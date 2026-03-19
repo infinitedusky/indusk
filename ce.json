@@ -1,0 +1,22 @@
+{
+	"envDir": "env",
+	"defaultProfile": "local",
+	"scripts": {
+		"command": "turbo",
+		"actions": ["dev", "build", "start"]
+	},
+	"profiles": {
+		"local": {
+			"suffix": "-local",
+			"domain": "infinitedusky.orb.local"
+		},
+		"staging": {
+			"suffix": "-stg",
+			"domain": "stg.agcorsillo.com"
+		},
+		"production": {
+			"suffix": "",
+			"domain": "agcorsillo.com"
+		}
+	}
+}

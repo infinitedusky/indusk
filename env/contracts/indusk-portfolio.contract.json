@@ -1,0 +1,38 @@
+{
+	"name": "indusk-portfolio",
+	"location": "apps/indusk-portfolio",
+	"includeVars": ["vars/platform-base"],
+	"target": {
+		"type": "docker-compose",
+		"file": "docker-compose.yml",
+		"service": "indusk-portfolio",
+		"config": {
+			"build": {
+				"context": ".",
+				"dockerfile": "docker/Dockerfile.nextdev"
+			},
+			"ports": ["3000:3000"],
+			"volumes": [
+				"./apps/indusk-portfolio/src:/app/apps/indusk-portfolio/src",
+				"./apps/indusk-portfolio/public:/app/apps/indusk-portfolio/public"
+			],
+			"restart": "unless-stopped"
+		},
+		"profileOverrides": {
+			"production": {
+				"build": {
+					"context": ".",
+					"dockerfile": "docker/Dockerfile.nextprod"
+				},
+				"volumes": []
+			}
+		}
+	},
+	"vars": {
+		"PORT": "${indusk-portfolio.PORT}"
+	},
+	"dev": {
+		"command": "pnpm dev:indusk-portfolio",
+		"label": "InDusk Portfolio"
+	}
+}

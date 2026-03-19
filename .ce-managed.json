@@ -1,0 +1,32 @@
+{
+	"version": 1,
+	"managed": [
+		{
+			"file": "turbo.json",
+			"keys": {
+				"globalDependencies": ["env/**"]
+			}
+		},
+		{
+			"file": "package.json",
+			"keys": {
+				"scripts": [
+					"env:build",
+					"dev:brand-site",
+					"build:brand-site",
+					"start:brand-site",
+					"dev",
+					"build",
+					"start",
+					"env:start",
+					"dev:indusk-portfolio",
+					"build:indusk-portfolio",
+					"start:indusk-portfolio",
+					"dev:indusk-docs",
+					"build:indusk-docs",
+					"start:indusk-docs"
+				]
+			}
+		}
+	]
+}

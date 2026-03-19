@@ -1,0 +1,29 @@
+{
+	"name": "infinitedusky",
+	"private": true,
+	"packageManager": "pnpm@9.15.4",
+	"scripts": {
+		"ce": "ce",
+		"test": "turbo test",
+		"check": "biome check",
+		"check:fix": "biome check --write",
+		"format": "biome format --write",
+		"env:build": "ce build --profile",
+		"dev:indusk-docs": "ce run --profile -- turbo dev --filter=indusk-docs",
+		"build:indusk-docs": "ce run --profile -- turbo build --filter=indusk-docs",
+		"start:indusk-docs": "ce run --profile -- turbo start --filter=indusk-docs",
+		"dev:indusk-portfolio": "ce run --profile -- turbo dev --filter=indusk-portfolio",
+		"build:indusk-portfolio": "ce run --profile -- turbo build --filter=indusk-portfolio",
+		"start:indusk-portfolio": "ce run --profile -- turbo start --filter=indusk-portfolio",
+		"dev": "ce run -- turbo dev",
+		"build": "ce run -- turbo build",
+		"start": "ce run -- turbo start",
+		"env:start": "ce start"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.8",
+		"composable.env": "^1.9.3",
+		"turbo": "^2.4.0",
+		"vitest": "^4.1.0"
+	}
+}

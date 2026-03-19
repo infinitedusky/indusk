@@ -1,0 +1,7 @@
+{
+	"vars": {
+		"NODE_ENV": "${networking.NODE_ENV}",
+		"NEXT_PUBLIC_PROFILE_SUFFIX": "${networking.PROFILE_SUFFIX}",
+		"NEXT_PUBLIC_DOMAIN": "${networking.DOMAIN}"
+	}
+}

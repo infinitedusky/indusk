@@ -1,0 +1,16 @@
+FROM node:22-alpine
+
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/indusk-portfolio/package.json apps/indusk-portfolio/
+
+RUN pnpm install --frozen-lockfile
+
+COPY apps/indusk-portfolio/ apps/indusk-portfolio/
+
+EXPOSE 3000
+
+CMD ["pnpm", "dev:site"]

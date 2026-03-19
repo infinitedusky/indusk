@@ -1,0 +1,34 @@
+# Build output
+.next/
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+*.local
+
+# Generated
+docker-compose.yml
+docker-compose.persistent.yml
+pnpm-lock.yaml
+
+# IDE
+.vscode/
+.idea/
+
+# Playwright
+.playwright-mcp/
+
+# Planning docs (not code)
+planning/
+research/
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.svg

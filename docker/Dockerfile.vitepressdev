@@ -1,0 +1,16 @@
+FROM node:22-alpine
+
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/indusk-docs/package.json apps/indusk-docs/
+
+RUN pnpm install --frozen-lockfile
+
+COPY apps/indusk-docs/ apps/indusk-docs/
+
+EXPOSE 5173
+
+CMD ["pnpm", "turbo", "dev", "--filter=indusk-docs"]

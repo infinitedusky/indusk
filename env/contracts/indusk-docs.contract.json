@@ -1,0 +1,26 @@
+{
+	"name": "indusk-docs",
+	"location": "apps/indusk-docs",
+	"includeVars": ["vars/platform-base"],
+	"target": {
+		"type": "docker-compose",
+		"file": "docker-compose.yml",
+		"service": "indusk-docs",
+		"config": {
+			"build": {
+				"context": ".",
+				"dockerfile": "docker/Dockerfile.vitepressdev"
+			},
+			"ports": ["4173:4173"],
+			"volumes": ["./apps/indusk-docs/src:/app/apps/indusk-docs/src"],
+			"restart": "unless-stopped"
+		}
+	},
+	"vars": {
+		"PORT": "${indusk-docs.PORT}"
+	},
+	"dev": {
+		"command": "pnpm dev:indusk-docs",
+		"label": "InDusk Docs"
+	}
+}

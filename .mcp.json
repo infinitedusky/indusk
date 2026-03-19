@@ -1,0 +1,14 @@
+{
+	"mcpServers": {
+		"codegraphcontext": {
+			"command": "cgc",
+			"args": ["mcp", "start"],
+			"env": {
+				"DATABASE_TYPE": "falkordb-remote",
+				"FALKORDB_HOST": "localhost",
+				"FALKORDB_PORT": "6379",
+				"FALKORDB_GRAPH_NAME": "codegraph"
+			}
+		}
+	}
+}
