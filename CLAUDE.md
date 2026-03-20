@@ -12,11 +12,11 @@ infinitedusky/
 │   ├── indusk-portfolio/   # Next.js 15 + Tailwind 4 — personal brand/portfolio site
 │   ├── indusk-mcp/        # InDusk MCP server — dev system tooling
 │   └── indusk-docs/       # VitePress documentation site with Mermaid + FullscreenDiagram
-├── .claude/skills/        # Claude Code skills (plan, work, context, composable-env)
-│   ├── plan/SKILL.md      # Structured planning lifecycle
-│   ├── work/SKILL.md      # Execute impl checklists
-│   ├── context/SKILL.md   # Maintain living project memory (this file)
-│   ├── verify/SKILL.md    # Automated verification — type checks, lint, tests
+├── .claude/skills/        # Claude Code skills (installed via `init`, not manually maintained)
+│   ├── plan/SKILL.md      # Installed from apps/indusk-mcp/skills/
+│   ├── work/SKILL.md      # Installed from apps/indusk-mcp/skills/
+│   ├── context/SKILL.md   # Installed from apps/indusk-mcp/skills/
+│   ├── verify/SKILL.md    # Installed from apps/indusk-mcp/skills/
 │   └── composable-env/    # composable.env skill (installed via ce add-skill)
 ├── docker/                # Dockerfiles for local dev (Dockerfile.nextdev, etc.)
 ├── env/                   # composable.env: components, profiles, contracts
@@ -30,7 +30,7 @@ infinitedusky/
 
 **Apps:**
 - **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme (zinc-950 bg, amber-400 accents). Runs in Docker via composable.env for local dev.
-- **indusk-mcp**: InDusk MCP server — dev system tooling for plan management, quality checks, and context tools. Will be published as `@infinitedusky/dev-system`.
+- **indusk-mcp**: InDusk MCP server — dev system tooling with 13 MCP tools (plan, context, quality, document, system). CLI for `init`/`update`. Skills are owned here in `skills/` and installed to `.claude/skills/` via init. Dogfooded in this repo via `.mcp.json`. Will be published as `@infinitedusky/dev-system`.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
 
 **Skills:**
@@ -62,6 +62,7 @@ infinitedusky/
 - After each retrospective, ask if mistakes could be caught by a Biome rule — if yes, add to biome.json and biome-rationale.md
 - Before touching shared code, query the code graph (`analyze_code_relationships`) to understand blast radius
 - Create `.cgcignore` in new projects to exclude build artifacts from graph indexing
+- `npx @infinitedusky/dev-system init` to set up a new project with skills, CLAUDE.md, biome, and MCP config
 
 ## Key Decisions
 
@@ -85,6 +86,8 @@ infinitedusky/
 - Skill files are `SKILL.md` (all caps), not `skill.md`
 - Vitest `passWithNoTests: true` must be set in each app's `vitest.config.ts`, not just root — `extends: true` doesn't inherit it when the app defines its own `test` block
 - Biome 2.x API differs from docs/examples: `noVar` doesn't exist, `noUnusedVariables` has no `ignorePattern` option, overrides use `includes` not `include`. Always match schema version to installed version.
+- Impl parser must handle all four gate types per phase: implementation, verification, context, document — not just three
+- Skills in `.claude/skills/` are package-owned — edit in `apps/indusk-mcp/skills/`, then run `update` to sync. Don't edit `.claude/skills/` directly.
 
 ## Current State
 
@@ -98,5 +101,5 @@ Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env
 | verify-skill | impl (completed) | Ready for retrospective |
 | code-quality-system | impl (completed) | MCP tools designed, ready for retrospective |
 | codegraph-context | impl (completed) | Ready for retrospective |
-| mcp-dev-system | brief (draft) | Review and accept brief |
-| document-skill | impl (in-progress) | Phase 1 complete, starting Phase 2 |
+| mcp-dev-system | impl (completed) | Ready for retrospective |
+| document-skill | impl (completed) | Ready for retrospective |
