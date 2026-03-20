@@ -19,6 +19,7 @@ The development lifecycle is powered by six skills that work together:
 
 | Tool | Purpose |
 |------|---------|
+| [InDusk MCP](/reference/tools/indusk-mcp) | Dev system MCP server — 14 tools for plans, context, quality, docs, system |
 | [Composable.env](/reference/tools/composable-env) | Docker-based local dev environment |
 | [CodeGraphContext](/reference/tools/codegraph) | Structural code intelligence |
 | [Biome](/reference/tools/biome) | Linting and formatting |

@@ -62,6 +62,7 @@ const config = defineConfig({
 				{
 					text: "Tools",
 					items: [
+						{ text: "InDusk MCP", link: "/reference/tools/indusk-mcp" },
 						{ text: "Composable.env", link: "/reference/tools/composable-env" },
 						{ text: "CodeGraphContext", link: "/reference/tools/codegraph" },
 						{ text: "Biome", link: "/reference/tools/biome" },
