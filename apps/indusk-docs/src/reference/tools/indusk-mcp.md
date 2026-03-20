@@ -1,6 +1,6 @@
 # InDusk MCP Server
 
-The InDusk MCP server (`@infinitedusky/dev-system`) provides 14 tools across 5 categories that make the skill system cohesive. Skills are markdown instructions the agent reads; MCP tools are structured APIs the agent calls.
+The InDusk MCP server (`indusk-mcp`) provides 14 tools across 5 categories that make the skill system cohesive. Skills are markdown instructions the agent reads; MCP tools are structured APIs the agent calls.
 
 ## Setup
 
@@ -22,7 +22,7 @@ For projects using the published package:
 {
   "indusk": {
     "command": "npx",
-    "args": ["@infinitedusky/dev-system", "serve"],
+    "args": ["indusk-mcp", "serve"],
     "env": { "PROJECT_ROOT": "." }
   }
 }

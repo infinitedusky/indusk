@@ -1,8 +1,15 @@
 {
-	"name": "@infinitedusky/dev-system",
-	"version": "0.1.0",
+	"name": "@infinitedusky/indusk-mcp",
+	"version": "0.2.0",
 	"description": "InDusk development system — skills, MCP tools, and CLI for structured AI-assisted development",
 	"type": "module",
+	"files": [
+		"dist",
+		"skills",
+		"templates",
+		"!dist/**/*.test.*",
+		"!dist/__tests__"
+	],
 	"bin": {
 		"indusk": "dist/bin/cli.js",
 		"dev-system": "dist/bin/cli.js"

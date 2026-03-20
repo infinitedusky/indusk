@@ -1,0 +1,6 @@
+src/
+.turbo/
+**/*.test.*
+**/__tests__/
+vitest.config.ts
+tsconfig.json

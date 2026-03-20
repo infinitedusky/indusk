@@ -14,7 +14,7 @@ Set up the InDusk development system in a new or existing project.
 ### 1. Install the dev system
 
 ```bash
-npx @infinitedusky/dev-system init
+npx indusk-mcp init
 ```
 
 This creates:
@@ -78,7 +78,7 @@ Run `check_health` to verify everything is connected.
 When the package releases new skill versions:
 
 ```bash
-npx @infinitedusky/dev-system update
+npx indusk-mcp update
 ```
 
 This compares content hashes and only replaces outdated skills. It never touches CLAUDE.md, planning/, biome.json, or .mcp.json.

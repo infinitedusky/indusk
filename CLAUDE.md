@@ -30,7 +30,7 @@ infinitedusky/
 
 **Apps:**
 - **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme (zinc-950 bg, amber-400 accents). Runs in Docker via composable.env for local dev.
-- **indusk-mcp**: InDusk MCP server — dev system tooling with 13 MCP tools (plan, context, quality, document, system). CLI for `init`/`update`. Skills are owned here in `skills/` and installed to `.claude/skills/` via init. Dogfooded in this repo via `.mcp.json`. Will be published as `@infinitedusky/dev-system`.
+- **indusk-mcp**: InDusk MCP server — dev system tooling with 13 MCP tools (plan, context, quality, document, system). CLI for `init`/`update`. Skills are owned here in `skills/` and installed to `.claude/skills/` via init. Dogfooded in this repo via `.mcp.json`. Will be published as `indusk-mcp`.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
 
 **Skills:**
@@ -62,7 +62,7 @@ infinitedusky/
 - After each retrospective, ask if mistakes could be caught by a Biome rule — if yes, add to biome.json and biome-rationale.md
 - Before touching shared code, query the code graph (`analyze_code_relationships`) to understand blast radius
 - Create `.cgcignore` in new projects to exclude build artifacts from graph indexing
-- `npx @infinitedusky/dev-system init` to set up a new project with skills, CLAUDE.md, biome, and MCP config
+- `npx indusk-mcp init` to set up a new project with skills, CLAUDE.md, biome, and MCP config
 
 ## Key Decisions
 
