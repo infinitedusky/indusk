@@ -9,6 +9,13 @@
 				"FALKORDB_PORT": "6379",
 				"FALKORDB_GRAPH_NAME": "codegraph"
 			}
+		},
+		"indusk": {
+			"command": "node",
+			"args": ["apps/indusk-mcp/dist/bin/cli.js", "serve"],
+			"env": {
+				"PROJECT_ROOT": "."
+			}
 		}
 	}
 }
