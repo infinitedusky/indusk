@@ -14,7 +14,7 @@ describe("parseImpl", () => {
 
 	it("parses the mcp-dev-system impl", () => {
 		const parsed = parseImpl(join(projectRoot, "planning/mcp-dev-system/impl.md"));
-		expect(parsed.status).toBe("in-progress");
+		expect(parsed.status).toBe("completed");
 		expect(parsed.phases.length).toBeGreaterThanOrEqual(7);
 
 		// Phase 1 should be fully checked
@@ -132,8 +132,8 @@ status: in-progress
 		expect(completions[0].complete).toBe(true);
 		expect(completions[1].complete).toBe(true);
 
-		// The last phase (Phase 7: Dogfood) should be incomplete until the plan is done
+		// All phases should be complete now
 		const lastPhase = completions[completions.length - 1];
-		expect(lastPhase.complete).toBe(false);
+		expect(lastPhase.complete).toBe(true);
 	});
 });

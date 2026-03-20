@@ -9,7 +9,7 @@ describe("parsePlan", () => {
 		const plan = parsePlan(join(projectRoot, "planning/mcp-dev-system"));
 		expect(plan.name).toBe("mcp-dev-system");
 		expect(plan.stage).toBe("impl");
-		expect(plan.stageStatus).toBe("in-progress");
+		expect(plan.stageStatus).toBe("completed");
 		expect(plan.documents).toContain("brief.md");
 		expect(plan.documents).toContain("adr.md");
 		expect(plan.documents).toContain("impl.md");

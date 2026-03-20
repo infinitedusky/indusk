@@ -17,9 +17,10 @@ program
 program
 	.command("init")
 	.description("Initialize a project with InDusk dev system")
-	.action(async () => {
+	.option("-f, --force", "Overwrite existing files (except CLAUDE.md and planning/)")
+	.action(async (opts) => {
 		const { init } = await import("./commands/init.js");
-		await init(process.cwd());
+		await init(process.cwd(), { force: opts.force ?? false });
 	});
 
 program

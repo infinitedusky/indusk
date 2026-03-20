@@ -25,7 +25,7 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 	server.registerTool(
 		"get_system_version",
 		{
-			description: "Return the installed @infinitedusky/dev-system package version",
+			description: "Return the installed indusk-mcp package version",
 		},
 		async () => {
 			const pkgPath = join(packageRoot, "package.json");
