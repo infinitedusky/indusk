@@ -59,7 +59,7 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
    **Context items** → capture what changed (concrete CLAUDE.md edits)
    **Document items** → write or update docs pages (see document skill)
 
-   A phase is not complete until all four are done. Do not advance to the next phase with unchecked verification, context, or document items.
+   A phase is not complete until all four are done. **Enforced by hooks:** if you try to check off a Phase N+1 implementation item while Phase N has unchecked gates, the edit will be blocked with a message listing what's missing. Complete the gates first.
 
 11. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
    - Run checks in order: type check → lint → affected tests → build. Skip checks that don't apply (see verify skill's skip logic table).

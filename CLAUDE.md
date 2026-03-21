@@ -54,7 +54,9 @@ infinitedusky/
 - Plans follow the lifecycle: research → brief → ADR → impl → retrospective
 - All planning docs live in `planning/{kebab-case-name}/`
 - Every impl phase ends with four gates before advancing: verify → context → document → advance
-- Three layers of defense: (1) Context/CLAUDE.md — advisory, (2) Biome rules — enforcement, (3) Retrospective — learning. The quality ratchet only gets tighter.
+- Plan gates are enforced via Claude Code hooks — the agent cannot skip verification/context/document items when advancing phases
+- `.claude/hooks/` contains gate enforcement scripts installed by init (check-gates.js blocks, gate-reminder.js nudges)
+- Three layers of defense: (1) Context/CLAUDE.md — advisory, (2) Biome rules — enforcement, (3) Hooks — gate enforcement, (4) Retrospective — learning. The quality ratchet only gets tighter.
 - Use the plan skill before implementing significant features — don't jump to code
 - `pnpm test` runs all tests, `pnpm turbo test --filter={app}` for scoped runs. Vitest configs use `passWithNoTests: true`
 - Verification items in impl docs must be specific runnable commands with expected output — not "verify it works"
@@ -76,6 +78,7 @@ infinitedusky/
 - CodeGraphContext with global FalkorDB + local CGC via pipx for structural code intelligence — see `planning/codegraph-context/adr.md`
 - Document skill (per-phase execution gate) + retrospective skill (closing audit with knowledge handoff to VitePress docs) — see `planning/document-skill/adr.md`
 - GSD-inspired: lessons registry, verification auto-discovery, forward intelligence, blocker protocol, workflow templates, boundary maps, domain skills — see `planning/gsd-inspired-improvements/adr.md`
+- Plan gate enforcement via Claude Code PreToolUse hooks — blocks phase transitions with incomplete gates — see `planning/enforce-plan-gates/adr.md`
 
 ## Known Gotchas
 
@@ -104,3 +107,5 @@ Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env
 | codegraph-context | impl (completed) | Ready for retrospective |
 | mcp-dev-system | impl (completed) | Ready for retrospective |
 | document-skill | impl (completed) | Ready for retrospective |
+| gsd-inspired-improvements | impl (in-progress) | Publish v0.5.0 and dogfood |
+| enforce-plan-gates | impl (in-progress) | Publish v0.6.0 and dogfood |

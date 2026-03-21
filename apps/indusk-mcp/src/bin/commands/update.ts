@@ -128,4 +128,39 @@ export async function update(projectRoot: string): Promise<void> {
 	} else {
 		console.info("  no domain skills installed");
 	}
+
+	// Sync hook scripts (only if hooks directory exists in target)
+	console.info("\nChecking for hook updates...\n");
+	const hooksSource = join(packageRoot, "hooks");
+	const hooksTarget = join(projectRoot, ".claude/hooks");
+
+	let hooksUpdated = 0;
+	let hooksCurrent = 0;
+
+	if (existsSync(hooksSource) && existsSync(hooksTarget)) {
+		const hookFiles = ["check-gates.js", "gate-reminder.js"];
+
+		for (const file of hookFiles) {
+			const sourceFile = join(hooksSource, file);
+			const targetFile = join(hooksTarget, file);
+
+			if (!existsSync(sourceFile) || !existsSync(targetFile)) continue;
+
+			const sourceH = fileHash(sourceFile);
+			const targetH = fileHash(targetFile);
+
+			if (sourceH === targetH) {
+				console.info(`  current: ${file}`);
+				hooksCurrent++;
+			} else {
+				cpSync(sourceFile, targetFile);
+				console.info(`  updated: ${file}`);
+				hooksUpdated++;
+			}
+		}
+
+		console.info(`\n${hooksUpdated} updated, ${hooksCurrent} current.`);
+	} else {
+		console.info("  hooks not installed (run init to install)");
+	}
 }

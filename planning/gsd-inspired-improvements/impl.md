@@ -42,7 +42,7 @@ Adopt 7 patterns from GSD-2 into the InDusk dev system: lessons registry, verifi
 
 ### Phase 1: Lessons Registry
 
-- [ ] Create `apps/indusk-mcp/lessons/community/` directory with 8 starter lessons:
+- [x] Create `apps/indusk-mcp/lessons/community/` directory with 8 starter lessons:
   - `community-no-fallback-values.md` — never use fallback values where a value is expected
   - `community-check-existing-packages.md` — search for official packages before building custom
   - `community-explicit-errors.md` — let errors propagate visibly, no silent catches
@@ -51,58 +51,58 @@ Adopt 7 patterns from GSD-2 into the InDusk dev system: lessons registry, verifi
   - `community-verify-before-commit.md` — always run checks before committing
   - `community-read-before-edit.md` — read the file before modifying it
   - `community-one-concern-per-change.md` — each change should address one thing
-- [ ] Update `init` to copy community lessons to `.claude/lessons/`
-- [ ] Update `update` to sync community lessons (files with `community-` prefix only), install new ones, never touch files without the prefix
-- [ ] Add `list_lessons` MCP tool — returns all lessons from `.claude/lessons/`
-- [ ] Add `add_lesson` MCP tool — creates a new personal lesson file from a description
-- [ ] Update retrospective skill to prompt "any lessons worth capturing?" and call `add_lesson`
+- [x] Update `init` to copy community lessons to `.claude/lessons/`
+- [x] Update `update` to sync community lessons (files with `community-` prefix only), install new ones, never touch files without the prefix
+- [x] Add `list_lessons` MCP tool — returns all lessons from `.claude/lessons/`
+- [x] Add `add_lesson` MCP tool — creates a new personal lesson file from a description
+- [x] Update retrospective skill to prompt "any lessons worth capturing?" and call `add_lesson`
 
 #### Phase 1 Verification
-- [ ] `npx @infinitedusky/indusk-mcp init` in a temp dir creates `.claude/lessons/` with 8 community files
-- [ ] Create a personal lesson manually, run `update` — personal lesson untouched, community lessons synced
-- [ ] `list_lessons` returns all lessons (community + personal)
-- [ ] `add_lesson` creates a properly formatted lesson file
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
-- [ ] `pnpm check` passes
+- [x] `npx @infinitedusky/indusk-mcp init` in a temp dir creates `.claude/lessons/` with 8 community files
+- [x] Create a personal lesson manually, run `update` — personal lesson untouched, community lessons synced
+- [x] `list_lessons` returns all lessons (community + personal)
+- [x] `add_lesson` creates a properly formatted lesson file
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
+- [x] `pnpm check` passes
 
 #### Phase 1 Context
-- [ ] Add to Architecture: `.claude/lessons/` — community (package-owned) + personal (user-owned) lessons
-- [ ] Add to Conventions: community lessons use `community-` prefix, personal lessons don't
+- [x] Add to Architecture: `.claude/lessons/` — community (package-owned) + personal (user-owned) lessons
+- [x] Add to Conventions: community lessons use `community-` prefix, personal lessons don't
 
 ### Phase 2: Verification Auto-Discovery
 
-- [ ] Create `src/lib/verification-discovery.ts`:
+- [x] Create `src/lib/verification-discovery.ts`:
   - Read `package.json` scripts, match known patterns: `typecheck`, `type-check`, `tsc`, `lint`, `test`, `build`, `check`
   - Detect tool configs: `biome.json` → `npx biome check`, `tsconfig.json` → `npx tsc --noEmit`, `vitest.config.*` → `npx vitest run`, `jest.config.*` → `npx jest`
   - Return array of `{ name: string, command: string, source: "package.json" | "config-file" }`
-- [ ] Update `quality_check` MCP tool: add `discover` mode that returns detected commands without running them
-- [ ] Update `quality_check` default behavior: if no command specified, run all discovered checks
-- [ ] Update verify skill: reference auto-discovery, note that impl doc commands are optional overrides
+- [x] Update `quality_check` MCP tool: add `discover` mode that returns detected commands without running them
+- [x] Update `quality_check` default behavior: if no command specified, run all discovered checks
+- [x] Update verify skill: reference auto-discovery, note that impl doc commands are optional overrides
 
 #### Phase 2 Verification
-- [ ] Run `quality_check` with discover mode on this repo — returns biome check, tsc, vitest
-- [ ] Run `quality_check` with no args — runs all discovered checks
-- [ ] Run `quality_check` with explicit command — uses the explicit command instead
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
-- [ ] `pnpm check` passes
+- [x] Run `quality_check` with discover mode on this repo — returns biome check, tsc, vitest
+- [x] Run `quality_check` with no args — runs all discovered checks
+- [x] Run `quality_check` with explicit command — uses the explicit command instead
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
+- [x] `pnpm check` passes
 
 #### Phase 2 Context
-- [ ] Add to Conventions: verification commands in impl docs are optional — auto-discovery is the default
+- [x] Add to Conventions: verification commands in impl docs are optional — auto-discovery is the default
 
 ### Phase 3: Forward Intelligence + Blocker Protocol
 
-- [ ] Update context skill: add `## Forward Intelligence` section template to per-phase context updates:
+- [x] Update context skill: add `## Forward Intelligence` section template to per-phase context updates:
   ```markdown
   #### Phase N Forward Intelligence
   - **Fragile**: {file/module that was tricky, why}
   - **Watch out**: {downstream risk for next phase}
   - **Assumption**: {thing that's true now but might not be later}
   ```
-- [ ] Update work skill: read forward intelligence from previous phase before starting next phase
-- [ ] Update impl-parser to detect `blocker:` lines in phases
-- [ ] Update work skill: check for `blocker:` before starting a phase, halt and present to user if found
-- [ ] Update `advance_plan` MCP tool: check for unresolved blockers, include in missing items if found
-- [ ] Add teach mode to work skill — when `/work teach` or `/work --teach` is used:
+- [x] Update work skill: read forward intelligence from previous phase before starting next phase
+- [x] Update impl-parser to detect `blocker:` lines in phases
+- [x] Update work skill: check for `blocker:` before starting a phase, halt and present to user if found
+- [x] Update `advance_plan` MCP tool: check for unresolved blockers, include in missing items if found
+- [x] Add teach mode to work skill — when `/work teach` or `/work --teach` is used:
   - Before each edit: explain what you're about to change and why, then stop and wait for "continue"
   - After each edit: explain what changed, what to notice, and how it connects to the broader goal, then stop and wait
   - Between checklist items: summarize what was accomplished and preview the next item
@@ -110,45 +110,45 @@ Adopt 7 patterns from GSD-2 into the InDusk dev system: lessons registry, verifi
   - Normal `/work` remains unchanged — fast execution without pauses
 
 #### Phase 3 Verification
-- [ ] Create a test impl with forward intelligence sections — verify work skill reads them
-- [ ] Create a test impl with `blocker:` line — verify work skill halts
-- [ ] Call `advance_plan` on a plan with a blocker — verify it reports the blocker
-- [ ] Run `/work teach` on a test item — verify it explains before editing, waits, explains after, waits
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
-- [ ] `pnpm check` passes
+- [x] Create a test impl with forward intelligence sections — verify work skill reads them
+- [x] Create a test impl with `blocker:` line — verify work skill halts
+- [x] Call `advance_plan` on a plan with a blocker — verify it reports the blocker
+- [x] Run `/work teach` on a test item — verify it explains before editing, waits, explains after, waits
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
+- [x] `pnpm check` passes
 
 #### Phase 3 Context
-- [ ] Add to Conventions: write forward intelligence at end of each phase, read it at start of next
+- [x] Add to Conventions: write forward intelligence at end of each phase, read it at start of next
 
 ### Phase 4: Workflow Templates + Boundary Maps
 
-- [ ] Create `apps/indusk-mcp/templates/workflows/`:
+- [x] Create `apps/indusk-mcp/templates/workflows/`:
   - `bugfix.md` — brief + impl only, streamlined
   - `refactor.md` — brief + impl with boundary map required
   - `spike.md` — research only
   - `feature.md` — full lifecycle (current default)
-- [ ] Update plan skill to accept workflow type as second argument:
+- [x] Update plan skill to accept workflow type as second argument:
   - `/plan bugfix auth-token-expiry` → scaffolds from bugfix template
   - `/plan refactor extract-middleware` → scaffolds from refactor template
   - `/plan spike redis-options` → scaffolds research.md only
   - `/plan feature payment-flow` or `/plan payment-flow` → full lifecycle (default)
-- [ ] Add `## Boundary Map` section to impl template (feature and refactor workflows)
-- [ ] Update plan skill documentation to describe workflow types and when to use each
+- [x] Add `## Boundary Map` section to impl template (feature and refactor workflows)
+- [x] Update plan skill documentation to describe workflow types and when to use each
 
 #### Phase 4 Verification
-- [ ] `/plan bugfix test-fix` creates only `brief.md` + `impl.md` in `planning/test-fix/`
-- [ ] `/plan spike test-spike` creates only `research.md` in `planning/test-spike/`
-- [ ] `/plan refactor test-refactor` creates `brief.md` + `impl.md` with boundary map section
-- [ ] `/plan feature test-feature` creates full lifecycle (same as current behavior)
-- [ ] Clean up test plan directories after verification
-- [ ] `pnpm check` passes
+- [x] `/plan bugfix test-fix` creates only `brief.md` + `impl.md` in `planning/test-fix/`
+- [x] `/plan spike test-spike` creates only `research.md` in `planning/test-spike/`
+- [x] `/plan refactor test-refactor` creates `brief.md` + `impl.md` with boundary map section
+- [x] `/plan feature test-feature` creates full lifecycle (same as current behavior)
+- [x] Clean up test plan directories after verification
+- [x] `pnpm check` passes
 
 #### Phase 4 Context
-- [ ] Add to Conventions: use `/plan bugfix` for fixes, `/plan spike` for exploration, `/plan refactor` for restructuring
+- [x] Add to Conventions: use `/plan bugfix` for fixes, `/plan spike` for exploration, `/plan refactor` for restructuring
 
 ### Phase 5: Domain Skills Registry
 
-- [ ] Create `apps/indusk-mcp/skills/domain/` directory with 8 domain skills:
+- [x] Create `apps/indusk-mcp/skills/domain/` directory with 8 domain skills:
   - `nextjs.md` — Next.js 13+ patterns, App Router, server components, caching
   - `tailwind.md` — Tailwind CSS patterns, avoid arbitrary values, utility-first
   - `react.md` — React patterns, hooks rules, component composition, state management
@@ -157,7 +157,7 @@ Adopt 7 patterns from GSD-2 into the InDusk dev system: lessons registry, verifi
   - `testing.md` — Testing patterns, arrange-act-assert, test isolation, what to mock
   - `docker.md` — Dockerfile patterns, multi-stage builds, layer caching, security
   - `vitepress.md` — VitePress patterns, frontmatter, Mermaid diagrams, sidebar config
-- [ ] Add detection logic to `init`:
+- [x] Add detection logic to `init`:
   ```typescript
   interface DomainDetection {
     skill: string;
@@ -176,49 +176,49 @@ Adopt 7 patterns from GSD-2 into the InDusk dev system: lessons registry, verifi
   | dependency | `vitepress` | vitepress |
   | file-pattern | `*.sol` | solidity |
   | file-pattern | `Dockerfile*` | docker |
-- [ ] Update `init` to run detection after copying process skills, install matching domain skills
-- [ ] Add `--skills nextjs,tailwind` flag to `init` for manual override
-- [ ] Add `--no-domain-skills` flag to skip detection entirely
-- [ ] Update `update` to sync domain skills same as process skills (by content hash)
-- [ ] Add `list_domain_skills` MCP tool — returns available domain skills and which are installed
+- [x] Update `init` to run detection after copying process skills, install matching domain skills
+- [x] Add `--skills nextjs,tailwind` flag to `init` for manual override
+- [x] Add `--no-domain-skills` flag to skip detection entirely
+- [x] Update `update` to sync domain skills same as process skills (by content hash)
+- [x] Add `list_domain_skills` MCP tool — returns available domain skills and which are installed
 
 #### Phase 5 Verification
-- [ ] Run `init` on this repo — detects and installs: typescript, testing, vitepress, docker (from Dockerfiles)
-- [ ] Run `init --skills solidity,react` — installs only those two domain skills
-- [ ] Run `init --no-domain-skills` — installs no domain skills
-- [ ] Run `update` — domain skills synced like process skills
-- [ ] `list_domain_skills` returns correct installed/available status
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
-- [ ] `pnpm check` passes
+- [x] Run `init` on this repo — detects and installs: typescript, testing, vitepress, docker (from Dockerfiles)
+- [x] Run `init --skills solidity,react` — installs only those two domain skills
+- [x] Run `init --no-domain-skills` — installs no domain skills
+- [x] Run `update` — domain skills synced like process skills
+- [x] `list_domain_skills` returns correct installed/available status
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
+- [x] `pnpm check` passes
 
 #### Phase 5 Context
-- [ ] Add to Architecture: domain skills in `.claude/skills/` alongside process skills, auto-detected by init
-- [ ] Add to Conventions: `init --skills x,y` for manual domain skill selection
+- [x] Add to Architecture: domain skills in `.claude/skills/` alongside process skills, auto-detected by init
+- [x] Add to Conventions: `init --skills x,y` for manual domain skill selection
 
 ### Phase 6: Integration, Dogfood, and Publish
 
-- [ ] Update toolbelt skill: add lessons reading at session start, domain skill awareness
-- [ ] Bump package version
-- [ ] Build and publish to npm
-- [ ] Run `update` on this repo — verify all new skills and lessons installed
-- [ ] Run `update` on numero — verify domain skill detection works on a different project
-- [ ] Test full workflow: start a session, verify lessons are read, domain skills loaded, verification auto-discovers
+- [x] Update toolbelt skill: add lessons reading at session start, domain skill awareness
+- [x] Bump package version
+- [x] Build and publish to npm
+- [x] Run `update` on this repo — verify all new skills and lessons installed
+- [x] Run `update` on numero — verify domain skill detection works on a different project
+- [x] Test full workflow: start a session, verify lessons are read, domain skills loaded, verification auto-discovers
 
 #### Phase 6 Verification
-- [ ] `npx @infinitedusky/indusk-mcp update` on this repo installs lessons + updated skills
-- [ ] New Claude Code session reads lessons and has domain skills available
-- [ ] `quality_check` auto-discovers verification commands
-- [ ] `/plan bugfix test` scaffolds correctly
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
-- [ ] `pnpm check` passes
+- [x] `npx @infinitedusky/indusk-mcp update` on this repo installs lessons + updated skills
+- [x] New Claude Code session reads lessons and has domain skills available
+- [x] `quality_check` auto-discovers verification commands
+- [x] `/plan bugfix test` scaffolds correctly
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
+- [x] `pnpm check` passes
 
 #### Phase 6 Context
-- [ ] Update Current State: GSD-inspired improvements implemented and published
+- [x] Update Current State: GSD-inspired improvements implemented and published
 
 #### Phase 6 Document
-- [ ] Update reference page at `apps/indusk-docs/src/reference/tools/indusk-mcp.md` with new tools (list_lessons, add_lesson, list_domain_skills)
-- [ ] Write guide page at `apps/indusk-docs/src/guide/lessons.md` explaining community vs personal lessons
-- [ ] Write guide page at `apps/indusk-docs/src/guide/domain-skills.md` explaining detection and manual override
+- [x] Update reference page at `apps/indusk-docs/src/reference/tools/indusk-mcp.md` with new tools (list_lessons, add_lesson, list_domain_skills)
+- [x] Write guide page at `apps/indusk-docs/src/guide/lessons.md` explaining community vs personal lessons
+- [x] Write guide page at `apps/indusk-docs/src/guide/domain-skills.md` explaining detection and manual override
 
 ## Files Affected
 

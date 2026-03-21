@@ -11,6 +11,6 @@ RUN pnpm install --frozen-lockfile
 
 COPY apps/indusk-docs/ apps/indusk-docs/
 
-EXPOSE 5173
+EXPOSE 4173
 
-CMD ["pnpm", "turbo", "dev", "--filter=indusk-docs"]
+CMD ["pnpm", "turbo", "dev", "--filter=indusk-docs", "--", "--host"]

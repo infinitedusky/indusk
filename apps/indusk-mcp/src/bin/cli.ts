@@ -38,6 +38,18 @@ program
 	});
 
 program
+	.command("check-gates")
+	.description(
+		"Validate plan execution gates — reports incomplete verification, context, and document items",
+	)
+	.option("--file <path>", "Path to a specific impl.md file")
+	.option("--phase <number>", "Check a specific phase number", Number.parseInt)
+	.action(async (opts) => {
+		const { checkGates } = await import("./commands/check-gates.js");
+		await checkGates(process.cwd(), { file: opts.file, phase: opts.phase });
+	});
+
+program
 	.command("serve")
 	.description("Start the MCP server (used by Claude Code via .mcp.json)")
 	.action(async () => {

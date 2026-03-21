@@ -334,7 +334,87 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		console.info(`  ${existsSync(biomePath) ? "overwrite" : "create"}: biome.json`);
 	}
 
-	// 7. Create .cgcignore (always overwrite — package-owned)
+	// 7. Install gate enforcement hooks
+	console.info("\n[Hooks]");
+	const hooksSource = join(packageRoot, "hooks");
+	const hooksTarget = join(projectRoot, ".claude/hooks");
+	const hookFiles = ["check-gates.js", "gate-reminder.js"];
+
+	if (existsSync(hooksSource)) {
+		mkdirSync(hooksTarget, { recursive: true });
+		for (const file of hookFiles) {
+			const sourceFile = join(hooksSource, file);
+			const targetFile = join(hooksTarget, file);
+			if (!existsSync(sourceFile)) continue;
+			if (existsSync(targetFile) && !force) {
+				console.info(`  skip: .claude/hooks/${file} (already exists)`);
+			} else {
+				cpSync(sourceFile, targetFile);
+				console.info(`  ${existsSync(targetFile) ? "overwrite" : "create"}: .claude/hooks/${file}`);
+			}
+		}
+	}
+
+	// Merge hook config into .claude/settings.json
+	const claudeSettingsPath = join(projectRoot, ".claude/settings.json");
+	const hookConfig = {
+		PreToolUse: [
+			{
+				matcher: "Edit|Write",
+				hooks: [{ type: "command", command: "node .claude/hooks/check-gates.js" }],
+			},
+		],
+		PostToolUse: [
+			{
+				matcher: "Edit|Write",
+				hooks: [{ type: "command", command: "node .claude/hooks/gate-reminder.js" }],
+			},
+		],
+	};
+
+	if (existsSync(claudeSettingsPath)) {
+		const existing = JSON.parse(readFileSync(claudeSettingsPath, "utf-8"));
+		existing.hooks = existing.hooks || {};
+
+		let hooksUpdated = false;
+		for (const [event, entries] of Object.entries(hookConfig)) {
+			const existingEntries = existing.hooks[event] || [];
+			// Check if our hook is already present
+			const hasOurHook = existingEntries.some((e: { hooks?: { command?: string }[] }) =>
+				e.hooks?.some(
+					(h: { command?: string }) =>
+						h.command?.includes("check-gates") || h.command?.includes("gate-reminder"),
+				),
+			);
+			if (!hasOurHook || force) {
+				// Remove old entries if force, then add
+				if (force) {
+					existing.hooks[event] = existingEntries.filter(
+						(e: { hooks?: { command?: string }[] }) =>
+							!e.hooks?.some(
+								(h: { command?: string }) =>
+									h.command?.includes("check-gates") || h.command?.includes("gate-reminder"),
+							),
+					);
+				}
+				existing.hooks[event] = [...(existing.hooks[event] || []), ...entries];
+				hooksUpdated = true;
+			}
+		}
+
+		if (hooksUpdated) {
+			writeFileSync(claudeSettingsPath, `${JSON.stringify(existing, null, "\t")}\n`);
+			console.info("  update: .claude/settings.json (added hook config)");
+		} else {
+			console.info("  skip: .claude/settings.json hooks (already configured)");
+		}
+	} else {
+		const settings = { hooks: hookConfig };
+		writeFileSync(claudeSettingsPath, `${JSON.stringify(settings, null, "\t")}\n`);
+		console.info("  create: .claude/settings.json (with hook config)");
+	}
+
+	// 8. Create .cgcignore (always overwrite — package-owned)
 	createCgcIgnore(projectRoot);
 
 	// 8. Infrastructure: FalkorDB + CGC
