@@ -70,8 +70,7 @@ The `decisions/` and `lessons/` directories are **not** populated during normal 
 
 - **One concept per diagram.** Don't cram the entire system into one chart. Break complex systems into focused diagrams.
 - **Meaningful labels.** Use full words, not abbreviations. `Plan Skill` not `PS`.
-- **Use `classDef` for visual grouping.** Color-code related nodes to show categories at a glance.
-- **Dark-mode friendly.** Avoid hardcoded light colors (white, light gray). Use the mermaid `dark` theme (already configured in VitePress). If you must customize colors, use high-contrast pairs.
+- **Do not use custom `style`, `classDef`, or `themeVariables` in diagrams.** The docs site supports both light and dark mode. The vitepress-plugin-mermaid auto-switches between Mermaid's `default` (light) and `dark` themes. Hardcoded colors (fills, text colors, borders) that work in one mode will be unreadable in the other. Let the built-in theme handle all colors. If you need visual grouping, use `subgraph` blocks instead of color-coding.
 - **Keep diagrams small enough to read inline** but detailed enough to be useful when expanded.
 
 ### Always Use FullscreenDiagram
@@ -117,6 +116,38 @@ implementation items → verification items → context items → document items
 ```
 
 A phase is not complete until its document items are done.
+
+## LLM-Readable Companion Files
+
+Every documentation page you create must have a corresponding **llms.txt** companion file. This makes the docs easy for AI agents to consume directly without HTML parsing.
+
+### How It Works
+
+For every page at `apps/indusk-docs/src/{path}.md`, create a matching file at `apps/indusk-docs/public/llms/{path}.txt`.
+
+```
+apps/indusk-docs/src/reference/skills/plan.md       → apps/indusk-docs/public/llms/reference/skills/plan.txt
+apps/indusk-docs/src/guide/getting-started.md        → apps/indusk-docs/public/llms/guide/getting-started.txt
+apps/indusk-docs/src/reference/tools/indusk-mcp.md   → apps/indusk-docs/public/llms/reference/tools/indusk-mcp.txt
+```
+
+### Content Rules
+
+The llms.txt file should contain the **same content** as the markdown page, with these adjustments:
+
+- Strip Mermaid diagram blocks and FullscreenDiagram wrappers (diagrams aren't useful as text)
+- Keep all tables, code blocks, headings, and prose
+- Keep all examples — these are the most valuable part for LLMs
+- Add a header line: `# {Page Title} — LLM-readable version`
+- Add a source line: `Source: {relative path to the .md file}`
+
+### Why
+
+When an external agent needs to understand this system, you can point it at `https://your-domain/llms/reference/skills/plan.txt` and it gets clean, structured text. No HTML parsing, no JavaScript rendering, no Mermaid SVGs to decode.
+
+### Also Create an Index
+
+Maintain `apps/indusk-docs/public/llms.txt` as a root index listing all available LLM-readable pages with their URLs and one-line descriptions. This follows the [llms.txt convention](https://llmstxt.org/).
 
 ## Running the Docs Site
 

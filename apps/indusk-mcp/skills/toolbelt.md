@@ -2,12 +2,20 @@
 
 You have MCP tools from two servers: **indusk** (dev system) and **codegraphcontext** (code graph). This skill tells you when to use them.
 
+## Lessons First
+
+The lesson system is how this project teaches you. Before writing any code, **always read the lessons**. They capture hard-won patterns and mistakes from past work — community-wide and personal.
+
+1. Call `list_lessons` at the start of every session. Read each one. These are not suggestions — they are rules this project has learned the hard way.
+2. When you discover a non-obvious pattern during work, capture it with `add_lesson`. Good lessons are actionable: they say what to do, why, and what goes wrong if you don't.
+3. During retrospectives, review whether any new lessons should be added based on what worked and what didn't.
+
 ## Session Start
 
 When a new session begins:
 
-1. Call `check_health` — verify FalkorDB and CGC are running. If unhealthy, tell the user what's down and how to fix it before proceeding.
-2. Call `list_lessons` — read all lessons (community + personal). Internalize these patterns before writing code.
+1. Call `list_lessons` — **read all lessons first**. Internalize these patterns before touching anything.
+2. Call `check_health` — verify FalkorDB and CGC are running. If unhealthy, tell the user what's down and how to fix it before proceeding.
 3. Call `list_plans` — understand what plans exist, their stages, and what's in progress.
 4. Call `get_context` — read the project's CLAUDE.md to understand architecture, conventions, and current state.
 

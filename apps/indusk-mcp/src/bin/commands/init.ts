@@ -145,10 +145,11 @@ export interface InitOptions {
 	force?: boolean;
 	skills?: string;
 	noDomainSkills?: boolean;
+	noIndex?: boolean;
 }
 
 export async function init(projectRoot: string, options: InitOptions = {}): Promise<void> {
-	const { force = false, skills, noDomainSkills = false } = options;
+	const { force = false, skills, noDomainSkills = false, noIndex = false } = options;
 	const projectName = basename(projectRoot);
 	console.info(`Initializing InDusk dev system...${force ? " (--force)" : ""}\n`);
 
@@ -429,7 +430,10 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	const cgcInstalled = checkCGC();
 
 	// 9. Auto-index the codebase into the graph
-	if (dockerAvailable && cgcInstalled) {
+	if (noIndex) {
+		console.info("\n[Code Graph]");
+		console.info("  skipped (--no-index)");
+	} else if (dockerAvailable && cgcInstalled) {
 		console.info("\n[Code Graph]");
 		console.info("  indexing: scanning codebase...");
 		const { indexProject } = await import("../../tools/graph-tools.js");

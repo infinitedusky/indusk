@@ -11,7 +11,7 @@
 				"context": ".",
 				"dockerfile": "docker/Dockerfile.vitepressdev"
 			},
-			"ports": ["4173:4173"],
+			"ports": ["${indusk-docs.PORT}:${indusk-docs.PORT}"],
 			"volumes": ["./apps/indusk-docs/src:/app/apps/indusk-docs/src"],
 			"restart": "unless-stopped"
 		}

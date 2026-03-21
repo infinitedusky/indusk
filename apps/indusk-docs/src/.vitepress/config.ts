@@ -14,13 +14,20 @@ const config = defineConfig({
 	},
 
 	mermaid: {
-		theme: "dark",
+		// theme: "default" for light mode.
+		// The plugin auto-switches to "dark" when VitePress dark mode is active.
+		// Do NOT set themeVariables — they persist across theme switches and break one mode.
+		theme: "default",
 		securityLevel: "loose",
-		startOnLoad: true,
 		maxTextSize: 50000,
 		flowchart: {
 			useMaxWidth: true,
 			htmlLabels: true,
+		},
+		sequence: {
+			actorFontWeight: "bold",
+			messageFontSize: 14,
+			actorFontSize: 14,
 		},
 	},
 
@@ -87,6 +94,9 @@ const config = defineConfig({
 	},
 
 	vite: {
+		server: {
+			allowedHosts: [".orb.local"],
+		},
 		optimizeDeps: {
 			include: ["mermaid"],
 		},
