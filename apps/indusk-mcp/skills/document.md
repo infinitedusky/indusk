@@ -72,6 +72,7 @@ The `decisions/` and `lessons/` directories are **not** populated during normal 
 - **Meaningful labels.** Use full words, not abbreviations. `Plan Skill` not `PS`.
 - **Do not use custom `style`, `classDef`, or `themeVariables` in diagrams.** The docs site supports both light and dark mode. The vitepress-plugin-mermaid auto-switches between Mermaid's `default` (light) and `dark` themes. Hardcoded colors (fills, text colors, borders) that work in one mode will be unreadable in the other. Let the built-in theme handle all colors. If you need visual grouping, use `subgraph` blocks instead of color-coding.
 - **Keep diagrams small enough to read inline** but detailed enough to be useful when expanded.
+- **Mermaid `securityLevel` must be `"strict"`.** Using `"loose"` causes Mermaid to scan the entire page DOM for diagram content, which produces "Syntax error in text" errors in the footer of every page. Always use `"strict"` in the VitePress mermaid config.
 
 ### Always Use FullscreenDiagram
 

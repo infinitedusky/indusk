@@ -16,6 +16,9 @@ You are working with a VitePress documentation site. Follow these patterns.
 - Keep diagrams focused — one concept per diagram
 - Use `flowchart TD` for top-down flows, `flowchart LR` for left-right
 - Use `classDiagram` for type relationships, `sequenceDiagram` for interactions
+- **Set `securityLevel: "strict"` in the mermaid config.** Using `"loose"` causes Mermaid v10+ to scan the entire page DOM, producing "Syntax error in text" errors on every page.
+- **Do not use `style`, `classDef`, or `themeVariables` with hardcoded colors.** The `vitepress-plugin-mermaid` auto-switches between `default` (light) and `dark` themes. Hardcoded colors break in the opposite mode. Use `subgraph` for visual grouping instead.
+- **Set `theme: "default"` in the mermaid config.** The plugin overrides to `"dark"` automatically when VitePress dark mode is active. Do not set `theme: "dark"` or `theme: "base"` — they interfere with the auto-switching.
 
 ## Sidebar & Navigation
 
