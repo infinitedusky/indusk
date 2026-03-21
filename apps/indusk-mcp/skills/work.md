@@ -25,12 +25,12 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
 5. **Work through the checklist in order.**
    - Start from the first unchecked item (`- [ ]`)
    - For each item:
-     a. **Query the code graph first** — before modifying a file, use `analyze_code_relationships` or `find_code` to understand its dependents. If the file is widely imported, flag the blast radius before proceeding.
-     b. **Check for existing code** — before writing new functions, use `find_code` to search for functions that already do what you need. Reuse and extend existing code rather than duplicating. Stay DRY.
+     a. **REQUIRED: Query the code graph** — before modifying ANY file, call `query_dependencies` on that file. Review the dependents list. If >3 dependents, flag the blast radius to the user before proceeding. This is not optional.
+     b. **REQUIRED: Check for existing code** — before writing new functions, call `find_code` to search for functions that already do what you need. Reuse and extend existing code rather than duplicating. Stay DRY.
      c. Read the relevant source files
      d. Implement the change
-     d. Immediately edit impl.md to check the item off (`- [ ]` → `- [x]`)
-     e. Move to the next item
+     e. Immediately edit impl.md to check the item off (`- [ ]` → `- [x]`)
+     f. Move to the next item
    - Do NOT skip ahead or work out of order unless there's a dependency reason
    - Do NOT batch checklist updates — check each off as soon as it's done
 

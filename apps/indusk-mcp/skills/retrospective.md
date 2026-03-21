@@ -40,7 +40,16 @@ Key sections to fill in honestly:
 - **What We'd Do Differently** — hindsight decisions
 - **Insights Worth Carrying Forward** — takeaways for future plans
 
-### Step 2: Docs Audit
+### Step 2: Structural Audit (Code Graph)
+
+**REQUIRED:** Before reviewing docs or tests, query the code graph to understand what actually changed:
+
+1. Call `query_dependencies` on the key files from this plan — verify the dependency relationships match what was designed
+2. Call `find_most_complex_functions` — check if the plan introduced high-complexity code that should be refactored
+3. Call `find_dead_code` — check if the plan left behind unused functions from refactoring
+4. Include findings in the retrospective under "What Actually Happened" — e.g., "Plan touched 8 files with 23 downstream dependents"
+
+### Step 3: Docs Audit
 
 Review every documentation page that was written or updated during this plan's impl phases.
 
@@ -52,7 +61,7 @@ For each page:
 
 Fix any discrepancies found. Plans often diverge from their impl during execution — the docs must reflect reality.
 
-### Step 3: Test Audit
+### Step 4: Test Audit
 
 Review the test files created or modified during this plan.
 
@@ -62,7 +71,7 @@ Review the test files created or modified during this plan.
 
 Flag gaps but don't necessarily fix them all now — add them as items to a follow-up plan if they're significant.
 
-### Step 4: Quality Audit
+### Step 5: Quality Audit
 
 Review mistakes made during this plan's implementation.
 
@@ -72,7 +81,7 @@ Review mistakes made during this plan's implementation.
 
 The quality ratchet only gets tighter. Every retrospective is an opportunity to prevent the same class of mistake from happening again.
 
-### Step 5: Context Audit
+### Step 6: Context Audit
 
 Re-read CLAUDE.md in full. After the entire impl is done, verify:
 
@@ -84,7 +93,7 @@ Re-read CLAUDE.md in full. After the entire impl is done, verify:
 
 Fix any inaccuracies. The impl may have changed things that weren't anticipated in the per-phase context updates.
 
-### Step 6: Knowledge Handoff
+### Step 7: Knowledge Handoff
 
 Distill planning artifacts into the docs site so the knowledge survives archival.
 
@@ -103,7 +112,7 @@ Not every plan produces a lessons page — only create one if the insights are g
 
 **Update sidebar:** Add new decision/lesson pages to the VitePress sidebar config in `apps/indusk-docs/src/.vitepress/config.ts`.
 
-### Step 7: Archival
+### Step 8: Archival
 
 Move the planning artifacts to the archive:
 

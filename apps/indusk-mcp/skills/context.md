@@ -78,6 +78,7 @@ After writing a retrospective, read the "Insights Worth Carrying Forward" and "W
 - If it changes the project's architecture or structure → update **Architecture**
 - Update **Current State** to reflect the plan's completion
 - If the retrospective's "Quality Ratchet" section adds a new Biome rule, also add the enforced pattern to **Conventions**
+- **REQUIRED: Query the code graph** — call `query_dependencies` on the key files that changed to verify the Architecture section still reflects reality. If the plan changed how modules connect, update Architecture with the new relationships.
 
 Do this immediately after writing the retrospective, before moving on.
 

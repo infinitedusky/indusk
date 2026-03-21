@@ -31,7 +31,12 @@ General-purpose research (insights useful across plans) also lives in `research/
 
 1. **Figure out where things stand.** If a plan folder already exists, read what's there. Check frontmatter statuses. The next document to write is the first one that's missing or incomplete.
 
-2. **If starting fresh**, create the plan folder and start with research. Explore the problem space — read code, search the web, check Context7 for library docs. **Query the code graph** (`analyze_code_relationships`, `find_code`, `get_repository_stats`) to understand the structural landscape before scoping. Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
+2. **If starting fresh**, create the plan folder and start with research. Explore the problem space — read code, search the web, check Context7 for library docs. **REQUIRED: Query the code graph before scoping:**
+   - Call `query_dependencies` on the target area to understand what depends on it and what it depends on
+   - Call `find_code` to find existing implementations you might reuse or need to modify
+   - Call `get_repository_stats` to understand the size of the area you're about to scope
+   - Include the graph findings in research.md — concrete numbers like "X has 12 dependents across 3 apps"
+   Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
 
 3. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. Present for review.
 

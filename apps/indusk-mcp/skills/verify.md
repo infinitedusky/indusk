@@ -56,7 +56,7 @@ When the work skill is executing an impl and reaches verification items, run che
    - Skip for: markdown changes, config-only changes with no test files
    - Catches: behavioral regressions, broken logic
    - Run affected app's tests, not the full suite
-   - **Use the code graph to find affected tests** — query `analyze_code_relationships` for the changed file to discover which test files import or depend on it. Run those tests specifically rather than guessing.
+   - **REQUIRED: Use the code graph to find affected tests** — call `query_dependencies` on the changed file with direction "dependents" to discover which test files import or depend on it. Run those tests specifically rather than guessing. Do not skip this step.
 
 4. **Build** — `pnpm turbo build --filter={app}`
    - Only for: shared package changes, build config changes

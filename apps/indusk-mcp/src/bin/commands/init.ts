@@ -226,6 +226,19 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 
 	const cgcInstalled = checkCGC();
 
+	// 9. Auto-index the codebase into the graph
+	if (dockerAvailable && cgcInstalled) {
+		console.info("\n[Code Graph]");
+		console.info("  indexing: scanning codebase...");
+		const { indexProject } = await import("../../tools/graph-tools.js");
+		const result = indexProject(projectRoot);
+		if (result.success) {
+			console.info(`  done: ${result.output}`);
+		} else {
+			console.info(`  error: ${result.output}`);
+		}
+	}
+
 	// Summary
 	console.info("\nDone!");
 	if (!cgcInstalled || !dockerAvailable) {
@@ -240,7 +253,6 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	}
 	console.info("\nNext steps:");
 	console.info("  1. Edit CLAUDE.md with your project details");
-	console.info("  2. Install Biome: pnpm add -D @biomejs/biome");
-	console.info("  3. Start a Claude Code session — MCP tools will be available");
-	console.info("  4. Start planning: /plan your-first-feature");
+	console.info("  2. Start a Claude Code session — MCP tools will be available");
+	console.info("  3. Start planning: /plan your-first-feature");
 }

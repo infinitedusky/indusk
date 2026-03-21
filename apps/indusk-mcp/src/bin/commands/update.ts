@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
@@ -19,16 +19,20 @@ export async function update(projectRoot: string): Promise<void> {
 	const skillFiles = globSync("*.md", { cwd: skillsSource });
 
 	let updated = 0;
-	let skipped = 0;
+	let added = 0;
+	let current = 0;
 
 	for (const file of skillFiles) {
 		const skillName = file.replace(".md", "");
 		const sourceFile = join(skillsSource, file);
-		const targetFile = join(skillsTarget, skillName, "SKILL.md");
+		const targetDir = join(skillsTarget, skillName);
+		const targetFile = join(targetDir, "SKILL.md");
 
 		if (!existsSync(targetFile)) {
-			console.info(`  skip: ${skillName} (not installed — run init first)`);
-			skipped++;
+			mkdirSync(targetDir, { recursive: true });
+			cpSync(sourceFile, targetFile);
+			console.info(`  added: ${skillName} (new skill)`);
+			added++;
 			continue;
 		}
 
@@ -37,7 +41,7 @@ export async function update(projectRoot: string): Promise<void> {
 
 		if (sourceHash === targetHash) {
 			console.info(`  current: ${skillName}`);
-			skipped++;
+			current++;
 		} else {
 			cpSync(sourceFile, targetFile);
 			console.info(`  updated: ${skillName}`);
@@ -45,5 +49,5 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 	}
 
-	console.info(`\n${updated} updated, ${skipped} current.`);
+	console.info(`\n${added} added, ${updated} updated, ${current} current.`);
 }

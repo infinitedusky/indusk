@@ -18,6 +18,8 @@ After context items are done, the document gate asks one question:
 
 **"Does this phase change something a user or developer needs to know?"**
 
+To answer this accurately, **REQUIRED: call `query_dependencies`** on the key files changed in this phase. If the change affects files with many dependents, it likely needs documentation. If it's internal with no downstream consumers, it might not.
+
 - If **yes**: write or update the relevant page in `apps/indusk-docs/src/`
 - If **no**: skip — not every phase produces documentation. The gate asks the question but doesn't always produce output.
 
