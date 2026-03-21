@@ -80,6 +80,22 @@ if (event.tool_name === "Edit" && oldContent) {
 	process.exit(0);
 }
 
+// Detect workflow type from content frontmatter
+function detectWorkflow(content) {
+	const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+	const fm = fmMatch ? fmMatch[1] : "";
+	const m = fm.match(/workflow:\s*(bugfix|refactor|feature|spike)/);
+	return m ? m[1] : "feature";
+}
+
+// Which gate types are required per workflow
+const WORKFLOW_GATES = {
+	feature: ["verification", "context", "document"],
+	refactor: ["verification", "context", "document"],
+	bugfix: ["verification", "document"],
+	spike: [],
+};
+
 // Parse phases from the NEW content (after edit) and OLD content (before edit)
 function parsePhases(content) {
 	// Strip frontmatter
@@ -131,6 +147,8 @@ function parsePhases(content) {
 	return phases;
 }
 
+const workflow = detectWorkflow(fullContent);
+const requiredGates = WORKFLOW_GATES[workflow] || WORKFLOW_GATES.feature;
 const oldPhases = parsePhases(fullContent);
 const newPhases = parsePhases(newFullContent);
 
@@ -171,15 +189,19 @@ for (const item of newlyChecked) {
 	for (const phase of oldPhases) {
 		if (phase.number >= item.phase) break;
 
+		const isOverridden = (text) =>
+			text.includes("(none needed)") ||
+			text.includes("(not applicable)") ||
+			text.includes("skip-reason:");
+
 		const uncheckedGates = phase.items.filter(
-			(i) =>
-				!i.checked && (i.gate === "verification" || i.gate === "context" || i.gate === "document"),
+			(i) => !i.checked && !isOverridden(i.text) && requiredGates.includes(i.gate),
 		);
 
 		if (uncheckedGates.length > 0) {
 			const missing = uncheckedGates.map((i) => `  [${i.gate}] ${i.text}`).join("\n");
 			process.stderr.write(
-				`Phase ${item.phase} blocked: complete Phase ${phase.number} gates first:\n${missing}\n`,
+				`Phase ${item.phase} blocked: complete Phase ${phase.number} gates first:\n${missing}\nTo skip a gate item, mark it with (none needed) or skip-reason: {why}\n`,
 			);
 			process.exit(2);
 		}

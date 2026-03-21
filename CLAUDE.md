@@ -55,7 +55,8 @@ infinitedusky/
 - All planning docs live in `planning/{kebab-case-name}/`
 - Every impl phase ends with four gates before advancing: verify → context → document → advance
 - Plan gates are enforced via Claude Code hooks — the agent cannot skip verification/context/document items when advancing phases
-- `.claude/hooks/` contains gate enforcement scripts installed by init (check-gates.js blocks, gate-reminder.js nudges)
+- `.claude/hooks/` contains gate enforcement scripts installed by init (check-gates.js blocks execution, validate-impl-structure.js blocks writing, gate-reminder.js nudges)
+- Every impl phase must have verification, context, and document sections — enforced by hook at write time. Use `(none needed)` or `skip-reason:` to opt out.
 - Three layers of defense: (1) Context/CLAUDE.md — advisory, (2) Biome rules — enforcement, (3) Hooks — gate enforcement, (4) Retrospective — learning. The quality ratchet only gets tighter.
 - Use the plan skill before implementing significant features — don't jump to code
 - `pnpm test` runs all tests, `pnpm turbo test --filter={app}` for scoped runs. Vitest configs use `passWithNoTests: true`
