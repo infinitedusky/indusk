@@ -183,4 +183,53 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 			};
 		},
 	);
+
+	server.registerTool(
+		"list_domain_skills",
+		{
+			description:
+				"List available domain skills and which are installed. Domain skills provide technology-specific best practices (nextjs, tailwind, react, solidity, etc.)",
+		},
+		async () => {
+			const domainSource = join(packageRoot, "skills/domain");
+			const skillsTarget = join(projectRoot, ".claude/skills");
+
+			if (!existsSync(domainSource)) {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify({ error: "Domain skills directory not found" }, null, 2),
+						},
+					],
+				};
+			}
+
+			const available = readdirSync(domainSource)
+				.filter((f) => f.endsWith(".md"))
+				.map((f) => {
+					const name = f.replace(".md", "");
+					const targetFile = join(skillsTarget, name, "SKILL.md");
+					const installed = existsSync(targetFile);
+					return { name, installed };
+				});
+
+			return {
+				content: [
+					{
+						type: "text" as const,
+						text: JSON.stringify(
+							{
+								available: available.length,
+								installed: available.filter((s) => s.installed).length,
+								skills: available,
+							},
+							null,
+							2,
+						),
+					},
+				],
+			};
+		},
+	);
 }

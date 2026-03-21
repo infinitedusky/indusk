@@ -3,54 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-
-interface BiomeDiagnostic {
-	file: string;
-	line: number;
-	column: number;
-	rule: string;
-	message: string;
-	severity: string;
-}
-
-function parseBiomeOutput(output: string): BiomeDiagnostic[] {
-	const diagnostics: BiomeDiagnostic[] = [];
-
-	// Biome outputs diagnostics in a format like:
-	// file.ts:line:col lint/category/ruleName  LEVEL  ━━━
-	//   message text
-	const diagRegex = /^(.+?):(\d+):(\d+)\s+([\w/]+)\s+(?:FIXABLE\s+)?/gm;
-	let match = diagRegex.exec(output);
-	while (match) {
-		diagnostics.push({
-			file: match[1],
-			line: Number.parseInt(match[2], 10),
-			column: Number.parseInt(match[3], 10),
-			rule: match[4],
-			message: "",
-			severity: "error",
-		});
-		match = diagRegex.exec(output);
-	}
-
-	// Also catch the info-level diagnostics
-	const infoRegex = /^(.+?):(\d+):(\d+)\s+([\w/]+)\s+FIXABLE/gm;
-	for (
-		let infoMatch = infoRegex.exec(output);
-		infoMatch !== null;
-		infoMatch = infoRegex.exec(output)
-	) {
-		const file = infoMatch[1];
-		const line = Number.parseInt(infoMatch[2], 10);
-		const rule = infoMatch[4];
-		const existing = diagnostics.find((d) => d.file === file && d.line === line && d.rule === rule);
-		if (existing) {
-			existing.severity = "info";
-		}
-	}
-
-	return diagnostics;
-}
+import { discoverVerificationCommands } from "../lib/verification-discovery.js";
 
 export function registerQualityTools(server: McpServer, projectRoot: string): void {
 	server.registerTool(
@@ -140,37 +93,85 @@ export function registerQualityTools(server: McpServer, projectRoot: string): vo
 		"quality_check",
 		{
 			description:
-				"Run `biome check` and return structured results with file, line, rule, and severity",
+				"Run verification checks. With mode 'discover', returns detected commands without running. With mode 'run' (default), executes all discovered checks or a specific command if provided.",
+			inputSchema: {
+				mode: z
+					.enum(["run", "discover"])
+					.default("run")
+					.describe("'discover' lists available checks, 'run' executes them"),
+				command: z
+					.string()
+					.optional()
+					.describe("Specific command to run (overrides auto-discovery). Only used in 'run' mode."),
+			},
 		},
-		async () => {
-			let output: string;
-			let exitCode: number;
+		async ({ mode, command }) => {
+			const discovered = discoverVerificationCommands(projectRoot);
 
-			try {
-				output = execSync("npx biome check", {
-					cwd: projectRoot,
-					encoding: "utf-8",
-					timeout: 30000,
-				});
-				exitCode = 0;
-			} catch (err: unknown) {
-				const execErr = err as { stdout?: string; stderr?: string; status?: number };
-				output = (execErr.stdout ?? "") + (execErr.stderr ?? "");
-				exitCode = execErr.status ?? 1;
+			if (mode === "discover") {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify({ discovered }, null, 2),
+						},
+					],
+				};
 			}
 
-			const diagnostics = parseBiomeOutput(output);
-			const passed = exitCode === 0;
+			// Run mode
+			const commands = command
+				? [{ name: "custom", command, source: "explicit" as const }]
+				: discovered;
 
-			// Extract the summary line
-			const summaryMatch = output.match(/Checked \d+ files?.*/);
-			const summary = summaryMatch ? summaryMatch[0] : "";
+			if (commands.length === 0) {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify({
+								passed: true,
+								note: "No verification commands discovered. Add scripts to package.json or provide a command explicitly.",
+							}),
+						},
+					],
+				};
+			}
+
+			const results = commands.map((cmd) => {
+				let output: string;
+				let exitCode: number;
+				try {
+					output = execSync(cmd.command, {
+						cwd: projectRoot,
+						encoding: "utf-8",
+						timeout: 60000,
+						stdio: ["ignore", "pipe", "pipe"],
+					});
+					exitCode = 0;
+				} catch (err: unknown) {
+					const execErr = err as { stdout?: string; stderr?: string; status?: number };
+					output = (execErr.stdout ?? "") + (execErr.stderr ?? "");
+					exitCode = execErr.status ?? 1;
+				}
+
+				return {
+					name: cmd.name,
+					command: cmd.command,
+					source: cmd.source,
+					passed: exitCode === 0,
+					exitCode,
+					output: output.slice(-2000),
+				};
+			});
+
+			const allPassed = results.every((r) => r.passed);
 
 			return {
 				content: [
 					{
 						type: "text" as const,
-						text: JSON.stringify({ passed, exitCode, summary, diagnostics }, null, 2),
+						text: JSON.stringify({ passed: allPassed, results }, null, 2),
 					},
 				],
 			};

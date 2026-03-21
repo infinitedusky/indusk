@@ -17,6 +17,8 @@ export interface ImplPhase {
 	number: number;
 	name: string;
 	gates: PhaseGate[];
+	blocker: string | null;
+	forwardIntelligence: string | null;
 }
 
 export interface ParsedImpl {
@@ -55,6 +57,8 @@ export function parseImplString(raw: string): ParsedImpl {
 	let currentPhase: ImplPhase | null = null;
 	let currentGateType: GateType = "implementation";
 	let currentGateLines: string[] = [];
+	let inForwardIntelligence = false;
+	let forwardIntelligenceLines: string[] = [];
 
 	function flushGate() {
 		if (!currentPhase) return;
@@ -75,24 +79,55 @@ export function parseImplString(raw: string): ParsedImpl {
 				number: Number.parseInt(phaseMatch[1], 10),
 				name: phaseMatch[2].trim(),
 				gates: [],
+				blocker: null,
+				forwardIntelligence: null,
 			};
 			currentGateType = "implementation";
 			currentGateLines = [];
 			continue;
 		}
 
+		// Forward Intelligence header: #### Phase N Forward Intelligence
+		const fiMatch = line.match(/^####\s+Phase\s+\d+\s+Forward Intelligence\b/);
+		if (fiMatch) {
+			flushGate();
+			inForwardIntelligence = true;
+			forwardIntelligenceLines = [];
+			continue;
+		}
+
 		// Gate header: #### Phase N Verification|Context|Document
 		const gateMatch = line.match(/^####\s+Phase\s+\d+\s+(Verification|Context|Document)\b/);
 		if (gateMatch) {
+			if (inForwardIntelligence && currentPhase) {
+				currentPhase.forwardIntelligence = forwardIntelligenceLines.join("\n").trim() || null;
+				inForwardIntelligence = false;
+			}
 			flushGate();
 			currentGateType = GATE_SUFFIXES[gateMatch[1]];
 			continue;
 		}
 
-		currentGateLines.push(line);
+		// Blocker line: blocker: description
+		if (currentPhase) {
+			const blockerMatch = line.match(/^blocker:\s+(.*)/);
+			if (blockerMatch) {
+				currentPhase.blocker = blockerMatch[1].trim();
+				continue;
+			}
+		}
+
+		if (inForwardIntelligence) {
+			forwardIntelligenceLines.push(line);
+		} else {
+			currentGateLines.push(line);
+		}
 	}
 
-	// Flush last gate and phase
+	// Flush last forward intelligence, gate, and phase
+	if (inForwardIntelligence && currentPhase) {
+		currentPhase.forwardIntelligence = forwardIntelligenceLines.join("\n").trim() || null;
+	}
 	flushGate();
 	if (currentPhase) phases.push(currentPhase);
 

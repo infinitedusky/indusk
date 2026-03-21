@@ -75,6 +75,7 @@ infinitedusky/
 - Biome config is a knowledge artifact with biome-rationale.md; quality ratchet only gets tighter — see `planning/code-quality-system/adr.md`
 - CodeGraphContext with global FalkorDB + local CGC via pipx for structural code intelligence — see `planning/codegraph-context/adr.md`
 - Document skill (per-phase execution gate) + retrospective skill (closing audit with knowledge handoff to VitePress docs) — see `planning/document-skill/adr.md`
+- GSD-inspired: lessons registry, verification auto-discovery, forward intelligence, blocker protocol, workflow templates, boundary maps, domain skills — see `planning/gsd-inspired-improvements/adr.md`
 
 ## Known Gotchas
 

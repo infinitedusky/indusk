@@ -7,8 +7,9 @@ You have MCP tools from two servers: **indusk** (dev system) and **codegraphcont
 When a new session begins:
 
 1. Call `check_health` — verify FalkorDB and CGC are running. If unhealthy, tell the user what's down and how to fix it before proceeding.
-2. Call `list_plans` — understand what plans exist, their stages, and what's in progress.
-3. Call `get_context` — read the project's CLAUDE.md to understand architecture, conventions, and current state.
+2. Call `list_lessons` — read all lessons (community + personal). Internalize these patterns before writing code.
+3. Call `list_plans` — understand what plans exist, their stages, and what's in progress.
+4. Call `get_context` — read the project's CLAUDE.md to understand architecture, conventions, and current state.
 
 ## Before Modifying Code
 
@@ -73,7 +74,7 @@ If the user wants text-based output instead, use `execute_cypher_query` directly
 
 ## Tool Reference
 
-### indusk (17 tools)
+### indusk (20 tools)
 
 | Tool | When to use |
 |------|-------------|
@@ -84,7 +85,7 @@ If the user wants text-based output instead, use `execute_cypher_query` directly
 | **Plans** | |
 | `list_plans` | Session start, orientation |
 | `get_plan_status` | Before working on a plan, checking progress |
-| `advance_plan` | End of every phase — validates all gates |
+| `advance_plan` | End of every phase — validates all gates and blockers |
 | `order_plans` | Understanding plan dependencies |
 | **Context** | |
 | `get_context` | Session start, after context updates |
@@ -92,11 +93,15 @@ If the user wants text-based output instead, use `execute_cypher_query` directly
 | **Quality** | |
 | `get_quality_config` | Reviewing Biome rules, after retros |
 | `suggest_rule` | Finding Biome rules for new patterns |
-| `quality_check` | After verification items, before advancing |
+| `quality_check` | Auto-discovers and runs checks; use `discover` mode to see available commands |
+| **Lessons** | |
+| `list_lessons` | **Session start** — read all lessons before writing code |
+| `add_lesson` | After retros, or when discovering a non-obvious pattern |
 | **Docs** | |
 | `list_docs` | After document items, checking coverage |
 | `check_docs_coverage` | After retros, finding doc gaps |
 | **System** | |
 | `get_system_version` | Debugging, version checks |
-| `get_skill_versions` | Checking for outdated skills |
+| `get_skill_versions` | Checking for outdated process skills |
+| `list_domain_skills` | See available/installed domain skills |
 | `check_health` | Session start, debugging connectivity |

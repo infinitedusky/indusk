@@ -124,6 +124,21 @@ When an agent writes an impl document (via the plan skill), every phase should e
 - [ ] {concrete CLAUDE.md edits this phase produces}
 ```
 
+### Forward Intelligence
+
+At the end of each phase's context items, write a **Forward Intelligence** block:
+
+```markdown
+#### Phase N Forward Intelligence
+- **Fragile**: {file or module that was tricky during this phase, and why}
+- **Watch out**: {downstream risk the next phase should be aware of}
+- **Assumption**: {something that's true now but could change — e.g., "parser assumes all phases have verification sections"}
+```
+
+This is not a CLAUDE.md update — it lives in the impl doc itself, after the context items. The work skill reads it before starting the next phase so the agent knows what landmines exist.
+
+Not every phase produces forward intelligence. Only write it when something is genuinely fragile, risky, or assumption-dependent. Skip the section entirely if there's nothing worth flagging.
+
 ### What goes in Phase N Context
 
 Context items are concrete, specific CLAUDE.md edits. Not "update CLAUDE.md" — that's too vague. Instead:

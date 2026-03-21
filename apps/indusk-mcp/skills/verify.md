@@ -118,6 +118,15 @@ Not every change needs every check. Before running verification, evaluate what f
 
 When skipping, note it in the verification report with the reason.
 
+## Auto-Discovery
+
+Verification commands are auto-discovered from the project. Call `quality_check` with mode `discover` to see what's available. The system detects:
+
+- **package.json scripts**: `typecheck`, `lint`, `test`, `build`, `check`
+- **Config files**: `biome.json` → biome check, `tsconfig.json` → tsc --noEmit, `vitest.config.*` → vitest run
+
+Explicit commands in impl verification sections override auto-discovery. If an impl says "run `pnpm turbo test --filter=mcp`", use that exact command. If an impl just says "run tests", use the auto-discovered test command.
+
 ## Commands Reference
 
 | Check | Command | When to use |
@@ -127,6 +136,8 @@ When skipping, note it in the verification report with the reason.
 | Test (scoped) | `pnpm turbo test --filter={app}` | Any logic change |
 | Test (all) | `pnpm test` | Cross-package changes |
 | Build (scoped) | `pnpm turbo build --filter={app}` | Shared package or build config changes |
+| Auto-discover | `quality_check` with mode `discover` | See what checks are available |
+| Run all checks | `quality_check` with no args | Run all discovered checks at once |
 
 ## Important
 

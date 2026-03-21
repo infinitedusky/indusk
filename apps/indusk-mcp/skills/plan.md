@@ -1,7 +1,7 @@
 ---
 name: plan
 description: Create and advance plans. Every plan follows the same document lifecycle — research, brief, ADR, impl, retrospective. Knows how to write each one, what order they go in, and how to pick up where things left off.
-argument-hint: "[plan name or topic]"
+argument-hint: "[workflow] [plan name] — workflow: feature (default), bugfix, refactor, spike"
 ---
 
 You know how to plan work in this project.
@@ -27,26 +27,50 @@ The order is always preserved — never write an ADR before the brief, or an imp
 
 General-purpose research (insights useful across plans) also lives in `research/` at the repo root.
 
+## Workflow Types
+
+The first argument to `/plan` can optionally be a workflow type that controls which documents are created:
+
+| Command | Workflow | Documents |
+|---------|----------|-----------|
+| `/plan bugfix auth-expiry` | bugfix | brief + impl only |
+| `/plan refactor extract-auth` | refactor | brief + impl (with boundary map) |
+| `/plan spike redis-options` | spike | research only |
+| `/plan feature payment-flow` | feature | full lifecycle (default) |
+| `/plan payment-flow` | feature | same — no type defaults to feature |
+
+Parse the input: if the first word is `bugfix`, `refactor`, `spike`, or `feature`, use that workflow. Otherwise, default to `feature`. The remaining words become the plan name (kebab-cased).
+
+Workflow templates are in `templates/workflows/` in the package. They describe which documents to create and provide streamlined templates for each workflow type.
+
 ## What to Do When Asked to Plan
 
-1. **Figure out where things stand.** If a plan folder already exists, read what's there. Check frontmatter statuses. The next document to write is the first one that's missing or incomplete.
+1. **Determine the workflow type** from the input (see above). This controls which documents you create.
 
-2. **If starting fresh**, create the plan folder and start with research. Explore the problem space — read code, search the web, check Context7 for library docs. **REQUIRED: Query the code graph before scoping:**
+2. **Figure out where things stand.** If a plan folder already exists, read what's there. Check frontmatter statuses. The next document to write is the first one that's missing or incomplete.
+
+3. **If starting fresh**, create the plan folder and start with the first document for the workflow type:
+   - **feature**: start with research
+   - **bugfix**: start with brief (streamlined template)
+   - **refactor**: start with brief (includes boundary map)
+   - **spike**: start with research (and stop there)
+
+   For feature/spike workflows that start with research: Explore the problem space — read code, search the web, check Context7 for library docs. **REQUIRED: Query the code graph before scoping:**
    - Call `query_dependencies` on the target area to understand what depends on it and what it depends on
    - Call `find_code` to find existing implementations you might reuse or need to modify
    - Call `get_repository_stats` to understand the size of the area you're about to scope
    - Include the graph findings in research.md — concrete numbers like "X has 12 dependents across 3 apps"
    Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
 
-3. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. Present for review.
+4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. Present for review.
 
-4. **If brief is accepted**, write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see planning/{plan}/adr.md`
+5. **If brief is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see planning/{plan}/adr.md`
 
-5. **If ADR is accepted**, write the impl. Break into phased checklists with concrete tasks.
+6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
-6. **If impl is completed** (all items checked off by `/work`), invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, and archival. Do not write a freeform retrospective — use the skill.
+7. **If impl is completed** (all items checked off by `/work`), invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call.)
 
-7. **Always present each document for review** before moving to the next stage. The user signs off on each step.
+8. **Always present each document for review** before moving to the next stage. The user signs off on each step.
 
 ## Cross-Referencing Between Plans
 
@@ -182,6 +206,15 @@ status: draft | approved | in-progress | completed | abandoned
 - {Item}
 ### Out of Scope
 - {Item}
+
+## Boundary Map
+
+For multi-phase impls, include a boundary map showing what each phase produces and consumes. Required for refactor workflows, recommended for features with 2+ phases.
+
+| Phase | Produces | Consumes |
+|-------|----------|----------|
+| Phase 1 | {exports, types, modules created} | {inputs, dependencies used} |
+| Phase 2 | {what this phase adds} | {what it needs from Phase 1} |
 
 ## Checklist
 ### Phase 1: {Name}

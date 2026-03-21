@@ -81,7 +81,22 @@ Review mistakes made during this plan's implementation.
 
 The quality ratchet only gets tighter. Every retrospective is an opportunity to prevent the same class of mistake from happening again.
 
-### Step 6: Context Audit
+### Step 6: Lesson Capture
+
+Review the plan's journey — research, implementation, debugging, surprises — and ask:
+
+**"Did we learn anything non-obvious that applies beyond this specific plan?"**
+
+Examples of good lessons:
+- "Never use fallback values where a required config value is expected — it hides missing env vars"
+- "Always check if the library has an official plugin before building custom"
+- "Run the full test suite after changing shared types, not just the tests in the changed package"
+
+If yes, call `add_lesson` for each one. These become personal lessons in `.claude/lessons/` — available to the agent in every future session across all projects.
+
+If no lessons emerged, that's fine — not every plan produces new knowledge. Move on.
+
+### Step 7: Context Audit
 
 Re-read CLAUDE.md in full. After the entire impl is done, verify:
 
@@ -93,7 +108,7 @@ Re-read CLAUDE.md in full. After the entire impl is done, verify:
 
 Fix any inaccuracies. The impl may have changed things that weren't anticipated in the per-phase context updates.
 
-### Step 7: Knowledge Handoff
+### Step 8: Knowledge Handoff
 
 Distill planning artifacts into the docs site so the knowledge survives archival.
 
@@ -112,7 +127,7 @@ Not every plan produces a lessons page — only create one if the insights are g
 
 **Update sidebar:** Add new decision/lesson pages to the VitePress sidebar config in `apps/indusk-docs/src/.vitepress/config.ts`.
 
-### Step 8: Archival
+### Step 9: Archival
 
 Move the planning artifacts to the archive:
 

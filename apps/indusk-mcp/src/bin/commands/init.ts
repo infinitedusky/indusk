@@ -82,12 +82,73 @@ function createCgcIgnore(projectRoot: string): void {
 	console.info("  create: .cgcignore");
 }
 
+interface DomainDetection {
+	skill: string;
+	signal: "dependency" | "devDependency" | "file-pattern";
+	match: string;
+}
+
+const DOMAIN_DETECTION_MAP: { signal: string; match: string; skill: string }[] = [
+	{ signal: "dependency", match: "next", skill: "nextjs" },
+	{ signal: "dependency", match: "tailwindcss", skill: "tailwind" },
+	{ signal: "dependency", match: "react", skill: "react" },
+	{ signal: "devDependency", match: "typescript", skill: "typescript" },
+	{ signal: "devDependency", match: "vitest", skill: "testing" },
+	{ signal: "devDependency", match: "jest", skill: "testing" },
+	{ signal: "dependency", match: "vitepress", skill: "vitepress" },
+];
+
+const FILE_PATTERN_DETECTIONS: { pattern: string; skill: string }[] = [
+	{ pattern: "*.sol", skill: "solidity" },
+	{ pattern: "Dockerfile*", skill: "docker" },
+];
+
+function detectDomainSkills(projectRoot: string): DomainDetection[] {
+	const detections: DomainDetection[] = [];
+	const seen = new Set<string>();
+
+	// Check package.json dependencies
+	const pkgPath = join(projectRoot, "package.json");
+	if (existsSync(pkgPath)) {
+		const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+		const deps = pkg.dependencies ?? {};
+		const devDeps = pkg.devDependencies ?? {};
+
+		for (const rule of DOMAIN_DETECTION_MAP) {
+			if (seen.has(rule.skill)) continue;
+			const source = rule.signal === "dependency" ? deps : devDeps;
+			if (source[rule.match]) {
+				detections.push({
+					skill: rule.skill,
+					signal: rule.signal as "dependency" | "devDependency",
+					match: rule.match,
+				});
+				seen.add(rule.skill);
+			}
+		}
+	}
+
+	// Check file patterns
+	for (const rule of FILE_PATTERN_DETECTIONS) {
+		if (seen.has(rule.skill)) continue;
+		const matches = globSync(rule.pattern, { cwd: projectRoot, maxDepth: 3 });
+		if (matches.length > 0) {
+			detections.push({ skill: rule.skill, signal: "file-pattern", match: rule.pattern });
+			seen.add(rule.skill);
+		}
+	}
+
+	return detections;
+}
+
 export interface InitOptions {
 	force?: boolean;
+	skills?: string;
+	noDomainSkills?: boolean;
 }
 
 export async function init(projectRoot: string, options: InitOptions = {}): Promise<void> {
-	const { force = false } = options;
+	const { force = false, skills, noDomainSkills = false } = options;
 	const projectName = basename(projectRoot);
 	console.info(`Initializing InDusk dev system...${force ? " (--force)" : ""}\n`);
 
@@ -114,7 +175,68 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		);
 	}
 
-	// 2. Create CLAUDE.md (never overwrite — write CLAUDE-NEW.md if exists)
+	// 2. Install domain skills
+	if (!noDomainSkills) {
+		console.info("\n[Domain Skills]");
+		const domainSource = join(packageRoot, "skills/domain");
+		let skillsToInstall: string[];
+
+		if (skills) {
+			skillsToInstall = skills.split(",").map((s) => s.trim());
+			console.info(`  manual: installing ${skillsToInstall.join(", ")}`);
+		} else {
+			const detections = detectDomainSkills(projectRoot);
+			skillsToInstall = detections.map((d) => d.skill);
+			if (detections.length > 0) {
+				for (const d of detections) {
+					console.info(`  detected: ${d.skill} (${d.signal}: ${d.match})`);
+				}
+			} else {
+				console.info("  none detected");
+			}
+		}
+
+		for (const skillName of skillsToInstall) {
+			const sourceFile = join(domainSource, `${skillName}.md`);
+			if (!existsSync(sourceFile)) {
+				console.info(`  skip: ${skillName} (not found in registry)`);
+				continue;
+			}
+			const targetDir = join(skillsTarget, skillName);
+			const targetFile = join(targetDir, "SKILL.md");
+			if (existsSync(targetFile) && !force) {
+				console.info(`  skip: .claude/skills/${skillName}/SKILL.md (already exists)`);
+				continue;
+			}
+			mkdirSync(targetDir, { recursive: true });
+			cpSync(sourceFile, targetFile);
+			console.info(`  install: .claude/skills/${skillName}/SKILL.md`);
+		}
+	} else {
+		console.info("\n[Domain Skills]");
+		console.info("  skipped (--no-domain-skills)");
+	}
+
+	// 3. Copy community lessons
+	console.info("\n[Lessons]");
+	const lessonsSource = join(packageRoot, "lessons/community");
+	const lessonsTarget = join(projectRoot, ".claude/lessons");
+	mkdirSync(lessonsTarget, { recursive: true });
+
+	if (existsSync(lessonsSource)) {
+		const lessonFiles = globSync("community-*.md", { cwd: lessonsSource });
+		for (const file of lessonFiles) {
+			const targetFile = join(lessonsTarget, file);
+			if (existsSync(targetFile) && !force) {
+				console.info(`  skip: .claude/lessons/${file} (already exists)`);
+				continue;
+			}
+			cpSync(join(lessonsSource, file), targetFile);
+			console.info(`  ${existsSync(targetFile) ? "overwrite" : "create"}: .claude/lessons/${file}`);
+		}
+	}
+
+	// 3. Create CLAUDE.md (never overwrite — write CLAUDE-NEW.md if exists)
 	console.info("\n[Project files]");
 	const claudeMdPath = join(projectRoot, "CLAUDE.md");
 	if (existsSync(claudeMdPath)) {

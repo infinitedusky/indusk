@@ -18,11 +18,20 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
    - If the plan has an ADR, verify its status is `accepted`. If it's still `proposed`, warn the user: "The ADR hasn't been accepted yet — want to review it first, or proceed anyway?"
    - If the brief has a `## Depends On` section, check that blocking plans are completed or far enough along.
 
-3. **Read the full plan context first.** Before touching any code, read everything in the plan folder — research, brief, ADR, impl. These contain the decisions and reasoning that should guide implementation choices. Don't just read the checklist.
+3. **Check for blockers.** Scan the current phase for `blocker:` lines. If found, stop and present the blocker to the user:
+   > "Phase 3 has a blocker: *the upstream API doesn't support batch requests — Phase 3 scope needs revision*. Want to resolve this before proceeding?"
+   Do not attempt to work around a blocker silently. Blockers mean the plan needs revision.
 
-4. **Update status.** If the impl status is `approved`, change it to `in-progress`.
+4. **Read forward intelligence.** If the previous phase has a `#### Phase N Forward Intelligence` section, read it before starting the current phase. Pay attention to:
+   - **Fragile** items — be extra careful with these files/modules
+   - **Watch out** items — these are known downstream risks
+   - **Assumption** items — verify these are still true before relying on them
 
-5. **Work through the checklist in order.**
+5. **Read the full plan context first.** Before touching any code, read everything in the plan folder — research, brief, ADR, impl. These contain the decisions and reasoning that should guide implementation choices. Don't just read the checklist.
+
+6. **Update status.** If the impl status is `approved`, change it to `in-progress`.
+
+7. **Work through the checklist in order.**
    - Start from the first unchecked item (`- [ ]`)
    - For each item:
      a. **REQUIRED: Query the code graph** — before modifying ANY file, call `query_dependencies` on that file. Review the dependents list. If >3 dependents, flag the blast radius to the user before proceeding. This is not optional.
@@ -34,16 +43,16 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
    - Do NOT skip ahead or work out of order unless there's a dependency reason
    - Do NOT batch checklist updates — check each off as soon as it's done
 
-6. **Handle blockers.** If you can't complete an item:
+8. **Handle blockers.** If you can't complete an item:
    - Add a note to impl.md under the item explaining the blocker
    - Move to the next item if possible
    - Flag the blocker to the user
 
-7. **Add discovered work.** If you find something that needs doing that isn't in the checklist:
+9. **Add discovered work.** If you find something that needs doing that isn't in the checklist:
    - Add it as a new item in the appropriate phase
    - Then do it and check it off
 
-8. **Per-phase completion order.** Each phase has up to four types of items. Complete them in this order:
+10. **Per-phase completion order.** Each phase has up to four types of items. Complete them in this order:
 
    **Implementation items** → build the thing
    **Verification items** → prove it works (tests, type checks, commands)
@@ -52,29 +61,58 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
 
    A phase is not complete until all four are done. Do not advance to the next phase with unchecked verification, context, or document items.
 
-9. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
+11. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
    - Run checks in order: type check → lint → affected tests → build. Skip checks that don't apply (see verify skill's skip logic table).
    - Run commands and capture output — verification items must be specific runnable commands, not "verify it works"
    - If a check fails: read the error, fix it, re-run only the failing check. Max 3 attempts before flagging as a blocker to the user.
    - Check items off only when actually verified, not assumed
 
-10. **Context items.** The Context section specifies concrete CLAUDE.md edits:
+12. **Context items.** The Context section specifies concrete CLAUDE.md edits:
     - Each item is a specific edit: "Add to Architecture: ...", "Add to Conventions: ...", etc.
     - Make the edit to CLAUDE.md, then check the item off
     - If a phase has no context items, that's fine — not every phase changes project context
 
-11. **Document items.** The Document section specifies docs pages to write or update:
+13. **Document items.** The Document section specifies docs pages to write or update:
     - Each item targets a specific page in `apps/indusk-docs/src/`
     - See the document skill for guidance on what to document, where, and how to use Mermaid diagrams
     - If a phase has no document items, that's fine — not every phase produces user-facing documentation
 
-12. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase.
+14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase.
 
-13. **Completion.** When all phases are checked:
+15. **Completion.** When all phases are checked:
     - Update impl status to `completed`
     - Summarize what was done
     - If this plan included an ADR, confirm CLAUDE.md's Key Decisions was updated
     - Let the user know the plan is ready for a retrospective if they want one (`/plan {name}` will pick up at the retrospective stage)
+
+## Teach Mode
+
+When invoked as `/work teach` or `/work --teach {plan}`, slow down to a mentoring pace. The goal is for the developer to understand every change, not just get the code written.
+
+### Before each edit:
+
+**Why this change:** Explain what you're about to modify and why. Reference the plan, the architecture, and the reasoning. Use plain language.
+
+Then **stop and wait** for the user to say "continue" before making the edit.
+
+### After each edit:
+
+**What changed:** Explain what was modified — the specific lines, the pattern used, why this approach over alternatives.
+
+**What to notice:** Point out the interesting parts — the design pattern, the gotcha you avoided, the convention being followed.
+
+Then **stop and wait** for the user to say "continue" before moving to the next item.
+
+### Between checklist items:
+
+Summarize what was accomplished and preview the next item. Explain how they connect.
+
+### Important for teach mode:
+
+- Never batch multiple edits between pauses
+- Use clear headings to separate teaching from doing
+- If the user asks a question, answer it fully before continuing
+- Normal `/work` (without teach) remains unchanged — fast execution, no pauses
 
 ## Corrections and Context Learning
 

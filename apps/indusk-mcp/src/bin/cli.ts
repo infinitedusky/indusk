@@ -18,9 +18,15 @@ program
 	.command("init")
 	.description("Initialize a project with InDusk dev system")
 	.option("-f, --force", "Overwrite existing files (except CLAUDE.md and planning/)")
+	.option("--skills <list>", "Comma-separated domain skills to install (e.g., nextjs,tailwind)")
+	.option("--no-domain-skills", "Skip domain skill detection and installation")
 	.action(async (opts) => {
 		const { init } = await import("./commands/init.js");
-		await init(process.cwd(), { force: opts.force ?? false });
+		await init(process.cwd(), {
+			force: opts.force ?? false,
+			skills: opts.skills,
+			noDomainSkills: opts.domainSkills === false,
+		});
 	});
 
 program

@@ -94,6 +94,13 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 
 				if (currentPhase) {
 					const missing: string[] = [];
+
+					// Check for blockers in the current phase
+					const phase = impl.phases.find((p) => p.number === currentPhase.phase);
+					if (phase?.blocker) {
+						missing.push(`[blocker] ${phase.blocker}`);
+					}
+
 					for (const [gate, items] of Object.entries(currentPhase.uncheckedByGate)) {
 						for (const item of items) {
 							missing.push(`[${gate}] ${item}`);
