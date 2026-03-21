@@ -68,7 +68,7 @@ Add CGC to `.mcp.json`:
 
 Open the project in Claude Code. You should see:
 - 6 skills available (`/plan`, `/work`, `/verify`, etc.)
-- InDusk MCP tools available (14 tools)
+- InDusk MCP tools available (20 tools)
 - CodeGraphContext MCP tools available (19 tools)
 
 Run `check_health` to verify everything is connected.

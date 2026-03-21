@@ -18,7 +18,7 @@ const config = defineConfig({
 		// The plugin auto-switches to "dark" when VitePress dark mode is active.
 		// Do NOT set themeVariables — they persist across theme switches and break one mode.
 		theme: "default",
-		securityLevel: "loose",
+		securityLevel: "strict",
 		maxTextSize: 50000,
 		flowchart: {
 			useMaxWidth: true,
