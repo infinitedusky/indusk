@@ -65,6 +65,7 @@ const config = defineConfig({
 						{ text: "Context", link: "/reference/skills/context" },
 						{ text: "Document", link: "/reference/skills/document" },
 						{ text: "Retrospective", link: "/reference/skills/retrospective" },
+						{ text: "Onboard", link: "/reference/skills/onboard" },
 					],
 				},
 				{

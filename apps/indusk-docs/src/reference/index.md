@@ -16,6 +16,7 @@ The development lifecycle is powered by six process skills that work together, p
 | [Context](/reference/skills/context) | Maintain CLAUDE.md as living project memory |
 | [Document](/reference/skills/document) | Per-phase documentation gate with Mermaid diagram guidance |
 | [Retrospective](/reference/skills/retrospective) | Closing audit, quality ratchet, and knowledge handoff |
+| [Onboard](/reference/skills/onboard) | Session-start protocol — reads lessons, health, context, plans, graph |
 
 ### Domain Skills
 
