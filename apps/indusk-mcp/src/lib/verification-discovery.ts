@@ -5,7 +5,7 @@ import { globSync } from "glob";
 export interface DiscoveredCheck {
 	name: string;
 	command: string;
-	source: "package.json" | "config-file";
+	source: "package.json" | "config-file" | "extension";
 }
 
 const SCRIPT_PATTERNS: Record<string, string> = {
@@ -18,7 +18,9 @@ const SCRIPT_PATTERNS: Record<string, string> = {
 	"check:fix": "check:fix",
 };
 
-export function discoverVerificationCommands(projectRoot: string): DiscoveredCheck[] {
+export async function discoverVerificationCommands(
+	projectRoot: string,
+): Promise<DiscoveredCheck[]> {
 	const checks: DiscoveredCheck[] = [];
 
 	// 1. Read package.json scripts
@@ -68,6 +70,26 @@ export function discoverVerificationCommands(projectRoot: string): DiscoveredChe
 	const jestConfigs = globSync("jest.config.*", { cwd: projectRoot });
 	if (jestConfigs.length > 0 && !checks.some((c) => c.name === "test")) {
 		checks.push({ name: "test", command: "npx jest", source: "config-file" });
+	}
+
+	// 3. Load verification commands from enabled extensions
+	try {
+		const { getEnabledExtensions } = await import("./extension-loader.js");
+		const extensions = getEnabledExtensions(projectRoot);
+		for (const ext of extensions) {
+			const verifications = ext.manifest.provides.verification ?? [];
+			for (const v of verifications) {
+				if (!checks.some((c) => c.name === v.name)) {
+					checks.push({
+						name: v.name,
+						command: v.command,
+						source: "extension" as DiscoveredCheck["source"],
+					});
+				}
+			}
+		}
+	} catch {
+		// Extensions not available — skip
 	}
 
 	return checks;

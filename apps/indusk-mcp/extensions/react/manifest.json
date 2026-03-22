@@ -1,0 +1,6 @@
+{
+	"name": "react",
+	"description": "React patterns — hooks, component composition, state management, anti-patterns",
+	"provides": { "skill": true },
+	"detect": { "dependency": "react" }
+}

@@ -1,0 +1,6 @@
+{
+	"name": "tailwind",
+	"description": "Tailwind CSS patterns — utility-first, responsive, dark mode, common gotchas",
+	"provides": { "skill": true },
+	"detect": { "dependency": "tailwindcss" }
+}

@@ -1,6 +1,6 @@
 {
 	"name": "@infinitedusky/indusk-mcp",
-	"version": "0.9.1",
+	"version": "1.0.0",
 	"description": "InDusk development system — skills, MCP tools, and CLI for structured AI-assisted development",
 	"type": "module",
 	"files": [
@@ -9,6 +9,7 @@
 		"templates",
 		"hooks",
 		"lessons",
+		"extensions",
 		"!dist/**/*.test.*",
 		"!dist/__tests__"
 	],

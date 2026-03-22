@@ -57,6 +57,7 @@ infinitedusky/
 - Plan gates are enforced via Claude Code hooks — the agent cannot skip verification/context/document items when advancing phases
 - `.claude/hooks/` contains gate enforcement scripts installed by init (check-gates.js blocks execution, validate-impl-structure.js blocks writing, gate-reminder.js nudges)
 - Every impl phase must have verification, context, and document sections — enforced by hook at write time. Use `(none needed)` or `skip-reason:` to opt out.
+- Health checks, init setup, and verification commands come from extensions — don't hardcode tool knowledge in indusk-mcp
 - Three layers of defense: (1) Context/CLAUDE.md — advisory, (2) Biome rules — enforcement, (3) Hooks — gate enforcement, (4) Retrospective — learning. The quality ratchet only gets tighter.
 - Use the plan skill before implementing significant features — don't jump to code
 - `pnpm test` runs all tests, `pnpm turbo test --filter={app}` for scoped runs. Vitest configs use `passWithNoTests: true`
@@ -94,6 +95,7 @@ infinitedusky/
 - Biome 2.x API differs from docs/examples: `noVar` doesn't exist, `noUnusedVariables` has no `ignorePattern` option, overrides use `includes` not `include`. Always match schema version to installed version.
 - Impl parser must handle all four gate types per phase: implementation, verification, context, document — not just three
 - Skills in `.claude/skills/` are package-owned — edit in `apps/indusk-mcp/skills/`, then run `update` to sync. Don't edit `.claude/skills/` directly.
+- Domain skills directory (`skills/domain/`) removed — domain skills are now extensions. Use `extensions enable nextjs` not `init --skills nextjs`.
 
 ## Current State
 

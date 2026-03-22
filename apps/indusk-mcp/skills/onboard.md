@@ -29,17 +29,21 @@ Call `list_plans`. This shows every plan and its status. Pay attention to:
 - The current phase of each active plan — this is where `/work` will pick up
 - Dependencies between plans — don't start a blocked plan
 
-### 5. Check Code Graph
-Call `get_repository_stats` to understand the codebase size and structure. This gives you a sense of what's indexed and queryable.
+### 5. Check Extensions
+Call `extensions_status` to see what extensions are enabled and their capabilities. This tells you what tools are integrated and what domain knowledge is available.
 
-### 6. Summarize
+### 6. Check Code Graph
+Call `get_repository_stats` to understand the codebase size and structure. This gives you a sense of what's indexed and queryable. If it fails, the CGC extension may not be enabled or FalkorDB may be down — check_health will have flagged this.
 
-After completing steps 1-5, present a brief summary to the user:
+### 7. Summarize
+
+After completing steps 1-6, present a brief summary to the user:
 
 ```
 **Session ready.**
 - Lessons: N loaded
 - Infrastructure: [healthy / issues]
+- Extensions: N enabled [list names]
 - Active plans: [list with current phase]
 - Codebase: [N files indexed]
 

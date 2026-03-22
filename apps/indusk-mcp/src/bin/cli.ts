@@ -18,15 +18,11 @@ program
 	.command("init")
 	.description("Initialize a project with InDusk dev system")
 	.option("-f, --force", "Overwrite existing files (except CLAUDE.md and planning/)")
-	.option("--skills <list>", "Comma-separated domain skills to install (e.g., nextjs,tailwind)")
-	.option("--no-domain-skills", "Skip domain skill detection and installation")
 	.option("--no-index", "Skip code graph indexing")
 	.action(async (opts) => {
 		const { init } = await import("./commands/init.js");
 		await init(process.cwd(), {
 			force: opts.force ?? false,
-			skills: opts.skills,
-			noDomainSkills: opts.domainSkills === false,
 			noIndex: opts.index === false,
 		});
 	});
@@ -37,6 +33,67 @@ program
 	.action(async () => {
 		const { update } = await import("./commands/update.js");
 		await update(process.cwd());
+	});
+
+const ext = program
+	.command("extensions")
+	.description("Manage extensions (built-in and third-party)");
+
+ext
+	.command("list")
+	.description("Show all available extensions")
+	.action(async () => {
+		const { extensionsList } = await import("./commands/extensions.js");
+		await extensionsList(process.cwd());
+	});
+
+ext
+	.command("status")
+	.description("Show enabled extensions with health")
+	.action(async () => {
+		const { extensionsStatus } = await import("./commands/extensions.js");
+		await extensionsStatus(process.cwd());
+	});
+
+ext
+	.command("enable <names...>")
+	.description("Enable extensions")
+	.action(async (names: string[]) => {
+		const { extensionsEnable } = await import("./commands/extensions.js");
+		await extensionsEnable(process.cwd(), names);
+	});
+
+ext
+	.command("disable <names...>")
+	.description("Disable extensions")
+	.action(async (names: string[]) => {
+		const { extensionsDisable } = await import("./commands/extensions.js");
+		await extensionsDisable(process.cwd(), names);
+	});
+
+ext
+	.command("add <name>")
+	.description("Add a third-party extension")
+	.requiredOption("--from <source>", "Source: npm:pkg, github:user/repo, URL, or local path")
+	.action(async (name: string, opts: { from: string }) => {
+		const { extensionsAdd } = await import("./commands/extensions.js");
+		await extensionsAdd(process.cwd(), name, opts.from);
+	});
+
+ext
+	.command("remove <names...>")
+	.description("Remove extensions")
+	.action(async (names: string[]) => {
+		const { extensionsRemove } = await import("./commands/extensions.js");
+		await extensionsRemove(process.cwd(), names);
+	});
+
+ext
+	.command("suggest")
+	.description("Recommend extensions based on project contents")
+	.action(async () => {
+		const { extensionsSuggest } = await import("./commands/extensions.js");
+		await extensionsSuggest(process.cwd());
 	});
 
 program

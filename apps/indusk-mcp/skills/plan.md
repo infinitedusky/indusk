@@ -62,7 +62,14 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - **refactor**: start with brief (includes boundary map)
    - **spike**: start with research (and stop there)
 
-   For feature/spike workflows that start with research: Explore the problem space — read code, search the web, check Context7 for library docs. **Query the code graph before scoping** (see toolbelt "Before Modifying Code") — include structural findings in research.md with concrete numbers.
+   **Check for existing research first.** Before writing new research, scan `research/` at the repo root for relevant standalone research docs. If one exists (e.g., `research/auth-options.md`), ask the user: "I found existing research at `research/auth-options.md`. Want to use this as the starting point?" If yes:
+   - Copy it to `planning/{plan-name}/research.md`
+   - Set the frontmatter status to `complete`
+   - Move straight to the brief
+
+   The `research/` directory is for standalone exploration that isn't tied to a plan yet. When it becomes a plan, it moves into the planning folder. The original in `research/` can be deleted or kept as a reference — user's choice.
+
+   For feature/spike workflows that need new research: Explore the problem space — read code, search the web, check Context7 for library docs. **Query the code graph before scoping** (see toolbelt "Before Modifying Code") — include structural findings in research.md with concrete numbers.
    Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
 
 4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. **Present the brief and have a conversation about it.** Don't just ask "does this look good?" — walk the user through it: "Here's what I'm proposing we build. Does this match what you had in mind? Is there anything missing, or anything here you don't want?" Iterate until the user is genuinely happy with the direction, then mark it as `accepted`.

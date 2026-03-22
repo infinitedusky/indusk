@@ -79,31 +79,9 @@ Extensions provide skills, health checks, networking, verification commands, and
 
 For composable.env: enable the `composable-env` extension. It provides Docker networking, service topology, and its own skill. **Read the skill before using composable.env** — the contract format has specific rules.
 
-## Code Graph (CGC Tools)
+## Code Graph
 
-These come from the codegraphcontext MCP server:
-
-| When | Tool |
-|------|------|
-| Search for code by name | `find_code` |
-| Understand what depends on a file | `analyze_code_relationships` |
-| Find complex functions to refactor | `find_most_complex_functions` |
-| Check for dead code | `find_dead_code` |
-| Scope a plan during research | `analyze_code_relationships` on the target area |
-| Custom graph queries | `execute_cypher_query` |
-| Visualize the graph | `visualize_graph_query` — returns a browser link to view the graph |
-| Get repo stats | `get_repository_stats` |
-| See what's indexed | `list_indexed_repositories` |
-
-### Visualizing the Code Graph
-
-When the user asks to "show the graph", "display dependencies", or "visualize":
-
-1. Call `visualize_graph_query` with a Cypher query like `MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 100` — this returns a URL to open in the browser.
-2. For a specific file's dependencies: `MATCH (n)-[r]->(m) WHERE n.name CONTAINS 'filename' RETURN n, r, m`
-3. For the full project overview: `MATCH (n) RETURN n LIMIT 200`
-
-If the user wants text-based output instead, use `execute_cypher_query` directly and format the results as a table or list.
+Enable the `cgc` extension for code graph tools (`extensions enable cgc`). The CGC extension skill has the full reference for when to use each tool. Key ones: `query_dependencies` (blast radius), `find_code` (search), `visualize_graph_query` (browser visualization).
 
 ## Tool Reference
 

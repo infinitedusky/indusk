@@ -52,6 +52,7 @@ const config = defineConfig({
 						{ text: "Overview", link: "/guide/" },
 						{ text: "Getting Started", link: "/guide/getting-started" },
 						{ text: "Walkthrough", link: "/guide/walkthrough" },
+						{ text: "Extensions", link: "/guide/extensions" },
 					],
 				},
 			],

@@ -19,40 +19,6 @@ function run(cmd: string, options?: { stdio?: "ignore" | "pipe" | "inherit" }): 
 	}
 }
 
-function ensureFalkorDB(): void {
-	// Check if FalkorDB container exists and is running
-	const status = run('docker ps --filter name=falkordb --format "{{.Status}}"');
-	if (status) {
-		console.info("  ok: FalkorDB container running");
-		return;
-	}
-
-	// Check if container exists but is stopped
-	const stopped = run('docker ps -a --filter name=falkordb --format "{{.Status}}"');
-	if (stopped) {
-		console.info("  start: FalkorDB container (was stopped)");
-		run("docker start falkordb");
-		return;
-	}
-
-	// Create and start the container
-	console.info("  create: FalkorDB container (global, persistent)");
-	run(
-		"docker run -d --name falkordb --restart unless-stopped -v falkordb-global:/data falkordb/falkordb:latest",
-	);
-}
-
-function checkCGC(): boolean {
-	const cgcPaths = [join(process.env.HOME ?? "", ".local/bin/cgc"), "/usr/local/bin/cgc"];
-	const found = cgcPaths.find((p) => existsSync(p));
-	if (found) {
-		console.info(`  ok: CGC found at ${found}`);
-		return true;
-	}
-	console.info("  missing: CGC — install via: pipx install codegraphcontext");
-	return false;
-}
-
 function createCgcIgnore(projectRoot: string): void {
 	const ignorePath = join(projectRoot, ".cgcignore");
 	if (existsSync(ignorePath)) {
@@ -82,74 +48,13 @@ function createCgcIgnore(projectRoot: string): void {
 	console.info("  create: .cgcignore");
 }
 
-interface DomainDetection {
-	skill: string;
-	signal: "dependency" | "devDependency" | "file-pattern";
-	match: string;
-}
-
-const DOMAIN_DETECTION_MAP: { signal: string; match: string; skill: string }[] = [
-	{ signal: "dependency", match: "next", skill: "nextjs" },
-	{ signal: "dependency", match: "tailwindcss", skill: "tailwind" },
-	{ signal: "dependency", match: "react", skill: "react" },
-	{ signal: "devDependency", match: "typescript", skill: "typescript" },
-	{ signal: "devDependency", match: "vitest", skill: "testing" },
-	{ signal: "devDependency", match: "jest", skill: "testing" },
-	{ signal: "dependency", match: "vitepress", skill: "vitepress" },
-];
-
-const FILE_PATTERN_DETECTIONS: { pattern: string; skill: string }[] = [
-	{ pattern: "*.sol", skill: "solidity" },
-	{ pattern: "Dockerfile*", skill: "docker" },
-];
-
-function detectDomainSkills(projectRoot: string): DomainDetection[] {
-	const detections: DomainDetection[] = [];
-	const seen = new Set<string>();
-
-	// Check package.json dependencies
-	const pkgPath = join(projectRoot, "package.json");
-	if (existsSync(pkgPath)) {
-		const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
-		const deps = pkg.dependencies ?? {};
-		const devDeps = pkg.devDependencies ?? {};
-
-		for (const rule of DOMAIN_DETECTION_MAP) {
-			if (seen.has(rule.skill)) continue;
-			const source = rule.signal === "dependency" ? deps : devDeps;
-			if (source[rule.match]) {
-				detections.push({
-					skill: rule.skill,
-					signal: rule.signal as "dependency" | "devDependency",
-					match: rule.match,
-				});
-				seen.add(rule.skill);
-			}
-		}
-	}
-
-	// Check file patterns
-	for (const rule of FILE_PATTERN_DETECTIONS) {
-		if (seen.has(rule.skill)) continue;
-		const matches = globSync(rule.pattern, { cwd: projectRoot, maxDepth: 3 });
-		if (matches.length > 0) {
-			detections.push({ skill: rule.skill, signal: "file-pattern", match: rule.pattern });
-			seen.add(rule.skill);
-		}
-	}
-
-	return detections;
-}
-
 export interface InitOptions {
 	force?: boolean;
-	skills?: string;
-	noDomainSkills?: boolean;
 	noIndex?: boolean;
 }
 
 export async function init(projectRoot: string, options: InitOptions = {}): Promise<void> {
-	const { force = false, skills, noDomainSkills = false, noIndex = false } = options;
+	const { force = false, noIndex = false } = options;
 	const projectName = basename(projectRoot);
 	console.info(`Initializing InDusk dev system...${force ? " (--force)" : ""}\n`);
 
@@ -176,49 +81,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		);
 	}
 
-	// 2. Install domain skills
-	if (!noDomainSkills) {
-		console.info("\n[Domain Skills]");
-		const domainSource = join(packageRoot, "skills/domain");
-		let skillsToInstall: string[];
-
-		if (skills) {
-			skillsToInstall = skills.split(",").map((s) => s.trim());
-			console.info(`  manual: installing ${skillsToInstall.join(", ")}`);
-		} else {
-			const detections = detectDomainSkills(projectRoot);
-			skillsToInstall = detections.map((d) => d.skill);
-			if (detections.length > 0) {
-				for (const d of detections) {
-					console.info(`  detected: ${d.skill} (${d.signal}: ${d.match})`);
-				}
-			} else {
-				console.info("  none detected");
-			}
-		}
-
-		for (const skillName of skillsToInstall) {
-			const sourceFile = join(domainSource, `${skillName}.md`);
-			if (!existsSync(sourceFile)) {
-				console.info(`  skip: ${skillName} (not found in registry)`);
-				continue;
-			}
-			const targetDir = join(skillsTarget, skillName);
-			const targetFile = join(targetDir, "SKILL.md");
-			if (existsSync(targetFile) && !force) {
-				console.info(`  skip: .claude/skills/${skillName}/SKILL.md (already exists)`);
-				continue;
-			}
-			mkdirSync(targetDir, { recursive: true });
-			cpSync(sourceFile, targetFile);
-			console.info(`  install: .claude/skills/${skillName}/SKILL.md`);
-		}
-	} else {
-		console.info("\n[Domain Skills]");
-		console.info("  skipped (--no-domain-skills)");
-	}
-
-	// 3. Copy community lessons
+	// 2. Copy community lessons
 	console.info("\n[Lessons]");
 	const lessonsSource = join(packageRoot, "lessons/community");
 	const lessonsTarget = join(projectRoot, ".claude/lessons");
@@ -424,47 +287,54 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	// 8. Create .cgcignore (always overwrite — package-owned)
 	createCgcIgnore(projectRoot);
 
-	// 8. Infrastructure: FalkorDB + CGC
-	console.info("\n[Infrastructure]");
-	const dockerAvailable = run("docker info") !== "";
-	if (dockerAvailable) {
-		ensureFalkorDB();
-	} else {
-		console.info("  missing: Docker — install Docker or OrbStack to enable FalkorDB");
+	// 9. Run on_init hooks from enabled extensions
+	console.info("\n[Extension Hooks]");
+	const { getEnabledExtensions } = await import("../../lib/extension-loader.js");
+	const enabledExts = getEnabledExtensions(projectRoot);
+	for (const ext of enabledExts) {
+		if (ext.manifest.hooks?.on_init) {
+			console.info(`  ${ext.manifest.name}: running on_init...`);
+			const result = run(ext.manifest.hooks.on_init);
+			if (result) {
+				console.info(`  ${ext.manifest.name}: ${result.slice(0, 100)}`);
+			}
+		}
+	}
+	if (enabledExts.length === 0) {
+		console.info("  no extensions enabled — run 'extensions enable' to add tool integrations");
 	}
 
-	const cgcInstalled = checkCGC();
-
-	// 9. Auto-index the codebase into the graph
+	// 10. Auto-index the codebase into the graph (if CGC extension is enabled)
+	const cgcEnabled = enabledExts.some((e) => e.manifest.name === "cgc");
 	if (noIndex) {
 		console.info("\n[Code Graph]");
 		console.info("  skipped (--no-index)");
-	} else if (dockerAvailable && cgcInstalled) {
+	} else if (cgcEnabled) {
 		console.info("\n[Code Graph]");
 		console.info("  indexing: scanning codebase...");
-		const { indexProject } = await import("../../tools/graph-tools.js");
-		const result = indexProject(projectRoot);
-		if (result.success) {
-			console.info(`  done: ${result.output}`);
-		} else {
-			console.info(`  error: ${result.output}`);
+		try {
+			const { indexProject } = await import("../../tools/graph-tools.js");
+			const result = indexProject(projectRoot);
+			if (result.success) {
+				console.info(`  done: ${result.output}`);
+			} else {
+				console.info(`  error: ${result.output}`);
+			}
+		} catch {
+			console.info("  skipped (CGC not available)");
 		}
 	}
 
+	// 11. Suggest extensions
+	console.info("\n[Extensions]");
+	const { extensionsSuggest } = await import("./extensions.js");
+	await extensionsSuggest(projectRoot);
+
 	// Summary
 	console.info("\nDone!");
-	if (!cgcInstalled || !dockerAvailable) {
-		console.info("\nManual steps needed:");
-		if (!dockerAvailable) {
-			console.info("  1. Install Docker or OrbStack");
-			console.info("  2. Re-run init to set up FalkorDB");
-		}
-		if (!cgcInstalled) {
-			console.info("  - Install CGC: pipx install codegraphcontext");
-		}
-	}
 	console.info("\nNext steps:");
 	console.info("  1. Edit CLAUDE.md with your project details");
-	console.info("  2. Start a Claude Code session — MCP tools will be available");
-	console.info("  3. Start planning: /plan your-first-feature");
+	console.info("  2. Enable extensions: extensions enable falkordb cgc typescript");
+	console.info("  3. Start a Claude Code session — MCP tools will be available");
+	console.info("  4. Start planning: /plan your-first-feature");
 }

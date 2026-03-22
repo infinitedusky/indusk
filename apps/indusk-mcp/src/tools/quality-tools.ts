@@ -106,7 +106,7 @@ export function registerQualityTools(server: McpServer, projectRoot: string): vo
 			},
 		},
 		async ({ mode, command }) => {
-			const discovered = discoverVerificationCommands(projectRoot);
+			const discovered = await discoverVerificationCommands(projectRoot);
 
 			if (mode === "discover") {
 				return {

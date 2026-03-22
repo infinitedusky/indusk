@@ -1,0 +1,11 @@
+{
+	"name": "typescript",
+	"description": "TypeScript patterns — strict mode, generics, discriminated unions, common gotchas",
+	"provides": {
+		"skill": true,
+		"verification": [
+			{ "name": "typecheck", "command": "npx tsc --noEmit", "detect": { "file": "tsconfig.json" } }
+		]
+	},
+	"detect": { "devDependency": "typescript" }
+}
