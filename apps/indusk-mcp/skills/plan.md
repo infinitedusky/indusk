@@ -75,6 +75,23 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
+   **Gate policy applies when writing impls.** The same `gate_policy` (strict/ask/auto) that governs work execution also governs how the impl is written:
+
+   - **`strict`**: Every phase MUST have all four sections (implementation, verification, context, document) with real items. No `(none needed)` or `skip-reason:`. If a section genuinely doesn't apply, you still must include it with a concrete item.
+   - **`ask`** (default): Every phase MUST have all required sections (per workflow type). If you think a section should be `(none needed)`, ask the user: "Phase 3 Document — I don't think this phase changes anything user-facing. Can I mark it (none needed)?" Only mark it after approval.
+   - **`auto`**: Include all sections, but you can use `(none needed)` or `skip-reason:` based on your judgment without asking.
+
+   Set the policy in the impl frontmatter:
+   ```yaml
+   ---
+   title: "My Plan"
+   gate_policy: ask
+   workflow: feature
+   ---
+   ```
+
+   The `validate-impl-structure` hook enforces this at write time — it will block the impl if sections are missing for the workflow type.
+
 7. **If impl is completed** (all items checked off by `/work`), invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call.)
 
 8. **Always present each document for review** before moving to the next stage. The user signs off on each step.

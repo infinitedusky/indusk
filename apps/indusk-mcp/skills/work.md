@@ -61,6 +61,54 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
 
    A phase is not complete until all four are done. **Enforced by hooks:** if you try to check off a Phase N+1 implementation item while Phase N has unchecked gates, the edit will be blocked with a message listing what's missing. Complete the gates first.
 
+## Gate Override Policy
+
+Gates exist to prevent skipping important work. But sometimes a gate genuinely doesn't apply. The override policy controls what happens when the agent wants to skip a gate item.
+
+Three modes, configured via `gate_policy` in the impl frontmatter or `.claude/settings.json`:
+
+| Mode | Behavior |
+|------|----------|
+| **`strict`** | No overrides. Every gate item must be completed. `(none needed)` and `skip-reason:` are not accepted. Use for critical work where nothing should be skipped. |
+| **`ask`** (default) | Agent must ask the user before skipping any gate item. The agent explains why it wants to skip and waits for approval. Only after the user says yes can it mark with `skip-reason:`. |
+| **`auto`** | Agent can skip with `skip-reason:` without asking. Use when running autonomously or when you trust the agent's judgment. |
+
+### How to set the mode
+
+**Per-plan** (in impl frontmatter):
+```yaml
+---
+title: "My Plan"
+gate_policy: strict
+---
+```
+
+**Per-project** (in `.claude/settings.json`):
+```json
+{
+  "indusk": {
+    "gate_policy": "ask"
+  }
+}
+```
+
+**Per-invocation**: `/work --strict`, `/work --ask`, `/work --auto`
+
+Priority: per-invocation > per-plan > per-project > default (`ask`).
+
+### What "ask" mode looks like
+
+When the agent encounters a gate item it thinks should be skipped:
+
+> "Phase 2 has a Document gate: 'Write reference page for the new API.' I don't think this phase needs a new docs page because we only changed internal implementation — the public API didn't change. Can I mark this as `skip-reason: internal change, no public API change`?"
+
+The user can say:
+- **"yes"** — agent marks it with skip-reason and continues
+- **"no, do it"** — agent completes the gate item
+- **"no, but mark it (none needed)"** — if the gate truly doesn't apply
+
+**The agent must NEVER skip a gate without asking in `ask` mode.** This is the core enforcement. The hooks block unauthorized skips, and the skill enforces the conversation.
+
 11. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
    - Run checks in order: type check → lint → affected tests → build. Skip checks that don't apply (see verify skill's skip logic table).
    - Run commands and capture output — verification items must be specific runnable commands, not "verify it works"
@@ -91,6 +139,8 @@ When invoked as `/work teach` or `/work --teach {plan}`, slow down to a mentorin
 
 ### Before each edit:
 
+**Where we are:** State the current position in the system — which plan, which phase, which gate (implementation/verification/context/document), and why this gate exists. Example: "We're in Phase 3 of the auth-system plan, working through implementation items. After these, we'll verify with type checks and tests, then update CLAUDE.md with what changed, then document it. That's the four-gate cycle that every phase goes through."
+
 **Why this change:** Explain what you're about to modify and why. Reference the plan, the architecture, and the reasoning. Use plain language.
 
 Then **stop and wait** for the user to say "continue" before making the edit.
@@ -103,15 +153,33 @@ Then **stop and wait** for the user to say "continue" before making the edit.
 
 Then **stop and wait** for the user to say "continue" before moving to the next item.
 
+### At gate transitions:
+
+When moving from implementation to verification, or verification to context, or context to document — explain the transition and why this gate exists:
+
+- **Implementation → Verification:** "The code is written. Now we prove it works. The verify skill says to run checks fastest-first: type check, lint, tests, build. This catches errors before they compound."
+- **Verification → Context:** "Everything passes. Now we update CLAUDE.md so the next session knows what changed. Context is how the project remembers — without it, the next agent starts from scratch."
+- **Context → Document:** "CLAUDE.md is updated. Now we write or update the project's documentation — the encyclopedia that any developer can read to understand what was built and why. In teach mode, we also write a learning entry: what surprised us, what we'd do differently, what conceptual connections to notice."
+- **Phase complete → Next phase:** "All four gates passed for Phase N. The hook would have blocked us if we'd tried to skip any. Now Phase N+1 builds on what Phase N produced — here's what the boundary map says it needs..."
+
 ### Between checklist items:
 
-Summarize what was accomplished and preview the next item. Explain how they connect.
+Summarize what was accomplished and preview the next item. Explain how they connect — both in terms of the feature being built and the InDusk system driving the process.
+
+### Document gate in teach mode:
+
+In teach mode, every Document gate produces two things:
+1. **Standard docs** — the same reference/guide updates you'd write in normal mode
+2. **Learning entry** — what the developer should take away from this phase: what surprised us, what we chose and why, what conceptual connections to notice
+
+See the document skill's "Two Documentation Layers" section for details. The learning journal is what makes teach mode a teaching tool, not just a slow mode.
 
 ### Important for teach mode:
 
 - Never batch multiple edits between pauses
 - Use clear headings to separate teaching from doing
 - If the user asks a question, answer it fully before continuing
+- Always give both layers: the **what** (the feature/code) and the **why** (the InDusk system's reasoning)
 - Normal `/work` (without teach) remains unchanged — fast execution, no pauses
 
 ## Corrections and Context Learning

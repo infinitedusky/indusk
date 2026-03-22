@@ -54,6 +54,60 @@ When you think a phase is complete:
 - Call `get_skill_versions` to check if installed skills are current or outdated.
 - Call `get_system_version` to verify the installed package version.
 
+## Local Development Environment (composable.env)
+
+composable.env manages Docker-based local development. It builds `.env` files and `docker-compose.yml` from declarative contracts and profiles. The CLI command is `ce` (always use `pnpm ce`, never `npx ce`).
+
+### When to use composable.env
+
+| Situation | What to do |
+|-----------|-----------|
+| New app needs Docker for local dev | Create a contract in `env/contracts/`, a component in `env/components/`, add to profile in `env/profiles/` |
+| Setting up a new project | `pnpm ce init` to scaffold the env directory structure |
+| Building environment files | `pnpm env:build` (always run before `docker compose`) |
+| Adding a new service (database, cache, etc.) | Add a contract with `persistent: true` for services that survive rebuilds |
+| Debugging environment issues | `pnpm ce status` to see what's configured |
+
+### How it fits together
+
+composable.env turns this:
+```
+env/
+├── contracts/       # What each app needs (ports, env vars, Docker config)
+├── components/      # Shared env var groups (networking, platform)
+├── profiles/        # Which contracts run together (local, staging, prod)
+└── ce.json          # Root config
+```
+
+Into this:
+```
+docker-compose.yml   # Generated — don't edit directly
+apps/*/. env.local   # Generated — per-app env files
+```
+
+### Key rules
+
+- **Always `pnpm env:build` before `docker compose`** — the generated files must be current
+- **Always `pnpm ce`, never `npx ce`** — the workspace script ensures the right binary
+- **Contracts are declarative** — they describe what an app needs, not how to build it
+- **Persistent services** (`persistent: true`) survive `ce build` cycles — use for databases, FalkorDB, etc.
+- **The docs site Dockerfile is created by `init-docs`** — it uses `docker/Dockerfile.vitepressdev`
+
+### For new projects
+
+When setting up a new project that needs Docker-based local dev:
+
+1. **Install the composable-env skill first**: run `pnpm ce add-skill` to install the composable-env skill to `.claude/skills/composable-env/SKILL.md`
+2. **Read the skill before doing anything**: the composable-env skill has full documentation on contract format, profiles, component composition, and the `ce` CLI commands. Read it completely before creating contracts or running commands.
+3. Then follow the setup:
+   - `pnpm ce init` to scaffold the env directory
+   - Create contracts for each app in `env/contracts/`
+   - Create a `local` profile in `env/profiles/local.json`
+   - `pnpm env:build` to generate docker-compose.yml
+   - `docker compose up`
+
+**Do NOT attempt to use composable.env without reading the skill first.** The contract format, component composition, and profile system have specific rules that aren't obvious. The skill teaches you how it works.
+
 ## Code Graph (CGC Tools)
 
 These come from the codegraphcontext MCP server:

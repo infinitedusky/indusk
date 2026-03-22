@@ -27,7 +27,34 @@ if (!filePath.endsWith("/impl.md") && !filePath.endsWith("\\impl.md")) {
 
 // Check for skip-gates escape hatch
 const newContent = toolInput.new_string ?? toolInput.content ?? "";
-if (newContent.includes("<!-- skip-gates -->")) {
+
+// Read gate policy from the impl file and settings
+function readGatePolicy() {
+	try {
+		const content = readFileSync(filePath, "utf-8");
+		const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
+		if (fmMatch) {
+			const policyMatch = fmMatch[1].match(/gate_policy:\s*(strict|ask|auto)/);
+			if (policyMatch) return policyMatch[1];
+		}
+	} catch {
+		// ignore
+	}
+	// Check project settings
+	try {
+		const settingsPath = `${event.cwd}/.claude/settings.json`;
+		const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+		if (settings.indusk?.gate_policy) return settings.indusk.gate_policy;
+	} catch {
+		// ignore
+	}
+	return "ask"; // default
+}
+
+const gatePolicy = readGatePolicy();
+
+// In strict mode, skip-gates escape hatch is not allowed
+if (newContent.includes("<!-- skip-gates -->") && gatePolicy !== "strict") {
 	process.exit(0);
 }
 
@@ -190,9 +217,10 @@ for (const item of newlyChecked) {
 		if (phase.number >= item.phase) break;
 
 		const isOverridden = (text) =>
-			text.includes("(none needed)") ||
-			text.includes("(not applicable)") ||
-			text.includes("skip-reason:");
+			gatePolicy !== "strict" &&
+			(text.includes("(none needed)") ||
+				text.includes("(not applicable)") ||
+				text.includes("skip-reason:"));
 
 		const uncheckedGates = phase.items.filter(
 			(i) => !i.checked && !isOverridden(i.text) && requiredGates.includes(i.gate),
@@ -200,8 +228,12 @@ for (const item of newlyChecked) {
 
 		if (uncheckedGates.length > 0) {
 			const missing = uncheckedGates.map((i) => `  [${i.gate}] ${i.text}`).join("\n");
+			const skipHint =
+				gatePolicy === "strict"
+					? "Gate policy is 'strict' — no overrides allowed.\n"
+					: "To skip a gate item, ask the user first, then mark with (none needed) or skip-reason: {why}\n";
 			process.stderr.write(
-				`Phase ${item.phase} blocked: complete Phase ${phase.number} gates first:\n${missing}\nTo skip a gate item, mark it with (none needed) or skip-reason: {why}\n`,
+				`Phase ${item.phase} blocked (policy: ${gatePolicy}): complete Phase ${phase.number} gates first:\n${missing}\n${skipHint}`,
 			);
 			process.exit(2);
 		}
