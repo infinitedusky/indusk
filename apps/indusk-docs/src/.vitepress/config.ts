@@ -50,6 +50,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/guide/" },
 						{ text: "Getting Started", link: "/guide/getting-started" },
+						{ text: "Walkthrough", link: "/guide/walkthrough" },
 					],
 				},
 			],

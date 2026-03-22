@@ -339,7 +339,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info("\n[Hooks]");
 	const hooksSource = join(packageRoot, "hooks");
 	const hooksTarget = join(projectRoot, ".claude/hooks");
-	const hookFiles = ["check-gates.js", "gate-reminder.js"];
+	const hookFiles = ["check-gates.js", "gate-reminder.js", "validate-impl-structure.js"];
 
 	if (existsSync(hooksSource)) {
 		mkdirSync(hooksTarget, { recursive: true });
@@ -362,7 +362,10 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		PreToolUse: [
 			{
 				matcher: "Edit|Write",
-				hooks: [{ type: "command", command: "node .claude/hooks/check-gates.js" }],
+				hooks: [
+					{ type: "command", command: "node .claude/hooks/check-gates.js" },
+					{ type: "command", command: "node .claude/hooks/validate-impl-structure.js" },
+				],
 			},
 		],
 		PostToolUse: [
@@ -384,7 +387,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			const hasOurHook = existingEntries.some((e: { hooks?: { command?: string }[] }) =>
 				e.hooks?.some(
 					(h: { command?: string }) =>
-						h.command?.includes("check-gates") || h.command?.includes("gate-reminder"),
+						h.command?.includes("check-gates") ||
+						h.command?.includes("gate-reminder") ||
+						h.command?.includes("validate-impl"),
 				),
 			);
 			if (!hasOurHook || force) {
@@ -394,7 +399,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 						(e: { hooks?: { command?: string }[] }) =>
 							!e.hooks?.some(
 								(h: { command?: string }) =>
-									h.command?.includes("check-gates") || h.command?.includes("gate-reminder"),
+									h.command?.includes("check-gates") ||
+									h.command?.includes("gate-reminder") ||
+									h.command?.includes("validate-impl"),
 							),
 					);
 				}

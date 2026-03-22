@@ -138,7 +138,7 @@ export async function update(projectRoot: string): Promise<void> {
 	let hooksCurrent = 0;
 
 	if (existsSync(hooksSource) && existsSync(hooksTarget)) {
-		const hookFiles = ["check-gates.js", "gate-reminder.js"];
+		const hookFiles = ["check-gates.js", "gate-reminder.js", "validate-impl-structure.js"];
 
 		for (const file of hookFiles) {
 			const sourceFile = join(hooksSource, file);

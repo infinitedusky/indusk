@@ -97,6 +97,35 @@ flowchart TD
 
 **Never** use bare ` ```mermaid ` blocks without the wrapper. The diagrams are often too small to read inline, and the FullscreenDiagram gives users zoom and pan controls.
 
+## Documentation by Workflow Type
+
+The document gate's expectations vary by workflow type. The hook enforces that the section exists, but what goes in it depends on what you're building.
+
+### Feature (full documentation)
+
+A feature is new functionality. It needs complete documentation:
+- Write new reference pages for tools, APIs, or configuration added
+- Write new guide pages for workflows introduced
+- Create Mermaid diagrams for architecture, flows, and relationships
+- Update existing pages that reference the area you changed
+- Create FullscreenDiagram-wrapped diagrams for anything structural
+
+### Refactor (update existing docs)
+
+A refactor restructures existing code. Documentation should reflect the new structure:
+- Update existing pages that reference moved/renamed code
+- Update diagrams that show the old structure
+- Don't create new pages unless the refactor introduces new concepts
+- If nothing user-facing changed, mark with `(none needed)`
+
+### Bugfix (document the fix)
+
+A bugfix solves a specific problem. Documentation is about the fix, not new content:
+- Update any docs that described the broken behavior
+- If the bug revealed a gotcha, add it to the relevant reference page
+- If the fix changes a public API or configuration, update that reference page
+- For internal-only fixes, mark with `(none needed)`
+
 ## Shaping Impl Documents
 
 When writing an impl (via the plan skill), every phase should consider documentation:
@@ -106,7 +135,7 @@ When writing an impl (via the plan skill), every phase should consider documenta
 - [ ] {Specific docs page to write or update}
 ```
 
-The agent writing the impl must answer: **"What does a user or developer need to know about what this phase built?"** If the answer is "nothing user-facing" — no document items needed. Not every phase produces docs. But the question must be asked.
+The agent writing the impl must answer: **"What does a user or developer need to know about what this phase built?"** If the answer is "nothing user-facing" — `(none needed)` or `skip-reason:` to opt out. Not every phase produces docs. But the question must be asked, and the section must exist (enforced by hook).
 
 ### Document Items Are Blocking
 

@@ -49,7 +49,14 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 2. **Figure out where things stand.** If a plan folder already exists, read what's there. Check frontmatter statuses. The next document to write is the first one that's missing or incomplete.
 
-3. **If starting fresh**, create the plan folder and start with the first document for the workflow type:
+3. **If starting fresh**, do a quick scan of the project (read CLAUDE.md, check the code graph) to understand the context. Then **ask the user discovery questions before doing any research or writing any documents.** The goal is to understand what they're trying to achieve, not just what they named the plan. Good discovery questions:
+   - "What problem are you trying to solve?" or "What should this feature do for your users?"
+   - "Is there anything specific you've already thought through or have strong opinions about?"
+   - "Are there any constraints I should know about — timeline, technology preferences, things to avoid?"
+
+   For non-developers especially, this conversation is critical. They may not know the right technical terms, but they know what they want. Draw that out before proceeding.
+
+   Once you understand the intent, create the plan folder and start with the first document for the workflow type:
    - **feature**: start with research
    - **bugfix**: start with brief (streamlined template)
    - **refactor**: start with brief (includes boundary map)
@@ -62,7 +69,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - Include the graph findings in research.md — concrete numbers like "X has 12 dependents across 3 apps"
    Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
 
-4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. Present for review.
+4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. **Present the brief and have a conversation about it.** Don't just ask "does this look good?" — walk the user through it: "Here's what I'm proposing we build. Does this match what you had in mind? Is there anything missing, or anything here you don't want?" Iterate until the user is genuinely happy with the direction, then mark it as `accepted`.
 
 5. **If brief is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see planning/{plan}/adr.md`
 
