@@ -1,4 +1,5 @@
 import { defineConfig } from "vitepress";
+import llmstxt from "vitepress-plugin-llms";
 import { withMermaid } from "vitepress-plugin-mermaid";
 
 const config = defineConfig({
@@ -96,6 +97,7 @@ const config = defineConfig({
 	},
 
 	vite: {
+		plugins: [llmstxt()],
 		server: {
 			allowedHosts: [".orb.local"],
 		},

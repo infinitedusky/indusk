@@ -28,7 +28,38 @@ if (!filePath.endsWith("/impl.md") && !filePath.endsWith("\\impl.md")) {
 
 // Check for skip-gates escape hatch
 const newContent = toolInput.new_string ?? toolInput.content ?? "";
-if (newContent.includes("<!-- skip-gates -->")) {
+
+// Read gate policy
+function readGatePolicy() {
+	// Check the content being written for a gate_policy in frontmatter
+	const contentToCheck = toolInput.content ?? toolInput.new_string ?? "";
+	const fmMatch = contentToCheck.match(/gate_policy:\s*(strict|ask|auto)/);
+	if (fmMatch) return fmMatch[1];
+	// Check existing file
+	try {
+		const existing = readFileSync(filePath, "utf-8");
+		const existingFm = existing.match(/^---\n([\s\S]*?)\n---\n/);
+		if (existingFm) {
+			const m = existingFm[1].match(/gate_policy:\s*(strict|ask|auto)/);
+			if (m) return m[1];
+		}
+	} catch {
+		// ignore
+	}
+	// Check project settings
+	try {
+		const settingsPath = `${event.cwd}/.claude/settings.json`;
+		const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+		if (settings.indusk?.gate_policy) return settings.indusk.gate_policy;
+	} catch {
+		// ignore
+	}
+	return "ask";
+}
+
+const gatePolicy = readGatePolicy();
+
+if (newContent.includes("<!-- skip-gates -->") && gatePolicy !== "strict") {
 	process.exit(0);
 }
 
@@ -93,6 +124,9 @@ for (const line of lines) {
 			hasVerification: false,
 			hasContext: false,
 			hasDocument: false,
+			verificationIsOptOut: false,
+			contextIsOptOut: false,
+			documentIsOptOut: false,
 		};
 		currentSection = "implementation";
 		continue;
@@ -127,6 +161,17 @@ for (const line of lines) {
 		currentPhase.hasImplementation = true;
 	}
 
+	// Track opt-out content in gate sections
+	const isOptOutLine =
+		line.includes("(none needed)") ||
+		line.includes("(not applicable)") ||
+		line.includes("skip-reason:");
+	if (currentPhase && isOptOutLine) {
+		if (currentSection === "verification") currentPhase.verificationIsOptOut = true;
+		if (currentSection === "context") currentPhase.contextIsOptOut = true;
+		if (currentSection === "document") currentPhase.documentIsOptOut = true;
+	}
+
 	// Forward intelligence doesn't count as a gate
 	if (line.match(/^####\s+Phase\s+\d+\s+Forward Intelligence\b/)) {
 		currentSection = "fi";
@@ -154,6 +199,22 @@ for (const phase of phases) {
 	if (missing.length > 0) {
 		errors.push(`Phase ${phase.number} (${phase.name}) is missing: ${missing.join(", ")}`);
 	}
+
+	// In strict mode, opt-outs are not allowed — sections must have real items
+	if (gatePolicy === "strict") {
+		const optOuts = [];
+		if (requirements.verification && phase.hasVerification && phase.verificationIsOptOut)
+			optOuts.push("Verification");
+		if (requirements.context && phase.hasContext && phase.contextIsOptOut)
+			optOuts.push("Context");
+		if (requirements.document && phase.hasDocument && phase.documentIsOptOut)
+			optOuts.push("Document");
+		if (optOuts.length > 0) {
+			errors.push(
+				`Phase ${phase.number} (${phase.name}): ${optOuts.join(", ")} cannot use opt-outs in strict mode — add real items`,
+			);
+		}
+	}
 }
 
 if (errors.length > 0) {
@@ -161,8 +222,12 @@ if (errors.length > 0) {
 	const reqNames = Object.entries(requirements)
 		.filter(([, v]) => v)
 		.map(([k]) => k.charAt(0).toUpperCase() + k.slice(1));
+	const skipHint =
+		gatePolicy === "strict"
+			? "Gate policy is 'strict' — all sections must have real items, no overrides.\n"
+			: "If a section isn't needed, add it with (none needed) or skip-reason: {why}\nExample: #### Phase 1 Document\\n(none needed)\n";
 	process.stderr.write(
-		`Impl structure incomplete (workflow: ${workflow}):\n${msg}\n\nThis workflow requires: ${reqNames.join(", ")} sections per phase.\nIf a section isn't needed, add it with (none needed) or skip-reason: {why}\nExample: #### Phase 1 Document\\n(none needed)\nTo change requirements, add 'workflow: bugfix' to the impl frontmatter.\n`,
+		`Impl structure incomplete (workflow: ${workflow}, policy: ${gatePolicy}):\n${msg}\n\nThis workflow requires: ${reqNames.join(", ")} sections per phase.\n${skipHint}To change requirements, add 'workflow: bugfix' to the impl frontmatter.\n`,
 	);
 	process.exit(2);
 }
