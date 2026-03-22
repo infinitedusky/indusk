@@ -52,7 +52,7 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 			const checks: { name: string; status: "ok" | "error"; detail: string }[] = [];
 
 			// Check FalkorDB TCP connectivity
-			const falkordbHost = process.env.FALKORDB_HOST ?? "localhost";
+			const falkordbHost = process.env.FALKORDB_HOST ?? "falkordb.orb.local";
 			const falkordbPort = Number.parseInt(process.env.FALKORDB_PORT ?? "6379", 10);
 			const falkordbOk = await new Promise<boolean>((resolve) => {
 				const socket = createConnection({ host: falkordbHost, port: falkordbPort }, () => {

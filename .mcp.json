@@ -5,8 +5,7 @@
 			"args": ["mcp", "start"],
 			"env": {
 				"DATABASE_TYPE": "falkordb-remote",
-				"FALKORDB_HOST": "localhost",
-				"FALKORDB_PORT": "6379",
+				"FALKORDB_HOST": "falkordb.orb.local",
 				"FALKORDB_GRAPH_NAME": "codegraph"
 			}
 		},
