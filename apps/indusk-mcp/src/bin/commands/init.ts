@@ -38,7 +38,7 @@ function ensureFalkorDB(): void {
 	// Create and start the container
 	console.info("  create: FalkorDB container (global, persistent)");
 	run(
-		"docker run -d --name falkordb --restart unless-stopped -p 6379:6379 -v falkordb-global:/data falkordb/falkordb:latest",
+		"docker run -d --name falkordb --restart unless-stopped -v falkordb-global:/data falkordb/falkordb:latest",
 	);
 }
 
@@ -272,8 +272,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		args: ["mcp", "start"],
 		env: {
 			DATABASE_TYPE: "falkordb-remote",
-			FALKORDB_HOST: "localhost",
-			FALKORDB_PORT: "6379",
+			FALKORDB_HOST: "falkordb.orb.local",
 			FALKORDB_GRAPH_NAME: projectName,
 		},
 	};

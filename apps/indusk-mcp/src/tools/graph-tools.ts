@@ -24,7 +24,7 @@ function runCgc(args: string, projectRoot: string): string {
 			env: {
 				...process.env,
 				DATABASE_TYPE: "falkordb-remote",
-				FALKORDB_HOST: process.env.FALKORDB_HOST ?? "localhost",
+				FALKORDB_HOST: process.env.FALKORDB_HOST ?? "falkordb.orb.local",
 				FALKORDB_PORT: process.env.FALKORDB_PORT ?? "6379",
 				FALKORDB_GRAPH_NAME: process.env.FALKORDB_GRAPH_NAME ?? basename(projectRoot),
 			},
@@ -56,7 +56,7 @@ export function indexProject(projectRoot: string): { success: boolean; output: s
 			env: {
 				...process.env,
 				DATABASE_TYPE: "falkordb-remote",
-				FALKORDB_HOST: process.env.FALKORDB_HOST ?? "localhost",
+				FALKORDB_HOST: process.env.FALKORDB_HOST ?? "falkordb.orb.local",
 				FALKORDB_PORT: process.env.FALKORDB_PORT ?? "6379",
 				FALKORDB_GRAPH_NAME: graphName,
 			},
