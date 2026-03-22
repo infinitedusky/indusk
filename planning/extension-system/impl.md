@@ -109,7 +109,7 @@ Execute the high and medium priority fixes from the audit before building the ex
 
 ### Phase 1: Manifest Spec and Loader
 
-- [ ] Define TypeScript types for the extension manifest:
+- [x] Define TypeScript types for the extension manifest:
   ```typescript
   interface ExtensionManifest {
     name: string;
@@ -139,26 +139,23 @@ Execute the high and medium priority fixes from the audit before building the ex
     devDependency?: string;
   }
   ```
-- [ ] Create `src/lib/extension-loader.ts`:
-  - `loadExtensions(projectRoot)` — scan `.indusk/extensions/`, parse all `.json` manifests, return enabled extensions
-  - `loadExtension(path)` — parse a single manifest, validate schema
-  - `isEnabled(name)` — check if extension is in `.indusk/extensions/` (not in `.disabled/`)
-  - `getEnabledExtensions(projectRoot)` — return all enabled extension manifests
-- [ ] Create `.indusk/extensions/` and `.indusk/extensions/.disabled/` directory management utilities
+- [x] Create `src/lib/extension-loader.ts` with loadExtensions, loadExtension, isEnabled, getEnabledExtensions, enableExtension, disableExtension, getExtension, ensureExtensionsDirs
+- [x] Create `.indusk/extensions/` and `.indusk/extensions/.disabled/` directory management utilities
 
 #### Phase 1 Verification
-- [ ] Unit test: loadExtension parses a valid manifest correctly
-- [ ] Unit test: loadExtensions finds all .json files in extensions directory
-- [ ] Unit test: isEnabled returns false for extensions in .disabled/
-- [ ] `pnpm turbo build --filter=@infinitedusky/indusk-mcp` passes
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
-- [ ] `pnpm check` passes
+- [x] Unit test: loadExtension parses a valid manifest correctly
+- [x] Unit test: loadExtensions finds all .json files in extensions directory (enabled + disabled)
+- [x] Unit test: isEnabled returns false for extensions in .disabled/
+- [x] Unit test: enable/disable moves extensions between directories
+- [x] `pnpm turbo build --filter=@infinitedusky/indusk-mcp` passes
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes (29 tests, 5 files)
+- [x] `pnpm check` passes
 
 #### Phase 1 Context
-- [ ] Add to Architecture: `.indusk/extensions/` — extension manifest directory, managed by `extensions` CLI
+- [x] Add to Architecture: `.indusk/extensions/` — extension manifest directory, managed by `extensions` CLI
 
 #### Phase 1 Document
-- [ ] Write spec page at `apps/indusk-docs/src/reference/extension-spec.md` — manifest format, capability types, lifecycle hooks, detection rules
+- [x] Write spec page at `apps/indusk-docs/src/reference/extension-spec.md` — manifest format, capability types, lifecycle hooks, detection rules
 
 ### Phase 2: Extensions CLI
 

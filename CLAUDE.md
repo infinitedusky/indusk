@@ -30,7 +30,7 @@ infinitedusky/
 
 **Apps:**
 - **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme (zinc-950 bg, amber-400 accents). Runs in Docker via composable.env for local dev.
-- **indusk-mcp**: InDusk MCP server — dev system tooling with 13 MCP tools (plan, context, quality, document, system). CLI for `init`/`update`. Skills are owned here in `skills/` and installed to `.claude/skills/` via init. Dogfooded in this repo via `.mcp.json`. Will be published as `indusk-mcp`.
+- **indusk-mcp**: InDusk MCP server — dev system tooling with MCP tools, CLI (`init`/`update`/`init-docs`/`extensions`/`check-gates`), skills, hooks, lessons, and extensions. `.indusk/extensions/` holds extension manifests (built-in + third-party). Published as `@infinitedusky/indusk-mcp`.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
 
 **Skills:**
