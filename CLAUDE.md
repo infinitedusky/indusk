@@ -50,7 +50,7 @@ infinitedusky/
 - **Node 22 required** — Tailwind 4 native bindings need it
 - **Biome for linting and formatting** — NOT ESLint. Single tool, single config. Run `biome check` not `eslint`
 - **composable.env for environment management** — all apps run in Docker containers for local dev. Use `pnpm env:build` before `docker compose`. Use `pnpm ce` for all composable.env commands, never `npx ce`
-- Skills are markdown files in `.claude/skills/{name}/SKILL.md`
+- Skills are markdown files in `.claude/skills/{name}/SKILL.md` — each concept has one canonical skill, others cross-reference
 - Plans follow the lifecycle: research → brief → ADR → impl → retrospective
 - All planning docs live in `planning/{kebab-case-name}/`
 - Every impl phase ends with four gates before advancing: verify → context → document → advance
@@ -80,6 +80,7 @@ infinitedusky/
 - Document skill (per-phase execution gate) + retrospective skill (closing audit with knowledge handoff to VitePress docs) — see `planning/document-skill/adr.md`
 - GSD-inspired: lessons registry, verification auto-discovery, forward intelligence, blocker protocol, workflow templates, boundary maps, domain skills — see `planning/gsd-inspired-improvements/adr.md`
 - Plan gate enforcement via Claude Code PreToolUse hooks — blocks phase transitions with incomplete gates — see `planning/enforce-plan-gates/adr.md`
+- Extension system: one system, two sources (built-in + third-party manifests), replaces domain skills — see `planning/extension-system/adr.md`
 
 ## Known Gotchas
 

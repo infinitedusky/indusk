@@ -34,8 +34,8 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
 7. **Work through the checklist in order.**
    - Start from the first unchecked item (`- [ ]`)
    - For each item:
-     a. **REQUIRED: Query the code graph** — before modifying ANY file, call `query_dependencies` on that file. Review the dependents list. If >3 dependents, flag the blast radius to the user before proceeding. This is not optional.
-     b. **REQUIRED: Check for existing code** — before writing new functions, call `find_code` to search for functions that already do what you need. Reuse and extend existing code rather than duplicating. Stay DRY.
+     a. **Query the code graph** — see toolbelt "Before Modifying Code." Check dependencies and blast radius before touching any file.
+     b. **Check for existing code** — call `find_code` before writing new functions. Reuse, don't duplicate.
      c. Read the relevant source files
      d. Implement the change
      e. Immediately edit impl.md to check the item off (`- [ ]` → `- [x]`)
@@ -155,12 +155,7 @@ Then **stop and wait** for the user to say "continue" before moving to the next 
 
 ### At gate transitions:
 
-When moving from implementation to verification, or verification to context, or context to document — explain the transition and why this gate exists:
-
-- **Implementation → Verification:** "The code is written. Now we prove it works. The verify skill says to run checks fastest-first: type check, lint, tests, build. This catches errors before they compound."
-- **Verification → Context:** "Everything passes. Now we update CLAUDE.md so the next session knows what changed. Context is how the project remembers — without it, the next agent starts from scratch."
-- **Context → Document:** "CLAUDE.md is updated. Now we write or update the project's documentation — the encyclopedia that any developer can read to understand what was built and why. In teach mode, we also write a learning entry: what surprised us, what we'd do differently, what conceptual connections to notice."
-- **Phase complete → Next phase:** "All four gates passed for Phase N. The hook would have blocked us if we'd tried to skip any. Now Phase N+1 builds on what Phase N produced — here's what the boundary map says it needs..."
+When moving between gates (implement → verify → context → document → next phase), explain the transition: what gate you're entering, why it exists, and what it catches. Example: "Code is written. Now we verify — type check, lint, tests. This catches errors before they compound into the next phase."
 
 ### Between checklist items:
 

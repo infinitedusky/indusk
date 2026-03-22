@@ -56,7 +56,7 @@ When the work skill is executing an impl and reaches verification items, run che
    - Skip for: markdown changes, config-only changes with no test files
    - Catches: behavioral regressions, broken logic
    - Run affected app's tests, not the full suite
-   - **REQUIRED: Use the code graph to find affected tests** — call `query_dependencies` on the changed file with direction "dependents" to discover which test files import or depend on it. Run those tests specifically rather than guessing. Do not skip this step.
+   - **Use the code graph to find affected tests** — see toolbelt "Before Modifying Code." Call `query_dependencies` with direction "dependents" to find test files that depend on the changed code.
 
 4. **Build** — `pnpm turbo build --filter={app}`
    - Only for: shared package changes, build config changes
@@ -147,3 +147,4 @@ Explicit commands in impl verification sections override auto-discovery. If an i
 - Run checks fastest-first. Stop on first failure — no point linting if types don't compile
 - Three retries max on failure, then escalate to the user
 - When in doubt, run the check. Slow verification beats missed bugs.
+- **Quality pipeline:** verify runs checks → retrospective reviews if new Biome rules should be added → context documents them in CLAUDE.md. See the retrospective skill for the quality ratchet.

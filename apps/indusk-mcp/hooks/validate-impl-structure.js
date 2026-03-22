@@ -205,8 +205,7 @@ for (const phase of phases) {
 		const optOuts = [];
 		if (requirements.verification && phase.hasVerification && phase.verificationIsOptOut)
 			optOuts.push("Verification");
-		if (requirements.context && phase.hasContext && phase.contextIsOptOut)
-			optOuts.push("Context");
+		if (requirements.context && phase.hasContext && phase.contextIsOptOut) optOuts.push("Context");
 		if (requirements.document && phase.hasDocument && phase.documentIsOptOut)
 			optOuts.push("Document");
 		if (optOuts.length > 0) {

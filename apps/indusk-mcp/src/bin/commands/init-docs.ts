@@ -172,10 +172,7 @@ export default {
 
 	// FullscreenDiagram.vue — copy from templates
 	const fullscreenDiagramPath = join(docsDir, "src/.vitepress/components/FullscreenDiagram.vue");
-	const templateComponent = join(
-		projectRoot,
-		"apps/indusk-mcp/templates/FullscreenDiagram.vue",
-	);
+	const templateComponent = join(projectRoot, "apps/indusk-mcp/templates/FullscreenDiagram.vue");
 	// If we have the template in the package, use it; otherwise inline a minimal version
 	if (existsSync(templateComponent)) {
 		const content = readFileSync(templateComponent, "utf-8");

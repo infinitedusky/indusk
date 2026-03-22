@@ -41,7 +41,9 @@ program
 
 program
 	.command("init-docs")
-	.description("Scaffold a VitePress documentation site with Mermaid, llms.txt, and FullscreenDiagram")
+	.description(
+		"Scaffold a VitePress documentation site with Mermaid, llms.txt, and FullscreenDiagram",
+	)
 	.action(async () => {
 		const { initDocs } = await import("./commands/init-docs.js");
 		await initDocs(process.cwd());

@@ -42,12 +42,7 @@ Key sections to fill in honestly:
 
 ### Step 2: Structural Audit (Code Graph)
 
-**REQUIRED:** Before reviewing docs or tests, query the code graph to understand what actually changed:
-
-1. Call `query_dependencies` on the key files from this plan — verify the dependency relationships match what was designed
-2. Call `find_most_complex_functions` — check if the plan introduced high-complexity code that should be refactored
-3. Call `find_dead_code` — check if the plan left behind unused functions from refactoring
-4. Include findings in the retrospective under "What Actually Happened" — e.g., "Plan touched 8 files with 23 downstream dependents"
+**Query the code graph** (see toolbelt "Before Modifying Code") to understand what actually changed. Include structural findings in "What Actually Happened" — e.g., "Plan touched 8 files with 23 downstream dependents." Also check `find_most_complex_functions` and `find_dead_code` for cleanup opportunities.
 
 ### Step 3: Docs Audit
 

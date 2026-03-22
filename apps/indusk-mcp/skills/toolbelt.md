@@ -2,6 +2,23 @@
 
 You have MCP tools from two servers: **indusk** (dev system) and **codegraphcontext** (code graph). This skill tells you when to use them.
 
+## How the Skills Work Together
+
+```
+/plan → creates planning docs (research, brief, ADR, impl)
+                ↓
+/work → executes impl checklist, phase by phase
+         each phase has four gates:
+           implement → verify → context → document → next phase
+         hooks enforce gates — can't skip
+                ↓
+/retrospective → audit, quality ratchet, knowledge handoff, archive
+```
+
+**Process skills**: plan (writes), work (executes), verify (checks), context (remembers), document (records), retrospective (audits), onboard (orients)
+
+**Extensions**: provide tool-specific knowledge (skills), health checks, networking, verification commands. Run `extensions status` to see what's active.
+
 ## Lessons First
 
 The lesson system is how this project teaches you. Before writing any code, **always read the lessons**. They capture hard-won patterns and mistakes from past work — community-wide and personal.
@@ -54,59 +71,13 @@ When you think a phase is complete:
 - Call `get_skill_versions` to check if installed skills are current or outdated.
 - Call `get_system_version` to verify the installed package version.
 
-## Local Development Environment (composable.env)
+## Extensions
 
-composable.env manages Docker-based local development. It builds `.env` files and `docker-compose.yml` from declarative contracts and profiles. The CLI command is `ce` (always use `pnpm ce`, never `npx ce`).
+Tools integrate with indusk-mcp via the extension system. Run `extensions status` to see what's enabled. Run `extensions suggest` to discover what's available for your project.
 
-### When to use composable.env
+Extensions provide skills, health checks, networking, verification commands, and more. See the extension spec docs for details.
 
-| Situation | What to do |
-|-----------|-----------|
-| New app needs Docker for local dev | Create a contract in `env/contracts/`, a component in `env/components/`, add to profile in `env/profiles/` |
-| Setting up a new project | `pnpm ce init` to scaffold the env directory structure |
-| Building environment files | `pnpm env:build` (always run before `docker compose`) |
-| Adding a new service (database, cache, etc.) | Add a contract with `persistent: true` for services that survive rebuilds |
-| Debugging environment issues | `pnpm ce status` to see what's configured |
-
-### How it fits together
-
-composable.env turns this:
-```
-env/
-├── contracts/       # What each app needs (ports, env vars, Docker config)
-├── components/      # Shared env var groups (networking, platform)
-├── profiles/        # Which contracts run together (local, staging, prod)
-└── ce.json          # Root config
-```
-
-Into this:
-```
-docker-compose.yml   # Generated — don't edit directly
-apps/*/. env.local   # Generated — per-app env files
-```
-
-### Key rules
-
-- **Always `pnpm env:build` before `docker compose`** — the generated files must be current
-- **Always `pnpm ce`, never `npx ce`** — the workspace script ensures the right binary
-- **Contracts are declarative** — they describe what an app needs, not how to build it
-- **Persistent services** (`persistent: true`) survive `ce build` cycles — use for databases, FalkorDB, etc.
-- **The docs site Dockerfile is created by `init-docs`** — it uses `docker/Dockerfile.vitepressdev`
-
-### For new projects
-
-When setting up a new project that needs Docker-based local dev:
-
-1. **Install the composable-env skill first**: run `pnpm ce add-skill` to install the composable-env skill to `.claude/skills/composable-env/SKILL.md`
-2. **Read the skill before doing anything**: the composable-env skill has full documentation on contract format, profiles, component composition, and the `ce` CLI commands. Read it completely before creating contracts or running commands.
-3. Then follow the setup:
-   - `pnpm ce init` to scaffold the env directory
-   - Create contracts for each app in `env/contracts/`
-   - Create a `local` profile in `env/profiles/local.json`
-   - `pnpm env:build` to generate docker-compose.yml
-   - `docker compose up`
-
-**Do NOT attempt to use composable.env without reading the skill first.** The contract format, component composition, and profile system have specific rules that aren't obvious. The skill teaches you how it works.
+For composable.env: enable the `composable-env` extension. It provides Docker networking, service topology, and its own skill. **Read the skill before using composable.env** — the contract format has specific rules.
 
 ## Code Graph (CGC Tools)
 
@@ -165,5 +136,5 @@ If the user wants text-based output instead, use `execute_cypher_query` directly
 | **System** | |
 | `get_system_version` | Debugging, version checks |
 | `get_skill_versions` | Checking for outdated process skills |
-| `list_domain_skills` | See available/installed domain skills |
+| `extensions_status` | See available/installed extensions |
 | `check_health` | Session start, debugging connectivity |
