@@ -1,0 +1,6 @@
+{
+	"name": "vitepress",
+	"description": "VitePress patterns — Mermaid diagrams, sidebar config, frontmatter, FullscreenDiagram",
+	"provides": { "skill": true },
+	"detect": { "dependency": "vitepress" }
+}

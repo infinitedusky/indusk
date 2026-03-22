@@ -1,0 +1,6 @@
+{
+	"name": "nextjs",
+	"description": "Next.js 13+ patterns — App Router, server components, caching, performance",
+	"provides": { "skill": true },
+	"detect": { "dependency": "next" }
+}

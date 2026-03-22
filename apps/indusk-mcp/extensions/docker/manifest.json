@@ -1,0 +1,9 @@
+{
+	"name": "docker",
+	"description": "Docker patterns — multi-stage builds, layer caching, security, Alpine gotchas",
+	"provides": {
+		"skill": true,
+		"health_checks": [{ "name": "docker-available", "command": "docker info > /dev/null 2>&1" }]
+	},
+	"detect": { "file_pattern": "Dockerfile*" }
+}

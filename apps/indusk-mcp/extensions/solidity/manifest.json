@@ -1,0 +1,6 @@
+{
+	"name": "solidity",
+	"description": "Solidity patterns — security (reentrancy, overflow), gas optimization, OpenZeppelin",
+	"provides": { "skill": true },
+	"detect": { "file_pattern": "*.sol" }
+}

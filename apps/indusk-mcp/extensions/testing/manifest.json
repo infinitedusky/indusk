@@ -1,0 +1,12 @@
+{
+	"name": "testing",
+	"description": "Testing patterns — arrange-act-assert, test isolation, mocking, common gotchas",
+	"provides": {
+		"skill": true,
+		"verification": [
+			{ "name": "vitest", "command": "npx vitest run", "detect": { "devDependency": "vitest" } },
+			{ "name": "jest", "command": "npx jest", "detect": { "devDependency": "jest" } }
+		]
+	},
+	"detect": { "devDependency": "vitest" }
+}

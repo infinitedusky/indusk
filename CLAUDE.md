@@ -30,7 +30,7 @@ infinitedusky/
 
 **Apps:**
 - **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme (zinc-950 bg, amber-400 accents). Runs in Docker via composable.env for local dev.
-- **indusk-mcp**: InDusk MCP server — dev system tooling with 13 MCP tools (plan, context, quality, document, system). CLI for `init`/`update`. Skills are owned here in `skills/` and installed to `.claude/skills/` via init. Dogfooded in this repo via `.mcp.json`. Will be published as `indusk-mcp`.
+- **indusk-mcp**: InDusk MCP server — dev system tooling with MCP tools, CLI (`init`/`update`/`init-docs`/`extensions`/`check-gates`), skills, hooks, lessons, and extensions. `.indusk/extensions/` holds extension manifests (built-in + third-party). Published as `@infinitedusky/indusk-mcp`.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
 
 **Skills:**
@@ -50,13 +50,14 @@ infinitedusky/
 - **Node 22 required** — Tailwind 4 native bindings need it
 - **Biome for linting and formatting** — NOT ESLint. Single tool, single config. Run `biome check` not `eslint`
 - **composable.env for environment management** — all apps run in Docker containers for local dev. Use `pnpm env:build` before `docker compose`. Use `pnpm ce` for all composable.env commands, never `npx ce`
-- Skills are markdown files in `.claude/skills/{name}/SKILL.md`
+- Skills are markdown files in `.claude/skills/{name}/SKILL.md` — each concept has one canonical skill, others cross-reference
 - Plans follow the lifecycle: research → brief → ADR → impl → retrospective
 - All planning docs live in `planning/{kebab-case-name}/`
 - Every impl phase ends with four gates before advancing: verify → context → document → advance
 - Plan gates are enforced via Claude Code hooks — the agent cannot skip verification/context/document items when advancing phases
 - `.claude/hooks/` contains gate enforcement scripts installed by init (check-gates.js blocks execution, validate-impl-structure.js blocks writing, gate-reminder.js nudges)
 - Every impl phase must have verification, context, and document sections — enforced by hook at write time. Use `(none needed)` or `skip-reason:` to opt out.
+- Health checks, init setup, and verification commands come from extensions — don't hardcode tool knowledge in indusk-mcp
 - Three layers of defense: (1) Context/CLAUDE.md — advisory, (2) Biome rules — enforcement, (3) Hooks — gate enforcement, (4) Retrospective — learning. The quality ratchet only gets tighter.
 - Use the plan skill before implementing significant features — don't jump to code
 - `pnpm test` runs all tests, `pnpm turbo test --filter={app}` for scoped runs. Vitest configs use `passWithNoTests: true`
@@ -80,6 +81,7 @@ infinitedusky/
 - Document skill (per-phase execution gate) + retrospective skill (closing audit with knowledge handoff to VitePress docs) — see `planning/document-skill/adr.md`
 - GSD-inspired: lessons registry, verification auto-discovery, forward intelligence, blocker protocol, workflow templates, boundary maps, domain skills — see `planning/gsd-inspired-improvements/adr.md`
 - Plan gate enforcement via Claude Code PreToolUse hooks — blocks phase transitions with incomplete gates — see `planning/enforce-plan-gates/adr.md`
+- Extension system: one system, two sources (built-in + third-party manifests), replaces domain skills — see `planning/extension-system/adr.md`
 
 ## Known Gotchas
 
@@ -93,6 +95,7 @@ infinitedusky/
 - Biome 2.x API differs from docs/examples: `noVar` doesn't exist, `noUnusedVariables` has no `ignorePattern` option, overrides use `includes` not `include`. Always match schema version to installed version.
 - Impl parser must handle all four gate types per phase: implementation, verification, context, document — not just three
 - Skills in `.claude/skills/` are package-owned — edit in `apps/indusk-mcp/skills/`, then run `update` to sync. Don't edit `.claude/skills/` directly.
+- Domain skills directory (`skills/domain/`) removed — domain skills are now extensions. Use `extensions enable nextjs` not `init --skills nextjs`.
 
 ## Current State
 

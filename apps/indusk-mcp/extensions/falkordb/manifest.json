@@ -1,0 +1,19 @@
+{
+	"name": "falkordb",
+	"description": "FalkorDB graph database — shared global instance for code graph via OrbStack",
+	"provides": {
+		"health_checks": [
+			{
+				"name": "falkordb-container",
+				"command": "docker ps --filter name=falkordb --format '{{.Status}}'"
+			}
+		],
+		"env_vars": {
+			"FALKORDB_HOST": "falkordb.orb.local"
+		}
+	},
+	"hooks": {
+		"on_init": "docker start falkordb 2>/dev/null || docker run -d --name falkordb --restart unless-stopped -v falkordb-global:/data falkordb/falkordb:latest",
+		"on_health_check": "docker ps --filter name=falkordb --format '{{.Status}}'"
+	}
+}

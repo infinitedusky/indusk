@@ -1,0 +1,25 @@
+{
+	"name": "cgc",
+	"description": "CodeGraphContext — structural code intelligence via FalkorDB graph database",
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "cgc-installed",
+				"command": "test -f ~/.local/bin/cgc || test -f /usr/local/bin/cgc"
+			}
+		],
+		"verification": [
+			{
+				"name": "code-graph-indexed",
+				"command": "cgc list"
+			}
+		]
+	},
+	"hooks": {
+		"on_health_check": "test -f ~/.local/bin/cgc || test -f /usr/local/bin/cgc"
+	},
+	"detect": {
+		"file": ".cgcignore"
+	}
+}

@@ -33,7 +33,7 @@ After context items are done, the document gate asks:
 
 **"What should a developer reading this project's docs learn from what this phase built?"**
 
-To answer this accurately, **REQUIRED: call `query_dependencies`** on the key files changed in this phase to understand what was affected and how broadly.
+To answer this accurately, **query the code graph** (see toolbelt "Before Modifying Code") to understand what was affected and how broadly.
 
 For each phase, consider all of these:
 
@@ -62,6 +62,8 @@ apps/indusk-docs/src/
 ├── decisions/       # Distilled from ADRs during retrospective/archival
 └── lessons/         # Distilled from retrospective insights during archival
 ```
+
+**Pipeline:** Document skill writes/updates docs during impl → retrospective skill archives planning artifacts and distills ADRs into decisions/ and insights into lessons/. Don't manually populate decisions/ or lessons/ during impl work — that's the retrospective's job.
 
 ### What Goes Where
 
@@ -92,36 +94,12 @@ The `decisions/` and `lessons/` directories are **not** populated during normal 
 | Data models, entity relationships | `erDiagram` | Database schema |
 | Timelines, project phases | `timeline` | Release milestones |
 
-### Diagram Best Practices
+### Mermaid Rules
 
-- **One concept per diagram.** Don't cram the entire system into one chart. Break complex systems into focused diagrams.
-- **Meaningful labels.** Use full words, not abbreviations. `Plan Skill` not `PS`.
-- **Do not use custom `style`, `classDef`, or `themeVariables` in diagrams.** The docs site supports both light and dark mode. The vitepress-plugin-mermaid auto-switches between Mermaid's `default` (light) and `dark` themes. Hardcoded colors (fills, text colors, borders) that work in one mode will be unreadable in the other. Let the built-in theme handle all colors. If you need visual grouping, use `subgraph` blocks instead of color-coding.
-- **Keep diagrams small enough to read inline** but detailed enough to be useful when expanded.
-- **Mermaid `securityLevel` must be `"strict"`.** Using `"loose"` causes Mermaid to scan the entire page DOM for diagram content, which produces "Syntax error in text" errors in the footer of every page. Always use `"strict"` in the VitePress mermaid config.
-
-### Always Use FullscreenDiagram
-
-Every Mermaid diagram in the docs **must** be wrapped in the `<FullscreenDiagram>` component. This provides expand-to-fullscreen with pan and zoom controls.
-
-```markdown
-<FullscreenDiagram>
-
-```mermaid
-flowchart TD
-  P[Plan] --> W[Work]
-  W --> V{Verify}
-  V -->|pass| CX[Context]
-  CX --> D[Document]
-  D --> W
-  W -->|complete| R[Retrospective]
-  R --> A[Archive]
-```
-
-</FullscreenDiagram>
-```
-
-**Never** use bare ` ```mermaid ` blocks without the wrapper. The diagrams are often too small to read inline, and the FullscreenDiagram gives users zoom and pan controls.
+- One concept per diagram. Meaningful labels (full words, not abbreviations).
+- **No custom colors**: don't use `style`, `classDef`, or `themeVariables`. The plugin auto-switches light/dark themes — hardcoded colors break in the opposite mode. Use `subgraph` for visual grouping.
+- **Security**: `securityLevel: "strict"` in config — this is mandatory, not a preference. Mermaid v10+ has a bug where `"loose"` scans the entire page DOM, producing "Syntax error in text" on every page.
+- **Always wrap in `<FullscreenDiagram>`**: `<FullscreenDiagram>` then the mermaid block then `</FullscreenDiagram>`. Never bare mermaid blocks.
 
 ## Two Documentation Layers
 
@@ -193,15 +171,9 @@ Every phase should produce at minimum a changelog entry. Beyond that, consider: 
 
 The `gate_policy` setting controls whether `(none needed)` is acceptable — in `strict` mode it is not. In `ask` mode, the agent must justify and get user approval before opting out. See the work skill for details.
 
-### Document Items Are Blocking
+### Document gate is blocking
 
-During execution (via the work skill), document items are checked off alongside implementation, verification, and context items. The per-phase completion order is:
-
-```
-implementation items → verification items → context items → document items → advance
-```
-
-A phase is not complete until its document items are done.
+Document items block phase advancement. See work skill "Per-phase completion order" for the full gate cycle. Documentation is blocking because code without docs is invisible to future developers.
 
 ## LLM-Readable Output (llms.txt)
 

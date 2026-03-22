@@ -62,11 +62,14 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - **refactor**: start with brief (includes boundary map)
    - **spike**: start with research (and stop there)
 
-   For feature/spike workflows that start with research: Explore the problem space — read code, search the web, check Context7 for library docs. **REQUIRED: Query the code graph before scoping:**
-   - Call `query_dependencies` on the target area to understand what depends on it and what it depends on
-   - Call `find_code` to find existing implementations you might reuse or need to modify
-   - Call `get_repository_stats` to understand the size of the area you're about to scope
-   - Include the graph findings in research.md — concrete numbers like "X has 12 dependents across 3 apps"
+   **Check for existing research first.** Before writing new research, scan `research/` at the repo root for relevant standalone research docs. If one exists (e.g., `research/auth-options.md`), ask the user: "I found existing research at `research/auth-options.md`. Want to use this as the starting point?" If yes:
+   - Copy it to `planning/{plan-name}/research.md`
+   - Set the frontmatter status to `complete`
+   - Move straight to the brief
+
+   The `research/` directory is for standalone exploration that isn't tied to a plan yet. When it becomes a plan, it moves into the planning folder. The original in `research/` can be deleted or kept as a reference — user's choice.
+
+   For feature/spike workflows that need new research: Explore the problem space — read code, search the web, check Context7 for library docs. **Query the code graph before scoping** (see toolbelt "Before Modifying Code") — include structural findings in research.md with concrete numbers.
    Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
 
 4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. **Present the brief and have a conversation about it.** Don't just ask "does this look good?" — walk the user through it: "Here's what I'm proposing we build. Does this match what you had in mind? Is there anything missing, or anything here you don't want?" Iterate until the user is genuinely happy with the direction, then mark it as `accepted`.
@@ -75,22 +78,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
-   **Gate policy applies when writing impls.** The same `gate_policy` (strict/ask/auto) that governs work execution also governs how the impl is written:
-
-   - **`strict`**: Every phase MUST have all four sections (implementation, verification, context, document) with real items. No `(none needed)` or `skip-reason:`. If a section genuinely doesn't apply, you still must include it with a concrete item.
-   - **`ask`** (default): Every phase MUST have all required sections (per workflow type). If you think a section should be `(none needed)`, ask the user: "Phase 3 Document — I don't think this phase changes anything user-facing. Can I mark it (none needed)?" Only mark it after approval.
-   - **`auto`**: Include all sections, but you can use `(none needed)` or `skip-reason:` based on your judgment without asking.
-
-   Set the policy in the impl frontmatter:
-   ```yaml
-   ---
-   title: "My Plan"
-   gate_policy: ask
-   workflow: feature
-   ---
-   ```
-
-   The `validate-impl-structure` hook enforces this at write time — it will block the impl if sections are missing for the workflow type.
+   **Gate policy applies when writing impls.** Set `gate_policy` in the impl frontmatter (`strict`, `ask`, or `auto`). See the work skill "Gate Override Policy" for what each mode means. The `validate-impl-structure` hook enforces this at write time.
 
 7. **If impl is completed** (all items checked off by `/work`), invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call.)
 

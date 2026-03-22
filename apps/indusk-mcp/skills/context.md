@@ -11,7 +11,7 @@ You know how to maintain project context in this project.
 Context ensures that project knowledge compounds across sessions. It does this in two ways:
 
 1. **Maintains CLAUDE.md** — the living project memory file that Claude Code reads at session start. Context keeps it accurate through three update triggers.
-2. **Shapes impl documents** — when writing an impl, every phase includes a Context section that specifies what CLAUDE.md updates that phase produces.
+2. **Shapes impl documents** — when writing an impl, every phase includes a Context gate that specifies what CLAUDE.md updates that phase produces.
 
 ## CLAUDE.md Structure
 
@@ -78,7 +78,7 @@ After writing a retrospective, read the "Insights Worth Carrying Forward" and "W
 - If it changes the project's architecture or structure → update **Architecture**
 - Update **Current State** to reflect the plan's completion
 - If the retrospective's "Quality Ratchet" section adds a new Biome rule, also add the enforced pattern to **Conventions**
-- **REQUIRED: Query the code graph** — call `query_dependencies` on the key files that changed to verify the Architecture section still reflects reality. If the plan changed how modules connect, update Architecture with the new relationships.
+- **Query the code graph** (see toolbelt "Before Modifying Code") to verify Architecture still reflects reality after the plan's changes.
 
 Do this immediately after writing the retrospective, before moving on.
 
@@ -111,18 +111,14 @@ When invoked as `/context learn "lesson"`, or when you detect you've been correc
 
 ## Shaping Impl Documents
 
-When an agent writes an impl document (via the plan skill), every phase should end with three sections:
+Every impl phase includes a `#### Phase N Context` gate with concrete CLAUDE.md edits. Context items must be specific:
 
-```markdown
-### Phase N: {Name}
-- [ ] {implementation items}
+- `Add to Architecture: new-package exists at packages/new-package, provides X`
+- `Add to Conventions: always use Y pattern when doing Z`
+- `Update Current State: Phase N of {plan} complete`
+- `Add to Known Gotchas: X doesn't work because of Y, use Z instead`
 
-#### Phase N Verification
-- [ ] {prove this phase works — tests, type checks, commands}
-
-#### Phase N Context
-- [ ] {concrete CLAUDE.md edits this phase produces}
-```
+Ask: **"What does this phase change about how the project works?"** If nothing — no context items needed. But the question must be asked.
 
 ### Forward Intelligence
 
@@ -139,26 +135,9 @@ This is not a CLAUDE.md update — it lives in the impl doc itself, after the co
 
 Not every phase produces forward intelligence. Only write it when something is genuinely fragile, risky, or assumption-dependent. Skip the section entirely if there's nothing worth flagging.
 
-### What goes in Phase N Context
+### Context gate is blocking
 
-Context items are concrete, specific CLAUDE.md edits. Not "update CLAUDE.md" — that's too vague. Instead:
-
-- `Add to Architecture: new-package exists at packages/new-package, provides X`
-- `Add to Conventions: always use Y pattern when doing Z`
-- `Update Current State: Phase N of {plan} complete`
-- `Add to Known Gotchas: X doesn't work because of Y, use Z instead`
-
-The agent writing the impl must answer: **"what does this phase change about how the project works, and what should future sessions know about it?"** If the answer is "nothing" — no context items needed. Not every phase produces context. But the question must be asked.
-
-### Context items are blocking
-
-During execution (via the work skill), context items are checked off alongside implementation and verification items. The per-phase completion order is:
-
-```
-implementation items → verification items → context items → advance to next phase
-```
-
-A phase is not complete until its context items are done.
+Context items block phase advancement. See work skill "Per-phase completion order" for the full gate cycle. Context items are blocking because CLAUDE.md is the next session's only memory — incomplete context means the next agent starts from scratch.
 
 ## Important
 

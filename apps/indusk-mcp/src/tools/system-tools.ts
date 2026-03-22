@@ -1,10 +1,10 @@
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { createConnection } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { getEnabledExtensions } from "../lib/extension-loader.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../..");
@@ -46,68 +46,44 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 		"check_health",
 		{
 			description:
-				"Check health of dev system dependencies: FalkorDB connectivity, CGC installation, and Docker container status. Errors indicate the system is degraded.",
+				"Check health of all enabled extensions. Runs health check commands from extension manifests. Errors indicate degraded system.",
 		},
 		async () => {
 			const checks: { name: string; status: "ok" | "error"; detail: string }[] = [];
+			const extensions = getEnabledExtensions(projectRoot);
 
-			// Check FalkorDB TCP connectivity
-			const falkordbHost = process.env.FALKORDB_HOST ?? "falkordb.orb.local";
-			const falkordbPort = Number.parseInt(process.env.FALKORDB_PORT ?? "6379", 10);
-			const falkordbOk = await new Promise<boolean>((resolve) => {
-				const socket = createConnection({ host: falkordbHost, port: falkordbPort }, () => {
-					socket.destroy();
-					resolve(true);
-				});
-				socket.setTimeout(3000);
-				socket.on("timeout", () => {
-					socket.destroy();
-					resolve(false);
-				});
-				socket.on("error", () => {
-					resolve(false);
-				});
-			});
-			checks.push({
-				name: "falkordb",
-				status: falkordbOk ? "ok" : "error",
-				detail: falkordbOk
-					? `Connected to ${falkordbHost}:${falkordbPort}`
-					: `Cannot connect to FalkorDB at ${falkordbHost}:${falkordbPort} — run: docker start falkordb`,
-			});
+			for (const ext of extensions) {
+				const healthChecks = ext.manifest.provides.health_checks ?? [];
+				for (const check of healthChecks) {
+					try {
+						const output = execSync(check.command, {
+							encoding: "utf-8",
+							timeout: 10000,
+							stdio: ["ignore", "pipe", "pipe"],
+							cwd: projectRoot,
+						}).trim();
+						checks.push({
+							name: `${ext.manifest.name}/${check.name}`,
+							status: "ok",
+							detail: output || "ok",
+						});
+					} catch (err: unknown) {
+						const execErr = err as { stderr?: string; message?: string };
+						checks.push({
+							name: `${ext.manifest.name}/${check.name}`,
+							status: "error",
+							detail: execErr.stderr?.trim() || execErr.message || "check failed",
+						});
+					}
+				}
+			}
 
-			// Check CGC installed — cgc prints version to stderr, so check binary exists
-			const cgcPaths = [join(process.env.HOME ?? "", ".local/bin/cgc"), "/usr/local/bin/cgc"];
-			const cgcPath = cgcPaths.find((p) => existsSync(p));
-			checks.push({
-				name: "codegraphcontext",
-				status: cgcPath ? "ok" : "error",
-				detail: cgcPath
-					? `CGC found at ${cgcPath}`
-					: "CGC not found — install via: pipx install codegraphcontext",
-			});
-
-			// Check FalkorDB Docker container
-			let containerRunning = false;
-			try {
-				const ps = execSync('docker ps --filter name=falkordb --format "{{.Status}}"', {
-					encoding: "utf-8",
-					timeout: 5000,
-					stdio: ["ignore", "pipe", "pipe"],
-				}).trim();
-				containerRunning = ps.length > 0;
+			if (checks.length === 0) {
 				checks.push({
-					name: "falkordb-container",
-					status: containerRunning ? "ok" : "error",
-					detail: containerRunning
-						? `Container status: ${ps}`
-						: "FalkorDB container not running — run: docker start falkordb",
-				});
-			} catch {
-				checks.push({
-					name: "falkordb-container",
-					status: "error",
-					detail: "Docker not available or falkordb container not found",
+					name: "extensions",
+					status: "ok",
+					detail:
+						"No extensions with health checks enabled. Run 'extensions enable falkordb cgc' to add checks.",
 				});
 			}
 
@@ -117,7 +93,7 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 				content: [
 					{
 						type: "text" as const,
-						text: JSON.stringify({ healthy, checks }, null, 2),
+						text: JSON.stringify({ healthy, extensions: extensions.length, checks }, null, 2),
 					},
 				],
 				isError: !healthy,
@@ -185,34 +161,23 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 	);
 
 	server.registerTool(
-		"list_domain_skills",
+		"extensions_status",
 		{
 			description:
-				"List available domain skills and which are installed. Domain skills provide technology-specific best practices (nextjs, tailwind, react, solidity, etc.)",
+				"List all extensions (enabled and disabled) with their capabilities. Replaces list_domain_skills.",
 		},
 		async () => {
-			const domainSource = join(packageRoot, "skills/domain");
-			const skillsTarget = join(projectRoot, ".claude/skills");
+			const { loadExtensions } = await import("../lib/extension-loader.js");
+			const all = loadExtensions(projectRoot);
 
-			if (!existsSync(domainSource)) {
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: JSON.stringify({ error: "Domain skills directory not found" }, null, 2),
-						},
-					],
-				};
-			}
-
-			const available = readdirSync(domainSource)
-				.filter((f) => f.endsWith(".md"))
-				.map((f) => {
-					const name = f.replace(".md", "");
-					const targetFile = join(skillsTarget, name, "SKILL.md");
-					const installed = existsSync(targetFile);
-					return { name, installed };
-				});
+			const extensions = all.map((ext) => ({
+				name: ext.manifest.name,
+				description: ext.manifest.description,
+				enabled: ext.enabled,
+				provides: Object.keys(ext.manifest.provides),
+				hasSkill: ext.manifest.provides.skill === true,
+				detect: ext.manifest.detect ?? null,
+			}));
 
 			return {
 				content: [
@@ -220,9 +185,10 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 						type: "text" as const,
 						text: JSON.stringify(
 							{
-								available: available.length,
-								installed: available.filter((s) => s.installed).length,
-								skills: available,
+								total: extensions.length,
+								enabled: extensions.filter((e) => e.enabled).length,
+								disabled: extensions.filter((e) => !e.enabled).length,
+								extensions,
 							},
 							null,
 							2,
