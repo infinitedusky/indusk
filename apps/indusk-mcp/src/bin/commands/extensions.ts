@@ -1,5 +1,13 @@
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	cpSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
@@ -145,22 +153,37 @@ export async function extensionsAdd(
 	let manifestContent: string | null = null;
 
 	if (from.startsWith("npm:")) {
-		// Fetch from npm package
+		// Fetch from npm package by downloading tarball and extracting the manifest
 		const pkg = from.slice(4);
 		try {
-			const result = execSync(`npm pack ${pkg} --dry-run --json 2>/dev/null || echo "[]"`, {
+			// npm pack downloads the tarball to cwd
+			const tmpDir = join(projectRoot, ".indusk/tmp");
+			mkdirSync(tmpDir, { recursive: true });
+			execSync(`npm pack ${pkg} --pack-destination "${tmpDir}"`, {
 				encoding: "utf-8",
 				timeout: 30000,
+				stdio: ["ignore", "pipe", "pipe"],
 			});
-			// Try to read the manifest from the installed package
-			const npmRoot = execSync(`npm root`, { encoding: "utf-8", cwd: projectRoot }).trim();
-			const manifestPath = join(npmRoot, pkg, "indusk-extension.json");
-			if (existsSync(manifestPath)) {
-				manifestContent = readFileSync(manifestPath, "utf-8");
-			} else {
-				console.info(`  ${name}: no indusk-extension.json found in ${pkg}`);
+			// Find the tarball
+			const tarballs = readdirSync(tmpDir).filter((f) => f.endsWith(".tgz"));
+			if (tarballs.length === 0) {
+				console.info(`  ${name}: failed to download ${pkg}`);
 				return;
 			}
+			// Extract indusk-extension.json from the tarball
+			try {
+				manifestContent = execSync(
+					`tar -xzf "${join(tmpDir, tarballs[tarballs.length - 1])}" -O package/indusk-extension.json`,
+					{ encoding: "utf-8", timeout: 10000 },
+				);
+			} catch {
+				console.info(`  ${name}: no indusk-extension.json found in ${pkg}`);
+				// Cleanup
+				rmSync(tmpDir, { recursive: true, force: true });
+				return;
+			}
+			// Cleanup
+			rmSync(tmpDir, { recursive: true, force: true });
 		} catch {
 			console.info(`  ${name}: failed to fetch from npm:${pkg}`);
 			return;

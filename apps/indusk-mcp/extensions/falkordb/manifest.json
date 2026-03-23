@@ -13,7 +13,7 @@
 		}
 	},
 	"hooks": {
-		"on_init": "docker start falkordb 2>/dev/null || docker run -d --name falkordb --restart unless-stopped -v falkordb-global:/data falkordb/falkordb:latest",
+		"on_init": "docker start falkordb 2>/dev/null || docker run -d --name falkordb --restart unless-stopped -v falkordb-global:/var/lib/falkordb/data falkordb/falkordb:latest",
 		"on_health_check": "docker ps --filter name=falkordb --format '{{.Status}}'"
 	}
 }
