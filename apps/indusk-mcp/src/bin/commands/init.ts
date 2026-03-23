@@ -201,7 +201,12 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info("\n[Hooks]");
 	const hooksSource = join(packageRoot, "hooks");
 	const hooksTarget = join(projectRoot, ".claude/hooks");
-	const hookFiles = ["check-gates.js", "gate-reminder.js", "validate-impl-structure.js"];
+	const hookFiles = [
+		"check-gates.js",
+		"gate-reminder.js",
+		"validate-impl-structure.js",
+		"check-catchup.js",
+	];
 
 	if (existsSync(hooksSource)) {
 		mkdirSync(hooksTarget, { recursive: true });
@@ -227,6 +232,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				hooks: [
 					{ type: "command", command: "node .claude/hooks/check-gates.js" },
 					{ type: "command", command: "node .claude/hooks/validate-impl-structure.js" },
+					{ type: "command", command: "node .claude/hooks/check-catchup.js" },
 				],
 			},
 		],
@@ -251,7 +257,8 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 					(h: { command?: string }) =>
 						h.command?.includes("check-gates") ||
 						h.command?.includes("gate-reminder") ||
-						h.command?.includes("validate-impl"),
+						h.command?.includes("validate-impl") ||
+						h.command?.includes("check-catchup"),
 				),
 			);
 			if (!hasOurHook || force) {

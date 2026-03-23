@@ -32,6 +32,16 @@ Create or overwrite `.claude/handoff.md` with:
 
 ## Watch Out For
 {Gotchas the next agent should know. "The FalkorDB graph needs reindexing." "The hooks aren't published yet — version 1.0.3 has them." "Don't touch init.ts until the extension system PR is merged."}
+
+## Catchup Status
+- [ ] handoff
+- [ ] lessons
+- [ ] skills
+- [ ] health
+- [ ] context
+- [ ] plans
+- [ ] extensions
+- [ ] graph
 ```
 
 ## When to Write a Handoff
@@ -48,3 +58,4 @@ Create or overwrite `.claude/handoff.md` with:
 - **Decisions that aren't saved anywhere else MUST go here.** They'll be lost otherwise.
 - **Overwrite the previous handoff.** There's only one — the most recent session's. Old handoffs are consumed by /catchup and don't need to persist.
 - **Keep it short.** This isn't a retrospective. It's a sticky note for the next person.
+- **Always include the Catchup Status section** with all boxes unchecked. This is enforced by a hook — the next session cannot edit or write code until `/catchup` checks off every box. Each step in catchup marks its box when completed.
