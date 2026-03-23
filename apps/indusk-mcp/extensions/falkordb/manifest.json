@@ -6,6 +6,10 @@
 			{
 				"name": "falkordb-container",
 				"command": "docker ps --filter name=falkordb --format '{{.Status}}'"
+			},
+			{
+				"name": "falkordb-connection",
+				"command": "node -e \"const s=require('net').connect(6379,process.env.FALKORDB_HOST||'falkordb.orb.local');s.setTimeout(3000);s.on('connect',()=>{console.log('connected');s.end();process.exit(0)});s.on('error',e=>{console.error(e.message);process.exit(1)});s.on('timeout',()=>{console.error('timeout');process.exit(1)})\""
 			}
 		],
 		"env_vars": {

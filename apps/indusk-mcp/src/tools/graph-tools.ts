@@ -9,23 +9,69 @@ function cgcPath(): string | null {
 	return paths.find((p) => existsSync(p)) ?? null;
 }
 
-function runCgc(args: string, projectRoot: string): string {
+function getFalkorHost(): string {
+	if (process.env.FALKORDB_HOST) return process.env.FALKORDB_HOST;
+
+	// Try OrbStack hostname first, fall back to localhost
+	try {
+		execSync("ping -c 1 -W 1 falkordb.orb.local", {
+			stdio: ["ignore", "ignore", "ignore"],
+			timeout: 2000,
+		});
+		return "falkordb.orb.local";
+	} catch {
+		return "localhost";
+	}
+}
+
+function checkFalkorConnection(host: string): boolean {
+	try {
+		// Fast TCP check — try to connect to Redis port
+		execSync(
+			`node -e "const s=require('net').connect(6379,'${host}');s.setTimeout(2000);s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1));s.on('timeout',()=>process.exit(1))"`,
+			{ timeout: 3000, stdio: ["ignore", "ignore", "ignore"] },
+		);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+function runCgc(
+	args: string,
+	projectRoot: string,
+	options?: { timeout?: number; skipConnectionCheck?: boolean },
+): string {
 	const cgc = cgcPath();
 	if (!cgc) {
 		return JSON.stringify({ error: "CGC not installed — run: pipx install codegraphcontext" });
 	}
 
+	const host = getFalkorHost();
+	const timeout = options?.timeout ?? 15000;
+
+	// Fast pre-check: is FalkorDB reachable?
+	if (!options?.skipConnectionCheck && !checkFalkorConnection(host)) {
+		return JSON.stringify({
+			error: `FalkorDB not reachable at ${host}:6379. Is the container running? Try: docker start falkordb`,
+			host,
+			suggestion:
+				host === "localhost"
+					? "OrbStack not detected. If using OrbStack, ensure it's running."
+					: "Try: docker start falkordb — or check if OrbStack is running.",
+		});
+	}
+
 	try {
 		return execSync(`${cgc} ${args}`, {
 			encoding: "utf-8",
-			timeout: 60000,
+			timeout,
 			stdio: ["ignore", "pipe", "pipe"],
 			cwd: projectRoot,
 			env: {
 				...process.env,
 				DATABASE_TYPE: "falkordb-remote",
-				FALKORDB_HOST: process.env.FALKORDB_HOST ?? "falkordb.orb.local",
-				FALKORDB_PORT: process.env.FALKORDB_PORT ?? "6379",
+				FALKORDB_HOST: host,
 				FALKORDB_GRAPH_NAME: process.env.FALKORDB_GRAPH_NAME ?? basename(projectRoot),
 			},
 		}).trim();
@@ -43,12 +89,18 @@ export function indexProject(projectRoot: string): { success: boolean; output: s
 		return { success: false, output: "CGC not installed — run: pipx install codegraphcontext" };
 	}
 
+	const host = getFalkorHost();
+	if (!checkFalkorConnection(host)) {
+		return {
+			success: false,
+			output: `FalkorDB not reachable at ${host}:6379. Is the container running? Try: docker start falkordb`,
+		};
+	}
+
 	const graphName = process.env.FALKORDB_GRAPH_NAME ?? basename(projectRoot);
+	const hasIgnore = existsSync(join(projectRoot, ".cgcignore"));
 
 	try {
-		// Check if .cgcignore exists
-		const hasIgnore = existsSync(join(projectRoot, ".cgcignore"));
-
 		const output = execSync(`${cgc} index ${projectRoot}`, {
 			encoding: "utf-8",
 			timeout: 120000,
@@ -56,8 +108,7 @@ export function indexProject(projectRoot: string): { success: boolean; output: s
 			env: {
 				...process.env,
 				DATABASE_TYPE: "falkordb-remote",
-				FALKORDB_HOST: process.env.FALKORDB_HOST ?? "falkordb.orb.local",
-				FALKORDB_PORT: process.env.FALKORDB_PORT ?? "6379",
+				FALKORDB_HOST: host,
 				FALKORDB_GRAPH_NAME: graphName,
 			},
 		}).trim();
@@ -356,6 +407,157 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 			const output = runCgc("stats", projectRoot);
 			return {
 				content: [{ type: "text" as const, text: output }],
+			};
+		},
+	);
+
+	server.registerTool(
+		"graph_ensure",
+		{
+			description:
+				"Validate and fix the entire code graph stack: FalkorDB container, CGC connection, repo indexing. Call this during catchup or when graph tools fail. Attempts auto-repair for common issues.",
+		},
+		async () => {
+			const steps: { step: string; status: "ok" | "fixed" | "error"; detail: string }[] = [];
+
+			// 1. Check CGC installed
+			const cgc = cgcPath();
+			if (!cgc) {
+				steps.push({
+					step: "cgc-installed",
+					status: "error",
+					detail: "CGC not installed — run: pipx install codegraphcontext",
+				});
+				return {
+					content: [{ type: "text" as const, text: JSON.stringify({ steps }, null, 2) }],
+					isError: true,
+				};
+			}
+			steps.push({ step: "cgc-installed", status: "ok", detail: cgc });
+
+			// 2. Check FalkorDB container exists and is running
+			try {
+				const status = execSync("docker ps --filter name=falkordb --format '{{.Status}}'", {
+					encoding: "utf-8",
+					timeout: 5000,
+					stdio: ["ignore", "pipe", "pipe"],
+				}).trim();
+
+				if (status) {
+					steps.push({ step: "falkordb-container", status: "ok", detail: status });
+				} else {
+					// Container exists but not running — try to start
+					try {
+						execSync("docker start falkordb", {
+							timeout: 10000,
+							stdio: ["ignore", "pipe", "pipe"],
+						});
+						steps.push({
+							step: "falkordb-container",
+							status: "fixed",
+							detail: "Started existing container",
+						});
+					} catch {
+						// Container doesn't exist — create it
+						try {
+							execSync(
+								"docker run -d --name falkordb --restart unless-stopped -v falkordb-global:/var/lib/falkordb/data falkordb/falkordb:latest",
+								{ timeout: 30000, stdio: ["ignore", "pipe", "pipe"] },
+							);
+							steps.push({
+								step: "falkordb-container",
+								status: "fixed",
+								detail: "Created new container",
+							});
+						} catch (e: unknown) {
+							const err = e as { message?: string };
+							steps.push({
+								step: "falkordb-container",
+								status: "error",
+								detail: err.message ?? "Failed to create container",
+							});
+						}
+					}
+				}
+			} catch {
+				steps.push({
+					step: "falkordb-container",
+					status: "error",
+					detail: "Docker not available — is OrbStack running?",
+				});
+			}
+
+			// 3. Check connectivity
+			const host = getFalkorHost();
+			if (checkFalkorConnection(host)) {
+				steps.push({
+					step: "falkordb-connection",
+					status: "ok",
+					detail: `Connected to ${host}:6379`,
+				});
+			} else {
+				// Wait a moment if we just started the container
+				const justStarted = steps.some(
+					(s) => s.step === "falkordb-container" && s.status === "fixed",
+				);
+				if (justStarted) {
+					await new Promise((r) => setTimeout(r, 3000));
+					if (checkFalkorConnection(host)) {
+						steps.push({
+							step: "falkordb-connection",
+							status: "ok",
+							detail: `Connected to ${host}:6379 (after wait)`,
+						});
+					} else {
+						steps.push({
+							step: "falkordb-connection",
+							status: "error",
+							detail: `Cannot connect to ${host}:6379`,
+						});
+					}
+				} else {
+					steps.push({
+						step: "falkordb-connection",
+						status: "error",
+						detail: `Cannot connect to ${host}:6379`,
+					});
+				}
+			}
+
+			// 4. Check if repo is indexed
+			if (steps.every((s) => s.status !== "error")) {
+				const listOutput = runCgc("list", projectRoot, { skipConnectionCheck: true });
+				if (listOutput.includes(projectRoot) || listOutput.includes(basename(projectRoot))) {
+					steps.push({ step: "repo-indexed", status: "ok", detail: "Repository is indexed" });
+				} else {
+					steps.push({
+						step: "repo-indexed",
+						status: "error",
+						detail: "Repository not indexed — call index_project to index",
+					});
+				}
+			}
+
+			const hasErrors = steps.some((s) => s.status === "error");
+			const hasFixed = steps.some((s) => s.status === "fixed");
+
+			return {
+				content: [
+					{
+						type: "text" as const,
+						text: JSON.stringify(
+							{
+								healthy: !hasErrors,
+								autoRepaired: hasFixed,
+								host,
+								steps,
+							},
+							null,
+							2,
+						),
+					},
+				],
+				isError: hasErrors,
 			};
 		},
 	);

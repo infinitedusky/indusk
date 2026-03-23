@@ -64,7 +64,7 @@ Understand what each skill does and when to use it. You should be able to answer
 **After reviewing, edit the handoff to check off:** `- [x] skills` and `- [x] extensions`
 
 ### 7. Check Code Graph
-Call `graph_stats` to understand the codebase size and structure. This gives you a sense of what's indexed and queryable. If it fails, call `graph_doctor` to diagnose. If FalkorDB is down or the repo isn't indexed, flag it.
+Call `graph_ensure` to validate the entire code graph stack: FalkorDB container, CGC connection, repo indexing. This tool auto-repairs common issues (starts stopped containers, detects the right host). If it reports errors it couldn't fix, tell the user what's wrong and how to fix it. If the repo isn't indexed, call `index_project`.
 
 **After checking, edit the handoff to check off:** `- [x] graph`
 
