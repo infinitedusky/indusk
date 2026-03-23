@@ -63,6 +63,16 @@ apps/indusk-docs/src/
 └── lessons/         # Distilled from retrospective insights during archival
 ```
 
+**CRITICAL: Every new page must be added to the sidebar.** The sidebar is configured in a single file: `apps/indusk-docs/src/.vitepress/config.ts` under `themeConfig.sidebar`. If you create a page but don't add it to the sidebar, it is invisible — users cannot navigate to it. This is the most common documentation mistake.
+
+When you create or move a page:
+1. Write the page content
+2. **Immediately** open `.vitepress/config.ts`
+3. Add the page to the correct sidebar section
+4. Verify the page appears in navigation
+
+Never consider a documentation item complete until the sidebar entry exists.
+
 **Pipeline:** Document skill writes/updates docs during impl → retrospective skill archives planning artifacts and distills ADRs into decisions/ and insights into lessons/. Don't manually populate decisions/ or lessons/ during impl work — that's the retrospective's job.
 
 ### What Goes Where
