@@ -179,13 +179,6 @@ for (const line of lines) {
 }
 if (currentPhase) phases.push(currentPhase);
 
-// Check for opt-out content in gate sections
-// Re-scan to check if sections that exist have (none needed) or skip-reason:
-const isOptedOut = (text) =>
-	text.includes("(none needed)") ||
-	text.includes("(not applicable)") ||
-	text.includes("skip-reason:");
-
 // Validate each phase
 const errors = [];
 for (const phase of phases) {
