@@ -42,6 +42,7 @@ const config = defineConfig({
 			{ text: "Reference", link: "/reference/" },
 			{ text: "Decisions", link: "/decisions/" },
 			{ text: "Lessons", link: "/lessons/" },
+			{ text: "Changelog", link: "/changelog" },
 		],
 
 		sidebar: {

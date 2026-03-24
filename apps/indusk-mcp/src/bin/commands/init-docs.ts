@@ -282,6 +282,16 @@ Insights from building ${projectName}. Each lesson captures what we learned, wha
 `,
 	);
 
+	writeFileSync(
+		join(docsDir, "src/changelog.md"),
+		`# Changelog
+
+All notable changes to ${projectName} are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+## [Unreleased]
+`,
+	);
+
 	// Dockerfile for local dev
 	const dockerDir = join(projectRoot, "docker");
 	mkdirSync(dockerDir, { recursive: true });

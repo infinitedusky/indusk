@@ -241,6 +241,11 @@ export async function extensionsAdd(
 		// leave as-is if parsing fails
 	}
 
+	// If source is npm, install the underlying package
+	if (from.startsWith("npm:")) {
+		installNpmPackage(projectRoot, name, from.slice(4));
+	}
+
 	const targetPath = join(extensionsDir(projectRoot), `${name}.json`);
 	writeFileSync(targetPath, manifestContent);
 	console.info(`  ${name}: added from ${from}`);
@@ -266,6 +271,33 @@ export async function extensionsAdd(
 		}
 	} catch {
 		// ignore parse errors
+	}
+}
+
+function installNpmPackage(projectRoot: string, extName: string, pkg: string): void {
+	const pm = existsSync(join(projectRoot, "pnpm-lock.yaml"))
+		? "pnpm"
+		: existsSync(join(projectRoot, "yarn.lock"))
+			? "yarn"
+			: "npm";
+	const isWorkspace = existsSync(join(projectRoot, "pnpm-workspace.yaml"));
+	const addCmd =
+		pm === "pnpm"
+			? `pnpm add -D ${isWorkspace ? "-w " : ""}${pkg}@latest`
+			: pm === "yarn"
+				? `yarn add -D ${pkg}@latest`
+				: `npm install -D ${pkg}@latest`;
+
+	console.info(`  ${extName}: running ${addCmd}...`);
+	try {
+		execSync(addCmd, {
+			cwd: projectRoot,
+			timeout: 60000,
+			encoding: "utf-8",
+		});
+		console.info(`  ${extName}: package installed`);
+	} catch {
+		console.info(`  ${extName}: auto-install failed. Run manually: ${addCmd}`);
 	}
 }
 
@@ -324,32 +356,7 @@ export async function extensionsUpdate(projectRoot: string, names?: string[]): P
 
 			// If source is npm, update the installed package FIRST so we get the latest
 			if (source.startsWith("npm:")) {
-				const pkg = source.slice(4);
-				// Detect package manager
-				const pm = existsSync(join(projectRoot, "pnpm-lock.yaml"))
-					? "pnpm"
-					: existsSync(join(projectRoot, "yarn.lock"))
-						? "yarn"
-						: "npm";
-				const isWorkspace = existsSync(join(projectRoot, "pnpm-workspace.yaml"));
-				const addCmd =
-					pm === "pnpm"
-						? `pnpm add -D ${isWorkspace ? "-w " : ""}${pkg}@latest`
-						: pm === "yarn"
-							? `yarn add -D ${pkg}@latest`
-							: `npm install -D ${pkg}@latest`;
-
-				console.info(`  ${name}: running ${addCmd}...`);
-				try {
-					execSync(addCmd, {
-						cwd: projectRoot,
-						timeout: 60000,
-						encoding: "utf-8",
-					});
-					console.info(`  ${name}: package updated`);
-				} catch {
-					console.info(`  ${name}: auto-update failed. Run manually: ${addCmd}`);
-				}
+				installNpmPackage(projectRoot, name, source.slice(4));
 			}
 
 			// Then fetch the latest manifest (from the now-updated package)

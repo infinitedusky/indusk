@@ -60,7 +60,8 @@ apps/indusk-docs/src/
 │   ├── skills/      # One page per skill
 │   └── tools/       # One page per tool (Biome, CGC, composable.env)
 ├── decisions/       # Distilled from ADRs during retrospective/archival
-└── lessons/         # Distilled from retrospective insights during archival
+├── lessons/         # Distilled from retrospective insights during archival
+└── changelog.md     # Version history — Added, Changed, Fixed, etc.
 ```
 
 **CRITICAL: Every new page must be added to the sidebar.** The sidebar is configured in a single file: `apps/indusk-docs/src/.vitepress/config.ts` under `themeConfig.sidebar`. If you create a page but don't add it to the sidebar, it is invisible — users cannot navigate to it. This is the most common documentation mistake.
@@ -79,11 +80,29 @@ Never consider a documentation item complete until the sidebar entry exists.
 
 | What changed | Where to document | Doc type |
 |---|---|---|
-| New feature or tool | `reference/` | Reference page |
-| New workflow or process | `guide/` | How-to guide |
-| Configuration change | `reference/` (update existing page) | Reference update |
-| Architecture change | `reference/` + diagram | Reference + diagram |
-| Nothing user-facing | Skip | — |
+| New feature or tool | `reference/` + changelog | Reference page + Added |
+| New workflow or process | `guide/` + changelog | How-to guide + Added |
+| Configuration change | `reference/` (update existing) + changelog | Reference update + Changed |
+| Bug fix | Existing page (if relevant) + changelog | Fixed |
+| Architecture change | `reference/` + diagram + changelog | Reference + diagram + Changed |
+| Nothing user-facing | Skip changelog | — |
+
+### Changelog
+
+The changelog lives at `changelog.md` in the docs site. It uses [Keep a Changelog](https://keepachangelog.com) categories:
+
+- **Added** — new features (from `feature` workflow plans)
+- **Changed** — changes to existing functionality (from `refactor` workflows)
+- **Fixed** — bug fixes (from `bugfix` workflows)
+- **Deprecated** — soon to be removed
+- **Removed** — removed features
+- **Security** — vulnerability fixes
+
+**When to write:** During the Document gate of each phase that changes user-facing behavior. Add the entry under `## [Unreleased]`. At publish time, move Unreleased entries into a versioned section.
+
+**What to write:** One line per change. Human-readable — what users gain, not what code changed. The workflow type from the impl frontmatter tells you the category (feature → Added, bugfix → Fixed, refactor → Changed).
+
+**During planning:** The ADR's Documentation Plan section should include planned changelog entries. This forces you to think about user impact during planning, not after.
 
 ### Decisions and Lessons
 
