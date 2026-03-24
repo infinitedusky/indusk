@@ -1,6 +1,24 @@
 # Dash0 Observability
 
-Dash0 provides access to your OpenTelemetry data — logs, traces, and metrics — directly from Claude Code via its MCP server.
+Dash0 provides access to your OpenTelemetry data — logs, traces, and metrics — via two interfaces: the MCP server (for in-session tool calls) and the CLI (for terminal operations and agent mode).
+
+## Two Interfaces
+
+**MCP Server (remote, streamable HTTP):**
+- Used by Claude Code tools directly during sessions
+- Provides 23 tools for logs, traces, metrics, services
+- Configured in `.mcp.json`
+
+**CLI (`dash0` binary):**
+- Installed via `brew install dash0hq/dash0-cli/dash0`
+- Auto-detects Claude Code and enables agent mode (JSON output, no prompts)
+- Use for: log queries, trace lookups, PromQL metrics, dashboard management, asset deployment
+- Key commands:
+  - `dash0 logs query` — search logs
+  - `dash0 traces get <trace-id>` — fetch trace details
+  - `dash0 metrics instant --query 'sum(...)'` — PromQL queries
+  - `dash0 dashboards list` — view dashboards
+  - `dash0 apply -f assets.yaml` — deploy dashboards, views, checks (GitOps)
 
 ## When to Use Dash0
 
@@ -9,41 +27,50 @@ Dash0 provides access to your OpenTelemetry data — logs, traces, and metrics �
 - **Performance investigation**: query metrics (PromQL) to check latency, throughput, error rates
 - **Deployment verification**: check traces and error rates after deploying a change
 - **During /work verification**: if a verification step involves checking service health, query Dash0
+- **Dashboard management**: use the CLI to create/update dashboards from YAML definitions
 
-## Available Tools (from Dash0 MCP server)
+## When to Use MCP vs CLI
 
-Dash0's MCP server provides 23 tools. The most useful for development:
-
-| Tool | When |
-|------|------|
-| Search logs | Find errors, warnings, or specific log messages |
-| Search traces | Find request traces by service, endpoint, status, or trace ID |
-| Query metrics (PromQL) | Check latency percentiles, error rates, throughput |
-| List services | See what services are sending telemetry |
-| Get trace details | Deep-dive into a specific trace's spans |
+| Task | Use |
+|------|-----|
+| Query logs during a session | MCP tools |
+| Search traces by service or ID | MCP tools |
+| Run PromQL metrics query | Either — MCP for simple, CLI for complex |
+| Deploy dashboard from YAML | CLI (`dash0 apply -f`) |
+| Diagnose a failing service | MCP tools (faster, in-session) |
+| CI/CD observability checks | CLI (scriptable, agent mode) |
+| Get trace details for debugging | Either |
 
 ## Setup
 
-1. Sign up at [dash0.com](https://www.dash0.com)
-2. Get your API token from the Dash0 dashboard
-3. Add the Dash0 MCP server to your `.mcp.json`:
+### MCP Server (enabled automatically by `extensions enable dash0`)
+
+The `.mcp.json` entry is added when you enable the extension:
 
 ```json
-{
-  "mcpServers": {
-    "dash0": {
-      "command": "npx",
-      "args": ["@dash0hq/mcp-server"],
-      "env": {
-        "DASH0_API_TOKEN": "your-token-here",
-        "DASH0_DATASET": "default"
-      }
-    }
+"dash0": {
+  "type": "streamableHttp",
+  "url": "YOUR_ENDPOINT_URL",
+  "headers": {
+    "Authorization": "Bearer YOUR_AUTH_TOKEN"
   }
 }
 ```
 
-4. Enable the extension: `extensions enable dash0`
+Get your endpoint URL and auth token from Dash0: Organization Settings > Endpoints > MCP, and Organization Settings > Auth Tokens.
+
+### CLI
+
+```bash
+brew tap dash0hq/dash0-cli https://github.com/dash0hq/dash0-cli
+brew install dash0hq/dash0-cli/dash0
+
+dash0 config profiles create dev \
+  --api-url https://api.us-west-2.aws.dash0.com \
+  --auth-token YOUR_AUTH_TOKEN
+```
+
+The CLI auto-detects Claude Code sessions and switches to agent mode (JSON output, no confirmation prompts, structured errors on stderr).
 
 ## Workflow Integration
 

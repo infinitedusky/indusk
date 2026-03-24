@@ -43,6 +43,16 @@ export interface ExtensionManifest {
 		on_onboard?: string;
 	};
 	detect?: DetectRule;
+	mcp_server?: {
+		type?: string;
+		url?: string;
+		command?: string;
+		args?: string[];
+		headers?: Record<string, string>;
+		env?: Record<string, string>;
+		env_from_shell?: string[];
+		setup_instructions?: string[];
+	};
 }
 
 export interface LoadedExtension {

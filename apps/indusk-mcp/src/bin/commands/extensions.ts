@@ -126,6 +126,7 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 			console.info(`  ${name}: enabled (built-in)`);
 			runHook(projectRoot, name, "on_init");
 			installSkill(projectRoot, name);
+			installMcpServer(projectRoot, name);
 			continue;
 		}
 
@@ -521,6 +522,48 @@ function runHook(projectRoot: string, name: string, hook: string): void {
 		execSync(command, { cwd: projectRoot, stdio: "inherit", timeout: 30000 });
 	} catch {
 		console.info(`  ${name}: ${hook} hook failed`);
+	}
+}
+
+function installMcpServer(projectRoot: string, name: string): void {
+	const extPath = join(extensionsDir(projectRoot), `${name}.json`);
+	const manifest = loadExtension(extPath);
+	if (!manifest?.mcp_server) return;
+
+	const mcpJsonPath = join(projectRoot, ".mcp.json");
+	let mcpConfig: { mcpServers?: Record<string, unknown> } = {};
+	if (existsSync(mcpJsonPath)) {
+		try {
+			mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
+		} catch {
+			mcpConfig = {};
+		}
+	}
+	if (!mcpConfig.mcpServers) mcpConfig.mcpServers = {};
+
+	if (mcpConfig.mcpServers[name]) {
+		console.info(`  ${name}: .mcp.json entry already exists`);
+	} else {
+		const serverConfig: Record<string, unknown> = {};
+		const srv = manifest.mcp_server;
+		if (srv.type) serverConfig.type = srv.type;
+		if (srv.url) serverConfig.url = srv.url;
+		if (srv.command) serverConfig.command = srv.command;
+		if (srv.args) serverConfig.args = srv.args;
+		if (srv.headers) serverConfig.headers = srv.headers;
+		if (srv.env) serverConfig.env = srv.env;
+		mcpConfig.mcpServers[name] = serverConfig;
+		writeFileSync(mcpJsonPath, JSON.stringify(mcpConfig, null, "\t") + "\n");
+		console.info(`  ${name}: added to .mcp.json`);
+	}
+
+	// Print setup instructions if any
+	if (manifest.mcp_server.setup_instructions) {
+		console.info(`\n  Setup required for ${name}:`);
+		for (const instruction of manifest.mcp_server.setup_instructions) {
+			console.info(`    ${instruction}`);
+		}
+		console.info("");
 	}
 }
 
