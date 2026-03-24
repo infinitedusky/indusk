@@ -372,6 +372,7 @@ export async function extensionsUpdate(projectRoot: string, names?: string[]): P
 		console.info("No third-party extensions to update.");
 	} else {
 		console.info(`\n${updated} extension(s) updated.`);
+		console.info("\n⚠  Restart Claude Code to load the updated extensions.");
 	}
 }
 

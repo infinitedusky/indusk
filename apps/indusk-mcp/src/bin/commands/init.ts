@@ -339,9 +339,10 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 
 	// Summary
 	console.info("\nDone!");
+	console.info("\n⚠  Restart Claude Code to load the updated MCP server and skills.");
 	console.info("\nNext steps:");
-	console.info("  1. Edit CLAUDE.md with your project details");
-	console.info("  2. Enable extensions: extensions enable falkordb cgc typescript");
-	console.info("  3. Start a Claude Code session — MCP tools will be available");
+	console.info("  1. Restart Claude Code");
+	console.info("  2. Edit CLAUDE.md with your project details");
+	console.info("  3. Enable extensions: extensions enable falkordb cgc typescript");
 	console.info("  4. Start planning: /plan your-first-feature");
 }
