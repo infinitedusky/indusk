@@ -321,6 +321,23 @@ export async function extensionsUpdate(projectRoot: string, names?: string[]): P
 
 			console.info(`  ${name}: updating from ${manifest._source}...`);
 			await extensionsAdd(projectRoot, name, manifest._source);
+
+			// If source is npm, also update the installed package
+			if (manifest._source.startsWith("npm:")) {
+				const pkg = manifest._source.slice(4);
+				console.info(`  ${name}: updating npm package ${pkg}...`);
+				try {
+					execSync(`pnpm add ${pkg}@latest`, {
+						cwd: projectRoot,
+						timeout: 60000,
+						stdio: ["ignore", "pipe", "pipe"],
+					});
+					console.info(`  ${name}: package updated`);
+				} catch {
+					console.info(`  ${name}: package update failed — run manually: pnpm add ${pkg}@latest`);
+				}
+			}
+
 			updated++;
 		} catch {
 			console.info(`  ${name}: failed to read manifest`);
