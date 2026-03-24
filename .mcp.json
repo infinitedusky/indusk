@@ -15,6 +15,13 @@
 			"env": {
 				"PROJECT_ROOT": "."
 			}
+		},
+		"dash0": {
+			"type": "streamableHttp",
+			"url": "https://api.europe-west4.gcp.dash0.com/mcp",
+			"headers": {
+				"Authorization": "Bearer auth_WTdiqJdsPrOO2iUQ1yUIzDTuCyY9uVXO"
+			}
 		}
 	}
 }

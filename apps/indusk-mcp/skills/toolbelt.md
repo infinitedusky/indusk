@@ -1,6 +1,18 @@
 # InDusk Toolbelt
 
-You have MCP tools from two servers: **indusk** (dev system) and **codegraphcontext** (code graph). This skill tells you when to use them.
+You have MCP tools from multiple servers. This skill tells you when to use them and how they connect.
+
+## MCP Server Types
+
+There are two types of MCP servers in your `.mcp.json`:
+
+**Command-based** (`"command": "..."`) — a local process that runs on your machine. Examples: indusk, codegraphcontext. These start when Claude Code starts and communicate via stdio.
+
+**Streamable HTTP** (`"type": "streamableHttp"`) — a remote server hosted externally. Example: Dash0. These connect over HTTPS to a URL. No local process, no npm package, no `npx`. They just need a URL and auth credentials in `.mcp.json`.
+
+Both types expose tools the same way — you call them identically. The difference is where they run.
+
+To see which MCP servers and extensions are active, call `extensions_status`.
 
 ## How the Skills Work Together
 

@@ -19,6 +19,19 @@ function run(cmd: string, options?: { stdio?: "ignore" | "pipe" | "inherit" }): 
 	}
 }
 
+function ensureGitignoreMcpJson(projectRoot: string): void {
+	const gitignorePath = join(projectRoot, ".gitignore");
+	if (existsSync(gitignorePath)) {
+		const content = readFileSync(gitignorePath, "utf-8");
+		if (content.includes(".mcp.json")) return;
+		writeFileSync(gitignorePath, `${content.trimEnd()}\n\n# MCP config (contains auth tokens)\n.mcp.json\n`);
+		console.info("  updated: .gitignore (added .mcp.json)");
+	} else {
+		writeFileSync(gitignorePath, "# MCP config (contains auth tokens)\n.mcp.json\n");
+		console.info("  created: .gitignore (with .mcp.json)");
+	}
+}
+
 function createCgcIgnore(projectRoot: string): void {
 	const ignorePath = join(projectRoot, ".cgcignore");
 	if (existsSync(ignorePath)) {
@@ -121,60 +134,49 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		console.info("  create: planning/");
 	}
 
-	// 4. Set up .mcp.json with both indusk and codegraphcontext
+	// 4. Set up MCP servers via claude mcp add
 	console.info("\n[MCP config]");
+
+	// Check which servers already exist
 	const mcpJsonPath = join(projectRoot, ".mcp.json");
-	const induskEntry = {
-		command: "npx",
-		args: ["@infinitedusky/indusk-mcp", "serve"],
-		env: { PROJECT_ROOT: "." },
-	};
-
-	const cgcEntry = {
-		command: "cgc",
-		args: ["mcp", "start"],
-		env: {
-			DATABASE_TYPE: "falkordb-remote",
-			FALKORDB_HOST: "falkordb.orb.local",
-			FALKORDB_GRAPH_NAME: projectName,
-		},
-	};
-
+	let existingServers: Set<string> = new Set();
 	if (existsSync(mcpJsonPath)) {
-		const existing = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
-		let updated = false;
-		existing.mcpServers = existing.mcpServers || {};
+		try {
+			const existing = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
+			existingServers = new Set(Object.keys(existing.mcpServers || {}));
+		} catch {}
+	}
 
-		if (!existing.mcpServers.indusk || force) {
-			existing.mcpServers.indusk = induskEntry;
-			console.info(`  ${existing.mcpServers.indusk ? "overwrite" : "add"}: .mcp.json indusk entry`);
-			updated = true;
-		} else {
-			console.info("  skip: .mcp.json indusk entry (already exists)");
-		}
-
-		if (!existing.mcpServers.codegraphcontext || force) {
-			existing.mcpServers.codegraphcontext = cgcEntry;
-			console.info(
-				`  ${existing.mcpServers.codegraphcontext ? "overwrite" : "add"}: .mcp.json codegraphcontext (graph: ${projectName})`,
+	// Add indusk MCP server (no secrets)
+	if (!existingServers.has("indusk") || force) {
+		try {
+			execSync(
+				`claude mcp add -t stdio -s project -e PROJECT_ROOT=. -- indusk npx @infinitedusky/indusk-mcp serve`,
+				{ cwd: projectRoot, stdio: "pipe", timeout: 10000 },
 			);
-			updated = true;
-		} else {
-			console.info("  skip: .mcp.json codegraphcontext entry (already exists)");
-		}
-
-		if (updated) {
-			writeFileSync(mcpJsonPath, `${JSON.stringify(existing, null, "\t")}\n`);
+			console.info("  added: indusk MCP server (via claude mcp add)");
+		} catch {
+			console.info("  failed: could not add indusk MCP server — run manually:");
+			console.info('    claude mcp add -t stdio -s project -e PROJECT_ROOT=. -- indusk npx @infinitedusky/indusk-mcp serve');
 		}
 	} else {
-		const mcpJson = {
-			mcpServers: {
-				indusk: induskEntry,
-				codegraphcontext: cgcEntry,
-			},
-		};
-		writeFileSync(mcpJsonPath, `${JSON.stringify(mcpJson, null, "\t")}\n`);
-		console.info("  create: .mcp.json (indusk + codegraphcontext)");
+		console.info("  skip: indusk MCP server (already exists)");
+	}
+
+	// Add codegraphcontext MCP server (no secrets)
+	if (!existingServers.has("codegraphcontext") || force) {
+		try {
+			execSync(
+				`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=falkordb.orb.local -e FALKORDB_GRAPH_NAME=${projectName} -- codegraphcontext cgc mcp start`,
+				{ cwd: projectRoot, stdio: "pipe", timeout: 10000 },
+			);
+			console.info(`  added: codegraphcontext MCP server (graph: ${projectName})`);
+		} catch {
+			console.info("  failed: could not add codegraphcontext MCP server — run manually:");
+			console.info(`    claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=falkordb.orb.local -e FALKORDB_GRAPH_NAME=${projectName} -- codegraphcontext cgc mcp start`);
+		}
+	} else {
+		console.info("  skip: codegraphcontext MCP server (already exists)");
 	}
 
 	// 5. Generate .vscode/settings.json
@@ -293,18 +295,34 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 
 	// 8. Create .cgcignore (always overwrite — package-owned)
 	createCgcIgnore(projectRoot);
+	ensureGitignoreMcpJson(projectRoot);
 
 	// 9. Run on_init hooks from enabled extensions
 	console.info("\n[Extension Hooks]");
 	const { getEnabledExtensions } = await import("../../lib/extension-loader.js");
 	const enabledExts = getEnabledExtensions(projectRoot);
+	const builtinExtDir = join(packageRoot, "extensions");
 	for (const ext of enabledExts) {
+		// Re-copy extension skill if force mode
+		const builtinSkill = join(builtinExtDir, ext.manifest.name, "skill.md");
+		const targetSkill = join(projectRoot, ".claude/skills", ext.manifest.name, "SKILL.md");
+		if (existsSync(builtinSkill)) {
+			if (force || !existsSync(targetSkill)) {
+				mkdirSync(join(projectRoot, ".claude/skills", ext.manifest.name), { recursive: true });
+				cpSync(builtinSkill, targetSkill);
+				console.info(`  ${ext.manifest.name}: skill updated`);
+			}
+		}
 		if (ext.manifest.hooks?.on_init) {
 			console.info(`  ${ext.manifest.name}: running on_init...`);
 			const result = run(ext.manifest.hooks.on_init);
 			if (result) {
 				console.info(`  ${ext.manifest.name}: ${result.slice(0, 100)}`);
 			}
+		}
+		// Print setup instructions for extensions with mcp_server
+		if (ext.manifest.mcp_server?.setup_instructions) {
+			console.info(`\n  ${ext.manifest.name}: MCP server setup needed — see .claude/skills/${ext.manifest.name}/SKILL.md for instructions`);
 		}
 	}
 	if (enabledExts.length === 0) {

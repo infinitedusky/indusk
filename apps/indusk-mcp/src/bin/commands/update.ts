@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
+import { loadExtension } from "../../lib/extension-loader.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../../..");
@@ -162,5 +163,66 @@ export async function update(projectRoot: string): Promise<void> {
 		console.info(`\n${hooksUpdated} updated, ${hooksCurrent} current.`);
 	} else {
 		console.info("  hooks not installed (run init to install)");
+	}
+
+	// Sync enabled built-in extensions (manifests, skills, print mcp_server config)
+	console.info("\nChecking for extension updates...\n");
+	const builtinDir = join(packageRoot, "extensions");
+	const enabledDir = join(projectRoot, ".indusk/extensions");
+
+	let extUpdated = 0;
+	let extCurrent = 0;
+
+	if (existsSync(builtinDir) && existsSync(enabledDir)) {
+		const enabledFiles = readdirSync(enabledDir).filter(
+			(f: string) => f.endsWith(".json") && !f.startsWith("."),
+		);
+
+		for (const file of enabledFiles) {
+			const name = file.replace(".json", "");
+			const builtinManifest = join(builtinDir, name, "manifest.json");
+			const enabledManifest = join(enabledDir, file);
+
+			// Only sync built-in extensions (skip third-party)
+			if (!existsSync(builtinManifest)) continue;
+
+			const sourceH = fileHash(builtinManifest);
+			const targetH = fileHash(enabledManifest);
+
+			if (sourceH !== targetH) {
+				cpSync(builtinManifest, enabledManifest);
+				console.info(`  updated: ${name} manifest`);
+				extUpdated++;
+			} else {
+				console.info(`  current: ${name}`);
+				extCurrent++;
+			}
+
+			// Sync extension skill
+			const builtinSkill = join(builtinDir, name, "skill.md");
+			const targetSkill = join(skillsTarget, name, "SKILL.md");
+			if (existsSync(builtinSkill) && existsSync(targetSkill)) {
+				const skillSourceH = fileHash(builtinSkill);
+				const skillTargetH = fileHash(targetSkill);
+				if (skillSourceH !== skillTargetH) {
+					cpSync(builtinSkill, targetSkill);
+					console.info(`  updated: ${name} skill`);
+				}
+			} else if (existsSync(builtinSkill) && !existsSync(targetSkill)) {
+				mkdirSync(join(skillsTarget, name), { recursive: true });
+				cpSync(builtinSkill, targetSkill);
+				console.info(`  added: ${name} skill`);
+			}
+
+			// Print setup reference for extensions with mcp_server
+			const manifest = loadExtension(enabledManifest);
+			if (manifest?.mcp_server?.setup_instructions) {
+				console.info(`  ${name}: MCP server setup — see .claude/skills/${name}/SKILL.md`);
+			}
+		}
+
+		console.info(`\n${extUpdated} updated, ${extCurrent} current.`);
+	} else {
+		console.info("  no extensions enabled");
 	}
 }

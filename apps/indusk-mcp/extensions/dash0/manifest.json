@@ -15,7 +15,7 @@
 		]
 	},
 	"mcp_server": {
-		"type": "streamableHttp",
+		"type": "http",
 		"url": "DASH0_ENDPOINT_MCP",
 		"headers": {
 			"Authorization": "Bearer DASH0_AUTH_TOKEN"
