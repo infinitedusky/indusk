@@ -332,10 +332,10 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	}
 
-	// 11. Suggest extensions
+	// 11. Auto-enable detected extensions
 	console.info("\n[Extensions]");
-	const { extensionsSuggest } = await import("./extensions.js");
-	await extensionsSuggest(projectRoot);
+	const { autoEnableExtensions } = await import("./extensions.js");
+	await autoEnableExtensions(projectRoot);
 
 	// Summary
 	console.info("\nDone!");
@@ -343,6 +343,5 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info("\nNext steps:");
 	console.info("  1. Restart Claude Code");
 	console.info("  2. Edit CLAUDE.md with your project details");
-	console.info("  3. Enable extensions: extensions enable falkordb cgc typescript");
-	console.info("  4. Start planning: /plan your-first-feature");
+	console.info("  3. Start planning: /plan your-first-feature");
 }

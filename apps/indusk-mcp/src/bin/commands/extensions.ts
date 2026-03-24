@@ -413,6 +413,20 @@ export async function extensionsSuggest(projectRoot: string): Promise<void> {
 				}
 			}
 		}
+
+		if (ext.detect.mcp_server) {
+			try {
+				const mcpPath = join(projectRoot, ".mcp.json");
+				if (existsSync(mcpPath)) {
+					const mcp = JSON.parse(readFileSync(mcpPath, "utf-8"));
+					if (mcp.mcpServers?.[ext.detect.mcp_server]) {
+						suggestions.push({ name: ext.name, reason: `${ext.detect.mcp_server} in .mcp.json` });
+					}
+				}
+			} catch {
+				// ignore
+			}
+		}
 	}
 
 	if (suggestions.length === 0) {
@@ -425,6 +439,73 @@ export async function extensionsSuggest(projectRoot: string): Promise<void> {
 		console.info(`  ${s.name} — ${s.reason}`);
 	}
 	console.info(`\nEnable with: extensions enable ${suggestions.map((s) => s.name).join(" ")}`);
+}
+
+export async function autoEnableExtensions(projectRoot: string): Promise<void> {
+	const builtins = getBuiltinExtensions();
+	let enabled = 0;
+
+	for (const ext of builtins) {
+		if (isEnabled(projectRoot, ext.name)) continue;
+		if (!ext.detect) continue;
+
+		let detected = false;
+		let reason = "";
+
+		if (ext.detect.file && existsSync(join(projectRoot, ext.detect.file))) {
+			detected = true;
+			reason = `${ext.detect.file} found`;
+		}
+
+		if (!detected && ext.detect.file_pattern) {
+			const matches = globSync(ext.detect.file_pattern, { cwd: projectRoot, maxDepth: 3 });
+			if (matches.length > 0) {
+				detected = true;
+				reason = `${ext.detect.file_pattern} found`;
+			}
+		}
+
+		if (!detected && (ext.detect.dependency || ext.detect.devDependency)) {
+			const pkgPath = join(projectRoot, "package.json");
+			if (existsSync(pkgPath)) {
+				const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+				const deps = pkg.dependencies ?? {};
+				const devDeps = pkg.devDependencies ?? {};
+				if (ext.detect.dependency && deps[ext.detect.dependency]) {
+					detected = true;
+					reason = `${ext.detect.dependency} in dependencies`;
+				} else if (ext.detect.devDependency && devDeps[ext.detect.devDependency]) {
+					detected = true;
+					reason = `${ext.detect.devDependency} in devDependencies`;
+				}
+			}
+		}
+
+		if (!detected && ext.detect.mcp_server) {
+			try {
+				const mcpPath = join(projectRoot, ".mcp.json");
+				if (existsSync(mcpPath)) {
+					const mcp = JSON.parse(readFileSync(mcpPath, "utf-8"));
+					if (mcp.mcpServers?.[ext.detect.mcp_server]) {
+						detected = true;
+						reason = `${ext.detect.mcp_server} in .mcp.json`;
+					}
+				}
+			} catch {
+				// ignore parse errors
+			}
+		}
+
+		if (detected) {
+			await extensionsEnable(projectRoot, [ext.name]);
+			console.info(`    (detected: ${reason})`);
+			enabled++;
+		}
+	}
+
+	if (enabled === 0) {
+		console.info("  No new extensions detected.");
+	}
 }
 
 // --- Helpers ---

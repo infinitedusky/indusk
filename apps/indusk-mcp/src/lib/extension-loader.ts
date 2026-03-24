@@ -8,6 +8,7 @@ export interface DetectRule {
 	file_pattern?: string;
 	dependency?: string;
 	devDependency?: string;
+	mcp_server?: string;
 }
 
 export interface HealthCheck {

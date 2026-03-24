@@ -1,0 +1,19 @@
+{
+	"name": "dash0",
+	"description": "Dash0 observability — query logs, traces, and metrics from your OpenTelemetry data via MCP",
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "dash0-mcp-configured",
+				"command": "node -e \"const m=JSON.parse(require('fs').readFileSync('.mcp.json','utf-8'));process.exit(m.mcpServers?.dash0 ? 0 : 1)\""
+			}
+		]
+	},
+	"hooks": {
+		"on_init": "echo 'Dash0 extension enabled. Configure the Dash0 MCP server in .mcp.json if not already present.'"
+	},
+	"detect": {
+		"mcp_server": "dash0"
+	}
+}
