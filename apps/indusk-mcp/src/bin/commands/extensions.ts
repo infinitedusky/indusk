@@ -319,28 +319,45 @@ export async function extensionsUpdate(projectRoot: string, names?: string[]): P
 				continue;
 			}
 
-			console.info(`  ${name}: updating from ${manifest._source}...`);
-			await extensionsAdd(projectRoot, name, manifest._source);
+			const source = manifest._source;
+			console.info(`  ${name}: updating from ${source}...`);
 
-			// If source is npm, also update the installed package
-			if (manifest._source.startsWith("npm:")) {
-				const pkg = manifest._source.slice(4);
-				console.info(`  ${name}: updating npm package ${pkg}...`);
+			// If source is npm, update the installed package FIRST so we get the latest
+			if (source.startsWith("npm:")) {
+				const pkg = source.slice(4);
+				// Detect package manager
+				const pm = existsSync(join(projectRoot, "pnpm-lock.yaml"))
+					? "pnpm"
+					: existsSync(join(projectRoot, "yarn.lock"))
+						? "yarn"
+						: "npm";
+				const isWorkspace = existsSync(join(projectRoot, "pnpm-workspace.yaml"));
+				const addCmd =
+					pm === "pnpm"
+						? `pnpm add -D ${isWorkspace ? "-w " : ""}${pkg}@latest`
+						: pm === "yarn"
+							? `yarn add -D ${pkg}@latest`
+							: `npm install -D ${pkg}@latest`;
+
+				console.info(`  ${name}: running ${addCmd}...`);
 				try {
-					execSync(`pnpm add ${pkg}@latest`, {
+					execSync(addCmd, {
 						cwd: projectRoot,
 						timeout: 60000,
-						stdio: ["ignore", "pipe", "pipe"],
+						encoding: "utf-8",
 					});
 					console.info(`  ${name}: package updated`);
 				} catch {
-					console.info(`  ${name}: package update failed — run manually: pnpm add ${pkg}@latest`);
+					console.info(`  ${name}: auto-update failed. Run manually: ${addCmd}`);
 				}
 			}
 
+			// Then fetch the latest manifest (from the now-updated package)
+			await extensionsAdd(projectRoot, name, source);
 			updated++;
-		} catch {
-			console.info(`  ${name}: failed to read manifest`);
+		} catch (e: unknown) {
+			const err = e as { message?: string };
+			console.info(`  ${name}: failed to read manifest: ${err.message ?? "unknown"}`);
 		}
 	}
 
