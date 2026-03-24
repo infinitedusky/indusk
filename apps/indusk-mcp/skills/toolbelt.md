@@ -10,7 +10,7 @@ You have MCP tools from two servers: **indusk** (dev system) and **codegraphcont
 /work → executes impl checklist, phase by phase
          each phase has four gates:
            implement → verify → context → document → next phase
-         hooks enforce gates — can't skip
+         hooks enforce gates — can't skip (see Gate Policy below)
                 ↓
 /retrospective → audit, quality ratchet, knowledge handoff, archive
 ```
@@ -51,6 +51,18 @@ While executing impl items:
 - After completing verification items, call `quality_check` to confirm Biome passes.
 - After completing context items, call `get_context` to verify CLAUDE.md was updated correctly.
 - After completing document items, call `list_docs` to verify the doc page exists.
+
+## Gate Policy
+
+Gates prevent skipping important work. Three enforcement levels, set via `gate_policy` in impl frontmatter or `.claude/settings.json`:
+
+| Mode | Writing the impl (`/plan`) | Executing the impl (`/work`) |
+|------|---------------------------|------------------------------|
+| **`strict`** | Every gate must have a real item. No `(none needed)`. | Every item must be completed. No skipping. |
+| **`ask`** (default) | Every gate must have a real item. No `(none needed)`. | Skip only with conversation proof: `(none needed — asked: "..." — user: "...")` |
+| **`auto`** | `(none needed)` / `skip-reason:` allowed at write time. | Skip without asking using `(none needed)` or `skip-reason:`. |
+
+Hooks enforce both stages. See the work skill "Gate Override Policy" for full details.
 
 ## Advancing Phases
 

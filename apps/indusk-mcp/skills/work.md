@@ -69,9 +69,9 @@ Three modes, configured via `gate_policy` in the impl frontmatter or `.claude/se
 
 | Mode | Behavior |
 |------|----------|
-| **`strict`** | No overrides. Every gate item must be completed. `(none needed)` and `skip-reason:` are not accepted. Use for critical work where nothing should be skipped. |
-| **`ask`** (default) | Agent must ask the user before skipping any gate item. The agent explains why it wants to skip and waits for approval. Only after the user says yes can it mark with `skip-reason:`. |
-| **`auto`** | Agent can skip with `skip-reason:` without asking. Use when running autonomously or when you trust the agent's judgment. |
+| **`strict`** | No overrides at any stage. Every gate must have a real item when the impl is written (`/plan`), and every item must be completed during `/work`. No `(none needed)`, no `skip-reason:`, no conversation proof. |
+| **`ask`** (default) | Every gate must have a real item when the impl is written. During `/work`, the agent must ask the user before skipping, and include proof of the conversation in the skip format. Hooks enforce both stages. |
+| **`auto`** | Gates can be pre-filled with `(none needed)` or `skip-reason:` at write time. During `/work`, the agent can skip without asking. Use when running autonomously. |
 
 ### How to set the mode
 
@@ -100,14 +100,30 @@ Priority: per-invocation > per-plan > per-project > default (`ask`).
 
 When the agent encounters a gate item it thinks should be skipped:
 
-> "Phase 2 has a Document gate: 'Write reference page for the new API.' I don't think this phase needs a new docs page because we only changed internal implementation — the public API didn't change. Can I mark this as `skip-reason: internal change, no public API change`?"
+> "Phase 2 has a Document gate: 'Write reference page for the new API.' I don't think this phase needs a new docs page because we only changed internal implementation — the public API didn't change. Can I skip the document gate?"
 
 The user can say:
-- **"yes"** — agent marks it with skip-reason and continues
+- **"yes, skip it"** — agent marks it with conversation proof and continues
 - **"no, do it"** — agent completes the gate item
-- **"no, but mark it (none needed)"** — if the gate truly doesn't apply
 
-**The agent must NEVER skip a gate without asking in `ask` mode.** This is the core enforcement. The hooks block unauthorized skips, and the skill enforces the conversation.
+### Conversation proof format (enforced by hooks)
+
+In `ask` mode, skipped gates MUST include proof that the conversation happened:
+
+```markdown
+#### Phase 2 Document
+- [x] (none needed — asked: "Phase 2 is internal refactoring with no public API changes. Can I skip the document gate?" — user: "yes, skip it")
+```
+
+The hook validates that both `asked:` and `user:` are present with non-empty quoted content. Bare `(none needed)` or `skip-reason:` without conversation proof will be **blocked by the hook**.
+
+| Mode | At write time (`/plan`) | At execution time (`/work`) |
+|------|------------------------|---------------------------|
+| `strict` | No opt-outs — real items required | No skipping — everything completed |
+| `ask` | No opt-outs — real items required | Skip only with conversation proof |
+| `auto` | `(none needed)` / `skip-reason:` allowed | Skip without asking |
+
+**The agent must NEVER skip a gate without asking in `ask` mode.** This is enforced by hooks at both stages — not just instructional.
 
 11. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
    - Run checks in order: type check → lint → affected tests → build. Skip checks that don't apply (see verify skill's skip logic table).

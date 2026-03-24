@@ -25,6 +25,7 @@ export interface ExtensionManifest {
 	name: string;
 	description: string;
 	version?: string;
+	_source?: string;
 	provides: {
 		skill?: boolean;
 		networking?: { env_file?: string; command?: string; description?: string };
@@ -36,6 +37,7 @@ export interface ExtensionManifest {
 	hooks?: {
 		on_init?: string;
 		on_update?: string;
+		on_post_update?: string;
 		on_health_check?: string;
 		on_onboard?: string;
 	};

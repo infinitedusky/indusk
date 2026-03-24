@@ -216,11 +216,25 @@ for (const item of newlyChecked) {
 	for (const phase of oldPhases) {
 		if (phase.number >= item.phase) break;
 
-		const isOverridden = (text) =>
-			gatePolicy !== "strict" &&
-			(text.includes("(none needed)") ||
+		const isOverridden = (text) => {
+			if (gatePolicy === "strict") return false;
+
+			const hasBareOptOut =
+				text.includes("(none needed)") ||
 				text.includes("(not applicable)") ||
-				text.includes("skip-reason:"));
+				text.includes("skip-reason:");
+
+			if (gatePolicy === "auto") return hasBareOptOut;
+
+			// ask mode: requires conversation proof
+			// Format: (none needed — asked: "{question}" — user: "{answer}")
+			const hasConversationProof =
+				/\(none needed\s*—\s*asked:\s*"[^"]+"\s*—\s*user:\s*"[^"]+"\)/.test(text) ||
+				/\(not applicable\s*—\s*asked:\s*"[^"]+"\s*—\s*user:\s*"[^"]+"\)/.test(text) ||
+				/skip-reason:.*—\s*asked:\s*"[^"]+"\s*—\s*user:\s*"[^"]+"/.test(text);
+
+			return hasConversationProof;
+		};
 
 		const uncheckedGates = phase.items.filter(
 			(i) => !i.checked && !isOverridden(i.text) && requiredGates.includes(i.gate),
@@ -231,7 +245,9 @@ for (const item of newlyChecked) {
 			const skipHint =
 				gatePolicy === "strict"
 					? "Gate policy is 'strict' — no overrides allowed.\n"
-					: "To skip a gate item, ask the user first, then mark with (none needed) or skip-reason: {why}\n";
+					: gatePolicy === "ask"
+						? 'Gate policy is \'ask\' — to skip, you must ask the user and include proof.\nFormat: (none needed — asked: "your question" — user: "their answer")\n'
+						: "To skip a gate item, mark with (none needed) or skip-reason: {why}\n";
 			process.stderr.write(
 				`Phase ${item.phase} blocked (policy: ${gatePolicy}): complete Phase ${phase.number} gates first:\n${missing}\n${skipHint}`,
 			);

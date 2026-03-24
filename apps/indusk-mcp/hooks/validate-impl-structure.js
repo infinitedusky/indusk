@@ -194,7 +194,9 @@ for (const phase of phases) {
 	}
 
 	// In strict mode, opt-outs are not allowed — sections must have real items
-	if (gatePolicy === "strict") {
+	// In ask mode, opt-outs are not allowed at write time — every gate must have a real item
+	// Opt-outs only happen during /work (execution time), not during /plan (write time)
+	if (gatePolicy === "strict" || gatePolicy === "ask") {
 		const optOuts = [];
 		if (requirements.verification && phase.hasVerification && phase.verificationIsOptOut)
 			optOuts.push("Verification");
@@ -202,8 +204,12 @@ for (const phase of phases) {
 		if (requirements.document && phase.hasDocument && phase.documentIsOptOut)
 			optOuts.push("Document");
 		if (optOuts.length > 0) {
+			const modeHint =
+				gatePolicy === "strict"
+					? "strict mode — no opt-outs allowed"
+					: "ask mode — every gate must have a real item when the impl is written. Opt-outs happen during /work after asking the user";
 			errors.push(
-				`Phase ${phase.number} (${phase.name}): ${optOuts.join(", ")} cannot use opt-outs in strict mode — add real items`,
+				`Phase ${phase.number} (${phase.name}): ${optOuts.join(", ")} cannot use opt-outs at write time (${modeHint})`,
 			);
 		}
 	}
@@ -217,7 +223,9 @@ if (errors.length > 0) {
 	const skipHint =
 		gatePolicy === "strict"
 			? "Gate policy is 'strict' — all sections must have real items, no overrides.\n"
-			: "If a section isn't needed, add it with (none needed) or skip-reason: {why}\nExample: #### Phase 1 Document\\n(none needed)\n";
+			: gatePolicy === "ask"
+				? "Gate policy is 'ask' — every gate must have a real item when writing the impl. Opt-outs happen during /work after asking the user.\n"
+				: "If a section isn't needed, add it with (none needed) or skip-reason: {why}\nExample: #### Phase 1 Document\\n(none needed)\n";
 	process.stderr.write(
 		`Impl structure incomplete (workflow: ${workflow}, policy: ${gatePolicy}):\n${msg}\n\nThis workflow requires: ${reqNames.join(", ")} sections per phase.\n${skipHint}To change requirements, add 'workflow: bugfix' to the impl frontmatter.\n`,
 	);

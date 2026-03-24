@@ -78,7 +78,11 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
-   **Gate policy applies when writing impls.** Set `gate_policy` in the impl frontmatter (`strict`, `ask`, or `auto`). See the work skill "Gate Override Policy" for what each mode means. The `validate-impl-structure` hook enforces this at write time.
+   **Gate policy applies when writing impls.** Set `gate_policy` in the impl frontmatter (`strict`, `ask`, or `auto`). The `validate-impl-structure` hook enforces this at write time:
+   - **`strict` / `ask`**: Every gate section (Verification, Context, Document) must have a real item — `(none needed)` and `skip-reason:` are blocked at write time. Opt-outs only happen during `/work` execution.
+   - **`auto`**: Gate sections can be pre-filled with `(none needed)` or `skip-reason:` at write time.
+
+   Default is `ask`. See the work skill "Gate Override Policy" for full details on what each mode enforces at execution time.
 
 7. **If impl is completed** (all items checked off by `/work`), invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call.)
 
@@ -192,6 +196,22 @@ because **{rationale}**.
 - {Tradeoff}
 ### Risks
 - {Risk and mitigation}
+
+## Documentation Plan
+{Decide upfront what documentation this feature produces. This shapes the Document gates in the impl.}
+
+### Pages
+- {New page or existing page to update — e.g., "New: reference/tools/settlement-api.md", "Update: guide/getting-started.md"}
+
+### Diagrams
+- {What diagrams are needed — e.g., "Architecture diagram showing settlement flow", "Sequence diagram for agent registration"}
+- {Where they go — e.g., "Mermaid in reference/tools/settlement-api.md", "Standalone in guide/architecture.md"}
+
+### Changelog
+- {What changelog entry — e.g., "Added settlement API with EIP-712 receipts"}
+
+### ADR in Docs
+- {Should this ADR be published to the docs site? If yes, which section — e.g., "decisions/settlement-architecture.md"}
 
 ## References
 - {Links to research, brief, related plans, external resources}

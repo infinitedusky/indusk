@@ -89,6 +89,14 @@ ext
 	});
 
 ext
+	.command("update [names...]")
+	.description("Update third-party extensions from their original source")
+	.action(async (names: string[]) => {
+		const { extensionsUpdate } = await import("./commands/extensions.js");
+		await extensionsUpdate(process.cwd(), names);
+	});
+
+ext
 	.command("suggest")
 	.description("Recommend extensions based on project contents")
 	.action(async () => {

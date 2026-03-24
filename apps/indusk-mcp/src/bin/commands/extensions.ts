@@ -94,7 +94,9 @@ export async function extensionsStatus(projectRoot: string): Promise<void> {
 						.join(", ")}`;
 		}
 
-		console.info(`  ${ext.manifest.name} — ${healthStatus}`);
+		const source = ext.manifest._source ? ` (from ${ext.manifest._source})` : " (built-in)";
+
+		console.info(`  ${ext.manifest.name}${source} — ${healthStatus}`);
 	}
 }
 
@@ -230,9 +232,41 @@ export async function extensionsAdd(
 		return;
 	}
 
+	// Store the source in the manifest so `extensions update` can re-fetch
+	try {
+		const parsed = JSON.parse(manifestContent);
+		parsed._source = from;
+		manifestContent = JSON.stringify(parsed, null, "\t");
+	} catch {
+		// leave as-is if parsing fails
+	}
+
 	const targetPath = join(extensionsDir(projectRoot), `${name}.json`);
 	writeFileSync(targetPath, manifestContent);
 	console.info(`  ${name}: added from ${from}`);
+
+	// Run post-update hook if defined
+	try {
+		const manifest = JSON.parse(manifestContent);
+		if (manifest.hooks?.on_post_update) {
+			console.info(`  ${name}: running post-update hook...`);
+			try {
+				execSync(manifest.hooks.on_post_update, {
+					cwd: projectRoot,
+					timeout: 30000,
+					stdio: ["ignore", "pipe", "pipe"],
+				});
+				console.info(`  ${name}: post-update hook completed`);
+			} catch (e: unknown) {
+				const err = e as { stderr?: string };
+				console.info(
+					`  ${name}: post-update hook failed: ${err.stderr?.trim() ?? "unknown error"}`,
+				);
+			}
+		}
+	} catch {
+		// ignore parse errors
+	}
 }
 
 export async function extensionsRemove(projectRoot: string, names: string[]): Promise<void> {
@@ -256,6 +290,47 @@ export async function extensionsRemove(projectRoot: string, names: string[]): Pr
 			rmSync(skillDir, { recursive: true });
 			console.info(`  ${name}: skill removed from .claude/skills/`);
 		}
+	}
+}
+
+export async function extensionsUpdate(projectRoot: string, names?: string[]): Promise<void> {
+	const extDir = extensionsDir(projectRoot);
+	if (!existsSync(extDir)) {
+		console.info("No extensions installed.");
+		return;
+	}
+
+	// Find all third-party extensions (ones with _source)
+	const files = readdirSync(extDir).filter((f) => f.endsWith(".json"));
+	let updated = 0;
+
+	for (const file of files) {
+		const name = file.replace(".json", "");
+		if (names?.length && !names.includes(name)) continue;
+
+		try {
+			const manifest = JSON.parse(readFileSync(join(extDir, file), "utf-8"));
+			if (!manifest._source) {
+				if (names && names.includes(name)) {
+					console.info(
+						`  ${name}: built-in extension — updated via package update, not extensions update`,
+					);
+				}
+				continue;
+			}
+
+			console.info(`  ${name}: updating from ${manifest._source}...`);
+			await extensionsAdd(projectRoot, name, manifest._source);
+			updated++;
+		} catch {
+			console.info(`  ${name}: failed to read manifest`);
+		}
+	}
+
+	if (updated === 0) {
+		console.info("No third-party extensions to update.");
+	} else {
+		console.info(`\n${updated} extension(s) updated.`);
 	}
 }
 
