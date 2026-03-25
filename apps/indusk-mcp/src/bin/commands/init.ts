@@ -225,8 +225,25 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	}
 
-	// Merge hook config into .claude/settings.json
+	// Merge hook config + permissions into .claude/settings.json
 	const claudeSettingsPath = join(projectRoot, ".claude/settings.json");
+	const catchupPermissions = [
+		"mcp__indusk__list_lessons",
+		"mcp__indusk__check_health",
+		"mcp__indusk__get_context",
+		"mcp__indusk__list_plans",
+		"mcp__indusk__extensions_status",
+		"mcp__indusk__graph_ensure",
+		"mcp__indusk__graph_stats",
+		"mcp__indusk__get_system_version",
+		"mcp__indusk__get_skill_versions",
+		"mcp__indusk__index_project",
+		"mcp__indusk__graph_doctor",
+		"mcp__codegraphcontext__get_repository_stats",
+		"mcp__codegraphcontext__list_indexed_repositories",
+		"Read(.claude/handoff.md)",
+		"Edit(.claude/handoff.md)",
+	];
 	const hookConfig = {
 		PreToolUse: [
 			{
@@ -249,6 +266,18 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	if (existsSync(claudeSettingsPath)) {
 		const existing = JSON.parse(readFileSync(claudeSettingsPath, "utf-8"));
 		existing.hooks = existing.hooks || {};
+		existing.permissions = existing.permissions || {};
+		existing.permissions.allow = existing.permissions.allow || [];
+
+		// Merge catchup permissions (add missing ones)
+		const existingAllow = new Set(existing.permissions.allow as string[]);
+		let permissionsUpdated = false;
+		for (const perm of catchupPermissions) {
+			if (!existingAllow.has(perm)) {
+				existing.permissions.allow.push(perm);
+				permissionsUpdated = true;
+			}
+		}
 
 		let hooksUpdated = false;
 		for (const [event, entries] of Object.entries(hookConfig)) {
@@ -281,16 +310,17 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			}
 		}
 
-		if (hooksUpdated) {
+		if (hooksUpdated || permissionsUpdated) {
 			writeFileSync(claudeSettingsPath, `${JSON.stringify(existing, null, "\t")}\n`);
-			console.info("  update: .claude/settings.json (added hook config)");
+			if (hooksUpdated) console.info("  update: .claude/settings.json (added hook config)");
+			if (permissionsUpdated) console.info("  update: .claude/settings.json (added catchup permissions)");
 		} else {
-			console.info("  skip: .claude/settings.json hooks (already configured)");
+			console.info("  skip: .claude/settings.json (already configured)");
 		}
 	} else {
-		const settings = { hooks: hookConfig };
+		const settings = { permissions: { allow: catchupPermissions }, hooks: hookConfig };
 		writeFileSync(claudeSettingsPath, `${JSON.stringify(settings, null, "\t")}\n`);
-		console.info("  create: .claude/settings.json (with hook config)");
+		console.info("  create: .claude/settings.json (with hook config + catchup permissions)");
 	}
 
 	// 8. Create .cgcignore (always overwrite — package-owned)

@@ -40,7 +40,11 @@ Key sections to fill in honestly:
 - **What We'd Do Differently** — hindsight decisions
 - **Insights Worth Carrying Forward** — takeaways for future plans
 
-### Step 2: Docs Audit
+### Step 2: Structural Audit (Code Graph)
+
+**Query the code graph** (see toolbelt "Before Modifying Code") to understand what actually changed. Include structural findings in "What Actually Happened" — e.g., "Plan touched 8 files with 23 downstream dependents." Also check `find_most_complex_functions` and `find_dead_code` for cleanup opportunities.
+
+### Step 3: Docs Audit
 
 Review every documentation page that was written or updated during this plan's impl phases.
 
@@ -52,7 +56,7 @@ For each page:
 
 Fix any discrepancies found. Plans often diverge from their impl during execution — the docs must reflect reality.
 
-### Step 3: Test Audit
+### Step 4: Test Audit
 
 Review the test files created or modified during this plan.
 
@@ -62,7 +66,7 @@ Review the test files created or modified during this plan.
 
 Flag gaps but don't necessarily fix them all now — add them as items to a follow-up plan if they're significant.
 
-### Step 4: Quality Audit
+### Step 5: Quality Audit
 
 Review mistakes made during this plan's implementation.
 
@@ -72,7 +76,22 @@ Review mistakes made during this plan's implementation.
 
 The quality ratchet only gets tighter. Every retrospective is an opportunity to prevent the same class of mistake from happening again.
 
-### Step 5: Context Audit
+### Step 6: Lesson Capture
+
+Review the plan's journey — research, implementation, debugging, surprises — and ask:
+
+**"Did we learn anything non-obvious that applies beyond this specific plan?"**
+
+Examples of good lessons:
+- "Never use fallback values where a required config value is expected — it hides missing env vars"
+- "Always check if the library has an official plugin before building custom"
+- "Run the full test suite after changing shared types, not just the tests in the changed package"
+
+If yes, call `add_lesson` for each one. These become personal lessons in `.claude/lessons/` — available to the agent in every future session across all projects.
+
+If no lessons emerged, that's fine — not every plan produces new knowledge. Move on.
+
+### Step 7: Context Audit
 
 Re-read CLAUDE.md in full. After the entire impl is done, verify:
 
@@ -84,7 +103,7 @@ Re-read CLAUDE.md in full. After the entire impl is done, verify:
 
 Fix any inaccuracies. The impl may have changed things that weren't anticipated in the per-phase context updates.
 
-### Step 6: Knowledge Handoff
+### Step 8: Knowledge Handoff
 
 Distill planning artifacts into the docs site so the knowledge survives archival.
 
@@ -103,7 +122,7 @@ Not every plan produces a lessons page — only create one if the insights are g
 
 **Update sidebar:** Add new decision/lesson pages to the VitePress sidebar config in `apps/indusk-docs/src/.vitepress/config.ts`.
 
-### Step 7: Archival
+### Step 9: Archival
 
 Move the planning artifacts to the archive:
 

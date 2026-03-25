@@ -18,63 +18,180 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
    - If the plan has an ADR, verify its status is `accepted`. If it's still `proposed`, warn the user: "The ADR hasn't been accepted yet — want to review it first, or proceed anyway?"
    - If the brief has a `## Depends On` section, check that blocking plans are completed or far enough along.
 
-3. **Read the full plan context first.** Before touching any code, read everything in the plan folder — research, brief, ADR, impl. These contain the decisions and reasoning that should guide implementation choices. Don't just read the checklist.
+3. **Check for blockers.** Scan the current phase for `blocker:` lines. If found, stop and present the blocker to the user:
+   > "Phase 3 has a blocker: *the upstream API doesn't support batch requests — Phase 3 scope needs revision*. Want to resolve this before proceeding?"
+   Do not attempt to work around a blocker silently. Blockers mean the plan needs revision.
 
-4. **Update status.** If the impl status is `approved`, change it to `in-progress`.
+4. **Read forward intelligence.** If the previous phase has a `#### Phase N Forward Intelligence` section, read it before starting the current phase. Pay attention to:
+   - **Fragile** items — be extra careful with these files/modules
+   - **Watch out** items — these are known downstream risks
+   - **Assumption** items — verify these are still true before relying on them
 
-5. **Work through the checklist in order.**
+5. **Read the full plan context first.** Before touching any code, read everything in the plan folder — research, brief, ADR, impl. These contain the decisions and reasoning that should guide implementation choices. Don't just read the checklist.
+
+6. **Update status.** If the impl status is `approved`, change it to `in-progress`.
+
+7. **Work through the checklist in order.**
    - Start from the first unchecked item (`- [ ]`)
    - For each item:
-     a. **Query the code graph first** — before modifying a file, use `analyze_code_relationships` or `find_code` to understand its dependents. If the file is widely imported, flag the blast radius before proceeding.
-     b. **Check for existing code** — before writing new functions, use `find_code` to search for functions that already do what you need. Reuse and extend existing code rather than duplicating. Stay DRY.
+     a. **Query the code graph** — see toolbelt "Before Modifying Code." Check dependencies and blast radius before touching any file.
+     b. **Check for existing code** — call `find_code` before writing new functions. Reuse, don't duplicate.
      c. Read the relevant source files
      d. Implement the change
-     d. Immediately edit impl.md to check the item off (`- [ ]` → `- [x]`)
-     e. Move to the next item
+     e. Immediately edit impl.md to check the item off (`- [ ]` → `- [x]`)
+     f. Move to the next item
    - Do NOT skip ahead or work out of order unless there's a dependency reason
    - Do NOT batch checklist updates — check each off as soon as it's done
 
-6. **Handle blockers.** If you can't complete an item:
+8. **Handle blockers.** If you can't complete an item:
    - Add a note to impl.md under the item explaining the blocker
    - Move to the next item if possible
    - Flag the blocker to the user
 
-7. **Add discovered work.** If you find something that needs doing that isn't in the checklist:
+9. **Add discovered work.** If you find something that needs doing that isn't in the checklist:
    - Add it as a new item in the appropriate phase
    - Then do it and check it off
 
-8. **Per-phase completion order.** Each phase has up to four types of items. Complete them in this order:
+10. **Per-phase completion order.** Each phase has up to four types of items. Complete them in this order:
 
    **Implementation items** → build the thing
    **Verification items** → prove it works (tests, type checks, commands)
    **Context items** → capture what changed (concrete CLAUDE.md edits)
    **Document items** → write or update docs pages (see document skill)
 
-   A phase is not complete until all four are done. Do not advance to the next phase with unchecked verification, context, or document items.
+   A phase is not complete until all four are done. **Enforced by hooks:** if you try to check off a Phase N+1 implementation item while Phase N has unchecked gates, the edit will be blocked with a message listing what's missing. Complete the gates first.
 
-9. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
+## Gate Override Policy
+
+Gates exist to prevent skipping important work. But sometimes a gate genuinely doesn't apply. The override policy controls what happens when the agent wants to skip a gate item.
+
+Three modes, configured via `gate_policy` in the impl frontmatter or `.claude/settings.json`:
+
+| Mode | Behavior |
+|------|----------|
+| **`strict`** | No overrides at any stage. Every gate must have a real item when the impl is written (`/plan`), and every item must be completed during `/work`. No `(none needed)`, no `skip-reason:`, no conversation proof. |
+| **`ask`** (default) | Every gate must have a real item when the impl is written. During `/work`, the agent must ask the user before skipping, and include proof of the conversation in the skip format. Hooks enforce both stages. |
+| **`auto`** | Gates can be pre-filled with `(none needed)` or `skip-reason:` at write time. During `/work`, the agent can skip without asking. Use when running autonomously. |
+
+### How to set the mode
+
+**Per-plan** (in impl frontmatter):
+```yaml
+---
+title: "My Plan"
+gate_policy: strict
+---
+```
+
+**Per-project** (in `.claude/settings.json`):
+```json
+{
+  "indusk": {
+    "gate_policy": "ask"
+  }
+}
+```
+
+**Per-invocation**: `/work --strict`, `/work --ask`, `/work --auto`
+
+Priority: per-invocation > per-plan > per-project > default (`ask`).
+
+### What "ask" mode looks like
+
+When the agent encounters a gate item it thinks should be skipped:
+
+> "Phase 2 has a Document gate: 'Write reference page for the new API.' I don't think this phase needs a new docs page because we only changed internal implementation — the public API didn't change. Can I skip the document gate?"
+
+The user can say:
+- **"yes, skip it"** — agent marks it with conversation proof and continues
+- **"no, do it"** — agent completes the gate item
+
+### Conversation proof format (enforced by hooks)
+
+In `ask` mode, skipped gates MUST include proof that the conversation happened:
+
+```markdown
+#### Phase 2 Document
+- [x] (none needed — asked: "Phase 2 is internal refactoring with no public API changes. Can I skip the document gate?" — user: "yes, skip it")
+```
+
+The hook validates that both `asked:` and `user:` are present with non-empty quoted content. Bare `(none needed)` or `skip-reason:` without conversation proof will be **blocked by the hook**.
+
+| Mode | At write time (`/plan`) | At execution time (`/work`) |
+|------|------------------------|---------------------------|
+| `strict` | No opt-outs — real items required | No skipping — everything completed |
+| `ask` | No opt-outs — real items required | Skip only with conversation proof |
+| `auto` | `(none needed)` / `skip-reason:` allowed | Skip without asking |
+
+**The agent must NEVER skip a gate without asking in `ask` mode.** This is enforced by hooks at both stages — not just instructional.
+
+11. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
    - Run checks in order: type check → lint → affected tests → build. Skip checks that don't apply (see verify skill's skip logic table).
    - Run commands and capture output — verification items must be specific runnable commands, not "verify it works"
    - If a check fails: read the error, fix it, re-run only the failing check. Max 3 attempts before flagging as a blocker to the user.
    - Check items off only when actually verified, not assumed
 
-10. **Context items.** The Context section specifies concrete CLAUDE.md edits:
+12. **Context items.** The Context section specifies concrete CLAUDE.md edits:
     - Each item is a specific edit: "Add to Architecture: ...", "Add to Conventions: ...", etc.
     - Make the edit to CLAUDE.md, then check the item off
     - If a phase has no context items, that's fine — not every phase changes project context
 
-11. **Document items.** The Document section specifies docs pages to write or update:
+13. **Document items.** The Document section specifies docs pages to write or update:
     - Each item targets a specific page in `apps/indusk-docs/src/`
     - See the document skill for guidance on what to document, where, and how to use Mermaid diagrams
     - If a phase has no document items, that's fine — not every phase produces user-facing documentation
 
-12. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase.
+14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase.
 
-13. **Completion.** When all phases are checked:
+15. **Completion.** When all phases are checked:
     - Update impl status to `completed`
     - Summarize what was done
     - If this plan included an ADR, confirm CLAUDE.md's Key Decisions was updated
     - Let the user know the plan is ready for a retrospective if they want one (`/plan {name}` will pick up at the retrospective stage)
+
+## Teach Mode
+
+When invoked as `/work teach` or `/work --teach {plan}`, slow down to a mentoring pace. The goal is for the developer to understand every change, not just get the code written.
+
+### Before each edit:
+
+**Where we are:** State the current position in the system — which plan, which phase, which gate (implementation/verification/context/document), and why this gate exists. Example: "We're in Phase 3 of the auth-system plan, working through implementation items. After these, we'll verify with type checks and tests, then update CLAUDE.md with what changed, then document it. That's the four-gate cycle that every phase goes through."
+
+**Why this change:** Explain what you're about to modify and why. Reference the plan, the architecture, and the reasoning. Use plain language.
+
+Then **stop and wait** for the user to say "continue" before making the edit.
+
+### After each edit:
+
+**What changed:** Explain what was modified — the specific lines, the pattern used, why this approach over alternatives.
+
+**What to notice:** Point out the interesting parts — the design pattern, the gotcha you avoided, the convention being followed.
+
+Then **stop and wait** for the user to say "continue" before moving to the next item.
+
+### At gate transitions:
+
+When moving between gates (implement → verify → context → document → next phase), explain the transition: what gate you're entering, why it exists, and what it catches. Example: "Code is written. Now we verify — type check, lint, tests. This catches errors before they compound into the next phase."
+
+### Between checklist items:
+
+Summarize what was accomplished and preview the next item. Explain how they connect — both in terms of the feature being built and the InDusk system driving the process.
+
+### Document gate in teach mode:
+
+In teach mode, every Document gate produces two things:
+1. **Standard docs** — the same reference/guide updates you'd write in normal mode
+2. **Learning entry** — what the developer should take away from this phase: what surprised us, what we chose and why, what conceptual connections to notice
+
+See the document skill's "Two Documentation Layers" section for details. The learning journal is what makes teach mode a teaching tool, not just a slow mode.
+
+### Important for teach mode:
+
+- Never batch multiple edits between pauses
+- Use clear headings to separate teaching from doing
+- If the user asks a question, answer it fully before continuing
+- Always give both layers: the **what** (the feature/code) and the **why** (the InDusk system's reasoning)
+- Normal `/work` (without teach) remains unchanged — fast execution, no pauses
 
 ## Corrections and Context Learning
 

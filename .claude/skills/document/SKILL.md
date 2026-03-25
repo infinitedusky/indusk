@@ -1,10 +1,25 @@
 ---
 name: document
-description: Per-phase documentation gate during impl execution. Writes and updates docs in the VitePress site. Encourages Mermaid diagrams for architecture, flows, and relationships.
+description: Build and maintain the project encyclopedia — a human-readable record of what was built, why, and how. Every plan contributes to documentation. This is not optional metadata.
 argument-hint: "[what to document or 'check']"
 ---
 
 You know how to maintain documentation in this project.
+
+## Why Documentation Exists
+
+Documentation is **the project's encyclopedia**. It is a human-readable record that any developer — today or a year from now — can read and understand:
+
+- **What** was built and how it works
+- **Why** it was built this way and not another
+- **How** to use it, configure it, extend it
+- **What changed** over time (changelogs, decision records)
+
+This is NOT the same as CLAUDE.md (which is agent-facing project memory) or code comments (which are implementation details). Documentation is for humans who need to understand the project without reading every source file.
+
+**Documentation is never optional.** The question is not "does this need docs?" — the question is "what docs does this need?" Even a bugfix updates the changelog. Even a refactor updates architecture diagrams. Even an internal change may need a decision record explaining why.
+
+The fact that information exists in CLAUDE.md, planning docs, or code does NOT eliminate the need for documentation. Those are working artifacts. Documentation is the polished, organized, permanent record.
 
 ## What Document Does
 
@@ -14,12 +29,25 @@ Document is a per-phase gate during impl execution, alongside verify and context
 implement → verify → context → document → advance
 ```
 
-After context items are done, the document gate asks one question:
+After context items are done, the document gate asks:
 
-**"Does this phase change something a user or developer needs to know?"**
+**"What should a developer reading this project's docs learn from what this phase built?"**
 
-- If **yes**: write or update the relevant page in `apps/indusk-docs/src/`
-- If **no**: skip — not every phase produces documentation. The gate asks the question but doesn't always produce output.
+To answer this accurately, **query the code graph** (see toolbelt "Before Modifying Code") to understand what was affected and how broadly.
+
+For each phase, consider all of these:
+
+| What happened | What to document |
+|---|---|
+| New feature or tool | Reference page + guide if complex |
+| Architecture change | Update architecture page + diagrams |
+| New decision (ADR accepted) | Decision page distilled from ADR |
+| Bug fixed | Changelog entry + update affected reference pages |
+| Refactor | Update architecture diagrams + any affected reference pages |
+| New convention | Update conventions/reference page |
+| API change | Update API reference |
+| Configuration change | Update configuration reference |
+| Lesson learned | Will go in lessons/ during retrospective |
 
 ## Where Docs Live
 
@@ -32,18 +60,49 @@ apps/indusk-docs/src/
 │   ├── skills/      # One page per skill
 │   └── tools/       # One page per tool (Biome, CGC, composable.env)
 ├── decisions/       # Distilled from ADRs during retrospective/archival
-└── lessons/         # Distilled from retrospective insights during archival
+├── lessons/         # Distilled from retrospective insights during archival
+└── changelog.md     # Version history — Added, Changed, Fixed, etc.
 ```
+
+**CRITICAL: Every new page must be added to the sidebar.** The sidebar is configured in a single file: `apps/indusk-docs/src/.vitepress/config.ts` under `themeConfig.sidebar`. If you create a page but don't add it to the sidebar, it is invisible — users cannot navigate to it. This is the most common documentation mistake.
+
+When you create or move a page:
+1. Write the page content
+2. **Immediately** open `.vitepress/config.ts`
+3. Add the page to the correct sidebar section
+4. Verify the page appears in navigation
+
+Never consider a documentation item complete until the sidebar entry exists.
+
+**Pipeline:** Document skill writes/updates docs during impl → retrospective skill archives planning artifacts and distills ADRs into decisions/ and insights into lessons/. Don't manually populate decisions/ or lessons/ during impl work — that's the retrospective's job.
 
 ### What Goes Where
 
 | What changed | Where to document | Doc type |
 |---|---|---|
-| New feature or tool | `reference/` | Reference page |
-| New workflow or process | `guide/` | How-to guide |
-| Configuration change | `reference/` (update existing page) | Reference update |
-| Architecture change | `reference/` + diagram | Reference + diagram |
-| Nothing user-facing | Skip | — |
+| New feature or tool | `reference/` + changelog | Reference page + Added |
+| New workflow or process | `guide/` + changelog | How-to guide + Added |
+| Configuration change | `reference/` (update existing) + changelog | Reference update + Changed |
+| Bug fix | Existing page (if relevant) + changelog | Fixed |
+| Architecture change | `reference/` + diagram + changelog | Reference + diagram + Changed |
+| Nothing user-facing | Skip changelog | — |
+
+### Changelog
+
+The changelog lives at `changelog.md` in the docs site. It uses [Keep a Changelog](https://keepachangelog.com) categories:
+
+- **Added** — new features (from `feature` workflow plans)
+- **Changed** — changes to existing functionality (from `refactor` workflows)
+- **Fixed** — bug fixes (from `bugfix` workflows)
+- **Deprecated** — soon to be removed
+- **Removed** — removed features
+- **Security** — vulnerability fixes
+
+**When to write:** During the Document gate of each phase that changes user-facing behavior. Add the entry under `## [Unreleased]`. At publish time, move Unreleased entries into a versioned section.
+
+**What to write:** One line per change. Human-readable — what users gain, not what code changed. The workflow type from the impl frontmatter tells you the category (feature → Added, bugfix → Fixed, refactor → Changed).
+
+**During planning:** The ADR's Documentation Plan section should include planned changelog entries. This forces you to think about user impact during planning, not after.
 
 ### Decisions and Lessons
 
@@ -64,57 +123,99 @@ The `decisions/` and `lessons/` directories are **not** populated during normal 
 | Data models, entity relationships | `erDiagram` | Database schema |
 | Timelines, project phases | `timeline` | Release milestones |
 
-### Diagram Best Practices
+### Mermaid Rules
 
-- **One concept per diagram.** Don't cram the entire system into one chart. Break complex systems into focused diagrams.
-- **Meaningful labels.** Use full words, not abbreviations. `Plan Skill` not `PS`.
-- **Use `classDef` for visual grouping.** Color-code related nodes to show categories at a glance.
-- **Dark-mode friendly.** Avoid hardcoded light colors (white, light gray). Use the mermaid `dark` theme (already configured in VitePress). If you must customize colors, use high-contrast pairs.
-- **Keep diagrams small enough to read inline** but detailed enough to be useful when expanded.
+- One concept per diagram. Meaningful labels (full words, not abbreviations).
+- **No custom colors**: don't use `style`, `classDef`, or `themeVariables`. The plugin auto-switches light/dark themes — hardcoded colors break in the opposite mode. Use `subgraph` for visual grouping.
+- **Security**: `securityLevel: "strict"` in config — this is mandatory, not a preference. Mermaid v10+ has a bug where `"loose"` scans the entire page DOM, producing "Syntax error in text" on every page.
+- **Always wrap in `<FullscreenDiagram>`**: `<FullscreenDiagram>` then the mermaid block then `</FullscreenDiagram>`. Never bare mermaid blocks.
 
-### Always Use FullscreenDiagram
+## Two Documentation Layers
 
-Every Mermaid diagram in the docs **must** be wrapped in the `<FullscreenDiagram>` component. This provides expand-to-fullscreen with pan and zoom controls.
+### Standard Documentation (always)
 
-```markdown
-<FullscreenDiagram>
+What was built, how it works, why it's designed this way. This is the reference someone reads to understand the system. Exists regardless of mode.
 
-```mermaid
-flowchart TD
-  P[Plan] --> W[Work]
-  W --> V{Verify}
-  V -->|pass| CX[Context]
-  CX --> D[Document]
-  D --> W
-  W -->|complete| R[Retrospective]
-  R --> A[Archive]
-```
+### Learning Journal (teach mode only)
 
-</FullscreenDiagram>
-```
+When running in teach mode (`/work teach`), documentation gains a second layer: **what we learned building it**. This captures:
 
-**Never** use bare ` ```mermaid ` blocks without the wrapper. The diagrams are often too small to read inline, and the FullscreenDiagram gives users zoom and pan controls.
+- What surprised us during implementation
+- Why we chose this approach over the alternatives we considered
+- What was harder or easier than expected
+- Conceptual connections — "this pattern is similar to X because..."
+- What we'd do differently next time
+
+Learning journal entries go in `apps/indusk-docs/src/lessons/` as standalone pages, or as `## What We Learned` sections within existing guide pages. They're written in first person and read like a developer's notebook — not formal reference docs.
+
+In teach mode, every Document gate should produce both:
+1. **Standard docs** — reference/guide updates (same as normal mode)
+2. **Learning entry** — what the developer should take away from this phase
+
+The learning journal is what makes teach mode more than just "go slow." It builds a permanent record of understanding alongside the permanent record of what was built.
+
+## Documentation by Workflow Type
+
+The depth varies by workflow type, but every workflow produces documentation.
+
+### Feature (full documentation)
+
+A feature is new functionality. It gets the full treatment:
+- Write new reference pages for tools, APIs, or configuration added
+- Write guide pages for workflows introduced
+- Create Mermaid diagrams for architecture, flows, and relationships
+- Update existing pages that reference the area you changed
+- Add a changelog entry describing the feature
+- If an ADR was accepted, create a decision page in `decisions/`
+
+### Refactor (update existing docs)
+
+A refactor restructures existing code. The docs must reflect the new reality:
+- Update existing pages that reference moved/renamed code
+- Update architecture diagrams to show the new structure
+- Add a changelog entry explaining what was restructured and why
+- If the refactor changes how developers interact with the code, update the relevant guide
+
+### Bugfix (document the fix)
+
+A bugfix solves a specific problem. Even small fixes leave a paper trail:
+- Add a changelog entry describing the bug and the fix
+- Update any docs that described the broken behavior
+- If the bug revealed a gotcha, add it to the relevant reference page
+- If the fix changes a public API or configuration, update that reference page
 
 ## Shaping Impl Documents
 
-When writing an impl (via the plan skill), every phase should consider documentation:
+When writing an impl (via the plan skill), every phase gets a Document section:
 
 ```markdown
 #### Phase N Document
 - [ ] {Specific docs page to write or update}
+- [ ] {Changelog entry}
 ```
 
-The agent writing the impl must answer: **"What does a user or developer need to know about what this phase built?"** If the answer is "nothing user-facing" — no document items needed. Not every phase produces docs. But the question must be asked.
+The agent writing the impl must answer: **"What should a developer reading the docs learn from what this phase built?"**
 
-### Document Items Are Blocking
+Every phase should produce at minimum a changelog entry. Beyond that, consider: does this phase add, change, or remove something that appears in the docs? If yes, list the specific pages to create or update.
 
-During execution (via the work skill), document items are checked off alongside implementation, verification, and context items. The per-phase completion order is:
+The `gate_policy` setting controls whether `(none needed)` is acceptable — in `strict` mode it is not. In `ask` mode, the agent must justify and get user approval before opting out. See the work skill for details.
 
-```
-implementation items → verification items → context items → document items → advance
-```
+### Document gate is blocking
 
-A phase is not complete until its document items are done.
+Document items block phase advancement. See work skill "Per-phase completion order" for the full gate cycle. Documentation is blocking because code without docs is invisible to future developers.
+
+## LLM-Readable Output (llms.txt)
+
+The docs site auto-generates LLM-friendly content via `vitepress-plugin-llms`. No manual work needed.
+
+At build time, the plugin produces:
+- `/llms.txt` — index with links to all pages (for LLM navigation)
+- `/llms-full.txt` — entire docs concatenated into one markdown file (for full ingestion)
+- Per-page `.md` files accessible directly
+
+This follows the [llms.txt convention](https://llmstxt.org/) used by Vite, Vue.js, Vitest, Stripe, and Cloudflare.
+
+**Do not** manually create llms.txt files — the plugin handles everything.
 
 ## Running the Docs Site
 
@@ -128,7 +229,10 @@ pnpm turbo build --filter=indusk-docs
 
 ## Important
 
-- Documentation is human-facing. CLAUDE.md is agent-facing. They serve different audiences — don't duplicate between them.
-- Link, don't duplicate. If something is fully documented in a skill file or ADR, link to the docs page for it rather than copying content.
+- **Documentation is the project's permanent record.** It outlives conversations, planning docs, and even the code itself. Write it like someone will read it a year from now with no other context.
+- **Documentation is human-facing. CLAUDE.md is agent-facing.** They serve different audiences. CLAUDE.md helps the agent work. Docs help humans understand.
+- **The existence of information elsewhere does not replace documentation.** ADRs, CLAUDE.md, planning docs, and code comments are working artifacts. Documentation is the polished, organized, permanent version.
+- **Every plan contributes to documentation.** Features add pages. Refactors update pages. Bugfixes add changelog entries. There is no plan that produces zero documentation.
 - Keep reference pages focused and scannable. Use tables and diagrams over paragraphs.
-- The `decisions/` and `lessons/` sections are populated during retrospective only, not during normal impl work.
+- The `decisions/` and `lessons/` sections are populated during retrospective, but decision pages can also be created during impl when an ADR is accepted.
+- When in doubt, document more, not less. Excess documentation can be trimmed. Missing documentation is invisible.

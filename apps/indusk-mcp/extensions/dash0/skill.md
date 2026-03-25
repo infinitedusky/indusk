@@ -37,7 +37,7 @@ The MCP server provides 23 tools. The key ones for debugging:
 
 ### Logs
 - **`getLogRecords`** — Query logs with filters, time range, pagination. Returns summary table.
-  - Always pass `dataset: "dev"` for our environment
+  - **Dataset**: check `env/components/dash0.env` for the dataset per profile (local, staging, production). If no composable.env component exists, check `.indusk/extensions/dash0/.env` for a `DASH0_DATASET` value. If neither exists, ask the user which dataset to use and remember it for the session.
   - `timeRange` requires ISO timestamps: `{"from": "...", "to": "..."}`
   - `filters`: `[{"key": "service.name", "operator": "is", "value": "game-server"}]`
   - `logAttributeKeys`: specify which attributes to show in the table (e.g. `["service.name", "otel.scope.name"]`)

@@ -56,7 +56,7 @@ When the work skill is executing an impl and reaches verification items, run che
    - Skip for: markdown changes, config-only changes with no test files
    - Catches: behavioral regressions, broken logic
    - Run affected app's tests, not the full suite
-   - **Use the code graph to find affected tests** — query `analyze_code_relationships` for the changed file to discover which test files import or depend on it. Run those tests specifically rather than guessing.
+   - **Use the code graph to find affected tests** — see toolbelt "Before Modifying Code." Call `query_dependencies` with direction "dependents" to find test files that depend on the changed code.
 
 4. **Build** — `pnpm turbo build --filter={app}`
    - Only for: shared package changes, build config changes
@@ -118,6 +118,15 @@ Not every change needs every check. Before running verification, evaluate what f
 
 When skipping, note it in the verification report with the reason.
 
+## Auto-Discovery
+
+Verification commands are auto-discovered from the project. Call `quality_check` with mode `discover` to see what's available. The system detects:
+
+- **package.json scripts**: `typecheck`, `lint`, `test`, `build`, `check`
+- **Config files**: `biome.json` → biome check, `tsconfig.json` → tsc --noEmit, `vitest.config.*` → vitest run
+
+Explicit commands in impl verification sections override auto-discovery. If an impl says "run `pnpm turbo test --filter=mcp`", use that exact command. If an impl just says "run tests", use the auto-discovered test command.
+
 ## Commands Reference
 
 | Check | Command | When to use |
@@ -127,6 +136,8 @@ When skipping, note it in the verification report with the reason.
 | Test (scoped) | `pnpm turbo test --filter={app}` | Any logic change |
 | Test (all) | `pnpm test` | Cross-package changes |
 | Build (scoped) | `pnpm turbo build --filter={app}` | Shared package or build config changes |
+| Auto-discover | `quality_check` with mode `discover` | See what checks are available |
+| Run all checks | `quality_check` with no args | Run all discovered checks at once |
 
 ## Important
 
@@ -136,3 +147,4 @@ When skipping, note it in the verification report with the reason.
 - Run checks fastest-first. Stop on first failure — no point linting if types don't compile
 - Three retries max on failure, then escalate to the user
 - When in doubt, run the check. Slow verification beats missed bugs.
+- **Quality pipeline:** verify runs checks → retrospective reviews if new Biome rules should be added → context documents them in CLAUDE.md. See the retrospective skill for the quality ratchet.

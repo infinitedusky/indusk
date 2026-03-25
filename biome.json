@@ -32,37 +32,5 @@
 				"useConst": "error"
 			}
 		}
-	},
-	"overrides": [
-		{
-			"includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
-			"linter": {
-				"rules": {
-					"suspicious": {
-						"noConsole": "off"
-					}
-				}
-			}
-		},
-		{
-			"includes": ["apps/indusk-mcp/**"],
-			"linter": {
-				"rules": {
-					"suspicious": {
-						"noConsole": "off"
-					}
-				}
-			}
-		},
-		{
-			"includes": ["**/*.vue"],
-			"linter": {
-				"rules": {
-					"correctness": {
-						"noUnusedVariables": "off"
-					}
-				}
-			}
-		}
-	]
+	}
 }

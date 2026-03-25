@@ -1,27 +1,28 @@
 {
-	"mcpServers": {
-		"codegraphcontext": {
-			"command": "cgc",
-			"args": ["mcp", "start"],
-			"env": {
-				"DATABASE_TYPE": "falkordb-remote",
-				"FALKORDB_HOST": "falkordb.orb.local",
-				"FALKORDB_GRAPH_NAME": "codegraph"
-			}
-		},
-		"indusk": {
-			"command": "node",
-			"args": ["apps/indusk-mcp/dist/bin/cli.js", "serve"],
-			"env": {
-				"PROJECT_ROOT": "."
-			}
-		},
-		"dash0": {
-			"type": "streamableHttp",
-			"url": "https://api.europe-west4.gcp.dash0.com/mcp",
-			"headers": {
-				"Authorization": "Bearer auth_WTdiqJdsPrOO2iUQ1yUIzDTuCyY9uVXO"
-			}
-		}
-	}
+  "mcpServers": {
+    "indusk": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@infinitedusky/indusk-mcp",
+        "serve"
+      ],
+      "env": {
+        "PROJECT_ROOT": "."
+      }
+    },
+    "codegraphcontext": {
+      "type": "stdio",
+      "command": "cgc",
+      "args": [
+        "mcp",
+        "start"
+      ],
+      "env": {
+        "DATABASE_TYPE": "falkordb-remote",
+        "FALKORDB_HOST": "falkordb.orb.local",
+        "FALKORDB_GRAPH_NAME": "infinitedusky"
+      }
+    }
+  }
 }
