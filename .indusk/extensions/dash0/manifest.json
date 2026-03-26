@@ -1,0 +1,37 @@
+{
+	"name": "dash0",
+	"description": "Dash0 observability — query logs, traces, and metrics from your OpenTelemetry data via MCP and CLI",
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "dash0-mcp-configured",
+				"command": "node -e \"const m=JSON.parse(require('fs').readFileSync('.mcp.json','utf-8'));process.exit(m.mcpServers?.dash0 ? 0 : 1)\""
+			},
+			{
+				"name": "dash0-cli-installed",
+				"command": "dash0 version --agent-mode"
+			}
+		]
+	},
+	"mcp_server": {
+		"type": "http",
+		"url": "DASH0_ENDPOINT_MCP",
+		"headers": {
+			"Authorization": "Bearer DASH0_AUTH_TOKEN"
+		},
+		"setup_instructions": [
+			"1. Log into Dash0 > Organization Settings > Endpoints > MCP to get your endpoint URL",
+			"2. Create an auth token at Organization Settings > Auth Tokens",
+			"3. Edit .mcp.json: replace DASH0_ENDPOINT_MCP with your regional endpoint URL",
+			"4. Edit .mcp.json: replace DASH0_AUTH_TOKEN with your token",
+			"5. Optional: install CLI with 'brew install dash0hq/dash0-cli/dash0'"
+		]
+	},
+	"hooks": {
+		"on_enable": "echo 'Dash0 extension enabled.'"
+	},
+	"detect": {
+		"mcp_server": "dash0"
+	}
+}

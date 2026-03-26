@@ -110,6 +110,7 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 		// Check if already enabled
 		if (isEnabled(projectRoot, name)) {
 			console.info(`  ${name}: already enabled`);
+			printMcpSetup(projectRoot, name);
 			continue;
 		}
 
@@ -118,6 +119,7 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 			console.info(`  ${name}: enabled (was disabled)`);
 			runHook(projectRoot, name, "on_init");
 			installSkill(projectRoot, name);
+			printMcpSetup(projectRoot, name);
 			continue;
 		}
 
@@ -130,6 +132,7 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 			console.info(`  ${name}: enabled (built-in)`);
 			runHook(projectRoot, name, "on_init");
 			installSkill(projectRoot, name);
+			printMcpSetup(projectRoot, name);
 			continue;
 		}
 
@@ -537,6 +540,55 @@ function runHook(projectRoot: string, name: string, hook: string): void {
 	} catch {
 		console.info(`  ${name}: ${hook} hook failed`);
 	}
+}
+
+function printMcpSetup(projectRoot: string, name: string): void {
+	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
+	if (!manifestPath) {
+		// Try built-in
+		const builtinPath = join(builtinDir, name, "manifest.json");
+		if (!existsSync(builtinPath)) return;
+		const manifest = loadExtension(builtinPath);
+		if (!manifest?.mcp_server) return;
+		printMcpInstructions(name, manifest);
+		return;
+	}
+	const manifest = loadExtension(manifestPath);
+	if (!manifest?.mcp_server) return;
+	printMcpInstructions(name, manifest);
+}
+
+function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
+	const server = manifest.mcp_server;
+	if (!server) return;
+
+	const needsAuth = server.headers && Object.keys(server.headers).length > 0;
+
+	// Auto-run claude mcp add for no-auth HTTP servers
+	if (!needsAuth && server.type === "http" && server.url) {
+		const cmd = `claude mcp add -t http -s project -- ${name} ${server.url}`;
+		console.info(`\n  ${name}: adding MCP server...`);
+		try {
+			execSync(cmd, { timeout: 15000, stdio: ["ignore", "pipe", "pipe"] });
+			console.info(`  ${name}: MCP server added (restart Claude Code to load)`);
+		} catch {
+			console.info(`  ${name}: auto-add failed. Run manually:`);
+			console.info(`    ${cmd}`);
+		}
+		return;
+	}
+
+	// For servers needing auth, print setup instructions
+	if (server.setup_instructions?.length) {
+		console.info(`\n  ${name} MCP setup:`);
+		for (const instruction of server.setup_instructions) {
+			console.info(`    ${instruction}`);
+		}
+	} else if (server.type === "http" && server.url) {
+		console.info(`\n  ${name} MCP setup:`);
+		console.info(`    claude mcp add -t http -- ${name} ${server.url}`);
+	}
+	console.info("");
 }
 
 function installSkill(projectRoot: string, name: string): void {
