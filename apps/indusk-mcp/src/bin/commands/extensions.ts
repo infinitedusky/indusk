@@ -13,14 +13,17 @@ import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import {
 	disableExtension,
+	disabledDir,
 	type ExtensionManifest,
 	enableExtension,
 	ensureExtensionsDirs,
+	extensionConfigDir,
 	extensionsDir,
 	getEnabledExtensions,
 	isEnabled,
 	loadExtension,
 	loadExtensions,
+	resolveManifestPath,
 } from "../../lib/extension-loader.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -121,8 +124,9 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 		// Try to copy from built-in
 		const builtinManifest = join(builtinDir, name, "manifest.json");
 		if (existsSync(builtinManifest)) {
-			const targetPath = join(extensionsDir(projectRoot), `${name}.json`);
-			cpSync(builtinManifest, targetPath);
+			const targetDir = extensionConfigDir(projectRoot, name);
+			mkdirSync(targetDir, { recursive: true });
+			cpSync(builtinManifest, join(targetDir, "manifest.json"));
 			console.info(`  ${name}: enabled (built-in)`);
 			runHook(projectRoot, name, "on_init");
 			installSkill(projectRoot, name);
@@ -246,8 +250,9 @@ export async function extensionsAdd(
 		installNpmPackage(projectRoot, name, from.slice(4));
 	}
 
-	const targetPath = join(extensionsDir(projectRoot), `${name}.json`);
-	writeFileSync(targetPath, manifestContent);
+	const targetDir = extensionConfigDir(projectRoot, name);
+	mkdirSync(targetDir, { recursive: true });
+	writeFileSync(join(targetDir, "manifest.json"), manifestContent);
 	console.info(`  ${name}: added from ${from}`);
 
 	// Run post-update hook if defined
@@ -303,14 +308,24 @@ function installNpmPackage(projectRoot: string, extName: string, pkg: string): v
 
 export async function extensionsRemove(projectRoot: string, names: string[]): Promise<void> {
 	for (const name of names) {
-		const enPath = join(extensionsDir(projectRoot), `${name}.json`);
-		const disPath = join(extensionsDir(projectRoot), ".disabled", `${name}.json`);
+		// Directory format
+		const enDir = extensionConfigDir(projectRoot, name);
+		const disDir = join(disabledDir(projectRoot), name);
+		// Legacy flat
+		const enFlat = join(extensionsDir(projectRoot), `${name}.json`);
+		const disFlat = join(disabledDir(projectRoot), `${name}.json`);
 
-		if (existsSync(enPath)) {
-			rmSync(enPath);
+		if (existsSync(join(enDir, "manifest.json"))) {
+			rmSync(enDir, { recursive: true });
 			console.info(`  ${name}: removed`);
-		} else if (existsSync(disPath)) {
-			rmSync(disPath);
+		} else if (existsSync(enFlat)) {
+			rmSync(enFlat);
+			console.info(`  ${name}: removed`);
+		} else if (existsSync(join(disDir, "manifest.json"))) {
+			rmSync(disDir, { recursive: true });
+			console.info(`  ${name}: removed (was disabled)`);
+		} else if (existsSync(disFlat)) {
+			rmSync(disFlat);
 			console.info(`  ${name}: removed (was disabled)`);
 		} else {
 			console.info(`  ${name}: not found`);
@@ -333,16 +348,15 @@ export async function extensionsUpdate(projectRoot: string, names?: string[]): P
 	}
 
 	// Find all third-party extensions (ones with _source)
-	const files = readdirSync(extDir).filter((f) => f.endsWith(".json"));
+	const enabled = getEnabledExtensions(projectRoot);
 	let updated = 0;
 
-	for (const file of files) {
-		const name = file.replace(".json", "");
+	for (const ext of enabled) {
+		const name = ext.manifest.name;
 		if (names?.length && !names.includes(name)) continue;
 
 		try {
-			const manifest = JSON.parse(readFileSync(join(extDir, file), "utf-8"));
-			if (!manifest._source) {
+			if (!ext.manifest._source) {
 				if (names && names.includes(name)) {
 					console.info(
 						`  ${name}: built-in extension — updated via package update, not extensions update`,
@@ -351,7 +365,7 @@ export async function extensionsUpdate(projectRoot: string, names?: string[]): P
 				continue;
 			}
 
-			const source = manifest._source;
+			const source = ext.manifest._source;
 			console.info(`  ${name}: updating from ${source}...`);
 
 			// If source is npm, update the installed package FIRST so we get the latest
@@ -511,8 +525,9 @@ export async function autoEnableExtensions(projectRoot: string): Promise<void> {
 // --- Helpers ---
 
 function runHook(projectRoot: string, name: string, hook: string): void {
-	const extPath = join(extensionsDir(projectRoot), `${name}.json`);
-	const manifest = loadExtension(extPath);
+	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
+	if (!manifestPath) return;
+	const manifest = loadExtension(manifestPath);
 	if (!manifest?.hooks) return;
 	const command = manifest.hooks[hook as keyof typeof manifest.hooks];
 	if (!command) return;
@@ -525,8 +540,9 @@ function runHook(projectRoot: string, name: string, hook: string): void {
 }
 
 function installSkill(projectRoot: string, name: string): void {
-	const extPath = join(extensionsDir(projectRoot), `${name}.json`);
-	const manifest = loadExtension(extPath);
+	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
+	if (!manifestPath) return;
+	const manifest = loadExtension(manifestPath);
 	if (!manifest?.provides.skill) return;
 
 	// Look for skill.md in built-in extensions

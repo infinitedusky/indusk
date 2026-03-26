@@ -92,36 +92,91 @@ export function loadExtension(manifestPath: string): ExtensionManifest | null {
 	}
 }
 
-export function loadExtensions(projectRoot: string): LoadedExtension[] {
-	const extensions: LoadedExtension[] = [];
-	const dir = extensionsDir(projectRoot);
+/**
+ * Resolve the manifest path for an extension.
+ * Supports both directory format ({name}/manifest.json) and legacy flat format ({name}.json).
+ * Returns the path if found, null otherwise.
+ */
+export function resolveManifestPath(baseDir: string, name: string): string | null {
+	// Directory format first (preferred)
+	const dirPath = join(baseDir, name, "manifest.json");
+	if (existsSync(dirPath)) return dirPath;
 
-	if (!existsSync(dir)) return extensions;
+	// Legacy flat file
+	const flatPath = join(baseDir, `${name}.json`);
+	if (existsSync(flatPath)) return flatPath;
 
-	// Load enabled extensions
-	const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
-	for (const file of files) {
-		const path = join(dir, file);
-		const manifest = loadExtension(path);
-		if (manifest) {
-			extensions.push({ manifest, path, enabled: true });
-		}
+	return null;
+}
+
+/**
+ * Get the directory path for an extension (creates if needed).
+ * This is where manifest.json, .env, and other extension files live.
+ */
+export function extensionConfigDir(projectRoot: string, name: string): string {
+	return join(extensionsDir(projectRoot), name);
+}
+
+/**
+ * Migrate a flat file extension to directory format.
+ * Moves {name}.json → {name}/manifest.json
+ */
+export function migrateToDirectory(baseDir: string, name: string): void {
+	const flatPath = join(baseDir, `${name}.json`);
+	const dirPath = join(baseDir, name);
+	const newPath = join(dirPath, "manifest.json");
+
+	if (existsSync(flatPath) && !existsSync(newPath)) {
+		mkdirSync(dirPath, { recursive: true });
+		renameSync(flatPath, newPath);
 	}
+}
 
-	// Load disabled extensions
-	const disDir = disabledDir(projectRoot);
-	if (existsSync(disDir)) {
-		const disabledFiles = readdirSync(disDir).filter((f) => f.endsWith(".json"));
-		for (const file of disabledFiles) {
-			const path = join(disDir, file);
-			const manifest = loadExtension(path);
-			if (manifest) {
-				extensions.push({ manifest, path, enabled: false });
+function loadFromDir(baseDir: string, enabled: boolean): LoadedExtension[] {
+	const extensions: LoadedExtension[] = [];
+	if (!existsSync(baseDir)) return extensions;
+
+	const entries = readdirSync(baseDir, { withFileTypes: true });
+
+	for (const entry of entries) {
+		if (entry.name.startsWith(".")) continue;
+
+		let manifestPath: string | null = null;
+
+		if (entry.isDirectory()) {
+			// Directory format: {name}/manifest.json
+			manifestPath = join(baseDir, entry.name, "manifest.json");
+			if (!existsSync(manifestPath)) continue;
+		} else if (entry.isFile() && entry.name.endsWith(".json")) {
+			// Legacy flat format: {name}.json — auto-migrate
+			const name = entry.name.replace(".json", "");
+			migrateToDirectory(baseDir, name);
+			manifestPath = join(baseDir, name, "manifest.json");
+			if (!existsSync(manifestPath)) {
+				// Migration failed, read from flat file
+				manifestPath = join(baseDir, entry.name);
 			}
+		} else {
+			continue;
+		}
+
+		const manifest = loadExtension(manifestPath);
+		if (manifest) {
+			extensions.push({ manifest, path: manifestPath, enabled });
 		}
 	}
 
 	return extensions;
+}
+
+export function loadExtensions(projectRoot: string): LoadedExtension[] {
+	const dir = extensionsDir(projectRoot);
+	const disDir = disabledDir(projectRoot);
+
+	return [
+		...loadFromDir(dir, true),
+		...loadFromDir(disDir, false),
+	];
 }
 
 export function getEnabledExtensions(projectRoot: string): LoadedExtension[] {
@@ -131,13 +186,31 @@ export function getEnabledExtensions(projectRoot: string): LoadedExtension[] {
 // --- Enable / Disable ---
 
 export function enableExtension(projectRoot: string, name: string): boolean {
-	const disPath = join(disabledDir(projectRoot), `${name}.json`);
-	const enPath = join(extensionsDir(projectRoot), `${name}.json`);
+	const enDir = join(extensionsDir(projectRoot), name);
+	const enManifest = join(enDir, "manifest.json");
 
-	if (existsSync(enPath)) return true; // Already enabled
+	// Already enabled (directory format)
+	if (existsSync(enManifest)) return true;
 
-	if (existsSync(disPath)) {
-		renameSync(disPath, enPath);
+	// Already enabled (legacy flat — migrate first)
+	const enFlat = join(extensionsDir(projectRoot), `${name}.json`);
+	if (existsSync(enFlat)) {
+		migrateToDirectory(extensionsDir(projectRoot), name);
+		return true;
+	}
+
+	// Check disabled — directory format
+	const disDir = join(disabledDir(projectRoot), name);
+	if (existsSync(join(disDir, "manifest.json"))) {
+		renameSync(disDir, enDir);
+		return true;
+	}
+
+	// Check disabled — legacy flat
+	const disFlat = join(disabledDir(projectRoot), `${name}.json`);
+	if (existsSync(disFlat)) {
+		mkdirSync(enDir, { recursive: true });
+		renameSync(disFlat, enManifest);
 		return true;
 	}
 
@@ -145,32 +218,45 @@ export function enableExtension(projectRoot: string, name: string): boolean {
 }
 
 export function disableExtension(projectRoot: string, name: string): boolean {
-	const enPath = join(extensionsDir(projectRoot), `${name}.json`);
-	const disPath = join(disabledDir(projectRoot), `${name}.json`);
+	const enDir = join(extensionsDir(projectRoot), name);
+	const disDir = join(disabledDir(projectRoot), name);
 
-	if (!existsSync(enPath)) return false;
+	if (existsSync(join(enDir, "manifest.json"))) {
+		ensureExtensionsDirs(projectRoot);
+		renameSync(enDir, disDir);
+		return true;
+	}
 
-	ensureExtensionsDirs(projectRoot);
-	renameSync(enPath, disPath);
-	return true;
+	// Legacy flat
+	const enFlat = join(extensionsDir(projectRoot), `${name}.json`);
+	if (existsSync(enFlat)) {
+		ensureExtensionsDirs(projectRoot);
+		mkdirSync(disDir, { recursive: true });
+		renameSync(enFlat, join(disDir, "manifest.json"));
+		return true;
+	}
+
+	return false;
 }
 
 // --- Query ---
 
 export function isEnabled(projectRoot: string, name: string): boolean {
-	return existsSync(join(extensionsDir(projectRoot), `${name}.json`));
+	return (
+		existsSync(join(extensionsDir(projectRoot), name, "manifest.json")) ||
+		existsSync(join(extensionsDir(projectRoot), `${name}.json`))
+	);
 }
 
 export function getExtension(projectRoot: string, name: string): LoadedExtension | null {
-	const enPath = join(extensionsDir(projectRoot), `${name}.json`);
-	const disPath = join(disabledDir(projectRoot), `${name}.json`);
-
-	if (existsSync(enPath)) {
+	const enPath = resolveManifestPath(extensionsDir(projectRoot), name);
+	if (enPath) {
 		const manifest = loadExtension(enPath);
 		return manifest ? { manifest, path: enPath, enabled: true } : null;
 	}
 
-	if (existsSync(disPath)) {
+	const disPath = resolveManifestPath(disabledDir(projectRoot), name);
+	if (disPath) {
 		const manifest = loadExtension(disPath);
 		return manifest ? { manifest, path: disPath, enabled: false } : null;
 	}

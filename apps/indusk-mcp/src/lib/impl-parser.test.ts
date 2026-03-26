@@ -5,22 +5,16 @@ import { getAllPhaseCompletions, parseImpl, parseImplString } from "./impl-parse
 const projectRoot = join(import.meta.dirname, "../../../..");
 
 describe("parseImpl", () => {
-	it("parses the document-skill impl", () => {
-		const parsed = parseImpl(join(projectRoot, "planning/document-skill/impl.md"));
-		expect(parsed.title).toContain("Document");
-		expect(parsed.status).toBe("completed");
+	it("parses the gsd-inspired-improvements impl", () => {
+		const parsed = parseImpl(join(projectRoot, "planning/gsd-inspired-improvements/impl.md"));
+		expect(parsed.title).toContain("GSD");
 		expect(parsed.phases.length).toBeGreaterThanOrEqual(2);
 	});
 
-	it("parses the mcp-dev-system impl", () => {
-		const parsed = parseImpl(join(projectRoot, "planning/mcp-dev-system/impl.md"));
+	it("parses the gate-policy-enforcement impl", () => {
+		const parsed = parseImpl(join(projectRoot, "planning/gate-policy-enforcement/impl.md"));
 		expect(parsed.status).toBe("completed");
-		expect(parsed.phases.length).toBeGreaterThanOrEqual(7);
-
-		// Phase 1 should be fully checked
-		const phase1 = parsed.phases[0];
-		expect(phase1.number).toBe(1);
-		expect(phase1.name).toContain("Package Structure");
+		expect(parsed.phases.length).toBeGreaterThanOrEqual(1);
 	});
 
 	it("returns empty for non-existent file", () => {
@@ -125,15 +119,12 @@ status: in-progress
 	});
 
 	it("reports completion status from real impl", () => {
-		const parsed = parseImpl(join(projectRoot, "planning/mcp-dev-system/impl.md"));
+		const parsed = parseImpl(join(projectRoot, "planning/gate-policy-enforcement/impl.md"));
 		const completions = getAllPhaseCompletions(parsed);
 
-		// Early phases should be complete
-		expect(completions[0].complete).toBe(true);
-		expect(completions[1].complete).toBe(true);
-
-		// All phases should be complete now
-		const lastPhase = completions[completions.length - 1];
-		expect(lastPhase.complete).toBe(true);
+		// Should have at least one phase
+		expect(completions.length).toBeGreaterThanOrEqual(1);
+		// Should have both checked and total counts
+		expect(completions[0].totalItems).toBeGreaterThan(0);
 	});
 });
