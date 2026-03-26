@@ -108,9 +108,25 @@ The changelog lives at `changelog.md` in the docs site. It uses [Keep a Changelo
 
 The `decisions/` and `lessons/` directories are **not** populated during normal impl work. They are populated during the retrospective/archival process by the retrospective skill. Don't write to them during `/work`.
 
-## Mermaid Diagrams
+## Diagrams
 
 **Prefer diagrams over long prose for architecture, flows, and relationships.** A well-labeled diagram communicates structure faster than paragraphs of text.
+
+### Mermaid vs Excalidraw
+
+Two diagram tools are available. Use the right one for the context:
+
+| Need | Tool | Why |
+|------|------|-----|
+| Formal diagram in the docs site | **Mermaid** | Text-based, diffs in git, renders natively in VitePress |
+| Conceptual sketch during a session | **Excalidraw** | Hand-drawn style, natural language input, fast |
+| Sequence/flowchart for reference docs | **Mermaid** | Structured, precise, version-controlled |
+| Architecture overview for a brief or ADR | **Excalidraw** | Approachable, whiteboard feel |
+| Debug illustration | **Excalidraw** | Quick visual communication |
+
+**Rule of thumb:** If it goes in the docs site, use Mermaid. If it's for in-session communication, use Excalidraw. If the Excalidraw extension isn't enabled, use Mermaid for everything.
+
+## Mermaid Diagrams
 
 ### When to Use Which Diagram Type
 

@@ -1,0 +1,14 @@
+{
+	"name": "excalidraw",
+	"description": "Hand-drawn diagrams via Excalidraw MCP — conceptual sketches, architecture visuals, debug illustrations",
+	"provides": {
+		"skill": true
+	},
+	"mcp_server": {
+		"type": "http",
+		"url": "https://mcp.excalidraw.com",
+		"setup_instructions": [
+			"claude mcp add -t http -- excalidraw https://mcp.excalidraw.com"
+		]
+	}
+}

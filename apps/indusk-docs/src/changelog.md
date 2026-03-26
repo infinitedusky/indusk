@@ -4,6 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- Excalidraw extension — hand-drawn diagrams for planning, debugging, and teach mode (complements Mermaid for formal docs)
+- Extension directory format — extensions use `{name}/manifest.json` + `.env` instead of flat files, auto-migrates
+
 ## [1.2.9] - 2026-03-24
 
 ### Added
