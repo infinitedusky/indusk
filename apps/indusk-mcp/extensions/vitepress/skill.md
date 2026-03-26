@@ -33,6 +33,34 @@ You are working with a VitePress documentation site. Follow these patterns.
 - `src/decisions/` — architecture decision records (distilled from ADRs)
 - `src/lessons/` — lessons learned (distilled from retrospectives)
 
+## Excalidraw Diagrams
+
+For conceptual and architecture diagrams that should persist in docs, use the `<ExcalidrawEmbed>` component:
+
+```vue
+<ExcalidrawEmbed
+  url="https://excalidraw.com/#json=..."
+  title="System Architecture"
+  height="500"
+/>
+```
+
+**Props:**
+- `url` (required) — shareable Excalidraw URL from `export_to_excalidraw`
+- `title` (optional, default "Excalidraw Diagram") — displayed in the header bar
+- `height` (optional, default 500) — iframe height in pixels
+
+**Agent workflow for persistent diagrams:**
+1. Create the diagram with `create_view`
+2. Export with `export_to_excalidraw` to get a shareable URL
+3. Add `<ExcalidrawEmbed url="..." title="..." />` to the docs page
+4. Add the page to sidebar in `.vitepress/config.ts` if new
+
+**When to use which:**
+- **Mermaid + FullscreenDiagram** — structured diagrams (sequence, flowchart, class, ER) that need git diffs
+- **Excalidraw + ExcalidrawEmbed** — conceptual architecture, system overviews, hand-drawn style
+- **Excalidraw (no embed)** — ephemeral session sketches that don't need to persist
+
 ## Common Gotchas
 
 - VitePress expects `.md` files in the `src/` directory (configured via `srcDir`)

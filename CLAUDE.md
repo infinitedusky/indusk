@@ -83,6 +83,7 @@ infinitedusky/
 - Plan gate enforcement via Claude Code PreToolUse hooks — blocks phase transitions with incomplete gates — see `planning/enforce-plan-gates/adr.md`
 - Extension system: one system, two sources (built-in + third-party manifests), replaces domain skills — see `planning/extension-system/adr.md`
 - Excalidraw extension for hand-drawn diagrams, complements Mermaid (formal docs = Mermaid, informal/conceptual = Excalidraw) — see `planning/excalidraw-extension/adr.md`
+- ExcalidrawEmbed component for persistent Excalidraw diagrams in VitePress via iframe — see `planning/vitepress-extension/adr.md`
 
 ## Known Gotchas
 

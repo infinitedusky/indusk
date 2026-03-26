@@ -1,40 +1,39 @@
-# Handoff — 2026-03-25
+# Handoff — 2026-03-26
 
 ## What was being worked on
-Major indusk-mcp development session spanning v1.0.0 through v1.5.0. Extension system, Dash0 integration, CGC improvements, context graph research.
+indusk-mcp v1.5.1 → v1.5.4. Catchup auto-permissions, extension directory format, Excalidraw extension, Dash0 dataset from composable.env, auto-add MCP servers.
 
 ## Where it stopped
-- **Context graph plan**: research complete (4 docs), brief written (draft, needs Sandy's review). Next step: Sandy reviews brief, then spike.
-- **OTEL core skill plan**: research written, needs brief.
-- **indusk-mcp v1.5.0**: published. Uses `claude mcp add` for server setup, `.mcp.json` gitignored, init copies extension skills on `--force`.
-- **PR #10 (graph-tools)**: open on GitHub, has all commits from v1.1.0 through research docs. Needs merge.
-- **This repo's code graph**: NOT indexed. FalkorDB is running but CGC indexing kept failing (exit 137 in background, broken pipe with SCIP enabled). Run manually: `DATABASE_TYPE=falkordb-remote FALKORDB_HOST=falkordb.orb.local FALKORDB_GRAPH_NAME=infinitedusky SCIP_INDEXER=false cgc index --force .`
+- **indusk-mcp v1.5.4**: committed and pushed to PR #10 (graph-tools). NOT published to npm yet.
+- **Excalidraw extension**: plan complete (research → brief → ADR → impl). Extension enabled, MCP server added to `.mcp.json`. Excalidraw doesn't render in VS Code extension — works in Claude Desktop, CLI, or web.
+- **Extension directory format**: migrated from flat files (`{name}.json`) to directories (`{name}/manifest.json`). Auto-migration on load. All extensions in this repo already migrated.
+- **Catchup auto-permissions**: added to `.claude/settings.json` and to `init` command so all projects get them.
 
 ## Key decisions made this session
-- Extensions use `claude mcp add` for MCP server setup, never write `.mcp.json` directly
-- `.mcp.json` should be gitignored (contains auth tokens)
-- Dash0 MCP server is type `http` (not `streamable-http` or `streamableHttp`)
-- Context graph direction: integrate CGC + Graphiti on shared FalkorDB, don't build from scratch
-- OTEL should be a core skill (like plan, work, verify), not an extension
-- The context graph is a **layer** alongside traditional context (skills, lessons, CLAUDE.md), not a replacement
+- Extension directories: `{name}/manifest.json` + `.env` instead of flat `{name}.json` — enables per-extension config
+- Excalidraw complements Mermaid: informal/conceptual = Excalidraw, formal docs = Mermaid
+- No-auth HTTP MCP servers auto-add via `claude mcp add` during `extensions enable`; auth-required servers print setup instructions
+- Dash0 dataset should come from composable.env component or `.indusk/extensions/dash0/.env`, not hardcoded
+- Catchup MCP tools are read-only and should be auto-allowed in permissions
 
 ## Watch out for
-- SCIP_INDEXER causes broken pipe errors during indexing on this repo — disable it (`SCIP_INDEXER=false`)
-- `init --force` now runs `claude mcp add` which can fail if Claude Code CLI isn't available in the npx context
-- Graphiti MCP server needs an LLM API key (OpenAI default, Anthropic supported) for contradiction detection
-- numero's `.mcp.json` was clobbered by `init --force` in an earlier version — the fix is in v1.5.0 but check it
+- Excalidraw MCP doesn't render in VS Code extension — only CLI, Claude Desktop, web
+- `extensions enable` now auto-runs `claude mcp add` for no-auth servers — if `claude` CLI isn't available it falls back to printing the command
+- Stale tests: plan-parser and impl-parser tests were updated to reference current plans (gsd-inspired-improvements, gate-policy-enforcement) instead of archived ones
+- Pre-existing biome lint issue in `init-docs.ts` (useTemplate) — not from this session
 
 ## Active plans (this repo)
 | Plan | Status | Next step |
 |------|--------|-----------|
+| excalidraw-extension | impl completed | Ready for retrospective |
 | context-graph | research complete, brief draft | Sandy reviews brief, then spike |
 | otel-core-skill | research complete | Write brief |
 | mcp-dashboard | research complete | Write brief (lower priority) |
 | gsd-inspired-improvements | impl in-progress | Continue work |
-| gate-policy-enforcement | brief written | Needs ADR + impl |
+| gate-policy-enforcement | impl completed | Ready for retrospective |
 
 ## Unpushed/uncommitted work
-PR #10 (graph-tools) is open and has everything. Merge it.
+PR #10 (graph-tools) has everything through v1.5.4. Needs merge and npm publish.
 
 ## Catchup Status
 - [x] handoff
