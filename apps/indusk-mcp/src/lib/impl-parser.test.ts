@@ -6,7 +6,7 @@ const projectRoot = join(import.meta.dirname, "../../../..");
 
 describe("parseImpl", () => {
 	it("parses the gsd-inspired-improvements impl", () => {
-		const parsed = parseImpl(join(projectRoot, "planning/gsd-inspired-improvements/impl.md"));
+		const parsed = parseImpl(join(projectRoot, "planning/archive/gsd-inspired-improvements/impl.md"));
 		expect(parsed.title).toContain("GSD");
 		expect(parsed.phases.length).toBeGreaterThanOrEqual(2);
 	});

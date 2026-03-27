@@ -89,6 +89,7 @@ const config = defineConfig({
 						{ text: "Overview", link: "/decisions/" },
 						{ text: "Excalidraw Extension", link: "/decisions/excalidraw-extension" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
+						{ text: "GSD-Inspired Improvements", link: "/decisions/gsd-inspired-improvements" },
 					],
 				},
 			],

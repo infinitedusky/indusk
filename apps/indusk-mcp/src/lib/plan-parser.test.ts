@@ -6,16 +6,17 @@ const projectRoot = join(import.meta.dirname, "../../../..");
 
 describe("parsePlan", () => {
 	it("parses the gsd-inspired-improvements plan", () => {
-		const plan = parsePlan(join(projectRoot, "planning/gsd-inspired-improvements"));
+		const plan = parsePlan(join(projectRoot, "planning/archive/gsd-inspired-improvements"));
 		expect(plan.name).toBe("gsd-inspired-improvements");
-		expect(plan.stage).toBe("impl");
+		expect(plan.stage).toBe("retrospective");
 		expect(plan.documents).toContain("brief.md");
 		expect(plan.documents).toContain("adr.md");
 		expect(plan.documents).toContain("impl.md");
+		expect(plan.documents).toContain("retrospective.md");
 	});
 
 	it("extracts dependencies from brief", () => {
-		const plan = parsePlan(join(projectRoot, "planning/gsd-inspired-improvements"));
+		const plan = parsePlan(join(projectRoot, "planning/archive/gsd-inspired-improvements"));
 		expect(plan.dependencies.length).toBeGreaterThanOrEqual(0);
 	});
 
@@ -28,11 +29,11 @@ describe("parsePlan", () => {
 describe("parseAllPlans", () => {
 	it("returns all plans sorted by name", () => {
 		const plans = parseAllPlans(projectRoot);
-		expect(plans.length).toBeGreaterThanOrEqual(3);
+		expect(plans.length).toBeGreaterThanOrEqual(2);
 
 		const names = plans.map((p) => p.name);
-		expect(names).toContain("gsd-inspired-improvements");
 		expect(names).toContain("context-graph");
+		expect(names).toContain("otel-core-skill");
 
 		// Verify sorted
 		const sorted = [...names].sort();

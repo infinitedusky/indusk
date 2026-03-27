@@ -107,7 +107,6 @@ Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env
 
 | Plan | Stage | Next Step |
 |------|-------|-----------|
-| gsd-inspired-improvements | impl (in-progress) | Continue work |
 | context-graph | brief (draft) | Sandy reviews brief |
 | otel-core-skill | research (complete) | Write brief |
 | mcp-dashboard | research (complete) | Write brief (lower priority) |
