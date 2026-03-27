@@ -19,10 +19,9 @@ describe("parsePlan", () => {
 		expect(plan.dependencies.length).toBeGreaterThanOrEqual(0);
 	});
 
-	it("parses a completed plan", () => {
-		const plan = parsePlan(join(projectRoot, "planning/gate-policy-enforcement"));
-		expect(plan.stage).toBe("impl");
-		expect(plan.stageStatus).toBe("completed");
+	it("parses an archived completed plan", () => {
+		const plan = parsePlan(join(projectRoot, "planning/archive/gate-policy-enforcement"));
+		expect(plan.stage).toBe("retrospective");
 	});
 });
 

@@ -85,7 +85,11 @@ const config = defineConfig({
 			"/decisions/": [
 				{
 					text: "Architecture Decisions",
-					items: [{ text: "Overview", link: "/decisions/" }],
+					items: [
+						{ text: "Overview", link: "/decisions/" },
+						{ text: "Excalidraw Extension", link: "/decisions/excalidraw-extension" },
+						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
+					],
 				},
 			],
 			"/lessons/": [

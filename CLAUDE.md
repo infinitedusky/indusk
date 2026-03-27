@@ -107,11 +107,7 @@ Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env
 
 | Plan | Stage | Next Step |
 |------|-------|-----------|
-| context-skill | impl (completed) | Ready for retrospective |
-| verify-skill | impl (completed) | Ready for retrospective |
-| code-quality-system | impl (completed) | MCP tools designed, ready for retrospective |
-| codegraph-context | impl (completed) | Ready for retrospective |
-| mcp-dev-system | impl (completed) | Ready for retrospective |
-| document-skill | impl (completed) | Ready for retrospective |
-| gsd-inspired-improvements | impl (in-progress) | Publish v0.5.0 and dogfood |
-| enforce-plan-gates | impl (in-progress) | Publish v0.6.0 and dogfood |
+| gsd-inspired-improvements | impl (in-progress) | Continue work |
+| context-graph | brief (draft) | Sandy reviews brief |
+| otel-core-skill | research (complete) | Write brief |
+| mcp-dashboard | research (complete) | Write brief (lower priority) |

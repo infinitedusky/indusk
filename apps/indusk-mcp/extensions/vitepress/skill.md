@@ -39,22 +39,23 @@ For conceptual and architecture diagrams that should persist in docs, use the `<
 
 ```vue
 <ExcalidrawEmbed
-  url="https://excalidraw.com/#json=..."
+  src="/diagrams/architecture.excalidraw.json"
   title="System Architecture"
-  height="500"
 />
 ```
 
 **Props:**
-- `url` (required) — shareable Excalidraw URL from `export_to_excalidraw`
-- `title` (optional, default "Excalidraw Diagram") — displayed in the header bar
-- `height` (optional, default 500) — iframe height in pixels
+- `src` (required) — path to `.excalidraw.json` file in `public/diagrams/`
+- `title` (optional, default "Excalidraw Diagram") — for accessibility
 
 **Agent workflow for persistent diagrams:**
 1. Create the diagram with `create_view`
-2. Export with `export_to_excalidraw` to get a shareable URL
-3. Add `<ExcalidrawEmbed url="..." title="..." />` to the docs page
-4. Add the page to sidebar in `.vitepress/config.ts` if new
+2. Read the checkpoint with `read_checkpoint` to get the element JSON
+3. Save the JSON to `apps/indusk-docs/src/public/diagrams/{name}.excalidraw.json`
+4. Add `<ExcalidrawEmbed src="/diagrams/{name}.excalidraw.json" title="..." />` to the docs page
+5. Add the page to sidebar in `.vitepress/config.ts` if new
+
+The component uses `@excalidraw/utils` to render SVG client-side, wrapped in `<FullscreenDiagram>` for pan/zoom.
 
 **When to use which:**
 - **Mermaid + FullscreenDiagram** — structured diagrams (sequence, flowchart, class, ER) that need git diffs
