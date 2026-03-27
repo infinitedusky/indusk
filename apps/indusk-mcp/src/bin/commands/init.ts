@@ -237,6 +237,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		"mcp__indusk__graph_stats",
 		"mcp__indusk__get_system_version",
 		"mcp__indusk__get_skill_versions",
+		"mcp__indusk__get_skill_summaries",
 		"mcp__indusk__index_project",
 		"mcp__indusk__graph_doctor",
 		"mcp__codegraphcontext__get_repository_stats",

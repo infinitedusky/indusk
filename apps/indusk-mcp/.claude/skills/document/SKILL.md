@@ -116,15 +116,20 @@ The `decisions/` and `lessons/` directories are **not** populated during normal 
 
 Two diagram tools are available. Use the right one for the context:
 
-| Need | Tool | Why |
-|------|------|-----|
-| Formal diagram in the docs site | **Mermaid** | Text-based, diffs in git, renders natively in VitePress |
-| Conceptual sketch during a session | **Excalidraw** | Hand-drawn style, natural language input, fast |
-| Sequence/flowchart for reference docs | **Mermaid** | Structured, precise, version-controlled |
-| Architecture overview for a brief or ADR | **Excalidraw** | Approachable, whiteboard feel |
-| Debug illustration | **Excalidraw** | Quick visual communication |
+| Need | Tool | Persists in docs? |
+|------|------|-------------------|
+| Sequence, flowchart, class, ER diagram | **Mermaid** + `<FullscreenDiagram>` | Yes — text diffs in git |
+| Conceptual architecture, system overview | **Excalidraw** + `<ExcalidrawEmbed>` | Yes — iframe from shareable URL |
+| Quick sketch during debugging or teach mode | **Excalidraw** (no embed) | No — ephemeral |
+| Any diagram when Excalidraw isn't enabled | **Mermaid** | Yes |
 
-**Rule of thumb:** If it goes in the docs site, use Mermaid. If it's for in-session communication, use Excalidraw. If the Excalidraw extension isn't enabled, use Mermaid for everything.
+**Rule of thumb:** Structured diagrams → Mermaid. Conceptual/hand-drawn → Excalidraw. If it should persist in docs, use the embed component.
+
+**Agent workflow for persistent Excalidraw diagrams:**
+1. Create with `create_view` during the session
+2. Export with `export_to_excalidraw` → get shareable URL
+3. Add `<ExcalidrawEmbed url="..." title="..." />` to the docs page
+4. Add page to sidebar in `.vitepress/config.ts` if new
 
 ## Mermaid Diagrams
 

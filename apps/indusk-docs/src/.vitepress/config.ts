@@ -108,7 +108,7 @@ const config = defineConfig({
 			include: ["mermaid"],
 		},
 		ssr: {
-			noExternal: ["mermaid"],
+			noExternal: ["mermaid", "@excalidraw/utils"],
 		},
 	},
 });

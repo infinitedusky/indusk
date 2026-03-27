@@ -161,6 +161,58 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 	);
 
 	server.registerTool(
+		"get_skill_summaries",
+		{
+			description:
+				"Returns name, description, and type for every installed skill. Use during catchup to learn what skills are available without loading full content.",
+		},
+		async () => {
+			const skillsTarget = join(projectRoot, ".claude/skills");
+			if (!existsSync(skillsTarget)) {
+				return {
+					content: [{ type: "text" as const, text: JSON.stringify({ skills: [], total: 0 }) }],
+				};
+			}
+
+			const skillDirs = readdirSync(skillsTarget).filter(
+				(d) => !d.startsWith(".") && existsSync(join(skillsTarget, d, "SKILL.md")),
+			);
+
+			const skills = skillDirs.map((dir) => {
+				const content = readFileSync(join(skillsTarget, dir, "SKILL.md"), "utf-8");
+
+				// Try frontmatter first (process skills)
+				const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+				if (fmMatch) {
+					const fm = fmMatch[1];
+					const name =
+						fm.match(/^name:\s*(.+)$/m)?.[1]?.trim() ?? dir;
+					const description =
+						fm.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? "";
+					const type = fm.match(/^argument-hint:/m) ? "process" : "domain";
+					return { name, description, type, slash: `/${name}` };
+				}
+
+				// Fall back to heading + first paragraph (extension skills)
+				const firstPara = content
+					.split("\n\n")
+					.find((p) => p && !p.startsWith("#") && !p.startsWith("---"));
+				const description = firstPara?.replace(/\n/g, " ").slice(0, 120) ?? "";
+				return { name: dir, description, type: "extension", slash: null };
+			});
+
+			return {
+				content: [
+					{
+						type: "text" as const,
+						text: JSON.stringify({ total: skills.length, skills }, null, 2),
+					},
+				],
+			};
+		},
+	);
+
+	server.registerTool(
 		"extensions_status",
 		{
 			description:

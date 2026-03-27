@@ -2,6 +2,10 @@
 
 Set up the InDusk development system in a new or existing project.
 
+## Architecture Overview
+
+<ExcalidrawEmbed src="/diagrams/architecture.excalidraw.json" title="InDusk MCP Architecture" />
+
 ## Prerequisites
 
 - **Node 22+** — Tailwind 4 requires it
