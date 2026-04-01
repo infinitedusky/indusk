@@ -114,6 +114,22 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 			continue;
 		}
 
+		// Check if extension requires auth — if so, .env must exist before enabling
+		const builtinManifest = join(builtinDir, name, "manifest.json");
+		if (existsSync(builtinManifest)) {
+			const manifest = loadExtension(builtinManifest);
+			if (manifest?.mcp_server?.headers && Object.keys(manifest.mcp_server.headers).length > 0) {
+				const envVars = readExtensionEnv(name);
+				if (Object.keys(envVars).length === 0) {
+					console.info(`\n  ${name}: cannot enable — no credentials found.`);
+					console.info(`    Create .indusk/extensions/${name}/.env with the required credentials first.`);
+					console.info(`    If using composable.env: run 'pnpm ce env:build' to generate it from your contract.`);
+					console.info(`    Then run 'extensions enable ${name}' again.\n`);
+					continue;
+				}
+			}
+		}
+
 		// Try to move from disabled
 		if (enableExtension(projectRoot, name)) {
 			console.info(`  ${name}: enabled (was disabled)`);
@@ -124,7 +140,6 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 		}
 
 		// Try to copy from built-in
-		const builtinManifest = join(builtinDir, name, "manifest.json");
 		if (existsSync(builtinManifest)) {
 			const targetDir = extensionConfigDir(projectRoot, name);
 			mkdirSync(targetDir, { recursive: true });
@@ -558,6 +573,33 @@ function printMcpSetup(projectRoot: string, name: string): void {
 	printMcpInstructions(name, manifest);
 }
 
+function readExtensionEnv(name: string): Record<string, string> {
+	const cwd = process.cwd();
+	// Try profile-specific env files first, then plain .env
+	const candidates = [
+		join(cwd, ".indusk/extensions", name, ".env.local"),
+		join(cwd, ".indusk/extensions", name, ".env"),
+		join(cwd, ".indusk/disabled", name, ".env.local"),
+		join(cwd, ".indusk/disabled", name, ".env"),
+	];
+
+	for (const envPath of candidates) {
+		if (!existsSync(envPath)) continue;
+		const vars: Record<string, string> = {};
+		const content = readFileSync(envPath, "utf-8");
+		for (const line of content.split("\n")) {
+			const trimmed = line.trim();
+			if (!trimmed || trimmed.startsWith("#")) continue;
+			const eqIdx = trimmed.indexOf("=");
+			if (eqIdx > 0) {
+				vars[trimmed.slice(0, eqIdx)] = trimmed.slice(eqIdx + 1);
+			}
+		}
+		if (Object.keys(vars).length > 0) return vars;
+	}
+	return {};
+}
+
 function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
 	const server = manifest.mcp_server;
 	if (!server) return;
@@ -578,15 +620,74 @@ function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
 		return;
 	}
 
-	// For servers needing auth, print setup instructions
-	if (server.setup_instructions?.length) {
-		console.info(`\n  ${name} MCP setup:`);
-		for (const instruction of server.setup_instructions) {
-			console.info(`    ${instruction}`);
+	// For servers needing auth, try to read credentials from extension .env
+	if (needsAuth && server.type === "http" && server.url && server.headers) {
+		const envVars = readExtensionEnv(name);
+
+		if (Object.keys(envVars).length > 0) {
+			// Substitute placeholders in url and headers
+			let url = server.url;
+			for (const [envKey, envVal] of Object.entries(envVars)) {
+				url = url.replaceAll(envKey, envVal);
+			}
+
+			const headerArgs: string[] = [];
+			let allResolved = true;
+			for (const [key, template] of Object.entries(server.headers)) {
+				let resolved = template;
+				for (const [envKey, envVal] of Object.entries(envVars)) {
+					resolved = resolved.replaceAll(envKey, envVal);
+				}
+				if (resolved === template) {
+					allResolved = false;
+					break;
+				}
+				headerArgs.push(`--header "${key}: ${resolved}"`);
+			}
+
+			if (allResolved) {
+				const args = [
+					"mcp", "add", "-t", "http",
+					...headerArgs.flatMap(h => {
+						const match = h.match(/--header "(.+): (.+)"/);
+						if (match) return ["--header", `${match[1]}: ${match[2]}`];
+						return [];
+					}),
+					"-s", "project", "--", name, url,
+				];
+				const cmd = `claude ${args.map(a => a.includes(" ") ? `"${a}"` : a).join(" ")}`;
+				console.info(`\n  ${name}: adding MCP server with credentials from .env...`);
+				// Remove existing entry first so we always write fresh credentials
+				try {
+					execSync(`claude mcp remove -s project ${name}`, { cwd: process.cwd(), timeout: 10000, stdio: ["ignore", "pipe", "pipe"] });
+				} catch {
+					// Ignore — may not exist
+				}
+				try {
+					execSync(cmd, { cwd: process.cwd(), timeout: 15000, stdio: ["ignore", "pipe", "pipe"] });
+					console.info(`  ${name}: MCP server configured (restart Claude Code to load)`);
+					return;
+				} catch (e: unknown) {
+					const err = e as { stderr?: Buffer | string; message?: string };
+					const stderr = err.stderr ? String(err.stderr).trim() : "";
+					console.info(`  ${name}: auto-add failed. ${stderr || err.message || ""}`);
+					console.info(`  command was: ${cmd}`);
+					return;
+				}
+			}
 		}
-	} else if (server.type === "http" && server.url) {
-		console.info(`\n  ${name} MCP setup:`);
-		console.info(`    claude mcp add -t http -- ${name} ${server.url}`);
+	}
+
+	// Fallback: no .env found or credentials incomplete
+	console.info(`\n  ${name}: no credentials found at .indusk/extensions/${name}/.env`);
+	console.info(`    To set up automatically:`);
+	console.info(`      1. Create .indusk/extensions/${name}/.env with the required credentials`);
+	console.info(`      2. Run 'extensions enable ${name}' again`);
+	if (server.setup_instructions?.length) {
+		console.info(`    Or set up manually:`);
+		for (const instruction of server.setup_instructions) {
+			console.info(`      ${instruction}`);
+		}
 	}
 	console.info("");
 }

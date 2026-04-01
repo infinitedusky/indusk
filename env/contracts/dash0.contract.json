@@ -1,0 +1,12 @@
+{
+	"name": "dash0",
+	"location": ".indusk/extensions/dash0",
+	"default": ".env",
+	"vars": {
+		"DASH0_AUTH_TOKEN": "${dash0.TOKEN}",
+		"DASH0_DATASET": "${dash0.DATASET}",
+		"DASH0_ENDPOINT_MCP": "${dash0.API_ENDPOINT}/mcp",
+		"OTEL_EXPORTER_OTLP_ENDPOINT": "${dash0.HTTP_ENDPOINT}",
+		"OTEL_EXPORTER_OTLP_HEADERS": "${dash0.OTLP_HEADERS}"
+	}
+}
