@@ -4,6 +4,11 @@ import { basename, join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
+function getCgcGraphName(projectRoot: string): string {
+	if (process.env.FALKORDB_GRAPH_NAME) return process.env.FALKORDB_GRAPH_NAME;
+	return `cgc-${basename(projectRoot)}`;
+}
+
 function cgcPath(): string | null {
 	const paths = [join(process.env.HOME ?? "", ".local/bin/cgc"), "/usr/local/bin/cgc"];
 	return paths.find((p) => existsSync(p)) ?? null;
@@ -72,7 +77,7 @@ function runCgc(
 				...process.env,
 				DATABASE_TYPE: "falkordb-remote",
 				FALKORDB_HOST: host,
-				FALKORDB_GRAPH_NAME: process.env.FALKORDB_GRAPH_NAME ?? basename(projectRoot),
+				FALKORDB_GRAPH_NAME: getCgcGraphName(projectRoot),
 			},
 		}).trim();
 	} catch (err: unknown) {
@@ -97,7 +102,7 @@ export function indexProject(projectRoot: string): { success: boolean; output: s
 		};
 	}
 
-	const graphName = process.env.FALKORDB_GRAPH_NAME ?? basename(projectRoot);
+	const graphName = getCgcGraphName(projectRoot);
 	const hasIgnore = existsSync(join(projectRoot, ".cgcignore"));
 
 	try {
@@ -218,7 +223,7 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 						...process.env,
 						DATABASE_TYPE: "falkordb-remote",
 						FALKORDB_HOST: process.env.FALKORDB_HOST ?? "falkordb.orb.local",
-						FALKORDB_GRAPH_NAME: process.env.FALKORDB_GRAPH_NAME ?? basename(projectRoot),
+						FALKORDB_GRAPH_NAME: getCgcGraphName(projectRoot),
 					},
 				});
 			} catch {
@@ -372,7 +377,7 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 						...process.env,
 						DATABASE_TYPE: "falkordb-remote",
 						FALKORDB_HOST: process.env.FALKORDB_HOST ?? "falkordb.orb.local",
-						FALKORDB_GRAPH_NAME: process.env.FALKORDB_GRAPH_NAME ?? basename(projectRoot),
+						FALKORDB_GRAPH_NAME: getCgcGraphName(projectRoot),
 					},
 				});
 			} catch {
@@ -527,7 +532,7 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 			// 4. Check if repo is indexed
 			if (steps.every((s) => s.status !== "error")) {
 				const listOutput = runCgc("list", projectRoot, { skipConnectionCheck: true });
-				if (listOutput.includes(projectRoot) || listOutput.includes(basename(projectRoot))) {
+				if (listOutput.includes(projectRoot) || listOutput.includes(basename(projectRoot)) || listOutput.includes(getCgcGraphName(projectRoot))) {
 					steps.push({ step: "repo-indexed", status: "ok", detail: "Repository is indexed" });
 				} else {
 					steps.push({
