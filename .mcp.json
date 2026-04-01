@@ -1,16 +1,5 @@
 {
   "mcpServers": {
-    "indusk": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "@infinitedusky/indusk-mcp",
-        "serve"
-      ],
-      "env": {
-        "PROJECT_ROOT": "."
-      }
-    },
     "codegraphcontext": {
       "type": "stdio",
       "command": "cgc",
@@ -21,12 +10,31 @@
       "env": {
         "DATABASE_TYPE": "falkordb-remote",
         "FALKORDB_HOST": "falkordb.orb.local",
-        "FALKORDB_GRAPH_NAME": "infinitedusky"
+        "FALKORDB_GRAPH_NAME": "cgc-infinitedusky"
       }
     },
     "excalidraw": {
       "type": "http",
       "url": "https://mcp.excalidraw.com"
+    },
+    "dash0": {
+      "type": "http",
+      "url": "https://api.europe-west4.gcp.dash0.com/mcp",
+      "headers": {
+        "Authorization": "Bearer auth_WTdiqJdsPrOO2iUQ1yUIzDTuCyY9uVXO"
+      }
+    },
+    "indusk": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "--yes",
+        "@infinitedusky/indusk-mcp",
+        "serve"
+      ],
+      "env": {
+        "PROJECT_ROOT": "."
+      }
     }
   }
 }

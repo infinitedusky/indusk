@@ -53,11 +53,12 @@ Call `list_plans`. This shows every plan and its status. Pay attention to:
 ### 6. Review Skills and Extensions
 Call `extensions_status` to see what extensions are enabled and their capabilities.
 
-Then read all installed skill files in `.claude/skills/*/SKILL.md`. These define your workflows:
-- **Process skills** (plan, work, verify, context, document, retrospective) — how you build things
-- **Domain skills** (typescript, nextjs, etc.) — technology-specific best practices
-- **Extension skills** (cgc, composable-env, etc.) — tool integrations and when to use them
-- **Utility skills** (catchup, handoff, toolbelt) — operational skills
+Call `get_skill_summaries` to load the name, description, and type of every installed skill. This returns a compact summary — you do NOT need to read each skill file individually. The full skill content loads automatically when the user invokes a slash command.
+
+Skill types:
+- **process** — workflow skills with slash commands (plan, work, verify, context, document, retrospective)
+- **extension** — tool integrations (cgc, composable-env, excalidraw, etc.)
+- **domain** — technology-specific best practices (typescript, testing, etc.)
 
 Understand what each skill does and when to use it. You should be able to answer: "What slash commands are available and what do they do?"
 

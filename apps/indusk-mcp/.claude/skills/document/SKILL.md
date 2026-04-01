@@ -127,9 +127,10 @@ Two diagram tools are available. Use the right one for the context:
 
 **Agent workflow for persistent Excalidraw diagrams:**
 1. Create with `create_view` during the session
-2. Export with `export_to_excalidraw` → get shareable URL
-3. Add `<ExcalidrawEmbed url="..." title="..." />` to the docs page
-4. Add page to sidebar in `.vitepress/config.ts` if new
+2. Read checkpoint with `read_checkpoint` to get element JSON
+3. Save JSON to `apps/indusk-docs/src/public/diagrams/{name}.excalidraw.json`
+4. Add `<ExcalidrawEmbed src="/diagrams/{name}.excalidraw.json" title="..." />` to the docs page
+5. Add page to sidebar in `.vitepress/config.ts` if new
 
 ## Mermaid Diagrams
 

@@ -1,39 +1,49 @@
-# Handoff — 2026-03-26
+# Handoff
 
-## What was being worked on
-indusk-mcp v1.5.1 → v1.5.4. Catchup auto-permissions, extension directory format, Excalidraw extension, Dash0 dataset from composable.env, auto-add MCP servers.
+**Date:** 2026-03-30
+**Session:** Context graph Plan 1 execution — Phase 0 complete, Graphiti validated with Gemini
 
-## Where it stopped
-- **indusk-mcp v1.5.4**: committed and pushed to PR #10 (graph-tools). NOT published to npm yet.
-- **Excalidraw extension**: plan complete (research → brief → ADR → impl). Extension enabled, MCP server added to `.mcp.json`. Excalidraw doesn't render in VS Code extension — works in Claude Desktop, CLI, or web.
-- **Extension directory format**: migrated from flat files (`{name}.json`) to directories (`{name}/manifest.json`). Auto-migration on load. All extensions in this repo already migrated.
-- **Catchup auto-permissions**: added to `.claude/settings.json` and to `init` command so all projects get them.
+## What Was Being Worked On
+Plan 1: graphiti-infrastructure (`planning/graphiti-infrastructure/impl.md`), status: in-progress.
 
-## Key decisions made this session
-- Extension directories: `{name}/manifest.json` + `.env` instead of flat `{name}.json` — enables per-extension config
-- Excalidraw complements Mermaid: informal/conceptual = Excalidraw, formal docs = Mermaid
-- No-auth HTTP MCP servers auto-add via `claude mcp add` during `extensions enable`; auth-required servers print setup instructions
-- Dash0 dataset should come from composable.env component or `.indusk/extensions/dash0/.env`, not hardcoded
-- Catchup MCP tools are read-only and should be auto-allowed in permissions
+## Where It Stopped
+- **Phase 0 (CGC Graph Naming): COMPLETE** — all 4 gates done
+  - Graphs renamed in FalkorDB: `cgc-infinitedusky`, `cgc-numero`, etc.
+  - Code updated: `getCgcGraphName()` helper in `graph-tools.ts`, `init.ts` uses `cgc-` prefix
+  - `.mcp.json` updated, CLAUDE.md gotcha added, docs page updated
+- **Phase 1 (Graphiti Setup): VALIDATED but not formalized**
+  - Full Graphiti pipeline proven working with Gemini
+  - Episode → entity extraction (7 entities) → fact creation (6 facts) → embedding → semantic search
+  - Working models: `gemini-2.5-flash` (LLM), `gemini-embedding-001` (embeddings)
+  - Needed patch: MCP server doesn't pass `cross_encoder` to `Graphiti()` — added Gemini reranker
+  - Test server was at `/tmp/graphiti-src/mcp_server/` — killed and cleaned up
+  - Deployment approach (Docker vs local) still TBD
 
-## Watch out for
-- Excalidraw MCP doesn't render in VS Code extension — only CLI, Claude Desktop, web
-- `extensions enable` now auto-runs `claude mcp add` for no-auth servers — if `claude` CLI isn't available it falls back to printing the command
-- Stale tests: plan-parser and impl-parser tests were updated to reference current plans (gsd-inspired-improvements, gate-policy-enforcement) instead of archived ones
-- Pre-existing biome lint issue in `init-docs.ts` (useTemplate) — not from this session
+## What's Next
+1. Decide Graphiti deployment (custom Docker image with google-genai, or local process)
+2. Formalize Phase 1: check off impl items, run gates
+3. Phase 2: Build `graphiti-client.ts` MCP client wrapper in indusk-mcp
+4. Phases 3-5: health checks, init integration, end-to-end validation
 
-## Active plans (this repo)
-| Plan | Status | Next step |
-|------|--------|-----------|
-| excalidraw-extension | impl completed | Ready for retrospective |
-| context-graph | research complete, brief draft | Sandy reviews brief, then spike |
-| otel-core-skill | research complete | Write brief |
-| mcp-dashboard | research complete | Write brief (lower priority) |
-| gsd-inspired-improvements | impl in-progress | Continue work |
-| gate-policy-enforcement | impl completed | Ready for retrospective |
+## Open Issues
+- `/tmp/graphiti-src/` needs re-clone next session (or move to permanent location)
+- The reranker patch lives only in `/tmp/` — needs to be persisted somewhere
+- CGC MCP server needs restart to pick up `cgc-infinitedusky` graph name
+- Code changes (graph-tools.ts, init.ts) are uncommitted
+- Pre-existing biome nested root config issue blocks `pnpm check` globally
 
-## Unpushed/uncommitted work
-PR #10 (graph-tools) has everything through v1.5.4. Needs merge and npm publish.
+## Decisions Made This Session
+- **CGC graphs use `cgc-` prefix**: clears namespace for Graphiti semantic graphs
+- **Gemini works with Graphiti**: `gemini-2.5-flash` + `gemini-embedding-001`. Deprecated: `gemini-2.0-flash`. Nonexistent: `text-embedding-001`, `text-embedding-004`.
+- **Docker image lacks Gemini**: `zepai/knowledge-graph-mcp:standalone` doesn't include `google-genai` extra. Need custom image or local run.
+- **MCP server needs reranker patch**: upstream doesn't create cross_encoder for non-OpenAI providers.
+- **GOOGLE_API_KEY**: sourced from `env/.env.secrets.shared` as `GEMINI_API_KEY`
+- **Graph naming**: `cgc-{project}` for structural, `{project}` for semantic, `shared` for universal
+
+## Watch Out For
+- Config with correct model names is at `docker/graphiti-config.yaml`
+- FalkorDB should show only `cgc-*` graphs. Bare project names = stale data or unrestarted CGC server.
+- `google-genai>=1.62.0` must be installed separately after `uv sync`
 
 ## Catchup Status
 - [x] handoff

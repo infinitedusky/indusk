@@ -1,54 +1,80 @@
 {
-	"permissions": {
-		"allow": [
-			"mcp__indusk__list_lessons",
-			"mcp__indusk__check_health",
-			"mcp__indusk__get_context",
-			"mcp__indusk__list_plans",
-			"mcp__indusk__extensions_status",
-			"mcp__indusk__graph_ensure",
-			"mcp__indusk__graph_stats",
-			"mcp__indusk__get_system_version",
-			"mcp__indusk__get_skill_versions",
-			"mcp__indusk__get_skill_summaries",
-			"mcp__indusk__index_project",
-			"mcp__indusk__graph_doctor",
-			"mcp__codegraphcontext__get_repository_stats",
-			"mcp__codegraphcontext__list_indexed_repositories",
-			"Read(.claude/handoff.md)",
-			"Edit(.claude/handoff.md)"
-		]
-	},
-	"hooks": {
-		"PreToolUse": [
-			{
-				"matcher": "Edit|Write",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "node .claude/hooks/check-gates.js"
-					},
-					{
-						"type": "command",
-						"command": "node .claude/hooks/validate-impl-structure.js"
-					},
-					{
-						"type": "command",
-						"command": "node .claude/hooks/check-catchup.js"
-					}
-				]
-			}
-		],
-		"PostToolUse": [
-			{
-				"matcher": "Edit|Write",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "node .claude/hooks/gate-reminder.js"
-					}
-				]
-			}
-		]
-	}
+  "permissions": {
+    "allow": [
+      "mcp__indusk__list_lessons",
+      "mcp__indusk__check_health",
+      "mcp__indusk__get_context",
+      "mcp__indusk__list_plans",
+      "mcp__indusk__extensions_status",
+      "mcp__indusk__graph_ensure",
+      "mcp__indusk__graph_stats",
+      "mcp__indusk__get_system_version",
+      "mcp__indusk__get_skill_versions",
+      "mcp__indusk__get_skill_summaries",
+      "mcp__indusk__index_project",
+      "mcp__indusk__graph_doctor",
+      "mcp__codegraphcontext__get_repository_stats",
+      "mcp__codegraphcontext__list_indexed_repositories",
+      "Read(.claude/handoff.md)",
+      "Edit(.claude/handoff.md)",
+      "Bash(pnpm add:*)",
+      "Bash(node -e \"const r = require\\(''@opentelemetry/resources''\\); console.log\\(Object.keys\\(r\\).filter\\(k => k.includes\\(''esource''\\)\\).join\\('', ''\\)\\)\")",
+      "Bash(pnpm turbo:*)",
+      "Bash(redis-cli -h falkordb.orb.local -p 6379 ping)",
+      "Bash(redis-cli -h falkordb.orb.local -p 6379 GRAPH.LIST)",
+      "mcp__dash0__getSpans",
+      "Read(//Users/the_dusky/code/sandbox/numero/**)",
+      "Read(//private/tmp/dash0-examples/**)",
+      "Read(//tmp/dash0-examples/nodejs-tracing-starter/**)",
+      "Read(//private/tmp/dash0-examples/nodejs-tracing-starter/**)",
+      "Bash(git -C /tmp/dash0-examples/nodejs-tracing-starter log --oneline)",
+      "Read(//private/tmp/dash0-sdk-web/**)",
+      "Read(//private/tmp/agent-skills/**)",
+      "Read(//tmp/agent-skills/skills/otel-instrumentation/**)",
+      "Read(//private/tmp/agent-skills/skills/otel-instrumentation/**)",
+      "Bash(node -e ':*)",
+      "Bash(cp /Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/hooks/validate-impl-structure.js /Users/the_dusky/code/sandbox/infinitedusky/.claude/hooks/validate-impl-structure.js)",
+      "Bash(cp /Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/hooks/check-gates.js /Users/the_dusky/code/sandbox/infinitedusky/.claude/hooks/check-gates.js)",
+      "Bash(npx indusk:*)",
+      "Bash(chmod +x /Users/the_dusky/.npm/_npx/91d49be415d665cf/node_modules/.bin/indusk)",
+      "Bash(npx --yes @infinitedusky/indusk-mcp --version)",
+      "Bash(claude mcp:*)",
+      "Bash(ls /Users/the_dusky/code/sandbox/infinitedusky/.claude/lessons/*.md)",
+      "mcp__indusk__add_lesson",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-gates.js"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/validate-impl-structure.js"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-catchup.js"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/gate-reminder.js"
+          }
+        ]
+      }
+    ]
+  }
 }

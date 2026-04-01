@@ -1,10 +1,6 @@
 {
 	"envDir": "env",
 	"defaultProfile": "local",
-	"scripts": {
-		"command": "turbo",
-		"actions": ["dev", "build", "start"]
-	},
 	"profiles": {
 		"local": {
 			"suffix": "-local",

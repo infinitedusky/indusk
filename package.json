@@ -22,7 +22,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.8",
-		"composable.env": "^1.10.0",
+		"composable.env": "^1.14.3",
 		"turbo": "^2.4.0",
 		"vitest": "^4.1.0"
 	}

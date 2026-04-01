@@ -30,7 +30,7 @@ infinitedusky/
 
 **Apps:**
 - **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme (zinc-950 bg, amber-400 accents). Runs in Docker via composable.env for local dev.
-- **indusk-mcp**: InDusk MCP server — dev system tooling with MCP tools, CLI (`init`/`update`/`init-docs`/`extensions`/`check-gates`), skills, hooks, lessons, and extensions. `.indusk/extensions/` holds extension manifests (built-in + third-party). Published as `@infinitedusky/indusk-mcp`.
+- **indusk-mcp**: InDusk MCP server — dev system tooling with MCP tools, CLI (`init`/`update`/`init-docs`/`extensions`/`check-gates`), skills, hooks, lessons, and extensions. `.indusk/extensions/` holds extension manifests (built-in + third-party). Published as `@infinitedusky/indusk-mcp`. OTel templates (`templates/instrumentation.ts`, `templates/filtering-exporter.ts`, `templates/logger.ts`, `templates/instrumentation.py`) are scaffolded by `init` into target projects.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
 
 **Skills:**
@@ -53,10 +53,10 @@ infinitedusky/
 - Skills are markdown files in `.claude/skills/{name}/SKILL.md` — each concept has one canonical skill, others cross-reference
 - Plans follow the lifecycle: research → brief → ADR → impl → retrospective
 - All planning docs live in `planning/{kebab-case-name}/`
-- Every impl phase ends with four gates before advancing: verify → context → document → advance
+- Every impl phase ends with five gates before advancing: otel → verify → context → document → advance
 - Plan gates are enforced via Claude Code hooks — the agent cannot skip verification/context/document items when advancing phases
 - `.claude/hooks/` contains gate enforcement scripts installed by init (check-gates.js blocks execution, validate-impl-structure.js blocks writing, gate-reminder.js nudges)
-- Every impl phase must have verification, context, and document sections — enforced by hook at write time. Use `(none needed)` or `skip-reason:` to opt out.
+- Every impl phase must have verification, otel, context, and document sections — enforced by hook at write time. Use `(none needed)` or `skip-reason:` to opt out.
 - Health checks, init setup, and verification commands come from extensions — don't hardcode tool knowledge in indusk-mcp
 - Three layers of defense: (1) Context/CLAUDE.md — advisory, (2) Biome rules — enforcement, (3) Hooks — gate enforcement, (4) Retrospective — learning. The quality ratchet only gets tighter.
 - Use the plan skill before implementing significant features — don't jump to code
@@ -66,7 +66,8 @@ infinitedusky/
 - After each retrospective, ask if mistakes could be caught by a Biome rule — if yes, add to biome.json and biome-rationale.md
 - Before touching shared code, query the code graph (`analyze_code_relationships`) to understand blast radius
 - Create `.cgcignore` in new projects to exclude build artifacts from graph indexing
-- `npx indusk-mcp init` to set up a new project with skills, CLAUDE.md, biome, and MCP config
+- `npx indusk-mcp init` to set up a new project with skills, CLAUDE.md, biome, OTel instrumentation, and MCP config
+- `init` scaffolds OTel: `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts` (Node.js/Next.js) or `instrumentation.py` (Python) — every project is observable from day one
 
 ## Key Decisions
 
@@ -84,6 +85,7 @@ infinitedusky/
 - Extension system: one system, two sources (built-in + third-party manifests), replaces domain skills — see `planning/extension-system/adr.md`
 - Excalidraw extension for hand-drawn diagrams, complements Mermaid (formal docs = Mermaid, informal/conceptual = Excalidraw) — see `planning/excalidraw-extension/adr.md`
 - ExcalidrawEmbed component for persistent Excalidraw diagrams in VitePress via iframe — see `planning/vitepress-extension/adr.md`
+- OTel as core instrumentation with category-based filtering — see `planning/otel-core-skill/adr.md`
 
 ## Known Gotchas
 
@@ -98,15 +100,18 @@ infinitedusky/
 - Impl parser must handle all four gate types per phase: implementation, verification, context, document — not just three
 - Skills in `.claude/skills/` are package-owned — edit in `apps/indusk-mcp/skills/`, then run `update` to sync. Don't edit `.claude/skills/` directly.
 - Domain skills directory (`skills/domain/`) removed — domain skills are now extensions. Use `extensions enable nextjs` not `init --skills nextjs`.
+- OTel auto-instrumentation must be loaded before any other imports — use `node --import ./instrumentation.ts` or the Next.js instrumentation hook
+- CGC graphs use `cgc-` prefix: `cgc-infinitedusky`, `cgc-numero`, etc. Graphiti semantic graphs use bare project names. Don't confuse them in FalkorDB.
 
 ## Current State
 
-Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env. FalkorDB running globally, CGC indexing the project. Biome configured with VS Code integration.
+Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env. FalkorDB running globally, CGC indexing the project. Biome configured with VS Code integration. OTel extension active — every project gets instrumentation from `init`, OTel gate enforced on all plans.
 
 **Active plans:**
 
 | Plan | Stage | Next Step |
 |------|-------|-----------|
-| context-graph | brief (draft) | Sandy reviews brief |
-| otel-core-skill | research (complete) | Write brief |
+| context-graph | brief (accepted) | Phase 0 complete, Phase 1 in progress |
+| graphiti-infrastructure | impl (in-progress) | Phase 1: Graphiti container setup |
 | mcp-dashboard | research (complete) | Write brief (lower priority) |
+| agent-skills-format | brief (draft) | Sandy reviews brief |

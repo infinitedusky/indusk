@@ -15,7 +15,8 @@
 			"mcp__codegraphcontext__get_repository_stats",
 			"mcp__codegraphcontext__list_indexed_repositories",
 			"Read(.claude/handoff.md)",
-			"Edit(.claude/handoff.md)"
+			"Edit(.claude/handoff.md)",
+			"mcp__indusk__get_skill_summaries"
 		]
 	},
 	"hooks": {
