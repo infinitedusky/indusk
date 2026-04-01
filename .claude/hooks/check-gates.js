@@ -117,8 +117,8 @@ function detectWorkflow(content) {
 
 // Which gate types are required per workflow
 const WORKFLOW_GATES = {
-	feature: ["verification", "context", "document"],
-	refactor: ["verification", "context", "document"],
+	feature: ["verification", "otel", "context", "document"],
+	refactor: ["verification", "otel", "context", "document"],
 	bugfix: ["verification", "document"],
 	spike: [],
 };
@@ -147,7 +147,7 @@ function parsePhases(content) {
 			continue;
 		}
 
-		const gateMatch = line.match(/^####\s+Phase\s+\d+\s+(Verification|Context|Document)\b/);
+		const gateMatch = line.match(/^####\s+Phase\s+\d+\s+(Verification|OTel|Context|Document)\b/);
 		if (gateMatch) {
 			currentGateType = gateMatch[1].toLowerCase();
 			continue;

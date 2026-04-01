@@ -48,6 +48,77 @@ When a new session begins:
 3. Call `list_plans` — understand what plans exist, their stages, and what's in progress.
 4. Call `get_context` — read the project's CLAUDE.md to understand architecture, conventions, and current state.
 
+## Creating a New App
+
+When starting a new service or app in the monorepo, follow this sequence:
+
+### 1. Create the app
+
+| Runtime | Command |
+|---------|---------|
+| **Next.js** | `npx create-next-app apps/my-app` |
+| **React SPA** (Vite) | `pnpm create vite apps/my-app --template react-ts` |
+| **Node.js** (Express/Fastify) | Create `apps/my-app/` with `package.json`, `src/index.ts` |
+| **Python** | Create `apps/my-app/` with `pyproject.toml` or `requirements.txt` |
+
+### 2. Initialize indusk-mcp
+
+```bash
+cd apps/my-app
+npx @infinitedusky/indusk-mcp init
+```
+
+This detects the runtime and scaffolds:
+- Skills, hooks, lessons, CLAUDE.md
+- **Next.js**: `instrumentation.ts` (app root) using `@vercel/otel`, `src/logger.ts` using Pino
+- **Node.js**: `src/instrumentation.ts` (full OTel SDK + FilteringExporter), `src/filtering-exporter.ts`, `src/logger.ts`
+- **Python**: `instrumentation.py` (OTel SDK with auto-instrumentation)
+- Biome config, VS Code settings, `.cgcignore`
+
+### 3. Install the printed packages
+
+`init` prints the install command — run it:
+- **Next.js**: `pnpm add @vercel/otel pino pino-opentelemetry-transport`
+- **Node.js**: `pnpm add @opentelemetry/sdk-node @opentelemetry/auto-instrumentations-node ...` (full list printed by init)
+- **Python**: `pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp`
+
+### 4. Wire instrumentation into the entry point
+
+- **Next.js**: automatic — Next.js loads `instrumentation.ts` from the app root
+- **Node.js**: `node --import ./src/instrumentation.ts src/index.ts`
+- **Python**: `opentelemetry-instrument python your_app.py`
+
+### 5. Create a composable.env contract (if using composable.env)
+
+Create `env/contracts/my-app.contract.json`:
+```json
+{
+  "name": "my-app",
+  "location": "apps/my-app",
+  "vars": {
+    "OTEL_SERVICE_NAME": "my-app",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "${dash0.HTTP_ENDPOINT}",
+    "OTEL_EXPORTER_OTLP_HEADERS": "${dash0.OTLP_HEADERS}"
+  }
+}
+```
+
+Then `pnpm ce env:build` generates the `.env` files.
+
+### 6. Enable extensions
+
+```bash
+npx @infinitedusky/indusk-mcp extensions enable dash0
+```
+
+If `.indusk/extensions/dash0/.env` has credentials, this auto-configures the MCP server. Otherwise it tells you what to create.
+
+### 7. Verify
+
+- Start the app, hit an endpoint
+- Check Dash0 for traces: `mcp__dash0__getSpans` with `service.name = my-app`
+- Check health: `mcp__indusk__check_health` should show OTel extension healthy
+
 ## Before Modifying Code
 
 Before touching any file:

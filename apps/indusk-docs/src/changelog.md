@@ -5,6 +5,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ## [Unreleased]
 
 ### Added
+- OpenTelemetry extension — auto-instrumentation scaffolding, Pino structured logging, category-based filtering exporter. Every project is observable from `init`.
 - Excalidraw extension — hand-drawn diagrams for planning, debugging, and teach mode (complements Mermaid for formal docs)
 - Extension directory format — extensions use `{name}/manifest.json` + `.env` instead of flat files, auto-migrates
 - ExcalidrawEmbed component — persistent, interactive Excalidraw diagrams in VitePress docs via iframe

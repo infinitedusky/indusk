@@ -1,0 +1,23 @@
+{
+	"name": "otel",
+	"description": "OpenTelemetry instrumentation — auto-instrumentation, Pino structured logging, category-based filtering",
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "otel-instrumentation-exists",
+				"command": "test -f instrumentation.ts || test -f src/instrumentation.ts || test -f instrumentation.py"
+			},
+			{
+				"name": "otel-packages-installed",
+				"command": "node -e \"require('@opentelemetry/sdk-node')\" 2>/dev/null || python -c \"import opentelemetry\" 2>/dev/null"
+			}
+		],
+		"verification": [
+			"test -f instrumentation.ts || test -f src/instrumentation.ts || test -f instrumentation.py"
+		]
+	},
+	"detect": {
+		"file_pattern": "**/instrumentation.{ts,py}"
+	}
+}

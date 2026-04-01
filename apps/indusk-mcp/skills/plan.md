@@ -256,8 +256,11 @@ For multi-phase impls, include a boundary map showing what each phase produces a
   function withdrawFor(wallet: address, player: address, amount: uint256, historyHash: bytes32)
   ```
 
+#### Phase 1 OTel
+- [ ] {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
+
 #### Phase 1 Verification
-- [ ] {Verification step — prove this phase works. Must be a specific runnable command with expected output, not "verify it works." See the verify skill for guidance on what checks a phase needs based on what changed.}
+- [ ] {Verification step — prove this phase works. Must be a specific runnable command with expected output, not "verify it works." See the verify skill for guidance on what checks a phase needs based on what changed. Can include trace verification if OTel was added.}
 
 #### Phase 1 Context
 - [ ] {Concrete CLAUDE.md edit this phase produces — e.g., "Add to Architecture: ...", "Add to Conventions: ...", "Update Current State: ...". Ask: "what does this phase change about how the project works?" If nothing, omit this section.}

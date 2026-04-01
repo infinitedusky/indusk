@@ -28,6 +28,9 @@ This creates:
 - `.mcp.json` — MCP server config for Claude Code
 - `.vscode/settings.json` — Biome integration
 - `biome.json` — base quality config
+- `instrumentation.ts` — OpenTelemetry auto-instrumentation (Node.js/Next.js) or `instrumentation.py` (Python)
+- `filtering-exporter.ts` — category-based span filtering (instrument everything, control export volume)
+- `logger.ts` — Pino structured logger with dual output (stdout + OTLP)
 
 ### 2. Install Biome
 

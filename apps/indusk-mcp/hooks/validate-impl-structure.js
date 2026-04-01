@@ -2,7 +2,7 @@
 /**
  * PreToolUse hook: validates that impl phases have all four gate sections.
  *
- * Every phase must have: implementation items, Verification, Context, Document.
+ * Every phase must have: implementation items, Verification, OTel, Context, Document.
  * Sections can opt out with (none needed), (not applicable), or skip-reason: {why}.
  *
  * Exit 0 = allow the edit
@@ -102,10 +102,10 @@ const workflow = workflowMatch ? workflowMatch[1] : "feature";
 
 // Different workflows have different requirements
 const requirements = {
-	feature: { verification: true, context: true, document: true },
-	refactor: { verification: true, context: true, document: true },
-	bugfix: { verification: true, context: false, document: true },
-	spike: { verification: false, context: false, document: false },
+	feature: { verification: true, otel: true, context: true, document: true },
+	refactor: { verification: true, otel: true, context: true, document: true },
+	bugfix: { verification: true, otel: false, context: false, document: true },
+	spike: { verification: false, otel: false, context: false, document: false },
 }[workflow];
 const lines = body.split("\n");
 
@@ -122,9 +122,11 @@ for (const line of lines) {
 			name: phaseMatch[2].trim(),
 			hasImplementation: false,
 			hasVerification: false,
+			hasOtel: false,
 			hasContext: false,
 			hasDocument: false,
 			verificationIsOptOut: false,
+			otelIsOptOut: false,
 			contextIsOptOut: false,
 			documentIsOptOut: false,
 		};
@@ -139,6 +141,13 @@ for (const line of lines) {
 	if (verMatch) {
 		currentPhase.hasVerification = true;
 		currentSection = "verification";
+		continue;
+	}
+
+	const otelMatch = line.match(/^####\s+Phase\s+\d+\s+OTel\b/);
+	if (otelMatch) {
+		currentPhase.hasOtel = true;
+		currentSection = "otel";
 		continue;
 	}
 
@@ -168,6 +177,7 @@ for (const line of lines) {
 		line.includes("skip-reason:");
 	if (currentPhase && isOptOutLine) {
 		if (currentSection === "verification") currentPhase.verificationIsOptOut = true;
+		if (currentSection === "otel") currentPhase.otelIsOptOut = true;
 		if (currentSection === "context") currentPhase.contextIsOptOut = true;
 		if (currentSection === "document") currentPhase.documentIsOptOut = true;
 	}
@@ -186,6 +196,7 @@ for (const phase of phases) {
 
 	const missing = [];
 	if (requirements.verification && !phase.hasVerification) missing.push("Verification");
+	if (requirements.otel && !phase.hasOtel) missing.push("OTel");
 	if (requirements.context && !phase.hasContext) missing.push("Context");
 	if (requirements.document && !phase.hasDocument) missing.push("Document");
 
@@ -200,6 +211,8 @@ for (const phase of phases) {
 		const optOuts = [];
 		if (requirements.verification && phase.hasVerification && phase.verificationIsOptOut)
 			optOuts.push("Verification");
+		if (requirements.otel && phase.hasOtel && phase.otelIsOptOut)
+			optOuts.push("OTel");
 		if (requirements.context && phase.hasContext && phase.contextIsOptOut) optOuts.push("Context");
 		if (requirements.document && phase.hasDocument && phase.documentIsOptOut)
 			optOuts.push("Document");

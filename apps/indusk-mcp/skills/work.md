@@ -52,14 +52,15 @@ Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your 
    - Add it as a new item in the appropriate phase
    - Then do it and check it off
 
-10. **Per-phase completion order.** Each phase has up to four types of items. Complete them in this order:
+10. **Per-phase completion order.** Each phase has up to five types of items. Complete them in this order:
 
    **Implementation items** → build the thing
-   **Verification items** → prove it works (tests, type checks, commands)
+   **OTel items** → instrument it (spans, categories, error recording — see OTel skill)
+   **Verification items** → prove it works (tests, type checks, commands — can include trace verification)
    **Context items** → capture what changed (concrete CLAUDE.md edits)
    **Document items** → write or update docs pages (see document skill)
 
-   A phase is not complete until all four are done. **Enforced by hooks:** if you try to check off a Phase N+1 implementation item while Phase N has unchecked gates, the edit will be blocked with a message listing what's missing. Complete the gates first.
+   A phase is not complete until all five are done. **Enforced by hooks:** if you try to check off a Phase N+1 implementation item while Phase N has unchecked gates, the edit will be blocked with a message listing what's missing. Complete the gates first.
 
 ## Gate Override Policy
 
@@ -171,7 +172,7 @@ Then **stop and wait** for the user to say "continue" before moving to the next 
 
 ### At gate transitions:
 
-When moving between gates (implement → verify → context → document → next phase), explain the transition: what gate you're entering, why it exists, and what it catches. Example: "Code is written. Now we verify — type check, lint, tests. This catches errors before they compound into the next phase."
+When moving between gates (implement → otel → verify → context → document → next phase), explain the transition: what gate you're entering, why it exists, and what it catches. Example: "Code is written. Now OTel — instrument the new code paths. Then verify — type check, lint, tests, trace verification. Then context and docs."
 
 ### Between checklist items:
 
