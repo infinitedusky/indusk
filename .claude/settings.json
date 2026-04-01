@@ -42,7 +42,9 @@
       "Bash(ls /Users/the_dusky/code/sandbox/infinitedusky/.claude/lessons/*.md)",
       "mcp__indusk__add_lesson",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Bash(jj log:*)",
+      "Bash(jj bookmark:*)"
     ]
   },
   "hooks": {

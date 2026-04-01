@@ -38,7 +38,7 @@ The MCP server provides 23 tools. The key ones for debugging:
 ### Logs
 - **`getLogRecords`** — Query logs with filters, time range, pagination. Returns summary table.
   - **Dataset**: check `env/components/dash0.env` for the dataset per profile (local, staging, production). If no composable.env component exists, check `.indusk/extensions/dash0/.env` for a `DASH0_DATASET` value. If neither exists, ask the user which dataset to use and remember it for the session.
-  - `timeRange` requires ISO timestamps: `{"from": "...", "to": "..."}`
+  - `timeRange`: use relative times like `{"from": "now-30m"}` (preferred) or ISO timestamps `{"from": "2026-04-01T10:00:00Z", "to": "..."}`. **Always default to `"now-30m"` or `"now-1h"` — never guess UTC timestamps.**
   - `filters`: `[{"key": "service.name", "operator": "is", "value": "game-server"}]`
   - `logAttributeKeys`: specify which attributes to show in the table (e.g. `["service.name", "otel.scope.name"]`)
   - Returns log record IDs for drilling into full details
@@ -200,6 +200,6 @@ Dash0 ingests standard OpenTelemetry data. If your services already export OTLP 
 ## Known Issues
 
 - **CLI `--experimental` required**: All query commands (logs, traces, metrics) require the `--experimental` flag. This will change when these commands become stable.
-- **Default time range is narrow**: Always specify `--from` when querying logs. Without it, you may get empty results.
+- **Default time range is narrow**: Always specify `--from` when querying logs. Without it, you may get empty results. For MCP tools, use relative times like `"now-30m"` — don't try to guess ISO timestamps.
 - **No trace search**: The CLI can only fetch traces by ID (`traces get <id>`), not search for them. Find trace IDs in log entries first.
 - **Profile auth may not load in Claude Code shell**: Run `source ~/.zshrc` before `dash0` commands if auth fails.

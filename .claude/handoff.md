@@ -1,49 +1,43 @@
 # Handoff
 
-**Date:** 2026-03-30
-**Session:** Context graph Plan 1 execution — Phase 0 complete, Graphiti validated with Gemini
+**Date:** 2026-04-01
+**Session:** OTel extension (full plan completed), Dash0 auto-setup, context graph Phase 0, agent-skills-format brief
 
 ## What Was Being Worked On
-Plan 1: graphiti-infrastructure (`planning/graphiti-infrastructure/impl.md`), status: in-progress.
+OTel extension plan (`planning/archive/otel-core-skill/`) — all 4 phases completed, retrospected, archived. Also completed context graph Phase 0 (CGC graph rename) and built Dash0 auto-setup for `extensions enable`.
 
 ## Where It Stopped
-- **Phase 0 (CGC Graph Naming): COMPLETE** — all 4 gates done
-  - Graphs renamed in FalkorDB: `cgc-infinitedusky`, `cgc-numero`, etc.
-  - Code updated: `getCgcGraphName()` helper in `graph-tools.ts`, `init.ts` uses `cgc-` prefix
-  - `.mcp.json` updated, CLAUDE.md gotcha added, docs page updated
-- **Phase 1 (Graphiti Setup): VALIDATED but not formalized**
-  - Full Graphiti pipeline proven working with Gemini
-  - Episode → entity extraction (7 entities) → fact creation (6 facts) → embedding → semantic search
-  - Working models: `gemini-2.5-flash` (LLM), `gemini-embedding-001` (embeddings)
-  - Needed patch: MCP server doesn't pass `cross_encoder` to `Graphiti()` — added Gemini reranker
-  - Test server was at `/tmp/graphiti-src/mcp_server/` — killed and cleaned up
-  - Deployment approach (Docker vs local) still TBD
+- **OTel plan**: completed, retrospected, archived. indusk-mcp v1.6.1 published with everything. Version bumped to 1.6.5 but not yet published or committed.
+- **Context graph (graphiti-infrastructure)**: Phase 0 done (CGC graphs renamed to `cgc-*`). Phase 1 validated (Graphiti works with Gemini on FalkorDB from source) but not formalized — container setup, MCP client, health checks still pending.
+- **Dash0 auto-setup**: working — `extensions enable dash0` reads `.env` credentials and runs `claude mcp add`. Composable.env contract created.
 
 ## What's Next
-1. Decide Graphiti deployment (custom Docker image with google-genai, or local process)
-2. Formalize Phase 1: check off impl items, run gates
-3. Phase 2: Build `graphiti-client.ts` MCP client wrapper in indusk-mcp
-4. Phases 3-5: health checks, init integration, end-to-end validation
+1. Commit and publish the 1.6.5 version bump
+2. Continue `graphiti-infrastructure` Phase 1 — formalize Graphiti deployment (Docker image vs local)
+3. `agent-skills-format` — convert skills to standard Agent Skills format for cross-editor compatibility
+4. `mcp-dashboard` — write brief (lower priority)
 
 ## Open Issues
-- `/tmp/graphiti-src/` needs re-clone next session (or move to permanent location)
-- The reranker patch lives only in `/tmp/` — needs to be persisted somewhere
-- CGC MCP server needs restart to pick up `cgc-infinitedusky` graph name
-- Code changes (graph-tools.ts, init.ts) are uncommitted
+- FalkorDB data was lost earlier when container was deleted — recreated with volume mount but data had to be re-indexed. The `--restart unless-stopped` flag is set but if someone does `docker rm falkordb` the data is gone.
 - Pre-existing biome nested root config issue blocks `pnpm check` globally
+- Graphiti source at `/tmp/graphiti-src/` has a reranker patch that would be lost if `/tmp` is cleaned — needs to be persisted or submitted upstream
+- `CLAUDE-NEW.md` exists at root from init runs — can be deleted
 
 ## Decisions Made This Session
-- **CGC graphs use `cgc-` prefix**: clears namespace for Graphiti semantic graphs
-- **Gemini works with Graphiti**: `gemini-2.5-flash` + `gemini-embedding-001`. Deprecated: `gemini-2.0-flash`. Nonexistent: `text-embedding-001`, `text-embedding-004`.
-- **Docker image lacks Gemini**: `zepai/knowledge-graph-mcp:standalone` doesn't include `google-genai` extra. Need custom image or local run.
-- **MCP server needs reranker patch**: upstream doesn't create cross_encoder for non-OpenAI providers.
-- **GOOGLE_API_KEY**: sourced from `env/.env.secrets.shared` as `GEMINI_API_KEY`
-- **Graph naming**: `cgc-{project}` for structural, `{project}` for semantic, `shared` for universal
+- **OTel is a fifth gate**: implementation → otel → verify → context → document. Enforced by hooks.
+- **Four runtime templates**: Node.js (full SDK), Next.js (server: @vercel/otel + client: OTel Web SDK), React SPA (OTel Web SDK), Python (opentelemetry-distro)
+- **Backend-agnostic**: all templates use standard OTLP. Dash0 is preferred but any OTLP backend works.
+- **Dash0 MCP endpoint is `api.*` not `ingress.*`**: ingress is for OTLP data, api is for MCP queries
+- **`npx --yes` required**: for MCP server commands in `.mcp.json` to avoid interactive prompts in stdio mode
+- **Agent Skills format**: plan created to convert all skills to the agentskills.io standard format
+- **Composable.env `default` field**: dash0 contract uses `"default": ".env"` to write a non-profile env file for extension setup
 
 ## Watch Out For
-- Config with correct model names is at `docker/graphiti-config.yaml`
-- FalkorDB should show only `cgc-*` graphs. Bare project names = stale data or unrestarted CGC server.
-- `google-genai>=1.62.0` must be installed separately after `uv sync`
+- `apps/otel-test` and `apps/otel-test-v2` were deleted — they were validation artifacts, not permanent apps
+- The OTel gate is now active on ALL feature/refactor impls. Any impl written without `#### Phase N OTel` sections will be blocked by the hook.
+- Graphiti needs `google-genai` installed separately after `uv sync` — it's not in the default extras
+- Graphiti's `gemini-2.0-flash` model is deprecated. Use `gemini-2.5-flash` for LLM and `gemini-embedding-001` for embeddings.
+- jj is co-managing this repo — detached HEAD is normal, use jj commands for version control
 
 ## Catchup Status
 - [x] handoff
