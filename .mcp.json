@@ -9,7 +9,7 @@
       ],
       "env": {
         "DATABASE_TYPE": "falkordb-remote",
-        "FALKORDB_HOST": "falkordb.orb.local",
+        "FALKORDB_HOST": "localhost",
         "FALKORDB_GRAPH_NAME": "cgc-infinitedusky"
       }
     },

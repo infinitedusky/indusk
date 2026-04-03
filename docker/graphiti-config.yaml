@@ -1,7 +1,7 @@
 server:
   transport: "http"
   host: "0.0.0.0"
-  port: 8000
+  port: 8100
 
 llm:
   provider: "gemini"
@@ -26,7 +26,7 @@ database:
   provider: "falkordb"
   providers:
     falkordb:
-      uri: ${FALKORDB_URI:redis://falkordb.orb.local:6379}
+      uri: redis://localhost:6379
       password: ${FALKORDB_PASSWORD:}
       database: ${FALKORDB_DATABASE:shared}
 

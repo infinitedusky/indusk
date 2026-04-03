@@ -1,0 +1,81 @@
+# indusk-infra: FalkorDB + Graphiti MCP server in a single container
+# Usage:
+#   docker build -f docker/Dockerfile.infra -t indusk-infra .
+#   docker run -d --name indusk-infra -p 6379:6379 -p 8100:8100 \
+#     -v indusk-data:/data -e GOOGLE_API_KEY=$GOOGLE_API_KEY indusk-infra
+#
+# OTel (optional — disabled by default):
+#   -e OTEL_EXPORTER_OTLP_ENDPOINT=https://... \
+#   -e OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer ..." \
+#   -e OTEL_SERVICE_NAME=indusk-infra
+#
+# Smoke test:
+#   ./docker/test-infra.sh $GOOGLE_API_KEY
+
+# Base: FalkorDB (Redis + FalkorDB module, known to work together)
+FROM falkordb/falkordb:latest
+
+# Install Python 3, pip, git, curl (FalkorDB image is Ubuntu-based)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv for Python dependency management
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Clone Graphiti and install dependencies
+RUN git clone --depth 1 https://github.com/getzep/graphiti.git /opt/graphiti
+
+WORKDIR /opt/graphiti
+
+RUN uv sync && \
+    uv pip install google-genai falkordb pyyaml "mcp[cli]" \
+    opentelemetry-sdk opentelemetry-exporter-otlp-proto-http \
+    opentelemetry-exporter-otlp-proto-grpc \
+    opentelemetry-distro opentelemetry-instrumentation \
+    opentelemetry-instrumentation-starlette \
+    opentelemetry-instrumentation-redis \
+    opentelemetry-instrumentation-httpx \
+    opentelemetry-instrumentation-logging \
+    opentelemetry-instrumentation-asyncio \
+    opentelemetry-instrumentation-urllib3
+
+# Apply reranker patch
+COPY docker/patches/graphiti-reranker.patch /tmp/graphiti-reranker.patch
+RUN git apply /tmp/graphiti-reranker.patch || echo "Reranker patch may already be applied upstream"
+
+# OTel setup module — configures trace + log export when OTEL_EXPORTER_OTLP_ENDPOINT is set
+COPY docker/otel-setup.py /opt/graphiti/mcp_server/src/otel_setup.py
+
+# Copy Graphiti config
+COPY docker/graphiti-config.yaml /opt/graphiti/mcp_server/config/config.yaml
+
+# Entrypoint: starts FalkorDB, waits for ready, then starts Graphiti
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# OTel defaults: use HTTP/protobuf (not gRPC), export traces + logs, skip metrics
+# These only take effect when OTEL_EXPORTER_OTLP_ENDPOINT is also set at runtime
+ENV OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+ENV OTEL_TRACES_EXPORTER=otlp
+ENV OTEL_LOGS_EXPORTER=otlp
+ENV OTEL_METRICS_EXPORTER=none
+ENV OTEL_SERVICE_NAME=indusk-infra
+
+# FalkorDB on 6379, Graphiti MCP on 8100
+EXPOSE 6379 8100
+
+# Persistent volume for FalkorDB data
+VOLUME ["/data"]
+
+# Health check: both services must respond
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD redis-cli ping | grep -q PONG && curl -sf http://localhost:8100/health > /dev/null
+
+# Override FalkorDB's default entrypoint
+ENTRYPOINT []
+CMD ["/usr/local/bin/entrypoint.sh"]

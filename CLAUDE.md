@@ -18,7 +18,7 @@ infinitedusky/
 │   ├── context/SKILL.md   # Installed from apps/indusk-mcp/skills/
 │   ├── verify/SKILL.md    # Installed from apps/indusk-mcp/skills/
 │   └── composable-env/    # composable.env skill (installed via ce add-skill)
-├── docker/                # Dockerfiles for local dev (Dockerfile.nextdev, etc.)
+├── docker/                # Dockerfiles: Dockerfile.infra (FalkorDB + Graphiti bundled), Dockerfile.nextdev, etc.
 ├── env/                   # composable.env: components, profiles, contracts
 ├── biome.json             # Biome config — quality ratchet, see biome-rationale.md for why each rule exists
 ├── biome-rationale.md     # Annotated rationale for each non-default Biome rule
@@ -30,7 +30,8 @@ infinitedusky/
 
 **Apps:**
 - **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme (zinc-950 bg, amber-400 accents). Runs in Docker via composable.env for local dev.
-- **indusk-mcp**: InDusk MCP server — dev system tooling with MCP tools, CLI (`init`/`update`/`init-docs`/`extensions`/`check-gates`), skills, hooks, lessons, and extensions. `.indusk/extensions/` holds extension manifests (built-in + third-party). Published as `@infinitedusky/indusk-mcp`. OTel templates (`templates/instrumentation.ts`, `templates/filtering-exporter.ts`, `templates/logger.ts`, `templates/instrumentation.py`) are scaffolded by `init` into target projects.
+- **indusk-mcp**: InDusk MCP server — dev system tooling with MCP tools, CLI (`init`/`update`/`init-docs`/`extensions`/`check-gates`/`infra`), skills, hooks, lessons, and extensions. `.indusk/extensions/` holds extension manifests (built-in + third-party). Published as `@infinitedusky/indusk-mcp`. OTel templates (`templates/instrumentation.ts`, `templates/filtering-exporter.ts`, `templates/logger.ts`, `templates/instrumentation.py`) are scaffolded by `init` into target projects.
+- **indusk-infra**: Bundled Docker container (`docker/Dockerfile.infra`) running FalkorDB + Graphiti MCP server. One container for all graph infrastructure. FalkorDB on port 6379, Graphiti on port 8100. Persistent volume `indusk-data` at `/data`. `GOOGLE_API_KEY` env var for Gemini LLM/embeddings. OTel export optional via `OTEL_EXPORTER_OTLP_ENDPOINT`.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
 
 **Skills:**
@@ -66,6 +67,7 @@ infinitedusky/
 - After each retrospective, ask if mistakes could be caught by a Biome rule — if yes, add to biome.json and biome-rationale.md
 - Before touching shared code, query the code graph (`analyze_code_relationships`) to understand blast radius
 - Create `.cgcignore` in new projects to exclude build artifacts from graph indexing
+- `indusk infra start` to start the infrastructure container (FalkorDB + Graphiti). One command, idempotent. Creates `~/.indusk/config.env` on first run.
 - `npx indusk-mcp init` to set up a new project with skills, CLAUDE.md, biome, OTel instrumentation, and MCP config
 - `init` scaffolds OTel: `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts` (Node.js/Next.js) or `instrumentation.py` (Python) — every project is observable from day one
 
@@ -102,16 +104,21 @@ infinitedusky/
 - Domain skills directory (`skills/domain/`) removed — domain skills are now extensions. Use `extensions enable nextjs` not `init --skills nextjs`.
 - OTel auto-instrumentation must be loaded before any other imports — use `node --import ./instrumentation.ts` or the Next.js instrumentation hook
 - CGC graphs use `cgc-` prefix: `cgc-infinitedusky`, `cgc-numero`, etc. Graphiti semantic graphs use bare project names. Don't confuse them in FalkorDB.
+- CGC connects to `localhost:6379` via the `indusk-infra` container (not the old standalone `falkordb` container on `falkordb.orb.local`). If CGC tools fail, check `docker ps --filter name=indusk-infra`.
+- FalkorDB and Graphiti run in a single bundled container (`indusk-infra`), not as separate containers. Use `docker/test-infra.sh` to smoke test. Port 8000 is taken by OrbStack — Graphiti uses 8100.
+- `GOOGLE_API_KEY` is required for Graphiti (Gemini LLM/embeddings). Without it, FalkorDB still works but Graphiti retries indefinitely. Store in `~/.indusk/config.env` (global, not per-project).
+- Graphiti source at `~/.graphiti/` has a reranker patch — this is now baked into `docker/patches/graphiti-reranker.patch` and applied during image build.
 
 ## Current State
 
-Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env. FalkorDB running globally, CGC indexing the project. Biome configured with VS Code integration. OTel extension active — every project gets instrumentation from `init`, OTel gate enforced on all plans.
+Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env. `indusk-infra` container bundles FalkorDB + Graphiti (replaces standalone FalkorDB). CGC indexing the project. Biome configured with VS Code integration. OTel extension active — every project gets instrumentation from `init`, OTel gate enforced on all plans.
 
 **Active plans:**
 
 | Plan | Stage | Next Step |
 |------|-------|-----------|
 | context-graph | brief (accepted) | Phase 0 complete, Phase 1 in progress |
-| graphiti-infrastructure | impl (in-progress) | Phase 1: Graphiti container setup |
+| graphiti-infrastructure | impl (in-progress) | Phase 1 complete, Phase 2: `indusk infra` CLI |
+| react-native-support | brief (accepted) | Write ADR |
 | mcp-dashboard | research (complete) | Write brief (lower priority) |
 | agent-skills-format | brief (draft) | Sandy reviews brief |

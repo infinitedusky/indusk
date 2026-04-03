@@ -126,6 +126,34 @@ program
 		await checkGates(process.cwd(), { file: opts.file, phase: opts.phase });
 	});
 
+const infra = program
+	.command("infra")
+	.description("Manage the indusk-infra container (FalkorDB + Graphiti)");
+
+infra
+	.command("start")
+	.description("Start the infrastructure container (creates if needed)")
+	.action(async () => {
+		const { infraStart } = await import("./commands/infra.js");
+		await infraStart();
+	});
+
+infra
+	.command("stop")
+	.description("Stop the infrastructure container (preserves data)")
+	.action(async () => {
+		const { infraStop } = await import("./commands/infra.js");
+		await infraStop();
+	});
+
+infra
+	.command("status")
+	.description("Show infrastructure container health and configuration")
+	.action(async () => {
+		const { infraStatus } = await import("./commands/infra.js");
+		await infraStatus();
+	});
+
 program
 	.command("serve")
 	.description("Start the MCP server (used by Claude Code via .mcp.json)")

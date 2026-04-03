@@ -19,16 +19,18 @@ Together they answer questions like:
 
 ### 1. Start FalkorDB
 
-FalkorDB runs as a Docker container:
+FalkorDB runs inside the `indusk-infra` container (bundled with Graphiti):
 
 ```bash
-docker run -d --name falkordb -p 6379:6379 falkordb/falkordb
+docker start indusk-infra
 ```
+
+Or if the container doesn't exist yet, see the [Infrastructure Container](/reference/tools/infrastructure) page for setup.
 
 Verify it is running:
 
 ```bash
-docker ps --filter name=falkordb
+docker ps --filter name=indusk-infra
 ```
 
 ### 2. Install CGC
@@ -379,7 +381,7 @@ The graph name is set via `FALKORDB_GRAPH_NAME` in `.mcp.json`. The InDusk graph
 
 ## Gotchas
 
-- **FalkorDB must be running.** All graph tools fail silently or return errors if the FalkorDB container is not up. Run `check_health` at session start to verify connectivity. Start it with `docker start falkordb` if stopped.
+- **FalkorDB must be running.** All graph tools fail silently or return errors if the `indusk-infra` container is not up. Run `check_health` at session start to verify connectivity. Start it with `docker start indusk-infra` if stopped.
 
 - **Re-index after structural changes.** The graph is a snapshot. After adding, removing, or renaming files, call `index_project` to update the graph. Queries against a stale graph return stale results.
 

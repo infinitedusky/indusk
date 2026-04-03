@@ -1,43 +1,50 @@
 # Handoff
 
-**Date:** 2026-04-01
-**Session:** OTel extension (full plan completed), Dash0 auto-setup, context graph Phase 0, agent-skills-format brief
+**Date:** 2026-04-03
+**Session:** React Native plan (research + brief), Graphiti infra Phase 1 complete with OTel verified, OTel skill updated
 
 ## What Was Being Worked On
-OTel extension plan (`planning/archive/otel-core-skill/`) — all 4 phases completed, retrospected, archived. Also completed context graph Phase 0 (CGC graph rename) and built Dash0 auto-setup for `extensions enable`.
+Two plans advanced:
+1. **`react-native-support`** — research complete, brief accepted (Expo + Embrace SDK). Next: ADR.
+2. **`graphiti-infrastructure`** — Phase 1 (Bundled Infrastructure Container) fully complete. Phase 1.5 added but not started.
 
 ## Where It Stopped
-- **OTel plan**: completed, retrospected, archived. indusk-mcp v1.6.1 published with everything. Version bumped to 1.6.5 but not yet published or committed.
-- **Context graph (graphiti-infrastructure)**: Phase 0 done (CGC graphs renamed to `cgc-*`). Phase 1 validated (Graphiti works with Gemini on FalkorDB from source) but not formalized — container setup, MCP client, health checks still pending.
-- **Dash0 auto-setup**: working — `extensions enable dash0` reads `.env` credentials and runs `claude mcp add`. Composable.env contract created.
+- **Phase 1 complete.** All gates checked off. `indusk-infra` container builds, runs, passes 8-point smoke test, OTel traces + logs verified in Dash0.
+- **Phase 1.5 next:** Migrate CGC from `falkordb.orb.local:6379` (old standalone container) to `localhost:6379` (bundled `indusk-infra` container). This must happen before Phase 2.
 
 ## What's Next
-1. Commit and publish the 1.6.5 version bump
-2. Continue `graphiti-infrastructure` Phase 1 — formalize Graphiti deployment (Docker image vs local)
-3. `agent-skills-format` — convert skills to standard Agent Skills format for cross-editor compatibility
-4. `mcp-dashboard` — write brief (lower priority)
+1. **Phase 1.5:** Migrate CGC to bundled container — update `.mcp.json`, `init.ts`, `graph_ensure`, re-index if needed, stop old FalkorDB
+2. **Phase 2:** `indusk infra start/stop/status` CLI commands + `~/.indusk/config.env` global config
+3. **Phase 3:** `graphiti-client.ts` MCP client wrapper
+4. **Phase 4:** Graphiti extension manifest + health checks
+5. **Phase 5:** `init` integration + Getting Started docs rewrite
+6. **Phase 6:** End-to-end validation
+7. **react-native-support:** Write ADR (Expo + Embrace SDK)
 
 ## Open Issues
-- FalkorDB data was lost earlier when container was deleted — recreated with volume mount but data had to be re-indexed. The `--restart unless-stopped` flag is set but if someone does `docker rm falkordb` the data is gone.
-- Pre-existing biome nested root config issue blocks `pnpm check` globally
-- Graphiti source at `/tmp/graphiti-src/` has a reranker patch that would be lost if `/tmp` is cleaned — needs to be persisted or submitted upstream
-- `CLAUDE-NEW.md` exists at root from init runs — can be deleted
+- `docker/otel-setup.py` and `docker/supervisord.conf` are unused — can be deleted
+- FalkorDB RediSearch syntax error on group_id `test-otel` — word `test` is reserved in RediSearch. Use different group_id names.
+- `~/.graphiti/` manual source clone still exists from spike — can be deleted once container is standard
+- OTel skill updated in `apps/indusk-mcp/extensions/otel/skill.md` but `.claude/skills/otel/SKILL.md` needs `indusk update` to sync
+- Handoff lock problem is a recurring annoyance — writing a handoff mid-session blocks all edits until catchup boxes are checked. Needs a lock/unlock mechanism.
 
 ## Decisions Made This Session
-- **OTel is a fifth gate**: implementation → otel → verify → context → document. Enforced by hooks.
-- **Four runtime templates**: Node.js (full SDK), Next.js (server: @vercel/otel + client: OTel Web SDK), React SPA (OTel Web SDK), Python (opentelemetry-distro)
-- **Backend-agnostic**: all templates use standard OTLP. Dash0 is preferred but any OTLP backend works.
-- **Dash0 MCP endpoint is `api.*` not `ingress.*`**: ingress is for OTLP data, api is for MCP queries
-- **`npx --yes` required**: for MCP server commands in `.mcp.json` to avoid interactive prompts in stdio mode
-- **Agent Skills format**: plan created to convert all skills to the agentskills.io standard format
-- **Composable.env `default` field**: dash0 contract uses `"default": ".env"` to write a non-profile env file for extension setup
+- **Expo over bare React Native** — Expo is the standard RN toolchain. Detection via `expo` dependency.
+- **Embrace SDK for RN OTel** — auto-instrumentation with standalone OTLP export to Dash0.
+- **Bundled `indusk-infra` container** — FalkorDB + Graphiti in one image, replaces standalone FalkorDB.
+- **Global install model** — `npm i -g @infinitedusky/indusk-mcp`, `indusk infra start`, `indusk init` per-project.
+- **`~/.indusk/config.env`** for global secrets (GOOGLE_API_KEY), not per-project.
+- **OTel via `opentelemetry-instrument`** — auto-instruments starlette, redis, httpx. Protocol defaults (`http/protobuf`) baked into Dockerfile ENV. Disabled by default.
+- **Span events deprecated (March 2026)** — OTel skill updated: use logs instead of `recordException`/`addEvent`.
+- **Port 8100 for Graphiti** — 8000 taken by OrbStack.
+- **Text-based lessons don't scale** — knowledge graph is the real fix, prioritize graphiti-infrastructure.
 
 ## Watch Out For
-- `apps/otel-test` and `apps/otel-test-v2` were deleted — they were validation artifacts, not permanent apps
-- The OTel gate is now active on ALL feature/refactor impls. Any impl written without `#### Phase N OTel` sections will be blocked by the hook.
-- Graphiti needs `google-genai` installed separately after `uv sync` — it's not in the default extras
-- Graphiti's `gemini-2.0-flash` model is deprecated. Use `gemini-2.5-flash` for LLM and `gemini-embedding-001` for embeddings.
-- jj is co-managing this repo — detached HEAD is normal, use jj commands for version control
+- jj is co-managing this repo — detached HEAD is normal, use jj commands
+- The OTel gate is active on ALL feature/refactor impls
+- `indusk-infra` container may be running on localhost:6379 and 8100 — conflicts with old standalone FalkorDB
+- `opentelemetry-instrument` adds ~90s to Graphiti startup time inside the container
+- The `OTEL_EXPORTER_OTLP_HEADERS` env var format (`key=value,key=value`) with spaces in Bearer token works with Python SDK but needs the env vars baked into the Dockerfile (not shell-level) to propagate correctly
 
 ## Catchup Status
 - [x] handoff

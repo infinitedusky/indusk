@@ -24,7 +24,10 @@ function ensureGitignoreMcpJson(projectRoot: string): void {
 	if (existsSync(gitignorePath)) {
 		const content = readFileSync(gitignorePath, "utf-8");
 		if (content.includes(".mcp.json")) return;
-		writeFileSync(gitignorePath, `${content.trimEnd()}\n\n# MCP config (contains auth tokens)\n.mcp.json\n`);
+		writeFileSync(
+			gitignorePath,
+			`${content.trimEnd()}\n\n# MCP config (contains auth tokens)\n.mcp.json\n`,
+		);
 		console.info("  updated: .gitignore (added .mcp.json)");
 	} else {
 		writeFileSync(gitignorePath, "# MCP config (contains auth tokens)\n.mcp.json\n");
@@ -147,33 +150,93 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		} catch {}
 	}
 
-	// Add indusk MCP server (no secrets)
+	// Add indusk MCP server — prefer global binary, fall back to npx
+	const hasGlobalIndusk = run("which indusk") || run("where indusk");
+	const induskCommand = hasGlobalIndusk
+		? "claude mcp add -t stdio -s project -e PROJECT_ROOT=. -- indusk indusk serve"
+		: "claude mcp add -t stdio -s project -e PROJECT_ROOT=. -- indusk npx --yes @infinitedusky/indusk-mcp serve";
+
 	if (!existingServers.has("indusk") || force) {
 		try {
-			execSync(
-				`claude mcp add -t stdio -s project -e PROJECT_ROOT=. -- indusk npx --yes @infinitedusky/indusk-mcp serve`,
-				{ cwd: projectRoot, stdio: "pipe", timeout: 10000 },
-			);
-			console.info("  added: indusk MCP server (via claude mcp add)");
+			execSync(induskCommand, { cwd: projectRoot, stdio: "pipe", timeout: 10000 });
+			console.info(`  added: indusk MCP server (${hasGlobalIndusk ? "global binary" : "via npx"})`);
 		} catch {
 			console.info("  failed: could not add indusk MCP server — run manually:");
-			console.info('    claude mcp add -t stdio -s project -e PROJECT_ROOT=. -- indusk npx --yes @infinitedusky/indusk-mcp serve');
+			console.info(`    ${induskCommand}`);
 		}
 	} else {
-		console.info("  skip: indusk MCP server (already exists)");
+		// Migrate from npx to global binary if available
+		if (hasGlobalIndusk) {
+			try {
+				const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
+				const induskArgs = mcpConfig.mcpServers?.indusk?.args;
+				if (induskArgs?.includes("npx")) {
+					execSync(induskCommand, { cwd: projectRoot, stdio: "pipe", timeout: 10000 });
+					console.info("  migrated: indusk MCP server (npx → global binary)");
+				} else {
+					console.info("  skip: indusk MCP server (already exists)");
+				}
+			} catch {
+				console.info("  skip: indusk MCP server (already exists)");
+			}
+		} else {
+			console.info("  skip: indusk MCP server (already exists)");
+		}
+	}
+
+	// Install CGC if not present
+	const cgcInstalled = run("cgc --version");
+	if (cgcInstalled) {
+		console.info(`  skip: codegraphcontext (${cgcInstalled})`);
+	} else {
+		const hasPipx = run("pipx --version");
+		if (hasPipx) {
+			console.info("  installing: codegraphcontext via pipx...");
+			try {
+				execSync("pipx install codegraphcontext", {
+					timeout: 60000,
+					stdio: ["ignore", "pipe", "pipe"],
+				});
+				console.info("  installed: codegraphcontext");
+			} catch {
+				console.info("  failed: could not install codegraphcontext — run manually:");
+				console.info("    pipx install codegraphcontext");
+			}
+		} else {
+			console.info(
+				"  skip: codegraphcontext (pipx not found — install pipx first, then: pipx install codegraphcontext)",
+			);
+		}
+	}
+
+	// Migrate CGC config: falkordb.orb.local → localhost (indusk-infra container)
+	if (existingServers.has("codegraphcontext") && !force) {
+		try {
+			const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
+			const cgcEnv = mcpConfig.mcpServers?.codegraphcontext?.env;
+			if (cgcEnv?.FALKORDB_HOST === "falkordb.orb.local") {
+				execSync(
+					`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=localhost -e FALKORDB_GRAPH_NAME=${cgcEnv.FALKORDB_GRAPH_NAME || `cgc-${projectName}`} -- codegraphcontext cgc mcp start`,
+					{ cwd: projectRoot, stdio: "pipe", timeout: 10000 },
+				);
+				console.info("  migrated: codegraphcontext FALKORDB_HOST → localhost (indusk-infra)");
+			}
+		} catch {}
 	}
 
 	// Add codegraphcontext MCP server (no secrets)
 	if (!existingServers.has("codegraphcontext") || force) {
 		try {
 			execSync(
-				`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=falkordb.orb.local -e FALKORDB_GRAPH_NAME=cgc-${projectName} -- codegraphcontext cgc mcp start`,
+				`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=localhost -e FALKORDB_GRAPH_NAME=cgc-${projectName} -- codegraphcontext cgc mcp start`,
 				{ cwd: projectRoot, stdio: "pipe", timeout: 10000 },
 			);
 			console.info(`  added: codegraphcontext MCP server (graph: cgc-${projectName})`);
 		} catch {
 			console.info("  failed: could not add codegraphcontext MCP server — run manually:");
-			console.info(`    claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=falkordb.orb.local -e FALKORDB_GRAPH_NAME=cgc-${projectName} -- codegraphcontext cgc mcp start`);
+			console.info(
+				`    claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=localhost -e FALKORDB_GRAPH_NAME=cgc-${projectName} -- codegraphcontext cgc mcp start`,
+			);
 		}
 	} else {
 		console.info("  skip: codegraphcontext MCP server (already exists)");
@@ -206,123 +269,166 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		console.info("\n[OpenTelemetry]");
 		console.info("  skip: this is the indusk-mcp package (templates are source, not scaffolded)");
 	} else {
-	console.info("\n[OpenTelemetry]");
-	const otelTemplates = ["instrumentation.ts", "filtering-exporter.ts", "logger.ts"];
-	const isNextJs =
-		existsSync(join(projectRoot, "next.config.js")) ||
-		existsSync(join(projectRoot, "next.config.ts")) ||
-		existsSync(join(projectRoot, "next.config.mjs"));
-	const isPython =
-		existsSync(join(projectRoot, "requirements.txt")) ||
-		existsSync(join(projectRoot, "pyproject.toml"));
-	const isReactSPA =
-		!isNextJs &&
-		(existsSync(join(projectRoot, "vite.config.ts")) ||
-			existsSync(join(projectRoot, "vite.config.js")));
+		console.info("\n[OpenTelemetry]");
+		const otelTemplates = ["instrumentation.ts", "filtering-exporter.ts", "logger.ts"];
+		const isNextJs =
+			existsSync(join(projectRoot, "next.config.js")) ||
+			existsSync(join(projectRoot, "next.config.ts")) ||
+			existsSync(join(projectRoot, "next.config.mjs"));
+		const isPython =
+			existsSync(join(projectRoot, "requirements.txt")) ||
+			existsSync(join(projectRoot, "pyproject.toml"));
+		const isReactSPA =
+			!isNextJs &&
+			(existsSync(join(projectRoot, "vite.config.ts")) ||
+				existsSync(join(projectRoot, "vite.config.js")));
 
-	if (isPython) {
-		const pyTemplate = "instrumentation.py";
-		const targetFile = join(projectRoot, pyTemplate);
-		if (existsSync(targetFile) && !force) {
-			console.info(`  skip: ${pyTemplate} (already exists)`);
-		} else {
-			cpSync(join(packageRoot, "templates", pyTemplate), targetFile);
-			console.info(`  create: ${pyTemplate}`);
-			console.info(
-				"  install: pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp",
-			);
-			console.info("  run: opentelemetry-instrument python your_app.py");
-		}
-	} else if (isNextJs) {
-		// Next.js — use @vercel/otel
-		const instrTarget = join(projectRoot, "instrumentation.ts");
-		if (existsSync(instrTarget) && !force) {
-			console.info("  skip: instrumentation.ts (already exists)");
-		} else {
-			cpSync(join(packageRoot, "templates/instrumentation.next.ts"), instrTarget);
-			const content = readFileSync(instrTarget, "utf-8");
-			writeFileSync(instrTarget, content.replace('"unknown-service"', `"${projectName}"`));
-			console.info("  create: instrumentation.ts (Next.js — @vercel/otel)");
-		}
-
-		// Logger
-		const loggerTarget = join(projectRoot, "src/logger.ts");
-		if (existsSync(loggerTarget) && !force) {
-			console.info("  skip: src/logger.ts (already exists)");
-		} else {
-			const loggerDir = join(projectRoot, "src");
-			mkdirSync(loggerDir, { recursive: true });
-			cpSync(join(packageRoot, "templates/logger.ts"), loggerTarget);
-			console.info("  create: src/logger.ts");
-		}
-
-		// Client-side browser instrumentation
-		const webInstrTarget = join(projectRoot, "src/instrumentation.web.ts");
-		if (existsSync(webInstrTarget) && !force) {
-			console.info("  skip: src/instrumentation.web.ts (already exists)");
-		} else {
-			const srcDir = join(projectRoot, "src");
-			mkdirSync(srcDir, { recursive: true });
-			cpSync(join(packageRoot, "templates/instrumentation.web.ts"), webInstrTarget);
-			const content = readFileSync(webInstrTarget, "utf-8");
-			writeFileSync(webInstrTarget, content.replace('"unknown-service"', `"${projectName}"`));
-			console.info("  create: src/instrumentation.web.ts (browser — OTel Web SDK)");
-		}
-
-		console.info("  install: pnpm add @vercel/otel pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction");
-		console.info("  wire (server): Next.js loads instrumentation.ts automatically");
-		console.info("  wire (client): import './instrumentation.web' in your root client component or layout");
-	} else if (isReactSPA) {
-		// React SPA (Vite) — browser instrumentation via Dash0 Web SDK
-		const srcDir = existsSync(join(projectRoot, "src")) ? join(projectRoot, "src") : projectRoot;
-		const instrTarget = join(srcDir, "instrumentation.ts");
-		if (existsSync(instrTarget) && !force) {
-			console.info("  skip: instrumentation.ts (already exists)");
-		} else {
-			cpSync(join(packageRoot, "templates/instrumentation.web.ts"), instrTarget);
-			const content = readFileSync(instrTarget, "utf-8");
-			writeFileSync(instrTarget, content.replace('"unknown-service"', `"${projectName}"`));
-			console.info("  create: src/instrumentation.ts (React SPA — @dash0/sdk-web)");
-		}
-
-		console.info("  install: pnpm add @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction");
-		console.info("  wire: import './instrumentation' at the top of your main.tsx or App.tsx");
-	} else {
-		// Node.js — full SDK with auto-instrumentation
-		const srcDir = existsSync(join(projectRoot, "src")) ? join(projectRoot, "src") : projectRoot;
-
-		for (const template of otelTemplates) {
-			const targetFile = join(srcDir, template);
+		if (isPython) {
+			const pyTemplate = "instrumentation.py";
+			const targetFile = join(projectRoot, pyTemplate);
 			if (existsSync(targetFile) && !force) {
-				console.info(`  skip: ${template} (already exists)`);
-				continue;
+				console.info(`  skip: ${pyTemplate} (already exists)`);
+			} else {
+				cpSync(join(packageRoot, "templates", pyTemplate), targetFile);
+				console.info(`  create: ${pyTemplate}`);
+				console.info(
+					"  install: pip install opentelemetry-distro opentelemetry-instrumentation opentelemetry-exporter-otlp",
+				);
+				console.info("  run: opentelemetry-instrument python your_app.py");
 			}
-			cpSync(join(packageRoot, "templates", template), targetFile);
-			console.info(`  create: ${template}`);
-		}
+		} else if (isNextJs) {
+			// Next.js — use @vercel/otel
+			const instrTarget = join(projectRoot, "instrumentation.ts");
+			if (existsSync(instrTarget) && !force) {
+				console.info("  skip: instrumentation.ts (already exists)");
+			} else {
+				cpSync(join(packageRoot, "templates/instrumentation.next.ts"), instrTarget);
+				const content = readFileSync(instrTarget, "utf-8");
+				writeFileSync(instrTarget, content.replace('"unknown-service"', `"${projectName}"`));
+				console.info("  create: instrumentation.ts (Next.js — @vercel/otel)");
+			}
 
-		// Set service name in instrumentation.ts
-		const instrPath = join(srcDir, "instrumentation.ts");
-		if (existsSync(instrPath)) {
-			const content = readFileSync(instrPath, "utf-8");
-			writeFileSync(instrPath, content.replace('"unknown-service"', `"${projectName}"`));
-		}
+			// Logger
+			const loggerTarget = join(projectRoot, "src/logger.ts");
+			if (existsSync(loggerTarget) && !force) {
+				console.info("  skip: src/logger.ts (already exists)");
+			} else {
+				const loggerDir = join(projectRoot, "src");
+				mkdirSync(loggerDir, { recursive: true });
+				cpSync(join(packageRoot, "templates/logger.ts"), loggerTarget);
+				console.info("  create: src/logger.ts");
+			}
 
-		const packages = [
-			"@opentelemetry/sdk-node",
-			"@opentelemetry/auto-instrumentations-node",
-			"@opentelemetry/exporter-trace-otlp-http",
-			"@opentelemetry/sdk-trace-base",
-			"@opentelemetry/resources",
-			"@opentelemetry/semantic-conventions",
-			"@opentelemetry/core",
-			"pino",
-			"pino-opentelemetry-transport",
-		];
-		console.info(`  install: pnpm add ${packages.join(" ")}`);
-		console.info("  wire: node --import ./src/instrumentation.ts src/index.ts");
-	}
+			// Client-side browser instrumentation
+			const webInstrTarget = join(projectRoot, "src/instrumentation.web.ts");
+			if (existsSync(webInstrTarget) && !force) {
+				console.info("  skip: src/instrumentation.web.ts (already exists)");
+			} else {
+				const srcDir = join(projectRoot, "src");
+				mkdirSync(srcDir, { recursive: true });
+				cpSync(join(packageRoot, "templates/instrumentation.web.ts"), webInstrTarget);
+				const content = readFileSync(webInstrTarget, "utf-8");
+				writeFileSync(webInstrTarget, content.replace('"unknown-service"', `"${projectName}"`));
+				console.info("  create: src/instrumentation.web.ts (browser — OTel Web SDK)");
+			}
+
+			console.info(
+				"  install: pnpm add @vercel/otel pino pino-opentelemetry-transport @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction",
+			);
+			console.info("  wire (server): Next.js loads instrumentation.ts automatically");
+			console.info(
+				"  wire (client): import './instrumentation.web' in your root client component or layout",
+			);
+		} else if (isReactSPA) {
+			// React SPA (Vite) — browser instrumentation via Dash0 Web SDK
+			const srcDir = existsSync(join(projectRoot, "src")) ? join(projectRoot, "src") : projectRoot;
+			const instrTarget = join(srcDir, "instrumentation.ts");
+			if (existsSync(instrTarget) && !force) {
+				console.info("  skip: instrumentation.ts (already exists)");
+			} else {
+				cpSync(join(packageRoot, "templates/instrumentation.web.ts"), instrTarget);
+				const content = readFileSync(instrTarget, "utf-8");
+				writeFileSync(instrTarget, content.replace('"unknown-service"', `"${projectName}"`));
+				console.info("  create: src/instrumentation.ts (React SPA — @dash0/sdk-web)");
+			}
+
+			console.info(
+				"  install: pnpm add @opentelemetry/sdk-trace-web @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/instrumentation @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction",
+			);
+			console.info("  wire: import './instrumentation' at the top of your main.tsx or App.tsx");
+		} else {
+			// Node.js — full SDK with auto-instrumentation
+			const srcDir = existsSync(join(projectRoot, "src")) ? join(projectRoot, "src") : projectRoot;
+
+			for (const template of otelTemplates) {
+				const targetFile = join(srcDir, template);
+				if (existsSync(targetFile) && !force) {
+					console.info(`  skip: ${template} (already exists)`);
+					continue;
+				}
+				cpSync(join(packageRoot, "templates", template), targetFile);
+				console.info(`  create: ${template}`);
+			}
+
+			// Set service name in instrumentation.ts
+			const instrPath = join(srcDir, "instrumentation.ts");
+			if (existsSync(instrPath)) {
+				const content = readFileSync(instrPath, "utf-8");
+				writeFileSync(instrPath, content.replace('"unknown-service"', `"${projectName}"`));
+			}
+
+			const packages = [
+				"@opentelemetry/sdk-node",
+				"@opentelemetry/auto-instrumentations-node",
+				"@opentelemetry/exporter-trace-otlp-http",
+				"@opentelemetry/sdk-trace-base",
+				"@opentelemetry/resources",
+				"@opentelemetry/semantic-conventions",
+				"@opentelemetry/core",
+				"pino",
+				"pino-opentelemetry-transport",
+			];
+			console.info(`  install: pnpm add ${packages.join(" ")}`);
+			console.info("  wire: node --import ./src/instrumentation.ts src/index.ts");
+		}
 	} // end isInduskMcp else
+
+	// 7b. Next.js webpack config — ensure --webpack dev script and aggregateTimeout watchOptions
+	if (!isInduskMcp) {
+		const nextConfigs = ["next.config.ts", "next.config.js", "next.config.mjs"].map((f) =>
+			join(projectRoot, f),
+		);
+		const nextConfigPath = nextConfigs.find((f) => existsSync(f));
+		if (nextConfigPath) {
+			console.info("\n[Next.js Webpack Config]");
+			const configContent = readFileSync(nextConfigPath, "utf-8");
+			if (!configContent.includes("aggregateTimeout")) {
+				console.info(
+					`  warn: ${nextConfigPath.split("/").pop()} is missing aggregateTimeout in webpack watchOptions`,
+				);
+				console.info("  add the following to your next.config:");
+				console.info("    webpack: (config) => {");
+				console.info("      config.watchOptions = { ...config.watchOptions, aggregateTimeout: 600 };");
+				console.info("      return config;");
+				console.info("    }");
+			} else {
+				console.info(`  ok: aggregateTimeout configured in ${nextConfigPath.split("/").pop()}`);
+			}
+
+			// Check dev script for --turbopack
+			const pkgJsonPath = join(projectRoot, "package.json");
+			if (existsSync(pkgJsonPath)) {
+				const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
+				const devScript = pkgJson.scripts?.dev || "";
+				if (devScript.includes("--webpack")) {
+					console.info("  ok: dev script uses --webpack");
+				} else {
+					console.info("  warn: dev script should use --webpack (Turbopack is the default in Next.js 16+)");
+					console.info("  Turbopack's 1ms file watcher debounce causes crashes with external tool writes on macOS");
+				}
+			}
+		}
+	}
 
 	// 8. Install gate enforcement hooks
 	console.info("\n[Hooks]");
@@ -439,7 +545,8 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		if (hooksUpdated || permissionsUpdated) {
 			writeFileSync(claudeSettingsPath, `${JSON.stringify(existing, null, "\t")}\n`);
 			if (hooksUpdated) console.info("  update: .claude/settings.json (added hook config)");
-			if (permissionsUpdated) console.info("  update: .claude/settings.json (added catchup permissions)");
+			if (permissionsUpdated)
+				console.info("  update: .claude/settings.json (added catchup permissions)");
 		} else {
 			console.info("  skip: .claude/settings.json (already configured)");
 		}
@@ -478,7 +585,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 		// Print setup instructions for extensions with mcp_server
 		if (ext.manifest.mcp_server?.setup_instructions) {
-			console.info(`\n  ${ext.manifest.name}: MCP server setup needed — see .claude/skills/${ext.manifest.name}/SKILL.md for instructions`);
+			console.info(
+				`\n  ${ext.manifest.name}: MCP server setup needed — see .claude/skills/${ext.manifest.name}/SKILL.md for instructions`,
+			);
 		}
 	}
 	if (enabledExts.length === 0) {

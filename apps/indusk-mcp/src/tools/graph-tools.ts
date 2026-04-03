@@ -16,17 +16,7 @@ function cgcPath(): string | null {
 
 function getFalkorHost(): string {
 	if (process.env.FALKORDB_HOST) return process.env.FALKORDB_HOST;
-
-	// Try OrbStack hostname first, fall back to localhost
-	try {
-		execSync("ping -c 1 -W 1 falkordb.orb.local", {
-			stdio: ["ignore", "ignore", "ignore"],
-			timeout: 2000,
-		});
-		return "falkordb.orb.local";
-	} catch {
-		return "localhost";
-	}
+	return "localhost";
 }
 
 function checkFalkorConnection(host: string): boolean {
@@ -58,12 +48,9 @@ function runCgc(
 	// Fast pre-check: is FalkorDB reachable?
 	if (!options?.skipConnectionCheck && !checkFalkorConnection(host)) {
 		return JSON.stringify({
-			error: `FalkorDB not reachable at ${host}:6379. Is the container running? Try: docker start falkordb`,
+			error: `FalkorDB not reachable at ${host}:6379. Is the indusk-infra container running? Try: docker start indusk-infra`,
 			host,
-			suggestion:
-				host === "localhost"
-					? "OrbStack not detected. If using OrbStack, ensure it's running."
-					: "Try: docker start falkordb — or check if OrbStack is running.",
+			suggestion: "Try: docker start indusk-infra — or run: indusk infra start",
 		});
 	}
 
@@ -98,7 +85,7 @@ export function indexProject(projectRoot: string): { success: boolean; output: s
 	if (!checkFalkorConnection(host)) {
 		return {
 			success: false,
-			output: `FalkorDB not reachable at ${host}:6379. Is the container running? Try: docker start falkordb`,
+			output: `FalkorDB not reachable at ${host}:6379. Is the indusk-infra container running? Try: docker start indusk-infra`,
 		};
 	}
 
@@ -222,7 +209,7 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 					env: {
 						...process.env,
 						DATABASE_TYPE: "falkordb-remote",
-						FALKORDB_HOST: process.env.FALKORDB_HOST ?? "falkordb.orb.local",
+						FALKORDB_HOST: process.env.FALKORDB_HOST ?? "localhost",
 						FALKORDB_GRAPH_NAME: getCgcGraphName(projectRoot),
 					},
 				});
@@ -376,7 +363,7 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 					env: {
 						...process.env,
 						DATABASE_TYPE: "falkordb-remote",
-						FALKORDB_HOST: process.env.FALKORDB_HOST ?? "falkordb.orb.local",
+						FALKORDB_HOST: process.env.FALKORDB_HOST ?? "localhost",
 						FALKORDB_GRAPH_NAME: getCgcGraphName(projectRoot),
 					},
 				});
@@ -442,7 +429,7 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 
 			// 2. Check FalkorDB container exists and is running
 			try {
-				const status = execSync("docker ps --filter name=falkordb --format '{{.Status}}'", {
+				const status = execSync("docker ps --filter name=indusk-infra --format '{{.Status}}'", {
 					encoding: "utf-8",
 					timeout: 5000,
 					stdio: ["ignore", "pipe", "pipe"],
@@ -453,7 +440,7 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				} else {
 					// Container exists but not running — try to start
 					try {
-						execSync("docker start falkordb", {
+						execSync("docker start indusk-infra", {
 							timeout: 10000,
 							stdio: ["ignore", "pipe", "pipe"],
 						});
@@ -463,25 +450,12 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 							detail: "Started existing container",
 						});
 					} catch {
-						// Container doesn't exist — create it
-						try {
-							execSync(
-								"docker run -d --name falkordb --restart unless-stopped -v falkordb-global:/var/lib/falkordb/data falkordb/falkordb:latest",
-								{ timeout: 30000, stdio: ["ignore", "pipe", "pipe"] },
-							);
-							steps.push({
-								step: "falkordb-container",
-								status: "fixed",
-								detail: "Created new container",
-							});
-						} catch (e: unknown) {
-							const err = e as { message?: string };
-							steps.push({
-								step: "falkordb-container",
-								status: "error",
-								detail: err.message ?? "Failed to create container",
-							});
-						}
+						steps.push({
+							step: "falkordb-container",
+							status: "error",
+							detail:
+								"indusk-infra container not found — run: indusk infra start (or docker run -d --name indusk-infra -p 6379:6379 -p 8100:8100 -v indusk-data:/data indusk-infra)",
+						});
 					}
 				}
 			} catch {
@@ -532,7 +506,11 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 			// 4. Check if repo is indexed
 			if (steps.every((s) => s.status !== "error")) {
 				const listOutput = runCgc("list", projectRoot, { skipConnectionCheck: true });
-				if (listOutput.includes(projectRoot) || listOutput.includes(basename(projectRoot)) || listOutput.includes(getCgcGraphName(projectRoot))) {
+				if (
+					listOutput.includes(projectRoot) ||
+					listOutput.includes(basename(projectRoot)) ||
+					listOutput.includes(getCgcGraphName(projectRoot))
+				) {
 					steps.push({ step: "repo-indexed", status: "ok", detail: "Repository is indexed" });
 				} else {
 					steps.push({

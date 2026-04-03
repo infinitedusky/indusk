@@ -80,6 +80,7 @@ const config = defineConfig({
 						{ text: "CodeGraphContext", link: "/reference/tools/codegraph" },
 						{ text: "Biome", link: "/reference/tools/biome" },
 						{ text: "OpenTelemetry", link: "/reference/tools/otel" },
+						{ text: "Infrastructure", link: "/reference/tools/infrastructure" },
 					],
 				},
 			],
