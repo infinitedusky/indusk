@@ -115,6 +115,20 @@ All graphs live in the single FalkorDB instance:
 | `{project}` | Graphiti | Project-specific semantic knowledge (decisions, gotchas, patterns) |
 | `shared` | Graphiti | Universal knowledge (developer preferences, conventions, cross-project lessons) |
 
+## Health Checks
+
+The `graphiti` extension provides three health checks that run during `check_health` and catchup:
+
+| Check | Command | Expected |
+|-------|---------|----------|
+| Container running | `docker inspect --format='{{.State.Running}}' indusk-infra` | `true` |
+| Graphiti reachable | `curl -sf http://localhost:8100/health` | `{"status":"healthy","service":"graphiti-mcp"}` |
+| FalkorDB reachable | `redis-cli -h localhost ping` | `PONG` |
+
+`graph_ensure` also checks all three and auto-starts the container if stopped.
+
+**Note:** Graphiti takes ~90 seconds to start after the container starts (OTel auto-instrumentation adds startup time). FalkorDB is ready in seconds. If `graph_ensure` reports Graphiti as unreachable right after starting the container, wait and retry.
+
 ## Smoke Test
 
 ```bash

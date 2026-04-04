@@ -521,6 +521,37 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				}
 			}
 
+			// 5. Check Graphiti health
+			if (steps.every((s) => s.step !== "falkordb-container" || s.status !== "error")) {
+				try {
+					const health = execSync("curl -sf http://localhost:8100/health", {
+						encoding: "utf-8",
+						timeout: 5000,
+						stdio: ["ignore", "pipe", "pipe"],
+					}).trim();
+					if (health.includes("healthy")) {
+						steps.push({
+							step: "graphiti-health",
+							status: "ok",
+							detail: "Graphiti MCP server healthy",
+						});
+					} else {
+						steps.push({
+							step: "graphiti-health",
+							status: "error",
+							detail: "Graphiti responded but not healthy",
+						});
+					}
+				} catch {
+					steps.push({
+						step: "graphiti-health",
+						status: "error",
+						detail:
+							"Graphiti MCP server not reachable on localhost:8100 — may still be starting (takes ~90s)",
+					});
+				}
+			}
+
 			const hasErrors = steps.some((s) => s.status === "error");
 			const hasFixed = steps.some((s) => s.status === "fixed");
 
