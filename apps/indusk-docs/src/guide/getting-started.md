@@ -35,15 +35,24 @@ cd your-project
 indusk init
 ```
 
-This sets up:
+Or for team repos you don't own:
+
+```bash
+indusk init --local
+```
+
+See [Local Mode](./local-mode) for details on using InDusk without touching committed files.
+
+`init` sets up:
 - `.claude/skills/` — 6 process skills + extension skills
 - `.claude/lessons/` — community lessons (rules from past mistakes)
-- `CLAUDE.md` — project context template
-- `planning/` — directory for plan documents
+- `CLAUDE.md` — project context template (skipped in local mode)
+- `.indusk/planning/` — directory for plan documents
+- `.indusk/config.json` — project profile (mode, detected tooling, verify contract)
 - `.mcp.json` — MCP server config (InDusk + CodeGraphContext)
-- `.vscode/settings.json` — Biome integration
-- `biome.json` — base quality config
-- `instrumentation.ts` — OpenTelemetry auto-instrumentation
+- `.vscode/settings.json` — Biome integration (skipped in local mode)
+- `biome.json` — base quality config (`.indusk/biome.json` in local mode)
+- `instrumentation.ts` — OpenTelemetry auto-instrumentation (skipped in local mode)
 - `.indusk/extensions/` — extension manifests (graphiti, cgc, etc.)
 - `.cgcignore` — excludes build artifacts from code graph
 

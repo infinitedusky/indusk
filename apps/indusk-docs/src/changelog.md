@@ -5,6 +5,23 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ## [Unreleased]
 
 ### Added
+- **Local init mode** (`indusk init --local`) — use InDusk on team codebases without touching committed files. Uses `.git/info/exclude` for isolation.
+- **`.indusk/config.json`** — central project profile recording mode, detected tooling, and verify contract. Both modes use it.
+- **`indusk pr-clean` / `pr-restore`** — strip and re-apply InDusk settings overlay for clean PRs
+- **Settings overlay** (`.indusk/settings-overlay.json`) — tracks what InDusk added to `.claude/settings.json`
+- Local-mode quality tools: `.indusk/biome.json`, `.indusk/tests/`, `.indusk/docs/`
+- Tooling detection at init (linter, test runner, OTel, TypeScript)
+
+### Changed
+- **Planning moved to `.indusk/planning/`** — all modes. `.indusk/` is now the InDusk home directory.
+- All skill path references updated (`planning/` → `.indusk/planning/`)
+- `indusk update` respects local mode — re-applies overlay after syncing
+
+### Fixed
+- Pre-existing test failure: `otel-core-skill` plan reference in plan-parser tests replaced with existing plan
+
+---
+
 - OpenTelemetry extension — auto-instrumentation scaffolding, Pino structured logging, category-based filtering exporter. Every project is observable from `init`.
 - Excalidraw extension — hand-drawn diagrams for planning, debugging, and teach mode (complements Mermaid for formal docs)
 - Extension directory format — extensions use `{name}/manifest.json` + `.env` instead of flat files, auto-migrates
