@@ -21,11 +21,11 @@
 			"Authorization": "Bearer DASH0_AUTH_TOKEN"
 		},
 		"setup_instructions": [
-			"1. Log into Dash0 > Organization Settings > Endpoints > MCP to get your endpoint URL",
-			"2. Create an auth token at Organization Settings > Auth Tokens",
-			"3. Edit .mcp.json: replace DASH0_ENDPOINT_MCP with your regional endpoint URL",
-			"4. Edit .mcp.json: replace DASH0_AUTH_TOKEN with your token",
-			"5. Optional: install CLI with 'brew install dash0hq/dash0-cli/dash0'"
+			"1. Create .indusk/extensions/dash0/.env with:",
+			"   DASH0_AUTH_TOKEN=<your auth token from Dash0 > Organization Settings > Auth Tokens>",
+			"   DASH0_ENDPOINT_MCP=https://api.<your-region>.gcp.dash0.com/mcp",
+			"2. Run 'extensions enable dash0' again",
+			"3. Optional: install CLI with 'brew install dash0hq/dash0-cli/dash0'"
 		]
 	},
 	"hooks": {

@@ -26,10 +26,8 @@
     },
     "indusk": {
       "type": "stdio",
-      "command": "npx",
+      "command": "indusk",
       "args": [
-        "--yes",
-        "@infinitedusky/indusk-mcp",
         "serve"
       ],
       "env": {

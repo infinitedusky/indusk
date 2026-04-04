@@ -44,7 +44,11 @@
       "Bash(git add:*)",
       "Bash(git commit -m ':*)",
       "Bash(jj log:*)",
-      "Bash(jj bookmark:*)"
+      "Bash(jj bookmark:*)",
+      "Bash(xargs ls:*)",
+      "Bash(npx ce:*)",
+      "Read(//Users/the_dusky/code/sandbox/indusk/**)",
+      "Read(//Users/the_dusky/code/**)"
     ]
   },
   "hooks": {

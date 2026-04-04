@@ -21,7 +21,7 @@ Three triggers start a retrospective:
 | Trigger | How It Happens |
 |---------|----------------|
 | [Work](/reference/skills/work) completes all phases | After the last phase's gates pass, the work skill signals that the plan is ready for retrospective |
-| [Plan](/reference/skills/plan) detects completed impl | `/plan {name}` reads the impl status as `completed` and directs you to run the retrospective |
+| [Planner](/reference/skills/plan) detects completed impl | `/planner {name}` reads the impl status as `completed` and directs you to run the retrospective |
 | Direct invocation | `/retrospective {plan-name}` starts the audit immediately |
 
 All three paths lead to the same nine-step audit sequence.

@@ -19,19 +19,21 @@ function run(cmd: string, options?: { stdio?: "ignore" | "pipe" | "inherit" }): 
 	}
 }
 
-function ensureGitignoreMcpJson(projectRoot: string): void {
+function ensureGitignore(projectRoot: string): void {
 	const gitignorePath = join(projectRoot, ".gitignore");
+	const entries = ["# MCP config (contains auth tokens)", ".mcp.json"];
+
 	if (existsSync(gitignorePath)) {
 		const content = readFileSync(gitignorePath, "utf-8");
-		if (content.includes(".mcp.json")) return;
-		writeFileSync(
-			gitignorePath,
-			`${content.trimEnd()}\n\n# MCP config (contains auth tokens)\n.mcp.json\n`,
-		);
+		if (content.includes(".mcp.json")) {
+			console.info("  skip: .gitignore (.mcp.json already ignored)");
+			return;
+		}
+		writeFileSync(gitignorePath, `${content.trimEnd()}\n\n${entries.join("\n")}\n`);
 		console.info("  updated: .gitignore (added .mcp.json)");
 	} else {
-		writeFileSync(gitignorePath, "# MCP config (contains auth tokens)\n.mcp.json\n");
-		console.info("  created: .gitignore (with .mcp.json)");
+		writeFileSync(gitignorePath, `${entries.join("\n")}\n`);
+		console.info("  create: .gitignore (with .mcp.json)");
 	}
 }
 
@@ -49,6 +51,9 @@ function createCgcIgnore(projectRoot: string): void {
 			"dist/",
 			"build/",
 			".git/",
+			".jj/",
+			".indusk/",
+			".claude/",
 			"*.png",
 			"*.jpg",
 			"*.svg",
@@ -749,11 +754,11 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 
 	// 8. Create .cgcignore and manage git excludes
 	createCgcIgnore(projectRoot);
+	// .mcp.json contains auth tokens — always gitignore it regardless of mode
+	ensureGitignore(projectRoot);
 	if (local) {
 		console.info("\n[Git Excludes]");
 		writeGitInfoExclude(projectRoot);
-	} else {
-		ensureGitignoreMcpJson(projectRoot);
 	}
 
 	// 9. Run on_init hooks from enabled extensions
@@ -841,12 +846,53 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info(`\n[Config]`);
 	console.info(`  create: .indusk/config.json (mode: ${config.mode})`);
 
+	// Create initial handoff so /catchup runs full orientation on first session
+	const handoffPath = join(projectRoot, ".claude/handoff.md");
+	if (!existsSync(handoffPath) || force) {
+		const today = new Date().toISOString().split("T")[0];
+		const handoffContent = [
+			"# Handoff",
+			"",
+			`**Date:** ${today}`,
+			"**Session:** Fresh init — first session orientation needed",
+			"",
+			"## Catchup Status",
+			"- [ ] mcp-ready",
+			"- [ ] handoff",
+			"- [ ] lessons",
+			"- [ ] health",
+			"- [ ] context",
+			"- [ ] plans",
+			"- [ ] skills",
+			"- [ ] extensions",
+			"- [ ] graph",
+			"",
+			"## What Was Being Worked On",
+			"`indusk init` just set up this project. No prior session.",
+			"",
+			"## Where It Stopped",
+			"Init complete. Agent needs full orientation (lessons, context, skills, extensions, graph).",
+			"",
+			"## What's Next",
+			"1. Run `/catchup` to orient the agent (reads lessons, context, skills, extensions, graph)",
+			"2. Edit CLAUDE.md with project details",
+			"3. Start planning: `/planner your-first-feature`",
+			"",
+			"## Open Issues",
+			"None — fresh project.",
+			"",
+		].join("\n");
+		writeFileSync(handoffPath, handoffContent);
+		console.info("\n[Handoff]");
+		console.info("  create: .claude/handoff.md (first-session orientation)");
+	}
+
 	// Summary
 	console.info("\nDone!");
 	console.info("\n⚠  Restart Claude Code to load the updated MCP server and skills.");
 	console.info("\nNext steps:");
 	console.info("  1. Set up infrastructure (if not done): indusk infra start");
-	console.info("  2. Restart Claude Code");
+	console.info("  2. Restart Claude Code — /catchup will auto-orient the agent");
 	console.info("  3. Edit CLAUDE.md with your project details");
-	console.info("  4. Start planning: /plan your-first-feature");
+	console.info("  4. Start planning: /planner your-first-feature");
 }

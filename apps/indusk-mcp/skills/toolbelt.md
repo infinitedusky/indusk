@@ -17,7 +17,7 @@ To see which MCP servers and extensions are active, call `extensions_status`.
 ## How the Skills Work Together
 
 ```
-/plan → creates planning docs (research, brief, ADR, impl)
+/planner → creates planning docs (research, brief, ADR, impl)
                 ↓
 /work → executes impl checklist, phase by phase
          each phase has four gates:
@@ -139,7 +139,7 @@ While executing impl items:
 
 Gates prevent skipping important work. Three enforcement levels, set via `gate_policy` in impl frontmatter or `.claude/settings.json`:
 
-| Mode | Writing the impl (`/plan`) | Executing the impl (`/work`) |
+| Mode | Writing the impl (`/planner`) | Executing the impl (`/work`) |
 |------|---------------------------|------------------------------|
 | **`strict`** | Every gate must have a real item. No `(none needed)`. | Every item must be completed. No skipping. |
 | **`ask`** (default) | Every gate must have a real item. No `(none needed)`. | Skip only with conversation proof: `(none needed — asked: "..." — user: "...")` |

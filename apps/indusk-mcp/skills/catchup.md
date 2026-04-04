@@ -78,7 +78,7 @@ Call `extensions_status` to see what extensions are enabled and their capabiliti
 Call `get_skill_summaries` to load the name, description, and type of every installed skill. This returns a compact summary — you do NOT need to read each skill file individually. The full skill content loads automatically when the user invokes a slash command.
 
 Skill types:
-- **process** — workflow skills with slash commands (plan, work, verify, context, document, retrospective)
+- **process** — workflow skills with slash commands (planner, work, verify, context, document, retrospective)
 - **extension** — tool integrations (cgc, composable-env, excalidraw, etc.)
 - **domain** — technology-specific best practices (typescript, testing, etc.)
 

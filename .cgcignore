@@ -25,7 +25,7 @@ pnpm-lock.yaml
 
 # Planning docs (not code)
 planning/
-research/
+.indusk/
 
 # Images
 *.png

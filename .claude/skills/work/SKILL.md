@@ -8,11 +8,11 @@ You know how to execute plans in this project.
 
 ## How Work Works Here
 
-Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your job is to work through them methodically — one item at a time, in order, checking each off immediately after completing it.
+Implementation plans live in `.indusk/planning/{plan-name}/impl.md` as checklists. Your job is to work through them methodically — one item at a time, in order, checking each off immediately after completing it.
 
 ## What to Do When Asked to Work
 
-1. **Find the right plan.** Look in `planning/` for the plan matching what the user asked for. If they didn't specify, list all plans that have an impl with status `approved` or `in-progress` and ask which one.
+1. **Find the right plan.** Look in `.indusk/planning/` for the plan matching what the user asked for. If they didn't specify, list all plans that have an impl with status `approved` or `in-progress` and ask which one.
 
 2. **Check prerequisites.** Before starting work:
    - If the plan has an ADR, verify its status is `accepted`. If it's still `proposed`, warn the user: "The ADR hasn't been accepted yet — want to review it first, or proceed anyway?"
@@ -70,7 +70,7 @@ Three modes, configured via `gate_policy` in the impl frontmatter or `.claude/se
 
 | Mode | Behavior |
 |------|----------|
-| **`strict`** | No overrides at any stage. Every gate must have a real item when the impl is written (`/plan`), and every item must be completed during `/work`. No `(none needed)`, no `skip-reason:`, no conversation proof. |
+| **`strict`** | No overrides at any stage. Every gate must have a real item when the impl is written (`/planner`), and every item must be completed during `/work`. No `(none needed)`, no `skip-reason:`, no conversation proof. |
 | **`ask`** (default) | Every gate must have a real item when the impl is written. During `/work`, the agent must ask the user before skipping, and include proof of the conversation in the skip format. Hooks enforce both stages. |
 | **`auto`** | Gates can be pre-filled with `(none needed)` or `skip-reason:` at write time. During `/work`, the agent can skip without asking. Use when running autonomously. |
 
@@ -118,7 +118,7 @@ In `ask` mode, skipped gates MUST include proof that the conversation happened:
 
 The hook validates that both `asked:` and `user:` are present with non-empty quoted content. Bare `(none needed)` or `skip-reason:` without conversation proof will be **blocked by the hook**.
 
-| Mode | At write time (`/plan`) | At execution time (`/work`) |
+| Mode | At write time (`/planner`) | At execution time (`/work`) |
 |------|------------------------|---------------------------|
 | `strict` | No opt-outs — real items required | No skipping — everything completed |
 | `ask` | No opt-outs — real items required | Skip only with conversation proof |
@@ -148,7 +148,7 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
     - Update impl status to `completed`
     - Summarize what was done
     - If this plan included an ADR, confirm CLAUDE.md's Key Decisions was updated
-    - Let the user know the plan is ready for a retrospective if they want one (`/plan {name}` will pick up at the retrospective stage)
+    - Let the user know the plan is ready for a retrospective if they want one (`/planner {name}` will pick up at the retrospective stage)
 
 ## Teach Mode
 
@@ -202,11 +202,16 @@ When you are corrected mid-work — the user says "no, not that way" or "don't d
 
 Don't wait to be told. Corrections are the most valuable source of project knowledge.
 
-## Commits
+## Commits (jj)
 
-Commit at natural boundaries — typically at the end of a phase or when the context changes. Follow the monorepo rule: commits should be siloed between different contexts (what would be separate repos).
+Use the **describe-then-do** workflow from the jj skill:
 
-Don't commit after every single checklist item — that's too granular. Don't wait until the entire plan is done — that's too coarse. A phase is usually the right unit.
+1. `jj new` before each logical unit of work
+2. `jj describe` to declare what you're about to do
+3. Do the work, check off the item(s)
+4. Repeat
+
+Commit at natural boundaries — typically per checklist item or per phase gate (otel, verify, context, document). Follow the monorepo rule: if a change spans multiple apps, use `jj split` to silo commits between contexts. See the jj skill for details.
 
 ## Cross-Plan Impact
 

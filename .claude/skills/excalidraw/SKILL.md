@@ -41,7 +41,7 @@ That's it. No tokens, no config files, no environment variables.
 
 ## When to Create Diagrams
 
-- **During `/plan` research or brief**: sketch the proposed architecture to make it concrete
+- **During `/planner` research or brief**: sketch the proposed architecture to make it concrete
 - **During `/work` teach mode**: visualize what a phase is building before and after
 - **During debugging**: draw the request flow to identify where things break
 - **During retrospective**: before/after architecture comparison

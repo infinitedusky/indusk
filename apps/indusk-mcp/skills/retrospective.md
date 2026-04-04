@@ -21,7 +21,7 @@ The retrospective skill replaces the freeform "write a retrospective" step with 
 ## When to Use
 
 - After `/work` completes all impl phases and the status is `completed`
-- When `/plan {name}` detects the impl is completed and the next step is retrospective
+- When `/planner {name}` detects the impl is completed and the next step is retrospective
 - Directly via `/retrospective {plan-name}`
 
 ## The Audit Checklist

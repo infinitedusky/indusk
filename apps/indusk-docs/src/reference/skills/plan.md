@@ -1,10 +1,10 @@
-# Plan
+# Planner
 
-The plan skill structures how work moves from idea to implementation. Every significant change starts with `/plan`, which creates a folder in `planning/` and walks through a document lifecycle — research, brief, ADR, impl, retrospective — where each document builds on the ones before it. The skill enforces ordering, knows where you left off, and adapts the lifecycle based on the type of work.
+The plan skill structures how work moves from idea to implementation. Every significant change starts with `/planner`, which creates a folder in `planning/` and walks through a document lifecycle — research, brief, ADR, impl, retrospective — where each document builds on the ones before it. The skill enforces ordering, knows where you left off, and adapts the lifecycle based on the type of work.
 
 ## What It Does
 
-The plan skill manages the full lifecycle of a planned change. It determines which documents to create based on the workflow type, generates them from templates with correct frontmatter, and ensures you never skip a stage (no ADR before the brief is accepted, no impl before the ADR is accepted). When you invoke `/plan`, it either picks up an existing plan where it left off or creates a new one from scratch.
+The plan skill manages the full lifecycle of a planned change. It determines which documents to create based on the workflow type, generates them from templates with correct frontmatter, and ensures you never skip a stage (no ADR before the brief is accepted, no impl before the ADR is accepted). When you invoke `/planner`, it either picks up an existing plan where it left off or creates a new one from scratch.
 
 ## The Planning Lifecycle
 
@@ -14,7 +14,7 @@ Every plan follows a linear progression through document stages. Each document m
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Research: /plan feature-name
+    [*] --> Research: /planner feature-name
     Research --> Brief: status: complete
     Brief --> ADR: status: accepted
     ADR --> Impl: status: accepted
@@ -67,7 +67,7 @@ Four workflow types control the document set for each plan:
 | **refactor** | brief, impl (with boundary map) | Restructuring code without changing behavior |
 | **spike** | research only | Pure exploration — no commitment to build anything |
 
-The feature workflow is the default. If you run `/plan payment-flow` without specifying a type, it uses feature.
+The feature workflow is the default. If you run `/planner payment-flow` without specifying a type, it uses feature.
 
 <FullscreenDiagram>
 
@@ -87,7 +87,7 @@ flowchart TD
 ## Invocation
 
 ```
-/plan [workflow] plan-name
+/planner [workflow] plan-name
 ```
 
 The first word is optionally a workflow type (`feature`, `bugfix`, `refactor`, `spike`). Everything after becomes the plan name, kebab-cased. If no workflow type is given, it defaults to `feature`.
@@ -96,17 +96,17 @@ The first word is optionally a workflow type (`feature`, `bugfix`, `refactor`, `
 
 ```bash
 # Full feature lifecycle (default)
-/plan payment-flow
-/plan feature payment-flow
+/planner payment-flow
+/planner feature payment-flow
 
 # Bug fix — brief + impl only
-/plan bugfix auth-token-expiry
+/planner bugfix auth-token-expiry
 
 # Refactor — brief + impl with boundary map
-/plan refactor extract-auth-middleware
+/planner refactor extract-auth-middleware
 
 # Spike — research only, no commitment
-/plan spike redis-session-options
+/planner spike redis-session-options
 ```
 
 If the plan folder already exists, the skill reads what's there, checks frontmatter statuses, and picks up at the next incomplete document.
@@ -118,7 +118,7 @@ Here is a realistic end-to-end example of planning a payment flow feature.
 ### 1. Start the plan
 
 ```
-/plan payment-flow
+/planner payment-flow
 ```
 
 The skill creates `planning/payment-flow/` and begins with research. Before writing anything, it queries the code graph to understand the existing codebase:
@@ -444,7 +444,7 @@ Sections: What We Set Out to Do, What Actually Happened, Getting to Done, What W
 
 The retrospective is not written manually — invoke `/retrospective plan-name` to trigger the structured audit.
 
-## Plan Dependencies
+## Planner Dependencies
 
 Plans can declare dependencies on other plans using two sections in `brief.md`:
 
@@ -590,7 +590,7 @@ Plans with no dependencies appear first. Plans whose dependencies are all satisf
 
 - **Always query the code graph before scoping.** Before writing a brief or impl, call `query_dependencies` and `find_code` to understand what you are touching. "This module has 12 dependents" prevents underscoping.
 
-- **Feature is the default workflow.** `/plan payment-flow` and `/plan feature payment-flow` are identical. You only need to specify the workflow type for `bugfix`, `refactor`, or `spike`.
+- **Feature is the default workflow.** `/planner payment-flow` and `/planner feature payment-flow` are identical. You only need to specify the workflow type for `bugfix`, `refactor`, or `spike`.
 
 - **Spike plans stop at research.** A spike produces `research.md` and nothing else. If the spike concludes with a recommendation to build something, start a new feature or refactor plan that references the spike's research.
 

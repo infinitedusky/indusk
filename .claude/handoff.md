@@ -1,52 +1,57 @@
 # Handoff
 
-**Date:** 2026-04-03
-**Session:** React Native plan (research + brief), Graphiti infra Phase 1 complete with OTel verified, OTel skill updated
+**Date:** 2026-04-05
+**Session:** CGC/FalkorDB fix, catchup hardening, `indusk update` consolidation, react-native-support plan, product direction research
 
 ## What Was Being Worked On
-Two plans advanced:
-1. **`react-native-support`** — research complete, brief accepted (Expo + Embrace SDK). Next: ADR.
-2. **`graphiti-infrastructure`** — Phase 1 (Bundled Infrastructure Container) fully complete. Phase 1.5 added but not started.
+Multiple threads this session:
+1. **CGC FalkorDB Lite fix** — discovered CGC CLI connects to embedded FalkorDB Lite instead of container. Fixed via `~/.zshrc` env vars. Catchup skill hardened with hook-enforced `mcp-ready` gate.
+2. **`indusk update` consolidation** — merged `upgrade` into `update`. One command now: self-update → skills → lessons → hooks → built-in extensions (with `on_update`/`on_post_update` hooks) → third-party extensions (with version display, single install).
+3. **react-native-support plan** — full lifecycle: research → brief (accepted) → ADR (accepted) → impl (approved). Standard OTel JS packages for React Native (no Embrace), Expo/Storybook/Framer extensions, Phase 0 auto-add MCP servers from extension manifests.
+4. **Product direction research** — `.indusk/research/indusk-product-direction.md`. InDusk as application build environment for professionals. Three pillars: monorepo DevEx, context management, process. Long-term Capacitor vision.
 
 ## Where It Stopped
-- **Phase 1 complete.** All gates checked off. `indusk-infra` container builds, runs, passes 8-point smoke test, OTel traces + logs verified in Dash0.
-- **Phase 1.5 next:** Migrate CGC from `falkordb.orb.local:6379` (old standalone container) to `localhost:6379` (bundled `indusk-infra` container). This must happen before Phase 2.
+- **v1.8.0 built, awaiting Sandy's `npm publish`** (needs OTP). Includes all update/extension/hook changes.
+- **react-native-support impl approved** — ready for `/work` to start Phase 0.
+- **Product research** written but status `in-progress` — Sandy may want to iterate further.
+- **Turbopack warning removed** from init.ts — Sandy prefers Turbopack despite fast watcher risks.
+- **~42 uncommitted files** in the repo. Need to commit before next session.
 
 ## What's Next
-1. **Phase 1.5:** Migrate CGC to bundled container — update `.mcp.json`, `init.ts`, `graph_ensure`, re-index if needed, stop old FalkorDB
-2. **Phase 2:** `indusk infra start/stop/status` CLI commands + `~/.indusk/config.env` global config
-3. **Phase 3:** `graphiti-client.ts` MCP client wrapper
-4. **Phase 4:** Graphiti extension manifest + health checks
-5. **Phase 5:** `init` integration + Getting Started docs rewrite
-6. **Phase 6:** End-to-end validation
-7. **react-native-support:** Write ADR (Expo + Embrace SDK)
+1. **Publish v1.8.0** — `cd apps/indusk-mcp && npm publish --access public`
+2. **Commit all changes** — massive uncommitted diff. Silo by concern: indusk-mcp changes, planning docs, research doc.
+3. **`/work react-native-support`** — Phase 0 (auto-add MCP servers from extensions), then Phase 1 (Expo/Storybook/Framer extensions).
+4. **Test `/catchup`** in fresh session — verify `mcp-ready` hook gate works.
+5. **CGC reindex** — remote FalkorDB graph is empty (data was in FalkorDB Lite). Run `graph_ensure` + `index_project` after env vars active.
 
 ## Open Issues
-- `docker/otel-setup.py` and `docker/supervisord.conf` are unused — can be deleted
-- FalkorDB RediSearch syntax error on group_id `test-otel` — word `test` is reserved in RediSearch. Use different group_id names.
-- `~/.graphiti/` manual source clone still exists from spike — can be deleted once container is standard
-- OTel skill updated in `apps/indusk-mcp/extensions/otel/skill.md` but `.claude/skills/otel/SKILL.md` needs `indusk update` to sync
-- Handoff lock problem is a recurring annoyance — writing a handoff mid-session blocks all edits until catchup boxes are checked. Needs a lock/unlock mechanism.
+- CGC remote FalkorDB graph is **empty** — all data in old FalkorDB Lite. Needs reindex.
+- `~/.codegraphcontext/.env` does NOT support `DATABASE_TYPE` — only shell env vars work.
+- `infra start` should configure CGC env vars for new users — not done yet.
+- `plan-parser.test.ts` has 1 failing test (pre-existing).
+- composable.env `scaffold:sync` during `indusk update` may add example files to existing projects — Sandy is fixing this in the composable.env repo.
+- `indusk update` self-update re-runs itself after upgrading — needs testing that the re-run actually uses the new binary and doesn't infinite loop.
 
 ## Decisions Made This Session
-- **Expo over bare React Native** — Expo is the standard RN toolchain. Detection via `expo` dependency.
-- **Embrace SDK for RN OTel** — auto-instrumentation with standalone OTLP export to Dash0.
-- **Bundled `indusk-infra` container** — FalkorDB + Graphiti in one image, replaces standalone FalkorDB.
-- **Global install model** — `npm i -g @infinitedusky/indusk-mcp`, `indusk infra start`, `indusk init` per-project.
-- **`~/.indusk/config.env`** for global secrets (GOOGLE_API_KEY), not per-project.
-- **OTel via `opentelemetry-instrument`** — auto-instruments starlette, redis, httpx. Protocol defaults (`http/protobuf`) baked into Dockerfile ENV. Disabled by default.
-- **Span events deprecated (March 2026)** — OTel skill updated: use logs instead of `recordException`/`addEvent`.
-- **Port 8100 for Graphiti** — 8000 taken by OrbStack.
-- **Text-based lessons don't scale** — knowledge graph is the real fix, prioritize graphiti-infrastructure.
+- **CGC stays on host, not in container** — needs filesystem access for indexing
+- **Catchup must hard-fail, not degrade** — hook-enforced `mcp-ready` gate checks FalkorDB (6379) + Graphiti (8100)
+- **Never run bare `cgc` CLI** — all graph ops through indusk MCP tools
+- **`indusk upgrade` deleted, merged into `indusk update`** — one command for everything
+- **Turbopack is OK** — Sandy prefers it despite fast watcher, removed warnings from init
+- **React Native OTel: standard packages, no Embrace** — `api` + `sdk-trace-base` + `exporter-trace-otlp-http` with Metro config workaround
+- **Product direction: "application build environment for professionals"** — three pillars: monorepo DevEx, context management, process. Capacitor as long-term brand/vision.
 
 ## Watch Out For
-- jj is co-managing this repo — detached HEAD is normal, use jj commands
-- The OTel gate is active on ALL feature/refactor impls
-- `indusk-infra` container may be running on localhost:6379 and 8100 — conflicts with old standalone FalkorDB
-- `opentelemetry-instrument` adds ~90s to Graphiti startup time inside the container
-- The `OTEL_EXPORTER_OTLP_HEADERS` env var format (`key=value,key=value`) with spaces in Bearer token works with Python SDK but needs the env vars baked into the Dockerfile (not shell-level) to propagate correctly
+- jj manages this repo — detached HEAD is normal
+- `indusk-infra` container running on localhost:6379 and 8100
+- `~/.zshrc` has CGC env vars — only active in new shells
+- `.mcp.json` uses `indusk serve` (global binary), not npx
+- **v1.8.0 not published yet** — local build only. Global `indusk` is still on whatever Sandy last published.
+- 42 uncommitted files — commit before doing more work
+- composable.env v1.16.1 published with `--serve` flag for `dc:up`
 
 ## Catchup Status
+- [x] mcp-ready
 - [x] handoff
 - [x] lessons
 - [x] skills
@@ -55,3 +60,11 @@ Two plans advanced:
 - [x] plans
 - [x] extensions
 - [x] graph
+
+## Session 2026-04-07 — Phase 5.5 work
+Picking up graphiti-infrastructure to insert Phase 5.5 (Surface Graphiti to the Agent)
+between Phase 5 and Phase 6. Phase 6 cannot run without it — Graphiti has no MCP tool
+exposure to the agent right now. Option C: register Graphiti directly in `.mcp.json`
+via init + keep `GraphitiClient` wrapper for internal use + add capture triggers in
+planner/work/retrospective/catchup skills + update graphiti skill to show real tool
+calls.

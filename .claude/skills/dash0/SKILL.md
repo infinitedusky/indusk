@@ -38,7 +38,7 @@ The MCP server provides 23 tools. The key ones for debugging:
 ### Logs
 - **`getLogRecords`** — Query logs with filters, time range, pagination. Returns summary table.
   - **Dataset**: check `env/components/dash0.env` for the dataset per profile (local, staging, production). If no composable.env component exists, check `.indusk/extensions/dash0/.env` for a `DASH0_DATASET` value. If neither exists, ask the user which dataset to use and remember it for the session.
-  - `timeRange`: use relative times like `{"from": "now-30m"}` (preferred) or ISO timestamps `{"from": "2026-04-01T10:00:00Z", "to": "..."}`. **Always default to `"now-30m"` or `"now-1h"` — never guess UTC timestamps.**
+  - `timeRange` requires ISO timestamps: `{"from": "...", "to": "..."}`
   - `filters`: `[{"key": "service.name", "operator": "is", "value": "game-server"}]`
   - `logAttributeKeys`: specify which attributes to show in the table (e.g. `["service.name", "otel.scope.name"]`)
   - Returns log record IDs for drilling into full details
@@ -65,13 +65,21 @@ The MCP server provides 23 tools. The key ones for debugging:
 - **`getFailedChecks`** / **`getFailedCheckDetails`** — View check failures
 - **`searchKnowledgeBase`** — Search Dash0 documentation
 
-### MCP Usage Pattern
+### MCP Usage Pattern — Traces First
+
+**Always start with spans.** Logs are correlated with traces, so finding the right trace first helps you find the right logs — not the other way around.
+
 ```
-1. getLogRecords → find the log summary, get log record IDs
-2. getFullLogRecord → drill into a specific log for all attributes
-3. If log has traceId → getTraceDetails to see the full request chain
-4. getServiceCatalog → see all services, error rates, dependencies
+1. getSpans (last 30s, no filters) → scan recent spans for anything matching your investigation
+2. Found a relevant span? → getTraceDetails to see the full request chain
+3. Use trace/span IDs to find correlated logs → getLogRecords with traceId filter
+4. getFullLogRecord → drill into a specific log for all attributes
 ```
+
+**Why traces first:**
+- Spans show the full request lifecycle — what happened, how long, what called what
+- Logs are attached to spans via trace context — the trace tells you which logs matter
+- Starting with logs means guessing at filters; starting with spans gives you the map
 
 ## When to Use MCP vs CLI
 
@@ -83,7 +91,7 @@ The MCP server provides 23 tools. The key ones for debugging:
 | Get full trace hierarchy | MCP `getTraceDetails` (preferred) |
 | Run PromQL metrics query | Either — MCP for simple, CLI for complex |
 | Deploy dashboard from YAML | CLI (`dash0 apply -f`) |
-| Diagnose a failing service | MCP `getServiceCatalog` → `getLogRecords` → `getFullLogRecord` |
+| Diagnose a failing service | MCP `getSpans` (last 30s) → `getTraceDetails` → `getLogRecords` (by traceId) |
 | CI/CD observability checks | CLI (scriptable, agent mode) |
 | Discover available attributes | MCP `getAttributeKeys` / `getAttributeValues` |
 
@@ -178,14 +186,16 @@ The CLI auto-detects Claude Code sessions and switches to agent mode (JSON outpu
 
 ### During verification
 When a verification step involves checking that a service is working correctly, don't just check the HTTP status — query Dash0 for:
-- Recent error logs for the service: `dash0 --experimental logs query --from now-15m --filter "service.name is game-server" --filter "otel.log.severity.range is_one_of ERROR WARN"`
-- Log entries matching the feature you modified
+- **Recent spans first**: use MCP `getSpans` with a short time range (last 30s) to see what the service just did — look for errors, slow spans, or missing expected operations
+- **Then correlated logs**: once you have a trace ID from a relevant span, use `getLogRecords` filtered by that trace ID to see exactly what happened during that request
+- **Only use broad log queries as a fallback** if no spans are present (e.g., the service isn't instrumented yet)
 
 ### During debugging
 When something fails:
-1. Check logs first — `dash0 --experimental logs query --from now-1h --filter "otel.log.severity.range is_one_of ERROR WARN" -o csv`
-2. Find the trace — look for trace IDs in log entries, then `dash0 --experimental traces get <trace-id>`
-3. Check metrics — is this a new problem or an existing one? Compare error rates over time.
+1. **Get recent spans first** — use MCP `getSpans` with a short time range (last 30s–1m). Don't filter yet — scan the results for spans matching what you're investigating.
+2. **Drill into the trace** — found a relevant span? Use `getTraceDetails` to see the full request chain, timing, errors, and hierarchy.
+3. **Find correlated logs** — use the trace ID from step 2 to query `getLogRecords` with a `traceId` filter. This gives you exactly the logs tied to that request, no guessing.
+4. **Check metrics** — is this a new problem or an existing one? Compare error rates over time.
 
 ### During retrospective
 Query Dash0 for metrics that show the impact of the plan:
@@ -200,6 +210,6 @@ Dash0 ingests standard OpenTelemetry data. If your services already export OTLP 
 ## Known Issues
 
 - **CLI `--experimental` required**: All query commands (logs, traces, metrics) require the `--experimental` flag. This will change when these commands become stable.
-- **Default time range is narrow**: Always specify `--from` when querying logs. Without it, you may get empty results. For MCP tools, use relative times like `"now-30m"` — don't try to guess ISO timestamps.
-- **No trace search**: The CLI can only fetch traces by ID (`traces get <id>`), not search for them. Find trace IDs in log entries first.
+- **Default time range is narrow**: Always specify `--from` when querying logs. Without it, you may get empty results.
+- **CLI has no trace search**: The CLI can only fetch traces by ID (`traces get <id>`), not search for them. Use the MCP `getSpans` tool to search spans — it supports filters and time ranges. The CLI requires you to already have a trace ID.
 - **Profile auth may not load in Claude Code shell**: Run `source ~/.zshrc` before `dash0` commands if auth fails.

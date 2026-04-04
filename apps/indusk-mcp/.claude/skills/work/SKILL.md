@@ -202,11 +202,16 @@ When you are corrected mid-work — the user says "no, not that way" or "don't d
 
 Don't wait to be told. Corrections are the most valuable source of project knowledge.
 
-## Commits
+## Commits (jj)
 
-Commit at natural boundaries — typically at the end of a phase or when the context changes. Follow the monorepo rule: commits should be siloed between different contexts (what would be separate repos).
+Use the **describe-then-do** workflow from the jj skill:
 
-Don't commit after every single checklist item — that's too granular. Don't wait until the entire plan is done — that's too coarse. A phase is usually the right unit.
+1. `jj new` before each logical unit of work
+2. `jj describe` to declare what you're about to do
+3. Do the work, check off the item(s)
+4. Repeat
+
+Commit at natural boundaries — typically per checklist item or per phase gate (otel, verify, context, document). Follow the monorepo rule: if a change spans multiple apps, use `jj split` to silo commits between contexts. See the jj skill for details.
 
 ## Cross-Plan Impact
 

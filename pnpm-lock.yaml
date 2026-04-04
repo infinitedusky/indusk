@@ -12,14 +12,23 @@ importers:
         specifier: ^2.4.8
         version: 2.4.8
       composable.env:
-        specifier: ^1.14.3
-        version: 1.14.3
+        specifier: ^1.17.0
+        version: 1.17.0
       turbo:
         specifier: ^2.4.0
         version: 2.8.20
       vitest:
         specifier: ^4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@22.19.15)(vite@8.0.1(@types/node@22.19.15)(esbuild@0.27.4)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+
+  apps/docs:
+    devDependencies:
+      vitepress:
+        specifier: ^1.5.0
+        version: 1.6.4(@algolia/client-search@5.49.2)(@types/node@22.19.15)(lightningcss@1.32.0)(postcss@8.5.8)(search-insights@2.17.3)(typescript@5.9.3)
+      vue:
+        specifier: ^3.5.0
+        version: 3.5.30(typescript@5.9.3)
 
   apps/indusk-docs:
     dependencies:
@@ -2269,8 +2278,8 @@ packages:
     resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
     engines: {node: '>= 12'}
 
-  composable.env@1.14.3:
-    resolution: {integrity: sha512-RwuYhJkPntO78qu1nVzXnsLurIMq1sfy/24ekcYDkF8fwz9wBpFZNJ517rOBwIPGS7FjL+PE1A6BqQOuXNG6+g==}
+  composable.env@1.17.0:
+    resolution: {integrity: sha512-9yM9uB4vpiBeMBK6sUsy7RWxe3YNpRlGFG3wGTG0Wl+w7Vcb83SiLrkVGwTRjQpQLLR3NCKnVLpZmH2KgwZ7Dg==}
     hasBin: true
 
   content-disposition@1.0.1:
@@ -6073,7 +6082,7 @@ snapshots:
 
   commander@8.3.0: {}
 
-  composable.env@1.14.3:
+  composable.env@1.17.0:
     dependencies:
       chalk: 5.6.2
       commander: 11.1.0

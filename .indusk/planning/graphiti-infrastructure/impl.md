@@ -35,7 +35,8 @@ Bundle FalkorDB + Graphiti into a single persistent Docker container (`indusk-in
 | Phase 3 | `graphiti-client.ts` MCP client wrapper | Phase 1 running container |
 | Phase 4 | Graphiti extension (manifest, skill, health checks), `graph_ensure` updates | Phase 1 container, Phase 3 client |
 | Phase 5 | `init` integration, Getting Started docs | Phases 1-4 |
-| Phase 6 | End-to-end validation | All prior phases |
+| Phase 5.5 | Graphiti MCP server registered in `.mcp.json` via init; capture/recall triggers in planner/work/retrospective/catchup skills; graphiti skill rewritten with real tool examples | Phase 1 running container, Phase 3 `GraphitiClient` (kept for internal use), Phase 5 init integration |
+| Phase 6 | End-to-end validation | All prior phases (now including Phase 5.5 — required for any agent-driven validation to work) |
 | Phase 7 | Published Docker image on GHCR, CI workflow | Phase 2 `infra start` command |
 | Phase 8 | `indusk update` command (npm, Docker, CGC, extensions) | Phase 7 published image, Phase 9 extension versions |
 | Phase 9 | Versioned extension manifests, extension update sync | Existing extension manifests |
@@ -412,6 +413,117 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
   - CLI commands table added to infrastructure.md in Phase 2
 - [x] Add troubleshooting page or section
   - Added to Getting Started: container, API key, ports, CGC
+
+## Phase 5.5: Surface Graphiti to the Agent
+
+### Goal
+Make Graphiti reachable from a Claude Code session and integrated into the workflows where it should be used. Discovered while preparing Phase 6: the `indusk-infra` container runs a working Graphiti MCP server on `localhost:8100/mcp`, and `GraphitiClient` (a typed wrapper) exists in `apps/indusk-mcp/src/lib/graphiti-client.ts` — but **nothing exposes Graphiti tools to the agent**. `.mcp.json` registers `indusk`, `cgc`, `dash0`, `excalidraw` — not graphiti. The graphiti skill shows pseudocode (`addEpisode("...", ...)`) that does not correspond to any callable tool. As a result, every Phase 6 manual test ("add episode with group_id `infinitedusky`", "verify cross-group search", etc.) is currently unrunnable from a session.
+
+### Strategy: Option C — Direct registration + keep wrapper
+
+- **Register Graphiti directly in `.mcp.json`** (like `dash0`) so the agent gets `mcp__graphiti__add_memory`, `mcp__graphiti__search_nodes`, `mcp__graphiti__search_memory_facts`, `mcp__graphiti__get_status` as first-class tools. No wrapping in `indusk` — the wrapper would just duplicate every tool with no agent-facing benefit.
+- **Keep `GraphitiClient`** in `apps/indusk-mcp/src/lib/` for internal use by skills/catchup that want typed defaults (project group + `shared` resolution, error swallowing). It is no longer the agent's interface — only an internal helper for code paths inside indusk-mcp.
+- **Add capture triggers** in planner/work/retrospective/catchup skills so episodes are written at the natural points where decisions and lessons get made. Without triggers, Graphiti stays empty regardless of how good the infrastructure is.
+- **Add recall triggers** in catchup so prior episodes surface at the start of every session — not just on demand.
+
+### Implementation
+
+#### MCP server registration
+- [ ] Update `apps/indusk-mcp/src/bin/commands/init.ts` to register the Graphiti MCP server in `.mcp.json` automatically when the graphiti extension is enabled. Use `claude mcp add -t http -s project graphiti http://localhost:8100/mcp` (matching how `dash0` is registered today). Skip registration if `.mcp.json` already has a `graphiti` entry. Print `added: graphiti MCP server (http://localhost:8100/mcp)` in the `[MCP config]` section of init output.
+- [ ] Verify the Graphiti container actually serves Streamable HTTP at `/mcp`. The container reports `{"status":"healthy","service":"graphiti-mcp"}` on `/health` and `transport: "http"` in `docker/graphiti-config.yaml`. Confirm `/mcp` is the correct endpoint by exercising the same connection path that `GraphitiClient` already uses (`StreamableHTTPClientTransport(new URL(serverUrl))`). If the endpoint is something other than `/mcp`, adjust both `init.ts` and `infra-config.ts` consistently and document it.
+- [ ] Update `apps/indusk-mcp/extensions/graphiti/manifest.json` to declare the MCP server registration so it's part of the extension's contract:
+  ```json
+  {
+    "mcp_server": {
+      "name": "graphiti",
+      "type": "http",
+      "url": "http://localhost:8100/mcp",
+      "setup_instructions": "Registered automatically by indusk init when graphiti extension is enabled"
+    }
+  }
+  ```
+- [ ] Make `indusk update` re-add the Graphiti MCP server to `.mcp.json` if it's missing — same idempotent pattern as the rest of the MCP config step in init.
+
+#### Internal helper (kept, not exposed)
+- [ ] Add `getProjectGroupId()` helper in `apps/indusk-mcp/src/lib/config.ts` (or wherever the project name is read) that returns the project's Graphiti group id. Defaults to the project directory basename, overridable via `.indusk/config.json` `graphiti.groupId` field. All internal episode capture (skills, catchup, etc.) uses this so the group id is consistent everywhere.
+- [ ] Verify `GraphitiClient` still functions after the agent gains direct access. The wrapper class is for internal indusk-mcp code paths only — no behavior change required, just confirm tests still pass.
+
+#### Skill: graphiti (rewrite with real tool calls)
+- [ ] Rewrite `apps/indusk-mcp/extensions/graphiti/skill.md` to replace pseudocode (`addEpisode("name", "body", { groupId: "..." })`) with real tool invocations. Examples:
+  ```
+  mcp__graphiti__add_memory({
+    name: "auth-approach-decision",
+    episode_body: "We chose JWT with refresh tokens over session cookies because the API serves both web and mobile clients. Session cookies don't work well with React Native.",
+    group_id: "myproject",
+    source: "text"
+  })
+  ```
+- [ ] Document the four real Graphiti tools the agent now has and what each one is for: `add_memory` (capture), `search_nodes` (entity search), `search_memory_facts` (fact/relationship search), `get_status` (health).
+- [ ] Add a "Capture and Recall" section to the skill explaining when episodes are written automatically (by other skills) vs when the agent should write them manually.
+- [ ] After editing the source, sync the installed skill: `cp apps/indusk-mcp/extensions/graphiti/skill.md .claude/skills/graphiti/SKILL.md`.
+
+#### Skill: planner (capture triggers)
+- [ ] In `apps/indusk-mcp/skills/planner.md`, add a "Capturing Decisions" section. After a brief is accepted (status changes from `draft` to `accepted`), call `mcp__graphiti__add_memory` with:
+  - `name`: `brief-accepted-{plan-name}`
+  - `episode_body`: the brief's "Proposed Direction" section, prefixed with the problem statement
+  - `group_id`: project group id from `getProjectGroupId()`
+- [ ] After an ADR is accepted, call `mcp__graphiti__add_memory` with the Y-statement as the body:
+  - `name`: `adr-{plan-name}`
+  - `episode_body`: full Y-statement (in/facing/decided/against/achieve/accepting/because)
+  - `group_id`: project group id
+- [ ] Sync the source change to `.claude/skills/planner/SKILL.md`.
+
+#### Skill: work (correction capture)
+- [ ] In `apps/indusk-mcp/skills/work.md`, the existing "Corrections and Context Learning" section already prompts for `context learn`. Extend it: when the user confirms `context learn`, also call `mcp__graphiti__add_memory` with:
+  - `name`: `correction-{slug}` (slug derived from the lesson topic)
+  - `episode_body`: the lesson text
+  - `group_id`: `shared` if the lesson is general (e.g. "always use pnpm ce"), project group id if specific (e.g. "indusk-mcp's plan parser handles four gate types")
+- [ ] Add explicit guidance on choosing `shared` vs project group: tool/convention-level → `shared`. Code-internal-to-this-project → project group.
+- [ ] Sync to `.claude/skills/work/SKILL.md`.
+
+#### Skill: retrospective (lesson capture)
+- [ ] In `apps/indusk-mcp/skills/retrospective.md`, after the retrospective is written, capture each "What We Learned" item and each "What We'd Do Differently" item as separate `mcp__graphiti__add_memory` calls. One episode per insight, named `retro-{plan}-{n}`, group id = project group.
+- [ ] If the retrospective surfaces a contradiction (e.g. "we thought X but found Y"), capture both the old and new framings as separate episodes — Graphiti will detect the contradiction and invalidate the older fact.
+- [ ] Sync to `.claude/skills/retrospective/SKILL.md`.
+
+#### Skill: catchup (recall triggers)
+- [ ] In `apps/indusk-mcp/skills/catchup.md`, add Step 4.5 between "Read Project Context" and "Check Active Plans": **Recall recent decisions**. Call `mcp__graphiti__search_nodes` with `query: "recent decisions"` and `group_ids: [project-group, "shared"]`. Surface anything notable to the user (most recent N=5 nodes by default). This is the recall side of Phase 5.5 — capture is meaningless without retrieval at the right moment.
+- [ ] Add Step 4.6: **Search for context relevant to active plans**. For each `in-progress` plan, call `mcp__graphiti__search_memory_facts` with the plan name as the query. Surface any contradictions (facts where `invalid_at` is set and `valid_at` is recent) — these are areas where the prior decision changed and the active plan may be working from stale assumptions.
+- [ ] Add to the catchup summary template a "Graphiti recall" section listing N most-relevant nodes/facts found.
+- [ ] Sync to `.claude/skills/catchup/SKILL.md`.
+
+#### Build and confirm
+- [ ] `cd apps/indusk-mcp && pnpm build` succeeds.
+- [ ] `pnpm check` passes.
+- [ ] `pnpm turbo test --filter=indusk-mcp` passes.
+- [ ] Bump indusk-mcp to v1.10.0 (minor — adds Graphiti MCP registration, capture/recall triggers — no breaking changes).
+
+#### Phase 5.5 OTel
+- skip-reason: All changes are skill markdown edits, init wiring, and a JSON manifest field. No new code paths produce telemetry. Existing OTel auto-instrumentation in indusk-mcp still applies; nothing new to instrument. The Graphiti container itself already exports OTel when configured (Phase 1).
+
+#### Phase 5.5 Verification
+- [ ] **MCP registration** — after running `indusk init` in a fresh sandbox project, `.mcp.json` contains a `graphiti` entry pointing at `http://localhost:8100/mcp`. Verify with `cat .mcp.json | jq .mcpServers.graphiti`.
+- [ ] **Tool exposure** — restart Claude Code in that project, then attempt `mcp__graphiti__add_memory({name: "test", episode_body: "Phase 5.5 test", group_id: "test-project", source: "text"})`. Tool returns success.
+- [ ] **Round-trip** — `mcp__graphiti__search_nodes({query: "Phase 5.5 test", group_ids: ["test-project"], max_nodes: 5})` returns the entity created by the previous step.
+- [ ] **Cross-group search** — add an episode with `group_id: "shared"`, then search with `group_ids: ["test-project", "shared"]` and confirm results from both groups appear.
+- [ ] **Project group helper** — `getProjectGroupId()` returns the directory basename for a project with no override, returns the configured value when `.indusk/config.json` has `graphiti.groupId`.
+- [ ] **Skill capture trigger — planner** — accept a brief in a test plan, verify a `brief-accepted-*` episode appears in Graphiti (search by name).
+- [ ] **Skill capture trigger — work corrections** — trigger `context learn` in a test session, verify a `correction-*` episode is captured.
+- [ ] **Skill recall trigger — catchup** — run `/catchup` in a project with prior episodes, verify the summary surfaces recalled episodes.
+- [ ] **Graceful degradation** — `indusk infra stop`, then call `mcp__graphiti__add_memory` from a session. Tool reports a clean error (not a crash). `indusk infra start`, retry, succeeds.
+- [ ] `pnpm turbo test --filter=indusk-mcp` passes.
+- [ ] `pnpm check` passes.
+
+#### Phase 5.5 Context
+- [ ] Update CLAUDE.md Architecture: add Graphiti to the MCP servers list with its purpose ("temporal knowledge graph — captures decisions, contradictions, and lessons across sessions"). Document the four agent-facing tools.
+- [ ] Update CLAUDE.md Conventions: "After a brief or ADR is accepted, the planner skill captures the decision as a Graphiti episode. Corrections logged via `context learn` are also captured. Catchup recalls relevant episodes at session start. The agent should not need to manually call Graphiti tools in normal flow — the skills handle it."
+- [ ] Update CLAUDE.md Key Decisions: "Graphiti registered directly as an MCP server in `.mcp.json` (Option C) — see `.indusk/planning/graphiti-infrastructure/impl.md` Phase 5.5". `GraphitiClient` wrapper kept for internal use only.
+
+#### Phase 5.5 Document
+- [ ] Update `apps/indusk-docs/src/reference/extensions/graphiti.md` (or create if missing) with the new tool surface and capture/recall flow.
+- [ ] Add a "Capture and Recall" section to the planner reference page showing where in the lifecycle Graphiti is touched.
+- [ ] Update the Getting Started page to mention Graphiti is now an exposed MCP server (one extra tool group the agent has).
+- [ ] Add a Mermaid sequence diagram to the graphiti reference page: brief accepted → planner calls add_memory → Graphiti extracts entities → next session catchup retrieves → agent uses recalled context.
 
 ## Phase 6: End-to-End Validation
 
