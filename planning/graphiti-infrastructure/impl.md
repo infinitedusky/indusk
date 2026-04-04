@@ -247,8 +247,9 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
 ## Phase 3: MCP Client in indusk-mcp
 
 ### Implementation
-- [ ] Add `@modelcontextprotocol/sdk` as a dependency in `apps/indusk-mcp/package.json`
-- [ ] Create `src/lib/graphiti-client.ts` — MCP client wrapper
+- [x] Add `@modelcontextprotocol/sdk` as a dependency in `apps/indusk-mcp/package.json`
+  - Already present as `^1.12.1`
+- [x] Create `src/lib/graphiti-client.ts` — MCP client wrapper
   - Connect via `StreamableHTTPClientTransport` to Graphiti server URL from `InfraConfig`
   - Expose typed methods:
     - `addEpisode(body, { groupId })` — write to project-specific or shared graph
@@ -260,7 +261,7 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
   - Lazy connection (connect on first call, not at server startup)
   - Server URL from `InfraConfig` (default `http://localhost:8100/mcp/`, overridable for hosted)
   - Detect project name from working directory or indusk-mcp config
-- [ ] Create `src/lib/graphiti-client.test.ts` — unit tests with mocked MCP client
+- [x] Create `src/lib/graphiti-client.test.ts` — unit tests with mocked MCP client
   - Test: addEpisode formats arguments correctly with group_id
   - Test: searchNodes includes both project and shared group_ids
   - Test: searchFacts includes both project and shared group_ids
@@ -272,15 +273,17 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
 - skip-reason: Client library with no user-facing endpoints; internal plumbing
 
 #### Phase 3 Verification
-- [ ] `pnpm turbo test --filter=indusk-mcp` passes with all new tests green
-- [ ] `pnpm check` passes (biome lint/format)
-- [ ] `pnpm turbo build --filter=indusk-mcp` succeeds (TypeScript compiles)
+- [x] `pnpm turbo test --filter=indusk-mcp` passes with all new tests green
+  - 7/7 graphiti-client tests pass. plan-parser test has pre-existing failure (plan count changed).
+- [x] `pnpm check` passes (biome lint/format)
+- [x] `pnpm turbo build --filter=indusk-mcp` succeeds (TypeScript compiles)
 
 #### Phase 3 Context
 - (none needed)
 
 #### Phase 3 Document
-- [ ] Add JSDoc to `graphiti-client.ts` public API: each method, parameters, return types, error behavior
+- [x] Add JSDoc to `graphiti-client.ts` public API: each method, parameters, return types, error behavior
+  - Class doc, `addEpisode`, `searchNodes`, `searchFacts`, `getStatus`, `connect`, `disconnect`, `resolveGroupIds` all documented
 
 ## Phase 4: Extension + Health Checks + graph_ensure
 
