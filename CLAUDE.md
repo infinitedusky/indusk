@@ -88,6 +88,7 @@ infinitedusky/
 - Excalidraw extension for hand-drawn diagrams, complements Mermaid (formal docs = Mermaid, informal/conceptual = Excalidraw) — see `planning/excalidraw-extension/adr.md`
 - ExcalidrawEmbed component for persistent Excalidraw diagrams in VitePress via iframe — see `planning/vitepress-extension/adr.md`
 - OTel as core instrumentation with category-based filtering — see `planning/otel-core-skill/adr.md`
+- Bundled `indusk-infra` container (FalkorDB + Graphiti), global CLI install, `~/.indusk/config.env` for secrets — see `planning/graphiti-infrastructure/adr.md`
 
 ## Known Gotchas
 

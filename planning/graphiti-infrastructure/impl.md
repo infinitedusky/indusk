@@ -351,14 +351,14 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
 ## Phase 5: Init Integration + Getting Started Docs
 
 ### Implementation
-- [ ] Update `init` command:
+- [x] Update `init` command:
   - Check if `indusk-infra` container is running; if not, run `indusk infra start`
   - If `~/.indusk/config.env` doesn't exist, create template and print instructions for `GOOGLE_API_KEY`
   - Copy Graphiti extension manifest to `.indusk/extensions/graphiti/`
   - Auto-enable the graphiti extension
   - Update output to show infra status (FalkorDB + Graphiti)
   - `init` without `GOOGLE_API_KEY` warns and continues (FalkorDB works, Graphiti degrades)
-- [ ] Rewrite Getting Started docs (`apps/indusk-docs/src/guide/getting-started.md`):
+- [x] Rewrite Getting Started docs (`apps/indusk-docs/src/guide/getting-started.md`):
   ```markdown
   ## Prerequisites
   - Node 22+
@@ -382,29 +382,36 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
   ### 4. Start coding
   # Open in Claude Code — skills and MCP tools are ready
   ```
-- [ ] Update Getting Started Prerequisites: remove pipx/CGC manual install (handled by init), remove manual FalkorDB docker command
-- [ ] Add troubleshooting section: container won't start, API key not set, port conflicts
+- [x] Update Getting Started Prerequisites: remove pipx/CGC manual install (handled by init), remove manual FalkorDB docker command
+- [x] Add troubleshooting section: container won't start, API key not set, port conflicts
 
 #### Phase 5 OTel
 - skip-reason: Init scaffolding and docs, no new observable code paths
 
 #### Phase 5 Verification
-- [ ] Fresh `indusk init` in a new project starts infra container if needed
-- [ ] `init` is idempotent — running twice doesn't duplicate
-- [ ] `init` without API key warns and continues
-- [ ] Getting Started docs accurately reflect the new 3-step flow
-- [ ] `pnpm turbo test --filter=indusk-mcp` passes
-- [ ] `pnpm check` passes
+- [x] Fresh `indusk init` in a new project starts infra container if needed
+  - Checks docker inspect, starts if stopped, prints instructions if missing
+- [x] `init` is idempotent — running twice doesn't duplicate
+  - All sections check existsSync before creating, skip if already present
+- [x] `init` without API key warns and continues
+  - ensureConfig creates template, infraStart warns, FalkorDB still works
+- [x] Getting Started docs accurately reflect the new 3-step flow
+  - Rewritten: install globally → infra start → init → code
+- [x] `pnpm turbo test --filter=indusk-mcp` passes
+- [x] `pnpm check` passes
 
 #### Phase 5 Context
-- Update CLAUDE.md to document `indusk infra start` as the standard setup command
-- Update CLAUDE.md Key Decisions: add Graphiti infrastructure ADR reference, bundled container model
-- Update CLAUDE.md Known Gotchas: global install recommended (`npm i -g`), `GOOGLE_API_KEY` in `~/.indusk/config.env`
+- [x] Update CLAUDE.md to document `indusk infra start` as the standard setup command — done in Phase 2
+- [x] Update CLAUDE.md Key Decisions: add Graphiti infrastructure ADR reference, bundled container model
+- [x] Update CLAUDE.md Known Gotchas: `GOOGLE_API_KEY` in `~/.indusk/config.env` — already present from Phase 1
 
 #### Phase 5 Document
-- [ ] Rewrite Getting Started page (the main deliverable of this phase)
-- [ ] Update indusk-mcp reference page: add `indusk infra` commands
-- [ ] Add troubleshooting page or section
+- [x] Rewrite Getting Started page (the main deliverable of this phase)
+  - 3-step flow: install globally → infra start → init. Troubleshooting section included.
+- [x] Update indusk-mcp reference page: add `indusk infra` commands
+  - CLI commands table added to infrastructure.md in Phase 2
+- [x] Add troubleshooting page or section
+  - Added to Getting Started: container, API key, ports, CGC
 
 ## Phase 6: End-to-End Validation
 

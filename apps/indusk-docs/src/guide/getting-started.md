@@ -10,85 +10,81 @@ Set up the InDusk development system in a new or existing project.
 
 - **Node 22+** — Tailwind 4 requires it
 - **pnpm** — package manager
-- **Docker / OrbStack** — for FalkorDB and local dev containers
-- **pipx** — for installing CodeGraphContext
+- **Docker** — OrbStack recommended on macOS, Docker Desktop on Windows/Linux
 
 ## Quick Start
 
-### 1. Install the dev system
+### 1. Install globally
 
 ```bash
-npx indusk-mcp init
+npm i -g @infinitedusky/indusk-mcp
 ```
 
-This creates:
-- `.claude/skills/` — 6 skill files (plan, work, verify, context, document, retrospective)
-- `CLAUDE.md` — project context template with 6 sections
+### 2. Start infrastructure
+
+```bash
+indusk infra start
+```
+
+First run creates `~/.indusk/config.env` — add your `GOOGLE_API_KEY` there for Graphiti (get one from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)). Without it, FalkorDB and CGC still work, but the knowledge graph won't.
+
+### 3. Initialize a project
+
+```bash
+cd your-project
+indusk init
+```
+
+This sets up:
+- `.claude/skills/` — 6 process skills + extension skills
+- `.claude/lessons/` — community lessons (rules from past mistakes)
+- `CLAUDE.md` — project context template
 - `planning/` — directory for plan documents
-- `.mcp.json` — MCP server config for Claude Code
+- `.mcp.json` — MCP server config (InDusk + CodeGraphContext)
 - `.vscode/settings.json` — Biome integration
 - `biome.json` — base quality config
-- `instrumentation.ts` — OpenTelemetry auto-instrumentation (Node.js/Next.js) or `instrumentation.py` (Python)
-- `filtering-exporter.ts` — category-based span filtering (instrument everything, control export volume)
-- `logger.ts` — Pino structured logger with dual output (stdout + OTLP)
+- `instrumentation.ts` — OpenTelemetry auto-instrumentation
+- `.indusk/extensions/` — extension manifests (graphiti, cgc, etc.)
+- `.cgcignore` — excludes build artifacts from code graph
 
-### 2. Install Biome
+`init` also:
+- Installs CodeGraphContext via pipx (if not already installed)
+- Checks the infrastructure container and starts it if stopped
+- Indexes the codebase into the code graph
+- Auto-enables detected extensions
 
-```bash
-pnpm add -D @biomejs/biome
-```
-
-### 3. Set up FalkorDB (for code graph)
-
-```bash
-docker run -d --name falkordb --restart unless-stopped \
-  -p 6379:6379 -v falkordb-global:/data \
-  falkordb/falkordb:latest
-```
-
-### 4. Install CodeGraphContext
-
-```bash
-pipx install codegraphcontext
-```
-
-Add CGC to `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "codegraphcontext": {
-      "command": "cgc",
-      "args": ["mcp", "start"],
-      "env": {
-        "DATABASE_TYPE": "falkordb-remote",
-        "FALKORDB_HOST": "localhost",
-        "FALKORDB_PORT": "6379",
-        "FALKORDB_GRAPH_NAME": "your-project-name"
-      }
-    }
-  }
-}
-```
-
-### 5. Start a Claude Code session
+### 4. Start coding
 
 Open the project in Claude Code. You should see:
-- 6 skills available (`/plan`, `/work`, `/verify`, etc.)
-- InDusk MCP tools available (20 tools)
-- CodeGraphContext MCP tools available (19 tools)
+- Skills available (`/plan`, `/work`, `/verify`, `/context`, `/document`, `/retrospective`)
+- InDusk MCP tools (20+ tools)
+- CodeGraphContext MCP tools (19 tools)
 
-Run `check_health` to verify everything is connected.
+Run `/catchup` to verify everything is connected.
 
-## Updating Skills
+## Updating
 
-When the package releases new skill versions:
+### Update the CLI and MCP server
 
 ```bash
-npx indusk-mcp update
+npm i -g @infinitedusky/indusk-mcp@latest
 ```
 
-This compares content hashes and only replaces outdated skills. It never touches CLAUDE.md, planning/, biome.json, or .mcp.json.
+Then in each project:
+
+```bash
+indusk init
+```
+
+This migrates stale config (e.g., old FalkorDB host), syncs skills/lessons, and picks up new extensions. It never overwrites CLAUDE.md, planning/, or your code.
+
+### Update skills only
+
+```bash
+indusk update
+```
+
+Compares content hashes and only replaces outdated skills. Doesn't touch project files.
 
 ## Workflow
 
@@ -100,3 +96,41 @@ This compares content hashes and only replaces outdated skills. It never touches
 6. **Retrospective** — closing audit with knowledge handoff
 
 See the [Reference](/reference/) for detailed docs on each skill and tool.
+
+## Troubleshooting
+
+### Container won't start
+
+```bash
+indusk infra status   # check what's happening
+docker logs indusk-infra  # see container logs
+```
+
+If the image doesn't exist, build it from the infinitedusky repo:
+```bash
+docker build -f docker/Dockerfile.infra -t indusk-infra .
+```
+
+### API key not set
+
+Graphiti requires `GOOGLE_API_KEY` in `~/.indusk/config.env`. Without it:
+- FalkorDB works (CGC code graph functional)
+- Graphiti retries indefinitely (knowledge graph non-functional)
+
+Add the key and restart: `indusk infra stop && indusk infra start`
+
+### Port conflicts
+
+`indusk-infra` uses ports 6379 (FalkorDB) and 8100 (Graphiti). If another service uses these ports:
+- Stop the conflicting service
+- Or run the container with different port mappings and update `~/.indusk/config.env`
+
+### CGC not working
+
+```bash
+cgc --version        # is it installed?
+cgc doctor           # run diagnostics
+indusk infra status  # is FalkorDB up?
+```
+
+If CGC isn't installed, `indusk init` installs it automatically via pipx.

@@ -242,6 +242,44 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		console.info("  skip: codegraphcontext MCP server (already exists)");
 	}
 
+	// 4b. Check infrastructure container
+	console.info("\n[Infrastructure]");
+	try {
+		const infraStatus = execSync("docker inspect --format='{{.State.Running}}' indusk-infra", {
+			encoding: "utf-8",
+			timeout: 5000,
+			stdio: ["ignore", "pipe", "pipe"],
+		}).trim();
+		if (infraStatus === "true") {
+			console.info("  ok: indusk-infra container is running");
+		} else {
+			console.info("  starting: indusk-infra container...");
+			execSync("docker start indusk-infra", {
+				timeout: 15000,
+				stdio: ["ignore", "pipe", "pipe"],
+			});
+			console.info("  started: indusk-infra");
+		}
+	} catch {
+		console.info("  skip: indusk-infra container not found");
+		console.info("    To set up infrastructure: indusk infra start");
+	}
+
+	// 4c. Copy Graphiti extension manifest
+	const graphitiExtDir = join(projectRoot, ".indusk/extensions/graphiti");
+	const graphitiManifest = join(graphitiExtDir, "manifest.json");
+	if (existsSync(graphitiManifest) && !force) {
+		console.info("  skip: graphiti extension (already exists)");
+	} else {
+		mkdirSync(graphitiExtDir, { recursive: true });
+		cpSync(join(packageRoot, "extensions/graphiti/manifest.json"), graphitiManifest);
+		const skillSource = join(packageRoot, "extensions/graphiti/skill.md");
+		if (existsSync(skillSource)) {
+			cpSync(skillSource, join(graphitiExtDir, "skill.md"));
+		}
+		console.info("  create: .indusk/extensions/graphiti/ (manifest + skill)");
+	}
+
 	// 5. Generate .vscode/settings.json
 	console.info("\n[Editor]");
 	const vscodePath = join(projectRoot, ".vscode/settings.json");
@@ -408,7 +446,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				);
 				console.info("  add the following to your next.config:");
 				console.info("    webpack: (config) => {");
-				console.info("      config.watchOptions = { ...config.watchOptions, aggregateTimeout: 600 };");
+				console.info(
+					"      config.watchOptions = { ...config.watchOptions, aggregateTimeout: 600 };",
+				);
 				console.info("      return config;");
 				console.info("    }");
 			} else {
@@ -420,11 +460,15 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			if (existsSync(pkgJsonPath)) {
 				const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
 				const devScript = pkgJson.scripts?.dev || "";
-				if (devScript.includes("--webpack")) {
-					console.info("  ok: dev script uses --webpack");
+				if (devScript.includes("--turbopack")) {
+					console.info("  warn: dev script uses --turbopack — remove it");
+					console.info(
+						"  Turbopack's 1ms file watcher debounce causes crashes with external tool writes on macOS",
+					);
+					console.info("  Next.js <16: plain 'next dev' uses webpack by default");
+					console.info("  Next.js 16+: use 'next dev --webpack' to opt out of Turbopack");
 				} else {
-					console.info("  warn: dev script should use --webpack (Turbopack is the default in Next.js 16+)");
-					console.info("  Turbopack's 1ms file watcher debounce causes crashes with external tool writes on macOS");
+					console.info("  ok: dev script does not use Turbopack");
 				}
 			}
 		}
@@ -624,7 +668,8 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info("\nDone!");
 	console.info("\n⚠  Restart Claude Code to load the updated MCP server and skills.");
 	console.info("\nNext steps:");
-	console.info("  1. Restart Claude Code");
-	console.info("  2. Edit CLAUDE.md with your project details");
-	console.info("  3. Start planning: /plan your-first-feature");
+	console.info("  1. Set up infrastructure (if not done): indusk infra start");
+	console.info("  2. Restart Claude Code");
+	console.info("  3. Edit CLAUDE.md with your project details");
+	console.info("  4. Start planning: /plan your-first-feature");
 }
