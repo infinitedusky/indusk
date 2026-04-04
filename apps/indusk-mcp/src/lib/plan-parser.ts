@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
+import { getPlanningDir } from "./config.js";
 
 export interface PlanFrontmatter {
 	title: string;
@@ -40,7 +41,7 @@ function parseDependsOn(filePath: string): string[] {
 
 	const deps: string[] = [];
 	for (const line of depsMatch[1].split("\n")) {
-		const match = line.match(/^-\s+`?planning\/([^/`]+)\/?`?/);
+		const match = line.match(/^-\s+`?(?:\.indusk\/)?planning\/([^/`]+)\/?`?/);
 		if (match) {
 			deps.push(match[1]);
 		}
@@ -101,7 +102,7 @@ export function parsePlan(planDir: string): PlanSummary {
 }
 
 export function parseAllPlans(projectRoot: string): PlanSummary[] {
-	const planningDir = join(projectRoot, "planning");
+	const planningDir = getPlanningDir(projectRoot);
 	if (!existsSync(planningDir)) return [];
 
 	return readdirSync(planningDir, { withFileTypes: true })

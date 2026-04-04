@@ -5,6 +5,28 @@ description: Get caught up on the project. Reads the handoff from the last sessi
 
 You are starting a new session on this project. Before doing anything else, get caught up.
 
+## Step 0. Wait for MCP Servers (BLOCKING)
+
+Before running any catchup steps, verify that ALL required MCP servers are available. Catchup depends on these tools and **cannot proceed without them**.
+
+**Required MCP servers:**
+- **indusk** — `get_system_version` (provides lessons, health, context, plans, extensions, graph tools)
+- **codegraphcontext** — `mcp__codegraphcontext__list_indexed_repositories` (provides code graph queries)
+
+**How to check:** Call `get_system_version` and `mcp__codegraphcontext__list_indexed_repositories`. If either tool is not available or errors, wait 5 seconds and retry. Retry up to 6 times (30 seconds total).
+
+- If all servers become available: check off `- [x] mcp-ready` in the handoff, then proceed with catchup.
+- If any server is still unavailable after 30 seconds: **STOP. Do not proceed.** Tell the user exactly which MCP server(s) failed and how to fix them:
+  - indusk: "InDusk MCP server not available — check `.mcp.json` config or restart Claude Code."
+  - codegraphcontext: "CGC MCP server not available — check `.mcp.json` config or restart Claude Code."
+  - Then say: "Catchup cannot continue with missing servers. Fix the issue and run `/catchup` again."
+
+**This step is enforced by a hook.** The `check-catchup.js` hook verifies that FalkorDB (port 6379) and Graphiti (port 8100) are reachable before allowing `mcp-ready` to be checked off. The agent cannot bypass this.
+
+**Do NOT skip steps. Do NOT fall back to shell commands. Do NOT proceed with partial functionality.** A half-completed catchup is worse than no catchup — it creates the illusion that the system is ready when it isn't.
+
+**CRITICAL: Never run bare `cgc` commands via Bash.** The `cgc` CLI does not have the correct database configuration without env vars that only the MCP tools provide. Running bare `cgc` will connect to FalkorDB Lite (an embedded database) instead of the shared FalkorDB in the indusk-infra container. Always use the indusk MCP tools (`graph_ensure`, `graph_stats`, `index_project`) for all code graph operations.
+
 ## Steps (execute in order)
 
 ### 1. Read Handoff

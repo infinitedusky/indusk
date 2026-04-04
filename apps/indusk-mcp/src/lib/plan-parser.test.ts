@@ -33,7 +33,7 @@ describe("parseAllPlans", () => {
 
 		const names = plans.map((p) => p.name);
 		expect(names).toContain("context-graph");
-		expect(names).toContain("otel-core-skill");
+		expect(names).toContain("local-init-mode");
 
 		// Verify sorted
 		const sorted = [...names].sort();

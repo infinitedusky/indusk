@@ -30,7 +30,7 @@ Work through these steps in order. Each step is blocking — do not skip ahead.
 
 ### Step 1: Write the Retrospective Document
 
-Create `planning/{plan-name}/retrospective.md` using the template from the plan skill. This is the reflective writing — what we set out to do, what actually happened, what we learned.
+Create `.indusk/planning/{plan-name}/retrospective.md` using the template from the plan skill. This is the reflective writing — what we set out to do, what actually happened, what we learned.
 
 Key sections to fill in honestly:
 - **What We Set Out to Do** — recap from the brief
@@ -110,7 +110,7 @@ Distill planning artifacts into the docs site so the knowledge survives archival
 **ADR → Decisions page:**
 Create `apps/indusk-docs/src/decisions/{plan-name}.md` with:
 - A concise summary of what was decided and why
-- Link to the full ADR in the archive: `planning/archive/{plan-name}/adr.md`
+- Link to the full ADR in the archive: `.indusk/planning/archive/{plan-name}/adr.md`
 - Key tradeoffs accepted
 
 **Retrospective insights → Lessons page:**
@@ -127,8 +127,8 @@ Not every plan produces a lessons page — only create one if the insights are g
 Move the planning artifacts to the archive:
 
 ```bash
-mkdir -p planning/archive
-mv planning/{plan-name} planning/archive/{plan-name}
+mkdir -p .indusk/planning/archive
+mv .indusk/planning/{plan-name} .indusk/planning/archive/{plan-name}
 ```
 
 The docs site now holds the published knowledge. The archive holds the process history. Both are preserved, but the docs are the primary reference going forward.

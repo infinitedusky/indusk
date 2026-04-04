@@ -8,7 +8,7 @@ You know how to plan work in this project.
 
 ## How Plans Work Here
 
-Every plan lives in `planning/{kebab-case-name}/` and follows the same document lifecycle:
+Every plan lives in `.indusk/planning/{kebab-case-name}/` and follows the same document lifecycle:
 
 ```
 research.md → brief.md → adr.md → impl.md → retrospective.md
@@ -63,7 +63,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - **spike**: start with research (and stop there)
 
    **Check for existing research first.** Before writing new research, scan `research/` at the repo root for relevant standalone research docs. If one exists (e.g., `research/auth-options.md`), ask the user: "I found existing research at `research/auth-options.md`. Want to use this as the starting point?" If yes:
-   - Copy it to `planning/{plan-name}/research.md`
+   - Copy it to `.indusk/planning/{plan-name}/research.md`
    - Set the frontmatter status to `complete`
    - Move straight to the brief
 
@@ -74,7 +74,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. **Consider creating a visual sketch** of the proposed architecture with Excalidraw (if the extension is enabled) — a hand-drawn diagram makes the proposal concrete and easier to discuss. **Present the brief and have a conversation about it.** Don't just ask "does this look good?" — walk the user through it: "Here's what I'm proposing we build. Does this match what you had in mind? Is there anything missing, or anything here you don't want?" Iterate until the user is genuinely happy with the direction, then mark it as `accepted`.
 
-5. **If brief is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see planning/{plan}/adr.md`
+5. **If brief is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see .indusk/planning/{plan}/adr.md`
 
 6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
@@ -91,7 +91,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 ## Cross-Referencing Between Plans
 
 Plans frequently depend on or relate to each other. When work overlaps:
-- Reference related plans by path: "See `planning/security-hardening/` Phase 8"
+- Reference related plans by path: "See `.indusk/planning/security-hardening/` Phase 8"
 - Use the `## Depends On` / `## Blocks` sections in the brief to make ordering explicit
 - If a change in one plan affects another, update both — don't let them drift
 
@@ -154,10 +154,10 @@ status: draft | accepted
 - {How we know this worked}
 
 ## Depends On
-- {Plans that must be completed before this one — e.g., `planning/per-game-escrow/`}
+- {Plans that must be completed before this one — e.g., `.indusk/planning/per-game-escrow/`}
 
 ## Blocks
-- {Plans that are waiting on this one — e.g., `planning/electric-ledger-sync/`}
+- {Plans that are waiting on this one — e.g., `.indusk/planning/electric-ledger-sync/`}
 ```
 
 ### adr.md
@@ -323,7 +323,7 @@ date: {YYYY-MM-DD}
 ## Folder Conventions
 
 ```
-planning/
+.indusk/planning/
 ├── {plan-name}/
 │   ├── research.md
 │   ├── brief.md
@@ -337,8 +337,8 @@ research/                    # Standalone insights useful across plans
 ```
 
 - Kebab-case folder names
-- Archive completed/abandoned plans to `planning/archive/`
-- When revising, archive the old version first (`planning/archive/{name}_v1/`)
+- Archive completed/abandoned plans to `.indusk/planning/archive/`
+- When revising, archive the old version first (`.indusk/planning/archive/{name}_v1/`)
 
 ## Important
 

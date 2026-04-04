@@ -297,6 +297,18 @@ export async function extensionsAdd(
 	}
 }
 
+function getInstalledVersion(projectRoot: string, pkg: string): string | null {
+	try {
+		const pkgJson = join(projectRoot, "node_modules", pkg, "package.json");
+		if (existsSync(pkgJson)) {
+			return JSON.parse(readFileSync(pkgJson, "utf-8")).version ?? null;
+		}
+	} catch {
+		// ignore
+	}
+	return null;
+}
+
 function installNpmPackage(projectRoot: string, extName: string, pkg: string): void {
 	const pm = existsSync(join(projectRoot, "pnpm-lock.yaml"))
 		? "pnpm"
@@ -384,15 +396,60 @@ export async function extensionsUpdate(projectRoot: string, names?: string[]): P
 			}
 
 			const source = ext.manifest._source;
-			console.info(`  ${name}: updating from ${source}...`);
 
-			// If source is npm, update the installed package FIRST so we get the latest
 			if (source.startsWith("npm:")) {
-				installNpmPackage(projectRoot, name, source.slice(4));
+				const pkg = source.slice(4);
+
+				// Check what version is currently installed
+				const oldVersion = getInstalledVersion(projectRoot, pkg);
+
+				// Install latest
+				installNpmPackage(projectRoot, name, pkg);
+
+				// Check new version
+				const newVersion = getInstalledVersion(projectRoot, pkg);
+
+				if (oldVersion && newVersion && oldVersion === newVersion) {
+					console.info(`  ${name}: already on latest (${newVersion})`);
+					continue;
+				}
+
+				console.info(`  ${name}: ${oldVersion ?? "unknown"} → ${newVersion ?? "latest"}`);
+
+				// Read manifest from installed package (no second download)
+				const manifestPath = join(projectRoot, "node_modules", pkg, "indusk-extension.json");
+				if (existsSync(manifestPath)) {
+					const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
+					manifest._source = source;
+					const extManifestDir = join(extensionsDir(projectRoot), name);
+					mkdirSync(extManifestDir, { recursive: true });
+					writeFileSync(
+						join(extManifestDir, "manifest.json"),
+						`${JSON.stringify(manifest, null, "\t")}\n`,
+					);
+					console.info(`  ${name}: manifest updated`);
+				}
+			} else {
+				console.info(`  ${name}: updating from ${source}...`);
+				await extensionsAdd(projectRoot, name, source);
 			}
 
-			// Then fetch the latest manifest (from the now-updated package)
-			await extensionsAdd(projectRoot, name, source);
+			// Run post-update hook if present
+			const updatedManifest = ext.manifest;
+			if (updatedManifest.hooks?.on_post_update) {
+				console.info(`  ${name}: running post-update hook...`);
+				try {
+					execSync(updatedManifest.hooks.on_post_update, {
+						cwd: projectRoot,
+						timeout: 30000,
+						stdio: ["ignore", "pipe", "pipe"],
+					});
+					console.info(`  ${name}: post-update hook completed`);
+				} catch {
+					console.info(`  ${name}: post-update hook failed`);
+				}
+			}
+
 			updated++;
 		} catch (e: unknown) {
 			const err = e as { message?: string };

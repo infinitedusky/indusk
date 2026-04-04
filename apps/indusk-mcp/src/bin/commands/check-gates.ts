@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { getPlanningDir } from "../../lib/config.js";
 import { getAllPhaseCompletions, parseImpl } from "../../lib/impl-parser.js";
 
 export async function checkGates(
@@ -11,10 +12,10 @@ export async function checkGates(
 	if (options.file) {
 		implPath = options.file;
 	} else {
-		// Find active impl (in-progress status) in planning/
-		const planningDir = join(projectRoot, "planning");
+		// Find active impl (in-progress status)
+		const planningDir = getPlanningDir(projectRoot);
 		if (!existsSync(planningDir)) {
-			console.error("No planning/ directory found");
+			console.error("No planning directory found");
 			process.exitCode = 1;
 			return;
 		}
@@ -35,7 +36,7 @@ export async function checkGates(
 		}
 
 		if (!found) {
-			console.error("No in-progress impl found in planning/");
+			console.error("No in-progress impl found");
 			process.exitCode = 1;
 			return;
 		}

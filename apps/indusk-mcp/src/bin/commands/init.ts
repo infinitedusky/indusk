@@ -66,13 +66,110 @@ function createCgcIgnore(projectRoot: string): void {
 
 export interface InitOptions {
 	force?: boolean;
+	local?: boolean;
 	noIndex?: boolean;
 }
 
+interface DetectedTooling {
+	linter?: string;
+	testRunner?: string;
+	otel?: boolean;
+	typeCheck?: boolean;
+}
+
+function detectTooling(projectRoot: string): DetectedTooling {
+	const detected: DetectedTooling = {};
+
+	// Detect linter
+	if (existsSync(join(projectRoot, "biome.json")) || existsSync(join(projectRoot, "biome.jsonc"))) {
+		detected.linter = "biome";
+	} else if (
+		existsSync(join(projectRoot, ".eslintrc.js")) ||
+		existsSync(join(projectRoot, ".eslintrc.json")) ||
+		existsSync(join(projectRoot, ".eslintrc.cjs")) ||
+		existsSync(join(projectRoot, "eslint.config.js")) ||
+		existsSync(join(projectRoot, "eslint.config.mjs")) ||
+		existsSync(join(projectRoot, "eslint.config.ts"))
+	) {
+		detected.linter = "eslint";
+	}
+
+	// Detect test runner
+	if (
+		existsSync(join(projectRoot, "vitest.config.ts")) ||
+		existsSync(join(projectRoot, "vitest.config.js"))
+	) {
+		detected.testRunner = "vitest";
+	} else if (
+		existsSync(join(projectRoot, "jest.config.js")) ||
+		existsSync(join(projectRoot, "jest.config.ts"))
+	) {
+		detected.testRunner = "jest";
+	}
+
+	// Detect OTel
+	if (
+		existsSync(join(projectRoot, "instrumentation.ts")) ||
+		existsSync(join(projectRoot, "src/instrumentation.ts")) ||
+		existsSync(join(projectRoot, "instrumentation.py"))
+	) {
+		detected.otel = true;
+	}
+
+	// Detect TypeScript
+	if (existsSync(join(projectRoot, "tsconfig.json"))) {
+		detected.typeCheck = true;
+	}
+
+	return detected;
+}
+
+function writeGitInfoExclude(projectRoot: string): void {
+	const excludePath = join(projectRoot, ".git/info/exclude");
+	const marker = "# InDusk local mode";
+
+	// Ensure .git/info/ exists
+	mkdirSync(join(projectRoot, ".git/info"), { recursive: true });
+
+	let content = "";
+	if (existsSync(excludePath)) {
+		content = readFileSync(excludePath, "utf-8");
+		if (content.includes(marker)) return; // Already configured
+	}
+
+	const entries = [
+		"",
+		marker,
+		".indusk/",
+		".claude/skills/",
+		".claude/hooks/",
+		".claude/lessons/",
+		".claude/settings.json",
+		".claude/handoff.md",
+		".cgcignore",
+		".mcp.json",
+		"",
+	].join("\n");
+
+	writeFileSync(excludePath, content.trimEnd() + entries);
+	console.info("  updated: .git/info/exclude (InDusk local mode entries)");
+}
+
 export async function init(projectRoot: string, options: InitOptions = {}): Promise<void> {
-	const { force = false, noIndex = false } = options;
+	const { force = false, local = false, noIndex = false } = options;
 	const projectName = basename(projectRoot);
-	console.info(`Initializing InDusk dev system...${force ? " (--force)" : ""}\n`);
+	const modeLabel = local ? " (--local)" : "";
+	console.info(`Initializing InDusk dev system...${force ? " (--force)" : ""}${modeLabel}\n`);
+
+	// Detect existing tooling
+	const detected = detectTooling(projectRoot);
+	if (local) {
+		console.info("[Detection]");
+		console.info(`  linter: ${detected.linter ?? "none"}`);
+		console.info(`  test runner: ${detected.testRunner ?? "none"}`);
+		console.info(`  otel: ${detected.otel ? "yes" : "no"}`);
+		console.info(`  typescript: ${detected.typeCheck ? "yes" : "no"}`);
+	}
 
 	// 1. Copy skills
 	console.info("[Skills]");
@@ -117,24 +214,31 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	}
 
 	// 3. Create CLAUDE.md (never overwrite — write CLAUDE-NEW.md if exists)
-	console.info("\n[Project files]");
-	const claudeMdPath = join(projectRoot, "CLAUDE.md");
-	if (existsSync(claudeMdPath)) {
-		const newPath = join(projectRoot, "CLAUDE-NEW.md");
-		cpSync(join(packageRoot, "templates/CLAUDE.md"), newPath);
-		console.info("  create: CLAUDE-NEW.md (merge manually with existing CLAUDE.md)");
-	} else {
-		cpSync(join(packageRoot, "templates/CLAUDE.md"), claudeMdPath);
-		console.info("  create: CLAUDE.md");
+	if (!local) {
+		console.info("\n[Project files]");
+		const claudeMdPath = join(projectRoot, "CLAUDE.md");
+		if (existsSync(claudeMdPath)) {
+			const newPath = join(projectRoot, "CLAUDE-NEW.md");
+			cpSync(join(packageRoot, "templates/CLAUDE.md"), newPath);
+			console.info("  create: CLAUDE-NEW.md (merge manually with existing CLAUDE.md)");
+		} else {
+			cpSync(join(packageRoot, "templates/CLAUDE.md"), claudeMdPath);
+			console.info("  create: CLAUDE.md");
+		}
 	}
 
 	// 3. Create planning directory
-	const planningDir = join(projectRoot, "planning");
+	const planningDir = join(projectRoot, ".indusk/planning");
+	const legacyPlanningDir = join(projectRoot, "planning");
 	if (existsSync(planningDir)) {
-		console.info("  skip: planning/ (already exists)");
+		console.info("  skip: .indusk/planning/ (already exists)");
+	} else if (existsSync(legacyPlanningDir)) {
+		console.info(
+			"  migrate: planning/ → .indusk/planning/ (move manually or run: mv planning .indusk/planning)",
+		);
 	} else {
 		mkdirSync(planningDir, { recursive: true });
-		console.info("  create: planning/");
+		console.info("  create: .indusk/planning/");
 	}
 
 	// 4. Set up MCP servers via claude mcp add
@@ -281,29 +385,103 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	}
 
 	// 5. Generate .vscode/settings.json
-	console.info("\n[Editor]");
-	const vscodePath = join(projectRoot, ".vscode/settings.json");
-	if (existsSync(vscodePath) && !force) {
-		console.info("  skip: .vscode/settings.json (already exists)");
-	} else {
-		mkdirSync(join(projectRoot, ".vscode"), { recursive: true });
-		cpSync(join(packageRoot, "templates/vscode-settings.json"), vscodePath);
-		console.info(`  ${existsSync(vscodePath) ? "overwrite" : "create"}: .vscode/settings.json`);
+	if (!local) {
+		console.info("\n[Editor]");
+		const vscodePath = join(projectRoot, ".vscode/settings.json");
+		if (existsSync(vscodePath) && !force) {
+			console.info("  skip: .vscode/settings.json (already exists)");
+		} else {
+			mkdirSync(join(projectRoot, ".vscode"), { recursive: true });
+			cpSync(join(packageRoot, "templates/vscode-settings.json"), vscodePath);
+			console.info(`  ${existsSync(vscodePath) ? "overwrite" : "create"}: .vscode/settings.json`);
+		}
 	}
 
-	// 6. Create base biome.json
-	const biomePath = join(projectRoot, "biome.json");
-	if (existsSync(biomePath) && !force) {
-		console.info("  skip: biome.json (already exists)");
+	// 6. Create biome.json (root in full mode, .indusk/ in local mode)
+	if (!local) {
+		const biomePath = join(projectRoot, "biome.json");
+		if (existsSync(biomePath) && !force) {
+			console.info("  skip: biome.json (already exists)");
+		} else {
+			cpSync(join(packageRoot, "templates/biome.template.json"), biomePath);
+			console.info(`  ${existsSync(biomePath) ? "overwrite" : "create"}: biome.json`);
+		}
 	} else {
-		cpSync(join(packageRoot, "templates/biome.template.json"), biomePath);
-		console.info(`  ${existsSync(biomePath) ? "overwrite" : "create"}: biome.json`);
+		console.info("\n[Local Quality Tools]");
+		// Biome in .indusk/
+		const localBiomePath = join(projectRoot, ".indusk/biome.json");
+		if (existsSync(localBiomePath) && !force) {
+			console.info("  skip: .indusk/biome.json (already exists)");
+		} else {
+			cpSync(join(packageRoot, "templates/biome.template.json"), localBiomePath);
+			console.info("  create: .indusk/biome.json");
+		}
+
+		// Test runner config in .indusk/
+		if (detected.testRunner === "jest") {
+			const jestConfig = join(projectRoot, ".indusk/jest.config.js");
+			if (!existsSync(jestConfig) || force) {
+				writeFileSync(
+					jestConfig,
+					[
+						"/** @type {import('jest').Config} */",
+						"module.exports = {",
+						"  roots: ['<rootDir>/../', '<rootDir>/tests/'],",
+						"  testMatch: ['<rootDir>/tests/**/*.test.{js,ts}'],",
+						"};",
+						"",
+					].join("\n"),
+				);
+				console.info("  create: .indusk/jest.config.js (extends team roots)");
+			}
+		} else {
+			// Default to vitest
+			const vitestConfig = join(projectRoot, ".indusk/vitest.config.ts");
+			if (!existsSync(vitestConfig) || force) {
+				writeFileSync(
+					vitestConfig,
+					[
+						'import { defineConfig } from "vitest/config";',
+						"",
+						"export default defineConfig({",
+						"  test: {",
+						'    include: [".indusk/tests/**/*.test.{ts,js}"],',
+						"    passWithNoTests: true,",
+						"  },",
+						"});",
+						"",
+					].join("\n"),
+				);
+				console.info("  create: .indusk/vitest.config.ts");
+			}
+		}
+
+		// Tests directory
+		const testsDir = join(projectRoot, ".indusk/tests");
+		if (!existsSync(testsDir)) {
+			mkdirSync(testsDir, { recursive: true });
+			writeFileSync(join(testsDir, ".gitkeep"), "");
+			console.info("  create: .indusk/tests/");
+		}
+
+		// Docs directory
+		const docsDir = join(projectRoot, ".indusk/docs");
+		if (!existsSync(docsDir)) {
+			mkdirSync(docsDir, { recursive: true });
+			writeFileSync(
+				join(docsDir, "index.md"),
+				`# ${projectName}\n\nLocal documentation. Portable to VitePress later.\n`,
+			);
+			console.info("  create: .indusk/docs/ (with index.md)");
+		}
 	}
 
-	// 7. Scaffold OpenTelemetry instrumentation
-	// Skip if this is the indusk-mcp package itself (has templates/ directory with instrumentation.ts)
+	// 7. Scaffold OpenTelemetry instrumentation (skip in local mode)
 	const isInduskMcp = existsSync(join(projectRoot, "templates/instrumentation.ts"));
-	if (isInduskMcp) {
+	if (local) {
+		console.info("\n[OpenTelemetry]");
+		console.info("  skip: local mode (team owns OTel setup)");
+	} else if (isInduskMcp) {
 		console.info("\n[OpenTelemetry]");
 		console.info("  skip: this is the indusk-mcp package (templates are source, not scaffolded)");
 	} else {
@@ -431,49 +609,6 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	} // end isInduskMcp else
 
-	// 7b. Next.js webpack config — ensure --webpack dev script and aggregateTimeout watchOptions
-	if (!isInduskMcp) {
-		const nextConfigs = ["next.config.ts", "next.config.js", "next.config.mjs"].map((f) =>
-			join(projectRoot, f),
-		);
-		const nextConfigPath = nextConfigs.find((f) => existsSync(f));
-		if (nextConfigPath) {
-			console.info("\n[Next.js Webpack Config]");
-			const configContent = readFileSync(nextConfigPath, "utf-8");
-			if (!configContent.includes("aggregateTimeout")) {
-				console.info(
-					`  warn: ${nextConfigPath.split("/").pop()} is missing aggregateTimeout in webpack watchOptions`,
-				);
-				console.info("  add the following to your next.config:");
-				console.info("    webpack: (config) => {");
-				console.info(
-					"      config.watchOptions = { ...config.watchOptions, aggregateTimeout: 600 };",
-				);
-				console.info("      return config;");
-				console.info("    }");
-			} else {
-				console.info(`  ok: aggregateTimeout configured in ${nextConfigPath.split("/").pop()}`);
-			}
-
-			// Check dev script for --turbopack
-			const pkgJsonPath = join(projectRoot, "package.json");
-			if (existsSync(pkgJsonPath)) {
-				const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf-8"));
-				const devScript = pkgJson.scripts?.dev || "";
-				if (devScript.includes("--turbopack")) {
-					console.info("  warn: dev script uses --turbopack — remove it");
-					console.info(
-						"  Turbopack's 1ms file watcher debounce causes crashes with external tool writes on macOS",
-					);
-					console.info("  Next.js <16: plain 'next dev' uses webpack by default");
-					console.info("  Next.js 16+: use 'next dev --webpack' to opt out of Turbopack");
-				} else {
-					console.info("  ok: dev script does not use Turbopack");
-				}
-			}
-		}
-	}
-
 	// 8. Install gate enforcement hooks
 	console.info("\n[Hooks]");
 	const hooksSource = join(packageRoot, "hooks");
@@ -501,6 +636,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	}
 
 	// Merge hook config + permissions into .claude/settings.json
+	const { writeOverlay, applyOverlay } = await import("../../lib/settings-overlay.js");
 	const claudeSettingsPath = join(projectRoot, ".claude/settings.json");
 	const catchupPermissions = [
 		"mcp__indusk__list_lessons",
@@ -600,9 +736,25 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		console.info("  create: .claude/settings.json (with hook config + catchup permissions)");
 	}
 
-	// 8. Create .cgcignore (always overwrite — package-owned)
+	// In local mode, save overlay so we can strip our additions before PRs
+	if (local) {
+		const overlayData = {
+			permissions: { allow: catchupPermissions },
+			hooks: hookConfig,
+		};
+		writeOverlay(projectRoot, overlayData);
+		applyOverlay(projectRoot);
+		console.info("  saved: .indusk/settings-overlay.json");
+	}
+
+	// 8. Create .cgcignore and manage git excludes
 	createCgcIgnore(projectRoot);
-	ensureGitignoreMcpJson(projectRoot);
+	if (local) {
+		console.info("\n[Git Excludes]");
+		writeGitInfoExclude(projectRoot);
+	} else {
+		ensureGitignoreMcpJson(projectRoot);
+	}
 
 	// 9. Run on_init hooks from enabled extensions
 	console.info("\n[Extension Hooks]");
@@ -663,6 +815,31 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	console.info("\n[Extensions]");
 	const { autoEnableExtensions } = await import("./extensions.js");
 	await autoEnableExtensions(projectRoot);
+
+	// 12. Write .indusk/config.json
+	const { writeConfig } = await import("../../lib/config.js");
+	const linterTool = local ? "biome" : (detected.linter ?? "biome");
+	const linterConfig = local ? ".indusk/biome.json" : "biome.json";
+	const testTool = detected.testRunner ?? "vitest";
+	const testConfig = local
+		? `.indusk/${testTool === "jest" ? "jest.config.js" : "vitest.config.ts"}`
+		: `${testTool}.config.${testTool === "jest" ? "js" : "ts"}`;
+	const config = {
+		mode: local ? ("local" as const) : ("full" as const),
+		verify: {
+			linter: { tool: linterTool, config: linterConfig },
+			testRunner: { tool: testTool, config: testConfig },
+			...(detected.typeCheck ? { typeCheck: "tsc" } : {}),
+		},
+		detected: {
+			...(detected.linter ? { linter: detected.linter } : {}),
+			...(detected.testRunner ? { testRunner: detected.testRunner } : {}),
+			...(detected.otel ? { otel: true } : {}),
+		},
+	};
+	writeConfig(projectRoot, config);
+	console.info(`\n[Config]`);
+	console.info(`  create: .indusk/config.json (mode: ${config.mode})`);
 
 	// Summary
 	console.info("\nDone!");

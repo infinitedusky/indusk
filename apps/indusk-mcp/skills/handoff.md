@@ -34,6 +34,7 @@ Create or overwrite `.claude/handoff.md` with:
 {Gotchas the next agent should know. "The FalkorDB graph needs reindexing." "The hooks aren't published yet — version 1.0.3 has them." "Don't touch init.ts until the extension system PR is merged."}
 
 ## Catchup Status
+- [ ] mcp-ready
 - [ ] handoff
 - [ ] lessons
 - [ ] skills

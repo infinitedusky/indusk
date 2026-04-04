@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { getPlanningDir } from "../lib/config.js";
 import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 
@@ -27,7 +28,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			inputSchema: { name: z.string().describe("Plan directory name (e.g. 'mcp-dev-system')") },
 		},
 		async ({ name }) => {
-			const planDir = join(projectRoot, "planning", name);
+			const planDir = join(getPlanningDir(projectRoot), name);
 			const plan = parsePlan(planDir);
 
 			const implPath = join(planDir, "impl.md");
@@ -54,7 +55,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			inputSchema: { name: z.string().describe("Plan directory name") },
 		},
 		async ({ name }) => {
-			const planDir = join(projectRoot, "planning", name);
+			const planDir = join(getPlanningDir(projectRoot), name);
 			const plan = parsePlan(planDir);
 			const implPath = join(planDir, "impl.md");
 			const impl = parseImpl(implPath);

@@ -1,0 +1,24 @@
+{
+	"name": "graphiti",
+	"description": "Graphiti temporal knowledge graph — episodic memory, contradiction detection, semantic search via FalkorDB",
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "indusk-infra-running",
+				"command": "docker inspect --format='{{.State.Running}}' indusk-infra 2>/dev/null | grep true"
+			},
+			{
+				"name": "graphiti-server-reachable",
+				"command": "curl -sf http://localhost:8100/health > /dev/null 2>&1"
+			},
+			{
+				"name": "falkordb-reachable",
+				"command": "redis-cli -h localhost ping 2>/dev/null | grep PONG"
+			}
+		]
+	},
+	"detect": {
+		"command": "docker inspect --format='{{.State.Running}}' indusk-infra 2>/dev/null | grep true"
+	}
+}

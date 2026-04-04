@@ -1,0 +1,18 @@
+{
+	"mode": "full",
+	"verify": {
+		"linter": {
+			"tool": "biome",
+			"config": "biome.json"
+		},
+		"testRunner": {
+			"tool": "vitest",
+			"config": "vitest.config.ts"
+		},
+		"typeCheck": "tsc"
+	},
+	"detected": {
+		"linter": "biome",
+		"testRunner": "vitest"
+	}
+}

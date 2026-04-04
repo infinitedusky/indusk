@@ -18,11 +18,13 @@ program
 	.command("init")
 	.description("Initialize a project with InDusk dev system")
 	.option("-f, --force", "Overwrite existing files (except CLAUDE.md and planning/)")
+	.option("--local", "Local mode — no committed file changes")
 	.option("--no-index", "Skip code graph indexing")
 	.action(async (opts) => {
 		const { init } = await import("./commands/init.js");
 		await init(process.cwd(), {
 			force: opts.force ?? false,
+			local: opts.local ?? false,
 			noIndex: opts.index === false,
 		});
 	});
@@ -152,6 +154,24 @@ infra
 	.action(async () => {
 		const { infraStatus } = await import("./commands/infra.js");
 		await infraStatus();
+	});
+
+program
+	.command("pr-clean")
+	.description("Strip InDusk settings overlay before a PR")
+	.action(async () => {
+		const { stripOverlay } = await import("../lib/settings-overlay.js");
+		stripOverlay(process.cwd());
+		console.info("Stripped InDusk overlay from .claude/settings.json");
+	});
+
+program
+	.command("pr-restore")
+	.description("Re-apply InDusk settings overlay after a PR")
+	.action(async () => {
+		const { applyOverlay } = await import("../lib/settings-overlay.js");
+		applyOverlay(process.cwd());
+		console.info("Re-applied InDusk overlay to .claude/settings.json");
 	});
 
 program

@@ -30,7 +30,7 @@ CLAUDE.md has exactly six sections. This structure is fixed — never add, remov
 {Patterns to follow, anti-patterns to avoid. Accumulated from corrections, retrospectives, and explicit decisions. Each entry is a concise one-liner.}
 
 ## Key Decisions
-{One-liner per decision with a link to the source document. Format: "- {decision summary} — see planning/{plan}/adr.md"}
+{One-liner per decision with a link to the source document. Format: "- {decision summary} — see .indusk/planning/{plan}/adr.md"}
 
 ## Known Gotchas
 {Things that went wrong before. Mistakes the agent made and was corrected on. Each entry is a concise one-liner explaining what NOT to do and why.}
@@ -87,7 +87,7 @@ Do this immediately after writing the retrospective, before moving on.
 When an ADR's status changes to `accepted`, add a one-liner to **Key Decisions**:
 
 ```markdown
-- {Concise decision summary} — see `planning/{plan-name}/adr.md`
+- {Concise decision summary} — see `.indusk/planning/{plan-name}/adr.md`
 ```
 
 Do not duplicate the ADR's rationale. The link is the documentation.

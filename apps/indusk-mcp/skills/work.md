@@ -8,11 +8,11 @@ You know how to execute plans in this project.
 
 ## How Work Works Here
 
-Implementation plans live in `planning/{plan-name}/impl.md` as checklists. Your job is to work through them methodically — one item at a time, in order, checking each off immediately after completing it.
+Implementation plans live in `.indusk/planning/{plan-name}/impl.md` as checklists. Your job is to work through them methodically — one item at a time, in order, checking each off immediately after completing it.
 
 ## What to Do When Asked to Work
 
-1. **Find the right plan.** Look in `planning/` for the plan matching what the user asked for. If they didn't specify, list all plans that have an impl with status `approved` or `in-progress` and ask which one.
+1. **Find the right plan.** Look in `.indusk/planning/` for the plan matching what the user asked for. If they didn't specify, list all plans that have an impl with status `approved` or `in-progress` and ask which one.
 
 2. **Check prerequisites.** Before starting work:
    - If the plan has an ADR, verify its status is `accepted`. If it's still `proposed`, warn the user: "The ADR hasn't been accepted yet — want to review it first, or proceed anyway?"
