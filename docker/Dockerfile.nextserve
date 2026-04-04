@@ -1,0 +1,21 @@
+# Next.js serve mode — app is pre-built on the host via dc:up --serve
+# No source code in image, no volume mounts. Just serves the built output.
+FROM node:20-alpine
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Install production dependencies only
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/ ./apps/
+COPY packages/ ./packages/
+RUN pnpm install --frozen-lockfile
+
+# The .next build output is already on disk from the host build.
+# No volume mounts — the built files are copied in via the Docker context.
+
+# Entrypoint detects NODE_ENV=production and runs pnpm start
+COPY docker/app-entrypoint.sh /usr/local/bin/app-entrypoint.sh
+ENV NODE_ENV=production
+ENTRYPOINT ["/usr/local/bin/app-entrypoint.sh"]

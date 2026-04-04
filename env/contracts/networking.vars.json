@@ -1,0 +1,7 @@
+{
+  "vars": {
+    "DOMAIN": "${networking.DOMAIN}",
+    "PROFILE_SUFFIX": "${networking.PROFILE_SUFFIX}",
+    "BASE_URL": "${networking.BASE_URL}"
+  }
+}

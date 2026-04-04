@@ -1,0 +1,31 @@
+# Next.js production build — standalone output, no source code
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# ── Install dependencies ──
+FROM base AS deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/ ./apps/
+COPY packages/ ./packages/
+RUN pnpm install --frozen-lockfile
+
+# ── Build ──
+FROM deps AS builder
+WORKDIR /app
+# Build args for any vars needed at build time (non-secret only)
+ARG APP_NAME
+RUN pnpm --filter ${APP_NAME} build
+
+# ── Production image ──
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Next.js standalone output
+COPY --from=builder /app/apps/${APP_NAME}/.next/standalone ./
+COPY --from=builder /app/apps/${APP_NAME}/.next/static ./apps/${APP_NAME}/.next/static
+COPY --from=builder /app/apps/${APP_NAME}/public ./apps/${APP_NAME}/public
+
+EXPOSE 3000
+CMD ["node", "apps/${APP_NAME}/server.js"]
