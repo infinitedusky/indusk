@@ -48,7 +48,9 @@
       "Bash(xargs ls:*)",
       "Bash(npx ce:*)",
       "Read(//Users/the_dusky/code/sandbox/indusk/**)",
-      "Read(//Users/the_dusky/code/**)"
+      "Read(//Users/the_dusky/code/**)",
+      "Bash(claude --version)",
+      "Bash(gh release:*)"
     ]
   },
   "hooks": {

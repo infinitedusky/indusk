@@ -13,10 +13,15 @@ infinitedusky/
 │   ├── indusk-mcp/        # InDusk MCP server — dev system tooling
 │   └── indusk-docs/       # VitePress documentation site with Mermaid + FullscreenDiagram
 ├── .claude/skills/        # Claude Code skills (installed via `init`, not manually maintained)
-│   ├── plan/SKILL.md      # Installed from apps/indusk-mcp/skills/
+│   ├── planner/SKILL.md   # Installed from apps/indusk-mcp/skills/ — slash command is /planner (not /plan)
 │   ├── work/SKILL.md      # Installed from apps/indusk-mcp/skills/
 │   ├── context/SKILL.md   # Installed from apps/indusk-mcp/skills/
 │   ├── verify/SKILL.md    # Installed from apps/indusk-mcp/skills/
+│   ├── retrospective/SKILL.md # Installed from apps/indusk-mcp/skills/
+│   ├── catchup/SKILL.md   # Installed from apps/indusk-mcp/skills/
+│   ├── handoff/SKILL.md   # Installed from apps/indusk-mcp/skills/
+│   ├── jj/SKILL.md        # Installed from apps/indusk-mcp/skills/
+│   ├── graphiti/SKILL.md  # Installed from apps/indusk-mcp/extensions/graphiti/
 │   └── composable-env/    # composable.env skill (installed via ce add-skill)
 ├── docker/                # Dockerfiles: Dockerfile.infra (FalkorDB + Graphiti bundled), Dockerfile.nextdev, etc.
 ├── env/                   # composable.env: components, profiles, contracts
@@ -103,6 +108,7 @@ infinitedusky/
 - Local init mode: `.indusk/` as home directory, `config.json` as project profile, `--local` flag for team repos — see `.indusk/planning/local-init-mode/adr.md`
 - OTel gate is role-aware via `otel.role` in `.indusk/config.json` (Phase 5.25 of graphiti-infrastructure). Unset/`service` = gate fires (default). `library`/`tool`/`none` = gate silenced. The planner skill stops writing OTel sections, and both gate-enforcement hooks honor the same rule. Backwards compatible: projects without the field behave exactly as before. indusk-mcp itself is `library`.
 - Graphiti registered directly in `.mcp.json` as a top-level MCP server (Option C from Phase 5.5 of graphiti-infrastructure). Agent calls `mcp__graphiti__*` tools directly (no `indusk` wrapper). `GraphitiClient` typed wrapper at `apps/indusk-mcp/src/lib/graphiti-client.ts` is kept for internal use only — skills/catchup that want typed defaults (project group + `shared` resolution, error swallowing) use it; the agent does not. Capture is automatic at trigger points (planner brief/ADR, work corrections, retro lessons), not manual. Recall happens in catchup Step 4.5.
+- Semantic graph bridge as event-sourced projection: per-project append-only log (`.indusk/graph/semantic-graph.log`) is canonical, tagged with jj change IDs, gitignored and local-only; FalkorDB runtime (`semantic-{project}`) is a disposable projection replayed from the log; anchor identity uses graph-stored UUIDs matched via git blob hashes and git rename detection; sync pipeline is adapter-agnostic (must not know "CGC") to preserve optionality for future non-code adapters — see `.indusk/planning/cgc-graphiti-bridge/adr.md` and companion whitepaper `.indusk/research/anchor-overlay-pattern.md`.
 
 ## Known Gotchas
 
@@ -129,14 +135,19 @@ infinitedusky/
 
 ## Current State
 
-Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env. `indusk-infra` container bundles FalkorDB + Graphiti (replaces standalone FalkorDB). CGC indexing the project. Biome configured with VS Code integration. OTel extension active — every project scaffolded by `init` gets instrumentation by default. **OTel gate is conditional on `otel.role` in `.indusk/config.json`** (Phase 5.25): fires by default, silenced for `library`/`tool`/`none`. infinitedusky/indusk-mcp itself is `otel.role: library` — phases here never have OTel sections. Local init mode (`--local`) available for using InDusk on team repos without touching committed files. `.indusk/config.json` serves as the central project profile.
+Repo scaffolded, building, and at v1.10.3 published. **`graphiti-infrastructure` plan completed and archived 2026-04-07** — indusk-infra container running FalkorDB + Graphiti, Graphiti registered as MCP server in every project's `.mcp.json` via init, capture/recall triggers wired into planner/work/retrospective/catchup skills, otel.role role-aware gate landed, hyphen-in-group-id sanitization fixed. CGC indexing the project (118 files, 19821 functions). Biome configured with VS Code integration. OTel extension active — every project scaffolded by `init` gets instrumentation by default. **OTel gate is conditional on `otel.role` in `.indusk/config.json`** (Phase 5.25 of graphiti-infrastructure): fires by default, silenced for `library`/`tool`/`none`. infinitedusky/indusk-mcp itself is `otel.role: library` — phases here never have OTel sections. Local init mode (`--local`) available for using InDusk on team repos without touching committed files. `.indusk/config.json` serves as the central project profile.
+
+**Sibling test bed**: `~/code/sandbox/chitin-sportsbook` is a real project (peer-to-peer baseball moneyline sportsbook on Base Sepolia, NUMEROSP-settled, agent-first API) being built using the dev system as both a substrate for evaluating CGC + Graphiti and as a future Numero module candidate. First plan (`scaffold-bootstrap`) ran end-to-end with full capture/recall on 2026-04-07. Ongoing experimental evaluation lives in `cgc-graphiti-evaluation` spike.
 
 **Active plans:**
 
 | Plan | Stage | Next Step |
 |------|-------|-----------|
-| context-graph | brief (accepted) | Phase 0 complete, Phase 1 in progress |
-| graphiti-infrastructure | impl (in-progress) | Phase 1 complete, Phase 2: `indusk infra` CLI |
-| react-native-support | brief (accepted) | Write ADR |
+| cgc-graphiti-evaluation | research (in-progress) | Append experiment results as chitin-sportsbook work continues |
+| cgc-graphiti-bridge | brief (draft) | Rewrite brief with the unified-graph files-as-anchors vision; then ADR |
+| context-graph | brief (accepted) | Umbrella plan; child plans drive the work |
+| dusk-v2 | research (in-progress, parked) | Pick back up after CGC + Graphiti experiment yields lessons |
+| react-native-support | impl (approved, parked) | Roll OTel substance into dusk-v2 OTel-as-extension; archive otherwise |
+| local-init-mode | impl (completed) | Run retrospective |
 | mcp-dashboard | research (complete) | Write brief (lower priority) |
 | agent-skills-format | brief (draft) | Sandy reviews brief |

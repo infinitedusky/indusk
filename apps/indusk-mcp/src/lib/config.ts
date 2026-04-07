@@ -76,11 +76,30 @@ export function getPlanningDir(projectRoot: string): string {
 }
 
 /**
+ * Sanitize a string into a valid Graphiti group id.
+ *
+ * Graphiti uses RediSearch under the hood, which treats `-` as a token separator.
+ * A query like `chitin-sportsbook` parses as "find chitin, exclude sportsbook" and
+ * fails with `Syntax error at offset N near chitin`. Anything that isn't
+ * `[A-Za-z0-9_]` gets replaced with `_`. Multiple separators collapse to one.
+ *
+ * Examples:
+ *   "chitin-sportsbook" → "chitin_sportsbook"
+ *   "my.cool.project"   → "my_cool_project"
+ *   "@scope/pkg"        → "scope_pkg"
+ *   "indusk_already_ok" → "indusk_already_ok" (no change)
+ */
+export function sanitizeGroupId(raw: string): string {
+	return raw.replace(/[^A-Za-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+/**
  * Get the Graphiti group id for project-specific episodes.
  *
  * Resolution order:
- *   1. .indusk/config.json `graphiti.groupId` if set
- *   2. Project directory basename
+ *   1. .indusk/config.json `graphiti.groupId` if set (used as-is, not sanitized —
+ *      explicit overrides are trusted; if you set a hyphenated id, that's on you)
+ *   2. Sanitized project directory basename (`-` → `_`, etc., for RediSearch safety)
  *
  * Use `[getProjectGroupId(root), "shared"]` as the default group_ids list when
  * searching Graphiti — this gives both project-scoped and cross-project knowledge.
@@ -88,7 +107,7 @@ export function getPlanningDir(projectRoot: string): string {
 export function getProjectGroupId(projectRoot: string): string {
 	const config = readConfig(projectRoot);
 	if (config?.graphiti?.groupId) return config.graphiti.groupId;
-	return basename(projectRoot);
+	return sanitizeGroupId(basename(projectRoot));
 }
 
 /**

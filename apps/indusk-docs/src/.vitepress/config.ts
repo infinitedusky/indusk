@@ -94,6 +94,7 @@ const config = defineConfig({
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
 						{ text: "GSD-Inspired Improvements", link: "/decisions/gsd-inspired-improvements" },
 					{ text: "OpenTelemetry Extension", link: "/decisions/otel-extension" },
+					{ text: "Graphiti Infrastructure", link: "/decisions/graphiti-infrastructure" },
 					],
 				},
 			],
