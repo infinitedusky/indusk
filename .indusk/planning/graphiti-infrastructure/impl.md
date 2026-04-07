@@ -35,6 +35,7 @@ Bundle FalkorDB + Graphiti into a single persistent Docker container (`indusk-in
 | Phase 3 | `graphiti-client.ts` MCP client wrapper | Phase 1 running container |
 | Phase 4 | Graphiti extension (manifest, skill, health checks), `graph_ensure` updates | Phase 1 container, Phase 3 client |
 | Phase 5 | `init` integration, Getting Started docs | Phases 1-4 |
+| Phase 5.25 | `otel.role` config field; planner skip OTel for non-service; hooks ditto; sweep OTel sections from indusk-mcp plans; indusk-mcp set to `library` | Existing config schema, planner/hooks |
 | Phase 5.5 | Graphiti MCP server registered in `.mcp.json` via init; capture/recall triggers in planner/work/retrospective/catchup skills; graphiti skill rewritten with real tool examples | Phase 1 running container, Phase 3 `GraphitiClient` (kept for internal use), Phase 5 init integration |
 | Phase 6 | End-to-end validation | All prior phases (now including Phase 5.5 — required for any agent-driven validation to work) |
 | Phase 7 | Published Docker image on GHCR, CI workflow | Phase 2 `infra start` command |
@@ -413,6 +414,72 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
   - CLI commands table added to infrastructure.md in Phase 2
 - [x] Add troubleshooting page or section
   - Added to Getting Started: container, API key, ports, CGC
+
+## Phase 5.25: OTel Gate Role-Awareness (`otel.role` config field)
+
+### Why this exists, mid-Phase-5.5
+
+The OTel gate currently fires on every phase of every plan in every project that has the otel extension enabled, including indusk-mcp itself. That's wrong: indusk-mcp is a **library** that ships to other people's machines. Emitting telemetry from a library is either silently dropped, reported back to us (creepy), or clutters consumers' telemetry with internal indusk-mcp spans they didn't ask for. The current state forces every indusk-mcp phase to write `skip-reason: ...` lines for OTel, which is friction without value.
+
+The fix is at the planner stage, not at gate enforcement: the planner should not write OTel sections at all when the project's `otel.role` is non-`service`. Sweep existing indusk-mcp impls to remove OTel sections that were written under the old (always-on) policy. Phase 5.5 verification then resumes in a quieter environment where the OTel gate doesn't apply to this project.
+
+### Strategy: opt-out, backwards-compatible
+
+- Add **optional** `otel.role` field to `InduskConfig`. Values: `"service"` | `"library"` | `"tool"` | `"none"`. **No default** — if the field is missing, behavior is unchanged from today (OTel gate fires on every phase).
+- Rule: **OTel gate fires when `otel?.role` is undefined OR `"service"`**. It skips when `otel.role` is explicitly `"library"`, `"tool"`, or `"none"`.
+- This means existing projects without the new field behave exactly as today. No migration needed. Opt-out is explicit; opt-in is implicit. The system stays loud by default (forgetting to instrument an app is worse than nagging).
+- For indusk-mcp itself (`infinitedusky/.indusk/config.json` and `apps/indusk-mcp/.indusk/config.json`): set `otel.role: "library"` and remove all OTel sections from existing impls.
+- For chitin-sportsbook and any user-facing app: keep field unset (or explicitly `"service"`). OTel sections remain.
+
+### Implementation
+
+#### Schema and config
+- [ ] Add optional `otel?: { role?: "service" | "library" | "tool" | "none" }` to `InduskConfig` interface in `apps/indusk-mcp/src/lib/config.ts`. Sibling to existing `graphiti?.groupId` field. No default value. JSDoc comment explains: "service = produces telemetry I want to collect (default behavior). library = ships to other people, never produces telemetry. tool = short-lived script, telemetry overhead exceeds value. none = explicit opt-out for legacy/prototype/internal experiments."
+- [ ] Add helper `shouldEmitOtelGate(projectRoot: string): boolean` in `apps/indusk-mcp/src/lib/config.ts`. Returns `true` if `otel?.role` is undefined or `"service"`, `false` otherwise. All planner/hook code uses this helper instead of inline conditionals.
+
+#### Planner skill
+- [ ] Update `apps/indusk-mcp/skills/planner.md` impl template section. The template currently shows `#### Phase N OTel` as one of five required sub-sections. Change wording: it's now **conditional** — only emit if the project's `otel.role` is undefined or `"service"`. For non-service projects, omit the entire `#### Phase N OTel` block.
+- [ ] Add a one-paragraph "OTel gate role" section to the planner skill that explains the field, the values, and when the gate fires. Cross-reference the same section in the verify skill if applicable.
+- [ ] Sync source → `.claude/skills/planner/SKILL.md`.
+
+#### Hooks
+- [ ] Update `.claude/hooks/validate-impl-structure.js` to skip the OTel section requirement when `otel?.role` is non-service. The hook currently requires every `## Phase N` block to contain `#### Phase N OTel`, `#### Phase N Verification`, `#### Phase N Context`, `#### Phase N Document`. Make the OTel requirement conditional on `shouldEmitOtelGate(projectRoot)`. Read the project root by walking up from `cwd` (same pattern as `check-catchup.js`).
+- [ ] Update `.claude/hooks/check-gates.js` similarly so phase advancement is not blocked waiting for an OTel section that never existed.
+- [ ] Sync hooks: source lives in `apps/indusk-mcp/hooks/`, installed copies in `.claude/hooks/`. Both `validate-impl-structure.js` and `check-gates.js` need to be updated and synced.
+- [ ] Tests for the hooks (smoke level): write a temporary impl with no OTel section + a `.indusk/config.json` with `otel.role: library`. Run `validate-impl-structure.js` against it. Should exit 0 (allow). Then change config to `otel.role: service`. Should exit 2 (block) because the OTel section is missing.
+
+#### Set indusk-mcp to library
+- [ ] Update `infinitedusky/.indusk/config.json`: add `"otel": { "role": "library" }`.
+- [ ] Update `apps/indusk-mcp/.indusk/config.json`: same.
+- [ ] Update `init.ts` so when scaffolding a fresh project, it does NOT set `otel.role` automatically (default = unset = behaves as service). Only indusk-mcp itself gets the explicit library setting, manually.
+
+#### Sweep existing OTel sections from indusk-mcp plans
+- [ ] Sweep all plans in `.indusk/planning/{*,archive/*}/impl.md` in this repo. Remove every `#### Phase N OTel` block (the heading line + all bullet items underneath, up to the next `####` or `##`).
+- [ ] Confirm impl-parser still parses each swept impl correctly (`mcp__indusk__list_plans` succeeds, plan structure intact).
+- [ ] This is a one-time historical cleanup. Going forward the planner will not write OTel sections for indusk-mcp.
+
+### Verification
+
+- [ ] `.indusk/config.json` shows `"otel": { "role": "library" }` in both `infinitedusky/` and `apps/indusk-mcp/`.
+- [ ] `mcp__indusk__list_plans` returns all plans without errors after sweep — confirms impl-parser tolerates missing OTel sections.
+- [ ] Open `.indusk/planning/graphiti-infrastructure/impl.md` after sweep — no `#### Phase N OTel` blocks anywhere. Plan is shorter. Validate-impl-structure hook approves it (write a no-op edit, hook should pass).
+- [ ] Try writing a NEW test phase via planner skill in this repo (mock or real plan). Confirm OTel section is omitted because `otel.role: library`.
+- [ ] Try the same test in a temporary project with no `.indusk/config.json` — confirm the OTel section IS emitted (default behavior preserved).
+- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes. impl-parser tests should still pass since they parse the four other gate types and tolerate missing OTel.
+- [ ] `pnpm exec biome check apps/indusk-mcp/src apps/indusk-mcp/extensions apps/indusk-mcp/skills` passes.
+
+### Context
+
+- [ ] Update CLAUDE.md Conventions: replace "Every impl phase ends with five gates before advancing: otel → verify → context → document → advance" with: "Every impl phase has **four required gates** (verify, context, document) plus an **optional OTel gate**. The OTel gate fires by default. Set `otel.role` in `.indusk/config.json` to `library`, `tool`, or `none` to silence it for projects that don't produce runtime telemetry."
+- [ ] Update CLAUDE.md Known Gotchas: "indusk-mcp itself is `otel.role: library` — phases never have OTel sections. New projects scaffolded by InDusk default to no `otel.role` (treated as `service`)."
+- [ ] Update CLAUDE.md Architecture or Conventions where it mentions "five gates" or "OTel gate enforced on all plans" — both phrases are now wrong for indusk-mcp.
+
+### Document
+
+- [ ] Update planner reference page (`apps/indusk-docs/src/reference/skills/plan.md` or wherever) to mention `otel.role` and the conditional OTel gate.
+- [ ] Update `apps/indusk-docs/src/reference/tools/config.md` (or create it) documenting the `.indusk/config.json` schema with `otel.role` field.
+- [ ] Update Getting Started or wherever the gate system is introduced — the "five gates" wording appears in skill summaries too.
+- [ ] Add a one-line note to the OTel skill: "If your project does not produce runtime telemetry (library, CLI, tool), set `otel.role` in `.indusk/config.json` to silence the OTel gate."
 
 ## Phase 5.5: Surface Graphiti to the Agent
 
