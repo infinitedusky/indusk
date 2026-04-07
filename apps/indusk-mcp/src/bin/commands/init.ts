@@ -352,8 +352,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	}
 
 	// Add graphiti MCP server (Phase 5.5 — Streamable HTTP, runs in indusk-infra container)
-	const graphitiAddCommand =
-		"claude mcp add -t http -s project graphiti http://localhost:8100/mcp";
+	const graphitiAddCommand = "claude mcp add -t http -s project graphiti http://localhost:8100/mcp";
 	if (!existingServers.has("graphiti") || force) {
 		try {
 			execSync(graphitiAddCommand, { cwd: projectRoot, stdio: "pipe", timeout: 10000 });

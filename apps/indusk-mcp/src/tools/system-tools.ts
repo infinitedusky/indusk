@@ -185,10 +185,8 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 				const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
 				if (fmMatch) {
 					const fm = fmMatch[1];
-					const name =
-						fm.match(/^name:\s*(.+)$/m)?.[1]?.trim() ?? dir;
-					const description =
-						fm.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? "";
+					const name = fm.match(/^name:\s*(.+)$/m)?.[1]?.trim() ?? dir;
+					const description = fm.match(/^description:\s*(.+)$/m)?.[1]?.trim() ?? "";
 					const type = fm.match(/^argument-hint:/m) ? "process" : "domain";
 					return { name, description, type, slash: `/${name}` };
 				}

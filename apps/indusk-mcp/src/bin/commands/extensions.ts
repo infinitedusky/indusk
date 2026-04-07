@@ -12,8 +12,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import {
-	disableExtension,
 	disabledDir,
+	disableExtension,
 	type ExtensionManifest,
 	enableExtension,
 	ensureExtensionsDirs,
@@ -122,8 +122,12 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 				const envVars = readExtensionEnv(name);
 				if (Object.keys(envVars).length === 0) {
 					console.info(`\n  ${name}: cannot enable — no credentials found.`);
-					console.info(`    Create .indusk/extensions/${name}/.env with the required credentials first.`);
-					console.info(`    If using composable.env: run 'pnpm ce env:build' to generate it from your contract.`);
+					console.info(
+						`    Create .indusk/extensions/${name}/.env with the required credentials first.`,
+					);
+					console.info(
+						`    If using composable.env: run 'pnpm ce env:build' to generate it from your contract.`,
+					);
 					console.info(`    Then run 'extensions enable ${name}' again.\n`);
 					continue;
 				}
@@ -704,19 +708,30 @@ function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
 
 			if (allResolved) {
 				const args = [
-					"mcp", "add", "-t", "http",
-					...headerArgs.flatMap(h => {
+					"mcp",
+					"add",
+					"-t",
+					"http",
+					...headerArgs.flatMap((h) => {
 						const match = h.match(/--header "(.+): (.+)"/);
 						if (match) return ["--header", `${match[1]}: ${match[2]}`];
 						return [];
 					}),
-					"-s", "project", "--", name, url,
+					"-s",
+					"project",
+					"--",
+					name,
+					url,
 				];
-				const cmd = `claude ${args.map(a => a.includes(" ") ? `"${a}"` : a).join(" ")}`;
+				const cmd = `claude ${args.map((a) => (a.includes(" ") ? `"${a}"` : a)).join(" ")}`;
 				console.info(`\n  ${name}: adding MCP server with credentials from .env...`);
 				// Remove existing entry first so we always write fresh credentials
 				try {
-					execSync(`claude mcp remove -s project ${name}`, { cwd: process.cwd(), timeout: 10000, stdio: ["ignore", "pipe", "pipe"] });
+					execSync(`claude mcp remove -s project ${name}`, {
+						cwd: process.cwd(),
+						timeout: 10000,
+						stdio: ["ignore", "pipe", "pipe"],
+					});
 				} catch {
 					// Ignore — may not exist
 				}

@@ -469,10 +469,10 @@ Make Graphiti reachable from a Claude Code session and integrated into the workf
 - [x] Synced to `.claude/skills/catchup/SKILL.md`.
 
 #### Build and confirm
-- [ ] `cd apps/indusk-mcp && pnpm build` succeeds.
-- [ ] `pnpm check` passes.
-- [ ] `pnpm turbo test --filter=indusk-mcp` passes.
-- [ ] Bump indusk-mcp to v1.10.0 (minor — adds Graphiti MCP registration, capture/recall triggers — no breaking changes).
+- [x] `cd apps/indusk-mcp && pnpm build` succeeds. Clean tsc, no errors.
+- [x] `pnpm check` (Biome) — pre-existing nested config issue in `apps/otel-test*` blocks the root invocation, but scoped check `pnpm exec biome check apps/indusk-mcp/{src,extensions,skills}` passes after `--write` autofix (formatting in 6 files including 2 from Phase 5.5: init.ts and extension-loader.ts). One remaining warning (`names?.includes(name)` in extensions.ts:394) is pre-existing and unrelated.
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp --force` — **all 36 tests pass** including the 7 `graphiti-client.test.ts` tests (confirms `GraphitiClient` still functions after Phase 5.5). Fixed pre-existing 6 failing tests in `plan-parser.test.ts` and `impl-parser.test.ts` that referenced the legacy `planning/archive/` path instead of `.indusk/planning/archive/` (collateral fix from the planning migration done in earlier session). The handoff's "1 failing test (pre-existing)" was actually 6, now 0.
+- [x] Bumped indusk-mcp from v1.9.4 → v1.10.0. Minor: adds Graphiti MCP registration, manifest `mcp_server.add_command` schema field, capture/recall triggers across 5 skills, internal `getProjectGroupId()` helper, generalised update.ts to re-add any extension's MCP server. No breaking changes.
 
 #### Phase 5.5 OTel
 - skip-reason: All changes are skill markdown edits, init wiring, and a JSON manifest field. No new code paths produce telemetry. Existing OTel auto-instrumentation in indusk-mcp still applies; nothing new to instrument. The Graphiti container itself already exports OTel when configured (Phase 1).

@@ -6,7 +6,7 @@ const projectRoot = join(import.meta.dirname, "../../../..");
 
 describe("parsePlan", () => {
 	it("parses the gsd-inspired-improvements plan", () => {
-		const plan = parsePlan(join(projectRoot, "planning/archive/gsd-inspired-improvements"));
+		const plan = parsePlan(join(projectRoot, ".indusk/planning/archive/gsd-inspired-improvements"));
 		expect(plan.name).toBe("gsd-inspired-improvements");
 		expect(plan.stage).toBe("retrospective");
 		expect(plan.documents).toContain("brief.md");
@@ -16,12 +16,12 @@ describe("parsePlan", () => {
 	});
 
 	it("extracts dependencies from brief", () => {
-		const plan = parsePlan(join(projectRoot, "planning/archive/gsd-inspired-improvements"));
+		const plan = parsePlan(join(projectRoot, ".indusk/planning/archive/gsd-inspired-improvements"));
 		expect(plan.dependencies.length).toBeGreaterThanOrEqual(0);
 	});
 
 	it("parses an archived completed plan", () => {
-		const plan = parsePlan(join(projectRoot, "planning/archive/gate-policy-enforcement"));
+		const plan = parsePlan(join(projectRoot, ".indusk/planning/archive/gate-policy-enforcement"));
 		expect(plan.stage).toBe("retrospective");
 	});
 });

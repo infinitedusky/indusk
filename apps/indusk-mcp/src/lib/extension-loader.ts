@@ -174,10 +174,7 @@ export function loadExtensions(projectRoot: string): LoadedExtension[] {
 	const dir = extensionsDir(projectRoot);
 	const disDir = disabledDir(projectRoot);
 
-	return [
-		...loadFromDir(dir, true),
-		...loadFromDir(disDir, false),
-	];
+	return [...loadFromDir(dir, true), ...loadFromDir(disDir, false)];
 }
 
 export function getEnabledExtensions(projectRoot: string): LoadedExtension[] {
