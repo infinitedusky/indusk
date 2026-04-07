@@ -306,7 +306,35 @@ export async function update(projectRoot: string): Promise<void> {
 				}
 			}
 
-			if (manifest?.mcp_server?.setup_instructions) {
+			// Phase 5.5: ensure declared MCP server is registered in .mcp.json.
+			// If the manifest's top-level mcp_server.add_command is set and the server
+			// is missing from .mcp.json, run the command. Idempotent — skips if present.
+			// The MCP server's name in .mcp.json is the extension name (matches init's
+			// `claude mcp add ... <extName> ...` convention).
+			const mcpServer = manifest?.mcp_server;
+			if (mcpServer?.add_command) {
+				const mcpJsonPath = join(projectRoot, ".mcp.json");
+				let alreadyRegistered = false;
+				if (existsSync(mcpJsonPath)) {
+					try {
+						const mcpJson = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
+						alreadyRegistered = !!mcpJson.mcpServers?.[name];
+					} catch {}
+				}
+				if (!alreadyRegistered) {
+					try {
+						execSync(mcpServer.add_command, {
+							cwd: projectRoot,
+							stdio: "pipe",
+							timeout: 10000,
+						});
+						console.info(`  ${name}: registered MCP server`);
+					} catch {
+						console.info(`  ${name}: failed to register MCP server — run manually:`);
+						console.info(`    ${mcpServer.add_command}`);
+					}
+				}
+			} else if (mcpServer?.setup_instructions) {
 				console.info(`  ${name}: MCP server setup — see .claude/skills/${name}/SKILL.md`);
 			}
 		}

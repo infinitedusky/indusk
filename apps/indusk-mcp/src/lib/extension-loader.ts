@@ -51,6 +51,7 @@ export interface ExtensionManifest {
 		headers?: Record<string, string>;
 		env?: Record<string, string>;
 		env_from_shell?: string[];
+		add_command?: string;
 		setup_instructions?: string[];
 	};
 }

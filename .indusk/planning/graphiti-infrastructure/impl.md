@@ -429,20 +429,10 @@ Make Graphiti reachable from a Claude Code session and integrated into the workf
 ### Implementation
 
 #### MCP server registration
-- [ ] Update `apps/indusk-mcp/src/bin/commands/init.ts` to register the Graphiti MCP server in `.mcp.json` automatically when the graphiti extension is enabled. Use `claude mcp add -t http -s project graphiti http://localhost:8100/mcp` (matching how `dash0` is registered today). Skip registration if `.mcp.json` already has a `graphiti` entry. Print `added: graphiti MCP server (http://localhost:8100/mcp)` in the `[MCP config]` section of init output.
-- [ ] Verify the Graphiti container actually serves Streamable HTTP at `/mcp`. The container reports `{"status":"healthy","service":"graphiti-mcp"}` on `/health` and `transport: "http"` in `docker/graphiti-config.yaml`. Confirm `/mcp` is the correct endpoint by exercising the same connection path that `GraphitiClient` already uses (`StreamableHTTPClientTransport(new URL(serverUrl))`). If the endpoint is something other than `/mcp`, adjust both `init.ts` and `infra-config.ts` consistently and document it.
-- [ ] Update `apps/indusk-mcp/extensions/graphiti/manifest.json` to declare the MCP server registration so it's part of the extension's contract:
-  ```json
-  {
-    "mcp_server": {
-      "name": "graphiti",
-      "type": "http",
-      "url": "http://localhost:8100/mcp",
-      "setup_instructions": "Registered automatically by indusk init when graphiti extension is enabled"
-    }
-  }
-  ```
-- [ ] Make `indusk update` re-add the Graphiti MCP server to `.mcp.json` if it's missing — same idempotent pattern as the rest of the MCP config step in init.
+- [x] Update `apps/indusk-mcp/src/bin/commands/init.ts` to register the Graphiti MCP server in `.mcp.json` automatically. Uses `claude mcp add -t http -s project graphiti http://localhost:8100/mcp`. Skips if `.mcp.json` already has a `graphiti` entry (or always re-adds with `--force`). Prints `added: graphiti MCP server (http://localhost:8100/mcp)` in the `[MCP config]` section. Registration is unconditional (not gated on the extension manifest existing) because the graphiti extension is enabled by default and the registration is cheap to skip. (init.ts:354-368)
+- [x] Verified the Graphiti container serves Streamable HTTP at `http://localhost:8100/mcp`. `POST /mcp` with proper headers (`Content-Type: application/json`, `Accept: application/json,text/event-stream`) returns `200 OK` with `Content-Type: text/event-stream` and a valid `initialize` response. Server identifies as `Graphiti Agent Memory v1.27.0`. `tools/list` returns 9 tools including `add_memory`, `search_nodes`, `search_memory_facts`, `get_status`. The `GraphitiClient` wrapper already uses this endpoint (`StreamableHTTPClientTransport`) so no changes to `infra-config.ts` needed.
+- [x] Update `apps/indusk-mcp/extensions/graphiti/manifest.json` to declare the MCP server registration. Added top-level `mcp_server` field (matches existing `ExtensionManifest` schema in `extension-loader.ts`, not nested under `provides`) with `type: "http"`, `url`, `add_command`, and `setup_instructions` array. Also added `add_command` to the `ExtensionManifest` interface so other extensions can declare their own. (manifest.json + extension-loader.ts:46-56)
+- [x] Make `indusk update` re-add any extension's MCP server if it's missing. Generalised: update.ts now reads `manifest.mcp_server.add_command` for each enabled built-in extension and runs it iff the server is absent from `.mcp.json`. Idempotent. Logs `{ext}: registered MCP server` when it adds, stays silent when present. (update.ts:309-339)
 
 #### Internal helper (kept, not exposed)
 - [ ] Add `getProjectGroupId()` helper in `apps/indusk-mcp/src/lib/config.ts` (or wherever the project name is read) that returns the project's Graphiti group id. Defaults to the project directory basename, overridable via `.indusk/config.json` `graphiti.groupId` field. All internal episode capture (skills, catchup, etc.) uses this so the group id is consistent everywhere.
