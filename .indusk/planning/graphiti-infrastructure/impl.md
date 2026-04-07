@@ -439,18 +439,10 @@ Make Graphiti reachable from a Claude Code session and integrated into the workf
 - [ ] Verify `GraphitiClient` still functions after the agent gains direct access. The wrapper class is for internal indusk-mcp code paths only — no behavior change required, just confirm tests still pass. (deferred to build/test step)
 
 #### Skill: graphiti (rewrite with real tool calls)
-- [ ] Rewrite `apps/indusk-mcp/extensions/graphiti/skill.md` to replace pseudocode (`addEpisode("name", "body", { groupId: "..." })`) with real tool invocations. Examples:
-  ```
-  mcp__graphiti__add_memory({
-    name: "auth-approach-decision",
-    episode_body: "We chose JWT with refresh tokens over session cookies because the API serves both web and mobile clients. Session cookies don't work well with React Native.",
-    group_id: "myproject",
-    source: "text"
-  })
-  ```
-- [ ] Document the four real Graphiti tools the agent now has and what each one is for: `add_memory` (capture), `search_nodes` (entity search), `search_memory_facts` (fact/relationship search), `get_status` (health).
-- [ ] Add a "Capture and Recall" section to the skill explaining when episodes are written automatically (by other skills) vs when the agent should write them manually.
-- [ ] After editing the source, sync the installed skill: `cp apps/indusk-mcp/extensions/graphiti/skill.md .claude/skills/graphiti/SKILL.md`.
+- [x] Rewrote `apps/indusk-mcp/extensions/graphiti/skill.md` to replace all `addEpisode(...)` pseudocode with real `mcp__graphiti__add_memory({...})` tool invocations. Five sections cover Capturing a Decision, Capturing a Correction, Searching Before Acting, Capturing a Retrospective Finding, Recall at Session Start.
+- [x] Documented all 9 real Graphiti tools (5 commonly used: add_memory, search_nodes, search_memory_facts, get_episodes, get_status; 4 cleanup tools used sparingly: delete_episode, delete_entity_edge, get_entity_edge, clear_graph). Tool surface table shows purpose for each.
+- [x] Added "Capture Triggers (Where Episodes Come From)" section listing the 5 trigger points (planner brief, planner ADR, work correction, retrospective lesson, retrospective wdid) so the agent knows episodes come from skills, not direct calls. Manual `add_memory` is documented as the exception, not the rule.
+- [x] Synced source skill to `.claude/skills/graphiti/SKILL.md`. Discovered that the graphiti skill was never installed in this project — `.indusk/extensions/graphiti/` only had `.env`, no manifest, no SKILL.md in `.claude/skills/`. Manually created the directory, copied both files. Bug noted: init does install graphiti skill on first init, but pre-existing projects (like infinitedusky from before the graphiti extension landed) need `init --force` or a manual sync. Worth a follow-up to make `update` install missing extension skills, but out of scope for Phase 5.5 (the immediate fix is done).
 
 #### Skill: planner (capture triggers)
 - [ ] In `apps/indusk-mcp/skills/planner.md`, add a "Capturing Decisions" section. After a brief is accepted (status changes from `draft` to `accepted`), call `mcp__graphiti__add_memory` with:

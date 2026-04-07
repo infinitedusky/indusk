@@ -33,6 +33,10 @@
       "env": {
         "PROJECT_ROOT": "."
       }
+    },
+    "graphiti": {
+      "type": "http",
+      "url": "http://localhost:8100/mcp"
     }
   }
 }
