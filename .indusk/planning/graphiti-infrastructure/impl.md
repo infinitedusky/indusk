@@ -435,8 +435,8 @@ Make Graphiti reachable from a Claude Code session and integrated into the workf
 - [x] Make `indusk update` re-add any extension's MCP server if it's missing. Generalised: update.ts now reads `manifest.mcp_server.add_command` for each enabled built-in extension and runs it iff the server is absent from `.mcp.json`. Idempotent. Logs `{ext}: registered MCP server` when it adds, stays silent when present. (update.ts:309-339)
 
 #### Internal helper (kept, not exposed)
-- [ ] Add `getProjectGroupId()` helper in `apps/indusk-mcp/src/lib/config.ts` (or wherever the project name is read) that returns the project's Graphiti group id. Defaults to the project directory basename, overridable via `.indusk/config.json` `graphiti.groupId` field. All internal episode capture (skills, catchup, etc.) uses this so the group id is consistent everywhere.
-- [ ] Verify `GraphitiClient` still functions after the agent gains direct access. The wrapper class is for internal indusk-mcp code paths only — no behavior change required, just confirm tests still pass.
+- [x] Added `getProjectGroupId()` helper in `apps/indusk-mcp/src/lib/config.ts`. Resolution order: `.indusk/config.json` `graphiti.groupId` field if set, else `basename(projectRoot)`. Added optional `graphiti.groupId` field to the `InduskConfig` interface so projects can override the directory-based default. (config.ts:43-58)
+- [ ] Verify `GraphitiClient` still functions after the agent gains direct access. The wrapper class is for internal indusk-mcp code paths only — no behavior change required, just confirm tests still pass. (deferred to build/test step)
 
 #### Skill: graphiti (rewrite with real tool calls)
 - [ ] Rewrite `apps/indusk-mcp/extensions/graphiti/skill.md` to replace pseudocode (`addEpisode("name", "body", { groupId: "..." })`) with real tool invocations. Examples:

@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 export interface VerifyToolConfig {
 	tool: string;
@@ -17,6 +17,14 @@ export interface InduskConfig {
 		otel?: boolean;
 		testRunner?: string;
 		linter?: string;
+	};
+	graphiti?: {
+		/**
+		 * Group id used for project-specific Graphiti episodes. Defaults to the
+		 * project directory basename. Override here if the directory name differs
+		 * from the desired group id (e.g. shared monorepo, renamed project).
+		 */
+		groupId?: string;
 	};
 }
 
@@ -48,4 +56,20 @@ export function getPlanningDir(projectRoot: string): string {
 
 	// Default to new path (will be created by init)
 	return newPath;
+}
+
+/**
+ * Get the Graphiti group id for project-specific episodes.
+ *
+ * Resolution order:
+ *   1. .indusk/config.json `graphiti.groupId` if set
+ *   2. Project directory basename
+ *
+ * Use `[getProjectGroupId(root), "shared"]` as the default group_ids list when
+ * searching Graphiti — this gives both project-scoped and cross-project knowledge.
+ */
+export function getProjectGroupId(projectRoot: string): string {
+	const config = readConfig(projectRoot);
+	if (config?.graphiti?.groupId) return config.graphiti.groupId;
+	return basename(projectRoot);
 }
