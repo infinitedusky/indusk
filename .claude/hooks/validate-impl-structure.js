@@ -2,14 +2,20 @@
 /**
  * PreToolUse hook: validates that impl phases have all four gate sections.
  *
- * Every phase must have: implementation items, Verification, OTel, Context, Document.
+ * Every phase must have: implementation items, Verification, OTel*, Context, Document.
  * Sections can opt out with (none needed), (not applicable), or skip-reason: {why}.
+ *
+ * *OTel section is conditional on the project's `otel.role` in .indusk/config.json:
+ *   - unset or "service": OTel section is required (default behavior)
+ *   - "library" / "tool" / "none": OTel section is NOT required (gate silenced)
+ * This mirrors `shouldEmitOtelGate()` in apps/indusk-mcp/src/lib/config.ts.
  *
  * Exit 0 = allow the edit
  * Exit 2 = block the edit (stderr sent to agent as feedback)
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 // Read hook input from stdin
 let input = "";
@@ -25,6 +31,43 @@ const filePath = toolInput.file_path ?? "";
 if (!filePath.endsWith("/impl.md") && !filePath.endsWith("\\impl.md")) {
 	process.exit(0);
 }
+
+/**
+ * Find the project root by walking up from a starting directory looking for
+ * a .indusk/ or .claude/ directory. Falls back to event.cwd if none found.
+ * Mirrors the pattern used in check-catchup.js.
+ */
+function findProjectRoot(startDir) {
+	let dir = startDir;
+	for (let i = 0; i < 10; i++) {
+		if (existsSync(`${dir}/.indusk`) || existsSync(`${dir}/.claude`)) return dir;
+		const parent = resolve(dir, "..");
+		if (parent === dir) break;
+		dir = parent;
+	}
+	return startDir;
+}
+
+/**
+ * Whether the OTel gate should fire for this project. Reads .indusk/config.json
+ * and checks otel.role. Returns true if the config is missing, if otel.role is
+ * unset, or if otel.role is "service" — matches shouldEmitOtelGate() in
+ * apps/indusk-mcp/src/lib/config.ts exactly.
+ */
+function shouldEmitOtelGate(projectRoot) {
+	const configPath = `${projectRoot}/.indusk/config.json`;
+	if (!existsSync(configPath)) return true;
+	try {
+		const config = JSON.parse(readFileSync(configPath, "utf-8"));
+		const role = config?.otel?.role;
+		return role === undefined || role === "service";
+	} catch {
+		return true; // on parse error, preserve default behavior
+	}
+}
+
+const projectRoot = findProjectRoot(event.cwd ?? process.cwd());
+const otelGateEnabled = shouldEmitOtelGate(projectRoot);
 
 // Check for skip-gates escape hatch
 const newContent = toolInput.new_string ?? toolInput.content ?? "";
@@ -100,10 +143,13 @@ const body = fmMatch ? newFullContent.slice(fmMatch[0].length) : newFullContent;
 const workflowMatch = frontmatter.match(/workflow:\s*(bugfix|refactor|feature|spike)/);
 const workflow = workflowMatch ? workflowMatch[1] : "feature";
 
-// Different workflows have different requirements
+// Different workflows have different requirements.
+// OTel is further gated on the project's `otel.role` in .indusk/config.json —
+// libraries/tools/none opt out of the OTel gate entirely. Workflows that normally
+// require OTel (feature, refactor) will only require it when otelGateEnabled is true.
 const requirements = {
-	feature: { verification: true, otel: true, context: true, document: true },
-	refactor: { verification: true, otel: true, context: true, document: true },
+	feature: { verification: true, otel: otelGateEnabled, context: true, document: true },
+	refactor: { verification: true, otel: otelGateEnabled, context: true, document: true },
 	bugfix: { verification: true, otel: false, context: false, document: true },
 	spike: { verification: false, otel: false, context: false, document: false },
 }[workflow];

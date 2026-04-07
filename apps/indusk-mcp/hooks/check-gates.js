@@ -2,11 +2,16 @@
 /**
  * PreToolUse hook: blocks phase transitions in impl.md when gates are incomplete.
  *
+ * The OTel gate is conditional on the project's `otel.role` in .indusk/config.json:
+ *   - unset or "service": OTel gate is enforced (default)
+ *   - "library" / "tool" / "none": OTel gate is silenced (mirrors validate-impl-structure)
+ *
  * Exit 0 = allow the edit
  * Exit 2 = block the edit (stderr sent to agent as feedback)
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 // Read hook input from stdin
 let input = "";
@@ -115,13 +120,56 @@ function detectWorkflow(content) {
 	return m ? m[1] : "feature";
 }
 
-// Which gate types are required per workflow
-const WORKFLOW_GATES = {
+/**
+ * Find the project root by walking up from a starting directory looking for
+ * a .indusk/ or .claude/ directory. Falls back to startDir if none found.
+ */
+function findProjectRoot(startDir) {
+	let dir = startDir;
+	for (let i = 0; i < 10; i++) {
+		if (existsSync(`${dir}/.indusk`) || existsSync(`${dir}/.claude`)) return dir;
+		const parent = resolve(dir, "..");
+		if (parent === dir) break;
+		dir = parent;
+	}
+	return startDir;
+}
+
+/**
+ * Whether the OTel gate should fire for this project. Reads .indusk/config.json
+ * and checks otel.role. Returns true if missing/unset/"service", false for
+ * library/tool/none. Mirrors shouldEmitOtelGate() in apps/indusk-mcp/src/lib/config.ts.
+ */
+function shouldEmitOtelGate(projectRoot) {
+	const configPath = `${projectRoot}/.indusk/config.json`;
+	if (!existsSync(configPath)) return true;
+	try {
+		const config = JSON.parse(readFileSync(configPath, "utf-8"));
+		const role = config?.otel?.role;
+		return role === undefined || role === "service";
+	} catch {
+		return true;
+	}
+}
+
+const projectRoot = findProjectRoot(event.cwd ?? process.cwd());
+const otelGateEnabled = shouldEmitOtelGate(projectRoot);
+
+// Which gate types are required per workflow.
+// OTel is filtered out below when the project opts out via otel.role.
+const WORKFLOW_GATES_BASE = {
 	feature: ["verification", "otel", "context", "document"],
 	refactor: ["verification", "otel", "context", "document"],
 	bugfix: ["verification", "document"],
 	spike: [],
 };
+
+const WORKFLOW_GATES = Object.fromEntries(
+	Object.entries(WORKFLOW_GATES_BASE).map(([wf, gates]) => [
+		wf,
+		otelGateEnabled ? gates : gates.filter((g) => g !== "otel"),
+	]),
+);
 
 // Parse phases from the NEW content (after edit) and OLD content (before edit)
 function parsePhases(content) {

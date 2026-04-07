@@ -443,10 +443,10 @@ The fix is at the planner stage, not at gate enforcement: the planner should not
 - [x] Synced source → `.claude/skills/planner/SKILL.md`.
 
 #### Hooks
-- [ ] Update `.claude/hooks/validate-impl-structure.js` to skip the OTel section requirement when `otel?.role` is non-service. The hook currently requires every `## Phase N` block to contain `#### Phase N OTel`, `#### Phase N Verification`, `#### Phase N Context`, `#### Phase N Document`. Make the OTel requirement conditional on `shouldEmitOtelGate(projectRoot)`. Read the project root by walking up from `cwd` (same pattern as `check-catchup.js`).
-- [ ] Update `.claude/hooks/check-gates.js` similarly so phase advancement is not blocked waiting for an OTel section that never existed.
-- [ ] Sync hooks: source lives in `apps/indusk-mcp/hooks/`, installed copies in `.claude/hooks/`. Both `validate-impl-structure.js` and `check-gates.js` need to be updated and synced.
-- [ ] Tests for the hooks (smoke level): write a temporary impl with no OTel section + a `.indusk/config.json` with `otel.role: library`. Run `validate-impl-structure.js` against it. Should exit 0 (allow). Then change config to `otel.role: service`. Should exit 2 (block) because the OTel section is missing.
+- [x] Updated `validate-impl-structure.js` (both source `apps/indusk-mcp/hooks/` and installed `.claude/hooks/`). Added inlined `findProjectRoot()` and `shouldEmitOtelGate()` helpers (hooks are standalone JS, can't import the TS helper). The `requirements` object now sets `otel: otelGateEnabled` for `feature` and `refactor` workflows. Result: when `otel.role` is unset/`service`, behavior is unchanged. When it's `library`/`tool`/`none`, the OTel requirement is dropped — phases without OTel sections pass validation.
+- [x] Updated `check-gates.js` (both copies) similarly. The `WORKFLOW_GATES` table is now derived from `WORKFLOW_GATES_BASE` by filtering out `"otel"` when `otelGateEnabled` is false. Result: phase advancement is no longer blocked waiting for an OTel section that should never exist for opt-out projects.
+- [x] Sources synced from `apps/indusk-mcp/hooks/` ↔ `.claude/hooks/`. Both `validate-impl-structure.js` and `check-gates.js` are identical between source and installed locations.
+- [ ] Tests for the hooks (smoke level): write a temporary impl with no OTel section + a `.indusk/config.json` with `otel.role: library`. Run `validate-impl-structure.js` against it. Should exit 0 (allow). Then change config to `otel.role: service`. Should exit 2 (block) because the OTel section is missing. (Deferred to verification step — will exercise via the actual sweep that comes next, since this repo will set `otel.role: library` and the sweep will remove all OTel sections, and re-running list_plans + opening impl.md will exercise the hooks against the real change.)
 
 #### Set indusk-mcp to library
 - [ ] Update `infinitedusky/.indusk/config.json`: add `"otel": { "role": "library" }`.
