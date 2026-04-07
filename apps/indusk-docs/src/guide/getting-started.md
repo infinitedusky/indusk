@@ -49,7 +49,7 @@ See [Local Mode](./local-mode) for details on using InDusk without touching comm
 - `CLAUDE.md` — project context template (skipped in local mode)
 - `.indusk/planning/` — directory for plan documents
 - `.indusk/config.json` — project profile (mode, detected tooling, verify contract)
-- `.mcp.json` — MCP server config (InDusk + CodeGraphContext)
+- `.mcp.json` — MCP server config (InDusk, CodeGraphContext, **Graphiti** ≥ v1.10.0, plus optional dash0 / excalidraw)
 - `.vscode/settings.json` — Biome integration (skipped in local mode)
 - `biome.json` — base quality config (`.indusk/biome.json` in local mode)
 - `instrumentation.ts` — OpenTelemetry auto-instrumentation (skipped in local mode)
@@ -65,9 +65,10 @@ See [Local Mode](./local-mode) for details on using InDusk without touching comm
 ### 4. Start coding
 
 Open the project in Claude Code. You should see:
-- Skills available (`/plan`, `/work`, `/verify`, `/context`, `/document`, `/retrospective`)
-- InDusk MCP tools (20+ tools)
-- CodeGraphContext MCP tools (19 tools)
+- Skills available (`/planner`, `/work`, `/verify`, `/context`, `/document`, `/retrospective`, `/catchup`, `/handoff`, `/jj`)
+- **InDusk MCP tools** — lessons, plans, context, extensions, code graph
+- **CodeGraphContext MCP tools** — structural code intelligence (`graph_find`, `query_dependencies`, `find_dead_code`, …)
+- **Graphiti MCP tools** (≥ v1.10.0) — temporal knowledge graph (`add_memory`, `search_nodes`, `search_memory_facts`, …). See [Graphiti reference](/reference/tools/graphiti). Episodes are written automatically by the planner/work/retrospective skills at trigger points; recall happens at the start of every `/catchup`.
 
 Run `/catchup` to verify everything is connected.
 

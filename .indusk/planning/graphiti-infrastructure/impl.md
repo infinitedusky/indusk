@@ -541,15 +541,16 @@ Make Graphiti reachable from a Claude Code session and integrated into the workf
 - [x] `pnpm check` — clean for Phase 5.5 changes (scoped check on indusk-mcp/src). Pre-existing nested biome config in apps/otel-test* still blocks root-level invocation.
 
 #### Phase 5.5 Context
-- [ ] Update CLAUDE.md Architecture: add Graphiti to the MCP servers list with its purpose ("temporal knowledge graph — captures decisions, contradictions, and lessons across sessions"). Document the four agent-facing tools.
-- [ ] Update CLAUDE.md Conventions: "After a brief or ADR is accepted, the planner skill captures the decision as a Graphiti episode. Corrections logged via `context learn` are also captured. Catchup recalls relevant episodes at session start. The agent should not need to manually call Graphiti tools in normal flow — the skills handle it."
-- [ ] Update CLAUDE.md Key Decisions: "Graphiti registered directly as an MCP server in `.mcp.json` (Option C) — see `.indusk/planning/graphiti-infrastructure/impl.md` Phase 5.5". `GraphitiClient` wrapper kept for internal use only.
+- [x] Updated CLAUDE.md Architecture: added a "MCP servers" subsection right after the indusk-infra description listing all 5 registered servers (indusk, codegraphcontext, graphiti, dash0, excalidraw) with their purposes. Graphiti entry documents all 9 tools, group id semantics (`{project}` vs `shared`), and the auto-registration via `indusk init` ≥ v1.10.0.
+- [x] Updated CLAUDE.md Conventions: added a paragraph documenting the capture/recall trigger points (planner brief acceptance, planner ADR acceptance, work corrections, retrospective lessons, catchup recall). Made explicit that the agent rarely needs to call `mcp__graphiti__add_memory` directly — trust the skills.
+- [x] Updated CLAUDE.md Key Decisions: added an entry for "Graphiti registered directly in `.mcp.json` (Option C)" right after the otel.role entry. Documents that `GraphitiClient` is kept for internal use only and that capture is automatic at trigger points.
 
 #### Phase 5.5 Document
-- [ ] Update `apps/indusk-docs/src/reference/extensions/graphiti.md` (or create if missing) with the new tool surface and capture/recall flow.
-- [ ] Add a "Capture and Recall" section to the planner reference page showing where in the lifecycle Graphiti is touched.
-- [ ] Update the Getting Started page to mention Graphiti is now an exposed MCP server (one extra tool group the agent has).
-- [ ] Add a Mermaid sequence diagram to the graphiti reference page: brief accepted → planner calls add_memory → Graphiti extracts entities → next session catchup retrieves → agent uses recalled context.
+- [x] Created `apps/indusk-docs/src/reference/tools/graphiti.md` (no `extensions/` subdir exists; tools/ is the correct home — `infrastructure.md` already covers the container, this new page covers the agent-facing MCP server). Documents what Graphiti stores (episodes/entities/facts/groups), group ID conventions, all 9 tools, capture triggers, recall, manual use cases, health check, what NOT to capture. Cross-links to infrastructure, planner, and catchup pages.
+- [x] Added "Capture and Recall" section to `apps/indusk-docs/src/reference/skills/plan.md` between MCP Tools and Gotchas. Documents the brief-accepted-{plan} and adr-{plan} triggers, the project group resolution, graceful degradation, and cross-links to the catchup recall step and the full lifecycle diagram.
+- [x] Updated Getting Started page: extended `.mcp.json` description to include Graphiti, replaced the outdated "InDusk MCP tools (20+) / CodeGraphContext (19)" tool list with three labeled groups including the new Graphiti tools and a one-line description of capture/recall trigger behavior. Also fixed a stale `/plan` reference to `/planner` and added the new domain skills (`/catchup`, `/handoff`, `/jj`) to the slash command list.
+- [x] Added Mermaid sequence diagram to `graphiti.md` (Capture and Recall Lifecycle section): User → planner → Graphiti `add_memory` for brief and ADR acceptance → work skill → Graphiti for corrections → retrospective skill → Graphiti for lessons → background entity extraction → next session's catchup → `search_nodes` → recalled context surfaced. Shows the full loop in one diagram.
+- [x] Added Graphiti to the VitePress sidebar (`apps/indusk-docs/src/.vitepress/config.ts` Tools section, between CodeGraphContext and Biome). Lesson #1: always update the sidebar when creating a new docs page.
 
 ## Phase 6: End-to-End Validation
 

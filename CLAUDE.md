@@ -35,6 +35,13 @@ infinitedusky/
 - **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme (zinc-950 bg, amber-400 accents). Runs in Docker via composable.env for local dev.
 - **indusk-mcp**: InDusk MCP server — dev system tooling with MCP tools, CLI (`init`/`update`/`init-docs`/`extensions`/`check-gates`/`infra`), skills, hooks, lessons, and extensions. `.indusk/extensions/` holds extension manifests (built-in + third-party). Published as `@infinitedusky/indusk-mcp`. OTel templates (`templates/instrumentation.ts`, `templates/filtering-exporter.ts`, `templates/logger.ts`, `templates/instrumentation.py`) are scaffolded by `init` into target projects.
 - **indusk-infra**: Bundled Docker container (`docker/Dockerfile.infra`) running FalkorDB + Graphiti MCP server. One container for all graph infrastructure. FalkorDB on port 6379, Graphiti on port 8100. Persistent volume `indusk-data` at `/data`. `GOOGLE_API_KEY` env var for Gemini LLM/embeddings. OTel export optional via `OTEL_EXPORTER_OTLP_ENDPOINT`.
+
+**MCP servers** (registered in `.mcp.json` per project):
+- **`indusk`** — InDusk MCP tools (lessons, plans, context, extensions, code graph)
+- **`codegraphcontext`** (CGC) — structural code intelligence via FalkorDB graph queries
+- **`graphiti`** — temporal knowledge graph (Phase 5.5 of graphiti-infrastructure). Captures decisions, contradictions, and lessons across sessions. 9 tools: `add_memory`, `search_nodes`, `search_memory_facts`, `get_episodes`, `get_entity_edge`, `delete_episode`, `delete_entity_edge`, `clear_graph`, `get_status`. Group ids isolate knowledge by project (`infinitedusky`, `numero`, etc.) plus a `shared` group for cross-project conventions. Registered automatically by `indusk init` ≥ v1.10.0.
+- **`dash0`** — observability (logs, traces, metrics) via the Dash0 hosted MCP. Use traces-first when investigating.
+- **`excalidraw`** — hand-drawn diagrams.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
 
 **Skills:**
@@ -70,6 +77,7 @@ infinitedusky/
 - After each retrospective, ask if mistakes could be caught by a Biome rule — if yes, add to biome.json and biome-rationale.md
 - Before touching shared code, query the code graph (`analyze_code_relationships`) to understand blast radius
 - Create `.cgcignore` in new projects to exclude build artifacts from graph indexing
+- **Graphiti capture is automatic at trigger points, not manual.** The planner skill writes a `brief-accepted-{plan}` episode when a brief moves to `accepted` and an `adr-{plan}` Y-statement when an ADR is accepted. The work skill writes a `correction-{slug}` episode when the user confirms `context learn`. The retrospective skill writes one episode per "What We Learned" and "What We'd Do Differently" item. The catchup skill recalls recent decisions and lessons via `mcp__graphiti__search_nodes` at session start (Step 4.5) and surfaces them in the catchup summary. **The agent rarely needs to call `mcp__graphiti__add_memory` directly** — trust the skills to capture, and let `/catchup` recall.
 - `indusk infra start` to start the infrastructure container (FalkorDB + Graphiti). One command, idempotent. Creates `~/.indusk/config.env` on first run.
 - `npx indusk-mcp init` to set up a new project with skills, CLAUDE.md, biome, OTel instrumentation, and MCP config
 - `init` scaffolds OTel: `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts` (Node.js/Next.js) or `instrumentation.py` (Python) — every project is observable from day one
@@ -94,6 +102,7 @@ infinitedusky/
 - Bundled `indusk-infra` container (FalkorDB + Graphiti), global CLI install, `~/.indusk/config.env` for secrets — see `.indusk/planning/graphiti-infrastructure/adr.md`
 - Local init mode: `.indusk/` as home directory, `config.json` as project profile, `--local` flag for team repos — see `.indusk/planning/local-init-mode/adr.md`
 - OTel gate is role-aware via `otel.role` in `.indusk/config.json` (Phase 5.25 of graphiti-infrastructure). Unset/`service` = gate fires (default). `library`/`tool`/`none` = gate silenced. The planner skill stops writing OTel sections, and both gate-enforcement hooks honor the same rule. Backwards compatible: projects without the field behave exactly as before. indusk-mcp itself is `library`.
+- Graphiti registered directly in `.mcp.json` as a top-level MCP server (Option C from Phase 5.5 of graphiti-infrastructure). Agent calls `mcp__graphiti__*` tools directly (no `indusk` wrapper). `GraphitiClient` typed wrapper at `apps/indusk-mcp/src/lib/graphiti-client.ts` is kept for internal use only — skills/catchup that want typed defaults (project group + `shared` resolution, error swallowing) use it; the agent does not. Capture is automatic at trigger points (planner brief/ADR, work corrections, retro lessons), not manual. Recall happens in catchup Step 4.5.
 
 ## Known Gotchas
 
