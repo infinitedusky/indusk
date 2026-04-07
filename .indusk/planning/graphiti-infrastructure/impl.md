@@ -434,13 +434,13 @@ The fix is at the planner stage, not at gate enforcement: the planner should not
 ### Implementation
 
 #### Schema and config
-- [ ] Add optional `otel?: { role?: "service" | "library" | "tool" | "none" }` to `InduskConfig` interface in `apps/indusk-mcp/src/lib/config.ts`. Sibling to existing `graphiti?.groupId` field. No default value. JSDoc comment explains: "service = produces telemetry I want to collect (default behavior). library = ships to other people, never produces telemetry. tool = short-lived script, telemetry overhead exceeds value. none = explicit opt-out for legacy/prototype/internal experiments."
-- [ ] Add helper `shouldEmitOtelGate(projectRoot: string): boolean` in `apps/indusk-mcp/src/lib/config.ts`. Returns `true` if `otel?.role` is undefined or `"service"`, `false` otherwise. All planner/hook code uses this helper instead of inline conditionals.
+- [x] Added optional `otel?: { role?: "service" | "library" | "tool" | "none" }` to `InduskConfig` interface in `apps/indusk-mcp/src/lib/config.ts`. Sibling to existing `graphiti?.groupId`. No default value. JSDoc explicitly documents that unset = behaves as `service` (backwards compatible). (config.ts:30-49)
+- [x] Added helper `shouldEmitOtelGate(projectRoot: string): boolean` in `apps/indusk-mcp/src/lib/config.ts`. Returns `true` when config is missing, when `otel.role` is unset, or when `otel.role === "service"`. Returns `false` only for explicit opt-out (`library` / `tool` / `none`). Used by planner and the two hooks. (config.ts:91-108)
 
 #### Planner skill
-- [ ] Update `apps/indusk-mcp/skills/planner.md` impl template section. The template currently shows `#### Phase N OTel` as one of five required sub-sections. Change wording: it's now **conditional** — only emit if the project's `otel.role` is undefined or `"service"`. For non-service projects, omit the entire `#### Phase N OTel` block.
-- [ ] Add a one-paragraph "OTel gate role" section to the planner skill that explains the field, the values, and when the gate fires. Cross-reference the same section in the verify skill if applicable.
-- [ ] Sync source → `.claude/skills/planner/SKILL.md`.
+- [x] Updated `apps/indusk-mcp/skills/planner.md` impl template (around line 283). Added an `{OPTIONAL: ...}` annotation above the `#### Phase 1 OTel` block explaining that the section is omitted when `otel.role` is `library` / `tool` / `none`. The literal Phase 1 OTel example still shows in the template for `service` projects but is clearly marked optional.
+- [x] Added "OTel gate is conditional on `otel.role`" paragraph to step 6 of the planner workflow (right after Gate policy). Documents the rule: planner reads `.indusk/config.json` (or uses `shouldEmitOtelGate(projectRoot)`), gate fires when role is unset or `"service"`, gate is silenced for `library`/`tool`/`none`. Other gates (verify, context, document) always apply.
+- [x] Synced source → `.claude/skills/planner/SKILL.md`.
 
 #### Hooks
 - [ ] Update `.claude/hooks/validate-impl-structure.js` to skip the OTel section requirement when `otel?.role` is non-service. The hook currently requires every `## Phase N` block to contain `#### Phase N OTel`, `#### Phase N Verification`, `#### Phase N Context`, `#### Phase N Document`. Make the OTel requirement conditional on `shouldEmitOtelGate(projectRoot)`. Read the project root by walking up from `cwd` (same pattern as `check-catchup.js`).

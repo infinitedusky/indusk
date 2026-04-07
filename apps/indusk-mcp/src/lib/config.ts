@@ -26,6 +26,23 @@ export interface InduskConfig {
 		 */
 		groupId?: string;
 	};
+	otel?: {
+		/**
+		 * Project's relationship to OpenTelemetry. Controls whether the OTel gate
+		 * fires when the planner writes impl phases and when the validate-impl-structure
+		 * / check-gates hooks evaluate them.
+		 *
+		 * - `service`: produces telemetry I want to collect (default behavior; gate fires)
+		 * - `library`: ships to other people, never produces telemetry (gate silent)
+		 * - `tool`: short-lived script, telemetry overhead exceeds value (gate silent)
+		 * - `none`: explicit opt-out for legacy/prototype/internal experiments (gate silent)
+		 *
+		 * **If unset, behaves as `service`** (gate fires). This preserves backwards
+		 * compatibility — existing projects without the field continue to get the OTel
+		 * gate enforced. Opt-out is explicit; opt-in is implicit.
+		 */
+		role?: "service" | "library" | "tool" | "none";
+	};
 }
 
 const CONFIG_PATH = ".indusk/config.json";
@@ -72,4 +89,24 @@ export function getProjectGroupId(projectRoot: string): string {
 	const config = readConfig(projectRoot);
 	if (config?.graphiti?.groupId) return config.graphiti.groupId;
 	return basename(projectRoot);
+}
+
+/**
+ * Whether the OTel gate should fire for this project.
+ *
+ * Returns `true` if `.indusk/config.json` is missing, missing `otel.role`, or
+ * has `otel.role: "service"`. Returns `false` only when the project explicitly
+ * opts out via `otel.role: "library" | "tool" | "none"`.
+ *
+ * Used by:
+ *   - planner skill (whether to write `#### Phase N OTel` sections into impl.md)
+ *   - validate-impl-structure hook (whether to require an OTel section at write time)
+ *   - check-gates hook (whether to block phase advancement on missing OTel)
+ *
+ * Backwards compatible: projects without the new field behave exactly as before.
+ */
+export function shouldEmitOtelGate(projectRoot: string): boolean {
+	const config = readConfig(projectRoot);
+	const role = config?.otel?.role;
+	return role === undefined || role === "service";
 }
