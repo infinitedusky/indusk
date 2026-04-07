@@ -14,7 +14,9 @@ describe("parseImpl", () => {
 	});
 
 	it("parses an archived completed impl", () => {
-		const parsed = parseImpl(join(projectRoot, ".indusk/planning/archive/gate-policy-enforcement/impl.md"));
+		const parsed = parseImpl(
+			join(projectRoot, ".indusk/planning/archive/gate-policy-enforcement/impl.md"),
+		);
 		expect(parsed.status).toBe("completed");
 		expect(parsed.phases.length).toBeGreaterThanOrEqual(1);
 	});
@@ -121,7 +123,9 @@ status: in-progress
 	});
 
 	it("reports completion status from real impl", () => {
-		const parsed = parseImpl(join(projectRoot, ".indusk/planning/archive/gate-policy-enforcement/impl.md"));
+		const parsed = parseImpl(
+			join(projectRoot, ".indusk/planning/archive/gate-policy-enforcement/impl.md"),
+		);
 		const completions = getAllPhaseCompletions(parsed);
 
 		// Should have at least one phase

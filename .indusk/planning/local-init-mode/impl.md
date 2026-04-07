@@ -70,9 +70,6 @@ The foundation. Introduce `config.json` and move planning into `.indusk/`.
 - [x] Update `parseDependsOn` in `plan-parser.ts` — parse both `planning/` and `.indusk/planning/` prefixes in Depends On sections
 - [x] Add migration helper: if `planning/` exists at root and `.indusk/planning/` doesn't, offer to move it (print message during init/update)
 
-#### Phase 0 OTel
-- [x] (none needed — asked: "Config read/write is simple JSON parse in a CLI tool, no runtime code paths or network calls. Can I skip OTel?" — user: "yes")
-
 #### Phase 0 Verification
 - [x] `pnpm turbo test --filter=indusk-mcp` — 36/36 tests pass (also fixed pre-existing `otel-core-skill` test reference)
 - [x] `pnpm check` — no lint errors (fixed import ordering in config.ts)
@@ -105,9 +102,6 @@ The `--local` flag, `.git/info/exclude`, and settings overlay.
 - [x] Init writes `.indusk/settings-overlay.json` with hooks + permissions, then calls `applyOverlay()`
 - [x] In full mode, init still writes config.json (mode: "full") and skips overlay (writes settings directly as before)
 
-#### Phase 1 OTel
-- [x] (none needed — asked: "CLI tooling detection and file I/O, no runtime code paths. Can I skip?" — user: "yes")
-
 #### Phase 1 Verification
 - [x] `pnpm turbo test --filter=indusk-mcp` — 36/36 pass
 - [x] `pnpm check` — clean after auto-fix
@@ -139,9 +133,6 @@ Set up local-only quality tools inside `.indusk/`.
   }
   ```
 
-#### Phase 2 OTel
-- [x] (none needed — asked: "File creation only, same as prior phases. Can I skip?" — user: "yes")
-
 #### Phase 2 Verification
 - [x] `pnpm check` — clean, build passes
 - [x] Manual: tested with Jest project — .indusk/jest.config.js, biome.json, docs/index.md all created, config.json verify points to .indusk/ paths, git status clean
@@ -162,9 +153,6 @@ The overlay lifecycle — strip before PR, re-apply on update.
 - [x] `pr-clean` calls `stripOverlay()` — reads overlay, removes those keys from `.claude/settings.json`
 - [x] Add `pr-restore` command — calls `applyOverlay()` to re-merge after PR
 - [x] Update `update` command — reads config.json, re-applies overlay in local mode after updating skills/hooks
-
-#### Phase 3 OTel
-- [x] (none needed — asked: "CLI commands calling existing overlay functions. Can I skip?" — user: "yes")
 
 #### Phase 3 Verification
 - [x] `pnpm turbo test --filter=indusk-mcp` — 36/36 pass
@@ -191,9 +179,6 @@ Update all skill references and write documentation.
 - [x] Update CLAUDE.md Current State — added local init mode and config.json note
 - [x] Update CLAUDE.md Key Decisions — all `planning/` references → `.indusk/planning/`
 - [x] Run `indusk update` — plan, work, context, retrospective skills updated
-
-#### Phase 4 OTel
-- [x] (none needed — asked: "Skill file text updates, no code. Can I skip?" — user: "yes")
 
 #### Phase 4 Verification
 - [x] `pnpm check` — tests pass (36/36)

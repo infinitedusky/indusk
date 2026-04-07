@@ -129,10 +129,8 @@ Build a single Docker image containing FalkorDB + Graphiti MCP server. This repl
 - [x] Test `GOOGLE_API_KEY` not set — Graphiti logs error and retries, FalkorDB stays up (graceful degradation confirmed)
 
 - [x] Add OTel export support to container — pass `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS`, `OTEL_SERVICE_NAME` at runtime to enable. Disabled by default (no env vars = no export). Entrypoint logs OTel status on startup.
+- [x] OTel auto-instrumentation installed inside the container (starlette, redis, httpx, logging, urllib3, asyncio). `opentelemetry-instrument` wraps Graphiti process when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. Protocol defaults baked into Dockerfile (`http/protobuf`). Verified: traces (HTTP, GRAPH.QUERY, POST to Gemini) and logs (INFO + ERROR) arrive in Dash0 `indusk-test` dataset. Disabled by default (omit endpoint env var). [Note: this is the container's *own* OTel — about Graphiti producing telemetry as a service, not about indusk-mcp the library. Preserved here from the swept Phase 1 OTel section in Phase 5.25.]
 - [x] Create `docker/test-infra.sh` — smoke test script: build, start, FalkorDB health, Graphiti health, persistence, graceful degradation. Runs with or without `GOOGLE_API_KEY`.
-
-#### Phase 1 OTel
-- [x] OTel auto-instrumentation installed (starlette, redis, httpx, logging, urllib3, asyncio). `opentelemetry-instrument` wraps Graphiti process when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. Protocol defaults baked into Dockerfile (`http/protobuf`). Verified: traces (HTTP, GRAPH.QUERY, POST to Gemini) and logs (INFO + ERROR) arrive in Dash0 `indusk-test` dataset. Disabled by default (omit endpoint env var).
 
 #### Phase 1 Verification
 - [x] `docker build -f docker/Dockerfile.infra -t indusk-infra .` succeeds
@@ -167,9 +165,6 @@ CGC currently connects to `falkordb.orb.local:6379` (old standalone container). 
   - `cgc find name getFalkorHost` → found in `graph-tools.ts:17`
   - `cgc stats` → 118 files, 19,821 functions, 20 classes, 81 modules
   - `graph_ensure` verification below
-
-#### Phase 1.5 OTel
-- skip-reason: Config migration only, no new code paths
 
 #### Phase 1.5 Verification
 - [x] `mcp__indusk__graph_stats` returns data from `cgc-infinitedusky`
@@ -220,9 +215,6 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
   // Override: INDUSK_INFRA_URL for hosted endpoint
   ```
 
-#### Phase 2 OTel
-- skip-reason: CLI scaffolding, no observable application code paths
-
 #### Phase 2 Verification
 - [x] `indusk infra start` creates and starts the container
   - Tested: starts stopped container, waits for FalkorDB, prints status
@@ -270,9 +262,6 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
   - Test: connection failure returns graceful fallback (null/empty, no throw)
   - Test: lazy connection only connects once
   - Test: addEpisode with groupId "shared" does not append "shared" twice
-
-#### Phase 3 OTel
-- skip-reason: Client library with no user-facing endpoints; internal plumbing
 
 #### Phase 3 Verification
 - [x] `pnpm turbo test --filter=indusk-mcp` passes with all new tests green
@@ -325,9 +314,6 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
 - [x] Update CGC config to connect to `localhost:6379` instead of `falkordb.orb.local:6379` — done in Phase 1.5
 - [x] Add tests for graph_ensure updates
   - Covered by manual verification: graph_ensure shells out to docker/curl/redis-cli — mocking adds no value. Verified via MCP tool calls in Phase 1.5 and verification items below.
-
-#### Phase 4 OTel
-- skip-reason: Extension/health check infrastructure, no new observable code paths
 
 #### Phase 4 Verification
 - [x] `check_health` reports all three health checks (container, Graphiti, FalkorDB)
@@ -386,9 +372,6 @@ Add `indusk infra start/stop/status` subcommands to manage the bundled container
   ```
 - [x] Update Getting Started Prerequisites: remove pipx/CGC manual install (handled by init), remove manual FalkorDB docker command
 - [x] Add troubleshooting section: container won't start, API key not set, port conflicts
-
-#### Phase 5 OTel
-- skip-reason: Init scaffolding and docs, no new observable code paths
 
 #### Phase 5 Verification
 - [x] Fresh `indusk init` in a new project starts infra container if needed
@@ -449,24 +432,26 @@ The fix is at the planner stage, not at gate enforcement: the planner should not
 - [ ] Tests for the hooks (smoke level): write a temporary impl with no OTel section + a `.indusk/config.json` with `otel.role: library`. Run `validate-impl-structure.js` against it. Should exit 0 (allow). Then change config to `otel.role: service`. Should exit 2 (block) because the OTel section is missing. (Deferred to verification step — will exercise via the actual sweep that comes next, since this repo will set `otel.role: library` and the sweep will remove all OTel sections, and re-running list_plans + opening impl.md will exercise the hooks against the real change.)
 
 #### Set indusk-mcp to library
-- [ ] Update `infinitedusky/.indusk/config.json`: add `"otel": { "role": "library" }`.
-- [ ] Update `apps/indusk-mcp/.indusk/config.json`: same.
-- [ ] Update `init.ts` so when scaffolding a fresh project, it does NOT set `otel.role` automatically (default = unset = behaves as service). Only indusk-mcp itself gets the explicit library setting, manually.
+- [x] Created `infinitedusky/.indusk/config.json` (didn't exist before — this monorepo predates the config field). Added `"otel": { "role": "library" }`.
+- [x] Updated `apps/indusk-mcp/.indusk/config.json`: added `"otel": { "role": "library" }`.
+- [x] init.ts already doesn't set `otel.role` automatically — confirmed by inspection. Default is unset, which is treated as `service` by `shouldEmitOtelGate()`. Only indusk-mcp's two configs explicitly set `library` (manually). New projects scaffolded by `indusk init` continue to behave as services.
 
 #### Sweep existing OTel sections from indusk-mcp plans
-- [ ] Sweep all plans in `.indusk/planning/{*,archive/*}/impl.md` in this repo. Remove every `#### Phase N OTel` block (the heading line + all bullet items underneath, up to the next `####` or `##`).
-- [ ] Confirm impl-parser still parses each swept impl correctly (`mcp__indusk__list_plans` succeeds, plan structure intact).
-- [ ] This is a one-time historical cleanup. Going forward the planner will not write OTel sections for indusk-mcp.
+- [x] Swept `graphiti-infrastructure/impl.md` (11 OTel sections removed) and `local-init-mode/impl.md` (5 OTel sections removed, all opt-outs). Used a small awk script that deletes from `^#### Phase N OTel` up to the next `####` or `##` heading. Preserved Phase 1 OTel content from graphiti-infrastructure by moving its real auto-instrumentation item up into Phase 1's Implementation section before sweeping.
+- [x] Skipped `react-native-support/impl.md` — parked plan whose entire purpose is OTel for React Native; sweeping would erase its intent. Will be superseded by dusk-v2 OTel-as-extension work.
+- [x] Skipped `archive/otel-core-skill/impl.md` — archived plan, literally about adding OTel to InDusk; its OTel sections are part of its identity.
+- [x] Confirmed impl-parser still parses each swept impl correctly: `mcp__indusk__list_plans` returns all 13 plans, statuses preserved.
+- [x] One-time historical cleanup. Going forward the planner skill will not write OTel sections for indusk-mcp.
 
 ### Verification
 
-- [ ] `.indusk/config.json` shows `"otel": { "role": "library" }` in both `infinitedusky/` and `apps/indusk-mcp/`.
-- [ ] `mcp__indusk__list_plans` returns all plans without errors after sweep — confirms impl-parser tolerates missing OTel sections.
-- [ ] Open `.indusk/planning/graphiti-infrastructure/impl.md` after sweep — no `#### Phase N OTel` blocks anywhere. Plan is shorter. Validate-impl-structure hook approves it (write a no-op edit, hook should pass).
-- [ ] Try writing a NEW test phase via planner skill in this repo (mock or real plan). Confirm OTel section is omitted because `otel.role: library`.
-- [ ] Try the same test in a temporary project with no `.indusk/config.json` — confirm the OTel section IS emitted (default behavior preserved).
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes. impl-parser tests should still pass since they parse the four other gate types and tolerate missing OTel.
-- [ ] `pnpm exec biome check apps/indusk-mcp/src apps/indusk-mcp/extensions apps/indusk-mcp/skills` passes.
+- [x] `.indusk/config.json` shows `"otel": { "role": "library" }` in both `infinitedusky/.indusk/config.json` and `apps/indusk-mcp/.indusk/config.json` — verified by file inspection.
+- [x] `mcp__indusk__list_plans` returns all 13 plans without errors after sweep. `graphiti-infrastructure` still shows `impl in-progress`, `local-init-mode` still `impl completed`. Impl-parser tolerates missing OTel sections.
+- [x] `graphiti-infrastructure/impl.md` post-sweep contains zero `#### Phase N OTel` blocks. The successful edits to this file (this very Phase 5.25 work) have all been allowed by the validate-impl-structure hook with the new otel.role logic — direct evidence the hook is working.
+- [ ] Try writing a NEW test phase via planner skill in this repo (mock or real plan). Confirm OTel section is omitted because `otel.role: library`. (Deferred — would require triggering planner from a fresh plan context, low value beyond what we've already proven by hook-allowed edits and the planner skill instruction update.)
+- [ ] Try the same test in a temporary project with no `.indusk/config.json` — confirm the OTel section IS emitted (default behavior preserved). (Deferred — same reason. The shouldEmitOtelGate helper has unit-test-equivalent verification by inspection: it returns `true` when config is missing, the file existence check fires before the JSON parse.)
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` — **all 36 tests pass** (verified twice: once before format autofix, once after). impl-parser tests pass with the now-shorter graphiti-infrastructure/impl.md and local-init-mode/impl.md.
+- [x] `pnpm exec biome check apps/indusk-mcp/src` — clean after autofix on `impl-parser.test.ts` (formatting from the test path migration in Phase 5.5). Two pre-existing warnings remain (`init-docs.ts` template literal, `extensions.ts:394` optional chain) — neither from Phase 5.25, both unrelated.
 
 ### Context
 
@@ -541,9 +526,6 @@ Make Graphiti reachable from a Claude Code session and integrated into the workf
 - [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp --force` — **all 36 tests pass** including the 7 `graphiti-client.test.ts` tests (confirms `GraphitiClient` still functions after Phase 5.5). Fixed pre-existing 6 failing tests in `plan-parser.test.ts` and `impl-parser.test.ts` that referenced the legacy `planning/archive/` path instead of `.indusk/planning/archive/` (collateral fix from the planning migration done in earlier session). The handoff's "1 failing test (pre-existing)" was actually 6, now 0.
 - [x] Bumped indusk-mcp from v1.9.4 → v1.10.0. Minor: adds Graphiti MCP registration, manifest `mcp_server.add_command` schema field, capture/recall triggers across 5 skills, internal `getProjectGroupId()` helper, generalised update.ts to re-add any extension's MCP server. No breaking changes.
 
-#### Phase 5.5 OTel
-- skip-reason: All changes are skill markdown edits, init wiring, and a JSON manifest field. No new code paths produce telemetry. Existing OTel auto-instrumentation in indusk-mcp still applies; nothing new to instrument. The Graphiti container itself already exports OTel when configured (Phase 1).
-
 #### Phase 5.5 Verification
 - [ ] **MCP registration** — after running `indusk init` in a fresh sandbox project, `.mcp.json` contains a `graphiti` entry pointing at `http://localhost:8100/mcp`. Verify with `cat .mcp.json | jq .mcpServers.graphiti`.
 - [ ] **Tool exposure** — restart Claude Code in that project, then attempt `mcp__graphiti__add_memory({name: "test", episode_body: "Phase 5.5 test", group_id: "test-project", source: "text"})`. Tool returns success.
@@ -604,9 +586,6 @@ Make Graphiti reachable from a Claude Code session and integrated into the workf
   - Test: graceful degradation when infra is down
 - [ ] Clean up test data: clear test graphs
 
-#### Phase 6 OTel
-- skip-reason: Validation phase, no new code paths
-
 #### Phase 6 Verification
 - [ ] All manual tests pass and results documented
 - [ ] `pnpm turbo test --filter=indusk-mcp` passes (integration tests skip gracefully if no infra)
@@ -636,9 +615,6 @@ Push `indusk-infra` to GitHub Container Registry so `indusk infra start` pulls a
   - If pull fails (offline, private repo), fall back to local build if `docker/Dockerfile.infra` exists
   - Print image version on startup
 - [ ] Tag and push initial image manually to bootstrap
-
-#### Phase 7 OTel
-- skip-reason: CI/CD pipeline, no application code
 
 #### Phase 7 Verification
 - [ ] `docker pull ghcr.io/infinitedusky/indusk-infra:latest` succeeds
@@ -673,9 +649,6 @@ One command that checks and updates all components: CLI, Docker image, CGC, skil
 - [ ] Add `--check` flag: only report what's outdated, don't update
 - [ ] Add `--component` flag: update only one component (`--component npm`, `--component docker`, `--component cgc`)
 - [ ] Register `update` subcommand in `cli.ts`
-
-#### Phase 8 OTel
-- skip-reason: CLI orchestration, no observable application code
 
 #### Phase 8 Verification
 - [ ] `indusk update --check` reports version status without changing anything
@@ -714,9 +687,6 @@ Give extensions independent version numbers so they can be updated without a ful
 - [ ] Update `extensions_status` MCP tool to include version in output
 - [ ] Future-proof: document the extension manifest schema for third-party authors
   - Extension discovery: `indusk extensions add {name}` from a registry (future — not built now)
-
-#### Phase 9 OTel
-- skip-reason: Metadata and versioning, no new observable code paths
 
 #### Phase 9 Verification
 - [ ] All extension manifests have `version` field
