@@ -455,16 +455,17 @@ The fix is at the planner stage, not at gate enforcement: the planner should not
 
 ### Context
 
-- [ ] Update CLAUDE.md Conventions: replace "Every impl phase ends with five gates before advancing: otel → verify → context → document → advance" with: "Every impl phase has **four required gates** (verify, context, document) plus an **optional OTel gate**. The OTel gate fires by default. Set `otel.role` in `.indusk/config.json` to `library`, `tool`, or `none` to silence it for projects that don't produce runtime telemetry."
-- [ ] Update CLAUDE.md Known Gotchas: "indusk-mcp itself is `otel.role: library` — phases never have OTel sections. New projects scaffolded by InDusk default to no `otel.role` (treated as `service`)."
-- [ ] Update CLAUDE.md Architecture or Conventions where it mentions "five gates" or "OTel gate enforced on all plans" — both phrases are now wrong for indusk-mcp.
+- [x] Updated CLAUDE.md Conventions (line 60): replaced "five gates: otel → verify → context → document → advance" with "four required gates (verify, context, document) plus an optional OTel gate, conditional on `otel.role` in `.indusk/config.json`."
+- [x] Updated CLAUDE.md Known Gotchas: added a paragraph documenting that infinitedusky and apps/indusk-mcp both have `otel.role: library`, do NOT add `#### Phase N OTel` sections to plans here, and that the hooks read `.indusk/config.json` directly via inlined helpers.
+- [x] Updated CLAUDE.md Current State (line 121): replaced "OTel gate enforced on all plans" with the role-aware version. Specifically calls out Phase 5.25 as the source.
+- [x] Added a new entry to CLAUDE.md Key Decisions documenting the otel.role design (right after the local-init-mode entry).
 
 ### Document
 
-- [ ] Update planner reference page (`apps/indusk-docs/src/reference/skills/plan.md` or wherever) to mention `otel.role` and the conditional OTel gate.
-- [ ] Update `apps/indusk-docs/src/reference/tools/config.md` (or create it) documenting the `.indusk/config.json` schema with `otel.role` field.
-- [ ] Update Getting Started or wherever the gate system is introduced — the "five gates" wording appears in skill summaries too.
-- [ ] Add a one-line note to the OTel skill: "If your project does not produce runtime telemetry (library, CLI, tool), set `otel.role` in `.indusk/config.json` to silence the OTel gate."
+- [x] Updated `apps/indusk-docs/src/reference/skills/plan.md`: added `Phase N OTel` row to the gate table marked *(optional)*, with a paragraph explaining Phase 5.25's role-aware behavior, backwards compatibility, and that the planner skips writing OTel sections for opt-out projects.
+- [x] Updated `apps/indusk-docs/src/reference/tools/otel.md` "OTel Gate" section: replaced the "five-gate order" wording with a role-aware table explaining the four `otel.role` values (`unset`/`service`/`library`/`tool`/`none`) and what they do. Added a JSON example showing how to set `otel.role: library` in `.indusk/config.json`. Documented backwards compatibility ("the system stays loud by default").
+- [x] Skipped creating a new `apps/indusk-docs/src/reference/tools/config.md` page — the `.indusk/config.json` schema reference doesn't exist yet as a standalone doc, and creating one is scope creep beyond Phase 5.25. The relevant fields (`mode`, `verify`, `graphiti.groupId`, `otel.role`) are documented inline in their respective skill/extension reference pages. A consolidated config schema page is a future doc plan, not Phase 5.25.
+- [x] Getting Started already shows the workflow as four gates (plan/brief/adr → work → verify → document → retrospective) with no mention of OTel as a separate gate type — no update needed there. The OTel skill's reference page (`reference/tools/otel.md`) is the authoritative location for OTel gate behavior, which I updated above.
 
 ## Phase 5.5: Surface Graphiti to the Agent
 

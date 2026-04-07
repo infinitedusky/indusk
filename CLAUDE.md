@@ -57,7 +57,7 @@ infinitedusky/
 - Skills are markdown files in `.claude/skills/{name}/SKILL.md` — each concept has one canonical skill, others cross-reference
 - Plans follow the lifecycle: research → brief → ADR → impl → retrospective
 - All planning docs live in `.indusk/planning/{kebab-case-name}/`
-- Every impl phase ends with five gates before advancing: otel → verify → context → document → advance
+- Every impl phase has **four required gates** (verify, context, document) plus an **optional OTel gate**. The OTel gate fires by default. Set `otel.role` in `.indusk/config.json` to `"library"`, `"tool"`, or `"none"` to silence it for projects that don't produce runtime telemetry. infinitedusky/indusk-mcp itself is `library` — its phases never have OTel sections.
 - Plan gates are enforced via Claude Code hooks — the agent cannot skip verification/context/document items when advancing phases
 - `.claude/hooks/` contains gate enforcement scripts installed by init (check-gates.js blocks execution, validate-impl-structure.js blocks writing, gate-reminder.js nudges)
 - Every impl phase must have verification, otel, context, and document sections — enforced by hook at write time. Use `(none needed)` or `skip-reason:` to opt out.
@@ -93,6 +93,7 @@ infinitedusky/
 - OTel as core instrumentation with category-based filtering — see `.indusk/planning/otel-core-skill/adr.md`
 - Bundled `indusk-infra` container (FalkorDB + Graphiti), global CLI install, `~/.indusk/config.env` for secrets — see `.indusk/planning/graphiti-infrastructure/adr.md`
 - Local init mode: `.indusk/` as home directory, `config.json` as project profile, `--local` flag for team repos — see `.indusk/planning/local-init-mode/adr.md`
+- OTel gate is role-aware via `otel.role` in `.indusk/config.json` (Phase 5.25 of graphiti-infrastructure). Unset/`service` = gate fires (default). `library`/`tool`/`none` = gate silenced. The planner skill stops writing OTel sections, and both gate-enforcement hooks honor the same rule. Backwards compatible: projects without the field behave exactly as before. indusk-mcp itself is `library`.
 
 ## Known Gotchas
 
@@ -105,6 +106,7 @@ infinitedusky/
 - Vitest `passWithNoTests: true` must be set in each app's `vitest.config.ts`, not just root — `extends: true` doesn't inherit it when the app defines its own `test` block
 - Biome 2.x API differs from docs/examples: `noVar` doesn't exist, `noUnusedVariables` has no `ignorePattern` option, overrides use `includes` not `include`. Always match schema version to installed version.
 - Impl parser must handle all four gate types per phase: implementation, verification, context, document — not just three
+- OTel gate is conditional on `otel.role` in `.indusk/config.json`. Set to `"library"` / `"tool"` / `"none"` to silence the gate. Unset (or `"service"`) keeps the gate firing. infinitedusky and apps/indusk-mcp both have `otel.role: library` — do NOT add `#### Phase N OTel` sections to plans in this repo. The `validate-impl-structure` and `check-gates` hooks read `.indusk/config.json` directly via inlined helpers (they can't import the TS one).
 - Skills in `.claude/skills/` are package-owned — edit in `apps/indusk-mcp/skills/`, then run `update` to sync. Don't edit `.claude/skills/` directly.
 - Domain skills directory (`skills/domain/`) removed — domain skills are now extensions. Use `extensions enable nextjs` not `init --skills nextjs`.
 - OTel auto-instrumentation must be loaded before any other imports — use `node --import ./instrumentation.ts` or the Next.js instrumentation hook
@@ -118,7 +120,7 @@ infinitedusky/
 
 ## Current State
 
-Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env. `indusk-infra` container bundles FalkorDB + Graphiti (replaces standalone FalkorDB). CGC indexing the project. Biome configured with VS Code integration. OTel extension active — every project gets instrumentation from `init`, OTel gate enforced on all plans. Local init mode (`--local`) available for using InDusk on team repos without touching committed files. `.indusk/config.json` serves as the central project profile.
+Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env. `indusk-infra` container bundles FalkorDB + Graphiti (replaces standalone FalkorDB). CGC indexing the project. Biome configured with VS Code integration. OTel extension active — every project scaffolded by `init` gets instrumentation by default. **OTel gate is conditional on `otel.role` in `.indusk/config.json`** (Phase 5.25): fires by default, silenced for `library`/`tool`/`none`. infinitedusky/indusk-mcp itself is `otel.role: library` — phases here never have OTel sections. Local init mode (`--local`) available for using InDusk on team repos without touching committed files. `.indusk/config.json` serves as the central project profile.
 
 **Active plans:**
 

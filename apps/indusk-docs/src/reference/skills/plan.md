@@ -422,7 +422,7 @@ Sections: Y-Statement, Context, Decision, Alternatives Considered, Consequences 
 
 Sections: Goal, Scope (In/Out), Boundary Map (optional), Checklist with phases, Files Affected, Dependencies, Notes.
 
-Each phase has up to four gate sections:
+Each phase has four required gate sections, plus an optional OTel gate:
 
 | Gate | Purpose |
 |------|---------|
@@ -430,6 +430,9 @@ Each phase has up to four gate sections:
 | **Phase N Verification** | Runnable commands that prove the phase works |
 | **Phase N Context** | Concrete CLAUDE.md edits this phase produces |
 | **Phase N Document** | Docs pages to write or update |
+| **Phase N OTel** *(optional)* | Telemetry instrumentation — only when the project's `otel.role` in `.indusk/config.json` is unset or `service` |
+
+The optional OTel gate is a Phase 5.25 addition: projects whose `otel.role` is `library`, `tool`, or `none` opt out of telemetry entirely, and the planner skips writing OTel sections for them. The `validate-impl-structure` and `check-gates` hooks honor the same rule. Backwards compatible: projects without the field behave as `service` (gate fires).
 
 All gates must be completed before advancing to the next phase. The [Work](/reference/skills/work) skill executes items one at a time; the [Verify](/reference/skills/verify) skill runs the verification commands.
 

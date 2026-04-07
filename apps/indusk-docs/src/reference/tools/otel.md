@@ -314,7 +314,16 @@ No code changes needed — all instrumentation uses standard OTLP.
 
 ## OTel Gate
 
-Every implementation phase has an **OTel gate** — enforced by hooks alongside verification, context, and document gates. The five-gate order:
+Implementation phases have an **optional OTel gate** — enforced by hooks alongside the four required gates (verification, context, document). The gate is conditional on the project's `otel.role` field in `.indusk/config.json`:
+
+| `otel.role` | Behavior |
+|-------------|----------|
+| *unset* (default) or `"service"` | OTel gate fires — phases must include `#### Phase N OTel` sections |
+| `"library"` | OTel gate silenced — code ships to other people, never produces telemetry |
+| `"tool"` | OTel gate silenced — short-lived script, telemetry overhead exceeds value |
+| `"none"` | OTel gate silenced — explicit opt-out for legacy/prototype/internal experiments |
+
+When the gate fires, the phase order is:
 
 1. **Implementation** — build the thing
 2. **OTel** — instrument it
@@ -322,7 +331,9 @@ Every implementation phase has an **OTel gate** — enforced by hooks alongside 
 4. **Context** — capture what changed
 5. **Document** — write/update docs
 
-The OTel gate asks: "did this phase add code paths that need instrumentation?" Example items:
+For projects with the gate silenced, the order is just **Implementation → Verification → Context → Document** — no OTel section is written and the planner skill skips it entirely.
+
+The OTel gate asks: "did this phase add code paths that need instrumentation?" Example items (for projects where the gate fires):
 
 ```markdown
 #### Phase 2 OTel
@@ -331,7 +342,22 @@ The OTel gate asks: "did this phase add code paths that need instrumentation?" E
 - [ ] Inference calls have `inference.*` spans with model, token count attributes
 ```
 
-For phases that don't add endpoints or business logic (config changes, documentation, tooling), the gate can be opted out per the gate policy.
+For specific phases that don't add endpoints or business logic (config changes, documentation, tooling), individual items can also be opted out per the gate policy. But if your *whole project* is a library or tool, set `otel.role` instead — it's cleaner than per-phase opt-outs.
+
+To set the role:
+
+```json
+// .indusk/config.json
+{
+  "mode": "full",
+  "verify": { ... },
+  "otel": {
+    "role": "library"
+  }
+}
+```
+
+Backwards compatible: existing projects without the field continue to behave as `service`. The system stays loud by default — forgetting to instrument an app is worse than nagging.
 
 ## Health Checks
 
