@@ -91,6 +91,36 @@ If yes, call `add_lesson` for each one. These become personal lessons in `.claud
 
 If no lessons emerged, that's fine — not every plan produces new knowledge. Move on.
 
+**Also capture each retrospective insight in Graphiti** so it becomes part of the temporal knowledge graph and can surface in future searches and contradictions.
+
+For each item in the retrospective's **What We Learned** section:
+```
+mcp__graphiti__add_memory({
+  name: "retro-{plan-name}-{n}",
+  episode_body: "{the full insight, including context — not just a one-line summary}",
+  group_id: "{project-group}",
+  source: "text",
+  source_description: "retrospective lesson"
+})
+```
+
+For each item in the retrospective's **What We'd Do Differently** section:
+```
+mcp__graphiti__add_memory({
+  name: "retro-{plan-name}-wdid-{n}",
+  episode_body: "{the hindsight item, with reasoning}",
+  group_id: "{project-group}",
+  source: "text",
+  source_description: "retrospective hindsight"
+})
+```
+
+Use the project group (from `getProjectGroupId(projectRoot)`) — most retrospective insights are project-specific. Promote to `shared` only if the insight is clearly cross-project (those should also become a personal lesson via `add_lesson`).
+
+**Contradictions:** If the retrospective surfaces a moment where "we thought X but found Y", capture both as separate episodes. Graphiti's contradiction detection will invalidate the older fact when it sees the conflicting one. This is one of Graphiti's most useful features — it remembers that a previous assumption was overturned, so the agent doesn't accidentally re-introduce it later.
+
+Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, and lesson recording via `add_lesson` is the canonical path. Graphiti capture is supplementary.
+
 ### Step 7: Context Audit
 
 Re-read CLAUDE.md in full. After the entire impl is done, verify:

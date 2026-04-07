@@ -202,6 +202,27 @@ When you are corrected mid-work — the user says "no, not that way" or "don't d
 
 Don't wait to be told. Corrections are the most valuable source of project knowledge.
 
+**When the user confirms `context learn`, ALSO capture the correction in Graphiti:**
+```
+mcp__graphiti__add_memory({
+  name: "correction-{slug}",
+  episode_body: "{lesson text}",
+  group_id: "{shared OR project-group}",
+  source: "text",
+  source_description: "user correction"
+})
+```
+
+Where `{slug}` is a short kebab-case label for the topic (e.g. `correction-pnpm-ce`, `correction-graphiti-error-handling`).
+
+**Choosing `shared` vs project group:**
+- **`shared`**: tools, conventions, patterns that apply across projects. Examples: "always use pnpm ce", "never mock the database in integration tests", "use jj describe-then-do for commits". The lesson is generally true and a different project would benefit from it.
+- **`{project-group}`**: facts specific to this project's code, data, or domain. Examples: "the impl-parser handles four gate types per phase", "graph_ensure auto-repairs the indusk-infra container". The lesson only makes sense in the context of this project.
+
+When in doubt, ask: "Would this correction make sense to a different project?" Yes → `shared`. No → project group.
+
+Use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to get the project group consistently. Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, do not fail the work item.
+
 ## Commits (jj)
 
 Use the **describe-then-do** workflow from the jj skill:

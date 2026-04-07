@@ -445,34 +445,28 @@ Make Graphiti reachable from a Claude Code session and integrated into the workf
 - [x] Synced source skill to `.claude/skills/graphiti/SKILL.md`. Discovered that the graphiti skill was never installed in this project — `.indusk/extensions/graphiti/` only had `.env`, no manifest, no SKILL.md in `.claude/skills/`. Manually created the directory, copied both files. Bug noted: init does install graphiti skill on first init, but pre-existing projects (like infinitedusky from before the graphiti extension landed) need `init --force` or a manual sync. Worth a follow-up to make `update` install missing extension skills, but out of scope for Phase 5.5 (the immediate fix is done).
 
 #### Skill: planner (capture triggers)
-- [ ] In `apps/indusk-mcp/skills/planner.md`, add a "Capturing Decisions" section. After a brief is accepted (status changes from `draft` to `accepted`), call `mcp__graphiti__add_memory` with:
-  - `name`: `brief-accepted-{plan-name}`
-  - `episode_body`: the brief's "Proposed Direction" section, prefixed with the problem statement
-  - `group_id`: project group id from `getProjectGroupId()`
-- [ ] After an ADR is accepted, call `mcp__graphiti__add_memory` with the Y-statement as the body:
-  - `name`: `adr-{plan-name}`
-  - `episode_body`: full Y-statement (in/facing/decided/against/achieve/accepting/because)
-  - `group_id`: project group id
-- [ ] Sync the source change to `.claude/skills/planner/SKILL.md`.
+- [x] Added Graphiti capture trigger to `apps/indusk-mcp/skills/planner.md` step 4 (brief acceptance) — `mcp__graphiti__add_memory({name: "brief-accepted-{plan-name}", episode_body: "{Problem}\\n\\n{Proposed Direction}", group_id: project-group, source: "text", source_description: "brief acceptance"})`. Project group resolved via `getProjectGroupId()` helper.
+- [x] Added Graphiti capture trigger to step 5 (ADR acceptance) — full Y-statement as episode body, named `adr-{plan-name}`. Documented that Graphiti's contradiction detection will invalidate old ADRs when superseded.
+- [x] Both triggers documented as "skip silently if `mcp__graphiti__add_memory` is unavailable" — Graphiti capture is best-effort, never fails the brief/ADR acceptance flow.
+- [x] Synced to `.claude/skills/planner/SKILL.md`.
 
 #### Skill: work (correction capture)
-- [ ] In `apps/indusk-mcp/skills/work.md`, the existing "Corrections and Context Learning" section already prompts for `context learn`. Extend it: when the user confirms `context learn`, also call `mcp__graphiti__add_memory` with:
-  - `name`: `correction-{slug}` (slug derived from the lesson topic)
-  - `episode_body`: the lesson text
-  - `group_id`: `shared` if the lesson is general (e.g. "always use pnpm ce"), project group id if specific (e.g. "indusk-mcp's plan parser handles four gate types")
-- [ ] Add explicit guidance on choosing `shared` vs project group: tool/convention-level → `shared`. Code-internal-to-this-project → project group.
-- [ ] Sync to `.claude/skills/work/SKILL.md`.
+- [x] Extended "Corrections and Context Learning" section in `apps/indusk-mcp/skills/work.md` — when the user confirms `context learn`, also call `mcp__graphiti__add_memory` with name `correction-{slug}`, body = lesson text, group depending on scope.
+- [x] Added explicit `shared` vs project group guidance: tool/convention-level → `shared` (e.g. "always use pnpm ce"), code-internal → project group (e.g. "impl-parser handles four gate types per phase"). With a "would this make sense to a different project?" rule of thumb.
+- [x] Documented use of `getProjectGroupId()` helper for consistency.
+- [x] Synced to `.claude/skills/work/SKILL.md`.
 
 #### Skill: retrospective (lesson capture)
-- [ ] In `apps/indusk-mcp/skills/retrospective.md`, after the retrospective is written, capture each "What We Learned" item and each "What We'd Do Differently" item as separate `mcp__graphiti__add_memory` calls. One episode per insight, named `retro-{plan}-{n}`, group id = project group.
-- [ ] If the retrospective surfaces a contradiction (e.g. "we thought X but found Y"), capture both the old and new framings as separate episodes — Graphiti will detect the contradiction and invalidate the older fact.
-- [ ] Sync to `.claude/skills/retrospective/SKILL.md`.
+- [x] Extended Step 6 (Lesson Capture) in `apps/indusk-mcp/skills/retrospective.md` — after `add_lesson` for each "What We Learned" item, also call `mcp__graphiti__add_memory` with name `retro-{plan-name}-{n}`. For "What We'd Do Differently" items, name is `retro-{plan-name}-wdid-{n}`. All in project group by default.
+- [x] Documented contradiction capture: when retrospective surfaces "we thought X but found Y", capture both framings as separate episodes so Graphiti's contradiction detection invalidates the old one. Called out as one of Graphiti's most useful features.
+- [x] Synced to `.claude/skills/retrospective/SKILL.md`.
 
 #### Skill: catchup (recall triggers)
-- [ ] In `apps/indusk-mcp/skills/catchup.md`, add Step 4.5 between "Read Project Context" and "Check Active Plans": **Recall recent decisions**. Call `mcp__graphiti__search_nodes` with `query: "recent decisions"` and `group_ids: [project-group, "shared"]`. Surface anything notable to the user (most recent N=5 nodes by default). This is the recall side of Phase 5.5 — capture is meaningless without retrieval at the right moment.
-- [ ] Add Step 4.6: **Search for context relevant to active plans**. For each `in-progress` plan, call `mcp__graphiti__search_memory_facts` with the plan name as the query. Surface any contradictions (facts where `invalid_at` is set and `valid_at` is recent) — these are areas where the prior decision changed and the active plan may be working from stale assumptions.
-- [ ] Add to the catchup summary template a "Graphiti recall" section listing N most-relevant nodes/facts found.
-- [ ] Sync to `.claude/skills/catchup/SKILL.md`.
+- [x] Added new Step 4.5 (Recall from Graphiti) between "Read Project Context" and "Check Active Plans" in `apps/indusk-mcp/skills/catchup.md`. Calls `mcp__graphiti__search_nodes` with `query: "recent decisions and lessons"`, both project group and `shared`, max 8 nodes. Surfaces 3-5 most relevant in the catchup summary.
+- [x] Combined Steps 4.5 and 4.6 from the original plan into a single Step 4.5 — searching by topic ("recent decisions and lessons") returns both decisions and contradictions in one call, no need for a separate fact-search call. Simpler.
+- [x] Added "Graphiti recall" line to the catchup summary template (Step 8) showing 3-5 most relevant nodes by name + summary, or "unavailable" if Graphiti is down.
+- [x] Documented graceful degradation: if Graphiti is down, skip silently, add `Graphiti: unavailable (run \`indusk infra start\` to recall episodic memory)` to the summary. Catchup must not fail if Graphiti is down — the rest of the layers are still valid.
+- [x] Synced to `.claude/skills/catchup/SKILL.md`.
 
 #### Build and confirm
 - [ ] `cd apps/indusk-mcp && pnpm build` succeeds.

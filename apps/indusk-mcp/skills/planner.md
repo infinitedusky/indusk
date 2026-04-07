@@ -74,7 +74,31 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. **Consider creating a visual sketch** of the proposed architecture with Excalidraw (if the extension is enabled) — a hand-drawn diagram makes the proposal concrete and easier to discuss. **Present the brief and have a conversation about it.** Don't just ask "does this look good?" — walk the user through it: "Here's what I'm proposing we build. Does this match what you had in mind? Is there anything missing, or anything here you don't want?" Iterate until the user is genuinely happy with the direction, then mark it as `accepted`.
 
+   **When the brief moves from `draft` to `accepted`**, capture the decision in Graphiti:
+   ```
+   mcp__graphiti__add_memory({
+     name: "brief-accepted-{plan-name}",
+     episode_body: "{Problem}\n\n{Proposed Direction}\n\n{Scope summary if helpful}",
+     group_id: "{project-group}",
+     source: "text",
+     source_description: "brief acceptance"
+   })
+   ```
+   The `group_id` is the project group (use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` — defaults to project directory basename, override via `.indusk/config.json` `graphiti.groupId`). Skip silently if `mcp__graphiti__add_memory` is unavailable (Graphiti may be down — degrade gracefully, do not fail the brief acceptance).
+
 5. **If brief is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see .indusk/planning/{plan}/adr.md`
+
+   **When the ADR moves from `proposed` to `accepted`**, capture the Y-statement in Graphiti:
+   ```
+   mcp__graphiti__add_memory({
+     name: "adr-{plan-name}",
+     episode_body: "In the context of {use case}, facing {constraint}, we decided for {chosen option} and against {rejected alternatives}, to achieve {desired outcome}, accepting {tradeoff}, because {rationale}.",
+     group_id: "{project-group}",
+     source: "text",
+     source_description: "ADR acceptance"
+   })
+   ```
+   The Y-statement is rich enough that Graphiti will extract entities for the chosen option, rejected alternatives, constraint, and rationale — and will detect contradictions if a later ADR overrides this one. Skip silently on Graphiti unavailability.
 
 6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
