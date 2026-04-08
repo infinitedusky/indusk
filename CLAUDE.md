@@ -134,6 +134,8 @@ infinitedusky/
 - In local mode, run `indusk pr-clean` before PRs to strip InDusk settings from `.claude/settings.json`. Run `indusk pr-restore` after.
 - Semantic graph event log is append-only jsonl at `.indusk/graph/semantic-graph.log` — never edited in place, never rewritten. Malformed lines (from crashed writes or hand edits) are skipped on replay with a warning via the reader's `onMalformed` callback, not thrown.
 - Semantic graph bridge requires jj — projects without jj cannot use it in v1. If `jj` is missing or the cwd is not a jj repo, sync fails with `NotAJjRepoError` explicitly rather than silently degrading. Stable change IDs (not git commit SHAs) are the versioning substrate because they survive rebase/amend/split/abandon.
+- FalkorDB now holds three graph namespaces per project, all in the same `indusk-infra` container: `cgc-{project}` (CGC's structural index), `semantic-{project}` (the semantic graph runtime — anchors and overlay edges projected from the event log), and any Graphiti groups. The semantic graph namespace is disposable; the canonical state lives in `.indusk/graph/semantic-graph.log` and rebuild = replay-the-log.
+- FalkorDB JS client (`falkordb` npm) returns query results as `{ data: Array<Record<aliasKey, value>> }` — rows are objects keyed by the projection alias, NOT positional tuples. Always alias projections in Cypher (`RETURN a.uuid AS uuid`) and read by name (`row.uuid`). Tested by chasing 6 false-positive failures in Phase 3 of cgc-graphiti-bridge.
 
 ## Current State
 

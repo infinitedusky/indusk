@@ -106,8 +106,8 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
 
 ### Phase 3: FalkorDB runtime client
 
-- [ ] Check for existing FalkorDB client in `apps/indusk-mcp/src/lib/`; extend or install `falkordb` npm package
-- [ ] Implement `runtime-client.ts`:
+- [x] Check for existing FalkorDB client in `apps/indusk-mcp/src/lib/`; extend or install `falkordb` npm package (installed `falkordb@^6.6.2`)
+- [x] Implement `runtime-client.ts`:
   - `SemanticGraphClient` class with constructor `(projectName: string)`, derives graph name `semantic-{projectName}`
   - `ensureConnection()` — connects to FalkorDB at `localhost:6379` (the `indusk-infra` container)
   - `applyEvent(event)` — translates each event type to Cypher:
@@ -119,8 +119,8 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
     - `sync.completed` → log-only, no graph write
   - `clearGraph()` — deletes the `semantic-{projectName}` graph
   - `getAnchor(uuid)`, `countAnchors()`, `countEdges()` helpers
-- [ ] Integration test against running `indusk-infra`: create/move/tombstone anchor, attach edge, verify each via direct Cypher read
-- [ ] Skip integration test cleanly when `indusk-infra` is not running
+- [x] Integration test against running `indusk-infra`: create/move/tombstone anchor, attach edge, verify each via direct Cypher read
+- [x] Skip integration test cleanly when `indusk-infra` is not running (via `describeIfFalkor` probe)
 
 #### Phase 3 Verification
 - [ ] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/runtime-client` passes when indusk-infra is running
@@ -130,7 +130,7 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
 - [ ] Add to CLAUDE.md Architecture: "FalkorDB holds two graph namespaces per project: `cgc-{project}` (CGC's structural index) and `semantic-{project}` (the semantic graph with anchors and overlay edges). Both live in the same `indusk-infra` container but are independent."
 
 #### Phase 3 Document
-- [ ] Add a subsection to `apps/indusk-docs/src/reference/semantic-graph/` explaining the graph naming convention and the `semantic-{project}` schema (node labels, relationship types, properties)
+- [x] Add `apps/indusk-docs/src/reference/semantic-graph/runtime-graph.md` explaining the graph naming convention and the `semantic-{project}` schema
 
 ---
 

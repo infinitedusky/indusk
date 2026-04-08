@@ -52,7 +52,14 @@
       "Bash(claude --version)",
       "Bash(gh release:*)",
       "Bash(node --input-type=module -e ':*)",
-      "Bash(pnpm --filter=@infinitedusky/indusk-mcp exec tsx -e ':*)"
+      "Bash(pnpm --filter=@infinitedusky/indusk-mcp exec tsx -e ':*)",
+      "Bash(pnpm vitest:*)",
+      "Bash(redis-cli -h localhost -p 6379 ping)",
+      "Bash(orb start:*)",
+      "Bash(docker start:*)",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY semantic-infinitedusky \"MATCH \\(a:Anchor\\) RETURN count\\(a\\)\")",
+      "Bash(node /Users/the_dusky/code/sandbox/infinitedusky/.claude/hooks/validate-impl-structure.js)",
+      "Read(//Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/**)"
     ],
     "additionalDirectories": [
       "/tmp"
