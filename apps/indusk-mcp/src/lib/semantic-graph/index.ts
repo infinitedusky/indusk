@@ -14,4 +14,5 @@ export {
 export { type LogReaderOptions, readAllEvents, readEvents } from "./log-reader.js";
 export { LogWriter } from "./log-writer.js";
 export * from "./paths.js";
+export { type ReplayOptions, type ReplayResult, replay } from "./replay.js";
 export { SemanticGraphClient, type SemanticGraphClientOptions } from "./runtime-client.js";

@@ -136,6 +136,7 @@ infinitedusky/
 - Semantic graph bridge requires jj — projects without jj cannot use it in v1. If `jj` is missing or the cwd is not a jj repo, sync fails with `NotAJjRepoError` explicitly rather than silently degrading. Stable change IDs (not git commit SHAs) are the versioning substrate because they survive rebase/amend/split/abandon.
 - FalkorDB now holds three graph namespaces per project, all in the same `indusk-infra` container: `cgc-{project}` (CGC's structural index), `semantic-{project}` (the semantic graph runtime — anchors and overlay edges projected from the event log), and any Graphiti groups. The semantic graph namespace is disposable; the canonical state lives in `.indusk/graph/semantic-graph.log` and rebuild = replay-the-log.
 - FalkorDB JS client (`falkordb` npm) returns query results as `{ data: Array<Record<aliasKey, value>> }` — rows are objects keyed by the projection alias, NOT positional tuples. Always alias projections in Cypher (`RETURN a.uuid AS uuid`) and read by name (`row.uuid`). Tested by chasing 6 false-positive failures in Phase 3 of cgc-graphiti-bridge.
+- `indusk graph rebuild` is safe to run at any time — the FalkorDB runtime for the semantic graph is disposable and reconstructs deterministically from the event log at `.indusk/graph/semantic-graph.log` via `replay()` in `apps/indusk-mcp/src/lib/semantic-graph/replay.ts`. No data is stored exclusively in the runtime; all canonical state lives in the log.
 
 ## Current State
 
