@@ -123,11 +123,11 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
 - [x] Skip integration test cleanly when `indusk-infra` is not running (via `describeIfFalkor` probe)
 
 #### Phase 3 Verification
-- [ ] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/runtime-client` passes when indusk-infra is running
-- [ ] Manual: `redis-cli -h localhost -p 6379 GRAPH.QUERY semantic-infinitedusky "MATCH (a:Anchor) RETURN count(a)"` returns 0 before any sync
+- [x] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/runtime-client` passes when indusk-infra is running (12 tests, 9 integration + 3 unit)
+- [x] Manual: `redis-cli -h localhost -p 6379 GRAPH.QUERY semantic-infinitedusky "MATCH (a:Anchor) RETURN count(a)"` returns 0 before any sync ✓
 
 #### Phase 3 Context
-- [ ] Add to CLAUDE.md Architecture: "FalkorDB holds two graph namespaces per project: `cgc-{project}` (CGC's structural index) and `semantic-{project}` (the semantic graph with anchors and overlay edges). Both live in the same `indusk-infra` container but are independent."
+- [x] Add to CLAUDE.md Known Gotchas: 3-namespace architecture + FalkorDB JS client rows-as-objects gotcha (actually landed in Known Gotchas rather than Architecture — minor reorganization)
 
 #### Phase 3 Document
 - [x] Add `apps/indusk-docs/src/reference/semantic-graph/runtime-graph.md` explaining the graph naming convention and the `semantic-{project}` schema
@@ -136,30 +136,30 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
 
 ### Phase 4: Replay engine
 
-- [ ] Implement `replay.ts` with `replay(logPath, client, options?: { ancestryFilter?: Set<string> })`:
+- [x] Implement `replay.ts` with `replay(logPath, client, options?: { ancestryFilter?: Set<string> })`:
   - Reads events from log in order
   - If `ancestryFilter` provided, skips events whose `change_id` is not in the set
   - Applies each kept event to the runtime client
   - Returns `{ total, applied, skipped, errors }`
   - Malformed events counted as errors and logged; replay continues
-- [ ] Integration test: seed a log with 10 events (mix of anchor and edge types), clear runtime, replay, verify end state matches expected
-- [ ] Ancestry filter test: seed 10 events with mixed change IDs, replay with partial reachable set, verify only reachable events applied
+- [x] Integration test: seeds log with anchor created/moved/tombstoned, edge attached, sync completed → replays → verifies end state
+- [x] Ancestry filter test: seeds 3 events with distinct change IDs, replays with partial reachable set (2 of 3), verifies only reachable events applied
 
 #### Phase 4 Verification
-- [ ] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/replay` passes
-- [ ] Manual: create test log with 5 events, clear semantic-test graph, run replay, check via Cypher that all 5 events are reflected
+- [x] `pnpm vitest run semantic-graph/replay` passes (7 tests); full semantic-graph suite: 49 tests across 6 files
+- [x] Manual smoke test: wrote 5-event log (2 creates + move + edge + sync.completed), cleared runtime, ran replay → `{ total: 5, applied: 5, skipped: 0, errors: 0 }`, runtime had 2 anchors + 1 edge, `a1.path = "src/app.ts"` (moved) ✓
 
 #### Phase 4 Context
-- [ ] Add to CLAUDE.md Conventions: "`indusk graph rebuild` is safe to run at any time — the FalkorDB runtime is disposable and reconstructs deterministically from the log. No data is stored exclusively in the runtime."
+- [x] Add to CLAUDE.md Known Gotchas: "`indusk graph rebuild` is safe to run at any time — the FalkorDB runtime for the semantic graph is disposable and reconstructs deterministically from the event log via replay() ..."
 
 #### Phase 4 Document
-- [ ] Add a "Rebuild and Replay" section to the semantic-graph docs explaining that the runtime graph is disposable and rebuildable from the log
+- [x] Add `apps/indusk-docs/src/reference/semantic-graph/rebuild-and-replay.md` covering rebuild pattern, ancestry filtering, partial replay, error handling, CLI preview
 
 ---
 
 ### Phase 5: Generic sync engine + adapter interface
 
-- [ ] Define `adapter.ts`:
+- [x] Define `adapter.ts`:
   ```typescript
   export interface SemanticGraphAdapter {
     readonly name: string;
@@ -175,7 +175,7 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
     metadata?: Record<string, unknown>;
   };
   ```
-- [ ] Implement `sync-engine.ts` with `runSync(adapter, projectRoot, logWriter, runtimeClient)`:
+- [x] Implement `sync-engine.ts` with `runSync(adapter, projectRoot, logWriter, runtimeClient)`:
   1. `adapter.snapshot(projectRoot)` → current records
   2. Read existing anchors from runtime (excluding tombstoned)
   3. Diff current vs existing via `adapter.identify`, falling back to `contentFingerprint` match for rename detection
@@ -183,24 +183,24 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
   5. Generate events tagged with current jj change ID
   6. Write each event to log AND apply to runtime
   7. Emit `sync.completed` event
-- [ ] Unit tests with a fake in-memory adapter covering: fresh sync, no-op, pure rename, delete, mixed delta. **These tests are the enforcement mechanism for adapter genericity — they must not import anything CGC-related.**
+- [x] Unit tests with a fake in-memory adapter covering: fresh sync, no-op, pure rename, delete, mixed delta (9 tests). **These tests are the enforcement mechanism for adapter genericity — they must not import anything CGC-related.**
 
 #### Phase 5 Verification
-- [ ] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/sync-engine` passes
-- [ ] Manual: build a fake adapter returning 3 file records, run sync twice, second run produces 0 deltas
-- [ ] Grep `apps/indusk-mcp/src/lib/semantic-graph/sync-engine.ts` for "cgc" — should return zero matches (case-insensitive). Same for `adapter.ts`.
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp -- semantic-graph/sync-engine` passes (9 tests)
+- [x] Manual: covered by unit test "second sync with same records produces zero deltas" — fake adapter with 2 file records, second sync returns `{ created: 0, moved: 0, tombstoned: 0, unchanged: 2 }`
+- [x] Grep `sync-engine.ts` and `adapter.ts` for "cgc" (case-insensitive) — zero matches in both ✓
 
 #### Phase 5 Context
-- [ ] Add to CLAUDE.md Conventions: "The semantic graph sync pipeline is adapter-agnostic by design (see `.indusk/research/anchor-overlay-pattern.md` Section 7). CGC is the first adapter; adding a new adapter means implementing `SemanticGraphAdapter` — the sync engine itself never changes. Enforced by sync-engine tests, which cannot import anything CGC-related."
+- [x] Add to CLAUDE.md Conventions: "The semantic graph sync pipeline is adapter-agnostic by design (see `.indusk/research/anchor-overlay-pattern.md` Section 7). CGC is the first adapter; adding a new adapter means implementing `SemanticGraphAdapter` — the sync engine itself never changes. Enforced by sync-engine tests, which cannot import anything CGC-related."
 
 #### Phase 5 Document
-- [ ] Create `apps/indusk-docs/src/reference/semantic-graph/adapter-interface.md` documenting the interface with the fake in-memory adapter as the worked example
+- [x] Create `apps/indusk-docs/src/reference/semantic-graph/adapter-interface.md` documenting the interface with the fake in-memory adapter as the worked example
 
 ---
 
 ### Phase 6: CGC adapter
 
-- [ ] Implement `adapters/cgc.ts`:
+- [x] Implement `adapters/cgc.ts`:
   - `snapshot(projectRoot)`:
     - Connect to `cgc-{basename(projectRoot)}` FalkorDB graph
     - Query all `File` nodes → file records with path and `git hash-object {path}` as `metadata.blob_hash`
@@ -211,17 +211,23 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
   - `contentFingerprint(record)`:
     - File → `metadata.blob_hash`
     - Symbol → `undefined` (v1)
-- [ ] Integration test against real `cgc-infinitedusky` graph: run sync, count anchors, verify against direct CGC queries for files + functions + classes + interfaces
+- [x] Project intra-codebase IMPORTS as `edge.attached` events:
+  - Query `File -[:IMPORTS]-> Module` where module name starts with `./` or `../` (excludes npm packages, `node:*` builtins, and all other external dependencies)
+  - Resolve specifier relative to importing file's directory (handle `.ts`/`.js` extensions)
+  - Match resolved path against known File anchors
+  - Emit `edge.attached` with `relation: "imports"`, `source_uuid` = importing file anchor, `target_uuid` = imported file anchor
+  - Skip unresolvable specifiers (deleted files, index re-exports) with a warning
+- [x] Integration test against real `cgc-infinitedusky` graph: 5 tests covering snapshot (files/functions/classes/interfaces), identity stability, content fingerprints, internal-only edges, edge count sanity bounds
 
 #### Phase 6 Verification
-- [ ] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/cgc-adapter` integration test passes
-- [ ] Manual: `runSync(cgcAdapter, '/Users/the_dusky/code/sandbox/infinitedusky', ...)` creates ~20k anchors, log file has ~20k+ events, `sync.completed` event at the end with matching delta counts
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp -- semantic-graph/adapters/cgc` passes (5 tests, 6.6s)
+- [x] Manual: full sync created 10,156 anchors + 155 import edges, log has 10,312 events (3.3MB), sync.completed at end with matching deltas, 73s duration
 
 #### Phase 6 Context
-- [ ] Add to CLAUDE.md Known Gotchas: "CGC adapter reads from `cgc-{basename}` graph, writes to `semantic-{basename}` graph. Different graph namespaces, same FalkorDB instance. Don't mix them up in manual Cypher."
+- [x] Add to CLAUDE.md Known Gotchas: CGC adapter namespace gotcha + internal imports edge projection
 
 #### Phase 6 Document
-- [ ] Create `apps/indusk-docs/src/reference/semantic-graph/cgc-adapter.md` explaining how the CGC adapter maps CGC nodes to anchor records
+- [x] Create `apps/indusk-docs/src/reference/semantic-graph/cgc-adapter.md` documenting node mapping, import edge projection, namespace separation, and performance
 
 ---
 

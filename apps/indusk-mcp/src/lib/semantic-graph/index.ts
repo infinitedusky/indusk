@@ -4,6 +4,7 @@
  * for the brief, ADR, and impl.
  */
 
+export type { AdapterRecord, SemanticGraphAdapter } from "./adapter.js";
 export * from "./events.js";
 export {
 	getCurrentChangeId,
@@ -16,3 +17,4 @@ export { LogWriter } from "./log-writer.js";
 export * from "./paths.js";
 export { type ReplayOptions, type ReplayResult, replay } from "./replay.js";
 export { SemanticGraphClient, type SemanticGraphClientOptions } from "./runtime-client.js";
+export { type SyncResult, runSync } from "./sync-engine.js";

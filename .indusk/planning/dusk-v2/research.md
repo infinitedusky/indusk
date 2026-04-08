@@ -263,6 +263,41 @@ Sub-questions:
 
 ---
 
+### 13. Planner v2 — subplans, timestamps, activity tracking [unblocked]
+
+The planner skill needs three new capabilities:
+
+**Subplans:** Phases that outgrow their parent plan become nested subplans under a `subplans/` directory within the parent. Each gets the full lifecycle (brief → ADR → impl → retro). Completed subplans move to `subplans/archive/` — a subplan must be retrospected and archived before the parent can advance past the delegating phase.
+
+```
+planning/
+├── auth-abstraction/
+│   ├── brief.md
+│   ├── adr.md
+│   ├── impl.md
+│   └── subplans/
+│       ├── test-harness/
+│       │   ├── brief.md, adr.md, impl.md
+│       └── archive/
+│           └── (completed subplans after retro)
+```
+
+**Mandatory timestamps on planning documents:** All planning artifacts (research, brief, ADR, impl, retro) get YAML frontmatter with `created:` date. Documents that change status (draft → accepted) also get `updated:`. Format: ISO date (`2026-04-09`). The planner skill writes these automatically.
+
+**Work activity events:** `/work` emits `phase.started` and `item.completed` events to the semantic graph event log (`.indusk/graph/semantic-graph.log`). This gives queryable activity history — how long phases took, when a plan was last touched. Graphiti stays the *decision* layer; the semantic graph log becomes the *activity* layer.
+
+Sub-questions:
+- Cap subplan nesting at one level, or allow deeper?
+- Does `list_plans` show subplans inline or only when querying the parent?
+- Should `/work parent` auto-delegate to the active subplan, or require explicit `/work parent/subplan`?
+- Do activity events need their own event types in the semantic graph schema, or reuse existing types?
+
+**To decide:** Subplan UX, timestamp format, activity event schema.
+
+**Status:** unanswered
+
+---
+
 ## Open Questions (broader)
 
 - Should `dusk` keep the "MCP server" framing or position itself as a dev system that includes an MCP server?

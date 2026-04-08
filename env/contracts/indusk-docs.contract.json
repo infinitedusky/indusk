@@ -1,7 +1,7 @@
 {
 	"name": "indusk-docs",
 	"location": "apps/indusk-docs",
-	"includeVars": ["vars/platform-base"],
+	"includeVars": [],
 	"target": {
 		"type": "docker-compose",
 		"file": "docker-compose.yml",

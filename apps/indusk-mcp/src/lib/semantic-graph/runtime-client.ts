@@ -221,6 +221,32 @@ export class SemanticGraphClient {
 		return row ? Number(row.n ?? 0) : 0;
 	}
 
+	async queryAnchors(
+		options: { status?: string } = {},
+	): Promise<{ uuid: string; kind: string; path: string; name: string | null; blob_hash: string | null; status: string }[]> {
+		const graph = this.requireGraph();
+		const where = options.status ? `WHERE a.status = $status` : "";
+		const result = await graph.query<{
+			uuid: string;
+			kind: string;
+			path: string;
+			name: string | null;
+			blob_hash: string | null;
+			status: string;
+		}>(
+			`MATCH (a:Anchor) ${where} RETURN a.uuid AS uuid, a.kind AS kind, a.path AS path, a.name AS name, a.blob_hash AS blob_hash, a.status AS status`,
+			options.status ? { params: { status: options.status } } : undefined,
+		);
+		return (result.data ?? []).map((row) => ({
+			uuid: String(row.uuid),
+			kind: String(row.kind),
+			path: String(row.path),
+			name: row.name !== null ? String(row.name) : null,
+			blob_hash: row.blob_hash !== null ? String(row.blob_hash) : null,
+			status: String(row.status ?? "active"),
+		}));
+	}
+
 	async getAnchor(uuid: string): Promise<{ uuid: string; path: string; status: string } | null> {
 		const graph = this.requireGraph();
 		const result = await graph.query<{ uuid: string; path: string; status: string }>(

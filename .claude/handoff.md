@@ -1,84 +1,81 @@
 # Handoff
 
-**Date:** 2026-04-07
-**Session:** Closed out `graphiti-infrastructure` plan end-to-end (13 phases, 227 items, 4 npm publishes v1.10.0→v1.10.3, retrospective written, plan archived). Created `cgc-graphiti-evaluation` spike. chitin-sportsbook scaffold-bootstrap ran end-to-end as the Phase 6 substrate. The system functionally works.
+**Date:** 2026-04-09
+**Session:** cgc-graphiti-bridge Phases 5–6 built + ce networking cleanup + semantic graph overview docs with Mermaid diagrams
 
 ## What Was Being Worked On
 
-Final closeout of `graphiti-infrastructure`. All 13 phases (Phases 0–9 plus inserted 1.5, 5.25, 5.5) marked complete. Retrospective skill ran the full 9-step audit. Plan moved to `.indusk/planning/archive/graphiti-infrastructure/`.
+`cgc-graphiti-bridge` — continuing from Phase 4 (completed last session). This session built Phases 5 and 6, plus pulled forward the overview documentation from Phase 9.
 
-The actual work this session, in order:
-1. v1.10.0 publish (Phase 5.5 implementation: graphiti MCP registration, capture/recall triggers in 5 skills)
-2. Phase 5.25 inserted mid-session: optional `otel.role` field, role-aware OTel gate, swept all OTel sections from indusk-mcp's plans, indusk-mcp set to `otel.role: library`
-3. v1.10.1 publish (Phase 5.5 verification work)
-4. v1.10.2 publish (dash0 traces-first restored to source — `indusk update` had reverted local-only edits)
-5. chitin-sportsbook created from scratch as the Phase 6 substrate
-6. Phase 6 hyphen bug discovered (`RediSearch: Syntax error at offset 18 near chitin`)
-7. v1.10.3 publish (`sanitizeGroupId` helper + 10 unit tests)
-8. chitin-sportsbook ran `scaffold-bootstrap` end-to-end (brief→impl→retro→archive) with full capture/recall
-9. The validation moment: agent in infinitedusky answered "find indusk-mcp problems from chitin-sportsbook" entirely from Graphiti without reading any retrospective files
-10. `cgc-graphiti-evaluation` spike plan created (replaces abstract Phase 6 evaluation with real experimental program)
-11. `graphiti-infrastructure` retrospective written, 7 lessons captured to Graphiti, decisions/graphiti-infrastructure.md added to docs site, plan archived
+Also cleaned up vestigial composable.env networking config (`networking.env`, `platform-base.vars.json`) and migrated to `${service.*}` auto-generated vars from `ce.json` profiles.
 
 ## Where It Stopped
 
-`graphiti-infrastructure` is **completed and archived**. CLAUDE.md updated. VitePress sidebar updated. Retrospective skill ran clean.
+**Phase 6 complete — all implementation, verification, context, and document gates done.** 66 tests across 8 files, all passing. Full sync against real cgc-infinitedusky: 10,156 anchors + 155 import edges.
 
-The system is in a clean closing state. No mid-item work in progress.
+Phase 5 adapter.ts was extended with `AdapterEdge` type and optional `edges()` method on the interface to support edge projection generically. sync-engine.ts projects edges after anchor diffing — tracks identity→UUID mappings during the diff pass so edges can reference anchors by identity string.
+
+**No jj commits were made this session.** All work sits on jj change `mylvxovm` (which already had the Phase 5 description from last session). The ce cleanup is also uncommitted. These should be split into separate commits:
+1. ce networking cleanup (delete networking.env, delete platform-base.vars.json, update components + contracts)
+2. Phase 5: adapter interface + sync engine + 12 unit tests
+3. Phase 6: CGC adapter + 5 integration tests + runtime-client queryAnchors method
+4. Docs: semantic graph overview page with Mermaid diagrams + sidebar config
 
 ## What's Next
 
-In priority order — pick whichever feels right:
+1. **Commit the work.** Split `mylvxovm` into the 4 logical commits above using `jj split`.
 
-1. **`/planner cgc-graphiti-bridge`** — promote the draft brief to a real plan. The current brief is scoped too small ("two graphs talking"); rewrite it with the **unified-graph "files as anchors"** vision (CGC nodes projected into the Graphiti project graph, file paths as join key, `describe_file` MCP tool, eventual Dash0 log/trace projection). Then ADR, then impl. **This is the next major infrastructure work and the natural successor to graphiti-infrastructure.**
+2. **Phase 7: Graphiti capture wrapper.** `graphiti-log-wrapper.ts` that dual-writes to Graphiti and the event log. Update planner/work/retrospective skills to route captures through it. Unit test with fake GraphitiClient and fake log writer.
 
-2. **`/retrospective local-init-mode`** — quick win, completed impl that never went through the retrospective skill. One focused session.
+3. **Phase 8: MCP tools + CLI.** `graph_sync`, `graph_rebuild`, `graph_status` — both MCP tools and `indusk graph` CLI commands.
 
-3. **Continue chitin-sportsbook work** — start the next plan there (`db-schema` is the natural next step per `sportsbook-bootstrap/research.md`). Each plan adds substrate for the cgc-graphiti-evaluation spike.
+4. **Phase 9: Init plumbing + work skill gate + smoke tests.** Verify init modes, add phase-end sync trigger to work skill, smoke test on infinitedusky and chitin-sportsbook.
 
-4. **Decide on `react-native-support`** — its OTel substance should fold into dusk-v2's OTel-as-extension work. Either explicitly archive it or roll the OTel content into a future plan.
-
-5. **`/planner` something for `dusk-v2`** — still parked at decision #1 (built-in extension storage). Pick back up after CGC + Graphiti experiment yields more lessons.
+5. **Testing strategy.** User wants to develop a testing approach that grows over time to validate the system as it's built. Discuss after the bridge is complete (or alongside remaining phases).
 
 ## Open Issues
 
-- **8 polluted Graphiti episodes in `main` group** from two malformed `add_memory` parameter syntax errors (one earlier this session, one in this very retrospective). The bug: closing `<parameter name="episode_body">` with `</episode_body>` and using `<parameter name="group_id">` (without `antml:` prefix). Fallback group is `main`. `delete_episode` requires UUIDs that `get_episodes` doesn't reliably return. Tracked as a follow-up in `cgc-graphiti-evaluation` research doc.
-- **Duplicate `vision-unified-knowledge-graph-files-as-anchors` episode in `shared`** from the same parameter-syntax bug earlier in the session. Same cleanup category.
-- **`get_episodes` API returns empty for groups that clearly have episodes** (verified by `search_nodes` returning their entities). Some kind of API/semantics mismatch worth investigating.
-- **Phase 5.25's gate sub-headings use `### Verification` (level 3) instead of `#### Phase 5.25 Verification` (level 4)** — cosmetic, the validate-impl-structure hook doesn't see them as gate sections, but the impl is closed so it doesn't matter unless any future tooling does depth-aware parsing.
-- **`apps/otel-test*/biome.json` nested config still blocks root `pnpm check`** — pre-existing, scoped check works. Pre-existing footnote, not from this work.
+- **Biome nested root config error.** `pnpm check` fails with "Found a nested root configuration." Pre-existing, not caused by this session. Needs `biome migrate --write` or manual config fix.
+
+- **First sync is slow.** 73 seconds for ~10k anchors + 155 edges on infinitedusky. Acceptable for v1 but worth noting. The bottleneck is `git hash-object` called once per file (118 sequential shell invocations). Could batch with `git hash-object --stdin-paths` in the future.
+
+- **Anchor count is ~10k, not ~20k as the impl predicted.** CGC reports 19,821 functions but the adapter snapshot returned fewer. Likely because CGC indexes build artifacts (`.js` chunks) that have functions but the adapter queries `File -[:CONTAINS]-> Function` which may not cover all function nodes. Not a bug — the impl estimate was based on raw CGC counts, not the join query.
+
+- **`.indusk/graph/semantic-graph.log` now has real data.** The manual sync test wrote 10,312 events (3.3MB) to the log. This is live data in the working copy. It's gitignored via `.indusk/` exclusion in local mode. Don't delete it — it's the first real semantic graph for infinitedusky.
 
 ## Decisions Made This Session
 
-All formalized in CLAUDE.md or the archived plan, but worth flagging:
+- **`AdapterEdge` type added to the adapter interface.** Edges are identity-string-based (not UUID-based) so the sync engine can resolve them after the anchor diff pass. The `edges()` method is optional on the interface — adapters that don't discover relationships just omit it.
 
-- **Option C for Graphiti exposure**: register Graphiti directly in `.mcp.json` as a top-level MCP server (like dash0), keep `GraphitiClient` wrapper for internal use only, no double-wrapping. (Now in CLAUDE.md Key Decisions.)
-- **`otel.role` field is the template for cross-cutting gate opt-outs**: optional field, backwards-compatible default, hooks read inlined helpers because they can't import the TS one. Pattern should be reused for any future cross-cutting gate (security, accessibility, performance). (Now in CLAUDE.md Key Decisions and Conventions.)
-- **`shared` Graphiti is for cross-project conventions AND meta-information about the project landscape** — not for in-project implementation discussions. The rule: "could this be codified in a skill, lesson, CLAUDE.md, or shipped source code? If yes, codify there. If no AND it's cross-project AND has no other home, then `shared`." (Captured as `correction-shared-vs-codified-channels` in `shared` Graphiti.)
-- **Unified-graph "files as anchors" vision**: CGC structural data and Graphiti episodic data both attaching to the same file/symbol nodes is the architectural endpoint. cgc-graphiti-bridge plan needs to be rewritten with this scope. (Captured in `infinitedusky` Graphiti as `vision-unified-knowledge-graph-files-as-anchors`; meta version in `shared`.)
-- **chitin-sportsbook is a Numero module candidate**, not a permanent standalone project. Stack consistency with Numero matters (Fastify, pnpm, Turborepo, Drizzle). The previous codename "chitin" still appears in chitin-sportsbook's name and is intentional. (Captured in `shared` Graphiti as `meta-chitin-sportsbook-numero-relationship`.)
-- **Phase 6 evaluation moves to the cgc-graphiti-evaluation spike**, which is a real experimental program (two-arm comparative study, pre-registered hypotheses, falsifiability, iterative methodology). NOT a one-shot validation. (Spike plan exists at `.indusk/planning/cgc-graphiti-evaluation/research.md`.)
+- **Internal imports only for v1.** CGC adapter filters IMPORTS to relative specifiers (`./`, `../`) only. npm packages, `node:*` builtins, and all external dependencies are excluded. The user explicitly requested this.
+
+- **Composable.env `networking.env` component is dead.** Replaced by `${service.<name>.address}`, `${service.<name>.suffix}`, `${service.<name>.domain}` auto-generated from `ce.json` profiles. `platform-base.vars.json` also deleted — its vars moved to nowhere (portfolio contract can add `NEXT_PUBLIC_*` vars directly if needed later). Contracts have `includeVars: []` (empty array, user preference over removing the key entirely).
+
+- **Overview docs pulled forward from Phase 9.** User wanted the system documented with diagrams for presentation and thinking. The overview page has 7 Mermaid diagrams covering architecture, data flow, concepts, and adapter extensibility. All 7 semantic-graph reference pages are now in the VitePress sidebar.
 
 ## Watch Out For
 
-- **Don't manually call `mcp__graphiti__add_memory` from any project unless you've verified the rule**: if the knowledge could be codified in a skill, lesson, CLAUDE.md, or source code, codify it there. `shared` Graphiti is the third option, not the first. The `correction-shared-vs-codified-channels` episode in `shared` has the full rule.
-- **`mcp__graphiti__add_memory` parameter syntax requires `<parameter name="...">` not `<parameter name="...">`** — using the wrong opening tag silently sends the call without the parameter, which falls back to default group `main`. Verify the response says the right group, not `'main'`.
-- **chitin-sportsbook still uses the workaround override** `graphiti.groupId: chitin_sportsbook` in `.indusk/config.json`. With v1.10.3 the auto-sanitization makes this redundant — `basename("chitin-sportsbook")` → `chitin_sportsbook` automatically. Either way works; explicit override always wins.
-- **5 indusk-mcp bugs were captured in `chitin_sportsbook` Graphiti** during scaffold-bootstrap retro. Real, actionable, queryable: index_project not idempotent, no `--force` flag, graph_ensure doesn't detect staleness, OTel health checks not monorepo-aware, init scaffolds single-app layout. None filed as bugfix plans yet — they live in Graphiti, queryable on demand.
-- **graphiti container has been up 40+ hours**, persistent volume `indusk-data` is fine. No need to restart unless you want to test graceful degradation.
-- **jj has many stacked changes from this session** (Phase 5.5 + 5.25 + dash0 + v1.10.x bumps + retrospective + spike). Sandy may want to review the log before pushing. Detached HEAD is normal for this repo.
-- **The `archive/` directory is a special name in `list_plans`** — it shows up as a "plan" with stage `unknown`. That's a quirk of the parser; harmless. Don't `/work archive`.
-- **CGC graph is current after `index_project` calls today** — 118 files, 19821 functions in `cgc-infinitedusky`. chitin-sportsbook also indexed. Both should still be valid next session.
+- **No commits made.** Everything is on the working copy of `mylvxovm`. First thing next session should be splitting and committing, or at least describing the change.
+
+- **`semantic-graph.log` has real data.** Don't clear it unless you also clear the FalkorDB `semantic-infinitedusky` runtime. They should stay in sync. `indusk graph rebuild` (Phase 8) will formalize this.
+
+- **The `queryAnchors` method was added to `runtime-client.ts`.** This is consumed by the sync engine. If the runtime-client tests break, check that the new method's Cypher is correct — it returns all anchor properties including `kind`, `name`, and `blob_hash`.
+
+- **SyncResult has an `edges_attached` field now.** Any code that destructures SyncResult needs to account for this.
+
+- **`adapter.ts` has two exports: `AdapterRecord` and `AdapterEdge`.** The barrel `index.ts` re-exports both. The `AdapterEdge` type is used by sync-engine and the CGC adapter.
+
+- **Ce contracts have `includeVars: []`.** The user manually edited these after I removed the key entirely. They prefer the empty array over omitting the key.
 
 ## Catchup Status
 
-- [x] mcp-ready
+- [x] mcp-ready (session 2026-04-09)
 - [x] handoff
 - [x] lessons
-- [x] skills
 - [x] health
 - [x] context
+- [x] graphiti
 - [x] plans
+- [x] skills
 - [x] extensions
 - [x] graph
-- [x] graphiti

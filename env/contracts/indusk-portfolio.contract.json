@@ -1,7 +1,7 @@
 {
 	"name": "indusk-portfolio",
 	"location": "apps/indusk-portfolio",
-	"includeVars": ["vars/platform-base"],
+	"includeVars": [],
 	"target": {
 		"type": "docker-compose",
 		"file": "docker-compose.yml",
@@ -11,7 +11,7 @@
 				"context": ".",
 				"dockerfile": "docker/Dockerfile.nextdev"
 			},
-			"ports": ["3000:3000"],
+			"ports": ["${indusk-portfolio.PORT}:${indusk-portfolio.PORT}"],
 			"volumes": [
 				"./apps/indusk-portfolio/src:/app/apps/indusk-portfolio/src",
 				"./apps/indusk-portfolio/public:/app/apps/indusk-portfolio/public"
