@@ -52,8 +52,8 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
 
 ### Phase 1: Event schema and log I/O
 
-- [ ] Create `apps/indusk-mcp/src/lib/semantic-graph/` with `index.ts` barrel export
-- [ ] Define event types in `events.ts` as a discriminated union:
+- [x] Create `apps/indusk-mcp/src/lib/semantic-graph/` with `index.ts` barrel export
+- [x] Define event types in `events.ts` as a discriminated union:
   ```typescript
   type AnchorKind = "file" | "function" | "class" | "interface";
   export type SemanticGraphEvent =
@@ -64,22 +64,22 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
     | { type: "edge.invalidated"; edge_uuid: string; reason: string; change_id: string; ts: string }
     | { type: "sync.completed"; adapter: string; deltas: { created: number; moved: number; tombstoned: number }; duration_ms: number; change_id: string; ts: string };
   ```
-- [ ] Write validators (zod or hand-rolled) for each event variant
-- [ ] Implement `paths.ts` with `getLogPath(projectRoot: string): string` returning `{projectRoot}/.indusk/graph/semantic-graph.log`
-- [ ] Implement `log-writer.ts` with a `LogWriter` class: `append(event)`, ensures directory exists, serializes to jsonl with fsync, documents single-writer assumption
-- [ ] Implement `log-reader.ts` as a streaming reader that yields validated events and logs-and-skips malformed lines
-- [ ] Unit tests covering: write/read roundtrip per event type, malformed line handling, empty file, missing directory creation
+- [x] Write validators (zod or hand-rolled) for each event variant
+- [x] Implement `paths.ts` with `getLogPath(projectRoot: string): string` returning `{projectRoot}/.indusk/graph/semantic-graph.log`
+- [x] Implement `log-writer.ts` with a `LogWriter` class: `append(event)`, ensures directory exists, serializes to jsonl with fsync, documents single-writer assumption
+- [x] Implement `log-reader.ts` as a streaming reader that yields validated events and logs-and-skips malformed lines
+- [x] Unit tests covering: write/read roundtrip per event type, malformed line handling, empty file, missing directory creation
 
 #### Phase 1 Verification
-- [ ] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/` passes with ≥ 12 tests
-- [ ] `pnpm check --filter=indusk-mcp` passes (no Biome violations)
-- [ ] Manual: write a throwaway harness that appends 5 events and reads them back; all 5 events roundtrip with identical field values
+- [x] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/` passes with ≥ 12 tests (19 passing)
+- [x] `pnpm check --filter=indusk-mcp` passes (no Biome violations)
+- [x] Manual: roundtrip test (covered by log-reader.test.ts "roundtrips events written by LogWriter" — 3-event roundtrip verified)
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Known Gotchas: "Semantic graph event log is append-only jsonl at `.indusk/graph/semantic-graph.log` — never edited in place, never rewritten. Malformed lines are skipped on replay with a warning."
+- [x] Add to CLAUDE.md Known Gotchas: "Semantic graph event log is append-only jsonl at `.indusk/graph/semantic-graph.log` — never edited in place, never rewritten. Malformed lines are skipped on replay with a warning."
 
 #### Phase 1 Document
-- [ ] Create `apps/indusk-docs/src/reference/semantic-graph/event-schema.md` documenting the six event types with field tables and one JSON example each
+- [x] Create `apps/indusk-docs/src/reference/semantic-graph/event-schema.md` documenting the six event types with field tables and one JSON example each
 
 ---
 

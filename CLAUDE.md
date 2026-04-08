@@ -132,6 +132,7 @@ infinitedusky/
 - Graphiti source at `~/.graphiti/` has a reranker patch — this is now baked into `docker/patches/graphiti-reranker.patch` and applied during image build.
 - In local mode, `.git/info/exclude` manages ignores — if you re-clone, re-run `indusk init --local`. The exclude file is per-clone, not committed.
 - In local mode, run `indusk pr-clean` before PRs to strip InDusk settings from `.claude/settings.json`. Run `indusk pr-restore` after.
+- Semantic graph event log is append-only jsonl at `.indusk/graph/semantic-graph.log` — never edited in place, never rewritten. Malformed lines (from crashed writes or hand edits) are skipped on replay with a warning via the reader's `onMalformed` callback, not thrown.
 
 ## Current State
 
