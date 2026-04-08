@@ -59,7 +59,20 @@
       "Bash(docker start:*)",
       "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY semantic-infinitedusky \"MATCH \\(a:Anchor\\) RETURN count\\(a\\)\")",
       "Bash(node /Users/the_dusky/code/sandbox/infinitedusky/.claude/hooks/validate-impl-structure.js)",
-      "Read(//Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/**)"
+      "Read(//Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/**)",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY cgc-infinitedusky \"CALL db.labels\\(\\) YIELD label RETURN label\")",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY cgc-infinitedusky \"CALL db.relationshipTypes\\(\\) YIELD relationshipType RETURN relationshipType\")",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY cgc-infinitedusky \"MATCH \\(f:File\\) RETURN f LIMIT 1\")",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY cgc-infinitedusky \"MATCH \\(f:File\\) WHERE f.is_dependency = false RETURN count\\(f\\) AS n\")",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY cgc-infinitedusky \"MATCH \\(a:File\\)-[:IMPORTS]->\\(b:File\\) WHERE a.is_dependency = false AND b.is_dependency = false RETURN count\\(*\\) AS n\")",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY cgc-infinitedusky \"MATCH \\(a:File\\)-[:IMPORTS]->\\(b:File\\) RETURN a.relative_path, b.relative_path LIMIT 5\")",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY cgc-infinitedusky \"MATCH \\(\\)-[:IMPORTS]->\\(\\) RETURN count\\(*\\) AS n\")",
+      "Bash(redis-cli -h localhost -p 6379 GRAPH.QUERY cgc-infinitedusky \"MATCH \\(m:Module\\) RETURN m LIMIT 3\")",
+      "Bash(node /tmp/dump-cgc.mjs)",
+      "Bash(node dump-cgc.mjs)",
+      "Bash(python3 -c ':*)",
+      "Bash(python3 /tmp/build-demo.py)",
+      "Bash(python3 /tmp/build-3d.py)"
     ],
     "additionalDirectories": [
       "/tmp"

@@ -1,0 +1,6 @@
+{
+	"name": "sigma",
+	"description": "Sigma.js graph visualization — WebGL rendering of large networks, built on graphology, used for semantic graph dashboards",
+	"provides": { "skill": true },
+	"detect": { "dependency": "sigma" }
+}
