@@ -5,6 +5,12 @@
  */
 
 export * from "./events.js";
+export {
+	getCurrentChangeId,
+	getReachableChangeIds,
+	isChangeReachable,
+	NotAJjRepoError,
+} from "./jj.js";
 export { type LogReaderOptions, readAllEvents, readEvents } from "./log-reader.js";
 export { LogWriter } from "./log-writer.js";
 export * from "./paths.js";

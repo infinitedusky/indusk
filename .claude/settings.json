@@ -50,7 +50,12 @@
       "Read(//Users/the_dusky/code/sandbox/indusk/**)",
       "Read(//Users/the_dusky/code/**)",
       "Bash(claude --version)",
-      "Bash(gh release:*)"
+      "Bash(gh release:*)",
+      "Bash(node --input-type=module -e ':*)",
+      "Bash(pnpm --filter=@infinitedusky/indusk-mcp exec tsx -e ':*)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   },
   "hooks": {

@@ -133,6 +133,7 @@ infinitedusky/
 - In local mode, `.git/info/exclude` manages ignores — if you re-clone, re-run `indusk init --local`. The exclude file is per-clone, not committed.
 - In local mode, run `indusk pr-clean` before PRs to strip InDusk settings from `.claude/settings.json`. Run `indusk pr-restore` after.
 - Semantic graph event log is append-only jsonl at `.indusk/graph/semantic-graph.log` — never edited in place, never rewritten. Malformed lines (from crashed writes or hand edits) are skipped on replay with a warning via the reader's `onMalformed` callback, not thrown.
+- Semantic graph bridge requires jj — projects without jj cannot use it in v1. If `jj` is missing or the cwd is not a jj repo, sync fails with `NotAJjRepoError` explicitly rather than silently degrading. Stable change IDs (not git commit SHAs) are the versioning substrate because they survive rebase/amend/split/abandon.
 
 ## Current State
 

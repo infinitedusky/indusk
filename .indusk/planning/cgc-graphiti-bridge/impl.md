@@ -85,22 +85,22 @@ Build the semantic graph bridge described in `adr.md`: an event-sourced projecti
 
 ### Phase 2: Jj integration
 
-- [ ] Implement `jj.ts`:
+- [x] Implement `jj.ts`:
   - `getCurrentChangeId(cwd: string): Promise<string>` — runs `jj log -r @ --no-graph --template 'change_id'`
   - `getReachableChangeIds(cwd: string): Promise<Set<string>>` — runs `jj log -r '::@' --no-graph --template 'change_id ++ "\n"'`, returns ancestor set
   - `isChangeReachable(changeId: string, reachable: Set<string>): boolean`
-- [ ] Handle "jj not available" case: typed `NotAJjRepoError` thrown when `jj` is missing or cwd is not a jj repo
-- [ ] Unit tests with mocked child_process covering: normal case, empty repo, not a jj repo, malformed output
+- [x] Handle "jj not available" case: typed `NotAJjRepoError` thrown when `jj` is missing or cwd is not a jj repo
+- [x] Unit tests with mocked child_process covering: normal case, empty repo, not a jj repo, malformed output
 
 #### Phase 2 Verification
-- [ ] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/jj` passes
-- [ ] Manual: run `getCurrentChangeId(process.cwd())` in a throwaway script inside infinitedusky; output matches `jj log -r @ --no-graph --template 'change_id'`
+- [x] `pnpm turbo test --filter=indusk-mcp -- semantic-graph/jj` passes (11 tests)
+- [x] Manual: smoke-tested against real jj in infinitedusky — current change id `lrowmounwpxnmortzuyumsomuprkrspv`, reachable ancestry set of 86 change ids, current is in reachable ✓
 
 #### Phase 2 Context
-- [ ] Add to CLAUDE.md Known Gotchas: "Semantic graph bridge requires jj — projects without jj cannot use it in v1. If `jj` is missing or the cwd is not a jj repo, sync fails with `NotAJjRepoError` explicitly rather than silently degrading."
+- [x] Add to CLAUDE.md Known Gotchas: "Semantic graph bridge requires jj — projects without jj cannot use it in v1. If `jj` is missing or the cwd is not a jj repo, sync fails with `NotAJjRepoError` explicitly rather than silently degrading."
 
 #### Phase 2 Document
-- [ ] Create `apps/indusk-docs/src/reference/semantic-graph/jj-dependency.md` explaining why jj is required (stable change IDs across rebase/amend), what breaks without it, and the future git-only fallback path
+- [x] Create `apps/indusk-docs/src/reference/semantic-graph/jj-dependency.md` explaining why jj is required (stable change IDs across rebase/amend), what breaks without it, and the future git-only fallback path
 
 ---
 
