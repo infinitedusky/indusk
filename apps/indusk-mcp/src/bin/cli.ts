@@ -156,6 +156,107 @@ infra
 		await infraStatus();
 	});
 
+const graph = program
+	.command("graph")
+	.description("Manage the semantic graph (sync, rebuild, status)");
+
+graph
+	.command("sync")
+	.description("Sync CGC structural data into the semantic graph")
+	.action(async () => {
+		const { basename } = await import("node:path");
+		const { CgcAdapter } = await import("../lib/semantic-graph/adapters/cgc.js");
+		const { LogWriter } = await import("../lib/semantic-graph/log-writer.js");
+		const { getLogPath } = await import("../lib/semantic-graph/paths.js");
+		const { SemanticGraphClient } = await import("../lib/semantic-graph/runtime-client.js");
+		const { runSync } = await import("../lib/semantic-graph/sync-engine.js");
+
+		const projectRoot = process.cwd();
+		const projectName = basename(projectRoot);
+		const adapter = new CgcAdapter();
+		const logWriter = new LogWriter(getLogPath(projectRoot));
+		const client = new SemanticGraphClient(projectName);
+
+		await client.ensureConnection();
+		console.info("Syncing semantic graph...");
+		const result = await runSync(adapter, projectRoot, logWriter, client);
+		await client.close();
+
+		console.info(`Created: ${result.created}, Moved: ${result.moved}, Tombstoned: ${result.tombstoned}, Edges: ${result.edges_attached}, Unchanged: ${result.unchanged}`);
+		console.info(`Duration: ${result.duration_ms}ms`);
+	});
+
+graph
+	.command("rebuild")
+	.description("Clear and rebuild the semantic graph runtime from the event log")
+	.action(async () => {
+		const { basename } = await import("node:path");
+		const { getLogPath } = await import("../lib/semantic-graph/paths.js");
+		const { replay } = await import("../lib/semantic-graph/replay.js");
+		const { SemanticGraphClient } = await import("../lib/semantic-graph/runtime-client.js");
+
+		const projectRoot = process.cwd();
+		const projectName = basename(projectRoot);
+		const logPath = getLogPath(projectRoot);
+		const client = new SemanticGraphClient(projectName);
+
+		await client.ensureConnection();
+		console.info("Clearing runtime...");
+		await client.clearGraph();
+		await client.close();
+
+		const freshClient = new SemanticGraphClient(projectName);
+		await freshClient.ensureConnection();
+		console.info("Replaying log...");
+		const result = await replay(logPath, freshClient);
+		await freshClient.close();
+
+		console.info(`Total: ${result.total}, Applied: ${result.applied}, Skipped: ${result.skipped}, Errors: ${result.errors}`);
+	});
+
+graph
+	.command("status")
+	.description("Show semantic graph status")
+	.action(async () => {
+		const { basename } = await import("node:path");
+		const { existsSync, statSync } = await import("node:fs");
+		const { getLogPath } = await import("../lib/semantic-graph/paths.js");
+		const { readAllEvents } = await import("../lib/semantic-graph/log-reader.js");
+		const { SemanticGraphClient } = await import("../lib/semantic-graph/runtime-client.js");
+
+		const projectRoot = process.cwd();
+		const projectName = basename(projectRoot);
+		const logPath = getLogPath(projectRoot);
+
+		console.info(`Project: ${projectName}`);
+		console.info(`Log: ${logPath}`);
+
+		if (existsSync(logPath)) {
+			const stat = statSync(logPath);
+			const events = await readAllEvents(logPath);
+			console.info(`  Events: ${events.length}`);
+			console.info(`  Size: ${(stat.size / 1024).toFixed(1)}KB`);
+
+			const lastSync = [...events].reverse().find((e) => e.type === "sync.completed");
+			if (lastSync) {
+				console.info(`  Last sync: ${lastSync.ts}`);
+			}
+		} else {
+			console.info("  (no log file — run 'indusk graph sync' first)");
+		}
+
+		try {
+			const client = new SemanticGraphClient(projectName);
+			await client.ensureConnection();
+			const anchors = await client.countAnchors();
+			const edges = await client.countEdges();
+			await client.close();
+			console.info(`Runtime: ${anchors} anchors, ${edges} edges`);
+		} catch {
+			console.info("Runtime: FalkorDB not available");
+		}
+	});
+
 program
 	.command("pr-clean")
 	.description("Strip InDusk settings overlay before a PR")

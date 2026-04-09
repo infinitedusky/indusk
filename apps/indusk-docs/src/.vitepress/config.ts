@@ -82,7 +82,9 @@ const config = defineConfig({
 						{ text: "CGC Adapter", link: "/reference/semantic-graph/cgc-adapter" },
 						{ text: "Jj Dependency", link: "/reference/semantic-graph/jj-dependency" },
 						{ text: "Runtime Graph", link: "/reference/semantic-graph/runtime-graph" },
-						{ text: "Rebuild & Replay", link: "/reference/semantic-graph/rebuild-and-replay" },
+						{ text: "Capture Flow", link: "/reference/semantic-graph/capture-flow" },
+					{ text: "Rebuild & Replay", link: "/reference/semantic-graph/rebuild-and-replay" },
+					{ text: "CLI & MCP Tools", link: "/reference/semantic-graph/cli" },
 					],
 				},
 				{
@@ -109,6 +111,7 @@ const config = defineConfig({
 					{ text: "OpenTelemetry Extension", link: "/decisions/otel-extension" },
 					{ text: "Graphiti Infrastructure", link: "/decisions/graphiti-infrastructure" },
 					{ text: "Local Init Mode", link: "/decisions/local-init-mode" },
+					{ text: "Semantic Graph Bridge", link: "/decisions/semantic-graph-bridge" },
 					],
 				},
 			],

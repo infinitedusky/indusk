@@ -1,8 +1,16 @@
 import { execSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+
+import { CgcAdapter } from "../lib/semantic-graph/adapters/cgc.js";
+import { readAllEvents } from "../lib/semantic-graph/log-reader.js";
+import { LogWriter } from "../lib/semantic-graph/log-writer.js";
+import { getLogPath } from "../lib/semantic-graph/paths.js";
+import { replay } from "../lib/semantic-graph/replay.js";
+import { SemanticGraphClient } from "../lib/semantic-graph/runtime-client.js";
+import { runSync } from "../lib/semantic-graph/sync-engine.js";
 
 function getCgcGraphName(projectRoot: string): string {
 	if (process.env.FALKORDB_GRAPH_NAME) return process.env.FALKORDB_GRAPH_NAME;
@@ -573,6 +581,166 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				],
 				isError: hasErrors,
 			};
+		},
+	);
+
+	// --- Semantic graph tools ---
+
+	server.registerTool(
+		"graph_sync",
+		{
+			description:
+				"Sync the semantic graph: snapshot CGC structural data, diff against runtime, emit events. Returns delta counts (created, moved, tombstoned, edges).",
+		},
+		async () => {
+			try {
+				const projectName = basename(projectRoot);
+				const adapter = new CgcAdapter();
+				const logWriter = new LogWriter(getLogPath(projectRoot));
+				const client = new SemanticGraphClient(projectName);
+
+				await client.ensureConnection();
+				const result = await runSync(adapter, projectRoot, logWriter, client);
+				await client.close();
+
+				return {
+					content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+				};
+			} catch (err) {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify({ error: (err as Error).message }, null, 2),
+						},
+					],
+					isError: true,
+				};
+			}
+		},
+	);
+
+	server.registerTool(
+		"graph_rebuild",
+		{
+			description:
+				"Clear the semantic graph runtime and rebuild from the event log. The runtime is disposable — this is always safe. Returns replay counts.",
+		},
+		async () => {
+			try {
+				const projectName = basename(projectRoot);
+				const logPath = getLogPath(projectRoot);
+				const client = new SemanticGraphClient(projectName);
+
+				await client.ensureConnection();
+				await client.clearGraph();
+
+				// Re-select graph after clear (clear deletes the graph)
+				await client.close();
+				const freshClient = new SemanticGraphClient(projectName);
+				await freshClient.ensureConnection();
+
+				const result = await replay(logPath, freshClient);
+				await freshClient.close();
+
+				return {
+					content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+				};
+			} catch (err) {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify({ error: (err as Error).message }, null, 2),
+						},
+					],
+					isError: true,
+				};
+			}
+		},
+	);
+
+	server.registerTool(
+		"graph_status",
+		{
+			description:
+				"Show semantic graph status: log path, event count, log size, runtime anchor/edge counts, last sync time.",
+		},
+		async () => {
+			try {
+				const projectName = basename(projectRoot);
+				const logPath = getLogPath(projectRoot);
+
+				let eventCount = 0;
+				let logSize = 0;
+				let lastSyncTime: string | null = null;
+				let lastSyncAdapter: string | null = null;
+
+				if (existsSync(logPath)) {
+					const stat = statSync(logPath);
+					logSize = stat.size;
+					const events = await readAllEvents(logPath);
+					eventCount = events.length;
+
+					for (let i = events.length - 1; i >= 0; i--) {
+						const evt = events[i];
+						if (evt.type === "sync.completed") {
+							lastSyncTime = evt.ts;
+							lastSyncAdapter = evt.adapter;
+							break;
+						}
+					}
+				}
+
+				let anchorCount = 0;
+				let edgeCount = 0;
+				let runtimeAvailable = false;
+
+				try {
+					const client = new SemanticGraphClient(projectName);
+					await client.ensureConnection();
+					anchorCount = await client.countAnchors();
+					edgeCount = await client.countEdges();
+					await client.close();
+					runtimeAvailable = true;
+				} catch {
+					// FalkorDB not available
+				}
+
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify(
+								{
+									logPath,
+									logExists: existsSync(logPath),
+									logSize: `${(logSize / 1024).toFixed(1)}KB`,
+									eventCount,
+									lastSync: lastSyncTime
+										? { time: lastSyncTime, adapter: lastSyncAdapter }
+										: null,
+									runtime: runtimeAvailable
+										? { anchors: anchorCount, edges: edgeCount }
+										: { error: "FalkorDB not available" },
+								},
+								null,
+								2,
+							),
+						},
+					],
+				};
+			} catch (err) {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify({ error: (err as Error).message }, null, 2),
+						},
+					],
+					isError: true,
+				};
+			}
 		},
 	);
 }

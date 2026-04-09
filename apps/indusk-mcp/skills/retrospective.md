@@ -119,7 +119,7 @@ Use the project group (from `getProjectGroupId(projectRoot)`) — most retrospec
 
 **Contradictions:** If the retrospective surfaces a moment where "we thought X but found Y", capture both as separate episodes. Graphiti's contradiction detection will invalidate the older fact when it sees the conflicting one. This is one of Graphiti's most useful features — it remembers that a previous assumption was overturned, so the agent doesn't accidentally re-introduce it later.
 
-Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, and lesson recording via `add_lesson` is the canonical path. Graphiti capture is supplementary.
+Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, and lesson recording via `add_lesson` is the canonical path. Graphiti capture is supplementary. When `mcp__indusk__graph_capture` is available, use it instead — it dual-writes to both Graphiti and the semantic graph event log.
 
 ### Step 7: Context Audit
 

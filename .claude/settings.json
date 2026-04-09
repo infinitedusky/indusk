@@ -72,7 +72,13 @@
       "Bash(node dump-cgc.mjs)",
       "Bash(python3 -c ':*)",
       "Bash(python3 /tmp/build-demo.py)",
-      "Bash(python3 /tmp/build-3d.py)"
+      "Bash(python3 /tmp/build-3d.py)",
+      "Bash(npx indusk-mcp:*)",
+      "Bash(node apps/indusk-mcp/dist/bin/cli.js graph status)",
+      "Bash(node apps/indusk-mcp/dist/bin/cli.js graph rebuild)",
+      "Bash(node /Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/dist/bin/cli.js graph sync)",
+      "Bash(node /Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/dist/bin/cli.js graph status)",
+      "mcp__codegraphcontext__find_dead_code"
     ],
     "additionalDirectories": [
       "/tmp"

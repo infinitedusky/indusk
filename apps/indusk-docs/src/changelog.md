@@ -12,6 +12,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - Local-mode quality tools: `.indusk/biome.json`, `.indusk/tests/`, `.indusk/docs/`
 - Tooling detection at init (linter, test runner, OTel, TypeScript)
 
+- **Semantic graph bridge** — per-project event-sourced projection of CGC structure and Graphiti knowledge, versioned via jj change IDs. Anchors for files, functions, classes, interfaces; internal import edges. `indusk graph sync/rebuild/status` CLI and MCP tools. Automatic sync at phase boundaries.
+
 ### Changed
 - **Planning moved to `.indusk/planning/`** — all modes. `.indusk/` is now the InDusk home directory.
 - All skill path references updated (`planning/` → `.indusk/planning/`)
