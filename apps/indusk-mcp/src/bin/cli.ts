@@ -182,7 +182,9 @@ graph
 		const result = await runSync(adapter, projectRoot, logWriter, client);
 		await client.close();
 
-		console.info(`Created: ${result.created}, Moved: ${result.moved}, Tombstoned: ${result.tombstoned}, Edges: ${result.edges_attached}, Unchanged: ${result.unchanged}`);
+		console.info(
+			`Created: ${result.created}, Moved: ${result.moved}, Tombstoned: ${result.tombstoned}, Edges: ${result.edges_attached}, Unchanged: ${result.unchanged}`,
+		);
 		console.info(`Duration: ${result.duration_ms}ms`);
 	});
 
@@ -211,7 +213,9 @@ graph
 		const result = await replay(logPath, freshClient);
 		await freshClient.close();
 
-		console.info(`Total: ${result.total}, Applied: ${result.applied}, Skipped: ${result.skipped}, Errors: ${result.errors}`);
+		console.info(
+			`Total: ${result.total}, Applied: ${result.applied}, Skipped: ${result.skipped}, Errors: ${result.errors}`,
+		);
 	});
 
 graph
@@ -273,6 +277,43 @@ program
 		const { applyOverlay } = await import("../lib/settings-overlay.js");
 		applyOverlay(process.cwd());
 		console.info("Re-applied InDusk overlay to .claude/settings.json");
+	});
+
+program
+	.command("install <names...>")
+	.description("Install extensions (shorthand for extensions enable / add)")
+	.option("--from <source>", "Source for third-party extension (npm:pkg, github:user/repo, URL, or path)")
+	.action(async (names: string[], opts: { from?: string }) => {
+		if (opts.from) {
+			const { extensionsAdd } = await import("./commands/extensions.js");
+			await extensionsAdd(process.cwd(), names[0], opts.from);
+		} else {
+			const { extensionsEnable } = await import("./commands/extensions.js");
+			await extensionsEnable(process.cwd(), names);
+		}
+	});
+
+const eval_ = program.command("eval").description("Context evaluation and quality scoring");
+
+eval_
+	.command("summary")
+	.description("Aggregate eval scores and trends")
+	.option("--mode <mode>", "Filter by mode (eval, baseline)")
+	.option("--since <date>", "Show results since date")
+	.option("--json", "Output as JSON")
+	.action(async (opts) => {
+		const { evalSummary } = await import("./commands/eval.js");
+		await evalSummary(process.cwd(), opts);
+	});
+
+eval_
+	.command("baseline")
+	.description("Run baseline evaluation with vanilla agent")
+	.requiredOption("--task <path>", "Path to task prompt file")
+	.option("--keep", "Keep baseline worktree after eval")
+	.action(async (opts) => {
+		const { evalBaseline } = await import("./commands/eval.js");
+		await evalBaseline(process.cwd(), opts);
 	});
 
 program

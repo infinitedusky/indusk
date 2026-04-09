@@ -55,6 +55,7 @@ const config = defineConfig({
 						{ text: "Walkthrough", link: "/guide/walkthrough" },
 						{ text: "Extensions", link: "/guide/extensions" },
 					{ text: "Local Mode", link: "/guide/local-mode" },
+						{ text: "Evaluation", link: "/guide/eval" },
 					],
 				},
 			],
@@ -88,6 +89,12 @@ const config = defineConfig({
 					],
 				},
 				{
+					text: "Evaluation",
+					items: [
+						{ text: "Overview", link: "/reference/eval/overview" },
+					],
+				},
+				{
 					text: "Tools",
 					items: [
 						{ text: "InDusk MCP", link: "/reference/tools/indusk-mcp" },
@@ -112,6 +119,7 @@ const config = defineConfig({
 					{ text: "Graphiti Infrastructure", link: "/decisions/graphiti-infrastructure" },
 					{ text: "Local Init Mode", link: "/decisions/local-init-mode" },
 					{ text: "Semantic Graph Bridge", link: "/decisions/semantic-graph-bridge" },
+						{ text: "Context Eval", link: "/decisions/context-eval" },
 					],
 				},
 			],

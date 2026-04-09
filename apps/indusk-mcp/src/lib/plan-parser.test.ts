@@ -33,7 +33,7 @@ describe("parseAllPlans", () => {
 
 		const names = plans.map((p) => p.name);
 		expect(names).toContain("context-graph");
-		expect(names).toContain("cgc-graphiti-bridge");
+		expect(names).toContain("dusk-v2");
 
 		// Verify sorted
 		const sorted = [...names].sort();

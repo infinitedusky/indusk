@@ -353,7 +353,12 @@ export async function update(projectRoot: string): Promise<void> {
 		console.info("  could not check third-party extensions");
 	}
 
-	// 8. Respect local mode: re-apply overlay, refresh excludes
+	// 8. Ensure .gitignore has all required entries
+	console.info("\n[Git Ignores]\n");
+	const { ensureGitignore } = await import("./init.js");
+	ensureGitignore(projectRoot);
+
+	// 9. Respect local mode: re-apply overlay, refresh excludes
 	const { readConfig } = await import("../../lib/config.js");
 	const config = readConfig(projectRoot);
 	if (config?.mode === "local") {

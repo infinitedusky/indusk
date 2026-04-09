@@ -27,3 +27,12 @@ apps/indusk-docs/src/.vitepress/cache/
 
 # MCP config (contains auth tokens)
 .mcp.json
+# InDusk managed
+# Session-specific handoff (not project knowledge)
+.claude/handoff.md
+# Semantic graph event log (large, local-only)
+.indusk/graph/
+# Eval results (local-only)
+.indusk/eval/
+# Extension manifests are package-owned; env files contain secrets
+.indusk/extensions/

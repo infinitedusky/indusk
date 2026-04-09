@@ -78,10 +78,21 @@
       "Bash(node apps/indusk-mcp/dist/bin/cli.js graph rebuild)",
       "Bash(node /Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/dist/bin/cli.js graph sync)",
       "Bash(node /Users/the_dusky/code/sandbox/infinitedusky/apps/indusk-mcp/dist/bin/cli.js graph status)",
-      "mcp__codegraphcontext__find_dead_code"
+      "mcp__codegraphcontext__find_dead_code",
+      "Bash(git hash-object:*)",
+      "Bash(node --loader tsx --input-type=module -e ':*)",
+      "Bash(ls -la /Users/the_dusky/.config/jj*)",
+      "Bash(jj config:*)",
+      "Bash(jj help:*)",
+      "Bash(jj version:*)",
+      "Bash(node /Users/the_dusky/code/sandbox/infinitedusky/.claude/hooks/eval-trigger.js)",
+      "Bash(claude --print --output-format json --model opus --permission-mode acceptEdits --allowed-tools Read Grep Glob \"Respond with just: {\\\\\"test\\\\\": true}\")",
+      "Bash(echo \"Background PID: $!\")",
+      "Bash(kill 11455 11399 3625)"
     ],
     "additionalDirectories": [
-      "/tmp"
+      "/tmp",
+      "/Users/the_dusky/code/sandbox/infinitedusky/.claude/hooks"
     ]
   },
   "hooks": {
@@ -111,6 +122,15 @@
           {
             "type": "command",
             "command": "node .claude/hooks/gate-reminder.js"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/eval-trigger.js"
           }
         ]
       }

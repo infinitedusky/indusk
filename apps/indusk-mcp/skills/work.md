@@ -221,7 +221,7 @@ Where `{slug}` is a short kebab-case label for the topic (e.g. `correction-pnpm-
 
 When in doubt, ask: "Would this correction make sense to a different project?" Yes → `shared`. No → project group.
 
-Use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to get the project group consistently. Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, do not fail the work item. When `mcp__indusk__graph_capture` is available, use it instead — it dual-writes to both Graphiti and the semantic graph event log.
+Use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to get the project group consistently. Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, do not fail the work item. Prefer `mcp__indusk__graph_capture` over raw `mcp__graphiti__add_memory` — it dual-writes to both Graphiti and the semantic graph event log.
 
 ## Commits (jj)
 

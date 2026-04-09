@@ -19,22 +19,39 @@ function run(cmd: string, options?: { stdio?: "ignore" | "pipe" | "inherit" }): 
 	}
 }
 
-function ensureGitignore(projectRoot: string): void {
-	const gitignorePath = join(projectRoot, ".gitignore");
-	const entries = ["# MCP config (contains auth tokens)", ".mcp.json"];
+/** Paths that should be gitignored in ALL modes (full + local). */
+const GITIGNORE_ENTRIES = [
+	{ comment: "# MCP config (contains auth tokens)", pattern: ".mcp.json" },
+	{ comment: "# Session-specific handoff (not project knowledge)", pattern: ".claude/handoff.md" },
+	{ comment: "# Semantic graph event log (large, local-only)", pattern: ".indusk/graph/" },
+	{ comment: "# Eval results (local-only)", pattern: ".indusk/eval/" },
+	{ comment: "# Extension manifests are package-owned; env files contain secrets", pattern: ".indusk/extensions/" },
+];
 
-	if (existsSync(gitignorePath)) {
-		const content = readFileSync(gitignorePath, "utf-8");
-		if (content.includes(".mcp.json")) {
-			console.info("  skip: .gitignore (.mcp.json already ignored)");
-			return;
-		}
-		writeFileSync(gitignorePath, `${content.trimEnd()}\n\n${entries.join("\n")}\n`);
-		console.info("  updated: .gitignore (added .mcp.json)");
-	} else {
-		writeFileSync(gitignorePath, `${entries.join("\n")}\n`);
-		console.info("  create: .gitignore (with .mcp.json)");
+const GITIGNORE_MARKER = "# InDusk managed";
+
+export function ensureGitignore(projectRoot: string): void {
+	const gitignorePath = join(projectRoot, ".gitignore");
+	const content = existsSync(gitignorePath) ? readFileSync(gitignorePath, "utf-8") : "";
+
+	// Collect entries that are missing from the current .gitignore
+	const missing = GITIGNORE_ENTRIES.filter((e) => !content.includes(e.pattern));
+	if (missing.length === 0) {
+		console.info("  skip: .gitignore (all InDusk entries present)");
+		return;
 	}
+
+	// Build the block to append
+	const block = [
+		"",
+		GITIGNORE_MARKER,
+		...missing.flatMap((e) => [e.comment, e.pattern]),
+		"",
+	].join("\n");
+
+	writeFileSync(gitignorePath, `${content.trimEnd()}${block}`);
+	const verb = content.length > 0 ? "updated" : "created";
+	console.info(`  ${verb}: .gitignore (added ${missing.map((e) => e.pattern).join(", ")})`);
 }
 
 function createCgcIgnore(projectRoot: string): void {

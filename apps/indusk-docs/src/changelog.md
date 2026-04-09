@@ -12,6 +12,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - Local-mode quality tools: `.indusk/biome.json`, `.indusk/tests/`, `.indusk/docs/`
 - Tooling detection at init (linter, test runner, OTel, TypeScript)
 
+- **Context system evaluation** — commit-triggered judge agent scores every commit against project conventions, lessons, and graph data. Two modes: eval (always on, writes derived insights to Graphiti) and baseline (vanilla agent comparison). `indusk eval summary` for trends, `indusk eval baseline --task <path>` for delta measurement. `/eval review` for manual quality checks.
+
 - **Semantic graph bridge** — per-project event-sourced projection of CGC structure and Graphiti knowledge, versioned via jj change IDs. Anchors for files, functions, classes, interfaces; internal import edges. `indusk graph sync/rebuild/status` CLI and MCP tools. Automatic sync at phase boundaries.
 
 ### Changed

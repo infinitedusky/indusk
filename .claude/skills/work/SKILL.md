@@ -142,7 +142,7 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
     - See the document skill for guidance on what to document, where, and how to use Mermaid diagrams
     - If a phase has no document items, that's fine — not every phase produces user-facing documentation
 
-14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase.
+14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase. **Semantic graph sync:** If the project has a `.indusk/` directory and `mcp__indusk__graph_sync` is available, call it after all phase gates succeed to keep the semantic graph current with code changes. This is best-effort — if sync fails, log a warning and continue.
 
 15. **Completion.** When all phases are checked:
     - Update impl status to `completed`
@@ -221,7 +221,7 @@ Where `{slug}` is a short kebab-case label for the topic (e.g. `correction-pnpm-
 
 When in doubt, ask: "Would this correction make sense to a different project?" Yes → `shared`. No → project group.
 
-Use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to get the project group consistently. Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, do not fail the work item.
+Use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to get the project group consistently. Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, do not fail the work item. Prefer `mcp__indusk__graph_capture` over raw `mcp__graphiti__add_memory` — it dual-writes to both Graphiti and the semantic graph event log.
 
 ## Commits (jj)
 

@@ -10,15 +10,13 @@
  * only imports starting with "./" or "../" are projected.
  */
 
-import { execFile } from "node:child_process";
+import { execFileSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
-import { promisify } from "node:util";
 
 import { FalkorDB } from "falkordb";
 
 import type { AdapterEdge, AdapterRecord, SemanticGraphAdapter } from "../adapter.js";
-
-const execFileAsync = promisify(execFile);
 
 export interface CgcAdapterOptions {
 	host?: string;
@@ -93,13 +91,18 @@ export class CgcAdapter implements SemanticGraphAdapter {
 			);
 
 			const filePaths = new Set<string>();
+			const filePathList: string[] = [];
 			for (const row of files.data ?? []) {
 				const path = String(row.path);
 				filePaths.add(path);
+				filePathList.push(path);
+			}
 
-				// Get blob hash for rename detection
-				const blobHash = await this.getBlobHash(path);
+			// Batch hash all files in one subprocess call
+			const blobHashes = this.getBlobHashes(filePathList);
 
+			for (const path of filePathList) {
+				const blobHash = blobHashes.get(path);
 				records.push({
 					kind: "file",
 					path,
@@ -172,13 +175,31 @@ export class CgcAdapter implements SemanticGraphAdapter {
 		return undefined;
 	}
 
-	private async getBlobHash(filePath: string): Promise<string | undefined> {
+	private getBlobHashes(filePaths: string[]): Map<string, string> {
+		const result = new Map<string, string>();
+		if (filePaths.length === 0) return result;
+
+		// Filter to files that actually exist — CGC index may reference stale paths
+		const existing = filePaths.filter((p) => existsSync(p));
+		if (existing.length === 0) return result;
+
 		try {
-			const { stdout } = await execFileAsync("git", ["hash-object", filePath]);
-			const hash = stdout.trim();
-			return hash.length > 0 ? hash : undefined;
+			const stdout = execFileSync("git", ["hash-object", "--stdin-paths"], {
+				input: existing.join("\n"),
+				encoding: "utf-8",
+				maxBuffer: 10 * 1024 * 1024,
+			});
+			const hashes = stdout.trim().split("\n");
+			for (let i = 0; i < existing.length && i < hashes.length; i++) {
+				const hash = hashes[i].trim();
+				if (hash.length > 0) {
+					result.set(existing[i], hash);
+				}
+			}
 		} catch {
-			return undefined;
+			// Failed to hash — return empty map, files will have no fingerprint
 		}
+
+		return result;
 	}
 }

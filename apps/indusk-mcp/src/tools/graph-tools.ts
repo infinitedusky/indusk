@@ -4,7 +4,9 @@ import { basename, join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
+import { GraphitiClient } from "../lib/graphiti-client.js";
 import { CgcAdapter } from "../lib/semantic-graph/adapters/cgc.js";
+import { captureWithLog } from "../lib/semantic-graph/graphiti-log-wrapper.js";
 import { readAllEvents } from "../lib/semantic-graph/log-reader.js";
 import { LogWriter } from "../lib/semantic-graph/log-writer.js";
 import { getLogPath } from "../lib/semantic-graph/paths.js";
@@ -729,6 +731,61 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 							),
 						},
 					],
+				};
+			} catch (err) {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify({ error: (err as Error).message }, null, 2),
+						},
+					],
+					isError: true,
+				};
+			}
+		},
+	);
+
+	server.registerTool(
+		"graph_capture",
+		{
+			description:
+				"Capture knowledge into both Graphiti and the semantic graph event log (dual-write). Use this instead of calling mcp__graphiti__add_memory directly when you want the capture to also appear as an edge in the semantic graph.",
+			inputSchema: {
+				name: z.string().describe("Short name for the episode (e.g., 'adr-auth-system')"),
+				body: z.string().describe("Episode content — the knowledge to capture"),
+				file_path: z
+					.string()
+					.optional()
+					.describe("File path this knowledge relates to (for anchor resolution)"),
+				relation: z
+					.string()
+					.default("knowledge")
+					.describe("Edge relation label (e.g., 'decision', 'correction', 'lesson')"),
+				group_id: z
+					.string()
+					.optional()
+					.describe("Graphiti group ID override (defaults to project name)"),
+			},
+		},
+		async ({ name, body, file_path, relation, group_id }) => {
+			try {
+				const projectName = basename(projectRoot);
+				const graphiti = new GraphitiClient(projectName);
+				const logWriter = new LogWriter(getLogPath(projectRoot));
+				const client = new SemanticGraphClient(projectName);
+
+				await client.ensureConnection();
+				const result = await captureWithLog(name, body, projectRoot, graphiti, logWriter, client, {
+					filePath: file_path,
+					relation,
+					groupId: group_id,
+				});
+				await client.close();
+				await graphiti.disconnect();
+
+				return {
+					content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
 				};
 			} catch (err) {
 				return {

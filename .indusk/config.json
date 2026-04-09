@@ -17,5 +17,9 @@
 	},
 	"otel": {
 		"role": "library"
+	},
+	"eval": {
+		"enabled": true,
+		"endpoint": null
 	}
 }
