@@ -18,6 +18,16 @@
 			}
 		]
 	},
+	"mcp_server": {
+		"type": "http",
+		"url": "http://localhost:8100/mcp",
+		"add_command": "claude mcp add -t http -s project graphiti http://localhost:8100/mcp",
+		"setup_instructions": [
+			"Registered automatically by `indusk init` and re-added by `indusk update` if missing.",
+			"The Graphiti MCP server runs inside the `indusk-infra` container on port 8100.",
+			"Exposes 9 tools: add_memory, search_nodes, search_memory_facts, get_episodes, get_entity_edge, delete_episode, delete_entity_edge, clear_graph, get_status."
+		]
+	},
 	"detect": {
 		"command": "docker inspect --format='{{.State.Running}}' indusk-infra 2>/dev/null | grep true"
 	}

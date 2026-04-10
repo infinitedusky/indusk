@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * PostToolUse hook: triggers the eval judge after `jj describe`.
  *
@@ -9,10 +10,21 @@
  * Exit 0 always — this is advisory, not blocking.
  */
 
-import { existsSync, readFileSync } from "node:fs";
 import { execSync, spawn } from "node:child_process";
-import { resolve, dirname } from "node:path";
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+// System log — writes to .indusk/eval/system.log for full visibility into eval lifecycle
+function syslog(projectRoot, msg) {
+	try {
+		const logDir = resolve(projectRoot || ".", ".indusk", "eval");
+		mkdirSync(logDir, { recursive: true });
+		appendFileSync(resolve(logDir, "system.log"), `${new Date().toISOString()} ${msg}\n`);
+	} catch {
+		// ignore — logging should never break the hook
+	}
+}
 
 // Read hook input from stdin
 let input = "";
@@ -23,9 +35,13 @@ for await (const chunk of process.stdin) {
 const event = JSON.parse(input);
 const toolInput = event.tool_input ?? {};
 const command = toolInput.command ?? "";
+const cwd = event.cwd ?? process.cwd();
+
+syslog(cwd, `hook fired — tool: ${event.tool_name}, command: ${command.slice(0, 100)}`);
 
 // Fast path: not a jj describe command
 if (!command.includes("jj describe")) {
+	syslog(cwd, "skip — no jj describe in command");
 	process.exit(0);
 }
 
@@ -60,11 +76,14 @@ function readEvalConfig(projectRoot) {
 	}
 }
 
-const projectRoot = findProjectRoot(event.cwd ?? process.cwd());
+const projectRoot = findProjectRoot(cwd);
 const evalConfig = readEvalConfig(projectRoot);
+
+syslog(projectRoot, `projectRoot: ${projectRoot}, eval.enabled: ${evalConfig.enabled}`);
 
 // Check if eval is disabled
 if (!evalConfig.enabled) {
+	syslog(projectRoot, "skip — eval disabled in config");
 	process.exit(0);
 }
 
@@ -85,26 +104,121 @@ try {
 // Claude Code provides CLAUDE_TRANSCRIPT_PATH in the environment when hooks run,
 // or we can search for the most recent transcript.
 const transcriptPath =
-	process.env.CLAUDE_TRANSCRIPT_PATH ??
-	process.env.TRANSCRIPT_PATH ??
-	"(transcript unavailable)";
+	process.env.CLAUDE_TRANSCRIPT_PATH ?? process.env.TRANSCRIPT_PATH ?? "(transcript unavailable)";
 
-// Spawn the judge runner as a detached background process.
-// Spawn a detached node process that calls runJudgeSync (which awaits completion).
-// runJudgeSync keeps the process alive until claude --print finishes and logs the result.
+// Find the indusk-mcp package — resolve from the hook's own location.
+// The hook lives at .claude/hooks/eval-trigger.js but was copied from the package's hooks/ dir.
+// Try multiple resolution strategies:
+// 1. Relative to the hook's original package location (when run from the package source)
+// 2. Via npx cache / global install
+// 3. Via the project's node_modules
+const hookDir = dirname(fileURLToPath(import.meta.url));
+const candidates = [
+	// Source repo (apps/indusk-mcp/hooks/ → apps/indusk-mcp/dist/)
+	resolve(hookDir, "../dist/lib/eval/judge-runner.js"),
+	// Installed package (hooks/ → dist/)
+	resolve(hookDir, "../../node_modules/@infinitedusky/indusk-mcp/dist/lib/eval/judge-runner.js"),
+	// Global npx cache
+	...(() => {
+		try {
+			const which = execSync("which indusk", { encoding: "utf8" }).trim();
+			if (which)
+				return [
+					resolve(
+						dirname(which),
+						"../lib/node_modules/@infinitedusky/indusk-mcp/dist/lib/eval/judge-runner.js",
+					),
+				];
+		} catch {}
+		return [];
+	})(),
+];
+let judgeRunnerPath = null;
+for (const c of candidates) {
+	syslog(projectRoot, `candidate: ${c} — ${existsSync(c) ? "found" : "missing"}`);
+	if (existsSync(c)) {
+		judgeRunnerPath = c;
+		break;
+	}
+}
+syslog(projectRoot, `judgeRunnerPath: ${judgeRunnerPath ?? "NOT FOUND"}`);
+
+if (!judgeRunnerPath) {
+	// Can't find the package — log error and exit
+	const { mkdirSync, appendFileSync } = await import("node:fs");
+	const logPath = resolve(projectRoot, ".indusk", "eval", "results.log");
+	mkdirSync(dirname(logPath), { recursive: true });
+	const entry = JSON.stringify({
+		version: 1,
+		timestamp: new Date().toISOString(),
+		mode: "eval",
+		changeId,
+		error: true,
+		message:
+			"Could not find @infinitedusky/indusk-mcp package — eval judge not available. Run: npm i -g @infinitedusky/indusk-mcp",
+	});
+	appendFileSync(logPath, entry + "\n", "utf8");
+	process.exit(0);
+}
+
+// Surface unresolved findings from previous evals
+const findingsPath = judgeRunnerPath.replace("judge-runner.js", "findings.js");
+if (existsSync(findingsPath)) {
+	try {
+		const { getUnresolvedFindings } = await import(findingsPath);
+		const unresolved = getUnresolvedFindings(projectRoot);
+		if (unresolved.length > 0) {
+			const lines = unresolved.map(
+				(f) => `  [${f.severity}] ${f.questionId}: ${f.finding} (change ${f.changeId.slice(0, 8)})`,
+			);
+			process.stderr.write(
+				`\n📊 Unresolved eval findings (${unresolved.length}):\n${lines.join("\n")}\nUse \`indusk eval fix <key>\` or \`indusk eval ignore <key>\` to resolve.\n\n`,
+			);
+		}
+	} catch {
+		// findings module not available — skip silently
+	}
+}
+
+// Use persistent judge — resumes existing session if available, otherwise does full catchup.
+const persistentJudgePath = judgeRunnerPath.replace("judge-runner.js", "persistent-judge.js");
+const useModule = existsSync(persistentJudgePath) ? persistentJudgePath : judgeRunnerPath;
+const useFunction = existsSync(persistentJudgePath) ? "runPersistentEval" : "runJudgeSync";
+
+syslog(
+	projectRoot,
+	`spawning judge — module: ${useModule}, function: ${useFunction}, changeId: ${changeId}`,
+);
+
+const syslogPath = resolve(projectRoot, ".indusk", "eval", "system.log");
 const judgeScript = `
-import("${resolve(projectRoot, "apps/indusk-mcp/dist/lib/eval/judge-runner.js")}")
-  .then(m => m.runJudgeSync({
-    projectRoot: ${JSON.stringify(projectRoot)},
-    changeId: ${JSON.stringify(changeId)},
-    transcriptPath: ${JSON.stringify(transcriptPath)},
-    mode: "eval",
-    evalEndpoint: ${JSON.stringify(evalConfig.endpoint)},
-  }))
-  .then(() => process.exit(0))
+const fs = require("fs");
+const path = require("path");
+function syslog(msg) {
+  try {
+    fs.mkdirSync(path.dirname("${syslogPath}"), { recursive: true });
+    fs.appendFileSync("${syslogPath}", new Date().toISOString() + " " + msg + "\\n");
+  } catch {}
+}
+syslog("judge process started — changeId: ${changeId}");
+import("${useModule}")
+  .then(m => {
+    syslog("judge module loaded — calling ${useFunction}");
+    return m.${useFunction}({
+      projectRoot: ${JSON.stringify(projectRoot)},
+      changeId: ${JSON.stringify(changeId)},
+      transcriptPath: ${JSON.stringify(transcriptPath)},
+      mode: "eval",
+      evalEndpoint: ${JSON.stringify(evalConfig.endpoint)},
+    });
+  })
+  .then((result) => {
+    const hasError = result && result.error;
+    syslog("judge completed — " + (hasError ? "error: " + result.message : "scorecard written"));
+    process.exit(0);
+  })
   .catch(err => {
-    const fs = require("fs");
-    const path = require("path");
+    syslog("judge crashed — " + (err.message || String(err)));
     const logPath = path.join(${JSON.stringify(projectRoot)}, ".indusk", "eval", "results.log");
     fs.mkdirSync(path.dirname(logPath), { recursive: true });
     const entry = JSON.stringify({
@@ -137,6 +251,8 @@ const output = JSON.stringify({
 	},
 });
 process.stdout.write(output);
-process.stderr.write(`📊 Eval judge spawned in background for ${changeId.slice(0, 8)}. Results will appear in .indusk/eval/results.log\n`);
+process.stderr.write(
+	`📊 Eval judge spawned in background for ${changeId.slice(0, 8)}. Results will appear in .indusk/eval/results.log\n`,
+);
 
 process.exit(0);

@@ -121,3 +121,56 @@ The evaluator writes two kinds of output:
 - **Graphiti facts** — derived insights written to the project's knowledge graph
 
 The evaluator's Graphiti writes are selective — only facts that would have changed the outcome. Combined with user-side capture (corrections, brief acceptance, retro lessons), this creates a complete feedback loop.
+
+## Findings Lifecycle
+
+Eval findings persist until explicitly resolved. When the judge scores a commit, any question answered `no` or `partial` becomes an **unresolved finding** in `.indusk/eval/findings.json`.
+
+On every subsequent `jj describe`, the hook surfaces unresolved findings to the agent:
+
+```
+📊 Unresolved eval findings (2):
+  [warning] conventions: CLAUDE.md still references parties/ (change zpqywqzs)
+  [info] missing-context: No graph data for webhook handler (change zpqywqzs)
+Use `indusk eval fix <key>` or `indusk eval ignore <key>` to resolve.
+```
+
+Three states:
+- **unresolved** — shows up on every commit until addressed
+- **fixed** — agent resolved the issue
+- **ignored** — agent saw it and chose to skip
+
+```bash
+# List unresolved findings
+indusk eval findings
+
+# List all findings including resolved
+indusk eval findings --all
+
+# Mark a finding as fixed
+indusk eval fix "zpqywqzs:conventions"
+
+# Mark a finding as ignored
+indusk eval ignore "zpqywqzs:missing-context"
+```
+
+## Persistent Judge Sessions
+
+The eval judge reuses sessions across commits to reduce cost. The first eval in a session does a full `/catchup` (~$2-4). Subsequent evals resume the same session via `claude --resume` with just the new change ID — much cheaper.
+
+Session state is stored in `.indusk/eval/judge-session.json`. If the session expires or errors, the system clears it and starts fresh automatically.
+
+## System Log
+
+The eval system writes to `.indusk/eval/system.log` for full lifecycle visibility:
+
+```
+2026-04-11T21:48:12.700Z hook fired — tool: Bash, command: jj describe -m "..."
+2026-04-11T21:48:12.701Z projectRoot: /path/to/project, eval.enabled: true
+2026-04-11T21:48:12.744Z candidate: .../judge-runner.js — found
+2026-04-11T21:48:12.746Z spawning judge — module: ..., changeId: abc123
+2026-04-11T21:48:13.001Z judge process started — changeId: abc123
+2026-04-11T21:50:45.123Z judge completed — scorecard written
+```
+
+Check this log when evals aren't appearing in `results.log`.

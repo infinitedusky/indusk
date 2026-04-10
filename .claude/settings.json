@@ -88,7 +88,15 @@
       "Bash(node /Users/the_dusky/code/sandbox/infinitedusky/.claude/hooks/eval-trigger.js)",
       "Bash(claude --print --output-format json --model opus --permission-mode acceptEdits --allowed-tools Read Grep Glob \"Respond with just: {\\\\\"test\\\\\": true}\")",
       "Bash(echo \"Background PID: $!\")",
-      "Bash(kill 11455 11399 3625)"
+      "Bash(kill 11455 11399 3625)",
+      "Bash(kill 19299)",
+      "Bash(node /Users/the_dusky/.nvm/versions/node/v22.17.0/lib/node_modules/@infinitedusky/indusk-mcp/dist/bin/cli.js eval summary)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('hooks',{}\\), indent=2\\)\\)\")",
+      "Bash(cp apps/indusk-mcp/hooks/eval-trigger.js .claude/hooks/eval-trigger.js)",
+      "Bash(cp apps/indusk-mcp/hooks/eval-trigger.js /Users/the_dusky/code/sandbox/numero/.claude/hooks/eval-trigger.js)",
+      "Bash(jj file:*)",
+      "Bash(cp .indusk/planning/semantic-graph-eval/* .indusk/planning/archive/semantic-graph-eval/)",
+      "Bash(rm .indusk/planning/semantic-graph-eval/*.md)"
     ],
     "additionalDirectories": [
       "/tmp",

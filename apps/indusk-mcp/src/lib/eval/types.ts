@@ -20,6 +20,15 @@ export interface EvalQuestion {
 	finding: string;
 }
 
+export interface EvalUsage {
+	costUsd: number;
+	inputTokens: number;
+	outputTokens: number;
+	cacheCreationTokens: number;
+	cacheReadTokens: number;
+	durationMs: number;
+}
+
 export interface EvalScorecard {
 	version: 1;
 	timestamp: string;
@@ -30,6 +39,7 @@ export interface EvalScorecard {
 	summary: string;
 	graphitiWrites: number;
 	telemetryPosted: boolean;
+	usage?: EvalUsage;
 }
 
 export interface EvalErrorEntry {
@@ -44,7 +54,9 @@ export interface EvalErrorEntry {
 export type EvalLogEntry = EvalScorecard | EvalErrorEntry;
 
 export function isScorecard(entry: EvalLogEntry): entry is EvalScorecard {
-	return !("error" in entry);
+	return (
+		!("error" in entry) && "questions" in entry && Array.isArray((entry as EvalScorecard).questions)
+	);
 }
 
 export function isErrorEntry(entry: EvalLogEntry): entry is EvalErrorEntry {

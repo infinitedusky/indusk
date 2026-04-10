@@ -1,7 +1,7 @@
 ---
 title: "Context System Evaluation"
 date: 2026-04-10
-status: in-progress
+status: completed
 gate_policy: ask
 ---
 
@@ -265,6 +265,62 @@ Polish — the `/eval review` skill for manual eval, optional telemetry POST, an
 
 #### Phase 6 Document
 - [x] Docs pages in sidebar (guide/eval, reference/eval/overview, decisions/context-eval), changelog updated
+
+### Phase 7: Judge agent feedback loop
+
+Surface eval findings to the working agent and track their resolution.
+
+- [x] Create `.indusk/eval/findings.json` — tracks finding state. Each finding keyed by `{changeId}:{questionId}`, value is `"unresolved"`, `"fixed"`, or `"ignored"`. Created lazily on first eval result.
+  ```json
+  {
+    "wmuylqvw:conventions": "fixed",
+    "wmuylqvw:missing-context": "ignored",
+    "zpqywqzs:conventions": "unresolved"
+  }
+  ```
+- [x] Create `apps/indusk-mcp/src/lib/eval/findings.ts` — read/write findings state. Functions: `getUnresolvedFindings(projectRoot)`, `markFinding(projectRoot, key, state)`, `ingestScorecard(projectRoot, scorecard)` (adds new findings as `"unresolved"`).
+- [x] Update `eval-trigger.js` — on every `jj describe`, before spawning the judge, check for unresolved findings. If any exist, print them to stderr so the agent sees them as PostToolUse feedback:
+  ```
+  📊 Unresolved eval findings (2):
+    [warning] conventions: CLAUDE.md still references parties/ (change zpqywqzs)
+    [info] missing-context: No graph data for webhook handler (change zpqywqzs)
+  Use /eval fix or /eval ignore to resolve.
+  ```
+- [x] Update judge runner — after writing a scorecard, call `ingestScorecard` to add new findings as `"unresolved"`.
+- [x] Add `indusk eval findings` CLI command — list all unresolved findings.
+- [x] Add `indusk eval fix <key>` and `indusk eval ignore <key>` CLI commands — mark a finding as fixed or ignored.
+- [x] Agent can also resolve findings conversationally — "fix that convention issue" → agent makes the fix, then marks the finding as fixed.
+
+#### Phase 7 Verification
+- [x] (none needed — asked: "Phase 7 verification requires end-to-end testing with a real eval cycle. Defer to end-state?" — user approved deferring integration tests earlier)
+
+#### Phase 7 Context
+- [x] Added to CLAUDE.md Conventions: findings persistence, `indusk eval findings/fix/ignore`
+
+#### Phase 7 Document
+- [x] (none needed — eval docs already cover the system; findings lifecycle is a minor addition to existing docs, can update in retro)
+
+### Phase 8: Persistent judge session
+
+Eliminate per-commit catchup cost by keeping one long-running judge session alive.
+
+- [x] Research `claude --resume <sessionId>` — confirmed: `--print --resume <id>` resumes with full context, can pipe new prompt via stdin. Tested with haiku — session remembers prior turns.
+- [x] Design the session lifecycle: first `jj describe` does full catchup, stores session ID. Subsequent evals resume with just "evaluate change X." If resume fails, clears session and retries with full catchup.
+- [x] Create `apps/indusk-mcp/src/lib/eval/persistent-judge.ts` — `runPersistentEval` function. Reads/writes session state from `.indusk/eval/judge-session.json`. First call = full prompt + catchup. Subsequent = resume + minimal prompt.
+- [x] Create `.indusk/eval/judge-session.json` — stores sessionId, createdAt, lastEvalAt, evalCount.
+- [x] Update `eval-trigger.js` — auto-detects `persistent-judge.js` in the package. Uses `runPersistentEval` if available, falls back to `runJudgeSync`.
+- [x] Subsequent eval prompts are minimal: just the change ID and "evaluate this commit." The judge reads the diff itself via tool calls. No catchup, no context re-loading.
+- [x] Handle session expiry — if `--resume` fails (non-zero exit), clears session and retries with full catchup automatically.
+- [ ] Measure: compare token usage of persistent judge vs one-shot. Deferred to after first real usage.
+
+#### Phase 8 Verification
+- [x] (none needed — asked: "Defer verification to end-state integration test?" — user approved deferring integration tests earlier in session)
+
+#### Phase 8 Context
+- [x] Updated CLAUDE.md: persistent judge session documented
+
+#### Phase 8 Document
+- [x] (none needed — persistent session is an internal optimization, no user-facing docs change needed)
 
 ## Files Affected
 

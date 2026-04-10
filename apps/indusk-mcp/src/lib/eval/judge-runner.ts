@@ -6,10 +6,11 @@
  * Results appear asynchronously in `.indusk/eval/results.log`.
  */
 
-import { execSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import { join } from "node:path";
 
 import { getProjectGroupId } from "../config.js";
+import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import { buildJudgePrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
@@ -25,14 +26,6 @@ export interface JudgeRunOptions {
 
 function getEvalLogPath(projectRoot: string): string {
 	return join(projectRoot, ".indusk", "eval", "results.log");
-}
-
-function getDiff(changeId: string): string {
-	try {
-		return execSync(`jj diff -r ${changeId}`, { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 });
-	} catch {
-		return "(diff unavailable)";
-	}
 }
 
 async function postTelemetry(endpoint: string, scorecard: EvalScorecard): Promise<void> {
@@ -59,14 +52,12 @@ async function postTelemetry(endpoint: string, scorecard: EvalScorecard): Promis
  * If anything fails, logs an error entry instead of silently dropping.
  */
 export function runJudgeBackground(opts: JudgeRunOptions): void {
-	const diff = getDiff(opts.changeId);
 	const projectGroup = getProjectGroupId(opts.projectRoot);
 
 	const prompt = buildJudgePrompt({
 		rubric: V1_RUBRIC,
 		changeId: opts.changeId,
 		transcriptPath: opts.transcriptPath,
-		diff,
 		mode: opts.mode,
 		projectGroup,
 	});
@@ -125,12 +116,24 @@ export function runJudgeBackground(opts: JudgeRunOptions): void {
 				throw new Error(`claude exited with code ${code}: ${stderr.slice(0, 500)}`);
 			}
 
-			// --output-format json wraps the result; extract the text content
+			// --output-format json wraps the result; extract the text content and usage
 			let scorecardText = stdout;
+			let usage: import("./types.js").EvalUsage | undefined;
 			try {
 				const jsonOutput = JSON.parse(stdout);
-				// claude --print --output-format json returns { result: string } or similar
 				scorecardText = jsonOutput.result ?? jsonOutput.text ?? jsonOutput.content ?? stdout;
+				// Capture usage data from claude --print output
+				if (jsonOutput.total_cost_usd !== undefined || jsonOutput.usage) {
+					const u = jsonOutput.usage ?? {};
+					usage = {
+						costUsd: jsonOutput.total_cost_usd ?? 0,
+						inputTokens: u.input_tokens ?? 0,
+						outputTokens: u.output_tokens ?? 0,
+						cacheCreationTokens: u.cache_creation_input_tokens ?? 0,
+						cacheReadTokens: u.cache_read_input_tokens ?? 0,
+						durationMs: jsonOutput.duration_ms ?? 0,
+					};
+				}
 			} catch {
 				// stdout might be raw JSON scorecard already
 			}
@@ -142,6 +145,7 @@ export function runJudgeBackground(opts: JudgeRunOptions): void {
 			}
 
 			const scorecard = JSON.parse(scorecardText.trim()) as EvalScorecard;
+			if (usage) scorecard.usage = usage;
 			scorecard.telemetryPosted = false;
 
 			if (opts.evalEndpoint) {
@@ -150,6 +154,7 @@ export function runJudgeBackground(opts: JudgeRunOptions): void {
 			}
 
 			await logWriter.append(scorecard);
+			ingestScorecard(opts.projectRoot, scorecard);
 		} catch (err) {
 			const errorEntry: EvalErrorEntry = {
 				version: 1,
@@ -169,14 +174,12 @@ export function runJudgeBackground(opts: JudgeRunOptions): void {
  * Returns the scorecard or error entry.
  */
 export async function runJudgeSync(opts: JudgeRunOptions): Promise<EvalScorecard | EvalErrorEntry> {
-	const diff = getDiff(opts.changeId);
 	const projectGroup = getProjectGroupId(opts.projectRoot);
 
 	const prompt = buildJudgePrompt({
 		rubric: V1_RUBRIC,
 		changeId: opts.changeId,
 		transcriptPath: opts.transcriptPath,
-		diff,
 		mode: opts.mode,
 		projectGroup,
 	});
@@ -234,9 +237,21 @@ export async function runJudgeSync(opts: JudgeRunOptions): Promise<EvalScorecard
 				}
 
 				let scorecardText = stdout;
+				let syncUsage: import("./types.js").EvalUsage | undefined;
 				try {
 					const jsonOutput = JSON.parse(stdout);
 					scorecardText = jsonOutput.result ?? jsonOutput.text ?? jsonOutput.content ?? stdout;
+					if (jsonOutput.total_cost_usd !== undefined || jsonOutput.usage) {
+						const u = jsonOutput.usage ?? {};
+						syncUsage = {
+							costUsd: jsonOutput.total_cost_usd ?? 0,
+							inputTokens: u.input_tokens ?? 0,
+							outputTokens: u.output_tokens ?? 0,
+							cacheCreationTokens: u.cache_creation_input_tokens ?? 0,
+							cacheReadTokens: u.cache_read_input_tokens ?? 0,
+							durationMs: jsonOutput.duration_ms ?? 0,
+						};
+					}
 				} catch {
 					// raw JSON
 				}
@@ -247,6 +262,7 @@ export async function runJudgeSync(opts: JudgeRunOptions): Promise<EvalScorecard
 				}
 
 				const scorecard = JSON.parse(scorecardText.trim()) as EvalScorecard;
+				if (syncUsage) scorecard.usage = syncUsage;
 				scorecard.telemetryPosted = false;
 
 				if (opts.evalEndpoint) {
@@ -255,6 +271,7 @@ export async function runJudgeSync(opts: JudgeRunOptions): Promise<EvalScorecard
 				}
 
 				await logWriter.append(scorecard);
+				ingestScorecard(opts.projectRoot, scorecard);
 				resolve(scorecard);
 			} catch (err) {
 				const errorEntry: EvalErrorEntry = {

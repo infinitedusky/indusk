@@ -64,6 +64,29 @@ Read it fully. Don't skim.
 
 **After reading, edit the handoff to check off:** `- [x] context`
 
+### 4.5. Recall from Graphiti
+
+CLAUDE.md is the stable, slow-changing layer of project memory. Graphiti is the fast, temporal layer — it captures decisions, corrections, and retrospective insights as they happen. Catchup pulls both layers so the agent starts the session with full context.
+
+**Recall recent decisions and lessons:**
+```
+mcp__graphiti__search_nodes({
+  query: "recent decisions and lessons",
+  group_ids: ["{project-group}", "shared"],
+  max_nodes: 8
+})
+```
+
+The project group comes from the `getProjectGroupId(projectRoot)` helper (in `apps/indusk-mcp/src/lib/config.ts`). Always include both the project group and `shared` so cross-project conventions surface alongside project-specific knowledge.
+
+**Surface contradictions:** look at the returned nodes for any whose `attributes` reference recently invalidated facts (Graphiti marks superseded facts with `invalid_at`). If a recently invalidated fact relates to an active plan or current code area, flag it to the user — those are places where assumptions changed.
+
+**Output format:** include a "Graphiti recall" section in the catchup summary with the most relevant 3-5 nodes by name + summary. Don't dump everything — surface what's actionable.
+
+**Graceful degradation:** If `mcp__graphiti__search_nodes` is unavailable (Graphiti container down, transport error), skip this step silently and add a note to the catchup summary: `Graphiti: unavailable (run \`indusk infra start\` to recall episodic memory)`. Catchup should not fail if Graphiti is down — the rest of the layers are still valid.
+
+**After completing recall, edit the handoff to check off:** `- [x] graphiti` (added to the catchup status box section)
+
 ### 5. Check Active Plans
 Call `list_plans`. This shows every plan and its status. Pay attention to:
 - Plans with status `in-progress` — these are actively being worked on
@@ -78,7 +101,7 @@ Call `extensions_status` to see what extensions are enabled and their capabiliti
 Call `get_skill_summaries` to load the name, description, and type of every installed skill. This returns a compact summary — you do NOT need to read each skill file individually. The full skill content loads automatically when the user invokes a slash command.
 
 Skill types:
-- **process** — workflow skills with slash commands (plan, work, verify, context, document, retrospective)
+- **process** — workflow skills with slash commands (planner, work, verify, context, document, retrospective)
 - **extension** — tool integrations (cgc, composable-env, excalidraw, etc.)
 - **domain** — technology-specific best practices (typescript, testing, etc.)
 
@@ -104,6 +127,7 @@ After completing all steps, present a brief summary to the user:
 - Extensions: N enabled [list names]
 - Active plans: [list with current phase]
 - Codebase: [N files indexed]
+- Graphiti recall: [3-5 most relevant nodes by name + summary, or "unavailable" if Graphiti is down]
 
 Ready to pick up. What would you like to do?
 ```

@@ -70,7 +70,7 @@ Three modes, configured via `gate_policy` in the impl frontmatter or `.claude/se
 
 | Mode | Behavior |
 |------|----------|
-| **`strict`** | No overrides at any stage. Every gate must have a real item when the impl is written (`/plan`), and every item must be completed during `/work`. No `(none needed)`, no `skip-reason:`, no conversation proof. |
+| **`strict`** | No overrides at any stage. Every gate must have a real item when the impl is written (`/planner`), and every item must be completed during `/work`. No `(none needed)`, no `skip-reason:`, no conversation proof. |
 | **`ask`** (default) | Every gate must have a real item when the impl is written. During `/work`, the agent must ask the user before skipping, and include proof of the conversation in the skip format. Hooks enforce both stages. |
 | **`auto`** | Gates can be pre-filled with `(none needed)` or `skip-reason:` at write time. During `/work`, the agent can skip without asking. Use when running autonomously. |
 
@@ -118,7 +118,7 @@ In `ask` mode, skipped gates MUST include proof that the conversation happened:
 
 The hook validates that both `asked:` and `user:` are present with non-empty quoted content. Bare `(none needed)` or `skip-reason:` without conversation proof will be **blocked by the hook**.
 
-| Mode | At write time (`/plan`) | At execution time (`/work`) |
+| Mode | At write time (`/planner`) | At execution time (`/work`) |
 |------|------------------------|---------------------------|
 | `strict` | No opt-outs — real items required | No skipping — everything completed |
 | `ask` | No opt-outs — real items required | Skip only with conversation proof |
@@ -142,13 +142,13 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
     - See the document skill for guidance on what to document, where, and how to use Mermaid diagrams
     - If a phase has no document items, that's fine — not every phase produces user-facing documentation
 
-14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase.
+14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase. **Semantic graph sync:** If the project has a `.indusk/` directory and `mcp__indusk__graph_sync` is available, call it after all phase gates succeed to keep the semantic graph current with code changes. This is best-effort — if sync fails, log a warning and continue.
 
 15. **Completion.** When all phases are checked:
     - Update impl status to `completed`
     - Summarize what was done
     - If this plan included an ADR, confirm CLAUDE.md's Key Decisions was updated
-    - Let the user know the plan is ready for a retrospective if they want one (`/plan {name}` will pick up at the retrospective stage)
+    - Let the user know the plan is ready for a retrospective if they want one (`/planner {name}` will pick up at the retrospective stage)
 
 ## Teach Mode
 
@@ -201,6 +201,27 @@ When you are corrected mid-work — the user says "no, not that way" or "don't d
 > "Should I capture this? `/context learn 'use pnpm ce, not npx — the skill doc specifies pnpm'`"
 
 Don't wait to be told. Corrections are the most valuable source of project knowledge.
+
+**When the user confirms `context learn`, ALSO capture the correction in Graphiti:**
+```
+mcp__graphiti__add_memory({
+  name: "correction-{slug}",
+  episode_body: "{lesson text}",
+  group_id: "{shared OR project-group}",
+  source: "text",
+  source_description: "user correction"
+})
+```
+
+Where `{slug}` is a short kebab-case label for the topic (e.g. `correction-pnpm-ce`, `correction-graphiti-error-handling`).
+
+**Choosing `shared` vs project group:**
+- **`shared`**: tools, conventions, patterns that apply across projects. Examples: "always use pnpm ce", "never mock the database in integration tests", "use jj describe-then-do for commits". The lesson is generally true and a different project would benefit from it.
+- **`{project-group}`**: facts specific to this project's code, data, or domain. Examples: "the impl-parser handles four gate types per phase", "graph_ensure auto-repairs the indusk-infra container". The lesson only makes sense in the context of this project.
+
+When in doubt, ask: "Would this correction make sense to a different project?" Yes → `shared`. No → project group.
+
+Use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to get the project group consistently. Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, do not fail the work item. Prefer `mcp__indusk__graph_capture` over raw `mcp__graphiti__add_memory` — it dual-writes to both Graphiti and the semantic graph event log.
 
 ## Commits (jj)
 

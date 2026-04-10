@@ -282,7 +282,10 @@ program
 program
 	.command("install <names...>")
 	.description("Install extensions (shorthand for extensions enable / add)")
-	.option("--from <source>", "Source for third-party extension (npm:pkg, github:user/repo, URL, or path)")
+	.option(
+		"--from <source>",
+		"Source for third-party extension (npm:pkg, github:user/repo, URL, or path)",
+	)
 	.action(async (names: string[], opts: { from?: string }) => {
 		if (opts.from) {
 			const { extensionsAdd } = await import("./commands/extensions.js");
@@ -304,6 +307,31 @@ eval_
 	.action(async (opts) => {
 		const { evalSummary } = await import("./commands/eval.js");
 		await evalSummary(process.cwd(), opts);
+	});
+
+eval_
+	.command("findings")
+	.description("List unresolved eval findings")
+	.option("--all", "Show all findings including fixed/ignored")
+	.action(async (opts) => {
+		const { evalFindings } = await import("./commands/eval.js");
+		await evalFindings(process.cwd(), opts);
+	});
+
+eval_
+	.command("fix <key>")
+	.description("Mark an eval finding as fixed")
+	.action(async (key: string) => {
+		const { evalMark } = await import("./commands/eval.js");
+		await evalMark(process.cwd(), key, "fixed");
+	});
+
+eval_
+	.command("ignore <key>")
+	.description("Mark an eval finding as ignored")
+	.action(async (key: string) => {
+		const { evalMark } = await import("./commands/eval.js");
+		await evalMark(process.cwd(), key, "ignored");
 	});
 
 eval_

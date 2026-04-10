@@ -2,8 +2,11 @@
  * Builds the judge agent's system prompt.
  *
  * The prompt instructs the judge to: do catchup, read the transcript, read the
- * diff, answer each rubric question, write findings to Graphiti (eval mode
- * only), and output a JSON scorecard.
+ * diff itself via jj, answer each rubric question, write findings to Graphiti
+ * (eval mode only), and output a JSON scorecard.
+ *
+ * The diff is NOT embedded in the prompt — the judge reads it via tool calls.
+ * This keeps the prompt small regardless of commit size.
  */
 
 import type { RubricQuestion } from "./types.js";
@@ -12,7 +15,6 @@ export interface PromptBuilderOptions {
 	rubric: RubricQuestion[];
 	changeId: string;
 	transcriptPath: string;
-	diff: string;
 	mode: "eval" | "baseline";
 	projectGroup: string;
 }
@@ -69,13 +71,9 @@ This is the JSONL record of the working agent's session. Read it to understand:
 
 ### Step 3: Read the diff
 
-Here is the diff of the committed work:
+Run \`jj diff -r ${opts.changeId}\` to see what was committed. This is the work being evaluated.
 
-\`\`\`
-${opts.diff}
-\`\`\`
-
-This is what was actually built. Cross-reference with the transcript to understand the journey from task to result.
+Then read the specific files that were changed to understand the full context — not just the diff lines, but the surrounding code.
 
 ### Step 4: Answer the evaluation questions
 

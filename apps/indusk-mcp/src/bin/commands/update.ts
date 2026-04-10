@@ -215,13 +215,21 @@ export async function update(projectRoot: string): Promise<void> {
 			"gate-reminder.js",
 			"validate-impl-structure.js",
 			"check-catchup.js",
+			"eval-trigger.js",
 		];
 
 		for (const file of hookFiles) {
 			const sourceFile = join(hooksSource, file);
 			const targetFile = join(hooksTarget, file);
 
-			if (!existsSync(sourceFile) || !existsSync(targetFile)) continue;
+			if (!existsSync(sourceFile)) continue;
+
+			if (!existsSync(targetFile)) {
+				cpSync(sourceFile, targetFile);
+				console.info(`  added: ${file}`);
+				hooksUpdated++;
+				continue;
+			}
 
 			const sourceH = fileHash(sourceFile);
 			const targetH = fileHash(targetFile);
@@ -237,8 +245,93 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 
 		console.info(`\n  ${hooksUpdated} updated, ${hooksCurrent} current.`);
+
+		// Ensure eval hook is registered in settings.json
+		const settingsPath = join(projectRoot, ".claude/settings.json");
+		if (existsSync(settingsPath)) {
+			try {
+				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+				const postHooks = settings.hooks?.PostToolUse ?? [];
+				const hasBashEvalHook = postHooks.some(
+					(entry: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
+						entry.matcher === "Bash" &&
+						entry.hooks?.some((h: { command?: string }) => h.command?.includes("eval-trigger")),
+				);
+				if (!hasBashEvalHook) {
+					if (!settings.hooks) settings.hooks = {};
+					if (!settings.hooks.PostToolUse) settings.hooks.PostToolUse = [];
+					settings.hooks.PostToolUse.push({
+						matcher: "Bash",
+						hooks: [{ type: "command", command: "node .claude/hooks/eval-trigger.js" }],
+					});
+					const { writeFileSync } = await import("node:fs");
+					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+					console.info("  registered eval-trigger hook in settings.json");
+				}
+			} catch {
+				console.info("  could not register eval hook in settings.json");
+			}
+		}
 	} else {
 		console.info("  not installed (run init to install)");
+	}
+
+	// 5b. Migrate stale MCP configs
+	const mcpJsonPath = join(projectRoot, ".mcp.json");
+	if (existsSync(mcpJsonPath)) {
+		try {
+			const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
+			let mcpChanged = false;
+
+			// Ensure CGC config is correct: localhost, cgc-{project} graph name
+			const cgcEnv = mcpConfig.mcpServers?.codegraphcontext?.env;
+			if (cgcEnv) {
+				const { basename } = await import("node:path");
+				const projectName = basename(projectRoot);
+				const correctHost = "localhost";
+				const correctGraph = `cgc-${projectName}`;
+				const needsFix =
+					cgcEnv.FALKORDB_HOST !== correctHost || cgcEnv.FALKORDB_GRAPH_NAME !== correctGraph;
+				if (needsFix) {
+					try {
+						run("claude mcp remove -s project codegraphcontext");
+						run(
+							`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=${correctHost} -e FALKORDB_GRAPH_NAME=${correctGraph} -- codegraphcontext cgc mcp start`,
+						);
+						console.info(`  fixed: codegraphcontext → ${correctHost}, ${correctGraph}`);
+						mcpChanged = true;
+					} catch {
+						console.info("  could not fix codegraphcontext — update .mcp.json manually");
+					}
+				}
+			}
+
+			// Migrate indusk: npx without --yes → npx --yes
+			const induskArgs = mcpConfig.mcpServers?.indusk?.args;
+			if (
+				induskArgs &&
+				Array.isArray(induskArgs) &&
+				induskArgs[0] === "@infinitedusky/indusk-mcp" &&
+				!induskArgs.includes("--yes")
+			) {
+				try {
+					run("claude mcp remove -s project indusk");
+					run(
+						"claude mcp add -t stdio -s project -e PROJECT_ROOT=. -- indusk npx --yes @infinitedusky/indusk-mcp serve",
+					);
+					console.info("  migrated: indusk MCP → npx --yes");
+					mcpChanged = true;
+				} catch {
+					console.info("  could not migrate indusk MCP — update .mcp.json manually");
+				}
+			}
+
+			if (!mcpChanged) {
+				console.info("  MCP config: current");
+			}
+		} catch {
+			// ignore parse errors
+		}
 	}
 
 	// 6. Sync built-in extensions

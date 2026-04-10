@@ -8,7 +8,6 @@ describe("buildJudgePrompt", () => {
 			rubric: V1_RUBRIC,
 			changeId: "test123",
 			transcriptPath: "/tmp/transcript.jsonl",
-			diff: "diff --git a/foo.ts b/foo.ts\n+console.log('hello')",
 			mode: "eval",
 			projectGroup: "infinitedusky",
 		});
@@ -20,18 +19,16 @@ describe("buildJudgePrompt", () => {
 		}
 	});
 
-	it("includes the diff in the prompt", () => {
-		const diff = "diff --git a/src/thing.ts b/src/thing.ts\n+export function doStuff() {}";
+	it("tells the judge to read the diff via jj command", () => {
 		const prompt = buildJudgePrompt({
 			rubric: V1_RUBRIC,
-			changeId: "abc",
+			changeId: "abc123",
 			transcriptPath: "/tmp/t.jsonl",
-			diff,
 			mode: "eval",
 			projectGroup: "test",
 		});
 
-		expect(prompt).toContain(diff);
+		expect(prompt).toContain("jj diff -r abc123");
 	});
 
 	it("includes Graphiti write instructions in eval mode", () => {
@@ -39,7 +36,6 @@ describe("buildJudgePrompt", () => {
 			rubric: V1_RUBRIC,
 			changeId: "abc",
 			transcriptPath: "/tmp/t.jsonl",
-			diff: "",
 			mode: "eval",
 			projectGroup: "myproject",
 		});
@@ -53,7 +49,6 @@ describe("buildJudgePrompt", () => {
 			rubric: V1_RUBRIC,
 			changeId: "abc",
 			transcriptPath: "/tmp/t.jsonl",
-			diff: "",
 			mode: "baseline",
 			projectGroup: "myproject",
 		});
@@ -66,7 +61,6 @@ describe("buildJudgePrompt", () => {
 			rubric: V1_RUBRIC,
 			changeId: "xyz789",
 			transcriptPath: "/home/user/.claude/transcripts/session.jsonl",
-			diff: "",
 			mode: "eval",
 			projectGroup: "test",
 		});

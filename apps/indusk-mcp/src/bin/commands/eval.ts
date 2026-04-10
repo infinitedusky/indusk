@@ -8,6 +8,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { getAllFindings, getUnresolvedFindings, markFinding } from "../../lib/eval/findings.js";
 import { readAllEntries } from "../../lib/eval/log-reader.js";
 import { type EvalScorecard, isScorecard } from "../../lib/eval/types.js";
 
@@ -68,6 +69,15 @@ export async function evalSummary(
 
 		console.info(`\nGraphiti writes: ${summary.totalGraphitiWrites}`);
 
+		if (summary.totalCostUsd > 0) {
+			console.info(`\nCost:`);
+			console.info(`  total:   $${summary.totalCostUsd.toFixed(2)}`);
+			console.info(`  per eval: $${(summary.totalCostUsd / scorecards.length).toFixed(2)}`);
+			console.info(
+				`  tokens:  ${summary.totalInputTokens.toLocaleString()} in / ${summary.totalOutputTokens.toLocaleString()} out`,
+			);
+		}
+
 		if (summary.evalCount >= 10) {
 			console.info(`\nTrend (last 10 vs previous 10):`);
 			for (const [id, delta] of Object.entries(summary.trend)) {
@@ -87,6 +97,9 @@ interface EvalSummaryStats {
 	baselineCount: number;
 	passRates: Record<string, number>;
 	totalGraphitiWrites: number;
+	totalCostUsd: number;
+	totalInputTokens: number;
+	totalOutputTokens: number;
 	trend: Record<string, number>;
 }
 
@@ -131,8 +144,45 @@ function computeSummary(scorecards: EvalScorecard[]): EvalSummaryStats {
 		baselineCount: baselineCards.length,
 		passRates,
 		totalGraphitiWrites: scorecards.reduce((sum, s) => sum + s.graphitiWrites, 0),
+		totalCostUsd: scorecards.reduce((sum, s) => sum + (s.usage?.costUsd ?? 0), 0),
+		totalInputTokens: scorecards.reduce(
+			(sum, s) => sum + (s.usage?.inputTokens ?? 0) + (s.usage?.cacheReadTokens ?? 0),
+			0,
+		),
+		totalOutputTokens: scorecards.reduce((sum, s) => sum + (s.usage?.outputTokens ?? 0), 0),
 		trend,
 	};
+}
+
+export async function evalFindings(projectRoot: string, opts: { all?: boolean }): Promise<void> {
+	const findings = opts.all ? getAllFindings(projectRoot) : getUnresolvedFindings(projectRoot);
+
+	if (findings.length === 0) {
+		console.info(opts.all ? "No eval findings." : "No unresolved findings.");
+		return;
+	}
+
+	console.info(`\n${opts.all ? "All" : "Unresolved"} eval findings (${findings.length}):\n`);
+	for (const f of findings) {
+		const icon = f.state === "fixed" ? "✓" : f.state === "ignored" ? "–" : "●";
+		console.info(`  ${icon} [${f.severity}] ${f.questionId}: ${f.finding}`);
+		console.info(`    key: ${f.key}  change: ${f.changeId.slice(0, 8)}  state: ${f.state}`);
+	}
+	console.info("");
+}
+
+export async function evalMark(
+	projectRoot: string,
+	key: string,
+	state: "fixed" | "ignored",
+): Promise<void> {
+	const success = markFinding(projectRoot, key, state);
+	if (success) {
+		console.info(`Marked ${key} as ${state}`);
+	} else {
+		console.error(`Finding not found: ${key}`);
+		process.exit(1);
+	}
 }
 
 function computePassRates(cards: EvalScorecard[]): Record<string, number> {

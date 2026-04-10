@@ -25,7 +25,10 @@ const GITIGNORE_ENTRIES = [
 	{ comment: "# Session-specific handoff (not project knowledge)", pattern: ".claude/handoff.md" },
 	{ comment: "# Semantic graph event log (large, local-only)", pattern: ".indusk/graph/" },
 	{ comment: "# Eval results (local-only)", pattern: ".indusk/eval/" },
-	{ comment: "# Extension manifests are package-owned; env files contain secrets", pattern: ".indusk/extensions/" },
+	{
+		comment: "# Extension manifests are package-owned; env files contain secrets",
+		pattern: ".indusk/extensions/",
+	},
 ];
 
 const GITIGNORE_MARKER = "# InDusk managed";
@@ -42,12 +45,9 @@ export function ensureGitignore(projectRoot: string): void {
 	}
 
 	// Build the block to append
-	const block = [
-		"",
-		GITIGNORE_MARKER,
-		...missing.flatMap((e) => [e.comment, e.pattern]),
-		"",
-	].join("\n");
+	const block = ["", GITIGNORE_MARKER, ...missing.flatMap((e) => [e.comment, e.pattern]), ""].join(
+		"\n",
+	);
 
 	writeFileSync(gitignorePath, `${content.trimEnd()}${block}`);
 	const verb = content.length > 0 ? "updated" : "created";
@@ -335,17 +335,26 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	}
 
-	// Migrate CGC config: falkordb.orb.local → localhost (indusk-infra container)
+	// Ensure CGC config is correct: localhost, cgc-{project} graph name
 	if (existingServers.has("codegraphcontext") && !force) {
 		try {
 			const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
 			const cgcEnv = mcpConfig.mcpServers?.codegraphcontext?.env;
-			if (cgcEnv?.FALKORDB_HOST === "falkordb.orb.local") {
+			const correctGraph = `cgc-${projectName}`;
+			if (
+				cgcEnv &&
+				(cgcEnv.FALKORDB_HOST !== "localhost" || cgcEnv.FALKORDB_GRAPH_NAME !== correctGraph)
+			) {
+				execSync("claude mcp remove -s project codegraphcontext", {
+					cwd: projectRoot,
+					stdio: "pipe",
+					timeout: 10000,
+				});
 				execSync(
-					`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=localhost -e FALKORDB_GRAPH_NAME=${cgcEnv.FALKORDB_GRAPH_NAME || `cgc-${projectName}`} -- codegraphcontext cgc mcp start`,
+					`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=localhost -e FALKORDB_GRAPH_NAME=${correctGraph} -- codegraphcontext cgc mcp start`,
 					{ cwd: projectRoot, stdio: "pipe", timeout: 10000 },
 				);
-				console.info("  migrated: codegraphcontext FALKORDB_HOST → localhost (indusk-infra)");
+				console.info(`  fixed: codegraphcontext → localhost, ${correctGraph}`);
 			}
 		} catch {}
 	}
@@ -708,6 +717,10 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				matcher: "Edit|Write",
 				hooks: [{ type: "command", command: "node .claude/hooks/gate-reminder.js" }],
 			},
+			{
+				matcher: "Bash",
+				hooks: [{ type: "command", command: "node .claude/hooks/eval-trigger.js" }],
+			},
 		],
 	};
 
@@ -731,30 +744,25 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		for (const [event, entries] of Object.entries(hookConfig)) {
 			const existingEntries = existing.hooks[event] || [];
 			// Check if our hook is already present
-			const hasOurHook = existingEntries.some((e: { hooks?: { command?: string }[] }) =>
-				e.hooks?.some(
-					(h: { command?: string }) =>
-						h.command?.includes("check-gates") ||
-						h.command?.includes("gate-reminder") ||
-						h.command?.includes("validate-impl") ||
-						h.command?.includes("check-catchup"),
-				),
-			);
-			if (!hasOurHook || force) {
-				// Remove old entries if force, then add
-				if (force) {
-					existing.hooks[event] = existingEntries.filter(
-						(e: { hooks?: { command?: string }[] }) =>
-							!e.hooks?.some(
-								(h: { command?: string }) =>
-									h.command?.includes("check-gates") ||
-									h.command?.includes("gate-reminder") ||
-									h.command?.includes("validate-impl"),
-							),
-					);
+			// Check each hook entry individually so new hooks get added even if old ones exist
+			for (const entry of entries as Array<{
+				matcher: string;
+				hooks: Array<{ command: string; type: string }>;
+			}>) {
+				const alreadyPresent = existingEntries.some(
+					(e: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
+						e.matcher === entry.matcher &&
+						entry.hooks.every((newHook) => e.hooks?.some((h) => h.command === newHook.command)),
+				);
+				if (!alreadyPresent || force) {
+					if (force) {
+						existing.hooks[event] = (existing.hooks[event] || []).filter(
+							(e: { matcher?: string }) => e.matcher !== entry.matcher,
+						);
+					}
+					existing.hooks[event] = [...(existing.hooks[event] || []), entry];
+					hooksUpdated = true;
 				}
-				existing.hooks[event] = [...(existing.hooks[event] || []), ...entries];
-				hooksUpdated = true;
 			}
 		}
 
