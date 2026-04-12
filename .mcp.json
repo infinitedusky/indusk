@@ -1,18 +1,5 @@
 {
   "mcpServers": {
-    "codegraphcontext": {
-      "type": "stdio",
-      "command": "cgc",
-      "args": [
-        "mcp",
-        "start"
-      ],
-      "env": {
-        "DATABASE_TYPE": "falkordb-remote",
-        "FALKORDB_HOST": "localhost",
-        "FALKORDB_GRAPH_NAME": "cgc-infinitedusky"
-      }
-    },
     "excalidraw": {
       "type": "http",
       "url": "https://mcp.excalidraw.com"
@@ -37,6 +24,29 @@
     "graphiti": {
       "type": "http",
       "url": "http://localhost:8100/mcp"
+    },
+    "codegraphcontext": {
+      "type": "stdio",
+      "command": "cgc",
+      "args": [
+        "mcp",
+        "start"
+      ],
+      "env": {
+        "DATABASE_TYPE": "falkordb-remote",
+        "FALKORDB_HOST": "localhost",
+        "FALKORDB_GRAPH_NAME": "cgc-dusk"
+      }
+    },
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--autoConnect"
+      ],
+      "env": {}
     }
   }
 }

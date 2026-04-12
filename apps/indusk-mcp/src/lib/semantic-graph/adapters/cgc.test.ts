@@ -1,7 +1,7 @@
 /**
  * Integration tests for the CGC adapter.
  *
- * Runs against real cgc-infinitedusky graph in the indusk-infra container.
+ * Runs against real cgc-dusk graph in the indusk-infra container.
  * Self-skips if FalkorDB is not reachable.
  */
 
@@ -11,7 +11,7 @@ import { FalkorDB } from "falkordb";
 
 import { CgcAdapter } from "./cgc.js";
 
-const PROJECT_ROOT = "/Users/the_dusky/code/sandbox/infinitedusky";
+const PROJECT_ROOT = "/Users/the_dusky/code/sandbox/dusk";
 
 async function isFalkorReachable(): Promise<boolean> {
 	try {
@@ -26,7 +26,7 @@ async function isFalkorReachable(): Promise<boolean> {
 async function isCgcGraphPopulated(): Promise<boolean> {
 	try {
 		const db = await FalkorDB.connect({ socket: { host: "localhost", port: 6379 } });
-		const graph = db.selectGraph("cgc-infinitedusky");
+		const graph = db.selectGraph("cgc-dusk");
 		const result = await graph.query<{ n: number }>("MATCH (f:File) RETURN count(f) AS n");
 		await db.close();
 		return (result.data?.[0]?.n ?? 0) > 0;

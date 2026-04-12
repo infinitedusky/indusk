@@ -19,9 +19,6 @@
 					"build",
 					"start",
 					"env:start",
-					"dev:indusk-portfolio",
-					"build:indusk-portfolio",
-					"start:indusk-portfolio",
 					"dev:indusk-docs",
 					"build:indusk-docs",
 					"start:indusk-docs"

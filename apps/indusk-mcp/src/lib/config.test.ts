@@ -10,7 +10,7 @@ describe("sanitizeGroupId", () => {
 	});
 
 	it("leaves already-safe ids unchanged", () => {
-		expect(sanitizeGroupId("infinitedusky")).toBe("infinitedusky");
+		expect(sanitizeGroupId("dusk")).toBe("dusk");
 		expect(sanitizeGroupId("indusk_already_ok")).toBe("indusk_already_ok");
 		expect(sanitizeGroupId("project123")).toBe("project123");
 	});

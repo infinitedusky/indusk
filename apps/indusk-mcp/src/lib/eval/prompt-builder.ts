@@ -27,23 +27,27 @@ export function buildJudgePrompt(opts: PromptBuilderOptions): string {
 	const graphitiInstructions =
 		opts.mode === "eval"
 			? `
-## Step 5: Write findings to Graphiti
+## Step 5: Write findings to the knowledge graph
 
-For each finding with severity "warning" or "critical", write a derived insight to Graphiti:
+For each finding with severity "warning" or "critical", write it using \`mcp__indusk__graph_capture\`. This dual-writes to both Graphiti AND the semantic graph, connecting the finding to the existing file anchor — so the context beam can find it later.
+
+**Use \`graph_capture\`, NOT \`mcp__graphiti__add_memory\`.** graph_capture attaches the finding to the file's existing node in the graph. add_memory creates a disconnected episode.
+
+For each finding, identify the **primary file** it relates to and pass it as \`file_path\`. Include all relevant file paths in the body text too.
 
 \`\`\`
-mcp__graphiti__add_memory({
+mcp__indusk__graph_capture({
   name: "eval-finding-{question-id}-{short-slug}",
-  episode_body: "{finding text with evidence}",
-  group_id: "${opts.projectGroup}",
-  source: "text",
-  source_description: "eval judge finding"
+  body: "In {file1} and {file2}: {finding text with evidence}",
+  file_path: "{primary file path}",
+  relation: "eval-finding",
+  group_id: "${opts.projectGroup}"
 })
 \`\`\`
 
 Only write facts that would have changed the outcome. Be selective — quality over quantity.
-Count how many Graphiti writes you made for the scorecard.
-If Graphiti is unavailable, skip silently and set graphitiWrites to 0.`
+Count how many graph_capture calls you made for the scorecard.
+If the tool is unavailable, skip silently and set graphitiWrites to 0.`
 			: `
 ## Step 5: Graphiti writes
 

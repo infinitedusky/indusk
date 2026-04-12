@@ -116,7 +116,7 @@ indusk infra status   # check what's happening
 docker logs indusk-infra  # see container logs
 ```
 
-If the image doesn't exist, build it from the infinitedusky repo:
+If the image doesn't exist, build it from the dusk repo:
 ```bash
 docker build -f docker/Dockerfile.infra -t indusk-infra .
 ```

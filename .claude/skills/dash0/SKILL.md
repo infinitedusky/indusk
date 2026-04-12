@@ -35,10 +35,20 @@ Dash0 provides access to your OpenTelemetry data — logs, traces, and metrics �
 
 The MCP server provides 23 tools. The key ones for debugging:
 
+**Dataset (MANDATORY)**: Every Dash0 MCP call MUST include a `dataset` parameter. Never omit it. Use this lookup table:
+
+| Context | Dataset ID |
+|---------|-----------|
+| local / dev / default | `dev` |
+| production | `chitin-production` |
+| demo | `dash0-demo` |
+
+**Default**: `dev` (local development). When the user says "check production" or "what's happening on prod", use `chitin-production`. If unsure which environment the user means, ask — do not guess, do not omit.
+
 ### Logs
 - **`getLogRecords`** — Query logs with filters, time range, pagination. Returns summary table.
-  - **Dataset**: check `env/components/dash0.env` for the dataset per profile (local, staging, production). If no composable.env component exists, check `.indusk/extensions/dash0/.env` for a `DASH0_DATASET` value. If neither exists, ask the user which dataset to use and remember it for the session.
-  - `timeRange` requires ISO timestamps: `{"from": "...", "to": "..."}`
+  - `dataset`: **required** — see lookup table above
+  - `timeRange`: supports relative expressions — use `{"from": "now-1h", "to": "now"}`, `now-30m`, `now-15m`, `now-24h`, etc. ISO timestamps also work: `{"from": "2026-04-13T00:00:00Z", "to": "2026-04-13T12:00:00Z"}`. **Prefer relative expressions** — they're simpler and always current.
   - `filters`: `[{"key": "service.name", "operator": "is", "value": "game-server"}]`
   - `logAttributeKeys`: specify which attributes to show in the table (e.g. `["service.name", "otel.scope.name"]`)
   - Returns log record IDs for drilling into full details
@@ -46,12 +56,12 @@ The MCP server provides 23 tools. The key ones for debugging:
 - **`getLogCorrelations`** — Find patterns and correlations in logs
 
 ### Traces
-- **`getSpans`** — Search for spans (traces) with filters and time range
+- **`getSpans`** — Search for spans (traces) with filters and time range. `dataset`: **required**.
 - **`getTraceDetails`** — Get full trace tree by trace ID, including hierarchy, events, and comparison to similar spans
 - **`getSpanCorrelations`** — Find patterns in spans
 
 ### Services
-- **`getServiceCatalog`** — All services with RED metrics (requests, errors, duration) and dependency map
+- **`getServiceCatalog`** — All services with RED metrics (requests, errors, duration) and dependency map. `dataset`: **required**.
 - **`getServiceDetails`** — Deep dive into a single service
 
 ### Metrics

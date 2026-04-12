@@ -9,7 +9,7 @@ describe("buildJudgePrompt", () => {
 			changeId: "test123",
 			transcriptPath: "/tmp/transcript.jsonl",
 			mode: "eval",
-			projectGroup: "infinitedusky",
+			projectGroup: "dusk",
 		});
 
 		for (const q of V1_RUBRIC) {
@@ -40,7 +40,7 @@ describe("buildJudgePrompt", () => {
 			projectGroup: "myproject",
 		});
 
-		expect(prompt).toContain("Write findings to Graphiti");
+		expect(prompt).toContain("Write findings to the knowledge graph");
 		expect(prompt).toContain("myproject");
 	});
 

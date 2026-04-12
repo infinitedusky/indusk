@@ -46,7 +46,7 @@ import {
 } from "@infinitedusky/indusk-mcp/semantic-graph";
 
 const projectRoot = process.cwd();
-const client = new SemanticGraphClient("infinitedusky");
+const client = new SemanticGraphClient("dusk");
 await client.ensureConnection();
 
 // 1. Wipe the runtime
@@ -54,7 +54,7 @@ await client.clearGraph();
 
 // 2. Reopen a fresh graph handle (FalkorDB requires this after delete)
 await client.close();
-const rebuilt = new SemanticGraphClient("infinitedusky");
+const rebuilt = new SemanticGraphClient("dusk");
 await rebuilt.ensureConnection();
 
 // 3. Replay the log with ancestry filtering

@@ -155,8 +155,19 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 			continue;
 		}
 
+		// Try npm as last resort
+		console.info(`  ${name}: not built-in, trying npm...`);
+		try {
+			await extensionsAdd(projectRoot, name, name);
+			if (isEnabled(projectRoot, name)) {
+				continue;
+			}
+		} catch {
+			// npm lookup failed, fall through
+		}
+
 		console.info(
-			`  ${name}: not found — use 'extensions add ${name} --from <source>' for third-party`,
+			`  ${name}: not found as built-in or npm package — use 'extensions add ${name} --from <source>' for third-party`,
 		);
 	}
 }
@@ -235,12 +246,36 @@ export async function extensionsAdd(
 			return;
 		}
 	} else {
-		// Local path
+		// Local path — or fall back to npm if file doesn't exist
 		if (existsSync(from)) {
 			manifestContent = readFileSync(from, "utf-8");
 		} else {
-			console.info(`  ${name}: file not found at ${from}`);
-			return;
+			// Try as npm package name
+			const pkg = from;
+			try {
+				const tmpDir = join(projectRoot, ".indusk/tmp");
+				mkdirSync(tmpDir, { recursive: true });
+				execSync(`npm pack ${pkg} --pack-destination "${tmpDir}"`, {
+					encoding: "utf-8",
+					timeout: 30000,
+					stdio: ["ignore", "pipe", "pipe"],
+				});
+				const tarballs = readdirSync(tmpDir).filter((f) => f.endsWith(".tgz"));
+				if (tarballs.length > 0) {
+					try {
+						manifestContent = execSync(
+							`tar -xzf "${join(tmpDir, tarballs[tarballs.length - 1])}" -O package/indusk-extension.json`,
+							{ encoding: "utf-8", timeout: 10000 },
+						);
+					} catch {
+						console.info(`  ${name}: no indusk-extension.json found in npm package ${pkg}`);
+					}
+				}
+				rmSync(tmpDir, { recursive: true, force: true });
+			} catch {
+				console.info(`  ${name}: not found as local file or npm package: ${from}`);
+				return;
+			}
 		}
 	}
 
@@ -667,8 +702,32 @@ function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
 
 	const needsAuth = server.headers && Object.keys(server.headers).length > 0;
 
+	// Remove first, then add — ensures clean state
+	try {
+		execSync(`claude mcp remove -s project ${name}`, { timeout: 10000, stdio: ["ignore", "pipe", "pipe"] });
+	} catch {
+		// not registered yet, fine
+	}
+
+	const serverType = server.type ?? (server as Record<string, unknown>).transport as string | undefined;
+
+	// Auto-run claude mcp add for no-auth stdio servers
+	if (!needsAuth && serverType === "stdio" && server.command) {
+		const args = server.args ? ` ${server.args.join(" ")}` : "";
+		const cmd = `claude mcp add -t stdio -s project -- ${name} ${server.command}${args}`;
+		console.info(`\n  ${name}: adding MCP server...`);
+		try {
+			execSync(cmd, { timeout: 15000, stdio: ["ignore", "pipe", "pipe"] });
+			console.info(`  ${name}: MCP server added (restart Claude Code to load)`);
+		} catch {
+			console.info(`  ${name}: auto-add failed. Run manually:`);
+			console.info(`    ${cmd}`);
+		}
+		return;
+	}
+
 	// Auto-run claude mcp add for no-auth HTTP servers
-	if (!needsAuth && server.type === "http" && server.url) {
+	if (!needsAuth && serverType === "http" && server.url) {
 		const cmd = `claude mcp add -t http -s project -- ${name} ${server.url}`;
 		console.info(`\n  ${name}: adding MCP server...`);
 		try {

@@ -1,57 +1,49 @@
 # Handoff
 
-**Date:** 2026-04-11
-**Session:** semantic-graph-eval — all 8 phases implemented, published at v1.13.0
+**Date:** 2026-04-15
+**Session:** Agent roles ADR + impl, MCP orchestration layer brief, master plan, plan ordering enforcement, code-level weighting research
 
 ## What Was Being Worked On
-
-`semantic-graph-eval` plan — full implementation across 8 phases. Started with brief/ADR updates (two modes, knowledge distillation, worktree model), then built all code, then iterated through integration testing and bug fixes.
+`agent-roles` plan — completed brief (accepted previous session), ADR (accepted this session), impl (written this session, status: draft). Also created `mcp-orchestration-layer` brief and `master.md` pipeline document.
 
 ## Where It Stopped
+`agent-roles` impl is written and ready for `/work`. Four phases:
+1. Highlights queue infrastructure (utilities + MCP tools)
+2. Migrate planner/work/retro skills from `graph_capture` to highlights
+3. Eval agent prompt update to read highlights with weighted processing
+4. `/highlight` command, session-end trigger, CLAUDE.md role docs
 
-All 8 phases complete. Published at v1.13.0. Working on both infinitedusky and Numero (confirmed scorecards produced on both). Ready for retrospective.
+No code has been written yet — only planning documents.
 
 ## What's Next
-
-1. **Retrospective** on semantic-graph-eval — `/retrospective semantic-graph-eval`
-2. **Commit all work via jj** — massive working copy with everything from this session. Should be split into logical commits (eval system, MCP migration fixes, planner skill fix, install command, server logging, persistent judge).
-3. **Verify persistent judge on Numero** — first `jj describe` should do catchup, second should resume cheaply. Compare usage data in scorecards.
-4. **Token usage measurement** — Phase 8 item deferred: compare persistent vs one-shot cost using the `usage` field in scorecards.
+1. **`/work agent-roles`** — start Phase 1, build the highlights queue infrastructure
+2. After agent-roles completes: pick up `hermes-inspired-improvements` ADR (transcript search over existing Claude Code session JSONL files)
+3. After that: `mcp-orchestration-layer` needs brief review and acceptance
+4. `graph-knowledge-architecture` has an impl draft that needs review in light of the agent-roles decisions (eval agent as sole structured writer, highlights as input)
 
 ## Open Issues
-
-- **Biome nested root config error** — pre-existing. `pnpm check` fails.
-- **Docs build broken** — pre-existing error in `infrastructure.md` line 190.
-- **indusk-portfolio container restarting** — exit code 254, unrelated.
-- **Transcript path unavailable** — eval hook can't reliably find Claude Code transcript. Judge gets `"(transcript unavailable)"` and still works (evaluates diff + codebase).
-- **`persistent-judge.ts` uses `require()` in one spot** — `clearSession` uses `require("node:fs")` instead of top-level import because it's in a conditional path. Works but inconsistent.
-- **Stale judge processes** — kill with `ps aux | grep "node.*input-type=module" | grep -v grep` and `kill` PIDs.
+- Biome nested root config error (pre-existing)
+- Docs build broken (pre-existing, infrastructure.md)
+- indusk-portfolio container restarting (exit code 254)
+- Beam Graphiti query slow (~1048ms)
+- 5 rapid describes = 5 parallel judges (race condition)
+- OTel health checks fail (expected — dusk has otel.role: library)
+- `graph-knowledge-architecture` impl was drafted before agent-roles ADR — it may need adjustments to align with the highlights queue pattern
 
 ## Decisions Made This Session
-
-- **Brief/ADR expanded**: two modes (eval + baseline), evaluator as knowledge distillation layer (user-side + outcome-side capture), worktree model (eval in-place, baseline gets own worktree), two dimensions of measurement (absolute quality + system improvement), opt-in telemetry POST
-- **Claude Code PostToolUse hook** — jj 0.39.0 has no native hooks. Eval trigger is PostToolUse on Bash, detects `jj describe`.
-- **Judge reads diff via tool calls** — not embedded in prompt. Prompt was 170KB+ with inline diff.
-- **`runJudgeSync` not `runJudgeBackground`** — detached+unref caused close handler to never fire. The hook's inline node script stays alive.
-- **`claude mcp add` requires `remove` first** — doesn't overwrite existing entries. Both init and update now remove-then-add.
-- **CGC graph name enforced as `cgc-{project}`** — migration no longer preserves wrong values.
-- **Hook registration checks per-entry** — old code skipped entire batch if any existing hook found. Now adds missing hooks individually by matcher.
-- **Package resolution via `which indusk`** — eval hook finds compiled code via global install path, not hardcoded monorepo path.
-- **`indusk install` shorthand** — delegates to extensions enable/add.
-- **Persistent judge sessions** — `claude --print --resume <sessionId>` works. First commit = full catchup, subsequent = resume with minimal prompt. Session stored in `.indusk/eval/judge-session.json`.
-- **Findings feedback loop** — findings persist as unresolved until fixed/ignored. Surfaced on every `jj describe`. CLI commands: `indusk eval findings/fix/ignore`.
-- **MCP server stderr logging** — `[indusk] v{version} starting`, tool registration, connection status, fatal errors. Plus global uncaught exception handlers.
-- **Adapter abstraction for eval triggers** — discussed but not built. Extract `EvalTrigger` interface when second consumer exists (Cursor, etc.).
+- **Agent roles ADR accepted** — three-tier model (working agent, eval agent, infrastructure) with highlights queue as interface. Working agent writes highlights, eval agent processes into structured Graphiti knowledge. Captured in `.indusk/planning/agent-roles/adr.md` and Graphiti.
+- **Highlight levels map to graph edge weights** — critical=1.0, important=0.6, note=0.3. Levels guide eval agent effort AND become edge weights in Graphiti.
+- **Structural connections inferred through shared nodes, semantic connections get explicit weighted edges.** If A and B both import from C, infer A↔B through C. Don't create direct A→B edges for structural relationships.
+- **Code-level weighting added to lsp-structural-indexing brief** — co-change frequency, fan-in, churn, coupling depth, bug density. All derivable from jj history + LSP + eval findings.
+- **Master plan enforcement** — `check-plan-order.js` hook reads `blocked_by` from brief frontmatter, checks if dependencies are archived. Exit code 2 (ask approval, not hard block).
+- **MCP orchestration layer** is its own plan — intent translation (Claude says what it wants, InDusk fills in correct syntax/config), compound operations (multi-MCP-server sequences), and request logging.
 
 ## Watch Out For
-
-- **v1.13.0 is minimum** — earlier versions have various broken eval features.
-- **Eval hook fires on EVERY `jj describe` via Bash** — including during work sessions.
-- **`eval-trigger.js` must be in both `apps/indusk-mcp/hooks/` and `.claude/hooks/`** — `indusk update` syncs it now.
-- **Session limits** — eval judge spawns Opus agents. Persistent sessions reduce cost but first eval per session is still expensive.
-- **`validate-impl-structure.js` bug fix** — `findProjectRoot` now derives from file path. Source in `apps/indusk-mcp/hooks/` may need syncing.
-- **Planner skill fixed** — `research/` → `.indusk/research/` in 7 places.
-- **`isScorecard` made defensive** — checks for `questions` array, not just absence of `error` field. Handles malformed judge output.
+- `check-plan-order.js` hook is installed in `.claude/settings.json` and `.claude/hooks/` — it reads `blocked_by` from brief frontmatter. All downstream briefs have been updated with `blocked_by` fields.
+- `master.md` at `.indusk/planning/master.md` defines the pipeline order. Keep it updated as plan statuses change.
+- Hermes repos at `/tmp/hermes-agent` and `/tmp/hermes-CCC` are ephemeral — key findings captured in `.indusk/planning/hermes-inspired-improvements/research.md`.
+- Two new research notes in `.indusk/research/`: `visual-planning.md` (diagrams as source of truth) and `indusk-interface.md` (VS Code fork / non-code-forward interface).
+- `graph-knowledge-architecture` already has a full impl draft but it was written before agent-roles. The "eval agent as sole writer" concept is confirmed but the mechanism changed (highlights queue, not transcript-only inference). The impl may need Phase adjustments.
 
 ## Catchup Status
 - [x] mcp-ready
@@ -64,5 +56,3 @@ All 8 phases complete. Published at v1.13.0. Working on both infinitedusky and N
 - [x] skills
 - [x] extensions
 - [x] graph
-
-<!-- Session 2026-04-11 continued -->

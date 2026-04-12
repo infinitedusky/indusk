@@ -55,9 +55,9 @@ Multiple projects in flight at the same time stay isolated by graph name:
 
 ```
 indusk-infra container (FalkorDB on :6379)
-├── cgc-infinitedusky          ← CGC structural data for infinitedusky
+├── cgc-dusk                   ← CGC structural data for dusk
 ├── cgc-chitin_sportsbook      ← CGC structural data for chitin-sportsbook
-├── semantic-infinitedusky     ← Semantic graph for infinitedusky
+├── semantic-dusk              ← Semantic graph for dusk
 ├── semantic-chitin_sportsbook ← Semantic graph for chitin-sportsbook
 └── ... (Graphiti group graphs)
 ```

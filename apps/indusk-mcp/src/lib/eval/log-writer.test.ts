@@ -12,7 +12,7 @@ function makeScorecard(overrides: Partial<EvalScorecard> = {}): EvalScorecard {
 		timestamp: "2026-04-10T12:00:00.000Z",
 		mode: "eval",
 		changeId: "abc123",
-		projectGroup: "infinitedusky",
+		projectGroup: "dusk",
 		questions: [
 			{
 				id: "conventions",

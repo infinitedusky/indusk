@@ -106,7 +106,7 @@ export async function infraStart(): Promise<void> {
 	if (!hasImage) {
 		console.error(`Docker image '${IMAGE_NAME}' not found.`);
 		console.error("");
-		console.error("Build it from the infinitedusky repo:");
+		console.error("Build it from the dusk repo:");
 		console.error("  docker build -f docker/Dockerfile.infra -t indusk-infra .");
 		console.error("");
 		console.error("Or pull from GHCR (when published):");

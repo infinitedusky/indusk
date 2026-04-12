@@ -2,8 +2,7 @@
 title: "Context Migration"
 date: 2026-03-27
 status: draft
-sequence: 6
-parent: context-graph
+blocked_by: [hermes-inspired-improvements, graph-knowledge-architecture]
 ---
 
 # Context Migration — Brief
@@ -37,8 +36,9 @@ A/B test at each stage: agent with graph context vs agent with traditional conte
 - Catchup reduces to a single beam query
 
 ## Depends On
-- context-bootstrap (Plan 5) — graph must have content before removing flat files
-- context-beam (Plan 4) — must be proven reliable
+- `graph-knowledge-architecture` — graph must carry rich, typed knowledge before removing flat files
+- context-beam — must be proven reliable (completed and archived 2026-04-13)
+- `hermes-inspired-improvements` — transcript search is an additional recall layer; migration plan must account for three sources (graph, transcripts, flat files) not just two
 
 ## Blocks
 - Nothing — this is the endgame

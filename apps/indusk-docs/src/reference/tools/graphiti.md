@@ -11,7 +11,7 @@ This page documents the agent-facing surface. For the container itself (Docker, 
 | **Episode** | A chunk of text — "something that happened" | "We chose JWT with refresh tokens because the API serves both web and mobile clients." |
 | **Entity** | Named thing extracted from episodes | `JWT`, `refresh tokens`, `session cookies`, `React Native` |
 | **Fact** | Relationship between entities, with temporal metadata | "JWT was chosen over session cookies." (with `valid_at`) |
-| **Group** | Knowledge isolation boundary | `infinitedusky`, `numero`, `shared` |
+| **Group** | Knowledge isolation boundary | `dusk`, `numero`, `shared` |
 
 Episodes are processed asynchronously — entities and facts appear in search results within a few seconds of writing the episode.
 

@@ -254,7 +254,7 @@ Define profiles in `ce.json` with suffix and domain settings:
   "profiles": {
     "local": {
       "suffix": "-local",
-      "domain": "infinitedusky.orb.local"
+      "domain": "dusk.orb.local"
     },
     "staging": {
       "suffix": "-stg",
@@ -433,7 +433,7 @@ Resolution happens in two passes: first `${secrets.KEY}` references, then `${com
 
 ## How InDusk Uses It
 
-The infinitedusky monorepo uses ce to manage two Docker-based apps: the Next.js portfolio site and the VitePress docs site.
+The dusk monorepo uses ce to manage two Docker-based apps: the Next.js portfolio site and the VitePress docs site.
 
 ### Project Structure
 
@@ -465,7 +465,7 @@ NODE_ENV=development
 
 [local]
 PROFILE_SUFFIX=-local
-DOMAIN=infinitedusky.orb.local
+DOMAIN=dusk.orb.local
 
 [staging]
 PROFILE_SUFFIX=-stg
@@ -530,7 +530,7 @@ services:
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_PROFILE_SUFFIX: -local
-      NEXT_PUBLIC_DOMAIN: infinitedusky.orb.local
+      NEXT_PUBLIC_DOMAIN: dusk.orb.local
       PORT: "3000"
 
   indusk-docs-local:
@@ -539,7 +539,7 @@ services:
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_PROFILE_SUFFIX: -local
-      NEXT_PUBLIC_DOMAIN: infinitedusky.orb.local
+      NEXT_PUBLIC_DOMAIN: dusk.orb.local
       PORT: "4173"
 ```
 
@@ -552,7 +552,7 @@ services:
   "profiles": {
     "local": {
       "suffix": "-local",
-      "domain": "infinitedusky.orb.local"
+      "domain": "dusk.orb.local"
     },
     "staging": {
       "suffix": "-stg",

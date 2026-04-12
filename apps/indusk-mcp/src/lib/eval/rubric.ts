@@ -35,4 +35,11 @@ export const V1_RUBRIC: RubricQuestion[] = [
 		guidance:
 			"Consider what the agent struggled with or got wrong. Would a Graphiti fact, a lesson, or a CLAUDE.md entry have prevented the mistake?",
 	},
+	{
+		id: "user-intent",
+		question:
+			"Did the user express decisions, concerns, reasoning, or preferences that should be captured in the knowledge graph?",
+		guidance:
+			"Read the transcript for user statements that reveal WHY something was done, not just what. Look for: design reasoning ('the reason we do X is...'), concerns ('I'm worried about...'), preferences ('I don't like this DX'), constraints ('we need this for promotion'), corrections ('no, do it this way'). These are the most valuable knowledge — they're only in the transcript and will be lost if not captured. Write each one to the graph via graph_capture with the relevant file_path.",
+	},
 ];

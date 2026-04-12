@@ -42,7 +42,7 @@ the product being showcased.
 ```markdown
 ## Architecture
 
-infinitedusky/
+dusk/
 ├── apps/
 │   ├── indusk-portfolio/   # Next.js 15 + Tailwind 4
 │   ├── indusk-mcp/        # InDusk MCP server — dev system tooling
@@ -305,7 +305,7 @@ Returns CLAUDE.md parsed into its 6 canonical sections with validation status. T
 
 ```json
 {
-  "title": "infinitedusky — Project Context",
+  "title": "dusk — Project Context",
   "sections": [
     {
       "name": "What This Is",
@@ -313,7 +313,7 @@ Returns CLAUDE.md parsed into its 6 canonical sections with validation status. T
     },
     {
       "name": "Architecture",
-      "content": "```\ninfinitedusky/\n├── apps/\n│   ├── indusk-portfolio/\n│   ├── indusk-mcp/\n│   └── indusk-docs/\n..."
+      "content": "```\ndusk/\n├── apps/\n│   ├── indusk-portfolio/\n│   ├── indusk-mcp/\n│   └── indusk-docs/\n..."
     },
     {
       "name": "Conventions",

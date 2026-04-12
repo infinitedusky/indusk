@@ -1,0 +1,16 @@
+{
+	"name": "chrome-devtools",
+	"description": "Chrome DevTools MCP — browser automation, performance traces with CrUX data, Lighthouse audits, network inspection, screenshots",
+	"provides": {
+		"skill": true
+	},
+	"detect": {
+		"mcp_server": "chrome-devtools"
+	},
+	"mcp_server": {
+		"name": "chrome-devtools",
+		"type": "stdio",
+		"command": "npx",
+		"args": ["-y", "chrome-devtools-mcp@latest", "--autoConnect"]
+	}
+}

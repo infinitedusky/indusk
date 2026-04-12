@@ -59,4 +59,4 @@ const result = await runSync(adapter, projectRoot, logWriter, runtimeClient);
 
 ## Performance
 
-First sync of infinitedusky (118 files, ~10k functions, 20 classes, 18 interfaces, 155 import edges): ~73 seconds, 10k+ events, 3.3MB log file. Subsequent syncs with no changes produce zero deltas in under a second.
+First sync of dusk (118 files, ~10k functions, 20 classes, 18 interfaces, 155 import edges): ~73 seconds, 10k+ events, 3.3MB log file. Subsequent syncs with no changes produce zero deltas in under a second.

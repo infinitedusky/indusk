@@ -13,7 +13,7 @@ const projectRoot = join(import.meta.dirname, "../../../..");
 describe("parseContext", () => {
 	it("parses the repo CLAUDE.md with all 6 sections", () => {
 		const parsed = parseContext(join(projectRoot, "CLAUDE.md"));
-		expect(parsed.title).toContain("infinitedusky");
+		expect(parsed.title).toContain("dusk");
 		expect(parsed.sections).toHaveLength(6);
 
 		const names = parsed.sections.map((s) => s.name);

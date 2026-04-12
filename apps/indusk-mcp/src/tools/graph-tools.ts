@@ -719,9 +719,7 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 									logExists: existsSync(logPath),
 									logSize: `${(logSize / 1024).toFixed(1)}KB`,
 									eventCount,
-									lastSync: lastSyncTime
-										? { time: lastSyncTime, adapter: lastSyncAdapter }
-										: null,
+									lastSync: lastSyncTime ? { time: lastSyncTime, adapter: lastSyncAdapter } : null,
 									runtime: runtimeAvailable
 										? { anchors: anchorCount, edges: edgeCount }
 										: { error: "FalkorDB not available" },
@@ -794,6 +792,49 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 							type: "text" as const,
 							text: JSON.stringify({ error: (err as Error).message }, null, 2),
 						},
+					],
+					isError: true,
+				};
+			}
+		},
+	);
+
+	server.registerTool(
+		"context_beam",
+		{
+			description:
+				"Get file-specific context from all sources (semantic graph, Graphiti, eval findings, CGC). Returns targeted, high-signal context for the file you're about to edit.",
+			inputSchema: {
+				path: z.string().describe("File path to get context for (relative to project root)"),
+				trace: z.boolean().default(false).describe("Show query trace"),
+				format: z.enum(["json", "markdown", "trace"]).default("markdown").describe("Output format"),
+			},
+		},
+		async ({ path: filePath, trace, format }) => {
+			try {
+				const { runBeam } = await import("../lib/beam/runner.js");
+				const { formatBeamMarkdown, formatBeamTrace } = await import("../lib/beam/format.js");
+
+				const result = await runBeam({
+					projectRoot,
+					targetPath: filePath,
+					trace: trace || format === "trace",
+				});
+
+				let text: string;
+				if (format === "json") {
+					text = JSON.stringify(result, null, 2);
+				} else if (format === "trace") {
+					text = formatBeamTrace(result);
+				} else {
+					text = formatBeamMarkdown(result);
+				}
+
+				return { content: [{ type: "text" as const, text }] };
+			} catch (err) {
+				return {
+					content: [
+						{ type: "text" as const, text: JSON.stringify({ error: (err as Error).message }) },
 					],
 					isError: true,
 				};

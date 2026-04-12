@@ -34,7 +34,7 @@ Every episode belongs to a group. Groups isolate knowledge:
 
 | Group | Purpose | Example |
 |-------|---------|---------|
-| `{project-name}` | Project-specific knowledge | `infinitedusky`, `numero` |
+| `{project-name}` | Project-specific knowledge | `dusk`, `numero` |
 | `shared` | Cross-project conventions | Developer preferences, universal patterns |
 
 When searching, always include both the project group and `shared` to get the full picture. Use `getProjectGroupId(projectRoot)` (from `apps/indusk-mcp/src/lib/config.ts`) to get the project group consistently — it reads `.indusk/config.json` `graphiti.groupId` if set, otherwise falls back to the project directory basename.
@@ -112,7 +112,7 @@ After a plan retrospective surfaces a useful insight, the retrospective skill ca
 mcp__graphiti__add_memory({
   name: "retro-gate-enforcement-1",
   episode_body: "Plan gates need hook-based enforcement, not just instructions. The agent skipped gates when they were advisory only. PreToolUse hooks that block phase transitions are the fix.",
-  group_id: "infinitedusky",
+  group_id: "dusk",
   source: "text",
   source_description: "retrospective insight"
 })

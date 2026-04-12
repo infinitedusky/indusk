@@ -1,7 +1,7 @@
 # Graphiti Infrastructure
 
 **Status:** accepted, completed 2026-04-07.
-**Plan archive:** [`.indusk/planning/archive/graphiti-infrastructure/`](https://github.com/infinitedusky/infinitedusky/tree/main/.indusk/planning/archive/graphiti-infrastructure)
+**Plan archive:** [`.indusk/planning/archive/graphiti-infrastructure/`](https://github.com/infinitedusky/dusk/tree/main/.indusk/planning/archive/graphiti-infrastructure)
 
 ## What was decided
 
@@ -18,7 +18,7 @@ The unified architecture:
   - work: `correction-{slug}` episode when user confirms `context learn`
   - retrospective: one episode per "What We Learned" and "What We'd Do Differently" item
   - catchup: recall query at session start, surfaces relevant entities in the catchup summary
-- **Project group convention**: episodes are stored in the project group (`infinitedusky`, `chitin_sportsbook`, etc.) with cross-project knowledge in a `shared` group. Catchup recall always queries `[project, "shared"]`.
+- **Project group convention**: episodes are stored in the project group (`dusk`, `chitin_sportsbook`, etc.) with cross-project knowledge in a `shared` group. Catchup recall always queries `[project, "shared"]`.
 - **`getProjectGroupId()` helper** sanitizes the directory basename for RediSearch compatibility (replaces `-` and other special characters with `_`), with explicit override via `.indusk/config.json` `graphiti.groupId`.
 
 ## Why
@@ -43,14 +43,14 @@ The capture triggers exist because **the system is empty by default**. A knowled
 
 ## Validation
 
-The plan was validated end-to-end on 2026-04-07 by running it on a real project: `chitin-sportsbook` (a peer-to-peer baseball moneyline sportsbook, sibling sandbox project to infinitedusky). The first plan in chitin-sportsbook (`scaffold-bootstrap`) ran the full lifecycle:
+The plan was validated end-to-end on 2026-04-07 by running it on a real project: `chitin-sportsbook` (a peer-to-peer baseball moneyline sportsbook, sibling sandbox project to dusk). The first plan in chitin-sportsbook (`scaffold-bootstrap`) ran the full lifecycle:
 
 - Brief written, accepted → `brief-accepted-scaffold-bootstrap` episode auto-captured to the `chitin_sportsbook` Graphiti group
 - 4-phase impl executed (root tooling, workspace packages, relocate root cruft, verify clean build)
 - Retrospective written → 5 lesson episodes auto-captured (Turbo cwd-scope footgun, mcp__indusk__index_project not idempotent, OTel monorepo health checks, gate_policy auto for refactors, source-export package warnings)
 - Plan automatically archived to `.indusk/planning/archive/scaffold-bootstrap/` by the retrospective skill
 
-The validation moment that proved the system was working came at the end of the same session, when the agent in infinitedusky was asked "find any indusk-mcp problems from chitin-sportsbook" and answered correctly from Graphiti — without reading any retrospective files. Cross-session, structured, queryable knowledge that bypassed the "which file should I read?" problem. The experiment validating itself in real time.
+The validation moment that proved the system was working came at the end of the same session, when the agent in dusk was asked "find any indusk-mcp problems from chitin-sportsbook" and answered correctly from Graphiti — without reading any retrospective files. Cross-session, structured, queryable knowledge that bypassed the "which file should I read?" problem. The experiment validating itself in real time.
 
 ## What this unblocks
 

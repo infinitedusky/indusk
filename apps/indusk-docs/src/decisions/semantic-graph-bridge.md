@@ -23,7 +23,7 @@ The architecture follows the anchor-overlay pattern described in the [companion 
 - 3 MCP tools + 3 CLI commands (`graph_sync`, `graph_rebuild`, `graph_status`)
 - 9 documentation pages with Mermaid diagrams
 - 72 tests (unit + integration against real FalkorDB)
-- Live semantic graphs for infinitedusky (~10k anchors) and chitin-sportsbook (18 anchors)
+- Live semantic graphs for dusk (~10k anchors) and chitin-sportsbook (18 anchors)
 
 ## Full ADR
 

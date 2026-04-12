@@ -345,6 +345,30 @@ eval_
 	});
 
 program
+	.command("beam <file>")
+	.description("Get file-specific context from all sources")
+	.option("--trace", "Show query trace")
+	.option("--json", "Output as JSON")
+	.action(async (file: string, opts: { trace?: boolean; json?: boolean }) => {
+		const { runBeam } = await import("../lib/beam/runner.js");
+		const { formatBeamMarkdown, formatBeamTrace } = await import("../lib/beam/format.js");
+
+		const result = await runBeam({
+			projectRoot: process.cwd(),
+			targetPath: file,
+			trace: opts.trace ?? false,
+		});
+
+		if (opts.json) {
+			console.info(JSON.stringify(result, null, 2));
+		} else if (opts.trace) {
+			console.info(formatBeamTrace(result));
+		} else {
+			console.info(formatBeamMarkdown(result));
+		}
+	});
+
+program
 	.command("serve")
 	.description("Start the MCP server (used by Claude Code via .mcp.json)")
 	.action(async () => {

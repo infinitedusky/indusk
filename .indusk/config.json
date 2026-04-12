@@ -18,6 +18,9 @@
 	"otel": {
 		"role": "library"
 	},
+	"graphiti": {
+		"groupId": "dusk"
+	},
 	"eval": {
 		"enabled": true,
 		"endpoint": null

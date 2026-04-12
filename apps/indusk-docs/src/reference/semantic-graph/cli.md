@@ -43,7 +43,7 @@ Show semantic graph diagnostics: log stats, last sync time, runtime counts.
 
 ```bash
 $ indusk graph status
-Project: infinitedusky
+Project: dusk
 Log: /Users/the_dusky/code/sandbox/infinitedusky/.indusk/graph/semantic-graph.log
   Events: 10312
   Size: 3365.7KB

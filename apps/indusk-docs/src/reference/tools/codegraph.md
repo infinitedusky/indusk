@@ -70,12 +70,12 @@ Add both the `codegraphcontext` and `indusk` servers to your `.mcp.json`. The co
 
 ### Graph Naming Convention
 
-CGC graphs use the `cgc-` prefix: `cgc-infinitedusky`, `cgc-numero`, etc. This distinguishes structural code graphs from semantic context graphs (used by the Graphiti knowledge engine).
+CGC graphs use the `cgc-` prefix: `cgc-dusk`, `cgc-numero`, etc. This distinguishes structural code graphs from semantic context graphs (used by the Graphiti knowledge engine).
 
 | Graph type | Naming pattern | Example | Purpose |
 |-----------|---------------|---------|---------|
-| CGC structural | `cgc-{project}` | `cgc-infinitedusky` | Code structure: files, functions, imports, calls |
-| Graphiti semantic | `{project}` | `infinitedusky` | Developer knowledge: concepts, gotchas, conventions |
+| CGC structural | `cgc-{project}` | `cgc-dusk` | Code structure: files, functions, imports, calls |
+| Graphiti semantic | `{project}` | `dusk` | Developer knowledge: concepts, gotchas, conventions |
 | Graphiti shared | `shared` | `shared` | Universal knowledge: cross-project conventions, preferences |
 
 All graphs live in the same FalkorDB instance. Multiple projects share one FalkorDB, each with their own `cgc-` prefixed structural graph and their own semantic graph.

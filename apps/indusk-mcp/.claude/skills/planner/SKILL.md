@@ -25,7 +25,7 @@ Each document builds on the ones before it. Not every plan needs all five — us
 
 The order is always preserved — never write an ADR before the brief, or an impl before the ADR (when both exist).
 
-General-purpose research (insights useful across plans) also lives in `research/` at the repo root.
+General-purpose research (insights useful across plans) also lives in `.indusk/research/`.
 
 ## Workflow Types
 
@@ -62,12 +62,12 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - **refactor**: start with brief (includes boundary map)
    - **spike**: start with research (and stop there)
 
-   **Check for existing research first.** Before writing new research, scan `research/` at the repo root for relevant standalone research docs. If one exists (e.g., `research/auth-options.md`), ask the user: "I found existing research at `research/auth-options.md`. Want to use this as the starting point?" If yes:
+   **Check for existing research first.** Before writing new research, scan `.indusk/research/` for relevant standalone research docs. If one exists (e.g., `.indusk/research/auth-options.md`), ask the user: "I found existing research at `.indusk/research/auth-options.md`. Want to use this as the starting point?" If yes:
    - Copy it to `.indusk/planning/{plan-name}/research.md`
    - Set the frontmatter status to `complete`
    - Move straight to the brief
 
-   The `research/` directory is for standalone exploration that isn't tied to a plan yet. When it becomes a plan, it moves into the planning folder. The original in `research/` can be deleted or kept as a reference — user's choice.
+   The `.indusk/research/` directory is for standalone exploration that isn't tied to a plan yet. When it becomes a plan, it moves into the planning folder. The original in `.indusk/research/` can be deleted or kept as a reference — user's choice.
 
    For feature/spike workflows that need new research: Explore the problem space — read code, search the web, check Context7 for library docs. **Query the code graph before scoping** (see toolbelt "Before Modifying Code") — include structural findings in research.md with concrete numbers.
    Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
@@ -336,7 +336,7 @@ date: {YYYY-MM-DD}
 - {Hindsight — decisions that could have been better, steps to skip or add}
 
 ## Insights Worth Carrying Forward
-{Takeaways for future plans. Save to research/ if broadly useful.}
+{Takeaways for future plans. Save to .indusk/research/ if broadly useful.}
 
 ## Quality Ratchet
 {Could any mistakes in this plan have been caught automatically by a Biome rule? If yes, add the rule to biome.json and document it in biome-rationale.md. The quality ratchet only gets tighter.}
@@ -361,7 +361,7 @@ date: {YYYY-MM-DD}
 └── archive/
     └── {completed-plan}/
 
-research/                    # Standalone insights useful across plans
+.indusk/research/            # Standalone insights useful across plans
 ```
 
 - Kebab-case folder names
@@ -374,6 +374,6 @@ research/                    # Standalone insights useful across plans
 - **Use the code graph for scoping.** Before writing a brief or impl, query `analyze_code_relationships` to understand what depends on what. "How many files import X?" and "What calls this function?" prevent underscoping.
 - Keep Y-statements concise but complete. Every field filled in.
 - Impl checklists: granular enough to track, not so granular they're busywork.
-- When research produces broadly useful insights, also save to `research/` at repo root.
+- When research produces broadly useful insights, also save to `.indusk/research/`.
 - Cross-reference related plans by path whenever work overlaps between plans.
 - The user's input is: $ARGUMENTS
