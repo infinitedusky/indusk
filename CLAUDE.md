@@ -1,15 +1,14 @@
-# infinitedusky — Project Context
+# dusk — Project Context
 
 ## What This Is
 
-A pnpm + Turborepo monorepo containing Sandy's personal brand site and the development system that powers it. The repo dogfoods its own skill system — the same plan/work/verify/context skills used to build features are also the product being showcased.
+A pnpm + Turborepo monorepo containing the InDusk development system. The repo dogfoods its own skill system — the same plan/work/verify/context skills used to build features are also the product being showcased.
 
 ## Architecture
 
 ```
-infinitedusky/
+dusk/
 ├── apps/
-│   ├── indusk-portfolio/   # Next.js 15 + Tailwind 4 — personal brand/portfolio site
 │   ├── indusk-mcp/        # InDusk MCP server — dev system tooling
 │   └── indusk-docs/       # VitePress documentation site with Mermaid + FullscreenDiagram
 ├── .claude/skills/        # Claude Code skills (installed via `init`, not manually maintained)
@@ -38,14 +37,13 @@ infinitedusky/
 ```
 
 **Apps:**
-- **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme (zinc-950 bg, amber-400 accents). Runs in Docker via composable.env for local dev.
 - **indusk-mcp**: InDusk MCP server — dev system tooling with MCP tools, CLI (`init`/`update`/`init-docs`/`extensions`/`check-gates`/`infra`), skills, hooks, lessons, and extensions. `.indusk/extensions/` holds extension manifests (built-in + third-party). Published as `@infinitedusky/indusk-mcp`. OTel templates (`templates/instrumentation.ts`, `templates/filtering-exporter.ts`, `templates/logger.ts`, `templates/instrumentation.py`) are scaffolded by `init` into target projects.
 - **indusk-infra**: Bundled Docker container (`docker/Dockerfile.infra`) running FalkorDB + Graphiti MCP server. One container for all graph infrastructure. FalkorDB on port 6379, Graphiti on port 8100. Persistent volume `indusk-data` at `/data`. `GOOGLE_API_KEY` env var for Gemini LLM/embeddings. OTel export optional via `OTEL_EXPORTER_OTLP_ENDPOINT`.
 
 **MCP servers** (registered in `.mcp.json` per project):
 - **`indusk`** — InDusk MCP tools (lessons, plans, context, extensions, code graph)
 - **`codegraphcontext`** (CGC) — structural code intelligence via FalkorDB graph queries
-- **`graphiti`** — temporal knowledge graph (Phase 5.5 of graphiti-infrastructure). Captures decisions, contradictions, and lessons across sessions. 9 tools: `add_memory`, `search_nodes`, `search_memory_facts`, `get_episodes`, `get_entity_edge`, `delete_episode`, `delete_entity_edge`, `clear_graph`, `get_status`. Group ids isolate knowledge by project (`infinitedusky`, `numero`, etc.) plus a `shared` group for cross-project conventions. Registered automatically by `indusk init` ≥ v1.10.0.
+- **`graphiti`** — temporal knowledge graph (Phase 5.5 of graphiti-infrastructure). Captures decisions, contradictions, and lessons across sessions. 9 tools: `add_memory`, `search_nodes`, `search_memory_facts`, `get_episodes`, `get_entity_edge`, `delete_episode`, `delete_entity_edge`, `clear_graph`, `get_status`. Group ids isolate knowledge by project (`dusk`, `numero`, etc.) plus a `shared` group for cross-project conventions. Registered automatically by `indusk init` ≥ v1.10.0.
 - **`dash0`** — observability (logs, traces, metrics) via the Dash0 hosted MCP. Use traces-first when investigating.
 - **`excalidraw`** — hand-drawn diagrams.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
@@ -70,7 +68,7 @@ infinitedusky/
 - Skills are markdown files in `.claude/skills/{name}/SKILL.md` — each concept has one canonical skill, others cross-reference
 - Plans follow the lifecycle: research → brief → ADR → impl → retrospective
 - All planning docs live in `.indusk/planning/{kebab-case-name}/`
-- Every impl phase has **four required gates** (verify, context, document) plus an **optional OTel gate**. The OTel gate fires by default. Set `otel.role` in `.indusk/config.json` to `"library"`, `"tool"`, or `"none"` to silence it for projects that don't produce runtime telemetry. infinitedusky/indusk-mcp itself is `library` — its phases never have OTel sections.
+- Every impl phase has **four required gates** (verify, context, document) plus an **optional OTel gate**. The OTel gate fires by default. Set `otel.role` in `.indusk/config.json` to `"library"`, `"tool"`, or `"none"` to silence it for projects that don't produce runtime telemetry. dusk/indusk-mcp itself is `library` — its phases never have OTel sections.
 - Plan gates are enforced via Claude Code hooks — the agent cannot skip verification/context/document items when advancing phases
 - `.claude/hooks/` contains gate enforcement scripts installed by init (check-gates.js blocks execution, validate-impl-structure.js blocks writing, gate-reminder.js nudges)
 - Every impl phase must have verification, otel, context, and document sections — enforced by hook at write time. Use `(none needed)` or `skip-reason:` to opt out.
@@ -113,6 +111,7 @@ infinitedusky/
 - OTel gate is role-aware via `otel.role` in `.indusk/config.json` (Phase 5.25 of graphiti-infrastructure). Unset/`service` = gate fires (default). `library`/`tool`/`none` = gate silenced. The planner skill stops writing OTel sections, and both gate-enforcement hooks honor the same rule. Backwards compatible: projects without the field behave exactly as before. indusk-mcp itself is `library`.
 - Graphiti registered directly in `.mcp.json` as a top-level MCP server (Option C from Phase 5.5 of graphiti-infrastructure). Agent calls `mcp__graphiti__*` tools directly (no `indusk` wrapper). `GraphitiClient` typed wrapper at `apps/indusk-mcp/src/lib/graphiti-client.ts` is kept for internal use only — skills/catchup that want typed defaults (project group + `shared` resolution, error swallowing) use it; the agent does not. Capture is automatic at trigger points (planner brief/ADR, work corrections, retro lessons), not manual. Recall happens in catchup Step 4.5.
 - Context system evaluation via commit-triggered judge agent: PostToolUse hook on Bash spawns a persistent judge session in background on every `jj describe`, scores work against a 4-question rubric, writes derived insights to Graphiti, logs scorecards to `.indusk/eval/results.log`. Findings persist until fixed or ignored. Persistent sessions amortize catchup cost across commits. `indusk eval summary/findings/fix/ignore/baseline` CLI. `system.log` for lifecycle visibility — see `.indusk/planning/archive/semantic-graph-eval/adr.md`
+- Context beam: fixed 6-query pipeline (`context_beam` MCP tool) for file-specific context delivery. Queries semantic graph, Graphiti, eval findings, and CGC with distance-based decay (0=full, 1=summary, 2=name). Optional graph weights via COALESCE. Trace mode for transparency. V1 explicit invocation, v2 auto-injection via PreToolUse hook — see `.indusk/planning/archive/context-beam/adr.md`
 - Semantic graph bridge as event-sourced projection: per-project append-only log (`.indusk/graph/semantic-graph.log`) is canonical, tagged with jj change IDs, gitignored and local-only; FalkorDB runtime (`semantic-{project}`) is a disposable projection replayed from the log; anchor identity uses graph-stored UUIDs matched via git blob hashes and git rename detection; sync pipeline is adapter-agnostic (must not know "CGC") to preserve optionality for future non-code adapters. Graphiti captures flow through a log-writer wrapper (`captureWithLog`) that mirrors every Graphiti write as an `edge.attached` event in the semantic graph log — see `.indusk/planning/archive/cgc-graphiti-bridge/adr.md` and companion whitepaper `.indusk/research/anchor-overlay-pattern.md`.
 
 ## Known Gotchas
@@ -126,11 +125,11 @@ infinitedusky/
 - Vitest `passWithNoTests: true` must be set in each app's `vitest.config.ts`, not just root — `extends: true` doesn't inherit it when the app defines its own `test` block
 - Biome 2.x API differs from docs/examples: `noVar` doesn't exist, `noUnusedVariables` has no `ignorePattern` option, overrides use `includes` not `include`. Always match schema version to installed version.
 - Impl parser must handle all four gate types per phase: implementation, verification, context, document — not just three
-- OTel gate is conditional on `otel.role` in `.indusk/config.json`. Set to `"library"` / `"tool"` / `"none"` to silence the gate. Unset (or `"service"`) keeps the gate firing. infinitedusky and apps/indusk-mcp both have `otel.role: library` — do NOT add `#### Phase N OTel` sections to plans in this repo. The `validate-impl-structure` and `check-gates` hooks read `.indusk/config.json` directly via inlined helpers (they can't import the TS one).
+- OTel gate is conditional on `otel.role` in `.indusk/config.json`. Set to `"library"` / `"tool"` / `"none"` to silence the gate. Unset (or `"service"`) keeps the gate firing. dusk and apps/indusk-mcp both have `otel.role: library` — do NOT add `#### Phase N OTel` sections to plans in this repo. The `validate-impl-structure` and `check-gates` hooks read `.indusk/config.json` directly via inlined helpers (they can't import the TS one).
 - Skills in `.claude/skills/` are package-owned — edit in `apps/indusk-mcp/skills/`, then run `update` to sync. Don't edit `.claude/skills/` directly.
 - Domain skills directory (`skills/domain/`) removed — domain skills are now extensions. Use `extensions enable nextjs` not `init --skills nextjs`.
 - OTel auto-instrumentation must be loaded before any other imports — use `node --import ./instrumentation.ts` or the Next.js instrumentation hook
-- CGC graphs use `cgc-` prefix: `cgc-infinitedusky`, `cgc-numero`, etc. Graphiti semantic graphs use bare project names. Don't confuse them in FalkorDB.
+- CGC graphs use `cgc-` prefix: `cgc-dusk`, `cgc-numero`, etc. Graphiti semantic graphs use bare project names. Don't confuse them in FalkorDB.
 - CGC connects to `localhost:6379` via the `indusk-infra` container (not the old standalone `falkordb` container on `falkordb.orb.local`). If CGC tools fail, check `docker ps --filter name=indusk-infra`.
 - FalkorDB and Graphiti run in a single bundled container (`indusk-infra`), not as separate containers. Use `docker/test-infra.sh` to smoke test. Port 8000 is taken by OrbStack — Graphiti uses 8100.
 - `GOOGLE_API_KEY` is required for Graphiti (Gemini LLM/embeddings). Without it, FalkorDB still works but Graphiti retries indefinitely. Store in `~/.indusk/config.env` (global, not per-project).
@@ -144,10 +143,12 @@ infinitedusky/
 - CGC adapter reads from `cgc-{basename}` graph, writes to `semantic-{basename}` graph. Different graph namespaces, same FalkorDB instance. Don't mix them up in manual Cypher. Internal imports (relative specifiers only) are projected as `edge.attached` events with `relation: "imports"` — npm packages and `node:*` builtins are excluded.
 - `indusk graph rebuild` is safe to run at any time — the FalkorDB runtime for the semantic graph is disposable and reconstructs deterministically from the event log at `.indusk/graph/semantic-graph.log` via `replay()` in `apps/indusk-mcp/src/lib/semantic-graph/replay.ts`. No data is stored exclusively in the runtime; all canonical state lives in the log.
 - The eval judge needs `claude` CLI available in PATH. If eval scorecards aren't appearing, check `which claude` and `.indusk/eval/results.log` for error entries. The eval hook is a Claude Code PostToolUse hook — it only fires inside Claude Code sessions, not from manual `jj describe` in a terminal.
+- Test Trajectory parser is strict about phase references being numeric (`Phase N`). Slug-style references are rejected — reorder overhead is intentional, per `.indusk/planning/tests-first-planning/adr.md` Section 6a. Temporal coherence (`Writable at ≤ Passes at`) is enforced by the validator; a reorder that breaks this fails at write time rather than silently.
+- `validate-impl-structure.js` full-file validation triggers when the edit's `new_string` contains a phase header — and the regex `/###\s+Phase\s+\d+/` matches `#### Phase` too (three of four hashes plus space). If you edit inside a phase and the hook flags unrelated OTel/Verification gaps, the edit itself is fine but the file-as-a-whole has structural gaps. Scope your edit to checklist items (not the phase heading) to limit re-validation.
 
 ## Current State
 
-Repo scaffolded, building, and at v1.10.3 published. **`graphiti-infrastructure` plan completed and archived 2026-04-07** — indusk-infra container running FalkorDB + Graphiti, Graphiti registered as MCP server in every project's `.mcp.json` via init, capture/recall triggers wired into planner/work/retrospective/catchup skills, otel.role role-aware gate landed, hyphen-in-group-id sanitization fixed. CGC indexing the project (118 files, 19821 functions). Biome configured with VS Code integration. OTel extension active — every project scaffolded by `init` gets instrumentation by default. **OTel gate is conditional on `otel.role` in `.indusk/config.json`** (Phase 5.25 of graphiti-infrastructure): fires by default, silenced for `library`/`tool`/`none`. infinitedusky/indusk-mcp itself is `otel.role: library` — phases here never have OTel sections. Local init mode (`--local`) available for using InDusk on team repos without touching committed files. `.indusk/config.json` serves as the central project profile. **Semantic graph bridge live** — event-sourced projection of CGC structure + Graphiti knowledge into `semantic-{project}` FalkorDB graphs. Anchors exist for infinitedusky (~10k) and chitin-sportsbook (18). Internal import edges projected. `indusk graph sync/rebuild/status` CLI and MCP tools available. Sync runs at phase boundaries automatically via work skill. **Context system evaluation live** — commit-triggered judge agent scores every commit via Claude Code PostToolUse hook, writes derived insights to Graphiti, logs scorecards to `.indusk/eval/results.log`. `indusk eval summary` for trends, `indusk eval baseline --task <path>` for baseline comparisons. `/eval review` for manual quality checks.
+Repo scaffolded, building, and at v1.10.3 published. **`graphiti-infrastructure` plan completed and archived 2026-04-07** — indusk-infra container running FalkorDB + Graphiti, Graphiti registered as MCP server in every project's `.mcp.json` via init, capture/recall triggers wired into planner/work/retrospective/catchup skills, otel.role role-aware gate landed, hyphen-in-group-id sanitization fixed. CGC indexing the project (118 files, 19821 functions). Biome configured with VS Code integration. OTel extension active — every project scaffolded by `init` gets instrumentation by default. **OTel gate is conditional on `otel.role` in `.indusk/config.json`** (Phase 5.25 of graphiti-infrastructure): fires by default, silenced for `library`/`tool`/`none`. dusk/indusk-mcp itself is `otel.role: library` — phases here never have OTel sections. Local init mode (`--local`) available for using InDusk on team repos without touching committed files. `.indusk/config.json` serves as the central project profile. **Semantic graph bridge live** — event-sourced projection of CGC structure + Graphiti knowledge into `semantic-{project}` FalkorDB graphs. Anchors exist for dusk (~10k) and chitin-sportsbook (18). Internal import edges projected. `indusk graph sync/rebuild/status` CLI and MCP tools available. Sync runs at phase boundaries automatically via work skill. **Context system evaluation live** — commit-triggered judge agent scores every commit via Claude Code PostToolUse hook, writes derived insights to Graphiti, logs scorecards to `.indusk/eval/results.log`. `indusk eval summary` for trends, `indusk eval baseline --task <path>` for baseline comparisons. `/eval review` for manual quality checks. **Context beam live** — `context_beam` MCP tool and `indusk beam` CLI for file-specific context delivery. 6-query pipeline across semantic graph, Graphiti, eval findings, and CGC with distance-based decay and trace mode.
 
 **Sibling test bed**: `~/code/sandbox/chitin-sportsbook` is a real project (peer-to-peer baseball moneyline sportsbook on Base Sepolia, NUMEROSP-settled, agent-first API) being built using the dev system as both a substrate for evaluating CGC + Graphiti and as a future Numero module candidate. First plan (`scaffold-bootstrap`) ran end-to-end with full capture/recall on 2026-04-07. Ongoing experimental evaluation lives in `cgc-graphiti-evaluation` spike.
 
@@ -155,9 +156,7 @@ Repo scaffolded, building, and at v1.10.3 published. **`graphiti-infrastructure`
 
 | Plan | Stage | Next Step |
 |------|-------|-----------|
-| cgc-graphiti-evaluation | research (in-progress) | Append experiment results as chitin-sportsbook work continues |
-| context-graph | brief (accepted) | Umbrella plan; child plans drive the work |
-| dusk-v2 | research (in-progress, parked) | Pick back up after CGC + Graphiti experiment yields lessons |
+| dusk-v2 | research (in-progress, parked) | Pick back up when ready to rewrite indusk-mcp |
 | react-native-support | impl (approved, parked) | Roll OTel substance into dusk-v2 OTel-as-extension; archive otherwise |
-| mcp-dashboard | research (complete) | Write brief (lower priority) |
+| context-migration | brief (draft) | Needs fresh brief when beam data quality is proven |
 | agent-skills-format | brief (draft) | Sandy reviews brief |
