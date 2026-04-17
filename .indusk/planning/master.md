@@ -11,16 +11,17 @@ Ordered execution pipeline. When an upstream plan changes, review and adjust all
 
 | # | Plan | Status | Depends On | Blocks |
 |---|------|--------|------------|--------|
-| 1 | [agent-roles](agent-roles/brief.md) | brief accepted, impl retrofitted | — | 2, 3, 4, 5, 6, 7, 9 |
+| 1 | [agent-roles](agent-roles/brief.md) | brief accepted, impl retrofitted | — | 2, 3, 4, 5, 6, 7, 8 |
 | 2 | [mcp-orchestration-layer](mcp-orchestration-layer/brief.md) | brief draft | 1 | — |
-| 3 | [hermes-inspired-improvements](hermes-inspired-improvements/brief.md) | brief accepted | 1 | 9 |
-| 4 | [graph-knowledge-architecture](graph-knowledge-architecture/brief.md) | impl draft | 1 (soft: 3) | 5, 6, 7, 9 |
+| 3 | [hermes-inspired-improvements](hermes-inspired-improvements/brief.md) | brief accepted | 1 | 8 |
+| 4 | [graph-knowledge-architecture](graph-knowledge-architecture/brief.md) | impl draft | 1 (soft: 3) | 5, 6, 7, 8 |
 | 5 | [lsp-structural-indexing](lsp-structural-indexing/brief.md) | brief draft | 4 | 6 |
 | 6 | [type-edges](type-edges/brief.md) | brief draft | 4, 5 | — |
 | 7 | [context-migration](context-migration/brief.md) | brief draft | 3, 4 | — |
 
 ## Archived
 
+- **falsification-ritual** (2026-04-17) — `/falsify` skill between `/work` and `/retrospective`, same-agent goal-flip bounty-hunting loop, three outcomes per failing test, retrospective Step 0 gate. Plan dogfooded itself and found 2 real bugs in its own library (LF and CR/LS/PS line-separator truncation). Shipped in indusk-mcp 1.16.0. CLI walk-up + sub-app cleanup in 1.16.1. See `archive/falsification-ritual/` and `apps/indusk-docs/src/decisions/falsification-ritual.md`.
 - **tests-first-planning** (2026-04-16) — Test Trajectory shape, four validator rules, structural phase-close enforcement, retrospective mitigation audit. Shipped in indusk-mcp 1.15.0. Hook-sync fix in 1.15.1. See `archive/tests-first-planning/` and `apps/indusk-docs/src/decisions/tests-first-planning.md`.
 
 ## Independent (no ordering constraint)
@@ -35,7 +36,7 @@ Ordered execution pipeline. When an upstream plan changes, review and adjust all
 
 | # | Plan | Status | Depends On |
 |---|------|--------|------------|
-| 9 | [complementary-personas](complementary-personas/brief.md) | brief draft | 1, 3, 4 |
+| 8 | [complementary-personas](complementary-personas/brief.md) | brief draft | 1, 3, 4 |
 
 ## Change Propagation
 
