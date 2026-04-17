@@ -36,3 +36,11 @@ apps/indusk-docs/src/.vitepress/cache/
 .indusk/eval/
 # Extension manifests are package-owned; env files contain secrets
 .indusk/extensions/
+
+# Sub-app .claude/ and .indusk/ dirs — these should only exist at the
+# repo root. They get accidentally created when `indusk init` or
+# `indusk update` is run from inside a sub-app directory. The 1.16.1
+# CLI fix walks up to find the real project root, but this gitignore is
+# the belt-and-suspenders so accidents don't land in commits.
+apps/*/.claude/
+apps/*/.indusk/

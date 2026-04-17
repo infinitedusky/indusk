@@ -3,9 +3,35 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Command } from "commander";
+import { resolveProjectRoot } from "../lib/config.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, "../../package.json"), "utf-8"));
+
+/**
+ * Resolve the InDusk project root for commands that operate on an existing
+ * project. Walks up from cwd looking for `.indusk/config.json`. If not
+ * found, errors out — prevents accidental writes to the wrong `.claude/`
+ * when invoked from a sub-directory like `apps/indusk-mcp/`.
+ *
+ * Commands that CREATE the project root (currently only `init`) use
+ * `process.cwd()` directly — init is responsible for creating the marker.
+ */
+function rootOrExit(): string {
+	const cwd = process.cwd();
+	const root = resolveProjectRoot(cwd);
+	if (root === null) {
+		console.error(
+			`Not inside an InDusk project (no .indusk/config.json found walking up from ${cwd}).\n` +
+				"Run 'indusk init' here to initialize a new project, or cd to an existing one.",
+		);
+		process.exit(1);
+	}
+	if (root !== cwd) {
+		console.info(`[indusk] Using project root: ${root}\n`);
+	}
+	return root;
+}
 
 const program = new Command();
 
@@ -34,7 +60,7 @@ program
 	.description("Update skills from package without touching project content")
 	.action(async () => {
 		const { update } = await import("./commands/update.js");
-		await update(process.cwd());
+		await update(rootOrExit());
 	});
 
 const ext = program
@@ -46,7 +72,7 @@ ext
 	.description("Show all available extensions")
 	.action(async () => {
 		const { extensionsList } = await import("./commands/extensions.js");
-		await extensionsList(process.cwd());
+		await extensionsList(rootOrExit());
 	});
 
 ext
@@ -54,7 +80,7 @@ ext
 	.description("Show enabled extensions with health")
 	.action(async () => {
 		const { extensionsStatus } = await import("./commands/extensions.js");
-		await extensionsStatus(process.cwd());
+		await extensionsStatus(rootOrExit());
 	});
 
 ext
@@ -62,7 +88,7 @@ ext
 	.description("Enable extensions")
 	.action(async (names: string[]) => {
 		const { extensionsEnable } = await import("./commands/extensions.js");
-		await extensionsEnable(process.cwd(), names);
+		await extensionsEnable(rootOrExit(), names);
 	});
 
 ext
@@ -70,7 +96,7 @@ ext
 	.description("Disable extensions")
 	.action(async (names: string[]) => {
 		const { extensionsDisable } = await import("./commands/extensions.js");
-		await extensionsDisable(process.cwd(), names);
+		await extensionsDisable(rootOrExit(), names);
 	});
 
 ext
@@ -79,7 +105,7 @@ ext
 	.requiredOption("--from <source>", "Source: npm:pkg, github:user/repo, URL, or local path")
 	.action(async (name: string, opts: { from: string }) => {
 		const { extensionsAdd } = await import("./commands/extensions.js");
-		await extensionsAdd(process.cwd(), name, opts.from);
+		await extensionsAdd(rootOrExit(), name, opts.from);
 	});
 
 ext
@@ -87,7 +113,7 @@ ext
 	.description("Remove extensions")
 	.action(async (names: string[]) => {
 		const { extensionsRemove } = await import("./commands/extensions.js");
-		await extensionsRemove(process.cwd(), names);
+		await extensionsRemove(rootOrExit(), names);
 	});
 
 ext
@@ -95,7 +121,7 @@ ext
 	.description("Update third-party extensions from their original source")
 	.action(async (names: string[]) => {
 		const { extensionsUpdate } = await import("./commands/extensions.js");
-		await extensionsUpdate(process.cwd(), names);
+		await extensionsUpdate(rootOrExit(), names);
 	});
 
 ext
@@ -103,7 +129,7 @@ ext
 	.description("Recommend extensions based on project contents")
 	.action(async () => {
 		const { extensionsSuggest } = await import("./commands/extensions.js");
-		await extensionsSuggest(process.cwd());
+		await extensionsSuggest(rootOrExit());
 	});
 
 program
@@ -113,7 +139,7 @@ program
 	)
 	.action(async () => {
 		const { initDocs } = await import("./commands/init-docs.js");
-		await initDocs(process.cwd());
+		await initDocs(rootOrExit());
 	});
 
 program
@@ -125,7 +151,7 @@ program
 	.option("--phase <number>", "Check a specific phase number", Number.parseInt)
 	.action(async (opts) => {
 		const { checkGates } = await import("./commands/check-gates.js");
-		await checkGates(process.cwd(), { file: opts.file, phase: opts.phase });
+		await checkGates(rootOrExit(), { file: opts.file, phase: opts.phase });
 	});
 
 const infra = program
@@ -171,7 +197,7 @@ graph
 		const { SemanticGraphClient } = await import("../lib/semantic-graph/runtime-client.js");
 		const { runSync } = await import("../lib/semantic-graph/sync-engine.js");
 
-		const projectRoot = process.cwd();
+		const projectRoot = rootOrExit();
 		const projectName = basename(projectRoot);
 		const adapter = new CgcAdapter();
 		const logWriter = new LogWriter(getLogPath(projectRoot));
@@ -197,7 +223,7 @@ graph
 		const { replay } = await import("../lib/semantic-graph/replay.js");
 		const { SemanticGraphClient } = await import("../lib/semantic-graph/runtime-client.js");
 
-		const projectRoot = process.cwd();
+		const projectRoot = rootOrExit();
 		const projectName = basename(projectRoot);
 		const logPath = getLogPath(projectRoot);
 		const client = new SemanticGraphClient(projectName);
@@ -228,7 +254,7 @@ graph
 		const { readAllEvents } = await import("../lib/semantic-graph/log-reader.js");
 		const { SemanticGraphClient } = await import("../lib/semantic-graph/runtime-client.js");
 
-		const projectRoot = process.cwd();
+		const projectRoot = rootOrExit();
 		const projectName = basename(projectRoot);
 		const logPath = getLogPath(projectRoot);
 
@@ -266,7 +292,7 @@ program
 	.description("Strip InDusk settings overlay before a PR")
 	.action(async () => {
 		const { stripOverlay } = await import("../lib/settings-overlay.js");
-		stripOverlay(process.cwd());
+		stripOverlay(rootOrExit());
 		console.info("Stripped InDusk overlay from .claude/settings.json");
 	});
 
@@ -275,7 +301,7 @@ program
 	.description("Re-apply InDusk settings overlay after a PR")
 	.action(async () => {
 		const { applyOverlay } = await import("../lib/settings-overlay.js");
-		applyOverlay(process.cwd());
+		applyOverlay(rootOrExit());
 		console.info("Re-applied InDusk overlay to .claude/settings.json");
 	});
 
@@ -287,12 +313,13 @@ program
 		"Source for third-party extension (npm:pkg, github:user/repo, URL, or path)",
 	)
 	.action(async (names: string[], opts: { from?: string }) => {
+		const root = rootOrExit();
 		if (opts.from) {
 			const { extensionsAdd } = await import("./commands/extensions.js");
-			await extensionsAdd(process.cwd(), names[0], opts.from);
+			await extensionsAdd(root, names[0], opts.from);
 		} else {
 			const { extensionsEnable } = await import("./commands/extensions.js");
-			await extensionsEnable(process.cwd(), names);
+			await extensionsEnable(root, names);
 		}
 	});
 
@@ -306,7 +333,7 @@ eval_
 	.option("--json", "Output as JSON")
 	.action(async (opts) => {
 		const { evalSummary } = await import("./commands/eval.js");
-		await evalSummary(process.cwd(), opts);
+		await evalSummary(rootOrExit(), opts);
 	});
 
 eval_
@@ -315,7 +342,7 @@ eval_
 	.option("--all", "Show all findings including fixed/ignored")
 	.action(async (opts) => {
 		const { evalFindings } = await import("./commands/eval.js");
-		await evalFindings(process.cwd(), opts);
+		await evalFindings(rootOrExit(), opts);
 	});
 
 eval_
@@ -323,7 +350,7 @@ eval_
 	.description("Mark an eval finding as fixed")
 	.action(async (key: string) => {
 		const { evalMark } = await import("./commands/eval.js");
-		await evalMark(process.cwd(), key, "fixed");
+		await evalMark(rootOrExit(), key, "fixed");
 	});
 
 eval_
@@ -331,7 +358,7 @@ eval_
 	.description("Mark an eval finding as ignored")
 	.action(async (key: string) => {
 		const { evalMark } = await import("./commands/eval.js");
-		await evalMark(process.cwd(), key, "ignored");
+		await evalMark(rootOrExit(), key, "ignored");
 	});
 
 eval_
@@ -341,7 +368,7 @@ eval_
 	.option("--keep", "Keep baseline worktree after eval")
 	.action(async (opts) => {
 		const { evalBaseline } = await import("./commands/eval.js");
-		await evalBaseline(process.cwd(), opts);
+		await evalBaseline(rootOrExit(), opts);
 	});
 
 program
@@ -354,7 +381,7 @@ program
 		const { formatBeamMarkdown, formatBeamTrace } = await import("../lib/beam/format.js");
 
 		const result = await runBeam({
-			projectRoot: process.cwd(),
+			projectRoot: rootOrExit(),
 			targetPath: file,
 			trace: opts.trace ?? false,
 		});

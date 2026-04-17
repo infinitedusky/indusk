@@ -8,6 +8,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - **Repo renamed from `infinitedusky` to `dusk`** — removed `indusk-portfolio` app (will be rebuilt in a separate repo). Updated graph namespaces, config, and docs references. npm package `@infinitedusky/indusk-mcp` unchanged.
 
 ### Fixed
+- **CLI commands walk up to the project root (1.16.1)** — every non-`init` `indusk` command (`update`, `extensions *`, `init-docs`, `check-gates`, `pr-clean`, `pr-restore`, `graph *`, `eval *`, `beam`, `install`) now walks up from cwd looking for `.indusk/config.json` and errors out with a helpful message if no project is found. Fixes accidental installs into sub-app `.claude/` dirs when the user runs e.g. `indusk update` from inside `apps/indusk-mcp/`. `init` still uses raw cwd (it creates the marker). `.gitignore` now also excludes `apps/*/.claude/` and `apps/*/.indusk/` as belt-and-suspenders.
 - **`indusk update` hook sync (1.15.1)** — the update command now discovers bundled hooks via `glob` from the package's `hooks/` dir (instead of a hardcoded list), creates `.claude/hooks/` if missing with all bundled hooks copied in, and logs the source path for debugging. New hooks added to the package now sync on update without code changes to `update.ts`.
 
 ### Added

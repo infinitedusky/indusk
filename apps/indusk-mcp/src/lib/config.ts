@@ -1,5 +1,32 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
+
+/**
+ * Resolve the InDusk project root by walking up from the given directory
+ * until `.indusk/config.json` is found. Returns the directory containing
+ * `.indusk/config.json`, or `null` if none is found up to the filesystem
+ * root.
+ *
+ * `.indusk/config.json` is the authoritative "this is an InDusk project"
+ * marker — created by `indusk init`, never by sub-apps that happen to
+ * have their own `.claude/` scaffolding. Walking up to find it prevents
+ * bugs like `indusk update` syncing to the wrong `.claude/` when the user
+ * runs it from a sub-directory (e.g. `apps/indusk-mcp/`).
+ *
+ * For `indusk init` itself, use the raw cwd — init creates the marker, so
+ * walk-up would either find nothing or (worse) match an ancestor project
+ * the user doesn't intend to re-init.
+ */
+export function resolveProjectRoot(startDir: string): string | null {
+	let dir = startDir;
+	for (let i = 0; i < 20; i++) {
+		if (existsSync(join(dir, ".indusk/config.json"))) return dir;
+		const parent = resolve(dir, "..");
+		if (parent === dir) return null;
+		dir = parent;
+	}
+	return null;
+}
 
 export interface VerifyToolConfig {
 	tool: string;
