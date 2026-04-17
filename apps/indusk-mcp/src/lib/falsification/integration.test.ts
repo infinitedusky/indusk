@@ -1,10 +1,11 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { isFalsificationComplete } from "./log.js";
 import { isFalsificationSkipped } from "./skip.js";
 
 const packageRoot = join(import.meta.dirname, "../../..");
+const repoRoot = join(packageRoot, "../..");
 const retrospectiveSkill = readFileSync(
 	join(packageRoot, "skills/retrospective.md"),
 	"utf-8",
@@ -100,5 +101,75 @@ falsification_reason: "two-line typo fix in a docs page; ritual cost > disciplin
 		const skipped = isFalsificationSkipped(implContent).skipped;
 		const gatePasses = complete || skipped;
 		expect(gatePasses).toBe(true);
+	});
+});
+
+describe("T10: user-facing guide exists and contains required sections", () => {
+	const guidePath = join(repoRoot, "apps/indusk-docs/src/guide/falsification-ritual.md");
+
+	it("guide file exists on disk", () => {
+		expect(existsSync(guidePath)).toBe(true);
+	});
+
+	it("contains all required section headings", () => {
+		const guide = readFileSync(guidePath, "utf-8");
+		expect(guide).toMatch(/##\s+Why this exists/);
+		expect(guide).toMatch(/##\s+The principle/);
+		expect(guide).toMatch(/##\s+The ritual/);
+		expect(guide).toMatch(/##\s+Three outcomes/);
+		expect(guide).toMatch(/##\s+Worked example/);
+		expect(guide).toMatch(/Bounty hunting, not candidate generation/);
+	});
+
+	it("names the three outcomes by slug", () => {
+		const guide = readFileSync(guidePath, "utf-8");
+		expect(guide).toContain("Fix in scope");
+		expect(guide).toContain("Spawn a new plan");
+		expect(guide).toContain("Accept as finding");
+	});
+
+	it("documents the two-field skip frontmatter", () => {
+		const guide = readFileSync(guidePath, "utf-8");
+		expect(guide).toContain("falsification: skipped");
+		expect(guide).toContain("falsification_reason:");
+	});
+
+	it("establishes the bookend symmetry with Test Trajectory", () => {
+		const guide = readFileSync(guidePath, "utf-8");
+		expect(guide.toLowerCase()).toContain("bookend");
+		expect(guide).toContain("Test Trajectory");
+	});
+});
+
+describe("T11: VitePress sidebar has an entry linking to /guide/falsification-ritual", () => {
+	const configPath = join(repoRoot, "apps/indusk-docs/src/.vitepress/config.ts");
+
+	it("sidebar config includes the guide link", () => {
+		const config = readFileSync(configPath, "utf-8");
+		expect(config).toContain("/guide/falsification-ritual");
+	});
+
+	it("sidebar entry has a human-readable label", () => {
+		const config = readFileSync(configPath, "utf-8");
+		// Loose match — any text label is fine as long as it points at the guide
+		expect(config).toMatch(/text:\s*"Falsification Ritual"\s*,\s*link:\s*"\/guide\/falsification-ritual"/);
+	});
+});
+
+describe("T12: community lesson cross-links the user-facing guide", () => {
+	const lessonPath = join(repoRoot, ".claude/lessons/verification-gates-need-adversarial-framing.md");
+
+	it("lesson file exists", () => {
+		expect(existsSync(lessonPath)).toBe(true);
+	});
+
+	it("lesson references the guide path", () => {
+		const lesson = readFileSync(lessonPath, "utf-8");
+		expect(lesson).toContain("guide/falsification-ritual");
+	});
+
+	it("lesson has a See Also section", () => {
+		const lesson = readFileSync(lessonPath, "utf-8");
+		expect(lesson).toMatch(/##\s+See Also/);
 	});
 });

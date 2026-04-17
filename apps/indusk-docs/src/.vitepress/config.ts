@@ -58,6 +58,7 @@ const config = defineConfig({
 						{ text: "Evaluation", link: "/guide/eval" },
 						{ text: "Context Beam", link: "/guide/context-beam" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
+						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 					],
 				},
 			],

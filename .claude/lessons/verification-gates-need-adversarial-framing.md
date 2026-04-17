@@ -30,3 +30,9 @@ Common failure modes worth checking:
 
 The cost of writing an adversarial gate is a few extra lines per phase. The cost of a rubber-stamp gate is discovering the gap after building on top of it.
 
+## See Also
+
+This lesson is the intellectual origin of the [Falsification Ritual](apps/indusk-docs/src/guide/falsification-ritual.md) — the `/falsify {plan}` skill that runs between `/work` completion and `/retrospective`. The ritual operationalizes this lesson as a structural step every plan performs before archival: the same working agent goal-flips from "prove it works" to "find a failing test" and hunts specific hypotheses about what's broken. See `.indusk/planning/archive/falsification-ritual/` (once archived) for the full design.
+
+The lesson covers the *technique* (four failure-mode patterns); the ritual covers the *discipline* (when, how, and with what gating).
+

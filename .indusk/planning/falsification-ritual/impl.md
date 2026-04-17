@@ -55,9 +55,9 @@ Ship `/falsify {plan}` as a new skill that runs between `/work` completion and `
 | T7 | `retrospective.md` skill prose references the falsification gate and the skip-reason escape hatch — grep for `falsification` in the skill markdown returns both the completion check and the skip pattern | Phase 2 | Phase 2 | passing |
 | T8 | `work.md` skill prose, at impl completion, directs the user to run `/falsify {plan}` before `/retrospective` — grep for `/falsify` in work.md returns at least one reference in the completion section | Phase 2 | Phase 2 | passing |
 | T9 | End-to-end integration: given a plan whose impl is `completed` but has no `falsification.md` and no `falsification: skipped` frontmatter, the retrospective skill's prose Step 0 refuses to proceed and names the gate explicitly | Phase 2 | Phase 2 | passing |
-| T10 | `apps/indusk-docs/src/guide/falsification-ritual.md` exists and contains sections for: the ritual (bounty-hunting), the principle (bullshit detector), the three outcomes, a worked example, the bookend symmetry with Test Trajectory | Phase 3 | Phase 3 | planned |
-| T11 | VitePress sidebar at `apps/indusk-docs/src/.vitepress/config.ts` has an entry linking to `/guide/falsification-ritual` | Phase 3 | Phase 3 | planned |
-| T12 | `.claude/lessons/verification-gates-need-adversarial-framing.md` cross-links the user-facing guide (grep for the guide path in the lesson file) | Phase 3 | Phase 3 | planned |
+| T10 | `apps/indusk-docs/src/guide/falsification-ritual.md` exists and contains sections for: the ritual (bounty-hunting), the principle (bullshit detector), the three outcomes, a worked example, the bookend symmetry with Test Trajectory | Phase 3 | Phase 3 | passing |
+| T11 | VitePress sidebar at `apps/indusk-docs/src/.vitepress/config.ts` has an entry linking to `/guide/falsification-ritual` | Phase 3 | Phase 3 | passing |
+| T12 | `.claude/lessons/verification-gates-need-adversarial-framing.md` cross-links the user-facing guide (grep for the guide path in the lesson file) | Phase 3 | Phase 3 | passing |
 | T13 | `apps/indusk-mcp/skills/falsify.md` exists and contains the bounty-hunting loop prose (investigate → hypothesize → write test → run → outcome), the three-outcome handling, and the hybrid exit criterion (agent proposes, user confirms) | Phase 4 | Phase 4 | planned |
 | T14 | Dogfood: running `/falsify falsification-ritual` against this plan's own `completed` impl produces at least one targeted hypothesis (fails against the attested state or confirms no in-scope hypothesis remained). `falsification.md` is written with the session record. | Phase 4 | Phase 4 | planned |
 
@@ -143,32 +143,23 @@ Ship `/falsify {plan}` as a new skill that runs between `/work` completion and `
 
 #### Implementation
 
-- [ ] Write `apps/indusk-docs/src/guide/falsification-ritual.md`:
-  - **Motivation** — Test Trajectory fixed universal deferral; authors still ship blind spots because they only write tests they can think of; the "I don't know what I don't know" problem
-  - **The principle** — bullshit detector; same agent, flipped goal; bounty hunting over candidate generation
-  - **The ritual** — investigate → hypothesize → write test → run → outcome (fix-in-scope, spawn-plan, accept-finding)
-  - **Bookend symmetry** — Trajectory writes failing tests at start that pass on success; `/falsify` hunts failing tests at close that shouldn't be producible if success is real
-  - **The three outcomes** with when to pick each
-  - **Hybrid exit criterion** — agent proposes, user confirms
-  - **Worked example** — a small plan that attested to "all user actions are audit-logged" and `/falsify` surfaces a specific concurrent-write path that writes to DB but skips the audit queue
-  - **Relation to complementary-personas** — personas are a richer future instantiator; the baseline ritual works today with whatever agent
-  - **Operational details** — where the log lives, the skip-reason escape hatch, the hard-block on retrospective
-- [ ] Add sidebar entry to `apps/indusk-docs/src/.vitepress/config.ts` — under the Guide section, after "Test Trajectory."
-- [ ] Update `.claude/lessons/verification-gates-need-adversarial-framing.md` — append a "See Also" section pointing to the guide and noting that the lesson is the intellectual origin of the `/falsify` ritual.
+- [x] Wrote `apps/indusk-docs/src/guide/falsification-ritual.md` — covers motivation (the universal-deferral/Trajectory/rubber-stamp arc), the bullshit-detector principle with three supporting arguments (asymmetric prove-failure, unknown unknowns, deterrent byproduct), same-agent-flipped-goal, bounty hunting vs candidate generation (the load-bearing framing), the seven-step ritual, the three outcomes with a decision matrix, the hybrid exit criterion, a full worked example (crash-recovery subsystem with 4 hypotheses across fix-in-scope / pass / spawn-plan / terminate paths), log location, skip-reason escape hatch, retrospective hard-block contract, and the relationship to complementary-personas. Plus See Also.
+- [x] Added sidebar entry to `apps/indusk-docs/src/.vitepress/config.ts` — "Falsification Ritual" link, placed after "Test Trajectory" in the Guide section (bookend adjacency).
+- [x] Updated `.claude/lessons/verification-gates-need-adversarial-framing.md` — appended "## See Also" section pointing to the guide, naming this as the lesson's operationalization, and noting the split (lesson covers the technique; ritual covers the discipline).
 
 #### Phase 3 Verification
 
-- [ ] T10 passes — guide file exists with all six required section headings (motivation, principle, ritual, bookend, outcomes, worked example)
-- [ ] T11 passes — sidebar config has a `/guide/falsification-ritual` entry
-- [ ] T12 passes — the community lesson contains a reference to the guide path
+- [x] T10 passes — integration.test.ts T10 (5 assertions: guide exists, all section headings present including "Bounty hunting, not candidate generation", three outcomes named, two-field skip documented, bookend symmetry established)
+- [x] T11 passes — integration.test.ts T11 (2 assertions: sidebar contains the link path, entry has the expected "Falsification Ritual" label)
+- [x] T12 passes — integration.test.ts T12 (3 assertions: lesson file exists, references the guide path, has a See Also section). Full suite: 243/243 green.
 
 #### Phase 3 Context
 
-- [ ] Update CLAUDE.md Key Decisions: add a bullet linking to `.indusk/planning/falsification-ritual/adr.md`
+- [x] Updated CLAUDE.md Key Decisions — added a bullet summarizing the ritual, its bookend relationship to `tests-first-planning`, the three outcomes, the hybrid exit, and the retrospective hard-block. Links the ADR and the user-facing guide.
 
 #### Phase 3 Document
 
-- [ ] Add changelog entry at `apps/indusk-docs/src/changelog.md` under Added: "`/falsify {plan}` — a bounty-hunting ritual between `/work` and `/retrospective` that drives the agent through goal-flipped failure-finding. Hard-blocks retrospective without a clean termination or explicit skip-reason."
+- [x] Added changelog entry at `apps/indusk-docs/src/changelog.md` — `Falsification Ritual (1.16.0)` under Added, describing the skill, the bounty-hunting loop, the three outcomes, the hybrid exit, the retrospective hard-block, and the bookend relationship to Test Trajectory. Links the guide.
 
 ### Phase 4: The Skill, Dogfood, and Version Bump
 
