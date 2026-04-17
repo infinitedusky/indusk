@@ -222,7 +222,7 @@ additive, not breaking. See `planning/payment-flow/research.md`.
 
 ### 4. ADR (`adr.md`)
 
-The ADR formalizes the decision using the Y-statement format. Every field must be filled in:
+The ADR formalizes the decision using the Y-statement format. Each of the seven canonical clauses is its own section: the clause label is bold and ends with a colon, the paragraph body begins on the next line (no blank line between them), and a blank line separates each clause from the next. Every clause must be filled in:
 
 ```markdown
 ---
@@ -234,19 +234,27 @@ status: accepted
 # Payment Flow
 
 ## Y-Statement
-In the context of **adding recurring subscriptions to the platform**,
-facing **an existing billing module with 8 dependents and no webhook
-infrastructure**,
-we decided for **extending the billing module with Stripe Subscription
-Billing and a dedicated webhook endpoint**
-and against **building a separate subscription microservice or using
-a third-party subscription management platform like Recurly**,
-to achieve **subscription lifecycle management with minimal disruption
-to existing billing consumers**,
-accepting **increased complexity in the billing module and a new
-operational dependency on webhook delivery**,
-because **the existing Stripe SDK already supports subscriptions, and
-an additive approach avoids breaking the 8 existing dependents**.
+
+**In the context of:**
+Adding recurring subscriptions to the platform.
+
+**Facing:**
+An existing billing module with 8 dependents and no webhook infrastructure.
+
+**We decided for:**
+Extending the billing module with Stripe Subscription Billing and a dedicated webhook endpoint.
+
+**And against:**
+Building a separate subscription microservice or using a third-party subscription management platform like Recurly.
+
+**To achieve:**
+Subscription lifecycle management with minimal disruption to existing billing consumers.
+
+**Accepting:**
+Increased complexity in the billing module and a new operational dependency on webhook delivery.
+
+**Because:**
+The existing Stripe SDK already supports subscriptions, and an additive approach avoids breaking the 8 existing dependents.
 
 ## Context
 See `planning/payment-flow/research.md` for technical findings and
