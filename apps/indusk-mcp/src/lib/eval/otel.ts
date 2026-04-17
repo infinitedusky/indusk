@@ -116,16 +116,29 @@ export function initEvalOtel(projectRoot: string): Tracer {
 		return trace.getTracer(TRACER_NAME);
 	}
 
+	// Build exporter headers. We pass Authorization and Dash0-Dataset in the
+	// constructor rather than relying on OTEL_EXPORTER_OTLP_HEADERS env parsing,
+	// because the OTel SDK's env parser has proven unreliable for tokens with
+	// spaces (e.g., "Bearer auth_xxx") in practice — the header silently fails
+	// to attach and exports retry-loop to no effect.
+	//
+	// Precedence:
+	//   1. User-set `OTEL_EXPORTER_OTLP_HEADERS` env (handled by SDK, takes top precedence per OTel spec)
+	//   2. Explicit constructor headers below (our defaults)
+	//
+	// DASH0_API_TOKEN is the conventional name we inherit from the Dash0 CLI.
+	// If set, we build a Bearer header. If not, we rely on the user's env.
+	const headers: Record<string, string> = {
+		"Dash0-Dataset": dataset,
+	};
+	if (process.env.DASH0_API_TOKEN) {
+		headers.Authorization = `Bearer ${process.env.DASH0_API_TOKEN}`;
+	}
+
 	try {
 		const exporter = new OTLPTraceExporter({
 			url: endpoint.endsWith("/v1/traces") ? endpoint : `${endpoint.replace(/\/$/, "")}/v1/traces`,
-			// Route agent spans to the Dash0 dataset named `dataset`. Default
-			// is "agent". Env-set headers (OTEL_EXPORTER_OTLP_HEADERS) take
-			// precedence — per the OTel SDK contract — so a user-provided
-			// Dash0-Dataset in env overrides this default.
-			headers: {
-				"Dash0-Dataset": dataset,
-			},
+			headers,
 		});
 
 		const provider = new NodeTracerProvider({

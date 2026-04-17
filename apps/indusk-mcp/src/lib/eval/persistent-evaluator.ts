@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { getProjectGroupId } from "../config.js";
+import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import { initEvalOtel, shutdownEvalOtel, withSpan } from "./otel.js";
@@ -150,6 +151,16 @@ export async function runPersistentEval(opts: {
 	const source = process.env.INDUSK_EVAL_SOURCE ?? "commit";
 	const projectGroup = getProjectGroupId(opts.projectRoot);
 
+	// Peek at the highlights queue before spawning — gives us observability
+	// into how much work the Claude subprocess will do without having to
+	// span per-highlight (which would require Claude-Code-internal OTel).
+	let unprocessedCount = 0;
+	try {
+		unprocessedCount = readUnprocessedHighlights(opts.projectRoot).length;
+	} catch {
+		// reading the queue is best-effort — never block the evaluator
+	}
+
 	const result = await withSpan(
 		tracer,
 		"eval.run",
@@ -158,6 +169,7 @@ export async function runPersistentEval(opts: {
 			source,
 			mode: opts.mode,
 			projectGroup,
+			"highlights.unprocessed_count": unprocessedCount,
 		},
 		async (rootSpan) => {
 			const logWriter = new EvalLogWriter(getEvalLogPath(opts.projectRoot));

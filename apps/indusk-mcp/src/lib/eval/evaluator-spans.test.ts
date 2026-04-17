@@ -272,3 +272,87 @@ describe("T9: root span has wrapper-level child spans in roughly chronological o
 		expect(root?.status.code).not.toBe(SpanStatusCode.ERROR);
 	});
 });
+
+describe("T10: root span carries highlights.unprocessed_count attribute", () => {
+	it("zero when no highlights exist", async () => {
+		writeConfigEnabled();
+		process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
+
+		const { runPersistentEval } = await import("./persistent-evaluator.js");
+		await runPersistentEval({
+			projectRoot,
+			changeId: "cid-nohighlights",
+			transcriptPath: "/tmp/t.jsonl",
+			mode: "eval",
+		});
+
+		const root = exporter.getFinishedSpans().find((s) => s.name === "eval.run");
+		expect(root?.attributes["highlights.unprocessed_count"]).toBe(0);
+	});
+
+	it("counts unprocessed highlights when queue is non-empty", async () => {
+		writeConfigEnabled();
+		process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
+
+		const { writeHighlight } = await import("../highlights/highlights.js");
+		writeHighlight(projectRoot, { tag: "observation", note: "one", level: "note" });
+		writeHighlight(projectRoot, { tag: "correction", note: "two", level: "important" });
+		writeHighlight(projectRoot, { tag: "brief-accepted", note: "three", level: "critical" });
+
+		const { runPersistentEval } = await import("./persistent-evaluator.js");
+		await runPersistentEval({
+			projectRoot,
+			changeId: "cid-withhighlights",
+			transcriptPath: "/tmp/t.jsonl",
+			mode: "eval",
+		});
+
+		const root = exporter.getFinishedSpans().find((s) => s.name === "eval.run");
+		expect(root?.attributes["highlights.unprocessed_count"]).toBe(3);
+	});
+});
+
+describe("T11: thrown exceptions are recorded on the span and set root status to ERROR", () => {
+	it("withSpan records exception + sets ERROR status", async () => {
+		const { initEvalOtel, withSpan } = await import("./otel.js");
+		writeConfigEnabled();
+		process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
+
+		const tracer = initEvalOtel(projectRoot);
+
+		await expect(
+			withSpan(tracer, "test.span", undefined, () => {
+				throw new Error("boom");
+			}),
+		).rejects.toThrow("boom");
+
+		const spans = exporter.getFinishedSpans();
+		const errored = spans.find((s) => s.name === "test.span");
+		expect(errored).toBeDefined();
+		expect(errored?.status.code).toBe(SpanStatusCode.ERROR);
+		// recordException adds an exception event to the span
+		expect(errored?.events.some((e) => e.name === "exception")).toBe(true);
+	});
+
+	it("when withSpan children throw, exception propagates and wrapping span goes ERROR", async () => {
+		const { initEvalOtel, withSpan } = await import("./otel.js");
+		writeConfigEnabled();
+		process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
+
+		const tracer = initEvalOtel(projectRoot);
+
+		await expect(
+			withSpan(tracer, "outer", undefined, async () => {
+				await withSpan(tracer, "inner", undefined, () => {
+					throw new Error("inner-boom");
+				});
+			}),
+		).rejects.toThrow("inner-boom");
+
+		const spans = exporter.getFinishedSpans();
+		const outer = spans.find((s) => s.name === "outer");
+		const inner = spans.find((s) => s.name === "inner");
+		expect(inner?.status.code).toBe(SpanStatusCode.ERROR);
+		expect(outer?.status.code).toBe(SpanStatusCode.ERROR);
+	});
+});

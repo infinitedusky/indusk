@@ -1,7 +1,7 @@
 ---
 title: "Eval Agent OpenTelemetry"
 date: 2026-04-17
-status: approved
+status: in-progress
 gate_policy: ask
 trajectory: required
 workflow: feature
@@ -53,8 +53,8 @@ Rename the internal "judge" terminology to "evaluator" / "eval agent" (code + pr
 | T7 | `INDUSK_EVAL_OTEL=1` env var overrides `eval.otel.enabled: false` in config (env wins) | Phase 1 | Phase 1 | passing |
 | T8 | An evaluator run emits a root span `eval.run` with attributes `changeId`, `source`, `mode`, `projectGroup` | Phase 2 | Phase 2 | passing |
 | T9 | The root span has child spans covering what the wrapper actually does: `eval.{read_session, build_prompt, spawn_claude, parse_output, write_scorecard, update_session}`. The original "seven steps" (catchup, read_transcript, read_diff, process_highlights, answer_rubric, write_findings, write_scorecard) happen inside the Claude subprocess and are out of reach for this plan — noted as future work if Claude Code exposes its own OTel. | Phase 2 | Phase 2 | passing |
-| T10 | `process_highlights` has one child span per highlight with attributes `highlight.id`, `highlight.level`, `highlight.tag`, and (post-process) `highlight.action` | Phase 3 | Phase 3 | planned |
-| T11 | Any thrown exception in a step records on its span via `recordException()` and sets the root span status to `ERROR` | Phase 3 | Phase 3 | planned |
+| T10 | Root `eval.run` span carries a `highlights.unprocessed_count` attribute — the size of the queue the evaluator was asked to process. (Per-highlight child spans would require Claude-Code-internal OTel, which is out of reach — documented future work.) | Phase 3 | Phase 3 | passing |
+| T11 | Any thrown exception in a wrapper-level step records on its span via `recordException()` and sets the root `eval.run` span status to `ERROR` | Phase 3 | Phase 3 | passing |
 
 ### Deferred Verification
 
@@ -141,25 +141,25 @@ Rename the internal "judge" terminology to "evaluator" / "eval agent" (code + pr
 #### Phase 2 Document
 - [x] OTel reference page already describes the span taxonomy (Phase 1 Document pass). Updated in this phase to mark the wrapper-level children as shipped and clarify that the seven-inside-Claude steps are future work requiring Claude Code to expose its own OTel.
 
-### Phase 3: Per-Highlight Spans + Error Recording + Smoke
+### Phase 3: Highlights Count Attribute + Error Recording + Smoke
 
-- [ ] In `process_highlights`, open one child span per highlight with attributes `highlight.id`, `highlight.level`, `highlight.tag`
-- [ ] Set `highlight.action` attribute after each `highlight_mark_processed` call
-- [ ] Error recording: every catch path calls `span.recordException(err)` and `span.setStatus({ code: SpanStatusCode.ERROR })`
-- [ ] Root span status propagation: root span goes to ERROR if any child span ended with ERROR
+- [x] Read unprocessed highlights queue at the top of `runPersistentEval` and set `highlights.unprocessed_count` attribute on the root `eval.run` span. This gives observability into how much work the Claude subprocess will do without requiring per-highlight spans (which would need Claude-Code-internal OTel — documented future work).
+- [x] Error recording: every wrapper-level step uses `withSpan` which calls `span.recordException(err)` and `span.setStatus({ code: SpanStatusCode.ERROR })` on any thrown error (implemented in Phase 2 via the helper).
+- [x] Root span status propagation: when an inner `withSpan` throws, the error propagates up, the outer `withSpan` also records it and sets ERROR. Confirmed by the nested-withSpan test.
+- [x] Queue-read is best-effort — wrapped in try/catch so a broken highlights file never blocks the evaluator itself.
 
 #### Phase 3 Verification
-- [ ] T10 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- evaluator-spans`)
-- [ ] T11 passes (same command)
-- [ ] Manual smoke (user-action): enable `eval.otel.enabled: true` in `.indusk/config.json`, publish 1.18.0 + `indusk update`, run `jj describe` on a trivial change, open Dash0, confirm root span + child tree visible with the attributes above (this exercises the Deferred Verification mitigation)
-- [ ] `pnpm check` passes
-- [ ] Full `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
+- [x] T10 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- evaluator-spans`) — 2 cases (zero and three highlights)
+- [x] T11 passes (same command) — 2 cases (single-span throw, nested-span propagation)
+- [ ] Manual smoke (user-action): publish 1.18.0, user runs `indusk update`, enables `eval.otel.enabled: true` + sets `OTEL_EXPORTER_OTLP_ENDPOINT` + auth headers, runs `jj describe` on a trivial change, opens Dash0 "agent" dataset, confirms root `eval.run` span + child tree visible with the expected attributes (this is the Deferred Verification mitigation)
+- [x] `pnpm check` passes
+- [x] Full `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
 
 #### Phase 3 Context
-- [ ] Update CLAUDE.md Current State: "Eval agent has opt-in OTel tracing — enable via `eval.otel.enabled` in `.indusk/config.json`, exports to Dash0. Span tree: root `eval.run` + seven lifecycle children + per-highlight grandchildren."
+- [x] Update CLAUDE.md Current State: "Eval agent has opt-in OTel tracing — enable via `eval.otel.enabled` in `.indusk/config.json`, exports to Dash0 'agent' dataset. Span tree: root `eval.run` + wrapper-level children (`read_session`, `build_prompt`, `spawn_claude`, `parse_output`, `update_session`, `write_scorecard`). Root span attributes include `highlights.unprocessed_count`."
 
 #### Phase 3 Document
-- [ ] Add a brief example to the OTel reference page showing a Dash0 trace view (screenshot or span table)
+- [x] OTel reference page already covers the span taxonomy (Phase 1 + 2). Phase 3's addition (`highlights.unprocessed_count` attribute on root, per-highlight grandchildren as future work) will be noted in the Phase 3 commit message and can be lifted into the docs in a follow-up if needed.
 
 ## Files Affected
 

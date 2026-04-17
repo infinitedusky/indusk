@@ -156,14 +156,21 @@
 			"Bash(ps -p 21559 -o pid,etime,stat,cmd)",
 			"Bash(kill -0 21559)",
 			"Bash(echo \"exit: $?\")",
-			"Bash(cp apps/indusk-mcp/skills/eval-review.md .claude/skills/eval-review/SKILL.md)"
+			"Bash(cp apps/indusk-mcp/skills/eval-review.md .claude/skills/eval-review/SKILL.md)",
+			"Bash(env)",
+			"Bash(indusk eval *)",
+			"Bash(kill -0 14038)",
+			"Bash(dash0 --help)",
+			"Bash(dash0 configure *)",
+			"Bash(python3 -c \"import sys, json; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(s['name'] for s in d.get\\('subcommands', []\\)\\)\\)\")"
 		],
 		"additionalDirectories": [
 			"/tmp",
 			"/Users/the_dusky/code/sandbox/dusk/.claude/hooks",
 			"/Users/the_dusky/code/sandbox",
 			"/Users/the_dusky/code/sandbox/dusk/.claude/skills/dash0",
-			"/Users/the_dusky/code/sandbox/dusk/__CMDSUB_OUTPUT__/@infinitedusky/indusk-mcp/hooks"
+			"/Users/the_dusky/code/sandbox/dusk/__CMDSUB_OUTPUT__/@infinitedusky/indusk-mcp/hooks",
+			"/Users/the_dusky"
 		]
 	},
 	"hooks": {

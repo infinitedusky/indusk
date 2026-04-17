@@ -23,6 +23,9 @@
 	},
 	"eval": {
 		"enabled": true,
-		"endpoint": null
+		"endpoint": null,
+		"otel": {
+			"enabled": true
+		}
 	}
 }
