@@ -113,7 +113,17 @@ For each finding, act on it:
 - **Deferred rows classified as `downstream-plan`** — verify the referenced plan exists and is either `accepted` or `in-progress`. If it's `draft` or missing, either accept the referenced plan now or pick a different mitigation.
 - **Deferred rows classified as `telemetry-alert`** — verify the named metric actually exists in the codebase (grep for it). If the metric hasn't been wired up, the mitigation is aspirational — either wire it up now or change the mitigation.
 
-Capture findings as a `retrospective-audit-{plan-slug}` episode in Graphiti (use `mcp__indusk__graph_capture` to dual-write to the semantic log). Include the classification, the warning (if any), and what was done. This is the signal the eval agent uses to detect mitigation drift over time.
+Flag findings as a highlight — the eval agent reads it, writes the `retrospective-audit-{plan-slug}` Graphiti episode, and marks it processed:
+
+```
+mcp__indusk__highlight({
+  tag: "retro-audit",
+  note: "{plan-name}: {finding classification}; {what was done}; {warning if any}",
+  level: "important"
+})
+```
+
+Include the classification, the warning (if any), and what was done. This is the signal the eval agent uses to detect mitigation drift over time.
 
 ### Step 5: Quality Audit
 
@@ -140,35 +150,31 @@ If yes, call `add_lesson` for each one. These become personal lessons in `.claud
 
 If no lessons emerged, that's fine — not every plan produces new knowledge. Move on.
 
-**Also capture each retrospective insight in Graphiti** so it becomes part of the temporal knowledge graph and can surface in future searches and contradictions.
+**Also flag each retrospective insight as a highlight** so the eval agent can turn it into a structured Graphiti episode and surface it in future searches and contradiction detection.
 
 For each item in the retrospective's **What We Learned** section:
 ```
-mcp__graphiti__add_memory({
-  name: "retro-{plan-name}-{n}",
-  episode_body: "{the full insight, including context — not just a one-line summary}",
-  group_id: "{project-group}",
-  source: "text",
-  source_description: "retrospective lesson"
+mcp__indusk__highlight({
+  tag: "retro-lesson",
+  note: "{plan-name}: {the insight, with enough context for the eval agent to write a full episode}",
+  level: "important"
 })
 ```
 
 For each item in the retrospective's **What We'd Do Differently** section:
 ```
-mcp__graphiti__add_memory({
-  name: "retro-{plan-name}-wdid-{n}",
-  episode_body: "{the hindsight item, with reasoning}",
-  group_id: "{project-group}",
-  source: "text",
-  source_description: "retrospective hindsight"
+mcp__indusk__highlight({
+  tag: "retro-hindsight",
+  note: "{plan-name}: {the hindsight item, with reasoning}",
+  level: "important"
 })
 ```
 
-Use the project group (from `getProjectGroupId(projectRoot)`) — most retrospective insights are project-specific. Promote to `shared` only if the insight is clearly cross-project (those should also become a personal lesson via `add_lesson`).
+The eval agent reads each highlight, writes the full Graphiti episode (project group by default; `shared` if the insight is clearly cross-project), and marks it processed. The working agent does not write the episode directly.
 
-**Contradictions:** If the retrospective surfaces a moment where "we thought X but found Y", capture both as separate episodes. Graphiti's contradiction detection will invalidate the older fact when it sees the conflicting one. This is one of Graphiti's most useful features — it remembers that a previous assumption was overturned, so the agent doesn't accidentally re-introduce it later.
+**Contradictions:** If the retrospective surfaces a moment where "we thought X but found Y", write two highlights (one per fact). Graphiti's contradiction detection will invalidate the older fact when it sees the conflicting one once the eval agent materializes the episodes. This is one of Graphiti's most useful features — it remembers that a previous assumption was overturned, so the agent doesn't accidentally re-introduce it later.
 
-Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, and lesson recording via `add_lesson` is the canonical path. Graphiti capture is supplementary. Prefer `mcp__indusk__graph_capture` over raw `mcp__graphiti__add_memory` — it dual-writes to both Graphiti and the semantic graph event log.
+Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort, and lesson recording via `add_lesson` remains the canonical local path. Highlight-driven Graphiti capture is supplementary.
 
 ### Step 7: Context Audit
 

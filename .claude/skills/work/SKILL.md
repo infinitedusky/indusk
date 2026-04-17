@@ -259,26 +259,20 @@ When you are corrected mid-work — the user says "no, not that way" or "don't d
 
 Don't wait to be told. Corrections are the most valuable source of project knowledge.
 
-**When the user confirms `context learn`, ALSO capture the correction in Graphiti:**
+**When the user confirms `context learn`, ALSO write a highlight so the eval agent can capture it in Graphiti:**
 ```
-mcp__graphiti__add_memory({
-  name: "correction-{slug}",
-  episode_body: "{lesson text}",
-  group_id: "{shared OR project-group}",
-  source: "text",
-  source_description: "user correction"
+mcp__indusk__highlight({
+  tag: "correction",
+  note: "{short slug + lesson text}",
+  level: "important"
 })
 ```
 
-Where `{slug}` is a short kebab-case label for the topic (e.g. `correction-pnpm-ce`, `correction-graphiti-error-handling`).
+The working agent does not write the Graphiti episode directly. The eval agent reads the highlight, decides whether it's a cross-project convention (→ `shared` group) or a project-specific fact (→ project group), phrases the episode, and writes it. The working agent just flags the moment and keeps working.
 
-**Choosing `shared` vs project group:**
-- **`shared`**: tools, conventions, patterns that apply across projects. Examples: "always use pnpm ce", "never mock the database in integration tests", "use jj describe-then-do for commits". The lesson is generally true and a different project would benefit from it.
-- **`{project-group}`**: facts specific to this project's code, data, or domain. Examples: "the impl-parser handles four gate types per phase", "graph_ensure auto-repairs the indusk-infra container". The lesson only makes sense in the context of this project.
+**What to include in the `note`:** enough for the eval agent to reconstruct the lesson and classify its scope. Example: `pnpm-ce: always use pnpm ce, not npx — skill doc specifies pnpm and mixing causes cache drift`. The eval agent has the full transcript, so concision over completeness is fine.
 
-When in doubt, ask: "Would this correction make sense to a different project?" Yes → `shared`. No → project group.
-
-Use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to get the project group consistently. Skip silently if `mcp__graphiti__add_memory` is unavailable — Graphiti capture is best-effort, do not fail the work item. Prefer `mcp__indusk__graph_capture` over raw `mcp__graphiti__add_memory` — it dual-writes to both Graphiti and the semantic graph event log.
+Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail the work item or the `context learn` recording (which is the canonical, local copy of the lesson).
 
 ## Commits (jj)
 

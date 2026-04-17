@@ -46,10 +46,10 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 | T3 | `markProcessed(id, action)` appends to highlights-processed.jsonl; subsequent `readUnprocessedHighlights` excludes that id | Phase 1 | Phase 1 | passing |
 | T4 | Highlight ID format `h-{YYYYMMDD}-{seq}` with 3-digit counter that resets daily | Phase 1 | Phase 1 | passing |
 | T5 | `highlight` MCP tool registered in the server and calls `writeHighlight` with tag/note/level | Phase 1 | Phase 1 | passing |
-| T6 | Planner skill `brief-accepted` and `adr-accepted` triggers call `highlight` (level: critical) — grep finds the calls and does NOT find raw `graph_capture`/`add_memory` | Phase 2 | Phase 2 | planned |
-| T7 | Work skill `correction` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | planned |
-| T8 | Retrospective skill `retro-lesson` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | planned |
-| T9 | No process skill (planner/work/retro) references `graph_capture` or raw `mcp__graphiti__add_memory` — repo-wide grep returns zero matches in `apps/indusk-mcp/skills/{planner,work,retrospective}.md` | Phase 2 | Phase 2 | planned |
+| T6 | Planner skill `brief-accepted` and `adr-accepted` triggers call `highlight` (level: critical) — grep finds the calls and does NOT find raw `graph_capture`/`add_memory` | Phase 2 | Phase 2 | passing |
+| T7 | Work skill `correction` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | passing |
+| T8 | Retrospective skill `retro-lesson` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | passing |
+| T9 | No process skill (planner/work/retro) references `graph_capture` or raw `mcp__graphiti__add_memory` — repo-wide grep returns zero matches in `apps/indusk-mcp/skills/{planner,work,retrospective}.md` | Phase 2 | Phase 2 | passing |
 | T10 | Eval agent prompt builder output contains highlight-processing instructions with level→weight mapping (critical→1.0, important→0.6, note→0.3) | Phase 3 | Phase 3 | planned |
 | T11 | `/highlight` slash command skill file exists at `apps/indusk-mcp/skills/highlight.md` with level arg parsing (defaults to `important`, accepts `critical` or `note`) | Phase 4 | Phase 4 | planned |
 | T12 | Handoff skill at end of session fires the eval trigger (mentions `eval-trigger.js --source handoff` or equivalent) | Phase 4 | Phase 4 | planned |
@@ -90,24 +90,24 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 - [x] Write reference page at `apps/indusk-docs/src/reference/tools/highlights.md` documenting the highlight system, levels, and MCP tools
 
 ### Phase 2: Migrate Skills from graph_capture to Highlights
-- [ ] Update planner skill (`apps/indusk-mcp/skills/planner/SKILL.md`): replace `graph_capture` call on brief acceptance with `highlight` call — level `critical`, tag `brief-accepted`
-- [ ] Update planner skill: replace `graph_capture` call on ADR acceptance with `highlight` call — level `critical`, tag `adr-accepted`
-- [ ] Update work skill (`apps/indusk-mcp/skills/work/SKILL.md`): replace `graph_capture` on corrections with `highlight` call — level `important`, tag `correction`
-- [ ] Update retrospective skill (`apps/indusk-mcp/skills/retrospective/SKILL.md`): replace `graph_capture` on lessons with `highlight` call — level `important`, tag `retro-lesson`
-- [ ] Verify no other skills call `graph_capture` or `mcp__graphiti__add_memory` directly — grep the skills directory
-- [ ] Keep `graph_capture` MCP tool available (don't remove it — the eval agent will use it for structured writes)
+- [x] Update planner skill (`apps/indusk-mcp/skills/planner/SKILL.md`): replace `graph_capture` call on brief acceptance with `highlight` call — level `critical`, tag `brief-accepted`
+- [x] Update planner skill: replace `graph_capture` call on ADR acceptance with `highlight` call — level `critical`, tag `adr-accepted`
+- [x] Update work skill (`apps/indusk-mcp/skills/work/SKILL.md`): replace `graph_capture` on corrections with `highlight` call — level `important`, tag `correction`
+- [x] Update retrospective skill (`apps/indusk-mcp/skills/retrospective/SKILL.md`): replace `graph_capture` on lessons with `highlight` call — level `important`, tag `retro-lesson`
+- [x] Verify no other skills call `graph_capture` or `mcp__graphiti__add_memory` directly — grep the skills directory
+- [x] Keep `graph_capture` MCP tool available (don't remove it — the eval agent will use it for structured writes)
 
 #### Phase 2 Verification
-- [ ] T6 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- skills`)
-- [ ] T7 passes (same command)
-- [ ] T8 passes (same command)
-- [ ] T9 passes — `grep -r "graph_capture\|add_memory" apps/indusk-mcp/skills/{planner,work,retrospective}.md` returns zero matches
+- [x] T6 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- skills-migration`)
+- [x] T7 passes (same command)
+- [x] T8 passes (same command)
+- [x] T9 passes — `grep -r "graph_capture\|add_memory" apps/indusk-mcp/skills/{planner,work,retrospective}.md` returns zero matches
 
 #### Phase 2 Context
-- [ ] Update CLAUDE.md Conventions: change "Graphiti capture is automatic at trigger points" to explain the highlights flow — working agent writes highlights, eval agent processes them into Graphiti
+- [x] Update CLAUDE.md Conventions: change "Graphiti capture is automatic at trigger points" to explain the highlights flow — working agent writes highlights, eval agent processes them into Graphiti
 
 #### Phase 2 Document
-- (none needed — the reference page from Phase 1 covers the system)
+- [x] (none needed — asked: "Phase 2 only migrated the three skills' trigger points from graph_capture to highlight; the Phase 1 reference page already documents the flow and trigger table. Can I skip the Phase 2 Document gate?" — user: "yes")
 
 ### Phase 3: Eval Agent Reads Highlights
 - [ ] Update eval agent prompt builder (`apps/indusk-mcp/src/lib/eval/prompt-builder.ts`) to include instruction: "Read unprocessed highlights via `highlights_unprocessed` tool. For each highlight, use the level to determine effort: critical = extract full context from transcript and write structured Graphiti episode with high weight (1.0), important = extract and write with medium weight (0.6), note = consider and write with low weight (0.3) or skip if already captured."

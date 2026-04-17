@@ -74,31 +74,27 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. **Consider creating a visual sketch** of the proposed architecture with Excalidraw (if the extension is enabled) — a hand-drawn diagram makes the proposal concrete and easier to discuss. **Present the brief and have a conversation about it.** Don't just ask "does this look good?" — walk the user through it: "Here's what I'm proposing we build. Does this match what you had in mind? Is there anything missing, or anything here you don't want?" Iterate until the user is genuinely happy with the direction, then mark it as `accepted`.
 
-   **When the brief moves from `draft` to `accepted`**, capture the decision in Graphiti:
+   **When the brief moves from `draft` to `accepted`**, write a highlight so the eval agent can turn it into a structured Graphiti episode:
    ```
-   mcp__graphiti__add_memory({
-     name: "brief-accepted-{plan-name}",
-     episode_body: "{Problem}\n\n{Proposed Direction}\n\n{Scope summary if helpful}",
-     group_id: "{project-group}",
-     source: "text",
-     source_description: "brief acceptance"
+   mcp__indusk__highlight({
+     tag: "brief-accepted",
+     note: "{plan-name}: {one-line summary of Proposed Direction}",
+     level: "critical"
    })
    ```
-   The `group_id` is the project group (use `getProjectGroupId(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` — defaults to project directory basename, override via `.indusk/config.json` `graphiti.groupId`). Skip silently if `mcp__graphiti__add_memory` is unavailable (Graphiti may be down — degrade gracefully, do not fail the brief acceptance). Prefer `mcp__indusk__graph_capture` over raw `mcp__graphiti__add_memory` — it dual-writes to both Graphiti and the semantic graph event log.
+   The working agent does not write Graphiti episodes directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts the full Problem + Proposed Direction + Scope context from the transcript, writes a structured episode into the project group, and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/indusk-docs/src/reference/tools/highlights.md`](../../indusk-docs/src/reference/tools/highlights.md) for the full flow.
 
 5. **If brief is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see .indusk/planning/{plan}/adr.md`
 
-   **When the ADR moves from `proposed` to `accepted`**, capture the Y-statement in Graphiti:
+   **When the ADR moves from `proposed` to `accepted`**, write a highlight so the eval agent can turn it into a structured Y-statement episode:
    ```
-   mcp__graphiti__add_memory({
-     name: "adr-{plan-name}",
-     episode_body: "In context facing: {use case AND constraint}. We decided for: {chosen option}. And against: {rejected alternatives}. To achieve: {desired outcome}. Accepting: {tradeoff}. Because: {rationale}.",
-     group_id: "{project-group}",
-     source: "text",
-     source_description: "ADR acceptance"
+   mcp__indusk__highlight({
+     tag: "adr-accepted",
+     note: "{plan-name}: {chosen option} — rejected {primary alternative}",
+     level: "critical"
    })
    ```
-   The Y-statement is rich enough that Graphiti will extract entities for the chosen option, rejected alternatives, constraint, and rationale — and will detect contradictions if a later ADR overrides this one. Skip silently on Graphiti unavailability. Prefer `mcp__indusk__graph_capture` over raw `mcp__graphiti__add_memory` — it dual-writes to both Graphiti and the semantic graph event log.
+   The eval agent reads the highlight, pulls the full Y-statement from the ADR file, writes a structured episode into the project group, and marks it processed. Graphiti's entity extraction will pick up the chosen option, rejected alternatives, constraint, and rationale, and will detect contradictions if a later ADR overrides this one. The working agent does not write the episode directly. Skip silently on highlight unavailability — degrade gracefully.
 
 6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
