@@ -46,12 +46,12 @@ Ship `/falsify {plan}` as a new skill that runs between `/work` completion and `
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `appendHypothesis(plan, entry)` creates `.indusk/planning/{plan}/falsification.md` if missing and appends a structured entry (hypothesis, test path, outcome) | Phase 1 | Phase 1 | planned |
-| T2 | `readFalsificationLog(plan)` parses the log back into an ordered list of entries, preserving insertion order | Phase 1 | Phase 1 | planned |
-| T3 | `markTerminated(plan, reason)` appends a terminator line with the user-confirmed reason; subsequent `readFalsificationLog` includes it as the last entry | Phase 1 | Phase 1 | planned |
-| T4 | `isFalsificationComplete(plan)` returns false when no log exists; true when the log has a terminator entry; false when the log has hypotheses but no terminator | Phase 1 | Phase 1 | planned |
-| T5 | `isFalsificationSkipped(implBody)` returns true when impl frontmatter has `falsification: skipped — reason: {non-empty text}`; false otherwise (missing, empty reason, or malformed) | Phase 1 | Phase 1 | planned |
-| T6 | `readFalsificationLog` returns an empty array (not throws) when `.indusk/planning/{plan}/falsification.md` does not exist | Phase 1 | Phase 1 | planned |
+| T1 | `appendHypothesis(plan, entry)` creates `.indusk/planning/{plan}/falsification.md` if missing and appends a structured entry (hypothesis, test path, outcome) | Phase 1 | Phase 1 | passing |
+| T2 | `readFalsificationLog(plan)` parses the log back into an ordered list of entries, preserving insertion order | Phase 1 | Phase 1 | passing |
+| T3 | `markTerminated(plan, reason)` appends a terminator line with the user-confirmed reason; subsequent `readFalsificationLog` includes it as the last entry | Phase 1 | Phase 1 | passing |
+| T4 | `isFalsificationComplete(plan)` returns false when no log exists; true when the log has a terminator entry; false when the log has hypotheses but no terminator | Phase 1 | Phase 1 | passing |
+| T5 | `isFalsificationSkipped(implBody)` returns true when impl frontmatter has `falsification: skipped` AND `falsification_reason: {non-empty text}`; false otherwise (missing, empty reason, or malformed) | Phase 1 | Phase 1 | passing |
+| T6 | `readFalsificationLog` returns an empty array (not throws) when `.indusk/planning/{plan}/falsification.md` does not exist | Phase 1 | Phase 1 | passing |
 | T7 | `retrospective.md` skill prose references the falsification gate and the skip-reason escape hatch — grep for `falsification` in the skill markdown returns both the completion check and the skip pattern | Phase 2 | Phase 2 | planned |
 | T8 | `work.md` skill prose, at impl completion, directs the user to run `/falsify {plan}` before `/retrospective` — grep for `/falsify` in work.md returns at least one reference in the completion section | Phase 2 | Phase 2 | planned |
 | T9 | End-to-end integration: given a plan whose impl is `completed` but has no `falsification.md` and no `falsification: skipped` frontmatter, the retrospective skill's prose Step 0 refuses to proceed and names the gate explicitly | Phase 2 | Phase 2 | planned |
@@ -81,33 +81,33 @@ Ship `/falsify {plan}` as a new skill that runs between `/work` completion and `
 
 #### Implementation
 
-- [ ] Create `apps/indusk-mcp/src/lib/falsification/log.ts`:
-  - Types: `HypothesisOutcome = "fix-in-scope" | "spawn-plan" | "accept-finding"`; `LogEntry = { kind: "hypothesis"; hypothesis: string; testPath: string | null; outcome: HypothesisOutcome; note?: string; timestamp: string } | { kind: "terminator"; reason: string; timestamp: string }`
-  - `appendHypothesis(planRoot: string, entry: Omit<LogEntry & {kind: "hypothesis"}, "timestamp">): void` — appends a structured entry to `{planRoot}/falsification.md`. Creates the file if missing with a header. Format: each entry is a markdown H3 heading + body.
-  - `markTerminated(planRoot: string, reason: string): void` — appends a terminator entry. Subsequent calls to `appendHypothesis` throw (terminated).
-  - `readFalsificationLog(planRoot: string): LogEntry[]` — parses the log into ordered entries. Returns `[]` if missing. Handles malformed entries by skipping them (logs a warning via `onMalformed` callback, matching the semantic-graph log's pattern).
-  - `isFalsificationComplete(planRoot: string): boolean` — true iff the log exists and its last entry is a terminator.
-- [ ] Create `apps/indusk-mcp/src/lib/falsification/skip.ts`:
-  - `isFalsificationSkipped(implBody: string): { skipped: boolean; reason: string | null }` — parses the impl's frontmatter, returns `{ skipped: true, reason }` when `falsification: skipped — reason: {non-empty}` is present. Returns `{ skipped: false, reason: null }` otherwise (missing, empty reason, malformed).
-- [ ] Write Vitest tests for T1–T6 using fixture plan dirs under `apps/indusk-mcp/src/lib/falsification/__tests__/fixtures/`.
+- [x] Create `apps/indusk-mcp/src/lib/falsification/log.ts`:
+  - Types: `HypothesisOutcome = "fix-in-scope" | "spawn-plan" | "accept-finding"`; `HypothesisEntry = { kind: "hypothesis"; hypothesis; testPath; outcome; note?; timestamp }`; `TerminatorEntry = { kind: "terminator"; reason; timestamp }`; `LogEntry = HypothesisEntry | TerminatorEntry`; plus `MalformedLine` for the onMalformed callback
+  - `appendHypothesis(planRoot, entry)` — creates log with a header if missing; appends an H2 section per entry (`## Hypothesis {ISO timestamp}` then fields); throws if already terminated; returns the stored entry for confirmation
+  - `markTerminated(planRoot, reason)` — appends a terminator H2 section; throws on double terminator or empty reason
+  - `readFalsificationLog(planRoot, opts?)` — parses the markdown using a section-scanning regex (`^## (Hypothesis|Terminated) {timestamp}$`); calls `opts.onMalformed` callback for entries with missing/invalid fields (mirroring the semantic-graph log's pattern); returns `[]` on missing file
+  - `isFalsificationComplete(planRoot)` — true iff log exists and last entry is a terminator
+- [x] Create `apps/indusk-mcp/src/lib/falsification/skip.ts`:
+  - `isFalsificationSkipped(implContent)` — parses frontmatter via `gray-matter`, returns `{ skipped: true, reason }` when `falsification: skipped` AND `falsification_reason: "non-empty text"` are BOTH present. **Spec deviation from ADR**: the ADR wrote `falsification: skipped — reason: {text}` as an inline single-field pattern; the implementation uses two separate frontmatter fields (`falsification` + `falsification_reason`) to avoid YAML parser ambiguity around inner colons inside em-dash-separated values. Equivalent semantics, cleaner parser.
+- [x] Write Vitest tests for T1–T6 — 15 tests in `log.test.ts` (uses `tmpdir()` for per-test isolation with `beforeEach` / `afterEach` cleanup; no external fixture files needed) + 8 tests in `skip.test.ts` covering happy path, missing fields, empty/whitespace reasons, wrong flag value, non-string reason, and malformed YAML resilience.
 
 #### Phase 1 Verification
 
-- [ ] T1 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- falsification`)
-- [ ] T2 passes (same command)
-- [ ] T3 passes (same command)
-- [ ] T4 passes (same command)
-- [ ] T5 passes (same command)
-- [ ] T6 passes (same command)
-- [ ] `pnpm check` passes on Phase 1 deliverables (biome clean on `apps/indusk-mcp/src/lib/falsification/`)
+- [x] T1 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- falsification` — log.test.ts, 3 cases under T1)
+- [x] T2 passes (same command — log.test.ts T2 block, 1 case)
+- [x] T3 passes (same command — log.test.ts T3 block, 4 cases including throw paths)
+- [x] T4 passes (same command — log.test.ts T4 block, 4 lifecycle cases)
+- [x] T5 passes (same command — skip.test.ts, 8 cases covering all happy/sad paths)
+- [x] T6 passes (same command — log.test.ts T6 block, 3 cases including malformed-entry resilience)
+- [x] `pnpm check` passes on Phase 1 deliverables (biome auto-fixed minor formatting; all four files clean). Full indusk-mcp test suite green at 223/223.
 
 #### Phase 1 Context
 
-- [ ] Add to CLAUDE.md Conventions: "Every plan that completes impl runs `/falsify {plan}` before `/retrospective`. The ritual writes a structured log at `.indusk/planning/{plan}/falsification.md` via `apps/indusk-mcp/src/lib/falsification/log.ts`. Skipping requires an explicit `falsification: skipped — reason: {text}` in the impl frontmatter."
+- [x] Added CLAUDE.md Conventions bullet: covers the ritual purpose (bounty hunt), log location (`.indusk/planning/{plan}/falsification.md`), library pointer (`apps/indusk-mcp/src/lib/falsification/log.ts`), and the two-field skip opt-out (`falsification: skipped` + `falsification_reason: "..."`) with a link to the ADR.
 
 #### Phase 1 Document
 
-- [ ] Write reference page at `apps/indusk-docs/src/reference/falsification/log.md` documenting the log format, the `LogEntry` types, the five library functions, and the skip-reason frontmatter. User-facing guide is Phase 3.
+- [x] Wrote reference page at `apps/indusk-docs/src/reference/falsification/log.md` — documents the log format with a worked example, the `LogEntry` / `HypothesisOutcome` types, the five library functions (`appendHypothesis`, `markTerminated`, `readFalsificationLog`, `isFalsificationComplete`, `isFalsificationSkipped`), the hook-integration contract for the retrospective gate, and the "two fields vs inline pattern" rationale for the skip frontmatter.
 
 ### Phase 2: Retrospective Gate and Work Handoff
 

@@ -135,7 +135,9 @@
       "Bash(wc -l \"$\\(npm root -g\\)/@infinitedusky/indusk-mcp/hooks/validate-impl-structure.js\")",
       "Bash(JJ_EDITOR=true jj split 'apps/indusk-mcp/src/bin/commands/update.ts | \"apps/indusk-mcp/package.json\" | \"apps/indusk-docs/src/changelog.md\"')",
       "Bash(jj op *)",
-      "Bash(JJ_EDITOR=true jj split '\"apps/indusk-mcp/src/bin/commands/update.ts\" | \"apps/indusk-mcp/package.json\" | \"apps/indusk-docs/src/changelog.md\"')"
+      "Bash(JJ_EDITOR=true jj split '\"apps/indusk-mcp/src/bin/commands/update.ts\" | \"apps/indusk-mcp/package.json\" | \"apps/indusk-docs/src/changelog.md\"')",
+      "Bash(jj edit *)",
+      "Bash(JJ_EDITOR=true jj split 'glob:\".indusk/planning/falsification-ritual/**\" | \"apps/indusk-mcp/skills/planner.md\" | \"apps/indusk-docs/src/reference/skills/plan.md\" | \".claude/lessons/verification-gates-need-adversarial-framing.md\"')"
     ],
     "additionalDirectories": [
       "/tmp",
