@@ -3,6 +3,7 @@ title: "Agent Roles — Define and Enforce Role Boundaries"
 date: 2026-04-15
 status: draft
 gate_policy: ask
+trajectory: required
 ---
 
 # Agent Roles
@@ -36,6 +37,32 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 | Phase 3 | Updated eval agent prompt reading highlights + writing weighted Graphiti episodes | Phase 1 utilities, Phase 2 highlight output |
 | Phase 4 | `/highlight` slash command, session-end eval trigger, CLAUDE.md role docs | Phases 1-3 |
 
+## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+| T1 | `writeHighlight(tag, note, level)` appends a JSONL entry to `.indusk/highlights.jsonl` with auto-generated ID and ISO timestamp | Phase 1 | Phase 1 | planned |
+| T2 | `readUnprocessedHighlights()` returns entries in highlights.jsonl that aren't yet in highlights-processed.jsonl | Phase 1 | Phase 1 | planned |
+| T3 | `markProcessed(id, action)` appends to highlights-processed.jsonl; subsequent `readUnprocessedHighlights` excludes that id | Phase 1 | Phase 1 | planned |
+| T4 | Highlight ID format `h-{YYYYMMDD}-{seq}` with 3-digit counter that resets daily | Phase 1 | Phase 1 | planned |
+| T5 | `highlight` MCP tool registered in the server and calls `writeHighlight` with tag/note/level | Phase 1 | Phase 1 | planned |
+| T6 | Planner skill `brief-accepted` and `adr-accepted` triggers call `highlight` (level: critical) — grep finds the calls and does NOT find raw `graph_capture`/`add_memory` | Phase 2 | Phase 2 | planned |
+| T7 | Work skill `correction` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | planned |
+| T8 | Retrospective skill `retro-lesson` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | planned |
+| T9 | No process skill (planner/work/retro) references `graph_capture` or raw `mcp__graphiti__add_memory` — repo-wide grep returns zero matches in `apps/indusk-mcp/skills/{planner,work,retrospective}.md` | Phase 2 | Phase 2 | planned |
+| T10 | Eval agent prompt builder output contains highlight-processing instructions with level→weight mapping (critical→1.0, important→0.6, note→0.3) | Phase 3 | Phase 3 | planned |
+| T11 | `/highlight` slash command skill file exists at `apps/indusk-mcp/skills/highlight.md` with level arg parsing (defaults to `important`, accepts `critical` or `note`) | Phase 4 | Phase 4 | planned |
+| T12 | Handoff skill at end of session fires the eval trigger (mentions `eval-trigger.js --source handoff` or equivalent) | Phase 4 | Phase 4 | planned |
+| T13 | `eval-trigger.js` accepts `--source handoff` CLI flag and sets the source in the eval agent's environment | Phase 4 | Phase 4 | planned |
+| T14 | `CLAUDE.md` Architecture contains the three-tier agent roles subsection, AND Key Decisions contains the agent-roles ADR bullet | Phase 4 | Phase 4 | planned |
+
+### Deferred Verification
+
+- **Eval agent end-to-end highlight processing on a real `jj describe`**
+  - reason: requires a full Claude Code session + jj commit + async eval judge invocation; not deterministic from unit tests
+  - would require: integration harness with a mock Claude CLI that captures the prompt and replays a scored response
+  - mitigation: manual smoke test during Phase 3 (write a highlight → run `jj describe` → check `.indusk/highlights-processed.jsonl` for the mark + `.indusk/eval/results.log` for highlight acknowledgement); also tracked as a retrospective finding if the first 3 real commits after ship don't process highlights correctly.
+
 ## Checklist
 
 ### Phase 1: Highlights Queue Infrastructure
@@ -49,11 +76,12 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 - [ ] Create `highlight_mark_processed` MCP tool that calls `markProcessed()` — exposed so the eval agent can mark highlights done
 
 #### Phase 1 Verification
+- [ ] T1 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- highlights`)
+- [ ] T2 passes (same command)
+- [ ] T3 passes (same command)
+- [ ] T4 passes (same command)
+- [ ] T5 passes — MCP tool registered; manual sanity via MCP inspector or call-through
 - [ ] `pnpm check` passes with no errors
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
-- [ ] Manual test: call `highlight` MCP tool, verify `.indusk/highlights.jsonl` has the entry
-- [ ] Manual test: call `highlights_unprocessed`, verify it returns the entry
-- [ ] Manual test: call `highlight_mark_processed`, verify `highlights-processed.jsonl` has the entry and `highlights_unprocessed` no longer returns it
 
 #### Phase 1 Context
 - [ ] Add to CLAUDE.md Conventions: "Working agent writes highlights via the `highlight` MCP tool instead of calling `graph_capture` directly. Highlights are processed by the eval agent into structured Graphiti episodes."
@@ -70,9 +98,10 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 - [ ] Keep `graph_capture` MCP tool available (don't remove it — the eval agent will use it for structured writes)
 
 #### Phase 2 Verification
-- [ ] `grep -r "graph_capture\|add_memory" apps/indusk-mcp/skills/` returns only the eval-review skill (if any) and no process skills (planner, work, retro)
-- [ ] Manual test: accept a brief using `/planner`, verify highlight is written to `.indusk/highlights.jsonl` with level `critical` and tag `brief-accepted`
-- [ ] Manual test: simulate a correction during `/work`, verify highlight is written with level `important` and tag `correction`
+- [ ] T6 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- skills`)
+- [ ] T7 passes (same command)
+- [ ] T8 passes (same command)
+- [ ] T9 passes — `grep -r "graph_capture\|add_memory" apps/indusk-mcp/skills/{planner,work,retrospective}.md` returns zero matches
 
 #### Phase 2 Context
 - [ ] Update CLAUDE.md Conventions: change "Graphiti capture is automatic at trigger points" to explain the highlights flow — working agent writes highlights, eval agent processes them into Graphiti
@@ -87,10 +116,8 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 - [ ] Update eval agent prompt to map highlight levels to Graphiti edge weights when writing episodes
 
 #### Phase 3 Verification
-- [ ] Write a highlight manually, then run `jj describe` to trigger eval agent
-- [ ] Check `.indusk/highlights-processed.jsonl` — the highlight should be marked processed
-- [ ] Check Graphiti via `mcp__graphiti__search_nodes` — the structured episode should exist
-- [ ] Check `.indusk/eval/results.log` — the eval scorecard should mention highlights processed
+- [ ] T10 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- prompt-builder`)
+- [ ] Manual smoke: write a highlight, run `jj describe`, confirm `.indusk/highlights-processed.jsonl` has the entry and `.indusk/eval/results.log` mentions highlights processed (this exercises the Deferred Verification mitigation for end-to-end eval agent behavior)
 
 #### Phase 3 Context
 - (none needed — Phase 2 context update covers the full flow)
@@ -109,11 +136,12 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 - [ ] Document roles in CLAUDE.md Architecture section — add a "Roles" subsection describing the three tiers, the highlights queue, and the principle that the eval agent is the sole structured writer to Graphiti
 
 #### Phase 4 Verification
-- [ ] Manual test: run `/highlight this is a test decision` — verify highlight written
-- [ ] Manual test: run `/handoff` — verify eval agent fires and processes unprocessed highlights
+- [ ] T11 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- highlight-command`)
+- [ ] T12 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- handoff`)
+- [ ] T13 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- eval-trigger`)
+- [ ] T14 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- claude-md-roles`)
 - [ ] `pnpm check` passes
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
-- [ ] CLAUDE.md has role definitions in both Architecture and Key Decisions sections
+- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes (full indusk-mcp suite)
 
 #### Phase 4 Context
 - [ ] Update CLAUDE.md Current State: "Agent roles formalized — working agent writes highlights, eval agent processes them into structured Graphiti knowledge with weighted edges. `/highlight` command available for explicit user-flagged moments."
