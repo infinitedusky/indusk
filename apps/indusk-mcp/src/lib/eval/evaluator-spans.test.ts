@@ -2,6 +2,12 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
+import { logs } from "@opentelemetry/api-logs";
+import {
+	InMemoryLogRecordExporter,
+	LoggerProvider,
+	SimpleLogRecordProcessor,
+} from "@opentelemetry/sdk-logs";
 import type { ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { InMemorySpanExporter, SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
@@ -83,6 +89,8 @@ vi.mock("node:child_process", async () => {
 let projectRoot: string;
 let exporter: InMemorySpanExporter;
 let provider: NodeTracerProvider;
+let logExporter: InMemoryLogRecordExporter;
+let logProvider: LoggerProvider;
 
 const ENV_KEYS = ["INDUSK_EVAL_OTEL", "OTEL_EXPORTER_OTLP_ENDPOINT", "INDUSK_EVAL_SOURCE"];
 let savedEnv: Record<string, string | undefined>;
@@ -97,20 +105,29 @@ beforeEach(async () => {
 		delete process.env[k];
 	}
 
-	// Set up an in-memory exporter that our code will discover via the global
-	// OTel API. We register it here and import the evaluator dynamically AFTER,
-	// so `initEvalOtel`'s "already-registered" short-circuit returns our tracer.
+	// Set up in-memory exporters that our code discovers via the global OTel
+	// API. Registered here BEFORE the evaluator is dynamically imported, so
+	// `initEvalOtel` / `initEvalOtelLogs`'s "already-registered" short-circuit
+	// returns our tracer + logger.
 	trace.disable();
+	logs.disable();
 	exporter = new InMemorySpanExporter();
 	provider = new NodeTracerProvider({
 		spanProcessors: [new SimpleSpanProcessor(exporter)],
 	});
 	provider.register();
+	logExporter = new InMemoryLogRecordExporter();
+	logProvider = new LoggerProvider({
+		processors: [new SimpleLogRecordProcessor(logExporter)],
+	});
+	logs.setGlobalLoggerProvider(logProvider);
 });
 
 afterEach(async () => {
 	await provider.shutdown().catch(() => {});
+	await logProvider.shutdown().catch(() => {});
 	trace.disable();
+	logs.disable();
 	rmSync(projectRoot, { recursive: true, force: true });
 
 	for (const k of ENV_KEYS) {
@@ -309,6 +326,56 @@ describe("T10: root span carries highlights.unprocessed_count attribute", () => 
 
 		const root = exporter.getFinishedSpans().find((s) => s.name === "eval.run");
 		expect(root?.attributes["highlights.unprocessed_count"]).toBe(3);
+	});
+});
+
+describe("T12: OTel logs emit content at prompt / claude.stdout / scorecard emission points", () => {
+	it("emits log records for prompt + claude.stdout + scorecard with body populated", async () => {
+		writeConfigEnabled();
+		process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
+
+		const { runPersistentEval } = await import("./persistent-evaluator.js");
+		await runPersistentEval({
+			projectRoot,
+			changeId: "cid-logs",
+			transcriptPath: "/tmp/t.jsonl",
+			mode: "eval",
+		});
+
+		const records = logExporter.getFinishedLogRecords();
+		const byEvent: Record<string, number> = {};
+		for (const r of records) {
+			const evt = r.attributes?.["eval.event"];
+			if (typeof evt === "string") byEvent[evt] = (byEvent[evt] ?? 0) + 1;
+		}
+		expect(byEvent.prompt).toBeGreaterThanOrEqual(1);
+		expect(byEvent["claude.stdout"]).toBeGreaterThanOrEqual(1);
+		expect(byEvent.scorecard).toBeGreaterThanOrEqual(1);
+
+		// Each log record has a non-empty body
+		for (const r of records) {
+			const body = typeof r.body === "string" ? r.body : JSON.stringify(r.body);
+			expect(body.length).toBeGreaterThan(0);
+		}
+	});
+
+	it("scorecard log carries question_count attribute", async () => {
+		writeConfigEnabled();
+		process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4318";
+
+		const { runPersistentEval } = await import("./persistent-evaluator.js");
+		await runPersistentEval({
+			projectRoot,
+			changeId: "cid-logs-attrs",
+			transcriptPath: "/tmp/t.jsonl",
+			mode: "eval",
+		});
+
+		const scorecardLog = logExporter
+			.getFinishedLogRecords()
+			.find((r) => r.attributes?.["eval.event"] === "scorecard");
+		expect(scorecardLog).toBeDefined();
+		expect(scorecardLog?.attributes?.["scorecard.question_count"]).toBeDefined();
 	});
 });
 

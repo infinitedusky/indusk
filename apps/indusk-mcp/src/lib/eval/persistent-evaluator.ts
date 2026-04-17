@@ -15,7 +15,13 @@ import { getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
-import { initEvalOtel, shutdownEvalOtel, withSpan } from "./otel.js";
+import {
+	initEvalOtel,
+	initEvalOtelLogs,
+	logEvalContent,
+	shutdownEvalOtel,
+	withSpan,
+} from "./otel.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import type { EvalErrorEntry, EvalScorecard, EvalUsage } from "./types.js";
@@ -148,6 +154,7 @@ export async function runPersistentEval(opts: {
 	evalEndpoint?: string;
 }): Promise<EvalScorecard | EvalErrorEntry> {
 	const tracer = initEvalOtel(opts.projectRoot);
+	initEvalOtelLogs(opts.projectRoot);
 	const source = process.env.INDUSK_EVAL_SOURCE ?? "commit";
 	const projectGroup = getProjectGroupId(opts.projectRoot);
 
@@ -185,49 +192,60 @@ export async function runPersistentEval(opts: {
 					tracer,
 					"eval.build_prompt",
 					{ resumed: session !== null },
-					() => {
-						if (session) {
-							const resumePrompt = `Evaluate a new commit. Change ID: ${opts.changeId}
+					(span) => {
+						const built = buildArgsAndPrompt();
+						span.setAttribute("prompt.length", built.prompt.length);
+						span.setAttribute("prompt.kind", session ? "resume" : "full");
+						logEvalContent("prompt", built.prompt, {
+							"prompt.length": built.prompt.length,
+							"prompt.kind": session ? "resume" : "full",
+						});
+						return built;
+					},
+				);
+
+				function buildArgsAndPrompt(): { args: string[]; prompt: string } {
+					if (session) {
+						const resumePrompt = `Evaluate a new commit. Change ID: ${opts.changeId}
 
 Run \`jj diff -r ${opts.changeId}\` to see what changed. Then answer the same evaluation questions as before. Read the changed files for full context.
 
 Output ONLY the JSON scorecard as before — no commentary.`;
 
-							return {
-								args: [
-									"--print",
-									"--output-format",
-									"json",
-									"--resume",
-									session.sessionId,
-									"--allowed-tools",
-									ALLOWED_TOOLS.join(","),
-								],
-								prompt: resumePrompt,
-							};
-						}
 						return {
 							args: [
 								"--print",
 								"--output-format",
 								"json",
-								"--model",
-								"opus",
-								"--permission-mode",
-								"acceptEdits",
+								"--resume",
+								session.sessionId,
 								"--allowed-tools",
 								ALLOWED_TOOLS.join(","),
 							],
-							prompt: buildEvaluatorPrompt({
-								rubric: V1_RUBRIC,
-								changeId: opts.changeId,
-								transcriptPath: opts.transcriptPath,
-								mode: opts.mode,
-								projectGroup,
-							}),
+							prompt: resumePrompt,
 						};
-					},
-				);
+					}
+					return {
+						args: [
+							"--print",
+							"--output-format",
+							"json",
+							"--model",
+							"opus",
+							"--permission-mode",
+							"acceptEdits",
+							"--allowed-tools",
+							ALLOWED_TOOLS.join(","),
+						],
+						prompt: buildEvaluatorPrompt({
+							rubric: V1_RUBRIC,
+							changeId: opts.changeId,
+							transcriptPath: opts.transcriptPath,
+							mode: opts.mode,
+							projectGroup,
+						}),
+					};
+				}
 
 				const claudeResult = await withSpan(
 					tracer,
@@ -239,9 +257,17 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 					async (span) => {
 						const spawned = await spawnClaude(args, prompt, opts.projectRoot);
 						span.setAttribute("exit.code", spawned.code ?? -1);
+						span.setAttribute("stdout.length", spawned.stdout.length);
 						if (spawned.code !== 0) {
 							span.setAttribute("exit.stderr_tail", spawned.stderr.slice(-500));
+							logEvalContent("claude.error", spawned.stderr, {
+								"exit.code": spawned.code ?? -1,
+							});
 						}
+						logEvalContent("claude.stdout", spawned.stdout, {
+							"stdout.length": spawned.stdout.length,
+							"exit.code": spawned.code ?? -1,
+						});
 						return spawned;
 					},
 				);
@@ -274,6 +300,26 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 				if (parsed.usage) scorecard.usage = parsed.usage;
 				scorecard.telemetryPosted = false;
 
+				// Carry scorecard-level content onto the root span for at-a-glance debugging in Dash0
+				rootSpan.setAttribute("scorecard.status", "ok");
+				rootSpan.setAttribute("scorecard.question_count", scorecard.questions?.length ?? 0);
+				if (scorecard.summary) {
+					rootSpan.setAttribute("scorecard.summary", scorecard.summary.slice(0, 500));
+				}
+				if (scorecard.usage) {
+					rootSpan.setAttribute("scorecard.cost_usd", scorecard.usage.costUsd);
+					rootSpan.setAttribute("scorecard.duration_ms", scorecard.usage.durationMs);
+					rootSpan.setAttribute("scorecard.input_tokens", scorecard.usage.inputTokens);
+					rootSpan.setAttribute("scorecard.output_tokens", scorecard.usage.outputTokens);
+				}
+				const answerCounts = { yes: 0, no: 0, partial: 0 };
+				for (const q of scorecard.questions ?? []) {
+					if (q.answer in answerCounts) answerCounts[q.answer as keyof typeof answerCounts]++;
+				}
+				rootSpan.setAttribute("scorecard.answers.yes", answerCounts.yes);
+				rootSpan.setAttribute("scorecard.answers.no", answerCounts.no);
+				rootSpan.setAttribute("scorecard.answers.partial", answerCounts.partial);
+
 				await withSpan(tracer, "eval.update_session", undefined, () => {
 					const newSession: EvaluatorSession = {
 						sessionId: parsed.sessionId ?? session?.sessionId ?? "unknown",
@@ -287,17 +333,28 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 				await withSpan(tracer, "eval.write_scorecard", undefined, async () => {
 					await logWriter.append(scorecard);
 					ingestScorecard(opts.projectRoot, scorecard);
+					logEvalContent("scorecard", JSON.stringify(scorecard), {
+						"scorecard.question_count": scorecard.questions?.length ?? 0,
+						"scorecard.summary_length": scorecard.summary?.length ?? 0,
+					});
 				});
 
 				return scorecard;
 			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				const stack = err instanceof Error ? (err.stack ?? "") : "";
+				rootSpan.setAttribute("scorecard.status", "error");
+				rootSpan.setAttribute("error.message", msg.slice(0, 500));
+				logEvalContent("error", stack || msg, {
+					"error.message": msg.slice(0, 500),
+				});
 				const errorEntry: EvalErrorEntry = {
 					version: 1,
 					timestamp: new Date().toISOString(),
 					mode: opts.mode,
 					changeId: opts.changeId,
 					error: true,
-					message: err instanceof Error ? err.message : String(err),
+					message: msg,
 				};
 				await logWriter.append(errorEntry);
 				return errorEntry;

@@ -1,6 +1,6 @@
 {
 	"name": "@infinitedusky/indusk-mcp",
-	"version": "1.18.1",
+	"version": "1.19.1",
 	"description": "InDusk development system — skills, MCP tools, and CLI for structured AI-assisted development",
 	"type": "module",
 	"files": [
@@ -29,8 +29,11 @@
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.12.1",
 		"@opentelemetry/api": "^1.9.0",
+		"@opentelemetry/api-logs": "^0.214.0",
+		"@opentelemetry/exporter-logs-otlp-http": "^0.214.0",
 		"@opentelemetry/exporter-trace-otlp-http": "^0.214.0",
 		"@opentelemetry/resources": "^2.6.0",
+		"@opentelemetry/sdk-logs": "^0.214.0",
 		"@opentelemetry/sdk-trace-base": "^2.6.0",
 		"@opentelemetry/sdk-trace-node": "^2.6.0",
 		"@opentelemetry/semantic-conventions": "^1.40.0",

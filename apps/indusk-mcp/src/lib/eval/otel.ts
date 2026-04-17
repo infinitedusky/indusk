@@ -16,8 +16,11 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { type Attributes, type Span, SpanStatusCode, type Tracer, trace } from "@opentelemetry/api";
+import { type Logger, logs, SeverityNumber } from "@opentelemetry/api-logs";
+import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
+import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
@@ -45,19 +48,27 @@ const DEFAULT_DATASET = "agent";
 
 /**
  * Pure predicate — reads `.indusk/config.json` `eval.otel.{enabled,dataset}` and
- * the `INDUSK_EVAL_OTEL` / `INDUSK_EVAL_OTEL_DATASET` / `OTEL_EXPORTER_OTLP_ENDPOINT`
- * env vars. Does not init anything or touch the network.
+ * the `INDUSK_EVAL_OTEL` / `INDUSK_EVAL_OTEL_DATASET` / `EVAL_AGENT_DATASET` /
+ * `OTEL_EXPORTER_OTLP_ENDPOINT` env vars. Does not init anything or touch the network.
  *
  * Resolution:
  * - `enabled`: `INDUSK_EVAL_OTEL=1` (truthy) wins, else config `eval.otel.enabled`, else false.
  * - `endpoint`: `OTEL_EXPORTER_OTLP_ENDPOINT` (null if unset).
- * - `dataset`: `INDUSK_EVAL_OTEL_DATASET` env var wins, else config `eval.otel.dataset`,
- *   else `"agent"` default. Sent as the `Dash0-Dataset` header on every OTLP export.
+ * - `dataset` (priority, highest → lowest):
+ *   1. `INDUSK_EVAL_OTEL_DATASET` env var (explicit per-invocation override)
+ *   2. `EVAL_AGENT_DATASET` env var (composable.env convention — see env/components/dash0.env)
+ *   3. `.indusk/config.json` `eval.otel.dataset`
+ *   4. `"agent"` default
+ *
+ *   Sent as the `Dash0-Dataset` header on every OTLP export. Also rewritten into
+ *   `OTEL_EXPORTER_OTLP_HEADERS` if present there (env headers beat constructor
+ *   headers per OTel spec — so we fix the env header at the source).
  */
 export function isEvalOtelEnabled(projectRoot: string): EvalOtelConfig {
 	const envFlag = process.env.INDUSK_EVAL_OTEL;
 	const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? null;
-	const envDataset = process.env.INDUSK_EVAL_OTEL_DATASET;
+	const explicitDataset = process.env.INDUSK_EVAL_OTEL_DATASET;
+	const composableDataset = process.env.EVAL_AGENT_DATASET;
 	let configEnabled = false;
 	let configDataset: string | undefined;
 
@@ -77,7 +88,11 @@ export function isEvalOtelEnabled(projectRoot: string): EvalOtelConfig {
 	const envForcesEnabled =
 		envFlag !== undefined && envFlag !== "" && envFlag !== "0" && envFlag.toLowerCase() !== "false";
 
-	const dataset = envDataset && envDataset !== "" ? envDataset : (configDataset ?? DEFAULT_DATASET);
+	const dataset =
+		(explicitDataset && explicitDataset !== "" && explicitDataset) ||
+		(composableDataset && composableDataset !== "" && composableDataset) ||
+		configDataset ||
+		DEFAULT_DATASET;
 
 	return {
 		enabled: envForcesEnabled || configEnabled,
@@ -86,7 +101,25 @@ export function isEvalOtelEnabled(projectRoot: string): EvalOtelConfig {
 	};
 }
 
+/**
+ * Rewrite the `Dash0-Dataset=<old>` entry in `OTEL_EXPORTER_OTLP_HEADERS` to
+ * `Dash0-Dataset=<target>`. OTel spec says env-set headers override constructor
+ * headers, so we have to fix the env directly for routing to work when the user's
+ * shell already sets `OTEL_EXPORTER_OTLP_HEADERS` via composable.env.
+ *
+ * No-op if the env var is unset or doesn't contain `Dash0-Dataset=`.
+ */
+function rewriteDatasetInEnvHeaders(target: string): void {
+	const current = process.env.OTEL_EXPORTER_OTLP_HEADERS;
+	if (!current || !current.includes("Dash0-Dataset=")) return;
+	const rewritten = current.replace(/Dash0-Dataset=[^,]*/g, `Dash0-Dataset=${target}`);
+	process.env.OTEL_EXPORTER_OTLP_HEADERS = rewritten;
+}
+
+const LOGGER_NAME = "@infinitedusky/indusk-mcp/eval";
+
 let activeProvider: NodeTracerProvider | null = null;
+let activeLoggerProvider: LoggerProvider | null = null;
 
 /**
  * Initialize OTel tracing for the evaluator if enabled + endpoint set.
@@ -115,6 +148,13 @@ export function initEvalOtel(projectRoot: string): Tracer {
 	if (activeProvider) {
 		return trace.getTracer(TRACER_NAME);
 	}
+
+	// Ensure env-set OTEL_EXPORTER_OTLP_HEADERS routes to the eval agent's
+	// dataset. Env headers beat constructor headers per OTel spec — so if the
+	// user's shell (composable.env) already set Dash0-Dataset for project
+	// telemetry, we rewrite it in-place to the eval agent dataset before the
+	// exporter reads it.
+	rewriteDatasetInEnvHeaders(dataset);
 
 	// Build exporter headers. We pass Authorization and Dash0-Dataset in the
 	// constructor rather than relying on OTEL_EXPORTER_OTLP_HEADERS env parsing,
@@ -188,19 +228,116 @@ export async function withSpan<T>(
 }
 
 /**
- * Flush and shut down the active provider. Call this before `process.exit()`
- * in detached processes so batched spans are not lost. No-op if no provider
- * is active.
+ * Initialize the OTel logs pipeline alongside traces. Returns a Logger —
+ * real when enabled + endpoint set, no-op otherwise. Shares the same
+ * config gating + Dash0 dataset routing as `initEvalOtel`. Safe to call
+ * multiple times.
+ *
+ * Log records emitted via `getEvalLogger().emit(...)` automatically
+ * correlate with the active span via trace_id / span_id.
+ */
+export function initEvalOtelLogs(projectRoot: string): Logger {
+	const { enabled, endpoint, dataset } = isEvalOtelEnabled(projectRoot);
+
+	if (!enabled) return logs.getLogger(LOGGER_NAME);
+
+	if (!endpoint) {
+		syslog(projectRoot, "eval.otel.logs — endpoint unset; falling back to no-op logger");
+		return logs.getLogger(LOGGER_NAME);
+	}
+
+	if (activeLoggerProvider) return logs.getLogger(LOGGER_NAME);
+
+	rewriteDatasetInEnvHeaders(dataset);
+
+	const headers: Record<string, string> = { "Dash0-Dataset": dataset };
+	if (process.env.DASH0_API_TOKEN) {
+		headers.Authorization = `Bearer ${process.env.DASH0_API_TOKEN}`;
+	}
+
+	try {
+		const exporter = new OTLPLogExporter({
+			url: endpoint.endsWith("/v1/logs") ? endpoint : `${endpoint.replace(/\/$/, "")}/v1/logs`,
+			headers,
+		});
+		const provider = new LoggerProvider({
+			resource: resourceFromAttributes({ [ATTR_SERVICE_NAME]: SERVICE_NAME }),
+			processors: [new BatchLogRecordProcessor(exporter)],
+		});
+		// setGlobalLoggerProvider returns false if one is already registered
+		// (e.g., a test's InMemoryLogRecordExporter provider). Respect that —
+		// only retain ownership (and tear down at shutdown) if we actually
+		// registered ours.
+		const accepted = logs.setGlobalLoggerProvider(provider);
+		if (accepted) {
+			activeLoggerProvider = provider;
+			syslog(
+				projectRoot,
+				`eval.otel.logs initialized — endpoint: ${endpoint}, dataset: ${dataset}`,
+			);
+		} else {
+			syslog(projectRoot, "eval.otel.logs — global provider already set; using existing");
+			// Fire-and-forget shutdown of the unused provider
+			void provider.shutdown().catch(() => {});
+		}
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err);
+		syslog(projectRoot, `eval.otel.logs init failed — falling back to no-op: ${message}`);
+	}
+
+	return logs.getLogger(LOGGER_NAME);
+}
+
+/**
+ * Accessor for the eval logger. Always safe to call — returns a no-op
+ * logger when logs aren't initialized.
+ */
+export function getEvalLogger(): Logger {
+	return logs.getLogger(LOGGER_NAME);
+}
+
+/**
+ * Emit an info-severity log record with an arbitrary body. Shorthand for
+ * `getEvalLogger().emit(...)`. When called inside an active span, the
+ * SDK attaches trace_id + span_id automatically.
+ */
+export function logEvalContent(
+	name: string,
+	body: string | Record<string, unknown>,
+	attributes?: Record<string, string | number | boolean>,
+): void {
+	// AnyValue requires plain primitives/arrays/records — stringify objects so
+	// Dash0 ingests the content as a single searchable log body rather than a
+	// nested structure.
+	const bodyText = typeof body === "string" ? body : JSON.stringify(body);
+	getEvalLogger().emit({
+		severityNumber: SeverityNumber.INFO,
+		severityText: "INFO",
+		body: bodyText,
+		attributes: { "eval.event": name, ...(attributes ?? {}) },
+	});
+}
+
+/**
+ * Flush and shut down the active providers (traces + logs). Call this
+ * before `process.exit()` in detached processes so batched signals are
+ * not lost. No-op if neither provider is active.
  */
 export async function shutdownEvalOtel(): Promise<void> {
-	if (!activeProvider) return;
+	const tasks: Promise<unknown>[] = [];
+	if (activeProvider) {
+		tasks.push(activeProvider.forceFlush().then(() => activeProvider?.shutdown()));
+	}
+	if (activeLoggerProvider) {
+		tasks.push(activeLoggerProvider.forceFlush().then(() => activeLoggerProvider?.shutdown()));
+	}
 	try {
-		await activeProvider.forceFlush();
-		await activeProvider.shutdown();
+		await Promise.all(tasks);
 	} catch {
 		// shutdown is best-effort
 	} finally {
 		activeProvider = null;
+		activeLoggerProvider = null;
 	}
 }
 
@@ -209,12 +346,17 @@ export async function shutdownEvalOtel(): Promise<void> {
  * starts fresh. Not part of the public API.
  */
 export function __resetEvalOtelForTests(): void {
-	// Tear down any provider left over from a previous test. This un-registers
-	// from the global OTel API, so `trace.getTracer()` falls back to the no-op
-	// tracer until a new provider is registered.
+	// Tear down any providers left over from a previous test. This
+	// un-registers from the global OTel API so `trace.getTracer()` /
+	// `logs.getLogger()` fall back to no-op until re-registered.
 	if (activeProvider) {
 		void activeProvider.shutdown().catch(() => {});
 	}
+	if (activeLoggerProvider) {
+		void activeLoggerProvider.shutdown().catch(() => {});
+	}
 	activeProvider = null;
+	activeLoggerProvider = null;
 	trace.disable();
+	logs.disable();
 }

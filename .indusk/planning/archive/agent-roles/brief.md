@@ -2,7 +2,7 @@
 title: "Agent Roles — Define and Enforce Role Boundaries"
 date: 2026-04-14
 status: accepted
-blocked_by: [improvement-eval-agent-open-telemetry, bug-fix-eval-agent]
+blocked_by: []
 ---
 
 # Agent Roles — Brief

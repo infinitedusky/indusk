@@ -226,15 +226,48 @@ syslog(
 );
 
 const syslogPath = resolve(projectRoot, ".indusk", "eval", "system.log");
+// NOTE: this inline script runs with --input-type=module (see spawn below).
+// ESM scope — use static imports from node: specifiers only. CJS module
+// resolution throws ReferenceError in ESM scope at parse, and stdio:"ignore"
+// on the detached spawn would swallow the error. For the full history see
+// .indusk/planning/archive/bug-fix-eval-agent/diagnosis.md
 const evaluatorScript = `
-const fs = require("fs");
-const path = require("path");
+import { mkdirSync, appendFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 function syslog(msg) {
   try {
-    fs.mkdirSync(path.dirname("${syslogPath}"), { recursive: true });
-    fs.appendFileSync("${syslogPath}", new Date().toISOString() + " " + msg + "\\n");
+    mkdirSync(dirname("${syslogPath}"), { recursive: true });
+    appendFileSync("${syslogPath}", new Date().toISOString() + " " + msg + "\\n");
   } catch {}
 }
+// Belt-and-suspenders: if the evaluator crashes with an unhandled exception
+// or rejection, write a loud error entry to results.log before exit so the
+// failure is never silent again.
+function writeErrorResult(message) {
+  try {
+    const logPath = join(${JSON.stringify(projectRoot)}, ".indusk", "eval", "results.log");
+    mkdirSync(dirname(logPath), { recursive: true });
+    const entry = JSON.stringify({
+      version: 1,
+      timestamp: new Date().toISOString(),
+      mode: "eval",
+      changeId: ${JSON.stringify(changeId)},
+      error: true,
+      message,
+    });
+    appendFileSync(logPath, entry + "\\n", "utf8");
+  } catch {}
+}
+process.on("uncaughtException", (err) => {
+  syslog("evaluator uncaughtException — " + (err && err.message ? err.message : String(err)));
+  writeErrorResult("uncaughtException: " + (err && err.message ? err.message : String(err)));
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  syslog("evaluator unhandledRejection — " + (reason && reason.message ? reason.message : String(reason)));
+  writeErrorResult("unhandledRejection: " + (reason && reason.message ? reason.message : String(reason)));
+  process.exit(1);
+});
 syslog("evaluator process started — changeId: ${changeId}");
 import("${useModule}")
   .then(m => {
@@ -254,17 +287,7 @@ import("${useModule}")
   })
   .catch(err => {
     syslog("evaluator crashed — " + (err.message || String(err)));
-    const logPath = path.join(${JSON.stringify(projectRoot)}, ".indusk", "eval", "results.log");
-    fs.mkdirSync(path.dirname(logPath), { recursive: true });
-    const entry = JSON.stringify({
-      version: 1,
-      timestamp: new Date().toISOString(),
-      mode: "eval",
-      changeId: ${JSON.stringify(changeId)},
-      error: true,
-      message: err.message || String(err),
-    });
-    fs.appendFileSync(logPath, entry + "\\n", "utf8");
+    writeErrorResult(err.message || String(err));
     process.exit(1);
   });
 `;

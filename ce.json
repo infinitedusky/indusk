@@ -5,7 +5,8 @@
 	"profiles": {
 		"local": {
 			"suffix": "-local",
-			"domain": "dusk.orb.local"
+			"domain": "dusk.orb.local",
+			"tls": true
 		},
 		"staging": {
 			"suffix": "-stg",

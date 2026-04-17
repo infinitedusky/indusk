@@ -1,7 +1,7 @@
 ---
 title: "Eval Agent OpenTelemetry"
 date: 2026-04-17
-status: in-progress
+status: completed
 gate_policy: ask
 trajectory: required
 workflow: feature
@@ -151,7 +151,7 @@ Rename the internal "judge" terminology to "evaluator" / "eval agent" (code + pr
 #### Phase 3 Verification
 - [x] T10 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- evaluator-spans`) — 2 cases (zero and three highlights)
 - [x] T11 passes (same command) — 2 cases (single-span throw, nested-span propagation)
-- [ ] Manual smoke (user-action): publish 1.18.0, user runs `indusk update`, enables `eval.otel.enabled: true` + sets `OTEL_EXPORTER_OTLP_ENDPOINT` + auth headers, runs `jj describe` on a trivial change, opens Dash0 "agent" dataset, confirms root `eval.run` span + child tree visible with the expected attributes (this is the Deferred Verification mitigation)
+- [x] Manual smoke (user-action): published 1.18.2 (evolved from 1.18.0 through 1.18.1 fix for env-header parsing and 1.18.2 for `EVAL_AGENT_DATASET` routing + env-header rewrite). User ran `indusk update`, ran `pnpm ce env:build local` which generated `.indusk/extensions/dash0/.env.local` with `EVAL_AGENT_DATASET=agent`. Direct invocation of `runPersistentEval` with ce env loaded produced full span tree in Dash0 "agent" dataset: `eval.run` + `eval.read_session` + `eval.build_prompt` + `eval.spawn_claude` + `eval.parse_output` + `eval.update_session` + `eval.write_scorecard` (confirmed via `dash0 spans query --dataset agent`). Deferred Verification mitigation satisfied.
 - [x] `pnpm check` passes
 - [x] Full `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes
 

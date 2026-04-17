@@ -174,3 +174,25 @@ The eval system writes to `.indusk/eval/system.log` for full lifecycle visibilit
 ```
 
 Check this log when evals aren't appearing in `results.log`.
+
+## Known Failure Modes
+
+### Silent crash at parse — CJS `require()` in the spawned ESM script
+
+**Symptom:** `system.log` shows `evaluator spawned — source: commit, pid: N` on every `jj describe`, but **never** logs `evaluator process started — changeId: ...` / `evaluator completed — ...` / `evaluator crashed — ...`. `results.log` receives no new scorecards. No error entry. No trace in Dash0. The subprocess seems to vanish.
+
+**Cause:** the hook at `apps/indusk-mcp/hooks/eval-trigger.js` spawns the evaluator's lifecycle wrapper as `node --input-type=module -e <inline-script>` with `stdio: "ignore"`. If that inline script contains CJS module-resolution calls at top level (e.g., `const fs = require("fs")`), the subprocess throws `ReferenceError: require is not defined in ES module scope` at parse — line 2, before any user code runs. `stdio: "ignore"` swallows the stderr. The parent sees the spawn succeed and moves on.
+
+**Fix in 1.19.1:** the inline script now uses ESM-native `import { mkdirSync, appendFileSync } from "node:fs"` and `import { dirname, join } from "node:path"`. A regression test (`apps/indusk-mcp/src/__tests__/falsification-hook-esm-require.test.ts`) grep-asserts the hook source contains no CJS module resolution.
+
+### Debugging a broken evaluator
+
+If `results.log` stops updating and you suspect a silent failure:
+
+1. **Enable OTel first.** Add `eval.otel.enabled: true` to `.indusk/config.json` and set `OTEL_EXPORTER_OTLP_ENDPOINT` + auth headers (or rely on composable.env's wiring). Fire a trivial `jj describe`.
+2. **Check `system.log` for lifecycle markers.** If you see `evaluator spawned` followed by nothing (no `evaluator process started`), the spawned subprocess is dying at parse. This is the failure mode above or a near relative.
+3. **Check Dash0 for the `eval.run` span.** If OTel init logs `eval.otel initialized` to `system.log` but no `eval.run` span appears in the `agent` dataset, the process died between `initEvalOtel` and the first `withSpan`. Very unlikely — but the absence of the span narrows the search window considerably.
+4. **Check `results.log` for `error: true` entries.** Since 1.19.1, any catch path writes an error entry. If there's no error entry AND no scorecard, the subprocess died before any user code ran (same failure class as above).
+5. **Read `.indusk/planning/archive/bug-fix-eval-agent/diagnosis.md`** for the canonical example of how to diagnose this class of silent failure — the same method works for unrelated crashes at parse.
+
+Silent failures in this pipeline are always diagnosable with the OTel + lifecycle-log + results.log triangle. If all three are silent, check what the subprocess was running (the hook's `evaluatorScript` template) for a parse-time error.

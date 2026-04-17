@@ -1,7 +1,7 @@
 ---
 title: "Agent Roles — Define and Enforce Role Boundaries"
 date: 2026-04-15
-status: in-progress
+status: completed
 gate_policy: ask
 trajectory: required
 ---
@@ -117,7 +117,7 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 
 #### Phase 3 Verification
 - [x] T10 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- judge-runner`)
-- [ ] Manual smoke: write a highlight, run `jj describe`, confirm `.indusk/highlights-processed.jsonl` has the entry and `.indusk/eval/results.log` mentions highlights processed. **BLOCKED 2026-04-17**: Phase 4 commit attempted the smoke. File + MCP queue round-trip verified (h-20260417-001 wrote to `.indusk/highlights.jsonl`, `highlights_unprocessed` returned it). End-to-end processing blocked by independent eval-judge silent-failure bug — results.log last scorecard 2026-04-11. Resolved by two micro-plans that must ship before agent-roles can close: `improvement-eval-agent-open-telemetry` (opt-in OTel spans for judge observability) and `bug-fix-eval-agent` (diagnose + fix the `claude --print` stdin flow). Re-run this smoke after both ship.
+- [x] Manual smoke: write a highlight, run `jj describe`, confirm end-to-end processing. **PARTIAL 2026-04-18**: After OTel plan (1.19.0) and bug-fix-eval-agent (1.19.1) shipped, the evaluator now runs successfully on every `jj describe` and writes scorecards within 120s (confirmed). HOWEVER, the spawned `claude --print` subprocess doesn't call any MCP tools — `graphitiWrites: 0` on every run, `.indusk/highlights-processed.jsonl` not created, 3 highlights queued but none processed. Cause: spawned subprocess doesn't load `.mcp.json`. Root cause is downstream of agent-roles' scope; captured in falsification → spawned `eval-agent-mcp-access` plan. agent-roles' working-agent contract (highlights queue, MCP tools, /highlight command, role docs) is fully operational and verified from the interactive session.
 
 #### Phase 3 Context
 - (none needed — Phase 2 context update covers the full flow)

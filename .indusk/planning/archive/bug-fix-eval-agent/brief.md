@@ -2,7 +2,7 @@
 title: "Bug Fix — Eval Agent Silent Failure"
 date: 2026-04-17
 status: accepted
-blocked_by: [improvement-eval-agent-open-telemetry]
+blocked_by: []
 ---
 
 # Eval Agent Silent Failure — Brief
