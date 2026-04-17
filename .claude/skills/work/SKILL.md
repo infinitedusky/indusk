@@ -204,7 +204,8 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
     - Update impl status to `completed`
     - Summarize what was done
     - If this plan included an ADR, confirm CLAUDE.md's Key Decisions was updated
-    - Let the user know the plan is ready for a retrospective if they want one (`/planner {name}` will pick up at the retrospective stage)
+    - **Run `/falsify {plan}` next, before `/retrospective`.** The falsification ritual is the bridge between "impl done" and "plan archived." It drives the same working agent through a goal-flipped bounty hunt — investigate the code, form a specific hypothesis about what should be broken, write the test that confirms it. The ritual may surface gaps worth addressing, which can reopen the impl (status flips back to `in-progress`) for a fix-in-scope phase, or spawn a new plan, or be recorded as a finding. Only after `/falsify` terminates cleanly — or has been explicitly skipped via `falsification: skipped` + `falsification_reason: "..."` in the impl frontmatter — is the plan ready for `/retrospective`. See the [Falsification Ritual guide](apps/indusk-docs/src/guide/falsification-ritual.md) and `.indusk/planning/archive/falsification-ritual/adr.md`.
+    - Let the user know: "Impl complete. Run `/falsify {plan}` next. If it terminates cleanly, then `/retrospective {plan}` will close out the plan."
 
 ## Teach Mode
 

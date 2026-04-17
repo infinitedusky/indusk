@@ -28,6 +28,34 @@ The retrospective skill replaces the freeform "write a retrospective" step with 
 
 Work through these steps in order. Each step is blocking — do not skip ahead.
 
+### Step 0: Falsification Gate
+
+**This gate blocks everything below. Do not proceed to Step 1 until it passes.**
+
+Before writing a single word of the retrospective, confirm that the plan has completed the falsification ritual or has an explicit, recorded skip-reason.
+
+Check the gate by reading two sources:
+
+1. **Completion:** Does `.indusk/planning/{plan-name}/falsification.md` exist with a terminator entry? Use `isFalsificationComplete(planRoot)` from `apps/indusk-mcp/src/lib/falsification/log.js` (invoke via `tsx` or an MCP tool wrapper).
+2. **Skip:** Does the impl's frontmatter contain BOTH `falsification: skipped` AND `falsification_reason: "{non-empty text}"`? Use `isFalsificationSkipped(implContent)` from `apps/indusk-mcp/src/lib/falsification/skip.js`.
+
+The gate passes if either condition holds. If neither holds, refuse to run the retrospective and surface this message to the user:
+
+> **Retrospective blocked: falsification gate not satisfied for `{plan-name}`.**
+>
+> Before closing out a plan, run `/falsify {plan-name}` to exercise the bounty-hunting ritual — investigate the code, form a specific hypothesis about what should be broken, write the test that confirms it. The ritual may surface gaps worth addressing before archival (fix in scope, spawn a new plan, or accept as finding).
+>
+> To skip the ritual intentionally, add these two fields to the impl's frontmatter:
+>
+> ```yaml
+> falsification: skipped
+> falsification_reason: "why skipping is acceptable for this specific plan"
+> ```
+>
+> The skip-reason is recorded in the archive and surfaced in retrospectives. Use sparingly — typically only for trivial typo-fix plans where the ritual cost exceeds the discipline value.
+
+Do not proceed to Step 1 until the gate passes. This is structural enforcement of the discipline documented in the [Falsification Ritual guide](apps/indusk-docs/src/guide/falsification-ritual.md) — happy-path authoring produces happy-path tests, and the ritual is the mechanism for surfacing the gaps the author couldn't think of.
+
 ### Step 1: Write the Retrospective Document
 
 Create `.indusk/planning/{plan-name}/retrospective.md` using the template from the plan skill. This is the reflective writing — what we set out to do, what actually happened, what we learned.

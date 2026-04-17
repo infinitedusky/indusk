@@ -92,7 +92,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    ```
    mcp__graphiti__add_memory({
      name: "adr-{plan-name}",
-     episode_body: "In the context of {use case}, facing {constraint}, we decided for {chosen option} and against {rejected alternatives}, to achieve {desired outcome}, accepting {tradeoff}, because {rationale}.",
+     episode_body: "In context facing: {use case AND constraint}. We decided for: {chosen option}. And against: {rejected alternatives}. To achieve: {desired outcome}. Accepting: {tradeoff}. Because: {rationale}.",
      group_id: "{project-group}",
      source: "text",
      source_description: "ADR acceptance"
@@ -207,13 +207,34 @@ status: proposed | accepted | deprecated | superseded | abandoned
 # {Title}
 
 ## Y-Statement
-In the context of **{use case}**,
-facing **{constraint}**,
-we decided for **{chosen option}**
-and against **{rejected alternatives}**,
-to achieve **{desired outcome}**,
-accepting **{tradeoff}**,
-because **{rationale}**.
+
+**In the context of:**
+{the use case — one paragraph, plain text, not bold}
+
+**Facing:**
+{the constraint or problem the use case presents — one paragraph}
+
+**We decided for:**
+{the chosen option — one paragraph}
+
+**And against:**
+{the rejected alternatives — one paragraph}
+
+**To achieve:**
+{the desired outcome — one paragraph}
+
+**Accepting:**
+{the tradeoff — one paragraph}
+
+**Because:**
+{the rationale — one paragraph}
+
+Format rules (the standard Y-statement format for every ADR in every project going forward):
+- Use all seven canonical clauses: In the context of, Facing, We decided for, And against, To achieve, Accepting, Because. These are the standard Y-statement fields — do not collapse, rename, or omit them.
+- Each clause is its own section. The clause label is bold and ends with a colon.
+- The paragraph body begins on the next line immediately after the bold label — no blank line between the label and the paragraph.
+- The paragraph body is plain text — not bold, no inline label.
+- A blank line separates each clause (between the end of one paragraph and the next bold label).
 
 ## Context
 {Situation and background. Reference research and brief.}

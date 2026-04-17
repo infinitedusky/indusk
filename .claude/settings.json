@@ -139,7 +139,12 @@
       "Bash(jj edit *)",
       "Bash(JJ_EDITOR=true jj split 'glob:\".indusk/planning/falsification-ritual/**\" | \"apps/indusk-mcp/skills/planner.md\" | \"apps/indusk-docs/src/reference/skills/plan.md\" | \".claude/lessons/verification-gates-need-adversarial-framing.md\"')",
       "Bash(npx @biomejs/biome check --write apps/indusk-mcp/src/lib/falsification/ apps/indusk-mcp/skills/retrospective.md apps/indusk-mcp/skills/work.md)",
-      "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/falsification/)"
+      "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/falsification/)",
+      "Bash(npx @biomejs/biome check --write src/lib/falsification/ skills/falsify.md)",
+      "Bash(cat \"$\\(npm root -g\\)/@infinitedusky/indusk-mcp/package.json\")",
+      "Bash(ls \"$\\(npm root -g\\)/@infinitedusky/indusk-mcp/skills/\")",
+      "Bash(indusk extensions *)",
+      "Bash(JJ_EDITOR=true jj split 'glob:\".indusk/planning/archive/falsification-ritual/**\" | glob:\".indusk/planning/falsification-ritual/**\" | \".indusk/planning/master.md\" | \"CLAUDE.md\" | \"apps/indusk-docs/src/.vitepress/config.ts\" | \"apps/indusk-docs/src/decisions/falsification-ritual.md\"')"
     ],
     "additionalDirectories": [
       "/tmp",
