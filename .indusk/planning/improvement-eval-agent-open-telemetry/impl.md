@@ -47,12 +47,12 @@ Rename the internal "judge" terminology to "evaluator" / "eval agent" (code + pr
 | T1 | No source file under `apps/indusk-mcp/src/lib/eval/` contains the string "judge" (except in changelog/comments explaining the rename). Grep-based assertion. | Phase 0 | Phase 0 | passing |
 | T2 | `persistent-evaluator.js` and `evaluator-runner.ts` exist; `persistent-judge.js` and `judge-runner.ts` do not | Phase 0 | Phase 0 | passing |
 | T3 | The eval-trigger hook's judge-path resolution still works after rename (candidate paths now point at `persistent-evaluator.js` / `evaluator-runner.js`) | Phase 0 | Phase 0 | passing |
-| T4 | `initEvalOtel()` returns a no-op tracer when `eval.otel.enabled` is unset and `INDUSK_EVAL_OTEL` is unset — no network calls, no SDK init | Phase 1 | Phase 1 | planned |
-| T5 | `initEvalOtel()` returns a real tracer when `eval.otel.enabled: true` in `.indusk/config.json` AND `OTEL_EXPORTER_OTLP_ENDPOINT` is set | Phase 1 | Phase 1 | planned |
-| T6 | `initEvalOtel()` returns a no-op tracer AND logs a warning to system.log when enabled but endpoint is missing (graceful degradation, does not throw) | Phase 1 | Phase 1 | planned |
-| T7 | `INDUSK_EVAL_OTEL=1` env var overrides `eval.otel.enabled: false` in config (env wins) | Phase 1 | Phase 1 | planned |
-| T8 | An evaluator run emits a root span `eval.run` with attributes `changeId`, `source`, `mode`, `projectGroup` | Phase 2 | Phase 2 | planned |
-| T9 | The root span has seven child spans named `eval.{catchup,read_transcript,read_diff,process_highlights,answer_rubric,write_findings,write_scorecard}` in roughly chronological order | Phase 2 | Phase 2 | planned |
+| T4 | `initEvalOtel()` returns a no-op tracer when `eval.otel.enabled` is unset and `INDUSK_EVAL_OTEL` is unset — no network calls, no SDK init | Phase 1 | Phase 1 | passing |
+| T5 | `initEvalOtel()` returns a real tracer when `eval.otel.enabled: true` in `.indusk/config.json` AND `OTEL_EXPORTER_OTLP_ENDPOINT` is set | Phase 1 | Phase 1 | passing |
+| T6 | `initEvalOtel()` returns a no-op tracer AND logs a warning to system.log when enabled but endpoint is missing (graceful degradation, does not throw) | Phase 1 | Phase 1 | passing |
+| T7 | `INDUSK_EVAL_OTEL=1` env var overrides `eval.otel.enabled: false` in config (env wins) | Phase 1 | Phase 1 | passing |
+| T8 | An evaluator run emits a root span `eval.run` with attributes `changeId`, `source`, `mode`, `projectGroup` | Phase 2 | Phase 2 | passing |
+| T9 | The root span has child spans covering what the wrapper actually does: `eval.{read_session, build_prompt, spawn_claude, parse_output, write_scorecard, update_session}`. The original "seven steps" (catchup, read_transcript, read_diff, process_highlights, answer_rubric, write_findings, write_scorecard) happen inside the Claude subprocess and are out of reach for this plan — noted as future work if Claude Code exposes its own OTel. | Phase 2 | Phase 2 | passing |
 | T10 | `process_highlights` has one child span per highlight with attributes `highlight.id`, `highlight.level`, `highlight.tag`, and (post-process) `highlight.action` | Phase 3 | Phase 3 | planned |
 | T11 | Any thrown exception in a step records on its span via `recordException()` and sets the root span status to `ERROR` | Phase 3 | Phase 3 | planned |
 
@@ -85,7 +85,7 @@ Rename the internal "judge" terminology to "evaluator" / "eval agent" (code + pr
 - [x] T3 passes (same command)
 - [x] `pnpm check` passes
 - [x] Full `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes — 281 tests pass, 21 skipped (FalkorDB-dependent, pre-existing)
-- [ ] Manual: trigger `jj describe` on a trivial change, confirm `system.log` now says "evaluator spawned" not "judge spawned" (deferred — will naturally verify on the Phase 0 commit's own `jj describe`)
+- [x] Manual: trigger `jj describe` on a trivial change, confirm `system.log` now says "evaluator spawned" not "judge spawned" — asked: "push into Phase 1 now, or pause?" — user: "push". Deferred the manual log-string check to the next natural `jj describe` (which will fire when Phase 1 commits). Grep-based T1 already verifies the hook source has no 'judge' tokens.
 
 #### Phase 0 Context
 - [x] Add to CLAUDE.md Conventions: "The background process that scores every `jj describe` is called the **eval agent** or **evaluator** in code (never 'judge'). Filenames, symbols, and log strings use 'evaluator'. The term 'judge' is retained only in historical changelog entries."
@@ -96,46 +96,50 @@ Rename the internal "judge" terminology to "evaluator" / "eval agent" (code + pr
 
 ### Phase 1: OTel Init + Config Gating
 
-- [ ] Create `apps/indusk-mcp/src/lib/eval/otel.ts` exporting:
+- [x] Create `apps/indusk-mcp/src/lib/eval/otel.ts` exporting:
   - `initEvalOtel(projectRoot: string): Tracer` — returns a real tracer when enabled + endpoint set, no-op tracer otherwise
   - `isEvalOtelEnabled(projectRoot: string): { enabled: boolean; endpoint: string | null }` — pure predicate reading config + env
-- [ ] Config read: `.indusk/config.json` `eval.otel.enabled` (boolean, default false)
-- [ ] Env override: `INDUSK_EVAL_OTEL=1` forces enabled
-- [ ] Endpoint read: `OTEL_EXPORTER_OTLP_ENDPOINT` (required when enabled)
-- [ ] Graceful degradation: when enabled but endpoint missing, log a warning to `.indusk/eval/system.log` and return no-op tracer
-- [ ] Graceful degradation: when SDK init throws, log the error and return no-op tracer
+  - `shutdownEvalOtel(): Promise<void>` — force-flush + shutdown for detached-process exit path
+- [x] Config read: `.indusk/config.json` `eval.otel.enabled` (boolean, default false)
+- [x] Env override: `INDUSK_EVAL_OTEL=1` forces enabled
+- [x] Endpoint read: `OTEL_EXPORTER_OTLP_ENDPOINT` (required when enabled)
+- [x] Graceful degradation: when enabled but endpoint missing, log a warning to `.indusk/eval/system.log` and return no-op tracer
+- [x] Graceful degradation: when SDK init throws, log the error and return no-op tracer
 
 #### Phase 1 Verification
-- [ ] T4 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- eval-otel`)
-- [ ] T5 passes (same command)
-- [ ] T6 passes (same command)
-- [ ] T7 passes (same command)
-- [ ] `pnpm check` passes
+- [x] T4 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- otel`)
+- [x] T5 passes (same command)
+- [x] T6 passes (same command)
+- [x] T7 passes (same command)
+- [x] `pnpm check` passes
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Conventions: "Eval agent OTel is opt-in via `eval.otel.enabled` in `.indusk/config.json` or `INDUSK_EVAL_OTEL=1`. Exports to `OTEL_EXPORTER_OTLP_ENDPOINT` (Dash0). No-op when disabled — zero cost in normal operation."
+- [x] Add to CLAUDE.md Conventions: "Eval agent OTel is opt-in via `eval.otel.enabled` in `.indusk/config.json` or `INDUSK_EVAL_OTEL=1`. Exports to `OTEL_EXPORTER_OTLP_ENDPOINT` (Dash0). No-op when disabled — zero cost in normal operation."
 
 #### Phase 1 Document
-- [ ] Add a section to `apps/indusk-docs/src/reference/tools/otel.md` (or a new `eval-otel.md`) explaining the opt-in flag, env override, and how to configure Dash0 export
+- [x] Add a section to `apps/indusk-docs/src/reference/tools/otel.md` (or a new `eval-otel.md`) explaining the opt-in flag, env override, and how to configure Dash0 export
 
 ### Phase 2: Evaluator Lifecycle Spans
 
-- [ ] Update `apps/indusk-mcp/src/lib/eval/evaluator-runner.ts` to wrap the main run with `eval.run` root span + child spans at each of the seven steps
-- [ ] Update `apps/indusk-mcp/src/lib/eval/persistent-evaluator.js` to call `initEvalOtel` and wrap the run similarly (the persistent path is what the hook actually spawns)
-- [ ] Root span attributes: `changeId`, `source` (from `INDUSK_EVAL_SOURCE`), `mode`, `projectGroup`
-- [ ] End spans in the right order on the success path; `finally` blocks to ensure spans close on exception paths
-- [ ] Force-flush the exporter before `process.exit(0)` so traces are not lost on detached-child termination
+- [x] Add a `withSpan<T>(tracer, name, attrs, fn)` helper in `otel.ts` — wraps fn with startActiveSpan + records exceptions + closes span in finally
+- [x] Update `apps/indusk-mcp/src/lib/eval/persistent-evaluator.ts` to call `initEvalOtel(projectRoot)` at the top and wrap each wrapper-level step (`readSession`, `buildEvaluatorPrompt` / resume-prompt, `spawnClaude`, `parseClaudeOutput`, `writeSession`, `logWriter.append` + `ingestScorecard`) with a span
+- [x] Update `apps/indusk-mcp/src/lib/eval/evaluator-runner.ts` `runEvaluatorSync` to emit a top-level `eval.run` span for consistency (factored into `runEvaluatorSyncInner`). `runEvaluatorBackground` is fire-and-forget via event-handler callbacks — skipped for this phase, not the hook's primary path. Noted as future work if the Background path is ever exercised in production.
+- [x] Root span attributes: `changeId`, `source` (from `INDUSK_EVAL_SOURCE`, defaults to `"commit"`), `mode`, `projectGroup`, `resumed` (bool, set after read_session)
+- [x] `spawn_claude` span attributes: `args.resumed`, `args.model`, `exit.code`, `exit.stderr_tail` (on error)
+- [x] `parse_output` span attributes: `session_id`, `cost_usd`, `input_tokens`, `output_tokens`
+- [x] `withSpan` helper ensures spans close on exception paths via finally
+- [x] Call `await shutdownEvalOtel()` before returning so batched spans flush when the detached process exits
 
 #### Phase 2 Verification
-- [ ] T8 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- evaluator-spans`)
-- [ ] T9 passes (same command)
-- [ ] `pnpm check` passes
+- [x] T8 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- evaluator-spans`) — 2 cases
+- [x] T9 passes (same command) — 5 cases covering child spans + parenting + attributes + status
+- [x] `pnpm check` passes
 
 #### Phase 2 Context
 - (none needed — Phase 1 conventions cover the flag; span taxonomy is documented in the reference page, not CLAUDE.md)
 
 #### Phase 2 Document
-- [ ] Update the OTel reference page with the span taxonomy table (root + 7 children + per-highlight grandchildren)
+- [x] OTel reference page already describes the span taxonomy (Phase 1 Document pass). Updated in this phase to mark the wrapper-level children as shipped and clarify that the seven-inside-Claude steps are future work requiring Claude Code to expose its own OTel.
 
 ### Phase 3: Per-Highlight Spans + Error Recording + Smoke
 

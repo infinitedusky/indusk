@@ -28,6 +28,12 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.12.1",
+		"@opentelemetry/api": "^1.9.0",
+		"@opentelemetry/exporter-trace-otlp-http": "^0.214.0",
+		"@opentelemetry/resources": "^2.6.0",
+		"@opentelemetry/sdk-trace-base": "^2.6.0",
+		"@opentelemetry/sdk-trace-node": "^2.6.0",
+		"@opentelemetry/semantic-conventions": "^1.40.0",
 		"commander": "^13.0.0",
 		"falkordb": "^6.6.2",
 		"glob": "^11.0.0",

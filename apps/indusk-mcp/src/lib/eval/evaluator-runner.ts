@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { getProjectGroupId } from "../config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
+import { initEvalOtel, shutdownEvalOtel, withSpan } from "./otel.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
@@ -176,8 +177,31 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 export async function runEvaluatorSync(
 	opts: EvaluatorRunOptions,
 ): Promise<EvalScorecard | EvalErrorEntry> {
+	const tracer = initEvalOtel(opts.projectRoot);
+	const source = process.env.INDUSK_EVAL_SOURCE ?? "commit";
 	const projectGroup = getProjectGroupId(opts.projectRoot);
 
+	const result = await withSpan(
+		tracer,
+		"eval.run",
+		{
+			changeId: opts.changeId,
+			source,
+			mode: opts.mode,
+			projectGroup,
+			entrypoint: "runEvaluatorSync",
+		},
+		() => runEvaluatorSyncInner(opts, projectGroup),
+	);
+
+	await shutdownEvalOtel();
+	return result;
+}
+
+async function runEvaluatorSyncInner(
+	opts: EvaluatorRunOptions,
+	projectGroup: string,
+): Promise<EvalScorecard | EvalErrorEntry> {
 	const prompt = buildEvaluatorPrompt({
 		rubric: V1_RUBRIC,
 		changeId: opts.changeId,

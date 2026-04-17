@@ -359,6 +359,67 @@ To set the role:
 
 Backwards compatible: existing projects without the field continue to behave as `service`. The system stays loud by default — forgetting to instrument an app is worse than nagging.
 
+## Eval Agent OTel (Opt-In)
+
+The background eval agent — spawned on every `jj describe` to score commits — has its own opt-in OTel tracing layer, separate from the per-project instrumentation above. Its purpose is internal observability: seeing what the eval agent is doing when it fails silently, instead of squinting at log files.
+
+### Enabling
+
+Pick either source (both are idempotent):
+
+**Per-project** (`.indusk/config.json`):
+```json
+{
+  "eval": {
+    "otel": {
+      "enabled": true,
+      "dataset": "agent"
+    }
+  }
+}
+```
+
+**Per-invocation** (env vars, win over config):
+```sh
+INDUSK_EVAL_OTEL=1 INDUSK_EVAL_OTEL_DATASET=agent jj describe -m "..."
+```
+
+Endpoint comes from the standard `OTEL_EXPORTER_OTLP_ENDPOINT` env var — same one the per-project instrumentation uses. The exporter posts to `{endpoint}/v1/traces` (HTTP protobuf).
+
+**Dash0 dataset routing.** Eval agent spans are routed to a specific Dash0 dataset via the `Dash0-Dataset` HTTP header on the OTLP exporter. The default is `agent` — a dedicated bucket for eval agent traces so they don't mix with the project-under-evaluation's own traces. Override per-project via `eval.otel.dataset` in config or per-invocation via `INDUSK_EVAL_OTEL_DATASET`. If you set `Dash0-Dataset` directly via `OTEL_EXPORTER_OTLP_HEADERS`, that env-set header takes precedence (per OTel SDK contract).
+
+### Default State
+
+**OFF.** Zero cost in normal operation. No SDK init, no network, no provider registered. `initEvalOtel()` returns a no-op tracer and every `startSpan` produces a span whose `isRecording()` is `false`.
+
+### Graceful Degradation
+
+| Condition | Result | Logged to `.indusk/eval/system.log` |
+|-----------|--------|-------------------------------------|
+| `enabled: false` (default) | No-op tracer | Nothing |
+| `enabled: true`, no `OTEL_EXPORTER_OTLP_ENDPOINT` | No-op tracer | `eval.otel.enabled but OTEL_EXPORTER_OTLP_ENDPOINT is unset — falling back to no-op tracer` |
+| `enabled: true`, endpoint set, SDK init throws | No-op tracer | `eval.otel init failed — falling back to no-op tracer: {message}` |
+| `enabled: true`, endpoint set, SDK init succeeds | Real tracer | `eval.otel initialized — endpoint: {url}` |
+
+**The eval agent never fails because of OTel.** Any init error is captured, logged, and the evaluator continues with no-op spans.
+
+### Span Taxonomy (coming in Phase 2 of `improvement-eval-agent-open-telemetry`)
+
+Phase 2 adds lifecycle spans around the evaluator's seven-step process:
+
+- Root span: `eval.run` with attributes `changeId`, `source` (`commit` / `handoff` / ...), `mode` (`eval` / `baseline`), `projectGroup`
+- Child spans: `eval.catchup`, `eval.read_transcript`, `eval.read_diff`, `eval.process_highlights`, `eval.answer_rubric`, `eval.write_findings`, `eval.write_scorecard`
+
+Phase 3 adds per-highlight grandchildren under `eval.process_highlights`.
+
+### Flushing Before Exit
+
+The eval agent runs as a detached child process that exits quickly — batched spans can be lost on process termination. Always call `await shutdownEvalOtel()` in the exit path (`finally` block or `uncaughtException` handler).
+
+### Service Identity
+
+All eval agent spans carry the resource attribute `service.name = indusk-eval-agent`. This makes them easy to filter out in Dash0 if you only want to see spans from the project under evaluation, not the evaluator itself.
+
 ## Health Checks
 
 The OTel extension verifies:

@@ -14,6 +14,7 @@ import { dirname, join } from "node:path";
 import { getProjectGroupId } from "../config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
+import { initEvalOtel, shutdownEvalOtel, withSpan } from "./otel.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import type { EvalErrorEntry, EvalScorecard, EvalUsage } from "./types.js";
@@ -145,97 +146,155 @@ export async function runPersistentEval(opts: {
 	mode: "eval" | "baseline";
 	evalEndpoint?: string;
 }): Promise<EvalScorecard | EvalErrorEntry> {
-	const logWriter = new EvalLogWriter(getEvalLogPath(opts.projectRoot));
-	const session = readSession(opts.projectRoot);
+	const tracer = initEvalOtel(opts.projectRoot);
+	const source = process.env.INDUSK_EVAL_SOURCE ?? "commit";
 	const projectGroup = getProjectGroupId(opts.projectRoot);
 
-	try {
-		let result: { stdout: string; stderr: string; code: number | null };
+	const result = await withSpan(
+		tracer,
+		"eval.run",
+		{
+			changeId: opts.changeId,
+			source,
+			mode: opts.mode,
+			projectGroup,
+		},
+		async (rootSpan) => {
+			const logWriter = new EvalLogWriter(getEvalLogPath(opts.projectRoot));
 
-		if (session) {
-			// Resume existing session — cheap eval, no catchup
-			const resumePrompt = `Evaluate a new commit. Change ID: ${opts.changeId}
+			const session = await withSpan(tracer, "eval.read_session", undefined, () =>
+				readSession(opts.projectRoot),
+			);
+
+			rootSpan.setAttribute("resumed", session !== null);
+
+			try {
+				const { args, prompt } = await withSpan(
+					tracer,
+					"eval.build_prompt",
+					{ resumed: session !== null },
+					() => {
+						if (session) {
+							const resumePrompt = `Evaluate a new commit. Change ID: ${opts.changeId}
 
 Run \`jj diff -r ${opts.changeId}\` to see what changed. Then answer the same evaluation questions as before. Read the changed files for full context.
 
 Output ONLY the JSON scorecard as before — no commentary.`;
 
-			result = await spawnClaude(
-				[
-					"--print",
-					"--output-format",
-					"json",
-					"--resume",
-					session.sessionId,
-					"--allowed-tools",
-					ALLOWED_TOOLS.join(","),
-				],
-				resumePrompt,
-				opts.projectRoot,
-			);
-		} else {
-			// First eval — full catchup + evaluation
-			const fullPrompt = buildEvaluatorPrompt({
-				rubric: V1_RUBRIC,
-				changeId: opts.changeId,
-				transcriptPath: opts.transcriptPath,
-				mode: opts.mode,
-				projectGroup,
-			});
+							return {
+								args: [
+									"--print",
+									"--output-format",
+									"json",
+									"--resume",
+									session.sessionId,
+									"--allowed-tools",
+									ALLOWED_TOOLS.join(","),
+								],
+								prompt: resumePrompt,
+							};
+						}
+						return {
+							args: [
+								"--print",
+								"--output-format",
+								"json",
+								"--model",
+								"opus",
+								"--permission-mode",
+								"acceptEdits",
+								"--allowed-tools",
+								ALLOWED_TOOLS.join(","),
+							],
+							prompt: buildEvaluatorPrompt({
+								rubric: V1_RUBRIC,
+								changeId: opts.changeId,
+								transcriptPath: opts.transcriptPath,
+								mode: opts.mode,
+								projectGroup,
+							}),
+						};
+					},
+				);
 
-			result = await spawnClaude(
-				[
-					"--print",
-					"--output-format",
-					"json",
-					"--model",
-					"opus",
-					"--permission-mode",
-					"acceptEdits",
-					"--allowed-tools",
-					ALLOWED_TOOLS.join(","),
-				],
-				fullPrompt,
-				opts.projectRoot,
-			);
-		}
+				const claudeResult = await withSpan(
+					tracer,
+					"eval.spawn_claude",
+					{
+						"args.resumed": session !== null,
+						"args.model": session ? "(resumed)" : "opus",
+					},
+					async (span) => {
+						const spawned = await spawnClaude(args, prompt, opts.projectRoot);
+						span.setAttribute("exit.code", spawned.code ?? -1);
+						if (spawned.code !== 0) {
+							span.setAttribute("exit.stderr_tail", spawned.stderr.slice(-500));
+						}
+						return spawned;
+					},
+				);
 
-		if (result.code !== 0) {
-			// If resuming failed, clear session and retry with full catchup
-			if (session) {
-				clearSession(opts.projectRoot);
-				return runPersistentEval(opts);
+				if (claudeResult.code !== 0) {
+					if (session) {
+						await withSpan(tracer, "eval.clear_stale_session", undefined, () =>
+							clearSession(opts.projectRoot),
+						);
+						// Recurse — the retry produces its own root span
+						return runPersistentEval(opts);
+					}
+					throw new Error(
+						`claude exited with code ${claudeResult.code}: ${claudeResult.stderr.slice(0, 500)}`,
+					);
+				}
+
+				const parsed = await withSpan(tracer, "eval.parse_output", undefined, (span) => {
+					const out = parseClaudeOutput(claudeResult.stdout);
+					if (out.sessionId) span.setAttribute("session_id", out.sessionId);
+					if (out.usage) {
+						span.setAttribute("cost_usd", out.usage.costUsd);
+						span.setAttribute("input_tokens", out.usage.inputTokens);
+						span.setAttribute("output_tokens", out.usage.outputTokens);
+					}
+					return out;
+				});
+
+				const scorecard = JSON.parse(parsed.scorecardText.trim()) as EvalScorecard;
+				if (parsed.usage) scorecard.usage = parsed.usage;
+				scorecard.telemetryPosted = false;
+
+				await withSpan(tracer, "eval.update_session", undefined, () => {
+					const newSession: EvaluatorSession = {
+						sessionId: parsed.sessionId ?? session?.sessionId ?? "unknown",
+						createdAt: session?.createdAt ?? new Date().toISOString(),
+						lastEvalAt: new Date().toISOString(),
+						evalCount: (session?.evalCount ?? 0) + 1,
+					};
+					writeSession(opts.projectRoot, newSession);
+				});
+
+				await withSpan(tracer, "eval.write_scorecard", undefined, async () => {
+					await logWriter.append(scorecard);
+					ingestScorecard(opts.projectRoot, scorecard);
+				});
+
+				return scorecard;
+			} catch (err) {
+				const errorEntry: EvalErrorEntry = {
+					version: 1,
+					timestamp: new Date().toISOString(),
+					mode: opts.mode,
+					changeId: opts.changeId,
+					error: true,
+					message: err instanceof Error ? err.message : String(err),
+				};
+				await logWriter.append(errorEntry);
+				return errorEntry;
 			}
-			throw new Error(`claude exited with code ${result.code}: ${result.stderr.slice(0, 500)}`);
-		}
+		},
+	);
 
-		const parsed = parseClaudeOutput(result.stdout);
-		const scorecard = JSON.parse(parsed.scorecardText.trim()) as EvalScorecard;
-		if (parsed.usage) scorecard.usage = parsed.usage;
-		scorecard.telemetryPosted = false;
+	// Flush OTel so batched spans ship before the detached process exits.
+	await shutdownEvalOtel();
 
-		// Update session state
-		const newSession: EvaluatorSession = {
-			sessionId: parsed.sessionId ?? session?.sessionId ?? "unknown",
-			createdAt: session?.createdAt ?? new Date().toISOString(),
-			lastEvalAt: new Date().toISOString(),
-			evalCount: (session?.evalCount ?? 0) + 1,
-		};
-		writeSession(opts.projectRoot, newSession);
-
-		await logWriter.append(scorecard);
-		ingestScorecard(opts.projectRoot, scorecard);
-		return scorecard;
-	} catch (err) {
-		const errorEntry: EvalErrorEntry = {
-			version: 1,
-			timestamp: new Date().toISOString(),
-			mode: opts.mode,
-			changeId: opts.changeId,
-			error: true,
-			message: err instanceof Error ? err.message : String(err),
-		};
-		await logWriter.append(errorEntry);
-		return errorEntry;
-	}
+	return result;
 }
