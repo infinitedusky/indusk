@@ -4,7 +4,7 @@ The eval system measures whether InDusk's context system makes agents better at 
 
 ## How It Works
 
-A Claude Code PostToolUse hook fires after every `jj describe`. It spawns a background judge agent that:
+A Claude Code PostToolUse hook fires after every `jj describe`. It spawns a background evaluator agent that:
 
 1. Does a full `/catchup` (same as any new session)
 2. Reads the session transcript
@@ -73,7 +73,7 @@ The rubric lives in `apps/indusk-mcp/src/lib/eval/rubric.ts`. Adding a question 
 }
 ```
 
-No infrastructure change needed. The judge prompt includes all questions automatically.
+No infrastructure change needed. The evaluator prompt includes all questions automatically.
 
 ## Reading Results
 
@@ -124,7 +124,7 @@ The evaluator's Graphiti writes are selective — only facts that would have cha
 
 ## Findings Lifecycle
 
-Eval findings persist until explicitly resolved. When the judge scores a commit, any question answered `no` or `partial` becomes an **unresolved finding** in `.indusk/eval/findings.json`.
+Eval findings persist until explicitly resolved. When the evaluator scores a commit, any question answered `no` or `partial` becomes an **unresolved finding** in `.indusk/eval/findings.json`.
 
 On every subsequent `jj describe`, the hook surfaces unresolved findings to the agent:
 
@@ -156,9 +156,9 @@ indusk eval ignore "zpqywqzs:missing-context"
 
 ## Persistent Judge Sessions
 
-The eval judge reuses sessions across commits to reduce cost. The first eval in a session does a full `/catchup` (~$2-4). Subsequent evals resume the same session via `claude --resume` with just the new change ID — much cheaper.
+The eval evaluator reuses sessions across commits to reduce cost. The first eval in a session does a full `/catchup` (~$2-4). Subsequent evals resume the same session via `claude --resume` with just the new change ID — much cheaper.
 
-Session state is stored in `.indusk/eval/judge-session.json`. If the session expires or errors, the system clears it and starts fresh automatically.
+Session state is stored in `.indusk/eval/evaluator-session.json`. If the session expires or errors, the system clears it and starts fresh automatically.
 
 ## System Log
 
@@ -167,10 +167,10 @@ The eval system writes to `.indusk/eval/system.log` for full lifecycle visibilit
 ```
 2026-04-11T21:48:12.700Z hook fired — tool: Bash, command: jj describe -m "..."
 2026-04-11T21:48:12.701Z projectRoot: /path/to/project, eval.enabled: true
-2026-04-11T21:48:12.744Z candidate: .../judge-runner.js — found
-2026-04-11T21:48:12.746Z spawning judge — module: ..., changeId: abc123
-2026-04-11T21:48:13.001Z judge process started — changeId: abc123
-2026-04-11T21:50:45.123Z judge completed — scorecard written
+2026-04-11T21:48:12.744Z candidate: .../evaluator-runner.js — found
+2026-04-11T21:48:12.746Z spawning evaluator — module: ..., changeId: abc123
+2026-04-11T21:48:13.001Z evaluator process started — changeId: abc123
+2026-04-11T21:50:45.123Z evaluator completed — scorecard written
 ```
 
 Check this log when evals aren't appearing in `results.log`.

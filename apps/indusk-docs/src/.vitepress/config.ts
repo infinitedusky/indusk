@@ -106,6 +106,7 @@ const config = defineConfig({
 						{ text: "OpenTelemetry", link: "/reference/tools/otel" },
 						{ text: "Infrastructure", link: "/reference/tools/infrastructure" },
 						{ text: "Context Beam", link: "/reference/tools/context-beam" },
+						{ text: "Highlights", link: "/reference/tools/highlights" },
 					],
 				},
 			],

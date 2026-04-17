@@ -281,7 +281,7 @@ export async function evalBaseline(
 
 	// Run the smart evaluator against the baseline
 	console.info("Running smart evaluator against baseline...");
-	const { runJudgeSync } = await import("../../lib/eval/judge-runner.js");
+	const { runEvaluatorSync } = await import("../../lib/eval/evaluator-runner.js");
 
 	let changeId: string;
 	try {
@@ -293,7 +293,7 @@ export async function evalBaseline(
 		changeId = "baseline-unknown";
 	}
 
-	const evalResult = await runJudgeSync({
+	const evalResult = await runEvaluatorSync({
 		projectRoot: worktreePath,
 		changeId,
 		transcriptPath: "(baseline — no transcript)",

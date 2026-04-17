@@ -1,10 +1,10 @@
 /**
- * Persistent judge session management.
+ * Persistent evaluator session management.
  *
  * First eval spawns a new session with full catchup. Subsequent evals resume
  * the same session — no catchup cost, just "evaluate this change."
  *
- * Session state stored in `.indusk/eval/judge-session.json`.
+ * Session state stored in `.indusk/eval/evaluator-session.json`.
  */
 
 import { spawn } from "node:child_process";
@@ -14,11 +14,11 @@ import { dirname, join } from "node:path";
 import { getProjectGroupId } from "../config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
-import { buildJudgePrompt } from "./prompt-builder.js";
+import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import type { EvalErrorEntry, EvalScorecard, EvalUsage } from "./types.js";
 
-interface JudgeSession {
+interface EvaluatorSession {
 	sessionId: string;
 	createdAt: string;
 	lastEvalAt: string;
@@ -26,14 +26,14 @@ interface JudgeSession {
 }
 
 function getSessionPath(projectRoot: string): string {
-	return join(projectRoot, ".indusk", "eval", "judge-session.json");
+	return join(projectRoot, ".indusk", "eval", "evaluator-session.json");
 }
 
 function getEvalLogPath(projectRoot: string): string {
 	return join(projectRoot, ".indusk", "eval", "results.log");
 }
 
-function readSession(projectRoot: string): JudgeSession | null {
+function readSession(projectRoot: string): EvaluatorSession | null {
 	const path = getSessionPath(projectRoot);
 	if (!existsSync(path)) return null;
 	try {
@@ -43,7 +43,7 @@ function readSession(projectRoot: string): JudgeSession | null {
 	}
 }
 
-function writeSession(projectRoot: string, session: JudgeSession): void {
+function writeSession(projectRoot: string, session: EvaluatorSession): void {
 	const path = getSessionPath(projectRoot);
 	mkdirSync(dirname(path), { recursive: true });
 	writeFileSync(path, `${JSON.stringify(session, null, 2)}\n`);
@@ -175,7 +175,7 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 			);
 		} else {
 			// First eval — full catchup + evaluation
-			const fullPrompt = buildJudgePrompt({
+			const fullPrompt = buildEvaluatorPrompt({
 				rubric: V1_RUBRIC,
 				changeId: opts.changeId,
 				transcriptPath: opts.transcriptPath,
@@ -215,7 +215,7 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 		scorecard.telemetryPosted = false;
 
 		// Update session state
-		const newSession: JudgeSession = {
+		const newSession: EvaluatorSession = {
 			sessionId: parsed.sessionId ?? session?.sessionId ?? "unknown",
 			createdAt: session?.createdAt ?? new Date().toISOString(),
 			lastEvalAt: new Date().toISOString(),

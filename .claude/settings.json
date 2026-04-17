@@ -147,7 +147,16 @@
 			"Bash(JJ_EDITOR=true jj split 'glob:\".indusk/planning/archive/falsification-ritual/**\" | glob:\".indusk/planning/falsification-ritual/**\" | \".indusk/planning/master.md\" | \"CLAUDE.md\" | \"apps/indusk-docs/src/.vitepress/config.ts\" | \"apps/indusk-docs/src/decisions/falsification-ritual.md\"')",
 			"Bash(cp apps/indusk-mcp/skills/planner.md .claude/skills/planner/SKILL.md)",
 			"Bash(cp apps/indusk-mcp/skills/work.md .claude/skills/work/SKILL.md)",
-			"Bash(cp apps/indusk-mcp/skills/retrospective.md .claude/skills/retrospective/SKILL.md)"
+			"Bash(cp apps/indusk-mcp/skills/retrospective.md .claude/skills/retrospective/SKILL.md)",
+			"Bash(mkdir -p .claude/skills/highlight)",
+			"Bash(cp apps/indusk-mcp/skills/highlight.md .claude/skills/highlight/SKILL.md)",
+			"Bash(cp apps/indusk-mcp/skills/handoff.md .claude/skills/handoff/SKILL.md)",
+			"mcp__indusk__highlight",
+			"mcp__indusk__highlights_unprocessed",
+			"Bash(ps -p 21559 -o pid,etime,stat,cmd)",
+			"Bash(kill -0 21559)",
+			"Bash(echo \"exit: $?\")",
+			"Bash(cp apps/indusk-mcp/skills/eval-review.md .claude/skills/eval-review/SKILL.md)"
 		],
 		"additionalDirectories": [
 			"/tmp",

@@ -122,7 +122,7 @@ The eval agent's PostToolUse hook fires on every `jj describe` and processes the
 
 The eval agent's prompt (built by [`prompt-builder.ts`](https://github.com/infinitedusky/dusk/tree/main/apps/indusk-mcp/src/lib/eval/prompt-builder.ts)) includes a **Step 4: Process unprocessed highlights** before the rubric evaluation. The step runs only in eval mode; baseline mode skips it by design.
 
-For each highlight returned by `highlights_unprocessed`, the judge:
+For each highlight returned by `highlights_unprocessed`, the evaluator:
 
 1. **Reads the level** and maps it to a Graphiti edge weight:
 
@@ -146,7 +146,7 @@ This matters because the working agent operates under time/flow pressure and may
 
 ### Graceful degradation
 
-If `mcp__indusk__highlights_unprocessed` is unavailable (InDusk MCP down, transport error), Step 4 is skipped silently and the judge continues to the rubric. Highlights are best-effort — the broader scoring flow never fails because of a Graphiti or InDusk hiccup.
+If `mcp__indusk__highlights_unprocessed` is unavailable (InDusk MCP down, transport error), Step 4 is skipped silently and the evaluator continues to the rubric. Highlights are best-effort — the broader scoring flow never fails because of a Graphiti or InDusk hiccup.
 
 ## Why Highlights and Not Direct Graphiti Writes
 

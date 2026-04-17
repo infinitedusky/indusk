@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildJudgePrompt } from "./prompt-builder.js";
+import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 
-describe("buildJudgePrompt", () => {
+describe("buildEvaluatorPrompt", () => {
 	it("includes all rubric questions in the prompt", () => {
-		const prompt = buildJudgePrompt({
+		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "test123",
 			transcriptPath: "/tmp/transcript.jsonl",
@@ -19,8 +19,8 @@ describe("buildJudgePrompt", () => {
 		}
 	});
 
-	it("tells the judge to read the diff via jj command", () => {
-		const prompt = buildJudgePrompt({
+	it("tells the evaluator to read the diff via jj command", () => {
+		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc123",
 			transcriptPath: "/tmp/t.jsonl",
@@ -32,7 +32,7 @@ describe("buildJudgePrompt", () => {
 	});
 
 	it("includes Graphiti write instructions in eval mode", () => {
-		const prompt = buildJudgePrompt({
+		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc",
 			transcriptPath: "/tmp/t.jsonl",
@@ -45,7 +45,7 @@ describe("buildJudgePrompt", () => {
 	});
 
 	it("skips Graphiti writes in baseline mode", () => {
-		const prompt = buildJudgePrompt({
+		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc",
 			transcriptPath: "/tmp/t.jsonl",
@@ -57,7 +57,7 @@ describe("buildJudgePrompt", () => {
 	});
 
 	it("T10: includes highlight-processing instructions with level→weight mapping in eval mode", () => {
-		const prompt = buildJudgePrompt({
+		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc",
 			transcriptPath: "/tmp/t.jsonl",
@@ -75,8 +75,8 @@ describe("buildJudgePrompt", () => {
 		expect(prompt).toMatch(/additive context[^.]*not a constraint/i);
 	});
 
-	it("T10 baseline: does NOT tell the judge to process highlights in baseline mode", () => {
-		const prompt = buildJudgePrompt({
+	it("T10 baseline: does NOT tell the evaluator to process highlights in baseline mode", () => {
+		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc",
 			transcriptPath: "/tmp/t.jsonl",
@@ -88,7 +88,7 @@ describe("buildJudgePrompt", () => {
 	});
 
 	it("includes the change ID and transcript path", () => {
-		const prompt = buildJudgePrompt({
+		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "xyz789",
 			transcriptPath: "/home/user/.claude/transcripts/session.jsonl",

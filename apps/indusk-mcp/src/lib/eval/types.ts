@@ -2,7 +2,7 @@
  * Types for the context system evaluation.
  *
  * The scorecard is the unit of evaluation — one per commit. Questions are the
- * rubric, defined in rubric.ts and answered by the judge agent.
+ * rubric, defined in rubric.ts and answered by the eval agent (evaluator).
  */
 
 export interface RubricQuestion {

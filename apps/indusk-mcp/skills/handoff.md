@@ -52,6 +52,20 @@ Create or overwrite `.claude/handoff.md` with:
 - When you're about to run out of context
 - `/handoff` explicitly
 
+## Fire the Eval Trigger
+
+After writing the handoff file, fire the eval trigger with `--source handoff` so the eval agent processes any unprocessed highlights before the session ends. This matters because highlights written after the last `jj describe` would otherwise sit in the queue until the next session's first commit.
+
+Run this from the project root:
+
+```bash
+node .claude/hooks/eval-trigger.js --source handoff
+```
+
+The trigger spawns the evaluator in the background and returns immediately — it never blocks handoff. The evaluator processes the highlights queue and, because `INDUSK_EVAL_SOURCE=handoff` is set in the environment, may skip diff-based rubric scoring (there's no new commit). Highlights still get materialized into Graphiti episodes.
+
+If the hook isn't installed or Node isn't on PATH, the handoff still succeeds — the highlights remain queued for the next `jj describe` in a future session.
+
 ## Rules
 
 - **Be specific.** "Working on Phase 3" is useless. "Phase 3, item 4: refactored check_health to use extensions. extensions_status MCP tool created. Next: refactor init to remove hardcoded FalkorDB/CGC." is useful.

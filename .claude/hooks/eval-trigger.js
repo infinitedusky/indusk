@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * PostToolUse hook: triggers the eval judge after `jj describe`.
+ * Dual-mode eval trigger.
  *
- * Fires on Bash tool calls containing "jj describe". Spawns the judge runner
- * as a detached background process and exits immediately — never blocks the
- * working session.
+ * 1) PostToolUse hook mode (default): fires on Bash tool calls containing
+ *    `jj describe`. Reads the hook event JSON from stdin. Spawns the evaluator
+ *    runner as a detached background process.
+ *
+ * 2) CLI mode (`--source <tag>`): invoked manually by skills (e.g., handoff)
+ *    at session end. No stdin read, no `jj describe` filter. Uses the current
+ *    @ change and passes the source tag to the evaluator via INDUSK_EVAL_SOURCE.
+ *    The evaluator may skip diff-based scoring when source != "commit" but still
+ *    processes the highlights queue.
  *
  * Exit 0 always — this is advisory, not blocking.
  */
@@ -26,24 +32,45 @@ function syslog(projectRoot, msg) {
 	}
 }
 
-// Read hook input from stdin
-let input = "";
-for await (const chunk of process.stdin) {
-	input += chunk;
+// Parse --source <tag> from argv. Returns null if not in CLI mode.
+function parseSourceArg(argv) {
+	const idx = argv.indexOf("--source");
+	if (idx === -1 || idx === argv.length - 1) return null;
+	const value = argv[idx + 1];
+	if (!value || value.startsWith("--")) return null;
+	return value;
 }
 
-const event = JSON.parse(input);
-const toolInput = event.tool_input ?? {};
-const command = toolInput.command ?? "";
-const cwd = event.cwd ?? process.cwd();
+const cliSource = parseSourceArg(process.argv);
+let cwd;
+let command = "";
 
-syslog(cwd, `hook fired — tool: ${event.tool_name}, command: ${command.slice(0, 100)}`);
+if (cliSource !== null) {
+	// CLI mode — no stdin, no jj describe filter
+	cwd = process.cwd();
+	syslog(cwd, `cli invocation — source: ${cliSource}`);
+} else {
+	// Hook mode — read event from stdin
+	let input = "";
+	for await (const chunk of process.stdin) {
+		input += chunk;
+	}
 
-// Fast path: not a jj describe command
-if (!command.includes("jj describe")) {
-	syslog(cwd, "skip — no jj describe in command");
-	process.exit(0);
+	const event = JSON.parse(input);
+	const toolInput = event.tool_input ?? {};
+	command = toolInput.command ?? "";
+	cwd = event.cwd ?? process.cwd();
+
+	syslog(cwd, `hook fired — tool: ${event.tool_name}, command: ${command.slice(0, 100)}`);
+
+	// Fast path: not a jj describe command
+	if (!command.includes("jj describe")) {
+		syslog(cwd, "skip — no jj describe in command");
+		process.exit(0);
+	}
 }
+
+const source = cliSource ?? "commit";
 
 /**
  * Find the project root by walking up looking for .indusk/ or .claude/.
@@ -115,9 +142,12 @@ const transcriptPath =
 const hookDir = dirname(fileURLToPath(import.meta.url));
 const candidates = [
 	// Source repo (apps/indusk-mcp/hooks/ → apps/indusk-mcp/dist/)
-	resolve(hookDir, "../dist/lib/eval/judge-runner.js"),
+	resolve(hookDir, "../dist/lib/eval/evaluator-runner.js"),
 	// Installed package (hooks/ → dist/)
-	resolve(hookDir, "../../node_modules/@infinitedusky/indusk-mcp/dist/lib/eval/judge-runner.js"),
+	resolve(
+		hookDir,
+		"../../node_modules/@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js",
+	),
 	// Global npx cache
 	...(() => {
 		try {
@@ -126,24 +156,24 @@ const candidates = [
 				return [
 					resolve(
 						dirname(which),
-						"../lib/node_modules/@infinitedusky/indusk-mcp/dist/lib/eval/judge-runner.js",
+						"../lib/node_modules/@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js",
 					),
 				];
 		} catch {}
 		return [];
 	})(),
 ];
-let judgeRunnerPath = null;
+let evaluatorRunnerPath = null;
 for (const c of candidates) {
 	syslog(projectRoot, `candidate: ${c} — ${existsSync(c) ? "found" : "missing"}`);
 	if (existsSync(c)) {
-		judgeRunnerPath = c;
+		evaluatorRunnerPath = c;
 		break;
 	}
 }
-syslog(projectRoot, `judgeRunnerPath: ${judgeRunnerPath ?? "NOT FOUND"}`);
+syslog(projectRoot, `evaluatorRunnerPath: ${evaluatorRunnerPath ?? "NOT FOUND"}`);
 
-if (!judgeRunnerPath) {
+if (!evaluatorRunnerPath) {
 	// Can't find the package — log error and exit
 	const { mkdirSync, appendFileSync } = await import("node:fs");
 	const logPath = resolve(projectRoot, ".indusk", "eval", "results.log");
@@ -155,14 +185,14 @@ if (!judgeRunnerPath) {
 		changeId,
 		error: true,
 		message:
-			"Could not find @infinitedusky/indusk-mcp package — eval judge not available. Run: npm i -g @infinitedusky/indusk-mcp",
+			"Could not find @infinitedusky/indusk-mcp package — eval evaluator not available. Run: npm i -g @infinitedusky/indusk-mcp",
 	});
 	appendFileSync(logPath, `${entry}\n`, "utf8");
 	process.exit(0);
 }
 
 // Surface unresolved findings from previous evals
-const findingsPath = judgeRunnerPath.replace("judge-runner.js", "findings.js");
+const findingsPath = evaluatorRunnerPath.replace("evaluator-runner.js", "findings.js");
 if (existsSync(findingsPath)) {
 	try {
 		const { getUnresolvedFindings } = await import(findingsPath);
@@ -180,18 +210,23 @@ if (existsSync(findingsPath)) {
 	}
 }
 
-// Use persistent judge — resumes existing session if available, otherwise does full catchup.
-const persistentJudgePath = judgeRunnerPath.replace("judge-runner.js", "persistent-judge.js");
-const useModule = existsSync(persistentJudgePath) ? persistentJudgePath : judgeRunnerPath;
-const useFunction = existsSync(persistentJudgePath) ? "runPersistentEval" : "runJudgeSync";
+// Use persistent evaluator — resumes existing session if available, otherwise does full catchup.
+const persistentEvaluatorPath = evaluatorRunnerPath.replace(
+	"evaluator-runner.js",
+	"persistent-evaluator.js",
+);
+const useModule = existsSync(persistentEvaluatorPath)
+	? persistentEvaluatorPath
+	: evaluatorRunnerPath;
+const useFunction = existsSync(persistentEvaluatorPath) ? "runPersistentEval" : "runEvaluatorSync";
 
 syslog(
 	projectRoot,
-	`spawning judge — module: ${useModule}, function: ${useFunction}, changeId: ${changeId}`,
+	`spawning evaluator — module: ${useModule}, function: ${useFunction}, changeId: ${changeId}`,
 );
 
 const syslogPath = resolve(projectRoot, ".indusk", "eval", "system.log");
-const judgeScript = `
+const evaluatorScript = `
 const fs = require("fs");
 const path = require("path");
 function syslog(msg) {
@@ -200,10 +235,10 @@ function syslog(msg) {
     fs.appendFileSync("${syslogPath}", new Date().toISOString() + " " + msg + "\\n");
   } catch {}
 }
-syslog("judge process started — changeId: ${changeId}");
+syslog("evaluator process started — changeId: ${changeId}");
 import("${useModule}")
   .then(m => {
-    syslog("judge module loaded — calling ${useFunction}");
+    syslog("evaluator module loaded — calling ${useFunction}");
     return m.${useFunction}({
       projectRoot: ${JSON.stringify(projectRoot)},
       changeId: ${JSON.stringify(changeId)},
@@ -214,11 +249,11 @@ import("${useModule}")
   })
   .then((result) => {
     const hasError = result && result.error;
-    syslog("judge completed — " + (hasError ? "error: " + result.message : "scorecard written"));
+    syslog("evaluator completed — " + (hasError ? "error: " + result.message : "scorecard written"));
     process.exit(0);
   })
   .catch(err => {
-    syslog("judge crashed — " + (err.message || String(err)));
+    syslog("evaluator crashed — " + (err.message || String(err)));
     const logPath = path.join(${JSON.stringify(projectRoot)}, ".indusk", "eval", "results.log");
     fs.mkdirSync(path.dirname(logPath), { recursive: true });
     const entry = JSON.stringify({
@@ -234,25 +269,34 @@ import("${useModule}")
   });
 `;
 
-const child = spawn("node", ["--input-type=module", "-e", judgeScript], {
+const child = spawn("node", ["--input-type=module", "-e", evaluatorScript], {
 	cwd: projectRoot,
 	stdio: "ignore",
 	detached: true,
-	env: { ...process.env },
+	env: { ...process.env, INDUSK_EVAL_SOURCE: source },
 });
 
 child.unref();
 
-// Output advisory message
-const output = JSON.stringify({
-	hookSpecificOutput: {
-		hookEventName: "PostToolUse",
-		message: `Eval judge spawned for change ${changeId.slice(0, 8)}`,
-	},
-});
-process.stdout.write(output);
-process.stderr.write(
-	`📊 Eval judge spawned in background for ${changeId.slice(0, 8)}. Results will appear in .indusk/eval/results.log\n`,
-);
+syslog(projectRoot, `evaluator spawned — source: ${source}, pid: ${child.pid}`);
+
+if (cliSource !== null) {
+	// CLI mode — write a brief notice to stderr and exit
+	process.stderr.write(
+		`📊 Eval evaluator spawned (source=${source}) for ${changeId.slice(0, 8)}. Results will appear in .indusk/eval/results.log\n`,
+	);
+} else {
+	// Hook mode — output structured hook response
+	const output = JSON.stringify({
+		hookSpecificOutput: {
+			hookEventName: "PostToolUse",
+			message: `Eval evaluator spawned for change ${changeId.slice(0, 8)}`,
+		},
+	});
+	process.stdout.write(output);
+	process.stderr.write(
+		`📊 Eval evaluator spawned in background for ${changeId.slice(0, 8)}. Results will appear in .indusk/eval/results.log\n`,
+	);
+}
 
 process.exit(0);

@@ -1,11 +1,11 @@
 /**
- * Builds the judge agent's system prompt.
+ * Builds the evaluator agent's system prompt.
  *
- * The prompt instructs the judge to: do catchup, read the transcript, read the
+ * The prompt instructs the evaluator to: do catchup, read the transcript, read the
  * diff itself via jj, answer each rubric question, write findings to Graphiti
  * (eval mode only), and output a JSON scorecard.
  *
- * The diff is NOT embedded in the prompt — the judge reads it via tool calls.
+ * The diff is NOT embedded in the prompt — the evaluator reads it via tool calls.
  * This keeps the prompt small regardless of commit size.
  */
 
@@ -19,7 +19,7 @@ export interface PromptBuilderOptions {
 	projectGroup: string;
 }
 
-export function buildJudgePrompt(opts: PromptBuilderOptions): string {
+export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
 	const questionsBlock = opts.rubric
 		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
 		.join("\n\n");
@@ -78,7 +78,7 @@ If the tool is unavailable, skip silently and set graphitiWrites to 0.`
 
 Baseline mode — do NOT write to Graphiti. Set graphitiWrites to 0.`;
 
-	return `You are the InDusk evaluation judge. Your job is to evaluate the quality of work done by an AI agent on a software project.
+	return `You are the InDusk eval agent (evaluator). Your job is to evaluate the quality of work done by an AI agent on a software project.
 
 You have full read access to the codebase, MCP tools (Graphiti, code graph, InDusk), and the session transcript. You cannot edit files.
 

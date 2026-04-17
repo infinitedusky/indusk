@@ -37,7 +37,7 @@ function makeError(overrides: Partial<EvalErrorEntry> = {}): EvalErrorEntry {
 		mode: "eval",
 		changeId: "abc123",
 		error: true,
-		message: "Judge failed to produce valid JSON",
+		message: "Evaluator failed to produce valid JSON",
 		...overrides,
 	};
 }

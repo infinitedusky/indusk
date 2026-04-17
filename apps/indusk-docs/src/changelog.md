@@ -5,6 +5,12 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ## [Unreleased]
 
 ### Changed
+- **Rename: "judge" → "evaluator" / "eval agent" (Phase 0 of `improvement-eval-agent-open-telemetry`)** — the background process that scores every `jj describe` is now called the eval agent or evaluator in code. Files renamed: `judge-runner.ts` → `evaluator-runner.ts`, `persistent-judge.ts` → `persistent-evaluator.ts`. Symbols renamed: `runJudgeSync` → `runEvaluatorSync`, `runJudgeBackground` → `runEvaluatorBackground`, `buildJudgePrompt` → `buildEvaluatorPrompt`, `JudgeRunOptions` → `EvaluatorRunOptions`. Log strings, skill docs, and reference pages updated. The state file `.indusk/eval/judge-session.json` becomes `.indusk/eval/evaluator-session.json` (harmless — the evaluator has been silently failing since 2026-04-11 so no one had live session state). No external CLI or MCP API change. Historical mentions of "judge" in archived changelog entries and archived plan docs remain as-is.
+
+### Added
+- **Agent Roles — highlights queue and eval-processing pipeline (1.17.0)** — the working agent stops writing Graphiti episodes at trigger points. Instead it calls `mcp__indusk__highlight` with a tag, a single-line note, and a level (`critical` / `important` / `note`). Highlights append to `.indusk/highlights.jsonl`. The eval agent, spawned on every `jj describe` and at session end, reads unprocessed highlights via `highlights_unprocessed`, writes level-weighted Graphiti episodes via `graph_capture` (critical → 1.0, important → 0.6, note → 0.3), and calls `highlight_mark_processed` with either `wrote-episode` or `skipped`. Three-tier agent roles (working agent / eval agent / infrastructure) documented in CLAUDE.md Architecture + Key Decisions. New `/highlight` slash command for explicit user-flagged moments. `handoff` skill fires `eval-trigger.js --source handoff` at session end so queued highlights are processed before the session ends — the eval-trigger hook now accepts `--source <tag>` and propagates it to the judge via `INDUSK_EVAL_SOURCE`. planner / work / retrospective skills migrated from direct `graph_capture` calls to `highlight` calls. See the [Highlights reference](/reference/tools/highlights) for the full flow and level semantics.
+
+### Changed
 - **Repo renamed from `infinitedusky` to `dusk`** — removed `indusk-portfolio` app (will be rebuilt in a separate repo). Updated graph namespaces, config, and docs references. npm package `@infinitedusky/indusk-mcp` unchanged.
 
 ### Fixed

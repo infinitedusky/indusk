@@ -1,8 +1,8 @@
 /**
- * Judge runner — spawns a background `claude --print` process that evaluates
+ * Evaluator runner — spawns a background `claude --print` process that evaluates
  * a commit and writes results to the eval log.
  *
- * The judge is a detached child process so the calling hook can exit immediately.
+ * The evaluator is a detached child process so the calling hook can exit immediately.
  * Results appear asynchronously in `.indusk/eval/results.log`.
  */
 
@@ -12,11 +12,11 @@ import { join } from "node:path";
 import { getProjectGroupId } from "../config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
-import { buildJudgePrompt } from "./prompt-builder.js";
+import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
 
-export interface JudgeRunOptions {
+export interface EvaluatorRunOptions {
 	projectRoot: string;
 	changeId: string;
 	transcriptPath: string;
@@ -45,16 +45,16 @@ async function postTelemetry(endpoint: string, scorecard: EvalScorecard): Promis
 }
 
 /**
- * Run the judge as a detached background process.
+ * Run the evaluator as a detached background process.
  *
- * Spawns `claude --print` with the judge prompt and allowed tools whitelist.
+ * Spawns `claude --print` with the evaluator prompt and allowed tools whitelist.
  * Collects stdout, parses the scorecard JSON, and appends to the eval log.
  * If anything fails, logs an error entry instead of silently dropping.
  */
-export function runJudgeBackground(opts: JudgeRunOptions): void {
+export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 	const projectGroup = getProjectGroupId(opts.projectRoot);
 
-	const prompt = buildJudgePrompt({
+	const prompt = buildEvaluatorPrompt({
 		rubric: V1_RUBRIC,
 		changeId: opts.changeId,
 		transcriptPath: opts.transcriptPath,
@@ -170,13 +170,15 @@ export function runJudgeBackground(opts: JudgeRunOptions): void {
 }
 
 /**
- * Run the judge synchronously (for testing and manual invocation).
+ * Run the evaluator synchronously (for testing and manual invocation).
  * Returns the scorecard or error entry.
  */
-export async function runJudgeSync(opts: JudgeRunOptions): Promise<EvalScorecard | EvalErrorEntry> {
+export async function runEvaluatorSync(
+	opts: EvaluatorRunOptions,
+): Promise<EvalScorecard | EvalErrorEntry> {
 	const projectGroup = getProjectGroupId(opts.projectRoot);
 
-	const prompt = buildJudgePrompt({
+	const prompt = buildEvaluatorPrompt({
 		rubric: V1_RUBRIC,
 		changeId: opts.changeId,
 		transcriptPath: opts.transcriptPath,

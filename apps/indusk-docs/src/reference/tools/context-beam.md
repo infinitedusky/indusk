@@ -45,7 +45,7 @@ Eval findings always rank highest regardless of distance — they're active, unr
 
 ```
 context_beam({
-  path: "src/lib/eval/judge-runner.ts",
+  path: "src/lib/eval/evaluator-runner.ts",
   trace: true,
   format: "markdown"
 })
@@ -60,13 +60,13 @@ Parameters:
 
 ```bash
 # Markdown output
-indusk beam src/lib/eval/judge-runner.ts
+indusk beam src/lib/eval/evaluator-runner.ts
 
 # Trace mode — see what each query found
-indusk beam src/lib/eval/judge-runner.ts --trace
+indusk beam src/lib/eval/evaluator-runner.ts --trace
 
 # JSON output
-indusk beam src/lib/eval/judge-runner.ts --json
+indusk beam src/lib/eval/evaluator-runner.ts --json
 ```
 
 ## Trace Mode
@@ -74,17 +74,17 @@ indusk beam src/lib/eval/judge-runner.ts --json
 `--trace` shows every query step as it runs:
 
 ```
-[beam] target: src/lib/eval/judge-runner.ts
+[beam] target: src/lib/eval/evaluator-runner.ts
 
 [anchor-lookup] semantic-graph (55ms)
   → 1 results
-    - Anchor: file at /full/path/to/judge-runner.ts
+    - Anchor: file at /full/path/to/evaluator-runner.ts
 
 [structural-neighbors] semantic-graph (33ms)
   → 6 results
     - IMPORTS: prompt-builder.ts
     - IMPORTS: rubric.ts
-    - IMPORTED_BY: persistent-judge.ts
+    - IMPORTED_BY: persistent-evaluator.ts
 
 [target-facts] graphiti (106ms)
   → 2 results
@@ -123,8 +123,8 @@ Beam has no configuration in v1. It runs on demand via the MCP tool or CLI.
 Beam results are only as good as the underlying data:
 
 - **Semantic graph** needs to be synced (`indusk graph sync`) to have current anchors and edges
-- **Graphiti** needs facts written with file paths (the eval judge does this via `graph_capture`)
+- **Graphiti** needs facts written with file paths (the eval evaluator does this via `graph_capture`)
 - **CGC** needs to be indexed (`indusk index_project`) for structural relationships
-- **Eval findings** accumulate automatically as the eval judge runs
+- **Eval findings** accumulate automatically as the eval evaluator runs
 
-If beam returns sparse results, the fix is usually enriching the data — run a graph sync, re-index CGC, or let the eval judge run for a few more commits.
+If beam returns sparse results, the fix is usually enriching the data — run a graph sync, re-index CGC, or let the eval evaluator run for a few more commits.
