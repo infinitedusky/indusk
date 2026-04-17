@@ -1,7 +1,7 @@
 ---
 title: "Agent Roles — Define and Enforce Role Boundaries"
 date: 2026-04-15
-status: draft
+status: in-progress
 gate_policy: ask
 trajectory: required
 ---
@@ -41,11 +41,11 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `writeHighlight(tag, note, level)` appends a JSONL entry to `.indusk/highlights.jsonl` with auto-generated ID and ISO timestamp | Phase 1 | Phase 1 | planned |
-| T2 | `readUnprocessedHighlights()` returns entries in highlights.jsonl that aren't yet in highlights-processed.jsonl | Phase 1 | Phase 1 | planned |
-| T3 | `markProcessed(id, action)` appends to highlights-processed.jsonl; subsequent `readUnprocessedHighlights` excludes that id | Phase 1 | Phase 1 | planned |
-| T4 | Highlight ID format `h-{YYYYMMDD}-{seq}` with 3-digit counter that resets daily | Phase 1 | Phase 1 | planned |
-| T5 | `highlight` MCP tool registered in the server and calls `writeHighlight` with tag/note/level | Phase 1 | Phase 1 | planned |
+| T1 | `writeHighlight(tag, note, level)` appends a JSONL entry to `.indusk/highlights.jsonl` with auto-generated ID and ISO timestamp | Phase 1 | Phase 1 | passing |
+| T2 | `readUnprocessedHighlights()` returns entries in highlights.jsonl that aren't yet in highlights-processed.jsonl | Phase 1 | Phase 1 | passing |
+| T3 | `markProcessed(id, action)` appends to highlights-processed.jsonl; subsequent `readUnprocessedHighlights` excludes that id | Phase 1 | Phase 1 | passing |
+| T4 | Highlight ID format `h-{YYYYMMDD}-{seq}` with 3-digit counter that resets daily | Phase 1 | Phase 1 | passing |
+| T5 | `highlight` MCP tool registered in the server and calls `writeHighlight` with tag/note/level | Phase 1 | Phase 1 | passing |
 | T6 | Planner skill `brief-accepted` and `adr-accepted` triggers call `highlight` (level: critical) — grep finds the calls and does NOT find raw `graph_capture`/`add_memory` | Phase 2 | Phase 2 | planned |
 | T7 | Work skill `correction` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | planned |
 | T8 | Retrospective skill `retro-lesson` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | planned |
@@ -66,28 +66,28 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 ## Checklist
 
 ### Phase 1: Highlights Queue Infrastructure
-- [ ] Create `apps/indusk-mcp/src/lib/highlights.ts` with:
+- [x] Create `apps/indusk-mcp/src/lib/highlights.ts` with:
   - `writeHighlight(tag: string, note: string, level: 'critical' | 'important' | 'note')` — appends to `.indusk/highlights.jsonl` with auto-generated ID and timestamp
   - `readUnprocessedHighlights()` — reads `highlights.jsonl`, reads `highlights-processed.jsonl`, returns unprocessed entries
   - `markProcessed(id: string, action: 'wrote-episode' | 'skipped', detail?: string)` — appends to `highlights-processed.jsonl`
   - ID format: `h-{YYYYMMDD}-{seq}` where seq is a 3-digit counter reset daily
-- [ ] Create `highlight` MCP tool in `apps/indusk-mcp/src/tools/` that calls `writeHighlight()` — exposed so the eval agent and skills can write highlights programmatically
-- [ ] Create `highlights_unprocessed` MCP tool that calls `readUnprocessedHighlights()` — exposed so the eval agent can query what needs processing
-- [ ] Create `highlight_mark_processed` MCP tool that calls `markProcessed()` — exposed so the eval agent can mark highlights done
+- [x] Create `highlight` MCP tool in `apps/indusk-mcp/src/tools/` that calls `writeHighlight()` — exposed so the eval agent and skills can write highlights programmatically
+- [x] Create `highlights_unprocessed` MCP tool that calls `readUnprocessedHighlights()` — exposed so the eval agent can query what needs processing
+- [x] Create `highlight_mark_processed` MCP tool that calls `markProcessed()` — exposed so the eval agent can mark highlights done
 
 #### Phase 1 Verification
-- [ ] T1 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- highlights`)
-- [ ] T2 passes (same command)
-- [ ] T3 passes (same command)
-- [ ] T4 passes (same command)
-- [ ] T5 passes — MCP tool registered; manual sanity via MCP inspector or call-through
-- [ ] `pnpm check` passes with no errors
+- [x] T1 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- highlights`)
+- [x] T2 passes (same command)
+- [x] T3 passes (same command)
+- [x] T4 passes (same command)
+- [x] T5 passes — MCP tool registered; manual sanity via MCP inspector or call-through
+- [x] `pnpm check` passes with no errors
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Conventions: "Working agent writes highlights via the `highlight` MCP tool instead of calling `graph_capture` directly. Highlights are processed by the eval agent into structured Graphiti episodes."
+- [x] Add to CLAUDE.md Conventions: "Working agent writes highlights via the `highlight` MCP tool instead of calling `graph_capture` directly. Highlights are processed by the eval agent into structured Graphiti episodes."
 
 #### Phase 1 Document
-- [ ] Write reference page at `apps/indusk-docs/src/reference/tools/highlights.md` documenting the highlight system, levels, and MCP tools
+- [x] Write reference page at `apps/indusk-docs/src/reference/tools/highlights.md` documenting the highlight system, levels, and MCP tools
 
 ### Phase 2: Migrate Skills from graph_capture to Highlights
 - [ ] Update planner skill (`apps/indusk-mcp/skills/planner/SKILL.md`): replace `graph_capture` call on brief acceptance with `highlight` call — level `critical`, tag `brief-accepted`
