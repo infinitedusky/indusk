@@ -137,7 +137,9 @@
       "Bash(jj op *)",
       "Bash(JJ_EDITOR=true jj split '\"apps/indusk-mcp/src/bin/commands/update.ts\" | \"apps/indusk-mcp/package.json\" | \"apps/indusk-docs/src/changelog.md\"')",
       "Bash(jj edit *)",
-      "Bash(JJ_EDITOR=true jj split 'glob:\".indusk/planning/falsification-ritual/**\" | \"apps/indusk-mcp/skills/planner.md\" | \"apps/indusk-docs/src/reference/skills/plan.md\" | \".claude/lessons/verification-gates-need-adversarial-framing.md\"')"
+      "Bash(JJ_EDITOR=true jj split 'glob:\".indusk/planning/falsification-ritual/**\" | \"apps/indusk-mcp/skills/planner.md\" | \"apps/indusk-docs/src/reference/skills/plan.md\" | \".claude/lessons/verification-gates-need-adversarial-framing.md\"')",
+      "Bash(npx @biomejs/biome check --write apps/indusk-mcp/src/lib/falsification/ apps/indusk-mcp/skills/retrospective.md apps/indusk-mcp/skills/work.md)",
+      "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/falsification/)"
     ],
     "additionalDirectories": [
       "/tmp",

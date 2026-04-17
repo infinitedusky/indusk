@@ -52,9 +52,9 @@ Ship `/falsify {plan}` as a new skill that runs between `/work` completion and `
 | T4 | `isFalsificationComplete(plan)` returns false when no log exists; true when the log has a terminator entry; false when the log has hypotheses but no terminator | Phase 1 | Phase 1 | passing |
 | T5 | `isFalsificationSkipped(implBody)` returns true when impl frontmatter has `falsification: skipped` AND `falsification_reason: {non-empty text}`; false otherwise (missing, empty reason, or malformed) | Phase 1 | Phase 1 | passing |
 | T6 | `readFalsificationLog` returns an empty array (not throws) when `.indusk/planning/{plan}/falsification.md` does not exist | Phase 1 | Phase 1 | passing |
-| T7 | `retrospective.md` skill prose references the falsification gate and the skip-reason escape hatch — grep for `falsification` in the skill markdown returns both the completion check and the skip pattern | Phase 2 | Phase 2 | planned |
-| T8 | `work.md` skill prose, at impl completion, directs the user to run `/falsify {plan}` before `/retrospective` — grep for `/falsify` in work.md returns at least one reference in the completion section | Phase 2 | Phase 2 | planned |
-| T9 | End-to-end integration: given a plan whose impl is `completed` but has no `falsification.md` and no `falsification: skipped` frontmatter, the retrospective skill's prose Step 0 refuses to proceed and names the gate explicitly | Phase 2 | Phase 2 | planned |
+| T7 | `retrospective.md` skill prose references the falsification gate and the skip-reason escape hatch — grep for `falsification` in the skill markdown returns both the completion check and the skip pattern | Phase 2 | Phase 2 | passing |
+| T8 | `work.md` skill prose, at impl completion, directs the user to run `/falsify {plan}` before `/retrospective` — grep for `/falsify` in work.md returns at least one reference in the completion section | Phase 2 | Phase 2 | passing |
+| T9 | End-to-end integration: given a plan whose impl is `completed` but has no `falsification.md` and no `falsification: skipped` frontmatter, the retrospective skill's prose Step 0 refuses to proceed and names the gate explicitly | Phase 2 | Phase 2 | passing |
 | T10 | `apps/indusk-docs/src/guide/falsification-ritual.md` exists and contains sections for: the ritual (bounty-hunting), the principle (bullshit detector), the three outcomes, a worked example, the bookend symmetry with Test Trajectory | Phase 3 | Phase 3 | planned |
 | T11 | VitePress sidebar at `apps/indusk-docs/src/.vitepress/config.ts` has an entry linking to `/guide/falsification-ritual` | Phase 3 | Phase 3 | planned |
 | T12 | `.claude/lessons/verification-gates-need-adversarial-framing.md` cross-links the user-facing guide (grep for the guide path in the lesson file) | Phase 3 | Phase 3 | planned |
@@ -115,33 +115,27 @@ Ship `/falsify {plan}` as a new skill that runs between `/work` completion and `
 
 #### Implementation
 
-- [ ] Update `apps/indusk-mcp/skills/retrospective.md`:
-  - Add a new "Step 0: Falsification Gate" at the top of the Audit Checklist (before Step 1). Pseudo-code:
-    ```
-    import { isFalsificationComplete } from "apps/indusk-mcp/src/lib/falsification/log.js";
-    import { isFalsificationSkipped } from "apps/indusk-mcp/src/lib/falsification/skip.js";
-    const ok = isFalsificationComplete(planRoot) || isFalsificationSkipped(implBody).skipped;
-    if (!ok) refuse with: "Run `/falsify {plan}` first. To skip intentionally, add `falsification: skipped — reason: {text}` to impl frontmatter."
-    ```
-  - Write it as skill prose (agent instructions), not executable code — the agent runs the check by invoking the helpers via tsx/MCP, as elsewhere in the skills.
-- [ ] Update `apps/indusk-mcp/skills/work.md`:
-  - In Step 15 (Completion), add: "Before updating impl status to `completed`, run `/falsify {plan}` to exercise the falsification ritual. The ritual may surface gaps that reopen the plan (`status: in-progress` again). Only after `/falsify` terminates cleanly — or is explicitly skipped via `falsification: skipped — reason: {text}` in the frontmatter — mark the plan `completed` and let the user know it's ready for `/retrospective`."
-- [ ] Write integration tests for T7, T8, T9 — grep-style markdown assertions on the skill files plus a mock-fixture retrospective dry-run.
+- [x] Updated `apps/indusk-mcp/skills/retrospective.md`: added Step 0 Falsification Gate at the top of the Audit Checklist. Step 0 is blocking — no writing the retrospective until the gate passes. Names both satisfying conditions (completion via `isFalsificationComplete` or skip via `isFalsificationSkipped`), spells out the two-field frontmatter shape, and surfaces the refusal message as a blockquote with a copy-pasteable skip block.
+- [x] Updated `apps/indusk-mcp/skills/work.md`: Step 15 Completion now directs the user to run `/falsify {plan}` before `/retrospective`, notes that the ritual may reopen the impl (status back to `in-progress` for fix-in-scope), references the skip opt-out, and links the guide + ADR. The final user-facing message is spelled out explicitly.
+- [x] Wrote integration tests for T7, T8, T9 in `apps/indusk-mcp/src/lib/falsification/integration.test.ts` — 10 tests:
+  - T7 (4 tests): Step 0 exists, references both helper functions by name, names both skip fields, explicitly refuses to proceed
+  - T8 (4 tests): Step 15 exists, mentions /falsify in the completion section, /falsify appears BEFORE /retrospective in that section, references the skip opt-out
+  - T9 (2 tests): gate logic applied to a synthetic plan with no record (fails) and a synthetic plan with valid skip frontmatter (passes)
 
 #### Phase 2 Verification
 
-- [ ] T7 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- retrospective-gate`)
-- [ ] T8 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- work-handoff`)
-- [ ] T9 passes — integration test using a fixture plan with `completed` impl but no falsification record; retrospective skill prose surfaces the gate refusal message
+- [x] T7 passes (`pnpm test falsification` — integration.test.ts, 4 assertions on retrospective.md Step 0)
+- [x] T8 passes (same command — 4 assertions on work.md Step 15, including /falsify-before-/retrospective ordering)
+- [x] T9 passes (same command — 2 synthetic-plan gate-check assertions; full suite: 233/233 green)
 
 #### Phase 2 Context
 
-- [ ] Update CLAUDE.md Conventions: "Retrospective hard-blocks without falsification. The gate check runs first in `/retrospective` via `isFalsificationComplete(planRoot) || isFalsificationSkipped(implBody)`. Skipping requires frontmatter opt-out with a recorded reason."
+- [x] Added CLAUDE.md Conventions bullet: "Retrospective hard-blocks without falsification" — names Step 0 in retrospective.md, the two helper functions used to evaluate the gate, and the work skill's role in directing users to /falsify first. Notes skill-level enforcement over Node-level validator hooks as a deliberate v1 choice.
 
 #### Phase 2 Document
 
-- [ ] Update `apps/indusk-docs/src/reference/skills/retrospective.md` — add Step 0 Falsification Gate with the refusal message, the two satisfying conditions, and a pointer to the guide (which will be written in Phase 3).
-- [ ] Update `apps/indusk-docs/src/reference/skills/work.md` — note the completion handoff to `/falsify` in the completion section.
+- [x] Updated `apps/indusk-docs/src/reference/skills/retrospective.md` — inserted Step 0 Falsification Gate before Step 1, names both satisfying conditions, points at the library reference and (forward-link) the user-facing guide.
+- [x] Updated `apps/indusk-docs/src/reference/skills/work.md` — added a new section "### 11. Plan completion — run `/falsify` next" between the Advance step and the Hook Enforcement section, covering the three ritual outcomes, the retrospective hard-block, and links to the guide.
 
 ### Phase 3: User-Facing Guide and Cross-Links
 

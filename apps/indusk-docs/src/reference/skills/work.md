@@ -213,6 +213,20 @@ Work continues to Phase 2.
 
 The agent must complete the missing item before advancing.
 
+### 11. Plan completion — run `/falsify` next
+
+When every phase is complete, the impl status flips to `completed`. But the plan is **not** ready for `/retrospective` yet. Before retrospective, the user runs `/falsify {plan}` — the [falsification ritual](/guide/falsification-ritual) — to exercise a goal-flipped bounty hunt against the attested state.
+
+The falsification ritual can:
+
+- Surface a gap worth fixing in-scope — the impl reopens (`status: in-progress`), a new phase is added, work resumes
+- Surface a gap that belongs in a new plan — a new plan is created, the current plan closes with a `blocks:` reference
+- Terminate cleanly with no in-scope gap found — the plan is now ready for `/retrospective`
+
+The retrospective skill hard-blocks (Step 0 Falsification Gate) until either the falsification log has a terminator entry, or the impl frontmatter declares `falsification: skipped` with a `falsification_reason`. This is structural enforcement of the discipline — not a lint rule, not a validator hook, but a skill-level gate that refuses to proceed.
+
+See the [Falsification Ritual guide](/guide/falsification-ritual) for the bounty-hunting ritual itself and the three outcomes.
+
 ## Hook Enforcement
 
 Two hooks enforce the gate system at the tool level, catching mistakes the skill instructions alone cannot prevent.
