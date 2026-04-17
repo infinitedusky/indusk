@@ -3,6 +3,7 @@ import { parseTrajectory } from "./parser.js";
 import {
 	validateCrossReferenceIntegrity,
 	validateDeferredCompleteness,
+	validateRationaleCompleteness,
 	validateTemporalCoherence,
 	validateTrajectory,
 	validateTrajectoryPresence,
@@ -227,5 +228,120 @@ describe("validateTrajectory composite", () => {
 `;
 		const body = bodyWithTrajectory("| T1 | a thing | Phase 1 | Phase 1 | passing |", phases);
 		expect(validateTrajectory(body)).toEqual([]);
+	});
+
+	it("does not run rationale-completeness when rationaleRequired is false (default)", () => {
+		const phases = `
+### Phase 1: Start
+
+- [ ] do
+
+#### Phase 1 Verification
+- [ ] T1 passes
+`;
+		const body = bodyWithTrajectory("| T1 | a thing | Phase 1 | Phase 1 | passing |", phases);
+		// No `### Trajectory Rationale` subsection — should be fine when not required
+		expect(validateTrajectory(body)).toEqual([]);
+	});
+
+	it("runs rationale-completeness when rationaleRequired is true and a row needs rationale", () => {
+		const phases = `
+### Phase 1: Start
+
+- [ ] do
+
+#### Phase 1 Verification
+- [ ] T1 passes
+`;
+		const body = bodyWithTrajectory("| T1 | a thing | Phase 1 | Phase 1 | passing |", phases);
+		const errors = validateTrajectory(body, { rationaleRequired: true });
+		expect(errors.length).toBe(1);
+		expect(errors[0].rule).toBe("rationale-completeness");
+		expect(errors[0].message).toContain("missing the `### Trajectory Rationale` subsection");
+	});
+});
+
+describe("T13: validateRationaleCompleteness rejects missing subsection when Phase 1+ row exists", () => {
+	it("emits an error when ### Trajectory Rationale is absent and at least one row is Phase 1+", () => {
+		const body = bodyWithTrajectory("| T1 | x | Phase 1 | Phase 1 | planned |");
+		const trajectory = parseTrajectory(body);
+		const errors = validateRationaleCompleteness(body, trajectory);
+		expect(errors.length).toBe(1);
+		expect(errors[0].rule).toBe("rationale-completeness");
+		expect(errors[0].message).toContain("missing the `### Trajectory Rationale` subsection");
+	});
+
+	it("does NOT emit an error when ### Trajectory Rationale is absent but every row is Phase 0", () => {
+		const body = bodyWithTrajectory("| T1 | regression | Phase 0 | Phase 1 | planned |");
+		const trajectory = parseTrajectory(body);
+		const errors = validateRationaleCompleteness(body, trajectory);
+		expect(errors).toEqual([]);
+	});
+});
+
+describe("T14: validateRationaleCompleteness rejects missing T-IDs", () => {
+	it("flags trajectory rows that have no rationale entry", () => {
+		const rows = "| T1 | a | Phase 1 | Phase 1 | planned |\n| T2 | b | Phase 1 | Phase 2 | planned |";
+		const body = `## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+${rows}
+
+### Trajectory Rationale
+
+- **T1** \`Writable at: Phase 1\` — subject lands here.
+
+## Checklist
+`;
+		const trajectory = parseTrajectory(body);
+		const errors = validateRationaleCompleteness(body, trajectory);
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toContain("T2");
+		expect(errors[0].message).not.toContain("T1");
+	});
+});
+
+describe("T15: validateRationaleCompleteness rejects stale entries", () => {
+	it("flags rationale entries for IDs not present in the trajectory table", () => {
+		const rows = "| T1 | a | Phase 1 | Phase 1 | planned |";
+		const body = `## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+${rows}
+
+### Trajectory Rationale
+
+- **T1** \`Writable at: Phase 1\` — subject lands here.
+- **T99** \`Writable at: Phase 1\` — stale entry from a removed row.
+
+## Checklist
+`;
+		const trajectory = parseTrajectory(body);
+		const errors = validateRationaleCompleteness(body, trajectory);
+		expect(errors.length).toBe(1);
+		expect(errors[0].message).toContain("T99");
+	});
+});
+
+describe("T16: validateRationaleCompleteness accepts complete subsection", () => {
+	it("returns no errors when every trajectory row has a rationale entry and there are no extras", () => {
+		const rows = "| T1 | a | Phase 1 | Phase 1 | planned |\n| T2 | b | Phase 1 | Phase 2 | planned |";
+		const body = `## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+${rows}
+
+### Trajectory Rationale
+
+- **T1** \`Writable at: Phase 1\` — subject lands here.
+- **T2** \`Writable at: Phase 1\` — bug reproducible today.
+
+## Checklist
+`;
+		const trajectory = parseTrajectory(body);
+		expect(validateRationaleCompleteness(body, trajectory)).toEqual([]);
 	});
 });

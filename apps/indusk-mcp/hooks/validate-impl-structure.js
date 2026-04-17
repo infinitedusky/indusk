@@ -311,9 +311,10 @@ for (const phase of phases) {
 const trajectoryRequiredFrontmatter = /trajectory:\s*required/.test(frontmatter);
 const hasTrajectoryHeading = /^##\s+Test Trajectory\b/m.test(body);
 const trajectoryValidationEnabled = trajectoryRequiredFrontmatter || hasTrajectoryHeading;
+const rationaleRequiredFrontmatter = /rationale:\s*required/.test(frontmatter);
 
 if (trajectoryValidationEnabled) {
-	const trajectoryErrors = validateTrajectory(body);
+	const trajectoryErrors = validateTrajectory(body, rationaleRequiredFrontmatter);
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
 			`Test Trajectory validation failed (policy: ${gatePolicy}):\n${trajectoryErrors.map((e) => `  [${e.rule}] ${e.message}`).join("\n")}\n\nSee .indusk/planning/tests-first-planning/adr.md Sections 3-6 for the Test Trajectory shape and validator rules.\n`,
@@ -346,7 +347,7 @@ process.exit(0);
 // apps/indusk-mcp/src/lib/trajectory/validator.ts and parser.ts)
 // ------------------------------------------------------------------
 
-function validateTrajectory(implBody) {
+function validateTrajectory(implBody, rationaleRequired) {
 	const errors = [];
 
 	// Rule 1: trajectory presence
@@ -363,6 +364,9 @@ function validateTrajectory(implBody) {
 	errors.push(...validateCrossReferenceIntegrity(implBody, trajectory));
 	errors.push(...validateTemporalCoherence(trajectory));
 	errors.push(...validateDeferredCompleteness(trajectory));
+	if (rationaleRequired) {
+		errors.push(...validateRationaleCompleteness(implBody, trajectory));
+	}
 	return errors;
 }
 
@@ -631,4 +635,73 @@ function validateDeferredCompleteness(trajectory) {
 		}
 	}
 	return errors;
+}
+
+// ------------------------------------------------------------------
+// Rationale validation (earliest-writable discipline)
+//
+// When frontmatter has `rationale: required`, the impl must contain a
+// `### Trajectory Rationale` subsection with an entry per trajectory row.
+// Each entry names what prevents authoring the test at Phase 0 (pre-plan).
+// Read the entries together: shared weak excuses signal over-sequencing.
+// ------------------------------------------------------------------
+
+function validateRationaleCompleteness(implBody, trajectory) {
+	const errors = [];
+
+	const rowsNeedingRationale = trajectory.rows.filter(
+		(r) => Number.isFinite(r.writableAt) && r.writableAt > 0,
+	);
+	const hasSubsection = /^###\s+Trajectory Rationale\b/m.test(implBody);
+	const rationaleIds = hasSubsection ? parseRationaleBlock(implBody) : new Set();
+
+	if (rowsNeedingRationale.length > 0 && !hasSubsection) {
+		errors.push({
+			rule: "rationale-completeness",
+			message: `\`rationale: required\` is set and ${rowsNeedingRationale.length} trajectory row(s) have \`Writable at\` later than Phase 0, but the impl is missing the \`### Trajectory Rationale\` subsection. Phase 0 rows don't need rationale; rows where authoring waits on plan code do — add an entry for ${rowsNeedingRationale.map((r) => r.id).join(", ")}.`,
+		});
+	}
+
+	const missing = [];
+	for (const row of rowsNeedingRationale) {
+		if (!rationaleIds.has(row.id)) missing.push(row.id);
+	}
+
+	if (missing.length > 0 && hasSubsection) {
+		errors.push({
+			rule: "rationale-completeness",
+			message: `Trajectory rows with \`Writable at\` later than Phase 0 missing from \`### Trajectory Rationale\`: ${missing.join(", ")}. Every row whose authoring waits on plan code needs a \`- **TN** \`Writable at: Phase N\` — {reason}\` entry. Phase 0 rows (writable today against the current stack) do not need rationale.`,
+		});
+	}
+
+	const extra = [...rationaleIds].filter((id) => !trajectory.rows.some((r) => r.id === id));
+	if (extra.length > 0) {
+		errors.push({
+			rule: "rationale-completeness",
+			message: `\`### Trajectory Rationale\` contains entries for IDs not present in the trajectory table: ${extra.join(", ")}. Remove the stale entries or add the missing trajectory rows.`,
+		});
+	}
+
+	return errors;
+}
+
+function parseRationaleBlock(implBody) {
+	const lines = implBody.split("\n");
+	const ids = new Set();
+	let inRationale = false;
+
+	for (const line of lines) {
+		if (/^###\s+Trajectory Rationale\b/.test(line)) {
+			inRationale = true;
+			continue;
+		}
+		if (!inRationale) continue;
+		// Break on next heading of depth 1-3 (new section starts)
+		if (/^#{1,3}\s+/.test(line) && !/^###\s+Trajectory Rationale\b/.test(line)) break;
+		// Match `- **TN**` at the start of a rationale entry
+		const match = line.match(/^-\s+\*\*(T\d+)\*\*/);
+		if (match) ids.add(match[1]);
+	}
+
+	return ids;
 }

@@ -100,6 +100,43 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **Author the Test Trajectory first.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State` (plus optional `Kind`, `Scope`). Walk the ADR's Decision section — for each decision, ask "what test would prove this works?" and add a row. Then walk each planned phase and ask "what becomes writable at this phase, and what flips to passing?" Every phase's Verification block references test IDs from the trajectory rather than restating the checks.
 
+   **Writable at is the earliest possible phase, not the fix phase.** The rule: *if it is possible to write a test, write it — then let it pass when it will.* The validator only enforces `Writable at ≤ Passes at` (a floor); the real discipline is `Writable at = earliest feasible phase`. A test authored in the same phase as its fix is a rubber stamp — nothing proves intermediate phases didn't break it or fix it by accident. A test that goes red early and stays red through intermediate phases until its fix lands is a live tripwire: any intermediate phase that turns it green prematurely signals unexpected coupling; any intermediate phase that breaks an unrelated passing test signals regression.
+
+   Honest shapes:
+   - **Regression tests for reported bugs**: `Writable at: Phase 0` (the stack runs, the bug is reproducible today, no plan code needed to author). Passes at = the phase that lands the fix.
+   - **End-to-end scenarios via HTTP/WS**: `Writable at: Phase 0` if the test can be a script hitting current endpoints (404 today is real-red). Passes at = the phase that closes the last gap. Only move later if authoring requires a not-yet-existing TypeScript symbol or constructor signature.
+   - **Reconstruction / persistence tests**: `Writable at: Phase 0` if the test is a "restart-and-check" script (today fails because state doesn't persist, which is real-red). Move later only if the assertion references a not-yet-existing symbol.
+   - **Unit tests for new code**: `Writable at = Passes at` is legitimate when the test's subject is a TypeScript symbol (schema file, new function, new enum value) introduced in that phase — the test file would not compile today.
+   - **Grep-the-thing-is-gone tests**: `Writable at: Phase 0` (the old identifier exists today; the grep finds it, which is the red state). Passes at = the phase that removes the identifier.
+
+   Challenge each row before you write it down: *"could this test be authored earlier than the phase that makes it pass?"* If yes, `Writable at` must point to that earlier phase. The Writable-phase's Verification block gains a `(write red)` item that commits the test against the current implementation and asserts the expected failure symptom; the Passes-phase's Verification block keeps its `(goes green)` item. Both reference the same test ID — the validator accepts multiple phase references to one trajectory row.
+
+   **Phase 0 is the default; rationale is required only for Phase 1+ rows.** Every new impl sets `rationale: required` in its frontmatter. The `### Trajectory Rationale` subsection (placed after `### Deferred Verification`) is required ONLY when at least one trajectory row has `Writable at` later than Phase 0. Phase 0 means "writable today against the current stack, before any plan code lands" — it's the default and needs no justification. We only require rationale when a test will be authored AFTER some plan implementation has happened (Writable at: Phase 1+). This keeps the subsection from filling with "trivially writable today" boilerplate when most rows are correctly Phase 0.
+
+   The `validate-impl-structure.js` hook enforces completeness: every Phase 1+ T-ID must appear as a `- **TN** \`Writable at: Phase N\` — {reason}` entry, the subsection itself must exist when any Phase 1+ row exists, and stale entries (entries for IDs not in the trajectory table) are flagged.
+
+   Entry shape: `- **TN** \`Writable at: Phase N\` — {one-sentence reason}`. Examples:
+   - `- **T22** \`Writable at: Phase 0\` — Bug is reproducible today against the running stack; test is authorable against current behavior and fails red.` *(no rationale entry needed; included here only as a reminder of the Phase 0 default)*
+   - `- **T14** \`Writable at: Phase 5\` — Subject is the zod schema file authored in Phase 5; no import target exists before then.` *(needs rationale)*
+   - `- **T20** \`Writable at: Phase 6\` — Test constructs PokerV2Room with a settings argument; the constructor signature gains the settings parameter in Phase 6, so TypeScript rejects the test source today.` *(needs rationale)*
+
+   **The rationale-quality test:** *Does this rationale describe a compile error against today's symbols, or does it describe an uninteresting failure mode?* If the latter, the row is a rubber-stamp — move it to Phase 1.
+
+   - **Legitimate `Writable > Phase 1` (compile error against today's symbols):**
+     - Test imports a not-yet-exported TypeScript symbol — `import { pokerTableSettingsSchema } from "@numero/types"` when the export doesn't exist. The import line is a compile error; the test file cannot be authored.
+     - Test constructs an object using a constructor signature that doesn't exist — `new PokerV2Room({ settings: {...} })` when the constructor doesn't take `settings`. TypeScript rejects.
+     - Test asserts against an enum value that doesn't exist — `expect(result.phase).toBe(GamePhase.CollectingBlinds)` when `CollectingBlinds` isn't in the enum.
+   - **Rubber-stamp `Writable > Phase 1` (red for an uninteresting reason — move to Phase 1):**
+     - "Assertion checks for error code `X` which is introduced in Phase N." → String comparison. Authorable today; fails because today's response is silent-swallow or a different error code. Stays red until the convention lands.
+     - "Endpoint doesn't exist yet." → HTTP request returns 404. Authorable today; 404-red is real-red.
+     - "Column doesn't exist yet." → SQL query errors. Authorable today; query-error-red is real-red.
+     - "Reconstruction code doesn't read from this column yet." → Restart-and-check script. Authorable today; whatever signal emerges is real.
+     - "Migration script doesn't exist yet." → Migration runner returns "migration NNNN not found." Authorable today.
+
+   The line is *can the test source code be authored today*, not *would it fail for a satisfying reason*. Red-for-uninteresting-reason is the whole point of `Writable at = Phase 1`: the test stays red through every intermediate phase, and any phase that turns it green prematurely or breaks an unrelated test surfaces a regression you'd otherwise miss.
+
+   Why it matters: read the rationales as a set after authoring. If multiple rows share the same weak excuse ("depends on the fix landing", "endpoint doesn't exist yet", "error code not defined yet"), the plan is over-sequenced and those tests should move earlier. The rationale subsection is the discipline tool — the validator enforces its presence; the human judgment is whether each rationale describes a real compile error or a rubber-stamped failure mode.
+
    **Trajectory sizing:** 3–5 tests for a bugfix or small feature, 10–25 for a multi-phase infrastructure plan. Prefer one high-level property test over five example tests where possible. If your trajectory has more rows than lines of new code, the plan is over-specified — consolidate. If it has fewer than one row per phase, you probably have untested phases — add rows or declare `(no tests flip at this phase — reason: {schema-only|delete|refactor|infra})` in the phase's Verification.
 
    **Declare untestable items explicitly.** If a plan includes something that genuinely cannot be tested (LLM quality, paid external integrations, UX judgment), add a `### Deferred Verification` subsection below the trajectory table. Every deferred row requires three fields: `reason:` (why not testable here), `would require:` (what would unlock a proper test), and `mitigation:` (compensating control — alert, scheduled review, downstream plan, canary). Missing any field is a write-time error. If you can't name a mitigation, that's a signal: either reshape the plan so the capability becomes testable, or scope it out.
@@ -202,6 +239,12 @@ status: proposed | accepted | deprecated | superseded | abandoned
 
 # {Title}
 
+## Goal
+
+**{One sentence. The headline outcome, in plain language. What will be true when this ADR's decisions ship that isn't true today.}**
+
+{One short paragraph — 2-4 sentences — grounding the goal in concrete user-visible terms. Name at least one specific current failure this fixes, so a reader arriving cold can tell what problem the rest of the ADR is solving. The Y-statement below formalizes the decision; this section lets a reader skim the headline without hunting through seven clauses first.}
+
 ## Y-Statement
 
 **In the context of:**
@@ -280,6 +323,7 @@ title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft | approved | in-progress | completed | abandoned
 trajectory: required
+rationale: required
 gate_policy: ask
 ---
 
@@ -318,6 +362,15 @@ For multi-phase impls, include a boundary map showing what each phase produces a
   - reason: {why this cannot be tested in this plan}
   - would require: {what would unlock a proper test — a new environment, a future plan, production data}
   - mitigation: {compensating control — telemetry alert, scheduled review, downstream plan, canary procedure, feedback signal}
+
+### Trajectory Rationale
+
+**Starting assumption: every test is writable at Phase 0 (pre-plan) against the current stack — Phase 0 rows need no rationale.** This subsection is required ONLY when one or more rows have `Writable at` later than Phase 0. List one entry per Phase 1+ row, naming what prevents authoring the test before plan code lands. Read the entries together — if multiple rows share the same weak excuse, the plan is over-sequenced.
+
+- **T3** `Writable at: Phase 2` — {one-sentence reason — typically because the subject under test is a TypeScript symbol authored in Phase 2 and the test file would not compile against today's stack}
+- **T14** `Writable at: Phase 5` — {reason — e.g., "subject is the zod schema introduced in Phase 5; the test's import line is a compile error today"}
+
+The `validate-impl-structure.js` hook enforces that every Phase 1+ T-ID from the trajectory table appears as an entry here. Phase 0 rows are exempt. Stale entries (rationale entries for IDs not in the trajectory) are flagged.
 
 ## Checklist
 ### Phase 1: {Name}
