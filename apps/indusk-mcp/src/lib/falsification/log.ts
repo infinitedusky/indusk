@@ -32,6 +32,26 @@ const VALID_OUTCOMES: ReadonlySet<HypothesisOutcome> = new Set([
 	"accept-finding",
 ]);
 
+/**
+ * Reject multiline content at the library boundary. The log's on-disk
+ * format is markdown sections with bold-labeled single-line fields; any
+ * line-separator character in hypothesis / note / reason silently
+ * truncates during parse (the regex uses /m mode, where $ matches before
+ * LF, CR, LS, and PS). Throwing here forces callers to sanitize — either
+ * collapse to a single line or split across multiple entries.
+ *
+ * Line separators rejected: LF (\n), CR (\r), LS (U+2028), PS (U+2029).
+ */
+const LINE_SEPARATOR_RE = /[\n\r\u2028\u2029]/;
+
+function assertSingleLine(field: string, value: string): void {
+	if (LINE_SEPARATOR_RE.test(value)) {
+		throw new Error(
+			`Falsification log ${field} must be single-line (got a value containing a line separator). Either collapse to one line (replace '\\n' with '; '), or split the content across multiple entries. The log's parser is line-oriented; any line-separator (LF, CR, LS, PS) would silently truncate.`,
+		);
+	}
+}
+
 function logPath(planRoot: string): string {
 	return join(planRoot, "falsification.md");
 }
@@ -51,6 +71,9 @@ export function appendHypothesis(
 	planRoot: string,
 	entry: Omit<HypothesisEntry, "kind" | "timestamp">,
 ): HypothesisEntry {
+	assertSingleLine("hypothesis", entry.hypothesis);
+	if (entry.note !== undefined) assertSingleLine("note", entry.note);
+
 	const path = logPath(planRoot);
 	const existing = existsSync(path) ? readFalsificationLog(planRoot) : [];
 	if (existing.length > 0 && existing[existing.length - 1].kind === "terminator") {
@@ -86,6 +109,7 @@ export function markTerminated(planRoot: string, reason: string): TerminatorEntr
 	if (!reason.trim()) {
 		throw new Error("markTerminated requires a non-empty reason.");
 	}
+	assertSingleLine("reason", reason);
 	const path = logPath(planRoot);
 	const existing = existsSync(path) ? readFalsificationLog(planRoot) : [];
 	if (existing.length > 0 && existing[existing.length - 1].kind === "terminator") {

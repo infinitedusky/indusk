@@ -54,6 +54,7 @@ Appends a confirmed-hypothesis entry to the plan's log. Creates the file with a 
 
 **Throws** when:
 - the log is already terminated (a new hypothesis after a terminator is a sign the ritual was restarted incorrectly — see `isFalsificationComplete`)
+- the `hypothesis` or `note` field contains a line-separator character (LF, CR, LS U+2028, PS U+2029). See [Content constraints](#content-constraints).
 
 ### `markTerminated(planRoot, reason): TerminatorEntry`
 
@@ -62,6 +63,7 @@ Appends a terminator entry marking the falsification ritual complete. No further
 **Throws** when:
 - the log is already terminated
 - `reason` is empty after trimming
+- `reason` contains a line-separator character. See [Content constraints](#content-constraints).
 
 ### `readFalsificationLog(planRoot, opts?): LogEntry[]`
 
@@ -91,6 +93,19 @@ Robust to malformed YAML: never throws, returns `{ skipped: false, reason: null 
 ### Why two fields instead of an inline pattern?
 
 The ADR initially called for a single field like `falsification: skipped — reason: {text}`. In practice, YAML values containing both em-dashes and colons are fragile across parsers — the inner colon can be interpreted as a nested key. Two fields eliminate that class of bug and make the opt-out unambiguous to read. Same semantics, cleaner parse.
+
+## Content constraints
+
+The log's on-disk format is markdown sections with bold-labeled single-line fields (e.g., `**Hypothesis:** {value}`). The parser uses a line-oriented regex (`/^\*\*Hypothesis:\*\* (.+)$/m`). In JavaScript's `/m` mode, the `$` anchor matches before any line-separator character — not just `\n` but also `\r`, `\u2028` (LS), and `\u2029` (PS).
+
+Consequently, **the `hypothesis`, `note`, and `reason` fields must be single-line.** The library rejects any line-separator character at the boundary:
+
+- `appendHypothesis` throws if `hypothesis` or `note` contains LF, CR, LS, or PS
+- `markTerminated` throws if `reason` contains any of the above
+
+This is a deliberate contract rather than a silent normalization: multiline input either gets sanitized by the caller (collapse with `"; "`, split across multiple hypothesis entries, or use an external file and reference its path in `testPath`) or fails loudly. Round-trip fidelity is guaranteed for single-line content.
+
+This rule was surfaced by the `/falsify` ritual running against the falsification-ritual plan itself — see [the plan's falsification log](https://github.com/infinite-dusky/dusk/blob/main/.indusk/planning/archive/falsification-ritual/falsification.md) (path updates when plan archives) for the two confirmed hypotheses (LF truncation and CR/Unicode-line-separator truncation) that led to this constraint.
 
 ## Hook / Skill Integration
 

@@ -6,10 +6,7 @@ import { isFalsificationSkipped } from "./skip.js";
 
 const packageRoot = join(import.meta.dirname, "../../..");
 const repoRoot = join(packageRoot, "../..");
-const retrospectiveSkill = readFileSync(
-	join(packageRoot, "skills/retrospective.md"),
-	"utf-8",
-);
+const retrospectiveSkill = readFileSync(join(packageRoot, "skills/retrospective.md"), "utf-8");
 const workSkill = readFileSync(join(packageRoot, "skills/work.md"), "utf-8");
 
 describe("T7: retrospective.md skill references the falsification gate and the skip escape hatch", () => {
@@ -152,12 +149,72 @@ describe("T11: VitePress sidebar has an entry linking to /guide/falsification-ri
 	it("sidebar entry has a human-readable label", () => {
 		const config = readFileSync(configPath, "utf-8");
 		// Loose match — any text label is fine as long as it points at the guide
-		expect(config).toMatch(/text:\s*"Falsification Ritual"\s*,\s*link:\s*"\/guide\/falsification-ritual"/);
+		expect(config).toMatch(
+			/text:\s*"Falsification Ritual"\s*,\s*link:\s*"\/guide\/falsification-ritual"/,
+		);
+	});
+});
+
+describe("T13: /falsify skill exists and contains required prose", () => {
+	const skillPath = join(packageRoot, "skills/falsify.md");
+
+	it("skill file exists", () => {
+		expect(existsSync(skillPath)).toBe(true);
+	});
+
+	it("frontmatter declares the skill name and argument hint", () => {
+		const skill = readFileSync(skillPath, "utf-8");
+		expect(skill).toMatch(/^name:\s*falsify/m);
+		expect(skill).toMatch(/argument-hint:/);
+	});
+
+	it("describes the bounty-hunting loop (investigate, hypothesize, write test, run)", () => {
+		const skill = readFileSync(skillPath, "utf-8");
+		// Each keyword from the loop should appear
+		expect(skill).toMatch(/investigate/i);
+		expect(skill).toMatch(/hypothesi[sz]e|hypothesis/i);
+		expect(skill).toMatch(/write.*test|test.*confirms/i);
+		expect(skill).toMatch(/run\s+(it|the test)/i);
+	});
+
+	it("explicitly warns against candidate generation", () => {
+		const skill = readFileSync(skillPath, "utf-8");
+		expect(skill.toLowerCase()).toContain("candidate generation");
+		// Should distinguish bounty hunting from candidate generation
+		expect(skill.toLowerCase()).toContain("bounty hunting");
+	});
+
+	it("describes the three outcomes with all required slugs", () => {
+		const skill = readFileSync(skillPath, "utf-8");
+		expect(skill).toContain("Fix in scope");
+		expect(skill).toContain("Spawn a new plan");
+		expect(skill).toContain("Accept as finding");
+	});
+
+	it("describes the hybrid exit criterion (agent proposes, user confirms)", () => {
+		const skill = readFileSync(skillPath, "utf-8");
+		expect(skill.toLowerCase()).toMatch(/cannot form a specific|can no longer form/);
+		expect(skill.toLowerCase()).toMatch(/user confirms|user decides|the user pointer/);
+	});
+
+	it("asserts same agent, no persona switch", () => {
+		const skill = readFileSync(skillPath, "utf-8");
+		expect(skill.toLowerCase()).toMatch(/same agent|goal-flip/);
+		expect(skill.toLowerCase()).toMatch(/no persona|not a persona/);
+	});
+
+	it("names the library helpers (appendHypothesis, markTerminated)", () => {
+		const skill = readFileSync(skillPath, "utf-8");
+		expect(skill).toContain("appendHypothesis");
+		expect(skill).toContain("markTerminated");
 	});
 });
 
 describe("T12: community lesson cross-links the user-facing guide", () => {
-	const lessonPath = join(repoRoot, ".claude/lessons/verification-gates-need-adversarial-framing.md");
+	const lessonPath = join(
+		repoRoot,
+		".claude/lessons/verification-gates-need-adversarial-framing.md",
+	);
 
 	it("lesson file exists", () => {
 		expect(existsSync(lessonPath)).toBe(true);
