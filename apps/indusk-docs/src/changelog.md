@@ -7,6 +7,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ### Changed
 - **Repo renamed from `infinitedusky` to `dusk`** — removed `indusk-portfolio` app (will be rebuilt in a separate repo). Updated graph namespaces, config, and docs references. npm package `@infinitedusky/indusk-mcp` unchanged.
 
+### Fixed
+- **`indusk update` hook sync (1.15.1)** — the update command now discovers bundled hooks via `glob` from the package's `hooks/` dir (instead of a hardcoded list), creates `.claude/hooks/` if missing with all bundled hooks copied in, and logs the source path for debugging. New hooks added to the package now sync on update without code changes to `update.ts`.
+
 ### Added
 - **Test Trajectory (1.15.0)** — every new impl.md opens with a `## Test Trajectory` table (`ID | Asserts | Writable at | Passes at | State`), and phase Verification sections reference test IDs rather than restating checks. Deferred Verification handles untestable items with three required fields (`reason`, `would require`, `mitigation`). Four validator rules enforced by `validate-impl-structure.js`; phase close structurally gated by `check-gates.js` blocking advance when `Passes at: Phase N` rows aren't `passing`/`skipped`/`blocked`. Retrospective skill audits mitigations via `auditPlanAtClose`. Enable on an impl with `trajectory: required` in the frontmatter. See the [Test Trajectory guide](/guide/test-trajectory).
 - **Local init mode** (`indusk init --local`) — use InDusk on team codebases without touching committed files. Uses `.git/info/exclude` for isolation.

@@ -205,24 +205,33 @@ export async function update(projectRoot: string): Promise<void> {
 	console.info("\n[Hooks]\n");
 	const hooksSource = join(packageRoot, "hooks");
 	const hooksTarget = join(projectRoot, ".claude/hooks");
+	console.info(`  source: ${hooksSource}`);
 
 	let hooksUpdated = 0;
 	let hooksCurrent = 0;
 
-	if (existsSync(hooksSource) && existsSync(hooksTarget)) {
-		const hookFiles = [
-			"check-gates.js",
-			"gate-reminder.js",
-			"validate-impl-structure.js",
-			"check-catchup.js",
-			"eval-trigger.js",
-		];
+	if (!existsSync(hooksSource)) {
+		console.info(`  source missing — the package install is broken`);
+	} else if (!existsSync(hooksTarget)) {
+		// Never initialized — create the dir and copy all bundled hooks
+		mkdirSync(hooksTarget, { recursive: true });
+		console.info(`  created: ${hooksTarget}`);
+		const bundled = globSync("*.js", { cwd: hooksSource });
+		for (const file of bundled) {
+			cpSync(join(hooksSource, file), join(hooksTarget, file));
+			console.info(`  added: ${file}`);
+			hooksUpdated++;
+		}
+		console.info(`\n  ${hooksUpdated} added.`);
+	} else {
+		// Both dirs exist — sync by hash compare. Discover bundled hooks from
+		// the source dir rather than hardcoding names, so new hooks added to
+		// the package get synced on update without code changes here.
+		const hookFiles = globSync("*.js", { cwd: hooksSource });
 
 		for (const file of hookFiles) {
 			const sourceFile = join(hooksSource, file);
 			const targetFile = join(hooksTarget, file);
-
-			if (!existsSync(sourceFile)) continue;
 
 			if (!existsSync(targetFile)) {
 				cpSync(sourceFile, targetFile);
@@ -272,8 +281,6 @@ export async function update(projectRoot: string): Promise<void> {
 				console.info("  could not register eval hook in settings.json");
 			}
 		}
-	} else {
-		console.info("  not installed (run init to install)");
 	}
 
 	// 5b. Migrate stale MCP configs
