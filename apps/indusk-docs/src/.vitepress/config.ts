@@ -57,6 +57,7 @@ const config = defineConfig({
 					{ text: "Local Mode", link: "/guide/local-mode" },
 						{ text: "Evaluation", link: "/guide/eval" },
 						{ text: "Context Beam", link: "/guide/context-beam" },
+						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
 					],
 				},
 			],

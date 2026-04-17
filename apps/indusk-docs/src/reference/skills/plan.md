@@ -486,7 +486,7 @@ Optional columns `Kind` (`example` \| `property` \| `contract` \| `approval` \| 
 
 If an author can't name a mitigation, the plan is shipping a capability that can't be observed — either reshape the plan so the capability becomes testable, or scope it out.
 
-See the [trajectory parser reference](/reference/trajectory/parser) for the validator API and error model. The design rationale lives in `.indusk/planning/tests-first-planning/adr.md` in the repo.
+See the [Test Trajectory guide](/guide/test-trajectory) for a full walkthrough with a worked example, and the [trajectory parser reference](/reference/trajectory/parser) for the validator API and error model. The design rationale lives in `.indusk/planning/tests-first-planning/adr.md` in the repo.
 
 ### retrospective.md
 

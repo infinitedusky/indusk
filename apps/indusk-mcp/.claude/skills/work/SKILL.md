@@ -62,6 +62,62 @@ Implementation plans live in `.indusk/planning/{plan-name}/impl.md` as checklist
 
    A phase is not complete until all five are done. **Enforced by hooks:** if you try to check off a Phase N+1 implementation item while Phase N has unchecked gates, the edit will be blocked with a message listing what's missing. Complete the gates first.
 
+## Test Trajectory — Phase Responsibilities
+
+If the impl has a `## Test Trajectory` table (frontmatter `trajectory: required`), the work skill takes on two additional responsibilities at phase boundaries.
+
+### At phase start — author writable-at-phase tests
+
+Before starting implementation items for Phase N:
+
+1. Read the Test Trajectory. Collect every row with `Writable at: Phase N` whose `State` is `planned` or `writable`.
+2. For each such row: create the test file (or add the test case to an existing file) implementing the `Asserts` description. Commit it as failing. If the test cannot yet run against a compiled symbol, use `.skip()` with a comment naming the unlock phase.
+3. Update each row's `State` to `written` in the trajectory table.
+
+These tests are the contract for the phase. They fail when the phase begins; they pass when it ends.
+
+### At phase close — verify passes-at-phase tests
+
+Before advancing past Phase N (i.e., before checking the first implementation item in Phase N+1):
+
+1. Collect every row with `Passes at: Phase N`.
+2. Run the tests. For each row whose test now passes, update its `State` to `passing` in the trajectory table.
+3. If a test is explicitly skipped (approval test awaiting first run, platform-specific test), update to `skipped` with an inline comment on the reason.
+4. If a test regressed or its dependencies changed unexpectedly, update to `blocked` — then resolve it (fix the test, or move its `Passes at` to a later phase with a reason).
+5. The `check-gates` hook rejects the phase transition if any `Passes at: Phase N` row is still in `planned`, `writable`, or `written` state. This is structural enforcement of "deferral is impossible."
+
+### State lifecycle
+
+```
+planned → writable → written → passing
+                              ↘ skipped (with reason)
+                              ↘ blocked (needs investigation)
+```
+
+| State | Meaning |
+|-------|---------|
+| `planned` | Row exists in the trajectory, no file yet |
+| `writable` | Dependencies exist; test can now be authored |
+| `written` | Test file exists and runs (fails or is `.skip()`) |
+| `passing` | Test runs and passes |
+| `skipped` | Intentionally `.skip()` with a documented reason |
+| `blocked` | Was writable/written, now regressed or changed; needs investigation |
+
+### Library helpers
+
+The `apps/indusk-mcp/src/lib/trajectory/state-ops.ts` module provides:
+
+- `getRowsWritableAt(trajectory, phase)` — rows to author at phase start
+- `getRowsBlockingPhaseClose(trajectory, phase)` — rows preventing phase close
+- `updateRowState(body, id, newState)` — rewrite the State cell in impl.md body
+- `getPhaseStartNudge(body, phase)` / `getPhaseCloseNudge(body, phase)` — human-readable reminder text
+
+Call these via `tsx` or through the InDusk MCP (once wired) rather than re-parsing the table by hand.
+
+### Deferred Verification audit
+
+The retrospective skill audits Deferred Verification rows at plan close — checking that each row's `mitigation:` field was actually wired up (telemetry configured, review scheduled, downstream plan linked). Work skill just maintains the Trajectory; retrospective validates completeness at the end.
+
 ## Gate Override Policy
 
 Gates exist to prevent skipping important work. But sometimes a gate genuinely doesn't apply. The override policy controls what happens when the agent wants to skip a gate item.

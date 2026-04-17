@@ -304,5 +304,126 @@ for (const item of newlyChecked) {
 	}
 }
 
+// ------------------------------------------------------------------
+// Trajectory enforcement: if advancing past Phase N (checking an
+// implementation item in Phase N+1 or later), every trajectory row
+// with `Passes at: Phase K` where K <= N must be in state `passing`,
+// `skipped`, or `blocked`. Planned/writable/written states fail the
+// phase close — the whole point of the tests-first-planning system is
+// that deferral is structurally impossible.
+//
+// Skipped if the impl has no `## Test Trajectory` section (grandfathered).
+// ------------------------------------------------------------------
+
+const hasTrajectorySection = /^##\s+Test Trajectory\b/m.test(newFullContent);
+if (hasTrajectorySection) {
+	const advancingPhases = new Set();
+	for (const item of newlyChecked) {
+		if (item.gate === "implementation") advancingPhases.add(item.phase);
+	}
+
+	if (advancingPhases.size > 0) {
+		const trajectory = parseTrajectoryFromBody(newFullContent);
+		const allBlockers = [];
+		for (const advancingPhase of advancingPhases) {
+			// Closing phases = every phase strictly before advancingPhase
+			for (let closingPhase = 1; closingPhase < advancingPhase; closingPhase++) {
+				const blockers = trajectory.rows.filter(
+					(row) =>
+						row.passesAt === closingPhase &&
+						row.state !== "passing" &&
+						row.state !== "skipped" &&
+						row.state !== "blocked",
+				);
+				for (const row of blockers) {
+					allBlockers.push({ phase: closingPhase, row });
+				}
+			}
+		}
+
+		if (allBlockers.length > 0) {
+			const msg = allBlockers
+				.map(
+					(b) =>
+						`  [${b.row.id}] ${b.row.asserts} — state: ${b.row.state} (Phase ${b.phase} cannot close until this row is 'passing' or 'skipped')`,
+				)
+				.join("\n");
+			process.stderr.write(
+				`Trajectory blocks phase advance (policy: ${gatePolicy}):\n${msg}\n\nEvery trajectory row with 'Passes at: Phase N' must be 'passing', 'skipped', or 'blocked' before advancing past Phase N. See .indusk/planning/tests-first-planning/adr.md Section 6.\n`,
+			);
+			process.exit(2);
+		}
+	}
+}
+
 // All checks passed
 process.exit(0);
+
+// ------------------------------------------------------------------
+// Trajectory parser (pure JS, mirrors parser.ts — simplified to read
+// just id, passesAt, and state which is all this hook needs).
+// ------------------------------------------------------------------
+
+function parseTrajectoryFromBody(implContent) {
+	const fmMatch = implContent.match(/^---\n[\s\S]*?\n---\n/);
+	const body = fmMatch ? implContent.slice(fmMatch[0].length) : implContent;
+	const lines = body.split("\n");
+
+	let inTrajectory = false;
+	const tableLines = [];
+	for (const line of lines) {
+		if (/^##\s+Test Trajectory\b/.test(line)) {
+			inTrajectory = true;
+			continue;
+		}
+		if (!inTrajectory) continue;
+		if (/^#{1,3}\s+/.test(line) && !/^###\s+Deferred Verification\b/.test(line)) {
+			const depth = (line.match(/^(#{1,6})/) || ["", ""])[1].length;
+			if (depth <= 3) break;
+		}
+		if (/^###\s+Deferred Verification\b/.test(line)) break;
+		tableLines.push(line);
+	}
+
+	const pipeLines = tableLines.filter((l) => l.trim().startsWith("|"));
+	if (pipeLines.length < 2) return { rows: [] };
+	const header = parseRowCells(pipeLines[0]);
+	const sep = parseRowCells(pipeLines[1]);
+	if (!sep.every((c) => /^:?-+:?$/.test(c))) return { rows: [] };
+
+	const keys = header.map((h) => {
+		const n = h.toLowerCase().trim();
+		if (n === "id") return "id";
+		if (n === "passes at") return "passesAt";
+		if (n === "state") return "state";
+		if (n === "writable at") return "writableAt";
+		if (n === "asserts") return "asserts";
+		return n;
+	});
+
+	const rows = [];
+	for (let i = 2; i < pipeLines.length; i++) {
+		const cells = parseRowCells(pipeLines[i]);
+		if (cells.length !== keys.length) continue;
+		const rec = {};
+		for (let j = 0; j < keys.length; j++) rec[keys[j]] = cells[j];
+		if (!rec.id) continue;
+		const passesMatch = (rec.passesAt || "").match(/^\s*Phase\s+(\d+)\s*$/i);
+		rows.push({
+			id: rec.id.trim(),
+			asserts: (rec.asserts || "").trim(),
+			passesAt: passesMatch ? Number.parseInt(passesMatch[1], 10) : Number.NaN,
+			state: (rec.state || "").toLowerCase().trim(),
+		});
+	}
+	return { rows };
+}
+
+function parseRowCells(line) {
+	const trimmed = line.trim();
+	if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return [];
+	return trimmed
+		.slice(1, -1)
+		.split("|")
+		.map((c) => c.trim());
+}

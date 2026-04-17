@@ -129,13 +129,17 @@
       "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/)",
       "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/check-gates.js apps/indusk-mcp/hooks/gate-reminder.js apps/indusk-mcp/hooks/validate-impl-structure.js apps/indusk-mcp/skills/work.md)",
       "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/check-gates.js apps/indusk-mcp/hooks/gate-reminder.js apps/indusk-mcp/hooks/validate-impl-structure.js)",
-      "Bash(npx @biomejs/biome check --write apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/check-gates.js apps/indusk-mcp/hooks/gate-reminder.js apps/indusk-mcp/hooks/validate-impl-structure.js)"
+      "Bash(npx @biomejs/biome check --write apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/check-gates.js apps/indusk-mcp/hooks/gate-reminder.js apps/indusk-mcp/hooks/validate-impl-structure.js)",
+      "Bash(npm root *)",
+      "Bash(ls \"$\\(npm root -g\\)/@infinitedusky/indusk-mcp/hooks/\")",
+      "Bash(wc -l \"$\\(npm root -g\\)/@infinitedusky/indusk-mcp/hooks/validate-impl-structure.js\")"
     ],
     "additionalDirectories": [
       "/tmp",
       "/Users/the_dusky/code/sandbox/dusk/.claude/hooks",
       "/Users/the_dusky/code/sandbox",
-      "/Users/the_dusky/code/sandbox/dusk/.claude/skills/dash0"
+      "/Users/the_dusky/code/sandbox/dusk/.claude/skills/dash0",
+      "/Users/the_dusky/code/sandbox/dusk/__CMDSUB_OUTPUT__/@infinitedusky/indusk-mcp/hooks"
     ]
   },
   "hooks": {

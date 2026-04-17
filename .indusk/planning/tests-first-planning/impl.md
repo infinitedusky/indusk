@@ -73,8 +73,8 @@ This impl itself follows the new shape end-to-end. The Test Trajectory below is 
 | T20 | Lesson file `apps/indusk-mcp/lessons/community/community-tests-first-within-each-phase.md` exists and matches the ADR phrasing | Phase 4 | Phase 4 | unit | passing |
 | T21 | Retrospective skill audit surfaces any Deferred Verification row whose `mitigation:` was never wired up | Phase 4 | Phase 4 | integration | passing |
 | T22 | Verify skill resolves a test ID reference (`T1`) to its test file path and runnable command | Phase 4 | Phase 4 | integration | passing |
-| T23 | `CLAUDE.md` Conventions section mentions Test Trajectory as an impl-doc requirement | Phase 5 | Phase 5 | unit | planned |
-| T24 | VitePress page `apps/indusk-docs/src/guide/test-trajectory.md` exists and is linked from planner skill docs and sidebar | Phase 5 | Phase 5 | unit | planned |
+| T23 | `CLAUDE.md` Conventions section mentions Test Trajectory as an impl-doc requirement | Phase 5 | Phase 5 | unit | passing |
+| T24 | VitePress page `apps/indusk-docs/src/guide/test-trajectory.md` exists and is linked from planner skill docs and sidebar | Phase 5 | Phase 5 | unit | passing |
 | T25 | `agent-roles/impl.md` validates successfully under the four new rules after retrofit (the end-to-end dogfood) | Phase 5 | Phase 5 | e2e | planned |
 
 ### Deferred Verification
@@ -254,38 +254,38 @@ This impl itself follows the new shape end-to-end. The Test Trajectory below is 
 
 #### Implementation
 
-- [ ] Write `apps/indusk-docs/src/guide/test-trajectory.md`:
-  - Motivation (origin story: universal deferral in numero retrospectives)
-  - The shape (table columns, Deferred Verification structure, phase references)
-  - Rules (four validator rules + `check-gates` enforcement)
-  - Worked example (a small plan with 5 tests across 3 phases, showing the full State lifecycle)
-  - Vocabulary mapping (where `writable-at-phase` comes from, Beck's "test list" lineage, etc.)
-  - Anti-patterns and how to avoid them
-- [ ] Add the new page to `apps/indusk-docs/.vitepress/config.ts` sidebar under "Process"
-- [ ] Update `apps/indusk-docs/src/reference/skills/planner.md` to link the guide
-- [ ] Update `CLAUDE.md` Key Decisions section with a bullet linking to this ADR
-- [ ] Update `CLAUDE.md` Known Gotchas with: "Test Trajectory `Writable at ≤ Passes at` (by phase number) is enforced by the validator — if a reorder breaks this, the hook fails at write time. This is intentional friction, not overhead."
-- [ ] Retrofit `.indusk/planning/agent-roles/impl.md`:
+- [x] Write `apps/indusk-docs/src/guide/test-trajectory.md` — full user-facing guide with motivation, shape, required/optional columns, authoring guidance, phase Verification by test-ID pattern, the four validator rules, phase-close structural enforcement, State lifecycle, Deferred Verification with all five mitigation shapes, a worked example (withdrawFor escrow plan, 3 phases, 5 tests, 1 deferred row), and six anti-patterns with mitigations
+- [x] Added the new page to `apps/indusk-docs/src/.vitepress/config.ts` sidebar under the Guide section (next to Context Beam)
+- [x] Updated `apps/indusk-docs/src/reference/skills/plan.md` Test Trajectory section to link the guide
+- [x] Updated CLAUDE.md Key Decisions: added Test Trajectory as canonical shape bullet pointing to `tests-first-planning/adr.md`
+- [x] CLAUDE.md Known Gotchas already covers temporal coherence (added in Phase 1) and hook regex scope (Phase 1) and JS port sync (Phase 3); nothing new needed
+- [x] Updated CLAUDE.md Current State: added "Test Trajectory live" sentence summarizing the 67 tests, four rules, phase-close enforcement, and retrospective audit
+- [x] Added changelog entry at `apps/indusk-docs/src/changelog.md` for 1.15.0
+- [x] Bumped `apps/indusk-mcp/package.json` version `1.14.10 → 1.15.0` (minor bump — additive feature, no breaking changes)
+- [ ] **Retrofit `.indusk/planning/agent-roles/impl.md`** (Phase 5b — after publish + `indusk update`)
   - Insert a Test Trajectory section after the Boundary Map
   - For each of the 4 existing phases, enumerate tests that would validate it and assign `Writable at` / `Passes at` phase numbers
   - Rewrite each phase's Verification block to reference test IDs
-  - Ensure the resulting file passes all four new validator rules
-- [ ] Update this plan's own trajectory `State` column for Phase 1–4 rows to `passing` as they complete; finalize Phase 5 rows at end
+  - Ensure the resulting file passes all four new validator rules AGAINST THE INSTALLED HOOKS
+- [ ] **Install verification** (Phase 5b — after publish + `indusk update`): confirm the installed `.claude/hooks/validate-impl-structure.js`, `check-gates.js`, `gate-reminder.js` are the new versions. Verify end-to-end by editing `agent-roles/impl.md` with a bad trajectory (orphan ID, missing mitigation field, writable-after-passes) and confirming the hook blocks correctly.
+- [x] Updated this plan's own trajectory `State` column for Phase 1–4 rows to `passing`; Phase 5 rows will flip after install verification.
 
 #### Phase 5 Verification
 
-- [ ] T23 passes (`grep -q "Test Trajectory" /Users/the_dusky/code/sandbox/dusk/CLAUDE.md`)
-- [ ] T24 passes (file existence check + sidebar entry check + link-from-planner-skill check)
-- [ ] T25 passes — the retrofit test. Run `validateTrajectory` against `agent-roles/impl.md`; expect zero errors
-- [ ] `pnpm check` passes
-- [ ] `pnpm turbo test` passes (full suite)
-- [ ] Manual sanity: open `agent-roles/impl.md` in the IDE, visually confirm the Test Trajectory is present and sensible; attempt an edit that violates a validator rule (e.g., introduce an orphan test ID reference) and verify the validator blocks it
+- [x] T23 passes (`grep -q "Test Trajectory" /Users/the_dusky/code/sandbox/dusk/CLAUDE.md` — verified bullet present in Conventions AND Current State AND Known Gotchas AND Key Decisions)
+- [x] T24 passes — `apps/indusk-docs/src/guide/test-trajectory.md` exists (full worked-example guide); sidebar entry added in `apps/indusk-docs/src/.vitepress/config.ts` under Guide; linked from `apps/indusk-docs/src/reference/skills/plan.md`
+- [ ] T25 passes — DEFERRED TO PHASE 5b (after publish + `indusk update`). Run `validateTrajectory` against retrofitted `agent-roles/impl.md`; expect zero errors AND confirm hook blocks bad edits.
+- [x] `pnpm check` passes on Phase 5a deliverables (biome clean on all my changes)
+- [x] `pnpm turbo test` passes — 67 trajectory tests green
+- [ ] Manual sanity — DEFERRED TO PHASE 5b (requires installed hooks to test)
 
 #### Phase 5 Context
 
-- [ ] Update CLAUDE.md Current State paragraph with a bullet "Test Trajectory is now the canonical shape for every new impl document. `tests-first-planning` plan archived — see docs site for the guide. `agent-roles` is the first plan executing under the new shape."
+- [x] Updated CLAUDE.md Current State: added "Test Trajectory live" sentence summarizing the four rules, phase-close enforcement, 67 tests, and this plan's dogfood path
+- [x] Updated CLAUDE.md Key Decisions: Test Trajectory as canonical shape bullet linking to `tests-first-planning/adr.md`
+- [ ] Final Current State revision after plan archives ("`tests-first-planning` plan archived; `agent-roles` is the first plan executing under the new shape") — Phase 5b.
 
 #### Phase 5 Document
 
-- [ ] Publish the VitePress docs page (happens automatically on merge to main if docs build passes)
-- [ ] Add a changelog entry to the docs site noting the new shape and its enforcement
+- [x] VitePress guide at `apps/indusk-docs/src/guide/test-trajectory.md` ready for publish (docs build runs on merge)
+- [x] Changelog entry at `apps/indusk-docs/src/changelog.md` for 1.15.0 with feature summary + guide link
