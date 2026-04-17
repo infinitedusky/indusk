@@ -32,7 +32,8 @@ describe("parseAllPlans", () => {
 		expect(plans.length).toBeGreaterThanOrEqual(2);
 
 		const names = plans.map((p) => p.name);
-		expect(names).toContain("context-graph");
+		// Use stable active plans that exist in the root planning dir (not archived)
+		expect(names).toContain("agent-roles");
 		expect(names).toContain("dusk-v2");
 
 		// Verify sorted

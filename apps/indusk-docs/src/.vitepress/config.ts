@@ -124,6 +124,7 @@ const config = defineConfig({
 					{ text: "Semantic Graph Bridge", link: "/decisions/semantic-graph-bridge" },
 						{ text: "Context Eval", link: "/decisions/context-eval" },
 						{ text: "Context Beam", link: "/decisions/context-beam" },
+						{ text: "Tests-First Planning", link: "/decisions/tests-first-planning" },
 					],
 				},
 			],
