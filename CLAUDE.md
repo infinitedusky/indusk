@@ -77,6 +77,7 @@ dusk/
 - Use the planner skill before implementing significant features — don't jump to code
 - `pnpm test` runs all tests, `pnpm turbo test --filter={app}` for scoped runs. Vitest configs use `passWithNoTests: true`
 - Verification items in impl docs must be specific runnable commands with expected output — not "verify it works"
+- Every new impl.md opens with a `## Test Trajectory` table after `## Boundary Map` and before `## Checklist`. Columns: `ID | Asserts | Writable at | Passes at | State` (optional: `Kind`, `Scope`). Phase Verification sections reference test IDs from the trajectory — not free-text checks. Deferred Verification rows (for genuinely untestable items) require three fields: `reason:`, `would require:`, `mitigation:`. The planner skill's impl.md template emits this shape; `trajectory: required` in frontmatter opts the impl into `validate-impl-structure.js` enforcement. See `.indusk/planning/tests-first-planning/adr.md`.
 - `pnpm check` for lint/format check, `pnpm check:fix` to auto-fix, `pnpm format` for format-only
 - After each retrospective, ask if mistakes could be caught by a Biome rule — if yes, add to biome.json and biome-rationale.md
 - Before touching shared code, query the code graph (`analyze_code_relationships`) to understand blast radius

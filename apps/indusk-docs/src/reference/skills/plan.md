@@ -293,11 +293,15 @@ After the ADR is accepted, a one-liner is added to CLAUDE.md's Key Decisions sec
 
 The impl breaks work into phased checklists. Each phase has four gate types: implementation tasks, verification, context updates, and documentation. All gates must be completed before advancing to the next phase.
 
+Every new impl also opens with a `## Test Trajectory` table — a cross-phase list of the tests the plan commits to, with explicit `Writable at` / `Passes at` phase references. Phase Verification sections reference test IDs from the trajectory rather than restating the checks. A narrow `### Deferred Verification` subsection handles items that are genuinely untestable within the plan's scope, with required `reason` / `would require` / `mitigation` fields. See the Test Trajectory section below for details and [`reference/trajectory/parser`](/reference/trajectory/parser) for the validator API.
+
 ```markdown
 ---
 title: "Payment Flow"
 date: 2026-03-21
 status: in-progress
+trajectory: required
+gate_policy: ask
 ---
 
 # Payment Flow
@@ -323,6 +327,23 @@ billing module.
 | Phase 2 | `/api/webhooks/stripe` endpoint, event handlers | Phase 1 subscription functions, Express app |
 | Phase 3 | Proration logic, plan change handlers | Phase 1 + Phase 2 |
 
+## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+| T1 | `createSubscription(user, 'pro')` returns a subscription with a valid Stripe ID | Phase 1 | Phase 1 | planned |
+| T2 | `cancelSubscription(id, 'immediate')` sets status to `cancelled` | Phase 1 | Phase 1 | planned |
+| T3 | Webhook endpoint rejects requests with invalid signatures (HTTP 400) | Phase 2 | Phase 2 | planned |
+| T4 | `customer.subscription.updated` event updates local subscription row | Phase 2 | Phase 2 | planned |
+| T5 | Proration credit on plan upgrade matches Stripe's invoice preview | Phase 3 | Phase 3 | planned |
+
+### Deferred Verification
+
+- **End-to-end Stripe production behavior**
+  - reason: we cannot hit live Stripe in CI without incurring cost and polluting test data
+  - would require: a dedicated Stripe test account with budget approval and per-PR isolation
+  - mitigation: manual staging smoke run before each release; Stripe test-mode webhooks replayed daily in CI from a recorded fixture
+
 ## Checklist
 ### Phase 1: Subscription Core
 - [ ] Add subscription types to `src/billing/types.ts`
@@ -340,7 +361,8 @@ billing module.
 - [ ] Add subscription database migrations
 
 #### Phase 1 Verification
-- [ ] `pnpm turbo test --filter=billing` — all existing + new subscription tests pass
+- [ ] T1 passes (`pnpm turbo test --filter=billing`)
+- [ ] T2 passes (`pnpm turbo test --filter=billing`)
 - [ ] `pnpm check` — no lint or format errors
 
 #### Phase 1 Context
@@ -357,8 +379,8 @@ billing module.
 - [ ] Handle `invoice.payment_failed` event
 
 #### Phase 2 Verification
-- [ ] `pnpm turbo test --filter=billing` — webhook handler tests pass
-- [ ] `curl -X POST localhost:3000/api/webhooks/stripe` with invalid signature returns 400
+- [ ] T3 passes (`pnpm turbo test --filter=billing`)
+- [ ] T4 passes (`pnpm turbo test --filter=billing`)
 
 #### Phase 2 Context
 - [ ] Add to Known Gotchas: "Stripe webhook signatures require raw body — do not parse JSON before verification"
@@ -419,15 +441,17 @@ Sections: Y-Statement, Context, Decision, Alternatives Considered, Consequences 
 | `title` | Plan title |
 | `date` | YYYY-MM-DD |
 | `status` | `draft`, `approved`, `in-progress`, `completed`, `abandoned` |
+| `trajectory` | `required` — opts the impl into Test Trajectory validation |
+| `gate_policy` | `strict`, `ask` (default), `auto` |
 
-Sections: Goal, Scope (In/Out), Boundary Map (optional), Checklist with phases, Files Affected, Dependencies, Notes.
+Sections: Goal, Scope (In/Out), Boundary Map (optional), **Test Trajectory**, Checklist with phases, Files Affected, Dependencies, Notes.
 
 Each phase has four required gate sections, plus an optional OTel gate:
 
 | Gate | Purpose |
 |------|---------|
 | **Phase N: Name** | Implementation tasks — the actual work items |
-| **Phase N Verification** | Runnable commands that prove the phase works |
+| **Phase N Verification** | Test-ID references from the Trajectory (and any non-test checks) |
 | **Phase N Context** | Concrete CLAUDE.md edits this phase produces |
 | **Phase N Document** | Docs pages to write or update |
 | **Phase N OTel** *(optional)* | Telemetry instrumentation — only when the project's `otel.role` in `.indusk/config.json` is unset or `service` |
@@ -435,6 +459,34 @@ Each phase has four required gate sections, plus an optional OTel gate:
 The optional OTel gate is a Phase 5.25 addition: projects whose `otel.role` is `library`, `tool`, or `none` opt out of telemetry entirely, and the planner skips writing OTel sections for them. The `validate-impl-structure` and `check-gates` hooks honor the same rule. Backwards compatible: projects without the field behave as `service` (gate fires).
 
 All gates must be completed before advancing to the next phase. The [Work](/reference/skills/work) skill executes items one at a time; the [Verify](/reference/skills/verify) skill runs the verification commands.
+
+#### Test Trajectory
+
+The Test Trajectory table is a cross-phase inventory of the tests the plan commits to — the plan's testing contract. It lives at the top of the impl (after Boundary Map, before Checklist) and has five required columns:
+
+| Column | Purpose |
+|--------|---------|
+| `ID` | Stable handle — `T1`, `T2`, ... |
+| `Asserts` | One-sentence description of what the test claims |
+| `Writable at` | Phase number at which the test can be authored |
+| `Passes at` | Phase number at which the test flips to passing |
+| `State` | `planned`, `writable`, `written`, `passing`, `blocked`, `skipped` |
+
+Optional columns `Kind` (`example` \| `property` \| `contract` \| `approval` \| `formal`) and `Scope` (`unit` \| `integration` \| `e2e`) can be added when the plan benefits from them.
+
+**Rule:** `Writable at ≤ Passes at` (by phase number). Violating this fails the validator — it catches reorder bugs at write time instead of letting them pass silently.
+
+**Phase Verification references test IDs.** Rather than repeating test descriptions, each phase's Verification section lists the IDs whose `Passes at` equals that phase, e.g., `- [ ] T3 passes (\`pnpm test:billing\`)`. A phase with no tests flipping declares so explicitly: `- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})`.
+
+**Deferred Verification** handles items genuinely untestable within the plan's scope. Each row requires three fields:
+
+- `reason:` why this can't be tested here
+- `would require:` what would unlock a proper test
+- `mitigation:` compensating control (telemetry alert, scheduled review, downstream plan, staging canary, feedback signal)
+
+If an author can't name a mitigation, the plan is shipping a capability that can't be observed — either reshape the plan so the capability becomes testable, or scope it out.
+
+See the [trajectory parser reference](/reference/trajectory/parser) for the validator API and error model. The design rationale lives in `.indusk/planning/tests-first-planning/adr.md` in the repo.
 
 ### retrospective.md
 
