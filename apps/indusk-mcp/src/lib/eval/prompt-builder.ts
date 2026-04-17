@@ -24,10 +24,35 @@ export function buildJudgePrompt(opts: PromptBuilderOptions): string {
 		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
 		.join("\n\n");
 
+	const highlightsInstructions =
+		opts.mode === "eval"
+			? `### Step 4: Process unprocessed highlights
+
+Before answering the rubric, process the working agent's highlights queue. Highlights are the working agent's flagged moments — brief acceptances, ADR acceptances, corrections, retrospective lessons — and the eval agent is responsible for materializing them into structured Graphiti episodes.
+
+Call \`mcp__indusk__highlights_unprocessed\` to get the list. For each highlight, the level drives effort and Graphiti edge weight:
+
+- **critical** (architectural decision, accepted ADR, accepted brief): extract full context from the transcript and the changed files, write a structured Graphiti episode with weight **1.0**.
+- **important** (correction, retro lesson, confirmed pattern): extract context, write a Graphiti episode with weight **0.6**.
+- **note** (observation, partially-formed thought): consider it. Write a low-weight (**0.3**) episode if it adds signal; skip if it's already captured in an existing episode.
+
+Write each episode using \`mcp__indusk__graph_capture\` so it attaches to the relevant file anchor in the semantic graph — not raw \`mcp__graphiti__add_memory\`. Pick the group sensibly: \`${opts.projectGroup}\` for project-specific facts, \`shared\` for cross-project conventions (e.g., "always use pnpm ce"). Use the level to set the edge weight in the body's metadata section so downstream context-beam queries can rank by importance.
+
+After processing each highlight (whether you wrote an episode or decided to skip), call \`mcp__indusk__highlight_mark_processed\` with the highlight ID and the action:
+- \`action: "wrote-episode"\`, \`detail: "{episode name}"\` — if you wrote an episode.
+- \`action: "skipped"\`, \`detail: "{brief reason}"\` — if you decided not to (e.g., already captured, or not meaningful enough).
+
+**Highlights are additive context, not a constraint.** Continue reading the full transcript and inferring knowledge independently — highlights ensure important moments aren't missed, but they don't bound your analysis. The transcript may contain insights the working agent didn't flag.
+
+If \`mcp__indusk__highlights_unprocessed\` is unavailable, skip this step silently and continue.`
+			: `### Step 4: Highlights (baseline mode)
+
+Baseline mode — do NOT process highlights or write to Graphiti. Skip to Step 5.`;
+
 	const graphitiInstructions =
 		opts.mode === "eval"
 			? `
-## Step 5: Write findings to the knowledge graph
+### Step 6: Write findings to the knowledge graph
 
 For each finding with severity "warning" or "critical", write it using \`mcp__indusk__graph_capture\`. This dual-writes to both Graphiti AND the semantic graph, connecting the finding to the existing file anchor — so the context beam can find it later.
 
@@ -46,10 +71,10 @@ mcp__indusk__graph_capture({
 \`\`\`
 
 Only write facts that would have changed the outcome. Be selective — quality over quantity.
-Count how many graph_capture calls you made for the scorecard.
+Count how many graph_capture calls you made for the scorecard (this count includes any highlight episodes written in Step 4).
 If the tool is unavailable, skip silently and set graphitiWrites to 0.`
 			: `
-## Step 5: Graphiti writes
+### Step 6: Graphiti writes
 
 Baseline mode — do NOT write to Graphiti. Set graphitiWrites to 0.`;
 
@@ -79,7 +104,9 @@ Run \`jj diff -r ${opts.changeId}\` to see what was committed. This is the work 
 
 Then read the specific files that were changed to understand the full context — not just the diff lines, but the surrounding code.
 
-### Step 4: Answer the evaluation questions
+${highlightsInstructions}
+
+### Step 5: Answer the evaluation questions
 
 For each question, investigate thoroughly using MCP tools — search the codebase, query the code graph, check Graphiti for relevant facts. Then answer with this exact JSON shape per question:
 
@@ -102,7 +129,7 @@ Questions:
 ${questionsBlock}
 ${graphitiInstructions}
 
-## Step 6: Output the scorecard
+### Step 7: Output the scorecard
 
 After completing all steps, output ONLY the following JSON object. No markdown wrapping, no commentary before or after — just the JSON:
 
@@ -113,7 +140,7 @@ After completing all steps, output ONLY the following JSON object. No markdown w
   "mode": "${opts.mode}",
   "changeId": "${opts.changeId}",
   "projectGroup": "${opts.projectGroup}",
-  "questions": [/* your answers from Step 4 */],
+  "questions": [/* your answers from Step 5 */],
   "summary": "{one paragraph overall assessment}",
   "graphitiWrites": {number of Graphiti writes made},
   "telemetryPosted": false

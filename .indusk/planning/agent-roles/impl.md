@@ -50,7 +50,7 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 | T7 | Work skill `correction` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | passing |
 | T8 | Retrospective skill `retro-lesson` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | passing |
 | T9 | No process skill (planner/work/retro) references `graph_capture` or raw `mcp__graphiti__add_memory` — repo-wide grep returns zero matches in `apps/indusk-mcp/skills/{planner,work,retrospective}.md` | Phase 2 | Phase 2 | passing |
-| T10 | Eval agent prompt builder output contains highlight-processing instructions with level→weight mapping (critical→1.0, important→0.6, note→0.3) | Phase 3 | Phase 3 | planned |
+| T10 | Eval agent prompt builder output contains highlight-processing instructions with level→weight mapping (critical→1.0, important→0.6, note→0.3) | Phase 3 | Phase 3 | passing |
 | T11 | `/highlight` slash command skill file exists at `apps/indusk-mcp/skills/highlight.md` with level arg parsing (defaults to `important`, accepts `critical` or `note`) | Phase 4 | Phase 4 | planned |
 | T12 | Handoff skill at end of session fires the eval trigger (mentions `eval-trigger.js --source handoff` or equivalent) | Phase 4 | Phase 4 | planned |
 | T13 | `eval-trigger.js` accepts `--source handoff` CLI flag and sets the source in the eval agent's environment | Phase 4 | Phase 4 | planned |
@@ -110,20 +110,20 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 - [x] (none needed — asked: "Phase 2 only migrated the three skills' trigger points from graph_capture to highlight; the Phase 1 reference page already documents the flow and trigger table. Can I skip the Phase 2 Document gate?" — user: "yes")
 
 ### Phase 3: Eval Agent Reads Highlights
-- [ ] Update eval agent prompt builder (`apps/indusk-mcp/src/lib/eval/prompt-builder.ts`) to include instruction: "Read unprocessed highlights via `highlights_unprocessed` tool. For each highlight, use the level to determine effort: critical = extract full context from transcript and write structured Graphiti episode with high weight (1.0), important = extract and write with medium weight (0.6), note = consider and write with low weight (0.3) or skip if already captured."
-- [ ] Update eval agent prompt to include instruction: "After processing each highlight, call `highlight_mark_processed` with the highlight ID and action taken."
-- [ ] Update eval agent prompt to include instruction: "Highlights are additive context, not a constraint. Continue reading the full transcript and inferring knowledge independently. Highlights ensure important moments aren't missed."
-- [ ] Update eval agent prompt to map highlight levels to Graphiti edge weights when writing episodes
+- [x] Update eval agent prompt builder (`apps/indusk-mcp/src/lib/eval/prompt-builder.ts`) to include instruction: "Read unprocessed highlights via `highlights_unprocessed` tool. For each highlight, use the level to determine effort: critical = extract full context from transcript and write structured Graphiti episode with high weight (1.0), important = extract and write with medium weight (0.6), note = consider and write with low weight (0.3) or skip if already captured."
+- [x] Update eval agent prompt to include instruction: "After processing each highlight, call `highlight_mark_processed` with the highlight ID and action taken."
+- [x] Update eval agent prompt to include instruction: "Highlights are additive context, not a constraint. Continue reading the full transcript and inferring knowledge independently. Highlights ensure important moments aren't missed."
+- [x] Update eval agent prompt to map highlight levels to Graphiti edge weights when writing episodes
 
 #### Phase 3 Verification
-- [ ] T10 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- prompt-builder`)
+- [x] T10 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- judge-runner`)
 - [ ] Manual smoke: write a highlight, run `jj describe`, confirm `.indusk/highlights-processed.jsonl` has the entry and `.indusk/eval/results.log` mentions highlights processed (this exercises the Deferred Verification mitigation for end-to-end eval agent behavior)
 
 #### Phase 3 Context
 - (none needed — Phase 2 context update covers the full flow)
 
 #### Phase 3 Document
-- [ ] Update `apps/indusk-docs/src/reference/tools/highlights.md` with eval agent processing details
+- [x] Update `apps/indusk-docs/src/reference/tools/highlights.md` with eval agent processing details
 
 ### Phase 4: User-Facing Highlight Command + Session-End Trigger + Role Documentation
 - [ ] Create `/highlight` slash command skill at `apps/indusk-mcp/skills/highlight/SKILL.md` — user says `/highlight this decision about X` and the skill writes a highlight with appropriate level (default `important`, user can specify `critical` or `note`)

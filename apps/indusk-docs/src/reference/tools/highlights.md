@@ -118,6 +118,36 @@ In Phase 1, only the library and the MCP tools ship. In Phase 2 of the agent-rol
 
 The eval agent's PostToolUse hook fires on every `jj describe` and processes the unprocessed queue before scoring the commit. The handoff skill also fires the eval trigger at session end (Phase 4), so highlights written without a subsequent commit still get processed before the session ends.
 
+## How the Eval Agent Processes Highlights
+
+The eval agent's prompt (built by [`prompt-builder.ts`](https://github.com/infinitedusky/dusk/tree/main/apps/indusk-mcp/src/lib/eval/prompt-builder.ts)) includes a **Step 4: Process unprocessed highlights** before the rubric evaluation. The step runs only in eval mode; baseline mode skips it by design.
+
+For each highlight returned by `highlights_unprocessed`, the judge:
+
+1. **Reads the level** and maps it to a Graphiti edge weight:
+
+   | Level | Edge weight | Expected effort |
+   |-------|-------------|-----------------|
+   | `critical` | **1.0** | Extract full context from transcript + changed files, write a structured episode. |
+   | `important` | **0.6** | Extract relevant context, write a medium-weight episode. |
+   | `note` | **0.3** | Consider — write a low-weight episode if it adds signal, otherwise skip. |
+
+2. **Writes a Graphiti episode** via `mcp__indusk__graph_capture` (not raw `mcp__graphiti__add_memory`). `graph_capture` attaches the episode to the relevant file anchor in the semantic graph, so [context-beam](/reference/tools/context-beam) queries can find it later. The group is typically the project group for project-specific facts, or `shared` for cross-project conventions (e.g., "always use pnpm ce"). The level is encoded in the body's metadata so downstream queries can rank by importance.
+
+3. **Marks the highlight processed** via `mcp__indusk__highlight_mark_processed`:
+   - `action: "wrote-episode"` with `detail: "{episode name}"` if an episode was written
+   - `action: "skipped"` with `detail: "{reason}"` if the eval agent decided the highlight didn't warrant a new episode (e.g., already captured by another episode)
+
+### Highlights are additive, not bounding
+
+The eval agent's prompt explicitly says: **"Highlights are additive context, not a constraint. Continue reading the full transcript and inferring knowledge independently."** The working agent's highlights ensure important moments aren't missed, but they don't bound the eval agent's analysis. The transcript may contain insights the working agent didn't flag, and the eval agent is expected to surface those too.
+
+This matters because the working agent operates under time/flow pressure and may miss moments that are obvious in hindsight. Highlights are a floor on what gets captured, not a ceiling.
+
+### Graceful degradation
+
+If `mcp__indusk__highlights_unprocessed` is unavailable (InDusk MCP down, transport error), Step 4 is skipped silently and the judge continues to the rubric. Highlights are best-effort — the broader scoring flow never fails because of a Graphiti or InDusk hiccup.
+
 ## Why Highlights and Not Direct Graphiti Writes
 
 1. **The working agent stays in flow.** Writing a highlight is two lines — a tag and a note. Writing a structured episode requires picking a group, phrasing a Y-statement, deciding whether this supersedes earlier facts, and handling Graphiti being down.

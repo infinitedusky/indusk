@@ -56,6 +56,37 @@ describe("buildJudgePrompt", () => {
 		expect(prompt).toContain("do NOT write to Graphiti");
 	});
 
+	it("T10: includes highlight-processing instructions with level→weight mapping in eval mode", () => {
+		const prompt = buildJudgePrompt({
+			rubric: V1_RUBRIC,
+			changeId: "abc",
+			transcriptPath: "/tmp/t.jsonl",
+			mode: "eval",
+			projectGroup: "myproject",
+		});
+
+		expect(prompt).toContain("mcp__indusk__highlights_unprocessed");
+		expect(prompt).toContain("mcp__indusk__highlight_mark_processed");
+
+		expect(prompt).toMatch(/critical[^\n]*1\.0/);
+		expect(prompt).toMatch(/important[^\n]*0\.6/);
+		expect(prompt).toMatch(/note[^\n]*0\.3/);
+
+		expect(prompt).toMatch(/additive context[^.]*not a constraint/i);
+	});
+
+	it("T10 baseline: does NOT tell the judge to process highlights in baseline mode", () => {
+		const prompt = buildJudgePrompt({
+			rubric: V1_RUBRIC,
+			changeId: "abc",
+			transcriptPath: "/tmp/t.jsonl",
+			mode: "baseline",
+			projectGroup: "myproject",
+		});
+
+		expect(prompt).not.toContain("mcp__indusk__highlights_unprocessed");
+	});
+
 	it("includes the change ID and transcript path", () => {
 		const prompt = buildJudgePrompt({
 			rubric: V1_RUBRIC,
