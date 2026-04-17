@@ -17,4 +17,4 @@ export { LogWriter } from "./log-writer.js";
 export * from "./paths.js";
 export { type ReplayOptions, type ReplayResult, replay } from "./replay.js";
 export { SemanticGraphClient, type SemanticGraphClientOptions } from "./runtime-client.js";
-export { type SyncResult, runSync } from "./sync-engine.js";
+export { runSync, type SyncResult } from "./sync-engine.js";

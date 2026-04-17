@@ -1,43 +1,36 @@
 {
-  "name": "docs",
-  "location": "apps/docs",
-  "target": {
-    "type": "docker-compose",
-    "file": "docker-compose.yml",
-    "service": "docs",
-    "config": {
-      "build": {
-        "context": ".",
-        "dockerfile": "docker/Dockerfile.vitepressdev"
-      },
-      "ports": [
-        "5173:5173"
-      ],
-      "volumes": [
-        "./apps/docs:/app/apps/docs",
-        "./packages:/app/packages"
-      ],
-      "command": "@project/docs",
-      "restart": "unless-stopped"
-    },
-    "profileOverrides": {
-      "production": {
-        "build": {
-          "context": ".",
-          "dockerfile": "docker/Dockerfile.vitepressprod"
-        },
-        "command": "",
-        "ports": [
-          "80:80"
-        ],
-        "volumes": []
-      }
-    }
-  },
-  "vars": {
-    "PORT": "${docs.PORT}"
-  },
-  "defaults": {
-    "PORT": "5173"
-  }
+	"name": "docs",
+	"location": "apps/docs",
+	"target": {
+		"type": "docker-compose",
+		"file": "docker-compose.yml",
+		"service": "docs",
+		"config": {
+			"build": {
+				"context": ".",
+				"dockerfile": "docker/Dockerfile.vitepressdev"
+			},
+			"ports": ["5173:5173"],
+			"volumes": ["./apps/docs:/app/apps/docs", "./packages:/app/packages"],
+			"command": "@project/docs",
+			"restart": "unless-stopped"
+		},
+		"profileOverrides": {
+			"production": {
+				"build": {
+					"context": ".",
+					"dockerfile": "docker/Dockerfile.vitepressprod"
+				},
+				"command": "",
+				"ports": ["80:80"],
+				"volumes": []
+			}
+		}
+	},
+	"vars": {
+		"PORT": "${docs.PORT}"
+	},
+	"defaults": {
+		"PORT": "5173"
+	}
 }

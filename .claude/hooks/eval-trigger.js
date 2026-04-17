@@ -157,7 +157,7 @@ if (!judgeRunnerPath) {
 		message:
 			"Could not find @infinitedusky/indusk-mcp package — eval judge not available. Run: npm i -g @infinitedusky/indusk-mcp",
 	});
-	appendFileSync(logPath, entry + "\n", "utf8");
+	appendFileSync(logPath, `${entry}\n`, "utf8");
 	process.exit(0);
 }
 

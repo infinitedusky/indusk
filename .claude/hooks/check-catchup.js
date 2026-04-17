@@ -12,8 +12,8 @@
  */
 
 import { execSync } from "node:child_process";
-import { createConnection } from "node:net";
 import { existsSync, readFileSync } from "node:fs";
+import { createConnection } from "node:net";
 import { join, resolve } from "node:path";
 
 const input = JSON.parse(readFileSync("/dev/stdin", "utf-8"));
@@ -38,9 +38,15 @@ function checkTcp(host, port, timeoutMs = 3000) {
 	return new Promise((resolve) => {
 		const sock = createConnection({ host, port });
 		sock.setTimeout(timeoutMs);
-		sock.on("connect", () => { sock.end(); resolve(true); });
+		sock.on("connect", () => {
+			sock.end();
+			resolve(true);
+		});
 		sock.on("error", () => resolve(false));
-		sock.on("timeout", () => { sock.destroy(); resolve(false); });
+		sock.on("timeout", () => {
+			sock.destroy();
+			resolve(false);
+		});
 	});
 }
 
@@ -61,7 +67,9 @@ if (filePath.endsWith("handoff.md")) {
 		// Check FalkorDB (indusk-infra container) on localhost:6379
 		const falkorUp = await checkTcp("localhost", 6379);
 		if (!falkorUp) {
-			errors.push("FalkorDB not reachable on localhost:6379 — is indusk-infra running? Try: docker start indusk-infra");
+			errors.push(
+				"FalkorDB not reachable on localhost:6379 — is indusk-infra running? Try: docker start indusk-infra",
+			);
 		}
 
 		// Check Graphiti on localhost:8100
@@ -75,14 +83,17 @@ if (filePath.endsWith("handoff.md")) {
 				errors.push("Graphiti responded but not healthy on localhost:8100");
 			}
 		} catch {
-			errors.push("Graphiti MCP server not reachable on localhost:8100 — may still be starting (~90s after container restart)");
+			errors.push(
+				"Graphiti MCP server not reachable on localhost:8100 — may still be starting (~90s after container restart)",
+			);
 		}
 
 		if (errors.length > 0) {
 			process.stderr.write(
 				`Cannot check off mcp-ready — infrastructure verification failed:\n` +
-				errors.map((e) => `  - ${e}`).join("\n") + "\n" +
-				`Fix the issues above before proceeding with catchup.`,
+					errors.map((e) => `  - ${e}`).join("\n") +
+					"\n" +
+					`Fix the issues above before proceeding with catchup.`,
 			);
 			process.exit(2);
 		}

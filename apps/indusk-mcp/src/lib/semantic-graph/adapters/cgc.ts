@@ -86,9 +86,7 @@ export class CgcAdapter implements SemanticGraphAdapter {
 			const records: AdapterRecord[] = [];
 
 			// Query File nodes
-			const files = await graph.query<{ path: string }>(
-				"MATCH (f:File) RETURN f.path AS path",
-			);
+			const files = await graph.query<{ path: string }>("MATCH (f:File) RETURN f.path AS path");
 
 			const filePaths = new Set<string>();
 			const filePathList: string[] = [];

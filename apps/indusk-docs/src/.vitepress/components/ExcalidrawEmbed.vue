@@ -11,8 +11,8 @@
 import { onMounted, ref } from "vue";
 
 const props = defineProps({
-  src: { type: String, required: true },
-  title: { type: String, default: "Excalidraw Diagram" },
+	src: { type: String, required: true },
+	title: { type: String, default: "Excalidraw Diagram" },
 });
 
 const containerRef = ref(null);
@@ -20,39 +20,39 @@ const loading = ref(true);
 const error = ref(null);
 
 onMounted(async () => {
-  try {
-    const res = await fetch(props.src);
-    if (!res.ok) throw new Error(`Failed to load ${props.src}`);
-    const data = await res.json();
+	try {
+		const res = await fetch(props.src);
+		if (!res.ok) throw new Error(`Failed to load ${props.src}`);
+		const data = await res.json();
 
-    const { exportToSvg } = await import("@excalidraw/utils");
+		const { exportToSvg } = await import("@excalidraw/utils");
 
-    const svg = await exportToSvg({
-      elements: data.elements || [],
-      appState: {
-        exportWithDarkMode: false,
-        exportBackground: true,
-        viewBackgroundColor: data.appState?.viewBackgroundColor || "#ffffff",
-        ...(data.appState || {}),
-      },
-      files: data.files || null,
-      exportPadding: 16,
-    });
+		const svg = await exportToSvg({
+			elements: data.elements || [],
+			appState: {
+				exportWithDarkMode: false,
+				exportBackground: true,
+				viewBackgroundColor: data.appState?.viewBackgroundColor || "#ffffff",
+				...(data.appState || {}),
+			},
+			files: data.files || null,
+			exportPadding: 16,
+		});
 
-    svg.style.width = "100%";
-    svg.style.height = "auto";
-    svg.removeAttribute("width");
-    svg.removeAttribute("height");
+		svg.style.width = "100%";
+		svg.style.height = "auto";
+		svg.removeAttribute("width");
+		svg.removeAttribute("height");
 
-    if (containerRef.value) {
-      containerRef.value.appendChild(svg);
-    }
-  } catch (e) {
-    console.error("ExcalidrawEmbed error:", e);
-    error.value = `Failed to render diagram: ${e.message}`;
-  } finally {
-    loading.value = false;
-  }
+		if (containerRef.value) {
+			containerRef.value.appendChild(svg);
+		}
+	} catch (e) {
+		console.error("ExcalidrawEmbed error:", e);
+		error.value = `Failed to render diagram: ${e.message}`;
+	} finally {
+		loading.value = false;
+	}
 });
 </script>
 

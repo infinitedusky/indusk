@@ -221,9 +221,16 @@ export class SemanticGraphClient {
 		return row ? Number(row.n ?? 0) : 0;
 	}
 
-	async queryAnchors(
-		options: { status?: string } = {},
-	): Promise<{ uuid: string; kind: string; path: string; name: string | null; blob_hash: string | null; status: string }[]> {
+	async queryAnchors(options: { status?: string } = {}): Promise<
+		{
+			uuid: string;
+			kind: string;
+			path: string;
+			name: string | null;
+			blob_hash: string | null;
+			status: string;
+		}[]
+	> {
 		const graph = this.requireGraph();
 		const where = options.status ? `WHERE a.status = $status` : "";
 		const result = await graph.query<{

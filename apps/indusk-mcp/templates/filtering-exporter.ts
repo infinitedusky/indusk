@@ -14,20 +14,10 @@
  * If OTEL_ENABLED_CATEGORIES is not set, all categories are exported.
  */
 
-import type {
-	ExportResult,
-	ExportResultCode,
-} from "@opentelemetry/core";
+import type { ExportResult, ExportResultCode } from "@opentelemetry/core";
 import type { ReadableSpan, SpanExporter } from "@opentelemetry/sdk-trace-base";
 
-export const ALL_CATEGORIES = [
-	"http",
-	"db",
-	"business",
-	"inference",
-	"state",
-	"system",
-] as const;
+export const ALL_CATEGORIES = ["http", "db", "business", "inference", "state", "system"] as const;
 
 export type OtelCategory = (typeof ALL_CATEGORIES)[number];
 
@@ -49,10 +39,7 @@ export class FilteringExporter implements SpanExporter {
 		this.enabledCategories = getEnabledCategories();
 	}
 
-	export(
-		spans: ReadableSpan[],
-		resultCallback: (result: ExportResult) => void,
-	): void {
+	export(spans: ReadableSpan[], resultCallback: (result: ExportResult) => void): void {
 		const filtered = spans.filter((span) => {
 			const category = span.attributes["otel.category"] as string | undefined;
 			// Spans without a category are always exported

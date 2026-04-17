@@ -2,13 +2,12 @@ import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-
+import type { GraphitiClient } from "../graphiti-client.js";
 import type { SemanticGraphEvent } from "./events.js";
+import { captureWithLog } from "./graphiti-log-wrapper.js";
 import { resetJjRunner, setJjRunner } from "./jj.js";
 import { LogWriter } from "./log-writer.js";
 import { getLogPath } from "./paths.js";
-import type { GraphitiClient } from "../graphiti-client.js";
-import { captureWithLog } from "./graphiti-log-wrapper.js";
 import type { SemanticGraphClient } from "./runtime-client.js";
 
 // ---------------------------------------------------------------------------

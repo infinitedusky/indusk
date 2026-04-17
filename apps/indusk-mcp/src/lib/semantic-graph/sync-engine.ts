@@ -11,8 +11,15 @@
 
 import { randomUUID } from "node:crypto";
 
-import type { AdapterRecord, SemanticGraphAdapter } from "./adapter.js";
-import type { AnchorCreatedEvent, AnchorMovedEvent, AnchorTombstonedEvent, EdgeAttachedEvent, SemanticGraphEvent, SyncCompletedEvent } from "./events.js";
+import type { SemanticGraphAdapter } from "./adapter.js";
+import type {
+	AnchorCreatedEvent,
+	AnchorMovedEvent,
+	AnchorTombstonedEvent,
+	EdgeAttachedEvent,
+	SemanticGraphEvent,
+	SyncCompletedEvent,
+} from "./events.js";
 import { getCurrentChangeId } from "./jj.js";
 import type { LogWriter } from "./log-writer.js";
 import type { SemanticGraphClient } from "./runtime-client.js";

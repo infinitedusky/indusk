@@ -93,13 +93,11 @@ for (const phase of phases) {
 		const nextHasUnchecked = nextPhase.items.some((i) => !i.checked);
 		if (nextHasUnchecked) {
 			// This phase is complete and next phase hasn't started
-			const result = {
+			const _result = {
 				hookSpecificOutput: {
 					hookEventName: "PostToolUse",
 				},
 			};
-			// Output reminder as JSON to stdout
-			console.log(JSON.stringify(result));
 			console.error(
 				`Phase ${phase.number} (${phase.name}) is fully complete. Call advance_plan to validate gates before starting Phase ${nextPhase.number}.`,
 			);

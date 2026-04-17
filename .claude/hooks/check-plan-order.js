@@ -10,8 +10,8 @@
  * Exit 2 = ask for approval (stderr sent to agent as feedback)
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { resolve, dirname, basename } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { basename, dirname, resolve } from "node:path";
 
 let input = "";
 for await (const chunk of process.stdin) {
@@ -50,20 +50,20 @@ if (!fmMatch) {
 
 const frontmatter = fmMatch[1];
 const blockedByMatch = frontmatter.match(/blocked_by:\s*\[([^\]]*)\]/);
-if (!blockedByMatch) {
-	// Also try YAML list format
+let blockers = [];
+if (blockedByMatch) {
+	blockers = blockedByMatch[1]
+		.split(",")
+		.map((s) => s.trim().replace(/['"]/g, ""))
+		.filter(Boolean);
+} else {
 	const yamlListMatch = frontmatter.match(/blocked_by:\s*\n((?:\s*-\s*.+\n?)+)/);
 	if (!yamlListMatch) {
 		process.exit(0);
 	}
-	var blockers = yamlListMatch[1]
+	blockers = yamlListMatch[1]
 		.split("\n")
-		.map(l => l.replace(/^\s*-\s*/, "").trim())
-		.filter(Boolean);
-} else {
-	var blockers = blockedByMatch[1]
-		.split(",")
-		.map(s => s.trim().replace(/['"]/g, ""))
+		.map((l) => l.replace(/^\s*-\s*/, "").trim())
 		.filter(Boolean);
 }
 
@@ -91,7 +91,7 @@ if (existsSync(archiveDir)) {
 	}
 }
 
-const incomplete = blockers.filter(b => !archived.has(b));
+const incomplete = blockers.filter((b) => !archived.has(b));
 
 if (incomplete.length === 0) {
 	process.exit(0);
@@ -100,9 +100,9 @@ if (incomplete.length === 0) {
 // Block with approval required
 process.stderr.write(
 	`Plan "${planName}" is blocked by incomplete dependencies:\n` +
-	incomplete.map(b => `  - ${b} (not archived)`).join("\n") +
-	`\n\nThese plans must complete their retrospective and be archived first.\n` +
-	`Check .indusk/planning/master.md for the execution order.\n` +
-	`Override only if you have a good reason to work out of order.`
+		incomplete.map((b) => `  - ${b} (not archived)`).join("\n") +
+		`\n\nThese plans must complete their retrospective and be archived first.\n` +
+		`Check .indusk/planning/master.md for the execution order.\n` +
+		`Override only if you have a good reason to work out of order.`,
 );
 process.exit(2);

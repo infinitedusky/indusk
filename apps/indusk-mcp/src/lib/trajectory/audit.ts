@@ -106,26 +106,21 @@ export interface TestIdResolution {
  * The verify skill uses this to resolve phase-Verification items that say
  * "T3 passes (...)" into a real invocation. Best-effort — human can override.
  */
-export function resolveTestIdCommand(
-	trajectory: Trajectory,
-	id: string,
-): TestIdResolution | null {
+export function resolveTestIdCommand(trajectory: Trajectory, id: string): TestIdResolution | null {
 	const row = trajectory.rows.find((r) => r.id === id);
 	if (!row) return null;
 
 	const backtickMatches = [...row.asserts.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
-	const identifiers = [...row.asserts.matchAll(/\b[a-zA-Z][a-zA-Z0-9_]{3,}\b/g)].map(
-		(m) => m[0],
-	);
+	const identifiers = [...row.asserts.matchAll(/\b[a-zA-Z][a-zA-Z0-9_]{3,}\b/g)].map((m) => m[0]);
 
 	const keyword =
-		backtickMatches
-			.filter((s) => /[a-zA-Z]/.test(s))
-			.sort((a, b) => b.length - a.length)[0] ??
+		backtickMatches.filter((s) => /[a-zA-Z]/.test(s)).sort((a, b) => b.length - a.length)[0] ??
 		identifiers.sort((a, b) => b.length - a.length)[0] ??
 		null;
 
-	const fileGlob = keyword ? `**/*${keyword.toLowerCase().replace(/[^a-z0-9]/g, "")}*.test.ts` : null;
+	const fileGlob = keyword
+		? `**/*${keyword.toLowerCase().replace(/[^a-z0-9]/g, "")}*.test.ts`
+		: null;
 	const suggestedCommand = keyword
 		? `pnpm test -t "${keyword}"`
 		: `pnpm test -t "${row.asserts.slice(0, 40)}"`;

@@ -17,8 +17,8 @@
  *   DEBUG — development details, disable in production
  */
 
-import pino from "pino";
 import type { TransportTargetOptions } from "pino";
+import pino from "pino";
 
 const targets: TransportTargetOptions[] = [
 	// Always log to stdout

@@ -426,7 +426,7 @@ export async function extensionsUpdate(projectRoot: string, names?: string[]): P
 
 		try {
 			if (!ext.manifest._source) {
-				if (names && names.includes(name)) {
+				if (names?.includes(name)) {
 					console.info(
 						`  ${name}: built-in extension — updated via package update, not extensions update`,
 					);
@@ -704,12 +704,16 @@ function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
 
 	// Remove first, then add — ensures clean state
 	try {
-		execSync(`claude mcp remove -s project ${name}`, { timeout: 10000, stdio: ["ignore", "pipe", "pipe"] });
+		execSync(`claude mcp remove -s project ${name}`, {
+			timeout: 10000,
+			stdio: ["ignore", "pipe", "pipe"],
+		});
 	} catch {
 		// not registered yet, fine
 	}
 
-	const serverType = server.type ?? (server as Record<string, unknown>).transport as string | undefined;
+	const serverType =
+		server.type ?? ((server as Record<string, unknown>).transport as string | undefined);
 
 	// Auto-run claude mcp add for no-auth stdio servers
 	if (!needsAuth && serverType === "stdio" && server.command) {

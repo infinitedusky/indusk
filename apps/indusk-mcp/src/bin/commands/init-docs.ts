@@ -32,7 +32,7 @@ export async function initDocs(projectRoot: string): Promise<void> {
 	// package.json
 	writeFileSync(
 		join(docsDir, "package.json"),
-		JSON.stringify(
+		`${JSON.stringify(
 			{
 				name: `${projectName}-docs`,
 				version: "0.1.0",
@@ -54,7 +54,7 @@ export async function initDocs(projectRoot: string): Promise<void> {
 			},
 			null,
 			"\t",
-		) + "\n",
+		)}\n`,
 	);
 
 	// .vitepress/config.ts

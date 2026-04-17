@@ -63,7 +63,7 @@ const cloneDiagram = () => {
 	diagramHTML.value = diagramRef.value.innerHTML;
 };
 
-const toggleExpand = () => {
+const _toggleExpand = () => {
 	if (!isExpanded.value) {
 		cloneDiagram();
 	}
@@ -97,7 +97,7 @@ const toggleExpand = () => {
 	}
 };
 
-const zoomIn = () => {
+const _zoomIn = () => {
 	if (panzoomInstance.value) {
 		const currentZoom = panzoomInstance.value.getTransform().scale;
 		if (currentZoom < 10) {
@@ -106,7 +106,7 @@ const zoomIn = () => {
 	}
 };
 
-const zoomOut = () => {
+const _zoomOut = () => {
 	if (panzoomInstance.value) {
 		const currentZoom = panzoomInstance.value.getTransform().scale;
 		if (currentZoom > 0.05) {

@@ -5,9 +5,8 @@
  * Self-skips if FalkorDB is not reachable.
  */
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-
 import { FalkorDB } from "falkordb";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { CgcAdapter } from "./cgc.js";
 

@@ -256,9 +256,7 @@ describe("sync-engine", () => {
 	});
 
 	it("handles empty runtime (first sync with no prior state)", async () => {
-		const adapter = createFakeAdapter([
-			{ kind: "function", path: "src/app.ts", name: "handler" },
-		]);
+		const adapter = createFakeAdapter([{ kind: "function", path: "src/app.ts", name: "handler" }]);
 		const result = await runSync(adapter, testDir, logWriter, asClient());
 
 		expect(result.created).toBe(1);
@@ -268,9 +266,7 @@ describe("sync-engine", () => {
 	it("tags all events with the jj change ID", async () => {
 		setJjRunner(async () => "specificchangeid\n");
 
-		const adapter = createFakeAdapter([
-			{ kind: "file", path: "src/app.ts" },
-		]);
+		const adapter = createFakeAdapter([{ kind: "file", path: "src/app.ts" }]);
 		await runSync(adapter, testDir, logWriter, asClient());
 
 		const events = readLogEvents();
@@ -280,14 +276,10 @@ describe("sync-engine", () => {
 	});
 
 	it("records without fingerprint skip rename detection", async () => {
-		const adapter1 = createFakeAdapter([
-			{ kind: "function", path: "src/app.ts", name: "oldName" },
-		]);
+		const adapter1 = createFakeAdapter([{ kind: "function", path: "src/app.ts", name: "oldName" }]);
 		await runSync(adapter1, testDir, logWriter, asClient());
 
-		const adapter2 = createFakeAdapter([
-			{ kind: "function", path: "src/app.ts", name: "newName" },
-		]);
+		const adapter2 = createFakeAdapter([{ kind: "function", path: "src/app.ts", name: "newName" }]);
 		const result = await runSync(adapter2, testDir, logWriter, asClient());
 
 		expect(result.tombstoned).toBe(1);
@@ -302,8 +294,16 @@ describe("sync-engine", () => {
 			{ kind: "file", path: "src/db.ts" },
 		];
 		const edges: AdapterEdge[] = [
-			{ source_identity: "file::src/app.ts", target_identity: "file::src/utils.ts", relation: "imports" },
-			{ source_identity: "file::src/app.ts", target_identity: "file::src/db.ts", relation: "imports" },
+			{
+				source_identity: "file::src/app.ts",
+				target_identity: "file::src/utils.ts",
+				relation: "imports",
+			},
+			{
+				source_identity: "file::src/app.ts",
+				target_identity: "file::src/db.ts",
+				relation: "imports",
+			},
 		];
 		const adapter = createFakeAdapter(records, edges);
 
@@ -322,11 +322,13 @@ describe("sync-engine", () => {
 	});
 
 	it("skips edges with unresolvable identities", async () => {
-		const records: AdapterRecord[] = [
-			{ kind: "file", path: "src/app.ts" },
-		];
+		const records: AdapterRecord[] = [{ kind: "file", path: "src/app.ts" }];
 		const edges: AdapterEdge[] = [
-			{ source_identity: "file::src/app.ts", target_identity: "file::src/missing.ts", relation: "imports" },
+			{
+				source_identity: "file::src/app.ts",
+				target_identity: "file::src/missing.ts",
+				relation: "imports",
+			},
 		];
 		const adapter = createFakeAdapter(records, edges);
 
@@ -337,9 +339,7 @@ describe("sync-engine", () => {
 	});
 
 	it("adapter without edges() method works fine", async () => {
-		const adapter = createFakeAdapter([
-			{ kind: "file", path: "src/app.ts" },
-		]);
+		const adapter = createFakeAdapter([{ kind: "file", path: "src/app.ts" }]);
 
 		const result = await runSync(adapter, testDir, logWriter, asClient());
 
