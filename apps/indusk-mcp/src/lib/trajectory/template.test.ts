@@ -30,21 +30,12 @@ function fillPlaceholders(template: string): string {
 		.replace(/draft \| approved \| in-progress \| completed \| abandoned/g, "draft")
 		.replace(/\{What this achieves and why\.\}/g, "Build a thing.")
 		.replace(/\{Item\}/g, "Example item")
-		.replace(
-			/\{one-line assertion — what the test claims is true\}/g,
-			"example assertion",
-		)
+		.replace(/\{one-line assertion — what the test claims is true\}/g, "example assertion")
 		.replace(/\{another assertion\}/g, "another example assertion")
-		.replace(
-			/\{Task — include code snippets when syntax matters\}/g,
-			"Example task",
-		)
+		.replace(/\{Task — include code snippets when syntax matters\}/g, "Example task")
 		.replace(/\{Name\}/g, "Setup")
 		.replace(/\{runnable command, e\.g\. pnpm test\}/g, "pnpm test")
-		.replace(
-			/\{Concrete CLAUDE\.md edit[^}]+\}/g,
-			"Add to Conventions: example",
-		)
+		.replace(/\{Concrete CLAUDE\.md edit[^}]+\}/g, "Add to Conventions: example")
 		.replace(/\{Docs page to write or update[^}]+\}/g, "Update example docs");
 }
 

@@ -235,6 +235,8 @@ The hook exits with code 2, which prevents the edit from being applied. The agen
 
 **Escape hatch:** Adding `<!-- skip-gates -->` to the edit content bypasses the hook. This exists for manual corrections, not for routine use.
 
+**Trajectory enforcement:** If the impl has a `## Test Trajectory` section, the hook ALSO checks that every trajectory row whose `Passes at: Phase N` lies before the phase being advanced into is in state `passing`, `skipped`, or `blocked`. A row still in `planned`, `writable`, or `written` blocks the advance. This is structural enforcement of the "deferral is impossible" property — the implementer cannot close a phase whose committed tests aren't passing.
+
 ### gate-reminder.js (PostToolUse)
 
 This hook runs after every `Edit` or `Write` call that modifies an `impl.md` file. It checks whether a phase just became fully complete (all items checked) and the next phase has not yet started.
@@ -243,9 +245,55 @@ This hook runs after every `Edit` or `Write` call that modifies an `impl.md` fil
 
 ```
 Phase 1 (Subscription Core) is fully complete. Call advance_plan to validate gates before starting Phase 2.
+
+Phase 2 opens with these tests to author (commit as failing before implementation work):
+  [T3] Webhook endpoint rejects requests with invalid signatures (HTTP 400)
+  [T4] customer.subscription.updated event updates local subscription row
 ```
 
-This is advisory — it cannot block. It nudges the agent to call `advance_plan` for formal validation before moving on.
+This is advisory — it cannot block. For impls with a Test Trajectory, the hook also lists `Writable at: Phase N+1` rows that need authoring at phase start, and mid-phase warns about `Passes at: Phase N` rows still not passing.
+
+## Test Trajectory
+
+For impls with `trajectory: required` in frontmatter, the work skill takes on two additional responsibilities at phase boundaries.
+
+### At phase start
+
+Before starting implementation items for Phase N:
+
+1. Read the Test Trajectory. Collect every row with `Writable at: Phase N` whose `State` is `planned` or `writable`.
+2. Author each named test as failing (or `.skip()` with an unlock-phase comment).
+3. Update each row's `State` to `written` in the trajectory table.
+
+### At phase close
+
+Before advancing past Phase N:
+
+1. Collect every row with `Passes at: Phase N`.
+2. Run the tests. Update each passing row's `State` to `passing`. Skipped or blocked rows transition accordingly with a reason.
+3. The `check-gates` hook rejects the phase transition if any `Passes at: Phase N` row is still in `planned`, `writable`, or `written` state.
+
+### State lifecycle
+
+| State | Meaning |
+|-------|---------|
+| `planned` | Row exists in the trajectory, no file yet |
+| `writable` | Dependencies exist; test can now be authored |
+| `written` | Test file exists and runs (fails or `.skip()`) |
+| `passing` | Test runs and passes |
+| `skipped` | Intentionally `.skip()` with a documented reason |
+| `blocked` | Was writable/written, now regressed; needs investigation |
+
+### Library helpers
+
+The [`apps/indusk-mcp/src/lib/trajectory/state-ops`](/reference/trajectory/parser) module exposes:
+
+- `getRowsWritableAt(trajectory, phase)` — rows to author at phase start
+- `getRowsBlockingPhaseClose(trajectory, phase)` — rows preventing phase close
+- `updateRowState(body, id, newState)` — rewrite the State cell in impl.md body
+- `getPhaseStartNudge(body, phase)` / `getPhaseCloseNudge(body, phase)` — human-readable reminder text
+
+Call these from scripts or MCP tools rather than re-parsing the table by hand.
 
 ## Forward Intelligence
 

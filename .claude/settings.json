@@ -125,7 +125,11 @@
       "Bash(node .claude/hooks/validate-impl-structure.js)",
       "Bash(echo \"EXIT=$?\")",
       "Bash(node --input-type=module -e ' *)",
-      "Bash(JJ_EDITOR=true jj split '~\\(glob:\".indusk/planning/tests-first-planning/**\" | glob:\"apps/indusk-mcp/src/lib/trajectory/**\" | glob:\"apps/indusk-docs/src/reference/trajectory/**\" | \"apps/indusk-mcp/hooks/validate-impl-structure.js\" | \"CLAUDE.md\" | \".indusk/planning/master.md\"\\)')"
+      "Bash(JJ_EDITOR=true jj split '~\\(glob:\".indusk/planning/tests-first-planning/**\" | glob:\"apps/indusk-mcp/src/lib/trajectory/**\" | glob:\"apps/indusk-docs/src/reference/trajectory/**\" | \"apps/indusk-mcp/hooks/validate-impl-structure.js\" | \"CLAUDE.md\" | \".indusk/planning/master.md\"\\)')",
+      "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/)",
+      "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/check-gates.js apps/indusk-mcp/hooks/gate-reminder.js apps/indusk-mcp/hooks/validate-impl-structure.js apps/indusk-mcp/skills/work.md)",
+      "Bash(npx @biomejs/biome check apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/check-gates.js apps/indusk-mcp/hooks/gate-reminder.js apps/indusk-mcp/hooks/validate-impl-structure.js)",
+      "Bash(npx @biomejs/biome check --write apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/check-gates.js apps/indusk-mcp/hooks/gate-reminder.js apps/indusk-mcp/hooks/validate-impl-structure.js)"
     ],
     "additionalDirectories": [
       "/tmp",

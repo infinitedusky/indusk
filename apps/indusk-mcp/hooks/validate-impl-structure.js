@@ -34,7 +34,7 @@ if (!filePath.endsWith("/impl.md") && !filePath.endsWith("\\impl.md")) {
 
 /**
  * Find the project root by walking up from a starting directory looking for
- * a .indusk/ or .claude/ directory. Falls back to event.cwd if none found.
+ * a .indusk/ or .claude/ directory. Falls back to startDir if none found.
  * Mirrors the pattern used in check-catchup.js.
  */
 function findProjectRoot(startDir) {
@@ -46,6 +46,25 @@ function findProjectRoot(startDir) {
 		dir = parent;
 	}
 	return startDir;
+}
+
+/**
+ * Resolve the project root for the file being edited. Prefer walking up from
+ * the file's own directory — the file being edited is always inside the
+ * project, and its directory chain reliably contains `.indusk/` even when
+ * `event.cwd` is set to something unrelated by the calling environment
+ * (observed from the Claude Code VS Code extension on impl edits). Falls
+ * back to `event.cwd` and finally `process.cwd()`.
+ */
+function resolveProjectRoot(filePath, eventCwd) {
+	if (filePath) {
+		const fileDir = resolve(filePath, "..");
+		const fromFile = findProjectRoot(fileDir);
+		if (existsSync(`${fromFile}/.indusk`) || existsSync(`${fromFile}/.claude`)) {
+			return fromFile;
+		}
+	}
+	return findProjectRoot(eventCwd ?? process.cwd());
 }
 
 /**
@@ -66,7 +85,7 @@ function shouldEmitOtelGate(projectRoot) {
 	}
 }
 
-const projectRoot = findProjectRoot(event.cwd ?? process.cwd());
+const projectRoot = resolveProjectRoot(filePath, event.cwd);
 const otelGateEnabled = shouldEmitOtelGate(projectRoot);
 
 // Check for skip-gates escape hatch
