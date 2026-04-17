@@ -51,10 +51,10 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 | T8 | Retrospective skill `retro-lesson` trigger calls `highlight` (level: important) — grep finds the call | Phase 2 | Phase 2 | passing |
 | T9 | No process skill (planner/work/retro) references `graph_capture` or raw `mcp__graphiti__add_memory` — repo-wide grep returns zero matches in `apps/indusk-mcp/skills/{planner,work,retrospective}.md` | Phase 2 | Phase 2 | passing |
 | T10 | Eval agent prompt builder output contains highlight-processing instructions with level→weight mapping (critical→1.0, important→0.6, note→0.3) | Phase 3 | Phase 3 | passing |
-| T11 | `/highlight` slash command skill file exists at `apps/indusk-mcp/skills/highlight.md` with level arg parsing (defaults to `important`, accepts `critical` or `note`) | Phase 4 | Phase 4 | planned |
-| T12 | Handoff skill at end of session fires the eval trigger (mentions `eval-trigger.js --source handoff` or equivalent) | Phase 4 | Phase 4 | planned |
-| T13 | `eval-trigger.js` accepts `--source handoff` CLI flag and sets the source in the eval agent's environment | Phase 4 | Phase 4 | planned |
-| T14 | `CLAUDE.md` Architecture contains the three-tier agent roles subsection, AND Key Decisions contains the agent-roles ADR bullet | Phase 4 | Phase 4 | planned |
+| T11 | `/highlight` slash command skill file exists at `apps/indusk-mcp/skills/highlight.md` with level arg parsing (defaults to `important`, accepts `critical` or `note`) | Phase 4 | Phase 4 | passing |
+| T12 | Handoff skill at end of session fires the eval trigger (mentions `eval-trigger.js --source handoff` or equivalent) | Phase 4 | Phase 4 | passing |
+| T13 | `eval-trigger.js` accepts `--source handoff` CLI flag and sets the source in the eval agent's environment | Phase 4 | Phase 4 | passing |
+| T14 | `CLAUDE.md` Architecture contains the three-tier agent roles subsection, AND Key Decisions contains the agent-roles ADR bullet | Phase 4 | Phase 4 | passing |
 
 ### Deferred Verification
 
@@ -117,7 +117,7 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 
 #### Phase 3 Verification
 - [x] T10 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- judge-runner`)
-- [ ] Manual smoke: write a highlight, run `jj describe`, confirm `.indusk/highlights-processed.jsonl` has the entry and `.indusk/eval/results.log` mentions highlights processed (this exercises the Deferred Verification mitigation for end-to-end eval agent behavior)
+- [ ] Manual smoke: write a highlight, run `jj describe`, confirm `.indusk/highlights-processed.jsonl` has the entry and `.indusk/eval/results.log` mentions highlights processed. **BLOCKED 2026-04-17**: Phase 4 commit attempted the smoke. File + MCP queue round-trip verified (h-20260417-001 wrote to `.indusk/highlights.jsonl`, `highlights_unprocessed` returned it). End-to-end processing blocked by independent eval-judge silent-failure bug — results.log last scorecard 2026-04-11. Resolved by two micro-plans that must ship before agent-roles can close: `improvement-eval-agent-open-telemetry` (opt-in OTel spans for judge observability) and `bug-fix-eval-agent` (diagnose + fix the `claude --print` stdin flow). Re-run this smoke after both ship.
 
 #### Phase 3 Context
 - (none needed — Phase 2 context update covers the full flow)
@@ -126,29 +126,30 @@ Establish clean role boundaries between the working agent, eval agent, and infra
 - [x] Update `apps/indusk-docs/src/reference/tools/highlights.md` with eval agent processing details
 
 ### Phase 4: User-Facing Highlight Command + Session-End Trigger + Role Documentation
-- [ ] Create `/highlight` slash command skill at `apps/indusk-mcp/skills/highlight/SKILL.md` — user says `/highlight this decision about X` and the skill writes a highlight with appropriate level (default `important`, user can specify `critical` or `note`)
-- [ ] Update handoff skill (`apps/indusk-mcp/skills/handoff/SKILL.md`): at the end of handoff, trigger the eval agent to process any remaining highlights that weren't followed by a `jj describe`. Implementation: the handoff hook fires the same eval trigger that `jj describe` fires.
-- [ ] Update eval trigger hook (`apps/indusk-mcp/hooks/eval-trigger.js`): accept a `--source handoff` flag so the eval agent knows it was triggered by session end, not a commit. The eval agent should still process highlights but may skip the diff-based scoring (there's no new commit to score).
-- [ ] Document role definitions in CLAUDE.md Key Decisions section:
+- [x] Create `/highlight` slash command skill at `apps/indusk-mcp/skills/highlight/SKILL.md` — user says `/highlight this decision about X` and the skill writes a highlight with appropriate level (default `important`, user can specify `critical` or `note`)
+- [x] Update handoff skill (`apps/indusk-mcp/skills/handoff/SKILL.md`): at the end of handoff, trigger the eval agent to process any remaining highlights that weren't followed by a `jj describe`. Implementation: the handoff hook fires the same eval trigger that `jj describe` fires.
+- [x] Update eval trigger hook (`apps/indusk-mcp/hooks/eval-trigger.js`): accept a `--source handoff` flag so the eval agent knows it was triggered by session end, not a commit. The eval agent should still process highlights but may skip the diff-based scoring (there's no new commit to score).
+- [x] Document role definitions in CLAUDE.md Key Decisions section:
   ```
   - Three-tier agent roles: working agent (code + highlights), eval agent (quality + structured knowledge), infrastructure (maintenance + enforcement) — see .indusk/planning/agent-roles/adr.md
   ```
-- [ ] Document roles in CLAUDE.md Architecture section — add a "Roles" subsection describing the three tiers, the highlights queue, and the principle that the eval agent is the sole structured writer to Graphiti
+- [x] Document roles in CLAUDE.md Architecture section — add a "Roles" subsection describing the three tiers, the highlights queue, and the principle that the eval agent is the sole structured writer to Graphiti
 
 #### Phase 4 Verification
-- [ ] T11 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- highlight-command`)
-- [ ] T12 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- handoff`)
-- [ ] T13 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- eval-trigger`)
-- [ ] T14 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- claude-md-roles`)
-- [ ] `pnpm check` passes
-- [ ] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes (full indusk-mcp suite)
+- [x] T11 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp -- agent-roles-phase4`)
+- [x] T12 passes (same command)
+- [x] T13 passes (same command)
+- [x] T14 passes (same command)
+- [x] `pnpm check` passes
+- [x] `pnpm turbo test --filter=@infinitedusky/indusk-mcp` passes (full indusk-mcp suite — 274 passed, 21 skipped for FalkorDB-dependent tests)
 
 #### Phase 4 Context
-- [ ] Update CLAUDE.md Current State: "Agent roles formalized — working agent writes highlights, eval agent processes them into structured Graphiti knowledge with weighted edges. `/highlight` command available for explicit user-flagged moments."
+- [x] Update CLAUDE.md Current State: "Agent roles formalized — working agent writes highlights, eval agent processes them into structured Graphiti knowledge with weighted edges. `/highlight` command available for explicit user-flagged moments."
 
 #### Phase 4 Document
-- [ ] Add sidebar entry for highlights reference page in `apps/indusk-docs/src/.vitepress/config.ts`
-- [ ] Update changelog at `apps/indusk-docs/src/changelog.md`
+- [x] Add sidebar entry for highlights reference page in `apps/indusk-docs/src/.vitepress/config.ts`
+- [x] Update changelog at `apps/indusk-docs/src/changelog.md`
+
 
 ## Files Affected
 

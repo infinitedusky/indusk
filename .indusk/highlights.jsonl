@@ -1,0 +1,2 @@
+{"id":"h-20260417-001","timestamp":"2026-04-17T18:59:23.546Z","level":"note","tag":"observation","note":"agent-roles Phase 3 smoke: end-to-end test of highlights pipeline via live 1.17.0 MCP tool"}
+{"id":"h-20260417-002","timestamp":"2026-04-17T19:03:16.463Z","level":"important","tag":"observation","note":"The eval judge needs OTel instrumentation (spans, traces) — opt-in/off-by-default in production, useful for debugging judge behavior locally. Sandy raised this while watching system.log during the agent-roles Phase 4 smoke. Future plan candidate."}

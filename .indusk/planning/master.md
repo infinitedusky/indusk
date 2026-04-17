@@ -11,7 +11,9 @@ Ordered execution pipeline. When an upstream plan changes, review and adjust all
 
 | # | Plan | Status | Depends On | Blocks |
 |---|------|--------|------------|--------|
-| 1 | [agent-roles](agent-roles/brief.md) | brief accepted, impl retrofitted | — | 2, 3, 4, 5, 6, 7, 8 |
+| 0a | [improvement-eval-agent-open-telemetry](improvement-eval-agent-open-telemetry/brief.md) | impl approved (straight-to-impl micro-plan) | — | 0b, 1 |
+| 0b | [bug-fix-eval-agent](bug-fix-eval-agent/brief.md) | impl approved (straight-to-impl micro-plan) | 0a | 1 |
+| 1 | [agent-roles](agent-roles/brief.md) | impl in-progress, Phase 1-4 code shipped, Phase 3 Deferred Verification blocked on 0a + 0b | 0a, 0b | 2, 3, 4, 5, 6, 7, 8 |
 | 2 | [mcp-orchestration-layer](mcp-orchestration-layer/brief.md) | brief draft | 1 | — |
 | 3 | [hermes-inspired-improvements](hermes-inspired-improvements/brief.md) | brief accepted | 1 | 8 |
 | 4 | [graph-knowledge-architecture](graph-knowledge-architecture/brief.md) | impl draft | 1 (soft: 3) | 5, 6, 7, 8 |
