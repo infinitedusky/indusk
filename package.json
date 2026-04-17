@@ -12,14 +12,14 @@
 		"dev:indusk-docs": "ce run --profile -- turbo dev --filter=indusk-docs",
 		"build:indusk-docs": "ce run --profile -- turbo build --filter=indusk-docs",
 		"start:indusk-docs": "ce run --profile -- turbo start --filter=indusk-docs",
-"dev": "ce run -- turbo dev",
+		"dev": "ce run -- turbo dev",
 		"build": "ce run -- turbo build",
 		"start": "ce run -- turbo start",
 		"env:start": "ce start"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.8",
-		"composable.env": "^1.17.2",
+		"composable.env": "^1.20.2",
 		"turbo": "^2.4.0",
 		"vitest": "^4.1.0"
 	}

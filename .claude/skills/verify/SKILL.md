@@ -42,6 +42,19 @@ When unsure, run the check. False negatives (missing a real error) are worse tha
 
 When the work skill is executing an impl and reaches verification items, run checks in this order (fastest first):
 
+### Test ID references
+
+If the impl has a `## Test Trajectory` section and a Verification item says "T3 passes (`...`)", resolve the ID to a runnable command:
+
+1. Read the Trajectory table, find the row with matching ID
+2. The item's parenthetical usually contains the command directly — use that
+3. If the parenthetical is missing or generic (`pnpm test`), derive a filter from the row's `Asserts` column:
+   - Extract backtick-quoted code identifiers (highest priority)
+   - Fall back to the longest camelCase/kebab-case identifier
+   - Use as `-t "{keyword}"` filter with the project's test runner
+
+Use the `resolveTestIdCommand(trajectory, id)` helper from [`apps/indusk-mcp/src/lib/trajectory/audit.ts`](/reference/trajectory/parser) for mechanical resolution. A phase cannot close (via the `check-gates` hook) until every `Passes at: Phase N` row is in `State: passing` — so verify MUST run those tests, not just the command the author typed.
+
 ### Check Order
 
 1. **Type check** — `tsc --noEmit` or `pnpm turbo typecheck --filter={app}` if wired

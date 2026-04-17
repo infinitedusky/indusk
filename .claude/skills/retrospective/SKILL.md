@@ -66,6 +66,27 @@ Review the test files created or modified during this plan.
 
 Flag gaps but don't necessarily fix them all now — add them as items to a follow-up plan if they're significant.
 
+#### Step 4a: Test Trajectory Audit
+
+If the impl used a `## Test Trajectory` (frontmatter `trajectory: required`), run the trajectory audit:
+
+```ts
+// From apps/indusk-mcp/src/lib/trajectory/audit.ts
+import { auditPlanAtClose } from "./audit.js";
+const result = auditPlanAtClose(implBody);
+// result.deferred: MitigationClassification[] — one per Deferred Verification row
+// result.blocked: BlockedRowFinding[] — rows ending in `blocked` state
+```
+
+For each finding, act on it:
+
+- **Blocked rows** — these ended the plan unresolved. For each: either (a) fix the test and update State to `passing` as a retroactive phase-close, (b) move the row's `Passes at` to a later plan with a link, or (c) promote to Deferred Verification with a real mitigation. Do not leave blocked rows unresolved — they're a debt flag.
+- **Deferred rows with vague mitigations** (`warning` non-null) — the mitigation text was too short or unclassifiable. Propose a more concrete commitment: a specific OTel metric name, a named review owner with cadence, a linked plan ID, a documented canary procedure. Update the impl.md's Deferred Verification row before archiving.
+- **Deferred rows classified as `downstream-plan`** — verify the referenced plan exists and is either `accepted` or `in-progress`. If it's `draft` or missing, either accept the referenced plan now or pick a different mitigation.
+- **Deferred rows classified as `telemetry-alert`** — verify the named metric actually exists in the codebase (grep for it). If the metric hasn't been wired up, the mitigation is aspirational — either wire it up now or change the mitigation.
+
+Capture findings as a `retrospective-audit-{plan-slug}` episode in Graphiti (use `mcp__indusk__graph_capture` to dual-write to the semantic log). Include the classification, the warning (if any), and what was done. This is the signal the eval agent uses to detect mitigation drift over time.
+
 ### Step 5: Quality Audit
 
 Review mistakes made during this plan's implementation.

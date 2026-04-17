@@ -1,0 +1,22 @@
+# Next.js local development — hot reload via volume mounts
+FROM node:20-alpine
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Caddy for TLS termination (:443 HTTPS, :80 HTTP redirect)
+RUN apk add --no-cache caddy
+
+WORKDIR /app
+
+# Install dependencies (cached layer)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Entrypoint bypasses turbo — env vars pass through to the app
+COPY docker/app-entrypoint.sh /usr/local/bin/app-entrypoint.sh
+
+# Source code comes from volume mounts — not copied
+# docker-compose volumes: ["./apps/myapp:/app/apps/myapp"]
+
+# command: in docker-compose passes the pnpm filter name as $1
+ENTRYPOINT ["/usr/local/bin/app-entrypoint.sh"]

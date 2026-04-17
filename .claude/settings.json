@@ -132,7 +132,10 @@
       "Bash(npx @biomejs/biome check --write apps/indusk-mcp/src/lib/trajectory apps/indusk-mcp/hooks/check-gates.js apps/indusk-mcp/hooks/gate-reminder.js apps/indusk-mcp/hooks/validate-impl-structure.js)",
       "Bash(npm root *)",
       "Bash(ls \"$\\(npm root -g\\)/@infinitedusky/indusk-mcp/hooks/\")",
-      "Bash(wc -l \"$\\(npm root -g\\)/@infinitedusky/indusk-mcp/hooks/validate-impl-structure.js\")"
+      "Bash(wc -l \"$\\(npm root -g\\)/@infinitedusky/indusk-mcp/hooks/validate-impl-structure.js\")",
+      "Bash(JJ_EDITOR=true jj split 'apps/indusk-mcp/src/bin/commands/update.ts | \"apps/indusk-mcp/package.json\" | \"apps/indusk-docs/src/changelog.md\"')",
+      "Bash(jj op *)",
+      "Bash(JJ_EDITOR=true jj split '\"apps/indusk-mcp/src/bin/commands/update.ts\" | \"apps/indusk-mcp/package.json\" | \"apps/indusk-docs/src/changelog.md\"')"
     ],
     "additionalDirectories": [
       "/tmp",

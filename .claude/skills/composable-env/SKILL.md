@@ -203,7 +203,8 @@ secrets (.env.secrets.shared + .env.secrets.local)
   "profiles": {
     "local": {
       "suffix": "-local",
-      "domain": "myproject.orb.local"
+      "domain": "myproject.orb.local",
+      "tls": true
     },
     "production": {
       "suffix": "",
@@ -218,7 +219,7 @@ secrets (.env.secrets.shared + .env.secrets.local)
 
 - `envDir` — custom env directory (default: `"env"`)
 - `defaultProfile` — default when no `--profile` flag
-- `profiles` — per-profile config: `suffix` (compose service name suffix), `domain` (for auto-generated `${service.*}` vars), `override` (per-service suffix/domain overrides)
+- `profiles` — per-profile config: `suffix` (compose service name suffix), `domain` (for auto-generated `${service.*}` vars), `tls` (auto-generate mkcert certs, inject into containers), `override` (per-service suffix/domain overrides)
 - Profile resolution: `--profile` flag > `CE_PROFILE` env var (legacy: `CENV_PROFILE`) > `ce.json defaultProfile` > `"default"`
 
 ## Contract format
@@ -591,12 +592,32 @@ When `ce.json` has profile configs with `domain`, ce auto-generates a `service` 
 # game-server.env
 [default]
 PORT=3665
-URL=http://${service.game-server.address}:${game-server.PORT}
+URL=${service.game-server.protocol}://${service.game-server.address}:${game-server.PORT}
 ```
 
 **Per-service overrides:** The `override` map lets specific services have different suffixes or domains. In the example above, `admin` has no suffix in local — `${service.admin.host}` resolves to `admin`, not `admin-local`.
 
 Components can still override service vars by defining the same key explicitly — the auto-generated values are defaults that components and contracts build on top of.
+
+### Automatic TLS with mkcert
+
+When a profile has `tls: true` and a `domain`, `pnpm ce dc:up` automatically:
+
+1. **Generates mkcert certs** — wildcard cert for `*.{domain}` in `.certs/{domain}/`
+2. **Mounts certs into containers** — adds `.certs/{domain}:/app/.certs:ro` volume to all target services
+3. **Sets `NODE_EXTRA_CA_CERTS`** — so containers trust the local CA for service-to-service HTTPS calls
+4. **Sets `CE_TLS_PORT`** on all services — signals the entrypoint to start Caddy
+5. **Starts Caddy TLS proxy** — `:443` serves HTTPS (reverse proxies to app on its normal PORT), `:80` redirects HTTP to HTTPS
+
+The app keeps its original PORT — no shifting. Caddy runs on well-known ports (443/80). OrbStack routes `https://service.domain` to `:443` and `http://` to `:80`. Matches production (load balancer on 443/80).
+
+Dev Dockerfiles include `RUN apk add --no-cache caddy` (standard package, no custom build). The app-entrypoint.sh generates a Caddyfile at runtime and starts Caddy before the app. This is local dev only — production profiles without `tls: true` don't get any of this.
+
+Prerequisites: `brew install mkcert && mkcert -install`
+
+The `.certs/` directory is auto-gitignored. Certs are only generated once — subsequent `dc:up` calls skip cert generation if they already exist.
+
+Use `${service.*.protocol}` in components to get `https` when `tls: true`, `http` otherwise. This way the same component works for both TLS and non-TLS profiles.
 
 ## Turbo + Docker: env var passthrough
 

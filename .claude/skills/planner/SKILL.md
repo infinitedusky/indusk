@@ -25,7 +25,7 @@ Each document builds on the ones before it. Not every plan needs all five — us
 
 The order is always preserved — never write an ADR before the brief, or an impl before the ADR (when both exist).
 
-General-purpose research (insights useful across plans) also lives in `research/` at the repo root.
+General-purpose research (insights useful across plans) also lives in `.indusk/research/`.
 
 ## Workflow Types
 
@@ -62,12 +62,12 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - **refactor**: start with brief (includes boundary map)
    - **spike**: start with research (and stop there)
 
-   **Check for existing research first.** Before writing new research, scan `research/` at the repo root for relevant standalone research docs. If one exists (e.g., `research/auth-options.md`), ask the user: "I found existing research at `research/auth-options.md`. Want to use this as the starting point?" If yes:
+   **Check for existing research first.** Before writing new research, scan `.indusk/research/` for relevant standalone research docs. If one exists (e.g., `.indusk/research/auth-options.md`), ask the user: "I found existing research at `.indusk/research/auth-options.md`. Want to use this as the starting point?" If yes:
    - Copy it to `.indusk/planning/{plan-name}/research.md`
    - Set the frontmatter status to `complete`
    - Move straight to the brief
 
-   The `research/` directory is for standalone exploration that isn't tied to a plan yet. When it becomes a plan, it moves into the planning folder. The original in `research/` can be deleted or kept as a reference — user's choice.
+   The `.indusk/research/` directory is for standalone exploration that isn't tied to a plan yet. When it becomes a plan, it moves into the planning folder. The original in `.indusk/research/` can be deleted or kept as a reference — user's choice.
 
    For feature/spike workflows that need new research: Explore the problem space — read code, search the web, check Context7 for library docs. **Query the code graph before scoping** (see toolbelt "Before Modifying Code") — include structural findings in research.md with concrete numbers.
    Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
@@ -102,11 +102,21 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
+   **Author the Test Trajectory first.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State` (plus optional `Kind`, `Scope`). Walk the ADR's Decision section — for each decision, ask "what test would prove this works?" and add a row. Then walk each planned phase and ask "what becomes writable at this phase, and what flips to passing?" Every phase's Verification block references test IDs from the trajectory rather than restating the checks.
+
+   **Trajectory sizing:** 3–5 tests for a bugfix or small feature, 10–25 for a multi-phase infrastructure plan. Prefer one high-level property test over five example tests where possible. If your trajectory has more rows than lines of new code, the plan is over-specified — consolidate. If it has fewer than one row per phase, you probably have untested phases — add rows or declare `(no tests flip at this phase — reason: {schema-only|delete|refactor|infra})` in the phase's Verification.
+
+   **Declare untestable items explicitly.** If a plan includes something that genuinely cannot be tested (LLM quality, paid external integrations, UX judgment), add a `### Deferred Verification` subsection below the trajectory table. Every deferred row requires three fields: `reason:` (why not testable here), `would require:` (what would unlock a proper test), and `mitigation:` (compensating control — alert, scheduled review, downstream plan, canary). Missing any field is a write-time error. If you can't name a mitigation, that's a signal: either reshape the plan so the capability becomes testable, or scope it out.
+
+   **Set `trajectory: required` in the impl frontmatter.** This opts the impl into trajectory validation by `validate-impl-structure.js`. Omitting it means the hook skips trajectory rules (grandfathering for legacy impls); every NEW impl should set it.
+
+   See [`apps/indusk-docs/src/guide/test-trajectory.md`](../../indusk-docs/src/guide/test-trajectory.md) for the full user-facing guide (published in the `tests-first-planning` plan's Phase 5) and [`apps/indusk-docs/src/reference/trajectory/parser.md`](../../indusk-docs/src/reference/trajectory/parser.md) for the parser/validator API reference. The design rationale lives in `.indusk/planning/tests-first-planning/adr.md`.
+
    **Gate policy applies when writing impls.** Set `gate_policy` in the impl frontmatter (`strict`, `ask`, or `auto`). The `validate-impl-structure` hook enforces this at write time:
    - **`strict` / `ask`**: Every gate section (Verification, Context, Document) must have a real item — `(none needed)` and `skip-reason:` are blocked at write time. Opt-outs only happen during `/work` execution.
    - **`auto`**: Gate sections can be pre-filled with `(none needed)` or `skip-reason:` at write time.
 
-   Default is `ask`. See the work skill "Gate Override Policy" for full details on what each mode enforces at execution time.
+   Default is `ask`. See the work skill "Gate Override Policy" for full details on what each mode enforces at execution time. Trajectory enforcement (the four trajectory rules) applies regardless of `gate_policy` — the rules are structural, not policy-dependent.
 
    **OTel gate is conditional on `otel.role`.** Read `.indusk/config.json` for the project's `otel.role` field (or use the `shouldEmitOtelGate(projectRoot)` helper from `apps/indusk-mcp/src/lib/config.ts`). The OTel gate fires for projects whose `otel.role` is unset or `"service"` — these are user-facing apps that produce telemetry you want to collect. **Do NOT write `#### Phase N OTel` sections** for projects whose `otel.role` is `"library"`, `"tool"`, or `"none"` — these are libraries, CLIs, or scripts that should never emit telemetry and writing OTel gates for them is friction without value. The `validate-impl-structure` and `check-gates` hooks apply the same rule. The other gates (verify, context, document) always apply regardless of `otel.role`.
 
@@ -252,6 +262,8 @@ Include code snippets in checklist items when the syntax matters — function si
 title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft | approved | in-progress | completed | abandoned
+trajectory: required
+gate_policy: ask
 ---
 
 # {Title}
@@ -274,6 +286,22 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 | Phase 1 | {exports, types, modules created} | {inputs, dependencies used} |
 | Phase 2 | {what this phase adds} | {what it needs from Phase 1} |
 
+## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+| T1 | {one-line assertion — what the test claims is true} | Phase 1 | Phase 1 | planned |
+| T2 | {another assertion} | Phase 1 | Phase 2 | planned |
+
+{Optional subsection — include ONLY if this plan has items that are genuinely untestable within its scope. Each row requires all three fields: reason, would require, mitigation.}
+
+### Deferred Verification
+
+- **{short name of the untestable item}**
+  - reason: {why this cannot be tested in this plan}
+  - would require: {what would unlock a proper test — a new environment, a future plan, production data}
+  - mitigation: {compensating control — telemetry alert, scheduled review, downstream plan, canary procedure, feedback signal}
+
 ## Checklist
 ### Phase 1: {Name}
 - [ ] {Task — include code snippets when syntax matters}
@@ -288,7 +316,11 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 - [ ] {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
 
 #### Phase 1 Verification
-- [ ] {Verification step — prove this phase works. Must be a specific runnable command with expected output, not "verify it works." See the verify skill for guidance on what checks a phase needs based on what changed. Can include trace verification if OTel was added.}
+- [ ] T1 passes (`{runnable command, e.g. pnpm test}`)
+- [ ] T2 flips to `written` state (skipped until Phase 2)
+
+{If a phase has no tests flipping at it, declare it explicitly — NOT silently:}
+{- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})}
 
 #### Phase 1 Context
 - [ ] {Concrete CLAUDE.md edit this phase produces — e.g., "Add to Architecture: ...", "Add to Conventions: ...", "Update Current State: ...". Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
@@ -336,7 +368,7 @@ date: {YYYY-MM-DD}
 - {Hindsight — decisions that could have been better, steps to skip or add}
 
 ## Insights Worth Carrying Forward
-{Takeaways for future plans. Save to research/ if broadly useful.}
+{Takeaways for future plans. Save to .indusk/research/ if broadly useful.}
 
 ## Quality Ratchet
 {Could any mistakes in this plan have been caught automatically by a Biome rule? If yes, add the rule to biome.json and document it in biome-rationale.md. The quality ratchet only gets tighter.}
@@ -361,7 +393,7 @@ date: {YYYY-MM-DD}
 └── archive/
     └── {completed-plan}/
 
-research/                    # Standalone insights useful across plans
+.indusk/research/            # Standalone insights useful across plans
 ```
 
 - Kebab-case folder names
@@ -374,6 +406,6 @@ research/                    # Standalone insights useful across plans
 - **Use the code graph for scoping.** Before writing a brief or impl, query `analyze_code_relationships` to understand what depends on what. "How many files import X?" and "What calls this function?" prevent underscoping.
 - Keep Y-statements concise but complete. Every field filled in.
 - Impl checklists: granular enough to track, not so granular they're busywork.
-- When research produces broadly useful insights, also save to `research/` at repo root.
+- When research produces broadly useful insights, also save to `.indusk/research/`.
 - Cross-reference related plans by path whenever work overlaps between plans.
 - The user's input is: $ARGUMENTS
