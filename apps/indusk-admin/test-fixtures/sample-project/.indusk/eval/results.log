@@ -1,0 +1,3 @@
+{"timestamp":"2026-04-19T08:30:00.000Z","changeId":"abc123","mode":"feature","summary":"Dropdown shell scaffolded","questions":[{"id":"conventions","answer":"yes","severity":"low"}],"graphitiWrites":1}
+{"timestamp":"2026-04-19T09:15:00.000Z","changeId":"def456","mode":"feature","summary":"Sort comparator stub","questions":[{"id":"tests","answer":"partial","severity":"medium"}],"graphitiWrites":0}
+{"timestamp":"2026-04-19T11:00:00.000Z","changeId":"ghi789","mode":"bugfix","summary":"Out-of-range scorecard for filter test","questions":[],"graphitiWrites":0}
