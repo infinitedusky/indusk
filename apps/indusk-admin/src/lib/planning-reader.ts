@@ -105,9 +105,23 @@ const DOC_FILES = [
 
 /**
  * Read a single document file and return parsed frontmatter + content. Returns
- * `null` if the file doesn't exist. Returns `{ malformed: true }` if gray-matter
- * fails to parse the frontmatter (e.g., unterminated quoted string).
+ * `null` if the file doesn't exist. Returns `{ malformed: true }` if the
+ * frontmatter cannot be parsed.
+ *
+ * Detection strategy: gray-matter is unreliable about throwing on malformed
+ * YAML — depending on the runtime / module-resolution path, js-yaml errors
+ * may be swallowed and `data: {}` returned instead. We detect malformed by
+ * the structural signal: a file that starts with `---\n` and has a closing
+ * `---` MUST yield a non-empty frontmatter block. If gray-matter returns a
+ * truly empty `data` for such a file (and the block isn't actually empty
+ * after trimming comments/whitespace), the parse silently failed.
+ *
+ * False-positive note: a legitimately empty frontmatter (`---\n---\nbody`)
+ * also produces `data: {}` but with an empty block — we differentiate by
+ * checking whether the block is non-trivial.
  */
+const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---/;
+
 async function readDoc(
   planDir: string,
   filename: string,
@@ -118,11 +132,25 @@ async function readDoc(
 > {
   const path = join(planDir, filename);
   if (!existsSync(path)) return null;
+  let raw: string;
   try {
-    const raw = await readFile(path, "utf-8");
+    raw = await readFile(path, "utf-8");
+  } catch {
+    return { malformed: true };
+  }
+  try {
     const parsed = matter(raw);
+    const data = parsed.data as DocumentFrontmatter;
+    const dataIsEmpty = Object.keys(data).length === 0;
+    if (dataIsEmpty) {
+      const fmMatch = raw.match(FRONTMATTER_RE);
+      if (fmMatch) {
+        const block = fmMatch[1].replace(/^\s*#[^\n]*$/gm, "").trim();
+        if (block !== "") return { malformed: true };
+      }
+    }
     return {
-      frontmatter: parsed.data as DocumentFrontmatter,
+      frontmatter: data,
       content: parsed.content,
     };
   } catch {

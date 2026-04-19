@@ -1,4 +1,3 @@
-<!-- skip-gates -->
 ---
 title: "Alpha Feature — Impl"
 status: in-progress
@@ -6,6 +5,8 @@ workflow: bugfix
 trajectory: required
 gate_policy: ask
 ---
+
+<!-- skip-gates -->
 
 # Alpha Feature — Impl
 

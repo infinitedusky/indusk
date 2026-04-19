@@ -1,13 +1,14 @@
-# Falsification log — alpha-feature
+# Falsification Log — alpha-feature
 
-This file is created by `apps/indusk-mcp/src/lib/falsification/log.ts`. Hand edits will be skipped on replay.
+Append-only record of the /falsify bounty hunt for this plan. Never edit in place; entries are appended via `appendHypothesis` and `markTerminated` from `apps/indusk-mcp/src/lib/falsification/log.ts`.
 
-## Hypothesis 1 — 2026-04-19T10:00:00Z
+## Hypothesis 2026-04-19T10:00:00.000Z
 
-- hypothesis: dropdown re-renders the entire row list on every change
-- test: apps/indusk-admin/test-fixtures/sample-project/sample-test.ts
-- outcome: accept-finding
+**Hypothesis:** dropdown re-renders the entire row list on every change
+**Test:** apps/indusk-admin/test-fixtures/sample-test.ts
+**Outcome:** accept-finding
+**Note:** Re-render is bounded by row count which never exceeds 50; performance impact negligible. Recorded as finding rather than fix.
 
-## Terminator — 2026-04-19T10:05:00Z
+## Terminated 2026-04-19T10:05:00.000Z
 
-reason: 1 hypothesis investigated, no further attack vector identified
+**Reason:** 1 hypothesis investigated, no further attack vector identified

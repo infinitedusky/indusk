@@ -1,9 +1,10 @@
-<!-- skip-gates -->
 ---
 title: "Gamma Missing ADR — Impl"
 status: in-progress
 workflow: bugfix
 ---
+
+<!-- skip-gates -->
 
 # Gamma — Impl
 
