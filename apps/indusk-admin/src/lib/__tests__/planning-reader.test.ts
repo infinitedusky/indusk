@@ -1,4 +1,10 @@
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -43,6 +49,17 @@ describe("planning-reader: readActivePlans", () => {
     expect(delta?.malformed).toBe(true);
     // The malformed brief is not surfaced as parsed data
     expect(delta?.brief).toBeUndefined();
+  });
+
+  it("preserves raw markdown for malformed documents under rawDocuments (T13 raw view)", async () => {
+    const plans = await readActivePlans(FIXTURE_ROOT);
+    const delta = plans.find((p) => p.name === "delta-malformed");
+    expect(delta?.rawDocuments).toBeDefined();
+    expect(delta?.rawDocuments?.["brief.md"]).toBeDefined();
+    expect(delta?.rawDocuments?.["brief.md"]).toContain("Delta Malformed");
+    expect(delta?.rawDocuments?.["brief.md"]).toContain(
+      "unterminated string above",
+    );
   });
 
   it("populates trajectory data when impl has a Test Trajectory section", async () => {
@@ -212,8 +229,14 @@ describe("planning-reader: readEvalScorecards", () => {
 describe("planning-reader: fixture sanity", () => {
   it("FIXTURE_ROOT contains the expected sample-project structure", () => {
     expect(existsSync(join(FIXTURE_ROOT, ".indusk/planning"))).toBe(true);
-    expect(existsSync(join(FIXTURE_ROOT, ".indusk/planning/master.md"))).toBe(true);
-    expect(existsSync(join(FIXTURE_ROOT, ".indusk/planning/archive"))).toBe(true);
-    expect(existsSync(join(FIXTURE_ROOT, ".indusk/eval/results.log"))).toBe(true);
+    expect(existsSync(join(FIXTURE_ROOT, ".indusk/planning/master.md"))).toBe(
+      true,
+    );
+    expect(existsSync(join(FIXTURE_ROOT, ".indusk/planning/archive"))).toBe(
+      true,
+    );
+    expect(existsSync(join(FIXTURE_ROOT, ".indusk/eval/results.log"))).toBe(
+      true,
+    );
   });
 });

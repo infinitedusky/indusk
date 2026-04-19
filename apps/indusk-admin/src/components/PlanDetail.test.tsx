@@ -264,20 +264,32 @@ describe("PlanDetail — falsification section (T10)", () => {
       },
     });
     const { container } = await render(<PlanDetail plan={plan} />);
-    const section = container.querySelector('[data-testid="falsification-section"]');
+    const section = container.querySelector(
+      '[data-testid="falsification-section"]',
+    );
     expect(section).not.toBeNull();
 
     // One entry per hypothesis, outcomes color-coded by data-testid
-    expect(section?.querySelector('[data-testid="hypothesis-fix-in-scope"]')).not.toBeNull();
-    expect(section?.querySelector('[data-testid="hypothesis-spawn-plan"]')).not.toBeNull();
-    expect(section?.querySelector('[data-testid="hypothesis-accept-finding"]')).not.toBeNull();
+    expect(
+      section?.querySelector('[data-testid="hypothesis-fix-in-scope"]'),
+    ).not.toBeNull();
+    expect(
+      section?.querySelector('[data-testid="hypothesis-spawn-plan"]'),
+    ).not.toBeNull();
+    expect(
+      section?.querySelector('[data-testid="hypothesis-accept-finding"]'),
+    ).not.toBeNull();
 
     // Terminator entry rendered as the closer
-    const terminator = section?.querySelector('[data-testid="falsification-terminator"]');
+    const terminator = section?.querySelector(
+      '[data-testid="falsification-terminator"]',
+    );
     expect(terminator?.textContent).toContain("investigated all three");
 
     // Each hypothesis surfaces its prose
-    expect(section?.textContent).toContain("the dropdown leaks state on unmount");
+    expect(section?.textContent).toContain(
+      "the dropdown leaks state on unmount",
+    );
     expect(section?.textContent).toContain("race condition");
     expect(section?.textContent).toContain("overflow on extreme input");
   });
@@ -285,7 +297,9 @@ describe("PlanDetail — falsification section (T10)", () => {
   it("T10 — renders 'no falsification ritual run' when the log is missing", async () => {
     const plan = mockPlan({ falsification: undefined });
     const { container } = await render(<PlanDetail plan={plan} />);
-    const empty = container.querySelector('[data-testid="falsification-empty"]');
+    const empty = container.querySelector(
+      '[data-testid="falsification-empty"]',
+    );
     expect(empty).not.toBeNull();
     expect(empty?.textContent).toContain("No falsification ritual run");
   });
@@ -311,7 +325,9 @@ describe("PlanDetail — scorecards section (T11)", () => {
     const { container } = await render(
       <PlanDetail plan={mockPlan()} scorecards={scorecards} />,
     );
-    const section = container.querySelector('[data-testid="scorecards-section"]');
+    const section = container.querySelector(
+      '[data-testid="scorecards-section"]',
+    );
     expect(section).not.toBeNull();
 
     // Header includes the count
@@ -340,7 +356,9 @@ describe("PlanDetail — scorecards section (T11)", () => {
 
   it("T11 — scorecards section omitted entirely when scorecards prop is undefined", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
-    expect(container.querySelector('[data-testid="scorecards-section"]')).toBeNull();
+    expect(
+      container.querySelector('[data-testid="scorecards-section"]'),
+    ).toBeNull();
   });
 });
 
@@ -352,11 +370,63 @@ describe("PlanDetail — malformed plan (T13)", () => {
       status: "unknown",
     });
     const { container } = await render(<PlanDetail plan={plan} />);
-    expect(container.querySelector('[data-testid="plan-detail"]')).not.toBeNull();
-    expect(container.querySelector('[data-testid="malformed-banner"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="plan-detail"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="malformed-banner"]'),
+    ).not.toBeNull();
     // Header still appears (with whatever name + status came through)
     const header = container.querySelector('[data-testid="plan-header"]');
     expect(header?.textContent).toContain("alpha-feature");
+  });
+
+  it("T13 — malformed plan with rawDocuments shows raw markdown so the user can inspect it", async () => {
+    const plan = mockPlan({
+      malformed: true,
+      brief: undefined,
+      status: "unknown",
+      rawDocuments: {
+        "brief.md":
+          '---\ntitle: "Bad Brief\nstatus: draft\n---\n\n# This brief had unterminated YAML',
+      },
+    });
+    const { container } = await render(<PlanDetail plan={plan} />);
+    const rawSection = container.querySelector(
+      '[data-testid="raw-documents-section"]',
+    );
+    expect(rawSection).not.toBeNull();
+    expect(rawSection?.textContent).toContain("brief.md");
+
+    // The raw <pre> appears once expanded — but it's a CollapsibleSection
+    // (defaultOpen=false), so click the brief.md header to expand
+    const briefHeader = Array.from(
+      rawSection?.querySelectorAll("[aria-expanded]") ?? [],
+    ).find((el) => el.textContent?.includes("brief.md")) as
+      | HTMLElement
+      | undefined;
+    briefHeader?.click();
+    await new Promise((r) => setTimeout(r, 50));
+
+    const rawPre = container.querySelector('[data-testid="raw-brief.md"]');
+    expect(rawPre).not.toBeNull();
+    expect(rawPre?.textContent).toContain('title: "Bad Brief');
+    expect(rawPre?.textContent).toContain("# This brief had unterminated YAML");
+  });
+
+  it("malformed plan WITHOUT rawDocuments only shows the banner (no raw section)", async () => {
+    const plan = mockPlan({
+      malformed: true,
+      brief: undefined,
+      status: "unknown",
+    });
+    const { container } = await render(<PlanDetail plan={plan} />);
+    expect(
+      container.querySelector('[data-testid="malformed-banner"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="raw-documents-section"]'),
+    ).toBeNull();
   });
 });
 
@@ -372,9 +442,15 @@ describe("PlanDetail — missing-document graceful render (T14)", () => {
       },
     };
     const { container } = await render(<PlanDetail plan={plan} />);
-    expect(container.querySelector('[data-testid="brief-section"]')).not.toBeNull();
-    expect(container.querySelector('[data-testid="phases-section"]')).toBeNull();
-    expect(container.querySelector('[data-testid="malformed-banner"]')).toBeNull();
+    expect(
+      container.querySelector('[data-testid="brief-section"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="phases-section"]'),
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-testid="malformed-banner"]'),
+    ).toBeNull();
   });
 
   it("T14 — plan with no documents at all still renders header + falsification empty state", async () => {
@@ -384,8 +460,12 @@ describe("PlanDetail — missing-document graceful render (T14)", () => {
       archived: false,
     };
     const { container } = await render(<PlanDetail plan={plan} />);
-    expect(container.querySelector('[data-testid="plan-detail"]')).not.toBeNull();
-    expect(container.querySelector('[data-testid="plan-header"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="plan-detail"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="plan-header"]'),
+    ).not.toBeNull();
     expect(
       container.querySelector('[data-testid="falsification-empty"]'),
     ).not.toBeNull();

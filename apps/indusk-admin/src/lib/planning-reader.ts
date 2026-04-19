@@ -77,6 +77,12 @@ export interface Plan {
   retrospective?: RetroData;
   /** True when ANY document in the plan failed to parse (malformed YAML frontmatter). */
   malformed?: boolean;
+  /**
+   * For each document that failed to parse, the raw file contents (so the UI
+   * can show a "Raw" view per T13). Only populated when `malformed: true`.
+   * Keys match the document filenames (e.g., `brief.md`, `impl.md`).
+   */
+  rawDocuments?: Record<string, string>;
 }
 
 export interface Scorecard {
@@ -127,7 +133,7 @@ async function readDoc(
   filename: string,
 ): Promise<
   | { frontmatter: DocumentFrontmatter; content: string }
-  | { malformed: true }
+  | { malformed: true; raw: string }
   | null
 > {
   const path = join(planDir, filename);
@@ -136,7 +142,7 @@ async function readDoc(
   try {
     raw = await readFile(path, "utf-8");
   } catch {
-    return { malformed: true };
+    return { malformed: true, raw: "" };
   }
   try {
     const parsed = matter(raw);
@@ -146,7 +152,7 @@ async function readDoc(
       const fmMatch = raw.match(FRONTMATTER_RE);
       if (fmMatch) {
         const block = fmMatch[1].replace(/^\s*#[^\n]*$/gm, "").trim();
-        if (block !== "") return { malformed: true };
+        if (block !== "") return { malformed: true, raw };
       }
     }
     return {
@@ -154,16 +160,16 @@ async function readDoc(
       content: parsed.content,
     };
   } catch {
-    return { malformed: true };
+    return { malformed: true, raw };
   }
 }
 
 function isMalformed(
   doc:
-    | { malformed: true }
+    | { malformed: true; raw: string }
     | { frontmatter: DocumentFrontmatter; content: string }
     | null,
-): doc is { malformed: true } {
+): doc is { malformed: true; raw: string } {
   return doc !== null && "malformed" in doc;
 }
 
@@ -175,6 +181,13 @@ async function readPlanFolder(
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
   const [brief, testPlan, adr, impl, _falsification, retrospective] = docs;
   const malformed = docs.some((d) => isMalformed(d));
+  const rawDocuments: Record<string, string> = {};
+  for (let i = 0; i < docs.length; i++) {
+    const doc = docs[i];
+    if (doc !== null && isMalformed(doc)) {
+      rawDocuments[DOC_FILES[i]] = doc.raw;
+    }
+  }
 
   let implData: ImplData | undefined;
   if (impl !== null && !isMalformed(impl)) {
@@ -218,7 +231,7 @@ async function readPlanFolder(
       retrospective !== null && !isMalformed(retrospective)
         ? retrospective
         : undefined,
-    ...(malformed ? { malformed: true } : {}),
+    ...(malformed ? { malformed: true, rawDocuments } : {}),
   };
 }
 

@@ -63,11 +63,11 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 | T7 | The main pane lists the plan's impl phases as collapsible sections. | Phase 2 | Phase 4 | passing |
 | T8 | Expanding a phase shows its trajectory rows in a table with columns: ID, Asserts, Writable at, Passes at, State. | Phase 2 | Phase 4 | passing |
 | T9 | Each trajectory row's State is visually color-coded (passing green, blocked red, planned/written gray, etc.) so pass/fail status is at-a-glance. | Phase 1 | Phase 4 | written |
-| T10 | When a plan has a falsification log, the main pane shows it as a section with one entry per hypothesis (text + outcome). | Phase 2 | Phase 5 | planned |
-| T11 | When the active plan has eval scorecards from `results.log` in its date range, those scorecards appear listed in the main pane (most recent first). | Phase 2 | Phase 5 | planned |
+| T10 | When a plan has a falsification log, the main pane shows it as a section with one entry per hypothesis (text + outcome). | Phase 2 | Phase 5 | passing |
+| T11 | When the active plan has eval scorecards from `results.log` in its date range, those scorecards appear listed in the main pane (most recent first). | Phase 2 | Phase 5 | passing |
 | T12 | When the planning directory is empty, the user sees an empty-state message rather than a blank screen or JS error. | Phase 1 | Phase 5 | passing |
-| T13 | When a plan's brief.md has malformed YAML frontmatter, the plan still appears in the sidebar with a "malformed" indicator and clicking shows raw content. | Phase 2 | Phase 5 | planned |
-| T14 | When a plan is missing optional documents (e.g., no ADR), the main pane renders without an error — missing sections simply don't appear. | Phase 2 | Phase 5 | planned |
+| T13 | When a plan's brief.md has malformed YAML frontmatter, the plan still appears in the sidebar with a "malformed" indicator and clicking shows raw content. | Phase 2 | Phase 5 | passing |
+| T14 | When a plan is missing optional documents (e.g., no ADR), the main pane renders without an error — missing sections simply don't appear. | Phase 2 | Phase 5 | passing |
 | T15 | An outsider can be shown the UI and within 30 seconds correctly identify: which plan is active, which phase, and at least one passing test row vs one failing/blocked row. | Phase 0 | Phase 6 | planned |
 | T16 | Audit walks `apps/indusk-admin/src/`: every visual primitive lives at exactly one path under `src/components/ui/`. No inline `<button className="...">` patterns where a Button primitive exists. | Phase 0 | Phase 6 | planned |
 
@@ -187,23 +187,23 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 
 ### Phase 5: Falsification + scorecards + edge cases
 
-- [ ] Add a Falsification section to plan detail: render the parsed log entries (hypothesis text + outcome badge: green for fix-in-scope, yellow for spawn-plan, gray for accept). Show "no falsification ritual run" when the log is missing.
-- [ ] Add a Scorecards section to plan detail: read `.indusk/eval/results.log`, filter by date range overlap with the plan's brief.date → archive date (or now). List most-recent-first with: changeId (truncated), timestamp, clean/error indicator (green check or red X).
-- [ ] Edge case handling: empty `.indusk/planning/` → empty-state copy in the sidebar; malformed-frontmatter plan → list with "⚠ malformed" indicator + click shows raw markdown; missing optional docs → corresponding sections simply don't render.
-- [ ] Update tests T10, T11, T13, T14 to flip from `(write red)` to `passing`.
+- [x] Add a Falsification section to plan detail: render the parsed log entries (hypothesis text + outcome badge: green for fix-in-scope, yellow for spawn-plan, gray for accept). Show "no falsification ritual run" when the log is missing. → `<FalsificationSection>` in `PlanDetail.tsx`; outcome badges via `outcomeToBadge` (`fix-in-scope` → passing/green, `spawn-plan` → writable/blue, `accept-finding` → neutral/gray); terminator entry shown as a closer.
+- [x] Add a Scorecards section to plan detail: read `.indusk/eval/results.log`, filter by date range overlap with the plan's brief.date → archive date (or now). List most-recent-first with: changeId (truncated), timestamp, clean/error indicator (green check or red X). → `<ScorecardsSection>` in `PlanDetail.tsx` + `planDateRange()` helper in `page.tsx` derives `from`/`to` from `brief.date`/`retrospective.date` frontmatter (epoch and now as fallbacks).
+- [x] Edge case handling: empty `.indusk/planning/` → empty-state (already from Phase 1, T12 still passing); malformed plan → list with "⚠ malformed" indicator (Phase 3 sidebar badge) + raw view via `<RawDocumentsSection>` reading `plan.rawDocuments` (Phase 5 extension to `readDoc` + `Plan` shape preserves raw markdown when frontmatter parse fails); missing docs → conditional section rendering (Phase 4 already established the pattern).
+- [x] Update tests T10, T11, T13, T14 to flip from `(write red)` to `passing` — authored 8 new PlanDetail tests (T10 ×2, T11 ×3, T13 ×3, T14 ×2) + 1 planning-reader test for the `rawDocuments` shape.
 
 #### Phase 5 Verification
-- [ ] T10 passes (falsification log displayed)
-- [ ] T11 passes (scorecards listed)
-- [ ] T12 confirmed still passing (empty state — Phase 1 covered this)
-- [ ] T13 passes (malformed frontmatter)
-- [ ] T14 passes (missing docs render gracefully)
+- [x] T10 passes (falsification log displayed) — 2 PlanDetail tests cover hypothesis+terminator render and missing-log empty state
+- [x] T11 passes (scorecards listed) — 3 PlanDetail tests cover row order/badges/columns, empty-state copy, and undefined-prop omission
+- [x] T12 confirmed still passing (empty state — Phase 1 covered this; PlanList delegates to EmptyPlansSidebarSlot when both active and archived are empty)
+- [x] T13 passes (malformed frontmatter) — 3 tests: banner-still-renders, raw-content view via CollapsibleSection per malformed file, banner-without-raws still renders
+- [x] T14 passes (missing docs render gracefully) — 2 tests: brief-only plan renders only the brief; entirely-empty plan still renders header + falsification empty state
 
 #### Phase 5 Context
-- [ ] Add to CLAUDE.md Known Gotchas: "**admin-ui scorecard-to-plan join is approximate (date-range overlap)**. v1 lists scorecards from `.indusk/eval/results.log` whose timestamp falls between a plan's brief.date and its archive date (or now). If a scorecard's commit doesn't actually relate to that plan, it'll still show under the plan's section — refine in v2 if it bites (e.g., add a `plan: {name}` field to scorecard schema)."
+- [x] Add to CLAUDE.md Known Gotchas: "**admin-ui scorecard-to-plan join is approximate (date-range overlap)**. v1 lists scorecards from `.indusk/eval/results.log` whose timestamp falls between a plan's brief.date and its retrospective.date (or now). If a scorecard's commit doesn't actually relate to that plan, it'll still show under the plan's section — refine in v2 if it bites (e.g., add a `plan: {name}` field to scorecard schema)."
 
 #### Phase 5 Document
-- [ ] (folded into Phase 6's overview page)
+- [x] (folded into Phase 6's overview page)
 
 ### Phase 6: CLI subcommand + ship + smoke
 

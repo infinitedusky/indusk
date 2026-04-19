@@ -53,6 +53,10 @@ export function PlanDetail({ plan, scorecards }: PlanDetailProps) {
 
       {plan.malformed && <MalformedBanner />}
 
+      {plan.malformed && plan.rawDocuments && (
+        <RawDocumentsSection rawDocuments={plan.rawDocuments} />
+      )}
+
       {plan.brief && (
         <BriefSection content={plan.brief.content} />
       )}
@@ -164,6 +168,45 @@ function PhasesSection({ plan }: { plan: Plan }) {
               )}
               <Markdown>{phase.content}</Markdown>
             </div>
+          </CollapsibleSection>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RawDocumentsSection({
+  rawDocuments,
+}: {
+  rawDocuments: Record<string, string>;
+}) {
+  const entries = Object.entries(rawDocuments);
+  if (entries.length === 0) return null;
+  return (
+    <section
+      className="flex flex-col gap-2"
+      data-testid="raw-documents-section"
+    >
+      <h2 className="text-base font-semibold text-gray-900">
+        Raw documents (malformed frontmatter)
+      </h2>
+      <p className="text-xs text-gray-500">
+        These files couldn't be parsed. Showing the raw markdown so you can
+        diagnose. Fix the YAML frontmatter and refresh.
+      </p>
+      <div className="flex flex-col gap-2">
+        {entries.map(([filename, raw]) => (
+          <CollapsibleSection
+            key={filename}
+            title={filename}
+            defaultOpen={false}
+          >
+            <pre
+              className="overflow-x-auto rounded bg-gray-50 p-3 text-xs font-mono text-gray-800 whitespace-pre-wrap"
+              data-testid={`raw-${filename}`}
+            >
+              {raw}
+            </pre>
           </CollapsibleSection>
         ))}
       </div>
