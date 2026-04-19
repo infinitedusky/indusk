@@ -187,7 +187,8 @@
       "Bash(node -e ' *)",
       "Bash(pnpm dlx *)",
       "Bash(pnpm -r exec node -e \"console.log\\(require\\('./package.json'\\).name\\)\")",
-      "Bash(find /Users/the_dusky/code/sandbox/dusk/node_modules/.pnpm/vitest-browser-react@2.2.0*/node_modules/vitest-browser-react/dist -name \"pure-*.d.ts\")"
+      "Bash(find /Users/the_dusky/code/sandbox/dusk/node_modules/.pnpm/vitest-browser-react@2.2.0*/node_modules/vitest-browser-react/dist -name \"pure-*.d.ts\")",
+      "Bash(0)"
     ],
     "additionalDirectories": [
       "/tmp",

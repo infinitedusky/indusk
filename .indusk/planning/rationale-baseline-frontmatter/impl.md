@@ -44,13 +44,13 @@ After this ships: Numero's three queued plans (`restart-recovery`, `coc4-verific
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | When impl.md frontmatter has `rationale_baseline: 1` and every trajectory row is `Writable at: Phase 1` or earlier, and `### Trajectory Rationale` is empty (or absent), the validator passes with no error. | Phase 0 | Phase 1 | planned |
-| T2 | When impl.md frontmatter has `rationale_baseline: 1` and one trajectory row is `Writable at: Phase 3` and `### Trajectory Rationale` is empty, the validator fails with an error message naming the single Phase-3 row's T-ID. | Phase 0 | Phase 1 | planned |
-| T3 | When impl.md frontmatter omits `rationale_baseline`, validator behavior matches today's exactly: rows at `Writable at > Phase 0` need rationale; rows at `Writable at: Phase 0` don't. (Backward compat regression.) | Phase 0 | Phase 1 | planned |
-| T4 | The error message for a baseline-aware plan reads "later than Phase {baseline}" (dynamic phase number), not hardcoded "Phase 0". | Phase 0 | Phase 1 | planned |
-| T5 | The TS source (`validator.ts`) and the JS hook port (`validate-impl-structure.js`) produce identical pass/fail decisions for the same impl.md content across a shared fixture set. (Parity check — load-bearing per CLAUDE.md gotcha about JS-port-mirrors-TS.) | Phase 0 | Phase 1 | planned |
+| T1 | When impl.md frontmatter has `rationale_baseline: 1` and every trajectory row is `Writable at: Phase 1` or earlier, and `### Trajectory Rationale` is empty (or absent), the validator passes with no error. | Phase 0 | Phase 1 | passing |
+| T2 | When impl.md frontmatter has `rationale_baseline: 1` and one trajectory row is `Writable at: Phase 3` and `### Trajectory Rationale` is empty, the validator fails with an error message naming the single Phase-3 row's T-ID. | Phase 0 | Phase 1 | passing |
+| T3 | When impl.md frontmatter omits `rationale_baseline`, validator behavior matches today's exactly: rows at `Writable at > Phase 0` need rationale; rows at `Writable at: Phase 0` don't. (Backward compat regression.) | Phase 0 | Phase 1 | passing |
+| T4 | The error message for a baseline-aware plan reads "later than Phase {baseline}" (dynamic phase number), not hardcoded "Phase 0". | Phase 0 | Phase 1 | passing |
+| T5 | The TS source (`validator.ts`) and the JS hook port (`validate-impl-structure.js`) produce identical pass/fail decisions for the same impl.md content across a shared fixture set. (Parity check — load-bearing per CLAUDE.md gotcha about JS-port-mirrors-TS.) | Phase 0 | Phase 1 | passing |
 | T6 | After upgrading global indusk-mcp on Numero, an impl.md with `rationale_baseline: 1` and rows all at `Writable at: Phase 1` can be edited freely without the hook rejecting the edit (live smoke on the real Claude Code Edit pipeline). | Phase 0 | Phase 3 | planned |
-| T7 | Indusk docs (the trajectory-frontmatter reference page) names the new `rationale_baseline` key, gives its default (`0`), and explains when to use a higher value. | Phase 0 | Phase 2 | planned |
+| T7 | Indusk docs (the trajectory-frontmatter reference page) names the new `rationale_baseline` key, gives its default (`0`), and explains when to use a higher value. | Phase 0 | Phase 2 | passing |
 
 (All rows are Phase-0-writable per the rationale-quality discipline. The current TS source / JS port / doc page exist today; tests can be authored against them and will fail red until the fix lands. No `### Trajectory Rationale` subsection needed below — every row is Phase 0.)
 
@@ -59,39 +59,39 @@ After this ships: Numero's three queued plans (`restart-recovery`, `coc4-verific
 ### Phase 1: Validator change + parity tests
 
 - [x] (write red) Add 5 unit tests to `apps/indusk-mcp/src/lib/trajectory/validator.test.ts` covering T1–T5. Each asserts the expected behavior post-fix; all 5 should fail red against current source.
-- [ ] Extend `ValidateTrajectoryOptions` in `apps/indusk-mcp/src/lib/trajectory/validator.ts` with optional `rationaleBaseline?: number` (default `0`).
-- [ ] Update `validateRationaleCompleteness(body, trajectory, baseline)` (or thread baseline through `validateTrajectory(body, options)` → internal call) so the row filter uses `r.writableAt > baseline` instead of `r.writableAt > 0`.
-- [ ] Update both error messages in `validateRationaleCompleteness` to use the dynamic baseline value: `"later than Phase ${baseline}"` instead of hardcoded "Phase 0". Wording per the brief (and per A4).
-- [ ] Mirror the same change in the JS hook port at `apps/indusk-mcp/hooks/validate-impl-structure.js`: parse `rationale_baseline` from frontmatter (extend the existing frontmatter-regex parsing), thread to `validateRationaleCompleteness`, update error messages.
-- [ ] Sync to `.claude/hooks/validate-impl-structure.js` (the project-installed mirror) — `cp` from package source.
-- [ ] Audit `apps/indusk-mcp/hooks/check-gates.js` and `gate-reminder.js` for any duplicate rationale-baseline-relevant logic. If present, sync; if not, note that the rule is centralized in `validate-impl-structure.js` only.
-- [ ] Run all trajectory tests; T1–T5 all pass.
+- [x] Extend `ValidateTrajectoryOptions` in `apps/indusk-mcp/src/lib/trajectory/validator.ts` with optional `rationaleBaseline?: number` (default `0`).
+- [x] Update `validateRationaleCompleteness(body, trajectory, baseline)` (or thread baseline through `validateTrajectory(body, options)` → internal call) so the row filter uses `r.writableAt > baseline` instead of `r.writableAt > 0`.
+- [x] Update both error messages in `validateRationaleCompleteness` to use the dynamic baseline value: `"later than Phase ${baseline}"` instead of hardcoded "Phase 0". Wording per the brief (and per A4).
+- [x] Mirror the same change in the JS hook port at `apps/indusk-mcp/hooks/validate-impl-structure.js`: parse `rationale_baseline` from frontmatter (extend the existing frontmatter-regex parsing), thread to `validateRationaleCompleteness`, update error messages.
+- [x] Sync to `.claude/hooks/validate-impl-structure.js` (the project-installed mirror) — `cp` from package source.
+- [x] Audit `apps/indusk-mcp/hooks/check-gates.js` and `gate-reminder.js` for any duplicate rationale-baseline-relevant logic. If present, sync; if not, note that the rule is centralized in `validate-impl-structure.js` only. (Confirmed: rule is centralized in `validate-impl-structure.js`; the other two hooks only read `writableAt` for unrelated gate-flip logic.)
+- [x] Run all trajectory tests; T1–T5 all pass.
 
 #### Phase 1 Verification
-- [ ] T1, T2, T3, T4, T5 pass (`pnpm vitest run src/lib/trajectory/validator.test.ts`)
-- [ ] Existing trajectory tests (74 prior passing per latest run) still all pass — no regression in unrelated rules
+- [x] T1, T2, T3, T4, T5 pass (`pnpm vitest run src/lib/trajectory/validator.test.ts`)
+- [x] Existing trajectory tests (74 prior passing per latest run) still all pass — no regression in unrelated rules (82 total pass: 74 prior + 5 new + 3 others)
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Key Decisions: "**Trajectory `rationale_baseline` frontmatter key** — plans can declare their writable baseline via `rationale_baseline: N` frontmatter (integer, default 0). Rows with `Writable at <= baseline` are exempt from the `### Trajectory Rationale` subsection. Use when Phase 1 IS the enabling work (refactor / schema migration / scaffolding) and tests can't be written against the pre-Phase-1 stack. Default 0 preserves all existing plan behavior. See `.indusk/planning/rationale-baseline-frontmatter/`."
+- [x] Add to CLAUDE.md Key Decisions: "**Trajectory `rationale_baseline` frontmatter key** — plans can declare their writable baseline via `rationale_baseline: N` frontmatter (integer, default 0). Rows with `Writable at <= baseline` are exempt from the `### Trajectory Rationale` subsection. Use when Phase 1 IS the enabling work (refactor / schema migration / scaffolding) and tests can't be written against the pre-Phase-1 stack. Default 0 preserves all existing plan behavior. See `.indusk/planning/rationale-baseline-frontmatter/`."
 
 #### Phase 1 Document
-- [ ] (folded into Phase 2 — the indusk docs page covers this)
+- [x] (folded into Phase 2 — the indusk docs page covers this)
 
 ### Phase 2: Documentation
 
-- [ ] Identify the existing trajectory-frontmatter doc page (`apps/indusk-docs/src/guide/test-trajectory.md` or `apps/indusk-docs/src/reference/trajectory/parser.md` — read both, pick the right home for frontmatter-key documentation). If neither covers frontmatter keys explicitly, add a "Frontmatter keys" section to the guide.
-- [ ] Add a section / paragraph documenting `rationale_baseline`: name, type (integer), default (`0`), what it means, when to use it (refactor / schema-migration / scaffolding plans where Phase 1 IS the enabling work), example frontmatter snippet.
-- [ ] Add a small example showing a plan that uses `rationale_baseline: 1` (e.g., a hypothetical migration plan with rows all at `Writable at: Phase 1`).
-- [ ] Verify the doc renders cleanly via `pnpm turbo dev --filter=indusk-docs` or static grep — A7 passes.
+- [x] Identify the existing trajectory-frontmatter doc page (`apps/indusk-docs/src/guide/test-trajectory.md` or `apps/indusk-docs/src/reference/trajectory/parser.md` — read both, pick the right home for frontmatter-key documentation). If neither covers frontmatter keys explicitly, add a "Frontmatter keys" section to the guide. (Picked `guide/test-trajectory.md`; `parser.md` is technical reference and didn't mention `rationale: required` either — added there.)
+- [x] Add a section / paragraph documenting `rationale_baseline`: name, type (integer), default (`0`), what it means, when to use it (refactor / schema-migration / scaffolding plans where Phase 1 IS the enabling work), example frontmatter snippet. (Added new "## Trajectory Rationale and the `rationale_baseline` key" section + frontmatter key reference table; also documented the previously-undocumented `rationale: required` opt-in and bumped "four validator rules" → five.)
+- [x] Add a small example showing a plan that uses `rationale_baseline: 1` (e.g., a hypothetical migration plan with rows all at `Writable at: Phase 1`). (Inline frontmatter snippet using table-lifecycle-unification as the canonical case study.)
+- [x] Verify the doc renders cleanly via `pnpm turbo dev --filter=indusk-docs` or static grep — A7 passes. (Static grep: 6 occurrences of `rationale_baseline`, default `0` documented in key-reference table, scaffolding/migration use cases named.)
 
 #### Phase 2 Verification
-- [ ] T7 passes (the documented page contains `rationale_baseline`, names default `0`, names the use case)
+- [x] T7 passes (the documented page contains `rationale_baseline`, names default `0`, names the use case)
 
 #### Phase 2 Context
-- [ ] (none needed — Phase 1 covered the CLAUDE.md update)
+- [x] (none needed — Phase 1 covered the CLAUDE.md update)
 
 #### Phase 2 Document
-- [ ] (this phase IS the document phase)
+- [x] (this phase IS the document phase)
 
 ### Phase 3: Ship + Numero smoke
 

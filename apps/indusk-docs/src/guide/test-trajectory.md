@@ -91,14 +91,55 @@ If a phase has no tests flipping at it, declare so explicitly — NOT silently:
 
 The allowed reasons are: `schema-only`, `delete`, `refactor`, `infra`. Any other reason fails the validator.
 
-## The four validator rules
+## The validator rules
 
-The `validate-impl-structure.js` hook enforces four rules when the impl has a Test Trajectory section or `trajectory: required` in frontmatter:
+The `validate-impl-structure.js` hook enforces four core rules when the impl has a Test Trajectory section or `trajectory: required` in frontmatter, plus a fifth rule that fires only when the impl opts in via `rationale: required`:
 
 1. **Trajectory presence** — the `## Test Trajectory` section must exist.
 2. **Cross-reference integrity** — every test ID referenced in a phase Verification block must exist in the Trajectory table. Orphaned IDs fail the validator. Phases without test-ID references must declare the `(no tests flip…)` form with an allowed reason.
 3. **Temporal coherence** — `Writable at ≤ Passes at` (by phase number) for every row. A test cannot pass before its dependencies exist. Reordering phases that breaks this fails at write time — which is the feedback you want.
 4. **Deferred Verification completeness** — every row in `### Deferred Verification` must have non-empty `reason:`, `would require:`, AND `mitigation:` fields.
+5. **Rationale completeness** *(opt-in via `rationale: required` in frontmatter)* — every row whose `Writable at` is later than the configured baseline must have a `- **TN** \`Writable at: Phase N\` — {reason}` entry in a `### Trajectory Rationale` subsection. Stale entries (entries for IDs not in the trajectory) are always flagged. See the dedicated section below for the `rationale_baseline` frontmatter key.
+
+## Trajectory Rationale and the `rationale_baseline` key
+
+Plans that opt in via `rationale: required` in their frontmatter must justify, in a `### Trajectory Rationale` subsection, every row whose test cannot be authored at the writable baseline. The default baseline is **Phase 0** — "writable today against the current stack, before any plan code lands." A row at `Writable at: Phase 0` needs no rationale; a row at `Writable at: Phase 3` does.
+
+Read the rationales as a set after authoring. Shared weak excuses across multiple rows ("waits on the fix landing", "endpoint doesn't exist yet") signal that the plan is over-sequenced — those tests should usually move earlier.
+
+### When the default baseline is wrong
+
+Some plans have **Phase 1 as their enabling work**: schema migrations, refactors that rename core types, scaffolding that has to land before any test can be authored. In those plans, "writable today against the current stack" is meaningless — the current stack is what's being replaced. Every test row would be `Writable at: Phase 1`, every row would need a rationale entry, and the rationale entries would all say the same thing ("can't write this until Phase 1 lands the new shape").
+
+For these cases, the impl frontmatter declares its own baseline:
+
+```yaml
+---
+title: "Table Lifecycle Unification"
+trajectory: required
+rationale: required
+rationale_baseline: 1
+---
+```
+
+With `rationale_baseline: 1`, rows at `Writable at: Phase 1` are exempt from the rationale rule (the same way Phase 0 rows are exempt at the default baseline). A row at `Writable at: Phase 3` still needs a rationale — that's a real deferral past the plan's natural starting point.
+
+### Frontmatter key reference
+
+| Key | Type | Default | Effect |
+|-----|------|---------|--------|
+| `rationale: required` | string | — (off) | Opts the impl into the rationale-completeness validator rule. |
+| `rationale_baseline: N` | integer | `0` | Names the phase that counts as "writable at the plan's natural starting point." Rows with `Writable at <= N` are exempt from the rationale rule. Has no effect unless `rationale: required` is also set. |
+
+### When to use a higher baseline
+
+Use `rationale_baseline: 1` (or higher) when:
+- Phase 1 IS the enabling work (rename / migrate / scaffold) and tests against the pre-Phase-1 state would require literally reverting production code
+- The plan explicitly declares its own writable convention in prose ("Default: every test is authored at Phase 1") and the rationale subsection would otherwise be 40+ identical entries
+
+Do **not** use a higher baseline as a workaround for a plan whose phases are mis-ordered. If most rows look like they could be Phase 0 (writable today) but were marked Phase 1 to avoid red tests during intermediate phases, the fix is to move them to Phase 0, not to raise the baseline.
+
+The validator's error messages are baseline-aware — they read "later than Phase {baseline}" using the actual configured value, so the operator sees the rule the plan declared, not the global default.
 
 ## Phase close is structurally enforced
 

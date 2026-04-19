@@ -21,6 +21,15 @@ export interface ValidateTrajectoryOptions {
 	 * check at apps/indusk-mcp/hooks/validate-impl-structure.js.
 	 */
 	rationaleRequired?: boolean;
+	/**
+	 * The phase number that counts as "writable today against the current stack."
+	 * Trajectory rows whose `Writable at` is ≤ baseline are exempt from the
+	 * rationale-completeness rule. Defaults to 0 (the original behavior:
+	 * Phase 0 rows are exempt). Plans where Phase 1 IS the enabling work
+	 * (refactors, schema migrations, scaffolding) set this to 1 so rows
+	 * authored at Phase 1 don't require justification entries.
+	 */
+	rationaleBaseline?: number;
 }
 
 const TRAJECTORY_HEADING = /^##\s+Test Trajectory\b/;
@@ -230,18 +239,20 @@ export function validateDeferredCompleteness(trajectory: Trajectory): Validation
 
 /**
  * Rule 5: When the impl frontmatter sets `rationale: required`, every
- * trajectory row whose `Writable at` is later than Phase 0 (the pre-plan
- * baseline) must have an entry in the `### Trajectory Rationale` subsection.
+ * trajectory row whose `Writable at` is later than the configured baseline
+ * (default Phase 0) must have an entry in the `### Trajectory Rationale`
+ * subsection.
  *
- * Phase 0 rows do NOT need a rationale — Phase 0 means "writable today
- * against the current stack, before any plan implementation," which is
- * the default and needs no justification. We only require rationale when
- * a test will be authored after some plan code lands (Writable at: Phase 1+).
+ * The baseline names the phase that counts as "writable today against the
+ * current stack" for this plan. Default 0 — Phase 0 rows are exempt because
+ * they're writable before any plan code lands. Plans where Phase 1 IS the
+ * enabling work (refactors, schema migrations, scaffolding) can declare
+ * `rationale_baseline: 1` in frontmatter so Phase 1 rows are exempt too.
  *
- * If no row needs a rationale (every row is Phase 0), the subsection itself
- * is optional. If any row is Phase 1+, the subsection must exist and contain
- * an entry for every Phase 1+ row. Stale entries (entries for IDs not in the
- * trajectory) are always flagged.
+ * If no row needs a rationale (every row is ≤ baseline), the subsection
+ * itself is optional. If any row is later than baseline, the subsection
+ * must exist and contain an entry for every such row. Stale entries
+ * (entries for IDs not in the trajectory) are always flagged.
  *
  * Mirrors `validateRationaleCompleteness` in
  * `.claude/hooks/validate-impl-structure.js`.
@@ -249,11 +260,13 @@ export function validateDeferredCompleteness(trajectory: Trajectory): Validation
 export function validateRationaleCompleteness(
 	body: string,
 	trajectory: Trajectory,
+	options: { baseline?: number } = {},
 ): ValidationError[] {
 	const errors: ValidationError[] = [];
+	const baseline = Number.isFinite(options.baseline) ? Number(options.baseline) : 0;
 
 	const rowsNeedingRationale = trajectory.rows.filter(
-		(r) => Number.isFinite(r.writableAt) && r.writableAt > 0,
+		(r) => Number.isFinite(r.writableAt) && r.writableAt > baseline,
 	);
 	const hasSubsection = /^###\s+Trajectory Rationale\b/m.test(body);
 	const rationaleIds = hasSubsection ? parseRationaleBlock(body) : new Set<string>();
@@ -261,7 +274,7 @@ export function validateRationaleCompleteness(
 	if (rowsNeedingRationale.length > 0 && !hasSubsection) {
 		errors.push({
 			rule: "rationale-completeness",
-			message: `\`rationale: required\` is set and ${rowsNeedingRationale.length} trajectory row(s) have \`Writable at\` later than Phase 0, but the impl is missing the \`### Trajectory Rationale\` subsection. Phase 0 rows don't need rationale; rows where authoring waits on plan code do — add an entry for ${rowsNeedingRationale.map((r) => r.id).join(", ")}.`,
+			message: `\`rationale: required\` is set and ${rowsNeedingRationale.length} trajectory row(s) have \`Writable at\` later than Phase ${baseline}, but the impl is missing the \`### Trajectory Rationale\` subsection. Rows at or below the baseline don't need rationale; rows where authoring waits on later plan code do — add an entry for ${rowsNeedingRationale.map((r) => r.id).join(", ")}.`,
 		});
 		// Even without the subsection, fall through to also check for stale entries
 		// (there are none in this case, but the structure is symmetric).
@@ -275,7 +288,7 @@ export function validateRationaleCompleteness(
 	if (missing.length > 0 && hasSubsection) {
 		errors.push({
 			rule: "rationale-completeness",
-			message: `Trajectory rows with \`Writable at\` later than Phase 0 missing from \`### Trajectory Rationale\`: ${missing.join(", ")}. Every row whose authoring waits on plan code needs a \`- **TN** \`Writable at: Phase N\` — {reason}\` entry. Phase 0 rows (writable today against the current stack) do not need rationale.`,
+			message: `Trajectory rows with \`Writable at\` later than Phase ${baseline} missing from \`### Trajectory Rationale\`: ${missing.join(", ")}. Every row whose authoring waits on later plan code needs a \`- **TN** \`Writable at: Phase N\` — {reason}\` entry. Rows at or below the baseline (Phase ${baseline}) do not need rationale.`,
 		});
 	}
 
@@ -337,7 +350,11 @@ export function validateTrajectory(
 		...validateDeferredCompleteness(trajectory),
 	];
 	if (options.rationaleRequired) {
-		errors.push(...validateRationaleCompleteness(body, trajectory));
+		errors.push(
+			...validateRationaleCompleteness(body, trajectory, {
+				baseline: options.rationaleBaseline,
+			}),
+		);
 	}
 	return errors;
 }

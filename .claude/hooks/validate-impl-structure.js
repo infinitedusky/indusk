@@ -312,9 +312,13 @@ const trajectoryRequiredFrontmatter = /trajectory:\s*required/.test(frontmatter)
 const hasTrajectoryHeading = /^##\s+Test Trajectory\b/m.test(body);
 const trajectoryValidationEnabled = trajectoryRequiredFrontmatter || hasTrajectoryHeading;
 const rationaleRequiredFrontmatter = /rationale:\s*required/.test(frontmatter);
+const rationaleBaselineMatch = frontmatter.match(/rationale_baseline:\s*(\d+)/);
+const rationaleBaseline = rationaleBaselineMatch
+	? Number.parseInt(rationaleBaselineMatch[1], 10)
+	: 0;
 
 if (trajectoryValidationEnabled) {
-	const trajectoryErrors = validateTrajectory(body, rationaleRequiredFrontmatter);
+	const trajectoryErrors = validateTrajectory(body, rationaleRequiredFrontmatter, rationaleBaseline);
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
 			`Test Trajectory validation failed (policy: ${gatePolicy}):\n${trajectoryErrors.map((e) => `  [${e.rule}] ${e.message}`).join("\n")}\n\nSee .indusk/planning/tests-first-planning/adr.md Sections 3-6 for the Test Trajectory shape and validator rules.\n`,
@@ -347,7 +351,7 @@ process.exit(0);
 // apps/indusk-mcp/src/lib/trajectory/validator.ts and parser.ts)
 // ------------------------------------------------------------------
 
-function validateTrajectory(implBody, rationaleRequired) {
+function validateTrajectory(implBody, rationaleRequired, rationaleBaseline = 0) {
 	const errors = [];
 
 	// Rule 1: trajectory presence
@@ -365,7 +369,7 @@ function validateTrajectory(implBody, rationaleRequired) {
 	errors.push(...validateTemporalCoherence(trajectory));
 	errors.push(...validateDeferredCompleteness(trajectory));
 	if (rationaleRequired) {
-		errors.push(...validateRationaleCompleteness(implBody, trajectory));
+		errors.push(...validateRationaleCompleteness(implBody, trajectory, rationaleBaseline));
 	}
 	return errors;
 }
@@ -646,11 +650,12 @@ function validateDeferredCompleteness(trajectory) {
 // Read the entries together: shared weak excuses signal over-sequencing.
 // ------------------------------------------------------------------
 
-function validateRationaleCompleteness(implBody, trajectory) {
+function validateRationaleCompleteness(implBody, trajectory, baseline = 0) {
 	const errors = [];
+	const baselineNum = Number.isFinite(baseline) ? Number(baseline) : 0;
 
 	const rowsNeedingRationale = trajectory.rows.filter(
-		(r) => Number.isFinite(r.writableAt) && r.writableAt > 0,
+		(r) => Number.isFinite(r.writableAt) && r.writableAt > baselineNum,
 	);
 	const hasSubsection = /^###\s+Trajectory Rationale\b/m.test(implBody);
 	const rationaleIds = hasSubsection ? parseRationaleBlock(implBody) : new Set();
@@ -658,7 +663,7 @@ function validateRationaleCompleteness(implBody, trajectory) {
 	if (rowsNeedingRationale.length > 0 && !hasSubsection) {
 		errors.push({
 			rule: "rationale-completeness",
-			message: `\`rationale: required\` is set and ${rowsNeedingRationale.length} trajectory row(s) have \`Writable at\` later than Phase 0, but the impl is missing the \`### Trajectory Rationale\` subsection. Phase 0 rows don't need rationale; rows where authoring waits on plan code do — add an entry for ${rowsNeedingRationale.map((r) => r.id).join(", ")}.`,
+			message: `\`rationale: required\` is set and ${rowsNeedingRationale.length} trajectory row(s) have \`Writable at\` later than Phase ${baselineNum}, but the impl is missing the \`### Trajectory Rationale\` subsection. Rows at or below the baseline don't need rationale; rows where authoring waits on later plan code do — add an entry for ${rowsNeedingRationale.map((r) => r.id).join(", ")}.`,
 		});
 	}
 
@@ -670,7 +675,7 @@ function validateRationaleCompleteness(implBody, trajectory) {
 	if (missing.length > 0 && hasSubsection) {
 		errors.push({
 			rule: "rationale-completeness",
-			message: `Trajectory rows with \`Writable at\` later than Phase 0 missing from \`### Trajectory Rationale\`: ${missing.join(", ")}. Every row whose authoring waits on plan code needs a \`- **TN** \`Writable at: Phase N\` — {reason}\` entry. Phase 0 rows (writable today against the current stack) do not need rationale.`,
+			message: `Trajectory rows with \`Writable at\` later than Phase ${baselineNum} missing from \`### Trajectory Rationale\`: ${missing.join(", ")}. Every row whose authoring waits on later plan code needs a \`- **TN** \`Writable at: Phase N\` — {reason}\` entry. Rows at or below the baseline (Phase ${baselineNum}) do not need rationale.`,
 		});
 	}
 
