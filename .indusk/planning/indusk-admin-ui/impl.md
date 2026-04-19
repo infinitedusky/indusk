@@ -95,7 +95,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 
 - [x] Created `apps/indusk-admin/` with Next.js 16.2.4 + React 19.2.4 + Tailwind 4.2.2 + TypeScript strict via `pnpm dlx create-next-app@latest apps/indusk-admin --ts --tailwind --app --src-dir --biome --import-alias "@/*" --use-pnpm --yes`. Scaffolded with App Router, src/ layout, Biome (matches project convention — not ESLint).
 - [x] Added `lucide-react` ^1.8.0 to dependencies.
-- [ ] Verify root `pnpm-workspace.yaml` picks up the new app. Add a top-level convenience script if useful.
+- [x] Verified `pnpm-workspace.yaml` picks up the new app — `pnpm -r exec` lists `indusk-admin` alongside `indusk-docs` and `@infinitedusky/indusk-mcp`. No config changes needed; existing `apps/*` glob caught it.
 - [ ] Create `src/components/ui/` directory.
 - [ ] Implement `Button.tsx` with variants (`primary`, `secondary`, `ghost`) + sizes (`sm`, `md`). Tailwind classes. Forward ref for accessibility.
 - [ ] Implement `Badge.tsx` with variants for each trajectory state (`passing`, `blocked`, `skipped`, `planned`, `writable`, `written`, `unknown`). Color palette: `passing` green, `blocked` red, `skipped` muted, the rest gray-toned (per A9 visibility requirement).
