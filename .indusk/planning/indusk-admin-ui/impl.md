@@ -102,7 +102,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Implemented `Table.tsx` exporting `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead` (header cell), `TableCell` (body cell). Wrapped in horizontal-overflow container for responsiveness; hover rows; sticky header style.
 - [x] Implemented `CollapsibleSection.tsx` — props: `title`, `defaultOpen`, `children`, optional `headerRight` slot. Click header toggles; chevron icon from lucide-react (`ChevronDown`/`ChevronRight`); `aria-expanded` for accessibility.
 - [x] Implemented `Sidebar.tsx` — fixed-width (`w-72`) left rail with header slot + scrollable content area. Full-height (`h-screen`).
-- [ ] Create the App shell at `src/app/layout.tsx` and `src/app/page.tsx` — sidebar + main pane structure, no data yet (placeholder content).
+- [x] App shell at `src/app/layout.tsx` (HTML + Geist fonts + flex container with `<Sidebar>` + `<main>`) and `src/app/page.tsx` (default "select a plan" empty-state when no plan is selected). Sidebar's plan-list slot is currently `<EmptyPlansSidebarSlot />` placeholder satisfying T12 (will be replaced in Phase 3 with server-component data render).
 - [ ] Configure `vitest.config.ts` with `vitest-browser-mode` (Playwright provider). `passWithNoTests: true`.
 - [ ] Add a basic component test for `Badge.tsx` confirming each variant renders with the expected color class. T9 passes.
 - [ ] Add a basic test that renders the App shell with no plan data and asserts the empty-state copy is visible. T12 passes (preserved through later phases).
