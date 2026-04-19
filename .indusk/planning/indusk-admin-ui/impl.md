@@ -55,10 +55,10 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
 | T1 | Running `indusk ui` from a project root prints a localhost URL and opens browser by default. | Phase 0 | Phase 6 | planned |
-| T2 | When the URL opens, the user sees a sidebar listing every active plan in this project. | Phase 1 | Phase 3 | planned |
+| T2 | When the URL opens, the user sees a sidebar listing every active plan in this project. | Phase 1 | Phase 3 | written |
 | T3 | The sidebar's plan list appears in the order defined by `master.md`'s pipeline. | Phase 2 | Phase 3 | planned |
-| T4 | Plans in `.indusk/planning/archive/` appear in a separate "Archived" section, visually distinct, collapsed by default. | Phase 1 | Phase 3 | planned |
-| T5 | Clicking a plan in the sidebar shows that plan's content in the main pane. | Phase 1 | Phase 4 | planned |
+| T4 | Plans in `.indusk/planning/archive/` appear in a separate "Archived" section, visually distinct, collapsed by default. | Phase 1 | Phase 3 | written |
+| T5 | Clicking a plan in the sidebar shows that plan's content in the main pane. | Phase 1 | Phase 4 | written |
 | T6 | The main pane shows the plan's brief — Problem and Proposed Direction at minimum. | Phase 2 | Phase 4 | planned |
 | T7 | The main pane lists the plan's impl phases as collapsible sections. | Phase 2 | Phase 4 | planned |
 | T8 | Expanding a phase shows its trajectory rows in a table with columns: ID, Asserts, Writable at, Passes at, State. | Phase 2 | Phase 4 | planned |
@@ -117,7 +117,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Added the `indusk-admin` app to CLAUDE.md Architecture's Apps list, naming the tech stack, the custom-primitives policy (no shadcn/Radix), the test framework choice (vitest-browser-mode + @vitest/browser-playwright), and the parser-reuse rule.
 
 #### Phase 1 Document
-- [ ] Create `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` — the load-bearing component-reuse discipline (where primitives live, how to add new ones, what the audit catches).
+- [x] Created `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` — table of primitives + variants, ❌/✅ inline-vs-primitive examples, how to add a new primitive, how to refactor duplication, what the audit catches, and the rationale for not using shadcn/Radix.
 
 ### Phase 2: Planning-reader (file-system + parser layer)
 

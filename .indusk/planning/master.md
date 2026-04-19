@@ -13,7 +13,8 @@ The pipeline is organized into three arcs. Each arc has an internal goal; arcs a
 
 | # | Plan | Status | Depends On | Blocks |
 |---|------|--------|------------|--------|
-| 1 | [indusk-admin-ui](indusk-admin-ui/brief.md) | brief accepted (NEXT — dogfoods the test-plan flow) | — | 2, 3 (UI consumes their data) |
+| 0.5 | [rationale-baseline-frontmatter](rationale-baseline-frontmatter/brief.md) | brief draft (~30 min upstream hook fix; URGENT — blocks Numero's next 3 plans from clean authoring) | — | (unblocks Numero's restart-recovery / coc4-verification-debt-audit / drop-compat-views and any future schema-migration plan) |
+| 1 | [indusk-admin-ui](indusk-admin-ui/brief.md) | impl in-progress (Phase 1 done; dogfoods the test-plan flow) | — | 2, 3 (UI consumes their data) |
 | 1.5 | playwright-auth-pattern | not yet created (~1 day; ships right after admin-ui — solves the "can't test logged-in screens" pain on Numero and any future project) | — | (unblocks e2e testing of auth-gated UI for any project) |
 | 2 | test-run-history | not yet created | — | (deepens admin-ui timeline view) |
 | 3 | local-telemetry | not yet created | — | (debug surface in admin-ui) |
@@ -26,6 +27,7 @@ The pipeline is organized into three arcs. Each arc has an internal goal; arcs a
 
 | # | Plan | Status | Depends On | Blocks |
 |---|------|--------|------------|--------|
+| 3.5 | [evaluator-structured-scorecard-output](evaluator-structured-scorecard-output/brief.md) | brief draft (the strategic fix for scorecard schema drift — same root cause as #4 but narrower scope, ships first) | — | 4 (validates the structured-output approach before we apply it to graph episodes); admin-ui v2 (canonical scorecards across projects) |
 | 4 | [graph-knowledge-architecture](graph-knowledge-architecture/brief.md) | impl draft | 0 | 5, 6, 7, 8 (the architectural pivot) |
 | 5 | [lsp-structural-indexing](lsp-structural-indexing/brief.md) | brief draft | 4 | 6 |
 | 6 | [type-edges](type-edges/brief.md) | brief draft | 4, 5 | — |
