@@ -58,7 +58,7 @@ After this ships: Numero's three queued plans (`restart-recovery`, `coc4-verific
 
 ### Phase 1: Validator change + parity tests
 
-- [ ] (write red) Add 5 unit tests to `apps/indusk-mcp/src/lib/trajectory/validator.test.ts` covering T1–T5. Each asserts the expected behavior post-fix; all 5 should fail red against current source.
+- [x] (write red) Add 5 unit tests to `apps/indusk-mcp/src/lib/trajectory/validator.test.ts` covering T1–T5. Each asserts the expected behavior post-fix; all 5 should fail red against current source.
 - [ ] Extend `ValidateTrajectoryOptions` in `apps/indusk-mcp/src/lib/trajectory/validator.ts` with optional `rationaleBaseline?: number` (default `0`).
 - [ ] Update `validateRationaleCompleteness(body, trajectory, baseline)` (or thread baseline through `validateTrajectory(body, options)` → internal call) so the row filter uses `r.writableAt > baseline` instead of `r.writableAt > 0`.
 - [ ] Update both error messages in `validateRationaleCompleteness` to use the dynamic baseline value: `"later than Phase ${baseline}"` instead of hardcoded "Phase 0". Wording per the brief (and per A4).
