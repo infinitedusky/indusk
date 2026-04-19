@@ -227,3 +227,167 @@ describe("PlanDetail — malformed banner (T13 prep)", () => {
     ).toBeNull();
   });
 });
+
+describe("PlanDetail — falsification section (T10)", () => {
+  it("T10 — renders one entry per hypothesis with outcome-colored badges", async () => {
+    const plan = mockPlan({
+      falsification: {
+        complete: true,
+        entries: [
+          {
+            kind: "hypothesis",
+            timestamp: "2026-04-19T10:00:00Z",
+            hypothesis: "the dropdown leaks state on unmount",
+            testPath: "src/dropdown.test.tsx",
+            outcome: "fix-in-scope",
+          },
+          {
+            kind: "hypothesis",
+            timestamp: "2026-04-19T10:05:00Z",
+            hypothesis: "race condition between two callers",
+            testPath: null,
+            outcome: "spawn-plan",
+          },
+          {
+            kind: "hypothesis",
+            timestamp: "2026-04-19T10:10:00Z",
+            hypothesis: "overflow on extreme input",
+            testPath: null,
+            outcome: "accept-finding",
+          },
+          {
+            kind: "terminator",
+            timestamp: "2026-04-19T10:15:00Z",
+            reason: "investigated all three; no further attack vector",
+          },
+        ],
+      },
+    });
+    const { container } = await render(<PlanDetail plan={plan} />);
+    const section = container.querySelector('[data-testid="falsification-section"]');
+    expect(section).not.toBeNull();
+
+    // One entry per hypothesis, outcomes color-coded by data-testid
+    expect(section?.querySelector('[data-testid="hypothesis-fix-in-scope"]')).not.toBeNull();
+    expect(section?.querySelector('[data-testid="hypothesis-spawn-plan"]')).not.toBeNull();
+    expect(section?.querySelector('[data-testid="hypothesis-accept-finding"]')).not.toBeNull();
+
+    // Terminator entry rendered as the closer
+    const terminator = section?.querySelector('[data-testid="falsification-terminator"]');
+    expect(terminator?.textContent).toContain("investigated all three");
+
+    // Each hypothesis surfaces its prose
+    expect(section?.textContent).toContain("the dropdown leaks state on unmount");
+    expect(section?.textContent).toContain("race condition");
+    expect(section?.textContent).toContain("overflow on extreme input");
+  });
+
+  it("T10 — renders 'no falsification ritual run' when the log is missing", async () => {
+    const plan = mockPlan({ falsification: undefined });
+    const { container } = await render(<PlanDetail plan={plan} />);
+    const empty = container.querySelector('[data-testid="falsification-empty"]');
+    expect(empty).not.toBeNull();
+    expect(empty?.textContent).toContain("No falsification ritual run");
+  });
+});
+
+describe("PlanDetail — scorecards section (T11)", () => {
+  it("T11 — lists scorecards in the plan's date range, most recent first, with status badges", async () => {
+    const scorecards = [
+      {
+        timestamp: "2026-04-19T11:00:00Z",
+        changeId: "abcdef1234567890",
+        mode: "feature",
+        summary: "Newest commit",
+      },
+      {
+        timestamp: "2026-04-19T10:00:00Z",
+        changeId: "fedcba0987654321",
+        mode: "bugfix",
+        summary: "Earlier commit",
+        error: true,
+      },
+    ];
+    const { container } = await render(
+      <PlanDetail plan={mockPlan()} scorecards={scorecards} />,
+    );
+    const section = container.querySelector('[data-testid="scorecards-section"]');
+    expect(section).not.toBeNull();
+
+    // Header includes the count
+    expect(section?.textContent).toContain("Eval Scorecards (2)");
+
+    // Both rows render with truncated changeId + summary
+    expect(section?.textContent).toContain("abcdef12");
+    expect(section?.textContent).toContain("Newest commit");
+    expect(section?.textContent).toContain("fedcba09");
+    expect(section?.textContent).toContain("Earlier commit");
+
+    // Status: ok for the first, error for the second (verify by row order)
+    const rows = Array.from(section?.querySelectorAll("tbody tr") ?? []);
+    expect(rows[0].textContent).toContain("✓ ok");
+    expect(rows[1].textContent).toContain("✗ error");
+  });
+
+  it("T11 — empty-state copy when no scorecards in range", async () => {
+    const { container } = await render(
+      <PlanDetail plan={mockPlan()} scorecards={[]} />,
+    );
+    const empty = container.querySelector('[data-testid="scorecards-empty"]');
+    expect(empty).not.toBeNull();
+    expect(empty?.textContent).toContain("No eval scorecards");
+  });
+
+  it("T11 — scorecards section omitted entirely when scorecards prop is undefined", async () => {
+    const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    expect(container.querySelector('[data-testid="scorecards-section"]')).toBeNull();
+  });
+});
+
+describe("PlanDetail — malformed plan (T13)", () => {
+  it("T13 — malformed plan still renders, with a banner indicating the malformed state", async () => {
+    const plan = mockPlan({
+      malformed: true,
+      brief: undefined, // typical: malformed brief gets dropped
+      status: "unknown",
+    });
+    const { container } = await render(<PlanDetail plan={plan} />);
+    expect(container.querySelector('[data-testid="plan-detail"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="malformed-banner"]')).not.toBeNull();
+    // Header still appears (with whatever name + status came through)
+    const header = container.querySelector('[data-testid="plan-header"]');
+    expect(header?.textContent).toContain("alpha-feature");
+  });
+});
+
+describe("PlanDetail — missing-document graceful render (T14)", () => {
+  it("T14 — plan with only a brief renders the brief, omits all other sections", async () => {
+    const plan: Plan = {
+      name: "brief-only",
+      status: "draft",
+      archived: false,
+      brief: {
+        frontmatter: { title: "Brief Only" },
+        content: "## Problem\n\nFoo.\n\n## Proposed Direction\n\nBar.",
+      },
+    };
+    const { container } = await render(<PlanDetail plan={plan} />);
+    expect(container.querySelector('[data-testid="brief-section"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="phases-section"]')).toBeNull();
+    expect(container.querySelector('[data-testid="malformed-banner"]')).toBeNull();
+  });
+
+  it("T14 — plan with no documents at all still renders header + falsification empty state", async () => {
+    const plan: Plan = {
+      name: "empty-plan",
+      status: "draft",
+      archived: false,
+    };
+    const { container } = await render(<PlanDetail plan={plan} />);
+    expect(container.querySelector('[data-testid="plan-detail"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="plan-header"]')).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="falsification-empty"]'),
+    ).not.toBeNull();
+  });
+});
