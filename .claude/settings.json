@@ -190,7 +190,14 @@
       "Bash(find /Users/the_dusky/code/sandbox/dusk/node_modules/.pnpm/vitest-browser-react@2.2.0*/node_modules/vitest-browser-react/dist -name \"pure-*.d.ts\")",
       "Bash(0)",
       "Bash(tar xz *)",
-      "Bash(find /Users/the_dusky/code/sandbox/dusk/apps/indusk-admin -name \"PlanList.test.tsx\" -exec cat {} \\\\;)"
+      "Bash(find /Users/the_dusky/code/sandbox/dusk/apps/indusk-admin -name \"PlanList.test.tsx\" -exec cat {} \\\\;)",
+      "Bash(awk 'NR>=94 && NR<=99 {printf \"%s\\\\n\", $0}' /Users/the_dusky/code/sandbox/dusk/apps/indusk-docs/src/.vitepress/config.ts)",
+      "Bash(python3 -c \"import sys; data = sys.stdin.read\\(\\); print\\(repr\\(data\\)\\)\")",
+      "Bash(timeout 25 node apps/indusk-mcp/dist/bin/cli.js ui --no-open --port 0)",
+      "Bash(node apps/indusk-mcp/dist/bin/cli.js ui --no-open --port 3939)",
+      "Bash(echo \"spawned pid $!\")",
+      "Bash(curl -s -o /tmp/curl-out.html -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" http://localhost:3939/)",
+      "Bash(curl -s -o /tmp/curl-plan.html -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" http://localhost:3939/plan/indusk-admin-ui)"
     ],
     "additionalDirectories": [
       "/tmp",

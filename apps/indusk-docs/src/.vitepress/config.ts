@@ -96,6 +96,16 @@ const config = defineConfig({
 					items: [{ text: "Overview", link: "/reference/eval/overview" }],
 				},
 				{
+					text: "Admin UI",
+					items: [
+						{ text: "Overview", link: "/reference/admin-ui/overview" },
+						{
+							text: "Component Conventions",
+							link: "/reference/admin-ui/component-conventions",
+						},
+					],
+				},
+				{
 					text: "Tools",
 					items: [
 						{ text: "InDusk MCP", link: "/reference/tools/indusk-mcp" },
