@@ -101,7 +101,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Implemented `Badge.tsx` with variants per trajectory state (`passing` green, `blocked` red, `skipped` yellow, `planned`/`writable`/`written` gray/blue-toned, `unknown`/`neutral` gray). Each uses ring-inset Tailwind classes for clean visual differentiation per A9.
 - [x] Implemented `Table.tsx` exporting `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead` (header cell), `TableCell` (body cell). Wrapped in horizontal-overflow container for responsiveness; hover rows; sticky header style.
 - [x] Implemented `CollapsibleSection.tsx` — props: `title`, `defaultOpen`, `children`, optional `headerRight` slot. Click header toggles; chevron icon from lucide-react (`ChevronDown`/`ChevronRight`); `aria-expanded` for accessibility.
-- [ ] Implement `Sidebar.tsx` — left rail container; props: `children`. Includes header slot and scrollable list area.
+- [x] Implemented `Sidebar.tsx` — fixed-width (`w-72`) left rail with header slot + scrollable content area. Full-height (`h-screen`).
 - [ ] Create the App shell at `src/app/layout.tsx` and `src/app/page.tsx` — sidebar + main pane structure, no data yet (placeholder content).
 - [ ] Configure `vitest.config.ts` with `vitest-browser-mode` (Playwright provider). `passWithNoTests: true`.
 - [ ] Add a basic component test for `Badge.tsx` confirming each variant renders with the expected color class. T9 passes.
