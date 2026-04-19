@@ -184,7 +184,8 @@
       "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}'\\)\")",
       "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nquestions: {len\\(d.get\\(\\\\\"questions\\\\\", []\\)\\)}\\\\\\\\nsummary: {d.get\\(\\\\\"summary\\\\\", d.get\\(\\\\\"message\\\\\", \\\\\"?\\\\\"\\)\\)[:200]}'\\)\")",
       "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nquestions_count: {len\\(d.get\\(\\\\\"questions\\\\\", []\\)\\)}'\\)\")",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(pnpm dlx *)"
     ],
     "additionalDirectories": [
       "/tmp",
