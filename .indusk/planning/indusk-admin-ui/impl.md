@@ -97,7 +97,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Added `lucide-react` ^1.8.0 to dependencies.
 - [x] Verified `pnpm-workspace.yaml` picks up the new app — `pnpm -r exec` lists `indusk-admin` alongside `indusk-docs` and `@infinitedusky/indusk-mcp`. No config changes needed; existing `apps/*` glob caught it.
 - [x] Created `src/components/ui/` directory.
-- [ ] Implement `Button.tsx` with variants (`primary`, `secondary`, `ghost`) + sizes (`sm`, `md`). Tailwind classes. Forward ref for accessibility.
+- [x] Implemented `Button.tsx` with variants (`primary`, `secondary`, `ghost`) + sizes (`sm`, `md`). Tailwind classes, `forwardRef` for accessibility, focus rings, disabled state.
 - [ ] Implement `Badge.tsx` with variants for each trajectory state (`passing`, `blocked`, `skipped`, `planned`, `writable`, `written`, `unknown`). Color palette: `passing` green, `blocked` red, `skipped` muted, the rest gray-toned (per A9 visibility requirement).
 - [ ] Implement `Table.tsx` with `<Table>`, `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableCell>` subcomponents. Responsive horizontal scroll.
 - [ ] Implement `CollapsibleSection.tsx` — props: `title`, `defaultOpen`, `children`. Click toggles open/closed; chevron icon from lucide.
