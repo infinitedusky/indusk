@@ -18,7 +18,15 @@
 		"dev-system": "dist/bin/cli.js"
 	},
 	"exports": {
-		".": "./dist/server/index.js"
+		".": "./dist/server/index.js",
+		"./trajectory/parser": {
+			"types": "./dist/lib/trajectory/parser.d.ts",
+			"default": "./dist/lib/trajectory/parser.js"
+		},
+		"./falsification/log": {
+			"types": "./dist/lib/falsification/log.d.ts",
+			"default": "./dist/lib/falsification/log.js"
+		}
 	},
 	"scripts": {
 		"dev": "tsx watch src/server/index.ts",
