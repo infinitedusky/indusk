@@ -106,7 +106,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Configured `vitest.config.ts` with vitest 4.1.4 + `@vitest/browser-playwright` provider (factory pattern, new in vitest 4.x — `provider: playwright()` not `provider: "playwright"`). Headless Chromium installed via `playwright install chromium`. `passWithNoTests: true`. `test` script wired in package.json.
 - [x] Added `Badge.test.tsx` with 9 tests: each of 8 variants renders with its expected color token (green/red/yellow/gray/blue), plus a passing-vs-blocked distinctness check. **T9 passes** (verified `pnpm test` — 9/9 green).
 - [x] Extracted `EmptyPlansSidebarSlot` from inline layout.tsx into its own component (per component-reuse discipline). Added `EmptyPlansSidebarSlot.test.tsx` with 3 tests (renders, "No plans yet" copy, /planner reference). **T12 passes** (12 tests total green).
-- [ ] Add structural tests for T2, T4, T5 — render App shell with mocked data, assert sidebar items + click-to-detail behavior. (Initially fail — pass at Phase 3 + 4.)
+- [x] Added `PlanList.test.tsx` with 3 `it.skip()` placeholders for T2/T4/T5 — each names the unlock phase in the comment + the assertion intent. Rationale for `.skip()` over fail-red: importing `PlanList` (doesn't exist until Phase 3) would break test-file compilation rather than producing a clean failure. `.skip()` keeps the test enumerable and ready to flip when its dependencies land.
 
 #### Phase 1 Verification
 - [ ] T9 passes (Badge color coding) — `pnpm vitest run apps/indusk-admin`
