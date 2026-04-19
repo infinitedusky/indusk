@@ -82,6 +82,8 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 		"opus",
 		"--permission-mode",
 		"acceptEdits",
+		"--mcp-config",
+		".mcp.json",
 		"--allowed-tools",
 		allowedTools.join(","),
 	];
@@ -229,6 +231,8 @@ async function runEvaluatorSyncInner(
 		"opus",
 		"--permission-mode",
 		"acceptEdits",
+		"--mcp-config",
+		".mcp.json",
 		"--allowed-tools",
 		allowedTools.join(","),
 	];

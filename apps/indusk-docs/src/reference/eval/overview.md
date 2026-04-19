@@ -185,6 +185,32 @@ Check this log when evals aren't appearing in `results.log`.
 
 **Fix in 1.19.1:** the inline script now uses ESM-native `import { mkdirSync, appendFileSync } from "node:fs"` and `import { dirname, join } from "node:path"`. A regression test (`apps/indusk-mcp/src/__tests__/falsification-hook-esm-require.test.ts`) grep-asserts the hook source contains no CJS module resolution.
 
+### MCP tools unreachable from the spawned subprocess
+
+**Symptom:** every scorecard in `.indusk/eval/results.log` records `graphitiWrites: 0` and `mcpToolCalls: 0`, even when `.indusk/highlights.jsonl` has unprocessed entries that the evaluator's prompt explicitly asks Claude to read and write to Graphiti. `.indusk/highlights-processed.jsonl` is never created. The evaluator runs to completion, writes a scorecard, but never invokes any `mcp__*` tool.
+
+**Cause:** `claude --print` does NOT auto-discover the project's `.mcp.json` from cwd. Without `--mcp-config <path>`, only globally-configured MCP servers (typically `context7`, `tmux`, `playwright` — whatever's in the user's global Claude Code config) are loaded into the subprocess. The project's MCP servers — `indusk`, `graphiti`, `codegraphcontext`, etc. — are absent regardless of what `--allowed-tools` permits. `--allowed-tools` controls which tools the model may *call*; `--mcp-config` controls which tools *exist* in the subprocess at all.
+
+A secondary trap: even with `--mcp-config` set, `claude --print` denies tool calls unless `--permission-mode acceptEdits` is also passed. The fresh-session evaluator path includes that flag; the resume-session path historically did not, so resumed sessions saw the tools but couldn't call them.
+
+**Fix in 1.23.0:** the evaluator's spawn args at `apps/indusk-mcp/src/lib/eval/persistent-evaluator.ts` now include `--mcp-config .mcp.json` on both fresh and resume paths, plus `--permission-mode acceptEdits` on the resume path for symmetry with the fresh path. See `.indusk/planning/archive/eval-agent-mcp-access/diagnosis.md` for the full A/B test that confirmed the cause.
+
+**Manual reproduction (works against any indusk project):**
+```bash
+# Fails — no MCP tools from .mcp.json visible:
+echo "Call mcp__indusk__get_system_version and report the result." \
+  | claude --print --output-format json \
+    --allowed-tools "mcp__indusk__*"
+
+# Succeeds — MCP tools loaded and callable:
+echo "Call mcp__indusk__get_system_version and report the result." \
+  | claude --print --output-format json \
+    --mcp-config .mcp.json --permission-mode acceptEdits \
+    --allowed-tools "mcp__indusk__*"
+```
+
+If the second invocation also returns "TOOL NOT AVAILABLE", check that `.mcp.json` is at cwd and that the `indusk` MCP server entry within it is reachable (`indusk serve` works on PATH).
+
 ### Debugging a broken evaluator
 
 If `results.log` stops updating and you suspect a silent failure:
