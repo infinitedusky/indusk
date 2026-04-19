@@ -30,7 +30,12 @@ export default defineConfig({
         },
         test: {
           name: "node",
-          include: ["src/lib/**/*.test.ts"],
+          // Node-only tests: lib parsers + audit scripts that touch the filesystem
+          // and don't render React. Audit lives at top-level src/__tests__/.
+          include: [
+            "src/lib/**/*.test.ts",
+            "src/__tests__/**/*.test.ts",
+          ],
           environment: "node",
         },
       },
@@ -42,8 +47,10 @@ export default defineConfig({
         },
         test: {
           name: "browser",
+          // Browser tests: React component tests under src/. Excludes lib (node)
+          // and src/__tests__/ (node-only audits).
           include: ["src/**/*.test.{ts,tsx}"],
-          exclude: ["src/lib/**"],
+          exclude: ["src/lib/**", "src/__tests__/**"],
           browser: {
             enabled: true,
             provider: playwright(),
