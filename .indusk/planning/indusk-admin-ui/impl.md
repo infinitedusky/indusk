@@ -121,33 +121,26 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 
 ### Phase 2: Planning-reader (file-system + parser layer)
 
-- [ ] Create `apps/indusk-admin/src/lib/planning-reader.ts` exporting:
+- [x] Create `apps/indusk-admin/src/lib/planning-reader.ts` exporting:
   - `readActivePlans(projectRoot: string): Promise<Plan[]>` — reads `.indusk/planning/{name}/`, skips `archive/`
   - `readArchivedPlans(projectRoot: string): Promise<Plan[]>`
   - `readMasterPlanOrder(projectRoot: string): string[]` — parses `master.md` pipeline table, returns plan names in order
   - `readEvalScorecards(projectRoot: string, planDateRange: {from: Date, to: Date}): Promise<Scorecard[]>` — reads `.indusk/eval/results.log`, filters by date overlap
-- [ ] Define the `Plan` interface: `{ name, status, brief?: BriefData, testPlan?: TestPlanData, adr?: ADRData, impl?: ImplData, falsification?: FalsificationData, retrospective?: RetroData, malformed?: boolean }`. All inner data optional so missing-document plans render gracefully (T14).
-- [ ] Reuse parsers via workspace import (or relative path during dev):
-  - `parseTrajectory` from `apps/indusk-mcp/src/lib/trajectory/parser.ts`
-  - Falsification log read functions from `apps/indusk-mcp/src/lib/falsification/log.ts` — add `readFalsificationLog(planRoot)` export to that module if missing.
-- [ ] Use `gray-matter` for frontmatter parsing. Catch parse errors, set `malformed: true` on the Plan.
-- [ ] Add unit tests in `apps/indusk-admin/src/lib/__tests__/planning-reader.test.ts`:
-  - Reads a fixture project with 3 plans; returns 3 Plan objects in correct order
-  - Skips `archive/` for `readActivePlans`; returns archived for `readArchivedPlans`
-  - Malformed frontmatter → Plan returned with `malformed: true` (T13 prep)
-  - Missing optional documents (no ADR) → Plan returned with `adr: undefined` (T14 prep)
-  - Empty planning directory → returns `[]`
-- [ ] Create `apps/indusk-admin/test-fixtures/sample-project/.indusk/planning/` with 3-4 sample plans covering: well-formed, malformed frontmatter, missing ADR, archived.
+- [x] Define the `Plan` interface: `{ name, status, archived, brief?, testPlan?, adr?, impl?, falsification?, retrospective?, malformed? }`. All inner data optional so missing-document plans render gracefully (T14).
+- [x] Reuse parsers via workspace import — added subpath exports `@infinitedusky/indusk-mcp/trajectory/parser` and `@infinitedusky/indusk-mcp/falsification/log` to indusk-mcp's package.json. Admin app declares `"@infinitedusky/indusk-mcp": "workspace:*"` in deps. `parseTrajectory`, `readFalsificationLog`, `isFalsificationComplete` all imported and used in planning-reader.
+- [x] Use `gray-matter` for frontmatter parsing. Catch parse errors AND detect silent-error mode (gray-matter swallows js-yaml errors in vitest's module-resolution path), set `malformed: true` on the Plan via "frontmatter block exists structurally but yielded empty data" detection.
+- [x] Add unit tests in `apps/indusk-admin/src/lib/__tests__/planning-reader.test.ts` — 18 tests covering active plans (8), archived (3), master order (3), eval scorecards (4), fixture sanity (1).
+- [x] Create `apps/indusk-admin/test-fixtures/sample-project/.indusk/planning/` with 5 sample plans: well-formed (alpha-feature), brief-only (beta-bugfix), missing-ADR (gamma-missing-adr), malformed (delta-malformed), archived (zeta-archived) + master.md + eval/results.log.
 
 #### Phase 2 Verification
-- [ ] (no tests flip at this phase — reason: infra) — Phase 2 builds the data layer; trajectory tests for the data layer's behavior are unit tests on `planning-reader.ts` itself, which are independent of T1–T16. T3, T13, T14 become writable here but pass at Phase 3 / 5.
-- [ ] `planning-reader.test.ts` unit tests pass (`pnpm vitest run apps/indusk-admin/src/lib/__tests__/`).
+- [x] (no tests flip at this phase — reason: infra) — Phase 2 builds the data layer; trajectory tests for the data layer's behavior are unit tests on `planning-reader.ts` itself, which are independent of T1–T16. T3, T13, T14 become writable here but pass at Phase 3 / 5.
+- [x] `planning-reader.test.ts` unit tests pass — 32 tests pass (18 new planning-reader + 14 existing component tests), 3 skipped (T2/T4/T5 placeholders awaiting Phase 3).
 
 #### Phase 2 Context
-- [ ] Add to CLAUDE.md Conventions: "**admin-ui reuses indusk-mcp parsers via workspace import** — never duplicate parsing logic. The trajectory and falsification parsers live in `apps/indusk-mcp/src/lib/`; admin-ui imports them. If a parser needs a new export to support admin-ui, add it to the original module rather than recreating it."
+- [x] Added to CLAUDE.md Conventions: "**admin-ui reuses indusk-mcp parsers via workspace import** — never duplicate parsing logic..." + the subpath-export mechanism + the additive-non-breaking note.
 
 #### Phase 2 Document
-- [ ] Update `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` with a "Data layer" section noting parsers are reused, not duplicated. (Folds into Phase 1's new doc.)
+- [x] Updated `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` with a new "Data layer — reuse, don't duplicate" section: parser-reuse table, the subpath-export config snippet, "why direct filesystem reads, not an MCP tool" rationale, and the malformed-frontmatter rail-integrity property.
 
 ### Phase 3: Sidebar + plan list
 

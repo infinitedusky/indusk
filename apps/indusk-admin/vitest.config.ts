@@ -32,7 +32,6 @@ export default defineConfig({
           name: "node",
           include: ["src/lib/**/*.test.ts"],
           environment: "node",
-          passWithNoTests: true,
         },
       },
       {
@@ -45,7 +44,6 @@ export default defineConfig({
           name: "browser",
           include: ["src/**/*.test.{ts,tsx}"],
           exclude: ["src/lib/**"],
-          passWithNoTests: true,
           browser: {
             enabled: true,
             provider: playwright(),

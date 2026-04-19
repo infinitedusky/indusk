@@ -189,7 +189,8 @@
       "Bash(pnpm -r exec node -e \"console.log\\(require\\('./package.json'\\).name\\)\")",
       "Bash(find /Users/the_dusky/code/sandbox/dusk/node_modules/.pnpm/vitest-browser-react@2.2.0*/node_modules/vitest-browser-react/dist -name \"pure-*.d.ts\")",
       "Bash(0)",
-      "Bash(tar xz *)"
+      "Bash(tar xz *)",
+      "Bash(find /Users/the_dusky/code/sandbox/dusk/apps/indusk-admin -name \"PlanList.test.tsx\" -exec cat {} \\\\;)"
     ],
     "additionalDirectories": [
       "/tmp",
