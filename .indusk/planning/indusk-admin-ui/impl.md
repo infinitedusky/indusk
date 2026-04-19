@@ -109,12 +109,12 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Added `PlanList.test.tsx` with 3 `it.skip()` placeholders for T2/T4/T5 — each names the unlock phase in the comment + the assertion intent. Rationale for `.skip()` over fail-red: importing `PlanList` (doesn't exist until Phase 3) would break test-file compilation rather than producing a clean failure. `.skip()` keeps the test enumerable and ready to flip when its dependencies land.
 
 #### Phase 1 Verification
-- [ ] T9 passes (Badge color coding) — `pnpm vitest run apps/indusk-admin`
-- [ ] T12 passes (empty state)
-- [ ] T2, T4, T5 (write red) — committed against the App shell, assert against expected post-Phase-3-or-4 behavior. They fail today; will pass at the listed Passes phase.
+- [x] T9 passes (Badge color coding) — confirmed via `pnpm test` from `apps/indusk-admin/` — 9 Badge tests green
+- [x] T12 passes (empty state) — 3 EmptyPlansSidebarSlot tests green
+- [x] T2, T4, T5 written (skipped with unlock-phase comments) — Phase 3 will replace `.skip()` with real assertions and unblock the trajectory rows. Total test status: 12 passed, 3 skipped, 0 failed.
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Architecture: "**indusk-admin**: Next.js (App Router) + React + Tailwind standalone web app at `apps/indusk-admin/`. Custom UI primitives in `src/components/ui/` (no shadcn-ui, no Radix). Served via `indusk ui` CLI subcommand."
+- [x] Added the `indusk-admin` app to CLAUDE.md Architecture's Apps list, naming the tech stack, the custom-primitives policy (no shadcn/Radix), the test framework choice (vitest-browser-mode + @vitest/browser-playwright), and the parser-reuse rule.
 
 #### Phase 1 Document
 - [ ] Create `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` — the load-bearing component-reuse discipline (where primitives live, how to add new ones, what the audit catches).

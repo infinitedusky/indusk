@@ -47,6 +47,7 @@ dusk/
 - **`dash0`** — observability (logs, traces, metrics) via the Dash0 hosted MCP. Use traces-first when investigating.
 - **`excalidraw`** — hand-drawn diagrams.
 - **indusk-docs**: VitePress 1.x documentation site with Mermaid diagrams and FullscreenDiagram component. Runs in Docker via composable.env. `pnpm turbo dev --filter=indusk-docs` for local dev.
+- **indusk-admin**: Next.js (App Router) + React + Tailwind standalone web app at `apps/indusk-admin/`. Custom UI primitives in `src/components/ui/` (no shadcn-ui, no Radix). Read-only viewer over `.indusk/planning/` and `.indusk/eval/*`. Served via `indusk ui` CLI subcommand on localhost. Tests use `vitest-browser-mode` with `@vitest/browser-playwright` provider (real Chromium). Reuses parsers from `apps/indusk-mcp/src/lib/trajectory/` and `apps/indusk-mcp/src/lib/falsification/` — never duplicates parsing logic.
 
 **Skills:**
 
