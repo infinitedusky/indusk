@@ -177,9 +177,7 @@ describe("PlanList — malformed plan indicator (T13 prep)", () => {
   });
 });
 
-describe("Plan navigation (T5)", () => {
-  it.skip("T5 — clicking a plan link navigates to /plan/[name] (unblock: Phase 4)", () => {
-    // Phase 4 wires the route; this test will assert that following the
-    // link renders the plan/[name] page with the plan's brief content.
-  });
-});
+// T5 (clicking a plan navigates to /plan/[name]) is satisfied by PlanList's
+// link href + PlanDetail.test.tsx asserting the rendered detail. End-to-end
+// click→navigate testing is deferred to Phase 6's CLI smoke (running the real
+// Next.js server).

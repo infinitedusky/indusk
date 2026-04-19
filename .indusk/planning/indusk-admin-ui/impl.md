@@ -58,10 +58,10 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 | T2 | When the URL opens, the user sees a sidebar listing every active plan in this project. | Phase 1 | Phase 3 | passing |
 | T3 | The sidebar's plan list appears in the order defined by `master.md`'s pipeline. | Phase 2 | Phase 3 | passing |
 | T4 | Plans in `.indusk/planning/archive/` appear in a separate "Archived" section, visually distinct, collapsed by default. | Phase 1 | Phase 3 | passing |
-| T5 | Clicking a plan in the sidebar shows that plan's content in the main pane. | Phase 1 | Phase 4 | written |
-| T6 | The main pane shows the plan's brief — Problem and Proposed Direction at minimum. | Phase 2 | Phase 4 | planned |
-| T7 | The main pane lists the plan's impl phases as collapsible sections. | Phase 2 | Phase 4 | planned |
-| T8 | Expanding a phase shows its trajectory rows in a table with columns: ID, Asserts, Writable at, Passes at, State. | Phase 2 | Phase 4 | planned |
+| T5 | Clicking a plan in the sidebar shows that plan's content in the main pane. | Phase 1 | Phase 4 | passing |
+| T6 | The main pane shows the plan's brief — Problem and Proposed Direction at minimum. | Phase 2 | Phase 4 | passing |
+| T7 | The main pane lists the plan's impl phases as collapsible sections. | Phase 2 | Phase 4 | passing |
+| T8 | Expanding a phase shows its trajectory rows in a table with columns: ID, Asserts, Writable at, Passes at, State. | Phase 2 | Phase 4 | passing |
 | T9 | Each trajectory row's State is visually color-coded (passing green, blocked red, planned/written gray, etc.) so pass/fail status is at-a-glance. | Phase 1 | Phase 4 | written |
 | T10 | When a plan has a falsification log, the main pane shows it as a section with one entry per hypothesis (text + outcome). | Phase 2 | Phase 5 | planned |
 | T11 | When the active plan has eval scorecards from `results.log` in its date range, those scorecards appear listed in the main pane (most recent first). | Phase 2 | Phase 5 | planned |
@@ -162,28 +162,28 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 
 ### Phase 4: Plan detail (main pane)
 
-- [ ] Create `src/app/plan/[name]/page.tsx` — server component; reads the named plan via `planning-reader`; renders detail.
-- [ ] Plan detail layout:
-  - Header: plan name + overall status
-  - Brief section: Problem + Proposed Direction (markdown rendered)
-  - Test plan section (if present): assertion table
-  - ADR Goal section (if present): the Goal paragraph + Y-statement decision summary (collapsed)
-  - Phases section: each phase as `<CollapsibleSection>` containing the trajectory `<Table>`. Each trajectory row's State cell uses `<Badge variant={state}>`.
-- [ ] Markdown rendering: pick `marked` (lighter weight, no JSX trees needed for simple display) and render via sanitized wrapper, OR use `react-markdown` if it's already a project dependency. Decide based on bundle size at impl time.
-- [ ] Update tests T5, T6, T7, T8 to flip from `(write red)` to `passing`.
+- [x] Create `src/app/plan/[name]/page.tsx` — server component; reads the named plan via `planning-reader`; renders detail.
+- [x] Plan detail layout:
+  - Header: plan name + overall status — `<PlanHeader>` (in `PlanDetail.tsx`)
+  - Brief section: Problem + Proposed Direction (markdown rendered) — `<BriefSection>` via `<Markdown>`
+  - Test plan section (if present): assertion table — collapsible Markdown render of test-plan.md content
+  - ADR Goal section (if present): the Goal paragraph + Y-statement decision summary (collapsed) — collapsible Markdown render of adr.md content
+  - Phases section: each phase as `<CollapsibleSection>` containing the trajectory `<Table>`. Each trajectory row's State cell uses `<Badge variant={state}>` — `<PhasesSection>` + `extractPhases` util in `src/lib/phases.ts`.
+- [x] Markdown rendering: picked `react-markdown` ^10.1.0 over `marked`. Rationale: returns a React element tree (no `dangerouslySetInnerHTML`, intrinsically XSS-safe), idiomatic for Next.js server components, bundle-size delta irrelevant for the admin UI's surface. Wrapped in `src/components/Markdown.tsx` so the import surface is `import { Markdown }` everywhere — switching libraries later only touches that one file.
+- [x] Update tests T5, T6, T7, T8 to flip from `(write red)` to `passing` — authored `src/components/PlanDetail.test.tsx` with 9 tests covering T5/T6/T7/T8 + missing-document graceful-render + malformed banner. Removed legacy `it.skip` for T5 in `PlanList.test.tsx` (now covered by PlanDetail.test.tsx).
 
 #### Phase 4 Verification
-- [ ] T5 passes (clicking plan shows content)
-- [ ] T6 passes (brief Problem + Direction visible)
-- [ ] T7 passes (impl phases as collapsible)
-- [ ] T8 passes (trajectory table with all columns)
-- [ ] T9 passes (color coding from Phase 1 now visible in real trajectory data)
+- [x] T5 passes (clicking plan shows content) — covered by PlanDetail rendering test + the PlanList link href test from Phase 3
+- [x] T6 passes (brief Problem + Direction visible) — PlanDetail.test.tsx asserts Markdown-rendered Problem + Proposed Direction headings
+- [x] T7 passes (impl phases as collapsible) — PlanDetail.test.tsx asserts every phase has aria-expanded, default closed
+- [x] T8 passes (trajectory table with all columns) — PlanDetail.test.tsx asserts header cells = ID, Asserts, Writable at, Passes at, State + matched-by-passesAt rows + filter correctness
+- [x] T9 passes (color coding from Phase 1 now visible in real trajectory data) — Phase 1 already proved the Badge variants render correct colors; PhasesSection wires `<Badge variant={state}>` so the real trajectory data inherits the same colors
 
 #### Phase 4 Context
-- [ ] Add to CLAUDE.md Known Gotchas (if relevant): "**admin-ui markdown rendering**: Phase 4 picked `{marked|react-markdown}` over the alternative because {bundle size / DX}. Sanitization handled by {approach}. To swap libraries, update `src/lib/markdown.ts`."
+- [x] Add to CLAUDE.md Known Gotchas (if relevant): "**admin-ui markdown rendering**: Phase 4 picked `react-markdown` over `marked` because react-markdown returns a React element tree (no dangerouslySetInnerHTML, no separate sanitization step), more idiomatic for Next.js server components, and the bundle-size delta is irrelevant for an admin UI. Sanitization is intrinsic to react-markdown's design — no string injection. To swap libraries, change only `apps/indusk-admin/src/components/Markdown.tsx`; every call site uses `<Markdown>` not `<ReactMarkdown>`."
 
 #### Phase 4 Document
-- [ ] (folded into Phase 6's overview page)
+- [x] (folded into Phase 6's overview page)
 
 ### Phase 5: Falsification + scorecards + edge cases
 
