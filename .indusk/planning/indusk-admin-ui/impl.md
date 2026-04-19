@@ -94,7 +94,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 ### Phase 1: Scaffold + UI primitives
 
 - [x] Created `apps/indusk-admin/` with Next.js 16.2.4 + React 19.2.4 + Tailwind 4.2.2 + TypeScript strict via `pnpm dlx create-next-app@latest apps/indusk-admin --ts --tailwind --app --src-dir --biome --import-alias "@/*" --use-pnpm --yes`. Scaffolded with App Router, src/ layout, Biome (matches project convention — not ESLint).
-- [ ] Add `lucide-react` to dependencies.
+- [x] Added `lucide-react` ^1.8.0 to dependencies.
 - [ ] Verify root `pnpm-workspace.yaml` picks up the new app. Add a top-level convenience script if useful.
 - [ ] Create `src/components/ui/` directory.
 - [ ] Implement `Button.tsx` with variants (`primary`, `secondary`, `ghost`) + sizes (`sm`, `md`). Tailwind classes. Forward ref for accessibility.
