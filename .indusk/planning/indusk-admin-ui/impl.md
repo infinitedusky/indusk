@@ -98,7 +98,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Verified `pnpm-workspace.yaml` picks up the new app — `pnpm -r exec` lists `indusk-admin` alongside `indusk-docs` and `@infinitedusky/indusk-mcp`. No config changes needed; existing `apps/*` glob caught it.
 - [x] Created `src/components/ui/` directory.
 - [x] Implemented `Button.tsx` with variants (`primary`, `secondary`, `ghost`) + sizes (`sm`, `md`). Tailwind classes, `forwardRef` for accessibility, focus rings, disabled state.
-- [ ] Implement `Badge.tsx` with variants for each trajectory state (`passing`, `blocked`, `skipped`, `planned`, `writable`, `written`, `unknown`). Color palette: `passing` green, `blocked` red, `skipped` muted, the rest gray-toned (per A9 visibility requirement).
+- [x] Implemented `Badge.tsx` with variants per trajectory state (`passing` green, `blocked` red, `skipped` yellow, `planned`/`writable`/`written` gray/blue-toned, `unknown`/`neutral` gray). Each uses ring-inset Tailwind classes for clean visual differentiation per A9.
 - [ ] Implement `Table.tsx` with `<Table>`, `<TableHeader>`, `<TableBody>`, `<TableRow>`, `<TableCell>` subcomponents. Responsive horizontal scroll.
 - [ ] Implement `CollapsibleSection.tsx` — props: `title`, `defaultOpen`, `children`. Click toggles open/closed; chevron icon from lucide.
 - [ ] Implement `Sidebar.tsx` — left rail container; props: `children`. Includes header slot and scrollable list area.
