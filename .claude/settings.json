@@ -186,7 +186,8 @@
       "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nquestions_count: {len\\(d.get\\(\\\\\"questions\\\\\", []\\)\\)}'\\)\")",
       "Bash(node -e ' *)",
       "Bash(pnpm dlx *)",
-      "Bash(pnpm -r exec node -e \"console.log\\(require\\('./package.json'\\).name\\)\")"
+      "Bash(pnpm -r exec node -e \"console.log\\(require\\('./package.json'\\).name\\)\")",
+      "Bash(find /Users/the_dusky/code/sandbox/dusk/node_modules/.pnpm/vitest-browser-react@2.2.0*/node_modules/vitest-browser-react/dist -name \"pure-*.d.ts\")"
     ],
     "additionalDirectories": [
       "/tmp",

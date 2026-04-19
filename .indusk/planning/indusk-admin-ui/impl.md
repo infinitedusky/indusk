@@ -62,7 +62,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 | T6 | The main pane shows the plan's brief — Problem and Proposed Direction at minimum. | Phase 2 | Phase 4 | planned |
 | T7 | The main pane lists the plan's impl phases as collapsible sections. | Phase 2 | Phase 4 | planned |
 | T8 | Expanding a phase shows its trajectory rows in a table with columns: ID, Asserts, Writable at, Passes at, State. | Phase 2 | Phase 4 | planned |
-| T9 | Each trajectory row's State is visually color-coded (passing green, blocked red, planned/written gray, etc.) so pass/fail status is at-a-glance. | Phase 1 | Phase 4 | planned |
+| T9 | Each trajectory row's State is visually color-coded (passing green, blocked red, planned/written gray, etc.) so pass/fail status is at-a-glance. | Phase 1 | Phase 4 | written |
 | T10 | When a plan has a falsification log, the main pane shows it as a section with one entry per hypothesis (text + outcome). | Phase 2 | Phase 5 | planned |
 | T11 | When the active plan has eval scorecards from `results.log` in its date range, those scorecards appear listed in the main pane (most recent first). | Phase 2 | Phase 5 | planned |
 | T12 | When the planning directory is empty, the user sees an empty-state message rather than a blank screen or JS error. | Phase 1 | Phase 5 | planned |
@@ -104,7 +104,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Implemented `Sidebar.tsx` — fixed-width (`w-72`) left rail with header slot + scrollable content area. Full-height (`h-screen`).
 - [x] App shell at `src/app/layout.tsx` (HTML + Geist fonts + flex container with `<Sidebar>` + `<main>`) and `src/app/page.tsx` (default "select a plan" empty-state when no plan is selected). Sidebar's plan-list slot is currently `<EmptyPlansSidebarSlot />` placeholder satisfying T12 (will be replaced in Phase 3 with server-component data render).
 - [x] Configured `vitest.config.ts` with vitest 4.1.4 + `@vitest/browser-playwright` provider (factory pattern, new in vitest 4.x — `provider: playwright()` not `provider: "playwright"`). Headless Chromium installed via `playwright install chromium`. `passWithNoTests: true`. `test` script wired in package.json.
-- [ ] Add a basic component test for `Badge.tsx` confirming each variant renders with the expected color class. T9 passes.
+- [x] Added `Badge.test.tsx` with 9 tests: each of 8 variants renders with its expected color token (green/red/yellow/gray/blue), plus a passing-vs-blocked distinctness check. **T9 passes** (verified `pnpm test` — 9/9 green).
 - [ ] Add a basic test that renders the App shell with no plan data and asserts the empty-state copy is visible. T12 passes (preserved through later phases).
 - [ ] Add structural tests for T2, T4, T5 — render App shell with mocked data, assert sidebar items + click-to-detail behavior. (Initially fail — pass at Phase 3 + 4.)
 
