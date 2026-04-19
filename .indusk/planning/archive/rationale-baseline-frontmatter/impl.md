@@ -1,7 +1,7 @@
 ---
 title: "Rationale Baseline Frontmatter"
 date: 2026-04-19
-status: in-progress
+status: completed
 workflow: bugfix
 trajectory: required
 rationale: required
@@ -49,9 +49,9 @@ After this ships: Numero's three queued plans (`restart-recovery`, `coc4-verific
 | T3 | When impl.md frontmatter omits `rationale_baseline`, validator behavior matches today's exactly: rows at `Writable at > Phase 0` need rationale; rows at `Writable at: Phase 0` don't. (Backward compat regression.) | Phase 0 | Phase 1 | passing |
 | T4 | The error message for a baseline-aware plan reads "later than Phase {baseline}" (dynamic phase number), not hardcoded "Phase 0". | Phase 0 | Phase 1 | passing |
 | T5 | The TS source (`validator.ts`) and the JS hook port (`validate-impl-structure.js`) produce identical pass/fail decisions for the same impl.md content across a shared fixture set. (Parity check — load-bearing per CLAUDE.md gotcha about JS-port-mirrors-TS.) | Phase 0 | Phase 1 | passing |
-| T6 | After upgrading global indusk-mcp on Numero, an impl.md with `rationale_baseline: 1` and rows all at `Writable at: Phase 1` can be edited freely without the hook rejecting the edit (live smoke on the real Claude Code Edit pipeline). | Phase 0 | Phase 3 | skipped — natural smoke deferred to first Numero follow-up plan (likely `coc4-verification-debt-audit`); landing the first impl.md with `rationale_baseline: 1` IS the smoke. Synthetic dry-run would only re-prove what the unit + parity tests already prove. |
+| T6 | After upgrading global indusk-mcp on Numero, an impl.md with `rationale_baseline: 1` and rows all at `Writable at: Phase 1` can be edited freely without the hook rejecting the edit (live smoke on the real Claude Code Edit pipeline). Skip-reason: natural smoke deferred to first Numero follow-up plan (likely `coc4-verification-debt-audit`); landing the first impl.md with `rationale_baseline: 1` IS the smoke. Synthetic dry-run would only re-prove what the unit + parity tests already prove. | Phase 0 | Phase 3 | skipped |
 | T7 | Indusk docs (the trajectory-frontmatter reference page) names the new `rationale_baseline` key, gives its default (`0`), and explains when to use a higher value. | Phase 0 | Phase 2 | passing |
-| T8 | A frontmatter that contains the substring `rationale_baseline: N` only inside a quoted YAML value (e.g., the `title:`) — but NOT as a top-level YAML key — is treated as having the default baseline (`0`), not `N`. (Regression for the substring-in-string-value attack surfaced by `/falsify`.) | Phase 0 | Phase 4 | written |
+| T8 | A frontmatter that contains the substring `rationale_baseline: N` only inside a quoted YAML value (e.g., the `title:`) — but NOT as a top-level YAML key — is treated as having the default baseline (`0`), not `N`. (Regression for the substring-in-string-value attack surfaced by `/falsify`.) | Phase 0 | Phase 4 | passing |
 
 (All rows are Phase-0-writable per the rationale-quality discipline. The current TS source / JS port / doc page exist today; tests can be authored against them and will fail red until the fix lands. No `### Trajectory Rationale` subsection needed below — every row is Phase 0.)
 
@@ -116,17 +116,17 @@ After this ships: Numero's three queued plans (`restart-recovery`, `coc4-verific
 
 `/falsify` confirmed hypothesis 1: the JS hook port's `/rationale_baseline:\s*(\d+)/` regex matches the substring anywhere in frontmatter — including inside quoted YAML string values. A frontmatter whose `title:` happens to mention the key name (e.g., a documentation plan about the key itself) silently inherits the baseline from the title's substring. Real bug, ~5 line fix.
 
-- [ ] Anchor the JS hook port regex in `apps/indusk-mcp/hooks/validate-impl-structure.js` to start-of-line within frontmatter: change `/rationale_baseline:\s*(\d+)/` to `/^rationale_baseline:\s*(\d+)/m`. The `m` flag + `^` ensures the key must appear at the start of a line (i.e., as a top-level YAML key), not inside a quoted value.
-- [ ] Sync to `.claude/hooks/validate-impl-structure.js` (project mirror) — `cp` from package source.
-- [ ] Update T8's regression test in `apps/indusk-mcp/src/__tests__/rationale-baseline-falsify-substring.test.ts` so that it remains the substring-attack regression — same fixture (title containing `rationale_baseline: 1`), but assertion flips: validator must now exit 2 with `rationale-completeness` in stderr (post-fix behavior).
-- [ ] Add a positive companion fixture to the parity test or substring test: a frontmatter where `rationale_baseline: 1` IS a top-level key (line-start) — must still be honored as baseline=1 (don't break the legitimate use).
-- [ ] Bump `apps/indusk-mcp/package.json` → 1.25.1 (patch — bug fix to a key feature shipped in 1.25.0).
-- [ ] Add changelog entry under `### Fixed` describing the regex anchor, the falsification origin, and that sibling regexes (`gate_policy:`, `rationale:`, `trajectory:`, `workflow:`) have the same shape but are intentionally out of scope (they're presence/enum checks where false-positive risk is lower than for an integer-valued key).
+- [x] Anchor the JS hook port regex in `apps/indusk-mcp/hooks/validate-impl-structure.js` to start-of-line within frontmatter: change `/rationale_baseline:\s*(\d+)/` to `/^rationale_baseline:\s*(\d+)/m`. The `m` flag + `^` ensures the key must appear at the start of a line (i.e., as a top-level YAML key), not inside a quoted value.
+- [x] Sync to `.claude/hooks/validate-impl-structure.js` (project mirror) — `cp` from package source.
+- [x] Update T8's regression test in `apps/indusk-mcp/src/__tests__/rationale-baseline-falsify-substring.test.ts` so that it remains the substring-attack regression — same fixture (title containing `rationale_baseline: 1`), but assertion flips: validator must now exit 2 with `rationale-completeness` in stderr (post-fix behavior).
+- [x] Add a positive companion fixture to the parity test or substring test: a frontmatter where `rationale_baseline: 1` IS a top-level key (line-start) — must still be honored as baseline=1 (don't break the legitimate use).
+- [x] Bump `apps/indusk-mcp/package.json` → 1.25.1 (patch — bug fix to a key feature shipped in 1.25.0).
+- [x] Add changelog entry under `### Fixed` describing the regex anchor, the falsification origin, and that sibling regexes (`gate_policy:`, `rationale:`, `trajectory:`, `workflow:`) have the same shape but are intentionally out of scope (they're presence/enum checks where false-positive risk is lower than for an integer-valued key).
 
 #### Phase 4 Verification
-- [ ] T8 passes (substring fixture exits 2 with `rationale-completeness` error)
-- [ ] Positive fixture passes (line-start `rationale_baseline: 1` honored as baseline=1, T1 exempt)
-- [ ] All existing trajectory + parity tests still green (regression)
+- [x] T8 passes (substring fixture exits 2 with `rationale-completeness` error)
+- [x] Positive fixture passes (line-start `rationale_baseline: 1` honored as baseline=1, T1 exempt)
+- [x] All existing trajectory + parity tests still green (regression) — 89 tests pass: 82 trajectory + 5 parity + 2 falsification
 
 #### Phase 4 Context
 - [x] (none needed — falsification finding is logged in `falsification.md`; the fix is a small regex anchor, not a new architectural decision worth a CLAUDE.md Key Decisions entry)

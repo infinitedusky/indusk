@@ -9,3 +9,7 @@ Append-only record of the /falsify bounty hunt for this plan. Never edit in plac
 **Outcome:** fix-in-scope
 **Note:** Confirmed: fixture with title 'Documenting rationale_baseline: 1 semantics' exits 0 (passes) when default baseline=0 should require rationale for T1 (Writable at: Phase 1). Fix-in-scope: anchor regex to line start with /^rationale_baseline:\s*(\d+)/m and mirror to .claude/ port. ~5 line change. Same flaw exists for sibling regexes (gate_policy, rationale, trajectory, workflow) but those predate this plan and are intentionally out of scope.
 
+## Terminated 2026-04-19T21:50:57.589Z
+
+**Reason:** 1 hypothesis confirmed and fixed in scope (substring-in-string-value attack); fix landed in 1.25.1 with line-anchored regex + 2 regression tests. Investigated 8 additional code regions (other validateTrajectory callers, edge values, defense layers, subsection detection, cross-hook contamination, parser layers); none yielded a specific in-scope hypothesis. Cannot form another concrete attack vector — exit.
+

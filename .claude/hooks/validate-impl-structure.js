@@ -312,7 +312,13 @@ const trajectoryRequiredFrontmatter = /trajectory:\s*required/.test(frontmatter)
 const hasTrajectoryHeading = /^##\s+Test Trajectory\b/m.test(body);
 const trajectoryValidationEnabled = trajectoryRequiredFrontmatter || hasTrajectoryHeading;
 const rationaleRequiredFrontmatter = /rationale:\s*required/.test(frontmatter);
-const rationaleBaselineMatch = frontmatter.match(/rationale_baseline:\s*(\d+)/);
+// Anchor to start-of-line within frontmatter (m flag) so the key is only matched
+// when it appears as a top-level YAML key — NOT when its name appears as a
+// substring inside a quoted value (e.g., a `title:` mentioning the key).
+// Surfaced by /falsify hypothesis 1: a documentation plan whose title contained
+// the literal `rationale_baseline: 1` silently inherited that baseline from the
+// title's substring. See .indusk/planning/rationale-baseline-frontmatter/falsification.md.
+const rationaleBaselineMatch = frontmatter.match(/^rationale_baseline:\s*(\d+)/m);
 const rationaleBaseline = rationaleBaselineMatch
 	? Number.parseInt(rationaleBaselineMatch[1], 10)
 	: 0;
