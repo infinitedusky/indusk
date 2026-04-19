@@ -1,33 +1,185 @@
-import { describe, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { render } from "vitest-browser-react";
+import type { Plan } from "@/lib/planning-reader";
+
+// `next/link` pulls in Node-only globals (`process`) that aren't present in
+// the browser test runtime. Stub it with a plain anchor — semantically
+// identical for the props PlanList passes (href + className + children).
+vi.mock("next/link", () => {
+  function MockLink({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) {
+    return <a href={href} {...rest}>{children}</a>;
+  }
+  return { default: MockLink, __esModule: true };
+});
+
+import { PlanList } from "./PlanList";
 
 /**
- * Trajectory tests for PlanList behavior. Written here at Phase 1 per the
- * tests-first discipline; skipped until the components they import land.
+ * Trajectory tests for PlanList behavior.
  *
- * - T2 (Phase 3): sidebar lists every active plan in this project
- * - T4 (Phase 3): archive section is visually distinct + collapsed by default
- * - T5 (Phase 4): clicking a plan in the sidebar shows the plan's content in the main pane
+ *   - T2 (Phase 3): sidebar lists every active plan in this project
+ *   - T3 (Phase 3): sidebar plan list appears in the order defined by master.md
+ *   - T4 (Phase 3): archive section is visually distinct + collapsed by default
+ *   - T5 (Phase 4): clicking a plan in the sidebar shows the plan's content
  *
- * When PlanList lands in Phase 3 (and the plan/[name] route in Phase 4),
- * remove the `.skip()` calls and replace the placeholder `it.skip` bodies
- * with real assertions against the rendered components.
+ * T5 stays `.skip()` until Phase 4 wires the `/plan/[name]` route.
  */
-describe("PlanList — sidebar list of plans (T2/T4)", () => {
-	it.skip("T2 — renders every active plan from props as a clickable list item (unblock: Phase 3)", () => {
-		// Will import { PlanList } from "./PlanList" — doesn't exist until Phase 3.
-		// Render with mock plans, assert each name appears, assert each is a Link.
-	});
 
-	it.skip("T4 — renders an archived section that is visually distinct and collapsed by default (unblock: Phase 3)", () => {
-		// Will pass `archived` prop with mock archived plans, assert section title,
-		// assert section starts collapsed (chevron right, content hidden),
-		// assert clicking expands it.
-	});
+function mockPlan(name: string, overrides: Partial<Plan> = {}): Plan {
+  return {
+    name,
+    status: "draft",
+    archived: false,
+    ...overrides,
+  };
+}
+
+describe("PlanList — sidebar list of plans (T2)", () => {
+  it("T2 — renders every active plan from props as a clickable list item", async () => {
+    const active = [
+      mockPlan("alpha-feature", { status: "in-progress" }),
+      mockPlan("beta-bugfix"),
+      mockPlan("gamma"),
+    ];
+    const { container } = await render(
+      <PlanList
+        active={active}
+        archived={[]}
+        masterOrder={["alpha-feature", "beta-bugfix", "gamma"]}
+      />,
+    );
+
+    for (const p of active) {
+      const link = container.querySelector(`a[data-plan-name="${p.name}"]`);
+      expect(link, `expected link for ${p.name}`).not.toBeNull();
+      expect(link?.getAttribute("href")).toBe(`/plan/${p.name}`);
+      expect(link?.textContent).toContain(p.name);
+    }
+  });
+
+  it("T2 — falls back to EmptyPlansSidebarSlot when no plans at all", async () => {
+    const { container } = await render(
+      <PlanList active={[]} archived={[]} masterOrder={[]} />,
+    );
+    expect(
+      container.querySelector('[data-testid="sidebar-empty-state"]'),
+    ).not.toBeNull();
+  });
+});
+
+describe("PlanList — master.md ordering (T3)", () => {
+  it("T3 — renders active plans in master.md order, regardless of input order", async () => {
+    const active = [
+      mockPlan("gamma"),
+      mockPlan("alpha-feature"),
+      mockPlan("beta-bugfix"),
+    ];
+    const masterOrder = ["alpha-feature", "beta-bugfix", "gamma"];
+    const { container } = await render(
+      <PlanList active={active} archived={[]} masterOrder={masterOrder} />,
+    );
+
+    const items = Array.from(
+      container.querySelectorAll(
+        '[data-testid="active-plans"] a[data-plan-name]',
+      ),
+    ).map((a) => a.getAttribute("data-plan-name"));
+    expect(items).toEqual(masterOrder);
+  });
+
+  it("T3 — plans not in master.md appear in an Unordered group below the master-ordered list", async () => {
+    const active = [
+      mockPlan("alpha-feature"),
+      mockPlan("orphan-plan"),
+      mockPlan("beta-bugfix"),
+    ];
+    const masterOrder = ["alpha-feature", "beta-bugfix"];
+    const { container } = await render(
+      <PlanList active={active} archived={[]} masterOrder={masterOrder} />,
+    );
+
+    const ordered = Array.from(
+      container.querySelectorAll(
+        '[data-testid="active-plans"] a[data-plan-name]',
+      ),
+    ).map((a) => a.getAttribute("data-plan-name"));
+    expect(ordered).toEqual(["alpha-feature", "beta-bugfix"]);
+
+    const unordered = Array.from(
+      container.querySelectorAll(
+        '[data-testid="unordered-plans"] a[data-plan-name]',
+      ),
+    ).map((a) => a.getAttribute("data-plan-name"));
+    expect(unordered).toEqual(["orphan-plan"]);
+  });
+});
+
+describe("PlanList — archived section (T4)", () => {
+  it("T4 — archived plans render in a separate section that is collapsed by default", async () => {
+    const archived = [
+      mockPlan("zeta-archived", { archived: true, status: "completed" }),
+      mockPlan("eta-archived", { archived: true, status: "completed" }),
+    ];
+    const { container } = await render(
+      <PlanList
+        active={[mockPlan("alpha-feature")]}
+        archived={archived}
+        masterOrder={["alpha-feature"]}
+      />,
+    );
+
+    const header = container.querySelector("[aria-expanded]");
+    expect(header).not.toBeNull();
+    expect(header?.textContent).toContain("Archived");
+    expect(header?.textContent).toContain("2");
+
+    expect(header?.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      container.querySelector('[data-testid="archived-plans"]'),
+    ).toBeNull();
+  });
+
+  it("T4 — archived section omitted entirely when there are no archived plans", async () => {
+    const { container } = await render(
+      <PlanList
+        active={[mockPlan("alpha-feature")]}
+        archived={[]}
+        masterOrder={["alpha-feature"]}
+      />,
+    );
+    expect(container.querySelector("[aria-expanded]")).toBeNull();
+  });
+});
+
+describe("PlanList — malformed plan indicator (T13 prep)", () => {
+  it("renders a 'malformed' badge on plans whose frontmatter failed to parse", async () => {
+    const active = [
+      mockPlan("delta-malformed", { malformed: true, status: "unknown" }),
+    ];
+    const { container } = await render(
+      <PlanList
+        active={active}
+        archived={[]}
+        masterOrder={["delta-malformed"]}
+      />,
+    );
+    expect(
+      container.querySelector('[data-testid="malformed-delta-malformed"]'),
+    ).not.toBeNull();
+  });
 });
 
 describe("Plan navigation (T5)", () => {
-	it.skip("T5 — clicking a plan link navigates to /plan/[name] (unblock: Phase 4)", () => {
-		// Will simulate click on a PlanList item, assert URL changes,
-		// assert plan/[name] page renders the plan's content.
-	});
+  it.skip("T5 — clicking a plan link navigates to /plan/[name] (unblock: Phase 4)", () => {
+    // Phase 4 wires the route; this test will assert that following the
+    // link renders the plan/[name] page with the plan's brief content.
+  });
 });

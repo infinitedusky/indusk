@@ -1,8 +1,8 @@
 import Link from "next/link";
-import type { Plan } from "@/lib/planning-reader";
+import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
-import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
+import type { Plan } from "@/lib/planning-reader";
 
 interface PlanListProps {
   active: Plan[];
@@ -54,7 +54,10 @@ export function PlanList({ active, archived, masterOrder }: PlanListProps) {
       )}
 
       {archived.length > 0 && (
-        <CollapsibleSection title={`Archived (${archived.length})`} defaultOpen={false}>
+        <CollapsibleSection
+          title={`Archived (${archived.length})`}
+          defaultOpen={false}
+        >
           <ul className="flex flex-col gap-1" data-testid="archived-plans">
             {archived.map((plan) => (
               <PlanItem key={plan.name} plan={plan} />
@@ -104,9 +107,12 @@ function orderByMaster(plans: Plan[], masterOrder: string[]): Plan[] {
  */
 function statusToBadge(status: string): BadgeVariant {
   const normalized = status.toLowerCase();
-  if (normalized.includes("completed") || normalized.includes("passing")) return "passing";
+  if (normalized.includes("completed") || normalized.includes("passing"))
+    return "passing";
   if (normalized.includes("blocked")) return "blocked";
-  if (normalized.includes("in-progress") || normalized.includes("accepted")) return "writable";
-  if (normalized.includes("draft") || normalized.includes("planned")) return "planned";
+  if (normalized.includes("in-progress") || normalized.includes("accepted"))
+    return "writable";
+  if (normalized.includes("draft") || normalized.includes("planned"))
+    return "planned";
   return "neutral";
 }

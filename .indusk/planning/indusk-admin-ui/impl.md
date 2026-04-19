@@ -55,9 +55,9 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
 | T1 | Running `indusk ui` from a project root prints a localhost URL and opens browser by default. | Phase 0 | Phase 6 | planned |
-| T2 | When the URL opens, the user sees a sidebar listing every active plan in this project. | Phase 1 | Phase 3 | written |
-| T3 | The sidebar's plan list appears in the order defined by `master.md`'s pipeline. | Phase 2 | Phase 3 | planned |
-| T4 | Plans in `.indusk/planning/archive/` appear in a separate "Archived" section, visually distinct, collapsed by default. | Phase 1 | Phase 3 | written |
+| T2 | When the URL opens, the user sees a sidebar listing every active plan in this project. | Phase 1 | Phase 3 | passing |
+| T3 | The sidebar's plan list appears in the order defined by `master.md`'s pipeline. | Phase 2 | Phase 3 | passing |
+| T4 | Plans in `.indusk/planning/archive/` appear in a separate "Archived" section, visually distinct, collapsed by default. | Phase 1 | Phase 3 | passing |
 | T5 | Clicking a plan in the sidebar shows that plan's content in the main pane. | Phase 1 | Phase 4 | written |
 | T6 | The main pane shows the plan's brief — Problem and Proposed Direction at minimum. | Phase 2 | Phase 4 | planned |
 | T7 | The main pane lists the plan's impl phases as collapsible sections. | Phase 2 | Phase 4 | planned |
@@ -144,21 +144,21 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 
 ### Phase 3: Sidebar + plan list
 
-- [ ] Wire `src/app/layout.tsx` to call `readActivePlans` + `readArchivedPlans` + `readMasterPlanOrder` (server component, async). Pass to Sidebar as props.
-- [ ] In `src/components/PlanList.tsx`: render active plans in master.md order; archive section below as a `<CollapsibleSection title="Archived" defaultOpen={false}>`.
-- [ ] Each plan list item: name + status badge + clickable link to `/plan/[name]`.
-- [ ] Update tests T2, T3, T4 to flip from `(write red)` to `passing` — they should now actually render the sidebar.
+- [x] Wire `src/app/layout.tsx` to call `readActivePlans` + `readArchivedPlans` + `readMasterPlanOrder` (server component, async). Pass to Sidebar as props.
+- [x] In `src/components/PlanList.tsx`: render active plans in master.md order; archive section below as a `<CollapsibleSection title="Archived" defaultOpen={false}>`.
+- [x] Each plan list item: name + status badge + clickable link to `/plan/[name]`.
+- [x] Update tests T2, T3, T4 to flip from `(write red)` to `passing` — they should now actually render the sidebar.
 
 #### Phase 3 Verification
-- [ ] T2 passes (sidebar lists active plans)
-- [ ] T3 passes (master.md ordering)
-- [ ] T4 passes (archive section separate + collapsed)
+- [x] T2 passes (sidebar lists active plans) — 2 PlanList tests under T2 group, both green
+- [x] T3 passes (master.md ordering) — 2 PlanList tests under T3 group covering master-ordered and Unordered fallback, both green
+- [x] T4 passes (archive section separate + collapsed) — 2 PlanList tests under T4 group, both green
 
 #### Phase 3 Context
-- [ ] Add to CLAUDE.md Conventions: "**admin-ui sidebar order is canonical from `master.md`** — to reorder plans in the UI, edit `.indusk/planning/master.md`'s pipeline table. The sidebar reflects whatever `readMasterPlanOrder` parses; plans not mentioned in master.md appear in an 'Unordered' group at the bottom."
+- [x] Add to CLAUDE.md Conventions: "**admin-ui sidebar order is canonical from `master.md`** — to reorder plans in the UI, edit `.indusk/planning/master.md`'s pipeline table. The sidebar reflects whatever `readMasterPlanOrder` parses; plans not mentioned in master.md appear in an 'Unordered' group at the bottom."
 
 #### Phase 3 Document
-- [ ] (folded into Phase 6's overview page — no separate page needed for sidebar behavior)
+- [x] (folded into Phase 6's overview page — no separate page needed for sidebar behavior)
 
 ### Phase 4: Plan detail (main pane)
 
