@@ -103,7 +103,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Implemented `CollapsibleSection.tsx` — props: `title`, `defaultOpen`, `children`, optional `headerRight` slot. Click header toggles; chevron icon from lucide-react (`ChevronDown`/`ChevronRight`); `aria-expanded` for accessibility.
 - [x] Implemented `Sidebar.tsx` — fixed-width (`w-72`) left rail with header slot + scrollable content area. Full-height (`h-screen`).
 - [x] App shell at `src/app/layout.tsx` (HTML + Geist fonts + flex container with `<Sidebar>` + `<main>`) and `src/app/page.tsx` (default "select a plan" empty-state when no plan is selected). Sidebar's plan-list slot is currently `<EmptyPlansSidebarSlot />` placeholder satisfying T12 (will be replaced in Phase 3 with server-component data render).
-- [ ] Configure `vitest.config.ts` with `vitest-browser-mode` (Playwright provider). `passWithNoTests: true`.
+- [x] Configured `vitest.config.ts` with vitest 4.1.4 + `@vitest/browser-playwright` provider (factory pattern, new in vitest 4.x — `provider: playwright()` not `provider: "playwright"`). Headless Chromium installed via `playwright install chromium`. `passWithNoTests: true`. `test` script wired in package.json.
 - [ ] Add a basic component test for `Badge.tsx` confirming each variant renders with the expected color class. T9 passes.
 - [ ] Add a basic test that renders the App shell with no plan data and asserts the empty-state copy is visible. T12 passes (preserved through later phases).
 - [ ] Add structural tests for T2, T4, T5 — render App shell with mocked data, assert sidebar items + click-to-detail behavior. (Initially fail — pass at Phase 3 + 4.)
