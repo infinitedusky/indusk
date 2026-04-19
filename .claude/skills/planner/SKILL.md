@@ -11,17 +11,17 @@ You know how to plan work in this project.
 Every plan lives in `.indusk/planning/{kebab-case-name}/` and follows the same document lifecycle:
 
 ```
-research.md → brief.md → adr.md → impl.md → retrospective.md
+research.md → brief.md → test-plan.md → adr.md → impl.md → retrospective.md
 ```
 
-Each document builds on the ones before it. Not every plan needs all five — use the guide below to decide what's needed:
+Each document builds on the ones before it. Not every plan needs all six — use the guide below to decide what's needed:
 
 | Situation | Documents |
 |---|---|
 | Quick config change or bug fix | brief + impl |
-| Architecture or technology decision | research + brief + adr + impl |
+| Architecture or technology decision | research + brief + test-plan + adr + impl |
 | Exploratory spike (no commitment) | research only |
-| Large feature or system change | all five |
+| Large feature or system change | all six |
 
 The order is always preserved — never write an ADR before the brief, or an impl before the ADR (when both exist).
 
@@ -36,7 +36,7 @@ The first argument to `/planner` can optionally be a workflow type that controls
 | `/planner bugfix auth-expiry` | bugfix | brief + impl only |
 | `/planner refactor extract-auth` | refactor | brief + impl (with boundary map) |
 | `/planner spike redis-options` | spike | research only |
-| `/planner feature payment-flow` | feature | full lifecycle (default) |
+| `/planner feature payment-flow` | feature | full lifecycle (default — includes test-plan between brief and ADR) |
 | `/planner payment-flow` | feature | same — no type defaults to feature |
 
 Parse the input: if the first word is `bugfix`, `refactor`, `spike`, or `feature`, use that workflow. Otherwise, default to `feature`. The remaining words become the plan name (kebab-cased).
@@ -84,7 +84,44 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    ```
    The working agent does not write Graphiti episodes directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts the full Problem + Proposed Direction + Scope context from the transcript, writes a structured episode into the project group, and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/indusk-docs/src/reference/tools/highlights.md`](../../indusk-docs/src/reference/tools/highlights.md) for the full flow.
 
-5. **If brief is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see .indusk/planning/{plan}/adr.md`
+5. **If brief is accepted** and the workflow includes a test plan (feature only), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **how it will be tested** — not the test code itself, but the test mechanism (vitest unit, vitest integration, end-to-end script, manual user test, manual smoke against running stack, etc.).
+
+   The discipline this produces: when you walk into the ADR with a test plan in hand, the architectural decision is constrained by "what makes all these assertions true?" rather than invented from intuition. The ADR's "We decided for" / "And against" clauses gain teeth because alternatives can be rejected against specific assertions. The impl's Test Trajectory rows derive directly from the test plan's assertions — one trajectory row per assertion, with the `Writable at` / `Passes at` columns added during impl authoring.
+
+   **CRITICAL: assertions must be BEHAVIORAL, not functional.** This is the single most important authoring discipline for the test plan. A behavioral assertion describes *what an outside observer sees the system do* — a user action, a visible outcome, an externally-observable state change. A functional assertion describes *how the system does it internally* — function calls, return types, internal state, method signatures. Functional assertions belong in unit tests inside the impl phase, not in the test plan.
+
+   The phrasing test: read the assertion aloud to a non-engineer stakeholder. If they understand it without you having to explain a function name or type, it's behavioral. If you have to say "this is the function that…", it's functional — rewrite at the user-facing level.
+
+   **Behavioral (good)** — describes what the user / outside observer experiences:
+   - "User can sign in with Google."
+   - "Sign-in with an invalid password shows the error 'Invalid credentials'."
+   - "Forgotten-password email arrives in the user's inbox within 60 seconds."
+   - "Settled match results appear in the user's history within 5 seconds of on-chain confirmation."
+   - "Migration from rooms → tables preserves every existing row's primary key."
+   - "Withdrawing $50 of chips returns $50 to the wallet within 5 seconds."
+
+   **Functional (bad — rewrite)** — describes implementation details:
+   - ❌ "googleAuth() returns a JWT" → behavioral: "User can sign in with Google"
+   - ❌ "POST /api/login validates the request body schema" → behavioral: "Sign-in with malformed payload returns 400"
+   - ❌ "jwt.sign() is called with the correct payload" → behavioral: "Authenticated requests survive a server restart"
+   - ❌ "tablesRepository.create() inserts a row" → behavioral: "After creating a table, it appears in the table list"
+   - ❌ "The reconstructFromDb() method reads the new column" → behavioral: "Restarting the server preserves in-progress hands"
+
+   The mechanism column is the right place for "vitest unit" or "manual smoke" or "end-to-end script" — the *how to test*. The assertion column stays at the *what should be true* level. If naming a function or type creeps into the assertion, you've leaked the implementation across the boundary the test plan is meant to enforce.
+
+   **Present the test plan for review.** Walk the user through the assertions: "Here's everything I think must be true for this to work, and how I'd test each one. Anything missing? Anything we'd test differently?" The user signs off before you proceed to the ADR. If they push back on assertions, that's the plan working — better to discover scope gaps here than at impl time. If you catch yourself writing functional-sounding assertions, stop and re-phrase before presenting.
+
+   **When the test plan moves from `draft` to `accepted`**, write a highlight:
+   ```
+   mcp__indusk__highlight({
+     tag: "test-plan-accepted",
+     note: "{plan-name}: {N} assertions covering {one-line summary of feature scope}",
+     level: "important"
+   })
+   ```
+   Skip silently on highlight unavailability.
+
+6. **If test plan is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see .indusk/planning/{plan}/adr.md`
 
    **When the ADR moves from `proposed` to `accepted`**, write a highlight so the eval agent can turn it into a structured Y-statement episode:
    ```
@@ -96,9 +133,9 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    ```
    The eval agent reads the highlight, pulls the full Y-statement from the ADR file, writes a structured episode into the project group, and marks it processed. Graphiti's entity extraction will pick up the chosen option, rejected alternatives, constraint, and rationale, and will detect contradictions if a later ADR overrides this one. The working agent does not write the episode directly. Skip silently on highlight unavailability — degrade gracefully.
 
-6. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
+7. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
-   **Author the Test Trajectory first.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State` (plus optional `Kind`, `Scope`). Walk the ADR's Decision section — for each decision, ask "what test would prove this works?" and add a row. Then walk each planned phase and ask "what becomes writable at this phase, and what flips to passing?" Every phase's Verification block references test IDs from the trajectory rather than restating the checks.
+   **Derive the Test Trajectory from the test plan.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State` (plus optional `Kind`, `Scope`). For feature plans, walk the test plan's assertion list — each assertion becomes a trajectory row, with the assertion text becoming the `Asserts` column and the test plan's mechanism informing the optional `Kind`/`Scope` columns. Then walk each planned phase and assign `Writable at` / `Passes at`. Every phase's Verification block references test IDs from the trajectory rather than restating the checks. For bugfix/refactor workflows without a test plan, walk the ADR's Decision section (or the brief's Success Criteria) and ask "what test would prove this works?" for each item.
 
    **Writable at is the earliest possible phase, not the fix phase.** The rule: *if it is possible to write a test, write it — then let it pass when it will.* The validator only enforces `Writable at ≤ Passes at` (a floor); the real discipline is `Writable at = earliest feasible phase`. A test authored in the same phase as its fix is a rubber stamp — nothing proves intermediate phases didn't break it or fix it by accident. A test that goes red early and stays red through intermediate phases until its fix lands is a live tripwire: any intermediate phase that turns it green prematurely signals unexpected coupling; any intermediate phase that breaks an unrelated passing test signals regression.
 
@@ -153,9 +190,9 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **OTel gate is conditional on `otel.role`.** Read `.indusk/config.json` for the project's `otel.role` field (or use the `shouldEmitOtelGate(projectRoot)` helper from `apps/indusk-mcp/src/lib/config.ts`). The OTel gate fires for projects whose `otel.role` is unset or `"service"` — these are user-facing apps that produce telemetry you want to collect. **Do NOT write `#### Phase N OTel` sections** for projects whose `otel.role` is `"library"`, `"tool"`, or `"none"` — these are libraries, CLIs, or scripts that should never emit telemetry and writing OTel gates for them is friction without value. The `validate-impl-structure` and `check-gates` hooks apply the same rule. The other gates (verify, context, document) always apply regardless of `otel.role`.
 
-7. **If impl is completed** (all items checked off by `/work`), invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call.)
+8. **If impl is completed** (all items checked off by `/work`), invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call.)
 
-8. **Always present each document for review** before moving to the next stage. The user signs off on each step.
+9. **Always present each document for review** before moving to the next stage. The user signs off on each step.
 
 ## Cross-Referencing Between Plans
 
@@ -227,6 +264,51 @@ status: draft | accepted
 
 ## Blocks
 - {Plans that are waiting on this one — e.g., `.indusk/planning/electric-ledger-sync/`}
+```
+
+### test-plan.md
+
+The test plan is the bridge between the brief and the ADR. It enumerates the **behavioral assertions** that must be true for the feature to be working, plus the **mechanism** by which each assertion will be tested. It does NOT contain test code — only the contract the implementation must satisfy and the kind of test that will verify it.
+
+**Behavioral, not functional.** Every assertion must describe what an outside observer (typically a user) experiences — not what an internal function does. "User can sign in with Google" not "googleAuth() returns a JWT." See step 5 above for the full bad-vs-good list. If an assertion mentions a function name, type name, internal endpoint name, repository method, or other implementation detail, rewrite it at the user-facing level before saving.
+
+```markdown
+---
+title: "{Title} — Test Plan"
+date: {YYYY-MM-DD}
+status: draft | accepted
+---
+
+# {Title} — Test Plan
+
+## Purpose
+
+This document lists the behavioral assertions that, taken together, mean the feature is working. Each assertion names the mechanism by which it will be tested — not the test code, but the test approach (vitest unit / vitest integration / end-to-end script / manual user test / manual smoke / etc.). When all assertions can be made true by an architecture, we have a feature; when all assertions are passing in code, the feature is shipped.
+
+The assertions here become the source rows for the impl's `## Test Trajectory` table. The ADR that follows this document is constrained by "what makes all these assertions true?" rather than invented from intuition.
+
+## Behavioral Assertions
+
+**Every assertion must be observable from outside the system.** Describe what the user sees, what the API returns to a caller, what an external observer measures — never internal function calls, return types, or method signatures. If a non-engineer stakeholder couldn't read an assertion and understand it, rewrite it.
+
+| ID | Assertion (user-visible behavior) | Mechanism |
+|----|-----------------------------------|-----------|
+| A1 | {Behavioral fact — e.g., "User can sign in with Google."} | {vitest unit / vitest integration / e2e script / manual user test / manual smoke} |
+| A2 | {Behavioral fact — e.g., "Sign-in with invalid password shows the error 'Invalid credentials'."} | vitest integration |
+| A3 | {Behavioral fact — e.g., "Forgotten-password email arrives in inbox within 60 seconds."} | manual smoke (account on staging) |
+
+## Untestable Assertions
+
+{Optional. Include only if the feature has behaviors that cannot be tested within this plan — LLM output quality, paid third-party integrations, UX judgment, behaviors only observable in production traffic. For each, name the reason and what compensating control covers it.}
+
+| ID | Assertion | Reason untestable | Compensating control |
+|----|-----------|-------------------|----------------------|
+| U1 | {behavior} | {why no test} | {alert / scheduled review / canary / downstream plan} |
+
+## Notes
+
+- {Open questions about the test approach}
+- {Known mechanism choices that may need revisiting}
 ```
 
 ### adr.md
@@ -457,6 +539,7 @@ date: {YYYY-MM-DD}
 ├── {plan-name}/
 │   ├── research.md
 │   ├── brief.md
+│   ├── test-plan.md
 │   ├── adr.md
 │   ├── impl.md
 │   └── retrospective.md
