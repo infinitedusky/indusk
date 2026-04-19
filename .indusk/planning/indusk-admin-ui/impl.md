@@ -100,7 +100,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Implemented `Button.tsx` with variants (`primary`, `secondary`, `ghost`) + sizes (`sm`, `md`). Tailwind classes, `forwardRef` for accessibility, focus rings, disabled state.
 - [x] Implemented `Badge.tsx` with variants per trajectory state (`passing` green, `blocked` red, `skipped` yellow, `planned`/`writable`/`written` gray/blue-toned, `unknown`/`neutral` gray). Each uses ring-inset Tailwind classes for clean visual differentiation per A9.
 - [x] Implemented `Table.tsx` exporting `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead` (header cell), `TableCell` (body cell). Wrapped in horizontal-overflow container for responsiveness; hover rows; sticky header style.
-- [ ] Implement `CollapsibleSection.tsx` — props: `title`, `defaultOpen`, `children`. Click toggles open/closed; chevron icon from lucide.
+- [x] Implemented `CollapsibleSection.tsx` — props: `title`, `defaultOpen`, `children`, optional `headerRight` slot. Click header toggles; chevron icon from lucide-react (`ChevronDown`/`ChevronRight`); `aria-expanded` for accessibility.
 - [ ] Implement `Sidebar.tsx` — left rail container; props: `children`. Includes header slot and scrollable list area.
 - [ ] Create the App shell at `src/app/layout.tsx` and `src/app/page.tsx` — sidebar + main pane structure, no data yet (placeholder content).
 - [ ] Configure `vitest.config.ts` with `vitest-browser-mode` (Playwright provider). `passWithNoTests: true`.
