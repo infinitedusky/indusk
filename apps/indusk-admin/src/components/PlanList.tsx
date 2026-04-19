@@ -32,12 +32,30 @@ export function PlanList({ active, archived, masterOrder }: PlanListProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      <nav className="flex flex-col gap-1" data-testid="global-nav">
+        <span className="px-2 text-xs uppercase tracking-wide text-gray-400">
+          Global
+        </span>
+        <Link
+          href="/scorecards"
+          className="rounded px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+          data-testid="nav-scorecards"
+        >
+          Eval Scorecards
+        </Link>
+      </nav>
+
       {orderedActive.length > 0 && (
-        <ul className="flex flex-col gap-1" data-testid="active-plans">
-          {orderedActive.map((plan) => (
-            <PlanItem key={plan.name} plan={plan} />
-          ))}
-        </ul>
+        <div className="flex flex-col gap-1">
+          <span className="px-2 text-xs uppercase tracking-wide text-gray-400">
+            Active plans
+          </span>
+          <ul className="flex flex-col gap-1" data-testid="active-plans">
+            {orderedActive.map((plan) => (
+              <PlanItem key={plan.name} plan={plan} />
+            ))}
+          </ul>
+        </div>
       )}
 
       {unordered.length > 0 && (

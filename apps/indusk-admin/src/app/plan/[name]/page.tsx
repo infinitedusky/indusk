@@ -1,11 +1,6 @@
 import { notFound } from "next/navigation";
 import { PlanDetail } from "@/components/PlanDetail";
-import {
-  type Plan,
-  readActivePlans,
-  readArchivedPlans,
-  readEvalScorecards,
-} from "@/lib/planning-reader";
+import { readActivePlans, readArchivedPlans } from "@/lib/planning-reader";
 import { getProjectRoot } from "@/lib/project-root";
 
 interface PlanPageProps {
@@ -33,36 +28,5 @@ export default async function PlanPage({ params }: PlanPageProps) {
   if (!plan) {
     notFound();
   }
-  const scorecards = await readEvalScorecards(projectRoot, planDateRange(plan));
-  return <PlanDetail plan={plan} scorecards={scorecards} />;
-}
-
-/**
- * Approximate the plan's lifetime as the date range to fetch scorecards for.
- * Start: brief.date frontmatter (or epoch fallback). End: retrospective.date
- * frontmatter (or now).
- *
- * Per Phase 5 Context note: this is a date-range overlap, NOT a real plan↔commit
- * join. A scorecard whose timestamp falls in the range surfaces under this plan
- * even if the underlying commit doesn't relate to it. v2 may add a `plan` field
- * to scorecards to tighten this, but v1's simplicity is fine for the demo.
- */
-function planDateRange(plan: Plan): { from: Date; to: Date } {
-  const fromStr = plan.brief?.frontmatter.date;
-  const toStr = plan.retrospective?.frontmatter.date;
-  const from = parseDate(fromStr) ?? new Date(0);
-  const to = parseDate(toStr) ?? new Date();
-  return { from, to };
-}
-
-function parseDate(value: unknown): Date | null {
-  if (!value) return null;
-  // gray-matter parses YAML dates as Date objects when written without quotes
-  // (`date: 2026-04-19`), as strings when quoted. Handle both.
-  if (value instanceof Date) return value;
-  if (typeof value === "string") {
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  return null;
+  return <PlanDetail plan={plan} />;
 }

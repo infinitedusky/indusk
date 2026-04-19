@@ -16,17 +16,10 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { extractPhases } from "@/lib/phases";
-import type { Plan, Scorecard } from "@/lib/planning-reader";
+import type { Plan } from "@/lib/planning-reader";
 
 interface PlanDetailProps {
   plan: Plan;
-  /**
-   * Eval scorecards belonging to this plan's date range. Loaded by the page
-   * component (`src/app/plan/[name]/page.tsx`). Empty array means none in
-   * range; `undefined` means scorecards weren't fetched (e.g., test rendering
-   * without scorecards).
-   */
-  scorecards?: Scorecard[];
 }
 
 /**
@@ -42,7 +35,7 @@ interface PlanDetailProps {
  * surface a banner indicating malformed YAML; the components-that-can-render
  * still render with whatever data they have.
  */
-export function PlanDetail({ plan, scorecards }: PlanDetailProps) {
+export function PlanDetail({ plan }: PlanDetailProps) {
   return (
     <article
       className="flex flex-col gap-6"
@@ -55,6 +48,12 @@ export function PlanDetail({ plan, scorecards }: PlanDetailProps) {
 
       {plan.malformed && plan.rawDocuments && (
         <RawDocumentsSection rawDocuments={plan.rawDocuments} />
+      )}
+
+      {plan.research && (
+        <CollapsibleSection title="Research" defaultOpen={!plan.brief}>
+          <Markdown>{plan.research.content}</Markdown>
+        </CollapsibleSection>
       )}
 
       {plan.brief && (
@@ -76,8 +75,6 @@ export function PlanDetail({ plan, scorecards }: PlanDetailProps) {
       {plan.impl && <PhasesSection plan={plan} />}
 
       <FalsificationSection plan={plan} />
-
-      {scorecards && <ScorecardsSection scorecards={scorecards} />}
     </article>
   );
 }
@@ -291,61 +288,6 @@ function HypothesisItem({ entry }: { entry: HypothesisEntry }) {
   );
 }
 
-function ScorecardsSection({ scorecards }: { scorecards: Scorecard[] }) {
-  return (
-    <section
-      className="flex flex-col gap-2"
-      data-testid="scorecards-section"
-    >
-      <h2 className="text-base font-semibold text-gray-900">
-        Eval Scorecards ({scorecards.length})
-      </h2>
-      {scorecards.length === 0 ? (
-        <p className="text-sm text-gray-500" data-testid="scorecards-empty">
-          No eval scorecards in this plan's date range.
-        </p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>When</TableHead>
-              <TableHead>Change</TableHead>
-              <TableHead>Mode</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Summary</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {scorecards.map((card) => (
-              <TableRow key={`${card.timestamp}-${card.changeId ?? "unknown"}`}>
-                <TableCell>
-                  <span className="text-xs text-gray-600 font-mono">
-                    {formatTimestamp(card.timestamp)}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-xs text-gray-600 font-mono">
-                    {(card.changeId ?? "—").slice(0, 8)}
-                  </span>
-                </TableCell>
-                <TableCell>{card.mode ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge variant={card.error ? "blocked" : "passing"}>
-                    {card.error ? "✗ error" : "✓ ok"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-sm text-gray-700">
-                  {(card.summary as string | undefined) ?? "—"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </section>
-  );
-}
-
 function isHypothesis(entry: LogEntry): entry is HypothesisEntry {
   return entry.kind === "hypothesis";
 }
@@ -358,12 +300,6 @@ function outcomeToBadge(outcome: HypothesisOutcome): BadgeVariant {
   if (outcome === "fix-in-scope") return "passing";
   if (outcome === "spawn-plan") return "writable";
   return "neutral"; // accept-finding
-}
-
-function formatTimestamp(ts: string): string {
-  const d = new Date(ts);
-  if (Number.isNaN(d.getTime())) return ts;
-  return d.toISOString().replace("T", " ").replace(/\.\d+Z$/, "Z");
 }
 
 function statusToBadge(status: string): BadgeVariant {

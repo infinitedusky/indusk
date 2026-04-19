@@ -197,7 +197,17 @@
       "Bash(node apps/indusk-mcp/dist/bin/cli.js ui --no-open --port 3939)",
       "Bash(echo \"spawned pid $!\")",
       "Bash(curl -s -o /tmp/curl-out.html -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" http://localhost:3939/)",
-      "Bash(curl -s -o /tmp/curl-plan.html -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" http://localhost:3939/plan/indusk-admin-ui)"
+      "Bash(curl -s -o /tmp/curl-plan.html -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" http://localhost:3939/plan/indusk-admin-ui)",
+      "Bash(pkill -f \"next.*dev\")",
+      "Bash(curl -s -w \"\\\\nROOT: HTTP %{http_code}\\\\n\" -o /dev/null http://localhost:3939/)",
+      "Bash(curl -s http://localhost:3939/plan/dusk-v2)",
+      "Bash(curl -s -w \"HTTP %{http_code}  bytes=%{size_download}\\\\n\" -o /tmp/d2.html http://localhost:3939/plan/dusk-v2)",
+      "Bash(curl -s -w \"HTTP %{http_code}  bytes=%{size_download}\\\\n\" -o /tmp/aui.html http://localhost:3939/plan/indusk-admin-ui)",
+      "Bash(python3 -c \"import sys, json; d = json.loads\\(sys.stdin.read\\(\\)\\); print\\(json.dumps\\(d, indent=2\\)\\)\")",
+      "Bash(echo \"spawned $!\")",
+      "Bash(curl -s -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" -o /tmp/sc.html http://localhost:3939/scorecards)",
+      "Bash(curl -s -o /tmp/plan.html http://localhost:3939/plan/indusk-admin-ui)",
+      "Bash(node /Users/the_dusky/code/sandbox/dusk/apps/indusk-mcp/dist/bin/cli.js ui --no-open --port 3939)"
     ],
     "additionalDirectories": [
       "/tmp",

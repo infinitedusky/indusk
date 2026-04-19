@@ -1,4 +1,14 @@
+import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/Table";
 
 interface MarkdownProps {
   children: string;
@@ -7,22 +17,40 @@ interface MarkdownProps {
 }
 
 /**
- * Server-rendered markdown with project-default Tailwind prose styling.
+ * Server-rendered markdown with project styling.
  *
- * Picked `react-markdown` over `marked` because:
- *   - Returns a React element tree (no `dangerouslySetInnerHTML`, no separate
- *     sanitization step — XSS-safe by construction).
- *   - Idiomatic for Next.js server components; no build-time HTML stringification.
- *   - The bundle-size delta is irrelevant for the admin UI's surface (server
- *     components don't ship JS unless they need client interactivity).
+ * Two layers of styling:
+ *   1. Tailwind `prose` (via @tailwindcss/typography) handles headings,
+ *      paragraphs, lists, blockquotes, code, links — the bulk of body text.
+ *   2. Custom `components` overrides for tables: every markdown table renders
+ *      via the project's `<Table>` primitive (Table/TableHeader/TableBody/...),
+ *      so a brief or research doc with a pipe-table gets the same visual
+ *      treatment as a trajectory table elsewhere in the app. Single source of
+ *      truth — no inline `<table className=...>` anywhere.
  *
- * To swap libraries later, change only this file. Every callsite imports
- * `<Markdown>` rather than `<ReactMarkdown>`.
+ * GFM (GitHub Flavored Markdown) is enabled via `remark-gfm` so pipe-tables,
+ * task lists, strikethrough, and autolinks all render correctly.
+ *
+ * Picked `react-markdown` over `marked` because it returns a React element
+ * tree (XSS-safe by construction; no `dangerouslySetInnerHTML`) and is
+ * idiomatic for Next.js server components. To swap libraries later, change
+ * only this file — every callsite imports `<Markdown>`, not `<ReactMarkdown>`.
  */
+const components: Components = {
+  table: ({ children }) => <Table>{children}</Table>,
+  thead: ({ children }) => <TableHeader>{children}</TableHeader>,
+  tbody: ({ children }) => <TableBody>{children}</TableBody>,
+  tr: ({ children }) => <TableRow>{children}</TableRow>,
+  th: ({ children }) => <TableHead>{children}</TableHead>,
+  td: ({ children }) => <TableCell>{children}</TableCell>,
+};
+
 export function Markdown({ children, className = "" }: MarkdownProps) {
   return (
     <div className={`prose prose-sm max-w-none ${className}`.trim()}>
-      <ReactMarkdown>{children}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+        {children}
+      </ReactMarkdown>
     </div>
   );
 }

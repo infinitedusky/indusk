@@ -305,59 +305,23 @@ describe("PlanDetail — falsification section (T10)", () => {
   });
 });
 
-describe("PlanDetail — scorecards section (T11)", () => {
-  it("T11 — lists scorecards in the plan's date range, most recent first, with status badges", async () => {
-    const scorecards = [
-      {
-        timestamp: "2026-04-19T11:00:00Z",
-        changeId: "abcdef1234567890",
-        mode: "feature",
-        summary: "Newest commit",
-      },
-      {
-        timestamp: "2026-04-19T10:00:00Z",
-        changeId: "fedcba0987654321",
-        mode: "bugfix",
-        summary: "Earlier commit",
-        error: true,
-      },
-    ];
-    const { container } = await render(
-      <PlanDetail plan={mockPlan()} scorecards={scorecards} />,
-    );
-    const section = container.querySelector(
-      '[data-testid="scorecards-section"]',
-    );
-    expect(section).not.toBeNull();
+// T11 (scorecards rendered) was originally tested as a per-plan section here.
+// PlanDetail no longer renders scorecards — they moved to the global
+// /scorecards page (`apps/indusk-admin/src/components/Scorecards.tsx`).
+// Per-plan scorecard attribution proved noisy (date-range overlap surfaced
+// unrelated commits under every plan) and missed the framing: scorecards
+// are a system-improvement signal, not plan-specific data.
+//
+// New T11 coverage lives in src/components/Scorecards.test.tsx.
 
-    // Header includes the count
-    expect(section?.textContent).toContain("Eval Scorecards (2)");
-
-    // Both rows render with truncated changeId + summary
-    expect(section?.textContent).toContain("abcdef12");
-    expect(section?.textContent).toContain("Newest commit");
-    expect(section?.textContent).toContain("fedcba09");
-    expect(section?.textContent).toContain("Earlier commit");
-
-    // Status: ok for the first, error for the second (verify by row order)
-    const rows = Array.from(section?.querySelectorAll("tbody tr") ?? []);
-    expect(rows[0].textContent).toContain("✓ ok");
-    expect(rows[1].textContent).toContain("✗ error");
-  });
-
-  it("T11 — empty-state copy when no scorecards in range", async () => {
-    const { container } = await render(
-      <PlanDetail plan={mockPlan()} scorecards={[]} />,
-    );
-    const empty = container.querySelector('[data-testid="scorecards-empty"]');
-    expect(empty).not.toBeNull();
-    expect(empty?.textContent).toContain("No eval scorecards");
-  });
-
-  it("T11 — scorecards section omitted entirely when scorecards prop is undefined", async () => {
+describe("PlanDetail — does not render scorecards section", () => {
+  it("never includes a scorecards section regardless of plan shape", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
     expect(
       container.querySelector('[data-testid="scorecards-section"]'),
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-testid="scorecards-list"]'),
     ).toBeNull();
   });
 });
