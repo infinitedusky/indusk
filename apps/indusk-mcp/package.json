@@ -1,6 +1,6 @@
 {
 	"name": "@infinitedusky/indusk-mcp",
-	"version": "1.23.0",
+	"version": "1.23.2",
 	"description": "InDusk development system — skills, MCP tools, and CLI for structured AI-assisted development",
 	"type": "module",
 	"files": [
@@ -24,7 +24,8 @@
 		"dev": "tsx watch src/server/index.ts",
 		"build": "tsc",
 		"start": "node dist/server/index.js",
-		"test": "vitest run"
+		"test": "vitest run",
+		"prepublishOnly": "pnpm build"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.12.1",

@@ -175,7 +175,13 @@
       "Bash(node .claude/hooks/eval-trigger.js --source handoff)",
       "Bash(nc -z localhost 6379)",
       "Bash(nc -z localhost 8100)",
-      "Bash(jj --version)"
+      "Bash(jj --version)",
+      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\nsummary: {d.get\\(\\\\\"summary\\\\\", d.get\\(\\\\\"message\\\\\", \\\\\"?\\\\\"\\)\\)[:200]}'\\)\")",
+      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\nsummary: {d.get\\(\\\\\"summary\\\\\", d.get\\(\\\\\"message\\\\\", \\\\\"?\\\\\"\\)\\)[:300]}'\\)\")",
+      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\nsummary: {d.get\\(\\\\\"summary\\\\\", d.get\\(\\\\\"message\\\\\", \\\\\"?\\\\\"\\)\\)[:200]}'\\)\")",
+      "Bash(claude --print --output-format json --mcp-config .mcp.json --permission-mode acceptEdits --allowed-tools \"Read,Grep,Glob,mcp__graphiti__*,mcp__indusk__*,mcp__codegraphcontext__*\")",
+      "Bash(claude --print --output-format json --mcp-config .mcp.json --permission-mode bypassPermissions --allowed-tools \"mcp__indusk__*\")",
+      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}'\\)\")"
     ],
     "additionalDirectories": [
       "/tmp",
