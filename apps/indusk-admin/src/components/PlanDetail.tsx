@@ -1,5 +1,10 @@
-import type { Plan } from "@/lib/planning-reader";
-import { extractPhases } from "@/lib/phases";
+import type {
+  HypothesisEntry,
+  HypothesisOutcome,
+  LogEntry,
+  TerminatorEntry,
+} from "@infinitedusky/indusk-mcp/falsification/log";
+import { Markdown } from "@/components/Markdown";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import {
@@ -10,10 +15,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
-import { Markdown } from "@/components/Markdown";
+import { extractPhases } from "@/lib/phases";
+import type { Plan, Scorecard } from "@/lib/planning-reader";
 
 interface PlanDetailProps {
   plan: Plan;
+  /**
+   * Eval scorecards belonging to this plan's date range. Loaded by the page
+   * component (`src/app/plan/[name]/page.tsx`). Empty array means none in
+   * range; `undefined` means scorecards weren't fetched (e.g., test rendering
+   * without scorecards).
+   */
+  scorecards?: Scorecard[];
 }
 
 /**
@@ -29,7 +42,7 @@ interface PlanDetailProps {
  * surface a banner indicating malformed YAML; the components-that-can-render
  * still render with whatever data they have.
  */
-export function PlanDetail({ plan }: PlanDetailProps) {
+export function PlanDetail({ plan, scorecards }: PlanDetailProps) {
   return (
     <article
       className="flex flex-col gap-6"
@@ -57,6 +70,10 @@ export function PlanDetail({ plan }: PlanDetailProps) {
       )}
 
       {plan.impl && <PhasesSection plan={plan} />}
+
+      <FalsificationSection plan={plan} />
+
+      {scorecards && <ScorecardsSection scorecards={scorecards} />}
     </article>
   );
 }
@@ -152,6 +169,158 @@ function PhasesSection({ plan }: { plan: Plan }) {
       </div>
     </section>
   );
+}
+
+function FalsificationSection({ plan }: { plan: Plan }) {
+  if (!plan.falsification) {
+    return (
+      <section
+        className="flex flex-col gap-2"
+        data-testid="falsification-section"
+      >
+        <h2 className="text-base font-semibold text-gray-900">Falsification</h2>
+        <p className="text-sm text-gray-500" data-testid="falsification-empty">
+          No falsification ritual run for this plan.
+        </p>
+      </section>
+    );
+  }
+
+  const hypotheses = plan.falsification.entries.filter(isHypothesis);
+  const terminator = plan.falsification.entries.find(isTerminator);
+
+  return (
+    <section
+      className="flex flex-col gap-2"
+      data-testid="falsification-section"
+    >
+      <header className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-gray-900">Falsification</h2>
+        <Badge variant={plan.falsification.complete ? "passing" : "writable"}>
+          {plan.falsification.complete ? "complete" : "in-progress"}
+        </Badge>
+      </header>
+      {hypotheses.length === 0 && (
+        <p className="text-sm text-gray-500">
+          No hypotheses logged yet.
+        </p>
+      )}
+      {hypotheses.length > 0 && (
+        <ul className="flex flex-col gap-3" data-testid="falsification-hypotheses">
+          {hypotheses.map((entry) => (
+            <HypothesisItem
+              key={`${entry.timestamp}-${entry.hypothesis.slice(0, 32)}`}
+              entry={entry}
+            />
+          ))}
+        </ul>
+      )}
+      {terminator && (
+        <div
+          className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+          data-testid="falsification-terminator"
+        >
+          <span className="font-semibold">Terminated:</span> {terminator.reason}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function HypothesisItem({ entry }: { entry: HypothesisEntry }) {
+  return (
+    <li
+      className="flex flex-col gap-1 rounded border border-gray-200 px-3 py-2"
+      data-testid={`hypothesis-${entry.outcome}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-gray-900">Hypothesis</span>
+        <Badge variant={outcomeToBadge(entry.outcome)}>{entry.outcome}</Badge>
+      </div>
+      <p className="text-sm text-gray-700">{entry.hypothesis}</p>
+      {entry.testPath && (
+        <p className="text-xs text-gray-500 font-mono">{entry.testPath}</p>
+      )}
+      {entry.note && (
+        <p className="text-xs text-gray-500">{entry.note}</p>
+      )}
+    </li>
+  );
+}
+
+function ScorecardsSection({ scorecards }: { scorecards: Scorecard[] }) {
+  return (
+    <section
+      className="flex flex-col gap-2"
+      data-testid="scorecards-section"
+    >
+      <h2 className="text-base font-semibold text-gray-900">
+        Eval Scorecards ({scorecards.length})
+      </h2>
+      {scorecards.length === 0 ? (
+        <p className="text-sm text-gray-500" data-testid="scorecards-empty">
+          No eval scorecards in this plan's date range.
+        </p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>When</TableHead>
+              <TableHead>Change</TableHead>
+              <TableHead>Mode</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Summary</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {scorecards.map((card) => (
+              <TableRow key={`${card.timestamp}-${card.changeId ?? "unknown"}`}>
+                <TableCell>
+                  <span className="text-xs text-gray-600 font-mono">
+                    {formatTimestamp(card.timestamp)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="text-xs text-gray-600 font-mono">
+                    {(card.changeId ?? "—").slice(0, 8)}
+                  </span>
+                </TableCell>
+                <TableCell>{card.mode ?? "—"}</TableCell>
+                <TableCell>
+                  <Badge variant={card.error ? "blocked" : "passing"}>
+                    {card.error ? "✗ error" : "✓ ok"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-sm text-gray-700">
+                  {(card.summary as string | undefined) ?? "—"}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </section>
+  );
+}
+
+function isHypothesis(entry: LogEntry): entry is HypothesisEntry {
+  return entry.kind === "hypothesis";
+}
+
+function isTerminator(entry: LogEntry): entry is TerminatorEntry {
+  return entry.kind === "terminator";
+}
+
+function outcomeToBadge(outcome: HypothesisOutcome): BadgeVariant {
+  if (outcome === "fix-in-scope") return "passing";
+  if (outcome === "spawn-plan") return "writable";
+  return "neutral"; // accept-finding
+}
+
+function formatTimestamp(ts: string): string {
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return ts;
+  return d.toISOString().replace("T", " ").replace(/\.\d+Z$/, "Z");
 }
 
 function statusToBadge(status: string): BadgeVariant {
