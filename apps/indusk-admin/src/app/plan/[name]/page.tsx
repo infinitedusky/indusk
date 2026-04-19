@@ -6,6 +6,7 @@ import {
   readArchivedPlans,
   readEvalScorecards,
 } from "@/lib/planning-reader";
+import { getProjectRoot } from "@/lib/project-root";
 
 interface PlanPageProps {
   params: Promise<{ name: string }>;
@@ -23,7 +24,7 @@ interface PlanPageProps {
  */
 export default async function PlanPage({ params }: PlanPageProps) {
   const { name } = await params;
-  const projectRoot = process.cwd();
+  const projectRoot = getProjectRoot();
   const [active, archived] = await Promise.all([
     readActivePlans(projectRoot),
     readArchivedPlans(projectRoot),

@@ -8,6 +8,7 @@ import {
   readArchivedPlans,
   readMasterPlanOrder,
 } from "@/lib/planning-reader";
+import { getProjectRoot } from "@/lib/project-root";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +40,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const projectRoot = process.cwd();
+  const projectRoot = getProjectRoot();
   const [active, archived] = await Promise.all([
     readActivePlans(projectRoot),
     readArchivedPlans(projectRoot),
