@@ -403,4 +403,14 @@ program
 		await startServer();
 	});
 
+program
+	.command("ui")
+	.description("Open the InDusk admin UI (sidebar of plans, trajectory states, scorecards)")
+	.option("--port <port>", "Port to listen on (0 = pick free)", "3939")
+	.option("--no-open", "Don't auto-open the browser when the server is ready")
+	.action(async (opts: { port: string; open: boolean }) => {
+		const { ui } = await import("./commands/ui.js");
+		await ui(rootOrExit(), { port: opts.port, open: opts.open });
+	});
+
 program.parse();
