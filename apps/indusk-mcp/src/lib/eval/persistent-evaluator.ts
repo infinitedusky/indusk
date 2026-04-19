@@ -24,6 +24,11 @@ import {
 } from "./otel.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
+import {
+	extractScorecardJson,
+	formatParseError,
+	getScorecardQuestions,
+} from "./scorecard-extractor.js";
 import type { EvalErrorEntry, EvalScorecard, EvalUsage } from "./types.js";
 
 interface EvaluatorSession {
@@ -104,9 +109,13 @@ function parseClaudeOutput(stdout: string): {
 		// raw output
 	}
 
-	const jsonMatch = scorecardText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-	if (jsonMatch?.[1]) {
-		scorecardText = jsonMatch[1];
+	// Tolerantly extract the scorecard JSON — handles pure JSON, fenced JSON,
+	// and prose-prefixed/wrapped JSON. Falls through to the raw text if no
+	// balanced object exists, letting the caller's JSON.parse surface a
+	// recognizable error (which the catch enriches with a stdout snippet).
+	const extracted = extractScorecardJson(scorecardText);
+	if (extracted !== null) {
+		scorecardText = extracted;
 	}
 
 	return { scorecardText, usage, sessionId };
@@ -186,6 +195,11 @@ export async function runPersistentEval(opts: {
 			);
 
 			rootSpan.setAttribute("resumed", session !== null);
+
+			// Capture raw stdout so the catch can include a snippet in the error
+			// message — preserves debuggability when JSON parsing fails on the
+			// extracted scorecard text.
+			let rawClaudeStdout = "";
 
 			try {
 				const { args, prompt } = await withSpan(
@@ -277,6 +291,7 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 						return spawned;
 					},
 				);
+				rawClaudeStdout = claudeResult.stdout;
 
 				if (claudeResult.code !== 0) {
 					if (session) {
@@ -303,6 +318,11 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 				});
 
 				const scorecard = JSON.parse(parsed.scorecardText.trim()) as EvalScorecard;
+				// Override the model-supplied timestamp with actual completion time.
+				// The model doesn't know the real current time and tends to round to
+				// 5-minute marks (e.g. 18:25:00). Use Date.now() so timestamps are
+				// accurate to the second.
+				scorecard.timestamp = new Date().toISOString();
 				if (parsed.usage) scorecard.usage = parsed.usage;
 				scorecard.telemetryPosted = false;
 
@@ -319,7 +339,11 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 					rootSpan.setAttribute("scorecard.output_tokens", scorecard.usage.outputTokens);
 				}
 				const answerCounts = { yes: 0, no: 0, partial: 0 };
-				for (const q of scorecard.questions ?? []) {
+				// Use the central guard from scorecard-extractor — `?? []` here was
+				// the bug: it only catches null/undefined, not non-array shapes like
+				// `{}` (which the model has been observed to return — e.g. on Numero
+				// 2026-04-19 19:54 with `questions: { conventions: {...} }` keyed by id).
+				for (const q of getScorecardQuestions<(typeof scorecard.questions)[number]>(scorecard)) {
 					if (q.answer in answerCounts) answerCounts[q.answer as keyof typeof answerCounts]++;
 				}
 				rootSpan.setAttribute("scorecard.answers.yes", answerCounts.yes);
@@ -349,9 +373,12 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
 				const stack = err instanceof Error ? (err.stack ?? "") : "";
+				const enrichedMessage = rawClaudeStdout
+					? formatParseError(err, rawClaudeStdout)
+					: msg;
 				rootSpan.setAttribute("scorecard.status", "error");
 				rootSpan.setAttribute("error.message", msg.slice(0, 500));
-				logEvalContent("error", stack || msg, {
+				logEvalContent("error", stack || enrichedMessage, {
 					"error.message": msg.slice(0, 500),
 				});
 				const errorEntry: EvalErrorEntry = {
@@ -360,7 +387,7 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 					mode: opts.mode,
 					changeId: opts.changeId,
 					error: true,
-					message: msg,
+					message: enrichedMessage,
 				};
 				await logWriter.append(errorEntry);
 				return errorEntry;

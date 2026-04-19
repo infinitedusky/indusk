@@ -8,6 +8,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
+import { getScorecardQuestions } from "./scorecard-extractor.js";
+
 import type { EvalScorecard } from "./types.js";
 
 export type FindingState = "unresolved" | "fixed" | "ignored";
@@ -66,7 +68,12 @@ export function ingestScorecard(projectRoot: string, scorecard: EvalScorecard): 
 	const findings = readFindings(projectRoot);
 	let added = 0;
 
-	for (const q of scorecard.questions) {
+	// Defensive: the model occasionally returns a scorecard with a missing,
+	// null, or non-array `questions` field (it invents its own schema). See
+	// `scorecard-extractor.ts` getScorecardQuestions for the central guard.
+	const questions = getScorecardQuestions<EvalScorecard["questions"][number]>(scorecard);
+
+	for (const q of questions) {
 		if (q.answer === "yes") continue; // no finding for passing questions
 		const key = `${scorecard.changeId}:${q.id}`;
 		if (!findings[key]) {

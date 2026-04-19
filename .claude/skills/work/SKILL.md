@@ -276,14 +276,25 @@ Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best
 
 ## Commits (jj)
 
-Use the **describe-then-do** workflow from the jj skill:
+Use the **describe-then-do** workflow from the jj skill. The order is load-bearing — never reverse it.
 
-1. `jj new` before each logical unit of work
-2. `jj describe` to declare what you're about to do
-3. Do the work, check off the item(s)
-4. Repeat
+**For every checklist item, in this exact order:**
 
-Commit at natural boundaries — typically per checklist item or per phase gate (otel, verify, context, document). Follow the monorepo rule: if a change spans multiple apps, use `jj split` to silo commits between contexts. See the jj skill for details.
+1. **`jj new`** — start a fresh empty commit. Do this BEFORE you touch any file.
+2. **`jj describe -m "..."`** — write the commit message describing what you're ABOUT to do. The description names the intent in present/future tense ("rename foo to bar") not past tense ("renamed foo to bar").
+3. **Do the work** — edit files, run tools, accumulate changes in `@` (the current commit).
+4. **Check the item off** in the impl.md.
+5. **Repeat** for the next item — back to step 1.
+
+**❌ Anti-pattern: describe-after-do.** Doing the work first and then describing what you did breaks two things: (a) the eval agent fires on `jj describe`, so the description is what it scores against — late descriptions mean the agent scores work that's already done without intent context; (b) the working copy IS the current commit in jj, so any uncommitted state automatically gets attributed to whatever the commit description currently says, even if that's the previous unit's description. Always: new → describe → work, in that order.
+
+**Default: one commit per checklist item.** Each impl checklist item is a logical unit of work — give it its own commit. This keeps history granular, makes blame and bisect useful, avoids the end-of-phase `jj split` chore, and lets the eval agent score each unit while context is fresh.
+
+Phase-close commits (one big commit for everything in a phase) are an exception, not the default. Use them ONLY when items are trivially related — e.g., a phase that's "rename X → Y in 5 files" where every commit would be the same one-line change. If items represent meaningfully different work (different concerns, different files, different intents), each item deserves its own commit.
+
+Cost is not a reason to batch. The eval agent uses session-resume after the first commit, so subsequent commits within a session amortize the catchup cost — per-item commits are cheap.
+
+Follow the monorepo rule: if a change spans multiple apps, use `jj split` to silo commits between contexts. See the jj skill for details.
 
 ## Cross-Plan Impact
 

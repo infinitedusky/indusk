@@ -147,5 +147,24 @@ After completing all steps, output ONLY the following JSON object. No markdown w
 }
 \`\`\`
 
-This JSON is parsed programmatically. It must be valid. Do not include anything outside the JSON object.`;
+This JSON is parsed programmatically. It must be valid. Do not include anything outside the JSON object.
+
+═══════════════════════════════════════════════════════════════════
+**FINAL REMINDER — OUTPUT FORMAT**
+
+Your final response must be a single raw JSON object. Nothing else. No prose before, no prose after, no markdown code fences. The parent process pipes your stdout directly into \`JSON.parse()\` — any character that isn't part of the JSON object will fail the parse and your scorecard will be lost.
+
+❌ DO NOT do this:
+  Now I've got everything I need. Here's the scorecard:
+  {"version":1,...}
+
+❌ DO NOT do this:
+  \`\`\`json
+  {"version":1,...}
+  \`\`\`
+
+✅ DO this — start your response with \`{\` and end with \`}\`, nothing else:
+  {"version":1,"timestamp":"2026-04-19T18:00:00.000Z","mode":"${opts.mode}","changeId":"${opts.changeId}","projectGroup":"${opts.projectGroup}","questions":[...],"summary":"...","graphitiWrites":3,"telemetryPosted":false}
+
+The first character of your output must be \`{\`. The last character must be \`}\`. Begin now.`;
 }

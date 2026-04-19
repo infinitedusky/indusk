@@ -13,8 +13,8 @@ The pipeline is organized into three arcs. Each arc has an internal goal; arcs a
 
 | # | Plan | Status | Depends On | Blocks |
 |---|------|--------|------------|--------|
-| 0 | eval-scorecard-format-fix | not yet created (micro-plan, ~30 min) | — | (unblocks clean scorecard reading; foundation for any UI that consumes scorecards) |
-| 1 | indusk-admin-ui | not yet created (next — dogfoods the test-plan flow) | 0 | 2, 3 (UI consumes their data) |
+| 1 | [indusk-admin-ui](indusk-admin-ui/brief.md) | brief accepted (NEXT — dogfoods the test-plan flow) | — | 2, 3 (UI consumes their data) |
+| 1.5 | playwright-auth-pattern | not yet created (~1 day; ships right after admin-ui — solves the "can't test logged-in screens" pain on Numero and any future project) | — | (unblocks e2e testing of auth-gated UI for any project) |
 | 2 | test-run-history | not yet created | — | (deepens admin-ui timeline view) |
 | 3 | local-telemetry | not yet created | — | (debug surface in admin-ui) |
 
@@ -43,11 +43,17 @@ The pipeline is organized into three arcs. Each arc has an internal goal; arcs a
 |---|------|--------|------------|--------|
 | 8 | [hermes-inspired-improvements](hermes-inspired-improvements/brief.md) | brief accepted | — (independent; could land anytime) | 10 |
 | 9 | [mcp-orchestration-layer](mcp-orchestration-layer/brief.md) | brief draft | — (independent) | — |
-| 10 | [complementary-personas](complementary-personas/brief.md) | brief draft | 4, 8 (needs typed graph + transcript search for persona memory) | — |
-| 11 | indusk-admin-ui v2 (knowledge-graph viewer) | not yet a separate plan; folded into #1's v2 scope | 4 (must wait for graph schema) | — |
+| 10 | falsify-spawn-pattern | not yet created (independent; precursor to 11) | — | 11 |
+| 11 | [complementary-personas](complementary-personas/brief.md) | brief draft | 4, 8, 10 (needs typed graph + transcript search + spawn pattern for persona memory) | — |
+| 12 | indusk-admin-ui v2 (knowledge-graph viewer) | not yet a separate plan; folded into #1's v2 scope | 4 (must wait for graph schema) | — |
+
+### `falsify-spawn-pattern` (#10) — context
+
+Surfaced 2026-04-19 during eval-scorecard-format-fix's falsification: the current `/falsify` ritual has a structural flaw — it's "same agent, goal-flipped," but the agent who built the thing has the worst perspective for finding its own gaps. Same assumptions, same blind spots, same things considered out-of-scope. When asked to confirm, I admitted the ritual found a bug we already knew about (cheat-sheet effect) and likely would NOT have found it cold. The fix: refactor `/falsify` to spawn a fresh background Claude session (same architecture as the eval agent) with zero prior session context, given only the plan files + codebase + a single mission ("find a test that would fail that should pass"). The contract stays identical (hypothesize → write test → pick outcome) — only the executor changes. This is the foundational primitive for `complementary-personas` (#11): the "skeptic" persona is exactly this design generalized.
 
 ## Archived
 
+- **eval-scorecard-format-fix** (2026-04-19) — eval scorecard parser tolerates prose-prefixed/fenced/wrapped JSON output via 3-strategy `extractScorecardJson` with balanced-brace scan; FINAL REMINDER prompt section + JSON example for output discipline; wrapper overrides `scorecard.timestamp` (model was rounding to 5-min marks); `ingestScorecard` tolerates malformed-shape scorecards via `Array.isArray` guard (found by /falsify, fixed in scope as Phase 4); work skill defaults to per-item commits with explicit describe-then-do anti-pattern callout. Shipped 1.24.0 → 1.24.4 across 5 publish cycles. **Surfaced the structural cheat-sheet effect in `/falsify` when run in-session** — queued as plan #10 `falsify-spawn-pattern`. First plan to dogfood the test-plan flow on a bugfix workflow — confirmed the discipline works at small scale. See `.indusk/planning/archive/eval-scorecard-format-fix/` and `apps/indusk-docs/src/lessons/eval-scorecard-format-fix.md`.
 - **eval-agent-mcp-access** (2026-04-19) — restored MCP tool access in the spawned `claude --print` subprocess. Took 3 publish cycles to land: 1.23.0 had the TS fix but shipped stale dist (no `pnpm build` before publish); 1.23.1 added `prepublishOnly` hook + rebuilt with `--mcp-config .mcp.json` + `--permission-mode acceptEdits`; 1.23.2 corrected to `--permission-mode bypassPermissions` after smoke verified `acceptEdits` only auto-accepts file edits, not MCP tool calls. **Verification**: `.indusk/highlights-processed.jsonl` populated with 3 entries (all `action: wrote-episode`) on smoke 4 — proves the spawned evaluator can now read highlights, write Graphiti episodes, and mark them processed. Falsification surfaced a separate downstream issue (evaluator scorecard JSON parse error from prose-mixed output) — captured as plan #0 (eval-scorecard-format-fix). Pending retrospective + falsification + archive moves.
 - **agent-roles** (2026-04-18) — three-tier agent split (working agent / eval agent / infrastructure) + highlights queue + `/highlight` command + handoff-trigger + role docs. Shipped in indusk-mcp 1.17.0. Falsification on Phase 3 smoke exposed the eval-judge silent failure — spawned improvement-eval-agent-open-telemetry + bug-fix-eval-agent. Second falsification round exposed MCP-access gap in the spawned subprocess — spawned eval-agent-mcp-access. Architecture shipped correctly; operational end-to-end (eval agent actually processes highlights) deferred to the downstream plan. See `archive/agent-roles/` and `apps/indusk-docs/src/lessons/agent-roles.md`.
 - **improvement-eval-agent-open-telemetry** (2026-04-18) — opt-in OTel traces + logs for the eval agent. 5 phases, 4 publish cycles, Dash0 "agent" dataset routing. Shipped in indusk-mcp 1.19.0. Falsification found the hook ESM-require bug → spawned `bug-fix-eval-agent`. See `archive/improvement-eval-agent-open-telemetry/` and `apps/indusk-docs/src/lessons/eval-agent-otel.md`.

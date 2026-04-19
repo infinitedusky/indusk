@@ -15,6 +15,7 @@ import { EvalLogWriter } from "./log-writer.js";
 import { initEvalOtel, shutdownEvalOtel, withSpan } from "./otel.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
+import { extractScorecardJson, formatParseError } from "./scorecard-extractor.js";
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
 
 export interface EvaluatorRunOptions {
@@ -141,13 +142,15 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 				// stdout might be raw JSON scorecard already
 			}
 
-			// Extract JSON from possible markdown code fences
-			const jsonMatch = scorecardText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-			if (jsonMatch?.[1]) {
-				scorecardText = jsonMatch[1];
+			// Tolerantly extract scorecard JSON — handles pure JSON, fenced JSON,
+			// and prose-prefixed/wrapped JSON. See scorecard-extractor.ts.
+			const extracted = extractScorecardJson(scorecardText);
+			if (extracted !== null) {
+				scorecardText = extracted;
 			}
 
 			const scorecard = JSON.parse(scorecardText.trim()) as EvalScorecard;
+			scorecard.timestamp = new Date().toISOString();
 			if (usage) scorecard.usage = usage;
 			scorecard.telemetryPosted = false;
 
@@ -165,7 +168,7 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 				mode: opts.mode,
 				changeId: opts.changeId,
 				error: true,
-				message: err instanceof Error ? err.message : String(err),
+				message: stdout ? formatParseError(err, stdout) : (err instanceof Error ? err.message : String(err)),
 			};
 			await logWriter.append(errorEntry);
 		}
@@ -286,12 +289,14 @@ async function runEvaluatorSyncInner(
 					// raw JSON
 				}
 
-				const jsonMatch = scorecardText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-				if (jsonMatch?.[1]) {
-					scorecardText = jsonMatch[1];
+				// Tolerantly extract scorecard JSON — see scorecard-extractor.ts.
+				const extracted = extractScorecardJson(scorecardText);
+				if (extracted !== null) {
+					scorecardText = extracted;
 				}
 
 				const scorecard = JSON.parse(scorecardText.trim()) as EvalScorecard;
+				scorecard.timestamp = new Date().toISOString();
 				if (syncUsage) scorecard.usage = syncUsage;
 				scorecard.telemetryPosted = false;
 
@@ -310,7 +315,7 @@ async function runEvaluatorSyncInner(
 					mode: opts.mode,
 					changeId: opts.changeId,
 					error: true,
-					message: err instanceof Error ? err.message : String(err),
+					message: stdout ? formatParseError(err, stdout) : (err instanceof Error ? err.message : String(err)),
 				};
 				await logWriter.append(errorEntry);
 				resolve(errorEntry);

@@ -185,6 +185,14 @@ Check this log when evals aren't appearing in `results.log`.
 
 **Fix in 1.19.1:** the inline script now uses ESM-native `import { mkdirSync, appendFileSync } from "node:fs"` and `import { dirname, join } from "node:path"`. A regression test (`apps/indusk-mcp/src/__tests__/falsification-hook-esm-require.test.ts`) grep-asserts the hook source contains no CJS module resolution.
 
+### Scorecard parse failure from prose-prefixed JSON
+
+**Symptom:** an `error: true` entry lands in `.indusk/eval/results.log` with a `message` like `Unexpected token 'N', "Now I've g"... is not valid JSON`. The evaluator otherwise ran to completion (system.log shows `evaluator completed`), and side-effects of its work landed (highlights got marked processed, Graphiti episodes were written) — but the final scorecard never made it into `results.log`. The eval system silently under-counts its own work because error-entries default `graphitiWrites: 0` even when MCP writes happened.
+
+**Cause:** the model sometimes prefixes natural-language prose to its JSON output despite the prompt saying "output only JSON" (e.g., `"Now I've got everything I need. Here's the scorecard:\n\n{...}"`). The previous parser tried `JSON.parse(stdout)` directly and a fenced-code-block regex; neither tolerated raw prose-prefixed JSON, so the call landed in the catch handler and produced an error-entry whose `message` field contained only the parse-error string — no snippet of what Claude actually wrote.
+
+**Fix in 1.24.0:** scorecard extraction logic factored into `apps/indusk-mcp/src/lib/eval/scorecard-extractor.ts` with a third extraction strategy: scan for the first `{` and find its matching `}` by tracking nesting depth and string-literal state (so braces inside JSON string values don't fool the depth counter). Strategy order: (1) trim-and-parse (cleanest case), (2) fenced-block regex, (3) balanced-brace scan. First success wins. Used at all 3 `claude --print` call sites in `persistent-evaluator.ts` + `evaluator-runner.ts`. Error-entry messages now include the first 500 chars of raw stdout via `formatParseError(err, rawStdout)` — no more re-running the evaluator just to see what Claude wrote.
+
 ### MCP tools unreachable from the spawned subprocess
 
 **Symptom:** every scorecard in `.indusk/eval/results.log` records `graphitiWrites: 0` and `mcpToolCalls: 0`, even when `.indusk/highlights.jsonl` has unprocessed entries that the evaluator's prompt explicitly asks Claude to read and write to Graphiti. `.indusk/highlights-processed.jsonl` is never created. The evaluator runs to completion, writes a scorecard, but never invokes any `mcp__*` tool.

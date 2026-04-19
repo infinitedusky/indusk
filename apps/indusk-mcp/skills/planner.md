@@ -33,11 +33,13 @@ The first argument to `/planner` can optionally be a workflow type that controls
 
 | Command | Workflow | Documents |
 |---------|----------|-----------|
-| `/planner bugfix auth-expiry` | bugfix | brief + impl only |
-| `/planner refactor extract-auth` | refactor | brief + impl (with boundary map) |
+| `/planner bugfix auth-expiry` | bugfix | brief + test-plan + impl |
+| `/planner refactor extract-auth` | refactor | brief + test-plan + impl (with boundary map) |
 | `/planner spike redis-options` | spike | research only |
-| `/planner feature payment-flow` | feature | full lifecycle (default — includes test-plan between brief and ADR) |
+| `/planner feature payment-flow` | feature | full lifecycle (research + brief + test-plan + adr + impl + retrospective) |
 | `/planner payment-flow` | feature | same — no type defaults to feature |
+
+**Test plan is required for any workflow that ships an impl** (bugfix, refactor, feature). For a bugfix, the first behavioral assertion IS the failing test that proves the bug — you can't write a fix until you've named what should be true once it works. Spike is the only workflow that skips the test plan, because it skips the impl.
 
 Parse the input: if the first word is `bugfix`, `refactor`, `spike`, or `feature`, use that workflow. Otherwise, default to `feature`. The remaining words become the plan name (kebab-cased).
 
@@ -84,7 +86,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    ```
    The working agent does not write Graphiti episodes directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts the full Problem + Proposed Direction + Scope context from the transcript, writes a structured episode into the project group, and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/indusk-docs/src/reference/tools/highlights.md`](../../indusk-docs/src/reference/tools/highlights.md) for the full flow.
 
-5. **If brief is accepted** and the workflow includes a test plan (feature only), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **how it will be tested** — not the test code itself, but the test mechanism (vitest unit, vitest integration, end-to-end script, manual user test, manual smoke against running stack, etc.).
+5. **If brief is accepted** and the workflow includes a test plan (bugfix, refactor, or feature — anything that ships an impl), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **how it will be tested** — not the test code itself, but the test mechanism (vitest unit, vitest integration, end-to-end script, manual user test, manual smoke against running stack, etc.).
 
    The discipline this produces: when you walk into the ADR with a test plan in hand, the architectural decision is constrained by "what makes all these assertions true?" rather than invented from intuition. The ADR's "We decided for" / "And against" clauses gain teeth because alternatives can be rejected against specific assertions. The impl's Test Trajectory rows derive directly from the test plan's assertions — one trajectory row per assertion, with the `Writable at` / `Passes at` columns added during impl authoring.
 

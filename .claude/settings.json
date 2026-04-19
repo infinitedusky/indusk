@@ -181,7 +181,10 @@
       "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\nsummary: {d.get\\(\\\\\"summary\\\\\", d.get\\(\\\\\"message\\\\\", \\\\\"?\\\\\"\\)\\)[:200]}'\\)\")",
       "Bash(claude --print --output-format json --mcp-config .mcp.json --permission-mode acceptEdits --allowed-tools \"Read,Grep,Glob,mcp__graphiti__*,mcp__indusk__*,mcp__codegraphcontext__*\")",
       "Bash(claude --print --output-format json --mcp-config .mcp.json --permission-mode bypassPermissions --allowed-tools \"mcp__indusk__*\")",
-      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}'\\)\")"
+      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}'\\)\")",
+      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nquestions: {len\\(d.get\\(\\\\\"questions\\\\\", []\\)\\)}\\\\\\\\nsummary: {d.get\\(\\\\\"summary\\\\\", d.get\\(\\\\\"message\\\\\", \\\\\"?\\\\\"\\)\\)[:200]}'\\)\")",
+      "Bash(python3 -c \"import sys, json; d=json.loads\\(sys.stdin.read\\(\\)\\); print\\(f'changeId: {d.get\\(\\\\\"changeId\\\\\", \\\\\"?\\\\\"\\)[:24]}\\\\\\\\nerror: {d.get\\(\\\\\"error\\\\\", False\\)}\\\\\\\\ngraphitiWrites: {d.get\\(\\\\\"graphitiWrites\\\\\", \\\\\"?\\\\\"\\)}\\\\\\\\nquestions_count: {len\\(d.get\\(\\\\\"questions\\\\\", []\\)\\)}'\\)\")",
+      "Bash(node -e ' *)"
     ],
     "additionalDirectories": [
       "/tmp",
@@ -190,7 +193,9 @@
       "/Users/the_dusky/code/sandbox/dusk/.claude/skills/dash0",
       "/Users/the_dusky/code/sandbox/dusk/__CMDSUB_OUTPUT__/@infinitedusky/indusk-mcp/hooks",
       "/Users/the_dusky",
-      "/Users/the_dusky/code/sandbox/dusk/.claude/skills/planner"
+      "/Users/the_dusky/code/sandbox/dusk/.claude/skills/planner",
+      "/Users/the_dusky/code/sandbox/dusk/.claude/skills/work",
+      "/Users/the_dusky/code/sandbox/dusk/.claude/lessons"
     ]
   },
   "hooks": {
