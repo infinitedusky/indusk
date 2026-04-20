@@ -194,18 +194,19 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 #### Phase 4 Document
 - [x] Extension `skill.md` authored at `apps/indusk-mcp/extensions/local-telemetry/skill.md` — what-you-have description, when-to-use / when-NOT-to-use guidance, four diagnosis patterns (what-just-failed / why-slow / did-server-receive / log-correlation), Jaeger UI fallback pattern, env-routing note, short-reference table of the four MCP tools landing in Phase 5.
 
-### Phase 5: MCP tool surface + query CLI
+### Phase 5: Wire jaeger_mcp + custom tail_logs tool + query CLI
 
-**Goal**: agent + human both get direct query access. MCP tools wrap Jaeger's REST API + SQLite sink. `indusk telemetry tail/trace/services/reset` mirror the same surface from a terminal.
+**Goal (reshaped 2026-04-20)**: ship the simplest workable MCP tool surface by wiring Jaeger's bundled `jaeger_mcp` extension directly into the project's `.mcp.json` (same pattern `dash0` uses for its cloud MCP). The agent calls Jaeger's 8 tools directly. We write ONE custom MCP tool — `tail_logs` — for the otelcol log sink Jaeger can't serve. Plus CLI subcommands for terminal users.
 
-- [ ] Create `apps/indusk-mcp/src/server/tools/telemetry/get-recent-spans.ts` — wraps `GET /api/traces` with filters. Signature per spike.
-- [ ] Create `get-trace.ts` — wraps `GET /api/traces/{id}`.
-- [ ] Create `get-services.ts` — wraps `GET /api/services`.
-- [ ] Create `tail-logs.ts` — SQL layer over SQLite with filters (service, level, since, trace_id).
-- [ ] Register all four tools in `apps/indusk-mcp/src/server/index.ts`. Gated by `local-telemetry` extension enabled in current project.
-- [ ] Extend `apps/indusk-mcp/src/bin/commands/telemetry.ts` with `telemetryTail`, `telemetryTrace`, `telemetryServices`, `telemetryReset`.
-- [ ] Wire `indusk telemetry tail/trace/services/reset` subcommands in `cli.ts`.
-- [ ] `reset` clears Jaeger storage (admin API or stop+restart-with-fresh-Badger) + truncates SQLite log sink.
+**The "insanely controlled natural-language wrapper" layer is deferred to a follow-up plan** (`telemetry-control-wrapper` or similar — queued in master.md). Rationale: ship substrate first, let real use with jaeger_mcp surface the actual bumbling patterns the wrapper needs to structurally prevent. Design-by-contact-with-reality.
+
+- [ ] Enable the `jaeger_mcp` extension in `packages/telemetry-binaries-shared/jaeger-config.yaml` + the daemon.ts inline-rendered config. Bound to a daemon-allocated port (e.g., `16687` by default, auto-bumped via `findFreePort`). Surface the port in `~/.indusk/telemetry.json` as `mcpPort` so `.mcp.json` generation can reference it.
+- [ ] Extend the `local-telemetry` extension's manifest so its on_enable hook writes/updates the project's `.mcp.json` adding a `jaeger` MCP server entry of type `http` pointing at `http://localhost:{mcpPort}/mcp`. Follow dash0's `mcp_server` shape in its manifest.
+- [ ] Create `apps/indusk-mcp/src/server/tools/telemetry/tail-logs.ts` — the ONE custom MCP tool. Reads `~/.indusk/telemetry/logs.jsonl` (produced by otelcol's file exporter); filters by `service?`, `level?`, `sinceMinutes?`, `limit?` (default 50, hard cap 200). Response includes `truncated` flag. No complex validation — this ships basic and iterates.
+- [ ] Register `tail_logs` in `apps/indusk-mcp/src/server/index.ts`. Tool availability gated on `local-telemetry` extension being active.
+- [ ] Extend `apps/indusk-mcp/src/bin/commands/telemetry.ts` with `telemetryTail`, `telemetryTrace`, `telemetryServices`, `telemetryReset` — human-facing CLI subcommands. `tail` wraps the same logs.jsonl reader. `trace/services` hit Jaeger's REST (`/api/traces/{id}` and `/api/services` — Jaeger's public query endpoints that jaeger_mcp also uses underneath). `reset` restarts the daemon with fresh in-memory storage + truncates logs.jsonl.
+- [ ] Wire `indusk telemetry tail/trace/services/reset` subcommands in `cli.ts` (commander@13 pattern).
+- [ ] Queue a follow-up plan entry in `master.md` for the control-wrapper plan — pending a brief draft that captures: the autonomy-arc motivation, the natural-language tool shape, zod schemas, MCP-to-MCP forwarding chokepoint, response-size caps, cursor support for polling agents, schema versioning. Will be briefed once `local-telemetry` ships + we have one real dogfood session of jaeger_mcp direct use to surface bumbling patterns.
 
 #### Phase 5 Verification
 - [ ] T9 (write red): end-to-end script simulating agent diagnosis — failing test emits error span; `get_recent_spans(status="error")` returns the span; agent consumes via MCP call. Red before Phase 5; green after MCP tools land.

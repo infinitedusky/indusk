@@ -180,14 +180,32 @@ Items 6 (npm platform-package publish+install), 7 (`require.resolve` + detached 
 - **Item 7 (`require.resolve` + detached spawn)**: admin-ui-hosting's daemon (Phase 3) already uses `createRequire(import.meta.url).resolve("next/package.json")` + `spawn(...)` + `detached: true` + `unref()`. The pattern is proven in the same codebase; Phase 2 applies it.
 - **Item 8 (MCP tool signature ergonomics)**: defer until Phase 5 when the tools are actually written — signature refinements come from real usage, not stub-based conjecture. Initial signatures from the ADR are fine starting points; iterate in Phase 5.
 
-## Interesting Surface: `jaeger_mcp` extension
+## LOCKED: `jaeger_mcp` extension subsumes our trace-tool surface (Phase 5 probe, 2026-04-20)
 
-Jaeger v2.17.0 bundles a **`jaeger_mcp` extension** (stability: Alpha) that appears to expose Jaeger's query API as an MCP server natively. Worth investigating in Phase 5:
+Phase 5 opened with a probe of the `jaeger_mcp` extension shipped in Jaeger v2.17.0. **It's a full MCP server exposing 8 tools, all of them richer than the 3 we'd planned.** The MCP endpoint listens on `:16687` by default (configurable); a proper MCP `initialize` → `notifications/initialized` → `tools/list` handshake returns:
 
-- **If it's a full MCP server exposing `get_recent_spans` / `get_trace` / `get_services` equivalents**: we may not need to write our own MCP tools at all. Just enable the extension, point Claude at the Jaeger MCP endpoint, done.
-- **If it's partial or too opinionated**: we still write our own thin wrappers over Jaeger's REST API as planned.
+| jaeger_mcp tool | Our original plan | Notes |
+|---|---|---|
+| `search_traces` | `get_recent_spans` | Richer — filters on service, time range, attributes, duration |
+| `get_trace_topology` | `get_trace` (part 1 — structure) | Flat depth-first span list |
+| `get_span_details` | `get_trace` (part 2 — contents) | Full attrs/events/links/status for specified span IDs |
+| `get_services` | `get_services` | Identical shape |
+| `get_span_names` | — | List operation names per service (we hadn't planned this; it's useful) |
+| `get_trace_errors` | — | All error spans in a trace — precisely the "why did this fail" surface |
+| `get_critical_path` | — | Blocking-path latency analysis — richer than anything we'd build |
+| `health` | — | MCP health check |
 
-The spike did not validate this — `jaeger_mcp` inspection is a Phase 5 task (flagged here so Phase 5 doesn't forget to check it first before writing custom MCP tools).
+**Decision**: wire jaeger_mcp as an MCP server in the project's `.mcp.json` (same pattern `dash0` uses for its cloud MCP endpoint). The agent accesses Jaeger's 8 tools directly. We write ZERO custom trace tools in indusk-mcp.
+
+**What we DO write**: `tail_logs` — Jaeger doesn't do logs, so this is still needed as a custom MCP tool wrapping the otelcol file sink (the JSONL rotating file at `~/.indusk/telemetry/logs.jsonl`).
+
+**Phase 5 reshape**:
+- T9, T10, T11 (trace-side assertions) are now satisfied by jaeger_mcp's tools — they become "verify jaeger_mcp is wired into `.mcp.json` and agent can call the tools" (integration test, not unit test).
+- T12 (query latency p95 < 500ms) — still applicable to jaeger_mcp's `search_traces`; spike Phase 1 validated the underlying Jaeger REST API; the MCP wrapper overhead is a few milliseconds on top.
+- T13 (tail_logs) — custom tool, full implementation in indusk-mcp.
+- T14/T15/T16/T17 (query CLI subcommands — `tail/trace/services/reset`) — still implemented as human-facing CLI parallel to the MCP surface. `trace/services` can delegate to Jaeger's REST API (`/api/traces`, `/api/services`) for human legibility; `tail` wraps the log sink; `reset` restarts with fresh storage.
+
+**Size of the win**: ~4–5 custom MCP tool files + their handlers + MCP wiring code we DON'T have to write. Jaeger's tools are maintained upstream on every Jaeger release.
 
 ## Binding Decisions for Phase 2+
 
