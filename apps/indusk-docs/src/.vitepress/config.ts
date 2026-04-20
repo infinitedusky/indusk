@@ -107,6 +107,13 @@ const config = defineConfig({
 					],
 				},
 				{
+					text: "Telemetry",
+					items: [
+						{ text: "Overview", link: "/reference/telemetry/overview" },
+						{ text: "CLI Reference", link: "/reference/telemetry/cli" },
+					],
+				},
+				{
 					text: "Tools",
 					items: [
 						{ text: "InDusk MCP", link: "/reference/tools/indusk-mcp" },
