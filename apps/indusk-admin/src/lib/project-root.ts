@@ -1,13 +1,16 @@
+import { getProjectPath as lookup } from "./registry-client";
+
 /**
- * Resolve the InDusk project root. The admin UI is launched by `indusk ui`
- * which spawns `next dev` from `apps/indusk-admin/` (not from the project
- * root) and sets `INDUSK_PROJECT_ROOT` in the env so the server components
- * can find `.indusk/planning/`.
+ * Resolve the absolute filesystem path for a registered project by name.
+ * Returns null when the name isn't registered — Phase 4's stale-project
+ * failure page renders in that case (the path-exists check is a separate
+ * concern handled by the per-project layout).
  *
- * Falls back to `process.cwd()` only if the env var is unset (which would
- * happen if the user runs `pnpm dev` directly from `apps/indusk-admin/` for
- * local UI development — fine, but the cwd will be the admin app dir).
+ * Replaces the pre-1.27 `getProjectRoot()` which took no arguments and
+ * resolved the single-project-per-daemon's root via `INDUSK_PROJECT_ROOT`.
+ * Now that the daemon serves every registered project, there is no single
+ * "root" — callers name which project they're asking about.
  */
-export function getProjectRoot(): string {
-  return process.env.INDUSK_PROJECT_ROOT ?? process.cwd();
+export function getProjectPath(name: string): string | null {
+	return lookup(name);
 }
