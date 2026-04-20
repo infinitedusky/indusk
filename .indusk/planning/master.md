@@ -17,7 +17,9 @@ The pipeline is organized into three arcs. Each arc has an internal goal; arcs a
 | 1 | [indusk-admin-ui](indusk-admin-ui/brief.md) | impl in-progress (Phase 1 done; dogfoods the test-plan flow) | — | 2, 3 (UI consumes their data) |
 | 1.5 | playwright-auth-pattern | not yet created (~1 day; ships right after admin-ui — solves the "can't test logged-in screens" pain on Numero and any future project) | — | (unblocks e2e testing of auth-gated UI for any project) |
 | 2 | test-run-history | not yet created | — | (deepens admin-ui timeline view) |
-| 3 | local-telemetry | not yet created | — | (debug surface in admin-ui) |
+| 3 | [local-telemetry](local-telemetry/brief.md) | brief accepted + test-plan draft (new extension + machine-global daemon following admin-UI 1.27.x pattern: Jaeger + OTel Collector + SQLite log sink in one container, managed by `indusk telemetry start/stop/restart/status`; MCP tool surface `get_recent_spans`/`get_trace`/`tail_logs`; dev traces local, staging/prod stay Dash0; foundation for autonomous-dev watcher pattern) | — | 3.6 (watcher consumes the buffer), 3.7 (test-strategy diagnosis UX) |
+| 3.6 | telemetry-watcher-agent | not yet created (~2 days; async-observer daemon tailing the local telemetry buffer, surfaces anomalies via highlights — same three-tier pattern as eval agent) | 3 | (continuous dev-loop signal: "I saw an error come through") |
+| 3.7 | test-strategy-convention | not yet created (~1 week; formalizes `{test-package}/` layout + Part 2 test/reality-drift controls from .indusk/research/test-strategy/induskbrief.md: shared client lib, branded opaque types, adversarial fixtures, E2E smoke, retroactive audits) | 3 (benefits from local span inspection during integration/E2E) | (unblocks reliable cross-service testing on every project) |
 
 **Discipline**: Admin UI v1 displays plan files (`.indusk/planning/`) and trajectory state. v2 adds the timeline view of test-runs + telemetry spans. NEITHER VERSION displays evaluator-written graph data — that surface comes in Arc 3 once Arc 2's schema is settled.
 

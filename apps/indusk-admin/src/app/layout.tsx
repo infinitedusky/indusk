@@ -62,20 +62,6 @@ export default function RootLayout({
 							read-only viewer
 						</span>
 					</Link>
-					<nav className="flex items-center gap-3 text-sm">
-						<Link
-							href="/"
-							className="text-gray-600 hover:text-gray-900"
-						>
-							Projects
-						</Link>
-						<Link
-							href="/scorecards"
-							className="text-gray-600 hover:text-gray-900"
-						>
-							Scorecards
-						</Link>
-					</nav>
 				</header>
 				<div className="h-[calc(100vh-2.5rem)] w-full">{children}</div>
 			</body>

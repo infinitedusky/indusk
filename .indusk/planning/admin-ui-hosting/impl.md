@@ -247,6 +247,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [ ] Build + publish: `cd apps/indusk-mcp && pnpm publish` (user action).
 - [ ] Upgrade global: `npm i -g @infinitedusky/indusk-mcp@1.27.2 && indusk ui restart`.
 - [ ] Smoke: browse `/p/dusk/scorecards` → sees dusk's scorecards; `/p/numero/scorecards` → sees numero's. Top-level `/scorecards` → 404. `/p/dusk/research/anchor-overlay-pattern` → renders markdown; sidebar lists research slugs. Plan detail: Brief section has a working chevron. Closes T19, T20, T21.
+- [x] Phase 6 bugfix (1.27.3): 1.27.2 smoke surfaced stale nav links in the global header — `app/layout.tsx` had `Projects` + `Scorecards` top-level `<Link>`s; `Scorecards` now 404s after the route removal. Fix: strip both nav links entirely. Header becomes pure chrome (title + subtitle left, nothing right). All navigation lives in the per-project sidebar where it belongs. Version bump to 1.27.3 + changelog entry.
 
 #### Phase 6 Verification
 - [x] T19 passes — `http-project-scorecards.test.ts`: 4/4 assertions green. `/p/proj-a/scorecards` isolates proj-a's data; `/scorecards` returns 404; sidebar link present.
