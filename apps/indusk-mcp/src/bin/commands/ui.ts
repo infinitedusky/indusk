@@ -23,7 +23,7 @@ import { readRegistry } from "../../lib/admin/registry.js";
  * with an unresolved leading component while `process.cwd()` returns the
  * fully-resolved realpath, so raw string compare misses.
  */
-function resolveOpenPath(): string {
+export function resolveOpenPath(): string {
 	const cwd = safeRealpath(process.cwd());
 	const reg = readRegistry();
 	const match = reg.projects.find((p) => safeRealpath(p.path) === cwd);

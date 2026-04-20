@@ -75,7 +75,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T22 | `daemonStatus()` returns `running: false` when the recorded PID points at a live process that is NOT listening on the recorded port (PID-reuse simulation). Today `isAlive`-only check false-positives and `uiStart` refuses to spawn a second daemon, blaming a stranger's PID. | Phase 0 | Phase 7 | written |
 | T23 | `daemonStop()` does NOT signal a process whose identity can't be confirmed — if the PID is alive but the recorded port is not listening, treat it as stale and clean up without SIGTERM. A spawned noop child sitting at the recorded PID must survive `daemonStop`. | Phase 0 | Phase 7 | written |
 | T24 | `readRegistry()` called against a malformed `projects.json` must quarantine the file (rename to `projects.json.corrupt.{ISO}.bak`) before `addProject()` writes a fresh registry — the malformed bytes must be preserved, not silently overwritten by the next write path. | Phase 0 | Phase 7 | written |
-| T25 | `resolveOpenPath()` returns `/p/{name}/` when cwd is a subdirectory of a registered project's root (e.g., `{root}/apps/indusk-mcp`), not just when cwd is the root itself — otherwise T16's cwd-aware promise regresses as soon as the user runs `indusk ui` from anywhere but the project root. | Phase 0 | Phase 7 | planned |
+| T25 | `resolveOpenPath()` returns `/p/{name}/` when cwd is a subdirectory of a registered project's root (e.g., `{root}/apps/indusk-mcp`), not just when cwd is the root itself — otherwise T16's cwd-aware promise regresses as soon as the user runs `indusk ui` from anywhere but the project root. | Phase 0 | Phase 7 | written |
 
 ### Trajectory Rationale
 
