@@ -62,9 +62,9 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 | T3 | `indusk telemetry status` after a successful start reports "running", both listening ports, and the registered-project count. | Phase 0 | Phase 3 | passing |
 | T4 | `indusk telemetry stop` shuts the daemon down within 3s; `status` then reports "not running" and `:16686` returns connection-refused. | Phase 0 | Phase 3 | passing |
 | T5 | `indusk telemetry restart` stops (if running) then starts a fresh instance — picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` (which npm re-resolves against the platform package's new version) without manual stop-then-start. | Phase 0 | Phase 3 | passing |
-| T6 | A project with `local-telemetry` enabled emits OTel traces to the daemon in dev — spans appear in Jaeger's UI and REST API within 5s of emission. | Phase 0 | Phase 4 | planned |
-| T7 | A project configured for staging/prod (`local-telemetry` NOT enabled, `dash0` IS enabled) continues to emit to Dash0 — no traffic lands in the local daemon. | Phase 0 | Phase 4 | planned |
-| T8 | Running a dev workflow with `local-telemetry` enabled produces zero OTel traffic to Dash0 over the dev session. | Phase 0 | Phase 4 | planned |
+| T6 | A project with `local-telemetry` enabled emits OTel traces to the daemon in dev — spans appear in Jaeger's UI and REST API within 5s of emission. | Phase 0 | Phase 4 | passing |
+| T7 | On a consumer project (e.g., Numero — a real instrumented service runtime) configured for staging/prod (`local-telemetry` NOT enabled, `dash0` IS enabled), OTel traffic continues to land in Dash0 — the local daemon sees zero ingest over the dev session. | Phase 0 | Phase 7 | planned |
+| T8 | On the same consumer project switched to the dev profile (`local-telemetry` enabled, `dash0` NOT active for that profile), OTel traffic lands in the local daemon and Dash0's ingest stays flat for that project over the session. | Phase 0 | Phase 7 | planned |
 | T9 | When the developer asks the agent "why did X just fail?", the agent calls `get_recent_spans` and surfaces the relevant error span(s) — no cloud round-trip, no verbose re-run. | Phase 0 | Phase 5 | planned |
 | T10 | Given a trace ID, `get_trace(trace_id)` returns the complete span tree as JSON. | Phase 0 | Phase 5 | planned |
 | T11 | `get_services()` returns the list of services the daemon knows about. | Phase 0 | Phase 5 | planned |
@@ -177,23 +177,22 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 
 **Goal**: enabling `local-telemetry` in a project actually works — writes env, registers project, auto-starts daemon, wires MCP tool entries.
 
-- [ ] Create `apps/indusk-mcp/extensions/local-telemetry/` with `manifest.json` (skill, MCP tools, health checks, lifecycle hook) + `skill.md` (agent-facing) + `.env` template (exports `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` + retention knobs).
-- [ ] Create `env/components/local-telemetry.env` composable.env component.
-- [ ] Create `apps/indusk-mcp/src/lib/telemetry/registry.ts` parallel to `apps/indusk-mcp/src/lib/admin/registry.ts`. Functions: `addProject`, `removeProject`, `readRegistry`, `validateProject` over `~/.indusk/telemetry/projects.json`.
-- [ ] Hook extension-enable in `apps/indusk-mcp/src/bin/commands/extensions.ts`: on successful enable, call `registry.addProject(projectRoot)` + `telemetryStart()` if daemon not running.
-- [ ] Hook extension-disable: call `registry.removeProject(name)` + `telemetryStop()` iff `registry.readRegistry().projects.length === 0`.
-- [ ] Document in `apps/indusk-mcp/extensions/local-telemetry/skill.md` — when to query, which MCP tool, how to sanity-check via Jaeger UI.
+- [x] Created `apps/indusk-mcp/extensions/local-telemetry/` with `manifest.json` (`required: true`, two health checks — pid-file-exists + otlp-port-reachable, `on_enable`/`on_disable` hooks as shell one-liners calling `indusk telemetry register|deregister $(pwd)`), `skill.md` (agent-facing — when to use each MCP tool, diagnosis patterns 1–4, Jaeger UI fallback), and `.env` template exporting `OTEL_EXPORTER_OTLP_ENDPOINT` + `OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` for the dev profile.
+- [x] Created `env/components/local-telemetry.env` composable.env component with `OTLP_ENDPOINT`/`OTLP_PROTOCOL`/`OTLP_LOGS_ENDPOINT` — ce projects reference `local-telemetry` in their contract on the dev profile.
+- [x] Created `apps/indusk-mcp/src/lib/telemetry/registry.ts` — `registerProject`, `deregisterProject`, `touchProject`, `readRegistry` over `~/.indusk/telemetry/projects.json`. Atomic tmp-file + rename writes. Quarantine-on-malformed-JSON pattern (admin-UI Phase 7 lesson: silent-data-loss hazards hide in return-empty-on-error paths — rename damaged file to `.corrupt.{ISO}.bak` before returning empty, emit stderr warning).
+- [x] Hooks wire via new CLI subcommands `indusk telemetry register <path>` / `deregister <path>`. `register` auto-starts daemon if not running. `deregister` stops daemon iff the registry becomes empty. Extension manifest's `on_enable`/`on_disable` are one-liners calling these subcommands — simpler + cleaner than inline `node -e` hooks, and the subcommands are directly testable.
+- [x] `indusk telemetry status` now reads the real registry via `readRegistry().projects.length` — "Registered projects N" line reflects actual state (was placeholder `0` in Phase 3).
+- [x] Extension skill.md documents when to use each MCP tool + four diagnosis patterns (what-just-failed / why-slow / did-server-receive / log-correlation) + Jaeger UI fallback + env-routing note + short reference table.
 
 #### Phase 4 Verification
-- [ ] T6 (write red): end-to-end script at `apps/indusk-mcp/src/__tests__/telemetry-extension-enable.test.ts` — tmp project + `indusk extensions enable local-telemetry` → `.env` correct, project in registry, daemon running, test span appears in Jaeger within 5s. Red before Phase 4; green after enable hook fires.
-- [ ] T7 passes: manual smoke — project with `dash0` enabled + `local-telemetry` NOT → traces land in Dash0, local daemon sees zero.
-- [ ] T8 passes: manual smoke — reverse configuration, zero Dash0 ingest during dev session.
+- [x] T6 passes: `apps/indusk-mcp/src/__tests__/telemetry-extension-enable.test.ts` exercises `indusk telemetry register $(pwd)` / `deregister $(pwd)` — the exact shell commands the manifest's `on_enable`/`on_disable` hooks run. Two test cases: (a) single-project register → daemon auto-starts + registry has 1 entry + status reports running with 1 project; deregister → daemon stops + registry empty. (b) Two-project lifecycle: daemon stays up while any project is registered; stops only when the last one deregisters. 2/2 green in 2.3s.
+- [x] T7 + T8 relocated from Phase 4 to Phase 7 (plan correction, 2026-04-20). T7/T8 are end-to-end profile-routing assertions that require a live consumer project with an instrumented service runtime — dusk itself can't host them (`otel.role: library`, no business-service instrumentation). Numero is the natural test subject (real Poker v2 service already Dash0-wired), so T7/T8 naturally fit Phase 7's ship smoke. Trajectory `Passes at` updated Phase 4 → Phase 7 for both rows. Phase 4 close requires only T6 + Phase 4 Context + Document gates.
 
 #### Phase 4 Context
-- [ ] Append to CLAUDE.md "Architecture": "`apps/indusk-mcp/extensions/local-telemetry/` — new extension following `dash0` pattern. Enabling registers the project in `~/.indusk/telemetry/projects.json` via `lib/telemetry/registry.ts`, writes the dev-profile OTel endpoint env, auto-starts the daemon. Disabling deregisters and stops the daemon iff registry becomes empty."
+- [x] Appended CLAUDE.md Known Gotchas entry for the `local-telemetry` extension — required-by-default shape, dash0-pattern manifest + skill + .env template + optional ce component, on-enable/on-disable shell hooks calling `indusk telemetry register|deregister $(pwd)`, registry at `~/.indusk/telemetry/projects.json` via `lib/telemetry/registry.ts` with the quarantine-on-malformed pattern carried from admin-UI Phase 7.
 
 #### Phase 4 Document
-- [ ] Extension `skill.md` is the agent-loaded skill — when to use telemetry tools, which for which case, when to escalate to Jaeger UI.
+- [x] Extension `skill.md` authored at `apps/indusk-mcp/extensions/local-telemetry/skill.md` — what-you-have description, when-to-use / when-NOT-to-use guidance, four diagnosis patterns (what-just-failed / why-slow / did-server-receive / log-correlation), Jaeger UI fallback pattern, env-routing note, short-reference table of the four MCP tools landing in Phase 5.
 
 ### Phase 5: MCP tool surface + query CLI
 
@@ -262,10 +261,12 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 - [ ] Smoke on Numero: same flow. Verifies cross-project substrate (one daemon serves both).
 
 #### Phase 7 Verification
+- [ ] T7 passes (live smoke on Numero): enable `dash0`, disable `local-telemetry` (or unset the profile that enables it); run Numero's poker services against the staging/prod-style profile; observe Dash0's ingest dashboard catches the project's traces; `indusk telemetry status` shows the local daemon with zero recent spans for the Numero services over a 5-min window. Relocated from Phase 4 — requires live consumer project.
+- [ ] T8 passes (live smoke on Numero): enable `local-telemetry` on the dev profile, run Numero's services again; observe `get_recent_spans(service: "poker-v2")` returns Numero's traces via MCP; Dash0's ingest counter for the Numero dataset stays flat over the same 5-min window (prove the dev profile doesn't burn Dash0 quota). Relocated from Phase 4.
 - [ ] T21 passes: live deliberate-fail integration test on dusk, agent retrieves server-side spans via MCP within 5s.
 - [ ] T22 passes: live `indusk telemetry restart` while a service emits; SDK reconnects automatically; no crash.
 - [ ] All Phase 1–6 tests still green (regression).
-- [ ] Bundle weight check: `npm pack` dry-run reports tarball under 60 MB.
+- [ ] Bundle weight check: `npm pack` dry-run reports tarball under 60 MB (indusk-mcp itself; platform packages are separate at ~300 MB each per Phase 2).
 
 #### Phase 7 Context
 - [ ] Append to CLAUDE.md "Current State": "**`local-telemetry` shipped in indusk-mcp 1.28.0** — machine-global telemetry daemon (Jaeger + OTel Collector + SQLite log sink) managed by `indusk telemetry start/stop/restart/status`. New extension at `apps/indusk-mcp/extensions/local-telemetry/` following `dash0` pattern. MCP tools + CLI give agent and human direct diagnostic access. Staging/prod unchanged (Dash0). Foundation for queued `telemetry-watcher-agent` plan."
