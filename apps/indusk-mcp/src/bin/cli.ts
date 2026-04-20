@@ -453,4 +453,55 @@ uiCmd
 		await uiRestart({ port: opts.port, open: opts.open });
 	});
 
+// Telemetry daemon (Jaeger + otelcol) — same parent+subcommand + optsWithGlobals
+// pattern as `indusk ui` above. Commander@13 drops duplicated options when they
+// appear on both parent and child, so options live only on the parent.
+const telemetryCmd = program
+	.command("telemetry")
+	.description("Local telemetry daemon lifecycle (start/stop/restart/status)")
+	.option(
+		"--otlp-port <port>",
+		"OTLP HTTP port for Jaeger (0 = pick free)",
+		"4318",
+	)
+	.option(
+		"--ui-port <port>",
+		"Jaeger UI port (0 = pick free)",
+		"16686",
+	);
+
+telemetryCmd
+	.command("start")
+	.description("Start the telemetry daemon (Jaeger + otelcol)")
+	.action(async function (this: Command) {
+		const opts = this.optsWithGlobals() as { otlpPort: string; uiPort: string };
+		const { telemetryStart } = await import("./commands/telemetry.js");
+		await telemetryStart({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
+	});
+
+telemetryCmd
+	.command("stop")
+	.description("Stop the telemetry daemon (SIGTERM both processes, SIGKILL fallback after 3s)")
+	.action(async () => {
+		const { telemetryStop } = await import("./commands/telemetry.js");
+		await telemetryStop();
+	});
+
+telemetryCmd
+	.command("restart")
+	.description("Stop + start — picks up new binaries from `npm i -g` of a newer indusk-mcp")
+	.action(async function (this: Command) {
+		const opts = this.optsWithGlobals() as { otlpPort: string; uiPort: string };
+		const { telemetryRestart } = await import("./commands/telemetry.js");
+		await telemetryRestart({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
+	});
+
+telemetryCmd
+	.command("status")
+	.description("Report the daemon's state, both ports, both PIDs, and registered-project count")
+	.action(async () => {
+		const { telemetryStatus } = await import("./commands/telemetry.js");
+		await telemetryStatus();
+	});
+
 program.parse();

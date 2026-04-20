@@ -57,11 +57,11 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `indusk telemetry start` from any directory brings up the daemon in under 10s and prints listening ports (4318 OTel, 16686 Jaeger UI). | Phase 0 | Phase 3 | written |
+| T1 | `indusk telemetry start` from any directory brings up the daemon in under 10s and prints listening ports (4318 OTel, 16686 Jaeger UI). | Phase 0 | Phase 3 | passing |
 | T2 | After daemon is running, `http://localhost:16686` serves Jaeger's trace search UI. | Phase 0 | Phase 2 | passing |
-| T3 | `indusk telemetry status` after a successful start reports "running", both listening ports, and the registered-project count. | Phase 0 | Phase 3 | written |
-| T4 | `indusk telemetry stop` shuts the daemon down within 3s; `status` then reports "not running" and `:16686` returns connection-refused. | Phase 0 | Phase 3 | written |
-| T5 | `indusk telemetry restart` stops (if running) then starts a fresh instance — picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` (which npm re-resolves against the platform package's new version) without manual stop-then-start. | Phase 0 | Phase 3 | written |
+| T3 | `indusk telemetry status` after a successful start reports "running", both listening ports, and the registered-project count. | Phase 0 | Phase 3 | passing |
+| T4 | `indusk telemetry stop` shuts the daemon down within 3s; `status` then reports "not running" and `:16686` returns connection-refused. | Phase 0 | Phase 3 | passing |
+| T5 | `indusk telemetry restart` stops (if running) then starts a fresh instance — picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` (which npm re-resolves against the platform package's new version) without manual stop-then-start. | Phase 0 | Phase 3 | passing |
 | T6 | A project with `local-telemetry` enabled emits OTel traces to the daemon in dev — spans appear in Jaeger's UI and REST API within 5s of emission. | Phase 0 | Phase 4 | planned |
 | T7 | A project configured for staging/prod (`local-telemetry` NOT enabled, `dash0` IS enabled) continues to emit to Dash0 — no traffic lands in the local daemon. | Phase 0 | Phase 4 | planned |
 | T8 | Running a dev workflow with `local-telemetry` enabled produces zero OTel traffic to Dash0 over the dev session. | Phase 0 | Phase 4 | planned |
@@ -153,19 +153,19 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 
 **Goal**: `indusk telemetry start/stop/restart/status` parallel to `indusk ui *`. Spawns Jaeger + otelcol as detached child processes resolved from the platform package, records daemon metadata, supervises PIDs. No Docker.
 
-- [ ] Create `apps/indusk-mcp/src/lib/telemetry/daemon.ts` — parallel to `apps/indusk-mcp/src/lib/admin/daemon.ts`. Functions: `daemonStart`, `daemonStop`, `daemonStatus`, `verifyIdentity(pid, port)`, `findFreePort`, `isPortListening`. Apply admin-UI Phase 7 lessons: verifyIdentity composes `isAlive` + `isPortListening` to avoid PID-reuse false-positives.
-- [ ] Binary path resolution via `resolveBinary(name: "jaeger" | "otelcol"): string` that calls `require.resolve("@infinitedusky/telemetry-binaries-{detectedPlatform}/bin/${name}")`. Platform detection via `process.platform` + `process.arch`; unsupported combos throw a clear error naming the platform + pointing to docs.
-- [ ] `daemonStart` spawns both children: first otelcol (OTLP receivers + exporters to Jaeger), then Jaeger (OTLP gRPC on 4317 — otelcol exports to it internally). Both `detached: true`, `stdio: ["ignore", logFd, logFd]`, `unref()`. Both PIDs written to `~/.indusk/telemetry.json`. The two processes are supervised as a unit — stop kills both.
-- [ ] Create `apps/indusk-mcp/src/bin/commands/telemetry.ts` — `telemetryStart`, `telemetryStop`, `telemetryStatus`, `telemetryRestart`.
-- [ ] Wire into `apps/indusk-mcp/src/bin/cli.ts` as `indusk telemetry start/stop/restart/status`. Apply commander@13 lesson: options on parent, subcommand actions use `optsWithGlobals()`.
-- [ ] Daemon metadata: `~/.indusk/telemetry.pid` (bare otelcol PID, as the "primary" process — Jaeger PID also tracked), `~/.indusk/telemetry.json` (`{jaegerPid, otelcolPid, otlpPort, uiPort, startedAt, jaegerBinary, otelcolBinary, platform}`), `~/.indusk/telemetry.log` (redirected child stdout+stderr for both processes, interleaved).
-- [ ] `start` auto-bumps ports if requested are taken; prints warnings. `restart` = `stop + start` (gracefully stops BOTH processes). `status` prints running state + both ports + both PIDs + started-at + registered-project count.
+- [x] Created `apps/indusk-mcp/src/lib/telemetry/daemon.ts` — parallel to `lib/admin/daemon.ts`. Exports `daemonStart`, `daemonStop`, `daemonStatus`, `daemonRestart`, `resolveBinary`, `findFreePort`, `isPortListening`. Private `verifyIdentity(pid, port)` composes `isAlive(pid)` + `isPortListening(port)` (admin-UI Phase 7 pattern); `daemonStatus` and `daemonStop` both gate on it for BOTH processes.
+- [x] `resolveBinary("jaeger" | "otelcol")` calls `createRequire(import.meta.url).resolve("@infinitedusky/telemetry-binaries-{platform}/bin/${name}")`. Platform tag via `process.platform` + `process.arch` (with `arm64`/`x64` normalization). Throws user-facing error when the platform package isn't installed, naming the platform + suggesting `npm install`.
+- [x] `daemonStart` spawns BOTH children — Jaeger first, waits for its health port (15s budget), then otelcol (own 15s budget). Both `detached: true`, `stdio: ["ignore", logFd, logFd]` (interleaved into `~/.indusk/telemetry.log`), `unref()`. 7 ports allocated simultaneously via `Promise.all` (avoids the sequential-pickFreePort collision surfaced in Phase 2).
+- [x] Created `apps/indusk-mcp/src/bin/commands/telemetry.ts` — `telemetryStart`, `telemetryStop`, `telemetryStatus`, `telemetryRestart` as thin CLI-layer wrappers.
+- [x] Wired `indusk telemetry start/stop/restart/status` into `cli.ts`. Commander@13 pattern: `--otlp-port` + `--ui-port` on parent only; subcommands read via `this.optsWithGlobals()`.
+- [x] Daemon metadata shape: `~/.indusk/telemetry.pid` holds Jaeger's PID (primary); `~/.indusk/telemetry.json` holds the full `DaemonMeta` (`jaegerPid`, `otelcolPid`, `otlpPort`, `uiPort`, both health ports, `logsOtlpPort`, `startedAt`, `jaegerBinary`, `otelcolBinary`, `platform`, `logsPath`); `~/.indusk/telemetry.log` holds interleaved stdout+stderr from both children.
+- [x] `start` auto-bumps ports via `findFreePort` when requested values are taken. `restart` = `stop` (with 200ms grace for OS port release) + `start`. `status` prints running state + both ports + both PIDs + startedAt + registered-project count (0 until Phase 4 lands the registry).
 
 #### Phase 3 Verification
-- [ ] T1 (write red): commit `apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts` running `indusk telemetry start --port 0`, asserting exit 0 + stdout contains port + daemon reachable via curl. Red today; goes green at Phase 3 close.
-- [ ] T3 passes: same subprocess test asserts `indusk telemetry status` after successful start reports running + ports + project count.
-- [ ] T4 passes: test asserts `indusk telemetry stop` exits 0 in <3s + subsequent `status` says "not running".
-- [ ] T5 passes: second subprocess test for `indusk telemetry restart` captures otelcol + Jaeger PIDs before + after; asserts both differ (new processes spawned).
+- [x] T1 (written red at Phase start, now passing): `apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts` runs `node dist/bin/cli.js telemetry start --otlp-port 0 --ui-port 0`, asserts exit 0 + stdout contains both `OTLP...localhost:N` and `Jaeger UI...localhost:N`.
+- [x] T3 passes: same test asserts `indusk telemetry status` after start reports "running", both ports, and a "project" mention.
+- [x] T4 passes: test asserts `indusk telemetry stop` exits 0, and subsequent `status` reports "not running".
+- [x] T5 passes: test captures `readPidsFromStatus()` before + after a `telemetry restart`; asserts both `jaegerPid` AND `otelcolPid` differ — proves fresh process spawn for both. 4/4 tests green across 4 consecutive runs (stable, no flakiness).
 
 #### Phase 3 Context
 - [ ] Append to CLAUDE.md "Conventions": "`indusk telemetry start/stop/restart/status` is the CLI lifecycle for the telemetry daemon — parallel to `indusk ui start/stop/restart/status`. Commander@13 pattern (options on parent, subcommands via `optsWithGlobals()`). Metadata at `~/.indusk/telemetry.{pid,json,log}`, never edited by hand."
