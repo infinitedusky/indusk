@@ -212,7 +212,11 @@
       "Bash(node /Users/the_dusky/code/sandbox/dusk/apps/indusk-mcp/scripts/bundle-admin.js)",
       "Bash(pkill -f \"next.*start\\\\|next.*dev\")",
       "Bash(pnpm exec *)",
-      "Read(//Users/the_dusky/code/sandbox/dusk/=== curl /**)"
+      "Read(//Users/the_dusky/code/sandbox/dusk/=== curl /**)",
+      "Bash(node -e \"console.log\\(require.resolve\\('next/package.json'\\)\\)\")",
+      "Read(//Users/the_dusky/code/sandbox/dusk/apps/indusk-mcp/admin/=== curl /**)",
+      "Bash(curl -s -w \"HTTP %{http_code} bytes=%{size_download}\\\\n\" -o /tmp/bs-root.html http://localhost:3941/)",
+      "Read(//Users/the_dusky/code/sandbox/dusk/apps/indusk-mcp/admin/=== /plan/**)"
     ],
     "additionalDirectories": [
       "/tmp",

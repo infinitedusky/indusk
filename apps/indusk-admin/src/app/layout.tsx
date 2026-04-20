@@ -26,6 +26,19 @@ export const metadata: Metadata = {
 };
 
 /**
+ * Force dynamic rendering for the entire app. Without this, Next.js prerenders
+ * `/` at build time using the build's `process.env` snapshot, which has no
+ * `INDUSK_PROJECT_ROOT` set. The baked HTML then shows an empty sidebar
+ * forever, regardless of what env var the runtime daemon was started with.
+ *
+ * The admin UI reads `.indusk/planning/` from disk on every request — there's
+ * nothing to prerender. Dynamic rendering is the correct mode.
+ *
+ * Discovered during Phase 1 bundling smoke of admin-ui-hosting.
+ */
+export const dynamic = "force-dynamic";
+
+/**
  * Root layout reads planning data on every request via the planning-reader.
  * This is a server component — `process.cwd()` is the directory the
  * `indusk ui` CLI was invoked from, which is the project root by convention.
