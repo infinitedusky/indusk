@@ -7,6 +7,7 @@ import {
 	readActivePlans,
 	readArchivedPlans,
 	readMasterPlanOrder,
+	readProjectResearch,
 } from "@/lib/planning-reader";
 import {
 	getProjectPath,
@@ -51,9 +52,10 @@ export default async function PerProjectLayout({
 		);
 	}
 
-	const [active, archived] = await Promise.all([
+	const [active, archived, research] = await Promise.all([
 		readActivePlans(projectPath),
 		readArchivedPlans(projectPath),
+		readProjectResearch(projectPath),
 	]);
 	const masterOrder = readMasterPlanOrder(projectPath);
 	const registered = readRegistryProjects().map((p) => ({ name: p.name }));
@@ -90,6 +92,26 @@ export default async function PerProjectLayout({
 					masterOrder={masterOrder}
 					planHrefPrefix={`/p/${project}/plan/`}
 				/>
+				{research.length > 0 && (
+					<nav
+						className="flex flex-col gap-1 pt-3 border-t border-gray-200 mt-3"
+						data-testid="research-group"
+					>
+						<h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+							Research
+						</h3>
+						{research.map((entry) => (
+							<Link
+								key={entry.slug}
+								href={`/p/${project}/research/${entry.slug}`}
+								className="truncate rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+								title={entry.title ?? entry.slug}
+							>
+								{entry.title ?? entry.slug}
+							</Link>
+						))}
+					</nav>
+				)}
 			</Sidebar>
 			<main className="flex-1 overflow-y-auto p-6">{children}</main>
 		</div>
