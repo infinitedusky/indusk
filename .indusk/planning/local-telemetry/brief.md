@@ -14,16 +14,16 @@ The broader arc is autonomy. A working agent that can see what just happened is 
 
 ## Proposed Direction
 
-Ship local-telemetry as **a new InDusk extension** (alongside `dash0`, `otel`, `graphiti`, etc. — same manifest + skill + `.env` shape the existing extension system already supports) PLUS **a machine-global daemon** managed by a new `indusk telemetry` CLI following the 1.27.x admin-UI pattern. Enabling the extension:
+Ship local-telemetry as **a new required-by-default InDusk extension** (alongside `dash0`, `otel`, `graphiti`, etc. — same manifest + skill + `.env` shape the existing extension system already supports) PLUS **a machine-global daemon** managed by a new `indusk telemetry` CLI following the 1.27.x admin-UI pattern. Because it's required-by-default, `indusk init` auto-enables it and `indusk update` adds it to pre-1.28 projects as a migration step (same pattern as the scaffolded `instrumentation.ts` today — every project gets the OTel emitter by default, and now every project also gets the local OTel receiver). An explicit `indusk extensions disable local-telemetry` remains the escape hatch for consumers who want to silence it. Enabling the extension:
 
 1. **Registers the project** with the machine-global telemetry daemon (writes the project entry to `~/.indusk/telemetry/projects.json`) and auto-starts the daemon if it isn't already running.
 2. **Writes the extension's `.env`** template (dev profile) pointing the project's services at `http://localhost:4318` — the OTel Collector receiver inside the daemon. Developer writes this directly, or has ce populate it from an `env/components/local-telemetry.env` component. Same pattern as `dash0`. When the extension is enabled, the scaffolded `instrumentation.ts` (already env-driven) emits to the local daemon.
 3. **Adds MCP tools** (`get_recent_spans`, `get_trace`, `get_services`, `tail_logs`) that wrap the daemon's query surface — Jaeger's REST API for traces, the SQLite log sink for logs. Agent calls one tool when diagnosing, no cloud round-trip.
 
-The daemon itself is one container image shipped in the indusk-mcp tarball (or pulled from a registry; spike decides). Contents: OTel Collector (receiver + fan-out) → Jaeger (trace storage + UI at `:16686` + REST query) + SQLite log sink (queryable via MCP). Lifecycle:
+The daemon itself runs **native binaries** — Jaeger all-in-one + OTel Collector — spawned and supervised as detached child processes in the admin-UI 1.27.x pattern. Binaries ship via **platform-specific npm optional dependencies** (the esbuild/swc distribution pattern): indusk-mcp lists `@infinitedusky/telemetry-binaries-darwin-arm64` / `-darwin-x64` / `-linux-arm64` / `-linux-x64` under `optionalDependencies` with matching `os`/`cpu` constraints, npm installs only the one matching the consumer's platform at `npm i -g` time, and `indusk telemetry start` resolves the binary paths via `require.resolve(...)`. The SQLite log sink runs in-process in otelcol via its file/SQLite exporter. Contents of the running daemon: OTel Collector (receiver + fan-out) → Jaeger (trace storage + UI at `:16686` + REST query) + SQLite log sink (queryable via MCP). Lifecycle:
 
 ```
-indusk telemetry start     # ensure the bundled container is up on 4318/16686
+indusk telemetry start     # ensure otelcol + Jaeger processes are up on 4318/16686
 indusk telemetry stop      # SIGTERM, same shape as `indusk ui stop`
 indusk telemetry restart   # post-upgrade, like `indusk ui restart`
 indusk telemetry status    # running/not + listening ports + registered project count
@@ -42,9 +42,10 @@ The eval agent's existing OTel (routing to Dash0's `agent` dataset) is untouched
 
 ## Context
 
-- Detailed prior-art scan, candidate backend comparison, MCP tool shape, and the six open questions the impl-Phase-1 spike will resolve live in [`research.md`](./research.md).
+- Detailed prior-art scan, candidate backend comparison, MCP tool shape, and the open questions the impl-Phase-1 spike will resolve live in [`research.md`](./research.md).
 - `instrumentation.ts` scaffolded by `indusk init` is already env-driven via OTel standard env vars; this plan adds defaults, not a new API.
-- The `indusk-infra` container precedent (FalkorDB + Graphiti, bundled, one docker command) is the model — one more service alongside, not a new container per consumer.
+- **admin-ui-hosting's 1.27.x daemon precedent** is the model — machine-global native Node-spawned daemon, `start/stop/restart/status` lifecycle, metadata at `~/.indusk/{name}.{pid,json,log}`, registry of consumer projects, auto-start on enable / graceful stop when last consumer disables. Local-telemetry reuses the pattern verbatim for its own daemon (separate from admin-UI's — different concerns, same shape).
+- **Distribution precedent**: esbuild, swc, biome, turbo, tailwindcss-oxide, rollup all ship native binaries via npm's platform-specific `optionalDependencies`. Same pattern here — no custom download logic, no GitHub-releases fetch at first-start, no Docker prereq.
 - The three-tier agent model (working agent / eval agent / infrastructure — see CLAUDE.md Architecture) places local-telemetry in the infrastructure tier. The working agent consumes via MCP; the downstream `telemetry-watcher-agent` plan adds a second async-observer tier that tails the buffer and surfaces anomalies.
 - Adjacent: `.indusk/research/test-strategy/induskbrief.md` — the to-be-planned test-strategy convention benefits from local spans (integration + E2E tests emit traces you can inspect instantly rather than re-running with `--verbose`), but doesn't strictly require this plan to ship first.
 
@@ -52,17 +53,18 @@ The eval agent's existing OTel (routing to Dash0's `agent` dataset) is untouched
 
 ### In Scope
 
-- **New extension `apps/indusk-mcp/extensions/local-telemetry/`** with `manifest.json` + `skill.md` + `.env` template (same shape as `dash0`). Enabling the extension registers the project with the telemetry daemon, writes the project's OTel endpoint env var, and surfaces the MCP tools.
-- **Machine-global telemetry daemon** packaged as one container image (Jaeger + OTel Collector + SQLite log sink) shipped in the indusk-mcp tarball or pulled from a registry (spike decides distribution). OTLP HTTP (4318), OTLP gRPC (4317), Jaeger UI (16686).
-- **`indusk telemetry` CLI** parallel to `indusk ui` — `start/stop/restart/status` for lifecycle; `tail/trace/services/reset` for queries.
+- **New required-by-default extension `apps/indusk-mcp/extensions/local-telemetry/`** with `manifest.json` (declaring `required: true`) + `skill.md` + `.env` template (same shape as `dash0`). Enabling the extension registers the project with the telemetry daemon, writes the project's OTel endpoint env var, and surfaces the MCP tools.
+- **Machine-global telemetry daemon** running Jaeger all-in-one + OTel Collector as native binaries (not containerized), spawned and supervised like admin-UI's daemon. OTLP HTTP (4318), OTLP gRPC (4317), Jaeger UI (16686). SQLite log sink runs in-process in otelcol via its file/SQLite exporter.
+- **Platform-specific npm packages** at `packages/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}/` (each bundling the upstream Jaeger + OTel Collector binaries for its platform), listed as `optionalDependencies` in indusk-mcp so `npm i -g @infinitedusky/indusk-mcp` installs exactly one matching package per consumer.
+- **`indusk telemetry` CLI** parallel to `indusk ui` — `start/stop/restart/status` for lifecycle; `tail/trace/services/reset` for queries. `start` resolves binary paths via `require.resolve("@infinitedusky/telemetry-binaries-{platform}/bin/jaeger")`.
 - **Daemon metadata at `~/.indusk/telemetry.{pid,json,log}`** + **registry at `~/.indusk/telemetry/projects.json`** listing which projects have enabled the extension.
 - **Extension enable auto-starts the daemon** if it isn't running (same courtesy admin-UI gives); extension disable deregisters the project and stops the daemon if no projects remain.
 - **Extension `.env` template** sets `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` + retention knobs. Developer can write it directly or populate from an `env/components/local-telemetry.env` ce component — standard extension-env pattern.
 - **MCP tool surface** (`get_recent_spans`, `get_trace`, `get_services`, `tail_logs`) wrapping the daemon's query surfaces.
-- **OTel Collector pipeline** — receives from services at 4318, fans out to Jaeger (traces) and SQLite log sink (logs). Collector config ships as part of the bundled container; v1 is locked (no consumer customization), v2 may expose a merge point for custom processors.
-- **`indusk init` integration** — adding `local-telemetry` to the enabled-extensions set during init wires everything via the existing extension activation path.
-- **Docs:** new reference page `reference/telemetry/overview.md` describing the daemon, the extension, the MCP tool surface, and the CLI. Migration note in changelog for existing projects.
-- **Impl Phase 1 = hands-on research spike.** Actual wiring + query-latency measurement + container-packaging shape + distribution mechanism, output captured in `spike-findings.md` which also feeds the `telemetry-watcher-agent` plan.
+- **OTel Collector pipeline** — receives from services at 4318, fans out to Jaeger (traces) and SQLite log sink (logs). Collector config ships as part of the bundled platform packages; v1 is locked (no consumer customization), v2 may expose a merge point for custom processors.
+- **`indusk init` auto-enable + `indusk update` migration** — every new InDusk project gets local-telemetry by default; every pre-1.28 project gets it added as a migration step. Required-by-default is explicit in the extension manifest.
+- **Docs:** new reference page `reference/telemetry/overview.md` describing the daemon, the extension, the MCP tool surface, and the CLI. Migration note in changelog for existing projects. Explicit callout of the `indusk extensions disable local-telemetry` escape hatch.
+- **Impl Phase 1 = hands-on research spike.** Actual wiring + query-latency measurement + npm platform-package publish+install flow + otelcol variant decision (contrib vs core vs minimal-build), output captured in `spike-findings.md` which also feeds the `telemetry-watcher-agent` plan.
 
 ### Out of Scope
 
@@ -81,7 +83,7 @@ The eval agent's existing OTel (routing to Dash0's `agent` dataset) is untouched
 1. **The "why did this fail" loop closes in seconds.** After a dev run fails, the agent answers "why?" by calling one MCP tool and reading the result — no Dash0 access, no `docker logs` grep, no verbose re-run.
 2. **Dev Dash0 quota goes to zero.** After rollout + migration, no project's dev profile exports to Dash0. Staging + prod unchanged.
 3. **Test runs emit inspectable telemetry.** Integration + E2E test failures surface real server-side traces the agent can pull immediately. Enables the follow-up test-strategy plan's diagnosis use cases.
-4. **`indusk-infra` stays pragmatic.** Bundle weight after adding Jaeger (+ optional Collector) stays under ~800 MB. If it exceeds, re-scope.
+4. **Platform-package install stays pragmatic.** Per-platform npm package (one installed per user) stays under ~150 MB. indusk-mcp tarball itself stays under ~15 MB (binaries live in separate optional-deps, not in indusk-mcp's own tarball).
 5. **Environment-aware routing survives `indusk init` on a fresh project.** A newly scaffolded project ships with the right env vars per profile and emits to Jaeger in dev without the developer editing anything.
 6. **Jaeger's trace UI is reachable at `localhost:16686` when started.** Proves the bundled service is healthy and usable for human eyeballing.
 7. **MCP tool calls return in under 500 ms** for realistic dev loads (spike validates; budget captured in success criteria so the "fast feedback" claim is concrete).

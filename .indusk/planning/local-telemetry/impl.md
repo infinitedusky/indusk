@@ -11,21 +11,23 @@ gate_policy: ask
 
 ## Goal
 
-Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry daemon (Jaeger + OTel Collector + SQLite log sink) managed by `indusk telemetry start/stop/restart/status`, with an MCP tool surface that lets the agent call `get_recent_spans` / `get_trace` / `get_services` / `tail_logs` for fast local diagnosis. Ships as indusk-mcp 1.28.0.
+Ship a new **required-by-default** InDusk extension `local-telemetry` plus a machine-global telemetry daemon (Jaeger + OTel Collector as native binaries + SQLite log sink running in-process in otelcol) managed by `indusk telemetry start/stop/restart/status`, with an MCP tool surface that lets the agent call `get_recent_spans` / `get_trace` / `get_services` / `tail_logs` for fast local diagnosis. Binaries ship via platform-specific npm optional dependencies (esbuild/swc pattern — zero custom download code). `indusk init` auto-enables; `indusk update` migrates pre-1.28 projects. Ships as indusk-mcp 1.28.0.
 
 ## Scope
 
 ### In Scope
 
-- New extension at `apps/indusk-mcp/extensions/local-telemetry/` (`manifest.json`, `skill.md`, `.env` template)
+- New **required-by-default** extension at `apps/indusk-mcp/extensions/local-telemetry/` (`manifest.json` with `required: true`, `skill.md`, `.env` template)
 - Optional ce component at `env/components/local-telemetry.env`
-- Container image bundling Jaeger all-in-one + OTel Collector + SQLite log sink + process manager — packaging shape decided by spike
+- **Platform-specific npm packages** at `packages/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}/` — each bundles upstream Jaeger + OTel Collector binaries for its platform (Apache 2.0, attribution in README), published as `@infinitedusky/telemetry-binaries-{platform}` and listed in indusk-mcp's `optionalDependencies` with matching `os`/`cpu` constraints
+- Build script `scripts/build-telemetry-binaries.sh` that fetches upstream Jaeger + otelcol release artifacts, verifies upstream checksums, packs per-platform, and optionally `npm publish`es — one-time-per-upstream-bump ceremony
+- Daemon lifecycle: spawn Jaeger + otelcol as detached child processes (admin-UI pattern), path-resolved via `require.resolve("@infinitedusky/telemetry-binaries-{platform}/bin/{jaeger,otelcol}")`, PIDs tracked in `~/.indusk/telemetry.json`
 - `indusk telemetry` CLI with lifecycle (`start/stop/restart/status`) + query (`tail/trace/services/reset`) subcommands
 - Daemon metadata at `~/.indusk/telemetry.{pid,json,log}` + registry at `~/.indusk/telemetry/projects.json`
 - MCP tools (`get_recent_spans`, `get_trace`, `get_services`, `tail_logs`)
 - Extension-enable auto-start + extension-disable graceful-stop-iff-registry-empty
-- `indusk init --extensions local-telemetry` scaffolding
-- Docs: `reference/telemetry/overview.md`, `reference/telemetry/cli.md`, extension `skill.md`, changelog 1.28.0 entry
+- `indusk init` auto-enable (default) + `indusk update` migration for pre-1.28 projects
+- Docs: `reference/telemetry/overview.md`, `reference/telemetry/cli.md`, extension `skill.md`, changelog 1.28.0 entry + `indusk extensions disable local-telemetry` escape-hatch callout
 - Spike Phase 1 producing `spike-findings.md`
 
 ### Out of Scope
@@ -36,19 +38,20 @@ Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry da
 - Watcher agent (`telemetry-watcher-agent` is a downstream plan)
 - Custom Collector processor config (v1 locked)
 - Cross-machine / team sharing
-- Windows support
+- Windows / BSD / musl-linux support (npm `os`/`cpu` filters exclude them cleanly; add as future platform packages if consumer demand surfaces)
+- Containerized distribution (explicitly rejected — see ADR Alternative #7)
 
 ## Boundary Map
 
 | Phase | Produces | Consumes |
 |-------|----------|----------|
-| Phase 1 | Spike findings: Jaeger query latency vs 500 ms budget, storage-mode choice, retention default, container-packaging shape, image distribution, MCP signature ergonomics. Output in `spike-findings.md`. | No prior phases — hands-on investigation. |
-| Phase 2 | Telemetry daemon container image + Dockerfile/Compose + Collector config + Jaeger launch args + SQLite schema. Consumer can `docker run` it and see Jaeger UI at `:16686`. | Phase 1's packaging + distribution decisions. |
-| Phase 3 | `indusk telemetry start/stop/restart/status` CLI + daemon lifecycle library + `~/.indusk/telemetry.{pid,json,log}`. | Phase 2's container image. |
-| Phase 4 | Extension scaffolding (`apps/indusk-mcp/extensions/local-telemetry/`) + ce component + registry library for `~/.indusk/telemetry/projects.json` + auto-start/deregister hooks wired to `indusk extensions enable/disable`. | Phase 3's CLI lifecycle. |
-| Phase 5 | MCP tools (`get_recent_spans`, `get_trace`, `get_services`, `tail_logs`) + `indusk telemetry tail/trace/services/reset` query CLI + SQL layer over SQLite log sink. | Phase 2's Jaeger REST API + SQLite sink; Phase 4's extension manifest declares the tools. |
-| Phase 6 | `indusk init --extensions local-telemetry` wiring + existing-project upgrade path from `dash0`-only. | Phase 4's extension + Phase 3's CLI. |
-| Phase 7 | Ship: 1.28.0 version bump, changelog, `reference/telemetry/overview.md` + `cli.md`, extension skill docs, publish, global upgrade + live smoke on dusk + Numero. | All prior phases. |
+| Phase 1 | Spike findings: Jaeger query latency vs 500 ms budget, storage-mode choice, retention default, **otelcol variant decision** (contrib vs core vs minimal-build), **npm platform-package publish + install flow** validated on macOS arm64 + Linux x64, MCP signature ergonomics. Output in `spike-findings.md`. | No prior phases — hands-on investigation. |
+| Phase 2 | **Platform-specific npm packages** at `packages/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}/` — each bundles Jaeger + otelcol for its platform. `scripts/build-telemetry-binaries.sh` automates fetch + verify + pack per-platform. `otelcol-config.yaml` (locked pipeline) included in the shared package config. Indusk-mcp's `package.json` lists them as `optionalDependencies`. Consumer running `npm i -g @infinitedusky/indusk-mcp` gets exactly one platform package's binaries installed in their node_modules. | Phase 1's otelcol-variant + publish-flow decisions. |
+| Phase 3 | `indusk telemetry start/stop/restart/status` CLI + daemon lifecycle library + `~/.indusk/telemetry.{pid,json,log}`. Spawns Jaeger + otelcol as detached child processes; path resolution via `require.resolve("@infinitedusky/telemetry-binaries-{platform}/bin/...")`; supervises two PIDs (one per process). | Phase 2's platform packages. |
+| Phase 4 | Extension scaffolding (`apps/indusk-mcp/extensions/local-telemetry/`) with `required: true` in manifest + ce component + registry library for `~/.indusk/telemetry/projects.json` + auto-start/deregister hooks wired to `indusk extensions enable/disable`. | Phase 3's CLI lifecycle. |
+| Phase 5 | MCP tools (`get_recent_spans`, `get_trace`, `get_services`, `tail_logs`) + `indusk telemetry tail/trace/services/reset` query CLI + SQL layer over SQLite log sink. | Phase 2's otelcol + Jaeger REST API + SQLite sink; Phase 4's extension manifest declares the tools. |
+| Phase 6 | `indusk init` auto-enables `local-telemetry` by default + `indusk update` migration path adds it to pre-1.28 projects. Existing-project upgrade from `dash0`-only validated. | Phase 4's extension + Phase 3's CLI. |
+| Phase 7 | Ship: 1.28.0 version bump on indusk-mcp + first publish of all 4 platform packages, changelog, `reference/telemetry/overview.md` + `cli.md`, extension skill docs, global upgrade + live smoke on dusk + Numero. | All prior phases. |
 
 ## Test Trajectory
 
@@ -58,7 +61,7 @@ Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry da
 | T2 | After daemon is running, `http://localhost:16686` serves Jaeger's trace search UI. | Phase 0 | Phase 2 | planned |
 | T3 | `indusk telemetry status` after a successful start reports "running", both listening ports, and the registered-project count. | Phase 0 | Phase 3 | planned |
 | T4 | `indusk telemetry stop` shuts the daemon down within 3s; `status` then reports "not running" and `:16686` returns connection-refused. | Phase 0 | Phase 3 | planned |
-| T5 | `indusk telemetry restart` stops (if running) then starts a fresh instance — picks up a new container image after `npm i -g @infinitedusky/indusk-mcp@<newer>` without manual stop-then-start. | Phase 0 | Phase 3 | planned |
+| T5 | `indusk telemetry restart` stops (if running) then starts a fresh instance — picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` (which npm re-resolves against the platform package's new version) without manual stop-then-start. | Phase 0 | Phase 3 | planned |
 | T6 | A project with `local-telemetry` enabled emits OTel traces to the daemon in dev — spans appear in Jaeger's UI and REST API within 5s of emission. | Phase 0 | Phase 4 | planned |
 | T7 | A project configured for staging/prod (`local-telemetry` NOT enabled, `dash0` IS enabled) continues to emit to Dash0 — no traffic lands in the local daemon. | Phase 0 | Phase 4 | planned |
 | T8 | Running a dev workflow with `local-telemetry` enabled produces zero OTel traffic to Dash0 over the dev session. | Phase 0 | Phase 4 | planned |
@@ -72,7 +75,7 @@ Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry da
 | T16 | `indusk telemetry services` prints the list of services the daemon has seen, one per line. | Phase 0 | Phase 5 | planned |
 | T17 | `indusk telemetry reset` empties the buffer — subsequent queries return no traces until new spans arrive. | Phase 0 | Phase 5 | planned |
 | T18 | `indusk init --extensions local-telemetry` on a fresh project produces a working setup: `.env` written, project registered, MCP tools in `.mcp.json`, daemon auto-starts, a test script can emit + query spans — zero further manual config. | Phase 0 | Phase 6 | planned |
-| T19 | `indusk extensions disable local-telemetry` deregisters the project, removes MCP tools from `.mcp.json`, and stops the daemon iff the registry becomes empty. No orphan containers, no stale MCP entries. | Phase 0 | Phase 6 | planned |
+| T19 | `indusk extensions disable local-telemetry` deregisters the project, removes MCP tools from `.mcp.json`, and stops the daemon iff the registry becomes empty. No orphan processes, no stale MCP entries. | Phase 0 | Phase 6 | planned |
 | T20 | An existing project (already using `dash0`, already has `instrumentation.ts`) can opt into local-telemetry via `indusk extensions enable local-telemetry` without rewriting `instrumentation.ts` — env file swap is the only behavioral change. | Phase 0 | Phase 6 | planned |
 | T21 | An integration test that fails emits server-side spans retrievable via MCP within 5s of the failure — enables `test-strategy-convention`'s diagnosis use cases. | Phase 0 | Phase 7 | planned |
 | T22 | Restarting the telemetry daemon does not orphan client OTel exporters — reconnection happens automatically once the daemon is healthy, retention matches storage mode (in-memory → empty; Badger → preserved). | Phase 0 | Phase 7 | planned |
@@ -100,18 +103,18 @@ Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry da
 
 **Goal**: before committing the remaining phases to specific shapes, run the system with deliberately minimal effort to measure the things whose answers can't be reasoned out on paper. Output is `spike-findings.md` in this plan folder.
 
-- [ ] Stand up a Jaeger all-in-one container (`jaegertracing/all-in-one:latest`) locally. Expose 4318 + 16686. Emit test spans via a small Node script using `@opentelemetry/sdk-trace-node` + OTLP HTTP exporter at `localhost:4318`. Verify spans land via Jaeger UI search.
-- [ ] Add an OTel Collector container (`otel/opentelemetry-collector-contrib:latest`) in front of Jaeger. Configure Collector to receive OTLP at 4318, forward to Jaeger internally. Emit spans to Collector; verify they land in Jaeger.
-- [ ] Add a log pipeline: Collector's file exporter writing to SQLite-compatible format OR a small consumer process tailing Collector output into SQLite. Emit structured log records; verify via `sqlite3` CLI.
+- [ ] Download Jaeger all-in-one binary from upstream GitHub release (`jaegertracing/jaeger` releases page, platform-matching archive) into a temp dir. Launch it natively: `./jaeger --collector.otlp.enabled=true`. Verify OTLP HTTP listens on 4318 + UI listens on 16686. Emit test spans via a small Node script using `@opentelemetry/sdk-trace-node` + OTLP HTTP exporter at `localhost:4318`. Verify spans land via Jaeger UI search.
+- [ ] Decide the **otelcol variant** (binding decision). Try three options: (a) `otelcol-contrib` ~200 MB with everything; (b) `otelcol` core ~50 MB with base receivers/exporters; (c) minimal-build via `otelcol-builder` selecting only the components the locked pipeline needs (OTLP receiver HTTP/gRPC, batch processor, Jaeger exporter, file/SQLite log exporter) — measure compile time and output size. Pick the variant that (1) satisfies the locked pipeline and (2) has the smallest per-platform-package footprint.
+- [ ] Launch the chosen otelcol variant natively in front of Jaeger with `collector-config.yaml` — OTLP HTTP + gRPC receivers → Jaeger exporter (traces) + file/SQLite log exporter (logs). Emit spans to otelcol 4318; verify they land in Jaeger. Emit structured log records; verify via `sqlite3 ~/.indusk/telemetry.db` or the file path the exporter is configured for.
 - [ ] Measure Jaeger query latency for `/api/traces?service=X&limit=100` against ~100 spans across 5s. Run 10 times. Capture p50/p95/p99. Compare to T12's 500 ms budget.
-- [ ] Try Jaeger in-memory vs Badger storage. Measure: write cost per span, survive-restart behavior, memory footprint for 1-hour buffer.
-- [ ] Package prototype: build a single container with supervisord managing Jaeger + Collector (+ log sink consumer if separate). Separately: prototype a docker-compose.yaml with the same services as separate containers. Compare image pull/build time, RAM at idle, failure containment.
-- [ ] Distribution prototype: produce a pullable public image (push to ghcr.io test tag) OR build locally from bundled Dockerfile. Measure first-`start` latency, ongoing-start latency, tarball-size impact.
+- [ ] Try Jaeger in-memory vs Badger storage. Measure: write cost per span, survive-restart behavior, memory footprint for 1-hour buffer. Pick the default.
+- [ ] **Validate npm platform-package publish + install flow.** Create a throwaway test package `@infinitedusky/telemetry-binaries-spike-darwin-arm64` containing a copy of the Jaeger + otelcol binaries under `bin/`. Publish to a private/test tag on npm OR use `npm pack` + local install. Create a throwaway consumer `indusk-mcp-spike` with `optionalDependencies` listing the platform package with matching `os: ["darwin"]` + `cpu: ["arm64"]` fields. Run `npm i` on macOS arm64; verify the platform package lands in `node_modules/`. Run `npm i` on Linux x64 (via Docker); verify the platform package is SKIPPED (no matching os/cpu) and nothing errors. Measure install-time footprint.
+- [ ] Resolve binary paths in the consumer via `require.resolve("@infinitedusky/telemetry-binaries-spike-darwin-arm64/bin/jaeger")` from a Node script. Spawn with `child_process.spawn(path, args, { detached: true, stdio: "ignore" })` + `unref()`. Verify the child process keeps running after the parent exits. Capture PID; kill via `process.kill(pid, "SIGTERM")`.
 - [ ] Have the agent call a stub MCP tool wrapper during a real diagnosis scenario. Capture ergonomic friction on signature choices.
-- [ ] Write `spike-findings.md` in this plan folder with every measurement, decision, and surprise. Binding on Phase 2+.
+- [ ] Write `spike-findings.md` in this plan folder with every measurement, decision, and surprise. Binding on Phase 2+. Include: otelcol variant chosen + rationale; per-platform binary sizes; npm platform-package install flow confirmed on macOS arm64 + Linux x64; query p50/p95/p99; storage-mode pick; retention default; MCP signature refinements.
 
 #### Phase 1 Verification
-- [ ] T2 (write red): commit `apps/indusk-admin/src/__tests__/telemetry-ui-reachable.test.ts` (or equivalent location — likely `apps/indusk-mcp/src/__tests__/telemetry-ui-reachable.test.ts`) that `fetch`es `http://localhost:16686` and asserts 200 + "Jaeger" in the title. Red today (no daemon); writable at Phase 0 via HTTP; goes green at Phase 2 when a standalone container run serves the UI.
+- [ ] T2 (write red): commit `apps/indusk-mcp/src/__tests__/telemetry-ui-reachable.test.ts` that spawns the Jaeger binary via `require.resolve("@infinitedusky/telemetry-binaries-{platform}/bin/jaeger")` on auto-picked ports, `fetch`es the UI port and asserts 200 + "Jaeger" in the title, then SIGTERMs. Red today (platform package not yet published); goes green at Phase 2 close.
 - [ ] T12 (write red): commit a timing harness at `apps/indusk-mcp/src/__tests__/telemetry-query-latency.test.ts` that POSTs ~100 spans across 5s to `http://localhost:4318/v1/traces`, then measures `GET /api/traces?limit=100` latency over 10 runs and asserts p95 < 500ms. Red today (no daemon); goes green at Phase 5 after MCP tool wraps the API and storage mode from spike is live.
 - [ ] Spike outputs captured in `.indusk/planning/local-telemetry/spike-findings.md` with measured numbers (not prose) for every open question.
 
@@ -121,43 +124,54 @@ Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry da
 #### Phase 1 Document
 - [ ] `spike-findings.md` in this plan folder (internal design artifact, not published to docs site). Seeds `telemetry-watcher-agent` brief.
 
-### Phase 2: Daemon container image
+### Phase 2: Platform-specific npm packages + binary bundling
 
-**Goal**: produce the runnable artifact Phase 3's CLI wraps. `docker run` (or `docker compose up`) the bundled image → Jaeger UI + Collector receiver + log sink all reachable.
+**Goal**: produce the four platform packages (`@infinitedusky/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}`) that indusk-mcp will depend on. After this phase, a consumer running `npm i -g @infinitedusky/indusk-mcp` gets exactly one platform package's worth of binaries installed in their node_modules, with zero custom download code.
 
-- [ ] Create `apps/indusk-mcp/telemetry/Dockerfile` (or `docker-compose.yaml`, per spike) assembling Jaeger all-in-one + OTel Collector + SQLite log sink. Process-manager choice per spike.
-- [ ] Add `apps/indusk-mcp/telemetry/collector-config.yaml` — OTLP HTTP + gRPC receivers → Jaeger exporter (traces) + file/SQLite exporter (logs). Locked pipeline in v1.
-- [ ] Add SQLite log sink: schema `(timestamp, service, level, trace_id, span_id, body, attributes_json)`. May use Collector's native file exporter if spike confirms structured-enough.
-- [ ] Configure Jaeger storage mode per spike; retention defaults per spike. Baseline: 1h OR 10 MB ring buffer, whichever hits first.
-- [ ] Local run instructions in `apps/indusk-mcp/telemetry/README.md` — exact `docker run` / `docker compose up`, expected ports, expected log output.
-- [ ] Distribution: if pull-from-registry, publish to ghcr.io under versioned tag; if local-build, ensure Dockerfile ships in tarball via `package.json` `files`.
+- [ ] Create `packages/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}/` directories. Each gets a minimal `package.json`:
+  - `name: "@infinitedusky/telemetry-binaries-{platform}"`
+  - `version`: matched to indusk-mcp's telemetry minor (e.g., `1.28.0`)
+  - `os: ["darwin"]` / `["linux"]` + `cpu: ["arm64"]` / `["x64"]` — npm's install-time filter
+  - `files: ["bin", "collector-config.yaml", "LICENSE", "README.md"]`
+  - `bin/` directory with the platform's `jaeger` + `otelcol` executables
+- [ ] Create `packages/telemetry-binaries-shared/collector-config.yaml` (or keep one copy per platform — spike decides): OTLP HTTP + gRPC receivers → batch processor → Jaeger exporter (traces) + file/SQLite log exporter (logs). Locked pipeline in v1.
+- [ ] Create `scripts/build-telemetry-binaries.sh` at repo root: (1) reads pinned upstream Jaeger + otelcol versions from a manifest file; (2) for each of the 4 platforms, downloads the matching release archive from GitHub; (3) verifies upstream SHA256 checksums against the manifest; (4) unpacks into the matching platform package's `bin/`; (5) copies `collector-config.yaml` into each platform package; (6) optionally runs `npm publish` for each. Idempotent; resumable if one download fails.
+- [ ] Create `packages/telemetry-binaries-shared/UPSTREAM.json` (or equivalent) pinning exact upstream versions + SHA256s. Example: `{ "jaeger": { "version": "2.5.0", "sha256_darwin_arm64": "...", ... }, "otelcol": { "variant": "{spike-chosen}", "version": "0.110.0", ... } }`. Updates to upstream are deliberate one-bump-per-file.
+- [ ] Update `apps/indusk-mcp/package.json` `optionalDependencies`: add all four platform packages at the matched version. Each entry includes `os`/`cpu` fields via the package's own package.json — npm honors them at install time.
+- [ ] Write per-platform `README.md` in each package folder: "Bundles upstream Jaeger vX.Y.Z + OTel Collector vA.B.C for {platform}. Apache 2.0. Redistribution under Apache 2.0 terms." Attribution, no more.
+- [ ] Write `packages/telemetry-binaries-shared/README.md` at repo root explaining the pattern, how to bump upstream versions, how `build-telemetry-binaries.sh` works, and that the four platform packages are load-bearing for indusk-mcp's telemetry feature.
 
 #### Phase 2 Verification
-- [ ] T2 passes: `curl http://localhost:16686` returns 200 with Jaeger UI HTML after hand-run of the bundled image.
-- [ ] Manual smoke: emit a test span via `@opentelemetry/exporter-trace-otlp-http`; verify in Jaeger UI within 5s.
-- [ ] Manual smoke: emit a test log record via Collector's OTLP log receiver; verify in SQLite sink via `sqlite3` CLI.
+- [ ] T2 (write red): commit `apps/indusk-mcp/src/__tests__/telemetry-ui-reachable.test.ts` that spawns `jaeger` (resolved via `require.resolve` from the appropriate platform package) with OTLP HTTP + UI on auto-picked ports, `fetch`es `http://localhost:{uiPort}` and asserts 200 + "Jaeger" in title, then SIGTERMs. Red today; goes green after Phase 2.
+- [ ] Manual smoke: emit a test span via `@opentelemetry/exporter-trace-otlp-http` to the spawned otelcol's 4318; verify in Jaeger UI within 5s.
+- [ ] Manual smoke: emit a test log record via otelcol's OTLP log receiver; verify in the SQLite sink via `sqlite3`.
+- [ ] Platform-package install check: `npm pack` each of the 4 platform packages. Confirm each tarball's `os`/`cpu` fields in `package.json` match target; confirm `bin/jaeger` + `bin/otelcol` + `collector-config.yaml` + `LICENSE` are present.
+- [ ] `npm i` an indusk-mcp-local-build on macOS arm64; confirm `@infinitedusky/telemetry-binaries-darwin-arm64` lands in `node_modules/` and the other 3 platform packages are SKIPPED (no errors, no presence).
 
 #### Phase 2 Context
-- [ ] Append to CLAUDE.md "Architecture": "Telemetry daemon container image at `apps/indusk-mcp/telemetry/` — Jaeger + OTel Collector + SQLite log sink. Distribution: {pull-from-ghcr | local-build}; packaging: {supervisord-single | compose-multi}."
+- [ ] Append to CLAUDE.md "Architecture": "Telemetry binaries ship as platform-specific npm packages at `packages/telemetry-binaries-{platform}/`. indusk-mcp lists them as `optionalDependencies`; npm's `os`/`cpu` filters install exactly one per consumer. Build script `scripts/build-telemetry-binaries.sh` + `UPSTREAM.json` manifest manage the Jaeger + otelcol version pinning + checksum verification."
+- [ ] Append to CLAUDE.md "Known Gotchas": "Platform-package distribution pattern (esbuild/swc/biome style) — `optionalDependencies` with `os`+`cpu` constraints in the platform package's `package.json`, not in indusk-mcp's. npm handles skip/install per consumer platform. Don't put install-time download scripts in postinstall — binaries are pre-bundled in the platform package tarballs, not fetched at install."
 
 #### Phase 2 Document
-- [ ] `apps/indusk-mcp/telemetry/README.md` — dev-facing manual run instructions + config files + ports + storage-mode choice.
+- [ ] `packages/telemetry-binaries-shared/README.md` — dev-facing reference on the packaging pattern, upstream-bump procedure, + manual run-by-hand instructions for testing the binaries directly.
 
 ### Phase 3: `indusk telemetry` lifecycle CLI
 
-**Goal**: `indusk telemetry start/stop/restart/status` parallel to `indusk ui *`. Manages the Phase 2 container image via Docker CLI, records daemon metadata.
+**Goal**: `indusk telemetry start/stop/restart/status` parallel to `indusk ui *`. Spawns Jaeger + otelcol as detached child processes resolved from the platform package, records daemon metadata, supervises PIDs. No Docker.
 
-- [ ] Create `apps/indusk-mcp/src/lib/telemetry/daemon.ts` — parallel to `apps/indusk-mcp/src/lib/admin/daemon.ts`. Functions: `daemonStart`, `daemonStop`, `daemonStatus`, `findFreePort`, `isPortListening`. Container orchestration via `docker run -d`/`docker stop`/`docker rm`.
+- [ ] Create `apps/indusk-mcp/src/lib/telemetry/daemon.ts` — parallel to `apps/indusk-mcp/src/lib/admin/daemon.ts`. Functions: `daemonStart`, `daemonStop`, `daemonStatus`, `verifyIdentity(pid, port)`, `findFreePort`, `isPortListening`. Apply admin-UI Phase 7 lessons: verifyIdentity composes `isAlive` + `isPortListening` to avoid PID-reuse false-positives.
+- [ ] Binary path resolution via `resolveBinary(name: "jaeger" | "otelcol"): string` that calls `require.resolve("@infinitedusky/telemetry-binaries-{detectedPlatform}/bin/${name}")`. Platform detection via `process.platform` + `process.arch`; unsupported combos throw a clear error naming the platform + pointing to docs.
+- [ ] `daemonStart` spawns both children: first otelcol (OTLP receivers + exporters to Jaeger), then Jaeger (OTLP gRPC on 4317 — otelcol exports to it internally). Both `detached: true`, `stdio: ["ignore", logFd, logFd]`, `unref()`. Both PIDs written to `~/.indusk/telemetry.json`. The two processes are supervised as a unit — stop kills both.
 - [ ] Create `apps/indusk-mcp/src/bin/commands/telemetry.ts` — `telemetryStart`, `telemetryStop`, `telemetryStatus`, `telemetryRestart`.
 - [ ] Wire into `apps/indusk-mcp/src/bin/cli.ts` as `indusk telemetry start/stop/restart/status`. Apply commander@13 lesson: options on parent, subcommand actions use `optsWithGlobals()`.
-- [ ] Daemon metadata: `~/.indusk/telemetry.pid`, `~/.indusk/telemetry.json` (`{containerId, port, startedAt, imageRef}`), `~/.indusk/telemetry.log` (redirected container logs).
-- [ ] `start` auto-bumps port if requested is taken; prints warning. `restart` = `stop + start`. `status` prints running state + port + container ID + started-at + registered-project count.
+- [ ] Daemon metadata: `~/.indusk/telemetry.pid` (bare otelcol PID, as the "primary" process — Jaeger PID also tracked), `~/.indusk/telemetry.json` (`{jaegerPid, otelcolPid, otlpPort, uiPort, startedAt, jaegerBinary, otelcolBinary, platform}`), `~/.indusk/telemetry.log` (redirected child stdout+stderr for both processes, interleaved).
+- [ ] `start` auto-bumps ports if requested are taken; prints warnings. `restart` = `stop + start` (gracefully stops BOTH processes). `status` prints running state + both ports + both PIDs + started-at + registered-project count.
 
 #### Phase 3 Verification
 - [ ] T1 (write red): commit `apps/indusk-mcp/src/__tests__/telemetry-cli-lifecycle.test.ts` running `indusk telemetry start --port 0`, asserting exit 0 + stdout contains port + daemon reachable via curl. Red today; goes green at Phase 3 close.
 - [ ] T3 passes: same subprocess test asserts `indusk telemetry status` after successful start reports running + ports + project count.
 - [ ] T4 passes: test asserts `indusk telemetry stop` exits 0 in <3s + subsequent `status` says "not running".
-- [ ] T5 passes: second subprocess test for `indusk telemetry restart` captures container ID before + after; asserts different.
+- [ ] T5 passes: second subprocess test for `indusk telemetry restart` captures otelcol + Jaeger PIDs before + after; asserts both differ (new processes spawned).
 
 #### Phase 3 Context
 - [ ] Append to CLAUDE.md "Conventions": "`indusk telemetry start/stop/restart/status` is the CLI lifecycle for the telemetry daemon — parallel to `indusk ui start/stop/restart/status`. Commander@13 pattern (options on parent, subcommands via `optsWithGlobals()`). Metadata at `~/.indusk/telemetry.{pid,json,log}`, never edited by hand."
@@ -216,19 +230,22 @@ Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry da
 - [ ] Extend `apps/indusk-docs/src/reference/telemetry/cli.md` with query-subcommand section + response-shape table.
 - [ ] Draft `apps/indusk-docs/src/reference/telemetry/overview.md` — daemon model, extension wiring, MCP tool surface, CLI, environment routing, architecture Mermaid sequence diagram.
 
-### Phase 6: init integration + existing-project upgrade
+### Phase 6: init auto-enable + update migration + existing-project upgrade
 
-**Goal**: both install paths work — `indusk init --extensions local-telemetry` scaffolds cleanly; existing `dash0`-only projects opt in without rewriting `instrumentation.ts`.
+**Goal**: every new InDusk project ships with local-telemetry; every pre-1.28 project gets it added on the next `indusk update`. Existing `dash0`-only projects migrate without rewriting `instrumentation.ts`. Escape hatch (`indusk extensions disable local-telemetry`) is documented.
 
-- [ ] Extend `apps/indusk-mcp/src/bin/commands/init.ts` to recognize `--extensions local-telemetry` and trigger Phase 4 enable path during init.
-- [ ] Write migration guidance in `overview.md`: existing projects run `indusk extensions enable local-telemetry` + rely on existing `instrumentation.ts` (no code change); extension swaps the endpoint. Describe exact file changes.
-- [ ] Handle `dash0` + `local-telemetry` coexistence: both enabled simultaneously; active profile (via ce or env files) determines runtime endpoint. Document.
-- [ ] Validate both install paths: fresh-project scaffold from `indusk init` + existing-project upgrade from `indusk extensions enable`. Both must produce a working setup.
+- [ ] Extend `apps/indusk-mcp/src/bin/commands/init.ts` to **auto-enable** `local-telemetry` on every scaffold (no flag required — required extensions are enabled by default). Log the auto-enable to stdout so the user sees it happen.
+- [ ] Extend `apps/indusk-mcp/src/bin/commands/update.ts` to detect pre-1.28 projects (any project where `local-telemetry` extension is not in the enabled set) and add it as a migration step. Log the migration to stdout.
+- [ ] Update extension resolution logic (wherever `extensions.ts` reads the enabled set) to respect `required: true` in the manifest — a required extension that the project hasn't explicitly disabled is treated as enabled even if missing from the project's enabled-extensions list. Escape hatch: explicit `disabled_extensions: ["local-telemetry"]` in `.indusk/config.json` silences it.
+- [ ] Write migration guidance in `overview.md`: existing projects will auto-receive the extension on next `indusk update`; `instrumentation.ts` is unchanged; the extension's `.env` template sets the endpoint. Describe exact file changes users see.
+- [ ] Handle `dash0` + `local-telemetry` coexistence: both enabled simultaneously; active profile (via ce or env files) determines runtime endpoint. Document the coexistence + the "disable if you really want to" pattern.
+- [ ] Validate both install paths: fresh-project scaffold from `indusk init` + existing-project upgrade from `indusk update`. Both must produce a working setup end-to-end. Also validate the explicit-disable escape hatch: `indusk extensions disable local-telemetry` makes the daemon stop (if no other projects register it) and removes MCP tools from the project's `.mcp.json`.
 
 #### Phase 6 Verification
-- [ ] T18 (write red): end-to-end `apps/indusk-mcp/src/__tests__/telemetry-init-fresh.test.ts` — `mkdtemp` project + `indusk init --extensions local-telemetry` → `.env` written, registry updated, MCP tools in `.mcp.json`, daemon running, test script emits + queries spans. Goes green at Phase 6.
+- [ ] T18 (write red): end-to-end `apps/indusk-mcp/src/__tests__/telemetry-init-fresh.test.ts` — `mkdtemp` project + `indusk init` (NO explicit flag needed; required-by-default) → `.env` written, registry updated, MCP tools in `.mcp.json`, daemon running, test script emits + queries spans. Goes green at Phase 6.
 - [ ] T19 (write red): end-to-end `telemetry-extension-disable.test.ts` — enable in two tmp projects, disable first (daemon stays), disable second (daemon stops), registry empty. Goes green at Phase 6.
-- [ ] T20 (write red): end-to-end `telemetry-existing-project-upgrade.test.ts` — fresh project with `dash0` only → `indusk extensions enable local-telemetry` → `instrumentation.ts` unchanged, `.env` contains new endpoint, project registered, daemon running.
+- [ ] T20 (write red): end-to-end `telemetry-existing-project-upgrade.test.ts` — pre-1.28-shaped project with `dash0` only → `indusk update` → `local-telemetry` added to enabled extensions, `instrumentation.ts` unchanged, `.env` contains new endpoint, project registered, daemon running.
+- [ ] New test `telemetry-explicit-disable.test.ts` — project with `disabled_extensions: ["local-telemetry"]` in `.indusk/config.json`; `indusk init` respects the explicit disable, does NOT auto-enable, does NOT register in the telemetry registry, does NOT surface MCP tools. Covers the escape-hatch contract.
 
 #### Phase 6 Context
 - [ ] Append to CLAUDE.md "Known Gotchas": "`indusk init --extensions local-telemetry` auto-starts the telemetry daemon if not running. `extensions disable local-telemetry` stops the daemon IFF the registry becomes empty — a project with two enabled-project entries won't kill the daemon when only one disables. Registry at `~/.indusk/telemetry/projects.json`, never edit by hand."
@@ -266,10 +283,15 @@ Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry da
 
 | File | Change |
 |------|--------|
-| `apps/indusk-mcp/package.json` | Version bump 1.27.x → 1.28.0; `files` gains `telemetry/`; Docker is consumer prerequisite, not package dep |
-| `apps/indusk-mcp/telemetry/Dockerfile` (or `docker-compose.yaml`) | NEW — container assembly per spike decision |
-| `apps/indusk-mcp/telemetry/collector-config.yaml` | NEW — OTel Collector pipeline (locked in v1) |
-| `apps/indusk-mcp/telemetry/README.md` | NEW — dev-facing run-by-hand instructions |
+| `apps/indusk-mcp/package.json` | Version bump 1.27.x → 1.28.0; `optionalDependencies` gains the four `@infinitedusky/telemetry-binaries-{platform}` packages at matching versions |
+| `packages/telemetry-binaries-darwin-arm64/` | NEW — platform package bundling Jaeger + otelcol binaries for darwin-arm64; `os: ["darwin"]` + `cpu: ["arm64"]` in its package.json |
+| `packages/telemetry-binaries-darwin-x64/` | NEW — same for darwin-x64 |
+| `packages/telemetry-binaries-linux-arm64/` | NEW — same for linux-arm64 |
+| `packages/telemetry-binaries-linux-x64/` | NEW — same for linux-x64 |
+| `packages/telemetry-binaries-shared/collector-config.yaml` | NEW — OTel Collector pipeline (locked in v1); copied into each platform package by the build script |
+| `packages/telemetry-binaries-shared/UPSTREAM.json` | NEW — pinned Jaeger + otelcol upstream versions + SHA256 checksums |
+| `packages/telemetry-binaries-shared/README.md` | NEW — pattern reference, bump procedure, run-by-hand instructions |
+| `scripts/build-telemetry-binaries.sh` | NEW — fetch + verify + pack script for all four platform packages |
 | `apps/indusk-mcp/src/lib/telemetry/daemon.ts` | NEW — lifecycle library parallel to `lib/admin/daemon.ts` |
 | `apps/indusk-mcp/src/lib/telemetry/registry.ts` | NEW — `~/.indusk/telemetry/projects.json` read/write/validate |
 | `apps/indusk-mcp/src/bin/commands/telemetry.ts` | NEW — `telemetryStart/Stop/Restart/Status/Tail/Trace/Services/Reset` |
@@ -303,13 +325,14 @@ Ship a new InDusk extension `local-telemetry` plus a machine-global telemetry da
 
 ## Dependencies
 
-- **OrbStack / Docker** already a prerequisite (same as `indusk-infra`); no regression.
 - **Node 22** (already required).
-- Image distribution path (registry vs local-build) per spike Phase 1.
+- **No Docker prereq for local-telemetry** — the telemetry daemon runs native binaries. Docker remains required for `indusk-infra` (FalkorDB + Graphiti) but not for this daemon.
+- **npm platform-package publish access** to the `@infinitedusky` org — one-time setup to publish the four platform packages + future upstream-version bumps.
+- **Upstream Jaeger + otelcol release artifacts** — pinned via `packages/telemetry-binaries-shared/UPSTREAM.json`. Versions are deliberate bumps, not auto-tracked.
 
 ## Notes
 
-- **Phase ordering is strict**: Phase 1 must complete before Phase 2 (packaging + distribution decisions gate Phase 2's Dockerfile/Compose).
+- **Phase ordering is strict**: Phase 1 must complete before Phase 2 (otelcol-variant + publish-flow decisions gate Phase 2's platform packages).
 - **No OTel gate sections in this impl**: dusk has `otel.role: library`; Phase N OTel sections are omitted per the role-aware gate.
 - **The spike is load-bearing**: if Phase 1 discovers the 500 ms budget can't be met for realistic loads, T12 has to be renegotiated in an ADR addendum before Phase 5 closes. Spike findings are binding, not advisory.
 - **The extension does not modify `instrumentation.ts`** — only env values. Keeps migration-from-Dash0-only trivial.
