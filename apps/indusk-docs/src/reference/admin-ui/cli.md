@@ -158,6 +158,24 @@ The daemon serves these routes, backed by the registry + project filesystems:
 
 **Daemon won't stop (SIGKILL warning)** — `indusk ui stop` escalates to SIGKILL after 3s. If you still see zombie state (`status` reports running but the port isn't listening), manually check the pid file: `cat ~/.indusk/admin-ui.pid`, `ps <pid>`, then `kill -9 <pid>` and `rm ~/.indusk/admin-ui.{pid,json}`.
 
+**Daemon reports "not running" right after a crash (1.27.5+)** — when the daemon process exits unexpectedly, the OS may later recycle its PID to an unrelated process (bash, postgres, another vitest). `daemonStatus` and `daemonStop` in 1.27.5+ detect this by combining PID liveness with a port-listening probe: if the recorded PID is alive but nothing is listening on the recorded port, it's not our daemon. The PID + meta files are auto-swept on the next `indusk ui status` / `indusk ui stop` — no user action required. Check `~/.indusk/admin-ui.log` for the underlying crash cause (Next build error, port bind race, OOM).
+
+**Registered projects seem to have disappeared (1.27.5+)** — if `indusk ui status` reports `0 projects` right after an edit to `~/.indusk/projects.json` broke the JSON, the malformed file was quarantined, not lost. Look in `~/.indusk/` for `projects.json.corrupt.{ISO}.bak`. Recovery procedure:
+
+```bash
+# 1. Inspect the backup
+cat ~/.indusk/projects.json.corrupt.*.bak
+# 2. Hand-fix the JSON (wrong shape, missing comma, etc.)
+# 3. Move it back, replacing the fresh empty file
+mv ~/.indusk/projects.json.corrupt.{ISO}.bak ~/.indusk/projects.json
+# 4. Verify
+indusk ui status
+```
+
+If you've added new projects since the corruption, merge them into the restored registry manually — the backup captures only the pre-damage state. The quarantine filename's ISO timestamp lets repeated corruption events coexist without overwriting each other.
+
+**Bare `indusk ui` from a subdirectory of my project (1.27.5+)** — the CLI walks up cwd's parents to find the nearest registered project root (capped at 40 ancestors, which no real path reaches). `cd apps/indusk-mcp && indusk ui` opens `/p/{project}/`, as does any deeper invocation. Before 1.27.5 only an exact match at the project root resolved; deeper invocations silently fell through to `/`. If walk-up still lands on `/`, confirm the project is registered: `cat ~/.indusk/projects.json | jq '.projects[].path'`.
+
 ## Registry commands
 
 Registry mutations are handled by existing commands, not `ui` subcommands:
