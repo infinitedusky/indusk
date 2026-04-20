@@ -1,3 +1,5 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import {
 	daemonRestart,
 	daemonStart,
@@ -10,6 +12,64 @@ import {
 	readRegistry,
 	registerProject,
 } from "../../lib/telemetry/registry.js";
+
+/**
+ * Read/write a project's `.mcp.json`, adding or removing the `jaeger` MCP
+ * server pointer. This is how the agent gets access to Jaeger's bundled
+ * MCP server (8 tools: search_traces, get_trace_topology, get_span_details,
+ * get_services, etc.) without needing a dedicated indusk-mcp wrapper.
+ *
+ * Follows the dash0 pattern — extension enable writes an entry, disable
+ * removes it. Daemon restart (which may auto-bump the mcpPort) refreshes
+ * every registered project's entry.
+ */
+interface McpServerEntry {
+	type?: string;
+	url?: string;
+	command?: string;
+	args?: string[];
+	[k: string]: unknown;
+}
+interface McpJson {
+	mcpServers?: Record<string, McpServerEntry>;
+}
+
+function readMcpJson(projectPath: string): McpJson {
+	const p = join(projectPath, ".mcp.json");
+	if (!existsSync(p)) return { mcpServers: {} };
+	try {
+		return JSON.parse(readFileSync(p, "utf-8")) as McpJson;
+	} catch {
+		return { mcpServers: {} };
+	}
+}
+
+function writeMcpJson(projectPath: string, data: McpJson): void {
+	writeFileSync(
+		join(projectPath, ".mcp.json"),
+		`${JSON.stringify(data, null, 2)}\n`,
+	);
+}
+
+function upsertJaegerEntry(projectPath: string, mcpPort: number): void {
+	const data = readMcpJson(projectPath);
+	data.mcpServers = data.mcpServers ?? {};
+	data.mcpServers.jaeger = {
+		type: "http",
+		url: `http://localhost:${mcpPort}/mcp`,
+	};
+	writeMcpJson(projectPath, data);
+}
+
+function removeJaegerEntry(projectPath: string): void {
+	const p = join(projectPath, ".mcp.json");
+	if (!existsSync(p)) return;
+	const data = readMcpJson(projectPath);
+	if (data.mcpServers?.jaeger) {
+		delete data.mcpServers.jaeger;
+		writeMcpJson(projectPath, data);
+	}
+}
 
 export interface TelemetryStartOptions {
 	otlpPort: string;
@@ -141,18 +201,24 @@ export async function telemetryStatus(): Promise<void> {
 /**
  * Register a project with the telemetry daemon (internal — called by the
  * extension's on_enable hook). If the daemon isn't running, auto-starts it
- * so the newly-registered project has a live daemon to emit to.
+ * so the newly-registered project has a live daemon to emit to. Also
+ * upserts a `jaeger` MCP server entry in the project's `.mcp.json` pointing
+ * at the daemon's current mcpPort — giving the agent direct access to
+ * Jaeger's 8 MCP tools (search_traces, get_trace_topology, get_span_details,
+ * etc.).
  */
 export async function telemetryRegister(projectPath: string): Promise<void> {
 	const entry = registerProject(projectPath);
 	console.info(`Registered project: ${entry.name} (${entry.path})`);
-	const status = await daemonStatus();
+	let status = await daemonStatus();
 	if (!status.running) {
 		console.info("Daemon not running — starting it now...");
 		try {
 			const meta = await daemonStart({});
 			console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
 			console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
+			console.info(`  Jaeger MCP: http://localhost:${meta.mcpPort}/mcp`);
+			status = { running: true, ...meta };
 		} catch (err) {
 			console.error(
 				`Project registered but daemon failed to start: ${(err as Error).message}`,
@@ -160,11 +226,18 @@ export async function telemetryRegister(projectPath: string): Promise<void> {
 			process.exit(1);
 		}
 	}
+	if (status.running) {
+		upsertJaegerEntry(projectPath, status.mcpPort);
+		console.info(
+			`  .mcp.json: wired jaeger MCP server at http://localhost:${status.mcpPort}/mcp`,
+		);
+	}
 }
 
 /**
  * Deregister a project (internal — called by the extension's on_disable hook).
- * If the registry becomes empty, gracefully stops the daemon.
+ * Removes the `jaeger` MCP server entry from the project's `.mcp.json`. If
+ * the registry becomes empty, gracefully stops the daemon.
  */
 export async function telemetryDeregister(projectPath: string): Promise<void> {
 	const removed = deregisterProject(projectPath);
@@ -172,6 +245,7 @@ export async function telemetryDeregister(projectPath: string): Promise<void> {
 		console.info(`Project not registered: ${projectPath}`);
 		return;
 	}
+	removeJaegerEntry(projectPath);
 	console.info(`Deregistered project: ${projectPath}`);
 	const reg = readRegistry();
 	if (reg.projects.length === 0) {

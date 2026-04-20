@@ -95,6 +95,20 @@ describe("T6 — local-telemetry extension-enable contract", () => {
 			expect(existsSync(join(testHome, "telemetry.pid"))).toBe(true);
 			expect(existsSync(join(testHome, "telemetry.json"))).toBe(true);
 
+			// Project's .mcp.json should have a jaeger MCP server entry pointing
+			// at the daemon's mcpPort (pattern: the agent talks to Jaeger's
+			// bundled MCP tool surface directly through .mcp.json, like dash0)
+			const projectMcp = join(projectDir, ".mcp.json");
+			expect(existsSync(projectMcp)).toBe(true);
+			const mcp = JSON.parse(readFileSync(projectMcp, "utf-8")) as {
+				mcpServers?: Record<string, { type?: string; url?: string }>;
+			};
+			expect(mcp.mcpServers?.jaeger).toBeDefined();
+			expect(mcp.mcpServers?.jaeger?.type).toBe("http");
+			expect(mcp.mcpServers?.jaeger?.url).toMatch(
+				/^http:\/\/localhost:\d+\/mcp$/,
+			);
+
 			// Deregister — should stop the daemon since registry becomes empty
 			const dereg = runCli(["telemetry", "deregister", projectDir]);
 			expect(dereg.code).toBe(0);
@@ -105,6 +119,17 @@ describe("T6 — local-telemetry extension-enable contract", () => {
 			expect(readRegistry().projects.length).toBe(0);
 			const statusAfter = runCli(["telemetry", "status"]);
 			expect(statusAfter.stdout.toLowerCase()).toContain("not running");
+
+			// .mcp.json's jaeger entry should be removed on deregister
+			const projectMcpPath = join(projectDir, ".mcp.json");
+			if (existsSync(projectMcpPath)) {
+				const mcpAfter = JSON.parse(
+					readFileSync(projectMcpPath, "utf-8"),
+				) as {
+					mcpServers?: Record<string, unknown>;
+				};
+				expect(mcpAfter.mcpServers?.jaeger).toBeUndefined();
+			}
 		},
 		45_000,
 	);
