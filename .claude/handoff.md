@@ -1,58 +1,72 @@
 # Handoff
 
 **Date:** 2026-04-20
-**Session:** admin-ui-hosting Phases 2, 3, and 4 landed end-to-end. Phase 5 (ship 1.27.0) intentionally deferred — user is switching to Numero poker migration work first, then will return here for ship + smoke.
+**Session:** Shipped admin-ui-hosting Phase 5 (1.27.0 → 1.27.3 including Phase 6 UX polish: scorecards project-siloing + research section + brief collapsible + stale-nav-links bugfix) then ran the full planner lifecycle for `local-telemetry` (research + brief + test-plan + ADR + impl, all accepted, impl approved ready for /work) and the full planner lifecycle + /work Phase 1 for `falsify-phase-authoring` (bugfix workflow, 1.27.4 ready to publish). Ended before publishing 1.27.4 and before the first dogfood of the new falsify flow on admin-ui-hosting.
 
 ## What Was Being Worked On
 
-`admin-ui-hosting` Phases 2 → 3 → 4 all completed in a single session. Every trajectory row except T1/T2/T17 (the live-smoke assertions that require a published npm install) is `passing`:
+Three plans in this session, each at a different state:
 
-- **Phase 2** (registry + daemon CLI): `daemon.ts`, `ui.ts` rewrite, commander wiring, `init`/`update` registry calls. T3–T10 passing.
-- **Phase 3** (route restructure): `/` = ProjectGrid, `/p/[project]/*` namespace, ProjectSwitcher, registry-client, slimmed root layout. T12–T14 passing.
-- **Phase 4** (stale-failure page + cross-project scorecards + cwd-aware bare ui): StaleProjectFailurePage, scorecards walker injects project labels, `uiStart` resolves open URL from cwd. T11, T15, T16 passing.
+1. **admin-ui-hosting** — shipped 1.27.0 → 1.27.1 (restart) → 1.27.2 (scorecards siloing + research + brief collapsible) → 1.27.3 (strip stale top-level nav links). Phase 6 fully closed. Live smoke passed on dusk + Numero. Plan status still `in-progress` pending `/falsify` + `/retrospective` under the NEW flow (which ships in 1.27.4).
+
+2. **local-telemetry** — full planner lifecycle completed this session. research.md + brief.md (accepted) + test-plan.md (accepted, 22 assertions) + adr.md (accepted) + impl.md (approved, 7 phases, 22 trajectory rows all Phase 0). Machine-global daemon following admin-UI 1.27.x pattern: Jaeger + OTel Collector + SQLite log sink in one container, `indusk telemetry start/stop/restart/status` + `tail/trace/services/reset` CLI, MCP tools (`get_recent_spans` / `get_trace` / `get_services` / `tail_logs`). Phase 1 is a hands-on spike producing `spike-findings.md`. Ready for `/work local-telemetry`.
+
+3. **falsify-phase-authoring** (NEW this session) — bugfix workflow: brief + test-plan + impl, all accepted/approved. **Phase 1 fully closed** (7 per-item jj commits): rewrote `apps/indusk-mcp/skills/falsify.md` + `.claude/skills/falsify/SKILL.md` to phase-authoring behavior, updated `apps/indusk-docs/src/guide/falsification-ritual.md` with phase-authoring walkthrough + legacy-plans section, updated `apps/indusk-mcp/skills/retrospective.md` + `.claude/skills/retrospective/SKILL.md` Step 0 gate to accept "all impl phases terminal" alongside legacy `isFalsificationComplete`, wrote regression test `apps/indusk-mcp/src/__tests__/retrospective-gate-backcompat.test.ts` (T6 — 3/3 passing), appended CLAUDE.md Conventions entry. **Phase 2 agent-side done**: bumped `apps/indusk-mcp/package.json` → 1.27.4, added changelog entry.
 
 ## Where It Stopped
 
-Impl is at status `in-progress`. Phase 4 closed cleanly — verification + context + document gates all checked off, semantic graph synced, CLAUDE.md updated (Architecture + Conventions + Known Gotchas + routing). Phase 5 (version bump, changelog, publish, live smoke) is **deliberately** unstarted. User paused here to run the Numero poker migration first so 1.27.0 can be validated against a real second project (`indusk init` / `update` / `ui start` on Numero) before publish.
+`falsify-phase-authoring` Phase 2 is paused at the publish step. The agent-side work is complete; user needs to:
+
+1. `cd ~/code/sandbox/dusk/apps/indusk-mcp && pnpm publish` (ships 1.27.4 with the new `/falsify` behavior)
+2. `npm i -g @infinitedusky/indusk-mcp@1.27.4`
+3. Optionally: `indusk ui restart` if the daemon is running (it'll pick up the new admin bundle, though admin-UI didn't change in this version)
+
+Then the dogfood on admin-ui-hosting begins (which closes T1–T5 for the falsify-phase-authoring plan AND unblocks admin-ui-hosting's retrospective queue).
 
 ## What's Next
 
-Phase 5 of `admin-ui-hosting` in this exact order:
+In this order:
 
-1. **Before ship: dogfood on Numero.** During the poker migration, use `pnpm link` or a local install of indusk-mcp (not the published 1.26.0) so Numero exercises `indusk init` → registry write → `indusk ui start` → homepage shows Numero+dusk → `/p/numero/` works. Any bug found there is a Phase 5 scope addition before publish. This **de-risks T17** (the "non-dusk consumer works without extra tooling" assertion).
-2. **Version bump** — `apps/indusk-mcp/package.json` → `1.27.0`.
-3. **Changelog** — add 1.27.0 entry to `apps/indusk-docs/src/changelog.md` with the breaking-change callout ("1.26.0 users: run `indusk init` once per project, then `indusk ui start` from anywhere") per ADR Documentation Plan.
-4. **Overview docs** — rewrite `apps/indusk-docs/src/reference/admin-ui/overview.md` per ADR: daemon model, registry, homepage + per-project routing, architecture Mermaid (sequence: `indusk ui start` → daemon spawn → registry read → browser request → per-project file read).
-5. **CLI docs** — new `apps/indusk-docs/src/reference/admin-ui/cli.md` per ADR: full reference for `indusk ui start/stop/status`, exit codes, env vars (`INDUSK_HOME`), port auto-bump, routing tree diagram.
-6. **Build + publish** — `cd apps/indusk-mcp && pnpm publish`. `prepublishOnly` already runs `pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js` so the admin bundle ships automatically. Tarball size ~12 MB (cap 50 MB).
-7. **Upgrade globals** — user runs `indusk update` on dusk + Numero.
-8. **Live smoke** — `indusk ui start` from dusk, verify browser opens to populated grid. `indusk ui stop` → `status` reports not running. Same on Numero. Closes T1, T2, T17.
-9. **CLAUDE.md Current State + Phase 5 Document gate** — standard close-out.
-10. **Then** `/falsify admin-ui-hosting` (hard-blocks retrospective otherwise) → `/retrospective admin-ui-hosting`.
+1. **Publish 1.27.4** + install globally (user action, commands above).
+2. **First dogfood of the new flow**: run `/falsify admin-ui-hosting`. Expect it to append a `### Phase 8: Falsification — {summary}` to `admin-ui-hosting/impl.md` with trajectory rows for any hypotheses + fix items + gates. **No test files should be created, no test runs should happen.** Plan status stays `in-progress`. Closes T1, T2, T3 of the falsify-phase-authoring plan.
+3. **Work the authored Phase 8**: `/work admin-ui-hosting` picks up Phase 8, authors writable-at-phase tests red at phase start, closes normally. Closes T4.
+4. **Retrospective admin-ui-hosting**: `/retrospective admin-ui-hosting` — the Step 0 gate should pass via "all impl phases terminal" WITHOUT needing a `falsification.md` file in the plan folder. Closes T5 + archives admin-ui-hosting. Closes falsify-phase-authoring Phase 2 + unblocks its own retrospective.
+5. **Repeat for indusk-admin-ui** (impl in-progress per CLAUDE.md; shipped in 1.26.0): `/falsify` → `/work` → `/retrospective`.
+6. **Repeat for eval-agent-mcp-access** (impl in-progress per CLAUDE.md; shipped in 1.23.x): same sequence.
+7. **`/retrospective falsify-phase-authoring`** once its Phase 2 is fully terminal (via admin-ui-hosting retrospective proving T5).
+8. **`/work local-telemetry`** — Phase 1 is a hands-on spike (Jaeger all-in-one + OTel Collector + SQLite sink prototype + latency measurement + container-packaging/distribution decisions). Output is `spike-findings.md` which also seeds the `telemetry-watcher-agent` plan.
 
 ## Open Issues
 
-- **Pre-existing stale test** in indusk-mcp: `plan-parser.test.ts > parseAllPlans > returns all plans sorted by name — expected names to include 'agent-roles'`. `agent-roles` was archived to `.indusk/planning/archive/agent-roles/` in earlier work; the test still asserts it lives in the active planning dir. **Not a Phase 2/3/4 regression** — was already failing against main before this branch started. Unrelated fix: either delete the assertion or move the fixture to archive-aware. Not blocking ship, but worth a one-line PR somewhere.
-- **No live Phase 5 smoke yet** — T1, T2, T17 are still `planned`. They can only flip after publish, which is the whole point of Phase 5.
-- **`indusk-admin-ui` plan stays `in-progress`** per user direction (same as last handoff): the hosting plan IS the v2 follow-up. Run `/falsify indusk-admin-ui` + `/retrospective indusk-admin-ui` AFTER `admin-ui-hosting` ships.
+- **1.27.4 not published yet.** Agent-side work is committed (version bump + changelog + skill rewrites + regression test) but `pnpm publish` not run. Everything that has to ship for the new `/falsify` flow is in place; user just needs to run the publish command.
+- **T4 and T5 of falsify-phase-authoring are `planned`** pending the admin-ui-hosting dogfood closing. They flip after `/work admin-ui-hosting` Phase 8 closes (T4) and `/retrospective admin-ui-hosting` runs (T5). This is expected — the plan stays `in-progress` until those transitive verifications flip.
+- **`local-telemetry` impl is `approved` status** — waiting for `/work` to be invoked. Phase 1 spike is deliberately hands-on; make sure OrbStack/Docker is available before starting since the spike pulls container images.
+- **indusk-v2-dawn rebrand**: user confirmed the v2 product is called "Dawn" (future versions: Dawn V3, Dawn V4). InDusk stays the parent project/company name. Highlight captured (h-20260420-007); no planning folder work yet since `indusk-v2-dawn` is still in `research` stage.
 
 ## Decisions Made This Session
 
-Three implementation-level choices worth preserving — all are already in CLAUDE.md or the impl's item notes, but listed here for quick handoff reference:
+1. **local-telemetry runs as a machine-global daemon, not bundled in indusk-infra.** The admin-UI 1.27.x daemon pattern is the reuse — `indusk telemetry start/stop/restart/status`, metadata at `~/.indusk/telemetry.{pid,json,log}`, registry at `~/.indusk/telemetry/projects.json`. Decoupling telemetry lifecycle from graph-infra lifecycle avoids "reindexing the graph bounces my trace buffer." Captured in adr.md + CLAUDE.md Key Decisions.
 
-1. **Commander@13 silently drops duplicate options on subcommands.** Declaring `--port`/`--no-open` on BOTH the parent `ui` command AND its `start` subcommand made the subcommand always receive the default value. Fix: options live only on the parent; subcommand actions read via `this.optsWithGlobals()`. Verified live with a minimal repro. Already a Known Gotcha in CLAUDE.md. Don't re-split.
-2. **vitest node project needs `fileParallelism: false`.** Multiple HTTP smoke tests each spawn `next dev`; running them in parallel spikes CPU/memory enough that `next dev` misses the "Ready in" stdout within 30s and fetch fires against an unbooted server. Serializing fixed it. Non-HTTP node tests pay negligible overhead.
-3. **Cwd ↔ registry path compare needs realpath normalization.** On macOS, `mkdtempSync` returns `/var/folders/...` while `process.cwd()` after `cd` returns `/private/var/folders/...`. Raw string compare misses. `resolveOpenPath()` in `ui.ts` wraps both sides in `safeRealpathSync`. Same concern will apply anywhere else registry paths are compared to runtime cwd — keep the helper in mind.
+2. **OTel Collector is structural, not optional.** Per-service sidecar exporters would duplicate batching/retry/filtering config across every service. Collector centralizes that once; future downstream exporters (sampling to Dash0, OpenInference for LLM spans) bolt onto Collector without touching services.
+
+3. **Logs are in v1, not punted to v2.** Half of "why did this fail" diagnosis is log context; an MCP tool named `tail_logs` returning "not yet implemented" undermines the plan's own justification. SQLite log sink schema `(timestamp, service, level, trace_id, span_id, body, attributes_json)` with rolling retention.
+
+4. **`/falsify` becomes a phase-authoring action** (not a test-running ritual). Captured in falsify-phase-authoring plan's brief + ADR-equivalent in the skill file. Three rejections: inline test running (removed; `/work` runs tests at phase start), three-outcome branching per hypothesis (removed; in-scope fixes become items, out-of-scope hypotheses are not authored), sidecar `falsification.md` log (removed for new plans; kept for backcompat on legacy plans).
+
+5. **Container packaging + image distribution for local-telemetry deferred to Phase 1 spike.** Supervisord-single-image vs docker-compose-multi-image + pull-from-ghcr vs local-build-from-bundled-Dockerfile — both decisions need hands-on measurement before committing.
+
+6. **Rebrand: dusk-v2 plan → indusk-v2-dawn; the v2 product line is called "Dawn".** Not yet formalized beyond the highlight + the renamed planning folder; `indusk-v2-dawn/research.md` will need to consume this when it moves forward.
 
 ## Watch Out For
 
-- **Phase 5 Verification requires the published 1.27.0 to actually work end-to-end.** The bundled admin dir already exists at `apps/indusk-mcp/admin/` (from Phase 1), and `prepublishOnly` rebundles before publish. But T17 requires the tarball works on a consumer project with NO `pnpm install` step — make sure to validate on Numero via `pnpm link` BEFORE publishing, not after. An actual bad publish means a 1.27.1 patch.
-- **`app/scorecards/page.tsx` ships in 1.27 with project labels ONLY when multiple registered projects have scorecards.** Single-project setups look identical to 1.26. The two-project fixture `http-scorecards-cross-project.test.ts` asserts the labels appear — verify that test still passes before publish.
-- **`StaleProjectFailurePage` returns 200, not 404 or 500.** Don't be alarmed when `/p/deleted/` returns a green HTTP status — that's the T11 contract. The failure message is in the HTML body.
-- **`vitest.config.ts`'s `fileParallelism: false`** slows non-HTTP node tests slightly. If someone tries to "speed up tests," don't let them remove this — the regression class is silent (tests go red under CPU load, green when run alone). CLAUDE.md Known Gotchas covers the why.
-- **Plan detail page at `/p/[project]/plan/[name]/page.tsx` early-returns `null`** when the project is stale. The layout catches the stale case and renders StaleProjectFailurePage; the null return prevents the page's own code from tripping on `readActivePlans` against a deleted dir. Don't replace with `notFound()` — that would override the layout's failure page with Next's 404 UI.
-- **Indusk-mcp has uncommitted state in @** — Phase 4 commits are in jj but not yet evaluated. `jj log` to verify chain looks clean before ship.
-- **Queued test-runner-integration plan:** user flagged wanting a vitest test-runner panel in the admin UI ("watch tests run, see logs") but explicitly deferred until AFTER the InDusk testing-strategy brief lands. Don't start it unprompted.
+- **Do NOT run `/falsify` with intent to execute tests inline** from 1.27.4 onward. The skill is now phase-authoring only. The updated `apps/indusk-mcp/skills/falsify.md` spells out `## What you do not do in the ritual` — no test files, no test runs, no three-way outcome picking. If you feel the urge, re-read that section.
+- **`/retrospective`'s Step 0 gate in 1.27.4 accepts all THREE pass conditions:** (a) all impl phases terminal, (b) legacy `isFalsificationComplete(planRoot)` via `falsification.md`, (c) `falsification: skipped` + `falsification_reason` frontmatter. The skill file lists them in this order; respect it.
+- **Phase 8 of admin-ui-hosting is yet to be authored** — the first use of the new flow. Any hypotheses formed during `/falsify admin-ui-hosting` become trajectory rows + impl items in that phase.
+- **local-telemetry Phase 1 spike is deliberate hands-on work** — don't skip it or treat it as prose research. The validator accepted all Phase 0 writable rows, but actual container packaging + image distribution decisions can only be made by running the prototype.
+- **The `falsification/log.ts` library is unchanged and STAYS unchanged.** Backwards compat for archived plans (e.g., `.indusk/planning/archive/falsification-ritual/falsification.md`). Do not delete or deprecate it — the regression test proves the legacy path still works.
+- **admin-ui-hosting's impl.md trajectory uses T-prefixed IDs (T1–T22 across Phases 1–6);** the NEW Phase 8 falsification rows continue numbering from T22 upward (T23+). Don't reset to T1.
+- **Three pending retros queue up behind this session's work**: admin-ui-hosting → indusk-admin-ui → eval-agent-mcp-access. Each gets the full new-flow treatment: `/falsify → /work → /retrospective`. If any of them surfaces a fix-in-scope change that requires another ship, version bumps proceed 1.27.5, 1.27.6, etc.
+- **Session-long jj history**: ~20 per-item commits this session spanning admin-ui-hosting Phase 5 + Phase 6 + 1.27.1 + 1.27.3 + falsify-phase-authoring Phase 1 + Phase 2 version bump. `jj log` to see the chain; none of it is pushed anywhere (that's user's call).
 
 ## Catchup Status
 - [x] mcp-ready

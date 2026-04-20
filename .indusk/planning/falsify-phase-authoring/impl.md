@@ -97,8 +97,8 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
 
 **Goal**: 1.27.4 lands on npm with the skill + guide + retrospective-gate changes; running `/falsify admin-ui-hosting` as the first dogfood authors a phase and doesn't run tests (closes T1/T2/T3); a subsequent `/work admin-ui-hosting` picks it up normally (T4); `/retrospective admin-ui-hosting` closes without a `falsification.md` (T5).
 
-- [ ] Bump `apps/indusk-mcp/package.json` version → 1.27.4.
-- [ ] Add changelog entry to `apps/indusk-docs/src/changelog.md` for 1.27.4 under "Changed": describe the `/falsify` behavior change, call out that it's a backwards-compatible shift (legacy plans continue to work), link to the updated `guide/falsification-ritual.md`.
+- [x] Bump `apps/indusk-mcp/package.json` version → 1.27.4.
+- [x] Add changelog entry to `apps/indusk-docs/src/changelog.md` for 1.27.4 under "Changed": describe the `/falsify` behavior change, call out that it's a backwards-compatible shift (legacy plans continue to work), link to the updated `guide/falsification-ritual.md`.
 - [ ] Build + publish: `cd apps/indusk-mcp && pnpm publish`. `prepublishOnly` runs existing build pipeline.
 - [ ] User upgrades global: `npm i -g @infinitedusky/indusk-mcp@1.27.4 && indusk update` on dusk.
 - [ ] Dogfood: run `/falsify admin-ui-hosting` — investigate the shipped 1.27.x daemon, author a Phase 8 in admin-ui-hosting's impl.md with whatever hypotheses surface. Observe: no test runs happen, a new phase appears, plan status stays `in-progress`. Closes T1, T2, T3.
