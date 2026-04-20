@@ -137,6 +137,7 @@ const config = defineConfig({
 						{ text: "Context Beam", link: "/decisions/context-beam" },
 						{ text: "Tests-First Planning", link: "/decisions/tests-first-planning" },
 						{ text: "Falsification Ritual", link: "/decisions/falsification-ritual" },
+						{ text: "Admin UI Hosting", link: "/decisions/admin-ui-hosting" },
 					],
 				},
 			],
