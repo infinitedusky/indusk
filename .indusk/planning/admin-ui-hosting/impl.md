@@ -123,16 +123,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
   - `findFreePort(start): Promise<number>` — checks `start`; if taken or `0`, returns an OS-picked free port (no upward scan — scanning invites check-then-listen races)
   - Bonus: `isPortListening(port)` — TCP-connect probe with 500ms timeout, used by `uiStatus` to disambiguate "alive but warming up" from "alive and serving"
 - [x] Create `apps/indusk-mcp/src/bin/commands/ui.ts` (REPLACED existing 1.26.0 file): exports `uiStart`, `uiStop`, `uiStatus`. Internally delegates to `daemon.ts`. `uiStart` calls `daemonStatus()` first for double-start guard, resolves bundled admin via `resolveBundledAdminDir()` (verifies `.next/BUILD_ID` exists — fails fast if unbundled), resolves next bin via `createRequire(import.meta.url).resolve("next/package.json")` + `dist/bin/next`, calls `findFreePort` for auto-bump, opens browser unless `--no-open`. `uiStop` reports SIGKILL fallback if grace expired. `uiStatus` merges daemon status with `readRegistry().projects.length` so T3 assertions (`running`, `port N`, `projects N`) all pass.
-- [ ] Update `apps/indusk-mcp/src/bin/cli.ts` commander:
-  ```ts
-  const ui = program.command("ui").description("Admin UI lifecycle");
-  ui.command("start").option("--port <port>", "...", "3939").option("--no-open", "...").action(async (opts) => { const { uiStart } = await import("./commands/ui.js"); await uiStart(opts); });
-  ui.command("stop").action(async () => { ... });
-  ui.command("status").action(async () => { ... });
-  // Keep bare `indusk ui` as alias for `start`:
-  program.command("ui").action(async () => { ... });  // friendly default
-  ```
-  (Verify commander's "command + subcommand" + "command-as-alias" pattern works; if not, restructure to a single `ui` command with positional argument `[action]`.)
+- [x] Update `apps/indusk-mcp/src/bin/cli.ts` commander: single `uiCmd = program.command("ui")` with a parent `.action()` for bare `indusk ui`, then `uiCmd.command("start"|"stop"|"status")` subcommands. Parent+subcommand pattern **verified live**: `node dist/bin/cli.js ui status` dispatches to the status subcommand, `node dist/bin/cli.js ui --help` lists both parent options (`--port`, `--no-open`) and subcommands. Commander's default behavior routes bare invocation to the parent's `.action()` when no subcommand matches. Flags re-declared on `start` so parse shape matches for both call sites.
 - [ ] Update `apps/indusk-mcp/src/bin/commands/init.ts`: after init succeeds, call `addProject(cwd)`. Print the registered name (and the suffix if collision-resolved) to stdout.
 - [ ] Update `apps/indusk-mcp/src/bin/commands/update.ts`: after update succeeds, call `validateProject(name)` (deriving name from cwd basename); if entry missing or path doesn't match, call `addProject(cwd)`; otherwise call `touchProject(name)`.
 - [ ] Add unit tests at `apps/indusk-mcp/src/lib/admin/__tests__/registry.test.ts`: T8/T9/T10 prep — addProject creates entry, addProject collision suffixes, validateProject reflects path-existence, touchProject moves lastSeenAt.

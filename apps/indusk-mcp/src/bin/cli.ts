@@ -403,14 +403,44 @@ program
 		await startServer();
 	});
 
-program
+const uiCmd = program
 	.command("ui")
-	.description("Open the InDusk admin UI (sidebar of plans, trajectory states, scorecards)")
+	.description("Admin UI daemon lifecycle (start/stop/status)")
 	.option("--port <port>", "Port to listen on (0 = pick free)", "3939")
 	.option("--no-open", "Don't auto-open the browser when the server is ready")
 	.action(async (opts: { port: string; open: boolean }) => {
-		const { ui } = await import("./commands/ui.js");
-		await ui(rootOrExit(), { port: opts.port, open: opts.open });
+		// Bare `indusk ui` — friendly alias for `ui start`. Commander dispatches
+		// here only when no subcommand matches. Flags declared on the parent are
+		// re-declared on `start` below so both `indusk ui --port N` and
+		// `indusk ui start --port N` parse identically.
+		const { uiStart } = await import("./commands/ui.js");
+		await uiStart({ port: opts.port, open: opts.open });
+	});
+
+uiCmd
+	.command("start")
+	.description("Start the admin UI daemon")
+	.option("--port <port>", "Port to listen on (0 = pick free)", "3939")
+	.option("--no-open", "Don't auto-open the browser when the server is ready")
+	.action(async (opts: { port: string; open: boolean }) => {
+		const { uiStart } = await import("./commands/ui.js");
+		await uiStart({ port: opts.port, open: opts.open });
+	});
+
+uiCmd
+	.command("stop")
+	.description("Stop the admin UI daemon (SIGTERM, SIGKILL fallback after 3s)")
+	.action(async () => {
+		const { uiStop } = await import("./commands/ui.js");
+		await uiStop();
+	});
+
+uiCmd
+	.command("status")
+	.description("Report the daemon's state and the number of registered projects")
+	.action(async () => {
+		const { uiStatus } = await import("./commands/ui.js");
+		await uiStatus();
 	});
 
 program.parse();
