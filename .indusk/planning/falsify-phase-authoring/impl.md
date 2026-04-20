@@ -70,7 +70,7 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
   - Rewrite the "How to run" section to describe phase-authoring flow
   - Add a "Legacy plans (archived before 1.27.4)" section noting that plans with `falsification.md` files stay readable via the library but new plans use impl phases
   - Update any sequence diagram or code snippet that shows the old inline-test-running flow
-- [ ] Update `apps/indusk-mcp/skills/retrospective.md` Step 0 gate:
+- [x] Update `apps/indusk-mcp/skills/retrospective.md` Step 0 gate:
   - Current logic: check `isFalsificationComplete(planRoot)` or `isFalsificationSkipped(implContent).skipped`. If neither, block.
   - New logic: check ONE of: (a) `isFalsificationComplete(planRoot)` — legacy path, (b) `isFalsificationSkipped(implContent).skipped` — explicit skip, (c) all impl phases terminal (via trajectory parser inspection of the impl) — new path.
   - Pseudocode: `if (isFalsificationComplete(planRoot) || isSkipped || allPhasesTerminal(impl)) { pass } else { block }`
