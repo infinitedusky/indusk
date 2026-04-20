@@ -15,7 +15,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * assert both project names appear labeling their respective cards.
  */
 
-const ADMIN_ROOT = path.resolve(__dirname, "../../..");
+const ADMIN_ROOT = path.resolve(__dirname, "../..");
 
 let server: ChildProcess | null = null;
 let port = 0;

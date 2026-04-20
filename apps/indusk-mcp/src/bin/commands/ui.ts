@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,6 +11,32 @@ import {
 	isPortListening,
 } from "../../lib/admin/daemon.js";
 import { readRegistry } from "../../lib/admin/registry.js";
+
+/**
+ * Resolve the browser URL path for a fresh `indusk ui` invocation. If the
+ * current working directory matches a registered project's `path`, return
+ * `/p/{name}/` so the user lands on that project directly. Otherwise fall
+ * back to `/` (the project grid). This is T16's contract.
+ *
+ * Both sides are normalized via `realpathSync` so macOS's /var ↔ /private/var
+ * symlink doesn't cause a false mismatch — `mkdtempSync` can return a path
+ * with an unresolved leading component while `process.cwd()` returns the
+ * fully-resolved realpath, so raw string compare misses.
+ */
+function resolveOpenPath(): string {
+	const cwd = safeRealpath(process.cwd());
+	const reg = readRegistry();
+	const match = reg.projects.find((p) => safeRealpath(p.path) === cwd);
+	return match ? `/p/${match.name}/` : "/";
+}
+
+function safeRealpath(p: string): string {
+	try {
+		return realpathSync(p);
+	} catch {
+		return p;
+	}
+}
 
 export interface UiStartOptions {
 	port: string;
@@ -25,9 +51,10 @@ export interface UiStartOptions {
  * `--no-open`.
  */
 export async function uiStart(opts: UiStartOptions): Promise<void> {
+	const openPath = resolveOpenPath();
 	const existing = await daemonStatus();
 	if (existing.running) {
-		const url = `http://localhost:${existing.port}/`;
+		const url = `http://localhost:${existing.port}${openPath}`;
 		console.info(`Admin UI is already running on ${url} (PID ${existing.pid}).`);
 		if (opts.open) openBrowser(url);
 		return;
@@ -63,14 +90,31 @@ export async function uiStart(opts: UiStartOptions): Promise<void> {
 		console.warn(`Port ${requested} is in use; using ${port} instead.`);
 	}
 
-	const url = `http://localhost:${port}/`;
-	console.info(`Starting admin UI on ${url}`);
+	const baseUrl = `http://localhost:${port}/`;
+	console.info(`Starting admin UI on ${baseUrl}`);
 
 	const meta = await daemonStart({ port, adminDir, nextBin });
 	console.info(`  PID: ${meta.pid}`);
 	console.info(`  Logs: ~/.indusk/admin-ui.log`);
 
-	if (opts.open) openBrowser(url);
+	// Cwd-aware open URL (T16): lands on /p/{name}/ when run inside a
+	// registered project, else falls through to /. Printing it in the CLI
+	// output doubles as the test-assertion surface.
+	const openUrl = `http://localhost:${port}${openPath}`;
+	console.info(`Opening ${openUrl}`);
+
+	if (opts.open) openBrowser(openUrl);
+}
+
+/**
+ * Restart the admin-ui daemon: stop (if running) then start. Picks up any
+ * new bundle that landed via `npm i -g` since the daemon last started. The
+ * inner `uiStart` call reuses the same cwd-aware open behavior and flag
+ * passthrough as a bare `indusk ui start`.
+ */
+export async function uiRestart(opts: UiStartOptions): Promise<void> {
+	await uiStop();
+	await uiStart(opts);
 }
 
 /**

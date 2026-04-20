@@ -1,55 +1,60 @@
 # Handoff
 
-**Date:** 2026-04-19
-**Session:** Authored full planner lifecycle for `admin-ui-hosting` (research → brief → test-plan → ADR → impl) + executed Phase 1 in full + Phase 2 item 1 (registry library). Total of 3 plans worked: rationale-baseline-frontmatter (shipped 1.25.0/1.25.1, archived), indusk-admin-ui (shipped 1.26.0, **still status: in-progress** by user direction — closure deferred until admin-ui-hosting ships), admin-ui-hosting (Phase 2 in progress).
+**Date:** 2026-04-20
+**Session:** admin-ui-hosting Phases 2, 3, and 4 landed end-to-end. Phase 5 (ship 1.27.0) intentionally deferred — user is switching to Numero poker migration work first, then will return here for ship + smoke.
 
 ## What Was Being Worked On
 
-`admin-ui-hosting` Phase 2 item 1: created `apps/indusk-mcp/src/lib/admin/registry.ts` with `readRegistry`, `addProject`, `validateProject`, `touchProject`. Atomic file writes, basename-collision suffixing (`-2`, `-3`), `INDUSK_HOME` env-var override for test isolation. 7 unit tests passing in `apps/indusk-mcp/src/lib/admin/__tests__/registry.test.ts`. Trajectory rows T8/T9/T10 → `passing`.
+`admin-ui-hosting` Phases 2 → 3 → 4 all completed in a single session. Every trajectory row except T1/T2/T17 (the live-smoke assertions that require a published npm install) is `passing`:
+
+- **Phase 2** (registry + daemon CLI): `daemon.ts`, `ui.ts` rewrite, commander wiring, `init`/`update` registry calls. T3–T10 passing.
+- **Phase 3** (route restructure): `/` = ProjectGrid, `/p/[project]/*` namespace, ProjectSwitcher, registry-client, slimmed root layout. T12–T14 passing.
+- **Phase 4** (stale-failure page + cross-project scorecards + cwd-aware bare ui): StaleProjectFailurePage, scorecards walker injects project labels, `uiStart` resolves open URL from cwd. T11, T15, T16 passing.
 
 ## Where It Stopped
 
-Phase 2 item 1 (registry) is COMPLETE. Phase 2 item 2 (`daemon.ts` — PID/port/log file management, detached spawn, port probing) is the next checklist item. Test files for T3–T7 are already authored as red at `apps/indusk-mcp/src/__tests__/admin-cli-lifecycle.test.ts` (they spawn the CLI binary via subprocess; will start passing once `ui.ts` lands).
+Impl is at status `in-progress`. Phase 4 closed cleanly — verification + context + document gates all checked off, semantic graph synced, CLAUDE.md updated (Architecture + Conventions + Known Gotchas + routing). Phase 5 (version bump, changelog, publish, live smoke) is **deliberately** unstarted. User paused here to run the Numero poker migration first so 1.27.0 can be validated against a real second project (`indusk init` / `update` / `ui start` on Numero) before publish.
 
 ## What's Next
 
-In order, all under Phase 2 of admin-ui-hosting:
+Phase 5 of `admin-ui-hosting` in this exact order:
 
-1. **`apps/indusk-mcp/src/lib/admin/daemon.ts`** — `daemonStart`, `daemonStop`, `daemonStatus`, `findFreePort`. Spawn via `spawn(..., { detached: true, stdio: "ignore" })` + `unref()`. PID at `~/.indusk/admin-ui.pid`, metadata at `~/.indusk/admin-ui.json`, logs at `~/.indusk/admin-ui.log`. Use `INDUSK_HOME` env var (registry.ts already does).
-2. **`apps/indusk-mcp/src/bin/commands/ui.ts`** — REPLACE existing 1.26.0 file. Export `uiStart`, `uiStop`, `uiStatus`. Internally call `daemon.ts`. `uiStart` resolves the bundled admin via `resolveBundledAdminDir()` (look at indusk-mcp install root + `/admin`), checks `daemonStatus()` first to avoid double-start, opens browser unless `--no-open`.
-3. **`apps/indusk-mcp/src/bin/cli.ts`** — wire commander: `ui.command("start"/.option(...))`, `ui.command("stop")`, `ui.command("status")`. Bare `indusk ui` should alias to `start` — verify commander supports parent-command-with-action-AND-subcommands (the spike I deferred).
-4. **`apps/indusk-mcp/src/bin/commands/init.ts`** — call `addProject(cwd)` after init succeeds; print registered name (and suffix if collision).
-5. **`apps/indusk-mcp/src/bin/commands/update.ts`** — `validateProject(name)` + `touchProject(name)` after update succeeds; `addProject(cwd)` if missing.
-6. Run `pnpm build` in indusk-mcp; then `pnpm vitest run src/__tests__/admin-cli-lifecycle.test.ts` to flip T3–T7 from `written` → `passing`.
-7. Phase 2 Verification + Context (CLAUDE.md Architecture/Conventions per impl) + Document (folded into Phase 5).
-8. Then Phase 3 (route restructure: `/`, `/p/[project]/...`, project switcher).
+1. **Before ship: dogfood on Numero.** During the poker migration, use `pnpm link` or a local install of indusk-mcp (not the published 1.26.0) so Numero exercises `indusk init` → registry write → `indusk ui start` → homepage shows Numero+dusk → `/p/numero/` works. Any bug found there is a Phase 5 scope addition before publish. This **de-risks T17** (the "non-dusk consumer works without extra tooling" assertion).
+2. **Version bump** — `apps/indusk-mcp/package.json` → `1.27.0`.
+3. **Changelog** — add 1.27.0 entry to `apps/indusk-docs/src/changelog.md` with the breaking-change callout ("1.26.0 users: run `indusk init` once per project, then `indusk ui start` from anywhere") per ADR Documentation Plan.
+4. **Overview docs** — rewrite `apps/indusk-docs/src/reference/admin-ui/overview.md` per ADR: daemon model, registry, homepage + per-project routing, architecture Mermaid (sequence: `indusk ui start` → daemon spawn → registry read → browser request → per-project file read).
+5. **CLI docs** — new `apps/indusk-docs/src/reference/admin-ui/cli.md` per ADR: full reference for `indusk ui start/stop/status`, exit codes, env vars (`INDUSK_HOME`), port auto-bump, routing tree diagram.
+6. **Build + publish** — `cd apps/indusk-mcp && pnpm publish`. `prepublishOnly` already runs `pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js` so the admin bundle ships automatically. Tarball size ~12 MB (cap 50 MB).
+7. **Upgrade globals** — user runs `indusk update` on dusk + Numero.
+8. **Live smoke** — `indusk ui start` from dusk, verify browser opens to populated grid. `indusk ui stop` → `status` reports not running. Same on Numero. Closes T1, T2, T17.
+9. **CLAUDE.md Current State + Phase 5 Document gate** — standard close-out.
+10. **Then** `/falsify admin-ui-hosting` (hard-blocks retrospective otherwise) → `/retrospective admin-ui-hosting`.
 
 ## Open Issues
 
-- **None blocking.** Clean checkpoint — registry passes 7/7, T18 (Phase 1 bundling) passes 3/3, all builds work.
-- **Aside (low priority)**: `apps/indusk-mcp/infinitedusky-indusk-mcp-1.26.0.tgz` was created locally during Phase 1 portability spike and is gitignored (added in this session). Can `rm` it any time.
-- **Stale background processes possible**: this session spawned several `next start` instances on ports 3939, 3941, 3943, 3944, 3945. If any survived, kill via `pkill -f "next.*start"`. The current process tree should be clean (all explicitly killed).
-- **Local global indusk install** is at 1.26.0 (the per-project version that this whole plan replaces). When Phase 5 ships 1.27.0, that gets superseded.
+- **Pre-existing stale test** in indusk-mcp: `plan-parser.test.ts > parseAllPlans > returns all plans sorted by name — expected names to include 'agent-roles'`. `agent-roles` was archived to `.indusk/planning/archive/agent-roles/` in earlier work; the test still asserts it lives in the active planning dir. **Not a Phase 2/3/4 regression** — was already failing against main before this branch started. Unrelated fix: either delete the assertion or move the fixture to archive-aware. Not blocking ship, but worth a one-line PR somewhere.
+- **No live Phase 5 smoke yet** — T1, T2, T17 are still `planned`. They can only flip after publish, which is the whole point of Phase 5.
+- **`indusk-admin-ui` plan stays `in-progress`** per user direction (same as last handoff): the hosting plan IS the v2 follow-up. Run `/falsify indusk-admin-ui` + `/retrospective indusk-admin-ui` AFTER `admin-ui-hosting` ships.
 
 ## Decisions Made This Session
 
-All major decisions are captured in plan documents — but two implementation-level calls aren't in the plan and need to be remembered:
+Three implementation-level choices worth preserving — all are already in CLAUDE.md or the impl's item notes, but listed here for quick handoff reference:
 
-1. **Lift admin's React/Next deps to indusk-mcp WITHOUT removing them from admin** (originally the impl said "move from admin to mcp"). pnpm dedups via workspace; both contexts work; removing breaks `pnpm --filter indusk-admin dev`. This is reflected in the impl.md item check-off note.
-2. **`indusk-admin-ui` plan stays `in-progress`** (user direction option (a)). The hosting plan IS its v2 follow-up; falsify + retro for indusk-admin-ui will run AFTER admin-ui-hosting ships. Don't try to close indusk-admin-ui in isolation.
+1. **Commander@13 silently drops duplicate options on subcommands.** Declaring `--port`/`--no-open` on BOTH the parent `ui` command AND its `start` subcommand made the subcommand always receive the default value. Fix: options live only on the parent; subcommand actions read via `this.optsWithGlobals()`. Verified live with a minimal repro. Already a Known Gotcha in CLAUDE.md. Don't re-split.
+2. **vitest node project needs `fileParallelism: false`.** Multiple HTTP smoke tests each spawn `next dev`; running them in parallel spikes CPU/memory enough that `next dev` misses the "Ready in" stdout within 30s and fetch fires against an unbooted server. Serializing fixed it. Non-HTTP node tests pay negligible overhead.
+3. **Cwd ↔ registry path compare needs realpath normalization.** On macOS, `mkdtempSync` returns `/var/folders/...` while `process.cwd()` after `cd` returns `/private/var/folders/...`. Raw string compare misses. `resolveOpenPath()` in `ui.ts` wraps both sides in `safeRealpathSync`. Same concern will apply anywhere else registry paths are compared to runtime cwd — keep the helper in mind.
 
 ## Watch Out For
 
-Three real findings from this session that future-you needs to know — all already in CLAUDE.md Known Gotchas, but worth flagging here too:
-
-1. **`scripts/bundle-admin.js` MUST exclude `.next/dev` AND `.next/cache`** (already does). Leftover `next dev` state in `.next/dev` can balloon a "production build" bundle to 200+ MB. The exclusion is a single-character regex change; don't remove it.
-2. **`apps/indusk-admin/src/app/layout.tsx` MUST export `dynamic = "force-dynamic"`** — without it, Next.js prerenders `/` at build time using the build's empty `INDUSK_PROJECT_ROOT`, baking the empty-state HTML in forever. Was a real production bug discovered during Phase 1 smoke. Don't remove the export.
-3. **Shared mutable default bug in `registry.ts`** — was caught and fixed during Phase 2 item 1. Original code had `const EMPTY_REGISTRY: Registry = { version: 1, projects: [] }` and `return { ...EMPTY_REGISTRY }`. Spread is shallow — `projects` array reference is shared, mutations leak across calls. Replaced with `function emptyRegistry()`. **Look for this pattern when authoring `daemon.ts`** — any module-level "default state" object should be a factory function, not a frozen constant.
-
-Plus: **commander's parent-command-with-action-AND-subcommands** (for bare `indusk ui` aliasing to `ui start`) hasn't been proven yet — verify with a quick spike before committing the cli.ts wiring.
+- **Phase 5 Verification requires the published 1.27.0 to actually work end-to-end.** The bundled admin dir already exists at `apps/indusk-mcp/admin/` (from Phase 1), and `prepublishOnly` rebundles before publish. But T17 requires the tarball works on a consumer project with NO `pnpm install` step — make sure to validate on Numero via `pnpm link` BEFORE publishing, not after. An actual bad publish means a 1.27.1 patch.
+- **`app/scorecards/page.tsx` ships in 1.27 with project labels ONLY when multiple registered projects have scorecards.** Single-project setups look identical to 1.26. The two-project fixture `http-scorecards-cross-project.test.ts` asserts the labels appear — verify that test still passes before publish.
+- **`StaleProjectFailurePage` returns 200, not 404 or 500.** Don't be alarmed when `/p/deleted/` returns a green HTTP status — that's the T11 contract. The failure message is in the HTML body.
+- **`vitest.config.ts`'s `fileParallelism: false`** slows non-HTTP node tests slightly. If someone tries to "speed up tests," don't let them remove this — the regression class is silent (tests go red under CPU load, green when run alone). CLAUDE.md Known Gotchas covers the why.
+- **Plan detail page at `/p/[project]/plan/[name]/page.tsx` early-returns `null`** when the project is stale. The layout catches the stale case and renders StaleProjectFailurePage; the null return prevents the page's own code from tripping on `readActivePlans` against a deleted dir. Don't replace with `notFound()` — that would override the layout's failure page with Next's 404 UI.
+- **Indusk-mcp has uncommitted state in @** — Phase 4 commits are in jj but not yet evaluated. `jj log` to verify chain looks clean before ship.
+- **Queued test-runner-integration plan:** user flagged wanting a vitest test-runner panel in the admin UI ("watch tests run, see logs") but explicitly deferred until AFTER the InDusk testing-strategy brief lands. Don't start it unprompted.
 
 ## Catchup Status
-
 - [x] mcp-ready
 - [x] handoff
 - [x] lessons
@@ -59,3 +64,4 @@ Plus: **commander's parent-command-with-action-AND-subcommands** (for bare `indu
 - [x] plans
 - [x] extensions
 - [x] graph
+- [x] graphiti

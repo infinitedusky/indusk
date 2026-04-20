@@ -53,10 +53,21 @@ export function readRegistryProjects(): ProjectEntry[] {
  * name isn't registered — callers (the per-project layout) render a
  * "needs reconfiguration" failure page in that case (Phase 4).
  *
- * Does NOT check whether the path exists on disk; that's a separate concern
- * handled by the failure-page branch in the layout.
+ * Does NOT check whether the path exists on disk; use `projectPathExists`
+ * for that. Keeping the two concerns in separate exports lets the browser
+ * test runtime mock just `getProjectPath` without pulling in `node:fs`.
  */
 export function getProjectPath(name: string): string | null {
 	const projects = readRegistryProjects();
 	return projects.find((p) => p.name === name)?.path ?? null;
+}
+
+/**
+ * Check whether a registered project's path still exists on disk. Separate
+ * from `getProjectPath` so the layout imports only registry-client (which
+ * is mockable in vitest's browser runtime) and doesn't reach for
+ * `node:fs` directly — the browser test env externalizes it.
+ */
+export function projectPathExists(path: string): boolean {
+	return existsSync(path);
 }

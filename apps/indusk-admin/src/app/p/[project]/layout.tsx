@@ -1,4 +1,3 @@
-import { existsSync } from "node:fs";
 import { PlanList } from "@/components/PlanList";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
@@ -10,6 +9,7 @@ import {
 } from "@/lib/planning-reader";
 import {
 	getProjectPath,
+	projectPathExists,
 	readRegistryProjects,
 } from "@/lib/registry-client";
 
@@ -41,7 +41,7 @@ export default async function PerProjectLayout({
 	const { project } = await params;
 	const projectPath = getProjectPath(project);
 
-	if (!projectPath || !existsSync(projectPath)) {
+	if (!projectPath || !projectPathExists(projectPath)) {
 		return (
 			<StaleProjectFailurePage
 				projectName={project}

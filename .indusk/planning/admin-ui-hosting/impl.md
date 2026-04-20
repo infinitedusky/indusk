@@ -44,14 +44,15 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | Phase 2 | `~/.indusk/projects.json` registry library (`registry.ts`), `indusk init`/`update` writing to it, daemon CLI shape (`uiStart`/`uiStop`/`uiStatus`), PID + port management library (`daemon.ts`) | Phase 1's bundled admin location resolution (the daemon needs to know where to spawn `next start` from) |
 | Phase 3 | Admin app route restructure: `/` becomes project grid, `/p/[project]/...` namespace, per-project layout with sidebar + header switcher, registry-aware project resolution | Phase 2's registry + daemon (for the bundled app to actually serve pages reading from the registered projects) |
 | Phase 4 | Cross-project `/scorecards` walking every registered project's `.indusk/eval/results.log`; stale-entry failure page for `/p/{deleted}/`; bare `indusk ui` cwd-aware behavior | Phases 2 + 3 (registry + per-project routing) |
-| Phase 5 | Ship: 1.27.0 version bump, changelog entry, build + publish + upgrade global; manual smoke on dusk + Numero (A2, A14, A16, A17 as live tests) | All prior phases |
+| Phase 5 | Ship: 1.27.0 version bump, changelog entry, build + publish + upgrade global; manual smoke on dusk + Numero (A2, A14, A16, A17 as live tests). 1.27.1 follow-up adds `indusk ui restart` | All prior phases |
+| Phase 6 | UX polish as 1.27.2: scorecards project-siloing (`/p/[project]/scorecards`), per-project research section (`/p/[project]/research/[slug]` backed by `.indusk/research/`), brief section collapsible for parity with Test Plan + ADR | Phase 3's `/p/[project]/` namespace; Phase 4's scorecards walker (repurposed for single-project) |
 
 ## Test Trajectory
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `indusk ui start` from any directory brings up the admin UI in <3s and prints a localhost URL. | Phase 0 | Phase 5 | planned |
-| T2 | After `indusk ui start`, the user can close the terminal and the admin UI remains reachable at the printed URL. | Phase 0 | Phase 5 | planned |
+| T1 | `indusk ui start` from any directory brings up the admin UI in <3s and prints a localhost URL. | Phase 0 | Phase 5 | passing |
+| T2 | After `indusk ui start`, the user can close the terminal and the admin UI remains reachable at the printed URL. | Phase 0 | Phase 5 | passing |
 | T3 | `indusk ui status` after a successful start reports "running", the listening port, and the count of registered projects. | Phase 2 | Phase 2 | passing |
 | T4 | `indusk ui start` when the daemon is already running prints "already running" and the existing URL — does not spawn a second daemon. | Phase 2 | Phase 2 | passing |
 | T5 | `indusk ui stop` shuts the daemon down within 3s; subsequent `indusk ui status` reports "not running". | Phase 2 | Phase 2 | passing |
@@ -60,14 +61,17 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T8 | `indusk init` from a fresh project directory adds an entry to `~/.indusk/projects.json`; subsequent `indusk ui status` reports the count incremented by 1. | Phase 2 | Phase 2 | passing |
 | T9 | `indusk update` from a registered project validates the entry without creating a duplicate; the timestamp moves forward. | Phase 2 | Phase 2 | passing |
 | T10 | `indusk init` from a project whose basename collides with a registered project's name registers under a numeric-suffixed name and prints a warning. | Phase 2 | Phase 2 | passing |
-| T11 | A registered project whose path is deleted from disk: `indusk ui status` still reports it; `/p/{name}/` returns HTTP 200 with a "needs reconfiguration" failure page (not 500). | Phase 4 | Phase 4 | written |
+| T11 | A registered project whose path is deleted from disk: `indusk ui status` still reports it; `/p/{name}/` returns HTTP 200 with a "needs reconfiguration" failure page (not 500). | Phase 4 | Phase 4 | passing |
 | T12 | The homepage at `/` shows one card per registered project with name, last-seen-at, and active-plan count. | Phase 3 | Phase 3 | passing |
 | T13 | Clicking a project card navigates to `/p/{name}/`, which renders the same sidebar + plan list shape as 1.26.0's per-project mode. | Phase 3 | Phase 3 | passing |
 | T14 | A header dropdown above the plan list switches between any two registered projects without restarting the daemon. | Phase 3 | Phase 3 | passing |
-| T15 | `/scorecards` lists every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first across all projects. | Phase 4 | Phase 4 | written |
-| T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | written |
-| T17 | A consumer running `npm install -g @infinitedusky/indusk-mcp@1.27` and then `indusk ui start` from any project: the daemon starts without the consumer running `pnpm install`, `next build`, or any other secondary tool. | Phase 0 | Phase 5 | planned |
+| T15 | `/scorecards` lists every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first across all projects. | Phase 4 | Phase 4 | passing |
+| T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | passing |
+| T17 | A consumer running `npm install -g @infinitedusky/indusk-mcp@1.27` and then `indusk ui start` from any project: the daemon starts without the consumer running `pnpm install`, `next build`, or any other secondary tool. | Phase 0 | Phase 5 | passing |
 | T18 | The published indusk-mcp tarball contains the pre-built Next.js production output. Tarball size is under 50 MB. | Phase 1 | Phase 1 | passing |
+| T19 | `/p/{project}/scorecards` renders that project's scorecards (from its `.indusk/eval/results.log`). The top-level `/scorecards` route is removed (404) or redirects into the current project. Per-project sidebar has a "Scorecards" link next to the plan list. | Phase 6 | Phase 6 | planned |
+| T20 | `/p/{project}/research/{slug}` renders a markdown file from that project's `.indusk/research/` directory via the same `<Markdown>` component used for plans. The per-project sidebar has a "Research" group listing every top-level `.md` slug under `.indusk/research/` (nested dirs shown as collapsible subgroups). Empty state when the directory is missing. | Phase 6 | Phase 6 | planned |
+| T21 | The Brief section on `/p/{project}/plan/{name}` is rendered inside a `<CollapsibleSection>` with the same expand/collapse control as Test Plan and ADR. Default state is expanded. | Phase 6 | Phase 6 | planned |
 
 ### Trajectory Rationale
 
@@ -86,6 +90,9 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - **T10** `Writable at: Phase 2` — Same as T8: requires `INDUSK_HOME` env var support landed in Phase 2.
 - **T11** `Writable at: Phase 4` — Test starts the daemon, registers a project, deletes its path, GETs `/p/{name}/`, asserts 200 + failure-page marker. The failure page component (`StaleProjectFailurePage.tsx`) and the `/p/[project]/layout.tsx` rendering it conditionally are authored in Phase 4. The test imports the marker (e.g., `data-testid="stale-project-failure"`) which doesn't exist before Phase 4. Move to Phase 4.
 - **T16** `Writable at: Phase 4` — Test invokes the new bare-`indusk ui` cwd-aware behavior added to `uiStart()` in Phase 4 (the cwd → registry lookup → URL selection logic). Phase 2 ships the `uiStart()` function but the cwd-aware branch is added in Phase 4. Move to Phase 4.
+- **T19** `Writable at: Phase 6` — Test imports the new `/p/[project]/scorecards/page.tsx` route component; file doesn't exist today. Top-level `/scorecards/page.tsx` still exports the cross-project walker (Phase 4 code). Compile error against today's symbols until Phase 6 creates the new route.
+- **T20** `Writable at: Phase 6` — Test imports the new research reader (e.g., `readResearchDir(projectRoot)` in `planning-reader.ts` or a new `research-reader.ts`) AND the new `/p/[project]/research/[slug]/page.tsx` route. Neither symbol exists today. Compile error until Phase 6.
+- **T21** `Writable at: Phase 6` — Test asserts the Brief section in `PlanDetail.tsx` is wrapped in a `<CollapsibleSection>` (either via querying the DOM for the expand/collapse chevron inside the brief region, or by asserting the structural change to the component tree). Today the Brief renders inline without the wrapper — the test would fail for the right reason but only after the Phase 6 component change flips the DOM shape.
 
 ## Checklist
 
@@ -174,53 +181,84 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 
 **Goal**: the parts that need both Phases 2 (registry) and 3 (routing) to be in place. After this phase, every test trajectory row except T1/T2/T17 is passing.
 
-- [ ] Update `app/scorecards/page.tsx` — read every registered project's path, walk each `.indusk/eval/results.log`, merge into one list, label each card with its project name, sort most-recent-first across all.
-- [ ] Update `Scorecards.tsx` to accept and display a project-name column on each card (in addition to the current Commit message + Mode + Status).
-- [ ] Create `apps/indusk-admin/src/components/StaleProjectFailurePage.tsx`: renders a clear message ("This project's path no longer exists. Run `indusk update` from the new location, OR remove `~/.indusk/projects.json` to start fresh.") with the registered name and old path visible.
-- [ ] Update `app/p/[project]/layout.tsx` — when `getProjectPath(name)` returns null OR the path doesn't exist on disk, render `<StaleProjectFailurePage>` instead of the normal sidebar+content.
-- [ ] Update `apps/indusk-mcp/src/bin/commands/ui.ts`'s `uiStart` (added in Phase 2): when called as bare `indusk ui`, check whether `process.cwd()` is a registered project; if yes, set the open-browser URL to `/p/{name}/` instead of `/`.
-- [ ] Add tests:
-  - `apps/indusk-admin/src/app/scorecards/page.test.ts` — walks two registered projects' fixture results.log files, asserts both projects' scorecards present and labeled correctly (T15)
-  - `apps/indusk-admin/src/components/StaleProjectFailurePage.test.tsx` — failure page renders expected copy (T11 component-level prep)
-  - `apps/indusk-admin/src/__tests__/http-stale-project.test.ts` — HTTP smoke: register a project, delete its dir, GET `/p/{name}/`, assert HTTP 200 + failure-page marker (T11 end-to-end)
-  - `apps/indusk-mcp/src/__tests__/cli-bare-ui-cwd-aware.test.ts` — spawn `indusk ui` from a tempdir registered as a project; assert the open-browser URL flag/output mentions `/p/{name}/`. From an unregistered tempdir, assert it mentions `/` (T16).
+- [x] Update `app/scorecards/page.tsx` — walker injects `project: entry.name` on each scorecard after reading the results.log so Scorecards.tsx can surface the label. The sort lives in `ScorecardsList` (`[...scorecards].sort((a,b) => b.timestamp.localeCompare(a.timestamp))`), which lets the page hand over an unsorted per-project union.
+- [x] Update `Scorecards.tsx` to accept and display a project-name column on each card. Added an optional `project?: string` field to the `Scorecard` interface (it rides the existing `[key: string]: unknown` index signature, but the explicit key documents the contract). Each `ScorecardCard`'s title row renders `<Badge variant="neutral" data-testid="scorecard-project-label">{project}</Badge>` when present.
+- [x] Create `apps/indusk-admin/src/components/StaleProjectFailurePage.tsx` — 200-page failure view. Two callable shapes: `{projectName, projectPath}` for the path-deleted case and `{projectName}` alone for the unregistered-name case. Both render the `data-testid="stale-project-failure"` marker (what the HTTP smoke asserts on) plus the recovery procedure naming `indusk update` and `~/.indusk/projects.json`.
+- [x] Update `app/p/[project]/layout.tsx` — renders `<StaleProjectFailurePage>` when `getProjectPath(project)` returns null OR when `projectPathExists(path)` is false. Moved the `existsSync` wrapper into `registry-client.ts`'s new `projectPathExists` export so the layout imports only from registry-client (browser test runtime can mock it without reaching for `node:fs`). Plan-detail page uses the same helper and early-returns null when the project is stale so the layout's failure branch owns the final render.
+- [x] Update `apps/indusk-mcp/src/bin/commands/ui.ts`'s `uiStart` — new `resolveOpenPath()` helper reads the registry and matches cwd against each entry's `path`. Both sides normalized via `realpathSync` so macOS's `/var` ↔ `/private/var` symlink doesn't cause a false mismatch (mkdtempSync returns the un-resolved form). Computed URL printed with `console.info('Opening ${url}')` — that line doubles as the T16 test-assertion surface.
+- [x] Tests landed: `StaleProjectFailurePage.test.tsx` (3 browser tests), `http-stale-project.test.ts` (2 HTTP tests covering both deleted-path and unregistered-name branches), `http-scorecards-cross-project.test.ts` (1 HTTP test, moved from `src/app/scorecards/` to `src/__tests__/` so it lands in the node vitest project, not browser), `cli-bare-ui-cwd-aware.test.ts` (2 CLI subprocess tests for cwd-aware opening).
+
+**Discovered during Phase 4**: running multiple HTTP smoke tests (each spawns `next dev`) in parallel reliably fails with ECONNREFUSED — `next dev` can't reach "Ready in" stdout within 30s under CPU contention. Fix: added `fileParallelism: false` to the node vitest project so HTTP tests serialize per file. Non-HTTP node tests pay a tiny serial overhead but run in ms each.
 
 #### Phase 4 Verification
-- [ ] T11 passes (stale-project failure page returns 200, not 500)
-- [ ] T15 passes (cross-project scorecards merge from multiple registered projects)
-- [ ] T16 passes (bare `indusk ui` is cwd-aware)
-- [ ] All Phase 1–3 tests still green
+- [x] T11 passes — `pnpm vitest run src/components/StaleProjectFailurePage.test.tsx src/__tests__/http-stale-project.test.ts` → 5/5 (3 component + 2 HTTP)
+- [x] T15 passes — `pnpm vitest run src/__tests__/http-scorecards-cross-project.test.ts` → 1/1 (two fixture projects labeled correctly)
+- [x] T16 passes — `pnpm vitest run src/__tests__/cli-bare-ui-cwd-aware.test.ts` → 2/2 (cwd-match opens `/p/{name}/`, unregistered opens `/`)
+- [x] All admin-ui tests green — `pnpm vitest run` → 81/81 across 14 files
+- [x] Indusk-mcp suite: 410/411. The same pre-existing stale `agent-roles` failure from Phase 3 (archived plan referenced by an older test fixture). Not a Phase 4 regression.
 
 #### Phase 4 Context
-- [ ] Add to CLAUDE.md Known Gotchas: "**admin-ui registry is never auto-pruned** — if a registered project's path is deleted, `/p/{name}/` shows a 'needs reconfiguration' failure page. The user resolves by running `indusk update` from the new location OR by hand-editing `~/.indusk/projects.json`. There is no UI affordance to remove an entry; this is intentional discipline (registry mutations only via CLI)."
+- [x] Added to CLAUDE.md Known Gotchas: admin-ui registry never auto-pruned — `/p/{name}/` shows StaleProjectFailurePage (200, not 500/404) when the registered path is missing or the name is unregistered. Recovery = CLI-only (`indusk update` or hand-edit `~/.indusk/projects.json`).
 
 #### Phase 4 Document
-- [ ] (folded into Phase 5's overview.md update — failure page + cross-project scorecards documented alongside the rest)
+- [x] (folded into Phase 5's overview.md update — failure page + cross-project scorecards + cwd-aware bare `indusk ui` all documented alongside the daemon model)
 
 ### Phase 5: Ship — version bump, changelog, build, publish, smoke
 
 **Goal**: 1.27.0 lands on npm with all the prior phases bundled. Smoke on dusk + Numero closes T1, T2, T17 (the assertions that require a real published install).
 
-- [ ] Bump `apps/indusk-mcp/package.json` version → 1.27.0 (new feature: daemon hosting model + breaking change from 1.26.0's per-project mode).
-- [ ] Add changelog entry to `apps/indusk-docs/src/changelog.md` per ADR's Documentation Plan: 1.27.0 entry naming the daemon model, the registry, the breaking change, the bundling decision (variant A3), and the cross-project scorecards. Include the migration note: "1.26.0 users: run `indusk init` once per project to register, then `indusk ui start` from anywhere."
-- [ ] Update `apps/indusk-docs/src/reference/admin-ui/overview.md` per ADR's Documentation Plan: replace the per-project CLI section with the daemon model; document the registry; document the homepage + per-project routing; include the architecture diagram (Mermaid sequence: `indusk ui start` → daemon spawn → registry read → browser request → per-project file read).
-- [ ] Create `apps/indusk-docs/src/reference/admin-ui/cli.md` per ADR's Documentation Plan: full CLI reference for `indusk ui start/stop/status`, exit codes, env vars (`INDUSK_HOME`), port behavior (default 3939, auto-bump on conflict), with the routing tree diagram.
-- [ ] Build + publish: `cd apps/indusk-mcp && pnpm publish` (user action). `prepublishOnly` runs the admin build automatically.
-- [ ] User upgrades global indusk-mcp on dusk + Numero (`indusk update` from each).
-- [ ] Smoke on dusk: kill any running `indusk-admin` from the prior 1.26.0 model. Run `indusk ui start`. Assert browser opens, project grid shows dusk + (any other init-ed projects), click into dusk → see plans, switch to another project via header (if multiple registered), `indusk ui status` reports running, `indusk ui stop` shuts it down. Closes T1, T2, T17 for dusk.
-- [ ] Smoke on Numero: ensure Numero is `indusk init`'d (or run `indusk update` to ensure registry entry exists). Run `indusk ui start` from Numero. Assert browser opens; Numero appears in the grid; click into Numero, assert plans render correctly. Closes T17 + the implicit "Numero works" success criterion that motivated this entire plan.
+- [x] Bump `apps/indusk-mcp/package.json` version → 1.27.0 (new feature: daemon hosting model + breaking change from 1.26.0's per-project mode).
+- [x] Add changelog entry to `apps/indusk-docs/src/changelog.md` per ADR's Documentation Plan: 1.27.0 entry naming the daemon model, the registry, the breaking change, the bundling decision (variant A3), and the cross-project scorecards. Include the migration note: "1.26.0 users: run `indusk init` once per project to register, then `indusk ui start` from anywhere."
+- [x] Update `apps/indusk-docs/src/reference/admin-ui/overview.md` per ADR's Documentation Plan: replace the per-project CLI section with the daemon model; document the registry; document the homepage + per-project routing; include the architecture diagram (Mermaid sequence: `indusk ui start` → daemon spawn → registry read → browser request → per-project file read).
+- [x] Create `apps/indusk-docs/src/reference/admin-ui/cli.md` per ADR's Documentation Plan: full CLI reference for `indusk ui start/stop/status`, exit codes, env vars (`INDUSK_HOME`), port behavior (default 3939, auto-bump on conflict), with the routing tree diagram.
+- [x] Build + publish: `cd apps/indusk-mcp && pnpm publish` (user action). `prepublishOnly` runs the admin build automatically. **Shipped 1.27.0 then 1.27.1 in same phase** — 1.27.1 adds `indusk ui restart` subcommand (scope addition surfaced during smoke: 1.26.0 leftovers held port 3939 and `indusk ui start` no-ops on running daemon per T4, so users had no one-command recovery after `npm i -g`).
+- [x] User upgrades global indusk-mcp on dusk + Numero (`indusk update` from each).
+- [x] Smoke on dusk: `indusk ui restart` from dusk. Browser opens, project grid shows dusk + numero, click into dusk → plans render, `indusk ui status` reports running. Closed T1, T2, T17 for dusk.
+- [x] Smoke on Numero: Numero is registered in `~/.indusk/projects.json`. `indusk ui restart` picks up Numero as a second project; browser shows numero in the grid; clicking into numero renders plans correctly. Closed T17 + the implicit "Numero works" success criterion that motivated this entire plan.
 
 #### Phase 5 Verification
-- [ ] T1 passes — live `indusk ui start` on dusk completes in <3s and prints the URL
-- [ ] T2 passes — live: close terminal, daemon survives, URL still reachable
-- [ ] T17 passes — Numero (a non-dusk project running globally-installed 1.27.0) gets a working `indusk ui start` with no `pnpm install` step
-- [ ] All Phase 1–4 tests still green (regression check)
+- [x] T1 passes — live `indusk ui start` on dusk completes in <3s and prints the URL
+- [x] T2 passes — live: close terminal, daemon survives, URL still reachable
+- [x] T17 passes — Numero (a non-dusk project running globally-installed 1.27.1) gets a working `indusk ui start` with no `pnpm install` step
+- [x] All Phase 1–4 tests still green (regression check)
 
 #### Phase 5 Context
-- [ ] Update CLAUDE.md "Current State": "**`admin-ui-hosting` shipped in indusk-mcp 1.27.0** — single long-lived native Node daemon hosts the admin UI for every InDusk project on the machine. `indusk ui start/stop/status` lifecycle. `~/.indusk/projects.json` registry populated by `indusk init`/`update`. Routes scope under `/p/[project]/...` with `/` as project grid and `/scorecards` cross-project. Pre-built Next.js production bundle (variant A3) shipped in tarball — consumers need zero extra tooling. Replaces the broken per-project model in 1.26.0."
+- [x] Update CLAUDE.md "Current State": "**`admin-ui-hosting` shipped in indusk-mcp 1.27.0** — single long-lived native Node daemon hosts the admin UI for every InDusk project on the machine. `indusk ui start/stop/status` lifecycle. `~/.indusk/projects.json` registry populated by `indusk init`/`update`. Routes scope under `/p/[project]/...` with `/` as project grid and `/scorecards` cross-project. Pre-built Next.js production bundle (variant A3) shipped in tarball — consumers need zero extra tooling. Replaces the broken per-project model in 1.26.0."
 
 #### Phase 5 Document
-- [ ] (overview.md + cli.md + changelog updates above ARE the Phase 5 docs; ADR publish to `apps/indusk-docs/src/decisions/admin-ui-hosting.md` happens in retrospective per the docs plan)
+- [x] (overview.md + cli.md + changelog updates above ARE the Phase 5 docs; ADR publish to `apps/indusk-docs/src/decisions/admin-ui-hosting.md` happens in retrospective per the docs plan)
+
+### Phase 6: UX polish — scorecards siloing, research section, brief collapsible (1.27.2)
+
+**Goal**: three deferred UX improvements batched into 1.27.2 after the 1.27.x daemon model proved stable in smoke. Scorecards become per-project (matching the rest of the project-siloed architecture), standalone `.indusk/research/` gets first-class treatment in the per-project view, and the Brief section reaches parity with Test Plan + ADR for expand/collapse control.
+
+- [ ] Add `readProjectScorecards(projectRoot)` helper to `apps/indusk-admin/src/lib/planning-reader.ts` (or reuse from single-project walk if already present) that reads one project's `.indusk/eval/results.log` and returns the same shape as the cross-project walker minus the project label. T19.
+- [ ] Create `apps/indusk-admin/src/app/p/[project]/scorecards/page.tsx` — server component reading the current project's scorecards via the helper above, rendering the existing `<Scorecards>` component (without project-label column). T19.
+- [ ] Remove top-level `apps/indusk-admin/src/app/scorecards/page.tsx` (route goes 404) OR have it redirect to the first registered project's `/p/{name}/scorecards`. Prefer removal for cleanliness — the top-level route was only useful cross-project, which we're now explicitly NOT doing. T19.
+- [ ] Add "Scorecards" link to the per-project sidebar in `apps/indusk-admin/src/app/p/[project]/layout.tsx` (above or below the plan list, with consistent styling). T19.
+- [ ] Add `readProjectResearch(projectRoot)` reader to `apps/indusk-admin/src/lib/planning-reader.ts` (or a new `research-reader.ts`) that walks `.indusk/research/` recursively, returning `{ slug: string, path: string, title: string | null }[]` — title from `# H1` when present, else slug. Handle missing directory gracefully (return empty list). T20.
+- [ ] Create `apps/indusk-admin/src/app/p/[project]/research/[slug]/page.tsx` — server component reading the markdown file at `projectRoot/.indusk/research/{slug}.md` (or `/{slug}/README.md` for directory slugs) and rendering via `<Markdown>`. Return `notFound()` for missing slugs. T20.
+- [ ] Add "Research" group to the per-project sidebar in `apps/indusk-admin/src/app/p/[project]/layout.tsx` listing every research slug as a link to `/p/{project}/research/{slug}`. Empty state: omit the group entirely when the research dir is absent or empty (don't render an empty header). T20.
+- [ ] Wrap the Brief section in `apps/indusk-admin/src/components/PlanDetail.tsx` inside `<CollapsibleSection>` with `defaultOpen={true}` — same pattern as the existing Test Plan + ADR wrappers. T21.
+- [ ] Bump `apps/indusk-mcp/package.json` version → 1.27.2.
+- [ ] Add changelog entry to `apps/indusk-docs/src/changelog.md` naming the three changes; flag scorecards relocation as a minor breaking-change for bookmarks (`/scorecards` is gone; use `/p/{project}/scorecards`).
+- [ ] Update `apps/indusk-docs/src/reference/admin-ui/overview.md` "Routing tree" + "What each page shows" sections — replace `/scorecards` row with `/p/{project}/scorecards`, add `/p/{project}/research/{slug}`, note Brief is collapsible.
+- [ ] Update `apps/indusk-docs/src/reference/admin-ui/cli.md` Routing tree section to match.
+- [ ] Build + publish: `cd apps/indusk-mcp && pnpm publish` (user action).
+- [ ] Upgrade global: `npm i -g @infinitedusky/indusk-mcp@1.27.2 && indusk ui restart`.
+- [ ] Smoke: browse `/p/dusk/scorecards` → sees dusk's scorecards; `/p/numero/scorecards` → sees numero's. Top-level `/scorecards` → 404. `/p/dusk/research/anchor-overlay-pattern` → renders markdown; sidebar lists research slugs. Plan detail: Brief section has a working chevron. Closes T19, T20, T21.
+
+#### Phase 6 Verification
+- [ ] T19 passes — `/p/{project}/scorecards` renders only that project's scorecards; top-level `/scorecards` is removed (404)
+- [ ] T20 passes — `/p/{project}/research/{slug}` renders markdown from `.indusk/research/`; per-project sidebar lists slugs; empty state hides the group
+- [ ] T21 passes — Brief section is visually collapsible with working chevron; default expanded
+- [ ] All Phase 1–5 tests still green (regression check)
+
+#### Phase 6 Context
+- [ ] Append to CLAUDE.md "Current State": "1.27.2 follow-up on 2026-04-20 — scorecards became project-siloed under `/p/[project]/scorecards`, per-project research section at `/p/[project]/research/[slug]` backed by `.indusk/research/`, Brief section made collapsible in PlanDetail. Top-level `/scorecards` removed — bookmark break, no replacement planned (cross-project scorecards view is deliberately out of scope; project-siloed is canonical going forward)."
+
+#### Phase 6 Document
+- [ ] overview.md + cli.md updates above ARE the Phase 6 docs (routing tree changes, new research route, Brief collapsibility note). No separate guide page needed — these are additive documentation changes.
 
 ## Files Affected
 

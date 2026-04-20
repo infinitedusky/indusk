@@ -37,6 +37,14 @@ export default defineConfig({
             "src/__tests__/**/*.test.ts",
           ],
           environment: "node",
+          // HTTP smoke tests spawn `next dev` per file. Running them in
+          // parallel spikes CPU + memory enough that `next dev` can't reach
+          // the "Ready in" stdout line within 30s — tests fetch before the
+          // server listens and all fail with ECONNREFUSED. Serializing per
+          // file keeps each spawn's boot window uncontested. Non-HTTP node
+          // tests (planning-reader, etc.) pay a small serial overhead but
+          // run in ms each so the cost is negligible.
+          fileParallelism: false,
         },
       },
       {

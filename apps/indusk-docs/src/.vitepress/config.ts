@@ -99,6 +99,7 @@ const config = defineConfig({
 					text: "Admin UI",
 					items: [
 						{ text: "Overview", link: "/reference/admin-ui/overview" },
+						{ text: "CLI Reference", link: "/reference/admin-ui/cli" },
 						{
 							text: "Component Conventions",
 							link: "/reference/admin-ui/component-conventions",

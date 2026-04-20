@@ -1,14 +1,14 @@
 ---
-title: "Dusk v2 — Greenfield Rewrite of indusk-mcp"
+title: "Indusk v2 - Dawn — Greenfield Rewrite of indusk-mcp"
 date: 2026-04-07
 status: in-progress
 ---
 
-# Dusk v2 — Research
+# Dawn — Research
 
 ## Question
 
-Rewrite `@infinitedusky/indusk-mcp` as `@infinitedusky/dusk` with a clean architecture: config-driven everything, scaffold/init separation, unified extension model, OTel-as-extension. Build in a sibling directory (`apps/dusk/`) so v1 stays installable while v2 develops in parallel. Migrate infinitedusky itself when v2 is ready.
+Rewrite `@infinitedusky/indusk-mcp` as `@infinitedusky/dawn` with a clean architecture: config-driven everything, scaffold/init separation, unified extension model, OTel-as-extension. Build in a sibling directory (`apps/dawn/`) so v1 stays installable while v2 develops in parallel. Migrate infinitedusky itself when v2 is ready.
 
 This research drives the decisions one at a time. Each decision unblocks the next. We don't write the brief until every decision is made and recorded here.
 
@@ -39,12 +39,12 @@ These are the questions we need to answer, in order. Each is a separate discussi
 Where do built-in extensions live, and how does the system find them?
 
 **Option A — Ship in package, copy on scaffold:**
-- `dusk` npm package contains `extensions/{name}/manifest.json`
+- `dawn` npm package contains `extensions/{name}/manifest.json`
 - During scaffold, selected extensions are copied to `.indusk/extensions/{name}/`
 - Built-in and third-party become indistinguishable on disk
 
 **Option B — Ship in package, reference by name:**
-- `dusk` npm package contains `extensions/{name}/`
+- `dawn` npm package contains `extensions/{name}/`
 - `.indusk/config.json` lists enabled extensions by name
 - Built-ins resolved against package, third-party extensions live in `.indusk/extensions/`
 - Two storage locations, one config
@@ -126,7 +126,7 @@ Currently the parser hardcodes 5 gate types: implementation, otel, verify, conte
 
 ### 5. Scaffold flow [blocked on #2, #3]
 
-What does `dusk scaffold` actually do?
+What does `dawn scaffold` actually do?
 
 Sub-questions:
 - Interactive prompts? Or flag-driven? Or both?
@@ -144,14 +144,14 @@ Sub-questions:
 
 ### 6. Init reconciliation behavior [blocked on #5]
 
-How does `dusk init` behave given a `.indusk/config.json`?
+How does `dawn init` behave given a `.indusk/config.json`?
 
 Sub-questions:
 - Pure idempotent reconciliation (no surprises, no decisions)?
 - Does init ever prompt? (probably not — scaffold is for prompts)
 - How does init handle drift (file changed since last init)?
 - What does init log? Same as v1's section-by-section output?
-- What's the relationship to `dusk update` (still needed? merged in?)
+- What's the relationship to `dawn update` (still needed? merged in?)
 
 **To decide:** Init's exact responsibilities and behavior.
 
@@ -161,7 +161,7 @@ Sub-questions:
 
 ### 7. Local mode rethink [unblocked, can run in parallel]
 
-Local mode currently uses an "overlay" system to layer InDusk additions onto the team's `.claude/settings.json`, then strip them via `pr-clean` before PRs.
+Local mode currently uses an "overlay" system to layer indusk additions onto the team's `.claude/settings.json`, then strip them via `pr-clean` before PRs.
 
 Sub-questions:
 - Is the overlay model the right answer or a workaround?
@@ -235,7 +235,7 @@ Likely **rewrite:**
 
 ### 11. Migration script design [blocked on everything]
 
-`dusk migrate` reads v1 layout and writes v2 layout.
+`dawn migrate` reads v1 layout and writes v2 layout.
 
 Sub-questions:
 - What v1 state does it read? (`.indusk/config.json`, `.claude/skills/`, `.indusk/extensions/`, ...)
@@ -252,7 +252,7 @@ Sub-questions:
 
 ### 12. Build location and release sequence [unblocked, can decide early]
 
-- Build v2 in `apps/dusk/` (sibling to `apps/indusk-mcp/`)
+- Build v2 in `apps/dawn/` (sibling to `apps/indusk-mcp/`)
 - v1 stays installable globally throughout v2 development
 - v2 publishes when complete; v1 freezes
 - Migration runs once per project; infinitedusky is the first migration
@@ -300,7 +300,7 @@ Sub-questions:
 
 ## Open Questions (broader)
 
-- Should `dusk` keep the "MCP server" framing or position itself as a dev system that includes an MCP server?
+- Should `dawn` keep the "MCP server" framing or position itself as a dev system that includes an MCP server?
 - Is the indusk-docs site part of v2 or a separate concern?
 - Are there v2 features worth building that we haven't talked about yet (e.g. plan dashboard, lesson auto-suggest)? Or strictly refactor scope?
 

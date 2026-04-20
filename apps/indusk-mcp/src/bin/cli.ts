@@ -444,4 +444,13 @@ uiCmd
 		await uiStatus();
 	});
 
+uiCmd
+	.command("restart")
+	.description("Stop the admin UI daemon (if running) and start it again — picks up a new bundle from `npm i -g`")
+	.action(async function (this: Command) {
+		const opts = this.optsWithGlobals() as { port: string; open: boolean };
+		const { uiRestart } = await import("./commands/ui.js");
+		await uiRestart({ port: opts.port, open: opts.open });
+	});
+
 program.parse();

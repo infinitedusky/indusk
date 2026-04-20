@@ -102,3 +102,43 @@ describe("T7 — bare `indusk ui` is a friendly alias for `start`", () => {
     expect(bare.stdout).toMatch(/(starting|started|running).*localhost/i);
   }, 30_000);
 });
+
+describe("`indusk ui restart` — stop + start", () => {
+  it.skipIf(SHOULD_SKIP)(
+    "restart: starts a fresh daemon with a new PID when one was already running",
+    async () => {
+      const first = runCli(["ui", "start", "--no-open", "--port", "0"]);
+      await new Promise((r) => setTimeout(r, 6000));
+      expect(first.stdout).toMatch(/PID: \d+/);
+      const firstPidMatch = first.stdout.match(/PID: (\d+)/);
+      const firstPid = firstPidMatch ? firstPidMatch[1] : null;
+      expect(firstPid).not.toBeNull();
+
+      const restart = runCli(["ui", "restart", "--no-open", "--port", "0"]);
+      await new Promise((r) => setTimeout(r, 6000));
+      expect(restart.code).toBe(0);
+      // Output contains both the stop acknowledgement AND a fresh start.
+      expect(restart.stdout).toMatch(/stopped|not running/i);
+      expect(restart.stdout).toMatch(/starting admin UI/i);
+      const secondPidMatch = restart.stdout.match(/PID: (\d+)/);
+      const secondPid = secondPidMatch ? secondPidMatch[1] : null;
+      expect(secondPid).not.toBeNull();
+      expect(secondPid).not.toBe(firstPid);
+    },
+    45_000,
+  );
+
+  it.skipIf(SHOULD_SKIP)(
+    "restart: works cleanly when no daemon is running (no-op stop + fresh start)",
+    async () => {
+      const restart = runCli(["ui", "restart", "--no-open", "--port", "0"]);
+      await new Promise((r) => setTimeout(r, 6000));
+      expect(restart.code).toBe(0);
+      // Stop path: "Admin UI is not running." Start path then runs normally.
+      expect(restart.stdout).toMatch(/not running/i);
+      expect(restart.stdout).toMatch(/starting admin UI/i);
+      expect(restart.stdout).toMatch(/PID: \d+/);
+    },
+    30_000,
+  );
+});

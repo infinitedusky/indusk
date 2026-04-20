@@ -1,8 +1,7 @@
-import { existsSync } from "node:fs";
 import { notFound } from "next/navigation";
 import { PlanDetail } from "@/components/PlanDetail";
 import { readActivePlans, readArchivedPlans } from "@/lib/planning-reader";
-import { getProjectPath } from "@/lib/registry-client";
+import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
 interface PlanPageProps {
 	params: Promise<{ project: string; name: string }>;
@@ -24,7 +23,7 @@ interface PlanPageProps {
 export default async function PlanPage({ params }: PlanPageProps) {
 	const { project, name } = await params;
 	const projectPath = getProjectPath(project);
-	if (!projectPath || !existsSync(projectPath)) return null;
+	if (!projectPath || !projectPathExists(projectPath)) return null;
 
 	const [active, archived] = await Promise.all([
 		readActivePlans(projectPath),

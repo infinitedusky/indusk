@@ -56,6 +56,10 @@ vi.mock("@/lib/registry-client", () => ({
 	],
 	getProjectPath: (name: string) =>
 		name === "fixture-proj" ? "/mock/project" : null,
+	// Always reports the mocked path exists; the stale-failure branch is
+	// exercised separately by component-level tests against
+	// StaleProjectFailurePage and the HTTP smoke in __tests__/.
+	projectPathExists: () => true,
 }));
 
 import PerProjectLayout from "./layout";
