@@ -69,9 +69,9 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | passing |
 | T17 | A consumer running `npm install -g @infinitedusky/indusk-mcp@1.27` and then `indusk ui start` from any project: the daemon starts without the consumer running `pnpm install`, `next build`, or any other secondary tool. | Phase 0 | Phase 5 | passing |
 | T18 | The published indusk-mcp tarball contains the pre-built Next.js production output. Tarball size is under 50 MB. | Phase 1 | Phase 1 | passing |
-| T19 | `/p/{project}/scorecards` renders that project's scorecards (from its `.indusk/eval/results.log`). The top-level `/scorecards` route is removed (404) or redirects into the current project. Per-project sidebar has a "Scorecards" link next to the plan list. | Phase 6 | Phase 6 | written |
-| T20 | `/p/{project}/research/{slug}` renders a markdown file from that project's `.indusk/research/` directory via the same `<Markdown>` component used for plans. The per-project sidebar has a "Research" group listing every top-level `.md` slug under `.indusk/research/` (nested dirs shown as collapsible subgroups). Empty state when the directory is missing. | Phase 6 | Phase 6 | written |
-| T21 | The Brief section on `/p/{project}/plan/{name}` is rendered inside a `<CollapsibleSection>` with the same expand/collapse control as Test Plan and ADR. Default state is expanded. | Phase 6 | Phase 6 | written |
+| T19 | `/p/{project}/scorecards` renders that project's scorecards (from its `.indusk/eval/results.log`). The top-level `/scorecards` route is removed (404) or redirects into the current project. Per-project sidebar has a "Scorecards" link next to the plan list. | Phase 6 | Phase 6 | passing |
+| T20 | `/p/{project}/research/{slug}` renders a markdown file from that project's `.indusk/research/` directory via the same `<Markdown>` component used for plans. The per-project sidebar has a "Research" group listing every top-level `.md` slug under `.indusk/research/` (nested dirs shown as collapsible subgroups). Empty state when the directory is missing. | Phase 6 | Phase 6 | passing |
+| T21 | The Brief section on `/p/{project}/plan/{name}` is rendered inside a `<CollapsibleSection>` with the same expand/collapse control as Test Plan and ADR. Default state is expanded. | Phase 6 | Phase 6 | passing |
 
 ### Trajectory Rationale
 
@@ -249,10 +249,10 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [ ] Smoke: browse `/p/dusk/scorecards` → sees dusk's scorecards; `/p/numero/scorecards` → sees numero's. Top-level `/scorecards` → 404. `/p/dusk/research/anchor-overlay-pattern` → renders markdown; sidebar lists research slugs. Plan detail: Brief section has a working chevron. Closes T19, T20, T21.
 
 #### Phase 6 Verification
-- [ ] T19 passes — `/p/{project}/scorecards` renders only that project's scorecards; top-level `/scorecards` is removed (404)
-- [ ] T20 passes — `/p/{project}/research/{slug}` renders markdown from `.indusk/research/`; per-project sidebar lists slugs; empty state hides the group
-- [ ] T21 passes — Brief section is visually collapsible with working chevron; default expanded
-- [ ] All Phase 1–5 tests still green (regression check)
+- [x] T19 passes — `http-project-scorecards.test.ts`: 4/4 assertions green. `/p/proj-a/scorecards` isolates proj-a's data; `/scorecards` returns 404; sidebar link present.
+- [x] T20 passes — `http-project-research.test.ts`: 5/5 green. Renders markdown, 404 for missing slug, sidebar Research group present for proj-a, absent for proj-b.
+- [x] T21 passes — `PlanDetail.test.tsx`: 2/2 new T21 cases green. Brief wrapped in CollapsibleSection, default expanded, click collapses.
+- [x] All Phase 1–5 tests still green — regression check: `pnpm exec tsc --noEmit` clean across the admin app. Phase 4's cross-project scorecards test (T15) was deleted in this phase because the feature it tested is removed — not a regression.
 
 #### Phase 6 Context
 - [ ] Append to CLAUDE.md "Current State": "1.27.2 follow-up on 2026-04-20 — scorecards became project-siloed under `/p/[project]/scorecards`, per-project research section at `/p/[project]/research/[slug]` backed by `.indusk/research/`, Brief section made collapsible in PlanDetail. Top-level `/scorecards` removed — bookmark break, no replacement planned (cross-project scorecards view is deliberately out of scope; project-siloed is canonical going forward)."
