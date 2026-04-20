@@ -116,11 +116,12 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 **Goal**: ship the lifecycle commands (`ui start/stop/status`) and the registry plumbing (`init`/`update` writing to `~/.indusk/projects.json`). Daemon process management without UI changes — the routes still respond as 1.26.0 did, but spawned via the new daemon machinery.
 
 - [x] Create `apps/indusk-mcp/src/lib/admin/registry.ts` exporting `readRegistry()`, `addProject(path)`, `validateProject(name)`, `touchProject(name)`. Atomic writes via tmp-file + rename. INDUSK_HOME env var redirects away from `~/.indusk/`. **Discovered during impl**: `EMPTY_REGISTRY` constant + `{ ...EMPTY_REGISTRY }` shallow spread shared the `projects` array reference across calls — first test mutated it, all later tests saw the leftover. Replaced with `emptyRegistry()` factory function. Classic shared-mutable-default-value bug. Worth a CLAUDE.md note when this phase wraps. 7 tests pass (T8/T9/T10 prep).
-- [ ] Create `apps/indusk-mcp/src/lib/admin/daemon.ts` exporting:
-  - `daemonStart({ port, registryPath, adminDir }): Promise<{ pid, port }>` — spawns `next start --port {port}` from `adminDir`, detached + unref, writes PID to `~/.indusk/admin-ui.pid` and metadata to `~/.indusk/admin-ui.json`, redirects stdio to `~/.indusk/admin-ui.log`
-  - `daemonStop(): Promise<{ stopped: boolean; signaledPid?: number }>` — reads PID, SIGTERM, polls for ≤3s, SIGKILL fallback, removes PID file
-  - `daemonStatus(): Promise<{ running: boolean; pid?: number; port?: number }>` — reads PID file, kill(pid, 0) liveness check, port-probe to confirm actually listening
-  - `findFreePort(start: number): Promise<number>` — checks `start`; if taken, finds free; returns the port to use
+- [x] Create `apps/indusk-mcp/src/lib/admin/daemon.ts` exporting:
+  - `daemonStart({ port, adminDir, nextBin, projectRoot? }): Promise<DaemonMeta>` — spawns `node <nextBin> start --port {port}` from `adminDir`, `detached: true` + `unref()` + stdio redirect to `~/.indusk/admin-ui.log`, writes PID to `~/.indusk/admin-ui.pid` and metadata to `~/.indusk/admin-ui.json`
+  - `daemonStop(): Promise<{ stopped, signaledPid?, usedSigkill? }>` — reads PID, SIGTERM, polls every 100ms up to 3s, SIGKILL fallback, cleans PID + meta files; `stopped:false` only when no PID file existed
+  - `daemonStatus(): Promise<DaemonStatusResult>` — reads PID + meta, `kill(pid, 0)` liveness check, returns `{running:true, pid, port, adminDir, startedAt}` or `{running:false}` (port probing left to caller via separate `isPortListening` export)
+  - `findFreePort(start): Promise<number>` — checks `start`; if taken or `0`, returns an OS-picked free port (no upward scan — scanning invites check-then-listen races)
+  - Bonus: `isPortListening(port)` — TCP-connect probe with 500ms timeout, used by `uiStatus` to disambiguate "alive but warming up" from "alive and serving"
 - [ ] Create `apps/indusk-mcp/src/bin/commands/ui.ts` (REPLACE existing 1.26.0 file): exports `uiStart(opts)`, `uiStop()`, `uiStatus()`. Internally each calls into `daemon.ts`. `uiStart` resolves the bundled admin dir via the new `resolveBundledAdminDir()` (looks at indusk-mcp's install root + `/admin`), checks for double-start (calls `daemonStatus()` first), opens browser unless `--no-open`.
 - [ ] Update `apps/indusk-mcp/src/bin/cli.ts` commander:
   ```ts
