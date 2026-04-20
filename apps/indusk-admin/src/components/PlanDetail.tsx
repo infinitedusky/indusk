@@ -56,23 +56,35 @@ export function PlanDetail({ plan }: PlanDetailProps) {
       )}
 
       {plan.research && (
-        <CollapsibleSection title="Research" defaultOpen={!plan.brief}>
+        <CollapsibleSection
+          title="Research"
+          defaultOpen={!plan.brief}
+          persistKey={`plan:${plan.name}:section:research`}
+        >
           <Markdown>{plan.research.content}</Markdown>
         </CollapsibleSection>
       )}
 
       {plan.brief && (
-        <BriefSection content={plan.brief.content} />
+        <BriefSection planName={plan.name} content={plan.brief.content} />
       )}
 
       {plan.testPlan && (
-        <CollapsibleSection title="Test Plan" defaultOpen={false}>
+        <CollapsibleSection
+          title="Test Plan"
+          defaultOpen={false}
+          persistKey={`plan:${plan.name}:section:test-plan`}
+        >
           <Markdown>{plan.testPlan.content}</Markdown>
         </CollapsibleSection>
       )}
 
       {plan.adr && (
-        <CollapsibleSection title="ADR — Goal + Decision" defaultOpen={false}>
+        <CollapsibleSection
+          title="ADR — Goal + Decision"
+          defaultOpen={false}
+          persistKey={`plan:${plan.name}:section:adr`}
+        >
           <Markdown>{plan.adr.content}</Markdown>
         </CollapsibleSection>
       )}
@@ -100,7 +112,12 @@ function ImplSections({ plan }: { plan: Plan }) {
   return (
     <>
       {split.pre.length > 0 && (
-        <PhasesSection phases={split.pre} heading="Phases" testId="phases-section" />
+        <PhasesSection
+          phases={split.pre}
+          heading="Phases"
+          testId="phases-section"
+          planName={plan.name}
+        />
       )}
       <FalsificationSection plan={plan} phase={split.falsification} />
       {split.post.length > 0 && (
@@ -108,6 +125,7 @@ function ImplSections({ plan }: { plan: Plan }) {
           phases={split.post}
           heading="Follow-up Phases"
           testId="followup-phases-section"
+          planName={plan.name}
         />
       )}
     </>
@@ -143,10 +161,20 @@ function MalformedBanner() {
   );
 }
 
-function BriefSection({ content }: { content: string }) {
+function BriefSection({
+  planName,
+  content,
+}: {
+  planName: string;
+  content: string;
+}) {
   return (
     <section className="flex flex-col gap-2" data-testid="brief-section">
-      <CollapsibleSection title="Brief" defaultOpen={true}>
+      <CollapsibleSection
+        title="Brief"
+        defaultOpen={true}
+        persistKey={`plan:${planName}:section:brief`}
+      >
         <Markdown>{content}</Markdown>
       </CollapsibleSection>
     </section>
@@ -157,10 +185,12 @@ function PhasesSection({
   phases,
   heading,
   testId,
+  planName,
 }: {
   phases: Phase[];
   heading: string;
   testId: string;
+  planName: string;
 }) {
   if (phases.length === 0) return null;
 
@@ -173,6 +203,7 @@ function PhasesSection({
             key={phase.number}
             title={`Phase ${phase.number}${phase.title ? `: ${phase.title}` : ""}`}
             defaultOpen={false}
+            persistKey={`plan:${planName}:phase:${phase.number}`}
           >
             <div className="flex flex-col gap-3">
               {phase.trajectoryRows.length > 0 && (

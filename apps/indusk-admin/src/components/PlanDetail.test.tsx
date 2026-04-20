@@ -1,8 +1,14 @@
 import type { Trajectory } from "@infinitedusky/indusk-mcp/trajectory/parser";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
 import { PlanDetail } from "./PlanDetail";
+
+// CollapsibleSection persists state to localStorage (1.27.7+). Clear between
+// tests so earlier test toggles don't bleed into later tests' initial state.
+beforeEach(() => {
+	if (typeof window !== "undefined") localStorage.clear();
+});
 
 /**
  * Trajectory tests for PlanDetail behavior:
