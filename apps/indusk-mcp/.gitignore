@@ -9,3 +9,9 @@
 .indusk/eval/
 # Extension manifests are package-owned; env files contain secrets
 .indusk/extensions/
+# Bundled admin app — produced by scripts/bundle-admin.js, included in
+# published tarball via package.json files array, but should never be
+# committed (regenerated on every build).
+admin/
+# Packed tarballs from `pnpm pack` — local build artifacts.
+*.tgz
