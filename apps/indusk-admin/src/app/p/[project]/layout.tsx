@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PlanList } from "@/components/PlanList";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
@@ -75,6 +76,14 @@ export default async function PerProjectLayout({
 					</div>
 				}
 			>
+				<nav className="flex flex-col gap-1 pb-3">
+					<Link
+						href={`/p/${project}/scorecards`}
+						className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+					>
+						Scorecards
+					</Link>
+				</nav>
 				<PlanList
 					active={active}
 					archived={archived}
