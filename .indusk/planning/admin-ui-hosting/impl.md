@@ -242,7 +242,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [x] Wrap the Brief section in `PlanDetail.tsx` inside `<CollapsibleSection title="Brief" defaultOpen={true}>` — parity with Test Plan + ADR. Outer `<section data-testid="brief-section">` preserved for T6 stability. T21.
 - [x] Bump `apps/indusk-mcp/package.json` version → 1.27.2.
 - [x] Add changelog entry to `apps/indusk-docs/src/changelog.md` naming the three changes; flag scorecards relocation as a minor breaking-change for bookmarks (`/scorecards` is gone; use `/p/{project}/scorecards`).
-- [ ] Update `apps/indusk-docs/src/reference/admin-ui/overview.md` "Routing tree" + "What each page shows" sections — replace `/scorecards` row with `/p/{project}/scorecards`, add `/p/{project}/research/{slug}`, note Brief is collapsible.
+- [x] Update `apps/indusk-docs/src/reference/admin-ui/overview.md` — routing tree rewritten for project-siloed model, per-project home structure documented (header/scorecards/plans/research), "What each page shows" adds `/p/{project}/scorecards` and `/p/{project}/research/{slug}` sections, Brief row flagged collapsible.
 - [ ] Update `apps/indusk-docs/src/reference/admin-ui/cli.md` Routing tree section to match.
 - [ ] Build + publish: `cd apps/indusk-mcp && pnpm publish` (user action).
 - [ ] Upgrade global: `npm i -g @infinitedusky/indusk-mcp@1.27.2 && indusk ui restart`.

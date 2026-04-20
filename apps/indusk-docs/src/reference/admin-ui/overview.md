@@ -65,19 +65,27 @@ No auto-pruning. If a registered project's path is deleted from disk, `indusk ui
 ## Routing tree
 
 ```
-/                        # Project grid — one card per registered project
-/scorecards              # Cross-project scorecards, labeled + sorted most-recent first
-/p/{project}/            # Per-project home (plan list in sidebar)
-/p/{project}/plan/{name} # Plan detail page
+/                                    # Project grid — one card per registered project
+/p/{project}/                        # Per-project home (sidebar + empty state)
+/p/{project}/scorecards              # Per-project eval scorecards (1.27.2+)
+/p/{project}/plan/{name}             # Plan detail page
+/p/{project}/research/{slug}         # Per-project standalone research (1.27.2+)
 ```
 
-Cross-project views (`/scorecards`, eventually more) stay at top-level routes. Anything project-scoped lives under `/p/{project}/...`. The per-project layout at `app/p/[project]/layout.tsx` owns the sidebar, plan list, and project switcher; the root layout (`app/layout.tsx`) is global-nav-only.
+Everything is project-scoped under `/p/{project}/...`. The top-level home at `/` is the cross-project entry point (project grid); there is no other cross-project view. 1.26.0/1.27.0 had a top-level `/scorecards` that walked every registered project — **removed in 1.27.2** in favor of per-project scorecards at `/p/{project}/scorecards`. The per-project layout at `app/p/[project]/layout.tsx` owns the sidebar, plan list, Scorecards link, Research group, and project switcher; the root layout (`app/layout.tsx`) is global-nav-only.
 
 ## What each page shows
 
 **`/` (project grid)** — one card per registered project with name, path, last-seen-at, and active-plan count. Clicking a card navigates to `/p/{name}/`.
 
-**`/p/{project}/` (per-project home)** — sidebar + empty-state main pane. Sidebar lists active plans in the order declared by that project's `.indusk/planning/master.md` pipeline tables. Plans not in `master.md` appear in an "Unordered" group. Archived plans appear in a collapsed `Archived (N)` section at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. A header `<ProjectSwitcher>` lets you jump between registered projects without restarting the daemon.
+**`/p/{project}/` (per-project home)** — sidebar + empty-state main pane. Sidebar structure (top to bottom):
+
+1. **Header** — project name + `<ProjectSwitcher>` to jump between registered projects.
+2. **Scorecards link** — direct to `/p/{project}/scorecards` (always present).
+3. **Plan list** — active plans in the order declared by `.indusk/planning/master.md` pipeline tables, then "Unordered" group for plans not in master, then `Archived (N)` collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`.
+4. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
+
+Switching projects via the header does not restart the daemon — the registry resolves on every request.
 
 **`/p/{project}/plan/{name}` (plan detail)** — sections render conditionally on which documents are present:
 
@@ -86,7 +94,7 @@ Cross-project views (`/scorecards`, eventually more) stay at top-level routes. A
 | Header | `name` + computed `status` | Always visible — name, archived/active marker, status badge |
 | Malformed banner | `plan.malformed` | Red banner when any document failed to parse |
 | Raw documents | `plan.rawDocuments` | One CollapsibleSection per malformed file with raw markdown in a `<pre>` |
-| Brief | `brief.md` | Markdown rendered (`react-markdown`) |
+| Brief | `brief.md` | Collapsible (1.27.2+) Markdown render, defaulted to open — parity with Test Plan + ADR |
 | Test Plan | `test-plan.md` | Collapsible Markdown render |
 | ADR | `adr.md` | Collapsible Markdown render |
 | Phases | `impl.md` | One CollapsibleSection per `### Phase N:` heading. Each phase contains a trajectory `<Table>` (filtered to rows whose `Passes at` matches the phase number) followed by the phase's full markdown |
@@ -95,7 +103,9 @@ Cross-project views (`/scorecards`, eventually more) stay at top-level routes. A
 
 Missing optional documents are not errors — sections simply don't render.
 
-**`/scorecards` (cross-project)** — flat table of every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first. When only one registered project has scorecards, the project label collapses (the view looks identical to 1.26.0's single-project mode).
+**`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `.indusk/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Empty state when no scorecards have been recorded yet.
+
+**`/p/{project}/research/{slug}` (per-project, 1.27.2+)** — renders a research markdown file via `<Markdown>`. Resolves `{slug}.md` first, then `{slug}/README.md` for nested-directory research. Path-traversal segments (`..`, `/`, leading `.`) are rejected. Missing slug returns 404.
 
 **`/p/{deleted}/` (stale failure page)** — registered name whose path no longer exists on disk. Returns HTTP 200 with a `StaleProjectFailurePage` that shows the registered name, the old path, and the recovery command (`cd <current-path> && indusk update`). Never 500, never 404.
 
