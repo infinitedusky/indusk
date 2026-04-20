@@ -116,6 +116,44 @@ describe("PlanDetail — brief section (T6)", () => {
   });
 });
 
+describe("PlanDetail — brief section is collapsible (T21, Phase 6)", () => {
+  it("T21 — Brief section is rendered inside a CollapsibleSection with aria-expanded control, defaulting to open", async () => {
+    const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    const brief = container.querySelector('[data-testid="brief-section"]');
+    expect(brief).not.toBeNull();
+    // The collapsible control is the CollapsibleSection's header button — it
+    // carries aria-expanded. The Brief section must contain exactly one such
+    // control wrapping its content (parity with Test Plan and ADR sections).
+    const toggle = brief?.querySelector("[aria-expanded]");
+    expect(
+      toggle,
+      "Brief section must contain an aria-expanded toggle (CollapsibleSection) — currently rendered inline without collapse control",
+    ).not.toBeNull();
+    // Default state is expanded (defaultOpen={true}).
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
+    // Clicking collapses the section.
+    (toggle as HTMLElement | null)?.click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("T21 — collapsing the Brief section hides its content", async () => {
+    const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    const brief = container.querySelector('[data-testid="brief-section"]');
+    expect(brief?.textContent).toContain("Customers can't sort");
+
+    const toggle = brief?.querySelector("[aria-expanded]") as
+      | HTMLElement
+      | null;
+    expect(toggle).not.toBeNull();
+    toggle?.click();
+    await new Promise((r) => setTimeout(r, 50));
+
+    // After collapse the brief markdown is not rendered.
+    expect(brief?.textContent ?? "").not.toContain("Customers can't sort");
+  });
+});
+
 describe("PlanDetail — impl phases as collapsible sections (T7)", () => {
   it("T7 — main pane lists each phase as a collapsible section, defaulted to closed", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
