@@ -58,7 +58,7 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
 
 **Goal**: the behavior change lands and the backwards-compat regression is locked in. After this phase, a hand-invoked `/falsify` on a plan authors a phase; `/retrospective` on a legacy plan with `falsification.md` still works.
 
-- [ ] Rewrite `apps/indusk-mcp/skills/falsify.md`:
+- [x] Rewrite `apps/indusk-mcp/skills/falsify.md`:
   - Change "How to hunt" to end at "form a specific hypothesis" + "write the hypothesis as a trajectory row in a new Phase N+1" (not "write the test and run it")
   - Replace "Three outcomes per failing test" section with "What the new phase contains": (a) trajectory rows for hypothesis tests (`T-ID | Asserts | Writable at | Passes at | State`, one per hypothesis, Writable at = Phase 0 typically since tests can be authored against current behavior), (b) implementation items for the fixes under an `### Phase N+1: Falsification — {summary}` heading, (c) Verification / Context / Document gates referencing the trajectory rows
   - Replace "Loop exit (hybrid)" to terminate when no more in-scope hypotheses can be formed; call `markTerminated` replaced with "stop adding rows to the phase"
