@@ -468,6 +468,36 @@ export async function update(projectRoot: string): Promise<void> {
 		console.info("  re-applied settings overlay");
 	}
 
+	// 10. Maintain the admin-ui project registry. If the cwd's basename is
+	// already registered and the path matches, bump `lastSeenAt`. Otherwise
+	// call `addProject` — either the project was never registered (pre-1.27
+	// projects being updated to the new shape) or the path changed and we
+	// want a fresh entry. `validateProject` throws when the name is absent;
+	// `addProject` is idempotent on path match.
+	console.info("\n[Project registry]\n");
+	const { basename } = await import("node:path");
+	const { addProject, touchProject, validateProject } = await import(
+		"../../lib/admin/registry.js"
+	);
+	const projectName = basename(projectRoot);
+	try {
+		const { entry, pathExists } = validateProject(projectName);
+		if (entry.path === projectRoot && pathExists) {
+			touchProject(projectName);
+			console.info(`  touched: ${projectName} (lastSeenAt updated)`);
+		} else {
+			const added = addProject(projectRoot);
+			console.info(`  registered: ${added.name} (entry for '${projectName}' had a different path)`);
+		}
+	} catch {
+		const added = addProject(projectRoot);
+		if (added.name !== projectName) {
+			console.info(`  registered: ${added.name} (basename '${projectName}' collided; suffixed)`);
+		} else {
+			console.info(`  registered: ${added.name}`);
+		}
+	}
+
 	console.info("\nDone.");
 	if (didUpgrade) {
 		console.info("Restart Claude Code to pick up the new MCP server.");

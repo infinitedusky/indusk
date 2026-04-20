@@ -403,16 +403,18 @@ program
 		await startServer();
 	});
 
+// Commander quirk: options declared on BOTH a parent and a subcommand cause
+// the subcommand to silently receive the default for duplicated flags (the
+// parent consumes the token). Declaring `--port`/`--no-open` only on the
+// parent and reading them via `this.optsWithGlobals()` in each subcommand
+// action is the pattern that works for both `indusk ui --port N` (bare) and
+// `indusk ui start --port N` (subcommand). Verified in commander@13.
 const uiCmd = program
 	.command("ui")
 	.description("Admin UI daemon lifecycle (start/stop/status)")
 	.option("--port <port>", "Port to listen on (0 = pick free)", "3939")
 	.option("--no-open", "Don't auto-open the browser when the server is ready")
-	.action(async (opts: { port: string; open: boolean }) => {
-		// Bare `indusk ui` — friendly alias for `ui start`. Commander dispatches
-		// here only when no subcommand matches. Flags declared on the parent are
-		// re-declared on `start` below so both `indusk ui --port N` and
-		// `indusk ui start --port N` parse identically.
+	.action(async function (this: Command, opts: { port: string; open: boolean }) {
 		const { uiStart } = await import("./commands/ui.js");
 		await uiStart({ port: opts.port, open: opts.open });
 	});
@@ -420,9 +422,8 @@ const uiCmd = program
 uiCmd
 	.command("start")
 	.description("Start the admin UI daemon")
-	.option("--port <port>", "Port to listen on (0 = pick free)", "3939")
-	.option("--no-open", "Don't auto-open the browser when the server is ready")
-	.action(async (opts: { port: string; open: boolean }) => {
+	.action(async function (this: Command) {
+		const opts = this.optsWithGlobals() as { port: string; open: boolean };
 		const { uiStart } = await import("./commands/ui.js");
 		await uiStart({ port: opts.port, open: opts.open });
 	});

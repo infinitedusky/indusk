@@ -105,7 +105,7 @@ export async function uiStatus(): Promise<void> {
 
 	if (!status.running) {
 		console.info("Admin UI: not running");
-		console.info(`Registered ${projectLabel}: ${projectCount}`);
+		console.info(`Registered ${projectLabel} ${projectCount} (~/.indusk/projects.json)`);
 		return;
 	}
 
@@ -115,7 +115,7 @@ export async function uiStatus(): Promise<void> {
 	console.info(`  PID: ${status.pid}`);
 	console.info(`  Started: ${status.startedAt}`);
 	console.info(`  Admin dir: ${status.adminDir}`);
-	console.info(`Registered ${projectLabel}: ${projectCount}`);
+	console.info(`Registered ${projectLabel} ${projectCount} (~/.indusk/projects.json)`);
 }
 
 /**
