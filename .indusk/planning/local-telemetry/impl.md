@@ -168,10 +168,10 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 - [x] T5 passes: test captures `readPidsFromStatus()` before + after a `telemetry restart`; asserts both `jaegerPid` AND `otelcolPid` differ — proves fresh process spawn for both. 4/4 tests green across 4 consecutive runs (stable, no flakiness).
 
 #### Phase 3 Context
-- [ ] Append to CLAUDE.md "Conventions": "`indusk telemetry start/stop/restart/status` is the CLI lifecycle for the telemetry daemon — parallel to `indusk ui start/stop/restart/status`. Commander@13 pattern (options on parent, subcommands via `optsWithGlobals()`). Metadata at `~/.indusk/telemetry.{pid,json,log}`, never edited by hand."
+- [x] Appended to CLAUDE.md Known Gotchas cluster: the `indusk telemetry start/stop/restart/status` CLI (parallel to `indusk ui *`), commander@13 options-on-parent pattern, daemon metadata file layout, 2-PID identity gate via `verifyIdentity(pid, port)` for both Jaeger AND otelcol, restart behavior with 200ms port-release grace, detached spawn with `unref()` + interleaved stdout/stderr log.
 
 #### Phase 3 Document
-- [ ] Draft `apps/indusk-docs/src/reference/telemetry/cli.md` — `start/stop/restart/status` reference. Query subcommands added in Phase 5.
+- [x] Drafted `apps/indusk-docs/src/reference/telemetry/cli.md` — lifecycle reference for `start/stop/restart/status` (flags, exit codes, sample output, identity-gate behavior, daemon-file layout, env vars). Query subcommands (`tail`/`trace`/`services`/`reset`) called out as "pending Phase 5" rather than silently omitted. VitePress sidebar wiring deferred to Phase 7 ship alongside `overview.md`.
 
 ### Phase 4: Extension + registry + auto-start/stop hooks
 
