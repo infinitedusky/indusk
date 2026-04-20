@@ -57,9 +57,9 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T5 | `indusk ui stop` shuts the daemon down within 3s; subsequent `indusk ui status` reports "not running". | Phase 2 | Phase 2 | written |
 | T6 | `indusk ui start --port <n>` listens on `n`. If `n` is taken, CLI auto-bumps and prints a warning naming the new port. | Phase 2 | Phase 2 | written |
 | T7 | Bare `indusk ui` from anywhere is functionally equivalent to `indusk ui start`. | Phase 2 | Phase 2 | written |
-| T8 | `indusk init` from a fresh project directory adds an entry to `~/.indusk/projects.json`; subsequent `indusk ui status` reports the count incremented by 1. | Phase 2 | Phase 2 | written |
-| T9 | `indusk update` from a registered project validates the entry without creating a duplicate; the timestamp moves forward. | Phase 2 | Phase 2 | written |
-| T10 | `indusk init` from a project whose basename collides with a registered project's name registers under a numeric-suffixed name and prints a warning. | Phase 2 | Phase 2 | written |
+| T8 | `indusk init` from a fresh project directory adds an entry to `~/.indusk/projects.json`; subsequent `indusk ui status` reports the count incremented by 1. | Phase 2 | Phase 2 | passing |
+| T9 | `indusk update` from a registered project validates the entry without creating a duplicate; the timestamp moves forward. | Phase 2 | Phase 2 | passing |
+| T10 | `indusk init` from a project whose basename collides with a registered project's name registers under a numeric-suffixed name and prints a warning. | Phase 2 | Phase 2 | passing |
 | T11 | A registered project whose path is deleted from disk: `indusk ui status` still reports it; `/p/{name}/` returns HTTP 200 with a "needs reconfiguration" failure page (not 500). | Phase 4 | Phase 4 | planned |
 | T12 | The homepage at `/` shows one card per registered project with name, last-seen-at, and active-plan count. | Phase 3 | Phase 3 | planned |
 | T13 | Clicking a project card navigates to `/p/{name}/`, which renders the same sidebar + plan list shape as 1.26.0's per-project mode. | Phase 3 | Phase 3 | planned |
@@ -115,11 +115,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 
 **Goal**: ship the lifecycle commands (`ui start/stop/status`) and the registry plumbing (`init`/`update` writing to `~/.indusk/projects.json`). Daemon process management without UI changes — the routes still respond as 1.26.0 did, but spawned via the new daemon machinery.
 
-- [ ] Create `apps/indusk-mcp/src/lib/admin/registry.ts` exporting:
-  - `readRegistry(): { version, projects: ProjectEntry[] }` — reads `~/.indusk/projects.json`, returns empty registry if file absent
-  - `addProject(path: string): ProjectEntry` — appends; basename for name; numeric suffix on collision; writes atomically
-  - `validateProject(name: string): { entry: ProjectEntry; pathExists: boolean }` — used by `update` and the failure-page logic
-  - `touchProject(name: string): void` — updates `lastSeenAt`
+- [x] Create `apps/indusk-mcp/src/lib/admin/registry.ts` exporting `readRegistry()`, `addProject(path)`, `validateProject(name)`, `touchProject(name)`. Atomic writes via tmp-file + rename. INDUSK_HOME env var redirects away from `~/.indusk/`. **Discovered during impl**: `EMPTY_REGISTRY` constant + `{ ...EMPTY_REGISTRY }` shallow spread shared the `projects` array reference across calls — first test mutated it, all later tests saw the leftover. Replaced with `emptyRegistry()` factory function. Classic shared-mutable-default-value bug. Worth a CLAUDE.md note when this phase wraps. 7 tests pass (T8/T9/T10 prep).
 - [ ] Create `apps/indusk-mcp/src/lib/admin/daemon.ts` exporting:
   - `daemonStart({ port, registryPath, adminDir }): Promise<{ pid, port }>` — spawns `next start --port {port}` from `adminDir`, detached + unref, writes PID to `~/.indusk/admin-ui.pid` and metadata to `~/.indusk/admin-ui.json`, redirects stdio to `~/.indusk/admin-ui.log`
   - `daemonStop(): Promise<{ stopped: boolean; signaledPid?: number }>` — reads PID, SIGTERM, polls for ≤3s, SIGKILL fallback, removes PID file
