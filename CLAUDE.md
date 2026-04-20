@@ -113,6 +113,7 @@ The working agent never calls `mcp__graphiti__add_memory` or `mcp__indusk__graph
 - `indusk infra start` to start the infrastructure container (FalkorDB + Graphiti). One command, idempotent. Creates `~/.indusk/config.env` on first run.
 - `npx indusk-mcp init` to set up a new project with skills, CLAUDE.md, biome, OTel instrumentation, and MCP config
 - `init` scaffolds OTel: `instrumentation.ts`, `filtering-exporter.ts`, `logger.ts` (Node.js/Next.js) or `instrumentation.py` (Python) — every project is observable from day one
+- **`/falsify` authors a Falsification Phase in the plan's impl.md** (as of 1.27.4) — it does NOT run tests inline. The skill investigates the code, forms specific hypotheses, captures each as a trajectory row (`Writable at: Phase 0`, `Passes at: Phase N+1`), and appends a new phase `### Phase N+1: Falsification — {summary}` with impl items for the fixes + standard gates. `/work` later picks up the phase like any other phase. `/retrospective`'s Step 0 gate accepts "all impl phases terminal" as a pass condition, alongside the legacy `isFalsificationComplete(planRoot)` check (for plans authored pre-1.27.4 with `falsification.md` files) and the `falsification: skipped` + `falsification_reason` frontmatter path. Never run `/falsify` with the intent of running tests inline — the ritual is phase-authoring only.
 
 ## Key Decisions
 

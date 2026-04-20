@@ -88,10 +88,10 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
 - [x] T1, T2, T3, T4, T5 are manual dogfood tests (not executable), procedural instructions captured in Phase 2's Verification block. No test file to commit at Phase 1; Phase 2 runs the dogfood and flips states.
 
 #### Phase 1 Context
-- [ ] Append to CLAUDE.md "Conventions": "The `/falsify` skill authors a new phase in impl.md (not a separate `falsification.md` file) from 1.27.4 onward. Phase shape: `### Phase N: Falsification — {summary}` with trajectory rows for hypothesis tests + impl items for fixes + standard gates. `/retrospective` accepts 'all impl phases terminal' as an equivalent gate-pass to the legacy `isFalsificationComplete` path. Legacy plans with `falsification.md` files continue to work unchanged."
+- [x] Appended to CLAUDE.md "Conventions" — `/falsify` authors Falsification Phases in impl.md (not a separate `falsification.md` file) from 1.27.4 onward; phase shape + gate acceptance paths documented; never run `/falsify` with intent of running tests inline (phase-authoring only).
 
 #### Phase 1 Document
-- [ ] `apps/indusk-docs/src/guide/falsification-ritual.md` rewrite IS the Phase 1 docs — user-facing explainer of both the new phase-authoring flow and the legacy ritual (for anyone reading an archived plan's `falsification.md`).
+- [x] `apps/indusk-docs/src/guide/falsification-ritual.md` rewritten — "The ritual" section now describes phase-authoring; "What you do not do in the ritual" section explicitly names the anti-patterns (no inline tests, no three-way outcome picking, no writing test files); "Where the output lives" section redirects away from `falsification.md` with a legacy-plans note; "Retrospective hard-block" section names all three pass conditions (all impl phases terminal / legacy log complete / skip-reason frontmatter).
 
 ### Phase 2: Ship 1.27.4 + dogfood on admin-ui-hosting
 
