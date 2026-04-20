@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { CollapsibleSection } from "./CollapsibleSection";
 
@@ -77,13 +77,17 @@ describe("CollapsibleSection — T29 persistKey (localStorage)", () => {
 		expect(button).not.toBeNull();
 		button?.click();
 
-		// After toggle: state is open, localStorage has "1"
-		expect(container.querySelector('[data-testid="toggle-child"]')).not.toBeNull();
+		// React state updates are async — wait for the rerender
+		await vi.waitFor(() => {
+			expect(container.querySelector('[data-testid="toggle-child"]')).not.toBeNull();
+		});
 		expect(localStorage.getItem("t29-toggle-key")).toBe("1");
 
 		// Toggle back closed
 		button?.click();
-		expect(container.querySelector('[data-testid="toggle-child"]')).toBeNull();
+		await vi.waitFor(() => {
+			expect(container.querySelector('[data-testid="toggle-child"]')).toBeNull();
+		});
 		expect(localStorage.getItem("t29-toggle-key")).toBe("0");
 	});
 });

@@ -10,6 +10,39 @@ export interface CollapsibleSectionProps {
 	/** Optional right-aligned content in the header (e.g. status badge, count). */
 	headerRight?: ReactNode;
 	className?: string;
+	/**
+	 * When set, persists the open/closed state to `localStorage[persistKey]`
+	 * (`"1"` = open, `"0"` = closed). Initial state is read from storage;
+	 * toggling writes back. Falls back to `defaultOpen` when no stored value
+	 * exists or when localStorage is unavailable (SSR, privacy mode).
+	 *
+	 * Conventional key shape: `"plan:{planName}:section:{slug}"` so the
+	 * mapping is stable across renders and unique per (plan, section).
+	 */
+	persistKey?: string;
+}
+
+function readPersisted(key: string | undefined, fallback: boolean): boolean {
+	if (!key) return fallback;
+	if (typeof window === "undefined") return fallback;
+	try {
+		const stored = window.localStorage.getItem(key);
+		if (stored === "1") return true;
+		if (stored === "0") return false;
+		return fallback;
+	} catch {
+		return fallback;
+	}
+}
+
+function writePersisted(key: string | undefined, open: boolean): void {
+	if (!key) return;
+	if (typeof window === "undefined") return;
+	try {
+		window.localStorage.setItem(key, open ? "1" : "0");
+	} catch {
+		// swallow — privacy mode / quota; best-effort persistence
+	}
 }
 
 export function CollapsibleSection({
@@ -18,15 +51,24 @@ export function CollapsibleSection({
 	children,
 	headerRight,
 	className = "",
+	persistKey,
 }: CollapsibleSectionProps) {
-	const [open, setOpen] = useState(defaultOpen);
+	const [open, setOpen] = useState(() => readPersisted(persistKey, defaultOpen));
 	const Chevron = open ? ChevronDown : ChevronRight;
+
+	const toggle = (): void => {
+		setOpen((o) => {
+			const next = !o;
+			writePersisted(persistKey, next);
+			return next;
+		});
+	};
 
 	return (
 		<div className={`rounded-md border border-gray-200 ${className}`}>
 			<button
 				type="button"
-				onClick={() => setOpen((o) => !o)}
+				onClick={toggle}
 				aria-expanded={open}
 				className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
 			>
