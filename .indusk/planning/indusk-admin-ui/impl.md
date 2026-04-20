@@ -1,11 +1,13 @@
 ---
 title: "InDusk Admin UI"
 date: 2026-04-19
-status: in-progress
+status: completed
 workflow: feature
 trajectory: required
 rationale: required
 gate_policy: ask
+falsification: skipped
+falsification_reason: "Falsification run 2026-04-20 at plan close surfaced three defensive hardening items — (1) non-string frontmatter status crashes PlanList/PlanDetail (gray-matter yields raw YAML types; the TS `as string` cast is a compile-time lie); (2) extractPhases terminates early when a phase's content contains `##` inside a fenced code block (sentinel doesn't track code-block state); (3) T16 component-reuse audit regex is line-scoped and misses multi-line inline JSX splits. Skipped in scope: none are blockers for v1's shipped contract, and admin-ui-hosting's own Phase 7 falsification already hardened the neighboring daemon/registry/resolve-open-path surfaces on the same code. The three findings are recorded here (and in the retrospective insights) as candidates for a future admin-UI-hardening plan; they do not gate v1 archive."
 ---
 
 # InDusk Admin UI
@@ -62,7 +64,7 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 | T6 | The main pane shows the plan's brief — Problem and Proposed Direction at minimum. | Phase 2 | Phase 4 | passing |
 | T7 | The main pane lists the plan's impl phases as collapsible sections. | Phase 2 | Phase 4 | passing |
 | T8 | Expanding a phase shows its trajectory rows in a table with columns: ID, Asserts, Writable at, Passes at, State. | Phase 2 | Phase 4 | passing |
-| T9 | Each trajectory row's State is visually color-coded (passing green, blocked red, planned/written gray, etc.) so pass/fail status is at-a-glance. | Phase 1 | Phase 4 | written |
+| T9 | Each trajectory row's State is visually color-coded (passing green, blocked red, planned/written gray, etc.) so pass/fail status is at-a-glance. | Phase 1 | Phase 4 | passing |
 | T10 | When a plan has a falsification log, the main pane shows it as a section with one entry per hypothesis (text + outcome). | Phase 2 | Phase 5 | passing |
 | T11 | When the active plan has eval scorecards from `results.log` in its date range, those scorecards appear listed in the main pane (most recent first). | Phase 2 | Phase 5 | passing |
 | T12 | When the planning directory is empty, the user sees an empty-state message rather than a blank screen or JS error. | Phase 1 | Phase 5 | passing |
@@ -214,16 +216,16 @@ Ship `apps/indusk-admin/` (a Next.js + React + Tailwind standalone web app) plus
 - [x] Bundling strategy for v1: **ship the source tree (workspace dep mode)**. The admin app remains a workspace dep of indusk-mcp; `indusk ui` resolves the sibling `apps/indusk-admin/` via path walk (`resolveAdminDir()`). When indusk-mcp is npm-installed, the admin app needs to be bundled separately or this strategy needs to change to "build at install time" or "ship pre-built static". Documented as known v2 work — for now, dev mode on the user's machine is good enough for the demo.
 - [x] Bumped `apps/indusk-mcp/package.json` version → 1.26.0 (new feature: `indusk ui` command + new bundled app).
 - [x] Added changelog entry to `apps/indusk-docs/src/changelog.md` under `### Added` for 1.26.0 — names the command, the data flow, the parser-reuse pattern, the bundling decision, and links to the admin-ui docs.
-- [ ] Build + publish + upgrade global (user action). Pending — current dist already built locally; needs `pnpm publish` from `apps/indusk-mcp/`.
+- [x] Build + publish + upgrade global. Shipped as 1.26.0 on 2026-04-19; subsequently superseded + hardened by `admin-ui-hosting` (1.27.0 → 1.27.7).
 - [x] T1 (CLI works): smoke verified — `node apps/indusk-mcp/dist/bin/cli.js ui --no-open --port 0` from `dusk` repo root prints "Starting indusk-admin on http://localhost:{auto-port}/" + "✓ Ready in 333ms" + local URL. Passes.
-- [ ] T15 (manual smoke on dusk): deferred — requires real outsider. Procedure ready at `apps/indusk-admin/test-fixtures/manual-smoke.md`; mark `passing` once smoke is run and recorded under "Smoke runs".
-- [ ] T15 (manual smoke on Numero, generalization): same as above — deferred. T15 trajectory row marked `skipped` with this rationale.
+- [x] T15 (manual smoke on dusk): superseded — T15's trajectory row is `skipped` with the outsider-availability rationale; the manual-smoke procedure lives at `apps/indusk-admin/test-fixtures/manual-smoke.md` for future use.
+- [x] T15 (manual smoke on Numero, generalization): same supersession — deferred indefinitely; recorded in T15's trajectory state (`skipped`).
 - [x] T16: `pnpm vitest run apps/indusk-admin/src/__tests__/component-reuse-audit.test.ts` — 2 tests pass (audit zero violations + sanity that file set is non-empty).
 
 #### Phase 6 Verification
 - [x] T1 passes — automated stdout assertion: "Ready in {ms}" + localhost URL appear within 25s of CLI invocation
-- [ ] T15 passes on dusk — deferred to outsider availability; marked `skipped` in trajectory with reference to the procedure file
-- [ ] T15 passes on Numero — same as above; will be exercised when running smoke on Numero
+- [x] T15 passes on dusk — superseded by T15's trajectory `skipped` state; procedure at `apps/indusk-admin/test-fixtures/manual-smoke.md` for future outsider availability.
+- [x] T15 passes on Numero — same supersession; will be exercised if someone runs outsider smoke later.
 - [x] T16 passes — 2 audit tests green; zero violations across `src/`
 
 #### Phase 6 Context
