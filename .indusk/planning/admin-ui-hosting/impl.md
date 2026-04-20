@@ -52,14 +52,14 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 |----|---------|-------------|-----------|-------|
 | T1 | `indusk ui start` from any directory brings up the admin UI in <3s and prints a localhost URL. | Phase 0 | Phase 5 | planned |
 | T2 | After `indusk ui start`, the user can close the terminal and the admin UI remains reachable at the printed URL. | Phase 0 | Phase 5 | planned |
-| T3 | `indusk ui status` after a successful start reports "running", the listening port, and the count of registered projects. | Phase 2 | Phase 2 | planned |
-| T4 | `indusk ui start` when the daemon is already running prints "already running" and the existing URL — does not spawn a second daemon. | Phase 2 | Phase 2 | planned |
-| T5 | `indusk ui stop` shuts the daemon down within 3s; subsequent `indusk ui status` reports "not running". | Phase 2 | Phase 2 | planned |
-| T6 | `indusk ui start --port <n>` listens on `n`. If `n` is taken, CLI auto-bumps and prints a warning naming the new port. | Phase 2 | Phase 2 | planned |
-| T7 | Bare `indusk ui` from anywhere is functionally equivalent to `indusk ui start`. | Phase 2 | Phase 2 | planned |
-| T8 | `indusk init` from a fresh project directory adds an entry to `~/.indusk/projects.json`; subsequent `indusk ui status` reports the count incremented by 1. | Phase 2 | Phase 2 | planned |
-| T9 | `indusk update` from a registered project validates the entry without creating a duplicate; the timestamp moves forward. | Phase 2 | Phase 2 | planned |
-| T10 | `indusk init` from a project whose basename collides with a registered project's name registers under a numeric-suffixed name and prints a warning. | Phase 2 | Phase 2 | planned |
+| T3 | `indusk ui status` after a successful start reports "running", the listening port, and the count of registered projects. | Phase 2 | Phase 2 | written |
+| T4 | `indusk ui start` when the daemon is already running prints "already running" and the existing URL — does not spawn a second daemon. | Phase 2 | Phase 2 | written |
+| T5 | `indusk ui stop` shuts the daemon down within 3s; subsequent `indusk ui status` reports "not running". | Phase 2 | Phase 2 | written |
+| T6 | `indusk ui start --port <n>` listens on `n`. If `n` is taken, CLI auto-bumps and prints a warning naming the new port. | Phase 2 | Phase 2 | written |
+| T7 | Bare `indusk ui` from anywhere is functionally equivalent to `indusk ui start`. | Phase 2 | Phase 2 | written |
+| T8 | `indusk init` from a fresh project directory adds an entry to `~/.indusk/projects.json`; subsequent `indusk ui status` reports the count incremented by 1. | Phase 2 | Phase 2 | written |
+| T9 | `indusk update` from a registered project validates the entry without creating a duplicate; the timestamp moves forward. | Phase 2 | Phase 2 | written |
+| T10 | `indusk init` from a project whose basename collides with a registered project's name registers under a numeric-suffixed name and prints a warning. | Phase 2 | Phase 2 | written |
 | T11 | A registered project whose path is deleted from disk: `indusk ui status` still reports it; `/p/{name}/` returns HTTP 200 with a "needs reconfiguration" failure page (not 500). | Phase 4 | Phase 4 | planned |
 | T12 | The homepage at `/` shows one card per registered project with name, last-seen-at, and active-plan count. | Phase 3 | Phase 3 | planned |
 | T13 | Clicking a project card navigates to `/p/{name}/`, which renders the same sidebar + plan list shape as 1.26.0's per-project mode. | Phase 3 | Phase 3 | planned |
