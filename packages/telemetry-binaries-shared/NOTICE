@@ -1,0 +1,46 @@
+@infinitedusky/telemetry-binaries-{platform}
+=============================================
+
+This package bundles native binaries from two upstream projects, both licensed
+under Apache License 2.0. Binaries are redistributed unmodified; the full
+Apache 2.0 license text is in LICENSE.
+
+-----------------------------------------------------------------------------
+Upstream: Jaeger
+-----------------------------------------------------------------------------
+
+Project:    https://github.com/jaegertracing/jaeger
+License:    Apache License 2.0
+License:    https://github.com/jaegertracing/jaeger/blob/main/LICENSE
+Version:    See UPSTREAM.json in packages/telemetry-binaries-shared/
+Binary:     bin/jaeger
+
+Copyright (c) The Jaeger Authors. Redistributed unmodified under Apache 2.0.
+
+-----------------------------------------------------------------------------
+Upstream: OpenTelemetry Collector
+-----------------------------------------------------------------------------
+
+Project:    https://github.com/open-telemetry/opentelemetry-collector
+Releases:   https://github.com/open-telemetry/opentelemetry-collector-releases
+License:    Apache License 2.0
+License:    https://github.com/open-telemetry/opentelemetry-collector/blob/main/LICENSE
+Version:    See UPSTREAM.json in packages/telemetry-binaries-shared/
+Distribution: otelcol (core)
+Binary:     bin/otelcol
+
+Copyright (c) The OpenTelemetry Authors. Redistributed unmodified under Apache 2.0.
+
+-----------------------------------------------------------------------------
+Bundling
+-----------------------------------------------------------------------------
+
+This package is produced by scripts/build-telemetry-binaries.sh in the
+@infinitedusky/indusk-mcp monorepo. No modifications are made to the upstream
+binaries; they are extracted from upstream's own release tarballs and repacked
+into the platform-specific npm package for consumption by the local-telemetry
+extension.
+
+If you are looking for the upstream projects' primary distribution channels,
+use the links above. This package exists only to simplify installation for
+@infinitedusky/indusk-mcp consumers — it is not a fork.

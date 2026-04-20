@@ -1,0 +1,12 @@
+# Native binaries are produced by scripts/build-telemetry-binaries.sh.
+# They are NOT committed to git — at hundreds of MB each, it would bloat the
+# repo. The build script fetches them from upstream + verifies SHA256
+# checksums at build time. npm publish includes bin/ via the package.json
+# `files` array; the git exclusion is purely a repo-hygiene thing.
+bin/
+
+# Generated LICENSE + NOTICE are copied from shared/ by the build script.
+# They're committed for the shared/ copies but regenerated in each platform
+# package, so exclude the per-platform copies to avoid duplicate tracking.
+LICENSE
+NOTICE
