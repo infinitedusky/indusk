@@ -473,3 +473,210 @@ describe("PlanDetail — missing-document graceful render (T14)", () => {
     ).not.toBeNull();
   });
 });
+
+/**
+ * T26/T27 (Phase 8) — when an impl.md contains a falsification phase (title
+ * contains "Falsification" case-insensitively), PlanDetail splits the phase
+ * list into three positional groups:
+ *   - pre phases      → main Phases section (`data-testid="phases-section"`)
+ *   - falsification   → FalsificationSection rendering phase-sourced content
+ *   - post phases     → Follow-up Phases section (`data-testid="followup-phases-section"`)
+ *
+ * T28 — legacy plans (no falsification phase in impl, but `plan.falsification`
+ * populated from `falsification.md`) continue to render via the log-based path.
+ */
+describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)", () => {
+  function mockMixedPhasePlan(): Plan {
+    return {
+      name: "mixed-phase-plan",
+      status: "in-progress",
+      archived: false,
+      impl: {
+        frontmatter: { title: "Mixed", status: "in-progress" },
+        content: `## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+| T1 | Regular Phase 1 assertion | Phase 0 | Phase 1 | passing |
+| T2 | Falsification hypothesis A | Phase 0 | Phase 2 | passing |
+| T3 | Follow-up Phase 3 assertion | Phase 0 | Phase 3 | passing |
+
+## Checklist
+
+### Phase 1: Regular pre-phase
+
+- [x] Do initial work
+
+#### Phase 1 Verification
+- [x] T1 passes
+
+### Phase 2: Falsification — hypotheses that matter
+
+- [x] Fix a thing found by the ritual
+- [ ] Second fix still open
+
+#### Phase 2 Verification
+- [x] T2 passes
+
+### Phase 3: Follow-up polish
+
+- [x] Cleanup derived from the falsification
+
+#### Phase 3 Verification
+- [x] T3 passes
+`,
+        trajectory: {
+          present: true,
+          deferred: [],
+          rows: [
+            {
+              id: "T1",
+              asserts: "Regular Phase 1 assertion",
+              writableAt: 0,
+              passesAt: 1,
+              state: "passing",
+            },
+            {
+              id: "T2",
+              asserts: "Falsification hypothesis A",
+              writableAt: 0,
+              passesAt: 2,
+              state: "passing",
+            },
+            {
+              id: "T3",
+              asserts: "Follow-up Phase 3 assertion",
+              writableAt: 0,
+              passesAt: 3,
+              state: "passing",
+            },
+          ],
+        },
+      },
+    };
+  }
+
+  it("T27 — Phase 2 (Falsification) is EXTRACTED from the Phases section and rendered as Falsification", async () => {
+    const { container } = await render(<PlanDetail plan={mockMixedPhasePlan()} />);
+
+    // Main Phases section contains Phase 1 only (Phase 2 hoisted out)
+    const phasesSection = container.querySelector('[data-testid="phases-section"]');
+    expect(phasesSection).not.toBeNull();
+    const phasesText = phasesSection?.textContent ?? "";
+    expect(phasesText).toContain("Phase 1");
+    expect(phasesText).not.toContain("Phase 2: Falsification");
+  });
+
+  it("T27 — Falsification section renders Phase 2's trajectory rows as hypotheses + checklist as fix items", async () => {
+    const { container } = await render(<PlanDetail plan={mockMixedPhasePlan()} />);
+
+    const falsification = container.querySelector(
+      '[data-testid="falsification-section"]',
+    );
+    expect(falsification).not.toBeNull();
+
+    // Hypotheses table (trajectory rows passing at Phase 2)
+    const hypotheses = container.querySelector(
+      '[data-testid="falsification-hypotheses"]',
+    );
+    expect(hypotheses).not.toBeNull();
+    expect(hypotheses?.textContent).toContain("T2");
+    expect(hypotheses?.textContent).toContain("Falsification hypothesis A");
+
+    // Fix items list from the phase's checklist
+    const fixItems = container.querySelector(
+      '[data-testid="falsification-fix-items"]',
+    );
+    expect(fixItems).not.toBeNull();
+    expect(fixItems?.textContent).toContain("Fix a thing found by the ritual");
+    expect(fixItems?.textContent).toContain("Second fix still open");
+  });
+
+  it("T27 — Follow-up Phases section contains Phase 3 (after the falsification phase)", async () => {
+    const { container } = await render(<PlanDetail plan={mockMixedPhasePlan()} />);
+
+    const followup = container.querySelector(
+      '[data-testid="followup-phases-section"]',
+    );
+    expect(followup).not.toBeNull();
+    expect(followup?.textContent).toContain("Phase 3");
+    expect(followup?.textContent).toContain("Follow-up polish");
+  });
+
+  it("T27 — Follow-up Phases section is absent when no post-falsification phases exist", async () => {
+    const plan = mockMixedPhasePlan();
+    // Trim impl so Phase 3 is gone — falsification is now the last phase
+    if (plan.impl) {
+      plan.impl = {
+        ...plan.impl,
+        content: plan.impl.content
+          .split("### Phase 3")[0]
+          .trimEnd()
+          .concat("\n"),
+      };
+    }
+    const { container } = await render(<PlanDetail plan={plan} />);
+    expect(
+      container.querySelector('[data-testid="followup-phases-section"]'),
+    ).toBeNull();
+  });
+});
+
+describe("PlanDetail — legacy falsification.md rendering still works (T28, Phase 8)", () => {
+  it("T28 — legacy plan (no falsification phase in impl, falsification.md present) renders hypothesis items from the log", async () => {
+    const legacyPlan: Plan = {
+      name: "legacy-falsification",
+      status: "completed",
+      archived: true,
+      impl: {
+        frontmatter: { title: "Legacy", status: "completed" },
+        content: `### Phase 1: Regular work
+
+- [x] Item one
+
+#### Phase 1 Verification
+- [x] All good
+`,
+      },
+      falsification: {
+        complete: true,
+        entries: [
+          {
+            kind: "hypothesis",
+            timestamp: "2026-04-15T12:00:00.000Z",
+            hypothesis: "Something could be broken here",
+            outcome: "fix-in-scope",
+            testPath: "src/legacy.test.ts",
+          },
+          {
+            kind: "terminator",
+            timestamp: "2026-04-15T12:30:00.000Z",
+            reason: "No more hypotheses",
+          },
+        ],
+      },
+    };
+    const { container } = await render(<PlanDetail plan={legacyPlan} />);
+
+    // Falsification section renders — not the empty state, not the phase path
+    expect(
+      container.querySelector('[data-testid="falsification-section"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="falsification-empty"]'),
+    ).toBeNull();
+
+    // Log-based rendering: hypothesis-{outcome} items present
+    expect(
+      container.querySelector('[data-testid="hypothesis-fix-in-scope"]'),
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="falsification-terminator"]'),
+    ).not.toBeNull();
+
+    // Phase-based fix-items marker is absent (we're on the log path)
+    expect(
+      container.querySelector('[data-testid="falsification-fix-items"]'),
+    ).toBeNull();
+  });
+});
