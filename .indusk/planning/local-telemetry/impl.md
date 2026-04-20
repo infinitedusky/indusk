@@ -57,11 +57,11 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `indusk telemetry start` from any directory brings up the daemon in under 10s and prints listening ports (4318 OTel, 16686 Jaeger UI). | Phase 0 | Phase 3 | planned |
+| T1 | `indusk telemetry start` from any directory brings up the daemon in under 10s and prints listening ports (4318 OTel, 16686 Jaeger UI). | Phase 0 | Phase 3 | written |
 | T2 | After daemon is running, `http://localhost:16686` serves Jaeger's trace search UI. | Phase 0 | Phase 2 | passing |
-| T3 | `indusk telemetry status` after a successful start reports "running", both listening ports, and the registered-project count. | Phase 0 | Phase 3 | planned |
-| T4 | `indusk telemetry stop` shuts the daemon down within 3s; `status` then reports "not running" and `:16686` returns connection-refused. | Phase 0 | Phase 3 | planned |
-| T5 | `indusk telemetry restart` stops (if running) then starts a fresh instance — picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` (which npm re-resolves against the platform package's new version) without manual stop-then-start. | Phase 0 | Phase 3 | planned |
+| T3 | `indusk telemetry status` after a successful start reports "running", both listening ports, and the registered-project count. | Phase 0 | Phase 3 | written |
+| T4 | `indusk telemetry stop` shuts the daemon down within 3s; `status` then reports "not running" and `:16686` returns connection-refused. | Phase 0 | Phase 3 | written |
+| T5 | `indusk telemetry restart` stops (if running) then starts a fresh instance — picks up new binaries after `npm i -g @infinitedusky/indusk-mcp@<newer>` (which npm re-resolves against the platform package's new version) without manual stop-then-start. | Phase 0 | Phase 3 | written |
 | T6 | A project with `local-telemetry` enabled emits OTel traces to the daemon in dev — spans appear in Jaeger's UI and REST API within 5s of emission. | Phase 0 | Phase 4 | planned |
 | T7 | A project configured for staging/prod (`local-telemetry` NOT enabled, `dash0` IS enabled) continues to emit to Dash0 — no traffic lands in the local daemon. | Phase 0 | Phase 4 | planned |
 | T8 | Running a dev workflow with `local-telemetry` enabled produces zero OTel traffic to Dash0 over the dev session. | Phase 0 | Phase 4 | planned |
