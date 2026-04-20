@@ -1,0 +1,65 @@
+# Jaeger v2 configuration — traces pipeline end-to-end
+#
+# Spike-validated on v2.17.0. This is the binding shape from
+# `.indusk/planning/local-telemetry/spike-findings.md` §"Item 1".
+#
+# Jaeger v2 IS an OTel Collector distribution — it accepts OTLP (HTTP + gRPC),
+# batches via `batch` processor, stores traces in the in-memory Jaeger backend,
+# and serves the UI + REST query API on port 16686. Logs DO NOT flow through
+# this binary — they're handled by the sibling otelcol-k8s binary (see
+# collector-config.yaml).
+#
+# Ports:
+#   4317  OTLP gRPC receiver  (Jaeger accepts directly; also consumed internally by otelcol-k8s logs pipeline's "otlp/jaeger" exporter — it's the same endpoint, Jaeger doesn't distinguish ingestors)
+#   4318  OTLP HTTP receiver  (services emit traces here via OTLPTraceExporter)
+#   13133 Health check HTTP
+#   16685 Jaeger query gRPC
+#   16686 Jaeger query HTTP + UI
+#
+# Storage: in-memory with max_traces=100000 per spike decision. Override with
+# JAEGER_STORAGE=badger + JAEGER_BADGER_DIR for disk persistence (documented
+# escape hatch; not the v1 default).
+#
+service:
+  extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger_storage_exporter]
+  telemetry:
+    resource:
+      service.name: jaeger
+
+extensions:
+  healthcheckv2:
+    use_v2: true
+    http:
+      endpoint: 0.0.0.0:13133
+  jaeger_storage:
+    backends:
+      some_storage:
+        memory:
+          max_traces: 100000
+  jaeger_query:
+    storage:
+      traces: some_storage
+    http:
+      endpoint: 0.0.0.0:16686
+    grpc:
+      endpoint: 0.0.0.0:16685
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch: {}
+
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: some_storage

@@ -1,0 +1,64 @@
+# OTel Collector (k8s distribution) configuration — LOGS-ONLY pipeline
+#
+# Runs alongside Jaeger as the sibling binary. Traces do NOT flow through
+# this Collector — services emit traces directly to Jaeger's OTLP receiver
+# on 4318. This Collector exists only to receive logs (which Jaeger v2
+# doesn't store) and write them to a SQLite-compatible file sink that the
+# `tail_logs` MCP tool reads from.
+#
+# Why Dash0's shape (otlp receivers → batch → otlp exporter) was adapted:
+# Dash0 routes traces+logs+metrics to one cloud endpoint. We route logs to
+# a local file; traces bypass this Collector entirely (they go direct to
+# Jaeger). Metrics are out of scope in v1 (ADR decision).
+#
+# Ports (this Collector listens on different ports than Jaeger's OTLP to
+# avoid conflict — services pick which endpoint to emit to based on signal):
+#   4319  OTLP HTTP receiver  (services emit LOGS here; traces go to 4318)
+#   13134 Health check HTTP    (Jaeger's health is on 13133)
+#
+# Log sink: file exporter writes JSONL to ~/.indusk/telemetry/logs.jsonl.
+# SQLite ingest is a downstream concern — the `tail_logs` MCP tool can
+# either read the JSONL directly (simplest) or keep a SQLite index atop it
+# (faster queries for large buffers). v1 ships the JSONL path; v2 may add
+# the SQLite index if query performance becomes a bottleneck.
+#
+# Retention: rolling file rotation, 10 MB × 5 files = 50 MB total log
+# buffer by default. Configurable via INDUSK_TELEMETRY_LOG_MAX_MB env.
+#
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4319
+
+processors:
+  batch:
+    send_batch_size: 512
+    timeout: 2s
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+
+exporters:
+  file/logs:
+    path: ${env:INDUSK_TELEMETRY_LOGS_PATH}
+    rotation:
+      max_megabytes: 10
+      max_backups: 5
+    format: json
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13134
+
+service:
+  extensions: [health_check]
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [file/logs]
+  telemetry:
+    logs:
+      level: warn
