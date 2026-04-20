@@ -65,7 +65,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T12 | The homepage at `/` shows one card per registered project with name, last-seen-at, and active-plan count. | Phase 3 | Phase 3 | passing |
 | T13 | Clicking a project card navigates to `/p/{name}/`, which renders the same sidebar + plan list shape as 1.26.0's per-project mode. | Phase 3 | Phase 3 | passing |
 | T14 | A header dropdown above the plan list switches between any two registered projects without restarting the daemon. | Phase 3 | Phase 3 | passing |
-| T15 | `/scorecards` lists every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first across all projects. | Phase 4 | Phase 4 | passing |
+| T15 | `/scorecards` lists every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first across all projects. **Feature removed in Phase 6; superseded by T19.** Test file deleted alongside the route. | Phase 4 | Phase 4 | passing |
 | T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | passing |
 | T17 | A consumer running `npm install -g @infinitedusky/indusk-mcp@1.27` and then `indusk ui start` from any project: the daemon starts without the consumer running `pnpm install`, `next build`, or any other secondary tool. | Phase 0 | Phase 5 | passing |
 | T18 | The published indusk-mcp tarball contains the pre-built Next.js production output. Tarball size is under 50 MB. | Phase 1 | Phase 1 | passing |
