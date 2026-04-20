@@ -135,11 +135,12 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [x] T8, T9, T10 pass via the registry unit tests (in-process; uses `INDUSK_HOME` for the temp registry path) — `pnpm vitest run src/lib/admin/__tests__/registry.test.ts` → 7/7 in 147ms
 
 #### Phase 2 Context
-- [ ] Add to CLAUDE.md Architecture under Apps: replace the existing per-project description of `indusk ui` with: "**`indusk ui` is now a daemon lifecycle command** — `start` spawns a long-lived Node process (the bundled admin app) detached from the shell; `stop` SIGTERMs it; `status` reports running/port/registered-projects. Daemon metadata at `~/.indusk/admin-ui.{pid,json,log}`. The bundled admin dir comes from indusk-mcp's tarball (Phase 1)."
-- [ ] Add to CLAUDE.md Conventions: "**`indusk init` and `indusk update` mutate `~/.indusk/projects.json`** — the project registry the admin daemon reads. Init appends; update validates + touches. Tests use `INDUSK_HOME` env var to isolate from the real home."
+- [x] Added to CLAUDE.md Architecture (`indusk-admin` app entry): daemon hosting via `indusk ui start/stop/status` with `~/.indusk/admin-ui.{pid,json,log}` lifecycle files, bundled admin at `apps/indusk-mcp/admin/`.
+- [x] Added to CLAUDE.md Conventions: `indusk init` and `indusk update` mutate `~/.indusk/projects.json` via `registry.ts` (never by hand); tests redirect via `INDUSK_HOME`.
+- [x] Added to CLAUDE.md Known Gotchas: commander@13 drops duplicate options on subcommands — declare on parent only, read via `this.optsWithGlobals()`. Surfaced during Phase 2 item 4 spike (the default port kept being 3939 instead of the passed value).
 
 #### Phase 2 Document
-- [ ] (folded into Phase 5 — daemon CLI documented alongside the rest in overview.md + cli.md)
+- [x] (folded into Phase 5 — daemon CLI documented alongside the rest in overview.md + cli.md)
 
 ### Phase 3: Admin app route restructure + project switcher
 
