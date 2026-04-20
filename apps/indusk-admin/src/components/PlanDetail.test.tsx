@@ -628,6 +628,35 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
   });
 });
 
+describe("PlanDetail — collapsible section state persists (T30, Phase 9)", () => {
+	it("T30 — PlanDetail wires a plan-scoped persistKey into the Brief section, so pre-seeded localStorage renders the Brief closed on first render", async () => {
+		// Simulate "user closed Brief on a prior visit"
+		localStorage.setItem("plan:alpha-feature:section:brief", "0");
+
+		const { container } = await render(<PlanDetail plan={mockPlan()} />);
+
+		// Brief section is present but its button reports closed state — even
+		// though the in-code defaultOpen={true} would otherwise render it open.
+		const briefButton = container.querySelector(
+			'[data-testid="brief-section"] button',
+		);
+		expect(briefButton).not.toBeNull();
+		expect(briefButton?.getAttribute("aria-expanded")).toBe("false");
+	});
+
+	it("T30 — absent localStorage value falls back to defaultOpen (Brief open on first-ever visit)", async () => {
+		// No prior storage — fresh user
+		expect(localStorage.getItem("plan:alpha-feature:section:brief")).toBeNull();
+
+		const { container } = await render(<PlanDetail plan={mockPlan()} />);
+
+		const briefButton = container.querySelector(
+			'[data-testid="brief-section"] button',
+		);
+		expect(briefButton?.getAttribute("aria-expanded")).toBe("true");
+	});
+});
+
 describe("PlanDetail — legacy falsification.md rendering still works (T28, Phase 8)", () => {
   it("T28 — legacy plan (no falsification phase in impl, falsification.md present) renders hypothesis items from the log", async () => {
     const legacyPlan: Plan = {
