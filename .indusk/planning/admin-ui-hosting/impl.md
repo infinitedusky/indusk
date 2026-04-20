@@ -60,12 +60,12 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T8 | `indusk init` from a fresh project directory adds an entry to `~/.indusk/projects.json`; subsequent `indusk ui status` reports the count incremented by 1. | Phase 2 | Phase 2 | passing |
 | T9 | `indusk update` from a registered project validates the entry without creating a duplicate; the timestamp moves forward. | Phase 2 | Phase 2 | passing |
 | T10 | `indusk init` from a project whose basename collides with a registered project's name registers under a numeric-suffixed name and prints a warning. | Phase 2 | Phase 2 | passing |
-| T11 | A registered project whose path is deleted from disk: `indusk ui status` still reports it; `/p/{name}/` returns HTTP 200 with a "needs reconfiguration" failure page (not 500). | Phase 4 | Phase 4 | planned |
+| T11 | A registered project whose path is deleted from disk: `indusk ui status` still reports it; `/p/{name}/` returns HTTP 200 with a "needs reconfiguration" failure page (not 500). | Phase 4 | Phase 4 | written |
 | T12 | The homepage at `/` shows one card per registered project with name, last-seen-at, and active-plan count. | Phase 3 | Phase 3 | passing |
 | T13 | Clicking a project card navigates to `/p/{name}/`, which renders the same sidebar + plan list shape as 1.26.0's per-project mode. | Phase 3 | Phase 3 | passing |
 | T14 | A header dropdown above the plan list switches between any two registered projects without restarting the daemon. | Phase 3 | Phase 3 | passing |
-| T15 | `/scorecards` lists every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first across all projects. | Phase 4 | Phase 4 | planned |
-| T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | planned |
+| T15 | `/scorecards` lists every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first across all projects. | Phase 4 | Phase 4 | written |
+| T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | written |
 | T17 | A consumer running `npm install -g @infinitedusky/indusk-mcp@1.27` and then `indusk ui start` from any project: the daemon starts without the consumer running `pnpm install`, `next build`, or any other secondary tool. | Phase 0 | Phase 5 | planned |
 | T18 | The published indusk-mcp tarball contains the pre-built Next.js production output. Tarball size is under 50 MB. | Phase 1 | Phase 1 | passing |
 
