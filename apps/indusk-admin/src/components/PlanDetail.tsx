@@ -111,8 +111,9 @@ function MalformedBanner() {
 function BriefSection({ content }: { content: string }) {
   return (
     <section className="flex flex-col gap-2" data-testid="brief-section">
-      <h2 className="text-base font-semibold text-gray-900">Brief</h2>
-      <Markdown>{content}</Markdown>
+      <CollapsibleSection title="Brief" defaultOpen={true}>
+        <Markdown>{content}</Markdown>
+      </CollapsibleSection>
     </section>
   );
 }
