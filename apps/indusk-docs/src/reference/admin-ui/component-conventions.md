@@ -145,3 +145,44 @@ Place the file under `src/app/p/[project]/<feature>/page.tsx` (or nested further
 ### The `planHrefPrefix` prop on `PlanList`
 
 Because plan links need to stay scoped to the current project (`/p/dusk/plan/foo` vs `/p/numero/plan/foo`), `PlanList` accepts an optional `planHrefPrefix` prop. The default is `/plan/` for back-compat with the pre-1.27 single-project shape; the per-project layout passes `/p/${project}/plan/`. If you ever need to link a plan from a cross-project context, set the prefix accordingly.
+
+## CollapsibleSection persistence (1.27.7+)
+
+`<CollapsibleSection>` accepts an optional `persistKey: string` prop. When supplied, the component:
+
+- **Reads** its initial open/closed state from `localStorage[persistKey]` on first render. Values are encoded as `"1"` (open) and `"0"` (closed). Any other value — or an absent key — falls through to the `defaultOpen` prop.
+- **Writes** the new state to `localStorage[persistKey]` on every toggle. The write is fire-and-forget — it doesn't block the state update.
+
+### Key convention
+
+Build the key from stable identifiers so the mapping survives across renders and re-renders don't double-register:
+
+```tsx
+// Plan-scoped sections (brief, test-plan, adr, research, phases)
+<CollapsibleSection persistKey={`plan:${plan.name}:section:brief`} ... />
+<CollapsibleSection persistKey={`plan:${plan.name}:phase:${phase.number}`} ... />
+```
+
+Without a `persistKey`, the component behaves exactly as before — ephemeral state, `defaultOpen` on every render.
+
+### SSR + hydration behavior
+
+The component is a client component (`"use client"`). Server-side render produces the `defaultOpen` value because `localStorage` doesn't exist server-side. On client hydration, the state initializer reads `localStorage` and may produce a different initial state — causing a brief flash when the persisted value disagrees with `defaultOpen`. Acceptable for the admin UI's usage (reader-only, no interaction during hydration).
+
+Privacy-mode browsers, quota-exceeded `localStorage`, and other failure modes are swallowed — both read and write operations are wrapped in try/catch blocks that fall through to `defaultOpen`-based behavior.
+
+### Testing
+
+Tests that render multiple `<CollapsibleSection>`s in series MUST reset the shared `localStorage` between tests, or state from an earlier toggle leaks into the next test's initial render:
+
+```ts
+beforeEach(() => {
+  if (typeof window !== "undefined") localStorage.clear();
+});
+```
+
+See `apps/indusk-admin/src/components/PlanDetail.test.tsx` for a reference implementation.
+
+### Rationale
+
+Without persistence, every navigation reopens the Brief, the ADR, and every phase — each of which is long prose. Users close sections once they've read them; re-opening on every visit is a papercut that compounds. The `localStorage` approach is simple (no server round-trip, no schema), per-user (localStorage is browser-local), and scopable (per-plan keys mean navigation to another plan doesn't clobber state).

@@ -337,7 +337,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [x] Added a CLAUDE.md Known Gotchas entry documenting the `persistKey` prop, the localStorage value encoding (`"1"` / `"0"`), the admin UI naming convention (`plan:{name}:section:{slug}` + `plan:{name}:phase:{N}`), the SSR/hydration flash tradeoff, and the testing caveat (`localStorage.clear()` in `beforeEach`). Landed immediately below the 1.27.6 falsification-rendering entry so the cluster of admin-UI conventions reads as a coherent section.
 
 #### Phase 9 Document
-- [ ] Update `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` with a new "CollapsibleSection persistence" subsection documenting the `persistKey` prop, the localStorage key convention, and the SSR/hydration behavior. Cross-reference from the overview.md Plan detail table — the Brief/TestPlan/ADR/Phases rows now all persist.
+- [x] Added a new "CollapsibleSection persistence (1.27.7+)" section to `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` — documents the `persistKey` prop, the localStorage encoding (`"1"` / `"0"`), the key convention (`plan:{name}:section:{slug}` + `plan:{name}:phase:{N}`), the SSR/hydration behavior (brief flash when persisted ≠ defaultOpen), the privacy-mode fallback story, and the testing requirement (`localStorage.clear()` in `beforeEach`). Closed with a Rationale subsection explaining the user-facing motivation. Changelog 1.27.7 entry under "Added" cross-references it.
 
 ## Files Affected
 
