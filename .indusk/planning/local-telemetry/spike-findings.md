@@ -116,7 +116,15 @@ Original spike question: "pick otelcol-contrib vs otelcol-core vs minimal-build.
 
 If logs are included in v1 (see below), a second binary may be needed OR logs use an alternative path within Jaeger v2. See "Open Decision" section.
 
-## Open Decision: Logs path for v1
+## LOCKED: Logs path for v1 — Option A (Jaeger + otelcol-k8s)
+
+**Decided 2026-04-20.** Platform packages ship TWO binaries per platform: `jaeger` (traces end-to-end) + `otelcol-k8s` (logs pipeline only). Two-PID supervision in `daemon.ts`. Platform package size estimate: ~170 MB per platform. The ~150 MB brief criterion is relaxed to ~180 MB accordingly.
+
+Rationale: evaluated OpenObserve, SigNoz, Uptrace, Grafana LGTM, and a custom Jaeger distribution with otelcol-builder as single-binary alternatives. All traded off smaller-binary wins against maturity / heaviness / build-pipeline costs that outweighed the benefit. Jaeger + otelcol are OTel-ecosystem siblings designed to compose; the one extra binary is a small, well-understood cost. See alternatives table in the Phase 1 /work session transcript.
+
+---
+
+## Earlier framing retained for history: Logs path options considered
 
 Jaeger v2's OTLP receiver accepts logs signals (the components list shows `otlp` is Stable for logs), BUT:
 - There's no **Jaeger log storage extension** — only `jaeger_storage` which handles traces.
@@ -183,19 +191,19 @@ The spike did not validate this — `jaeger_mcp` inspection is a Phase 5 task (f
 
 ## Binding Decisions for Phase 2+
 
-1. **Single platform-package binary** per platform: Jaeger v2 only (for traces). Logs path TBD via Option A/B/C decision above.
+1. **Two platform-package binaries** per platform: `jaeger` (v2.17.0, traces end-to-end) + `otelcol-k8s` (logs-only pipeline → SQLite sink). Locked via Option A decision.
 2. **Storage**: `memory` with `max_traces: 100000`. Badger deferred.
 3. **Config shape**: the minimal YAML under "Item 1" is the template for the shared config shipped with each platform package.
 4. **Ports**: OTLP HTTP 4318, OTLP gRPC 4317, UI 16686, health 13133. Auto-bump on conflict per admin-UI precedent.
-5. **Binary size per platform**: ~120 MB (Jaeger alone). +~50 MB if logs option A adds otelcol-k8s → ~170 MB total.
+5. **Binary size per platform**: ~170 MB total (Jaeger ~120 MB + otelcol-k8s ~50 MB) per Option A. Brief's `<150 MB` target relaxed to `<180 MB`.
 6. **Query budget**: 500ms p95 confirmed with 40x headroom. T12 is a safe target.
 7. **Jaeger version pinned**: v2.17.0 for v1 ship. Bump procedure documented in Phase 2's `UPSTREAM.json`.
 
 ## Next Steps (non-spike)
 
-- **Decision gate**: user picks logs path (A/B/C) before Phase 2 starts. Phase 2 scope depends on it.
-- **Phase 2**: build platform packages, publish pipeline, `scripts/build-telemetry-binaries.sh`.
-- **Phase 5**: when writing MCP tools, first check `jaeger_mcp` extension to see if it subsumes our planned tool surface.
+- **Phase 2**: build platform packages containing both `jaeger` + `otelcol-k8s` binaries per platform. `scripts/build-telemetry-binaries.sh` fetches both from their respective upstream releases, verifies checksums, packs per-platform, optionally publishes. `UPSTREAM.json` pins both versions. `collector-config.yaml` scoped to logs-only pipeline (traces go direct to Jaeger's OTLP 4317; logs route otelcol-k8s → file/SQLite exporter).
+- **Phase 3**: `daemon.ts` spawns Jaeger first, then otelcol-k8s (which needs Jaeger's OTLP port reachable), both detached. Two PIDs tracked in `~/.indusk/telemetry.json`. Two-PID supervision unit — stop kills both in reverse order.
+- **Phase 5**: when writing MCP tools, first check `jaeger_mcp` extension to see if it subsumes our planned trace-query tool surface. `tail_logs` MCP wraps the SQLite file otelcol-k8s writes to.
 
 ## Appendix: What wasn't tested
 

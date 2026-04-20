@@ -119,10 +119,10 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 - [x] Spike outputs captured in [`.indusk/planning/local-telemetry/spike-findings.md`](./spike-findings.md) — measured numbers for query latency (p50/p95/p99), storage-mode choice (in-memory, 100k traces), binary size (114 MB), version pin (Jaeger v2.17.0), the minimal YAML config template, and the **open logs-path decision** (Option A/B/C) that gates Phase 2 scope.
 
 #### Phase 1 Context
-- [ ] Append to CLAUDE.md "Current State": "local-telemetry Phase 1 spike complete — measured Jaeger query latency at {p50/p95} for {N}-span workload; chose {storage mode}, {packaging shape}, {distribution path}; findings in `.indusk/planning/local-telemetry/spike-findings.md`."
+- [x] Appended to CLAUDE.md "Current State": local-telemetry Phase 1 spike complete 2026-04-20; headline finding (Jaeger v2 is an OTel Collector distribution — single binary replaces separate Jaeger + otelcol); query-latency measurements (p50=5.5ms / p95=12.2ms / p99=12.2ms against T12's 500ms budget — 40x headroom); storage-mode pick (in-memory, 100k traces); open logs-path decision (A/B/C) before Phase 2; pointer to `spike-findings.md` for full measurements + binding decisions.
 
 #### Phase 1 Document
-- [ ] `spike-findings.md` in this plan folder (internal design artifact, not published to docs site). Seeds `telemetry-watcher-agent` brief.
+- [x] [`spike-findings.md`](./spike-findings.md) in this plan folder (internal design artifact, not published to docs site). Captures: the headline finding + downstream impact, Item 1's minimal YAML config template (binding on Phase 2), Item 4's latency numbers, Item 5's storage pick, the open logs-path decision with three options + spike recommendation (Option A following Dash0's pattern), the `jaeger_mcp` flag for Phase 5 investigation, and an explicit "what wasn't tested" appendix. Seeds `telemetry-watcher-agent` brief when that plan is authored.
 
 ### Phase 2: Platform-specific npm packages + binary bundling
 
