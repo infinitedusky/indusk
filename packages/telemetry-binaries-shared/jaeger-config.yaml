@@ -30,6 +30,14 @@ service:
   telemetry:
     resource:
       service.name: jaeger
+    # Disable Jaeger's own self-metrics Prometheus exporter (defaults to
+    # binding localhost:8888 — which we don't use and which causes port
+    # conflicts on rapid spawn+stop+spawn cycles in tests + daemon restarts).
+    # Agent diagnosis uses the Jaeger query API on 16686, not Jaeger's
+    # self-monitoring. If a consumer ever needs Jaeger's self-metrics, they
+    # can flip this back on + configure an explicit non-default port.
+    metrics:
+      level: none
 
 extensions:
   healthcheckv2:
