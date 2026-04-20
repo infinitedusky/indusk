@@ -33,7 +33,7 @@
 		"build": "tsc",
 		"start": "node dist/server/index.js",
 		"test": "vitest run",
-		"prepublishOnly": "pnpm build"
+		"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.12.1",

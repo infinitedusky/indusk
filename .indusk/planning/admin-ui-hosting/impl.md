@@ -93,8 +93,8 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 
 **Goal**: prove variant A3 actually works — pre-built bundle survives the npm tarball round-trip on macOS and Linux, and tarball stays under 50 MB. De-risks ADR Risks #1 and #2 before committing routing work.
 
-- [ ] Add `prepublishOnly` script to `apps/indusk-mcp/package.json`: `"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js"`.
-- [ ] Create `apps/indusk-mcp/scripts/bundle-admin.js`: copies the admin app's `.next/` output, `package.json`, `next.config.ts`, and minimal source needed for `next start` into `apps/indusk-mcp/admin/`. Excludes `node_modules/`, `.git/`, test fixtures.
+- [x] Add `prepublishOnly` script to `apps/indusk-mcp/package.json`: `"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js"`.
+- [x] Create `apps/indusk-mcp/scripts/bundle-admin.js`: copies the admin app's `.next/` output, `package.json`, `next.config.ts`, and minimal source needed for `next start` into `apps/indusk-mcp/admin/`. Excludes `.next/cache`, `.next/dev` (leftover dev-server state — balloons to >200 MB if not excluded). Smoke-tested: produced 11.8 MB bundle on dusk's admin app.
 - [ ] Update `apps/indusk-mcp/package.json` `files` array to include `"admin"`.
 - [ ] Move `next` + `react` + `react-dom` + `react-markdown` + `remark-gfm` + `lucide-react` from `apps/indusk-admin/package.json`'s `dependencies` to `apps/indusk-mcp/package.json`'s `dependencies` (the daemon process resolves them from the indusk-mcp install). Keep `@tailwindcss/typography`, `tailwindcss`, postcss in the admin app's deps because Tailwind is build-time only.
 - [ ] Run `pnpm pack` from `apps/indusk-mcp/`: capture the resulting tarball's size. Write the measured size to a temp file or print to stdout for the T18 test.
