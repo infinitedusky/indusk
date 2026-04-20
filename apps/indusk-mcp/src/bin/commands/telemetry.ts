@@ -5,6 +5,11 @@ import {
 	daemonStop,
 	isPortListening,
 } from "../../lib/telemetry/daemon.js";
+import {
+	deregisterProject,
+	readRegistry,
+	registerProject,
+} from "../../lib/telemetry/registry.js";
 
 export interface TelemetryStartOptions {
 	otlpPort: string;
@@ -108,14 +113,16 @@ export async function telemetryRestart(
 
 /**
  * Report daemon running/not, both ports, both PIDs, started-at, registered
- * project count. Registered-projects registry lands in Phase 4 — for now we
- * report 0 as a placeholder so T3's assertion on "project" can pass.
+ * project count (read from the registry at `~/.indusk/telemetry/projects.json`).
  */
 export async function telemetryStatus(): Promise<void> {
 	const status = await daemonStatus();
+	const projectCount = readRegistry().projects.length;
+	const projectLabel = projectCount === 1 ? "project" : "projects";
+
 	if (!status.running) {
 		console.info("Telemetry daemon: not running");
-		console.info("Registered projects 0 (registry lands in Phase 4)");
+		console.info(`Registered ${projectLabel} ${projectCount}`);
 		return;
 	}
 
@@ -128,5 +135,47 @@ export async function telemetryStatus(): Promise<void> {
 	console.info(`  Jaeger UI: http://localhost:${status.uiPort}`);
 	console.info(`  PIDs:      jaeger=${status.jaegerPid} otelcol=${status.otelcolPid}`);
 	console.info(`  Started:   ${status.startedAt}`);
-	console.info("Registered projects 0 (registry lands in Phase 4)");
+	console.info(`Registered ${projectLabel} ${projectCount}`);
+}
+
+/**
+ * Register a project with the telemetry daemon (internal — called by the
+ * extension's on_enable hook). If the daemon isn't running, auto-starts it
+ * so the newly-registered project has a live daemon to emit to.
+ */
+export async function telemetryRegister(projectPath: string): Promise<void> {
+	const entry = registerProject(projectPath);
+	console.info(`Registered project: ${entry.name} (${entry.path})`);
+	const status = await daemonStatus();
+	if (!status.running) {
+		console.info("Daemon not running — starting it now...");
+		try {
+			const meta = await daemonStart({});
+			console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
+			console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
+		} catch (err) {
+			console.error(
+				`Project registered but daemon failed to start: ${(err as Error).message}`,
+			);
+			process.exit(1);
+		}
+	}
+}
+
+/**
+ * Deregister a project (internal — called by the extension's on_disable hook).
+ * If the registry becomes empty, gracefully stops the daemon.
+ */
+export async function telemetryDeregister(projectPath: string): Promise<void> {
+	const removed = deregisterProject(projectPath);
+	if (!removed) {
+		console.info(`Project not registered: ${projectPath}`);
+		return;
+	}
+	console.info(`Deregistered project: ${projectPath}`);
+	const reg = readRegistry();
+	if (reg.projects.length === 0) {
+		console.info("Last project disabled — stopping daemon...");
+		await daemonStop();
+	}
 }

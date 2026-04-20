@@ -504,4 +504,20 @@ telemetryCmd
 		await telemetryStatus();
 	});
 
+telemetryCmd
+	.command("register <path>")
+	.description("(internal) Register a project path with the telemetry daemon. Called by the local-telemetry extension's on_enable hook; auto-starts the daemon if not running.")
+	.action(async (path: string) => {
+		const { telemetryRegister } = await import("./commands/telemetry.js");
+		await telemetryRegister(path);
+	});
+
+telemetryCmd
+	.command("deregister <path>")
+	.description("(internal) Deregister a project path. Called by the on_disable hook; graceful-stops the daemon when the registry becomes empty.")
+	.action(async (path: string) => {
+		const { telemetryDeregister } = await import("./commands/telemetry.js");
+		await telemetryDeregister(path);
+	});
+
 program.parse();

@@ -1,0 +1,25 @@
+{
+	"name": "local-telemetry",
+	"description": "Local OTel telemetry daemon — Jaeger + OTel Collector running natively, agent-queryable via MCP tools for fast 'why did this just fail' diagnosis",
+	"required": true,
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "telemetry-daemon-running",
+				"command": "node -e \"const p=require('os').homedir()+'/.indusk/telemetry.pid';const fs=require('fs');process.exit(fs.existsSync(p) ? 0 : 1)\""
+			},
+			{
+				"name": "telemetry-otlp-listening",
+				"command": "node -e \"const p=require('os').homedir()+'/.indusk/telemetry.json';const fs=require('fs');if(!fs.existsSync(p)){process.exit(1)}const m=JSON.parse(fs.readFileSync(p,'utf-8'));require('net').createConnection({host:'127.0.0.1',port:m.otlpPort}).on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))\""
+			}
+		]
+	},
+	"hooks": {
+		"on_enable": "indusk telemetry register $(pwd)",
+		"on_disable": "indusk telemetry deregister $(pwd)"
+	},
+	"detect": {
+		"file": ".indusk/extensions/local-telemetry/.env"
+	}
+}
