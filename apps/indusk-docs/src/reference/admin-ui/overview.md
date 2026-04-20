@@ -97,11 +97,15 @@ Switching projects via the header does not restart the daemon — the registry r
 | Brief | `brief.md` | Collapsible (1.27.2+) Markdown render, defaulted to open — parity with Test Plan + ADR |
 | Test Plan | `test-plan.md` | Collapsible Markdown render |
 | ADR | `adr.md` | Collapsible Markdown render |
-| Phases | `impl.md` | One CollapsibleSection per `### Phase N:` heading. Each phase contains a trajectory `<Table>` (filtered to rows whose `Passes at` matches the phase number) followed by the phase's full markdown |
-| Falsification | `falsification.md` | One entry per hypothesis, outcome-color-coded (`fix-in-scope` → green, `spawn-plan` → blue, `accept-finding` → gray) |
+| Phases | `impl.md` | One CollapsibleSection per `### Phase N:` heading, EXCLUDING the falsification phase (see next row). Each phase contains a trajectory `<Table>` (filtered to rows whose `Passes at` matches the phase number) followed by the phase's full markdown |
+| Falsification (1.27.6+ phase path) | `impl.md` phase with `"Falsification"` in the title | Hypotheses table from the phase's trajectory rows (ID / Asserts / State) plus a Fix items list from the phase's `- [ ]` / `- [x]` checklist. Status badge reads `complete` when all rows are `passing`/`skipped` AND no unchecked items remain |
+| Falsification (legacy) | `falsification.md` | Used only when impl.md has no falsification phase. One entry per hypothesis, outcome-color-coded (`fix-in-scope` → green, `spawn-plan` → blue, `accept-finding` → gray) |
+| Follow-up Phases (1.27.6+) | `impl.md` phases AFTER the falsification phase | Same CollapsibleSection shape as regular Phases but in its own section below `Falsification`. Hidden when no post-falsification phases exist |
 | Scorecards | `.indusk/eval/results.log` | Table of scorecards whose timestamp falls in the plan's date range (`brief.date` → `retrospective.date`/now). Most-recent first |
 
 Missing optional documents are not errors — sections simply don't render.
+
+**Falsification rendering (1.27.6+)** — when a plan uses the phase-authoring flow from `/falsify` (introduced in 1.27.4), the admin UI automatically detects the falsification phase by scanning for the FIRST phase whose title contains `"Falsification"` (case-insensitive). That phase is hoisted out of the main Phases section and rendered with a dedicated layout: trajectory rows become the Hypotheses table, and checklist items become the Fix items list. Phases authored AFTER the falsification phase — fix-in-scope follow-ups derived from the ritual — render as a distinct "Follow-up Phases" section below. Legacy plans (authored before 1.27.4 with a `falsification.md` log file) continue to render via the log-based path; the two paths are mutually exclusive but both supported, so archives keep rendering correctly.
 
 **`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `.indusk/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Empty state when no scorecards have been recorded yet.
 
