@@ -926,6 +926,21 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		console.info("  create: .claude/handoff.md (first-session orientation)");
 	}
 
+	// 13. Register this project in ~/.indusk/projects.json so the admin-ui
+	// daemon can find it. `addProject` is idempotent on the path (returns the
+	// existing entry without touching lastSeenAt) and suffix-aware on name
+	// collisions.
+	const { addProject } = await import("../../lib/admin/registry.js");
+	const entry = addProject(projectRoot);
+	console.info("\n[Project registry]");
+	if (entry.name !== projectName) {
+		console.info(
+			`  registered: ${entry.name} (basename '${projectName}' collided with existing entry; suffixed)`,
+		);
+	} else {
+		console.info(`  registered: ${entry.name}`);
+	}
+
 	// Summary
 	console.info("\nDone!");
 	console.info("\n⚠  Restart Claude Code to load the updated MCP server and skills.");
