@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { notFound } from "next/navigation";
 import { PlanDetail } from "@/components/PlanDetail";
 import { readActivePlans, readArchivedPlans } from "@/lib/planning-reader";
@@ -9,21 +10,21 @@ interface PlanPageProps {
 
 /**
  * Server component for `/p/{project}/plan/{name}`. Resolves the project's
- * path via the registry, then reads every active + archived plan for that
+ * path via the registry, reads every active + archived plan for that
  * project, finds the requested plan by folder name, and renders PlanDetail.
- * 404s for unregistered projects AND unknown plan names — both failure
- * modes share the same affordance (Next.js not-found UI) in Phase 3;
- * Phase 4 adds the richer stale-project failure page.
  *
- * Reading every plan per request stays intentionally simple at v1. Most
- * projects have <50 plans; the cost is tens of milliseconds.
+ * The stale-project branch (path null OR deleted on disk) is handled by
+ * the layout (`app/p/[project]/layout.tsx`) — it replaces its own output
+ * with `<StaleProjectFailurePage>` in that case, so this page's rendered
+ * element is never placed in the DOM. We early-return `null` when path is
+ * stale so the page's own code doesn't trip on `readActivePlans` against
+ * a deleted dir. `notFound()` is reserved for the genuinely plan-not-found
+ * case (path OK, plan name wrong).
  */
 export default async function PlanPage({ params }: PlanPageProps) {
 	const { project, name } = await params;
 	const projectPath = getProjectPath(project);
-	if (!projectPath) {
-		notFound();
-	}
+	if (!projectPath || !existsSync(projectPath)) return null;
 
 	const [active, archived] = await Promise.all([
 		readActivePlans(projectPath),

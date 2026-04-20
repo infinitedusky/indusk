@@ -1,24 +1,21 @@
-import { notFound } from "next/navigation";
-import { getProjectPath } from "@/lib/registry-client";
-
 interface PerProjectPageProps {
 	params: Promise<{ project: string }>;
 }
 
 /**
  * Per-project landing page. The layout (`app/p/[project]/layout.tsx`) owns
- * the sidebar + PlanList; this page is just the empty-state prompt for the
- * main content area (equivalent to 1.26.0's `app/page.tsx`, but scoped).
+ * the sidebar + PlanList AND the stale-project failure branch (T11) — when
+ * the registry lookup fails or the path is deleted, the layout replaces
+ * its own output entirely with `<StaleProjectFailurePage>` and this page's
+ * rendered element is never placed in the DOM.
  *
- * Returning `notFound()` for unregistered projects matches the layout's
- * behavior; Phase 4 replaces both with the richer
- * `<StaleProjectFailurePage>` that handles path-deleted cases too.
+ * So the page is an unconditional empty-state — no notFound() call, no
+ * re-check of the project path. Trust the layout.
  */
 export default async function PerProjectPage({ params }: PerProjectPageProps) {
-	const { project } = await params;
-	if (!getProjectPath(project)) {
-		notFound();
-	}
+	// Awaiting params is still required by Next 16's dynamic-segment contract,
+	// even though this page doesn't branch on the value.
+	await params;
 
 	return (
 		<div className="flex h-full flex-col items-center justify-center text-center text-gray-500">

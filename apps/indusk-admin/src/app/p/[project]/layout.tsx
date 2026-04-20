@@ -1,6 +1,7 @@
-import { notFound } from "next/navigation";
+import { existsSync } from "node:fs";
 import { PlanList } from "@/components/PlanList";
 import { ProjectSwitcher } from "@/components/ProjectSwitcher";
+import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { Sidebar } from "@/components/ui/Sidebar";
 import {
 	readActivePlans,
@@ -22,10 +23,10 @@ interface PerProjectLayoutProps {
  * in the URL. Every `/p/{project}/...` route gets this frame; the homepage
  * (`/`) and top-level routes (`/scorecards`) do not.
  *
- * If the named project isn't in the registry, we currently render a
- * Next.js `notFound()`. Phase 4 replaces that with a richer
- * `<StaleProjectFailurePage>` that also covers path-deleted-on-disk cases
- * and gives the user clear recovery instructions.
+ * If the named project isn't in the registry OR its registered path no
+ * longer exists on disk, renders `<StaleProjectFailurePage>` — a 200
+ * response with recovery instructions, NOT a 500 or 404. This is the
+ * invariant T11 asserts.
  *
  * Typed with a local props interface rather than Next 16's global
  * `LayoutProps` helper because the latter's inferred `params` shape
@@ -39,8 +40,14 @@ export default async function PerProjectLayout({
 }: PerProjectLayoutProps) {
 	const { project } = await params;
 	const projectPath = getProjectPath(project);
-	if (!projectPath) {
-		notFound();
+
+	if (!projectPath || !existsSync(projectPath)) {
+		return (
+			<StaleProjectFailurePage
+				projectName={project}
+				projectPath={projectPath ?? undefined}
+			/>
+		);
 	}
 
 	const [active, archived] = await Promise.all([
