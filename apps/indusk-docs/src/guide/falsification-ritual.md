@@ -40,27 +40,25 @@ The distinction matters because bounty hunting **terminates meaningfully**. Ever
 
 ## The ritual
 
+The ritual **authors** work — it does not run tests. Running tests is `/work`'s job after the ritual appends a phase. This separation is deliberate: it makes falsification deferrable (you can capture hypotheses now and execute them later), visible (phases render in the admin UI; sidecar log files don't), and traceable (the plan's phase sequence tells the full story).
+
 1. **Read the attested state.** The impl's Goal, the Trajectory rows (all in terminal state — every `Passes at: Phase N` row is `passing`, `skipped`, or `blocked`), the claims the plan makes about what is now true.
 2. **Investigate the code.** Read the actual implementation, the test coverage, the invariants the attestation claims. Look for a concrete thing that *should be broken*.
-3. **Form a specific hypothesis.** Not "what if something doesn't work?" — "*this specific condition, with these specific inputs, will violate this specific invariant.*" The hypothesis names the failure before any test is written.
-4. **Write the test that confirms the hypothesis.** If the hypothesis is right, the test fails. If the hypothesis is wrong, the test passes.
-5. **Run the test.**
-   - **Fails** → hypothesis confirmed, real gap found. Pick one of the [three outcomes](#three-outcomes) below.
-   - **Passes** → hypothesis was wrong. The attestation held against that specific attack. Go back to step 2 with a *different* hypothesis.
-6. **Repeat** until the agent can no longer form a specific in-scope hypothesis to investigate.
-7. **Terminate.** The agent proposes termination with a summary of hypotheses investigated and outcomes. The user confirms or points at an area that wasn't investigated. When confirmed, `markTerminated(planRoot, reason)` is called and the log closes.
+3. **Form a specific hypothesis.** Not "what if something doesn't work?" — "*this specific condition, with these specific inputs, will violate this specific invariant.*" The hypothesis names the failure before any trajectory row is written.
+4. **Capture the hypothesis as a trajectory row** in the plan's `## Test Trajectory` table — a T-ID, a one-line `Asserts` describing the failure the test will guard against, `Writable at: Phase 0` (typically — hypothesis tests are usually authorable against current behavior, red until the fix lands), `Passes at: Phase N+1` (the new Falsification Phase being authored).
+5. **Capture the fix work as impl items** under a new phase heading `### Phase N+1: Falsification — {short summary}`. One checklist item per concrete code change. Include standard Verification / Context / Document gates; the Verification gate references the trajectory rows added in step 4.
+6. **Repeat steps 2–5** for each additional hypothesis. Each hypothesis appends one trajectory row + (if a fix is needed) one or more impl items to the same Falsification Phase.
+7. **Terminate.** The agent proposes termination with a summary of hypotheses captured + regions of code investigated without finding an attack vector. The user confirms or points at an unexplored region.
 
-## Three outcomes
+When the ritual ends, the plan's `impl.md` contains a new Falsification Phase — unchecked, with trajectory rows that are `planned`. The plan's impl status stays `in-progress`. The next `/work {plan}` invocation picks up the phase normally: authors the writable-at-phase tests red, runs items, closes the phase. No special-case handling.
 
-When a failing test is confirmed, the user picks one of three outcomes:
+## What you do not do in the ritual
 
-| Outcome | When to use |
-|---------|-------------|
-| **Fix in scope** | The gap is small, clearly in-scope for the plan's original goal, and the fix is direct. Adds a new phase to the current impl. The plan's status flips back to `in-progress` and `/work` resumes. This is the "build the plane while flying" path — the plan grows during its own closure. |
-| **Spawn a new plan** | The gap is large, touches unrelated areas, or deserves its own planning lifecycle. A new plan is created with the failing test as its core motivation. The current plan's brief gets a `blocks:` reference to the new plan. |
-| **Accept as finding** | Rare. The gap is small, unambiguously out-of-scope, and the cost of a new plan isn't justified. The finding is recorded in the falsification log and surfaced in retrospective. Use only when "fix in scope" and "new plan" both genuinely don't fit. |
+- **You do not write test files.** `/work` authors writable-at-phase tests at phase start — that's its job.
+- **You do not run any tests.** The ritual's output is the modified `impl.md`, nothing else.
+- **You do not pick a three-way outcome per hypothesis.** In-scope fixes become impl items in the Falsification Phase. Genuinely out-of-scope hypotheses are not authored — stop that branch and move on. If the hypothesis deserves its own planning lifecycle, mention it in the retrospective for follow-up; don't invent a third pseudo-outcome.
 
-The agent recommends the outcome based on the gap's shape; the decision is the user's.
+The old ritual distinguished "fix in scope" (reopen impl with a new phase) from "spawn new plan" (new plan with blocks reference) from "accept as finding" (log-only). With phase-authoring as the default, "fix in scope" IS the shape — the Falsification Phase is the new phase being added. "Spawn new plan" stays available for genuinely large gaps; it's just not a decision made inside the ritual. "Accept as finding" is gone — findings that deserve record either become phase items (so they actually get done) or get flagged in retrospective (so they're visible, not buried in a sidecar log).
 
 ## Hybrid exit criterion
 
@@ -84,35 +82,45 @@ The Trajectory ran green. Every `Passes at` row is `passing`. `/work` is done. N
 
 **Hypothesis 1**: "`recoverState(userId)` assumes the journal entries for that user are complete. If a crash happens mid-journal-write (half the bytes landed, half didn't), `recoverState` will deserialize garbage and either throw or — worse — return a state that *looks* valid but has corrupt fields."
 
-Write the test: inject a partial journal write via a test harness, call `recoverState(userId)`, assert either a specific `TruncatedJournalError` is thrown OR the state is flagged invalid. Run it.
+Captured as trajectory row:
 
-Test fails → the implementation silently returns a partially-recovered state without any error, which is exactly the pathology the attestation claimed was impossible.
+```
+| T23 | Truncated journal entries surface as TruncatedJournalError; recoverState never returns a partially-recovered state silently. | Phase 0 | Phase 5 | planned |
+```
 
-Outcome: **fix in scope**. Phase 5 is added to the impl: "detect truncated journal entries and surface as `TruncatedJournalError`." The plan reopens, `/work` resumes.
+And Phase 5 authored:
 
-After the fix lands, `/falsify` restarts.
+```markdown
+### Phase 5: Falsification — truncated journal + version skew
 
-**Hypothesis 2**: "Two concurrent `recoverState(userId)` calls for the same user could race on the file handle and interleave reads, producing inconsistent state for one of the callers."
+- [ ] Add TruncatedJournalError class in recovery/errors.ts
+- [ ] Detect CRC mismatch on journal tail in recoverState; throw TruncatedJournalError
+- [ ] (if hypothesis 3 below also in scope) Add journal-version check rejecting unknown-version entries with VersionSkewError
 
-Test: spawn two threads calling `recoverState(sameUserId)` concurrently, assert both return identical state objects. Run it.
+#### Phase 5 Verification
+- [ ] T23 passes — inject partial-write harness, assert TruncatedJournalError
+- [ ] T24 passes — inject journal with future version byte, assert VersionSkewError
+```
 
-Test passes → the implementation correctly serializes reads with a per-user lock. Hypothesis was wrong.
+**Hypothesis 2**: "Two concurrent `recoverState(userId)` calls for the same user could race on the file handle and interleave reads."
 
-**Hypothesis 3**: "The journal format has a version byte, but the attestation doesn't say what happens when a journal is read by an older code version (no forward compatibility). If a user runs an older binary against a newer journal, `recoverState` may silently skip entries it doesn't understand."
+After investigation: the existing code holds a per-user lock and serializes reads. No attack vector remaining on this surface. No trajectory row added.
 
-After investigation: this is a real gap, but forward compatibility is a separate plan that's already drafted (`journal-schema-evolution`).
+**Hypothesis 3**: "The journal format has a version byte, but the attestation doesn't say what happens when a journal is read by an older code version."
 
-Outcome: **spawn a new plan** (link to `journal-schema-evolution`, which is now `blocked_by: [recovery-subsystem]` for the part it depends on, OR simply noted in retrospective as a downstream concern). The ritual continues.
+Captured as T24 in the same Falsification Phase 5 above. Fix item added.
 
-**Hypothesis 4, 5, 6…** more attempts against serialization boundaries, input validation, time-based invariants. All pass. Agent proposes termination: "Investigated truncated journals, concurrent reads, forward compatibility, serialization boundaries, malformed inputs, and clock skew. No more specific in-scope hypothesis remains."
+**Hypothesis 4, 5, 6…** more attempts against serialization boundaries, input validation, time-based invariants. All investigated without finding concrete attack vectors. Agent proposes termination: "Investigated truncated journals, concurrent reads, forward compatibility, serialization boundaries, malformed inputs, and clock skew. T23 and T24 captured as falsification rows in Phase 5. No more specific in-scope hypothesis remains."
 
-User confirms. Terminator entry written. `/retrospective recovery-subsystem` now unblocks.
+User confirms. Ritual ends. `impl.md` now has Phase 5 authored and unchecked. The plan's impl status is still `in-progress`.
 
-## Where the log lives
+Later, `/work recovery-subsystem` picks up Phase 5: authors the T23/T24 test files red, implements the fixes, runs tests green, closes the phase. Then `/retrospective recovery-subsystem` passes its Step 0 gate (all impl phases terminal) and archives the plan.
 
-The ritual writes to `.indusk/planning/{plan}/falsification.md` alongside the plan's research / brief / adr / impl / retrospective. The log is **append-only markdown** — never edited in place. Each confirmed-hypothesis entry and the final terminator is an H2 section with a timestamp. See the [log format reference](/reference/falsification/log) for the structure.
+## Where the output lives
 
-After archival, the log travels with the plan to `.indusk/planning/archive/{plan}/falsification.md`. It's part of the plan's permanent record — a hypothesis that was wrong at plan close is valuable context for future plans attacking similar surfaces.
+The ritual modifies the plan's `impl.md` — adding a new Falsification Phase with trajectory rows and checklist items. No separate log file, no sidecar markdown. The phase is visible in the admin UI's plan-detail view like every other phase.
+
+**Legacy plans** (authored before 1.27.4) may have a `.indusk/planning/{plan}/falsification.md` file from the old flow. Those files continue to work — the retrospective gate still accepts `isFalsificationComplete(planRoot)` for backward compatibility. New plans use the phase-authoring flow; legacy plans stay readable as-is.
 
 ## When to skip
 
@@ -133,10 +141,11 @@ Both fields are required. The `falsification_reason` is recorded in the archive 
 
 ## Retrospective hard-block
 
-The retrospective skill's **Step 0 Falsification Gate** refuses to proceed unless either:
+The retrospective skill's **Step 0 Falsification Gate** refuses to proceed unless one of the following is true:
 
-- `isFalsificationComplete(planRoot)` is true — the log exists and its last entry is a terminator, OR
-- `isFalsificationSkipped(implContent).skipped` is true — the two-field skip is set in the impl
+- **All impl phases are terminal** — the new flow's default path. If `/falsify` authored a Falsification Phase and `/work` closed it (along with any fix-in-scope phases it spawned), the gate passes automatically. No separate "falsification is done" assertion needed — the phase sequence itself is the proof.
+- `isFalsificationComplete(planRoot)` is true — legacy path for plans authored before 1.27.4. The log exists and its last entry is a terminator.
+- `isFalsificationSkipped(implContent).skipped` is true — the two-field skip is set in the impl (see "When to skip" above).
 
 Without one of these, `/retrospective` surfaces a refusal message pointing you at `/falsify`. This is the structural enforcement layer that makes the ritual load-bearing, not advisory.
 

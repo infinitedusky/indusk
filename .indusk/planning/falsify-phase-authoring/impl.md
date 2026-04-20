@@ -66,7 +66,7 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
   - Keep "When to skip the ritual entirely" unchanged (`falsification: skipped` + reason stays a legitimate opt-out)
   - Update cross-references to `falsification.md`-based behavior
 - [x] Mirror the rewritten skill to `.claude/skills/falsify/SKILL.md` (the installed copy in this repo). Verified byte-identical via `diff -q`.
-- [ ] Update `apps/indusk-docs/src/guide/falsification-ritual.md` user-facing guide:
+- [x] Update `apps/indusk-docs/src/guide/falsification-ritual.md` user-facing guide:
   - Rewrite the "How to run" section to describe phase-authoring flow
   - Add a "Legacy plans (archived before 1.27.4)" section noting that plans with `falsification.md` files stay readable via the library but new plans use impl phases
   - Update any sequence diagram or code snippet that shows the old inline-test-running flow
