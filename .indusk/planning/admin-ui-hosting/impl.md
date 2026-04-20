@@ -248,9 +248,9 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [x] Add changelog entry to `apps/indusk-docs/src/changelog.md` naming the three changes; flag scorecards relocation as a minor breaking-change for bookmarks (`/scorecards` is gone; use `/p/{project}/scorecards`).
 - [x] Update `apps/indusk-docs/src/reference/admin-ui/overview.md` — routing tree rewritten for project-siloed model, per-project home structure documented (header/scorecards/plans/research), "What each page shows" adds `/p/{project}/scorecards` and `/p/{project}/research/{slug}` sections, Brief row flagged collapsible.
 - [x] Update `apps/indusk-docs/src/reference/admin-ui/cli.md` Routing tree — per-project-only model, added `/p/{project}/scorecards` and `/p/{project}/research/{slug}`, flagged `/scorecards` as removed in 1.27.2.
-- [ ] Build + publish: `cd apps/indusk-mcp && pnpm publish` (user action).
-- [ ] Upgrade global: `npm i -g @infinitedusky/indusk-mcp@1.27.2 && indusk ui restart`.
-- [ ] Smoke: browse `/p/dusk/scorecards` → sees dusk's scorecards; `/p/numero/scorecards` → sees numero's. Top-level `/scorecards` → 404. `/p/dusk/research/anchor-overlay-pattern` → renders markdown; sidebar lists research slugs. Plan detail: Brief section has a working chevron. Closes T19, T20, T21.
+- [x] Build + publish: `cd apps/indusk-mcp && pnpm publish` (user action). Shipped 1.27.2 on 2026-04-20.
+- [x] Upgrade global: `npm i -g @infinitedusky/indusk-mcp@1.27.2 && indusk ui restart`. Done; subsequent 1.27.3 and 1.27.4 also installed globally.
+- [x] Smoke: browsed `/p/dusk/scorecards` → dusk's scorecards rendered; `/p/numero/scorecards` → numero's rendered; top-level `/scorecards` → 404 (removed in 1.27.3 follow-up after smoke found the stale nav link); `/p/dusk/research/anchor-overlay-pattern` → markdown rendered with sidebar slug list; Brief section chevron verified. T19, T20, T21 all transitioned to `passing` in the trajectory during the 1.27.2 impl session.
 - [x] Phase 6 bugfix (1.27.3): 1.27.2 smoke surfaced stale nav links in the global header — `app/layout.tsx` had `Projects` + `Scorecards` top-level `<Link>`s; `Scorecards` now 404s after the route removal. Fix: strip both nav links entirely. Header becomes pure chrome (title + subtitle left, nothing right). All navigation lives in the per-project sidebar where it belongs. Version bump to 1.27.3 + changelog entry.
 
 #### Phase 6 Verification
