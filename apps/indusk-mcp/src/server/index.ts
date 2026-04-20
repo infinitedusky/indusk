@@ -22,6 +22,7 @@ import { registerLessonTools } from "../tools/lesson-tools.js";
 import { registerPlanTools } from "../tools/plan-tools.js";
 import { registerQualityTools } from "../tools/quality-tools.js";
 import { registerSystemTools } from "../tools/system-tools.js";
+import { registerTelemetryTools } from "../tools/telemetry-tools.js";
 
 function getLocalVersion(): string {
 	try {
@@ -69,6 +70,7 @@ export async function startServer(): Promise<void> {
 		registerGraphTools(server, projectRoot);
 		registerLessonTools(server, projectRoot);
 		registerHighlightTools(server, projectRoot);
+		registerTelemetryTools(server);
 		console.error("[indusk] tools registered");
 
 		const transport = new StdioServerTransport();
