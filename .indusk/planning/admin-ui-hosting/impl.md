@@ -69,9 +69,9 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | passing |
 | T17 | A consumer running `npm install -g @infinitedusky/indusk-mcp@1.27` and then `indusk ui start` from any project: the daemon starts without the consumer running `pnpm install`, `next build`, or any other secondary tool. | Phase 0 | Phase 5 | passing |
 | T18 | The published indusk-mcp tarball contains the pre-built Next.js production output. Tarball size is under 50 MB. | Phase 1 | Phase 1 | passing |
-| T19 | `/p/{project}/scorecards` renders that project's scorecards (from its `.indusk/eval/results.log`). The top-level `/scorecards` route is removed (404) or redirects into the current project. Per-project sidebar has a "Scorecards" link next to the plan list. | Phase 6 | Phase 6 | planned |
-| T20 | `/p/{project}/research/{slug}` renders a markdown file from that project's `.indusk/research/` directory via the same `<Markdown>` component used for plans. The per-project sidebar has a "Research" group listing every top-level `.md` slug under `.indusk/research/` (nested dirs shown as collapsible subgroups). Empty state when the directory is missing. | Phase 6 | Phase 6 | planned |
-| T21 | The Brief section on `/p/{project}/plan/{name}` is rendered inside a `<CollapsibleSection>` with the same expand/collapse control as Test Plan and ADR. Default state is expanded. | Phase 6 | Phase 6 | planned |
+| T19 | `/p/{project}/scorecards` renders that project's scorecards (from its `.indusk/eval/results.log`). The top-level `/scorecards` route is removed (404) or redirects into the current project. Per-project sidebar has a "Scorecards" link next to the plan list. | Phase 6 | Phase 6 | written |
+| T20 | `/p/{project}/research/{slug}` renders a markdown file from that project's `.indusk/research/` directory via the same `<Markdown>` component used for plans. The per-project sidebar has a "Research" group listing every top-level `.md` slug under `.indusk/research/` (nested dirs shown as collapsible subgroups). Empty state when the directory is missing. | Phase 6 | Phase 6 | written |
+| T21 | The Brief section on `/p/{project}/plan/{name}` is rendered inside a `<CollapsibleSection>` with the same expand/collapse control as Test Plan and ADR. Default state is expanded. | Phase 6 | Phase 6 | written |
 
 ### Trajectory Rationale
 
