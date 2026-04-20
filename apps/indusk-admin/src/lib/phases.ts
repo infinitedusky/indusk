@@ -82,3 +82,69 @@ function buildPhase(
     trajectoryRows,
   };
 }
+
+/**
+ * Split a phase list into three groups around the falsification phase:
+ *   - `pre`:           phases BEFORE the falsification phase
+ *   - `falsification`: the phase whose title contains "Falsification" (case-insensitive);
+ *                      `null` when no such phase exists
+ *   - `post`:          phases AFTER the falsification phase (fix-in-scope follow-ups
+ *                      derived from the ritual)
+ *
+ * If multiple phases have "Falsification" in the title, the FIRST match wins —
+ * later ones fall into `post`. In practice plans author exactly one falsification
+ * phase; the first-match rule is a defensive choice for the edge case.
+ *
+ * Matching is a case-insensitive substring, not a regex — the /falsify skill's
+ * recommended convention is `### Phase N: Falsification — {summary}` but the
+ * title field is free-form, so we match the word loosely.
+ */
+export interface PhaseSplit {
+  pre: Phase[];
+  falsification: Phase | null;
+  post: Phase[];
+}
+
+export function splitPhasesAroundFalsification(phases: Phase[]): PhaseSplit {
+  const idx = phases.findIndex((p) =>
+    p.title.toLowerCase().includes("falsification"),
+  );
+  if (idx === -1) {
+    return { pre: phases, falsification: null, post: [] };
+  }
+  return {
+    pre: phases.slice(0, idx),
+    falsification: phases[idx],
+    post: phases.slice(idx + 1),
+  };
+}
+
+/**
+ * Extract `- [ ]` / `- [x]` checklist items from markdown content. Used by
+ * the falsification-phase rendering to surface fix items as a discrete list.
+ *
+ * Intentionally narrow — not a general markdown AST parser. Matches only the
+ * standard GFM task-list shape at line start with mandatory space between
+ * brackets. Uppercase `X` is rejected (contract is lowercase `x`) so we don't
+ * silently accept non-standard syntax.
+ */
+export interface ChecklistItem {
+  text: string;
+  checked: boolean;
+}
+
+const CHECKLIST_ITEM_RE = /^- \[( |x)\] (.+)$/;
+
+export function extractChecklistItems(markdown: string): ChecklistItem[] {
+  const items: ChecklistItem[] = [];
+  for (const line of markdown.split("\n")) {
+    const match = line.match(CHECKLIST_ITEM_RE);
+    if (match) {
+      items.push({
+        checked: match[1] === "x",
+        text: match[2].trim(),
+      });
+    }
+  }
+  return items;
+}
