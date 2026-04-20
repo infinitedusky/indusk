@@ -1,29 +1,52 @@
 import { ScorecardsList } from "@/components/Scorecards";
 import { readEvalScorecards } from "@/lib/planning-reader";
-import { getProjectRoot } from "@/lib/project-root";
+import { readRegistryProjects } from "@/lib/registry-client";
 import { getCommitMessages } from "@/lib/vcs";
 
 /**
- * Global eval scorecards view. Lists EVERY entry from
- * `.indusk/eval/results.log`, framed as a system-improvement signal —
- * not tied to any individual plan.
+ * Cross-project eval scorecards view. Walks every registered project's
+ * `.indusk/eval/results.log`, merges the entries, and renders them as a
+ * single list sorted most-recent-first (ScorecardsList owns the sort).
  *
- * Enriches each scorecard with the commit message for its `changeId` —
- * the human-authored intent of what was being scored. Tries jj first (per
- * dusk convention) and falls back to git for repos that don't use jj. The
- * canonical fix would be to capture this AT THE TIME OF SCORING in the
- * eval agent (so it survives later jj abandon / restructure), but the
- * UI-level lookup works retroactively for every existing scorecard.
+ * Phase 3 delivers the walk + merge. Phase 4 adds the project-name column
+ * on each card so the user can tell which project a scorecard belongs to;
+ * for now the scorecards are interleaved but unlabeled — acceptable when
+ * only one project is registered (the common case today).
+ *
+ * The commit-message enrichment stays per-project because jj describe
+ * output is scoped to the repo it's invoked in. We accumulate into a
+ * single descriptions map keyed by changeId; duplicate changeIds across
+ * projects (unlikely but possible) fall back to the last-seen project's
+ * description.
  */
 export default async function ScorecardsPage() {
-  const projectRoot = getProjectRoot();
-  const scorecards = await readEvalScorecards(projectRoot, {
-    from: new Date(0),
-    to: new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000),
-  });
-  const ids = scorecards
-    .map((s) => (s.changeId ? String(s.changeId) : ""))
-    .filter((id) => id !== "");
-  const messages = getCommitMessages(projectRoot, ids);
-  return <ScorecardsList scorecards={scorecards} descriptions={messages} />;
+	const projects = readRegistryProjects();
+	const since = new Date(0);
+	const until = new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000);
+
+	const perProject = await Promise.all(
+		projects.map(async (entry) => {
+			const scorecards = await readEvalScorecards(entry.path, {
+				from: since,
+				to: until,
+			}).catch(() => []);
+			const ids = scorecards
+				.map((s) => (s.changeId ? String(s.changeId) : ""))
+				.filter((id) => id !== "");
+			const messages = getCommitMessages(entry.path, ids);
+			return { scorecards, messages };
+		}),
+	);
+
+	const allScorecards = perProject.flatMap((p) => p.scorecards);
+	const allMessages = new Map<string, string>();
+	for (const { messages } of perProject) {
+		for (const [k, v] of messages) {
+			allMessages.set(k, v);
+		}
+	}
+
+	return (
+		<ScorecardsList scorecards={allScorecards} descriptions={allMessages} />
+	);
 }

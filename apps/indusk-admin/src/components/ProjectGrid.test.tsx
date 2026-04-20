@@ -65,15 +65,15 @@ describe("ProjectGrid — T12: one card per registered project", () => {
 		const { container } = await render(<ProjectGrid projects={projects} />);
 
 		for (const p of projects) {
+			// ProjectCard IS an <a> (it's the Link itself), so the card element
+			// carries both the data attribute and the href.
 			const card = container.querySelector(
 				`[data-project-name="${p.name}"]`,
 			);
 			expect(card, `expected card for ${p.name}`).not.toBeNull();
 			expect(card?.textContent).toContain(p.name);
 			expect(card?.textContent).toContain(`${p.activePlanCount}`);
-
-			const link = card?.querySelector("a");
-			expect(link?.getAttribute("href")).toBe(`/p/${p.name}/`);
+			expect(card?.getAttribute("href")).toBe(`/p/${p.name}/`);
 		}
 	});
 

@@ -21,44 +21,81 @@ vi.mock("next/link", () => {
 	return { default: MockLink, __esModule: true };
 });
 
-// Mock next/navigation — pages/layouts that host ProjectSwitcher will reach
-// for useRouter; we don't exercise navigation from the page test.
 vi.mock("next/navigation", () => ({
+	__esModule: true,
 	useRouter: () => ({ push: vi.fn() }),
+	notFound: () => {
+		throw new Error("not found");
+	},
 }));
 
-import PerProjectPage from "./page";
+// The layout's data layer hits `node:fs` transitively via planning-reader
+// and registry-client. In the vitest browser runtime `node:fs` is
+// externalized — mocking these modules is the cleanest way to assert on
+// the layout's shape without paying the server-side I/O cost or importing
+// node internals into the browser.
+vi.mock("@/lib/planning-reader", () => ({
+	__esModule: true,
+	readActivePlans: async () => [
+		{ name: "alpha", status: "draft", archived: false },
+		{ name: "beta", status: "in-progress", archived: false },
+	],
+	readArchivedPlans: async () => [],
+	readMasterPlanOrder: () => ["alpha", "beta"],
+}));
+
+vi.mock("@/lib/registry-client", () => ({
+	__esModule: true,
+	readRegistryProjects: () => [
+		{
+			name: "fixture-proj",
+			path: "/mock/project",
+			registeredAt: "2026-04-20T00:00:00.000Z",
+			lastSeenAt: "2026-04-20T00:00:00.000Z",
+		},
+	],
+	getProjectPath: (name: string) =>
+		name === "fixture-proj" ? "/mock/project" : null,
+}));
+
+import PerProjectLayout from "./layout";
 
 /**
- * T13 — Clicking a project card on the homepage navigates to `/p/{name}/`,
- * which renders the same sidebar + plan-list shape as 1.26.0's per-project
- * mode.
+ * T13 — The per-project layout renders the same sidebar + plan-list shape
+ * as 1.26.0's per-project mode.
  *
- * The page-level server component does filesystem I/O; this test exercises
- * its default export as an async function, resolves the JSX, and renders it
- * in the browser to assert shape. The shape contract is:
- *   - a PlanList with the project's plans ([data-testid="active-plans"])
- *   - a ProjectSwitcher ([data-testid="project-switcher"]) when >1 project
- *     is registered
+ * Implementation detail: T13 exercises the LAYOUT (`app/p/[project]/layout.tsx`)
+ * rather than the PAGE. In the new route structure the layout owns the
+ * sidebar + PlanList — the page fills the main content area only. Testing
+ * the layout is the honest thing; testing the page alone wouldn't assert
+ * the shape claim.
+ *
+ * Data-layer calls are mocked (see `vi.mock` above) so this renders
+ * hermetically in the browser runtime.
  */
+describe("per-project layout — T13: same sidebar + plan-list shape as 1.26.0", () => {
+	it("T13 — renders PlanList scoped to the project (active-plans testid present)", async () => {
+		const element = await PerProjectLayout({
+			children: <div data-testid="child-marker">child</div>,
+			params: Promise.resolve({ project: "fixture-proj" }),
+		});
 
-describe("PerProjectPage — T13: per-project layout preserves 1.26.0 sidebar+plan-list shape", () => {
-	it("T13 — default export is an async function that returns JSX", () => {
-		expect(typeof PerProjectPage).toBe("function");
-	});
+		const { container } = await render(element as React.ReactElement);
 
-	it("T13 — renders a PlanList scoped to the project", async () => {
-		// The page takes params.project; Next 16 passes params as a Promise.
-		const element = await PerProjectPage({
-			params: Promise.resolve({ project: "dusk" }),
-		} as Parameters<typeof PerProjectPage>[0]);
-
-		const { container } = await render(<>{element}</>);
-
-		// Sidebar + PlanList shape must appear (same as 1.26.0 per-project mode)
+		// Sidebar + PlanList shape must appear — same contract as 1.26.0
 		expect(
-			container.querySelector('[data-testid="active-plans"]') ??
-				container.querySelector('[data-testid="sidebar-empty-state"]'),
+			container.querySelector('[data-testid="active-plans"]'),
+		).not.toBeNull();
+
+		// Plan entries carry the per-project href prefix
+		const firstLink = container.querySelector(
+			'[data-testid="active-plans"] a[data-plan-name="alpha"]',
+		);
+		expect(firstLink?.getAttribute("href")).toBe("/p/fixture-proj/plan/alpha");
+
+		// Children slot receives what was passed
+		expect(
+			container.querySelector('[data-testid="child-marker"]'),
 		).not.toBeNull();
 	});
 });

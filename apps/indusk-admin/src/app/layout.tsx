@@ -1,35 +1,28 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
-import { PlanList } from "@/components/PlanList";
-import { Sidebar } from "@/components/ui/Sidebar";
-import {
-  readActivePlans,
-  readArchivedPlans,
-  readMasterPlanOrder,
-} from "@/lib/planning-reader";
-import { getProjectRoot } from "@/lib/project-root";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+	variable: "--font-geist-sans",
+	subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+	variable: "--font-geist-mono",
+	subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "InDusk Admin",
-  description: "Read-only viewer over .indusk/planning/",
+	title: "InDusk Admin",
+	description: "Read-only viewer over .indusk/planning/ across every registered project",
 };
 
 /**
  * Force dynamic rendering for the entire app. Without this, Next.js prerenders
  * `/` at build time using the build's `process.env` snapshot, which has no
- * `INDUSK_PROJECT_ROOT` set. The baked HTML then shows an empty sidebar
- * forever, regardless of what env var the runtime daemon was started with.
+ * `INDUSK_HOME` set. The baked HTML then shows an empty sidebar forever,
+ * regardless of what env var the runtime daemon was started with.
  *
  * The admin UI reads `.indusk/planning/` from disk on every request — there's
  * nothing to prerender. Dynamic rendering is the correct mode.
@@ -39,47 +32,53 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 /**
- * Root layout reads planning data on every request via the planning-reader.
- * This is a server component — `process.cwd()` is the directory the
- * `indusk ui` CLI was invoked from, which is the project root by convention.
+ * Global root layout. In the 1.27+ daemon model, the root layout is
+ * deliberately thin — it only owns the chrome (body classes, top-level
+ * navigation). Per-project pages nest their own sidebar + plan-list under
+ * `app/p/[project]/layout.tsx`; the homepage (`/`) owns the project grid.
  *
- * Per the work skill's tests-first discipline, the data flow is:
- *   layout.tsx → readActivePlans/readArchivedPlans/readMasterPlanOrder
- *              → <PlanList active=... archived=... masterOrder=... />
- *              → <Link href={`/plan/${name}`}> per item (Phase 4 wires the route)
+ * Splitting like this means per-project pages DON'T double-render a sidebar
+ * (one global + one per-project) and the homepage doesn't waste the
+ * sidebar's width when it only has project cards to show.
  */
-export default async function RootLayout({
-  children,
+export default function RootLayout({
+	children,
 }: Readonly<{
-  children: React.ReactNode;
+	children: React.ReactNode;
 }>) {
-  const projectRoot = getProjectRoot();
-  const [active, archived] = await Promise.all([
-    readActivePlans(projectRoot),
-    readArchivedPlans(projectRoot),
-  ]);
-  const masterOrder = readMasterPlanOrder(projectRoot);
-
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full">
-        <div className="flex h-screen w-full">
-          <Sidebar
-            header={
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-gray-900">InDusk Admin</span>
-                <span className="text-xs text-gray-500">read-only viewer</span>
-              </div>
-            }
-          >
-            <PlanList active={active} archived={archived} masterOrder={masterOrder} />
-          </Sidebar>
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
-        </div>
-      </body>
-    </html>
-  );
+	return (
+		<html
+			lang="en"
+			className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+		>
+			<body className="min-h-full bg-gray-50">
+				<header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2">
+					<Link
+						href="/"
+						className="flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-blue-600"
+					>
+						<span>InDusk Admin</span>
+						<span className="text-xs font-normal text-gray-500">
+							read-only viewer
+						</span>
+					</Link>
+					<nav className="flex items-center gap-3 text-sm">
+						<Link
+							href="/"
+							className="text-gray-600 hover:text-gray-900"
+						>
+							Projects
+						</Link>
+						<Link
+							href="/scorecards"
+							className="text-gray-600 hover:text-gray-900"
+						>
+							Scorecards
+						</Link>
+					</nav>
+				</header>
+				<div className="h-[calc(100vh-2.5rem)] w-full">{children}</div>
+			</body>
+		</html>
+	);
 }

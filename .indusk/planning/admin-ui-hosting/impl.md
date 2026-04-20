@@ -61,9 +61,9 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T9 | `indusk update` from a registered project validates the entry without creating a duplicate; the timestamp moves forward. | Phase 2 | Phase 2 | passing |
 | T10 | `indusk init` from a project whose basename collides with a registered project's name registers under a numeric-suffixed name and prints a warning. | Phase 2 | Phase 2 | passing |
 | T11 | A registered project whose path is deleted from disk: `indusk ui status` still reports it; `/p/{name}/` returns HTTP 200 with a "needs reconfiguration" failure page (not 500). | Phase 4 | Phase 4 | planned |
-| T12 | The homepage at `/` shows one card per registered project with name, last-seen-at, and active-plan count. | Phase 3 | Phase 3 | written |
-| T13 | Clicking a project card navigates to `/p/{name}/`, which renders the same sidebar + plan list shape as 1.26.0's per-project mode. | Phase 3 | Phase 3 | written |
-| T14 | A header dropdown above the plan list switches between any two registered projects without restarting the daemon. | Phase 3 | Phase 3 | written |
+| T12 | The homepage at `/` shows one card per registered project with name, last-seen-at, and active-plan count. | Phase 3 | Phase 3 | passing |
+| T13 | Clicking a project card navigates to `/p/{name}/`, which renders the same sidebar + plan list shape as 1.26.0's per-project mode. | Phase 3 | Phase 3 | passing |
+| T14 | A header dropdown above the plan list switches between any two registered projects without restarting the daemon. | Phase 3 | Phase 3 | passing |
 | T15 | `/scorecards` lists every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first across all projects. | Phase 4 | Phase 4 | planned |
 | T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | planned |
 | T17 | A consumer running `npm install -g @infinitedusky/indusk-mcp@1.27` and then `indusk ui start` from any project: the daemon starts without the consumer running `pnpm install`, `next build`, or any other secondary tool. | Phase 0 | Phase 5 | planned |
@@ -148,26 +148,27 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 
 - [x] Create `apps/indusk-admin/src/lib/registry-client.ts` — server-component-side reader of `~/.indusk/projects.json`. Deliberately duplicates the `ProjectEntry` shape from indusk-mcp rather than importing — keeps admin-ui's deployment bundle free of a runtime dependency on indusk-mcp internals. Exports `readRegistryProjects(): ProjectEntry[]` (returns `[]` on absent/malformed) and `getProjectPath(name): string | null` (no on-disk check — callers like the Phase 4 stale-failure page branch own that).
 - [x] Replace `apps/indusk-admin/src/lib/project-root.ts` — thin wrapper that re-exports `getProjectPath` from `registry-client.ts`. The old `getProjectRoot(): string` is gone — callers now name which project they're asking about. The file is kept (vs deleted) so existing imports from `@/lib/project-root` continue to resolve during the route migration in the next item.
-- [ ] Update every callsite of the old `getProjectRoot()`: `app/layout.tsx`, `app/plan/[name]/page.tsx`, `app/scorecards/page.tsx` — they all need to take a `project` param (or be moved into `/p/[project]/...`).
-- [ ] Move `app/plan/[name]/page.tsx` → `app/p/[project]/plan/[name]/page.tsx`. Update to read project via `params.project`, look up path via `getProjectPath`, then call `readActivePlans(projectPath)` etc.
-- [ ] Create `app/p/[project]/layout.tsx`: reads `params.project`; renders the existing Sidebar + PlanList scoped to this project; adds the new `<ProjectSwitcher>` component above the PlanList.
-- [ ] Create `app/p/[project]/page.tsx`: per-project empty state ("Select a plan from the sidebar"). Equivalent to current `app/page.tsx` but project-scoped.
-- [ ] Replace `app/page.tsx` (root): renders `<ProjectGrid>` — one `<ProjectCard>` per registered project, cards show name, last-seen-at (humanized via simple date diff), active-plan count (via `readActivePlans(path).length`), in-progress badge if any plan's status is "in-progress".
-- [ ] Create `apps/indusk-admin/src/components/ProjectGrid.tsx` and `ProjectCard.tsx` and `ProjectSwitcher.tsx`. ProjectSwitcher is a simple `<select>` (or our existing Badge-style dropdown) styled into the per-project header.
-- [ ] Update `app/layout.tsx` (root): becomes thin — global nav only (sidebar shows the global section: link to `/`, link to `/scorecards`). The per-project sidebar now lives in `app/p/[project]/layout.tsx`.
-- [ ] Add browser-mode tests at `apps/indusk-admin/src/components/ProjectGrid.test.tsx` (T12), `apps/indusk-admin/src/components/ProjectSwitcher.test.tsx` (T14), `apps/indusk-admin/src/app/p/[project]/page.test.tsx` (T13 — verifies the per-project layout renders the existing PlanList shape).
+- [x] Update every callsite of the old `getProjectRoot()`: `app/scorecards/page.tsx` walks the registry for Phase 3 (Phase 4 adds per-project labels); `app/layout.tsx` is slimmed to global-nav only so no longer needs project data; the old `app/plan/[name]/page.tsx` was deleted (moved to nested route).
+- [x] Move `app/plan/[name]/page.tsx` → `app/p/[project]/plan/[name]/page.tsx`. Reads both `project` and `name` from params, resolves path via `getProjectPath`, 404s on unregistered project OR unknown plan name (both failure modes share the Next.js not-found UI for Phase 3; Phase 4 adds the richer stale-project failure page). Updated `http-smoke.test.ts` to hit the new URL with a registry-backed `INDUSK_HOME` fixture.
+- [x] Create `app/p/[project]/layout.tsx`: renders Sidebar + PlanList scoped to project with ProjectSwitcher above the plan list. Typed with a local `PerProjectLayoutProps` interface rather than Next 16's global `LayoutProps<"/p/[project]">` helper because the latter regenerates from the route tree during `next build` — `tsc --noEmit` in isolation fails to resolve it. Local interface keeps typecheck hermetic.
+- [x] Create `app/p/[project]/page.tsx`: per-project empty state. `notFound()` for unregistered project.
+- [x] Replace `app/page.tsx` (root): renders `<ProjectGrid>` awaiting `readActivePlans` across every registered project in parallel. Cards show name, humanized last-seen-at, active-plan count, in-progress badge when any plan's status === "in-progress". Stale paths (deleted on disk) render `0 active plans` without crashing — `readActivePlans.catch(() => [])`.
+- [x] Create `apps/indusk-admin/src/components/ProjectGrid.tsx` + `ProjectCard.tsx` + `ProjectSwitcher.tsx`. ProjectSwitcher is a native `<select>` with `useRouter().push` — omits entirely when only one project is registered (no point showing it with a single option). ProjectCard IS a `<Link>` (the whole card is clickable), verified in T12 via `card.getAttribute("href")` instead of `card.querySelector("a")`.
+- [x] Update `app/layout.tsx` (root): slimmed to a header + content area. Global nav lives in the header (`Projects` / `Scorecards`); per-project sidebars now live in `app/p/[project]/layout.tsx`. Also dropped the `Global` nav block from `PlanList.tsx` (no longer needed since the global nav moved). `PlanList` now accepts an optional `planHrefPrefix` prop (default `/plan/` for back-compat with existing tests; the per-project layout passes `/p/${project}/plan/`).
+- [x] Add browser-mode tests at `ProjectGrid.test.tsx` (T12, 3 tests: one card per project + empty state + in-progress badge), `ProjectSwitcher.test.tsx` (T14, 3 tests: options + onChange navigation + hidden when single project), `app/p/[project]/page.test.tsx` (T13, 1 test: layout renders PlanList with per-project href prefix + children slot passes through). T13 mocks `@/lib/planning-reader` and `@/lib/registry-client` to avoid `node:fs` externalization in the browser runtime.
 
 #### Phase 3 Verification
-- [ ] T12 passes (ProjectGrid renders one card per registered project with name + last-seen-at + plan count)
-- [ ] T13 passes (per-project page renders sidebar + PlanList in the same shape as 1.26.0)
-- [ ] T14 passes (ProjectSwitcher: clicking an option navigates to that project's `/p/{name}/`)
-- [ ] All Phase 1 + Phase 2 tests still green (no regression in CLI lifecycle or bundling)
+- [x] T12 passes — `pnpm vitest run src/components/ProjectGrid.test.tsx` → 3/3
+- [x] T13 passes — `pnpm vitest run src/app/p/[project]/page.test.tsx` → 1/1
+- [x] T14 passes — `pnpm vitest run src/components/ProjectSwitcher.test.tsx` → 3/3
+- [x] Admin-ui full suite green — `pnpm vitest run` → 75/75 across 11 files. Updated `http-smoke.test.ts` to the new route structure with a registry-backed INDUSK_HOME fixture; it now covers GET `/` (project grid), `/p/dusk/` (sidebar), `/p/dusk/plan/indusk-admin-ui` (detail), and the 404 path.
+- [x] Indusk-mcp suite: 408/409 pass. The one failure (`plan-parser.test.ts: returns all plans sorted by name — expected names to include 'agent-roles'`) is a pre-existing stale fixture — `agent-roles` was archived to `.indusk/planning/archive/agent-roles/` in earlier work, and the test is asserting it still lives in the active planning dir. **Not a Phase 3 regression** — the test was already failing against main before this branch touched anything. Queued as an unrelated fix for a separate commit.
 
 #### Phase 3 Context
-- [ ] Add to CLAUDE.md Conventions: "**admin-ui routes are project-scoped**: `/` renders a project grid; per-project content lives under `/p/[project]/...`. Cross-project content (scorecards, future cross-project signal) lives at top-level routes (`/scorecards`). The per-project layout (`app/p/[project]/layout.tsx`) is where the sidebar + project switcher live; the root layout is global-nav-only."
+- [x] Added to CLAUDE.md Conventions (admin-ui routes are project-scoped): `/` = ProjectGrid, `/p/[project]/...` = per-project, `/scorecards` cross-project. Per-project layout owns sidebar+switcher; root layout is global-nav-only. `PlanList` accepts optional `planHrefPrefix` (default `/plan/`, per-project passes `/p/${project}/plan/`).
 
 #### Phase 3 Document
-- [ ] Update `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` — append "Routing" section documenting the `/` vs `/p/[project]/...` split and the per-project layout convention.
+- [x] Updated `apps/indusk-docs/src/reference/admin-ui/component-conventions.md` — new "Routing" section documents the `/` vs `/p/[project]/...` split, the per-project layout convention, how to add cross-project vs per-project routes, and the `planHrefPrefix` prop on `PlanList`.
 
 ### Phase 4: Cross-project scorecards + stale-entry failure page + cwd-aware bare ui
 

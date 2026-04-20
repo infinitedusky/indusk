@@ -12,6 +12,13 @@ interface PlanListProps {
    * appear in an "Unordered" group at the bottom of the active section.
    */
   masterOrder: string[];
+  /**
+   * Route prefix for a plan's link. Defaults to `/plan/` so existing
+   * single-project tests keep working; the per-project layout (admin-ui-hosting
+   * Phase 3) passes `/p/{project}/plan/` to namespace links under the
+   * project segment.
+   */
+  planHrefPrefix?: string;
 }
 
 /**
@@ -21,8 +28,17 @@ interface PlanListProps {
  *   - Archived plans in a collapsed CollapsibleSection (T4) below the active list.
  *   - Empty state (no plans at all) renders the EmptyPlansSidebarSlot (T12,
  *     preserving Phase 1 behavior).
+ *
+ * Global navigation (Projects, Scorecards) moved to the root layout's header
+ * in admin-ui-hosting Phase 3 — per-project sidebars no longer duplicate the
+ * global nav block.
  */
-export function PlanList({ active, archived, masterOrder }: PlanListProps) {
+export function PlanList({
+  active,
+  archived,
+  masterOrder,
+  planHrefPrefix = "/plan/",
+}: PlanListProps) {
   if (active.length === 0 && archived.length === 0) {
     return <EmptyPlansSidebarSlot />;
   }
@@ -32,19 +48,6 @@ export function PlanList({ active, archived, masterOrder }: PlanListProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <nav className="flex flex-col gap-1" data-testid="global-nav">
-        <span className="px-2 text-xs uppercase tracking-wide text-gray-400">
-          Global
-        </span>
-        <Link
-          href="/scorecards"
-          className="rounded px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
-          data-testid="nav-scorecards"
-        >
-          Eval Scorecards
-        </Link>
-      </nav>
-
       {orderedActive.length > 0 && (
         <div className="flex flex-col gap-1">
           <span className="px-2 text-xs uppercase tracking-wide text-gray-400">
@@ -52,7 +55,7 @@ export function PlanList({ active, archived, masterOrder }: PlanListProps) {
           </span>
           <ul className="flex flex-col gap-1" data-testid="active-plans">
             {orderedActive.map((plan) => (
-              <PlanItem key={plan.name} plan={plan} />
+              <PlanItem key={plan.name} plan={plan} prefix={planHrefPrefix} />
             ))}
           </ul>
         </div>
@@ -65,7 +68,7 @@ export function PlanList({ active, archived, masterOrder }: PlanListProps) {
           </span>
           <ul className="flex flex-col gap-1" data-testid="unordered-plans">
             {unordered.map((plan) => (
-              <PlanItem key={plan.name} plan={plan} />
+              <PlanItem key={plan.name} plan={plan} prefix={planHrefPrefix} />
             ))}
           </ul>
         </div>
@@ -78,7 +81,7 @@ export function PlanList({ active, archived, masterOrder }: PlanListProps) {
         >
           <ul className="flex flex-col gap-1" data-testid="archived-plans">
             {archived.map((plan) => (
-              <PlanItem key={plan.name} plan={plan} />
+              <PlanItem key={plan.name} plan={plan} prefix={planHrefPrefix} />
             ))}
           </ul>
         </CollapsibleSection>
@@ -87,11 +90,11 @@ export function PlanList({ active, archived, masterOrder }: PlanListProps) {
   );
 }
 
-function PlanItem({ plan }: { plan: Plan }) {
+function PlanItem({ plan, prefix }: { plan: Plan; prefix: string }) {
   return (
     <li>
       <Link
-        href={`/plan/${plan.name}`}
+        href={`${prefix}${plan.name}`}
         className="flex items-center justify-between rounded px-2 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
         data-plan-name={plan.name}
       >

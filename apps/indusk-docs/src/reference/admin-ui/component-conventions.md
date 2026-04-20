@@ -120,3 +120,28 @@ A `Plan` object per folder under `.indusk/planning/{name}/` (and separately unde
 Malformed YAML frontmatter sets `malformed: true` on the Plan and leaves the affected document field undefined. The sidebar still shows the plan with a "malformed" indicator (T13); clicking it shows the raw content. This is the rail-integrity property: a partially-broken plan never blocks the UI.
 
 The reader is server-side only (uses `node:fs`). Designed to be called from Next.js server components — never imported into client components.
+
+## Routing
+
+As of indusk-mcp 1.27 (`admin-ui-hosting` plan), the admin UI is hosted as a single daemon serving every registered project. Routes split into three tiers:
+
+| Tier | Path | Purpose |
+|------|------|---------|
+| Global | `/` | `<ProjectGrid>` — one card per registered project |
+| Global | `/scorecards` | Cross-project eval scorecards (walks every registered project's `.indusk/eval/results.log`) |
+| Per-project | `/p/[project]/` | Per-project empty state with sidebar + PlanList + ProjectSwitcher (the layout owns the chrome) |
+| Per-project | `/p/[project]/plan/[name]` | Plan detail — nested under the per-project layout |
+
+The per-project layout (`apps/indusk-admin/src/app/p/[project]/layout.tsx`) is the only place that reads a single project's plans — every file under `/p/[project]/...` inherits the sidebar + switcher for free. The root layout (`app/layout.tsx`) is deliberately thin (global header + nav only); it must NOT render a per-project sidebar or it would double up with the per-project layout's sidebar.
+
+### Adding a cross-project route
+
+New cross-project features (system-improvement signal, aggregate stats, etc.) belong at top-level paths like `/scorecards`. They read via `readRegistryProjects()` from `apps/indusk-admin/src/lib/registry-client.ts`, walk each project's path, and merge results.
+
+### Adding a per-project route
+
+Place the file under `src/app/p/[project]/<feature>/page.tsx` (or nested further). The route inherits the sidebar and project switcher from the per-project layout automatically. Resolve the project's filesystem path with `getProjectPath(params.project)` — returns null for unregistered names, at which point `notFound()` (or, post-Phase-4, the stale-project failure page) renders.
+
+### The `planHrefPrefix` prop on `PlanList`
+
+Because plan links need to stay scoped to the current project (`/p/dusk/plan/foo` vs `/p/numero/plan/foo`), `PlanList` accepts an optional `planHrefPrefix` prop. The default is `/plan/` for back-compat with the pre-1.27 single-project shape; the per-project layout passes `/p/${project}/plan/`. If you ever need to link a plan from a cross-project context, set the prefix accordingly.
