@@ -67,7 +67,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 | T15 | `/scorecards` lists every scorecard from every registered project's `.indusk/eval/results.log`, labeled with project name, sorted most-recent-first across all projects. | Phase 4 | Phase 4 | planned |
 | T16 | Bare `indusk ui` from inside a registered project opens the browser to `/p/{this-project}/`; from outside any registered project, opens to `/`. | Phase 4 | Phase 4 | planned |
 | T17 | A consumer running `npm install -g @infinitedusky/indusk-mcp@1.27` and then `indusk ui start` from any project: the daemon starts without the consumer running `pnpm install`, `next build`, or any other secondary tool. | Phase 0 | Phase 5 | planned |
-| T18 | The published indusk-mcp tarball contains the pre-built Next.js production output. Tarball size is under 50 MB. | Phase 1 | Phase 1 | planned |
+| T18 | The published indusk-mcp tarball contains the pre-built Next.js production output. Tarball size is under 50 MB. | Phase 1 | Phase 1 | passing |
 
 ### Trajectory Rationale
 
@@ -102,8 +102,8 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [x] If tarball exceeds 50 MB, profile + reduce. **N/A — tarball is 2.7 MB compressed / 11.6 MB unpacked, well under cap.**
 
 #### Phase 1 Verification
-- [ ] T18 passes — `npm pack` produces a tarball that contains `admin/.next/`, `admin/package.json`, and is under 50 MB. (Test: `apps/indusk-mcp/src/__tests__/admin-bundle-pack.test.ts`)
-- [ ] Portability spike: extract the packed tarball in `/tmp/`, spawn `next start` against the bundled `admin/`, curl `http://localhost:{port}/`, assert HTTP 200. Documented as a manual smoke step (not a perpetual CI test — too slow and platform-dependent).
+- [x] T18 passes — 3 assertions: tarball <50 MB; tarball contains `package/admin/.next/BUILD_ID`; tarball contains `admin/package.json` + `admin/next.config.ts`. Test at `apps/indusk-mcp/src/__tests__/admin-bundle-pack.test.ts`. Skippable via `SKIP_SLOW_TESTS=1` for fast iteration.
+- [x] Portability spike: `npm install /path/to/tarball.tgz` into clean tempdir → bundled admin at `node_modules/@infinitedusky/indusk-mcp/admin/` → spawn `next start` from there with `INDUSK_PROJECT_ROOT=/path/to/dusk` → curl `/` returns HTTP 200 with populated `active-plans`, `/plan/indusk-admin-ui` returns HTTP 200 with `plan-detail`+`phases-section`. Documented as manual smoke (not perpetual CI — runs the actual npm install of a 287-package tree). ADR Risk #1 (platform binaries / module resolution from bundled location) structurally addressed.
 
 #### Phase 1 Context
 - [ ] Add to CLAUDE.md Conventions: "**indusk-mcp prepublishOnly bundles the admin app** — `pnpm --filter indusk-admin build` runs first, then `scripts/bundle-admin.js` copies the production `.next/` output into `apps/indusk-mcp/admin/`. The published tarball includes this bundled app; consumers do not run `pnpm install` or `next build` themselves. Tarball is capped at 50 MB by audit (T18). To verify: `npm pack` from `apps/indusk-mcp/` and inspect the tarball."
