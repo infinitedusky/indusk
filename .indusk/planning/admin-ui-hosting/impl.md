@@ -1,7 +1,7 @@
 ---
 title: "Admin UI Hosting"
 date: 2026-04-19
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
