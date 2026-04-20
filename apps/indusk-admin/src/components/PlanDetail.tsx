@@ -15,7 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
-import { extractPhases } from "@/lib/phases";
+import {
+  extractChecklistItems,
+  extractPhases,
+  type Phase,
+  splitPhasesAroundFalsification,
+} from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanDetailProps {
@@ -72,10 +77,40 @@ export function PlanDetail({ plan }: PlanDetailProps) {
         </CollapsibleSection>
       )}
 
-      {plan.impl && <PhasesSection plan={plan} />}
-
-      <FalsificationSection plan={plan} />
+      {plan.impl && <ImplSections plan={plan} />}
+      {!plan.impl && <FalsificationSection plan={plan} phase={null} />}
     </article>
+  );
+}
+
+/**
+ * When an impl.md exists, split its phases into pre-falsification / falsification
+ * / post-falsification groups and render each in its own section. The
+ * falsification phase (if any) is rendered by `FalsificationSection` instead of
+ * mixed into the main Phases section. Post-falsification phases render below as
+ * "Follow-up Phases" — the fix-in-scope derivatives of the ritual.
+ *
+ * When no impl is present, the PlanDetail top-level still shows a
+ * FalsificationSection directly (legacy-log-only path).
+ */
+function ImplSections({ plan }: { plan: Plan }) {
+  if (!plan.impl) return null;
+  const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
+  const split = splitPhasesAroundFalsification(phases);
+  return (
+    <>
+      {split.pre.length > 0 && (
+        <PhasesSection phases={split.pre} heading="Phases" testId="phases-section" />
+      )}
+      <FalsificationSection plan={plan} phase={split.falsification} />
+      {split.post.length > 0 && (
+        <PhasesSection
+          phases={split.post}
+          heading="Follow-up Phases"
+          testId="followup-phases-section"
+        />
+      )}
+    </>
   );
 }
 
@@ -118,14 +153,20 @@ function BriefSection({ content }: { content: string }) {
   );
 }
 
-function PhasesSection({ plan }: { plan: Plan }) {
-  if (!plan.impl) return null;
-  const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
+function PhasesSection({
+  phases,
+  heading,
+  testId,
+}: {
+  phases: Phase[];
+  heading: string;
+  testId: string;
+}) {
   if (phases.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-2" data-testid="phases-section">
-      <h2 className="text-base font-semibold text-gray-900">Phases</h2>
+    <section className="flex flex-col gap-2" data-testid={testId}>
+      <h2 className="text-base font-semibold text-gray-900">{heading}</h2>
       <div className="flex flex-col gap-2">
         {phases.map((phase) => (
           <CollapsibleSection
@@ -212,7 +253,17 @@ function RawDocumentsSection({
   );
 }
 
-function FalsificationSection({ plan }: { plan: Plan }) {
+function FalsificationSection({
+  plan,
+  phase,
+}: {
+  plan: Plan;
+  phase: Phase | null;
+}) {
+  // Priority: phase-authoring flow (new, 1.27.4+) > legacy log file > empty state.
+  if (phase) {
+    return <FalsificationPhaseSection phase={phase} />;
+  }
   if (!plan.falsification) {
     return (
       <section
@@ -262,6 +313,93 @@ function FalsificationSection({ plan }: { plan: Plan }) {
           data-testid="falsification-terminator"
         >
           <span className="font-semibold">Terminated:</span> {terminator.reason}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Render a falsification phase (new phase-authoring flow, 1.27.4+). Hypotheses
+ * come from the phase's trajectory rows (each row == one hypothesis); fix items
+ * come from the phase's checklist. Status badge derives from the combined state
+ * of trajectory rows + unchecked checklist items.
+ */
+function FalsificationPhaseSection({ phase }: { phase: Phase }) {
+  const checklistItems = extractChecklistItems(phase.content);
+  const allTrajectoryTerminal = phase.trajectoryRows.every(
+    (r) => r.state === "passing" || r.state === "skipped",
+  );
+  const allItemsChecked = checklistItems.every((i) => i.checked);
+  const complete = allTrajectoryTerminal && allItemsChecked;
+
+  return (
+    <section
+      className="flex flex-col gap-2"
+      data-testid="falsification-section"
+    >
+      <header className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-gray-900">
+          Falsification
+          {phase.title ? (
+            <span className="ml-2 text-sm font-normal text-gray-500">
+              (Phase {phase.number}: {phase.title})
+            </span>
+          ) : null}
+        </h2>
+        <Badge variant={complete ? "passing" : "writable"}>
+          {complete ? "complete" : "in-progress"}
+        </Badge>
+      </header>
+
+      {phase.trajectoryRows.length > 0 && (
+        <div data-testid="falsification-hypotheses">
+          <h3 className="text-sm font-semibold text-gray-800 mt-1">
+            Hypotheses
+          </h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Asserts</TableHead>
+                <TableHead>State</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {phase.trajectoryRows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>
+                    <span className="font-mono text-xs">{row.id}</span>
+                  </TableCell>
+                  <TableCell>{row.asserts}</TableCell>
+                  <TableCell>
+                    <Badge variant={stateToBadge(row.state)}>{row.state}</Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {checklistItems.length > 0 && (
+        <div data-testid="falsification-fix-items" className="mt-2">
+          <h3 className="text-sm font-semibold text-gray-800">Fix items</h3>
+          <ul className="flex flex-col gap-1">
+            {checklistItems.map((item) => (
+              <li
+                key={`${item.checked ? "x" : "o"}-${item.text}`}
+                className="flex items-start gap-2 text-sm text-gray-700"
+              >
+                <span className="font-mono text-xs text-gray-500">
+                  [{item.checked ? "x" : " "}]
+                </span>
+                <span className={item.checked ? "text-gray-500 line-through" : ""}>
+                  {item.text}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </section>
