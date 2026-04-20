@@ -128,12 +128,7 @@ Ship a new **required-by-default** InDusk extension `local-telemetry` plus a mac
 
 **Goal**: produce the four platform packages (`@infinitedusky/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}`) that indusk-mcp will depend on. After this phase, a consumer running `npm i -g @infinitedusky/indusk-mcp` gets exactly one platform package's worth of binaries installed in their node_modules, with zero custom download code.
 
-- [ ] Create `packages/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}/` directories. Each gets a minimal `package.json`:
-  - `name: "@infinitedusky/telemetry-binaries-{platform}"`
-  - `version`: matched to indusk-mcp's telemetry minor (e.g., `1.28.0`)
-  - `os: ["darwin"]` / `["linux"]` + `cpu: ["arm64"]` / `["x64"]` — npm's install-time filter
-  - `files: ["bin", "collector-config.yaml", "LICENSE", "README.md"]`
-  - `bin/` directory with the platform's `jaeger` + `otelcol` executables
+- [x] Created `packages/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}/` directories with a minimal `package.json` each: `name: "@infinitedusky/telemetry-binaries-{platform}"`, `version: "1.28.0"`, matching `os`/`cpu` constraints, `files: ["bin", "collector-config.yaml", "jaeger-config.yaml", "LICENSE", "NOTICE", "README.md"]`, `publishConfig.access: "public"`, Apache-2.0 license. Also added `packages/*` to `pnpm-workspace.yaml`. Verified pnpm correctly flags three platforms as "Unsupported platform" warnings on macOS arm64 host — demonstrates the `os`/`cpu` filter will only install the matching package per consumer. Binaries will land in each platform's `bin/` via the build script (next item).
 - [ ] Create `packages/telemetry-binaries-shared/collector-config.yaml` (or keep one copy per platform — spike decides): OTLP HTTP + gRPC receivers → batch processor → Jaeger exporter (traces) + file/SQLite log exporter (logs). Locked pipeline in v1.
 - [ ] Create `scripts/build-telemetry-binaries.sh` at repo root: (1) reads pinned upstream Jaeger + otelcol versions from a manifest file; (2) for each of the 4 platforms, downloads the matching release archive from GitHub; (3) verifies upstream SHA256 checksums against the manifest; (4) unpacks into the matching platform package's `bin/`; (5) copies `collector-config.yaml` into each platform package; (6) optionally runs `npm publish` for each. Idempotent; resumable if one download fails.
 - [ ] Create `packages/telemetry-binaries-shared/UPSTREAM.json` (or equivalent) pinning exact upstream versions + SHA256s. Example: `{ "jaeger": { "version": "2.5.0", "sha256_darwin_arm64": "...", ... }, "otelcol": { "variant": "{spike-chosen}", "version": "0.110.0", ... } }`. Updates to upstream are deliberate one-bump-per-file.

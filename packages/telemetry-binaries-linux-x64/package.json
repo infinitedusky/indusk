@@ -1,0 +1,24 @@
+{
+	"name": "@infinitedusky/telemetry-binaries-linux-x64",
+	"version": "1.28.0",
+	"description": "Jaeger + OTel Collector (k8s distribution) native binaries for linux-x64, bundled for @infinitedusky/indusk-mcp's local-telemetry extension. Upstream Apache 2.0 redistributed with attribution.",
+	"license": "Apache-2.0",
+	"os": ["linux"],
+	"cpu": ["x64"],
+	"files": [
+		"bin",
+		"collector-config.yaml",
+		"jaeger-config.yaml",
+		"LICENSE",
+		"NOTICE",
+		"README.md"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/infinitedusky/indusk-mcp.git",
+		"directory": "packages/telemetry-binaries-linux-x64"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
