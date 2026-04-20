@@ -74,7 +74,7 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
   - Current logic: check `isFalsificationComplete(planRoot)` or `isFalsificationSkipped(implContent).skipped`. If neither, block.
   - New logic: check ONE of: (a) `isFalsificationComplete(planRoot)` — legacy path, (b) `isFalsificationSkipped(implContent).skipped` — explicit skip, (c) all impl phases terminal (via trajectory parser inspection of the impl) — new path.
   - Pseudocode: `if (isFalsificationComplete(planRoot) || isSkipped || allPhasesTerminal(impl)) { pass } else { block }`
-- [ ] Mirror retrospective update to `.claude/skills/retrospective/SKILL.md`.
+- [x] Mirror retrospective update to `.claude/skills/retrospective/SKILL.md`. Verified byte-identical via `diff -q`.
 - [ ] Write regression test at `apps/indusk-mcp/src/__tests__/retrospective-gate-backcompat.test.ts`:
   - Set up a tmp plan folder with a `falsification.md` file whose content is a completed log (terminator entry present)
   - Import `isFalsificationComplete` from `apps/indusk-mcp/src/lib/falsification/log.ts`

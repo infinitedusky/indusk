@@ -32,18 +32,19 @@ Work through these steps in order. Each step is blocking — do not skip ahead.
 
 **This gate blocks everything below. Do not proceed to Step 1 until it passes.**
 
-Before writing a single word of the retrospective, confirm that the plan has completed the falsification ritual or has an explicit, recorded skip-reason.
+Before writing a single word of the retrospective, confirm that the plan has completed the falsification ritual — either via the new phase-authoring flow (1.27.4+) that leaves a Falsification Phase in impl.md, via the legacy sidecar log, or via an explicit skip-reason.
 
-Check the gate by reading two sources:
+Check the gate by reading three sources in this order:
 
-1. **Completion:** Does `.indusk/planning/{plan-name}/falsification.md` exist with a terminator entry? Use `isFalsificationComplete(planRoot)` from `apps/indusk-mcp/src/lib/falsification/log.js` (invoke via `tsx` or an MCP tool wrapper).
-2. **Skip:** Does the impl's frontmatter contain BOTH `falsification: skipped` AND `falsification_reason: "{non-empty text}"`? Use `isFalsificationSkipped(implContent)` from `apps/indusk-mcp/src/lib/falsification/skip.js`.
+1. **All impl phases terminal (new flow default):** Parse the impl's `## Test Trajectory` table. The gate passes if every phase is terminal — every `Passes at: Phase N` trajectory row is in a terminal state (`passing`, `skipped`, or `blocked`), AND the last phase is not a marker of open falsification work. In practice: if the `/falsify` ritual authored a Falsification Phase and `/work` subsequently closed it (and any fix-in-scope phases it spawned), this condition is automatically true. The phase sequence itself is the proof that the ritual ran.
+2. **Legacy completion (pre-1.27.4 flow):** Does `.indusk/planning/{plan-name}/falsification.md` exist with a terminator entry? Use `isFalsificationComplete(planRoot)` from `apps/indusk-mcp/src/lib/falsification/log.js` (invoke via `tsx` or an MCP tool wrapper). Plans authored under the old flow still pass this way; the library is kept unchanged for backwards compatibility.
+3. **Skip:** Does the impl's frontmatter contain BOTH `falsification: skipped` AND `falsification_reason: "{non-empty text}"`? Use `isFalsificationSkipped(implContent)`.
 
-The gate passes if either condition holds. If neither holds, refuse to run the retrospective and surface this message to the user:
+The gate passes if ANY of the three conditions holds. If none holds, refuse to run the retrospective and surface this message to the user:
 
 > **Retrospective blocked: falsification gate not satisfied for `{plan-name}`.**
 >
-> Before closing out a plan, run `/falsify {plan-name}` to exercise the bounty-hunting ritual — investigate the code, form a specific hypothesis about what should be broken, write the test that confirms it. The ritual may surface gaps worth addressing before archival (fix in scope, spawn a new plan, or accept as finding).
+> Before closing out a plan, run `/falsify {plan-name}` to exercise the bounty-hunting ritual — investigate the code, form specific hypotheses about what should be broken, and author a Falsification Phase in the plan's impl.md capturing the hypothesis tests + fix items. `/work` then picks up the phase and closes it normally; once all impl phases are terminal, this gate passes automatically.
 >
 > To skip the ritual intentionally, add these two fields to the impl's frontmatter:
 >
