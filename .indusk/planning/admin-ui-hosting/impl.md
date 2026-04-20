@@ -241,7 +241,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [x] Add "Research" group to the per-project sidebar — `<nav>` block below `<PlanList>`, conditional on `research.length > 0`. Each entry links to `/p/{project}/research/{slug}` with the parsed `# H1` title (fallback: slug). `data-testid="research-group"` for test targeting. Missing/empty research dir renders nothing. T20.
 - [x] Wrap the Brief section in `PlanDetail.tsx` inside `<CollapsibleSection title="Brief" defaultOpen={true}>` — parity with Test Plan + ADR. Outer `<section data-testid="brief-section">` preserved for T6 stability. T21.
 - [x] Bump `apps/indusk-mcp/package.json` version → 1.27.2.
-- [ ] Add changelog entry to `apps/indusk-docs/src/changelog.md` naming the three changes; flag scorecards relocation as a minor breaking-change for bookmarks (`/scorecards` is gone; use `/p/{project}/scorecards`).
+- [x] Add changelog entry to `apps/indusk-docs/src/changelog.md` naming the three changes; flag scorecards relocation as a minor breaking-change for bookmarks (`/scorecards` is gone; use `/p/{project}/scorecards`).
 - [ ] Update `apps/indusk-docs/src/reference/admin-ui/overview.md` "Routing tree" + "What each page shows" sections — replace `/scorecards` row with `/p/{project}/scorecards`, add `/p/{project}/research/{slug}`, note Brief is collapsible.
 - [ ] Update `apps/indusk-docs/src/reference/admin-ui/cli.md` Routing tree section to match.
 - [ ] Build + publish: `cd apps/indusk-mcp && pnpm publish` (user action).
