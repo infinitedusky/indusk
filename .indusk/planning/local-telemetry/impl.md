@@ -1,7 +1,7 @@
 ---
 title: "Local Telemetry — Impl"
 date: 2026-04-20
-status: approved
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
