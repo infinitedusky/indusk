@@ -1,0 +1,2 @@
+0dfd081d122af00457a25d1275513be0dda02fded4f154f29cb9cf9e7b332916 *jaeger-2.17.0-darwin-arm64/example-hotrod
+dac2348882ba6fe52e05efa95a97f1155830f9d4bb4b629146bb1bdeb7ece827 *jaeger-2.17.0-darwin-arm64/jaeger
