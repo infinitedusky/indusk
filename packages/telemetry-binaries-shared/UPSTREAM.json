@@ -1,0 +1,42 @@
+{
+  "$comment": [
+    "Pinned upstream versions for the telemetry binaries. Every platform package bundles one archive from each source below, extracted + repacked into the platform package's bin/ directory.",
+    "",
+    "Updates to versions are deliberate, one-pin-per-change. Do not bump from CI automation — changes here trigger a republish of all four platform packages.",
+    "",
+    "otelcol note: we use otelcol-contrib (not otelcol-k8s) because k8s distribution is Linux-only. Contrib is available for darwin arm64/x64 + linux arm64/x64 and has every receiver/processor/exporter we might want, including fileexporter with rotation which our logs pipeline needs."
+  ],
+  "jaeger": {
+    "version": "2.17.0",
+    "source_template": "https://github.com/jaegertracing/jaeger/releases/download/v{version}/jaeger-{version}-{jaeger_platform}.tar.gz",
+    "sha_template": "https://github.com/jaegertracing/jaeger/releases/download/v{version}/jaeger-{version}-{jaeger_platform}.sha256sum.txt",
+    "binary_name": "jaeger",
+    "extract_path": "jaeger-{version}-{jaeger_platform}/jaeger",
+    "platform_map": {
+      "darwin-arm64": "darwin-arm64",
+      "darwin-x64": "darwin-amd64",
+      "linux-arm64": "linux-arm64",
+      "linux-x64": "linux-amd64"
+    },
+    "license": "Apache-2.0",
+    "license_url": "https://github.com/jaegertracing/jaeger/blob/main/LICENSE",
+    "upstream_project": "https://github.com/jaegertracing/jaeger"
+  },
+  "otelcol": {
+    "variant": "otelcol-contrib",
+    "version": "0.150.1",
+    "source_template": "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{version}/otelcol-contrib_{version}_{otelcol_platform}.tar.gz",
+    "sha_template": "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v{version}/otelcol-contrib_{version}_checksums.txt",
+    "binary_name": "otelcol-contrib",
+    "extract_path": "otelcol-contrib",
+    "platform_map": {
+      "darwin-arm64": "darwin_arm64",
+      "darwin-x64": "darwin_amd64",
+      "linux-arm64": "linux_arm64",
+      "linux-x64": "linux_amd64"
+    },
+    "license": "Apache-2.0",
+    "license_url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/LICENSE",
+    "upstream_project": "https://github.com/open-telemetry/opentelemetry-collector-releases"
+  }
+}
