@@ -106,10 +106,10 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [x] Portability spike: `npm install /path/to/tarball.tgz` into clean tempdir → bundled admin at `node_modules/@infinitedusky/indusk-mcp/admin/` → spawn `next start` from there with `INDUSK_PROJECT_ROOT=/path/to/dusk` → curl `/` returns HTTP 200 with populated `active-plans`, `/plan/indusk-admin-ui` returns HTTP 200 with `plan-detail`+`phases-section`. Documented as manual smoke (not perpetual CI — runs the actual npm install of a 287-package tree). ADR Risk #1 (platform binaries / module resolution from bundled location) structurally addressed.
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Conventions: "**indusk-mcp prepublishOnly bundles the admin app** — `pnpm --filter indusk-admin build` runs first, then `scripts/bundle-admin.js` copies the production `.next/` output into `apps/indusk-mcp/admin/`. The published tarball includes this bundled app; consumers do not run `pnpm install` or `next build` themselves. Tarball is capped at 50 MB by audit (T18). To verify: `npm pack` from `apps/indusk-mcp/` and inspect the tarball."
+- [x] Added to CLAUDE.md Known Gotchas (richer than originally planned because two real findings surfaced during impl): the bundler conventions + the `force-dynamic` requirement on the layout. Both are concrete enough that the next person debugging admin builds won't have to rediscover them.
 
 #### Phase 1 Document
-- [ ] (folded into Phase 5's overview.md update — bundling architecture is documented alongside the daemon architecture)
+- [x] (folded into Phase 5's overview.md update — bundling architecture is documented alongside the daemon architecture)
 
 ### Phase 2: Registry + daemon CLI
 
