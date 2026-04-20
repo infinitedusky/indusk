@@ -255,10 +255,10 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 - [x] All Phase 1–5 tests still green — regression check: `pnpm exec tsc --noEmit` clean across the admin app. Phase 4's cross-project scorecards test (T15) was deleted in this phase because the feature it tested is removed — not a regression.
 
 #### Phase 6 Context
-- [ ] Append to CLAUDE.md "Current State": "1.27.2 follow-up on 2026-04-20 — scorecards became project-siloed under `/p/[project]/scorecards`, per-project research section at `/p/[project]/research/[slug]` backed by `.indusk/research/`, Brief section made collapsible in PlanDetail. Top-level `/scorecards` removed — bookmark break, no replacement planned (cross-project scorecards view is deliberately out of scope; project-siloed is canonical going forward)."
+- [x] Appended to CLAUDE.md "Current State" — Phase 6 (1.27.2) entry covers scorecards siloing (with T15 supersession note), research section (readers + path-traversal rejection + H1 title parse), Brief collapsibility, and the per-project layout changes. Trajectory assertion counts included (T19: 4, T20: 5, T21: 2).
 
 #### Phase 6 Document
-- [ ] overview.md + cli.md updates above ARE the Phase 6 docs (routing tree changes, new research route, Brief collapsibility note). No separate guide page needed — these are additive documentation changes.
+- [x] overview.md + cli.md updates above ARE the Phase 6 docs — routing tree rewritten per-project-only, per-project home sidebar structure documented, `/p/{project}/scorecards` + `/p/{project}/research/{slug}` sections added, Brief flagged collapsible in the plan-detail table. No separate guide page needed — additive documentation changes that live alongside existing admin-ui reference.
 
 ## Files Affected
 
