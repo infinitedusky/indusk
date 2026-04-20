@@ -119,15 +119,16 @@ The daemon serves these routes, backed by the registry + project filesystems:
 
 ```
 /                                  Project grid — one card per registered project
-/scorecards                        Cross-project scorecards, project-labeled, sorted most-recent-first
 
-/p/{project}/                      Per-project home (plan list in sidebar)
+/p/{project}/                      Per-project home (sidebar: scorecards link, plan list, research group)
+/p/{project}/scorecards            Per-project eval scorecards (1.27.2+)
 /p/{project}/plan/{name}           Plan detail (brief, test-plan, ADR, phases, falsification, scorecards)
+/p/{project}/research/{slug}       Per-project research article from .indusk/research/ (1.27.2+)
 /p/{deleted}/                      Stale failure page (HTTP 200) with recovery hint
 ```
 
-- Cross-project views stay at top-level (`/`, `/scorecards`).
-- Project-scoped views live under `/p/{project}/...`.
+- Only one top-level route: `/` (project grid). Everything else is project-scoped.
+- 1.26.0/1.27.0's cross-project `/scorecards` is **removed in 1.27.2** — use `/p/{project}/scorecards`.
 - Deleted registry entries render a 200 failure page, not 404 or 500. See Recovery below.
 
 ## Daemon metadata
