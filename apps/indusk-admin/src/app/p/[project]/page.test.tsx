@@ -42,6 +42,7 @@ vi.mock("@/lib/planning-reader", () => ({
 	],
 	readArchivedPlans: async () => [],
 	readMasterPlanOrder: () => ["alpha", "beta"],
+	readProjectResearch: async () => [],
 }));
 
 vi.mock("@/lib/registry-client", () => ({
