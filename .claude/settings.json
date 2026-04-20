@@ -209,7 +209,10 @@
       "Bash(curl -s -o /tmp/plan.html http://localhost:3939/plan/indusk-admin-ui)",
       "Bash(node /Users/the_dusky/code/sandbox/dusk/apps/indusk-mcp/dist/bin/cli.js ui --no-open --port 3939)",
       "Bash(pnpm --filter indusk-admin build)",
-      "Bash(node /Users/the_dusky/code/sandbox/dusk/apps/indusk-mcp/scripts/bundle-admin.js)"
+      "Bash(node /Users/the_dusky/code/sandbox/dusk/apps/indusk-mcp/scripts/bundle-admin.js)",
+      "Bash(pkill -f \"next.*start\\\\|next.*dev\")",
+      "Bash(pnpm exec *)",
+      "Read(//Users/the_dusky/code/sandbox/dusk/=== curl /**)"
     ],
     "additionalDirectories": [
       "/tmp",

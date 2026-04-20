@@ -10,6 +10,8 @@
 		"hooks",
 		"lessons",
 		"extensions",
+		"admin",
+		"scripts/bundle-admin.js",
 		"!dist/**/*.test.*",
 		"!dist/__tests__"
 	],
