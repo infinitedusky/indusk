@@ -370,7 +370,7 @@ export async function daemonStart(
 		findFreePort(0),
 		findFreePort(0),
 		findFreePort(0),
-		findFreePort(16687),
+		findFreePort(0),
 	]);
 
 	// Write configs to INDUSK_HOME/telemetry-{jaeger,collector}.yaml so they

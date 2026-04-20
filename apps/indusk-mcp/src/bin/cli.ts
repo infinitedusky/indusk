@@ -520,4 +520,66 @@ telemetryCmd
 		await telemetryDeregister(path);
 	});
 
+telemetryCmd
+	.command("tail")
+	.description("Print recent log records (from otelcol's file sink). Same filters as the MCP `tail_logs` tool.")
+	.option("--service <name>", "filter by service.name")
+	.option(
+		"--level <level>",
+		"filter by severity (error/warn/info/debug/any)",
+		"any",
+	)
+	.option("--since <minutes>", "how far back to look, in minutes", "5")
+	.option("--limit <n>", "max records to print", "50")
+	.action(
+		async (opts: {
+			service?: string;
+			level: string;
+			since: string;
+			limit: string;
+		}) => {
+			const { telemetryTail } = await import("./commands/telemetry.js");
+			const level = [
+				"error",
+				"warn",
+				"info",
+				"debug",
+				"any",
+			].includes(opts.level)
+				? (opts.level as "error" | "warn" | "info" | "debug" | "any")
+				: "any";
+			await telemetryTail({
+				service: opts.service,
+				level,
+				sinceMinutes: opts.since,
+				limit: opts.limit,
+			});
+		},
+	);
+
+telemetryCmd
+	.command("trace <id>")
+	.description("Print the full span tree for a trace ID (via Jaeger's REST query API).")
+	.action(async (id: string) => {
+		const { telemetryTrace } = await import("./commands/telemetry.js");
+		await telemetryTrace(id);
+	});
+
+telemetryCmd
+	.command("services")
+	.description("List services the daemon has seen, one per line.")
+	.action(async () => {
+		const { telemetryServices } = await import("./commands/telemetry.js");
+		await telemetryServices();
+	});
+
+telemetryCmd
+	.command("reset")
+	.description("Stop the daemon, clear in-memory trace storage + log sink, and restart. Human-only — not exposed as an MCP tool.")
+	.action(async function (this: Command) {
+		const opts = this.optsWithGlobals() as { otlpPort: string; uiPort: string };
+		const { telemetryReset } = await import("./commands/telemetry.js");
+		await telemetryReset({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
+	});
+
 program.parse();

@@ -235,6 +235,196 @@ export async function telemetryRegister(projectPath: string): Promise<void> {
 }
 
 /**
+ * Human-facing terminal: tail recent logs from the log sink. Same filters
+ * as the MCP `tail_logs` tool, printed as text lines instead of JSON.
+ */
+export interface TelemetryTailOptions {
+	service?: string;
+	level: "error" | "warn" | "info" | "debug" | "any";
+	sinceMinutes: string;
+	limit: string;
+}
+
+export async function telemetryTail(opts: TelemetryTailOptions): Promise<void> {
+	const since = Number.parseInt(opts.sinceMinutes, 10) || 5;
+	const lim = Number.parseInt(opts.limit, 10) || 50;
+	const { existsSync, readFileSync } = await import("node:fs");
+	const { homedir } = await import("node:os");
+	const { join } = await import("node:path");
+	const path = join(
+		process.env.INDUSK_HOME ?? join(homedir(), ".indusk"),
+		"telemetry",
+		"logs.jsonl",
+	);
+	if (!existsSync(path)) {
+		console.info("No log sink yet. Emit some logs or start the daemon.");
+		return;
+	}
+	const raw = readFileSync(path, "utf-8");
+	const windowStart = Date.now() - since * 60_000;
+	const levelRank: Record<string, number> = {
+		debug: 0,
+		info: 1,
+		warn: 2,
+		error: 3,
+	};
+	const minRank = opts.level === "any" ? -1 : (levelRank[opts.level] ?? -1);
+	const matches: string[] = [];
+	for (const line of raw.split("\n")) {
+		const trimmed = line.trim();
+		if (!trimmed) continue;
+		let parsed: Record<string, unknown>;
+		try {
+			parsed = JSON.parse(trimmed);
+		} catch {
+			continue;
+		}
+		const rls = Array.isArray(parsed.resourceLogs) ? parsed.resourceLogs : [];
+		for (const rl of rls) {
+			if (!rl || typeof rl !== "object") continue;
+			const rlObj = rl as Record<string, unknown>;
+			const res = (rlObj.resource ?? {}) as Record<string, unknown>;
+			const resAttrs = Array.isArray(res.attributes)
+				? (res.attributes as Array<Record<string, unknown>>)
+				: [];
+			const svc =
+				(resAttrs.find((a) => a.key === "service.name")?.value as {
+					stringValue?: string;
+				})?.stringValue ?? "-";
+			if (opts.service && svc !== opts.service) continue;
+			const sls = Array.isArray(rlObj.scopeLogs) ? rlObj.scopeLogs : [];
+			for (const sl of sls) {
+				if (!sl || typeof sl !== "object") continue;
+				const lrs = Array.isArray((sl as Record<string, unknown>).logRecords)
+					? ((sl as Record<string, unknown>).logRecords as Array<
+							Record<string, unknown>
+						>)
+					: [];
+				for (const lr of lrs) {
+					const timeNs =
+						typeof lr.timeUnixNano === "string"
+							? Number(lr.timeUnixNano)
+							: Number(lr.timeUnixNano ?? Date.now() * 1_000_000);
+					const ts = new Date(timeNs / 1_000_000);
+					if (ts.getTime() < windowStart) continue;
+					const sev =
+						typeof lr.severityText === "string"
+							? (lr.severityText as string).toLowerCase()
+							: "-";
+					if (minRank >= 0) {
+						const r = levelRank[sev] ?? -1;
+						if (r < minRank) continue;
+					}
+					const body =
+						(lr.body as { stringValue?: string } | undefined)?.stringValue ??
+						JSON.stringify(lr.body ?? {});
+					matches.push(
+						`${ts.toISOString()} [${sev.toUpperCase().padEnd(5)}] ${svc.padEnd(20)} ${body}`,
+					);
+				}
+			}
+		}
+	}
+	const out = matches.slice(-lim);
+	if (out.length === 0) {
+		console.info(
+			`No log records in the last ${since} minute(s)${opts.service ? ` for service=${opts.service}` : ""}${opts.level !== "any" ? ` at level>=${opts.level}` : ""}.`,
+		);
+		return;
+	}
+	for (const line of out) console.info(line);
+	if (matches.length > out.length) {
+		console.info(
+			`\n(showing last ${out.length} of ${matches.length} matching records — raise --limit to see more)`,
+		);
+	}
+}
+
+/**
+ * Print the full span tree for a trace ID, via Jaeger's REST query API.
+ */
+export async function telemetryTrace(traceId: string): Promise<void> {
+	const status = await daemonStatus();
+	if (!status.running) {
+		console.error("Telemetry daemon is not running. Run `indusk telemetry start`.");
+		process.exit(1);
+	}
+	const url = `http://localhost:${status.uiPort}/api/traces/${traceId}`;
+	try {
+		const res = await fetch(url);
+		if (!res.ok) {
+			console.error(`Jaeger returned ${res.status} for ${url}`);
+			process.exit(1);
+		}
+		const body = await res.json();
+		console.info(JSON.stringify(body, null, 2));
+	} catch (err) {
+		console.error(`Failed to fetch trace: ${(err as Error).message}`);
+		process.exit(1);
+	}
+}
+
+/**
+ * Print the list of services the daemon has seen, one per line.
+ */
+export async function telemetryServices(): Promise<void> {
+	const status = await daemonStatus();
+	if (!status.running) {
+		console.error("Telemetry daemon is not running. Run `indusk telemetry start`.");
+		process.exit(1);
+	}
+	const url = `http://localhost:${status.uiPort}/api/services`;
+	try {
+		const res = await fetch(url);
+		if (!res.ok) {
+			console.error(`Jaeger returned ${res.status} for ${url}`);
+			process.exit(1);
+		}
+		const body = (await res.json()) as { data?: string[] };
+		if (!body.data || body.data.length === 0) {
+			console.info("(no services have emitted traces yet)");
+			return;
+		}
+		for (const s of body.data) console.info(s);
+	} catch (err) {
+		console.error(`Failed to fetch services: ${(err as Error).message}`);
+		process.exit(1);
+	}
+}
+
+/**
+ * Reset the daemon: stop + restart with fresh in-memory Jaeger storage +
+ * truncate logs.jsonl. Human-triggered only; not exposed as an MCP tool.
+ */
+export async function telemetryReset(
+	opts: TelemetryStartOptions,
+): Promise<void> {
+	const { existsSync, writeFileSync } = await import("node:fs");
+	const { homedir } = await import("node:os");
+	const { join } = await import("node:path");
+	console.info("Stopping daemon + clearing buffers...");
+	await daemonStop();
+	const logsPath = join(
+		process.env.INDUSK_HOME ?? join(homedir(), ".indusk"),
+		"telemetry",
+		"logs.jsonl",
+	);
+	if (existsSync(logsPath)) writeFileSync(logsPath, "");
+	try {
+		const meta = await daemonStart({
+			otlpPort: Number.parseInt(opts.otlpPort, 10),
+			uiPort: Number.parseInt(opts.uiPort, 10),
+		});
+		console.info("Daemon restarted with fresh buffers.");
+		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
+		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
+	} catch (err) {
+		console.error(`Reset failed: ${(err as Error).message}`);
+		process.exit(1);
+	}
+}
+
+/**
  * Deregister a project (internal — called by the extension's on_disable hook).
  * Removes the `jaeger` MCP server entry from the project's `.mcp.json`. If
  * the registry becomes empty, gracefully stops the daemon.
