@@ -50,7 +50,7 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
 | T3 | After `/falsify` runs, the plan's impl status is still `in-progress` (not `completed`) because the newly authored phase is unchecked. | Phase 0 | Phase 2 | planned |
 | T4 | `/work {plan}` picks up a falsification-authored phase like any other phase — authors writable-at-phase tests at phase start, runs items, flips trajectory states at phase close. | Phase 0 | Phase 2 | planned |
 | T5 | `/retrospective {plan}` closes a plan whose impl has all phases terminal (including a falsification phase from the new flow) without requiring a `falsification.md` file in the plan folder. | Phase 0 | Phase 2 | planned |
-| T6 | A legacy plan with a completed `falsification.md` file (archived falsification-ritual plan as fixture) still passes `/retrospective`'s Step 0 gate via `isFalsificationComplete` — no regression. | Phase 0 | Phase 1 | planned |
+| T6 | A legacy plan with a completed `falsification.md` file (archived falsification-ritual plan as fixture) still passes `/retrospective`'s Step 0 gate via `isFalsificationComplete` — no regression. | Phase 0 | Phase 1 | passing |
 
 ## Checklist
 
@@ -75,7 +75,7 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
   - New logic: check ONE of: (a) `isFalsificationComplete(planRoot)` — legacy path, (b) `isFalsificationSkipped(implContent).skipped` — explicit skip, (c) all impl phases terminal (via trajectory parser inspection of the impl) — new path.
   - Pseudocode: `if (isFalsificationComplete(planRoot) || isSkipped || allPhasesTerminal(impl)) { pass } else { block }`
 - [x] Mirror retrospective update to `.claude/skills/retrospective/SKILL.md`. Verified byte-identical via `diff -q`.
-- [ ] Write regression test at `apps/indusk-mcp/src/__tests__/retrospective-gate-backcompat.test.ts`:
+- [x] Write regression test at `apps/indusk-mcp/src/__tests__/retrospective-gate-backcompat.test.ts`:
   - Set up a tmp plan folder with a `falsification.md` file whose content is a completed log (terminator entry present)
   - Import `isFalsificationComplete` from `apps/indusk-mcp/src/lib/falsification/log.ts`
   - Assert `isFalsificationComplete(planRoot) === true` for the legacy fixture
@@ -84,8 +84,8 @@ Change `/falsify` from a test-running ritual into a phase-authoring action that 
   - The test demonstrates both branches pass the gate
 
 #### Phase 1 Verification
-- [ ] T6 passes: `pnpm --filter @infinitedusky/indusk-mcp test -- retrospective-gate-backcompat` runs green. Regression locked in.
-- [ ] T1, T2, T3, T4, T5 written-red at Phase 0 intent: they are manual dogfood tests (not executable), procedural instructions captured in Phase 2's Verification block below. No test file to commit at Phase 1; Phase 2 runs the dogfood and flips states.
+- [x] T6 passes: `pnpm exec vitest run src/__tests__/retrospective-gate-backcompat.test.ts` green (3/3). Regression locked in — legacy `falsification.md` path still works, incomplete/missing-log cases correctly rejected.
+- [x] T1, T2, T3, T4, T5 are manual dogfood tests (not executable), procedural instructions captured in Phase 2's Verification block. No test file to commit at Phase 1; Phase 2 runs the dogfood and flips states.
 
 #### Phase 1 Context
 - [ ] Append to CLAUDE.md "Conventions": "The `/falsify` skill authors a new phase in impl.md (not a separate `falsification.md` file) from 1.27.4 onward. Phase shape: `### Phase N: Falsification — {summary}` with trajectory rows for hypothesis tests + impl items for fixes + standard gates. `/retrospective` accepts 'all impl phases terminal' as an equivalent gate-pass to the legacy `isFalsificationComplete` path. Legacy plans with `falsification.md` files continue to work unchanged."
