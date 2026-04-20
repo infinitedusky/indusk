@@ -21,7 +21,7 @@
 # escape hatch; not the v1 default).
 #
 service:
-  extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+  extensions: [jaeger_storage, jaeger_query, jaeger_mcp, healthcheckv2]
   pipelines:
     traces:
       receivers: [otlp]
@@ -56,6 +56,9 @@ extensions:
       endpoint: 0.0.0.0:16686
     grpc:
       endpoint: 0.0.0.0:16685
+  jaeger_mcp:
+    http:
+      endpoint: 0.0.0.0:16687
 
 receivers:
   otlp:

@@ -64,6 +64,7 @@ export interface DaemonMeta {
 	otelcolPid: number;
 	otlpPort: number;
 	uiPort: number;
+	mcpPort: number;
 	jaegerHealthPort: number;
 	otelcolHealthPort: number;
 	logsOtlpPort: number;
@@ -86,6 +87,7 @@ export type DaemonStatusResult =
 			otelcolPid: number;
 			otlpPort: number;
 			uiPort: number;
+			mcpPort: number;
 			startedAt: string;
 	  }
 	| { running: false };
@@ -227,9 +229,10 @@ function renderJaegerConfig(ports: {
 	ui: number;
 	uiGrpc: number;
 	health: number;
+	mcp: number;
 }): string {
 	return `service:
-  extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+  extensions: [jaeger_storage, jaeger_query, jaeger_mcp, healthcheckv2]
   pipelines:
     traces:
       receivers: [otlp]
@@ -258,6 +261,9 @@ extensions:
       endpoint: 0.0.0.0:${ports.ui}
     grpc:
       endpoint: 0.0.0.0:${ports.uiGrpc}
+  jaeger_mcp:
+    http:
+      endpoint: 0.0.0.0:${ports.mcp}
 
 receivers:
   otlp:
@@ -345,18 +351,27 @@ export async function daemonStart(
 	const jaegerBin = resolveBinary("jaeger");
 	const otelcolBin = resolveBinary("otelcol");
 
-	// Pick 7 ports simultaneously to avoid sequential-pickFreePort collision
+	// Pick 8 ports simultaneously to avoid sequential-pickFreePort collision
 	// (see telemetry-ui-reachable.test.ts lesson from Phase 2).
-	const [otlpHttp, otlpGrpc, ui, uiGrpc, jaegerHealth, logsOtlp, otelcolHealth] =
-		await Promise.all([
-			findFreePort(opts.otlpPort ?? 4318),
-			findFreePort(0),
-			findFreePort(opts.uiPort ?? 16686),
-			findFreePort(0),
-			findFreePort(0),
-			findFreePort(0),
-			findFreePort(0),
-		]);
+	const [
+		otlpHttp,
+		otlpGrpc,
+		ui,
+		uiGrpc,
+		jaegerHealth,
+		logsOtlp,
+		otelcolHealth,
+		mcp,
+	] = await Promise.all([
+		findFreePort(opts.otlpPort ?? 4318),
+		findFreePort(0),
+		findFreePort(opts.uiPort ?? 16686),
+		findFreePort(0),
+		findFreePort(0),
+		findFreePort(0),
+		findFreePort(0),
+		findFreePort(16687),
+	]);
 
 	// Write configs to INDUSK_HOME/telemetry-{jaeger,collector}.yaml so they
 	// survive parent exit and are inspectable post-mortem.
@@ -373,6 +388,7 @@ export async function daemonStart(
 			ui,
 			uiGrpc,
 			health: jaegerHealth,
+			mcp,
 		}),
 	);
 	writeFileSync(
@@ -441,6 +457,7 @@ export async function daemonStart(
 		otelcolPid: otelcolChild.pid,
 		otlpPort: otlpHttp,
 		uiPort: ui,
+		mcpPort: mcp,
 		jaegerHealthPort: jaegerHealth,
 		otelcolHealthPort: otelcolHealth,
 		logsOtlpPort: logsOtlp,
@@ -486,6 +503,7 @@ export async function daemonStatus(): Promise<DaemonStatusResult> {
 		otelcolPid: meta.otelcolPid,
 		otlpPort: meta.otlpPort,
 		uiPort: meta.uiPort,
+		mcpPort: meta.mcpPort,
 		startedAt: meta.startedAt,
 	};
 }
