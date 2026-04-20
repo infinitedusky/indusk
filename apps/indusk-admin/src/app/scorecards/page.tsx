@@ -26,10 +26,15 @@ export default async function ScorecardsPage() {
 
 	const perProject = await Promise.all(
 		projects.map(async (entry) => {
-			const scorecards = await readEvalScorecards(entry.path, {
+			const raw = await readEvalScorecards(entry.path, {
 				from: since,
 				to: until,
 			}).catch(() => []);
+			// Inject the registered project name on each scorecard so
+			// Scorecards.tsx can display it as a label. The field isn't in
+			// the underlying results.log — it's an enrichment from the
+			// walker.
+			const scorecards = raw.map((s) => ({ ...s, project: entry.name }));
 			const ids = scorecards
 				.map((s) => (s.changeId ? String(s.changeId) : ""))
 				.filter((id) => id !== "");

@@ -42,6 +42,12 @@ export interface ScorecardsListProps {
 }
 
 export function ScorecardsList({ scorecards, descriptions }: ScorecardsListProps) {
+  // Most-recent-first sort (ISO 8601 timestamps sort lexicographically in
+  // reverse). Done here so the page-level walker can pass an unsorted
+  // union of per-project entries — the list owns the ordering contract.
+  const sorted = [...scorecards].sort((a, b) =>
+    b.timestamp.localeCompare(a.timestamp),
+  );
   return (
     <section className="flex flex-col gap-4" data-testid="scorecards-list">
       <header className="flex flex-col gap-1">
@@ -53,21 +59,21 @@ export function ScorecardsList({ scorecards, descriptions }: ScorecardsListProps
           could improve. Not tied to any single plan.
         </p>
         <p className="text-xs text-gray-500">
-          Source: <span className="font-mono">.indusk/eval/results.log</span> ({scorecards.length}{" "}
-          entries, most recent first)
+          Source: <span className="font-mono">.indusk/eval/results.log</span> across every
+          registered project ({sorted.length} entries, most recent first)
         </p>
       </header>
 
-      {scorecards.length === 0 ? (
+      {sorted.length === 0 ? (
         <p className="text-sm text-gray-500" data-testid="scorecards-empty">
           No scorecards yet — run a few <code className="font-mono">jj describe</code>{" "}
           commands inside Claude Code, and they'll start appearing.
         </p>
       ) : (
         <div className="flex flex-col gap-2">
-          {scorecards.map((card) => (
+          {sorted.map((card) => (
             <ScorecardCard
-              key={`${card.timestamp}-${card.changeId ?? "unknown"}`}
+              key={`${card.timestamp}-${card.changeId ?? "unknown"}-${card.project ?? ""}`}
               card={card}
               jjDescription={
                 card.changeId ? descriptions?.get(String(card.changeId)) : undefined
@@ -103,6 +109,15 @@ function ScorecardCard({
       <span className="text-xs text-gray-500 font-mono shrink-0">
         {formatTimestamp(card.timestamp)}
       </span>
+      {card.project ? (
+        <Badge
+          variant="neutral"
+          data-testid="scorecard-project-label"
+          className="shrink-0"
+        >
+          {card.project}
+        </Badge>
+      ) : null}
       <span className="text-xs text-gray-500 font-mono shrink-0">
         {(card.changeId ?? "—").slice(0, 8)}
       </span>

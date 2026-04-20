@@ -98,6 +98,12 @@ export interface Scorecard {
   summary?: string;
   questions?: unknown;
   graphitiWrites?: number;
+  /**
+   * Registered project name — injected by the cross-project scorecards
+   * walker (`app/scorecards/page.tsx`) after reading each project's
+   * results.log. Not present in the underlying log file.
+   */
+  project?: string;
   [key: string]: unknown;
 }
 
