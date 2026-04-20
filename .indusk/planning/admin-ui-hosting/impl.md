@@ -146,7 +146,7 @@ Same as brief — LAN access, auth, HTTPS, project add/remove via UI, daemon aut
 
 **Goal**: rewire the admin app's URLs so everything lives under either `/` (project grid) or `/p/[project]/...` (per-project), with a header switcher to navigate between projects. Components inside the routes (PlanList, PlanDetail) reused as-is.
 
-- [ ] Create `apps/indusk-admin/src/lib/registry-client.ts` — server-component-side reader of `~/.indusk/projects.json` (mirrors `apps/indusk-mcp/src/lib/admin/registry.ts` shape but read-only, doesn't depend on indusk-mcp's package). Exports `readRegistryProjects(): ProjectEntry[]` and `getProjectPath(name): string | null`.
+- [x] Create `apps/indusk-admin/src/lib/registry-client.ts` — server-component-side reader of `~/.indusk/projects.json`. Deliberately duplicates the `ProjectEntry` shape from indusk-mcp rather than importing — keeps admin-ui's deployment bundle free of a runtime dependency on indusk-mcp internals. Exports `readRegistryProjects(): ProjectEntry[]` (returns `[]` on absent/malformed) and `getProjectPath(name): string | null` (no on-disk check — callers like the Phase 4 stale-failure page branch own that).
 - [ ] Replace `apps/indusk-admin/src/lib/project-root.ts` — `getProjectPath(name)` (renamed from `getProjectRoot()`) looks up via `registry-client`. Returns `null` for unregistered/stale.
 - [ ] Update every callsite of the old `getProjectRoot()`: `app/layout.tsx`, `app/plan/[name]/page.tsx`, `app/scorecards/page.tsx` — they all need to take a `project` param (or be moved into `/p/[project]/...`).
 - [ ] Move `app/plan/[name]/page.tsx` → `app/p/[project]/plan/[name]/page.tsx`. Update to read project via `params.project`, look up path via `getProjectPath`, then call `readActivePlans(projectPath)` etc.
