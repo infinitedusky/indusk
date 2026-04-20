@@ -24,10 +24,30 @@ import { readRegistry } from "../../lib/admin/registry.js";
  * fully-resolved realpath, so raw string compare misses.
  */
 export function resolveOpenPath(): string {
-	const cwd = safeRealpath(process.cwd());
 	const reg = readRegistry();
-	const match = reg.projects.find((p) => safeRealpath(p.path) === cwd);
-	return match ? `/p/${match.name}/` : "/";
+	if (reg.projects.length === 0) return "/";
+
+	// Precompute registered project realpaths once — cheap, and keeps the
+	// walk-up loop body to a single string compare per ancestor.
+	const projectRealpaths = reg.projects.map((p) => ({
+		name: p.name,
+		real: safeRealpath(p.path),
+	}));
+
+	// Walk up from cwd toward the filesystem root, checking each ancestor
+	// against every registered project's realpath. First match wins — nearer
+	// ancestors are more specific and should take precedence if the user
+	// has nested project registrations (rare but possible with monorepo
+	// submodules registered separately).
+	let cur = safeRealpath(process.cwd());
+	for (let i = 0; i < 40; i++) {
+		const hit = projectRealpaths.find((p) => p.real === cur);
+		if (hit) return `/p/${hit.name}/`;
+		const parent = dirname(cur);
+		if (parent === cur) break; // filesystem root reached
+		cur = parent;
+	}
+	return "/";
 }
 
 function safeRealpath(p: string): string {
