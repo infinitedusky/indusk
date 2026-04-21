@@ -1,6 +1,6 @@
 {
 	"name": "@infinitedusky/indusk-mcp",
-	"version": "1.28.0",
+	"version": "1.28.2",
 	"description": "InDusk development system — skills, MCP tools, and CLI for structured AI-assisted development",
 	"type": "module",
 	"files": [
@@ -61,10 +61,10 @@
 		"zod": "^4.3.6"
 	},
 	"optionalDependencies": {
-		"@infinitedusky/telemetry-binaries-darwin-arm64": "workspace:*",
-		"@infinitedusky/telemetry-binaries-darwin-x64": "workspace:*",
-		"@infinitedusky/telemetry-binaries-linux-arm64": "workspace:*",
-		"@infinitedusky/telemetry-binaries-linux-x64": "workspace:*"
+		"@infinitedusky/telemetry-binaries-darwin-arm64": "^1.28.0",
+		"@infinitedusky/telemetry-binaries-darwin-x64": "^1.28.0",
+		"@infinitedusky/telemetry-binaries-linux-arm64": "^1.28.0",
+		"@infinitedusky/telemetry-binaries-linux-x64": "^1.28.0"
 	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",

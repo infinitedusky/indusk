@@ -189,17 +189,17 @@ importers:
         version: 4.3.6
     optionalDependencies:
       '@infinitedusky/telemetry-binaries-darwin-arm64':
-        specifier: workspace:*
-        version: link:../../packages/telemetry-binaries-darwin-arm64
+        specifier: ^1.28.0
+        version: 1.28.0
       '@infinitedusky/telemetry-binaries-darwin-x64':
-        specifier: workspace:*
-        version: link:../../packages/telemetry-binaries-darwin-x64
+        specifier: ^1.28.0
+        version: 1.28.0
       '@infinitedusky/telemetry-binaries-linux-arm64':
-        specifier: workspace:*
-        version: link:../../packages/telemetry-binaries-linux-arm64
+        specifier: ^1.28.0
+        version: 1.28.0
       '@infinitedusky/telemetry-binaries-linux-x64':
-        specifier: workspace:*
-        version: link:../../packages/telemetry-binaries-linux-x64
+        specifier: ^1.28.0
+        version: 1.28.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -913,6 +913,26 @@ packages:
     engines: {node: ^18.17.0 || ^20.3.0 || >=21.0.0}
     cpu: [x64]
     os: [win32]
+
+  '@infinitedusky/telemetry-binaries-darwin-arm64@1.28.0':
+    resolution: {integrity: sha512-L/vZNPGF8/2SCaZf9++Q85sel9Xd0J9Om71ksuHlVTf2OtO+Z5v5zLxrIwby+KWT08JSyXsiZa5VSJWNUIF0Iw==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@infinitedusky/telemetry-binaries-darwin-x64@1.28.0':
+    resolution: {integrity: sha512-QgsgLJMU5A2D5gZY2rphSNOp+OC6PAlsI7tDACbgl8OXxdftL9HnJHW0KRL16hgZ4JiCda7WyfGmcPZqaCYYMA==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@infinitedusky/telemetry-binaries-linux-arm64@1.28.0':
+    resolution: {integrity: sha512-zP7GFDsGgY5xfyQSxWH/ukW/6jrNyhJISbvqVMvp8Ppwt6YAFvcy8YcjjpWEZaJLUDhiUHKVsUwIB3Rb+xSp/Q==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@infinitedusky/telemetry-binaries-linux-x64@1.28.0':
+    resolution: {integrity: sha512-IxJKInxOQMF7kBxsAp0WBkeACQmqWaFVt1WebhiVevtPozvX1ngBFEaX2fGbKleUYNKQysKW8ahojzuCoR8avA==}
+    cpu: [x64]
+    os: [linux]
 
   '@isaacs/cliui@9.0.0':
     resolution: {integrity: sha512-AokJm4tuBHillT+FpMtxQ60n8ObyXBatq7jD2/JA9dxbDDokKQm8KMht5ibGzLVU9IJDIKK4TPKgMHEYMn3lMg==}
@@ -4272,6 +4292,18 @@ snapshots:
     optional: true
 
   '@img/sharp-win32-x64@0.34.5':
+    optional: true
+
+  '@infinitedusky/telemetry-binaries-darwin-arm64@1.28.0':
+    optional: true
+
+  '@infinitedusky/telemetry-binaries-darwin-x64@1.28.0':
+    optional: true
+
+  '@infinitedusky/telemetry-binaries-linux-arm64@1.28.0':
+    optional: true
+
+  '@infinitedusky/telemetry-binaries-linux-x64@1.28.0':
     optional: true
 
   '@isaacs/cliui@9.0.0': {}
