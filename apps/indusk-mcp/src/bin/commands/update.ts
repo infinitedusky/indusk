@@ -37,7 +37,16 @@ export async function update(projectRoot: string): Promise<void> {
 	const currentVersion = getLocalVersion();
 	let didUpgrade = false;
 
+	// Short-circuit when recursively invoked from a just-completed self-update,
+	// or when tests need deterministic offline behavior. Also lets preview
+	// users pin to a specific version without the self-update dance on every
+	// `indusk update` call.
+	const skipSelfUpdate = process.env.INDUSK_SKIP_SELF_UPDATE === "1";
+	if (skipSelfUpdate) {
+		console.info(`  current: v${currentVersion} (self-update skipped)`);
+	}
 	try {
+		if (skipSelfUpdate) throw new Error("skip");
 		const latestVersion = run("npm view @infinitedusky/indusk-mcp version");
 		if (latestVersion !== currentVersion) {
 			console.info(`  update available: ${currentVersion} → ${latestVersion}`);
@@ -452,6 +461,17 @@ export async function update(projectRoot: string): Promise<void> {
 	} catch {
 		console.info("  could not check third-party extensions");
 	}
+
+	// 7b. Required-by-default migration. For projects authored before a
+	// given required extension existed (e.g., pre-1.28 `local-telemetry`),
+	// `autoEnableExtensions` notices it's marked `required: true` in the
+	// shipped built-ins, not enabled here, and not in `disabled_extensions`
+	// — then enables it + fires on_enable so the downstream wiring
+	// (daemon registration, `.mcp.json` mutation, etc.) runs. Idempotent
+	// on subsequent runs: already-enabled required extensions are skipped.
+	console.info("\n[Required Extensions]\n");
+	const { autoEnableExtensions } = await import("./extensions.js");
+	await autoEnableExtensions(projectRoot);
 
 	// 8. Ensure .gitignore has all required entries
 	console.info("\n[Git Ignores]\n");

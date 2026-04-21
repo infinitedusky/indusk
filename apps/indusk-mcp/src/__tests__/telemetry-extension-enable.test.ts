@@ -3,6 +3,7 @@ import {
 	existsSync,
 	mkdtempSync,
 	readFileSync,
+	realpathSync,
 	rmSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -84,7 +85,9 @@ describe("T6 — local-telemetry extension-enable contract", () => {
 			// Registry file should contain the project
 			const registry = readRegistry();
 			expect(registry.projects.length).toBe(1);
-			expect(registry.projects[0].path).toBe(projectDir);
+			// Registry stores realpath-normalized paths so on_enable's $(pwd)
+			// and programmatic register calls match consistently (1.28 change).
+			expect(registry.projects[0].path).toBe(realpathSync(projectDir));
 
 			// Daemon should be running (status reports it)
 			const status = runCli(["telemetry", "status"]);

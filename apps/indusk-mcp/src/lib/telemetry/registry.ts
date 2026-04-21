@@ -2,11 +2,27 @@ import {
 	existsSync,
 	mkdirSync,
 	readFileSync,
+	realpathSync,
 	renameSync,
 	writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
+
+/**
+ * Normalize a project path for registry key-matching. Resolves symlinks
+ * (macOS `/var` → `/private/var`) so registrations via absolute paths and
+ * registrations via shell `$(pwd)` — which the extension's on_enable hook
+ * uses — produce the same key. If the path doesn't exist yet, returns the
+ * path unchanged rather than throwing.
+ */
+export function normalizeProjectPath(p: string): string {
+	try {
+		return realpathSync(p);
+	} catch {
+		return p;
+	}
+}
 
 /**
  * Telemetry project registry — `~/.indusk/telemetry/projects.json`.
@@ -111,11 +127,14 @@ function writeRegistry(reg: Registry): void {
  */
 export function registerProject(projectPath: string): ProjectEntry {
 	const reg = readRegistry();
+	const normalized = normalizeProjectPath(projectPath);
 
-	const existing = reg.projects.find((p) => p.path === projectPath);
+	const existing = reg.projects.find(
+		(p) => normalizeProjectPath(p.path) === normalized,
+	);
 	if (existing) return existing;
 
-	const baseName = basename(projectPath);
+	const baseName = basename(normalized);
 	let name = baseName;
 	let suffix = 2;
 	while (reg.projects.some((p) => p.name === name)) {
@@ -126,7 +145,7 @@ export function registerProject(projectPath: string): ProjectEntry {
 	const now = new Date().toISOString();
 	const entry: ProjectEntry = {
 		name,
-		path: projectPath,
+		path: normalized,
 		registeredAt: now,
 		lastSeenAt: now,
 	};
@@ -142,8 +161,11 @@ export function registerProject(projectPath: string): ProjectEntry {
  */
 export function deregisterProject(projectPath: string): boolean {
 	const reg = readRegistry();
+	const normalized = normalizeProjectPath(projectPath);
 	const before = reg.projects.length;
-	reg.projects = reg.projects.filter((p) => p.path !== projectPath);
+	reg.projects = reg.projects.filter(
+		(p) => normalizeProjectPath(p.path) !== normalized,
+	);
 	if (reg.projects.length === before) return false;
 	writeRegistry(reg);
 	return true;
@@ -156,7 +178,10 @@ export function deregisterProject(projectPath: string): boolean {
  */
 export function touchProject(projectPath: string): void {
 	const reg = readRegistry();
-	const entry = reg.projects.find((p) => p.path === projectPath);
+	const normalized = normalizeProjectPath(projectPath);
+	const entry = reg.projects.find(
+		(p) => normalizeProjectPath(p.path) === normalized,
+	);
 	if (!entry) return;
 	entry.lastSeenAt = new Date().toISOString();
 	writeRegistry(reg);

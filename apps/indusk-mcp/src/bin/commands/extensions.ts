@@ -138,6 +138,7 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 		if (enableExtension(projectRoot, name)) {
 			console.info(`  ${name}: enabled (was disabled)`);
 			runHook(projectRoot, name, "on_init");
+			runHook(projectRoot, name, "on_enable");
 			installSkill(projectRoot, name);
 			printMcpSetup(projectRoot, name);
 			continue;
@@ -150,6 +151,7 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 			cpSync(builtinManifest, join(targetDir, "manifest.json"));
 			console.info(`  ${name}: enabled (built-in)`);
 			runHook(projectRoot, name, "on_init");
+			runHook(projectRoot, name, "on_enable");
 			installSkill(projectRoot, name);
 			printMcpSetup(projectRoot, name);
 			continue;
@@ -174,6 +176,14 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 
 export async function extensionsDisable(projectRoot: string, names: string[]): Promise<void> {
 	for (const name of names) {
+		// Fire on_disable BEFORE renaming the manifest dir — the hook typically
+		// needs to read the manifest to know what cleanup to do (e.g.,
+		// local-telemetry's hook runs `indusk telemetry deregister $(pwd)`).
+		// `runHook` reads the manifest from the enabled path, so it must run
+		// while the extension is still enabled.
+		if (isEnabled(projectRoot, name)) {
+			runHook(projectRoot, name, "on_disable");
+		}
 		if (disableExtension(projectRoot, name)) {
 			console.info(`  ${name}: disabled`);
 		} else {
@@ -570,11 +580,35 @@ export async function extensionsSuggest(projectRoot: string): Promise<void> {
 }
 
 export async function autoEnableExtensions(projectRoot: string): Promise<void> {
+	const { isExtensionExplicitlyDisabled } = await import(
+		"../../lib/config.js"
+	);
 	const builtins = getBuiltinExtensions();
 	let enabled = 0;
 
+	// Pass 1: required-by-default extensions. These enable unconditionally
+	// unless the project has explicitly opted out via `disabled_extensions`
+	// in `.indusk/config.json`. Runs BEFORE detection-based enables so that
+	// detection-driven dependencies on required substrate resolve against
+	// an already-enabled required set.
+	for (const ext of builtins) {
+		if (!ext.required) continue;
+		if (isEnabled(projectRoot, ext.name)) continue;
+		if (isExtensionExplicitlyDisabled(projectRoot, ext.name)) {
+			console.info(
+				`  ${ext.name}: skipped (disabled_extensions in .indusk/config.json)`,
+			);
+			continue;
+		}
+		await extensionsEnable(projectRoot, [ext.name]);
+		console.info(`    (required-by-default)`);
+		enabled++;
+	}
+
+	// Pass 2: detection-based auto-enable (the original flow).
 	for (const ext of builtins) {
 		if (isEnabled(projectRoot, ext.name)) continue;
+		if (ext.required) continue; // already handled in Pass 1
 		if (!ext.detect) continue;
 
 		let detected = false;
@@ -646,8 +680,22 @@ function runHook(projectRoot: string, name: string, hook: string): void {
 	const command = manifest.hooks[hook as keyof typeof manifest.hooks];
 	if (!command) return;
 
+	// `INDUSK_BIN` override — when set, substitute the bare `indusk ` prefix
+	// for the explicit binary. This lets tests force hooks to run against a
+	// specific dist (not the globally-installed `indusk`, which may be a
+	// prior version) and gives preview users a clean override path.
+	const bin = process.env.INDUSK_BIN;
+	const effectiveCommand =
+		bin && /^\s*indusk\s/.test(command)
+			? command.replace(/^\s*indusk\s/, `${bin} `)
+			: command;
+
 	try {
-		execSync(command, { cwd: projectRoot, stdio: "inherit", timeout: 30000 });
+		execSync(effectiveCommand, {
+			cwd: projectRoot,
+			stdio: "inherit",
+			timeout: 30000,
+		});
 	} catch {
 		console.info(`  ${name}: ${hook} hook failed`);
 	}

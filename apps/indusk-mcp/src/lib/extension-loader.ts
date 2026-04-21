@@ -27,6 +27,14 @@ export interface ExtensionManifest {
 	description: string;
 	version?: string;
 	_source?: string;
+	/**
+	 * `required: true` means the extension is enabled-by-default on every
+	 * project unless listed in `.indusk/config.json`'s `disabled_extensions`
+	 * array. Required-by-default extensions ship as essential substrate
+	 * (e.g., local-telemetry) that the rest of the dev system assumes.
+	 * Opt-out is explicit; opt-in is implicit.
+	 */
+	required?: boolean;
 	provides: {
 		skill?: boolean;
 		networking?: { env_file?: string; command?: string; description?: string };
@@ -37,6 +45,8 @@ export interface ExtensionManifest {
 	};
 	hooks?: {
 		on_init?: string;
+		on_enable?: string;
+		on_disable?: string;
 		on_update?: string;
 		on_post_update?: string;
 		on_health_check?: string;

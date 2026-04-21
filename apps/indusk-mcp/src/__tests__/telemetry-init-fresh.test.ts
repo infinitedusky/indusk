@@ -1,9 +1,9 @@
 import { spawnSync } from "node:child_process";
 import {
 	existsSync,
-	mkdirSync,
 	mkdtempSync,
 	readFileSync,
+	realpathSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -70,7 +70,14 @@ function runInit(): { code: number; stdout: string; stderr: string } {
 		[CLI_BIN, "init", "--no-index"],
 		{
 			cwd: projectDir,
-			env: { ...process.env, INDUSK_HOME: testHome },
+			env: {
+				...process.env,
+				INDUSK_HOME: testHome,
+				// Force the on_enable hook ("indusk telemetry register $(pwd)")
+				// to use our dev CLI instead of the globally-installed indusk
+				// (which may be a pre-1.28 version without the telemetry subcommand).
+				INDUSK_BIN: `node ${CLI_BIN}`,
+			},
 			encoding: "utf-8",
 			timeout: 60_000,
 		},
@@ -114,9 +121,14 @@ describe("T18 — indusk init auto-enables local-telemetry (required-by-default)
 			// init stdout advertises the auto-enable (user-visible feedback)
 			expect(result.stdout.toLowerCase()).toMatch(/local-telemetry/);
 
-			// Registry updated
+			// Registry updated. Realpath both sides — macOS mkdtemp returns a
+			// `/var/...` path but the CLI's cwd resolves via `$(pwd)` which
+			// expands to the realpath `/private/var/...`.
 			const registry = readRegistry();
-			expect(registry.projects.map((p) => p.path)).toContain(projectDir);
+			const resolvedProject = realpathSync(projectDir);
+			expect(
+				registry.projects.map((p) => realpathSync(p.path)),
+			).toContain(resolvedProject);
 
 			// .mcp.json has a jaeger MCP server entry
 			const mcp = JSON.parse(

@@ -70,6 +70,33 @@ export interface InduskConfig {
 		 */
 		role?: "service" | "library" | "tool" | "none";
 	};
+	/**
+	 * Extensions the project has explicitly opted OUT of, even if they're
+	 * marked `required: true` in the built-in manifest. Escape hatch for
+	 * security/perf-constrained projects that can't run a localhost daemon
+	 * or similar. The required-by-default resolver (in
+	 * `autoEnableExtensions`) honors this list.
+	 *
+	 * Add via hand-edit to `.indusk/config.json`; there's no CLI affordance
+	 * for this because opting out of a required extension is a deliberate,
+	 * rare act.
+	 */
+	disabled_extensions?: string[];
+}
+
+/**
+ * True if the given extension is listed in `.indusk/config.json`'s
+ * `disabled_extensions` array. Single source of truth for the required-
+ * by-default escape hatch.
+ */
+export function isExtensionExplicitlyDisabled(
+	projectRoot: string,
+	name: string,
+): boolean {
+	const config = readConfig(projectRoot);
+	const list = config?.disabled_extensions;
+	if (!Array.isArray(list)) return false;
+	return list.includes(name);
 }
 
 const CONFIG_PATH = ".indusk/config.json";

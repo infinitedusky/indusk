@@ -106,6 +106,25 @@ The daemon resolves binaries via `createRequire(import.meta.url).resolve("@infin
 
 **Escape hatch**: if you don't want local telemetry on a specific project, add `disabled_extensions: ["local-telemetry"]` to `.indusk/config.json`. The required-by-default logic respects explicit disables. No data lost, no weird coexistence — the project simply routes `development` OTel to whatever its `.env` component says (usually Dash0 as a fallback, or nowhere).
 
+The escape hatch shape:
+
+```json
+{
+  "mode": "full",
+  "disabled_extensions": ["local-telemetry"],
+  "verify": { ... },
+  ...
+}
+```
+
+When `disabled_extensions` contains `"local-telemetry"`:
+
+- `indusk init` prints `local-telemetry: skipped (disabled_extensions in .indusk/config.json)` and does not enable the extension, register the project, wire `.mcp.json`, or start the daemon.
+- `indusk update` on an existing project makes the same choice — the migration step is silent (no auto-enable) for opted-out projects.
+- The extension is not present in `.indusk/extensions/` AND not present in `.indusk/extensions/.disabled/` — it's simply skipped. Remove the entry from `disabled_extensions` and re-run `indusk update` to opt back in.
+
+No CLI affordance exists for this (no `indusk extensions opt-out` command) because opting out of a required extension is deliberate + rare. Hand-edit `.indusk/config.json` and commit it.
+
 ## Agent + human surface {#agent-human-surface}
 
 Two tools, two audiences, same data.

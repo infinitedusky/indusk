@@ -8,6 +8,7 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
+	realpathSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -120,6 +121,9 @@ function runCli(
 			// Skip the self-update step (npm check) — that's orthogonal to the
 			// migration concern we're testing and adds flakiness on offline runs.
 			INDUSK_SKIP_SELF_UPDATE: "1",
+			// Point the on_enable hook at our dev CLI — the globally-installed
+			// indusk may be pre-1.28 without the telemetry subcommand.
+			INDUSK_BIN: `node ${CLI_BIN}`,
 		},
 		encoding: "utf-8",
 		timeout: 60_000,
@@ -167,10 +171,18 @@ describe("T20 — indusk update migrates pre-1.28 projects to local-telemetry", 
 			const instrAfter = sha(readFileSync(instrPath));
 			expect(instrAfter).toBe(instrBefore);
 
-			// Registry has this project
-			expect(readRegistry().projects.map((p) => p.path)).toContain(projectDir);
+			// Registry has this project (realpath-normalized — the on_enable hook
+			// uses `$(pwd)` which resolves symlinks; registry stores realpaths).
+			const resolvedProject = realpathSync(projectDir);
+			expect(
+				readRegistry().projects.map((p) => realpathSync(p.path)),
+			).toContain(resolvedProject);
 
 			// .mcp.json has jaeger entry wired
+			expect(
+				existsSync(join(projectDir, ".mcp.json")),
+				`expected .mcp.json to be written by the on_enable hook.\nupdate stdout:\n${res.stdout}\nupdate stderr:\n${res.stderr}`,
+			).toBe(true);
 			const mcp = JSON.parse(
 				readFileSync(join(projectDir, ".mcp.json"), "utf-8"),
 			) as {
@@ -193,7 +205,10 @@ describe("T20 — indusk update migrates pre-1.28 projects to local-telemetry", 
 		async () => {
 			const first = runCli(["update"]);
 			expect(first.code).toBe(0);
-			expect(readRegistry().projects.length).toBe(1);
+			expect(
+				readRegistry().projects.length,
+				`after first update: registry=${JSON.stringify(readRegistry())}\nstdout:\n${first.stdout}\nstderr:\n${first.stderr}`,
+			).toBe(1);
 
 			const second = runCli(["update"]);
 			expect(

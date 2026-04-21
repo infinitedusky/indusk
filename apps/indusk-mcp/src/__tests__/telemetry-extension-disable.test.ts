@@ -109,7 +109,14 @@ function runCli(
 ): { code: number; stdout: string; stderr: string } {
 	const result = spawnSync("node", [CLI_BIN, ...args], {
 		cwd: opts.cwd ?? projectDir,
-		env: { ...process.env, INDUSK_HOME: testHome },
+		env: {
+			...process.env,
+			INDUSK_HOME: testHome,
+			// Point the extension's on_disable hook ("indusk telemetry deregister
+			// $(pwd)") at our dev dist instead of the globally-installed indusk
+			// (which may be a pre-1.28 version that doesn't know about telemetry).
+			INDUSK_BIN: `node ${CLI_BIN}`,
+		},
 		encoding: "utf-8",
 	});
 	return {
@@ -148,7 +155,7 @@ describe("T19 — extensions disable local-telemetry runs on_disable end-to-end"
 			).toBe(0);
 			expect(res.stdout.toLowerCase()).toMatch(/disabled/);
 
-			// Extension was moved to disabled
+			// Extension was moved to disabled (.indusk/extensions/.disabled/)
 			expect(
 				existsSync(
 					join(projectDir, ".indusk/extensions/local-telemetry/manifest.json"),
@@ -156,7 +163,10 @@ describe("T19 — extensions disable local-telemetry runs on_disable end-to-end"
 			).toBe(false);
 			expect(
 				existsSync(
-					join(projectDir, ".indusk/disabled/local-telemetry/manifest.json"),
+					join(
+						projectDir,
+						".indusk/extensions/.disabled/local-telemetry/manifest.json",
+					),
 				),
 			).toBe(true);
 
@@ -217,10 +227,16 @@ describe("T19 — extensions disable local-telemetry runs on_disable end-to-end"
 				const res = runCli(["extensions", "disable", "local-telemetry"], {
 					cwd: projectDir,
 				});
-				expect(res.code).toBe(0);
+				expect(
+					res.code,
+					`stdout:\n${res.stdout}\nstderr:\n${res.stderr}`,
+				).toBe(0);
 
 				// Registry should drop to 1 (second project still registered)
-				expect(readRegistry().projects.length).toBe(1);
+				expect(
+					readRegistry().projects.length,
+					`registry after disable: ${JSON.stringify(readRegistry(), null, 2)}\ndisable stdout:\n${res.stdout}`,
+				).toBe(1);
 				// Daemon should still be running
 				expect(existsSync(join(testHome, "telemetry.pid"))).toBe(true);
 			} finally {
