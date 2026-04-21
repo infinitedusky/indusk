@@ -12,8 +12,8 @@ importers:
         specifier: ^2.4.8
         version: 2.4.8
       composable.env:
-        specifier: ^1.20.2
-        version: 1.20.2
+        specifier: ^1.21.0
+        version: 1.21.0
       turbo:
         specifier: ^2.4.0
         version: 2.8.20
@@ -1977,8 +1977,8 @@ packages:
     resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
     engines: {node: '>= 12'}
 
-  composable.env@1.20.2:
-    resolution: {integrity: sha512-KGUQIzUqrQ4N8KVm/9IhAqGGlbi5zZVyWCZgbTZx1W3zbMNwbPU259nM3D9evKK5iWR3m6X60l6GA9SX56Kw0g==}
+  composable.env@1.21.0:
+    resolution: {integrity: sha512-+IbEg/4uKm+dH/w82jOkaERu6rFeShJS2kgqoOEGYpxU2R9MNVfEoGqOZxJs5rNx3yk4ldbFgNNU9VRgd3DFnA==}
     hasBin: true
 
   content-disposition@1.0.1:
@@ -3503,6 +3503,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uvu@0.5.6:
@@ -5287,7 +5288,7 @@ snapshots:
 
   commander@8.3.0: {}
 
-  composable.env@1.20.2:
+  composable.env@1.21.0:
     dependencies:
       chalk: 5.6.2
       commander: 11.1.0

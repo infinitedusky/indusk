@@ -107,9 +107,12 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 	ensureExtensionsDirs(projectRoot);
 
 	for (const name of names) {
-		// Check if already enabled
+		// Check if already enabled — still refresh `.env.example` so users
+		// pick up updated field documentation on each `indusk update`.
 		if (isEnabled(projectRoot, name)) {
+			copyExtensionAssets(projectRoot, name);
 			console.info(`  ${name}: already enabled`);
+			printEnvSetupHint(projectRoot, name);
 			printMcpSetup(projectRoot, name);
 			continue;
 		}
@@ -121,10 +124,30 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 			if (manifest?.mcp_server?.headers && Object.keys(manifest.mcp_server.headers).length > 0) {
 				const envVars = readExtensionEnv(name);
 				if (Object.keys(envVars).length === 0) {
-					console.info(`\n  ${name}: cannot enable — no credentials found.`);
-					console.info(
-						`    Create .indusk/extensions/${name}/.env with the required credentials first.`,
+					// Copy `.env.example` (if shipped) BEFORE refusing, so the
+					// user has a concrete template documenting every required
+					// field. Without this, they'd have to read setup_instructions
+					// to know what vars the extension needs.
+					copyExtensionAssets(projectRoot, name);
+					const examplePath = join(
+						extensionConfigDir(projectRoot, name),
+						".env.example",
 					);
+
+					console.info(`\n  ${name}: cannot enable — no credentials found.`);
+					if (existsSync(examplePath)) {
+						console.info(
+							`    A template is at .indusk/extensions/${name}/.env.example`,
+						);
+						console.info(
+							`      cp .indusk/extensions/${name}/.env.example .indusk/extensions/${name}/.env`,
+						);
+						console.info(`    Then edit .env and fill in values (see inline comments).`);
+					} else {
+						console.info(
+							`    Create .indusk/extensions/${name}/.env with the required credentials first.`,
+						);
+					}
 					console.info(
 						`    If using composable.env: run 'pnpm ce env:build' to generate it from your contract.`,
 					);
@@ -136,10 +159,12 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 
 		// Try to move from disabled
 		if (enableExtension(projectRoot, name)) {
+			copyExtensionAssets(projectRoot, name);
 			console.info(`  ${name}: enabled (was disabled)`);
 			runHook(projectRoot, name, "on_init");
 			runHook(projectRoot, name, "on_enable");
 			installSkill(projectRoot, name);
+			printEnvSetupHint(projectRoot, name);
 			printMcpSetup(projectRoot, name);
 			continue;
 		}
@@ -149,10 +174,12 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 			const targetDir = extensionConfigDir(projectRoot, name);
 			mkdirSync(targetDir, { recursive: true });
 			cpSync(builtinManifest, join(targetDir, "manifest.json"));
+			copyExtensionAssets(projectRoot, name);
 			console.info(`  ${name}: enabled (built-in)`);
 			runHook(projectRoot, name, "on_init");
 			runHook(projectRoot, name, "on_enable");
 			installSkill(projectRoot, name);
+			printEnvSetupHint(projectRoot, name);
 			printMcpSetup(projectRoot, name);
 			continue;
 		}
@@ -672,6 +699,67 @@ export async function autoEnableExtensions(projectRoot: string): Promise<void> {
 
 // --- Helpers ---
 
+/**
+ * Copy reference assets from the built-in extension source dir into the
+ * project's `.indusk/extensions/{name}/`. Today this handles `.env.example`
+ * — a documented template showing which env vars the extension needs.
+ * Always overwrites the target so projects pick up updated field docs on
+ * each `indusk update`; the user's real `.env` (if any) is never touched
+ * (we only ever write `.env.example` from here, never `.env`).
+ */
+function copyExtensionAssets(projectRoot: string, name: string): void {
+	const sourceExample = join(builtinDir, name, ".env.example");
+	if (!existsSync(sourceExample)) return;
+	const targetDir = extensionConfigDir(projectRoot, name);
+	mkdirSync(targetDir, { recursive: true });
+	cpSync(sourceExample, join(targetDir, ".env.example"));
+}
+
+/**
+ * Whether an extension's `.env` file is functionally consumed (vs
+ * reference-only). Today the signal is "has auth-required MCP headers" —
+ * extensions with auth populate `.mcp.json` from `.env`, so a missing
+ * `.env` means the MCP server can't be wired. Extensions without that
+ * (local-telemetry, whose MCP is wired dynamically by the daemon; any
+ * no-MCP extension) treat `.env.example` as documentation.
+ *
+ * Exported so `update.ts` can gate its inline hint on the same rule.
+ */
+export function envIsFunctional(name: string): boolean {
+	const manifestPath = join(builtinDir, name, "manifest.json");
+	if (!existsSync(manifestPath)) return false;
+	const manifest = loadExtension(manifestPath);
+	const headers = manifest?.mcp_server?.headers;
+	return !!headers && Object.keys(headers).length > 0;
+}
+
+/**
+ * After enable, nudge the user if this extension *functionally consumes*
+ * `.env` (auth-required MCP server) AND no real `.env` exists yet. Silent
+ * when:
+ *  - no `.env.example` ships (nothing to point at)
+ *  - the user has already created `.env` (they're configured)
+ *  - the extension has no auth-required MCP server (`.env.example` is
+ *    reference-only, e.g. local-telemetry's port documentation — copying
+ *    it to `.env` wouldn't "activate" anything because nothing reads it)
+ *
+ * Runs before `printMcpSetup` so the actionable `cp` command appears at
+ * the top of the extension's enable output.
+ */
+function printEnvSetupHint(projectRoot: string, name: string): void {
+	const targetDir = extensionConfigDir(projectRoot, name);
+	const examplePath = join(targetDir, ".env.example");
+	const envPath = join(targetDir, ".env");
+	if (!existsSync(examplePath)) return;
+	if (existsSync(envPath)) return;
+	if (!envIsFunctional(name)) return;
+	console.info(`\n  ${name}: .env not found — copy the template to activate:`);
+	console.info(
+		`    cp .indusk/extensions/${name}/.env.example .indusk/extensions/${name}/.env`,
+	);
+	console.info(`    Then edit .env and fill in values (see inline comments).`);
+}
+
 function runHook(projectRoot: string, name: string, hook: string): void {
 	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
 	if (!manifestPath) return;
@@ -861,7 +949,12 @@ function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
 		}
 	}
 
-	// Fallback: no .env found or credentials incomplete
+	// Fallback: no .env found or credentials incomplete. When the extension
+	// ships an `.env.example`, `printEnvSetupHint` already nudged the user
+	// with the copy-the-template command — don't duplicate it here.
+	const examplePath = join(process.cwd(), ".indusk/extensions", name, ".env.example");
+	if (existsSync(examplePath)) return;
+
 	console.info(`\n  ${name}: no credentials found at .indusk/extensions/${name}/.env`);
 	console.info(`    To set up automatically:`);
 	console.info(`      1. Create .indusk/extensions/${name}/.env with the required credentials`);

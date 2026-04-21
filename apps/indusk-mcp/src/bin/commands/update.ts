@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { loadExtension } from "../../lib/extension-loader.js";
+import { envIsFunctional } from "./extensions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../../..");
@@ -396,6 +397,40 @@ export async function update(projectRoot: string): Promise<void> {
 				mkdirSync(join(skillsTarget, name), { recursive: true });
 				cpSync(builtinSkill, targetSkill);
 				console.info(`  added: ${name} skill`);
+			}
+
+			// Sync `.env.example` reference template. Extensions that ship a
+			// template (e.g., dash0 for auth credentials, local-telemetry for
+			// port documentation) publish the file as a reference; whether
+			// the user should then copy it to `.env` depends on whether the
+			// extension functionally consumes `.env`. Always overwrite the
+			// target — `.env.example` is a reference file, never user-edited;
+			// the real `.env` next to it is untouched by this sync.
+			const builtinExample = join(builtinDir, name, ".env.example");
+			const targetExample = join(enabledDir, name, ".env.example");
+			if (existsSync(builtinExample)) {
+				const exists = existsSync(targetExample);
+				if (!exists) {
+					cpSync(builtinExample, targetExample);
+					console.info(`  added: ${name} .env.example`);
+				} else {
+					const exampleSourceH = fileHash(builtinExample);
+					const exampleTargetH = fileHash(targetExample);
+					if (exampleSourceH !== exampleTargetH) {
+						cpSync(builtinExample, targetExample);
+						console.info(`  updated: ${name} .env.example`);
+					}
+				}
+				// Nudge only when `.env` is functionally required (auth-
+				// headered MCP server) AND not yet present. Reference-only
+				// templates (local-telemetry's port docs) stay silent.
+				const targetEnv = join(enabledDir, name, ".env");
+				if (!existsSync(targetEnv) && envIsFunctional(name)) {
+					console.info(`  ${name}: .env not found — copy the template to activate:`);
+					console.info(
+						`    cp .indusk/extensions/${name}/.env.example .indusk/extensions/${name}/.env`,
+					);
+				}
 			}
 
 			// Run update hooks if present

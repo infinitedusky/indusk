@@ -48,3 +48,9 @@ apps/indusk-docs/src/.vitepress/cache/
 # the belt-and-suspenders so accidents don't land in commits.
 apps/*/.claude/
 apps/*/.indusk/
+
+# Private interview prep / personal notes site — never commit
+apps/docs/
+.indusk/interview/
+
+.certs/

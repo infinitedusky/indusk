@@ -22,6 +22,14 @@ Dash0 provides access to your OpenTelemetry data — logs, traces, and metrics �
   - `dash0 dashboards list` — view dashboards
   - `dash0 apply -f assets.yaml` — deploy dashboards, views, checks (GitOps)
 
+## Extension env boundary — read-side only
+
+`.indusk/extensions/dash0/.env` configures the **read side** — how indusk-mcp queries Dash0. Fields: `DASH0_AUTH_TOKEN`, `DASH0_DATASET`, `DASH0_ENDPOINT_MCP`, optional `EVAL_AGENT_DATASET`. The dash0 MCP server auth header is wired from these during `indusk extensions enable dash0` / `indusk update`.
+
+This `.env` does **NOT** configure how your services *emit* telemetry to Dash0. Service emit (`OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS`) is a runtime concern managed by your project's env-management setup — project root `.env.local`, composable.env profile-scoped component, Docker compose env, Vercel env, etc. See the `local-telemetry` skill's "Wiring services to emit here" section for patterns; the same patterns apply to Dash0 (different endpoint + headers).
+
+The split: **dash0 extension = query Dash0 (read). Service env = emit to Dash0 (write).** Keeping them separate means you can point dev services at a local daemon while `.indusk/extensions/dash0/.env` still has your Dash0 credentials so the MCP server can query staging/prod data from the same session.
+
 ## When to Use Dash0
 
 - **Test failures**: query recent logs/traces to see what happened in the service during the test

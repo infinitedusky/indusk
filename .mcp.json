@@ -47,6 +47,10 @@
         "--autoConnect"
       ],
       "env": {}
+    },
+    "jaeger": {
+      "type": "http",
+      "url": "http://localhost:65286/mcp"
     }
   }
 }

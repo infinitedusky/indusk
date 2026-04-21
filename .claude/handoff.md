@@ -1,80 +1,88 @@
 # Handoff
 
 **Date:** 2026-04-21
-**Session:** Shipped admin-ui-hosting Phases 7 / 8 / 9 (1.27.5 → 1.27.7 — falsification dogfood hardening + falsification-aware rendering + CollapsibleSection persistKey). Ran `/retrospective admin-ui-hosting` + `/retrospective indusk-admin-ui`; both plans archived. Drove local-telemetry through Phases 1–7 end-to-end: spike + platform packages + daemon + CLI + MCP tools + extension + required-by-default resolution + update migration. **1.28.0 published to npm (4 platform packages + indusk-mcp) and globally installed on this machine.** Session ends before Phase 7 live smoke (T7/T8/T21/T22) + `/falsify local-telemetry`.
+**Session:** Shipped 1.28.3 (`.env.example` as single source of truth for extension env setup) → patched twice as bugs surfaced. Then ~half the session on vision work: crystallized the signal-correlation product thesis, authored a docs page explaining it, pivoted the v2 plan (`indusk-v2-dawn`) to be a product pivot (not a rewrite), and started working through the decisions ledger in `/research` mode.
 
 ## What Was Being Worked On
 
-Two plan threads this session, one closed, one at the publish gate:
+Two threads, one closed enough to hand off, one mid-flight:
 
-1. **admin-ui-hosting + indusk-admin-ui** — both retrospectives ran, both archived 2026-04-20. admin-ui-hosting's Phase 7/8/9 trilogy shipped as 1.27.5/1.27.6/1.27.7 with four falsification findings fixed (daemon PID-reuse identity, registry malformed-JSON quarantine, cwd walk-up regression, test-mock omission), plus falsification-aware admin UI rendering, plus CollapsibleSection state persistence. Lessons captured at `.claude/lessons/{dogfood-every-rendered-surface,quarantine-instead-of-silent-overwrite,ship-fast-rewrite-for-low-blast-radius}.md`. Decision summary pages live at `/decisions/admin-ui-hosting` and `/decisions/indusk-admin-ui`.
+**1. `.env.example` + env-handling in extensions (1.28.3 → 1.28.4 → 1.28.5).**
+Shipped 1.28.3 which added `.env.example` templates for dash0 + local-telemetry extensions and wired `extensionsEnable` to copy them on enable. Publish confirmed — user's `indusk update` self-upgraded from 1.28.2 to 1.28.3. Discovered 1.28.3 didn't land `.env.example` for already-enabled extensions because `update.ts` has a separate built-in-extensions refresh loop that doesn't route through `extensionsEnable`. Fixed in 1.28.4 by adding a `.env.example` sync block alongside the existing skill sync in `update.ts`, plus a `cp` hint on add. Then 1.28.5: reshape. Trimmed dash0's `.env.example` to read-side keys only (removed `OTEL_EXPORTER_OTLP_*` — those are service write-side, not extension concerns). Reshaped local-telemetry's `.env.example` as a port-reference docs file (not something to copy). Added `envIsFunctional(name)` gate so the cp hint only fires for auth-headered extensions (dash0 yes, local-telemetry no). Updated both skills with read/write boundary sections. Also trimmed dusk's own `env/contracts/dash0.contract.json` to remove the write-side OTel keys that shouldn't have been in the dash0 extension's contract. Tests added: 3 new unit tests for the `envIsFunctional` gate (15/15 green).
 
-2. **local-telemetry** — drove through Phases 1–6 inline and wired Phase 7 ship prep. Phase 1 spike (Jaeger v2 native + latency probe + jaeger_mcp investigation + storage + logs-path decision) is closed with findings in `spike-findings.md`. Phase 2–5 built platform-specific npm packages (4 platforms), daemon lifecycle CLI (`indusk telemetry start/stop/restart/status/register/deregister/tail/trace/services/reset`), extension manifest with required:true + on_enable/on_disable hooks, MCP tool (`tail_logs`) + direct jaeger_mcp wiring in `.mcp.json`. Phase 6 wired required-by-default resolution + `disabled_extensions` escape hatch + `extensionsDisable` on_disable firing + update.ts migration + `INDUSK_BIN` hook override + registry realpath normalization. 10 telemetry tests across 5 files all passing (T6, T18, T19, T20, T23 + 3 lifecycle variants). Impl status is `in-progress` through Phase 7.
+**2. Dawn (v2) pivot — decisions ledger in `/research` mode.**
+User decided to pivot to v2 now. Created `.indusk/planning/indusk-v2-dawn/decisions.md` as a live working ledger. Walked through decisions one-at-a-time in research mode. Existing `research.md` from April 7 carried forward as K1–K6 (kept). K6 rewritten from "bespoke migration script" to "coexistence, not migration" — no migration work; indusk + dawn coexist in the same repo with a toggle for which is active. Added A7 (adapter-extension boundary for external tools — hexagonal-inspired but not full Clean Architecture), renamed to avoid overclaiming. Added A8 (agent-neutral skills/hooks with per-agent adapters — `.dawn/skills/` and `.dawn/hooks/` as source of truth; Claude Code becomes just another adapter target). Session ended after A8 was added and I asked "next?" — user said /handoff.
 
 ## Where It Stopped
 
-1.28.0 is live on npm and installed globally. Next session opens at the **live-smoke gate** for Phase 7:
+Last completed action: **added A8 to `.indusk/planning/indusk-v2-dawn/decisions.md` + change log entry**. Working in `/research` mode with the user walking through the ledger decision-by-decision.
 
-- 4 platform packages (`@infinitedusky/telemetry-binaries-{darwin-arm64,darwin-x64,linux-arm64,linux-x64}`) published at 1.28.0
-- `@infinitedusky/indusk-mcp@1.28.0` published
-- User ran `npm i -g @infinitedusky/indusk-mcp@1.28.0`
-
-The dusk project itself has NOT yet been migrated to local-telemetry — that happens on the next `indusk update` against this repo. Until then, the daemon isn't running + no `.mcp.json` jaeger entry + no registry entry for dusk.
+Ledger currently has:
+- **Keep (K1–K6):** decided. K6 is the rewritten coexistence-not-migration form.
+- **Update (U1–U3):** flagged as `new` — not yet `decided`. Reframes OTel-as-extension → signal-petal-as-extension, gate model → evidence source model, rewrite inventory expanded.
+- **Delete (D1–D2):** flagged as `new`. Semantic graph bridge as central substrate (demoted). CGC as required (becomes optional petal).
+- **Add (A1–A8):** flagged as `new`. Big ones: A1 claim/evidence model, A2 three-agent architecture, A3 spiral iteration, A5 "dawn is a product not a rewrite," A7 adapter boundary, A8 agent-neutral skills/hooks.
+- **Still open (O1–O9):** pre-existing questions from April 7 research — extension storage shape, config schema, manifest schema, scaffold flow, init reconciliation, local mode rethink, plan parser refactor, migration design (obsoleted by K6 but O8 still says "migration script" — needs updating), planner v2 subplans/timestamps/activity.
 
 ## What's Next
 
-1. **Trigger dusk's own migration**: `cd ~/code/sandbox/dusk && indusk update`. Step 7b of update.ts runs autoEnableExtensions Pass 1 — enables local-telemetry (required-by-default), fires on_enable → `indusk telemetry register $(pwd)` → daemon auto-starts → `.mcp.json` gets the `jaeger` entry. First-time daemon spawn downloads nothing (platform-package binaries are already in `node_modules` via the optionalDependency install).
-2. **Smoke T21/T22 on dusk**: `indusk telemetry status` shows `running` + `Registered projects 1`. Emit a test span (simplest: run one of indusk-mcp's own OTel-instrumented tests, or `curl -X POST http://localhost:4318/v1/traces -d '{"resourceSpans":[...]}'`). Then `indusk telemetry services` should list it; `http://localhost:16686` UI should show the trace; `indusk telemetry tail` should show related logs if any emitted. Flip T21/T22 to `passing` once verified.
-3. **Smoke T7/T8 on Numero** (the real consumer — Numero's poker-v2 service has live OTel instrumentation): `cd ~/code/sandbox/numero && indusk update` to enable local-telemetry. Run the dev profile; confirm traces land locally via Jaeger UI + `indusk telemetry services`; over a 5-min window confirm Dash0's ingest counter for the Numero dataset stays flat (proving dev profile doesn't burn Dash0 quota). Then switch to staging profile + verify the opposite (Dash0 catches them, local daemon sees nothing). Flip T7/T8 to `passing`.
-4. **Close Phase 7**: check off Phase 7 impl items + Context + Document gates in `local-telemetry/impl.md`. Impl status → `completed`.
-5. **`/falsify local-telemetry`** — first falsification run against this plan. Likely hypothesis vectors: port collision on rapid daemon restart cycles; binary path resolution when platform package is symlinked (npm overlay, monorepo hoisting); registry/daemon state divergence when a registered project is renamed or moved; hook failure when `indusk` isn't on PATH (no global install); log-sink rotation at the 50 MB boundary; `disabled_extensions` toggle round-trip (disable via config edit → does the daemon actually deregister, or does the config-edit path miss the registry?). Authors a Falsification Phase.
-6. **`/work local-telemetry`** closes any fix items the Falsification Phase surfaces.
-7. **`/retrospective local-telemetry`** → archive.
+1. **Continue through the ledger in `/research` mode.** Specifically: walk through the `new` items (U1–U3, D1–D2, A1–A8) one at a time and move them to `decided` or adjust. The user is driving, so wait for them to pick the next decision.
+2. **Resolve or punt the `Still open` list (O1–O9).** O8 is obsoleted by K6 and should be removed/updated. The rest are legitimate open questions that need resolution before or during the brief.
+3. **Update `research.md`'s preamble** to mark that the vision crystallized on April 21 and the scope expanded — currently reads as pre-correlation-vision. The decisions ledger supersedes it for current state, but the research doc should reference the pivot.
+4. **Author the brief** (`.indusk/planning/indusk-v2-dawn/brief.md`) once the ledger is stable enough. The brief will set path/rules for downstream feature plans. User explicitly framed this as a "product brief" (sets rules), not just a project brief (single delivery). First thing dawn's planner adds might be this brief type.
+5. **Publish status check for 1.28.4 and 1.28.5.** I built and smoke-tested both but I don't have confirmation they were published to npm. If `npm view @infinitedusky/indusk-mcp version` returns anything less than 1.28.5, the user still needs to `cd apps/indusk-mcp && pnpm publish --access public`. 1.28.3 was definitely published (update output confirmed).
+6. **Verify the signal-correlation docs page renders** — I authored 4 Mermaid diagrams (mindmap for the flower, flowchart for the three agents, two sequence diagrams for the examples) but didn't run `pnpm turbo dev --filter=indusk-docs` to visually confirm. Mermaid syntax should be valid but a visual pass is pending.
 
 ## Open Issues
 
-- **1.28.0 not published yet.** Everything is committed and prepped. User runs 5 npm commands (per "Where It Stopped") to ship.
-- **T7/T8/T21/T22 in local-telemetry's trajectory remain `planned`** — they need live smoke against a real consumer project (dusk itself for T21/T22, Numero for T7/T8). Flipping them to `passing` requires actually running the daemon + emitting + observing. Don't flip them prematurely.
-- **No falsification run on local-telemetry yet** — the plan is impl Phase 6 closed, Phase 7 ship-prep closed, but `/falsify` hasn't been invoked. Phase 7 must close first (via live smoke), THEN falsify.
-- **Phase 6 impl was bundled into one commit** rather than per-item commits per the work skill's default discipline. Reason: 6 tightly-coupled changes touching the same files (extensions.ts + config.ts + extension-loader.ts + registry.ts + update.ts) that would have been the same 4-file diff split 6 ways. Noted in the commit message. Per-item commits resume Phase 7 onward.
-- **6 pre-existing unrelated test failures** in `plan-parser.test.ts` (expects archived `agent-roles` plan to exist in `.indusk/planning/` not archive) and 5 in `falsification/integration.test.ts` (expects literal skill-file text that drifted when falsify-phase-authoring shipped 1.27.4). Not introduced by Phase 6; flagged as noise here so retrospective doesn't re-surface them. Would be fixed by either updating the test fixtures or teaching the tests about the archive lookup path.
-- **Platform binaries are NOT committed to git** (300 MB × 4 = 1.2 GB bloat). `.gitignore` excludes them in each platform package dir + `.cache/telemetry-binaries/`. The npm tarballs produced by `npm publish` DO contain them because npm uses `files` / `.npmignore` rules, not `.gitignore`. If you clone fresh and need binaries, run `bash scripts/build-telemetry-binaries.sh`.
+- **1.28.4 and 1.28.5 publish status unclear.** Built, tested green, version bumped, CLAUDE.md updated — but I don't have explicit confirmation user ran `pnpm publish`. Check `npm view @infinitedusky/indusk-mcp version` first thing.
+- **Pre-existing telemetry-daemon test flakiness.** `telemetry-extension-enable.test.ts` + `telemetry-init-fresh.test.ts` fail with "Jaeger did not become ready on health port within 15s." Not caused by this session's work; already in handoff history. 3 of ~438 tests; the other 435 + new 15 pass. Environment/timing flake, not a code regression.
+- **Composable.env multi-profile compose bug.** Root cause: `src/builder.ts:762` — `writeMultiProfileComposeFile` only ever receives the currently-building profile's entries. Noted upstream at `/Users/the_dusky/code/composable.env/docs/planning/multi-profile-compose/bug-only-current-profile-written.md`. User said they'd deal with it later. Workaround: always chain `env:build <p> && up <p>`.
+- **`signal-correlation.md` docs page not visually verified.** Mermaid diagrams written but not rendered. If they break in the real theme, easy to iterate.
 
 ## Decisions Made This Session
 
-1. **admin-ui-hosting gets three follow-up phases (7/8/9) instead of one cumulative one**, because each batched a distinct concern: daemon hardening, falsification-aware rendering, UX persistence. Each shipped as its own patch version (1.27.5/1.27.6/1.27.7) so smoke tests had a clean test surface per ship.
+Most are captured in `.indusk/planning/indusk-v2-dawn/decisions.md` (live ledger) or in `apps/indusk-docs/src/guide/signal-correlation.md` (vision doc). Not yet in CLAUDE.md — worth lifting the stable ones on a future context update.
 
-2. **`unified-telemetry-query` is positioned as LATER / INDEPENDENT**, not a dependency of the watcher agent. User clarified the intent: unified is a user-facing convenience so any agent sees one interface across Jaeger + Dash0; the watcher is strictly local-only and talks to `jaeger_mcp` + `tail_logs` directly. Captured in master.md's Independent section and in the overview page's Future Work.
+1. **Dawn pivots to a product, not a rewrite.** Signal-correlation PM system for agent-assisted software development. Positioning: "project management system for building code that self-improves by correlating development and delivery across every signal." Captured in A5/A6.
 
-3. **Fix `extensionsDisable` to fire `on_disable`** rather than just renaming the manifest dir — this was a silent pre-existing bug surfaced by T19. Not a scope creep; it's the *reason* T19 existed as a separate test from T6 (which invoked the subcommand directly, bypassing the hook chain).
+2. **Six claim-evidence petals + correlation center** as the architectural shape. Tests, OTel, compiler, annotations, preferences, flags. Correlation engine + three agents (monitor, coder, eval) in the middle. Memory compounds via Graphiti. Captured in A1/A2.
 
-4. **Telemetry registry normalizes paths to realpath** rather than storing whatever the caller passes. This fixes a macOS-specific phantom-no-match bug where `/var/folders/...` registrations disagreed with `/private/var/folders/...` lookups from `$(pwd)`-expanded hook commands. Same class of fix as admin-UI's `resolveOpenPath` symlink normalization in 1.27.5.
+3. **Claim model sharpened.** Claims are commitments ("we claim X works"); evidence is observations; claim lifecycle (proposed → under-development → verified → contested → invalidated) is separate from evidence timestamps. Claims live in-repo (trajectory rows, plan docs); evidence flows through native stores; Graphiti holds state history.
 
-5. **`INDUSK_BIN` env var overrides `indusk` in hook shell commands.** Substitutes the bare `indusk ` prefix with `$INDUSK_BIN` when set. Tests pin it to `node /path/to/dist/bin/cli.js` so hooks target the dev dist, not a pre-1.28 global. Also useful for preview users running a pre-release tarball.
+4. **Spiral iteration as delivery doctrine.** All petals grow together each cycle; center grows with them; retrospective identifies next cycle's bottleneck petal; new petals sprout when correlation demands them. Captured in A3. Worth codifying as its own skill (`.dawn/skills/spiral/SKILL.md` or similar) in a future session.
 
-6. **`disabled_extensions` is hand-edit only, no CLI affordance.** Opting out of a required extension is deliberate and rare; surfacing it as `indusk extensions opt-out` would invite casual opt-outs that then rot. Hand-edit `.indusk/config.json` is the right friction level.
+5. **Coexistence, not migration.** K6 rewritten. `.indusk/` and `.dawn/` live side-by-side in the same project; toggle switches which is active; no forced port of existing plans.
 
-7. **Platform packages are `optionalDependencies`, not `dependencies`.** Npm's `os`/`cpu` filter ONLY applies to optionalDependencies — declaring them as regular deps would cause install to fail on unsupported platforms. The esbuild/swc/biome pattern exists for exactly this reason.
+6. **Adapter-extension boundary** (A7). Core speaks only the claim/evidence protocol; external tools integrate via adapter extensions. Core protocol is versioned. Hexagonal-inspired; not committing to full Clean Architecture.
+
+7. **Agent-neutral skills & hooks** (A8). Skills/hooks live in `.dawn/` as source of truth; Claude Code adapter projects to `.claude/`. Skills declare agent compatibility in frontmatter; adapters filter accordingly. Cursor/Aider/Codex-CLI adapters can be added later without rewriting the skill library.
+
+8. **Claim vs plan granularity.** Claims are orthogonal to plan phases — a phase can require multiple claim states to close; a claim can span multiple phases; a claim can exist outside any plan entirely (standing invariants, SLOs). Claim registry as first-class durable artifact. Regression detection becomes a property of the claim registry (verified claims get continuously evaluated).
+
+9. **Test assertions are not 1:1 with claims.** A claim is a composite of evidence from many assertions across many sources. Test cases are the natural evidence-emission unit; assertions matter for diagnosis when a claim becomes contested.
+
+10. **Dash0/LaunchDarkly/Cursor/Monday framing** for positioning. Product's pitch shape references all four markets while the novel thing is the correlation center. Strategic insight: we don't need to beat any single one; we integrate with them off-the-shelf, thin wrapper provides slight value, depth comes later (Vercel playbook).
 
 ## Watch Out For
 
-- **Publish ORDER matters.** Platform packages first, indusk-mcp second. Other way around and consumers hit 404s until the platform packages land.
-- **`prepublishOnly` script rebuilds dist + admin bundle.** Do NOT pass `--ignore-scripts` to `pnpm publish` — that skips the rebuild and would ship stale code. This bit us in 1.23.x (CLAUDE.md captures the lesson).
-- **Zombie Jaeger/otelcol processes** can hold ports across test runs. If tests start flaking with `address already in use` or `did not become ready`, run `pkill -f "packages/telemetry-binaries"` to clean up. This happened multiple times during Phase 6 test development; vitest `fileParallelism: false` helps but isn't a full guard.
-- **The work skill's "one commit per checklist item" default was violated in Phase 6 impl** (bundled commit instead of 6 items). This was deliberate — the 6 items shared files — but is a known deviation. Eval agent will score the bundle commit; that's fine.
-- **Manifests at `apps/indusk-mcp/extensions/local-telemetry/manifest.json` now use `required: true` + `hooks.on_enable` + `hooks.on_disable`.** Any future extension that copies this manifest as a template: only set `required: true` if the extension is genuinely substrate (agent + tests assume it's present). Don't abuse required-by-default for preference-level extensions.
-- **Do NOT run `/falsify local-telemetry` BEFORE Phase 7 ship + smoke closes.** The falsification ritual runs against the completed claim; Phase 7 is where T7/T8/T21/T22 get proved via live smoke, so until those pass, there's no attested state to falsify against.
-- **Test-trajectory row states in local-telemetry/impl.md**: T1–T6 passing, T7–T8 planned (Phase 7), T9–T17 passing (Phase 5), T18–T20 + T23 passing (Phase 6), T21–T22 planned (Phase 7). Phase 7 closure requires the 4 planned rows flip to passing via live smoke, not test-file authoring.
-- **Session-long jj history**: roughly 15 per-item commits this session across admin-ui-hosting Phase 7/8/9 trilogy + local-telemetry Phase 6 tests + bundled Phase 6 impl + Phase 7 prep. `jj log` to see the chain. None pushed; that's the user's call post-publish.
+- **`.indusk/planning/indusk-v2-dawn/decisions.md` is a LIVE working doc.** Expect it to churn further in the next session as the user continues walking through items. Don't lift to CLAUDE.md or docs until stable.
+- **Session started in normal mode, then pivoted to `/research` mode around the "product brief vs project brief" turn.** Research mode rules: short answers (1–4 sentences), one claim per turn, suggested follow-ups optional not mandatory. The user explicitly wanted this mode; honor it until they exit. If unsure whether they've exited, ask.
+- **Existing `research.md` (April 7) hasn't been updated** to reflect the correlation-vision pivot. The new thinking lives in `decisions.md`. Either add a preamble to `research.md` or accept that the ledger is now the authoritative scope doc.
+- **1.28.3 IS published and globally installed on this machine.** 1.28.4 and 1.28.5 publish status unclear — verify before assuming users elsewhere can `indusk update` to pick up the changes.
+- **O8 in the "still open" list is stale** — it asks about migration script design, which K6 now obsoletes. Delete or rewrite on next pass through the ledger.
+- **Claude Code's `.claude/` dir is currently the source of truth for skills and hooks in v1.** Under A8, dawn inverts this — `.dawn/` becomes the source, `.claude/` becomes derived. Don't start restructuring v1's layout to match; A8 is a v2 commitment, not a v1 change.
+- **The docs site's Mermaid `mindmap` syntax uses `root((Text))` — parens matter.** If rendering breaks, try `root(Text)` (single parens) as a fallback. The sequence diagrams are conventional and shouldn't have issues.
+- **`.claude/handoff.md` is gitignored per InDusk convention** (see CLAUDE.md gotcha: "Session-specific handoff (not project knowledge)"). Safe to overwrite.
 
 ## Catchup Status
-- [x] mcp-ready
-- [x] handoff
-- [x] lessons
-- [x] skills
-- [x] health
-- [x] context
-- [x] plans
-- [x] extensions
-- [x] graph
-- [x] graphiti
+- [ ] mcp-ready
+- [ ] handoff
+- [ ] lessons
+- [ ] skills
+- [ ] health
+- [ ] context
+- [ ] plans
+- [ ] extensions
+- [ ] graph
+- [ ] graphiti

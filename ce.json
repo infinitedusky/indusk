@@ -1,20 +1,20 @@
 {
-	"envDir": "env",
-	"defaultProfile": "local",
-	"scaffold": "docker",
-	"profiles": {
-		"local": {
-			"suffix": "-local",
-			"domain": "dusk.orb.local",
-			"tls": true
-		},
-		"staging": {
-			"suffix": "-stg",
-			"domain": "stg.agcorsillo.com"
-		},
-		"production": {
-			"suffix": "",
-			"domain": "agcorsillo.com"
-		}
-	}
+  "envDir": "env",
+  "defaultProfile": "local",
+  "scaffold": "docker",
+  "profiles": {
+    "local": {
+      "suffix": "-local",
+      "domain": "dusk.orb.local",
+      "tls": true
+    },
+    "staging": {
+      "suffix": "-stg",
+      "domain": "stg.agcorsillo.com"
+    },
+    "production": {
+      "suffix": "",
+      "domain": "agcorsillo.com"
+    }
+  }
 }
