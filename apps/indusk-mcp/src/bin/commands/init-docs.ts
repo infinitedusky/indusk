@@ -23,6 +23,9 @@ export async function initDocs(projectRoot: string): Promise<void> {
 		"src/reference/tools",
 		"src/decisions",
 		"src/lessons",
+		"src/api",
+		"src/specs/openapi",
+		"src/public",
 	];
 
 	for (const dir of dirs) {
@@ -47,6 +50,7 @@ export async function initDocs(projectRoot: string): Promise<void> {
 					mermaid: "^10.2.2",
 					panzoom: "^9.4.3",
 					vitepress: "^1.6.3",
+					"vitepress-openapi": "^0.1.20",
 					"vitepress-plugin-llms": "^1.12.0",
 					"vitepress-plugin-mermaid": "^2.0.10",
 					vue: "^3.4.15",
@@ -99,6 +103,7 @@ const config = defineConfig({
 		nav: [
 			{ text: "Guide", link: "/guide/" },
 			{ text: "Reference", link: "/reference/" },
+			{ text: "API", link: "/api/" },
 			{ text: "Decisions", link: "/decisions/" },
 			{ text: "Lessons", link: "/lessons/" },
 		],
@@ -119,6 +124,12 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/reference/" },
 					],
+				},
+			],
+			"/api/": [
+				{
+					text: "API",
+					items: [{ text: "Overview", link: "/api/" }],
 				},
 			],
 			"/decisions/": [
@@ -159,12 +170,18 @@ export default withMermaid(config);
 		join(docsDir, "src/.vitepress/theme/index.ts"),
 		`import type { Theme } from "vitepress";
 import DefaultTheme from "vitepress/theme";
+import { theme as openapiTheme, useOpenapi } from "vitepress-openapi/client";
+import "vitepress-openapi/dist/style.css";
 import FullscreenDiagram from "../components/FullscreenDiagram.vue";
+import spec from "../../specs/openapi/openapi.json" with { type: "json" };
 
 export default {
 	extends: DefaultTheme,
-	enhanceApp({ app }) {
+	async enhanceApp(ctx) {
+		const { app } = ctx;
 		app.component("FullscreenDiagram", FullscreenDiagram);
+		useOpenapi({ spec });
+		openapiTheme.enhanceApp(ctx);
 	},
 } satisfies Theme;
 `,
@@ -282,6 +299,63 @@ Insights from building ${projectName}. Each lesson captures what we learned, wha
 `,
 	);
 
+	// Placeholder OpenAPI spec — replace with the real spec for ${projectName}.
+	writeFileSync(
+		join(docsDir, "src/specs/openapi/openapi.json"),
+		`${JSON.stringify(
+			{
+				openapi: "3.0.3",
+				info: {
+					title: `${projectName} API`,
+					version: "0.0.0",
+					description: `Replace src/specs/openapi/openapi.json with the real OpenAPI spec for ${projectName}. Add more specs alongside it under src/specs/openapi/ as the API surface grows.`,
+				},
+				servers: [{ url: "https://api.example.com", description: "Example server" }],
+				paths: {
+					"/health": {
+						get: {
+							operationId: "getHealth",
+							summary: "Health check",
+							tags: ["System"],
+							responses: {
+								"200": {
+									description: "OK",
+									content: {
+										"application/json": {
+											schema: {
+												type: "object",
+												properties: { status: { type: "string", example: "ok" } },
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			null,
+			"\t",
+		)}\n`,
+	);
+
+	writeFileSync(
+		join(docsDir, "src/api/index.md"),
+		`---
+aside: false
+outline: false
+title: API Reference
+---
+
+# API Reference
+
+Rendered from \`src/specs/openapi/openapi.json\` via [vitepress-openapi](https://vitepress-openapi.vercel.app/).
+Replace the placeholder spec with the real one for ${projectName}.
+
+<OASpec />
+`,
+	);
+
 	writeFileSync(
 		join(docsDir, "src/changelog.md"),
 		`# Changelog
@@ -292,41 +366,12 @@ All notable changes to ${projectName} are documented here. Follows [Keep a Chang
 `,
 	);
 
-	// Dockerfile for local dev
-	const dockerDir = join(projectRoot, "docker");
-	mkdirSync(dockerDir, { recursive: true });
-	const dockerfilePath = join(dockerDir, "Dockerfile.vitepressdev");
-	const docsAppName = `${projectName}-docs`;
-	if (!existsSync(dockerfilePath)) {
-		writeFileSync(
-			dockerfilePath,
-			`FROM node:22-alpine
-
-RUN apk add --no-cache git
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
-
-WORKDIR /app
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY apps/${docsAppName}/package.json apps/${docsAppName}/
-
-RUN pnpm install --frozen-lockfile
-
-COPY apps/${docsAppName}/ apps/${docsAppName}/
-
-CMD ["sh", "-c", "pnpm turbo dev --filter=${docsAppName} -- --host"]
-`,
-		);
-		console.info("  created: docker/Dockerfile.vitepressdev");
-	} else {
-		console.info("  skip: docker/Dockerfile.vitepressdev (already exists)");
-	}
-
 	console.info("  created: package.json");
 	console.info("  created: .vitepress/config.ts (mermaid + llms plugin)");
-	console.info("  created: .vitepress/theme/index.ts");
+	console.info("  created: .vitepress/theme/index.ts (vitepress-openapi wired)");
 	console.info("  created: .vitepress/components/FullscreenDiagram.vue");
-	console.info("  created: starter pages (index, guide, reference, decisions, lessons)");
+	console.info("  created: starter pages (index, guide, reference, api, decisions, lessons)");
+	console.info("  created: src/specs/openapi/openapi.json (placeholder — replace with real spec)");
 
 	// Check if pnpm-workspace.yaml includes this app
 	const workspacePath = join(projectRoot, "pnpm-workspace.yaml");
@@ -356,5 +401,6 @@ CMD ["sh", "-c", "pnpm turbo dev --filter=${docsAppName} -- --host"]
 	console.info("\nNext steps:");
 	console.info(`  1. pnpm turbo dev --filter=${projectName}-docs`);
 	console.info("  2. Edit src/guide/getting-started.md with your setup instructions");
-	console.info("  3. Add reference pages as you build features");
+	console.info("  3. Replace src/specs/openapi/openapi.json with your real OpenAPI spec");
+	console.info("  4. Add reference pages as you build features");
 }
