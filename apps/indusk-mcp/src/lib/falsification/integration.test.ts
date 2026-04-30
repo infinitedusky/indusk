@@ -113,16 +113,17 @@ describe("T10: user-facing guide exists and contains required sections", () => {
 		expect(guide).toMatch(/##\s+Why this exists/);
 		expect(guide).toMatch(/##\s+The principle/);
 		expect(guide).toMatch(/##\s+The ritual/);
-		expect(guide).toMatch(/##\s+Three outcomes/);
 		expect(guide).toMatch(/##\s+Worked example/);
 		expect(guide).toMatch(/Bounty hunting, not candidate generation/);
 	});
 
-	it("names the three outcomes by slug", () => {
+	it("describes the phase-authoring contract (post 1.27.4 rewrite)", () => {
+		// Three outcomes are explicitly gone in the rewrite — the new contract
+		// is: in-scope hypotheses become Falsification Phase items; out-of-scope
+		// hypotheses are discarded. The guide must reflect this.
 		const guide = readFileSync(guidePath, "utf-8");
-		expect(guide).toContain("Fix in scope");
-		expect(guide).toContain("Spawn a new plan");
-		expect(guide).toContain("Accept as finding");
+		expect(guide.toLowerCase()).toMatch(/falsification phase|phase[- ]authoring/);
+		expect(guide.toLowerCase()).toContain("in scope");
 	});
 
 	it("documents the two-field skip frontmatter", () => {
@@ -168,13 +169,13 @@ describe("T13: /falsify skill exists and contains required prose", () => {
 		expect(skill).toMatch(/argument-hint:/);
 	});
 
-	it("describes the bounty-hunting loop (investigate, hypothesize, write test, run)", () => {
+	it("describes the bounty-hunting loop (investigate, hypothesize, capture as trajectory row)", () => {
 		const skill = readFileSync(skillPath, "utf-8");
-		// Each keyword from the loop should appear
+		// Each step of the new phase-authoring loop should appear. The skill
+		// no longer runs tests inline (post 1.27.4) — it authors a phase.
 		expect(skill).toMatch(/investigate/i);
 		expect(skill).toMatch(/hypothesi[sz]e|hypothesis/i);
-		expect(skill).toMatch(/write.*test|test.*confirms/i);
-		expect(skill).toMatch(/run\s+(it|the test)/i);
+		expect(skill).toMatch(/write.*test|test.*confirms|trajectory row/i);
 	});
 
 	it("explicitly warns against candidate generation", () => {
@@ -184,11 +185,13 @@ describe("T13: /falsify skill exists and contains required prose", () => {
 		expect(skill.toLowerCase()).toContain("bounty hunting");
 	});
 
-	it("describes the three outcomes with all required slugs", () => {
+	it("describes the phase-authoring outcome (in-scope fix becomes phase item)", () => {
+		// The 1.27.4 rewrite collapsed the three-outcomes model. The skill now
+		// describes a binary: in-scope hypotheses become Falsification Phase
+		// items; out-of-scope hypotheses are discarded.
 		const skill = readFileSync(skillPath, "utf-8");
-		expect(skill).toContain("Fix in scope");
-		expect(skill).toContain("Spawn a new plan");
-		expect(skill).toContain("Accept as finding");
+		expect(skill.toLowerCase()).toMatch(/falsification phase/);
+		expect(skill.toLowerCase()).toMatch(/in scope/);
 	});
 
 	it("describes the hybrid exit criterion (agent proposes, user confirms)", () => {
@@ -203,10 +206,13 @@ describe("T13: /falsify skill exists and contains required prose", () => {
 		expect(skill.toLowerCase()).toMatch(/no persona|not a persona/);
 	});
 
-	it("names the library helpers (appendHypothesis, markTerminated)", () => {
+	it("describes the phase-authoring output (modified impl.md, not log file)", () => {
+		// Pre-1.27.4 the skill called library helpers (appendHypothesis,
+		// markTerminated) to write a sidecar log. The rewrite makes the skill's
+		// output the modified impl.md itself — no library calls, no log file.
 		const skill = readFileSync(skillPath, "utf-8");
-		expect(skill).toContain("appendHypothesis");
-		expect(skill).toContain("markTerminated");
+		expect(skill.toLowerCase()).toMatch(/impl\.md|implementation\.md/);
+		expect(skill.toLowerCase()).toMatch(/phase[- ]authoring|authors a (new |falsification )?phase/);
 	});
 });
 

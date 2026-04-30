@@ -3,7 +3,7 @@
  *
  * Queries run in two groups:
  * - Group A (independent): anchor-lookup, target-facts, eval-findings
- * - Group B (needs neighbors): structural-neighbors first, then neighbor-facts, cgc-relationships
+ * - Group B (needs neighbors): structural-neighbors first, then neighbor-facts
  */
 
 import { basename, isAbsolute, join, relative } from "node:path";
@@ -46,13 +46,11 @@ export async function runBeam(opts: BeamOptions): Promise<BeamResult> {
 		(s) => s.name === "anchor-lookup" || s.name === "target-facts" || s.name === "eval-findings",
 	);
 
-	// Group B1: structural-neighbors (must run before neighbor-facts and cgc)
+	// Group B1: structural-neighbors (must run before neighbor-facts)
 	const structuralStep = BEAM_PIPELINE.find((s) => s.name === "structural-neighbors");
 
 	// Group B2: depends on neighbors
-	const groupB2 = BEAM_PIPELINE.filter(
-		(s) => s.name === "neighbor-facts" || s.name === "cgc-relationships",
-	);
+	const groupB2 = BEAM_PIPELINE.filter((s) => s.name === "neighbor-facts");
 
 	// Run Group A in parallel
 	const groupAResults = await Promise.all(

@@ -172,7 +172,11 @@ function isPortFree(port: number): Promise<boolean> {
 		const s = createServer();
 		s.once("error", () => resolve(false));
 		s.once("listening", () => s.close(() => resolve(true)));
-		s.listen(port, "127.0.0.1");
+		// Bind without host so we test the same wildcard scope Jaeger/otelcol use.
+		// Binding to 127.0.0.1 falsely reports "free" when another process holds
+		// the port via an IPv6 wildcard (`::`) bind without IPV6_V6ONLY — which
+		// is the default for `net.createServer` and what Jaeger does internally.
+		s.listen(port);
 	});
 }
 
@@ -583,8 +587,26 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 export async function daemonRestart(
 	opts: DaemonStartOptions = {},
 ): Promise<DaemonMeta> {
+	// Restart means "same daemon, fresh processes" — inherit the previously
+	// bound ports before stopping so the new spawn rebinds the same addresses
+	// (and doesn't fall back to default 4318/16686, which collide with the
+	// machine-global daemon when the test/dev daemon was started with port 0).
+	// Caller-supplied opts win when explicitly set.
+	let inheritedOpts: DaemonStartOptions = opts;
+	const metaFile = metaFilePath();
+	if (existsSync(metaFile)) {
+		try {
+			const prev = JSON.parse(readFileSync(metaFile, "utf-8")) as DaemonMeta;
+			inheritedOpts = {
+				otlpPort: opts.otlpPort ?? prev.otlpPort,
+				uiPort: opts.uiPort ?? prev.uiPort,
+			};
+		} catch {
+			// Malformed meta — fall through to caller opts (or defaults).
+		}
+	}
 	await daemonStop();
 	// Small pause so OS releases ports before the new spawn
 	await sleep(200);
-	return daemonStart(opts);
+	return daemonStart(inheritedOpts);
 }

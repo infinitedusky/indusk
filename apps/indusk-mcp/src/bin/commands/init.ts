@@ -146,6 +146,232 @@ function detectTooling(projectRoot: string): DetectedTooling {
 	return detected;
 }
 
+// ---- Biome wiring (full mode only) -----------------------------------------
+//
+// `init` is opinionated: TypeScript / Node projects use Biome as the single
+// lint+format tool. ESLint and Prettier are out. Detection of an existing
+// ESLint config does NOT cause InDusk to "respect" the existing tool — it
+// triggers a vestige warning instead.
+//
+// The wiring step does three things:
+// 1. Add `@biomejs/biome` to the root `devDependencies` (matches the version
+//    referenced in `templates/biome.template.json`'s schema URL).
+// 2. Replace `lint` and `format` scripts that are SIMPLE invocations of
+//    eslint / next-lint / prettier with their Biome equivalents. Conservative:
+//    if the script contains `&&` / `||` / `;` (compound), leave it alone —
+//    rewriting it would silently drop other steps (e.g. `&& tsc --noEmit`).
+// 3. Surface a "[Lint migration warnings]" block listing residual ESLint /
+//    Prettier configs and devDeps. The user finishes the migration; init
+//    doesn't remove user-visible files or devDeps automatically.
+//
+// Dawn (v2) will replace this with a config-file-driven preference. Until
+// then, opinionated.
+
+const BIOME_VERSION_PIN = "^2.4.8";
+
+const SIMPLE_ESLINT_RE = /^(npx\s+)?eslint\b/;
+const SIMPLE_NEXT_LINT_RE = /^(npx\s+)?next\s+lint\b/;
+const SIMPLE_PRETTIER_RE = /^(npx\s+)?prettier\b/;
+
+function isCompoundScript(value: string): boolean {
+	return value.includes("&&") || value.includes("||") || value.includes(";");
+}
+
+function rewriteScriptValue(name: string, value: string): string | null {
+	if (isCompoundScript(value)) return null;
+	if (name === "lint") {
+		if (SIMPLE_ESLINT_RE.test(value) || SIMPLE_NEXT_LINT_RE.test(value)) {
+			return "biome check";
+		}
+	}
+	if (name === "format") {
+		if (SIMPLE_PRETTIER_RE.test(value)) {
+			return "biome format --write";
+		}
+	}
+	return null;
+}
+
+function collectPackageJsonPaths(projectRoot: string): string[] {
+	const paths: string[] = [];
+	const root = join(projectRoot, "package.json");
+	if (existsSync(root)) paths.push(root);
+	for (const subdir of ["apps", "packages"]) {
+		const base = join(projectRoot, subdir);
+		if (!existsSync(base)) continue;
+		for (const entry of globSync("*/package.json", { cwd: base })) {
+			paths.push(join(base, entry));
+		}
+	}
+	return paths;
+}
+
+interface PackageJson {
+	scripts?: Record<string, string>;
+	devDependencies?: Record<string, string>;
+	dependencies?: Record<string, string>;
+	[k: string]: unknown;
+}
+
+interface BiomeWiringResult {
+	scriptsChanged: number;
+	packagesChanged: number;
+	devDepAdded: boolean;
+	compoundScriptsSkipped: Array<{ pkgPath: string; name: string; value: string }>;
+	packagePaths: string[];
+}
+
+function wireBiomeIntoProject(projectRoot: string): BiomeWiringResult {
+	const result: BiomeWiringResult = {
+		scriptsChanged: 0,
+		packagesChanged: 0,
+		devDepAdded: false,
+		compoundScriptsSkipped: [],
+		packagePaths: collectPackageJsonPaths(projectRoot),
+	};
+
+	const rootPath = join(projectRoot, "package.json");
+
+	for (const pkgPath of result.packagePaths) {
+		let pkg: PackageJson;
+		let raw: string;
+		try {
+			raw = readFileSync(pkgPath, "utf-8");
+			pkg = JSON.parse(raw) as PackageJson;
+		} catch {
+			continue;
+		}
+		let modified = false;
+
+		if (pkg.scripts) {
+			for (const [name, value] of Object.entries(pkg.scripts)) {
+				// Flag compound scripts that LOOK like they should migrate, so the
+				// user can manually decide what to keep.
+				if (
+					(name === "lint" || name === "format") &&
+					isCompoundScript(value) &&
+					(SIMPLE_ESLINT_RE.test(value) ||
+						SIMPLE_NEXT_LINT_RE.test(value) ||
+						SIMPLE_PRETTIER_RE.test(value))
+				) {
+					result.compoundScriptsSkipped.push({ pkgPath, name, value });
+					continue;
+				}
+				const replacement = rewriteScriptValue(name, value);
+				if (replacement && replacement !== value) {
+					pkg.scripts[name] = replacement;
+					console.info(
+						`    ${pkgPath.replace(`${projectRoot}/`, "")}: ${name} = "${value}" → "${replacement}"`,
+					);
+					result.scriptsChanged++;
+					modified = true;
+				}
+			}
+		}
+
+		if (pkgPath === rootPath) {
+			pkg.devDependencies = pkg.devDependencies ?? {};
+			if (!pkg.devDependencies["@biomejs/biome"]) {
+				pkg.devDependencies["@biomejs/biome"] = BIOME_VERSION_PIN;
+				console.info(
+					`    package.json: + @biomejs/biome ${BIOME_VERSION_PIN} (devDependencies)`,
+				);
+				result.devDepAdded = true;
+				modified = true;
+			}
+		}
+
+		if (modified) {
+			// Preserve trailing newline (most editors expect it)
+			const trailingNewline = raw.endsWith("\n") ? "\n" : "";
+			writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}${trailingNewline || "\n"}`);
+			result.packagesChanged++;
+		}
+	}
+
+	return result;
+}
+
+const ESLINT_CONFIG_FILES = [
+	".eslintrc.js",
+	".eslintrc.json",
+	".eslintrc.cjs",
+	".eslintrc.yml",
+	".eslintrc.yaml",
+	"eslint.config.js",
+	"eslint.config.mjs",
+	"eslint.config.cjs",
+	"eslint.config.ts",
+];
+
+const PRETTIER_CONFIG_FILES = [
+	".prettierrc",
+	".prettierrc.json",
+	".prettierrc.js",
+	".prettierrc.cjs",
+	".prettierrc.yaml",
+	".prettierrc.yml",
+	".prettierrc.toml",
+	"prettier.config.js",
+	"prettier.config.cjs",
+	"prettier.config.mjs",
+];
+
+function isEslintOrPrettierDep(name: string): boolean {
+	return (
+		name === "eslint" ||
+		name === "prettier" ||
+		name.startsWith("eslint-") ||
+		name.startsWith("@eslint/") ||
+		name.startsWith("@typescript-eslint/") ||
+		name.startsWith("eslint-plugin-") ||
+		name.startsWith("eslint-config-") ||
+		name.startsWith("prettier-plugin-") ||
+		name.startsWith("@prettier/")
+	);
+}
+
+interface LintVestiges {
+	configFiles: string[];
+	depsByPackage: Array<{ pkgPath: string; deps: string[] }>;
+}
+
+function detectLintVestiges(projectRoot: string, packagePaths: string[]): LintVestiges {
+	const configFiles: string[] = [];
+	for (const cfg of [...ESLINT_CONFIG_FILES, ...PRETTIER_CONFIG_FILES]) {
+		if (existsSync(join(projectRoot, cfg))) configFiles.push(cfg);
+	}
+	for (const pkgPath of packagePaths) {
+		const dir = dirname(pkgPath);
+		if (dir === projectRoot) continue; // already covered above
+		for (const cfg of [...ESLINT_CONFIG_FILES, ...PRETTIER_CONFIG_FILES]) {
+			if (existsSync(join(dir, cfg))) {
+				configFiles.push(join(dir, cfg).replace(`${projectRoot}/`, ""));
+			}
+		}
+	}
+
+	const depsByPackage: Array<{ pkgPath: string; deps: string[] }> = [];
+	for (const pkgPath of packagePaths) {
+		let pkg: PackageJson;
+		try {
+			pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as PackageJson;
+		} catch {
+			continue;
+		}
+		const allDeps = { ...(pkg.devDependencies ?? {}), ...(pkg.dependencies ?? {}) };
+		const offending = Object.keys(allDeps).filter(isEslintOrPrettierDep);
+		if (offending.length > 0) {
+			depsByPackage.push({
+				pkgPath: pkgPath.replace(`${projectRoot}/`, ""),
+				deps: offending,
+			});
+		}
+	}
+
+	return { configFiles, depsByPackage };
+}
+
 export function writeGitInfoExclude(projectRoot: string): void {
 	const excludePath = join(projectRoot, ".git/info/exclude");
 	const marker = "# InDusk local mode";
@@ -450,6 +676,52 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		} else {
 			cpSync(join(packageRoot, "templates/biome.template.json"), biomePath);
 			console.info(`  ${existsSync(biomePath) ? "overwrite" : "create"}: biome.json`);
+		}
+
+		// 6.5. Wire Biome into package.json files: add devDep + replace simple
+		// eslint/prettier/next-lint scripts. Then surface ESLint/Prettier
+		// vestiges so the user can finish the migration.
+		console.info("\n[Biome wiring]");
+		const wiring = wireBiomeIntoProject(projectRoot);
+		if (
+			wiring.scriptsChanged === 0 &&
+			!wiring.devDepAdded &&
+			wiring.compoundScriptsSkipped.length === 0
+		) {
+			console.info("  skip: Biome already wired (no scripts to migrate, devDep present)");
+		} else if (wiring.devDepAdded || wiring.scriptsChanged > 0) {
+			console.info(
+				`  done: ${wiring.scriptsChanged} script(s) migrated, ${wiring.packagesChanged} package.json file(s) updated`,
+			);
+			if (wiring.devDepAdded) {
+				console.info("  → run `pnpm install` (or npm/yarn) to install @biomejs/biome");
+			}
+		}
+		if (wiring.compoundScriptsSkipped.length > 0) {
+			console.info("  ⚠ compound scripts skipped (manual migration needed):");
+			for (const s of wiring.compoundScriptsSkipped) {
+				console.info(
+					`    ${s.pkgPath.replace(`${projectRoot}/`, "")}: ${s.name} = "${s.value}"`,
+				);
+			}
+		}
+
+		const vestiges = detectLintVestiges(projectRoot, wiring.packagePaths);
+		if (vestiges.configFiles.length > 0 || vestiges.depsByPackage.length > 0) {
+			console.info("\n[Lint migration warnings]");
+			console.info("  Biome is now wired, but ESLint/Prettier residue remains.");
+			console.info("  InDusk does not auto-remove user-visible files / devDeps; finish the cutover manually:\n");
+			if (vestiges.configFiles.length > 0) {
+				console.info("  Config files to delete:");
+				for (const f of vestiges.configFiles) console.info(`    - ${f}`);
+			}
+			if (vestiges.depsByPackage.length > 0) {
+				console.info("  devDependencies to remove:");
+				for (const p of vestiges.depsByPackage) {
+					console.info(`    - ${p.pkgPath}: ${p.deps.join(", ")}`);
+				}
+			}
+			console.info("  After cleanup, run `pnpm install` to refresh the lockfile.");
 		}
 	} else {
 		console.info("\n[Local Quality Tools]");
@@ -863,9 +1135,12 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	const { autoEnableExtensions } = await import("./extensions.js");
 	await autoEnableExtensions(projectRoot);
 
-	// 12. Write .indusk/config.json
+	// 12. Write .indusk/config.json — InDusk is opinionated: linter is always
+	// Biome. ESLint/Prettier detection becomes a vestige warning (see step 6.5),
+	// not a recorded preference. Dawn (v2) will move this to a config-file-driven
+	// preference; until then, single-tool default.
 	const { writeConfig } = await import("../../lib/config.js");
-	const linterTool = local ? "biome" : (detected.linter ?? "biome");
+	const linterTool = "biome";
 	const linterConfig = local ? ".indusk/biome.json" : "biome.json";
 	const testTool = detected.testRunner ?? "vitest";
 	const testConfig = local
@@ -879,7 +1154,6 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			...(detected.typeCheck ? { typeCheck: "tsc" } : {}),
 		},
 		detected: {
-			...(detected.linter ? { linter: detected.linter } : {}),
 			...(detected.testRunner ? { testRunner: detected.testRunner } : {}),
 			...(detected.otel ? { otel: true } : {}),
 		},
@@ -907,16 +1181,15 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			"- [ ] plans",
 			"- [ ] skills",
 			"- [ ] extensions",
-			"- [ ] graph",
 			"",
 			"## What Was Being Worked On",
 			"`indusk init` just set up this project. No prior session.",
 			"",
 			"## Where It Stopped",
-			"Init complete. Agent needs full orientation (lessons, context, skills, extensions, graph).",
+			"Init complete. Agent needs full orientation (lessons, context, skills, extensions).",
 			"",
 			"## What's Next",
-			"1. Run `/catchup` to orient the agent (reads lessons, context, skills, extensions, graph)",
+			"1. Run `/catchup` to orient the agent (reads lessons, context, skills, extensions)",
 			"2. Edit CLAUDE.md with project details",
 			"3. Start planning: `/planner your-first-feature`",
 			"",

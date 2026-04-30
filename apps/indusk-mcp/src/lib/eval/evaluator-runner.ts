@@ -72,7 +72,6 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 		"Bash(git:*)",
 		"mcp__graphiti__*",
 		"mcp__indusk__*",
-		"mcp__codegraphcontext__*",
 	];
 
 	const args = [
@@ -223,7 +222,6 @@ async function runEvaluatorSyncInner(
 		"Bash(git:*)",
 		"mcp__graphiti__*",
 		"mcp__indusk__*",
-		"mcp__codegraphcontext__*",
 	];
 
 	const args = [

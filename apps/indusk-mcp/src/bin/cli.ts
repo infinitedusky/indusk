@@ -491,9 +491,18 @@ telemetryCmd
 	.command("restart")
 	.description("Stop + start — picks up new binaries from `npm i -g` of a newer indusk-mcp")
 	.action(async function (this: Command) {
-		const opts = this.optsWithGlobals() as { otlpPort: string; uiPort: string };
+		const parent = this.parent as Command;
+		const opts = parent.opts() as { otlpPort: string; uiPort: string };
+		// Only forward ports when explicitly set; otherwise daemonRestart
+		// inherits the previously-bound ports from the running daemon's meta,
+		// which is the correct restart semantics ("same daemon, fresh processes").
+		const otlpExplicit = parent.getOptionValueSource("otlpPort") === "cli";
+		const uiExplicit = parent.getOptionValueSource("uiPort") === "cli";
 		const { telemetryRestart } = await import("./commands/telemetry.js");
-		await telemetryRestart({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
+		await telemetryRestart({
+			otlpPort: otlpExplicit ? opts.otlpPort : undefined,
+			uiPort: uiExplicit ? opts.uiPort : undefined,
+		});
 	});
 
 telemetryCmd

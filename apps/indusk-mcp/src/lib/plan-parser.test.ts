@@ -32,9 +32,10 @@ describe("parseAllPlans", () => {
 		expect(plans.length).toBeGreaterThanOrEqual(2);
 
 		const names = plans.map((p) => p.name);
-		// Use stable active plans that exist in the root planning dir (not archived)
-		expect(names).toContain("agent-roles");
-		expect(names).toContain("dusk-v2");
+		// Use stable active plans that exist in the root planning dir (not archived).
+		// Both are parked/long-term plans unlikely to be archived in the near term.
+		expect(names).toContain("indusk-v2-dawn");
+		expect(names).toContain("react-native-support");
 
 		// Verify sorted
 		const sorted = [...names].sort();

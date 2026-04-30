@@ -42,7 +42,6 @@ Create or overwrite `.claude/handoff.md` with:
 - [ ] context
 - [ ] plans
 - [ ] extensions
-- [ ] graph
 ```
 
 ## When to Write a Handoff

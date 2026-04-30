@@ -1,79 +1,70 @@
 # Handoff
 
-**Date:** 2026-04-21
-**Session:** Shipped 1.28.3 (`.env.example` as single source of truth for extension env setup) → patched twice as bugs surfaced. Then ~half the session on vision work: crystallized the signal-correlation product thesis, authored a docs page explaining it, pivoted the v2 plan (`indusk-v2-dawn`) to be a product pivot (not a rewrite), and started working through the decisions ledger in `/research` mode.
+**Date:** 2026-05-03
+**Session:** Two threads. (1) **Path-to-code-freeze cleanup** — shipped 1.28.7 (CGC scope reduction + telemetry restart bugs + falsification test cleanup + plan-parser fixture drift) and staged 1.28.8 (init becomes opinionated about Biome — adds devDep, migrates simple scripts, surfaces vestiges). (2) **Dawn ledger expansion** — landed two new research docs (verbatim FDE-and-extraction thread + architecture companion sharpening the codebase/Dawn-app split, worktree inheritance, emission-only direction); revised U1 + A8 in place; added A9–A14 + O10–O15 to the ledger.
 
 ## What Was Being Worked On
 
-Two threads, one closed enough to hand off, one mid-flight:
+Sandy's framing: get tests green + telemetry reliable, then code-freeze this repo and start fresh in **Dawn** (the new repo's name). Path-to-freeze is six items:
 
-**1. `.env.example` + env-handling in extensions (1.28.3 → 1.28.4 → 1.28.5).**
-Shipped 1.28.3 which added `.env.example` templates for dash0 + local-telemetry extensions and wired `extensionsEnable` to copy them on enable. Publish confirmed — user's `indusk update` self-upgraded from 1.28.2 to 1.28.3. Discovered 1.28.3 didn't land `.env.example` for already-enabled extensions because `update.ts` has a separate built-in-extensions refresh loop that doesn't route through `extensionsEnable`. Fixed in 1.28.4 by adding a `.env.example` sync block alongside the existing skill sync in `update.ts`, plus a `cp` hint on add. Then 1.28.5: reshape. Trimmed dash0's `.env.example` to read-side keys only (removed `OTEL_EXPORTER_OTLP_*` — those are service write-side, not extension concerns). Reshaped local-telemetry's `.env.example` as a port-reference docs file (not something to copy). Added `envIsFunctional(name)` gate so the cp hint only fires for auth-headered extensions (dash0 yes, local-telemetry no). Updated both skills with read/write boundary sections. Also trimmed dusk's own `env/contracts/dash0.contract.json` to remove the write-side OTel keys that shouldn't have been in the dash0 extension's contract. Tests added: 3 new unit tests for the `envIsFunctional` gate (15/15 green).
+- ✅ #1 Telemetry test reliability — shipped 1.28.7 (real prod bug, not flake)
+- ✅ #2 Bump 1.28.6 → 1.28.7 (Sandy published)
+- ✅ #3 Falsification stale assertions cleanup — shipped 1.28.7
+- ✅ #4 Plan-parser fixture drift — shipped 1.28.7
+- ⏳ #5 Numero smoke (Sandy explicitly said "I can do numero")
+- ⏳ #6 Mark code freeze in CLAUDE.md Current State
 
-**2. Dawn (v2) pivot — decisions ledger in `/research` mode.**
-User decided to pivot to v2 now. Created `.indusk/planning/indusk-v2-dawn/decisions.md` as a live working ledger. Walked through decisions one-at-a-time in research mode. Existing `research.md` from April 7 carried forward as K1–K6 (kept). K6 rewritten from "bespoke migration script" to "coexistence, not migration" — no migration work; indusk + dawn coexist in the same repo with a toggle for which is active. Added A7 (adapter-extension boundary for external tools — hexagonal-inspired but not full Clean Architecture), renamed to avoid overclaiming. Added A8 (agent-neutral skills/hooks with per-agent adapters — `.dawn/skills/` and `.dawn/hooks/` as source of truth; Claude Code becomes just another adapter target). Session ended after A8 was added and I asked "next?" — user said /handoff.
+Plus a sixth thread that landed mid-session: **opinionated Biome in `indusk init`** (1.28.8 staged, awaiting Sandy's publish). Triggered when Sandy noted that pre-1.28.8 init produced exactly the half-done state Numero is in (`biome.json` written but `@biomejs/biome` never installed; ESLint/Prettier vestiges remain functional).
+
+Plus a parallel Dawn research thread driven by Sandy sharing the FDE/AST-rule-engine doc.
 
 ## Where It Stopped
 
-Last completed action: **added A8 to `.indusk/planning/indusk-v2-dawn/decisions.md` + change log entry**. Working in `/research` mode with the user walking through the ledger decision-by-decision.
+Last completed action: **wrote three docs and updated decisions.md** in `.indusk/planning/indusk-v2-dawn/`. New file inventory:
 
-Ledger currently has:
-- **Keep (K1–K6):** decided. K6 is the rewritten coexistence-not-migration form.
-- **Update (U1–U3):** flagged as `new` — not yet `decided`. Reframes OTel-as-extension → signal-petal-as-extension, gate model → evidence source model, rewrite inventory expanded.
-- **Delete (D1–D2):** flagged as `new`. Semantic graph bridge as central substrate (demoted). CGC as required (becomes optional petal).
-- **Add (A1–A8):** flagged as `new`. Big ones: A1 claim/evidence model, A2 three-agent architecture, A3 spiral iteration, A5 "dawn is a product not a rewrite," A7 adapter boundary, A8 agent-neutral skills/hooks.
-- **Still open (O1–O9):** pre-existing questions from April 7 research — extension storage shape, config schema, manifest schema, scaffold flow, init reconciliation, local mode rethink, plan parser refactor, migration design (obsoleted by K6 but O8 still says "migration script" — needs updating), planner v2 subplans/timestamps/activity.
+- `research-fde-and-extraction.md` — verbatim from Sandy's shared thread (Avoca catalyst)
+- `research-dawn-project-architecture.md` — companion doc sharpening the codebase/Dawn-app split with the signal-correlation loop made concrete
+- `decisions.md` — U1 revised in place (petals = emission points; Dawn app = correlation point); A8 revised in place (skills/hooks live in Dawn app, projected per active agent); A9 (fork-and-extract as special case), A10 (AST rule engine, rejects markers), A11 (tree-shaped worktree inheritance), A12 (emission-only direction), A13 (codebase contains ONLY prod + tests + OTel rules), A14 (`apps/dawn-test-target/` synthetic) added; O10–O15 added (rule-engine syntax, AST library, OTel conflicts, reviewer UI, rebase conflicts, codebase identity discovery)
+
+40 ledger entries total; A9–A14 and O10–O15 are at state `new` awaiting Sandy's walkthrough → `decided`.
 
 ## What's Next
 
-1. **Continue through the ledger in `/research` mode.** Specifically: walk through the `new` items (U1–U3, D1–D2, A1–A8) one at a time and move them to `decided` or adjust. The user is driving, so wait for them to pick the next decision.
-2. **Resolve or punt the `Still open` list (O1–O9).** O8 is obsoleted by K6 and should be removed/updated. The rest are legitimate open questions that need resolution before or during the brief.
-3. **Update `research.md`'s preamble** to mark that the vision crystallized on April 21 and the scope expanded — currently reads as pre-correlation-vision. The decisions ledger supersedes it for current state, but the research doc should reference the pivot.
-4. **Author the brief** (`.indusk/planning/indusk-v2-dawn/brief.md`) once the ledger is stable enough. The brief will set path/rules for downstream feature plans. User explicitly framed this as a "product brief" (sets rules), not just a project brief (single delivery). First thing dawn's planner adds might be this brief type.
-5. **Publish status check for 1.28.4 and 1.28.5.** I built and smoke-tested both but I don't have confirmation they were published to npm. If `npm view @infinitedusky/indusk-mcp version` returns anything less than 1.28.5, the user still needs to `cd apps/indusk-mcp && pnpm publish --access public`. 1.28.3 was definitely published (update output confirmed).
-6. **Verify the signal-correlation docs page renders** — I authored 4 Mermaid diagrams (mindmap for the flower, flowchart for the three agents, two sequence diagrams for the examples) but didn't run `pnpm turbo dev --filter=indusk-docs` to visually confirm. Mermaid syntax should be valid but a visual pass is pending.
+1. **Confirm 1.28.8 publish status.** I bumped + wrote the changelog entry + verified build/tests green; Sandy was going to publish. First action: `npm view @infinitedusky/indusk-mcp version`. If returns 1.28.8, smoke `indusk init --force` against a half-done fixture (or just do it on Numero — that's the real test). If still 1.28.7, ask Sandy if he wants to publish or leave staged.
+2. **Numero smoke.** Sandy will drive — but be ready to advise. The Numero audit identified: 6 `lint` scripts pointing at eslint/next-lint, 1 root `format` script using prettier, 1 ESLint config (`apps/admin/eslint.config.mjs`), `eslint ^9` in `apps/admin` devDeps, `prettier ^3.2.5` in root devDeps. After 1.28.8 publishes, `indusk init --force` in Numero should migrate the simple scripts + add `@biomejs/biome`, leave compound scripts (`packages/game-logic/package.json` lint script if any compound) untouched with a warning, and surface vestige punch list.
+3. **Mark code freeze in CLAUDE.md** Current State once Numero smoke is green.
+4. **Continue walking the Dawn ledger in `/research` mode.** A9–A14 + O10–O15 are fresh and need walkthrough. Existing `new` items from previous session also still pending: U1–U3, D1–D2, A1–A8 (all `new`). The ledger has accumulated a lot — Sandy may want to batch-decide or walk one at a time.
+5. **Author the Dawn brief** once the ledger stabilizes. Sandy framed it as a "product brief" (sets rules), not just a "project brief" (single delivery). Ledger needs to settle first.
 
 ## Open Issues
 
-- **1.28.4 and 1.28.5 publish status unclear.** Built, tested green, version bumped, CLAUDE.md updated — but I don't have explicit confirmation user ran `pnpm publish`. Check `npm view @infinitedusky/indusk-mcp version` first thing.
-- **Pre-existing telemetry-daemon test flakiness.** `telemetry-extension-enable.test.ts` + `telemetry-init-fresh.test.ts` fail with "Jaeger did not become ready on health port within 15s." Not caused by this session's work; already in handoff history. 3 of ~438 tests; the other 435 + new 15 pass. Environment/timing flake, not a code regression.
-- **Composable.env multi-profile compose bug.** Root cause: `src/builder.ts:762` — `writeMultiProfileComposeFile` only ever receives the currently-building profile's entries. Noted upstream at `/Users/the_dusky/code/composable.env/docs/planning/multi-profile-compose/bug-only-current-profile-written.md`. User said they'd deal with it later. Workaround: always chain `env:build <p> && up <p>`.
-- **`signal-correlation.md` docs page not visually verified.** Mermaid diagrams written but not rendered. If they break in the real theme, easy to iterate.
+- **1.28.8 publish status unconfirmed** — Sandy said he'd publish; haven't seen the version flip yet. Don't assume.
+- **`apps/dawn-test-target/` doesn't exist yet** — A14 commits to building it but it's a v2 deliverable, not a v1 task. Dawn lives in a separate repo; this dusk repo is heading to code-freeze. The synthetic test target may end up in Dawn's repo, not dusk.
+- **CGC extension is still installed** in dusk — only the *forced* flows were removed (catchup gate, eval allowed-tools, beam query, code-graph step). The extension itself still works; agent can manually invoke `mcp__codegraphcontext__*` if specifically wanted. This is by design.
+- **Pre-existing test count drift** — 444 tests passing as of session end, was 444 passing + 13 failing at start. All 13 failures resolved in 1.28.7. None of the resolved failures were caused by my edits in this session — they were real bugs (3 categories) that had been masquerading as environmental flake.
 
 ## Decisions Made This Session
 
-Most are captured in `.indusk/planning/indusk-v2-dawn/decisions.md` (live ledger) or in `apps/indusk-docs/src/guide/signal-correlation.md` (vision doc). Not yet in CLAUDE.md — worth lifting the stable ones on a future context update.
+Several formalized in code/changelog/ledger; flagging the ones that may need lifting to CLAUDE.md or other durable docs:
 
-1. **Dawn pivots to a product, not a rewrite.** Signal-correlation PM system for agent-assisted software development. Positioning: "project management system for building code that self-improves by correlating development and delivery across every signal." Captured in A5/A6.
-
-2. **Six claim-evidence petals + correlation center** as the architectural shape. Tests, OTel, compiler, annotations, preferences, flags. Correlation engine + three agents (monitor, coder, eval) in the middle. Memory compounds via Graphiti. Captured in A1/A2.
-
-3. **Claim model sharpened.** Claims are commitments ("we claim X works"); evidence is observations; claim lifecycle (proposed → under-development → verified → contested → invalidated) is separate from evidence timestamps. Claims live in-repo (trajectory rows, plan docs); evidence flows through native stores; Graphiti holds state history.
-
-4. **Spiral iteration as delivery doctrine.** All petals grow together each cycle; center grows with them; retrospective identifies next cycle's bottleneck petal; new petals sprout when correlation demands them. Captured in A3. Worth codifying as its own skill (`.dawn/skills/spiral/SKILL.md` or similar) in a future session.
-
-5. **Coexistence, not migration.** K6 rewritten. `.indusk/` and `.dawn/` live side-by-side in the same project; toggle switches which is active; no forced port of existing plans.
-
-6. **Adapter-extension boundary** (A7). Core speaks only the claim/evidence protocol; external tools integrate via adapter extensions. Core protocol is versioned. Hexagonal-inspired; not committing to full Clean Architecture.
-
-7. **Agent-neutral skills & hooks** (A8). Skills/hooks live in `.dawn/` as source of truth; Claude Code adapter projects to `.claude/`. Skills declare agent compatibility in frontmatter; adapters filter accordingly. Cursor/Aider/Codex-CLI adapters can be added later without rewriting the skill library.
-
-8. **Claim vs plan granularity.** Claims are orthogonal to plan phases — a phase can require multiple claim states to close; a claim can span multiple phases; a claim can exist outside any plan entirely (standing invariants, SLOs). Claim registry as first-class durable artifact. Regression detection becomes a property of the claim registry (verified claims get continuously evaluated).
-
-9. **Test assertions are not 1:1 with claims.** A claim is a composite of evidence from many assertions across many sources. Test cases are the natural evidence-emission unit; assertions matter for diagnosis when a claim becomes contested.
-
-10. **Dash0/LaunchDarkly/Cursor/Monday framing** for positioning. Product's pitch shape references all four markets while the novel thing is the correlation center. Strategic insight: we don't need to beat any single one; we integrate with them off-the-shelf, thin wrapper provides slight value, depth comes later (Vercel playbook).
+1. **CGC moves from required to optional in v1** — formalized in 1.28.7 changelog entry. Foreshadows D2 in the Dawn ledger ("CGC as required → optional petal"). Worth a CLAUDE.md "Current State" note when Sandy marks code freeze.
+2. **Biome is the opinionated default for `indusk init`** — formalized in 1.28.8 changelog entry. CLAUDE.md gotcha already says "Biome over ESLint" so the conventions are consistent; the change is in init's *behavior*, which the changelog captures.
+3. **Dawn architecture is two surfaces (Dawn app outside the codebase + codebase containing only prod + tests + OTel rules)** — formalized in `research-dawn-project-architecture.md` + ledger entries A11/A12/A13. Stricter than "system Dawn vs worktree Dawn." No per-worktree Dawn install. Worktrees never have a Dawn install. The Dawn app discovers them; they don't announce themselves.
+4. **Marker-based OTel extraction is rejected** in favor of AST-driven rule engine — formalized as A10. Important because we hadn't formally written down the marker approach but probably would have reached for it. The rejection saves future work from going down the wrong path.
+5. **Three real production bugs fixed in 1.28.7**, framed as bugs not test fixes:
+   - `daemonRestart` was reading commander defaults instead of inheriting bound ports → would have collided with any user's machine-global daemon
+   - `isPortFree` bound to 127.0.0.1 → false-positive "free" when daemons hold IPv6 wildcard `*:port`
+   - `telemetryRestart` was forwarding commander default strings → couldn't distinguish "user passed flag" from "default supplied"
 
 ## Watch Out For
 
-- **`.indusk/planning/indusk-v2-dawn/decisions.md` is a LIVE working doc.** Expect it to churn further in the next session as the user continues walking through items. Don't lift to CLAUDE.md or docs until stable.
-- **Session started in normal mode, then pivoted to `/research` mode around the "product brief vs project brief" turn.** Research mode rules: short answers (1–4 sentences), one claim per turn, suggested follow-ups optional not mandatory. The user explicitly wanted this mode; honor it until they exit. If unsure whether they've exited, ask.
-- **Existing `research.md` (April 7) hasn't been updated** to reflect the correlation-vision pivot. The new thinking lives in `decisions.md`. Either add a preamble to `research.md` or accept that the ledger is now the authoritative scope doc.
-- **1.28.3 IS published and globally installed on this machine.** 1.28.4 and 1.28.5 publish status unclear — verify before assuming users elsewhere can `indusk update` to pick up the changes.
-- **O8 in the "still open" list is stale** — it asks about migration script design, which K6 now obsoletes. Delete or rewrite on next pass through the ledger.
-- **Claude Code's `.claude/` dir is currently the source of truth for skills and hooks in v1.** Under A8, dawn inverts this — `.dawn/` becomes the source, `.claude/` becomes derived. Don't start restructuring v1's layout to match; A8 is a v2 commitment, not a v1 change.
-- **The docs site's Mermaid `mindmap` syntax uses `root((Text))` — parens matter.** If rendering breaks, try `root(Text)` (single parens) as a fallback. The sequence diagrams are conventional and shouldn't have issues.
-- **`.claude/handoff.md` is gitignored per InDusk convention** (see CLAUDE.md gotcha: "Session-specific handoff (not project knowledge)"). Safe to overwrite.
+- **Catchup status template lost the `- [ ] graph` row** in 1.28.7. Old handoffs (this one's predecessor) had `- [ ] graph` in the Catchup Status section. The new template (mirrored to `.claude/skills/handoff/SKILL.md` and `.claude/skills/catchup/SKILL.md` in this session) does NOT include it. The check-catchup.js hook still verifies FalkorDB + Graphiti reachability (port 6379 + 8100); CGC dropped silently. If you see a stale handoff with `[ ] graph` it's pre-1.28.7.
+- **`indusk init` is now opinionated about Biome** (1.28.8). Running `init --force` on a non-Biome project will: add `@biomejs/biome` to root devDeps, replace simple lint/format scripts. Leave compound scripts (`&&` / `||` / `;`) ALONE. Surface vestige warnings for residual configs/devDeps. The `[Lint migration warnings]` block prints AT THE END of init output but BEFORE step 7 (handoff scaffold) — so it's mixed in with subsequent init output if you grep filter. Use raw output or scroll up to find it.
+- **Numero is still half-done** until Sandy runs `indusk init --force` (or migrates manually). If you see Numero conversations, the audit punch list lives at the top of this session's reasoning — also captured in the 1.28.7 / 1.28.8 changelog entries.
+- **Dawn ledger has A1–A14 + U1–U3 + D1–D2 + O1–O15 to walk through in /research mode.** Don't try to walk all 40 in one session — Sandy paces these one decision at a time, often pivoting mid-walk. Let him drive.
+- **`apps/indusk-mcp/CLAUDE.md` is a STUB** (template content for a fresh init). The real CLAUDE.md is at the dusk repo root. Don't get confused by the stub when it surfaces in system reminders.
+- **`.claude/handoff.md` is gitignored** per InDusk convention. Safe to overwrite.
+- **The Dawn repo doesn't exist yet.** When Sandy says "Dawn" he means the planned next-repo. All the architecture decisions live in `.indusk/planning/indusk-v2-dawn/` here in dusk. When Sandy starts Dawn, that planning will move (or be referenced).
 
 ## Catchup Status
 - [x] mcp-ready
@@ -84,5 +75,3 @@ Most are captured in `.indusk/planning/indusk-v2-dawn/decisions.md` (live ledger
 - [x] context
 - [x] plans
 - [x] extensions
-- [x] graph
-- [x] graphiti

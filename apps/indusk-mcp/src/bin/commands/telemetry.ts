@@ -145,18 +145,25 @@ export async function telemetryStop(): Promise<void> {
 	}
 }
 
+export interface TelemetryRestartOptions {
+	otlpPort?: string;
+	uiPort?: string;
+}
+
 /**
  * Restart = stop + start. Picks up new binaries after `npm i -g` of a newer
- * indusk-mcp + new platform-package version (T5 contract).
+ * indusk-mcp + new platform-package version (T5 contract). When ports are not
+ * explicitly supplied, `daemonRestart` inherits them from the previously
+ * running daemon's meta file — restart means "same daemon, fresh processes."
  */
 export async function telemetryRestart(
-	opts: TelemetryStartOptions,
+	opts: TelemetryRestartOptions = {},
 ): Promise<void> {
 	console.info("Restarting telemetry daemon...");
 	try {
 		const meta = await daemonRestart({
-			otlpPort: Number.parseInt(opts.otlpPort, 10),
-			uiPort: Number.parseInt(opts.uiPort, 10),
+			otlpPort: opts.otlpPort !== undefined ? Number.parseInt(opts.otlpPort, 10) : undefined,
+			uiPort: opts.uiPort !== undefined ? Number.parseInt(opts.uiPort, 10) : undefined,
 		});
 		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
 		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);

@@ -24,7 +24,6 @@ export function formatBeamMarkdown(result: BeamResult): string {
 	if (d1.length > 0) {
 		const structural = d1.filter((i) => i.source === "semantic-graph");
 		const facts = d1.filter((i) => i.source === "graphiti");
-		const cgc = d1.filter((i) => i.source === "cgc");
 
 		if (structural.length > 0) {
 			lines.push("### Structural neighbors (distance 1)\n");
@@ -37,14 +36,6 @@ export function formatBeamMarkdown(result: BeamResult): string {
 		if (facts.length > 0) {
 			lines.push("### Neighbor facts\n");
 			for (const item of facts) {
-				lines.push(`- ${item.content}`);
-			}
-			lines.push("");
-		}
-
-		if (cgc.length > 0) {
-			lines.push("### Function dependencies\n");
-			for (const item of cgc) {
 				lines.push(`- ${item.content}`);
 			}
 			lines.push("");

@@ -78,7 +78,6 @@ const ALLOWED_TOOLS = [
 	"Bash(git:*)",
 	"mcp__graphiti__*",
 	"mcp__indusk__*",
-	"mcp__codegraphcontext__*",
 ];
 
 function parseClaudeOutput(stdout: string): {

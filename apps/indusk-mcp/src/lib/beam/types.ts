@@ -6,7 +6,7 @@
  */
 
 export interface BeamItem {
-	source: "semantic-graph" | "graphiti" | "eval" | "cgc";
+	source: "semantic-graph" | "graphiti" | "eval";
 	distance: 0 | 1 | 2;
 	detail: "full" | "summary" | "name";
 	content: string;
@@ -46,7 +46,7 @@ export interface QueryContext {
 
 export interface QueryStep {
 	name: string;
-	source: "semantic-graph" | "graphiti" | "eval" | "cgc";
+	source: "semantic-graph" | "graphiti" | "eval";
 	distance: 0 | 1 | 2;
 	maxResults: number;
 	detail: "full" | "summary" | "name";

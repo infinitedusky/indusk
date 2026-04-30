@@ -6,7 +6,6 @@
  */
 
 import { anchorLookup } from "./queries/anchor-lookup.js";
-import { cgcRelationships } from "./queries/cgc-relationships.js";
 import { evalFindings } from "./queries/eval-findings.js";
 import { neighborFacts } from "./queries/neighbor-facts.js";
 import { structuralNeighbors } from "./queries/structural-neighbors.js";
@@ -18,7 +17,7 @@ import type { QueryStep } from "./types.js";
  *
  * Execution groups (for parallelism):
  * - Group A (independent): anchor-lookup, target-facts, eval-findings
- * - Group B (depends on neighbors): structural-neighbors, then neighbor-facts, cgc-relationships
+ * - Group B (depends on neighbors): structural-neighbors, then neighbor-facts
  */
 export const BEAM_PIPELINE: QueryStep[] = [
 	anchorLookup,
@@ -26,5 +25,4 @@ export const BEAM_PIPELINE: QueryStep[] = [
 	targetFacts,
 	neighborFacts,
 	evalFindings,
-	cgcRelationships,
 ];
