@@ -146,7 +146,7 @@ function detectTooling(projectRoot: string): DetectedTooling {
 	return detected;
 }
 
-function writeGitInfoExclude(projectRoot: string): void {
+export function writeGitInfoExclude(projectRoot: string): void {
 	const excludePath = join(projectRoot, ".git/info/exclude");
 	const marker = "# InDusk local mode";
 
@@ -793,11 +793,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 
 	// 8. Create .cgcignore and manage git excludes
 	createCgcIgnore(projectRoot);
-	// .mcp.json contains auth tokens — always gitignore it regardless of mode
-	ensureGitignore(projectRoot);
 	if (local) {
+		// Local mode keeps the tracked .gitignore untouched — InDusk patterns
+		// go in .git/info/exclude (per-clone, never committed) instead.
 		console.info("\n[Git Excludes]");
 		writeGitInfoExclude(projectRoot);
+	} else {
+		// .mcp.json contains auth tokens — always gitignore it in full mode
+		ensureGitignore(projectRoot);
 	}
 
 	// 9. Run on_init hooks from enabled extensions

@@ -76,13 +76,13 @@ Most are captured in `.indusk/planning/indusk-v2-dawn/decisions.md` (live ledger
 - **`.claude/handoff.md` is gitignored per InDusk convention** (see CLAUDE.md gotcha: "Session-specific handoff (not project knowledge)"). Safe to overwrite.
 
 ## Catchup Status
-- [ ] mcp-ready
-- [ ] handoff
-- [ ] lessons
-- [ ] skills
-- [ ] health
-- [ ] context
-- [ ] plans
-- [ ] extensions
-- [ ] graph
-- [ ] graphiti
+- [x] mcp-ready
+- [x] handoff
+- [x] lessons
+- [x] skills
+- [x] health
+- [x] context
+- [x] plans
+- [x] extensions
+- [x] graph
+- [x] graphiti

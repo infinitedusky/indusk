@@ -508,15 +508,23 @@ export async function update(projectRoot: string): Promise<void> {
 	const { autoEnableExtensions } = await import("./extensions.js");
 	await autoEnableExtensions(projectRoot);
 
-	// 8. Ensure .gitignore has all required entries
-	console.info("\n[Git Ignores]\n");
-	const { ensureGitignore } = await import("./init.js");
-	ensureGitignore(projectRoot);
-
-	// 9. Respect local mode: re-apply overlay, refresh excludes
+	// 8. Ensure ignores: in full mode, refresh tracked .gitignore. In local
+	// mode, leave .gitignore untouched and refresh .git/info/exclude (per-clone,
+	// never committed) so InDusk patterns ignore correctly without a PR diff.
 	const { readConfig } = await import("../../lib/config.js");
 	const config = readConfig(projectRoot);
-	if (config?.mode === "local") {
+	const isLocal = config?.mode === "local";
+	console.info("\n[Git Ignores]\n");
+	if (isLocal) {
+		const { writeGitInfoExclude } = await import("./init.js");
+		writeGitInfoExclude(projectRoot);
+	} else {
+		const { ensureGitignore } = await import("./init.js");
+		ensureGitignore(projectRoot);
+	}
+
+	// 9. Respect local mode: re-apply overlay
+	if (isLocal) {
 		console.info("\n[Local Mode]\n");
 		const { applyOverlay } = await import("../../lib/settings-overlay.js");
 		applyOverlay(projectRoot);
