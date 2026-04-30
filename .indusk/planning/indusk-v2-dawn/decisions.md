@@ -73,6 +73,14 @@ These decisions from the April 7 research doc remain unanswered and need resolut
 - Is `indusk-docs` part of v2 or a separate concern?
 - Project management surface — is the admin UI the primary surface, or does dawn get its own?
 
+## Research alts (to evaluate)
+
+Alternate directions surfaced as standalone research docs. Not yet decided — flagged for evaluation against the main direction.
+
+| Doc | Thesis | State |
+|-----|--------|-------|
+| [research-alt.md](research-alt.md) — Workbench Mode | Make workbench root configurable so Dawn's source-of-truth can live alongside (rather than inside) managed projects. Project-local becomes the special case where workbench root = project root. Originated from FDE consulting usage. Has a load-bearing Claude Code prerequisite (cwd-only `.mcp.json` resolution). | to-evaluate |
+
 ---
 
 ## Change log
@@ -86,3 +94,5 @@ These decisions from the April 7 research doc remain unanswered and need resolut
 **2026-04-21 (same day)** — Renamed A7 from "Hexagonal architecture" to "Adapter-extension boundary for external tools" to avoid overclaiming. Committing to the adapter principle only, not the full Clean Architecture pattern.
 
 **2026-04-21 (same day)** — Added A8: agent-neutral skills & hooks with per-agent adapters. Skills/hooks live in `.dawn/`; Claude Code (and future agents) get them via adapter projection into the agent's native format.
+
+**2026-04-30** — Surfaced workbench-mode as a research alt at [research-alt.md](research-alt.md). Originated from real FDE consulting usage; proposes making workbench root configurable so the Dawn state can live alongside managed projects rather than inside them. State: to-evaluate. Load-bearing prerequisite: Claude Code currently resolves `.mcp.json`/skills/hooks only from cwd at session launch (no composition with parent dirs / workbench root) — without an upstream fix or launcher workaround, the abstraction is broken. Also bundled adjacent feedback (init-docs Docker scaffold collision with composable.env, `.env.secrets.shared` plaintext-leak default, OrbStack 502 caching lesson, vitepress-openapi as default scaffold).
