@@ -11,6 +11,17 @@
 		"name": "chrome-devtools",
 		"type": "stdio",
 		"command": "npx",
-		"args": ["-y", "chrome-devtools-mcp@latest", "--autoConnect"]
+		"args": ["-y", "chrome-devtools-mcp@latest", "--browserUrl=http://localhost:9222"],
+		"setup_instructions": [
+			"Launch Chrome with remote debugging on port 9222 BEFORE starting Claude Code:",
+			"  /Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --remote-debugging-port=9222",
+			"",
+			"Why --browserUrl over --autoConnect: autoConnect tries to attach to whatever Chrome",
+			"profile is running, but Chrome silently refuses to open the debug port on profiles that",
+			"already have a session. Symptom: 'Could not find DevToolsActivePort'. --browserUrl is",
+			"explicit — connect to the URL you control, fail loudly when it's not there.",
+			"",
+			"To use a different port, edit args in this manifest or the project's .mcp.json."
+		]
 	}
 }
