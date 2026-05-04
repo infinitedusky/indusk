@@ -91,8 +91,8 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 #### Phase 1 Context
 
-- [ ] Add to CLAUDE.md Architecture section: `apps/indusk-mcp/src/lib/scm/` — SCM abstraction layer with detection (init time) and read (runtime). `.indusk/config.json` `scm` field is the source of truth at runtime.
-- [ ] Add to CLAUDE.md Conventions: `scm` field in `.indusk/config.json` is set once at init by `detectScm()` and is the runtime source of truth. Don't re-detect per call — read the config field via `getScm(projectRoot)`. `indusk update` migrates pre-1.28.x projects.
+- [x] Add to CLAUDE.md Architecture section: `apps/indusk-mcp/src/lib/scm/` — SCM abstraction layer with detection (init time) and read (runtime). `.indusk/config.json` `scm` field is the source of truth at runtime.
+- [x] Add to CLAUDE.md Conventions: `scm` field in `.indusk/config.json` is set once at init by `detectScm()` and is the runtime source of truth. Don't re-detect per call — read the config field via `getScm(projectRoot)`. `indusk update` migrates pre-1.28.x projects.
 
 #### Phase 1 Document
 
