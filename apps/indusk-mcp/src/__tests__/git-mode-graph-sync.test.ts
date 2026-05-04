@@ -85,7 +85,7 @@ afterEach(() => {
 		rmSync(projectDir, { recursive: true, force: true });
 });
 
-describe.skipIf(SHOULD_SKIP)("graph sync on git mode (T4)", () => {
+describe.skipIf(SHOULD_SKIP)("graph sync on git mode (T4)", { timeout: 60000 }, () => {
 	it("exits 0, prints 'git mode — semantic graph unavailable', writes no events", () => {
 		// Init the project first so config has scm: "git"
 		const initResult = runCli(["init", "--no-index"]);

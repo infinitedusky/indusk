@@ -50,8 +50,8 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T3 | A3: `indusk update` on a project missing the `scm` field detects + adds it; second run is a no-op | Phase 0 | Phase 1 | passing |
 | T4 | A4: `indusk graph sync` on a git-mode project exits 0, prints `git mode — semantic graph unavailable` to stderr, writes no events | Phase 0 | Phase 2 | passing |
 | T5 | A5: existing `sync-engine.test.ts` + `jj.test.ts` stay green (no regression on jj path) | Phase 0 | Phase 2 | passing |
-| T6 | A6: `indusk eval baseline --task <path>` on a git-mode project completes and writes a baseline scorecard | Phase 0 | Phase 3 | planned |
-| T7 | A7: `buildEvaluatorPrompt({ scm: "git", ... })` includes `git show ${shortSha}`; `buildEvaluatorPrompt({ scm: "jj", ... })` includes `jj diff -r ${changeId}` | Phase 3 | Phase 3 | written |
+| T6 | A6: `indusk eval baseline --task <path>` on a git-mode project completes and writes a baseline scorecard | Phase 0 | Phase 3 | passing |
+| T7 | A7: `buildEvaluatorPrompt({ scm: "git", ... })` includes `git show ${shortSha}`; `buildEvaluatorPrompt({ scm: "jj", ... })` includes `jj diff -r ${changeId}` | Phase 3 | Phase 3 | passing |
 | T8 | A8: after `git commit -m "..."` inside a Claude Code session in a git-mode fixture, a scorecard entry appears in `.indusk/eval/results.log` within 60s | Phase 0 | Phase 5 | planned |
 | T9 | A9: `apps/indusk-mcp/skills/git.md` exists with `git commit -m` content; `apps/indusk-mcp/skills/jj.md` is byte-equal to its pre-Phase-4 content | Phase 0 | Phase 4 | planned |
 | T10 | A10: `apps/indusk-mcp/skills/work.md` commit-cadence section contains both `jj describe` and `git commit` | Phase 0 | Phase 4 | planned |
@@ -135,15 +135,15 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 ### Phase 3: Eval surface — prompts + baseline CLI
 
-- [ ] Add `scm: "jj" | "git"` to `PromptBuilderOptions` in `apps/indusk-mcp/src/lib/eval/prompt-builder.ts:14-20`
-- [ ] Branch the prompt text in `prompt-builder.ts:103` and `persistent-evaluator.ts:224`:
+- [x] Add `scm: "jj" | "git"` to `PromptBuilderOptions` in `apps/indusk-mcp/src/lib/eval/prompt-builder.ts:14-20`
+- [x] Branch the prompt text in `prompt-builder.ts:103` and `persistent-evaluator.ts:224`:
   ```typescript
   const diffCommand = opts.scm === "git"
     ? `git show ${opts.changeId}`
     : `jj diff -r ${opts.changeId}`;
   ```
-- [ ] Update every caller of `buildEvaluatorPrompt` to pass `scm: getScm(projectRoot)`. Find via `grep -rn "buildEvaluatorPrompt(" apps/indusk-mcp/src` and trace.
-- [ ] Update `apps/indusk-mcp/src/bin/commands/eval.ts:276-288` (the baseline command) to branch on SCM:
+- [x] Update every caller of `buildEvaluatorPrompt` to pass `scm: getScm(projectRoot)`. Find via `grep -rn "buildEvaluatorPrompt(" apps/indusk-mcp/src` and trace.
+- [x] Update `apps/indusk-mcp/src/bin/commands/eval.ts:276-288` (the baseline command) to branch on SCM:
   ```typescript
   if (scm === "jj") {
     execSync("jj new", { cwd: worktreePath });
@@ -154,15 +154,17 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
     changeId = execSync("git rev-parse --short HEAD", ...).toString().trim();
   }
   ```
-- [ ] Update doc comment in `apps/indusk-mcp/src/lib/eval/findings.ts:5`: replace "every jj describe" with "every commit (jj describe / git commit)"
-- [ ] Add `apps/indusk-mcp/src/lib/eval/prompt-builder.test.ts` test cases (or extend existing) for both `scm: "git"` and `scm: "jj"` snapshots
+- [x] Update doc comment in `apps/indusk-mcp/src/lib/eval/findings.ts:5`: replace "every jj describe" with "every commit (jj describe / git commit)"
+- [x] Add `apps/indusk-mcp/src/lib/eval/prompt-builder.test.ts` test cases (or extend existing) for both `scm: "git"` and `scm: "jj"` snapshots
+- [x] **Discovered**: persistent-evaluator's `scm` const must be declared OUTSIDE the `try` block / above `withSpan(...)` — I initially placed it after the build_prompt span, which put `diffCommand` in TDZ when `buildArgsAndPrompt` (called from inside the span callback) tried to read it. Surfaced as 5 `evaluator-spans.test.ts` failures (missing `eval.spawn_claude` span, missing scorecard log) when the throw short-circuited the eval pipeline. Fixed by hoisting `scm` + `diffCommand` above the `try` block.
+- [x] **Discovered**: heavy subprocess tests (`scm-init-detection`, `git-mode-graph-sync`) need `{ timeout: 60000 }` on their `describe` blocks — vitest's 5s default isn't enough when these run in parallel with the rest of the suite. T2 timed out under load even though it passed solo.
 
 #### Phase 3 Verification
 
-- [ ] T6 (write red — Phase 0 reference): create end-to-end test for `indusk eval baseline --task` against a git-only fixture; today fails because the command runs `jj new`/`jj describe`. Stays red until this phase.
-- [ ] T7: snapshot test on `buildEvaluatorPrompt` for both SCM values — git snapshot contains `git show`, jj snapshot contains `jj diff -r`
-- [ ] T6, T7 flip to passing
-- [ ] T1–T5 still passing (no regression check)
+- [x] T6 (write red — Phase 0 reference): create end-to-end test for `indusk eval baseline --task` against a git-only fixture; today fails because the command runs `jj new`/`jj describe`. Stays red until this phase.
+- [x] T7: snapshot test on `buildEvaluatorPrompt` for both SCM values — git snapshot contains `git show`, jj snapshot contains `jj diff -r`
+- [x] T6, T7 flip to passing
+- [x] T1–T5 still passing (no regression check)
 
 #### Phase 3 Context
 

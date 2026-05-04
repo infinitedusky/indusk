@@ -201,6 +201,12 @@ export async function runPersistentEval(opts: {
 			// extracted scorecard text.
 			let rawClaudeStdout = "";
 
+			const scm = getScm(opts.projectRoot);
+			const diffCommand =
+				scm === "git"
+					? `git show ${opts.changeId}`
+					: `jj diff -r ${opts.changeId}`;
+
 			try {
 				const { args, prompt } = await withSpan(
 					tracer,
@@ -217,12 +223,6 @@ export async function runPersistentEval(opts: {
 						return built;
 					},
 				);
-
-				const scm = getScm(opts.projectRoot);
-				const diffCommand =
-					scm === "git"
-						? `git show ${opts.changeId}`
-						: `jj diff -r ${opts.changeId}`;
 
 				function buildArgsAndPrompt(): { args: string[]; prompt: string } {
 					if (session) {

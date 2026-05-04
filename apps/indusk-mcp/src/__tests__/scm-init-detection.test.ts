@@ -97,7 +97,7 @@ afterEach(() => {
 		rmSync(projectDir, { recursive: true, force: true });
 });
 
-describe.skipIf(SHOULD_SKIP)("scm init detection (T1, T2, T3)", () => {
+describe.skipIf(SHOULD_SKIP)("scm init detection (T1, T2, T3)", { timeout: 60000 }, () => {
 	it("T1: indusk init in a git-only repo (jj NOT on PATH) writes scm: 'git'", () => {
 		// Make projectDir a git repo
 		const gitInit = spawnSync("git", ["init", "-q"], {
