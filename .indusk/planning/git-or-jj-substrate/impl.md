@@ -176,13 +176,13 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 ### Phase 4: Skills — agnostic prose + new git.md
 
-- [ ] Snapshot current `apps/indusk-mcp/skills/jj.md` content before any edits in this phase, and pin a vitest unit test to the snapshot (T9's byte-equal check)
-- [ ] Create `apps/indusk-mcp/skills/git.md` — sibling to `jj.md`, describing the do-then-commit workflow with `git commit -m` cadence. Cover: per-item commit cadence, monorepo siloing via `git add -p` + multiple commits, the eval-fires-after-commit asymmetry. Cross-reference `jj.md` for users on jj.
-- [ ] Edit `apps/indusk-mcp/skills/work.md:279-297` — rewrite the "Use the describe-then-do workflow from the jj skill" section to be SCM-conditional. Show both forms with a short note on the asymmetry. Keep the existing jj rationale; add the git equivalent.
-- [ ] Edit `apps/indusk-mcp/skills/highlight.md:6,39` — replace "next `jj describe` or at session end" with "next commit (jj describe / git commit) or at session end"
-- [ ] Edit `apps/indusk-mcp/skills/eval-review.md:11,15,25` — make the diff-fetching commands SCM-aware
-- [ ] Run `pnpm --filter indusk-mcp build` to ensure nothing breaks
-- [ ] Verify `indusk update` syncs the new `git.md` into installed projects' `.claude/skills/`. Check `apps/indusk-mcp/src/bin/commands/update.ts` skill-sync logic.
+- [x] Snapshot current `apps/indusk-mcp/skills/jj.md` content before any edits in this phase, and pin a vitest unit test to the snapshot (T9's byte-equal check)
+- [x] Create `apps/indusk-mcp/skills/git.md` — sibling to `jj.md`, describing the do-then-commit workflow with `git commit -m` cadence. Cover: per-item commit cadence, monorepo siloing via `git add -p` + multiple commits, the eval-fires-after-commit asymmetry. Cross-reference `jj.md` for users on jj. (Sandy's direction: trunk-based development, short-lived feature branches, frequent commits + pulls, merge + delete fast — big-org GitHub-Flow style. Includes "What NOT to Do", "When Things Go Wrong" recovery table, branch naming conventions, monorepo siloing via `git add -p`.)
+- [x] Edit `apps/indusk-mcp/skills/work.md:279-297` — rewrite the "Use the describe-then-do workflow from the jj skill" section to be SCM-conditional. Show both forms with a short note on the asymmetry. Keep the existing jj rationale; add the git equivalent.
+- [x] Edit `apps/indusk-mcp/skills/highlight.md:6,39` — replace "next `jj describe` or at session end" with "next commit (jj describe / git commit) or at session end"
+- [x] Edit `apps/indusk-mcp/skills/eval-review.md:11,15,25` — make the diff-fetching commands SCM-aware
+- [x] Run `pnpm --filter indusk-mcp build` to ensure nothing breaks
+- [x] Verify `indusk update` syncs the new `git.md` into installed projects' `.claude/skills/`. Check `apps/indusk-mcp/src/bin/commands/update.ts` skill-sync logic. (Confirmed: both `init.ts:426` and `update.ts:102` use `globSync("*.md", { cwd: skillsSource })` to find every skill — `git.md` is picked up automatically.)
 
 #### Phase 4 Verification
 
