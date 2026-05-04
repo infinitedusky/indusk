@@ -53,8 +53,8 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T6 | A6: `indusk eval baseline --task <path>` on a git-mode project completes and writes a baseline scorecard | Phase 0 | Phase 3 | passing |
 | T7 | A7: `buildEvaluatorPrompt({ scm: "git", ... })` includes `git show ${shortSha}`; `buildEvaluatorPrompt({ scm: "jj", ... })` includes `jj diff -r ${changeId}` | Phase 3 | Phase 3 | passing |
 | T8 | A8: after `git commit -m "..."` inside a Claude Code session in a git-mode fixture, a scorecard entry appears in `.indusk/eval/results.log` within 60s | Phase 0 | Phase 5 | planned |
-| T9 | A9: `apps/indusk-mcp/skills/git.md` exists with `git commit -m` content; `apps/indusk-mcp/skills/jj.md` is byte-equal to its pre-Phase-4 content | Phase 0 | Phase 4 | written |
-| T10 | A10: `apps/indusk-mcp/skills/work.md` commit-cadence section contains both `jj describe` and `git commit` | Phase 0 | Phase 4 | written |
+| T9 | A9: `apps/indusk-mcp/skills/git.md` exists with `git commit -m` content; `apps/indusk-mcp/skills/jj.md` is byte-equal to its pre-Phase-4 content | Phase 0 | Phase 4 | passing |
+| T10 | A10: `apps/indusk-mcp/skills/work.md` commit-cadence section contains both `jj describe` and `git commit` | Phase 0 | Phase 4 | passing |
 
 ### Trajectory Rationale
 
@@ -186,10 +186,10 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 #### Phase 4 Verification
 
-- [ ] T9 (write red — Phase 0): commit a vitest unit test that asserts `apps/indusk-mcp/skills/git.md` exists, contains `git commit -m`, contains do-then-commit cadence guidance, and `apps/indusk-mcp/skills/jj.md` is byte-equal to a snapshot fixture (the pre-Phase-4 content). Today fails — the file doesn't exist.
-- [ ] T10 (write red — Phase 0): commit a vitest unit test that greps `apps/indusk-mcp/skills/work.md` for both `jj describe` and `git commit` in the commit-cadence section. Today fails — only `jj describe` appears.
-- [ ] T9, T10 flip to passing
-- [ ] T1–T7 still passing (no regression check)
+- [x] T9 (write red — Phase 0): commit a vitest unit test that asserts `apps/indusk-mcp/skills/git.md` exists, contains `git commit -m`, contains do-then-commit cadence guidance, and `apps/indusk-mcp/skills/jj.md` is byte-equal to a snapshot fixture (the pre-Phase-4 content). Today fails — the file doesn't exist.
+- [x] T10 (write red — Phase 0): commit a vitest unit test that greps `apps/indusk-mcp/skills/work.md` for both `jj describe` and `git commit` in the commit-cadence section. Today fails — only `jj describe` appears.
+- [x] T9, T10 flip to passing
+- [x] T1–T7 still passing (no regression check)
 
 #### Phase 4 Context
 
