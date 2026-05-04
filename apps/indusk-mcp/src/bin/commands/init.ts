@@ -1140,12 +1140,16 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	// not a recorded preference. Dawn (v2) will move this to a config-file-driven
 	// preference; until then, single-tool default.
 	const { writeConfig } = await import("../../lib/config.js");
+	const { detectScm } = await import("../../lib/scm/detect.js");
 	const linterTool = "biome";
 	const linterConfig = local ? ".indusk/biome.json" : "biome.json";
 	const testTool = detected.testRunner ?? "vitest";
 	const testConfig = local
 		? `.indusk/${testTool === "jest" ? "jest.config.js" : "vitest.config.ts"}`
 		: `${testTool}.config.${testTool === "jest" ? "js" : "ts"}`;
+	// SCM detection: try jj first (preserves historical default), fall back to git.
+	// Throws NoScmDetectedError if neither is present — InDusk requires one.
+	const scm = await detectScm(projectRoot);
 	const config = {
 		mode: local ? ("local" as const) : ("full" as const),
 		verify: {
@@ -1157,10 +1161,11 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			...(detected.testRunner ? { testRunner: detected.testRunner } : {}),
 			...(detected.otel ? { otel: true } : {}),
 		},
+		scm,
 	};
 	writeConfig(projectRoot, config);
 	console.info(`\n[Config]`);
-	console.info(`  create: .indusk/config.json (mode: ${config.mode})`);
+	console.info(`  create: .indusk/config.json (mode: ${config.mode}, scm: ${scm})`);
 
 	// Create initial handoff so /catchup runs full orientation on first session
 	const handoffPath = join(projectRoot, ".claude/handoff.md");

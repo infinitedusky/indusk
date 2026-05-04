@@ -76,7 +76,7 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
   // If both fail, throw with message "neither jj nor git detected at {projectRoot}"
   ```
 - [x] Implement `getScm(projectRoot: string): "jj" | "git"` reading `.indusk/config.json`. If field is missing on a project that exists, return `"jj"` (backward-compat default for pre-1.28.x projects)
-- [ ] Update `apps/indusk-mcp/src/bin/commands/init.ts` to call `detectScm` and write the field
+- [x] Update `apps/indusk-mcp/src/bin/commands/init.ts` to call `detectScm` and write the field
 - [ ] Update `apps/indusk-mcp/src/bin/commands/update.ts` to call `detectScm` and migrate the field if missing (idempotent — re-runs do nothing)
 - [ ] Add `apps/indusk-mcp/src/lib/scm/detect.test.ts` covering: jj path returns "jj", PATH-stripped-of-jj falls back to "git", neither tool throws
 
