@@ -508,10 +508,30 @@ export async function update(projectRoot: string): Promise<void> {
 	const { autoEnableExtensions } = await import("./extensions.js");
 	await autoEnableExtensions(projectRoot);
 
+	// 7c. SCM field migration. Pre-1.28.x projects don't have `scm` in their
+	// config — detect once and write it back. Idempotent on subsequent runs:
+	// if the field is already populated, do nothing.
+	console.info("\n[SCM Detection]\n");
+	const { readConfig, writeConfig } = await import("../../lib/config.js");
+	const { detectScm } = await import("../../lib/scm/detect.js");
+	const scmConfig = readConfig(projectRoot);
+	if (scmConfig && !scmConfig.scm) {
+		try {
+			const scm = await detectScm(projectRoot);
+			writeConfig(projectRoot, { ...scmConfig, scm });
+			console.info(`  add: scm: "${scm}"`);
+		} catch (err) {
+			console.info(
+				`  skip: ${err instanceof Error ? err.message : String(err)}`,
+			);
+		}
+	} else if (scmConfig?.scm) {
+		console.info(`  ok: scm: "${scmConfig.scm}" (already set)`);
+	}
+
 	// 8. Ensure ignores: in full mode, refresh tracked .gitignore. In local
 	// mode, leave .gitignore untouched and refresh .git/info/exclude (per-clone,
 	// never committed) so InDusk patterns ignore correctly without a PR diff.
-	const { readConfig } = await import("../../lib/config.js");
 	const config = readConfig(projectRoot);
 	const isLocal = config?.mode === "local";
 	console.info("\n[Git Ignores]\n");
