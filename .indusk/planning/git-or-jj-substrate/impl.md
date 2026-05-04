@@ -64,7 +64,7 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 ### Phase 1: SCM detection + config field
 
-- [ ] Add `scm` to the config schema in `apps/indusk-mcp/src/lib/config.ts` (or wherever `Config` type lives — verify via `grep "interface Config\|type Config"`)
+- [x] Add `scm` to the config schema in `apps/indusk-mcp/src/lib/config.ts` (or wherever `Config` type lives — verify via `grep "interface Config\|type Config"`)
   ```typescript
   // Config type addition
   scm?: "jj" | "git"; // optional during migration; readers default to jj for legacy projects without the field

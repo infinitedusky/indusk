@@ -71,6 +71,20 @@ export interface InduskConfig {
 		role?: "service" | "library" | "tool" | "none";
 	};
 	/**
+	 * Source-control system the project uses. Set once at init by `detectScm()`
+	 * and read at runtime via `getScm(projectRoot)`. Don't re-detect per call —
+	 * the config field is the runtime source of truth.
+	 *
+	 * `jj` is the historical default — InDusk shipped with jj as the only SCM
+	 * substrate. `git` mode adds plain-git support; the semantic graph is jj-only
+	 * in v1 and graceful-degrades on git mode (sync no-ops with a clear message).
+	 *
+	 * **If unset on a pre-existing project, callers default to `jj`** (preserves
+	 * pre-1.28.x behavior). New projects scaffolded by `init` always have the
+	 * field populated; `update` migrates pre-1.28.x projects on the next run.
+	 */
+	scm?: "jj" | "git";
+	/**
 	 * Extensions the project has explicitly opted OUT of, even if they're
 	 * marked `required: true` in the built-in manifest. Escape hatch for
 	 * security/perf-constrained projects that can't run a localhost daemon
