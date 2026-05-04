@@ -45,9 +45,9 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | A1: `indusk init` in a git-only repo (no jj on PATH) writes `scm: "git"` to `.indusk/config.json` | Phase 0 | Phase 1 | written |
-| T2 | A2: `indusk init` in a jj repo writes `scm: "jj"` to `.indusk/config.json` | Phase 0 | Phase 1 | written |
-| T3 | A3: `indusk update` on a project missing the `scm` field detects + adds it; second run is a no-op | Phase 0 | Phase 1 | written |
+| T1 | A1: `indusk init` in a git-only repo (no jj on PATH) writes `scm: "git"` to `.indusk/config.json` | Phase 0 | Phase 1 | passing |
+| T2 | A2: `indusk init` in a jj repo writes `scm: "jj"` to `.indusk/config.json` | Phase 0 | Phase 1 | passing |
+| T3 | A3: `indusk update` on a project missing the `scm` field detects + adds it; second run is a no-op | Phase 0 | Phase 1 | passing |
 | T4 | A4: `indusk graph sync` on a git-mode project exits 0, prints `git mode — semantic graph unavailable` to stderr, writes no events | Phase 0 | Phase 2 | planned |
 | T5 | A5: existing `sync-engine.test.ts` + `jj.test.ts` stay green (no regression on jj path) | Phase 0 | Phase 2 | planned |
 | T6 | A6: `indusk eval baseline --task <path>` on a git-mode project completes and writes a baseline scorecard | Phase 0 | Phase 3 | planned |
@@ -78,16 +78,16 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 - [x] Implement `getScm(projectRoot: string): "jj" | "git"` reading `.indusk/config.json`. If field is missing on a project that exists, return `"jj"` (backward-compat default for pre-1.28.x projects)
 - [x] Update `apps/indusk-mcp/src/bin/commands/init.ts` to call `detectScm` and write the field
 - [x] Update `apps/indusk-mcp/src/bin/commands/update.ts` to call `detectScm` and migrate the field if missing (idempotent — re-runs do nothing)
-- [ ] Add `apps/indusk-mcp/src/lib/scm/detect.test.ts` covering: jj path returns "jj", PATH-stripped-of-jj falls back to "git", neither tool throws
+- [x] Add `apps/indusk-mcp/src/lib/scm/detect.test.ts` covering: jj path returns "jj", PATH-stripped-of-jj falls back to "git", neither tool throws
 
 #### Phase 1 Verification
 
 - [x] T1 (write red): commit an end-to-end test in `apps/indusk-mcp/src/__tests__/scm-init-detection.test.ts` that spawns `indusk init` against a tmpdir git repo with `PATH` stripped of jj and asserts `config.scm === "git"`. Today's behavior: `config.scm` is undefined. Test stays red until this phase lands.
 - [x] T2 (write red): same harness against a tmpdir jj repo; assert `config.scm === "jj"`
 - [x] T3 (write red): create a project, manually delete the `scm` field from config, run `indusk update`, assert field is restored; re-run, assert no change
-- [ ] T1, T2, T3 flip to passing once `init`/`update` write the field
-- [ ] `pnpm --filter indusk-mcp test src/lib/scm/detect.test.ts` passes
-- [ ] T4–T10 stay in their existing states (planned for later phases)
+- [x] T1, T2, T3 flip to passing once `init`/`update` write the field
+- [x] `pnpm --filter indusk-mcp test src/lib/scm/detect.test.ts` passes
+- [x] T4–T10 stay in their existing states (planned for later phases)
 
 #### Phase 1 Context
 
