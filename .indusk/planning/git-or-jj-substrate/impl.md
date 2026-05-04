@@ -52,13 +52,17 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T5 | A5: existing `sync-engine.test.ts` + `jj.test.ts` stay green (no regression on jj path) | Phase 0 | Phase 2 | passing |
 | T6 | A6: `indusk eval baseline --task <path>` on a git-mode project completes and writes a baseline scorecard | Phase 0 | Phase 3 | passing |
 | T7 | A7: `buildEvaluatorPrompt({ scm: "git", ... })` includes `git show ${shortSha}`; `buildEvaluatorPrompt({ scm: "jj", ... })` includes `jj diff -r ${changeId}` | Phase 3 | Phase 3 | passing |
-| T8 | A8: after `git commit -m "..."` inside a Claude Code session in a git-mode fixture, a scorecard entry appears in `.indusk/eval/results.log` within 60s | Phase 0 | Phase 5 | planned |
+| T8 | A8: after `git commit -m "..."` inside a Claude Code session in a git-mode fixture, a scorecard entry appears in `.indusk/eval/results.log` within 60s | Phase 0 | Phase 5 | skipped |
 | T9 | A9: `apps/indusk-mcp/skills/git.md` exists with `git commit -m` content; `apps/indusk-mcp/skills/jj.md` is byte-equal to its pre-Phase-4 content | Phase 0 | Phase 4 | passing |
 | T10 | A10: `apps/indusk-mcp/skills/work.md` commit-cadence section contains both `jj describe` and `git commit` | Phase 0 | Phase 4 | passing |
 
 ### Trajectory Rationale
 
 - **T7** `Writable at: Phase 3` — The test calls `buildEvaluatorPrompt({ scm: "git", ... })`. The `PromptBuilderOptions` interface gains the `scm` field in Phase 3; passing it today is a TypeScript compile error against the current interface, so the test source cannot be authored before then.
+
+### Skipped Verification
+
+- **T8** `State: skipped` — Approval test awaiting first run. The eval hook fires inside Claude Code's tool-execution path, so verifying it requires driving Claude Code itself — no automation can prove it from a CLI subprocess. The full procedure is documented at [`apps/indusk-mcp/test-fixtures/git-mode-manual-smoke.md`](../../../apps/indusk-mcp/test-fixtures/git-mode-manual-smoke.md). Sandy runs this manually post-merge; once a real scorecard appears in `<60s`, edit the trajectory row state to `passing` and add the run's date + scorecard ID inline.
 
 ## Checklist
 
