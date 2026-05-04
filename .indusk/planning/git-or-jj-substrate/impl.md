@@ -48,8 +48,8 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T1 | A1: `indusk init` in a git-only repo (no jj on PATH) writes `scm: "git"` to `.indusk/config.json` | Phase 0 | Phase 1 | passing |
 | T2 | A2: `indusk init` in a jj repo writes `scm: "jj"` to `.indusk/config.json` | Phase 0 | Phase 1 | passing |
 | T3 | A3: `indusk update` on a project missing the `scm` field detects + adds it; second run is a no-op | Phase 0 | Phase 1 | passing |
-| T4 | A4: `indusk graph sync` on a git-mode project exits 0, prints `git mode — semantic graph unavailable` to stderr, writes no events | Phase 0 | Phase 2 | written |
-| T5 | A5: existing `sync-engine.test.ts` + `jj.test.ts` stay green (no regression on jj path) | Phase 0 | Phase 2 | written |
+| T4 | A4: `indusk graph sync` on a git-mode project exits 0, prints `git mode — semantic graph unavailable` to stderr, writes no events | Phase 0 | Phase 2 | passing |
+| T5 | A5: existing `sync-engine.test.ts` + `jj.test.ts` stay green (no regression on jj path) | Phase 0 | Phase 2 | passing |
 | T6 | A6: `indusk eval baseline --task <path>` on a git-mode project completes and writes a baseline scorecard | Phase 0 | Phase 3 | planned |
 | T7 | A7: `buildEvaluatorPrompt({ scm: "git", ... })` includes `git show ${shortSha}`; `buildEvaluatorPrompt({ scm: "jj", ... })` includes `jj diff -r ${changeId}` | Phase 3 | Phase 3 | planned |
 | T8 | A8: after `git commit -m "..."` inside a Claude Code session in a git-mode fixture, a scorecard entry appears in `.indusk/eval/results.log` within 60s | Phase 0 | Phase 5 | planned |
@@ -116,14 +116,14 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
   ```
 - [x] Update `apps/indusk-mcp/src/lib/semantic-graph/graphiti-log-wrapper.ts:17,90,153` — same switch + same early-return pattern (silent — no stderr noise on every Graphiti write; write the message once at first call per session via a module-level `warned` flag)
 - [x] Update `apps/indusk-mcp/src/lib/semantic-graph/index.ts:10-13` — re-export `lib/scm` versions instead of (or in addition to) the jj-only versions; remove the `NotAJjRepoError` re-export from the public surface (it's now an internal jj-mode implementation detail)
-- [ ] Add `apps/indusk-mcp/src/lib/scm/index.test.ts` covering: jj-mode returns same values as direct jj.ts, git-mode returns short-SHA strings, ancestry set on git is non-empty
+- [x] Add `apps/indusk-mcp/src/lib/scm/index.test.ts` covering: jj-mode returns same values as direct jj.ts, git-mode returns short-SHA strings, ancestry set on git is non-empty
 
 #### Phase 2 Verification
 
 - [x] T4 (write red): commit an end-to-end test that creates a tmpdir git-only project, runs `indusk graph sync`, asserts exit 0 + stderr contains `git mode — semantic graph unavailable` + `.indusk/graph/semantic-graph.log` is empty/absent. Today's behavior: throws `NotAJjRepoError`. Stays red until this phase.
-- [ ] T5: run `pnpm --filter indusk-mcp test src/lib/semantic-graph/` — all existing tests stay green (no regression on jj path)
-- [ ] T4, T5 flip to passing
-- [ ] `pnpm --filter indusk-mcp test src/lib/scm/index.test.ts` passes
+- [x] T5: run `pnpm --filter indusk-mcp test src/lib/semantic-graph/` — all existing tests stay green (no regression on jj path)
+- [x] T4, T5 flip to passing
+- [x] `pnpm --filter indusk-mcp test src/lib/scm/index.test.ts` passes
 
 #### Phase 2 Context
 
