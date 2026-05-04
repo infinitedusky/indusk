@@ -274,9 +274,13 @@ The working agent does not write the Graphiti episode directly. The eval agent r
 
 Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail the work item or the `context learn` recording (which is the canonical, local copy of the lesson).
 
-## Commits (jj)
+## Commits
 
-Use the **describe-then-do** workflow from the jj skill. The order is load-bearing — never reverse it.
+Read `.indusk/config.json`'s `scm` field once at session start. Branch the commit cadence accordingly. Both rituals share a default — **one commit per checklist item** — but the *order of operations* differs.
+
+### If `scm: "jj"` — describe-then-do (see `jj.md`)
+
+The order is load-bearing — never reverse it.
 
 **For every checklist item, in this exact order:**
 
@@ -288,13 +292,56 @@ Use the **describe-then-do** workflow from the jj skill. The order is load-beari
 
 **❌ Anti-pattern: describe-after-do.** Doing the work first and then describing what you did breaks two things: (a) the eval agent fires on `jj describe`, so the description is what it scores against — late descriptions mean the agent scores work that's already done without intent context; (b) the working copy IS the current commit in jj, so any uncommitted state automatically gets attributed to whatever the commit description currently says, even if that's the previous unit's description. Always: new → describe → work, in that order.
 
-**Default: one commit per checklist item.** Each impl checklist item is a logical unit of work — give it its own commit. This keeps history granular, makes blame and bisect useful, avoids the end-of-phase `jj split` chore, and lets the eval agent score each unit while context is fresh.
+If a change spans multiple apps, use `jj split` to silo commits between contexts. See `jj.md` for details.
 
-Phase-close commits (one big commit for everything in a phase) are an exception, not the default. Use them ONLY when items are trivially related — e.g., a phase that's "rename X → Y in 5 files" where every commit would be the same one-line change. If items represent meaningfully different work (different concerns, different files, different intents), each item deserves its own commit.
+### If `scm: "git"` — do-then-commit on a feature branch (see `git.md`)
+
+Trunk-based development: short-lived feature branches, frequent commits + pulls, merge + delete fast.
+
+**Once at phase start:**
+
+```bash
+git checkout main
+git pull --rebase
+git checkout -b plan/{plan-name}-phase-{n}
+```
+
+**For every checklist item, in this exact order:**
+
+1. **Do the work** — edit files, run tools.
+2. **Check the item off** in the impl.md.
+3. **`git add -p`** — stage hunks selectively (NOT `git add -A`).
+4. **`git commit -m "context: what + why"`** — short, intent-named. Eval hook fires here.
+5. **Repeat** for the next item.
+
+**Periodically (at least once per session, before merging):**
+
+```bash
+git fetch origin
+git rebase origin/main          # stay current with trunk
+git push --force-with-lease     # safe force-push after rebase
+```
+
+**At phase or plan completion:** push + open PR (or merge directly if solo), then delete the branch on both sides:
+
+```bash
+git push -u origin plan/{plan-name}-phase-{n}
+# → merge via GitHub button or `git merge --no-ff` locally
+git branch -d plan/{plan-name}-phase-{n}
+git push origin --delete plan/{plan-name}-phase-{n}
+```
+
+**Eval hook timing asymmetry vs jj:** git users do-then-commit, so the eval scores work AFTER it's done, without the pre-stated intent jj has. Mitigation: write descriptive commit messages that name the *why*, not just the *what*. The judge has the diff + transcript regardless; the gap is just stated intent.
+
+If a change spans multiple apps, stage hunks per app with `git add -p apps/{name}/...` and commit each context separately. Don't lump multi-context changes into one commit.
+
+### Granularity and batching (both SCMs)
+
+**Default: one commit per checklist item.** Each impl checklist item is a logical unit of work — give it its own commit. This keeps history granular, makes blame and bisect useful, and lets the eval agent score each unit while context is fresh.
+
+Phase-close commits (one big commit for everything in a phase) are an exception, not the default. Use them ONLY when items are trivially related — e.g., a phase that's "rename X → Y in 5 files" where every commit would be the same one-line change. If items represent meaningfully different work, each item deserves its own commit.
 
 Cost is not a reason to batch. The eval agent uses session-resume after the first commit, so subsequent commits within a session amortize the catchup cost — per-item commits are cheap.
-
-Follow the monorepo rule: if a change spans multiple apps, use `jj split` to silo commits between contexts. See the jj skill for details.
 
 ## Cross-Plan Impact
 
