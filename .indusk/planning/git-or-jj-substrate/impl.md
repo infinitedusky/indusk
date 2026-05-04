@@ -193,11 +193,11 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 #### Phase 4 Context
 
-- [ ] Add to CLAUDE.md Conventions: Skills are SCM-agnostic in their commit-cadence guidance. The `jj.md` skill remains as the jj-mode reference; `git.md` is the new git-mode reference. Edit one or the other when SCM-specific guidance changes; edit `work.md` when cross-cutting cadence guidance changes.
+- [x] Add to CLAUDE.md Conventions: Skills are SCM-agnostic in their commit-cadence guidance. The `jj.md` skill remains as the jj-mode reference; `git.md` is the new git-mode reference. Edit one or the other when SCM-specific guidance changes; edit `work.md` when cross-cutting cadence guidance changes.
 
 #### Phase 4 Document
 
-- [ ] Update `apps/indusk-docs/src/guide/scm.md` (new page) or extend an existing guide page covering: which SCM InDusk supports, how to choose, the asymmetry. Link from the changelog entry.
+- [x] Update `apps/indusk-docs/src/guide/scm.md` (new page) or extend an existing guide page covering: which SCM InDusk supports, how to choose, the asymmetry. Link from the changelog entry. (Wrote new page at `apps/indusk-docs/src/guide/scm.md` — covers detection at init, the two commit rituals, asymmetries table, semantic graph caveat, choosing between, and migration.)
 
 ### Phase 5: End-to-end smoke + manual verification
 
