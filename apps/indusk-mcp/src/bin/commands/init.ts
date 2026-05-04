@@ -473,6 +473,15 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			cpSync(join(packageRoot, "templates/CLAUDE.md"), claudeMdPath);
 			console.info("  create: CLAUDE.md");
 		}
+
+		// AGENTS.md — agent conduct directives, imported by CLAUDE.md via @AGENTS.md
+		const agentsMdPath = join(projectRoot, "AGENTS.md");
+		if (existsSync(agentsMdPath)) {
+			console.info("  skip: AGENTS.md (already exists — review templates/AGENTS.md for conduct directives)");
+		} else {
+			cpSync(join(packageRoot, "templates/AGENTS.md"), agentsMdPath);
+			console.info("  create: AGENTS.md");
+		}
 	}
 
 	// 3. Create planning directory

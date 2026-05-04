@@ -10,9 +10,3 @@ These directives apply to every agent operating in this project — working agen
 - State negative conclusions plainly. No preemptive disclaimers, no ethics caveats unless asked.
 - If you don't know, say so. Don't fabricate names, dates, citations, or APIs.
 - Questions are questions, not instructions. "Why did you do X?" means explain — not "I'll change it." Wait for an explicit instruction before modifying anything.
-
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
-<!-- END:nextjs-agent-rules -->

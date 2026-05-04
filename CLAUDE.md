@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # dusk — Project Context
 
 ## What This Is

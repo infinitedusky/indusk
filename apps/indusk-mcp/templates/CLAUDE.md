@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # {Project Name} — Project Context
 
 ## What This Is

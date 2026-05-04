@@ -351,6 +351,21 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 	}
 
+	// 5b. Ensure AGENTS.md exists (agent conduct directives, imported by CLAUDE.md
+	// via @AGENTS.md). Never overwrites — users may extend the file. Pre-1.28.x
+	// projects pick it up on next update; new projects get it from init.
+	console.info("\n[Project files]\n");
+	{
+		const agentsMdPath = join(projectRoot, "AGENTS.md");
+		if (existsSync(agentsMdPath)) {
+			console.info("  current: AGENTS.md");
+		} else {
+			cpSync(join(packageRoot, "templates/AGENTS.md"), agentsMdPath);
+			console.info("  added: AGENTS.md");
+			console.info("  note: add `@AGENTS.md` to the top of CLAUDE.md to import the conduct directives");
+		}
+	}
+
 	// 6. Sync built-in extensions
 	console.info("\n[Built-in Extensions]\n");
 	const builtinDir = join(packageRoot, "extensions");
