@@ -69,13 +69,13 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
   // Config type addition
   scm?: "jj" | "git"; // optional during migration; readers default to jj for legacy projects without the field
   ```
-- [ ] Implement `detectScm(projectRoot: string): Promise<"jj" | "git">` in new file `apps/indusk-mcp/src/lib/scm/detect.ts`
+- [x] Implement `detectScm(projectRoot: string): Promise<"jj" | "git">` in new file `apps/indusk-mcp/src/lib/scm/detect.ts`
   ```typescript
   // Try jj first via execFile("jj", ["log", "-r", "@", "--no-graph", "-T", "change_id"], { cwd: projectRoot })
   // ENOENT or non-zero exit → fall back to execFile("git", ["rev-parse", "HEAD"], { cwd: projectRoot })
   // If both fail, throw with message "neither jj nor git detected at {projectRoot}"
   ```
-- [ ] Implement `getScm(projectRoot: string): "jj" | "git"` reading `.indusk/config.json`. If field is missing on a project that exists, return `"jj"` (backward-compat default for pre-1.28.x projects)
+- [x] Implement `getScm(projectRoot: string): "jj" | "git"` reading `.indusk/config.json`. If field is missing on a project that exists, return `"jj"` (backward-compat default for pre-1.28.x projects)
 - [ ] Update `apps/indusk-mcp/src/bin/commands/init.ts` to call `detectScm` and write the field
 - [ ] Update `apps/indusk-mcp/src/bin/commands/update.ts` to call `detectScm` and migrate the field if missing (idempotent — re-runs do nothing)
 - [ ] Add `apps/indusk-mcp/src/lib/scm/detect.test.ts` covering: jj path returns "jj", PATH-stripped-of-jj falls back to "git", neither tool throws
