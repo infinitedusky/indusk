@@ -11,6 +11,8 @@
 
 import { randomUUID } from "node:crypto";
 
+import { getScm } from "../scm/detect.js";
+import { getCurrentChangeId } from "../scm/index.js";
 import type { SemanticGraphAdapter } from "./adapter.js";
 import type {
 	AnchorCreatedEvent,
@@ -20,7 +22,6 @@ import type {
 	SemanticGraphEvent,
 	SyncCompletedEvent,
 } from "./events.js";
-import { getCurrentChangeId } from "./jj.js";
 import type { LogWriter } from "./log-writer.js";
 import type { SemanticGraphClient } from "./runtime-client.js";
 
@@ -32,6 +33,16 @@ export interface SyncResult {
 	edges_attached: number;
 	duration_ms: number;
 }
+
+/** Empty result for graceful-degrade paths (git mode in v1). */
+const EMPTY_RESULT: SyncResult = {
+	created: 0,
+	moved: 0,
+	tombstoned: 0,
+	unchanged: 0,
+	edges_attached: 0,
+	duration_ms: 0,
+};
 
 interface ExistingAnchor {
 	uuid: string;
@@ -60,6 +71,18 @@ export async function runSync(
 	runtimeClient: SemanticGraphClient,
 ): Promise<SyncResult> {
 	const start = Date.now();
+
+	// Graceful-degrade on git mode. The semantic graph requires SCM ancestry
+	// filtering with stable change IDs that survive rebase/amend; jj provides
+	// this, git does not (in v1). Future work: stable event_id design that
+	// tolerates git rewrites — see `.indusk/planning/git-or-jj-substrate/research.md`
+	// "Three viable degrade modes".
+	if (getScm(projectRoot) === "git") {
+		process.stderr.write(
+			"git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)\n",
+		);
+		return { ...EMPTY_RESULT, duration_ms: Date.now() - start };
+	}
 
 	const changeId = await getCurrentChangeId(projectRoot);
 	const ts = new Date().toISOString();

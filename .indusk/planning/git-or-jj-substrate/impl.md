@@ -107,7 +107,7 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
   // git branch: execFile("git", ["rev-parse", "--short", "HEAD"]) for getCurrentChangeId
   //             execFile("git", ["log", "--format=%h", "HEAD"]) for getReachableChangeIds
   ```
-- [ ] Update `apps/indusk-mcp/src/lib/semantic-graph/sync-engine.ts:23,64` — switch import from `./jj.js` to `../scm/index.js`. Add early-return on git mode:
+- [x] Update `apps/indusk-mcp/src/lib/semantic-graph/sync-engine.ts:23,64` — switch import from `./jj.js` to `../scm/index.js`. Add early-return on git mode:
   ```typescript
   if (getScm(projectRoot) === "git") {
     process.stderr.write("git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)\n");
