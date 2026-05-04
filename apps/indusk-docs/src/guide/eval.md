@@ -5,7 +5,7 @@ The eval system scores every commit automatically. No setup needed beyond having
 ## Your First Eval
 
 1. Work normally — implement features, fix bugs, follow plans
-2. Commit with `jj describe`
+2. Commit your change — `jj describe` if your project uses jj, `git commit -m "..."` if it uses plain git. InDusk auto-detects which SCM your project uses at `indusk init` and writes it to `.indusk/config.json`'s `scm` field.
 3. The eval judge spawns in the background
 4. After ~2 minutes, check your results:
 
@@ -13,7 +13,9 @@ The eval system scores every commit automatically. No setup needed beyond having
 indusk eval summary
 ```
 
-That's it. The eval hook fires on every `jj describe` inside a Claude Code session.
+That's it. The eval hook fires on every commit inside a Claude Code session — `jj describe` or `git commit`, whichever your project uses. The evaluator's diff-fetch instruction adapts: it tells Claude to run `jj diff -r ${id}` on jj projects and `git show ${id}` on git projects.
+
+**One asymmetry to know about**: on jj, the describe-then-do workflow means the agent writes the commit description BEFORE doing the work, so the eval scores work in the context of stated intent. On git, you commit AFTER doing the work, so the eval fires post-hoc — the judge has the diff and the transcript but no pre-stated intent. Same scorecard format; slightly less context.
 
 ## Interpreting Scores
 

@@ -168,11 +168,11 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 #### Phase 3 Context
 
-- [ ] Add to CLAUDE.md Architecture: Eval prompts and baseline CLI are SCM-aware. `buildEvaluatorPrompt` takes an `scm` field; baseline command branches at `eval.ts:276-288`.
+- [x] Add to CLAUDE.md Architecture: Eval prompts and baseline CLI are SCM-aware. `buildEvaluatorPrompt` takes an `scm` field; baseline command branches at `eval.ts:276-288`.
 
 #### Phase 3 Document
 
-- [ ] Update the eval-agent reference page at `apps/indusk-docs/src/reference/agents/eval-agent.md` (or wherever the eval prompt is documented) to note SCM-awareness.
+- [x] Update the eval-agent reference page at `apps/indusk-docs/src/reference/agents/eval-agent.md` (or wherever the eval prompt is documented) to note SCM-awareness. (Updated `apps/indusk-docs/src/guide/eval.md` — that's where the eval flow is user-documented in this repo.)
 
 ### Phase 4: Skills — agnostic prose + new git.md
 
