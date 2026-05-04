@@ -1140,7 +1140,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	// not a recorded preference. Dawn (v2) will move this to a config-file-driven
 	// preference; until then, single-tool default.
 	const { writeConfig } = await import("../../lib/config.js");
-	const { detectScm } = await import("../../lib/scm/detect.js");
+	const { detectScm, NoScmDetectedError } = await import(
+		"../../lib/scm/detect.js"
+	);
 	const linterTool = "biome";
 	const linterConfig = local ? ".indusk/biome.json" : "biome.json";
 	const testTool = detected.testRunner ?? "vitest";
@@ -1148,8 +1150,16 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		? `.indusk/${testTool === "jest" ? "jest.config.js" : "vitest.config.ts"}`
 		: `${testTool}.config.${testTool === "jest" ? "js" : "ts"}`;
 	// SCM detection: try jj first (preserves historical default), fall back to git.
-	// Throws NoScmDetectedError if neither is present — InDusk requires one.
-	const scm = await detectScm(projectRoot);
+	// If neither is present (bare tmpdir, project initialized before SCM choice
+	// is made), defer the field — the next `indusk update` will populate it once
+	// the user runs `git init` / `jj git init`.
+	let scm: "jj" | "git" | undefined;
+	try {
+		scm = await detectScm(projectRoot);
+	} catch (err) {
+		if (!(err instanceof NoScmDetectedError)) throw err;
+		scm = undefined;
+	}
 	const config = {
 		mode: local ? ("local" as const) : ("full" as const),
 		verify: {
@@ -1161,11 +1171,13 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			...(detected.testRunner ? { testRunner: detected.testRunner } : {}),
 			...(detected.otel ? { otel: true } : {}),
 		},
-		scm,
+		...(scm ? { scm } : {}),
 	};
 	writeConfig(projectRoot, config);
 	console.info(`\n[Config]`);
-	console.info(`  create: .indusk/config.json (mode: ${config.mode}, scm: ${scm})`);
+	console.info(
+		`  create: .indusk/config.json (mode: ${config.mode}, scm: ${scm ?? "deferred — run 'indusk update' after git/jj init"})`,
+	);
 
 	// Create initial handoff so /catchup runs full orientation on first session
 	const handoffPath = join(projectRoot, ".claude/handoff.md");
