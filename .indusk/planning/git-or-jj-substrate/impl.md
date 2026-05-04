@@ -114,7 +114,7 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
     return; // exits sync as no-op
   }
   ```
-- [ ] Update `apps/indusk-mcp/src/lib/semantic-graph/graphiti-log-wrapper.ts:17,90,153` — same switch + same early-return pattern (silent — no stderr noise on every Graphiti write; write the message once at first call per session via a module-level `warned` flag)
+- [x] Update `apps/indusk-mcp/src/lib/semantic-graph/graphiti-log-wrapper.ts:17,90,153` — same switch + same early-return pattern (silent — no stderr noise on every Graphiti write; write the message once at first call per session via a module-level `warned` flag)
 - [ ] Update `apps/indusk-mcp/src/lib/semantic-graph/index.ts:10-13` — re-export `lib/scm` versions instead of (or in addition to) the jj-only versions; remove the `NotAJjRepoError` re-export from the public surface (it's now an internal jj-mode implementation detail)
 - [ ] Add `apps/indusk-mcp/src/lib/scm/index.test.ts` covering: jj-mode returns same values as direct jj.ts, git-mode returns short-SHA strings, ancestry set on git is non-empty
 

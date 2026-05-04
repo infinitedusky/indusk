@@ -13,10 +13,26 @@
 import { randomUUID } from "node:crypto";
 
 import type { GraphitiClient } from "../graphiti-client.js";
+import { getScm } from "../scm/detect.js";
+import { getCurrentChangeId } from "../scm/index.js";
 import type { EdgeAttachedEvent } from "./events.js";
-import { getCurrentChangeId } from "./jj.js";
 import type { LogWriter } from "./log-writer.js";
 import type { SemanticGraphClient } from "./runtime-client.js";
+
+/**
+ * Module-level flag — emit the "git mode — semantic graph unavailable"
+ * warning once per process. captureWithLog is called on every Graphiti
+ * write, so a per-call warning would saturate stderr.
+ */
+let warnedGitMode = false;
+
+function warnOnceGitMode(): void {
+	if (warnedGitMode) return;
+	warnedGitMode = true;
+	process.stderr.write(
+		"git mode — semantic graph unavailable; Graphiti writes still succeed but are not mirrored to the event log (jj-only feature in v1)\n",
+	);
+}
 
 export interface CaptureOptions {
 	/** File path this capture relates to (for anchor resolution). */
@@ -68,6 +84,15 @@ export async function captureWithLog(
 	if (!graphitiSuccess) {
 		// Graphiti failed — still try to write the edge to the log
 		// so the capture is at least recorded locally
+	}
+
+	// Graceful-degrade on git mode: Graphiti write above still succeeded;
+	// we just skip mirroring to the semantic graph event log. Returns the
+	// Graphiti outcome but no edge data. See sync-engine.ts for the full
+	// rationale.
+	if (getScm(projectRoot) === "git") {
+		warnOnceGitMode();
+		return { graphitiSuccess, edgeWritten: false };
 	}
 
 	// 2. Resolve anchor UUID
