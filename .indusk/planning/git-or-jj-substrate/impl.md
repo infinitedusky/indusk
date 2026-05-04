@@ -101,7 +101,7 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 ### Phase 2: Semantic graph wiring + graceful-degrade
 
-- [ ] Create `apps/indusk-mcp/src/lib/scm/index.ts` exposing `getCurrentChangeId(projectRoot)` and `getReachableChangeIds(projectRoot)` that branch on `getScm(projectRoot)`
+- [x] Create `apps/indusk-mcp/src/lib/scm/index.ts` exposing `getCurrentChangeId(projectRoot)` and `getReachableChangeIds(projectRoot)` that branch on `getScm(projectRoot)`
   ```typescript
   // jj branch: delegate to existing lib/semantic-graph/jj.ts (re-export the existing functions)
   // git branch: execFile("git", ["rev-parse", "--short", "HEAD"]) for getCurrentChangeId
