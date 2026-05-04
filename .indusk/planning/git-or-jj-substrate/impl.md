@@ -96,7 +96,7 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 #### Phase 1 Document
 
-- [ ] Add a Known Gotcha to CLAUDE.md: `getScm()` defaults to `"jj"` when the field is missing — preserves backward-compat for projects scaffolded before this plan. Don't rely on the default; ensure init/update have populated the field.
+- [x] Add a Known Gotcha to CLAUDE.md: `getScm()` defaults to `"jj"` when the field is missing — preserves backward-compat for projects scaffolded before this plan. Don't rely on the default; ensure init/update have populated the field.
 
 ### Phase 2: Semantic graph wiring + graceful-degrade
 
