@@ -55,6 +55,11 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T8 | A8: after `git commit -m "..."` inside a Claude Code session in a git-mode fixture, a scorecard entry appears in `.indusk/eval/results.log` within 60s | Phase 0 | Phase 5 | skipped |
 | T9 | A9: `apps/indusk-mcp/skills/git.md` exists with `git commit -m` content; `apps/indusk-mcp/skills/jj.md` is byte-equal to its pre-Phase-4 content | Phase 0 | Phase 4 | passing |
 | T10 | A10: `apps/indusk-mcp/skills/work.md` commit-cadence section contains both `jj describe` and `git commit` | Phase 0 | Phase 4 | passing |
+| T11 | H1-A: `eval-trigger.js`'s skip filter accepts a hook event whose `command` contains `git commit` (does NOT early-exit on the filter check) | Phase 0 | Phase 6 | planned |
+| T12 | H1-B: `eval-trigger.js` simulated against a git-only tmpdir resolves a non-empty changeId via git fallback (doesn't exit silently when jj is missing) | Phase 0 | Phase 6 | planned |
+| T13 | H2-A: `indusk graph status` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT print the misleading `run 'indusk graph sync' first` hint | Phase 0 | Phase 6 | planned |
+| T14 | H2-B: `indusk graph rebuild` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT clear the runtime or attempt replay | Phase 0 | Phase 6 | planned |
+| T15 | H1-C: `apps/indusk-mcp/src/bin/commands/init.ts` syncs ALL `.js` files from the package's `hooks/` directory (eval-trigger.js included) — verified by source grep that init's hook copy uses `globSync` rather than a hardcoded list | Phase 0 | Phase 6 | planned |
 
 ### Trajectory Rationale
 
@@ -217,12 +222,47 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 #### Phase 5 Context
 
-- [ ] Update CLAUDE.md Current State: git-mode support shipped in `<version>`. Note the semantic-graph deferral (full git parity is future work).
+- [x] Update CLAUDE.md Current State: git-mode support shipped in `<version>`. Note the semantic-graph deferral (full git parity is future work).
 
 #### Phase 5 Document
 
-- [ ] Add changelog entry to `apps/indusk-docs/src/changelog.md` with: what changed for git users, what changed for jj users (nothing observable), and the known limitation (semantic graph unavailable on git).
-- [ ] Run `/falsify git-or-jj-substrate` before `/retrospective`
+- [x] Add changelog entry to `apps/indusk-docs/src/changelog.md` with: what changed for git users, what changed for jj users (nothing observable), and the known limitation (semantic graph unavailable on git).
+- [x] Run `/falsify git-or-jj-substrate` before `/retrospective` — **completed; authored Phase 6 below**
+
+### Phase 6: Falsification — eval-trigger jj-only despite plan's claim, plus graph CLI UX gaps on git mode
+
+**Goal**: verify whether the attested state holds against two specific failure modes I found by reading the code:
+1. **H1 (load-bearing)**: The plan's brief claims "the eval hook (`eval-trigger.js`) already works on git." Reading the actual hook source shows it does NOT — line 67 filters for `jj describe` only (skips `git commit`), and line 120 reads the change ID via `jj log` with no git fallback. T8 (the manual smoke for "scorecard appears within 60s of `git commit`") would fail today because the hook never fires on git commits. This invalidates the plan's headline adoption claim for git users.
+2. **H2 (UX bug)**: `indusk graph status` and `indusk graph rebuild` don't branch on `getScm()` — on git-mode projects, status prints `(no log file — run 'indusk graph sync' first)` which is misleading (running sync no-ops, doesn't help); rebuild clears the runtime then silently no-ops. Both should emit the same `git mode — semantic graph unavailable` message that `runSync()` does.
+
+Each trajectory row below captures one hypothesis test; each checklist item captures the fix the code needs.
+
+- [ ] **H1 fix part A — `eval-trigger.js` line 67**: extend the trigger filter to match BOTH `jj describe` AND `git commit`. Replace `if (!command.includes("jj describe"))` with `const triggerPatterns = ["jj describe", "git commit"]; if (!triggerPatterns.some(p => command.includes(p)))`. The skip-message becomes "skip — no jj describe / git commit in command".
+- [ ] **H1 fix part B — `eval-trigger.js` line 120**: try jj first for the change ID; on jj failure, fall back to `git rev-parse --short HEAD`. Only exit silently if BOTH fail. Pattern lifted from `apps/indusk-mcp/src/lib/scm/index.ts:getCurrentChangeId`.
+- [ ] **H1 fix part C — file installation**: confirm `eval-trigger.js` lands at `.claude/hooks/eval-trigger.js` on `indusk init` (currently `init.ts:942-947`'s `hookFiles` array is hardcoded and missing eval-trigger; only `update.ts:240`'s `globSync` gets it). If init doesn't ship the hook, T8 can't pass on a fresh-init project. Switch `init.ts` to `globSync("*.js", { cwd: hooksSource })` so any hook the package ships gets installed — same pattern update already uses. (Adjacent to H1; would have surfaced as part of T8 manual smoke even if H1 itself were already correct.)
+- [ ] **H2 fix part A — `cli.ts` `graph status` action**: read `getScm(projectRoot)` after `rootOrExit()`. If `"git"`, print `git mode — semantic graph unavailable in v1; sync/status/rebuild are jj-only` to stderr and exit 0 BEFORE attempting log inspection. Match the `runSync()` graceful-degrade message pattern.
+- [ ] **H2 fix part B — `cli.ts` `graph rebuild` action**: same SCM check, same early-return + message.
+- [ ] **H2 fix part C — also-MCP-tools**: `mcp__indusk__graph_sync`, `graph_rebuild`, `graph_status` MCP tools should emit the same git-mode message. Verify the MCP wrappers reuse the CLI logic; if not, add the same `getScm()` branch.
+
+#### Phase 6 Verification
+
+- [ ] T11 (write red): vitest unit test asserting `eval-trigger.js`'s skip-filter accepts `git commit`. Authored against current source — fails because filter rejects `git commit`. Goes green after H1 fix A.
+- [ ] T12 (write red): integration test simulating eval-trigger on a git-only tmpdir — pipe a fake hook event with `command: "git commit -m \"test\""`, assert the hook proceeds past the filter and resolves a non-empty changeId. Today fails (filter rejects, OR `jj log` errors out). Goes green after H1 A + B both land.
+- [ ] T13 (write red): end-to-end test running `indusk graph status` on a git-mode tmpdir; asserts exit 0 + stderr contains `git mode — semantic graph unavailable`. Today exits 0 with the misleading "run sync first" hint. Goes green after H2 A.
+- [ ] T14 (write red): end-to-end test running `indusk graph rebuild` on a git-mode tmpdir; same assertion shape. Goes green after H2 B.
+- [ ] T15 (write red): unit test asserting `apps/indusk-mcp/src/bin/commands/init.ts` uses `globSync("*.js", ...)` for hook installation (i.e., source grep for `globSync` near the hook copy block). Today fails — init has a hardcoded list. Goes green after H1 fix C.
+
+Each row goes from `written → passing` once the corresponding fix lands. Run all five tests after each fix to make sure none regress.
+
+#### Phase 6 Context
+
+- [ ] Update CLAUDE.md Conventions: Add "**The eval-trigger hook fires on `jj describe` AND `git commit`** (`git-or-jj-substrate` Phase 6). Both trigger patterns are matched in `apps/indusk-mcp/hooks/eval-trigger.js`'s skip filter; change-ID extraction tries jj first and falls back to `git rev-parse --short HEAD`. `indusk graph status/rebuild` early-return on git-mode projects with the same `git mode — semantic graph unavailable` message that `runSync()` uses. Don't add new SCM-coupled CLI commands without branching on `getScm()` first."
+- [ ] Update CLAUDE.md Known Gotchas: Add "**`init.ts` uses a hardcoded `hookFiles` array; `update.ts` uses `globSync`** — pre-Phase-6 init missed `eval-trigger.js` (registered in settings.json but never copied to `.claude/hooks/`); fixed by switching init to globSync. When adding a new hook to `apps/indusk-mcp/hooks/`, verify both init AND update sync it; the gap is invisible because settings.json registration succeeds while the file is missing."
+
+#### Phase 6 Document
+
+- [ ] Update `apps/indusk-docs/src/guide/eval.md` to confirm git users get scorecards on every `git commit` (currently the page promises this but the underlying hook didn't actually do it). The promise becomes accurate after Phase 6 ships.
+- [ ] Update `apps/indusk-docs/src/guide/scm.md` "Semantic graph caveat for git users" to note that `indusk graph status` and `indusk graph rebuild` also emit the unavailable-on-git message (currently the section only mentions sync).
 
 ## Files Affected
 
