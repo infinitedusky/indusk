@@ -17,9 +17,19 @@ export interface PromptBuilderOptions {
 	transcriptPath: string;
 	mode: "eval" | "baseline";
 	projectGroup: string;
+	/**
+	 * SCM the project uses. Controls which command the evaluator is told to
+	 * run to inspect the diff: `jj diff -r ${changeId}` for jj, `git show
+	 * ${changeId}` for git. Defaults to `"jj"` for backward-compat with
+	 * pre-1.28.x callers that don't pass the field.
+	 */
+	scm?: "jj" | "git";
 }
 
 export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
+	const scm = opts.scm ?? "jj";
+	const diffCommand =
+		scm === "git" ? `git show ${opts.changeId}` : `jj diff -r ${opts.changeId}`;
 	const questionsBlock = opts.rubric
 		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
 		.join("\n\n");
@@ -100,7 +110,7 @@ This is the JSONL record of the working agent's session. Read it to understand:
 
 ### Step 3: Read the diff
 
-Run \`jj diff -r ${opts.changeId}\` to see what was committed. This is the work being evaluated.
+Run \`${diffCommand}\` to see what was committed. This is the work being evaluated.
 
 Then read the specific files that were changed to understand the full context — not just the diff lines, but the surrounding code.
 

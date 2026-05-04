@@ -13,6 +13,7 @@ import { dirname, join } from "node:path";
 
 import { getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
+import { getScm } from "../scm/detect.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
@@ -217,11 +218,17 @@ export async function runPersistentEval(opts: {
 					},
 				);
 
+				const scm = getScm(opts.projectRoot);
+				const diffCommand =
+					scm === "git"
+						? `git show ${opts.changeId}`
+						: `jj diff -r ${opts.changeId}`;
+
 				function buildArgsAndPrompt(): { args: string[]; prompt: string } {
 					if (session) {
 						const resumePrompt = `Evaluate a new commit. Change ID: ${opts.changeId}
 
-Run \`jj diff -r ${opts.changeId}\` to see what changed. Then answer the same evaluation questions as before. Read the changed files for full context.
+Run \`${diffCommand}\` to see what changed. Then answer the same evaluation questions as before. Read the changed files for full context.
 
 Output ONLY the JSON scorecard as before — no commentary.`;
 
@@ -262,6 +269,7 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 							transcriptPath: opts.transcriptPath,
 							mode: opts.mode,
 							projectGroup,
+							scm,
 						}),
 					};
 				}
