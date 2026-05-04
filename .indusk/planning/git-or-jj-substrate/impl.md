@@ -127,11 +127,11 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 
 #### Phase 2 Context
 
-- [ ] Add to CLAUDE.md Conventions: Semantic graph features (`indusk graph sync`, Graphiti log capture) are jj-only in v1. On git-mode projects, `sync` is a no-op with a clear message; full git parity (stable event_id, rebase-tolerant replay) is deferred. Plans, lessons, eval, highlights all work on git unchanged.
+- [x] Add to CLAUDE.md Conventions: Semantic graph features (`indusk graph sync`, Graphiti log capture) are jj-only in v1. On git-mode projects, `sync` is a no-op with a clear message; full git parity (stable event_id, rebase-tolerant replay) is deferred. Plans, lessons, eval, highlights all work on git unchanged.
 
 #### Phase 2 Document
 
-- [ ] Update `apps/indusk-docs/src/changelog.md` with a "git mode — semantic graph unavailable" gotcha entry.
+- [x] Update `apps/indusk-docs/src/changelog.md` with a "git mode — semantic graph unavailable" gotcha entry.
 
 ### Phase 3: Eval surface — prompts + baseline CLI
 
