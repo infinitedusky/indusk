@@ -60,9 +60,9 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T13 | H2-A: `indusk graph status` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT print the misleading `run 'indusk graph sync' first` hint | Phase 0 | Phase 6 | passing |
 | T14 | H2-B: `indusk graph rebuild` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT clear the runtime or attempt replay | Phase 0 | Phase 6 | passing |
 | T15 | H1-C: `apps/indusk-mcp/src/bin/commands/init.ts` syncs ALL `.js` files from the package's `hooks/` directory (eval-trigger.js included) — verified by source grep that init's hook copy uses `globSync` rather than a hardcoded list | Phase 0 | Phase 6 | passing |
-| T16 | H3: `eval-trigger.js`'s trigger filter does NOT fire on `git config user.email "git committer"` (substring false-positive — "committer" contains "commit"); does fire on a real `git commit -m "..."` | Phase 0 | Phase 7 | planned |
-| T17 | H4: `eval-trigger.js` skips when `event.tool_response.exit_code` is non-zero (failed commit) — does not run the eval against a previous commit's SHA | Phase 0 | Phase 7 | planned |
-| T18 | H5: `indusk init` in a tmpdir without `git init`/`jj git init` first prints a stderr warning naming the recovery command (`indusk update` after initializing SCM) | Phase 0 | Phase 7 | planned |
+| T16 | H3: `eval-trigger.js`'s trigger filter does NOT fire on `git config user.email "git committer"` (substring false-positive — "committer" contains "commit"); does fire on a real `git commit -m "..."` | Phase 0 | Phase 7 | written |
+| T17 | H4: `eval-trigger.js` skips when `event.tool_response.exit_code` is non-zero (failed commit) — does not run the eval against a previous commit's SHA | Phase 0 | Phase 7 | written |
+| T18 | H5: `indusk init` in a tmpdir without `git init`/`jj git init` first prints a stderr warning naming the recovery command (`indusk update` after initializing SCM) | Phase 0 | Phase 7 | written |
 
 ### Trajectory Rationale
 
@@ -283,9 +283,9 @@ Each trajectory row below captures one hypothesis test; each checklist item capt
 
 #### Phase 7 Verification
 
-- [ ] T16 (write red): vitest unit test that loads `eval-trigger.js` source and asserts the trigger filter is a word-boundary regex (NOT a `String.includes`). The test today fails because the filter still uses `command.includes(p)`. Goes green after H3.
-- [ ] T17 (write red): vitest unit test asserting `eval-trigger.js` source contains a check on `tool_response.exit_code` (or equivalent — `tool_response?.exit_code`, `event.tool_response.exit_code`) BEFORE the trigger-filter check. Today fails — no exit_code read exists. Goes green after H4.
-- [ ] T18 (write red): end-to-end test that runs `indusk init --no-index` against a fresh tmpdir WITHOUT initializing git or jj, asserts stderr contains the deferred-SCM warning naming `indusk update` as the recovery command. Today fails — init silently omits the field with no user-visible warning. Goes green after H5.
+- [x] T16 (write red): vitest unit test that loads `eval-trigger.js` source and asserts the trigger filter is a word-boundary regex (NOT a `String.includes`). The test today fails because the filter still uses `command.includes(p)`. Goes green after H3.
+- [x] T17 (write red): vitest unit test asserting `eval-trigger.js` source contains a check on `tool_response.exit_code` (or equivalent — `tool_response?.exit_code`, `event.tool_response.exit_code`) BEFORE the trigger-filter check. Today fails — no exit_code read exists. Goes green after H4.
+- [x] T18 (write red): end-to-end test that runs `indusk init --no-index` against a fresh tmpdir WITHOUT initializing git or jj, asserts stderr contains the deferred-SCM warning naming `indusk update` as the recovery command. Today fails — init silently omits the field with no user-visible warning. Goes green after H5. (Tightened from initial draft: requires a stderr-bound warning specifically + recognizable marker like ⚠ / "warning" — Phase 1's existing inline parenthetical on stdout was insufficient.)
 
 #### Phase 7 Context
 
