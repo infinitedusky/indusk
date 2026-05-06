@@ -69,10 +69,13 @@ if (cliSource !== null) {
 	syslog(cwd, `hook fired — tool: ${event.tool_name}, command: ${command.slice(0, 100)}`);
 
 	// Fast path: not a recognized commit-trigger command. The hook fires on
-	// `jj describe` (jj projects) AND `git commit` (git projects) — match
-	// either, skip otherwise.
-	const triggerPatterns = ["jj describe", "git commit"];
-	if (!triggerPatterns.some((p) => command.includes(p))) {
+	// `jj describe` (jj projects) AND `git commit` (git projects). Word-
+	// boundary anchors (\b) prevent substring false-positives like
+	// `git config user.email "git committer"` ("committer" contains "commit"
+	// as a substring), `cat git-commit-template.md`, or `echo "git commit"`
+	// inside an unrelated string literal.
+	const TRIGGER_RE = /\b(jj describe|git commit)\b/;
+	if (!TRIGGER_RE.test(command)) {
 		syslog(cwd, "skip — no jj describe / git commit in command");
 		process.exit(0);
 	}
