@@ -1,17 +1,22 @@
 #!/usr/bin/env node
 
 /**
- * Dual-mode eval trigger.
+ * Dual-mode eval trigger. Works with both jj and plain git.
  *
  * 1) PostToolUse hook mode (default): fires on Bash tool calls containing
- *    `jj describe`. Reads the hook event JSON from stdin. Spawns the evaluator
- *    runner as a detached background process.
+ *    `jj describe` (jj projects) or `git commit` (git projects). Reads the
+ *    hook event JSON from stdin. Spawns the evaluator runner as a detached
+ *    background process.
  *
  * 2) CLI mode (`--source <tag>`): invoked manually by skills (e.g., handoff)
- *    at session end. No stdin read, no `jj describe` filter. Uses the current
- *    @ change and passes the source tag to the evaluator via INDUSK_EVAL_SOURCE.
- *    The evaluator may skip diff-based scoring when source != "commit" but still
- *    processes the highlights queue.
+ *    at session end. No stdin read, no trigger-command filter. Uses the
+ *    current change/commit ID and passes the source tag to the evaluator
+ *    via INDUSK_EVAL_SOURCE. The evaluator may skip diff-based scoring when
+ *    source != "commit" but still processes the highlights queue.
+ *
+ * SCM detection: tries jj first (`jj log -r @`), falls back to git
+ * (`git rev-parse --short HEAD`) on jj failure. Mirrors the runtime
+ * detection pattern used by `apps/indusk-mcp/src/lib/scm/index.ts`.
  *
  * Exit 0 always — this is advisory, not blocking.
  */
@@ -46,7 +51,7 @@ let cwd;
 let command = "";
 
 if (cliSource !== null) {
-	// CLI mode — no stdin, no jj describe filter
+	// CLI mode — no stdin, no jj describe / git commit filter
 	cwd = process.cwd();
 	syslog(cwd, `cli invocation — source: ${cliSource}`);
 } else {
@@ -63,9 +68,12 @@ if (cliSource !== null) {
 
 	syslog(cwd, `hook fired — tool: ${event.tool_name}, command: ${command.slice(0, 100)}`);
 
-	// Fast path: not a jj describe command
-	if (!command.includes("jj describe")) {
-		syslog(cwd, "skip — no jj describe in command");
+	// Fast path: not a recognized commit-trigger command. The hook fires on
+	// `jj describe` (jj projects) AND `git commit` (git projects) — match
+	// either, skip otherwise.
+	const triggerPatterns = ["jj describe", "git commit"];
+	if (!triggerPatterns.some((p) => command.includes(p))) {
+		syslog(cwd, "skip — no jj describe / git commit in command");
 		process.exit(0);
 	}
 }
