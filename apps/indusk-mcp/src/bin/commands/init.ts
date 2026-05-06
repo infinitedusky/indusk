@@ -1188,6 +1188,20 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		`  create: .indusk/config.json (mode: ${config.mode}, scm: ${scm ?? "deferred — run 'indusk update' after git/jj init"})`,
 	);
 
+	// Loud stderr warning when scm is deferred. The inline `(scm: deferred ...)`
+	// note above lands on stdout in the middle of the [Config] block — easy
+	// to miss when scrolling init output. A separate stderr warning gives
+	// the user a recognizable alert with the recovery command spelled out.
+	if (!scm) {
+		process.stderr.write(
+			"\n⚠ WARNING: scm field deferred — neither jj nor git detected at the project root.\n" +
+				"  All SCM-coupled features (eval prompts, semantic graph, baseline CLI) will\n" +
+				"  default to jj until the field is populated. To fix:\n" +
+				"    1. Initialize your SCM: `git init` or `jj git init`\n" +
+				"    2. Run `indusk update` to detect and write the scm field.\n\n",
+		);
+	}
+
 	// Create initial handoff so /catchup runs full orientation on first session
 	const handoffPath = join(projectRoot, ".claude/handoff.md");
 	if (!existsSync(handoffPath) || force) {
