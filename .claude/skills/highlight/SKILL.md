@@ -3,7 +3,7 @@ name: highlight
 description: Flag a moment in the session as worth remembering. Writes a highlight to the queue so the eval agent can materialize it into a structured Graphiti episode.
 ---
 
-You are flagging something the user wants captured — an observation, a decision, a surprise, a lesson that isn't an official retrospective yet. Write a highlight to the queue. The eval agent will process it into a structured Graphiti episode on the next `jj describe` or at session end.
+You are flagging something the user wants captured — an observation, a decision, a surprise, a lesson that isn't an official retrospective yet. Write a highlight to the queue. The eval agent will process it into a structured Graphiti episode on the next commit (`jj describe` on jj projects, `git commit` on git projects) or at session end.
 
 ## Invocation
 
@@ -36,7 +36,7 @@ The user runs `/highlight {free-form text} [level: critical|important|note]`.
 
 4. **Confirm to the user** with the generated ID and a one-line summary:
 
-   > "Highlighted as `h-20260417-007` (level: critical, tag: decision). The eval agent will pick this up on the next `jj describe` or at session end."
+   > "Highlighted as `h-20260417-007` (level: critical, tag: decision). The eval agent will pick this up on the next commit (`jj describe` / `git commit`) or at session end."
 
 ## Rules
 

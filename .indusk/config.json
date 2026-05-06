@@ -27,5 +27,6 @@
 		"otel": {
 			"enabled": true
 		}
-	}
+	},
+	"scm": "jj"
 }

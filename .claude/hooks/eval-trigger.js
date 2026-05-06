@@ -1,17 +1,22 @@
 #!/usr/bin/env node
 
 /**
- * Dual-mode eval trigger.
+ * Dual-mode eval trigger. Works with both jj and plain git.
  *
  * 1) PostToolUse hook mode (default): fires on Bash tool calls containing
- *    `jj describe`. Reads the hook event JSON from stdin. Spawns the evaluator
- *    runner as a detached background process.
+ *    `jj describe` (jj projects) or `git commit` (git projects). Reads the
+ *    hook event JSON from stdin. Spawns the evaluator runner as a detached
+ *    background process.
  *
  * 2) CLI mode (`--source <tag>`): invoked manually by skills (e.g., handoff)
- *    at session end. No stdin read, no `jj describe` filter. Uses the current
- *    @ change and passes the source tag to the evaluator via INDUSK_EVAL_SOURCE.
- *    The evaluator may skip diff-based scoring when source != "commit" but still
- *    processes the highlights queue.
+ *    at session end. No stdin read, no trigger-command filter. Uses the
+ *    current change/commit ID and passes the source tag to the evaluator
+ *    via INDUSK_EVAL_SOURCE. The evaluator may skip diff-based scoring when
+ *    source != "commit" but still processes the highlights queue.
+ *
+ * SCM detection: tries jj first (`jj log -r @`), falls back to git
+ * (`git rev-parse --short HEAD`) on jj failure. Mirrors the runtime
+ * detection pattern used by `apps/indusk-mcp/src/lib/scm/index.ts`.
  *
  * Exit 0 always — this is advisory, not blocking.
  */
@@ -46,7 +51,7 @@ let cwd;
 let command = "";
 
 if (cliSource !== null) {
-	// CLI mode — no stdin, no jj describe filter
+	// CLI mode — no stdin, no jj describe / git commit filter
 	cwd = process.cwd();
 	syslog(cwd, `cli invocation — source: ${cliSource}`);
 } else {
@@ -58,14 +63,35 @@ if (cliSource !== null) {
 
 	const event = JSON.parse(input);
 	const toolInput = event.tool_input ?? {};
+	const toolResponse = event.tool_response ?? {};
 	command = toolInput.command ?? "";
 	cwd = event.cwd ?? process.cwd();
 
 	syslog(cwd, `hook fired — tool: ${event.tool_name}, command: ${command.slice(0, 100)}`);
 
-	// Fast path: not a jj describe command
-	if (!command.includes("jj describe")) {
-		syslog(cwd, "skip — no jj describe in command");
+	// Fast path: skip failed bash commands. PostToolUse hooks fire regardless
+	// of the underlying command's exit code, so a `git commit` that fails
+	// (no staged changes, pre-commit hook rejection, signing failure) would
+	// otherwise trigger an eval against the PREVIOUS commit's SHA — producing
+	// a misleading scorecard for stale state. Read tool_response.exit_code
+	// (Claude Code's hook event shape) and skip when non-zero. Treats missing
+	// exit_code as 0 (success) — preserves prior behavior on hook events that
+	// don't carry the field.
+	const exitCode = toolResponse.exit_code ?? 0;
+	if (exitCode !== 0) {
+		syslog(cwd, `skip — bash command failed (exit_code=${exitCode})`);
+		process.exit(0);
+	}
+
+	// Fast path: not a recognized commit-trigger command. The hook fires on
+	// `jj describe` (jj projects) AND `git commit` (git projects). Word-
+	// boundary anchors (\b) prevent substring false-positives like
+	// `git config user.email "git committer"` ("committer" contains "commit"
+	// as a substring), `cat git-commit-template.md`, or `echo "git commit"`
+	// inside an unrelated string literal.
+	const TRIGGER_RE = /\b(jj describe|git commit)\b/;
+	if (!TRIGGER_RE.test(command)) {
+		syslog(cwd, "skip — no jj describe / git commit in command");
 		process.exit(0);
 	}
 }
@@ -114,16 +140,36 @@ if (!evalConfig.enabled) {
 	process.exit(0);
 }
 
-// Get the current change ID
+// Get the current change/commit ID. Try jj first, fall back to git.
+// Mirrors the pattern in `apps/indusk-mcp/src/lib/scm/index.ts:getCurrentChangeId`.
 let changeId;
 try {
+	// Try jj first — preserves existing behavior for jj-using projects.
 	changeId = execSync("jj log -r @ --no-graph -T change_id", {
 		cwd: projectRoot,
 		encoding: "utf8",
 		timeout: 5000,
 	}).trim();
 } catch {
-	// Can't get change ID — skip eval silently
+	// jj unavailable, no jj repo, or other failure — fall through.
+}
+if (!changeId) {
+	try {
+		// Fall back to git short SHA. On git-mode projects this is the only
+		// path; on jj-only projects (jj managing without colocated git) this
+		// would also fail, in which case we skip silently below.
+		changeId = execSync("git rev-parse --short HEAD", {
+			cwd: projectRoot,
+			encoding: "utf8",
+			timeout: 5000,
+		}).trim();
+	} catch {
+		// Both failed — skip eval silently. No change/commit ID means we have
+		// nothing meaningful to evaluate against.
+	}
+}
+if (!changeId) {
+	syslog(projectRoot, "skip — no SCM change/commit ID available (neither jj nor git produced one)");
 	process.exit(0);
 }
 
