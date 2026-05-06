@@ -60,9 +60,9 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T13 | H2-A: `indusk graph status` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT print the misleading `run 'indusk graph sync' first` hint | Phase 0 | Phase 6 | passing |
 | T14 | H2-B: `indusk graph rebuild` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT clear the runtime or attempt replay | Phase 0 | Phase 6 | passing |
 | T15 | H1-C: `apps/indusk-mcp/src/bin/commands/init.ts` syncs ALL `.js` files from the package's `hooks/` directory (eval-trigger.js included) — verified by source grep that init's hook copy uses `globSync` rather than a hardcoded list | Phase 0 | Phase 6 | passing |
-| T16 | H3: `eval-trigger.js`'s trigger filter does NOT fire on `git config user.email "git committer"` (substring false-positive — "committer" contains "commit"); does fire on a real `git commit -m "..."` | Phase 0 | Phase 7 | written |
-| T17 | H4: `eval-trigger.js` skips when `event.tool_response.exit_code` is non-zero (failed commit) — does not run the eval against a previous commit's SHA | Phase 0 | Phase 7 | written |
-| T18 | H5: `indusk init` in a tmpdir without `git init`/`jj git init` first prints a stderr warning naming the recovery command (`indusk update` after initializing SCM) | Phase 0 | Phase 7 | written |
+| T16 | H3: `eval-trigger.js`'s trigger filter does NOT fire on `git config user.email "git committer"` (substring false-positive — "committer" contains "commit"); does fire on a real `git commit -m "..."` | Phase 0 | Phase 7 | passing |
+| T17 | H4: `eval-trigger.js` skips when `event.tool_response.exit_code` is non-zero (failed commit) — does not run the eval against a previous commit's SHA | Phase 0 | Phase 7 | passing |
+| T18 | H5: `indusk init` in a tmpdir without `git init`/`jj git init` first prints a stderr warning naming the recovery command (`indusk update` after initializing SCM) | Phase 0 | Phase 7 | passing |
 
 ### Trajectory Rationale
 
@@ -277,9 +277,9 @@ Each row goes from `written → passing` once the corresponding fix lands. Run a
 
 Each trajectory row below captures one hypothesis test; each checklist item captures the fix the code needs.
 
-- [ ] **H3 fix — `eval-trigger.js` trigger filter regex**: replace the `String.includes` calls with a single regex that anchors on word boundaries: `const TRIGGER_RE = /\b(jj describe|git commit)\b/; if (!TRIGGER_RE.test(command))`. Word-boundary `\b` matches the position between a word char and a non-word char, preventing `git committer` / `git-commit-template.md` substring false-positives. The skip-message stays as `"skip — no jj describe / git commit in command"`.
-- [ ] **H4 fix — `eval-trigger.js` exit_code check**: read `event.tool_response?.exit_code` from the hook input. If non-zero, `syslog(cwd, "skip — bash command failed (exit_code=N)")` and `process.exit(0)` BEFORE the trigger-filter check. Failed commits don't produce evaluation-worthy state.
-- [ ] **H5 fix — `init.ts` deferred-SCM warning**: when `detectScm` throws and the `scm` field is omitted, print a clear stderr block at the end of init's [Config] section: `⚠ scm field deferred — neither jj nor git detected. After running 'git init' or 'jj git init', run 'indusk update' to populate the field. Until then, all SCM-coupled features default to jj.`
+- [x] **H3 fix — `eval-trigger.js` trigger filter regex**: replace the `String.includes` calls with a single regex that anchors on word boundaries: `const TRIGGER_RE = /\b(jj describe|git commit)\b/; if (!TRIGGER_RE.test(command))`. Word-boundary `\b` matches the position between a word char and a non-word char, preventing `git committer` / `git-commit-template.md` substring false-positives. The skip-message stays as `"skip — no jj describe / git commit in command"`.
+- [x] **H4 fix — `eval-trigger.js` exit_code check**: read `event.tool_response?.exit_code` from the hook input. If non-zero, `syslog(cwd, "skip — bash command failed (exit_code=N)")` and `process.exit(0)` BEFORE the trigger-filter check. Failed commits don't produce evaluation-worthy state.
+- [x] **H5 fix — `init.ts` deferred-SCM warning**: when `detectScm` throws and the `scm` field is omitted, print a clear stderr block at the end of init's [Config] section: `⚠ scm field deferred — neither jj nor git detected. After running 'git init' or 'jj git init', run 'indusk update' to populate the field. Until then, all SCM-coupled features default to jj.`
 
 #### Phase 7 Verification
 
