@@ -122,16 +122,36 @@ if (!evalConfig.enabled) {
 	process.exit(0);
 }
 
-// Get the current change ID
+// Get the current change/commit ID. Try jj first, fall back to git.
+// Mirrors the pattern in `apps/indusk-mcp/src/lib/scm/index.ts:getCurrentChangeId`.
 let changeId;
 try {
+	// Try jj first — preserves existing behavior for jj-using projects.
 	changeId = execSync("jj log -r @ --no-graph -T change_id", {
 		cwd: projectRoot,
 		encoding: "utf8",
 		timeout: 5000,
 	}).trim();
 } catch {
-	// Can't get change ID — skip eval silently
+	// jj unavailable, no jj repo, or other failure — fall through.
+}
+if (!changeId) {
+	try {
+		// Fall back to git short SHA. On git-mode projects this is the only
+		// path; on jj-only projects (jj managing without colocated git) this
+		// would also fail, in which case we skip silently below.
+		changeId = execSync("git rev-parse --short HEAD", {
+			cwd: projectRoot,
+			encoding: "utf8",
+			timeout: 5000,
+		}).trim();
+	} catch {
+		// Both failed — skip eval silently. No change/commit ID means we have
+		// nothing meaningful to evaluate against.
+	}
+}
+if (!changeId) {
+	syslog(projectRoot, "skip — no SCM change/commit ID available (neither jj nor git produced one)");
 	process.exit(0);
 }
 
