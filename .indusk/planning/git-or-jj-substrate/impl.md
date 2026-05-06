@@ -55,11 +55,11 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T8 | A8: after `git commit -m "..."` inside a Claude Code session in a git-mode fixture, a scorecard entry appears in `.indusk/eval/results.log` within 60s | Phase 0 | Phase 5 | skipped |
 | T9 | A9: `apps/indusk-mcp/skills/git.md` exists with `git commit -m` content; `apps/indusk-mcp/skills/jj.md` is byte-equal to its pre-Phase-4 content | Phase 0 | Phase 4 | passing |
 | T10 | A10: `apps/indusk-mcp/skills/work.md` commit-cadence section contains both `jj describe` and `git commit` | Phase 0 | Phase 4 | passing |
-| T11 | H1-A: `eval-trigger.js`'s skip filter accepts a hook event whose `command` contains `git commit` (does NOT early-exit on the filter check) | Phase 0 | Phase 6 | planned |
-| T12 | H1-B: `eval-trigger.js` simulated against a git-only tmpdir resolves a non-empty changeId via git fallback (doesn't exit silently when jj is missing) | Phase 0 | Phase 6 | planned |
-| T13 | H2-A: `indusk graph status` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT print the misleading `run 'indusk graph sync' first` hint | Phase 0 | Phase 6 | planned |
-| T14 | H2-B: `indusk graph rebuild` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT clear the runtime or attempt replay | Phase 0 | Phase 6 | planned |
-| T15 | H1-C: `apps/indusk-mcp/src/bin/commands/init.ts` syncs ALL `.js` files from the package's `hooks/` directory (eval-trigger.js included) — verified by source grep that init's hook copy uses `globSync` rather than a hardcoded list | Phase 0 | Phase 6 | planned |
+| T11 | H1-A: `eval-trigger.js`'s skip filter accepts a hook event whose `command` contains `git commit` (does NOT early-exit on the filter check) | Phase 0 | Phase 6 | written |
+| T12 | H1-B: `eval-trigger.js` simulated against a git-only tmpdir resolves a non-empty changeId via git fallback (doesn't exit silently when jj is missing) | Phase 0 | Phase 6 | written |
+| T13 | H2-A: `indusk graph status` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT print the misleading `run 'indusk graph sync' first` hint | Phase 0 | Phase 6 | written |
+| T14 | H2-B: `indusk graph rebuild` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT clear the runtime or attempt replay | Phase 0 | Phase 6 | written |
+| T15 | H1-C: `apps/indusk-mcp/src/bin/commands/init.ts` syncs ALL `.js` files from the package's `hooks/` directory (eval-trigger.js included) — verified by source grep that init's hook copy uses `globSync` rather than a hardcoded list | Phase 0 | Phase 6 | written |
 
 ### Trajectory Rationale
 
@@ -246,11 +246,11 @@ Each trajectory row below captures one hypothesis test; each checklist item capt
 
 #### Phase 6 Verification
 
-- [ ] T11 (write red): vitest unit test asserting `eval-trigger.js`'s skip-filter accepts `git commit`. Authored against current source — fails because filter rejects `git commit`. Goes green after H1 fix A.
-- [ ] T12 (write red): integration test simulating eval-trigger on a git-only tmpdir — pipe a fake hook event with `command: "git commit -m \"test\""`, assert the hook proceeds past the filter and resolves a non-empty changeId. Today fails (filter rejects, OR `jj log` errors out). Goes green after H1 A + B both land.
-- [ ] T13 (write red): end-to-end test running `indusk graph status` on a git-mode tmpdir; asserts exit 0 + stderr contains `git mode — semantic graph unavailable`. Today exits 0 with the misleading "run sync first" hint. Goes green after H2 A.
-- [ ] T14 (write red): end-to-end test running `indusk graph rebuild` on a git-mode tmpdir; same assertion shape. Goes green after H2 B.
-- [ ] T15 (write red): unit test asserting `apps/indusk-mcp/src/bin/commands/init.ts` uses `globSync("*.js", ...)` for hook installation (i.e., source grep for `globSync` near the hook copy block). Today fails — init has a hardcoded list. Goes green after H1 fix C.
+- [x] T11 (write red): vitest unit test asserting `eval-trigger.js`'s skip-filter accepts `git commit`. Authored against current source — fails because filter rejects `git commit`. Goes green after H1 fix A.
+- [x] T12 (write red): integration test simulating eval-trigger on a git-only tmpdir — pipe a fake hook event with `command: "git commit -m \"test\""`, assert the hook proceeds past the filter and resolves a non-empty changeId. Today fails (filter rejects, OR `jj log` errors out). Goes green after H1 A + B both land. (Implemented as source-level tests in `eval-trigger-git-mode.test.ts` rather than full hook-spawn simulation — the hook is short and the pattern is purely textual; full simulation would be heavier without proportional value.)
+- [x] T13 (write red): end-to-end test running `indusk graph status` on a git-mode tmpdir; asserts exit 0 + stderr contains `git mode — semantic graph unavailable`. Today exits 0 with the misleading "run sync first" hint. Goes green after H2 A.
+- [x] T14 (write red): end-to-end test running `indusk graph rebuild` on a git-mode tmpdir; same assertion shape. Goes green after H2 B.
+- [x] T15 (write red): unit test asserting `apps/indusk-mcp/src/bin/commands/init.ts` uses `globSync("*.js", ...)` for hook installation (i.e., source grep for `globSync` near the hook copy block). Today fails — init has a hardcoded list. Goes green after H1 fix C.
 
 Each row goes from `written → passing` once the corresponding fix lands. Run all five tests after each fix to make sure none regress.
 
