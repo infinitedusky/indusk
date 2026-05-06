@@ -5,6 +5,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { GraphitiClient } from "../lib/graphiti-client.js";
+import { getScm } from "../lib/scm/detect.js";
 import { CgcAdapter } from "../lib/semantic-graph/adapters/cgc.js";
 import { captureWithLog } from "../lib/semantic-graph/graphiti-log-wrapper.js";
 import { readAllEvents } from "../lib/semantic-graph/log-reader.js";
@@ -595,6 +596,20 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				"Sync the semantic graph: snapshot CGC structural data, diff against runtime, emit events. Returns delta counts (created, moved, tombstoned, edges).",
 		},
 		async () => {
+			// Graceful-degrade on git mode. The semantic graph is jj-only in v1
+			// (see git-or-jj-substrate Phase 2). `runSync` already early-returns
+			// internally, but the wrapper short-circuits with an explicit message
+			// so the MCP response is human-readable instead of an empty SyncResult.
+			if (getScm(projectRoot) === "git") {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: "git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)",
+						},
+					],
+				};
+			}
 			try {
 				const projectName = basename(projectRoot);
 				const adapter = new CgcAdapter();
@@ -629,6 +644,16 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				"Clear the semantic graph runtime and rebuild from the event log. The runtime is disposable — this is always safe. Returns replay counts.",
 		},
 		async () => {
+			if (getScm(projectRoot) === "git") {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: "git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)",
+						},
+					],
+				};
+			}
 			try {
 				const projectName = basename(projectRoot);
 				const logPath = getLogPath(projectRoot);
@@ -669,6 +694,16 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				"Show semantic graph status: log path, event count, log size, runtime anchor/edge counts, last sync time.",
 		},
 		async () => {
+			if (getScm(projectRoot) === "git") {
+				return {
+					content: [
+						{
+							type: "text" as const,
+							text: "git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)",
+						},
+					],
+				};
+			}
 			try {
 				const projectName = basename(projectRoot);
 				const logPath = getLogPath(projectRoot);
