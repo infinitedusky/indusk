@@ -55,11 +55,11 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T8 | A8: after `git commit -m "..."` inside a Claude Code session in a git-mode fixture, a scorecard entry appears in `.indusk/eval/results.log` within 60s | Phase 0 | Phase 5 | skipped |
 | T9 | A9: `apps/indusk-mcp/skills/git.md` exists with `git commit -m` content; `apps/indusk-mcp/skills/jj.md` is byte-equal to its pre-Phase-4 content | Phase 0 | Phase 4 | passing |
 | T10 | A10: `apps/indusk-mcp/skills/work.md` commit-cadence section contains both `jj describe` and `git commit` | Phase 0 | Phase 4 | passing |
-| T11 | H1-A: `eval-trigger.js`'s skip filter accepts a hook event whose `command` contains `git commit` (does NOT early-exit on the filter check) | Phase 0 | Phase 6 | written |
-| T12 | H1-B: `eval-trigger.js` simulated against a git-only tmpdir resolves a non-empty changeId via git fallback (doesn't exit silently when jj is missing) | Phase 0 | Phase 6 | written |
-| T13 | H2-A: `indusk graph status` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT print the misleading `run 'indusk graph sync' first` hint | Phase 0 | Phase 6 | written |
-| T14 | H2-B: `indusk graph rebuild` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT clear the runtime or attempt replay | Phase 0 | Phase 6 | written |
-| T15 | H1-C: `apps/indusk-mcp/src/bin/commands/init.ts` syncs ALL `.js` files from the package's `hooks/` directory (eval-trigger.js included) — verified by source grep that init's hook copy uses `globSync` rather than a hardcoded list | Phase 0 | Phase 6 | written |
+| T11 | H1-A: `eval-trigger.js`'s skip filter accepts a hook event whose `command` contains `git commit` (does NOT early-exit on the filter check) | Phase 0 | Phase 6 | passing |
+| T12 | H1-B: `eval-trigger.js` simulated against a git-only tmpdir resolves a non-empty changeId via git fallback (doesn't exit silently when jj is missing) | Phase 0 | Phase 6 | passing |
+| T13 | H2-A: `indusk graph status` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT print the misleading `run 'indusk graph sync' first` hint | Phase 0 | Phase 6 | passing |
+| T14 | H2-B: `indusk graph rebuild` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT clear the runtime or attempt replay | Phase 0 | Phase 6 | passing |
+| T15 | H1-C: `apps/indusk-mcp/src/bin/commands/init.ts` syncs ALL `.js` files from the package's `hooks/` directory (eval-trigger.js included) — verified by source grep that init's hook copy uses `globSync` rather than a hardcoded list | Phase 0 | Phase 6 | passing |
 
 ### Trajectory Rationale
 
@@ -240,9 +240,9 @@ Each trajectory row below captures one hypothesis test; each checklist item capt
 - [x] **H1 fix part A — `eval-trigger.js` line 67**: extend the trigger filter to match BOTH `jj describe` AND `git commit`. Replace `if (!command.includes("jj describe"))` with `const triggerPatterns = ["jj describe", "git commit"]; if (!triggerPatterns.some(p => command.includes(p)))`. The skip-message becomes "skip — no jj describe / git commit in command".
 - [x] **H1 fix part B — `eval-trigger.js` line 120**: try jj first for the change ID; on jj failure, fall back to `git rev-parse --short HEAD`. Only exit silently if BOTH fail. Pattern lifted from `apps/indusk-mcp/src/lib/scm/index.ts:getCurrentChangeId`.
 - [x] **H1 fix part C — file installation**: confirm `eval-trigger.js` lands at `.claude/hooks/eval-trigger.js` on `indusk init` (currently `init.ts:942-947`'s `hookFiles` array is hardcoded and missing eval-trigger; only `update.ts:240`'s `globSync` gets it). If init doesn't ship the hook, T8 can't pass on a fresh-init project. Switch `init.ts` to `globSync("*.js", { cwd: hooksSource })` so any hook the package ships gets installed — same pattern update already uses. (Adjacent to H1; would have surfaced as part of T8 manual smoke even if H1 itself were already correct.)
-- [ ] **H2 fix part A — `cli.ts` `graph status` action**: read `getScm(projectRoot)` after `rootOrExit()`. If `"git"`, print `git mode — semantic graph unavailable in v1; sync/status/rebuild are jj-only` to stderr and exit 0 BEFORE attempting log inspection. Match the `runSync()` graceful-degrade message pattern.
-- [ ] **H2 fix part B — `cli.ts` `graph rebuild` action**: same SCM check, same early-return + message.
-- [ ] **H2 fix part C — also-MCP-tools**: `mcp__indusk__graph_sync`, `graph_rebuild`, `graph_status` MCP tools should emit the same git-mode message. Verify the MCP wrappers reuse the CLI logic; if not, add the same `getScm()` branch.
+- [x] **H2 fix part A — `cli.ts` `graph status` action**: read `getScm(projectRoot)` after `rootOrExit()`. If `"git"`, print `git mode — semantic graph unavailable in v1; sync/status/rebuild are jj-only` to stderr and exit 0 BEFORE attempting log inspection. Match the `runSync()` graceful-degrade message pattern.
+- [x] **H2 fix part B — `cli.ts` `graph rebuild` action**: same SCM check, same early-return + message.
+- [x] **H2 fix part C — also-MCP-tools**: `mcp__indusk__graph_sync`, `graph_rebuild`, `graph_status` MCP tools should emit the same git-mode message. Verify the MCP wrappers reuse the CLI logic; if not, add the same `getScm()` branch. (Confirmed: the MCP tools at `apps/indusk-mcp/src/tools/graph-tools.ts` are SEPARATE from the CLI actions — they call `runSync` / `replay` directly without going through cli.ts. Added explicit `getScm()` early-returns in all three MCP wrappers so the agent gets a clear git-mode message in the tool response, not just an empty SyncResult struct.)
 
 #### Phase 6 Verification
 
