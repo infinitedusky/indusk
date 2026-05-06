@@ -63,10 +63,25 @@ if (cliSource !== null) {
 
 	const event = JSON.parse(input);
 	const toolInput = event.tool_input ?? {};
+	const toolResponse = event.tool_response ?? {};
 	command = toolInput.command ?? "";
 	cwd = event.cwd ?? process.cwd();
 
 	syslog(cwd, `hook fired — tool: ${event.tool_name}, command: ${command.slice(0, 100)}`);
+
+	// Fast path: skip failed bash commands. PostToolUse hooks fire regardless
+	// of the underlying command's exit code, so a `git commit` that fails
+	// (no staged changes, pre-commit hook rejection, signing failure) would
+	// otherwise trigger an eval against the PREVIOUS commit's SHA — producing
+	// a misleading scorecard for stale state. Read tool_response.exit_code
+	// (Claude Code's hook event shape) and skip when non-zero. Treats missing
+	// exit_code as 0 (success) — preserves prior behavior on hook events that
+	// don't carry the field.
+	const exitCode = toolResponse.exit_code ?? 0;
+	if (exitCode !== 0) {
+		syslog(cwd, `skip — bash command failed (exit_code=${exitCode})`);
+		process.exit(0);
+	}
 
 	// Fast path: not a recognized commit-trigger command. The hook fires on
 	// `jj describe` (jj projects) AND `git commit` (git projects). Word-
