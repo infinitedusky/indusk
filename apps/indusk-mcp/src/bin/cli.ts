@@ -253,8 +253,20 @@ graph
 		const { getLogPath } = await import("../lib/semantic-graph/paths.js");
 		const { readAllEvents } = await import("../lib/semantic-graph/log-reader.js");
 		const { SemanticGraphClient } = await import("../lib/semantic-graph/runtime-client.js");
+		const { getScm } = await import("../lib/scm/detect.js");
 
 		const projectRoot = rootOrExit();
+
+		// Graceful-degrade on git mode. Semantic graph is jj-only in v1; without
+		// this branch, status would print `(no log file — run 'indusk graph sync'
+		// first)` which is misleading on git projects (sync no-ops).
+		if (getScm(projectRoot) === "git") {
+			process.stderr.write(
+				"git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)\n",
+			);
+			return;
+		}
+
 		const projectName = basename(projectRoot);
 		const logPath = getLogPath(projectRoot);
 
