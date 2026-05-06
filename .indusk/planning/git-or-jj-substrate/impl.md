@@ -256,8 +256,8 @@ Each row goes from `written → passing` once the corresponding fix lands. Run a
 
 #### Phase 6 Context
 
-- [ ] Update CLAUDE.md Conventions: Add "**The eval-trigger hook fires on `jj describe` AND `git commit`** (`git-or-jj-substrate` Phase 6). Both trigger patterns are matched in `apps/indusk-mcp/hooks/eval-trigger.js`'s skip filter; change-ID extraction tries jj first and falls back to `git rev-parse --short HEAD`. `indusk graph status/rebuild` early-return on git-mode projects with the same `git mode — semantic graph unavailable` message that `runSync()` uses. Don't add new SCM-coupled CLI commands without branching on `getScm()` first."
-- [ ] Update CLAUDE.md Known Gotchas: Add "**`init.ts` uses a hardcoded `hookFiles` array; `update.ts` uses `globSync`** — pre-Phase-6 init missed `eval-trigger.js` (registered in settings.json but never copied to `.claude/hooks/`); fixed by switching init to globSync. When adding a new hook to `apps/indusk-mcp/hooks/`, verify both init AND update sync it; the gap is invisible because settings.json registration succeeds while the file is missing."
+- [x] Update CLAUDE.md Conventions: Add "**The eval-trigger hook fires on `jj describe` AND `git commit`** (`git-or-jj-substrate` Phase 6). Both trigger patterns are matched in `apps/indusk-mcp/hooks/eval-trigger.js`'s skip filter; change-ID extraction tries jj first and falls back to `git rev-parse --short HEAD`. `indusk graph status/rebuild` early-return on git-mode projects with the same `git mode — semantic graph unavailable` message that `runSync()` uses. Don't add new SCM-coupled CLI commands without branching on `getScm()` first."
+- [x] Update CLAUDE.md Known Gotchas: Add "**`init.ts` uses a hardcoded `hookFiles` array; `update.ts` uses `globSync`** — pre-Phase-6 init missed `eval-trigger.js` (registered in settings.json but never copied to `.claude/hooks/`); fixed by switching init to globSync. When adding a new hook to `apps/indusk-mcp/hooks/`, verify both init AND update sync it; the gap is invisible because settings.json registration succeeds while the file is missing."
 
 #### Phase 6 Document
 
