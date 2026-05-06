@@ -935,23 +935,23 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	} // end isInduskMcp else
 
-	// 8. Install gate enforcement hooks
+	// 8. Install gate enforcement + eval-trigger hooks. Discover hook files
+	// from the package source via globSync rather than maintaining a hardcoded
+	// list — matches the pattern in `update.ts:240` so any new hook the
+	// package ships gets installed on next `init` without code changes.
+	// Pre-Phase-6 (git-or-jj-substrate) the array was hardcoded and missed
+	// `eval-trigger.js`; settings.json registered it but the file was never
+	// copied, so the eval hook silently never fired on fresh-init projects.
 	console.info("\n[Hooks]");
 	const hooksSource = join(packageRoot, "hooks");
 	const hooksTarget = join(projectRoot, ".claude/hooks");
-	const hookFiles = [
-		"check-gates.js",
-		"gate-reminder.js",
-		"validate-impl-structure.js",
-		"check-catchup.js",
-	];
 
 	if (existsSync(hooksSource)) {
 		mkdirSync(hooksTarget, { recursive: true });
+		const hookFiles = globSync("*.js", { cwd: hooksSource });
 		for (const file of hookFiles) {
 			const sourceFile = join(hooksSource, file);
 			const targetFile = join(hooksTarget, file);
-			if (!existsSync(sourceFile)) continue;
 			if (existsSync(targetFile) && !force) {
 				console.info(`  skip: .claude/hooks/${file} (already exists)`);
 			} else {

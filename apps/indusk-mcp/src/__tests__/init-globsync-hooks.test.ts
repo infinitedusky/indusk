@@ -28,11 +28,12 @@ describe("init.ts syncs hooks via globSync (T15)", () => {
 	it("uses globSync to discover hook files (matching update.ts's pattern)", () => {
 		// After H1-C, init's hook installation block should call
 		// globSync("*.js", { cwd: hooksSource }) — same as update.ts:240.
-		// Find the section that mentions "[Hooks]" or hooks installation,
-		// then check globSync is used in that vicinity.
-		const hooksSectionIdx = source.indexOf("// 8. Install gate enforcement hooks");
+		// Find the section by the stable "[Hooks]" header, then check
+		// globSync is used in that vicinity.
+		const hooksSectionIdx = source.indexOf('"\\n[Hooks]"');
 		expect(hooksSectionIdx, "hooks install section should exist").toBeGreaterThan(-1);
-		// Window from "// 8." until ~600 chars later should contain globSync
+		// Window from the [Hooks] header until ~800 chars later should
+		// contain a globSync call against the hooks source dir.
 		const window = source.slice(hooksSectionIdx, hooksSectionIdx + 800);
 		expect(window).toMatch(/globSync\s*\(\s*['"`]\*\.js['"`]/);
 	});
