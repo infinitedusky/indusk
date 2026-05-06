@@ -8,7 +8,7 @@ InDusk supports two source control systems: [Jujutsu](https://github.com/jj-vcs/
 
 1. **Tries `jj log -r @` first.** If your repo has a colocated `.jj/` directory (jj overlaid on top of git, jj's normal mode of operation), jj wins.
 2. **Falls back to `git rev-parse HEAD`.** Plain-git repos take this branch.
-3. **Defers if neither succeeds.** A bare tmpdir with no SCM gets an `scm`-free config; the next `indusk update` (after you run `git init` / `jj git init`) populates the field.
+3. **Defers if neither succeeds.** A bare tmpdir with no SCM gets an `scm`-free config; the next `indusk update` (after you run `git init` / `jj git init`) populates the field. **Init prints a loud stderr `⚠ WARNING` when this happens**, naming the recovery command so you don't silently fall through to the default — without the warning, `getScm()` quietly defaults to `"jj"` and you may not notice until the eval hook starts telling Claude to run `jj diff` on what's actually a git project. After running `git init` (or `jj git init`), run `indusk update` and the warning goes away.
 
 The result is written to `.indusk/config.json`:
 

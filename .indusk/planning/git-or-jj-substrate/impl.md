@@ -1,7 +1,7 @@
 ---
 title: "git-or-jj-substrate"
 date: 2026-05-04
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -294,7 +294,7 @@ Each trajectory row below captures one hypothesis test; each checklist item capt
 
 #### Phase 7 Document
 
-- [ ] Update `apps/indusk-docs/src/guide/scm.md` "Detection at init" section to note the warning behavior — `indusk init` will print a deferred-SCM warning if neither tool is detected, and the recovery is `indusk update` after `git init`/`jj git init`. Currently the section says "Defers if neither succeeds" but doesn't mention that the user gets a visible signal.
+- [x] Update `apps/indusk-docs/src/guide/scm.md` "Detection at init" section to note the warning behavior — `indusk init` will print a deferred-SCM warning if neither tool is detected, and the recovery is `indusk update` after `git init`/`jj git init`. Currently the section says "Defers if neither succeeds" but doesn't mention that the user gets a visible signal.
 
 ## Files Affected
 
