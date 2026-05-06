@@ -121,7 +121,7 @@ The `graphiti` extension provides three health checks that run during `check_hea
 
 | Check | Command | Expected |
 |-------|---------|----------|
-| Container running | `docker inspect --format='{{.State.Running}}' indusk-infra` | `true` |
+| Container running | <code v-pre>docker inspect --format='{{.State.Running}}' indusk-infra</code> | `true` |
 | Graphiti reachable | `curl -sf http://localhost:8100/health` | `{"status":"healthy","service":"graphiti-mcp"}` |
 | FalkorDB reachable | `redis-cli -h localhost ping` | `PONG` |
 

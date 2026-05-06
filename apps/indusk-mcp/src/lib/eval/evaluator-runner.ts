@@ -9,7 +9,7 @@
 import { spawn } from "node:child_process";
 import { join } from "node:path";
 
-import { getProjectGroupId } from "../config.js";
+import { getEvalModel, getProjectGroupId } from "../config.js";
 import { getScm } from "../scm/detect.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
@@ -82,7 +82,7 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 		"--output-format",
 		"json",
 		"--model",
-		"opus",
+		getEvalModel(opts.projectRoot),
 		"--permission-mode",
 		"bypassPermissions",
 		"--mcp-config",
@@ -233,7 +233,7 @@ async function runEvaluatorSyncInner(
 		"--output-format",
 		"json",
 		"--model",
-		"opus",
+		getEvalModel(opts.projectRoot),
 		"--permission-mode",
 		"bypassPermissions",
 		"--mcp-config",

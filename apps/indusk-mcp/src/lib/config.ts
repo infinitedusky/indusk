@@ -85,6 +85,34 @@ export interface InduskConfig {
 	 */
 	scm?: "jj" | "git";
 	/**
+	 * Eval-agent configuration. Most of this is read directly via JSON
+	 * traversal in `lib/eval/otel.ts`; the schema here is documentary.
+	 */
+	eval?: {
+		enabled?: boolean;
+		endpoint?: string | null;
+		otel?: {
+			enabled?: boolean;
+			dataset?: string;
+		};
+		/**
+		 * Model the eval agent uses for fresh first-call evals. Accepts any
+		 * value Claude Code's `--model` flag accepts: shortcuts (`opus`,
+		 * `sonnet`, `haiku`) or full IDs (`claude-sonnet-4-6`).
+		 *
+		 * **Default: `"sonnet"`** — chosen because resume calls already drop
+		 * to Sonnet on Claude Code's machine default, so making first-call
+		 * also Sonnet matches the actual behavior most users experience and
+		 * cuts catchup cost ~5× ($4–$7 → $0.80–$1.50 per fresh call).
+		 *
+		 * Set to `"opus"` to force Opus on fresh first-call. Note: subsequent
+		 * resume calls do NOT re-pass `--model` (Claude Code's session model
+		 * inheritance is opaque from our side), so Opus on fresh-call may not
+		 * mean Opus on resume. Verify via `~/.claude/projects/<pkg>/<sessionId>.jsonl`.
+		 */
+		model?: string;
+	};
+	/**
 	 * Extensions the project has explicitly opted OUT of, even if they're
 	 * marked `required: true` in the built-in manifest. Escape hatch for
 	 * security/perf-constrained projects that can't run a localhost daemon
@@ -196,4 +224,26 @@ export function shouldEmitOtelGate(projectRoot: string): boolean {
 	const config = readConfig(projectRoot);
 	const role = config?.otel?.role;
 	return role === undefined || role === "service";
+}
+
+const DEFAULT_EVAL_MODEL = "sonnet";
+
+/**
+ * Model arg the eval agent passes to `claude --print --model <arg>` on fresh
+ * first-call evals. Reads `eval.model` from `.indusk/config.json`; defaults to
+ * `"sonnet"` when unset.
+ *
+ * Why default to sonnet: empirical pricing on resume calls (which don't pass
+ * `--model` and inherit Claude Code's machine default) shows ~5× cheaper than
+ * Opus. Defaulting fresh-call to Sonnet matches that behavior and saves the
+ * catchup-cost spike. Set `eval.model: "opus"` to opt back into Opus.
+ *
+ * Returns the raw string — pass directly to `--model`. Accepts any value
+ * Claude Code's `--model` accepts (`opus`, `sonnet`, `haiku`, full IDs).
+ */
+export function getEvalModel(projectRoot: string): string {
+	const config = readConfig(projectRoot);
+	const model = config?.eval?.model;
+	if (typeof model === "string" && model.length > 0) return model;
+	return DEFAULT_EVAL_MODEL;
 }

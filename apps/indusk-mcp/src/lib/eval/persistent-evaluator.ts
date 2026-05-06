@@ -11,7 +11,7 @@ import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-import { getProjectGroupId } from "../config.js";
+import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { getScm } from "../scm/detect.js";
 import { ingestScorecard } from "./findings.js";
@@ -255,7 +255,7 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 							"--output-format",
 							"json",
 							"--model",
-							"opus",
+							getEvalModel(opts.projectRoot),
 							"--permission-mode",
 							"bypassPermissions",
 							"--mcp-config",
@@ -279,7 +279,7 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 					"eval.spawn_claude",
 					{
 						"args.resumed": session !== null,
-						"args.model": session ? "(resumed)" : "opus",
+						"args.model": session ? "(resumed)" : getEvalModel(opts.projectRoot),
 					},
 					async (span) => {
 						const spawned = await spawnClaude(args, prompt, opts.projectRoot);

@@ -42,6 +42,7 @@ const config = defineConfig({
 			{ text: "Reference", link: "/reference/" },
 			{ text: "Decisions", link: "/decisions/" },
 			{ text: "Lessons", link: "/lessons/" },
+			{ text: "Dawn", link: "/dawn/" },
 			{ text: "Changelog", link: "/changelog" },
 		],
 
@@ -154,6 +155,25 @@ const config = defineConfig({
 				{
 					text: "Lessons Learned",
 					items: [{ text: "Overview", link: "/lessons/" }],
+				},
+			],
+			"/dawn/": [
+				{
+					text: "Dawn — Product Definition",
+					items: [
+						{ text: "Overview", link: "/dawn/" },
+						{ text: "Why Dawn", link: "/dawn/why" },
+						{ text: "Who Dawn is for", link: "/dawn/who" },
+						{ text: "5x on day 1", link: "/dawn/5x-on-day-1" },
+						{ text: "Pick, Defer, Cut", link: "/dawn/pick-defer-cut" },
+						{ text: "Out of scope", link: "/dawn/out-of-scope" },
+					],
+				},
+				{
+					text: "Architecture",
+					items: [
+						{ text: "Decisions", link: "/dawn/decisions" },
+					],
 				},
 			],
 		},
