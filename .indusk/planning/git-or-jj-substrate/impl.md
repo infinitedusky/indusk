@@ -60,6 +60,9 @@ Make InDusk function on plain-git projects without regressing jj behavior. Add a
 | T13 | H2-A: `indusk graph status` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT print the misleading `run 'indusk graph sync' first` hint | Phase 0 | Phase 6 | passing |
 | T14 | H2-B: `indusk graph rebuild` on a git-mode tmpdir exits 0, prints `git mode — semantic graph unavailable`, does NOT clear the runtime or attempt replay | Phase 0 | Phase 6 | passing |
 | T15 | H1-C: `apps/indusk-mcp/src/bin/commands/init.ts` syncs ALL `.js` files from the package's `hooks/` directory (eval-trigger.js included) — verified by source grep that init's hook copy uses `globSync` rather than a hardcoded list | Phase 0 | Phase 6 | passing |
+| T16 | H3: `eval-trigger.js`'s trigger filter does NOT fire on `git config user.email "git committer"` (substring false-positive — "committer" contains "commit"); does fire on a real `git commit -m "..."` | Phase 0 | Phase 7 | planned |
+| T17 | H4: `eval-trigger.js` skips when `event.tool_response.exit_code` is non-zero (failed commit) — does not run the eval against a previous commit's SHA | Phase 0 | Phase 7 | planned |
+| T18 | H5: `indusk init` in a tmpdir without `git init`/`jj git init` first prints a stderr warning naming the recovery command (`indusk update` after initializing SCM) | Phase 0 | Phase 7 | planned |
 
 ### Trajectory Rationale
 
@@ -261,8 +264,37 @@ Each row goes from `written → passing` once the corresponding fix lands. Run a
 
 #### Phase 6 Document
 
-- [ ] Update `apps/indusk-docs/src/guide/eval.md` to confirm git users get scorecards on every `git commit` (currently the page promises this but the underlying hook didn't actually do it). The promise becomes accurate after Phase 6 ships.
-- [ ] Update `apps/indusk-docs/src/guide/scm.md` "Semantic graph caveat for git users" to note that `indusk graph status` and `indusk graph rebuild` also emit the unavailable-on-git message (currently the section only mentions sync).
+- [x] Update `apps/indusk-docs/src/guide/eval.md` to confirm git users get scorecards on every `git commit` (currently the page promises this but the underlying hook didn't actually do it). The promise becomes accurate after Phase 6 ships. (No prose edit needed — the page already promises both SCMs work; Phase 6's hook fixes make that promise accurate. Verified the existing prose at lines 1–18 holds.)
+- [x] Update `apps/indusk-docs/src/guide/scm.md` "Semantic graph caveat for git users" to note that `indusk graph status` and `indusk graph rebuild` also emit the unavailable-on-git message (currently the section only mentions sync). (Added two new bullets covering status/rebuild + the MCP tool wrappers.)
+
+### Phase 7: Falsification — eval-trigger filter false-positives, failed-commit noise, init-before-SCM footgun
+
+**Goal**: verify whether Phase 6's new code holds against three specific failure modes surfaced by a second pass of the falsification ritual:
+
+1. **H3 (load-bearing)**: Phase 6 H1-A's filter uses `command.includes("jj describe") || command.includes("git commit")`. `String.includes` is a substring match — it fires on `git config user.email "git committer"` ("committer" contains "commit"), `cat git-commit-template.md`, `echo "Don't forget to git commit!"`, and any other Bash command whose string content contains the trigger as a substring. Result: silent eval-runner spawns + junk scorecards on non-commit commands.
+2. **H4 (medium)**: PostToolUse hooks fire regardless of the underlying Bash command's exit code. A failed `git commit` (no staged changes, pre-commit hook rejection, signing failure) still triggers eval, which runs against the *previous* commit's SHA and produces a misleading scorecard. The hook event JSON contains `tool_response.exit_code` but Phase 6 doesn't read it. Same risk theoretically existed for `jj describe`, but is far more visible on git because git commits fail more often.
+3. **H5 (UX footgun)**: Phase 1's init tolerates `NoScmDetectedError` and silently omits the `scm` field when neither SCM is initialized. A user running `indusk init` before `git init`/`jj git init` gets a config without `scm`; subsequent `getScm()` calls default to `"jj"`. The eval prompt says `jj diff -r ...` on what's actually a git project. The user has no signal that they need to run `indusk update` after initializing the SCM.
+
+Each trajectory row below captures one hypothesis test; each checklist item captures the fix the code needs.
+
+- [ ] **H3 fix — `eval-trigger.js` trigger filter regex**: replace the `String.includes` calls with a single regex that anchors on word boundaries: `const TRIGGER_RE = /\b(jj describe|git commit)\b/; if (!TRIGGER_RE.test(command))`. Word-boundary `\b` matches the position between a word char and a non-word char, preventing `git committer` / `git-commit-template.md` substring false-positives. The skip-message stays as `"skip — no jj describe / git commit in command"`.
+- [ ] **H4 fix — `eval-trigger.js` exit_code check**: read `event.tool_response?.exit_code` from the hook input. If non-zero, `syslog(cwd, "skip — bash command failed (exit_code=N)")` and `process.exit(0)` BEFORE the trigger-filter check. Failed commits don't produce evaluation-worthy state.
+- [ ] **H5 fix — `init.ts` deferred-SCM warning**: when `detectScm` throws and the `scm` field is omitted, print a clear stderr block at the end of init's [Config] section: `⚠ scm field deferred — neither jj nor git detected. After running 'git init' or 'jj git init', run 'indusk update' to populate the field. Until then, all SCM-coupled features default to jj.`
+
+#### Phase 7 Verification
+
+- [ ] T16 (write red): vitest unit test that loads `eval-trigger.js` source and asserts the trigger filter is a word-boundary regex (NOT a `String.includes`). The test today fails because the filter still uses `command.includes(p)`. Goes green after H3.
+- [ ] T17 (write red): vitest unit test asserting `eval-trigger.js` source contains a check on `tool_response.exit_code` (or equivalent — `tool_response?.exit_code`, `event.tool_response.exit_code`) BEFORE the trigger-filter check. Today fails — no exit_code read exists. Goes green after H4.
+- [ ] T18 (write red): end-to-end test that runs `indusk init --no-index` against a fresh tmpdir WITHOUT initializing git or jj, asserts stderr contains the deferred-SCM warning naming `indusk update` as the recovery command. Today fails — init silently omits the field with no user-visible warning. Goes green after H5.
+
+#### Phase 7 Context
+
+- [ ] Update CLAUDE.md Conventions: Add "**The eval-trigger filter uses a word-boundary regex, not `String.includes`** (`git-or-jj-substrate` Phase 7). Substring matches on `"git commit"` / `"jj describe"` produce false-positives on commands like `git config user.email \"git committer\"` or `cat git-commit-template.md`. The regex is `/\\b(jj describe|git commit)\\b/`. Also: the hook reads `event.tool_response?.exit_code` and skips when non-zero — failed commits don't produce evaluable state and shouldn't trigger scorecard noise. New trigger patterns get added as alternations in the regex AND must respect both word-boundary discipline and exit_code skip."
+- [ ] Update CLAUDE.md Known Gotchas: Add "**`indusk init` defers the `scm` field when neither jj nor git is detected** (`git-or-jj-substrate` Phase 7) — this is intentional (init must work in bare tmpdirs for tests) but is a UX footgun: the user might run init before `git init`/`jj git init` and never realize they need `indusk update` afterward. Init now prints a loud stderr warning naming the recovery command when the field is deferred. The warning is the user's signal; the silent default-to-jj fallback in `getScm()` is the safety net."
+
+#### Phase 7 Document
+
+- [ ] Update `apps/indusk-docs/src/guide/scm.md` "Detection at init" section to note the warning behavior — `indusk init` will print a deferred-SCM warning if neither tool is detected, and the recovery is `indusk update` after `git init`/`jj git init`. Currently the section says "Defers if neither succeeds" but doesn't mention that the user gets a visible signal.
 
 ## Files Affected
 

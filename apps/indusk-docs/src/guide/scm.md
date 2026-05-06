@@ -70,6 +70,8 @@ The eval agent fires on `git commit` and scores the work after the fact. The jud
 The semantic graph (`indusk graph sync`, Graphiti log capture) is jj-only in v1. On git-mode projects:
 
 - `indusk graph sync` exits 0 with a clear `git mode — semantic graph unavailable` message.
+- `indusk graph status` and `indusk graph rebuild` early-return with the same message — none of the three commands reach their jj-specific code paths on git projects.
+- The MCP tools `mcp__indusk__graph_sync`, `mcp__indusk__graph_rebuild`, `mcp__indusk__graph_status` return the same human-readable text instead of jj-flavored errors, so an agent inspecting these tools knows to skip semantic graph operations on git projects.
 - `captureWithLog()` warns once per session and skips the event-log mirror; Graphiti writes still succeed.
 - All other features — plans, lessons, eval, highlights, init/update — work on git unchanged.
 
