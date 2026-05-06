@@ -222,8 +222,21 @@ graph
 		const { getLogPath } = await import("../lib/semantic-graph/paths.js");
 		const { replay } = await import("../lib/semantic-graph/replay.js");
 		const { SemanticGraphClient } = await import("../lib/semantic-graph/runtime-client.js");
+		const { getScm } = await import("../lib/scm/detect.js");
 
 		const projectRoot = rootOrExit();
+
+		// Graceful-degrade on git mode. Same rationale as `graph sync` and
+		// `graph status` — the semantic graph requires jj's stable change-ID
+		// ancestry; rebuild would clear the runtime then no-op against an
+		// empty/absent log, leaving the user confused.
+		if (getScm(projectRoot) === "git") {
+			process.stderr.write(
+				"git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)\n",
+			);
+			return;
+		}
+
 		const projectName = basename(projectRoot);
 		const logPath = getLogPath(projectRoot);
 		const client = new SemanticGraphClient(projectName);
