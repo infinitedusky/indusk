@@ -1,0 +1,30 @@
+{
+	"name": "datadog",
+	"description": "Datadog observability — query logs, traces, metrics, monitors, dashboards, security signals via Datadog's official remote MCP server (16+ tools, OAuth)",
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "datadog-mcp-configured",
+				"command": "node -e \"const m=JSON.parse(require('fs').readFileSync('.mcp.json','utf-8'));process.exit(m.mcpServers?.datadog ? 0 : 1)\""
+			}
+		]
+	},
+	"mcp_server": {
+		"type": "http",
+		"url": "DATADOG_MCP_URL",
+		"setup_instructions": [
+			"1. Copy the template:",
+			"   cp .indusk/extensions/datadog/.env.example .indusk/extensions/datadog/.env",
+			"2. Edit .env and pick the regional endpoint matching your Datadog site (US1, US3, US5, EU1, US1-FED, AP1).",
+			"3. Run 'indusk extensions enable datadog' again (or 'indusk update'). The MCP server gets registered in '.mcp.json'.",
+			"4. On first session in Claude Code, complete the OAuth flow when prompted — no API token in env vars (different from dash0)."
+		]
+	},
+	"hooks": {
+		"on_enable": "echo 'Datadog extension enabled. Complete OAuth on first Claude Code session.'"
+	},
+	"detect": {
+		"mcp_server": "datadog"
+	}
+}

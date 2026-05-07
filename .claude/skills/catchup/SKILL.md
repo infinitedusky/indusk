@@ -63,15 +63,25 @@ Read it fully. Don't skim.
 CLAUDE.md is the stable, slow-changing layer of project memory. Graphiti is the fast, temporal layer — it captures decisions, corrections, and retrospective insights as they happen. Catchup pulls both layers so the agent starts the session with full context.
 
 **Recall recent decisions and lessons:**
+
+First, fetch the project's Graphiti group via the InDusk MCP (do NOT guess from project basename — InDusk applies sanitization rules):
+
+```
+mcp__indusk__get_project_info()
+// returns { project_group: "<sanitized>", scm: ..., ... }
+```
+
+Then query Graphiti with that group plus `"shared"` for cross-project knowledge:
+
 ```
 mcp__graphiti__search_nodes({
   query: "recent decisions and lessons",
-  group_ids: ["{project-group}", "shared"],
+  group_ids: [<project_group from get_project_info>, "shared"],
   max_nodes: 8
 })
 ```
 
-The project group comes from the `getProjectGroupId(projectRoot)` helper (in `apps/indusk-mcp/src/lib/config.ts`). Always include both the project group and `shared` so cross-project conventions surface alongside project-specific knowledge.
+**Why the explicit group lookup matters**: hyphen-containing group IDs (`dawn-fde-toolkit`) hit a RediSearch syntax error and silently return empty. Omitting `group_ids` entirely also returns empty — Graphiti does NOT scan all groups by default. Both failure modes look identical to "graph empty," so always pass the sanitized `project_group` value plus `"shared"` explicitly. See the `community-graphiti-group-id-underscores` lesson for the full pattern.
 
 **Surface contradictions:** look at the returned nodes for any whose `attributes` reference recently invalidated facts (Graphiti marks superseded facts with `invalid_at`). If a recently invalidated fact relates to an active plan or current code area, flag it to the user — those are places where assumptions changed.
 
