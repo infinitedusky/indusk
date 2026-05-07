@@ -36,3 +36,8 @@ Reason: Default to `const` unless reassignment is needed. Makes intent clear and
 Added: 2026-03-19
 Source: Initial setup — code hygiene
 Reason: `debugger` statements should never be committed. They halt execution in browsers and have no place in production code.
+
+## Override: noUnusedVariables disabled for `**/*.vue` (1.28.13)
+Added: 2026-05-07
+Source: FullscreenDiagram silent-no-op bug — handlers prefixed with `_` because the linter couldn't see template references
+Reason: Biome doesn't parse Vue's `<template>` blocks, so it treats handlers and reactive state used only by the template as "unused." The auto-fix path (and the underscore-prefix convention from `argsIgnorePattern`) caused agents to prepend `_` to handlers that were already correctly named — Vue then resolved the template binding `@click="toggleExpand"` to `undefined` and clicks became silent no-ops. We disable the rule for `*.vue` files entirely; genuinely-unused script-setup vars are surfaced by Vue dev tools and the cost of letting them slip is far smaller than the cost of silently broken click handlers. If a future Biome version gains Vue template parsing (or we adopt a Vue-aware linter that does), this override becomes redundant and should be removed.

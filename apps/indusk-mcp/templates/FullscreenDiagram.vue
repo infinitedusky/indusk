@@ -63,7 +63,14 @@ const cloneDiagram = () => {
 	diagramHTML.value = diagramRef.value.innerHTML;
 };
 
-const _toggleExpand = () => {
+// IMPORTANT: handler names must NOT be prefixed with `_`. The template binds
+// to `toggleExpand` / `zoomIn` / `zoomOut`; an underscore prefix makes Vue
+// resolve those bindings to undefined → silent no-op on click. ESLint's
+// `no-unused-vars` with `argsIgnorePattern: "^_"` may try to auto-fix these
+// as "unused" because the linter can't see template references — turn off
+// `no-unused-vars` for `<script setup>` blocks, or enable
+// `vue/no-unused-properties` so the parser counts template references as uses.
+const toggleExpand = () => {
 	if (!isExpanded.value) {
 		cloneDiagram();
 	}
@@ -76,10 +83,27 @@ const _toggleExpand = () => {
 					expandedDiagramRef.value.querySelector("svg") || expandedDiagramRef.value.firstChild;
 				if (svgElement) {
 					panzoomInstance.value = panzoom(svgElement, {
-						bounds: true,
-						boundsPadding: 0.1,
+						// `bounds: true` + `boundsPadding: 0.1` silently locks panning when
+						// the rendered SVG roughly fills the modal — drag does nothing.
+						// Figma/Miro convention is unbounded panning with a reset button.
+						bounds: false,
 						minZoom: 0.05,
 						maxZoom: 10,
+						// Wheel-to-pan with Cmd/Ctrl-wheel-to-zoom — panzoom's default
+						// (wheel-to-zoom) feels wrong for diagram viewers. Returning
+						// `false` from `beforeWheel` aborts panzoom's wheel handler so
+						// our custom logic runs instead.
+						beforeWheel(e) {
+							if (e.ctrlKey || e.metaKey) {
+								// Let panzoom handle zoom — return falsy so it proceeds.
+								return false;
+							}
+							// Plain wheel = pan. Move by the wheel delta and abort the
+							// default zoom path.
+							e.preventDefault();
+							panzoomInstance.value?.moveBy(-e.deltaX, -e.deltaY, false);
+							return true;
+						},
 					});
 					panzoomInstance.value.on("zoom", () => {
 						zoom.value = panzoomInstance.value.getTransform().scale;
@@ -97,7 +121,7 @@ const _toggleExpand = () => {
 	}
 };
 
-const _zoomIn = () => {
+const zoomIn = () => {
 	if (panzoomInstance.value) {
 		const currentZoom = panzoomInstance.value.getTransform().scale;
 		if (currentZoom < 10) {
@@ -106,7 +130,7 @@ const _zoomIn = () => {
 	}
 };
 
-const _zoomOut = () => {
+const zoomOut = () => {
 	if (panzoomInstance.value) {
 		const currentZoom = panzoomInstance.value.getTransform().scale;
 		if (currentZoom > 0.05) {
