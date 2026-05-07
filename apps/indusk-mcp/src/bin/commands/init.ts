@@ -968,6 +968,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		"mcp__indusk__list_lessons",
 		"mcp__indusk__check_health",
 		"mcp__indusk__get_context",
+		"mcp__indusk__get_project_info",
 		"mcp__indusk__list_plans",
 		"mcp__indusk__extensions_status",
 		"mcp__indusk__graph_ensure",
