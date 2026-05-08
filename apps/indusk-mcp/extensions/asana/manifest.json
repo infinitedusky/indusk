@@ -1,0 +1,30 @@
+{
+	"name": "asana",
+	"description": "Asana project management — query the Asana Work Graph (tasks, projects, comments, sections, custom fields, time tracking) via Asana's official V2 remote MCP server (OAuth)",
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "asana-mcp-configured",
+				"command": "node -e \"const m=JSON.parse(require('fs').readFileSync('.mcp.json','utf-8'));process.exit(m.mcpServers?.asana ? 0 : 1)\""
+			}
+		]
+	},
+	"mcp_server": {
+		"type": "http",
+		"url": "ASANA_MCP_URL",
+		"setup_instructions": [
+			"1. Copy the template:",
+			"   cp .indusk/extensions/asana/.env.example .indusk/extensions/asana/.env",
+			"2. The default value (https://mcp.asana.com/v2/mcp) works for all Asana customers — Asana is single-region. No editing needed unless Asana publishes a new endpoint.",
+			"3. Run 'indusk extensions enable asana' again (or 'indusk update'). The MCP server gets registered in '.mcp.json'.",
+			"4. On first session in Claude Code, complete the OAuth flow when prompted. All actions appear as the authorizing user; access is bounded by the user's existing Asana permissions. Tokens expire hourly and refresh automatically."
+		]
+	},
+	"hooks": {
+		"on_enable": "echo 'Asana extension enabled. Complete OAuth on first Claude Code session.'"
+	},
+	"detect": {
+		"mcp_server": "asana"
+	}
+}
