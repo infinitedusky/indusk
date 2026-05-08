@@ -62,5 +62,8 @@ The actual surface is product-enablement-dependent on your Datadog account. Run 
 
 ## See Also
 
-- [`apps/indusk-mcp/extensions/dash0/skill.md`](../dash0/skill.md) — sibling observability extension; same problem space, different vendor + auth model
+- [Extensions index](../README.md) — full catalog of InDusk extensions with decision matrix
+- [`dash0/skill.md`](../dash0/skill.md) — sibling observability extension; same problem space, different vendor + auth model (mutually exclusive in practice)
+- [`local-telemetry/skill.md`](../local-telemetry/skill.md) — orthogonal observability for dev-time only
+- [`otel/skill.md`](../otel/skill.md) — emit-side instrumentation patterns
 - [Datadog MCP Server docs](https://docs.datadoghq.com/bits_ai/mcp_server/) — the canonical reference; toolset list, auth flow, regional endpoints

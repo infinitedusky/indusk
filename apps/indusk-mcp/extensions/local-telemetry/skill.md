@@ -150,6 +150,8 @@ Kubernetes: ConfigMap + `envFrom:`. Docker compose: `env_file:` / `environment:`
 
 ## See also
 
+- [Extensions index](../README.md) — full catalog of InDusk extensions with decision matrix
 - `apps/indusk-docs/src/reference/telemetry/` — CLI + overview docs
 - `.indusk/planning/local-telemetry/adr.md` — why this exists
-- `dash0` extension — the staging/prod counterpart
+- [`dash0/skill.md`](../dash0/skill.md), [`datadog/skill.md`](../datadog/skill.md) — staging/prod observability counterparts (orthogonal to local-telemetry)
+- [`otel/skill.md`](../otel/skill.md) — emit-side instrumentation patterns; pairs with whichever query-side extension you use

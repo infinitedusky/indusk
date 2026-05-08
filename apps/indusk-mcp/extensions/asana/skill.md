@@ -76,5 +76,6 @@ The full surface is product-enablement-dependent. Run `mcp__asana__list_tools` (
 
 ## See Also
 
+- [Extensions index](../README.md) — full catalog of InDusk extensions with decision matrix
 - [Asana V2 MCP docs](https://developers.asana.com/docs/using-asanas-mcp-server) — canonical reference
-- [`apps/indusk-mcp/extensions/dash0/skill.md`](../dash0/skill.md), [`apps/indusk-mcp/extensions/datadog/skill.md`](../datadog/skill.md) — sibling extensions wrapping observability MCP servers (different problem space)
+- [`dash0/skill.md`](../dash0/skill.md), [`datadog/skill.md`](../datadog/skill.md) — sibling extensions wrapping observability MCP servers (different problem space)

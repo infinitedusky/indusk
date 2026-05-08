@@ -305,14 +305,21 @@ for (const item of newlyChecked) {
 }
 
 // ------------------------------------------------------------------
-// Trajectory enforcement: if advancing past Phase N (checking an
-// implementation item in Phase N+1 or later), every trajectory row
-// with `Passes at: Phase K` where K <= N must be in state `passing`,
-// `skipped`, or `blocked`. Planned/writable/written states fail the
-// phase close — the whole point of the tests-first-planning system is
-// that deferral is structurally impossible.
+// Trajectory enforcement: two gates fire when an implementation item
+// in Phase N is checked.
 //
-// Skipped if the impl has no `## Test Trajectory` section (grandfathered).
+// Gate A — test-first authoring (per advancing phase):
+//   Every trajectory row with `Writable at: Phase N` must be in state
+//   `written`, `passing`, `skipped`, or `blocked` — NOT `planned`,
+//   `writable`, or `unknown`. Phase N's tests must exist (as RED at
+//   minimum) before its implementation items can be marked done.
+//
+// Gate B — phase close (per closed prior phase):
+//   Every trajectory row with `Passes at: Phase K` where K < N must
+//   be in state `passing`, `skipped`, or `blocked`. The whole point
+//   of tests-first is that deferral is structurally impossible.
+//
+// Both skipped if the impl has no `## Test Trajectory` section.
 // ------------------------------------------------------------------
 
 const hasTrajectorySection = /^##\s+Test Trajectory\b/m.test(newFullContent);
@@ -324,6 +331,35 @@ if (hasTrajectorySection) {
 
 	if (advancingPhases.size > 0) {
 		const trajectory = parseTrajectoryFromBody(newFullContent);
+
+		// Gate A: test-first authoring for the advancing phase itself.
+		const testFirstBlockers = [];
+		for (const advancingPhase of advancingPhases) {
+			const unauthored = trajectory.rows.filter(
+				(row) =>
+					row.writableAt === advancingPhase &&
+					row.state !== "written" &&
+					row.state !== "passing" &&
+					row.state !== "skipped" &&
+					row.state !== "blocked",
+			);
+			for (const row of unauthored) {
+				testFirstBlockers.push({ phase: advancingPhase, row });
+			}
+		}
+
+		if (testFirstBlockers.length > 0) {
+			const msg = testFirstBlockers
+				.map(
+					(b) =>
+						`Phase ${b.phase} test-first violation: row ${b.row.id} is Writable at: Phase ${b.phase} but still ${b.row.state}. Author it as RED before marking implementation items done.`,
+				)
+				.join("\n");
+			process.stderr.write(`${msg}\n`);
+			process.exit(2);
+		}
+
+		// Gate B: every prior phase must be closable.
 		const allBlockers = [];
 		for (const advancingPhase of advancingPhases) {
 			// Closing phases = every phase strictly before advancingPhase
@@ -408,10 +444,12 @@ function parseTrajectoryFromBody(implContent) {
 		const rec = {};
 		for (let j = 0; j < keys.length; j++) rec[keys[j]] = cells[j];
 		if (!rec.id) continue;
+		const writableMatch = (rec.writableAt || "").match(/^\s*Phase\s+(\d+)\s*$/i);
 		const passesMatch = (rec.passesAt || "").match(/^\s*Phase\s+(\d+)\s*$/i);
 		rows.push({
 			id: rec.id.trim(),
 			asserts: (rec.asserts || "").trim(),
+			writableAt: writableMatch ? Number.parseInt(writableMatch[1], 10) : Number.NaN,
 			passesAt: passesMatch ? Number.parseInt(passesMatch[1], 10) : Number.NaN,
 			state: (rec.state || "").toLowerCase().trim(),
 		});
