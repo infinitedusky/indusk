@@ -218,6 +218,24 @@ async function waitForPortListening(
 	return false;
 }
 
+// Poll until a port is rebind-able (or timeout). After `daemonStop()` the OS
+// can hold the just-released socket in TIME_WAIT / cleanup for hundreds of ms
+// to a couple of seconds; without this, `daemonRestart` would race and
+// `findFreePort(4318)` would fall through to `pickAnyFreePort()` — drifting
+// the OTLP port off the user's pinned value and breaking every downstream app
+// pointing at the old port.
+async function waitForPortFree(
+	port: number,
+	timeoutMs: number,
+): Promise<boolean> {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		if (await isPortFree(port)) return true;
+		await sleep(100);
+	}
+	return false;
+}
+
 // ---- config file rendering -------------------------------------------------
 
 /**
@@ -276,6 +294,17 @@ receivers:
         endpoint: 0.0.0.0:${ports.otlpGrpc}
       http:
         endpoint: 0.0.0.0:${ports.otlpHttp}
+        # CORS for browser-origin OTLP POSTs. Without this, every
+        # /v1/traces request from a webapp fails preflight and no
+        # browser-side spans land in Jaeger. Wildcard is safe here because
+        # InDusk telemetry is a developer-machine local tool (Jaeger binds
+        # to 0.0.0.0 already; the network boundary is the dev's loopback,
+        # not the internet). Projects with stricter needs can override via
+        # a future user-configurable hook.
+        cors:
+          allowed_origins:
+            - "*"
+          allowed_headers: ["*"]
 
 processors:
   batch: {}
@@ -606,7 +635,15 @@ export async function daemonRestart(
 		}
 	}
 	await daemonStop();
-	// Small pause so OS releases ports before the new spawn
-	await sleep(200);
+	// Poll the inherited ports until the OS has actually released them. A fixed
+	// sleep (used to be 200 ms) is unreliable: on machines where TIME_WAIT
+	// outlives the sleep, `daemonStart` calls `findFreePort(inheritedOpts.otlpPort)`,
+	// sees the port still occupied, and falls through to `pickAnyFreePort()` —
+	// drifting the OTLP port off the user's pinned value. 5 s ceiling is well
+	// above observed worst-case release time on macOS/Linux loopback.
+	const portsToWait = [inheritedOpts.otlpPort, inheritedOpts.uiPort].filter(
+		(p): p is number => typeof p === "number" && p > 0,
+	);
+	await Promise.all(portsToWait.map((p) => waitForPortFree(p, 5_000)));
 	return daemonStart(inheritedOpts);
 }
