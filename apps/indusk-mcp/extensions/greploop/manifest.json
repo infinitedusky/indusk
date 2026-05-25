@@ -1,0 +1,7 @@
+{
+	"name": "greploop",
+	"description": "Iteratively fix a PR/MR/CL until Greptile gives 5/5 confidence with zero unresolved comments — trigger review, fix actionable comments, push/re-shelve, repeat (max 5 iterations)",
+	"provides": {
+		"skill": true
+	}
+}

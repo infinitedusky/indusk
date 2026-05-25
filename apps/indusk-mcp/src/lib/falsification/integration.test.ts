@@ -102,7 +102,7 @@ falsification_reason: "two-line typo fix in a docs page; ritual cost > disciplin
 });
 
 describe("T10: user-facing guide exists and contains required sections", () => {
-	const guidePath = join(repoRoot, "apps/indusk-docs/src/guide/falsification-ritual.md");
+	const guidePath = join(repoRoot, "apps/docs/src/guide/falsification-ritual.md");
 
 	it("guide file exists on disk", () => {
 		expect(existsSync(guidePath)).toBe(true);
@@ -140,7 +140,7 @@ describe("T10: user-facing guide exists and contains required sections", () => {
 });
 
 describe("T11: VitePress sidebar has an entry linking to /guide/falsification-ritual", () => {
-	const configPath = join(repoRoot, "apps/indusk-docs/src/.vitepress/config.ts");
+	const configPath = join(repoRoot, "apps/docs/src/.vitepress/config.ts");
 
 	it("sidebar config includes the guide link", () => {
 		const config = readFileSync(configPath, "utf-8");

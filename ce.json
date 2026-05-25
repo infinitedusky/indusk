@@ -2,11 +2,12 @@
   "envDir": "env",
   "defaultProfile": "local",
   "scaffold": "docker",
+  "composeFilePerProfile": true,
   "profiles": {
     "local": {
-      "suffix": "-local",
-      "domain": "dusk.orb.local",
-      "tls": true
+      "suffix": "",
+      "domain": "dusk.dawn",
+      "proxy": "caddy-external"
     },
     "staging": {
       "suffix": "-stg",
@@ -14,7 +15,8 @@
     },
     "production": {
       "suffix": "",
-      "domain": "agcorsillo.com"
+      "domain": "agcorsillo.com",
+      "tls": true
     }
   }
 }

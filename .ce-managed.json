@@ -19,9 +19,9 @@
 					"build",
 					"start",
 					"env:start",
-					"dev:indusk-docs",
-					"build:indusk-docs",
-					"start:indusk-docs"
+					"dev:docs",
+					"build:docs",
+					"start:docs"
 				]
 			}
 		}

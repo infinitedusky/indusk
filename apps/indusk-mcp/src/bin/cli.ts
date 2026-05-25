@@ -63,6 +63,19 @@ program
 		await update(rootOrExit());
 	});
 
+program
+	.command("upgrade")
+	.description("Upgrade the global indusk-mcp CLI to the latest published version")
+	.option(
+		"--force",
+		"Install latest without comparing versions (use to recover from a stuck state)",
+	)
+	.action(async function (this: Command) {
+		const opts = this.opts() as { force?: boolean };
+		const { upgrade } = await import("./commands/upgrade.js");
+		await upgrade({ force: opts.force === true });
+	});
+
 const ext = program
 	.command("extensions")
 	.description("Manage extensions (built-in and third-party)");
@@ -471,7 +484,9 @@ uiCmd
 
 uiCmd
 	.command("restart")
-	.description("Stop the admin UI daemon (if running) and start it again — picks up a new bundle from `npm i -g`")
+	.description(
+		"Stop the admin UI daemon (if running) and start it again — picks up a new bundle from `npm i -g`",
+	)
 	.action(async function (this: Command) {
 		const opts = this.optsWithGlobals() as { port: string; open: boolean };
 		const { uiRestart } = await import("./commands/ui.js");
@@ -484,16 +499,8 @@ uiCmd
 const telemetryCmd = program
 	.command("telemetry")
 	.description("Local telemetry daemon lifecycle (start/stop/restart/status)")
-	.option(
-		"--otlp-port <port>",
-		"OTLP HTTP port for Jaeger (0 = pick free)",
-		"4318",
-	)
-	.option(
-		"--ui-port <port>",
-		"Jaeger UI port (0 = pick free)",
-		"16686",
-	);
+	.option("--otlp-port <port>", "OTLP HTTP port for Jaeger (0 = pick free)", "4318")
+	.option("--ui-port <port>", "Jaeger UI port (0 = pick free)", "16686");
 
 telemetryCmd
 	.command("start")
@@ -540,7 +547,9 @@ telemetryCmd
 
 telemetryCmd
 	.command("register <path>")
-	.description("(internal) Register a project path with the telemetry daemon. Called by the local-telemetry extension's on_enable hook; auto-starts the daemon if not running.")
+	.description(
+		"(internal) Register a project path with the telemetry daemon. Called by the local-telemetry extension's on_enable hook; auto-starts the daemon if not running.",
+	)
 	.action(async (path: string) => {
 		const { telemetryRegister } = await import("./commands/telemetry.js");
 		await telemetryRegister(path);
@@ -548,7 +557,9 @@ telemetryCmd
 
 telemetryCmd
 	.command("deregister <path>")
-	.description("(internal) Deregister a project path. Called by the on_disable hook; graceful-stops the daemon when the registry becomes empty.")
+	.description(
+		"(internal) Deregister a project path. Called by the on_disable hook; graceful-stops the daemon when the registry becomes empty.",
+	)
 	.action(async (path: string) => {
 		const { telemetryDeregister } = await import("./commands/telemetry.js");
 		await telemetryDeregister(path);
@@ -556,40 +567,25 @@ telemetryCmd
 
 telemetryCmd
 	.command("tail")
-	.description("Print recent log records (from otelcol's file sink). Same filters as the MCP `tail_logs` tool.")
-	.option("--service <name>", "filter by service.name")
-	.option(
-		"--level <level>",
-		"filter by severity (error/warn/info/debug/any)",
-		"any",
+	.description(
+		"Print recent log records (from otelcol's file sink). Same filters as the MCP `tail_logs` tool.",
 	)
+	.option("--service <name>", "filter by service.name")
+	.option("--level <level>", "filter by severity (error/warn/info/debug/any)", "any")
 	.option("--since <minutes>", "how far back to look, in minutes", "5")
 	.option("--limit <n>", "max records to print", "50")
-	.action(
-		async (opts: {
-			service?: string;
-			level: string;
-			since: string;
-			limit: string;
-		}) => {
-			const { telemetryTail } = await import("./commands/telemetry.js");
-			const level = [
-				"error",
-				"warn",
-				"info",
-				"debug",
-				"any",
-			].includes(opts.level)
-				? (opts.level as "error" | "warn" | "info" | "debug" | "any")
-				: "any";
-			await telemetryTail({
-				service: opts.service,
-				level,
-				sinceMinutes: opts.since,
-				limit: opts.limit,
-			});
-		},
-	);
+	.action(async (opts: { service?: string; level: string; since: string; limit: string }) => {
+		const { telemetryTail } = await import("./commands/telemetry.js");
+		const level = ["error", "warn", "info", "debug", "any"].includes(opts.level)
+			? (opts.level as "error" | "warn" | "info" | "debug" | "any")
+			: "any";
+		await telemetryTail({
+			service: opts.service,
+			level,
+			sinceMinutes: opts.since,
+			limit: opts.limit,
+		});
+	});
 
 telemetryCmd
 	.command("trace <id>")
@@ -609,7 +605,9 @@ telemetryCmd
 
 telemetryCmd
 	.command("reset")
-	.description("Stop the daemon, clear in-memory trace storage + log sink, and restart. Human-only — not exposed as an MCP tool.")
+	.description(
+		"Stop the daemon, clear in-memory trace storage + log sink, and restart. Human-only — not exposed as an MCP tool.",
+	)
 	.action(async function (this: Command) {
 		const opts = this.optsWithGlobals() as { otlpPort: string; uiPort: string };
 		const { telemetryReset } = await import("./commands/telemetry.js");

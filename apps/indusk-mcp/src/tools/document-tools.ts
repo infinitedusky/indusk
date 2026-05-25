@@ -22,13 +22,13 @@ function findMarkdownFiles(dir: string, base: string): string[] {
 }
 
 export function registerDocumentTools(server: McpServer, projectRoot: string): void {
-	const docsDir = join(projectRoot, "apps/indusk-docs/src");
+	const docsDir = join(projectRoot, "apps/docs/src");
 
 	server.registerTool(
 		"list_docs",
 		{
 			description:
-				"List all markdown files in the VitePress docs directory (apps/indusk-docs/src/)",
+				"List all markdown files in the VitePress docs directory (apps/docs/src/)",
 		},
 		async () => {
 			const files = findMarkdownFiles(docsDir, docsDir);
@@ -37,7 +37,7 @@ export function registerDocumentTools(server: McpServer, projectRoot: string): v
 				content: [
 					{
 						type: "text" as const,
-						text: JSON.stringify({ docsDir: "apps/indusk-docs/src", files }, null, 2),
+						text: JSON.stringify({ docsDir: "apps/docs/src", files }, null, 2),
 					},
 				],
 			};

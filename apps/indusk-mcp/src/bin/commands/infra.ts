@@ -87,18 +87,22 @@ export async function infraStart(): Promise<void> {
 	}
 
 	if (status === "stopped") {
-		console.info(`Starting ${CONTAINER_NAME}...`);
-		const result = run(`docker start ${CONTAINER_NAME}`);
-		if (result) {
-			console.info("Started.");
-			// Wait for FalkorDB to be ready
-			await waitForReady();
-			await infraStatus();
-		} else {
-			console.error(`Failed to start ${CONTAINER_NAME}.`);
+		// `docker start` reuses the original container's env vars — so
+		// edits to ~/.indusk/config.env (rotated API key, new OTLP endpoint,
+		// service-name rename) silently DON'T take effect on restart, and
+		// the status check (which reads config.env on the host) lies to the
+		// user. Recreate every time: data lives in the named volume, so
+		// the container is just a stateless wrapper around env + image.
+		// Adds ~1-2s vs `docker start` and avoids an entire class of
+		// invisible drift bugs.
+		console.info(`Removing existing ${CONTAINER_NAME} to pick up current config.env...`);
+		const removed = run(`docker rm ${CONTAINER_NAME}`);
+		if (!removed) {
+			console.error(`Failed to remove ${CONTAINER_NAME}.`);
 			process.exitCode = 1;
+			return;
 		}
-		return;
+		// Fall through to the create-and-run path below.
 	}
 
 	// Container doesn't exist — check for image, then create

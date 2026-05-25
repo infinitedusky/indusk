@@ -807,7 +807,13 @@ function printMcpSetup(projectRoot: string, name: string): void {
 
 function readExtensionEnv(name: string): Record<string, string> {
 	const cwd = process.cwd();
-	// Try profile-specific env files first, then plain .env
+	// Cascade priority (highest first, dotenv convention): .env.local
+	// overrides .env. Disabled-state files are a fallback for re-enabling
+	// an extension whose env files migrated under .indusk/disabled/.
+	// Union semantics: walk highest-to-lowest, set only keys not already
+	// set, so the highest-priority file wins per-key. Lets a project keep
+	// shared defaults in `.env` and override individual keys in
+	// `.env.local` without needing to duplicate the rest.
 	const candidates = [
 		join(cwd, ".indusk/extensions", name, ".env.local"),
 		join(cwd, ".indusk/extensions", name, ".env"),
@@ -815,21 +821,21 @@ function readExtensionEnv(name: string): Record<string, string> {
 		join(cwd, ".indusk/disabled", name, ".env"),
 	];
 
+	const merged: Record<string, string> = {};
 	for (const envPath of candidates) {
 		if (!existsSync(envPath)) continue;
-		const vars: Record<string, string> = {};
 		const content = readFileSync(envPath, "utf-8");
 		for (const line of content.split("\n")) {
 			const trimmed = line.trim();
 			if (!trimmed || trimmed.startsWith("#")) continue;
 			const eqIdx = trimmed.indexOf("=");
-			if (eqIdx > 0) {
-				vars[trimmed.slice(0, eqIdx)] = trimmed.slice(eqIdx + 1);
-			}
+			if (eqIdx <= 0) continue;
+			const key = trimmed.slice(0, eqIdx);
+			if (key in merged) continue;
+			merged[key] = trimmed.slice(eqIdx + 1);
 		}
-		if (Object.keys(vars).length > 0) return vars;
 	}
-	return {};
+	return merged;
 }
 
 function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
@@ -866,9 +872,19 @@ function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
 		return;
 	}
 
-	// Auto-run claude mcp add for no-auth HTTP servers
+	// Auto-run claude mcp add for no-auth HTTP servers. Substitute any
+	// env-var placeholders in `server.url` from the extension's .env so
+	// manifests can ship a regional/template URL (e.g., Datadog uses
+	// OAuth — no headers — but the URL still varies by region and is
+	// configured via .env). Same substitution shape as the auth branch
+	// below, just without the headers.
 	if (!needsAuth && serverType === "http" && server.url) {
-		const cmd = `claude mcp add -t http -s project -- ${name} ${server.url}`;
+		const envVars = readExtensionEnv(name);
+		let url = server.url;
+		for (const [envKey, envVal] of Object.entries(envVars)) {
+			url = url.replaceAll(envKey, envVal);
+		}
+		const cmd = `claude mcp add -t http -s project -- ${name} ${url}`;
 		console.info(`\n  ${name}: adding MCP server...`);
 		try {
 			execSync(cmd, { timeout: 15000, stdio: ["ignore", "pipe", "pipe"] });

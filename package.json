@@ -1,7 +1,7 @@
 {
 	"name": "dusk",
 	"private": true,
-	"packageManager": "pnpm@9.15.4",
+	"packageManager": "pnpm@10.33.0",
 	"scripts": {
 		"ce": "ce",
 		"test": "turbo test",
@@ -9,9 +9,9 @@
 		"check:fix": "biome check --write",
 		"format": "biome format --write",
 		"env:build": "ce build --profile",
-		"dev:indusk-docs": "ce run --profile -- turbo dev --filter=indusk-docs",
-		"build:indusk-docs": "ce run --profile -- turbo build --filter=indusk-docs",
-		"start:indusk-docs": "ce run --profile -- turbo start --filter=indusk-docs",
+		"dev:docs": "ce run --profile -- turbo dev --filter=@infinitedusky/docs",
+		"build:docs": "ce run --profile -- turbo build --filter=@infinitedusky/docs",
+		"start:docs": "ce run --profile -- turbo start --filter=@infinitedusky/docs",
 		"dev": "ce run -- turbo dev",
 		"build": "ce run -- turbo build",
 		"start": "ce run -- turbo start",
@@ -19,7 +19,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.8",
-		"composable.env": "^1.22.0",
+		"composable.env": "^1.37.2",
 		"turbo": "^2.4.0",
 		"vitest": "^4.1.0"
 	}

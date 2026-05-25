@@ -231,3 +231,10 @@ Dash0 ingests standard OpenTelemetry data. If your services already export OTLP 
 - **Default time range is narrow**: Always specify `--from` when querying logs. Without it, you may get empty results.
 - **CLI has no trace search**: The CLI can only fetch traces by ID (`traces get <id>`), not search for them. Use the MCP `getSpans` tool to search spans — it supports filters and time ranges. The CLI requires you to already have a trace ID.
 - **Profile auth may not load in Claude Code shell**: Run `source ~/.zshrc` before `dash0` commands if auth fails.
+
+## See Also
+
+- [Extensions index](../README.md) — full catalog of InDusk extensions with decision matrix
+- [`datadog/skill.md`](../datadog/skill.md) — sibling observability extension; alternative SaaS vendor (mutually exclusive with dash0 in practice)
+- [`local-telemetry/skill.md`](../local-telemetry/skill.md) — orthogonal observability for dev-time only (no SaaS account needed)
+- [`otel/skill.md`](../otel/skill.md) — emit-side instrumentation patterns; pairs with dash0 to instrument services that emit telemetry to Dash0

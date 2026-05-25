@@ -1,36 +1,28 @@
 {
 	"name": "docs",
 	"location": "apps/docs",
+	"includeVars": [],
 	"target": {
 		"type": "docker-compose",
 		"file": "docker-compose.yml",
 		"service": "docs",
+		"subdomain": "docs",
 		"config": {
 			"build": {
 				"context": ".",
 				"dockerfile": "docker/Dockerfile.vitepressdev"
 			},
-			"ports": ["5173:5173"],
-			"volumes": ["./apps/docs:/app/apps/docs", "./packages:/app/packages"],
-			"command": "@project/docs",
+			"ports": ["${docs.PORT}:${docs.PORT}"],
+			"volumes": ["./apps/docs/src:/app/apps/docs/src"],
+			"command": "@infinitedusky/docs",
 			"restart": "unless-stopped"
-		},
-		"profileOverrides": {
-			"production": {
-				"build": {
-					"context": ".",
-					"dockerfile": "docker/Dockerfile.vitepressprod"
-				},
-				"command": "",
-				"ports": ["80:80"],
-				"volumes": []
-			}
 		}
 	},
 	"vars": {
 		"PORT": "${docs.PORT}"
 	},
-	"defaults": {
-		"PORT": "5173"
+	"dev": {
+		"command": "pnpm dev",
+		"label": "Docs"
 	}
 }

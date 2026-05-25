@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { loadExtension } from "../../lib/extension-loader.js";
+import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { envIsFunctional } from "./extensions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -33,67 +34,15 @@ function getLocalVersion(): string {
 }
 
 export async function update(projectRoot: string): Promise<void> {
-	// 1. Self-update: check npm for newer version and install it
+	// CLI version is informational only here. The actual upgrade lives in
+	// `indusk upgrade` — see `bin/commands/upgrade.ts` for the rationale.
+	// `indusk update` is strictly project-state work (skills, hooks,
+	// extensions, settings overlay, registry); it never mutates the
+	// machine-state global install. A non-blocking notice at the end
+	// surfaces newer versions without coupling the two.
 	console.info("[indusk-mcp]\n");
 	const currentVersion = getLocalVersion();
-	let didUpgrade = false;
-
-	// Short-circuit when recursively invoked from a just-completed self-update,
-	// or when tests need deterministic offline behavior. Also lets preview
-	// users pin to a specific version without the self-update dance on every
-	// `indusk update` call.
-	const skipSelfUpdate = process.env.INDUSK_SKIP_SELF_UPDATE === "1";
-	if (skipSelfUpdate) {
-		console.info(`  current: v${currentVersion} (self-update skipped)`);
-	}
-	try {
-		if (skipSelfUpdate) throw new Error("skip");
-		const latestVersion = run("npm view @infinitedusky/indusk-mcp version");
-		if (latestVersion !== currentVersion) {
-			console.info(`  update available: ${currentVersion} → ${latestVersion}`);
-
-			const hasGlobal = run("which indusk").length > 0;
-			if (hasGlobal) {
-				console.info("  updating global install...");
-				try {
-					run(`npm i -g @infinitedusky/indusk-mcp@${latestVersion}`, { timeout: 60000 });
-					console.info(`  global: updated to ${latestVersion}`);
-					didUpgrade = true;
-				} catch (err) {
-					console.error(`  global: FAILED — ${err instanceof Error ? err.message : err}`);
-					console.error("  run manually: npm i -g @infinitedusky/indusk-mcp@latest");
-				}
-			}
-
-			// Clear npx cache
-			try {
-				run("rm -rf ~/.npm/_npx/*");
-				console.info("  npx cache: cleared");
-			} catch {
-				// ignore
-			}
-		} else {
-			console.info(`  current: v${currentVersion}`);
-		}
-	} catch {
-		console.info(`  could not check npm registry — continuing with v${currentVersion}`);
-	}
-
-	// If we upgraded, re-run update from the new version
-	if (didUpgrade) {
-		console.info("\n  Re-running update from new version...\n");
-		try {
-			execSync("indusk update", {
-				cwd: projectRoot,
-				timeout: 120000,
-				stdio: "inherit",
-				env: { ...process.env, INDUSK_SKIP_SELF_UPDATE: "1" },
-			});
-		} catch {
-			console.info("  re-run failed — run `indusk update` again manually");
-		}
-		return;
-	}
+	console.info(`  current: v${currentVersion}`);
 
 	// 2. Sync skills
 	console.info("\n[Skills]\n");
@@ -343,6 +292,32 @@ export async function update(projectRoot: string): Promise<void> {
 				}
 			}
 
+			// Sync jaeger MCP url to the live telemetry daemon's mcpPort.
+			// `mcpPort` is OS-assigned per spawn so it rotates on every daemon
+			// start/restart; without this sync, `indusk update` couldn't fix
+			// a project whose entry had gone stale from a prior daemon run.
+			// Only writes when the daemon is running AND the URL is wrong;
+			// silent no-op otherwise.
+			const jaegerEntry = mcpConfig.mcpServers?.jaeger;
+			if (jaegerEntry?.type === "http" && typeof jaegerEntry.url === "string") {
+				try {
+					const { daemonStatus } = await import("../../lib/telemetry/daemon.js");
+					const status = await daemonStatus();
+					if (status.running) {
+						const expectedUrl = `http://localhost:${status.mcpPort}/mcp`;
+						if (jaegerEntry.url !== expectedUrl) {
+							const { writeFileSync } = await import("node:fs");
+							mcpConfig.mcpServers.jaeger = { type: "http", url: expectedUrl };
+							writeFileSync(mcpJsonPath, `${JSON.stringify(mcpConfig, null, 2)}\n`);
+							console.info(`  synced: jaeger MCP url → ${expectedUrl}`);
+							mcpChanged = true;
+						}
+					}
+				} catch {
+					// Daemon not running, or write failed — don't block update.
+				}
+			}
+
 			if (!mcpChanged) {
 				console.info("  MCP config: current");
 			}
@@ -362,7 +337,9 @@ export async function update(projectRoot: string): Promise<void> {
 		} else {
 			cpSync(join(packageRoot, "templates/AGENTS.md"), agentsMdPath);
 			console.info("  added: AGENTS.md");
-			console.info("  note: add `@AGENTS.md` to the top of CLAUDE.md to import the conduct directives");
+			console.info(
+				"  note: add `@AGENTS.md` to the top of CLAUDE.md to import the conduct directives",
+			);
 		}
 	}
 
@@ -536,9 +513,7 @@ export async function update(projectRoot: string): Promise<void> {
 			writeConfig(projectRoot, { ...scmConfig, scm });
 			console.info(`  add: scm: "${scm}"`);
 		} catch (err) {
-			console.info(
-				`  skip: ${err instanceof Error ? err.message : String(err)}`,
-			);
+			console.info(`  skip: ${err instanceof Error ? err.message : String(err)}`);
 		}
 	} else if (scmConfig?.scm) {
 		console.info(`  ok: scm: "${scmConfig.scm}" (already set)`);
@@ -574,9 +549,7 @@ export async function update(projectRoot: string): Promise<void> {
 	// `addProject` is idempotent on path match.
 	console.info("\n[Project registry]\n");
 	const { basename } = await import("node:path");
-	const { addProject, touchProject, validateProject } = await import(
-		"../../lib/admin/registry.js"
-	);
+	const { addProject, touchProject, validateProject } = await import("../../lib/admin/registry.js");
 	const projectName = basename(projectRoot);
 	try {
 		const { entry, pathExists } = validateProject(projectName);
@@ -597,7 +570,21 @@ export async function update(projectRoot: string): Promise<void> {
 	}
 
 	console.info("\nDone.");
-	if (didUpgrade) {
-		console.info("Restart Claude Code to pick up the new MCP server.");
+
+	// Non-blocking version notice. Uses the 6h-cached lookup so we don't
+	// hit npm on every invocation. Silently no-ops when offline, when the
+	// cache is empty and the network fails, or when INDUSK_SKIP_UPDATE_CHECK=1.
+	// This is the ONLY place `indusk update` touches the npm registry — and
+	// it never installs anything. See `bin/commands/upgrade.ts` for the
+	// install path.
+	try {
+		const check = await checkLatestVersion();
+		if (hasNewerVersion(currentVersion, check.latestVersion)) {
+			console.info(
+				`\nv${check.latestVersion} is available (current: v${currentVersion}). Run \`indusk upgrade\`.`,
+			);
+		}
+	} catch {
+		// Best-effort — never let the notice break the update.
 	}
 }

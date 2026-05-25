@@ -149,6 +149,7 @@ try {
 		cwd: projectRoot,
 		encoding: "utf8",
 		timeout: 5000,
+		stdio: ["ignore", "pipe", "ignore"],
 	}).trim();
 } catch {
 	// jj unavailable, no jj repo, or other failure — fall through.
@@ -162,6 +163,7 @@ if (!changeId) {
 			cwd: projectRoot,
 			encoding: "utf8",
 			timeout: 5000,
+			stdio: ["ignore", "pipe", "ignore"],
 		}).trim();
 	} catch {
 		// Both failed — skip eval silently. No change/commit ID means we have

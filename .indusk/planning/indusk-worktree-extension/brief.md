@@ -1,9 +1,10 @@
 ---
 title: InDusk Worktree Extension — Brief (for sharing with the InDusk team)
 created: 2026-05-09
-status: draft
-audience: InDusk maintainers + Lazer FDE peers
-plan_type: external proposal (no impl in this repo; this brief is the deliverable)
+updated: 2026-05-20
+status: accepted
+audience: InDusk maintainers + Lazer FDE peers (external) + dusk impl (internal)
+plan_type: implementation plan with external brief (dogfood on dusk + Numero; brief remains the external-facing artifact)
 ---
 
 # InDusk Worktree Extension — Brief
@@ -75,6 +76,14 @@ Per-client config lives at `.indusk/worktree-configs/<repo>.json`:
 }
 ```
 
+### `scripts/refresh-worktree.sh`
+
+```
+Usage: refresh-worktree.sh <slug>
+```
+
+Companion to `setup-worktree.sh` — refreshes an existing worktree after the base branch advances. Re-reads `copy_files[]` and `append_files[]` from the per-client config and re-applies them. Useful when the canonical client clone has a new `.env.local` or `.npmrc` change you need to pick up without nuking the worktree. Also re-applies any pending `apply_commits[]` cherry-picks (see "the upstream-overlay pattern" below) and clears stale `skip-worktree` flags for entries that have since merged.
+
 ### `scripts/wt.sh`
 
 ```
@@ -88,6 +97,14 @@ Examples:
 ```
 
 Slug-resolves to a worktree (matches a name exactly OR ending in `-<slug>`), then runs `pnpm <command>` inside the right directory. Special-cases the `inngest` command to delegate to `apps/web/inngest`. Errors clearly on zero or multiple matches.
+
+### `scripts/wt-pm2.sh`
+
+```
+Usage: wt-pm2 <slug>[:<app>] <command>
+```
+
+Sibling to `wt.sh` but routes through pm2 instead of running foreground. Used when multiple worktrees need to run their dev servers in parallel without juggling terminal tabs. `pm2 list` shows one named process per (worktree, app, command) combination — easy to start/stop selectively. Crash recovery is automatic via pm2's process supervisor.
 
 ### `scripts/preflight.sh`
 
@@ -124,6 +141,36 @@ The `env/avoca-next.fde-overrides.env` file referenced in the worktree config is
 
 The component (`env/components/avoca.env`) holds non-secret values. Secret values reference `${secrets.X}` and resolve from `.env.secrets.shared` / `.env.secrets.local` (gitignored). One source of truth, regenerated via `pnpm ce build local`. Per-client envs follow the same shape — one component + one contract per client.
 
+### `apply_commits[]` — the upstream-overlay pattern (load-bearing)
+
+The most reusable mechanism in the toolkit, and the one a new FDE is least likely to invent on their own.
+
+When you need an upstream commit that hasn't yet merged to land in your worktree — a typing fix, a bug fix in shared library code, a feature you depend on — without polluting your feature PR, the per-client config supports:
+
+```jsonc
+{
+  "apply_commits": [
+    {
+      "sha": "abc1234",
+      "_description": "shared lib type fix from upstream PR #4567",
+      "_remove_when": "upstream PR #4567 merges to main",
+      "skip_worktree": true
+    }
+  ]
+}
+```
+
+For each entry, `setup-worktree.sh`:
+
+1. `git cherry-pick <sha>` applies the change to the worktree's branch.
+2. `git update-index --skip-worktree <files>` marks every touched file so git pretends they're unchanged — they no longer surface in `git status`, `git diff`, or `git commit -a`.
+
+Net effect: the commit's contents are **live** in your working tree (dev server picks them up, code runs against them, tests see them) but **invisible** to git operations and structurally impossible to accidentally include in your feature PR.
+
+When the upstream commit merges to main, you delete the entry from config. The next `refresh-worktree.sh` clears the skip-worktree flags and the change naturally reconciles with main.
+
+This is the difference between "I'm blocked on upstream, can't ship until they merge" and "I'm working ahead, my PR stays clean." Promote this with the rest of the worktree extension — it's the single most differentiated affordance in the toolkit.
+
 ### Workbench symlink pattern
 
 Documented in `.claude/lessons/workbench-symlink-pattern.md`. The toolkit's `worktrees/` directory contains symlinks to:
@@ -139,6 +186,7 @@ Concrete bugs the scaffolding caught (or would have caught with proper preflight
 - **Editing the wrong worktree silently.** Multiple times an FDE was running their dev server in the previous worktree (different branch) and made changes / observed behavior against the wrong code. `wt.sh` makes the slug explicit so this stops happening.
 - **CI lint workflow silent-skipping on force-push.** Avoca-next's lint.yml had `git fetch origin main --depth=1`, which combined with a force-pushed main caused `git merge-base` to fail, the diff to return empty, and the lint step to be silently skipped — workflow showing green. We caught it because preflight uses a deeper fetch and would have caught the issue locally before merge. (Submitted a fix back to Avoca; merged 2026-05-08.)
 - **Missing FDE-specific env vars per worktree.** Without `setup-worktree.sh` copying `.env.local` and appending FDE-overrides, a fresh worktree was missing the encryption key for AutoOps credential decryption. Looked like a code bug; was actually env config drift.
+- **Upstream type fix accidentally landing in a feature PR.** Before `apply_commits` + `skip_worktree`, we maintained an upstream type-fix as a regular local commit on the feature branch. A rebase to pick up main carried the type-fix into the PR — reviewers had to untangle two unrelated changes. The skip-worktree overlay pattern makes this structurally impossible: the upstream change is in the working tree but invisible to commits.
 
 ## Why InDusk is the right home
 
@@ -185,6 +233,14 @@ Plus a config schema:
       "dst": "apps/web/.env.local"
     }
   ],
+  "apply_commits": [
+    {
+      "sha": "abc1234",
+      "_description": "shared lib type fix from upstream PR #4567",
+      "_remove_when": "upstream PR #4567 merges to main",
+      "skip_worktree": true
+    }
+  ],
   "preflight": [
     "if [ -n \"$CHANGED_FILES_BIOME\" ]; then pnpm exec biome check ... -- $CHANGED_FILES_BIOME; ..."
   ]
@@ -218,6 +274,22 @@ To support arbitrary path-filter exports, the config could allow:
 ```
 
 This makes the path-filter pattern declarative + reusable across clients.
+
+## Surface revision (2026-05-20)
+
+After the test-plan review, the user-facing surface reshapes to align with how `dawn-fde-toolkit` actually composes commands today:
+
+**Execution moves to ce.** Instead of `indusk worktree run <slug> <cmd>`, the command-execution surface is `pnpm ce wt:<target> <command>`. ce is already the user's entry point for command composition (profiles, `dc:up`, env-aware execution); making it the worktree-aware entry point unifies the two-surface model the toolkit has today (`pnpm wt <slug> <cmd>` + `pnpm ce <cmd>`) into one ce-mediated surface in the indusk version.
+
+**Trunk is implicit.** The toolkit's `wt.sh` already resolves slugs against `worktrees/<slug>` AND `production/<slug>` (two-pass fallback) — trunk and worktrees share one namespace. The indusk version inherits this: `wt:trunk` is always-present without a create step. The per-project config declares where the trunk lives — typically `production/<repo>` per the workbench shape (e.g., `production/numero` in a Numero workbench).
+
+**Workbench-only target (Sandy, 2026-05-20).** The extension targets workbench-shaped indusk projects only — those with `production/<repo>` symlinks to canonical client clones and a `worktrees/` directory for active feature branches. Single-repo indusk projects (like Numero standalone) are NOT valid adopters; to dogfood the extension against Numero, we create a new workbench-shaped indusk project (e.g., `numero-workbench/`) that wraps Numero via `production/numero` symlink. There is no downside to this — a workbench is itself an indusk project, so setting one up is the same kind of one-time scaffolding work as any new indusk project, and it gives Sandy the per-engagement anchor he wants per the "all code inside an indusk project" principle.
+
+**`wt:pm2` is multi-process orchestration, not a flag.** The toolkit's `wt-pm2.sh` takes multiple `<target>:<app> <cmd>` pairs and launches each as a named pm2 process. The indusk surface preserves this: `pnpm ce wt:pm2 <target>:<app> <cmd> [<target>:<app> <cmd>]...` rather than a `--pm2` flag on the single-target form.
+
+**Lifecycle stays in indusk.** `indusk worktree create / refresh / list / preflight` remains the CLI for state operations. Execution (`pnpm ce wt:<target> <cmd>`) is the user-facing run-anything surface that composes with whatever ce already exposes (dev, build, `dc:up local`, etc.).
+
+**Implementation direction (Sandy, 2026-05-20):** the indusk extension installs a **local CLI** into the target project. Concretely: on `indusk extensions enable worktree`, the extension's `on_enable` hook scaffolds the necessary scripts (`scripts/wt.sh` analog or TypeScript equivalent), registers pnpm scripts in the target's `package.json` (`wt`, `wt:pm2`, `preflight`), and seeds `.indusk/worktree-configs/` with a starter config. ce itself is not modified — the `pnpm ce wt:<target> <cmd>` shape works because the extension wires up whatever local glue ce needs (env-aware pnpm script, or a thin shim that ce delegates to). Implementation lives in dusk-the-indusk-project, ships with every project that adopts the extension, and matches the "all code we are working on inside an indusk project" principle.
 
 ## Phased rollout
 

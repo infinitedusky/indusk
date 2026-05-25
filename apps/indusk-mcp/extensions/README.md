@@ -17,6 +17,8 @@ When extensions overlap on problem space, this table tells you which one to reac
 | Local-only OTel during dev (no SaaS account, no internet) | `local-telemetry` |
 | Add OpenTelemetry instrumentation to your service | `otel` (skill — emit side, not query side) |
 | Coordinate work via Asana (tasks, projects, comments) | `asana` |
+| Check a PR/MR/CL for unresolved comments + failing checks; fix and resolve | `check-pr` |
+| Loop a PR through Greptile until 5/5 confidence + zero comments | `greploop` |
 | Walk code structure (callers, callees, dead code) | `cgc` |
 | Persist episodic memory across sessions (decisions, lessons, contradictions) | `graphiti` |
 | Run FalkorDB locally for `cgc` or `graphiti` | `falkordb` |
@@ -55,6 +57,17 @@ When extensions overlap on problem space, this table tells you which one to reac
 | Extension | One-liner | Auth | When |
 |---|---|---|---|
 | `asana` | Asana Work Graph — tasks, projects, comments, custom fields | OAuth (browser flow) | Coordinating work via Asana; cross-referencing PRs to tasks |
+
+### PR review workflows
+
+Both adapted from [greptileai/skills](https://github.com/greptileai/skills) (MIT). Auto-detect GitHub / GitLab / Perforce from the environment.
+
+| Extension | One-liner | Requires | When |
+|---|---|---|---|
+| `check-pr` | Check PR/MR/CL for unresolved comments, failing checks, incomplete description; fix and resolve threads | `gh` / `glab` / `p4` CLI authenticated | Addressing review feedback; preparing a PR for merge |
+| `greploop` | Loop: trigger Greptile review, fix actionable comments, push, re-review — until 5/5 confidence | Greptile bot installed on the repo + `gh` / `glab` / `p4` | Project uses Greptile and you want to fully optimize a PR against its review standards |
+
+`check-pr` is the general-purpose one — works whether you use Greptile or not. `greploop` is Greptile-specific (it triggers reviews from the SaaS bot).
 
 ### Code intelligence
 

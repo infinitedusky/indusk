@@ -28,5 +28,5 @@
 			"enabled": true
 		}
 	},
-	"scm": "jj"
+	"scm": "git"
 }

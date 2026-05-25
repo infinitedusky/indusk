@@ -7,11 +7,7 @@ import {
 	daemonStop,
 	isPortListening,
 } from "../../lib/telemetry/daemon.js";
-import {
-	deregisterProject,
-	readRegistry,
-	registerProject,
-} from "../../lib/telemetry/registry.js";
+import { deregisterProject, readRegistry, registerProject } from "../../lib/telemetry/registry.js";
 
 /**
  * Read/write a project's `.mcp.json`, adding or removing the `jaeger` MCP
@@ -45,10 +41,7 @@ function readMcpJson(projectPath: string): McpJson {
 }
 
 function writeMcpJson(projectPath: string, data: McpJson): void {
-	writeFileSync(
-		join(projectPath, ".mcp.json"),
-		`${JSON.stringify(data, null, 2)}\n`,
-	);
+	writeFileSync(join(projectPath, ".mcp.json"), `${JSON.stringify(data, null, 2)}\n`);
 }
 
 function upsertJaegerEntry(projectPath: string, mcpPort: number): void {
@@ -71,6 +64,51 @@ function removeJaegerEntry(projectPath: string): void {
 	}
 }
 
+/**
+ * Re-write the `jaeger` MCP server entry across every registered project's
+ * `.mcp.json` to point at the supplied `mcpPort`. Called after daemon
+ * start / restart / register so every project's pointer stays in sync with
+ * the live OS-assigned port (which rotates on every spawn).
+ *
+ * Silently skips projects whose path no longer exists on disk (admin-UI
+ * lesson: registry is never auto-pruned — a deleted project path is a user
+ * recovery action, not something to crash the daemon over). Returns counts
+ * so callers can surface what happened.
+ */
+function reportMcpSync(result: { updated: number; skipped: string[] }, mcpPort: number): void {
+	if (result.updated > 0) {
+		console.info(
+			`  .mcp.json: synced ${result.updated} registered project(s) to mcpPort :${mcpPort}`,
+		);
+	}
+	if (result.skipped.length > 0) {
+		console.warn(
+			`  Skipped ${result.skipped.length} project(s) (missing path or write failed): ${result.skipped.join(", ")}`,
+		);
+	}
+}
+
+function syncAllRegisteredProjectsMcp(mcpPort: number): {
+	updated: number;
+	skipped: string[];
+} {
+	const skipped: string[] = [];
+	let updated = 0;
+	for (const p of readRegistry().projects) {
+		if (!existsSync(p.path)) {
+			skipped.push(p.name);
+			continue;
+		}
+		try {
+			upsertJaegerEntry(p.path, mcpPort);
+			updated++;
+		} catch (err) {
+			skipped.push(`${p.name} (${(err as Error).message})`);
+		}
+	}
+	return { updated, skipped };
+}
+
 export interface TelemetryStartOptions {
 	otlpPort: string;
 	uiPort: string;
@@ -80,9 +118,7 @@ export interface TelemetryStartOptions {
  * Start the telemetry daemon (Jaeger + otelcol). If already running, prints
  * the current state without spawning a second set of processes.
  */
-export async function telemetryStart(
-	opts: TelemetryStartOptions,
-): Promise<void> {
+export async function telemetryStart(opts: TelemetryStartOptions): Promise<void> {
 	const status = await daemonStatus();
 	if (status.running) {
 		console.info(
@@ -113,11 +149,10 @@ export async function telemetryStart(
 		});
 		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
 		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
-		console.info(
-			`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`,
-		);
+		console.info(`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`);
 		console.info(`  Logs:      ${meta.logsPath}`);
 		console.info(`  Daemon log: ~/.indusk/telemetry.log`);
+		reportMcpSync(syncAllRegisteredProjectsMcp(meta.mcpPort), meta.mcpPort);
 	} catch (err) {
 		console.error(`Failed to start telemetry daemon: ${(err as Error).message}`);
 		process.exit(1);
@@ -156,9 +191,7 @@ export interface TelemetryRestartOptions {
  * explicitly supplied, `daemonRestart` inherits them from the previously
  * running daemon's meta file — restart means "same daemon, fresh processes."
  */
-export async function telemetryRestart(
-	opts: TelemetryRestartOptions = {},
-): Promise<void> {
+export async function telemetryRestart(opts: TelemetryRestartOptions = {}): Promise<void> {
 	console.info("Restarting telemetry daemon...");
 	try {
 		const meta = await daemonRestart({
@@ -167,13 +200,10 @@ export async function telemetryRestart(
 		});
 		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
 		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
-		console.info(
-			`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`,
-		);
+		console.info(`  PIDs:      jaeger=${meta.jaegerPid} otelcol=${meta.otelcolPid}`);
+		reportMcpSync(syncAllRegisteredProjectsMcp(meta.mcpPort), meta.mcpPort);
 	} catch (err) {
-		console.error(
-			`Failed to restart telemetry daemon: ${(err as Error).message}`,
-		);
+		console.error(`Failed to restart telemetry daemon: ${(err as Error).message}`);
 		process.exit(1);
 	}
 }
@@ -195,8 +225,7 @@ export async function telemetryStatus(): Promise<void> {
 
 	const uiListening = await isPortListening(status.uiPort);
 	const otlpListening = await isPortListening(status.otlpPort);
-	const portSuffix =
-		uiListening && otlpListening ? "" : " (port not yet accepting connections)";
+	const portSuffix = uiListening && otlpListening ? "" : " (port not yet accepting connections)";
 	console.info(`Telemetry daemon: running${portSuffix}`);
 	console.info(`  OTLP:      http://localhost:${status.otlpPort}`);
 	console.info(`  Jaeger UI: http://localhost:${status.uiPort}`);
@@ -227,17 +256,27 @@ export async function telemetryRegister(projectPath: string): Promise<void> {
 			console.info(`  Jaeger MCP: http://localhost:${meta.mcpPort}/mcp`);
 			status = { running: true, ...meta };
 		} catch (err) {
-			console.error(
-				`Project registered but daemon failed to start: ${(err as Error).message}`,
-			);
+			console.error(`Project registered but daemon failed to start: ${(err as Error).message}`);
 			process.exit(1);
 		}
 	}
 	if (status.running) {
-		upsertJaegerEntry(projectPath, status.mcpPort);
-		console.info(
-			`  .mcp.json: wired jaeger MCP server at http://localhost:${status.mcpPort}/mcp`,
-		);
+		// Sync ALL registered projects (not just this one) — daemon's mcpPort
+		// is OS-assigned per spawn, so other projects' .mcp.json may be stale
+		// from a previous daemon run.
+		const result = syncAllRegisteredProjectsMcp(status.mcpPort);
+		console.info(`  .mcp.json: wired jaeger MCP server at http://localhost:${status.mcpPort}/mcp`);
+		const others = Math.max(0, result.updated - 1);
+		if (others > 0) {
+			console.info(
+				`  Refreshed ${others} other registered project(s)' .mcp.json to the same mcpPort`,
+			);
+		}
+		if (result.skipped.length > 0) {
+			console.warn(
+				`  Skipped ${result.skipped.length} project(s) (missing path or write failed): ${result.skipped.join(", ")}`,
+			);
+		}
 	}
 }
 
@@ -295,17 +334,17 @@ export async function telemetryTail(opts: TelemetryTailOptions): Promise<void> {
 				? (res.attributes as Array<Record<string, unknown>>)
 				: [];
 			const svc =
-				(resAttrs.find((a) => a.key === "service.name")?.value as {
-					stringValue?: string;
-				})?.stringValue ?? "-";
+				(
+					resAttrs.find((a) => a.key === "service.name")?.value as {
+						stringValue?: string;
+					}
+				)?.stringValue ?? "-";
 			if (opts.service && svc !== opts.service) continue;
 			const sls = Array.isArray(rlObj.scopeLogs) ? rlObj.scopeLogs : [];
 			for (const sl of sls) {
 				if (!sl || typeof sl !== "object") continue;
 				const lrs = Array.isArray((sl as Record<string, unknown>).logRecords)
-					? ((sl as Record<string, unknown>).logRecords as Array<
-							Record<string, unknown>
-						>)
+					? ((sl as Record<string, unknown>).logRecords as Array<Record<string, unknown>>)
 					: [];
 				for (const lr of lrs) {
 					const timeNs =
@@ -315,9 +354,7 @@ export async function telemetryTail(opts: TelemetryTailOptions): Promise<void> {
 					const ts = new Date(timeNs / 1_000_000);
 					if (ts.getTime() < windowStart) continue;
 					const sev =
-						typeof lr.severityText === "string"
-							? (lr.severityText as string).toLowerCase()
-							: "-";
+						typeof lr.severityText === "string" ? (lr.severityText as string).toLowerCase() : "-";
 					if (minRank >= 0) {
 						const r = levelRank[sev] ?? -1;
 						if (r < minRank) continue;
@@ -403,9 +440,7 @@ export async function telemetryServices(): Promise<void> {
  * Reset the daemon: stop + restart with fresh in-memory Jaeger storage +
  * truncate logs.jsonl. Human-triggered only; not exposed as an MCP tool.
  */
-export async function telemetryReset(
-	opts: TelemetryStartOptions,
-): Promise<void> {
+export async function telemetryReset(opts: TelemetryStartOptions): Promise<void> {
 	const { existsSync, writeFileSync } = await import("node:fs");
 	const { homedir } = await import("node:os");
 	const { join } = await import("node:path");
@@ -425,6 +460,7 @@ export async function telemetryReset(
 		console.info("Daemon restarted with fresh buffers.");
 		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
 		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
+		reportMcpSync(syncAllRegisteredProjectsMcp(meta.mcpPort), meta.mcpPort);
 	} catch (err) {
 		console.error(`Reset failed: ${(err as Error).message}`);
 		process.exit(1);

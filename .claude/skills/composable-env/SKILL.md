@@ -177,12 +177,13 @@ secrets (.env.secrets.shared + .env.secrets.local)
 | Command | Alias | Purpose |
 |---------|-------|---------|
 | `pnpm ce init` | — | Scaffold env/ directory and ce.json. `--scaffold docker` adds Docker + Next.js + VitePress setup. `--scaffold vitepress` for VitePress only. |
-| `pnpm ce env:build <profile>` | `pnpm ce build <profile>` | Build .env files for a single profile (required argument). If docker-compose targets exist, compose file includes all profiles. |
+| `pnpm ce scaffold:sync` | — | Re-run scaffold (reads `scaffold` type from ce.json). Creates missing files and re-generates Dockerfiles to pick up new app contracts. Never overwrites user customizations to non-generated files. |
+| `pnpm ce env:build <profile>` | `pnpm ce build <profile>` | Build .env files for a single profile (required argument). If docker-compose targets exist, compose file includes all profiles. Pass `--serve [services...]` to apply serve config overrides. |
 | `pnpm ce env:build:all` | `pnpm ce build:all` | Build .env files for all profiles. |
 | `pnpm ce profile:list` | `pnpm ce p:list` | Show components, profiles, contracts |
-| `pnpm ce pm2:start [profile]` | `pnpm ce start` | Build + launch PM2 dev environment |
-| `pnpm ce dc:up [profile]` | `pnpm ce up` | Build env, then `docker compose --profile X down && up -d --build` |
-| `pnpm ce dc:down [profile]` | `pnpm ce down` | Stop Docker Compose services for a profile |
+| `pnpm ce pm2:start [profile]` | `pnpm ce start` | Build env + launch PM2 for contracts with `target.type: "pm2"` (or legacy `dev` field) |
+| `pnpm ce dc:up [profile]` | `pnpm ce up` | `docker compose --profile X down && up -d --build --remove-orphans`, then prune dangling images and build cache older than 24h. Before bringing services up, runs a pre-flight check for host port conflicts against other running compose projects — if another project is already publishing one of this project's host ports (commonly :80/:443 when running two proxy-equipped stacks), prints the conflicting container/project and exits with instructions to stop the other project first. Flags: `--no-cache` (force full rebuild), `--serve [services...]` (host-side build then run serve config). Does NOT auto-run env:build — run that separately if you changed env files. |
+| `pnpm ce dc:down [profile]` | `pnpm ce down` | Stop Docker Compose services for a profile (`-v` to also remove volumes) |
 | `pnpm ce dc:logs [profile]` | `pnpm ce logs` | Tail Docker Compose logs (`--service X` for one service) |
 | `pnpm ce dc:ps [profile]` | `pnpm ce ps` | Show Docker Compose service status |
 | `pnpm ce persistent:up` | — | Start persistent services (detached) |
@@ -219,7 +220,18 @@ secrets (.env.secrets.shared + .env.secrets.local)
 
 - `envDir` — custom env directory (default: `"env"`)
 - `defaultProfile` — default when no `--profile` flag
-- `profiles` — per-profile config: `suffix` (compose service name suffix), `domain` (for auto-generated `${service.*}` vars), `tls` (auto-generate mkcert certs, inject into containers), `override` (per-service suffix/domain overrides)
+- `scaffold` — set automatically by `ce init --scaffold <type>`. Tells `scaffold:sync` which template to re-run.
+- `profiles` — per-profile config:
+  - `suffix` — compose service name suffix (e.g. `"-local"`, `""`, `"-stg"`)
+  - `domain` — used for auto-generated `${service.*.address}`. If it ends in `.orb.local`, the first segment becomes the docker-compose project name (so OrbStack DNS matches what ce resolves).
+  - `tls` — auto-generate mkcert certs, inject into all containers, run Caddy on :443/:80 (local dev only).
+  - `proxy` — reverse-proxy config file format: `"nginx"` (default), `"caddy"`, `"caddy-external"`, or `"both"`. Controls what gets emitted alongside `docker-compose.yml` from contracts with `target.subdomain`.
+    - `"caddy"` — emits Caddyfile in project root AND auto-injects a per-project Caddy container into docker-compose (publishes :80/:443 on the host). Best when one project owns the host ports.
+    - `"caddy-external"` — emits Caddyfile to `~/.indusk/proxy/sites/{project}.caddyfile` (or `$INDUSK_PROXY_SITES_DIR`), upstreams as `127.0.0.1:<hostport>`, auto-emits `tls internal`, and runs `caddy reload`. No per-project container. Use this when multiple projects share one host-level Caddy daemon (managed by indusk) so they can't all bind :80/:443.
+    - `"nginx"` — what most production environments use.
+    - `"both"` — emits nginx and in-container Caddy side by side.
+  - `tlsInternal` — when `true`, the generated Caddyfile emits `tls internal` inside each vhost so Caddy forces its internal CA regardless of domain. Needed for local-dev TLDs other than `.local`/`.localhost` (e.g. `.test`, `.dev`), where Caddy would otherwise try Let's Encrypt and fail because there's no public DNS. Leave unset for `.local` domains — Caddy's default already does the right thing there.
+  - `override` — per-service suffix/domain overrides (e.g. `"admin": { "suffix": "" }` keeps admin unsuffixed in this profile).
 - Profile resolution: `--profile` flag > `CE_PROFILE` env var (legacy: `CENV_PROFILE`) > `ce.json defaultProfile` > `"default"`
 
 ## Contract format
@@ -237,7 +249,8 @@ secrets (.env.secrets.shared + .env.secrets.local)
   "defaults": {
     "LOG_LEVEL": "info"
   },
-  "dev": {
+  "target": {
+    "type": "pm2",
     "command": "pnpm dev",
     "label": "API Server"
   }
@@ -248,7 +261,9 @@ secrets (.env.secrets.shared + .env.secrets.local)
 - Right side = **always** a `${component.KEY}` reference. Contracts only reference components, never secrets directly. Secrets flow through components (`${secrets.KEY}` in a component, `${component.KEY}` in a contract).
 - `defaults` is the **only** place for hardcoded values in a contract — static fallbacks like `LOG_LEVEL=info`. Everything in `vars` should be a `${component.KEY}` reference so values vary by profile.
 - `defaults` provides fallbacks for unresolvable vars
-- `dev` defines how `pnpm ce pm2:start` runs this service via PM2. Fields: `command` (required), `label` (optional display name), `cwd` (optional working directory)
+- `target` declares the runtime, if any. `target.type: "docker-compose"` for Docker (full schema below), or `target.type: "pm2"` for PM2. Without a target, the contract just writes an env file — no process gets started. This is the right shape for env-only contracts (datadog, observability extensions, etc.).
+- PM2 target shape: `{ "type": "pm2", "command": "pnpm dev", "label": "API" (optional), "cwd": "apps/api" (optional, defaults to location) }`. Use this instead of the legacy `dev` field for new contracts.
+- `dev` (legacy) still works as a shortcut for a PM2 target. Equivalent to `target: { type: "pm2", ...dev }`. Use `target.type: "pm2"` going forward — `dev` will be removed in v2.
 - `location` accepts: `"apps/api"` (relative to project root, default), `"/abs/path"` (absolute), or `"~/foo"` (`~` expands to `$HOME`). Use absolute or `~` paths to write env files outside the project tree (e.g., to a tool's config directory).
 - `outputs` — optional map of profile name → output filename or path. When set, writes `${location}/${outputs[profile]}` instead of the default `${location}/.env.${profile}`. Profile names not in the map fall back to the default. The output value can be relative (joined with `location`), absolute, or `~`-prefixed. Useful for tools that expect specific filenames like `t.cyux.xy.env` or `service.env.prod`.
 - `onlyProfiles` — optional array of ce profile names. If set, the contract is only included when building one of those profiles. Useful for dev-only services (log aggregators, debug tools) that shouldn't exist in production builds
@@ -257,6 +272,8 @@ secrets (.env.secrets.shared + .env.secrets.local)
   - If a `default` profile exists: writes to this filename instead of `.env.default`
   - If no `default` profile exists: builds using only `[default]` sections from components, skips unresolvable vars, writes to this filename
 - `ignoreDefault` — optional boolean. If `true`, skip the default profile entirely for this contract (no `.env.default` written even if a default profile exists)
+- `persistent` — optional boolean (docker-compose targets only). If `true`, this service goes into a separate `docker-compose.persistent.yml` file. Used for databases, caches, and other long-lived containers managed via `pnpm ce persistent:*` commands so they survive normal `dc:up` rebuild cycles.
+- `serve` — optional. Used by `dc:up --serve <name>` to run a host-side build then start the container with overrides. Shape: `{ "build": "turbo build --filter=@org/api", "config": { "build": { "dockerfile": "..." }, "volumes": [] } }`. The `build` command runs on the host (with that contract's env vars loaded). `config` overrides `target.config` for the rebuilt compose file. ce auto-sets `NODE_ENV=production` for served services.
 
 ### Var sets (`*.vars.json`)
 
@@ -327,17 +344,50 @@ One contract defines the container, others add vars to it:
     "PORT": "${api.PORT}",
     "DATABASE_URL": "${database.URL}",
     "JWT_SECRET": "${auth.JWT_SECRET}"
-  },
-  "dev": { "command": "pnpm dev" }
+  }
 }
 ```
 
-Multiple contracts targeting the same service are **additive** — both `config` (arrays concatenated, objects merged) and `vars` (merged) accumulate. A contract can have `location`, `target`, or both:
-- `location` only → writes `.env.{profile}` (local dev)
-- `target` only → writes into docker-compose.yml (Docker only)
-- Both → writes to both (local dev + Docker from the same contract)
+Multiple contracts targeting the same compose service are **additive** — both `config` (arrays concatenated, objects merged) and `vars` (merged) accumulate. The relationship between `location` and `target` controls what gets generated:
 
-### Multi-profile compose output
+**`target.augment: true`** — when set, the contract does NOT create a new service. Instead, its `vars` are merged into the `environment:` block of the existing service named by `target.service` in the same `target.file`. The other compose fields (`config`, `dockerfile`, `subdomain`, `profileOverrides`) are ignored — augment contracts contribute env vars only.
+
+Use this to layer env vars onto an auto-injected service (e.g., add `CF_API_TOKEN` to the synthetic Caddy container for ACME DNS-01) or onto a base service emitted by another contract, without restating its config. Base vars win on key conflicts — augment is additive, never overriding. ce errors at build time if no service named `target.service` exists in the file (typo guard).
+
+- `location` only, no `target` → writes `.env.{profile}`. No process runs. (Datadog-style env-only contracts.)
+- `target.type: "docker-compose"` only → writes into docker-compose.yml. No `.env` file.
+- `target.type: "docker-compose"` + `location` → writes both: `.env.{profile}` for local tooling AND the compose service.
+- `target.type: "pm2"` (requires `location`) → writes `.env.{profile}` and PM2 spawns the command from that directory.
+
+Today a contract has at most one `target`. To run the same contract via PM2 *and* Docker, add a legacy `dev` field as a sibling to the docker-compose target. v2 will introduce `targets: []` arrays for first-class multi-runtime support — see `docs/planning/targets-array-v2/`.
+
+### Compose file output: two shapes
+
+**Default — single compose file with all profiles** (`target.file: "docker-compose.yml"`):
+ce writes one file containing every profile's services, each variant suffixed (`admin-server-local`, `admin-server-test`) and tagged with `profiles: [X]` arrays. `docker compose --profile X up` selects at runtime. Profile suffixes MUST be unique because the `services:` map is flat — two profiles with the same suffix would collide on service names.
+
+**Per-profile files** (`target.file: "docker-compose.{profile}.yml"`):
+The `{profile}` placeholder splits output into one file per profile — `docker-compose.local.yml`, `docker-compose.test.yml`, `docker-compose.production.yml`. Each file is its own namespace, so service names can be clean (`admin-server` in every file, no suffix) and profile suffixes can be empty across the board. `pnpm ce dc:up <profile>` reads the matching file. No `--profile` flag needed at the Docker level since each file IS the profile selector. Use this shape when:
+- You want production service names to match dev (no `-local` / `-test` suffix discipline)
+- Profiles correspond to distinct environments you run one-at-a-time
+- You'd rather have multiple compose files than one big multi-profile one
+
+Switch shape per project by changing the `target.file` value in your contracts. The two shapes can coexist if some contracts use the placeholder and others don't.
+
+**Global flag — `composeFilePerProfile: true` in ce.json:** flips every contract into per-profile-file mode without editing each `target.file`. Equivalent to inserting `{profile}` into every contract's path automatically. Useful when you have many contracts and want the per-profile behavior globally:
+
+```json
+{
+  "envDir": "env",
+  "defaultProfile": "local",
+  "composeFilePerProfile": true,
+  "profiles": { ... }
+}
+```
+
+With the flag on, a contract with `"file": "docker-compose.yml"` writes `docker-compose.{profile}.yml`. Contracts that already have `{profile}` in the path are unchanged.
+
+#### Single-file shape — the YAML it generates
 
 When `pnpm ce env:build` detects target contracts, it builds **all profiles** (from `env/profiles/*.json` — not component sections) into one compose file. Shared Docker config (image, ports, volumes) goes into `x-` YAML anchor blocks. Per-profile variants use `<<: *anchor` merge and Docker Compose `profiles:` arrays:
 
@@ -472,9 +522,9 @@ Key points:
 - Contracts with only `target` (no `location`) are skipped by `pnpm ce pm2:start`
 - See `examples/docker-compose/` for a full working example
 
-## Reverse proxy — nginx config generation
+## Reverse proxy — nginx or Caddy config generation
 
-Contracts with `subdomain` on their target auto-generate nginx configs per profile. Requires `domain` in `ce.json` profiles.
+Contracts with `subdomain` on their target auto-generate a reverse-proxy config per profile. Requires `domain` in `ce.json` profiles. The emitter is selected via the profile's `proxy` field — `"nginx"` (default), `"caddy"`, or `"both"`.
 
 ```json
 {
@@ -488,7 +538,36 @@ Contracts with `subdomain` on their target auto-generate nginx configs per profi
 }
 ```
 
-`pnpm ce env:build` generates `nginx.{profile}.conf` with `server_name portainer.{domain}` proxying to the container port. Includes WebSocket upgrade headers. Auto-gitignored. Deploy by copying to `/etc/nginx/sites-enabled/`.
+**nginx** (`proxy: "nginx"`, default): generates `nginx.{profile}.conf` (or `nginx.conf` if only one profile emits) with `server_name portainer.{domain}` proxying to the container port. Includes WebSocket upgrade headers. Auto-gitignored. Typical deployment: copy to `/etc/nginx/sites-enabled/` on the production host.
+
+**Caddy** (`proxy: "caddy"`): generates `Caddyfile.{profile}` (or `Caddyfile`) with `reverse_proxy {service}{suffix}:{port}` site blocks. Caddy auto-issues HTTPS via its internal CA (run `caddy trust` once per dev machine) and re-resolves Docker DNS per request — handy for local dev when you want to bypass OrbStack's stale-IP cache by running Caddy as a docker-compose service joined to the same network. Auto-gitignored. For DNS resolution without `/etc/hosts` edits, run `./scripts/dev/setup-dns.sh` (scaffolded by `ce init --scaffold docker`) — it configures dnsmasq + `/etc/resolver/{tld}` once per machine so any `*.{your-domain}` hostname resolves to 127.0.0.1.
+
+For non-`.local` local-dev TLDs (`.test`, `.dev`, etc.), set `tlsInternal: true` on the profile — the Caddyfile then includes `tls internal` per vhost, forcing Caddy's internal CA instead of the Let's Encrypt attempt that fails without public DNS. `.local` profiles don't need it; Caddy's default already issues an internal cert for that TLD.
+
+**Leaf cert lifetime:** every `tls internal` block ce emits sets `lifetime 720h` (30 days) + `sign_with_root`. Caddy's default leaf lifetime is 12 hours, which causes constant browser cert prompts and disrupts any pinned tooling during a dev session. The longer lifetime avoids that churn. `sign_with_root` is required so the 30-day leaf doesn't outlive its 7-day intermediate — it signs leafs directly with the 10-year root CA. Tradeoff: the root CA private key is used per signing instead of an intermediate. That's fine for local dev (`tls internal` is local-only) but never appropriate for public-facing certs.
+
+When `proxy: "caddy"` is set AND any contract has `target.subdomain`, ce **auto-injects a Caddy container** (`caddy:2-alpine`) into the same `docker-compose.yml`. It mounts the generated Caddyfile, publishes :80 and :443 on the host, and persists Caddy's internal CA in named volumes. No manual `caddy.contract.json` needed.
+
+If you write your own `caddy.contract.json` (e.g., for a custom image, extra mounts, or to mix in plugins via a custom build), your contract wins — ce skips the auto-injection entirely. **Exception:** when a profile uses an `*-external` proxy mode (currently `caddy-external`), ce skips your in-stack proxy contract for that profile too, since external modes mean "a host-level daemon serves this stack — no proxy container needed." So a project with both `local` (proxy: `caddy-external`) and `production` (proxy: `caddy`) profiles + a `caddy.contract.json` emits the caddy service for production but not for local. Same rule applies to a hypothetical `nginx-external` → skips contracts named `nginx`.
+
+ce sanity-checks the user contract (when it's not being skipped) and warns if it doesn't look like a working proxy:
+
+- No host port 80 or 443 in `target.config.ports` → "vhosts in the generated Caddyfile won't be reachable" (acceptable if you front Caddy with another listener).
+- No volume mount referencing `Caddyfile` in `target.config.volumes` → "the proxy will run with whatever config is baked into the image" (mount `./Caddyfile:/etc/caddy/Caddyfile:ro` or your project's equivalent).
+
+Warnings only — ce never blocks the build, because legitimate setups exist that we don't model (TLS-terminated upstream, host-firewall port mapping, etc.).
+
+**Caddy (external)** (`proxy: "caddy-external"`): for when multiple projects on the same machine need a reverse proxy, but the host ports :80/:443 can only belong to one process. Instead of injecting a per-project Caddy container, ce:
+
+- Writes the Caddyfile to `~/.indusk/proxy/sites/{project}.caddyfile` (override with `INDUSK_PROXY_SITES_DIR`). The project name is the basename of the project root.
+- Renders upstreams as `127.0.0.1:<hostport>` — the LEFT side of each contract's port mapping — because the host-level Caddy reaches containers through their published host ports, not via Docker DNS.
+- Auto-emits `tls internal` in every vhost. The host-level Caddy has no way to know whether the TLD is publicly resolvable, and a wrong guess (Let's Encrypt on a `.test` domain) fails closed with no fallback.
+- Runs `caddy reload --config <main-caddyfile>` after writing so the running host Caddy picks up the new sites. The main Caddyfile path defaults to `/opt/homebrew/etc/Caddyfile` (darwin/brew) or `/etc/caddy/Caddyfile` (linux/apt); override with `INDUSK_PROXY_CADDYFILE` for custom layouts. The reload is best-effort — if it fails (binary missing, daemon not running, wrong config path), ce warns but doesn't error. Set `CE_SKIP_CADDY_RELOAD=1` to skip the reload (used by ce's own tests).
+- Does NOT inject any Caddy container into `docker-compose.yml`. The expectation is that a separate daemon (e.g., indusk-managed) is already running on the host with `import ~/.indusk/proxy/sites/*.caddyfile` in its root Caddyfile.
+
+You can mix modes in one project — e.g., `local` profile uses `caddy` (in-container), `test` profile uses `caddy-external` (shared host Caddy) — and each writes to its correct destination.
+
+**both** emits both files. Use during a transition from one to the other, or when local dev uses Caddy but production uses nginx.
 
 ## Component format
 
@@ -601,6 +680,55 @@ URL=${service.game-server.protocol}://${service.game-server.address}:${game-serv
 
 Components can still override service vars by defining the same key explicitly — the auto-generated values are defaults that components and contracts build on top of.
 
+**Proxy-aware addresses:** When the profile has `proxy: "caddy"` (or `"both"`) AND a contract declares `target.subdomain`, the auto-generated `address` and `protocol` switch to the proxy's public vhost — not the Docker DNS form. This matters for browser-facing env vars like `NEXT_PUBLIC_AUTH_BASE_URL` that need the URL the *browser* uses, not the URL one container uses to reach another:
+
+| Setup | `${service.auth-server.address}` | `${service.auth-server.protocol}` |
+|-------|---------|---------|
+| `proxy` not set | `auth-server-local.numero.local` (Docker DNS) | `http` |
+| `proxy: "caddy"` + `subdomain: "auth"` | `auth.numero.local` (Caddy vhost) | `https` |
+| `proxy: "caddy"`, contract has no `subdomain` | `auth-server-local.numero.local` (internal-only service, not proxy-routable) | `http` |
+
+`${service.<name>.host}` always returns the Docker DNS form regardless of proxy config — that's the name container-to-container traffic uses on the internal network, which doesn't go through the proxy. So a typical pair:
+
+```ini
+# Internal call (one container → another, bypasses Caddy)
+INTERNAL_AUTH_URL=http://${service.auth-server.host}:${auth-server.PORT}
+
+# Browser-facing URL (goes through Caddy, https + public vhost)
+NEXT_PUBLIC_AUTH_BASE_URL=${service.auth-server.protocol}://${service.auth-server.address}
+```
+
+### Profile-global vars (`${profile.*}`)
+
+Alongside `${service.<name>.*}`, ce auto-injects a `${profile.*}` namespace for **profile-global** primitives — values that don't depend on which service you're configuring:
+
+| Reference | Returns |
+|-----------|---------|
+| `${profile.name}` | Current profile name (`"local"`, `"staging"`, `"production"`) |
+| `${profile.suffix}` | The profile's `suffix` from `ce.json` (`"-local"`, `"-stg"`, `""`) |
+| `${profile.domain}` | The profile's `domain` from `ce.json` (`"numero.local"`, `"chitin.casino"`) |
+| `${profile.protocol}` | `"https"` when `tls: true`, otherwise `"http"` |
+
+Use these in components and contracts when the value applies to the whole profile, not a specific service. Example:
+
+```ini
+# auth.env
+COOKIE_DOMAIN=${profile.domain}
+```
+
+```json
+// vars/platform-base.vars.json
+{
+  "vars": {
+    "NEXT_PUBLIC_DOMAIN": "${profile.domain}",
+    "NEXT_PUBLIC_PROFILE_SUFFIX": "${profile.suffix}",
+    "NODE_ENV": "${profile.name}"
+  }
+}
+```
+
+This replaces the common pattern of hand-rolling a `networking.env` component with `DOMAIN=` / `PROFILE_SUFFIX=` per profile section — the data already lives in `ce.json`, and `${profile.*}` exposes it directly.
+
 ### Automatic TLS with mkcert
 
 When a profile has `tls: true` and a `domain`, `pnpm ce dc:up` automatically:
@@ -653,6 +781,33 @@ Dockerfiles use `ENTRYPOINT ["/usr/local/bin/app-entrypoint.sh"]`. Contracts pas
 ```
 
 The entrypoint receives `@myorg/myapp` as `$1` and runs `pnpm --filter @myorg/myapp dev` (or `build` + `start` in production). Env vars pass through because turbo is never invoked.
+
+### Workspace dep installation: wholesale COPY
+
+The dev Dockerfiles (`Dockerfile.nextdev`, `Dockerfile.vitepressdev`) install workspace dependencies via wholesale COPY of `apps/` and `packages/` before `pnpm install --frozen-lockfile`. This works with every pnpm workspace shape, including `dependenciesMeta.injected` deps that other approaches (notably `turbo prune --docker`) can't serialize.
+
+Trade-off: changing any file in `apps/` or `packages/` invalidates the install layer for every service. For projects with many services and frequent package edits, this can mean longer rebuild times. If your project doesn't use injected deps and the cache invalidation hurts, replace the scaffolded Dockerfile with a tighter pattern (per-app COPY enumeration or a tool that handles your workspace shape).
+
+### Build-args: APP_NAME and APP_DIR
+
+The prod templates (`nextprod`, `vitepressprod`) declare two build-args:
+
+- `APP_NAME` — the pnpm workspace package name (e.g. `@numero/docs`), used as the `--filter` selector. ce reads `package.json#name` at `<projectRoot>/<contract.location>`.
+- `APP_DIR` — the on-disk directory under `apps/` (e.g. `docs`), used in `COPY` paths during the multi-stage build. ce derives it from `path.basename(contract.location)`.
+
+Two values because the package name and directory aren't necessarily the same in pnpm workspaces (`apps/docs/package.json` can have `name: "@numero/docs"`). Templates use one for the filter, the other for paths.
+
+ce scans the dockerfile at emit time for `^\s*ARG\s+<name>` and auto-fills any it recognizes — so a future template that adds e.g. `ARG APP_NAME` self-onboards without a code change. The same goes for `profileOverrides.<p>.dockerfile`.
+
+**You can override per key.** If `target.config.build.args.APP_NAME` is set explicitly, ce skips auto-derivation for that key (and won't try to read package.json). Useful when the contract has no `location` field but you want to satisfy the ARG manually.
+
+**Failure modes** (clean errors, not silent no-ops):
+
+- Contract has no `location` and template ARGs APP_NAME/APP_DIR → "set location… or set them explicitly in target.config.build.args"
+- `<location>/package.json` missing or malformed → "could not read <path>: <reason>"
+- package.json has no `name` field → "no 'name' field"
+
+Templates also fail loud at build time with `RUN test -n "${APP_NAME}"` guards, so a missing arg never silently produces an empty `pnpm --filter` (which exits 0 on zero matches and breaks two stages later).
 
 ## Anti-patterns to watch for
 

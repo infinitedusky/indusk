@@ -12,7 +12,7 @@ Unlike dash0, there is **no separate `datadog` CLI** that this extension wires u
 
 Datadog uses **OAuth on first session launch**, not a static API token. This is different from dash0 (Bearer token in headers). What this means in practice:
 
-- `.indusk/extensions/datadog/.env` only has `DATADOG_MCP_URL` (regional endpoint). No secrets.
+- `.indusk/extensions/datadog/.env` only has `SITE` (the Datadog site host — e.g., `us5.datadoghq.com`). No secrets. The manifest's URL template substitutes `SITE` to point at the right regional MCP endpoint.
 - On first Claude Code session after the extension enables, you'll see an OAuth prompt — choose your Datadog account, complete the browser flow.
 - Subsequent sessions reuse the OAuth token transparently. If it expires, the next session re-prompts.
 - The OAuth-vs-token split means `datadog/.env` is safer to share (no credentials), but the extension is harder to use in headless / CI contexts where OAuth can't complete.

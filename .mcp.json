@@ -50,7 +50,7 @@
     },
     "jaeger": {
       "type": "http",
-      "url": "http://localhost:65286/mcp"
+      "url": "http://localhost:61902/mcp"
     }
   }
 }

@@ -12,11 +12,11 @@
 	},
 	"mcp_server": {
 		"type": "http",
-		"url": "DATADOG_MCP_URL",
+		"url": "https://mcp.SITE/api/unstable/mcp-server/mcp?toolsets=all",
 		"setup_instructions": [
 			"1. Copy the template:",
 			"   cp .indusk/extensions/datadog/.env.example .indusk/extensions/datadog/.env",
-			"2. Edit .env and pick the regional endpoint matching your Datadog site (US1, US3, US5, EU1, US1-FED, AP1).",
+			"2. Edit .env and set SITE to your Datadog site (e.g., us5.datadoghq.com, datadoghq.com, datadoghq.eu). The URL template substitutes SITE — one variable drives every regional variant.",
 			"3. Run 'indusk extensions enable datadog' again (or 'indusk update'). The MCP server gets registered in '.mcp.json'.",
 			"4. On first session in Claude Code, complete the OAuth flow when prompted — no API token in env vars (different from dash0)."
 		]

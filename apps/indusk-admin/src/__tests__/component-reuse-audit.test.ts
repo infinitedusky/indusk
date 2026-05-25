@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
  * — e.g., `<button className=` when there's a `<Button>` primitive, `<table className=`
  * when there's a `<Table>` primitive, etc.
  *
- * The discipline (per `apps/indusk-docs/src/reference/admin-ui/component-conventions.md`):
+ * The discipline (per `apps/docs/src/reference/admin-ui/component-conventions.md`):
  * if a primitive exists, USE IT. Inline duplication of what should be a primitive
  * accumulates as cleanup debt.
  *
