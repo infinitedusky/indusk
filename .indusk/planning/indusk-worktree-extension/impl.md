@@ -47,7 +47,7 @@ Trajectory IDs `T1`–`T18` map 1:1 to the test-plan's behavioral assertions `A1
 | T12 | [A12] Malformed `worktree-configs/<repo>.json` produces clear error naming the offending field | Phase 2 | Phase 2 | planned |
 | T13 | [A13] Same extension + config schema + `pnpm wt` surface works against dawn-fde-toolkit AND numero-workbench | Phase 7 | Phase 7 | planned (manual smoke + parameterized vitest) |
 | T14 | [A14] `worktree create` twice with same `<repo> <slug>` exits non-zero; "already exists" stderr; no state corruption | Phase 6 | Phase 6 | planned |
-| T15 | [A15] Extension is `required: false`; not auto-enabled on non-workbench projects | Phase 1 | Phase 1 | written |
+| T15 | [A15] Extension is `required: false`; not auto-enabled on non-workbench projects | Phase 1 | Phase 1 | passing |
 | T16 | [A16] After `extensions enable worktree`, package.json gets `wt`/`wt:pm2`/`preflight` scripts + starter config materializes | Phase 6 | Phase 6 | planned |
 | T17 | [A17] `preflight` exports consistent env contract (`CHANGED_FILES`, `CHANGED_FILES_BIOME`, declarative `preflight_env{}` booleans) across configs | Phase 5 | Phase 5 | planned |
 | T18 | [A18] Workbench with top-level `composeProjectName` in `ce.json` produces one docker-compose project namespace regardless of cwd | Phase 6 | Phase 7 | planned (manual smoke, requires docker + composable.env ≥ 1.37.7) |
@@ -69,25 +69,24 @@ Discoverable `worktree` extension that can be enabled but does nothing yet. Vali
 - [x] Write `apps/indusk-mcp/extensions/worktree/manifest.json` with `required: false`, `on_enable`/`on_disable` hooks pointing at to-be-written commands (placeholders fine; bodies fill in later phases), `description`, `version`
 - [x] Write `apps/indusk-mcp/extensions/worktree/skill.md` — agent-facing reference describing the four CLI commands, the `pnpm wt` execution surface, and the `composeProjectName` cross-cwd targeting capability. Cross-reference `composable-env` skill
 - [x] Add `worktree` row to `apps/indusk-mcp/extensions/README.md` (the decision matrix Sandy already maintains)
-- [ ] Update `apps/docs/src/.vitepress/config.ts` and `apps/docs/src/reference/extensions/` (if extensions index page exists) — link to the new skill
-  - **BLOCKER**: `apps/docs/` is fully ignored in `.gitignore:53` ("Private interview prep / personal notes site — never commit"). The recent `apps/indusk-docs → apps/docs` structural rename collided with this pre-existing directory. Local edits to `apps/docs/src/reference/extensions/index.md` are in the working tree but cannot be committed without first narrowing the gitignore (risk: would expose any private files Sandy still has under `apps/docs/`). Flagged to Sandy 2026-05-28; deferred pending direction on gitignore resolution.
+- [x] Update `apps/docs/src/.vitepress/config.ts` and `apps/docs/src/reference/extensions/` (if extensions index page exists) — link to the new skill. (config.ts unchanged: extensions don't have per-extension docs pages; the skill.md inside the package IS the per-extension reference. `apps/docs/src/reference/extensions/index.md` gets a Decision-matrix row + new "Development workflow" section. Resolved alongside the apps/indusk-docs → apps/docs rename completion commit — gitignore line was outdated per Sandy 2026-05-28.)
 
 #### Phase 1 Verification
 
-- [ ] T15 written at `apps/indusk-mcp/src/__tests__/extension-worktree-required-false.test.ts` — invokes `autoEnableExtensions` against a non-workbench tmpdir fixture and asserts `worktree` is not in the resulting `extensions/` directory. T15 passes.
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0
-- [ ] `pnpm check` exits 0 (biome clean)
-- [ ] Manual: `cd /tmp/test-workbench && indusk extensions enable worktree` succeeds (the no-op stub); `cd /tmp/test-singlerepo && indusk init` does NOT enable worktree
+- [x] T15 written at `apps/indusk-mcp/src/__tests__/extension-worktree-required-false.test.ts` — invokes `autoEnableExtensions` against a non-workbench tmpdir fixture and asserts `worktree` is not in the resulting `extensions/` directory. T15 passes.
+- [x] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0 — 516 tests passed (full suite)
+- [x] `pnpm check` exits 0 (biome clean) — 272 files checked; required out-of-scope biome cleanup to land (separate commit: biome v2 nested-config migrate + Tailwind v4 globals.css exclude + unused notFound import drop)
+- [x] Manual: `cd /tmp/test-workbench && indusk extensions enable worktree` succeeds (the no-op stub); `cd /tmp/test-singlerepo && indusk init` does NOT enable worktree — verified 2026-05-28 on tmpdir: init left extensions/ without worktree; explicit enable installed worktree, fired the placeholder on_enable echo, and synced skill.md to `.claude/skills/worktree/SKILL.md`
 
 #### Phase 1 Context
 
-- [ ] CLAUDE.md "Conventions" gets a new bullet: "Worktree extension is opt-in via `indusk extensions enable worktree` and only makes sense for workbench-shaped projects (`production/<repo>` + `worktrees/`)."
-- [ ] CLAUDE.md "Current State" gets a note that I.2 Phase 1 has shipped
+- [x] CLAUDE.md "Conventions" gets a new bullet: "Worktree extension is opt-in via `indusk extensions enable worktree` and only makes sense for workbench-shaped projects (`production/<repo>` + `worktrees/`)."
+- [x] CLAUDE.md "Current State" gets a note that I.2 Phase 1 has shipped
 
 #### Phase 1 Document
 
-- [ ] skill.md (the extension's agent-facing doc) is the document deliverable for this phase
-- [ ] (no Mermaid needed — extension structure is one-screen flat)
+- [x] skill.md (the extension's agent-facing doc) is the document deliverable for this phase
+- [x] (no Mermaid needed — extension structure is one-screen flat)
 
 ---
 
@@ -321,7 +320,7 @@ Numero adopts the workbench pattern; both dawn-fde-toolkit and numero-workbench 
 
 ## Checklist
 
-- [ ] Phase 1 complete
+- [x] Phase 1 complete
 - [ ] Phase 2 complete
 - [ ] Phase 3 complete
 - [ ] Phase 4 complete
