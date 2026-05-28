@@ -1,0 +1,12 @@
+{
+	"name": "worktree",
+	"description": "Worktree management for workbench-shaped indusk projects — per-repo config, scripts that author and refresh worktrees with upstream-file-overlay support, and a `pnpm wt <slug> <cmd>` execution surface that composes with composable.env",
+	"required": false,
+	"provides": {
+		"skill": true
+	},
+	"hooks": {
+		"on_enable": "echo 'worktree extension enabled — lifecycle scaffolding ships in later phases of the indusk-worktree-extension plan'",
+		"on_disable": "echo 'worktree extension disabled'"
+	}
+}
