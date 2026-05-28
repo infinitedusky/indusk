@@ -101,6 +101,8 @@ describe("ScorecardsList — global scorecards view (T11)", () => {
     header?.click();
     await new Promise((r) => setTimeout(r, 50));
 
-    expect(container.textContent).toContain("claude exited with code 1: spawn error");
+    expect(container.textContent).toContain(
+      "claude exited with code 1: spawn error",
+    );
   });
 });

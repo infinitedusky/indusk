@@ -12,5 +12,5 @@ import { getProjectPath as lookup } from "./registry-client";
  * "root" — callers name which project they're asking about.
  */
 export function getProjectPath(name: string): string | null {
-	return lookup(name);
+  return lookup(name);
 }

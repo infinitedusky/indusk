@@ -4,7 +4,7 @@ import { readActivePlans, readArchivedPlans } from "@/lib/planning-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
 interface PlanPageProps {
-	params: Promise<{ project: string; name: string }>;
+  params: Promise<{ project: string; name: string }>;
 }
 
 /**
@@ -21,19 +21,19 @@ interface PlanPageProps {
  * case (path OK, plan name wrong).
  */
 export default async function PlanPage({ params }: PlanPageProps) {
-	const { project, name } = await params;
-	const projectPath = getProjectPath(project);
-	if (!projectPath || !projectPathExists(projectPath)) return null;
+  const { project, name } = await params;
+  const projectPath = getProjectPath(project);
+  if (!projectPath || !projectPathExists(projectPath)) return null;
 
-	const [active, archived] = await Promise.all([
-		readActivePlans(projectPath),
-		readArchivedPlans(projectPath),
-	]);
-	const plan =
-		active.find((p) => p.name === name) ??
-		archived.find((p) => p.name === name);
-	if (!plan) {
-		notFound();
-	}
-	return <PlanDetail plan={plan} />;
+  const [active, archived] = await Promise.all([
+    readActivePlans(projectPath),
+    readArchivedPlans(projectPath),
+  ]);
+  const plan =
+    active.find((p) => p.name === name) ??
+    archived.find((p) => p.name === name);
+  if (!plan) {
+    notFound();
+  }
+  return <PlanDetail plan={plan} />;
 }

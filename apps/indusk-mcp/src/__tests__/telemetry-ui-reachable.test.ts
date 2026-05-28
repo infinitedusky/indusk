@@ -1,11 +1,5 @@
 import { spawn } from "node:child_process";
-import {
-	mkdtempSync,
-	openSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { mkdtempSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer, type Server } from "node:net";
 import { tmpdir } from "node:os";
@@ -42,9 +36,7 @@ function currentPlatformTag(): string {
 function resolveJaegerBinary(): string | null {
 	const require = createRequire(import.meta.url);
 	try {
-		return require.resolve(
-			`@infinitedusky/telemetry-binaries-${currentPlatformTag()}/bin/jaeger`,
-		);
+		return require.resolve(`@infinitedusky/telemetry-binaries-${currentPlatformTag()}/bin/jaeger`);
 	} catch {
 		return null;
 	}
@@ -85,10 +77,7 @@ function pickFreePorts(n: number): Promise<number[]> {
 	});
 }
 
-async function waitForReady(
-	url: string,
-	timeoutMs: number,
-): Promise<void> {
+async function waitForReady(url: string, timeoutMs: number): Promise<void> {
 	const deadline = Date.now() + timeoutMs;
 	while (Date.now() < deadline) {
 		try {
@@ -129,8 +118,7 @@ describe("T2 — Jaeger UI reachable at the daemon's UI port", () => {
 			expect(jaegerBin, "platform package should be installed").not.toBeNull();
 			if (!jaegerBin) return;
 
-			const [otlpHttpPort, otlpGrpcPort, uiPort, uiGrpcPort, healthPort] =
-				await pickFreePorts(5);
+			const [otlpHttpPort, otlpGrpcPort, uiPort, uiGrpcPort, healthPort] = await pickFreePorts(5);
 
 			// Write a minimal config keyed to the auto-picked ports. Shape
 			// matches packages/telemetry-binaries-shared/jaeger-config.yaml but

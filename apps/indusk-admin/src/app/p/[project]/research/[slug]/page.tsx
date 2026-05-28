@@ -5,7 +5,7 @@ import { readResearchContent } from "@/lib/planning-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
 interface ResearchRouteProps {
-	params: Promise<{ project: string; slug: string }>;
+  params: Promise<{ project: string; slug: string }>;
 }
 
 /**
@@ -16,28 +16,28 @@ interface ResearchRouteProps {
  * of the `/p/{project}/...` tree.
  */
 export default async function ResearchPage({ params }: ResearchRouteProps) {
-	const { project, slug } = await params;
-	const projectPath = getProjectPath(project);
+  const { project, slug } = await params;
+  const projectPath = getProjectPath(project);
 
-	if (!projectPath || !projectPathExists(projectPath)) {
-		return (
-			<StaleProjectFailurePage
-				projectName={project}
-				projectPath={projectPath ?? undefined}
-			/>
-		);
-	}
+  if (!projectPath || !projectPathExists(projectPath)) {
+    return (
+      <StaleProjectFailurePage
+        projectName={project}
+        projectPath={projectPath ?? undefined}
+      />
+    );
+  }
 
-	const content = await readResearchContent(projectPath, slug);
-	if (content === null) notFound();
+  const content = await readResearchContent(projectPath, slug);
+  if (content === null) notFound();
 
-	return (
-		<article
-			className="flex flex-col gap-4"
-			data-testid="research-article"
-			data-research-slug={slug}
-		>
-			<Markdown>{content}</Markdown>
-		</article>
-	);
+  return (
+    <article
+      className="flex flex-col gap-4"
+      data-testid="research-article"
+      data-research-slug={slug}
+    >
+      <Markdown>{content}</Markdown>
+    </article>
+  );
 }

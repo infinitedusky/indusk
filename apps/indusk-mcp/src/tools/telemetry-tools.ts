@@ -80,9 +80,7 @@ function normalizeLog(raw: RawLogRecord): NormalizedLog[] {
 		if (!rl || typeof rl !== "object") continue;
 		const rlObj = rl as Record<string, unknown>;
 		const resource = (rlObj.resource ?? {}) as Record<string, unknown>;
-		const resourceAttrs = pickAttributes(
-			(resource.attributes ?? []) as unknown[],
-		);
+		const resourceAttrs = pickAttributes((resource.attributes ?? []) as unknown[]);
 		const service =
 			typeof resourceAttrs["service.name"] === "string"
 				? (resourceAttrs["service.name"] as string)
@@ -95,9 +93,7 @@ function normalizeLog(raw: RawLogRecord): NormalizedLog[] {
 			for (const lr of logRecords) {
 				if (!lr || typeof lr !== "object") continue;
 				const lrObj = lr as Record<string, unknown>;
-				const attrs = pickAttributes(
-					(lrObj.attributes ?? []) as unknown[],
-				);
+				const attrs = pickAttributes((lrObj.attributes ?? []) as unknown[]);
 				const bodyObj = (lrObj.body ?? {}) as Record<string, unknown>;
 				const body =
 					typeof bodyObj.stringValue === "string"
@@ -117,10 +113,8 @@ function normalizeLog(raw: RawLogRecord): NormalizedLog[] {
 							? (lrObj.severityText as string).toLowerCase()
 							: null,
 					body,
-					trace_id:
-						typeof lrObj.traceId === "string" ? (lrObj.traceId as string) : null,
-					span_id:
-						typeof lrObj.spanId === "string" ? (lrObj.spanId as string) : null,
+					trace_id: typeof lrObj.traceId === "string" ? (lrObj.traceId as string) : null,
+					span_id: typeof lrObj.spanId === "string" ? (lrObj.spanId as string) : null,
 					attributes: { ...resourceAttrs, ...attrs },
 				});
 			}
@@ -139,8 +133,7 @@ function pickAttributes(list: unknown[]): Record<string, unknown> {
 		const value = aObj.value as Record<string, unknown> | undefined;
 		if (!value) continue;
 		if (typeof value.stringValue === "string") out[key] = value.stringValue;
-		else if (typeof value.intValue === "string")
-			out[key] = Number(value.intValue);
+		else if (typeof value.intValue === "string") out[key] = Number(value.intValue);
 		else if (typeof value.intValue === "number") out[key] = value.intValue;
 		else if (typeof value.boolValue === "boolean") out[key] = value.boolValue;
 		else if (typeof value.doubleValue === "number") out[key] = value.doubleValue;
@@ -159,9 +152,7 @@ const TailLogsInput = z.object({
 	level: z
 		.enum(["error", "warn", "info", "debug", "any"])
 		.default("any")
-		.describe(
-			"Only return logs at this severity or worse. `any` returns all levels.",
-		),
+		.describe("Only return logs at this severity or worse. `any` returns all levels."),
 	since_minutes: z
 		.number()
 		.int()
@@ -214,9 +205,7 @@ export function registerTelemetryTools(server: McpServer): void {
 									count: 0,
 									truncated: false,
 									window_actual: {
-										from: new Date(
-											Date.now() - input.since_minutes * 60_000,
-										).toISOString(),
+										from: new Date(Date.now() - input.since_minutes * 60_000).toISOString(),
 										to: new Date().toISOString(),
 									},
 									hints: [
@@ -266,10 +255,7 @@ export function registerTelemetryTools(server: McpServer): void {
 				if (truncated) break;
 			}
 
-			matches.sort(
-				(a, b) =>
-					new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-			);
+			matches.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
 			const hints: string[] = [];
 			if (matches.length === 0) {

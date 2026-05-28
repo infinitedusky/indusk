@@ -15,79 +15,87 @@ import { CollapsibleSection } from "./CollapsibleSection";
  */
 
 describe("CollapsibleSection — T29 persistKey (localStorage)", () => {
-	beforeEach(() => {
-		localStorage.clear();
-	});
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
-	it("falls back to defaultOpen when persistKey is absent (regression guard)", async () => {
-		const { container } = await render(
-			<CollapsibleSection title="no-key" defaultOpen={true}>
-				<span data-testid="no-key-child">content</span>
-			</CollapsibleSection>,
-		);
-		// No persistKey → initial state comes from defaultOpen, body visible
-		expect(container.querySelector('[data-testid="no-key-child"]')).not.toBeNull();
-	});
+  it("falls back to defaultOpen when persistKey is absent (regression guard)", async () => {
+    const { container } = await render(
+      <CollapsibleSection title="no-key" defaultOpen={true}>
+        <span data-testid="no-key-child">content</span>
+      </CollapsibleSection>,
+    );
+    // No persistKey → initial state comes from defaultOpen, body visible
+    expect(
+      container.querySelector('[data-testid="no-key-child"]'),
+    ).not.toBeNull();
+  });
 
-	it("renders CLOSED when persistKey is set and localStorage[key] === '0', even if defaultOpen is true", async () => {
-		localStorage.setItem("t29-closed-key", "0");
-		const { container } = await render(
-			<CollapsibleSection
-				title="closed-key"
-				defaultOpen={true}
-				persistKey="t29-closed-key"
-			>
-				<span data-testid="closed-child">content</span>
-			</CollapsibleSection>,
-		);
-		// Persisted "0" overrides defaultOpen=true
-		expect(container.querySelector('[data-testid="closed-child"]')).toBeNull();
-	});
+  it("renders CLOSED when persistKey is set and localStorage[key] === '0', even if defaultOpen is true", async () => {
+    localStorage.setItem("t29-closed-key", "0");
+    const { container } = await render(
+      <CollapsibleSection
+        title="closed-key"
+        defaultOpen={true}
+        persistKey="t29-closed-key"
+      >
+        <span data-testid="closed-child">content</span>
+      </CollapsibleSection>,
+    );
+    // Persisted "0" overrides defaultOpen=true
+    expect(container.querySelector('[data-testid="closed-child"]')).toBeNull();
+  });
 
-	it("renders OPEN when persistKey is set and localStorage[key] === '1', even if defaultOpen is false", async () => {
-		localStorage.setItem("t29-open-key", "1");
-		const { container } = await render(
-			<CollapsibleSection
-				title="open-key"
-				defaultOpen={false}
-				persistKey="t29-open-key"
-			>
-				<span data-testid="open-child">content</span>
-			</CollapsibleSection>,
-		);
-		expect(container.querySelector('[data-testid="open-child"]')).not.toBeNull();
-	});
+  it("renders OPEN when persistKey is set and localStorage[key] === '1', even if defaultOpen is false", async () => {
+    localStorage.setItem("t29-open-key", "1");
+    const { container } = await render(
+      <CollapsibleSection
+        title="open-key"
+        defaultOpen={false}
+        persistKey="t29-open-key"
+      >
+        <span data-testid="open-child">content</span>
+      </CollapsibleSection>,
+    );
+    expect(
+      container.querySelector('[data-testid="open-child"]'),
+    ).not.toBeNull();
+  });
 
-	it("writes the new state back to localStorage on toggle", async () => {
-		const { container } = await render(
-			<CollapsibleSection
-				title="toggle-key"
-				defaultOpen={false}
-				persistKey="t29-toggle-key"
-			>
-				<span data-testid="toggle-child">content</span>
-			</CollapsibleSection>,
-		);
-		// Start closed
-		expect(localStorage.getItem("t29-toggle-key")).toBeNull();
-		expect(container.querySelector('[data-testid="toggle-child"]')).toBeNull();
+  it("writes the new state back to localStorage on toggle", async () => {
+    const { container } = await render(
+      <CollapsibleSection
+        title="toggle-key"
+        defaultOpen={false}
+        persistKey="t29-toggle-key"
+      >
+        <span data-testid="toggle-child">content</span>
+      </CollapsibleSection>,
+    );
+    // Start closed
+    expect(localStorage.getItem("t29-toggle-key")).toBeNull();
+    expect(container.querySelector('[data-testid="toggle-child"]')).toBeNull();
 
-		// Click the header button to toggle open
-		const button = container.querySelector("button");
-		expect(button).not.toBeNull();
-		button?.click();
+    // Click the header button to toggle open
+    const button = container.querySelector("button");
+    expect(button).not.toBeNull();
+    button?.click();
 
-		// React state updates are async — wait for the rerender
-		await vi.waitFor(() => {
-			expect(container.querySelector('[data-testid="toggle-child"]')).not.toBeNull();
-		});
-		expect(localStorage.getItem("t29-toggle-key")).toBe("1");
+    // React state updates are async — wait for the rerender
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector('[data-testid="toggle-child"]'),
+      ).not.toBeNull();
+    });
+    expect(localStorage.getItem("t29-toggle-key")).toBe("1");
 
-		// Toggle back closed
-		button?.click();
-		await vi.waitFor(() => {
-			expect(container.querySelector('[data-testid="toggle-child"]')).toBeNull();
-		});
-		expect(localStorage.getItem("t29-toggle-key")).toBe("0");
-	});
+    // Toggle back closed
+    button?.click();
+    await vi.waitFor(() => {
+      expect(
+        container.querySelector('[data-testid="toggle-child"]'),
+      ).toBeNull();
+    });
+    expect(localStorage.getItem("t29-toggle-key")).toBe("0");
+  });
 });

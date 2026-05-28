@@ -228,7 +228,9 @@ function PhasesSection({
                           <TableCell>Phase {row.writableAt}</TableCell>
                           <TableCell>Phase {row.passesAt}</TableCell>
                           <TableCell>
-                            <Badge variant={stateToBadge(row.state)}>{row.state}</Badge>
+                            <Badge variant={stateToBadge(row.state)}>
+                              {row.state}
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -324,12 +326,13 @@ function FalsificationSection({
         </Badge>
       </header>
       {hypotheses.length === 0 && (
-        <p className="text-sm text-gray-500">
-          No hypotheses logged yet.
-        </p>
+        <p className="text-sm text-gray-500">No hypotheses logged yet.</p>
       )}
       {hypotheses.length > 0 && (
-        <ul className="flex flex-col gap-3" data-testid="falsification-hypotheses">
+        <ul
+          className="flex flex-col gap-3"
+          data-testid="falsification-hypotheses"
+        >
           {hypotheses.map((entry) => (
             <HypothesisItem
               key={`${entry.timestamp}-${entry.hypothesis.slice(0, 32)}`}
@@ -425,7 +428,9 @@ function FalsificationPhaseSection({ phase }: { phase: Phase }) {
                 <span className="font-mono text-xs text-gray-500">
                   [{item.checked ? "x" : " "}]
                 </span>
-                <span className={item.checked ? "text-gray-500 line-through" : ""}>
+                <span
+                  className={item.checked ? "text-gray-500 line-through" : ""}
+                >
                   {item.text}
                 </span>
               </li>
@@ -451,9 +456,7 @@ function HypothesisItem({ entry }: { entry: HypothesisEntry }) {
       {entry.testPath && (
         <p className="text-xs text-gray-500 font-mono">{entry.testPath}</p>
       )}
-      {entry.note && (
-        <p className="text-xs text-gray-500">{entry.note}</p>
-      )}
+      {entry.note && <p className="text-xs text-gray-500">{entry.note}</p>}
     </li>
   );
 }
@@ -474,16 +477,28 @@ function outcomeToBadge(outcome: HypothesisOutcome): BadgeVariant {
 
 function statusToBadge(status: string): BadgeVariant {
   const normalized = status.toLowerCase();
-  if (normalized.includes("completed") || normalized.includes("passing")) return "passing";
+  if (normalized.includes("completed") || normalized.includes("passing"))
+    return "passing";
   if (normalized.includes("blocked")) return "blocked";
-  if (normalized.includes("in-progress") || normalized.includes("accepted")) return "writable";
-  if (normalized.includes("draft") || normalized.includes("planned")) return "planned";
+  if (normalized.includes("in-progress") || normalized.includes("accepted"))
+    return "writable";
+  if (normalized.includes("draft") || normalized.includes("planned"))
+    return "planned";
   return "neutral";
 }
 
 function stateToBadge(state: string): BadgeVariant {
   const normalized = state.toLowerCase();
-  if (["passing", "blocked", "skipped", "planned", "writable", "written"].includes(normalized)) {
+  if (
+    [
+      "passing",
+      "blocked",
+      "skipped",
+      "planned",
+      "writable",
+      "written",
+    ].includes(normalized)
+  ) {
     return normalized as BadgeVariant;
   }
   return "neutral";

@@ -41,10 +41,7 @@ describe("T6 — legacy falsification.md gate path (backward compatibility)", ()
 			outcome: "fix-in-scope",
 			note: "Legacy fixture for backward-compatibility regression test.",
 		});
-		markTerminated(
-			planRoot,
-			"No further in-scope hypothesis after investigation.",
-		);
+		markTerminated(planRoot, "No further in-scope hypothesis after investigation.");
 
 		// The legacy gate path passes for this shape — unchanged from pre-1.27.4.
 		expect(isFalsificationComplete(planRoot)).toBe(true);

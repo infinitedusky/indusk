@@ -1,12 +1,5 @@
 import { spawn } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	openSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createConnection, createServer } from "node:net";
 import { homedir } from "node:os";
@@ -206,10 +199,7 @@ function sleep(ms: number): Promise<void> {
 	return new Promise((r) => setTimeout(r, ms));
 }
 
-async function waitForPortListening(
-	port: number,
-	timeoutMs: number,
-): Promise<boolean> {
+async function waitForPortListening(port: number, timeoutMs: number): Promise<boolean> {
 	const deadline = Date.now() + timeoutMs;
 	while (Date.now() < deadline) {
 		if (await isPortListening(port)) return true;
@@ -224,10 +214,7 @@ async function waitForPortListening(
 // `findFreePort(4318)` would fall through to `pickAnyFreePort()` — drifting
 // the OTLP port off the user's pinned value and breaking every downstream app
 // pointing at the old port.
-async function waitForPortFree(
-	port: number,
-	timeoutMs: number,
-): Promise<boolean> {
+async function waitForPortFree(port: number, timeoutMs: number): Promise<boolean> {
 	const deadline = Date.now() + timeoutMs;
 	while (Date.now() < deadline) {
 		if (await isPortFree(port)) return true;
@@ -320,10 +307,13 @@ exporters:
  * `packages/telemetry-binaries-shared/collector-config.yaml` with the log
  * sink path templated.
  */
-function renderCollectorConfig(ports: {
-	otlpHttp: number;
-	health: number;
-}, logsPath: string): string {
+function renderCollectorConfig(
+	ports: {
+		otlpHttp: number;
+		health: number;
+	},
+	logsPath: string,
+): string {
 	return `receivers:
   otlp:
     protocols:
@@ -368,9 +358,7 @@ service:
 
 // ---- daemonStart / daemonStop / daemonStatus / daemonRestart ---------------
 
-export async function daemonStart(
-	opts: DaemonStartOptions = {},
-): Promise<DaemonMeta> {
+export async function daemonStart(opts: DaemonStartOptions = {}): Promise<DaemonMeta> {
 	ensureHome();
 
 	// Fail fast if already running (up-stream uiStart-style guard)
@@ -386,25 +374,17 @@ export async function daemonStart(
 
 	// Pick 8 ports simultaneously to avoid sequential-pickFreePort collision
 	// (see telemetry-ui-reachable.test.ts lesson from Phase 2).
-	const [
-		otlpHttp,
-		otlpGrpc,
-		ui,
-		uiGrpc,
-		jaegerHealth,
-		logsOtlp,
-		otelcolHealth,
-		mcp,
-	] = await Promise.all([
-		findFreePort(opts.otlpPort ?? 4318),
-		findFreePort(0),
-		findFreePort(opts.uiPort ?? 16686),
-		findFreePort(0),
-		findFreePort(0),
-		findFreePort(0),
-		findFreePort(0),
-		findFreePort(0),
-	]);
+	const [otlpHttp, otlpGrpc, ui, uiGrpc, jaegerHealth, logsOtlp, otelcolHealth, mcp] =
+		await Promise.all([
+			findFreePort(opts.otlpPort ?? 4318),
+			findFreePort(0),
+			findFreePort(opts.uiPort ?? 16686),
+			findFreePort(0),
+			findFreePort(0),
+			findFreePort(0),
+			findFreePort(0),
+			findFreePort(0),
+		]);
 
 	// Write configs to INDUSK_HOME/telemetry-{jaeger,collector}.yaml so they
 	// survive parent exit and are inspectable post-mortem.
@@ -426,10 +406,7 @@ export async function daemonStart(
 	);
 	writeFileSync(
 		collectorConfig,
-		renderCollectorConfig(
-			{ otlpHttp: logsOtlp, health: otelcolHealth },
-			logsPath,
-		),
+		renderCollectorConfig({ otlpHttp: logsOtlp, health: otelcolHealth }, logsPath),
 	);
 
 	const logFd = openSync(logFilePath(), "a");
@@ -521,10 +498,7 @@ export async function daemonStatus(): Promise<DaemonStatusResult> {
 
 	// Identity gate: BOTH processes alive AND both listening on their ports
 	const jaegerOk = await verifyIdentity(meta.jaegerPid, meta.uiPort);
-	const otelcolOk = await verifyIdentity(
-		meta.otelcolPid,
-		meta.otelcolHealthPort,
-	);
+	const otelcolOk = await verifyIdentity(meta.otelcolPid, meta.otelcolHealthPort);
 	if (!jaegerOk || !otelcolOk) {
 		cleanupFiles();
 		return { running: false };
@@ -556,10 +530,7 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 	// Identity gate for stop: if the recorded PIDs aren't ours anymore
 	// (PID-reuse), clean up files but don't SIGTERM a stranger.
 	const jaegerOk = await verifyIdentity(meta.jaegerPid, meta.uiPort);
-	const otelcolOk = await verifyIdentity(
-		meta.otelcolPid,
-		meta.otelcolHealthPort,
-	);
+	const otelcolOk = await verifyIdentity(meta.otelcolPid, meta.otelcolHealthPort);
 	if (!jaegerOk && !otelcolOk) {
 		cleanupFiles();
 		return {
@@ -613,9 +584,7 @@ export async function daemonStop(): Promise<DaemonStopResult> {
 	};
 }
 
-export async function daemonRestart(
-	opts: DaemonStartOptions = {},
-): Promise<DaemonMeta> {
+export async function daemonRestart(opts: DaemonStartOptions = {}): Promise<DaemonMeta> {
 	// Restart means "same daemon, fresh processes" — inherit the previously
 	// bound ports before stopping so the new spawn rebinds the same addresses
 	// (and doesn't fall back to default 4318/16686, which collide with the

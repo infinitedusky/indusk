@@ -1,22 +1,22 @@
 {
-  "envDir": "env",
-  "defaultProfile": "local",
-  "scaffold": "docker",
-  "composeFilePerProfile": true,
-  "profiles": {
-    "local": {
-      "suffix": "",
-      "domain": "dusk.dawn",
-      "proxy": "caddy-external"
-    },
-    "staging": {
-      "suffix": "-stg",
-      "domain": "stg.agcorsillo.com"
-    },
-    "production": {
-      "suffix": "",
-      "domain": "agcorsillo.com",
-      "tls": true
-    }
-  }
+	"envDir": "env",
+	"defaultProfile": "local",
+	"scaffold": "docker",
+	"composeFilePerProfile": true,
+	"profiles": {
+		"local": {
+			"suffix": "",
+			"domain": "dusk.dawn",
+			"proxy": "caddy-external"
+		},
+		"staging": {
+			"suffix": "-stg",
+			"domain": "stg.agcorsillo.com"
+		},
+		"production": {
+			"suffix": "",
+			"domain": "agcorsillo.com",
+			"tls": true
+		}
+	}
 }

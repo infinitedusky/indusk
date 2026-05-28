@@ -4,20 +4,20 @@ import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { Sidebar } from "@/components/ui/Sidebar";
 import {
-	readActivePlans,
-	readArchivedPlans,
-	readMasterPlanOrder,
-	readProjectResearch,
+  readActivePlans,
+  readArchivedPlans,
+  readMasterPlanOrder,
+  readProjectResearch,
 } from "@/lib/planning-reader";
 import {
-	getProjectPath,
-	projectPathExists,
-	readRegistryProjects,
+  getProjectPath,
+  projectPathExists,
+  readRegistryProjects,
 } from "@/lib/registry-client";
 
 interface PerProjectLayoutProps {
-	children: React.ReactNode;
-	params: Promise<{ project: string }>;
+  children: React.ReactNode;
+  params: Promise<{ project: string }>;
 }
 
 /**
@@ -37,83 +37,80 @@ interface PerProjectLayoutProps {
  * `LayoutProps`. Keeping a local interface keeps the typecheck hermetic.
  */
 export default async function PerProjectLayout({
-	children,
-	params,
+  children,
+  params,
 }: PerProjectLayoutProps) {
-	const { project } = await params;
-	const projectPath = getProjectPath(project);
+  const { project } = await params;
+  const projectPath = getProjectPath(project);
 
-	if (!projectPath || !projectPathExists(projectPath)) {
-		return (
-			<StaleProjectFailurePage
-				projectName={project}
-				projectPath={projectPath ?? undefined}
-			/>
-		);
-	}
+  if (!projectPath || !projectPathExists(projectPath)) {
+    return (
+      <StaleProjectFailurePage
+        projectName={project}
+        projectPath={projectPath ?? undefined}
+      />
+    );
+  }
 
-	const [active, archived, research] = await Promise.all([
-		readActivePlans(projectPath),
-		readArchivedPlans(projectPath),
-		readProjectResearch(projectPath),
-	]);
-	const masterOrder = readMasterPlanOrder(projectPath);
-	const registered = readRegistryProjects().map((p) => ({ name: p.name }));
+  const [active, archived, research] = await Promise.all([
+    readActivePlans(projectPath),
+    readArchivedPlans(projectPath),
+    readProjectResearch(projectPath),
+  ]);
+  const masterOrder = readMasterPlanOrder(projectPath);
+  const registered = readRegistryProjects().map((p) => ({ name: p.name }));
 
-	return (
-		<div className="flex h-full w-full">
-			<Sidebar
-				header={
-					<div className="flex flex-col gap-2">
-						<div className="flex items-baseline justify-between">
-							<span className="truncate text-sm font-semibold text-gray-900">
-								{project}
-							</span>
-							<span className="text-xs text-gray-500">project</span>
-						</div>
-						<ProjectSwitcher
-							projects={registered}
-							currentProject={project}
-						/>
-					</div>
-				}
-			>
-				<nav className="flex flex-col gap-1 pb-3">
-					<Link
-						href={`/p/${project}/scorecards`}
-						className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
-					>
-						Scorecards
-					</Link>
-				</nav>
-				<PlanList
-					active={active}
-					archived={archived}
-					masterOrder={masterOrder}
-					planHrefPrefix={`/p/${project}/plan/`}
-				/>
-				{research.length > 0 && (
-					<nav
-						className="flex flex-col gap-1 pt-3 border-t border-gray-200 mt-3"
-						data-testid="research-group"
-					>
-						<h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-							Research
-						</h3>
-						{research.map((entry) => (
-							<Link
-								key={entry.slug}
-								href={`/p/${project}/research/${entry.slug}`}
-								className="truncate rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
-								title={entry.title ?? entry.slug}
-							>
-								{entry.title ?? entry.slug}
-							</Link>
-						))}
-					</nav>
-				)}
-			</Sidebar>
-			<main className="flex-1 overflow-y-auto p-6">{children}</main>
-		</div>
-	);
+  return (
+    <div className="flex h-full w-full">
+      <Sidebar
+        header={
+          <div className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between">
+              <span className="truncate text-sm font-semibold text-gray-900">
+                {project}
+              </span>
+              <span className="text-xs text-gray-500">project</span>
+            </div>
+            <ProjectSwitcher projects={registered} currentProject={project} />
+          </div>
+        }
+      >
+        <nav className="flex flex-col gap-1 pb-3">
+          <Link
+            href={`/p/${project}/scorecards`}
+            className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Scorecards
+          </Link>
+        </nav>
+        <PlanList
+          active={active}
+          archived={archived}
+          masterOrder={masterOrder}
+          planHrefPrefix={`/p/${project}/plan/`}
+        />
+        {research.length > 0 && (
+          <nav
+            className="flex flex-col gap-1 pt-3 border-t border-gray-200 mt-3"
+            data-testid="research-group"
+          >
+            <h3 className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Research
+            </h3>
+            {research.map((entry) => (
+              <Link
+                key={entry.slug}
+                href={`/p/${project}/research/${entry.slug}`}
+                className="truncate rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+                title={entry.title ?? entry.slug}
+              >
+                {entry.title ?? entry.slug}
+              </Link>
+            ))}
+          </nav>
+        )}
+      </Sidebar>
+      <main className="flex-1 overflow-y-auto p-6">{children}</main>
+    </div>
+  );
 }

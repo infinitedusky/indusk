@@ -1,12 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -126,9 +119,7 @@ describe(".env.example copy + missing-.env hint", () => {
 			const result = runCli(["extensions", "enable", "dash0"]);
 
 			// The cp hint should not be printed because .env exists.
-			expect(result.stdout).not.toMatch(
-				/cp \.indusk\/extensions\/dash0\/\.env\.example/,
-			);
+			expect(result.stdout).not.toMatch(/cp \.indusk\/extensions\/dash0\/\.env\.example/);
 		},
 		30_000,
 	);
@@ -139,10 +130,7 @@ describe(".env.example copy + missing-.env hint", () => {
 			// Smoke: just confirm the source file exists and contains the
 			// documented variables. A full enable of local-telemetry would
 			// trigger the daemon — out of scope for this test.
-			const source = join(
-				REPO_ROOT,
-				"apps/indusk-mcp/extensions/local-telemetry/.env.example",
-			);
+			const source = join(REPO_ROOT, "apps/indusk-mcp/extensions/local-telemetry/.env.example");
 			expect(existsSync(source)).toBe(true);
 			const contents = readFileSync(source, "utf-8");
 			expect(contents).toMatch(/OTEL_EXPORTER_OTLP_ENDPOINT/);

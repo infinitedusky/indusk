@@ -7,7 +7,7 @@ import { PlanDetail } from "./PlanDetail";
 // CollapsibleSection persists state to localStorage (1.27.7+). Clear between
 // tests so earlier test toggles don't bleed into later tests' initial state.
 beforeEach(() => {
-	if (typeof window !== "undefined") localStorage.clear();
+  if (typeof window !== "undefined") localStorage.clear();
 });
 
 /**
@@ -148,9 +148,9 @@ describe("PlanDetail — brief section is collapsible (T21, Phase 6)", () => {
     const brief = container.querySelector('[data-testid="brief-section"]');
     expect(brief?.textContent).toContain("Customers can't sort");
 
-    const toggle = brief?.querySelector("[aria-expanded]") as
-      | HTMLElement
-      | null;
+    const toggle = brief?.querySelector(
+      "[aria-expanded]",
+    ) as HTMLElement | null;
     expect(toggle).not.toBeNull();
     toggle?.click();
     await new Promise((r) => setTimeout(r, 50));
@@ -563,10 +563,14 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
   }
 
   it("T27 — Phase 2 (Falsification) is EXTRACTED from the Phases section and rendered as Falsification", async () => {
-    const { container } = await render(<PlanDetail plan={mockMixedPhasePlan()} />);
+    const { container } = await render(
+      <PlanDetail plan={mockMixedPhasePlan()} />,
+    );
 
     // Main Phases section contains Phase 1 only (Phase 2 hoisted out)
-    const phasesSection = container.querySelector('[data-testid="phases-section"]');
+    const phasesSection = container.querySelector(
+      '[data-testid="phases-section"]',
+    );
     expect(phasesSection).not.toBeNull();
     const phasesText = phasesSection?.textContent ?? "";
     expect(phasesText).toContain("Phase 1");
@@ -574,7 +578,9 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
   });
 
   it("T27 — Falsification section renders Phase 2's trajectory rows as hypotheses + checklist as fix items", async () => {
-    const { container } = await render(<PlanDetail plan={mockMixedPhasePlan()} />);
+    const { container } = await render(
+      <PlanDetail plan={mockMixedPhasePlan()} />,
+    );
 
     const falsification = container.querySelector(
       '[data-testid="falsification-section"]',
@@ -599,7 +605,9 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
   });
 
   it("T27 — Follow-up Phases section contains Phase 3 (after the falsification phase)", async () => {
-    const { container } = await render(<PlanDetail plan={mockMixedPhasePlan()} />);
+    const { container } = await render(
+      <PlanDetail plan={mockMixedPhasePlan()} />,
+    );
 
     const followup = container.querySelector(
       '[data-testid="followup-phases-section"]',
@@ -629,32 +637,32 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
 });
 
 describe("PlanDetail — collapsible section state persists (T30, Phase 9)", () => {
-	it("T30 — PlanDetail wires a plan-scoped persistKey into the Brief section, so pre-seeded localStorage renders the Brief closed on first render", async () => {
-		// Simulate "user closed Brief on a prior visit"
-		localStorage.setItem("plan:alpha-feature:section:brief", "0");
+  it("T30 — PlanDetail wires a plan-scoped persistKey into the Brief section, so pre-seeded localStorage renders the Brief closed on first render", async () => {
+    // Simulate "user closed Brief on a prior visit"
+    localStorage.setItem("plan:alpha-feature:section:brief", "0");
 
-		const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    const { container } = await render(<PlanDetail plan={mockPlan()} />);
 
-		// Brief section is present but its button reports closed state — even
-		// though the in-code defaultOpen={true} would otherwise render it open.
-		const briefButton = container.querySelector(
-			'[data-testid="brief-section"] button',
-		);
-		expect(briefButton).not.toBeNull();
-		expect(briefButton?.getAttribute("aria-expanded")).toBe("false");
-	});
+    // Brief section is present but its button reports closed state — even
+    // though the in-code defaultOpen={true} would otherwise render it open.
+    const briefButton = container.querySelector(
+      '[data-testid="brief-section"] button',
+    );
+    expect(briefButton).not.toBeNull();
+    expect(briefButton?.getAttribute("aria-expanded")).toBe("false");
+  });
 
-	it("T30 — absent localStorage value falls back to defaultOpen (Brief open on first-ever visit)", async () => {
-		// No prior storage — fresh user
-		expect(localStorage.getItem("plan:alpha-feature:section:brief")).toBeNull();
+  it("T30 — absent localStorage value falls back to defaultOpen (Brief open on first-ever visit)", async () => {
+    // No prior storage — fresh user
+    expect(localStorage.getItem("plan:alpha-feature:section:brief")).toBeNull();
 
-		const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    const { container } = await render(<PlanDetail plan={mockPlan()} />);
 
-		const briefButton = container.querySelector(
-			'[data-testid="brief-section"] button',
-		);
-		expect(briefButton?.getAttribute("aria-expanded")).toBe("true");
-	});
+    const briefButton = container.querySelector(
+      '[data-testid="brief-section"] button',
+    );
+    expect(briefButton?.getAttribute("aria-expanded")).toBe("true");
+  });
 });
 
 describe("PlanDetail — legacy falsification.md rendering still works (T28, Phase 8)", () => {

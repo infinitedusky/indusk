@@ -1,12 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -43,11 +36,7 @@ beforeEach(() => {
 	projectDir = mkdtempSync(join(tmpdir(), "telemetry-escape-proj-"));
 	writeFileSync(
 		join(projectDir, "package.json"),
-		JSON.stringify(
-			{ name: "telemetry-escape-smoke", version: "0.0.0" },
-			null,
-			2,
-		),
+		JSON.stringify({ name: "telemetry-escape-smoke", version: "0.0.0" }, null, 2),
 	);
 });
 
@@ -61,8 +50,7 @@ afterEach(() => {
 		});
 	}
 	if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
-	if (existsSync(projectDir))
-		rmSync(projectDir, { recursive: true, force: true });
+	if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 });
 
 function runInit(): { code: number; stdout: string; stderr: string } {
@@ -112,16 +100,12 @@ describe("Escape hatch — disabled_extensions silences required-by-default loca
 
 			// Extension NOT enabled
 			expect(
-				existsSync(
-					join(projectDir, ".indusk/extensions/local-telemetry/manifest.json"),
-				),
+				existsSync(join(projectDir, ".indusk/extensions/local-telemetry/manifest.json")),
 				`expected local-telemetry to be skipped due to disabled_extensions\nstdout:\n${result.stdout}`,
 			).toBe(false);
 
 			// Registry untouched — project not added
-			expect(readRegistry().projects.map((p) => p.path)).not.toContain(
-				projectDir,
-			);
+			expect(readRegistry().projects.map((p) => p.path)).not.toContain(projectDir);
 
 			// .mcp.json has no jaeger entry (may not exist at all if init didn't
 			// need to write one)

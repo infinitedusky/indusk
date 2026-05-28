@@ -281,7 +281,8 @@ describe("T13: validateRationaleCompleteness rejects missing subsection when Pha
 
 describe("T14: validateRationaleCompleteness rejects missing T-IDs", () => {
 	it("flags trajectory rows that have no rationale entry", () => {
-		const rows = "| T1 | a | Phase 1 | Phase 1 | planned |\n| T2 | b | Phase 1 | Phase 2 | planned |";
+		const rows =
+			"| T1 | a | Phase 1 | Phase 1 | planned |\n| T2 | b | Phase 1 | Phase 2 | planned |";
 		const body = `## Test Trajectory
 
 | ID | Asserts | Writable at | Passes at | State |
@@ -327,7 +328,8 @@ ${rows}
 
 describe("T16: validateRationaleCompleteness accepts complete subsection", () => {
 	it("returns no errors when every trajectory row has a rationale entry and there are no extras", () => {
-		const rows = "| T1 | a | Phase 1 | Phase 1 | planned |\n| T2 | b | Phase 1 | Phase 2 | planned |";
+		const rows =
+			"| T1 | a | Phase 1 | Phase 1 | planned |\n| T2 | b | Phase 1 | Phase 2 | planned |";
 		const body = `## Test Trajectory
 
 | ID | Asserts | Writable at | Passes at | State |

@@ -203,9 +203,7 @@ export async function runPersistentEval(opts: {
 
 			const scm = getScm(opts.projectRoot);
 			const diffCommand =
-				scm === "git"
-					? `git show ${opts.changeId}`
-					: `jj diff -r ${opts.changeId}`;
+				scm === "git" ? `git show ${opts.changeId}` : `jj diff -r ${opts.changeId}`;
 
 			try {
 				const { args, prompt } = await withSpan(
@@ -380,9 +378,7 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
 				const stack = err instanceof Error ? (err.stack ?? "") : "";
-				const enrichedMessage = rawClaudeStdout
-					? formatParseError(err, rawClaudeStdout)
-					: msg;
+				const enrichedMessage = rawClaudeStdout ? formatParseError(err, rawClaudeStdout) : msg;
 				rootSpan.setAttribute("scorecard.status", "error");
 				rootSpan.setAttribute("error.message", msg.slice(0, 500));
 				logEvalContent("error", stack || enrichedMessage, {

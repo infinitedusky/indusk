@@ -185,8 +185,7 @@ describe("rationale-baseline T5: TS source ↔ JS hook port parity", () => {
 				rationaleRequired: true,
 				rationaleBaseline: baseline,
 			});
-			const tsPasses =
-				tsErrors.filter((e) => e.rule === "rationale-completeness").length === 0;
+			const tsPasses = tsErrors.filter((e) => e.rule === "rationale-completeness").length === 0;
 
 			// JS hook verdict — write fixture to a temp impl.md, spawn hook with a
 			// Write event, observe exit code (0 = pass, 2 = block).
@@ -198,18 +197,16 @@ describe("rationale-baseline T5: TS source ↔ JS hook port parity", () => {
 				tool_input: { file_path: implPath, content: fullContent },
 				cwd: dir,
 			};
-			const result = await new Promise<{ exitCode: number; stderr: string }>(
-				(resolve, reject) => {
-					const child = spawn("node", [HOOK_PATH], { stdio: ["pipe", "pipe", "pipe"] });
-					let stderr = "";
-					child.stderr.on("data", (d) => {
-						stderr += d.toString();
-					});
-					child.on("error", reject);
-					child.on("close", (code) => resolve({ exitCode: code ?? 0, stderr }));
-					child.stdin.end(JSON.stringify(event));
-				},
-			);
+			const result = await new Promise<{ exitCode: number; stderr: string }>((resolve, reject) => {
+				const child = spawn("node", [HOOK_PATH], { stdio: ["pipe", "pipe", "pipe"] });
+				let stderr = "";
+				child.stderr.on("data", (d) => {
+					stderr += d.toString();
+				});
+				child.on("error", reject);
+				child.on("close", (code) => resolve({ exitCode: code ?? 0, stderr }));
+				child.stdin.end(JSON.stringify(event));
+			});
 			const jsBlockedOnRationale =
 				result.exitCode === 2 && result.stderr.includes("rationale-completeness");
 			const jsPasses = !jsBlockedOnRationale;

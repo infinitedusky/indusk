@@ -28,8 +28,7 @@ export interface PromptBuilderOptions {
 
 export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
 	const scm = opts.scm ?? "jj";
-	const diffCommand =
-		scm === "git" ? `git show ${opts.changeId}` : `jj diff -r ${opts.changeId}`;
+	const diffCommand = scm === "git" ? `git show ${opts.changeId}` : `jj diff -r ${opts.changeId}`;
 	const questionsBlock = opts.rubric
 		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
 		.join("\n\n");

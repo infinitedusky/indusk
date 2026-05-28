@@ -41,7 +41,10 @@ export interface ScorecardsListProps {
   descriptions?: Map<string, string>;
 }
 
-export function ScorecardsList({ scorecards, descriptions }: ScorecardsListProps) {
+export function ScorecardsList({
+  scorecards,
+  descriptions,
+}: ScorecardsListProps) {
   // Most-recent-first sort (ISO 8601 timestamps sort lexicographically in
   // reverse). Done here so the page-level walker can pass an unsorted
   // union of per-project entries — the list owns the ordering contract.
@@ -54,20 +57,24 @@ export function ScorecardsList({ scorecards, descriptions }: ScorecardsListProps
         <h1 className="text-xl font-semibold text-gray-900">Eval Scorecards</h1>
         <p className="text-sm text-gray-600">
           Per-commit scores produced by the eval agent on every{" "}
-          <code className="rounded bg-gray-100 px-1 text-xs font-mono">jj describe</code>.
-          This is a self-improvement signal — what worked, what didn't, what the system
-          could improve. Not tied to any single plan.
+          <code className="rounded bg-gray-100 px-1 text-xs font-mono">
+            jj describe
+          </code>
+          . This is a self-improvement signal — what worked, what didn't, what
+          the system could improve. Not tied to any single plan.
         </p>
         <p className="text-xs text-gray-500">
-          Source: <span className="font-mono">.indusk/eval/results.log</span> across every
-          registered project ({sorted.length} entries, most recent first)
+          Source: <span className="font-mono">.indusk/eval/results.log</span>{" "}
+          across every registered project ({sorted.length} entries, most recent
+          first)
         </p>
       </header>
 
       {sorted.length === 0 ? (
         <p className="text-sm text-gray-500" data-testid="scorecards-empty">
-          No scorecards yet — run a few <code className="font-mono">jj describe</code>{" "}
-          commands inside Claude Code, and they'll start appearing.
+          No scorecards yet — run a few{" "}
+          <code className="font-mono">jj describe</code> commands inside Claude
+          Code, and they'll start appearing.
         </p>
       ) : (
         <div className="flex flex-col gap-2">
@@ -76,7 +83,9 @@ export function ScorecardsList({ scorecards, descriptions }: ScorecardsListProps
               key={`${card.timestamp}-${card.changeId ?? "unknown"}-${card.project ?? ""}`}
               card={card}
               jjDescription={
-                card.changeId ? descriptions?.get(String(card.changeId)) : undefined
+                card.changeId
+                  ? descriptions?.get(String(card.changeId))
+                  : undefined
               }
             />
           ))}
@@ -95,7 +104,8 @@ function ScorecardCard({
 }) {
   const status = card.error ? "error" : "ok";
   const llmSummary =
-    (card.summary as string | undefined) ?? (card.message as string | undefined);
+    (card.summary as string | undefined) ??
+    (card.message as string | undefined);
   // Prefer the actual jj describe text when we have it — it's the human-
   // authored intent of the commit being scored. Fall back to the LLM-
   // generated summary, then to a placeholder.
@@ -135,7 +145,11 @@ function ScorecardCard({
     </span>
   );
   return (
-    <CollapsibleSection title={titleNode} headerRight={headerRight} defaultOpen={false}>
+    <CollapsibleSection
+      title={titleNode}
+      headerRight={headerRight}
+      defaultOpen={false}
+    >
       <div className="flex flex-col gap-3">
         {jjDescription && (
           <section
@@ -184,7 +198,10 @@ function ScorecardMeta({ card }: { card: Scorecard }) {
       "Graphiti writes",
       typeof card.graphitiWrites === "number" ? card.graphitiWrites : undefined,
     ],
-    ["Project group", card.projectGroup ? String(card.projectGroup) : undefined],
+    [
+      "Project group",
+      card.projectGroup ? String(card.projectGroup) : undefined,
+    ],
   ];
   return (
     <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-700 sm:grid-cols-3">
@@ -192,7 +209,9 @@ function ScorecardMeta({ card }: { card: Scorecard }) {
         .filter(([, v]) => v !== undefined && v !== "")
         .map(([k, v]) => (
           <div key={k} className="flex flex-col">
-            <dt className="font-semibold text-gray-500 uppercase tracking-wide">{k}</dt>
+            <dt className="font-semibold text-gray-500 uppercase tracking-wide">
+              {k}
+            </dt>
             <dd className="font-mono break-all">{String(v)}</dd>
           </div>
         ))}
@@ -226,7 +245,9 @@ function ScorecardQuestions({ questions }: { questions: ScorecardQuestion[] }) {
             </TableCell>
             <TableCell>{q.answer ?? "—"}</TableCell>
             <TableCell>
-              <Badge variant={severityToBadge(q.severity)}>{q.severity ?? "—"}</Badge>
+              <Badge variant={severityToBadge(q.severity)}>
+                {q.severity ?? "—"}
+              </Badge>
             </TableCell>
             <TableCell>
               <div className="flex flex-col gap-1">
@@ -258,5 +279,8 @@ function severityToBadge(severity: string | undefined): BadgeVariant {
 function formatTimestamp(ts: string): string {
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return ts;
-  return d.toISOString().replace("T", " ").replace(/\.\d+Z$/, "Z");
+  return d
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d+Z$/, "Z");
 }

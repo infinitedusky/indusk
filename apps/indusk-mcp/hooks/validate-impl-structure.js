@@ -324,7 +324,11 @@ const rationaleBaseline = rationaleBaselineMatch
 	: 0;
 
 if (trajectoryValidationEnabled) {
-	const trajectoryErrors = validateTrajectory(body, rationaleRequiredFrontmatter, rationaleBaseline);
+	const trajectoryErrors = validateTrajectory(
+		body,
+		rationaleRequiredFrontmatter,
+		rationaleBaseline,
+	);
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
 			`Test Trajectory validation failed (policy: ${gatePolicy}):\n${trajectoryErrors.map((e) => `  [${e.rule}] ${e.message}`).join("\n")}\n\nSee .indusk/planning/tests-first-planning/adr.md Sections 3-6 for the Test Trajectory shape and validator rules.\n`,

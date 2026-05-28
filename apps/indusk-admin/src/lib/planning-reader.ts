@@ -192,7 +192,8 @@ async function readPlanFolder(
   archived: boolean,
 ): Promise<Plan> {
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
-  const [research, brief, testPlan, adr, impl, _falsification, retrospective] = docs;
+  const [research, brief, testPlan, adr, impl, _falsification, retrospective] =
+    docs;
   const malformed = docs.some((d) => isMalformed(d));
   const rawDocuments: Record<string, string> = {};
   for (let i = 0; i < docs.length; i++) {
@@ -234,7 +235,8 @@ async function readPlanFolder(
     name,
     status,
     archived,
-    research: research !== null && !isMalformed(research) ? research : undefined,
+    research:
+      research !== null && !isMalformed(research) ? research : undefined,
     brief: brief !== null && !isMalformed(brief) ? brief : undefined,
     testPlan:
       testPlan !== null && !isMalformed(testPlan) ? testPlan : undefined,

@@ -17,15 +17,30 @@ import { execFileSync } from "node:child_process";
  * Both calls are read-only — `jj log --ignore-working-copy` doesn't snapshot,
  * and `git log` is always read-only.
  */
-export function getCommitMessage(projectRoot: string, id: string): string | null {
+export function getCommitMessage(
+  projectRoot: string,
+  id: string,
+): string | null {
   if (!id || !/^[a-z0-9]+$/i.test(id)) return null;
 
   // Try jj first
   try {
     const out = execFileSync(
       "jj",
-      ["log", "-r", id, "--no-graph", "-T", "description", "--ignore-working-copy"],
-      { cwd: projectRoot, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
+      [
+        "log",
+        "-r",
+        id,
+        "--no-graph",
+        "-T",
+        "description",
+        "--ignore-working-copy",
+      ],
+      {
+        cwd: projectRoot,
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+      },
     );
     const trimmed = out.trim();
     if (trimmed !== "") return trimmed;
@@ -53,7 +68,10 @@ export function getCommitMessage(projectRoot: string, id: string): string | null
  * Bulk-resolve commit messages for many ids. Deduplicates by id so the same
  * commit isn't queried twice per render.
  */
-export function getCommitMessages(projectRoot: string, ids: string[]): Map<string, string> {
+export function getCommitMessages(
+  projectRoot: string,
+  ids: string[],
+): Map<string, string> {
   const out = new Map<string, string>();
   for (const id of new Set(ids)) {
     const msg = getCommitMessage(projectRoot, id);

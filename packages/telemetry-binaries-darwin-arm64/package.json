@@ -3,8 +3,12 @@
 	"version": "1.28.0",
 	"description": "Jaeger + OTel Collector (k8s distribution) native binaries for darwin-arm64, bundled for @infinitedusky/indusk-mcp's local-telemetry extension. Upstream Apache 2.0 redistributed with attribution.",
 	"license": "Apache-2.0",
-	"os": ["darwin"],
-	"cpu": ["arm64"],
+	"os": [
+		"darwin"
+	],
+	"cpu": [
+		"arm64"
+	],
 	"files": [
 		"bin",
 		"collector-config.yaml",

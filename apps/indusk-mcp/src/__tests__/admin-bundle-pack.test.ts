@@ -34,57 +34,63 @@ let tarballSizeMB = 0;
 let tempPackDir: string | null = null;
 
 beforeAll(() => {
-  if (SHOULD_SKIP) return;
-  // Pack into a tempdir so we don't pollute the repo with stray .tgz files
-  tempPackDir = mkdtempSync(join(tmpdir(), "indusk-mcp-pack-"));
-  execFileSync("pnpm", ["pack", "--pack-destination", tempPackDir], {
-    cwd: INDUSK_MCP,
-    encoding: "utf-8",
-  });
-  const tgzs = readdirSync(tempPackDir).filter((f) => f.endsWith(".tgz"));
-  if (tgzs.length !== 1) {
-    throw new Error(`expected exactly one .tgz in ${tempPackDir}, got ${tgzs.length}`);
-  }
-  tarballPath = join(tempPackDir, tgzs[0]);
-  tarballSizeMB = statSync(tarballPath).size / (1024 * 1024);
+	if (SHOULD_SKIP) return;
+	// Pack into a tempdir so we don't pollute the repo with stray .tgz files
+	tempPackDir = mkdtempSync(join(tmpdir(), "indusk-mcp-pack-"));
+	execFileSync("pnpm", ["pack", "--pack-destination", tempPackDir], {
+		cwd: INDUSK_MCP,
+		encoding: "utf-8",
+	});
+	const tgzs = readdirSync(tempPackDir).filter((f) => f.endsWith(".tgz"));
+	if (tgzs.length !== 1) {
+		throw new Error(`expected exactly one .tgz in ${tempPackDir}, got ${tgzs.length}`);
+	}
+	tarballPath = join(tempPackDir, tgzs[0]);
+	tarballSizeMB = statSync(tarballPath).size / (1024 * 1024);
 }, 180_000);
 
 afterAll(() => {
-  if (tempPackDir && existsSync(tempPackDir)) {
-    rmSync(tempPackDir, { recursive: true, force: true });
-  }
+	if (tempPackDir && existsSync(tempPackDir)) {
+		rmSync(tempPackDir, { recursive: true, force: true });
+	}
 });
 
 describe("T18 — admin app bundled into indusk-mcp tarball", () => {
-  it.skipIf(SHOULD_SKIP)("pnpm pack produces a tarball under 50 MB compressed", () => {
-    expect(tarballPath, "tarball was not produced by pnpm pack").not.toBeNull();
-    // Compressed size cap: 50 MB is the ADR's hard upper bound. The Y-statement
-    // mentions "~10–30 MB" as the accepted range; 50 MB is the variant-revisit threshold.
-    expect(tarballSizeMB).toBeLessThan(50);
-  });
+	it.skipIf(SHOULD_SKIP)("pnpm pack produces a tarball under 50 MB compressed", () => {
+		expect(tarballPath, "tarball was not produced by pnpm pack").not.toBeNull();
+		// Compressed size cap: 50 MB is the ADR's hard upper bound. The Y-statement
+		// mentions "~10–30 MB" as the accepted range; 50 MB is the variant-revisit threshold.
+		expect(tarballSizeMB).toBeLessThan(50);
+	});
 
-  it.skipIf(SHOULD_SKIP)("tarball contains admin/.next/BUILD_ID (Next.js production build marker)", () => {
-    expect(tarballPath).not.toBeNull();
-    const out = execFileSync("tar", ["tzf", tarballPath as string], {
-      encoding: "utf-8",
-    });
-    const files = out.split("\n");
-    const hasBuildId = files.some((f) => f === "package/admin/.next/BUILD_ID");
-    expect(
-      hasBuildId,
-      `package/admin/.next/BUILD_ID not found in tarball; first 20 admin/ entries: ${files
-        .filter((f) => f.startsWith("package/admin/"))
-        .slice(0, 20)
-        .join(", ")}`,
-    ).toBe(true);
-  });
+	it.skipIf(SHOULD_SKIP)(
+		"tarball contains admin/.next/BUILD_ID (Next.js production build marker)",
+		() => {
+			expect(tarballPath).not.toBeNull();
+			const out = execFileSync("tar", ["tzf", tarballPath as string], {
+				encoding: "utf-8",
+			});
+			const files = out.split("\n");
+			const hasBuildId = files.some((f) => f === "package/admin/.next/BUILD_ID");
+			expect(
+				hasBuildId,
+				`package/admin/.next/BUILD_ID not found in tarball; first 20 admin/ entries: ${files
+					.filter((f) => f.startsWith("package/admin/"))
+					.slice(0, 20)
+					.join(", ")}`,
+			).toBe(true);
+		},
+	);
 
-  it.skipIf(SHOULD_SKIP)("tarball contains admin/package.json + admin/next.config.ts (runtime files)", () => {
-    expect(tarballPath).not.toBeNull();
-    const out = execFileSync("tar", ["tzf", tarballPath as string], {
-      encoding: "utf-8",
-    });
-    expect(out).toContain("package/admin/package.json");
-    expect(out).toContain("package/admin/next.config.ts");
-  });
+	it.skipIf(SHOULD_SKIP)(
+		"tarball contains admin/package.json + admin/next.config.ts (runtime files)",
+		() => {
+			expect(tarballPath).not.toBeNull();
+			const out = execFileSync("tar", ["tzf", tarballPath as string], {
+				encoding: "utf-8",
+			});
+			expect(out).toContain("package/admin/package.json");
+			expect(out).toContain("package/admin/next.config.ts");
+		},
+	);
 });

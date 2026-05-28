@@ -1,4 +1,7 @@
-import type { Trajectory, TrajectoryRow } from "@infinitedusky/indusk-mcp/trajectory/parser";
+import type {
+  Trajectory,
+  TrajectoryRow,
+} from "@infinitedusky/indusk-mcp/trajectory/parser";
 
 /**
  * Parsed phase from an impl.md `## Checklist` section.
@@ -33,7 +36,10 @@ const PHASE_HEADING_RE = /^###\s+Phase\s+(\d+)(?::\s*(.*))?$/m;
  * `## Files Affected`, `## Dependencies`, `## Notes` sections don't bleed into
  * the last phase).
  */
-export function extractPhases(implContent: string, trajectory?: Trajectory): Phase[] {
+export function extractPhases(
+  implContent: string,
+  trajectory?: Trajectory,
+): Phase[] {
   const lines = implContent.split("\n");
   const phases: Phase[] = [];
   let current: { number: number; title: string; lines: string[] } | null = null;

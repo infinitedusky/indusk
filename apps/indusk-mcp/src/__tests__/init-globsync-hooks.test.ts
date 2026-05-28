@@ -45,9 +45,7 @@ describe("init.ts syncs hooks via globSync (T15)", () => {
 		// ..., "check-catchup.js"]`-style array exists, eval-trigger.js must
 		// be in it. Simpler proxy: there should be no hardcoded list of
 		// hook filenames at all.
-		const hardcoded = source.match(
-			/const hookFiles\s*=\s*\[\s*"check-gates\.js"[^\]]*\]/,
-		);
+		const hardcoded = source.match(/const hookFiles\s*=\s*\[\s*"check-gates\.js"[^\]]*\]/);
 		if (hardcoded) {
 			// Old hardcoded shape exists — must include eval-trigger
 			expect(hardcoded[0]).toContain("eval-trigger.js");

@@ -12,8 +12,8 @@ importers:
         specifier: ^2.4.8
         version: 2.4.8
       composable.env:
-        specifier: ^1.37.2
-        version: 1.37.2
+        specifier: ^1.37.7
+        version: 1.37.7
       turbo:
         specifier: ^2.4.0
         version: 2.8.20
@@ -2020,8 +2020,8 @@ packages:
     resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
     engines: {node: '>= 12'}
 
-  composable.env@1.37.2:
-    resolution: {integrity: sha512-qZMZfIrniAisBwElPxiwjCWUdhP+IPx4Z5lrr2BAybmGNN70UOTVOC0fmxRkShpxugTvmHCMaZgG1W0LxpPwcg==}
+  composable.env@1.37.7:
+    resolution: {integrity: sha512-U2A/aar2JPR4PbUefV6K35NAPRSNfRP3IirRTbOdS5bfb6vyy0VXKuJSQJIhzuUln0fyuuM2YT5lQAKzmQk4IA==}
     hasBin: true
 
   content-disposition@1.0.1:
@@ -5336,7 +5336,7 @@ snapshots:
 
   commander@8.3.0: {}
 
-  composable.env@1.37.2:
+  composable.env@1.37.7:
     dependencies:
       chalk: 5.6.2
       commander: 11.1.0

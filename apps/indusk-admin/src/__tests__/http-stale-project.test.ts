@@ -27,7 +27,9 @@ beforeAll(async () => {
   // Register a project at a path that will EXIST at boot but be deleted
   // before the request. The registry itself is never auto-pruned.
   staleProjectPath = mkdtempSync(path.join(tmpdir(), "stale-"));
-  mkdirSync(path.join(staleProjectPath, ".indusk/planning"), { recursive: true });
+  mkdirSync(path.join(staleProjectPath, ".indusk/planning"), {
+    recursive: true,
+  });
   writeFileSync(
     path.join(testHome, "projects.json"),
     JSON.stringify({
@@ -44,18 +46,14 @@ beforeAll(async () => {
   );
 
   port = await findFreePort();
-  server = spawn(
-    "pnpm",
-    ["exec", "next", "dev", "--port", String(port)],
-    {
-      cwd: ADMIN_ROOT,
-      env: {
-        ...process.env,
-        INDUSK_HOME: testHome,
-      },
-      stdio: ["ignore", "pipe", "pipe"],
+  server = spawn("pnpm", ["exec", "next", "dev", "--port", String(port)], {
+    cwd: ADMIN_ROOT,
+    env: {
+      ...process.env,
+      INDUSK_HOME: testHome,
     },
-  );
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   await new Promise<void>((resolveReady, rejectReady) => {
     const timeout = setTimeout(
       () => rejectReady(new Error("next dev did not become ready in 30s")),

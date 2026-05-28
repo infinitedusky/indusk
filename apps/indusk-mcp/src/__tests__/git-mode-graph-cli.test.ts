@@ -1,10 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdtempSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -82,8 +77,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
-	if (existsSync(projectDir))
-		rmSync(projectDir, { recursive: true, force: true });
+	if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 });
 
 describe.skipIf(SHOULD_SKIP)("graph CLI on git mode", { timeout: 60000 }, () => {

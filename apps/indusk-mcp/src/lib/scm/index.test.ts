@@ -35,11 +35,9 @@ function gitInitWithCommit(): string {
 		cwd: projectDir,
 	});
 	spawnSync("git", ["config", "user.name", "Test"], { cwd: projectDir });
-	const commit = spawnSync(
-		"git",
-		["commit", "--allow-empty", "-q", "-m", "initial"],
-		{ cwd: projectDir },
-	);
+	const commit = spawnSync("git", ["commit", "--allow-empty", "-q", "-m", "initial"], {
+		cwd: projectDir,
+	});
 	expect(commit.status).toBe(0);
 	const sha = spawnSync("git", ["rev-parse", "--short", "HEAD"], {
 		cwd: projectDir,

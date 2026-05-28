@@ -1,10 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -55,9 +50,9 @@ function runCli(args: string[]): {
 }
 
 function readOtlpPort(): number {
-	const meta = JSON.parse(
-		readFileSync(join(testHome, "telemetry.json"), "utf-8"),
-	) as { otlpPort: number };
+	const meta = JSON.parse(readFileSync(join(testHome, "telemetry.json"), "utf-8")) as {
+		otlpPort: number;
+	};
 	return meta.otlpPort;
 }
 
@@ -67,14 +62,7 @@ describe("telemetry restart pins the OTLP port across the OS port-release race",
 		{ timeout: 90_000 },
 		async () => {
 			// Start with auto-pick so we don't collide with the user's daemon on 4318
-			const start = runCli([
-				"telemetry",
-				"start",
-				"--otlp-port",
-				"0",
-				"--ui-port",
-				"0",
-			]);
+			const start = runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
 			expect(start.code, start.stderr).toBe(0);
 			const pinnedPort = readOtlpPort();
 			expect(pinnedPort).toBeGreaterThan(0);

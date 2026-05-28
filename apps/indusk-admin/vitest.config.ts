@@ -32,10 +32,7 @@ export default defineConfig({
           name: "node",
           // Node-only tests: lib parsers + audit scripts that touch the filesystem
           // and don't render React. Audit lives at top-level src/__tests__/.
-          include: [
-            "src/lib/**/*.test.ts",
-            "src/__tests__/**/*.test.ts",
-          ],
+          include: ["src/lib/**/*.test.ts", "src/__tests__/**/*.test.ts"],
           environment: "node",
           // HTTP smoke tests spawn `next dev` per file. Running them in
           // parallel spikes CPU + memory enough that `next dev` can't reach

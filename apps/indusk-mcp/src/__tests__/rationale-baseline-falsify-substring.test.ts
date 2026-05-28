@@ -29,7 +29,10 @@ import { describe, expect, it } from "vitest";
 
 const HOOK_PATH = new URL("../../hooks/validate-impl-structure.js", import.meta.url).pathname;
 
-function runHook(implPath: string, fullContent: string): Promise<{ exitCode: number; stderr: string }> {
+function runHook(
+	implPath: string,
+	fullContent: string,
+): Promise<{ exitCode: number; stderr: string }> {
 	const event = {
 		tool_name: "Write",
 		tool_input: { file_path: implPath, content: fullContent },

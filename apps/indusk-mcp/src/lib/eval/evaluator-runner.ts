@@ -170,7 +170,11 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 				mode: opts.mode,
 				changeId: opts.changeId,
 				error: true,
-				message: stdout ? formatParseError(err, stdout) : (err instanceof Error ? err.message : String(err)),
+				message: stdout
+					? formatParseError(err, stdout)
+					: err instanceof Error
+						? err.message
+						: String(err),
 			};
 			await logWriter.append(errorEntry);
 		}
@@ -317,7 +321,11 @@ async function runEvaluatorSyncInner(
 					mode: opts.mode,
 					changeId: opts.changeId,
 					error: true,
-					message: stdout ? formatParseError(err, stdout) : (err instanceof Error ? err.message : String(err)),
+					message: stdout
+						? formatParseError(err, stdout)
+						: err instanceof Error
+							? err.message
+							: String(err),
 				};
 				await logWriter.append(errorEntry);
 				resolve(errorEntry);

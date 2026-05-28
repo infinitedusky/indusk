@@ -67,10 +67,7 @@ describe("T16 — bare `indusk ui` is cwd-aware", () => {
 			process.env.INDUSK_HOME = testHome;
 			try {
 				const entry = addProject(testProject);
-				const result = runCli(
-					["ui", "--no-open", "--port", "0"],
-					{ cwd: testProject },
-				);
+				const result = runCli(["ui", "--no-open", "--port", "0"], { cwd: testProject });
 				await new Promise((r) => setTimeout(r, 6000));
 				expect(result.stdout).toContain(`/p/${entry.name}/`);
 			} finally {
@@ -85,10 +82,7 @@ describe("T16 — bare `indusk ui` is cwd-aware", () => {
 		async () => {
 			const unregistered = mkdtempSync(join(tmpdir(), "t16-unreg-"));
 			try {
-				const result = runCli(
-					["ui", "--no-open", "--port", "0"],
-					{ cwd: unregistered },
-				);
+				const result = runCli(["ui", "--no-open", "--port", "0"], { cwd: unregistered });
 				await new Promise((r) => setTimeout(r, 6000));
 				// Must print the bare localhost URL WITHOUT a /p/ prefix
 				expect(result.stdout).toMatch(/http:\/\/localhost:\d+\/\s/);

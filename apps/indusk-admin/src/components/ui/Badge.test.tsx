@@ -12,34 +12,40 @@ import { Badge, type BadgeVariant } from "./Badge";
  * red tokens, distinct from each other.
  */
 describe("Badge — color-coded trajectory states (T9)", () => {
-	const cases: Array<[BadgeVariant, RegExp]> = [
-		["passing", /green/],
-		["blocked", /red/],
-		["skipped", /yellow/],
-		["planned", /gray/],
-		["writable", /gray/],
-		["written", /blue/],
-		["unknown", /gray/],
-		["neutral", /gray/],
-	];
+  const cases: Array<[BadgeVariant, RegExp]> = [
+    ["passing", /green/],
+    ["blocked", /red/],
+    ["skipped", /yellow/],
+    ["planned", /gray/],
+    ["writable", /gray/],
+    ["written", /blue/],
+    ["unknown", /gray/],
+    ["neutral", /gray/],
+  ];
 
-	for (const [variant, colorPattern] of cases) {
-		it(`renders ${variant} with ${colorPattern.source} color tokens`, async () => {
-			const { container } = await render(<Badge variant={variant}>{variant}</Badge>);
-			const span = container.querySelector("span");
-			expect(span).not.toBeNull();
-			expect(span?.className).toMatch(colorPattern);
-		});
-	}
+  for (const [variant, colorPattern] of cases) {
+    it(`renders ${variant} with ${colorPattern.source} color tokens`, async () => {
+      const { container } = await render(
+        <Badge variant={variant}>{variant}</Badge>,
+      );
+      const span = container.querySelector("span");
+      expect(span).not.toBeNull();
+      expect(span?.className).toMatch(colorPattern);
+    });
+  }
 
-	it("passing and blocked are visually distinct", async () => {
-		const { container: pContainer } = await render(<Badge variant="passing">ok</Badge>);
-		const { container: bContainer } = await render(<Badge variant="blocked">err</Badge>);
-		const pClass = pContainer.querySelector("span")?.className ?? "";
-		const bClass = bContainer.querySelector("span")?.className ?? "";
-		// Passing and blocked must carry DIFFERENT primary color tokens.
-		expect(pClass).toMatch(/green/);
-		expect(bClass).toMatch(/red/);
-		expect(pClass).not.toBe(bClass);
-	});
+  it("passing and blocked are visually distinct", async () => {
+    const { container: pContainer } = await render(
+      <Badge variant="passing">ok</Badge>,
+    );
+    const { container: bContainer } = await render(
+      <Badge variant="blocked">err</Badge>,
+    );
+    const pClass = pContainer.querySelector("span")?.className ?? "";
+    const bClass = bContainer.querySelector("span")?.className ?? "";
+    // Passing and blocked must carry DIFFERENT primary color tokens.
+    expect(pClass).toMatch(/green/);
+    expect(bClass).toMatch(/red/);
+    expect(pClass).not.toBe(bClass);
+  });
 });

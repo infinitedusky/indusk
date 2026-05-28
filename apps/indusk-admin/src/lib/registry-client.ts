@@ -13,23 +13,23 @@ import { join } from "node:path";
  */
 
 export interface ProjectEntry {
-	name: string;
-	path: string;
-	registeredAt: string;
-	lastSeenAt: string;
+  name: string;
+  path: string;
+  registeredAt: string;
+  lastSeenAt: string;
 }
 
 interface Registry {
-	version: 1;
-	projects: ProjectEntry[];
+  version: 1;
+  projects: ProjectEntry[];
 }
 
 function induskHome(): string {
-	return process.env.INDUSK_HOME ?? join(homedir(), ".indusk");
+  return process.env.INDUSK_HOME ?? join(homedir(), ".indusk");
 }
 
 function registryPath(): string {
-	return join(induskHome(), "projects.json");
+  return join(induskHome(), "projects.json");
 }
 
 /**
@@ -37,15 +37,15 @@ function registryPath(): string {
  * malformed — the admin UI treats both cases identically (nothing to show).
  */
 export function readRegistryProjects(): ProjectEntry[] {
-	const path = registryPath();
-	if (!existsSync(path)) return [];
-	try {
-		const parsed = JSON.parse(readFileSync(path, "utf-8")) as Registry;
-		if (parsed.version !== 1 || !Array.isArray(parsed.projects)) return [];
-		return parsed.projects;
-	} catch {
-		return [];
-	}
+  const path = registryPath();
+  if (!existsSync(path)) return [];
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf-8")) as Registry;
+    if (parsed.version !== 1 || !Array.isArray(parsed.projects)) return [];
+    return parsed.projects;
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -58,8 +58,8 @@ export function readRegistryProjects(): ProjectEntry[] {
  * test runtime mock just `getProjectPath` without pulling in `node:fs`.
  */
 export function getProjectPath(name: string): string | null {
-	const projects = readRegistryProjects();
-	return projects.find((p) => p.name === name)?.path ?? null;
+  const projects = readRegistryProjects();
+  return projects.find((p) => p.name === name)?.path ?? null;
 }
 
 /**
@@ -69,5 +69,5 @@ export function getProjectPath(name: string): string | null {
  * `node:fs` directly — the browser test env externalizes it.
  */
 export function projectPathExists(path: string): boolean {
-	return existsSync(path);
+  return existsSync(path);
 }

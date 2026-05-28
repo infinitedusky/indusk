@@ -126,8 +126,8 @@ The file system is organized by **audience**, not by environment or profile:
 | File | Sensitive? | Audience | In git? | Purpose |
 |------|-----------|----------|---------|---------|
 | `env/components/*.env` | No | Everyone | Yes | Non-secret shared values. The main source of truth. Versioned because they apply to all developers and all environments. |
-| `env/.env.secrets.shared` | Yes | All devs on the project | **No** — passed around manually or via vault | Team secrets that every developer needs (DB passwords, API keys, etc.). Not committed because they're sensitive, but "shared" means the file is distributed to the team. |
-| `env/.env.secrets.local` | Yes | One developer | No | Personal secrets for that developer's specific environment. Example: credentials for their personal staging environment. |
+| `env/.env.secrets.shared` | Yes | All devs on the project | **No** — passed around manually, via vault, or **replaced by a secret provider** (see below) | Team secrets that every developer needs (DB passwords, API keys, etc.). Not committed because they're sensitive, but "shared" means the file is distributed to the team. Bypassed entirely when `secrets.provider` is set in ce.json — the provider becomes the source of `${secrets.*}` instead. |
+| `env/.env.secrets.local` | Yes | One developer | No | Personal secrets for that developer's specific environment. Example: credentials for their personal staging environment. Also bypassed when a `secrets.provider` is configured. |
 | `env/.env.local` | No | One developer | No | Personal non-secret overrides. Rarely used — only for values specific to one developer's setup (e.g., a custom port or log level). Not sensitive, just not relevant to anyone else. |
 
 ### The mental model
@@ -149,6 +149,53 @@ STAGING_HOST=alice-staging.example.com
 
 These override the team defaults in `.env.secrets.shared` for that developer only.
 
+### Secret providers — env-files vs Doppler
+
+The `${secrets.*}` namespace gets its values from one of two providers, chosen
+per-project via `ce.json`:
+
+- **`secrets.provider: "env-files"` (default)** — the legacy / opt-out path.
+  ce reads `env/.env.secrets.shared` and `env/.env.secrets.local` from disk,
+  decrypting any `CENV_ENC[...]` values via the embedded age+SOPS vault. Use
+  `pnpm ce vault` to manage encrypted values committed to the shared file.
+  Fine for solo projects or teams that already have a working age-keyed
+  workflow.
+
+- **`secrets.provider: "doppler"`** — the recommended path for any project
+  with real permission / rotation / audit needs. ce shells out to the
+  `doppler` CLI per build (`doppler secrets download --format json`) and
+  feeds the output into the `${secrets.*}` namespace. ce never touches a
+  Doppler token directly — the CLI handles auth via `doppler login`
+  (local) or `DOPPLER_TOKEN` (CI/VPS, scoped to one config).
+
+Both providers feed the same `${secrets.KEY}` references in components —
+nothing in your contracts changes between providers. The choice is purely
+about who owns the secret store.
+
+**Opt-in to Doppler** (after `brew install dopplerhq/cli/doppler` and
+`doppler login`):
+
+```json
+{
+  "secrets": {
+    "provider": "doppler",
+    "project": "myproject"
+  },
+  "profiles": {
+    "local":      { "suffix": "-local" },
+    "production": { "suffix": "",       "dopplerConfig": "prd_main" }
+  }
+}
+```
+
+Per-profile `dopplerConfig` overrides the default (which is the profile
+name). For CI/VPS, set `DOPPLER_TOKEN` to a config-scoped service token
+and skip `doppler login` entirely.
+
+When `secrets.provider: "doppler"` is set, `pnpm ce vault` still runs but
+prints a deprecation banner — vault writes no longer affect build-time
+secret resolution.
+
 ### Why secrets flow through components
 
 Secrets should always be referenced in components via `${secrets.KEY}`, and contracts should reference components — never secrets directly. The reason: the value a component exposes may or may not actually be secret. A `DATABASE_URL` might contain a secret password today but be a local socket path tomorrow. Components and contracts handle the mapping of values to apps and profiles. Secrets are just a protection layer — a way of keeping sensitive values out of git or scoped to a specific developer.
@@ -162,7 +209,9 @@ Never short-circuit this: `contracts → secrets` directly.
 ## Resolution chain
 
 ```
-secrets (.env.secrets.shared + .env.secrets.local)
+secrets — provider-dependent:
+  - env-files (default): .env.secrets.shared + .env.secrets.local
+  - doppler:             `doppler secrets download` for the profile's config
   → components[default] + components[profile sections]
     → Pass 1: resolve ${secrets.KEY} in components
     → Pass 2: resolve ${component.KEY} cross-references
@@ -190,7 +239,7 @@ secrets (.env.secrets.shared + .env.secrets.local)
 | `pnpm ce persistent:down` | — | Stop persistent services (preserves volumes) |
 | `pnpm ce persistent:destroy` | — | Stop persistent services and remove volumes |
 | `pnpm ce persistent:status` | — | Show persistent service status |
-| `pnpm ce vault <subcommand>` | — | Optional encrypted secrets. Subcommands: `init`, `set <key> <value>`, `get <key>`, `ls`, `add`, `remove`, `recipients` |
+| `pnpm ce vault <subcommand>` | — | [legacy — bypassed when `secrets.provider: "doppler"` is set in ce.json] Encrypted secrets via age+SOPS. Subcommands: `init`, `set <key> <value>`, `get <key>`, `ls`, `add`, `remove`, `recipients`. Prints a deprecation banner when the project is on a non-env-files provider. |
 | `pnpm ce migrate` | — | Convert legacy format to vars format |
 | `pnpm ce add-skill` | — | Install Claude Code skill |
 | `pnpm ce uninstall` | — | Remove all ce artifacts |
@@ -201,6 +250,11 @@ secrets (.env.secrets.shared + .env.secrets.local)
 {
   "envDir": "env",
   "defaultProfile": "local",
+  "composeProjectName": "myproject",
+  "secrets": {
+    "provider": "doppler",
+    "project": "myproject"
+  },
   "profiles": {
     "local": {
       "suffix": "-local",
@@ -210,6 +264,7 @@ secrets (.env.secrets.shared + .env.secrets.local)
     "production": {
       "suffix": "",
       "domain": "myproject.com",
+      "dopplerConfig": "prd_main",
       "override": {
         "admin": { "suffix": "", "domain": "admin.myproject.com" }
       }
@@ -220,11 +275,16 @@ secrets (.env.secrets.shared + .env.secrets.local)
 
 - `envDir` — custom env directory (default: `"env"`)
 - `defaultProfile` — default when no `--profile` flag
+- `composeProjectName` — explicit `name:` for the generated docker-compose file. Controls container prefixes, `docker compose ls` grouping, and OrbStack DNS (`<name>.orb.local`). When unset, ce falls back to the legacy heuristic (derive from a `.orb.local` profile domain), and if that also doesn't apply, docker compose defaults to the project directory name. Set this explicitly when your local profile uses a non-`.orb.local` TLD (`.dawn`, `.test`, `.local`, etc.) and you want a stable project name across machines.
 - `scaffold` — set automatically by `ce init --scaffold <type>`. Tells `scaffold:sync` which template to re-run.
+- `secrets` — secret-provider config. Omit to use the default `"env-files"` provider (`.env.secrets.shared`/`.env.secrets.local` + age+SOPS vault).
+  - `secrets.provider` — `"env-files"` (default) or `"doppler"`.
+  - `secrets.project` — Doppler project name. Optional; when unset, ce omits `--project` from the doppler call and defers to the CLI's local context (`.doppler.yaml` via `doppler setup`) or `DOPPLER_TOKEN` scope.
 - `profiles` — per-profile config:
   - `suffix` — compose service name suffix (e.g. `"-local"`, `""`, `"-stg"`)
   - `domain` — used for auto-generated `${service.*.address}`. If it ends in `.orb.local`, the first segment becomes the docker-compose project name (so OrbStack DNS matches what ce resolves).
   - `tls` — auto-generate mkcert certs, inject into all containers, run Caddy on :443/:80 (local dev only).
+  - `dopplerConfig` — Doppler config name override for this profile. Only used when `secrets.provider: "doppler"`. Defaults to the profile name (so a `production` ce profile pulls from a `production` doppler config by default).
   - `proxy` — reverse-proxy config file format: `"nginx"` (default), `"caddy"`, `"caddy-external"`, or `"both"`. Controls what gets emitted alongside `docker-compose.yml` from contracts with `target.subdomain`.
     - `"caddy"` — emits Caddyfile in project root AND auto-injects a per-project Caddy container into docker-compose (publishes :80/:443 on the host). Best when one project owns the host ports.
     - `"caddy-external"` — emits Caddyfile to `~/.indusk/proxy/sites/{project}.caddyfile` (or `$INDUSK_PROXY_SITES_DIR`), upstreams as `127.0.0.1:<hostport>`, auto-emits `tls internal`, and runs `caddy reload`. No per-project container. Use this when multiple projects share one host-level Caddy daemon (managed by indusk) so they can't all bind :80/:443.
@@ -816,10 +876,11 @@ Templates also fail loud at build time with `RUN test -n "${APP_NAME}"` guards, 
 3. **Don't reference secrets directly in contracts** — secrets should be referenced in components (`${secrets.KEY}`), and contracts reference components (`${component.KEY}`). This keeps the value mapping clean — a component value might not always be secret, and the contract shouldn't care where the value comes from.
 4. **Don't leave profiles underspecified** — every profile that gets built should produce a complete, working env. If `production.json` only overrides `database` but the app also needs production `blockchain` and `game-server` values, the build will silently use `[default]` values for those. Audit profiles to ensure all components have appropriate section overrides.
 5. **Don't keep vestigial components** — if two components define the same service's config (e.g., `partykit.env` and `game-server.env` both defining HOST for the same server), merge them. One component per logical service.
-6. **Document all secrets for onboarding** — if a secret exists only in `.env.secrets.local` with no counterpart in `.env.secrets.shared`, new developers can't build without manual setup. Every team secret should be in `.env.secrets.shared` (or the vault), with `.env.secrets.local` only for personal overrides.
+6. **Document all secrets for onboarding** — if a secret exists only in `.env.secrets.local` (or only in a personal Doppler config) with no counterpart in the team source, new developers can't build without manual setup. Every team secret should be in the configured provider's team source (`.env.secrets.shared` for env-files, or the team's shared Doppler config for `provider: "doppler"`), with `.env.secrets.local` only for personal overrides.
 7. **Don't leave deploy-time values blank** — if a component has keys like `DIAMOND_ADDRESS=` that must be populated after a deploy, document this in the component file with a comment and consider a post-deploy script that writes to the component or vault.
 8. **Don't manually source env in Docker** — use a `target` contract to write vars into docker-compose.yml's `environment:` block. Don't copy composable.env into the container or source .env files in entrypoints — that risks baking secrets into image layers. The `target` approach keeps secrets at runtime only.
 9. **Don't hand-edit generated docker-compose.yml** — the compose file is a build artifact generated by `pnpm ce env:build`. If you need to change service config, update the contract's `target.config`. If you need to change env vars, update the contract's `vars` or the underlying component. `pnpm ce env:build` auto-gitignores the file since it contains secrets.
+10. **Don't exclude `.env.production` from your `.dockerignore` without a `!**/.env.production` allowlist** — Next.js production builds read `.env.production` at build time to bake `NEXT_PUBLIC_*` values into the client bundle. A broad `**/.env*` exclusion silently strips it, the build succeeds, and the deployed app ships with empty public env (no error, just broken). ce now warns at `env:build` time when a `nextprod` contract is paired with a `.dockerignore` that excludes `.env.production`, pointing at the specific offending line.
 
 ## When helping the user
 
@@ -827,11 +888,13 @@ Templates also fail loud at build time with `RUN test -n "${APP_NAME}"` guards, 
 2. **Debugging builds**: Run `pnpm ce env:build` and read error output. Missing vars usually mean a component is missing a key or a contract reference is wrong.
 3. **Adding a service**: Create a `.contract.json` with `vars` mapping what the service needs to component keys.
 4. **Adding a component**: Create a `.env` file in `env/components/` with `[default]` section. It's auto-discovered.
-5. **Secrets**: Use `pnpm ce vault set KEY=VALUE` to encrypt. Reference with `${secrets.KEY}` in components — never in contracts directly.
+5. **Secrets**: Reference values with `${secrets.KEY}` in components — never in contracts directly. The storage backend depends on `ce.json` `secrets.provider`:
+   - `"doppler"` (recommended for teams) — push to Doppler via `doppler secrets set KEY=VALUE --project <p> --config <c>`. ce reads them at build time via the doppler CLI. No tokens in ce.
+   - `"env-files"` (default / legacy) — `pnpm ce vault set KEY=VALUE` to encrypt into `.env.secrets.shared`, or add to `.env.secrets.local` plaintext for personal-only values.
 6. **Cross-component refs**: Components can reference each other: `${database.HOST}` in a component resolves from the database component.
 7. **Custom env dir**: Set `envDir` in `ce.json` if the project doesn't use the default `env/` path.
 8. **Default profile**: Set `defaultProfile` in `ce.json` so the team doesn't need `--profile` on every command.
-9. **Deciding where a value goes**: Is it secret? → `.env.secrets.shared`. Is it personal? → `.env.secrets.local` or `.env.local`. Is it neither? → directly in a component file (versioned).
+9. **Deciding where a value goes**: Is it secret? → the configured `secrets.provider` (Doppler when `provider: "doppler"`; `.env.secrets.shared` otherwise). Is it personal? → `.env.secrets.local` or `.env.local` (still works under either provider for personal-only overrides). Is it neither? → directly in a component file (versioned).
 10. **Docker Compose services**: Use `target` instead of `location` in the contract. Set `type: "docker-compose"`, point `file` to the compose file, and `service` to the service name. Gitignore the compose file since it will contain resolved secrets.
 11. **Starting Docker services**: Use `pnpm ce dc:up local` (builds env, then docker compose down + up --build). Use `pnpm ce dc:logs local` to tail logs, `pnpm ce dc:ps local` for status.
 12. **Persistent services**: Use `pnpm ce persistent:up` to start databases/caches, `pnpm ce persistent:status` to check them.

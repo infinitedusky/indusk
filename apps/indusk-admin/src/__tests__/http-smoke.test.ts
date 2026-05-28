@@ -55,21 +55,20 @@ beforeAll(async () => {
   );
 
   port = await findFreePort();
-  server = spawn(
-    "pnpm",
-    ["exec", "next", "dev", "--port", String(port)],
-    {
-      cwd: ADMIN_ROOT,
-      env: {
-        ...process.env,
-        INDUSK_HOME: testHome,
-      },
-      stdio: ["ignore", "pipe", "pipe"],
+  server = spawn("pnpm", ["exec", "next", "dev", "--port", String(port)], {
+    cwd: ADMIN_ROOT,
+    env: {
+      ...process.env,
+      INDUSK_HOME: testHome,
     },
-  );
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   // Wait for "Ready" in stdout (timeout 30s)
   await new Promise<void>((resolveReady, rejectReady) => {
-    const timeout = setTimeout(() => rejectReady(new Error("next dev did not become ready in 30s")), 30_000);
+    const timeout = setTimeout(
+      () => rejectReady(new Error("next dev did not become ready in 30s")),
+      30_000,
+    );
     server?.stdout?.on("data", (chunk) => {
       if (/✓ Ready in/.test(chunk.toString())) {
         clearTimeout(timeout);

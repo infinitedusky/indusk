@@ -27,118 +27,138 @@ const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1";
 let testHome: string;
 
 beforeEach(() => {
-  testHome = mkdtempSync(join(tmpdir(), "indusk-home-"));
+	testHome = mkdtempSync(join(tmpdir(), "indusk-home-"));
 });
 
 afterEach(() => {
-  // Stop any running daemon spawned during the test
-  if (existsSync(join(testHome, "admin-ui.pid"))) {
-    runCli(["ui", "stop"]);
-  }
-  if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
+	// Stop any running daemon spawned during the test
+	if (existsSync(join(testHome, "admin-ui.pid"))) {
+		runCli(["ui", "stop"]);
+	}
+	if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
 });
 
 function runCli(args: string[]): { code: number; stdout: string; stderr: string } {
-  const result = spawnSync("node", [CLI_BIN, ...args], {
-    env: { ...process.env, INDUSK_HOME: testHome },
-    encoding: "utf-8",
-  });
-  return {
-    code: result.status ?? -1,
-    stdout: result.stdout,
-    stderr: result.stderr,
-  };
+	const result = spawnSync("node", [CLI_BIN, ...args], {
+		env: { ...process.env, INDUSK_HOME: testHome },
+		encoding: "utf-8",
+	});
+	return {
+		code: result.status ?? -1,
+		stdout: result.stdout,
+		stderr: result.stderr,
+	};
 }
 
 describe("T3 — `indusk ui status`", () => {
-  it.skipIf(SHOULD_SKIP)("after `ui start`, status reports running + port + project count", async () => {
-    runCli(["ui", "start", "--no-open", "--port", "0"]);
-    await new Promise((r) => setTimeout(r, 6000));
-    const status = runCli(["ui", "status"]);
-    expect(status.stdout).toContain("running");
-    expect(status.stdout).toMatch(/port \d+/i);
-    expect(status.stdout).toMatch(/projects? \d+/i);
-  }, 30_000);
+	it.skipIf(SHOULD_SKIP)(
+		"after `ui start`, status reports running + port + project count",
+		async () => {
+			runCli(["ui", "start", "--no-open", "--port", "0"]);
+			await new Promise((r) => setTimeout(r, 6000));
+			const status = runCli(["ui", "status"]);
+			expect(status.stdout).toContain("running");
+			expect(status.stdout).toMatch(/port \d+/i);
+			expect(status.stdout).toMatch(/projects? \d+/i);
+		},
+		30_000,
+	);
 });
 
 describe("T4 — double `ui start` is idempotent", () => {
-  it.skipIf(SHOULD_SKIP)("second start prints 'already running' and does NOT spawn a second daemon", async () => {
-    runCli(["ui", "start", "--no-open", "--port", "0"]);
-    await new Promise((r) => setTimeout(r, 6000));
-    const second = runCli(["ui", "start", "--no-open", "--port", "0"]);
-    expect(second.stdout).toMatch(/already running/i);
-    // The same port appears in both starts → no second daemon
-  }, 30_000);
+	it.skipIf(SHOULD_SKIP)(
+		"second start prints 'already running' and does NOT spawn a second daemon",
+		async () => {
+			runCli(["ui", "start", "--no-open", "--port", "0"]);
+			await new Promise((r) => setTimeout(r, 6000));
+			const second = runCli(["ui", "start", "--no-open", "--port", "0"]);
+			expect(second.stdout).toMatch(/already running/i);
+			// The same port appears in both starts → no second daemon
+		},
+		30_000,
+	);
 });
 
 describe("T5 — `indusk ui stop`", () => {
-  it.skipIf(SHOULD_SKIP)("stops the daemon within 3s; subsequent status says not running", async () => {
-    runCli(["ui", "start", "--no-open", "--port", "0"]);
-    await new Promise((r) => setTimeout(r, 6000));
-    const stop = runCli(["ui", "stop"]);
-    expect(stop.code).toBe(0);
-    await new Promise((r) => setTimeout(r, 1000));
-    const status = runCli(["ui", "status"]);
-    expect(status.stdout).toMatch(/not running/i);
-  }, 30_000);
+	it.skipIf(SHOULD_SKIP)(
+		"stops the daemon within 3s; subsequent status says not running",
+		async () => {
+			runCli(["ui", "start", "--no-open", "--port", "0"]);
+			await new Promise((r) => setTimeout(r, 6000));
+			const stop = runCli(["ui", "stop"]);
+			expect(stop.code).toBe(0);
+			await new Promise((r) => setTimeout(r, 1000));
+			const status = runCli(["ui", "status"]);
+			expect(status.stdout).toMatch(/not running/i);
+		},
+		30_000,
+	);
 });
 
 describe("T6 — `--port <n>` listens on n; auto-bumps on conflict", () => {
-  it.skipIf(SHOULD_SKIP)("specified port is honored when free; auto-bumps with warning when taken", async () => {
-    // First start on a specific port
-    const first = runCli(["ui", "start", "--no-open", "--port", "53939"]);
-    await new Promise((r) => setTimeout(r, 6000));
-    expect(first.stdout).toContain("53939");
-    // (Simulating a collision is heavyweight in a single test; this assertion
-    // covers the "honored when free" half of T6. The auto-bump branch is
-    // exercised by the unit test on findFreePort + manual smoke.)
-  }, 30_000);
+	it.skipIf(SHOULD_SKIP)(
+		"specified port is honored when free; auto-bumps with warning when taken",
+		async () => {
+			// First start on a specific port
+			const first = runCli(["ui", "start", "--no-open", "--port", "53939"]);
+			await new Promise((r) => setTimeout(r, 6000));
+			expect(first.stdout).toContain("53939");
+			// (Simulating a collision is heavyweight in a single test; this assertion
+			// covers the "honored when free" half of T6. The auto-bump branch is
+			// exercised by the unit test on findFreePort + manual smoke.)
+		},
+		30_000,
+	);
 });
 
 describe("T7 — bare `indusk ui` is a friendly alias for `start`", () => {
-  it.skipIf(SHOULD_SKIP)("bare `indusk ui` starts the daemon and prints the URL", async () => {
-    const bare = runCli(["ui", "--no-open", "--port", "0"]);
-    await new Promise((r) => setTimeout(r, 6000));
-    expect(bare.stdout).toMatch(/(starting|started|running).*localhost/i);
-  }, 30_000);
+	it.skipIf(SHOULD_SKIP)(
+		"bare `indusk ui` starts the daemon and prints the URL",
+		async () => {
+			const bare = runCli(["ui", "--no-open", "--port", "0"]);
+			await new Promise((r) => setTimeout(r, 6000));
+			expect(bare.stdout).toMatch(/(starting|started|running).*localhost/i);
+		},
+		30_000,
+	);
 });
 
 describe("`indusk ui restart` — stop + start", () => {
-  it.skipIf(SHOULD_SKIP)(
-    "restart: starts a fresh daemon with a new PID when one was already running",
-    async () => {
-      const first = runCli(["ui", "start", "--no-open", "--port", "0"]);
-      await new Promise((r) => setTimeout(r, 6000));
-      expect(first.stdout).toMatch(/PID: \d+/);
-      const firstPidMatch = first.stdout.match(/PID: (\d+)/);
-      const firstPid = firstPidMatch ? firstPidMatch[1] : null;
-      expect(firstPid).not.toBeNull();
+	it.skipIf(SHOULD_SKIP)(
+		"restart: starts a fresh daemon with a new PID when one was already running",
+		async () => {
+			const first = runCli(["ui", "start", "--no-open", "--port", "0"]);
+			await new Promise((r) => setTimeout(r, 6000));
+			expect(first.stdout).toMatch(/PID: \d+/);
+			const firstPidMatch = first.stdout.match(/PID: (\d+)/);
+			const firstPid = firstPidMatch ? firstPidMatch[1] : null;
+			expect(firstPid).not.toBeNull();
 
-      const restart = runCli(["ui", "restart", "--no-open", "--port", "0"]);
-      await new Promise((r) => setTimeout(r, 6000));
-      expect(restart.code).toBe(0);
-      // Output contains both the stop acknowledgement AND a fresh start.
-      expect(restart.stdout).toMatch(/stopped|not running/i);
-      expect(restart.stdout).toMatch(/starting admin UI/i);
-      const secondPidMatch = restart.stdout.match(/PID: (\d+)/);
-      const secondPid = secondPidMatch ? secondPidMatch[1] : null;
-      expect(secondPid).not.toBeNull();
-      expect(secondPid).not.toBe(firstPid);
-    },
-    45_000,
-  );
+			const restart = runCli(["ui", "restart", "--no-open", "--port", "0"]);
+			await new Promise((r) => setTimeout(r, 6000));
+			expect(restart.code).toBe(0);
+			// Output contains both the stop acknowledgement AND a fresh start.
+			expect(restart.stdout).toMatch(/stopped|not running/i);
+			expect(restart.stdout).toMatch(/starting admin UI/i);
+			const secondPidMatch = restart.stdout.match(/PID: (\d+)/);
+			const secondPid = secondPidMatch ? secondPidMatch[1] : null;
+			expect(secondPid).not.toBeNull();
+			expect(secondPid).not.toBe(firstPid);
+		},
+		45_000,
+	);
 
-  it.skipIf(SHOULD_SKIP)(
-    "restart: works cleanly when no daemon is running (no-op stop + fresh start)",
-    async () => {
-      const restart = runCli(["ui", "restart", "--no-open", "--port", "0"]);
-      await new Promise((r) => setTimeout(r, 6000));
-      expect(restart.code).toBe(0);
-      // Stop path: "Admin UI is not running." Start path then runs normally.
-      expect(restart.stdout).toMatch(/not running/i);
-      expect(restart.stdout).toMatch(/starting admin UI/i);
-      expect(restart.stdout).toMatch(/PID: \d+/);
-    },
-    30_000,
-  );
+	it.skipIf(SHOULD_SKIP)(
+		"restart: works cleanly when no daemon is running (no-op stop + fresh start)",
+		async () => {
+			const restart = runCli(["ui", "restart", "--no-open", "--port", "0"]);
+			await new Promise((r) => setTimeout(r, 6000));
+			expect(restart.code).toBe(0);
+			// Stop path: "Admin UI is not running." Start path then runs normally.
+			expect(restart.stdout).toMatch(/not running/i);
+			expect(restart.stdout).toMatch(/starting admin UI/i);
+			expect(restart.stdout).toMatch(/PID: \d+/);
+		},
+		30_000,
+	);
 });

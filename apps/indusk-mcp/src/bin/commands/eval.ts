@@ -292,9 +292,7 @@ export async function evalBaseline(
 			});
 		}
 	} catch {
-		console.info(
-			`Note: ${scm} commit may have failed — evaluating current state anyway`,
-		);
+		console.info(`Note: ${scm} commit may have failed — evaluating current state anyway`);
 	}
 
 	// Run the smart evaluator against the baseline

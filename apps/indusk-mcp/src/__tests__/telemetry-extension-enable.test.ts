@@ -1,11 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdtempSync,
-	readFileSync,
-	realpathSync,
-	rmSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -47,8 +41,7 @@ afterEach(() => {
 		});
 	}
 	if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
-	if (existsSync(projectDir))
-		rmSync(projectDir, { recursive: true, force: true });
+	if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 });
 
 function runCli(args: string[]): {
@@ -108,9 +101,7 @@ describe("T6 — local-telemetry extension-enable contract", () => {
 			};
 			expect(mcp.mcpServers?.jaeger).toBeDefined();
 			expect(mcp.mcpServers?.jaeger?.type).toBe("http");
-			expect(mcp.mcpServers?.jaeger?.url).toMatch(
-				/^http:\/\/localhost:\d+\/mcp$/,
-			);
+			expect(mcp.mcpServers?.jaeger?.url).toMatch(/^http:\/\/localhost:\d+\/mcp$/);
 
 			// Deregister — should stop the daemon since registry becomes empty
 			const dereg = runCli(["telemetry", "deregister", projectDir]);
@@ -126,9 +117,7 @@ describe("T6 — local-telemetry extension-enable contract", () => {
 			// .mcp.json's jaeger entry should be removed on deregister
 			const projectMcpPath = join(projectDir, ".mcp.json");
 			if (existsSync(projectMcpPath)) {
-				const mcpAfter = JSON.parse(
-					readFileSync(projectMcpPath, "utf-8"),
-				) as {
+				const mcpAfter = JSON.parse(readFileSync(projectMcpPath, "utf-8")) as {
 					mcpServers?: Record<string, unknown>;
 				};
 				expect(mcpAfter.mcpServers?.jaeger).toBeUndefined();

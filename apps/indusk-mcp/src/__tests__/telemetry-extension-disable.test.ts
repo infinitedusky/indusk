@@ -1,12 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -60,30 +53,18 @@ beforeEach(() => {
 	// disable-flow's on_disable hook has something to deregister.
 	const extDir = join(projectDir, ".indusk/extensions/local-telemetry");
 	mkdirSync(extDir, { recursive: true });
-	const builtinManifest = join(
-		PACKAGE_ROOT,
-		"extensions/local-telemetry/manifest.json",
-	);
+	const builtinManifest = join(PACKAGE_ROOT, "extensions/local-telemetry/manifest.json");
 	if (!existsSync(builtinManifest)) {
-		throw new Error(
-			`Built-in local-telemetry manifest not found at ${builtinManifest}`,
-		);
+		throw new Error(`Built-in local-telemetry manifest not found at ${builtinManifest}`);
 	}
-	writeFileSync(
-		join(extDir, "manifest.json"),
-		readFileSync(builtinManifest, "utf-8"),
-	);
+	writeFileSync(join(extDir, "manifest.json"), readFileSync(builtinManifest, "utf-8"));
 
 	// Register the project so the daemon is running + .mcp.json has the
 	// jaeger entry — preconditions for meaningful disable assertions.
-	const reg = spawnSync(
-		"node",
-		[CLI_BIN, "telemetry", "register", projectDir],
-		{
-			env: { ...process.env, INDUSK_HOME: testHome },
-			encoding: "utf-8",
-		},
-	);
+	const reg = spawnSync("node", [CLI_BIN, "telemetry", "register", projectDir], {
+		env: { ...process.env, INDUSK_HOME: testHome },
+		encoding: "utf-8",
+	});
 	if (reg.status !== 0) {
 		throw new Error(
 			`precondition register failed: code=${reg.status}\nstdout:${reg.stdout}\nstderr:${reg.stderr}`,
@@ -99,8 +80,7 @@ afterEach(() => {
 		});
 	}
 	if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
-	if (existsSync(projectDir))
-		rmSync(projectDir, { recursive: true, force: true });
+	if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 });
 
 function runCli(
@@ -149,25 +129,15 @@ describe("T19 — extensions disable local-telemetry runs on_disable end-to-end"
 
 			// Run the user-facing CLI chain
 			const res = runCli(["extensions", "disable", "local-telemetry"]);
-			expect(
-				res.code,
-				`stdout:${res.stdout}\nstderr:${res.stderr}`,
-			).toBe(0);
+			expect(res.code, `stdout:${res.stdout}\nstderr:${res.stderr}`).toBe(0);
 			expect(res.stdout.toLowerCase()).toMatch(/disabled/);
 
 			// Extension was moved to disabled (.indusk/extensions/.disabled/)
+			expect(existsSync(join(projectDir, ".indusk/extensions/local-telemetry/manifest.json"))).toBe(
+				false,
+			);
 			expect(
-				existsSync(
-					join(projectDir, ".indusk/extensions/local-telemetry/manifest.json"),
-				),
-			).toBe(false);
-			expect(
-				existsSync(
-					join(
-						projectDir,
-						".indusk/extensions/.disabled/local-telemetry/manifest.json",
-					),
-				),
+				existsSync(join(projectDir, ".indusk/extensions/.disabled/local-telemetry/manifest.json")),
 			).toBe(true);
 
 			// Registry should no longer contain this project
@@ -190,9 +160,7 @@ describe("T19 — extensions disable local-telemetry runs on_disable end-to-end"
 	it.skipIf(SHOULD_SKIP)(
 		"two-project case: disable on one project keeps daemon up for the other",
 		async () => {
-			const secondProject = mkdtempSync(
-				join(tmpdir(), "telemetry-disable-proj2-"),
-			);
+			const secondProject = mkdtempSync(join(tmpdir(), "telemetry-disable-proj2-"));
 			try {
 				// Seed the second project + register it
 				mkdirSync(join(secondProject, ".indusk"), { recursive: true });
@@ -200,26 +168,16 @@ describe("T19 — extensions disable local-telemetry runs on_disable end-to-end"
 					join(secondProject, ".indusk/config.json"),
 					JSON.stringify({ mode: "local" }, null, 2),
 				);
-				const extDir = join(
-					secondProject,
-					".indusk/extensions/local-telemetry",
-				);
+				const extDir = join(secondProject, ".indusk/extensions/local-telemetry");
 				mkdirSync(extDir, { recursive: true });
 				writeFileSync(
 					join(extDir, "manifest.json"),
-					readFileSync(
-						join(PACKAGE_ROOT, "extensions/local-telemetry/manifest.json"),
-						"utf-8",
-					),
+					readFileSync(join(PACKAGE_ROOT, "extensions/local-telemetry/manifest.json"), "utf-8"),
 				);
-				spawnSync(
-					"node",
-					[CLI_BIN, "telemetry", "register", secondProject],
-					{
-						env: { ...process.env, INDUSK_HOME: testHome },
-						encoding: "utf-8",
-					},
-				);
+				spawnSync("node", [CLI_BIN, "telemetry", "register", secondProject], {
+					env: { ...process.env, INDUSK_HOME: testHome },
+					encoding: "utf-8",
+				});
 
 				expect(readRegistry().projects.length).toBe(2);
 
@@ -227,10 +185,7 @@ describe("T19 — extensions disable local-telemetry runs on_disable end-to-end"
 				const res = runCli(["extensions", "disable", "local-telemetry"], {
 					cwd: projectDir,
 				});
-				expect(
-					res.code,
-					`stdout:\n${res.stdout}\nstderr:\n${res.stderr}`,
-				).toBe(0);
+				expect(res.code, `stdout:\n${res.stdout}\nstderr:\n${res.stderr}`).toBe(0);
 
 				// Registry should drop to 1 (second project still registered)
 				expect(
@@ -240,8 +195,7 @@ describe("T19 — extensions disable local-telemetry runs on_disable end-to-end"
 				// Daemon should still be running
 				expect(existsSync(join(testHome, "telemetry.pid"))).toBe(true);
 			} finally {
-				if (existsSync(secondProject))
-					rmSync(secondProject, { recursive: true, force: true });
+				if (existsSync(secondProject)) rmSync(secondProject, { recursive: true, force: true });
 			}
 		},
 		60_000,

@@ -217,10 +217,6 @@ function resolveNextBin(): string | null {
 
 function openBrowser(url: string): void {
 	const cmd =
-		process.platform === "darwin"
-			? "open"
-			: process.platform === "win32"
-				? "start"
-				: "xdg-open";
+		process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
 	spawn(cmd, [url], { stdio: "ignore", detached: true }).unref();
 }

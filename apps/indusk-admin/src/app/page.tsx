@@ -15,20 +15,20 @@ import { readRegistryProjects } from "@/lib/registry-client";
  * Phase 4 adds an explicit stale-project branch inside `/p/{name}/`.
  */
 export default async function Home() {
-	const registered = readRegistryProjects();
+  const registered = readRegistryProjects();
 
-	const projects: ProjectCardData[] = await Promise.all(
-		registered.map(async (entry) => {
-			const active = await readActivePlans(entry.path).catch(() => []);
-			return {
-				name: entry.name,
-				path: entry.path,
-				lastSeenAt: entry.lastSeenAt,
-				activePlanCount: active.length,
-				hasInProgress: active.some((p) => p.status === "in-progress"),
-			};
-		}),
-	);
+  const projects: ProjectCardData[] = await Promise.all(
+    registered.map(async (entry) => {
+      const active = await readActivePlans(entry.path).catch(() => []);
+      return {
+        name: entry.name,
+        path: entry.path,
+        lastSeenAt: entry.lastSeenAt,
+        activePlanCount: active.length,
+        hasInProgress: active.some((p) => p.status === "in-progress"),
+      };
+    }),
+  );
 
-	return <ProjectGrid projects={projects} />;
+  return <ProjectGrid projects={projects} />;
 }

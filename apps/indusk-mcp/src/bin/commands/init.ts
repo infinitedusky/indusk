@@ -273,9 +273,7 @@ function wireBiomeIntoProject(projectRoot: string): BiomeWiringResult {
 			pkg.devDependencies = pkg.devDependencies ?? {};
 			if (!pkg.devDependencies["@biomejs/biome"]) {
 				pkg.devDependencies["@biomejs/biome"] = BIOME_VERSION_PIN;
-				console.info(
-					`    package.json: + @biomejs/biome ${BIOME_VERSION_PIN} (devDependencies)`,
-				);
+				console.info(`    package.json: + @biomejs/biome ${BIOME_VERSION_PIN} (devDependencies)`);
 				result.devDepAdded = true;
 				modified = true;
 			}
@@ -477,7 +475,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		// AGENTS.md — agent conduct directives, imported by CLAUDE.md via @AGENTS.md
 		const agentsMdPath = join(projectRoot, "AGENTS.md");
 		if (existsSync(agentsMdPath)) {
-			console.info("  skip: AGENTS.md (already exists — review templates/AGENTS.md for conduct directives)");
+			console.info(
+				"  skip: AGENTS.md (already exists — review templates/AGENTS.md for conduct directives)",
+			);
 		} else {
 			cpSync(join(packageRoot, "templates/AGENTS.md"), agentsMdPath);
 			console.info("  create: AGENTS.md");
@@ -709,9 +709,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		if (wiring.compoundScriptsSkipped.length > 0) {
 			console.info("  ⚠ compound scripts skipped (manual migration needed):");
 			for (const s of wiring.compoundScriptsSkipped) {
-				console.info(
-					`    ${s.pkgPath.replace(`${projectRoot}/`, "")}: ${s.name} = "${s.value}"`,
-				);
+				console.info(`    ${s.pkgPath.replace(`${projectRoot}/`, "")}: ${s.name} = "${s.value}"`);
 			}
 		}
 
@@ -719,7 +717,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		if (vestiges.configFiles.length > 0 || vestiges.depsByPackage.length > 0) {
 			console.info("\n[Lint migration warnings]");
 			console.info("  Biome is now wired, but ESLint/Prettier residue remains.");
-			console.info("  InDusk does not auto-remove user-visible files / devDeps; finish the cutover manually:\n");
+			console.info(
+				"  InDusk does not auto-remove user-visible files / devDeps; finish the cutover manually:\n",
+			);
 			if (vestiges.configFiles.length > 0) {
 				console.info("  Config files to delete:");
 				for (const f of vestiges.configFiles) console.info(`    - ${f}`);
@@ -1150,9 +1150,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	// not a recorded preference. Dawn (v2) will move this to a config-file-driven
 	// preference; until then, single-tool default.
 	const { writeConfig } = await import("../../lib/config.js");
-	const { detectScm, NoScmDetectedError } = await import(
-		"../../lib/scm/detect.js"
-	);
+	const { detectScm, NoScmDetectedError } = await import("../../lib/scm/detect.js");
 	const linterTool = "biome";
 	const linterConfig = local ? ".indusk/biome.json" : "biome.json";
 	const testTool = detected.testRunner ?? "vitest";

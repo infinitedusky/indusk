@@ -129,16 +129,11 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 					// field. Without this, they'd have to read setup_instructions
 					// to know what vars the extension needs.
 					copyExtensionAssets(projectRoot, name);
-					const examplePath = join(
-						extensionConfigDir(projectRoot, name),
-						".env.example",
-					);
+					const examplePath = join(extensionConfigDir(projectRoot, name), ".env.example");
 
 					console.info(`\n  ${name}: cannot enable — no credentials found.`);
 					if (existsSync(examplePath)) {
-						console.info(
-							`    A template is at .indusk/extensions/${name}/.env.example`,
-						);
+						console.info(`    A template is at .indusk/extensions/${name}/.env.example`);
 						console.info(
 							`      cp .indusk/extensions/${name}/.env.example .indusk/extensions/${name}/.env`,
 						);
@@ -607,9 +602,7 @@ export async function extensionsSuggest(projectRoot: string): Promise<void> {
 }
 
 export async function autoEnableExtensions(projectRoot: string): Promise<void> {
-	const { isExtensionExplicitlyDisabled } = await import(
-		"../../lib/config.js"
-	);
+	const { isExtensionExplicitlyDisabled } = await import("../../lib/config.js");
 	const builtins = getBuiltinExtensions();
 	let enabled = 0;
 
@@ -622,9 +615,7 @@ export async function autoEnableExtensions(projectRoot: string): Promise<void> {
 		if (!ext.required) continue;
 		if (isEnabled(projectRoot, ext.name)) continue;
 		if (isExtensionExplicitlyDisabled(projectRoot, ext.name)) {
-			console.info(
-				`  ${ext.name}: skipped (disabled_extensions in .indusk/config.json)`,
-			);
+			console.info(`  ${ext.name}: skipped (disabled_extensions in .indusk/config.json)`);
 			continue;
 		}
 		await extensionsEnable(projectRoot, [ext.name]);
@@ -754,9 +745,7 @@ function printEnvSetupHint(projectRoot: string, name: string): void {
 	if (existsSync(envPath)) return;
 	if (!envIsFunctional(name)) return;
 	console.info(`\n  ${name}: .env not found — copy the template to activate:`);
-	console.info(
-		`    cp .indusk/extensions/${name}/.env.example .indusk/extensions/${name}/.env`,
-	);
+	console.info(`    cp .indusk/extensions/${name}/.env.example .indusk/extensions/${name}/.env`);
 	console.info(`    Then edit .env and fill in values (see inline comments).`);
 }
 
@@ -774,9 +763,7 @@ function runHook(projectRoot: string, name: string, hook: string): void {
 	// prior version) and gives preview users a clean override path.
 	const bin = process.env.INDUSK_BIN;
 	const effectiveCommand =
-		bin && /^\s*indusk\s/.test(command)
-			? command.replace(/^\s*indusk\s/, `${bin} `)
-			: command;
+		bin && /^\s*indusk\s/.test(command) ? command.replace(/^\s*indusk\s/, `${bin} `) : command;
 
 	try {
 		execSync(effectiveCommand, {

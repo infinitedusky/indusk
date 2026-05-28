@@ -75,9 +75,7 @@ function quarantine(path: string): void {
 	const backupPath = `${path}.corrupt.${iso}.bak`;
 	try {
 		renameSync(path, backupPath);
-		process.stderr.write(
-			`warning: quarantined malformed telemetry registry to ${backupPath}\n`,
-		);
+		process.stderr.write(`warning: quarantined malformed telemetry registry to ${backupPath}\n`);
 	} catch {
 		// best-effort; caller gets empty registry regardless
 	}
@@ -129,9 +127,7 @@ export function registerProject(projectPath: string): ProjectEntry {
 	const reg = readRegistry();
 	const normalized = normalizeProjectPath(projectPath);
 
-	const existing = reg.projects.find(
-		(p) => normalizeProjectPath(p.path) === normalized,
-	);
+	const existing = reg.projects.find((p) => normalizeProjectPath(p.path) === normalized);
 	if (existing) return existing;
 
 	const baseName = basename(normalized);
@@ -163,9 +159,7 @@ export function deregisterProject(projectPath: string): boolean {
 	const reg = readRegistry();
 	const normalized = normalizeProjectPath(projectPath);
 	const before = reg.projects.length;
-	reg.projects = reg.projects.filter(
-		(p) => normalizeProjectPath(p.path) !== normalized,
-	);
+	reg.projects = reg.projects.filter((p) => normalizeProjectPath(p.path) !== normalized);
 	if (reg.projects.length === before) return false;
 	writeRegistry(reg);
 	return true;
@@ -179,9 +173,7 @@ export function deregisterProject(projectPath: string): boolean {
 export function touchProject(projectPath: string): void {
 	const reg = readRegistry();
 	const normalized = normalizeProjectPath(projectPath);
-	const entry = reg.projects.find(
-		(p) => normalizeProjectPath(p.path) === normalized,
-	);
+	const entry = reg.projects.find((p) => normalizeProjectPath(p.path) === normalized);
 	if (!entry) return;
 	entry.lastSeenAt = new Date().toISOString();
 	writeRegistry(reg);

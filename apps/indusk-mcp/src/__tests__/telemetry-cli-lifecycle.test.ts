@@ -27,8 +27,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 const REPO_ROOT = resolve(__dirname, "../../../..");
 const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
 
-const SHOULD_SKIP =
-	process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
+const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
 
 let testHome: string;
 
@@ -65,9 +64,10 @@ function readPidsFromStatus(): {
 } {
 	const pidFile = join(testHome, "telemetry.json");
 	if (!existsSync(pidFile)) return { jaegerPid: null, otelcolPid: null };
-	const meta = JSON.parse(
-		require("node:fs").readFileSync(pidFile, "utf-8"),
-	) as { jaegerPid?: number; otelcolPid?: number };
+	const meta = JSON.parse(require("node:fs").readFileSync(pidFile, "utf-8")) as {
+		jaegerPid?: number;
+		otelcolPid?: number;
+	};
 	return {
 		jaegerPid: meta.jaegerPid ?? null,
 		otelcolPid: meta.otelcolPid ?? null,
@@ -78,14 +78,7 @@ describe("T1 — `indusk telemetry start` brings up the daemon", () => {
 	it.skipIf(SHOULD_SKIP)(
 		"start exits 0 and prints both listening ports within 10s",
 		async () => {
-			const result = runCli([
-				"telemetry",
-				"start",
-				"--otlp-port",
-				"0",
-				"--ui-port",
-				"0",
-			]);
+			const result = runCli(["telemetry", "start", "--otlp-port", "0", "--ui-port", "0"]);
 			expect(result.code, `stdout: ${result.stdout}\nstderr: ${result.stderr}`).toBe(0);
 			// Prints something like "OTLP: http://localhost:xxxxx" and "Jaeger UI: http://localhost:xxxxx"
 			expect(result.stdout).toMatch(/OTLP[^\n]*localhost:\d+/);

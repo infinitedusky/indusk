@@ -47,11 +47,9 @@ function validateGitHash(raw: string): string {
 export async function getCurrentChangeId(projectRoot: string): Promise<string> {
 	const scm = getScm(projectRoot);
 	if (scm === "jj") return getJjChangeId(projectRoot);
-	const { stdout } = await execFileAsync(
-		"git",
-		["rev-parse", "--short", "HEAD"],
-		{ cwd: projectRoot },
-	);
+	const { stdout } = await execFileAsync("git", ["rev-parse", "--short", "HEAD"], {
+		cwd: projectRoot,
+	});
 	return validateGitHash(stdout);
 }
 
@@ -61,9 +59,7 @@ export async function getCurrentChangeId(projectRoot: string): Promise<string> {
  * - jj: ancestry via `jj log -r '::@'`.
  * - git: ancestry via `git log --format=%h HEAD` (linear history walk).
  */
-export async function getReachableChangeIds(
-	projectRoot: string,
-): Promise<Set<string>> {
+export async function getReachableChangeIds(projectRoot: string): Promise<Set<string>> {
 	const scm = getScm(projectRoot);
 	if (scm === "jj") return getJjReachable(projectRoot);
 	let stdout: string;

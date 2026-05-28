@@ -1,12 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -83,54 +76,45 @@ beforeEach(() => {
 
 afterEach(() => {
 	if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
-	if (existsSync(projectDir))
-		rmSync(projectDir, { recursive: true, force: true });
+	if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 });
 
-describe.skipIf(SHOULD_SKIP)(
-	"git-mode end-to-end sequence",
-	{ timeout: 60000 },
-	() => {
-		it("init → graph sync → impl-plan creation → second sync all succeed without throwing", () => {
-			// 1. init
-			const init = runCli(["init", "--no-index"]);
-			expect(init.code, `init failed: ${init.stderr}`).toBe(0);
-			const config = JSON.parse(
-				readFileSync(join(projectDir, ".indusk/config.json"), "utf-8"),
-			);
-			expect(config.scm).toBe("git");
+describe.skipIf(SHOULD_SKIP)("git-mode end-to-end sequence", { timeout: 60000 }, () => {
+	it("init → graph sync → impl-plan creation → second sync all succeed without throwing", () => {
+		// 1. init
+		const init = runCli(["init", "--no-index"]);
+		expect(init.code, `init failed: ${init.stderr}`).toBe(0);
+		const config = JSON.parse(readFileSync(join(projectDir, ".indusk/config.json"), "utf-8"));
+		expect(config.scm).toBe("git");
 
-			// 2. graph sync (1st run, empty log)
-			const sync1 = runCli(["graph", "sync"]);
-			expect(sync1.code, `1st graph sync failed: ${sync1.stderr}`).toBe(0);
-			expect(sync1.stderr).toMatch(/git mode/i);
+		// 2. graph sync (1st run, empty log)
+		const sync1 = runCli(["graph", "sync"]);
+		expect(sync1.code, `1st graph sync failed: ${sync1.stderr}`).toBe(0);
+		expect(sync1.stderr).toMatch(/git mode/i);
 
-			// 3. Add a tiny plan to simulate a real project state
-			const planDir = join(projectDir, ".indusk/planning/sample-plan");
-			mkdirSync(planDir, { recursive: true });
-			writeFileSync(
-				join(planDir, "brief.md"),
-				`---\ntitle: "Sample"\ndate: 2026-05-04\nstatus: draft\n---\n\n# Sample\n\nE2E test fixture.\n`,
-			);
+		// 3. Add a tiny plan to simulate a real project state
+		const planDir = join(projectDir, ".indusk/planning/sample-plan");
+		mkdirSync(planDir, { recursive: true });
+		writeFileSync(
+			join(planDir, "brief.md"),
+			`---\ntitle: "Sample"\ndate: 2026-05-04\nstatus: draft\n---\n\n# Sample\n\nE2E test fixture.\n`,
+		);
 
-			// 4. graph sync (2nd run — proves graceful-degrade is idempotent)
-			const sync2 = runCli(["graph", "sync"]);
-			expect(sync2.code, `2nd graph sync failed: ${sync2.stderr}`).toBe(0);
-			expect(sync2.stderr).toMatch(/git mode/i);
+		// 4. graph sync (2nd run — proves graceful-degrade is idempotent)
+		const sync2 = runCli(["graph", "sync"]);
+		expect(sync2.code, `2nd graph sync failed: ${sync2.stderr}`).toBe(0);
+		expect(sync2.stderr).toMatch(/git mode/i);
 
-			// 5. The semantic graph event log should NOT exist (sync no-oped)
-			const logPath = join(projectDir, ".indusk/graph/semantic-graph.log");
-			if (existsSync(logPath)) {
-				expect(readFileSync(logPath, "utf-8").trim()).toBe("");
-			}
+		// 5. The semantic graph event log should NOT exist (sync no-oped)
+		const logPath = join(projectDir, ".indusk/graph/semantic-graph.log");
+		if (existsSync(logPath)) {
+			expect(readFileSync(logPath, "utf-8").trim()).toBe("");
+		}
 
-			// 6. update — confirms field is preserved + no SCM regression
-			const update = runCli(["update"]);
-			expect(update.code, `update failed: ${update.stderr}`).toBe(0);
-			const configAfter = JSON.parse(
-				readFileSync(join(projectDir, ".indusk/config.json"), "utf-8"),
-			);
-			expect(configAfter.scm).toBe("git");
-		});
-	},
-);
+		// 6. update — confirms field is preserved + no SCM regression
+		const update = runCli(["update"]);
+		expect(update.code, `update failed: ${update.stderr}`).toBe(0);
+		const configAfter = JSON.parse(readFileSync(join(projectDir, ".indusk/config.json"), "utf-8"));
+		expect(configAfter.scm).toBe("git");
+	});
+});

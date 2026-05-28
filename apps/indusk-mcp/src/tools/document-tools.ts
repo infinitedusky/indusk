@@ -27,8 +27,7 @@ export function registerDocumentTools(server: McpServer, projectRoot: string): v
 	server.registerTool(
 		"list_docs",
 		{
-			description:
-				"List all markdown files in the VitePress docs directory (apps/docs/src/)",
+			description: "List all markdown files in the VitePress docs directory (apps/docs/src/)",
 		},
 		async () => {
 			const files = findMarkdownFiles(docsDir, docsDir);

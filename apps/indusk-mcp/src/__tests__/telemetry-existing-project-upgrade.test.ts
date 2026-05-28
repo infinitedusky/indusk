@@ -1,8 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	createHash,
-	type BinaryLike,
-} from "node:crypto";
+import { type BinaryLike, createHash } from "node:crypto";
 import {
 	existsSync,
 	mkdirSync,
@@ -67,19 +64,12 @@ beforeEach(() => {
 	mkdirSync(dash0Dir, { recursive: true });
 	const dash0Builtin = join(PACKAGE_ROOT, "extensions/dash0/manifest.json");
 	if (existsSync(dash0Builtin)) {
-		writeFileSync(
-			join(dash0Dir, "manifest.json"),
-			readFileSync(dash0Builtin, "utf-8"),
-		);
+		writeFileSync(join(dash0Dir, "manifest.json"), readFileSync(dash0Builtin, "utf-8"));
 	} else {
 		// Stand-in manifest if the real one isn't present in this tree
 		writeFileSync(
 			join(dash0Dir, "manifest.json"),
-			JSON.stringify(
-				{ name: "dash0", version: "1.0.0", provides: ["otel-endpoint"] },
-				null,
-				2,
-			),
+			JSON.stringify({ name: "dash0", version: "1.0.0", provides: ["otel-endpoint"] }, null, 2),
 		);
 	}
 
@@ -106,13 +96,10 @@ afterEach(() => {
 		});
 	}
 	if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
-	if (existsSync(projectDir))
-		rmSync(projectDir, { recursive: true, force: true });
+	if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 });
 
-function runCli(
-	args: string[],
-): { code: number; stdout: string; stderr: string } {
+function runCli(args: string[]): { code: number; stdout: string; stderr: string } {
 	const result = spawnSync("node", [CLI_BIN, ...args], {
 		cwd: projectDir,
 		env: {
@@ -149,23 +136,16 @@ describe("T20 — indusk update migrates pre-1.28 projects to local-telemetry", 
 			const instrBefore = sha(readFileSync(instrPath));
 
 			const res = runCli(["update"]);
-			expect(
-				res.code,
-				`update failed.\nstdout:\n${res.stdout}\nstderr:\n${res.stderr}`,
-			).toBe(0);
+			expect(res.code, `update failed.\nstdout:\n${res.stdout}\nstderr:\n${res.stderr}`).toBe(0);
 
 			// local-telemetry is now enabled
 			expect(
-				existsSync(
-					join(projectDir, ".indusk/extensions/local-telemetry/manifest.json"),
-				),
+				existsSync(join(projectDir, ".indusk/extensions/local-telemetry/manifest.json")),
 				`expected local-telemetry to be enabled after update\nstdout:\n${res.stdout}`,
 			).toBe(true);
 
 			// dash0 is still enabled (coexistence, not replacement)
-			expect(
-				existsSync(join(projectDir, ".indusk/extensions/dash0/manifest.json")),
-			).toBe(true);
+			expect(existsSync(join(projectDir, ".indusk/extensions/dash0/manifest.json"))).toBe(true);
 
 			// instrumentation.ts was not modified
 			const instrAfter = sha(readFileSync(instrPath));
@@ -174,25 +154,19 @@ describe("T20 — indusk update migrates pre-1.28 projects to local-telemetry", 
 			// Registry has this project (realpath-normalized — the on_enable hook
 			// uses `$(pwd)` which resolves symlinks; registry stores realpaths).
 			const resolvedProject = realpathSync(projectDir);
-			expect(
-				readRegistry().projects.map((p) => realpathSync(p.path)),
-			).toContain(resolvedProject);
+			expect(readRegistry().projects.map((p) => realpathSync(p.path))).toContain(resolvedProject);
 
 			// .mcp.json has jaeger entry wired
 			expect(
 				existsSync(join(projectDir, ".mcp.json")),
 				`expected .mcp.json to be written by the on_enable hook.\nupdate stdout:\n${res.stdout}\nupdate stderr:\n${res.stderr}`,
 			).toBe(true);
-			const mcp = JSON.parse(
-				readFileSync(join(projectDir, ".mcp.json"), "utf-8"),
-			) as {
+			const mcp = JSON.parse(readFileSync(join(projectDir, ".mcp.json"), "utf-8")) as {
 				mcpServers?: Record<string, { type?: string; url?: string }>;
 			};
 			expect(mcp.mcpServers?.jaeger).toBeDefined();
 			expect(mcp.mcpServers?.jaeger?.type).toBe("http");
-			expect(mcp.mcpServers?.jaeger?.url).toMatch(
-				/^http:\/\/localhost:\d+\/mcp$/,
-			);
+			expect(mcp.mcpServers?.jaeger?.url).toMatch(/^http:\/\/localhost:\d+\/mcp$/);
 
 			// update's stdout visibly announced the migration
 			expect(res.stdout.toLowerCase()).toMatch(/local-telemetry/);

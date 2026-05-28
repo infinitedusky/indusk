@@ -12,20 +12,22 @@ import { EmptyPlansSidebarSlot } from "./EmptyPlansSidebarSlot";
  * in the actual sidebar.
  */
 describe("EmptyPlansSidebarSlot — visible empty-state copy (T12)", () => {
-	it("renders without crashing", async () => {
-		const { container } = await render(<EmptyPlansSidebarSlot />);
-		expect(container.querySelector('[data-testid="sidebar-empty-state"]')).not.toBeNull();
-	});
+  it("renders without crashing", async () => {
+    const { container } = await render(<EmptyPlansSidebarSlot />);
+    expect(
+      container.querySelector('[data-testid="sidebar-empty-state"]'),
+    ).not.toBeNull();
+  });
 
-	it("includes 'No plans yet' guidance text", async () => {
-		const { container } = await render(<EmptyPlansSidebarSlot />);
-		const text = container.textContent ?? "";
-		expect(text).toContain("No plans yet");
-	});
+  it("includes 'No plans yet' guidance text", async () => {
+    const { container } = await render(<EmptyPlansSidebarSlot />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("No plans yet");
+  });
 
-	it("references the /planner command as the recovery action", async () => {
-		const { container } = await render(<EmptyPlansSidebarSlot />);
-		const text = container.textContent ?? "";
-		expect(text).toContain("/planner");
-	});
+  it("references the /planner command as the recovery action", async () => {
+    const { container } = await render(<EmptyPlansSidebarSlot />);
+    const text = container.textContent ?? "";
+    expect(text).toContain("/planner");
+  });
 });

@@ -4,12 +4,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import {
-	getEvalModel,
-	getProjectGroupId,
-	readConfig,
-	shouldEmitOtelGate,
-} from "../lib/config.js";
+import { getEvalModel, getProjectGroupId, readConfig, shouldEmitOtelGate } from "../lib/config.js";
 import { getEnabledExtensions } from "../lib/extension-loader.js";
 import { getScm } from "../lib/scm/detect.js";
 
@@ -53,7 +48,7 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 		"get_project_info",
 		{
 			description:
-				"Return runtime project metadata: project_group (Graphiti group ID — sanitized form, hyphens → underscores), scm (jj or git), planning_dir, otel_role, eval_model, eval_enabled. Use `project_group` as the value for `group_ids` when querying `mcp__graphiti__*` tools — the sanitized form is what writes use, so reads must match. Always pass `[project_group, \"shared\"]` to recall both project-specific and cross-project knowledge.",
+				'Return runtime project metadata: project_group (Graphiti group ID — sanitized form, hyphens → underscores), scm (jj or git), planning_dir, otel_role, eval_model, eval_enabled. Use `project_group` as the value for `group_ids` when querying `mcp__graphiti__*` tools — the sanitized form is what writes use, so reads must match. Always pass `[project_group, "shared"]` to recall both project-specific and cross-project knowledge.',
 		},
 		async () => {
 			const config = readConfig(projectRoot);
@@ -67,7 +62,7 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 				eval_enabled: config?.eval?.enabled !== false,
 				eval_model: getEvalModel(projectRoot),
 				graphiti_group_recall_example: {
-					note: "Pass `group_ids: [project_group, \"shared\"]` to graphiti queries. Omitting group_ids does NOT scan all groups — it returns empty.",
+					note: 'Pass `group_ids: [project_group, "shared"]` to graphiti queries. Omitting group_ids does NOT scan all groups — it returns empty.',
 					group_ids: [getProjectGroupId(projectRoot), "shared"],
 				},
 			};

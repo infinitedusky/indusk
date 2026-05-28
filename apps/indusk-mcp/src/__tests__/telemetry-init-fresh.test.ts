@@ -60,28 +60,23 @@ afterEach(() => {
 		});
 	}
 	if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
-	if (existsSync(projectDir))
-		rmSync(projectDir, { recursive: true, force: true });
+	if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 });
 
 function runInit(): { code: number; stdout: string; stderr: string } {
-	const result = spawnSync(
-		"node",
-		[CLI_BIN, "init", "--no-index"],
-		{
-			cwd: projectDir,
-			env: {
-				...process.env,
-				INDUSK_HOME: testHome,
-				// Force the on_enable hook ("indusk telemetry register $(pwd)")
-				// to use our dev CLI instead of the globally-installed indusk
-				// (which may be a pre-1.28 version without the telemetry subcommand).
-				INDUSK_BIN: `node ${CLI_BIN}`,
-			},
-			encoding: "utf-8",
-			timeout: 60_000,
+	const result = spawnSync("node", [CLI_BIN, "init", "--no-index"], {
+		cwd: projectDir,
+		env: {
+			...process.env,
+			INDUSK_HOME: testHome,
+			// Force the on_enable hook ("indusk telemetry register $(pwd)")
+			// to use our dev CLI instead of the globally-installed indusk
+			// (which may be a pre-1.28 version without the telemetry subcommand).
+			INDUSK_BIN: `node ${CLI_BIN}`,
 		},
-	);
+		encoding: "utf-8",
+		timeout: 60_000,
+	});
 	return {
 		code: result.status ?? -1,
 		stdout: result.stdout ?? "",
@@ -106,10 +101,7 @@ describe("T18 — indusk init auto-enables local-telemetry (required-by-default)
 			).toBe(0);
 
 			// Extension was auto-enabled
-			const enabledManifest = join(
-				projectDir,
-				".indusk/extensions/local-telemetry/manifest.json",
-			);
+			const enabledManifest = join(projectDir, ".indusk/extensions/local-telemetry/manifest.json");
 			expect(existsSync(enabledManifest)).toBe(true);
 			const manifest = JSON.parse(readFileSync(enabledManifest, "utf-8")) as {
 				name: string;
@@ -126,21 +118,15 @@ describe("T18 — indusk init auto-enables local-telemetry (required-by-default)
 			// expands to the realpath `/private/var/...`.
 			const registry = readRegistry();
 			const resolvedProject = realpathSync(projectDir);
-			expect(
-				registry.projects.map((p) => realpathSync(p.path)),
-			).toContain(resolvedProject);
+			expect(registry.projects.map((p) => realpathSync(p.path))).toContain(resolvedProject);
 
 			// .mcp.json has a jaeger MCP server entry
-			const mcp = JSON.parse(
-				readFileSync(join(projectDir, ".mcp.json"), "utf-8"),
-			) as {
+			const mcp = JSON.parse(readFileSync(join(projectDir, ".mcp.json"), "utf-8")) as {
 				mcpServers?: Record<string, { type?: string; url?: string }>;
 			};
 			expect(mcp.mcpServers?.jaeger).toBeDefined();
 			expect(mcp.mcpServers?.jaeger?.type).toBe("http");
-			expect(mcp.mcpServers?.jaeger?.url).toMatch(
-				/^http:\/\/localhost:\d+\/mcp$/,
-			);
+			expect(mcp.mcpServers?.jaeger?.url).toMatch(/^http:\/\/localhost:\d+\/mcp$/);
 
 			// Daemon should be running after init
 			expect(existsSync(join(testHome, "telemetry.pid"))).toBe(true);

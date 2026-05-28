@@ -172,9 +172,7 @@ const config = defineConfig({
 				},
 				{
 					text: "Architecture",
-					items: [
-						{ text: "Decisions", link: "/dawn/decisions" },
-					],
+					items: [{ text: "Decisions", link: "/dawn/decisions" }],
 				},
 			],
 		},

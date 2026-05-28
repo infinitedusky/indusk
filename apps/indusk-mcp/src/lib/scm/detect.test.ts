@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { writeConfig } from "../config.js";
-import { NoScmDetectedError, detectScm, getScm } from "./detect.js";
+import { detectScm, getScm, NoScmDetectedError } from "./detect.js";
 
 /**
  * Unit tests for `detectScm()` and `getScm()`.
@@ -103,7 +103,10 @@ describe("getScm", () => {
 		const path = join(projectDir, ".indusk/config.json");
 		const dir = join(projectDir, ".indusk");
 		spawnSync("mkdir", ["-p", dir]);
-		writeFileSync(path, JSON.stringify({ mode: "full", verify: {}, detected: {}, scm: "fossil" }, null, 2));
+		writeFileSync(
+			path,
+			JSON.stringify({ mode: "full", verify: {}, detected: {}, scm: "fossil" }, null, 2),
+		);
 		expect(getScm(projectDir)).toBe("jj");
 	});
 });

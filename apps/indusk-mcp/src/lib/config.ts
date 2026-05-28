@@ -131,10 +131,7 @@ export interface InduskConfig {
  * `disabled_extensions` array. Single source of truth for the required-
  * by-default escape hatch.
  */
-export function isExtensionExplicitlyDisabled(
-	projectRoot: string,
-	name: string,
-): boolean {
+export function isExtensionExplicitlyDisabled(projectRoot: string, name: string): boolean {
 	const config = readConfig(projectRoot);
 	const list = config?.disabled_extensions;
 	if (!Array.isArray(list)) return false;

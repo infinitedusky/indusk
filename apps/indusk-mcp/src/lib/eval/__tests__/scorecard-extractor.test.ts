@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildEvaluatorPrompt } from "../prompt-builder.js";
 import { V1_RUBRIC } from "../rubric.js";
-import {
-	extractScorecardJson,
-	formatParseError,
-} from "../scorecard-extractor.js";
+import { extractScorecardJson, formatParseError } from "../scorecard-extractor.js";
 
 describe("T1: prose-prefixed JSON (the smoke 4 failure mode)", () => {
 	it("extracts a balanced JSON object when text begins with prose followed by JSON", () => {
@@ -54,14 +51,14 @@ describe("T2: pure JSON (the cleanest case)", () => {
 
 describe("T3: fenced JSON (markdown code block)", () => {
 	it("extracts JSON wrapped in ```json fences", () => {
-		const text = "```json\n{\"summary\":\"fenced\",\"graphitiWrites\":1}\n```";
+		const text = '```json\n{"summary":"fenced","graphitiWrites":1}\n```';
 		const extracted = extractScorecardJson(text);
 		expect(extracted).not.toBeNull();
 		expect(JSON.parse(extracted as string).summary).toBe("fenced");
 	});
 
 	it("extracts JSON wrapped in unlabeled ``` fences", () => {
-		const text = "```\n{\"summary\":\"unlabeled\"}\n```";
+		const text = '```\n{"summary":"unlabeled"}\n```';
 		const extracted = extractScorecardJson(text);
 		expect(extracted).not.toBeNull();
 		expect(JSON.parse(extracted as string).summary).toBe("unlabeled");
@@ -107,7 +104,8 @@ describe("T5: no parseable JSON", () => {
 
 	it("formatParseError preserves the raw stdout snippet", () => {
 		const err = new SyntaxError("Unexpected token 'N', \"Now I've g\"... is not valid JSON");
-		const rawStdout = "Now I've got everything I need to score this commit. Let me think about it...".repeat(5);
+		const rawStdout =
+			"Now I've got everything I need to score this commit. Let me think about it...".repeat(5);
 		const formatted = formatParseError(err, rawStdout);
 		expect(formatted).toContain("Unexpected token");
 		// Snippet must be at least 200 characters of the raw stdout (or all of it if shorter)
@@ -184,7 +182,7 @@ describe("end-to-end: extracted JSON parses cleanly to a scorecard shape", () =>
 					question: "Did the agent follow the project's conventions?",
 					answer: "yes",
 					severity: "info",
-					evidence: "evidence text with a brace { and a quote \"",
+					evidence: 'evidence text with a brace { and a quote "',
 					finding: "ok",
 				},
 			],

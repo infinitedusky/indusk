@@ -15,7 +15,11 @@ vi.mock("next/link", () => {
     children: React.ReactNode;
     [key: string]: unknown;
   }) {
-    return <a href={href} {...rest}>{children}</a>;
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    );
   }
   return { default: MockLink, __esModule: true };
 });

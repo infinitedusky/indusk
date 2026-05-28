@@ -1,1 +1,48 @@
-{"type":"result","subtype":"success","is_error":false,"duration_ms":7782,"duration_api_ms":11979,"num_turns":3,"result":"I need user permission to call the `mcp__indusk__get_system_version` tool. Based on the available tools I have access to, I can see that the `mcp__indusk__*` tools are available (I can see many MCP tools in my tool list including indusk-specific ones like `mcp__indusk__list_plans`, `mcp__indusk__get_context`, etc.).\n\nWould you like to grant permission for me to call `mcp__indusk__get_system_version`?","session_id":"386e67f9-51de-46d6-b2aa-ce39bc486599","total_cost_usd":0.32761909999999994,"usage":{"input_tokens":9,"cache_creation_input_tokens":78022,"cache_read_input_tokens":55272,"output_tokens":164,"server_tool_use":{"web_search_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":78022}},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":3,"outputTokens":253,"cacheReadInputTokens":0,"cacheCreationInputTokens":11760,"webSearchRequests":0,"costUSD":0.015968,"contextWindow":200000},"claude-sonnet-4-5-20250929":{"inputTokens":9,"outputTokens":164,"cacheReadInputTokens":55272,"cacheCreationInputTokens":78022,"webSearchRequests":0,"costUSD":0.31165109999999996,"contextWindow":200000}},"permission_denials":[{"tool_name":"mcp__indusk__get_system_version","tool_use_id":"toolu_01CLmY4oAnhAacgnuhrSz4Cv","tool_input":{}}],"uuid":"f1a46046-1cdf-4d47-b72c-a340e755419e"}
+{
+	"type": "result",
+	"subtype": "success",
+	"is_error": false,
+	"duration_ms": 7782,
+	"duration_api_ms": 11979,
+	"num_turns": 3,
+	"result": "I need user permission to call the `mcp__indusk__get_system_version` tool. Based on the available tools I have access to, I can see that the `mcp__indusk__*` tools are available (I can see many MCP tools in my tool list including indusk-specific ones like `mcp__indusk__list_plans`, `mcp__indusk__get_context`, etc.).\n\nWould you like to grant permission for me to call `mcp__indusk__get_system_version`?",
+	"session_id": "386e67f9-51de-46d6-b2aa-ce39bc486599",
+	"total_cost_usd": 0.32761909999999994,
+	"usage": {
+		"input_tokens": 9,
+		"cache_creation_input_tokens": 78022,
+		"cache_read_input_tokens": 55272,
+		"output_tokens": 164,
+		"server_tool_use": { "web_search_requests": 0 },
+		"service_tier": "standard",
+		"cache_creation": { "ephemeral_1h_input_tokens": 0, "ephemeral_5m_input_tokens": 78022 }
+	},
+	"modelUsage": {
+		"claude-haiku-4-5-20251001": {
+			"inputTokens": 3,
+			"outputTokens": 253,
+			"cacheReadInputTokens": 0,
+			"cacheCreationInputTokens": 11760,
+			"webSearchRequests": 0,
+			"costUSD": 0.015968,
+			"contextWindow": 200000
+		},
+		"claude-sonnet-4-5-20250929": {
+			"inputTokens": 9,
+			"outputTokens": 164,
+			"cacheReadInputTokens": 55272,
+			"cacheCreationInputTokens": 78022,
+			"webSearchRequests": 0,
+			"costUSD": 0.31165109999999996,
+			"contextWindow": 200000
+		}
+	},
+	"permission_denials": [
+		{
+			"tool_name": "mcp__indusk__get_system_version",
+			"tool_use_id": "toolu_01CLmY4oAnhAacgnuhrSz4Cv",
+			"tool_input": {}
+		}
+	],
+	"uuid": "f1a46046-1cdf-4d47-b72c-a340e755419e"
+}

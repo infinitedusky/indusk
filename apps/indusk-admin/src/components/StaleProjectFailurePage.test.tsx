@@ -17,39 +17,36 @@ import { StaleProjectFailurePage } from "./StaleProjectFailurePage";
  */
 
 describe("StaleProjectFailurePage — T11: component shape", () => {
-	it("T11 — renders the failure marker, the registered name, and the old path", async () => {
-		const { container } = await render(
-			<StaleProjectFailurePage
-				projectName="gone-project"
-				projectPath="/Users/someone/deleted/gone-project"
-			/>,
-		);
-		expect(
-			container.querySelector('[data-testid="stale-project-failure"]'),
-		).not.toBeNull();
-		expect(container.textContent).toContain("gone-project");
-		expect(container.textContent).toContain(
-			"/Users/someone/deleted/gone-project",
-		);
-	});
+  it("T11 — renders the failure marker, the registered name, and the old path", async () => {
+    const { container } = await render(
+      <StaleProjectFailurePage
+        projectName="gone-project"
+        projectPath="/Users/someone/deleted/gone-project"
+      />,
+    );
+    expect(
+      container.querySelector('[data-testid="stale-project-failure"]'),
+    ).not.toBeNull();
+    expect(container.textContent).toContain("gone-project");
+    expect(container.textContent).toContain(
+      "/Users/someone/deleted/gone-project",
+    );
+  });
 
-	it("T11 — names the recovery command", async () => {
-		const { container } = await render(
-			<StaleProjectFailurePage
-				projectName="gone"
-				projectPath="/tmp/gone"
-			/>,
-		);
-		expect(container.textContent).toContain("indusk update");
-	});
+  it("T11 — names the recovery command", async () => {
+    const { container } = await render(
+      <StaleProjectFailurePage projectName="gone" projectPath="/tmp/gone" />,
+    );
+    expect(container.textContent).toContain("indusk update");
+  });
 
-	it("T11 — handles the 'unregistered name' case (null path)", async () => {
-		const { container } = await render(
-			<StaleProjectFailurePage projectName="never-registered" />,
-		);
-		expect(
-			container.querySelector('[data-testid="stale-project-failure"]'),
-		).not.toBeNull();
-		expect(container.textContent).toContain("never-registered");
-	});
+  it("T11 — handles the 'unregistered name' case (null path)", async () => {
+    const { container } = await render(
+      <StaleProjectFailurePage projectName="never-registered" />,
+    );
+    expect(
+      container.querySelector('[data-testid="stale-project-failure"]'),
+    ).not.toBeNull();
+    expect(container.textContent).toContain("never-registered");
+  });
 });
