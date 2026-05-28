@@ -1,11 +1,5 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -27,10 +21,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 const REPO_ROOT = resolve(__dirname, "../../../..");
 const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const MANIFEST_PATH = join(
-	REPO_ROOT,
-	"apps/indusk-mcp/extensions/worktree/manifest.json",
-);
+const MANIFEST_PATH = join(REPO_ROOT, "apps/indusk-mcp/extensions/worktree/manifest.json");
 const SHOULD_SKIP_CLI = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
 
 describe("worktree extension is required: false and opt-in only", () => {
@@ -61,8 +52,7 @@ describe("worktree extension is required: false and opt-in only", () => {
 
 		afterEach(() => {
 			if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
-			if (existsSync(projectDir))
-				rmSync(projectDir, { recursive: true, force: true });
+			if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 		});
 
 		it.skipIf(SHOULD_SKIP_CLI)(
@@ -80,12 +70,7 @@ describe("worktree extension is required: false and opt-in only", () => {
 					timeout: 50_000,
 				});
 				expect(result.status, `init failed: ${result.stderr}`).toBe(0);
-				const workTreeExtDir = join(
-					projectDir,
-					".indusk",
-					"extensions",
-					"worktree",
-				);
+				const workTreeExtDir = join(projectDir, ".indusk", "extensions", "worktree");
 				expect(existsSync(workTreeExtDir)).toBe(false);
 			},
 		);
