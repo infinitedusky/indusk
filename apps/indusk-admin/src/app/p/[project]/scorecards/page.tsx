@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { ScorecardsList } from "@/components/Scorecards";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { readEvalScorecards } from "@/lib/planning-reader";
@@ -6,7 +5,7 @@ import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { getCommitMessages } from "@/lib/vcs";
 
 interface ScorecardsRouteProps {
-	params: Promise<{ project: string }>;
+  params: Promise<{ project: string }>;
 }
 
 /**
@@ -23,51 +22,51 @@ interface ScorecardsRouteProps {
  * and we keep it here.
  */
 export default async function PerProjectScorecardsPage({
-	params,
+  params,
 }: ScorecardsRouteProps) {
-	const { project } = await params;
-	const projectPath = getProjectPath(project);
+  const { project } = await params;
+  const projectPath = getProjectPath(project);
 
-	if (!projectPath || !projectPathExists(projectPath)) {
-		return (
-			<StaleProjectFailurePage
-				projectName={project}
-				projectPath={projectPath ?? undefined}
-			/>
-		);
-	}
+  if (!projectPath || !projectPathExists(projectPath)) {
+    return (
+      <StaleProjectFailurePage
+        projectName={project}
+        projectPath={projectPath ?? undefined}
+      />
+    );
+  }
 
-	const since = new Date(0);
-	const until = new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000);
+  const since = new Date(0);
+  const until = new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000);
 
-	const scorecards = await readEvalScorecards(projectPath, {
-		from: since,
-		to: until,
-	}).catch(() => []);
+  const scorecards = await readEvalScorecards(projectPath, {
+    from: since,
+    to: until,
+  }).catch(() => []);
 
-	const ids = scorecards
-		.map((s) => (s.changeId ? String(s.changeId) : ""))
-		.filter((id) => id !== "");
-	const messages = getCommitMessages(projectPath, ids);
+  const ids = scorecards
+    .map((s) => (s.changeId ? String(s.changeId) : ""))
+    .filter((id) => id !== "");
+  const messages = getCommitMessages(projectPath, ids);
 
-	// Single-project view — deliberately omit the project-name label per row
-	// (it'd be redundant noise since every scorecard belongs to {project}).
-	// ScorecardsList handles `undefined` / missing `project` fields by not
-	// rendering the label.
-	if (scorecards.length === 0) {
-		// Not an error — just no scorecards yet. Surface a calm empty state.
-		return (
-			<div className="flex flex-col gap-2">
-				<h1 className="text-lg font-semibold text-gray-900">
-					Scorecards — {project}
-				</h1>
-				<p className="text-sm text-gray-500">
-					No eval scorecards recorded for this project yet. Commit via `jj
-					describe` to trigger the eval agent.
-				</p>
-			</div>
-		);
-	}
+  // Single-project view — deliberately omit the project-name label per row
+  // (it'd be redundant noise since every scorecard belongs to {project}).
+  // ScorecardsList handles `undefined` / missing `project` fields by not
+  // rendering the label.
+  if (scorecards.length === 0) {
+    // Not an error — just no scorecards yet. Surface a calm empty state.
+    return (
+      <div className="flex flex-col gap-2">
+        <h1 className="text-lg font-semibold text-gray-900">
+          Scorecards — {project}
+        </h1>
+        <p className="text-sm text-gray-500">
+          No eval scorecards recorded for this project yet. Commit via `jj
+          describe` to trigger the eval agent.
+        </p>
+      </div>
+    );
+  }
 
-	return <ScorecardsList scorecards={scorecards} descriptions={messages} />;
+  return <ScorecardsList scorecards={scorecards} descriptions={messages} />;
 }
