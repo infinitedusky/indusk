@@ -47,7 +47,7 @@ Trajectory IDs `T1`–`T18` map 1:1 to the test-plan's behavioral assertions `A1
 | T12 | [A12] Malformed `worktree-configs/<repo>.json` produces clear error naming the offending field | Phase 2 | Phase 2 | planned |
 | T13 | [A13] Same extension + config schema + `pnpm wt` surface works against dawn-fde-toolkit AND numero-workbench | Phase 7 | Phase 7 | planned (manual smoke + parameterized vitest) |
 | T14 | [A14] `worktree create` twice with same `<repo> <slug>` exits non-zero; "already exists" stderr; no state corruption | Phase 6 | Phase 6 | planned |
-| T15 | [A15] Extension is `required: false`; not auto-enabled on non-workbench projects | Phase 1 | Phase 1 | planned |
+| T15 | [A15] Extension is `required: false`; not auto-enabled on non-workbench projects | Phase 1 | Phase 1 | written |
 | T16 | [A16] After `extensions enable worktree`, package.json gets `wt`/`wt:pm2`/`preflight` scripts + starter config materializes | Phase 6 | Phase 6 | planned |
 | T17 | [A17] `preflight` exports consistent env contract (`CHANGED_FILES`, `CHANGED_FILES_BIOME`, declarative `preflight_env{}` booleans) across configs | Phase 5 | Phase 5 | planned |
 | T18 | [A18] Workbench with top-level `composeProjectName` in `ce.json` produces one docker-compose project namespace regardless of cwd | Phase 6 | Phase 7 | planned (manual smoke, requires docker + composable.env ≥ 1.37.7) |
