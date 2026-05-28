@@ -33,6 +33,7 @@ When extensions overlap on problem space, this table tells you which one to reac
 | Style with Tailwind | `tailwind` |
 | Write Vitest / Jest tests | `testing` |
 | Write TypeScript with strict mode | `typescript` |
+| Manage multiple worktrees in a workbench-shaped project (one `.indusk/` across worktrees, scripted scaffolding) | `worktree` |
 
 ## Grouped catalog
 
@@ -90,6 +91,12 @@ Both adapted from [greptileai/skills](https://github.com/greptileai/skills) (MIT
 |---|---|---|
 | `excalidraw` | Hand-drawn diagrams in chat | Conceptual sketches, debug illustrations |
 | `vitepress` | VitePress patterns — Mermaid diagrams, sidebar config, FullscreenDiagram | Authoring docs site content |
+
+### Development workflow
+
+| Extension | One-liner | When |
+|---|---|---|
+| `worktree` | Per-repo worktree management for workbench-shaped projects — one `.indusk/` survives worktree create/destroy; bare `pnpm wt <slug> <cmd>` execution surface; `composeProjectName` cross-cwd docker-compose targeting | Multi-worktree work on a wrapped repo where `.indusk/` state (plans, eval, highlights) must NOT be duplicated or lost across worktrees |
 
 ### Domain / framework skills (skill-only, no MCP server)
 

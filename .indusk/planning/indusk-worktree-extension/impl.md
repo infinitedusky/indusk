@@ -68,8 +68,9 @@ Discoverable `worktree` extension that can be enabled but does nothing yet. Vali
 - [x] Create `apps/indusk-mcp/extensions/worktree/` directory
 - [x] Write `apps/indusk-mcp/extensions/worktree/manifest.json` with `required: false`, `on_enable`/`on_disable` hooks pointing at to-be-written commands (placeholders fine; bodies fill in later phases), `description`, `version`
 - [x] Write `apps/indusk-mcp/extensions/worktree/skill.md` — agent-facing reference describing the four CLI commands, the `pnpm wt` execution surface, and the `composeProjectName` cross-cwd targeting capability. Cross-reference `composable-env` skill
-- [ ] Add `worktree` row to `apps/indusk-mcp/extensions/README.md` (the decision matrix Sandy already maintains)
+- [x] Add `worktree` row to `apps/indusk-mcp/extensions/README.md` (the decision matrix Sandy already maintains)
 - [ ] Update `apps/docs/src/.vitepress/config.ts` and `apps/docs/src/reference/extensions/` (if extensions index page exists) — link to the new skill
+  - **BLOCKER**: `apps/docs/` is fully ignored in `.gitignore:53` ("Private interview prep / personal notes site — never commit"). The recent `apps/indusk-docs → apps/docs` structural rename collided with this pre-existing directory. Local edits to `apps/docs/src/reference/extensions/index.md` are in the working tree but cannot be committed without first narrowing the gitignore (risk: would expose any private files Sandy still has under `apps/docs/`). Flagged to Sandy 2026-05-28; deferred pending direction on gitignore resolution.
 
 #### Phase 1 Verification
 
