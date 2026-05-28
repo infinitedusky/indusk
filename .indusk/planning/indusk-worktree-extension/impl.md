@@ -61,6 +61,8 @@ Trajectory IDs `T1`–`T18` map 1:1 to the test-plan's behavioral assertions `A1
 
 ## Phases
 
+> **Shape revision banner (2026-05-28)**: workbench layout flattened to trunk-symlink + worktrees as siblings at workbench root (no `production/` or `worktrees/` subdirectories); single-repo only for v1 (multi-repo deferred to FDE-agency plan). References below to `production/<repo>` / `worktrees/<slug>/` paths read against the flat shape: trunk lives at `<workbench>/<repo>` and worktrees live at `<workbench>/<slug>`. wt.sh's "two-pass resolution" becomes one-pass (single subdir lookup at workbench root). `indusk worktree create` drops the `<repo>` argument (single-repo workbenches read it from `worktree.wrapped_repo` config). Phase 7 numero migration already rewritten against the new shape; Phase 3/4/6 implementation items target the flat shape during the bash-script ports. The skill.md at `apps/indusk-mcp/extensions/worktree/skill.md` is the canonical user-facing reference.
+
 ### Phase 1: Extension scaffolding (manifest + skill + index)
 
 Discoverable `worktree` extension that can be enabled but does nothing yet. Validates the `required: false` posture before any code commits to behavior.
@@ -253,33 +255,27 @@ TypeScript CLI surface for state operations + new init flag for one-command work
 
 ---
 
-### Phase 7: Numero migration + dual-workbench dogfood
+### Phase 7: Numero migration + single-workbench dogfood (revised 2026-05-28: flat shape, single-repo only)
 
-Numero adopts the workbench pattern; both dawn-fde-toolkit and numero-workbench pass the full T1-T18 acceptance set. T13 (parity assertion) is the load-bearing close.
+Numero adopts the workbench pattern (flat layout, single-repo). numero-workbench passes the full T1-T18 acceptance set. T13's framing collapses from dual-workbench parity to single-workbench dogfood since dawn-fde-toolkit is multi-repo and now out of v1 scope; the demo workbench at `~/code/sandbox/wt-demo-workbench/` (scaffolded alongside Phase 2) doubles as the second case for any "two distinct workbenches behave identically" assertion that remains useful.
 
-**Numero migration (7 steps from ADR)**:
+**Numero migration (flat shape)**:
 
-- [ ] `mkdir -p ~/code/sandbox/numero-workbench/{production,worktrees}`
-- [ ] `ln -s ../numero ~/code/sandbox/numero-workbench/production/numero`
-- [ ] `cd ~/code/sandbox/numero-workbench && indusk init --workbench --sibling-parent ~/code/sandbox`
-- [ ] **Migration move**: `mv ~/code/sandbox/numero/.indusk ~/code/sandbox/numero-workbench/.indusk-imported` then merge into workbench's freshly-created `.indusk/` (config.json takes the workbench shape; planning/, eval/, highlights/* are moved over; `worktree-configs/` gets a numero.json entry derived from numero's current shape)
-- [ ] `indusk extensions enable worktree` from `~/code/sandbox/numero-workbench/`
+- [ ] `mkdir -p ~/code/sandbox/numero-workbench`
+- [ ] `ln -s ../numero ~/code/sandbox/numero-workbench/numero` (trunk symlink at workbench root)
+- [ ] `cd ~/code/sandbox/numero-workbench && indusk init --workbench --wrapped-repo numero --sibling-parent ~/code/sandbox` (writes `.indusk/config.json` with `worktree.{shape, wrapped_repo, sibling_parent}` + auto-enables the worktree extension)
+- [ ] **Migration move**: `mv ~/code/sandbox/numero/.indusk ~/code/sandbox/numero-workbench/.indusk-imported` then merge into workbench's freshly-created `.indusk/` (workbench shape's config.json wins; planning/, eval/, highlights/* move over; `worktree-configs/` gets a `numero.json` entry derived from numero's current shape)
 - [ ] Re-register: `indusk telemetry deregister ~/code/sandbox/numero` then `indusk telemetry register ~/code/sandbox/numero-workbench` (if local-telemetry was enabled). Admin UI registry: hand-edit `~/.indusk/projects.json` to update the `numero` entry's `path` from `~/code/sandbox/numero` to `~/code/sandbox/numero-workbench`
-- [ ] Recreate any existing numero git-worktrees inside the workbench: for each existing entry in numero's `.git/worktrees/`, run `indusk worktree create numero <slug>` in the workbench; then `git worktree remove` the original
+- [ ] Recreate any existing numero git-worktrees inside the workbench: for each existing entry in numero's `.git/worktrees/`, run `indusk worktree create <slug>` (no `<repo>` arg in single-repo mode) in the workbench; then `git worktree remove` the original. New worktrees land as siblings of the `numero` symlink at workbench root.
 
-**dawn-fde-toolkit adoption**:
+**dawn-fde-toolkit**: out of v1 scope (multi-repo workbench). Existing ad-hoc scripts continue to work; this extension does not replace them yet. When the FDE-agency plan lands multi-repo support, dawn-fde-toolkit becomes the canonical case.
 
-- [ ] Archive existing scripts: `mv ~/code/lazer/dawn-fde-toolkit/scripts/{wt,wt-pm2,setup-worktree,refresh-worktree,preflight}.sh scripts/.archived/`
-- [ ] Update `~/code/lazer/dawn-fde-toolkit/.indusk/config.json` to add `worktree.shape: "workbench"` and `worktree.sibling_parent: "~/code/lazer/avoca"`
-- [ ] `indusk extensions enable worktree` (will install the new scripts from the extension)
-- [ ] `pnpm wt cancel-polish lint` should work identically to before
+**Single-workbench smoke (T13, revised)**:
 
-**Dual-workbench smoke (T13)**:
-
-- [ ] Run the manual T13 checklist on both workbenches: create a new worktree, refresh, run a `pnpm wt <slug> dev` command, run `indusk worktree list`, run `indusk worktree preflight <slug>`. Each command's outcome must be functionally identical (same exit codes, same stderr shape, same artifact creation)
-- [ ] T8 manual smoke (one workbench, requires docker): `cd ~/code/sandbox/numero-workbench && pnpm wt cancel-polish ce dc:up local` — assert docker-compose comes up with the worktree's env
-- [ ] T18 manual smoke (one workbench, requires docker + ce ≥ 1.37.7): with `composeProjectName: "numero"` in the workbench's ce.json, run `pnpm wt cancel-polish ce dc:up local` from the worktree, then `pnpm ce dc:logs` from the workbench root — assert the logs come from the same stack
-- [ ] T7 manual smoke (one workbench, requires pm2): `pnpm wt:pm2 cancel-polish:web dev cancel-polish:api dev` — `pm2 list` shows both processes
+- [ ] Run the manual T13 checklist against `numero-workbench` AND the `wt-demo-workbench` scaffolded in Phase 2: create a new worktree (`indusk worktree create <slug>`), refresh, run a `pnpm wt <slug> dev` command, run `indusk worktree list`, run `indusk worktree preflight <slug>`. Same exit codes, same stderr shape, same artifact creation across both workbenches. (The demo workbench wraps a trivial scratch repo; numero-workbench wraps Numero. Two genuinely-distinct workloads on the same surface.)
+- [ ] T8 manual smoke (numero-workbench, requires docker): `cd ~/code/sandbox/numero-workbench && pnpm wt <slug> ce dc:up local` — assert docker-compose comes up with the worktree's env
+- [ ] T18 manual smoke (numero-workbench, requires docker + ce ≥ 1.37.7): with `composeProjectName: "numero"` in the workbench's ce.json, run `pnpm wt <slug> ce dc:up local` from the worktree, then `pnpm ce dc:logs` from the workbench root — assert the logs come from the same stack
+- [ ] T7 manual smoke (numero-workbench, requires pm2): `pnpm wt:pm2 <slug>:web dev <slug>:api dev` — `pm2 list` shows both processes
 
 #### Phase 7 Verification
 

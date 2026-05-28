@@ -12,6 +12,38 @@ inputs:
 
 # Worktree Extension — Architecture Decisions
 
+## Shape revision (2026-05-28) — supersedes Decisions 3 + 4 below
+
+Sandy directed mid-Phase-2: the workbench layout consolidates from `production/<repo>` + `worktrees/<slug>/` into a **flat workbench root** — trunk symlink and active worktrees are siblings at the workbench root. Single-repo-only narrowed for v1; multi-repo workbenches (dawn-fde-toolkit-style, one workbench wrapping N repos) deferred to a future "FDE agency" plan.
+
+**New layout** (replaces Decision 3's diagram):
+
+```
+my-workbench/
+├── .indusk/config.json        # worktree.{shape, wrapped_repo, sibling_parent}
+├── .indusk/worktree-configs/<repo>.json
+├── <repo>                     # symlink to canonical clone (the trunk)
+├── <slug-1>/                  # active worktrees as siblings of the trunk
+├── <slug-2>/
+├── ce.json
+└── package.json
+```
+
+**Config field rename / addition**: `.indusk/config.json` adds `worktree.wrapped_repo` (the single repo's name; required in v1 single-repo mode); `worktree.sibling_parent` stays (parent dir of canonical clones).
+
+**Numero migration update**: the steps remain but target the flat shape — `~/code/sandbox/numero-workbench/` contains `numero` symlink (→ `../numero`), worktrees as siblings, no `production/` or `worktrees/` subdirectories.
+
+**Decisions below that change**:
+- **Decision 3** (numero migration): layout updates to flat; steps re-numbered against the new shape; see impl.md Phase 7 for the executable form.
+- **Decision 4** (sibling_parent location): unchanged structurally — still per-workbench in `.indusk/config.json` — but now lives alongside `worktree.wrapped_repo` (new sibling field).
+- **Test plan A13** (dual-workbench parity dogfood): collapses to single-workbench dogfood (numero-workbench alone). dawn-fde-toolkit is multi-repo and exits v1 scope.
+
+`apps/indusk-mcp/extensions/worktree/skill.md` is fully rewritten against this shape; CLAUDE.md's Conventions bullet is revised.
+
+The original ADR content below retains the historical framing for the document trail; the shape rev above is load-bearing.
+
+---
+
 ## Why this shape (the motivation underneath every decision below)
 
 **State-integrity, not FDE quality-of-life.** The earlier framing was "FDE workflow promotion — make per-engagement worktree management less painful." That undersells it. The deeper need Sandy named (2026-05-27): when worktrees of a project are created and destroyed during normal development, the `.indusk/` state (plans, highlights, eval results, config) must NOT be duplicated across worktrees, must NOT get silently lost when a worktree is removed, and must NOT require merge resolution to keep coherent. The workbench pattern — one `.indusk/` at the workbench root, code (with `.git/`) in symlinked subdirs that never carry `.indusk/` content — delivers exactly this: a single InDusk state-of-record that survives every worktree lifecycle event.

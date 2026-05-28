@@ -1,47 +1,50 @@
 ---
 name: worktree
-description: Per-repo worktree management for workbench-shaped indusk projects. One `.indusk/` per workbench survives worktree create/destroy; bare `pnpm wt <slug> <cmd>` is the execution surface; `composeProjectName` enables cross-cwd docker-compose targeting.
+description: Single-repo worktree management for workbench-shaped indusk projects. One `.indusk/` survives worktree create/destroy; flat workbench layout (trunk + worktrees side-by-side at workbench root); bare `pnpm wt <slug> <cmd>` execution surface; `composeProjectName` enables cross-cwd docker-compose targeting.
 type: extension
 ---
 
 # Worktree
 
-> **Status (2026-05-27)**: under active development on the `indusk-worktree-extension` plan. The manifest and skill (this file) are Phase 1. CLI commands (`indusk worktree create/refresh/list/preflight`), bash scripts (`pnpm wt`, `pnpm wt:pm2`, `preflight`), and the `indusk init --workbench` flag ship across Phases 2–6. Numero migration + dual-workbench dogfood close out Phase 7. Until then, this skill is the design reference; the actual surface may not all exist yet.
+> **Status (2026-05-28)**: under active development on the `indusk-worktree-extension` plan. Phase 1 = manifest + skill (this file). CLI commands (`indusk worktree create/refresh/list/preflight`), bash scripts (`pnpm wt`, `pnpm wt:pm2`, `preflight`), and the `indusk init --workbench` flag ship across Phases 2–6. Numero migration + demo-workbench dogfood close Phase 7.
+>
+> **Shape revision 2026-05-28**: workbench layout is flat (trunk symlink + worktrees as siblings at workbench root). Earlier `production/<repo>` + `worktrees/<slug>/` split is dropped. Multi-repo workbench support (one workbench wrapping N repos) is deferred to a future "FDE agency" plan; v1 is single-repo only.
 
 ## What this extension is for
 
-**Multi-worktree development with one `.indusk/` per project.** The problem it solves: when you create git worktrees of an indusk project, `.indusk/` state (plans, highlights, eval results, config) gets duplicated across worktrees and either has to be merged or risks being lost. The workbench pattern eliminates that — one `.indusk/` at the workbench root; code (with `.git/`) in symlinked subdirs that never carry `.indusk/` content.
+**Multi-worktree development with one `.indusk/` per project.** The problem it solves: when you create git worktrees of an indusk project, `.indusk/` state (plans, highlights, eval results, config) gets duplicated across worktrees and either has to be merged or risks being lost. The workbench pattern eliminates that — one `.indusk/` at the workbench root; code (with `.git/`) lives in the symlinked trunk and in worktrees that share that trunk's history.
 
 This is a hard prerequisite for I.1 (`handoff-multi-agent`): the per-agent presence files that solve the multi-Claude-session collision problem live in the workbench's single `.indusk/`. Without the workbench shape, there's nowhere coherent to put them.
 
-## Workbench layout
+## Workbench layout (flat, single-repo)
 
-A workbench is just an indusk project with a specific directory shape:
+A workbench is an indusk project with this shape:
 
 ```
-my-workbench/                       # the indusk project
-├── .indusk/                        # single source of truth — plans, eval, highlights, worktree-configs
-│   ├── config.json                 # `worktree.shape: "workbench"` + `worktree.sibling_parent`
+my-workbench/                  # the indusk project
+├── .indusk/                   # single source of truth — plans, eval, highlights, worktree-configs
+│   ├── config.json            # `worktree.shape: "workbench"` + `worktree.wrapped_repo` + `worktree.sibling_parent`
 │   └── worktree-configs/
-│       └── <repo>.json             # per-wrapped-repo config (copy_files, apply_commits, preflight, etc.)
-├── production/
-│   └── <repo>                      # symlink → canonical clone (the actual git repo)
-├── worktrees/
-│   └── <slug>/                     # active feature branch worktrees (git worktree add'd from production/<repo>)
-├── ce.json                         # composable.env config, optionally with `composeProjectName: "<repo>"`
-└── package.json                    # has `wt`, `wt:pm2`, `preflight` scripts
+│       └── <repo>.json        # per-wrapped-repo config (copy_files, apply_commits, preflight, etc.)
+├── <repo>                     # symlink → canonical clone (the trunk; name matches `wrapped_repo`)
+├── <slug-1>/                  # active worktree (git worktree add'd from the trunk)
+├── <slug-2>/                  # another active worktree
+├── ce.json                    # composable.env config, optionally with `composeProjectName: "<repo>"`
+└── package.json               # has `wt`, `wt:pm2`, `preflight` scripts
 ```
 
-The wrapped repo's canonical clone lives elsewhere on disk (typically `~/code/<area>/<repo>`); the workbench's `production/<repo>` is a symlink to it. The clone keeps its own `.git/`; the workbench keeps the `.indusk/`.
+The wrapped repo's canonical clone lives elsewhere on disk (typically `~/code/<area>/<repo>`); the workbench's `<repo>` symlink points to it. The clone keeps its own `.git/`; the workbench keeps the `.indusk/`. Worktrees are created via `git worktree add` from inside the trunk symlink and land as siblings of the trunk.
+
+**Trunk vs worktrees**: identified by config (`worktree.wrapped_repo` names the trunk) and structurally (the trunk is a symlink; worktrees are real directories). Worktree slugs must not collide with the trunk's name.
 
 ## When to enable
 
 Enable this extension on:
-- A new workbench bootstrapped via `indusk init --workbench --sibling-parent <path>`
+- A new workbench bootstrapped via `indusk init --workbench --wrapped-repo <name> --sibling-parent <path>`
 - An existing single-repo indusk project being converted to workbench shape (see the numero migration in `.indusk/planning/indusk-worktree-extension/impl.md` Phase 7 for the conversion pattern)
 
 Do NOT enable on:
-- A single-repo indusk project that doesn't intend to grow into a workbench — the extension assumes `production/` + `worktrees/` exist; without them, every command errors
+- A single-repo indusk project that doesn't intend to grow into a workbench — the extension assumes the flat workbench layout above; without it, every command errors
 - A repo that's a wrapped-repo target (the canonical clone) — the workbench is the indusk project, not the clone
 
 The extension is `required: false` and has no auto-detection. It only lands via explicit `indusk extensions enable worktree`.
@@ -50,20 +53,22 @@ The extension is `required: false` and has no auto-detection. It only lands via 
 
 Four state-management commands, all run from the workbench root:
 
-### `indusk worktree create <repo> <slug> [base-branch]`
+### `indusk worktree create <slug> [base-branch]`
 
-Creates a new worktree at `worktrees/<slug>/`, branched off `<base-branch>` (default per the repo's `.indusk/worktree-configs/<repo>.json`'s `base_branch`). Applies the config's `copy_files[]` and `append_files[]` declarations. Applies any `apply_commits[]` entries as **upstream-file-overlay** (full-file replacement via `git show <sha>:<file>` followed by `git update-index --skip-worktree`), NOT cherry-pick — the overlay files are invisible to `git status` / `git diff` / `git commit -a`. Idempotent: invoking twice with the same `<repo> <slug>` exits non-zero with "worktree already exists at <path>".
+Creates a new worktree at `<workbench-root>/<slug>/`, branched off `<base-branch>` (default per `.indusk/worktree-configs/<wrapped_repo>.json`'s `base_branch`). Applies the config's `copy_files[]` and `append_files[]` declarations. Applies any `apply_commits[]` entries as **upstream-file-overlay** (full-file replacement via `git show <sha>:<file>` followed by `git update-index --skip-worktree`), NOT cherry-pick — the overlay files are invisible to `git status` / `git diff` / `git commit -a`. Idempotent: invoking twice with the same `<slug>` exits non-zero with "worktree already exists at <path>".
+
+The `<repo>` argument from the multi-repo design is dropped — single-repo workbenches know their wrapped repo from `worktree.wrapped_repo` in `.indusk/config.json`.
 
 ### `indusk worktree refresh <slug>`
 
-Re-applies the wrapped repo's config to an existing worktree. If `apply_commits[]` has entries removed since the last refresh, clears the corresponding skip-worktree flags so `git status` reflects current state. Workbench-internal state file `worktrees/<slug>/.indusk-overlay-state.json` tracks the prior run's overlay snapshot; it is gitignored.
+Re-applies the wrapped repo's config to an existing worktree. If `apply_commits[]` has entries removed since the last refresh, clears the corresponding skip-worktree flags so `git status` reflects current state. Workbench-internal state file `<slug>/.indusk-overlay-state.json` tracks the prior run's overlay snapshot; it is gitignored.
 
 ### `indusk worktree list`
 
-Tabulates every wrapped repo in the workbench with a status badge:
-- `(config valid)` — schema-conformant `.indusk/worktree-configs/<repo>.json` + worktrees present
-- `(config missing)` — no config file for this `production/<repo>`
-- `(no worktrees)` — config present, no worktrees yet created
+Tabulates the wrapped repo's status: trunk path + worktree slugs at workbench root + status badge:
+- `(config valid)` — schema-conformant `.indusk/worktree-configs/<repo>.json` + trunk symlink resolves
+- `(config missing)` — no config file for the wrapped repo
+- `(no worktrees)` — config present, trunk healthy, no worktrees yet created
 
 ### `indusk worktree preflight <slug>`
 
@@ -76,29 +81,23 @@ Out of scope: `remove`, `prune`, orphan-worktree detection. These are manual ope
 
 ## The execution surface — bare `pnpm wt`
 
-The user-facing run-anything surface is `pnpm wt <slug>[:<app>] <command> [args...]`. This matches the shape `dawn-fde-toolkit` ships today.
+The user-facing run-anything surface is `pnpm wt <slug>[:<app>] <command> [args...]`. This matches the shape `dawn-fde-toolkit` ships today, simplified for single-repo.
 
-Resolution is two-pass:
-1. Match `<slug>` against `worktrees/<slug>/`
-2. Match `<slug>` against `production/<slug>/`
-
-Suffix-match fallback if exact match fails. Exact match wins; ambiguous match errors with the candidates listed; zero match errors with the search paths.
+Resolution is a single-pass lookup against subdirs at workbench root. Exact match wins; suffix-match fallback; ambiguous match errors with the candidates listed; zero match errors with the searched directory.
 
 `:<app>` suffix changes the resolved dir from `<resolved>` to `<resolved>/apps/<app>`.
 
-Examples:
-- `pnpm wt cancel-polish dev` — cd to `worktrees/cancel-polish/`, run `pnpm dev`
-- `pnpm wt cancel-polish:web build` — cd to `worktrees/cancel-polish/apps/web/`, run `pnpm build`
-- `pnpm wt trunk lint` — cd to `production/<default-repo>/`, run `pnpm lint`
-- `pnpm wt numero dev` — cd to `production/numero/`, run `pnpm dev`
+Examples (workbench is wrapping `numero`):
+- `pnpm wt cancel-polish dev` — cd to `<workbench>/cancel-polish/`, run `pnpm dev`
+- `pnpm wt cancel-polish:web build` — cd to `<workbench>/cancel-polish/apps/web/`, run `pnpm build`
+- `pnpm wt numero lint` — cd to `<workbench>/numero/` (the trunk symlink), run `pnpm lint`
+- `pnpm wt cancel-polish ce dc:up local` — cd to `<workbench>/cancel-polish/`, run `pnpm ce dc:up local` (ce reads the worktree's env)
 
-Trunk is always addressable without an `indusk worktree create` step — both `pnpm wt trunk` and `pnpm wt <wrapped-repo-name>` work as soon as the workbench is configured.
+The trunk is addressable by its repo name (`pnpm wt numero ...`). No `pnpm wt trunk` alias — keeps the surface minimal; the repo name is already in `worktree.wrapped_repo` config and stable.
 
 ### Composing with composable.env
 
-ce composition works inside the bare form: `pnpm wt <slug> ce <ce-cmd>`. The wt script cd's into the worktree dir, then invokes `pnpm ce <ce-cmd>` from there — composable.env picks up the worktree's `.env.local` because that's the cwd.
-
-Example: `pnpm wt cancel-polish ce dc:up local` brings docker-compose up with the `local` profile against the cancel-polish worktree's env, not the trunk's.
+ce composition works inside the bare form: `pnpm wt <slug> ce <ce-cmd>`. wt.sh cd's into the worktree dir, then invokes `pnpm ce <ce-cmd>` from there — composable.env picks up the worktree's `.env.local` because that's the cwd.
 
 ### `pnpm wt:pm2` — multi-process orchestration
 
@@ -108,7 +107,7 @@ For parallel dev-server orchestration across worktrees/apps:
 pnpm wt:pm2 <target>:<app> <cmd> [<target>:<app> <cmd>]...
 ```
 
-Each `<target>:<app> <cmd>` pair launches as a named pm2 process (name format: `wt-<slug>-<app>`). Single invocation, N pm2 processes. Visible in `pm2 list`. The colon in `wt:pm2` is fine — it's a top-level pnpm script name, not a wildcard.
+Each `<target>:<app> <cmd>` pair launches as a named pm2 process (name format: `wt-<slug>-<app>`). Single invocation, N pm2 processes. Visible in `pm2 list`.
 
 ## `composeProjectName` — cross-cwd docker-compose targeting
 
@@ -128,7 +127,7 @@ With it pinned, every `docker compose` invocation that ce generates addresses th
 
 ```
 # From the worktree, bring the stack up:
-cd worktrees/cancel-polish && pnpm wt cancel-polish ce dc:up local
+cd cancel-polish && pnpm wt cancel-polish ce dc:up local
 
 # From the workbench root, inspect or stop it — no need to cd back:
 pnpm ce dc:logs
@@ -188,11 +187,16 @@ Malformed configs produce clear errors at validation time naming the offending f
 - **composable-env skill** — for ce-specific commands (`dc:up`, profiles, `env:build`). Worktree extension composes with ce; doesn't replace it
 - **git skill** (`skills/git.md`) — for the underlying git operations the worktree extension orchestrates
 - **handoff-multi-agent plan** (`.indusk/planning/handoff-multi-agent/brief.md`) — the multi-agent-coordination plan this extension unblocks
-- **ADR** (`.indusk/planning/indusk-worktree-extension/adr.md`) — full decision rationale including why bash port, why bare `pnpm wt`, why workbench-only
+- **ADR** (`.indusk/planning/indusk-worktree-extension/adr.md`) — full decision rationale including why bash port, why bare `pnpm wt`, why workbench-only, why flat-vs-split layout
+
+## Multi-repo workbenches: deferred
+
+v1 wraps exactly ONE repo per workbench. The pattern dawn-fde-toolkit established (one workbench wrapping `avoca-next` + `claude-skills` + `vapi` side-by-side) is out of scope for v1 and deferred to a future "FDE agency" plan that addresses the relational + multi-engagement concerns it surfaces. If your work needs multi-repo today, dawn-fde-toolkit's ad-hoc scripts continue to work; the worktree extension just doesn't replace them in that mode yet.
 
 ## Anti-patterns
 
-- **Don't enable on a single-repo indusk project hoping to use the CLI commands without restructuring.** The commands assume `production/` + `worktrees/`. Convert to a workbench first (see Phase 7 of impl.md for the migration pattern) or skip the extension.
-- **Don't commit `.indusk-overlay-state.json`.** It's workbench-internal state tracking the prior `apply_commits[]` snapshot for the refresh-clear-skip-worktree behavior. Gitignored automatically; do not version it.
+- **Don't enable on a single-repo indusk project hoping to use the CLI commands without restructuring.** The commands assume the flat workbench layout. Convert to a workbench first (see Phase 7 of impl.md for the migration pattern) or skip the extension.
+- **Don't name a worktree the same as the wrapped repo.** Resolution would be ambiguous. The validator rejects this at create time.
+- **Don't commit `<slug>/.indusk-overlay-state.json`.** It's workbench-internal state tracking the prior `apply_commits[]` snapshot for the refresh-clear-skip-worktree behavior. Gitignored automatically; do not version it.
 - **Don't use `git cherry-pick` to apply upstream commits when `apply_commits[]` would do.** The extension's upstream-file-overlay is intentional — files stay invisible to `git status` so the overlay doesn't pollute your worktree's diff. Cherry-pick would leak them.
 - **Don't pin `composeProjectName` when you genuinely need multiple parallel worktree stacks of the same repo.** It's a deliberate one-stack-per-repo constraint; omit the field if multi-stack is the norm for your workflow.

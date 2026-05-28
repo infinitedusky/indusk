@@ -275,6 +275,26 @@ To support arbitrary path-filter exports, the config could allow:
 
 This makes the path-filter pattern declarative + reusable across clients.
 
+## Shape revision (2026-05-28) — flat workbench root, single-repo only
+
+**Supersedes the `production/<repo>` + `worktrees/<slug>/` split documented below.** Sandy directed mid-Phase-2 (2026-05-28): the workbench layout consolidates to a single flat structure — trunk symlink and active worktrees as siblings at the workbench root. Multi-repo workbenches (one workbench wrapping several repos, dawn-fde-toolkit-style) are deferred to a future **FDE-agency plan**.
+
+New layout:
+
+```
+my-workbench/
+├── .indusk/
+│   ├── config.json            # worktree.wrapped_repo + worktree.sibling_parent
+│   └── worktree-configs/<repo>.json
+├── <repo>                     # symlink to canonical clone (the trunk; name matches wrapped_repo)
+├── <slug-1>/                  # active worktree
+├── <slug-2>/                  # active worktree
+├── ce.json
+└── package.json
+```
+
+Brief content below retains the historical framing (production/+worktrees/ split, multi-repo dual-workbench dogfood) for the document trail. **Read the shape rev block above first.** Test plan revision 5 and ADR's Decision 9 are the load-bearing updates; impl.md Phase 7 (numero migration) is rewritten against the new shape. `apps/indusk-mcp/extensions/worktree/skill.md` is fully rewritten and is the canonical user-facing reference.
+
 ## Surface revision (2026-05-20, revised 2026-05-27)
 
 After the test-plan review and the composable.env 1.37.x `composeProjectName` shift, the user-facing surface aligns with how `dawn-fde-toolkit` actually composes commands today — bare `pnpm wt` form, no new routing layer.

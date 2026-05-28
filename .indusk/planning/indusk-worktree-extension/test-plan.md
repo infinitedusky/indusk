@@ -2,6 +2,7 @@
 title: "InDusk Worktree Extension — Test Plan"
 date: 2026-05-20
 status: draft
+revision: 5 (2026-05-28 — workbench layout flattens: trunk symlink + worktrees as siblings at workbench root, replacing the `production/<repo>` + `worktrees/<slug>/` split. Single-repo-only narrowed; multi-repo deferred to future FDE-agency plan. A1/A2/A5/A6/A11/A13/A16 wording reads against the flat shape; A13's dual-workbench dogfood collapses to single-workbench-with-numero dogfood since dawn-fde-toolkit is multi-repo and now out of scope.)
 revision: 4 (2026-05-27 — execution surface flips from `pnpm ce wt:<slug> <cmd>` to bare `pnpm wt <slug> <cmd>`; new A18 covers `composeProjectName` cross-cwd targeting per composable.env ≥ 1.37.7)
 ---
 
