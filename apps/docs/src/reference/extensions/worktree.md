@@ -76,6 +76,40 @@ The extension's `on_enable` hook materializes a starter `.indusk/worktree-config
 
 Adopters who don't want the default biome preflight or want a different shape edit the file. The starter is opinionated but not load-bearing.
 
+## Execution surface — `pnpm wt`
+
+After `indusk extensions enable worktree`, the workbench's `package.json` gets four scripts that delegate to bash:
+
+```json
+{
+  "scripts": {
+    "wt": "bash scripts/worktree/wt.sh",
+    "wt:pm2": "bash scripts/worktree/wt-pm2.sh",
+    "wt-setup": "bash scripts/worktree/setup-worktree.sh",
+    "wt-refresh": "bash scripts/worktree/refresh-worktree.sh"
+  }
+}
+```
+
+`pnpm wt <slug>[:<app>] <command> [args...]` runs `pnpm <command>` from the resolved directory:
+
+```mermaid
+flowchart TD
+    A[pnpm wt &lt;slug&gt; &lt;cmd&gt;] --> B[scan subdirs at workbench root]
+    B --> C{exact match on slug?}
+    C -- yes --> H[cwd = workbench/&lt;match&gt;]
+    C -- no --> D{any subdir ending in -&lt;slug&gt;?}
+    D -- one --> H
+    D -- multiple --> E[error: 'multiple targets match']
+    D -- zero --> F[error: 'no worktree or trunk matching']
+    H --> I{:&lt;app&gt; suffix?}
+    I -- yes --> J[cwd = cwd/apps/&lt;app&gt;]
+    I -- no --> K[exec pnpm &lt;cmd&gt;]
+    J --> K
+```
+
+Reserved subdirs (`.indusk`, `node_modules`, `dist`, `build`, `.git`, `.next`, `scripts`, `env`) are skipped during resolution. Exact-match wins over suffix-match. The trunk (whose name matches `worktree.wrapped_repo`) is just another subdir from wt.sh's perspective — `pnpm wt <wrapped-repo-name> <cmd>` runs from the trunk symlink.
+
 ## Create + refresh lifecycle
 
 The `setup-worktree.sh` and `refresh-worktree.sh` bash scripts (under `apps/indusk-mcp/extensions/worktree/scripts/`) implement the per-worktree state machine. The TS CLI in Phase 6 wraps them as `indusk worktree create` and `indusk worktree refresh`.

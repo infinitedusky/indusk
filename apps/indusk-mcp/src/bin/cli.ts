@@ -614,4 +614,25 @@ telemetryCmd
 		await telemetryReset({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
 	});
 
+// ---- worktree extension lifecycle ----
+// Phase 4 ships ONE internal command (_on-enable) used by the worktree
+// extension's manifest hook. The user-facing commands (create / refresh /
+// list / preflight) ship in Phase 6 of the indusk-worktree-extension plan.
+
+const worktreeCmd = program
+	.command("worktree")
+	.description(
+		"Worktree extension lifecycle (create/refresh/list/preflight ship in Phase 6 of the indusk-worktree-extension plan)",
+	);
+
+worktreeCmd
+	.command("_on-enable", { hidden: true })
+	.description(
+		"(internal) Scaffold the worktree extension into the workbench. Invoked by the extension's on_enable hook.",
+	)
+	.action(async () => {
+		const { worktreeOnEnable } = await import("./commands/worktree.js");
+		worktreeOnEnable();
+	});
+
 program.parse();

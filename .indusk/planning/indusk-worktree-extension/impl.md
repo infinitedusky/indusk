@@ -37,10 +37,10 @@ Trajectory IDs `T1`–`T18` map 1:1 to the test-plan's behavioral assertions `A1
 | T2 | [A2] `copy_files[]` and `append_files[]` are honored on create | Phase 3 | Phase 3 | passing |
 | T3 | [A3] `apply_commits[]` applies upstream-file-overlay (not cherry-pick); files invisible to git status | Phase 3 | Phase 3 | passing |
 | T4 | [A4] Removing an entry from `apply_commits[]` + `worktree refresh` clears skip-worktree flags (fix-in-scope per ADR D7) | Phase 3 | Phase 3 | passing |
-| T5 | [A5] `pnpm wt <target>[:<app>] <cmd>` resolves via two-pass slug scheme; clear errors on zero/multi match | Phase 4 | Phase 4 | planned |
-| T6 | [A6] `pnpm wt trunk` and `pnpm wt <wrapped-repo-name>` always addressable | Phase 4 | Phase 4 | planned |
-| T7 | [A7] `pnpm wt:pm2` launches N named pm2 processes | Phase 4 | Phase 7 | planned (manual smoke, pm2 absent in CI) |
-| T8 | [A8] `pnpm wt <slug> ce <ce-cmd>` composes — worktree's `.env.local` in scope, not trunk's | Phase 4 | Phase 7 | planned (manual smoke, requires docker) |
+| T5 | [A5] `pnpm wt <target>[:<app>] <cmd>` resolves via single-pass workbench-root scheme (flat shape); clear errors on zero/multi match | Phase 4 | Phase 4 | passing |
+| T6 | [A6] `pnpm wt <wrapped-repo-name>` always addressable as the trunk | Phase 4 | Phase 4 | passing |
+| T7 | [A7] `pnpm wt:pm2` launches N named pm2 processes (scaffold passing in dry-run mode; full pm2 spawn = Phase 7 manual smoke) | Phase 4 | Phase 7 | written |
+| T8 | [A8] `pnpm wt <slug> ce <ce-cmd>` composes — worktree's `.env.local` in scope, not trunk's (resolved-cwd assertions pass at Phase 4; ce composition smoke = Phase 7) | Phase 4 | Phase 7 | written |
 | T9 | [A9] `indusk worktree preflight <slug>` exits non-zero on real biome violation; stderr surfaces it | Phase 5 | Phase 5 | planned |
 | T10 | [A10] `preflight <slug>` exits 0 in <2s when diff touches only out-of-scope files | Phase 5 | Phase 5 | planned |
 | T11 | [A11] `indusk worktree list` shows wrapped repos with status badges (config valid/missing/no worktrees) | Phase 6 | Phase 6 | planned |
@@ -139,7 +139,7 @@ The two scripts that author and refresh worktrees work against the new config-dr
 - [x] T4 at `apps/indusk-mcp/src/__tests__/worktree-refresh-clears-skip.test.ts` — start with `apply_commits[]` containing an entry, refresh, remove entry, refresh again, assert `git status` reflects current state (the fix-in-scope behavior). 2 assertions: removed entry clears skip-worktree + restores from HEAD, idempotent no-op refresh doesn't churn
 - [x] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0 — 540 tests passing (+8 from Phase 2's 532)
 - [x] `pnpm check` exits 0 — 279 files clean (auto-fix needed on the 3 new test files for formatting)
-- [ ] Shellcheck: `shellcheck apps/indusk-mcp/extensions/worktree/scripts/*.sh` — **DEFERRED**, shellcheck not installed on this machine. Manual review during write was the substitute; formal shellcheck moves to Phase 7 dogfood
+- [x] (none needed — asked: "Phase 3 and Phase 4 verification both include a shellcheck item. Shellcheck isn't installed on this machine. How should I treat these?" — user: "Skip with conversation proof, defer to Phase 7 dogfood (Recommended)") Manual review during write substituted; formal shellcheck moves to Phase 7
 
 #### Phase 3 Context
 
@@ -157,39 +157,32 @@ The two scripts that author and refresh worktrees work against the new config-dr
 
 Bare `pnpm wt <slug> <cmd>` and `pnpm wt:pm2 <slug>:<app> <cmd>...` work end-to-end.
 
-- [ ] Port `wt.sh` from `~/code/lazer/dawn-fde-toolkit/scripts/` to `apps/indusk-mcp/extensions/worktree/scripts/wt.sh`
-- [ ] Two-pass slug resolution: `worktrees/<slug>` first, then `production/<slug>`. Suffix-match fallback. Exact-match wins; ambiguous match errors with the candidates listed; zero match errors with the search paths
-- [ ] `:<app>` suffix changes resolved dir from `<resolved>` to `<resolved>/apps/<app>`
-- [ ] Port `wt-pm2.sh` — parses positional pairs `(<target>:<app> <cmd>)*`, launches each as a named pm2 process (name format: `wt-<slug>-<app>`)
-- [ ] on-enable hook registers pnpm scripts in workbench's `package.json`:
-  ```json
-  {
-    "scripts": {
-      "wt": "bash scripts/worktree/wt.sh",
-      "wt:pm2": "bash scripts/worktree/wt-pm2.sh"
-    }
-  }
-  ```
-  Pattern: read package.json, merge scripts, write back. Idempotent — re-running enable doesn't duplicate
+- [x] Port `wt.sh` to `apps/indusk-mcp/extensions/worktree/scripts/wt.sh` (adapted for flat shape: single-pass at workbench root, reserved-name skip-list including `scripts`/`env`)
+- [x] Single-pass slug resolution against workbench root subdirs (was two-pass in dawn-fde-toolkit). Exact-match wins; suffix-match fallback; ambiguous errors with candidates listed; zero-match errors with available targets listed
+- [x] `:<app>` suffix changes resolved dir from `<resolved>` to `<resolved>/apps/<app>`
+- [x] Port `wt-pm2.sh` — parses positional pairs `(<target>:<app> <cmd>)*`, launches each as a named pm2 process (`<slug>-<command>` or `<slug>-<app>-<command>`). `WT_PM2_DRY_RUN=1` env support for testing without pm2 installed
+- [x] on-enable hook (new TS shim `indusk worktree _on-enable` at `apps/indusk-mcp/src/bin/commands/worktree.ts` → bash hook `extensions/worktree/hooks/on_enable.sh`) registers pnpm scripts (`wt`, `wt:pm2`, `wt-setup`, `wt-refresh`) in workbench's `package.json`, copies all 4 scripts + helpers into `<workbench>/scripts/worktree/`, materializes starter `.indusk/worktree-configs/<wrapped_repo>.json` from template if absent (substitutes `WRAPPED_REPO_NAME` placeholder). Pattern: jq-merge package.json scripts (idempotent). TS shim walks `__dirname` up to find indusk-mcp package root — works in both global install and dev monorepo (see CLAUDE.md gotcha)
 
 #### Phase 4 Verification
 
-- [ ] T5 at `apps/indusk-mcp/src/__tests__/worktree-wt-resolve.test.ts` — workbench fixture with multiple worktrees + a trunk; exercise exact match, suffix match, ambiguous match (asserts the error format), zero match, trunk addressing. Assert each case's exit code + stderr
-- [ ] T6 in same file — assert `pnpm wt trunk` and `pnpm wt numero` both resolve to the trunk
-- [ ] T7 scaffold (not full pass) — assert wt-pm2.sh parses pairs correctly and would invoke pm2 with the right args (mock pm2 via PATH override; do not require pm2 in CI). Full pass at Phase 7 manual smoke
-- [ ] T8 scaffold (not full pass) — assert wt.sh's resolved-dir is the worktree dir (not the trunk) when invoked with a worktree slug. Full ce composition is the Phase 7 manual smoke
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0; T5/T6 passing; T7/T8 written
-- [ ] `pnpm check` exits 0
-- [ ] Shellcheck passes
+- [x] T5 at `apps/indusk-mcp/src/__tests__/worktree-wt-resolve.test.ts` — workbench fixture with two worktrees (`alpha`, `repo-beta`) + the trunk symlink. Four assertions: exact match wins, suffix match falls back, ambiguous (after adding `other-beta`) errors with both candidates listed, zero match errors with available targets listed. Uses pnpm-stub on PATH to assert resolved cwd. T5 passing
+- [x] T6 in same file — `pnpm wt clone <cmd>` (fixture's wrapped repo) resolves to the trunk symlink. T6 passing
+- [x] T7 scaffold in same file — odd-args rejection + single-pair + multi-pair dry-run output asserting process name format + cwd. Uses `WT_PM2_DRY_RUN=1` env to avoid needing pm2. T7 written; full pm2-spawn smoke = Phase 7
+- [x] T8 scaffold in same file — `pnpm wt alpha hello` runs from `<workbench>/alpha` NOT the trunk; `:app` suffix changes cwd to `<resolved>/apps/<app>`. T8 written; ce composition smoke = Phase 7
+- [x] On-enable smoke in same file: spawn `node dist/bin/cli.js worktree _on-enable` against a fresh fixture; assert scripts/ dir created + package.json scripts registered
+- [x] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0 — 546 tests passing (+6 from Phase 3's 540)
+- [x] `pnpm check` exits 0 — 281 files clean
+- [x] (none needed — asked: "Phase 3 and Phase 4 verification both include a shellcheck item. Shellcheck isn't installed on this machine. How should I treat these?" — user: "Skip with conversation proof, defer to Phase 7 dogfood (Recommended)")
 
 #### Phase 4 Context
 
-- [ ] CLAUDE.md "Conventions" updates the worktree extension bullet from Phase 1 with the bare `pnpm wt` form being the canonical execution surface (and noting ce composition works inside via `pnpm wt <slug> ce <cmd>`)
+- [x] CLAUDE.md "Conventions" updates the worktree extension bullet from Phase 1 with the bare `pnpm wt` form being the canonical execution surface (and noting ce composition works inside via `pnpm wt <slug> ce <cmd>`) — already done as part of the shape-revision commit
+- [x] CLAUDE.md "Known Gotchas" gets a bullet about the `indusk <ext> _<hook>` shim pattern (TS shim walks `__dirname` to find indusk-mcp package root; necessary because extension hooks shell-exec from user's project cwd and have no built-in way to address sibling scripts in the extension's source dir)
 
 #### Phase 4 Document
 
-- [ ] `apps/docs/src/reference/extensions/worktree.md` gets a section on the execution surface and the two-pass slug resolution
-- [ ] Mermaid flowchart for slug resolution: input slug → check `worktrees/<slug>` → check `production/<slug>` → suffix match fallback → exact/ambiguous/zero branches
+- [x] `apps/docs/src/reference/extensions/worktree.md` gets the execution surface section: pnpm scripts registered, resolution mechanics, reserved-name skip-list
+- [x] Mermaid flowchart for slug resolution (single-pass against workbench root, exact match → suffix-match → ambiguous/zero error branches; `:app` suffix path)
 
 ---
 
@@ -209,7 +202,7 @@ Bare `pnpm wt <slug> <cmd>` and `pnpm wt:pm2 <slug>:<app> <cmd>...` work end-to-
 - [ ] T17 at `apps/indusk-mcp/src/__tests__/worktree-preflight-env-contract.test.ts` — two configs with different `preflight_env{}` declarations; run against synthetic diffs; assert env vars match per-config declaration
 - [ ] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0; T9, T10, T17 passing
 - [ ] `pnpm check` exits 0
-- [ ] Shellcheck passes
+- [x] (none needed — asked: "Phase 3 and Phase 4 verification both include a shellcheck item. Shellcheck isn't installed on this machine. How should I treat these?" — user: "Skip with conversation proof, defer to Phase 7 dogfood (Recommended)")
 
 #### Phase 5 Context
 
@@ -320,7 +313,7 @@ Numero adopts the workbench pattern (flat layout, single-repo). numero-workbench
 - [x] Phase 1 complete
 - [x] Phase 2 complete
 - [x] Phase 3 complete
-- [ ] Phase 4 complete
+- [x] Phase 4 complete
 - [ ] Phase 5 complete
 - [ ] Phase 6 complete
 - [ ] Phase 7 complete
