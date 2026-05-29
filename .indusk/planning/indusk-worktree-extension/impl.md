@@ -44,7 +44,7 @@ Trajectory IDs `T1`–`T18` map 1:1 to the test-plan's behavioral assertions `A1
 | T9 | [A9] `indusk worktree preflight <slug>` exits non-zero on real biome violation; stderr surfaces it | Phase 5 | Phase 5 | planned |
 | T10 | [A10] `preflight <slug>` exits 0 in <2s when diff touches only out-of-scope files | Phase 5 | Phase 5 | planned |
 | T11 | [A11] `indusk worktree list` shows wrapped repos with status badges (config valid/missing/no worktrees) | Phase 6 | Phase 6 | planned |
-| T12 | [A12] Malformed `worktree-configs/<repo>.json` produces clear error naming the offending field | Phase 2 | Phase 2 | planned |
+| T12 | [A12] Malformed `worktree-configs/<repo>.json` produces clear error naming the offending field | Phase 2 | Phase 2 | passing |
 | T13 | [A13] Same extension + config schema + `pnpm wt` surface works against dawn-fde-toolkit AND numero-workbench | Phase 7 | Phase 7 | planned (manual smoke + parameterized vitest) |
 | T14 | [A14] `worktree create` twice with same `<repo> <slug>` exits non-zero; "already exists" stderr; no state corruption | Phase 6 | Phase 6 | planned |
 | T15 | [A15] Extension is `required: false`; not auto-enabled on non-workbench projects | Phase 1 | Phase 1 | passing |
@@ -96,26 +96,27 @@ Discoverable `worktree` extension that can be enabled but does nothing yet. Vali
 
 `.indusk/worktree-configs/<repo>.json` has a published JSON Schema; malformed configs produce clear errors at validation time.
 
-- [ ] Define `apps/indusk-mcp/extensions/worktree/config.schema.json` covering: `trunk_branch`, `base_branch`, `copy_files[]`, `append_files[]`, `apply_commits[]`, `preflight[]`, `preflight_env{}`, `compose_project_name` (top-level fields per ADR Decision 5)
-- [ ] Write validator at `apps/indusk-mcp/src/lib/worktree/validate-config.ts` — uses `ajv` (already a dep, or add it) to validate against the schema. Returns `{ valid: true } | { valid: false, errors: Array<{ field, expected, got }> }`. Error messages name the offending field, not stack traces (per T12)
-- [ ] Write starter template at `apps/indusk-mcp/extensions/worktree/templates/worktree-config.template.json` — the concrete shape from ADR Decision 5, with `compose_project_name: "<repo>"` placeholder
-- [ ] Export the validator from `apps/indusk-mcp` for downstream use (subpath export pattern, see how `trajectory/parser` is exported)
+- [x] Define `apps/indusk-mcp/extensions/worktree/config.schema.json` covering: `trunk_branch`, `base_branch`, `copy_files[]`, `append_files[]`, `apply_commits[]`, `preflight[]`, `preflight_env{}`, `compose_project_name` (top-level fields per ADR Decision 5). Plus optional `$schema` for IDE/LSP support; `additionalProperties: false` rejects typos.
+- [x] Write validator at `apps/indusk-mcp/src/lib/worktree/validate-config.ts` — uses `ajv@^8.20.0` (added to indusk-mcp deps in this phase). Returns `{ valid: true } | { valid: false, errors: WorktreeConfigValidationError[] }`. Error messages name the offending field via Ajv's `params.additionalProperty` / `params.missingProperty` for the special-cased keywords, and `instancePath`-derived dotted field path for the rest. Never throws on garbage input (try/catch wrapper).
+- [x] Write starter template at `apps/indusk-mcp/extensions/worktree/templates/worktree-config.template.json` — concrete shape with `compose_project_name: "WRAPPED_REPO_NAME"` placeholder (substituted on materialize) and a sample biome preflight + migrations preflight_env block
+- [x] Export the validator from `apps/indusk-mcp` for downstream use — added `./worktree/validate-config` subpath export to `apps/indusk-mcp/package.json` `exports` field (sibling of `./trajectory/parser`, `./falsification/log`)
 
 #### Phase 2 Verification
 
-- [ ] T12 written at `apps/indusk-mcp/src/__tests__/worktree-config-validator.test.ts` — covers (a) missing required field, (b) wrong type, (c) unknown top-level key; each produces an error message naming the field. T12 passes.
-- [ ] Validator unit test for valid-config case: schema-conformant config returns `{ valid: true }`. (Full T11 passes at Phase 6 when `indusk worktree list` exists.)
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0
-- [ ] `pnpm check` exits 0
+- [x] T12 written at `apps/indusk-mcp/src/__tests__/worktree-config-validator.test.ts` — covers (a) missing required field (`trunk_branch`), (b) wrong type (`copy_files: "not-an-array"`), (c) unknown top-level key (`mystery_field`); each produces an error naming the field. T12 passes.
+- [x] Validator unit test for valid-config case: schema-conformant config returns `{ valid: true }`. (Full T11 passes at Phase 6 when `indusk worktree list` exists.) Plus a "never throws on garbage input" test covering null/undefined/number/string/empty-array/empty-object inputs.
+- [x] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0 — 521 tests passed (up from 516 in Phase 1)
+- [x] `pnpm check` exits 0 — 276 files clean (4 new files added: schema, validator, template, docs page)
+- [x] Demo workbench smoke: copied template to `~/code/sandbox/wt-demo-workbench/.indusk/worktree-configs/wt-demo-repo.json` and ran `validateWorktreeConfig` against it — `{ valid: true }`. The `$schema` reference field initially produced a regression caught here ($schema not in allowed properties); fixed by adding `$schema` to the schema's properties block.
 
 #### Phase 2 Context
 
-- [ ] CLAUDE.md "Known Gotchas" gets a bullet: "`.indusk/worktree-configs/<repo>.json` shape is defined by `apps/indusk-mcp/extensions/worktree/config.schema.json`. Changes to required fields are breaking — bump the extension version and document the migration."
+- [x] CLAUDE.md "Known Gotchas" gets a bullet: "`.indusk/worktree-configs/<repo>.json` shape is defined by `apps/indusk-mcp/extensions/worktree/config.schema.json`. Changes to required fields are breaking — bump the extension version and document the migration." Bullet also notes the subpath export + the schema's optional `$schema` field for IDE/LSP support.
 
 #### Phase 2 Document
 
-- [ ] Add `apps/docs/src/reference/extensions/worktree.md` skeleton documenting the config schema and the starter shape
-- [ ] (no Mermaid needed)
+- [x] Add `apps/docs/src/reference/extensions/worktree.md` skeleton documenting the config schema and the starter shape
+- [x] (no Mermaid needed)
 
 ---
 
@@ -317,7 +318,7 @@ Numero adopts the workbench pattern (flat layout, single-repo). numero-workbench
 ## Checklist
 
 - [x] Phase 1 complete
-- [ ] Phase 2 complete
+- [x] Phase 2 complete
 - [ ] Phase 3 complete
 - [ ] Phase 4 complete
 - [ ] Phase 5 complete

@@ -1,0 +1,19 @@
+{
+	"$schema": "../../config.schema.json",
+	"trunk_branch": "main",
+	"base_branch": "main",
+	"copy_files": [],
+	"append_files": [],
+	"apply_commits": [],
+	"preflight": [
+		{
+			"name": "biome",
+			"command": "pnpm biome check $CHANGED_FILES_BIOME",
+			"when": "CHANGED_FILES_BIOME"
+		}
+	],
+	"preflight_env": {
+		"MIGRATIONS_RELEVANT": ["packages/db/migrations/**", "**/migrations/*.sql"]
+	},
+	"compose_project_name": "WRAPPED_REPO_NAME"
+}

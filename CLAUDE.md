@@ -157,6 +157,7 @@ The working agent never calls `mcp__graphiti__add_memory` or `mcp__indusk__graph
 
 ## Known Gotchas
 
+- **`.indusk/worktree-configs/<repo>.json` shape is defined by `apps/indusk-mcp/extensions/worktree/config.schema.json`** (worktree extension). Changes to required fields are breaking — bump the extension version and document the migration. Adding optional fields is non-breaking. Validator at `apps/indusk-mcp/src/lib/worktree/validate-config.ts` (exported via subpath `@infinitedusky/indusk-mcp/worktree/validate-config`); rejects unknown top-level keys (additionalProperties: false), so config typos surface immediately. The schema permits an optional `$schema` reference for IDE/LSP support.
 - Tailwind 4 requires Node 22 — build fails on Node 18 with "Cannot find native binding" error
 - Always use `pnpm ce`, not `npx ce` — the skill doc specifies pnpm
 - Always run `pnpm env:build` before `docker compose` — use the ce-generated scripts

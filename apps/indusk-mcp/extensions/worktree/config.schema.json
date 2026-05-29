@@ -1,0 +1,99 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://infinitedusky.com/schemas/indusk-worktree-config.json",
+	"title": "InDusk Worktree Per-Repo Config",
+	"description": "Shape of .indusk/worktree-configs/<repo>.json — per-wrapped-repo source of truth for the worktree extension. See apps/indusk-mcp/extensions/worktree/skill.md.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["trunk_branch"],
+	"properties": {
+		"$schema": {
+			"type": "string",
+			"description": "Optional JSON Schema reference for IDE/LSP support; validator ignores it"
+		},
+		"trunk_branch": {
+			"type": "string",
+			"description": "Branch name the trunk symlink tracks (typically 'main' or 'master')",
+			"minLength": 1
+		},
+		"base_branch": {
+			"type": "string",
+			"description": "Default base branch new worktrees branch off (typically same as trunk_branch)",
+			"minLength": 1
+		},
+		"copy_files": {
+			"type": "array",
+			"description": "Files copied from canonical clone into a new worktree at create time",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["src", "dest"],
+				"properties": {
+					"src": { "type": "string", "minLength": 1 },
+					"dest": { "type": "string", "minLength": 1 }
+				}
+			}
+		},
+		"append_files": {
+			"type": "array",
+			"description": "Files concatenated onto existing destination files under a sentinel header at create time",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["src", "dest"],
+				"properties": {
+					"src": { "type": "string", "minLength": 1 },
+					"dest": { "type": "string", "minLength": 1 }
+				}
+			}
+		},
+		"apply_commits": {
+			"type": "array",
+			"description": "Upstream-file-overlay entries. Each names a SHA and a file list; the file contents at <sha> are written into the worktree and marked skip-worktree (invisible to git status).",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["sha", "files"],
+				"properties": {
+					"sha": { "type": "string", "minLength": 4 },
+					"files": {
+						"type": "array",
+						"items": { "type": "string", "minLength": 1 },
+						"minItems": 1
+					}
+				}
+			}
+		},
+		"preflight": {
+			"type": "array",
+			"description": "Preflight commands. Each runs against CHANGED_FILES + preflight_env-derived booleans. Failures exit preflight non-zero.",
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["name", "command"],
+				"properties": {
+					"name": { "type": "string", "minLength": 1 },
+					"command": { "type": "string", "minLength": 1 },
+					"when": {
+						"type": "string",
+						"description": "Env var name that must be truthy for this preflight item to run (optional; omit to always run)"
+					}
+				}
+			}
+		},
+		"preflight_env": {
+			"type": "object",
+			"description": "Declarative path filters. For each key, glob-match patterns against CHANGED_FILES; export the key as truthy on match.",
+			"additionalProperties": {
+				"type": "array",
+				"items": { "type": "string", "minLength": 1 },
+				"minItems": 1
+			}
+		},
+		"compose_project_name": {
+			"type": "string",
+			"description": "Recommended value for ce.json's top-level composeProjectName field (composable.env ≥ 1.37.7). Pins docker-compose project name for cross-cwd targeting. One stack per repo at a time.",
+			"minLength": 1
+		}
+	}
+}
