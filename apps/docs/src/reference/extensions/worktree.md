@@ -176,6 +176,75 @@ sequenceDiagram
 
 Per-worktree `.git/info/exclude` is not a thing in git — the main worktree's exclude file is the only one git reads. So a state file inside the working tree would always appear as untracked. The state file lives at `<per-worktree-gitdir>/indusk-overlay-state.json` (typically `<canonical-clone>/.git/worktrees/<slug>/indusk-overlay-state.json`), where git ignores its own internals by definition.
 
+## Preflight — scoped pre-push checks
+
+`pnpm preflight <slug> [base-branch]` (alias for `bash scripts/worktree/preflight.sh`) runs the worktree's preflight commands against files changed vs the base branch. Mirrors how CI scopes checks — green here = green in CI.
+
+### Env contract
+
+Every preflight command runs with these env vars in scope:
+
+| Var | Source | Value |
+|---|---|---|
+| `$CHANGED_FILES` | computed | Newline-separated list of files changed vs `merge-base(base, HEAD)`. Union of committed + staged + unstaged. Filtered to files that still exist |
+| `$CHANGED_FILES_BIOME` | computed | Same list filtered to `.js .jsx .ts .tsx .css .json .jsonc`. Space-separated for direct use in commands |
+| `$<KEY>` | declared in `preflight_env{}` | `"1"` when any of the key's glob patterns match `CHANGED_FILES`; empty otherwise |
+
+Each `preflight[]` entry can opt-in to gating via the `when` field — a string naming an env var that must be truthy for the entry to run.
+
+### Glob patterns in `preflight_env{}`
+
+Patterns translate to regex via these rules:
+
+| Glob | Regex |
+|---|---|
+| `**` | `.*` (greedy across slashes) |
+| `*` | `[^/]*` (no slash) |
+| `?` | `.` |
+| `.`, `+`, `(`, `)`, `[`, `]`, `{`, `}`, `|`, `\`, `^`, `$` | escaped literal |
+
+Pattern is anchored: `^<regex>$`. A file matches the key when ANY of the key's patterns matches.
+
+Example:
+```json
+{
+  "preflight_env": {
+    "MIGRATIONS_RELEVANT": ["packages/db/migrations/**"],
+    "API_TYPES_CHANGED": ["packages/api-contracts/**/*.ts"]
+  },
+  "preflight": [
+    { "name": "schema-check", "command": "pnpm db:check", "when": "MIGRATIONS_RELEVANT" },
+    { "name": "regenerate-types", "command": "pnpm gen:types", "when": "API_TYPES_CHANGED" }
+  ]
+}
+```
+
+### Skip-fast paths
+
+- Empty `CHANGED_FILES` (no diff vs base): exit 0 immediately, no preflight commands run
+- A preflight entry's `when` env var is empty/unset: that entry skips with `(skipped — $VAR is empty)` in stdout
+- `pnpm preflight <trunk-name>`: rejected with "preflight cannot target the trunk; pick a worktree slug" — preflight is a feature-branch concept
+
+### Base-branch resolution
+
+Default base is `origin/main`. If `origin/main` isn't fetched, the script tries `git fetch origin main` once. If no remote is configured (local dev/test mode), it falls back to bare `main`. Override with `pnpm preflight <slug> <base>` (e.g., `pnpm preflight cancel-polish origin/develop`).
+
+### `set -u` and undeclared keys
+
+The script runs under `set -u` (nounset). Preflight commands that reference an env var not declared in the config's `preflight_env{}` will hit nounset errors. Use `"${VAR:-}"` to read keys defensively:
+
+```json
+{
+  "preflight_env": { "MIGRATIONS_RELEVANT": ["packages/db/migrations/**"] },
+  "preflight": [
+    {
+      "name": "echo-env",
+      "command": "echo MIG=$MIGRATIONS_RELEVANT HAM=${HAMMING_RELEVANT:-}"
+    }
+  ]
+}
+```
+
 ## Related
 
 - [Extension skill](https://github.com/infinitedusky/indusk/blob/main/apps/indusk-mcp/extensions/worktree/skill.md) — agent-facing reference (CLI commands, execution surface, layout, `composeProjectName`)

@@ -45,6 +45,7 @@ cp "$EXT_DIR/scripts/setup-worktree.sh" "$WORKBENCH_SCRIPTS/setup-worktree.sh"
 cp "$EXT_DIR/scripts/refresh-worktree.sh" "$WORKBENCH_SCRIPTS/refresh-worktree.sh"
 cp "$EXT_DIR/scripts/wt.sh" "$WORKBENCH_SCRIPTS/wt.sh"
 cp "$EXT_DIR/scripts/wt-pm2.sh" "$WORKBENCH_SCRIPTS/wt-pm2.sh"
+cp "$EXT_DIR/scripts/preflight.sh" "$WORKBENCH_SCRIPTS/preflight.sh"
 cp "$EXT_DIR/scripts/lib/workbench-helpers.sh" "$WORKBENCH_SCRIPTS/lib/workbench-helpers.sh"
 chmod +x "$WORKBENCH_SCRIPTS"/*.sh
 echo "  scripts: copied into $WORKBENCH_SCRIPTS/"
@@ -58,11 +59,12 @@ if [[ -f "$PKG_JSON" ]]; then
 			"wt": "bash scripts/worktree/wt.sh",
 			"wt:pm2": "bash scripts/worktree/wt-pm2.sh",
 			"wt-setup": "bash scripts/worktree/setup-worktree.sh",
-			"wt-refresh": "bash scripts/worktree/refresh-worktree.sh"
+			"wt-refresh": "bash scripts/worktree/refresh-worktree.sh",
+			"preflight": "bash scripts/worktree/preflight.sh"
 		}
 	' "$PKG_JSON" > "$TMP_PKG"
 	mv "$TMP_PKG" "$PKG_JSON"
-	echo "  package.json: registered wt, wt:pm2, wt-setup, wt-refresh"
+	echo "  package.json: registered wt, wt:pm2, wt-setup, wt-refresh, preflight"
 else
 	echo "  WARN: no package.json at $PKG_JSON; skipping script registration"
 fi

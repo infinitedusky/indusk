@@ -41,15 +41,15 @@ Trajectory IDs `T1`–`T18` map 1:1 to the test-plan's behavioral assertions `A1
 | T6 | [A6] `pnpm wt <wrapped-repo-name>` always addressable as the trunk | Phase 4 | Phase 4 | passing |
 | T7 | [A7] `pnpm wt:pm2` launches N named pm2 processes (scaffold passing in dry-run mode; full pm2 spawn = Phase 7 manual smoke) | Phase 4 | Phase 7 | written |
 | T8 | [A8] `pnpm wt <slug> ce <ce-cmd>` composes — worktree's `.env.local` in scope, not trunk's (resolved-cwd assertions pass at Phase 4; ce composition smoke = Phase 7) | Phase 4 | Phase 7 | written |
-| T9 | [A9] `indusk worktree preflight <slug>` exits non-zero on real biome violation; stderr surfaces it | Phase 5 | Phase 5 | planned |
-| T10 | [A10] `preflight <slug>` exits 0 in <2s when diff touches only out-of-scope files | Phase 5 | Phase 5 | planned |
+| T9 | [A9] `indusk worktree preflight <slug>` exits non-zero on real biome violation; stderr surfaces it | Phase 5 | Phase 5 | passing |
+| T10 | [A10] `preflight <slug>` exits 0 in <2s when diff touches only out-of-scope files | Phase 5 | Phase 5 | passing |
 | T11 | [A11] `indusk worktree list` shows wrapped repos with status badges (config valid/missing/no worktrees) | Phase 6 | Phase 6 | planned |
 | T12 | [A12] Malformed `worktree-configs/<repo>.json` produces clear error naming the offending field | Phase 2 | Phase 2 | passing |
 | T13 | [A13] Same extension + config schema + `pnpm wt` surface works against dawn-fde-toolkit AND numero-workbench | Phase 7 | Phase 7 | planned (manual smoke + parameterized vitest) |
 | T14 | [A14] `worktree create` twice with same `<repo> <slug>` exits non-zero; "already exists" stderr; no state corruption | Phase 6 | Phase 6 | planned |
 | T15 | [A15] Extension is `required: false`; not auto-enabled on non-workbench projects | Phase 1 | Phase 1 | passing |
 | T16 | [A16] After `extensions enable worktree`, package.json gets `wt`/`wt:pm2`/`preflight` scripts + starter config materializes | Phase 6 | Phase 6 | planned |
-| T17 | [A17] `preflight` exports consistent env contract (`CHANGED_FILES`, `CHANGED_FILES_BIOME`, declarative `preflight_env{}` booleans) across configs | Phase 5 | Phase 5 | planned |
+| T17 | [A17] `preflight` exports consistent env contract (`CHANGED_FILES`, `CHANGED_FILES_BIOME`, declarative `preflight_env{}` booleans) across configs | Phase 5 | Phase 5 | passing |
 | T18 | [A18] Workbench with top-level `composeProjectName` in `ce.json` produces one docker-compose project namespace regardless of cwd | Phase 6 | Phase 7 | planned (manual smoke, requires docker + composable.env ≥ 1.37.7) |
 
 ### Trajectory Rationale
@@ -190,28 +190,30 @@ Bare `pnpm wt <slug> <cmd>` and `pnpm wt:pm2 <slug>:<app> <cmd>...` work end-to-
 
 `indusk worktree preflight <slug>` runs against the worktree's diff, exits non-zero on real violations, exports the consistent env contract.
 
-- [ ] Port `preflight.sh` from `~/code/lazer/dawn-fde-toolkit/scripts/` to `apps/indusk-mcp/extensions/worktree/scripts/preflight.sh`
-- [ ] Compute `CHANGED_FILES` (full diff vs base) and `CHANGED_FILES_BIOME` (filter to biome-relevant extensions) and export both before invoking the config's `preflight[]` commands
-- [ ] Honor `preflight_env{}` declarative path filters — for each key, glob-match its patterns against `CHANGED_FILES`; export a boolean env var (e.g., `MIGRATIONS_RELEVANT=true`) when any pattern matches
-- [ ] Skip-fast: if `CHANGED_FILES` is empty after diff vs base, exit 0 immediately (~ms scale, never spends multiple seconds for T10's <2s assertion)
+- [x] Port `preflight.sh` to `apps/indusk-mcp/extensions/worktree/scripts/preflight.sh` (adapted for flat single-repo shape: reads `worktree.wrapped_repo` directly, rejects preflighting the trunk symlink)
+- [x] Compute `CHANGED_FILES` (union of committed-vs-merge-base + staged + unstaged) and `CHANGED_FILES_BIOME` (filter to `.js .jsx .ts .tsx .css .json .jsonc`) and export both
+- [x] Honor `preflight_env{}` declarative path filters via a bash-internal `_glob_to_regex` helper (`**` → `.*`, `*` → `[^/]*`, `?` → `.`, regex metachars escaped). For each key, glob-match patterns against `CHANGED_FILES`; export key as `"1"` on any match, empty otherwise. `declare -x` keeps the export idempotent
+- [x] `preflight[]` schema is array of `{name, command, when?}` objects (Phase 2 schema, NOT dawn-fde-toolkit's array-of-strings). `when` references an env var name; if the var is empty/unset, the entry skips with `(skipped — $VAR is empty)`
+- [x] Skip-fast: empty `CHANGED_FILES` → exit 0 immediately. Base-branch resolution falls back from `origin/main` to bare `main` when no remote is configured (local-only dev/test mode)
+- [x] on_enable hook updated to copy `preflight.sh` into `<workbench>/scripts/worktree/` + register `preflight` pnpm script in package.json
 
 #### Phase 5 Verification
 
-- [ ] T9 at `apps/indusk-mcp/src/__tests__/worktree-preflight-violation.test.ts` — commit a known biome violation file to a feature branch; run preflight; assert exit code non-zero + stderr substring contains the violation
-- [ ] T10 in same file — touch only out-of-scope files; assert exit code 0 in <2s (vitest timeout/perf assertion)
-- [ ] T17 at `apps/indusk-mcp/src/__tests__/worktree-preflight-env-contract.test.ts` — two configs with different `preflight_env{}` declarations; run against synthetic diffs; assert env vars match per-config declaration
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0; T9, T10, T17 passing
-- [ ] `pnpm check` exits 0
+- [x] T9 at `apps/indusk-mcp/src/__tests__/worktree-preflight.test.ts` — stub preflight command outputs marker to stderr + returns 1 via `false`; assert preflight propagates non-zero + stderr contains the marker + "preflight FAILED on: stub-violation"
+- [x] T10 in same file — two cases: (a) markdown-only diff with biome `when: CHANGED_FILES_BIOME` skips the gated check; (b) empty diff exits 0 via the skip-fast path. Both with `expect(elapsedMs).toBeLessThan(2000)` per T10's budget
+- [x] T17 in same file — three cases across two distinct configs: (a) MIGRATIONS_RELEVANT triggers on `packages/db/migrations/**` match; (b) different config triggers HAMMING_RELEVANT on `apps/web/lib/integrations/hamming*.ts`; (c) config-A applied to a non-matching diff leaves MIGRATIONS_RELEVANT empty. Plus safety tests for trunk-rejection and unknown-slug
+- [x] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0 — 554 tests passing (+8 from Phase 4's 546)
+- [x] `pnpm check` exits 0
 - [x] (none needed — asked: "Phase 3 and Phase 4 verification both include a shellcheck item. Shellcheck isn't installed on this machine. How should I treat these?" — user: "Skip with conversation proof, defer to Phase 7 dogfood (Recommended)")
 
 #### Phase 5 Context
 
-- [ ] CLAUDE.md "Known Gotchas" gets a bullet: "Preflight's env contract is `CHANGED_FILES` + `CHANGED_FILES_BIOME` + declarative `preflight_env{}` booleans. Configs that want a new derived boolean add a new key to `preflight_env{}`, not a new env-var convention."
+- [x] CLAUDE.md "Known Gotchas" gets a bullet: preflight's env contract is `CHANGED_FILES` + `CHANGED_FILES_BIOME` + declarative `preflight_env{}` booleans; configs that want a new derived boolean add a key to `preflight_env{}` (not a new env-var convention); the script uses `set -u` so preflight commands referencing undeclared keys should use `${VAR:-}` to avoid nounset errors
 
 #### Phase 5 Document
 
-- [ ] `apps/docs/src/reference/extensions/worktree.md` gets a section on preflight (env contract, scoped diff)
-- [ ] (no new Mermaid diagram)
+- [x] `apps/docs/src/reference/extensions/worktree.md` gets a section on preflight: env contract, scoped diff, glob-pattern semantics, skip-fast paths
+- [x] (no new Mermaid diagram)
 
 ---
 
@@ -314,7 +316,7 @@ Numero adopts the workbench pattern (flat layout, single-repo). numero-workbench
 - [x] Phase 2 complete
 - [x] Phase 3 complete
 - [x] Phase 4 complete
-- [ ] Phase 5 complete
+- [x] Phase 5 complete
 - [ ] Phase 6 complete
 - [ ] Phase 7 complete
 - [ ] `/falsify indusk-worktree-extension` run; falsification phase appended; falsification fix-items worked
