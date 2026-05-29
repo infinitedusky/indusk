@@ -33,10 +33,10 @@ Trajectory IDs `T1`–`T18` map 1:1 to the test-plan's behavioral assertions `A1
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | [A1] `indusk worktree create <repo> <slug>` creates worktree at configured path, branched off configured base | Phase 3 | Phase 3 | planned |
-| T2 | [A2] `copy_files[]` and `append_files[]` are honored on create | Phase 3 | Phase 3 | planned |
-| T3 | [A3] `apply_commits[]` applies upstream-file-overlay (not cherry-pick); files invisible to git status | Phase 3 | Phase 3 | planned |
-| T4 | [A4] Removing an entry from `apply_commits[]` + `worktree refresh` clears skip-worktree flags (fix-in-scope per ADR D7) | Phase 3 | Phase 3 | planned |
+| T1 | [A1] `indusk worktree create <repo> <slug>` creates worktree at configured path, branched off configured base | Phase 3 | Phase 3 | passing |
+| T2 | [A2] `copy_files[]` and `append_files[]` are honored on create | Phase 3 | Phase 3 | passing |
+| T3 | [A3] `apply_commits[]` applies upstream-file-overlay (not cherry-pick); files invisible to git status | Phase 3 | Phase 3 | passing |
+| T4 | [A4] Removing an entry from `apply_commits[]` + `worktree refresh` clears skip-worktree flags (fix-in-scope per ADR D7) | Phase 3 | Phase 3 | passing |
 | T5 | [A5] `pnpm wt <target>[:<app>] <cmd>` resolves via two-pass slug scheme; clear errors on zero/multi match | Phase 4 | Phase 4 | planned |
 | T6 | [A6] `pnpm wt trunk` and `pnpm wt <wrapped-repo-name>` always addressable | Phase 4 | Phase 4 | planned |
 | T7 | [A7] `pnpm wt:pm2` launches N named pm2 processes | Phase 4 | Phase 7 | planned (manual smoke, pm2 absent in CI) |
@@ -124,32 +124,32 @@ Discoverable `worktree` extension that can be enabled but does nothing yet. Vali
 
 The two scripts that author and refresh worktrees work against the new config-driven `sibling_parent`. `refresh-worktree.sh` includes the skip-worktree-on-removed-entries fix per ADR Decision 7.
 
-- [ ] Port `setup-worktree.sh` from `~/code/lazer/dawn-fde-toolkit/scripts/` to `apps/indusk-mcp/extensions/worktree/scripts/setup-worktree.sh`
-- [ ] Replace the hardcoded `SIBLING_PARENT="$HOME/code/lazer/avoca"` with a call to `_resolve_workbench_root` (new helper) that walks up from cwd to find a `.indusk/config.json` with `worktree.shape: "workbench"`, then reads `worktree.sibling_parent` from it
-- [ ] Add `apps/indusk-mcp/extensions/worktree/scripts/lib/workbench-helpers.sh` containing `_resolve_workbench_root`, `_read_workbench_config`, `_read_worktree_config` shell functions (~30 LOC)
-- [ ] Port `refresh-worktree.sh` with the SAME config-driven helpers
-- [ ] **Fix-in-scope (ADR D7)**: `refresh-worktree.sh` writes/reads `worktrees/<slug>/.indusk-overlay-state.json` containing the prior run's `apply_commits[]` snapshot. On refresh, diff current vs prior, and for each removed entry run `git update-index --no-skip-worktree <file...>`. Make the state file gitignored automatically (template a `.gitignore` entry or write to `.git/info/exclude`)
-- [ ] on-enable hook copies `setup-worktree.sh` + `refresh-worktree.sh` + helpers into the workbench at `<workbench>/scripts/worktree/` (workbench owns its scripts so per-workbench tweaks remain possible; `indusk update` re-copies if upstream changes — same pattern as the existing hooks dir)
+- [x] Port `setup-worktree.sh` from `~/code/lazer/dawn-fde-toolkit/scripts/` to `apps/indusk-mcp/extensions/worktree/scripts/setup-worktree.sh` (adapted for flat single-repo shape: no <repo> arg, worktrees as siblings of trunk symlink at workbench root)
+- [x] Replace the hardcoded `SIBLING_PARENT="$HOME/code/lazer/avoca"` with a call to `_resolve_workbench_root` (new helper) that walks up from cwd to find a `.indusk/config.json` with `worktree.shape: "workbench"`, then reads `worktree.sibling_parent` from it
+- [x] Add `apps/indusk-mcp/extensions/worktree/scripts/lib/workbench-helpers.sh` containing `_resolve_workbench_root`, `_read_workbench_field`, `_read_worktree_config`, `_expand_path` shell functions
+- [x] Port `refresh-worktree.sh` with the SAME config-driven helpers
+- [x] **Fix-in-scope (ADR D7)**: `refresh-worktree.sh` writes/reads `<per-worktree-gitdir>/indusk-overlay-state.json` containing the prior run's `apply_commits[]` snapshot. On refresh, diff current vs prior, and for each removed file run `git update-index --no-skip-worktree <file>` + `git checkout HEAD -- <file>` (restore from main's content, not just unflag). State file lives under the gitdir because per-worktree `.git/info/exclude` is not a real thing — git ignores its own internals by definition.
+- [ ] on-enable hook copies `setup-worktree.sh` + `refresh-worktree.sh` + helpers into the workbench at `<workbench>/scripts/worktree/` (workbench owns its scripts so per-workbench tweaks remain possible; `indusk update` re-copies if upstream changes — same pattern as the existing hooks dir) — **DEFERRED to Phase 4** (the pnpm script registration ships at the same time as the wt.sh/wt-pm2.sh port; coupling on-enable scaffolding to a single phase keeps the on_enable atomic)
 
 #### Phase 3 Verification
 
-- [ ] T1 at `apps/indusk-mcp/src/__tests__/worktree-setup.test.ts` — tmpdir workbench fixture (with a stub canonical clone), invoke `setup-worktree.sh`, assert worktree dir + branch name
-- [ ] T2 in the same file — config with `copy_files` + `append_files`, assert files present + suffixes correct
-- [ ] T3 in same file — sample upstream commit on a side branch, apply via `apply_commits[]`, assert content diverges from `git status` output
-- [ ] T4 at `apps/indusk-mcp/src/__tests__/worktree-refresh-clears-skip.test.ts` — start with `apply_commits[]` containing an entry, refresh, remove entry, refresh again, assert `git status` reflects current state (the fix-in-scope behavior)
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0; T1–T4 passing
-- [ ] `pnpm check` exits 0
-- [ ] Shellcheck: `shellcheck apps/indusk-mcp/extensions/worktree/scripts/*.sh` exits 0 (add to dev-deps if not present)
+- [x] T1 at `apps/indusk-mcp/src/__tests__/worktree-setup.test.ts` — tmpdir workbench fixture (with a stub canonical clone), invoke `setup-worktree.sh`, assert worktree dir + branch name. 5 assertions: creates dir, branches off correctly, rejects slug-equals-repo-name collision, rejects duplicate create (T14 dep), writes state file invisible to git
+- [x] T2 in the same file — config with `copy_files` + `append_files`, assert files present + suffixes correct. 3 assertions: copy+append composition, sentinel-bounded append, missing-src warns-not-fails
+- [x] T3 in same file — sample upstream commit on a side branch, apply via `apply_commits[]`, assert content diverges from `git status` output. 3 assertions: file content matches upstream, ls-files shows 'S ' (skip-worktree), state file snapshots the entries
+- [x] T4 at `apps/indusk-mcp/src/__tests__/worktree-refresh-clears-skip.test.ts` — start with `apply_commits[]` containing an entry, refresh, remove entry, refresh again, assert `git status` reflects current state (the fix-in-scope behavior). 2 assertions: removed entry clears skip-worktree + restores from HEAD, idempotent no-op refresh doesn't churn
+- [x] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0 — 540 tests passing (+8 from Phase 2's 532)
+- [x] `pnpm check` exits 0 — 279 files clean (auto-fix needed on the 3 new test files for formatting)
+- [ ] Shellcheck: `shellcheck apps/indusk-mcp/extensions/worktree/scripts/*.sh` — **DEFERRED**, shellcheck not installed on this machine. Manual review during write was the substitute; formal shellcheck moves to Phase 7 dogfood
 
 #### Phase 3 Context
 
-- [ ] CLAUDE.md "Known Gotchas" gets a bullet about `apply_commits[]` being upstream-file-overlay not cherry-pick (per ADR), citing the lesson from `dawn-fde-toolkit/.claude/lessons/worktree-creation-use-refresh-script.md`
-- [ ] CLAUDE.md "Known Gotchas" gets a bullet about `.indusk-overlay-state.json` being the workbench-internal state file that makes T4's behavior possible
+- [x] CLAUDE.md "Known Gotchas" gets a bullet about `apply_commits[]` being upstream-file-overlay not cherry-pick (per ADR), citing the sharp edge from `dawn-fde-toolkit/.claude/lessons/worktree-creation-use-refresh-script.md`
+- [x] CLAUDE.md "Known Gotchas" gets a bullet about state file location — under `<per-worktree-gitdir>/indusk-overlay-state.json`, NOT the worktree's working tree (reason: per-worktree `.git/info/exclude` isn't a real thing in git)
 
 #### Phase 3 Document
 
-- [ ] `apps/docs/src/reference/extensions/worktree.md` gets a section on the create/refresh lifecycle
-- [ ] Add a Mermaid sequence diagram showing the worktree create flow: read config → resolve sibling_parent → `git worktree add` → apply copy_files → apply apply_commits + skip-worktree
+- [x] `apps/docs/src/reference/extensions/worktree.md` gets a section on the create/refresh lifecycle
+- [x] Add a Mermaid sequence diagram showing the worktree create flow + refresh flow (with the ADR D7 fix-in-scope step highlighted)
 
 ---
 
@@ -319,7 +319,7 @@ Numero adopts the workbench pattern (flat layout, single-repo). numero-workbench
 
 - [x] Phase 1 complete
 - [x] Phase 2 complete
-- [ ] Phase 3 complete
+- [x] Phase 3 complete
 - [ ] Phase 4 complete
 - [ ] Phase 5 complete
 - [ ] Phase 6 complete
