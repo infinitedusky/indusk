@@ -46,12 +46,27 @@ program
 	.option("-f, --force", "Overwrite existing files (except CLAUDE.md and planning/)")
 	.option("--local", "Local mode — no committed file changes")
 	.option("--no-index", "Skip code graph indexing")
+	.option(
+		"--workbench",
+		"Initialize as a flat single-repo workbench (Phase 6 of indusk-worktree-extension). Requires --wrapped-repo and --sibling-parent.",
+	)
+	.option(
+		"--wrapped-repo <name>",
+		"Workbench mode: the single repo name this workbench wraps (e.g., 'numero')",
+	)
+	.option(
+		"--sibling-parent <path>",
+		"Workbench mode: parent dir of the canonical clone (e.g., '~/code/sandbox'). Trunk symlink will point at <sibling-parent>/<wrapped-repo>.",
+	)
 	.action(async (opts) => {
 		const { init } = await import("./commands/init.js");
 		await init(process.cwd(), {
 			force: opts.force ?? false,
 			local: opts.local ?? false,
 			noIndex: opts.index === false,
+			workbench: opts.workbench ?? false,
+			wrappedRepo: opts.wrappedRepo,
+			siblingParent: opts.siblingParent,
 		});
 	});
 
@@ -615,15 +630,14 @@ telemetryCmd
 	});
 
 // ---- worktree extension lifecycle ----
-// Phase 4 ships ONE internal command (_on-enable) used by the worktree
-// extension's manifest hook. The user-facing commands (create / refresh /
-// list / preflight) ship in Phase 6 of the indusk-worktree-extension plan.
+// Worktree extension lifecycle. Phase 4 shipped the internal _on-enable
+// hook; Phase 6 adds the user-facing create / refresh / list / preflight
+// subcommands that wrap the bash scripts in apps/indusk-mcp/extensions/
+// worktree/scripts/.
 
 const worktreeCmd = program
 	.command("worktree")
-	.description(
-		"Worktree extension lifecycle (create/refresh/list/preflight ship in Phase 6 of the indusk-worktree-extension plan)",
-	);
+	.description("Worktree extension lifecycle (create/refresh/list/preflight)");
 
 worktreeCmd
 	.command("_on-enable", { hidden: true })
@@ -633,6 +647,46 @@ worktreeCmd
 	.action(async () => {
 		const { worktreeOnEnable } = await import("./commands/worktree.js");
 		worktreeOnEnable();
+	});
+
+worktreeCmd
+	.command("create <slug> [base-branch]")
+	.description(
+		"Create a worktree at <workbench>/<slug>, branched off [base-branch] (default: config's base_branch or main)",
+	)
+	.action(async (slug: string, baseBranch?: string) => {
+		const { worktreeCreate } = await import("./commands/worktree.js");
+		worktreeCreate(slug, baseBranch);
+	});
+
+worktreeCmd
+	.command("refresh <slug>")
+	.description(
+		"Re-apply config to an existing worktree (copy_files, append_files, apply_commits); clears skip-worktree for removed apply_commits entries",
+	)
+	.action(async (slug: string) => {
+		const { worktreeRefresh } = await import("./commands/worktree.js");
+		worktreeRefresh(slug);
+	});
+
+worktreeCmd
+	.command("list")
+	.description(
+		"Show the wrapped repo, trunk symlink status, per-repo config status, and current worktrees",
+	)
+	.action(async () => {
+		const { worktreeList } = await import("./commands/worktree.js");
+		worktreeList(rootOrExit());
+	});
+
+worktreeCmd
+	.command("preflight <slug> [base-branch]")
+	.description(
+		"Run preflight commands scoped to files changed vs [base-branch] (default: origin/main); exits non-zero on first failure",
+	)
+	.action(async (slug: string, baseBranch?: string) => {
+		const { worktreePreflight } = await import("./commands/worktree.js");
+		worktreePreflight(slug, baseBranch);
 	});
 
 program.parse();

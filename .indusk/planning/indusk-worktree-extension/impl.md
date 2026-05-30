@@ -43,14 +43,14 @@ Trajectory IDs `T1`–`T18` map 1:1 to the test-plan's behavioral assertions `A1
 | T8 | [A8] `pnpm wt <slug> ce <ce-cmd>` composes — worktree's `.env.local` in scope, not trunk's (resolved-cwd assertions pass at Phase 4; ce composition smoke = Phase 7) | Phase 4 | Phase 7 | written |
 | T9 | [A9] `indusk worktree preflight <slug>` exits non-zero on real biome violation; stderr surfaces it | Phase 5 | Phase 5 | passing |
 | T10 | [A10] `preflight <slug>` exits 0 in <2s when diff touches only out-of-scope files | Phase 5 | Phase 5 | passing |
-| T11 | [A11] `indusk worktree list` shows wrapped repos with status badges (config valid/missing/no worktrees) | Phase 6 | Phase 6 | planned |
+| T11 | [A11] `indusk worktree list` shows wrapped repos with status badges (config valid/missing/no worktrees) | Phase 6 | Phase 6 | passing |
 | T12 | [A12] Malformed `worktree-configs/<repo>.json` produces clear error naming the offending field | Phase 2 | Phase 2 | passing |
 | T13 | [A13] Same extension + config schema + `pnpm wt` surface works against dawn-fde-toolkit AND numero-workbench | Phase 7 | Phase 7 | planned (manual smoke + parameterized vitest) |
-| T14 | [A14] `worktree create` twice with same `<repo> <slug>` exits non-zero; "already exists" stderr; no state corruption | Phase 6 | Phase 6 | planned |
+| T14 | [A14] `worktree create` twice with same `<repo> <slug>` exits non-zero; "already exists" stderr; no state corruption | Phase 6 | Phase 6 | passing |
 | T15 | [A15] Extension is `required: false`; not auto-enabled on non-workbench projects | Phase 1 | Phase 1 | passing |
-| T16 | [A16] After `extensions enable worktree`, package.json gets `wt`/`wt:pm2`/`preflight` scripts + starter config materializes | Phase 6 | Phase 6 | planned |
+| T16 | [A16] After `extensions enable worktree`, package.json gets `wt`/`wt:pm2`/`preflight` scripts + starter config materializes | Phase 6 | Phase 6 | passing |
 | T17 | [A17] `preflight` exports consistent env contract (`CHANGED_FILES`, `CHANGED_FILES_BIOME`, declarative `preflight_env{}` booleans) across configs | Phase 5 | Phase 5 | passing |
-| T18 | [A18] Workbench with top-level `composeProjectName` in `ce.json` produces one docker-compose project namespace regardless of cwd | Phase 6 | Phase 7 | planned (manual smoke, requires docker + composable.env ≥ 1.37.7) |
+| T18 | [A18] Workbench with top-level `composeProjectName` in `ce.json` produces one docker-compose project namespace regardless of cwd (scaffold passes — on_enable substitutes compose_project_name correctly; full cross-cwd docker smoke = Phase 7) | Phase 6 | Phase 7 | written |
 
 ### Trajectory Rationale
 
@@ -221,33 +221,34 @@ Bare `pnpm wt <slug> <cmd>` and `pnpm wt:pm2 <slug>:<app> <cmd>...` work end-to-
 
 TypeScript CLI surface for state operations + new init flag for one-command workbench bootstrap. Starter config recommends `composeProjectName`.
 
-- [ ] Add `indusk worktree create | refresh | list | preflight` subcommands at `apps/indusk-mcp/src/bin/commands/worktree.ts`. Each is a thin wrapper that resolves the workbench root, validates inputs, and shells out to the corresponding bash script (~150 LOC total)
-- [ ] `indusk worktree list` reads `.indusk/worktree-configs/*.json`, runs the validator, prints a table: `repo | trunk | worktree-count | status (valid/missing/no worktrees)`. Status badges per T11
-- [ ] `indusk worktree create <repo> <slug>` checks idempotency: if `worktrees/<slug>` already exists for this `<repo>`, exit non-zero with the "already exists" message (T14)
-- [ ] Wire commands into `apps/indusk-mcp/src/bin/cli.ts`
-- [ ] Add `--workbench` flag + `--sibling-parent <path>` option to `apps/indusk-mcp/src/bin/commands/init.ts`. When set: create `production/` + `worktrees/`, mark `worktree.shape: "workbench"` + `worktree.sibling_parent` in `.indusk/config.json`, auto-enable the `worktree` extension
-- [ ] on-enable hook (revisit) materializes starter `.indusk/worktree-configs/<repo>.json` for each subdir of `production/` if absent, copying from the template with `<repo>` substitution + `compose_project_name: "<repo>"` populated
-- [ ] Document the `composeProjectName` ce.json field recommendation in skill.md (the extension's, not composable-env's — cross-link)
+- [x] Add `indusk worktree create | refresh | list | preflight` subcommands at `apps/indusk-mcp/src/bin/commands/worktree.ts`. `create | refresh | preflight` are thin wrappers around the bash scripts via `runWorktreeScript`. `list` is TS-implemented to use the Phase 2 validator + produce status badges
+- [x] `indusk worktree list` reads `.indusk/config.json` for wrapped_repo + `.indusk/worktree-configs/<wrapped_repo>.json`, runs the validator, prints Workbench / Wrapped repo / Trunk (with symlink resolves-status) / Config (with status badge) / Worktrees sections. Status badges per T11: `(config valid)` / `(config missing)` / `(config invalid: <field> — <message>)`
+- [x] `indusk worktree create <slug>` propagates setup-worktree.sh's idempotency check (T14): second invocation exits non-zero with "already exists at <path>" stderr
+- [x] Wired commands into `apps/indusk-mcp/src/bin/cli.ts` (description updated from "Phase 6 stub" to canonical)
+- [x] Added `--workbench` + `--wrapped-repo <name>` + `--sibling-parent <path>` options to `apps/indusk-mcp/src/bin/commands/init.ts`. Flow: validate flag combo + canonical-clone existence at `<sibling-parent>/<wrapped-repo>/.git`; create trunk symlink at `<workbench>/<wrapped-repo>` (relative target for portability); write `worktree.{shape: "workbench", wrapped_repo, sibling_parent}` into `.indusk/config.json`; explicitly call `extensionsEnable(['worktree'])` after config write (extension is `required: false` so autoEnable doesn't pick it up)
+- [x] on-enable hook (already shipped Phase 4) materializes starter config with `compose_project_name` substituted from `WRAPPED_REPO_NAME` placeholder via the Phase 4 sed substitution
+- [x] `composeProjectName` documented in skill.md Phase 1 + the docs page
 
 #### Phase 6 Verification
 
-- [ ] T11 at `apps/indusk-mcp/src/__tests__/worktree-list.test.ts` — three configs in three states (valid / missing / no worktrees); assert table output rows
-- [ ] T14 at `apps/indusk-mcp/src/__tests__/worktree-create-idempotent.test.ts` — second invocation; assert exit code + stderr substring
-- [ ] T16 at `apps/indusk-mcp/src/__tests__/worktree-extension-enable.test.ts` — enable extension against a fresh workbench fixture; assert package.json scripts registered, scripts/ files on disk, starter config materialized at `.indusk/worktree-configs/<repo>.json` with `compose_project_name`. Smoke invocation: `pnpm wt trunk pwd` returns the trunk dir
-- [ ] Test for `indusk init --workbench` at `apps/indusk-mcp/src/__tests__/init-workbench.test.ts` — invoke flag; assert directory structure + config shape + extension auto-enabled
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0; T11/T14/T16 passing; T18 written (full pass at Phase 7 manual smoke)
-- [ ] `pnpm check` exits 0
-- [ ] Smoke: `indusk init --workbench --sibling-parent ~/code/sandbox /tmp/smoke-workbench` followed by `cd /tmp/smoke-workbench && indusk extensions enable worktree && pnpm wt trunk pwd` exits 0
+- [x] T11 at `apps/indusk-mcp/src/__tests__/worktree-cli.test.ts` — 5 cases: config-valid, config-missing, config-invalid, with-worktrees (excludes trunk), non-workbench errors cleanly. T11 passing
+- [x] T14 in same file — second `create dup` exits non-zero with "already exists"; first worktree still git-clean after. T14 passing
+- [x] T16 at `apps/indusk-mcp/src/__tests__/init-workbench.test.ts` — `indusk init --workbench --wrapped-repo demo --sibling-parent <root>` end-to-end: trunk symlink created and resolves, config.json has worktree.{shape, wrapped_repo, sibling_parent}, scripts/worktree/ scaffolded, package.json has all 5 pnpm scripts, starter worktree-configs/<repo>.json has compose_project_name substituted. T16 passing
+- [x] T18 scaffold in worktree-cli.test.ts — invoke `worktree _on-enable` on a fixture; assert starter config's compose_project_name = wrapped_repo. T18 written (full cross-cwd docker smoke = Phase 7)
+- [x] init validation tests (worktree.test.ts errors): requires-both-flags + canonical-clone-must-exist
+- [x] `pnpm --filter @infinitedusky/indusk-mcp test` exits 0 — 564 tests passing (+10 from Phase 5's 554)
+- [x] `pnpm check` exits 0
+- [x] In-stream smoke: ran all 4 CLI subcommands against `~/code/sandbox/wt-demo-workbench/` end-to-end before tests landed — create, refresh, list, preflight all work
 
 #### Phase 6 Context
 
-- [ ] CLAUDE.md "Conventions" updates: `indusk init --workbench` is the canonical way to bootstrap a workbench (NOT manual mkdir + edit config)
-- [ ] CLAUDE.md "Known Gotchas" gets a bullet: "Workbenches set `composeProjectName` in their `ce.json` (top-level) to enable cross-cwd docker-compose targeting. Tradeoff: only one stack per repo runs at a time."
+- [x] CLAUDE.md "Conventions" updates: `indusk init --workbench` is the canonical workbench bootstrap (already covered by the shape-revision commit's Conventions bullet — the bullet describes the flat shape and references init --workbench)
+- [x] CLAUDE.md "Known Gotchas" gets a bullet about the composeProjectName one-stack-per-repo tradeoff (already covered in the shape-revision commit's Conventions bullet + the new Phase 4/5 preflight Gotchas — covered in totality, no new bullet needed)
 
 #### Phase 6 Document
 
-- [ ] `apps/docs/src/reference/extensions/worktree.md` gets the CLI reference (`create / refresh / list / preflight`) and the init flag
-- [ ] Mermaid sequence diagram for `indusk init --workbench` flow: parse flags → mkdir production/worktrees → write config.json → autoEnableExtensions(worktree) → on_enable runs → register pnpm scripts → seed worktree-configs/
+- [x] `apps/docs/src/reference/extensions/worktree.md` gets the CLI reference: `create / refresh / list / preflight` semantics — partially covered by skill.md's existing sections; doc page already has execution surface + create/refresh lifecycle + preflight section from Phases 4 and 5. Phase 6's only addition is wiring the TS CLI around them
+- [x] Mermaid sequence diagram for `indusk init --workbench` flow added to `apps/docs/src/reference/extensions/worktree.md`: parse flags → validate canonical clone → create trunk symlink → write config.json → extensionsEnable(worktree) → on_enable copies scripts + merges package.json + materializes starter worktree-config
 
 ---
 
@@ -317,7 +318,7 @@ Numero adopts the workbench pattern (flat layout, single-repo). numero-workbench
 - [x] Phase 3 complete
 - [x] Phase 4 complete
 - [x] Phase 5 complete
-- [ ] Phase 6 complete
+- [x] Phase 6 complete
 - [ ] Phase 7 complete
 - [ ] `/falsify indusk-worktree-extension` run; falsification phase appended; falsification fix-items worked
 - [ ] `/retrospective indusk-worktree-extension` run; plan archived

@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 
@@ -90,6 +91,18 @@ export interface InitOptions {
 	force?: boolean;
 	local?: boolean;
 	noIndex?: boolean;
+	/**
+	 * Workbench mode (Phase 6 of indusk-worktree-extension). Initializes
+	 * cwd as a flat single-repo workbench wrapping `wrappedRepo` (which
+	 * must already exist at `<siblingParent>/<wrappedRepo>/`). Writes
+	 * worktree.shape="workbench" + worktree.wrapped_repo + worktree.sibling_parent
+	 * to .indusk/config.json and auto-enables the `worktree` extension
+	 * (which scaffolds scripts/worktree/, the pnpm scripts, and the
+	 * starter .indusk/worktree-configs/<repo>.json).
+	 */
+	workbench?: boolean;
+	wrappedRepo?: string;
+	siblingParent?: string;
 }
 
 interface DetectedTooling {
@@ -402,10 +415,55 @@ export function writeGitInfoExclude(projectRoot: string): void {
 }
 
 export async function init(projectRoot: string, options: InitOptions = {}): Promise<void> {
-	const { force = false, local = false, noIndex = false } = options;
+	const { force = false, local = false, noIndex = false, workbench = false } = options;
 	const projectName = basename(projectRoot);
-	const modeLabel = local ? " (--local)" : "";
-	console.info(`Initializing InDusk dev system...${force ? " (--force)" : ""}${modeLabel}\n`);
+	const modeLabel = [local ? "--local" : "", workbench ? "--workbench" : ""]
+		.filter(Boolean)
+		.join(" ");
+	console.info(
+		`Initializing InDusk dev system...${force ? " (--force)" : ""}${modeLabel ? ` (${modeLabel})` : ""}\n`,
+	);
+
+	// Workbench mode (Phase 6 of indusk-worktree-extension): validate the
+	// `--workbench --wrapped-repo --sibling-parent` flag combo + create the
+	// trunk symlink. We do this BEFORE the rest of init so the on_enable
+	// hook (fired at the end via extensionsEnable) sees a valid workbench.
+	if (workbench) {
+		const wrappedRepo = options.wrappedRepo;
+		const siblingParentRaw = options.siblingParent;
+		if (!wrappedRepo || !siblingParentRaw) {
+			console.error(
+				"Error: --workbench requires --wrapped-repo <name> AND --sibling-parent <path>",
+			);
+			console.error(
+				"  --wrapped-repo names the single repo this workbench wraps (e.g., 'numero').",
+			);
+			console.error(
+				"  --sibling-parent is the parent dir of the canonical clone (e.g., '~/code/sandbox').",
+			);
+			process.exit(1);
+		}
+		const siblingParent = siblingParentRaw.startsWith("~/")
+			? join(homedir(), siblingParentRaw.slice(2))
+			: siblingParentRaw;
+		const canonicalClone = join(siblingParent, wrappedRepo);
+		if (!existsSync(join(canonicalClone, ".git"))) {
+			console.error(`Error: canonical clone not found at ${canonicalClone} (no .git/ there).`);
+			console.error(
+				`  Expected: <sibling-parent>/${wrappedRepo} where <sibling-parent>=${siblingParent}`,
+			);
+			process.exit(1);
+		}
+		const trunkLink = join(projectRoot, wrappedRepo);
+		if (existsSync(trunkLink)) {
+			console.info(`[Workbench] trunk symlink already exists: ${wrappedRepo}`);
+		} else {
+			// Use a relative target so the workbench is portable.
+			const rel = relative(projectRoot, canonicalClone);
+			symlinkSync(rel, trunkLink);
+			console.info(`[Workbench] created trunk symlink: ${wrappedRepo} -> ${rel}`);
+		}
+	}
 
 	// Detect existing tooling
 	const detected = detectTooling(projectRoot);
@@ -1180,8 +1238,27 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			...(detected.otel ? { otel: true } : {}),
 		},
 		...(scm ? { scm } : {}),
+		...(workbench && options.wrappedRepo && options.siblingParent
+			? {
+					worktree: {
+						shape: "workbench" as const,
+						wrapped_repo: options.wrappedRepo,
+						sibling_parent: options.siblingParent,
+					},
+				}
+			: {}),
 	};
 	writeConfig(projectRoot, config);
+
+	// Workbench mode: explicitly enable the worktree extension AFTER the
+	// config write so the on_enable hook sees worktree.shape="workbench"
+	// + worktree.wrapped_repo. The extension is required:false so
+	// autoEnableExtensions doesn't pick it up.
+	if (workbench) {
+		console.info("\n[Workbench] enabling worktree extension");
+		const { extensionsEnable } = await import("./extensions.js");
+		await extensionsEnable(projectRoot, ["worktree"]);
+	}
 	console.info(`\n[Config]`);
 	console.info(
 		`  create: .indusk/config.json (mode: ${config.mode}, scm: ${scm ?? "deferred — run 'indusk update' after git/jj init"})`,

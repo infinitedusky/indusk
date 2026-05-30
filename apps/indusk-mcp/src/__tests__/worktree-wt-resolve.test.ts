@@ -146,7 +146,7 @@ describe("wt.sh slug resolution (T5/T6/T8)", () => {
 			// verifying that ce reads the worktree's .env.local — is the Phase 7
 			// manual smoke; this just proves the cwd is right.)
 			expect(r.stdout).toMatch(/STUB_PNPM cwd=.*\/alpha\b/);
-			expect(r.stdout).not.toContain("STUB_PNPM cwd=" + join(fixture.workbenchDir, "clone"));
+			expect(r.stdout).not.toContain(`STUB_PNPM cwd=${join(fixture.workbenchDir, "clone")}`);
 		});
 
 		it(":<app> suffix changes cwd to <resolved>/apps/<app>", () => {

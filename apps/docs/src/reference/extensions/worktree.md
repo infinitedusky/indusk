@@ -245,6 +245,39 @@ The script runs under `set -u` (nounset). Preflight commands that reference an e
 }
 ```
 
+## Bootstrapping a workbench — `indusk init --workbench`
+
+Phase 6 ships a one-command workbench bootstrap:
+
+```bash
+mkdir ~/code/sandbox/numero-workbench
+cd ~/code/sandbox/numero-workbench
+indusk init --workbench --wrapped-repo numero --sibling-parent ~/code/sandbox
+```
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Init as indusk init --workbench
+    participant FS as filesystem
+    participant Config as .indusk/config.json
+    participant ExtSys as extensionsEnable("worktree")
+    participant Hook as on_enable.sh
+
+    User->>Init: --workbench --wrapped-repo numero --sibling-parent ~/code/sandbox
+    Init->>FS: verify <sibling-parent>/numero/.git exists
+    Init->>FS: symlink numero -> ../numero (relative target)
+    Init->>Config: write {worktree: {shape, wrapped_repo, sibling_parent}, ...}
+    Init->>ExtSys: explicit enable (required:false, no auto-detect)
+    ExtSys->>Hook: invoke via indusk worktree _on-enable
+    Hook->>FS: copy 5 scripts + lib/ to <workbench>/scripts/worktree/
+    Hook->>FS: jq-merge 5 pnpm scripts into package.json
+    Hook->>FS: materialize .indusk/worktree-configs/numero.json from template<br/>(WRAPPED_REPO_NAME → numero)
+```
+
+After: `indusk worktree list` works, `pnpm wt numero pwd` resolves to the trunk, `pnpm wt <slug> <cmd>` for any worktrees you create.
+
 ## Related
 
 - [Extension skill](https://github.com/infinitedusky/indusk/blob/main/apps/indusk-mcp/extensions/worktree/skill.md) — agent-facing reference (CLI commands, execution surface, layout, `composeProjectName`)
