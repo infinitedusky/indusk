@@ -74,7 +74,7 @@ fi
 # Slug resolution (single-pass against workbench root; same as wt.sh).
 _is_reserved_name() {
 	case "$1" in
-		.indusk | node_modules | dist | build | .git | .next | scripts | env) return 0 ;;
+		.indusk | .claude | .vscode | .cursor | node_modules | dist | build | .git | .next | scripts | env) return 0 ;;
 		*) return 1 ;;
 	esac
 }

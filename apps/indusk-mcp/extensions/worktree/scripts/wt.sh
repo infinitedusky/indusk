@@ -63,7 +63,7 @@ WORKBENCH_ROOT="$(_resolve_workbench_root)"
 # Skip reserved/non-checkout entries at workbench root.
 _is_reserved_name() {
 	case "$1" in
-		.indusk | node_modules | dist | build | .git | .next | scripts | env) return 0 ;;
+		.indusk | .claude | .vscode | .cursor | node_modules | dist | build | .git | .next | scripts | env) return 0 ;;
 		*) return 1 ;;
 	esac
 }

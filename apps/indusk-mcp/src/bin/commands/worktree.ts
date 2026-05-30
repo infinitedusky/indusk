@@ -128,6 +128,9 @@ function readWorkbenchConfig(workbenchRoot: string): WorkbenchConfig | null {
 function listSubdirs(workbenchRoot: string): string[] {
 	const reserved = new Set([
 		".indusk",
+		".claude",
+		".vscode",
+		".cursor",
 		"node_modules",
 		"dist",
 		"build",
