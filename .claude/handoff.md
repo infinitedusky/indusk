@@ -1,77 +1,60 @@
 # Handoff
 
-**Date:** 2026-05-03
-**Session:** Two threads. (1) **Path-to-code-freeze cleanup** — shipped 1.28.7 (CGC scope reduction + telemetry restart bugs + falsification test cleanup + plan-parser fixture drift) and staged 1.28.8 (init becomes opinionated about Biome — adds devDep, migrates simple scripts, surfaces vestiges). (2) **Dawn ledger expansion** — landed two new research docs (verbatim FDE-and-extraction thread + architecture companion sharpening the codebase/Dawn-app split, worktree inheritance, emission-only direction); revised U1 + A8 in place; added A9–A14 + O10–O15 to the ledger.
+**Date:** 2026-05-30
+**Session:** Shipped all 7 phases of `indusk-worktree-extension` plan end-to-end. Multi-day session: started on telemetry binary install issues, moved through planning restructure (Immediate queue + Arc 0 Midnight) and shape revision (flat single-repo workbench), then executed Phases 1–7 of the worktree extension.
 
 ## What Was Being Worked On
 
-Sandy's framing: get tests green + telemetry reliable, then code-freeze this repo and start fresh in **Dawn** (the new repo's name). Path-to-freeze is six items:
-
-- ✅ #1 Telemetry test reliability — shipped 1.28.7 (real prod bug, not flake)
-- ✅ #2 Bump 1.28.6 → 1.28.7 (Sandy published)
-- ✅ #3 Falsification stale assertions cleanup — shipped 1.28.7
-- ✅ #4 Plan-parser fixture drift — shipped 1.28.7
-- ⏳ #5 Numero smoke (Sandy explicitly said "I can do numero")
-- ⏳ #6 Mark code freeze in CLAUDE.md Current State
-
-Plus a sixth thread that landed mid-session: **opinionated Biome in `indusk init`** (1.28.8 staged, awaiting Sandy's publish). Triggered when Sandy noted that pre-1.28.8 init produced exactly the half-done state Numero is in (`biome.json` written but `@biomejs/biome` never installed; ESLint/Prettier vestiges remain functional).
-
-Plus a parallel Dawn research thread driven by Sandy sharing the FDE/AST-rule-engine doc.
+`indusk-worktree-extension` plan — all 7 phases plus a mid-stream shape revision. 18/18 trajectory rows passing. 567 tests in indusk-mcp. 12+ commits to `origin/main`. Plan impl status: `in-progress` → ready for `/falsify` + `/retrospective` close-out.
 
 ## Where It Stopped
 
-Last completed action: **wrote three docs and updated decisions.md** in `.indusk/planning/indusk-v2-dawn/`. New file inventory:
+Phase 7 closed and merged to main (commit `99e7748b`). All trajectory rows in `passing` state. Plan is implementation-complete but NOT archived — three close-out steps remain (publish + falsify + retrospective).
 
-- `research-fde-and-extraction.md` — verbatim from Sandy's shared thread (Avoca catalyst)
-- `research-dawn-project-architecture.md` — companion doc sharpening the codebase/Dawn-app split with the signal-correlation loop made concrete
-- `decisions.md` — U1 revised in place (petals = emission points; Dawn app = correlation point); A8 revised in place (skills/hooks live in Dawn app, projected per active agent); A9 (fork-and-extract as special case), A10 (AST rule engine, rejects markers), A11 (tree-shaped worktree inheritance), A12 (emission-only direction), A13 (codebase contains ONLY prod + tests + OTel rules), A14 (`apps/dawn-test-target/` synthetic) added; O10–O15 added (rule-engine syntax, AST library, OTel conflicts, reviewer UI, rebase conflicts, codebase identity discovery)
-
-40 ledger entries total; A9–A14 and O10–O15 are at state `new` awaiting Sandy's walkthrough → `decided`.
+The last thing Sandy did was request: "commit everything, I'm going to be running this on a different computer. I'm going to be cloning you." So everything is pushed; the next session likely starts on a fresh clone on a different machine.
 
 ## What's Next
 
-1. **Confirm 1.28.8 publish status.** I bumped + wrote the changelog entry + verified build/tests green; Sandy was going to publish. First action: `npm view @infinitedusky/indusk-mcp version`. If returns 1.28.8, smoke `indusk init --force` against a half-done fixture (or just do it on Numero — that's the real test). If still 1.28.7, ask Sandy if he wants to publish or leave staged.
-2. **Numero smoke.** Sandy will drive — but be ready to advise. The Numero audit identified: 6 `lint` scripts pointing at eslint/next-lint, 1 root `format` script using prettier, 1 ESLint config (`apps/admin/eslint.config.mjs`), `eslint ^9` in `apps/admin` devDeps, `prettier ^3.2.5` in root devDeps. After 1.28.8 publishes, `indusk init --force` in Numero should migrate the simple scripts + add `@biomejs/biome`, leave compound scripts (`packages/game-logic/package.json` lint script if any compound) untouched with a warning, and surface vestige punch list.
-3. **Mark code freeze in CLAUDE.md** Current State once Numero smoke is green.
-4. **Continue walking the Dawn ledger in `/research` mode.** A9–A14 + O10–O15 are fresh and need walkthrough. Existing `new` items from previous session also still pending: U1–U3, D1–D2, A1–A8 (all `new`). The ledger has accumulated a lot — Sandy may want to batch-decide or walk one at a time.
-5. **Author the Dawn brief** once the ledger stabilizes. Sandy framed it as a "product brief" (sets rules), not just a "project brief" (single delivery). Ledger needs to settle first.
+In order:
+
+1. **Publish indusk-mcp 1.28.26 to npm.** Sandy's 2FA needed: `cd apps/indusk-mcp && pnpm publish --no-git-checks`. Without this, the global `indusk` is still 1.28.25 and the `worktree` subcommand doesn't exist — so `indusk extensions enable worktree` will fail with "unknown command 'worktree'" when on_enable fires (verified in-stream this session). Either publish 1.28.26 OR set `INDUSK_BIN="node /path/to/dist/bin/cli.js"` for dev usage.
+2. **`/falsify indusk-worktree-extension`** — required before retrospective. Same-agent goal-flipped bounty hunt; appends a Falsification Phase to impl.md with hypothesis tests + fix items.
+3. **`/work indusk-worktree-extension`** — execute any falsification-phase fix items if /falsify surfaces them.
+4. **`/retrospective indusk-worktree-extension`** — closes the plan and archives.
+5. **(Sandy-time, separate)** — execute the numero migration via the Flow B runbook in `apps/docs/src/guide/worktree-setup.md`. Not blocking plan archive.
 
 ## Open Issues
 
-- **1.28.8 publish status unconfirmed** — Sandy said he'd publish; haven't seen the version flip yet. Don't assume.
-- **`apps/dawn-test-target/` doesn't exist yet** — A14 commits to building it but it's a v2 deliverable, not a v1 task. Dawn lives in a separate repo; this dusk repo is heading to code-freeze. The synthetic test target may end up in Dawn's repo, not dusk.
-- **CGC extension is still installed** in dusk — only the *forced* flows were removed (catchup gate, eval allowed-tools, beam query, code-graph step). The extension itself still works; agent can manually invoke `mcp__codegraphcontext__*` if specifically wanted. This is by design.
-- **Pre-existing test count drift** — 444 tests passing as of session end, was 444 passing + 13 failing at start. All 13 failures resolved in 1.28.7. None of the resolved failures were caused by my edits in this session — they were real bugs (3 categories) that had been masquerading as environmental flake.
+- **Global `indusk` is at 1.28.25** — predates the `worktree` subcommand. Until 1.28.26 publishes OR you set `INDUSK_BIN` to point at dist, `indusk worktree _on-enable` will fail with "unknown command". The on_enable hook ITSELF has a try/catch via `runHook`, so the failure surfaces as `"  worktree: on_enable hook failed"` in init's output — visible but easy to miss.
+- **`apps/docs/` build artifacts under `.vitepress/cache/` and `.vitepress/dist/`** — covered by `.gitignore` updates already, but a fresh clone won't have them; running `pnpm dev:docs` regenerates them.
+- **No real falsification failures expected** — all 18 trajectory rows pass cleanly; /falsify may surface surprises but the substantive implementation has been dogfooded against demo + scratch workbenches all session.
 
 ## Decisions Made This Session
 
-Several formalized in code/changelog/ledger; flagging the ones that may need lifting to CLAUDE.md or other durable docs:
+All major decisions are in CLAUDE.md already. The load-bearing ones, for quick recall:
 
-1. **CGC moves from required to optional in v1** — formalized in 1.28.7 changelog entry. Foreshadows D2 in the Dawn ledger ("CGC as required → optional petal"). Worth a CLAUDE.md "Current State" note when Sandy marks code freeze.
-2. **Biome is the opinionated default for `indusk init`** — formalized in 1.28.8 changelog entry. CLAUDE.md gotcha already says "Biome over ESLint" so the conventions are consistent; the change is in init's *behavior*, which the changelog captures.
-3. **Dawn architecture is two surfaces (Dawn app outside the codebase + codebase containing only prod + tests + OTel rules)** — formalized in `research-dawn-project-architecture.md` + ledger entries A11/A12/A13. Stricter than "system Dawn vs worktree Dawn." No per-worktree Dawn install. Worktrees never have a Dawn install. The Dawn app discovers them; they don't announce themselves.
-4. **Marker-based OTel extraction is rejected** in favor of AST-driven rule engine — formalized as A10. Important because we hadn't formally written down the marker approach but probably would have reached for it. The rejection saves future work from going down the wrong path.
-5. **Three real production bugs fixed in 1.28.7**, framed as bugs not test fixes:
-   - `daemonRestart` was reading commander defaults instead of inheriting bound ports → would have collided with any user's machine-global daemon
-   - `isPortFree` bound to 127.0.0.1 → false-positive "free" when daemons hold IPv6 wildcard `*:port`
-   - `telemetryRestart` was forwarding commander default strings → couldn't distinguish "user passed flag" from "default supplied"
+- **Flat single-repo workbench shape** — trunk symlink + worktrees as siblings at workbench root. Dropped the original `production/<repo>/` + `worktrees/<slug>/` split. Multi-repo workbenches (dawn-fde-toolkit-style) deferred to a future "FDE agency" plan. Documented in CLAUDE.md Conventions.
+- **Per-developer workbench model** — wrapped repo is the only shared/versioned thing. Workbench is local-only per-developer scaffolding; planning history doesn't sync between teammates by design. Documented in CLAUDE.md Known Gotchas + the new setup-workflows guide.
+- **TS shim pattern for extension hooks** — `indusk <ext> _<hook>` invokes a small TS shim that walks `__dirname` up to find the indusk-mcp package root, then shells out to the extension's bash hook. Works for both global installs and dev monorepo. Documented in CLAUDE.md Known Gotchas. Reusable for future extensions whose hooks need more than a one-liner.
+- **Numero migration deferred** — per Sandy's explicit "defer the numero migration; finish the plan via demo + a second throwaway workbench" choice. Captured as Flow B runbook in the new guide.
+- **Workbench bootstrap is two-step (not init-clones-the-repo)** — user runs `git clone <wrapped-repo>` themselves; `indusk init --workbench` just wires up the workbench AROUND an existing canonical clone. Documented in guide Flow A.
 
 ## Watch Out For
 
-- **Catchup status template lost the `- [ ] graph` row** in 1.28.7. Old handoffs (this one's predecessor) had `- [ ] graph` in the Catchup Status section. The new template (mirrored to `.claude/skills/handoff/SKILL.md` and `.claude/skills/catchup/SKILL.md` in this session) does NOT include it. The check-catchup.js hook still verifies FalkorDB + Graphiti reachability (port 6379 + 8100); CGC dropped silently. If you see a stale handoff with `[ ] graph` it's pre-1.28.7.
-- **`indusk init` is now opinionated about Biome** (1.28.8). Running `init --force` on a non-Biome project will: add `@biomejs/biome` to root devDeps, replace simple lint/format scripts. Leave compound scripts (`&&` / `||` / `;`) ALONE. Surface vestige warnings for residual configs/devDeps. The `[Lint migration warnings]` block prints AT THE END of init output but BEFORE step 7 (handoff scaffold) — so it's mixed in with subsequent init output if you grep filter. Use raw output or scroll up to find it.
-- **Numero is still half-done** until Sandy runs `indusk init --force` (or migrates manually). If you see Numero conversations, the audit punch list lives at the top of this session's reasoning — also captured in the 1.28.7 / 1.28.8 changelog entries.
-- **Dawn ledger has A1–A14 + U1–U3 + D1–D2 + O1–O15 to walk through in /research mode.** Don't try to walk all 40 in one session — Sandy paces these one decision at a time, often pivoting mid-walk. Let him drive.
-- **`apps/indusk-mcp/CLAUDE.md` is a STUB** (template content for a fresh init). The real CLAUDE.md is at the dusk repo root. Don't get confused by the stub when it surfaces in system reminders.
-- **`.claude/handoff.md` is gitignored** per InDusk convention. Safe to overwrite.
-- **The Dawn repo doesn't exist yet.** When Sandy says "Dawn" he means the planned next-repo. All the architecture decisions live in `.indusk/planning/indusk-v2-dawn/` here in dusk. When Sandy starts Dawn, that planning will move (or be referenced).
+- **Next session likely on a different machine.** Sandy said they'll be cloning to a new machine. Fresh clone of `git@github.com:infinitedusky/indusk.git` will have everything as of `99e7748b`. They'll need: `pnpm install` + `pnpm --filter @infinitedusky/indusk-mcp build` + globally install indusk-mcp at 1.28.26 (once published) or set `INDUSK_BIN`.
+- **`~/code/sandbox/wt-demo-workbench/` and `~/code/sandbox/wt-scratch-workbench/`** are local-only test artifacts on the ORIGINAL machine. They won't exist on the new machine. If the next session wants to re-dogfood, recreate them via the guide Flow A.
+- **The `~/code/sandbox/wt-demo-repo/` and `~/code/sandbox/wt-scratch-repo/`** scratch git repos also won't exist on the new machine. Same — recreate via the guide.
+- **Don't write the Phase 7 falsification phase yet without thinking** — `/falsify` is a separate skill that will hypothesize + author the phase. Don't preempt it.
+- **`.claude/handoff.md` (this file) is gitignored.** A fresh clone won't have it. If the next session is on a different machine + fresh clone, this handoff doesn't survive. Sandy may need to re-orient via `/catchup` from scratch (CLAUDE.md + master.md + impl.md will have all the context).
+- **`indusk-mcp 1.28.25` is the currently-published latest.** `pnpm i -g @infinitedusky/indusk-mcp@latest` will get 1.28.25 (no worktree command). The `worktree` subcommand only exists at HEAD (1.28.26-pending).
+- **Stale registry entries** in `~/.indusk/projects.json`: `demo-workbench-2` and `demo-workbench-3` (from Phase 6 init-workbench test iterations), plus the older `tmp.Hs50dNzRUK` and the test fixtures from init-workbench.test.ts. Telemetry logs `Skipped N project(s) (missing path or write failed)`. Not blocking; candidate for cleanup pass.
 
 ## Catchup Status
-- [x] mcp-ready
-- [x] handoff
-- [x] lessons
-- [x] skills
-- [x] health
-- [x] context
-- [x] plans
-- [x] extensions
+- [ ] mcp-ready
+- [ ] handoff
+- [ ] lessons
+- [ ] skills
+- [ ] health
+- [ ] context
+- [ ] plans
+- [ ] extensions
