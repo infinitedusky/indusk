@@ -46,13 +46,13 @@ migrating dusk off ce.
 
 | ID | Asserts | Writable at | Passes at | State | Kind |
 |----|---------|-------------|-----------|-------|------|
-| T1 | Enabling the doppler extension produces `.indusk/extensions/doppler/.env.example` documenting the token + config | Phase 0 | Phase 1 | planned | integration |
-| T2 | With a token in the gitignored `.env`, the env-pull step populates each app's `.env.<profile>` from Doppler | Phase 0 | Phase 2 | planned | integration (stub) |
-| T3 | After `indusk worktree create <slug>`, the new worktree's apps have populated `.env` files — no manual env step | Phase 0 | Phase 3 | planned | integration (stub) |
-| T4 | A fresh `indusk init` enables the doppler extension and does not create the composable.env `env/` contract tree | Phase 0 | Phase 4 | planned | integration |
-| T5 | `indusk update` on a composable.env project reports the ce deprecation + migration path and leaves ce working | Phase 0 | Phase 4 | planned | integration |
-| T6 | The composable-env extension can still be explicitly enabled (opt-in for legacy) | Phase 0 | Phase 4 | planned | integration |
-| T7 | doppler-provisioned `.env.<profile>` files never appear in `git status` (trunk or worktree) | Phase 0 | Phase 2 | planned | integration (stub) |
+| T1 | Enabling the doppler extension produces `.indusk/extensions/doppler/.env.example` documenting the token + config | Phase 0 | Phase 1 | passing | integration |
+| T2 | With a token in the gitignored `.env`, the env-pull step populates each app's `.env.<profile>` from Doppler | Phase 0 | Phase 2 | written | integration (stub) |
+| T3 | After `indusk worktree create <slug>`, the new worktree's apps have populated `.env` files — no manual env step | Phase 0 | Phase 3 | written | integration (stub) |
+| T4 | A fresh `indusk init` enables the doppler extension and does not create the composable.env `env/` contract tree | Phase 0 | Phase 4 | written | integration |
+| T5 | `indusk update` on a composable.env project reports the ce deprecation + migration path and leaves ce working | Phase 0 | Phase 4 | written | integration |
+| T6 | The composable-env extension can still be explicitly enabled (opt-in for legacy) | Phase 0 | Phase 4 | written | integration |
+| T7 | doppler-provisioned `.env.<profile>` files never appear in `git status` (trunk or worktree) | Phase 0 | Phase 2 | written | integration (stub) |
 | T8 | dusk's local stack comes up with composable.env removed — no `ce` invocation in the run path | Phase 0 | Phase 5 | planned | manual smoke |
 | T9 | A dev whose only setup was dropping the token in the gitignored file creates a worktree that builds | Phase 0 | Phase 5 | planned | manual smoke |
 
@@ -92,15 +92,15 @@ subsection is required (no Phase 1+ rows).
       (`cp .env.example .env`). `on_disable`: cleanup.
 
 #### Phase 1 Verification
-- [ ] Set up the stubbed-`doppler`-binary test harness (fixture secrets on PATH) and write T1–T7 as integration tests; assert all currently fail red (tripwires).
-- [ ] T1 goes green — `pnpm turbo test --filter=indusk-mcp -- doppler` (enabling `doppler` lands `.env.example`).
+- [x] Set up the stubbed-`doppler`-binary test harness (fixture secrets on PATH) and write T1–T7 as integration tests; T1 live, T2–T7 `.skip()` scaffolds with unlock-phase markers (`src/__tests__/doppler-extension.test.ts`).
+- [x] T1 goes green — `npx vitest run src/__tests__/doppler-extension.test.ts` (1 passed, 6 skipped; enabling `doppler` lands `.env.example`).
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Architecture: the `doppler` extension exists at
+- [x] Add to CLAUDE.md Architecture: the `doppler` extension exists at
       `apps/indusk-mcp/extensions/doppler/` (Doppler + plain compose env layer).
 
 #### Phase 1 Document
-- [ ] Create skeleton `apps/docs/src/reference/extensions/doppler.md` (config +
+- [x] Create skeleton `apps/docs/src/reference/extensions/doppler.md` (config +
       token model sections; filled out in Phase 5).
 
 ### Phase 2: `env-pull` script + per-app provisioning
