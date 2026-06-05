@@ -78,7 +78,7 @@ subsection is required (no Phase 1+ rows).
 ## Checklist
 
 ### Phase 1: `doppler` extension package
-- [ ] Create `apps/indusk-mcp/extensions/doppler/manifest.json` — `name: doppler`,
+- [x] Create `apps/indusk-mcp/extensions/doppler/manifest.json` — `name: doppler`,
       `required: false` for now (default-enable lands in Phase 4), `provides:
       [skill, health_checks]`, `hooks: { on_enable, on_disable }`.
 - [ ] Write `apps/indusk-mcp/extensions/doppler/skill.md` — agent-facing: env via
@@ -87,8 +87,8 @@ subsection is required (no Phase 1+ rows).
 - [ ] Write `apps/indusk-mcp/extensions/doppler/.env.example` — documents
       `DOPPLER_TOKEN` + `DOPPLER_PROJECT` with inline comments (the `.env.example`
       → gitignored `.env` pattern dash0/local-telemetry already use).
-- [ ] Health checks: `doppler` binary on PATH; token file present + non-empty.
-- [ ] `on_enable`: `copyExtensionAssets` (lands `.env.example`) + `printEnvSetupHint`
+- [x] Health checks: `doppler` binary on PATH; token file present + non-empty.
+- [x] `on_enable`: `copyExtensionAssets` (lands `.env.example`) + `printEnvSetupHint`
       (`cp .env.example .env`). `on_disable`: cleanup.
 
 #### Phase 1 Verification

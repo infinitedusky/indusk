@@ -1,0 +1,25 @@
+{
+	"name": "doppler",
+	"description": "Doppler-backed environment management — env vars from Doppler branched configs + plain docker-compose, with per-worktree auto-provisioning. Replaces composable.env as the default InDusk env layer.",
+	"required": false,
+	"provides": {
+		"skill": true,
+		"health_checks": [
+			{
+				"name": "doppler-cli-installed",
+				"command": "command -v doppler >/dev/null 2>&1"
+			},
+			{
+				"name": "doppler-token-present",
+				"command": "node -e \"const fs=require('fs');const p='.indusk/extensions/doppler/.env';if(!fs.existsSync(p))process.exit(1);process.exit(/DOPPLER_TOKEN=\\S/.test(fs.readFileSync(p,'utf-8'))?0:1)\""
+			}
+		]
+	},
+	"hooks": {
+		"on_enable": "echo 'Doppler extension enabled. Add your Doppler service token to .indusk/extensions/doppler/.env (copy from .env.example), then env auto-provisions on worktree create.'",
+		"on_disable": "echo 'Doppler extension disabled. .indusk/extensions/doppler/.env is left in place; remove it manually if you no longer want the token on disk.'"
+	},
+	"detect": {
+		"file": ".indusk/extensions/doppler/.env"
+	}
+}
