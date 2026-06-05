@@ -1,7 +1,7 @@
 {
 	"name": "doppler",
 	"description": "Doppler-backed environment management — env vars from Doppler branched configs + plain docker-compose, with per-worktree auto-provisioning. Replaces composable.env as the default InDusk env layer.",
-	"required": false,
+	"required": true,
 	"provides": {
 		"skill": true,
 		"health_checks": [

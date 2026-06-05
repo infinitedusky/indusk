@@ -10,6 +10,23 @@ import { envIsFunctional } from "./extensions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../../..");
+
+/**
+ * composable.env deprecation notice. Returns a non-destructive nudge toward the
+ * `doppler` extension when the project still has a `ce.json`, else null. Pure
+ * read — never mutates or removes the project's composable.env setup, so the
+ * legacy opt-in keeps working.
+ */
+export function ceDeprecationNotice(projectRoot: string): string | null {
+	if (!existsSync(join(projectRoot, "ce.json"))) return null;
+	return [
+		"\n[composable.env]",
+		"  ⚠ composable.env is deprecated in favor of the `doppler` extension",
+		"    (Doppler + plain docker-compose; per-worktree auto-provisioning).",
+		"    Your ce.json is untouched — composable.env keeps working (opt-in).",
+		"    To migrate, see numero's `composable-env-removal` plan as the worked example.",
+	].join("\n");
+}
 const pkgJsonPath = join(packageRoot, "package.json");
 
 function fileHash(path: string): string {
@@ -499,6 +516,10 @@ export async function update(projectRoot: string): Promise<void> {
 	console.info("\n[Required Extensions]\n");
 	const { autoEnableExtensions } = await import("./extensions.js");
 	await autoEnableExtensions(projectRoot);
+
+	// composable.env deprecation nudge (non-destructive — only prints).
+	const ceNotice = ceDeprecationNotice(projectRoot);
+	if (ceNotice) console.info(ceNotice);
 
 	// 7c. SCM field migration. Pre-1.28.x projects don't have `scm` in their
 	// config — detect once and write it back. Idempotent on subsequent runs:

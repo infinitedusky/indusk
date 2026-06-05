@@ -1203,6 +1203,12 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	const { autoEnableExtensions } = await import("./extensions.js");
 	await autoEnableExtensions(projectRoot);
 
+	// composable.env deprecation nudge if the project being initialized still
+	// carries a ce.json (non-destructive — just prints).
+	const { ceDeprecationNotice } = await import("./update.js");
+	const ceNotice = ceDeprecationNotice(projectRoot);
+	if (ceNotice) console.info(ceNotice);
+
 	// 12. Write .indusk/config.json — InDusk is opinionated: linter is always
 	// Biome. ESLint/Prettier detection becomes a vestige warning (see step 6.5),
 	// not a recorded preference. Dawn (v2) will move this to a config-file-driven
