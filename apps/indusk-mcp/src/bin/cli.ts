@@ -689,4 +689,17 @@ worktreeCmd
 		worktreePreflight(slug, baseBranch);
 	});
 
+// ---- doppler extension: env management ----
+const dopplerCmd = program.command("doppler").description("Doppler env management (env-pull)");
+
+dopplerCmd
+	.command("env-pull <profile>")
+	.description(
+		"Materialize apps/<app>/.env.<profile> from Doppler (profile: local | staging | production), using the InDusk-level service token",
+	)
+	.action(async (profile: string) => {
+		const { dopplerEnvPull } = await import("./commands/doppler.js");
+		dopplerEnvPull(rootOrExit(), profile);
+	});
+
 program.parse();
