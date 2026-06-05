@@ -84,7 +84,7 @@ subsection is required (no Phase 1+ rows).
 - [ ] Write `apps/indusk-mcp/extensions/doppler/skill.md` — agent-facing: env via
       Doppler + plain docker-compose, the `env-pull` step, worktree
       auto-provisioning, and the InDusk-level token model.
-- [ ] Write `apps/indusk-mcp/extensions/doppler/.env.example` — documents
+- [x] Write `apps/indusk-mcp/extensions/doppler/.env.example` — documents
       `DOPPLER_TOKEN` + `DOPPLER_PROJECT` with inline comments (the `.env.example`
       → gitignored `.env` pattern dash0/local-telemetry already use).
 - [x] Health checks: `doppler` binary on PATH; token file present + non-empty.
