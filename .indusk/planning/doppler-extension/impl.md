@@ -81,7 +81,7 @@ subsection is required (no Phase 1+ rows).
 - [x] Create `apps/indusk-mcp/extensions/doppler/manifest.json` — `name: doppler`,
       `required: false` for now (default-enable lands in Phase 4), `provides:
       [skill, health_checks]`, `hooks: { on_enable, on_disable }`.
-- [ ] Write `apps/indusk-mcp/extensions/doppler/skill.md` — agent-facing: env via
+- [x] Write `apps/indusk-mcp/extensions/doppler/skill.md` — agent-facing: env via
       Doppler + plain docker-compose, the `env-pull` step, worktree
       auto-provisioning, and the InDusk-level token model.
 - [x] Write `apps/indusk-mcp/extensions/doppler/.env.example` — documents
