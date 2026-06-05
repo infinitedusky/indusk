@@ -115,26 +115,30 @@ describe("doppler extension — Test Trajectory", () => {
 	);
 
 	// T7 — Passes at Phase 2 (gitignore). Provisioned env files never show in git status.
-	it.skipIf(SHOULD_SKIP)("T7: provisioned .env.<profile> files are gitignored", () => {
-		spawnSync("git", ["init", "-q"], { cwd: projectDir });
-		mkdirSync(join(projectDir, "apps/admin"), { recursive: true });
-		mkdirSync(join(projectDir, ".indusk/extensions/doppler"), { recursive: true });
-		writeFileSync(
-			join(projectDir, ".indusk/extensions/doppler/.env"),
-			"DOPPLER_TOKEN=t\nDOPPLER_PROJECT=demo\n",
-		);
-		const env = stubDoppler({ loc_admin: { SECRET: "x" } });
-		runCli(["doppler", "env-pull", "local"], env);
-		expect(existsSync(join(projectDir, "apps/admin/.env.local"))).toBe(true);
-		const status =
-			spawnSync("git", ["status", "--porcelain", "-uall"], {
-				cwd: projectDir,
-				encoding: "utf-8",
-			}).stdout ?? "";
-		// the provisioned env file and the InDusk-level token are both gitignored
-		expect(status).not.toMatch(/apps\/admin\/\.env\.local/);
-		expect(status).not.toMatch(/extensions\/doppler\/\.env$/m);
-	}, 30_000);
+	it.skipIf(SHOULD_SKIP)(
+		"T7: provisioned .env.<profile> files are gitignored",
+		() => {
+			spawnSync("git", ["init", "-q"], { cwd: projectDir });
+			mkdirSync(join(projectDir, "apps/admin"), { recursive: true });
+			mkdirSync(join(projectDir, ".indusk/extensions/doppler"), { recursive: true });
+			writeFileSync(
+				join(projectDir, ".indusk/extensions/doppler/.env"),
+				"DOPPLER_TOKEN=t\nDOPPLER_PROJECT=demo\n",
+			);
+			const env = stubDoppler({ loc_admin: { SECRET: "x" } });
+			runCli(["doppler", "env-pull", "local"], env);
+			expect(existsSync(join(projectDir, "apps/admin/.env.local"))).toBe(true);
+			const status =
+				spawnSync("git", ["status", "--porcelain", "-uall"], {
+					cwd: projectDir,
+					encoding: "utf-8",
+				}).stdout ?? "";
+			// the provisioned env file and the InDusk-level token are both gitignored
+			expect(status).not.toMatch(/apps\/admin\/\.env\.local/);
+			expect(status).not.toMatch(/extensions\/doppler\/\.env$/m);
+		},
+		30_000,
+	);
 
 	// T3 — Passes at Phase 3 (worktree auto-provision). THE load-bearing assertion.
 	it.skip("T3: indusk worktree create auto-provisions a build-ready worktree (no manual env step)", () => {

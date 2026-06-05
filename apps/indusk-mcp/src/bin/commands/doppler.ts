@@ -97,12 +97,16 @@ export function dopplerEnvPull(projectRoot: string, profile: string): void {
 			{ encoding: "utf-8" },
 		);
 		if (res.status !== 0) {
-			console.error(`  ${app}: skipped — doppler download failed for ${config}: ${(res.stderr ?? "").trim()}`);
+			console.error(
+				`  ${app}: skipped — doppler download failed for ${config}: ${(res.stderr ?? "").trim()}`,
+			);
 			continue;
 		}
 		writeFileSync(join(appsDir, app, `.env.${profile}`), res.stdout);
-		console.log(`  ${app} → apps/${app}/.env.${profile}`);
+		console.info(`  ${app} → apps/${app}/.env.${profile}`);
 		written++;
 	}
-	console.log(`env-pull (${profile}): wrote ${written} file(s) from Doppler project "${project}".`);
+	console.info(
+		`env-pull (${profile}): wrote ${written} file(s) from Doppler project "${project}".`,
+	);
 }
