@@ -3,12 +3,17 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { join } from "node:path";
 
 /**
- * doppler extension — `env-pull` command.
+ * doppler extension — `env-pull` + worktree auto-provisioning.
  *
- * Reads the InDusk-level service token from `.indusk/extensions/doppler/.env`,
- * then for each app under `apps/*` runs
+ * `env-pull` reads the InDusk-level service token from
+ * `<tokenRoot>/.indusk/extensions/doppler/.env`, then for each app under
+ * `<appsRoot>/apps/*` runs
  *   doppler secrets download --project <P> --config <prefix>_<app> --format env
- * and writes the result to `apps/<app>/.env.<profile>` (gitignored).
+ * and writes `<appsRoot>/apps/<app>/.env.<profile>` (gitignored).
+ *
+ * For a standalone project tokenRoot === appsRoot === projectRoot. For a worktree
+ * the token lives at the workbench root while apps live in the worktree, so the
+ * two roots differ (see `provisionWorktreeEnv`).
  *
  * Profiles map to Doppler config prefixes: local→loc, staging→stg, production→prd.
  * The `test` profile is intentionally NOT pulled — `.env.test` is committed to git
@@ -40,6 +45,13 @@ function parseEnvFile(path: string): Record<string, string> {
 	return out;
 }
 
+/** Read the InDusk-level Doppler token + project, or null if not configured. */
+function readDopplerCreds(tokenRoot: string): { token: string; project: string } | null {
+	const env = parseEnvFile(join(tokenRoot, ".indusk/extensions/doppler/.env"));
+	if (!env.DOPPLER_TOKEN || !env.DOPPLER_PROJECT) return null;
+	return { token: env.DOPPLER_TOKEN, project: env.DOPPLER_PROJECT };
+}
+
 /** Idempotently ensure the provisioned env files (and the token) are gitignored. */
 function ensureGitignore(projectRoot: string): void {
 	const path = join(projectRoot, ".gitignore");
@@ -49,31 +61,46 @@ function ensureGitignore(projectRoot: string): void {
 	writeFileSync(path, `${current}${prefix}\n${GITIGNORE_BLOCK.join("\n")}\n`);
 }
 
-export function dopplerEnvPull(projectRoot: string, profile: string): void {
+interface EnvPullOptions {
+	manageGitignore?: boolean;
+	quiet?: boolean;
+}
+
+/**
+ * Pull env from Doppler for every app under `appsRoot/apps`, using the token at
+ * `tokenRoot`. Returns the number of files written, or -1 on a hard error
+ * (bad profile / missing token / no apps dir).
+ */
+function runEnvPull(
+	tokenRoot: string,
+	appsRoot: string,
+	profile: string,
+	opts: EnvPullOptions = {},
+): number {
 	const prefix = PROFILE_PREFIX[profile];
 	if (!prefix) {
 		console.error(`Unknown profile "${profile}". Use one of: local, staging, production.`);
-		process.exit(1);
+		return -1;
 	}
 
-	const tokenEnv = parseEnvFile(join(projectRoot, ".indusk/extensions/doppler/.env"));
-	const token = tokenEnv.DOPPLER_TOKEN;
-	const project = tokenEnv.DOPPLER_PROJECT;
-	if (!token || !project) {
-		console.error(
-			"Missing DOPPLER_TOKEN or DOPPLER_PROJECT in .indusk/extensions/doppler/.env.\n" +
-				"Copy the template: cp .indusk/extensions/doppler/.env.example .indusk/extensions/doppler/.env",
-		);
-		process.exit(1);
+	const creds = readDopplerCreds(tokenRoot);
+	if (!creds) {
+		if (!opts.quiet) {
+			console.error(
+				"Missing DOPPLER_TOKEN or DOPPLER_PROJECT in .indusk/extensions/doppler/.env.\n" +
+					"Copy the template: cp .indusk/extensions/doppler/.env.example .indusk/extensions/doppler/.env",
+			);
+		}
+		return -1;
 	}
 
-	const appsDir = join(projectRoot, "apps");
+	const appsDir = join(appsRoot, "apps");
 	if (!existsSync(appsDir)) {
-		console.error(`No apps/ directory at ${appsDir} — nothing to provision.`);
-		process.exit(1);
+		if (!opts.quiet) console.error(`No apps/ directory at ${appsDir} — nothing to provision.`);
+		return -1;
 	}
 
-	ensureGitignore(projectRoot);
+	if (opts.manageGitignore) ensureGitignore(appsRoot);
 
 	const apps = readdirSync(appsDir).filter((a) => statSync(join(appsDir, a)).isDirectory());
 	let written = 0;
@@ -85,28 +112,55 @@ export function dopplerEnvPull(projectRoot: string, profile: string): void {
 				"secrets",
 				"download",
 				"--project",
-				project,
+				creds.project,
 				"--config",
 				config,
 				"--format",
 				"env",
 				"--no-file",
 				"--token",
-				token,
+				creds.token,
 			],
 			{ encoding: "utf-8" },
 		);
 		if (res.status !== 0) {
-			console.error(
-				`  ${app}: skipped — doppler download failed for ${config}: ${(res.stderr ?? "").trim()}`,
-			);
+			if (!opts.quiet) {
+				console.error(
+					`  ${app}: skipped — doppler download failed for ${config}: ${(res.stderr ?? "").trim()}`,
+				);
+			}
 			continue;
 		}
 		writeFileSync(join(appsDir, app, `.env.${profile}`), res.stdout);
-		console.info(`  ${app} → apps/${app}/.env.${profile}`);
+		if (!opts.quiet) console.info(`  ${app} → apps/${app}/.env.${profile}`);
 		written++;
 	}
-	console.info(
-		`env-pull (${profile}): wrote ${written} file(s) from Doppler project "${project}".`,
-	);
+	if (!opts.quiet) {
+		console.info(
+			`env-pull (${profile}): wrote ${written} file(s) from Doppler project "${creds.project}".`,
+		);
+	}
+	return written;
+}
+
+/** CLI entry: `indusk doppler env-pull <profile>` — token + apps both at projectRoot. */
+export function dopplerEnvPull(projectRoot: string, profile: string): void {
+	if (runEnvPull(projectRoot, projectRoot, profile, { manageGitignore: true }) < 0) {
+		process.exit(1);
+	}
+}
+
+/**
+ * Auto-provision a freshly-created worktree's env: token from the workbench root,
+ * apps from the worktree. Returns true if doppler is configured (token present)
+ * and provisioning ran; false to skip silently (extension not set up).
+ */
+export function provisionWorktreeEnv(
+	workbenchRoot: string,
+	worktreeDir: string,
+	profile = "local",
+): boolean {
+	if (!readDopplerCreds(workbenchRoot)) return false;
+	runEnvPull(workbenchRoot, worktreeDir, profile, { manageGitignore: false });
+	return true;
 }
