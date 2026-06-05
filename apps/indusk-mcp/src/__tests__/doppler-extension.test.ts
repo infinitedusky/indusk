@@ -93,23 +93,48 @@ describe("doppler extension — Test Trajectory", () => {
 		30_000,
 	);
 
-	// T2 — Passes at Phase 2 (env-pull). Unblocks once the env-pull step exists.
-	it.skip("T2: env-pull writes apps/<app>/.env.<profile> from (stubbed) Doppler", () => {
-		mkdirSync(join(projectDir, "apps/admin"), { recursive: true });
-		writeFileSync(join(projectDir, ".indusk/extensions/doppler/.env"), "DOPPLER_TOKEN=t\nDOPPLER_PROJECT=demo\n");
-		const env = stubDoppler({ loc_admin: { DATABASE_URL: "postgres://local", PORT: "3000" } });
-		runCli(["env-pull", "local"], env); // command lands in Phase 2
-		const dotenv = readFileSync(join(projectDir, "apps/admin/.env.local"), "utf-8");
-		expect(dotenv).toMatch(/DATABASE_URL=postgres:\/\/local/);
-		expect(dotenv).toMatch(/PORT=3000/);
-	});
+	// T2 — Passes at Phase 2 (env-pull).
+	it.skipIf(SHOULD_SKIP)(
+		"T2: env-pull writes apps/<app>/.env.<profile> from (stubbed) Doppler",
+		() => {
+			mkdirSync(join(projectDir, "apps/admin"), { recursive: true });
+			mkdirSync(join(projectDir, ".indusk/extensions/doppler"), { recursive: true });
+			writeFileSync(
+				join(projectDir, ".indusk/extensions/doppler/.env"),
+				"DOPPLER_TOKEN=t\nDOPPLER_PROJECT=demo\n",
+			);
+			const env = stubDoppler({ loc_admin: { DATABASE_URL: "postgres://local", PORT: "3000" } });
+			const r = runCli(["doppler", "env-pull", "local"], env);
+			const out = join(projectDir, "apps/admin/.env.local");
+			expect(existsSync(out), `stdout:\n${r.stdout}\nstderr:\n${r.stderr}`).toBe(true);
+			const dotenv = readFileSync(out, "utf-8");
+			expect(dotenv).toMatch(/DATABASE_URL=postgres:\/\/local/);
+			expect(dotenv).toMatch(/PORT=3000/);
+		},
+		30_000,
+	);
 
 	// T7 — Passes at Phase 2 (gitignore). Provisioned env files never show in git status.
-	it.skip("T7: provisioned .env.<profile> files are gitignored", () => {
-		// After env-pull (Phase 2), `git status --porcelain` in the project shows
-		// no apps/*/.env.* entries — the gitignore wiring covers them.
-		expect(true).toBe(true);
-	});
+	it.skipIf(SHOULD_SKIP)("T7: provisioned .env.<profile> files are gitignored", () => {
+		spawnSync("git", ["init", "-q"], { cwd: projectDir });
+		mkdirSync(join(projectDir, "apps/admin"), { recursive: true });
+		mkdirSync(join(projectDir, ".indusk/extensions/doppler"), { recursive: true });
+		writeFileSync(
+			join(projectDir, ".indusk/extensions/doppler/.env"),
+			"DOPPLER_TOKEN=t\nDOPPLER_PROJECT=demo\n",
+		);
+		const env = stubDoppler({ loc_admin: { SECRET: "x" } });
+		runCli(["doppler", "env-pull", "local"], env);
+		expect(existsSync(join(projectDir, "apps/admin/.env.local"))).toBe(true);
+		const status =
+			spawnSync("git", ["status", "--porcelain", "-uall"], {
+				cwd: projectDir,
+				encoding: "utf-8",
+			}).stdout ?? "";
+		// the provisioned env file and the InDusk-level token are both gitignored
+		expect(status).not.toMatch(/apps\/admin\/\.env\.local/);
+		expect(status).not.toMatch(/extensions\/doppler\/\.env$/m);
+	}, 30_000);
 
 	// T3 — Passes at Phase 3 (worktree auto-provision). THE load-bearing assertion.
 	it.skip("T3: indusk worktree create auto-provisions a build-ready worktree (no manual env step)", () => {

@@ -47,12 +47,12 @@ migrating dusk off ce.
 | ID | Asserts | Writable at | Passes at | State | Kind |
 |----|---------|-------------|-----------|-------|------|
 | T1 | Enabling the doppler extension produces `.indusk/extensions/doppler/.env.example` documenting the token + config | Phase 0 | Phase 1 | passing | integration |
-| T2 | With a token in the gitignored `.env`, the env-pull step populates each app's `.env.<profile>` from Doppler | Phase 0 | Phase 2 | written | integration (stub) |
+| T2 | With a token in the gitignored `.env`, the env-pull step populates each app's `.env.<profile>` from Doppler | Phase 0 | Phase 2 | passing | integration (stub) |
 | T3 | After `indusk worktree create <slug>`, the new worktree's apps have populated `.env` files — no manual env step | Phase 0 | Phase 3 | written | integration (stub) |
 | T4 | A fresh `indusk init` enables the doppler extension and does not create the composable.env `env/` contract tree | Phase 0 | Phase 4 | written | integration |
 | T5 | `indusk update` on a composable.env project reports the ce deprecation + migration path and leaves ce working | Phase 0 | Phase 4 | written | integration |
 | T6 | The composable-env extension can still be explicitly enabled (opt-in for legacy) | Phase 0 | Phase 4 | written | integration |
-| T7 | doppler-provisioned `.env.<profile>` files never appear in `git status` (trunk or worktree) | Phase 0 | Phase 2 | written | integration (stub) |
+| T7 | doppler-provisioned `.env.<profile>` files never appear in `git status` (trunk or worktree) | Phase 0 | Phase 2 | passing | integration (stub) |
 | T8 | dusk's local stack comes up with composable.env removed — no `ce` invocation in the run path | Phase 0 | Phase 5 | planned | manual smoke |
 | T9 | A dev whose only setup was dropping the token in the gitignored file creates a worktree that builds | Phase 0 | Phase 5 | planned | manual smoke |
 
@@ -104,26 +104,30 @@ subsection is required (no Phase 1+ rows).
       token model sections; filled out in Phase 5).
 
 ### Phase 2: `env-pull` script + per-app provisioning
-- [ ] Write the `env-pull` script (extension-owned): read the token from the
+- [x] Write the `env-pull` script (extension-owned): read the token from the
       InDusk-level gitignored `.env`, iterate `apps/*/`, run `doppler secrets
       download --project $P --config <prefix>_<app> --format env` per app, write
-      `apps/<app>/.env.<profile>`.
-- [ ] gitignore wiring: ensure `.env.<profile>` (and the extension `.env`) are
-      gitignored in the target project.
-- [ ] `pnpm env:pull <profile>` alias template for scaffolded projects.
+      `apps/<app>/.env.<profile>`. → `indusk doppler env-pull <profile>` in
+      `src/bin/commands/doppler.ts` (profile local/staging/production → loc/stg/prd).
+- [x] gitignore wiring: ensure `.env.<profile>` (and the extension `.env`) are
+      gitignored in the target project. → `ensureGitignore()` idempotently appends
+      a marked block (`.indusk/extensions/doppler/.env`, `apps/*/.env.{local,staging,production}`).
+- [x] `pnpm env:pull <profile>` alias template for scaffolded projects. → maps to
+      `indusk doppler env-pull`; the package.json script is scaffolded into projects
+      by `init` in Phase 4 (documented in skill.md).
 
 #### Phase 2 Verification
-- [ ] T2 goes green — env-pull writes each app's `.env.<profile>` from the
-      stubbed Doppler fixture (`pnpm turbo test --filter=indusk-mcp -- doppler`).
-- [ ] T7 goes green — provisioned files are gitignored (clean `git status`).
+- [x] T2 goes green — env-pull writes each app's `.env.<profile>` from the
+      stubbed Doppler fixture (`npx vitest run src/__tests__/doppler-extension.test.ts` — 3 passed, 4 skipped).
+- [x] T7 goes green — provisioned files are gitignored (`git status --porcelain -uall` omits them).
 
 #### Phase 2 Context
-- [ ] Add to CLAUDE.md Conventions: doppler env-pull writes per-app
+- [x] Add to CLAUDE.md Conventions: doppler env-pull writes per-app
       `.env.<profile>` (gitignored) from the InDusk-level token; these files are
       machine-local provisioning output and must never be committed.
 
 #### Phase 2 Document
-- [ ] Add the `env-pull` + per-app `.env` section to `reference/extensions/doppler.md`.
+- [x] Add the `env-pull` + per-app `.env` section to `reference/extensions/doppler.md`.
 
 ### Phase 3: Worktree-create auto-provisioning (load-bearing — A3)
 - [ ] Hook env-pull into the worktree provisioning flow (`indusk worktree create`

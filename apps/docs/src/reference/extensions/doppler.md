@@ -43,9 +43,42 @@ auto-provisions its env.
 
 ## env-pull
 
-*(Filled out in Phase 2.)* `pnpm env:pull <profile>` downloads each app's
-`<prefix>_<app>` Doppler config and writes `apps/<app>/.env.<profile>`
-(gitignored).
+`indusk doppler env-pull <profile>` materializes env files from Doppler:
+
+```sh
+indusk doppler env-pull local        # → apps/*/.env.local
+indusk doppler env-pull staging      # → apps/*/.env.staging
+indusk doppler env-pull production   # → apps/*/.env.production
+```
+
+For each app under `apps/*`, it runs:
+
+```sh
+doppler secrets download --project <DOPPLER_PROJECT> --config <prefix>_<app> --format env
+```
+
+where `<prefix>` maps the profile (`local`→`loc`, `staging`→`stg`,
+`production`→`prd`) and the project + service token come from
+`.indusk/extensions/doppler/.env`. The result is written to
+`apps/<app>/.env.<profile>`.
+
+Scaffolded projects get a `pnpm env:pull <profile>` alias for this command.
+
+### Gitignore
+
+env-pull idempotently adds a marked block to the project's `.gitignore`:
+
+```
+# doppler env-pull (machine-local, provisioned from Doppler)
+.indusk/extensions/doppler/.env
+apps/*/.env.local
+apps/*/.env.staging
+apps/*/.env.production
+```
+
+The provisioned files and the token are machine-local and never committed.
+`.env.test` is the exception — committed with safe, non-secret defaults so tests
+run without Doppler access, and is **not** pulled by env-pull.
 
 ## Worktree auto-provisioning
 
