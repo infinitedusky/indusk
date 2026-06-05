@@ -175,20 +175,64 @@ describe("doppler extension — Test Trajectory", () => {
 		60_000,
 	);
 
-	// T4 — Passes at Phase 4 (init posture).
-	it.skip("T4: a fresh indusk init enables doppler and creates no composable.env env/ tree", () => {
-		// `indusk init` → .indusk/extensions/doppler enabled; no top-level env/ contract dir.
-		expect(true).toBe(true);
-	});
+	// T4 — Passes at Phase 4. doppler is required:true, so autoEnableExtensions
+	// (what init/update call) enables it by default. local-telemetry is disabled
+	// here only to isolate doppler from its daemon-starting on_enable hook.
+	it.skipIf(SHOULD_SKIP)(
+		"T4: a fresh project enables doppler by default and gets no composable.env env/ tree",
+		async () => {
+			writeFileSync(
+				join(projectDir, ".indusk/config.json"),
+				JSON.stringify({
+					mode: "normal",
+					otel: { role: "none" },
+					disabled_extensions: ["local-telemetry"],
+				}),
+			);
+			const { autoEnableExtensions } = await import("../bin/commands/extensions.js");
+			await autoEnableExtensions(projectDir);
+			expect(existsSync(join(projectDir, ".indusk/extensions/doppler"))).toBe(true);
+			// composable.env contract tree is never scaffolded
+			expect(existsSync(join(projectDir, "env"))).toBe(false);
+		},
+		30_000,
+	);
 
-	// T5 — Passes at Phase 4 (update deprecation, non-destructive).
-	it.skip("T5: indusk update on a composable.env project reports ce deprecation + migration path, ce still works", () => {
-		expect(true).toBe(true);
-	});
+	// T5 — Passes at Phase 4. The ce deprecation notice (what init/update print)
+	// reports the deprecation + migration path for a composable.env project.
+	it.skipIf(SHOULD_SKIP)(
+		"T5: ce deprecation notice reports deprecation + migration path, non-destructively",
+		async () => {
+			writeFileSync(join(projectDir, "ce.json"), "{}\n");
+			const { ceDeprecationNotice } = await import("../bin/commands/update.js");
+			const notice = ceDeprecationNotice(projectDir);
+			expect(notice).toBeTruthy();
+			expect(notice).toMatch(/deprecated/);
+			expect(notice).toMatch(/doppler/);
+			expect(notice).toMatch(/composable-env-removal|migrate/);
+			// non-destructive: ce.json is left untouched
+			expect(existsSync(join(projectDir, "ce.json"))).toBe(true);
+		},
+		30_000,
+	);
 
-	// T6 — Passes at Phase 4 (ce opt-in regression guard).
-	it.skip("T6: the composable-env extension can still be explicitly enabled (opt-in)", () => {
-		const r = runCli(["extensions", "enable", "composable-env"]);
-		expect(r.stdout).toMatch(/composable-env: enabled|already enabled/);
-	});
+	// T6 — Passes at Phase 4. composable.env stays opt-in: doppler-as-default does
+	// NOT remove or break an existing ce setup, and clean projects get no notice.
+	// (composable-env is not a built-in indusk-mcp extension — it's added via
+	//  `ce add-skill` — so the legacy guarantee is "ce.json survives", not
+	//  "extensions enable composable-env".)
+	it.skipIf(SHOULD_SKIP)(
+		"T6: composable.env stays opt-in — ce.json survives and the notice is read-only",
+		async () => {
+			writeFileSync(join(projectDir, "ce.json"), '{"keep":true}\n');
+			const { ceDeprecationNotice } = await import("../bin/commands/update.js");
+			ceDeprecationNotice(projectDir);
+			ceDeprecationNotice(projectDir);
+			expect(readFileSync(join(projectDir, "ce.json"), "utf-8")).toBe('{"keep":true}\n');
+			// a clean project (no ce.json) produces no notice
+			rmSync(join(projectDir, "ce.json"));
+			expect(ceDeprecationNotice(projectDir)).toBeNull();
+		},
+		30_000,
+	);
 });

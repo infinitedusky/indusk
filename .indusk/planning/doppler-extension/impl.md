@@ -49,9 +49,9 @@ migrating dusk off ce.
 | T1 | Enabling the doppler extension produces `.indusk/extensions/doppler/.env.example` documenting the token + config | Phase 0 | Phase 1 | passing | integration |
 | T2 | With a token in the gitignored `.env`, the env-pull step populates each app's `.env.<profile>` from Doppler | Phase 0 | Phase 2 | passing | integration (stub) |
 | T3 | After `indusk worktree create <slug>`, the new worktree's apps have populated `.env` files — no manual env step | Phase 0 | Phase 3 | passing | integration (stub) |
-| T4 | A fresh `indusk init` enables the doppler extension and does not create the composable.env `env/` contract tree | Phase 0 | Phase 4 | written | integration |
-| T5 | `indusk update` on a composable.env project reports the ce deprecation + migration path and leaves ce working | Phase 0 | Phase 4 | written | integration |
-| T6 | The composable-env extension can still be explicitly enabled (opt-in for legacy) | Phase 0 | Phase 4 | written | integration |
+| T4 | A fresh `indusk init` enables the doppler extension and does not create the composable.env `env/` contract tree | Phase 0 | Phase 4 | passing | integration |
+| T5 | `indusk update` on a composable.env project reports the ce deprecation + migration path and leaves ce working | Phase 0 | Phase 4 | passing | integration |
+| T6 | composable.env stays opt-in — an existing ce.json survives the doppler default unchanged (composable-env is not a built-in extension; the legacy guarantee is non-destruction) | Phase 0 | Phase 4 | passing | integration |
 | T7 | doppler-provisioned `.env.<profile>` files never appear in `git status` (trunk or worktree) | Phase 0 | Phase 2 | passing | integration (stub) |
 | T8 | dusk's local stack comes up with composable.env removed — no `ce` invocation in the run path | Phase 0 | Phase 5 | planned | manual smoke |
 | T9 | A dev whose only setup was dropping the token in the gitignored file creates a worktree that builds | Phase 0 | Phase 5 | planned | manual smoke |
@@ -154,26 +154,35 @@ subsection is required (no Phase 1+ rows).
       env-pull → per-app `.env`) to `reference/extensions/doppler.md`.
 
 ### Phase 4: init/update posture — doppler default, ce deprecated
-- [ ] `init`: scaffold the `doppler` extension + plain docker-compose templates by
-      default; stop scaffolding the composable.env `env/` contract tree.
-- [ ] Mark the `composable-env` extension deprecated in its manifest; keep it
-      enable-able (opt-in).
-- [ ] `update`: detect composable.env projects, print the deprecation + migration
-      path (point at numero's `composable-env-removal` as the worked example);
-      non-destructive (do not remove ce config).
+> **Discovery:** composable-env is NOT a built-in indusk-mcp extension (no
+> `extensions/composable-env/` — it's added externally via `ce add-skill`). So
+> there's no manifest to "mark deprecated" and no `extensions enable
+> composable-env`. The deprecation is therefore a **ce.json-detection notice**,
+> and T6 is reframed to the real legacy guarantee: ce.json survives unchanged.
+- [x] `init`/`update` enable doppler by default → flipped the doppler manifest to
+      `required: true`, so `autoEnableExtensions` Pass 1 enables it on every
+      init/update. (init never scaffolded an `env/` contract tree, so there's
+      nothing to stop — T4 asserts no `env/` is created.)
+- [x] composable.env deprecation: added `ceDeprecationNotice(projectRoot)` (exported
+      from `update.ts`) — a non-destructive nudge toward doppler, printed only when
+      `ce.json` is present. (No built-in composable-env manifest exists to mark.)
+- [x] `update` + `init` call the notice: detect `ce.json`, print the deprecation +
+      migration path (numero's `composable-env-removal`); ce.json untouched.
 
 #### Phase 4 Verification
-- [ ] T4 goes green — fresh `indusk init` enables doppler, no `env/` tree.
-- [ ] T5 goes green — `indusk update` on a ce project prints deprecation + path,
-      ce config still present.
-- [ ] T6 goes green — `indusk extensions enable composable-env` still activates it.
+- [x] T4 goes green — `autoEnableExtensions` (what init/update call) enables doppler;
+      no `env/` tree created.
+- [x] T5 goes green — `ceDeprecationNotice` returns the deprecation + migration text
+      for a ce project; ce.json left in place.
+- [x] T6 goes green — composable.env stays opt-in: ce.json survives, the notice is
+      read-only, and clean projects (no ce.json) get no notice.
 
 #### Phase 4 Context
-- [ ] Update CLAUDE.md Conventions: `init`/`update` scaffold the doppler extension
+- [x] Update CLAUDE.md Conventions: `init`/`update` scaffold the doppler extension
       by default; composable-env is deprecated to opt-in.
 
 #### Phase 4 Document
-- [ ] Write `apps/docs/src/guide/env.md` ("how env works in InDusk" — Doppler +
+- [x] Write `apps/docs/src/guide/env.md` ("how env works in InDusk" — Doppler +
       plain compose); mark the composable-env docs deprecated, pointing at doppler
       + numero's migration.
 
