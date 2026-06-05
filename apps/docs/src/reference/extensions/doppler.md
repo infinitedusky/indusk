@@ -82,8 +82,27 @@ run without Doppler access, and is **not** pulled by env-pull.
 
 ## Worktree auto-provisioning
 
-*(Filled out in Phase 3.)* `indusk worktree create <slug>` provisions the new
-worktree's env automatically — it comes up build-ready with no manual step.
+`indusk worktree create <slug>` provisions the new worktree's env automatically —
+it comes up build-ready with no manual step. After the worktree is created,
+`worktreeCreate` resolves the workbench root and pulls env using the
+**workbench-level** token, writing the **worktree's** `apps/*/.env.local`.
+
+```mermaid
+flowchart LR
+    T[".indusk/extensions/doppler/.env<br/>(workbench-level token)"]
+    C["indusk worktree create &lt;slug&gt;"]
+    P["env-pull (workbench token + worktree apps)"]
+    E["&lt;slug&gt;/apps/*/.env.local"]
+    C --> P
+    T -. token .-> P
+    P --> E
+    E --> R["worktree is build-ready"]
+```
+
+The token lives once at the workbench root and is shared by every worktree, so a
+freshly created worktree needs **zero** manual env steps. If the doppler
+extension isn't configured (no token), provisioning is skipped silently and
+worktree creation proceeds normally.
 
 ## Migrating off composable.env
 

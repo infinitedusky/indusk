@@ -48,7 +48,7 @@ migrating dusk off ce.
 |----|---------|-------------|-----------|-------|------|
 | T1 | Enabling the doppler extension produces `.indusk/extensions/doppler/.env.example` documenting the token + config | Phase 0 | Phase 1 | passing | integration |
 | T2 | With a token in the gitignored `.env`, the env-pull step populates each app's `.env.<profile>` from Doppler | Phase 0 | Phase 2 | passing | integration (stub) |
-| T3 | After `indusk worktree create <slug>`, the new worktree's apps have populated `.env` files — no manual env step | Phase 0 | Phase 3 | written | integration (stub) |
+| T3 | After `indusk worktree create <slug>`, the new worktree's apps have populated `.env` files — no manual env step | Phase 0 | Phase 3 | passing | integration (stub) |
 | T4 | A fresh `indusk init` enables the doppler extension and does not create the composable.env `env/` contract tree | Phase 0 | Phase 4 | written | integration |
 | T5 | `indusk update` on a composable.env project reports the ce deprecation + migration path and leaves ce working | Phase 0 | Phase 4 | written | integration |
 | T6 | The composable-env extension can still be explicitly enabled (opt-in for legacy) | Phase 0 | Phase 4 | written | integration |
@@ -130,22 +130,27 @@ subsection is required (no Phase 1+ rows).
 - [x] Add the `env-pull` + per-app `.env` section to `reference/extensions/doppler.md`.
 
 ### Phase 3: Worktree-create auto-provisioning (load-bearing — A3)
-- [ ] Hook env-pull into the worktree provisioning flow (`indusk worktree create`
+- [x] Hook env-pull into the worktree provisioning flow (`indusk worktree create`
       / `setup-worktree.sh`): after the worktree dir is created and `copy_files`
       applied, run env-pull for the worktree's apps using the workbench-level token.
-- [ ] Provisioning is automatic when the doppler extension is enabled (config-driven,
-      no extra per-worktree flag).
+      → `worktreeCreate` runs the setup script, then on success calls
+      `provisionWorktreeEnv(workbenchRoot, <workbench>/<slug>)` (token from workbench,
+      apps from worktree). `resolveWorkbenchRoot()` walks up to the workbench.
+- [x] Provisioning is automatic when the doppler extension is enabled (config-driven,
+      no extra per-worktree flag). → `provisionWorktreeEnv` returns false + skips
+      silently when no token at `.indusk/extensions/doppler/.env`.
 
 #### Phase 3 Verification
-- [ ] T3 goes green — `indusk worktree create <slug>` against the stubbed Doppler
-      yields a worktree whose apps have populated `.env` files, with no manual step.
+- [x] T3 goes green — `indusk worktree create <slug>` against the stubbed Doppler
+      yields a worktree whose apps have populated `.env` files, with no manual step
+      (`npx vitest run src/__tests__/doppler-extension.test.ts` — 4 passed, 3 skipped).
 
 #### Phase 3 Context
-- [ ] Add to CLAUDE.md Conventions: worktree creation auto-provisions env via the
+- [x] Add to CLAUDE.md Conventions: worktree creation auto-provisions env via the
       doppler extension from the workbench-level token; no per-worktree env step.
 
 #### Phase 3 Document
-- [ ] Add the worktree auto-provision flow + a Mermaid diagram (token → create →
+- [x] Add the worktree auto-provision flow + a Mermaid diagram (token → create →
       env-pull → per-app `.env`) to `reference/extensions/doppler.md`.
 
 ### Phase 4: init/update posture — doppler default, ce deprecated

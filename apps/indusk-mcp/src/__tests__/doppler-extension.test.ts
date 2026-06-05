@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { buildWorktreeFixture } from "./helpers/worktree-fixture.js";
 
 /**
  * Test Trajectory for the doppler-extension plan.
@@ -141,12 +142,38 @@ describe("doppler extension — Test Trajectory", () => {
 	);
 
 	// T3 — Passes at Phase 3 (worktree auto-provision). THE load-bearing assertion.
-	it.skip("T3: indusk worktree create auto-provisions a build-ready worktree (no manual env step)", () => {
-		// In a workbench with the doppler extension enabled + token present,
-		// `indusk worktree create <slug>` against stubDoppler() yields a worktree
-		// whose apps have populated .env files, with zero manual steps.
-		expect(true).toBe(true);
-	});
+	it.skipIf(SHOULD_SKIP)(
+		"T3: indusk worktree create auto-provisions a build-ready worktree (no manual env step)",
+		() => {
+			const fx = buildWorktreeFixture({
+				worktreeConfig: { trunk_branch: "main", base_branch: "main" },
+				extraFiles: [{ path: "apps/admin/package.json", content: '{"name":"admin"}\n' }],
+			});
+			try {
+				// doppler configured once at the workbench level (shared by every worktree)
+				mkdirSync(join(fx.workbenchDir, ".indusk/extensions/doppler"), { recursive: true });
+				writeFileSync(
+					join(fx.workbenchDir, ".indusk/extensions/doppler/.env"),
+					"DOPPLER_TOKEN=t\nDOPPLER_PROJECT=demo\n",
+				);
+				const env = stubDoppler({ loc_admin: { DATABASE_URL: "postgres://wt", PORT: "4000" } });
+				// run `indusk worktree create` FROM the workbench (no manual env step)
+				const r = spawnSync("node", [CLI_BIN, "worktree", "create", "feat-x"], {
+					cwd: fx.workbenchDir,
+					env: { ...process.env, INDUSK_SKIP_SELF_UPDATE: "1", ...env },
+					encoding: "utf-8",
+				});
+				const provisioned = join(fx.workbenchDir, "feat-x/apps/admin/.env.local");
+				expect(existsSync(provisioned), `stdout:\n${r.stdout}\nstderr:\n${r.stderr}`).toBe(true);
+				const contents = readFileSync(provisioned, "utf-8");
+				expect(contents).toMatch(/DATABASE_URL=postgres:\/\/wt/);
+				expect(contents).toMatch(/PORT=4000/);
+			} finally {
+				fx.cleanup();
+			}
+		},
+		60_000,
+	);
 
 	// T4 — Passes at Phase 4 (init posture).
 	it.skip("T4: a fresh indusk init enables doppler and creates no composable.env env/ tree", () => {
