@@ -271,4 +271,29 @@ describe("doppler extension — Test Trajectory", () => {
 		},
 		30_000,
 	);
+
+	// Token-optional: with NO token file, env-pull falls back to the logged-in
+	// Doppler CLI session (the stub stands in for it). Proves a `doppler login`
+	// dev needs no token file. (Old behavior hard-errored on a missing token.)
+	it.skipIf(SHOULD_SKIP)(
+		"env-pull works without a token (relies on the doppler CLI session)",
+		() => {
+			mkdirSync(join(projectDir, "apps/docs"), { recursive: true });
+			writeFileSync(
+				join(projectDir, ".indusk/config.json"),
+				JSON.stringify({
+					mode: "normal",
+					otel: { role: "none" },
+					doppler: { project: "indusk", profiles: { local: "local" }, apps: [{ dir: "docs" }] },
+				}),
+			);
+			// no .indusk/extensions/doppler/.env written → no token
+			const env = stubDoppler({ local_docs: { X: "1" } });
+			const r = runCli(["doppler", "env-pull", "local"], env);
+			const out = join(projectDir, "apps/docs/.env.local");
+			expect(existsSync(out), `stdout:\n${r.stdout}\nstderr:\n${r.stderr}`).toBe(true);
+			expect(readFileSync(out, "utf-8")).toMatch(/X=1/);
+		},
+		30_000,
+	);
 });

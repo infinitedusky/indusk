@@ -126,17 +126,11 @@ function runEnvPull(
 	}
 
 	const env = readDopplerEnv(tokenRoot);
-	const token = env.token;
+	// Auth precedence: explicit service token (CI via DOPPLER_TOKEN env, or the
+	// extension .env) → otherwise the logged-in Doppler CLI session (`doppler login`).
+	// So a dev who's logged in needs no token file; CI sets DOPPLER_TOKEN from a secret.
+	const token = process.env.DOPPLER_TOKEN ?? env.token;
 	const project = cfg.project ?? env.project;
-	if (!token) {
-		if (!opts.quiet) {
-			console.error(
-				"Missing DOPPLER_TOKEN in .indusk/extensions/doppler/.env.\n" +
-					"Copy the template: cp .indusk/extensions/doppler/.env.example .indusk/extensions/doppler/.env",
-			);
-		}
-		return -1;
-	}
 	if (!project) {
 		if (!opts.quiet) {
 			console.error(
@@ -163,23 +157,20 @@ function runEnvPull(
 			if (!opts.quiet) console.error(`  ${app.dir}: skipped — apps/${app.dir} not found`);
 			continue;
 		}
-		const res = spawnSync(
-			"doppler",
-			[
-				"secrets",
-				"download",
-				"--project",
-				project,
-				"--config",
-				leaf,
-				"--format",
-				"env",
-				"--no-file",
-				"--token",
-				token,
-			],
-			{ encoding: "utf-8" },
-		);
+		const dopplerArgs = [
+			"secrets",
+			"download",
+			"--project",
+			project,
+			"--config",
+			leaf,
+			"--format",
+			"env",
+			"--no-file",
+		];
+		// Only pass --token when we have one; otherwise rely on `doppler login`.
+		if (token) dopplerArgs.push("--token", token);
+		const res = spawnSync("doppler", dopplerArgs, { encoding: "utf-8" });
 		if (res.status !== 0) {
 			if (!opts.quiet) {
 				console.error(
@@ -208,16 +199,17 @@ export function dopplerEnvPull(projectRoot: string, profile: string): void {
 }
 
 /**
- * Auto-provision a freshly-created worktree's env: token + config from the workbench
- * root, apps written into the worktree. Returns true if doppler is configured (token
- * present) and provisioning ran; false to skip silently (extension not set up).
+ * Auto-provision a freshly-created worktree's env: token/config from the workbench
+ * root, apps written into the worktree. Attempts when the doppler extension is enabled
+ * for the workbench; auth resolves to a service token (env/.env) or the logged-in
+ * Doppler CLI session. Returns true if it ran without a hard error, false to skip
+ * silently (extension not enabled). Per-app download failures are non-fatal.
  */
 export function provisionWorktreeEnv(
 	workbenchRoot: string,
 	worktreeDir: string,
 	profile = "local",
 ): boolean {
-	if (!readDopplerEnv(workbenchRoot).token) return false;
-	runEnvPull(workbenchRoot, worktreeDir, profile, { manageGitignore: false });
-	return true;
+	if (!existsSync(join(workbenchRoot, ".indusk", "extensions", "doppler"))) return false;
+	return runEnvPull(workbenchRoot, worktreeDir, profile, { manageGitignore: false }) >= 0;
 }
