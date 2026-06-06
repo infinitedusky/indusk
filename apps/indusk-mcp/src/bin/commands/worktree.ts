@@ -3,6 +3,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from "
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateWorktreeConfig } from "../../lib/worktree/validate-config.js";
+import { provisionWorktreeEnv } from "./doppler.js";
 
 /**
  * `indusk worktree` subcommands.
@@ -94,7 +95,42 @@ function runWorktreeScript(scriptName: string, args: string[]): never {
 }
 
 export function worktreeCreate(slug: string, baseBranch?: string): never {
-	runWorktreeScript("setup-worktree", baseBranch ? [slug, baseBranch] : [slug]);
+	const pkgRoot = indusKMcpPackageRoot();
+	const script = resolve(pkgRoot, "extensions/worktree/scripts/setup-worktree.sh");
+	if (!existsSync(script)) {
+		console.error(`Error: setup-worktree.sh not found at ${script}`);
+		process.exit(1);
+	}
+	const r = spawnSync("bash", [script, ...(baseBranch ? [slug, baseBranch] : [slug])], {
+		cwd: process.cwd(),
+		stdio: "inherit",
+	});
+	const code = r.status ?? 1;
+	// On success, auto-provision the worktree's env if the doppler extension is
+	// configured (token at the workbench level). Skips silently otherwise.
+	if (code === 0) {
+		try {
+			const workbenchRoot = resolveWorkbenchRoot(process.cwd());
+			if (workbenchRoot && provisionWorktreeEnv(workbenchRoot, join(workbenchRoot, slug))) {
+				console.info(`  doppler: auto-provisioned env for ${slug}`);
+			}
+		} catch (e) {
+			console.error(`  doppler: env auto-provision failed — ${(e as Error).message}`);
+		}
+	}
+	process.exit(code);
+}
+
+/** Walk up from `start` to the nearest workbench root (`.indusk/config.json` with worktree.shape === "workbench"). */
+function resolveWorkbenchRoot(start: string): string | null {
+	let dir = resolve(start);
+	for (let i = 0; i < 40; i++) {
+		if (readWorkbenchConfig(dir)?.worktree?.shape === "workbench") return dir;
+		const parent = dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+	return null;
 }
 
 export function worktreeRefresh(slug: string): never {
