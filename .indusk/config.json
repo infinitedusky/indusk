@@ -28,5 +28,13 @@
 			"enabled": true
 		}
 	},
-	"scm": "git"
+	"scm": "git",
+	"doppler": {
+		"project": "indusk",
+		"profiles": {
+			"local": "local",
+			"production": "prd"
+		},
+		"apps": [{ "dir": "docs" }, { "dir": "indusk-admin", "config": "admin" }]
+	}
 }

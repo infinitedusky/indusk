@@ -235,4 +235,40 @@ describe("doppler extension — Test Trajectory", () => {
 		},
 		30_000,
 	);
+
+	// Config-driven (dawn "config as source of truth"): prefix override, folder↔config
+	// mapping, and explicit app list — all from .indusk/config.json's doppler section.
+	it.skipIf(SHOULD_SKIP)(
+		"config.doppler drives the prefix, folder↔config mapping, and app list",
+		() => {
+			for (const d of ["docs", "indusk-admin", "indusk-mcp"]) {
+				mkdirSync(join(projectDir, "apps", d), { recursive: true });
+			}
+			mkdirSync(join(projectDir, ".indusk/extensions/doppler"), { recursive: true });
+			writeFileSync(join(projectDir, ".indusk/extensions/doppler/.env"), "DOPPLER_TOKEN=t\n");
+			writeFileSync(
+				join(projectDir, ".indusk/config.json"),
+				JSON.stringify({
+					mode: "normal",
+					otel: { role: "none" },
+					doppler: {
+						project: "indusk",
+						profiles: { local: "local" },
+						apps: [{ dir: "docs" }, { dir: "indusk-admin", config: "admin" }],
+					},
+				}),
+			);
+			const env = stubDoppler({ local_docs: { D: "1" }, local_admin: { A: "2" } });
+			runCli(["doppler", "env-pull", "local"], env);
+			// docs ← local_docs (prefix "local", not the default "loc")
+			expect(readFileSync(join(projectDir, "apps/docs/.env.local"), "utf-8")).toMatch(/D=1/);
+			// indusk-admin folder ← local_admin (config-name override)
+			expect(readFileSync(join(projectDir, "apps/indusk-admin/.env.local"), "utf-8")).toMatch(
+				/A=2/,
+			);
+			// indusk-mcp is not in the app list → not provisioned
+			expect(existsSync(join(projectDir, "apps/indusk-mcp/.env.local"))).toBe(false);
+		},
+		30_000,
+	);
 });
