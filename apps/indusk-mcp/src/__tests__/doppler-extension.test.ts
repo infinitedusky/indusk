@@ -296,4 +296,37 @@ describe("doppler extension — Test Trajectory", () => {
 		},
 		30_000,
 	);
+
+	// `path` targets: env can land ANYWHERE, not just apps/<dir> — total composable.env
+	// replacement control (root .env, packages/*, services/*, etc.).
+	it.skipIf(SHOULD_SKIP)(
+		"config.doppler `path` targets write outside apps/ (repo root + packages)",
+		() => {
+			mkdirSync(join(projectDir, "packages/db"), { recursive: true });
+			mkdirSync(join(projectDir, ".indusk/extensions/doppler"), { recursive: true });
+			writeFileSync(join(projectDir, ".indusk/extensions/doppler/.env"), "DOPPLER_TOKEN=t\n");
+			writeFileSync(
+				join(projectDir, ".indusk/config.json"),
+				JSON.stringify({
+					mode: "normal",
+					otel: { role: "none" },
+					doppler: {
+						project: "indusk",
+						profiles: { local: "local" },
+						apps: [
+							{ path: ".", config: "root" },
+							{ path: "packages/db", config: "db" },
+						],
+					},
+				}),
+			);
+			const env = stubDoppler({ local_root: { R: "1" }, local_db: { DB: "2" } });
+			runCli(["doppler", "env-pull", "local"], env);
+			// repo-root target
+			expect(readFileSync(join(projectDir, ".env.local"), "utf-8")).toMatch(/R=1/);
+			// non-apps package target
+			expect(readFileSync(join(projectDir, "packages/db/.env.local"), "utf-8")).toMatch(/DB=2/);
+		},
+		30_000,
+	);
 });

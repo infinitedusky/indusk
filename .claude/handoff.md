@@ -43,11 +43,11 @@ Sandy left for a numero hackathon mid-thread. Last topic: how to reconstruct the
 - **`worktreeCreate` now imports `provisionWorktreeEnv` from `doppler.ts`** — the worktree extension and doppler extension are now coupled at the worktree-create flow. Don't break that import.
 
 ## Catchup Status
-- [ ] mcp-ready
-- [ ] handoff
-- [ ] lessons
-- [ ] skills
-- [ ] health
-- [ ] context
-- [ ] plans
-- [ ] extensions
+- [x] mcp-ready
+- [x] handoff
+- [x] lessons
+- [x] skills
+- [x] health
+- [x] context
+- [x] plans
+- [x] extensions

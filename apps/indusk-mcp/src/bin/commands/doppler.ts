@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 
 /**
  * doppler extension — `env-pull` + worktree auto-provisioning.
@@ -43,7 +43,8 @@ const GITIGNORE_BLOCK = [
 ];
 
 interface DopplerAppConfig {
-	dir: string;
+	dir?: string;
+	path?: string;
 	config?: string;
 }
 
@@ -151,10 +152,19 @@ function runEnvPull(
 
 	let written = 0;
 	for (const app of apps) {
-		const leaf = `${prefix}_${app.config ?? app.dir}`;
-		const outDir = join(appsRoot, "apps", app.dir);
+		// Output dir: explicit `path` (relative to project root) or the `apps/<dir>` shorthand.
+		const relDir = app.path ?? `apps/${app.dir}`;
+		// Doppler leaf: explicit `config`, else the dir name, else the path basename.
+		const name =
+			app.config ?? app.dir ?? (app.path && app.path !== "." ? basename(app.path) : undefined);
+		if (!name) {
+			if (!opts.quiet) console.error(`  ${relDir}: skipped — set a "config" for this target`);
+			continue;
+		}
+		const leaf = `${prefix}_${name}`;
+		const outDir = join(appsRoot, relDir);
 		if (!existsSync(outDir)) {
-			if (!opts.quiet) console.error(`  ${app.dir}: skipped — apps/${app.dir} not found`);
+			if (!opts.quiet) console.error(`  ${relDir}: skipped — ${relDir} not found`);
 			continue;
 		}
 		const dopplerArgs = [
@@ -174,13 +184,13 @@ function runEnvPull(
 		if (res.status !== 0) {
 			if (!opts.quiet) {
 				console.error(
-					`  ${app.dir}: skipped — doppler download failed for ${leaf}: ${(res.stderr ?? "").trim()}`,
+					`  ${relDir}: skipped — doppler download failed for ${leaf}: ${(res.stderr ?? "").trim()}`,
 				);
 			}
 			continue;
 		}
 		writeFileSync(join(outDir, `.env.${profile}`), res.stdout);
-		if (!opts.quiet) console.info(`  ${app.dir} → apps/${app.dir}/.env.${profile} (${leaf})`);
+		if (!opts.quiet) console.info(`  ${relDir} → ${relDir}/.env.${profile} (${leaf})`);
 		written++;
 	}
 	if (!opts.quiet) {

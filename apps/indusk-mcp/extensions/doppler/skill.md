@@ -36,10 +36,31 @@ inherits from `base`.
 
 ### env-pull materializes `.env` files
 
-`pnpm env:pull <profile>` walks `apps/*/`, calls
-`doppler secrets download --project <p> --config <prefix>_<app> --format env`
-for each app, and writes `apps/<app>/.env.<profile>` — gitignored. CI runs the
-same step before `docker compose up`.
+`indusk doppler env-pull <profile>` reads the project's `.indusk/config.json`
+`doppler` section and, for each target, downloads its Doppler config and writes
+`<path>/.env.<profile>` — gitignored. CI runs the same step before `docker compose up`.
+
+```jsonc
+"doppler": {
+  "project": "indusk",                                     // Doppler project
+  "profiles": { "local": "local", "production": "prd" },   // profile → config-root prefix
+  "apps": [
+    { "dir": "docs" },                          // → apps/docs/.env.<profile>  (config local_docs)
+    { "dir": "admin", "config": "admin" },      // folder name ≠ Doppler leaf
+    { "path": "packages/db", "config": "db" },  // ANY path, not just apps/ → packages/db/.env.<profile>
+    { "path": ".", "config": "root" }           // repo-root .env
+  ]
+}
+```
+
+- **`dir`** = `apps/<dir>` shorthand. **`path`** = any dir relative to the project
+  root (`.`, `packages/*`, `services/*`). Output is `<path>/.env.<profile>`.
+- **`config`** = the Doppler leaf suffix (downloads `<prefix>_<config>`); defaults
+  to the dir/basename.
+- **`profiles`** maps the profile arg to the Doppler config-root (`local`→`local`).
+
+With no `doppler` section, env-pull falls back to globbing `apps/*` with the default
+prefixes (`local`→`loc`, `staging`→`stg`, `production`→`prd`).
 
 Test profile is the exception: `.env.test` files are committed to git with safe,
 non-secret defaults so tests run without a Doppler token.
