@@ -1,0 +1,18 @@
+# dusk — root docker-compose (hand-written; replaces the composable.env-generated
+# files). Composes per-app fragments via `include:`. Each app owns its fragment,
+# co-located with its code; this root file just wires them together + holds any
+# shared infra. `project_directory: .` makes each fragment's relative paths resolve
+# from the repo root (so build contexts + env_file + volume paths stay
+# root-relative, matching the monorepo layout). Env comes from Doppler via
+# `indusk doppler env-pull`, which writes the apps/<app>/.env.* the fragments read.
+#
+#   indusk doppler env-pull local   # → apps/docs/.env.local
+#   docker compose up -d            # brings up the docs site
+name: dusk
+
+include:
+  - path: apps/docs/docker-compose.yml
+    project_directory: .
+  # add more apps here as they get dockerized:
+  #   - path: apps/indusk-admin/docker-compose.yml
+  #     project_directory: .

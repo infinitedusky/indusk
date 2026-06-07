@@ -1,0 +1,18 @@
+# docs service fragment — included by the root docker-compose.yml via `include:`.
+# Paths here are repo-root-relative because the root's include entry sets
+# `project_directory: .` (otherwise `include` would resolve them relative to this
+# file's directory). Keeping them root-relative matches the monorepo build, where
+# the docs image's context is the repo root and it needs the shared packages.
+services:
+  docs:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.vitepressdev
+    ports:
+      - "4173:4173"
+    volumes:
+      - ./apps/docs/src:/app/apps/docs/src
+    command: "@infinitedusky/docs"
+    env_file:
+      - apps/docs/.env.local
+    restart: unless-stopped
