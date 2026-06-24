@@ -106,19 +106,50 @@ export function worktreeCreate(slug: string, baseBranch?: string): never {
 		stdio: "inherit",
 	});
 	const code = r.status ?? 1;
-	// On success, auto-provision the worktree's env if the doppler extension is
-	// configured (token at the workbench level). Skips silently otherwise.
+	// On success: (1) auto-provision env via the doppler extension if configured,
+	// then (2) run the config's post_create commands (install/build/etc.) in the
+	// new worktree — so `worktree create` yields a runnable worktree in one shot.
 	if (code === 0) {
 		try {
 			const workbenchRoot = resolveWorkbenchRoot(process.cwd());
-			if (workbenchRoot && provisionWorktreeEnv(workbenchRoot, join(workbenchRoot, slug))) {
-				console.info(`  doppler: auto-provisioned env for ${slug}`);
+			if (workbenchRoot) {
+				const worktreeDir = join(workbenchRoot, slug);
+				if (provisionWorktreeEnv(workbenchRoot, worktreeDir)) {
+					console.info(`  doppler: auto-provisioned env for ${slug}`);
+				}
+				for (const cmd of readPostCreate(workbenchRoot)) {
+					console.info(`  post_create: ${cmd}`);
+					const pc = spawnSync(cmd, { cwd: worktreeDir, stdio: "inherit", shell: true });
+					if (pc.status !== 0) {
+						console.error(
+							`  post_create failed (exit ${pc.status ?? "?"}): ${cmd}\n` +
+								`  worktree created but not fully provisioned — fix, then re-run in ${worktreeDir}`,
+						);
+						break;
+					}
+				}
 			}
 		} catch (e) {
-			console.error(`  doppler: env auto-provision failed — ${(e as Error).message}`);
+			console.error(`  worktree provisioning failed — ${(e as Error).message}`);
 		}
 	}
 	process.exit(code);
+}
+
+/** Read `post_create` commands from the workbench's worktree config — run in each new worktree after create. */
+function readPostCreate(workbenchRoot: string): string[] {
+	const repo = readWorkbenchConfig(workbenchRoot)?.worktree?.wrapped_repo;
+	if (!repo) return [];
+	const p = join(workbenchRoot, ".indusk", "worktree-configs", `${repo}.json`);
+	if (!existsSync(p)) return [];
+	try {
+		const cfg = JSON.parse(readFileSync(p, "utf-8")) as { post_create?: unknown };
+		return Array.isArray(cfg.post_create)
+			? cfg.post_create.filter((c): c is string => typeof c === "string")
+			: [];
+	} catch {
+		return [];
+	}
 }
 
 /** Walk up from `start` to the nearest workbench root (`.indusk/config.json` with worktree.shape === "workbench"). */

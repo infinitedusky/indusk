@@ -94,6 +94,11 @@
 			"type": "string",
 			"description": "Recommended value for ce.json's top-level composeProjectName field (composable.env ≥ 1.37.7). Pins docker-compose project name for cross-cwd targeting. One stack per repo at a time.",
 			"minLength": 1
+		},
+		"post_create": {
+			"type": "array",
+			"description": "Shell commands run (via shell, in order) inside a new worktree after create + env provisioning — install/build/etc. First non-zero exit stops the rest. Makes `indusk worktree create` yield a runnable worktree in one shot.",
+			"items": { "type": "string", "minLength": 1 }
 		}
 	}
 }

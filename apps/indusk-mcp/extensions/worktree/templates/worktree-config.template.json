@@ -2,6 +2,7 @@
 	"$schema": "../../config.schema.json",
 	"trunk_branch": "main",
 	"base_branch": "main",
+	"post_create": ["pnpm install"],
 	"copy_files": [],
 	"append_files": [],
 	"apply_commits": [],
