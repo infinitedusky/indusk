@@ -167,7 +167,8 @@ The starter `.indusk/worktree-configs/<repo>.json` materialized by `indusk exten
   "preflight_env": {
     "MIGRATIONS_RELEVANT": ["packages/db/migrations/**"]
   },
-  "compose_project_name": "numero"
+  "compose_project_name": "numero",
+  "post_create": ["pnpm install", "pnpm build"]
 }
 ```
 
@@ -178,7 +179,8 @@ Field semantics:
 - `apply_commits[]` — upstream-file-overlay entries; see `indusk worktree create` above for semantics
 - `preflight[]` — commands to run as preflight; each has `name`, `command`, and optional `when` (env var name that must be truthy)
 - `preflight_env{}` — declarative path filters; for each key, glob-match its patterns against `CHANGED_FILES` and export the key as a truthy env var on match
-- `compose_project_name` — populates `ce.json`'s `composeProjectName` field for the workbench (cross-cwd docker-compose targeting)
+- `compose_project_name` — populates `ce.json`'s `composeProjectName` (cross-cwd docker-compose targeting). The same one-stack-per-repo model applies to plain docker-compose via the compose file's `name:` field — the doppler/default world
+- `post_create[]` — shell commands run in order inside a new worktree after create + env provisioning (`pnpm install`, build, etc.); first non-zero exit stops the rest and prints what to re-run. Makes `indusk worktree create` yield a *runnable* worktree
 
 Malformed configs produce clear errors at validation time naming the offending field — not stack traces.
 
