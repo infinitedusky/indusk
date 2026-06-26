@@ -59,6 +59,31 @@ export function ensureGitignore(projectRoot: string): void {
 	console.info(`  ${verb}: .gitignore (added ${missing.map((e) => e.pattern).join(", ")})`);
 }
 
+/**
+ * Idempotently set `.indusk/current.md merge=union` in the project's
+ * `.gitattributes`. The `merge=union` driver tells git to combine both
+ * sides' line additions on merge instead of producing a conflict — exactly
+ * what we want for per-agent sections where each session only appends its
+ * own block. Without this, two branches both appending different sections
+ * at the same end-of-file position produce a same-insertion-point conflict
+ * even though there's no semantic overlap. See handoff-multi-agent-section-shape
+ * ADR for the merge-strategy rationale.
+ */
+export function ensureCurrentMdMergeUnion(projectRoot: string): void {
+	const path = join(projectRoot, ".gitattributes");
+	const marker = ".indusk/current.md merge=union";
+	const existing = existsSync(path) ? readFileSync(path, "utf-8") : "";
+	if (existing.includes(marker)) {
+		console.info("  skip: .gitattributes (current.md merge=union already present)");
+		return;
+	}
+	const block = `${existing.trimEnd()}${existing.length > 0 ? "\n\n" : ""}# InDusk: combine per-agent section additions on merge\n${marker}\n`;
+	writeFileSync(path, block);
+	console.info(
+		`  ${existing.length > 0 ? "updated" : "created"}: .gitattributes (.indusk/current.md merge=union)`,
+	);
+}
+
 function createCgcIgnore(projectRoot: string): void {
 	const ignorePath = join(projectRoot, ".cgcignore");
 	if (existsSync(ignorePath)) {
@@ -1157,6 +1182,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	} else {
 		// .mcp.json contains auth tokens — always gitignore it in full mode
 		ensureGitignore(projectRoot);
+		ensureCurrentMdMergeUnion(projectRoot);
 	}
 
 	// 9. Run on_init hooks from enabled extensions

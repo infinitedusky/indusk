@@ -611,8 +611,9 @@ export async function update(projectRoot: string): Promise<void> {
 		const { writeGitInfoExclude } = await import("./init.js");
 		writeGitInfoExclude(projectRoot);
 	} else {
-		const { ensureGitignore } = await import("./init.js");
+		const { ensureGitignore, ensureCurrentMdMergeUnion } = await import("./init.js");
 		ensureGitignore(projectRoot);
+		ensureCurrentMdMergeUnion(projectRoot);
 	}
 
 	// 9. Respect local mode: re-apply overlay

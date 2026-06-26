@@ -6,6 +6,8 @@ status: accepted
 
 # Multi-Agent Coordination
 
+> **Superseded in part by [`.indusk/planning/handoff-multi-agent-section-shape/`](../handoff-multi-agent-section-shape/) (2026-06-26).** The original split between `.indusk/current.md` (fixed `In Flight / Open Questions / Cursor` sections) and `.indusk/agents/<sessionId>.md` (per-session presence files) is replaced by per-agent sections inside a single `.indusk/current.md`. The session ID / sanitizer / init scaffolding / CLI surface decisions in this ADR stay; the file shape and skill behavior described in "Decision" and "Alternatives Considered" below are revised by the section-shape ADR. Read this document for the rationale; for the actual shipped behavior see the section-shape plan.
+
 ## Goal
 
 **Two or more Claude Code sessions can work on the same InDusk project at the same time without one freezing the other, overwriting the other's session state, or proceeding blind to what the other is doing.**

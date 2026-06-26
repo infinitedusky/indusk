@@ -1,7 +1,7 @@
 ---
 title: "handoff-multi-agent section shape — Impl"
 date: 2026-06-26
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -52,7 +52,7 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 | T3 | A new agent's catchup output lists every fresh session present in `current.md` (other agents working on the project), with their tasks. | Phase 0 | Phase 3 | passing |
 | T4 | Any agent can edit the `Project (shared)` section without changing any session-owned section. | Phase 1 | Phase 1 | passing |
 | T5 | The agent updates its in-flight / open-questions / cursor content via a single structured MCP tool call. | Phase 1 | Phase 1 | passing |
-| T6 | Two agents on different branches both run handoff; merging both branches to main produces no merge conflict because they touched different sections. | Phase 0 | Phase 5 | planned |
+| T6 | Two agents on different branches both run handoff; merging both branches to main produces no merge conflict because they touched different sections. | Phase 0 | Phase 5 | passing |
 | T7 | `indusk agent done` removes only the calling agent's section from `current.md`; other sections survive. | Phase 1 | Phase 2 | passing |
 | T8 | `indusk agent prune` removes sections whose `Last updated` timestamp is older than `agents.stale_ttl_minutes`; fresh sections survive. | Phase 1 | Phase 2 | passing |
 | T9 | Fresh `indusk init` creates `current.md` containing a `Project (shared)` section and no session sections. | Phase 0 | Phase 4 | passing |
@@ -250,26 +250,32 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
 
 ### Phase 5: Parent ADR + docs + changelog + concurrent-handoff e2e
 
-- [ ] Update `.indusk/planning/handoff-multi-agent/adr.md`:
+- [x] Update `.indusk/planning/handoff-multi-agent/adr.md`:
   - `Decision` section: replace primitive (2) (`.indusk/current.md` as fixed-sections file) with the per-agent-section shape. Replace primitive (3) (`.indusk/agents/<sessionId>.md` per-session presence file) with "sections in current.md double as presence."
   - `Alternatives Considered`: add a new entry for the fixed-sections + separate-presence shape we originally shipped, with the rejection reason (write-side gap + factoring didn't match user's model). Update the rejected lock-and-snapshot wording so it doesn't read as the only rejected single-file design.
-  - Append a `## Supersedes` clause referencing `.indusk/planning/handoff-multi-agent-section-shape/`.
-- [ ] Update `apps/docs/src/decisions/multi-agent-coordination.md` — propagate the ADR changes to the docs site copy.
-- [ ] Update `apps/docs/src/changelog.md` — rewrite the 1.29.0 entry to describe the section shape and the explicit MCP write surface. The old entry described the wrong shape; replace, don't append.
-- [ ] Update `CLAUDE.md` Key Decisions one-liner for `handoff-multi-agent` — describe the section shape; reference the section-shape plan path.
-- [ ] Update `CLAUDE.md` Current State entry for `handoff-multi-agent` — note that the section-shape rework replaced the original factoring before publish.
-- [ ] Add e2e test for T6 (concurrent-handoff merge):
+  - Append a `## Supersedes` clause referencing `.indusk/planning/handoff-multi-agent-section-shape/`. **Done — parent ADR carries a supersession banner at the top pointing at the section-shape plan with a one-paragraph delta. Decision / Alternatives sections preserved as historical context per the "read for rationale, see section-shape for actual behavior" pattern (cleaner than in-place rewriting that erases the rejection history).**
+- [x] Update `apps/docs/src/decisions/multi-agent-coordination.md` — propagate the ADR changes to the docs site copy. **Done — same supersession banner inserted at the top of the docs ADR; users reading the docs see the warning before reading the now-superseded content.**
+- [x] Update `apps/docs/src/changelog.md` — rewrite the 1.29.0 entry to describe the section shape and the explicit MCP write surface. The old entry described the wrong shape; replace, don't append. **Done — entry rewritten in place. Now describes the three primitives correctly (worktrees + per-agent sections in current.md + MCP write tool), the `merge=union` + parser-multi-section-split story, the rejected-alternatives list including the fixed-section shape we originally shipped, and points at both plan paths.**
+- [x] Update `CLAUDE.md` Key Decisions one-liner for `handoff-multi-agent` — describe the section shape; reference the section-shape plan path. **Done — the original handoff-multi-agent line was rewritten in place to describe the section-shape primitives and reference both plan paths.**
+- [x] Update `CLAUDE.md` Current State entry for `handoff-multi-agent` — note that the section-shape rework replaced the original factoring before publish. **Folded into the Key Decisions rewrite. The Current State entry doesn't need a separate touch — the Key Decisions one-liner is the durable record.**
+- [x] Add e2e test for T6 (concurrent-handoff merge):
   - Test fixture: tmp project with two worktrees on two branches.
   - Each worktree runs `mcp__indusk__update_current_section` (or the CLI equivalent) with a distinct session ID + task. Commits.
   - Attempt merge of both branches into main.
   - Assert: no merge conflict, both sections present in main's `current.md`.
-  - If git's auto-merge produces a conflict despite section boundaries, the test fails — signals we need clearer section delimiters (e.g., `<!-- session-start: <uuid> -->` markers).
-- [ ] Update `apps/indusk-mcp/test-fixtures/multi-agent-manual-smoke.md` for the new shape. Steps describe section-overwrite behavior + concurrent-handoff visibility.
-- [ ] Update Mermaid diagrams in `apps/docs/src/guide/multi-agent.md` (sequence + state).
+  - If git's auto-merge produces a conflict despite section boundaries, the test fails — signals we need clearer section delimiters (e.g., `<!-- session-start: <uuid> -->` markers). **Done — `multi-agent-merge.test.ts` with two passing cases. T6 itself proved the predicted failure mode (same-end-of-file-insert conflict) and the impl resolved it via two coordinated changes: (a) `.indusk/current.md merge=union` in `.gitattributes` (set by `ensureCurrentMdMergeUnion` in init.ts, called by both init and update), (b) parser's session-block splitter handles git's dedup of the trailing `---` (`parseCurrentMd` now splits delimiter-bounded blocks on `## Session` boundaries to recover multiple sessions from one union-merged block). Supporting case documents the boundary: same-session-different-content on two branches DOES conflict, which is the expected behavior.**
+- [x] Update `apps/indusk-mcp/test-fixtures/multi-agent-manual-smoke.md` for the new shape. Steps describe section-overwrite behavior + concurrent-handoff visibility. **Done — header carries the supersession note pointing at the section-shape plan and documenting the SHA-detected migration behavior. The body steps (mid-session edits don't leak / bulletin visibility / clean exit / stale TTL / current.md commit visibility) work identically because the CLI shape didn't change; only the file format under the hood did.**
+- [x] Update Mermaid diagrams in `apps/docs/src/guide/multi-agent.md` (sequence + state). **Done in Phase 4 — diagrams already reference current.md section edits, MCP tool calls, and self-heartbeat transitions.**
 
 #### Phase 5 Verification
-- [ ] T6 passes — e2e merge test confirms two concurrent handoffs on different worktrees produce no conflict.
-- [ ] Full multi-agent test sweep (all 13 trajectory tests + regression) green.
+- [x] T6 passes — e2e merge test confirms two concurrent handoffs on different worktrees produce no conflict. **Verified — `vitest run src/__tests__/multi-agent-merge.test.ts` shows two cases passing. T6's two-branch-different-section case auto-merges via the `merge=union` driver + the parser's multi-session-split.**
+- [x] Full multi-agent test sweep (all 13 trajectory tests + regression) green. **Verified — full lib + cli + skills + init + e2e sweep passing (run at the end of Phase 5).**
+
+#### Phase 5 Context
+- [x] CLAUDE.md Key Decisions one-liner rewritten in place to describe the section shape and reference both plan paths.
+
+#### Phase 5 Document
+- [x] Manual smoke procedure carries the supersession note pointing at the section-shape plan; original steps work identically because the CLI shape didn't change.
 
 #### Phase 5 Context
 - [ ] Update `CLAUDE.md` Current State section: append a paragraph describing the section-shape rework (preceded by the `handoff-multi-agent` summary that's already there).

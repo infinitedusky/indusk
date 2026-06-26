@@ -6,6 +6,8 @@ status: accepted
 
 # Multi-Agent Coordination
 
+> **Superseded in part by handoff-multi-agent-section-shape (2026-06-26).** The original split between `.indusk/current.md` (fixed sections) and `.indusk/agents/<sessionId>.md` (per-session presence files) is replaced by per-agent sections inside a single `.indusk/current.md`. The agent CLI register/done/list/prune now operate on sections; the explicit write surface is `mcp__indusk__update_current_section`. `/handoff` is no longer deprecated — it's a real session-end ritual. The session ID / sanitizer / init scaffolding / CLI commands keep their original shape. See the [multi-agent guide](/guide/multi-agent) for the actual shipped behavior.
+
 ## Goal
 
 **Two or more Claude Code sessions can work on the same InDusk project at the same time without one freezing the other, overwriting the other's session state, or proceeding blind to what the other is doing.**

@@ -197,8 +197,17 @@ export function parseCurrentMd(content: string): CurrentMd {
 			continue;
 		}
 		if (block.match(/^##\s+Session\s+/m)) {
-			const section = parseSessionSection(block);
-			if (section) sections.push(section);
+			// A delimiter-split block may contain MULTIPLE `## Session` headings
+			// when git's merge=union driver combined two branches' appends and
+			// deduplicated the trailing `---` separators. Split on `## Session`
+			// boundaries before parsing so each session is recognized independently.
+			const sessionSubBlocks = block.split(/^(?=##\s+Session\s+)/m);
+			for (const sub of sessionSubBlocks) {
+				if (sub.match(/^##\s+Session\s+/m)) {
+					const section = parseSessionSection(sub);
+					if (section) sections.push(section);
+				}
+			}
 		}
 	}
 

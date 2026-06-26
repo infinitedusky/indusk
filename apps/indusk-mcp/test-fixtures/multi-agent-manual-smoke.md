@@ -1,8 +1,9 @@
 # Multi-Agent Coordination — Manual Smoke Procedure
 
-**Plan:** `.indusk/planning/handoff-multi-agent/`
-**Trajectory row:** T10 (Phase 5 — manual smoke)
-**Status:** Pending Sandy's first run.
+**Plans:** `.indusk/planning/handoff-multi-agent/` (original) + `.indusk/planning/handoff-multi-agent-section-shape/` (final shape).
+**Status:** Pending Sandy's first run after 1.29.0 publishes.
+
+> **Note (2026-06-26):** the original parent plan shipped `.indusk/current.md` with fixed `In Flight / Open Questions / Cursor` sections + separate `.indusk/agents/<sessionId>.md` presence files. The section-shape rework replaced that with per-agent sections inside one `current.md` (each session owns a `## Session <short> — <task>` block; presence is the block's freshness). The CLI shape (`agent register/done/list/prune`) is unchanged from the user's perspective; behavior under the hood operates on sections. Update procedure steps below if you run this against an install that still has the old shape — `indusk update` SHA-detects the empty old template and migrates.
 
 ## Purpose
 
