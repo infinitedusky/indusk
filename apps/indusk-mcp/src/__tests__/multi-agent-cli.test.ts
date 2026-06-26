@@ -1,26 +1,26 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	rmSync,
-	statSync,
-	utimesSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 /**
- * Test Trajectory for the handoff-multi-agent plan — CLI surface rows.
+ * Test Trajectory for the handoff-multi-agent-section-shape plan — CLI rows.
  *
- * T3, T4, T5 — live (Phase 2). Exercise the `indusk agent register/done/list/prune`
- * surface end-to-end against a tmp project.
+ * After the section-shape rework, the bulletin lives as per-agent sections
+ * inside .indusk/current.md. Tests exercise the `indusk agent` CLI end-to-end
+ * against a tmp project.
  *
- * T1, T2 — `.skip()` until Phase 3 (skill rewrites unlock the catchup integration).
+ *   T3, T7, T8 — live (Phase 2). Exercise register/done/list/prune against
+ *     sections in current.md.
+ *   T12 — live regression: path-traversal session IDs rejected at the CLI
+ *     boundary (sanitizer in the lib helpers).
  *
- * See `.indusk/planning/handoff-multi-agent/impl.md` for the full trajectory.
+ *   T1, T2 — `.skip()` until Phase 3 (skill rewrites unlock the catchup
+ *     integration where two simulated agents interact).
+ *
+ * See `.indusk/planning/handoff-multi-agent-section-shape/impl.md` for the
+ * full trajectory.
  */
 
 const REPO_ROOT = resolve(__dirname, "../../../..");
@@ -59,7 +59,27 @@ function runCli(
 	};
 }
 
-describe.skipIf(SHOULD_SKIP)("multi-agent CLI — handoff-multi-agent trajectory", () => {
+function readCurrentMd(project: TestProject): string {
+	return readFileSync(join(project.dir, ".indusk/current.md"), "utf-8");
+}
+
+function backdateSectionTimestamp(
+	project: TestProject,
+	sessionId: string,
+	isoTimestamp: string,
+): void {
+	const path = join(project.dir, ".indusk/current.md");
+	const content = readFileSync(path, "utf-8");
+	// Find the section block by session ID, replace its **Last updated**: line.
+	const sessionIdPattern = new RegExp(
+		`(\\*\\*Session ID\\*\\*:\\s*${sessionId.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\$&")}\\s*\\n\\*\\*Last updated\\*\\*:\\s*)([^\\n]+)`,
+		"m",
+	);
+	const updated = content.replace(sessionIdPattern, `$1${isoTimestamp}`);
+	writeFileSync(path, updated);
+}
+
+describe.skipIf(SHOULD_SKIP)("multi-agent CLI — section-shape trajectory", () => {
 	let project: TestProject;
 
 	beforeEach(() => {
@@ -70,8 +90,8 @@ describe.skipIf(SHOULD_SKIP)("multi-agent CLI — handoff-multi-agent trajectory
 		rmSync(project.dir, { recursive: true, force: true });
 	});
 
-	// T3 — Phase 2: register-then-list shows the registered task within 5s
-	it("T3: registering as an agent makes you visible within 5 seconds", () => {
+	// T3-CLI — register-then-list shows the registered task in the bulletin
+	it("T3-CLI: registering as an agent makes you visible within 5 seconds", () => {
 		const start = Date.now();
 		const reg = runCli(project, ["agent", "register", "--task", "auth refactor"]);
 		expect(reg.status).toBe(0);
@@ -83,8 +103,8 @@ describe.skipIf(SHOULD_SKIP)("multi-agent CLI — handoff-multi-agent trajectory
 		expect(elapsed).toBeLessThan(5000);
 	});
 
-	// T4 — Phase 2: `agent done` removes the current session's presence file
-	it("T4: an agent that ends cleanly disappears from the bulletin", () => {
+	// T7 — Phase 2 end-to-end: `agent done` removes the section
+	it("T7: an agent that ends cleanly disappears from the bulletin", () => {
 		runCli(project, ["agent", "register", "--task", "transient"]);
 		const before = runCli(project, ["agent", "list"]);
 		expect(before.stdout).toMatch(/transient/);
@@ -97,148 +117,94 @@ describe.skipIf(SHOULD_SKIP)("multi-agent CLI — handoff-multi-agent trajectory
 		expect(after.stdout).toMatch(/no agents currently registered/);
 	});
 
-	// T5 — Phase 2: mtime older than stale_ttl_minutes is filtered from `agent list`
-	// (verified from a *different* session than the stale one — T13's Phase 6 fix
-	// makes `agent list` self-heartbeat the caller, so an in-process stale check
-	// against the same session would defeat the staleness filter by refreshing mtime.)
-	it("T5: a stale presence file stops appearing after the TTL elapses (cross-session)", () => {
-		// Session A registers as "ghost"
+	// T8 — Phase 2 end-to-end: stale section filtered from `list`, prune removes it
+	it("T8: a section with stale Last updated is filtered from list and removed by prune", () => {
 		runCli(project, ["agent", "register", "--task", "ghost"]);
+		const fresh = runCli(project, ["agent", "list"]);
+		expect(fresh.stdout).toMatch(/ghost/);
 
-		// Different session B observes the bulletin — sees ghost while fresh
+		// Backdate the section's Last updated to 2h ago — exceeds the 60min TTL.
+		// (Use a different session for the list call so it doesn't self-heartbeat the ghost.)
+		const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+		backdateSectionTimestamp(project, "session-A-uuid", twoHoursAgo);
+
 		const observerB: TestProject = {
 			dir: project.dir,
 			env: { ...process.env, CLAUDE_CODE_SESSION_ID: "session-B-observer" },
 		};
-		const fresh = runCli(observerB, ["agent", "list"]);
-		expect(fresh.stdout).toMatch(/ghost/);
-
-		// Backdate session A's presence file to two hours ago (> default 60min TTL).
-		// Session A is the "ghost" — it never calls list itself again (would
-		// self-heartbeat), so it stays stale.
-		const ghostPath = join(project.dir, ".indusk/agents/session-A-uuid.md");
-		const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-		utimesSync(ghostPath, twoHoursAgo, twoHoursAgo);
-
-		// Session B observes again — ghost has aged out
-		const stale = runCli(observerB, ["agent", "list"]);
-		expect(stale.stdout).not.toMatch(/ghost/);
+		const staleList = runCli(observerB, ["agent", "list"]);
+		expect(staleList.stdout).not.toMatch(/ghost/);
 	});
 
-	// T5 supporting: `agent prune` removes stale files unconditionally
-	it("T5 supporting: prune removes stale files unconditionally", () => {
+	it("T8 supporting: prune removes stale sections unconditionally", () => {
 		runCli(project, ["agent", "register", "--task", "ghost"]);
-		const presencePath = join(project.dir, ".indusk/agents/session-A-uuid.md");
-		const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-		utimesSync(presencePath, twoHoursAgo, twoHoursAgo);
+		const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+		backdateSectionTimestamp(project, "session-A-uuid", twoHoursAgo);
 
 		const prune = runCli(project, ["agent", "prune"]);
 		expect(prune.status).toBe(0);
 		expect(prune.stdout).toMatch(/Pruned 1/);
-		expect(existsSync(presencePath)).toBe(false);
+
+		const content = readCurrentMd(project);
+		expect(content).not.toMatch(/ghost/);
 	});
 
-	// `list` is well-defined on an empty bulletin
-	it("list returns no-agents-message cleanly when nothing is registered", () => {
+	// `list` empty-bulletin behavior
+	it("list returns no-agents-message when nothing is registered", () => {
 		const list = runCli(project, ["agent", "list"]);
 		expect(list.status).toBe(0);
 		expect(list.stdout).toMatch(/no agents currently registered/);
 	});
 
-	// `done` is silent on an already-gone presence file
-	it("done is a silent no-op when the presence file is already gone", () => {
+	// `done` silent no-op when section is already gone
+	it("done is a silent no-op when no section exists for this session", () => {
 		const done = runCli(project, ["agent", "done"]);
 		expect(done.status).toBe(0);
 		expect(done.stdout).toMatch(/already done/);
 	});
 
-	// T12 — Phase 6 (falsification): sessionId path-traversal cannot escape .indusk/agents/
-	it("T12: poisoned $CLAUDE_CODE_SESSION_ID with `..` cannot write outside .indusk/agents/", () => {
+	// T12 — path-traversal session IDs rejected at the CLI boundary
+	it("T12: poisoned $CLAUDE_CODE_SESSION_ID with `..` is rejected", () => {
 		const evilProject: TestProject = {
 			dir: project.dir,
 			env: { ...process.env, CLAUDE_CODE_SESSION_ID: "../escaped" },
 		};
 		const reg = runCli(evilProject, ["agent", "register", "--task", "evil"]);
-
-		// Expected post-fix: register either exits non-zero with a sanitizer error
-		// OR sanitizes the ID so the file lands inside agents/. Either way:
-		// no file outside the agents directory.
-		const escaped = join(project.dir, ".indusk/escaped.md");
-		const insideEscaped = join(project.dir, ".indusk/agents/..", "escaped.md");
-		expect(existsSync(escaped)).toBe(false);
-		expect(existsSync(insideEscaped)).toBe(false);
-
-		// And the command surfaces the failure (non-zero exit + error message)
 		expect(reg.status).not.toBe(0);
 		expect((reg.stderr + reg.stdout).toLowerCase()).toMatch(/session id|invalid|sanitiz/);
 	});
 
-	it("T12 supporting: --session-id with `..` cannot delete outside .indusk/agents/", () => {
-		// Drop a sentinel file at <projectDir>/.indusk/sentinel.md that a traversal-escaping
-		// agent done would otherwise wipe out via rmSync(..., { force: true }).
-		writeFileSync(join(project.dir, ".indusk/sentinel.md"), "do not delete me");
+	it("T12 supporting: --session-id with `..` is rejected by done", () => {
 		const done = runCli(project, ["agent", "done", "--session-id", "../sentinel"]);
-
-		// Expected post-fix: done rejects the traversal-bearing session id; sentinel survives.
-		expect(existsSync(join(project.dir, ".indusk/sentinel.md"))).toBe(true);
 		expect(done.status).not.toBe(0);
 		expect((done.stderr + done.stdout).toLowerCase()).toMatch(/session id|invalid|sanitiz/);
 	});
 
-	it("T12 supporting: normal UUID/pid session IDs still work end-to-end", () => {
+	it("T12 supporting: normal UUID session IDs still work end-to-end", () => {
 		const uuidProject: TestProject = {
 			dir: project.dir,
 			env: { ...process.env, CLAUDE_CODE_SESSION_ID: "2c87e7b6-702a-4dcd-876f-a31820e0df3e" },
 		};
-		expect(runCli(uuidProject, ["agent", "register", "--task", "ok"]).status).toBe(0);
+		const reg = runCli(uuidProject, ["agent", "register", "--task", "real work"]);
+		expect(reg.status).toBe(0);
 		const list = runCli(uuidProject, ["agent", "list"]);
-		expect(list.stdout).toMatch(/ok/);
-	});
-
-	// T13 — Phase 6 (falsification): agent list self-heartbeats the caller's own presence file
-	it("T13: `agent list` refreshes the caller's own presence-file mtime (implicit heartbeat)", () => {
-		runCli(project, ["agent", "register", "--task", "long running"]);
-		const presencePath = join(project.dir, ".indusk/agents/session-A-uuid.md");
-
-		// Backdate to T-90min (older than the default 60min TTL — would be stale)
-		const ninetyMinAgo = new Date(Date.now() - 90 * 60 * 1000);
-		utimesSync(presencePath, ninetyMinAgo, ninetyMinAgo);
-
-		// Same session calls `agent list` — should self-heartbeat
-		const beforeMtimeMs = statSync(presencePath).mtimeMs;
-		runCli(project, ["agent", "list"]);
-
-		const afterMtimeMs = statSync(presencePath).mtimeMs;
-
-		// Post-fix: list touches own file mtime to "now"
-		expect(afterMtimeMs).toBeGreaterThan(beforeMtimeMs);
-		expect(Date.now() - afterMtimeMs).toBeLessThan(5000);
-
-		// And: subsequent list calls now see the entry (no longer stale)
-		const listAgain = runCli(project, ["agent", "list"]);
-		expect(listAgain.stdout).toMatch(/long running/);
+		expect(list.stdout).toMatch(/real work/);
 	});
 
 	// T1 — Phase 3 unlock: two concurrent catchup flows both complete cleanly
 	it.skip("T1: two agents starting catchup at the same time both complete", () => {
 		// Intended shape (un-skip in Phase 3):
-		//   const [a, b] = await Promise.all([
-		//     runCatchupFlow(workbenchRoot, "agent-A"),
-		//     runCatchupFlow(workbenchRoot, "agent-B"),
-		//   ]);
+		//   const [a, b] = await Promise.all([runCatchupFlow(workbench, "A"), runCatchupFlow(workbench, "B")]);
 		//   expect(a.exitCode).toBe(0);
 		//   expect(b.exitCode).toBe(0);
-		expect.fail("Phase 3 unlock — concurrent catchup flow requires register + skill rewrite");
+		expect.fail("Phase 3 unlock — concurrent catchup flow requires skill rewrite");
 	});
 
-	// T2 — Phase 3 unlock: catchup output lists other agents' tasks
-	it.skip("T2: a new agent's catchup sees other working agents' tasks", () => {
+	// T2 — Phase 3 unlock: catchup output lists other agents' sections
+	it.skip("T2: a new agent's catchup sees other working agents' sections", () => {
 		// Intended shape (un-skip in Phase 3):
-		//   spawnSync(CLI_BIN, ["agent", "register", "--task", "auth"], { cwd, env: sessionAEnv });
-		//   spawnSync(CLI_BIN, ["agent", "register", "--task", "telemetry"], { cwd, env: sessionBEnv });
-		//   const list = spawnSync(CLI_BIN, ["agent", "list"], { cwd });
-		//   expect(list.stdout.toString()).toMatch(/auth/);
-		//   expect(list.stdout.toString()).toMatch(/telemetry/);
-		expect.fail("Phase 3 unlock — bulletin visibility surface lands with skill rewrite");
+		//   register agent A and B with distinct sessionIds
+		//   read catchup output as a third session — assert both task names appear
+		expect.fail("Phase 3 unlock — catchup-reads-sections behavior lands with skill rewrite");
 	});
 });

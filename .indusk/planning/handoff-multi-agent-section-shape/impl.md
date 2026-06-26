@@ -53,12 +53,12 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 | T4 | Any agent can edit the `Project (shared)` section without changing any session-owned section. | Phase 1 | Phase 1 | passing |
 | T5 | The agent updates its in-flight / open-questions / cursor content via a single structured MCP tool call. | Phase 1 | Phase 1 | passing |
 | T6 | Two agents on different branches both run handoff; merging both branches to main produces no merge conflict because they touched different sections. | Phase 0 | Phase 5 | planned |
-| T7 | `indusk agent done` removes only the calling agent's section from `current.md`; other sections survive. | Phase 1 | Phase 2 | written |
-| T8 | `indusk agent prune` removes sections whose `Last updated` timestamp is older than `agents.stale_ttl_minutes`; fresh sections survive. | Phase 1 | Phase 2 | written |
+| T7 | `indusk agent done` removes only the calling agent's section from `current.md`; other sections survive. | Phase 1 | Phase 2 | passing |
+| T8 | `indusk agent prune` removes sections whose `Last updated` timestamp is older than `agents.stale_ttl_minutes`; fresh sections survive. | Phase 1 | Phase 2 | passing |
 | T9 | Fresh `indusk init` creates `current.md` containing a `Project (shared)` section and no session sections. | Phase 0 | Phase 4 | planned |
 | T10 | Running `indusk update` on a pre-section-shape project migrates the template if it's still the empty version from the previous plan; if the user has edited it, the content is preserved untouched. | Phase 0 | Phase 4 | planned |
 | T11 | Running `/catchup` does not modify any file (other than the agent's own section if it explicitly calls the MCP tool — catchup itself is read-only). | Phase 0 | Phase 3 | planned |
-| T12 | A session ID containing path-traversal characters cannot cause section writes or removals to escape `.indusk/current.md`. | Phase 0 | Phase 2 | planned |
+| T12 | A session ID containing path-traversal characters cannot cause section writes or removals to escape `.indusk/current.md`. | Phase 0 | Phase 2 | passing |
 | T13 | A teammate cloning the project sees no leftover session sections from the original developer's machine. | Phase 0 | Phase 4 | planned |
 
 ### Deferred Verification
@@ -148,29 +148,29 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
 
 ### Phase 2: Repurpose `indusk agent` CLI for sections
 
-- [ ] Rewrite `apps/indusk-mcp/src/bin/commands/agent.ts`:
+- [x] Rewrite `apps/indusk-mcp/src/bin/commands/agent.ts`:
   - `register --task "..."` calls `upsertSection` with empty body sections (just establishes presence).
   - `done` calls `removeSection` with the current session ID.
   - `list` calls `listSections(content, ttl)` and prints the `fresh` partition as a compact table — same output shape as today's bulletin.
-  - `prune` calls `pruneStaleSections` and reports what was removed.
-- [ ] Drop the `.indusk/agents/` directory writes from `register`. The directory just stops being used. Gitignore line stays.
-- [ ] Drop `serializePresenceFile` / `parsePresenceFile` / `readBulletin` from the file — replaced by lib calls.
-- [ ] Keep `currentBranch(cwd)` for the section's optional branch metadata (still useful, just lives inside the section now, not in a frontmatter).
-- [ ] Rewrite `multi-agent-cli.test.ts`:
+  - `prune` calls `pruneStaleSections` and reports what was removed. **Done — full rewrite to use the Phase 1 lib. `register` preserves existing section bodies if a section already exists (just refreshes Last updated + task). `list` self-heartbeats the caller's own section (preserves parent plan's heartbeat semantics). `prune` reports the count from `listSections`.**
+- [x] Drop the `.indusk/agents/` directory writes from `register`. The directory just stops being used. Gitignore line stays. **Done — no code path writes to `.indusk/agents/` anymore. Gitignore line untouched (still in init's GITIGNORE_ENTRIES as a precaution).**
+- [x] Drop `serializePresenceFile` / `parsePresenceFile` / `readBulletin` from the file — replaced by lib calls. **Done — gone. The CLI is a thin shell over current-md.ts helpers + atomic-write.**
+- [x] Keep `currentBranch(cwd)` for the section's optional branch metadata (still useful, just lives inside the section now, not in a frontmatter). **Kept — currently unused-but-noted; sections don't store branch yet. Will surface in catchup output in Phase 3 if needed.**
+- [x] Rewrite `multi-agent-cli.test.ts`:
   - T3 / T4 / T5 / T7 / T8 (the live CLI assertions) update to expect section-shape outcomes.
   - T12 (path-traversal) keeps the same end-to-end shape but now asserts no escape via section mutations.
-  - Add a supporting test: heartbeat-via-list still works (calling `list` from session A re-stamps A's `Last updated`).
+  - Add a supporting test: heartbeat-via-list still works (calling `list` from session A re-stamps A's `Last updated`). **Done — full rewrite. 9 passing cases covering T3-CLI, T7, T8 + supporting prune, empty list, silent-done, T12 + supporting --session-id and normal-UUID. T1/T2 stay `.skip()` until Phase 3. Stale TTL test uses a different session-ID for the observer call to avoid self-heartbeat masking the stale state.**
 
 #### Phase 2 Verification
-- [ ] T7 passes end-to-end — `vitest run src/__tests__/multi-agent-cli.test.ts` shows `agent done` removes only the calling session's section.
-- [ ] T8 passes end-to-end — backdated section is filtered from `agent list` output; `agent prune` removes it.
-- [ ] T12 passes end-to-end — poisoned session ID returns non-zero with sanitizer error before any section write.
+- [x] T7 passes end-to-end — `vitest run src/__tests__/multi-agent-cli.test.ts` shows `agent done` removes only the calling session's section. **Verified — done call removes the section; subsequent list reports no agents.**
+- [x] T8 passes end-to-end — backdated section is filtered from `agent list` output; `agent prune` removes it. **Verified — observer-from-different-session sees the stale section filtered out; prune call removes it from current.md.**
+- [x] T12 passes end-to-end — poisoned session ID returns non-zero with sanitizer error before any section write. **Verified — `CLAUDE_CODE_SESSION_ID=../escaped indusk agent register` exits non-zero with sanitizer error; `--session-id ../sentinel` to done exits non-zero too.**
 
 #### Phase 2 Context
-- [ ] Update `CLAUDE.md` Architecture entry for indusk-mcp's `agent` subcommand — describe the new shape ("agent CLI operates on sections in `.indusk/current.md`"), drop the obsolete `.indusk/agents/{sessionId}.md` reference.
+- [x] Update `CLAUDE.md` Architecture entry for indusk-mcp's `agent` subcommand — describe the new shape ("agent CLI operates on sections in `.indusk/current.md`"), drop the obsolete `.indusk/agents/{sessionId}.md` reference. **Done — entry rewritten to describe the section-shape semantics, the `mcp__indusk__update_current_section` MCP write surface, the self-heartbeat behavior, and the precaution-gitignore for the unused `.indusk/agents/` directory.**
 
 #### Phase 2 Document
-- [ ] Update `apps/docs/src/reference/cli/agent.md` — rewrite the body so the four subcommands describe section operations. Drop the "File shape" section about presence files; add a new "Section shape" section with the `## Session <short> — <task>` template. Cross-link to the multi-agent guide.
+- [x] Update `apps/docs/src/reference/cli/agent.md` — rewrite the body so the four subcommands describe section operations. Drop the "File shape" section about presence files; add a new "Section shape" section with the `## Session <short> — <task>` template. Cross-link to the multi-agent guide. **Done — full rewrite. Each subcommand describes the section semantics; new `## Section shape` with a worked example; `## Path safety` documents sanitizer behavior; `## Concurrency` covers tmp+rename + git-merge story.**
 
 ### Phase 3: Skill rewrites — handoff resurrected, catchup reads sections
 

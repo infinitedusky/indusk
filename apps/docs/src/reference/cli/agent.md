@@ -1,17 +1,17 @@
-# `indusk agent` — multi-agent presence bulletin
+# `indusk agent` — multi-agent presence (sections in current.md)
 
-The `agent` subcommand group manages a per-session presence bulletin so that two or more Claude Code sessions running on the same InDusk project can see each other.
+The `agent` subcommand group manages the per-session presence bulletin for multi-agent coordination on an InDusk project.
 
-It is the runtime surface introduced by the [`handoff-multi-agent` plan](../../decisions/multi-agent-coordination.md) (shipped in indusk-mcp 1.29+). Each session writes one small file on `register`, deletes it on `done`, and `list` glob-reads the directory. There is no shared mutation surface across agents.
+After the [section-shape rework](/decisions/multi-agent-coordination) (shipped in indusk-mcp 1.29+), the bulletin lives as **per-agent sections inside `.indusk/current.md`** — there is no separate `.indusk/agents/` directory. Each session owns its section, identified by the full session ID. The MCP write surface is [`mcp__indusk__update_current_section`](/reference/tools/indusk-mcp#agent-tools); the CLI subcommands below wrap the same lib helpers for shell-driven use.
 
 ## Subcommands
 
 | Command | Purpose |
 |---------|---------|
-| `agent register --task "<what>"` | Write the current session's presence file. |
-| `agent done` | Remove the current session's presence file. |
-| `agent list` | Print the bulletin of currently-registered agents (stale-filtered). |
-| `agent prune` | Remove every stale presence file unconditionally. |
+| `agent register --task "<what>"` | Ensure a section exists for the current session in `current.md`. Refreshes `Last updated` + task; preserves any existing section bodies. |
+| `agent done` | Remove the current session's section. |
+| `agent list` | Print the bulletin of currently-fresh sections (stale-filtered). Also self-heartbeats the caller's section. |
+| `agent prune` | Remove every section whose `Last updated` is older than `agents.stale_ttl_minutes`. |
 
 ### `agent register`
 
@@ -21,13 +21,13 @@ indusk agent register --task "auth refactor" [--branch feat/auth] [--worktree ./
 
 | Flag | Purpose | Default |
 |------|---------|---------|
-| `--task <description>` | One-line description of what this agent is working on. | _required_ |
+| `--task <description>` | One-line description of what this session is working on. Appears in the section heading. | _required_ |
 | `--branch <branch>` | Override detected git branch. | Detected via `git rev-parse --abbrev-ref HEAD`. |
 | `--worktree <path>` | Override the recorded worktree path. | `process.cwd()` |
 
-Writes `<projectRoot>/.indusk/agents/<sessionId>.md` with YAML frontmatter (`sessionId`, `task`, `branch`, `worktree`, `startedAt`) and a small human-readable body.
+Reads `.indusk/current.md`, calls `upsertSection` with the agent's section, writes back atomically (tmp + rename). If a section for the session already exists, the existing in-flight / open-questions / cursor bodies are preserved — only the `Last updated` timestamp and task change. Use the [MCP tool](/reference/tools/indusk-mcp#agent-tools) to update those bodies.
 
-The session ID comes from `$CLAUDE_CODE_SESSION_ID` (a UUID exposed by Claude Code SDK 0.3.187+, inherited by every subprocess). When the env var is unset, falls back to `pid-<process.pid>`. See the [session ID gotcha in CLAUDE.md](../../../../../CLAUDE.md) for the rationale.
+The session ID comes from `$CLAUDE_CODE_SESSION_ID` (UUID v4 exposed by Claude Code SDK 0.3.187+, inherited by every subprocess). When unset, falls back to `pid-<process.pid>`.
 
 ### `agent done`
 
@@ -37,9 +37,9 @@ indusk agent done [--session-id <id>]
 
 | Flag | Purpose | Default |
 |------|---------|---------|
-| `--session-id <id>` | Mark a specific session done instead of the current one. | Current session (`getSessionId()`). |
+| `--session-id <id>` | Mark a specific session done instead of the current one. | Current session. |
 
-Silent no-op when the file is already gone. Prints `Agent <id> already done (no presence file).` in that case.
+Calls `removeSection`. Silent no-op when no matching section exists: prints `Agent <id> already done (no section in current.md).`
 
 ### `agent list`
 
@@ -47,16 +47,18 @@ Silent no-op when the file is already gone. Prints `Agent <id> already done (no 
 indusk agent list
 ```
 
-Reads every `*.md` file under `<projectRoot>/.indusk/agents/`, filters out any whose mtime is older than `agents.stale_ttl_minutes` from `.indusk/config.json` (default `60`), and prints a compact table:
+Reads `.indusk/current.md`, partitions sections by `Last updated` vs `agents.stale_ttl_minutes` (default 60), prints the fresh partition as a compact table:
 
 ```
-SESSION   TASK            BRANCH    STARTED
---------  --------------  --------  -------------------
-2c87e7b6  auth refactor   feat/auth 2026-06-25 21:43:50
-f0a99b21  telemetry spike main      2026-06-25 22:01:15
+SESSION   TASK            LAST UPDATED
+--------  --------------  -------------------
+2c87e7b6  auth refactor   2026-06-26 21:43:50
+f0a99b21  telemetry spike 2026-06-26 22:01:15
 ```
 
-When the directory is empty (or every entry is stale), prints `(no agents currently registered)`.
+When the file is empty or every entry is stale, prints `(no agents currently registered)`.
+
+**Self-heartbeat**: before printing the table, `list` refreshes the calling session's own section's `Last updated` (if a section exists for the caller). The act of asking who's around implicitly says "I am still here." Long-running sessions that periodically run `/catchup` (which calls `list`) stay visible indefinitely without manual TTL tuning. Sessions that go truly idle (no `agent` CLI activity for > TTL) age out.
 
 ### `agent prune`
 
@@ -64,30 +66,7 @@ When the directory is empty (or every entry is stale), prints `(no agents curren
 indusk agent prune
 ```
 
-Removes every presence file whose mtime is older than `agents.stale_ttl_minutes`. Prints `Pruned N stale presence file(s).` (or `No stale presence files to prune.`).
-
-## Heartbeat
-
-`indusk agent list` is also an **implicit heartbeat** for the caller — before the staleness filter runs, the caller's own presence file mtime is refreshed via `utimesSync`. The act of asking "who's around" implicitly says "I am still here."
-
-In practice this means:
-
-- A long-running session that runs `/catchup` or `indusk agent list` periodically stays visible indefinitely — no manual TTL tuning, no explicit heartbeat subcommand.
-- Only sessions that go truly idle (no `indusk agent` CLI activity for longer than `agents.stale_ttl_minutes`) age out.
-- Other agents asking "is session A still around?" cannot observe their own staleness — staleness is always observed from a different session's perspective. If you need to assert "session A has aged out," do it from session B.
-
-The heartbeat is idempotent and silent — `agent list` still prints exactly what's in the bulletin; the mtime touch is a side effect only.
-
-## Path safety
-
-Every session ID flows through `sanitizeSessionId()` in `apps/indusk-mcp/src/lib/agents/session.ts` before it reaches any file path:
-
-- Rejects `..`, `/`, `\` anywhere in the id (path-segment escape)
-- Rejects leading `.` (hidden-file shenanigans)
-- Rejects empty / whitespace-only ids
-- Rejects ids longer than 128 characters (UUIDs and `pid-<N>` both fit comfortably)
-
-Reject means: the CLI exits non-zero with `Error: Invalid session id: ... (rejected by sanitizer)`. A poisoned `$CLAUDE_CODE_SESSION_ID` cannot cause `agent register` to write outside `.indusk/agents/`, and `--session-id ../../config` cannot cause `agent done` to delete arbitrary files.
+Removes every section whose `Last updated` is older than `agents.stale_ttl_minutes`. Prints `Pruned N stale section(s).` (or `No stale sections to prune.`).
 
 ## Configuration
 
@@ -101,37 +80,46 @@ The stale TTL is controlled by `agents.stale_ttl_minutes` in `.indusk/config.jso
 }
 ```
 
-If the field is absent, the CLI defaults to 60 minutes. See the [Heartbeat](#heartbeat) section for how active sessions stay visible without manual tuning.
+If the field is absent, the CLI defaults to 60 minutes.
 
-## File shape
+## Path safety
 
-Each presence file at `<projectRoot>/.indusk/agents/<sessionId>.md` looks like:
+Every session ID flows through `sanitizeSessionId()` in `apps/indusk-mcp/src/lib/agents/session.ts` before it reaches any file write or section mutation:
+
+- Rejects `..`, `/`, `\` anywhere in the id (path-segment escape)
+- Rejects leading `.` (hidden-file shenanigans)
+- Rejects empty / whitespace-only ids
+- Rejects ids longer than 128 characters
+
+Reject means the CLI exits non-zero with `Error: Invalid session id: ... (rejected by sanitizer)`. A poisoned `$CLAUDE_CODE_SESSION_ID` cannot cause `agent register` to write outside the section's scope inside `.indusk/current.md`; `--session-id ../whatever` cannot cause `agent done` to delete anything.
+
+## Section shape
+
+Each section inside `.indusk/current.md` looks like:
 
 ```markdown
----
-sessionId: 2c87e7b6-702a-4dcd-876f-a31820e0df3e
-task: auth refactor
-branch: feat/auth
-worktree: /Users/sandy/code/workbench/auth
-startedAt: 2026-06-25T21:43:50.123Z
----
+## Session 2c87e7b6 — auth refactor
 
-# Agent presence — 2c87e7b6-702a-4dcd-876f-a31820e0df3e
+**Session ID**: 2c87e7b6-702a-4dcd-876f-a31820e0df3e
+**Last updated**: 2026-06-26T21:43:50.123Z
 
-**Task:** auth refactor
-**Branch:** feat/auth
-**Worktree:** /Users/sandy/code/workbench/auth
-**Started:** 2026-06-25T21:43:50.123Z
+### In Flight
+
+working on middleware refactor
+
+### Open Questions
+
+jwt vs session cookies?
+
+### Cursor
+
+apps/backend/src/auth/middleware.ts:42
 ```
 
-The frontmatter is the structured contract (parsed by `list`/`prune`); the body is for humans glancing at the file directly.
-
-## Where the bulletin lives
-
-`getAgentsDir()` resolves to `<inDuskRoot>/.indusk/agents/`, where `inDuskRoot` is the nearest ancestor directory containing `.indusk/config.json`. In single-repo projects that's the project root. In workbench-shaped projects (worktree extension enabled), that's the workbench root — the same `.indusk/agents/` directory is naturally shared across all worktrees, which is what makes the bulletin visible across concurrent agents on different branches.
+The heading carries the short 8-char session ID for human legibility; the `**Session ID**:` line carries the full UUID and drives unambiguous matching. The three `### Subsection` bodies hold the operational state — agents write these via [`mcp__indusk__update_current_section`](/reference/tools/indusk-mcp#agent-tools).
 
 ## Concurrency
 
-Each agent's `register` and `done` only ever touches its own file (named after its session ID). `list` and `prune` are read-side or remove-only. The directory listing is the only shared surface, and POSIX file create/delete is atomic — concurrent `register` calls cannot interleave their writes.
+CLI subprocesses on the same workbench can race on the write step; the atomic tmp + rename pattern means readers never see a half-written file. Cross-branch concurrent edits — two real Claude Code sessions in two worktrees on two branches — are handled by git: different sections in `current.md` produce no merge conflict because they touch different lines.
 
-See the [multi-agent coordination ADR](../../decisions/multi-agent-coordination.md) for the full rationale, including the rejected alternatives (lock-and-snapshot state machine, in-repo bulletin committed to main, distributed locks).
+See the [multi-agent coordination ADR](/decisions/multi-agent-coordination) for the full rationale, including the rejected alternatives.
