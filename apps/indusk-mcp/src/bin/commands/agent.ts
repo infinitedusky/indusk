@@ -6,12 +6,13 @@ import {
 	readFileSync,
 	rmSync,
 	statSync,
+	utimesSync,
 	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { getAgentsDir, getPresenceFilePath } from "../../lib/agents/paths.js";
-import { getSessionId } from "../../lib/agents/session.js";
+import { getSessionId, sanitizeSessionId } from "../../lib/agents/session.js";
 import type { PresenceFile } from "../../lib/agents/types.js";
 import { readConfig } from "../../lib/config.js";
 
@@ -114,7 +115,15 @@ export function agentRegister(projectRoot: string, opts: AgentRegisterOptions): 
 		console.error("Error: --task is required");
 		process.exit(1);
 	}
-	const sessionId = getSessionId();
+	let sessionId: string;
+	try {
+		sessionId = getSessionId();
+	} catch (err) {
+		console.error(
+			`Error: ${err instanceof Error ? err.message : String(err)} (rejected by sanitizer)`,
+		);
+		process.exit(1);
+	}
 	const branch = opts.branch ?? currentBranch(opts.worktree ?? process.cwd());
 	const worktree = opts.worktree ?? process.cwd();
 	const presence: PresenceFile = {
@@ -136,7 +145,15 @@ export interface AgentDoneOptions {
 }
 
 export function agentDone(projectRoot: string, opts: AgentDoneOptions): void {
-	const sessionId = opts.sessionId ?? getSessionId();
+	let sessionId: string;
+	try {
+		sessionId = opts.sessionId ? sanitizeSessionId(opts.sessionId) : getSessionId();
+	} catch (err) {
+		console.error(
+			`Error: ${err instanceof Error ? err.message : String(err)} (rejected by sanitizer)`,
+		);
+		process.exit(1);
+	}
 	const path = getPresenceFilePath(projectRoot, sessionId);
 	if (existsSync(path)) {
 		rmSync(path, { force: true });
@@ -211,6 +228,23 @@ function formatTable(entries: AgentListEntry[]): string {
 }
 
 export function agentList(projectRoot: string): void {
+	// Self-heartbeat — Phase 6 falsification fix for T13. The act of asking
+	// "who's around" implicitly says "I am still here," so the caller's own
+	// presence file mtime is refreshed before staleness filtering. Routine
+	// /catchup or `indusk agent list` calls keep an active session visible
+	// without manual TTL tuning or a separate heartbeat subcommand.
+	try {
+		const ownSessionId = getSessionId();
+		const ownPath = getPresenceFilePath(projectRoot, ownSessionId);
+		if (existsSync(ownPath)) {
+			const now = new Date();
+			utimesSync(ownPath, now, now);
+		}
+	} catch {
+		// If getSessionId throws (poisoned env var) or utimes fails (race,
+		// permission), silently skip the heartbeat. The list output proceeds.
+	}
+
 	const entries = readBulletin(projectRoot).filter((e) => !e.stale);
 	console.info(formatTable(entries));
 }

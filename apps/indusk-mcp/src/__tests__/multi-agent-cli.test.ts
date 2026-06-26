@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	rmSync,
+	statSync,
+	utimesSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -90,19 +98,31 @@ describe.skipIf(SHOULD_SKIP)("multi-agent CLI — handoff-multi-agent trajectory
 	});
 
 	// T5 — Phase 2: mtime older than stale_ttl_minutes is filtered from `agent list`
-	it("T5: a stale presence file stops appearing after the TTL elapses", () => {
+	// (verified from a *different* session than the stale one — T13's Phase 6 fix
+	// makes `agent list` self-heartbeat the caller, so an in-process stale check
+	// against the same session would defeat the staleness filter by refreshing mtime.)
+	it("T5: a stale presence file stops appearing after the TTL elapses (cross-session)", () => {
+		// Session A registers as "ghost"
 		runCli(project, ["agent", "register", "--task", "ghost"]);
-		const fresh = runCli(project, ["agent", "list"]);
+
+		// Different session B observes the bulletin — sees ghost while fresh
+		const observerB: TestProject = {
+			dir: project.dir,
+			env: { ...process.env, CLAUDE_CODE_SESSION_ID: "session-B-observer" },
+		};
+		const fresh = runCli(observerB, ["agent", "list"]);
 		expect(fresh.stdout).toMatch(/ghost/);
 
-		// Backdate the presence file's mtime to two hours ago (> default 60min TTL)
-		const presencePath = join(project.dir, ".indusk/agents/session-A-uuid.md");
+		// Backdate session A's presence file to two hours ago (> default 60min TTL).
+		// Session A is the "ghost" — it never calls list itself again (would
+		// self-heartbeat), so it stays stale.
+		const ghostPath = join(project.dir, ".indusk/agents/session-A-uuid.md");
 		const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
-		utimesSync(presencePath, twoHoursAgo, twoHoursAgo);
+		utimesSync(ghostPath, twoHoursAgo, twoHoursAgo);
 
-		const stale = runCli(project, ["agent", "list"]);
+		// Session B observes again — ghost has aged out
+		const stale = runCli(observerB, ["agent", "list"]);
 		expect(stale.stdout).not.toMatch(/ghost/);
-		expect(stale.stdout).toMatch(/no agents currently registered/);
 	});
 
 	// T5 supporting: `agent prune` removes stale files unconditionally
@@ -130,6 +150,73 @@ describe.skipIf(SHOULD_SKIP)("multi-agent CLI — handoff-multi-agent trajectory
 		const done = runCli(project, ["agent", "done"]);
 		expect(done.status).toBe(0);
 		expect(done.stdout).toMatch(/already done/);
+	});
+
+	// T12 — Phase 6 (falsification): sessionId path-traversal cannot escape .indusk/agents/
+	it("T12: poisoned $CLAUDE_CODE_SESSION_ID with `..` cannot write outside .indusk/agents/", () => {
+		const evilProject: TestProject = {
+			dir: project.dir,
+			env: { ...process.env, CLAUDE_CODE_SESSION_ID: "../escaped" },
+		};
+		const reg = runCli(evilProject, ["agent", "register", "--task", "evil"]);
+
+		// Expected post-fix: register either exits non-zero with a sanitizer error
+		// OR sanitizes the ID so the file lands inside agents/. Either way:
+		// no file outside the agents directory.
+		const escaped = join(project.dir, ".indusk/escaped.md");
+		const insideEscaped = join(project.dir, ".indusk/agents/..", "escaped.md");
+		expect(existsSync(escaped)).toBe(false);
+		expect(existsSync(insideEscaped)).toBe(false);
+
+		// And the command surfaces the failure (non-zero exit + error message)
+		expect(reg.status).not.toBe(0);
+		expect((reg.stderr + reg.stdout).toLowerCase()).toMatch(/session id|invalid|sanitiz/);
+	});
+
+	it("T12 supporting: --session-id with `..` cannot delete outside .indusk/agents/", () => {
+		// Drop a sentinel file at <projectDir>/.indusk/sentinel.md that a traversal-escaping
+		// agent done would otherwise wipe out via rmSync(..., { force: true }).
+		writeFileSync(join(project.dir, ".indusk/sentinel.md"), "do not delete me");
+		const done = runCli(project, ["agent", "done", "--session-id", "../sentinel"]);
+
+		// Expected post-fix: done rejects the traversal-bearing session id; sentinel survives.
+		expect(existsSync(join(project.dir, ".indusk/sentinel.md"))).toBe(true);
+		expect(done.status).not.toBe(0);
+		expect((done.stderr + done.stdout).toLowerCase()).toMatch(/session id|invalid|sanitiz/);
+	});
+
+	it("T12 supporting: normal UUID/pid session IDs still work end-to-end", () => {
+		const uuidProject: TestProject = {
+			dir: project.dir,
+			env: { ...process.env, CLAUDE_CODE_SESSION_ID: "2c87e7b6-702a-4dcd-876f-a31820e0df3e" },
+		};
+		expect(runCli(uuidProject, ["agent", "register", "--task", "ok"]).status).toBe(0);
+		const list = runCli(uuidProject, ["agent", "list"]);
+		expect(list.stdout).toMatch(/ok/);
+	});
+
+	// T13 — Phase 6 (falsification): agent list self-heartbeats the caller's own presence file
+	it("T13: `agent list` refreshes the caller's own presence-file mtime (implicit heartbeat)", () => {
+		runCli(project, ["agent", "register", "--task", "long running"]);
+		const presencePath = join(project.dir, ".indusk/agents/session-A-uuid.md");
+
+		// Backdate to T-90min (older than the default 60min TTL — would be stale)
+		const ninetyMinAgo = new Date(Date.now() - 90 * 60 * 1000);
+		utimesSync(presencePath, ninetyMinAgo, ninetyMinAgo);
+
+		// Same session calls `agent list` — should self-heartbeat
+		const beforeMtimeMs = statSync(presencePath).mtimeMs;
+		runCli(project, ["agent", "list"]);
+
+		const afterMtimeMs = statSync(presencePath).mtimeMs;
+
+		// Post-fix: list touches own file mtime to "now"
+		expect(afterMtimeMs).toBeGreaterThan(beforeMtimeMs);
+		expect(Date.now() - afterMtimeMs).toBeLessThan(5000);
+
+		// And: subsequent list calls now see the entry (no longer stale)
+		const listAgain = runCli(project, ["agent", "list"]);
+		expect(listAgain.stdout).toMatch(/long running/);
 	});
 
 	// T1 — Phase 3 unlock: two concurrent catchup flows both complete cleanly
