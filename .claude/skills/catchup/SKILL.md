@@ -1,11 +1,11 @@
 ---
 name: catchup
-description: Get caught up on the project. Pure-read — registers presence, surfaces other working agents, then reads operational state, lessons, plans, and Graphiti. Run at the start of every new session.
+description: Get caught up on the project. Pure-read — registers presence, reads .indusk/current.md sections to surface other working agents + the project's operational state, then reads lessons, plans, and Graphiti. Run at the start of every new session.
 ---
 
 You are starting a new session on this project. Before doing anything else, get caught up.
 
-`/catchup` is **pure-read** for everything other than the agent's own presence file. It does not mutate any shared file, does not check off any state machine, and does not interfere with other agents currently working on the project. The only side effect is `indusk agent register`, which writes the current session's own presence file under `.indusk/agents/`.
+`/catchup` is **pure-read** for every shared file. The only writes are (a) `indusk agent register` ensuring a section exists for the current session in `.indusk/current.md`, and (b) the implicit self-heartbeat in `indusk agent list` (refreshes your own section's `Last updated`). Neither write touches any other agent's section. Two sessions can run `/catchup` simultaneously on the same project without blocking or corrupting each other.
 
 ## Step 0. Wait for MCP Servers (BLOCKING)
 
@@ -31,7 +31,7 @@ Run this first, before reading anything else, so other concurrent agents can see
 indusk agent register --task "<one-line description of what this session is about>"
 ```
 
-If the user hasn't told you what they want to work on yet, use `--task "starting catchup"` and re-register with a meaningful task once the conversation makes it clear. The `task` field is free-text; later `register` calls overwrite the previous file for the same session.
+If the user hasn't told you what they want to work on yet, use `--task "starting catchup"` and re-register with a meaningful task once the conversation makes it clear. The `task` field is free-text; later `register` calls overwrite the section's task (preserving its in-flight / open-questions / cursor bodies if any).
 
 The session ID comes from `$CLAUDE_CODE_SESSION_ID` and is automatically inherited from this Claude Code session — no flag needed.
 
@@ -41,17 +41,20 @@ The session ID comes from `$CLAUDE_CODE_SESSION_ID` and is automatically inherit
 indusk agent list
 ```
 
-This prints every currently-registered agent on this project (stale entries older than `agents.stale_ttl_minutes` are filtered out, default 60). If other agents are present, surface them in the catchup summary so you know who you're working alongside — and so you can avoid stepping on their in-flight work.
+This prints every currently-fresh session in `.indusk/current.md` — i.e., other agents working on this project. Stale sections (older than `agents.stale_ttl_minutes`, default 60) are filtered out. If other agents are present, surface them in the catchup summary so the user knows who you're working alongside.
 
 Empty output means you're the only agent currently active. That's fine — just note it.
 
+Calling `agent list` also implicitly self-heartbeats your section (refreshes `Last updated`), so this is the canonical "I am still here" surface for long-running sessions.
+
 ### 3. Read Operational State
 
-Check if `.indusk/current.md` exists. If it does, read it — this is the operational layer: in-flight work, open questions, cursor positions. It is continuously maintained by working agents during sessions and is the durable answer to "what is happening on this project right now."
+Read `.indusk/current.md`. It has two regions worth surfacing:
 
-If `.indusk/current.md` doesn't exist yet (project initialized before Phase 4 of handoff-multi-agent shipped, or freshly initialized), skip silently. CLAUDE.md and active plans will cover the gap.
+- **`## Project (shared)`** — cross-cutting state that's true for the whole project right now ("pre-launch crunch mode", "telemetry endpoint changed last week", "merge freeze through Thursday"). Any agent can edit this section. Read it to know the project-wide context.
+- **Per-agent sections** (`## Session <short> — <task>`) — operational state from other working agents. Each section's `### In Flight`, `### Open Questions`, and `### Cursor` subsections tell you what other agents are doing in detail.
 
-**Do NOT edit `.indusk/current.md` during catchup.** Catchup is read-only for shared files. Working agents update it as state solidifies; catchup just reads it.
+**Do NOT edit `.indusk/current.md` during catchup.** Catchup is read-only for shared content. Your own section's content (in-flight / open-questions / cursor) is written via the [`mcp__indusk__update_current_section` MCP tool](apps/docs/src/reference/tools/indusk-mcp.md#agent-tools) — typically at `/handoff`, not during catchup. The `agent register` call in Step 1 only refreshes the heading + `Last updated`; it preserves any existing body content.
 
 ### 4. Read Lessons
 
@@ -130,8 +133,9 @@ After completing all steps, present a brief summary to the user:
 ```
 **Caught up.**
 - Session: registered as <session-id-short> on <branch>
-- Other agents currently working: [list from `indusk agent list`, or "none"]
-- Operational state: [summary from .indusk/current.md, or "no current.md yet"]
+- Project (shared) state: [content from `.indusk/current.md`'s ## Project (shared) section, or "none"]
+- Other agents currently working: [list from `indusk agent list`, with each agent's task — or "none"]
+- Notable in-flight from other agents: [if anyone's section is on something that might affect this session, surface it]
 - Lessons: N loaded
 - Infrastructure: [healthy / issues]
 - Skills: N installed [list names]
@@ -152,8 +156,8 @@ Ready to pick up. What would you like to do?
 ## Important
 
 - Do NOT skip any step. Each one prevents a class of mistake.
-- Do NOT mutate shared files during catchup. The only write is the current session's own presence file via `indusk agent register`.
+- Do NOT mutate any shared file during catchup. The only writes are `indusk agent register` and the implicit self-heartbeat in `indusk agent list`, both touching only the current session's own section.
 - Do NOT start coding before completing onboarding. The lessons and context exist because of past failures.
 - If CLAUDE.md seems outdated, flag it to the user — it may need a `/context` update.
 - If a plan's impl has unchecked items from a previous session, that's where `/work` picks up. Don't re-do completed work.
-- If you see other agents in `indusk agent list`, be aware of what they're working on. Avoid editing files they're likely to touch; if you must, surface it explicitly so the user can coordinate.
+- If you see other agents in `indusk agent list` working on something that overlaps with what the user wants you to do, surface that explicitly before proceeding. The bulletin is visibility, not coordination — the working agent owns the "avoid stepping on each other" judgment.

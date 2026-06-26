@@ -49,7 +49,7 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 |----|---------|-------------|-----------|-------|
 | T1 | After an agent runs handoff, only its own section in `.indusk/current.md` has changed — other agents' sections are byte-identical before vs after. | Phase 1 | Phase 1 | passing |
 | T2 | When an agent's session ID has no matching section in `current.md` and it runs handoff, a new section is appended tagged with its session ID. | Phase 1 | Phase 1 | passing |
-| T3 | A new agent's catchup output lists every fresh session present in `current.md` (other agents working on the project), with their tasks. | Phase 0 | Phase 3 | planned |
+| T3 | A new agent's catchup output lists every fresh session present in `current.md` (other agents working on the project), with their tasks. | Phase 0 | Phase 3 | passing |
 | T4 | Any agent can edit the `Project (shared)` section without changing any session-owned section. | Phase 1 | Phase 1 | passing |
 | T5 | The agent updates its in-flight / open-questions / cursor content via a single structured MCP tool call. | Phase 1 | Phase 1 | passing |
 | T6 | Two agents on different branches both run handoff; merging both branches to main produces no merge conflict because they touched different sections. | Phase 0 | Phase 5 | planned |
@@ -57,7 +57,7 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 | T8 | `indusk agent prune` removes sections whose `Last updated` timestamp is older than `agents.stale_ttl_minutes`; fresh sections survive. | Phase 1 | Phase 2 | passing |
 | T9 | Fresh `indusk init` creates `current.md` containing a `Project (shared)` section and no session sections. | Phase 0 | Phase 4 | planned |
 | T10 | Running `indusk update` on a pre-section-shape project migrates the template if it's still the empty version from the previous plan; if the user has edited it, the content is preserved untouched. | Phase 0 | Phase 4 | planned |
-| T11 | Running `/catchup` does not modify any file (other than the agent's own section if it explicitly calls the MCP tool — catchup itself is read-only). | Phase 0 | Phase 3 | planned |
+| T11 | Running `/catchup` does not modify any file (other than the agent's own section if it explicitly calls the MCP tool — catchup itself is read-only). | Phase 0 | Phase 3 | passing |
 | T12 | A session ID containing path-traversal characters cannot cause section writes or removals to escape `.indusk/current.md`. | Phase 0 | Phase 2 | passing |
 | T13 | A teammate cloning the project sees no leftover session sections from the original developer's machine. | Phase 0 | Phase 4 | planned |
 
@@ -174,31 +174,31 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
 
 ### Phase 3: Skill rewrites — handoff resurrected, catchup reads sections
 
-- [ ] Rewrite `apps/indusk-mcp/skills/handoff.md`:
+- [x] Rewrite `apps/indusk-mcp/skills/handoff.md`:
   - Replace deprecation page with a real ritual: (1) call `mcp__indusk__update_current_section` with the session's current in-flight / open-questions / cursor, (2) commit the change, (3) `indusk agent done` optional (sections age out naturally), (4) fire eval-trigger.
   - Heading reflects the new role: not "Deprecated," but "Session-end ritual."
-  - Explicit guidance: the agent fills in the three sections in its own words. No required schema beyond the three categories.
-- [ ] Rewrite `apps/indusk-mcp/skills/catchup.md`:
+  - Explicit guidance: the agent fills in the three sections in its own words. No required schema beyond the three categories. **Done — handoff.md is a full session-end-ritual page. The four-step ritual is named explicitly; the MCP tool's input shape is shown with explanatory text for each section; explicit disclaimers about not touching other agents' sections and not bundling `Project (shared)` edits; "Why it works this way" closes with the rationale for the section shape.**
+- [x] Rewrite `apps/indusk-mcp/skills/catchup.md`:
   - Strip the `.indusk/agents/` glob step.
   - Update Step 3 from "read `.indusk/current.md` for operational state" to "read `.indusk/current.md` — surface the `Project (shared)` section and list other agents' sessions from per-agent sections."
-  - Keep the pure-read invariant explicit.
-- [ ] Sync rewritten skills to dusk's `.claude/skills/catchup/SKILL.md` and `.claude/skills/handoff/SKILL.md` for this-session effect (the standard `globSync("*.md")` in init/update reaffirms from source on next update).
-- [ ] Rewrite `multi-agent-skills.test.ts`:
+  - Keep the pure-read invariant explicit. **Done — Step 2 (read the bulletin) now describes section-shape semantics + self-heartbeat behavior; Step 3 (read operational state) describes both `Project (shared)` and per-agent sections; preamble + Step 3 + Important block all reinforce the pure-read invariant.**
+- [x] Sync rewritten skills to dusk's `.claude/skills/catchup/SKILL.md` and `.claude/skills/handoff/SKILL.md` for this-session effect (the standard `globSync("*.md")` in init/update reaffirms from source on next update). **Done — both skills copied. Claude Code's skill registry already picked up the new descriptions (visible in the system reminder).**
+- [x] Rewrite `multi-agent-skills.test.ts`:
   - T3: catchup skill content instructs reading `current.md` sections and surfacing other agents from them. No `.indusk/agents/` references.
   - T11: pure-read invariant — catchup skill body explicitly disclaims any file write outside the agent's own MCP tool call.
-  - Drop the "handoff is deprecated" content assertion; replace with: handoff skill instructs calling `mcp__indusk__update_current_section` and committing.
+  - Drop the "handoff is deprecated" content assertion; replace with: handoff skill instructs calling `mcp__indusk__update_current_section` and committing. **Done — 5 passing assertions covering T3 (sections + Project (shared) + other-agents surfaced + no glob agents/), T11 (pure-read + register + self-heartbeat + do-not-edit invariant), handoff-is-a-ritual (MCP tool + 4-step + ritual not deprecation), handoff-only-touches-own-section, and T2-supporting (heading shape + subsection names visible).**
 
 #### Phase 3 Verification
-- [ ] T3 passes — content assertion on catchup skill confirms section-read flow.
-- [ ] T11 passes — pure-read invariant content assertion.
-- [ ] (No test flips at this phase from the CLI-level work — Phase 2 covered those; this phase covers skill content + the catchup-reads-current flow.)
+- [x] T3 passes — content assertion on catchup skill confirms section-read flow. **Verified — skill instructs reading `.indusk/current.md` sections, surfacing other agents from `## Session` blocks; does not glob the unused `.indusk/agents/` directory.**
+- [x] T11 passes — pure-read invariant content assertion. **Verified — preamble and Important block both name the invariant; the only writes are `indusk agent register` and the implicit `list` self-heartbeat, both touching only the caller's own section.**
+- [x] (No test flips at this phase from the CLI-level work — Phase 2 covered those; this phase covers skill content + the catchup-reads-current flow.) **Confirmed.**
 
 #### Phase 3 Context
-- [ ] Update `CLAUDE.md` Conventions entry that currently says "`/catchup` is pure-read + presence-register; `/handoff` is deprecated" — replace with the new shape: `/catchup` reads `current.md` sections; `/handoff` is a real session-end ritual that calls `mcp__indusk__update_current_section`.
+- [x] Update `CLAUDE.md` Conventions entry that currently says "`/catchup` is pure-read + presence-register; `/handoff` is deprecated" — replace with the new shape: `/catchup` reads `current.md` sections; `/handoff` is a real session-end ritual that calls `mcp__indusk__update_current_section`. **Done — new entry inserted before the existing handoff-multi-agent entry (which is left in place as historical context; can be pruned in Phase 5's docs cleanup pass). Describes section-shape semantics, the two pure-read invariants for catchup, the four-step handoff ritual, and the supersession relationship to the original plan.**
 
 #### Phase 3 Document
-- [ ] Update `apps/docs/src/reference/skills/catchup.md` — describe the section-read flow.
-- [ ] Update `apps/docs/src/reference/skills/handoff.md` — flip from deprecation page to the real ritual page. Preserve the URL for backward links.
+- [x] Update `apps/docs/src/reference/skills/catchup.md` — describe the section-read flow. **Done — rewrite covers section-shape semantics (Project shared + per-agent sections), pure-read invariant, the two explicit writes (register + heartbeat), cross-links to MCP tool + CLI ref.**
+- [x] Update `apps/docs/src/reference/skills/handoff.md` — flip from deprecation page to the real ritual page. Preserve the URL for backward links. **Done — full rewrite as a four-step ritual page. Each step explained with rationale; "What you're NOT doing" calls out the other-agents-section and Project (shared) disclaimers; "Why it works this way" preserves the rejected-alternative context.**
 
 ### Phase 4: Template + init/update migration
 

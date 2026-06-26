@@ -1,33 +1,67 @@
 # Handoff
 
-**Deprecated** as of the [handoff-multi-agent](/decisions/multi-agent-coordination) plan. The singleton `.claude/handoff.md` file no longer exists; there is no session-end document to write.
+The handoff skill is the session-end ritual: promote your session's operational state into `.indusk/current.md`, commit, run `indusk agent done`, fire the eval trigger.
 
-The work that the old handoff was trying to do has been split across surfaces that are already in place:
+After the [section-shape rework](/decisions/multi-agent-coordination), `.indusk/current.md` carries per-agent sections — one per Claude Code session. Your session owns one section, identified by your full session ID. The handoff ritual overwrites only *your* section; every other agent's section in the file is byte-untouched.
 
-- **Operational state** (in-flight work, open questions, cursor position) lives in `.indusk/current.md`. Working agents edit it during the session as things solidify. There is no end-of-session snapshot ceremony — the file is current at every moment because agents keep it that way.
-- **Presence** (who is currently working) lives in `.indusk/agents/<sessionId>.md`, written on [`indusk agent register`](/reference/cli/agent#agent-register) and removed on [`indusk agent done`](/reference/cli/agent#agent-done). There is no session-end broadcast ceremony — the presence file just exists while the agent is alive.
+## The Four Steps
 
-## What to Do at Session End
+### 1. Update your section via the MCP tool
 
-The skill is retained as a four-step ritual rather than an artifact:
+Call [`mcp__indusk__update_current_section`](/reference/tools/indusk-mcp#agent-tools) with three section bodies:
 
-1. **Promote operational state.** Edit `.indusk/current.md` only if the session produced in-flight reasoning, open hypotheses, or cursor-position context the next agent will want. If the session shipped a feature and closed a plan, `current.md` may not need to change at all.
-2. **Commit your changes.** Including the `current.md` edit if you made one. Other agents only see committed state — your working tree is invisible to them.
-3. **Run `indusk agent done`.** Removes your presence file. Other agents stop seeing you within seconds.
-4. **Fire the eval trigger.** So the eval agent processes any unprocessed highlights before the session ends:
-   ```bash
-   node .claude/hooks/eval-trigger.js --source handoff
-   ```
-   The trigger spawns the evaluator in the background and returns immediately.
+```typescript
+mcp__indusk__update_current_section({
+  sessionId: "<$CLAUDE_CODE_SESSION_ID>",
+  task: "<one-line description>",
+  sections: {
+    in_flight: "What's actively in progress.",
+    open_questions: "Hypotheses to confirm, design decisions mid-conversation.",
+    cursor: "Where you stopped — file paths, line numbers, next concrete step."
+  }
+})
+```
 
-## Why This Changed
+Atomic read-modify-write: the tool reads `current.md`, calls `upsertSection`, and renames a tmp file into place. Other agents' sections are byte-untouched.
 
-The old handoff model had two failure modes against concurrent agents:
+If the session produced nothing worth promoting (shipped a feature and closed a plan, no in-flight state), skip this step. The tool is for state that *should* survive — don't paste boilerplate to fill the section.
 
-1. `/catchup` mutated `.claude/handoff.md` (a checkbox state machine). While one agent was mid-catchup, the other agent's gate hook saw a partial file and either froze or behaved inconsistently.
-2. `/handoff` overwrote a single shared `.claude/handoff.md`. Whichever agent ran handoff second silently destroyed what the first one wrote.
+### 2. Commit the change
 
-Both failures are structurally impossible in the new model: catchup is pure-read except for the agent's own presence file, and there is no singleton handoff file at all. See the [ADR](/decisions/multi-agent-coordination) for the full rejected-alternatives list.
+Other agents only see committed state. If you skipped step 1, commit any code/plan work you did this session anyway.
+
+### 3. Remove your presence
+
+```bash
+indusk agent done
+```
+
+Removes your section from `current.md`. Optional — sections age out via the `Last updated` TTL — but explicit `done` makes the bulletin tidier.
+
+### 4. Fire the eval trigger
+
+So the eval agent processes any unprocessed highlights before the session closes:
+
+```bash
+node .claude/hooks/eval-trigger.js --source handoff
+```
+
+Spawns the evaluator in the background and returns immediately. Never blocks session close.
+
+## What You're NOT Doing
+
+- **Not writing a separate file.** The old `.claude/handoff.md` is gone. There's no document to fill in beyond the three section bodies passed to the MCP tool.
+- **Not touching other agents' sections.** Other sections in `current.md` belong to other sessions. Leave them alone. Use `indusk agent prune` if you want to clean up stale entries.
+- **Not editing `## Project (shared)`.** That section is for cross-cutting project state, not session handoffs. If you need to update shared state, do it as a separate explicit edit; don't bundle it into your handoff write.
+
+## Why It Works This Way
+
+The old singleton `.claude/handoff.md` had two reliable failure modes against concurrent agents:
+
+1. `/catchup` mutated the file (checkbox state machine) while another agent was reading it.
+2. `/handoff` overwrote the file, destroying the previous session's content.
+
+The section-shape design makes both impossible: each section is keyed by session ID; the MCP tool's atomic read-modify-write only touches the calling agent's section; and git merges different-section edits without conflict.
 
 ## Source
 
@@ -36,5 +70,6 @@ The canonical skill lives at `apps/indusk-mcp/skills/handoff.md`. Auto-synced to
 ## See also
 
 - [Multi-Agent Coordination ADR](/decisions/multi-agent-coordination)
-- [Catchup skill](/reference/skills/catchup)
+- [`mcp__indusk__update_current_section`](/reference/tools/indusk-mcp#agent-tools)
 - [`indusk agent` CLI reference](/reference/cli/agent)
+- [Catchup skill](/reference/skills/catchup)

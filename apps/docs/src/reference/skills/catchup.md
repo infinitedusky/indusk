@@ -1,30 +1,28 @@
 # Catchup
 
-The catchup skill gets a fresh Claude Code session oriented on a project. As of [handoff-multi-agent](/decisions/multi-agent-coordination), it is **pure-read** for every shared file — the only side effect is the agent's own presence file at `.indusk/agents/<sessionId>.md`, written via [`indusk agent register`](/reference/cli/agent#agent-register).
+The catchup skill gets a fresh Claude Code session oriented on a project. After the [section-shape rework](/decisions/multi-agent-coordination), it reads operational state from per-agent sections inside `.indusk/current.md` and surfaces other working agents from the same file.
 
-This makes concurrent catchup runs structurally race-free: two sessions can run `/catchup` at the same time on the same project and neither can corrupt the other's view or block the other from finishing.
+It is **pure-read** for every shared file. The only writes are (a) [`indusk agent register`](/reference/cli/agent#agent-register) ensuring a section exists for the current session, and (b) the implicit self-heartbeat in [`indusk agent list`](/reference/cli/agent#agent-list) refreshing the caller's own section's `Last updated`. Neither write touches any other agent's section. Two sessions can run `/catchup` simultaneously on the same project without blocking or corrupting each other.
 
 ## What It Does
 
 Given a fresh session, catchup:
 
-1. **Waits for required MCP servers** (`indusk`) to be available, blocking up to 30 seconds. Refuses to proceed without them — a partial catchup is worse than no catchup.
-2. **Registers the current session's presence** via `indusk agent register --task "..."`. The session ID comes from `$CLAUDE_CODE_SESSION_ID`; the file lands at `<projectRoot>/.indusk/agents/<sessionId>.md`.
-3. **Reads the bulletin** via `indusk agent list`. Surfaces other agents currently working on this project so the working agent knows who else is around and can avoid stepping on their in-flight work.
-4. **Reads operational state** from `.indusk/current.md` (the "what is happening NOW" layer). Strictly read-only — catchup never edits it.
-5. **Reads lessons** via `list_lessons` — past mistakes turned into rules.
-6. **Checks infrastructure** via `check_health` — FalkorDB + Graphiti reachable.
-7. **Reads project context** from CLAUDE.md (architecture, conventions, key decisions, gotchas, current state).
-8. **Recalls from Graphiti** via `search_nodes` — the temporal layer of project memory; decisions, corrections, retrospective insights as they happened.
-9. **Lists active plans** — which plans are in-progress and where `/work` would pick up.
+1. **Waits for required MCP servers** (`indusk`) to be available, blocking up to 30 seconds. Refuses to proceed without them.
+2. **Registers presence** via `indusk agent register --task "..."`. The session ID comes from `$CLAUDE_CODE_SESSION_ID`; the section lands in `.indusk/current.md`.
+3. **Reads the bulletin** via `indusk agent list`. Surfaces other agents currently working on the project. Self-heartbeats the caller's own section.
+4. **Reads operational state** from `.indusk/current.md` — both the `## Project (shared)` anchor (cross-cutting state any agent can edit) and per-agent `## Session <short> — <task>` blocks (other agents' in-flight / open-questions / cursor).
+5. **Reads lessons** via `list_lessons`.
+6. **Checks infrastructure** via `check_health`.
+7. **Reads project context** from `CLAUDE.md`.
+8. **Recalls from Graphiti** via `search_nodes`.
+9. **Lists active plans**.
 10. **Reviews installed skills and enabled extensions**.
-11. **Summarizes** to the user with the active plan list, other agents present, current state, and Graphiti recall highlights.
+11. **Summarizes** to the user with the active plan list, other agents present, project (shared) state, and Graphiti recall highlights.
 
 ## Pure-Read Invariant
 
-The skill body explicitly names the invariant: catchup does not mutate any file other than the current session's own `.indusk/agents/<sessionId>.md`. No checkbox state machine, no shared markdown edits, no plan-doc mutations. This is the structural guarantee that makes concurrent agent operation safe.
-
-If a catchup step *would* require a write to a shared file, that step has been moved to a different skill (working agent's normal commit flow, `/retrospective`, or `/context`). Catchup itself stays pure-read forever.
+Catchup never edits any shared file. Per-agent sections inside `current.md` are owned by their session — only that session writes them, and the canonical way to do so is via the [`mcp__indusk__update_current_section` MCP tool](/reference/tools/indusk-mcp#agent-tools) at `/handoff`. The `## Project (shared)` anchor section can be edited by any agent at any time, but catchup itself does not edit it.
 
 ## When to Use
 
@@ -39,6 +37,7 @@ The canonical skill lives at `apps/indusk-mcp/skills/catchup.md`. The auto-sync 
 
 ## See also
 
-- [Multi-Agent Coordination ADR](/decisions/multi-agent-coordination) — the full rationale for the pure-read design
+- [Multi-Agent Coordination ADR](/decisions/multi-agent-coordination) — the full rationale for the section shape
 - [`indusk agent` CLI reference](/reference/cli/agent) — the four subcommands the bulletin uses
-- [Handoff skill](/reference/skills/handoff) — the deprecated session-end skill, retained as a pointer page
+- [`mcp__indusk__update_current_section`](/reference/tools/indusk-mcp#agent-tools) — the write surface
+- [Handoff skill](/reference/skills/handoff) — the session-end ritual
