@@ -158,6 +158,7 @@ const config = defineConfig({
 						{ text: "Falsification Ritual", link: "/decisions/falsification-ritual" },
 						{ text: "InDusk Admin UI", link: "/decisions/indusk-admin-ui" },
 						{ text: "Admin UI Hosting", link: "/decisions/admin-ui-hosting" },
+						{ text: "Multi-Agent Coordination", link: "/decisions/multi-agent-coordination" },
 					],
 				},
 			],

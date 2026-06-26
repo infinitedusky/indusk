@@ -97,6 +97,61 @@ A presence file with mtime older than `stale_ttl_minutes` is filtered from `indu
 - **Inter-agent messaging.** The bulletin is read-only signal. Agents see each other but don't talk to each other. If coordination beyond visibility is needed, that's a separate plan.
 - **Auto-coordination.** The system tells agents what other agents are doing; it does not prevent two agents from editing the same file. That's the working agent's job to notice and route around.
 
+## Diagrams
+
+### Two concurrent agents — full lifecycle
+
+```mermaid
+sequenceDiagram
+    participant A as Session A (smoke-A worktree)
+    participant FS as Filesystem<br/>(.indusk/agents/)
+    participant B as Session B (smoke-B worktree)
+    participant G as Git (main)
+
+    A->>FS: indusk agent register --task "auth"
+    Note over FS: A.md written
+    B->>FS: indusk agent register --task "telemetry"
+    Note over FS: B.md written
+
+    A->>FS: indusk agent list
+    FS-->>A: [A: auth, B: telemetry]
+    B->>FS: indusk agent list
+    FS-->>B: [A: auth, B: telemetry]
+
+    A->>A: edit files on feat/auth
+    B->>B: edit files on feat/telemetry
+    Note over A,B: working trees are isolated — no leak
+
+    A->>A: edit .indusk/current.md (operational state)
+    A->>G: git commit + push
+    Note over G: current.md change committed
+
+    B->>G: git pull
+    G-->>B: current.md updated
+    Note over B: B's next /catchup sees A's promotion
+
+    A->>FS: indusk agent done
+    Note over FS: A.md removed
+    B->>FS: indusk agent list
+    FS-->>B: [B: telemetry]
+```
+
+### Presence-file state machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> None : (no file)
+    None --> Fresh : indusk agent register
+    Fresh --> Fresh : indusk agent register (overwrites)
+    Fresh --> None : indusk agent done
+    Fresh --> Stale : mtime > stale_ttl_minutes
+    Stale --> None : indusk agent prune
+    Stale --> Fresh : indusk agent register (touches mtime)
+    Stale --> [*] : (filtered from `agent list`)
+```
+
+`Fresh` is the only state where `indusk agent list` reports the agent. `Stale` files still exist on disk but are filtered from output until either (a) the agent re-registers and refreshes the mtime, or (b) someone runs `indusk agent prune`.
+
 ## See also
 
 - [Multi-Agent Coordination ADR](/decisions/multi-agent-coordination) — the architectural rationale and rejected alternatives
