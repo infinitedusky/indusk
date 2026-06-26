@@ -43,6 +43,7 @@ const config = defineConfig({
 			{ text: "Decisions", link: "/decisions/" },
 			{ text: "Lessons", link: "/lessons/" },
 			{ text: "Dawn", link: "/dawn/" },
+			{ text: "Strategy", link: "/strategy/" },
 			{ text: "Changelog", link: "/changelog" },
 		],
 
@@ -80,6 +81,10 @@ const config = defineConfig({
 						{ text: "Extension Spec", link: "/reference/extension-spec" },
 						{ text: "Extensions Index", link: "/reference/extensions/" },
 					],
+				},
+				{
+					text: "CLI",
+					items: [{ text: "agent", link: "/reference/cli/agent" }],
 				},
 				{
 					text: "Semantic Graph",
@@ -174,6 +179,18 @@ const config = defineConfig({
 				{
 					text: "Architecture",
 					items: [{ text: "Decisions", link: "/dawn/decisions" }],
+				},
+			],
+			"/strategy/": [
+				{
+					text: "Strategy",
+					items: [
+						{ text: "Overview", link: "/strategy/" },
+						{
+							text: "Midnight & the Landscape (2026-06)",
+							link: "/strategy/midnight-and-the-landscape",
+						},
+					],
 				},
 			],
 		},
