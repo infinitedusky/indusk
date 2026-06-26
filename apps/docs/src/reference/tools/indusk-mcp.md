@@ -121,6 +121,12 @@ The 6 canonical sections: What This Is, Architecture, Conventions, Key Decisions
 | `query_dependencies` | `target`, `direction` | Queries what depends on a file/module (`dependents`), what it depends on (`dependencies`), or `both`. See [CodeGraphContext](/reference/tools/codegraph). |
 | `query_graph` | `cypher` | Runs a custom Cypher query against the code graph for advanced structural analysis. |
 
+### Agent Tools
+
+| Tool | Input | Description |
+|------|-------|-------------|
+| `update_current_section` | `sessionId`, `task`, `sections: { in_flight, open_questions, cursor }` | Promotes the current session's operational state to `.indusk/current.md`. Finds the agent's section by full session ID, overwrites in place, or appends if no match. Other agents' sections are byte-untouched. Atomic read-modify-write (tmp + rename). The explicit write surface for the [multi-agent section-shape coordination](/decisions/multi-agent-coordination). |
+
 ## Hooks
 
 Two Claude Code hooks enforce the gate system during [work](/reference/skills/work) execution:

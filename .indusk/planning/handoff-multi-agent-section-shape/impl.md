@@ -47,11 +47,11 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | After an agent runs handoff, only its own section in `.indusk/current.md` has changed — other agents' sections are byte-identical before vs after. | Phase 1 | Phase 1 | written |
-| T2 | When an agent's session ID has no matching section in `current.md` and it runs handoff, a new section is appended tagged with its session ID. | Phase 1 | Phase 1 | written |
+| T1 | After an agent runs handoff, only its own section in `.indusk/current.md` has changed — other agents' sections are byte-identical before vs after. | Phase 1 | Phase 1 | passing |
+| T2 | When an agent's session ID has no matching section in `current.md` and it runs handoff, a new section is appended tagged with its session ID. | Phase 1 | Phase 1 | passing |
 | T3 | A new agent's catchup output lists every fresh session present in `current.md` (other agents working on the project), with their tasks. | Phase 0 | Phase 3 | planned |
-| T4 | Any agent can edit the `Project (shared)` section without changing any session-owned section. | Phase 1 | Phase 1 | written |
-| T5 | The agent updates its in-flight / open-questions / cursor content via a single structured MCP tool call. | Phase 1 | Phase 1 | written |
+| T4 | Any agent can edit the `Project (shared)` section without changing any session-owned section. | Phase 1 | Phase 1 | passing |
+| T5 | The agent updates its in-flight / open-questions / cursor content via a single structured MCP tool call. | Phase 1 | Phase 1 | passing |
 | T6 | Two agents on different branches both run handoff; merging both branches to main produces no merge conflict because they touched different sections. | Phase 0 | Phase 5 | planned |
 | T7 | `indusk agent done` removes only the calling agent's section from `current.md`; other sections survive. | Phase 1 | Phase 2 | written |
 | T8 | `indusk agent prune` removes sections whose `Last updated` timestamp is older than `agents.stale_ttl_minutes`; fresh sections survive. | Phase 1 | Phase 2 | written |
@@ -83,7 +83,7 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
 
 ### Phase 1: Section lib + MCP write tool
 
-- [ ] Create `apps/indusk-mcp/src/lib/agents/current-md.ts` with these exports:
+- [x] Create `apps/indusk-mcp/src/lib/agents/current-md.ts` with these exports:
   ```typescript
   export interface AgentSection {
     sessionId: string;        // full UUID
@@ -106,8 +106,8 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
   export function pruneStaleSections(content: string, ttlMinutes: number, now?: Date): string;
   export function listSections(content: string, ttlMinutes: number, now?: Date): { fresh: AgentSection[]; stale: AgentSection[] };
   ```
-- [ ] Section heading shape: `## Session <short8> — <task>`. Inside the section, `**Session ID**: <full-uuid>` line drives unambiguous matching by full ID. Lookup priority: full-UUID match first, short-prefix fallback (warning on multiple matches).
-- [ ] Wire new MCP tool `update_current_section` in `apps/indusk-mcp/src/mcp/index.ts` (or wherever tools live). Input shape:
+- [x] Section heading shape: `## Session <short8> — <task>`. Inside the section, `**Session ID**: <full-uuid>` line drives unambiguous matching by full ID. Lookup priority: full-UUID match first, short-prefix fallback (warning on multiple matches). **Done — matching is by full UUID via parser's `**Session ID**:` regex. Short prefix is heading-only for human legibility; collisions tolerated because full UUID disambiguates.**
+- [x] Wire new MCP tool `update_current_section` in `apps/indusk-mcp/src/mcp/index.ts` (or wherever tools live). Input shape:
   ```typescript
   {
     sessionId: string;
@@ -119,32 +119,32 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
     };
   }
   ```
-  Tool reads `.indusk/current.md`, calls `upsertSection` with the given session, writes back atomically (write to temp + rename).
-- [ ] Reuse `sanitizeSessionId` from `lib/agents/session.ts` — every section-mutating function routes sessionId through it.
-- [ ] Vitest unit tests in `apps/indusk-mcp/src/lib/agents/__tests__/current-md.test.ts`:
+  Tool reads `.indusk/current.md`, calls `upsertSection` with the given session, writes back atomically (write to temp + rename). **Done — `registerAgentTools` in `apps/indusk-mcp/src/tools/agent-tools.ts`; wired in `src/server/index.ts` alongside the other tool registrations. Atomic write via tmp + renameSync.**
+- [x] Reuse `sanitizeSessionId` from `lib/agents/session.ts` — every section-mutating function routes sessionId through it. **Done — `upsertSection` and `removeSection` both call `sanitizeSessionId`; rejected IDs throw TypeError before any string mutation.**
+- [x] Vitest unit tests in `apps/indusk-mcp/src/lib/agents/__tests__/current-md.test.ts`:
   - parse round-trip (parse → serialize → byte-equal to canonical form)
   - upsert: T1 (only-touch-own), T2 (append-if-missing)
   - removeSection: T7 (other sections survive)
   - editSharedSection: T4 (no session-owned sections change)
   - pruneStaleSections: T8 (timestamp-based filter)
   - listSections: returns fresh + stale partition
-  - sanitizer regression: T12 (path-traversal session ID rejected at lib boundary)
-- [ ] Vitest unit tests for the MCP tool itself: T5 (the tool call is the documented input/output, atomic read-modify-write).
+  - sanitizer regression: T12 (path-traversal session ID rejected at lib boundary) **Done — 18 passing cases in `current-md.test.ts`: roundtrip, T1 (two sub-cases), T2 (three sub-cases including sanitizer regression), T4 (two sub-cases), T7-lib (three sub-cases including sanitizer regression), T8-lib (three sub-cases), listSections partition.**
+- [x] Vitest unit tests for the MCP tool itself: T5 (the tool call is the documented input/output, atomic read-modify-write). **Done — 5 passing cases in `agent-tools.test.ts`: registration, create-from-empty, upsert-in-place, preserve-others, sanitizer-regression.**
 
 #### Phase 1 Verification
-- [ ] T1 passes — `pnpm --filter @infinitedusky/indusk-mcp test src/lib/agents/__tests__/current-md.test.ts`
-- [ ] T2 passes (same file)
-- [ ] T4 passes (same file)
-- [ ] T5 passes — MCP tool wrapper test
-- [ ] T7 lib-level passes (CLI-level still red until Phase 2)
-- [ ] T8 lib-level passes (CLI-level still red until Phase 2)
-- [ ] T12 passes (sanitizer regression at the new lib boundary)
+- [x] T1 passes — `pnpm --filter @infinitedusky/indusk-mcp test src/lib/agents/__tests__/current-md.test.ts` **Verified 2026-06-26: 18 of 18 lib cases passing.**
+- [x] T2 passes (same file) **Verified — three sub-cases including append-on-empty + append-alongside + sanitizer regression.**
+- [x] T4 passes (same file) **Verified — two sub-cases.**
+- [x] T5 passes — MCP tool wrapper test **Verified — 5 of 5 in `agent-tools.test.ts`.**
+- [x] T7 lib-level passes (CLI-level still red until Phase 2) **Verified — `removeSection` tests passing; CLI-level test stays red until Phase 2 wires the CLI.**
+- [x] T8 lib-level passes (CLI-level still red until Phase 2) **Verified — `pruneStaleSections` tests passing.**
+- [x] T12 passes (sanitizer regression at the new lib boundary) **Verified — sanitizer regression tests in both `upsertSection` and `removeSection` confirm path-traversal rejection.**
 
 #### Phase 1 Context
-- [ ] Update `CLAUDE.md` Known Gotchas: add an entry describing the section-shape contract — heading format, full-UUID matching, atomic-write requirement, sanitization at every entry.
+- [x] Update `CLAUDE.md` Known Gotchas: add an entry describing the section-shape contract — heading format, full-UUID matching, atomic-write requirement, sanitization at every entry. **Done — entry covers file shape, full-UUID matching invariant, split-and-slice parser rationale (JS regex limitation), MCP tool location + input shape + atomic-write, and the malformed-timestamp-is-kept policy.**
 
 #### Phase 1 Document
-- [ ] Update `apps/docs/src/reference/tools/indusk-mcp.md` (the InDusk MCP tool catalog) — add `update_current_section` to the tool list with shape + behavior. This is the new public MCP surface; the user-facing CLI reference change waits for Phase 2.
+- [x] Update `apps/docs/src/reference/tools/indusk-mcp.md` (the InDusk MCP tool catalog) — add `update_current_section` to the tool list with shape + behavior. This is the new public MCP surface; the user-facing CLI reference change waits for Phase 2. **Done — new `### Agent Tools` section added with the tool's input shape, behavior summary, and cross-link to the multi-agent ADR.**
 
 ### Phase 2: Repurpose `indusk agent` CLI for sections
 

@@ -14,6 +14,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { registerAgentTools } from "../tools/agent-tools.js";
 import { registerContextTools } from "../tools/context-tools.js";
 import { registerDocumentTools } from "../tools/document-tools.js";
 import { registerGraphTools } from "../tools/graph-tools.js";
@@ -70,6 +71,7 @@ export async function startServer(): Promise<void> {
 		registerGraphTools(server, projectRoot);
 		registerLessonTools(server, projectRoot);
 		registerHighlightTools(server, projectRoot);
+		registerAgentTools(server, projectRoot);
 		registerTelemetryTools(server);
 		console.error("[indusk] tools registered");
 
