@@ -55,11 +55,11 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 | T6 | Two agents on different branches both run handoff; merging both branches to main produces no merge conflict because they touched different sections. | Phase 0 | Phase 5 | planned |
 | T7 | `indusk agent done` removes only the calling agent's section from `current.md`; other sections survive. | Phase 1 | Phase 2 | passing |
 | T8 | `indusk agent prune` removes sections whose `Last updated` timestamp is older than `agents.stale_ttl_minutes`; fresh sections survive. | Phase 1 | Phase 2 | passing |
-| T9 | Fresh `indusk init` creates `current.md` containing a `Project (shared)` section and no session sections. | Phase 0 | Phase 4 | planned |
-| T10 | Running `indusk update` on a pre-section-shape project migrates the template if it's still the empty version from the previous plan; if the user has edited it, the content is preserved untouched. | Phase 0 | Phase 4 | planned |
+| T9 | Fresh `indusk init` creates `current.md` containing a `Project (shared)` section and no session sections. | Phase 0 | Phase 4 | passing |
+| T10 | Running `indusk update` on a pre-section-shape project migrates the template if it's still the empty version from the previous plan; if the user has edited it, the content is preserved untouched. | Phase 0 | Phase 4 | passing |
 | T11 | Running `/catchup` does not modify any file (other than the agent's own section if it explicitly calls the MCP tool — catchup itself is read-only). | Phase 0 | Phase 3 | passing |
 | T12 | A session ID containing path-traversal characters cannot cause section writes or removals to escape `.indusk/current.md`. | Phase 0 | Phase 2 | passing |
-| T13 | A teammate cloning the project sees no leftover session sections from the original developer's machine. | Phase 0 | Phase 4 | planned |
+| T13 | A teammate cloning the project sees no leftover session sections from the original developer's machine. | Phase 0 | Phase 4 | passing |
 
 ### Deferred Verification
 
@@ -202,7 +202,7 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
 
 ### Phase 4: Template + init/update migration
 
-- [ ] Rewrite `apps/indusk-mcp/templates/current.md` to the new shape:
+- [x] Rewrite `apps/indusk-mcp/templates/current.md` to the new shape:
   ```markdown
   # Operational State
 
@@ -224,29 +224,29 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
   ---
 
   <!-- session sections are appended below this marker by `update_current_section` -->
-  ```
-- [ ] `init.ts` — no code change required. Template is at `apps/indusk-mcp/templates/current.md`; init's existing step 3.5 already copies it.
-- [ ] `update.ts` step 7c — extend the existing migration:
+  ``` **Done — template carries `# Operational State` preamble explaining the two regions, then `## Project (shared)` anchor (with `(empty)` placeholder), then `---` delimiter + HTML-comment marker.**
+- [x] `init.ts` — no code change required. Template is at `apps/indusk-mcp/templates/current.md`; init's existing step 3.5 already copies it. **Confirmed — fresh init's `current.md` matches the new template byte-for-byte.**
+- [x] `update.ts` step 7c — extend the existing migration:
   - If `.indusk/current.md` doesn't exist, copy template (unchanged behavior).
   - If `.indusk/current.md` exists AND is byte-equal to the PARENT plan's empty template (the old shape we shipped on the branch), replace with the new template.
   - If `.indusk/current.md` exists and has any user-authored content, leave untouched.
-  - To detect "byte-equal to old empty template," embed a known SHA-256 of the parent template content as a constant; compare on read.
-- [ ] Update `multi-agent-init.test.ts`:
+  - To detect "byte-equal to old empty template," embed a known SHA-256 of the parent template content as a constant; compare on read. **Done — step 7c now SHA-detects the old template (`e31a23d18eb1eecc250b35e82c1e374506e87e587486b159a3525bb60a25821b`) and replaces with the new template; any byte difference (even one extra newline) is treated as user content and preserved.**
+- [x] Update `multi-agent-init.test.ts`:
   - T9: fresh init creates new-shape template (has `## Project (shared)` heading).
   - T10: pre-section-shape project gets migrated only if file is still empty template.
   - T10 supporting: pre-section-shape project with user content gets preserved.
-  - T13: still asserts the gitignore line for `.indusk/agents/` lands (kept as precaution).
+  - T13: still asserts the gitignore line for `.indusk/agents/` lands (kept as precaution). **Done — 7 passing cases: T9 (new shape), T13 (gitignore precaution), config default, no-overwrite-on-re-init, T10 (migrate byte-equal old template), T10 supporting (preserve user-edited), T10 supporting (idempotent — second update is a no-op).**
 
 #### Phase 4 Verification
-- [ ] T9 passes — fresh init's `current.md` matches the new template shape.
-- [ ] T10 passes — update migrates empty template, preserves user-edited content.
-- [ ] T13 passes — gitignore line still present.
+- [x] T9 passes — fresh init's `current.md` matches the new template shape. **Verified — `## Project (shared)` heading present, old `## In Flight / Open Questions / Cursor` top-level headings absent, `---` delimiter present.**
+- [x] T10 passes — update migrates empty template, preserves user-edited content. **Verified — byte-equal old template → migrate (stdout `migrate: .indusk/current.md`); old template + user edit → preserve (stdout `user content preserved`); double-update is idempotent.**
+- [x] T13 passes — gitignore line still present. **Verified — `.indusk/agents/` line present in `.gitignore` after init; phantom presence file dropped under `.indusk/agents/` does not appear in `git status --porcelain`.**
 
 #### Phase 4 Context
-- [ ] Update `CLAUDE.md` Conventions entry that describes `.indusk/current.md` — describe the per-agent section shape with the `Project (shared)` anchor; drop the "fixed sections (In Flight / Open Questions / Cursor at top level)" wording.
+- [x] Update `CLAUDE.md` Conventions entry that describes `.indusk/current.md` — describe the per-agent section shape with the `Project (shared)` anchor; drop the "fixed sections (In Flight / Open Questions / Cursor at top level)" wording. **Done — new entry inserted before the existing parent-plan entry. Describes the file shape, the no-code-change init path, the SHA-detected migration, and the parser-tolerates-legacy-preamble property.**
 
 #### Phase 4 Document
-- [ ] Update `apps/docs/src/guide/multi-agent.md` — rewrite the operational-vs-architectural table and the day-in-the-life flows for the section shape. Update the Mermaid sequence diagram so the FS messages reference `current.md` section edits, not `.indusk/agents/` writes. Update the state diagram or replace it with a section-staleness diagram (Fresh / Stale / Removed).
+- [x] Update `apps/docs/src/guide/multi-agent.md` — rewrite the operational-vs-architectural table and the day-in-the-life flows for the section shape. Update the Mermaid sequence diagram so the FS messages reference `current.md` section edits, not `.indusk/agents/` writes. Update the state diagram or replace it with a section-staleness diagram (Fresh / Stale / Removed). **Done — full rewrite. Three primitives now describe worktrees + current.md sections + MCP tool; new `## File shape` section with worked example; operational-vs-architectural table reflects per-agent sections; `/handoff` flow documents the four-step ritual including MCP tool call; `Project (shared)` editing is explicitly called out as a separate flow from session handoffs. Mermaid sequence updated for current.md edits + MCP tool call; state diagram updated to Fresh/Stale/Removed with self-heartbeat transition.**
 
 ### Phase 5: Parent ADR + docs + changelog + concurrent-handoff e2e
 
