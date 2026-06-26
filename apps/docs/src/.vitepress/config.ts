@@ -63,6 +63,7 @@ const config = defineConfig({
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Worktree Setup (Workbench)", link: "/guide/worktree-setup" },
+						{ text: "Multi-Agent Coordination", link: "/guide/multi-agent" },
 					],
 				},
 			],
