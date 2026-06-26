@@ -3,16 +3,20 @@ import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Test Trajectory for the handoff-multi-agent plan — skill content + commit-flow rows.
+ * Test Trajectory for the handoff-multi-agent plan — skill content rows.
  *
- * All three rows are `.skip()` scaffolds at Phase 1; each names the phase that
- * unblocks it. Un-skipped together in Phase 3 when the skill rewrites land:
- *   T6 → Phase 3 (catchup reads current.md after commit)
- *   T7 → Phase 3 (catchup pure-read invariant)
- *   T8 → Phase 3 (handoff deprecation message)
+ * T6, T7, T8 — live (Phase 3). Assert the rewritten skill source files at
+ * apps/indusk-mcp/skills/ carry the new convention (current.md read, no
+ * checkbox mutation, handoff deprecation message). These are content tests on
+ * the canonical skill source — the auto-sync globSync("*.md") in init.ts /
+ * update.ts ensures consumers get the same content.
  *
- * Today the skill files contain the old checkbox/mutation flow, so reading them
- * and grepping for the new convention shows "not present" — red signal is real.
+ * T1, T2 — content tests on the catchup skill demonstrating the new
+ * concurrent-safe shape: the skill no longer mutates shared state, the skill
+ * surfaces other agents via `indusk agent list`. The behavioral "two agents
+ * concurrently invoke /catchup" check requires running Claude Code itself,
+ * which is out of scope for unit tests — verified instead by the Phase 5
+ * manual smoke (T10) and structurally by T7 (catchup is pure-read).
  *
  * See `.indusk/planning/handoff-multi-agent/impl.md` for the full trajectory.
  */
@@ -20,41 +24,64 @@ import { describe, expect, it } from "vitest";
 const REPO_ROOT = resolve(__dirname, "../../../..");
 const CATCHUP_SKILL = join(REPO_ROOT, "apps/indusk-mcp/skills/catchup.md");
 const HANDOFF_SKILL = join(REPO_ROOT, "apps/indusk-mcp/skills/handoff.md");
-const _SKILLS_PRESENT = existsSync(CATCHUP_SKILL) && existsSync(HANDOFF_SKILL);
 
 describe("multi-agent skills — handoff-multi-agent trajectory", () => {
-	// T6 — Phase 3 unlock: catchup output reflects a current.md edit committed on main
-	it.skip("T6: after a commit to current.md on main, next agent's catchup sees it", () => {
-		// Intended shape (un-skip in Phase 3):
-		//   const before = catchupOutput(projectDir);
-		//   writeFileSync(join(projectDir, ".indusk/current.md"), "## In Flight\n\nNEW THING\n");
-		//   spawnSync("git", ["add", ".indusk/current.md"], { cwd: projectDir });
-		//   spawnSync("git", ["commit", "-m", "current"], { cwd: projectDir });
-		//   const after = catchupOutput(projectDir);
-		//   expect(after).toContain("NEW THING");
-		//   expect(before).not.toContain("NEW THING");
-		expect.fail("Phase 3 unlock — current.md surface + catchup-reads-it skill behavior");
+	// T1 — Phase 3: catchup skill no longer mutates shared state (pure-read invariant)
+	it("T1: catchup skill is structurally race-free (no checkbox mutation, no shared file writes)", () => {
+		const content = readFileSync(CATCHUP_SKILL, "utf-8");
+
+		// The old checkbox state machine is gone — no instructions to mutate handoff.md
+		expect(content).not.toMatch(/edit the handoff to check off/i);
+		expect(content).not.toMatch(/\.claude\/handoff\.md/);
+		expect(content).not.toMatch(/check off `- \[x\] /); // legacy phrasing
+
+		// The new convention is explicitly stated: pure-read for shared files
+		expect(content.toLowerCase()).toMatch(/pure[- ]read/);
+
+		// Catchup's only mutation is the agent's own presence file
+		expect(content).toMatch(/indusk agent register/);
 	});
 
-	// T7 — Phase 3 unlock: catchup mutates only the agent's own presence file
-	it.skip("T7: running catchup does not modify any file other agents would observe", () => {
-		// Intended shape (un-skip in Phase 3):
-		//   const before = snapshotFsMtimes(projectDir, { exclude: [".indusk/agents/<self>.md"] });
-		//   runCatchupFlow(projectDir);
-		//   const after = snapshotFsMtimes(projectDir, { exclude: [".indusk/agents/<self>.md"] });
-		//   expect(after).toEqual(before);
-		expect.fail("Phase 3 unlock — pure-read catchup is the Phase 3 deliverable");
+	// T2 — Phase 3: catchup skill surfaces other working agents via bulletin
+	it("T2: catchup skill instructs the agent to surface other working agents", () => {
+		const content = readFileSync(CATCHUP_SKILL, "utf-8");
+		expect(content).toMatch(/indusk agent list/);
+		// And calls out concurrent-agent awareness in the summary template
+		expect(content.toLowerCase()).toMatch(/other agents/);
 	});
 
-	// T8 — Phase 3 unlock: handoff skill content is a deprecation pointer
-	it.skip("T8: deprecated handoff command tells the user what to do instead", () => {
-		// Intended shape (un-skip in Phase 3):
-		//   const content = readFileSync(HANDOFF_SKILL, "utf-8");
-		//   expect(content.toLowerCase()).toMatch(/deprecated/);
-		//   expect(content).toMatch(/indusk agent done|multi-agent\.md|current\.md/);
-		const content = existsSync(HANDOFF_SKILL) ? readFileSync(HANDOFF_SKILL, "utf-8") : "";
-		// Today's handoff skill is NOT a deprecation page — this assertion intentionally
-		// describes the post-Phase-3 invariant. Phase 3 makes it pass.
+	// T6 — Phase 3: catchup skill instructs reading .indusk/current.md
+	it("T6: catchup skill reads .indusk/current.md as the operational state surface", () => {
+		const content = readFileSync(CATCHUP_SKILL, "utf-8");
+		expect(content).toMatch(/\.indusk\/current\.md/);
+		// And documents the read-only contract for current.md during catchup
+		expect(content.toLowerCase()).toMatch(/do not edit.*current\.md/);
+	});
+
+	// T7 — Phase 3: catchup skill explicitly states the pure-read invariant
+	it("T7: catchup skill names the pure-read invariant against shared files", () => {
+		const content = readFileSync(CATCHUP_SKILL, "utf-8");
+		// Skill body is explicit that the only side effect is the agent's own presence file
+		expect(content.toLowerCase()).toMatch(/only side effect|only mutation|only write/);
+		expect(content).toMatch(/\.indusk\/agents\//);
+		// And the "Important" section reinforces the rule
+		expect(content.toLowerCase()).toMatch(/do not mutate shared files/);
+	});
+
+	// T8 — Phase 3: handoff skill is now a deprecation pointer
+	it("T8: deprecated handoff skill tells the user what to do instead", () => {
+		expect(existsSync(HANDOFF_SKILL)).toBe(true);
+		const content = readFileSync(HANDOFF_SKILL, "utf-8");
+
+		// Marked as deprecated
 		expect(content.toLowerCase()).toMatch(/deprecated/);
+
+		// Points at the new flow — current.md + agent done + eval trigger
+		expect(content).toMatch(/\.indusk\/current\.md/);
+		expect(content).toMatch(/indusk agent done/);
+		expect(content).toMatch(/eval-trigger/);
+
+		// Does NOT instruct writing the old .claude/handoff.md file
+		expect(content).not.toMatch(/Create or overwrite `\.claude\/handoff\.md`/);
 	});
 });

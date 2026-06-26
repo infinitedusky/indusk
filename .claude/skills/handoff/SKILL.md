@@ -1,75 +1,48 @@
 ---
 name: handoff
-description: Write a handoff file before ending a session. Captures what was worked on, where it stopped, what's next, and any warnings for the next agent.
+description: Deprecated. Session-end checklist — commit any operational state to .indusk/current.md, run `indusk agent done`, fire the eval trigger. The singleton handoff.md file no longer exists.
 ---
 
-You are ending a session or handing off to another agent. Write a handoff file so the next session can pick up exactly where you left off.
+`/handoff` is **deprecated** as of the handoff-multi-agent plan. The singleton `.claude/handoff.md` is gone. There is no shared handoff document to write or overwrite. If you came here looking for the old "write a handoff file" flow, that's not what closes a session anymore.
 
-## What to Write
+The work that the old handoff was trying to do is now split across two surfaces, both of which are already in place:
 
-Create or overwrite `.claude/handoff.md` with:
+- **Operational state** (in-flight work, open questions, cursor position) lives in `.indusk/current.md`. Working agents edit it during the session as things solidify, and commit the edits like any other file. There is no end-of-session "snapshot" ceremony — the file is current at every moment because agents keep it that way.
+- **Presence** (who is currently working on this project) lives in `.indusk/agents/<sessionId>.md`, written on `indusk agent register` and removed on `indusk agent done`. There is no session-end "broadcast" ceremony — the presence file just exists while the agent is alive.
 
-```markdown
-# Handoff
+The architecture rationale is in [`apps/docs/src/decisions/multi-agent-coordination.md`](../../docs/src/decisions/multi-agent-coordination.md). The CLI reference is in [`apps/docs/src/reference/cli/agent.md`](../../docs/src/reference/cli/agent.md). The guide is in [`apps/docs/src/guide/multi-agent.md`](../../docs/src/guide/multi-agent.md).
 
-**Date:** {YYYY-MM-DD}
-**Session:** {brief description of what this session focused on}
+## What to do at session end
 
-## What Was Being Worked On
-{Plan name, phase, specific checklist item. Be precise — "Phase 3 of extension-system, item 4: refactor check_health" not "working on extensions."}
+There is no document to write. There is a small ritual:
 
-## Where It Stopped
-{Last thing completed. First thing that needs doing next. If mid-item, explain exactly where.}
+1. **Promote any operational state that's worth carrying to the next session.** Edit `.indusk/current.md` if the session produced in-flight reasoning, open hypotheses, or cursor-position context that the next agent (or the next session of yourself) will want. Don't dump everything — `current.md` is for the operational layer (what's happening NOW), not the architectural layer (CLAUDE.md). If the session's output is "feature shipped, plan closed" then `current.md` doesn't need to change.
 
-## What's Next
-{The immediate next step. Then the next 2-3 steps after that. This is the pickup point for /catchup.}
+2. **Commit your changes.** Including the `current.md` edit if you made one. This is what makes the change visible to other agents — they only see committed state, never your uncommitted working tree.
 
-## Open Issues
-{Anything broken, failing, or weird. Tests that don't pass. Errors being investigated. Things that worked before but don't now.}
+3. **Run `indusk agent done`.** Removes your presence file. Other agents stop seeing you within seconds. Silent no-op if the file is already gone.
 
-## Decisions Made This Session
-{Any decisions that aren't captured in CLAUDE.md or an ADR yet. These need to be formalized — they're here so they don't get lost between sessions.}
+4. **Fire the eval trigger.** So the eval agent processes any unprocessed highlights before the session ends. Highlights written after the last `git commit` would otherwise sit in the queue until the next session's first commit.
 
-## Watch Out For
-{Gotchas the next agent should know. "The FalkorDB graph needs reindexing." "The hooks aren't published yet — version 1.0.3 has them." "Don't touch init.ts until the extension system PR is merged."}
+   ```bash
+   node .claude/hooks/eval-trigger.js --source handoff
+   ```
 
-## Catchup Status
-- [ ] mcp-ready
-- [ ] handoff
-- [ ] lessons
-- [ ] skills
-- [ ] health
-- [ ] context
-- [ ] plans
-- [ ] extensions
-```
+   The trigger spawns the evaluator in the background and returns immediately — it never blocks the session close. If the hook isn't installed or Node isn't on PATH, the highlights remain queued for the next `git commit` in a future session.
 
-## When to Write a Handoff
+## When this skill fires
 
-- Before ending any session where work was done
-- When the user says "let's stop here", "wrap up", "hand off"
-- When you're about to run out of context
-- `/handoff` explicitly
+- `/handoff` explicitly (legacy users running the old command)
+- The user says "wrap up", "hand off", "let's stop here"
+- About to run out of context
 
-## Fire the Eval Trigger
+In any of those cases, walk the four-step ritual above. Do not write a `handoff.md` file. Do not edit any other agent's presence file. The whole point of this rewrite is that there is no shared mutation surface at session end.
 
-After writing the handoff file, fire the eval trigger with `--source handoff` so the eval agent processes any unprocessed highlights before the session ends. This matters because highlights written after the last `jj describe` would otherwise sit in the queue until the next session's first commit.
+## Why this changed
 
-Run this from the project root:
+The old handoff model had two failure modes against concurrent agents:
 
-```bash
-node .claude/hooks/eval-trigger.js --source handoff
-```
+1. `/catchup` mutated `.claude/handoff.md` (a checkbox state machine). While one agent was mid-catchup, the other agent's gate hook saw a partial file and either froze or behaved inconsistently.
+2. `/handoff` overwrote a single shared `.claude/handoff.md`. Whichever agent ran handoff second silently destroyed what the first one wrote.
 
-The trigger spawns the evaluator in the background and returns immediately — it never blocks handoff. The evaluator processes the highlights queue and, because `INDUSK_EVAL_SOURCE=handoff` is set in the environment, may skip diff-based rubric scoring (there's no new commit). Highlights still get materialized into Graphiti episodes.
-
-If the hook isn't installed or Node isn't on PATH, the handoff still succeeds — the highlights remain queued for the next `jj describe` in a future session.
-
-## Rules
-
-- **Be specific.** "Working on Phase 3" is useless. "Phase 3, item 4: refactored check_health to use extensions. extensions_status MCP tool created. Next: refactor init to remove hardcoded FalkorDB/CGC." is useful.
-- **Include the ugly parts.** If something is broken, say so. The next agent needs to know.
-- **Decisions that aren't saved anywhere else MUST go here.** They'll be lost otherwise.
-- **Overwrite the previous handoff.** There's only one — the most recent session's. Old handoffs are consumed by /catchup and don't need to persist.
-- **Keep it short.** This isn't a retrospective. It's a sticky note for the next person.
-- **Always include the Catchup Status section** with all boxes unchecked. This is enforced by a hook — the next session cannot edit or write code until `/catchup` checks off every box. Each step in catchup marks its box when completed.
+Both failures are structurally impossible in the new model: catchup is pure-read except for the agent's own presence file, and there is no singleton handoff file at all. See the ADR for the full rejected-alternatives list (lock-and-snapshot state machine, in-repo bulletin, distributed locks, per-worktree presence).
