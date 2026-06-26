@@ -61,9 +61,7 @@ describe("multi-agent CLI — handoff-multi-agent trajectory", () => {
 		//   ]);
 		//   expect(a.exitCode).toBe(0);
 		//   expect(b.exitCode).toBe(0);
-		expect.fail(
-			"Phase 3 unlock — concurrent catchup flow requires register + skill rewrite",
-		);
+		expect.fail("Phase 3 unlock — concurrent catchup flow requires register + skill rewrite");
 	});
 
 	// T2 — Phase 3 unlock: catchup output lists other agents' tasks
@@ -74,8 +72,6 @@ describe("multi-agent CLI — handoff-multi-agent trajectory", () => {
 		//   const list = spawnSync(CLI_BIN, ["agent", "list"], { cwd });
 		//   expect(list.stdout.toString()).toMatch(/auth/);
 		//   expect(list.stdout.toString()).toMatch(/telemetry/);
-		expect.fail(
-			"Phase 3 unlock — bulletin visibility surface lands with skill rewrite",
-		);
+		expect.fail("Phase 3 unlock — bulletin visibility surface lands with skill rewrite");
 	});
 });

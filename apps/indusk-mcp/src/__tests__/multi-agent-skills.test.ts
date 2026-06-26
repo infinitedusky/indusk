@@ -33,9 +33,7 @@ describe("multi-agent skills — handoff-multi-agent trajectory", () => {
 		//   const after = catchupOutput(projectDir);
 		//   expect(after).toContain("NEW THING");
 		//   expect(before).not.toContain("NEW THING");
-		expect.fail(
-			"Phase 3 unlock — current.md surface + catchup-reads-it skill behavior",
-		);
+		expect.fail("Phase 3 unlock — current.md surface + catchup-reads-it skill behavior");
 	});
 
 	// T7 — Phase 3 unlock: catchup mutates only the agent's own presence file
@@ -54,9 +52,7 @@ describe("multi-agent skills — handoff-multi-agent trajectory", () => {
 		//   const content = readFileSync(HANDOFF_SKILL, "utf-8");
 		//   expect(content.toLowerCase()).toMatch(/deprecated/);
 		//   expect(content).toMatch(/indusk agent done|multi-agent\.md|current\.md/);
-		const content = existsSync(HANDOFF_SKILL)
-			? readFileSync(HANDOFF_SKILL, "utf-8")
-			: "";
+		const content = existsSync(HANDOFF_SKILL) ? readFileSync(HANDOFF_SKILL, "utf-8") : "";
 		// Today's handoff skill is NOT a deprecation page — this assertion intentionally
 		// describes the post-Phase-3 invariant. Phase 3 makes it pass.
 		expect(content.toLowerCase()).toMatch(/deprecated/);

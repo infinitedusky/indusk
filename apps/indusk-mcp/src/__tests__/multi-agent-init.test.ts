@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -35,8 +35,6 @@ describe("multi-agent init — handoff-multi-agent trajectory", () => {
 		//   // gitignore explicitly mentions the path
 		//   const gi = readFileSync(join(projectDir, ".gitignore"), "utf-8");
 		//   expect(gi).toMatch(/^\.indusk\/agents\/?$/m);
-		expect.fail(
-			"Phase 4 unlock — init.ts does not gitignore .indusk/agents/ yet",
-		);
+		expect.fail("Phase 4 unlock — init.ts does not gitignore .indusk/agents/ yet");
 	});
 });
