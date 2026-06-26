@@ -66,6 +66,29 @@ indusk agent prune
 
 Removes every presence file whose mtime is older than `agents.stale_ttl_minutes`. Prints `Pruned N stale presence file(s).` (or `No stale presence files to prune.`).
 
+## Heartbeat
+
+`indusk agent list` is also an **implicit heartbeat** for the caller — before the staleness filter runs, the caller's own presence file mtime is refreshed via `utimesSync`. The act of asking "who's around" implicitly says "I am still here."
+
+In practice this means:
+
+- A long-running session that runs `/catchup` or `indusk agent list` periodically stays visible indefinitely — no manual TTL tuning, no explicit heartbeat subcommand.
+- Only sessions that go truly idle (no `indusk agent` CLI activity for longer than `agents.stale_ttl_minutes`) age out.
+- Other agents asking "is session A still around?" cannot observe their own staleness — staleness is always observed from a different session's perspective. If you need to assert "session A has aged out," do it from session B.
+
+The heartbeat is idempotent and silent — `agent list` still prints exactly what's in the bulletin; the mtime touch is a side effect only.
+
+## Path safety
+
+Every session ID flows through `sanitizeSessionId()` in `apps/indusk-mcp/src/lib/agents/session.ts` before it reaches any file path:
+
+- Rejects `..`, `/`, `\` anywhere in the id (path-segment escape)
+- Rejects leading `.` (hidden-file shenanigans)
+- Rejects empty / whitespace-only ids
+- Rejects ids longer than 128 characters (UUIDs and `pid-<N>` both fit comfortably)
+
+Reject means: the CLI exits non-zero with `Error: Invalid session id: ... (rejected by sanitizer)`. A poisoned `$CLAUDE_CODE_SESSION_ID` cannot cause `agent register` to write outside `.indusk/agents/`, and `--session-id ../../config` cannot cause `agent done` to delete arbitrary files.
+
 ## Configuration
 
 The stale TTL is controlled by `agents.stale_ttl_minutes` in `.indusk/config.json`:
@@ -78,7 +101,7 @@ The stale TTL is controlled by `agents.stale_ttl_minutes` in `.indusk/config.jso
 }
 ```
 
-If the field is absent, the CLI defaults to 60 minutes.
+If the field is absent, the CLI defaults to 60 minutes. See the [Heartbeat](#heartbeat) section for how active sessions stay visible without manual tuning.
 
 ## File shape
 

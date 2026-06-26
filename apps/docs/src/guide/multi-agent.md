@@ -85,7 +85,7 @@ If you have operational state worth carrying forward, edit `.indusk/current.md` 
 }
 ```
 
-A presence file with mtime older than `stale_ttl_minutes` is filtered from `indusk agent list` output. Default 60 minutes; increase if your sessions routinely run longer; decrease if you want crashed agents to disappear from the bulletin sooner. `indusk agent prune` removes stale files unconditionally.
+A presence file with mtime older than `stale_ttl_minutes` is filtered from `indusk agent list` output. Default 60 minutes. **Active sessions stay visible without manual TTL tuning** — `indusk agent list` is also an implicit heartbeat for the caller (see [`agent` CLI reference → Heartbeat](/reference/cli/agent#heartbeat)), so any session that runs `/catchup` or asks the bulletin who's around naturally refreshes its own mtime. Only sessions that go truly idle (no `indusk agent` CLI activity for > TTL) age out. Decrease the TTL if you want crashed agents to disappear from the bulletin sooner; `indusk agent prune` removes stale files unconditionally.
 
 ## Where the bulletin lives
 
