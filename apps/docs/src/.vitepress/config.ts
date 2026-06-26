@@ -78,6 +78,8 @@ const config = defineConfig({
 						{ text: "Document", link: "/reference/skills/document" },
 						{ text: "Retrospective", link: "/reference/skills/retrospective" },
 						{ text: "Onboard", link: "/reference/skills/onboard" },
+						{ text: "Catchup", link: "/reference/skills/catchup" },
+						{ text: "Handoff (deprecated)", link: "/reference/skills/handoff" },
 						{ text: "Extension Spec", link: "/reference/extension-spec" },
 						{ text: "Extensions Index", link: "/reference/extensions/" },
 					],
