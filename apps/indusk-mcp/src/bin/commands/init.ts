@@ -30,6 +30,10 @@ const GITIGNORE_ENTRIES = [
 		comment: "# Extension manifests are package-owned; env files contain secrets",
 		pattern: ".indusk/extensions/",
 	},
+	{
+		comment: "# Multi-agent presence bulletin (per-session, machine-local)",
+		pattern: ".indusk/agents/",
+	},
 ];
 
 const GITIGNORE_MARKER = "# InDusk managed";
@@ -554,6 +558,18 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	} else {
 		mkdirSync(planningDir, { recursive: true });
 		console.info("  create: .indusk/planning/");
+	}
+
+	// 3.5. Create .indusk/current.md (operational state layer)
+	const currentMdPath = join(projectRoot, ".indusk/current.md");
+	if (existsSync(currentMdPath)) {
+		console.info("  skip: .indusk/current.md (already exists)");
+	} else {
+		const currentTemplate = join(packageRoot, "templates/current.md");
+		if (existsSync(currentTemplate)) {
+			cpSync(currentTemplate, currentMdPath);
+			console.info("  create: .indusk/current.md (from template)");
+		}
 	}
 
 	// 4. Set up MCP servers via claude mcp add
@@ -1242,6 +1258,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		detected: {
 			...(detected.testRunner ? { testRunner: detected.testRunner } : {}),
 			...(detected.otel ? { otel: true } : {}),
+		},
+		agents: {
+			stale_ttl_minutes: 60,
 		},
 		...(scm ? { scm } : {}),
 		...(workbench && options.wrappedRepo && options.siblingParent

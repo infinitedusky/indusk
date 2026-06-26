@@ -540,6 +540,42 @@ export async function update(projectRoot: string): Promise<void> {
 		console.info(`  ok: scm: "${scmConfig.scm}" (already set)`);
 	}
 
+	// 7c. Multi-agent scaffolding (handoff-multi-agent Phase 4). Idempotently
+	// migrate pre-1.29 projects to the new operational-state + presence-bulletin
+	// convention. Creates .indusk/current.md if missing (does NOT overwrite an
+	// existing one — that file holds user state) and adds agents.stale_ttl_minutes
+	// to config if absent.
+	console.info("\n[Multi-Agent Scaffolding]\n");
+	const { cpSync: _cpSyncMa, existsSync: _existsSyncMa } = await import("node:fs");
+	const { join: _joinMa, dirname: _dirnameMa } = await import("node:path");
+	const { fileURLToPath: _fileURLToPathMa } = await import("node:url");
+	const _maDirname = _dirnameMa(_fileURLToPathMa(import.meta.url));
+	const _maPackageRoot = _joinMa(_maDirname, "../../..");
+	const _maCurrentMdPath = _joinMa(projectRoot, ".indusk/current.md");
+	if (_existsSyncMa(_maCurrentMdPath)) {
+		console.info("  ok: .indusk/current.md (already exists, preserving user state)");
+	} else {
+		const _maTemplate = _joinMa(_maPackageRoot, "templates/current.md");
+		if (_existsSyncMa(_maTemplate)) {
+			_cpSyncMa(_maTemplate, _maCurrentMdPath);
+			console.info("  create: .indusk/current.md (from template)");
+		} else {
+			console.info("  skip: .indusk/current.md (template not found)");
+		}
+	}
+	const _maConfig = readConfig(projectRoot);
+	const _maHasAgents = (_maConfig as unknown as { agents?: { stale_ttl_minutes?: number } } | null)
+		?.agents?.stale_ttl_minutes;
+	if (_maConfig && typeof _maHasAgents !== "number") {
+		writeConfig(projectRoot, {
+			..._maConfig,
+			agents: { stale_ttl_minutes: 60 },
+		} as typeof _maConfig);
+		console.info("  add: agents.stale_ttl_minutes: 60 to .indusk/config.json");
+	} else if (typeof _maHasAgents === "number") {
+		console.info(`  ok: agents.stale_ttl_minutes: ${_maHasAgents} (already set)`);
+	}
+
 	// 8. Ensure ignores: in full mode, refresh tracked .gitignore. In local
 	// mode, leave .gitignore untouched and refresh .git/info/exclude (per-clone,
 	// never committed) so InDusk patterns ignore correctly without a PR diff.
