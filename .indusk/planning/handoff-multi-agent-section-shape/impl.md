@@ -1,7 +1,7 @@
 ---
 title: "handoff-multi-agent section shape — Impl"
 date: 2026-06-26
-status: approved
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -47,14 +47,14 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | After an agent runs handoff, only its own section in `.indusk/current.md` has changed — other agents' sections are byte-identical before vs after. | Phase 1 | Phase 1 | planned |
-| T2 | When an agent's session ID has no matching section in `current.md` and it runs handoff, a new section is appended tagged with its session ID. | Phase 1 | Phase 1 | planned |
+| T1 | After an agent runs handoff, only its own section in `.indusk/current.md` has changed — other agents' sections are byte-identical before vs after. | Phase 1 | Phase 1 | written |
+| T2 | When an agent's session ID has no matching section in `current.md` and it runs handoff, a new section is appended tagged with its session ID. | Phase 1 | Phase 1 | written |
 | T3 | A new agent's catchup output lists every fresh session present in `current.md` (other agents working on the project), with their tasks. | Phase 0 | Phase 3 | planned |
-| T4 | Any agent can edit the `Project (shared)` section without changing any session-owned section. | Phase 1 | Phase 1 | planned |
-| T5 | The agent updates its in-flight / open-questions / cursor content via a single structured MCP tool call. | Phase 1 | Phase 1 | planned |
+| T4 | Any agent can edit the `Project (shared)` section without changing any session-owned section. | Phase 1 | Phase 1 | written |
+| T5 | The agent updates its in-flight / open-questions / cursor content via a single structured MCP tool call. | Phase 1 | Phase 1 | written |
 | T6 | Two agents on different branches both run handoff; merging both branches to main produces no merge conflict because they touched different sections. | Phase 0 | Phase 5 | planned |
-| T7 | `indusk agent done` removes only the calling agent's section from `current.md`; other sections survive. | Phase 1 | Phase 2 | planned |
-| T8 | `indusk agent prune` removes sections whose `Last updated` timestamp is older than `agents.stale_ttl_minutes`; fresh sections survive. | Phase 1 | Phase 2 | planned |
+| T7 | `indusk agent done` removes only the calling agent's section from `current.md`; other sections survive. | Phase 1 | Phase 2 | written |
+| T8 | `indusk agent prune` removes sections whose `Last updated` timestamp is older than `agents.stale_ttl_minutes`; fresh sections survive. | Phase 1 | Phase 2 | written |
 | T9 | Fresh `indusk init` creates `current.md` containing a `Project (shared)` section and no session sections. | Phase 0 | Phase 4 | planned |
 | T10 | Running `indusk update` on a pre-section-shape project migrates the template if it's still the empty version from the previous plan; if the user has edited it, the content is preserved untouched. | Phase 0 | Phase 4 | planned |
 | T11 | Running `/catchup` does not modify any file (other than the agent's own section if it explicitly calls the MCP tool — catchup itself is read-only). | Phase 0 | Phase 3 | planned |
