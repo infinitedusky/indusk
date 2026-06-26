@@ -35,6 +35,9 @@
 			"local": "local",
 			"production": "prd"
 		},
-		"apps": [{ "dir": "docs" }, { "dir": "indusk-admin", "config": "admin" }]
+		"apps": [
+			{ "dir": "docs" },
+			{ "dir": "indusk-admin", "config": "admin" }
+		]
 	}
 }
