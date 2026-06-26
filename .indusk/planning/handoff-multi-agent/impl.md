@@ -53,7 +53,7 @@ Ship the three primitives from the ADR — `.indusk/current.md` durable state, `
 | T8 | The deprecated handoff command exits with a message that tells the user what to do instead. | Phase 0 | Phase 3 | passing |
 | T9 | On a system where Claude Code's session ID env var is unset, agent registration still works and uses a stable per-session identifier. | Phase 1 | Phase 1 | passing |
 | T10 | Two agents in different worktrees on the same workbench can each edit their own branches without their changes appearing in each other's working trees mid-session. | Phase 0 | Phase 5 | written |
-| T11 | A new teammate cloning the project sees no leftover presence files from the original developer's machine. | Phase 0 | Phase 4 | written |
+| T11 | A new teammate cloning the project sees no leftover presence files from the original developer's machine. | Phase 0 | Phase 4 | passing |
 
 ### Deferred Verification
 
@@ -169,28 +169,28 @@ Phase 0 is the writable baseline. The only Phase 1+ row is T9, listed below.
 
 ### Phase 4: current.md + init/update scaffolding
 
-- [ ] In `apps/indusk-mcp/src/bin/commands/init.ts`:
+- [x] In `apps/indusk-mcp/src/bin/commands/init.ts`:
   - Write `.indusk/current.md` from a template if it doesn't exist. Template has three sections: `## In Flight`, `## Open Questions`, `## Cursor` (each with placeholder text the working agent overwrites).
   - Add `.indusk/agents/` to the gitignored paths (alongside other `.indusk/`-relative gitignore entries).
-  - Write `agents.stale_ttl_minutes: 60` into `.indusk/config.json` default if the field is absent.
-- [ ] In `apps/indusk-mcp/src/bin/commands/update.ts`:
-  - Idempotently apply the same three scaffolding steps. If `.indusk/current.md` exists, leave it. If `.indusk/agents/` is not gitignored, add it. If `agents.stale_ttl_minutes` is absent, add the default.
-- [ ] Vitest tests:
+  - Write `agents.stale_ttl_minutes: 60` into `.indusk/config.json` default if the field is absent. **Done — new step 3.5 scaffolds `.indusk/current.md` from `templates/current.md`; `GITIGNORE_ENTRIES` array grew an entry for `.indusk/agents/`; `agents: { stale_ttl_minutes: 60 }` added to the config object built at line ~1235.**
+- [x] In `apps/indusk-mcp/src/bin/commands/update.ts`:
+  - Idempotently apply the same three scaffolding steps. If `.indusk/current.md` exists, leave it. If `.indusk/agents/` is not gitignored, add it. If `agents.stale_ttl_minutes` is absent, add the default. **Done — new step 7c "Multi-Agent Scaffolding" handles current.md creation (preserves existing files) and config field migration; `.indusk/agents/` gitignore line is picked up automatically by the existing `ensureGitignore` step at 7d/8 since the entry now lives in `GITIGNORE_ENTRIES`.**
+- [x] Vitest tests:
   - Fresh init creates `.indusk/current.md` with the three template sections.
   - Fresh init gitignores `.indusk/agents/`.
   - Fresh init writes the config default.
   - Update on an existing 1.28.x project (no `.indusk/current.md`) creates one.
   - Update on a project that already has `.indusk/current.md` does not overwrite it.
-  - Update on a project that already has the gitignore line does not duplicate it.
+  - Update on a project that already has the gitignore line does not duplicate it. **Done — `multi-agent-init.test.ts` flipped from `.skip()` to live. 5 passing cases covering T11 (gitignore makes a teammate clone clean), current.md template creation, config default, no-overwrite, and the full pre-1.29 → 1.29 update migration with idempotency. Test uses `{ timeout: 60000 }` per the heavy-subprocess test convention from `scm-init-detection.test.ts` and similar.**
 
 #### Phase 4 Verification
-- [ ] T11 passes — after `indusk init` followed by a fresh clone (vitest fixture: init in tmpA, copy to tmpB without `.indusk/agents/`, assert `git status` shows clean in tmpB).
+- [x] T11 passes — after `indusk init` followed by a fresh clone (vitest fixture: init in tmpA, copy to tmpB without `.indusk/agents/`, assert `git status` shows clean in tmpB). **Verified 2026-06-26: 5 of 5 cases passing in 31.65s. T11's "fresh teammate clone sees no leftover presence files" case writes a presence file under `.indusk/agents/` after init and confirms `git status --porcelain` does not list it (the gitignore line does its job).**
 
 #### Phase 4 Context
-- [ ] Update `CLAUDE.md` Conventions section: add "`.indusk/current.md` is the operational state layer (in-flight work, open threads, cursor). CLAUDE.md is the architectural layer. `/retrospective` distills the former into the latter on its existing cadence."
+- [x] Update `CLAUDE.md` Conventions section: add "`.indusk/current.md` is the operational state layer (in-flight work, open threads, cursor). CLAUDE.md is the architectural layer. `/retrospective` distills the former into the latter on its existing cadence." **Done — Conventions entry describes the operational/architectural split, the git-mediated visibility model, the init/update scaffolding behavior, and the stale TTL config field.**
 
 #### Phase 4 Document
-- [ ] Write `apps/docs/src/guide/multi-agent.md` introducing the convention: what `current.md` is for, what `.indusk/agents/` does, when to edit each, how `/catchup` and the deprecated `/handoff` fit in. Cross-link to CLI reference and skill pages.
+- [x] Write `apps/docs/src/guide/multi-agent.md` introducing the convention: what `current.md` is for, what `.indusk/agents/` does, when to edit each, how `/catchup` and the deprecated `/handoff` fit in. Cross-link to CLI reference and skill pages. **Done — guide covers the three-primitive shape, the operational ↔ architectural state split with comparison table, day-in-the-life flows (start session / work alongside / promote state / end session), config field, workbench-vs-single-repo bulletin location, out-of-scope notes, and cross-links. Mermaid diagrams deferred to Phase 5 (will land alongside the e2e + manual smoke work).**
 
 ### Phase 5: Integration + manual smoke
 
