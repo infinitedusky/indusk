@@ -45,9 +45,9 @@ Ship the three primitives from the ADR — `.indusk/current.md` durable state, `
 |----|---------|-------------|-----------|-------|
 | T1 | Two agents starting catchup at the same time both complete without one freezing or hanging on the other. | Phase 0 | Phase 3 | written |
 | T2 | When a new agent starts catchup, it can see the tasks the other currently-working agents are on. | Phase 0 | Phase 3 | written |
-| T3 | Registering as an agent makes you visible to other agents within 5 seconds. | Phase 0 | Phase 2 | written |
-| T4 | An agent that ends cleanly disappears from the bulletin other agents see. | Phase 0 | Phase 2 | written |
-| T5 | An agent that crashed without cleanup stops appearing on the bulletin after the configured stale TTL elapses. | Phase 0 | Phase 2 | written |
+| T3 | Registering as an agent makes you visible to other agents within 5 seconds. | Phase 0 | Phase 2 | passing |
+| T4 | An agent that ends cleanly disappears from the bulletin other agents see. | Phase 0 | Phase 2 | passing |
+| T5 | An agent that crashed without cleanup stops appearing on the bulletin after the configured stale TTL elapses. | Phase 0 | Phase 2 | passing |
 | T6 | After someone commits an edit to the durable project-state file on main, the next agent's catchup reflects the new state. | Phase 0 | Phase 3 | written |
 | T7 | Running catchup does not modify any file that other agents would observe. | Phase 0 | Phase 3 | written |
 | T8 | The deprecated handoff command exits with a message that tells the user what to do instead. | Phase 0 | Phase 3 | written |
@@ -111,35 +111,30 @@ Phase 0 is the writable baseline. The only Phase 1+ row is T9, listed below.
 
 ### Phase 2: CLI surface
 
-- [ ] Create `apps/indusk-mcp/src/bin/commands/agent.ts` with four subcommands:
+- [x] Create `apps/indusk-mcp/src/bin/commands/agent.ts` with four subcommands:
   ```typescript
   // indusk agent register --task "<what>" [--branch <branch>] [--worktree <path>]
   // indusk agent done [--session-id <id>]  // defaults to current session
   // indusk agent list  // respects stale TTL from config
   // indusk agent prune  // removes all stale files
   ```
-- [ ] Wire into commander in `apps/indusk-mcp/src/bin/cli.ts`. Following the commander@13 pattern from CLAUDE.md gotchas: declare any shared flags on the parent command, not duplicated on subcommands.
-- [ ] `register` writes `<agentsDir>/<sessionId>.md` with a small markdown body matching the `PresenceFile` shape (frontmatter + body for legibility).
-- [ ] `done` removes the file for the current session (or the one named via `--session-id`). Silently succeeds if the file is already gone.
-- [ ] `list` reads `agents.stale_ttl_minutes` from `.indusk/config.json` (default 60), filters out files with mtime older than that, prints a compact table.
-- [ ] `prune` removes all stale files, prints what was removed.
-- [ ] Vitest tests:
-  - register writes a presence file with the expected shape (T3)
-  - done removes the current session's file (T4)
-  - list ignores files older than the TTL (T5)
-  - prune removes stale files unconditionally
-  - list returns empty cleanly when no agents are registered
+- [x] Wire into commander in `apps/indusk-mcp/src/bin/cli.ts`. Following the commander@13 pattern from CLAUDE.md gotchas: declare any shared flags on the parent command, not duplicated on subcommands. **Done — `agent` is a single-level subcommand group; no shared flags on the parent, so the commander@13 gotcha didn't bite here.**
+- [x] `register` writes `<agentsDir>/<sessionId>.md` with a small markdown body matching the `PresenceFile` shape (frontmatter + body for legibility). **Done — YAML frontmatter via gray-matter + a Markdown body listing task/branch/worktree/started.**
+- [x] `done` removes the file for the current session (or the one named via `--session-id`). Silently succeeds if the file is already gone. **Done — prints `already done (no presence file)` on the silent-success path.**
+- [x] `list` reads `agents.stale_ttl_minutes` from `.indusk/config.json` (default 60), filters out files with mtime older than that, prints a compact table. **Done — formats a SESSION/TASK/BRANCH/STARTED table; prints `(no agents currently registered)` when empty.**
+- [x] `prune` removes all stale files, prints what was removed. **Done — `Pruned N stale presence file(s)`.**
+- [x] Vitest tests: 6 passing in `apps/indusk-mcp/src/__tests__/multi-agent-cli.test.ts` covering T3, T4, T5, supporting prune, empty list, silent-done.
 
 #### Phase 2 Verification
-- [ ] T3 passes — `pnpm --filter indusk-mcp test src/bin/commands/__tests__/agent.test.ts` shows register-then-list returns the registered task within 5 seconds.
-- [ ] T4 passes — done-then-list does not include the removed entry.
-- [ ] T5 passes — mtime-manipulation fixture confirms stale files are filtered.
+- [x] T3 passes — register-then-list returns the registered task within 5s (measured elapsed ~600-900ms in vitest run).
+- [x] T4 passes — done-then-list shows `(no agents currently registered)` for the just-removed entry.
+- [x] T5 passes — utimesSync backdates the mtime; subsequent `list` filters the entry out; `prune` removes the file from disk.
 
 #### Phase 2 Context
-- [ ] Update `CLAUDE.md` Architecture section: in the indusk-mcp CLI list, add `agent` to the subcommands (alongside `init`/`update`/`extensions`/`ui`/`telemetry`/`worktree`).
+- [x] Update `CLAUDE.md` Architecture section: in the indusk-mcp CLI list, add `agent` to the subcommands (alongside `init`/`update`/`extensions`/`ui`/`telemetry`/`worktree`). **Done — added `agent` to the CLI list with a one-paragraph summary of the four subcommands, the session-ID source, and the TTL config field.**
 
 #### Phase 2 Document
-- [ ] Write `apps/docs/src/reference/cli/agent.md` covering the four subcommands, their flags, the presence-file shape, and the TTL behavior. Link to the multi-agent guide (Phase 4) when it lands.
+- [x] Write `apps/docs/src/reference/cli/agent.md` covering the four subcommands, their flags, the presence-file shape, and the TTL behavior. Link to the multi-agent guide (Phase 4) when it lands. **Done — page covers register/done/list/prune with flag tables, presence-file shape with example, TTL config, and concurrency rationale. New `CLI` sidebar group added to vitepress config (`apps/docs/src/.vitepress/config.ts`).**
 
 ### Phase 3: Skill rewrites
 
