@@ -1,7 +1,7 @@
 ---
 title: "Multi-Agent Coordination — Impl"
 date: 2026-06-25
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -54,6 +54,8 @@ Ship the three primitives from the ADR — `.indusk/current.md` durable state, `
 | T9 | On a system where Claude Code's session ID env var is unset, agent registration still works and uses a stable per-session identifier. | Phase 1 | Phase 1 | passing |
 | T10 | Two agents in different worktrees on the same workbench can each edit their own branches without their changes appearing in each other's working trees mid-session. | Phase 0 | Phase 5 | skipped |
 | T11 | A new teammate cloning the project sees no leftover presence files from the original developer's machine. | Phase 0 | Phase 4 | passing |
+| T12 | A session ID containing path-traversal characters (`..`, `/`, `\`, leading `.`) cannot cause `agent register` or `agent done` to write or delete files outside `<projectRoot>/.indusk/agents/`. | Phase 0 | Phase 6 | planned |
+| T13 | A registered agent that has not re-registered for longer than `agents.stale_ttl_minutes` continues to appear in `indusk agent list` output as long as it issues any further `indusk agent` CLI call (the act of using the bulletin is a heartbeat for the caller). | Phase 0 | Phase 6 | planned |
 
 ### Deferred Verification
 
@@ -72,6 +74,8 @@ Ship the three primitives from the ADR — `.indusk/current.md` durable state, `
 Phase 0 is the writable baseline. The only Phase 1+ row is T9, listed below.
 
 - **T9** `Writable at: Phase 1` — Subject is the `getSessionId` function and the resolved fallback semantics authored in Phase 1's spike. The test imports the symbol from `apps/indusk-mcp/src/lib/agents/session.ts`; no import target exists before then, so the test file is a compile error against today's source. Phase 1 also resolves the fallback mechanism (PID-at-start is fragile across subprocesses; the spike picks the actual answer), so the assertion's pass criterion isn't defined until Phase 1.
+
+T12 and T13 are Phase 0 — both tests can be authored today against the current CLI surface (register/done/list all exist after Phase 2). T12's red signal: today, `CLAUDE_CODE_SESSION_ID=../escaped indusk agent register --task evil` writes `<projectRoot>/.indusk/escaped.md` because `path.join(agentsDir, "../escaped.md")` normalizes out of the directory; the test asserts no file lands outside `.indusk/agents/`. T13's red signal: today, register-then-backdate-mtime-past-TTL-then-list omits the entry — but the same caller is making the list call, so "I am still here" should be implicit; the test asserts the calling session's own file mtime is refreshed by `indusk agent list`.
 
 ## Checklist
 
@@ -218,6 +222,54 @@ Phase 0 is the writable baseline. The only Phase 1+ row is T9, listed below.
   - State diagram showing presence-file states (none / fresh / stale / cleaned) and the transitions. **Done — both diagrams landed in the new `## Diagrams` section: sequence diagram covers register → both list → mid-work isolation → A edits + commits current.md → B pulls → A done; state diagram captures None/Fresh/Stale states with re-register/done/prune transitions.**
 - [x] Add a changelog entry: "Added multi-agent coordination: concurrent Claude Code sessions on one project no longer collide; `current.md` + `.indusk/agents/` bulletin + worktree isolation. `/handoff` deprecated; `/catchup` is now pure-read." **Done — comprehensive 1.29.0 entry in `[Unreleased]` describing the three primitives, the rejected alternatives, the session-ID env var correction, the CLI surface, the init/update scaffolding, the doc pages, and the side finding about dusk's config typo.**
 - [x] Publish ADR to docs at `apps/docs/src/decisions/multi-agent-coordination.md` (per ADR Documentation Plan). **Done — ADR copied to docs/src/decisions/; sidebar entry added under Architecture Decisions.**
+
+### Phase 6: Falsification — sessionId path-traversal + long-session staleness
+
+**Goal**: verify whether the attested state holds against (1) unvalidated session IDs that flow into `path.join` from a poisoned `$CLAUDE_CODE_SESSION_ID` or `--session-id` flag, escaping the `.indusk/agents/` directory; and (2) the implicit "long-running active agent stays visible" invariant that the multi-agent guide promises but no trajectory row enforces.
+
+Each trajectory row in the Falsification Phase captures one hypothesis about a specific failure mode; each checklist item captures a concrete code change the implementation needs.
+
+**Investigation summary (what was searched and why):**
+
+- `getSessionId()` — unvalidated env-var read, returns user-supplied string verbatim.
+- `agentRegister` + `agentDone` — both flow `sessionId` straight into `path.join(agentsDir, "<sessionId>.md")` without sanitization. `path.join` normalizes `..` segments, so an attacker-controlled session ID with traversal characters escapes the directory. `rmSync(path, { force: true })` in `agentDone` is destructive and silent.
+- `readBulletin` mtime filter — uses `now - mtimeMs > ttlMs`. A registered session's mtime updates only on `register` calls. The multi-agent guide explicitly notes "increase if your sessions routinely run longer," but no test enforces that a long-running session calling `indusk agent list` (the bulletin-visibility surface) stays visible. The simplest fix is to make `list` self-heartbeat the calling session's own file (acts as "I am still here" without requiring an explicit heartbeat call).
+- Concurrent writes — checked, robust (POSIX atomic create, `parsePresenceFile` returns null on malformed content, `mkdirSync({ recursive: true })` idempotent).
+- YAML serialization — gray-matter / js-yaml properly escape colons + newlines in task strings; not a real surface.
+- Branch detection edge cases — `currentBranch` handles non-git dirs, detached HEAD, missing git binary cleanly.
+- TTL extreme values (`NaN`, negative, `Infinity`, string) — `getStaleTtlMinutes` falls back to default on every non-positive-number; no escape route.
+
+**Regions NOT investigated (out of plan scope):**
+
+- Cross-machine bulletin sync (brief explicitly scoped out for v1).
+- jj-substrate parity (jj being deprecated; this plan is git-only by design).
+- Skill execution ordering inside Claude Code itself (catchup skill steps could be skipped or reordered by the agent, but that's a discipline concern not a falsification target).
+
+- [ ] **Add `sanitizeSessionId(raw: string): string`** in `apps/indusk-mcp/src/lib/agents/session.ts`. Reject (throw) on any input containing `..`, `/`, `\`, or a leading `.`, or whose trimmed length exceeds 128 characters. Apply inside `getSessionId()` before returning the env-var path so every consumer of the helper gets safe IDs for free. Export the helper for direct use by `agentDone`.
+- [ ] **Wire sanitization into `agentDone`** so the `--session-id` flag also passes through `sanitizeSessionId`. Sanitize before constructing the file path — the destructive `rmSync(..., { force: true })` must not run against a traversal-escaped path.
+- [ ] **Make `agentList` self-heartbeat the caller's own presence file** in `apps/indusk-mcp/src/bin/commands/agent.ts`. After computing the entries and BEFORE filtering for staleness, identify the entry whose `sessionId === getSessionId()` (the calling session) and `utimesSync` its file to `Date.now()`. Side effect is the only change visible to callers; the function still returns the same table.
+- [ ] **Document the implicit heartbeat in `apps/docs/src/reference/cli/agent.md`** — add a `## Heartbeat` section noting that `indusk agent list` refreshes the caller's mtime so active sessions naturally stay visible without an explicit heartbeat call. Cross-link from the `agents.stale_ttl_minutes` config description.
+- [ ] **Update `apps/docs/src/guide/multi-agent.md`** — the existing "increase if your sessions routinely run longer" guidance can stay but should be qualified: routine `/catchup` or `indusk agent list` calls keep the session visible without manual TTL tuning. Only sessions that go truly idle (no CLI activity for > TTL) age out.
+- [ ] **Sync rewritten skill if affected** — neither catchup.md nor handoff.md needs to change for these fixes (catchup already calls `agent list` which now self-heartbeats; handoff is already deprecated).
+
+#### Phase 6 Verification
+- [ ] T12 passes — three test cases against the published CLI:
+  - `CLAUDE_CODE_SESSION_ID=../escaped indusk agent register --task evil` exits non-zero (rejected by sanitizer); no file lands at `<projectRoot>/.indusk/escaped.md` or anywhere outside `.indusk/agents/`.
+  - `indusk agent done --session-id ../../config` exits non-zero (rejected); `<projectRoot>/.indusk/config.json` is unaffected.
+  - Normal session IDs (UUIDs, `pid-1234`, `abc_def-123`) still work end-to-end.
+- [ ] T13 passes — register-backdate-list cycle:
+  - Register session A, backdate its presence file mtime to T-90min (older than default 60min TTL).
+  - From session A: `indusk agent list`.
+  - Assert: session A's presence file mtime is now within the last 5 seconds (refreshed by the self-heartbeat).
+  - Assert: session A still appears in subsequent `indusk agent list` output from any session.
+- [ ] Regression sweep: all existing trajectory rows (T1-T11) still passing after the sanitizer + heartbeat changes land.
+
+#### Phase 6 Context
+- [ ] Update `CLAUDE.md` Known Gotchas: add entry "Session IDs are sanitized at the boundary — any `$CLAUDE_CODE_SESSION_ID` or `--session-id` value containing `..`, `/`, `\`, or starting with `.` is rejected; the sanitizer lives in `apps/indusk-mcp/src/lib/agents/session.ts` and is the single chokepoint. Future code that constructs presence file paths from external input MUST route through `sanitizeSessionId`."
+- [ ] Update `CLAUDE.md` Known Gotchas: add entry "`indusk agent list` is also an implicit heartbeat — the calling session's own presence file mtime gets refreshed on every list call. Sessions that go idle for `agents.stale_ttl_minutes` (default 60) without any `agent` CLI activity age out; sessions that use the bulletin stay visible indefinitely."
+
+#### Phase 6 Document
+- [ ] Already covered by the implementation checklist items above (agent.md `## Heartbeat` section + guide qualifier). Mark the agent.md `## Heartbeat` and the multi-agent.md long-running-session paragraph as the document-gate deliverables; no additional pages needed.
 
 ## Files Affected
 
