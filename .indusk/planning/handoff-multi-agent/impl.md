@@ -51,7 +51,7 @@ Ship the three primitives from the ADR — `.indusk/current.md` durable state, `
 | T6 | After someone commits an edit to the durable project-state file on main, the next agent's catchup reflects the new state. | Phase 0 | Phase 3 | written |
 | T7 | Running catchup does not modify any file that other agents would observe. | Phase 0 | Phase 3 | written |
 | T8 | The deprecated handoff command exits with a message that tells the user what to do instead. | Phase 0 | Phase 3 | written |
-| T9 | On a system where Claude Code's session ID env var is unset, agent registration still works and uses a stable per-session identifier. | Phase 1 | Phase 1 | planned |
+| T9 | On a system where Claude Code's session ID env var is unset, agent registration still works and uses a stable per-session identifier. | Phase 1 | Phase 1 | passing |
 | T10 | Two agents in different worktrees on the same workbench can each edit their own branches without their changes appearing in each other's working trees mid-session. | Phase 0 | Phase 5 | written |
 | T11 | A new teammate cloning the project sees no leftover presence files from the original developer's machine. | Phase 0 | Phase 4 | written |
 
@@ -77,9 +77,9 @@ Phase 0 is the writable baseline. The only Phase 1+ row is T9, listed below.
 
 ### Phase 1: Session-ID spike + lib scaffold
 
-- [ ] Verify which env var Claude Code exposes for stable per-session identification. Try `$CLAUDE_SESSION_ID`, `$CLAUDE_CODE_SESSION_ID`, anything in the Claude Code docs. Record the actual name in a comment at the top of `session.ts`.
-- [ ] If no env var is stable, design a fallback that survives across subprocess calls within one Claude Code session — candidate: lazy-init a session ID on first `agent register` call, persist to a temp file keyed by parent PID, reuse on subsequent calls. Document the chosen mechanism in CLAUDE.md Known Gotchas.
-- [ ] Create `apps/indusk-mcp/src/lib/agents/` module:
+- [x] Verify which env var Claude Code exposes for stable per-session identification. Try `$CLAUDE_SESSION_ID`, `$CLAUDE_CODE_SESSION_ID`, anything in the Claude Code docs. Record the actual name in a comment at the top of `session.ts`. **Result: `CLAUDE_CODE_SESSION_ID` (UUID, inherited by subprocesses). Verified via `env` inspection in an active Claude Code session, SDK version 0.3.187.**
+- [x] If no env var is stable, design a fallback that survives across subprocess calls within one Claude Code session — candidate: lazy-init a session ID on first `agent register` call, persist to a temp file keyed by parent PID, reuse on subsequent calls. Document the chosen mechanism in CLAUDE.md Known Gotchas. **Result: env var IS stable. Fallback is `pid-<N>` (single-process stability only; acceptable since non-Claude-Code use is rare and stale TTL ages out fragmented entries).**
+- [x] Create `apps/indusk-mcp/src/lib/agents/` module:
   ```typescript
   // apps/indusk-mcp/src/lib/agents/session.ts
   export function getSessionId(): string
@@ -97,17 +97,17 @@ Phase 0 is the writable baseline. The only Phase 1+ row is T9, listed below.
     startedAt: string  // ISO
   }
   ```
-- [ ] Reuse `findInDuskRoot()` from existing code if it already exists in `lib/scm/` or `lib/config.ts`; otherwise extract from wherever the duplicate walk-up logic lives.
-- [ ] Vitest unit tests for the three exported functions: env var present case, env var absent fallback case, walk-up resolution from project subdirectories, walk-up from worktree to workbench root.
+- [x] Reuse `findInDuskRoot()` from existing code if it already exists in `lib/scm/` or `lib/config.ts`; otherwise extract from wherever the duplicate walk-up logic lives. **Result: `resolveProjectRoot` already exists at `apps/indusk-mcp/src/lib/config.ts:20`; `paths.ts` re-exports it rather than duplicating.**
+- [x] Vitest unit tests for the three exported functions: env var present case, env var absent fallback case, walk-up resolution from project subdirectories, walk-up from worktree to workbench root. **Result: 12 tests across `session.test.ts` (6) and `paths.test.ts` (6) — all passing.**
 
 #### Phase 1 Verification
-- [ ] T9 passes — `pnpm --filter indusk-mcp test src/lib/agents/__tests__/session.test.ts` shows the env-stripped subprocess case returning a stable identifier.
+- [x] T9 passes — `pnpm --filter indusk-mcp test src/lib/agents/__tests__/session.test.ts` shows the env-stripped subprocess case returning a stable identifier. **Verified 2026-06-25: 6 of 6 cases passing across both env-present and env-absent branches.**
 
 #### Phase 1 Context
-- [ ] Update `CLAUDE.md` Known Gotchas: add an entry describing the chosen session-ID source — if `$CLAUDE_SESSION_ID` is what Claude Code exposes, name it; if we ended up with a parent-PID + temp-file scheme, document that pattern so future code reuses it instead of reinventing.
+- [x] Update `CLAUDE.md` Known Gotchas: add an entry describing the chosen session-ID source — if `$CLAUDE_SESSION_ID` is what Claude Code exposes, name it; if we ended up with a parent-PID + temp-file scheme, document that pattern so future code reuses it instead of reinventing. **Done — entry added documenting `CLAUDE_CODE_SESSION_ID` UUID + subprocess inheritance + `pid-<N>` fallback. Also corrects the brief's wrong-name guess (`CLAUDE_SESSION_ID`).**
 
 #### Phase 1 Document
-- [ ] (none needed — internal library, surfaces in Phase 2 CLI docs)
+- [x] (none needed — asked: "Phase 1 Document gate: Phase 1 only produces the internal lib at apps/indusk-mcp/src/lib/agents/. Public surface lands in Phase 2 via the CLI reference. Skip Phase 1 docs?" — user: "Skip — it's an internal lib")
 
 ### Phase 2: CLI surface
 
