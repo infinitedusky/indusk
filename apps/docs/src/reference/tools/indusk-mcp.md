@@ -121,6 +121,26 @@ The 6 canonical sections: What This Is, Architecture, Conventions, Key Decisions
 | `query_dependencies` | `target`, `direction` | Queries what depends on a file/module (`dependents`), what it depends on (`dependencies`), or `both`. See [CodeGraphContext](/reference/tools/codegraph). |
 | `query_graph` | `cypher` | Runs a custom Cypher query against the code graph for advanced structural analysis. |
 
+### Agent Tools
+
+| Tool | Input | Description |
+|------|-------|-------------|
+| `update_current_section` | `sessionId`, `task`, `sections: { in_flight, open_questions, cursor }` | Promotes the current session's operational state to `.indusk/current.md`. Finds the agent's section by full session ID, overwrites in place, or appends if no match. Other agents' sections are byte-untouched. File-locked + atomic-rename read-modify-write. The explicit write surface for the [multi-agent section-shape coordination](/decisions/multi-agent-coordination). |
+
+#### `update_current_section` — input validation
+
+The tool rejects three classes of malformed input before any write hits disk:
+
+- **Path-traversal `sessionId`** — `..`, `/`, `\`, leading `.`, empty/whitespace, > 128 chars. Throws `TypeError`.
+- **Control characters in `sessionId`** — anything with code point below 0x20 (`\n`, `\r`, `\t`, null, bell, etc.). Throws `TypeError`. Newlines would corrupt the section heading line on serialize and silently drop the section on re-parse.
+- **Structural-marker injection in section body** — any of the three section bodies (`in_flight`, `open_questions`, `cursor`) containing a line matching `^---\s*$`, `^##\s+Session\s+`, `^\*\*Session ID\*\*:`, or `^\*\*Last updated\*\*:`. These are the four anchored line patterns the parser uses to recognize sessions; a body containing them would inject a fake session. Throws `TypeError`.
+
+All three checks live in `apps/indusk-mcp/src/lib/agents/`: `sanitizeSessionId` for the first two, `sanitizeSectionBody` for the third. The MCP tool inherits the rejections via the lib boundary.
+
+#### `update_current_section` — concurrency
+
+The tool holds an `O_EXCL`-based file lock on `<projectRoot>/.indusk/current.md.lock` for the duration of the read-modify-write. Two concurrent callers (or a CLI process and a tool call) serialize through the lock instead of racing on stale reads. Lock timeout 5s; stale lock TTL 30s (lockfile older than that gets taken over by the newcomer, assuming the holder crashed).
+
 ## Hooks
 
 Two Claude Code hooks enforce the gate system during [work](/reference/skills/work) execution:

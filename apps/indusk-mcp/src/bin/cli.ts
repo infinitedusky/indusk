@@ -702,4 +702,46 @@ dopplerCmd
 		dopplerEnvPull(rootOrExit(), profile);
 	});
 
+const agentCmd = program
+	.command("agent")
+	.description("Multi-agent presence bulletin (register / done / list / prune)");
+
+agentCmd
+	.command("register")
+	.description("Register the current Claude Code session as a working agent on this project")
+	.requiredOption("--task <description>", "One-line description of what you're working on")
+	.option("--branch <branch>", "Override detected git branch")
+	.option("--worktree <path>", "Override detected worktree path (defaults to cwd)")
+	.action(async (opts: { task: string; branch?: string; worktree?: string }) => {
+		const { agentRegister } = await import("./commands/agent.js");
+		agentRegister(rootOrExit(), opts);
+	});
+
+agentCmd
+	.command("done")
+	.description("Remove the current session's presence file (or one named via --session-id)")
+	.option("--session-id <id>", "Session ID to mark done (defaults to current session)")
+	.action(async (opts: { sessionId?: string }) => {
+		const { agentDone } = await import("./commands/agent.js");
+		agentDone(rootOrExit(), opts);
+	});
+
+agentCmd
+	.command("list")
+	.description(
+		"Print the bulletin of currently-registered agents (filtered by agents.stale_ttl_minutes)",
+	)
+	.action(async () => {
+		const { agentList } = await import("./commands/agent.js");
+		agentList(rootOrExit());
+	});
+
+agentCmd
+	.command("prune")
+	.description("Remove every stale presence file unconditionally")
+	.action(async () => {
+		const { agentPrune } = await import("./commands/agent.js");
+		agentPrune(rootOrExit());
+	});
+
 program.parse();

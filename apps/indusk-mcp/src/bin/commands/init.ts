@@ -30,6 +30,10 @@ const GITIGNORE_ENTRIES = [
 		comment: "# Extension manifests are package-owned; env files contain secrets",
 		pattern: ".indusk/extensions/",
 	},
+	{
+		comment: "# Multi-agent presence bulletin (per-session, machine-local)",
+		pattern: ".indusk/agents/",
+	},
 ];
 
 const GITIGNORE_MARKER = "# InDusk managed";
@@ -53,6 +57,31 @@ export function ensureGitignore(projectRoot: string): void {
 	writeFileSync(gitignorePath, `${content.trimEnd()}${block}`);
 	const verb = content.length > 0 ? "updated" : "created";
 	console.info(`  ${verb}: .gitignore (added ${missing.map((e) => e.pattern).join(", ")})`);
+}
+
+/**
+ * Idempotently set `.indusk/current.md merge=union` in the project's
+ * `.gitattributes`. The `merge=union` driver tells git to combine both
+ * sides' line additions on merge instead of producing a conflict — exactly
+ * what we want for per-agent sections where each session only appends its
+ * own block. Without this, two branches both appending different sections
+ * at the same end-of-file position produce a same-insertion-point conflict
+ * even though there's no semantic overlap. See handoff-multi-agent-section-shape
+ * ADR for the merge-strategy rationale.
+ */
+export function ensureCurrentMdMergeUnion(projectRoot: string): void {
+	const path = join(projectRoot, ".gitattributes");
+	const marker = ".indusk/current.md merge=union";
+	const existing = existsSync(path) ? readFileSync(path, "utf-8") : "";
+	if (existing.includes(marker)) {
+		console.info("  skip: .gitattributes (current.md merge=union already present)");
+		return;
+	}
+	const block = `${existing.trimEnd()}${existing.length > 0 ? "\n\n" : ""}# InDusk: combine per-agent section additions on merge\n${marker}\n`;
+	writeFileSync(path, block);
+	console.info(
+		`  ${existing.length > 0 ? "updated" : "created"}: .gitattributes (.indusk/current.md merge=union)`,
+	);
 }
 
 function createCgcIgnore(projectRoot: string): void {
@@ -554,6 +583,18 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	} else {
 		mkdirSync(planningDir, { recursive: true });
 		console.info("  create: .indusk/planning/");
+	}
+
+	// 3.5. Create .indusk/current.md (operational state layer)
+	const currentMdPath = join(projectRoot, ".indusk/current.md");
+	if (existsSync(currentMdPath)) {
+		console.info("  skip: .indusk/current.md (already exists)");
+	} else {
+		const currentTemplate = join(packageRoot, "templates/current.md");
+		if (existsSync(currentTemplate)) {
+			cpSync(currentTemplate, currentMdPath);
+			console.info("  create: .indusk/current.md (from template)");
+		}
 	}
 
 	// 4. Set up MCP servers via claude mcp add
@@ -1141,6 +1182,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	} else {
 		// .mcp.json contains auth tokens — always gitignore it in full mode
 		ensureGitignore(projectRoot);
+		ensureCurrentMdMergeUnion(projectRoot);
 	}
 
 	// 9. Run on_init hooks from enabled extensions
@@ -1242,6 +1284,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		detected: {
 			...(detected.testRunner ? { testRunner: detected.testRunner } : {}),
 			...(detected.otel ? { otel: true } : {}),
+		},
+		agents: {
+			stale_ttl_minutes: 60,
 		},
 		...(scm ? { scm } : {}),
 		...(workbench && options.wrappedRepo && options.siblingParent

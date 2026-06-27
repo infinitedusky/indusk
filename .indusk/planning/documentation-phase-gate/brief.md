@@ -1,7 +1,7 @@
 ---
 title: "Documentation as a final gated phase (not per-phase)"
 date: 2026-06-25
-status: draft
+status: accepted
 ---
 
 # Documentation as a final gated phase — Brief

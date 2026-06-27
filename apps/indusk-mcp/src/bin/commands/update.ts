@@ -540,6 +540,67 @@ export async function update(projectRoot: string): Promise<void> {
 		console.info(`  ok: scm: "${scmConfig.scm}" (already set)`);
 	}
 
+	// 7c. Multi-agent scaffolding (handoff-multi-agent Phase 4, reshaped in
+	// handoff-multi-agent-section-shape Phase 4). Idempotently migrate
+	// pre-1.29 projects:
+	//   - .indusk/current.md missing → copy new template
+	//   - exists AND byte-equal to OLD parent-plan template → replace (the user
+	//     hasn't edited it; safe to upgrade the shape)
+	//   - exists with any other content → preserve untouched
+	// SHA-256 of the parent-plan empty template (from handoff-multi-agent
+	// Phase 4 ship): e31a23d18eb1eecc250b35e82c1e374506e87e587486b159a3525bb60a25821b.
+	// If the user edited even one byte, the SHA changes and we leave the file
+	// alone. The section-shape parser tolerates legacy preamble as `preamble`
+	// in the CurrentMd struct, so the agent CLI keeps working even on a
+	// not-migrated old-shape file.
+	console.info("\n[Multi-Agent Scaffolding]\n");
+	const {
+		cpSync: _cpSyncMa,
+		existsSync: _existsSyncMa,
+		readFileSync: _readFileSyncMa,
+		writeFileSync: _writeFileSyncMa,
+	} = await import("node:fs");
+	const { createHash: _createHashMa } = await import("node:crypto");
+	const { join: _joinMa, dirname: _dirnameMa } = await import("node:path");
+	const { fileURLToPath: _fileURLToPathMa } = await import("node:url");
+	const _maDirname = _dirnameMa(_fileURLToPathMa(import.meta.url));
+	const _maPackageRoot = _joinMa(_maDirname, "../../..");
+	const _maCurrentMdPath = _joinMa(projectRoot, ".indusk/current.md");
+	const _maOldTemplateSha = "e31a23d18eb1eecc250b35e82c1e374506e87e587486b159a3525bb60a25821b";
+	const _maTemplate = _joinMa(_maPackageRoot, "templates/current.md");
+	if (!_existsSyncMa(_maCurrentMdPath)) {
+		if (_existsSyncMa(_maTemplate)) {
+			_cpSyncMa(_maTemplate, _maCurrentMdPath);
+			console.info("  create: .indusk/current.md (from section-shape template)");
+		} else {
+			console.info("  skip: .indusk/current.md (template not found)");
+		}
+	} else {
+		const existingContent = _readFileSyncMa(_maCurrentMdPath, "utf-8");
+		const existingSha = _createHashMa("sha256").update(existingContent).digest("hex");
+		if (existingSha === _maOldTemplateSha && _existsSyncMa(_maTemplate)) {
+			const newTemplateContent = _readFileSyncMa(_maTemplate, "utf-8");
+			_writeFileSyncMa(_maCurrentMdPath, newTemplateContent);
+			console.info(
+				"  migrate: .indusk/current.md (empty old-shape template → section-shape template)",
+			);
+		} else {
+			console.info("  ok: .indusk/current.md (user content preserved)");
+		}
+	}
+	const _maConfig = readConfig(projectRoot);
+	const _maHasAgents = (_maConfig as unknown as { agents?: { stale_ttl_minutes?: number } } | null)
+		?.agents?.stale_ttl_minutes;
+	if (_maConfig && typeof _maHasAgents !== "number") {
+		writeConfig(projectRoot, {
+			..._maConfig,
+			agents: { stale_ttl_minutes: 60 },
+		} as typeof _maConfig);
+		console.info("  add: agents.stale_ttl_minutes: 60 to .indusk/config.json");
+	} else if (typeof _maHasAgents === "number") {
+		console.info(`  ok: agents.stale_ttl_minutes: ${_maHasAgents} (already set)`);
+	}
+
 	// 8. Ensure ignores: in full mode, refresh tracked .gitignore. In local
 	// mode, leave .gitignore untouched and refresh .git/info/exclude (per-clone,
 	// never committed) so InDusk patterns ignore correctly without a PR diff.
@@ -550,8 +611,9 @@ export async function update(projectRoot: string): Promise<void> {
 		const { writeGitInfoExclude } = await import("./init.js");
 		writeGitInfoExclude(projectRoot);
 	} else {
-		const { ensureGitignore } = await import("./init.js");
+		const { ensureGitignore, ensureCurrentMdMergeUnion } = await import("./init.js");
 		ensureGitignore(projectRoot);
+		ensureCurrentMdMergeUnion(projectRoot);
 	}
 
 	// 9. Respect local mode: re-apply overlay

@@ -43,6 +43,7 @@ const config = defineConfig({
 			{ text: "Decisions", link: "/decisions/" },
 			{ text: "Lessons", link: "/lessons/" },
 			{ text: "Dawn", link: "/dawn/" },
+			{ text: "Strategy", link: "/strategy/" },
 			{ text: "Changelog", link: "/changelog" },
 		],
 
@@ -62,6 +63,7 @@ const config = defineConfig({
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Worktree Setup (Workbench)", link: "/guide/worktree-setup" },
+						{ text: "Multi-Agent Coordination", link: "/guide/multi-agent" },
 					],
 				},
 			],
@@ -77,9 +79,15 @@ const config = defineConfig({
 						{ text: "Document", link: "/reference/skills/document" },
 						{ text: "Retrospective", link: "/reference/skills/retrospective" },
 						{ text: "Onboard", link: "/reference/skills/onboard" },
+						{ text: "Catchup", link: "/reference/skills/catchup" },
+						{ text: "Handoff (deprecated)", link: "/reference/skills/handoff" },
 						{ text: "Extension Spec", link: "/reference/extension-spec" },
 						{ text: "Extensions Index", link: "/reference/extensions/" },
 					],
+				},
+				{
+					text: "CLI",
+					items: [{ text: "agent", link: "/reference/cli/agent" }],
 				},
 				{
 					text: "Semantic Graph",
@@ -150,13 +158,17 @@ const config = defineConfig({
 						{ text: "Falsification Ritual", link: "/decisions/falsification-ritual" },
 						{ text: "InDusk Admin UI", link: "/decisions/indusk-admin-ui" },
 						{ text: "Admin UI Hosting", link: "/decisions/admin-ui-hosting" },
+						{ text: "Multi-Agent Coordination", link: "/decisions/multi-agent-coordination" },
 					],
 				},
 			],
 			"/lessons/": [
 				{
 					text: "Lessons Learned",
-					items: [{ text: "Overview", link: "/lessons/" }],
+					items: [
+						{ text: "Overview", link: "/lessons/" },
+						{ text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)", link: "/lessons/handoff-multi-agent-section-shape" },
+					],
 				},
 			],
 			"/dawn/": [
@@ -174,6 +186,18 @@ const config = defineConfig({
 				{
 					text: "Architecture",
 					items: [{ text: "Decisions", link: "/dawn/decisions" }],
+				},
+			],
+			"/strategy/": [
+				{
+					text: "Strategy",
+					items: [
+						{ text: "Overview", link: "/strategy/" },
+						{
+							text: "Midnight & the Landscape (2026-06)",
+							link: "/strategy/midnight-and-the-landscape",
+						},
+					],
 				},
 			],
 		},

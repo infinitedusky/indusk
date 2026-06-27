@@ -64,3 +64,9 @@ nginx.staging.conf
 nginx.production.conf
 
 Caddyfile
+
+# doppler env-pull (machine-local, provisioned from Doppler)
+.indusk/extensions/doppler/.env
+apps/*/.env.local
+apps/*/.env.staging
+apps/*/.env.production

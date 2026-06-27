@@ -1,9 +1,11 @@
 ---
 name: catchup
-description: Get caught up on the project. Reads the handoff from the last session, then context, plans, lessons, and extensions. Run at the start of every new session.
+description: Get caught up on the project. Pure-read — registers presence, reads .indusk/current.md sections to surface other working agents + the project's operational state, then reads lessons, plans, and Graphiti. Run at the start of every new session.
 ---
 
 You are starting a new session on this project. Before doing anything else, get caught up.
+
+`/catchup` is **pure-read** for every shared file. The only writes are (a) `indusk agent register` ensuring a section exists for the current session in `.indusk/current.md`, and (b) the implicit self-heartbeat in `indusk agent list` (refreshes your own section's `Last updated`). Neither write touches any other agent's section. Two sessions can run `/catchup` simultaneously on the same project without blocking or corrupting each other.
 
 ## Step 0. Wait for MCP Servers (BLOCKING)
 
@@ -14,39 +16,58 @@ Before running any catchup steps, verify that ALL required MCP servers are avail
 
 **How to check:** Call `get_system_version`. If the tool is not available or errors, wait 5 seconds and retry. Retry up to 6 times (30 seconds total).
 
-- If indusk becomes available: check off `- [x] mcp-ready` in the handoff, then proceed with catchup.
+- If indusk becomes available: proceed with catchup.
 - If indusk is still unavailable after 30 seconds: **STOP. Do not proceed.** Tell the user: "InDusk MCP server not available — check `.mcp.json` config or restart Claude Code. Catchup cannot continue. Fix the issue and run `/catchup` again."
 
-**This step is enforced by a hook.** The `check-catchup.js` hook verifies that FalkorDB (port 6379) and Graphiti (port 8100) are reachable before allowing `mcp-ready` to be checked off. The agent cannot bypass this.
-
-**Do NOT skip steps. Do NOT fall back to shell commands. Do NOT proceed with partial functionality.** A half-completed catchup is worse than no catchup — it creates the illusion that the system is ready when it isn't.
+**Do NOT skip steps. Do NOT fall back to shell commands. Do NOT proceed with partial functionality.**
 
 ## Steps (execute in order)
 
-### 1. Read Handoff
-Check if `.claude/handoff.md` exists. If it does, read it first — this is the most recent context from the last session. It tells you:
-- What was being worked on
-- Where it stopped
-- What's next
-- Any warnings or open issues
+### 1. Register Presence
 
-If the handoff exists, present a brief summary to the user: "Last session was working on X, stopped at Y. Ready to pick up there?"
+Run this first, before reading anything else, so other concurrent agents can see you the moment they call `indusk agent list`:
 
-**After reading, edit the handoff to check off:** `- [x] handoff`
+```bash
+indusk agent register --task "<one-line description of what this session is about>"
+```
 
-If no handoff exists, create one with all catchup status boxes unchecked, then check off handoff.
+If the user hasn't told you what they want to work on yet, use `--task "starting catchup"` and re-register with a meaningful task once the conversation makes it clear. The `task` field is free-text; later `register` calls overwrite the section's task (preserving its in-flight / open-questions / cursor bodies if any).
 
-### 2. Read Lessons
+The session ID comes from `$CLAUDE_CODE_SESSION_ID` and is automatically inherited from this Claude Code session — no flag needed.
+
+### 2. Read the Bulletin
+
+```bash
+indusk agent list
+```
+
+This prints every currently-fresh session in `.indusk/current.md` — i.e., other agents working on this project. Stale sections (older than `agents.stale_ttl_minutes`, default 60) are filtered out. If other agents are present, surface them in the catchup summary so the user knows who you're working alongside.
+
+Empty output means you're the only agent currently active. That's fine — just note it.
+
+Calling `agent list` also implicitly self-heartbeats your section (refreshes `Last updated`), so this is the canonical "I am still here" surface for long-running sessions.
+
+### 3. Read Operational State
+
+Read `.indusk/current.md`. It has two regions worth surfacing:
+
+- **`## Project (shared)`** — cross-cutting state that's true for the whole project right now ("pre-launch crunch mode", "telemetry endpoint changed last week", "merge freeze through Thursday"). Any agent can edit this section. Read it to know the project-wide context.
+- **Per-agent sections** (`## Session <short> — <task>`) — operational state from other working agents. Each section's `### In Flight`, `### Open Questions`, and `### Cursor` subsections tell you what other agents are doing in detail.
+
+**Filter per-agent sections by `Last updated` against `agents.stale_ttl_minutes`** (read the TTL from `.indusk/config.json`, default 60). Only surface sections whose `Last updated` is within the TTL — sections from agents that ran `/handoff` but skipped `indusk agent done` linger in the file and would otherwise look active forever. **Exclude stale sections from your catchup summary**; do not present a stale section as if its owner were currently working. (`indusk agent list` performs the same filter; this rule keeps the catchup output consistent with it.)
+
+**Do NOT edit `.indusk/current.md` during catchup.** Catchup is read-only for shared content. Your own section's content (in-flight / open-questions / cursor) is written via the [`mcp__indusk__update_current_section` MCP tool](apps/docs/src/reference/tools/indusk-mcp.md#agent-tools) — typically at `/handoff`, not during catchup. The `agent register` call in Step 1 only refreshes the heading + `Last updated`; it preserves any existing body content.
+
+### 4. Read Lessons
+
 Call `list_lessons`. Read every lesson. These are rules learned from past mistakes — not suggestions. Internalize them before touching any code.
 
-**After reading, edit the handoff to check off:** `- [x] lessons`
+### 5. Check Infrastructure
 
-### 3. Check Infrastructure
 Call `check_health`. Verify FalkorDB and Graphiti are running. If unhealthy, tell the user what's down and how to fix it.
 
-**After checking, edit the handoff to check off:** `- [x] health`
+### 6. Read Project Context
 
-### 4. Read Project Context
 Call `get_context` to read CLAUDE.md. This contains:
 - **Architecture** — what the project is, how it's structured
 - **Conventions** — rules to follow (commit style, no DB from Next.js, no fallback URLs, etc.)
@@ -56,9 +77,7 @@ Call `get_context` to read CLAUDE.md. This contains:
 
 Read it fully. Don't skim.
 
-**After reading, edit the handoff to check off:** `- [x] context`
-
-### 4.5. Recall from Graphiti
+### 7. Recall from Graphiti
 
 CLAUDE.md is the stable, slow-changing layer of project memory. Graphiti is the fast, temporal layer — it captures decisions, corrections, and retrospective insights as they happen. Catchup pulls both layers so the agent starts the session with full context.
 
@@ -89,17 +108,15 @@ mcp__graphiti__search_nodes({
 
 **Graceful degradation:** If `mcp__graphiti__search_nodes` is unavailable (Graphiti container down, transport error), skip this step silently and add a note to the catchup summary: `Graphiti: unavailable (run \`indusk infra start\` to recall episodic memory)`. Catchup should not fail if Graphiti is down — the rest of the layers are still valid.
 
-**After completing recall, edit the handoff to check off:** `- [x] graphiti` (added to the catchup status box section)
+### 8. Check Active Plans
 
-### 5. Check Active Plans
 Call `list_plans`. This shows every plan and its status. Pay attention to:
 - Plans with status `in-progress` — these are actively being worked on
 - The current phase of each active plan — this is where `/work` will pick up
 - Dependencies between plans — don't start a blocked plan
 
-**After checking, edit the handoff to check off:** `- [x] plans`
+### 9. Review Skills and Extensions
 
-### 6. Review Skills and Extensions
 Call `extensions_status` to see what extensions are enabled and their capabilities.
 
 Call `get_skill_summaries` to load the name, description, and type of every installed skill. This returns a compact summary — you do NOT need to read each skill file individually. The full skill content loads automatically when the user invokes a slash command.
@@ -111,15 +128,16 @@ Skill types:
 
 Understand what each skill does and when to use it. You should be able to answer: "What slash commands are available and what do they do?"
 
-**After reviewing, edit the handoff to check off:** `- [x] skills` and `- [x] extensions`
-
-### 7. Summarize
+### 10. Summarize
 
 After completing all steps, present a brief summary to the user:
 
 ```
 **Caught up.**
-- Handoff: [summary of last session's work, or "none"]
+- Session: registered as <session-id-short> on <branch>
+- Project (shared) state: [content from `.indusk/current.md`'s ## Project (shared) section, or "none"]
+- Other agents currently working: [list from `indusk agent list`, with each agent's task — or "none"]
+- Notable in-flight from other agents: [if anyone's section is on something that might affect this session, surface it]
 - Lessons: N loaded
 - Infrastructure: [healthy / issues]
 - Skills: N installed [list names]
@@ -140,6 +158,8 @@ Ready to pick up. What would you like to do?
 ## Important
 
 - Do NOT skip any step. Each one prevents a class of mistake.
+- Do NOT mutate any shared file during catchup. The only writes are `indusk agent register` and the implicit self-heartbeat in `indusk agent list`, both touching only the current session's own section.
 - Do NOT start coding before completing onboarding. The lessons and context exist because of past failures.
 - If CLAUDE.md seems outdated, flag it to the user — it may need a `/context` update.
 - If a plan's impl has unchecked items from a previous session, that's where `/work` picks up. Don't re-do completed work.
+- If you see other agents in `indusk agent list` working on something that overlaps with what the user wants you to do, surface that explicitly before proceeding. The bulletin is visibility, not coordination — the working agent owns the "avoid stepping on each other" judgment.

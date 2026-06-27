@@ -1,75 +1,84 @@
 ---
 name: handoff
-description: Write a handoff file before ending a session. Captures what was worked on, where it stopped, what's next, and any warnings for the next agent.
+description: Session-end ritual — call mcp__indusk__update_current_section to promote your session's operational state into .indusk/current.md (overwriting only your own section), commit, run `indusk agent done`, fire the eval trigger.
 ---
 
-You are ending a session or handing off to another agent. Write a handoff file so the next session can pick up exactly where you left off.
+You are ending a session, or about to hand off to another agent or another session of yourself. The handoff ritual promotes your session's operational state into `.indusk/current.md` so the next agent (or future-you) can pick up where you left off without rediscovery.
 
-## What to Write
+The file `.indusk/current.md` carries **per-agent sections** — one per Claude Code session that's worked on this project recently. Your session owns one of those sections, identified by your full session ID (`$CLAUDE_CODE_SESSION_ID`, or `pid-<N>` fallback). This ritual overwrites only *your* section; every other agent's section in the file is byte-untouched. There's no shared mutation surface and no race against concurrent handoffs.
 
-Create or overwrite `.claude/handoff.md` with:
+## The ritual
 
-```markdown
-# Handoff
+### 1. Update your section via the MCP tool
 
-**Date:** {YYYY-MM-DD}
-**Session:** {brief description of what this session focused on}
+Call `mcp__indusk__update_current_section` with your operational state:
 
-## What Was Being Worked On
-{Plan name, phase, specific checklist item. Be precise — "Phase 3 of extension-system, item 4: refactor check_health" not "working on extensions."}
-
-## Where It Stopped
-{Last thing completed. First thing that needs doing next. If mid-item, explain exactly where.}
-
-## What's Next
-{The immediate next step. Then the next 2-3 steps after that. This is the pickup point for /catchup.}
-
-## Open Issues
-{Anything broken, failing, or weird. Tests that don't pass. Errors being investigated. Things that worked before but don't now.}
-
-## Decisions Made This Session
-{Any decisions that aren't captured in CLAUDE.md or an ADR yet. These need to be formalized — they're here so they don't get lost between sessions.}
-
-## Watch Out For
-{Gotchas the next agent should know. "The FalkorDB graph needs reindexing." "The hooks aren't published yet — version 1.0.3 has them." "Don't touch init.ts until the extension system PR is merged."}
-
-## Catchup Status
-- [ ] mcp-ready
-- [ ] handoff
-- [ ] lessons
-- [ ] skills
-- [ ] health
-- [ ] context
-- [ ] plans
-- [ ] extensions
+```typescript
+mcp__indusk__update_current_section({
+  sessionId: "<your $CLAUDE_CODE_SESSION_ID, or pid-<N> if env unset>",
+  task: "<one-line description of what this session is working on>",
+  sections: {
+    in_flight: "What's actively in progress. Plan name + phase + current focus. Examples: 'auth-refactor Phase 3 — middleware rewrite', 'investigating slow Graphiti queries (no plan yet)'. Be specific; vague entries waste the next session's time.",
+    open_questions: "Hypotheses you haven't confirmed; design decisions mid-conversation; things you want the next agent to think about before continuing.",
+    cursor: "Where you stopped, in enough detail that re-entering doesn't require rediscovery. File paths + line numbers + the next concrete step. Examples: 'apps/backend/src/auth/middleware.ts:42 — about to extract refreshToken helper', 'Phase 2 verification gate — T7 written + scaffolded, needs Phase 3 lib lands'."
+  }
+})
 ```
 
-## When to Write a Handoff
+The tool reads `.indusk/current.md`, finds the section matching your session ID, overwrites the three subsection bodies, refreshes the `Last updated` timestamp, and atomically writes back. If no section exists for your session yet, the tool appends a new one. Either way, every other agent's section is byte-untouched.
 
-- Before ending any session where work was done
-- When the user says "let's stop here", "wrap up", "hand off"
-- When you're about to run out of context
-- `/handoff` explicitly
+**Body-content rules** — the tool rejects any of the three section bodies (`in_flight`, `open_questions`, `cursor`) containing a line that matches one of these four anchored patterns:
 
-## Fire the Eval Trigger
+- `^---\s*$` — a horizontal rule on its own line (would split the section in the parser)
+- `^##\s+Session\s+` — a heading starting with `## Session` (would inject a fake session)
+- `^\*\*Session ID\*\*:` — the full-UUID marker line
+- `^\*\*Last updated\*\*:` — the staleness-timestamp marker
 
-After writing the handoff file, fire the eval trigger with `--source handoff` so the eval agent processes any unprocessed highlights before the session ends. This matters because highlights written after the last `jj describe` would otherwise sit in the queue until the next session's first commit.
+These are the four line patterns the parser uses to recognize sessions. If you need to describe another session's work in your body — e.g., "blocked on what `## Session 2c87` is doing" — wrap the marker in backticks (`` `## Session ...` ``) or indent it, so it's no longer at the start of the line. Newlines and other control characters in the `sessionId` field are also rejected. Rejections come back as `TypeError`; the tool exits with non-zero before any write.
 
-Run this from the project root:
+If you have nothing worth promoting (the session shipped a feature and closed a plan, leaving no in-flight state), you can skip this step. The tool is for moments that *should* survive — don't paste boilerplate just because the ritual asks.
+
+### 2. Commit the change
+
+Use the normal commit flow for this project. Other agents only see committed state — your uncommitted edits are invisible to them. If you skipped step 1, commit whatever code/plan work you did this session anyway.
+
+### 3. Remove your presence
+
+```bash
+indusk agent done
+```
+
+Removes your section from `.indusk/current.md`. After this, you no longer show up in `indusk agent list` from other sessions. Optional — sections age out automatically via the `Last updated` TTL — but explicit `done` makes the bulletin tidier for concurrent agents.
+
+### 4. Fire the eval trigger
+
+So the eval agent processes any unprocessed highlights before the session closes. Highlights written after the last `git commit` would otherwise sit in the queue until the next session's first commit.
 
 ```bash
 node .claude/hooks/eval-trigger.js --source handoff
 ```
 
-The trigger spawns the evaluator in the background and returns immediately — it never blocks handoff. The evaluator processes the highlights queue and, because `INDUSK_EVAL_SOURCE=handoff` is set in the environment, may skip diff-based rubric scoring (there's no new commit). Highlights still get materialized into Graphiti episodes.
+The trigger spawns the evaluator in the background and returns immediately. Never blocks session close. If the hook isn't installed or Node isn't on PATH, the highlights stay queued for the next commit in a future session.
 
-If the hook isn't installed or Node isn't on PATH, the handoff still succeeds — the highlights remain queued for the next `jj describe` in a future session.
+## When this skill fires
 
-## Rules
+- `/handoff` explicitly
+- The user says "wrap up", "hand off", "let's stop here"
+- You're about to run out of context
 
-- **Be specific.** "Working on Phase 3" is useless. "Phase 3, item 4: refactored check_health to use extensions. extensions_status MCP tool created. Next: refactor init to remove hardcoded FalkorDB/CGC." is useful.
-- **Include the ugly parts.** If something is broken, say so. The next agent needs to know.
-- **Decisions that aren't saved anywhere else MUST go here.** They'll be lost otherwise.
-- **Overwrite the previous handoff.** There's only one — the most recent session's. Old handoffs are consumed by /catchup and don't need to persist.
-- **Keep it short.** This isn't a retrospective. It's a sticky note for the next person.
-- **Always include the Catchup Status section** with all boxes unchecked. This is enforced by a hook — the next session cannot edit or write code until `/catchup` checks off every box. Each step in catchup marks its box when completed.
+In any of those cases, walk the four steps. Skip step 1 only if there's genuinely nothing worth promoting — don't pad the section with vague restatements of the conversation.
+
+## What you're NOT doing
+
+- **Not writing a separate file.** The old `.claude/handoff.md` is gone. There's no document to write, no template to fill in beyond the three section bodies passed to the MCP tool.
+- **Not touching other agents' sections.** Even if you see another agent's section in `current.md` with stale `Last updated`, leave it alone. Use `indusk agent prune` if you want to clean up stale entries — it operates on TTL, not session identity.
+- **Not overwriting the `Project (shared)` section.** That section is for cross-cutting project state (any agent can edit it) — not session handoffs. If you need to update shared state, do it as a separate explicit edit; don't bundle it into your handoff write.
+
+## Why it works this way
+
+The old singleton `.claude/handoff.md` had two reliable failure modes:
+
+1. `/catchup` mutated the file while another agent was reading it (checkbox state machine), so concurrent catchups would block or corrupt each other.
+2. `/handoff` overwrote whatever was in the file, so two sessions handing off destroyed each other's content.
+
+The section-shape design makes both impossible: each agent's section is keyed by session ID, the MCP tool's atomic read-modify-write only touches that section, and git merges different-section edits without conflict. See [the ADR](apps/docs/src/decisions/multi-agent-coordination.md) for the full rationale.
