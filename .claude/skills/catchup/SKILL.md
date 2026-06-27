@@ -54,6 +54,8 @@ Read `.indusk/current.md`. It has two regions worth surfacing:
 - **`## Project (shared)`** — cross-cutting state that's true for the whole project right now ("pre-launch crunch mode", "telemetry endpoint changed last week", "merge freeze through Thursday"). Any agent can edit this section. Read it to know the project-wide context.
 - **Per-agent sections** (`## Session <short> — <task>`) — operational state from other working agents. Each section's `### In Flight`, `### Open Questions`, and `### Cursor` subsections tell you what other agents are doing in detail.
 
+**Filter per-agent sections by `Last updated` against `agents.stale_ttl_minutes`** (read the TTL from `.indusk/config.json`, default 60). Only surface sections whose `Last updated` is within the TTL — sections from agents that ran `/handoff` but skipped `indusk agent done` linger in the file and would otherwise look active forever. **Exclude stale sections from your catchup summary**; do not present a stale section as if its owner were currently working. (`indusk agent list` performs the same filter; this rule keeps the catchup output consistent with it.)
+
 **Do NOT edit `.indusk/current.md` during catchup.** Catchup is read-only for shared content. Your own section's content (in-flight / open-questions / cursor) is written via the [`mcp__indusk__update_current_section` MCP tool](apps/docs/src/reference/tools/indusk-mcp.md#agent-tools) — typically at `/handoff`, not during catchup. The `agent register` call in Step 1 only refreshes the heading + `Last updated`; it preserves any existing body content.
 
 ### 4. Read Lessons
