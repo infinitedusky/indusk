@@ -1,6 +1,6 @@
 # Section shape: branch-mergeable markdown + the lock-vs-merge split
 
-Insights surfaced during the `handoff-multi-agent-section-shape` plan (shipped 1.29.0). The plan reshaped `.indusk/current.md` from fixed sections + separate presence files to per-agent sections in one file. Three lessons generalize beyond this specific plan.
+Insights surfaced during the `handoff-multi-agent-section-shape` plan (shipped 1.30.0). The plan reshaped `.indusk/current.md` from fixed sections + separate presence files to per-agent sections in one file. Three lessons generalize beyond this specific plan.
 
 ## 1. `merge=union` + content-shape parser cooperation is the canonical pattern for append-only markdown
 
