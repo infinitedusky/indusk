@@ -50,6 +50,42 @@
 
 import { sanitizeSessionId } from "./session.js";
 
+/**
+ * Reject body content that would corrupt the file structure when written into
+ * a section. Added as the Phase 6 falsification fix for T14:
+ * `parseCurrentMd` splits content first on `^---\s*$` delimiters, then on
+ * `^##\s+Session\s+` headings. A body containing those markers is
+ * indistinguishable from a real session boundary on re-parse, so an attacker
+ * (or an honest user pasting a snippet) can inject a fake session that other
+ * agents see.
+ *
+ * Four forbidden line patterns:
+ *   1. `^---\s*$`              — horizontal rule (section delimiter)
+ *   2. `^##\s+Session\s+`      — session heading
+ *   3. `^\*\*Session ID\*\*:`  — full-UUID marker
+ *   4. `^\*\*Last updated\*\*:` — staleness timestamp
+ *
+ * Throws TypeError on any match; the public mutation helpers
+ * (`upsertSection`, `editSharedSection`) route every body through this
+ * sanitizer before writing.
+ */
+export function sanitizeSectionBody(body: string, fieldName: string): string {
+	const forbidden = [
+		{ pattern: /^---\s*$/m, label: "horizontal rule (---)" },
+		{ pattern: /^##\s+Session\s+/m, label: "## Session heading" },
+		{ pattern: /^\*\*Session ID\*\*:/m, label: "**Session ID**: marker" },
+		{ pattern: /^\*\*Last updated\*\*:/m, label: "**Last updated**: marker" },
+	];
+	for (const { pattern, label } of forbidden) {
+		if (pattern.test(body)) {
+			throw new TypeError(
+				`Invalid section body (${fieldName}): contains forbidden structural marker (${label})`,
+			);
+		}
+	}
+	return body;
+}
+
 export interface AgentSection {
 	/** Full session ID — the canonical identity. UUID v4 from CLAUDE_CODE_SESSION_ID, or pid-<N>. */
 	sessionId: string;
@@ -264,6 +300,11 @@ function buildSessionShort(sessionId: string): string {
  */
 export function upsertSection(content: string, section: AgentSection): string {
 	const sessionId = sanitizeSessionId(section.sessionId);
+	// Route each body through the sanitizer before any write. Throws TypeError
+	// on structural-marker injection. See sanitizeSectionBody above.
+	sanitizeSectionBody(section.inFlight, "inFlight");
+	sanitizeSectionBody(section.openQuestions, "openQuestions");
+	sanitizeSectionBody(section.cursor, "cursor");
 	const normalized: AgentSection = {
 		...section,
 		sessionId,
@@ -293,6 +334,10 @@ export function removeSection(content: string, sessionId: string): string {
 
 /** Replace the `## Project (shared)` section body. Session sections untouched. */
 export function editSharedSection(content: string, sharedBody: string): string {
+	// Phase 6 falsification fix: shared body also goes through the structural-marker
+	// sanitizer. An attacker editing `## Project (shared)` could otherwise inject
+	// a fake session via the same mechanism.
+	sanitizeSectionBody(sharedBody, "sharedSection");
 	const doc = parseCurrentMd(content);
 	doc.sharedSection = sharedBody;
 	return serializeCurrentMd(doc);
