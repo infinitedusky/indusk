@@ -54,11 +54,11 @@ The trajectory IDs below use a `T1..T13` numbering scheme. They map directly to 
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | On a fresh git project, `indusk graph sync` after a commit produces events in the semantic graph log and `indusk graph status` reports anchors greater than zero (replaces today's "git mode — semantic graph unavailable" stderr no-op). | Phase 0 | Phase 1 | planned |
-| T2 | A `graph_capture` call on a git-mode project writes both the Graphiti episode AND an `edge.attached` event to the semantic graph log connecting episode UUID to file anchor. | Phase 0 | Phase 1 | planned |
-| T3 | `indusk graph sync` then `git rebase -i HEAD~3` (rewriting history without changing file content) then `indusk graph sync` again converges the runtime to current file state; no orphaned anchors. | Phase 0 | Phase 1 | planned |
-| T4 | `indusk graph sync` then `git mv` a file then commit then `indusk graph sync` preserves the file's anchor UUID via rename detection (anchor.moved event, not tombstoned+created). | Phase 0 | Phase 1 | planned |
-| T5 | A `graph_capture` call with a `file_path` argument on a git-mode project produces an `edge.attached` event whose target is the specific file's anchor UUID (not a project-root fallback anchor). | Phase 0 | Phase 1 | planned |
+| T1 | On a fresh git project, `indusk graph sync` after a commit produces events in the semantic graph log and `indusk graph status` reports anchors greater than zero (replaces today's "git mode — semantic graph unavailable" stderr no-op). | Phase 0 | Phase 1 | written |
+| T2 | A `graph_capture` call on a git-mode project writes both the Graphiti episode AND an `edge.attached` event to the semantic graph log connecting episode UUID to file anchor. | Phase 0 | Phase 1 | written |
+| T3 | `indusk graph sync` then `git rebase -i HEAD~3` (rewriting history without changing file content) then `indusk graph sync` again converges the runtime to current file state; no orphaned anchors. | Phase 0 | Phase 1 | written |
+| T4 | `indusk graph sync` then `git mv` a file then commit then `indusk graph sync` preserves the file's anchor UUID via rename detection (anchor.moved event, not tombstoned+created). | Phase 0 | Phase 1 | written |
+| T5 | A `graph_capture` call with a `file_path` argument on a git-mode project produces an `edge.attached` event whose target is the specific file's anchor UUID (not a project-root fallback anchor). | Phase 0 | Phase 1 | written |
 | T6 | A search across `apps/indusk-mcp/src/` for `getScm`, `jj.ts`, `NotAJjRepoError`, or `getJjReachable` finds zero matches. | Phase 0 | Phase 4 | planned |
 | T7 | `apps/indusk-mcp/skills/jj.md` does not exist on disk; `apps/indusk-mcp/skills/git.md` exists and contains no "if your project uses jj" framing. | Phase 0 | Phase 3 | planned |
 | T8 | The eval-trigger hook fires on `git commit` but not on `jj describe`, `jj split`, or any other jj subcommand. The trigger regex narrows from a dual-pattern matcher (matching `jj describe` OR `git commit`) to a git-only matcher (matching `git commit` only). | Phase 0 | Phase 2 | planned |
@@ -82,12 +82,12 @@ No `### Trajectory Rationale` subsection required — every row is Phase 0.
 - [ ] Update the doc comment at the top of `sync-engine.ts` (steps 5 and 6 still reference "jj change ID" — change to "git short SHA")
 - [ ] Update the doc comment at the top of `graphiti-log-wrapper.ts` to drop the "jj-only" framing
 - [ ] Identify and update or delete existing tests that asserted the git-mode-unavailable stderr behavior — likely candidates: `apps/indusk-mcp/src/__tests__/git-mode-e2e.test.ts`, plus any unit tests in `apps/indusk-mcp/src/lib/semantic-graph/__tests__/` that mock SCM detection to "git" and assert no-op behavior
-- [ ] Write end-to-end harness helper for tmp git projects (init + commit + run `indusk graph sync` + read log/status). Reused by T1, T3, T4, T10. Place at `apps/indusk-mcp/src/__tests__/helpers/git-tmp-project.ts`
-- [ ] Write T1 e2e: fresh git project + commit + `indusk graph sync` asserts log has `anchor.created` events AND `indusk graph status` reports anchors > 0
-- [ ] Write T2 vitest integration: call `graph_capture` against a git-mode project with a stubbed Graphiti client + real log writer, assert both Graphiti episode AND `edge.attached` event with correct anchor UUID
-- [ ] Write T3 e2e: full sync then `git rebase -i HEAD~3` (rewriting history without changing content) then full sync — assert runtime state reflects current file paths and contents (no orphaned anchors for files whose blob hash matches current path)
-- [ ] Write T4 e2e: full sync then `git mv` a file + commit then full sync — assert `anchor.moved` event in the second sync's output, NOT tombstoned+created; assert the file's anchor UUID is preserved
-- [ ] Write T5 vitest integration: call `graph_capture` with `file_path` argument on git-mode project, assert resulting `edge.attached` event's target UUID matches the specific file anchor (not the project-root fallback)
+- [x] Write end-to-end harness helper for tmp git projects (init + commit + run `indusk graph sync` + read log/status). Reused by T1, T3, T4, T10. Place at `apps/indusk-mcp/src/__tests__/helpers/git-tmp-project.ts`
+- [x] Write T1 e2e: fresh git project + commit + `indusk graph sync` asserts log has `anchor.created` events AND `indusk graph status` reports anchors > 0
+- [x] Write T2 vitest integration: call `graph_capture` against a git-mode project with a stubbed Graphiti client + real log writer, assert both Graphiti episode AND `edge.attached` event with correct anchor UUID
+- [x] Write T3 e2e: full sync then `git rebase -i HEAD~3` (rewriting history without changing content) then full sync — assert runtime state reflects current file paths and contents (no orphaned anchors for files whose blob hash matches current path)
+- [x] Write T4 e2e: full sync then `git mv` a file + commit then full sync — assert `anchor.moved` event in the second sync's output, NOT tombstoned+created; assert the file's anchor UUID is preserved
+- [x] Write T5 vitest integration: call `graph_capture` with `file_path` argument on git-mode project, assert resulting `edge.attached` event's target UUID matches the specific file anchor (not the project-root fallback)
 
 #### Phase 1 Verification
 - [ ] T1 passes (pnpm vitest run src/__tests__/git-tmp-project-graph-sync.test.ts or similar)
