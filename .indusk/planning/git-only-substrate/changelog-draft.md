@@ -24,9 +24,23 @@ Test surfaces:
 - `eval-trigger-filter-falsepositives.test.ts` — T16's regex assertion updated to expect `/\bgit commit\b/` instead of the dual pattern.
 - `eval-baseline-scm-branches.test.ts` — rewritten as a git-only assertion suite; old "contains both branches" assertions are flipped to "does NOT contain jj branches".
 
-## Phase 3 — Skills collapse (pending)
+## Phase 3 — Skills collapse
 
-## Phase 3 — Skills collapse (pending)
+Skills are git-only as of 1.31.0. Five surfaces touched:
+
+- **`apps/indusk-mcp/skills/jj.md`**: deleted. The standalone jj reference skill is gone.
+- **`apps/indusk-mcp/skills/work.md`**: dual-form `### If scm: "jj"` / `### If scm: "git"` commit-cadence sections collapsed to single-form do-then-commit on a feature branch. No more `jj new` / `jj describe` / `jj split` prose.
+- **`apps/indusk-mcp/skills/highlight.md`**: "next commit (jj describe / git commit)" prose collapsed to "next `git commit`".
+- **`apps/indusk-mcp/skills/eval-review.md`**: dual `jj diff` / `git diff` examples collapsed to git-only; `jj log -r @` change-ID extraction collapsed to `git rev-parse --short HEAD`.
+- **`apps/indusk-mcp/skills/git.md`**: removed "if your project uses Jujutsu" callout; removed "same as jj" comparison; rewrote eval-hook-timing-asymmetry-vs-jj paragraph as commit-message-discipline; removed `jj.md` from See Also.
+
+Test surfaces:
+- `apps/indusk-mcp/src/__tests__/fixtures/jj-skill-pre-phase-4.md` — deleted (byte-equal fixture).
+- `apps/indusk-mcp/src/__tests__/skill-prose-scm-agnostic.test.ts` — deleted.
+- `apps/indusk-mcp/src/lib/eval/evaluator-runner.test.ts` — pre-Phase-2 tests asserting jj-default and `scm: "jj"` branches collapsed to a single git-only test.
+- `apps/indusk-mcp/src/__tests__/multi-agent-e2e.test.ts` — 2 pre-existing tests skipped with explanatory comments (section-shape leftover, orthogonal to git-only-substrate).
+
+CLAUDE.md "Skills are SCM-aware" gotcha rewritten as "All skills assume git as the only SCM as of 1.31.0".
 
 ## Phase 4 — SCM abstraction rip-out (pending)
 
