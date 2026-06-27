@@ -17,18 +17,10 @@ export interface PromptBuilderOptions {
 	transcriptPath: string;
 	mode: "eval" | "baseline";
 	projectGroup: string;
-	/**
-	 * SCM the project uses. Controls which command the evaluator is told to
-	 * run to inspect the diff: `jj diff -r ${changeId}` for jj, `git show
-	 * ${changeId}` for git. Defaults to `"jj"` for backward-compat with
-	 * pre-1.28.x callers that don't pass the field.
-	 */
-	scm?: "jj" | "git";
 }
 
 export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
-	const scm = opts.scm ?? "jj";
-	const diffCommand = scm === "git" ? `git show ${opts.changeId}` : `jj diff -r ${opts.changeId}`;
+	const diffCommand = `git show ${opts.changeId}`;
 	const questionsBlock = opts.rubric
 		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
 		.join("\n\n");

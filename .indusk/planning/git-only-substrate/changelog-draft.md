@@ -10,7 +10,21 @@ Content-keyed dedup at sync time (existing) handles rebase via noisy-replay-then
 
 Three obsolete tests deleted: `git-mode-graph-sync.test.ts`, `git-mode-graph-cli.test.ts`, `git-mode-e2e.test.ts` — all asserted the prior graceful-degrade behavior. Replaced by T1, T2, T3, T5 in new test files (T4 skipped with documented reason — CGC index unavailable in tmp projects).
 
-## Phase 2 — Eval pipeline collapse (pending)
+## Phase 2 — Eval pipeline collapse
+
+The eval pipeline is now single-SCM. Four collapses:
+
+- **`apps/indusk-mcp/hooks/eval-trigger.js`**: trigger regex narrows from `/\b(jj describe|git commit)\b/` to `/\bgit commit\b/`; change-ID extraction collapses to a single `git rev-parse --short HEAD` call (no jj-first-then-fallback); module doc comment + skip message updated to git-only framing.
+- **`apps/indusk-mcp/src/lib/eval/prompt-builder.ts`**: `scm` field removed from `PromptBuilderOptions`; `diffCommand` is now `git show ${changeId}` everywhere.
+- **`apps/indusk-mcp/src/lib/eval/evaluator-runner.ts` + `persistent-evaluator.ts`**: `getScm()` call sites deleted; `scm` const deleted; allowed-tools list loses `Bash(jj:*)`. The TDZ-on-`scm`-const gotcha in `persistent-evaluator.ts` is no longer applicable.
+- **`apps/indusk-mcp/src/bin/commands/eval.ts` (`baseline --task`)**: SCM-aware commit + change-ID extraction collapses to `git commit --allow-empty` + `git rev-parse --short HEAD`. No more jj `jj new`/`jj describe`/`jj log` shell-outs.
+
+Test surfaces:
+- `eval-trigger-git-mode.test.ts` — rewritten to assert the git-only shape (no `jj describe` in the trigger regex; no `jj log -r` for change-ID extraction).
+- `eval-trigger-filter-falsepositives.test.ts` — T16's regex assertion updated to expect `/\bgit commit\b/` instead of the dual pattern.
+- `eval-baseline-scm-branches.test.ts` — rewritten as a git-only assertion suite; old "contains both branches" assertions are flipped to "does NOT contain jj branches".
+
+## Phase 3 — Skills collapse (pending)
 
 ## Phase 3 — Skills collapse (pending)
 

@@ -13,7 +13,6 @@ import { dirname, join } from "node:path";
 
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
-import { getScm } from "../scm/detect.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
@@ -201,9 +200,7 @@ export async function runPersistentEval(opts: {
 			// extracted scorecard text.
 			let rawClaudeStdout = "";
 
-			const scm = getScm(opts.projectRoot);
-			const diffCommand =
-				scm === "git" ? `git show ${opts.changeId}` : `jj diff -r ${opts.changeId}`;
+			const diffCommand = `git show ${opts.changeId}`;
 
 			try {
 				const { args, prompt } = await withSpan(
@@ -267,7 +264,6 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 							transcriptPath: opts.transcriptPath,
 							mode: opts.mode,
 							projectGroup,
-							scm,
 						}),
 					};
 				}

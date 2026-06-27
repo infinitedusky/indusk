@@ -3,72 +3,64 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * T11 + T12 — `eval-trigger.js` is dual-mode (jj + git), per the
- * `git-or-jj-substrate` plan's brief and Phase 6 falsification.
+ * Phase 2 collapse — `eval-trigger.js` is git-only as of 1.31.0
+ * (`git-only-substrate` Phase 2). The trigger regex narrowed from
+ * `/\b(jj describe|git commit)\b/` to `/\bgit commit\b/`. The skip
+ * message no longer names `jj describe`. Change ID extraction goes
+ * straight to git (no jj-first-then-fallback).
  *
- * RED AT PHASE 6 START. The hook today filters trigger commands by
- * `command.includes("jj describe")` only; it reads the change ID via
- * `jj log` with no git fallback. On git-mode projects this means the
- * eval hook never fires after a `git commit`. T11 + T12 capture this
- * structural shape — they go red against current source and green once
- * Phase 6's H1-A + H1-B fixes land.
+ * History: T11 + T12 (git-or-jj-substrate Phase 6) originally pinned
+ * the dual-SCM shape — kept here as updated assertions for the git-
+ * only shape that replaced it.
  *
- * Source-level tests are sufficient here: the hook is a single short
- * script, and the pattern we want to enforce is purely textual. A full
- * runtime simulation would require spawning the hook with a fake hook
- * event and inspecting system.log — heavier, slower, and more brittle
- * than a grep against source.
+ * Source-level tests are sufficient — the hook is a single short script
+ * and the patterns we want to enforce are textual.
  */
 
 const HOOK_PATH = resolve(__dirname, "../../hooks/eval-trigger.js");
 
-describe("eval-trigger.js — dual-SCM trigger filter (T11)", () => {
+describe("eval-trigger.js — git-only trigger filter (T8)", () => {
 	const source = readFileSync(HOOK_PATH, "utf-8");
 
-	it("matches both `jj describe` AND `git commit` in the trigger filter", () => {
-		// The filter must accept both trigger commands — neither one alone is enough.
-		// Grep for both literal strings appearing as filter patterns (not in
-		// comments / docs).
-		expect(source).toMatch(/jj describe/);
+	it("matches `git commit` in the trigger filter", () => {
 		expect(source).toMatch(/git commit/);
 	});
 
-	it("does NOT use a single-command early-exit filter (the pre-Phase-6 shape)", () => {
-		// Pre-fix shape was `if (!command.includes("jj describe"))`. After fix
-		// the filter uses an array/some/test/regex covering both patterns. The
-		// exact post-fix shape isn't pinned, but the bare single-command form
-		// must be gone.
-		expect(source).not.toMatch(/if\s*\(\s*!command\.includes\("jj describe"\)\s*\)/);
+	it("does NOT match `jj describe` (or any `jj` subcommand) in the trigger filter regex", () => {
+		// The TRIGGER_RE literal in source must contain `git commit` and NOT
+		// `jj describe`. Search the specific TRIGGER_RE line/block to avoid
+		// false-positives from comment prose elsewhere.
+		const triggerLine = source
+			.split("\n")
+			.find((l) => l.includes("TRIGGER_RE =") && l.includes("git commit"));
+		expect(triggerLine, "TRIGGER_RE assignment line should exist").toBeDefined();
+		expect(triggerLine).not.toMatch(/jj describe/);
 	});
 
-	it("the skip log message names BOTH jj describe and git commit (so debug output is honest)", () => {
-		// Pre-fix log was `"skip — no jj describe in command"`. After fix it
-		// names both triggers so a user reading system.log isn't misled into
-		// thinking only jj is monitored.
-		expect(source).toMatch(/skip[^"]*jj describe[^"]*git commit/);
+	it("the skip log message names ONLY git commit (no jj reference)", () => {
+		// Find the syslog line for the trigger-filter skip path (the one that
+		// fires when TRIGGER_RE doesn't match). It names "no git commit" after
+		// the Phase 2 collapse; pre-Phase-2 it named both `jj describe` and
+		// `git commit`.
+		const syslogSkipLine = source
+			.split("\n")
+			.find((l) => l.includes("syslog") && l.includes("no git commit"));
+		expect(syslogSkipLine, "trigger-filter skip syslog line should exist").toBeDefined();
+		expect(syslogSkipLine).not.toMatch(/jj describe/);
 	});
 });
 
-describe("eval-trigger.js — change ID extraction with git fallback (T12)", () => {
+describe("eval-trigger.js — change ID extraction is git-only (T8 supporting)", () => {
 	const source = readFileSync(HOOK_PATH, "utf-8");
 
-	it("invokes `git rev-parse` as a fallback when jj's change-ID query fails", () => {
-		// After H1-B the hook tries jj first, falls back to git rev-parse on
-		// failure. Pre-fix the fallback didn't exist; the catch block silently
-		// `process.exit(0)`-d, dropping the eval entirely on git-mode projects.
+	it("invokes `git rev-parse` (git is the only SCM)", () => {
 		expect(source).toMatch(/git rev-parse/);
 	});
 
-	it("does NOT silently exit when jj's change-ID query fails (the pre-Phase-6 shape)", () => {
-		// Pre-fix shape was a bare `} catch { process.exit(0); }` immediately
-		// after the `jj log -r @` execSync. After fix, the catch block tries
-		// the git path before exiting. We check that the catch immediately
-		// following the jj log call is NOT a silent exit.
-		const jjLogIdx = source.indexOf("jj log -r @");
-		expect(jjLogIdx, "jj log call should still exist").toBeGreaterThan(-1);
-		// Slice the next 250 chars after the jj log call — should contain a
-		// `git rev-parse` (the fallback) before any `process.exit(0)`.
-		const nextWindow = source.slice(jjLogIdx, jjLogIdx + 350);
-		expect(nextWindow).toMatch(/git rev-parse/);
+	it("does NOT invoke `jj log` for change-ID extraction (jj is gone)", () => {
+		// jj-first-then-fallback is collapsed to git-only. The jj log path is
+		// gone entirely. Allow `jj` to appear in comment prose; assert no
+		// `jj log` shell-out remains.
+		expect(source).not.toMatch(/jj log -r/);
 	});
 });

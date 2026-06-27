@@ -24,7 +24,7 @@ export async function evalSummary(
 
 	if (!existsSync(logPath)) {
 		console.info(
-			"No eval results yet. Results appear after a commit (jj describe / git commit) triggers the eval hook.",
+			"No eval results yet. Results appear after a `git commit` triggers the eval hook.",
 		);
 		return;
 	}
@@ -272,27 +272,17 @@ export async function evalBaseline(
 		console.error(`Baseline agent exited with code ${result.status}`);
 	}
 
-	// Commit the baseline work — SCM-aware. The worktree inherits the
-	// project's `scm` field via the same .indusk/config.json copy, so we
-	// branch on that rather than re-detecting per worktree.
+	// Commit the baseline work. git-only as of 1.31.0 (git-only-substrate
+	// Phase 2): the worktree gets an empty commit so the evaluator has a
+	// fresh tip to score against.
 	console.info("Committing baseline work...");
-	const { getScm } = await import("../../lib/scm/detect.js");
-	const scm = getScm(projectRoot);
 	try {
-		if (scm === "git") {
-			execSync(`git commit --allow-empty -m "baseline: ${taskName}"`, {
-				cwd: worktreePath,
-				stdio: "pipe",
-			});
-		} else {
-			execSync("jj new", { cwd: worktreePath, stdio: "pipe" });
-			execSync(`jj describe -m "baseline: ${taskName}"`, {
-				cwd: worktreePath,
-				stdio: "pipe",
-			});
-		}
+		execSync(`git commit --allow-empty -m "baseline: ${taskName}"`, {
+			cwd: worktreePath,
+			stdio: "pipe",
+		});
 	} catch {
-		console.info(`Note: ${scm} commit may have failed — evaluating current state anyway`);
+		console.info("Note: git commit may have failed — evaluating current state anyway");
 	}
 
 	// Run the smart evaluator against the baseline
@@ -301,17 +291,10 @@ export async function evalBaseline(
 
 	let changeId: string;
 	try {
-		if (scm === "git") {
-			changeId = execSync("git rev-parse --short HEAD", {
-				cwd: worktreePath,
-				encoding: "utf8",
-			}).trim();
-		} else {
-			changeId = execSync("jj log -r @ --no-graph -T change_id", {
-				cwd: worktreePath,
-				encoding: "utf8",
-			}).trim();
-		}
+		changeId = execSync("git rev-parse --short HEAD", {
+			cwd: worktreePath,
+			encoding: "utf8",
+		}).trim();
 	} catch {
 		changeId = "baseline-unknown";
 	}

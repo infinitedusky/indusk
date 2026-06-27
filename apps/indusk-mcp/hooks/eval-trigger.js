@@ -1,22 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * Dual-mode eval trigger. Works with both jj and plain git.
+ * Eval trigger. git-only as of 1.31.0 (`git-only-substrate` Phase 2).
  *
  * 1) PostToolUse hook mode (default): fires on Bash tool calls containing
- *    `jj describe` (jj projects) or `git commit` (git projects). Reads the
- *    hook event JSON from stdin. Spawns the evaluator runner as a detached
- *    background process.
+ *    `git commit`. Reads the hook event JSON from stdin. Spawns the
+ *    evaluator runner as a detached background process.
  *
  * 2) CLI mode (`--source <tag>`): invoked manually by skills (e.g., handoff)
  *    at session end. No stdin read, no trigger-command filter. Uses the
- *    current change/commit ID and passes the source tag to the evaluator
+ *    current commit ID and passes the source tag to the evaluator
  *    via INDUSK_EVAL_SOURCE. The evaluator may skip diff-based scoring when
  *    source != "commit" but still processes the highlights queue.
  *
- * SCM detection: tries jj first (`jj log -r @`), falls back to git
- * (`git rev-parse --short HEAD`) on jj failure. Mirrors the runtime
- * detection pattern used by `apps/indusk-mcp/src/lib/scm/index.ts`.
+ * Commit ID extraction: `git rev-parse --short HEAD`.
  *
  * Exit 0 always — this is advisory, not blocking.
  */
@@ -51,7 +48,7 @@ let cwd;
 let command = "";
 
 if (cliSource !== null) {
-	// CLI mode — no stdin, no jj describe / git commit filter
+	// CLI mode — no stdin, no git commit filter
 	cwd = process.cwd();
 	syslog(cwd, `cli invocation — source: ${cliSource}`);
 } else {
@@ -84,14 +81,13 @@ if (cliSource !== null) {
 	}
 
 	// Fast path: not a recognized commit-trigger command. The hook fires on
-	// `jj describe` (jj projects) AND `git commit` (git projects). Word-
-	// boundary anchors (\b) prevent substring false-positives like
-	// `git config user.email "git committer"` ("committer" contains "commit"
-	// as a substring), `cat git-commit-template.md`, or `echo "git commit"`
-	// inside an unrelated string literal.
-	const TRIGGER_RE = /\b(jj describe|git commit)\b/;
+	// `git commit`. Word-boundary anchors (\b) prevent substring false-
+	// positives like `git config user.email "git committer"` ("committer"
+	// contains "commit" as a substring), `cat git-commit-template.md`, or
+	// `echo "git commit"` inside an unrelated string literal.
+	const TRIGGER_RE = /\bgit commit\b/;
 	if (!TRIGGER_RE.test(command)) {
-		syslog(cwd, "skip — no jj describe / git commit in command");
+		syslog(cwd, "skip — no git commit in command");
 		process.exit(0);
 	}
 }
@@ -140,38 +136,22 @@ if (!evalConfig.enabled) {
 	process.exit(0);
 }
 
-// Get the current change/commit ID. Try jj first, fall back to git.
-// Mirrors the pattern in `apps/indusk-mcp/src/lib/scm/index.ts:getCurrentChangeId`.
+// Get the current commit ID. git-only as of 1.31.0 (git-only-substrate
+// Phase 2). Mirrors `apps/indusk-mcp/src/lib/scm/index.ts:getCurrentChangeId`.
 let changeId;
 try {
-	// Try jj first — preserves existing behavior for jj-using projects.
-	changeId = execSync("jj log -r @ --no-graph -T change_id", {
+	changeId = execSync("git rev-parse --short HEAD", {
 		cwd: projectRoot,
 		encoding: "utf8",
 		timeout: 5000,
 		stdio: ["ignore", "pipe", "ignore"],
 	}).trim();
 } catch {
-	// jj unavailable, no jj repo, or other failure — fall through.
+	// git failed — skip eval silently. No commit ID means we have
+	// nothing meaningful to evaluate against.
 }
 if (!changeId) {
-	try {
-		// Fall back to git short SHA. On git-mode projects this is the only
-		// path; on jj-only projects (jj managing without colocated git) this
-		// would also fail, in which case we skip silently below.
-		changeId = execSync("git rev-parse --short HEAD", {
-			cwd: projectRoot,
-			encoding: "utf8",
-			timeout: 5000,
-			stdio: ["ignore", "pipe", "ignore"],
-		}).trim();
-	} catch {
-		// Both failed — skip eval silently. No change/commit ID means we have
-		// nothing meaningful to evaluate against.
-	}
-}
-if (!changeId) {
-	syslog(projectRoot, "skip — no SCM change/commit ID available (neither jj nor git produced one)");
+	syslog(projectRoot, "skip — no git commit ID available");
 	process.exit(0);
 }
 

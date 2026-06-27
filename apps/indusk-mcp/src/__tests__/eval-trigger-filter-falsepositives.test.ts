@@ -25,10 +25,11 @@ describe("eval-trigger.js — word-boundary trigger filter (T16)", () => {
 	const source = readFileSync(HOOK_PATH, "utf-8");
 
 	it("uses a regex with word boundaries (\\b) for the trigger filter", () => {
-		// After H3 the filter should be a regex like /\b(jj describe|git commit)\b/.
-		// We don't pin the exact source shape; we just require the filter to
-		// use \b as a boundary anchor.
-		expect(source).toMatch(/\\b\(?jj describe[\s\S]*git commit[\s\S]*\)?\\b/);
+		// As of 1.31.0 (`git-only-substrate` Phase 2) the filter is the single-
+		// pattern `/\bgit commit\b/`. We require `\b` anchors on both sides of
+		// the literal `git commit` to defend against substring false-positives
+		// like `git config user.email "git committer"`.
+		expect(source).toMatch(/\\bgit commit\\b/);
 	});
 
 	it("does NOT use String.includes for the trigger check (the pre-Phase-7 shape)", () => {
