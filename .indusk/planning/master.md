@@ -14,7 +14,7 @@ Three plans queued ahead of arc work because each is small, ready-or-near-ready,
 
 | # | Plan | Status | Why now |
 |---|------|--------|---------|
-| I.1 | [handoff-multi-agent](handoff-multi-agent/brief.md) | brief draft (~1 day pending F1) | URGENT — Sandy hit the multi-agent block 2026-05-25. Two concurrent Claude sessions collide on `.claude/handoff.md` (one overwrites the other, `/catchup`'s checkbox-mutation freezes the other agent). Brief commits to worktrees-per-agent + shared `current.md` + per-agent presence files. |
+| I.1 | ~~handoff-multi-agent~~ → shipped via [handoff-multi-agent-section-shape](archive/handoff-multi-agent-section-shape/) | shipped 2026-06-27 (archived) | DONE — concurrent Claude sessions on one project no longer collide. Per-agent sections inside one `.indusk/current.md` + `mcp__indusk__update_current_section` MCP write tool + `/handoff` as a real four-step ritual. Falsification surfaced 4 real bugs (body injection / register race / catchup TTL gap / control-char session ID) — all fixed in Phase 6. Parent plan ADR carries supersession banner. |
 | I.2 | [indusk-worktree-extension](indusk-worktree-extension/brief.md) | brief accepted + test-plan draft (~2–3 days) | Multi-agent fix (I.1) depends on this. Independent quality-of-life win for FDE work even without I.1. Previously F1 in the FDE bucket. |
 | I.3 | [code-reviewer-agent](code-reviewer-agent/impl.md) | impl draft, trajectory written (~1–2 days) | Shovel-ready; independent of everything else. Was Arc 1 #3.8. Lands a sibling-of-eval-agent code-quality observability surface. |
 

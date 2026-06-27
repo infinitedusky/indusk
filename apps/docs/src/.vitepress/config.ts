@@ -165,7 +165,10 @@ const config = defineConfig({
 			"/lessons/": [
 				{
 					text: "Lessons Learned",
-					items: [{ text: "Overview", link: "/lessons/" }],
+					items: [
+						{ text: "Overview", link: "/lessons/" },
+						{ text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)", link: "/lessons/handoff-multi-agent-section-shape" },
+					],
 				},
 			],
 			"/dawn/": [
