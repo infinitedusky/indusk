@@ -10,6 +10,7 @@ import {
 	serializeCurrentMd,
 	upsertSection,
 } from "../../lib/agents/current-md.js";
+import { withLock } from "../../lib/agents/lock.js";
 import { getSessionId, sanitizeSessionId } from "../../lib/agents/session.js";
 import { readConfig } from "../../lib/config.js";
 
@@ -80,6 +81,10 @@ function currentMdPath(projectRoot: string): string {
 	return join(projectRoot, ".indusk/current.md");
 }
 
+function currentMdLockPath(projectRoot: string): string {
+	return `${currentMdPath(projectRoot)}.lock`;
+}
+
 function readCurrent(projectRoot: string): string {
 	const path = currentMdPath(projectRoot);
 	if (!existsSync(path)) {
@@ -121,21 +126,23 @@ export function agentRegister(projectRoot: string, opts: AgentRegisterOptions): 
 	const branch = opts.branch ?? currentBranch(opts.worktree ?? process.cwd());
 	const _branch = branch; // currently stored only for future use; sections don't carry branch yet
 	void _branch;
-	const initial = readCurrent(projectRoot);
-	const doc = parseCurrentMd(initial);
-	const existing = doc.sections.find((s) => s.sessionId === sessionId);
-	const section: AgentSection = {
-		sessionId,
-		sessionShort: sessionId.slice(0, 8),
-		task: opts.task.trim(),
-		lastUpdated: new Date().toISOString(),
-		inFlight: existing?.inFlight ?? "",
-		openQuestions: existing?.openQuestions ?? "",
-		cursor: existing?.cursor ?? "",
-	};
-	const updated = upsertSection(initial, section);
-	writeAtomic(projectRoot, updated, sessionId);
-	console.info(`Registered agent ${sessionId} — ${section.task}`);
+	withLock(currentMdLockPath(projectRoot), () => {
+		const initial = readCurrent(projectRoot);
+		const doc = parseCurrentMd(initial);
+		const existing = doc.sections.find((s) => s.sessionId === sessionId);
+		const section: AgentSection = {
+			sessionId,
+			sessionShort: sessionId.slice(0, 8),
+			task: opts.task.trim(),
+			lastUpdated: new Date().toISOString(),
+			inFlight: existing?.inFlight ?? "",
+			openQuestions: existing?.openQuestions ?? "",
+			cursor: existing?.cursor ?? "",
+		};
+		const updated = upsertSection(initial, section);
+		writeAtomic(projectRoot, updated, sessionId);
+		console.info(`Registered agent ${sessionId} — ${section.task}`);
+	});
 }
 
 export interface AgentDoneOptions {
@@ -152,16 +159,18 @@ export function agentDone(projectRoot: string, opts: AgentDoneOptions): void {
 		);
 		process.exit(1);
 	}
-	const initial = readCurrent(projectRoot);
-	const doc = parseCurrentMd(initial);
-	const existed = doc.sections.some((s) => s.sessionId === sessionId);
-	if (!existed) {
-		console.info(`Agent ${sessionId} already done (no section in current.md).`);
-		return;
-	}
-	const updated = removeSection(initial, sessionId);
-	writeAtomic(projectRoot, updated, sessionId);
-	console.info(`Agent ${sessionId} done.`);
+	withLock(currentMdLockPath(projectRoot), () => {
+		const initial = readCurrent(projectRoot);
+		const doc = parseCurrentMd(initial);
+		const existed = doc.sections.some((s) => s.sessionId === sessionId);
+		if (!existed) {
+			console.info(`Agent ${sessionId} already done (no section in current.md).`);
+			return;
+		}
+		const updated = removeSection(initial, sessionId);
+		writeAtomic(projectRoot, updated, sessionId);
+		console.info(`Agent ${sessionId} done.`);
+	});
 }
 
 function formatTable(entries: AgentSection[]): string {
@@ -189,45 +198,49 @@ function formatTable(entries: AgentSection[]): string {
 }
 
 export function agentList(projectRoot: string): void {
-	const initial = readCurrent(projectRoot);
-	const ttl = getStaleTtlMinutes(projectRoot);
-	const { fresh } = listSections(initial, ttl);
-	// Self-heartbeat — refresh the caller's own section's lastUpdated by re-upserting it.
-	// Preserves the heartbeat semantics from the parent plan: asking who's around implicitly
-	// says "I am still here." Silent if the caller has no section yet.
-	try {
-		const sessionId = getSessionId();
-		const callerSection = fresh.find((s) => s.sessionId === sessionId);
-		if (callerSection) {
-			const touched = upsertSection(initial, {
-				...callerSection,
-				lastUpdated: new Date().toISOString(),
-			});
-			writeAtomic(projectRoot, touched, sessionId);
+	withLock(currentMdLockPath(projectRoot), () => {
+		const initial = readCurrent(projectRoot);
+		const ttl = getStaleTtlMinutes(projectRoot);
+		const { fresh } = listSections(initial, ttl);
+		// Self-heartbeat — refresh the caller's own section's lastUpdated by re-upserting it.
+		// Preserves the heartbeat semantics from the parent plan: asking who's around implicitly
+		// says "I am still here." Silent if the caller has no section yet.
+		try {
+			const sessionId = getSessionId();
+			const callerSection = fresh.find((s) => s.sessionId === sessionId);
+			if (callerSection) {
+				const touched = upsertSection(initial, {
+					...callerSection,
+					lastUpdated: new Date().toISOString(),
+				});
+				writeAtomic(projectRoot, touched, sessionId);
+			}
+		} catch {
+			// Sanitizer rejection or other failure — skip heartbeat silently. List output below is unaffected.
 		}
-	} catch {
-		// Sanitizer rejection or other failure — skip heartbeat silently. List output below is unaffected.
-	}
-	console.info(formatTable(fresh));
+		console.info(formatTable(fresh));
+	});
 }
 
 export function agentPrune(projectRoot: string): void {
-	const initial = readCurrent(projectRoot);
-	const ttl = getStaleTtlMinutes(projectRoot);
-	const { stale } = listSections(initial, ttl);
-	if (stale.length === 0) {
-		console.info("No stale sections to prune.");
-		return;
-	}
-	const updated = pruneStaleSections(initial, ttl);
-	// Use a stable identifier for the tmp filename — the prune call isn't tied to one session.
-	const sessionId = (() => {
-		try {
-			return getSessionId();
-		} catch {
-			return `prune-${Date.now()}`;
+	withLock(currentMdLockPath(projectRoot), () => {
+		const initial = readCurrent(projectRoot);
+		const ttl = getStaleTtlMinutes(projectRoot);
+		const { stale } = listSections(initial, ttl);
+		if (stale.length === 0) {
+			console.info("No stale sections to prune.");
+			return;
 		}
-	})();
-	writeAtomic(projectRoot, updated, sessionId);
-	console.info(`Pruned ${stale.length} stale section(s).`);
+		const updated = pruneStaleSections(initial, ttl);
+		// Use a stable identifier for the tmp filename — the prune call isn't tied to one session.
+		const sessionId = (() => {
+			try {
+				return getSessionId();
+			} catch {
+				return `prune-${Date.now()}`;
+			}
+		})();
+		writeAtomic(projectRoot, updated, sessionId);
+		console.info(`Pruned ${stale.length} stale section(s).`);
+	});
 }

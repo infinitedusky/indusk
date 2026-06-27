@@ -4,6 +4,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { AgentSection } from "../lib/agents/current-md.js";
 import { upsertSection } from "../lib/agents/current-md.js";
+import { withLock } from "../lib/agents/lock.js";
 
 /**
  * Register the multi-agent presence MCP tools.
@@ -64,20 +65,24 @@ export function registerAgentTools(server: McpServer, projectRoot: string): void
 		},
 		async ({ sessionId, task, sections }) => {
 			const path = join(projectRoot, ".indusk/current.md");
-			const initial = existsSync(path) ? readFileSync(path, "utf-8") : "";
-			const agentSection: AgentSection = {
-				sessionId,
-				sessionShort: sessionId.slice(0, 8),
-				task,
-				lastUpdated: new Date().toISOString(),
-				inFlight: sections.in_flight,
-				openQuestions: sections.open_questions,
-				cursor: sections.cursor,
-			};
-			const updated = upsertSection(initial, agentSection);
-			const tmpPath = `${path}.tmp.${sessionId}`;
-			writeFileSync(tmpPath, updated);
-			renameSync(tmpPath, path);
+			const lockPath = `${path}.lock`;
+			let agentSection!: AgentSection;
+			withLock(lockPath, () => {
+				const initial = existsSync(path) ? readFileSync(path, "utf-8") : "";
+				agentSection = {
+					sessionId,
+					sessionShort: sessionId.slice(0, 8),
+					task,
+					lastUpdated: new Date().toISOString(),
+					inFlight: sections.in_flight,
+					openQuestions: sections.open_questions,
+					cursor: sections.cursor,
+				};
+				const updated = upsertSection(initial, agentSection);
+				const tmpPath = `${path}.tmp.${sessionId}`;
+				writeFileSync(tmpPath, updated);
+				renameSync(tmpPath, path);
+			});
 			return {
 				content: [
 					{
