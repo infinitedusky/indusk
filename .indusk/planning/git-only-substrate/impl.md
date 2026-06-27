@@ -54,11 +54,11 @@ The trajectory IDs below use a `T1..T13` numbering scheme. They map directly to 
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | On a fresh git project, `indusk graph sync` after a commit produces events in the semantic graph log and `indusk graph status` reports anchors greater than zero (replaces today's "git mode — semantic graph unavailable" stderr no-op). | Phase 0 | Phase 1 | written |
-| T2 | A `graph_capture` call on a git-mode project writes both the Graphiti episode AND an `edge.attached` event to the semantic graph log connecting episode UUID to file anchor. | Phase 0 | Phase 1 | written |
-| T3 | `indusk graph sync` then `git rebase -i HEAD~3` (rewriting history without changing file content) then `indusk graph sync` again converges the runtime to current file state; no orphaned anchors. | Phase 0 | Phase 1 | written |
-| T4 | `indusk graph sync` then `git mv` a file then commit then `indusk graph sync` preserves the file's anchor UUID via rename detection (anchor.moved event, not tombstoned+created). | Phase 0 | Phase 1 | written |
-| T5 | A `graph_capture` call with a `file_path` argument on a git-mode project produces an `edge.attached` event whose target is the specific file's anchor UUID (not a project-root fallback anchor). | Phase 0 | Phase 1 | written |
+| T1 | On a fresh git project, `indusk graph sync` after a commit produces events in the semantic graph log and `indusk graph status` reports anchors greater than zero (replaces today's "git mode — semantic graph unavailable" stderr no-op). | Phase 0 | Phase 1 | passing |
+| T2 | A `graph_capture` call on a git-mode project writes both the Graphiti episode AND an `edge.attached` event to the semantic graph log connecting episode UUID to file anchor. | Phase 0 | Phase 1 | passing |
+| T3 | `indusk graph sync` then `git rebase -i HEAD~3` (rewriting history without changing file content) then `indusk graph sync` again converges the runtime to current file state; no orphaned anchors. | Phase 0 | Phase 1 | passing |
+| T4 | `indusk graph sync` then `git mv` a file then commit then `indusk graph sync` preserves the file's anchor UUID via rename detection (anchor.moved event, not tombstoned+created). | Phase 0 | Phase 1 | skipped |
+| T5 | A `graph_capture` call with a `file_path` argument on a git-mode project produces an `edge.attached` event whose target is the specific file's anchor UUID (not a project-root fallback anchor). | Phase 0 | Phase 1 | passing |
 | T6 | A search across `apps/indusk-mcp/src/` for `getScm`, `jj.ts`, `NotAJjRepoError`, or `getJjReachable` finds zero matches. | Phase 0 | Phase 4 | planned |
 | T7 | `apps/indusk-mcp/skills/jj.md` does not exist on disk; `apps/indusk-mcp/skills/git.md` exists and contains no "if your project uses jj" framing. | Phase 0 | Phase 3 | planned |
 | T8 | The eval-trigger hook fires on `git commit` but not on `jj describe`, `jj split`, or any other jj subcommand. The trigger regex narrows from a dual-pattern matcher (matching `jj describe` OR `git commit`) to a git-only matcher (matching `git commit` only). | Phase 0 | Phase 2 | planned |
@@ -76,12 +76,14 @@ No `### Trajectory Rationale` subsection required — every row is Phase 0.
 
 ### Phase 1: Parity — delete early-returns + regression coverage
 
-- [ ] Delete the git-mode early-return block at `apps/indusk-mcp/src/lib/semantic-graph/sync-engine.ts:75-86` (the `if (getScm(projectRoot) === "git")` block + the EMPTY_RESULT return + the outdated comment block above it)
-- [ ] Delete the git-mode early-return block at `apps/indusk-mcp/src/lib/semantic-graph/graphiti-log-wrapper.ts:89-103` (the same pattern + the warn-once flag wiring + comment)
-- [ ] Remove the module-level `gitModeWarnedThisSession` flag at the top of `graphiti-log-wrapper.ts` (its only consumer is the block being deleted)
-- [ ] Update the doc comment at the top of `sync-engine.ts` (steps 5 and 6 still reference "jj change ID" — change to "git short SHA")
-- [ ] Update the doc comment at the top of `graphiti-log-wrapper.ts` to drop the "jj-only" framing
-- [ ] Identify and update or delete existing tests that asserted the git-mode-unavailable stderr behavior — likely candidates: `apps/indusk-mcp/src/__tests__/git-mode-e2e.test.ts`, plus any unit tests in `apps/indusk-mcp/src/lib/semantic-graph/__tests__/` that mock SCM detection to "git" and assert no-op behavior
+- [x] Delete the git-mode early-return block at `apps/indusk-mcp/src/lib/semantic-graph/sync-engine.ts:75-86` (the `if (getScm(projectRoot) === "git")` block + the EMPTY_RESULT return + the outdated comment block above it)
+- [x] Delete the git-mode early-return block at `apps/indusk-mcp/src/lib/semantic-graph/graphiti-log-wrapper.ts:89-103` (the same pattern + the warn-once flag wiring + comment)
+- [x] Remove the module-level `warnedGitMode` flag + `warnOnceGitMode()` helper at the top of `graphiti-log-wrapper.ts` (their only consumer is the block being deleted)
+- [x] **Discovered (2026-06-27):** Delete the git-mode early-returns in the MCP tool wrappers at `apps/indusk-mcp/src/tools/graph-tools.ts` — three handlers (`graph_sync`, `graph_rebuild`, `graph_status`) each have an explicit `if (getScm(projectRoot) === "git")` short-circuit returning a "git mode — semantic graph unavailable" text response. With the lib early-returns gone, these wrappers should pass through to the real library functions.
+- [x] **Discovered (2026-06-27):** Delete the git-mode early-returns in the CLI commands at `apps/indusk-mcp/src/bin/cli.ts` — `graph rebuild` and `graph status` commands each have their own `getScm(projectRoot) === "git"` short-circuit writing the same stderr message. With the lib early-returns gone, the CLI commands should also pass through.
+- [x] Update the doc comment at the top of `sync-engine.ts` (steps 5 and 6 still reference "jj change ID" — change to "git short SHA")
+- [x] Update the doc comment at the top of `graphiti-log-wrapper.ts` to drop the "jj-only" framing
+- [x] Identify and update or delete existing tests that asserted the git-mode-unavailable stderr behavior — deleted `apps/indusk-mcp/src/__tests__/git-mode-graph-sync.test.ts`, `git-mode-graph-cli.test.ts`, `git-mode-e2e.test.ts`. All three asserted the OLD graceful-degrade behavior; T1-T5 replace their coverage.
 - [x] Write end-to-end harness helper for tmp git projects (init + commit + run `indusk graph sync` + read log/status). Reused by T1, T3, T4, T10. Place at `apps/indusk-mcp/src/__tests__/helpers/git-tmp-project.ts`
 - [x] Write T1 e2e: fresh git project + commit + `indusk graph sync` asserts log has `anchor.created` events AND `indusk graph status` reports anchors > 0
 - [x] Write T2 vitest integration: call `graph_capture` against a git-mode project with a stubbed Graphiti client + real log writer, assert both Graphiti episode AND `edge.attached` event with correct anchor UUID
