@@ -36,8 +36,16 @@
 			"production": "prd"
 		},
 		"apps": [
-			{ "dir": "docs" },
-			{ "dir": "indusk-admin", "config": "admin" }
+			{
+				"dir": "docs"
+			},
+			{
+				"dir": "indusk-admin",
+				"config": "admin"
+			}
 		]
+	},
+	"agents": {
+		"stale_ttl_minutes": 60
 	}
 }

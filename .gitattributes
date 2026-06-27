@@ -1,0 +1,2 @@
+# InDusk: combine per-agent section additions on merge
+.indusk/current.md merge=union

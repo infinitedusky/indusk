@@ -30,66 +30,113 @@ Env vars live in Doppler, organized as a project with branched configs:
   └─ <project>/prd            ← production + secrets
 ```
 
-Naming convention: `<prefix>_<app>` where prefix is `loc` (local), `stg`
-(staging), `prd` (production). Per-app leaves inherit from the env parent, which
-inherits from `base`.
+Naming: per-target leaves are `<prefix>_<target>`. The prefix is **whatever you
+name your env roots** (e.g. `local`/`prd`, or `loc`/`stg`/`prd`) — you map the
+profile arg to the prefix via `doppler.profiles` in `.indusk/config.json`. Leaves
+inherit from the env root, which inherits from `base`.
 
 ### env-pull materializes `.env` files
 
-`pnpm env:pull <profile>` walks `apps/*/`, calls
-`doppler secrets download --project <p> --config <prefix>_<app> --format env`
-for each app, and writes `apps/<app>/.env.<profile>` — gitignored. CI runs the
-same step before `docker compose up`.
+`indusk doppler env-pull <profile>` reads the project's `.indusk/config.json`
+`doppler` section and, for each target, downloads its Doppler config and writes
+`<path>/.env.<profile>` — gitignored. CI runs the same step before `docker compose up`.
+
+```jsonc
+"doppler": {
+  "project": "indusk",                                     // Doppler project
+  "profiles": { "local": "local", "production": "prd" },   // profile → config-root prefix
+  "apps": [
+    { "dir": "docs" },                          // → apps/docs/.env.<profile>  (config local_docs)
+    { "dir": "admin", "config": "admin" },      // folder name ≠ Doppler leaf
+    { "path": "packages/db", "config": "db" },  // ANY path, not just apps/ → packages/db/.env.<profile>
+    { "path": ".", "config": "root" }           // repo-root .env
+  ]
+}
+```
+
+- **`dir`** = `apps/<dir>` shorthand. **`path`** = any dir relative to the project
+  root (`.`, `packages/*`, `services/*`). Output is `<path>/.env.<profile>`.
+- **`config`** = the Doppler leaf suffix (downloads `<prefix>_<config>`); defaults
+  to the dir/basename.
+- **`profiles`** maps the profile arg to the Doppler config-root (`local`→`local`).
+
+With no `doppler` section, env-pull falls back to globbing `apps/*` with the default
+prefixes (`local`→`loc`, `staging`→`stg`, `production`→`prd`).
 
 Test profile is the exception: `.env.test` files are committed to git with safe,
 non-secret defaults so tests run without a Doppler token.
 
-## Auth — one token at the InDusk level
+## Auth — login (devs) or token (CI), optional locally
 
-Auth is a Doppler **service token** stored once in a gitignored file:
+env-pull resolves auth in this order:
 
-```
-.indusk/extensions/doppler/.env      ← gitignored; DOPPLER_TOKEN + DOPPLER_PROJECT
-.indusk/extensions/doppler/.env.example  ← committed template
-```
+1. **`DOPPLER_TOKEN` env var** — CI / deployment (set from a GitHub secret).
+2. **`.indusk/extensions/doppler/.env`** — an optional service token file (gitignored).
+3. **The logged-in Doppler CLI session** — `doppler login`.
 
-`.indusk/` lives at the workbench root, so this **one token is shared by the
-trunk and every worktree**. No `doppler login` OAuth, no per-worktree auth.
-
-Setup (once per machine/workbench):
+A dev who ran `doppler login` needs **no token file at all** — that's the
+recommended path. The token exists for CI and headless boxes. `.indusk/` is at the
+workbench root, so whichever you use is shared by the trunk and every worktree.
 
 ```sh
-cp .indusk/extensions/doppler/.env.example .indusk/extensions/doppler/.env
-# edit .env: paste a Doppler service token + the project name
+doppler login                              # dev — recommended, no token file
+# CI: set DOPPLER_TOKEN from a secret (no login)
+# optional headless token file:
+cp .indusk/extensions/doppler/.env.example .indusk/extensions/doppler/.env   # paste DOPPLER_TOKEN
 ```
 
-A new/3rd-party dev requests a token, drops it in that file once — done.
+The Doppler **project** lives in `.indusk/config.json` (`doppler.project`), not in
+the `.env` — the `.env` is only ever the secret.
+
+## Doppler is the source of truth (one-way)
+
+env-pull only **pulls** — Doppler → local `.env` files. It never pushes back:
+
+- **Manage env in Doppler** — the UI, or `doppler secrets set KEY=val --config <leaf>` —
+  then `env-pull`.
+- The local `.env.*` files are **disposable, gitignored projections**. Editing one by
+  hand is ephemeral; the next pull overwrites it. Never manage env via `.env.local`.
+- One-time migration seed: `doppler secrets upload <file> --config <leaf>` (manual,
+  deliberate). After that it's pull-only.
 
 ## Worktrees auto-provision (the load-bearing behavior)
 
 When the doppler extension is enabled, **`indusk worktree create <slug>` pulls
 env automatically** as part of provisioning — the developer runs nothing. A
-freshly created worktree is build-ready: its apps already have populated `.env`
-files, pulled from Doppler using the workbench-level token.
+freshly created worktree is build-ready: its targets already have populated `.env`
+files, pulled from Doppler using the workbench-level auth (login or token). Then the
+worktree config's `post_create[]` commands run (install/build) — so the worktree is
+not just env-ready but **runnable** in one shot.
 
-This is the whole point: worktrees "just work" with zero per-worktree env steps.
+This is the whole point: worktrees "just work" with zero per-worktree steps.
+
+## Docker across worktrees
+
+`docker-compose.yml` lives in the repo (committed), with a pinned project `name:`.
+There's one Docker daemon + one pinned-name stack, so **`docker compose up` from any
+worktree (or the trunk) addresses the same stack** — it builds *that* worktree's code
+with *that* worktree's pulled `.env`. Tradeoff: **one stack per repo at a time** (two
+worktrees can't both `up` — same name + ports collide). env is per-worktree; docker is
+shared. (Inherited from the worktree extension's `compose_project_name` model.)
 
 ## Commands
 
 | Command | What |
 |---------|------|
-| `pnpm env:pull local` | write `apps/*/.env.local` from Doppler `loc_*` configs |
-| `pnpm env:pull staging` | write `apps/*/.env.staging` from `stg_*` |
-| `pnpm env:pull production` | write `apps/*/.env.production` from `prd_*` |
-| `indusk worktree create <slug>` | create a worktree with env auto-provisioned |
+| `indusk doppler env-pull local` | write each target's `.env.local` (targets from `.indusk/config.json` `doppler.apps`) |
+| `indusk doppler env-pull production` | same for `.env.production` |
+| `indusk worktree create <slug>` | create a worktree with env auto-provisioned + `post_create` run |
+| `doppler login` | authenticate the CLI once (no token file needed after) |
 
 ## Health
 
 - `doppler-cli-installed` — the `doppler` binary is on PATH (`brew install dopplerhq/cli/doppler`).
-- `doppler-token-present` — `.indusk/extensions/doppler/.env` exists and has a `DOPPLER_TOKEN`.
+- `doppler-token-present` — checks for a token file. **With `doppler login` you don't
+  need one**, so this check can fail while env-pull still works via your CLI session.
 
-If a worktree comes up without env, check both: the binary must be installed and
-the token file must be present at the InDusk level.
+If a worktree comes up without env: confirm the CLI is installed and you're either
+logged in (`doppler login`) or have a token (file / `DOPPLER_TOKEN`), and that
+`.indusk/config.json` has a `doppler.project` plus the target in `doppler.apps`.
 
 ## Migrating off composable.env
 
