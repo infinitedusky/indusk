@@ -30,12 +30,12 @@ export function registerAgentTools(server: McpServer, projectRoot: string): void
 		"update_current_section",
 		{
 			description:
-				"Promote the current session's operational state (in-flight work, open questions, cursor position) to `.indusk/current.md`. Finds the agent's own section by session ID and overwrites it in place; appends a new section if no match exists. Other agents' sections are byte-untouched. This is the explicit write surface for the section-shape multi-agent coordination — call it at `/handoff` or any moment when something solidifies that the next session will want.",
+				"Promote the current session's operational state (in-flight work, open questions, cursor position) to `.indusk/current.md`. Finds the agent's own section by session ID and overwrites it in place; appends a new section if no match exists. Other agents' sections are byte-untouched. This is the explicit write surface for the section-shape multi-agent coordination — call it at `/handoff` or any moment when something solidifies that the next session will want.\n\nRejections (returned as TypeError before any write):\n- `sessionId` containing `..`, `/`, `\\`, leading `.`, empty/whitespace, > 128 chars, OR any control character (newline, carriage return, tab, code point < 0x20).\n- Any of the three section bodies containing a line that matches `^---\\s*$`, `^##\\s+Session\\s+`, `^\\*\\*Session ID\\*\\*:`, or `^\\*\\*Last updated\\*\\*:`. These are the parser's structural markers; allowing them in body content lets a body inject a fake session. If you need to reference one of these patterns in prose, indent it or wrap in backticks so it's not at start-of-line.",
 			inputSchema: {
 				sessionId: z
 					.string()
 					.describe(
-						"The current session's stable ID — typically $CLAUDE_CODE_SESSION_ID (UUID v4) or `pid-<N>` fallback.",
+						"The current session's stable ID — typically $CLAUDE_CODE_SESSION_ID (UUID v4) or `pid-<N>` fallback. Rejected if it contains path-traversal characters (.., /, \\), leading '.', or any control character (newline, tab, etc.).",
 					),
 				task: z
 					.string()
@@ -47,17 +47,17 @@ export function registerAgentTools(server: McpServer, projectRoot: string): void
 						in_flight: z
 							.string()
 							.describe(
-								"Markdown body for the `### In Flight` subsection. What's actively being worked on. Empty string is fine.",
+								"Markdown body for the `### In Flight` subsection. What's actively being worked on. Empty string is fine. **Rejected** if any line matches `^---\\s*$`, `^##\\s+Session\\s+`, `^\\*\\*Session ID\\*\\*:`, or `^\\*\\*Last updated\\*\\*:` — wrap such references in backticks or indent them.",
 							),
 						open_questions: z
 							.string()
 							.describe(
-								"Markdown body for the `### Open Questions` subsection. Hypotheses to confirm, design decisions mid-conversation. Empty string is fine.",
+								"Markdown body for the `### Open Questions` subsection. Hypotheses to confirm, design decisions mid-conversation. Empty string is fine. Same rejection rules as `in_flight`.",
 							),
 						cursor: z
 							.string()
 							.describe(
-								"Markdown body for the `### Cursor` subsection. Where you stopped — file paths, line numbers, next concrete step. Empty string is fine.",
+								"Markdown body for the `### Cursor` subsection. Where you stopped — file paths, line numbers, next concrete step. Empty string is fine. Same rejection rules as `in_flight`.",
 							),
 					})
 					.describe("The three section bodies that make up the agent's operational state."),

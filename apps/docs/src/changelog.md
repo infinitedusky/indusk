@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.30.1] — 2026-06-27
+
+### Added
+- **Body-content rules surfaced in handoff skill + MCP tool description (1.30.1)** — the body sanitization rules from 1.30.0 Phase 6 falsification (rejecting `^---\s*$`, `^##\s+Session\s+`, `^\*\*Session ID\*\*:`, `^\*\*Last updated\*\*:` at start of line + control characters in `sessionId`) were enforced at the lib boundary but not surfaced to agents. The handoff skill now carries a "Body-content rules" subsection listing the four forbidden patterns + the workaround (backtick or indent), and the `mcp__indusk__update_current_section` tool's Zod schema descriptions now spell the rejections out per-field. Agents in downstream projects (numero, concierge, etc.) no longer hit silent `TypeError` rejections with no warning. Closes the gap surfaced during the section-shape retrospective audit — skills auto-sync to consumers via `globSync("*.md")` in `update.ts`; the MCP tool description rides along with the tool registration.
+
 ## [1.30.0] — 2026-06-27
 
 ### Added

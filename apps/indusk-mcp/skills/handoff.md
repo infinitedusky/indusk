@@ -27,6 +27,15 @@ mcp__indusk__update_current_section({
 
 The tool reads `.indusk/current.md`, finds the section matching your session ID, overwrites the three subsection bodies, refreshes the `Last updated` timestamp, and atomically writes back. If no section exists for your session yet, the tool appends a new one. Either way, every other agent's section is byte-untouched.
 
+**Body-content rules** — the tool rejects any of the three section bodies (`in_flight`, `open_questions`, `cursor`) containing a line that matches one of these four anchored patterns:
+
+- `^---\s*$` — a horizontal rule on its own line (would split the section in the parser)
+- `^##\s+Session\s+` — a heading starting with `## Session` (would inject a fake session)
+- `^\*\*Session ID\*\*:` — the full-UUID marker line
+- `^\*\*Last updated\*\*:` — the staleness-timestamp marker
+
+These are the four line patterns the parser uses to recognize sessions. If you need to describe another session's work in your body — e.g., "blocked on what `## Session 2c87` is doing" — wrap the marker in backticks (`` `## Session ...` ``) or indent it, so it's no longer at the start of the line. Newlines and other control characters in the `sessionId` field are also rejected. Rejections come back as `TypeError`; the tool exits with non-zero before any write.
+
 If you have nothing worth promoting (the session shipped a feature and closed a plan, leaving no in-flight state), you can skip this step. The tool is for moments that *should* survive — don't paste boilerplate just because the ritual asks.
 
 ### 2. Commit the change
