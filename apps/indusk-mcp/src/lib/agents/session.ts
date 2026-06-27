@@ -64,6 +64,19 @@ export function sanitizeSessionId(raw: string): string {
 			"Invalid session id: path-traversal characters ('..', '/', '\\\\') are not allowed",
 		);
 	}
+	// T17 (handoff-multi-agent-section-shape Phase 6 falsification fix): reject
+	// control characters. A session ID containing `\n` corrupts the `## Session
+	// <short> — <task>` heading line on serialize, then fails the section regex
+	// on read and silently drops the section. Reject anything with code point
+	// below 0x20 (covers \n, \r, \t, null, bell, etc.).
+	for (let i = 0; i < trimmed.length; i++) {
+		const cp = trimmed.charCodeAt(i);
+		if (cp < 0x20) {
+			throw new TypeError(
+				`Invalid session id: control character at position ${i} (code point 0x${cp.toString(16).padStart(2, "0")}) is not allowed`,
+			);
+		}
+	}
 	return trimmed;
 }
 
