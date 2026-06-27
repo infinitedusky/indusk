@@ -112,4 +112,34 @@ describe("sanitizeSessionId — handoff-multi-agent T12 (falsification)", () => 
 		const justRight = "a".repeat(128);
 		expect(sanitizeSessionId(justRight)).toBe(justRight);
 	});
+
+	// T17 — handoff-multi-agent-section-shape falsification: control characters
+	// in session IDs corrupt the section heading line on serialize. The sanitizer
+	// must reject newline, carriage return, tab, and any other character with
+	// code point < 0x20 before it reaches a write.
+	it("T17: rejects session IDs containing newline (\\n)", () => {
+		expect(() => sanitizeSessionId("valid\nevil")).toThrow(/control character|invalid/i);
+	});
+
+	it("T17: rejects session IDs containing carriage return (\\r)", () => {
+		expect(() => sanitizeSessionId("valid\revil")).toThrow(/control character|invalid/i);
+	});
+
+	it("T17: rejects session IDs containing tab (\\t)", () => {
+		expect(() => sanitizeSessionId("valid\tevil")).toThrow(/control character|invalid/i);
+	});
+
+	it("T17: rejects session IDs containing any control character (code point < 0x20)", () => {
+		// Sample of code points: 0x00 (null), 0x07 (bell), 0x0b (vertical tab), 0x1f (unit separator)
+		for (const cp of [0x00, 0x07, 0x0b, 0x1f]) {
+			const id = `valid${String.fromCharCode(cp)}evil`;
+			expect(() => sanitizeSessionId(id)).toThrow(/control character|invalid/i);
+		}
+	});
+
+	it("T17: accepts characters at the boundary (code point 0x20, space) — already covered by trim", () => {
+		// 0x20 is space; sanitizer trims surrounding whitespace, so this becomes "valid evil".
+		// We're just confirming the boundary: 0x20 isn't rejected as control char.
+		expect(sanitizeSessionId("validXevil".replace("X", " "))).toBe("valid evil");
+	});
 });

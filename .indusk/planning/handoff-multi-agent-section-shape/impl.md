@@ -60,10 +60,10 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 | T11 | Running `/catchup` does not modify any file (other than the agent's own section if it explicitly calls the MCP tool — catchup itself is read-only). | Phase 0 | Phase 3 | passing |
 | T12 | A session ID containing path-traversal characters cannot cause section writes or removals to escape `.indusk/current.md`. | Phase 0 | Phase 2 | passing |
 | T13 | A teammate cloning the project sees no leftover session sections from the original developer's machine. | Phase 0 | Phase 4 | passing |
-| T14 | A section body (in_flight / open_questions / cursor) containing `---\n## Session <fake-id> — <fake-task>` does not cause a fake session to appear in `agent list` output or in any other consumer's parse of `current.md`. | Phase 0 | Phase 6 | planned |
-| T15 | Two concurrent CLI processes calling `agent register` with different session IDs against the same `current.md` always result in both sections being present after both processes exit (no read-modify-write data loss). | Phase 0 | Phase 6 | planned |
-| T16 | `/catchup` does not surface stale per-agent sections (sections whose `Last updated` is older than `agents.stale_ttl_minutes`) as if they were active working agents. | Phase 0 | Phase 6 | planned |
-| T17 | A `CLAUDE_CODE_SESSION_ID` value containing a newline or other control character is rejected by `sanitizeSessionId` rather than silently corrupting `current.md` on serialize. | Phase 0 | Phase 6 | planned |
+| T14 | A section body (in_flight / open_questions / cursor) containing `---\n## Session <fake-id> — <fake-task>` does not cause a fake session to appear in `agent list` output or in any other consumer's parse of `current.md`. | Phase 0 | Phase 6 | written |
+| T15 | Two concurrent CLI processes calling `agent register` with different session IDs against the same `current.md` always result in both sections being present after both processes exit (no read-modify-write data loss). | Phase 0 | Phase 6 | written |
+| T16 | `/catchup` does not surface stale per-agent sections (sections whose `Last updated` is older than `agents.stale_ttl_minutes`) as if they were active working agents. | Phase 0 | Phase 6 | written |
+| T17 | A `CLAUDE_CODE_SESSION_ID` value containing a newline or other control character is rejected by `sanitizeSessionId` rather than silently corrupting `current.md` on serialize. | Phase 0 | Phase 6 | written |
 
 ### Deferred Verification
 

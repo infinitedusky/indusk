@@ -106,4 +106,27 @@ describe("multi-agent skills — section-shape trajectory", () => {
 		expect(content).toMatch(/Open Questions/);
 		expect(content).toMatch(/Cursor/);
 	});
+
+	// T16 — handoff-multi-agent-section-shape falsification: catchup reads
+	// current.md directly and surfaces per-agent sections without checking
+	// `Last updated` against `agents.stale_ttl_minutes`. A stale section from
+	// an agent that ran handoff but skipped `done` looks active in catchup
+	// output forever. Only `indusk agent list` filters by TTL.
+	//
+	// Fix: catchup Step 3 instructs the agent to filter sections by
+	// `Last updated` against the configured TTL before surfacing them.
+	it("T16: catchup skill instructs filtering per-agent sections by Last updated against stale_ttl_minutes", () => {
+		const content = readFileSync(CATCHUP_SKILL, "utf-8");
+
+		// Skill body must explicitly tell the agent to check freshness when
+		// surfacing per-agent sections.
+		expect(content.toLowerCase()).toMatch(/last updated/);
+		expect(content.toLowerCase()).toMatch(/stale_ttl_minutes|stale ttl|stale.*minutes/);
+
+		// And the freshness check has to be in the "Read Operational State" step
+		// (Step 3 in the current skill) — not buried somewhere else.
+		// We check that the skill's prose mentions filtering / freshness in the
+		// context of per-agent sections.
+		expect(content.toLowerCase()).toMatch(/filter.*stale|stale.*filter|only.*fresh|exclude.*stale/);
+	});
 });
