@@ -19,40 +19,13 @@ describe("buildEvaluatorPrompt", () => {
 		}
 	});
 
-	it("tells the evaluator to read the diff via jj command (default jj mode)", () => {
+	it("tells the evaluator to read the diff via git show (git-only as of 1.31.0)", () => {
 		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc123",
 			transcriptPath: "/tmp/t.jsonl",
 			mode: "eval",
 			projectGroup: "test",
-		});
-
-		expect(prompt).toContain("jj diff -r abc123");
-	});
-
-	it("T7: tells the evaluator to read the diff via jj command when scm: 'jj'", () => {
-		const prompt = buildEvaluatorPrompt({
-			rubric: V1_RUBRIC,
-			changeId: "abc123",
-			transcriptPath: "/tmp/t.jsonl",
-			mode: "eval",
-			projectGroup: "test",
-			scm: "jj",
-		});
-
-		expect(prompt).toContain("jj diff -r abc123");
-		expect(prompt).not.toContain("git show abc123");
-	});
-
-	it("T7: tells the evaluator to read the diff via git command when scm: 'git'", () => {
-		const prompt = buildEvaluatorPrompt({
-			rubric: V1_RUBRIC,
-			changeId: "abc123",
-			transcriptPath: "/tmp/t.jsonl",
-			mode: "eval",
-			projectGroup: "test",
-			scm: "git",
 		});
 
 		expect(prompt).toContain("git show abc123");

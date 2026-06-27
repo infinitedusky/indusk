@@ -60,11 +60,11 @@ The trajectory IDs below use a `T1..T13` numbering scheme. They map directly to 
 | T4 | `indusk graph sync` then `git mv` a file then commit then `indusk graph sync` preserves the file's anchor UUID via rename detection (anchor.moved event, not tombstoned+created). | Phase 0 | Phase 1 | skipped |
 | T5 | A `graph_capture` call with a `file_path` argument on a git-mode project produces an `edge.attached` event whose target is the specific file's anchor UUID (not a project-root fallback anchor). | Phase 0 | Phase 1 | passing |
 | T6 | A search across `apps/indusk-mcp/src/` for `getScm`, `jj.ts`, `NotAJjRepoError`, or `getJjReachable` finds zero matches. | Phase 0 | Phase 4 | planned |
-| T7 | `apps/indusk-mcp/skills/jj.md` does not exist on disk; `apps/indusk-mcp/skills/git.md` exists and contains no "if your project uses jj" framing. | Phase 0 | Phase 3 | planned |
+| T7 | `apps/indusk-mcp/skills/jj.md` does not exist on disk; `apps/indusk-mcp/skills/git.md` exists and contains no "if your project uses jj" framing. | Phase 0 | Phase 3 | passing |
 | T8 | The eval-trigger hook fires on `git commit` but not on `jj describe`, `jj split`, or any other jj subcommand. The trigger regex narrows from a dual-pattern matcher (matching `jj describe` OR `git commit`) to a git-only matcher (matching `git commit` only). | Phase 0 | Phase 2 | passing |
 | T9 | The eval agent's prompt's diff-fetch instruction says `git show ${id}` regardless of project; never `jj diff -r ${id}`. | Phase 0 | Phase 2 | passing |
 | T10 | Running `indusk update` on a project whose `.indusk/config.json` has `scm: "jj"` emits exactly one stderr nudge ("scm field no longer used; safe to remove from .indusk/config.json") and leaves the config file's contents byte-unchanged. | Phase 0 | Phase 5 | planned |
-| T11 | `apps/indusk-mcp/skills/{work,highlight,eval-review}.md` contain no SCM-conditional "if jj... else git..." prose — every commit-cadence and diff-fetch reference is single-form. | Phase 0 | Phase 3 | planned |
+| T11 | `apps/indusk-mcp/skills/{work,highlight,eval-review}.md` contain no SCM-conditional "if jj... else git..." prose — every commit-cadence and diff-fetch reference is single-form. | Phase 0 | Phase 3 | passing |
 | T12 | `apps/docs/src/guide/scm.md` opens as a git workflow guide (no "choose your SCM" framing); `apps/docs/src/decisions/git-or-jj-substrate.md` carries a supersession banner at the top pointing to this plan's ADR. | Phase 0 | Phase 5 | planned |
 | T13 | `pnpm test` from the repo root passes after all changes land. Every existing test that previously asserted dual-SCM behavior either updates to assert git-only behavior or is deleted with rationale. | Phase 0 | Phase 4 | planned |
 
