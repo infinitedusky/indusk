@@ -130,6 +130,16 @@ A section with `Last updated` older than `stale_ttl_minutes` is filtered from `i
 
 `indusk agent register` writes to `<inDuskRoot>/.indusk/current.md`, where `inDuskRoot` is the nearest ancestor directory containing `.indusk/config.json`. In single-repo projects that's the project root. In workbench-shaped projects (worktree extension enabled), that's the workbench root — the same `current.md` is naturally shared across every worktree, which is what makes the bulletin visible across concurrent agents on different branches.
 
+## Concurrency in workbench mode
+
+Two different concurrency primitives are at play depending on the project shape:
+
+- **Single-repo projects**: `.indusk/current.md` is tracked in the project's git repo. Two agents on different branches both updating their own sections produce no merge conflict because git's `merge=union` driver (set in `.gitattributes` by `indusk init`) combines line additions from both sides. Different-section edits are auto-resolved by git; same-section conflicts are surfaced as normal merge conflicts for the user to resolve.
+
+- **Workbench-shaped projects**: `.indusk/current.md` lives at the workbench root, which is NOT a git repo (the wrapped repo and its worktrees are the git repos; the workbench root is just an organizational dir). **`merge=union` is unwired here** — there's no git layer between two concurrent CLI processes on the workbench, just the filesystem. The load-bearing concurrency primitive becomes the file lock that the agent CLI and the MCP tool hold around every read-modify-write: `<projectRoot>/.indusk/current.md.lock` opened with `O_EXCL`, 5s acquisition timeout, 30s stale-lock TTL.
+
+Practical implication: don't assume git's merge resolution is doing the work in workbench mode. The lock is what prevents two `indusk agent register` calls from losing one section. If you build a third surface that mutates `current.md` directly (bypassing the CLI / MCP tool), you must hold the lock yourself — `apps/indusk-mcp/src/lib/agents/lock.ts` exports `withLock(lockPath, fn)` for that.
+
 ## What's out of scope (v1)
 
 - **Cross-machine coordination.** If you have Claude Code on a laptop and a desktop both working on the same project, `current.md` syncs via the normal git push/pull cadence, but presence bulletins are local-only.

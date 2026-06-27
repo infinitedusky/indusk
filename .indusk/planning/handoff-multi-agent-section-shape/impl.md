@@ -1,7 +1,7 @@
 ---
 title: "handoff-multi-agent section shape — Impl"
 date: 2026-06-26
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -60,10 +60,10 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 | T11 | Running `/catchup` does not modify any file (other than the agent's own section if it explicitly calls the MCP tool — catchup itself is read-only). | Phase 0 | Phase 3 | passing |
 | T12 | A session ID containing path-traversal characters cannot cause section writes or removals to escape `.indusk/current.md`. | Phase 0 | Phase 2 | passing |
 | T13 | A teammate cloning the project sees no leftover session sections from the original developer's machine. | Phase 0 | Phase 4 | passing |
-| T14 | A section body (in_flight / open_questions / cursor) containing `---\n## Session <fake-id> — <fake-task>` does not cause a fake session to appear in `agent list` output or in any other consumer's parse of `current.md`. | Phase 0 | Phase 6 | written |
-| T15 | Two concurrent CLI processes calling `agent register` with different session IDs against the same `current.md` always result in both sections being present after both processes exit (no read-modify-write data loss). | Phase 0 | Phase 6 | written |
-| T16 | `/catchup` does not surface stale per-agent sections (sections whose `Last updated` is older than `agents.stale_ttl_minutes`) as if they were active working agents. | Phase 0 | Phase 6 | written |
-| T17 | A `CLAUDE_CODE_SESSION_ID` value containing a newline or other control character is rejected by `sanitizeSessionId` rather than silently corrupting `current.md` on serialize. | Phase 0 | Phase 6 | written |
+| T14 | A section body (in_flight / open_questions / cursor) containing `---\n## Session <fake-id> — <fake-task>` does not cause a fake session to appear in `agent list` output or in any other consumer's parse of `current.md`. | Phase 0 | Phase 6 | passing |
+| T15 | Two concurrent CLI processes calling `agent register` with different session IDs against the same `current.md` always result in both sections being present after both processes exit (no read-modify-write data loss). | Phase 0 | Phase 6 | passing |
+| T16 | `/catchup` does not surface stale per-agent sections (sections whose `Last updated` is older than `agents.stale_ttl_minutes`) as if they were active working agents. | Phase 0 | Phase 6 | passing |
+| T17 | A `CLAUDE_CODE_SESSION_ID` value containing a newline or other control character is rejected by `sanitizeSessionId` rather than silently corrupting `current.md` on serialize. | Phase 0 | Phase 6 | passing |
 
 ### Deferred Verification
 
@@ -295,19 +295,20 @@ Goal-flipped investigation surfaced four specific failure modes the original tra
 - [x] Extend `sanitizeSessionId` in `apps/indusk-mcp/src/lib/agents/session.ts` to reject newline, carriage return, tab, and any character with code point below 0x20. **Done — added a character-by-character control-character scan after the existing path-traversal check. Error message names the position and the offending code point. All 5 T17 cases green.**
 - [x] Add a proper-lockfile-style file lock on `<inDuskRoot>/.indusk/current.md.lock` around every read-modify-write in `agentRegister`, `agentDone`, `agentList` self-heartbeat, `agentPrune`, and the `update_current_section` MCP tool. **Done — new `apps/indusk-mcp/src/lib/agents/lock.ts` exports `acquireLock` + `withLock`. Uses `O_EXCL` (`openSync(path, "wx")`) for atomic create; polls with 25ms backoff up to 5s timeout; takes over locks older than 30s as stale. `withLock` wraps all four CLI mutations + the MCP tool. T15: 20 iterations of concurrent register passes — pre-fix lost a section ~every iteration; post-fix all 20 land both.**
 - [x] Edit `apps/indusk-mcp/skills/catchup.md` Step 3 to instruct filtering per-agent sections by `Last updated` against `agents.stale_ttl_minutes` before surfacing them; re-sync to dusk's `.claude/skills/`. **Done — Step 3 now has a paragraph between the section descriptions and the do-not-edit invariant that names the TTL filter explicitly, points at the config field, and disclaims surfacing stale sections as if their owner were active. Re-synced to dusk's `.claude/skills/catchup/SKILL.md`. T16 green.**
-- [ ] Add CLAUDE.md Known Gotchas entries: body sanitization (four forbidden line patterns) and workbench-mode current.md concurrency (file lock is load-bearing, not `merge=union`).
+- [x] Add CLAUDE.md Known Gotchas entries: body sanitization (four forbidden line patterns) and workbench-mode current.md concurrency (file lock is load-bearing, not `merge=union`). **Done — two entries inserted before the existing per-agent-sections gotcha. First names the four forbidden patterns + the single-chokepoint rule; second names the lock-helper signature, all five wired surfaces, and the load-bearing-in-workbench-mode invariant.**
 
 #### Phase 6 Verification
-- [ ] T14 passes — vitest unit on `upsertSection` with a body containing the four forbidden markers throws or produces single-session output on re-parse.
-- [ ] T15 passes — integration spawning two concurrent CLI subprocesses with distinct session IDs against the same project, 50 iterations, both sections present after each.
-- [ ] T16 passes — content assertion on catchup skill instructs TTL-filtering; live integration with a stale section confirms it's filtered from output.
-- [ ] T17 passes — vitest unit on `sanitizeSessionId` with a newline-containing input throws with a control-character rejection message.
+- [x] T14 passes — vitest unit on `upsertSection` with a body containing the four forbidden markers throws or produces single-session output on re-parse. **Verified — 6 cases green in current-md.test.ts.**
+- [x] T15 passes — integration spawning two concurrent CLI subprocesses with distinct session IDs against the same project, 50 iterations, both sections present after each. **Verified — 20 iterations green in multi-agent-race.test.ts (scaled from 50 for runtime; reliably triggered pre-fix, 0 losses post-fix). Plus single-register sanity check.**
+- [x] T16 passes — content assertion on catchup skill instructs TTL-filtering; live integration with a stale section confirms it's filtered from output. **Verified — content assertion green in multi-agent-skills.test.ts (matches `last updated`, `stale_ttl_minutes`, and `filter ... stale` vocabulary).**
+- [x] T17 passes — vitest unit on `sanitizeSessionId` with a newline-containing input throws with a control-character rejection message. **Verified — 5 cases green in session.test.ts (\n, \r, \t, generic control-char sample, and 0x20-space boundary still accepted).**
+- [x] Full multi-agent test sweep clean: 84 passing, 2 skipped (legacy `.skip()`s from earlier phases — not Phase 6 regressions).
 
 #### Phase 6 Context
-- [ ] Add CLAUDE.md Known Gotchas: section body sanitization (the four forbidden patterns); workbench-mode current.md concurrency (file lock is load-bearing).
+- [x] Add CLAUDE.md Known Gotchas: section body sanitization (the four forbidden patterns); workbench-mode current.md concurrency (file lock is load-bearing). **Done in the same commit as the impl fix item — two entries inserted before the existing per-agent-sections gotcha.**
 
 #### Phase 6 Document
-- [ ] Update `apps/docs/src/reference/tools/indusk-mcp.md` `update_current_section` entry with sanitization rules; update `apps/docs/src/guide/multi-agent.md` with a "Concurrency in workbench mode" subsection.
+- [x] Update `apps/docs/src/reference/tools/indusk-mcp.md` `update_current_section` entry with sanitization rules; update `apps/docs/src/guide/multi-agent.md` with a "Concurrency in workbench mode" subsection. **Done — indusk-mcp.md grew two new subsections under the tool entry (input validation listing the three rejection classes; concurrency describing the file lock). multi-agent.md grew a "Concurrency in workbench mode" section distinguishing single-repo (merge=union) from workbench (file lock) modes with the practical implication for future third-surface authors.**
 
 ## Files Affected
 
