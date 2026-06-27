@@ -210,6 +210,31 @@ const candidates = [
 		} catch {}
 		return [];
 	})(),
+	// pnpm global root — pnpm's bin shim is a shell script, not a symlink, so
+	// realpath/which can't walk to the package. Ask pnpm directly.
+	...(() => {
+		try {
+			const pnpmRoot = execSync("pnpm root -g", { encoding: "utf8" }).trim();
+			if (pnpmRoot)
+				return [
+					resolve(pnpmRoot, "@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js"),
+				];
+		} catch {}
+		return [];
+	})(),
+	// npm global root — explicit `npm root -g` covers cases where the indusk
+	// bin's parent layout doesn't match `<bin>/../lib/node_modules/...`
+	// (e.g., mise-managed Node installs, custom prefixes).
+	...(() => {
+		try {
+			const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
+			if (npmRoot)
+				return [
+					resolve(npmRoot, "@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js"),
+				];
+		} catch {}
+		return [];
+	})(),
 ];
 let evaluatorRunnerPath = null;
 for (const c of candidates) {

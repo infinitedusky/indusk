@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.30.2] — 2026-06-27
+
+### Fixed
+- **eval-trigger hook now finds pnpm-global installs (1.30.2)** — pre-1.30.2, `apps/indusk-mcp/hooks/eval-trigger.js` checked two npm-style candidate paths (`<bin>/../lib/node_modules/...` and `<hook>/../../node_modules/...`) and gave up. Pnpm-global installs live under `<pnpm-root>/@infinitedusky/indusk-mcp/...` — neither candidate hit — so every `git commit` / `jj describe` on a pnpm-installed indusk-mcp logged `Could not find @infinitedusky/indusk-mcp package` to `.indusk/eval/results.log` and exited without spawning the evaluator. Highlights queued indefinitely; nothing landed in Graphiti. Dusk itself surfaced this after 22 hours and 44 unprocessed highlights. **Fix**: extended the candidate list with two additional lookups, both guarded by try/catch (so missing `pnpm` or `npm` on PATH is non-fatal): `pnpm root -g` joined with `@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js`, and the same for `npm root -g`. The npm-root lookup also covers mise-managed Node installs and custom prefixes where the `<bin>/../lib/node_modules/...` shape isn't accurate. Backlog of queued highlights drains on the next commit after upgrade — no manual recovery needed. Regression: `apps/indusk-mcp/src/__tests__/eval-trigger-pnpm-lookup.test.ts` — source-level grep, same pattern as the existing eval-trigger hook tests.
+
 ## [1.30.1] — 2026-06-27
 
 ### Added
