@@ -1,7 +1,7 @@
 ---
 title: "handoff-multi-agent section shape — Impl"
 date: 2026-06-26
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -60,6 +60,10 @@ Reshape `.indusk/current.md` from fixed sections + separate `.indusk/agents/` pr
 | T11 | Running `/catchup` does not modify any file (other than the agent's own section if it explicitly calls the MCP tool — catchup itself is read-only). | Phase 0 | Phase 3 | passing |
 | T12 | A session ID containing path-traversal characters cannot cause section writes or removals to escape `.indusk/current.md`. | Phase 0 | Phase 2 | passing |
 | T13 | A teammate cloning the project sees no leftover session sections from the original developer's machine. | Phase 0 | Phase 4 | passing |
+| T14 | A section body (in_flight / open_questions / cursor) containing `---\n## Session <fake-id> — <fake-task>` does not cause a fake session to appear in `agent list` output or in any other consumer's parse of `current.md`. | Phase 0 | Phase 6 | planned |
+| T15 | Two concurrent CLI processes calling `agent register` with different session IDs against the same `current.md` always result in both sections being present after both processes exit (no read-modify-write data loss). | Phase 0 | Phase 6 | planned |
+| T16 | `/catchup` does not surface stale per-agent sections (sections whose `Last updated` is older than `agents.stale_ttl_minutes`) as if they were active working agents. | Phase 0 | Phase 6 | planned |
+| T17 | A `CLAUDE_CODE_SESSION_ID` value containing a newline or other control character is rejected by `sanitizeSessionId` rather than silently corrupting `current.md` on serialize. | Phase 0 | Phase 6 | planned |
 
 ### Deferred Verification
 
@@ -272,17 +276,38 @@ Phase 0 is the writable baseline. Phase 1+ rows below:
 - [x] Full multi-agent test sweep (all 13 trajectory tests + regression) green. **Verified — full lib + cli + skills + init + e2e sweep passing (run at the end of Phase 5).**
 
 #### Phase 5 Context
-- [x] CLAUDE.md Key Decisions one-liner rewritten in place to describe the section shape and reference both plan paths.
+- [x] CLAUDE.md Key Decisions one-liner rewritten in place to describe the section shape and reference both plan paths. CLAUDE.md Current State paragraph for `handoff-multi-agent` folded into the Key Decisions rewrite (one-liner is the durable record).
 
 #### Phase 5 Document
-- [x] Manual smoke procedure carries the supersession note pointing at the section-shape plan; original steps work identically because the CLI shape didn't change.
+- [x] Manual smoke procedure carries the supersession note pointing at the section-shape plan; original steps work identically because the CLI shape didn't change. Changelog 1.29.0 entry rewritten in place (commit e2a5a045). All docs cross-links resolve and Mermaid diagrams render.
 
-#### Phase 5 Context
-- [ ] Update `CLAUDE.md` Current State section: append a paragraph describing the section-shape rework (preceded by the `handoff-multi-agent` summary that's already there).
+### Phase 6: Falsification
 
-#### Phase 5 Document
-- [ ] Update changelog 1.29.0 entry with the final shape (this replaces the old entry, since 1.29.0 hasn't published yet).
-- [ ] Confirm all docs cross-links resolve and Mermaid diagrams render.
+Goal-flipped investigation surfaced four specific failure modes the original trajectory missed plus one workbench-mode finding:
+
+- T14: a section body containing `---` followed by `## Session <id>` injects a fake session that other agents see.
+- T15: two concurrent `agent register` CLI processes can lose one section due to read-modify-write race; atomic rename only prevents torn writes, not stale reads.
+- T16: `/catchup` reads `current.md` directly and surfaces stale sections as if active; only `agent list` filters by TTL.
+- T17: `sanitizeSessionId` rejects path-traversal but not control characters; a newline corrupts the heading line silently.
+- Workbench finding: in workbench-shaped projects `current.md` lives at the workbench root (not in the wrapped repo), so `merge=union` is unwired; the file lock proposed below is the load-bearing primitive there.
+
+- [ ] Add `sanitizeSectionBody(body)` in `apps/indusk-mcp/src/lib/agents/current-md.ts` that rejects bodies containing lines matching the four structural markers (horizontal rule, `## Session`, `**Session ID**:`, `**Last updated**:`); route `upsertSection` and `editSharedSection` through it.
+- [ ] Extend `sanitizeSessionId` in `apps/indusk-mcp/src/lib/agents/session.ts` to reject newline, carriage return, tab, and any character with code point below 0x20.
+- [ ] Add a proper-lockfile-style file lock on `<inDuskRoot>/.indusk/current.md.lock` around every read-modify-write in `agentRegister`, `agentDone`, `agentList` self-heartbeat, `agentPrune`, and the `update_current_section` MCP tool.
+- [ ] Edit `apps/indusk-mcp/skills/catchup.md` Step 3 to instruct filtering per-agent sections by `Last updated` against `agents.stale_ttl_minutes` before surfacing them; re-sync to dusk's `.claude/skills/`.
+- [ ] Add CLAUDE.md Known Gotchas entries: body sanitization (four forbidden line patterns) and workbench-mode current.md concurrency (file lock is load-bearing, not `merge=union`).
+
+#### Phase 6 Verification
+- [ ] T14 passes — vitest unit on `upsertSection` with a body containing the four forbidden markers throws or produces single-session output on re-parse.
+- [ ] T15 passes — integration spawning two concurrent CLI subprocesses with distinct session IDs against the same project, 50 iterations, both sections present after each.
+- [ ] T16 passes — content assertion on catchup skill instructs TTL-filtering; live integration with a stale section confirms it's filtered from output.
+- [ ] T17 passes — vitest unit on `sanitizeSessionId` with a newline-containing input throws with a control-character rejection message.
+
+#### Phase 6 Context
+- [ ] Add CLAUDE.md Known Gotchas: section body sanitization (the four forbidden patterns); workbench-mode current.md concurrency (file lock is load-bearing).
+
+#### Phase 6 Document
+- [ ] Update `apps/docs/src/reference/tools/indusk-mcp.md` `update_current_section` entry with sanitization rules; update `apps/docs/src/guide/multi-agent.md` with a "Concurrency in workbench mode" subsection.
 
 ## Files Affected
 
