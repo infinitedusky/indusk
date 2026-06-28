@@ -1,7 +1,9 @@
 ---
 title: "Code Reviewer Agent — MVP plumbing + first findings"
 date: 2026-05-07
-status: in-progress
+status: parked
+parked_at: 2026-06-28
+unblock_condition: "Dawn design partner named (so reviewer's value can be tested against a second user's repo, not just Sandy's)"
 trajectory: required
 ---
 
@@ -244,3 +246,5 @@ A second post-commit agent (sibling of the eval agent) that reviews code artifac
 ## Revisions
 
 - **2026-06-28** — fresh-eyes review pass after ~7 weeks. Substrate changed (git-only since 1.31.0; `markProcessed` write-time dedup since 1.31.2; eval-agent-mcp-access regression lessons from 1.31.1–1.31.3). Edits: `jj describe` → `git commit` (T1, T16); dropped `scm` parameter from `buildReviewerPrompt` (T6); added T17 (regex right-edge lookahead), T18 (hook exit_code skip), T19 (resume-prompt parity with fresh-spawn), T20 (atomic writes + quarantine), T21 (write-time duplicate rejection); renamed `scorecard-extractor.ts` → `findings-extractor.ts` (vocabulary distinct from eval); expanded Boundary Map to mirror eval's actual module decomposition (added `rules.ts`, `log-writer.ts`, `log-reader.ts`, `types.ts`); added Out-of-scope entry for runtime OTel on the reviewer agent; baseline subcommand pinned to git-only shape.
+
+- **2026-06-28 — PARKED.** Same-session decision after the fresh-eyes review. The 7-week dormancy was itself a value signal: this wasn't an emergency. Shipping now optimizes for "tool Sandy wants on his own daily commits" — legitimate but strictly personal. **Deferring until Dawn design partner is named** so the reviewer can validate against a second user's repo (the integration thesis — does CLAUDE.md-anchored review beat generic? — is unfalsifiable when measured only by the plan's author on the plan's own conventions; cheat-sheet effect applies). Pickup signal: the design partner from `apps/indusk-docs/src/dawn/who.md`'s TODO becomes a named person. At that point the MVP success metric grows a real user and the petal-validation learning becomes leverage for Dawn. Plan is `/work`-ready as-is; resume by changing `status: parked` → `status: in-progress` in frontmatter and running `/work code-reviewer-agent`.
