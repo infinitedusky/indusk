@@ -1,7 +1,7 @@
 ---
 title: "git-only-substrate"
 date: 2026-06-27
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
