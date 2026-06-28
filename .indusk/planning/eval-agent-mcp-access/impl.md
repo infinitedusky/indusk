@@ -32,8 +32,10 @@ Current state: every evaluator run logs `graphitiWrites: 0`; `.indusk/highlights
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | An evaluator run that has ≥1 unprocessed highlight produces a scorecard with `graphitiWrites > 0`. | Phase 0 | Phase 2 | planned |
-| T2 | After the fix ships, the 3 currently-queued highlights (`h-20260417-001`, `h-20260417-002`, `h-20260418-001`) appear in `.indusk/highlights-processed.jsonl` with `action: wrote-episode`, and matching Graphiti episodes are searchable in the `dusk` and/or `shared` group. | Phase 0 | Phase 3 | planned |
+| T1 | An evaluator run that has ≥1 unprocessed highlight produces a scorecard with `graphitiWrites > 0`. | Phase 0 | Phase 2 | passing |
+| T2 | After the fix ships, the 3 currently-queued highlights (`h-20260417-001`, `h-20260417-002`, `h-20260418-001`) appear in `.indusk/highlights-processed.jsonl` with `action: wrote-episode`, and matching Graphiti episodes are searchable in the `dusk` and/or `shared` group. | Phase 0 | Phase 3 | passing |
+| T3 | The source of `apps/indusk-mcp/src/lib/eval/persistent-evaluator.ts`'s resumePrompt construction reaches the same Step 4 (highlights processing) instructions as the fresh-spawn prompt — either by inlining the instructions verbatim or by delegating to a shared helper extracted from `prompt-builder.ts`. The minimal "Evaluate a new commit ... output the JSON scorecard" shape that silently omitted Step 4 must be gone. | Phase 0 | Phase 4 | planned |
+| T4 | After Phase 4 ships, a real eval run on dusk (any commit) that hits the resume path processes the queued highlights backlog — `.indusk/highlights-processed.jsonl` grows by N entries within one eval cycle (where N = number of unprocessed highlights at trigger time), and the corresponding Graphiti episodes are searchable in the `dusk` group. Manual smoke against the live evaluator since spawning `claude --print` in CI is impractical. | Phase 0 | Phase 4 | planned |
 
 ## Checklist
 
@@ -77,7 +79,29 @@ Current state: every evaluator run logs `graphitiWrites: 0`; `.indusk/highlights
 - [ ] Regression check (if added): the structural test grepping `eval-trigger.js` for the fix-flag passes (`pnpm vitest run src/__tests__/`).
 
 #### Phase 3 Document
-- [ ] Update CLAUDE.md "Current State" with one sentence: "eval-agent-mcp-access shipped — eval agent now processes highlights into Graphiti episodes on every `jj describe` (and at session end via `/handoff`)."
+- [x] CLAUDE.md "Current State" updated when 1.23.x shipped — historically accurate at the time.
+
+### Phase 4: Resume-prompt regression fix
+
+**Goal**: the resume path of the eval agent's spawn now reaches the same Step 4 (process unprocessed highlights) instruction as the fresh-spawn path. The minimal hand-rolled "Evaluate a new commit ... output the JSON scorecard" resume prompt drops Step 4 entirely; this phase makes them symmetric.
+
+Discovered 2026-06-27 during a digression while investigating why highlights still weren't draining despite the 1.23.x fix being intact. Diagnostic evidence: across 197 evals on the persistent session `12cb92bb-2c82-4781-9ff7-f2867cf28e5b` (created 2026-04-19, last used 2026-06-28), the inner Claude called `mcp__indusk__highlights_unprocessed` only 8 times and called `mcp__indusk__graph_capture` / `mcp__indusk__highlight_mark_processed` **zero times**. The 3 entries in `.indusk/highlights-processed.jsonl` are from the April first-spawn run; every commit since has been a resume that received no Step 4 instruction.
+
+- [ ] Extract the Step 4 "process unprocessed highlights" block from `apps/indusk-mcp/src/lib/eval/prompt-builder.ts` into an exported `buildHighlightsInstructions(opts: { projectGroup: string })` helper. The fresh-spawn prompt continues to use it via the existing `buildEvaluatorPrompt` path.
+- [ ] In `apps/indusk-mcp/src/lib/eval/persistent-evaluator.ts`'s `buildArgsAndPrompt()`, on the resume branch, prepend `buildHighlightsInstructions({ projectGroup })` to the existing minimal `resumePrompt`. Order: highlights instructions → "Evaluate a new commit ..." → "Output ONLY the JSON scorecard". The inner Claude sees: "process highlights first, then score the commit."
+- [ ] Bump `apps/indusk-mcp/package.json` from `1.31.0` to `1.31.1` (post-publish patch — the regression bug was always there; we're surfacing the fix as a discrete patch so the changelog can document the second cause clearly).
+- [ ] Add a changelog entry to `apps/docs/src/changelog.md` under `[Unreleased]` describing the resume-prompt fix: gap statement, fix shape, expected behavior change (highlights now drain on every resume, not just on first-spawn).
+
+#### Phase 4 Verification
+- [ ] T3 passes: source-grep test in `apps/indusk-mcp/src/__tests__/eval-resume-prompt-includes-highlights.test.ts` reads `persistent-evaluator.ts` source and asserts the resume-prompt construction reaches the highlights instructions (either inlined or via `buildHighlightsInstructions` call). Pre-fix the test fails because the minimal prompt has no `highlights_unprocessed` / `graph_capture` / `highlight_mark_processed` reference; post-fix it passes.
+- [ ] T4 passes (manual smoke): after publishing 1.31.1 and upgrading the global install, trigger an eval via a real `git commit`. Within one eval cycle (≤120s), assert `.indusk/highlights-processed.jsonl` grew by ≥1 entry. Compare counts before/after.
+- [ ] Full `pnpm vitest run` from `apps/indusk-mcp/` passes (no regression on the existing suite).
+
+#### Phase 4 Context
+- [ ] Add a CLAUDE.md Known Gotcha: "The eval agent's resume prompt is hand-rolled and intentionally minimal — but it MUST include Step 4 (process highlights) or highlights stop draining on every commit after the first session spawn. The fresh-spawn path goes through `buildEvaluatorPrompt` (which includes Step 4); the resume path prepends `buildHighlightsInstructions()` to a minimal commit-evaluation block. Don't shrink the resume prompt without first checking whether `highlights-processed.jsonl` is still growing."
+
+#### Phase 4 Document
+- [ ] Update the "MCP-access debugging" section in `apps/docs/src/reference/eval/overview.md` (the section added in Phase 1) with a "Second cause: resume prompt drops Step 4" note + a pointer to this plan's Phase 4.
 
 ## Files Affected
 

@@ -18,9 +18,9 @@
 		"env:start": "ce start"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.8",
+		"@biomejs/biome": "^2.5.1",
 		"composable.env": "^1.37.7",
-		"turbo": "^2.4.0",
-		"vitest": "^4.1.0"
+		"turbo": "^2.10.0",
+		"vitest": "^4.1.9"
 	}
 }

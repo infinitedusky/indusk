@@ -19,15 +19,20 @@ export interface PromptBuilderOptions {
 	projectGroup: string;
 }
 
-export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
-	const diffCommand = `git show ${opts.changeId}`;
-	const questionsBlock = opts.rubric
-		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
-		.join("\n\n");
-
-	const highlightsInstructions =
-		opts.mode === "eval"
-			? `### Step 4: Process unprocessed highlights
+/**
+ * Step 4 — process unprocessed highlights — extracted so the persistent-evaluator's
+ * resume-prompt path can include it too. Pre-1.31.1 the resume prompt was a hand-
+ * rolled "Evaluate a new commit ... output the JSON scorecard" stub that omitted
+ * Step 4 entirely; only the fresh-spawn prompt (built via `buildEvaluatorPrompt`)
+ * carried the instructions. The eval agent's persistent session resumed for 197
+ * commits without ever seeing Step 4, so the highlights queue stopped draining
+ * after the very first fresh spawn. eval-agent-mcp-access Phase 4 fix.
+ *
+ * Keep this in sync with the inline copy in `buildEvaluatorPrompt` — actually,
+ * `buildEvaluatorPrompt` calls this helper directly, so there's only one source.
+ */
+export function buildHighlightsInstructions(opts: { projectGroup: string }): string {
+	return `### Step 4: Process unprocessed highlights
 
 Before answering the rubric, process the working agent's highlights queue. Highlights are the working agent's flagged moments — brief acceptances, ADR acceptances, corrections, retrospective lessons — and the eval agent is responsible for materializing them into structured Graphiti episodes.
 
@@ -45,7 +50,18 @@ After processing each highlight (whether you wrote an episode or decided to skip
 
 **Highlights are additive context, not a constraint.** Continue reading the full transcript and inferring knowledge independently — highlights ensure important moments aren't missed, but they don't bound your analysis. The transcript may contain insights the working agent didn't flag.
 
-If \`mcp__indusk__highlights_unprocessed\` is unavailable, skip this step silently and continue.`
+If \`mcp__indusk__highlights_unprocessed\` is unavailable, skip this step silently and continue.`;
+}
+
+export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
+	const diffCommand = `git show ${opts.changeId}`;
+	const questionsBlock = opts.rubric
+		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
+		.join("\n\n");
+
+	const highlightsInstructions =
+		opts.mode === "eval"
+			? buildHighlightsInstructions({ projectGroup: opts.projectGroup })
 			: `### Step 4: Highlights (baseline mode)
 
 Baseline mode — do NOT process highlights or write to Graphiti. Skip to Step 5.`;

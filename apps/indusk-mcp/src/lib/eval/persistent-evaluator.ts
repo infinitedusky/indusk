@@ -22,7 +22,7 @@ import {
 	shutdownEvalOtel,
 	withSpan,
 } from "./otel.js";
-import { buildEvaluatorPrompt } from "./prompt-builder.js";
+import { buildEvaluatorPrompt, buildHighlightsInstructions } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import {
 	extractScorecardJson,
@@ -221,7 +221,18 @@ export async function runPersistentEval(opts: {
 
 				function buildArgsAndPrompt(): { args: string[]; prompt: string } {
 					if (session) {
-						const resumePrompt = `Evaluate a new commit. Change ID: ${opts.changeId}
+						// eval-agent-mcp-access Phase 4 (2026-06-27): the resume prompt
+						// previously omitted Step 4 (process highlights). Across 197
+						// resume runs on the persistent session, the inner Claude never
+						// got the highlights instructions — highlights stopped draining
+						// after the very first fresh spawn. Now we prepend the same
+						// Step 4 block the fresh-spawn prompt uses.
+						const highlightsBlock = buildHighlightsInstructions({ projectGroup });
+						const resumePrompt = `${highlightsBlock}
+
+---
+
+### Now: evaluate a new commit. Change ID: ${opts.changeId}
 
 Run \`${diffCommand}\` to see what changed. Then answer the same evaluation questions as before. Read the changed files for full context.
 
