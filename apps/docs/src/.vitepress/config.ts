@@ -159,6 +159,7 @@ const config = defineConfig({
 						{ text: "InDusk Admin UI", link: "/decisions/indusk-admin-ui" },
 						{ text: "Admin UI Hosting", link: "/decisions/admin-ui-hosting" },
 						{ text: "Multi-Agent Coordination", link: "/decisions/multi-agent-coordination" },
+						{ text: "Git-Only Substrate", link: "/decisions/git-only-substrate" },
 					],
 				},
 			],
@@ -168,6 +169,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/lessons/" },
 						{ text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)", link: "/lessons/handoff-multi-agent-section-shape" },
+						{ text: "Git-Only Substrate (Falsification + Inherited Bugs)", link: "/lessons/git-only-substrate" },
 					],
 				},
 			],
