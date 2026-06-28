@@ -41,9 +41,9 @@ Ship a workbench-aware path resolution helper for the 4 hooks, refactor each hoo
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `resolveStateAndGitPaths(cwd)` in a single-repo case (cwd inside a git repo that also contains `.indusk/`) returns `{statePath, gitPath}` where both point at the repo root | Phase 0 | Phase 1 | writable |
-| T2 | `resolveStateAndGitPaths(cwd)` in a workbench-shaped case (workbench root has `.indusk/` but no `.git/`; wrapped repo lives in a subdirectory; cwd is inside the wrapped repo) returns `statePath` at workbench root AND `gitPath` at wrapped repo root | Phase 0 | Phase 1 | writable |
-| T3 | `resolveStateAndGitPaths(cwd)` from inside a worktree (sibling to the wrapped repo) returns `statePath` at workbench root AND `gitPath` at the worktree's own git path | Phase 0 | Phase 1 | writable |
+| T1 | `resolveStateAndGitPaths(cwd)` in a single-repo case (cwd inside a git repo that also contains `.indusk/`) returns `{statePath, gitPath}` where both point at the repo root | Phase 0 | Phase 1 | passing |
+| T2 | `resolveStateAndGitPaths(cwd)` in a workbench-shaped case (workbench root has `.indusk/` but no `.git/`; wrapped repo lives in a subdirectory; cwd is inside the wrapped repo) returns `statePath` at workbench root AND `gitPath` at wrapped repo root | Phase 0 | Phase 1 | passing |
+| T3 | `resolveStateAndGitPaths(cwd)` from inside a worktree (sibling to the wrapped repo) returns `statePath` at workbench root AND `gitPath` at the worktree's own git path | Phase 0 | Phase 1 | passing |
 | T4 | `eval-trigger.js` driven against a workbench-shaped tmpdir from inside the wrapped repo successfully resolves the change ID via `gitPath` and writes its `evaluator spawned` lifecycle marker to `statePath/.indusk/eval/system.log` | Phase 0 | Phase 2 | writable |
 | T5 | `eval-trigger.js` against a single-repo tmpdir (the existing pattern) still resolves change ID and writes lifecycle markers correctly — no regression | Phase 0 | Phase 2 | writable |
 | T6 | `check-catchup.js`, `check-gates.js`, `validate-impl-structure.js` source code each `require`/`import` the new shared helper `_hook-paths.js` instead of carrying their own `findProjectRoot()` — source-level grep test | Phase 0 | Phase 3 | writable |
