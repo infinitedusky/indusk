@@ -197,3 +197,65 @@ describe("T9: markProcessed rejects duplicate IDs at write time (Phase 6 dedup f
 		expect(unprocessed[0].id).toBe(b.id);
 	});
 });
+
+describe("T10: markProcessed catches malformed historic entries via raw-content check (Phase 7 falsification fix H19)", () => {
+	// Phase 7 reasoning: readAllProcessed silently skips malformed JSON lines
+	// (try/catch around JSON.parse). If highlights-processed.jsonl contains a
+	// corrupted line carrying the literal "id":"<target>" (e.g., a write that
+	// crashed mid-line, a hand-edit gone wrong, a version-format mismatch),
+	// readAllProcessed returns no entry for the target ID, the Phase 6
+	// markProcessed check thinks it's not present, and appends a duplicate —
+	// the dedup contract silently breaks.
+	//
+	// The fix: defensive substring-on-raw-content check before the parsed
+	// check. If the raw bytes contain `"id":"<escaped id>"`, treat the ID
+	// as already present even when readAllProcessed didn't surface a
+	// parseable entry. The agent's STOP signal (already_processed: true)
+	// still fires; original_processedAt is undefined because the malformed
+	// entry didn't yield a parseable timestamp.
+
+	it("treats a malformed (truncated JSON) historic entry as already processed", async () => {
+		const { writeFileSync } = await import("node:fs");
+
+		// Seed the processed log with a malformed entry for h-X.
+		// Note: opening brace + id field + processedAt field, then truncated —
+		// no closing brace. JSON.parse rejects this.
+		const malformedPath = join(induskDir, "highlights-processed.jsonl");
+		writeFileSync(
+			malformedPath,
+			`{"id":"h-20260101-001","processedAt":"2026-01-01T00:00:00.000Z","action":"wrote-episo\n`,
+			"utf-8",
+		);
+
+		const result = markProcessed(projectRoot, "h-20260101-001", "wrote-episode", "retry-attempt");
+
+		expect(
+			(result as { already_processed?: boolean }).already_processed,
+			"malformed historic entry for this ID must trigger the already_processed signal",
+		).toBe(true);
+
+		const linesAfter = readFileSync(malformedPath, "utf-8")
+			.split("\n")
+			.filter((l) => l.length > 0).length;
+		expect(linesAfter, "file must NOT grow — duplicate write rejected").toBe(1);
+	});
+
+	it("readAllProcessed still silently skips the malformed line (parser tolerance preserved)", () => {
+		const { writeFileSync } = require("node:fs");
+		const malformedPath = join(induskDir, "highlights-processed.jsonl");
+		writeFileSync(
+			malformedPath,
+			`{"id":"h-bad","processedAt":"BAD-TS","action":"wrote-episo\n`,
+			"utf-8",
+		);
+		// The defensive markProcessed check works around the parser's tolerance
+		// without changing it — readAllProcessed returns an empty array because
+		// the only line fails JSON.parse. readUnprocessedHighlights treats
+		// the malformed entry as "not processed" (also acceptable; it falls
+		// back to "we don't know"). The contract specifically defended here
+		// is on the WRITE side.
+		const unproc = readUnprocessedHighlights(projectRoot);
+		// No well-formed highlights exist either; unproc is []
+		expect(unproc).toEqual([]);
+	});
+});

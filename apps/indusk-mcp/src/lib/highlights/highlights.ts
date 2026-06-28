@@ -95,6 +95,28 @@ function readAllProcessed(projectRoot: string): ProcessedMark[] {
 }
 
 /**
+ * Phase 7 falsification fix (H19): defensive substring check on the raw
+ * file content. `readAllProcessed` silently skips malformed JSON lines
+ * (try/catch around `JSON.parse`), so a corrupted historic entry carrying
+ * the target ID is invisible to the parsed dedup check. This helper
+ * scans the raw bytes for the literal `"id":"<escaped id>"` substring —
+ * if found, the ID has been "seen" by the file even if the line is
+ * unparseable. Used as a belt-and-suspenders layer on top of
+ * `readAllProcessed` in `markProcessed`.
+ */
+function isIdInRawProcessed(projectRoot: string, id: string): boolean {
+	const path = processedPath(projectRoot);
+	if (!existsSync(path)) return false;
+	const raw = readFileSync(path, "utf-8");
+	// Escape JSON-relevant characters in the ID for the regex literal.
+	// Highlight IDs are h-YYYYMMDD-NNN (alphanumeric + hyphens), so no
+	// regex metacharacters in practice, but defensive escaping is cheap.
+	const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const pattern = new RegExp(`"id"\\s*:\\s*"${escaped}"`);
+	return pattern.test(raw);
+}
+
+/**
  * Compute the next sequence number for today's highlights. Reads all
  * existing highlights, filters to entries whose ID starts with today's
  * date, takes max seq, adds 1. Starts at 001 if none exist for today.
@@ -188,6 +210,22 @@ export function markProcessed(
 			detail,
 			already_processed: true,
 			original_processedAt: existing.processedAt,
+		};
+	}
+
+	// Phase 7 (H19) defense: even if `readAllProcessed` returned no parseable
+	// entry for this ID, the raw file may still contain a corrupted historic
+	// line carrying the literal ID. Treat that as "already processed" too —
+	// the parser's tolerance shouldn't silently re-open the dedup contract.
+	// original_processedAt is undefined because the malformed entry didn't
+	// yield a parseable timestamp; the boolean is the load-bearing signal.
+	if (isIdInRawProcessed(projectRoot, id)) {
+		return {
+			id,
+			processedAt: new Date().toISOString(),
+			action,
+			detail,
+			already_processed: true,
 		};
 	}
 
