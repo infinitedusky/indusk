@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.31.9] — 2026-06-28
+
+### Fixed (worktree extension — wt.sh raw-exec via `--` separator)
+- **`pnpm wt <slug> -- <binary> [args...]` runs the binary directly without prepending `pnpm`** — surfaced by Sandy running `pnpm wt solana-migration docker compose --env-file .env.local up -d --force-recreate poker` and hitting `node: .env.local: not found`. Root cause: `wt.sh` always prepends `pnpm` to whatever follows the slug (lines 132 and 137 — `exec pnpm "${COMMAND[@]}"`). For pnpm-script targets (`pnpm dev`, `pnpm build`) and pnpm-aware tools (`pnpm ce`), that's correct. For raw external binaries like `docker`, the prefix means pnpm 9+'s built-in `--env-file` flag consumes the user's `--env-file .env.local` for its own env loading, garbles the downstream args, and lands as `node: .env.local: not found` somewhere in the exec chain. **Fix**: support `--` as a separator. With `--` as the first command token, `wt.sh` exec's the remaining args directly — no pnpm prefix, no flag interpretation. Sandy's command becomes `pnpm wt solana-migration -- docker compose --env-file .env.local up -d --force-recreate poker` and works as expected. Backwards-compatible — existing `pnpm wt cancel-polish dev` continues to invoke `pnpm dev` in the worktree. 4 new vitest cases in `apps/indusk-mcp/src/__tests__/worktree-wt-resolve.test.ts` cover (a) the raw-exec path with a binary in PATH (`echo`) carries args through verbatim including `--env-file`, (b) `--` with no following command errors with a clear usage message, (c) `:<app>` + `--` runs raw exec inside `apps/<app>/`, (d) absence of `--` still uses the pnpm prefix. Header line also distinguishes the two modes: `[alpha] echo raw-args` (raw) vs `[alpha] pnpm dev` (pnpm-prefix).
+
 ## [1.31.8] — 2026-06-28
 
 ### Added (workbench-mode-rail-integrity — Phase 5 prep: post-update agent skill)

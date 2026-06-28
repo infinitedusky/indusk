@@ -174,6 +174,66 @@ describe("wt.sh slug resolution (T5/T6/T8)", () => {
 			expect(r.stderr).toMatch(/app not found at .*\/alpha\/apps\/missing/);
 		});
 	});
+
+	describe("T8b: -- separator runs raw exec without pnpm prefix (1.31.9)", () => {
+		it("`pnpm wt <slug> -- <bin> <args>` exec's the binary directly, no pnpm prefix", () => {
+			// Use `echo` (always in PATH) as the raw binary. If the pnpm-prefix
+			// path were taken, the stub would emit `STUB_PNPM ...` and the args
+			// would carry --env-file artifacts. With the -- separator, echo
+			// runs directly with its full arg list intact.
+			const r = run(
+				WT_SCRIPT,
+				fixture.workbenchDir,
+				["alpha", "--", "echo", "raw-args", "--env-file", ".env.local", "up"],
+				{ PATH: pnpmStubPath(stubBin) },
+			);
+			expect(r.code, r.stderr).toBe(0);
+			// Header line shows the command without pnpm prefix
+			expect(r.stdout).toContain("[alpha] echo raw-args --env-file .env.local up");
+			expect(r.stdout).not.toContain("[alpha] pnpm");
+			// echo prints its args verbatim — proves --env-file wasn't consumed
+			expect(r.stdout).toContain("raw-args --env-file .env.local up");
+			// And NOT the pnpm-stub output
+			expect(r.stdout).not.toContain("STUB_PNPM");
+		});
+
+		it("`pnpm wt <slug> --` (separator with no command) errors with usage", () => {
+			const r = run(WT_SCRIPT, fixture.workbenchDir, ["alpha", "--"], {
+				PATH: pnpmStubPath(stubBin),
+			});
+			expect(r.code).not.toBe(0);
+			expect(r.stderr).toMatch(/'--' specified but no command followed/);
+		});
+
+		it(":<app> + -- separator runs raw exec in apps/<app>/", () => {
+			mkdirSync(join(fixture.workbenchDir, "alpha", "apps", "web"), {
+				recursive: true,
+			});
+			writeFileSync(
+				join(fixture.workbenchDir, "alpha", "apps", "web", "package.json"),
+				JSON.stringify({ name: "web", version: "0.0.0" }),
+			);
+			const r = run(
+				WT_SCRIPT,
+				fixture.workbenchDir,
+				["alpha:web", "--", "echo", "from-app"],
+				{ PATH: pnpmStubPath(stubBin) },
+			);
+			expect(r.code, r.stderr).toBe(0);
+			expect(r.stdout).toContain("[alpha/apps/web] echo from-app");
+			expect(r.stdout).not.toContain("[alpha/apps/web] pnpm");
+			expect(r.stdout).toContain("from-app");
+		});
+
+		it("backwards compat: no -- still uses pnpm prefix", () => {
+			const r = run(WT_SCRIPT, fixture.workbenchDir, ["alpha", "dev"], {
+				PATH: pnpmStubPath(stubBin),
+			});
+			expect(r.code, r.stderr).toBe(0);
+			expect(r.stdout).toContain("[alpha] pnpm dev");
+			expect(r.stdout).toContain("STUB_PNPM");
+		});
+	});
 });
 
 describe("wt-pm2.sh argument parsing (T7 scaffold)", () => {
