@@ -22,11 +22,14 @@ import { execSync, spawn } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveStateAndGitPaths } from "./_hook-paths.js";
 
-// System log — writes to .indusk/eval/system.log for full visibility into eval lifecycle
-function syslog(projectRoot, msg) {
+// System log — writes to .indusk/eval/system.log under the InDusk state path.
+// In workbench mode this lands at the workbench root (where .indusk/ lives),
+// NOT at the wrapped repo's path. See `_hook-paths.js` for the rationale.
+function syslog(statePath, msg) {
 	try {
-		const logDir = resolve(projectRoot || ".", ".indusk", "eval");
+		const logDir = resolve(statePath || ".", ".indusk", "eval");
 		mkdirSync(logDir, { recursive: true });
 		appendFileSync(resolve(logDir, "system.log"), `${new Date().toISOString()} ${msg}\n`);
 	} catch {
@@ -46,11 +49,11 @@ function parseSourceArg(argv) {
 const cliSource = parseSourceArg(process.argv);
 let cwd;
 let command = "";
+let exitCode = 0;
 
 if (cliSource !== null) {
 	// CLI mode — no stdin, no git commit filter
 	cwd = process.cwd();
-	syslog(cwd, `cli invocation — source: ${cliSource}`);
 } else {
 	// Hook mode — read event from stdin
 	let input = "";
@@ -60,11 +63,29 @@ if (cliSource !== null) {
 
 	const event = JSON.parse(input);
 	const toolInput = event.tool_input ?? {};
-	const toolResponse = event.tool_response ?? {};
 	command = toolInput.command ?? "";
 	cwd = event.cwd ?? process.cwd();
+	exitCode = event.tool_response?.exit_code ?? 0;
+}
 
-	syslog(cwd, `hook fired — tool: ${event.tool_name}, command: ${command.slice(0, 100)}`);
+// Workbench-aware path resolution (1.31.7). statePath is where `.indusk/`
+// lives — for state operations (config, system.log, results.log, highlights).
+// gitPath is the git repo root — for git operations (rev-parse HEAD, etc.).
+// In single-repo mode they're the same; in workbench mode statePath is the
+// workbench root and gitPath is the wrapped repo (or worktree).
+//
+// Resolve EARLY (before any syslog) so every subsequent log line writes
+// under the InDusk state path, not the wrapped-repo cwd. Pre-1.31.7, the
+// early syslog calls used raw `cwd` and silently created stray `.indusk/`
+// directories inside wrapped repos — exactly the "no lingering app-level
+// state" pattern this plan is fixing.
+const { statePath: resolvedStatePath, gitPath } = resolveStateAndGitPaths(cwd);
+const statePath = resolvedStatePath ?? cwd;
+
+if (cliSource !== null) {
+	syslog(statePath, `cli invocation — source: ${cliSource}`);
+} else {
+	syslog(statePath, `hook fired — tool: Bash, command: ${command.slice(0, 100)}`);
 
 	// Fast path: skip failed bash commands. PostToolUse hooks fire regardless
 	// of the underlying command's exit code, so a `git commit` that fails
@@ -74,9 +95,8 @@ if (cliSource !== null) {
 	// (Claude Code's hook event shape) and skip when non-zero. Treats missing
 	// exit_code as 0 (success) — preserves prior behavior on hook events that
 	// don't carry the field.
-	const exitCode = toolResponse.exit_code ?? 0;
 	if (exitCode !== 0) {
-		syslog(cwd, `skip — bash command failed (exit_code=${exitCode})`);
+		syslog(statePath, `skip — bash command failed (exit_code=${exitCode})`);
 		process.exit(0);
 	}
 
@@ -91,7 +111,7 @@ if (cliSource !== null) {
 	// `git commit-tree` fire the hook.
 	const TRIGGER_RE = /\bgit commit(?=$|\s|;|&|\|)/;
 	if (!TRIGGER_RE.test(command)) {
-		syslog(cwd, "skip — no git commit in command");
+		syslog(statePath, "skip — no git commit in command");
 		process.exit(0);
 	}
 }
@@ -99,24 +119,10 @@ if (cliSource !== null) {
 const source = cliSource ?? "commit";
 
 /**
- * Find the project root by walking up looking for .indusk/ or .claude/.
- */
-function findProjectRoot(startDir) {
-	let dir = startDir;
-	for (let i = 0; i < 10; i++) {
-		if (existsSync(`${dir}/.indusk`) || existsSync(`${dir}/.claude`)) return dir;
-		const parent = resolve(dir, "..");
-		if (parent === dir) break;
-		dir = parent;
-	}
-	return startDir;
-}
-
-/**
  * Read eval config from .indusk/config.json.
  */
-function readEvalConfig(projectRoot) {
-	const configPath = `${projectRoot}/.indusk/config.json`;
+function readEvalConfig(statePath) {
+	const configPath = `${statePath}/.indusk/config.json`;
 	if (!existsSync(configPath)) return { enabled: true, endpoint: null };
 	try {
 		const config = JSON.parse(readFileSync(configPath, "utf-8"));
@@ -129,33 +135,46 @@ function readEvalConfig(projectRoot) {
 	}
 }
 
-const projectRoot = findProjectRoot(cwd);
-const evalConfig = readEvalConfig(projectRoot);
+// statePath + gitPath were resolved earlier (above) before any syslog
+// calls — see the workbench-aware path resolution block.
+const evalConfig = readEvalConfig(statePath);
 
-syslog(projectRoot, `projectRoot: ${projectRoot}, eval.enabled: ${evalConfig.enabled}`);
+syslog(
+	statePath,
+	`statePath: ${statePath}, gitPath: ${gitPath ?? "(none)"}, eval.enabled: ${evalConfig.enabled}`,
+);
 
 // Check if eval is disabled
 if (!evalConfig.enabled) {
-	syslog(projectRoot, "skip — eval disabled in config");
+	syslog(statePath, "skip — eval disabled in config");
 	process.exit(0);
 }
 
-// Get the current commit ID. git-only as of 1.31.0 (git-only-substrate
-// Phase 2). Mirrors `apps/indusk-mcp/src/lib/scm/index.ts:getCurrentChangeId`.
+// Get the current commit ID. Runs against gitPath, not statePath — in
+// workbench mode the two differ (statePath = workbench root, NOT a git repo;
+// gitPath = wrapped repo or worktree). Pre-1.31.7 ran against statePath
+// and bailed on every commit in workbench-shaped projects.
 let changeId;
-try {
-	changeId = execSync("git rev-parse --short HEAD", {
-		cwd: projectRoot,
-		encoding: "utf8",
-		timeout: 5000,
-		stdio: ["ignore", "pipe", "ignore"],
-	}).trim();
-} catch {
-	// git failed — skip eval silently. No commit ID means we have
-	// nothing meaningful to evaluate against.
+if (gitPath) {
+	try {
+		changeId = execSync("git rev-parse --short HEAD", {
+			cwd: gitPath,
+			encoding: "utf8",
+			timeout: 5000,
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
+	} catch {
+		// git failed — skip eval silently. No commit ID means we have
+		// nothing meaningful to evaluate against.
+	}
 }
 if (!changeId) {
-	syslog(projectRoot, "skip — no git commit ID available");
+	syslog(
+		statePath,
+		gitPath
+			? "skip — no git commit ID available"
+			: `skip — no git repo at cwd (workbench-mode state path: ${statePath})`,
+	);
 	process.exit(0);
 }
 
@@ -222,18 +241,18 @@ const candidates = [
 ];
 let evaluatorRunnerPath = null;
 for (const c of candidates) {
-	syslog(projectRoot, `candidate: ${c} — ${existsSync(c) ? "found" : "missing"}`);
+	syslog(statePath, `candidate: ${c} — ${existsSync(c) ? "found" : "missing"}`);
 	if (existsSync(c)) {
 		evaluatorRunnerPath = c;
 		break;
 	}
 }
-syslog(projectRoot, `evaluatorRunnerPath: ${evaluatorRunnerPath ?? "NOT FOUND"}`);
+syslog(statePath, `evaluatorRunnerPath: ${evaluatorRunnerPath ?? "NOT FOUND"}`);
 
 if (!evaluatorRunnerPath) {
 	// Can't find the package — log error and exit
 	const { mkdirSync, appendFileSync } = await import("node:fs");
-	const logPath = resolve(projectRoot, ".indusk", "eval", "results.log");
+	const logPath = resolve(statePath, ".indusk", "eval", "results.log");
 	mkdirSync(dirname(logPath), { recursive: true });
 	const entry = JSON.stringify({
 		version: 1,
@@ -253,7 +272,7 @@ const findingsPath = evaluatorRunnerPath.replace("evaluator-runner.js", "finding
 if (existsSync(findingsPath)) {
 	try {
 		const { getUnresolvedFindings } = await import(findingsPath);
-		const unresolved = getUnresolvedFindings(projectRoot);
+		const unresolved = getUnresolvedFindings(statePath);
 		if (unresolved.length > 0) {
 			const lines = unresolved.map(
 				(f) => `  [${f.severity}] ${f.questionId}: ${f.finding} (change ${f.changeId.slice(0, 8)})`,
@@ -278,11 +297,11 @@ const useModule = existsSync(persistentEvaluatorPath)
 const useFunction = existsSync(persistentEvaluatorPath) ? "runPersistentEval" : "runEvaluatorSync";
 
 syslog(
-	projectRoot,
+	statePath,
 	`spawning evaluator — module: ${useModule}, function: ${useFunction}, changeId: ${changeId}`,
 );
 
-const syslogPath = resolve(projectRoot, ".indusk", "eval", "system.log");
+const syslogPath = resolve(statePath, ".indusk", "eval", "system.log");
 // NOTE: this inline script runs with --input-type=module (see spawn below).
 // ESM scope — use static imports from node: specifiers only. CJS module
 // resolution throws ReferenceError in ESM scope at parse, and stdio:"ignore"
@@ -302,7 +321,7 @@ function syslog(msg) {
 // failure is never silent again.
 function writeErrorResult(message) {
   try {
-    const logPath = join(${JSON.stringify(projectRoot)}, ".indusk", "eval", "results.log");
+    const logPath = join(${JSON.stringify(statePath)}, ".indusk", "eval", "results.log");
     mkdirSync(dirname(logPath), { recursive: true });
     const entry = JSON.stringify({
       version: 1,
@@ -330,7 +349,7 @@ import("${useModule}")
   .then(m => {
     syslog("evaluator module loaded — calling ${useFunction}");
     return m.${useFunction}({
-      projectRoot: ${JSON.stringify(projectRoot)},
+      statePath: ${JSON.stringify(statePath)},
       changeId: ${JSON.stringify(changeId)},
       transcriptPath: ${JSON.stringify(transcriptPath)},
       mode: "eval",
@@ -349,8 +368,14 @@ import("${useModule}")
   });
 `;
 
+// Spawn cwd: gitPath when available — the inner claude --print process
+// inherits this cwd, and the rubric's diff-fetch step issues `git show
+// ${changeId}` which needs to run inside the git repo. In single-repo mode
+// gitPath === statePath so this is the same as before. In workbench mode
+// the runner inherits the wrapped repo's cwd so git ops work; state file
+// access uses the absolute `statePath` baked into the inline script.
 const child = spawn("node", ["--input-type=module", "-e", evaluatorScript], {
-	cwd: projectRoot,
+	cwd: gitPath ?? statePath,
 	stdio: "ignore",
 	detached: true,
 	env: { ...process.env, INDUSK_EVAL_SOURCE: source },
@@ -358,7 +383,7 @@ const child = spawn("node", ["--input-type=module", "-e", evaluatorScript], {
 
 child.unref();
 
-syslog(projectRoot, `evaluator spawned — source: ${source}, pid: ${child.pid}`);
+syslog(statePath, `evaluator spawned — source: ${source}, pid: ${child.pid}`);
 
 if (cliSource !== null) {
 	// CLI mode — write a brief notice to stderr and exit
