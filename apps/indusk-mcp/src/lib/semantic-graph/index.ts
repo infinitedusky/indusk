@@ -1,18 +1,15 @@
 /**
  * Semantic graph — event-sourced bridge between CGC (structural) and
- * Graphiti (semantic overlay). See `.indusk/planning/cgc-graphiti-bridge/`
- * for the brief, ADR, and impl.
+ * Graphiti (semantic overlay). See `.indusk/planning/archive/cgc-graphiti-bridge/`
+ * for the brief, ADR, and impl. git-only as of 1.31.0 (git-only-substrate).
  */
 
-// SCM-aware change-ID and ancestry helpers. The jj-only versions still live
-// in `./jj.ts` as the jj-branch implementation; consumers that want
-// rebase-survivable identity should reach for them directly. Public surface
-// goes through `lib/scm`. `NotAJjRepoError` is no longer re-exported — it's
-// an internal jj-mode detail.
+// Change-ID and ancestry helpers (git short SHA based). The SCM abstraction
+// went away in `git-only-substrate` Phase 4 — `lib/scm/index.ts` is the
+// single source.
 export { getCurrentChangeId, getReachableChangeIds } from "../scm/index.js";
 export type { AdapterRecord, SemanticGraphAdapter } from "./adapter.js";
 export * from "./events.js";
-export { isChangeReachable } from "./jj.js";
 export { type LogReaderOptions, readAllEvents, readEvents } from "./log-reader.js";
 export { LogWriter } from "./log-writer.js";
 export * from "./paths.js";

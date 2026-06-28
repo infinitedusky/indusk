@@ -42,6 +42,34 @@ Test surfaces:
 
 CLAUDE.md "Skills are SCM-aware" gotcha rewritten as "All skills assume git as the only SCM as of 1.31.0".
 
-## Phase 4 — SCM abstraction rip-out (pending)
+## Phase 4 — SCM abstraction rip-out
+
+The SCM abstraction layer is gone. Deletions:
+
+- **`apps/indusk-mcp/src/lib/semantic-graph/jj.ts`** + `jj.test.ts` — the jj-specific change-ID + ancestry helpers + `NotAJjRepoError`.
+- **`apps/indusk-mcp/src/lib/scm/detect.ts`** + `detect.test.ts` — `detectScm`, `getScm`, `NoScmDetectedError`.
+- **`apps/indusk-mcp/src/lib/scm/index.test.ts`** — tested the SCM-branching behavior that no longer exists.
+- **`apps/indusk-mcp/src/__tests__/scm-init-detection.test.ts`** — asserted `indusk init` writes `scm: "git"` / `scm: "jj"`; no longer applicable since the field isn't written.
+- **`apps/indusk-mcp/src/__tests__/init-deferred-scm-warning.test.ts`** — asserted the deferred-SCM stderr warning; the warning was deleted in this phase.
+
+Collapse:
+- **`apps/indusk-mcp/src/lib/scm/index.ts`**: shrank from ~85 to ~60 lines. `getCurrentChangeId` is now a single `git rev-parse --short HEAD` call; `getReachableChangeIds` is a single `git log --format=%h HEAD` walk. No SCM branching. `getJjReachable` re-export and the `import` from `semantic-graph/jj.js` are gone.
+- **`apps/indusk-mcp/src/lib/semantic-graph/index.ts`**: removed `isChangeReachable` re-export from `jj.ts`; updated module doc comment.
+- **`apps/indusk-mcp/src/bin/commands/init.ts`**: removed `detectScm()` import + try/catch + `scm` field write + deferred-SCM stderr warning block. New projects no longer carry the `scm` field.
+- **`apps/indusk-mcp/src/bin/commands/update.ts`**: replaced the migration block that called `detectScm()` + wrote the field with a one-line stderr nudge on existing `scm: "jj"` entries: `scm field no longer used; safe to remove from .indusk/config.json`. The config file is NOT modified — removing the field is the user's call.
+- **`apps/indusk-mcp/src/tools/system-tools.ts`**: removed `getScm` import; `get_project_info` MCP tool no longer returns `scm` in its response.
+- **`apps/indusk-mcp/src/lib/config.ts`**: kept the `scm?: "jj" | "git"` field on `IndConfig` (so config-readers don't reject existing `scm: "jj"` entries) but marked `@deprecated`; doc comment rewritten.
+
+Lib test updates:
+- **`graphiti-log-wrapper.test.ts`** + **`sync-engine.test.ts`**: replaced `setJjRunner` / `resetJjRunner` mocking with a real `git init` + empty initial commit in the tmp dir, so `getCurrentChangeId` (which now calls `git rev-parse`) returns a valid short SHA. The change-ID-tag assertion is rewritten to compute the expected SHA via `git rev-parse` rather than asserting a fixed mock value.
+
+New test:
+- **`apps/indusk-mcp/src/__tests__/scm-rip-out-grep.test.ts`** (T6) — globs every non-test `.ts` in `apps/indusk-mcp/src/` and asserts none import `getScm`, none import from `lib/scm/detect`, none import from `semantic-graph/jj`, none reference `NotAJjRepoError` or `getJjReachable`. Also asserts the two deleted files don't exist.
+
+CLAUDE.md updates:
+- "`scm` field in `.indusk/config.json` is the runtime source of truth" Convention rewritten as "`scm` field is no longer used as of 1.31.0".
+- "`getScm()` defaults to `"jj"` when the config field is missing" Known Gotcha struck through with a note that the function was deleted.
+
+## Phase 5 — Migration + docs + version bump (pending)
 
 ## Phase 5 — Migration + docs + version bump (pending)

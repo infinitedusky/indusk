@@ -115,10 +115,10 @@ beforeEach(() => {
 	spawnSync("git", ["config", "user.name", "Test"], { cwd: testDir });
 	spawnSync("git", ["commit", "--allow-empty", "-q", "-m", "initial"], { cwd: testDir });
 
-	// Write .indusk/config.json with scm: "git" so getScm() returns "git".
-	// Without this, getScm() defaults to "jj" (the pre-1.31.0 default) and
-	// the captureWithLog path under test would not match production behavior
-	// on a real git project.
+	// Write a minimal .indusk/config.json. As of 1.31.0 the `scm` field is
+	// no longer read by InDusk (git-only-substrate Phase 4); the file is
+	// kept here only because some downstream callers (getProjectGroupId etc)
+	// expect it to exist.
 	mkdirSync(join(testDir, ".indusk"), { recursive: true });
 	writeFileSync(
 		join(testDir, ".indusk/config.json"),

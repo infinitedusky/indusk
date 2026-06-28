@@ -1256,24 +1256,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	// not a recorded preference. Dawn (v2) will move this to a config-file-driven
 	// preference; until then, single-tool default.
 	const { writeConfig } = await import("../../lib/config.js");
-	const { detectScm, NoScmDetectedError } = await import("../../lib/scm/detect.js");
 	const linterTool = "biome";
 	const linterConfig = local ? ".indusk/biome.json" : "biome.json";
 	const testTool = detected.testRunner ?? "vitest";
 	const testConfig = local
 		? `.indusk/${testTool === "jest" ? "jest.config.js" : "vitest.config.ts"}`
 		: `${testTool}.config.${testTool === "jest" ? "js" : "ts"}`;
-	// SCM detection: try jj first (preserves historical default), fall back to git.
-	// If neither is present (bare tmpdir, project initialized before SCM choice
-	// is made), defer the field — the next `indusk update` will populate it once
-	// the user runs `git init` / `jj git init`.
-	let scm: "jj" | "git" | undefined;
-	try {
-		scm = await detectScm(projectRoot);
-	} catch (err) {
-		if (!(err instanceof NoScmDetectedError)) throw err;
-		scm = undefined;
-	}
+	// git is the only SCM as of 1.31.0 (git-only-substrate Phase 4) —
+	// no SCM detection or scm field write needed.
 	const config = {
 		mode: local ? ("local" as const) : ("full" as const),
 		verify: {
@@ -1288,7 +1278,6 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		agents: {
 			stale_ttl_minutes: 60,
 		},
-		...(scm ? { scm } : {}),
 		...(workbench && options.wrappedRepo && options.siblingParent
 			? {
 					worktree: {
@@ -1311,23 +1300,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		await extensionsEnable(projectRoot, ["worktree"]);
 	}
 	console.info(`\n[Config]`);
-	console.info(
-		`  create: .indusk/config.json (mode: ${config.mode}, scm: ${scm ?? "deferred — run 'indusk update' after git/jj init"})`,
-	);
-
-	// Loud stderr warning when scm is deferred. The inline `(scm: deferred ...)`
-	// note above lands on stdout in the middle of the [Config] block — easy
-	// to miss when scrolling init output. A separate stderr warning gives
-	// the user a recognizable alert with the recovery command spelled out.
-	if (!scm) {
-		process.stderr.write(
-			"\n⚠ WARNING: scm field deferred — neither jj nor git detected at the project root.\n" +
-				"  All SCM-coupled features (eval prompts, semantic graph, baseline CLI) will\n" +
-				"  default to jj until the field is populated. To fix:\n" +
-				"    1. Initialize your SCM: `git init` or `jj git init`\n" +
-				"    2. Run `indusk update` to detect and write the scm field.\n\n",
-		);
-	}
+	console.info(`  create: .indusk/config.json (mode: ${config.mode})`);
 
 	// Create initial handoff so /catchup runs full orientation on first session
 	const handoffPath = join(projectRoot, ".claude/handoff.md");
