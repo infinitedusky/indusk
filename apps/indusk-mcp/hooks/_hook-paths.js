@@ -30,8 +30,17 @@ import { existsSync, realpathSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 /**
- * Walk up from `startDir` looking for a directory containing `.indusk/`. Returns
- * the realpath of the first match, or null if no match before filesystem root.
+ * Walk up from `startDir` looking for the InDusk state path — a directory
+ * containing either `.indusk/` or `.claude/`. Both markers count: `.indusk/`
+ * is the canonical InDusk substrate; `.claude/` is the Claude Code project
+ * config dir, present even on InDusk-less projects. Hooks like check-catchup
+ * need to resolve to the latter on non-InDusk projects.
+ *
+ * In workbench mode, BOTH live at the workbench root — finding either gets
+ * the correct path.
+ *
+ * Returns the realpath of the first match, or null if no match before
+ * filesystem root.
  *
  * @param {string} startDir
  * @returns {string | null}
@@ -41,7 +50,10 @@ function findStatePath(startDir) {
 	// Hard cap to defend against pathological symlink loops. 40 ancestors is
 	// vastly more than any real filesystem path.
 	for (let i = 0; i < 40; i++) {
-		if (existsSync(resolve(current, ".indusk"))) {
+		if (
+			existsSync(resolve(current, ".indusk")) ||
+			existsSync(resolve(current, ".claude"))
+		) {
 			try {
 				return realpathSync(current);
 			} catch {

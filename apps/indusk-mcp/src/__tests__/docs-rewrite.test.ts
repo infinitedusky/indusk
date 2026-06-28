@@ -34,9 +34,11 @@ describe("docs rewrite — git-only framing (T12)", () => {
 		expect(jjOccurrences).toBeGreaterThan(0);
 	});
 
-	it("supersession banner is at the top of git-or-jj-substrate/brief.md", () => {
+	it("supersession banner is at the top of git-or-jj-substrate/brief.md (now archived)", () => {
+		// The plan was retrospected + archived 2026-06-28 — moved from
+		// .indusk/planning/git-or-jj-substrate/ to .indusk/planning/archive/.
 		const content = readFileSync(
-			join(REPO_ROOT, ".indusk/planning/git-or-jj-substrate/brief.md"),
+			join(REPO_ROOT, ".indusk/planning/archive/git-or-jj-substrate/brief.md"),
 			"utf-8",
 		);
 		// Banner appears in the first ~600 chars

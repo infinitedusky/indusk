@@ -15,7 +15,8 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname } from "node:path";
+import { resolveStateAndGitPaths } from "./_hook-paths.js";
 
 // Read hook input from stdin
 let input = "";
@@ -33,38 +34,23 @@ if (!filePath.endsWith("/impl.md") && !filePath.endsWith("\\impl.md")) {
 }
 
 /**
- * Find the project root by walking up from a starting directory looking for
- * a .indusk/ or .claude/ directory. Falls back to startDir if none found.
- * Mirrors the pattern used in check-catchup.js.
- */
-function findProjectRoot(startDir) {
-	let dir = startDir;
-	for (let i = 0; i < 10; i++) {
-		if (existsSync(`${dir}/.indusk`) || existsSync(`${dir}/.claude`)) return dir;
-		const parent = resolve(dir, "..");
-		if (parent === dir) break;
-		dir = parent;
-	}
-	return startDir;
-}
-
-/**
- * Resolve the project root for the file being edited. Prefer walking up from
+ * Resolve the state path for the file being edited. Prefer walking up from
  * the file's own directory — the file being edited is always inside the
  * project, and its directory chain reliably contains `.indusk/` even when
  * `event.cwd` is set to something unrelated by the calling environment
  * (observed from the Claude Code VS Code extension on impl edits). Falls
  * back to `event.cwd` and finally `process.cwd()`.
+ *
+ * Workbench-aware (1.31.7): uses the shared `resolveStateAndGitPaths` helper.
+ * This hook only needs statePath (no git operations), so gitPath is discarded.
  */
-function resolveProjectRoot(filePath, eventCwd) {
+function resolveStatePath(filePath, eventCwd) {
 	if (filePath) {
-		const fileDir = resolve(filePath, "..");
-		const fromFile = findProjectRoot(fileDir);
-		if (existsSync(`${fromFile}/.indusk`) || existsSync(`${fromFile}/.claude`)) {
-			return fromFile;
-		}
+		const { statePath } = resolveStateAndGitPaths(dirname(filePath));
+		if (statePath) return statePath;
 	}
-	return findProjectRoot(eventCwd ?? process.cwd());
+	const { statePath } = resolveStateAndGitPaths(eventCwd ?? process.cwd());
+	return statePath ?? eventCwd ?? process.cwd();
 }
 
 /**
@@ -73,8 +59,8 @@ function resolveProjectRoot(filePath, eventCwd) {
  * unset, or if otel.role is "service" — matches shouldEmitOtelGate() in
  * apps/indusk-mcp/src/lib/config.ts exactly.
  */
-function shouldEmitOtelGate(projectRoot) {
-	const configPath = `${projectRoot}/.indusk/config.json`;
+function shouldEmitOtelGate(statePath) {
+	const configPath = `${statePath}/.indusk/config.json`;
 	if (!existsSync(configPath)) return true;
 	try {
 		const config = JSON.parse(readFileSync(configPath, "utf-8"));
@@ -85,8 +71,8 @@ function shouldEmitOtelGate(projectRoot) {
 	}
 }
 
-const projectRoot = resolveProjectRoot(filePath, event.cwd);
-const otelGateEnabled = shouldEmitOtelGate(projectRoot);
+const statePath = resolveStatePath(filePath, event.cwd);
+const otelGateEnabled = shouldEmitOtelGate(statePath);
 
 // Check for skip-gates escape hatch
 const newContent = toolInput.new_string ?? toolInput.content ?? "";
