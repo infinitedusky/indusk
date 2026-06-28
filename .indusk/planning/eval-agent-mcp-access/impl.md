@@ -1,7 +1,7 @@
 ---
 title: "Eval Agent MCP Access"
 date: 2026-04-19
-status: in-progress
+status: completed
 workflow: bugfix
 trajectory: required
 rationale: required
