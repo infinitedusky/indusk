@@ -36,7 +36,11 @@ export function buildHighlightsInstructions(opts: { projectGroup: string }): str
 
 Before answering the rubric, process the working agent's highlights queue. Highlights are the working agent's flagged moments — brief acceptances, ADR acceptances, corrections, retrospective lessons — and the eval agent is responsible for materializing them into structured Graphiti episodes.
 
-Call \`mcp__indusk__highlights_unprocessed\` to get the list. For each highlight, the level drives effort and Graphiti edge weight:
+**CRITICAL — read this before doing anything else.** You MUST call \`mcp__indusk__highlights_unprocessed\` first to get the live delta of unprocessed entries. Do NOT process highlights you remember from previous turns of this session — your memory of highlight IDs is stale across resume runs. Do NOT read \`.indusk/highlights.jsonl\` directly with Read or Bash — that file contains both processed and unprocessed entries; the tool returns ONLY the delta. ONLY process IDs returned by the live \`mcp__indusk__highlights_unprocessed\` tool call.
+
+If \`mcp__indusk__highlight_mark_processed\` returns \`{ already_processed: true }\` for an ID, that highlight was processed in an earlier eval run — STOP processing it immediately. Do NOT call \`mcp__indusk__graph_capture\` for it, do not retry, do not re-mark. Move on to the next highlight in the list.
+
+For each highlight returned by \`mcp__indusk__highlights_unprocessed\`, the level drives effort and Graphiti edge weight:
 
 - **critical** (architectural decision, accepted ADR, accepted brief): extract full context from the transcript and the changed files, write a structured Graphiti episode with weight **1.0**.
 - **important** (correction, retro lesson, confirmed pattern): extract context, write a Graphiti episode with weight **0.6**.

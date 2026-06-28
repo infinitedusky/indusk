@@ -17,6 +17,14 @@ export interface ProcessedMark {
 	processedAt: string;
 	action: ProcessedAction;
 	detail?: string;
+	/**
+	 * Set to `true` when `markProcessed` was called on an ID already
+	 * present in the processed log. The append was REJECTED to prevent
+	 * duplicate Graphiti episodes downstream. Phase 6 dedup fix (1.31.2).
+	 */
+	already_processed?: boolean;
+	/** Timestamp of the original processed mark, surfaced when `already_processed: true`. */
+	original_processedAt?: string;
 }
 
 export interface WriteHighlightInput {
@@ -149,9 +157,19 @@ export function readUnprocessedHighlights(projectRoot: string): Highlight[] {
  * either writing a structured Graphiti episode (`wrote-episode`) or
  * deciding the highlight doesn't warrant a new episode (`skipped`).
  *
- * The operation is idempotent by design — appending a processed mark
- * for an already-processed ID just adds a duplicate entry, and
- * `readUnprocessedHighlights` uses a Set so duplicates don't matter.
+ * **Write-time dedup (Phase 6 fix, 1.31.2)**: previously this function
+ * was idempotent-append — duplicate calls for the same ID would append
+ * duplicate lines, and `readUnprocessedHighlights` deduped via Set at
+ * read time. T4's runtime audit (2026-06-28) showed the eval agent
+ * sometimes processes highlights from session memory rather than calling
+ * `highlights_unprocessed`, producing duplicate `graph_capture` writes to
+ * Graphiti. The fix: check the processed log first; if the ID is present,
+ * return `{ already_processed: true, original_processedAt }` WITHOUT
+ * appending. The agent's tool result signals the redundancy so it can
+ * skip the duplicate `graph_capture` call.
+ *
+ * `readUnprocessedHighlights` still uses a Set on read — defense against
+ * historic duplicates already in the file from pre-1.31.2 runs.
  */
 export function markProcessed(
 	projectRoot: string,
@@ -160,6 +178,19 @@ export function markProcessed(
 	detail?: string,
 ): ProcessedMark {
 	ensureInduskDir(projectRoot);
+
+	const existing = readAllProcessed(projectRoot).find((m) => m.id === id);
+	if (existing) {
+		return {
+			id,
+			processedAt: new Date().toISOString(),
+			action,
+			detail,
+			already_processed: true,
+			original_processedAt: existing.processedAt,
+		};
+	}
+
 	const mark: ProcessedMark = {
 		id,
 		processedAt: new Date().toISOString(),

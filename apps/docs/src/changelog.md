@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.31.2] — 2026-06-28
+
+### Fixed (eval-agent-mcp-access Phase 6 — highlights dedup)
+- **`markProcessed` rejects duplicate IDs at write time (1.31.2)** — T4's runtime audit of the 1.31.1 fix surfaced a gap: across 4 successful post-upgrade evals on dusk, the eval agent called `mcp__indusk__highlights_unprocessed` in only 3 of them. The 4th eval processed highlights from session memory instead, producing 43 duplicate `graph_capture` writes for the same 52 unique highlight IDs (`highlights-processed.jsonl` grew to 98 lines for 52 unique IDs). The dedup logic in `readUnprocessedHighlights` was correct (uses a Set on processed IDs) but `markProcessed` was designed as idempotent-append — duplicate writes silently accepted, no signal back to the agent. **Fix**: two-pronged. (a) Strengthened the Step 4 prompt instruction in `buildHighlightsInstructions` with a **CRITICAL** preamble: *"You MUST call `mcp__indusk__highlights_unprocessed` first. Do NOT process highlights from session memory. Do NOT read `.indusk/highlights.jsonl` directly. ONLY process IDs returned by the tool."* Plus an explicit instruction for the `already_processed: true` response: *"STOP processing it immediately. Do NOT call `mcp__indusk__graph_capture`."* (b) Changed `markProcessed` from idempotent-append to write-time rejection: if the ID is already in the processed log, return `{ already_processed: true, original_processedAt }` without appending. The agent's tool result now signals the redundancy so downstream `graph_capture` calls don't happen for already-done IDs. Regression: 3 new vitest cases in `apps/indusk-mcp/src/lib/highlights/highlights.test.ts` covering the new contract; T8 source-grep in the eval-resume-prompt test file pins the "MUST call" + "don't process from memory" + "already_processed" instructions in the helper body.
+
 ## [1.31.1] — 2026-06-28
 
 ### Fixed

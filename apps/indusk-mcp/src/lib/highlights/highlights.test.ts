@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -139,5 +139,61 @@ describe("T4: highlight ID format is h-{YYYYMMDD}-{seq} with seq reset daily", (
 		const h = writeHighlight(projectRoot, { tag: "a", note: "1", level: "note" });
 		const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 		expect(h.id.slice(2, 10)).toBe(today);
+	});
+});
+
+describe("T9: markProcessed rejects duplicate IDs at write time (Phase 6 dedup fix)", () => {
+	it("returns { already_processed: true } on the second call AND does NOT append a second line", () => {
+		const h = writeHighlight(projectRoot, { tag: "x", note: "1", level: "note" });
+
+		const first = markProcessed(projectRoot, h.id, "wrote-episode", "episode-1");
+		// First call writes normally — no already_processed flag (or it's false)
+		expect(first.id).toBe(h.id);
+		expect(
+			(first as { already_processed?: boolean }).already_processed,
+			"first call must NOT carry already_processed: true",
+		).toBeFalsy();
+
+		const processedPath = join(induskDir, "highlights-processed.jsonl");
+		const linesAfterFirst = readFileSync(processedPath, "utf-8")
+			.split("\n")
+			.filter((l) => l.length > 0).length;
+		expect(linesAfterFirst).toBe(1);
+
+		const second = markProcessed(projectRoot, h.id, "wrote-episode", "episode-2-attempted");
+		// Second call returns the already_processed signal
+		expect((second as { already_processed?: boolean }).already_processed).toBe(true);
+
+		const linesAfterSecond = readFileSync(processedPath, "utf-8")
+			.split("\n")
+			.filter((l) => l.length > 0).length;
+		expect(
+			linesAfterSecond,
+			"file must NOT grow on duplicate markProcessed — write rejected",
+		).toBe(1);
+	});
+
+	it("the original processedAt timestamp is surfaced when already_processed: true", () => {
+		const h = writeHighlight(projectRoot, { tag: "y", note: "1", level: "important" });
+
+		const first = markProcessed(projectRoot, h.id, "wrote-episode");
+		const second = markProcessed(projectRoot, h.id, "wrote-episode");
+
+		expect(
+			(second as { original_processedAt?: string }).original_processedAt,
+			"second call should report the original processedAt for context",
+		).toBe(first.processedAt);
+	});
+
+	it("readUnprocessedHighlights still works correctly when no duplicates exist (regression)", () => {
+		const a = writeHighlight(projectRoot, { tag: "z", note: "a", level: "note" });
+		const b = writeHighlight(projectRoot, { tag: "z", note: "b", level: "note" });
+
+		// Mark only one
+		markProcessed(projectRoot, a.id, "wrote-episode");
+
+		const unprocessed = readUnprocessedHighlights(projectRoot);
+		expect(unprocessed.length).toBe(1);
+		expect(unprocessed[0].id).toBe(b.id);
 	});
 });

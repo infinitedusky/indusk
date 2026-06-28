@@ -1,7 +1,7 @@
 ---
 title: "Eval Agent MCP Access"
 date: 2026-04-19
-status: completed
+status: in-progress
 workflow: bugfix
 trajectory: required
 rationale: required
@@ -39,6 +39,8 @@ Current state: every evaluator run logs `graphitiWrites: 0`; `.indusk/highlights
 | T5 | The resume prompt's commit-evaluation line does NOT contain the backwards-anchoring phrase "as before" — the wording was "answer the same evaluation questions as before" which, in a 197-turn persistent session where Step 4 was never previously provided, reads as "your last turns" and pulls the inner Claude back to the pre-fix pattern of skipping Step 4. The line is reworded to a present-tense direct instruction with no backwards reference. | Phase 0 | Phase 5 | passing |
 | T6 | The `buildHighlightsInstructions` helper text explicitly handles the case where `mcp__indusk__highlights_unprocessed` returns an empty list — currently the instruction only handles "unavailable" (tool not loaded), so after the backlog drains the inner Claude has undefined behavior on subsequent commits (could hallucinate highlights, loop, or smoothly skip). The fix adds one explicit sentence: "If the list is empty, log briefly and continue to the rubric." | Phase 0 | Phase 5 | passing |
 | T7 | Source-grep regression: `persistent-evaluator.ts` source contains BOTH `--mcp-config` AND `bypassPermissions` literal strings. These flags are load-bearing for the 1.23.x MCP-access fix; without them the inner Claude has no MCP tool surface and the entire highlights-processing path returns to the April-2026 failure mode. T3 pins the prompt shape but not the spawn flags. | Phase 0 | Phase 5 | passing |
+| T8 | The `buildHighlightsInstructions` helper text contains a "MUST call `mcp__indusk__highlights_unprocessed` first; do NOT process from memory or by reading `highlights.jsonl` directly" instruction — explicitly forbidding the failure mode T4's runtime audit surfaced (the inner Claude skipped the tool call ~25% of evals and processed from session memory, causing 43 duplicate Graphiti episodes for the same 52 unique highlight IDs). | Phase 0 | Phase 6 | passing |
+| T9 | Calling `markProcessed(projectRoot, id, action)` twice for the same ID returns `{ already_processed: true, original_processedAt: <ts> }` on the second call AND does NOT append a second line to `highlights-processed.jsonl`. The current behavior is idempotent-append-allowed (duplicates accepted, dedup at read time); the fix changes to idempotent-rejection at write time so the agent's tool result signals the redundancy and downstream `graph_capture` calls don't happen for already-done IDs. | Phase 0 | Phase 6 | passing |
 
 ## Checklist
 
@@ -125,6 +127,31 @@ Discovered 2026-06-27 during a digression while investigating why highlights sti
 
 #### Phase 5 Document
 - [x] 1.31.1 not yet published; the Phase 5 fixes ride along on 1.31.1 — no separate version bump. Changelog entry under `[1.31.1]` extended with a "Phase 5 falsification fixes" sub-section describing the three falsification-surfaced changes.
+
+### Phase 6: Dedup fix — prompt strengthens + markProcessed write-time guard
+
+**Goal**: prevent the inner Claude from re-processing highlights that have already been written to Graphiti. T4's runtime audit (2026-06-28) showed the eval agent called `highlights_unprocessed` in only 3 of 4 post-upgrade evals, processing highlights from session memory in the 4th — producing 43 duplicate `graph_capture` writes for the same 52 unique IDs (98 lines in `highlights-processed.jsonl` for 52 unique IDs). The dedup logic in `readUnprocessedHighlights` is correct (uses a Set on processed IDs), but `markProcessed` is documented as idempotent-append — duplicate writes are silently accepted, which doesn't signal the redundancy back to the agent.
+
+Belt-and-suspenders fix: (1) strengthen Step 4's prompt instruction to forbid memory-based processing, AND (2) change `markProcessed` to reject duplicates at write time and return an `already_processed: true` flag.
+
+- [x] **Prompt fix (T8)**: `buildHighlightsInstructions` helper now opens with a **CRITICAL** preamble forbidding memory-based processing and direct file reads. Added an explicit "if `already_processed: true`, STOP" paragraph immediately after, naming the failure mode T4's audit surfaced.
+- [x] **Tool guard (T9)**: `markProcessed` reads the processed log first via `readAllProcessed`. If `id` is present, returns `{ id, processedAt: <new ts>, action, detail, already_processed: true, original_processedAt: <ts of first mark> }` WITHOUT appending. Function signature updated; `ProcessedMark` interface gains `already_processed?: boolean` + `original_processedAt?: string`. Doc comment rewritten from idempotent-append → write-time rejection.
+- [x] **Tool result wiring**: the `highlight_mark_processed` MCP handler JSON-serializes the full `ProcessedMark` including the new fields via spread — inner Claude sees the flag in tool results without further plumbing.
+- [x] **Doc comment update**: `readUnprocessedHighlights` doc comment unchanged in spirit (Set-dedup still defensive); the lib-level comment block on `markProcessed` now describes the 1.31.2 write-time rejection behavior + cross-references the Phase 6 audit context.
+
+#### Phase 6 Verification
+- [x] T8 passes — `eval-resume-prompt-includes-highlights.test.ts` extended with a T8 case asserting the "MUST call" + "do NOT process from memory" + "highlights.jsonl" + "already_processed" instructions appear in the helper body
+- [x] T9 passes — `highlights.test.ts` extended with 3 cases: (1) second call returns `already_processed: true` + file does NOT grow, (2) `original_processedAt` carries the first-mark timestamp, (3) regression: `readUnprocessedHighlights` still correctly returns unprocessed entries when no duplicates exist
+- [x] Full suite passes — 665 of 676 from `apps/indusk-mcp/` (vs 661 pre-Phase-6; +4 new Phase 6 tests)
+- [x] T6 (Phase 5 empty-list assertion) re-greens after bumping its source-extraction regex span from 3000 → 6000 chars to accommodate the longer Phase 6 helper body
+
+#### Phase 6 Context
+- [x] CLAUDE.md "eval agent resume prompt must include Step 4" gotcha extended in this commit with the Phase 6 dedup contract (write-time guard + strengthened prompt).
+- [x] New CLAUDE.md Known Gotcha added: "`markProcessed` is no longer idempotent-append (1.31.2)" — describes the contract change and warns future callers not to rely on the old behavior.
+
+#### Phase 6 Document
+- [x] `apps/indusk-mcp/package.json` bumped from `1.31.1` to `1.31.2`.
+- [x] Changelog entry `[1.31.2]` describes the gap (T4 runtime audit found 43 duplicate Graphiti episodes), the two-pronged fix (prompt + tool guard), and the contract change for `markProcessed`.
 
 ## Files Affected
 

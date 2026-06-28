@@ -84,9 +84,10 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 	// smoothly skip. Pinning it removes the ambiguity.
 	it("T6: buildHighlightsInstructions explicitly handles the empty-list case", () => {
 		// Look for an instruction about an empty list / no highlights anywhere
-		// inside the helper body.
+		// inside the helper body. Bumped span to 6000 chars since Phase 6
+		// expanded the helper with the "CRITICAL — read this before" block.
 		const helperMatch = promptBuilderSource.match(
-			/export function buildHighlightsInstructions[\s\S]{0,3000}?^\}/m,
+			/export function buildHighlightsInstructions[\s\S]{0,6000}?^\}/m,
 		);
 		expect(helperMatch, "could not locate buildHighlightsInstructions body").not.toBeNull();
 		const helperBody = helperMatch?.[0] ?? "";
@@ -94,6 +95,28 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 		expect(helperBody).toMatch(
 			/empty list|no unprocessed highlights|\(no unprocessed highlights\)|returns an empty/i,
 		);
+	});
+
+	// T8 (Phase 6 dedup fix): the helper text must include a CRITICAL/MUST-call
+	// instruction forbidding the failure mode T4's runtime audit surfaced —
+	// the inner Claude sometimes processes highlights from session memory or
+	// by reading highlights.jsonl directly instead of calling the live
+	// `highlights_unprocessed` tool. The "MUST call" + "do NOT process from
+	// memory" + "if already_processed: true, stop" instructions need to be
+	// present in the helper body.
+	it("T8: buildHighlightsInstructions forbids memory-based processing and explains already_processed", () => {
+		const helperMatch = promptBuilderSource.match(
+			/export function buildHighlightsInstructions[\s\S]{0,6000}?^\}/m,
+		);
+		expect(helperMatch, "could not locate buildHighlightsInstructions body").not.toBeNull();
+		const helperBody = helperMatch?.[0] ?? "";
+		// Forbid memory-based processing
+		expect(helperBody).toMatch(/MUST call.*highlights_unprocessed|highlights_unprocessed.*first/i);
+		expect(helperBody).toMatch(/do NOT process.*from.*memory|never.*process.*memory|not.*memory/i);
+		// Mention that direct file reads are not allowed
+		expect(helperBody).toMatch(/highlights\.jsonl|do NOT read.*directly/i);
+		// Explain the already_processed signal
+		expect(helperBody).toMatch(/already_processed/);
 	});
 
 	// T7 (Phase 5 falsification, H16): source-grep regression for the
