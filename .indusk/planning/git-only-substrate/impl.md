@@ -1,7 +1,7 @@
 ---
 title: "git-only-substrate"
 date: 2026-06-27
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -63,9 +63,9 @@ The trajectory IDs below use a `T1..T13` numbering scheme. They map directly to 
 | T7 | `apps/indusk-mcp/skills/jj.md` does not exist on disk; `apps/indusk-mcp/skills/git.md` exists and contains no "if your project uses jj" framing. | Phase 0 | Phase 3 | passing |
 | T8 | The eval-trigger hook fires on `git commit` but not on `jj describe`, `jj split`, or any other jj subcommand. The trigger regex narrows from a dual-pattern matcher (matching `jj describe` OR `git commit`) to a git-only matcher (matching `git commit` only). | Phase 0 | Phase 2 | passing |
 | T9 | The eval agent's prompt's diff-fetch instruction says `git show ${id}` regardless of project; never `jj diff -r ${id}`. | Phase 0 | Phase 2 | passing |
-| T10 | Running `indusk update` on a project whose `.indusk/config.json` has `scm: "jj"` emits exactly one stderr nudge ("scm field no longer used; safe to remove from .indusk/config.json") and leaves the config file's contents byte-unchanged. | Phase 0 | Phase 5 | planned |
+| T10 | Running `indusk update` on a project whose `.indusk/config.json` has `scm: "jj"` emits exactly one stderr nudge ("scm field no longer used; safe to remove from .indusk/config.json") and leaves the config file's contents byte-unchanged. | Phase 0 | Phase 5 | passing |
 | T11 | `apps/indusk-mcp/skills/{work,highlight,eval-review}.md` contain no SCM-conditional "if jj... else git..." prose — every commit-cadence and diff-fetch reference is single-form. | Phase 0 | Phase 3 | passing |
-| T12 | `apps/docs/src/guide/scm.md` opens as a git workflow guide (no "choose your SCM" framing); `apps/docs/src/decisions/git-or-jj-substrate.md` carries a supersession banner at the top pointing to this plan's ADR. | Phase 0 | Phase 5 | planned |
+| T12 | `apps/docs/src/guide/scm.md` opens as a git workflow guide (no "choose your SCM" framing); `apps/docs/src/decisions/git-or-jj-substrate.md` carries a supersession banner at the top pointing to this plan's ADR. | Phase 0 | Phase 5 | passing |
 | T13 | `pnpm test` from the repo root passes after all changes land. Every existing test that previously asserted dual-SCM behavior either updates to assert git-only behavior or is deleted with rationale. | Phase 0 | Phase 4 | passing |
 
 All trajectory rows are writable at Phase 0 — every test is authorable today against the current stack. T1-T5 e2e and integration tests assert the post-Phase-1 behavior and go red today (current stack returns "git mode unavailable" or skips the log mirror). T6-T12 are source-level grep / file content assertions, red today because the patterns exist. T13 is the existing CI run, which goes through transient red states during phases 2-4 as code/tests get removed and ends green at Phase 4.

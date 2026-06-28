@@ -4,6 +4,19 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.31.0] — 2026-06-27
+
+### Changed
+- **SCM substrate is now git-only (1.31.0)** — InDusk's dual-SCM era (1.28.x–1.30.x) ends. Git is the only supported source control system. Existing `scm: "jj"` config fields become a no-op; `indusk update` emits a one-line stderr nudge (`scm field no longer used; safe to remove from .indusk/config.json`) and leaves the file unchanged. See [git-only-substrate](/decisions/git-only-substrate) for the full decision; see [Git workflow guide](/guide/scm) for the convention.
+
+### Added
+- **Semantic graph populates on every git project (Phase 1)** — `indusk graph sync`, `captureWithLog`, and the MCP `graph_*` tools now produce real events on git projects. The prior graceful-degrade no-op is gone. Rebase tolerance comes via content-keyed dedup at sync time (`existingByIdentity` on path + `existingByFingerprint` on blob hash) — `git rebase` produces noisy-replay-then-converge: extra `anchor.*` events get written; the runtime de-duplicates by `(path, blob_hash)` identity on the next sync; the system converges to current file state after one cycle. Provenance traceability is fuzzy (an event's `change_id` may name a rewritten commit) but functional correctness holds. Three obsolete tests (`git-mode-graph-sync.test.ts`, `git-mode-graph-cli.test.ts`, `git-mode-e2e.test.ts`) deleted; replaced by `git-tmp-project-graph-sync.test.ts` (T1, T3, T4) and `graph-capture-git-mode.test.ts` (T2, T5).
+- **Eval pipeline collapsed to single-SCM (Phase 2)** — `apps/indusk-mcp/hooks/eval-trigger.js`'s `TRIGGER_RE` narrowed from `/\b(jj describe|git commit)\b/` to `/\bgit commit\b/`; change-ID extraction collapsed to a single `git rev-parse --short HEAD` call (no jj-first-then-fallback). `prompt-builder.ts` no longer accepts an `scm` field; `diffCommand` is `git show ${changeId}` everywhere. `persistent-evaluator.ts` + `evaluator-runner.ts` no longer call `getScm()`. `indusk eval baseline --task` collapsed to `git commit --allow-empty` + `git rev-parse --short HEAD`. The TDZ-on-scm-const gotcha in `persistent-evaluator.ts` is no longer applicable.
+- **Skills collapsed to git-only (Phase 3)** — `apps/indusk-mcp/skills/jj.md` deleted. `work.md`'s dual-form `### If scm: "jj"` / `### If scm: "git"` commit-cadence sections collapsed to single-form do-then-commit on a feature branch. `highlight.md`'s "next commit (jj describe / git commit)" prose collapsed to "next `git commit`". `eval-review.md`'s dual `jj diff` / `git diff` examples collapsed to git-only. `git.md` lost its "if your project uses Jujutsu" framing.
+
+### Removed
+- **SCM abstraction layer (Phase 4)** — `apps/indusk-mcp/src/lib/scm/detect.ts`, `apps/indusk-mcp/src/lib/semantic-graph/jj.ts`, `getScm()`, `detectScm()`, `NoScmDetectedError`, `getJjReachable`, `NotAJjRepoError`. `lib/scm/index.ts` shrank from ~85 lines to ~60 (single git impl). `lib/semantic-graph/jj.test.ts` + `scm/detect.test.ts` + `scm-init-detection.test.ts` + `init-deferred-scm-warning.test.ts` deleted. `apps/docs/src/guide/scm.md` rewritten as "Source Control: Git". The `git-or-jj-substrate` planning brief gained a supersession banner.
+
 ## [1.30.2] — 2026-06-27
 
 ### Fixed

@@ -1,8 +1,14 @@
 ---
 title: "git-or-jj-substrate"
 date: 2026-05-03
-status: accepted
+status: superseded
 ---
+
+> **Superseded by [`git-only-substrate`](../git-only-substrate/) — 2026-06-27.**
+> Decision: rip out jj; git is the only SCM. The dual-SCM model this plan
+> shipped (1.28.9) was reversed; `lib/scm/detect.ts`, `lib/semantic-graph/jj.ts`,
+> `getScm()`, and the `jj.md` skill are all deleted. Historical content below
+> preserved as time-stamped record.
 
 # git-or-jj-substrate — Brief
 
