@@ -10,7 +10,7 @@ export function registerLessonTools(server: McpServer, projectRoot: string): voi
 		"list_lessons",
 		{
 			description:
-				"List all lessons (community + personal) from .claude/lessons/. Read these at session start to internalize proven patterns and avoid known mistakes.",
+				"List all lessons (community + personal) from .claude/lessons/ — returns title + file path per lesson, NOT full content. Titles ARE the rules in most cases; read full content via the Read tool against `path` only when a lesson is relevant to the work the user is asking for.",
 		},
 		async () => {
 			if (!existsSync(lessonsDir)) {
@@ -30,13 +30,15 @@ export function registerLessonTools(server: McpServer, projectRoot: string): voi
 
 			const files = readdirSync(lessonsDir).filter((f) => f.endsWith(".md"));
 			const lessons = files.map((file) => {
-				const content = readFileSync(join(lessonsDir, file), "utf-8");
+				const filePath = join(lessonsDir, file);
+				// Read only enough bytes to find the H1 — avoids loading full content for the listing.
+				const content = readFileSync(filePath, "utf-8");
 				const firstLine = content.split("\n").find((l) => l.startsWith("# "));
 				return {
 					file,
+					path: filePath,
 					type: file.startsWith("community-") ? "community" : "personal",
 					title: firstLine?.replace("# ", "") ?? file,
-					content: content.trim(),
 				};
 			});
 
@@ -49,6 +51,7 @@ export function registerLessonTools(server: McpServer, projectRoot: string): voi
 								count: lessons.length,
 								community: lessons.filter((l) => l.type === "community").length,
 								personal: lessons.filter((l) => l.type === "personal").length,
+								note: "Titles are the actionable rules. Read full content via the Read tool on `path` only when a lesson's title matches the work you're about to do.",
 								lessons,
 							},
 							null,

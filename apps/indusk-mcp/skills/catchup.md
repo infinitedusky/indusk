@@ -58,9 +58,20 @@ Read `.indusk/current.md`. It has two regions worth surfacing:
 
 **Do NOT edit `.indusk/current.md` during catchup.** Catchup is read-only for shared content. Your own section's content (in-flight / open-questions / cursor) is written via the [`mcp__indusk__update_current_section` MCP tool](apps/docs/src/reference/tools/indusk-mcp.md#agent-tools) — typically at `/handoff`, not during catchup. The `agent register` call in Step 1 only refreshes the heading + `Last updated`; it preserves any existing body content.
 
-### 4. Read Lessons
+### 4. Skim Lessons (Lazy-Load)
 
-Call `list_lessons`. Read every lesson. These are rules learned from past mistakes — not suggestions. Internalize them before touching any code.
+Call `list_lessons`. As of 1.31.5, the tool returns `title` + `path` per lesson — **not** the full content. Titles ARE the actionable rules in most cases.
+
+**Skim every title.** Most lesson titles are written as the rule itself ("Never use String.includes for shell-command trigger detection — use anchored regex" / "Ground-truth-verify every 'X already works' claim in a brief before acceptance"). Internalize the titles. That's enough to act on for most work.
+
+**Read the full body** (via the `Read` tool against the `path` field — not via a new MCP call) only when:
+- The lesson's title bears on what the user is about to ask you to do (e.g., starting a brief → read `community-brief-author-bias-ground-truth-verification` in full; touching shell-triggered code → read `community-anchor-shell-trigger-patterns-no-substring` in full)
+- An error, finding, or question mid-session matches a lesson title — read that one's body then
+- The user explicitly asks about a topic a lesson covers
+
+The shift from "read every lesson's full content" (status quo through 1.31.4) to "skim titles + read on demand" is a ~5–15× context-cost reduction per catchup without losing any lesson coverage — every lesson is still discoverable; you just defer the body load until it's relevant.
+
+These are rules learned from past mistakes — not suggestions. Internalize the titles before touching any code; reach for full content when the work calls for it.
 
 ### 5. Check Infrastructure
 
