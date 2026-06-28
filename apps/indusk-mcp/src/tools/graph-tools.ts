@@ -5,7 +5,6 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { GraphitiClient } from "../lib/graphiti-client.js";
-import { getScm } from "../lib/scm/detect.js";
 import { CgcAdapter } from "../lib/semantic-graph/adapters/cgc.js";
 import { captureWithLog } from "../lib/semantic-graph/graphiti-log-wrapper.js";
 import { readAllEvents } from "../lib/semantic-graph/log-reader.js";
@@ -596,20 +595,6 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				"Sync the semantic graph: snapshot CGC structural data, diff against runtime, emit events. Returns delta counts (created, moved, tombstoned, edges).",
 		},
 		async () => {
-			// Graceful-degrade on git mode. The semantic graph is jj-only in v1
-			// (see git-or-jj-substrate Phase 2). `runSync` already early-returns
-			// internally, but the wrapper short-circuits with an explicit message
-			// so the MCP response is human-readable instead of an empty SyncResult.
-			if (getScm(projectRoot) === "git") {
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: "git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)",
-						},
-					],
-				};
-			}
 			try {
 				const projectName = basename(projectRoot);
 				const adapter = new CgcAdapter();
@@ -624,11 +609,24 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 					content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
 				};
 			} catch (err) {
+				// git-only-substrate Phase 6 (falsification fix H3): translate
+				// git-state errors to friendly messages mirroring the CLI fix
+				// in bin/cli.ts. Without this, the MCP response carried the raw
+				// execFileAsync "Command failed: git rev-parse..." text.
+				const msg = err instanceof Error ? err.message : String(err);
+				let friendly = msg;
+				if (/not a git repository|fatal:.*not.*git/i.test(msg)) {
+					friendly =
+						"this directory is not a git repository — run `git init` first, then re-run graph sync";
+				} else if (/unknown revision|HEAD/i.test(msg)) {
+					friendly =
+						"this git repository has no commits yet — run `git commit --allow-empty -m 'init'` first, then re-run graph sync";
+				}
 				return {
 					content: [
 						{
 							type: "text" as const,
-							text: JSON.stringify({ error: (err as Error).message }, null, 2),
+							text: JSON.stringify({ error: friendly }, null, 2),
 						},
 					],
 					isError: true,
@@ -644,16 +642,6 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				"Clear the semantic graph runtime and rebuild from the event log. The runtime is disposable — this is always safe. Returns replay counts.",
 		},
 		async () => {
-			if (getScm(projectRoot) === "git") {
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: "git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)",
-						},
-					],
-				};
-			}
 			try {
 				const projectName = basename(projectRoot);
 				const logPath = getLogPath(projectRoot);
@@ -694,16 +682,6 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 				"Show semantic graph status: log path, event count, log size, runtime anchor/edge counts, last sync time.",
 		},
 		async () => {
-			if (getScm(projectRoot) === "git") {
-				return {
-					content: [
-						{
-							type: "text" as const,
-							text: "git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)",
-						},
-					],
-				};
-			}
 			try {
 				const projectName = basename(projectRoot);
 				const logPath = getLogPath(projectRoot);

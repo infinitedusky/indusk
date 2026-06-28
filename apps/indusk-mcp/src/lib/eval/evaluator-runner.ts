@@ -10,7 +10,6 @@ import { spawn } from "node:child_process";
 import { join } from "node:path";
 
 import { getEvalModel, getProjectGroupId } from "../config.js";
-import { getScm } from "../scm/detect.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import { initEvalOtel, shutdownEvalOtel, withSpan } from "./otel.js";
@@ -56,7 +55,6 @@ async function postTelemetry(endpoint: string, scorecard: EvalScorecard): Promis
  */
 export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 	const projectGroup = getProjectGroupId(opts.projectRoot);
-	const scm = getScm(opts.projectRoot);
 
 	const prompt = buildEvaluatorPrompt({
 		rubric: V1_RUBRIC,
@@ -64,14 +62,12 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 		transcriptPath: opts.transcriptPath,
 		mode: opts.mode,
 		projectGroup,
-		scm,
 	});
 
 	const allowedTools = [
 		"Read",
 		"Grep",
 		"Glob",
-		"Bash(jj:*)",
 		"Bash(git:*)",
 		"mcp__graphiti__*",
 		"mcp__indusk__*",
@@ -219,7 +215,6 @@ async function runEvaluatorSyncInner(
 		transcriptPath: opts.transcriptPath,
 		mode: opts.mode,
 		projectGroup,
-		scm: getScm(opts.projectRoot),
 	});
 
 	const allowedTools = [

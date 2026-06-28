@@ -13,7 +13,6 @@ import { dirname, join } from "node:path";
 
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
-import { getScm } from "../scm/detect.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
@@ -23,7 +22,7 @@ import {
 	shutdownEvalOtel,
 	withSpan,
 } from "./otel.js";
-import { buildEvaluatorPrompt } from "./prompt-builder.js";
+import { buildEvaluatorPrompt, buildHighlightsInstructions } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import {
 	extractScorecardJson,
@@ -201,9 +200,7 @@ export async function runPersistentEval(opts: {
 			// extracted scorecard text.
 			let rawClaudeStdout = "";
 
-			const scm = getScm(opts.projectRoot);
-			const diffCommand =
-				scm === "git" ? `git show ${opts.changeId}` : `jj diff -r ${opts.changeId}`;
+			const diffCommand = `git show ${opts.changeId}`;
 
 			try {
 				const { args, prompt } = await withSpan(
@@ -224,11 +221,28 @@ export async function runPersistentEval(opts: {
 
 				function buildArgsAndPrompt(): { args: string[]; prompt: string } {
 					if (session) {
-						const resumePrompt = `Evaluate a new commit. Change ID: ${opts.changeId}
+						// eval-agent-mcp-access Phase 4 (2026-06-27): the resume prompt
+						// previously omitted Step 4 (process highlights). Across 197
+						// resume runs on the persistent session, the inner Claude never
+						// got the highlights instructions — highlights stopped draining
+						// after the very first fresh spawn. Now we prepend the same
+						// Step 4 block the fresh-spawn prompt uses.
+						const highlightsBlock = buildHighlightsInstructions({ projectGroup });
+						// Phrasing note (eval-agent-mcp-access Phase 5 falsification fix H14):
+						// the previous wording "answer the same evaluation questions as
+						// before" pulled the inner Claude back to its 197-turn pre-fix
+						// pattern of skipping Step 4 — "as before" reads as "your last
+						// turns" inside a persistent session. Use present-tense direct
+						// instruction with no backwards-anchoring temporal modifier.
+						const resumePrompt = `${highlightsBlock}
 
-Run \`${diffCommand}\` to see what changed. Then answer the same evaluation questions as before. Read the changed files for full context.
+---
 
-Output ONLY the JSON scorecard as before — no commentary.`;
+### Now: evaluate a new commit. Change ID: ${opts.changeId}
+
+Run \`${diffCommand}\` to see what changed. Then answer the v1 rubric questions for this commit. Read the changed files for full context.
+
+Output ONLY the JSON scorecard — no commentary.`;
 
 						return {
 							args: [
@@ -267,7 +281,6 @@ Output ONLY the JSON scorecard as before — no commentary.`;
 							transcriptPath: opts.transcriptPath,
 							mode: opts.mode,
 							projectGroup,
-							scm,
 						}),
 					};
 				}

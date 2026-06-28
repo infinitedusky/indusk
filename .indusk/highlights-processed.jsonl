@@ -1,3 +1,104 @@
 {"id":"h-20260418-001","processedAt":"2026-04-19T18:05:10.373Z","action":"wrote-episode","detail":"eval-retro-lesson-micro-plan-pattern"}
 {"id":"h-20260417-002","processedAt":"2026-04-19T18:05:26.949Z","action":"wrote-episode","detail":"eval-agent-otel-observation"}
 {"id":"h-20260417-001","processedAt":"2026-04-19T18:05:50.073Z","action":"wrote-episode","detail":"agent-roles-phase3-smoke"}
+{"id":"h-20260628-001","processedAt":"2026-06-28T02:19:44.364Z","action":"wrote-episode","detail":"git-only-substrate-graceful-degrade-lesson"}
+{"id":"h-20260628-002","processedAt":"2026-06-28T02:20:05.720Z","action":"wrote-episode","detail":"falsification-ritual-value"}
+{"id":"h-20260628-002","processedAt":"2026-06-28T02:20:08.700Z","action":"wrote-episode","detail":"falsification-ritual-value"}
+{"id":"h-20260628-003","processedAt":"2026-06-28T02:20:21.062Z","action":"wrote-episode","detail":"inherited-bugs-ownership"}
+{"id":"h-20260628-003","processedAt":"2026-06-28T02:20:26.261Z","action":"wrote-episode","detail":"inherited-bugs-ownership"}
+{"id":"h-20260628-004","processedAt":"2026-06-28T02:20:38.955Z","action":"wrote-episode","detail":"probe-wrapper-layer-at-authoring"}
+{"id":"h-20260628-004","processedAt":"2026-06-28T02:20:40.727Z","action":"wrote-episode","detail":"mcp-wrapper-probing-at-authoring"}
+{"id":"h-20260628-005","processedAt":"2026-06-28T02:21:09.163Z","action":"wrote-episode","detail":"estimate-by-grep-undercounting"}
+{"id":"h-20260628-005","processedAt":"2026-06-28T02:21:09.297Z","action":"wrote-episode","detail":"estimate-by-grep-undercounts"}
+{"id":"h-20260419-001","processedAt":"2026-06-28T02:39:59.721Z","action":"wrote-episode","detail":"rationale-baseline-regex-anchoring"}
+{"id":"h-20260419-002","processedAt":"2026-06-28T02:40:15.002Z","action":"wrote-episode","detail":"falsification-same-session-value"}
+{"id":"h-20260419-003","processedAt":"2026-06-28T02:40:28.732Z","action":"wrote-episode","detail":"falsification-fixtures-minimal"}
+{"id":"h-20260419-003","processedAt":"2026-06-28T02:40:38.281Z","action":"wrote-episode","detail":"falsification-minimal-fixtures"}
+{"id":"h-20260419-004","processedAt":"2026-06-28T02:40:43.074Z","action":"wrote-episode","detail":"ts-js-parity-subprocess-tests"}
+{"id":"h-20260419-005","processedAt":"2026-06-28T02:40:45.748Z","action":"skipped","detail":"already captured in rationale-baseline-regex-anchoring episode"}
+{"id":"h-20260419-006","processedAt":"2026-06-28T02:40:49.282Z","action":"skipped","detail":"audit status, not reusable knowledge"}
+{"id":"h-20260419-004","processedAt":"2026-06-28T02:40:53.379Z","action":"wrote-episode","detail":"ts-js-parity-tests-subprocess"}
+{"id":"h-20260419-005","processedAt":"2026-06-28T02:40:56.460Z","action":"skipped","detail":"already captured in rationale-baseline-regex-anchoring episode"}
+{"id":"h-20260419-006","processedAt":"2026-06-28T02:40:59.484Z","action":"skipped","detail":"trajectory audit status, not a lesson"}
+{"id":"h-20260420-001","processedAt":"2026-06-28T02:41:06.240Z","action":"wrote-episode","detail":"admin-ui-hosting-native-daemon-decision"}
+{"id":"h-20260420-002","processedAt":"2026-06-28T02:41:10.368Z","action":"skipped","detail":"test plan acceptance, already captured in admin-ui-hosting-native-daemon-decision"}
+{"id":"h-20260420-003","processedAt":"2026-06-28T02:41:13.141Z","action":"skipped","detail":"ADR acceptance, already captured in admin-ui-hosting-native-daemon-decision"}
+{"id":"h-20260420-001","processedAt":"2026-06-28T02:41:19.020Z","action":"wrote-episode","detail":"admin-ui-hosting-native-daemon"}
+{"id":"h-20260420-002","processedAt":"2026-06-28T02:41:22.172Z","action":"skipped","detail":"test plan details, covered by brief decision"}
+{"id":"h-20260420-003","processedAt":"2026-06-28T02:41:25.589Z","action":"skipped","detail":"ADR details already captured in admin-ui-hosting-native-daemon episode"}
+{"id":"h-20260420-004","processedAt":"2026-06-28T02:41:33.328Z","action":"wrote-episode","detail":"local-telemetry-extension-decision"}
+{"id":"h-20260420-005","processedAt":"2026-06-28T02:41:36.340Z","action":"skipped","detail":"test plan acceptance, already captured in local-telemetry-extension-decision"}
+{"id":"h-20260420-006","processedAt":"2026-06-28T02:41:39.970Z","action":"skipped","detail":"ADR acceptance, already captured in local-telemetry-extension-decision"}
+{"id":"h-20260420-004","processedAt":"2026-06-28T02:41:42.525Z","action":"wrote-episode","detail":"local-telemetry-extension-architecture"}
+{"id":"h-20260420-005","processedAt":"2026-06-28T02:41:45.744Z","action":"skipped","detail":"test plan details, covered by brief decision"}
+{"id":"h-20260420-006","processedAt":"2026-06-28T02:41:51.801Z","action":"skipped","detail":"ADR details already captured in local-telemetry-extension-architecture episode"}
+{"id":"h-20260420-007","processedAt":"2026-06-28T02:41:53.589Z","action":"wrote-episode","detail":"indusk-v2-dawn-rebrand"}
+{"id":"h-20260420-007","processedAt":"2026-06-28T02:42:03.920Z","action":"wrote-episode","detail":"indusk-v2-dawn-product-rebrand"}
+{"id":"h-20260420-008","processedAt":"2026-06-28T02:42:09.163Z","action":"wrote-episode","detail":"falsify-phase-authoring-decision"}
+{"id":"h-20260420-009","processedAt":"2026-06-28T02:42:12.929Z","action":"skipped","detail":"test plan acceptance, already captured in falsify-phase-authoring-decision"}
+{"id":"h-20260420-008","processedAt":"2026-06-28T02:42:20.242Z","action":"wrote-episode","detail":"falsify-phase-authoring-ritual"}
+{"id":"h-20260420-009","processedAt":"2026-06-28T02:42:23.569Z","action":"skipped","detail":"test plan details, covered by brief decision"}
+{"id":"h-20260420-010","processedAt":"2026-06-28T02:42:27.337Z","action":"wrote-episode","detail":"dogfood-rendered-surfaces-lesson"}
+{"id":"h-20260420-010","processedAt":"2026-06-28T02:42:39.058Z","action":"wrote-episode","detail":"dogfood-rendered-surfaces-on-convention-change"}
+{"id":"h-20260420-011","processedAt":"2026-06-28T02:42:42.077Z","action":"wrote-episode","detail":"quarantine-damaged-state-pattern"}
+{"id":"h-20260420-012","processedAt":"2026-06-28T02:42:45.388Z","action":"skipped","detail":"process recommendation, not reusable knowledge"}
+{"id":"h-20260420-011","processedAt":"2026-06-28T02:42:53.877Z","action":"wrote-episode","detail":"quarantine-damaged-state-pattern"}
+{"id":"h-20260420-013","processedAt":"2026-06-28T02:42:58.087Z","action":"wrote-episode","detail":"ship-fast-rewrite-pattern"}
+{"id":"h-20260420-012","processedAt":"2026-06-28T02:42:59.472Z","action":"skipped","detail":"process recommendation, not a reusable lesson"}
+{"id":"h-20260420-014","processedAt":"2026-06-28T02:43:11.696Z","action":"wrote-episode","detail":"structural-detection-vs-exception-signaling"}
+{"id":"h-20260420-013","processedAt":"2026-06-28T02:43:15.028Z","action":"wrote-episode","detail":"v1-rewrite-pattern-when-cost-low"}
+{"id":"h-20260420-015","processedAt":"2026-06-28T02:43:16.601Z","action":"skipped","detail":"hindsight on v1 decision, already captured in ship-fast-rewrite-pattern"}
+{"id":"h-20260504-001","processedAt":"2026-06-28T02:43:20.286Z","action":"skipped","detail":"brief acceptance, superseded by git-only-substrate plan"}
+{"id":"h-20260504-002","processedAt":"2026-06-28T02:43:22.925Z","action":"skipped","detail":"test plan acceptance, superseded by git-only-substrate plan"}
+{"id":"h-20260420-014","processedAt":"2026-06-28T02:43:28.662Z","action":"wrote-episode","detail":"structural-detection-over-exception-signaling"}
+{"id":"h-20260420-015","processedAt":"2026-06-28T02:43:32.144Z","action":"skipped","detail":"hindsight reflection, already captured in admin-ui-hosting-native-daemon decision"}
+{"id":"h-20260504-001","processedAt":"2026-06-28T02:43:35.480Z","action":"skipped","detail":"superseded by git-only-substrate plan"}
+{"id":"h-20260504-002","processedAt":"2026-06-28T02:43:38.619Z","action":"skipped","detail":"superseded by git-only-substrate plan"}
+{"id":"h-20260520-001","processedAt":"2026-06-28T02:43:39.164Z","action":"wrote-episode","detail":"indusk-worktree-extension-decision"}
+{"id":"h-20260520-001","processedAt":"2026-06-28T02:43:54.446Z","action":"wrote-episode","detail":"worktree-extension-architecture"}
+{"id":"h-20260605-001","processedAt":"2026-06-28T02:43:55.088Z","action":"wrote-episode","detail":"doppler-extension-decision"}
+{"id":"h-20260605-002","processedAt":"2026-06-28T02:43:58.083Z","action":"skipped","detail":"test plan acceptance, already captured in doppler-extension-decision"}
+{"id":"h-20260605-003","processedAt":"2026-06-28T02:44:00.821Z","action":"skipped","detail":"ADR acceptance, already captured in doppler-extension-decision"}
+{"id":"h-20260625-001","processedAt":"2026-06-28T02:44:04.181Z","action":"skipped","detail":"brief acceptance for documentation-phase-gate, not implemented yet"}
+{"id":"h-20260625-002","processedAt":"2026-06-28T02:44:06.928Z","action":"skipped","detail":"test plan acceptance for documentation-phase-gate, not implemented yet"}
+{"id":"h-20260605-001","processedAt":"2026-06-28T02:44:13.333Z","action":"wrote-episode","detail":"doppler-extension-architecture"}
+{"id":"h-20260605-002","processedAt":"2026-06-28T02:44:16.614Z","action":"skipped","detail":"test plan details, covered by brief decision"}
+{"id":"h-20260605-003","processedAt":"2026-06-28T02:44:19.727Z","action":"skipped","detail":"ADR details already captured in doppler-extension-architecture episode"}
+{"id":"h-20260625-003","processedAt":"2026-06-28T02:44:22.292Z","action":"wrote-episode","detail":"handoff-multi-agent-decision"}
+{"id":"h-20260625-001","processedAt":"2026-06-28T02:44:22.743Z","action":"skipped","detail":"brief for documentation-phase-gate plan, not load-bearing knowledge"}
+{"id":"h-20260625-002","processedAt":"2026-06-28T02:44:25.878Z","action":"skipped","detail":"test plan details for documentation-phase-gate, not load-bearing knowledge"}
+{"id":"h-20260625-004","processedAt":"2026-06-28T02:44:26.158Z","action":"skipped","detail":"test plan acceptance, already captured in handoff-multi-agent-decision"}
+{"id":"h-20260625-005","processedAt":"2026-06-28T02:44:29.011Z","action":"skipped","detail":"ADR acceptance, already captured in handoff-multi-agent-decision"}
+{"id":"h-20260625-003","processedAt":"2026-06-28T02:44:46.050Z","action":"wrote-episode","detail":"handoff-multi-agent-architecture"}
+{"id":"h-20260625-004","processedAt":"2026-06-28T02:44:48.870Z","action":"skipped","detail":"test plan details, covered by brief decision"}
+{"id":"h-20260626-001","processedAt":"2026-06-28T02:44:49.918Z","action":"wrote-episode","detail":"handoff-section-shape-decision"}
+{"id":"h-20260625-005","processedAt":"2026-06-28T02:44:52.802Z","action":"skipped","detail":"ADR details already captured in handoff-multi-agent-architecture episode"}
+{"id":"h-20260626-002","processedAt":"2026-06-28T02:44:53.278Z","action":"skipped","detail":"test plan acceptance, already captured in handoff-section-shape-decision"}
+{"id":"h-20260627-001","processedAt":"2026-06-28T02:44:56.880Z","action":"skipped","detail":"audit status, not reusable knowledge"}
+{"id":"h-20260626-001","processedAt":"2026-06-28T02:45:10.954Z","action":"wrote-episode","detail":"section-shape-multi-agent-coordination"}
+{"id":"h-20260627-002","processedAt":"2026-06-28T02:45:13.087Z","action":"wrote-episode","detail":"falsification-high-yield-for-input-handling"}
+{"id":"h-20260626-002","processedAt":"2026-06-28T02:45:14.156Z","action":"skipped","detail":"test plan details, covered by brief decision"}
+{"id":"h-20260627-001","processedAt":"2026-06-28T02:45:17.721Z","action":"skipped","detail":"trajectory audit status, not a lesson"}
+{"id":"h-20260627-003","processedAt":"2026-06-28T02:45:28.028Z","action":"wrote-episode","detail":"markdown-branch-merge-pattern"}
+{"id":"h-20260627-002","processedAt":"2026-06-28T02:45:32.260Z","action":"wrote-episode","detail":"falsification-high-yield-for-input-handling"}
+{"id":"h-20260627-004","processedAt":"2026-06-28T02:45:43.180Z","action":"wrote-episode","detail":"workbench-mode-file-lock-load-bearing"}
+{"id":"h-20260627-003","processedAt":"2026-06-28T02:45:45.806Z","action":"wrote-episode","detail":"append-only-markdown-merge-pattern"}
+{"id":"h-20260627-005","processedAt":"2026-06-28T02:45:54.612Z","action":"wrote-episode","detail":"atomic-rename-guarantees-documentation"}
+{"id":"h-20260627-006","processedAt":"2026-06-28T02:45:57.944Z","action":"skipped","detail":"hindsight on parent plan, already captured in falsification-high-yield-for-input-handling"}
+{"id":"h-20260627-004","processedAt":"2026-06-28T02:46:00.586Z","action":"wrote-episode","detail":"workbench-mode-filesystem-locks"}
+{"id":"h-20260627-007","processedAt":"2026-06-28T02:46:13.646Z","action":"wrote-episode","detail":"tests-first-real-failing-not-skip"}
+{"id":"h-20260627-005","processedAt":"2026-06-28T02:46:14.046Z","action":"wrote-episode","detail":"atomic-rename-guarantees"}
+{"id":"h-20260627-006","processedAt":"2026-06-28T02:46:17.557Z","action":"skipped","detail":"hindsight reflection, lesson captured in falsification-high-yield-for-input-handling"}
+{"id":"h-20260627-007","processedAt":"2026-06-28T02:46:32.025Z","action":"wrote-episode","detail":"real-failing-tests-over-skip-scaffolds"}
+{"id":"h-20260627-008","processedAt":"2026-06-28T02:46:33.992Z","action":"wrote-episode","detail":"git-only-substrate-decision"}
+{"id":"h-20260627-009","processedAt":"2026-06-28T02:46:37.219Z","action":"skipped","detail":"test plan acceptance, already captured in git-only-substrate-decision"}
+{"id":"h-20260627-010","processedAt":"2026-06-28T02:46:39.889Z","action":"skipped","detail":"ADR acceptance, already captured in git-only-substrate-decision"}
+{"id":"h-20260627-008","processedAt":"2026-06-28T02:46:54.177Z","action":"wrote-episode","detail":"git-only-substrate-decision"}
+{"id":"h-20260627-009","processedAt":"2026-06-28T02:46:57.326Z","action":"skipped","detail":"test plan details, covered by brief decision"}
+{"id":"h-20260627-010","processedAt":"2026-06-28T02:47:00.984Z","action":"skipped","detail":"ADR details already captured in git-only-substrate-decision episode"}
+{"id":"h-20260628-006","processedAt":"2026-06-28T05:06:06.879Z","action":"wrote-episode","detail":"eval-agent-verification-dual-path-lesson"}
+{"id":"h-20260628-007","processedAt":"2026-06-28T05:06:23.384Z","action":"wrote-episode","detail":"eval-agent-doctor-commands-not-optional"}
+{"id":"h-20260628-008","processedAt":"2026-06-28T05:06:41.977Z","action":"wrote-episode","detail":"falsification-ritual-load-bearing-for-prompts"}
+{"id":"h-20260628-009","processedAt":"2026-06-28T05:06:58.666Z","action":"wrote-episode","detail":"prompt-instructions-are-code"}
+{"id":"h-20260628-010","processedAt":"2026-06-28T05:07:18.621Z","action":"wrote-episode","detail":"runtime-success-counters-required-exit-criterion"}
+{"id":"h-20260628-011","processedAt":"2026-06-28T05:07:37.161Z","action":"wrote-episode","detail":"inspect-session-jsonl-early"}

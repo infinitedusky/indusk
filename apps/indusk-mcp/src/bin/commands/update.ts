@@ -522,22 +522,21 @@ export async function update(projectRoot: string): Promise<void> {
 	if (ceNotice) console.info(ceNotice);
 
 	// 7c. SCM field migration. Pre-1.28.x projects don't have `scm` in their
-	// config — detect once and write it back. Idempotent on subsequent runs:
-	// if the field is already populated, do nothing.
-	console.info("\n[SCM Detection]\n");
+	// Legacy `scm` field migration (git-only-substrate Phase 5).
+	// git is the only SCM as of 1.31.0. Existing `scm: "jj"` config fields
+	// become a no-op; emit one stderr nudge so the user knows the field
+	// is safe to remove from `.indusk/config.json`. The file itself is
+	// NOT modified — removing the field is the user's call.
+	console.info("\n[SCM]\n");
 	const { readConfig, writeConfig } = await import("../../lib/config.js");
-	const { detectScm } = await import("../../lib/scm/detect.js");
 	const scmConfig = readConfig(projectRoot);
-	if (scmConfig && !scmConfig.scm) {
-		try {
-			const scm = await detectScm(projectRoot);
-			writeConfig(projectRoot, { ...scmConfig, scm });
-			console.info(`  add: scm: "${scm}"`);
-		} catch (err) {
-			console.info(`  skip: ${err instanceof Error ? err.message : String(err)}`);
-		}
-	} else if (scmConfig?.scm) {
-		console.info(`  ok: scm: "${scmConfig.scm}" (already set)`);
+	if (scmConfig?.scm) {
+		process.stderr.write(
+			"scm field no longer used; safe to remove from .indusk/config.json\n",
+		);
+		console.info(`  nudge: scm: "${scmConfig.scm}" (no longer used; safe to remove)`);
+	} else {
+		console.info("  ok: (no scm field; git is the only SCM as of 1.31.0)");
 	}
 
 	// 7c. Multi-agent scaffolding (handoff-multi-agent Phase 4, reshaped in

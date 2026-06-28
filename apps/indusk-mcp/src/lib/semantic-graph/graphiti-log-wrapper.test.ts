@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -5,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { GraphitiClient } from "../graphiti-client.js";
 import type { SemanticGraphEvent } from "./events.js";
 import { captureWithLog } from "./graphiti-log-wrapper.js";
-import { resetJjRunner, setJjRunner } from "./jj.js";
 import { LogWriter } from "./log-writer.js";
 import { getLogPath } from "./paths.js";
 import type { SemanticGraphClient } from "./runtime-client.js";
@@ -89,14 +89,19 @@ let graphiti: FakeGraphitiClient;
 beforeEach(() => {
 	testDir = join(tmpdir(), `wrapper-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 	mkdirSync(testDir, { recursive: true });
-	setJjRunner(async () => "wrappertestid\n");
+	// captureWithLog calls getCurrentChangeId via lib/scm which runs
+	// `git rev-parse --short HEAD`. Create a real git repo with one
+	// commit so the call succeeds.
+	spawnSync("git", ["init", "-q", "-b", "main"], { cwd: testDir });
+	spawnSync("git", ["config", "user.email", "test@test.invalid"], { cwd: testDir });
+	spawnSync("git", ["config", "user.name", "Test"], { cwd: testDir });
+	spawnSync("git", ["commit", "--allow-empty", "-q", "-m", "initial"], { cwd: testDir });
 	logWriter = new LogWriter(getLogPath(testDir));
 	runtimeClient = new FakeRuntimeClient();
 	graphiti = new FakeGraphitiClient();
 });
 
 afterEach(() => {
-	resetJjRunner();
 	rmSync(testDir, { recursive: true, force: true });
 });
 

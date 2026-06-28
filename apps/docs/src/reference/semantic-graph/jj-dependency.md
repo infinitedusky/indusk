@@ -1,4 +1,6 @@
-# Jj Dependency
+# Jj Dependency (Historical)
+
+> **Historical reference.** This page describes the original jj-only versioning design of the semantic graph bridge. As of 1.31.0 ([`git-only-substrate`](/decisions/git-only-substrate)), the semantic graph is git-only — the jj dependency is gone, and rebase tolerance comes via content-keyed dedup at sync time (`(path, blob_hash)` lookup) instead of stable change IDs. Provenance traceability is fuzzy (an event's `change_id` may name a rewritten commit) but functional correctness holds. The content below is preserved as a time-stamped record of the original design rationale.
 
 The semantic graph bridge requires [jj (Jujutsu)](https://martinvonz.github.io/jj/latest/) as its versioning substrate. Projects that don't use jj cannot use the bridge in v1.
 

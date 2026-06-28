@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -139,5 +139,123 @@ describe("T4: highlight ID format is h-{YYYYMMDD}-{seq} with seq reset daily", (
 		const h = writeHighlight(projectRoot, { tag: "a", note: "1", level: "note" });
 		const today = new Date().toISOString().slice(0, 10).replace(/-/g, "");
 		expect(h.id.slice(2, 10)).toBe(today);
+	});
+});
+
+describe("T9: markProcessed rejects duplicate IDs at write time (Phase 6 dedup fix)", () => {
+	it("returns { already_processed: true } on the second call AND does NOT append a second line", () => {
+		const h = writeHighlight(projectRoot, { tag: "x", note: "1", level: "note" });
+
+		const first = markProcessed(projectRoot, h.id, "wrote-episode", "episode-1");
+		// First call writes normally — no already_processed flag (or it's false)
+		expect(first.id).toBe(h.id);
+		expect(
+			(first as { already_processed?: boolean }).already_processed,
+			"first call must NOT carry already_processed: true",
+		).toBeFalsy();
+
+		const processedPath = join(induskDir, "highlights-processed.jsonl");
+		const linesAfterFirst = readFileSync(processedPath, "utf-8")
+			.split("\n")
+			.filter((l) => l.length > 0).length;
+		expect(linesAfterFirst).toBe(1);
+
+		const second = markProcessed(projectRoot, h.id, "wrote-episode", "episode-2-attempted");
+		// Second call returns the already_processed signal
+		expect((second as { already_processed?: boolean }).already_processed).toBe(true);
+
+		const linesAfterSecond = readFileSync(processedPath, "utf-8")
+			.split("\n")
+			.filter((l) => l.length > 0).length;
+		expect(
+			linesAfterSecond,
+			"file must NOT grow on duplicate markProcessed — write rejected",
+		).toBe(1);
+	});
+
+	it("the original processedAt timestamp is surfaced when already_processed: true", () => {
+		const h = writeHighlight(projectRoot, { tag: "y", note: "1", level: "important" });
+
+		const first = markProcessed(projectRoot, h.id, "wrote-episode");
+		const second = markProcessed(projectRoot, h.id, "wrote-episode");
+
+		expect(
+			(second as { original_processedAt?: string }).original_processedAt,
+			"second call should report the original processedAt for context",
+		).toBe(first.processedAt);
+	});
+
+	it("readUnprocessedHighlights still works correctly when no duplicates exist (regression)", () => {
+		const a = writeHighlight(projectRoot, { tag: "z", note: "a", level: "note" });
+		const b = writeHighlight(projectRoot, { tag: "z", note: "b", level: "note" });
+
+		// Mark only one
+		markProcessed(projectRoot, a.id, "wrote-episode");
+
+		const unprocessed = readUnprocessedHighlights(projectRoot);
+		expect(unprocessed.length).toBe(1);
+		expect(unprocessed[0].id).toBe(b.id);
+	});
+});
+
+describe("T10: markProcessed catches malformed historic entries via raw-content check (Phase 7 falsification fix H19)", () => {
+	// Phase 7 reasoning: readAllProcessed silently skips malformed JSON lines
+	// (try/catch around JSON.parse). If highlights-processed.jsonl contains a
+	// corrupted line carrying the literal "id":"<target>" (e.g., a write that
+	// crashed mid-line, a hand-edit gone wrong, a version-format mismatch),
+	// readAllProcessed returns no entry for the target ID, the Phase 6
+	// markProcessed check thinks it's not present, and appends a duplicate —
+	// the dedup contract silently breaks.
+	//
+	// The fix: defensive substring-on-raw-content check before the parsed
+	// check. If the raw bytes contain `"id":"<escaped id>"`, treat the ID
+	// as already present even when readAllProcessed didn't surface a
+	// parseable entry. The agent's STOP signal (already_processed: true)
+	// still fires; original_processedAt is undefined because the malformed
+	// entry didn't yield a parseable timestamp.
+
+	it("treats a malformed (truncated JSON) historic entry as already processed", async () => {
+		const { writeFileSync } = await import("node:fs");
+
+		// Seed the processed log with a malformed entry for h-X.
+		// Note: opening brace + id field + processedAt field, then truncated —
+		// no closing brace. JSON.parse rejects this.
+		const malformedPath = join(induskDir, "highlights-processed.jsonl");
+		writeFileSync(
+			malformedPath,
+			`{"id":"h-20260101-001","processedAt":"2026-01-01T00:00:00.000Z","action":"wrote-episo\n`,
+			"utf-8",
+		);
+
+		const result = markProcessed(projectRoot, "h-20260101-001", "wrote-episode", "retry-attempt");
+
+		expect(
+			(result as { already_processed?: boolean }).already_processed,
+			"malformed historic entry for this ID must trigger the already_processed signal",
+		).toBe(true);
+
+		const linesAfter = readFileSync(malformedPath, "utf-8")
+			.split("\n")
+			.filter((l) => l.length > 0).length;
+		expect(linesAfter, "file must NOT grow — duplicate write rejected").toBe(1);
+	});
+
+	it("readAllProcessed still silently skips the malformed line (parser tolerance preserved)", () => {
+		const { writeFileSync } = require("node:fs");
+		const malformedPath = join(induskDir, "highlights-processed.jsonl");
+		writeFileSync(
+			malformedPath,
+			`{"id":"h-bad","processedAt":"BAD-TS","action":"wrote-episo\n`,
+			"utf-8",
+		);
+		// The defensive markProcessed check works around the parser's tolerance
+		// without changing it — readAllProcessed returns an empty array because
+		// the only line fails JSON.parse. readUnprocessedHighlights treats
+		// the malformed entry as "not processed" (also acceptable; it falls
+		// back to "we don't know"). The contract specifically defended here
+		// is on the WRITE side.
+		const unproc = readUnprocessedHighlights(projectRoot);
+		// No well-formed highlights exist either; unproc is []
+		expect(unproc).toEqual([]);
 	});
 });

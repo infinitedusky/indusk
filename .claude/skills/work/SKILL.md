@@ -276,27 +276,9 @@ Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best
 
 ## Commits
 
-Read `.indusk/config.json`'s `scm` field once at session start. Branch the commit cadence accordingly. Both rituals share a default — **one commit per checklist item** — but the *order of operations* differs.
+Default: **one commit per checklist item.** Trunk-based development on a feature branch: short-lived branches, frequent commits + pulls, merge + delete fast. See `git.md` for the full convention.
 
-### If `scm: "jj"` — describe-then-do (see `jj.md`)
-
-The order is load-bearing — never reverse it.
-
-**For every checklist item, in this exact order:**
-
-1. **`jj new`** — start a fresh empty commit. Do this BEFORE you touch any file.
-2. **`jj describe -m "..."`** — write the commit message describing what you're ABOUT to do. The description names the intent in present/future tense ("rename foo to bar") not past tense ("renamed foo to bar").
-3. **Do the work** — edit files, run tools, accumulate changes in `@` (the current commit).
-4. **Check the item off** in the impl.md.
-5. **Repeat** for the next item — back to step 1.
-
-**❌ Anti-pattern: describe-after-do.** Doing the work first and then describing what you did breaks two things: (a) the eval agent fires on `jj describe`, so the description is what it scores against — late descriptions mean the agent scores work that's already done without intent context; (b) the working copy IS the current commit in jj, so any uncommitted state automatically gets attributed to whatever the commit description currently says, even if that's the previous unit's description. Always: new → describe → work, in that order.
-
-If a change spans multiple apps, use `jj split` to silo commits between contexts. See `jj.md` for details.
-
-### If `scm: "git"` — do-then-commit on a feature branch (see `git.md`)
-
-Trunk-based development: short-lived feature branches, frequent commits + pulls, merge + delete fast.
+### Workflow
 
 **Once at phase start:**
 
@@ -331,11 +313,11 @@ git branch -d plan/{plan-name}-phase-{n}
 git push origin --delete plan/{plan-name}-phase-{n}
 ```
 
-**Eval hook timing asymmetry vs jj:** git users do-then-commit, so the eval scores work AFTER it's done, without the pre-stated intent jj has. Mitigation: write descriptive commit messages that name the *why*, not just the *what*. The judge has the diff + transcript regardless; the gap is just stated intent.
+**Commit message discipline:** the eval hook fires on commit and scores the diff + transcript. Write descriptive commit messages that name the *why*, not just the *what* — the agent has the diff regardless; the message provides intent.
 
 If a change spans multiple apps, stage hunks per app with `git add -p apps/{name}/...` and commit each context separately. Don't lump multi-context changes into one commit.
 
-### Granularity and batching (both SCMs)
+### Granularity and batching
 
 **Default: one commit per checklist item.** Each impl checklist item is a logical unit of work — give it its own commit. This keeps history granular, makes blame and bisect useful, and lets the eval agent score each unit while context is fresh.
 

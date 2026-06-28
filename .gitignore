@@ -70,3 +70,6 @@ Caddyfile
 apps/*/.env.local
 apps/*/.env.staging
 apps/*/.env.production
+# InDusk managed
+# Multi-agent presence bulletin (per-session, machine-local)
+.indusk/agents/

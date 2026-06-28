@@ -17,29 +17,30 @@ export interface PromptBuilderOptions {
 	transcriptPath: string;
 	mode: "eval" | "baseline";
 	projectGroup: string;
-	/**
-	 * SCM the project uses. Controls which command the evaluator is told to
-	 * run to inspect the diff: `jj diff -r ${changeId}` for jj, `git show
-	 * ${changeId}` for git. Defaults to `"jj"` for backward-compat with
-	 * pre-1.28.x callers that don't pass the field.
-	 */
-	scm?: "jj" | "git";
 }
 
-export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
-	const scm = opts.scm ?? "jj";
-	const diffCommand = scm === "git" ? `git show ${opts.changeId}` : `jj diff -r ${opts.changeId}`;
-	const questionsBlock = opts.rubric
-		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
-		.join("\n\n");
-
-	const highlightsInstructions =
-		opts.mode === "eval"
-			? `### Step 4: Process unprocessed highlights
+/**
+ * Step 4 — process unprocessed highlights — extracted so the persistent-evaluator's
+ * resume-prompt path can include it too. Pre-1.31.1 the resume prompt was a hand-
+ * rolled "Evaluate a new commit ... output the JSON scorecard" stub that omitted
+ * Step 4 entirely; only the fresh-spawn prompt (built via `buildEvaluatorPrompt`)
+ * carried the instructions. The eval agent's persistent session resumed for 197
+ * commits without ever seeing Step 4, so the highlights queue stopped draining
+ * after the very first fresh spawn. eval-agent-mcp-access Phase 4 fix.
+ *
+ * Keep this in sync with the inline copy in `buildEvaluatorPrompt` — actually,
+ * `buildEvaluatorPrompt` calls this helper directly, so there's only one source.
+ */
+export function buildHighlightsInstructions(opts: { projectGroup: string }): string {
+	return `### Step 4: Process unprocessed highlights
 
 Before answering the rubric, process the working agent's highlights queue. Highlights are the working agent's flagged moments — brief acceptances, ADR acceptances, corrections, retrospective lessons — and the eval agent is responsible for materializing them into structured Graphiti episodes.
 
-Call \`mcp__indusk__highlights_unprocessed\` to get the list. For each highlight, the level drives effort and Graphiti edge weight:
+**CRITICAL — read this before doing anything else.** You MUST call \`mcp__indusk__highlights_unprocessed\` first to get the live delta of unprocessed entries. Do NOT process highlights you remember from previous turns of this session — your memory of highlight IDs is stale across resume runs. Do NOT read \`.indusk/highlights.jsonl\` directly with Read or Bash — that file contains both processed and unprocessed entries; the tool returns ONLY the delta. ONLY process IDs returned by the live \`mcp__indusk__highlights_unprocessed\` tool call.
+
+If \`mcp__indusk__highlight_mark_processed\` returns \`{ already_processed: true }\` for an ID, that highlight was processed in an earlier eval run — STOP processing it immediately. Do NOT call \`mcp__indusk__graph_capture\` for it, do not retry, do not re-mark. Move on to the next highlight in the list.
+
+For each highlight returned by \`mcp__indusk__highlights_unprocessed\`, the level drives effort and Graphiti edge weight:
 
 - **critical** (architectural decision, accepted ADR, accepted brief): extract full context from the transcript and the changed files, write a structured Graphiti episode with weight **1.0**.
 - **important** (correction, retro lesson, confirmed pattern): extract context, write a Graphiti episode with weight **0.6**.
@@ -53,7 +54,20 @@ After processing each highlight (whether you wrote an episode or decided to skip
 
 **Highlights are additive context, not a constraint.** Continue reading the full transcript and inferring knowledge independently — highlights ensure important moments aren't missed, but they don't bound your analysis. The transcript may contain insights the working agent didn't flag.
 
-If \`mcp__indusk__highlights_unprocessed\` is unavailable, skip this step silently and continue.`
+If \`mcp__indusk__highlights_unprocessed\` is unavailable, skip this step silently and continue.
+
+If the tool returns an empty list (no unprocessed highlights), note "(no unprocessed highlights)" once in your output and continue to the rubric — do not invent highlights, do not loop searching for them, do not call \`graph_capture\` speculatively.`;
+}
+
+export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
+	const diffCommand = `git show ${opts.changeId}`;
+	const questionsBlock = opts.rubric
+		.map((q, i) => `${i + 1}. **${q.id}**: ${q.question}\n   Guidance: ${q.guidance}`)
+		.join("\n\n");
+
+	const highlightsInstructions =
+		opts.mode === "eval"
+			? buildHighlightsInstructions({ projectGroup: opts.projectGroup })
 			: `### Step 4: Highlights (baseline mode)
 
 Baseline mode — do NOT process highlights or write to Graphiti. Skip to Step 5.`;

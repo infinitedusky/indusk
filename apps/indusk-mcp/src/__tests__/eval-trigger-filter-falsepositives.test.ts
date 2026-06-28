@@ -24,11 +24,16 @@ const HOOK_PATH = resolve(__dirname, "../../hooks/eval-trigger.js");
 describe("eval-trigger.js — word-boundary trigger filter (T16)", () => {
 	const source = readFileSync(HOOK_PATH, "utf-8");
 
-	it("uses a regex with word boundaries (\\b) for the trigger filter", () => {
-		// After H3 the filter should be a regex like /\b(jj describe|git commit)\b/.
-		// We don't pin the exact source shape; we just require the filter to
-		// use \b as a boundary anchor.
-		expect(source).toMatch(/\\b\(?jj describe[\s\S]*git commit[\s\S]*\)?\\b/);
+	it("uses a regex with a left-edge word boundary (\\b) for the trigger filter", () => {
+		// As of 1.31.0 (`git-only-substrate` Phase 2) the filter narrowed to
+		// match only the user-facing porcelain `git commit`. Phase 6 (falsi-
+		// fication fix for H5) further tightened the right edge — `\b` matches
+		// `t`→`-` (word-char to non-word), which would let `git commit-tree`
+		// fire the hook. The right edge now uses a lookahead like
+		// `(?=$|\s|;|&|\|)`. We assert the left-edge `\b` is still there as
+		// the substring-defense floor; the per-command negative cases live
+		// in the T16 group below.
+		expect(source).toMatch(/\\bgit commit/);
 	});
 
 	it("does NOT use String.includes for the trigger check (the pre-Phase-7 shape)", () => {
@@ -40,6 +45,48 @@ describe("eval-trigger.js — word-boundary trigger filter (T16)", () => {
 		expect(source).not.toMatch(/command\.includes\("jj describe"\)/);
 		// Also: the array-of-patterns-with-some pattern should be gone.
 		expect(source).not.toMatch(/triggerPatterns\.some\(/);
+	});
+});
+
+describe("eval-trigger.js — TRIGGER_RE does not match git plumbing commands (T16)", () => {
+	const source = readFileSync(HOOK_PATH, "utf-8");
+
+	// Extract the TRIGGER_RE literal from the source so the assertions exercise
+	// the actual regex the hook will use, not a re-typed copy.
+	function extractTriggerRe(): RegExp {
+		const m = source.match(/const\s+TRIGGER_RE\s*=\s*(\/[^/]+\/[gimsuy]*)/);
+		if (!m) throw new Error("could not find TRIGGER_RE in eval-trigger.js");
+		const literal = m[1];
+		const lastSlash = literal.lastIndexOf("/");
+		const body = literal.slice(1, lastSlash);
+		const flags = literal.slice(lastSlash + 1);
+		return new RegExp(body, flags);
+	}
+
+	it("matches the porcelain `git commit` (regression: don't break the happy path)", () => {
+		const re = extractTriggerRe();
+		expect(re.test('git commit -m "msg"')).toBe(true);
+		expect(re.test("git commit")).toBe(true);
+		expect(re.test("git commit --allow-empty -m 'baseline'")).toBe(true);
+	});
+
+	it("does NOT match `git commit-tree` plumbing command (the regex's right-edge word boundary currently matches `t`→`-`)", () => {
+		const re = extractTriggerRe();
+		expect(re.test("git commit-tree HEAD^{tree}")).toBe(false);
+		expect(re.test("git commit-tree write-tree")).toBe(false);
+	});
+
+	it("does NOT match `git commit-graph` plumbing command", () => {
+		const re = extractTriggerRe();
+		expect(re.test("git commit-graph write")).toBe(false);
+		expect(re.test("git commit-graph verify")).toBe(false);
+	});
+
+	it("still rejects non-commit `git` commands that happen to contain `commit` as a substring", () => {
+		// `git config user.email "git committer"` — pre-existing word-boundary
+		// defense, must still hold after the right-edge tightening.
+		const re = extractTriggerRe();
+		expect(re.test('git config user.email "git committer"')).toBe(false);
 	});
 });
 

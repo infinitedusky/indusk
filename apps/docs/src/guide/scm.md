@@ -1,92 +1,69 @@
-# Source Control: jj or git
+# Source Control: Git
 
-InDusk supports two source control systems: [Jujutsu](https://github.com/jj-vcs/jj) (jj) and plain git. The right one for your project depends on your team's existing workflow — InDusk works either way, but the per-item commit ritual diverges in a meaningful way that's worth understanding.
+InDusk uses [git](https://git-scm.com/) as the only source control system as of 1.31.0. Earlier versions (1.28.x–1.30.x) supported [Jujutsu](https://github.com/jj-vcs/jj) (jj) as an alternate substrate; that support was removed in the [`git-only-substrate`](/decisions/git-only-substrate) plan. If your project still has `scm: "jj"` in its `.indusk/config.json`, the field is now a no-op and `indusk update` nudges you to remove it.
 
-## Detection at init
+## The git workflow
 
-`indusk init` detects which SCM your project uses at scaffold time:
+InDusk's commit cadence follows trunk-based development:
 
-1. **Tries `jj log -r @` first.** If your repo has a colocated `.jj/` directory (jj overlaid on top of git, jj's normal mode of operation), jj wins.
-2. **Falls back to `git rev-parse HEAD`.** Plain-git repos take this branch.
-3. **Defers if neither succeeds.** A bare tmpdir with no SCM gets an `scm`-free config; the next `indusk update` (after you run `git init` / `jj git init`) populates the field. **Init prints a loud stderr `⚠ WARNING` when this happens**, naming the recovery command so you don't silently fall through to the default — without the warning, `getScm()` quietly defaults to `"jj"` and you may not notice until the eval hook starts telling Claude to run `jj diff` on what's actually a git project. After running `git init` (or `jj git init`), run `indusk update` and the warning goes away.
+- **Short-lived feature branches.** Cut a branch off `main` for each plan or feature; merge fast; delete when done.
+- **One commit per checklist item.** Each impl checklist item gets its own commit. The eval hook fires on every `git commit` and scores the work against the rubric. Per-item commits keep history granular and the eval scorecards specific.
+- **Frequent integration with `main`.** Pull (rebase) at least once a day. Don't let a feature branch drift more than a workday behind trunk.
+- **`--force-with-lease` after rebase.** Push after `git rebase origin/main` with `--force-with-lease`, never bare `--force`.
+- **Merge and delete fast.** Once the plan or feature is done, merge to `main`, delete the feature branch locally and on the remote. No stale branches.
 
-The result is written to `.indusk/config.json`:
+The full convention lives in the [`git.md`](https://github.com/infinitedusky/indusk/blob/main/apps/indusk-mcp/skills/git.md) skill.
 
-```json
-{
-  "scm": "jj"   // or "git"
-}
-```
+## During /work
 
-This is the runtime source of truth. Read it via `getScm(projectRoot)` from `apps/indusk-mcp/src/lib/scm/detect.ts`.
-
-## The Two Rituals
-
-The high-level commit cadence is the same — **one commit per checklist item**, eval hook fires on each commit. The difference is *timing*.
-
-### jj — describe-then-do
+When executing an implementation plan, integrate git into the per-item workflow:
 
 ```
-jj new                                 # fresh empty commit
-jj describe -m "what I'm about to do"  # state intent BEFORE work
-[do the work]
-[check item off in impl.md]
-→ repeat
+Once at phase start:
+  git checkout main
+  git pull --rebase
+  git checkout -b plan/{plan-name}-phase-{n}
+
+For each checklist item:
+  1. [do the implementation work]
+  2. [check off the item(s) in impl.md]
+  3. git add -p                                  # stage hunks selectively
+  4. git commit -m "context: what + why"         # short, intent-named
+  5. → repeat from step 1 for the next item
+
+Periodically (at least once a day, or before merging):
+  git fetch origin
+  git rebase origin/main                         # stay current with trunk
+
+At phase or plan completion:
+  git push -u origin plan/{plan-name}-phase-{n}
+  # → open PR, get review, merge via GitHub button
+  git branch -d plan/{plan-name}-phase-{n}       # delete local
+  git push origin --delete plan/{plan-name}-phase-{n}  # delete remote
 ```
 
-The eval agent fires on `jj describe` and scores the work in the context of stated intent. See [`apps/indusk-mcp/skills/jj.md`](https://github.com/your-org/indusk-mcp/blob/main/apps/indusk-mcp/skills/jj.md) for the full skill.
+## Commit messages
 
-### git — do-then-commit on a feature branch
+The eval hook reads commit messages — descriptive messages get descriptive scorecards. Follow the monorepo convention:
 
 ```
-git checkout -b plan/my-plan-phase-1   # short-lived feature branch
-[do the work]
-[check item off in impl.md]
-git add -p                              # selective staging
-git commit -m "context: what + why"    # commit AFTER work
-→ repeat
+{context}: {what changed}, {why if not obvious}
 
-# at phase / plan completion:
-git push -u origin plan/my-plan-phase-1
-git merge → main
-git branch -d / git push origin --delete   # delete local + remote
+{optional body with details}
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ```
 
-The eval agent fires on `git commit` and scores the work after the fact. The judge has the diff + transcript but no pre-stated intent. See [`apps/indusk-mcp/skills/git.md`](https://github.com/your-org/indusk-mcp/blob/main/apps/indusk-mcp/skills/git.md) for the full skill — including trunk-based development discipline, branch hygiene, and recovery procedures.
+Context prefixes name the app or area (`indusk-mcp:`, `indusk-docs:`, `root:`, `infra:`). Keep the first line under 72 characters.
 
-## Asymmetries to Know About
+## Historical note
 
-| Aspect | jj | git |
-|--------|----|----|
-| Commit description timing | Before the work | After the work |
-| Eval context | Diff + transcript + stated intent | Diff + transcript only |
-| Branch model | One linear stack with rebase/split/squash as normal ops | Short-lived feature branches off main |
-| History rewriting | Routine | Allowed on local branches; never on shared/published |
-| Staging area | None — working copy IS the change | `git add -p` for selective staging |
-| Semantic graph | Full support — change IDs survive rebase/amend | **Graceful-degrade** — `indusk graph sync` no-ops; full git parity is future work |
+Prior to 1.31.0 InDusk shipped with dual-SCM support — projects could pick `scm: "jj"` or `scm: "git"` in their config, and InDusk would branch on the field at runtime (eval prompts, baseline CLI, semantic graph sync, even per-phase commit cadence). The strategic shift to single-SCM is recorded in the [`git-only-substrate`](/decisions/git-only-substrate) decision; the historical dual-SCM design is preserved in the superseded [`git-or-jj-substrate`](https://github.com/infinitedusky/indusk/tree/main/.indusk/planning/git-or-jj-substrate) planning folder.
 
-## Semantic graph caveat for git users
+If you had `scm: "jj"` in a project's config, `indusk update` will nudge you to remove the field — InDusk silently ignores it. Removing the field is the user's call; nothing breaks if you leave it.
 
-The semantic graph (`indusk graph sync`, Graphiti log capture) is jj-only in v1. On git-mode projects:
+## See also
 
-- `indusk graph sync` exits 0 with a clear `git mode — semantic graph unavailable` message.
-- `indusk graph status` and `indusk graph rebuild` early-return with the same message — none of the three commands reach their jj-specific code paths on git projects.
-- The MCP tools `mcp__indusk__graph_sync`, `mcp__indusk__graph_rebuild`, `mcp__indusk__graph_status` return the same human-readable text instead of jj-flavored errors, so an agent inspecting these tools knows to skip semantic graph operations on git projects.
-- `captureWithLog()` warns once per session and skips the event-log mirror; Graphiti writes still succeed.
-- All other features — plans, lessons, eval, highlights, init/update — work on git unchanged.
-
-This deferral is deliberate. The semantic graph event log uses jj change IDs because they survive rebase/amend/split; git commit SHAs don't. Full git parity (a stable `event_id` UUID independent of SCM) is queued as a follow-up plan. See [`.indusk/planning/git-or-jj-substrate/research.md`](https://github.com/your-org/indusk-mcp/blob/main/.indusk/planning/git-or-jj-substrate/research.md) "Three viable degrade modes" for the design rationale.
-
-## Choosing Between Them
-
-If you're already using jj — keep using jj. The describe-then-do flow is genuinely better for agent-driven work, and the semantic graph is a real feature.
-
-If you're new to SCMs or your team is on git — use git. Trunk-based development with short-lived feature branches is the standard big-org workflow; InDusk's `git.md` skill describes that pattern. You don't need to learn jj just to use InDusk. The semantic graph deferral is the only feature gap.
-
-If you want to try jj on top of an existing git repo — run `jj git init` in the project root. jj colocates its own `.jj/` alongside `.git/`. From then on, `getScm()` returns `"jj"` because `jj log -r @` succeeds. Your team can keep using git; you can use jj locally.
-
-## Migrating Between Modes
-
-If your project's `.indusk/config.json` is missing the `scm` field (pre-1.28.x scaffold), running `indusk update` detects and writes it.
-
-If you switch SCMs (rare — typically adopting jj on top of an existing git repo), hand-edit `.indusk/config.json`'s `scm` field. There's no CLI affordance because the change is rare and deliberate.
+- The [`git.md`](https://github.com/infinitedusky/indusk/blob/main/apps/indusk-mcp/skills/git.md) skill — the full convention reference.
+- The [`work.md`](https://github.com/infinitedusky/indusk/blob/main/apps/indusk-mcp/skills/work.md) skill — per-item commit cadence + gate execution order.
+- The [Eval hook](/guide/eval) guide — what the hook scores and how to read scorecards.

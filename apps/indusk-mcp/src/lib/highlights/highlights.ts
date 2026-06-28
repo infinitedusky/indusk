@@ -17,6 +17,14 @@ export interface ProcessedMark {
 	processedAt: string;
 	action: ProcessedAction;
 	detail?: string;
+	/**
+	 * Set to `true` when `markProcessed` was called on an ID already
+	 * present in the processed log. The append was REJECTED to prevent
+	 * duplicate Graphiti episodes downstream. Phase 6 dedup fix (1.31.2).
+	 */
+	already_processed?: boolean;
+	/** Timestamp of the original processed mark, surfaced when `already_processed: true`. */
+	original_processedAt?: string;
 }
 
 export interface WriteHighlightInput {
@@ -87,6 +95,28 @@ function readAllProcessed(projectRoot: string): ProcessedMark[] {
 }
 
 /**
+ * Phase 7 falsification fix (H19): defensive substring check on the raw
+ * file content. `readAllProcessed` silently skips malformed JSON lines
+ * (try/catch around `JSON.parse`), so a corrupted historic entry carrying
+ * the target ID is invisible to the parsed dedup check. This helper
+ * scans the raw bytes for the literal `"id":"<escaped id>"` substring —
+ * if found, the ID has been "seen" by the file even if the line is
+ * unparseable. Used as a belt-and-suspenders layer on top of
+ * `readAllProcessed` in `markProcessed`.
+ */
+function isIdInRawProcessed(projectRoot: string, id: string): boolean {
+	const path = processedPath(projectRoot);
+	if (!existsSync(path)) return false;
+	const raw = readFileSync(path, "utf-8");
+	// Escape JSON-relevant characters in the ID for the regex literal.
+	// Highlight IDs are h-YYYYMMDD-NNN (alphanumeric + hyphens), so no
+	// regex metacharacters in practice, but defensive escaping is cheap.
+	const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const pattern = new RegExp(`"id"\\s*:\\s*"${escaped}"`);
+	return pattern.test(raw);
+}
+
+/**
  * Compute the next sequence number for today's highlights. Reads all
  * existing highlights, filters to entries whose ID starts with today's
  * date, takes max seq, adds 1. Starts at 001 if none exist for today.
@@ -149,9 +179,19 @@ export function readUnprocessedHighlights(projectRoot: string): Highlight[] {
  * either writing a structured Graphiti episode (`wrote-episode`) or
  * deciding the highlight doesn't warrant a new episode (`skipped`).
  *
- * The operation is idempotent by design — appending a processed mark
- * for an already-processed ID just adds a duplicate entry, and
- * `readUnprocessedHighlights` uses a Set so duplicates don't matter.
+ * **Write-time dedup (Phase 6 fix, 1.31.2)**: previously this function
+ * was idempotent-append — duplicate calls for the same ID would append
+ * duplicate lines, and `readUnprocessedHighlights` deduped via Set at
+ * read time. T4's runtime audit (2026-06-28) showed the eval agent
+ * sometimes processes highlights from session memory rather than calling
+ * `highlights_unprocessed`, producing duplicate `graph_capture` writes to
+ * Graphiti. The fix: check the processed log first; if the ID is present,
+ * return `{ already_processed: true, original_processedAt }` WITHOUT
+ * appending. The agent's tool result signals the redundancy so it can
+ * skip the duplicate `graph_capture` call.
+ *
+ * `readUnprocessedHighlights` still uses a Set on read — defense against
+ * historic duplicates already in the file from pre-1.31.2 runs.
  */
 export function markProcessed(
 	projectRoot: string,
@@ -160,6 +200,35 @@ export function markProcessed(
 	detail?: string,
 ): ProcessedMark {
 	ensureInduskDir(projectRoot);
+
+	const existing = readAllProcessed(projectRoot).find((m) => m.id === id);
+	if (existing) {
+		return {
+			id,
+			processedAt: new Date().toISOString(),
+			action,
+			detail,
+			already_processed: true,
+			original_processedAt: existing.processedAt,
+		};
+	}
+
+	// Phase 7 (H19) defense: even if `readAllProcessed` returned no parseable
+	// entry for this ID, the raw file may still contain a corrupted historic
+	// line carrying the literal ID. Treat that as "already processed" too —
+	// the parser's tolerance shouldn't silently re-open the dedup contract.
+	// original_processedAt is undefined because the malformed entry didn't
+	// yield a parseable timestamp; the boolean is the load-bearing signal.
+	if (isIdInRawProcessed(projectRoot, id)) {
+		return {
+			id,
+			processedAt: new Date().toISOString(),
+			action,
+			detail,
+			already_processed: true,
+		};
+	}
+
 	const mark: ProcessedMark = {
 		id,
 		processedAt: new Date().toISOString(),

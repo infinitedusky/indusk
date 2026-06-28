@@ -5,6 +5,8 @@ status: accepted
 blocked_by: []
 ---
 
+> **Regression update — 2026-06-27** — The 1.23.x fix (adding `--mcp-config .mcp.json` + `--permission-mode bypassPermissions` to the spawn args) is still in place and verifies as expected: the inner Claude subprocess CAN call MCP tools. Today's investigation revealed a **second bug that has always existed** but went unnoticed because April's verification was a fresh-spawn eval. Across 197 evals on the persistent session since April, the inner Claude has called `mcp__indusk__highlights_unprocessed` only 8 times and called `mcp__indusk__graph_capture` / `mcp__indusk__highlight_mark_processed` **zero times**. Root cause: the *resume* prompt in `persistent-evaluator.ts:222-245` hand-rolls a minimal "Evaluate a new commit ... output the JSON scorecard" prompt and **omits Step 4 (process highlights) entirely**. Only the fresh-spawn path (~1 in 197 evals) receives Step 4. The 3 highlights processed in April were that fresh-spawn run; nothing has processed since. See Phase 4 below for the second-cause fix.
+
 # Eval Agent MCP Access — Brief
 
 ## Problem

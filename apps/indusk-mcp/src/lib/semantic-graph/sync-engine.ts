@@ -11,7 +11,6 @@
 
 import { randomUUID } from "node:crypto";
 
-import { getScm } from "../scm/detect.js";
 import { getCurrentChangeId } from "../scm/index.js";
 import type { SemanticGraphAdapter } from "./adapter.js";
 import type {
@@ -34,16 +33,6 @@ export interface SyncResult {
 	duration_ms: number;
 }
 
-/** Empty result for graceful-degrade paths (git mode in v1). */
-const EMPTY_RESULT: SyncResult = {
-	created: 0,
-	moved: 0,
-	tombstoned: 0,
-	unchanged: 0,
-	edges_attached: 0,
-	duration_ms: 0,
-};
-
 interface ExistingAnchor {
 	uuid: string;
 	kind: string;
@@ -60,9 +49,17 @@ interface ExistingAnchor {
  * 2. Read existing active anchors from runtime
  * 3. Match by identity; fallback to contentFingerprint for rename detection
  * 4. Unmatched existing → tombstone
- * 5. Tag events with current jj change ID
+ * 5. Tag events with current git short SHA
  * 6. Write each event to log AND apply to runtime
  * 7. Emit sync.completed
+ *
+ * Rebase tolerance: events are de-duplicated by content identity at sync
+ * time (`existingByIdentity` on path + `existingByFingerprint` on blob hash),
+ * not by change ID. A `git rebase` that rewrites commit SHAs produces
+ * noisy-replay-then-converge: extra events get written; the next sync's
+ * identity-matching tombstones whatever's orphaned; the runtime converges
+ * to current file state after one cycle. The log may carry historical
+ * noise, but functional correctness holds.
  */
 export async function runSync(
 	adapter: SemanticGraphAdapter,
@@ -71,18 +68,6 @@ export async function runSync(
 	runtimeClient: SemanticGraphClient,
 ): Promise<SyncResult> {
 	const start = Date.now();
-
-	// Graceful-degrade on git mode. The semantic graph requires SCM ancestry
-	// filtering with stable change IDs that survive rebase/amend; jj provides
-	// this, git does not (in v1). Future work: stable event_id design that
-	// tolerates git rewrites — see `.indusk/planning/git-or-jj-substrate/research.md`
-	// "Three viable degrade modes".
-	if (getScm(projectRoot) === "git") {
-		process.stderr.write(
-			"git mode — semantic graph unavailable (jj-only feature in v1; see .indusk/planning/git-or-jj-substrate/)\n",
-		);
-		return { ...EMPTY_RESULT, duration_ms: Date.now() - start };
-	}
 
 	const changeId = await getCurrentChangeId(projectRoot);
 	const ts = new Date().toISOString();
