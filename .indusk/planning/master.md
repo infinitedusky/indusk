@@ -14,7 +14,7 @@ Three plans queued ahead of arc work because each is small, ready-or-near-ready,
 
 | # | Plan | Status | Why now |
 |---|------|--------|---------|
-| I.1 | ~~handoff-multi-agent~~ → shipped via [handoff-multi-agent-section-shape](archive/handoff-multi-agent-section-shape/) | shipped 2026-06-27 (archived) | DONE — concurrent Claude sessions on one project no longer collide. Per-agent sections inside one `.indusk/current.md` + `mcp__indusk__update_current_section` MCP write tool + `/handoff` as a real four-step ritual. Falsification surfaced 4 real bugs (body injection / register race / catchup TTL gap / control-char session ID) — all fixed in Phase 6. Parent plan ADR carries supersession banner. |
+| ~~I.1~~ | ~~handoff-multi-agent~~ → shipped via [handoff-multi-agent-section-shape](archive/handoff-multi-agent-section-shape/); parent archived 2026-06-28 ([SUPERSEDED.md](archive/handoff-multi-agent/SUPERSEDED.md)) | DONE — shipped 2026-06-27 | Concurrent Claude sessions on one project no longer collide. Per-agent sections inside one `.indusk/current.md` + `mcp__indusk__update_current_section` MCP write tool + `/handoff` as a real four-step ritual. Falsification surfaced 4 real bugs — all fixed in Phase 6. Section-shape retrospective covers the actual shipped design; parent SUPERSEDED.md captures what was preserved vs replaced. |
 | I.2 | [indusk-worktree-extension](indusk-worktree-extension/brief.md) | brief accepted + test-plan draft (~2–3 days) | Multi-agent fix (I.1) depends on this. Independent quality-of-life win for FDE work even without I.1. Previously F1 in the FDE bucket. |
 | ~~I.3~~ | ~~code-reviewer-agent~~ → **ARCHIVED 2026-06-28**, see [archive/code-reviewer-agent/PIVOTED.md](archive/code-reviewer-agent/PIVOTED.md) | replaced by future `refactor-check` plan (not yet scaffolded) | The original "sibling of eval agent, fires on git commit, severity tiers" framing was wrong-shaped. Three framings in one day landed on: dual-surface refactor-readiness check (planner-skill enhancement + standalone `/refactor-check`), shared analysis engine, suggestions promote to Phase 0 trajectory rows. Sandy sitting with the framing before scaffolding. |
 
@@ -132,7 +132,7 @@ Surfaced 2026-04-19 during eval-scorecard-format-fix's falsification: the curren
 Updated 2026-05-25. The pre-2026-05-25 sequence (eval-scorecard-format-fix → indusk-admin-ui → ...) is mostly shipped through Arc 1 mid-list; the new starting point is the Immediate queue.
 
 1. **Immediate** (this week):
-   - `/work handoff-multi-agent` (I.1) — concurrent with F1, since multi-agent fix consumes worktrees
+   - ~~`/work handoff-multi-agent` (I.1)~~ — **shipped via section-shape, both archived 2026-06-28**
    - `/work indusk-worktree-extension` (I.2) — composes with I.1
    - ~~`/work code-reviewer-agent` (I.3)~~ — **archived 2026-06-28** ([PIVOTED.md](archive/code-reviewer-agent/PIVOTED.md)); replacement plan `refactor-check` not yet scaffolded
 2. **Arc 0 — Midnight Phases 0.1–0.3** (~3 days) — convention + code annotations + telemetry contract extension. Reshapes test-writing discipline for everything after.
