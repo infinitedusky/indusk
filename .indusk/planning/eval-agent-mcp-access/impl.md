@@ -172,7 +172,7 @@ Specific failure: production-environment risk where a previous write crashed mid
 - [x] Updated the CLAUDE.md "markProcessed is no longer idempotent-append" gotcha with a Phase 7 sentence describing the malformed-line defense (substring-on-raw-content check, defensive regex escaping, original_processedAt undefined for the malformed case).
 
 #### Phase 7 Document
-- [x] Phase 7 rides along on 1.31.2 — npm latest is 1.31.0; both 1.31.1 and 1.31.2 are local-only, so the Phase 7 defense ships in the same single 1.31.2 publish. No separate version bump needed. Changelog entry `[1.31.2]` extended with a Phase 7 falsification fix sub-bullet describing the malformed-line bypass and the substring defense.
+- [x] Phase 7 ships as its own 1.31.3 — Sandy published 1.31.2 to npm BEFORE Phase 7's falsification ran, so the malformed-line defense couldn't ride along. `apps/indusk-mcp/package.json` bumped to 1.31.3; new `[1.31.3] — 2026-06-28` changelog section above `[1.31.2]` describes the Phase 7 fix. CLAUDE.md gotcha reference updated from `(1.31.2)` to `(1.31.3)`. Single follow-up publish needed.
 
 ## Files Affected
 
