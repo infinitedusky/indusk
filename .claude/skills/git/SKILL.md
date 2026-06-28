@@ -5,16 +5,14 @@ description: Git version control — trunk-based development, short-lived featur
 
 # Git
 
-This project uses plain git for version control (`.indusk/config.json` has `scm: "git"`). Use the conventional GitHub Flow / trunk-based-development workflow that big orgs lean on: short-lived feature branches, lots of small commits, frequent integration with main, merge-and-delete when done.
-
-If your project uses Jujutsu instead, see the sibling `jj.md` skill — the rituals diverge meaningfully.
+This project uses git for version control. Use the conventional GitHub Flow / trunk-based-development workflow that big orgs lean on: short-lived feature branches, lots of small commits, frequent integration with main, merge-and-delete when done.
 
 ## Core Rhythm: Commit a Lot, Pull a Lot, Branch a Lot
 
 Five disciplines. None are optional.
 
 1. **Always work on a feature branch.** Never commit directly to `main`. The branch is your scratchpad; main is the published record.
-2. **Commit per checklist item.** Same granularity as jj — one logical unit per commit. Each commit triggers the eval hook.
+2. **Commit per checklist item.** One logical unit per commit. Each commit triggers the eval hook.
 3. **Pull main frequently.** Rebase your feature branch on `origin/main` at least once a day. Don't let your branch drift more than a workday behind trunk.
 4. **Push your branch often.** Pushing backs up your work and surfaces it to others. There's no penalty for pushing in-progress branches.
 5. **Merge fast, delete branches.** When the plan or feature is done, merge to `main` and delete the feature branch (locally and on the remote). No stale branches.
@@ -51,7 +49,7 @@ At phase or plan completion:
 
 **Granularity:** One `git commit` per logical unit of work. Usually one checklist item, but closely related items (e.g., "add type" + "add factory for that type") can share a commit. The gate items (otel, verify, context, document) within a phase can be one commit each or grouped — use judgment.
 
-**Eval hook timing asymmetry vs jj:** on jj you describe-then-do (commit message written before the work, eval scores in context of stated intent). On git you do-then-commit — the eval still runs, still scores against the diff + transcript, but it has slightly less context about your stated intent. Mitigation: write descriptive commit messages that name the *why*, not just the *what*.
+**Commit message discipline:** the eval hook fires on commit and scores the diff + transcript. Write descriptive commit messages that name the *why*, not just the *what* — the agent has the diff regardless; the message provides intent.
 
 ## Branch Naming
 
@@ -196,7 +194,7 @@ git diff <ref1>..<ref2>               # diff between two refs
 
 ## Commit Message Style
 
-Follow the monorepo conventions — same as jj:
+Follow the monorepo conventions:
 
 ```
 {context}: {what changed}, {why if not obvious}
@@ -238,6 +236,5 @@ After merge, delete the branch (both local and remote — see "Merging Back to M
 
 ## See Also
 
-- `jj.md` — sibling skill for projects using Jujutsu instead
-- `work.md` — per-item commit cadence is the same regardless of SCM
-- `apps/indusk-docs/src/guide/eval.md` — eval hook timing details and the do-then-commit asymmetry
+- `work.md` — per-item commit cadence
+- `apps/indusk-docs/src/guide/eval.md` — eval hook timing details
