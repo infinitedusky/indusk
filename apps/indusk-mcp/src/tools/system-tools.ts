@@ -121,13 +121,39 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 				});
 			}
 
+			// Workbench-mode stray-state audit (1.31.7). Detects stray
+			// .indusk/ directories inside the wrapped repo — an artifact of
+			// pre-1.31.7 init runs or operators running init from the wrong
+			// cwd. Silently confuses path resolution. Returns [] in single-
+			// repo mode (no false positives). See
+			// `.indusk/planning/workbench-mode-rail-integrity/` for full
+			// rationale.
+			const { findStrayState } = await import("../lib/stray-state-audit.js");
+			const strayState = findStrayState(projectRoot);
+			for (const finding of strayState) {
+				checks.push({
+					name: `workbench/stray-state-${finding.type}`,
+					status: "error",
+					detail: `${finding.path} — recommended cleanup: ${finding.recommendation}`,
+				});
+			}
+
 			const healthy = checks.every((c) => c.status === "ok");
 
 			return {
 				content: [
 					{
 						type: "text" as const,
-						text: JSON.stringify({ healthy, extensions: extensions.length, checks }, null, 2),
+						text: JSON.stringify(
+							{
+								healthy,
+								extensions: extensions.length,
+								checks,
+								stray_state: strayState,
+							},
+							null,
+							2,
+						),
 					},
 				],
 				isError: !healthy,

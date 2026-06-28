@@ -48,10 +48,10 @@ Ship a workbench-aware path resolution helper for the 4 hooks, refactor each hoo
 | T5 | `eval-trigger.js` against a single-repo tmpdir (the existing pattern) still resolves change ID and writes lifecycle markers correctly — no regression | Phase 0 | Phase 2 | passing |
 | T6 | `check-catchup.js`, `check-gates.js`, `validate-impl-structure.js` source code each `require`/`import` the new shared helper `_hook-paths.js` instead of carrying their own `findProjectRoot()` — source-level grep test | Phase 0 | Phase 3 | passing |
 | T7 | The 3 non-eval hooks (catchup, gates, validate) continue to operate correctly on existing single-repo dusk plans — no regression on the existing hook surface | Phase 0 | Phase 3 | passing |
-| T8 | `check_health` in workbench mode detects a stray `.indusk/` directory inside the wrapped repo and emits a `stray-state` error naming the path + a recommended `rm -rf` command | Phase 0 | Phase 4 | writable |
-| T9 | `check_health` in workbench mode with NO stray state (only the legitimate workbench-root `.indusk/`) reports clean — no false-positive errors | Phase 0 | Phase 4 | writable |
-| T10 | `check_health` in single-repo mode (NOT workbench) does NOT search for stray `.indusk/` directories — the audit is workbench-specific | Phase 0 | Phase 4 | writable |
-| T11 | A worktree under the workbench with its own `.indusk/` scratch (e.g., for local-only telemetry binding) is NOT flagged as stray — only the wrapped-repo case is | Phase 0 | Phase 4 | writable |
+| T8 | `check_health` in workbench mode detects a stray `.indusk/` directory inside the wrapped repo and emits a `stray-state` error naming the path + a recommended `rm -rf` command | Phase 0 | Phase 4 | passing |
+| T9 | `check_health` in workbench mode with NO stray state (only the legitimate workbench-root `.indusk/`) reports clean — no false-positive errors | Phase 0 | Phase 4 | passing |
+| T10 | `check_health` in single-repo mode (NOT workbench) does NOT search for stray `.indusk/` directories — the audit is workbench-specific | Phase 0 | Phase 4 | passing |
+| T11 | A worktree under the workbench with its own `.indusk/` scratch (e.g., for local-only telemetry binding) is NOT flagged as stray — only the wrapped-repo case is | Phase 0 | Phase 4 | passing |
 
 ### Deferred Verification
 
