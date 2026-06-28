@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join, relative } from "node:path";
@@ -1301,6 +1301,30 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	}
 	console.info(`\n[Config]`);
 	console.info(`  create: .indusk/config.json (mode: ${config.mode})`);
+
+	// git-only-substrate Phase 6 (falsification fix H1): warn the user when
+	// the project root is not a git repository. As of 1.31.0 git is the only
+	// SCM InDusk integrates with; the eval hook, semantic graph sync, and
+	// baseline CLI all require git. Init still succeeds (the directory will
+	// be valid as soon as the user runs `git init`), but without a signal
+	// at init time the user discovers git is required only when a downstream
+	// command crashes or silently no-ops. The check is intentionally cheap:
+	// `git rev-parse --git-dir` fails fast if there's no `.git/` either at
+	// the project root or in any parent directory.
+	const gitCheck = spawnSync("git", ["rev-parse", "--git-dir"], {
+		cwd: projectRoot,
+		stdio: "ignore",
+	});
+	if (gitCheck.status !== 0) {
+		process.stderr.write(
+			"\n⚠ WARNING: git is the only SCM InDusk supports (as of 1.31.0),\n" +
+				"  but this directory is not a git repository.\n" +
+				"  All SCM-coupled features (eval hook, semantic graph sync, baseline\n" +
+				"  CLI) will fail until you initialize git:\n" +
+				"    1. Run `git init` in this directory.\n" +
+				"    2. Make at least one commit (`git commit --allow-empty -m \"init\"`).\n\n",
+		);
+	}
 
 	// Create initial handoff so /catchup runs full orientation on first session
 	const handoffPath = join(projectRoot, ".claude/handoff.md");
