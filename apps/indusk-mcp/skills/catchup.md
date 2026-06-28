@@ -108,6 +108,8 @@ mcp__graphiti__search_nodes({
 
 **Graceful degradation:** If `mcp__graphiti__search_nodes` is unavailable (Graphiti container down, transport error), skip this step silently and add a note to the catchup summary: `Graphiti: unavailable (run \`indusk infra start\` to recall episodic memory)`. Catchup should not fail if Graphiti is down — the rest of the layers are still valid.
 
+**Reads only.** Catchup queries Graphiti — it does not write to it. As a working agent, **you never call `mcp__graphiti__add_memory` or `mcp__indusk__graph_capture` directly in process skills**. When you have a moment worth remembering, write a highlight via `mcp__indusk__highlight` (tag + level + note); the eval agent materializes it into a structured Graphiti episode at the next `git commit` or session end. See the `community-use-highlight-not-direct-graphiti-writes` lesson for the full discipline.
+
 ### 8. Check Active Plans
 
 Call `list_plans`. This shows every plan and its status. Pay attention to:
