@@ -1,7 +1,7 @@
 ---
 title: "Eval Agent MCP Access"
 date: 2026-04-19
-status: completed
+status: in-progress
 workflow: bugfix
 trajectory: required
 rationale: required
@@ -41,6 +41,7 @@ Current state: every evaluator run logs `graphitiWrites: 0`; `.indusk/highlights
 | T7 | Source-grep regression: `persistent-evaluator.ts` source contains BOTH `--mcp-config` AND `bypassPermissions` literal strings. These flags are load-bearing for the 1.23.x MCP-access fix; without them the inner Claude has no MCP tool surface and the entire highlights-processing path returns to the April-2026 failure mode. T3 pins the prompt shape but not the spawn flags. | Phase 0 | Phase 5 | passing |
 | T8 | The `buildHighlightsInstructions` helper text contains a "MUST call `mcp__indusk__highlights_unprocessed` first; do NOT process from memory or by reading `highlights.jsonl` directly" instruction — explicitly forbidding the failure mode T4's runtime audit surfaced (the inner Claude skipped the tool call ~25% of evals and processed from session memory, causing 43 duplicate Graphiti episodes for the same 52 unique highlight IDs). | Phase 0 | Phase 6 | passing |
 | T9 | Calling `markProcessed(projectRoot, id, action)` twice for the same ID returns `{ already_processed: true, original_processedAt: <ts> }` on the second call AND does NOT append a second line to `highlights-processed.jsonl`. The current behavior is idempotent-append-allowed (duplicates accepted, dedup at read time); the fix changes to idempotent-rejection at write time so the agent's tool result signals the redundancy and downstream `graph_capture` calls don't happen for already-done IDs. | Phase 0 | Phase 6 | passing |
+| T10 | Calling `markProcessed(projectRoot, "h-X", action)` when `highlights-processed.jsonl` already contains a MALFORMED line carrying the literal `"id":"h-X"` (e.g., truncated JSON from a crash mid-write, a hand-edit gone wrong, or a future-format mismatch) returns `{ already_processed: true }` AND does NOT append. T9 only covers well-formed historic entries — `readAllProcessed` silently skips malformed lines (via try/catch around `JSON.parse`) and lines missing `id: string`, so the Phase 6 dedup contract has an undetected bypass when a single corrupted line for the target ID exists in the historic file. | Phase 0 | Phase 7 | planned |
 
 ## Checklist
 
@@ -152,6 +153,26 @@ Belt-and-suspenders fix: (1) strengthen Step 4's prompt instruction to forbid me
 #### Phase 6 Document
 - [x] `apps/indusk-mcp/package.json` bumped from `1.31.1` to `1.31.2`.
 - [x] Changelog entry `[1.31.2]` describes the gap (T4 runtime audit found 43 duplicate Graphiti episodes), the two-pronged fix (prompt + tool guard), and the contract change for `markProcessed`.
+
+### Phase 7: Falsification — malformed-line bypass of the Phase 6 dedup contract
+
+**Goal**: verify whether Phase 6's `markProcessed` write-time dedup holds when `highlights-processed.jsonl` contains a malformed historic entry carrying the target ID. T9 (the Phase 6 verification) only covers well-formed historic entries — `readAllProcessed`'s `try { JSON.parse(line) } catch { skip }` silently drops malformed lines, so a corrupted entry for the target ID is invisible to the dedup check and the function appends a duplicate.
+
+Specific failure: production-environment risk where a previous write crashed mid-line, a hand-edit truncated a line, or a version-format mismatch leaves the file with a line like `{"id":"h-X","processedAt"...` (no closing brace). The substring `"id":"h-X"` is in the file but `JSON.parse` rejects it. `markProcessed("h-X", ...)` thinks the ID is not present, appends a fresh line. Two physical lines for `h-X` — one malformed, one valid. Phase 6's contract silently breaks for this specific input.
+
+- [ ] **H19 fix (T10)**: in `apps/indusk-mcp/src/lib/highlights/highlights.ts`'s `markProcessed`, add a defensive substring check on the RAW file content BEFORE the parsed-content check. If `processedPath` exists and its raw content contains the literal substring `"id":"<the id>"` (using a JSON-safe match — e.g., regex `/"id"\s*:\s*"<escaped id>"/`), treat the ID as already present even if `readAllProcessed` didn't surface a parsed entry for it. Return `{ already_processed: true, original_processedAt: undefined }` (the original_processedAt is undefined because the malformed entry didn't yield a parseable timestamp; the inner Claude still knows to STOP from the boolean alone).
+- [ ] **Optional helper**: extract the substring check into `isIdInRawProcessed(projectRoot: string, id: string): boolean` so the logic is testable in isolation AND reusable from any future caller that wants to know "is this ID known to have been processed at any point, even via a corrupted entry."
+
+#### Phase 7 Verification
+- [ ] T10 passes — extend `apps/indusk-mcp/src/lib/highlights/highlights.test.ts` with a new case: write a malformed line directly to `processedPath` (truncated JSON containing `"id":"h-X"` but missing the closing brace), call `markProcessed(root, "h-X", "wrote-episode")`, assert the return carries `already_processed: true` AND the file's line count did NOT grow.
+- [ ] Phase 7 verification also asserts that `readAllProcessed` still skips the malformed line (the surface symptom that prompted this hypothesis is intentional — the defensive check in `markProcessed` works around it without changing the parser's tolerance).
+- [ ] Full `pnpm vitest run` from `apps/indusk-mcp/` passes (no regression on the 665-test suite).
+
+#### Phase 7 Context
+- [ ] Update the CLAUDE.md "markProcessed is no longer idempotent-append" gotcha (added in Phase 6) with a sentence about the malformed-line defense: `Phase 7 added a defensive substring-on-raw-content check so a malformed historic entry carrying the ID (e.g., a truncated JSON line from a crash mid-write) still triggers the already_processed: true signal even though readAllProcessed skips the malformed line. The check uses a JSON-safe regex on the raw bytes — sufficient to detect the ID's presence without parsing the corrupted line.`
+
+#### Phase 7 Document
+- [ ] Append a "Phase 7 falsification fix (1.31.3)" entry to the changelog under `[Unreleased]` describing the malformed-line bypass + the defensive substring check. Bump `apps/indusk-mcp/package.json` from `1.31.2` to `1.31.3` since the Phase 6 fix shipped under 1.31.2 hasn't been published yet — the Phase 7 fix can either ride along on 1.31.2 if not published, or take its own version if 1.31.2 is already live. The work skill decides at execution time based on publication state.
 
 ## Files Affected
 
