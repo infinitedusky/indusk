@@ -81,11 +81,15 @@ if (cliSource !== null) {
 	}
 
 	// Fast path: not a recognized commit-trigger command. The hook fires on
-	// `git commit`. Word-boundary anchors (\b) prevent substring false-
-	// positives like `git config user.email "git committer"` ("committer"
-	// contains "commit" as a substring), `cat git-commit-template.md`, or
-	// `echo "git commit"` inside an unrelated string literal.
-	const TRIGGER_RE = /\bgit commit\b/;
+	// the user-facing porcelain `git commit ...` but NOT on git plumbing
+	// commands like `git commit-tree` or `git commit-graph`. The left-edge
+	// `\b` defends substring false-positives ("git committer" — `committer`
+	// has `commit` as a substring); the right-edge requires the next
+	// character to terminate the command word (whitespace, end-of-string,
+	// or a shell separator). Without the right-edge tightening, JS's `\b`
+	// matches `t`→`-` (word char to non-word), which would let
+	// `git commit-tree` fire the hook.
+	const TRIGGER_RE = /\bgit commit(?=$|\s|;|&|\|)/;
 	if (!TRIGGER_RE.test(command)) {
 		syslog(cwd, "skip — no git commit in command");
 		process.exit(0);
