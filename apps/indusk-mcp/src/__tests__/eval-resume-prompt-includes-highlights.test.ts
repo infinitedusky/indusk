@@ -56,6 +56,64 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 		expect(persistentSource).toMatch(/buildHighlightsInstructions\(\s*\{/);
 	});
 
+	// T5 (Phase 5 falsification, H14): the resume prompt's commit-evaluation
+	// line must NOT anchor the inner Claude backward to "as before" / "the
+	// same evaluation questions as before." In a 197-turn persistent session
+	// where Step 4 was never previously provided, that phrasing reads as
+	// "your last turns" and pulls Claude back to the pre-fix pattern of
+	// skipping Step 4. Drop the backwards-anchoring temporal modifier.
+	it("T5: the resume prompt's commit-evaluation line does NOT use backwards-anchoring phrasing", () => {
+		// Locate the resumePrompt template literal itself — not the surrounding
+		// code or comments. The template literal starts with `${highlightsBlock}`
+		// and continues through to the closing backtick.
+		const resumePromptMatch = persistentSource.match(
+			/const\s+resumePrompt\s*=\s*`([\s\S]*?)`;/,
+		);
+		expect(resumePromptMatch, "could not locate resumePrompt template literal").not.toBeNull();
+		const resumePromptText = resumePromptMatch?.[1] ?? "";
+		// The pre-fix phrasing was "the same evaluation questions as before"
+		// — both halves must be gone from the actual prompt text.
+		expect(resumePromptText).not.toMatch(/as before/i);
+		expect(resumePromptText).not.toMatch(/the same evaluation questions/i);
+	});
+
+	// T6 (Phase 5 falsification, H15): the helper text must explicitly handle
+	// the empty-list case from highlights_unprocessed, not just the
+	// unavailable-tool case. Without this, once the backlog drains, the inner
+	// Claude has undefined behavior — could hallucinate highlights, loop, or
+	// smoothly skip. Pinning it removes the ambiguity.
+	it("T6: buildHighlightsInstructions explicitly handles the empty-list case", () => {
+		// Look for an instruction about an empty list / no highlights anywhere
+		// inside the helper body.
+		const helperMatch = promptBuilderSource.match(
+			/export function buildHighlightsInstructions[\s\S]{0,3000}?^\}/m,
+		);
+		expect(helperMatch, "could not locate buildHighlightsInstructions body").not.toBeNull();
+		const helperBody = helperMatch?.[0] ?? "";
+		// Some explicit empty-list / no-unprocessed-highlights branch
+		expect(helperBody).toMatch(
+			/empty list|no unprocessed highlights|\(no unprocessed highlights\)|returns an empty/i,
+		);
+	});
+
+	// T7 (Phase 5 falsification, H16): source-grep regression for the
+	// April 1.23.x MCP-access flags. If anyone refactors persistent-evaluator's
+	// args list and removes --mcp-config or bypassPermissions, the inner
+	// Claude has no MCP tool surface and Step 4 fires into a void — the
+	// April-2026 bug returns silently. T3 pins the prompt shape but not the
+	// spawn flags; T7 fills the gap.
+	it("T7: persistent-evaluator.ts contains both --mcp-config AND bypassPermissions literal strings", () => {
+		expect(persistentSource).toContain("--mcp-config");
+		expect(persistentSource).toContain("bypassPermissions");
+		// Both flags should appear in both branches (resume + fresh) of
+		// buildArgsAndPrompt. We don't pin "both branches" strictly — just
+		// the presence somewhere. The args literal must reference both.
+		const mcpConfigCount = (persistentSource.match(/--mcp-config/g) ?? []).length;
+		const bypassCount = (persistentSource.match(/bypassPermissions/g) ?? []).length;
+		expect(mcpConfigCount, "expected --mcp-config in at least both spawn-arg sites").toBeGreaterThanOrEqual(2);
+		expect(bypassCount, "expected bypassPermissions in at least both spawn-arg sites").toBeGreaterThanOrEqual(2);
+	});
+
 	it("the resume-prompt construction is NOT the pre-fix minimal shape", () => {
 		// Pre-Phase-4 the resume prompt began with the commit-evaluation line as
 		// its very first content. The fix prepends the highlights block above it.

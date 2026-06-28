@@ -50,7 +50,9 @@ After processing each highlight (whether you wrote an episode or decided to skip
 
 **Highlights are additive context, not a constraint.** Continue reading the full transcript and inferring knowledge independently — highlights ensure important moments aren't missed, but they don't bound your analysis. The transcript may contain insights the working agent didn't flag.
 
-If \`mcp__indusk__highlights_unprocessed\` is unavailable, skip this step silently and continue.`;
+If \`mcp__indusk__highlights_unprocessed\` is unavailable, skip this step silently and continue.
+
+If the tool returns an empty list (no unprocessed highlights), note "(no unprocessed highlights)" once in your output and continue to the rubric — do not invent highlights, do not loop searching for them, do not call \`graph_capture\` speculatively.`;
 }
 
 export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {

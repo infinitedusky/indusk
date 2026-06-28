@@ -2,3 +2,12 @@
 {"id":"h-20260417-002","processedAt":"2026-04-19T18:05:26.949Z","action":"wrote-episode","detail":"eval-agent-otel-observation"}
 {"id":"h-20260417-001","processedAt":"2026-04-19T18:05:50.073Z","action":"wrote-episode","detail":"agent-roles-phase3-smoke"}
 {"id":"h-20260628-001","processedAt":"2026-06-28T02:19:44.364Z","action":"wrote-episode","detail":"git-only-substrate-graceful-degrade-lesson"}
+{"id":"h-20260628-002","processedAt":"2026-06-28T02:20:05.720Z","action":"wrote-episode","detail":"falsification-ritual-value"}
+{"id":"h-20260628-002","processedAt":"2026-06-28T02:20:08.700Z","action":"wrote-episode","detail":"falsification-ritual-value"}
+{"id":"h-20260628-003","processedAt":"2026-06-28T02:20:21.062Z","action":"wrote-episode","detail":"inherited-bugs-ownership"}
+{"id":"h-20260628-003","processedAt":"2026-06-28T02:20:26.261Z","action":"wrote-episode","detail":"inherited-bugs-ownership"}
+{"id":"h-20260628-004","processedAt":"2026-06-28T02:20:38.955Z","action":"wrote-episode","detail":"probe-wrapper-layer-at-authoring"}
+{"id":"h-20260628-004","processedAt":"2026-06-28T02:20:40.727Z","action":"wrote-episode","detail":"mcp-wrapper-probing-at-authoring"}
+{"id":"h-20260628-005","processedAt":"2026-06-28T02:21:09.163Z","action":"wrote-episode","detail":"estimate-by-grep-undercounting"}
+{"id":"h-20260628-005","processedAt":"2026-06-28T02:21:09.297Z","action":"wrote-episode","detail":"estimate-by-grep-undercounts"}
+{"id":"h-20260419-001","processedAt":"2026-06-28T02:39:59.721Z","action":"wrote-episode","detail":"rationale-baseline-regex-anchoring"}

@@ -228,15 +228,21 @@ export async function runPersistentEval(opts: {
 						// after the very first fresh spawn. Now we prepend the same
 						// Step 4 block the fresh-spawn prompt uses.
 						const highlightsBlock = buildHighlightsInstructions({ projectGroup });
+						// Phrasing note (eval-agent-mcp-access Phase 5 falsification fix H14):
+						// the previous wording "answer the same evaluation questions as
+						// before" pulled the inner Claude back to its 197-turn pre-fix
+						// pattern of skipping Step 4 — "as before" reads as "your last
+						// turns" inside a persistent session. Use present-tense direct
+						// instruction with no backwards-anchoring temporal modifier.
 						const resumePrompt = `${highlightsBlock}
 
 ---
 
 ### Now: evaluate a new commit. Change ID: ${opts.changeId}
 
-Run \`${diffCommand}\` to see what changed. Then answer the same evaluation questions as before. Read the changed files for full context.
+Run \`${diffCommand}\` to see what changed. Then answer the v1 rubric questions for this commit. Read the changed files for full context.
 
-Output ONLY the JSON scorecard as before — no commentary.`;
+Output ONLY the JSON scorecard — no commentary.`;
 
 						return {
 							args: [
