@@ -609,11 +609,24 @@ export function registerGraphTools(server: McpServer, projectRoot: string): void
 					content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
 				};
 			} catch (err) {
+				// git-only-substrate Phase 6 (falsification fix H3): translate
+				// git-state errors to friendly messages mirroring the CLI fix
+				// in bin/cli.ts. Without this, the MCP response carried the raw
+				// execFileAsync "Command failed: git rev-parse..." text.
+				const msg = err instanceof Error ? err.message : String(err);
+				let friendly = msg;
+				if (/not a git repository|fatal:.*not.*git/i.test(msg)) {
+					friendly =
+						"this directory is not a git repository — run `git init` first, then re-run graph sync";
+				} else if (/unknown revision|HEAD/i.test(msg)) {
+					friendly =
+						"this git repository has no commits yet — run `git commit --allow-empty -m 'init'` first, then re-run graph sync";
+				}
 				return {
 					content: [
 						{
 							type: "text" as const,
-							text: JSON.stringify({ error: (err as Error).message }, null, 2),
+							text: JSON.stringify({ error: friendly }, null, 2),
 						},
 					],
 					isError: true,

@@ -233,13 +233,37 @@ graph
 
 		await client.ensureConnection();
 		console.info("Syncing semantic graph...");
-		const result = await runSync(adapter, projectRoot, logWriter, client);
-		await client.close();
 
-		console.info(
-			`Created: ${result.created}, Moved: ${result.moved}, Tombstoned: ${result.tombstoned}, Edges: ${result.edges_attached}, Unchanged: ${result.unchanged}`,
-		);
-		console.info(`Duration: ${result.duration_ms}ms`);
+		try {
+			const result = await runSync(adapter, projectRoot, logWriter, client);
+			await client.close();
+			console.info(
+				`Created: ${result.created}, Moved: ${result.moved}, Tombstoned: ${result.tombstoned}, Edges: ${result.edges_attached}, Unchanged: ${result.unchanged}`,
+			);
+			console.info(`Duration: ${result.duration_ms}ms`);
+		} catch (err) {
+			// git-only-substrate Phase 6 (falsification fix H3): wrap the runSync
+			// call so a git-state error doesn't bubble as an unhandled rejection.
+			// runSync calls getCurrentChangeId → `git rev-parse --short HEAD`,
+			// which rejects on no-git-repo / no-commits. Translate to a friendly
+			// stderr message + non-zero exit.
+			await client.close().catch(() => {});
+			const msg = err instanceof Error ? err.message : String(err);
+			if (/not a git repository|fatal:.*not.*git/i.test(msg)) {
+				process.stderr.write(
+					"Error: this directory is not a git repository.\n" +
+						"  Run `git init` first, then re-run `indusk graph sync`.\n",
+				);
+			} else if (/unknown revision|HEAD/i.test(msg)) {
+				process.stderr.write(
+					"Error: this git repository has no commits yet.\n" +
+						"  Run `git commit --allow-empty -m \"init\"` first, then re-run `indusk graph sync`.\n",
+				);
+			} else {
+				process.stderr.write(`Error: ${msg}\n`);
+			}
+			process.exit(1);
+		}
 	});
 
 graph

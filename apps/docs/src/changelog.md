@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed (1.31.0 falsification ritual — H1, H3, H5)
+- **`indusk init` warns when the project is not a git repository** (H1) — Phase 4 deleted the pre-1.31.0 deferred-SCM stderr warning; nothing was added in its place. `indusk init` in a non-git directory got a green-looking init and the user discovered git was required only when `indusk graph sync` crashed or the eval hook silently skipped. The warning is back, scoped to "git is the only SCM" with `git init` named as the recovery. Informational — init still exits 0.
+- **`indusk graph sync` translates git-state errors to friendly messages** (H3) — `runSync()` calls `getCurrentChangeId()` which awaits `execFileAsync("git", ["rev-parse", "--short", "HEAD"])`. Previously, the rejection propagated through `cli.ts`'s action as an unhandled `Error` with the raw `ChildProcess` stack trace. Now the CLI wraps the call in try/catch and translates "not a git repository" → "run `git init` first" / "unknown revision" → "run `git commit --allow-empty -m 'init'` first". Exits with code 1. The same translation lives in `tools/graph-tools.ts`'s `graph_sync` MCP handler so MCP callers get the same UX.
+- **Eval-trigger `TRIGGER_RE` no longer matches `git commit-tree` / `git commit-graph`** (H5) — pre-existing bug inherited from the dual-form `\b(jj describe|git commit)\b` regex and not tightened during the Phase 2 collapse. JS's `\b` matches the `t`→`-` transition (word-char to non-word-char), so `\bgit commit\b` matched git plumbing commands. Tightened to `/\bgit commit(?=$|\s|;|&|\|)/` — lookahead requires end-of-string, whitespace, or a shell separator after `commit`. The porcelain `git commit ...` still matches; plumbing commands no longer fire the eval hook. New CLAUDE.md gotcha records the constraint so future regex changes don't reintroduce the bug.
+
 ## [1.31.0] — 2026-06-27
 
 ### Changed
