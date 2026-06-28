@@ -54,6 +54,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/guide/" },
 						{ text: "Agent Roles", link: "/guide/agent-roles" },
+						{ text: "Rail Check (post-update)", link: "/guide/rail-check" },
 						{ text: "Signal Correlation", link: "/guide/signal-correlation" },
 						{ text: "Getting Started", link: "/guide/getting-started" },
 						{ text: "Walkthrough", link: "/guide/walkthrough" },
