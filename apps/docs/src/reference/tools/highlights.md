@@ -116,7 +116,7 @@ In Phase 1, only the library and the MCP tools ship. In Phase 2 of the agent-rol
 | Retrospective "What We Learned" item | retrospective | `important` | `retro-lesson` |
 | User runs `/highlight ...` (Phase 4) | highlight skill | user-specified (default `important`) | user-specified or `observation` |
 
-The eval agent's PostToolUse hook fires on every `jj describe` and processes the unprocessed queue before scoring the commit. The handoff skill also fires the eval trigger at session end (Phase 4), so highlights written without a subsequent commit still get processed before the session ends.
+The eval agent's PostToolUse hook fires on every `git commit` and processes the unprocessed queue before scoring the commit. The handoff skill also fires the eval trigger at session end, so highlights written without a subsequent commit still get processed before the session ends.
 
 ## How the Eval Agent Processes Highlights
 

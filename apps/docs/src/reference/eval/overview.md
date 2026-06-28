@@ -4,7 +4,7 @@ The eval system measures whether InDusk's context system makes agents better at 
 
 ## How It Works
 
-A Claude Code PostToolUse hook fires after every `jj describe`. It spawns a background evaluator agent that:
+A Claude Code PostToolUse hook fires after every `git commit`. It spawns a background eval agent that:
 
 1. Does a full `/catchup` (same as any new session)
 2. Reads the session transcript
@@ -17,21 +17,21 @@ A Claude Code PostToolUse hook fires after every `jj describe`. It spawns a back
 ```mermaid
 sequenceDiagram
     participant Agent as Working Agent
-    participant JJ as jj describe
+    participant Git as git commit
     participant Hook as PostToolUse Hook
-    participant Judge as Judge Agent
+    participant Eval as Eval Agent
     participant Log as results.log
     participant G as Graphiti
 
-    Agent->>JJ: jj describe -m "..."
-    JJ-->>Hook: Bash tool completed
-    Hook->>Judge: spawn background (claude --print)
+    Agent->>Git: git commit -m "..."
+    Git-->>Hook: Bash tool completed
+    Hook->>Eval: spawn background (claude --print)
     Hook-->>Agent: continues working
-    Judge->>Judge: /catchup
-    Judge->>Judge: read transcript + diff
-    Judge->>Judge: answer rubric questions
-    Judge->>G: write derived insights
-    Judge->>Log: append scorecard
+    Eval->>Eval: /catchup
+    Eval->>Eval: read transcript + diff
+    Eval->>Eval: answer rubric questions
+    Eval->>G: write derived insights
+    Eval->>Log: append scorecard
 ```
 
 ## Two Modes
@@ -126,7 +126,7 @@ The evaluator's Graphiti writes are selective — only facts that would have cha
 
 Eval findings persist until explicitly resolved. When the evaluator scores a commit, any question answered `no` or `partial` becomes an **unresolved finding** in `.indusk/eval/findings.json`.
 
-On every subsequent `jj describe`, the hook surfaces unresolved findings to the agent:
+On every subsequent `git commit`, the hook surfaces unresolved findings to the agent:
 
 ```
 📊 Unresolved eval findings (2):
@@ -165,7 +165,7 @@ Session state is stored in `.indusk/eval/evaluator-session.json`. If the session
 The eval system writes to `.indusk/eval/system.log` for full lifecycle visibility:
 
 ```
-2026-04-11T21:48:12.700Z hook fired — tool: Bash, command: jj describe -m "..."
+2026-04-11T21:48:12.700Z hook fired — tool: Bash, command: git commit -m "..."
 2026-04-11T21:48:12.701Z projectRoot: /path/to/project, eval.enabled: true
 2026-04-11T21:48:12.744Z candidate: .../evaluator-runner.js — found
 2026-04-11T21:48:12.746Z spawning evaluator — module: ..., changeId: abc123
@@ -179,7 +179,7 @@ Check this log when evals aren't appearing in `results.log`.
 
 ### Silent crash at parse — CJS `require()` in the spawned ESM script
 
-**Symptom:** `system.log` shows `evaluator spawned — source: commit, pid: N` on every `jj describe`, but **never** logs `evaluator process started — changeId: ...` / `evaluator completed — ...` / `evaluator crashed — ...`. `results.log` receives no new scorecards. No error entry. No trace in Dash0. The subprocess seems to vanish.
+**Symptom:** `system.log` shows `evaluator spawned — source: commit, pid: N` on every `git commit`, but **never** logs `evaluator process started — changeId: ...` / `evaluator completed — ...` / `evaluator crashed — ...`. `results.log` receives no new scorecards. No error entry. No trace in Dash0. The subprocess seems to vanish.
 
 **Cause:** the hook at `apps/indusk-mcp/hooks/eval-trigger.js` spawns the evaluator's lifecycle wrapper as `node --input-type=module -e <inline-script>` with `stdio: "ignore"`. If that inline script contains CJS module-resolution calls at top level (e.g., `const fs = require("fs")`), the subprocess throws `ReferenceError: require is not defined in ES module scope` at parse — line 2, before any user code runs. `stdio: "ignore"` swallows the stderr. The parent sees the spawn succeed and moves on.
 
@@ -223,7 +223,7 @@ If the second invocation also returns "TOOL NOT AVAILABLE", check that `.mcp.jso
 
 If `results.log` stops updating and you suspect a silent failure:
 
-1. **Enable OTel first.** Add `eval.otel.enabled: true` to `.indusk/config.json` and set `OTEL_EXPORTER_OTLP_ENDPOINT` + auth headers (or rely on composable.env's wiring). Fire a trivial `jj describe`.
+1. **Enable OTel first.** Add `eval.otel.enabled: true` to `.indusk/config.json` and set `OTEL_EXPORTER_OTLP_ENDPOINT` + auth headers (or rely on composable.env's wiring). Fire a trivial `git commit`.
 2. **Check `system.log` for lifecycle markers.** If you see `evaluator spawned` followed by nothing (no `evaluator process started`), the spawned subprocess is dying at parse. This is the failure mode above or a near relative.
 3. **Check Dash0 for the `eval.run` span.** If OTel init logs `eval.otel initialized` to `system.log` but no `eval.run` span appears in the `agent` dataset, the process died between `initEvalOtel` and the first `withSpan`. Very unlikely — but the absence of the span narrows the search window considerably.
 4. **Check `results.log` for `error: true` entries.** Since 1.19.1, any catch path writes an error entry. If there's no error entry AND no scorecard, the subprocess died before any user code ran (same failure class as above).

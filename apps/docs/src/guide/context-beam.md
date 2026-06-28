@@ -36,7 +36,7 @@ Beam returns context organized by distance from the file:
 
 Beam is only as useful as the data in the graph. Three things improve results:
 
-1. **Let the eval judge run.** Every `jj describe` triggers an evaluation that writes findings to the graph — with file paths attached. More commits = richer context.
+1. **Let the eval agent run.** Every `git commit` triggers an evaluation that writes findings to the graph — with file paths attached. More commits = richer context.
 
 2. **Keep the graph synced.** Run `indusk graph sync` periodically (it runs automatically at plan phase boundaries). This keeps the semantic graph anchors current.
 

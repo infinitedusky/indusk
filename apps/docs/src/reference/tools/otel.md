@@ -361,7 +361,7 @@ Backwards compatible: existing projects without the field continue to behave as 
 
 ## Eval Agent OTel (Opt-In)
 
-The background eval agent — spawned on every `jj describe` to score commits — has its own opt-in OTel tracing layer, separate from the per-project instrumentation above. Its purpose is internal observability: seeing what the eval agent is doing when it fails silently, instead of squinting at log files.
+The background eval agent — spawned on every `git commit` to score commits — has its own opt-in OTel tracing layer, separate from the per-project instrumentation above. Its purpose is internal observability: seeing what the eval agent is doing when it fails silently, instead of squinting at log files.
 
 ### Enabling
 
@@ -381,7 +381,7 @@ Pick either source (both are idempotent):
 
 **Per-invocation** (env vars, win over config):
 ```sh
-INDUSK_EVAL_OTEL=1 INDUSK_EVAL_OTEL_DATASET=agent jj describe -m "..."
+INDUSK_EVAL_OTEL=1 INDUSK_EVAL_OTEL_DATASET=agent git commit -m "..."
 ```
 
 Endpoint comes from the standard `OTEL_EXPORTER_OTLP_ENDPOINT` env var — same one the per-project instrumentation uses. The exporter posts to `{endpoint}/v1/traces` (HTTP protobuf).

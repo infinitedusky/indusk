@@ -5,17 +5,17 @@ The eval system scores every commit automatically. No setup needed beyond having
 ## Your First Eval
 
 1. Work normally — implement features, fix bugs, follow plans
-2. Commit your change — `jj describe` if your project uses jj, `git commit -m "..."` if it uses plain git. InDusk auto-detects which SCM your project uses at `indusk init` and writes it to `.indusk/config.json`'s `scm` field.
-3. The eval judge spawns in the background
+2. Commit your change — `git commit -m "..."`
+3. The eval agent spawns in the background
 4. After ~2 minutes, check your results:
 
 ```bash
 indusk eval summary
 ```
 
-That's it. The eval hook fires on every commit inside a Claude Code session — `jj describe` or `git commit`, whichever your project uses. The evaluator's diff-fetch instruction adapts: it tells Claude to run `jj diff -r ${id}` on jj projects and `git show ${id}` on git projects.
+That's it. The eval hook fires on every `git commit` inside a Claude Code session. The evaluator's diff-fetch instruction tells Claude to run `git show ${changeId}` against the just-committed SHA.
 
-**One asymmetry to know about**: on jj, the describe-then-do workflow means the agent writes the commit description BEFORE doing the work, so the eval scores work in the context of stated intent. On git, you commit AFTER doing the work, so the eval fires post-hoc — the judge has the diff and the transcript but no pre-stated intent. Same scorecard format; slightly less context.
+**One thing to know about**: git's commit-after-work pattern means the eval fires post-hoc — the eval agent has the diff and the session transcript but no pre-stated intent. Plan-driven workflows compensate: the active plan's brief + impl serve as the stated intent that the eval agent reads via `/catchup`.
 
 ## Interpreting Scores
 

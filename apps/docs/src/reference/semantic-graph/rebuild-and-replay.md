@@ -66,7 +66,10 @@ console.log(`Rebuilt: ${result.applied} events applied, ${result.skipped} skippe
 
 Clearing the runtime is cheap (one Cypher `GRAPH.DELETE` call). Replay cost scales with log length: ~20 μs per event on a warm FalkorDB, so a 100k-event log rebuilds in a couple of seconds.
 
-## Ancestry filtering
+## Ancestry filtering (historical — jj-only)
+
+> **Historical reference.** This section describes the original jj-based ancestry filtering design. As of 1.31.0 ([`git-only-substrate`](/decisions/git-only-substrate)), the semantic graph is git-only and rebase tolerance comes via content-keyed dedup at sync time (`(path, blob_hash)` lookup) rather than ancestry-set replay filtering. Events whose underlying content matches a previous event get tombstoned by the runtime's identity matching on the next sync; the system converges to current file state after one cycle. The content below is preserved as a time-stamped record of the original design.
+
 
 The `ancestryFilter` option is the bridge between the event log and jj's version control. Every event carries a `change_id` field; `getReachableChangeIds(projectRoot)` returns the set of jj change IDs that are ancestors of the current HEAD (`::@` in jj revset terms). Events whose `change_id` isn't in that set are skipped during replay.
 
