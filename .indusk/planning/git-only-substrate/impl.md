@@ -1,7 +1,7 @@
 ---
 title: "git-only-substrate"
 date: 2026-06-27
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -67,6 +67,9 @@ The trajectory IDs below use a `T1..T13` numbering scheme. They map directly to 
 | T11 | `apps/indusk-mcp/skills/{work,highlight,eval-review}.md` contain no SCM-conditional "if jj... else git..." prose — every commit-cadence and diff-fetch reference is single-form. | Phase 0 | Phase 3 | passing |
 | T12 | `apps/docs/src/guide/scm.md` opens as a git workflow guide (no "choose your SCM" framing); `apps/docs/src/decisions/git-or-jj-substrate.md` carries a supersession banner at the top pointing to this plan's ADR. | Phase 0 | Phase 5 | passing |
 | T13 | `pnpm test` from the repo root passes after all changes land. Every existing test that previously asserted dual-SCM behavior either updates to assert git-only behavior or is deleted with rationale. | Phase 0 | Phase 4 | passing |
+| T14 | `indusk init` in a directory without `git init` emits a stderr warning naming git as the required SCM and pointing at `git init` as the next step (the pre-1.31.0 deferred-SCM warning was deleted in Phase 4 and the user got no signal that git was required; the warning needs to come back, scoped to "git is the only SCM"). | Phase 0 | Phase 6 | planned |
+| T15 | `indusk graph sync` in a directory that is not a git repository (or in a git repository with zero commits) exits non-zero with a friendly stderr message naming the cause (e.g., "not a git repository" or "no commits yet"). It does NOT print an unhandled stack trace from `execFileAsync` rejection bubbling through `runSync`. | Phase 0 | Phase 6 | planned |
+| T16 | The eval-trigger `TRIGGER_RE` does NOT match `git commit-tree`, `git commit-graph`, or any other `git commit-<word>` plumbing command — the `\bgit commit\b` regex's right-side word boundary currently matches the transition from `t` to `-` and produces a false positive. The regex must be tightened so only the user-facing porcelain `git commit` fires the eval hook. | Phase 0 | Phase 6 | planned |
 
 All trajectory rows are writable at Phase 0 — every test is authorable today against the current stack. T1-T5 e2e and integration tests assert the post-Phase-1 behavior and go red today (current stack returns "git mode unavailable" or skips the log mirror). T6-T12 are source-level grep / file content assertions, red today because the patterns exist. T13 is the existing CI run, which goes through transient red states during phases 2-4 as code/tests get removed and ends green at Phase 4.
 
@@ -209,6 +212,26 @@ No `### Trajectory Rationale` subsection required — every row is Phase 0.
 - [ ] ADR published to `apps/docs/src/decisions/git-only-substrate.md` with docs-site frontmatter (title, sidebar order, etc.)
 - [ ] Supersession banners in place on prior plan's ADR (`apps/docs/src/decisions/git-or-jj-substrate.md`) and prior planning ADR (`.indusk/planning/git-or-jj-substrate/adr.md`)
 - [ ] 1.31.0 changelog entry published in `apps/docs/src/changelog.md` under `[Unreleased]` then `[1.31.0]` heading at release time
+
+### Phase 6: Falsification — silent init in non-git, graph sync stack-trace, eval-trigger commit-tree false-positive
+
+**Goal**: verify whether the attested state holds against three failure modes the trajectory rows T1–T13 did not catch. The trade-off "git is the only SCM, so I don't need to detect or warn" is not the same as "the user knows git is required" — Phase 4 deleted the deferred-SCM warning but added nothing in its place. T14 captures the unwarned-init silent failure. The trade-off "git error propagates from `getCurrentChangeId`" is not the same as "the user sees a useful message" — runSync's caller in the CLI doesn't catch the rejection. T15 captures the unhandled-stack-trace failure. T16 captures a pre-existing regex false-positive that the Phase 2 narrowing inherited but did not tighten: `\bgit commit\b` matches `git commit-tree` because the `t`-to-`-` boundary is a JS word boundary.
+
+- [ ] **H1 fix (T14)**: in `apps/indusk-mcp/src/bin/commands/init.ts`, after the `writeConfig` call, run `git rev-parse --git-dir` (or `existsSync(join(projectRoot, ".git"))`). If neither succeeds, emit a stderr warning block scoped to git as the required SCM, naming `git init` as the recovery and `indusk update` as the follow-up. The warning is informational — init still succeeds (the directory will be valid once the user runs `git init` afterwards).
+- [ ] **H3 fix (T15)**: in `apps/indusk-mcp/src/bin/cli.ts`'s `graph sync` action, wrap the `runSync` call in a try/catch. On error, detect whether the cause is "not a git repo" or "no commits" (inspect the `stderr` of the underlying execFile rejection) and print a friendly stderr message naming the cause + the recovery (`git init`, or `git commit` first). Exit with code 1 instead of letting the rejection bubble. Apply the same fix in the MCP tool wrapper `apps/indusk-mcp/src/tools/graph-tools.ts`'s `graph_sync` handler so the MCP response carries the same friendly message instead of an unhandled rejection.
+- [ ] **H5 fix (T16)**: in `apps/indusk-mcp/hooks/eval-trigger.js`, tighten `TRIGGER_RE` from `/\bgit commit\b/` to `/\bgit commit(?:$|\s|;|&|\|)/` (or equivalent — the right-edge boundary must reject `-<word>` continuations). The intent: match the user-facing porcelain `git commit ...` but NOT `git commit-tree`, `git commit-graph`, etc.
+
+#### Phase 6 Verification
+- [ ] T14 passes (a vitest unit or end-to-end test in `apps/indusk-mcp/src/__tests__/init-no-git-warning.test.ts` runs `indusk init` in a non-git tmp dir and asserts the stderr warning mentions git)
+- [ ] T15 passes (a vitest unit or end-to-end test in `apps/indusk-mcp/src/__tests__/graph-sync-no-git-friendly.test.ts` runs `indusk graph sync` against a non-git tmp dir AND a git-repo-with-zero-commits tmp dir, asserts exit code 1, asserts stderr contains a friendly message, asserts no `Error:` stack trace pattern in output)
+- [ ] T16 passes (extend `apps/indusk-mcp/src/__tests__/eval-trigger-filter-falsepositives.test.ts` with assertions that `TRIGGER_RE.test("git commit-tree write-tree")` is `false` and `TRIGGER_RE.test("git commit-graph write")` is `false`, while `TRIGGER_RE.test('git commit -m "msg"')` stays `true`)
+- [ ] Full `pnpm vitest run` from `apps/indusk-mcp/` passes (no regression on existing 645-test suite)
+
+#### Phase 6 Context
+- [ ] Update CLAUDE.md Known Gotchas: add an entry about the eval-trigger regex needing right-edge non-`-` boundary so future regex changes don't reintroduce the commit-tree false-positive
+
+#### Phase 6 Document
+- [ ] Append a Phase 6 entry to the 1.31.x changelog (released as a 1.31.1 patch alongside this falsification fix): three lines noting the init warning, the friendly graph-sync error, and the tightened eval-trigger regex
 
 ## Files Affected
 
