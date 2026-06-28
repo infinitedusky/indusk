@@ -170,6 +170,7 @@ const config = defineConfig({
 						{ text: "Overview", link: "/lessons/" },
 						{ text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)", link: "/lessons/handoff-multi-agent-section-shape" },
 						{ text: "Git-Only Substrate (Falsification + Inherited Bugs)", link: "/lessons/git-only-substrate" },
+						{ text: "Eval Agent MCP Access (Fresh-vs-Resume Path Divergence)", link: "/lessons/eval-agent-mcp-access" },
 					],
 				},
 			],

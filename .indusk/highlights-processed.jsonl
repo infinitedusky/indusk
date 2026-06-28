@@ -96,3 +96,9 @@
 {"id":"h-20260627-008","processedAt":"2026-06-28T02:46:54.177Z","action":"wrote-episode","detail":"git-only-substrate-decision"}
 {"id":"h-20260627-009","processedAt":"2026-06-28T02:46:57.326Z","action":"skipped","detail":"test plan details, covered by brief decision"}
 {"id":"h-20260627-010","processedAt":"2026-06-28T02:47:00.984Z","action":"skipped","detail":"ADR details already captured in git-only-substrate-decision episode"}
+{"id":"h-20260628-006","processedAt":"2026-06-28T05:06:06.879Z","action":"wrote-episode","detail":"eval-agent-verification-dual-path-lesson"}
+{"id":"h-20260628-007","processedAt":"2026-06-28T05:06:23.384Z","action":"wrote-episode","detail":"eval-agent-doctor-commands-not-optional"}
+{"id":"h-20260628-008","processedAt":"2026-06-28T05:06:41.977Z","action":"wrote-episode","detail":"falsification-ritual-load-bearing-for-prompts"}
+{"id":"h-20260628-009","processedAt":"2026-06-28T05:06:58.666Z","action":"wrote-episode","detail":"prompt-instructions-are-code"}
+{"id":"h-20260628-010","processedAt":"2026-06-28T05:07:18.621Z","action":"wrote-episode","detail":"runtime-success-counters-required-exit-criterion"}
+{"id":"h-20260628-011","processedAt":"2026-06-28T05:07:37.161Z","action":"wrote-episode","detail":"inspect-session-jsonl-early"}
