@@ -26,7 +26,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, realpathSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 /**
@@ -76,7 +76,7 @@ function findStatePath(startDir) {
  * @param {string} cwd
  * @returns {string | null}
  */
-function findGitPath(cwd) {
+function findGitPathFromCwd(cwd) {
 	try {
 		const out = execFileSync("git", ["rev-parse", "--show-toplevel"], {
 			cwd,
@@ -98,6 +98,56 @@ function findGitPath(cwd) {
 }
 
 /**
+ * Workbench-mode gitPath fallback (1.31.10 falsification finding). When
+ * `findGitPathFromCwd` returns null (cwd is not inside any git repo), check
+ * whether `statePath` is a workbench root and, if so, derive gitPath from
+ * the configured wrapped repo.
+ *
+ * This is the common case for hooks fired by Claude Code in workbench mode:
+ * the session's `event.cwd` is the workbench root (where Claude Code was
+ * launched), NOT the wrapped repo or a worktree. `event.cwd` is the session
+ * cwd, not the subprocess cwd that ran `git commit` — so `git rev-parse`
+ * against it fails even though the commit DID happen in a real git repo
+ * inside the workbench.
+ *
+ * The fallback reads `${statePath}/.indusk/config.json` for the
+ * `worktree.wrapped_repo` field. If present and the path exists, returns
+ * the realpath of `${statePath}/${wrapped_repo}`. Otherwise returns null
+ * (caller logs an actionable skip message naming `statePath`).
+ *
+ * Trade-off accepted: if the user committed in a SIBLING WORKTREE rather
+ * than the wrapped repo, this resolves `gitPath` to the wrapped repo
+ * (giving the eval agent the wrapped repo's HEAD, which may not be the
+ * commit just made). That's a known incompleteness — Phase N+1 work
+ * could read `tool_input.command` for a `cd <worktree>` prefix to
+ * disambiguate. Until then, the wrapped-repo fallback is strictly better
+ * than the pre-1.31.10 behavior of silently bailing every commit.
+ *
+ * @param {string | null} statePath
+ * @returns {string | null}
+ */
+function findGitPathFromWorkbenchConfig(statePath) {
+	if (!statePath) return null;
+	const configPath = resolve(statePath, ".indusk/config.json");
+	if (!existsSync(configPath)) return null;
+	let config;
+	try {
+		config = JSON.parse(readFileSync(configPath, "utf-8"));
+	} catch {
+		return null;
+	}
+	const wrappedRepo = config?.worktree?.wrapped_repo;
+	if (!wrappedRepo || typeof wrappedRepo !== "string") return null;
+	const candidate = resolve(statePath, wrappedRepo);
+	if (!existsSync(candidate)) return null;
+	try {
+		return realpathSync(candidate);
+	} catch {
+		return candidate;
+	}
+}
+
+/**
  * Resolve both the InDusk state path and the git path for a given cwd. Either
  * may be null:
  *   - `statePath` is null if no `.indusk/` directory exists in any ancestor.
@@ -112,8 +162,17 @@ function findGitPath(cwd) {
  * @returns {{ statePath: string | null, gitPath: string | null }}
  */
 export function resolveStateAndGitPaths(cwd) {
-	return {
-		statePath: findStatePath(cwd),
-		gitPath: findGitPath(cwd),
-	};
+	const statePath = findStatePath(cwd);
+	let gitPath = findGitPathFromCwd(cwd);
+	if (!gitPath) {
+		// Workbench-mode fallback (1.31.10). When event.cwd is the workbench
+		// root, `git rev-parse` against it fails because the workbench root
+		// isn't a git repo — but the wrapped repo IS, and its path is
+		// recoverable from the workbench's config. Without this fallback,
+		// Claude Code's PostToolUse hook bails on every commit when launched
+		// from the workbench root (the dominant operating model on Numero
+		// and any future FDE engagement).
+		gitPath = findGitPathFromWorkbenchConfig(statePath);
+	}
+	return { statePath, gitPath };
 }

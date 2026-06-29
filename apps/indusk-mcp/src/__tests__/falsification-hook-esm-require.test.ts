@@ -127,4 +127,48 @@ syslog("evaluator process started");
 		expect(cjsRequireFs.test(hookBody)).toBe(false);
 		expect(cjsRequirePath.test(hookBody)).toBe(false);
 	});
+
+	// Broadened in 1.31.10 after Sandy traced a separate ESM-require crash in
+	// `persistent-evaluator.ts` that escaped the eval-trigger.js-only scan
+	// above. The bug pattern is FILE-CLASS, not file-specific — anywhere in
+	// the eval lib that compiles to ESM is at risk. Scan every file under
+	// src/lib/eval/ recursively so the next regression in any sibling module
+	// fails this test loudly.
+	it("no CJS require() of node:fs or node:path anywhere under src/lib/eval/", async () => {
+		const { readdirSync } = await import("node:fs");
+		const evalLibDir = join(__dirname, "../lib/eval");
+
+		const cjsRequireFs = /require\s*\(\s*['"`](?:node:)?fs['"`]\s*\)/;
+		const cjsRequirePath = /require\s*\(\s*['"`](?:node:)?path['"`]\s*\)/;
+
+		function* walkTsFiles(dir: string): Generator<string> {
+			for (const entry of readdirSync(dir, { withFileTypes: true })) {
+				if (entry.isDirectory()) {
+					if (entry.name === "__tests__" || entry.name === "node_modules") continue;
+					yield* walkTsFiles(join(dir, entry.name));
+					continue;
+				}
+				if (!entry.name.endsWith(".ts") && !entry.name.endsWith(".js")) continue;
+				if (entry.name.endsWith(".d.ts") || entry.name.endsWith(".test.ts")) continue;
+				yield join(dir, entry.name);
+			}
+		}
+
+		const offenders: Array<{ file: string; line: number; match: string }> = [];
+		for (const file of walkTsFiles(evalLibDir)) {
+			const body = readFileSync(file, "utf-8");
+			body.split("\n").forEach((line, i) => {
+				if (cjsRequireFs.test(line) || cjsRequirePath.test(line)) {
+					offenders.push({ file, line: i + 1, match: line.trim() });
+				}
+			});
+		}
+
+		expect(
+			offenders,
+			`CJS require() of node:fs or node:path found in eval lib (1.31.10 falsification finding). ` +
+				`Replace with ESM imports at the top of the file. Offenders:\n` +
+				offenders.map((o) => `  ${o.file}:${o.line} — ${o.match}`).join("\n"),
+		).toEqual([]);
+	});
 });

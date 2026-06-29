@@ -52,6 +52,8 @@ Ship a workbench-aware path resolution helper for the 4 hooks, refactor each hoo
 | T9 | `check_health` in workbench mode with NO stray state (only the legitimate workbench-root `.indusk/`) reports clean — no false-positive errors | Phase 0 | Phase 4 | passing |
 | T10 | `check_health` in single-repo mode (NOT workbench) does NOT search for stray `.indusk/` directories — the audit is workbench-specific | Phase 0 | Phase 4 | passing |
 | T11 | A worktree under the workbench with its own `.indusk/` scratch (e.g., for local-only telemetry binding) is NOT flagged as stray — only the wrapped-repo case is | Phase 0 | Phase 4 | passing |
+| T12 | `findGitPathFromWorkbenchConfig(statePath)` returns the realpath of `${statePath}/${wrapped_repo}` when `.indusk/config.json` names a worktree.wrapped_repo and the path exists; returns null otherwise. The fallback is invoked when `findGitPathFromCwd` returns null. Defends Numero's dominant case where Claude Code launches from the workbench root and `event.cwd` is not a git repo. | Phase 0 | Phase 6 | passing |
+| T13 | Recursive scan of `src/lib/eval/**` for CJS `require()` of `node:fs` / `node:path` finds no offenders. Broadens the 1.19.1 regression net from `hooks/eval-trigger.js`-only to every file under `src/lib/eval/`. Defends against the bug class re-escaping into a sibling module (which is what happened in `persistent-evaluator.ts:68` between 1.19.1 and 1.31.10). | Phase 0 | Phase 6 | passing |
 
 ### Deferred Verification
 
@@ -212,6 +214,43 @@ _(filled in by Sandy after running the manual smoke)_
 
 - [ ] Add a changelog entry: "Workbench mode rail integrity — hooks now distinguish `statePath` from `gitPath`; eval pipeline functions on workbench-shaped projects; stray-state audit available via `check_health`."
 - [ ] Falsification ritual: run `/falsify workbench-mode-rail-integrity` and address the resulting Falsification Phase before retrospective.
+
+### Phase 6 — Falsification (1.31.10)
+
+Sandy traced the Numero rail on 2026-06-28 mid-drain (using `runEvaluatorSync` to bypass the broken auto-rail). The trace surfaced **two real bugs both shipping in 1.31.7 unfalsified** — both fixed in 1.31.10.
+
+#### Hypotheses
+
+**H1 — `persistent-evaluator.ts:68` crashes with `require is not defined` in ESM context.**
+`useFunction = existsSync(persistentEvaluatorPath) ? "runPersistentEval" : "runEvaluatorSync"` at `eval-trigger.js:297` — when `persistent-evaluator.js` is installed, the runner prefers `runPersistentEval`. That path executes `const { unlinkSync } = require("node:fs")` inside `clearSession()` at line 68. The file is a `type: "module"` ESM compile target. Node throws `ReferenceError: require is not defined in ES module scope` at parse, the eval agent subprocess crashes silently (stdio: "ignore" from the inline-script spawn), and Sandy saw zero scorecards land for 2 months on Numero even after 1.31.7 supposedly fixed the rail. **This is the bug-fix-eval-agent (1.19.1) pattern re-escaping into a sibling module.** The existing regression test at `falsification-hook-esm-require.test.ts` scanned only `hooks/eval-trigger.js` — file coverage was too narrow.
+
+**H2 — `event.cwd` is the SESSION cwd, not the subprocess cwd that ran `git commit`.**
+1.31.7's `findGitPath(cwd)` derived gitPath via `git rev-parse --show-toplevel` against `event.cwd`. The brief and Phase 2 test fixtures assumed `event.cwd` was inside a git repo. For the actual Numero pattern — Claude Code launched from the workbench root, `pnpm wt feat-thing git commit -m "..."` — `event.cwd` IS the workbench root, which is NOT a git repo. `git rev-parse` returns null. Hook bails with `skip — no git repo at cwd` even though the commit DID happen in a real git repo inside the workbench. T4 (workbench end-to-end test) passed in the synthetic fixture because the fixture used `cwd: wrappedRepo` directly — it never exercised the actual Claude Code event shape.
+
+#### Fix Items
+
+- [x] **H1**: replace `const { unlinkSync } = require("node:fs")` at `persistent-evaluator.ts:68` with a top-of-file `import { unlinkSync } from "node:fs"`
+- [x] **H1**: broaden `falsification-hook-esm-require.test.ts` to recursively scan `apps/indusk-mcp/src/lib/eval/**` (skipping `__tests__/`, `.d.ts`, `.test.ts`) against the existing CJS-require regex. Reports offenders as `file:line — match` so the next regression is loud
+- [x] **H2**: new `findGitPathFromWorkbenchConfig(statePath)` in `_hook-paths.js` — reads `${statePath}/.indusk/config.json` for `worktree.wrapped_repo`, returns `realpath(${statePath}/${wrapped_repo})` if the path exists, null otherwise
+- [x] **H2**: `resolveStateAndGitPaths(cwd)` now calls the fallback when `findGitPathFromCwd(cwd)` returns null. Single-repo mode unaffected (cwd-based resolution always wins when there's a git repo at cwd)
+- [x] Flip T12, T13 to passing
+
+#### Phase 6 Verification
+
+- [x] T12 passes (4 sub-cases): config-fallback resolves, no-config returns null, cwd-git wins over fallback, nonexistent wrapped_repo returns null
+- [x] T13 passes: recursive `src/lib/eval/**` scan against the regex finds no offenders
+- [x] All Phase 1-4 trajectory rows (T1-T11) remain passing — no regression on existing helper / hook / audit behavior
+- [x] `pnpm --filter indusk-mcp test src/__tests__/hook-paths.test.ts src/__tests__/eval-trigger-workbench-mode.test.ts src/__tests__/falsification-hook-esm-require.test.ts` — 16/16 green
+
+#### Phase 6 Context
+
+- [x] Add Known Gotcha to CLAUDE.md: Claude Code PostToolUse hook `event.cwd` is the SESSION cwd, not the subprocess cwd. Workbench-mode hooks must derive `gitPath` from config (via the `_hook-paths.js` fallback), not solely from `git rev-parse` against `event.cwd`. The lesson `community-brief-author-bias-ground-truth-verification` applies — assuming `event.cwd` was a git repo was a brief-author-bias failure; Phase 6 ground-truth-verified against Numero's actual shape
+- [x] Update lesson `falsification-regression-regex-coverage` (or add a sibling note): regression tests defend against bug CLASSES, not specific files. When a CJS-in-ESM bug surfaces in file X, the regression test must scan every file in the same execution context, not just file X
+
+#### Phase 6 Document
+
+- [x] Add 1.31.10 changelog entry to `apps/docs/src/changelog.md` with both H1/H2 narratives + the test-coverage discipline note
+- [x] No new docs guide page — the existing `apps/docs/src/guide/rail-check.md` covers the post-update verification procedure; the 1.31.10 fixes are transparent to the operator (rail "just works" after restart)
 
 ## Out of scope (explicit defers)
 

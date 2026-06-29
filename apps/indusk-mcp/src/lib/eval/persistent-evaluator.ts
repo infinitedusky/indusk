@@ -8,7 +8,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { getEvalModel, getProjectGroupId } from "../config.js";
@@ -65,7 +65,14 @@ function writeSession(projectRoot: string, session: EvaluatorSession): void {
 function clearSession(projectRoot: string): void {
 	const path = getSessionPath(projectRoot);
 	if (existsSync(path)) {
-		const { unlinkSync } = require("node:fs") as typeof import("node:fs");
+		// ESM-native unlinkSync — never reintroduce CJS `require()` here.
+		// The runner is loaded via dynamic `import()` from a Node ESM context;
+		// any top-level or inline `require(...)` throws "require is not defined"
+		// at parse and the eval agent crashes silently. This was the bug-fix-
+		// eval-agent (1.19.1) pattern; it re-escaped here in persistent-
+		// evaluator.ts because the original regression test only scanned
+		// hooks/eval-trigger.js. Fixed in 1.31.10 by widening the regression
+		// scan to cover every file in src/lib/eval/.
 		unlinkSync(path);
 	}
 }

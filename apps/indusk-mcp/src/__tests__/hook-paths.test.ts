@@ -103,6 +103,89 @@ describe("resolveStateAndGitPaths — workbench-aware path resolution", () => {
 		});
 	});
 
+	describe("T2b: workbench-mode gitPath fallback when cwd is the workbench root (1.31.10)", () => {
+		it("resolves gitPath from config when event.cwd is the workbench root (no git repo there)", async () => {
+			// Workbench shape with the wrapped repo named in config — Claude Code's
+			// PostToolUse hook event.cwd is the SESSION cwd (where Claude Code was
+			// launched), not the subprocess cwd that ran `git commit`. When the
+			// session is launched from the workbench root, event.cwd points at a
+			// directory that's NOT a git repo — `git rev-parse` fails. Pre-1.31.10
+			// the hook bailed silently on every commit. The fallback reads
+			// `.indusk/config.json`'s `worktree.wrapped_repo` and derives gitPath.
+			mkdirSync(join(tmpRoot, ".indusk"));
+			writeFileSync(
+				join(tmpRoot, ".indusk/config.json"),
+				JSON.stringify({ worktree: { wrapped_repo: "numero" } }),
+			);
+
+			const wrappedRepo = join(tmpRoot, "numero");
+			mkdirSync(wrappedRepo);
+			gitInit(wrappedRepo);
+
+			// NB: cwd is the workbench root, NOT the wrapped repo or a worktree
+			const resolveStateAndGitPaths = await loadHelper();
+			const result = resolveStateAndGitPaths(tmpRoot);
+
+			const workbenchReal = execSync("realpath .", { cwd: tmpRoot, encoding: "utf-8" }).trim();
+			const wrappedReal = execSync("realpath .", { cwd: wrappedRepo, encoding: "utf-8" }).trim();
+
+			expect(result.statePath).toBe(workbenchReal);
+			// Critical: gitPath resolves from config-derived wrapped repo, NOT null
+			expect(result.gitPath).toBe(wrappedReal);
+		});
+
+		it("returns gitPath=null when config has no worktree.wrapped_repo and cwd has no git repo", async () => {
+			// Workbench-style .indusk/ exists but no worktree config + cwd not in
+			// any git repo — fallback gracefully returns null (caller handles).
+			mkdirSync(join(tmpRoot, ".indusk"));
+			writeFileSync(join(tmpRoot, ".indusk/config.json"), JSON.stringify({}));
+
+			const resolveStateAndGitPaths = await loadHelper();
+			const result = resolveStateAndGitPaths(tmpRoot);
+
+			expect(result.statePath).not.toBeNull();
+			expect(result.gitPath).toBeNull();
+		});
+
+		it("prefers cwd's git repo over the config fallback when both available", async () => {
+			// Edge: cwd IS inside a git repo (the wrapped one) AND config has
+			// wrapped_repo set. Existing behavior wins — `git rev-parse` against
+			// cwd returns the actual repo, fallback never fires.
+			mkdirSync(join(tmpRoot, ".indusk"));
+			writeFileSync(
+				join(tmpRoot, ".indusk/config.json"),
+				JSON.stringify({ worktree: { wrapped_repo: "numero" } }),
+			);
+
+			const wrappedRepo = join(tmpRoot, "numero");
+			mkdirSync(wrappedRepo);
+			gitInit(wrappedRepo);
+
+			const resolveStateAndGitPaths = await loadHelper();
+			// cwd is INSIDE the wrapped repo
+			const result = resolveStateAndGitPaths(join(wrappedRepo, "src"));
+			mkdirSync(join(wrappedRepo, "src"), { recursive: true });
+
+			const wrappedReal = execSync("realpath .", { cwd: wrappedRepo, encoding: "utf-8" }).trim();
+			// gitPath comes from `git rev-parse` (same answer as fallback in this case,
+			// but proves the path was used)
+			expect(result.gitPath).toBe(wrappedReal);
+		});
+
+		it("returns null when config names a wrapped_repo that doesn't exist on disk", async () => {
+			mkdirSync(join(tmpRoot, ".indusk"));
+			writeFileSync(
+				join(tmpRoot, ".indusk/config.json"),
+				JSON.stringify({ worktree: { wrapped_repo: "nonexistent" } }),
+			);
+
+			const resolveStateAndGitPaths = await loadHelper();
+			const result = resolveStateAndGitPaths(tmpRoot);
+
+			expect(result.gitPath).toBeNull();
+		});
+	});
+
 	describe("T3: worktree case", () => {
 		it("returns statePath at workbench root AND gitPath at the worktree's own git path", async () => {
 			// Workbench + worktree shape:
