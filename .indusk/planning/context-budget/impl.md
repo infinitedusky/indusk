@@ -43,16 +43,16 @@ Piece 3 (current.md auto-archive + `context.budget_tokens` + beam-default catchu
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `measureProjectContext(projectRoot)` library returns a `PruneReport` with sizes per CLAUDE.md section, per-lesson ages, per-current-md-section ages, and a total-auto-loaded-bytes estimate | Phase 0 | Phase 1 | writable |
-| T2 | `measureProjectContext` against a project with NO `.indusk/` returns a degraded but non-throwing report (most fields null/empty + a `notes: ["no .indusk/ found"]` entry) | Phase 0 | Phase 1 | writable |
-| T3 | `measureProjectContext` flags CLAUDE.md sections larger than the configurable threshold (`large_section_chars`, default 4000) — flagged sections appear with a `recommended_action` field naming the cleanup | Phase 0 | Phase 1 | writable |
-| T4 | `measureProjectContext` flags lessons whose mtime is older than the configurable threshold (`stale_lesson_days`, default 180) — flagged lessons appear with their last-modified date and an opt-in recommended deletion command | Phase 0 | Phase 1 | writable |
-| T5 | `measureProjectContext` flags `current.md` per-agent sections older than the configurable threshold (`stale_section_days`, default 7) — flagged sections appear with their session ID + last-updated timestamp | Phase 0 | Phase 1 | writable |
-| T6 | `indusk prune` CLI invokes `measureProjectContext` and prints the report. `--dry-run` is the default; running with no flags prints the report and exits 0 without modifying any file | Phase 0 | Phase 2 | writable |
-| T7 | `indusk prune --help` lists `--dry-run` as the default mode and explicitly states "no destructive action in this version" | Phase 0 | Phase 2 | writable |
-| T8 | CLI integration test: against a tmpdir with a bloated CLAUDE.md (one section > 4000 chars), `indusk prune` exits 0 and stdout contains the section name + recommended cleanup | Phase 0 | Phase 2 | writable |
-| T9 | `apps/indusk-mcp/skills/retrospective.md` Step 7 (Context Audit) source contains the literal "one-line entry" / "one line plus a link" guidance for Current State entries — defends the new discipline against future skill drift | Phase 0 | Phase 3 | writable |
-| T10 | `retrospective.md` contains a counter-example block warning AGAINST multi-paragraph Current State entries with the rationale (token cost on every catchup) — operators reading the skill see WHY, not just WHAT | Phase 0 | Phase 3 | writable |
+| T1 | `measureProjectContext(projectRoot)` library returns a `PruneReport` with sizes per CLAUDE.md section, per-lesson ages, per-current-md-section ages, and a total-auto-loaded-bytes estimate | Phase 0 | Phase 1 | passing |
+| T2 | `measureProjectContext` against a project with NO `.indusk/` returns a degraded but non-throwing report (most fields null/empty + a `notes: ["no .indusk/ found"]` entry) | Phase 0 | Phase 1 | passing |
+| T3 | `measureProjectContext` flags CLAUDE.md sections larger than the configurable threshold (`large_section_chars`, default 4000) — flagged sections appear with a `recommended_action` field naming the cleanup | Phase 0 | Phase 1 | passing |
+| T4 | `measureProjectContext` flags lessons whose mtime is older than the configurable threshold (`stale_lesson_days`, default 180) — flagged lessons appear with their last-modified date and an opt-in recommended deletion command | Phase 0 | Phase 1 | passing |
+| T5 | `measureProjectContext` flags `current.md` per-agent sections older than the configurable threshold (`stale_section_days`, default 7) — flagged sections appear with their session ID + last-updated timestamp | Phase 0 | Phase 1 | passing |
+| T6 | `indusk prune` CLI invokes `measureProjectContext` and prints the report. `--dry-run` is the default; running with no flags prints the report and exits 0 without modifying any file | Phase 0 | Phase 2 | passing |
+| T7 | `indusk prune --help` lists `--dry-run` as the default mode and explicitly states "no destructive action in this version" | Phase 0 | Phase 2 | passing |
+| T8 | CLI integration test: against a tmpdir with a bloated CLAUDE.md (one section > 4000 chars), `indusk prune` exits 0 and stdout contains the section name + recommended cleanup | Phase 0 | Phase 2 | passing |
+| T9 | `apps/indusk-mcp/skills/retrospective.md` Step 7 (Context Audit) source contains the literal "one-line entry" / "one line plus a link" guidance for Current State entries — defends the new discipline against future skill drift | Phase 0 | Phase 3 | passing |
+| T10 | `retrospective.md` contains a counter-example block warning AGAINST multi-paragraph Current State entries with the rationale (token cost on every catchup) — operators reading the skill see WHY, not just WHAT | Phase 0 | Phase 3 | passing |
 
 ### Deferred Verification
 

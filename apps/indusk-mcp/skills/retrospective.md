@@ -189,6 +189,38 @@ Re-read CLAUDE.md in full. After the entire impl is done, verify:
 
 Fix any inaccuracies. The impl may have changed things that weren't anticipated in the per-phase context updates.
 
+#### Current State entries are ONE LINE + link to archive (1.31.11)
+
+When you add a Current State entry for a newly-completed plan, write it as **one line + a link to the archive**, not as a multi-paragraph prose entry. Every retrospective accretes Current State; over 20-30 plans, paragraph entries push CLAUDE.md past 30KB of always-loaded prose. The detail lives in the archived plan + the docs site decisions/lessons pages — the Current State entry is a pointer, not a duplicate.
+
+**Use this shape:**
+
+```markdown
+- **{plan-name} ({version})** — one-sentence summary of what shipped. See [archive](.indusk/planning/archive/{plan-name}/) for full detail.
+```
+
+Example:
+
+```markdown
+- **workbench-mode-rail-integrity (1.31.10)** — eval→Graphiti pipeline works on workbench-shaped projects; 4 hooks refactored, stray-state audit added, falsification surfaced 2 more bugs both fixed. See [archive](.indusk/planning/archive/workbench-mode-rail-integrity/) for full detail.
+```
+
+**Counter-example — do NOT write this shape going forward**:
+
+```markdown
+- **plan-name shipped in 1.X.Y (2026-XX-XX)** — three paragraphs of detail
+  about what the plan did, what shipped in each phase, what bugs were
+  found in falsification, what lessons were captured, what's deferred to
+  follow-up work, with embedded code references and file paths and...
+  [continues for ~500 chars]
+```
+
+The counter-example is **token bloat on every catchup**, paid by every Claude Code session forever. The one-line shape preserves discoverability (the plan name + version + link is enough for the agent to know what to query) at a fraction of the cost.
+
+Existing multi-paragraph entries (pre-1.31.11) can be collapsed via `indusk prune --dry-run` (which surfaces them) plus manual operator cleanup — they are not auto-migrated.
+
+Why this matters: CLAUDE.md is auto-loaded into every Claude Code session. Every byte you add accrues to every prompt indefinitely. The discipline is "thinner navigation layer, queryable detail" — see [context-budget brief](../../.indusk/planning/context-budget/brief.md) for the full rationale.
+
 ### Step 8: Knowledge Handoff
 
 Distill planning artifacts into the docs site so the knowledge survives archival.

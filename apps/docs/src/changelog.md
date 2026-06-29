@@ -4,6 +4,18 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.31.11] — 2026-06-29
+
+### Added (context-budget — Pieces 1 + 2 of brief)
+- **`indusk prune --dry-run` measurement surface** — new CLI command that audits InDusk context bloat without modifying anything. Reports CLAUDE.md size by section (flagging sections > `--large-section-chars`, default 4000 chars), per-lesson ages (flagging lessons untouched > `--stale-lesson-days`, default 180), per-current-md-section ages (flagging sections older than `--stale-section-days`, default 7), total estimated auto-loaded bytes per catchup, and recommended manual cleanup commands. **`--dry-run` is the default and only mode in v1** — no `--apply`, no destructive action. Auto-pruning is intentionally deferred to Piece 3 of the context-budget plan (the larger architectural shape: current.md auto-archive + `context.budget_tokens` config field + beam-default catchup). Library lives at `apps/indusk-mcp/src/lib/prune/measure.ts` as a pure-read function consumable by future tooling (admin UI, retrospective skill, etc.) without going through the CLI. 8 vitest cases across `prune-measure.test.ts` (T1-T5: library shape, degraded mode without `.indusk/`, threshold-flagging for CLAUDE.md / lessons / current.md) and `prune-cli.test.ts` (T6-T8: CLI invocation prints + no-file-modification + --help disclaimer + bloated-CLAUDE.md surfacing).
+
+### Changed (retrospective skill — one-line Current State entries)
+- **`/retrospective` skill Step 7 (Context Audit) now documents the one-line + link-to-archive shape for Current State entries** — replaces the previous implicit pattern where retrospectives wrote multi-paragraph entries that accreted in CLAUDE.md indefinitely. Over 20-30 plans the paragraph pattern pushes CLAUDE.md past 30KB of always-loaded prose, paid by every Claude Code session forever. New shape: `- **{plan-name} ({version})** — one-sentence summary. See [archive](.indusk/planning/archive/{plan-name}/) for full detail.` The skill now includes a concrete example showing the right shape AND a counter-example block warning AGAINST multi-paragraph entries with the rationale (token bloat on every catchup, the detail lives in the archive anyway). Existing multi-paragraph entries unchanged — operator collapses via `indusk prune --dry-run` surface + manual cleanup. 5 source-grep cases in `retrospective-skill-one-line.test.ts` (T9-T10) defend the discipline against future skill drift: assert Step 7 contains the one-line phrasing, includes a concrete example, has a counter-example warning, names the token-cost rationale, references the context-budget plan.
+
+### Notes
+- The immediate token-reduction impact on Numero comes from the operator's MANUAL one-time CLAUDE.md diet (~30 min by hand) collapsing existing multi-paragraph Current State entries to one-liners. Pieces 1 + 2 make the diet sustainable going forward but don't perform it.
+- Piece 3 (current.md auto-archive + `context.budget_tokens` config field + beam-default catchup) is its own subsequent plan with full ADR. See [context-budget brief](https://github.com/infinitedusky/dusk/blob/main/.indusk/planning/context-budget/brief.md) for the architectural design.
+
 ## [1.31.10] — 2026-06-28
 
 ### Fixed (workbench-mode-rail-integrity — Falsification Phase, two bugs)

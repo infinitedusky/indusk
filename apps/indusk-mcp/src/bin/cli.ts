@@ -91,6 +91,43 @@ program
 		await upgrade({ force: opts.force === true });
 	});
 
+program
+	.command("prune")
+	.description(
+		"Audit auto-loaded context bloat (CLAUDE.md sections, lessons, current.md). --dry-run is the default and only mode in this version; no destructive action.",
+	)
+	.option("--dry-run", "Report only, no destructive action (default; only mode in this version)", true)
+	.option(
+		"--large-section-chars <n>",
+		"Flag CLAUDE.md sections larger than this many chars (default 4000)",
+		(v) => Number.parseInt(v, 10),
+	)
+	.option(
+		"--stale-lesson-days <n>",
+		"Flag lessons untouched for more than this many days (default 180)",
+		(v) => Number.parseInt(v, 10),
+	)
+	.option(
+		"--stale-section-days <n>",
+		"Flag current.md per-agent sections whose lastUpdated is older than this (default 7)",
+		(v) => Number.parseInt(v, 10),
+	)
+	.action(async function (this: Command) {
+		const opts = this.opts() as {
+			dryRun?: boolean;
+			largeSectionChars?: number;
+			staleLessonDays?: number;
+			staleSectionDays?: number;
+		};
+		const { prune } = await import("./commands/prune.js");
+		await prune(rootOrExit(), {
+			dryRun: opts.dryRun !== false,
+			largeSectionChars: opts.largeSectionChars,
+			staleLessonDays: opts.staleLessonDays,
+			staleSectionDays: opts.staleSectionDays,
+		});
+	});
+
 const ext = program
 	.command("extensions")
 	.description("Manage extensions (built-in and third-party)");
