@@ -1,7 +1,7 @@
 ---
 title: "Context Budget — Targeted Retrieval, Thinner Auto-Load"
 date: 2026-06-29
-status: draft
+status: accepted
 audience: indusk-mcp maintainers + Sandy
 ---
 
