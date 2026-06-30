@@ -89,7 +89,7 @@ All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke
   }
   ```
   Note: validation uses `process.exit(1)` (consistent with `init`); subprocess tests observe the exit code. The collision/validation guards run BEFORE `mkdirSync`, so a failed `setup` creates nothing (T4/T5).
-- [ ] Register the command in `apps/indusk-mcp/src/bin/cli.ts` immediately after the `init` command block (after the current line ~71):
+- [x] Register the command in `apps/indusk-mcp/src/bin/cli.ts` immediately after the `init` command block (after the current line ~71):
   ```typescript
   program
     .command("setup <repo-path>")
