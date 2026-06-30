@@ -116,9 +116,8 @@ All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke
 - [x] Lint/format clean: Biome clean on `setup.ts` + `setup-command.test.ts` (test import-sort + format auto-fixed). Note: 3 pre-existing Biome violations in `cli.ts` (lines ~109 `--large-section-chars`, ~304 git-no-commits message) predate this edit (present in HEAD~3) and are out of scope — not touched to keep the commit siloed.
 - [x] Manual dogfood: built CLI `setup <throwaway-repo>` → scaffolded workbench + trunk symlink `myapp -> ../myapp`; `worktree list` → config valid + trunk resolves; re-run `setup` → `Error: a workbench already exists … run \`indusk update\`` (exit 1)
 
-#### Phase 1 Context
-- [ ] Add to dusk `CLAUDE.md` Conventions: "`indusk setup <cloned-repo-path>` one-shots workbench creation — derives `<repo>-workbench` name/parent from the path, scaffolds `package.json`, symlinks the trunk in-place (repo not moved), and delegates to `init --workbench`. Zero-flag; errors if `<repo>-workbench` already exists (→ `indusk update`). The `setup.ts` command is a thin wrapper over `init`; do not duplicate workbench-init logic."
-- [ ] Update dusk `CLAUDE.md` Current State / active-plans table to note `workbench-setup-command` shipped.
+- [x] Add to dusk `CLAUDE.md` Conventions: "`indusk setup <cloned-repo-path>` one-shots workbench creation — derives `<repo>-workbench` name/parent from the path, scaffolds `package.json`, symlinks the trunk in-place (repo not moved), and delegates to `init --workbench`. Zero-flag; errors if `<repo>-workbench` already exists (→ `indusk update`). The `setup.ts` command is a thin wrapper over `init`; do not duplicate workbench-init logic."
+- [x] Update dusk `CLAUDE.md` Current State to note `workbench-setup-command` impl complete pending falsification + retrospective.
 
 #### Phase 1 Document
 - [ ] Rewrite `apps/docs/src/guide/worktree-setup.md` Flow A to lead with `indusk setup <repo-path>` as the one-command path; demote the four manual steps to a collapsed "what it does under the hood" note. Keep Flow B (migration) intact.
