@@ -35,13 +35,13 @@ Add a single CLI verb — `indusk setup <cloned-repo-path>` — that turns an al
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `indusk setup <path>` on a fresh clone (no flags, no pre-made files) creates `<path>-workbench` where `indusk worktree list` reports config valid + trunk resolving | Phase 0 | Phase 1 | written |
-| T2 | After `setup`, the wrapped repo still exists at its original path with its files intact (nothing moved) | Phase 0 | Phase 1 | written |
-| T3 | After `setup`, `indusk worktree create <slug>` produces a working sibling worktree inside the workbench | Phase 0 | Phase 1 | written |
-| T4 | `setup` against a non-git / nonexistent path exits non-zero with a clear message and leaves no workbench dir behind | Phase 0 | Phase 1 | written |
-| T5 | `setup` when `<repo>-workbench` already exists exits non-zero, points at `indusk update`, and leaves the existing workbench's contents untouched | Phase 0 | Phase 1 | written |
-| T6 | A repo with uncommitted + untracked changes can be set up successfully (dirty tree does not block) | Phase 0 | Phase 1 | written |
-| T7 | `indusk init --workbench --wrapped-repo X --sibling-parent Y` still produces a working workbench (regression guard for the delegated-to path) | Phase 0 | Phase 1 | written |
+| T1 | `indusk setup <path>` on a fresh clone (no flags, no pre-made files) creates `<path>-workbench` where `indusk worktree list` reports config valid + trunk resolving | Phase 0 | Phase 1 | passing |
+| T2 | After `setup`, the wrapped repo still exists at its original path with its files intact (nothing moved) | Phase 0 | Phase 1 | passing |
+| T3 | After `setup`, `indusk worktree create <slug>` produces a working sibling worktree inside the workbench | Phase 0 | Phase 1 | passing |
+| T4 | `setup` against a non-git / nonexistent path exits non-zero with a clear message and leaves no workbench dir behind | Phase 0 | Phase 1 | passing |
+| T5 | `setup` when `<repo>-workbench` already exists exits non-zero, points at `indusk update`, and leaves the existing workbench's contents untouched | Phase 0 | Phase 1 | passing |
+| T6 | A repo with uncommitted + untracked changes can be set up successfully (dirty tree does not block) | Phase 0 | Phase 1 | passing |
+| T7 | `indusk init --workbench --wrapped-repo X --sibling-parent Y` still produces a working workbench (regression guard for the delegated-to path) | Phase 0 | Phase 1 | passing |
 
 All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke `setup` (or `init --workbench`) as a string subcommand against tmp `git init` repos, so the test source compiles today and fails red (`unknown command 'setup'` for T1–T6; T7 already passes and is a standing guardrail). No `### Trajectory Rationale` subsection is required (it applies only to Phase 1+ rows). No `### Deferred Verification` — every assertion is testable against ephemeral repos with no external services.
 
@@ -100,7 +100,7 @@ All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke
     });
   ```
   `setup` CREATES a project root (the workbench), so — like `init` — it does NOT call `rootOrExit()`; it operates on the derived `workbenchDir`.
-- [ ] Create `apps/indusk-mcp/src/__tests__/setup-command.test.ts` mirroring `init-no-git-warning.test.ts`: `CLI_BIN = dist/bin/cli.js`, `describe.skipIf(!existsSync(CLI_BIN))`, `{ timeout: 60000 }`, tmp `projectDir`/`siblingParent` + tmp `INDUSK_HOME`, `INDUSK_SKIP_SELF_UPDATE: "1"`. Cases:
+- [x] Create `apps/indusk-mcp/src/__tests__/setup-command.test.ts` mirroring `init-no-git-warning.test.ts`: `CLI_BIN = dist/bin/cli.js`, `describe.skipIf(!existsSync(CLI_BIN))`, `{ timeout: 60000 }`, tmp `projectDir`/`siblingParent` + tmp `INDUSK_HOME`, `INDUSK_SKIP_SELF_UPDATE: "1"`. Cases:
   - **T1** — `git init` + commit a tmp repo; `spawnSync(node, [CLI_BIN, "setup", repoPath])`; assert exit 0, `<repoPath>-workbench/.indusk/config.json` exists with `worktree.shape === "workbench"`, `wrapped_repo`, `sibling_parent`; run `[CLI_BIN, "worktree", "list"]` in the workbench → stderr/stdout contains `config valid` and trunk `resolves`.
   - **T2** — after T1's setup, assert the original repo dir still exists with a sentinel file written pre-setup.
   - **T3** — after setup, `spawnSync(node, [CLI_BIN, "worktree", "create", "feat-smoke"])` in the workbench; assert exit 0 and `<workbench>/feat-smoke` is a directory.
@@ -108,13 +108,13 @@ All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke
   - **T5** — run `setup` twice; before the 2nd, drop a sentinel file in the workbench; assert 2nd exits non-zero, stderr matches `/already exists/` and `/indusk update/`, and the sentinel survives.
   - **T6** — `git init` + commit, then write an untracked file and modify a tracked one; `setup` → assert exit 0 and workbench is config-valid.
   - **T7** — `git init` + commit a tmp repo; `mkdir` a sibling workbench dir + minimal `package.json`; `spawnSync(node, [CLI_BIN, "init", "--workbench", "--wrapped-repo", name, "--sibling-parent", parent])`; assert exit 0 + config-valid workbench (pins the delegated-to path).
-- [ ] `git worktree add` requires a commit — every tmp repo in T1/T3/T6/T7 must `git init` + `git config user.*` + an initial `git commit --allow-empty`.
+- [x] `git worktree add` requires a commit — every tmp repo in T1/T3/T6/T7 must `git init` + `git config user.*` + an initial `git commit --allow-empty`. (handled by the `initRepo` helper)
 
 #### Phase 1 Verification
-- [ ] Build first so the subprocess tests run (not skipped): `pnpm --filter @infinitedusky/indusk-mcp build`
-- [ ] T1–T7 pass: `pnpm --filter @infinitedusky/indusk-mcp test setup-command` (all 7 green; none skipped — confirms `CLI_BIN` exists)
-- [ ] Lint/format clean: `pnpm check` (Biome)
-- [ ] Manual dogfood: on a throwaway clone, `indusk setup <path>` → `indusk worktree list` shows config valid + trunk resolves; re-running `setup` errors with the `indusk update` hint
+- [x] Build first so the subprocess tests run (not skipped): `pnpm --filter @infinitedusky/indusk-mcp build` (tsc clean)
+- [x] T1–T7 pass: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/setup-command.test.ts` (7 passed, 0 skipped)
+- [x] Lint/format clean: Biome clean on `setup.ts` + `setup-command.test.ts` (test import-sort + format auto-fixed). Note: 3 pre-existing Biome violations in `cli.ts` (lines ~109 `--large-section-chars`, ~304 git-no-commits message) predate this edit (present in HEAD~3) and are out of scope — not touched to keep the commit siloed.
+- [x] Manual dogfood: built CLI `setup <throwaway-repo>` → scaffolded workbench + trunk symlink `myapp -> ../myapp`; `worktree list` → config valid + trunk resolves; re-run `setup` → `Error: a workbench already exists … run \`indusk update\`` (exit 1)
 
 #### Phase 1 Context
 - [ ] Add to dusk `CLAUDE.md` Conventions: "`indusk setup <cloned-repo-path>` one-shots workbench creation — derives `<repo>-workbench` name/parent from the path, scaffolds `package.json`, symlinks the trunk in-place (repo not moved), and delegates to `init --workbench`. Zero-flag; errors if `<repo>-workbench` already exists (→ `indusk update`). The `setup.ts` command is a thin wrapper over `init`; do not duplicate workbench-init logic."
