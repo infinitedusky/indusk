@@ -35,13 +35,13 @@ Add a single CLI verb — `indusk setup <cloned-repo-path>` — that turns an al
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | `indusk setup <path>` on a fresh clone (no flags, no pre-made files) creates `<path>-workbench` where `indusk worktree list` reports config valid + trunk resolving | Phase 0 | Phase 1 | planned |
-| T2 | After `setup`, the wrapped repo still exists at its original path with its files intact (nothing moved) | Phase 0 | Phase 1 | planned |
-| T3 | After `setup`, `indusk worktree create <slug>` produces a working sibling worktree inside the workbench | Phase 0 | Phase 1 | planned |
-| T4 | `setup` against a non-git / nonexistent path exits non-zero with a clear message and leaves no workbench dir behind | Phase 0 | Phase 1 | planned |
-| T5 | `setup` when `<repo>-workbench` already exists exits non-zero, points at `indusk update`, and leaves the existing workbench's contents untouched | Phase 0 | Phase 1 | planned |
-| T6 | A repo with uncommitted + untracked changes can be set up successfully (dirty tree does not block) | Phase 0 | Phase 1 | planned |
-| T7 | `indusk init --workbench --wrapped-repo X --sibling-parent Y` still produces a working workbench (regression guard for the delegated-to path) | Phase 0 | Phase 1 | planned |
+| T1 | `indusk setup <path>` on a fresh clone (no flags, no pre-made files) creates `<path>-workbench` where `indusk worktree list` reports config valid + trunk resolving | Phase 0 | Phase 1 | written |
+| T2 | After `setup`, the wrapped repo still exists at its original path with its files intact (nothing moved) | Phase 0 | Phase 1 | written |
+| T3 | After `setup`, `indusk worktree create <slug>` produces a working sibling worktree inside the workbench | Phase 0 | Phase 1 | written |
+| T4 | `setup` against a non-git / nonexistent path exits non-zero with a clear message and leaves no workbench dir behind | Phase 0 | Phase 1 | written |
+| T5 | `setup` when `<repo>-workbench` already exists exits non-zero, points at `indusk update`, and leaves the existing workbench's contents untouched | Phase 0 | Phase 1 | written |
+| T6 | A repo with uncommitted + untracked changes can be set up successfully (dirty tree does not block) | Phase 0 | Phase 1 | written |
+| T7 | `indusk init --workbench --wrapped-repo X --sibling-parent Y` still produces a working workbench (regression guard for the delegated-to path) | Phase 0 | Phase 1 | written |
 
 All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke `setup` (or `init --workbench`) as a string subcommand against tmp `git init` repos, so the test source compiles today and fails red (`unknown command 'setup'` for T1–T6; T7 already passes and is a standing guardrail). No `### Trajectory Rationale` subsection is required (it applies only to Phase 1+ rows). No `### Deferred Verification` — every assertion is testable against ephemeral repos with no external services.
 
