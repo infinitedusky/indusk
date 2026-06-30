@@ -49,7 +49,7 @@ All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke
 
 ### Phase 1: `setup` command
 
-- [ ] Create `apps/indusk-mcp/src/bin/commands/setup.ts` exporting `async function setup(repoPathInput: string): Promise<void>`:
+- [x] Create `apps/indusk-mcp/src/bin/commands/setup.ts` exporting `async function setup(repoPathInput: string): Promise<void>`:
   ```typescript
   import { existsSync, mkdirSync, writeFileSync } from "node:fs";
   import { basename, dirname, join, resolve } from "node:path";
