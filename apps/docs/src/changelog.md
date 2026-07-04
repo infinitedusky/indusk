@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added (`indusk setup` — one-shot workbench creation)
+- **`indusk setup <cloned-repo-path>` turns an already-cloned git repo into a workbench in one command** — collapses the four-step manual Flow A (mkdir workbench, hand-write `package.json`, symlink the trunk, `init --workbench --wrapped-repo X --sibling-parent Y`) into a single verb and removes the `--sibling-parent` footgun. Derives `<repo>-workbench` name + parent from the path, scaffolds the workbench `package.json`, creates a non-destructive **symlink-in-place** trunk (`<repo>-workbench/<repo> -> ../<repo>` — the clone is not moved, a dirty tree is fine), then delegates to `init --workbench`. Errors (exit 1) on a non-git/missing path or when `<repo>-workbench` already exists (pointing at `indusk update`); all guards run before any `mkdir`, so a failed setup creates nothing. New `apps/indusk-mcp/src/bin/commands/setup.ts` + `cli.ts` registration; 7 subprocess integration tests in `setup-command.test.ts` (T1–T7). Reference: [`indusk setup`](/reference/cli/setup); guide: [Worktree setup — Flow A](/guide/worktree-setup). Plan: `workbench-setup-command`.
+
 ## [1.31.11] — 2026-06-29
 
 ### Added (context-budget — Pieces 1 + 2 of brief)

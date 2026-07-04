@@ -89,7 +89,10 @@ const config = defineConfig({
 				},
 				{
 					text: "CLI",
-					items: [{ text: "agent", link: "/reference/cli/agent" }],
+					items: [
+						{ text: "setup", link: "/reference/cli/setup" },
+						{ text: "agent", link: "/reference/cli/agent" },
+					],
 				},
 				{
 					text: "Semantic Graph",

@@ -66,7 +66,34 @@ The diagram makes the asymmetry explicit: dev 1 and dev 2 each have their own pr
     └── scripts/worktree/            # the bash scripts the extension scaffolded
 ```
 
-### Step by step
+### The one-command path
+
+```sh
+# 1. Clone the wrapped repo wherever you keep code
+mkdir -p ~/code/sandbox
+cd ~/code/sandbox
+git clone <numero-repo-url> numero
+
+# 2. Turn it into a workbench — one command
+indusk setup ~/code/sandbox/numero
+```
+
+That's it. `indusk setup <cloned-repo-path>` derives the workbench name (`numero-workbench`) and location from the path, scaffolds the workbench `package.json`, symlinks the trunk **in place** (your clone is not moved), and runs the full workbench init. It refuses — pointing you at `indusk update` — if `numero-workbench` already exists, and rejects a path that isn't a git repo. Verify:
+
+```sh
+cd ~/code/sandbox/numero-workbench
+indusk worktree list   # → config valid + trunk resolves
+```
+
+Then skip ahead to [Tune the worktree config](#_5-tune-the-worktree-config-optional) and [Create your first worktree](#_7-create-your-first-worktree).
+
+> **Heads-up:** the workbench root is intentionally *not* a git repo, so `indusk setup` prints a benign "not a git repository" warning at the end — expected, not an error. Git lives in the trunk + worktrees.
+
+See the [`indusk setup` CLI reference](/reference/cli/setup) for the full derivation rule and error behavior.
+
+### Manual equivalent — what `indusk setup` does under the hood
+
+If you want to understand the moving parts, or set things up by hand, these are the steps `indusk setup` performs for you. (`indusk init --workbench --wrapped-repo X --sibling-parent Y` is the lower-level command `setup` wraps — `--sibling-parent` is the parent dir of the canonical clone.)
 
 #### 1. Choose locations + clone the wrapped repo
 
