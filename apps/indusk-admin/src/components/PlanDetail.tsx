@@ -7,6 +7,7 @@ import type {
 import { Markdown } from "@/components/Markdown";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
+import { CopyButton } from "@/components/ui/CopyButton";
 import {
   Table,
   TableBody,
@@ -15,6 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import {
+  falsificationLogMarkdown,
+  falsificationPhaseMarkdown,
+  phaseMarkdown,
+  planMarkdown,
+  sectionMarkdown,
+} from "@/lib/markdown-export";
 import {
   extractChecklistItems,
   extractPhases,
@@ -60,6 +68,7 @@ export function PlanDetail({ plan }: PlanDetailProps) {
           title="Research"
           defaultOpen={!plan.brief}
           persistKey={`plan:${plan.name}:section:research`}
+          copyMarkdown={sectionMarkdown("Research", plan.research.content)}
         >
           <Markdown>{plan.research.content}</Markdown>
         </CollapsibleSection>
@@ -74,6 +83,7 @@ export function PlanDetail({ plan }: PlanDetailProps) {
           title="Test Plan"
           defaultOpen={false}
           persistKey={`plan:${plan.name}:section:test-plan`}
+          copyMarkdown={sectionMarkdown("Test Plan", plan.testPlan.content)}
         >
           <Markdown>{plan.testPlan.content}</Markdown>
         </CollapsibleSection>
@@ -84,6 +94,10 @@ export function PlanDetail({ plan }: PlanDetailProps) {
           title="ADR — Goal + Decision"
           defaultOpen={false}
           persistKey={`plan:${plan.name}:section:adr`}
+          copyMarkdown={sectionMarkdown(
+            "ADR — Goal + Decision",
+            plan.adr.content,
+          )}
         >
           <Markdown>{plan.adr.content}</Markdown>
         </CollapsibleSection>
@@ -144,7 +158,14 @@ function PlanHeader({ plan }: { plan: Plan }) {
           {plan.archived ? "archived" : "active"}
         </span>
       </div>
-      <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
+      <div className="flex items-center gap-3">
+        <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
+        <CopyButton
+          text={planMarkdown(plan)}
+          label="Copy whole plan as markdown"
+          data-testid="copy-plan-button"
+        />
+      </div>
     </header>
   );
 }
@@ -174,6 +195,7 @@ function BriefSection({
         title="Brief"
         defaultOpen={true}
         persistKey={`plan:${planName}:section:brief`}
+        copyMarkdown={sectionMarkdown("Brief", content)}
       >
         <Markdown>{content}</Markdown>
       </CollapsibleSection>
@@ -204,6 +226,7 @@ function PhasesSection({
             title={`Phase ${phase.number}${phase.title ? `: ${phase.title}` : ""}`}
             defaultOpen={false}
             persistKey={`plan:${planName}:phase:${phase.number}`}
+            copyMarkdown={phaseMarkdown(phase)}
           >
             <div className="flex flex-col gap-3">
               {phase.trajectoryRows.length > 0 && (
@@ -303,7 +326,12 @@ function FalsificationSection({
         className="flex flex-col gap-2"
         data-testid="falsification-section"
       >
-        <h2 className="text-base font-semibold text-gray-900">Falsification</h2>
+        <header className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900">
+            Falsification
+          </h2>
+          <CopyButton text={falsificationLogMarkdown(undefined)} />
+        </header>
         <p className="text-sm text-gray-500" data-testid="falsification-empty">
           No falsification ritual run for this plan.
         </p>
@@ -319,11 +347,14 @@ function FalsificationSection({
       className="flex flex-col gap-2"
       data-testid="falsification-section"
     >
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-gray-900">Falsification</h2>
-        <Badge variant={plan.falsification.complete ? "passing" : "writable"}>
-          {plan.falsification.complete ? "complete" : "in-progress"}
-        </Badge>
+        <span className="flex items-center gap-2">
+          <Badge variant={plan.falsification.complete ? "passing" : "writable"}>
+            {plan.falsification.complete ? "complete" : "in-progress"}
+          </Badge>
+          <CopyButton text={falsificationLogMarkdown(plan.falsification)} />
+        </span>
       </header>
       {hypotheses.length === 0 && (
         <p className="text-sm text-gray-500">No hypotheses logged yet.</p>
@@ -372,7 +403,7 @@ function FalsificationPhaseSection({ phase }: { phase: Phase }) {
       className="flex flex-col gap-2"
       data-testid="falsification-section"
     >
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-2">
         <h2 className="text-base font-semibold text-gray-900">
           Falsification
           {phase.title ? (
@@ -381,9 +412,12 @@ function FalsificationPhaseSection({ phase }: { phase: Phase }) {
             </span>
           ) : null}
         </h2>
-        <Badge variant={complete ? "passing" : "writable"}>
-          {complete ? "complete" : "in-progress"}
-        </Badge>
+        <span className="flex items-center gap-2">
+          <Badge variant={complete ? "passing" : "writable"}>
+            {complete ? "complete" : "in-progress"}
+          </Badge>
+          <CopyButton text={falsificationPhaseMarkdown(phase)} />
+        </span>
       </header>
 
       {phase.trajectoryRows.length > 0 && (

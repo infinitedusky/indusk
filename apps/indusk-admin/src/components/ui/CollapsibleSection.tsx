@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { CopyButton } from "@/components/ui/CopyButton";
 
 export interface CollapsibleSectionProps {
   title: ReactNode;
@@ -20,6 +21,12 @@ export interface CollapsibleSectionProps {
    * mapping is stable across renders and unique per (plan, section).
    */
   persistKey?: string;
+  /**
+   * When set, renders a copy-to-clipboard icon button in the header that
+   * copies this markdown string (heading included) verbatim. Omit to hide
+   * the button — most non-plan uses of this component don't need it.
+   */
+  copyMarkdown?: string;
 }
 
 function readPersisted(key: string | undefined, fallback: boolean): boolean {
@@ -52,6 +59,7 @@ export function CollapsibleSection({
   headerRight,
   className = "",
   persistKey,
+  copyMarkdown,
 }: CollapsibleSectionProps) {
   const [open, setOpen] = useState(() =>
     readPersisted(persistKey, defaultOpen),
@@ -68,18 +76,28 @@ export function CollapsibleSection({
 
   return (
     <div className={`rounded-md border border-gray-200 ${className}`}>
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-      >
-        <span className="flex items-center gap-2">
+      <div className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-gray-900">
+        <button
+          type="button"
+          onClick={toggle}
+          aria-expanded={open}
+          className="flex flex-1 items-center gap-2 rounded text-left transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+        >
           <Chevron className="h-4 w-4 text-gray-500" aria-hidden />
           <span>{title}</span>
-        </span>
-        {headerRight ? <span className="ml-auto">{headerRight}</span> : null}
-      </button>
+        </button>
+        {(headerRight || copyMarkdown) && (
+          <span className="ml-auto flex items-center gap-2">
+            {headerRight}
+            {copyMarkdown ? (
+              <CopyButton
+                text={copyMarkdown}
+                label="Copy section as markdown"
+              />
+            ) : null}
+          </span>
+        )}
+      </div>
       {open ? (
         <div className="border-t border-gray-200 p-3">{children}</div>
       ) : null}
