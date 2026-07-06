@@ -55,7 +55,7 @@ The gate passes if ANY of the three conditions holds. If none holds, refuse to r
 >
 > The skip-reason is recorded in the archive and surfaced in retrospectives. Use sparingly — typically only for trivial typo-fix plans where the ritual cost exceeds the discipline value.
 
-Do not proceed to Step 1 until the gate passes. This is structural enforcement of the discipline documented in the [Falsification Ritual guide](apps/indusk-docs/src/guide/falsification-ritual.md) — happy-path authoring produces happy-path tests, and the ritual is the mechanism for surfacing the gaps the author couldn't think of.
+Do not proceed to Step 1 until the gate passes. This is structural enforcement of the discipline documented in the [Falsification Ritual guide](apps/docs/src/guide/falsification-ritual.md) — happy-path authoring produces happy-path tests, and the ritual is the mechanism for surfacing the gaps the author couldn't think of.
 
 ### Step 1: Write the Retrospective Document
 
@@ -194,19 +194,19 @@ Fix any inaccuracies. The impl may have changed things that weren't anticipated 
 Distill planning artifacts into the docs site so the knowledge survives archival.
 
 **ADR → Decisions page:**
-Create `apps/indusk-docs/src/decisions/{plan-name}.md` with:
+Create `apps/docs/src/decisions/{plan-name}.md` with:
 - A concise summary of what was decided and why
 - Link to the full ADR in the archive: `.indusk/planning/archive/{plan-name}/adr.md`
 - Key tradeoffs accepted
 
 **Retrospective insights → Lessons page:**
-If the retrospective produced broadly useful insights, create `apps/indusk-docs/src/lessons/{plan-name}.md` with:
+If the retrospective produced broadly useful insights, create `apps/docs/src/lessons/{plan-name}.md` with:
 - What we learned that applies beyond this specific plan
 - What we'd do differently and why
 
 Not every plan produces a lessons page — only create one if the insights are genuinely reusable.
 
-**Update sidebar:** Add new decision/lesson pages to the VitePress sidebar config in `apps/indusk-docs/src/.vitepress/config.ts`.
+**Update sidebar:** Add new decision/lesson pages to the VitePress sidebar config in `apps/docs/src/.vitepress/config.ts`.
 
 ### Step 9: Archival
 

@@ -4,7 +4,7 @@ This directory holds InDusk extensions: opt-in (or required-by-default) modules 
 
 This index lists every shipped extension with a one-line summary and "when to use" guidance. For setup details on any individual extension, see its `skill.md`. For the runtime list of which extensions are enabled in a given project, call `mcp__indusk__extensions_status`.
 
-The user-facing version of this index lives at [`apps/indusk-docs/src/reference/extensions/index.md`](../../indusk-docs/src/reference/extensions/index.md) and is what gets served on the docs site.
+The user-facing version of this index lives at [`apps/docs/src/reference/extensions/index.md`](../../docs/src/reference/extensions/index.md) and is what gets served on the docs site.
 
 ## Decision matrix
 
@@ -130,13 +130,13 @@ Extensions with secrets or runtime config also have:
 
 The manifest's `provides.skill: true` opts the skill into syncing with the project's `.claude/skills/{name}/SKILL.md` on `indusk update`. The manifest's `mcp_server` block (if present) registers the extension's MCP server in the project's `.mcp.json` on `indusk extensions enable {name}` (or fresh init for required-by-default extensions). The manifest's `provides.health_checks` runs every `mcp__indusk__check_health` invocation; non-ok checks degrade catchup.
 
-For the full schema + the `required: true` flag (auto-enable on init/update), see [`apps/indusk-docs/src/reference/extension-spec.md`](../../indusk-docs/src/reference/extension-spec.md).
+For the full schema + the `required: true` flag (auto-enable on init/update), see [`apps/docs/src/reference/extension-spec.md`](../../docs/src/reference/extension-spec.md).
 
 ## Adding a new extension
 
 1. Create `extensions/{name}/` with `manifest.json` + `skill.md` (and `.env.example` if needed).
 2. If wrapping an MCP server, add the `mcp_server` block to the manifest. Use `DASH0_AUTH_TOKEN` / `DATADOG_MCP_URL` style env-var references — these get resolved from `.env` at enable time.
-3. Add an entry to this README (decision matrix + grouped catalog) AND to the docs version at `apps/indusk-docs/src/reference/extensions/index.md`.
+3. Add an entry to this README (decision matrix + grouped catalog) AND to the docs version at `apps/docs/src/reference/extensions/index.md`.
 4. If the extension belongs in a problem space that already has alternatives (e.g., a third observability vendor), update the relevant sibling skills' "See Also" sections to cross-reference the new sibling.
 5. If `required: true`, add the extension to `lib/extension-loader.ts`'s default-enabled list and ensure `update.ts` migrates pre-existing projects.
 

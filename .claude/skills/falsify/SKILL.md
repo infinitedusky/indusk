@@ -122,7 +122,7 @@ The `/retrospective` skill's Step 0 hard-blocks without one of these. Don't bypa
 
 ## Why this exists
 
-See the [Falsification Ritual guide](apps/indusk-docs/src/guide/falsification-ritual.md) for the full motivation. Short version: the Test Trajectory made universal deferral structurally impossible, but authors only write tests they can think of — and the author is the last person likely to notice the gaps in their own thinking. The ritual is a bullshit detector. Its purpose is rigor through self-examination.
+See the [Falsification Ritual guide](apps/docs/src/guide/falsification-ritual.md) for the full motivation. Short version: the Test Trajectory made universal deferral structurally impossible, but authors only write tests they can think of — and the author is the last person likely to notice the gaps in their own thinking. The ritual is a bullshit detector. Its purpose is rigor through self-examination.
 
 The phase-authoring shape (vs the old sidecar-log shape) exists because:
 

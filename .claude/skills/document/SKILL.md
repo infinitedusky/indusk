@@ -51,10 +51,10 @@ For each phase, consider all of these:
 
 ## Where Docs Live
 
-Documentation lives in a VitePress site at `apps/indusk-docs/`:
+Documentation lives in a VitePress site at `apps/docs/`:
 
 ```
-apps/indusk-docs/src/
+apps/docs/src/
 ├── guide/           # How-to guides (task-oriented)
 ├── reference/       # Skills, tools, API, configuration (information-oriented)
 │   ├── skills/      # One page per skill
@@ -64,7 +64,7 @@ apps/indusk-docs/src/
 └── changelog.md     # Version history — Added, Changed, Fixed, etc.
 ```
 
-**CRITICAL: Every new page must be added to the sidebar.** The sidebar is configured in a single file: `apps/indusk-docs/src/.vitepress/config.ts` under `themeConfig.sidebar`. If you create a page but don't add it to the sidebar, it is invisible — users cannot navigate to it. This is the most common documentation mistake.
+**CRITICAL: Every new page must be added to the sidebar.** The sidebar is configured in a single file: `apps/docs/src/.vitepress/config.ts` under `themeConfig.sidebar`. If you create a page but don't add it to the sidebar, it is invisible — users cannot navigate to it. This is the most common documentation mistake.
 
 When you create or move a page:
 1. Write the page content
@@ -128,7 +128,7 @@ Two diagram tools are available. Use the right one for the context:
 **Agent workflow for persistent Excalidraw diagrams:**
 1. Create with `create_view` during the session
 2. Read checkpoint with `read_checkpoint` to get element JSON
-3. Save JSON to `apps/indusk-docs/src/public/diagrams/{name}.excalidraw.json`
+3. Save JSON to `apps/docs/src/public/diagrams/{name}.excalidraw.json`
 4. Add `<ExcalidrawEmbed src="/diagrams/{name}.excalidraw.json" title="..." />` to the docs page
 5. Add page to sidebar in `.vitepress/config.ts` if new
 
@@ -168,7 +168,7 @@ When running in teach mode (`/work teach`), documentation gains a second layer: 
 - Conceptual connections — "this pattern is similar to X because..."
 - What we'd do differently next time
 
-Learning journal entries go in `apps/indusk-docs/src/lessons/` as standalone pages, or as `## What We Learned` sections within existing guide pages. They're written in first person and read like a developer's notebook — not formal reference docs.
+Learning journal entries go in `apps/docs/src/lessons/` as standalone pages, or as `## What We Learned` sections within existing guide pages. They're written in first person and read like a developer's notebook — not formal reference docs.
 
 In teach mode, every Document gate should produce both:
 1. **Standard docs** — reference/guide updates (same as normal mode)
