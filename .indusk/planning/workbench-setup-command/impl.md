@@ -140,7 +140,7 @@ All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke
 - [x] T9: `setup` with `INDUSK_HOME` = a regular file → init throws `ENOTDIR` on the registry write (empirically confirmed: `addProject` is a sync call in init's async body at `init.ts:1374`, so the throw is a catchable rejected promise); setup's `try/catch` `rmSync`es the partial dir + exits 1. Red before fix (dir lingered), green after. Biome clean (`biome check setup.ts`).
 
 #### Phase 2 Context
-- [ ] Add a Known Gotcha to dusk `CLAUDE.md`: `indusk setup`'s collision guard distinguishes a real workbench (`.indusk/config.json` present) from a partial/foreign `<repo>-workbench`, and setup is atomic — it removes the dir it created if `init` fails — so a failed/interrupted setup never leaves a lingering dir that misroutes the next run to `indusk update`.
+- [x] Add a Known Gotcha to dusk `CLAUDE.md`: `indusk setup`'s collision guard distinguishes a real workbench (`.indusk/config.json` present) from a partial/foreign `<repo>-workbench`, and setup is atomic — it removes the dir it created if `init` fails — so a failed/interrupted setup never leaves a lingering dir that misroutes the next run to `indusk update`.
 
 #### Phase 2 Document
 - [ ] Update `apps/docs/src/reference/cli/setup.md` errors table: add the "`<repo>-workbench` exists but is not an InDusk workbench" row (distinct from "a workbench already exists"), and note that a failed setup cleans up the dir it created.
