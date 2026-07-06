@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Create and advance plans. Every plan follows the same document lifecycle — research, brief, ADR, impl, retrospective. Knows how to write each one, what order they go in, and how to pick up where things left off.
-argument-hint: "[workflow] [plan name] — workflow: feature (default), bugfix, refactor, spike"
+argument-hint: "[workflow] [plan name] — workflow: feature (default), bugfix, refactor, spike, hotfix"
 ---
 
 You know how to plan work in this project.
@@ -22,6 +22,7 @@ Each document builds on the ones before it. Not every plan needs all six — use
 | Architecture or technology decision | research + brief + test-plan + adr + impl |
 | Exploratory spike (no commitment) | research only |
 | Large feature or system change | all six |
+| Production-down emergency | impl only, created retroactively after the fix ships — see **Hotfix Workflow** below |
 
 The order is always preserved — never write an ADR before the brief, or an impl before the ADR (when both exist).
 
@@ -38,16 +39,108 @@ The first argument to `/planner` can optionally be a workflow type that controls
 | `/planner spike redis-options` | spike | research only |
 | `/planner feature payment-flow` | feature | full lifecycle (research + brief + test-plan + adr + impl + retrospective) |
 | `/planner payment-flow` | feature | same — no type defaults to feature |
+| `/planner hotfix payment-timeout-crash` | hotfix | impl only, created *retroactively* after the fix ships — see **Hotfix Workflow** below. Not part of the normal document-first sequence. |
 
-**Test plan is required for any workflow that ships an impl** (bugfix, refactor, feature). For a bugfix, the first behavioral assertion IS the failing test that proves the bug — you can't write a fix until you've named what should be true once it works. Spike is the only workflow that skips the test plan, because it skips the impl.
+**Test plan is required for any workflow that ships an impl** (bugfix, refactor, feature). For a bugfix, the first behavioral assertion IS the failing test that proves the bug — you can't write a fix until you've named what should be true once it works. Spike is the only workflow that skips the test plan, because it skips the impl. **Hotfix skips the test plan too, but for the opposite reason** — not because it skips the impl, but because it skips *everything* up front and backfills afterward; see below.
 
-Parse the input: if the first word is `bugfix`, `refactor`, `spike`, or `feature`, use that workflow. Otherwise, default to `feature`. The remaining words become the plan name (kebab-cased).
+Parse the input: if the first word is `bugfix`, `refactor`, `spike`, `feature`, or `hotfix`, use that workflow. Otherwise, default to `feature`. The remaining words become the plan name (kebab-cased).
 
 Workflow templates are in `templates/workflows/` in the package. They describe which documents to create and provide streamlined templates for each workflow type.
 
+## Hotfix Workflow
+
+`hotfix` is fundamentally different from the other four workflow types: everything else happens document-first, then code. Hotfix inverts this — code ships first, the plan folder is created retroactively, and discipline is enforced through a mandatory backfill phase rather than upfront ceremony. **Use this only for genuine production-down / urgent-bug scenarios** where even `bugfix`'s ceremony (a brief and a test plan before any code) is too slow to be realistic. If there's time to write a two-line brief first, use `bugfix` instead — treating hotfix as the default bugfix path erodes the exact discipline it exists to protect.
+
+### Flow
+
+1. **Ship the fix directly.** No plan folder, no docs, no ceremony yet. Protect any in-progress work on the current branch first, then branch off `main` — in the current working directory, **not a worktree** (the worktree extension's setup ceremony is real cost that fights the "as fast as possible" goal, and the extension isn't enabled on most projects):
+   ```bash
+   git stash                       # or a WIP safety commit
+   git checkout main && git pull --rebase
+   git checkout -b hotfix/{slug}   # NOT fix/{slug} — see git.md
+   ```
+   Write the fix, commit, push, open the PR. Move as fast as normal review allows — this is the entire point of the workflow.
+
+2. **Immediately after the PR opens (or merges), create the plan folder retroactively.** Only `impl.md` — no brief, test plan, or ADR:
+   ```
+   .indusk/planning/{slug}/impl.md
+   ```
+
+3. **Fire a highlight** so the eval agent can capture this in Graphiti — no other trigger point covers a plan whose Phase 1 predates the plan file:
+   ```
+   mcp__indusk__highlight({
+     tag: "hotfix-shipped",
+     level: "critical",
+     note: "{slug}: {what broke + what shipped}"
+   })
+   ```
+   Skip silently if `mcp__indusk__highlight` is unavailable.
+
+4. **`impl.md` always has exactly three phases — Ship, Backfill, Close:**
+
+   ```markdown
+   ---
+   title: "{Title}"
+   date: {YYYY-MM-DD}
+   status: in-progress
+   workflow: hotfix
+   gate_policy: auto
+   trajectory: required
+   ---
+
+   # {Title}
+
+   ## Goal
+   {What broke, what the fix does, why it couldn't wait for the normal workflow.}
+
+   ## Test Trajectory
+
+   | ID | Asserts | Writable at | Passes at | State |
+   |----|---------|-------------|-----------|-------|
+   | T1 | {regression test proving the original bug} | Phase 0 | Phase 2 | planned |
+
+   ## Checklist
+
+   ### Phase 1: Ship
+   - [x] {the fix — documented retroactively, it already shipped}
+
+   #### Phase 1 Verification
+   - [x] (none needed — skip-reason: hotfix — deferred to Phase 2 backfill)
+
+   #### Phase 1 Document
+   - [x] (none needed — skip-reason: hotfix — deferred to Phase 2 backfill)
+
+   ### Phase 2: Backfill
+   - [ ] Author the regression test (T1) proving the original bug
+   - [ ] Confirm it passes against the shipped fix
+
+   #### Phase 2 Verification
+   - [ ] T1 passes
+
+   #### Phase 2 Document
+   - [ ] {whatever docs the fix actually needs}
+
+   ### Phase 3: Close
+   - [ ] Confirm all Phase 2 trajectory rows are terminal (passing/skipped/blocked)
+
+   #### Phase 3 Verification
+   - [ ] (none needed — skip-reason: n/a, this phase has no tests of its own)
+
+   #### Phase 3 Document
+   - [ ] (none needed — skip-reason: n/a)
+   ```
+
+   **Why Phase 3 exists — don't skip it, don't add real work to it.** `check-gates.js`'s phase-close check only fires when a *later* phase's implementation item is checked — a plan's terminal phase's own trajectory rows are never inspected (see CLAUDE.md's Known Gotcha on this). Phase 3 is a trivial, single-item phase whose only job is to be that "later phase": checking its one item is what makes Phase 2's regression test actually have to reach `passing` before the plan can be considered done. Without Phase 3, Backfill would be terminal and nothing would force its trajectory row to resolve.
+
+   Gate requirements (verification + document required; otel + context not required) match `bugfix` exactly.
+
+5. **Backfill for real.** Author the regression test, get it passing, fill in the Verification/Document gates properly. From here it's normal `/work` execution — same discipline as any other phase.
+
+6. **`/falsify` and `/retrospective` run unmodified**, exactly as they would for any other workflow, once Phase 3 closes — just later in wall-clock time than usual.
+
 ## What to Do When Asked to Plan
 
-1. **Determine the workflow type** from the input (see above). This controls which documents you create.
+1. **Determine the workflow type** from the input (see above). This controls which documents you create. **If the workflow is `hotfix`, stop here and follow the Hotfix Workflow section above instead** — it does not follow the document-first sequence these numbered steps describe.
 
 2. **Figure out where things stand.** If a plan folder already exists, read what's there. Check frontmatter statuses. The next document to write is the first one that's missing or incomplete.
 

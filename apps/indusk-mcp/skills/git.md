@@ -57,10 +57,13 @@ At phase or plan completion:
 |---------|---------|
 | `plan/{plan-name}-phase-{n}` | Plan-driven impl work |
 | `fix/{slug}` | Bugfixes outside a plan |
+| `hotfix/{slug}` | Production-down emergencies — see the planner skill's Hotfix Workflow |
 | `spike/{slug}` | Exploratory spikes |
 | `chore/{slug}` | Tooling, deps, lint config |
 
-Lowercase, kebab-case. The prefix tells reviewers what kind of work this is.
+Lowercase, kebab-case. The prefix tells reviewers what kind of work this is. `hotfix/{slug}` is deliberately distinct from `fix/{slug}` — a hotfix ships before any plan doc exists and gets a mandatory backfill phase, which `fix/{slug}` bugfixes don't; keeping the branch names distinguishable lets any future automation key off "this was a hotfix" in git log or PR titles.
+
+**Hotfix branches skip the worktree question entirely.** Create them as a plain branch in the current working directory — `git stash` (or a WIP safety commit) to protect in-progress work, `git checkout main && git pull --rebase`, then `git checkout -b hotfix/{slug}`. Do **not** reach for the worktree extension here: its setup ceremony (file overlay, env provisioning, optional service spin-up) is real cost that fights the entire point of a hotfix, and the extension isn't enabled on most projects anyway.
 
 ## Monorepo Commit Siloing
 

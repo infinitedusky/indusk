@@ -42,11 +42,11 @@ Note on phase references below: `Phase N` in this table always means *this plan'
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | A hotfix plan's Ship phase, with verification+document sections written as `skip-reason:` under `gate_policy: auto`, is accepted (not blocked) at write time. | Phase 0 | Phase 1 | planned |
-| T2 | The identical Ship-phase content is blocked, with an error naming the missing section, when `gate_policy` is `strict` or `ask`. | Phase 0 | Phase 1 | planned |
-| T3 | With `workflow: hotfix`, content that has real (or skip-reasoned) verification+document sections but *omits* otel and context sections entirely is accepted — hotfix's own lighter required set, not feature's full set. | Phase 0 | Phase 1 | planned |
-| T4 | A hotfix plan's Ship phase, with zero trajectory rows targeting it, can be closed/advanced past without any row needing to reach a terminal state. | Phase 0 | Phase 0 | planned |
-| T5 | In a hotfix plan shaped Ship → Backfill → Close, checking Close's own (single) implementation item is blocked while Backfill's trajectory row remains unresolved (`planned`/`writable`/`written`), with an error naming the row — and is allowed once that row reaches `passing`. This is `check-gates.js`'s existing Gate B, triggered by Close's item-check; it does **not** fire merely from checking Backfill's own items (verified empirically — see Notes). | Phase 0 | Phase 0 | planned |
+| T1 | A hotfix plan's Ship phase, with verification+document sections written as `skip-reason:` under `gate_policy: auto`, is accepted (not blocked) at write time. | Phase 0 | Phase 1 | passing |
+| T2 | The identical Ship-phase content is blocked, with an error naming the missing section, when `gate_policy` is `strict` or `ask`. | Phase 0 | Phase 1 | passing |
+| T3 | With `workflow: hotfix`, content that has real (or skip-reasoned) verification+document sections but *omits* otel and context sections entirely is accepted — hotfix's own lighter required set, not feature's full set. | Phase 0 | Phase 1 | passing |
+| T4 | A hotfix plan's Ship phase, with zero trajectory rows targeting it, can be closed/advanced past without any row needing to reach a terminal state. | Phase 0 | Phase 0 | passing |
+| T5 | In a hotfix plan shaped Ship → Backfill → Close, checking Close's own (single) implementation item is blocked while Backfill's trajectory row remains unresolved (`planned`/`writable`/`written`), with an error naming the row — and is allowed once that row reaches `passing`. This is `check-gates.js`'s existing Gate B, triggered by Close's item-check; it does **not** fire merely from checking Backfill's own items (verified empirically — see Notes). | Phase 0 | Phase 0 | passing |
 | T6 | Running `/falsify` and `/retrospective` against a completed hotfix plan works end-to-end with no special-casing in either skill. | Phase 3 | Phase 3 | planned |
 | T7 | Following the documented hotfix flow produces a branch named `hotfix/{slug}` — not `fix/{slug}`, not a worktree. | Phase 3 | Phase 3 | planned |
 
@@ -87,21 +87,21 @@ Note on phase references below: `Phase N` in this table always means *this plan'
 
 ### Phase 2: Skill + branch + docs-site
 
-- [ ] `planner.md`: add `hotfix` to the workflow dispatch table, `argument-hint`, and the parse rule (`bugfix`, `refactor`, `spike`, `feature`, `hotfix`).
-- [ ] `planner.md`: add a numbered step (or sub-step of the existing impl-authoring step) describing the retroactive, three-phase hotfix flow — including the embedded `impl.md` skeleton (frontmatter: `workflow: hotfix`, `gate_policy: auto`, `trajectory: required`; Phase 1 Ship all-deferred; Phase 2 Backfill mandatory with real trajectory rows/gates; Phase 3 Close — a single trivial item, e.g. "confirm all Backfill trajectory rows are terminal" — explained as existing solely so Gate B's phase-transition check actually fires against Backfill's rows, not a real unit of work) and the `hotfix-shipped` highlight call (`mcp__indusk__highlight({ tag: "hotfix-shipped", level: "critical", note: "{slug}: {what broke + what shipped}" })`), fired when the plan folder is created.
-- [ ] `git.md`: add `hotfix/{slug}` row to the branch naming table; short prose — stash or WIP safety-commit, branch off `main` in the current working directory, explicitly not a worktree.
-- [ ] `apps/docs/src/reference/skills/plan.md`: add `hotfix` row to the Workflow Types table and a branch in the Mermaid decision diagram.
-- [ ] Publish this ADR to `apps/docs/src/decisions/planner-hotfix-mode.md`.
-- [ ] Changelog entry: "Added `hotfix` planner workflow — ship-first, backfill-mandatory fast path for production-down bugs."
+- [x] `planner.md`: add `hotfix` to the workflow dispatch table, `argument-hint`, and the parse rule (`bugfix`, `refactor`, `spike`, `feature`, `hotfix`). Also added a row to the "Not every plan needs all six" guide table and a pointer from step 1 of "What to Do When Asked to Plan" diverting hotfix to the new section entirely.
+- [x] `planner.md`: added a new `## Hotfix Workflow` top-level section (not a numbered sub-step — hotfix's flow is different enough from the document-first steps that it needed its own section) describing the retroactive, three-phase hotfix flow — full embedded `impl.md` skeleton (frontmatter: `workflow: hotfix`, `gate_policy: auto`, `trajectory: required`; Phase 1 Ship all-deferred; Phase 2 Backfill mandatory with real trajectory rows/gates; Phase 3 Close — a single trivial item, explained as existing solely so Gate B's phase-transition check actually fires against Backfill's rows, not a real unit of work) and the `hotfix-shipped` highlight call, fired when the plan folder is created.
+- [x] `git.md`: added `hotfix/{slug}` row to the branch naming table + two prose paragraphs — why it's distinct from `fix/{slug}`, and why hotfix branches skip the worktree question entirely (plain branch, stash-or-safety-commit, current working directory).
+- [x] `apps/docs/src/reference/skills/plan.md`: added `hotfix` row to the Workflow Types table (now "Five workflow types"), a `Q2b` branch in the Mermaid decision diagram, a new `## Hotfix Workflow` section, and an invocation example.
+- [x] Publish this ADR to `apps/docs/src/decisions/planner-hotfix-mode.md`.
+- [x] Changelog entry added under `## [Unreleased]` / `### Added`.
 
 #### Phase 2 Verification
-- [ ] (no tests flip at this phase — reason: schema-only) — this phase is documentation/prose; T1–T5 already validate the underlying mechanism in Phase 1, T6/T7 validate the described flow in Phase 3.
+- [x] (no tests flip at this phase — reason: schema-only) — this phase is documentation/prose; T1–T5 already validate the underlying mechanism in Phase 1, T6/T7 validate the described flow in Phase 3.
 
 #### Phase 2 Context
-- [ ] Confirm the CLAUDE.md Key Decisions one-liner (added at ADR acceptance) still accurately reflects what Phase 1 actually shipped (in particular the otel-exclusion correction).
+- [x] Confirmed the CLAUDE.md Key Decisions one-liner (added at ADR acceptance) still accurately reflects what Phase 1 actually shipped, including the otel-exclusion correction (it already said "unconditionally excluded," matching what shipped).
 
 #### Phase 2 Document
-- [ ] `apps/docs/src/reference/skills/plan.md` Workflow Types section + diagram updated (see checklist above — tracked here as the Document gate for this phase).
+- [x] `apps/docs/src/reference/skills/plan.md` Workflow Types section + diagram updated (see checklist above — tracked here as the Document gate for this phase).
 
 ### Phase 3: Dogfood
 
