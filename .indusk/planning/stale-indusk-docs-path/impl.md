@@ -1,7 +1,7 @@
 ---
 title: "Stale apps/indusk-docs Path References in Skill Files"
 date: 2026-07-06
-status: in-progress
+status: completed
 workflow: hotfix
 gate_policy: auto
 trajectory: required
@@ -43,13 +43,13 @@ PR: https://github.com/infinitedusky/indusk/pull/11
 - [x] (none needed — skip-reason: this is a mechanical path-reference fix with no new user-facing behavior; the fixed files' own content is the documentation)
 
 ### Phase 3: Close
-- [ ] Confirm T1 (the only Phase 2 trajectory row) is terminal (passing/skipped/blocked)
+- [x] Confirm T1 (the only Phase 2 trajectory row) is terminal (passing/skipped/blocked) — T1 is `passing`.
 
 #### Phase 3 Verification
-- [ ] (no tests flip at this phase — reason: infra)
+- [x] (no tests flip at this phase — reason: infra)
 
 #### Phase 3 Document
-- [ ] (none needed — skip-reason: n/a)
+- [x] (none needed — skip-reason: n/a)
 
 ## Notes
 - This is the Phase 3 (Dogfood) exercise for `.indusk/planning/planner-hotfix-mode/` — proves the ship-first/backfill-mandatory flow end-to-end, including a real PR.
