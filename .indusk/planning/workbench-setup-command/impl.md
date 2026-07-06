@@ -42,8 +42,8 @@ Add a single CLI verb — `indusk setup <cloned-repo-path>` — that turns an al
 | T5 | `setup` when `<repo>-workbench` already exists exits non-zero, points at `indusk update`, and leaves the existing workbench's contents untouched | Phase 0 | Phase 1 | passing |
 | T6 | A repo with uncommitted + untracked changes can be set up successfully (dirty tree does not block) | Phase 0 | Phase 1 | passing |
 | T7 | `indusk init --workbench --wrapped-repo X --sibling-parent Y` still produces a working workbench (regression guard for the delegated-to path) | Phase 0 | Phase 1 | passing |
-| T8 | When `<repo>-workbench` exists but is NOT a completed InDusk workbench (no `.indusk/config.json`), `setup` reports a distinct "exists but is not an InDusk workbench" error and does NOT advise `indusk update` | Phase 0 | Phase 2 | planned |
-| T9 | A `setup` run that fails during `init` (after the workbench dir is created) leaves no `<repo>-workbench` directory behind — setup is atomic | Phase 0 | Phase 2 | planned |
+| T8 | When `<repo>-workbench` exists but is NOT a completed InDusk workbench (no `.indusk/config.json`), `setup` reports a distinct "exists but is not an InDusk workbench" error and does NOT advise `indusk update` | Phase 0 | Phase 2 | written |
+| T9 | A `setup` run that fails during `init` (after the workbench dir is created) leaves no `<repo>-workbench` directory behind — setup is atomic | Phase 0 | Phase 2 | written |
 
 All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke `setup` (or `init --workbench`) as a string subcommand against tmp `git init` repos, so the test source compiles today and fails red (`unknown command 'setup'` for T1–T6; T7 already passes and is a standing guardrail). No `### Trajectory Rationale` subsection is required (it applies only to Phase 1+ rows). No `### Deferred Verification` — every assertion is testable against ephemeral repos with no external services.
 

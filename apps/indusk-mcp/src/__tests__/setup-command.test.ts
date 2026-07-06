@@ -171,5 +171,33 @@ describe.skipIf(SHOULD_SKIP)(
 			expect(config.worktree?.shape).toBe("workbench");
 			expect(config.worktree?.wrapped_repo).toBe("myrepo");
 		});
+
+		it("T8: existing <repo>-workbench without config is not treated as a workbench", () => {
+			const repo = join(sibling, "myrepo");
+			initRepo(repo);
+			// A partial / foreign dir: <repo>-workbench exists but has no .indusk/config.json
+			mkdirSync(join(sibling, "myrepo-workbench"), { recursive: true });
+
+			const res = runCli(["setup", repo], sibling, home);
+			expect(res.status).not.toBe(0);
+			// Must NOT misroute the user to `indusk update` — there is no workbench to update
+			expect(res.stderr).not.toMatch(/indusk update/);
+			expect(res.stderr).toMatch(/not an InDusk workbench/i);
+		});
+
+		it("T9: a setup that fails during init leaves no <repo>-workbench behind (atomic)", () => {
+			const repo = join(sibling, "myrepo");
+			initRepo(repo);
+			// Force init to fail AFTER the workbench dir is created: point INDUSK_HOME at a
+			// regular file so init's registry write (writeRegistry → open) throws ENOTDIR.
+			const homeAsFile = join(sibling, "home-as-file");
+			writeFileSync(homeAsFile, "not a directory");
+
+			const res = runCli(["setup", repo], sibling, homeAsFile);
+			expect(res.status).not.toBe(0);
+			// Atomicity: the partial workbench must be cleaned up, not left behind to trip
+			// the collision guard on the next run.
+			expect(existsSync(join(sibling, "myrepo-workbench"))).toBe(false);
+		});
 	},
 );
