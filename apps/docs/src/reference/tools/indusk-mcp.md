@@ -238,7 +238,7 @@ flowchart TD
         claude["CLAUDE.md"]
         planning["planning/"]
         biome["biome.json"]
-        docs["apps/indusk-docs/"]
+        docs["apps/docs/"]
         lessons[".claude/lessons/"]
     end
 

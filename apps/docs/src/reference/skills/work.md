@@ -79,7 +79,7 @@ flowchart TD
 | **Implementation** | The actual work — code changes, new files, configuration | `Add subscription types to src/billing/types.ts` |
 | **Verification** | Runnable commands that prove the phase works. Must be specific, not vague. | `pnpm turbo test --filter=billing` — all tests pass |
 | **Context** | Concrete edits to CLAUDE.md that capture what changed | `Add to Architecture: "billing module includes subscription support"` |
-| **Document** | Docs pages to write or update in the VitePress site | `Write API reference at apps/indusk-docs/src/reference/api/subscriptions.md` |
+| **Document** | Docs pages to write or update in the VitePress site | `Write API reference at apps/docs/src/reference/api/subscriptions.md` |
 
 Not every phase needs all four gates. A phase with no context changes simply has no context section. But if the section exists, every item in it must be completed before advancing.
 
@@ -176,7 +176,7 @@ The agent edits `CLAUDE.md`, adding the line to the Architecture section, then c
 ### 9. Move to the document gate
 
 ```markdown
-- [ ] Write API reference for subscription endpoints at `apps/indusk-docs/src/reference/api/subscriptions.md`
+- [ ] Write API reference for subscription endpoints at `apps/docs/src/reference/api/subscriptions.md`
 ```
 
 The agent writes the docs page following the [Document](/reference/skills/document) skill guidance, then checks the item off.
@@ -387,7 +387,7 @@ Commit at phase boundaries, not per-item and not at plan completion.
 | After each phase | Correct — natural boundary, gates are cleared |
 | After the entire plan | Too coarse — loses rollback granularity |
 
-Follow the monorepo rule: commits should be siloed between different contexts (what would be separated repos). If a phase touches both `apps/indusk-mcp/` and `apps/indusk-docs/`, that is fine in a single commit — they are part of the same logical change. But unrelated changes to a different app should be a separate commit.
+Follow the monorepo rule: commits should be siloed between different contexts (what would be separated repos). If a phase touches both `apps/indusk-mcp/` and `apps/docs/`, that is fine in a single commit — they are part of the same logical change. But unrelated changes to a different app should be a separate commit.
 
 ## Gotchas
 

@@ -205,5 +205,5 @@ See [Component conventions](./component-conventions) for the visual primitive di
 
 - [CLI reference](./cli) — full `indusk ui start/stop/status` reference, exit codes, env vars, port behavior
 - [Component conventions](./component-conventions) — the primitives, the no-shadcn rationale, the audit
-- [`apps/indusk-docs/src/changelog.md`](/changelog) — the 1.26.0 and 1.27.0 entries
-- [`apps/indusk-docs/src/lessons/`](/lessons) — retrospective lessons
+- [`apps/docs/src/changelog.md`](/changelog) — the 1.26.0 and 1.27.0 entries
+- [`apps/docs/src/lessons/`](/lessons) — retrospective lessons

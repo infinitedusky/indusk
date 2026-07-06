@@ -52,3 +52,60 @@ describe("stale-indusk-docs-path: no dead apps/indusk-docs path references remai
 		});
 	}
 });
+
+/**
+ * T3 (falsification finding): the published VitePress docs site's live
+ * reference pages carried the same staleness the Ship phase fixed in the
+ * skill-instruction surface. Excludes dated historical records (changelog,
+ * decisions/*, dawn/decisions.md) by design — those accurately describe
+ * what was true at the time and should NOT be rewritten.
+ */
+const DOCS_SITE_FILES = [
+	"apps/docs/src/reference/skills/document.md",
+	"apps/docs/src/reference/skills/retrospective.md",
+	"apps/docs/src/reference/skills/work.md",
+	"apps/docs/src/reference/skills/plan.md",
+	"apps/docs/src/reference/skills/context.md",
+	"apps/docs/src/reference/tools/indusk-mcp.md",
+	"apps/docs/src/reference/tools/composable-env.md",
+	"apps/docs/src/reference/admin-ui/overview.md",
+	"apps/docs/src/reference/admin-ui/cli.md",
+	"apps/docs/src/guide/scm.md",
+];
+
+describe("stale-indusk-docs-path T3: published docs-site reference pages", () => {
+	for (const relPath of DOCS_SITE_FILES) {
+		it(`${relPath} has no apps/indusk-docs or ../../indusk-docs path reference`, () => {
+			const content = readFileSync(join(REPO_ROOT, relPath), "utf-8");
+			expect(content).not.toContain("apps/indusk-docs");
+			expect(content).not.toContain("../../indusk-docs");
+		});
+	}
+});
+
+/**
+ * T4 (falsification finding): CLAUDE.md's own live Architecture section,
+ * Apps bullet, and Key Decisions links — not its dated Current-State
+ * narrative, which legitimately still says "apps/indusk-docs" when
+ * describing what was true at a past point in time.
+ */
+describe("stale-indusk-docs-path T4: CLAUDE.md's live architecture description", () => {
+	const claudeMd = readFileSync(join(REPO_ROOT, "CLAUDE.md"), "utf-8");
+
+	it("Architecture directory tree names the current docs/ directory", () => {
+		expect(claudeMd).toContain("└── docs/");
+		expect(claudeMd).not.toContain("└── indusk-docs/");
+	});
+
+	it("Apps bullet names the current docs app, not indusk-docs", () => {
+		expect(claudeMd).toContain("- **docs**: VitePress 1.x documentation site");
+	});
+
+	it("Falsification Ritual guide link points at the current docs path", () => {
+		expect(claudeMd).toContain("(apps/docs/src/guide/falsification-ritual.md)");
+	});
+
+	it("rationale-baseline-frontmatter lessons page link points at the current docs path", () => {
+		expect(claudeMd).toContain("`apps/docs/src/lessons/rationale-baseline-frontmatter.md`");
+	});
+});

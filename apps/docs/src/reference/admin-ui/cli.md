@@ -191,4 +191,4 @@ There is no `indusk ui add`, `indusk ui remove`, or equivalent — registry muta
 
 - [Overview](./overview) — the daemon model, registry, routing, and what each page shows
 - [Component conventions](./component-conventions) — the primitives that back the rendered pages
-- [`apps/indusk-docs/src/changelog.md`](/changelog) — 1.27.0 breaking-change callout and migration note
+- [`apps/docs/src/changelog.md`](/changelog) — 1.27.0 breaking-change callout and migration note

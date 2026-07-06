@@ -46,7 +46,7 @@ dusk/
 ├── apps/
 │   ├── indusk-portfolio/   # Next.js 15 + Tailwind 4
 │   ├── indusk-mcp/        # InDusk MCP server — dev system tooling
-│   └── indusk-docs/       # VitePress documentation site
+│   └── docs/              # VitePress documentation site
 ├── .claude/skills/        # Claude Code skills (installed via init)
 ├── planning/              # Plans following the plan skill lifecycle
 └── CLAUDE.md              # This file — living project memory
@@ -55,7 +55,7 @@ dusk/
 - **indusk-portfolio**: Next.js 15 + Tailwind 4. Dark theme. Runs in Docker.
 - **indusk-mcp**: 13 MCP tools across plan, context, quality, document, and
   system categories. CLI for init/update.
-- **indusk-docs**: VitePress 1.x with Mermaid diagrams and FullscreenDiagram.
+- **docs**: VitePress 1.x with Mermaid diagrams and FullscreenDiagram.
 ```
 
 **Conventions:**
@@ -313,7 +313,7 @@ Returns CLAUDE.md parsed into its 6 canonical sections with validation status. T
     },
     {
       "name": "Architecture",
-      "content": "```\ndusk/\n├── apps/\n│   ├── indusk-portfolio/\n│   ├── indusk-mcp/\n│   └── indusk-docs/\n..."
+      "content": "```\ndusk/\n├── apps/\n│   ├── indusk-portfolio/\n│   ├── indusk-mcp/\n│   └── docs/\n..."
     },
     {
       "name": "Conventions",

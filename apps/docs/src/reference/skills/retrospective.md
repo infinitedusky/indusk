@@ -170,11 +170,11 @@ Fix inaccuracies via `update_context`. The impl may have changed things that wer
 
 Distill planning artifacts into the docs site so the knowledge survives archival.
 
-**ADR to decisions page:** Create `apps/indusk-docs/src/decisions/{plan-name}.md` with a concise summary of what was decided and why, a link to the full ADR in the archive, and the key tradeoffs accepted.
+**ADR to decisions page:** Create `apps/docs/src/decisions/{plan-name}.md` with a concise summary of what was decided and why, a link to the full ADR in the archive, and the key tradeoffs accepted.
 
-**Retrospective insights to lessons page:** If the retrospective produced broadly useful insights, create `apps/indusk-docs/src/lessons/{plan-name}.md` with what was learned that applies beyond this plan and what would be done differently. Not every plan produces a lessons page — only create one if the insights are genuinely reusable.
+**Retrospective insights to lessons page:** If the retrospective produced broadly useful insights, create `apps/docs/src/lessons/{plan-name}.md` with what was learned that applies beyond this plan and what would be done differently. Not every plan produces a lessons page — only create one if the insights are genuinely reusable.
 
-**Update sidebar:** Add new decision and lesson pages to the VitePress sidebar config in `apps/indusk-docs/src/.vitepress/config.ts`.
+**Update sidebar:** Add new decision and lesson pages to the VitePress sidebar config in `apps/docs/src/.vitepress/config.ts`.
 
 ### Step 9: Archival
 
@@ -242,7 +242,7 @@ The knowledge handoff (Step 8) publishes two kinds of content to the docs site:
 
 ### Decisions Pages
 
-Decisions pages go to `apps/indusk-docs/src/decisions/`. They summarize ADRs for quick reference.
+Decisions pages go to `apps/docs/src/decisions/`. They summarize ADRs for quick reference.
 
 ```markdown
 # Context Skill
@@ -262,7 +262,7 @@ The full ADR is at `planning/archive/context-skill/adr.md`.
 
 ### Lessons Pages
 
-Lessons pages go to `apps/indusk-docs/src/lessons/`. They capture reusable insights.
+Lessons pages go to `apps/docs/src/lessons/`. They capture reusable insights.
 
 ```markdown
 # Document Skill
@@ -376,7 +376,7 @@ Finding: one dead function from an earlier approach. Removed during the retrospe
 
 ```
 check_docs_coverage()
-→ document-skill: missing docs page at apps/indusk-docs/src/reference/skills/document.md
+→ document-skill: missing docs page at apps/docs/src/reference/skills/document.md
 ```
 
 The [Document](/reference/skills/document) skill was built but never got its own docs page. Created during this step.
@@ -412,7 +412,7 @@ add_lesson({
 
 ### Step 8 — Knowledge handoff
 
-Created `apps/indusk-docs/src/decisions/document-skill.md` summarizing the ADR decision (per-phase execution gate vs. end-of-plan documentation pass). Created `apps/indusk-docs/src/lessons/document-skill.md` with the diagram-before-prose insight. Updated the sidebar config.
+Created `apps/docs/src/decisions/document-skill.md` summarizing the ADR decision (per-phase execution gate vs. end-of-plan documentation pass). Created `apps/docs/src/lessons/document-skill.md` with the diagram-before-prose insight. Updated the sidebar config.
 
 ### Step 9 — Archival
 
@@ -448,7 +448,7 @@ The retrospective draws on tools from across the InDusk MCP server:
 
 - **Lessons should be actionable, not observational.** "TypeScript is complex" is not a lesson. "Always run the full test suite after changing shared types, not just the tests in the changed package" is a lesson. The test: could someone read this lesson and change their behavior?
 
-- **Always update the sidebar when adding pages.** New decisions and lessons pages in the docs site are invisible until added to the sidebar config in `apps/indusk-docs/src/.vitepress/config.ts`. This is easy to forget during the knowledge handoff step.
+- **Always update the sidebar when adding pages.** New decisions and lessons pages in the docs site are invisible until added to the sidebar config in `apps/docs/src/.vitepress/config.ts`. This is easy to forget during the knowledge handoff step.
 
 - **Not every plan produces a lessons page.** The knowledge handoff creates a decisions page for every plan (every plan has an ADR), but lessons pages are only for plans with genuinely reusable insights. Do not force it.
 
