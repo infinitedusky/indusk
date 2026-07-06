@@ -267,6 +267,8 @@ Repo scaffolded, building, and at v1.10.3 published. **`graphiti-infrastructure`
 
 **Sibling test bed**: `~/code/sandbox/chitin-sportsbook` is a real project (peer-to-peer baseball moneyline sportsbook on Base Sepolia, NUMEROSP-settled, agent-first API) being built using the dev system as both a substrate for evaluating CGC + Graphiti and as a future Numero module candidate. First plan (`scaffold-bootstrap`) ran end-to-end with full capture/recall on 2026-04-07. Ongoing experimental evaluation lives in `cgc-graphiti-evaluation` spike.
 
+- **planner-hotfix-mode (2026-07-06)** — fifth planner workflow for production-down fixes: ship first on `hotfix/{slug}`, retroactive plan folder, mandatory 3-phase (Ship/Backfill/Close) backfill enforced via existing `gate_policy: auto` + Gate B (no new hook mechanism). Falsification found + fixed an unanchored `workflow:` detection regex (same bug class as `rationale_baseline`). Dogfooded end-to-end on a real bug/PR — see [archive](.indusk/planning/archive/stale-indusk-docs-path/). See [archive](.indusk/planning/archive/planner-hotfix-mode/) for full detail.
+
 **Active plans:**
 
 | Plan | Stage | Next Step |
