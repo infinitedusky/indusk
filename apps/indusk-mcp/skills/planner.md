@@ -105,7 +105,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - [x] {the fix — documented retroactively, it already shipped}
 
    #### Phase 1 Verification
-   - [x] (none needed — skip-reason: hotfix — deferred to Phase 2 backfill)
+   - [x] (no tests flip at this phase — reason: infra)
 
    #### Phase 1 Document
    - [x] (none needed — skip-reason: hotfix — deferred to Phase 2 backfill)
@@ -124,7 +124,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - [ ] Confirm all Phase 2 trajectory rows are terminal (passing/skipped/blocked)
 
    #### Phase 3 Verification
-   - [ ] (none needed — skip-reason: n/a, this phase has no tests of its own)
+   - [ ] (no tests flip at this phase — reason: infra)
 
    #### Phase 3 Document
    - [ ] (none needed — skip-reason: n/a)
@@ -132,9 +132,11 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **Why Phase 3 exists — don't skip it, don't add real work to it.** `check-gates.js`'s phase-close check only fires when a *later* phase's implementation item is checked — a plan's terminal phase's own trajectory rows are never inspected (see CLAUDE.md's Known Gotcha on this). Phase 3 is a trivial, single-item phase whose only job is to be that "later phase": checking its one item is what makes Phase 2's regression test actually have to reach `passing` before the plan can be considered done. Without Phase 3, Backfill would be terminal and nothing would force its trajectory row to resolve.
 
+   **Use the exact phrase `(no tests flip at this phase — reason: infra)` for Ship/Close Verification sections — not a bespoke skip-reason.** The trajectory validator's cross-reference-integrity rule requires this specific phrase (one of exactly four allowed reasons: `schema-only`, `delete`, `refactor`, `infra`) whenever a phase's Verification section has no test-ID references — this rule is workflow-agnostic and fires regardless of `gate_policy`. A well-intentioned `(none needed — skip-reason: hotfix — deferred to backfill)` reads as equivalent but will be rejected at write time. `infra` is the best-fit existing value for "this phase is process scaffolding, not testable business logic."
+
    Gate requirements (verification + document required; otel + context not required) match `bugfix` exactly.
 
-5. **Backfill for real.** Author the regression test, get it passing, fill in the Verification/Document gates properly. From here it's normal `/work` execution — same discipline as any other phase.
+5. **Backfill for real.** Author the regression test, get it passing, fill in the Verification/Document gates properly. From here it's normal `/work` execution — same discipline as any other phase. **If the fix touches published/distributed content** (a published npm package, a deployed docs site, a CDN asset, anything with a separate publish or deploy step from the git commit) — ask explicitly whether Backfill needs to include that publish/deploy step. A working-tree fix to distributed content isn't done until consumers actually get it; confirmed the hard way during this workflow's own first dogfood, where the Ship phase fixed the git repo but the published npm package and docs site kept shipping the bug until a Falsification phase caught it. Don't wait for falsification to ask this — ask it here.
 
 6. **`/falsify` and `/retrospective` run unmodified**, exactly as they would for any other workflow, once Phase 3 closes — just later in wall-clock time than usual.
 

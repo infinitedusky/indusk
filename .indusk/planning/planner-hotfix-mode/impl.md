@@ -1,7 +1,7 @@
 ---
 title: "Planner Hotfix Mode"
 date: 2026-07-01
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -47,8 +47,8 @@ Note on phase references below: `Phase N` in this table always means *this plan'
 | T3 | With `workflow: hotfix`, content that has real (or skip-reasoned) verification+document sections but *omits* otel and context sections entirely is accepted — hotfix's own lighter required set, not feature's full set. | Phase 0 | Phase 1 | passing |
 | T4 | A hotfix plan's Ship phase, with zero trajectory rows targeting it, can be closed/advanced past without any row needing to reach a terminal state. | Phase 0 | Phase 0 | passing |
 | T5 | In a hotfix plan shaped Ship → Backfill → Close, checking Close's own (single) implementation item is blocked while Backfill's trajectory row remains unresolved (`planned`/`writable`/`written`), with an error naming the row — and is allowed once that row reaches `passing`. This is `check-gates.js`'s existing Gate B, triggered by Close's item-check; it does **not** fire merely from checking Backfill's own items (verified empirically — see Notes). | Phase 0 | Phase 0 | passing |
-| T6 | Running `/falsify` and `/retrospective` against a completed hotfix plan works end-to-end with no special-casing in either skill. | Phase 3 | Phase 3 | planned |
-| T7 | Following the documented hotfix flow produces a branch named `hotfix/{slug}` — not `fix/{slug}`, not a worktree. | Phase 3 | Phase 3 | planned |
+| T6 | Running `/falsify` and `/retrospective` against a completed hotfix plan works end-to-end with no special-casing in either skill. | Phase 3 | Phase 3 | passing |
+| T7 | Following the documented hotfix flow produces a branch named `hotfix/{slug}` — not `fix/{slug}`, not a worktree. | Phase 3 | Phase 3 | passing |
 
 ### Deferred Verification
 
@@ -105,22 +105,22 @@ Note on phase references below: `Phase N` in this table always means *this plan'
 
 ### Phase 3: Dogfood
 
-- [ ] Identify one real, trivial, currently-true bug in this repo (or seed one deliberately, documented as such) suitable for a genuine hotfix dogfood.
-- [ ] Run the full flow: `hotfix/{slug}` branch, fix, PR, retroactive plan folder + `impl.md` (Ship phase documented + skip-reasoned), confirm `hotfix-shipped` highlight appears in `.indusk/highlights.jsonl`.
-- [ ] Complete Backfill for real (regression test authored + passing, verification/document gates filled in).
-- [ ] Check off Close's single item — confirm this is genuinely blocked if attempted before Backfill's row reaches `passing`, then succeeds once it does (live confirmation of T5, not just the Phase 1 fixture).
-- [ ] Run `/falsify` against the dogfood hotfix plan.
-- [ ] Run `/retrospective` against the dogfood hotfix plan.
+- [x] Identified a real bug: live agent-facing skill/extension files still referencing the pre-rename `apps/indusk-docs` path (20 in the initial scope, ~34 once the falsification-phase widening is counted). `.indusk/planning/stale-indusk-docs-path` dogfood plan (archived at `.indusk/planning/archive/stale-indusk-docs-path/`).
+- [x] Ran the full flow: `hotfix/stale-indusk-docs-path` branch, fix, real PR (#11, https://github.com/infinitedusky/indusk/pull/11), retroactive plan folder + `impl.md` (Ship phase documented + `infra`-reasoned), `hotfix-shipped` highlight fired successfully.
+- [x] Completed Backfill for real — 20-assertion regression test authored and passing, confirmed it would have failed pre-fix.
+- [x] Checked off Close's single item — **live-confirmed T5's mechanism against a real plan, not just the Phase 1 fixture**: the edit was accepted once Backfill's row reached `passing` (blocked when hand-tested with the row left `written`, matching the Phase 1 fixture's behavior exactly).
+- [x] Ran `/falsify` against the dogfood hotfix plan — found 3 confirmed, real gaps (not synthetic): the published npm package still shipped every broken file (verified via `npm pack`), 10 live docs-site reference pages carried the same staleness, and this repo's own `CLAUDE.md` architecture section was itself wrong. All fixed in a Phase 4 the ritual authored, except the actual `npm publish` (blocked on missing credentials in this environment — promoted to a Deferred Verification row with a `scheduled-review` mitigation).
+- [x] Ran `/retrospective` against the dogfood hotfix plan — archived, 2 lessons captured (`hotfix-content-fix-must-reach-distribution-channel`, `trajectory-no-tests-phrase-is-fixed-vocabulary`), lessons page published.
 
 #### Phase 3 Verification
-- [ ] T6 passes (manual smoke — the dogfood run itself)
-- [ ] T7 passes (manual smoke — observe `hotfix/{slug}` branch name)
+- [x] T6 passes (manual smoke — the full dogfood run, including a real PR and a real falsification cycle)
+- [x] T7 passes (manual smoke — `hotfix/stale-indusk-docs-path` branch, confirmed distinct from `fix/{slug}`, not a worktree)
 
 #### Phase 3 Context
-- [ ] Add a Current State entry (or fold into this plan's own retrospective) noting hotfix mode is live, with a pointer to the dogfood plan as a worked example.
+- [x] CLAUDE.md Current State entry added in the dogfood plan's own commit, pointing at the archived dogfood plan as a worked example; this plan's own retrospective adds the `planner-hotfix-mode` entry itself.
 
 #### Phase 3 Document
-- [ ] If the dogfood surfaces any gap in the `planner.md` hotfix section or `git.md` prose, fix it in place before closing this phase — the dogfood is the acceptance test for the documentation, not just the code.
+- [x] The dogfood surfaced two real gaps in `planner.md`'s hotfix section, both fixed in place: (1) the embedded template's Ship/Close Verification phrasing (a generic, freeform reason for having no tests at that phase) didn't satisfy the trajectory validator's cross-reference-integrity rule — corrected to the required `no tests flip at this phase` phrasing with an `infra` reason, plus an explanatory note so it's not a magic incantation; (2) the Backfill step now explicitly prompts "does this fix need to be published/deployed to reach consumers?" for fixes to distributed content, since the dogfood's own Ship phase missed exactly this and only caught it via `/falsify`.
 
 ## Files Affected
 | File | Change |
