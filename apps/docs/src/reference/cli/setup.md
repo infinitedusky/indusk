@@ -48,7 +48,9 @@ indusk worktree list
 |-----------|------|---------|
 | Path doesn't exist | 1 | `Error: no such path: <path>` |
 | Path is not a git repo | 1 | `Error: <path> is not a git repository (no .git/ there).` |
-| `<repo>-workbench` already exists | 1 | `Error: a workbench already exists at <dir>.` → run `indusk update` there, or remove the dir |
+| `<repo>-workbench` is a real workbench (`.indusk/config.json` present) | 1 | `Error: a workbench already exists at <dir>.` → run `indusk update` there, or remove the dir |
+| `<repo>-workbench` exists but is **not** an InDusk workbench (no `.indusk/config.json` — an empty, foreign, or half-built dir) | 1 | `Error: <dir> exists but is not an InDusk workbench.` → remove it and re-run (**not** `indusk update`) |
+| `init` fails after the workbench dir is created | 1 | `Error: setup failed during init — removed the partial workbench at <dir>.` — **setup is atomic**: it removes the dir it created so a failed run leaves nothing behind |
 
 ## Notes
 

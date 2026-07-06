@@ -1,7 +1,7 @@
 ---
 title: "Workbench Setup Command — `indusk setup`"
 date: 2026-06-30
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -143,7 +143,7 @@ All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke
 - [x] Add a Known Gotcha to dusk `CLAUDE.md`: `indusk setup`'s collision guard distinguishes a real workbench (`.indusk/config.json` present) from a partial/foreign `<repo>-workbench`, and setup is atomic — it removes the dir it created if `init` fails — so a failed/interrupted setup never leaves a lingering dir that misroutes the next run to `indusk update`.
 
 #### Phase 2 Document
-- [ ] Update `apps/docs/src/reference/cli/setup.md` errors table: add the "`<repo>-workbench` exists but is not an InDusk workbench" row (distinct from "a workbench already exists"), and note that a failed setup cleans up the dir it created.
+- [x] Update `apps/docs/src/reference/cli/setup.md` errors table: split the collision row into real-workbench vs. not-a-workbench, and added an "`init` fails after mkdir → atomic cleanup" row.
 
 ## Files Affected
 | File | Change |
