@@ -264,6 +264,8 @@ Repo scaffolded, building, and at v1.10.3 published. **`graphiti-infrastructure`
 
 **Sibling test bed**: `~/code/sandbox/chitin-sportsbook` is a real project (peer-to-peer baseball moneyline sportsbook on Base Sepolia, NUMEROSP-settled, agent-first API) being built using the dev system as both a substrate for evaluating CGC + Graphiti and as a future Numero module candidate. First plan (`scaffold-bootstrap`) ran end-to-end with full capture/recall on 2026-04-07. Ongoing experimental evaluation lives in `cgc-graphiti-evaluation` spike.
 
+- **stale-indusk-docs-path (1.31.13, npm publish pending)** — first real dogfood of the `planner-hotfix-mode` workflow: fixed 20 skill/extension files' dead `apps/indusk-docs` references via `hotfix/stale-indusk-docs-path` (PR #11), then falsification found the fix hadn't reached the published npm package or docs site — both fixed in Phase 4. T2 (npm publish) deferred as `scheduled-review`, pending Sandy's credentialed publish. See [archive](.indusk/planning/archive/stale-indusk-docs-path/) for full detail.
+
 **Active plans:**
 
 | Plan | Stage | Next Step |

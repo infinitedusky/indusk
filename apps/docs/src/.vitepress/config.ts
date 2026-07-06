@@ -168,9 +168,22 @@ const config = defineConfig({
 					text: "Lessons Learned",
 					items: [
 						{ text: "Overview", link: "/lessons/" },
-						{ text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)", link: "/lessons/handoff-multi-agent-section-shape" },
-						{ text: "Git-Only Substrate (Falsification + Inherited Bugs)", link: "/lessons/git-only-substrate" },
-						{ text: "Eval Agent MCP Access (Fresh-vs-Resume Path Divergence)", link: "/lessons/eval-agent-mcp-access" },
+						{
+							text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)",
+							link: "/lessons/handoff-multi-agent-section-shape",
+						},
+						{
+							text: "Git-Only Substrate (Falsification + Inherited Bugs)",
+							link: "/lessons/git-only-substrate",
+						},
+						{
+							text: "Eval Agent MCP Access (Fresh-vs-Resume Path Divergence)",
+							link: "/lessons/eval-agent-mcp-access",
+						},
+						{
+							text: "Stale indusk-docs Path (Fixed-Where-Consumers-Look)",
+							link: "/lessons/stale-indusk-docs-path",
+						},
 					],
 				},
 			],
