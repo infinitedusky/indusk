@@ -67,23 +67,23 @@ Note on phase references below: `Phase N` in this table always means *this plan'
 ### Phase 1: Hook recognition
 
 - [x] Write T1/T2/T3 subprocess test fixtures (mirroring `rationale-baseline-parity.test.ts`'s spawn-with-synthetic-event pattern) against the **current, unmodified** hooks first — confirm each fails for the expected reason (T1/T3: blocked because `workflow: hotfix` falls through to `feature`'s stricter set; T2: blocked because `gate_policy` isn't `auto` — this one may already pass today for an unrelated reason, note it either way). Confirmed via live run: T1/T3 fail today with `Impl structure incomplete (workflow: feature, policy: auto): Phase 1 (Ship) is missing: OTel, Context` — red for the right reason. T2 already passes (ask-mode opt-out restriction is pre-existing, workflow-independent).
-- [ ] `check-gates.js`: add `hotfix` to the `detectWorkflow` regex (`/workflow:\s*(bugfix|refactor|feature|spike|hotfix)/`); add `hotfix: ["verification", "document"]` to `WORKFLOW_GATES_BASE` (no `"otel"` entry — matches `bugfix` exactly, unconditional exclusion, not filtered by `otelGateEnabled`).
-- [ ] `validate-impl-structure.js`: same regex addition; add `hotfix: { verification: true, otel: false, context: false, document: true }` to its inline map.
-- [ ] Confirm T1/T2/T3 now pass against the modified hooks.
+- [x] `check-gates.js`: add `hotfix` to the `detectWorkflow` regex (`/workflow:\s*(bugfix|refactor|feature|spike|hotfix)/`); add `hotfix: ["verification", "document"]` to `WORKFLOW_GATES_BASE` (no `"otel"` entry — matches `bugfix` exactly, unconditional exclusion, not filtered by `otelGateEnabled`). Applied to both `apps/indusk-mcp/hooks/check-gates.js` (source) and `.claude/hooks/check-gates.js` (this repo's own installed copy — otherwise the change wouldn't be live for dusk's own dogfood sessions).
+- [x] `validate-impl-structure.js`: same regex addition; add `hotfix: { verification: true, otel: false, context: false, document: true }` to its inline map. Same both-copies treatment (`apps/indusk-mcp/hooks/` + `.claude/hooks/`).
+- [x] Confirm T1/T2/T3 now pass against the modified hooks. All 6 assertions in `planner-hotfix-mode.test.ts` pass (T1-T5, T2 has no separate before/after distinction). Also reran `rationale-baseline-parity.test.ts` + `init-globsync-hooks.test.ts` as a regression check on the two hook files — 7 tests, all passing, unaffected.
 - [x] Write T4 fixture (Ship phase, zero rows targeting it, closes freely) and T5 fixture (three-phase Ship→Backfill→Close shape; checking Close's item blocks while Backfill's row is unresolved, allows once `passing`) confirming `check-gates.js`'s existing Gate B behavior already holds for a `workflow: hotfix` fixture with no hotfix-specific hook code required — these should pass immediately, serving as regression coverage that the Phase 1 changes don't disturb this pre-existing mechanic. Confirmed passing on first run, both variants (blocked-while-written, allowed-once-passing).
 
 #### Phase 1 Verification
-- [ ] T1 passes (`pnpm turbo test --filter=indusk-mcp -- planner-hotfix-mode`)
-- [ ] T2 passes
-- [ ] T3 passes
-- [ ] T4 passes (pre-existing behavior, confirmed unaffected)
-- [ ] T5 passes (pre-existing behavior, confirmed unaffected)
+- [x] T1 passes (`npx vitest run src/__tests__/planner-hotfix-mode.test.ts` from `apps/indusk-mcp` — 6/6 passing)
+- [x] T2 passes
+- [x] T3 passes
+- [x] T4 passes (pre-existing behavior, confirmed unaffected)
+- [x] T5 passes (pre-existing behavior, confirmed unaffected)
 
 #### Phase 1 Context
-- [ ] Add a Known Gotchas entry noting the two hook files' independently-duplicated workflow-dispatch pattern now has a fifth entry in each — cross-reference for anyone touching either file next.
+- [x] Add a Known Gotchas entry noting the two hook files' independently-duplicated workflow-dispatch pattern now has a fifth entry in each — cross-reference for anyone touching either file next.
 
 #### Phase 1 Document
-- [ ] (none needed — Phase 1 is hook code only, no user-facing surface yet; docs land in Phase 2)
+- [x] (none needed — Phase 1 is hook code only, no user-facing surface yet; docs land in Phase 2)
 
 ### Phase 2: Skill + branch + docs-site
 

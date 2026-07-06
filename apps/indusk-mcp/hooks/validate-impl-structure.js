@@ -159,7 +159,7 @@ const body = fmMatch ? newFullContent.slice(fmMatch[0].length) : newFullContent;
 
 // Detect workflow type from frontmatter (workflow: bugfix|refactor|feature)
 // or infer from plan structure
-const workflowMatch = frontmatter.match(/workflow:\s*(bugfix|refactor|feature|spike)/);
+const workflowMatch = frontmatter.match(/workflow:\s*(bugfix|refactor|feature|spike|hotfix)/);
 const workflow = workflowMatch ? workflowMatch[1] : "feature";
 
 // Different workflows have different requirements.
@@ -170,6 +170,7 @@ const requirements = {
 	feature: { verification: true, otel: otelGateEnabled, context: true, document: true },
 	refactor: { verification: true, otel: otelGateEnabled, context: true, document: true },
 	bugfix: { verification: true, otel: false, context: false, document: true },
+	hotfix: { verification: true, otel: false, context: false, document: true },
 	spike: { verification: false, otel: false, context: false, document: false },
 }[workflow];
 const lines = body.split("\n");

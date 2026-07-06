@@ -15,10 +15,7 @@ import { describe, expect, it } from "vitest";
  * matching a real project without an explicit `otel.role`.
  */
 
-const VALIDATE_HOOK = new URL(
-	"../../hooks/validate-impl-structure.js",
-	import.meta.url,
-).pathname;
+const VALIDATE_HOOK = new URL("../../hooks/validate-impl-structure.js", import.meta.url).pathname;
 const CHECK_GATES_HOOK = new URL("../../hooks/check-gates.js", import.meta.url).pathname;
 
 function runHook(hookPath: string, event: unknown): Promise<{ exitCode: number; stderr: string }> {

@@ -116,7 +116,7 @@ if (event.tool_name === "Edit" && oldContent) {
 function detectWorkflow(content) {
 	const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
 	const fm = fmMatch ? fmMatch[1] : "";
-	const m = fm.match(/workflow:\s*(bugfix|refactor|feature|spike)/);
+	const m = fm.match(/workflow:\s*(bugfix|refactor|feature|spike|hotfix)/);
 	return m ? m[1] : "feature";
 }
 
@@ -161,6 +161,7 @@ const WORKFLOW_GATES_BASE = {
 	feature: ["verification", "otel", "context", "document"],
 	refactor: ["verification", "otel", "context", "document"],
 	bugfix: ["verification", "document"],
+	hotfix: ["verification", "document"],
 	spike: [],
 };
 
