@@ -159,7 +159,11 @@ const body = fmMatch ? newFullContent.slice(fmMatch[0].length) : newFullContent;
 
 // Detect workflow type from frontmatter (workflow: bugfix|refactor|feature)
 // or infer from plan structure
-const workflowMatch = frontmatter.match(/workflow:\s*(bugfix|refactor|feature|spike|hotfix)/);
+// Line-anchored (m flag) so a substring match inside another frontmatter
+// value (e.g. a title mentioning "workflow: hotfix") can't silently
+// override the real workflow key. Same fix shape as the rationale_baseline
+// substring bug.
+const workflowMatch = frontmatter.match(/^workflow:\s*(bugfix|refactor|feature|spike|hotfix)/m);
 const workflow = workflowMatch ? workflowMatch[1] : "feature";
 
 // Different workflows have different requirements.

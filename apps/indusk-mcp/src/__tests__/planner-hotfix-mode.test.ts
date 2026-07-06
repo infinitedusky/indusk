@@ -217,6 +217,95 @@ trajectory: required
 `;
 }
 
+/**
+ * T8 (falsification finding): the workflow: detection regex in both hooks
+ * was unanchored, so a `title` (or any other frontmatter field) containing
+ * the literal substring "workflow: hotfix" could silently override the real
+ * `workflow: feature` key. Same bug class as the previously-fixed
+ * rationale_baseline substring bug. Fixture below has the real workflow set
+ * to `feature` (requires verification+otel+context+document) but a title
+ * containing "workflow: hotfix" and only verification+document sections
+ * present (hotfix's lighter set). If misdetected as hotfix, this fixture
+ * would be wrongly ACCEPTED; correct detection blocks it (missing otel/context).
+ */
+const SUBSTRING_TITLE_FIXTURE = `---
+title: "Document explaining workflow: hotfix behavior"
+workflow: feature
+gate_policy: auto
+---
+
+# Fixture
+
+## Checklist
+
+### Phase 1: Something
+
+- [x] do a thing
+
+#### Phase 1 Verification
+- [x] (none needed — skip-reason: n/a)
+
+#### Phase 1 Document
+- [x] (none needed — skip-reason: n/a)
+`;
+
+describe("planner-hotfix-mode T8: workflow: detection is not fooled by a title substring", () => {
+	it("validate-impl-structure.js still requires feature's full gate set (blocked, not misdetected as hotfix)", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "hotfix-t8-validate-"));
+		const implPath = writeFixture(dir, SUBSTRING_TITLE_FIXTURE);
+		const result = await runHook(VALIDATE_HOOK, {
+			tool_name: "Write",
+			tool_input: { file_path: implPath, content: SUBSTRING_TITLE_FIXTURE },
+			cwd: dir,
+		});
+		expect(result.exitCode).toBe(2);
+		expect(result.stderr).toContain("workflow: feature");
+	});
+
+	it("check-gates.js's WORKFLOW_GATES applies feature's set, not hotfix's, for this fixture", async () => {
+		// Discriminating fixture: Phase 1 has an unchecked Context item.
+		// Under feature (correct detection), context is required — checking
+		// Phase 2's implementation item is blocked. Under hotfix (misdetected),
+		// context isn't required — the unchecked item is invisible to the
+		// scan and the edit would be wrongly allowed.
+		const content = `---
+title: "Document explaining workflow: hotfix behavior"
+workflow: feature
+gate_policy: auto
+---
+
+# Fixture
+
+## Checklist
+
+### Phase 1: Something
+- [x] do a thing
+#### Phase 1 Verification
+- [x] (none needed — skip-reason: n/a)
+#### Phase 1 Context
+- [ ] update CLAUDE.md
+#### Phase 1 Document
+- [x] (none needed — skip-reason: n/a)
+
+### Phase 2: Next
+- [ ] do the next thing
+`;
+		const dir = mkdtempSync(join(tmpdir(), "hotfix-t8-checkgates-"));
+		const implPath = writeFixture(dir, content);
+		const result = await runHook(CHECK_GATES_HOOK, {
+			tool_name: "Edit",
+			tool_input: {
+				file_path: implPath,
+				old_string: "- [ ] do the next thing",
+				new_string: "- [x] do the next thing",
+			},
+			cwd: dir,
+		});
+		expect(result.exitCode).toBe(2);
+		expect(result.stderr).toContain("[context]");
+	});
+});
+
 describe("planner-hotfix-mode T5: Close's item-check triggers Gate B against Backfill's rows", () => {
 	it("blocks (exit 2, naming the row) while Backfill's row is unresolved", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "hotfix-t5-blocked-"));
