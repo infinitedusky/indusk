@@ -178,6 +178,7 @@ const config = defineConfig({
 						{ text: "Git-Only Substrate (Falsification + Inherited Bugs)", link: "/lessons/git-only-substrate" },
 						{ text: "Git-or-jj Substrate (Ship-and-Reverse Pattern + Brief Author Bias)", link: "/lessons/git-or-jj-substrate" },
 						{ text: "Eval Agent MCP Access (Fresh-vs-Resume Path Divergence)", link: "/lessons/eval-agent-mcp-access" },
+						{ text: "Workbench Setup Command (Delegate-Don't-Extract + Falsification)", link: "/lessons/workbench-setup-command" },
 					],
 				},
 			],

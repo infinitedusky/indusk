@@ -1,0 +1,7 @@
+# Verify a fault-injection induction empirically before building a test around it
+
+When a test needs to induce a failure (to prove error handling / atomicity / cleanup), verify the induction actually produces the failure — for the right reason — before writing the test around it. Otherwise you risk a "hopeful test" that passes for the wrong reason or never goes red.
+
+Concrete case (`workbench-setup-command` falsification): to test that `setup` is atomic (cleans up a partial workbench if `init` fails), I needed a deterministic way to make `init` fail *after* the workbench dir was created. Candidate: point `INDUSK_HOME` at a regular file so init's registry write fails. Before authoring the test, I ran it by hand and confirmed three things: (1) init actually throws (`ENOTDIR`), (2) it throws AFTER the dir is created (so the partial-state bug is real), and (3) the throw is a catchable rejected promise, not an uncatchable `process.exit` — because `addProject` is a synchronous call inside init's async body, so a sync throw there becomes a rejected promise that `await init(...)` will reject on. Only then did I write the test.
+
+The discipline: a fault-injection test is only as good as the fault it injects. "Moderate confidence this triggers the failure" is not good enough — run the induction first, read the actual error and its propagation path, then author. This is the difference between bounty-hunting and candidate-generation in the falsification ritual.
