@@ -1,7 +1,7 @@
 ---
 title: "Workbench Setup Command — `indusk setup`"
 date: 2026-06-30
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -42,6 +42,8 @@ Add a single CLI verb — `indusk setup <cloned-repo-path>` — that turns an al
 | T5 | `setup` when `<repo>-workbench` already exists exits non-zero, points at `indusk update`, and leaves the existing workbench's contents untouched | Phase 0 | Phase 1 | passing |
 | T6 | A repo with uncommitted + untracked changes can be set up successfully (dirty tree does not block) | Phase 0 | Phase 1 | passing |
 | T7 | `indusk init --workbench --wrapped-repo X --sibling-parent Y` still produces a working workbench (regression guard for the delegated-to path) | Phase 0 | Phase 1 | passing |
+| T8 | When `<repo>-workbench` exists but is NOT a completed InDusk workbench (no `.indusk/config.json`), `setup` reports a distinct "exists but is not an InDusk workbench" error and does NOT advise `indusk update` | Phase 0 | Phase 2 | planned |
+| T9 | A `setup` run that fails during `init` (after the workbench dir is created) leaves no `<repo>-workbench` directory behind — setup is atomic | Phase 0 | Phase 2 | planned |
 
 All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke `setup` (or `init --workbench`) as a string subcommand against tmp `git init` repos, so the test source compiles today and fails red (`unknown command 'setup'` for T1–T6; T7 already passes and is a standing guardrail). No `### Trajectory Rationale` subsection is required (it applies only to Phase 1+ rows). No `### Deferred Verification` — every assertion is testable against ephemeral repos with no external services.
 
@@ -125,6 +127,23 @@ All rows are `Writable at: Phase 0` — the tests spawn the built CLI and invoke
 - [x] Add CLI reference page `apps/docs/src/reference/cli/setup.md` (synopsis, derivation rule, collision behavior, symlink-in-place note, errors table).
 - [x] Add a changelog entry in `apps/docs/src/changelog.md` under `## [Unreleased]` (siloed from the in-flight 1.31.12 release, a different context's uncommitted work).
 - [x] (deferred — asked: "package.json is already at 1.31.12 uncommitted from a different context's in-flight release, and this plan publishes only after `/falsify` + `/retrospective`. Skip the version bump now and do it at publish time?" — user: "continue" — the AskUserQuestion tool errored; user replied "continue" to the posed question, so proceeding with the recommended defer) Bump lands at publish (next version after 1.31.12), not now — avoids entangling with the in-flight release.
+
+### Phase 2: Falsification — non-atomic setup + workbench-blind collision guard
+
+**Goal**: verify whether setup's "creates nothing on failure" and "clear collision message" promises hold against a `<repo>-workbench` that exists-but-isn't-a-workbench (empty dir, foreign dir, or a partial dir left by a failed/interrupted prior run), and against an `init` failure *after* the workbench dir is created. Both gaps are visible in the current `setup.ts`: the collision guard (lines 39-44) is unconditional — it tells the user "a workbench already exists … run `indusk update`" for ANY existing `<repo>-workbench`, even an empty or half-built one where `indusk update` is wrong advice; and the scaffold+init block (lines 48-57) has no `try/catch`, so an `init` failure after `mkdirSync` leaves a partial `<repo>-workbench` behind — which then trips the misleading collision path on the next run, locking the user out of both completing and cleanly retrying.
+
+- [ ] Refine the collision guard in `setup.ts` (currently unconditional, lines 39-44): after `existsSync(workbenchDir)`, branch on `existsSync(join(workbenchDir, ".indusk", "config.json"))`. Real workbench (config present) → keep the current "a workbench already exists … run `indusk update`" message. Dir exists WITHOUT config → a distinct error ("`<dir>` exists but is not an InDusk workbench — remove it and re-run `indusk setup`") that does NOT advise `indusk update`.
+- [ ] Make `setup` atomic: wrap the post-guard `mkdirSync` + `writeFileSync` + `await init(...)` (lines 48-57) in `try/catch`. On failure, `rmSync(workbenchDir, { recursive: true, force: true })` before re-throwing / exiting non-zero. Safe because the collision guard already proved `workbenchDir` did not pre-exist, so setup created it this run — cleanup cannot delete pre-existing user data.
+
+#### Phase 2 Verification
+- [ ] T8: create an empty `<repo>-workbench` (no `.indusk/config.json`), run `setup <repo>` → stderr does NOT match `/indusk update/` and names the not-a-workbench condition. Red today (guard is unconditional); green after the guard refinement. Also confirm T5 (real-workbench collision → "indusk update") stays green — the two cases must diverge on config presence.
+- [ ] T9: run `setup <repo>` with `INDUSK_HOME` pointing at a regular FILE (forces `init`'s registry write to fail *after* the workbench dir is created) → setup exits non-zero AND `<repo>-workbench` does not exist afterward. Red today (partial dir lingers); green after the atomicity fix. If `init` proves robust to that specific fault (degrades instead of throwing), substitute another post-`mkdir` fault injection or downgrade T9 with a recorded reason — do not rubber-stamp it green.
+
+#### Phase 2 Context
+- [ ] Add a Known Gotcha to dusk `CLAUDE.md`: `indusk setup`'s collision guard distinguishes a real workbench (`.indusk/config.json` present) from a partial/foreign `<repo>-workbench`, and setup is atomic — it removes the dir it created if `init` fails — so a failed/interrupted setup never leaves a lingering dir that misroutes the next run to `indusk update`.
+
+#### Phase 2 Document
+- [ ] Update `apps/docs/src/reference/cli/setup.md` errors table: add the "`<repo>-workbench` exists but is not an InDusk workbench" row (distinct from "a workbench already exists"), and note that a failed setup cleans up the dir it created.
 
 ## Files Affected
 | File | Change |
