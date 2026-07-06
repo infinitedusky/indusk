@@ -1,7 +1,7 @@
 ---
 title: "Planner Hotfix Mode"
 date: 2026-07-01
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -49,6 +49,7 @@ Note on phase references below: `Phase N` in this table always means *this plan'
 | T5 | In a hotfix plan shaped Ship → Backfill → Close, checking Close's own (single) implementation item is blocked while Backfill's trajectory row remains unresolved (`planned`/`writable`/`written`), with an error naming the row — and is allowed once that row reaches `passing`. This is `check-gates.js`'s existing Gate B, triggered by Close's item-check; it does **not** fire merely from checking Backfill's own items (verified empirically — see Notes). | Phase 0 | Phase 0 | passing |
 | T6 | Running `/falsify` and `/retrospective` against a completed hotfix plan works end-to-end with no special-casing in either skill. | Phase 3 | Phase 3 | passing |
 | T7 | Following the documented hotfix flow produces a branch named `hotfix/{slug}` — not `fix/{slug}`, not a worktree. | Phase 3 | Phase 3 | passing |
+| T8 | A plan whose real `workflow:` frontmatter key is `feature` (or any non-hotfix value), but whose `title` or other frontmatter field contains the literal substring `workflow: hotfix`, is NOT misdetected as `workflow: hotfix` by `check-gates.js` or `validate-impl-structure.js` — the real workflow value still governs gate requirements. | Phase 0 | Phase 4 | planned |
 
 ### Deferred Verification
 
@@ -121,6 +122,22 @@ Note on phase references below: `Phase N` in this table always means *this plan'
 
 #### Phase 3 Document
 - [x] The dogfood surfaced two real gaps in `planner.md`'s hotfix section, both fixed in place: (1) the embedded template's Ship/Close Verification phrasing (a generic, freeform reason for having no tests at that phase) didn't satisfy the trajectory validator's cross-reference-integrity rule — corrected to the required `no tests flip at this phase` phrasing with an `infra` reason, plus an explanatory note so it's not a magic incantation; (2) the Backfill step now explicitly prompts "does this fix need to be published/deployed to reach consumers?" for fixes to distributed content, since the dogfood's own Ship phase missed exactly this and only caught it via `/falsify`.
+
+### Phase 4: Falsification — unanchored workflow-detection regex misdetects on frontmatter substrings
+
+**Goal**: verify whether `check-gates.js` and `validate-impl-structure.js` correctly detect a plan's `workflow:` value, or whether — like the previously-fixed `rationale_baseline` substring bug — an unanchored regex lets a *different* frontmatter field's text (most plausibly a `title` mentioning "workflow: hotfix", exactly the kind of title a plan *about* hotfix mode would have) silently override the real value. Confirmed by direct reproduction: a frontmatter block with `title: "Document explaining workflow: hotfix behavior"` followed by the real `workflow: feature` line returns `hotfix` as the first regex match, not `feature`. This makes misdetection strictly more dangerous than before this plan: silently landing on `hotfix` (the most permissive workflow, gates deferrable under `auto`) instead of the safe `feature` default is a worse failure than the pre-existing risk for the other four values.
+
+- [ ] Anchor `check-gates.js`'s `detectWorkflow` regex to `/^workflow:\s*(bugfix|refactor|feature|spike|hotfix)/m` (line-anchored — same fix shape as the `rationale_baseline` precedent).
+- [ ] Anchor `validate-impl-structure.js`'s equivalent regex the same way.
+
+#### Phase 4 Verification
+- [ ] T8: the substring-in-title case no longer misdetects; the real `workflow:` YAML key (at start of line, as YAML requires) still correctly detects the true value — before/after pair, same shape as the `rationale_baseline` regression fixture.
+
+#### Phase 4 Context
+- [ ] Add a CLAUDE.md Known Gotcha (or extend the existing workflow-dispatch-duplication one) noting both `workflow:` regexes are now line-anchored, and why — cross-reference the `rationale_baseline` precedent as the established pattern for this class of bug.
+
+#### Phase 4 Document
+- [ ] The CLAUDE.md Known Gotcha added in the Context item above doubles as the user-facing documentation for this fix — it's the mechanism by which a future plan author (or hook maintainer) learns that both `workflow:` regexes are line-anchored and why. No separate docs-site page — this is an internal hook-correctness fix, not a new capability.
 
 ## Files Affected
 | File | Change |
