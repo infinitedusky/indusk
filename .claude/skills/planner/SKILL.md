@@ -84,7 +84,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
      level: "critical"
    })
    ```
-   The working agent does not write Graphiti episodes directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts the full Problem + Proposed Direction + Scope context from the transcript, writes a structured episode into the project group, and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/indusk-docs/src/reference/tools/highlights.md`](../../indusk-docs/src/reference/tools/highlights.md) for the full flow.
+   The working agent does not write Graphiti episodes directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts the full Problem + Proposed Direction + Scope context from the transcript, writes a structured episode into the project group, and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/docs/src/reference/tools/highlights.md`](../../docs/src/reference/tools/highlights.md) for the full flow.
 
 5. **If brief is accepted** and the workflow includes a test plan (bugfix, refactor, or feature — anything that ships an impl), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **how it will be tested** — not the test code itself, but the test mechanism (vitest unit, vitest integration, end-to-end script, manual user test, manual smoke against running stack, etc.).
 
@@ -182,7 +182,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **Set `trajectory: required` in the impl frontmatter.** This opts the impl into trajectory validation by `validate-impl-structure.js`. Omitting it means the hook skips trajectory rules (grandfathering for legacy impls); every NEW impl should set it.
 
-   See [`apps/indusk-docs/src/guide/test-trajectory.md`](../../indusk-docs/src/guide/test-trajectory.md) for the full user-facing guide (published in the `tests-first-planning` plan's Phase 5) and [`apps/indusk-docs/src/reference/trajectory/parser.md`](../../indusk-docs/src/reference/trajectory/parser.md) for the parser/validator API reference. The design rationale lives in `.indusk/planning/tests-first-planning/adr.md`.
+   See [`apps/docs/src/guide/test-trajectory.md`](../../docs/src/guide/test-trajectory.md) for the full user-facing guide (published in the `tests-first-planning` plan's Phase 5) and [`apps/docs/src/reference/trajectory/parser.md`](../../docs/src/reference/trajectory/parser.md) for the parser/validator API reference. The design rationale lives in `.indusk/planning/tests-first-planning/adr.md`.
 
    **Gate policy applies when writing impls.** Set `gate_policy` in the impl frontmatter (`strict`, `ask`, or `auto`). The `validate-impl-structure` hook enforces this at write time:
    - **`strict` / `ask`**: Every gate section (Verification, Context, Document) must have a real item — `(none needed)` and `skip-reason:` are blocked at write time. Opt-outs only happen during `/work` execution.
@@ -480,7 +480,7 @@ The `validate-impl-structure.js` hook enforces that every Phase 1+ T-ID from the
 - [ ] {Concrete CLAUDE.md edit this phase produces — e.g., "Add to Architecture: ...", "Add to Conventions: ...", "Update Current State: ...". Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
 
 #### Phase 1 Document
-- [ ] {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}
+- [ ] {Docs page to write or update — e.g., "Write reference page at apps/docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}
 
 ## Files Affected
 | File | Change |

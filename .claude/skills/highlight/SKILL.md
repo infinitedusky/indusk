@@ -47,4 +47,4 @@ The user runs `/highlight {free-form text} [level: critical|important|note]`.
 
 ## Cross-reference
 
-See [`apps/indusk-docs/src/reference/tools/highlights.md`](../../indusk-docs/src/reference/tools/highlights.md) for the full highlights system — file format, level → Graphiti edge weight mapping, eval agent processing, and trigger points across other skills.
+See [`apps/docs/src/reference/tools/highlights.md`](../../docs/src/reference/tools/highlights.md) for the full highlights system — file format, level → Graphiti edge weight mapping, eval agent processing, and trigger points across other skills.

@@ -377,7 +377,7 @@ billing module.
 - [ ] Add to Architecture: "billing module now includes subscription support via Stripe Subscription Billing"
 
 #### Phase 1 Document
-- [ ] Write API reference for subscription endpoints at `apps/indusk-docs/src/reference/api/subscriptions.md`
+- [ ] Write API reference for subscription endpoints at `apps/docs/src/reference/api/subscriptions.md`
 
 ### Phase 2: Webhook Endpoint
 - [ ] Create `/api/webhooks/stripe` POST route with signature verification

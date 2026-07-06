@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.31.13] — 2026-07-06
+
+### Fixed (stale-indusk-docs-path hotfix)
+- **Stale `apps/indusk-docs` path references fixed across the published package + docs site** — the `apps/indusk-docs` → `apps/docs` rename (`indusk-worktree-extension` Phase 1, 2026-05-28) left the published npm package's skill/extension files, the published VitePress docs-site's reference pages, and this repo's own `CLAUDE.md` architecture section all pointing at a directory that no longer exists. Shipped as `hotfix/stale-indusk-docs-path` (PR #11) — the first real dogfood of the new `hotfix` planner workflow. Falsification found the initial Ship-phase fix only reached dusk's own working tree; this release closes the gap for the actual distribution channels (npm package, published docs site). Regression coverage: 34 assertions in `apps/indusk-mcp/src/__tests__/stale-indusk-docs-path.test.ts`.
+
 ## [1.31.3] — 2026-06-28
 
 ### Fixed (eval-agent-mcp-access Phase 7 — malformed-line bypass defense)

@@ -51,7 +51,7 @@ For conceptual and architecture diagrams that should persist in docs, use the `<
 **Agent workflow for persistent diagrams:**
 1. Create the diagram with `create_view`
 2. Read the checkpoint with `read_checkpoint` to get the element JSON
-3. Save the JSON to `apps/indusk-docs/src/public/diagrams/{name}.excalidraw.json`
+3. Save the JSON to `apps/docs/src/public/diagrams/{name}.excalidraw.json`
 4. Add `<ExcalidrawEmbed src="/diagrams/{name}.excalidraw.json" title="..." />` to the docs page
 5. Add the page to sidebar in `.vitepress/config.ts` if new
 

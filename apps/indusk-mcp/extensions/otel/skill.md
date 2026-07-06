@@ -9,7 +9,7 @@ Every service is instrumented from day one. `init` creates the instrumentation f
 
 ## What's Already Set Up
 
-After `init`, your project has instrumentation files for your runtime. See the OTel reference docs in the indusk-docs site for the full list per runtime.
+After `init`, your project has instrumentation files for your runtime. See the OTel reference docs in the docs site for the full list per runtime.
 
 ## Core Principle: Signal Density Over Volume
 

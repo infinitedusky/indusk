@@ -16,10 +16,10 @@ The skill also provides guidance on where documentation belongs, how to structur
 
 ## Where Docs Live
 
-Documentation lives in a VitePress site at `apps/indusk-docs/src/`:
+Documentation lives in a VitePress site at `apps/docs/src/`:
 
 ```
-apps/indusk-docs/src/
+apps/docs/src/
 ├── guide/           # How-to guides (task-oriented)
 ├── reference/       # Skills, tools, API, configuration (information-oriented)
 │   ├── skills/      # One page per skill
@@ -43,7 +43,7 @@ The core question at every phase:
 
 To answer accurately, call `query_dependencies` on the key files changed in the phase. If the change affects files with many dependents, it likely needs documentation. If it is internal with no downstream consumers, it might not.
 
-- **Yes** — write or update the relevant page in `apps/indusk-docs/src/`
+- **Yes** — write or update the relevant page in `apps/docs/src/`
 - **No** — mark as N/A with a brief reason and advance
 
 The gate is blocking. A phase is not complete until its document items are resolved — either by writing the docs or by explicitly deciding no docs are needed.
@@ -175,13 +175,13 @@ Two MCP tools support the document skill:
 
 ### `list_docs`
 
-Lists all markdown files in the VitePress docs directory (`apps/indusk-docs/src/`). No input required.
+Lists all markdown files in the VitePress docs directory (`apps/docs/src/`). No input required.
 
 Example output:
 
 ```json
 {
-  "docsDir": "apps/indusk-docs/src",
+  "docsDir": "apps/docs/src",
   "files": [
     "index.md",
     "guide/index.md",
@@ -245,7 +245,7 @@ Every documentation page must have a corresponding **llms.txt** companion file s
 
 ### File Mapping
 
-For every page at `apps/indusk-docs/src/{path}.md`, create a matching file at `apps/indusk-docs/public/llms/{path}.txt`:
+For every page at `apps/docs/src/{path}.md`, create a matching file at `apps/docs/public/llms/{path}.txt`:
 
 ```
 src/reference/skills/plan.md       → public/llms/reference/skills/plan.txt
@@ -265,7 +265,7 @@ The `.txt` file contains the **same content** as the markdown page with these ad
 
 ### Root Index
 
-Maintain `apps/indusk-docs/public/llms.txt` as a root index listing all available LLM-readable pages with URLs and one-line descriptions. This follows the [llms.txt convention](https://llmstxt.org/).
+Maintain `apps/docs/public/llms.txt` as a root index listing all available LLM-readable pages with URLs and one-line descriptions. This follows the [llms.txt convention](https://llmstxt.org/).
 
 ### Why This Matters
 

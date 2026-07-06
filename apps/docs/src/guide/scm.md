@@ -54,7 +54,7 @@ The eval hook reads commit messages — descriptive messages get descriptive sco
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ```
 
-Context prefixes name the app or area (`indusk-mcp:`, `indusk-docs:`, `root:`, `infra:`). Keep the first line under 72 characters.
+Context prefixes name the app or area (`indusk-mcp:`, `docs:`, `root:`, `infra:`). Keep the first line under 72 characters.
 
 ## Historical note
 

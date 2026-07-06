@@ -348,11 +348,11 @@ Contracts inherit with `includeVars`:
 
 ```json
 {
-  "name": "indusk-docs",
-  "location": "apps/indusk-docs",
+  "name": "docs",
+  "location": "apps/docs",
   "includeVars": ["vars/platform-base"],
   "vars": {
-    "PORT": "${indusk-docs.PORT}"
+    "PORT": "${docs.PORT}"
   }
 }
 ```
@@ -445,10 +445,10 @@ env/
 ├── components/
 │   ├── networking.env          # NODE_ENV, PROFILE_SUFFIX, DOMAIN per profile
 │   ├── indusk-portfolio.env    # PORT, ENDPOINT, URL for the portfolio app
-│   └── indusk-docs.env         # PORT, ENDPOINT, URL for the docs site
+│   └── docs.env                # PORT, ENDPOINT, URL for the docs site
 ├── contracts/
 │   ├── indusk-portfolio.contract.json
-│   ├── indusk-docs.contract.json
+│   ├── docs.contract.json
 │   └── vars/
 │       └── platform-base.vars.json   # NODE_ENV, PROFILE_SUFFIX, DOMAIN
 └── profiles/
@@ -505,7 +505,7 @@ The `package.json` scripts wrap ce commands:
     "env:build": "ce build --profile",
     "dev": "ce run -- turbo dev",
     "dev:indusk-portfolio": "ce run --profile -- turbo dev --filter=indusk-portfolio",
-    "dev:indusk-docs": "ce run --profile -- turbo dev --filter=indusk-docs"
+    "dev:docs": "ce run --profile -- turbo dev --filter=indusk-docs"
   }
 }
 ```
@@ -533,8 +533,8 @@ services:
       NEXT_PUBLIC_DOMAIN: dusk.orb.local
       PORT: "3000"
 
-  indusk-docs-local:
-    <<: *indusk-docs-base
+  docs-local:
+    <<: *docs-base
     profiles: ["local"]
     environment:
       NODE_ENV: development

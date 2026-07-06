@@ -71,8 +71,8 @@ This is a monorepo. Commits should be siloed between different contexts (what wo
 git add -p apps/indusk-mcp/...
 git commit -m "indusk-mcp: implement detectScm()"
 
-git add -p apps/indusk-docs/...
-git commit -m "indusk-docs: document SCM-aware eval prompts"
+git add -p apps/docs/...
+git commit -m "docs: document SCM-aware eval prompts"
 ```
 
 Don't lump multi-context changes into one commit. `git add -A` is a smell — it makes commit boundaries imprecise. Prefer `git add -p` (interactive hunk staging) or `git add {specific path}`.
@@ -204,7 +204,7 @@ Follow the monorepo conventions:
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ```
 
-Context prefixes: the app or area name (`indusk-mcp:`, `indusk-docs:`, `root:`, `infra:`, etc.). Keep the first line under 72 characters. Use the body for details when the change is complex.
+Context prefixes: the app or area name (`indusk-mcp:`, `docs:`, `root:`, `infra:`, etc.). Keep the first line under 72 characters. Use the body for details when the change is complex.
 
 The eval agent reads commit messages — descriptive messages get descriptive scorecards.
 
@@ -237,4 +237,4 @@ After merge, delete the branch (both local and remote — see "Merging Back to M
 ## See Also
 
 - `work.md` — per-item commit cadence
-- `apps/indusk-docs/src/guide/eval.md` — eval hook timing details
+- `apps/docs/src/guide/eval.md` — eval hook timing details
