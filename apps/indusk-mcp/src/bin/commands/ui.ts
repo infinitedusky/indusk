@@ -10,6 +10,11 @@ import {
 	findFreePort,
 	isPortListening,
 } from "../../lib/admin/daemon.js";
+import {
+	ADMIN_HOSTNAME,
+	deregisterAdminRoute,
+	registerAdminRoute,
+} from "../../lib/admin/proxy-route.js";
 import { readRegistry } from "../../lib/admin/registry.js";
 
 /**
@@ -76,6 +81,7 @@ export async function uiStart(opts: UiStartOptions): Promise<void> {
 	if (existing.running) {
 		const url = `http://localhost:${existing.port}${openPath}`;
 		console.info(`Admin UI is already running on ${url} (PID ${existing.pid}).`);
+		await reportRoute("registered", await registerAdminRoute(existing.port));
 		if (opts.open) openBrowser(url);
 		return;
 	}
@@ -117,6 +123,8 @@ export async function uiStart(opts: UiStartOptions): Promise<void> {
 	console.info(`  PID: ${meta.pid}`);
 	console.info(`  Logs: ~/.indusk/admin-ui.log`);
 
+	await reportRoute("registered", await registerAdminRoute(meta.port));
+
 	// Cwd-aware open URL (T16): lands on /p/{name}/ when run inside a
 	// registered project, else falls through to /. Printing it in the CLI
 	// output doubles as the test-assertion surface.
@@ -154,6 +162,29 @@ export async function uiStop(): Promise<void> {
 	} else {
 		console.info(`Admin UI daemon (PID ${result.signaledPid}) stopped.`);
 	}
+	await reportRoute("removed", await deregisterAdminRoute());
+}
+
+/**
+ * Print the outcome of a register/deregister call. Silent when there was
+ * nothing to do (no shared Caddy on this machine — the common case for most
+ * users); informational when the route changed; a warning when the file
+ * changed but the reload itself couldn't be confirmed.
+ */
+async function reportRoute(
+	action: "registered" | "removed",
+	result: { changed: boolean; reloaded: boolean; reason?: string },
+): Promise<void> {
+	if (!result.changed) return;
+	if (result.reloaded) {
+		if (action === "registered") {
+			console.info(`  Also reachable at https://${ADMIN_HOSTNAME}`);
+		} else {
+			console.info(`  Removed the https://${ADMIN_HOSTNAME} route.`);
+		}
+		return;
+	}
+	console.warn(`  ${ADMIN_HOSTNAME} route ${action}, but reload didn't complete: ${result.reason}`);
 }
 
 /**

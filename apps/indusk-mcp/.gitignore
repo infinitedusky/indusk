@@ -12,6 +12,9 @@
 # Bundled admin app — produced by scripts/bundle-admin.js, included in
 # published tarball via package.json files array, but should never be
 # committed (regenerated on every build).
-admin/
+# Anchored to this directory's root ONLY — a bare `admin/` also matches
+# src/lib/admin/, silently hiding real source from git status/biome (found
+# while adding apps/indusk-mcp/src/lib/admin/proxy-route.ts).
+/admin/
 # Packed tarballs from `pnpm pack` — local build artifacts.
 *.tgz
