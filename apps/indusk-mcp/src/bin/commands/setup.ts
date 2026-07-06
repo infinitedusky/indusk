@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
 /**
@@ -35,24 +35,45 @@ export async function setup(repoPathInput: string): Promise<void> {
 	const siblingParent = dirname(repoPath);
 	const workbenchDir = join(siblingParent, `${wrappedRepo}-workbench`);
 
-	// Never clobber an existing workbench (T5).
+	// Never clobber an existing directory. Distinguish a real workbench (has
+	// `.indusk/config.json`) from a partial/foreign dir — advising `indusk
+	// update` only makes sense for the former (T5 / T8).
 	if (existsSync(workbenchDir)) {
-		console.error(`Error: a workbench already exists at ${workbenchDir}.`);
-		console.error("  To refresh it, run `indusk update` from there.");
-		console.error("  To recreate it, remove that directory first.");
+		if (existsSync(join(workbenchDir, ".indusk", "config.json"))) {
+			console.error(`Error: a workbench already exists at ${workbenchDir}.`);
+			console.error("  To refresh it, run `indusk update` from there.");
+			console.error("  To recreate it, remove that directory first.");
+		} else {
+			console.error(`Error: ${workbenchDir} exists but is not an InDusk workbench.`);
+			console.error("  Remove it and re-run `indusk setup`.");
+		}
 		process.exit(1);
 	}
 
 	// All guards passed — scaffold the workbench dir + minimal package.json
-	// (the file the manual flow required you to hand-write).
+	// (the file the manual flow required you to hand-write), then delegate to
+	// the single workbench-init flow. Wrapped so a failure during init leaves
+	// no partial `<repo>-workbench` behind (T9): the collision guard above
+	// proved the dir did not pre-exist, so setup created it this run and can
+	// safely remove it on failure. `rmSync` removes the trunk symlink as a link
+	// (it does not recurse into `../<repo>`), so the wrapped repo is untouched.
 	mkdirSync(workbenchDir, { recursive: true });
-	writeFileSync(
-		join(workbenchDir, "package.json"),
-		`${JSON.stringify({ name: `${wrappedRepo}-workbench`, version: "0.0.1", private: true }, null, 2)}\n`,
-	);
-	console.info(`[Setup] scaffolded workbench: ${workbenchDir}`);
+	try {
+		writeFileSync(
+			join(workbenchDir, "package.json"),
+			`${JSON.stringify({ name: `${wrappedRepo}-workbench`, version: "0.0.1", private: true }, null, 2)}\n`,
+		);
+		console.info(`[Setup] scaffolded workbench: ${workbenchDir}`);
 
-	// Delegate to the single workbench-init flow.
-	const { init } = await import("./init.js");
-	await init(workbenchDir, { workbench: true, wrappedRepo, siblingParent });
+		const { init } = await import("./init.js");
+		await init(workbenchDir, { workbench: true, wrappedRepo, siblingParent });
+	} catch (err) {
+		rmSync(workbenchDir, { recursive: true, force: true });
+		const msg = err instanceof Error ? err.message : String(err);
+		console.error(
+			`Error: setup failed during init — removed the partial workbench at ${workbenchDir}.`,
+		);
+		console.error(`  ${msg}`);
+		process.exit(1);
+	}
 }
