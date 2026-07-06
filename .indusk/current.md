@@ -17,4 +17,21 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-<!-- Session sections are appended below this marker by `mcp__indusk__update_current_section`. -->
+## Session cde27016 — eval: reviewing commit 4086ab99 (fix stale apps/indusk-docs path refs in skill files)
+
+**Session ID**: cde27016-5b8f-4fa1-8646-80f5dbffc9db
+**Last updated**: 2026-07-06T18:42:58.861Z
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
