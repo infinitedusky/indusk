@@ -1,7 +1,7 @@
 ---
 title: "Stale apps/indusk-docs Path References in Skill Files"
 date: 2026-07-06
-status: in-progress
+status: completed
 workflow: hotfix
 gate_policy: auto
 trajectory: required
