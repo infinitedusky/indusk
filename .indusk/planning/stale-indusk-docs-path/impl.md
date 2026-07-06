@@ -24,6 +24,13 @@ PR: https://github.com/infinitedusky/indusk/pull/11
 | T3 | The published VitePress docs site's live reference pages (`reference/skills/{document,retrospective,work,plan,context}.md`, `reference/tools/{indusk-mcp,composable-env}.md`, `reference/admin-ui/{overview,cli}.md`, `guide/scm.md`) contain no stale `apps/indusk-docs` artifacts — excluding dated historical records (`changelog.md`, `decisions/*.md`, `dawn/decisions.md`). | Phase 0 | Phase 4 | passing |
 | T4 | `CLAUDE.md`'s live Architecture section (directory tree) and Apps bullet — not its historical Current-State narrative — name the current `apps/docs/` directory, not the pre-rename `apps/indusk-docs/`. | Phase 0 | Phase 4 | passing |
 
+### Deferred Verification
+
+- **T2 — publish `@infinitedusky/indusk-mcp@1.31.13` to npm**
+  - reason: this environment has no npm publish credentials (`npm whoami` → 401 Unauthorized); the fix (version bump + changelog entry) is prepared but the actual publish requires someone with `@infinitedusky` org access.
+  - would require: Sandy (or another credentialed maintainer) running `npm publish` from a merged/rebased checkout of this branch.
+  - mitigation: scheduled-review — Sandy runs the publish after merging this PR. Verification is a one-time manual command, not a standing CI test (checking "what's currently published" against the live npm registry isn't appropriate for a hermetic test suite): `npm pack @infinitedusky/indusk-mcp@latest && tar xzf *.tgz && grep -rl "indusk-docs" package/skills package/extensions` should return empty once 1.31.13 is live.
+
 ## Checklist
 
 ### Phase 1: Ship
