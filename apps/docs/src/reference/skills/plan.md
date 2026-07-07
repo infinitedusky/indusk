@@ -58,7 +58,7 @@ Not every plan uses all five stages. The workflow type determines which document
 
 ## Workflow Types
 
-Four workflow types control the document set for each plan:
+Five workflow types control the document set for each plan:
 
 | Workflow | Documents Created | When to Use |
 |----------|-------------------|-------------|
@@ -66,8 +66,9 @@ Four workflow types control the document set for each plan:
 | **bugfix** | brief, impl | Known problem with a straightforward fix |
 | **refactor** | brief, impl (with boundary map) | Restructuring code without changing behavior |
 | **spike** | research only | Pure exploration — no commitment to build anything |
+| **hotfix** | impl only, created *retroactively* after the fix ships | Production-down emergency — no time even for bugfix's brief |
 
-The feature workflow is the default. If you run `/planner payment-flow` without specifying a type, it uses feature.
+The feature workflow is the default. If you run `/planner payment-flow` without specifying a type, it uses feature. Hotfix is the odd one out — see [Hotfix Workflow](#hotfix-workflow) below; every other workflow follows the document-first sequence this page describes.
 
 <FullscreenDiagram>
 
@@ -76,7 +77,9 @@ flowchart TD
     Start["What kind of work is this?"] --> Q1{"Is this pure exploration?"}
     Q1 -->|Yes| Spike["spike — research.md only"]
     Q1 -->|No| Q2{"Is something broken?"}
-    Q2 -->|Yes| Bugfix["bugfix — brief + impl"]
+    Q2 -->|Yes| Q2b{"Production down — no time for a brief?"}
+    Q2b -->|Yes| Hotfix["hotfix — impl only, written after the fix ships"]
+    Q2b -->|No| Bugfix["bugfix — brief + impl"]
     Q2 -->|No| Q3{"Changing behavior or adding capabilities?"}
     Q3 -->|No, restructuring| Refactor["refactor — brief + impl + boundary map"]
     Q3 -->|Yes| Feature["feature — full lifecycle"]
@@ -84,13 +87,23 @@ flowchart TD
 
 </FullscreenDiagram>
 
+## Hotfix Workflow
+
+Hotfix inverts the normal order: the fix ships first, on its own `hotfix/{slug}` branch (plain branch, not a worktree), and the plan folder — just `impl.md`, no brief/test-plan/ADR — gets created retroactively once the PR is open. The `impl.md` always has exactly three phases:
+
+- **Phase 1 (Ship)** documents what already shipped, with every gate section explicitly deferred (`skip-reason: hotfix — deferred to Phase 2 backfill`) under `gate_policy: auto`.
+- **Phase 2 (Backfill)** is the mandatory, fully-enforced phase — the regression test proving the original bug, real verification/document gates.
+- **Phase 3 (Close)** is a trivial single-item phase that exists purely to trigger the phase-close check against Backfill's rows (a plan's terminal phase's own trajectory rows aren't otherwise inspected — see this workflow's [ADR](/decisions/planner-hotfix-mode) for the full mechanism).
+
+`/falsify` and `/retrospective` run unmodified once Phase 3 closes, just later in wall-clock time than for other workflows. Full flow and the reasoning behind the three-phase shape live in the planner skill's own Hotfix Workflow section (`apps/indusk-mcp/skills/planner.md`).
+
 ## Invocation
 
 ```
 /planner [workflow] plan-name
 ```
 
-The first word is optionally a workflow type (`feature`, `bugfix`, `refactor`, `spike`). Everything after becomes the plan name, kebab-cased. If no workflow type is given, it defaults to `feature`.
+The first word is optionally a workflow type (`feature`, `bugfix`, `refactor`, `spike`, `hotfix`). Everything after becomes the plan name, kebab-cased. If no workflow type is given, it defaults to `feature`.
 
 **Examples:**
 
@@ -104,6 +117,9 @@ The first word is optionally a workflow type (`feature`, `bugfix`, `refactor`, `
 
 # Refactor — brief + impl with boundary map
 /planner refactor extract-auth-middleware
+
+# Hotfix — impl only, written after the fix ships
+/planner hotfix payment-timeout-crash
 
 # Spike — research only, no commitment
 /planner spike redis-session-options

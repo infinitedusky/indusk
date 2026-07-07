@@ -116,7 +116,11 @@ if (event.tool_name === "Edit" && oldContent) {
 function detectWorkflow(content) {
 	const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n/);
 	const fm = fmMatch ? fmMatch[1] : "";
-	const m = fm.match(/workflow:\s*(bugfix|refactor|feature|spike)/);
+	// Line-anchored (m flag) so a substring match inside another frontmatter
+	// value (e.g. a title mentioning "workflow: hotfix") can't silently
+	// override the real workflow key. Same fix shape as the rationale_baseline
+	// substring bug.
+	const m = fm.match(/^workflow:\s*(bugfix|refactor|feature|spike|hotfix)/m);
 	return m ? m[1] : "feature";
 }
 
@@ -161,6 +165,7 @@ const WORKFLOW_GATES_BASE = {
 	feature: ["verification", "otel", "context", "document"],
 	refactor: ["verification", "otel", "context", "document"],
 	bugfix: ["verification", "document"],
+	hotfix: ["verification", "document"],
 	spike: [],
 };
 

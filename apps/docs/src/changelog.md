@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **`hotfix` planner workflow** — a fifth workflow type for production-down emergencies. The fix ships first on its own `hotfix/{slug}` branch; the plan folder (`impl.md` only, no brief/test-plan/ADR) is created retroactively with a fixed three-phase shape: Phase 1 (Ship) documents the already-shipped fix with every gate deferred under `gate_policy: auto`; Phase 2 (Backfill) is the mandatory, fully-enforced phase (regression test + real verification/document gates); Phase 3 (Close) is a trivial single-item phase that exists solely to trigger `check-gates.js`'s existing phase-close check against Backfill's rows — a plan's terminal phase's own trajectory rows are otherwise never inspected (a general, previously-undocumented gap found mid-implementation, now a standing CLAUDE.md Known Gotcha). No new hook mechanism — reuses `gate_policy: auto` and the existing Phase-0 trajectory rule for reported bugs. See [Planner Hotfix Mode](/decisions/planner-hotfix-mode).
+
 ## [1.31.3] — 2026-06-28
 
 ### Fixed (eval-agent-mcp-access Phase 7 — malformed-line bypass defense)
