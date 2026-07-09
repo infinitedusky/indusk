@@ -47,22 +47,22 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 
 | ID | Asserts | Writable at | Passes at | Kind | State |
 |----|---------|-------------|-----------|------|-------|
-| T5 | A hand-authored `### Phase N: Cleanup` phase (normal Verification/Context/Document gates) passes the existing `validate-impl-structure.js` and `check-gates.js` unchanged — proving no hook change is needed | Phase 0 | Phase 0 | vitest subprocess | planned |
+| T5 | A hand-authored `### Phase N: Cleanup` phase (normal Verification/Context/Document gates) passes the existing `validate-impl-structure.js` and `check-gates.js` unchanged — proving no hook change is needed | Phase 0 | Phase 0 | vitest subprocess | passing |
 | T7 | The config reader returns the built-in default threshold when no `cleanup` block is present | Phase 1 | Phase 1 | vitest unit | planned |
-| T12 | `indusk update` adds `cleanup` config defaults idempotently (adds first run, reports already-set on re-run) without disturbing user content | Phase 0 | Phase 1 | vitest integration (subprocess) | planned |
+| T12 | `indusk update` adds `cleanup` config defaults idempotently (adds first run, reports already-set on re-run) without disturbing user content | Phase 0 | Phase 1 | vitest integration (subprocess) | skipped |
 | T6 | A 300-line changed file under a `components/**` scope (cap 200) is flagged; the same file outside every scope (global 400) is not | Phase 2 | Phase 2 | vitest integration (git fixture) | planned |
 | T8 | Only files changed vs the merge-base are considered; an over-threshold untouched legacy file is never flagged | Phase 2 | Phase 2 | vitest integration (git fixture) | planned |
 | T2 | A plan with an unrun Cleanup Phase and no skip frontmatter fails the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | planned |
 | T3 | A plan with a terminal Cleanup Phase passes the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | planned |
 | T4 | `cleanup: skipped` + non-empty `cleanup_reason` passes the gate; `cleanup: skipped` with no/empty reason still blocks | Phase 3 | Phase 3 | vitest unit | planned |
 | T13 | The retrospective Step 0 gate passes only when BOTH falsification AND cleanup are satisfied (terminal-or-skipped); satisfying one alone still blocks | Phase 3 | Phase 3 | vitest unit | planned |
-| T9 | The `cleanup` skill directs the agent to the enabled domain extensions' skills for "what to extract" (references domain skills, not a hardcoded framework) | Phase 0 | Phase 4 | vitest source-grep | planned |
+| T9 | The `cleanup` skill directs the agent to the enabled domain extensions' skills for "what to extract" (references domain skills, not a hardcoded framework) | Phase 0 | Phase 4 | vitest source-grep | skipped |
 | T1 | Running `/cleanup` on a plan that grew a file past its scope threshold authors a `### Phase N: Cleanup` naming the file and one+ recommended extractions/refactors | Phase 4 | Phase 4 | manual smoke | planned |
 | T10 | numero's ≤200 + test-sibling convention on `packages/game-ui/src/components/**` is expressible entirely by editing numero's `cleanup` config block | Phase 4 | Phase 5 | manual smoke | planned |
 | T11 | On dusk, running the ritual on a plan touching a >400-LOC source file authors a Cleanup Phase whose execution lands the file decomposed | Phase 4 | Phase 5 | manual smoke | planned |
-| T14 | An impl whose trajectory table, Verification references, and rationale entries all use `A`-prefixed IDs validates with zero cross-reference/rationale errors (fails today; passes after the regex loosens) | Phase 0 | Phase 0 | vitest unit | planned |
-| T15 | The TS validator and the JS hook port produce identical verdicts on an `A`-prefixed fixture (no TS↔JS drift) | Phase 0 | Phase 0 | vitest subprocess parity | planned |
-| T16 | A Verification block referencing an `A`-ID that is absent from the trajectory table still errors — the prefix is broadened, the existence check is not disabled | Phase 0 | Phase 0 | vitest unit | planned |
+| T14 | An impl whose trajectory table, Verification references, and rationale entries all use `A`-prefixed IDs validates with zero cross-reference/rationale errors (fails today; passes after the regex loosens) | Phase 0 | Phase 0 | vitest unit | written |
+| T15 | The TS validator and the JS hook port produce identical verdicts on an `A`-prefixed fixture (no TS↔JS drift) | Phase 0 | Phase 0 | vitest subprocess parity | written |
+| T16 | A Verification block referencing an `A`-ID that is absent from the trajectory table still errors — the prefix is broadened, the existence check is not disabled | Phase 0 | Phase 0 | vitest unit | written |
 
 ### Deferred Verification
 

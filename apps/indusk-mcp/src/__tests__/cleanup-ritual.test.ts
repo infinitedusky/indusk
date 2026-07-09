@@ -1,0 +1,95 @@
+import { spawn } from "node:child_process";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+/**
+ * Cleanup-ritual trajectory tests that are writable at Phase 0.
+ *
+ * T5  — a hand-authored `### Phase N: Cleanup` phase passes the EXISTING
+ *       validate-impl-structure.js hook unchanged (proving the ritual needs no
+ *       new gate type). Passes today.
+ * T9  — the /cleanup skill defers to the enabled domain extensions for
+ *       "what to extract". Subject (skills/cleanup.md) is authored in Phase 4;
+ *       skipped until then.
+ * T12 — `indusk update` adds the cleanup config block idempotently. Subject
+ *       (the update migration step) is authored in Phase 1; skipped until then.
+ */
+
+const HOOK_PATH = new URL("../../hooks/validate-impl-structure.js", import.meta.url).pathname;
+
+const CLEANUP_PHASE_IMPL = `---
+title: "Fixture"
+trajectory: required
+rationale: required
+gate_policy: ask
+---
+
+## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+| T1 | the extraction preserves behavior | Phase 0 | Phase 1 | planned |
+
+## Checklist
+
+### Phase 1: Cleanup — decompose the oversized table
+
+- [ ] extract the Chip markup into its own component file
+
+#### Phase 1 Verification
+- [ ] T1 passes
+
+#### Phase 1 Context
+- [ ] note the new Chip component in CLAUDE.md
+
+#### Phase 1 Document
+- [ ] document the Chip component in the reference
+`;
+
+describe("cleanup-ritual T5: a Cleanup phase passes the existing hooks unchanged", () => {
+	it("validate-impl-structure.js accepts `### Phase N: Cleanup` with normal gates (exit 0)", async () => {
+		// A workbench-less project with otel.role: library so the OTel gate is
+		// silenced — the only variable under test is the "Cleanup" phase name.
+		const dir = mkdtempSync(join(tmpdir(), "cleanup-phase-"));
+		mkdirSync(join(dir, ".indusk"), { recursive: true });
+		writeFileSync(
+			join(dir, ".indusk", "config.json"),
+			JSON.stringify({ otel: { role: "library" } }),
+		);
+		const planDir = join(dir, ".indusk", "planning", "fixture");
+		mkdirSync(planDir, { recursive: true });
+		const implPath = join(planDir, "impl.md");
+		writeFileSync(implPath, CLEANUP_PHASE_IMPL);
+
+		const event = {
+			tool_name: "Write",
+			tool_input: { file_path: implPath, content: CLEANUP_PHASE_IMPL },
+			cwd: dir,
+		};
+		const result = await new Promise<{ exitCode: number; stderr: string }>((resolve, reject) => {
+			const child = spawn("node", [HOOK_PATH], { stdio: ["pipe", "pipe", "pipe"] });
+			let stderr = "";
+			child.stderr.on("data", (d) => {
+				stderr += d.toString();
+			});
+			child.on("error", reject);
+			child.on("close", (code) => resolve({ exitCode: code ?? 0, stderr }));
+			child.stdin.end(JSON.stringify(event));
+		});
+
+		expect(result.stderr).not.toContain("Cleanup");
+		expect(result.exitCode).toBe(0);
+	});
+});
+
+describe("cleanup-ritual T9: skill defers to enabled domain extensions", () => {
+	// Unlock: Phase 4 — apps/indusk-mcp/skills/cleanup.md is authored there.
+	it.skip("cleanup.md references the enabled domain extensions for what-to-extract (unlock Phase 4)", () => {});
+});
+
+describe("cleanup-ritual T12: indusk update adds cleanup config idempotently", () => {
+	// Unlock: Phase 1 — the update migration step is authored there.
+	it.skip("indusk update adds cleanup defaults on first run, already-set on re-run (unlock Phase 1)", () => {});
+});
