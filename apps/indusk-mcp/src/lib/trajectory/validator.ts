@@ -37,7 +37,10 @@ const PHASE_HEADING = /^###\s+Phase\s+(\d+)\b/;
 const VERIFICATION_HEADING = /^####\s+Phase\s+(\d+)\s+Verification\b/;
 const NEXT_GATE_HEADING = /^####\s+Phase\s+\d+\s+(OTel|Context|Document|Forward Intelligence)\b/;
 const CHECKLIST_ITEM = /^-\s+\[[ xX]\]\s+(.*)/;
-const TEST_ID_PATTERN = /\bT\d+\b/g;
+// Accept T-prefixed (test) and A-prefixed (acceptance) IDs. Bounded to [TA]
+// deliberately — broadening to [A-Z] would false-match H-prefixed hypothesis
+// refs and P-prefixed phase refs in Verification prose.
+const TEST_ID_PATTERN = /\b[TA]\d+\b/g;
 
 const ALLOWED_NO_TESTS_REASONS: ReadonlySet<string> = new Set([
 	"schema-only",
@@ -321,7 +324,7 @@ function parseRationaleBlock(body: string): Set<string> {
 		}
 		if (!inRationale) continue;
 		if (/^#{1,3}\s+/.test(line) && !/^###\s+Trajectory Rationale\b/.test(line)) break;
-		const match = line.match(/^-\s+\*\*(T\d+)\*\*/);
+		const match = line.match(/^-\s+\*\*([TA]\d+)\*\*/);
 		if (match) ids.add(match[1]);
 	}
 

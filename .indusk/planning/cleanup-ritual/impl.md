@@ -60,9 +60,9 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 | T1 | Running `/cleanup` on a plan that grew a file past its scope threshold authors a `### Phase N: Cleanup` naming the file and one+ recommended extractions/refactors | Phase 4 | Phase 4 | manual smoke | planned |
 | T10 | numero's ≤200 + test-sibling convention on `packages/game-ui/src/components/**` is expressible entirely by editing numero's `cleanup` config block | Phase 4 | Phase 5 | manual smoke | planned |
 | T11 | On dusk, running the ritual on a plan touching a >400-LOC source file authors a Cleanup Phase whose execution lands the file decomposed | Phase 4 | Phase 5 | manual smoke | planned |
-| T14 | An impl whose trajectory table, Verification references, and rationale entries all use `A`-prefixed IDs validates with zero cross-reference/rationale errors (fails today; passes after the regex loosens) | Phase 0 | Phase 0 | vitest unit | written |
-| T15 | The TS validator and the JS hook port produce identical verdicts on an `A`-prefixed fixture (no TS↔JS drift) | Phase 0 | Phase 0 | vitest subprocess parity | written |
-| T16 | A Verification block referencing an `A`-ID that is absent from the trajectory table still errors — the prefix is broadened, the existence check is not disabled | Phase 0 | Phase 0 | vitest unit | written |
+| T14 | An impl whose trajectory table, Verification references, and rationale entries all use `A`-prefixed IDs validates with zero cross-reference/rationale errors (fails today; passes after the regex loosens) | Phase 0 | Phase 0 | vitest unit | passing |
+| T15 | The TS validator and the JS hook port produce identical verdicts on an `A`-prefixed fixture (no TS↔JS drift) | Phase 0 | Phase 0 | vitest subprocess parity | passing |
+| T16 | A Verification block referencing an `A`-ID that is absent from the trajectory table still errors — the prefix is broadened, the existence check is not disabled | Phase 0 | Phase 0 | vitest unit | passing |
 
 ### Deferred Verification
 
@@ -94,20 +94,20 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 
 ### Phase 0: Allow A-prefix trajectory IDs
 
-- [ ] Loosen the two `T`-specific ID regexes in `apps/indusk-mcp/src/lib/trajectory/validator.ts`: line ~40 `TEST_ID_PATTERN = /\bT\d+\b/g` → `/\b[TA]\d+\b/g`, and line ~324 `/^-\s+\*\*(T\d+)\*\*/` → `/^-\s+\*\*([TA]\d+)\*\*/`. Keep it `[TA]` (not `[A-Z]`) so `H`/`P` refs don't false-match.
-- [ ] Mirror both changes in the JS hook port `apps/indusk-mcp/hooks/validate-impl-structure.js` (lines ~511, ~703); sync to `.claude/hooks/` (run `indusk update` or copy) so the change is live in this repo. `check-gates.js` needs no change (it matches rows by phase number, reading IDs verbatim).
-- [ ] Note the allowance in the trajectory guide + the planner skill's trajectory template comment (T is still the recommended default; A is accepted for acceptance-style IDs).
+- [x] Loosen the two `T`-specific ID regexes in `apps/indusk-mcp/src/lib/trajectory/validator.ts`: line ~40 `TEST_ID_PATTERN = /\bT\d+\b/g` → `/\b[TA]\d+\b/g`, and line ~324 `/^-\s+\*\*(T\d+)\*\*/` → `/^-\s+\*\*([TA]\d+)\*\*/`. Keep it `[TA]` (not `[A-Z]`) so `H`/`P` refs don't false-match.
+- [x] Mirror both changes in the JS hook port `apps/indusk-mcp/hooks/validate-impl-structure.js` (lines ~511, ~703); sync to `.claude/hooks/` (run `indusk update` or copy) so the change is live in this repo. `check-gates.js` needs no change (it matches rows by phase number, reading IDs verbatim).
+- [x] Note the allowance in the trajectory guide + the planner skill's trajectory template comment (T is still the recommended default; A is accepted for acceptance-style IDs).
 
 #### Phase 0 Verification
-- [ ] T14 passes — unit test: an `A`-prefixed fixture validates clean (authored red against today's `T`-only regex, goes green here).
-- [ ] T15 passes — TS↔JS parity test on an `A`-prefixed fixture (clone the `rationale-baseline-parity.test.ts` shape).
-- [ ] T16 passes — unit test: an unknown `A`-ID referenced but absent from the table still errors.
+- [x] T14 passes — unit test: an `A`-prefixed fixture validates clean (authored red against today's `T`-only regex, goes green here).
+- [x] T15 passes — TS↔JS parity test on an `A`-prefixed fixture (clone the `rationale-baseline-parity.test.ts` shape).
+- [x] T16 passes — unit test: an unknown `A`-ID referenced but absent from the table still errors.
 
 #### Phase 0 Context
-- [ ] Add to CLAUDE.md Known Gotchas: the trajectory validator accepts `[TA]\d+` IDs (cross-reference + rationale); `check-gates.js` is unaffected (reads IDs verbatim); keep the change in lockstep across TS + JS port.
+- [x] Add to CLAUDE.md Known Gotchas: the trajectory validator accepts `[TA]\d+` IDs (cross-reference + rationale); `check-gates.js` is unaffected (reads IDs verbatim); keep the change in lockstep across TS + JS port.
 
 #### Phase 0 Document
-- [ ] Update the Test Trajectory guide (`apps/docs/src/guide/test-trajectory.md`) to state that `A`-prefixed IDs are accepted alongside `T`.
+- [x] Update the Test Trajectory guide (`apps/docs/src/guide/test-trajectory.md`) to state that `A`-prefixed IDs are accepted alongside `T`.
 
 ### Phase 1: Config block + reader
 

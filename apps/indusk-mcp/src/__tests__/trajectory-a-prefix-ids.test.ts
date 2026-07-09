@@ -134,7 +134,11 @@ describe("cleanup-ritual T16: unknown A-ID reference still errors", () => {
 describe("cleanup-ritual T15: TS source ↔ JS hook port parity on A-prefixed fixtures", () => {
 	const fixtures = [
 		{ name: "clean A-prefix impl", body: CLEAN_A_BODY, expectPass: true },
-		{ name: "A-prefix impl missing a Phase-3 rationale entry", body: MISSING_RATIONALE_A_BODY, expectPass: false },
+		{
+			name: "A-prefix impl missing a Phase-3 rationale entry",
+			body: MISSING_RATIONALE_A_BODY,
+			expectPass: false,
+		},
 	];
 
 	for (const fx of fixtures) {
@@ -154,8 +158,15 @@ gate_policy: ask`;
 			);
 			const tsPasses = tsRelevant.length === 0;
 
+			// Compare the SPECIFIC cross-reference/rationale verdict, not the raw
+			// exit code — the JS hook also blocks on missing Context/Document gates,
+			// which are unrelated to A-prefix ID recognition (mirrors the approach in
+			// rationale-baseline-parity.test.ts).
 			const js = await runHook(full);
-			const jsPasses = js.exitCode === 0;
+			const jsBlockedOnIds =
+				js.stderr.includes("cross-reference-integrity") ||
+				js.stderr.includes("rationale-completeness");
+			const jsPasses = !jsBlockedOnIds;
 
 			expect({ tsPasses, jsPasses }).toEqual({ tsPasses: fx.expectPass, jsPasses: fx.expectPass });
 		});
