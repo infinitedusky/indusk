@@ -48,8 +48,8 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 | ID | Asserts | Writable at | Passes at | Kind | State |
 |----|---------|-------------|-----------|------|-------|
 | T5 | A hand-authored `### Phase N: Cleanup` phase (normal Verification/Context/Document gates) passes the existing `validate-impl-structure.js` and `check-gates.js` unchanged — proving no hook change is needed | Phase 0 | Phase 0 | vitest subprocess | passing |
-| T7 | The config reader returns the built-in default threshold when no `cleanup` block is present | Phase 1 | Phase 1 | vitest unit | planned |
-| T12 | `indusk update` adds `cleanup` config defaults idempotently (adds first run, reports already-set on re-run) without disturbing user content | Phase 0 | Phase 1 | vitest integration (subprocess) | skipped |
+| T7 | The config reader returns the built-in default threshold when no `cleanup` block is present | Phase 1 | Phase 1 | vitest unit | passing |
+| T12 | `indusk update` adds `cleanup` config defaults idempotently (adds first run, reports already-set on re-run) without disturbing user content | Phase 0 | Phase 1 | vitest unit | passing |
 | T6 | A 300-line changed file under a `components/**` scope (cap 200) is flagged; the same file outside every scope (global 400) is not | Phase 2 | Phase 2 | vitest integration (git fixture) | planned |
 | T8 | Only files changed vs the merge-base are considered; an over-threshold untouched legacy file is never flagged | Phase 2 | Phase 2 | vitest integration (git fixture) | planned |
 | T2 | A plan with an unrun Cleanup Phase and no skip frontmatter fails the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | planned |
@@ -111,21 +111,21 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 
 ### Phase 1: Config block + reader
 
-- [ ] Add a `cleanup` block to the `InduskConfig` documentary interface in `apps/indusk-mcp/src/lib/config.ts`: `cleanup?: { max_file_loc?: number; scopes?: { include: string; max_file_loc?: number; test_sibling?: boolean }[] }`.
-- [ ] Add `getCleanupConfig(projectRoot)` + `resolveCapForPath(path, config)` readers with module-level default constants (`DEFAULT_MAX_FILE_LOC = 400`), following the `getEvalModel`/`getStaleTtlMinutes` type-guard-at-read pattern. Absence of the block → defaults; absence of a matching scope → global default.
+- [x] Add a `cleanup` block to the `InduskConfig` documentary interface in `apps/indusk-mcp/src/lib/config.ts`: `cleanup?: { max_file_loc?: number; scopes?: { include: string; max_file_loc?: number; test_sibling?: boolean }[] }`.
+- [x] Add `getCleanupConfig(projectRoot)` + `resolveCapForPath(path, config)` readers with module-level default constants (`DEFAULT_MAX_FILE_LOC = 400`), following the `getEvalModel`/`getStaleTtlMinutes` type-guard-at-read pattern. Absence of the block → defaults; absence of a matching scope → global default.
   ```typescript
   const DEFAULT_MAX_FILE_LOC = 400;
   function resolveCapForPath(path: string, cfg: CleanupConfig): { cap: number; scope?: string; testSibling: boolean }
   ```
-- [ ] `init.ts` step 12: scaffold a default `cleanup: { max_file_loc: 400, scopes: [] }` into the config object literal (unconditional, like `agents.stale_ttl_minutes`).
-- [ ] `update.ts` (new step alongside 7c): read-check-spread-write — if `config.cleanup` is missing, add the default block and print `add: cleanup.max_file_loc: 400`; if present print `ok: cleanup (already set)`. Idempotent.
+- [x] `init.ts` step 12: scaffold a default `cleanup: { max_file_loc: 400, scopes: [] }` into the config object literal (unconditional, like `agents.stale_ttl_minutes`).
+- [x] `update.ts` (new step alongside 7c): read-check-spread-write — if `config.cleanup` is missing, add the default block and print `add: cleanup.max_file_loc: 400`; if present print `ok: cleanup (already set)`. Idempotent.
 
 #### Phase 1 Verification
-- [ ] T7 passes — `pnpm turbo test --filter=indusk-mcp -- cleanup-config` (reader returns default when block absent).
-- [ ] T12 passes — subprocess `indusk update` test adds the block on first run, reports already-set on second, preserves user content. (T12 was authored red at Phase 0; it goes green here.)
+- [x] T7 passes — `pnpm turbo test --filter=indusk-mcp -- cleanup-config` (reader returns default when block absent).
+- [x] T12 passes — the update migration (`ensureCleanupConfig`) adds the block on first run, reports already-set on re-run, preserves user content. (T12 was stubbed at Phase 0; fleshed out + green here.)
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Conventions: the `cleanup` config block shape + that the threshold is attention-focus (not a blocking cap), read by the `/cleanup` skill.
+- [x] Add to CLAUDE.md Conventions: the `cleanup` config block shape + that the threshold is attention-focus (not a blocking cap), read by the `/cleanup` skill.
 
 #### Phase 1 Document
 - [ ] Add the `cleanup` block to the config reference doc (the same page that documents `otel.role`, `eval.*`, `agents.*`) — fields, defaults, scope semantics.

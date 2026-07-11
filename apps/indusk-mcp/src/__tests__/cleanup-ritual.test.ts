@@ -1,8 +1,9 @@
 import { spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ensureCleanupConfig, getCleanupConfig } from "../lib/config.js";
 
 /**
  * Cleanup-ritual trajectory tests that are writable at Phase 0.
@@ -89,7 +90,37 @@ describe("cleanup-ritual T9: skill defers to enabled domain extensions", () => {
 	it.skip("cleanup.md references the enabled domain extensions for what-to-extract (unlock Phase 4)", () => {});
 });
 
-describe("cleanup-ritual T12: indusk update adds cleanup config idempotently", () => {
-	// Unlock: Phase 1 — the update migration step is authored there.
-	it.skip("indusk update adds cleanup defaults on first run, already-set on re-run (unlock Phase 1)", () => {});
+function cleanupProject(config: Record<string, unknown>): string {
+	const dir = mkdtempSync(join(tmpdir(), "cleanup-migrate-"));
+	mkdirSync(join(dir, ".indusk"), { recursive: true });
+	writeFileSync(join(dir, ".indusk", "config.json"), JSON.stringify(config, null, "\t"));
+	return dir;
+}
+
+describe("cleanup-ritual T12: the update migration adds cleanup config idempotently", () => {
+	it("adds the block on first run, reports already-set on re-run, preserves user content", () => {
+		const dir = cleanupProject({ mode: "full", otel: { role: "library" } });
+
+		expect(ensureCleanupConfig(dir)).toBe("added");
+		expect(getCleanupConfig(dir).max_file_loc).toBe(400);
+
+		// idempotent — second run makes no change
+		expect(ensureCleanupConfig(dir)).toBe("already-set");
+
+		// user content preserved through the migration
+		const cfg = JSON.parse(readFileSync(join(dir, ".indusk", "config.json"), "utf-8"));
+		expect(cfg.otel.role).toBe("library");
+		expect(cfg.mode).toBe("full");
+	});
+
+	it("preserves a user-customized max_file_loc (reports already-set, never overwrites)", () => {
+		const dir = cleanupProject({ mode: "full", cleanup: { max_file_loc: 250, scopes: [] } });
+		expect(ensureCleanupConfig(dir)).toBe("already-set");
+		expect(getCleanupConfig(dir).max_file_loc).toBe(250);
+	});
+
+	it("returns no-config when there is no .indusk/config.json", () => {
+		const dir = mkdtempSync(join(tmpdir(), "cleanup-nocfg-"));
+		expect(ensureCleanupConfig(dir)).toBe("no-config");
+	});
 });

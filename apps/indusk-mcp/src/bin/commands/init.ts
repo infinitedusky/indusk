@@ -1278,6 +1278,10 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		agents: {
 			stale_ttl_minutes: 60,
 		},
+		cleanup: {
+			max_file_loc: 400,
+			scopes: [],
+		},
 		...(workbench && options.wrappedRepo && options.siblingParent
 			? {
 					worktree: {
@@ -1322,7 +1326,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				"  All SCM-coupled features (eval hook, semantic graph sync, baseline\n" +
 				"  CLI) will fail until you initialize git:\n" +
 				"    1. Run `git init` in this directory.\n" +
-				"    2. Make at least one commit (`git commit --allow-empty -m \"init\"`).\n\n",
+				'    2. Make at least one commit (`git commit --allow-empty -m "init"`).\n\n',
 		);
 	}
 
