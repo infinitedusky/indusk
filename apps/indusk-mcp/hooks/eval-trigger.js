@@ -348,8 +348,18 @@ syslog("evaluator process started — changeId: ${changeId}");
 import("${useModule}")
   .then(m => {
     syslog("evaluator module loaded — calling ${useFunction}");
+    // CONTRACT: the state root MUST be passed as \`projectRoot\` (the key both
+    // runPersistentEval and runEvaluatorSync read). 1.31.7 renamed this to
+    // \`statePath\` here without updating the evaluator signatures, so
+    // opts.projectRoot was undefined and the evaluator crashed at
+    // initEvalOtel(undefined) → join(undefined,…) before any work — silently
+    // killing the eval→Graphiti rail. \`gitRoot\` carries the git repo so the
+    // inner claude's \`git show \${changeId}\` resolves in workbench mode (state
+    // root is the non-git workbench root). Guarded by
+    // eval-trigger-evaluator-arg-contract.test.ts.
     return m.${useFunction}({
-      statePath: ${JSON.stringify(statePath)},
+      projectRoot: ${JSON.stringify(statePath)},
+      gitRoot: ${JSON.stringify(gitPath ?? statePath)},
       changeId: ${JSON.stringify(changeId)},
       transcriptPath: ${JSON.stringify(transcriptPath)},
       mode: "eval",

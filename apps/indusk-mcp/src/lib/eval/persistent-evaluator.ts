@@ -162,7 +162,19 @@ async function spawnClaude(
  * Subsequent calls resume the session with just the new change.
  */
 export async function runPersistentEval(opts: {
+	/**
+	 * Where `.indusk/` lives (state root). All state paths hang off this.
+	 * CONTRACT: `hooks/eval-trigger.js` MUST pass this key as `projectRoot`,
+	 * not `statePath` — see the EvaluatorRunOptions doc in evaluator-runner.ts
+	 * and eval-trigger-evaluator-arg-contract.test.ts for the regression this
+	 * guards (undefined projectRoot crashed the rail 1.31.7–1.31.11).
+	 */
 	projectRoot: string;
+	/**
+	 * Git repo root — cwd for the inner `claude` so `git show ${changeId}`
+	 * resolves. Falls back to `projectRoot` when omitted (single-repo).
+	 */
+	gitRoot?: string;
 	changeId: string;
 	transcriptPath: string;
 	mode: "eval" | "baseline";
@@ -300,7 +312,10 @@ Output ONLY the JSON scorecard — no commentary.`;
 						"args.model": session ? "(resumed)" : getEvalModel(opts.projectRoot),
 					},
 					async (span) => {
-						const spawned = await spawnClaude(args, prompt, opts.projectRoot);
+						// cwd = git repo so the rubric's `git show ${changeId}` runs in
+						// the repo. In workbench mode gitRoot differs from projectRoot
+						// (the non-git state root); single-repo callers fall back to it.
+						const spawned = await spawnClaude(args, prompt, opts.gitRoot ?? opts.projectRoot);
 						span.setAttribute("exit.code", spawned.code ?? -1);
 						span.setAttribute("stdout.length", spawned.stdout.length);
 						if (spawned.code !== 0) {
