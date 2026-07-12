@@ -81,3 +81,26 @@ describe("cleanup-ritual T8: only merge-base-changed files are considered", () =
 		expect(flagged).toEqual([]);
 	});
 });
+
+describe("cleanup-ritual T17: generated/vendored files are never flagged", () => {
+	it("excludes lockfiles, logs, and build output even when changed and over cap", () => {
+		const dir = makeRepo({ max_file_loc: 400, scopes: [] });
+		writeLines(dir, "README.md", 1);
+		git(dir, "add", "-A");
+		git(dir, "commit", "-m", "base");
+
+		git(dir, "checkout", "-b", "feature");
+		writeLines(dir, "pnpm-lock.yaml", 800); // generated lockfile
+		writeLines(dir, "debug.log", 800); // log
+		writeLines(dir, "dist/bundle.js", 800); // build output
+		writeLines(dir, "src/real.ts", 500); // real source, over cap
+		git(dir, "add", "-A");
+		git(dir, "commit", "-m", "changes");
+
+		const flagged = listOversizedChangedFiles(dir, "main").map((f) => f.path);
+		expect(flagged).toContain("src/real.ts");
+		expect(flagged).not.toContain("pnpm-lock.yaml");
+		expect(flagged).not.toContain("debug.log");
+		expect(flagged).not.toContain("dist/bundle.js");
+	});
+});

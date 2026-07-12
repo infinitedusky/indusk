@@ -44,6 +44,23 @@ function countLoc(content: string): number {
 	return lines.length;
 }
 
+// Generated / vendored files are never decomposition targets — no one splits a
+// lockfile, a log, or a bundled dist file. Excluded before the cap check so the
+// ritual's output is signal, not noise. (Surfaced by the cleanup-ritual dogfood,
+// which flagged pnpm-lock.yaml at 7.7k LOC and the semantic-graph log at 25k.)
+const EXCLUDE_DIRS = new Set(["node_modules", "dist", "build", ".next", "coverage", ".turbo"]);
+const EXCLUDE_BASENAMES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.lock"]);
+
+function isGeneratedOrVendored(rel: string): boolean {
+	const parts = rel.split("/");
+	const base = parts[parts.length - 1];
+	if (EXCLUDE_BASENAMES.has(base)) return true;
+	if (base.endsWith(".lock") || base.endsWith(".log")) return true;
+	if (parts.some((p) => EXCLUDE_DIRS.has(p))) return true;
+	if (rel.startsWith(".indusk/graph/")) return true;
+	return false;
+}
+
 /**
  * List the changed files (vs the merge base with `baseRef`) whose line count
  * exceeds their resolved cleanup cap. This is what the `/cleanup` ritual
@@ -77,6 +94,7 @@ export function listOversizedChangedFiles(
 	for (const rel of [...names].sort()) {
 		const abs = join(projectRoot, rel);
 		if (!existsSync(abs)) continue; // deleted or renamed away
+		if (isGeneratedOrVendored(rel)) continue; // lockfiles, logs, dist — never decomposition targets
 		const loc = countLoc(readFileSync(abs, "utf-8"));
 		const { cap, scope } = resolveCapForPath(rel, cfg);
 		if (loc > cap) {
