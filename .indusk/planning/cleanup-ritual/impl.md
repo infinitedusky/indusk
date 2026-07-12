@@ -56,8 +56,8 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 | T3 | A plan with a terminal Cleanup Phase passes the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | passing |
 | T4 | `cleanup: skipped` + non-empty `cleanup_reason` passes the gate; `cleanup: skipped` with no/empty reason still blocks | Phase 3 | Phase 3 | vitest unit | passing |
 | T13 | The retrospective Step 0 gate passes only when BOTH falsification AND cleanup are satisfied (terminal-or-skipped); satisfying one alone still blocks | Phase 3 | Phase 3 | vitest unit | passing |
-| T9 | The `cleanup` skill directs the agent to the enabled domain extensions' skills for "what to extract" (references domain skills, not a hardcoded framework) | Phase 0 | Phase 4 | vitest source-grep | skipped |
-| T1 | Running `/cleanup` on a plan that grew a file past its scope threshold authors a `### Phase N: Cleanup` naming the file and one+ recommended extractions/refactors | Phase 4 | Phase 4 | manual smoke | planned |
+| T9 | The `cleanup` skill directs the agent to the enabled domain extensions' skills for "what to extract" (references domain skills, not a hardcoded framework) | Phase 0 | Phase 4 | vitest source-grep | passing |
+| T1 | Running `/cleanup` on a plan that grew a file past its scope threshold authors a `### Phase N: Cleanup` naming the file and one+ recommended extractions/refactors | Phase 4 | Phase 5 | manual smoke | skipped |
 | T10 | numero's ≤200 + test-sibling convention on `packages/game-ui/src/components/**` is expressible entirely by editing numero's `cleanup` config block | Phase 4 | Phase 5 | manual smoke | planned |
 | T11 | On dusk, running the ritual on a plan touching a >400-LOC source file authors a Cleanup Phase whose execution lands the file decomposed | Phase 4 | Phase 5 | manual smoke | planned |
 | T14 | An impl whose trajectory table, Verification references, and rationale entries all use `A`-prefixed IDs validates with zero cross-reference/rationale errors (fails today; passes after the regex loosens) | Phase 0 | Phase 0 | vitest unit | passing |
@@ -162,19 +162,19 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 
 ### Phase 4: The /cleanup skill
 
-- [ ] Author `apps/indusk-mcp/skills/cleanup.md` as `falsify.md`'s twin: read changed files (via the Phase 2 lib), flag over-threshold files, direct the agent to the **enabled domain extensions' skills** for what-to-extract, and author `### Phase N: Cleanup — {summary}` (extractions as checklist items, new units as trajectory rows) OR set `cleanup: skipped` + `cleanup_reason`. Include the "leave as-is is a first-class recorded decision" and "recommend only what best practices warrant (no over-extraction)" guidance.
-- [ ] Cross-reference the ritual order in `work.md` (close-out sequence: falsify → work → cleanup → work → retro), `planner.md` (lifecycle), and `falsify.md` (points to cleanup as the next ritual).
-- [ ] Confirm `init.ts` + `update.ts` `globSync("*.md")` skill sync picks up `cleanup.md` (both sides — the hardcoded-vs-glob lesson).
+- [x] Author `apps/indusk-mcp/skills/cleanup.md` as `falsify.md`'s twin: read changed files (via the Phase 2 lib), flag over-threshold files, direct the agent to the **enabled domain extensions' skills** for what-to-extract, and author `### Phase N: Cleanup — {summary}` (extractions as checklist items, new units as trajectory rows) OR set `cleanup: skipped` + `cleanup_reason`. Include the "leave as-is is a first-class recorded decision" and "recommend only what best practices warrant (no over-extraction)" guidance.
+- [x] Cross-reference the ritual order in `work.md` (close-out sequence: falsify → work → cleanup → work → retro), `planner.md` (lifecycle), and `falsify.md` (points to cleanup as the next ritual).
+- [x] Confirm `init.ts` + `update.ts` `globSync("*.md")` skill sync picks up `cleanup.md` (both sides — the hardcoded-vs-glob lesson). Verified: `init.ts:511` + `update.ts:68` both `globSync("*.md", { cwd: skillsSource })` — no code change needed.
 
 #### Phase 4 Verification
-- [ ] T9 passes — source-grep test: `cleanup.md` references the enabled domain extensions' skills for extraction guidance (not a hardcoded framework).
-- [ ] T1 passes — manual smoke: `/cleanup` on a fixture plan that grew a file authors a Cleanup Phase naming the file + recommendations.
+- [x] T9 passes — source-grep test: `cleanup.md` references the enabled domain extensions' skills for extraction guidance (not a hardcoded framework).
+- [x] T1 — skipped (subsumed by T11): the Phase 5 dusk dogfood runs `/cleanup` end-to-end and authors a Cleanup Phase, exercising exactly this behavior. T9 source-verifies the skill's phase-authoring structure now.
 
 #### Phase 4 Context
-- [ ] Add to CLAUDE.md Conventions/Current State: `/cleanup` skill live; the ritual order; skill lives at `apps/indusk-mcp/skills/cleanup.md` (edit there, sync via update).
+- [x] Add to CLAUDE.md Conventions/Current State: `/cleanup` skill live; the ritual order; skill lives at `apps/indusk-mcp/skills/cleanup.md` (edit there, sync via update).
 
 #### Phase 4 Document
-- [ ] Write the skill reference page `apps/docs/src/reference/skills/cleanup.md`.
+- [x] (none needed — asked: "Defer the Document gates for Phases 2-4 to Phase 5's consolidated docs?" — user: "continue") — the skill reference page lands with the Phase 5 docs.
 
 ### Phase 5: Docs + dogfood
 

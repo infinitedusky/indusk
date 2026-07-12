@@ -86,8 +86,21 @@ describe("cleanup-ritual T5: a Cleanup phase passes the existing hooks unchanged
 });
 
 describe("cleanup-ritual T9: skill defers to enabled domain extensions", () => {
-	// Unlock: Phase 4 — apps/indusk-mcp/skills/cleanup.md is authored there.
-	it.skip("cleanup.md references the enabled domain extensions for what-to-extract (unlock Phase 4)", () => {});
+	const skill = readFileSync(
+		new URL("../../skills/cleanup.md", import.meta.url).pathname,
+		"utf-8",
+	);
+
+	it("cleanup.md directs the agent to the enabled domain extensions for what-to-extract", () => {
+		expect(skill).toMatch(/enabled domain extension/i);
+		// the concrete domain idioms come from the extensions, named as examples
+		expect(skill).toMatch(/nextjs/i);
+		expect(skill).toMatch(/react/i);
+	});
+
+	it("cleanup.md does not hardcode framework assumptions", () => {
+		expect(skill.toLowerCase()).toContain("do not hardcode");
+	});
 });
 
 function cleanupProject(config: Record<string, unknown>): string {

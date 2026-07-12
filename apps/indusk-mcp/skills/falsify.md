@@ -112,7 +112,9 @@ For genuinely trivial plans (two-line typo fix, changelog entry, variable rename
 
 ## Output
 
-By the time you hand off to `/retrospective`, one of these must be true:
+After falsification comes the **cleanup ritual** (`/cleanup {plan}`) — its twin, which reviews the plan's changed files for decomposition and authors a Cleanup Phase. The close-out sequence is `/work → /falsify → /work → /cleanup → /work → /retrospective`. Hand off to `/cleanup` next, then `/retrospective`.
+
+By the time you hand off to the next ritual, one of these must be true:
 
 - A Falsification Phase has been appended to the plan's `impl.md` (with trajectory rows + fix items + gates); `/work` will later close it. The plan's impl status remains `in-progress`.
 - The plan's impl frontmatter contains `falsification: skipped` + `falsification_reason` with a real reason.
