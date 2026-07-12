@@ -1,0 +1,7 @@
+# Adding a more-permissive value to a fixed-vocabulary regex changes the risk of a pre-existing anchoring gap
+
+An unanchored regex matching one of several enum-like values from frontmatter (e.g. `workflow:\s*(a|b|c)`) can misdetect if some OTHER field's text contains the same substring — `.match()` without anchoring returns whichever occurrence comes first in the string, not necessarily the one on the actual key's line. This class of bug isn't new: it was already found and fixed once in this codebase (`rationale_baseline` substring bug).
+
+The important part: the risk isn't static. When you add a NEW, more-permissive value to an existing fixed-vocabulary regex, you change what a misdetection costs. Discovered while adding `hotfix` as a fifth planner workflow value: the unanchored `workflow:` regex already had this gap for the other four values, but misdetection there fell back to `feature` — the strictest, safest default. Adding `hotfix` meant misdetection could now land on the MOST permissive workflow (gates deferrable under `gate_policy: auto`) instead. The bug was pre-existing; the blast radius of triggering it got strictly worse the moment a new permissive option was introduced.
+
+What to do: whenever you add a new value to an existing enum-matched frontmatter (or similarly free-text-adjacent) regex, re-examine that regex's anchoring specifically in light of what the new value is permitted to skip or relax — don't just confirm the new value parses correctly in isolation.
