@@ -1,7 +1,7 @@
 ---
 title: "Cleanup Ritual"
 date: 2026-07-06
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -64,6 +64,10 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 | T15 | The TS validator and the JS hook port produce identical verdicts on an `A`-prefixed fixture (no TS↔JS drift) | Phase 0 | Phase 0 | vitest subprocess parity | passing |
 | T16 | A Verification block referencing an `A`-ID that is absent from the trajectory table still errors — the prefix is broadened, the existence check is not disabled | Phase 0 | Phase 0 | vitest unit | passing |
 | T17 | Generated/vendored files (lockfiles, logs, build output) are never flagged even when changed and over cap — dogfood fix-in-scope | Phase 5 | Phase 5 | vitest integration (git fixture) | passing |
+| T18 | A phase whose title merely mentions "cleanup" (e.g. "The /cleanup skill") is NOT detected as the ritual's Cleanup phase — only a title starting with "Cleanup" is | Phase 0 | Phase 6 | vitest unit | planned |
+| T19 | In a local repo with no `origin` remote, `listOversizedChangedFiles` with the DEFAULT baseRef still flags a committed over-cap file (does not silently return empty) | Phase 0 | Phase 6 | vitest integration (git fixture) | planned |
+| T20 | `checkRetrospectiveReadiness` reports `falsificationOk: true` for a plan with a terminal `### Phase N: Falsification` phase (no legacy log, not skipped) — the default falsify flow | Phase 0 | Phase 6 | vitest unit | planned |
+| T21 | `ensureCleanupConfig` preserves a user's `cleanup` block that has `scopes` but no top-level `max_file_loc` (never clobbers scopes) | Phase 0 | Phase 6 | vitest unit | planned |
 
 ### Deferred Verification
 
@@ -195,6 +199,27 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 
 #### Phase 5 Document
 - [x] Ensure the changelog + guide + ADR are all cross-linked and in the sidebar (the add-to-sidebar lesson). The guide is the canonical skill doc — a separate `reference/skills/cleanup.md` stub would duplicate it, so it's folded into the guide.
+
+### Phase 6: Falsification — gate detection, base-ref resolution, config-merge edge cases
+
+**Goal**: verify whether the cleanup machinery holds against four failure modes found by reading the implementation — a too-loose Cleanup-phase detector, a default base-ref that doesn't resolve on local repos, a composed gate that mismodels the default falsification flow, and a config migration that clobbers user scopes. Each trajectory row is one hypothesis; each checklist item is the fix.
+
+- [ ] **H1** — Tighten `isCleanupPhaseTerminal` (`lib/cleanup/gate.ts`): detect the ritual phase by a title STARTING with "Cleanup" (`/^Cleanup\b/i` on the title text after `Phase N:`), not a substring `/cleanup/i`. Today any phase mentioning "cleanup" (this plan's Phase 4 "The /cleanup skill") is misdetected, so `isCleanupComplete` returns true without the ritual running. Update the `cleanup.md` skill's phase-detection note to match.
+- [ ] **H2** — Make `listOversizedChangedFiles` (`lib/cleanup/oversized.ts`) resolve a base that exists: when `git merge-base <baseRef> HEAD` fails, try candidate bases (`main`, `master`) before giving up, rather than reusing the unresolvable `baseRef` for the diff. Today the default `origin/main` fails on any local repo without a fetched `origin`, so committed changes are invisible and the ritual flags nothing.
+- [ ] **H4** — Fix `checkRetrospectiveReadiness` (`lib/cleanup/gate.ts`) so the falsification requirement honors the default phase-authoring flow — a terminal `### Phase N: Falsification` phase (no log, not skipped). Add a `isFalsificationPhaseTerminal` mirroring the cleanup detector, or scope the helper to cleanup-only and let the retrospective skill compose falsification. Today it only accepts log-complete or skipped, falsely blocking the common case (this plan included).
+- [ ] **H8** — Fix `ensureCleanupConfig` (`lib/config.ts`) to key on cleanup-block PRESENCE (`config.cleanup !== undefined`), not `cleanup.max_file_loc`, and merge the default cap into an existing block without clobbering `scopes`. Today a user block with `scopes` but no top-level `max_file_loc` is overwritten with `{ max_file_loc: 400, scopes: [] }` — silent scope loss on `indusk update`.
+
+#### Phase 6 Verification
+- [ ] T18: `isCleanupPhaseTerminal` returns false for an impl whose only "cleanup"-mentioning phase is "The /cleanup skill" (all checked) with no ritual Cleanup phase.
+- [ ] T19: `listOversizedChangedFiles(dir)` (default baseRef) flags a committed over-cap file in a local repo with no `origin` remote.
+- [ ] T20: `checkRetrospectiveReadiness(...).falsificationOk` is true for a plan with a terminal `### Phase N: Falsification` phase (no log, not skipped).
+- [ ] T21: `ensureCleanupConfig` on a config with `cleanup: { scopes: [...] }` and no `max_file_loc` returns `"already-set"` and preserves the scopes.
+
+#### Phase 6 Context
+- [ ] Add to CLAUDE.md Known Gotchas: ritual-phase detection (Cleanup/Falsification) must match a title STARTING with the ritual word, not a substring, or a topic-named phase false-positives; `ensureCleanupConfig` keys on block presence not `max_file_loc`; the oversized lib's default base-ref must resolve locally.
+
+#### Phase 6 Document
+- [ ] Update the changelog `[Unreleased]` cleanup entry to note the Phase 6 correctness fixes (phase-detection anchoring, local base-ref resolution, falsification-phase-aware gate, non-clobbering config merge).
 
 ## Files Affected
 
