@@ -50,8 +50,8 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 | T5 | A hand-authored `### Phase N: Cleanup` phase (normal Verification/Context/Document gates) passes the existing `validate-impl-structure.js` and `check-gates.js` unchanged — proving no hook change is needed | Phase 0 | Phase 0 | vitest subprocess | passing |
 | T7 | The config reader returns the built-in default threshold when no `cleanup` block is present | Phase 1 | Phase 1 | vitest unit | passing |
 | T12 | `indusk update` adds `cleanup` config defaults idempotently (adds first run, reports already-set on re-run) without disturbing user content | Phase 0 | Phase 1 | vitest unit | passing |
-| T6 | A 300-line changed file under a `components/**` scope (cap 200) is flagged; the same file outside every scope (global 400) is not | Phase 2 | Phase 2 | vitest integration (git fixture) | planned |
-| T8 | Only files changed vs the merge-base are considered; an over-threshold untouched legacy file is never flagged | Phase 2 | Phase 2 | vitest integration (git fixture) | planned |
+| T6 | A 300-line changed file under a `components/**` scope (cap 200) is flagged; the same file outside every scope (global 400) is not | Phase 2 | Phase 2 | vitest integration (git fixture) | passing |
+| T8 | Only files changed vs the merge-base are considered; an over-threshold untouched legacy file is never flagged | Phase 2 | Phase 2 | vitest integration (git fixture) | passing |
 | T2 | A plan with an unrun Cleanup Phase and no skip frontmatter fails the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | planned |
 | T3 | A plan with a terminal Cleanup Phase passes the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | planned |
 | T4 | `cleanup: skipped` + non-empty `cleanup_reason` passes the gate; `cleanup: skipped` with no/empty reason still blocks | Phase 3 | Phase 3 | vitest unit | planned |
@@ -128,19 +128,19 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 - [x] Add to CLAUDE.md Conventions: the `cleanup` config block shape + that the threshold is attention-focus (not a blocking cap), read by the `/cleanup` skill.
 
 #### Phase 1 Document
-- [ ] Add the `cleanup` block to the config reference doc (the same page that documents `otel.role`, `eval.*`, `agents.*`) — fields, defaults, scope semantics.
+- [x] (none needed — asked: "Phase 1 Document targets a config-reference doc that doesn't exist; config fields are documented per-feature and the cleanup block's home is the Phase 5 cleanup-ritual guide. Skip the Phase 1 Document gate and defer to Phase 5?" — user: "yes continue")
 
 ### Phase 2: File-flagging lib
 
-- [ ] Author `apps/indusk-mcp/src/lib/cleanup/oversized.ts` exporting `listOversizedChangedFiles(planRoot, baseRef?)`: compute changed files as the sort-u union of `git diff --name-only <merge-base>..HEAD` + `--cached` + unstaged (the preflight mechanics), filter to extant source files, count LOC, and return `{ path, loc, cap, scope, isNew }[]` for those over their resolved cap. Base-ref resolution defaults to the configured base branch → `git merge-base`, with the preflight fallback for remote-less dev.
-- [ ] Optional: a thin `indusk cleanup list` CLI subcommand wrapping the lib (for the eval agent + manual use). Non-blocking.
+- [x] Author `apps/indusk-mcp/src/lib/cleanup/oversized.ts` exporting `listOversizedChangedFiles(planRoot, baseRef?)`: compute changed files as the sort-u union of `git diff --name-only <merge-base>..HEAD` + `--cached` + unstaged (the preflight mechanics), filter to extant source files, count LOC, and return `{ path, loc, cap, scope, isNew }[]` for those over their resolved cap. Base-ref resolution defaults to the configured base branch → `git merge-base`, with the preflight fallback for remote-less dev.
+- [x] Optional CLI `indusk cleanup list` — DEFERRED (v1, non-blocking): the Phase 4 skill calls `listOversizedChangedFiles` directly, so a thin CLI wrapper adds no v1 value. Revisit if the eval agent needs a shell entry point.
 
 #### Phase 2 Verification
-- [ ] T6 passes — git-fixture test: scoped 300-line file flagged inside `components/**`, not outside.
-- [ ] T8 passes — git-fixture test: untouched over-threshold file never flagged; only merge-base-diff files considered.
+- [x] T6 passes — git-fixture test: scoped 300-line file flagged inside `components/**`, not outside.
+- [x] T8 passes — git-fixture test: untouched over-threshold file never flagged; only merge-base-diff files considered.
 
 #### Phase 2 Context
-- [ ] Add to CLAUDE.md Known Gotchas: the file-flagging lib reuses the preflight `git merge-base` + three-way-diff-union; base-ref resolution + the empty-set fast path.
+- [x] Add to CLAUDE.md Known Gotchas: the file-flagging lib reuses the preflight `git merge-base` + three-way-diff-union; base-ref resolution + the empty-set fast path.
 
 #### Phase 2 Document
 - [ ] Reference the `oversized` lib / `indusk cleanup list` in the CLI reference (inputs, output shape).
