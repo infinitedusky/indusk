@@ -57,9 +57,15 @@ importers:
       lucide-react:
         specifier: ^1.8.0
         version: 1.8.0(react@19.2.4)
+      mermaid:
+        specifier: ^10.9.5
+        version: 10.9.5
       next:
         specifier: 16.2.4
         version: 16.2.4(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      panzoom:
+        specifier: ^9.4.3
+        version: 9.4.3
       react:
         specifier: 19.2.4
         version: 19.2.4

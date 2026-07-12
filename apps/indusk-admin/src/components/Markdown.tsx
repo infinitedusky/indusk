@@ -1,6 +1,8 @@
+import { isValidElement, type ReactNode } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Mermaid } from "@/components/Mermaid";
 import {
   Table,
   TableBody,
@@ -36,6 +38,14 @@ interface MarkdownProps {
  * idiomatic for Next.js server components. To swap libraries later, change
  * only this file — every callsite imports `<Markdown>`, not `<ReactMarkdown>`.
  */
+function isMermaidCodeElement(node: ReactNode): boolean {
+  if (!isValidElement<{ className?: string }>(node)) return false;
+  return (
+    typeof node.props.className === "string" &&
+    node.props.className.includes("language-mermaid")
+  );
+}
+
 const components: Components = {
   table: ({ children }) => <Table>{children}</Table>,
   thead: ({ children }) => <TableHeader>{children}</TableHeader>,
@@ -43,6 +53,25 @@ const components: Components = {
   tr: ({ children }) => <TableRow>{children}</TableRow>,
   th: ({ children }) => <TableHead>{children}</TableHead>,
   td: ({ children }) => <TableCell>{children}</TableCell>,
+  pre({ children, ...rest }) {
+    // ```mermaid blocks render their own container via <Mermaid> — skip the
+    // default <pre> wrapper so Tailwind Typography's `pre` styling
+    // (padding/background/monospace) doesn't fight the diagram's own box.
+    const child = Array.isArray(children) ? children[0] : children;
+    if (isMermaidCodeElement(child)) return <>{children}</>;
+    return <pre {...rest}>{children}</pre>;
+  },
+  code({ className, children, ...rest }) {
+    const match = /language-(\w+)/.exec(className ?? "");
+    if (match?.[1] === "mermaid") {
+      return <Mermaid source={String(children).replace(/\n$/, "")} />;
+    }
+    return (
+      <code className={className} {...rest}>
+        {children}
+      </code>
+    );
+  },
 };
 
 export function Markdown({ children, className = "" }: MarkdownProps) {
