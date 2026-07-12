@@ -52,10 +52,10 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 | T12 | `indusk update` adds `cleanup` config defaults idempotently (adds first run, reports already-set on re-run) without disturbing user content | Phase 0 | Phase 1 | vitest unit | passing |
 | T6 | A 300-line changed file under a `components/**` scope (cap 200) is flagged; the same file outside every scope (global 400) is not | Phase 2 | Phase 2 | vitest integration (git fixture) | passing |
 | T8 | Only files changed vs the merge-base are considered; an over-threshold untouched legacy file is never flagged | Phase 2 | Phase 2 | vitest integration (git fixture) | passing |
-| T2 | A plan with an unrun Cleanup Phase and no skip frontmatter fails the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | planned |
-| T3 | A plan with a terminal Cleanup Phase passes the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | planned |
-| T4 | `cleanup: skipped` + non-empty `cleanup_reason` passes the gate; `cleanup: skipped` with no/empty reason still blocks | Phase 3 | Phase 3 | vitest unit | planned |
-| T13 | The retrospective Step 0 gate passes only when BOTH falsification AND cleanup are satisfied (terminal-or-skipped); satisfying one alone still blocks | Phase 3 | Phase 3 | vitest unit | planned |
+| T2 | A plan with an unrun Cleanup Phase and no skip frontmatter fails the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | passing |
+| T3 | A plan with a terminal Cleanup Phase passes the retrospective Step 0 gate | Phase 3 | Phase 3 | vitest unit | passing |
+| T4 | `cleanup: skipped` + non-empty `cleanup_reason` passes the gate; `cleanup: skipped` with no/empty reason still blocks | Phase 3 | Phase 3 | vitest unit | passing |
+| T13 | The retrospective Step 0 gate passes only when BOTH falsification AND cleanup are satisfied (terminal-or-skipped); satisfying one alone still blocks | Phase 3 | Phase 3 | vitest unit | passing |
 | T9 | The `cleanup` skill directs the agent to the enabled domain extensions' skills for "what to extract" (references domain skills, not a hardcoded framework) | Phase 0 | Phase 4 | vitest source-grep | skipped |
 | T1 | Running `/cleanup` on a plan that grew a file past its scope threshold authors a `### Phase N: Cleanup` naming the file and one+ recommended extractions/refactors | Phase 4 | Phase 4 | manual smoke | planned |
 | T10 | numero's ≤200 + test-sibling convention on `packages/game-ui/src/components/**` is expressible entirely by editing numero's `cleanup` config block | Phase 4 | Phase 5 | manual smoke | planned |
@@ -143,22 +143,22 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 - [x] Add to CLAUDE.md Known Gotchas: the file-flagging lib reuses the preflight `git merge-base` + three-way-diff-union; base-ref resolution + the empty-set fast path.
 
 #### Phase 2 Document
-- [ ] Reference the `oversized` lib / `indusk cleanup list` in the CLI reference (inputs, output shape).
+- [x] (none needed — asked: "The ritual is internal machinery until the /cleanup skill + guide land in Phase 5, which owns all user-facing docs. Defer the Document gates for Phases 2-4 to Phase 5?" — user: "continue")
 
 ### Phase 3: Retrospective gate helpers
 
-- [ ] Author `isCleanupComplete(planRoot)` + `isCleanupSkipped(implContent)` as near-clones of the falsification helpers (same lib module family), returning the terminal/skip verdicts.
-- [ ] Extend the retrospective skill's Step 0 gate so it requires cleanup AND falsification: pass iff `(isFalsificationComplete || falsificationSkipped)` AND `(isCleanupComplete || cleanupSkipped)`. Compose additively — coordinate with any `documentation-phase-gate` change to the same gate.
+- [x] Author `isCleanupComplete(planRoot)` + `isCleanupSkipped(implContent)` as near-clones of the falsification helpers (same lib module family), returning the terminal/skip verdicts. (Also `isCleanupPhaseTerminal` (content-level) + `checkRetrospectiveReadiness` (composed gate) in `lib/cleanup/gate.js`.)
+- [x] Extend the retrospective skill's Step 0 gate so it requires cleanup AND falsification: pass iff `(isFalsificationComplete || falsificationSkipped)` AND `(isCleanupComplete || cleanupSkipped)`. Compose additively — coordinate with any `documentation-phase-gate` change to the same gate.
 
 #### Phase 3 Verification
-- [ ] T2, T3, T4 pass — unit tests on `isCleanupComplete`/`isCleanupSkipped` (unrun blocks; terminal passes; skip-with-reason passes; skip-without-reason blocks).
-- [ ] T13 passes — composed-gate unit test (both required; one-alone blocks).
+- [x] T2, T3, T4 pass — unit tests on `isCleanupComplete`/`isCleanupSkipped` (unrun blocks; terminal passes; skip-with-reason passes; skip-without-reason blocks).
+- [x] T13 passes — composed-gate unit test (both required; one-alone blocks).
 
 #### Phase 3 Context
-- [ ] Add to CLAUDE.md Conventions: `/retrospective` Step 0 now hard-blocks without cleanup as well as falsification; the `isCleanupComplete` + `cleanup: skipped`/`cleanup_reason` shapes.
+- [x] Add to CLAUDE.md Conventions: `/retrospective` Step 0 now hard-blocks without cleanup as well as falsification; the `isCleanupComplete` + `cleanup: skipped`/`cleanup_reason` shapes.
 
 #### Phase 3 Document
-- [ ] Update the retrospective skill reference doc: Step 0 gate now requires both rituals; document the cleanup skip frontmatter.
+- [x] (none needed — asked: "Defer the Document gates for Phases 2-4 to Phase 5's consolidated docs?" — user: "continue") — the retrospective skill-reference doc update lands with the Phase 5 docs.
 
 ### Phase 4: The /cleanup skill
 
