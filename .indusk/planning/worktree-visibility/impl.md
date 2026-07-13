@@ -1,7 +1,7 @@
 ---
 title: "Worktree Visibility"
 date: 2026-07-12
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -50,8 +50,8 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 | T7 | Starting `/work` on a plan with no opt-out results in a git worktree existing for that plan before any code file is edited. | Phase 3 | Phase 3 | skipped | manual |
 | T8 | Starting `/work` on a plan whose impl frontmatter has `worktree: none` proceeds in the current tree with no worktree created. | Phase 3 | Phase 3 | skipped | manual |
 | T9 | `/catchup` reports other active agents' worktree and branch and surfaces a same-trunk collision. | Phase 3 | Phase 3 | skipped | manual |
-| T10 | Running `agent list` from a non-git cwd (e.g. the workbench root, where `.indusk/` lives) preserves the caller's last-known worktree/branch instead of wiping them to empty — the session stays on the board and in the collision check. | Phase 0 | Phase 4 | planned | integration |
-| T11 | `resolveWorktreeDecision` treats `worktree: false` (boolean) and YAML-falsy `no`/`off` as "skip", matching the intent to opt out — not "create". | Phase 0 | Phase 4 | planned | unit |
+| T10 | Running `agent list` from a non-git cwd (e.g. the workbench root, where `.indusk/` lives) preserves the caller's last-known worktree/branch instead of wiping them to empty — the session stays on the board and in the collision check. | Phase 0 | Phase 4 | passing | integration |
+| T11 | `resolveWorktreeDecision` treats `worktree: false` (boolean) and YAML-falsy `no`/`off` as "skip", matching the intent to opt out — not "create". | Phase 0 | Phase 4 | passing | unit |
 
 ### Deferred Verification
 
@@ -179,19 +179,26 @@ Confirmed by investigation:
 
 Investigated and **rejected** (no row): symlink path divergence between two sessions' `worktree` strings — `git rev-parse --show-toplevel` returns the physical path (`/private/tmp`, not `/tmp`), so all stored values are already realpath-normalized and compare equal.
 
-- [ ] `agentList` heartbeat: only overwrite `branch`/`worktree` when the recompute yields a **non-empty** value; when `currentWorktree(cwd)`/`currentBranch(cwd)` come back empty (non-git cwd), **preserve** the caller section's prior stored value. The section still heartbeats `lastUpdated`. (H3/T10)
-- [ ] `resolveWorktreeDecision`: broaden the opt-out — return `"skip"` for boolean `false`, and for the case-insensitive strings `none`/`no`/`off`/`false`/`skip`; everything else / absent / unparseable stays `"create"`. Keep the safe-default-create posture. (H4/T11)
-- [ ] Document the collision flag's eventual-consistency semantics in `apps/docs/src/reference/cli/agent.md` and the `detectCollisions` doc comment: the verdict reflects each session's **last-known** tree, refreshed when *that* session next runs `agent register`/`agent list`; a moved-but-idle session shows its prior tree until its next heartbeat. (H1)
+- [x] `agentList` heartbeat: only overwrite `branch`/`worktree` when the recompute yields a **non-empty** value; when `currentWorktree(cwd)`/`currentBranch(cwd)` come back empty (non-git cwd), **preserve** the caller section's prior stored value (`nextWorktree = freshWorktree || callerSection.worktree`). The section still heartbeats `lastUpdated`. (H3/T10)
+- [x] `resolveWorktreeDecision`: broadened the opt-out — boolean `false` and the case-insensitive `OPT_OUT_STRINGS` set (`none`/`no`/`off`/`false`/`skip`) → `"skip"`; everything else / absent / unparseable stays `"create"`. (H4/T11)
+- [x] Documented the collision flag's eventual-consistency semantics in `apps/docs/src/reference/cli/agent.md` (+ non-git-cwd-is-safe note) and the `detectCollisions` doc comment: the verdict reflects each session's **last-known** tree, self-correcting on that session's next heartbeat. (H1)
 
 #### Phase 4 Verification
-- [ ] T10: integration test registers a session inside a git repo, then runs `agent list` from a **non-git** cwd (the workbench root) with the same session ID; asserts the session's WORKTREE/BRANCH are preserved (not `—`) and, with a second session in the same tree, the `⚠ collision` still fires. Red today (heartbeat wipes to empty), green after the preserve fix.
-- [ ] T11: unit test over `resolveWorktreeDecision` for `worktree: false` / `no` / `off` → `"skip"`; `worktree: create` / absent → `"create"`. Red today (`false`/`no`/`off` return `"create"`), green after the coercion fix.
+- [x] T10 passes — CLI integration: register two sessions in the trunk, run `agent list` from the
+      **workbench root** (non-git); S1's WORKTREE/BRANCH preserved and the `⚠ collision` still fires.
+      Confirmed red before the fix (collision dropped), green after. (`worktree-visibility-cli.test.ts`)
+- [x] T11 passes — unit: `resolveWorktreeDecision` returns `"skip"` for `false`/`no`/`off`, `"create"`
+      for `create`/absent. Confirmed red before, green after. 73 agents+worktree tests green;
+      `tsc --noEmit` + `biome check` clean.
 
 #### Phase 4 Context
-- [ ] Add a CLAUDE.md Known Gotcha: `agent list`'s heartbeat must never wipe worktree/branch to empty on a non-git cwd (the workbench root is not a git repo) — preserve last-known; and the `worktree:` opt-out accepts `false`/`no`/`off`/`none`/`skip`, not just `none`.
+- [x] Added a CLAUDE.md Known Gotcha: `agent list`'s heartbeat must never wipe worktree/branch to empty
+      on a non-git cwd (the workbench root is not a git repo) — preserve last-known; the `worktree:`
+      opt-out accepts `false`/`no`/`off`/`none`/`skip`; `detectCollisions` is eventually consistent.
 
 #### Phase 4 Document
-- [ ] Update `apps/docs/src/reference/cli/agent.md`: the collision flag's eventual-consistency semantics (H1) and the broadened `worktree:` opt-out keyword set (H4).
+- [x] Updated `apps/docs/src/reference/cli/agent.md` — collision-flag eventual-consistency + non-git-cwd
+      safety notes; and `apps/docs/src/guide/multi-agent.md` — the broadened `worktree:` opt-out forms.
 
 ## Files Affected
 | File | Change |

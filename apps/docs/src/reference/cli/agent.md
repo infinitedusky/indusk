@@ -68,6 +68,10 @@ The `WORKTREE` column shows the basename of the session's git worktree toplevel 
 
 Sessions in separate worktrees do not collide. Non-git cwds (no resolvable worktree) are excluded from the check. The flag is visibility, not enforcement — it surfaces the collision class that worktree-per-plan is designed to prevent.
 
+**Eventual consistency.** The collision verdict compares each session's *last-known* tree. Only the calling session's tree is recomputed live on each `list`; every other session's tree is whatever it last recorded via `agent register` / `agent list`. A session that moved between the trunk and a worktree but hasn't run an `agent` command since carries a stale tree, so a collision can appear (or clear) a beat late — it self-corrects on that session's next heartbeat. This is inherent: the CLI can't run git in another session's working directory.
+
+**Running `list` from a non-git cwd is safe.** If you run `agent list` from a directory that isn't a git repo — notably the workbench root, where `.indusk/` lives — your session's recorded worktree/branch are **preserved** (the last known values), not wiped. The heartbeat only overwrites them when it can resolve a git repo from the current cwd.
+
 **Self-heartbeat**: before printing the table, `list` refreshes the calling session's own section's `Last updated` (if a section exists for the caller) — and, as above, its worktree/branch. The act of asking who's around implicitly says "I am still here." Long-running sessions that periodically run `/catchup` (which calls `list`) stay visible indefinitely without manual TTL tuning. Sessions that go truly idle (no `agent` CLI activity for > TTL) age out.
 
 ### `agent prune`

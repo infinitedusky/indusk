@@ -131,7 +131,7 @@ f0a99b21  telemetry spike  wtb       plan/telemetry     2026-06-26 22:01:15
 ⚠ collision: 2 sessions share worktree /path/to/repo (2c87e7b6, f0a99b21)
 ```
 
-**Worktree-per-plan is the default.** Every plan gets its own worktree, created at the start of its impl (`/work`'s Worktree Kickoff step nudges `indusk worktree create {plan-slug}` when you're in the trunk). One plan → one branch → one worktree → PR → merge-and-delete, which makes "no overlap" true by construction — the collision flag above is then just the safety net. Opt a single plan out with `worktree: none` in its impl frontmatter; no workflow sets that by default. The kickoff is a nudge, not a hard gate — if you proceed in the trunk anyway, the collision flag will tell you when it bites.
+**Worktree-per-plan is the default.** Every plan gets its own worktree, created at the start of its impl (`/work`'s Worktree Kickoff step nudges `indusk worktree create {plan-slug}` when you're in the trunk). One plan → one branch → one worktree → PR → merge-and-delete, which makes "no overlap" true by construction — the collision flag above is then just the safety net. Opt a single plan out with `worktree: none` in its impl frontmatter (the natural falsy forms `no` / `off` / `false` work too — a plan that says "no worktree" any reasonable way gets none); no workflow sets that by default. The kickoff is a nudge, not a hard gate — if you proceed in the trunk anyway, the collision flag will tell you when it bites.
 
 ## Configuration
 
