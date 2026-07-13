@@ -2,7 +2,7 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.32.0] — 2026-07-13
 
 ### Added (Worktree Visibility — worktree-per-plan, observable in the bulletin)
 - **`indusk agent list` now shows each session's worktree + branch, recomputed live.** `agent register` records the session's worktree toplevel and branch; `agent list` gains `WORKTREE`/`BRANCH` columns and **recomputes** both from cwd in its self-heartbeat (not the register-time snapshot), so the who-is-where board never drifts as an agent moves between the trunk and a worktree. The `**Branch**:` / `**Worktree**:` markers join `sanitizeSectionBody`'s forbidden-marker list so a section body can't spoof them.
