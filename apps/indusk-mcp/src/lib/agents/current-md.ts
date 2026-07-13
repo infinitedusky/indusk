@@ -268,7 +268,10 @@ export function parseCurrentMd(content: string): CurrentMd {
 function serializeSection(section: AgentSection): string {
 	// **Branch**: / **Worktree**: are emitted only when non-empty, so absence
 	// round-trips to "" and the file stays clean for detached/no-repo sessions.
-	const idLines = [`**Session ID**: ${section.sessionId}`, `**Last updated**: ${section.lastUpdated}`];
+	const idLines = [
+		`**Session ID**: ${section.sessionId}`,
+		`**Last updated**: ${section.lastUpdated}`,
+	];
 	if (section.branch) idLines.push(`**Branch**: ${section.branch}`);
 	if (section.worktree) idLines.push(`**Worktree**: ${section.worktree}`);
 	return [

@@ -41,10 +41,10 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 
 | ID | Asserts | Writable at | Passes at | State | Kind |
 |----|---------|-------------|-----------|-------|------|
-| T1 | `indusk agent list` shows each active session's worktree path and branch. | Phase 0 | Phase 1 | planned | integration |
-| T2 | After a session's branch/worktree changes, the next `agent list` shows the current branch, not the register-time one. | Phase 0 | Phase 1 | planned | integration |
-| T3 | Two active sessions both in the shared trunk produce a collision warning naming them; two in separate worktrees do not. | Phase 0 | Phase 1 | planned | integration |
-| T4 | A section body containing a `**Branch**:`/`**Worktree**:` line does not create a phantom agent or spoofed field in `agent list`. | Phase 0 | Phase 1 | written | unit |
+| T1 | `indusk agent list` shows each active session's worktree path and branch. | Phase 0 | Phase 1 | passing | integration |
+| T2 | After a session's branch/worktree changes, the next `agent list` shows the current branch, not the register-time one. | Phase 0 | Phase 1 | passing | integration |
+| T3 | Two active sessions both in the shared trunk produce a collision warning naming them; two in separate worktrees do not. | Phase 0 | Phase 1 | passing | integration |
+| T4 | A section body containing a `**Branch**:`/`**Worktree**:` line does not create a phantom agent or spoofed field in `agent list`. | Phase 0 | Phase 1 | passing | unit |
 | T5 | Impl frontmatter with `worktree: none` yields a "skip" decision; absent yields "create". | Phase 2 | Phase 2 | planned | unit |
 | T6 | The tree-context helper classifies a cwd inside the trunk as "trunk" and a cwd inside a worktree as "worktree". | Phase 2 | Phase 2 | planned | unit |
 | T7 | Starting `/work` on a plan with no opt-out results in a git worktree existing for that plan before any code file is edited. | Phase 3 | Phase 3 | planned | manual |
@@ -78,33 +78,36 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 - [x] Add `**Branch**:` and `**Worktree**:` to the forbidden-marker list in `sanitizeSectionBody`
       so a section body cannot inject a fake marker line (same defense as the Session ID / Last
       updated markers).
-- [ ] `agent register` (`apps/indusk-mcp/src/bin/commands/agent.ts`): stop discarding the computed
+- [x] `agent register` (`apps/indusk-mcp/src/bin/commands/agent.ts`): stop discarding the computed
       branch — populate `section.branch` and `section.worktree` (worktree = `git rev-parse
-      --show-toplevel` of cwd, or the worktree path). Remove the `const _branch = branch; void _branch`
-      stub.
-- [ ] `formatTable`: add `WORKTREE` and `BRANCH` columns (worktree shown as basename or short path
-      to keep the table narrow).
-- [ ] `agentList` self-heartbeat: **recompute** `branch`/`worktree` from cwd before re-upserting the
-      caller's section — do not re-stamp the preserved snapshot.
-- [ ] Collision flag: in `agentList`, after computing `fresh`, group by resolved tree; if ≥2 fresh
-      sessions share a tree, print a warning line above/below the table naming the sessions. (Trunk is
-      the expected shared tree; the flag is tree-agnostic.)
+      --show-toplevel` of cwd via new `currentWorktree` helper). Removed the `const _branch = branch;
+      void _branch` stub.
+- [x] `formatTable`: added `WORKTREE` (basename cell) and `BRANCH` columns; refactored to a
+      column-list to keep width computation DRY.
+- [x] `agentList` self-heartbeat: **recomputes** `branch`/`worktree` from cwd before re-upserting the
+      caller's section (mutates the printed `fresh` entry in place too, so the caller's own row shows
+      the current tree and participates in collision detection with fresh data).
+- [x] Collision flag: `detectCollisions` groups fresh sessions by resolved worktree toplevel; ≥2 in
+      one tree prints a `⚠ collision:` warning (via `console.warn` → stderr) naming the sessions.
+      Non-git cwds (empty worktree) are excluded.
 
 #### Phase 1 Verification
-- [ ] T1 passes — integration test spawns two `agent register` calls with distinct worktrees then
-      asserts `agent list` output contains both worktree paths + branches (`pnpm turbo test --filter=indusk-mcp`).
-- [ ] T2 passes — register with branch A, change cwd branch to B, `agent list` shows B (write red in
-      Phase 0 against current no-column output).
-- [ ] T3 passes — two registers in the same tree → warning present; two in separate trees → absent.
-- [ ] T4 passes — unit test feeds a body with a `**Branch**:` line to `sanitizeSectionBody`,
-      asserts rejection (write red in Phase 0 — current sanitizer allows it).
+- [x] T1 passes — `worktree-visibility-cli.test.ts` asserts `agent list` shows WORKTREE/BRANCH
+      columns with the branch + worktree basename (`pnpm vitest run src/__tests__/worktree-visibility-cli.test.ts`).
+- [x] T2 passes — register on `main`, `git checkout -b feature-x`, `agent list` shows `feature-x`
+      and no stale `main` (recompute in heartbeat).
+- [x] T3 passes — two sessions in one tree → `⚠ collision` on stderr; S2 moved to a linked worktree → absent.
+- [x] T4 passes — `worktree-visibility.test.ts` asserts `sanitizeSectionBody` + `upsertSection` reject
+      injected `**Branch**:`/`**Worktree**:` lines. Full run: 63 agents-domain tests green; `tsc --noEmit` clean; `biome check` clean.
 
 #### Phase 1 Context
-- [ ] Update CLAUDE.md Conventions: `agent register` now records worktree/branch; `agent list` shows
+- [x] Update CLAUDE.md Conventions: `agent register` now records worktree/branch; `agent list` shows
       them recomputed-live; same-tree collision flag. Note the sanitizer's two new forbidden markers.
 
 #### Phase 1 Document
-- [ ] Update `apps/docs/src/reference/cli/agent.md` (or equivalent) with the new columns + collision flag.
+- [x] Updated `apps/docs/src/reference/cli/agent.md`: new WORKTREE/BRANCH columns in the `agent list`
+      table, recompute-live note, same-tree collision-flag section, and the `**Branch**:`/`**Worktree**:`
+      markers in the section-shape example (noted as optional/emit-when-in-repo).
 
 ### Phase 2: Decision + detection helpers
 

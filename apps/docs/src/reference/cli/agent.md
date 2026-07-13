@@ -50,15 +50,25 @@ indusk agent list
 Reads `.indusk/current.md`, partitions sections by `Last updated` vs `agents.stale_ttl_minutes` (default 60), prints the fresh partition as a compact table:
 
 ```
-SESSION   TASK            LAST UPDATED
---------  --------------  -------------------
-2c87e7b6  auth refactor   2026-06-26 21:43:50
-f0a99b21  telemetry spike 2026-06-26 22:01:15
+SESSION   TASK             WORKTREE  BRANCH            LAST UPDATED
+--------  ---------------  --------  ----------------  -------------------
+2c87e7b6  auth refactor    repo      plan/auth-phase-1 2026-06-26 21:43:50
+f0a99b21  telemetry spike  wtb       plan/telemetry    2026-06-26 22:01:15
 ```
 
-When the file is empty or every entry is stale, prints `(no agents currently registered)`.
+The `WORKTREE` column shows the basename of the session's git worktree toplevel (`—` when the cwd is not a git repo); `BRANCH` shows the current branch. When the file is empty or every entry is stale, prints `(no agents currently registered)`.
 
-**Self-heartbeat**: before printing the table, `list` refreshes the calling session's own section's `Last updated` (if a section exists for the caller). The act of asking who's around implicitly says "I am still here." Long-running sessions that periodically run `/catchup` (which calls `list`) stay visible indefinitely without manual TTL tuning. Sessions that go truly idle (no `agent` CLI activity for > TTL) age out.
+**Worktree/branch are recomputed live.** `register` seeds a session's worktree + branch from its cwd, but the `list` self-heartbeat **recomputes** them from the caller's current cwd each time — so the board reflects where an agent is *now*, not where it registered. An agent that moves from the trunk into a worktree mid-session shows its new worktree/branch on the next `list`.
+
+**Same-tree collision flag.** When two or more fresh sessions resolve to the same worktree toplevel — the real case being two agents both editing the shared trunk — `list` prints a warning to stderr before the table:
+
+```
+⚠ collision: 2 sessions share worktree /path/to/repo (2c87e7b6, f0a99b21)
+```
+
+Sessions in separate worktrees do not collide. Non-git cwds (no resolvable worktree) are excluded from the check. The flag is visibility, not enforcement — it surfaces the collision class that worktree-per-plan is designed to prevent.
+
+**Self-heartbeat**: before printing the table, `list` refreshes the calling session's own section's `Last updated` (if a section exists for the caller) — and, as above, its worktree/branch. The act of asking who's around implicitly says "I am still here." Long-running sessions that periodically run `/catchup` (which calls `list`) stay visible indefinitely without manual TTL tuning. Sessions that go truly idle (no `agent` CLI activity for > TTL) age out.
 
 ### `agent prune`
 
@@ -102,6 +112,8 @@ Each section inside `.indusk/current.md` looks like:
 
 **Session ID**: 2c87e7b6-702a-4dcd-876f-a31820e0df3e
 **Last updated**: 2026-06-26T21:43:50.123Z
+**Branch**: plan/auth-phase-1
+**Worktree**: /Users/dev/code/myproject-workbench/repo
 
 ### In Flight
 
@@ -116,7 +128,7 @@ jwt vs session cookies?
 apps/backend/src/auth/middleware.ts:42
 ```
 
-The heading carries the short 8-char session ID for human legibility; the `**Session ID**:` line carries the full UUID and drives unambiguous matching. The three `### Subsection` bodies hold the operational state — agents write these via [`mcp__indusk__update_current_section`](/reference/tools/indusk-mcp#agent-tools).
+The heading carries the short 8-char session ID for human legibility; the `**Session ID**:` line carries the full UUID and drives unambiguous matching. The `**Branch**:` / `**Worktree**:` lines are optional — emitted only when the session's cwd resolves inside a git repo, and omitted (round-tripping to empty) otherwise. The three `### Subsection` bodies hold the operational state — agents write these via [`mcp__indusk__update_current_section`](/reference/tools/indusk-mcp#agent-tools).
 
 ## Concurrency
 
