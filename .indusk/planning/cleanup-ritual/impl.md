@@ -1,7 +1,7 @@
 ---
 title: "Cleanup Ritual"
 date: 2026-07-06
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -70,6 +70,10 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 | T19 | In a local repo with no `origin` remote, `listOversizedChangedFiles` with the DEFAULT baseRef still flags a committed over-cap file (does not silently return empty) | Phase 0 | Phase 6 | vitest integration (git fixture) | passing |
 | T20 | `checkRetrospectiveReadiness` reports `falsificationOk: true` for a plan with a terminal `### Phase N: Falsification` phase (no legacy log, not skipped) — the default falsify flow | Phase 0 | Phase 6 | vitest unit | passing |
 | T21 | `ensureCleanupConfig` preserves a user's `cleanup` block that has `scopes` but no top-level `max_file_loc` (never clobbers scopes) | Phase 0 | Phase 6 | vitest unit | passing |
+| T22 | On a non-git project root (workbench shape), `listOversizedChangedFiles` throws a clear not-a-git-repo error naming the recovery — it does NOT silently return an empty list, and no raw git usage/stderr spam reaches the caller's terminal | Phase 0 | Phase 7 | vitest integration | planned |
+| T23 | A `### Phase N: Cleanup` heading with ZERO checklist items is NOT terminal — an empty phase cannot vacuously satisfy the retrospective gate | Phase 0 | Phase 7 | vitest unit | planned |
+| T24 | An indented (nested) unchecked `- [ ]` item inside a Cleanup phase keeps the phase non-terminal — column-0 anchoring doesn't skip nested items | Phase 0 | Phase 7 | vitest unit | planned |
+| T25 | Every package-owned installed skill (`.claude/skills/{name}/SKILL.md`) is byte-identical to its source (`apps/indusk-mcp/skills/{name}.md`) — forgotten syncs surface at test time, not when a stale skill loads | Phase 0 | Phase 7 | vitest structural | planned |
 
 ### Deferred Verification
 
@@ -222,6 +226,28 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 
 #### Phase 6 Document
 - [x] Update the changelog `[Unreleased]` cleanup entry to note the Phase 6 correctness fixes (phase-detection anchoring, local base-ref resolution, falsification-phase-aware gate, non-clobbering config merge).
+
+### Phase 7: Falsification — round 2: integration seams (workbench, gate edge cases, skill sync, doc drift)
+
+**Goal**: verify whether the ritual holds at its integration seams — the surfaces round 1 didn't hunt. Five findings confirmed by live probes: silent-empty on non-git roots (the workbench shape — same statePath/gitPath lineage as the 1.31.7/1.31.12 eval-rail bugs), a vacuously-terminal empty Cleanup phase, nested unchecked items invisible to the terminality check, four stale installed skills (including retrospective — meaning the cleanup gate this plan built would NOT be enforced by the `/retrospective` about to run on it), and the guide still documenting pre-H1 substring detection.
+
+- [ ] **F1** — `lib/cleanup/oversized.ts`: when `projectRoot` is not a git repo (`git rev-parse --show-toplevel` fails), THROW a clear error naming the recovery ("run against the git repo/worktree — in workbench mode pass the wrapped repo path, not the workbench root") instead of silently returning `[]`. Also silence git stderr in the `git()` helper (`stdio: ["ignore", "pipe", "ignore"]`) — the probe showed raw `git diff` usage spam leaking to the caller's terminal. Update `cleanup.md`'s step 1 to name the workbench caveat. (Also fold in: exclude `.indusk/` entirely in `isGeneratedOrVendored` — planning impl.md files grow past 400 on long plans and are records, not decomposition targets.)
+- [ ] **F2** — `lib/cleanup/gate.ts` `isRitualPhaseTerminal`: require at least one checklist item in the ritual phase — an empty `### Phase N: Cleanup` heading must not be vacuously terminal (rubber-stamp vector: author an empty phase, gate passes).
+- [ ] **F3** — same function: match unchecked items with leading whitespace (`/^\s*-\s+\[ \]/`) so a nested unchecked sub-item keeps the phase non-terminal.
+- [ ] **F4** — resync the four stale installed skills (`retrospective`, `work`, `planner`, `falsify`) from package sources to `.claude/skills/*/SKILL.md` (dusk edits sources but has no global `indusk update` to sync; the stale retrospective copy still carries the falsification-only Step 0, so the cleanup gate would silently not be enforced). Add the structural sync test (T25) so a forgotten sync fails at test time.
+- [ ] **F6** — fix `apps/docs/src/guide/cleanup-ritual.md` line ~111: the phase title must START with "Cleanup" (post-H1), not "contain" it; scan `decisions/cleanup-ritual.md` for the same drift.
+
+#### Phase 7 Verification
+- [ ] T22: non-git root throws with recovery message; no stderr spam (was: silent `[]` + git usage dump).
+- [ ] T23: empty Cleanup phase is not terminal (was: vacuously true).
+- [ ] T24: nested unchecked item blocks terminality (was: invisible).
+- [ ] T25: installed skills byte-match package sources (was: 4 of 5 stale).
+
+#### Phase 7 Context
+- [ ] Add to CLAUDE.md Known Gotchas: the cleanup lib requires a git repo root and throws on workbench roots (pass the wrapped repo path); ritual-phase terminality requires ≥1 item and sees nested unchecked items; dusk's installed `.claude/skills/` copies must be resynced from `apps/indusk-mcp/skills/` after editing sources (structural test now pins this).
+
+#### Phase 7 Document
+- [ ] Fix the guide's phase-detection wording (F6 is itself the doc item); note the workbench caveat in the guide's "The ritual" step 1.
 
 ## Files Affected
 
