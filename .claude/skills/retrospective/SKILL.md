@@ -28,11 +28,13 @@ The retrospective skill replaces the freeform "write a retrospective" step with 
 
 Work through these steps in order. Each step is blocking — do not skip ahead.
 
-### Step 0: Falsification Gate
+### Step 0: Ritual Gate — Falsification + Cleanup
 
 **This gate blocks everything below. Do not proceed to Step 1 until it passes.**
 
-Before writing a single word of the retrospective, confirm that the plan has completed the falsification ritual — either via the new phase-authoring flow (1.27.4+) that leaves a Falsification Phase in impl.md, via the legacy sidecar log, or via an explicit skip-reason.
+Before writing a single word of the retrospective, confirm that the plan has completed **both** closing rituals — falsification **and** cleanup. Each is satisfied either via its phase-authoring flow (a Falsification Phase / a `### Phase N: Cleanup` phase, both terminal in impl.md), via a legacy sidecar log (falsification only), or via an explicit skip-reason frontmatter pair. **Both must pass.** The composed check is `checkRetrospectiveReadiness(planRoot, implContent)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`) — it returns `{ passes, missing }`, where `missing` names any unsatisfied ritual.
+
+**Falsification** is satisfied by any of the three conditions below.
 
 Check the gate by reading three sources in this order:
 
@@ -40,9 +42,16 @@ Check the gate by reading three sources in this order:
 2. **Legacy completion (pre-1.27.4 flow):** Does `.indusk/planning/{plan-name}/falsification.md` exist with a terminator entry? Use `isFalsificationComplete(planRoot)` from `apps/indusk-mcp/src/lib/falsification/log.js` (invoke via `tsx` or an MCP tool wrapper). Plans authored under the old flow still pass this way; the library is kept unchanged for backwards compatibility.
 3. **Skip:** Does the impl's frontmatter contain BOTH `falsification: skipped` AND `falsification_reason: "{non-empty text}"`? Use `isFalsificationSkipped(implContent)`.
 
-The gate passes if ANY of the three conditions holds. If none holds, refuse to run the retrospective and surface this message to the user:
+The **falsification** requirement passes if ANY of the three conditions above holds.
 
-> **Retrospective blocked: falsification gate not satisfied for `{plan-name}`.**
+**Cleanup** must ALSO pass, by either of:
+
+- **Complete:** the plan's impl.md has a terminal `### Phase N: Cleanup` phase — `isCleanupComplete(planRoot)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`).
+- **Skip:** the impl's frontmatter contains BOTH `cleanup: skipped` AND `cleanup_reason: "{non-empty text}"` — `isCleanupSkipped(implContent)`.
+
+Cleanup runs AFTER falsification: `/work` → `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Evaluate both rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when BOTH requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:
+
+> **Retrospective blocked: ritual gate not satisfied for `{plan-name}` (missing: `{the `missing` list — falsification and/or cleanup}`).**
 >
 > Before closing out a plan, run `/falsify {plan-name}` to exercise the bounty-hunting ritual — investigate the code, form specific hypotheses about what should be broken, and author a Falsification Phase in the plan's impl.md capturing the hypothesis tests + fix items. `/work` then picks up the phase and closes it normally; once all impl phases are terminal, this gate passes automatically.
 >
@@ -53,7 +62,14 @@ The gate passes if ANY of the three conditions holds. If none holds, refuse to r
 > falsification_reason: "why skipping is acceptable for this specific plan"
 > ```
 >
-> The skip-reason is recorded in the archive and surfaced in retrospectives. Use sparingly — typically only for trivial typo-fix plans where the ritual cost exceeds the discipline value.
+> If cleanup is the missing ritual, run `/cleanup {plan-name}` to author a Cleanup Phase (decomposition recommendations `/work` then executes), or skip it intentionally:
+>
+> ```yaml
+> cleanup: skipped
+> cleanup_reason: "why skipping is acceptable for this specific plan"
+> ```
+>
+> The skip-reasons are recorded in the archive and surfaced in retrospectives. Use sparingly — typically only for trivial typo-fix plans where the ritual cost exceeds the discipline value.
 
 Do not proceed to Step 1 until the gate passes. This is structural enforcement of the discipline documented in the [Falsification Ritual guide](apps/indusk-docs/src/guide/falsification-ritual.md) — happy-path authoring produces happy-path tests, and the ritual is the mechanism for surfacing the gaps the author couldn't think of.
 

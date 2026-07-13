@@ -149,7 +149,8 @@ After completing all steps, present a brief summary to the user:
 **Caught up.**
 - Session: registered as <session-id-short> on <branch>
 - Project (shared) state: [content from `.indusk/current.md`'s ## Project (shared) section, or "none"]
-- Other agents currently working: [list from `indusk agent list`, with each agent's task — or "none"]
+- Other agents currently working: [list from `indusk agent list`, with each agent's task, worktree, and branch — or "none"]
+- Worktree collision: [if `indusk agent list` prints a `⚠ collision` warning — two or more live sessions sharing one worktree (typically the shared trunk) — surface it prominently; this is the exact class worktree-per-plan prevents]
 - Notable in-flight from other agents: [if anyone's section is on something that might affect this session, surface it]
 - Lessons: N loaded
 - Infrastructure: [healthy / issues]
@@ -175,4 +176,4 @@ Ready to pick up. What would you like to do?
 - Do NOT start coding before completing onboarding. The lessons and context exist because of past failures.
 - If CLAUDE.md seems outdated, flag it to the user — it may need a `/context` update.
 - If a plan's impl has unchecked items from a previous session, that's where `/work` picks up. Don't re-do completed work.
-- If you see other agents in `indusk agent list` working on something that overlaps with what the user wants you to do, surface that explicitly before proceeding. The bulletin is visibility, not coordination — the working agent owns the "avoid stepping on each other" judgment.
+- If you see other agents in `indusk agent list` working on something that overlaps with what the user wants you to do, surface that explicitly before proceeding. The bulletin is visibility, not coordination — the working agent owns the "avoid stepping on each other" judgment. `agent list` now shows each session's **worktree** and **branch**, and prints a `⚠ collision` line to stderr when two live sessions share a worktree — read both when judging overlap.
