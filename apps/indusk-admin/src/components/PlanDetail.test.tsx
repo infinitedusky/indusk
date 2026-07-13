@@ -1,8 +1,17 @@
 import type { Trajectory } from "@infinitedusky/indusk-mcp/trajectory/parser";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
 import { PlanDetail } from "./PlanDetail";
+
+function stubClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", {
+    value: { writeText },
+    configurable: true,
+  });
+  return writeText;
+}
 
 // CollapsibleSection persists state to localStorage (1.27.7+). Clear between
 // tests so earlier test toggles don't bleed into later tests' initial state.
@@ -89,6 +98,48 @@ function mockPlan(overrides: Partial<Plan> = {}): Plan {
     ...overrides,
   };
 }
+
+describe("PlanDetail — copy-as-markdown affordances", () => {
+  it("plan header exposes a copy-whole-plan button that copies planMarkdown output", async () => {
+    const writeText = stubClipboard();
+    const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    const copyPlanButton = container.querySelector(
+      '[data-testid="copy-plan-button"]',
+    ) as HTMLButtonElement;
+    expect(copyPlanButton).not.toBeNull();
+    copyPlanButton.click();
+
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledTimes(1);
+    });
+    const copied = writeText.mock.calls[0][0] as string;
+    expect(copied.startsWith("# alpha-feature\n\nStatus: in-progress")).toBe(
+      true,
+    );
+    expect(copied).toContain("## Brief");
+    expect(copied).toContain("## Phase 1: Dropdown shell");
+  });
+
+  it("the Brief section's copy button copies just that section, heading included", async () => {
+    const writeText = stubClipboard();
+    const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    const brief = container.querySelector('[data-testid="brief-section"]');
+    const copyButton = brief?.querySelector(
+      '[data-testid="copy-button"]',
+    ) as HTMLButtonElement;
+    expect(copyButton).not.toBeNull();
+    copyButton.click();
+
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledTimes(1);
+    });
+    const copied = writeText.mock.calls[0][0] as string;
+    expect(copied.startsWith("## Brief")).toBe(true);
+    expect(copied).toContain("Customers can't sort");
+    // Only the Brief section's text — not the whole plan.
+    expect(copied).not.toContain("## Phase 1");
+  });
+});
 
 describe("PlanDetail — main pane renders plan content (T5)", () => {
   it("T5 — rendering PlanDetail with a Plan produces a populated detail container with the plan's name", async () => {

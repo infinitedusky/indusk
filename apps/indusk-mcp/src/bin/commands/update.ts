@@ -528,12 +528,12 @@ export async function update(projectRoot: string): Promise<void> {
 	// is safe to remove from `.indusk/config.json`. The file itself is
 	// NOT modified — removing the field is the user's call.
 	console.info("\n[SCM]\n");
-	const { readConfig, writeConfig } = await import("../../lib/config.js");
+	const { readConfig, writeConfig, ensureCleanupConfig, getCleanupConfig } = await import(
+		"../../lib/config.js"
+	);
 	const scmConfig = readConfig(projectRoot);
 	if (scmConfig?.scm) {
-		process.stderr.write(
-			"scm field no longer used; safe to remove from .indusk/config.json\n",
-		);
+		process.stderr.write("scm field no longer used; safe to remove from .indusk/config.json\n");
 		console.info(`  nudge: scm: "${scmConfig.scm}" (no longer used; safe to remove)`);
 	} else {
 		console.info("  ok: (no scm field; git is the only SCM as of 1.31.0)");
@@ -598,6 +598,17 @@ export async function update(projectRoot: string): Promise<void> {
 		console.info("  add: agents.stale_ttl_minutes: 60 to .indusk/config.json");
 	} else if (typeof _maHasAgents === "number") {
 		console.info(`  ok: agents.stale_ttl_minutes: ${_maHasAgents} (already set)`);
+	}
+
+	// [Cleanup ritual] scaffold the cleanup config block idempotently — the
+	// /cleanup skill reads it to decide which changed files to scrutinize.
+	const _clStatus = ensureCleanupConfig(projectRoot);
+	if (_clStatus === "added") {
+		console.info("  add: cleanup.max_file_loc: 400 to .indusk/config.json");
+	} else if (_clStatus === "already-set") {
+		console.info(
+			`  ok: cleanup.max_file_loc: ${getCleanupConfig(projectRoot).max_file_loc} (already set)`,
+		);
 	}
 
 	// 8. Ensure ignores: in full mode, refresh tracked .gitignore. In local

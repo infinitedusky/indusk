@@ -11,7 +11,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolveStateAndGitPaths } from "./_hook-paths.js";
 
 // Read hook input from stdin
 let input = "";
@@ -121,27 +121,12 @@ function detectWorkflow(content) {
 }
 
 /**
- * Find the project root by walking up from a starting directory looking for
- * a .indusk/ or .claude/ directory. Falls back to startDir if none found.
- */
-function findProjectRoot(startDir) {
-	let dir = startDir;
-	for (let i = 0; i < 10; i++) {
-		if (existsSync(`${dir}/.indusk`) || existsSync(`${dir}/.claude`)) return dir;
-		const parent = resolve(dir, "..");
-		if (parent === dir) break;
-		dir = parent;
-	}
-	return startDir;
-}
-
-/**
  * Whether the OTel gate should fire for this project. Reads .indusk/config.json
  * and checks otel.role. Returns true if missing/unset/"service", false for
  * library/tool/none. Mirrors shouldEmitOtelGate() in apps/indusk-mcp/src/lib/config.ts.
  */
-function shouldEmitOtelGate(projectRoot) {
-	const configPath = `${projectRoot}/.indusk/config.json`;
+function shouldEmitOtelGate(statePath) {
+	const configPath = `${statePath}/.indusk/config.json`;
 	if (!existsSync(configPath)) return true;
 	try {
 		const config = JSON.parse(readFileSync(configPath, "utf-8"));
@@ -152,8 +137,10 @@ function shouldEmitOtelGate(projectRoot) {
 	}
 }
 
-const projectRoot = findProjectRoot(event.cwd ?? process.cwd());
-const otelGateEnabled = shouldEmitOtelGate(projectRoot);
+// Workbench-aware state resolution (1.31.7). statePath is where .indusk/ lives.
+const { statePath: resolvedStatePath } = resolveStateAndGitPaths(event.cwd ?? process.cwd());
+const statePath = resolvedStatePath ?? event.cwd ?? process.cwd();
+const otelGateEnabled = shouldEmitOtelGate(statePath);
 
 // Which gate types are required per workflow.
 // OTel is filtered out below when the project opts out via otel.role.

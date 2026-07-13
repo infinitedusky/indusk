@@ -205,7 +205,8 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
     - Summarize what was done
     - If this plan included an ADR, confirm CLAUDE.md's Key Decisions was updated
     - **Run `/falsify {plan}` next, before `/retrospective`.** The falsification ritual is the bridge between "impl done" and "plan archived." It drives the same working agent through a goal-flipped bounty hunt — investigate the code, form a specific hypothesis about what should be broken, write the test that confirms it. The ritual may surface gaps worth addressing, which can reopen the impl (status flips back to `in-progress`) for a fix-in-scope phase, or spawn a new plan, or be recorded as a finding. Only after `/falsify` terminates cleanly — or has been explicitly skipped via `falsification: skipped` + `falsification_reason: "..."` in the impl frontmatter — is the plan ready for `/retrospective`. See the [Falsification Ritual guide](apps/indusk-docs/src/guide/falsification-ritual.md) and `.indusk/planning/archive/falsification-ritual/adr.md`.
-    - Let the user know: "Impl complete. Run `/falsify {plan}` next. If it terminates cleanly, then `/retrospective {plan}` will close out the plan."
+    - **Then run `/cleanup {plan}`, before `/retrospective`.** The cleanup ritual is falsification's twin: it reviews the plan's changed files for decomposition, applies the enabled domain extensions' best practices (nextjs/react/…), and authors a `### Phase N: Cleanup` phase that `/work` executes. Runs AFTER falsification — refactor under the green coverage falsification hardened. Skip via `cleanup: skipped` + `cleanup_reason` for trivial plans. `/retrospective` Step 0 blocks without a terminal Cleanup Phase or the skip. See the cleanup skill.
+    - Let the user know: "Impl complete. Run `/falsify {plan}` next, then `/cleanup {plan}` (decomposition review); then `/retrospective {plan}` closes out the plan."
 
 ## Teach Mode
 
@@ -273,6 +274,18 @@ The working agent does not write the Graphiti episode directly. The eval agent r
 **What to include in the `note`:** enough for the eval agent to reconstruct the lesson and classify its scope. Example: `pnpm-ce: always use pnpm ce, not npx — skill doc specifies pnpm and mixing causes cache drift`. The eval agent has the full transcript, so concision over completeness is fine.
 
 Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail the work item or the `context learn` recording (which is the canonical, local copy of the lesson).
+
+## Worktree Kickoff
+
+Before writing any code for a plan (i.e. at the start of Phase 1, at the research→impl boundary), decide whether this plan runs in its own git worktree. **Worktree-per-plan is the default** — one plan → one branch → one worktree → PR → merge-and-delete (see the `worktree-visibility` ADR). It gives no-overlap-by-construction for concurrent sessions.
+
+1. **Read the impl frontmatter.** If it contains `worktree: none`, skip this section — the author has explicitly opted this plan into running in the current tree.
+2. **Otherwise, check where you are.** Compare `git rev-parse --show-toplevel` against `git worktree list` — are you in the shared trunk or already in a dedicated worktree? If you're already in a worktree for this plan, you're set.
+3. **If you're in the trunk, nudge before editing code:**
+   > "This plan defaults to running in its own worktree, and you're in the shared trunk. Want me to `indusk worktree create {plan-slug}` first? (Or set `worktree: none` in the impl frontmatter to run here deliberately.)"
+4. **This is a nudge, not a gate.** If the user proceeds in the trunk anyway, continue — but note that `indusk agent list` / `/catchup` will flag a same-trunk collision if another session is also there.
+
+The deterministic logic behind this — `resolveWorktreeDecision(implContent)` (frontmatter → `create`/`skip`) and `detectTreeContext(cwd)` (trunk vs worktree) — lives in `apps/indusk-mcp/src/lib/worktree/decision.ts`. The worktree, once created, is bound to the plan for the life of its impl; `indusk worktree create` also auto-provisions the worktree's env.
 
 ## Commits
 

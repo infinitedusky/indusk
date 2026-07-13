@@ -3,12 +3,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	parseCurrentMd,
-	serializeCurrentMd,
-	upsertSection,
-} from "../lib/agents/current-md.js";
 import type { AgentSection } from "../lib/agents/current-md.js";
+import { parseCurrentMd, serializeCurrentMd, upsertSection } from "../lib/agents/current-md.js";
 
 /**
  * T6 from the handoff-multi-agent-section-shape trajectory:
@@ -39,6 +35,8 @@ function makeSection(sessionId: string, task: string, ts: string): AgentSection 
 		inFlight: `${task} in-flight body`,
 		openQuestions: `${task} open questions`,
 		cursor: `${task} cursor`,
+		branch: "",
+		worktree: "",
 	};
 }
 
@@ -120,9 +118,7 @@ describe.skipIf(SHOULD_SKIP)(
 			const finalContent = readFileSync(currentPath, "utf-8");
 			const finalDoc = parseCurrentMd(finalContent);
 			const sessionIds = finalDoc.sections.map((s) => s.sessionId).sort();
-			expect(sessionIds).toEqual(
-				[sectionA.sessionId, sectionB.sessionId].sort(),
-			);
+			expect(sessionIds).toEqual([sectionA.sessionId, sectionB.sessionId].sort());
 
 			// Confirm no unresolved conflict markers
 			expect(finalContent).not.toMatch(/^<<<<<<</m);

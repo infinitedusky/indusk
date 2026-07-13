@@ -102,3 +102,32 @@
 {"id":"h-20260628-009","processedAt":"2026-06-28T05:06:58.666Z","action":"wrote-episode","detail":"prompt-instructions-are-code"}
 {"id":"h-20260628-010","processedAt":"2026-06-28T05:07:18.621Z","action":"wrote-episode","detail":"runtime-success-counters-required-exit-criterion"}
 {"id":"h-20260628-011","processedAt":"2026-06-28T05:07:37.161Z","action":"wrote-episode","detail":"inspect-session-jsonl-early"}
+{"id":"h-20260628-012","processedAt":"2026-06-28T10:59:46.332Z","action":"wrote-episode","detail":"posttooluse-hook-exit-code-check"}
+{"id":"h-20260628-013","processedAt":"2026-06-28T11:03:14.637Z","action":"wrote-episode","detail":"falsification-compounding-rounds"}
+{"id":"h-20260628-014","processedAt":"2026-06-28T11:03:28.376Z","action":"wrote-episode","detail":"mcp-cli-surfaces-independence"}
+{"id":"h-20260628-015","processedAt":"2026-06-28T11:03:45.026Z","action":"wrote-episode","detail":"dual-scm-model-hindsight"}
+{"id":"h-20260628-016","processedAt":"2026-06-28T11:03:59.230Z","action":"wrote-episode","detail":"persistent-evaluator-tdz-trap"}
+{"id":"h-20260628-017","processedAt":"2026-06-28T17:53:07.762Z","action":"wrote-episode","detail":"workbench-mode-rail-integrity-brief-accepted"}
+{"id":"h-20260629-001","processedAt":"2026-06-30T05:54:55.172Z","action":"wrote-episode","detail":"context-budget-brief-accepted"}
+{"id":"h-20260630-001","processedAt":"2026-06-30T21:37:28.265Z","action":"wrote-episode","detail":"workbench-setup-command-brief-accepted"}
+{"id":"h-20260630-002","processedAt":"2026-06-30T21:37:51.976Z","action":"wrote-episode","detail":"workbench-setup-command-test-plan-accepted"}
+{"id":"h-20260701-001","processedAt":"2026-07-04T20:19:16.495Z","action":"wrote-episode","detail":"planner-hotfix-mode-brief-accepted"}
+{"id":"h-20260701-002","processedAt":"2026-07-04T20:19:29.899Z","action":"wrote-episode","detail":"planner-hotfix-mode-test-plan-accepted"}
+{"id":"h-20260701-003","processedAt":"2026-07-04T20:19:44.250Z","action":"wrote-episode","detail":"planner-hotfix-mode-adr-accepted"}
+{"id":"h-20260706-001","processedAt":"2026-07-06T18:45:52.703Z","action":"wrote-episode","detail":"stale-indusk-docs-path-hotfix-shipped"}
+{"id":"h-20260706-002","processedAt":"2026-07-06T18:52:12.776Z","action":"wrote-episode","detail":"admin-ui-local-domain-brief-accepted"}
+{"id":"h-20260706-003","processedAt":"2026-07-06T18:52:24.855Z","action":"wrote-episode","detail":"cleanup-phase-gate-brief-accepted"}
+{"id":"h-20260706-004","processedAt":"2026-07-06T19:41:07.643Z","action":"wrote-episode","detail":"workbench-setup-falsification-lesson"}
+{"id":"h-20260706-005","processedAt":"2026-07-06T19:41:20.785Z","action":"wrote-episode","detail":"delegation-beats-extraction-lesson"}
+{"id":"h-20260706-006","processedAt":"2026-07-06T19:41:37.159Z","action":"wrote-episode","detail":"workbench-setup-scope-edit-gotcha"}
+{"id":"h-20260706-007","processedAt":"2026-07-06T19:41:40.544Z","action":"skipped","detail":"trajectory audit clean — operational note, not a lesson"}
+{"id":"h-20260706-008","processedAt":"2026-07-09T01:06:57.596Z","action":"wrote-episode","detail":"stale-indusk-docs-path-publish-verification"}
+{"id":"h-20260706-009","processedAt":"2026-07-09T01:07:03.898Z","action":"wrote-episode","detail":"trajectory-no-tests-phrase-is-fixed-vocabulary"}
+{"id":"h-20260706-010","processedAt":"2026-07-09T01:07:11.526Z","action":"wrote-episode","detail":"grep-broadest-scope-first-when-fixing-references"}
+{"id":"h-20260706-011","processedAt":"2026-07-09T01:07:12.477Z","action":"skipped","detail":"audit clean note — mitigation was concrete, no vagueness warning"}
+{"id":"h-20260706-012","processedAt":"2026-07-09T01:07:24.775Z","action":"wrote-episode","detail":"cleanup-ritual-shape-decision"}
+{"id":"h-20260706-013","processedAt":"2026-07-09T01:07:29.054Z","action":"wrote-episode","detail":"cleanup-ritual-test-plan-accepted"}
+{"id":"h-20260706-014","processedAt":"2026-07-09T01:07:29.718Z","action":"skipped","detail":"audit clean note — deferred mitigation worked as intended"}
+{"id":"h-20260706-015","processedAt":"2026-07-09T01:07:38.038Z","action":"wrote-episode","detail":"new-enum-value-changes-regex-anchoring-risk-calculus"}
+{"id":"h-20260706-016","processedAt":"2026-07-09T01:07:45.630Z","action":"wrote-episode","detail":"additive-recovery-over-rewrite-under-git-collision"}
+{"id":"h-20260707-001","processedAt":"2026-07-09T01:07:54.019Z","action":"wrote-episode","detail":"cleanup-ritual-adr-accepted"}

@@ -1,0 +1,146 @@
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { getCleanupConfig, resolveCapForPath } from "../config.js";
+
+/** A changed file whose line count exceeds its resolved cleanup cap. */
+export interface OversizedFile {
+	/** Repo-relative path. */
+	path: string;
+	/** Line count at HEAD/working tree. */
+	loc: number;
+	/** The cap that applied (scope override or global default). */
+	cap: number;
+	/** The matching scope's `include` glob, or undefined for the global default. */
+	scope?: string;
+	/** True when the file did not exist at the merge base (a new file). */
+	isNew: boolean;
+}
+
+/** Run git; swallow errors to an empty string (callers tolerate absence).
+ * stderr is ignored — execFileSync forwards child stderr to the parent's
+ * terminal by default, which leaked raw `git diff` usage spam (round-2 F1). */
+function git(projectRoot: string, args: string[]): string {
+	try {
+		return execFileSync("git", args, {
+			cwd: projectRoot,
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
+	} catch {
+		return "";
+	}
+}
+
+/**
+ * Resolve a merge base that actually exists. Tries the requested `baseRef`, then
+ * common local bases, so the default keeps working on a local repo with no
+ * fetched `origin` (cleanup-ritual H2 — `origin/main` alone silently yielded an
+ * empty diff, hiding all committed changes). Falls back to the repo's root
+ * commit so a diff still resolves.
+ */
+function resolveMergeBase(projectRoot: string, baseRef: string): string {
+	for (const c of [baseRef, "origin/main", "main", "origin/master", "master"]) {
+		const mb = git(projectRoot, ["merge-base", c, "HEAD"]);
+		if (mb) return mb;
+	}
+	const root = git(projectRoot, ["rev-list", "--max-parents=0", "HEAD"]).split("\n")[0];
+	return root || "HEAD";
+}
+
+/** True iff `<ref>:<rel>` resolves — used to tell new files from modified. */
+function fileExistsAtRef(projectRoot: string, ref: string, rel: string): boolean {
+	try {
+		execFileSync("git", ["cat-file", "-e", `${ref}:${rel}`], { cwd: projectRoot, stdio: "ignore" });
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/** Count lines, ignoring a single trailing newline. */
+function countLoc(content: string): number {
+	if (content === "") return 0;
+	const lines = content.split("\n");
+	if (lines[lines.length - 1] === "") lines.pop();
+	return lines.length;
+}
+
+// Generated / vendored files are never decomposition targets — no one splits a
+// lockfile, a log, or a bundled dist file. Excluded before the cap check so the
+// ritual's output is signal, not noise. (Surfaced by the cleanup-ritual dogfood,
+// which flagged pnpm-lock.yaml at 7.7k LOC and the semantic-graph log at 25k.)
+const EXCLUDE_DIRS = new Set(["node_modules", "dist", "build", ".next", "coverage", ".turbo"]);
+const EXCLUDE_BASENAMES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.lock"]);
+
+function isGeneratedOrVendored(rel: string): boolean {
+	const parts = rel.split("/");
+	const base = parts[parts.length - 1];
+	if (EXCLUDE_BASENAMES.has(base)) return true;
+	if (base.endsWith(".lock") || base.endsWith(".log")) return true;
+	if (parts.some((p) => EXCLUDE_DIRS.has(p))) return true;
+	// .indusk/ holds planning docs, logs, and state — records, not decomposition
+	// targets. impl.md files legitimately grow past 400 lines on long plans.
+	if (rel.startsWith(".indusk/")) return true;
+	return false;
+}
+
+/**
+ * List the changed files (vs the merge base with `baseRef`) whose line count
+ * exceeds their resolved cleanup cap. This is what the `/cleanup` ritual
+ * scrutinizes at plan close — **the cap is attention-focus, never a blocking
+ * gate.**
+ *
+ * Changed-file computation mirrors the worktree preflight: the sorted union of
+ * committed (`<mergeBase>..HEAD`), staged (`--cached`), and unstaged diffs,
+ * filtered to files that still exist on disk. `baseRef` defaults to
+ * `origin/main`; when merge-base resolution fails (shallow clone, unrelated
+ * history) it falls back to `baseRef` directly.
+ */
+export function listOversizedChangedFiles(
+	projectRoot: string,
+	baseRef = "origin/main",
+): OversizedFile[] {
+	// Fail loudly on a non-git root. A workbench root (where .indusk/ lives) is
+	// deliberately NOT a git repo — silently returning [] there would make the
+	// ritual report "nothing to clean" on every workbench project (round-2 F1,
+	// the same statePath/gitPath split the eval-rail hit in 1.31.7/1.31.12).
+	if (!git(projectRoot, ["rev-parse", "--show-toplevel"])) {
+		throw new Error(
+			`listOversizedChangedFiles: ${projectRoot} is not a git repo. ` +
+				"In workbench mode pass the wrapped repo/worktree path (where the code lives), " +
+				"not the workbench root (where .indusk/ lives).",
+		);
+	}
+	const mergeBase = resolveMergeBase(projectRoot, baseRef);
+
+	const names = new Set<string>();
+	const ranges: string[][] = [[`${mergeBase}..HEAD`], ["--cached"], []];
+	for (const range of ranges) {
+		const out = git(projectRoot, ["diff", "--name-only", ...range]);
+		for (const line of out.split("\n")) {
+			const f = line.trim();
+			if (f) names.add(f);
+		}
+	}
+
+	const cfg = getCleanupConfig(projectRoot);
+	const result: OversizedFile[] = [];
+	for (const rel of [...names].sort()) {
+		const abs = join(projectRoot, rel);
+		if (!existsSync(abs)) continue; // deleted or renamed away
+		if (isGeneratedOrVendored(rel)) continue; // lockfiles, logs, dist — never decomposition targets
+		const loc = countLoc(readFileSync(abs, "utf-8"));
+		const { cap, scope } = resolveCapForPath(rel, cfg);
+		if (loc > cap) {
+			result.push({
+				path: rel,
+				loc,
+				cap,
+				scope,
+				isNew: !fileExistsAtRef(projectRoot, mergeBase, rel),
+			});
+		}
+	}
+	return result;
+}

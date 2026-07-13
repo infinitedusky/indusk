@@ -14,24 +14,13 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createConnection } from "node:net";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
+import { resolveStateAndGitPaths } from "./_hook-paths.js";
 
 const input = JSON.parse(readFileSync("/dev/stdin", "utf-8"));
 const toolInput = input.tool_input ?? {};
 const filePath = toolInput.file_path ?? "";
 const newString = toolInput.new_string ?? "";
-
-// Find project root by looking for .claude/ directory
-function findProjectRoot() {
-	let dir = process.cwd();
-	for (let i = 0; i < 10; i++) {
-		if (existsSync(join(dir, ".claude"))) return dir;
-		const parent = resolve(dir, "..");
-		if (parent === dir) break;
-		dir = parent;
-	}
-	return process.cwd();
-}
 
 /** TCP check: can we connect to host:port? */
 function checkTcp(host, port, timeoutMs = 3000) {
@@ -50,8 +39,12 @@ function checkTcp(host, port, timeoutMs = 3000) {
 	});
 }
 
-const projectRoot = findProjectRoot();
-const handoffPath = join(projectRoot, ".claude", "handoff.md");
+// Workbench-aware state resolution (1.31.7). In single-repo mode this is
+// the project root; in workbench mode it's the workbench root (where
+// .claude/ and .indusk/ live, shared across worktrees).
+const { statePath: resolvedStatePath } = resolveStateAndGitPaths(process.cwd());
+const statePath = resolvedStatePath ?? process.cwd();
+const handoffPath = join(statePath, ".claude", "handoff.md");
 
 // Allow if no handoff exists (first session or handoff not yet created)
 if (!existsSync(handoffPath)) {

@@ -77,6 +77,16 @@ function currentBranch(cwd: string): string | null {
 	return branch;
 }
 
+/** Worktree toplevel path for a cwd. "" when not in a git repo. */
+function currentWorktree(cwd: string): string {
+	const res = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+		cwd,
+		encoding: "utf-8",
+	});
+	if (res.status !== 0) return "";
+	return (res.stdout ?? "").trim();
+}
+
 function currentMdPath(projectRoot: string): string {
 	return join(projectRoot, ".indusk/current.md");
 }
@@ -123,9 +133,9 @@ export function agentRegister(projectRoot: string, opts: AgentRegisterOptions): 
 		);
 		process.exit(1);
 	}
-	const branch = opts.branch ?? currentBranch(opts.worktree ?? process.cwd());
-	const _branch = branch; // currently stored only for future use; sections don't carry branch yet
-	void _branch;
+	const cwd = opts.worktree ?? process.cwd();
+	const branch = opts.branch ?? currentBranch(cwd) ?? "";
+	const worktree = currentWorktree(cwd);
 	withLock(currentMdLockPath(projectRoot), () => {
 		const initial = readCurrent(projectRoot);
 		const doc = parseCurrentMd(initial);
@@ -138,6 +148,8 @@ export function agentRegister(projectRoot: string, opts: AgentRegisterOptions): 
 			inFlight: existing?.inFlight ?? "",
 			openQuestions: existing?.openQuestions ?? "",
 			cursor: existing?.cursor ?? "",
+			branch,
+			worktree,
 		};
 		const updated = upsertSection(initial, section);
 		writeAtomic(projectRoot, updated, sessionId);
@@ -173,28 +185,79 @@ export function agentDone(projectRoot: string, opts: AgentDoneOptions): void {
 	});
 }
 
+/** Basename of a worktree path, for a narrow table cell. "" → "—". */
+function worktreeCell(worktree: string): string {
+	if (!worktree) return "—";
+	const parts = worktree.split("/").filter(Boolean);
+	return parts.length ? parts[parts.length - 1] : worktree;
+}
+
+type TableRow = {
+	session: string;
+	task: string;
+	worktree: string;
+	branch: string;
+	started: string;
+};
+
 function formatTable(entries: AgentSection[]): string {
 	if (entries.length === 0) return "(no agents currently registered)";
-	const rows = entries.map((e) => ({
+	const rows: TableRow[] = entries.map((e) => ({
 		session: e.sessionShort,
 		task: e.task,
+		worktree: worktreeCell(e.worktree),
+		branch: e.branch || "—",
 		started: e.lastUpdated.slice(0, 19).replace("T", " "),
 	}));
-	const headers = { session: "SESSION", task: "TASK", started: "LAST UPDATED" };
-	const widths = {
-		session: Math.max(headers.session.length, ...rows.map((r) => r.session.length)),
-		task: Math.max(headers.task.length, ...rows.map((r) => r.task.length)),
-		started: Math.max(headers.started.length, ...rows.map((r) => r.started.length)),
+	const headers: TableRow = {
+		session: "SESSION",
+		task: "TASK",
+		worktree: "WORKTREE",
+		branch: "BRANCH",
+		started: "LAST UPDATED",
 	};
+	const cols: (keyof TableRow)[] = ["session", "task", "worktree", "branch", "started"];
+	const widths = Object.fromEntries(
+		cols.map((c) => [c, Math.max(headers[c].length, ...rows.map((r) => r[c].length))]),
+	) as Record<keyof TableRow, number>;
 	const pad = (s: string, w: number) => s.padEnd(w);
-	const line = (r: { session: string; task: string; started: string }) =>
-		`${pad(r.session, widths.session)}  ${pad(r.task, widths.task)}  ${pad(r.started, widths.started)}`;
-	const out = [
-		line(headers),
-		`${"-".repeat(widths.session)}  ${"-".repeat(widths.task)}  ${"-".repeat(widths.started)}`,
-	];
+	const line = (r: TableRow) => cols.map((c) => pad(r[c], widths[c])).join("  ");
+	const out = [line(headers), cols.map((c) => "-".repeat(widths[c])).join("  ")];
 	for (const r of rows) out.push(line(r));
 	return out.join("\n");
+}
+
+/**
+ * Same-tree collision detection: group fresh sessions by resolved worktree
+ * toplevel; any tree shared by ≥2 live sessions is flagged (the real case being
+ * two agents both sitting in the shared trunk). Sessions with no resolvable
+ * worktree (non-git cwd) are excluded — can't determine a shared tree.
+ *
+ * Eventual-consistency semantics (falsification H1): the verdict compares each
+ * session's LAST-KNOWN tree. Only the calling session's tree is recomputed live
+ * (in `agentList`'s heartbeat) — every other session's tree is whatever it last
+ * wrote via `agent register` / `agent list`. A session that moved between the
+ * trunk and a worktree but hasn't run an `agent` command since carries a stale
+ * tree, so a collision can be flagged (or cleared) a beat late. This is inherent
+ * — you can't run git in another session's cwd — and self-corrects on that
+ * session's next heartbeat. Not a bug; documented so it isn't mistaken for one.
+ */
+function detectCollisions(entries: AgentSection[]): string[] {
+	const byTree = new Map<string, AgentSection[]>();
+	for (const e of entries) {
+		if (!e.worktree) continue;
+		const group = byTree.get(e.worktree) ?? [];
+		group.push(e);
+		byTree.set(e.worktree, group);
+	}
+	const warnings: string[] = [];
+	for (const [tree, group] of byTree) {
+		if (group.length >= 2) {
+			const who = group.map((g) => g.sessionShort).join(", ");
+			warnings.push(`⚠ collision: ${group.length} sessions share worktree ${tree} (${who})`);
+		}
+	}
+	return warnings;
 }
 
 export function agentList(projectRoot: string): void {
@@ -204,19 +267,40 @@ export function agentList(projectRoot: string): void {
 		const { fresh } = listSections(initial, ttl);
 		// Self-heartbeat — refresh the caller's own section's lastUpdated by re-upserting it.
 		// Preserves the heartbeat semantics from the parent plan: asking who's around implicitly
-		// says "I am still here." Silent if the caller has no section yet.
+		// says "I am still here." Also RECOMPUTES branch/worktree from cwd (not the register-time
+		// snapshot) so the who-is-where board never drifts as the agent moves between trees.
+		// Silent if the caller has no section yet.
 		try {
 			const sessionId = getSessionId();
 			const callerSection = fresh.find((s) => s.sessionId === sessionId);
 			if (callerSection) {
+				const cwd = process.cwd();
+				// Recompute from cwd — but PRESERVE the last-known value when the
+				// recompute comes back empty (non-git cwd). The workbench root is
+				// intentionally not a git repo and is exactly where `.indusk/` lives,
+				// so running `agent list` there must NOT wipe the caller's worktree/
+				// branch to "" — that would drop the session off the board and out of
+				// the collision check (falsification T10, 2026-07-13).
+				const freshWorktree = currentWorktree(cwd);
+				const freshBranchRaw = currentBranch(cwd);
+				const nextWorktree = freshWorktree || callerSection.worktree;
+				const nextBranch = freshBranchRaw ?? (callerSection.branch || "");
+				callerSection.branch = nextBranch;
+				callerSection.worktree = nextWorktree;
 				const touched = upsertSection(initial, {
 					...callerSection,
+					branch: nextBranch,
+					worktree: nextWorktree,
 					lastUpdated: new Date().toISOString(),
 				});
 				writeAtomic(projectRoot, touched, sessionId);
 			}
 		} catch {
 			// Sanitizer rejection or other failure — skip heartbeat silently. List output below is unaffected.
+		}
+		const collisions = detectCollisions(fresh);
+		if (collisions.length > 0) {
+			for (const w of collisions) console.warn(w);
 		}
 		console.info(formatTable(fresh));
 	});

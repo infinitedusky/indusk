@@ -2,6 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { CollapsibleSection } from "./CollapsibleSection";
 
+function stubClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", {
+    value: { writeText },
+    configurable: true,
+  });
+  return writeText;
+}
+
 /**
  * T29 — `CollapsibleSection` accepts an optional `persistKey` prop. When set,
  *       the component reads its initial open/closed state from
@@ -97,5 +106,55 @@ describe("CollapsibleSection — T29 persistKey (localStorage)", () => {
       ).toBeNull();
     });
     expect(localStorage.getItem("t29-toggle-key")).toBe("0");
+  });
+});
+
+describe("CollapsibleSection — copyMarkdown", () => {
+  it("does not render a copy button when copyMarkdown is omitted", async () => {
+    const { container } = await render(
+      <CollapsibleSection title="no-copy">
+        <span>content</span>
+      </CollapsibleSection>,
+    );
+    expect(container.querySelector('[data-testid="copy-button"]')).toBeNull();
+  });
+
+  it("copies the supplied markdown verbatim, without toggling the section", async () => {
+    const writeText = stubClipboard();
+    const { container } = await render(
+      <CollapsibleSection
+        title="Research"
+        defaultOpen={false}
+        copyMarkdown={"## Research\n\nSome research body."}
+      >
+        <span data-testid="research-child">content</span>
+      </CollapsibleSection>,
+    );
+
+    const copyButton = container.querySelector(
+      '[data-testid="copy-button"]',
+    ) as HTMLButtonElement;
+    expect(copyButton).not.toBeNull();
+    copyButton.click();
+
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        "## Research\n\nSome research body.",
+      );
+    });
+    // Clicking the copy button must not toggle the section open.
+    expect(
+      container.querySelector('[data-testid="research-child"]'),
+    ).toBeNull();
+  });
+
+  it("keeps the toggle button as the first <button> in the DOM (T29 querySelector regression guard)", async () => {
+    const { container } = await render(
+      <CollapsibleSection title="ordering" copyMarkdown={"## ordering\n\nbody"}>
+        <span>content</span>
+      </CollapsibleSection>,
+    );
+    const firstButton = container.querySelector("button");
+    expect(firstButton?.getAttribute("aria-expanded")).not.toBeNull();
   });
 });

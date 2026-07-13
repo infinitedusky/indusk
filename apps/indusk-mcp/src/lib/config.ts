@@ -120,6 +120,17 @@ export interface InduskConfig {
 	 * rare act.
 	 */
 	disabled_extensions?: string[];
+	/**
+	 * Cleanup ritual configuration. The `/cleanup` skill reads this to decide
+	 * which changed files to scrutinize at plan close. `max_file_loc` is the
+	 * global line threshold; `scopes` apply tighter thresholds (and an optional
+	 * `test_sibling` requirement) to files matching a glob. **The threshold is
+	 * attention-focus, NOT a blocking cap** — there is no mechanical LOC gate.
+	 */
+	cleanup?: {
+		max_file_loc?: number;
+		scopes?: CleanupScope[];
+	};
 }
 
 /**
@@ -239,4 +250,110 @@ export function getEvalModel(projectRoot: string): string {
 	const model = config?.eval?.model;
 	if (typeof model === "string" && model.length > 0) return model;
 	return DEFAULT_EVAL_MODEL;
+}
+
+/**
+ * A per-scope cleanup rule: files matching `include` get a tighter cap and an
+ * optional test-sibling requirement.
+ */
+export interface CleanupScope {
+	include: string;
+	max_file_loc?: number;
+	test_sibling?: boolean;
+}
+
+/** Resolved cleanup config — global cap plus a normalized scope list. */
+export interface CleanupConfig {
+	max_file_loc: number;
+	scopes: CleanupScope[];
+}
+
+const DEFAULT_MAX_FILE_LOC = 400;
+
+/**
+ * Reads the `cleanup` block from `.indusk/config.json`. A missing block,
+ * missing file, or non-positive `max_file_loc` all fall back to the built-in
+ * default (400) — the ritual is never silently disabled by config absence.
+ * Malformed scope entries (no string `include`) are dropped.
+ */
+export function getCleanupConfig(projectRoot: string): CleanupConfig {
+	const config = readConfig(projectRoot);
+	const raw = config?.cleanup;
+	const max =
+		typeof raw?.max_file_loc === "number" && raw.max_file_loc > 0
+			? raw.max_file_loc
+			: DEFAULT_MAX_FILE_LOC;
+	const scopes = Array.isArray(raw?.scopes)
+		? raw.scopes.filter((s): s is CleanupScope => typeof s?.include === "string")
+		: [];
+	return { max_file_loc: max, scopes };
+}
+
+/**
+ * The cap that applies to a repo-relative path: the first matching scope's cap
+ * (or the global default), plus whether a test sibling is required there.
+ */
+export function resolveCapForPath(
+	path: string,
+	cfg: CleanupConfig,
+): { cap: number; scope?: string; testSibling: boolean } {
+	for (const s of cfg.scopes) {
+		if (globToRegExp(s.include).test(path)) {
+			const cap =
+				typeof s.max_file_loc === "number" && s.max_file_loc > 0
+					? s.max_file_loc
+					: cfg.max_file_loc;
+			return { cap, scope: s.include, testSibling: s.test_sibling === true };
+		}
+	}
+	return { cap: cfg.max_file_loc, testSibling: false };
+}
+
+/**
+ * Minimal glob → RegExp for scope matching. Mirrors the worktree preflight
+ * `_glob_to_regex` semantics: `**` → `.*`, `*` → `[^/]*`, `?` → `.`, every other
+ * regex metacharacter escaped. Anchored to a full-string match.
+ */
+function globToRegExp(glob: string): RegExp {
+	let re = "";
+	for (let i = 0; i < glob.length; i++) {
+		const c = glob[i];
+		if (c === "*") {
+			if (glob[i + 1] === "*") {
+				re += ".*";
+				i++;
+			} else {
+				re += "[^/]*";
+			}
+		} else if (c === "?") {
+			re += ".";
+		} else if ("\\^$.|+()[]{}".includes(c)) {
+			re += `\\${c}`;
+		} else {
+			re += c;
+		}
+	}
+	return new RegExp(`^${re}$`);
+}
+
+/**
+ * Idempotently scaffold the `cleanup` config block into an existing project.
+ * Called by `indusk update` to migrate pre-cleanup-ritual projects. Returns:
+ *   - `"added"`        — block was missing and has been written with defaults
+ *   - `"already-set"`  — a `cleanup.max_file_loc` is already present; untouched
+ *   - `"no-config"`    — the project has no `.indusk/config.json` at all
+ * User content is preserved (spread over the existing config).
+ */
+export function ensureCleanupConfig(projectRoot: string): "added" | "already-set" | "no-config" {
+	const config = readConfig(projectRoot);
+	if (!config) return "no-config";
+	// Key on block PRESENCE, not `max_file_loc` — a user block with `scopes` but
+	// no top-level cap is valid and must never be clobbered (cleanup-ritual H8).
+	const existing = (config as { cleanup?: unknown }).cleanup;
+	if (existing !== null && typeof existing === "object") return "already-set";
+	writeConfig(projectRoot, {
+		...config,
+		cleanup: { max_file_loc: DEFAULT_MAX_FILE_LOC, scopes: [] },
+	} as InduskConfig);
+	return "added";
 }

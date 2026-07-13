@@ -112,6 +112,27 @@ If your session produced nothing worth promoting (shipped a feature and closed a
 
 The `## Project (shared)` anchor section is editable by any agent. Use it for cross-cutting state that's project-wide and short-lived ("merge freeze through Thursday", "telemetry endpoint changed last week"). Don't bundle these edits into your handoff write — they're not your session's state.
 
+## Worktree visibility and worktree-per-plan
+
+Isolation only helps if it's the default and if you can see it. Two pieces make that true:
+
+**The bulletin shows where each session is.** `indusk agent list` shows a `WORKTREE` and `BRANCH` column per session, recomputed from cwd on every `list` (not snapshotted at register time) — so an agent that moves from the trunk into a worktree mid-session shows its current location, never a stale one:
+
+```
+SESSION   TASK             WORKTREE  BRANCH             LAST UPDATED
+--------  ---------------  --------  -----------------  -------------------
+2c87e7b6  auth refactor    repo      plan/auth-phase-1  2026-06-26 21:43:50
+f0a99b21  telemetry spike  wtb       plan/telemetry     2026-06-26 22:01:15
+```
+
+**Same-tree collisions are flagged.** When two live sessions resolve to the same worktree toplevel — the real collision case is both sitting in the shared trunk — `agent list` prints a warning to stderr and `/catchup` surfaces it:
+
+```
+⚠ collision: 2 sessions share worktree /path/to/repo (2c87e7b6, f0a99b21)
+```
+
+**Worktree-per-plan is the default.** Every plan gets its own worktree, created at the start of its impl (`/work`'s Worktree Kickoff step nudges `indusk worktree create {plan-slug}` when you're in the trunk). One plan → one branch → one worktree → PR → merge-and-delete, which makes "no overlap" true by construction — the collision flag above is then just the safety net. Opt a single plan out with `worktree: none` in its impl frontmatter (the natural falsy forms `no` / `off` / `false` work too — a plan that says "no worktree" any reasonable way gets none); no workflow sets that by default. The kickoff is a nudge, not a hard gate — if you proceed in the trunk anyway, the collision flag will tell you when it bites.
+
 ## Configuration
 
 `.indusk/config.json` carries one field for this system:

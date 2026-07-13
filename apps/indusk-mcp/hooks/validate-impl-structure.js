@@ -508,7 +508,9 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 	const knownIds = new Set(trajectory.rows.map((r) => r.id));
 	const allowed = new Set(["schema-only", "delete", "refactor", "infra"]);
 	const noTestsRegex = /\(no tests flip at this phase\s*[—–-]+\s*reason:\s*([a-z-]+)\s*\)/i;
-	const testIdPattern = /\bT\d+\b/g;
+	// Accept T-prefixed (test) and A-prefixed (acceptance) IDs — mirrors
+	// TEST_ID_PATTERN in lib/trajectory/validator.ts. Bounded to [TA] on purpose.
+	const testIdPattern = /\b[TA]\d+\b/g;
 
 	const lines = implBody.split("\n");
 	let currentPhase = null;
@@ -700,7 +702,7 @@ function parseRationaleBlock(implBody) {
 		// Break on next heading of depth 1-3 (new section starts)
 		if (/^#{1,3}\s+/.test(line) && !/^###\s+Trajectory Rationale\b/.test(line)) break;
 		// Match `- **TN**` at the start of a rationale entry
-		const match = line.match(/^-\s+\*\*(T\d+)\*\*/);
+		const match = line.match(/^-\s+\*\*([TA]\d+)\*\*/);
 		if (match) ids.add(match[1]);
 	}
 

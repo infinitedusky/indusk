@@ -5,8 +5,12 @@ server:
 
 llm:
   provider: "gemini"
-  model: "gemini-2.5-flash"
-  small_model: "gemini-2.5-flash"
+  # `-latest` aliases track Google's current GA flash models — well-provisioned
+  # (unlike `-preview` models, which have lower capacity and 503 more) and never
+  # deprecated, so we don't chase version retirements. Pin to e.g. gemini-3.5-flash
+  # if deterministic extraction behavior is preferred over auto-tracking.
+  model: "gemini-flash-latest"
+  small_model: "gemini-flash-lite-latest"
   max_tokens: 4096
 
   providers:

@@ -19,7 +19,27 @@ import { extractScorecardJson, formatParseError } from "./scorecard-extractor.js
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
 
 export interface EvaluatorRunOptions {
+	/**
+	 * Where `.indusk/` lives — the InDusk state root. All state paths
+	 * (results.log, evaluator-session.json, config.json, highlights) hang off
+	 * this. In workbench mode this is the workbench root (NOT a git repo);
+	 * in single-repo mode it equals `gitRoot`.
+	 *
+	 * CONTRACT: `hooks/eval-trigger.js` MUST pass this key as `projectRoot`.
+	 * It passed `statePath` between 1.31.7 and 1.31.11, leaving `projectRoot`
+	 * undefined → `initEvalOtel(undefined)` → `join(undefined, …)` crashed the
+	 * evaluator before any work, silently killing the eval→Graphiti rail for
+	 * weeks. Guarded by eval-trigger-evaluator-arg-contract.test.ts.
+	 */
 	projectRoot: string;
+	/**
+	 * The git repo root — the cwd for the inner `claude` process so its
+	 * `git show ${changeId}` diff-fetch runs inside the repo. In workbench mode
+	 * this differs from `projectRoot` (state root is the non-git workbench
+	 * root). Optional: falls back to `projectRoot` when omitted (single-repo
+	 * callers and the baseline CLI).
+	 */
+	gitRoot?: string;
 	changeId: string;
 	transcriptPath: string;
 	mode: "eval" | "baseline";
@@ -89,8 +109,10 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 
 	// Not detached — the eval-trigger hook already spawns this in a separate
 	// node process. Detaching + unref causes the close handler to never fire.
+	// cwd is the git repo (gitRoot) so the rubric's `git show ${changeId}` runs
+	// in the repo — in workbench mode that differs from the state root.
 	const child = spawn("claude", args, {
-		cwd: opts.projectRoot,
+		cwd: opts.gitRoot ?? opts.projectRoot,
 		stdio: ["pipe", "pipe", "pipe"],
 		env: { ...process.env },
 	});
@@ -242,8 +264,10 @@ async function runEvaluatorSyncInner(
 	];
 
 	return new Promise((resolve) => {
+		// cwd = git repo so `git show ${changeId}` resolves; falls back to the
+		// state root for single-repo callers (gitRoot === projectRoot there).
 		const child = spawn("claude", args, {
-			cwd: opts.projectRoot,
+			cwd: opts.gitRoot ?? opts.projectRoot,
 			stdio: ["pipe", "pipe", "pipe"],
 			env: { ...process.env },
 		});

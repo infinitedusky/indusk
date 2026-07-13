@@ -17,33 +17,40 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 2c87e7b6 — handoff-multi-agent plan close + 1.29 publish + new-project init
+## Session 9f1ead50 — fresh-eyes review of code-reviewer-agent plan
 
-**Session ID**: 2c87e7b6-702a-4dcd-876f-a31820e0df3e
-**Last updated**: 2026-06-28T10:15:09.614Z
+**Session ID**: 9f1ead50-3c0c-40c2-87e0-2ac8bbfc8b06
+**Last updated**: 2026-06-28T10:19:55.206Z
 
 ### In Flight
 
-Original `handoff-multi-agent` plan impl is `completed` after 6 phases on branch `plan/handoff-multi-agent-phase-1` (23 commits, not pushed/merged). Phase 6 falsification shipped two fixes: `sanitizeSessionId` helper rejecting path-traversal characters in session IDs, and `agentList` self-heartbeat via `utimesSync` so long-running sessions stay visible without manual TTL tuning. 48 multi-agent tests passing + 2 phase-3-deferred + T10 (manual smoke awaits Sandy's first run after 1.29 publish).
-
-User-chosen path for this work: canonical (falsify → retro → publish → use). Falsify done. Retrospective not yet run.
-
-Side finding fixed in scope: stray-quote typo in `.indusk/config.json` introduced by b31c1d60 (doppler-extension commit) was silently making the OTel validator default-on for ~a month — fixed in the first commit on this branch.
+(empty)
 
 ### Open Questions
 
-The `handoff-multi-agent-section-shape` plan appears to have shipped concurrently with my work — the templates, skill docs, e2e tests, and CLAUDE.md status entries now reference per-agent sections inside one `current.md` rather than the per-session presence files my plan delivered. Retrospective needs to handle the supersession explicitly:
-  (a) Archive `handoff-multi-agent` as the original; archive `handoff-multi-agent-section-shape` separately as the final shape, with a supersession pointer.
-  (b) OR merge into a single retro that tells the full story.
-
-Need to verify whether my Phase 6 fixes survive into the section-shape world: `sanitizeSessionId` is still needed (independent of file vs section storage); the `agentList` self-heartbeat may be superseded by section freshness if presence files no longer exist on disk. Check `lib/agents/paths.ts` and the section-shape impl before retrospective concludes.
-
-The `multi-agent-e2e.test.ts` has two cases now `.skip()`d with section-shape comments (queued as `section-shape-test-cleanup` follow-up by whoever did the rework). Worth noting in the retrospective whether that cleanup is in scope for the original plan or belongs in the section-shape plan.
+(empty)
 
 ### Cursor
 
-Branch `plan/handoff-multi-agent-phase-1` at commit ae64ef57 (impl status set to `completed`). Next concrete step: run `/retrospective handoff-multi-agent` to close + archive. Sandy chose to invoke `/handoff` before retro fires — likely because they want to checkpoint here before the supersession question gets resolved.
+(empty)
 
-After retrospective (whatever shape it takes): merge `plan/handoff-multi-agent-phase-1` into main, bump indusk-mcp to 1.29.0 (the `prepublishOnly` already builds + bundles admin-UI), publish to npm. Then `npm i -g @infinitedusky/indusk-mcp@latest` to update Sandy's global binary. Then in the brand-new project dir: `indusk init` scaffolds CLAUDE.md / .mcp.json / hooks / `.indusk/current.md` / `.indusk/agents/` gitignore / `agents.stale_ttl_minutes` config. Optionally `indusk extensions enable worktree` for the workbench shape if the new project benefits from per-feature worktrees from day one.
+---
+
+## Session baf66f0a — brief: per-phase code cleanup/quality gate
+
+**Session ID**: baf66f0a-62d9-4f32-8654-461bbef2716b
+**Last updated**: 2026-07-06T18:14:59.540Z
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
 
 ---

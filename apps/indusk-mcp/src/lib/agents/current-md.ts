@@ -59,11 +59,13 @@ import { sanitizeSessionId } from "./session.js";
  * (or an honest user pasting a snippet) can inject a fake session that other
  * agents see.
  *
- * Four forbidden line patterns:
+ * Six forbidden line patterns:
  *   1. `^---\s*$`              — horizontal rule (section delimiter)
  *   2. `^##\s+Session\s+`      — session heading
  *   3. `^\*\*Session ID\*\*:`  — full-UUID marker
  *   4. `^\*\*Last updated\*\*:` — staleness timestamp
+ *   5. `^\*\*Branch\*\*:`       — branch marker (worktree-visibility)
+ *   6. `^\*\*Worktree\*\*:`     — worktree marker (worktree-visibility)
  *
  * Throws TypeError on any match; the public mutation helpers
  * (`upsertSection`, `editSharedSection`) route every body through this
@@ -75,6 +77,8 @@ export function sanitizeSectionBody(body: string, fieldName: string): string {
 		{ pattern: /^##\s+Session\s+/m, label: "## Session heading" },
 		{ pattern: /^\*\*Session ID\*\*:/m, label: "**Session ID**: marker" },
 		{ pattern: /^\*\*Last updated\*\*:/m, label: "**Last updated**: marker" },
+		{ pattern: /^\*\*Branch\*\*:/m, label: "**Branch**: marker" },
+		{ pattern: /^\*\*Worktree\*\*:/m, label: "**Worktree**: marker" },
 	];
 	for (const { pattern, label } of forbidden) {
 		if (pattern.test(body)) {
@@ -101,6 +105,10 @@ export interface AgentSection {
 	openQuestions: string;
 	/** Markdown body of `### Cursor`. May be empty. */
 	cursor: string;
+	/** Git branch the session's cwd is on, `**Branch**:` marker. May be empty (detached / no repo). */
+	branch: string;
+	/** Worktree toplevel path the session's cwd resolves to, `**Worktree**:` marker. May be empty. */
+	worktree: string;
 }
 
 export interface CurrentMd {
@@ -156,11 +164,17 @@ function parseSessionSection(block: string): AgentSection | null {
 	if (!lastUpdatedMatch) return null;
 	const lastUpdated = lastUpdatedMatch[1];
 
+	// **Branch**: / **Worktree**: — optional markers (worktree-visibility). Absent → "".
+	const branchMatch = block.match(/^\*\*Branch\*\*:\s*(.+?)\s*$/m);
+	const worktreeMatch = block.match(/^\*\*Worktree\*\*:\s*(.+?)\s*$/m);
+
 	return {
 		sessionId,
 		sessionShort,
 		task,
 		lastUpdated,
+		branch: branchMatch ? branchMatch[1] : "",
+		worktree: worktreeMatch ? worktreeMatch[1] : "",
 		inFlight: extractSubsection(block, "In Flight"),
 		openQuestions: extractSubsection(block, "Open Questions"),
 		cursor: extractSubsection(block, "Cursor"),
@@ -252,11 +266,18 @@ export function parseCurrentMd(content: string): CurrentMd {
 
 /** Serialize a single AgentSection into the markdown block form. */
 function serializeSection(section: AgentSection): string {
+	// **Branch**: / **Worktree**: are emitted only when non-empty, so absence
+	// round-trips to "" and the file stays clean for detached/no-repo sessions.
+	const idLines = [
+		`**Session ID**: ${section.sessionId}`,
+		`**Last updated**: ${section.lastUpdated}`,
+	];
+	if (section.branch) idLines.push(`**Branch**: ${section.branch}`);
+	if (section.worktree) idLines.push(`**Worktree**: ${section.worktree}`);
 	return [
 		`## Session ${section.sessionShort} — ${section.task}`,
 		"",
-		`**Session ID**: ${section.sessionId}`,
-		`**Last updated**: ${section.lastUpdated}`,
+		...idLines,
 		"",
 		"### In Flight",
 		"",

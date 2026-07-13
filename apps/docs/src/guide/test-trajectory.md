@@ -44,7 +44,7 @@ Every impl document that opts in (via `trajectory: required` in the frontmatter)
 
 | Column | Purpose |
 |--------|---------|
-| `ID` | Stable handle — `T1`, `T2`, … Used by phase Verification references |
+| `ID` | Stable handle — `T1`, `T2`, … (or `A1`, `A2`, … — the validator accepts both `T`-prefixed and `A`-prefixed IDs; `A` suits acceptance-style trajectories mirrored from a test plan). Used by phase Verification references |
 | `Asserts` | One-sentence description of what the test claims is true |
 | `Writable at` | Phase number at which the test can be authored (dependencies exist) |
 | `Passes at` | Phase number at which the test flips to passing |

@@ -71,6 +71,14 @@ program
 	});
 
 program
+	.command("setup <repo-path>")
+	.description("Turn an already-cloned git repo into an InDusk workbench (one-shot)")
+	.action(async (repoPath) => {
+		const { setup } = await import("./commands/setup.js");
+		await setup(repoPath);
+	});
+
+program
 	.command("update")
 	.description("Update skills from package without touching project content")
 	.action(async () => {

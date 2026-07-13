@@ -1,6 +1,6 @@
 {
 	"name": "@infinitedusky/indusk-mcp",
-	"version": "1.31.11",
+	"version": "1.31.12",
 	"description": "InDusk development system — skills, MCP tools, and CLI for structured AI-assisted development",
 	"type": "module",
 	"files": [
@@ -28,6 +28,14 @@
 		"./falsification/log": {
 			"types": "./dist/lib/falsification/log.d.ts",
 			"default": "./dist/lib/falsification/log.js"
+		},
+		"./cleanup/oversized": {
+			"types": "./dist/lib/cleanup/oversized.d.ts",
+			"default": "./dist/lib/cleanup/oversized.js"
+		},
+		"./cleanup/gate": {
+			"types": "./dist/lib/cleanup/gate.d.ts",
+			"default": "./dist/lib/cleanup/gate.js"
 		},
 		"./worktree/validate-config": {
 			"types": "./dist/lib/worktree/validate-config.d.ts",
