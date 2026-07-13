@@ -35,6 +35,23 @@ describe("resolveWorktreeDecision (T5)", () => {
 	});
 });
 
+// T11 (Phase 4 falsification) — the opt-out must accept the natural falsy forms,
+// not only the literal string "none". `worktree: false` parses to boolean false;
+// `no`/`off` stay strings. All three should mean "skip".
+describe("resolveWorktreeDecision opt-out coercion (T11)", () => {
+	it("treats boolean `worktree: false` as skip", () => {
+		expect(resolveWorktreeDecision(FM("false"))).toBe("skip");
+	});
+	it("treats YAML-falsy `no` / `off` as skip", () => {
+		expect(resolveWorktreeDecision(FM("no"))).toBe("skip");
+		expect(resolveWorktreeDecision(FM("off"))).toBe("skip");
+	});
+	it("still treats `create` and absent as create", () => {
+		expect(resolveWorktreeDecision(FM("create"))).toBe("create");
+		expect(resolveWorktreeDecision(FM(undefined))).toBe("create");
+	});
+});
+
 describe("detectTreeContext (T6)", () => {
 	// Fake git runner: main worktree is /wb/repo; a linked worktree is /wb/wtb.
 	const runner =

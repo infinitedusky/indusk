@@ -19,17 +19,29 @@ import matter from "gray-matter";
 export type WorktreeDecision = "create" | "skip";
 
 /**
+ * Case-insensitive strings that mean "opt out of a worktree". `none` is the
+ * documented keyword; `no`/`off`/`false`/`skip` are accepted because a user
+ * expressing "no worktree" the natural way should not silently GET one. Note
+ * that `worktree: false` parses to boolean `false` (handled separately below),
+ * while `no`/`off` stay strings under js-yaml 4.x.
+ */
+const OPT_OUT_STRINGS = new Set(["none", "no", "off", "false", "skip"]);
+
+/**
  * Decide whether a plan's impl kickoff should create a worktree. Pure — reads
- * only the `worktree:` frontmatter key. Unparseable content → "create" (the
- * safe default: a plan with a broken header still gets isolation).
+ * only the `worktree:` frontmatter key. Opt out with `worktree: none` (or the
+ * natural falsy forms `no`/`off`/`false`); everything else, absent, or
+ * unparseable → "create" (the safe default: a plan with a broken header still
+ * gets isolation). Falsification T11 (2026-07-13): `worktree: false` parses to
+ * a boolean, so a string-only check silently returned "create" against intent.
  */
 export function resolveWorktreeDecision(implContent: string): WorktreeDecision {
 	try {
 		const { data } = matter(implContent);
 		const raw = data.worktree;
+		if (raw === false) return "skip";
 		if (typeof raw !== "string") return "create";
-		if (raw.trim().toLowerCase() === "none") return "skip";
-		return "create";
+		return OPT_OUT_STRINGS.has(raw.trim().toLowerCase()) ? "skip" : "create";
 	} catch {
 		return "create";
 	}
