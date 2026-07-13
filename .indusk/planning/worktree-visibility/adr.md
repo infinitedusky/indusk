@@ -1,7 +1,7 @@
 ---
 title: "Worktree Visibility"
 date: 2026-07-12
-status: proposed
+status: accepted
 ---
 
 # Worktree Visibility
