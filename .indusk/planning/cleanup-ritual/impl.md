@@ -5,6 +5,8 @@ status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "Reviewed all changed source. The plan's own new modules (oversized.ts 127, gate.ts 120, cleanup.md 112, cleanup-*.test.ts) are small single-responsibility files under the 400 cap — nothing tangled or repeated. The only over-cap files it touched (init.ts 1396, update.ts 683) are pre-existing monoliths where this plan added ~6-15 lines each, so decomposing them is out of scope (the follow-up 'first cleanup customer' plan). No nextjs/react extensions enabled (library/CLI), so the idiom is function/module extraction and nothing here warrants it."
 ---
 
 # Cleanup Ritual
