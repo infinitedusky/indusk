@@ -275,6 +275,18 @@ The working agent does not write the Graphiti episode directly. The eval agent r
 
 Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail the work item or the `context learn` recording (which is the canonical, local copy of the lesson).
 
+## Worktree Kickoff
+
+Before writing any code for a plan (i.e. at the start of Phase 1, at the research→impl boundary), decide whether this plan runs in its own git worktree. **Worktree-per-plan is the default** — one plan → one branch → one worktree → PR → merge-and-delete (see the `worktree-visibility` ADR). It gives no-overlap-by-construction for concurrent sessions.
+
+1. **Read the impl frontmatter.** If it contains `worktree: none`, skip this section — the author has explicitly opted this plan into running in the current tree.
+2. **Otherwise, check where you are.** Compare `git rev-parse --show-toplevel` against `git worktree list` — are you in the shared trunk or already in a dedicated worktree? If you're already in a worktree for this plan, you're set.
+3. **If you're in the trunk, nudge before editing code:**
+   > "This plan defaults to running in its own worktree, and you're in the shared trunk. Want me to `indusk worktree create {plan-slug}` first? (Or set `worktree: none` in the impl frontmatter to run here deliberately.)"
+4. **This is a nudge, not a gate.** If the user proceeds in the trunk anyway, continue — but note that `indusk agent list` / `/catchup` will flag a same-trunk collision if another session is also there.
+
+The deterministic logic behind this — `resolveWorktreeDecision(implContent)` (frontmatter → `create`/`skip`) and `detectTreeContext(cwd)` (trunk vs worktree) — lives in `apps/indusk-mcp/src/lib/worktree/decision.ts`. The worktree, once created, is bound to the plan for the life of its impl; `indusk worktree create` also auto-provisions the worktree's env.
+
 ## Commits
 
 Default: **one commit per checklist item.** Trunk-based development on a feature branch: short-lived branches, frequent commits + pulls, merge + delete fast. See `git.md` for the full convention.

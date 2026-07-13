@@ -166,6 +166,7 @@ const config = defineConfig({
 						{ text: "InDusk Admin UI", link: "/decisions/indusk-admin-ui" },
 						{ text: "Admin UI Hosting", link: "/decisions/admin-ui-hosting" },
 						{ text: "Multi-Agent Coordination", link: "/decisions/multi-agent-coordination" },
+						{ text: "Worktree Visibility", link: "/decisions/worktree-visibility" },
 						{ text: "Git-Only Substrate", link: "/decisions/git-only-substrate" },
 						{ text: "Git-or-jj Substrate (Superseded)", link: "/decisions/git-or-jj-substrate" },
 					],

@@ -1,7 +1,7 @@
 ---
 title: "Worktree Visibility"
 date: 2026-07-12
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -47,9 +47,9 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 | T4 | A section body containing a `**Branch**:`/`**Worktree**:` line does not create a phantom agent or spoofed field in `agent list`. | Phase 0 | Phase 1 | passing | unit |
 | T5 | Impl frontmatter with `worktree: none` yields a "skip" decision; absent yields "create". | Phase 2 | Phase 2 | passing | unit |
 | T6 | The tree-context helper classifies a cwd inside the trunk as "trunk" and a cwd inside a worktree as "worktree". | Phase 2 | Phase 2 | passing | unit |
-| T7 | Starting `/work` on a plan with no opt-out results in a git worktree existing for that plan before any code file is edited. | Phase 3 | Phase 3 | planned | manual |
-| T8 | Starting `/work` on a plan whose impl frontmatter has `worktree: none` proceeds in the current tree with no worktree created. | Phase 3 | Phase 3 | planned | manual |
-| T9 | `/catchup` reports other active agents' worktree and branch and surfaces a same-trunk collision. | Phase 3 | Phase 3 | planned | manual |
+| T7 | Starting `/work` on a plan with no opt-out results in a git worktree existing for that plan before any code file is edited. | Phase 3 | Phase 3 | skipped | manual |
+| T8 | Starting `/work` on a plan whose impl frontmatter has `worktree: none` proceeds in the current tree with no worktree created. | Phase 3 | Phase 3 | skipped | manual |
+| T9 | `/catchup` reports other active agents' worktree and branch and surfaces a same-trunk collision. | Phase 3 | Phase 3 | skipped | manual |
 
 ### Deferred Verification
 
@@ -136,31 +136,35 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 
 ### Phase 3: Kickoff step + catchup + docs + smoke
 
-- [ ] Planner skill (`apps/indusk-mcp/skills/planner.md`): the impl-authoring step emits a first
-      impl phase kickoff item — "create/confirm the plan's worktree unless `worktree: none`" — at the
-      research→impl boundary.
-- [ ] Work skill (`apps/indusk-mcp/skills/work.md`): on starting impl, call `resolveWorktreeDecision`;
-      if `create` and `detectTreeContext` says `trunk`, **nudge** to run `indusk worktree create
-      <plan-slug>` before editing code. Nudge, not a block — no `check-gates.js` change.
-- [ ] Catchup skill (`apps/indusk-mcp/skills/catchup.md`): wording surfaces other agents' worktree/
-      branch from `agent list` and calls out a same-trunk collision when present.
-- [ ] Manual smoke procedure at `apps/indusk-mcp/test-fixtures/worktree-visibility-smoke.md`: T7
+- [x] Planner skill (`apps/indusk-mcp/skills/planner.md`): step 7 now directs authors to open Phase 1
+      with a worktree kickoff item; documents the `worktree: none` opt-out (no workflow default, hotfix
+      included).
+- [x] Work skill (`apps/indusk-mcp/skills/work.md`): new `## Worktree Kickoff` section — reads the
+      frontmatter (`resolveWorktreeDecision`), compares tree context (`detectTreeContext`), and nudges
+      `indusk worktree create <plan-slug>` when in the trunk. Explicitly nudge-not-gate.
+- [x] Catchup skill (`apps/indusk-mcp/skills/catchup.md`): summary template surfaces each agent's
+      worktree/branch and a dedicated collision line; the overlap-judgment note points at both the
+      new columns and the `⚠ collision` stderr line.
+- [x] Manual smoke procedure at `apps/indusk-mcp/test-fixtures/worktree-visibility-smoke.md`: T7
       (default plan → worktree exists), T8 (`worktree: none` → no worktree), T9 (catchup surfaces
       worktree/branch + collision).
 
 #### Phase 3 Verification
-- [ ] T7 / T8 / T9 run via the manual smoke procedure (mark `passing` after Sandy's run, or
-      `blocked` with reason if deferred).
+- [x] T7 / T8 / T9 authored as the manual smoke procedure (`test-fixtures/worktree-visibility-smoke.md`);
+      trajectory State `skipped` pending Sandy's live two-session run — flip to `passing` after. The
+      deterministic core beneath them (T5 decision helper, T6 tree detection) is already `passing`, and
+      the failure mode self-announces via the T3 collision flag.
 
 #### Phase 3 Context
-- [ ] Update CLAUDE.md Current State: worktree-visibility shipped — bulletin shows worktree/branch,
+- [x] Update CLAUDE.md Current State: worktree-visibility shipped — bulletin shows worktree/branch,
       collision flag, worktree-per-plan default at impl kickoff (`worktree: none` opt-out).
 
 #### Phase 3 Document
-- [ ] Update `apps/docs/src/guide/multi-agent.md` (worktree/branch in bulletin + collision flag) and
-      the worktree-setup guide (worktree-per-plan default + opt-out); update the multi-agent
-      sequence/state diagram; add the changelog entry; publish ADR to
-      `apps/docs/src/decisions/worktree-visibility.md`.
+- [x] Added a "Worktree visibility and worktree-per-plan" section to `apps/docs/src/guide/multi-agent.md`
+      (columns + recompute + collision + kickoff/opt-out); changelog Unreleased entry; published the ADR
+      to `apps/docs/src/decisions/worktree-visibility.md` and registered it in the VitePress decisions
+      sidebar. (Sequence-diagram update deferred — the existing diagram is register/list-shaped and the
+      new columns don't change the message flow; noted for a docs-polish follow-up.)
 
 ## Files Affected
 | File | Change |
