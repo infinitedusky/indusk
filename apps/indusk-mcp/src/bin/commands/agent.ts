@@ -232,6 +232,15 @@ function formatTable(entries: AgentSection[]): string {
  * toplevel; any tree shared by ≥2 live sessions is flagged (the real case being
  * two agents both sitting in the shared trunk). Sessions with no resolvable
  * worktree (non-git cwd) are excluded — can't determine a shared tree.
+ *
+ * Eventual-consistency semantics (falsification H1): the verdict compares each
+ * session's LAST-KNOWN tree. Only the calling session's tree is recomputed live
+ * (in `agentList`'s heartbeat) — every other session's tree is whatever it last
+ * wrote via `agent register` / `agent list`. A session that moved between the
+ * trunk and a worktree but hasn't run an `agent` command since carries a stale
+ * tree, so a collision can be flagged (or cleared) a beat late. This is inherent
+ * — you can't run git in another session's cwd — and self-corrects on that
+ * session's next heartbeat. Not a bug; documented so it isn't mistaken for one.
  */
 function detectCollisions(entries: AgentSection[]): string[] {
 	const byTree = new Map<string, AgentSection[]>();
@@ -266,14 +275,22 @@ export function agentList(projectRoot: string): void {
 			const callerSection = fresh.find((s) => s.sessionId === sessionId);
 			if (callerSection) {
 				const cwd = process.cwd();
-				const freshBranch = currentBranch(cwd) ?? "";
+				// Recompute from cwd — but PRESERVE the last-known value when the
+				// recompute comes back empty (non-git cwd). The workbench root is
+				// intentionally not a git repo and is exactly where `.indusk/` lives,
+				// so running `agent list` there must NOT wipe the caller's worktree/
+				// branch to "" — that would drop the session off the board and out of
+				// the collision check (falsification T10, 2026-07-13).
 				const freshWorktree = currentWorktree(cwd);
-				callerSection.branch = freshBranch;
-				callerSection.worktree = freshWorktree;
+				const freshBranchRaw = currentBranch(cwd);
+				const nextWorktree = freshWorktree || callerSection.worktree;
+				const nextBranch = freshBranchRaw ?? (callerSection.branch || "");
+				callerSection.branch = nextBranch;
+				callerSection.worktree = nextWorktree;
 				const touched = upsertSection(initial, {
 					...callerSection,
-					branch: freshBranch,
-					worktree: freshWorktree,
+					branch: nextBranch,
+					worktree: nextWorktree,
 					lastUpdated: new Date().toISOString(),
 				});
 				writeAtomic(projectRoot, touched, sessionId);

@@ -108,4 +108,19 @@ describe.skipIf(SHOULD_SKIP)("worktree-visibility CLI (Phase 1)", () => {
 		const split = runCli(repo, S1, ["agent", "list"]);
 		expect(split.stderr).not.toMatch(/collision/i);
 	});
+
+	it("T10: `agent list` from a non-git cwd (workbench root) preserves worktree/branch and keeps the collision", () => {
+		const { wb, repo } = makeWorkbench();
+		// Both sessions register INSIDE the git repo (the trunk) → recorded worktree = repo.
+		runCli(repo, S1, ["agent", "register", "--task", "s1 in trunk"]);
+		runCli(repo, S2, ["agent", "register", "--task", "s2 in trunk"]);
+		// S1 now runs `agent list` FROM the workbench root, which is NOT a git repo
+		// (this is where .indusk/ lives — a completely normal place to run it).
+		const { stdout, stderr } = runCli(wb, S1, ["agent", "list"]);
+		// S1's worktree/branch must be PRESERVED (basename of repo, branch main), not wiped to "—".
+		expect(stdout).toContain(basename(repo));
+		expect(stdout).toContain("main");
+		// And the real same-trunk collision must still fire (S1 must not have dropped out of it).
+		expect(stderr).toMatch(/collision/i);
+	});
 });
