@@ -79,5 +79,5 @@ the same collisions.
 - **Risk:** an ignored nudge → collisions persist — mitigated by the self-announcing collision flag
   and a known hard-gate follow-up.
 
-See the full plan at `.indusk/planning/worktree-visibility/` and the
+See the full plan at `.indusk/planning/archive/worktree-visibility/` and the
 [multi-agent guide](/guide/multi-agent).
