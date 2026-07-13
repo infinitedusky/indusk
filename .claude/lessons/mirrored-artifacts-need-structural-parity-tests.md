@@ -1,0 +1,7 @@
+# Every mirrored artifact needs a structural parity test — manual audits under-count
+
+When an artifact has a synced replica (package skill source → installed `.claude/skills/*/SKILL.md`, TS lib → JS hook port, code behavior → docs prose), edits to the source silently strand the replica unless something *structural* pins the pair. Advisory conventions ("edit in apps/, run update to sync") fail exactly when the sync tool isn't in the loop — dusk edits package skill sources but has no global `indusk update`, so 4 of 5 ritual skills went stale during the cleanup-ritual plan, including a retrospective skill whose stale copy would have silently enforced the wrong gate.
+
+The fix shape: a vitest structural test that asserts byte-equality (or behavior-parity) across every source/replica pair, with an actionable failure message naming the resync command. See `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` (cleanup-ritual T25) and the older `rationale-baseline-parity.test.ts` (TS↔JS hook ports).
+
+The kicker: T25 caught a **sixth** stale file (`catchup`, drifted by a different plan) on its first run — the manual `diff -q` audit that motivated the test had missed it. Structural tests out-count manual audits immediately. Three of five round-2 falsification findings on cleanup-ritual were "the fix didn't reach every replica" — this class is common enough that any new mirrored surface should ship its parity test in the same phase that creates the mirror.

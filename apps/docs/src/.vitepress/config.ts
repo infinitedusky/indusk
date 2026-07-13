@@ -177,6 +177,7 @@ const config = defineConfig({
 					text: "Lessons Learned",
 					items: [
 						{ text: "Overview", link: "/lessons/" },
+						{ text: "Cleanup Ritual (Ritual vs Gate + Mirrored-Artifact Parity)", link: "/lessons/cleanup-ritual" },
 						{ text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)", link: "/lessons/handoff-multi-agent-section-shape" },
 						{ text: "Git-Only Substrate (Falsification + Inherited Bugs)", link: "/lessons/git-only-substrate" },
 						{ text: "Git-or-jj Substrate (Ship-and-Reverse Pattern + Brief Author Bias)", link: "/lessons/git-or-jj-substrate" },
