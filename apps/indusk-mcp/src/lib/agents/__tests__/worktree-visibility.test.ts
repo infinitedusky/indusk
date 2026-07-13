@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { AgentSection } from "../current-md.js";
-import { parseCurrentMd, sanitizeSectionBody, serializeCurrentMd, upsertSection } from "../current-md.js";
+import {
+	parseCurrentMd,
+	sanitizeSectionBody,
+	serializeCurrentMd,
+	upsertSection,
+} from "../current-md.js";
 
 /**
  * Test Trajectory for the worktree-visibility plan — Phase 1 lib rows.
