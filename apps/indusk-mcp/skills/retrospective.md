@@ -32,7 +32,7 @@ Work through these steps in order. Each step is blocking — do not skip ahead.
 
 **This gate blocks everything below. Do not proceed to Step 1 until it passes.**
 
-Before writing a single word of the retrospective, confirm that the plan has completed **both** closing rituals — falsification **and** cleanup. Each is satisfied either via its phase-authoring flow (a Falsification Phase / a `### Phase N: Cleanup` phase, both terminal in impl.md), via a legacy sidecar log (falsification only), or via an explicit skip-reason frontmatter pair. **Both must pass.** The composed check is `checkRetrospectiveReadiness(planRoot, implContent)` from `apps/indusk-mcp/src/lib/cleanup/gate.js` — it returns `{ passes, missing }`, where `missing` names any unsatisfied ritual.
+Before writing a single word of the retrospective, confirm that the plan has completed **both** closing rituals — falsification **and** cleanup. Each is satisfied either via its phase-authoring flow (a Falsification Phase / a `### Phase N: Cleanup` phase, both terminal in impl.md), via a legacy sidecar log (falsification only), or via an explicit skip-reason frontmatter pair. **Both must pass.** The composed check is `checkRetrospectiveReadiness(planRoot, implContent)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`) — it returns `{ passes, missing }`, where `missing` names any unsatisfied ritual.
 
 **Falsification** is satisfied by any of the three conditions below.
 
@@ -46,7 +46,7 @@ The **falsification** requirement passes if ANY of the three conditions above ho
 
 **Cleanup** must ALSO pass, by either of:
 
-- **Complete:** the plan's impl.md has a terminal `### Phase N: Cleanup` phase — `isCleanupComplete(planRoot)` from `apps/indusk-mcp/src/lib/cleanup/gate.js`.
+- **Complete:** the plan's impl.md has a terminal `### Phase N: Cleanup` phase — `isCleanupComplete(planRoot)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`).
 - **Skip:** the impl's frontmatter contains BOTH `cleanup: skipped` AND `cleanup_reason: "{non-empty text}"` — `isCleanupSkipped(implContent)`.
 
 Cleanup runs AFTER falsification: `/work` → `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Evaluate both rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when BOTH requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:

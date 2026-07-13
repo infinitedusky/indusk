@@ -20,7 +20,7 @@ The close-out sequence is: `/work` → `/falsify` → `/work` → **`/cleanup`**
 
 This is best-practice-guided decomposition, not blanket extraction. **Extraction is not universally good** — forcing it produces 8-line "components", prop-drilling, and the wrong abstraction (which costs more than the duplication it removes). Recommend only what best practices actually warrant.
 
-1. **Find the changed files that deserve scrutiny.** The threshold is a focus tool, not a cap. Use `listOversizedChangedFiles(planRoot, baseRef)` from `apps/indusk-mcp/src/lib/cleanup/oversized.js` (invoke via `tsx` or shell out) — it diffs the plan's branch against its merge base and returns the changed files over their resolved cleanup cap, with `{ path, loc, cap, scope, isNew }`. The caps come from the `cleanup` config block in `.indusk/config.json` (`max_file_loc` + per-scope overrides). A file being flagged means "look here", not "this fails".
+1. **Find the changed files that deserve scrutiny.** The threshold is a focus tool, not a cap. Use `listOversizedChangedFiles(planRoot, baseRef)` — import it from `@infinitedusky/indusk-mcp/cleanup/oversized` in a consumer project (or `apps/indusk-mcp/src/lib/cleanup/oversized.ts` in the dusk monorepo), invoked via `tsx` or a short Node script — it diffs the plan's branch against its merge base and returns the changed files over their resolved cleanup cap, with `{ path, loc, cap, scope, isNew }`. The caps come from the `cleanup` config block in `.indusk/config.json` (`max_file_loc` + per-scope overrides). A file being flagged means "look here", not "this fails".
 2. **Apply the enabled domain extensions' best practices.** What counts as a cohesive unit is domain-specific — it comes from the enabled extensions, not from this skill. Read the skills of the project's enabled domain extensions (via `extensions_status` / `get_skill_summaries`):
    - **`nextjs`** — "minimize `"use client"` boundaries, push them as deep as possible"; "server components can't use hooks/event handlers". The concrete move on a Next.js project is often *pull the interactive `"use client"` island out of a big server component into its own file*, splitting server and client concerns.
    - **`react`** — "one component per file for non-trivial components".
@@ -90,7 +90,7 @@ cleanup_reason: "reviewed changed files X, Y, Z; all under threshold or cohesive
 
 This is a confession, not a bypass — it is visible in the retrospective audit and records what you reviewed. Use it when there is truly nothing to do, or for trivial plans (typo, changelog) where the ritual cost exceeds the value.
 
-The retrospective skill's Step 0 gate accepts either a terminal Cleanup Phase (`isCleanupComplete(planRoot)`) OR the `cleanup: skipped` + `cleanup_reason` pair (`isCleanupSkipped(implContent)`). See `apps/indusk-mcp/src/lib/cleanup/gate.js`.
+The retrospective skill's Step 0 gate accepts either a terminal Cleanup Phase (`isCleanupComplete(planRoot)`) OR the `cleanup: skipped` + `cleanup_reason` pair (`isCleanupSkipped(implContent)`). See `@infinitedusky/indusk-mcp/cleanup/gate` (or `apps/indusk-mcp/src/lib/cleanup/gate.ts` in the monorepo).
 
 ## Output
 

@@ -29,6 +29,14 @@
 			"types": "./dist/lib/falsification/log.d.ts",
 			"default": "./dist/lib/falsification/log.js"
 		},
+		"./cleanup/oversized": {
+			"types": "./dist/lib/cleanup/oversized.d.ts",
+			"default": "./dist/lib/cleanup/oversized.js"
+		},
+		"./cleanup/gate": {
+			"types": "./dist/lib/cleanup/gate.d.ts",
+			"default": "./dist/lib/cleanup/gate.js"
+		},
 		"./worktree/validate-config": {
 			"types": "./dist/lib/worktree/validate-config.d.ts",
 			"default": "./dist/lib/worktree/validate-config.js"
