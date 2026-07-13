@@ -47,6 +47,7 @@ function isRitualPhaseTerminal(implContent: string, ritualWord: string): boolean
 	const lines = implContent.split("\n");
 	let inPhase = false;
 	let found = false;
+	let itemCount = 0;
 	for (const line of lines) {
 		const phaseMatch = /^###\s+Phase\s+\d+\s*:\s*(.*)$/i.exec(line);
 		if (phaseMatch) {
@@ -58,11 +59,19 @@ function isRitualPhaseTerminal(implContent: string, ritualWord: string): boolean
 			}
 			continue;
 		}
-		if (inPhase && /^-\s+\[ \]/.test(line)) {
-			return false; // an unchecked item inside the ritual phase
+		if (!inPhase) continue;
+		// Leading whitespace allowed — nested sub-items count (round-2 F3; the
+		// old column-0 anchor made an indented unchecked item invisible).
+		if (/^\s*-\s+\[[ xX]\]/.test(line)) {
+			itemCount++;
+			if (/^\s*-\s+\[ \]/.test(line)) {
+				return false; // an unchecked item inside the ritual phase
+			}
 		}
 	}
-	return found;
+	// An empty ritual phase is NOT terminal — a bare heading with zero items
+	// must not vacuously satisfy the retrospective gate (round-2 F2).
+	return found && itemCount > 0;
 }
 
 /** True iff a terminal `### Phase N: Cleanup …` phase exists in the impl body. */

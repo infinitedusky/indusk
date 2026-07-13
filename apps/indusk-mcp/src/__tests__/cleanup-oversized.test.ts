@@ -128,7 +128,10 @@ describe("cleanup-ritual T22: non-git root throws, no silent-empty, no stderr sp
 	it("throws a clear not-a-git-repo error on a workbench-shaped root (has .indusk, no git)", () => {
 		const dir = mkdtempSync(join(tmpdir(), "cleanup-nogit-"));
 		mkdirSync(join(dir, ".indusk"), { recursive: true });
-		writeFileSync(join(dir, ".indusk", "config.json"), JSON.stringify({ cleanup: { max_file_loc: 400 } }));
+		writeFileSync(
+			join(dir, ".indusk", "config.json"),
+			JSON.stringify({ cleanup: { max_file_loc: 400 } }),
+		);
 		writeLines(dir, "src/huge.ts", 800); // over cap, but the root is NOT a git repo
 
 		// Silent [] here means the ritual reports "nothing to clean" on every

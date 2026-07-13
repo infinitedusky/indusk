@@ -17,10 +17,16 @@ export interface OversizedFile {
 	isNew: boolean;
 }
 
-/** Run git; swallow errors to an empty string (callers tolerate absence). */
+/** Run git; swallow errors to an empty string (callers tolerate absence).
+ * stderr is ignored — execFileSync forwards child stderr to the parent's
+ * terminal by default, which leaked raw `git diff` usage spam (round-2 F1). */
 function git(projectRoot: string, args: string[]): string {
 	try {
-		return execFileSync("git", args, { cwd: projectRoot, encoding: "utf-8" }).trim();
+		return execFileSync("git", args, {
+			cwd: projectRoot,
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
 	} catch {
 		return "";
 	}
@@ -73,7 +79,9 @@ function isGeneratedOrVendored(rel: string): boolean {
 	if (EXCLUDE_BASENAMES.has(base)) return true;
 	if (base.endsWith(".lock") || base.endsWith(".log")) return true;
 	if (parts.some((p) => EXCLUDE_DIRS.has(p))) return true;
-	if (rel.startsWith(".indusk/graph/")) return true;
+	// .indusk/ holds planning docs, logs, and state — records, not decomposition
+	// targets. impl.md files legitimately grow past 400 lines on long plans.
+	if (rel.startsWith(".indusk/")) return true;
 	return false;
 }
 
@@ -93,6 +101,17 @@ export function listOversizedChangedFiles(
 	projectRoot: string,
 	baseRef = "origin/main",
 ): OversizedFile[] {
+	// Fail loudly on a non-git root. A workbench root (where .indusk/ lives) is
+	// deliberately NOT a git repo — silently returning [] there would make the
+	// ritual report "nothing to clean" on every workbench project (round-2 F1,
+	// the same statePath/gitPath split the eval-rail hit in 1.31.7/1.31.12).
+	if (!git(projectRoot, ["rev-parse", "--show-toplevel"])) {
+		throw new Error(
+			`listOversizedChangedFiles: ${projectRoot} is not a git repo. ` +
+				"In workbench mode pass the wrapped repo/worktree path (where the code lives), " +
+				"not the workbench root (where .indusk/ lives).",
+		);
+	}
 	const mergeBase = resolveMergeBase(projectRoot, baseRef);
 
 	const names = new Set<string>();
