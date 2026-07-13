@@ -145,6 +145,32 @@ describe("cleanup-ritual T18: Cleanup-phase detection anchors on the title start
 	});
 });
 
+describe("cleanup-ritual T23: an empty Cleanup phase is not vacuously terminal", () => {
+	it("a Cleanup heading with zero checklist items does NOT satisfy the gate", () => {
+		const impl = `## Checklist
+
+### Phase 7: Cleanup — decompose
+
+(no items were authored)
+`;
+		// Rubber-stamp vector: author an empty phase, gate passes. Must be false.
+		expect(isCleanupPhaseTerminal(impl)).toBe(false);
+	});
+});
+
+describe("cleanup-ritual T24: nested unchecked items block terminality", () => {
+	it("an indented unchecked sub-item keeps the Cleanup phase non-terminal", () => {
+		const impl = `## Checklist
+
+### Phase 7: Cleanup — decompose
+
+- [x] top-level item done
+  - [ ] nested sub-item NOT done
+`;
+		expect(isCleanupPhaseTerminal(impl)).toBe(false);
+	});
+});
+
 describe("cleanup-ritual T20: gate honors the phase-authored falsification flow", () => {
 	it("falsificationOk is true for a terminal Falsification phase (no log, not skipped)", () => {
 		const dir = mkdtempSync(join(tmpdir(), "cleanup-fals-"));

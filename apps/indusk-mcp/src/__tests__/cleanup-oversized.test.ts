@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -121,5 +121,29 @@ describe("cleanup-ritual T19: the DEFAULT baseRef resolves on a local repo (no o
 		// unfetched `origin/main`. A committed change on a local repo must show.
 		const flagged = listOversizedChangedFiles(dir).map((f) => f.path);
 		expect(flagged).toContain("src/big.ts");
+	});
+});
+
+describe("cleanup-ritual T22: non-git root throws, no silent-empty, no stderr spam", () => {
+	it("throws a clear not-a-git-repo error on a workbench-shaped root (has .indusk, no git)", () => {
+		const dir = mkdtempSync(join(tmpdir(), "cleanup-nogit-"));
+		mkdirSync(join(dir, ".indusk"), { recursive: true });
+		writeFileSync(join(dir, ".indusk", "config.json"), JSON.stringify({ cleanup: { max_file_loc: 400 } }));
+		writeLines(dir, "src/huge.ts", 800); // over cap, but the root is NOT a git repo
+
+		// Silent [] here means the ritual reports "nothing to clean" on every
+		// workbench project — it must throw with a recovery hint instead.
+		expect(() => listOversizedChangedFiles(dir)).toThrowError(/git repo|workbench/i);
+	});
+
+	it("the git helper silences child stderr (no raw git usage spam to the caller's terminal)", () => {
+		// execFileSync forwards child stderr to the parent's stderr unless stdio
+		// overrides it — the probe showed a full `git diff` usage dump leaking.
+		// Pin the fix at source level: stderr must be ignored in the helper.
+		const src = readFileSync(
+			new URL("../lib/cleanup/oversized.ts", import.meta.url).pathname,
+			"utf-8",
+		);
+		expect(src).toMatch(/stdio:\s*\[\s*"ignore"\s*,\s*"pipe"\s*,\s*"ignore"\s*\]/);
 	});
 });

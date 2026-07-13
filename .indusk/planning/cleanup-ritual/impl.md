@@ -70,10 +70,10 @@ Ship `/cleanup {plan}` — the plan-close decomposition ritual twinning `/falsif
 | T19 | In a local repo with no `origin` remote, `listOversizedChangedFiles` with the DEFAULT baseRef still flags a committed over-cap file (does not silently return empty) | Phase 0 | Phase 6 | vitest integration (git fixture) | passing |
 | T20 | `checkRetrospectiveReadiness` reports `falsificationOk: true` for a plan with a terminal `### Phase N: Falsification` phase (no legacy log, not skipped) — the default falsify flow | Phase 0 | Phase 6 | vitest unit | passing |
 | T21 | `ensureCleanupConfig` preserves a user's `cleanup` block that has `scopes` but no top-level `max_file_loc` (never clobbers scopes) | Phase 0 | Phase 6 | vitest unit | passing |
-| T22 | On a non-git project root (workbench shape), `listOversizedChangedFiles` throws a clear not-a-git-repo error naming the recovery — it does NOT silently return an empty list, and no raw git usage/stderr spam reaches the caller's terminal | Phase 0 | Phase 7 | vitest integration | planned |
-| T23 | A `### Phase N: Cleanup` heading with ZERO checklist items is NOT terminal — an empty phase cannot vacuously satisfy the retrospective gate | Phase 0 | Phase 7 | vitest unit | planned |
-| T24 | An indented (nested) unchecked `- [ ]` item inside a Cleanup phase keeps the phase non-terminal — column-0 anchoring doesn't skip nested items | Phase 0 | Phase 7 | vitest unit | planned |
-| T25 | Every package-owned installed skill (`.claude/skills/{name}/SKILL.md`) is byte-identical to its source (`apps/indusk-mcp/skills/{name}.md`) — forgotten syncs surface at test time, not when a stale skill loads | Phase 0 | Phase 7 | vitest structural | planned |
+| T22 | On a non-git project root (workbench shape), `listOversizedChangedFiles` throws a clear not-a-git-repo error naming the recovery — it does NOT silently return an empty list, and no raw git usage/stderr spam reaches the caller's terminal | Phase 0 | Phase 7 | vitest integration | written |
+| T23 | A `### Phase N: Cleanup` heading with ZERO checklist items is NOT terminal — an empty phase cannot vacuously satisfy the retrospective gate | Phase 0 | Phase 7 | vitest unit | written |
+| T24 | An indented (nested) unchecked `- [ ]` item inside a Cleanup phase keeps the phase non-terminal — column-0 anchoring doesn't skip nested items | Phase 0 | Phase 7 | vitest unit | written |
+| T25 | Every package-owned installed skill (`.claude/skills/{name}/SKILL.md`) is byte-identical to its source (`apps/indusk-mcp/skills/{name}.md`) — forgotten syncs surface at test time, not when a stale skill loads | Phase 0 | Phase 7 | vitest structural | written |
 
 ### Deferred Verification
 
