@@ -347,8 +347,10 @@ function globToRegExp(glob: string): RegExp {
 export function ensureCleanupConfig(projectRoot: string): "added" | "already-set" | "no-config" {
 	const config = readConfig(projectRoot);
 	if (!config) return "no-config";
-	const existing = (config as { cleanup?: { max_file_loc?: number } }).cleanup?.max_file_loc;
-	if (typeof existing === "number") return "already-set";
+	// Key on block PRESENCE, not `max_file_loc` — a user block with `scopes` but
+	// no top-level cap is valid and must never be clobbered (cleanup-ritual H8).
+	const existing = (config as { cleanup?: unknown }).cleanup;
+	if (existing !== null && typeof existing === "object") return "already-set";
 	writeConfig(projectRoot, {
 		...config,
 		cleanup: { max_file_loc: DEFAULT_MAX_FILE_LOC, scopes: [] },

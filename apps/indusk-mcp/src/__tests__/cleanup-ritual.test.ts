@@ -136,4 +136,16 @@ describe("cleanup-ritual T12: the update migration adds cleanup config idempoten
 		const dir = mkdtempSync(join(tmpdir(), "cleanup-nocfg-"));
 		expect(ensureCleanupConfig(dir)).toBe("no-config");
 	});
+
+	it("T21: preserves a user cleanup block that has scopes but no top-level max_file_loc", () => {
+		const dir = cleanupProject({
+			mode: "full",
+			cleanup: { scopes: [{ include: "packages/**", max_file_loc: 200 }] },
+		});
+		// block IS present (just no top-level cap) — must NOT be clobbered
+		expect(ensureCleanupConfig(dir)).toBe("already-set");
+		const cfg = JSON.parse(readFileSync(join(dir, ".indusk", "config.json"), "utf-8"));
+		expect(cfg.cleanup.scopes).toHaveLength(1);
+		expect(cfg.cleanup.scopes[0].include).toBe("packages/**");
+	});
 });

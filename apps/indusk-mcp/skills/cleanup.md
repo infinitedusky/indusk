@@ -65,7 +65,7 @@ When you've formed one or more recommendations, **append a new phase to the plan
 - [ ] {docs update if the public surface changed, or "(none — internal decomposition)" with proof}
 ```
 
-Add any new-unit trajectory rows to the plan's `## Test Trajectory` table (`Writable at`/`Passes at: Phase N`). **The phase name should contain "Cleanup"** — the retrospective gate's `isCleanupComplete` detects the phase by the word "cleanup" (case-insensitive) in the title, exactly as the admin UI detects the falsification phase.
+Add any new-unit trajectory rows to the plan's `## Test Trajectory` table (`Writable at`/`Passes at: Phase N`). **The phase title must START with "Cleanup"** (`### Phase N: Cleanup — {summary}`) — the retrospective gate's `isCleanupComplete` detects the ritual phase by a title *beginning* with "cleanup" (case-insensitive), NOT a substring anywhere. A substring match would misdetect a topic-named phase like "The /cleanup skill" as the ritual phase.
 
 **What you do NOT do in the skill:**
 

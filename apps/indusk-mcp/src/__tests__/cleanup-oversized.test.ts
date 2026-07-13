@@ -104,3 +104,22 @@ describe("cleanup-ritual T17: generated/vendored files are never flagged", () =>
 		expect(flagged).not.toContain("dist/bundle.js");
 	});
 });
+
+describe("cleanup-ritual T19: the DEFAULT baseRef resolves on a local repo (no origin)", () => {
+	it("flags a committed over-cap file with no baseRef argument", () => {
+		const dir = makeRepo({ max_file_loc: 400, scopes: [] });
+		writeLines(dir, "README.md", 1);
+		git(dir, "add", "-A");
+		git(dir, "commit", "-m", "base");
+
+		git(dir, "checkout", "-b", "feature");
+		writeLines(dir, "src/big.ts", 500);
+		git(dir, "add", "-A");
+		git(dir, "commit", "-m", "big");
+
+		// No baseRef → the default must resolve to a LOCAL base (main), not the
+		// unfetched `origin/main`. A committed change on a local repo must show.
+		const flagged = listOversizedChangedFiles(dir).map((f) => f.path);
+		expect(flagged).toContain("src/big.ts");
+	});
+});

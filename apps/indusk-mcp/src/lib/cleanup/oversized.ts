@@ -26,6 +26,22 @@ function git(projectRoot: string, args: string[]): string {
 	}
 }
 
+/**
+ * Resolve a merge base that actually exists. Tries the requested `baseRef`, then
+ * common local bases, so the default keeps working on a local repo with no
+ * fetched `origin` (cleanup-ritual H2 — `origin/main` alone silently yielded an
+ * empty diff, hiding all committed changes). Falls back to the repo's root
+ * commit so a diff still resolves.
+ */
+function resolveMergeBase(projectRoot: string, baseRef: string): string {
+	for (const c of [baseRef, "origin/main", "main", "origin/master", "master"]) {
+		const mb = git(projectRoot, ["merge-base", c, "HEAD"]);
+		if (mb) return mb;
+	}
+	const root = git(projectRoot, ["rev-list", "--max-parents=0", "HEAD"]).split("\n")[0];
+	return root || "HEAD";
+}
+
 /** True iff `<ref>:<rel>` resolves — used to tell new files from modified. */
 function fileExistsAtRef(projectRoot: string, ref: string, rel: string): boolean {
 	try {
@@ -77,7 +93,7 @@ export function listOversizedChangedFiles(
 	projectRoot: string,
 	baseRef = "origin/main",
 ): OversizedFile[] {
-	const mergeBase = git(projectRoot, ["merge-base", baseRef, "HEAD"]) || baseRef;
+	const mergeBase = resolveMergeBase(projectRoot, baseRef);
 
 	const names = new Set<string>();
 	const ranges: string[][] = [[`${mergeBase}..HEAD`], ["--cached"], []];

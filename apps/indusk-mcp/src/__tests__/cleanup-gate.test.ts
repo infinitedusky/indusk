@@ -118,3 +118,41 @@ describe("cleanup-ritual T13: retrospective gate requires BOTH rituals", () => {
 		expect(r.missing).toContain("falsification");
 	});
 });
+
+describe("cleanup-ritual T18: Cleanup-phase detection anchors on the title start", () => {
+	it("a phase merely MENTIONING cleanup ('The /cleanup skill') is NOT the ritual phase", () => {
+		const impl = `## Checklist
+
+### Phase 4: The /cleanup skill
+
+- [x] author the skill
+
+#### Phase 4 Verification
+- [x] T9 passes
+`;
+		// substring detection would wrongly return true (all items checked)
+		expect(isCleanupPhaseTerminal(impl)).toBe(false);
+	});
+
+	it("a phase titled 'Cleanup — {summary}' IS the ritual phase", () => {
+		const impl = `## Checklist
+
+### Phase 6: Cleanup — decompose the table
+
+- [x] extract Chip into its own file
+`;
+		expect(isCleanupPhaseTerminal(impl)).toBe(true);
+	});
+});
+
+describe("cleanup-ritual T20: gate honors the phase-authored falsification flow", () => {
+	it("falsificationOk is true for a terminal Falsification phase (no log, not skipped)", () => {
+		const dir = mkdtempSync(join(tmpdir(), "cleanup-fals-"));
+		const content = `---\ntitle: "P"\n---\n\n## Checklist\n\n### Phase 6: Falsification — hunt\n\n- [x] fix a bug\n\n#### Phase 6 Verification\n- [x] T1 passes\n\n### Phase 7: Cleanup — decompose\n\n- [x] extract a component\n`;
+		writeFileSync(join(dir, "impl.md"), content);
+		const r = checkRetrospectiveReadiness(dir, content);
+		// no falsification.md log, no `falsification: skipped` — only a terminal
+		// Falsification phase, which is the DEFAULT flow. Must count as satisfied.
+		expect(r.falsificationOk).toBe(true);
+	});
+});

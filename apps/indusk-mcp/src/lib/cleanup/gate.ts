@@ -34,35 +34,46 @@ export function isCleanupSkipped(implContent: string): SkipCheck {
 }
 
 /**
- * True iff the impl body contains a `### Phase N: …Cleanup…` phase whose every
- * checklist item (implementation + gates) is checked. A phase title is treated
- * as the Cleanup phase when it contains "cleanup" (case-insensitive), mirroring
- * the admin-UI's falsification-phase detection. Returns false when no Cleanup
- * phase exists (the ritual hasn't run) or any item under it is unchecked.
- *
- * Gate sub-headers (`#### Phase N Verification`, etc.) do NOT reset the phase —
- * their items belong to the phase, so an unchecked gate item keeps it non-terminal.
+ * True iff `implContent` has a `### Phase N: <RitualWord>…` phase whose every
+ * checklist item is checked. The title must **start** with the ritual word
+ * (after `Phase N:`) — matching a substring would misdetect a topic-named phase
+ * like "The /cleanup skill" as the ritual phase (found by the cleanup-ritual
+ * falsification, H1). Returns false when no such phase exists or any item under
+ * it is unchecked. Gate sub-headers (`#### Phase N Verification`, etc.) do NOT
+ * reset the phase — their items belong to it.
  */
-export function isCleanupPhaseTerminal(implContent: string): boolean {
+function isRitualPhaseTerminal(implContent: string, ritualWord: string): boolean {
+	const startsWith = new RegExp(`^${ritualWord}\\b`, "i");
 	const lines = implContent.split("\n");
-	let inCleanup = false;
+	let inPhase = false;
 	let found = false;
 	for (const line of lines) {
 		const phaseMatch = /^###\s+Phase\s+\d+\s*:\s*(.*)$/i.exec(line);
 		if (phaseMatch) {
-			if (/cleanup/i.test(phaseMatch[1])) {
-				inCleanup = true;
+			if (startsWith.test(phaseMatch[1].trim())) {
+				inPhase = true;
 				found = true;
 			} else {
-				inCleanup = false;
+				inPhase = false;
 			}
 			continue;
 		}
-		if (inCleanup && /^-\s+\[ \]/.test(line)) {
-			return false; // an unchecked item inside the Cleanup phase
+		if (inPhase && /^-\s+\[ \]/.test(line)) {
+			return false; // an unchecked item inside the ritual phase
 		}
 	}
 	return found;
+}
+
+/** True iff a terminal `### Phase N: Cleanup …` phase exists in the impl body. */
+export function isCleanupPhaseTerminal(implContent: string): boolean {
+	return isRitualPhaseTerminal(implContent, "cleanup");
+}
+
+/** True iff a terminal `### Phase N: Falsification …` phase exists — the default
+ * phase-authoring falsify flow leaves one (no legacy log, not skipped). */
+export function isFalsificationPhaseTerminal(implContent: string): boolean {
+	return isRitualPhaseTerminal(implContent, "falsification");
 }
 
 /**
@@ -98,7 +109,9 @@ export function checkRetrospectiveReadiness(
 	implContent: string,
 ): RetrospectiveReadiness {
 	const falsificationOk =
-		isFalsificationComplete(planRoot) || isFalsificationSkipped(implContent).skipped;
+		isFalsificationComplete(planRoot) ||
+		isFalsificationSkipped(implContent).skipped ||
+		isFalsificationPhaseTerminal(implContent);
 	const cleanupOk = isCleanupComplete(planRoot) || isCleanupSkipped(implContent).skipped;
 	const missing: string[] = [];
 	if (!falsificationOk) missing.push("falsification");
