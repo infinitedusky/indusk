@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { AgentSection } from "../lib/agents/current-md.js";
-import { upsertSection } from "../lib/agents/current-md.js";
+import { parseCurrentMd, upsertSection } from "../lib/agents/current-md.js";
 import { withLock } from "../lib/agents/lock.js";
 
 /**
@@ -69,6 +69,9 @@ export function registerAgentTools(server: McpServer, projectRoot: string): void
 			let agentSection!: AgentSection;
 			withLock(lockPath, () => {
 				const initial = existsSync(path) ? readFileSync(path, "utf-8") : "";
+				// Preserve branch/worktree set by `agent register` — this tool promotes
+				// operational state (in_flight/open_questions/cursor), not presence identity.
+				const existing = parseCurrentMd(initial).sections.find((s) => s.sessionId === sessionId);
 				agentSection = {
 					sessionId,
 					sessionShort: sessionId.slice(0, 8),
@@ -77,6 +80,8 @@ export function registerAgentTools(server: McpServer, projectRoot: string): void
 					inFlight: sections.in_flight,
 					openQuestions: sections.open_questions,
 					cursor: sections.cursor,
+					branch: existing?.branch ?? "",
+					worktree: existing?.worktree ?? "",
 				};
 				const updated = upsertSection(initial, agentSection);
 				const tmpPath = `${path}.tmp.${sessionId}`;

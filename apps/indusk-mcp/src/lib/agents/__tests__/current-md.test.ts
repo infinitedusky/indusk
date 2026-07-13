@@ -40,6 +40,8 @@ function makeSection(
 		inFlight: parts.inFlight ?? "",
 		openQuestions: parts.openQuestions ?? "",
 		cursor: parts.cursor ?? "",
+		branch: "",
+		worktree: "",
 	};
 }
 

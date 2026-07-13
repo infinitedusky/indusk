@@ -39,6 +39,8 @@ function makeSection(sessionId: string, task: string, ts: string): AgentSection 
 		inFlight: `${task} in-flight body`,
 		openQuestions: `${task} open questions`,
 		cursor: `${task} cursor`,
+		branch: "",
+		worktree: "",
 	};
 }
 

@@ -1,7 +1,7 @@
 ---
 title: "Worktree Visibility"
 date: 2026-07-12
-status: draft
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -44,7 +44,7 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 | T1 | `indusk agent list` shows each active session's worktree path and branch. | Phase 0 | Phase 1 | planned | integration |
 | T2 | After a session's branch/worktree changes, the next `agent list` shows the current branch, not the register-time one. | Phase 0 | Phase 1 | planned | integration |
 | T3 | Two active sessions both in the shared trunk produce a collision warning naming them; two in separate worktrees do not. | Phase 0 | Phase 1 | planned | integration |
-| T4 | A section body containing a `**Branch**:`/`**Worktree**:` line does not create a phantom agent or spoofed field in `agent list`. | Phase 0 | Phase 1 | planned | unit |
+| T4 | A section body containing a `**Branch**:`/`**Worktree**:` line does not create a phantom agent or spoofed field in `agent list`. | Phase 0 | Phase 1 | written | unit |
 | T5 | Impl frontmatter with `worktree: none` yields a "skip" decision; absent yields "create". | Phase 2 | Phase 2 | planned | unit |
 | T6 | The tree-context helper classifies a cwd inside the trunk as "trunk" and a cwd inside a worktree as "worktree". | Phase 2 | Phase 2 | planned | unit |
 | T7 | Starting `/work` on a plan with no opt-out results in a git worktree existing for that plan before any code file is edited. | Phase 3 | Phase 3 | planned | manual |
@@ -70,12 +70,12 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 
 ### Phase 1: Visibility fields in the bulletin
 
-- [ ] Add `branch: string` and `worktree: string` (both may be empty) to `AgentSection` in
+- [x] Add `branch: string` and `worktree: string` (both may be empty) to `AgentSection` in
       `apps/indusk-mcp/src/lib/agents/current-md.ts`.
-- [ ] Serialize `**Branch**: <b>` / `**Worktree**: <p>` marker lines in the section body (alongside
-      `**Session ID**:` / `**Last updated**:`); parse them back. Empty values omit the line or write
-      a placeholder — pick one and keep the round-trip stable.
-- [ ] Add `**Branch**:` and `**Worktree**:` to the forbidden-marker list in `sanitizeSectionBody`
+- [x] Serialize `**Branch**: <b>` / `**Worktree**: <p>` marker lines in the section body (alongside
+      `**Session ID**:` / `**Last updated**:`); parse them back. Empty values omit the line (round-trip
+      to `""`).
+- [x] Add `**Branch**:` and `**Worktree**:` to the forbidden-marker list in `sanitizeSectionBody`
       so a section body cannot inject a fake marker line (same defense as the Session ID / Last
       updated markers).
 - [ ] `agent register` (`apps/indusk-mcp/src/bin/commands/agent.ts`): stop discarding the computed
