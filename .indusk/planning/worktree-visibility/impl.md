@@ -45,8 +45,8 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 | T2 | After a session's branch/worktree changes, the next `agent list` shows the current branch, not the register-time one. | Phase 0 | Phase 1 | passing | integration |
 | T3 | Two active sessions both in the shared trunk produce a collision warning naming them; two in separate worktrees do not. | Phase 0 | Phase 1 | passing | integration |
 | T4 | A section body containing a `**Branch**:`/`**Worktree**:` line does not create a phantom agent or spoofed field in `agent list`. | Phase 0 | Phase 1 | passing | unit |
-| T5 | Impl frontmatter with `worktree: none` yields a "skip" decision; absent yields "create". | Phase 2 | Phase 2 | planned | unit |
-| T6 | The tree-context helper classifies a cwd inside the trunk as "trunk" and a cwd inside a worktree as "worktree". | Phase 2 | Phase 2 | planned | unit |
+| T5 | Impl frontmatter with `worktree: none` yields a "skip" decision; absent yields "create". | Phase 2 | Phase 2 | passing | unit |
+| T6 | The tree-context helper classifies a cwd inside the trunk as "trunk" and a cwd inside a worktree as "worktree". | Phase 2 | Phase 2 | passing | unit |
 | T7 | Starting `/work` on a plan with no opt-out results in a git worktree existing for that plan before any code file is edited. | Phase 3 | Phase 3 | planned | manual |
 | T8 | Starting `/work` on a plan whose impl frontmatter has `worktree: none` proceeds in the current tree with no worktree created. | Phase 3 | Phase 3 | planned | manual |
 | T9 | `/catchup` reports other active agents' worktree and branch and surfaces a same-trunk collision. | Phase 3 | Phase 3 | planned | manual |
@@ -111,25 +111,28 @@ and unit/integration-testable; the **automatic-isolation** half (worktree create
 
 ### Phase 2: Decision + detection helpers
 
-- [ ] `resolveWorktreeDecision(frontmatter): "create" | "skip"` — reads `worktree` from impl
-      frontmatter; `"none"` → `"skip"`, anything else/absent → `"create"`. Pure, no I/O. Place in a
-      new `apps/indusk-mcp/src/lib/worktree/decision.ts` (or extend an existing worktree lib module).
-- [ ] `detectTreeContext(cwd): { kind: "trunk" | "worktree"; toplevel: string }` — classify via
-      `git worktree list` membership / comparing toplevel against the workbench's `wrapped_repo`
-      trunk. Pure-ish (shells `git`); inject the git runner for testability.
-- [ ] Export both via subpath if the skills/hooks need them; otherwise keep internal.
+- [x] `resolveWorktreeDecision(implContent): "create" | "skip"` — reads the `worktree:` impl
+      frontmatter key via gray-matter (mirroring `isCleanupSkipped`); `"none"` (case-insensitive) →
+      `"skip"`, anything else/absent/unparseable → `"create"`. Pure. In new
+      `apps/indusk-mcp/src/lib/worktree/decision.ts`.
+- [x] `detectTreeContext(cwd, run?): { kind: "trunk" | "worktree"; toplevel: string }` — compares the
+      current `--show-toplevel` against the first (main) entry of `git worktree list --porcelain`;
+      injectable `GitRunner` for testability. Non-git cwd → `{ kind: "trunk", toplevel: "" }`.
+- [x] Kept internal for now (only the work/planner skills consume them, via `tsx`); no subpath export
+      added until a cross-package consumer needs it.
 
 #### Phase 2 Verification
-- [ ] T5 passes — unit test over `resolveWorktreeDecision` for `none` / absent / other values.
-- [ ] T6 passes — unit test over `detectTreeContext` with a faked git runner returning trunk vs
-      worktree toplevels.
+- [x] T5 passes — `decision.test.ts` covers `resolveWorktreeDecision` for none / absent / other /
+      case-insensitive / unparseable. (`pnpm vitest run src/lib/worktree/__tests__/decision.test.ts`)
+- [x] T6 passes — `detectTreeContext` classifies trunk vs linked worktree via a faked git runner, and
+      falls back to trunk for non-git cwds. 8 tests green; `tsc --noEmit` clean.
 
 #### Phase 2 Context
-- [ ] Update CLAUDE.md Conventions: the `worktree: none` frontmatter opt-out + the two helpers as the
+- [x] Update CLAUDE.md Conventions: the `worktree: none` frontmatter opt-out + the two helpers as the
       deterministic core behind the skill-driven kickoff.
 
 #### Phase 2 Document
-- [ ] (none needed — helpers documented via the kickoff-step doc in Phase 3)
+- [x] (none needed — asked: "Phase 2 helpers are internal, no public API, documented in Phase 3's kickoff-step docs. Skip the Phase 2 Document gate?" — user: "Skip it")
 
 ### Phase 3: Kickoff step + catchup + docs + smoke
 
