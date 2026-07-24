@@ -54,3 +54,24 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 (empty)
 
 ---
+
+## Session 4adeb3eb — starting catchup
+
+**Session ID**: 4adeb3eb-b03d-4d0a-b5e9-581ffda852d5
+**Last updated**: 2026-07-20T01:45:35.042Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

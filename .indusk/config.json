@@ -47,5 +47,9 @@
 	},
 	"agents": {
 		"stale_ttl_minutes": 60
+	},
+	"cleanup": {
+		"max_file_loc": 400,
+		"scopes": []
 	}
 }
