@@ -131,6 +131,48 @@ export interface InduskConfig {
 		max_file_loc?: number;
 		scopes?: CleanupScope[];
 	};
+	/**
+	 * Multi-agent bulletin configuration (`.indusk/current.md`).
+	 *
+	 * `stale_ttl_minutes` is the DISPLAY TTL — sections older than this are
+	 * hidden from `agent list` but stay in the file. `sweep_ttl_minutes` is the
+	 * DECAY TTL — sections older than this are MOVED to the archive by
+	 * `indusk agent sweep` (default 7 days, deliberately much longer than the
+	 * display TTL so merely-quiet sessions are never evicted).
+	 */
+	agents?: {
+		stale_ttl_minutes?: number;
+		sweep_ttl_minutes?: number;
+	};
+	/**
+	 * Planning-lifecycle housekeeping. `dead_draft_days` is the age threshold
+	 * for `indusk plans archive-dead` — a plan whose docs are all draft-or-
+	 * abandoned AND whose newest file is older than this many days is moved to
+	 * `.indusk/planning/archive/` (moved, never deleted).
+	 */
+	planning?: {
+		dead_draft_days?: number;
+	};
+}
+
+/** Default sweep TTL: 7 days. Distinct from the 60-minute display TTL. */
+export const DEFAULT_SWEEP_TTL_MINUTES = 7 * 24 * 60;
+
+/** Default dead-draft age threshold for `indusk plans archive-dead`. */
+export const DEFAULT_DEAD_DRAFT_DAYS = 30;
+
+/** Read `agents.sweep_ttl_minutes` with the 7-day default. Defaults live here, in the reader. */
+export function getSweepTtlMinutes(projectRoot: string): number {
+	const config = readConfig(projectRoot);
+	const v = config?.agents?.sweep_ttl_minutes;
+	return typeof v === "number" && v > 0 ? v : DEFAULT_SWEEP_TTL_MINUTES;
+}
+
+/** Read `planning.dead_draft_days` with the 30-day default. Defaults live here, in the reader. */
+export function getDeadDraftDays(projectRoot: string): number {
+	const config = readConfig(projectRoot);
+	const v = config?.planning?.dead_draft_days;
+	return typeof v === "number" && v > 0 ? v : DEFAULT_DEAD_DRAFT_DAYS;
 }
 
 /**
