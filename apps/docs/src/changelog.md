@@ -2,6 +2,10 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.33.2] — 2026-07-23
+
+Version-alignment republish — identical content to 1.33.1.
+
 ## [1.33.1] — 2026-07-23
 
 (1.33.0 was an accidental publish of 1.32.0-era trunk code and is deprecated on npm — 1.33.1 is the real indusk-makeover release. Content below.)
