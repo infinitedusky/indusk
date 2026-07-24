@@ -1,5 +1,7 @@
 # CodeGraphContext
 
+> **RETIRED (indusk-makeover, 2026-07-23).** This subsystem was removed from InDusk: field measurement showed near-zero reads against real infrastructure + context cost. Curated lessons carry cross-session knowledge; Grep/Read answer blast-radius questions. `indusk init`/`update` remove stale MCP registrations automatically. This page is kept as a historical reference. See [the decision](/decisions/indusk-makeover).
+
 Structural code intelligence for the InDusk dev system. CodeGraphContext (CGC) indexes your codebase into a FalkorDB graph database, making dependency relationships, complexity metrics, and dead code detection queryable via MCP tools and Cypher queries.
 
 ## What It Does

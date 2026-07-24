@@ -54,3 +54,24 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 (empty)
 
 ---
+
+## Session c6257c42 — work indusk-makeover (Phase 0: baseline tripwires)
+
+**Session ID**: c6257c42-ad34-41a2-b090-d161a282c5c3
+**Last updated**: 2026-07-24T00:25:31.233Z
+**Branch**: plan/indusk-makeover-phase-0
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/indusk-makeover
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

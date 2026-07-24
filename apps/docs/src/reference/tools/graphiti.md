@@ -1,5 +1,7 @@
 # Graphiti — Temporal Knowledge Graph
 
+> **RETIRED (indusk-makeover, 2026-07-23).** This subsystem was removed from InDusk: field measurement showed near-zero reads against real infrastructure + context cost. Curated lessons carry cross-session knowledge; Grep/Read answer blast-radius questions. `indusk init`/`update` remove stale MCP registrations automatically. This page is kept as a historical reference. See [the decision](/decisions/indusk-makeover).
+
 Graphiti is a temporal knowledge graph that captures decisions, contradictions, and lessons across sessions. It runs inside the [`indusk-infra` container](/reference/tools/infrastructure) on port 8100 and is registered as an MCP server in every project's `.mcp.json` (automatically by `indusk init` ≥ v1.10.0). The agent calls Graphiti tools directly via `mcp__graphiti__*` — there is no `indusk` wrapper layer.
 
 This page documents the agent-facing surface. For the container itself (Docker, persistence, env vars), see [Infrastructure Container](/reference/tools/infrastructure).

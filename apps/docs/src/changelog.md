@@ -2,6 +2,16 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — indusk-makeover (in progress)
+
+### Changed (InDusk Makeover — budgets + decay + removal)
+- **CLAUDE.md hard budget (60 KB) enforced at write time.** New `claude-md-budget.js` PreToolUse hook blocks over-budget Edit/Write on any file named CLAUDE.md and warns at 90%; budget configurable via `context.claude_md_budget_bytes`. Discipline-only compression was tried and failed — the hook is the ratchet. New `indusk context check-pointers` verifies every path reference in CLAUDE.md resolves (under rule+pointer compression, a dead pointer is a lost rule body). See [the context-budget guide](/guide/context-budget).
+- **Decay layer.** `indusk agent sweep` archives current.md sections older than `agents.sweep_ttl_minutes` (default 7 days — distinct from the 60-minute display TTL) to `.indusk/archive/current-md-archive.md`; `indusk plans archive-dead` moves all-draft stale plans (older than `planning.dead_draft_days`, default 30) to `planning/archive/`. Archive, never delete. See [`plans` CLI reference](/reference/cli/plans).
+
+### Removed (Graphiti + CGC)
+- **Graphiti and CodeGraphContext are retired.** MCP registrations, extensions (`graphiti`/`cgc`/`falkordb`), the semantic-graph event pipeline, the context beam, and `indusk graph`/`indusk beam` CLI are all removed. Field measurement: ~1 generic Graphiti query per session, near-zero CGC reads, standing infra + schema cost. `indusk init`/`update` now REMOVE stale registrations and disable the retired extension manifests on existing projects.
+- **The highlight→eval rail is preserved and retargets to lessons.** The eval agent materializes durable highlights via `add_lesson` (titles-hot/bodies-cold); findings persist via the eval scorecard/findings log. The CRITICAL live-delta and `already_processed` STOP guards from 1.31.x carry over unchanged — a reappearing `graph_capture` reference is now itself a test failure.
+
 ## [1.32.0] — 2026-07-13
 
 ### Added (Worktree Visibility — worktree-per-plan, observable in the bulletin)

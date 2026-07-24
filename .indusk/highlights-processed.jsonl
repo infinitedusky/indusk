@@ -131,3 +131,8 @@
 {"id":"h-20260706-015","processedAt":"2026-07-09T01:07:38.038Z","action":"wrote-episode","detail":"new-enum-value-changes-regex-anchoring-risk-calculus"}
 {"id":"h-20260706-016","processedAt":"2026-07-09T01:07:45.630Z","action":"wrote-episode","detail":"additive-recovery-over-rewrite-under-git-collision"}
 {"id":"h-20260707-001","processedAt":"2026-07-09T01:07:54.019Z","action":"wrote-episode","detail":"cleanup-ritual-adr-accepted"}
+{"id":"h-20260723-001","processedAt":"2026-07-24T00:29:29.238Z","action":"wrote-episode","detail":"brief-accepted-versioned-workbench"}
+{"id":"h-20260723-002","processedAt":"2026-07-24T00:29:29.902Z","action":"wrote-episode","detail":"test-plan-accepted-indusk-makeover"}
+{"id":"h-20260723-003","processedAt":"2026-07-24T00:29:30.402Z","action":"wrote-episode","detail":"adr-accepted-indusk-makeover"}
+{"id":"placeholder-none","processedAt":"2026-07-24T00:48:57.840Z","action":"skipped","detail":"no unprocessed highlights this cycle; call omitted"}
+{"id":"h-20260724-a8smoke","processedAt":"2026-07-24T01:06:52.580Z","action":"skipped","detail":"Highlight note is an A8 smoke-test probe asking the eval agent to prove the rail by writing a specific lesson, not a substantive correction — writing 'A8 smoke: the lessons rail works without Graphiti' as a permanent lesson would pollute the registry with test scaffolding. The rail's operation is already proven by this very mark_processed call succeeding; the durable rule (highlights→lessons, not Graphiti) is already captured in the personal lesson highlight-materializes-to-lessons-not-graphiti.md."}

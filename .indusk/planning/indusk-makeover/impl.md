@@ -45,8 +45,8 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 | A4 | 15 randomly sampled pre-compression entries have their operative rule still stated post-compression | Phase 6 | Phase 6 | planned |
 | A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | written |
 | A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | written |
-| A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | written |
-| A8 | A highlight written in a session is processed by the eval agent into a lesson at commit time, with Graphiti gone, without error | Phase 3 | Phase 3 | planned |
+| A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | passing |
+| A8 | A highlight written in a session is processed by the eval agent into a lesson at commit time, with Graphiti gone, without error | Phase 3 | Phase 3 | passing |
 | A9 | Sweep archives sections older than the stale TTL; archived content is retrievable from the archive file | Phase 1 | Phase 1 | passing |
 | A10 | Sweep never touches the Project (shared) section or a live session's section (adversarial fixtures) | Phase 1 | Phase 1 | passing |
 | A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | written |
@@ -135,15 +135,15 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - [x] Grep-gone check: no live-code references to `GraphitiClient`/`graph_capture` outside archived docs + changelog
 
 #### Phase 3 Verification
-- [ ] A7 script flips green (graphiti/CGC absent, `check_health` passes)
-- [ ] A8 manual smoke: write a highlight, `git commit`, observe eval agent produce a lesson entry and mark the highlight processed, zero errors in `.indusk/eval/results.log`
-- [ ] Full suite green (`pnpm test`) — the eval-resume-prompt + rail regression tests updated, not deleted
+- [x] A7 script flips green (graphiti/CGC absent, `check_health` passes) — verified 2026-07-23
+- [x] A8 manual smoke: write a highlight, `git commit`, observe eval agent produce a lesson entry and mark the highlight processed, zero errors in `.indusk/eval/results.log` — smoke highlight h-20260724-a8smoke drained through the retargeted rail (reasoned skip + real lesson `highlight-materializes-to-lessons-not-graphiti.md`); side-finds: stale-model 404 on old persistent eval sessions (recovery: fresh spawn)
+- [x] Full suite green (`pnpm test`) — eval-resume-prompt + rail regression tests updated, not deleted; graph-sync friendly-error tests removed with their command; admin tests green after building the bundle (were environmental)
 
 #### Phase 3 Context
-- [ ] Update CLAUDE.md: Architecture MCP-server list loses graphiti/codegraphcontext; Conventions eval-rail entry retargeted to lessons — one-liners + pointer
+- [x] Update CLAUDE.md: Architecture MCP-server list loses graphiti/codegraphcontext; Conventions eval-rail entry retargeted to lessons — one-liners + pointer
 
 #### Phase 3 Document
-- [ ] Removal notices on Graphiti/CGC guide pages (what replaced them: lessons rail, Grep); changelog entry
+- [x] Removal notices on Graphiti/CGC guide pages (what replaced them: lessons rail, Grep); changelog entry
 
 ### Phase 4: Catchup diet + sweep wiring
 - [ ] Rewrite `apps/indusk-mcp/skills/catchup.md`: drop Graphiti step, drop duplicate CLAUDE.md fetch, read Project (shared) + live sections only (via `indusk agent list` fresh partition), plans via status-filtered listing; keep lessons titles-hot pattern

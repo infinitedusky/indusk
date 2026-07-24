@@ -1,0 +1,11 @@
+# Highlights materialize into lessons via add_lesson, not Graphiti episodes (Graphiti removed indusk-makeover P3)
+
+Superseding correction to the existing `community-use-highlight-not-direct-graphiti-writes` lesson, which is now stale as of commit 50c75337 (indusk-makeover Phase 3, 2026-07-23).
+
+As of this commit, Graphiti is removed from the eval agent's rail entirely. `apps/indusk-mcp/src/lib/eval/prompt-builder.ts`'s `buildHighlightsInstructions` no longer instructs the eval agent to call `mcp__indusk__graph_capture` or `mcp__graphiti__add_memory` — it now instructs the eval agent to call `mcp__indusk__add_lesson` for highlights carrying a durable rule (critical highlights already recorded in an ADR/brief are explicitly skipped rather than duplicated into a lesson; important highlights — corrections, retro lessons, confirmed patterns — are the highest-value candidates). Step 6 ("Findings persistence") no longer writes to a knowledge graph at all — findings persist through the eval scorecard/findings log only (`indusk eval findings`).
+
+`mcp__graphiti__*` is also removed from the eval agent's allowed-tools list in `evaluator-runner.ts` and `persistent-evaluator.ts` — the eval agent subprocess can no longer call Graphiti tools even if it wanted to (they aren't in `--allowedTools`).
+
+The working-agent-side rule from the old lesson (flag moments via `mcp__indusk__highlight`, don't write structured knowledge directly) is UNCHANGED and still correct — that boundary survives the removal. What changed is only what the eval agent does with the queue afterward: lessons (titles-hot/bodies-cold, always loaded at catchup) instead of a queryable Graphiti graph (which required an explicit search call to surface).
+
+The old lesson's "Where this is enforced" section, "What you CAN do with Graphiti directly" section (search_nodes/search_memory_facts/get_episodes examples), and its final "exception is apps/indusk-mcp/src/lib/eval/... allowed to call graph_capture" line are all now factually wrong and should be revised or archived when this project's lessons registry is next groomed — Graphiti MCP tools are gone from the project's `.mcp.json` keep-list per the indusk-makeover ADR (project keep-list: indusk/dash0/posthog/jaeger).
