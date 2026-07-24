@@ -40,7 +40,7 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
 | A1 | Project CLAUDE.md is ≤ 60 KB on disk (`wc -c` gate script) | Phase 0 | Phase 6 | written |
-| A2 | Editing CLAUDE.md past budget produces a visible warn/block at write time | Phase 2 | Phase 2 | planned |
+| A2 | Editing CLAUDE.md past budget produces a visible warn/block at write time | Phase 2 | Phase 2 | passing |
 | A3 | Every compressed entry's pointer resolves to an existing docs page or archived doc (link walker) | Phase 0 | Phase 6 | written |
 | A4 | 15 randomly sampled pre-compression entries have their operative rule still stated post-compression | Phase 6 | Phase 6 | planned |
 | A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | written |
@@ -113,19 +113,19 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - [x] New section in `apps/docs/src/reference/cli/agent.md` for `agent sweep`; new `apps/docs/src/reference/cli/plans.md` for `plans archive-dead` — both in the sidebar CLI group
 
 ### Phase 2: CLAUDE.md size-budget hook + pointer walker productized
-- [ ] `apps/indusk-mcp/hooks/claude-md-budget.js` (PreToolUse on Edit/Write targeting `CLAUDE.md`): computes post-edit size; > budget → block with message naming the compaction ritual; > 90% → warn; budget from `context.claude_md_budget_bytes` (default 61440) via inlined config reader (hook precedent)
-- [ ] Hook registered in init/update settings template; confirm globSync (both sides) picks it up — the eval-trigger lesson
-- [ ] Productize the pointer walker as `indusk context check-pointers` (walks CLAUDE.md path references, reports dead ones)
-- [ ] Vitest: hook unit (under/at/over budget, warn band, non-CLAUDE.md files untouched) + walker unit
+- [x] `apps/indusk-mcp/hooks/claude-md-budget.js` (PreToolUse on Edit/Write targeting `CLAUDE.md`): computes post-edit size; > budget → block with message naming the compaction ritual; > 90% → warn; budget from `context.claude_md_budget_bytes` (default 61440) via inlined config reader (hook precedent) — applies to any file named CLAUDE.md; never blocks on its own parse failure
+- [x] Hook registered in init/update settings template; confirm globSync (both sides) picks it up — the eval-trigger lesson — init hookConfig entry + targeted ensure-block in update.ts (eval-trigger pattern); globSync confirmed at init.ts:1050 + update.ts:206
+- [x] Productize the pointer walker as `indusk context check-pointers` (walks CLAUDE.md path references, reports dead ones) — `lib/context-pointers.ts` + `commands/context.ts`, exit 1 on dead pointers
+- [x] Vitest: hook unit (under/at/over budget, warn band, non-CLAUDE.md files untouched) + walker unit — 8 hook e2e (subprocess + stdin event) + 4 walker tests
 
 #### Phase 2 Verification
-- [ ] A2 passes: manual hook-fire test — attempt an over-budget CLAUDE.md edit in a scratch project, observe block message; vitest hook unit green
+- [x] A2 passes: manual hook-fire test — attempt an over-budget CLAUDE.md edit in a scratch project, observe block message; vitest hook unit green — the e2e suite runs the real hook binary via subprocess against a scratch project (block message asserted verbatim); 12 tests green, tsc + biome clean
 
 #### Phase 2 Context
-- [ ] Add CLAUDE.md Conventions one-liner: the 60 KB budget, hook name, config key, how to raise the budget deliberately — pointer to `guide/context-budget.md`
+- [x] Add CLAUDE.md Conventions one-liner: the 60 KB budget, hook name, config key, how to raise the budget deliberately — pointer to `guide/context-budget.md`
 
 #### Phase 2 Document
-- [ ] Write `apps/docs/src/guide/context-budget.md`: budget rationale, hook behavior, compaction ritual, decay-loop Mermaid diagram
+- [x] Write `apps/docs/src/guide/context-budget.md`: budget rationale, hook behavior, compaction ritual, decay-loop Mermaid diagram — registered in the guide sidebar
 
 ### Phase 3: Graphiti + CGC removal, rail retargeted to lessons
 - [ ] Retarget eval Step 4: `buildHighlightsInstructions` writes lessons (via `add_lesson`) instead of `graph_capture`/`mcp__graphiti__*`; keep the CRITICAL preamble + `already_processed` STOP path byte-intact; update the resume-prompt regression test's expectations

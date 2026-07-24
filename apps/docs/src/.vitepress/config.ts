@@ -62,6 +62,7 @@ const config = defineConfig({
 						{ text: "Local Mode", link: "/guide/local-mode" },
 						{ text: "Evaluation", link: "/guide/eval" },
 						{ text: "Context Beam", link: "/guide/context-beam" },
+						{ text: "Context Budget", link: "/guide/context-budget" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Cleanup Ritual", link: "/guide/cleanup-ritual" },
@@ -178,13 +179,34 @@ const config = defineConfig({
 					text: "Lessons Learned",
 					items: [
 						{ text: "Overview", link: "/lessons/" },
-						{ text: "Cleanup Ritual (Ritual vs Gate + Mirrored-Artifact Parity)", link: "/lessons/cleanup-ritual" },
-						{ text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)", link: "/lessons/handoff-multi-agent-section-shape" },
-						{ text: "Git-Only Substrate (Falsification + Inherited Bugs)", link: "/lessons/git-only-substrate" },
-						{ text: "Git-or-jj Substrate (Ship-and-Reverse Pattern + Brief Author Bias)", link: "/lessons/git-or-jj-substrate" },
-						{ text: "Eval Agent MCP Access (Fresh-vs-Resume Path Divergence)", link: "/lessons/eval-agent-mcp-access" },
-						{ text: "Workbench Setup Command (Delegate-Don't-Extract + Falsification)", link: "/lessons/workbench-setup-command" },
-						{ text: "Worktree Visibility (YAML Boolean Coercion + Non-Git-CWD)", link: "/lessons/worktree-visibility" },
+						{
+							text: "Cleanup Ritual (Ritual vs Gate + Mirrored-Artifact Parity)",
+							link: "/lessons/cleanup-ritual",
+						},
+						{
+							text: "Section Shape (Branch-Mergeable Markdown + Lock vs Merge)",
+							link: "/lessons/handoff-multi-agent-section-shape",
+						},
+						{
+							text: "Git-Only Substrate (Falsification + Inherited Bugs)",
+							link: "/lessons/git-only-substrate",
+						},
+						{
+							text: "Git-or-jj Substrate (Ship-and-Reverse Pattern + Brief Author Bias)",
+							link: "/lessons/git-or-jj-substrate",
+						},
+						{
+							text: "Eval Agent MCP Access (Fresh-vs-Resume Path Divergence)",
+							link: "/lessons/eval-agent-mcp-access",
+						},
+						{
+							text: "Workbench Setup Command (Delegate-Don't-Extract + Falsification)",
+							link: "/lessons/workbench-setup-command",
+						},
+						{
+							text: "Worktree Visibility (YAML Boolean Coercion + Non-Git-CWD)",
+							link: "/lessons/worktree-visibility",
+						},
 					],
 				},
 			],
