@@ -80,7 +80,7 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 ## Checklist
 
 ### Phase 0: Baseline measurement scripts (red tripwires)
-- [ ] Create/confirm this plan's worktree (`git worktree` branch `plan/indusk-makeover`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Create/confirm this plan's worktree (`git worktree` branch `plan/indusk-makeover`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
 - [ ] Author `scripts/makeover-gates.sh` in the plan folder (or `apps/indusk-mcp/scripts/`): A1 `wc -c` gate (CLAUDE.md ≤ 61440 bytes), A7 config grep (graphiti/codegraphcontext absent from `.mcp.json` + `.indusk/extensions/`), A11 active-plan count vs frontmatter status, A12 keep-list diff for project + global MCP configs — each printing PASS/FAIL
 - [ ] Author A3 pointer-walker (scan CLAUDE.md for `.indusk/`/`apps/docs/` path references; verify each resolves on disk)
 - [ ] Author A5/A6 measurement procedure as a checked-in doc: run `/catchup`, sum tool-result chars/4, grep transcript for Graphiti calls + duplicate CLAUDE.md reads
