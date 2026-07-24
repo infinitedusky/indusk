@@ -42,11 +42,20 @@ fi
 # classifier, the gate checks the actual assertion: zero dead-draft candidates
 # remain outside archive/ (all-draft docs + stale mtime + not master-protected).
 plans=$(find "$ROOT/.indusk/planning" -mindepth 1 -maxdepth 1 -type d ! -name archive | wc -l | tr -d ' ')
-dead=$(cd "$ROOT" && node "$ROOT/apps/indusk-mcp/dist/bin/cli.js" plans archive-dead --dry-run 2>/dev/null | grep -c '^  - .*newest file' || true)
-if [ "${dead:-0}" -eq 0 ]; then
-  gate PASS A11 "0 dead-draft candidates (${plans} active plan dirs, all with genuine status)"
+# A vacuous PASS is worse than a FAIL: if the classifier can't run (no built
+# dist, broken node), say so loudly instead of counting an empty stream as
+# zero (Phase 7 falsification, A18).
+a11_out=$(cd "$ROOT" && node "$ROOT/apps/indusk-mcp/dist/bin/cli.js" plans archive-dead --dry-run 2>&1)
+a11_status=$?
+if [ $a11_status -ne 0 ]; then
+  gate FAIL A11 "classifier could not run (exit ${a11_status}) — build apps/indusk-mcp first"
 else
-  gate FAIL A11 "${dead} dead-draft candidate(s) not yet archived (${plans} active dirs)"
+  dead=$(printf '%s\n' "$a11_out" | grep -c '^  - .*newest file' || true)
+  if [ "${dead:-0}" -eq 0 ]; then
+    gate PASS A11 "0 dead-draft candidates (${plans} active plan dirs, all with genuine status)"
+  else
+    gate FAIL A11 "${dead} dead-draft candidate(s) not yet archived (${plans} active dirs)"
+  fi
 fi
 
 # --- A12: MCP keep-lists ------------------------------------------------------

@@ -79,7 +79,16 @@ function postEditContent(toolName, ti, editedFilePath) {
 		return typeof ti.content === "string" ? ti.content : null;
 	}
 	// Edit: apply old_string → new_string against the current on-disk content.
+	// LITERAL semantics only — never String.replace(). Its replacement-string
+	// $-substitution ($$, $&, $`, $') diverges from the Edit tool's literal
+	// replacement, so a shell/regex snippet in new_string would make the size
+	// prediction wrong in either direction (Phase 7 falsification, A16).
 	if (typeof ti.old_string !== "string" || typeof ti.new_string !== "string") return null;
+	if (ti.old_string === "") {
+		// The Edit tool rejects empty old_string itself; predicting against it
+		// (split("")/join) explodes. Nothing for us to measure.
+		return null;
+	}
 	if (!existsSync(editedFilePath)) return null;
 	let current;
 	try {
@@ -92,9 +101,11 @@ function postEditContent(toolName, ti, editedFilePath) {
 		return null;
 	}
 	if (ti.replace_all) {
+		// split/join is literal-safe.
 		return current.split(ti.old_string).join(ti.new_string);
 	}
-	return current.replace(ti.old_string, ti.new_string);
+	const idx = current.indexOf(ti.old_string);
+	return current.slice(0, idx) + ti.new_string + current.slice(idx + ti.old_string.length);
 }
 
 const next = postEditContent(event.tool_name, toolInput, filePath);

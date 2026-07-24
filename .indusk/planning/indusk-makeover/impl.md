@@ -1,7 +1,7 @@
 ---
 title: "InDusk Makeover — Implementation"
 date: 2026-07-23
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -54,9 +54,9 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 | A13 | A rule promoted from this project is received by a second project via the pull flow, with provenance | Phase 5 | Phase 5 | passing |
 | A14 | Pulling twice changes nothing the second time; local (personal) lessons are never overwritten | Phase 5 | Phase 5 | passing |
 | A15 | A plan close produces a compact CLAUDE.md entry (rule + pointer), via the wired ritual — verified by dry-run diff | Phase 6 | Phase 6 | passing |
-| A16 | The budget hook's predicted post-edit content is byte-identical to what the Edit tool writes, even when `new_string` contains `$$`/`$&`/`` $` ``/`$'` substitution patterns or `old_string` is empty | Phase 0 | Phase 7 | planned |
-| A17 | `list_plans { active: true }` includes plans whose impl is `completed` but which are still in `planning/` (awaiting falsify/cleanup/retrospective) | Phase 0 | Phase 7 | planned |
-| A18 | The A11 gate FAILS loudly (not vacuous-PASS) when the classifier CLI cannot run | Phase 0 | Phase 7 | planned |
+| A16 | The budget hook's predicted post-edit content is byte-identical to what the Edit tool writes, even when `new_string` contains `$$`/`$&`/`` $` ``/`$'` substitution patterns or `old_string` is empty | Phase 0 | Phase 7 | passing |
+| A17 | `list_plans { active: true }` includes plans whose impl is `completed` but which are still in `planning/` (awaiting falsify/cleanup/retrospective) | Phase 0 | Phase 7 | passing |
+| A18 | The A11 gate FAILS loudly (not vacuous-PASS) when the classifier CLI cannot run | Phase 0 | Phase 7 | passing |
 
 ### Deferred Verification
 
@@ -203,20 +203,20 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 
 **Goal**: verify whether the attested state holds against three confirmed-by-investigation failure modes: (1) `claude-md-budget.js` predicts Edit results with `String.replace`, whose `$`-substitution semantics diverge from the Edit tool's literal replacement — a `new_string` containing `` $` ``/`$'`/`$&`/`$$` (plausible in shell/regex snippets) makes the size check wrong in either direction, and an empty `old_string` explodes the replace_all prediction; (2) `list_plans { active: true }`'s status set omits `completed`, hiding exactly the plans mid-close-out (this plan, today, is the live counterexample) from the dieted catchup; (3) the makeover-gates A11 check swallows CLI failure (`2>/dev/null | grep -c`) and reports PASS when the classifier never ran.
 
-- [ ] `hooks/claude-md-budget.js`: replace the `.replace()` prediction with an index-based splice (`idx = current.indexOf(old); current.slice(0, idx) + newStr + current.slice(idx + old.length)`) so substitution patterns are never interpreted; guard `old_string === ""` → exit 0 (the Edit tool rejects it anyway); replace_all keeps split/join (already literal)
-- [ ] `src/tools/plan-tools.ts`: add `"completed"` to `ACTIVE_STATUSES` — a completed impl still inside `planning/` is by definition awaiting close-out rituals; only archival removes it from the active list. Update the tool description's status enumeration
-- [ ] `scripts/makeover-gates.sh` (plan folder): A11 runs the CLI without `2>/dev/null` discard-everything; on non-zero exit or empty output, `gate FAIL A11 "classifier could not run"` instead of counting an empty stream as zero
+- [x] `hooks/claude-md-budget.js`: replace the `.replace()` prediction with an index-based splice (`idx = current.indexOf(old); current.slice(0, idx) + newStr + current.slice(idx + old.length)`) so substitution patterns are never interpreted; guard `old_string === ""` → exit 0 (the Edit tool rejects it anyway); replace_all keeps split/join (already literal)
+- [x] `src/tools/plan-tools.ts`: add `"completed"` to `ACTIVE_STATUSES` — a completed impl still inside `planning/` is by definition awaiting close-out rituals; only archival removes it from the active list. Update the tool description's status enumeration
+- [x] `scripts/makeover-gates.sh` (plan folder): A11 runs the CLI without `2>/dev/null` discard-everything; on non-zero exit or empty output, `gate FAIL A11 "classifier could not run"` instead of counting an empty stream as zero
 
 #### Phase 7 Verification
-- [ ] A16: hook e2e cases with `new_string` containing `` $` ``, `$&`, `$$`, `$'` land byte-exact predictions (block/allow decisions match true post-edit size); empty `old_string` exits 0 — red today, green after the splice fix
-- [ ] A17: unit test — a plan fixture with impl status `completed` appears in `list_plans { active: true }` output — red today, green after the status set fix
-- [ ] A18: gates script run with a deliberately broken CLI path reports FAIL for A11 — red today (vacuous PASS), green after the script hardening
+- [x] A16: hook e2e cases with `new_string` containing `` $` ``, `$&`, `$$`, `$'` land byte-exact predictions (block/allow decisions match true post-edit size); empty `old_string` exits 0 — red today, green after the splice fix — 11 hook tests green
+- [x] A17: unit test — a plan fixture with impl status `completed` appears in `list_plans { active: true }` output — red today, green after the status set fix — `isActivePlanStatus` predicate, 10 tests green
+- [x] A18: gates script run with a deliberately broken CLI path reports FAIL for A11 — red today (vacuous PASS), green after the script hardening — broken-root run prints `FAIL A11 classifier could not run`; real root still PASSes with a real count
 
 #### Phase 7 Context
-- [ ] Add CLAUDE.md Known Gotchas one-liner: never predict Edit results with `String.replace` — `$`-substitution patterns in the replacement diverge from the tool's literal semantics; use index-splice (the claude-md-budget lesson)
+- [x] Add CLAUDE.md Known Gotchas one-liner: never predict Edit results with `String.replace` — `$`-substitution patterns in the replacement diverge from the tool's literal semantics; use index-splice (the claude-md-budget lesson)
 
 #### Phase 7 Document
-- [ ] Add the `$`-substitution fix + active-filter widening to the changelog's Unreleased makeover entry
+- [x] Add the `$`-substitution fix + active-filter widening to the changelog's Unreleased makeover entry
 
 ## Files Affected
 

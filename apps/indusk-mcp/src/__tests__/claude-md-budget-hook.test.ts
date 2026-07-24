@@ -144,4 +144,40 @@ describe("claude-md-budget hook (A2)", () => {
 		});
 		expect(missingOld.exitCode).toBe(0);
 	});
+
+	// A16 (indusk-makeover Phase 7 falsification): the prediction must be
+	// byte-identical to the Edit tool's LITERAL replacement — String.replace's
+	// $-substitution semantics must never leak in.
+	it("A16: `$`` in new_string does not inflate the prediction (no spurious block)", () => {
+		// literal result ≈ 903 B (under the 1000 B budget); a $`-expanding
+		// prediction balloons to ~1800 B and wrongly blocks.
+		writeFileSync(claudeMdPath, `${"x".repeat(900)}MARKER`);
+		const result = runHook({
+			tool_name: "Edit",
+			tool_input: { file_path: claudeMdPath, old_string: "MARKER", new_string: "$` y" },
+			cwd: projectRoot,
+		});
+		expect(result.exitCode).toBe(0);
+	});
+
+	it("A16: `$$` in new_string does not deflate the prediction (no wrongful allow)", () => {
+		// literal result ≈ 1100 B (over budget); a $$-collapsing prediction
+		// shrinks to ~800 B and wrongly allows.
+		writeFileSync(claudeMdPath, `${"x".repeat(500)}MARKER`);
+		const result = runHook({
+			tool_name: "Edit",
+			tool_input: { file_path: claudeMdPath, old_string: "MARKER", new_string: "$$".repeat(300) },
+			cwd: projectRoot,
+		});
+		expect(result.exitCode).toBe(2);
+	});
+
+	it("A16: empty old_string exits 0 (the Edit tool rejects it; never predict against it)", () => {
+		const result = runHook({
+			tool_name: "Edit",
+			tool_input: { file_path: claudeMdPath, old_string: "", new_string: "y", replace_all: true },
+			cwd: projectRoot,
+		});
+		expect(result.exitCode).toBe(0);
+	});
 });

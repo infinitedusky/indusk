@@ -16,7 +16,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 					.boolean()
 					.optional()
 					.describe(
-						"When true, return only active plans — stage status is accepted/approved/in-progress/proposed. Dead drafts and completed stages are omitted (with a count).",
+						"When true, return only active plans — stage status is accepted/approved/in-progress/proposed/completed (completed = awaiting close-out rituals). Dead drafts and finished spikes are omitted (with a count).",
 					),
 			},
 		},
@@ -27,10 +27,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 					content: [{ type: "text" as const, text: JSON.stringify(plans, null, 2) }],
 				};
 			}
-			const ACTIVE_STATUSES = new Set(["accepted", "approved", "in-progress", "proposed"]);
-			const filtered = plans.filter((p) =>
-				ACTIVE_STATUSES.has((p.stageStatus ?? "").toLowerCase()),
-			);
+			const filtered = plans.filter((p) => isActivePlanStatus(p.stageStatus ?? ""));
 			return {
 				content: [
 					{
@@ -39,7 +36,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 							{
 								active: filtered,
 								omitted: plans.length - filtered.length,
-								note: "omitted = drafts/completed/archived-stage plans; call without `active` for the full list",
+								note: "omitted = dead drafts and finished spikes; call without `active` for the full list",
 							},
 							null,
 							2,
@@ -234,3 +231,24 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 		},
 	);
 }
+
+/**
+ * Whether a plan's most-advanced-doc status counts as ACTIVE for
+ * `list_plans { active: true }`. Includes `completed` — a completed impl
+ * still inside planning/ is awaiting close-out rituals (falsify / cleanup /
+ * retrospective); only archival removes a plan from the active list
+ * (indusk-makeover Phase 7 falsification, A17). `complete` (research-doc
+ * terminal status) stays excluded — a finished spike with no further docs
+ * is not in-motion work.
+ */
+export function isActivePlanStatus(status: string): boolean {
+	return ACTIVE_PLAN_STATUSES.has(status.toLowerCase());
+}
+
+const ACTIVE_PLAN_STATUSES = new Set([
+	"accepted",
+	"approved",
+	"in-progress",
+	"proposed",
+	"completed",
+]);
