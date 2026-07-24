@@ -110,7 +110,7 @@ dusk/
 
 ## Current State
 
-**Version**: indusk-mcp 1.33.0 (indusk-makeover — budgets + decay + Graphiti/CGC removal + hub sync).
+**Version**: indusk-mcp 1.33.1 (indusk-makeover — budgets + decay + Graphiti/CGC removal + hub sync). 1.33.0 is a deprecated accidental publish of 1.32.0-era code.
 
 **In flight:**
 
