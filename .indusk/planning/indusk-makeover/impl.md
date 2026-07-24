@@ -39,18 +39,18 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | Project CLAUDE.md is ≤ 60 KB on disk (`wc -c` gate script) | Phase 0 | Phase 6 | planned |
+| A1 | Project CLAUDE.md is ≤ 60 KB on disk (`wc -c` gate script) | Phase 0 | Phase 6 | written |
 | A2 | Editing CLAUDE.md past budget produces a visible warn/block at write time | Phase 2 | Phase 2 | planned |
-| A3 | Every compressed entry's pointer resolves to an existing docs page or archived doc (link walker) | Phase 0 | Phase 6 | planned |
+| A3 | Every compressed entry's pointer resolves to an existing docs page or archived doc (link walker) | Phase 0 | Phase 6 | written |
 | A4 | 15 randomly sampled pre-compression entries have their operative rule still stated post-compression | Phase 6 | Phase 6 | planned |
-| A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | planned |
-| A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | planned |
-| A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | planned |
+| A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | written |
+| A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | written |
+| A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | written |
 | A8 | A highlight written in a session is processed by the eval agent into a lesson at commit time, with Graphiti gone, without error | Phase 3 | Phase 3 | planned |
 | A9 | Sweep archives sections older than the stale TTL; archived content is retrievable from the archive file | Phase 1 | Phase 1 | planned |
 | A10 | Sweep never touches the Project (shared) section or a live session's section (adversarial fixtures) | Phase 1 | Phase 1 | planned |
-| A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | planned |
-| A12 | Project MCP config is exactly indusk/dash0/posthog/jaeger; global is playwright only | Phase 0 | Phase 6 | planned |
+| A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | written |
+| A12 | Project MCP config is exactly indusk/dash0/posthog/jaeger; global is playwright only | Phase 0 | Phase 6 | written |
 | A13 | A rule promoted from this project is received by a second project via the pull flow, with provenance | Phase 5 | Phase 5 | planned |
 | A14 | Pulling twice changes nothing the second time; local (personal) lessons are never overwritten | Phase 5 | Phase 5 | planned |
 | A15 | A plan close produces a compact CLAUDE.md entry (rule + pointer), via the wired ritual — verified by dry-run diff | Phase 6 | Phase 6 | planned |
@@ -81,7 +81,7 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 
 ### Phase 0: Baseline measurement scripts (red tripwires)
 - [x] Create/confirm this plan's worktree (`git worktree` branch `plan/indusk-makeover`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] Author `scripts/makeover-gates.sh` in the plan folder (or `apps/indusk-mcp/scripts/`): A1 `wc -c` gate (CLAUDE.md ≤ 61440 bytes), A7 config grep (graphiti/codegraphcontext absent from `.mcp.json` + `.indusk/extensions/`), A11 active-plan count vs frontmatter status, A12 keep-list diff for project + global MCP configs — each printing PASS/FAIL
+- [x] Author `scripts/makeover-gates.sh` in the plan folder (or `apps/indusk-mcp/scripts/`): A1 `wc -c` gate (CLAUDE.md ≤ 61440 bytes), A7 config grep (graphiti/codegraphcontext absent from `.mcp.json` + `.indusk/extensions/`), A11 active-plan count vs frontmatter status, A12 keep-list diff for project + global MCP configs — each printing PASS/FAIL
 - [ ] Author A3 pointer-walker (scan CLAUDE.md for `.indusk/`/`apps/docs/` path references; verify each resolves on disk)
 - [ ] Author A5/A6 measurement procedure as a checked-in doc: run `/catchup`, sum tool-result chars/4, grep transcript for Graphiti calls + duplicate CLAUDE.md reads
 - [ ] Run all of the above; record the red baseline numbers in this plan folder (`baseline.md`)
