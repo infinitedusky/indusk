@@ -2,6 +2,11 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.33.4] — 2026-07-24
+
+### Fixed
+- **Removed the permanently-unsatisfiable `check-catchup.js` hook** (found by the versioned-workbench POC): fresh projects deadlocked — init wrote an unchecked handoff.md Catchup Status AND registered the hook demanding it be checked, whose manual path probed the retired FalkorDB/Graphiti. `init` no longer ships the hook or the handoff scaffold; `update` deletes the installed hook and strips its settings registration on every project.
+
 ## [1.33.3] — 2026-07-23
 
 The first complete 1.33.x release: indusk-makeover + posthog extension together. (1.33.0 and 1.33.2 were accidental pre-merge trunk publishes — deprecated; 1.33.1 has the makeover but not posthog.)
@@ -23,7 +28,6 @@ The first complete 1.33.x release: indusk-makeover + posthog extension together.
 
 ### Fixed (Phase 7 falsification)
 - **Budget hook predicts Edits with literal splice, not `String.replace`** — `$`-substitution patterns in a replacement string (plausible in shell/regex snippets) made the size prediction diverge from what the Edit tool actually writes, in either direction. Empty `old_string` is guarded.
-- **The legacy `check-catchup.js` hook is removed and migrated away** — it gated every Edit/Write on `.claude/handoff.md` checkboxes the post-1.29 catchup never writes, with a manual path probing the retired FalkorDB/Graphiti: permanently unsatisfiable (found by the versioned-workbench POC on a fresh project). `init` no longer ships it or the handoff.md scaffold; `update` deletes the installed hook and strips its settings registration.
 - **Legacy-server removal is a shared, tested migration helper** (`lib/mcp-migration.ts`) — init and update call one implementation; future MCP retirements extend its list.
 - **`list_plans { active: true }` includes `completed`** — a completed impl still in `planning/` is awaiting close-out rituals; hiding it from the dieted catchup hid exactly the plans mid-close.
 
