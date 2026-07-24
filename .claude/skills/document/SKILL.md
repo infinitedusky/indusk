@@ -33,7 +33,7 @@ After context items are done, the document gate asks:
 
 **"What should a developer reading this project's docs learn from what this phase built?"**
 
-To answer this accurately, **query the code graph** (see toolbelt "Before Modifying Code") to understand what was affected and how broadly.
+To answer this accurately, **grep for the changed symbols' consumers** to understand what was affected and how broadly.
 
 For each phase, consider all of these:
 
@@ -58,7 +58,7 @@ apps/indusk-docs/src/
 ├── guide/           # How-to guides (task-oriented)
 ├── reference/       # Skills, tools, API, configuration (information-oriented)
 │   ├── skills/      # One page per skill
-│   └── tools/       # One page per tool (Biome, CGC, composable.env)
+│   └── tools/       # One page per tool (Biome, OTel, doppler)
 ├── decisions/       # Distilled from ADRs during retrospective/archival
 ├── lessons/         # Distilled from retrospective insights during archival
 └── changelog.md     # Version history — Added, Changed, Fixed, etc.

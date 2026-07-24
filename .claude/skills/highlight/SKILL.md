@@ -1,9 +1,9 @@
 ---
 name: highlight
-description: Flag a moment in the session as worth remembering. Writes a highlight to the queue so the eval agent can materialize it into a structured Graphiti episode.
+description: Flag a moment in the session as worth remembering. Writes a highlight to the queue so the eval agent can materialize it into a lesson.
 ---
 
-You are flagging something the user wants captured — an observation, a decision, a surprise, a lesson that isn't an official retrospective yet. Write a highlight to the queue. The eval agent will process it into a structured Graphiti episode on the next `git commit` or at session end.
+You are flagging something the user wants captured — an observation, a decision, a surprise, a lesson that isn't an official retrospective yet. Write a highlight to the queue. The eval agent will process it into a lesson (when it carries a durable rule) on the next `git commit` or at session end.
 
 ## Invocation
 
@@ -41,10 +41,10 @@ The user runs `/highlight {free-form text} [level: critical|important|note]`.
 ## Rules
 
 - **Default level is `important`.** Only bump to `critical` if the user explicitly says so or the content is clearly an architectural / decision-level moment.
-- **Do not write the Graphiti episode yourself.** The whole point of highlights is that the working agent flags and moves on; the eval agent handles materialization.
+- **Do not write the lesson yourself.** The whole point of highlights is that the working agent flags and moves on; the eval agent handles materialization.
 - **If `mcp__indusk__highlight` is unavailable**, degrade gracefully: tell the user "highlights queue unavailable — InDusk MCP may be down" and do not fail.
 - **One highlight per invocation.** If the user flags multiple things at once, ask them to split or pick the most important one to flag.
 
 ## Cross-reference
 
-See [`apps/indusk-docs/src/reference/tools/highlights.md`](../../indusk-docs/src/reference/tools/highlights.md) for the full highlights system — file format, level → Graphiti edge weight mapping, eval agent processing, and trigger points across other skills.
+See [`apps/docs/src/reference/tools/highlights.md`](../../docs/src/reference/tools/highlights.md) for the full highlights system — file format, level semantics, eval agent processing, and trigger points across other skills.

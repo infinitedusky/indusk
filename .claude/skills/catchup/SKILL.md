@@ -1,6 +1,6 @@
 ---
 name: catchup
-description: Get caught up on the project. Pure-read — registers presence, reads .indusk/current.md sections to surface other working agents + the project's operational state, then reads lessons, plans, and Graphiti. Run at the start of every new session.
+description: Get caught up on the project. Pure-read — registers presence, reads .indusk/current.md sections to surface other working agents + the project's operational state, then reads lessons and plans. Run at the start of every new session.
 ---
 
 You are starting a new session on this project. Before doing anything else, get caught up.
@@ -12,7 +12,7 @@ You are starting a new session on this project. Before doing anything else, get 
 Before running any catchup steps, verify that ALL required MCP servers are available. Catchup depends on these tools and **cannot proceed without them**.
 
 **Required MCP servers:**
-- **indusk** — `get_system_version` (provides lessons, health, context, plans, extensions, graph tools)
+- **indusk** — `get_system_version` (provides lessons, health, context, plans, extensions)
 
 **How to check:** Call `get_system_version`. If the tool is not available or errors, wait 5 seconds and retry. Retry up to 6 times (30 seconds total).
 
@@ -75,7 +75,7 @@ These are rules learned from past mistakes — not suggestions. Internalize the 
 
 ### 5. Check Infrastructure
 
-Call `check_health`. Verify FalkorDB and Graphiti are running. If unhealthy, tell the user what's down and how to fix it.
+Call `check_health`. It runs every enabled extension's health checks. If unhealthy, tell the user what's down and how to fix it.
 
 ### 6. Read Project Context
 
@@ -88,47 +88,14 @@ Call `get_context` to read CLAUDE.md. This contains:
 
 Read it fully. Don't skim.
 
-### 7. Recall from Graphiti
-
-CLAUDE.md is the stable, slow-changing layer of project memory. Graphiti is the fast, temporal layer — it captures decisions, corrections, and retrospective insights as they happen. Catchup pulls both layers so the agent starts the session with full context.
-
-**Recall recent decisions and lessons:**
-
-First, fetch the project's Graphiti group via the InDusk MCP (do NOT guess from project basename — InDusk applies sanitization rules):
-
-```
-mcp__indusk__get_project_info()
-// returns { project_group: "<sanitized>", scm: ..., ... }
-```
-
-Then query Graphiti with that group plus `"shared"` for cross-project knowledge:
-
-```
-mcp__graphiti__search_nodes({
-  query: "recent decisions and lessons",
-  group_ids: [<project_group from get_project_info>, "shared"],
-  max_nodes: 8
-})
-```
-
-**Why the explicit group lookup matters**: hyphen-containing group IDs (`dawn-fde-toolkit`) hit a RediSearch syntax error and silently return empty. Omitting `group_ids` entirely also returns empty — Graphiti does NOT scan all groups by default. Both failure modes look identical to "graph empty," so always pass the sanitized `project_group` value plus `"shared"` explicitly. See the `community-graphiti-group-id-underscores` lesson for the full pattern.
-
-**Surface contradictions:** look at the returned nodes for any whose `attributes` reference recently invalidated facts (Graphiti marks superseded facts with `invalid_at`). If a recently invalidated fact relates to an active plan or current code area, flag it to the user — those are places where assumptions changed.
-
-**Output format:** include a "Graphiti recall" section in the catchup summary with the most relevant 3-5 nodes by name + summary. Don't dump everything — surface what's actionable.
-
-**Graceful degradation:** If `mcp__graphiti__search_nodes` is unavailable (Graphiti container down, transport error), skip this step silently and add a note to the catchup summary: `Graphiti: unavailable (run \`indusk infra start\` to recall episodic memory)`. Catchup should not fail if Graphiti is down — the rest of the layers are still valid.
-
-**Reads only.** Catchup queries Graphiti — it does not write to it. As a working agent, **you never call `mcp__graphiti__add_memory` or `mcp__indusk__graph_capture` directly in process skills**. When you have a moment worth remembering, write a highlight via `mcp__indusk__highlight` (tag + level + note); the eval agent materializes it into a structured Graphiti episode at the next `git commit` or session end. See the `community-use-highlight-not-direct-graphiti-writes` lesson for the full discipline.
-
-### 8. Check Active Plans
+### 7. Check Active Plans
 
 Call `list_plans`. This shows every plan and its status. Pay attention to:
 - Plans with status `in-progress` — these are actively being worked on
 - The current phase of each active plan — this is where `/work` will pick up
 - Dependencies between plans — don't start a blocked plan
 
-### 9. Review Skills and Extensions
+### 8. Review Skills and Extensions
 
 Call `extensions_status` to see what extensions are enabled and their capabilities.
 
@@ -141,7 +108,7 @@ Skill types:
 
 Understand what each skill does and when to use it. You should be able to answer: "What slash commands are available and what do they do?"
 
-### 10. Summarize
+### 9. Summarize
 
 After completing all steps, present a brief summary to the user:
 
@@ -157,7 +124,6 @@ After completing all steps, present a brief summary to the user:
 - Skills: N installed [list names]
 - Extensions: N enabled [list names]
 - Active plans: [list with current phase]
-- Graphiti recall: [3-5 most relevant nodes by name + summary, or "unavailable" if Graphiti is down]
 
 Ready to pick up. What would you like to do?
 ```

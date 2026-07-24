@@ -51,7 +51,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 2. **Figure out where things stand.** If a plan folder already exists, read what's there. Check frontmatter statuses. The next document to write is the first one that's missing or incomplete.
 
-3. **If starting fresh**, do a quick scan of the project (read CLAUDE.md, check the code graph) to understand the context. Then **ask the user discovery questions before doing any research or writing any documents.** The goal is to understand what they're trying to achieve, not just what they named the plan. Good discovery questions:
+3. **If starting fresh**, do a quick scan of the project (read CLAUDE.md, skim the relevant source) to understand the context. Then **ask the user discovery questions before doing any research or writing any documents.** The goal is to understand what they're trying to achieve, not just what they named the plan. Good discovery questions:
    - "What problem are you trying to solve?" or "What should this feature do for your users?"
    - "Is there anything specific you've already thought through or have strong opinions about?"
    - "Are there any constraints I should know about — timeline, technology preferences, things to avoid?"
@@ -71,12 +71,12 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    The `.indusk/research/` directory is for standalone exploration that isn't tied to a plan yet. When it becomes a plan, it moves into the planning folder. The original in `.indusk/research/` can be deleted or kept as a reference — user's choice.
 
-   For feature/spike workflows that need new research: Explore the problem space — read code, search the web, check Context7 for library docs. **Query the code graph before scoping** (see toolbelt "Before Modifying Code") — include structural findings in research.md with concrete numbers.
+   For feature/spike workflows that need new research: Explore the problem space — read code, search the web for library docs. **Grep for the affected symbols' consumers before scoping** — include structural findings in research.md with concrete numbers.
    Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
 
 4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. **Consider creating a visual sketch** of the proposed architecture with Excalidraw (if the extension is enabled) — a hand-drawn diagram makes the proposal concrete and easier to discuss. **Present the brief and have a conversation about it.** Don't just ask "does this look good?" — walk the user through it: "Here's what I'm proposing we build. Does this match what you had in mind? Is there anything missing, or anything here you don't want?" Iterate until the user is genuinely happy with the direction, then mark it as `accepted`.
 
-   **When the brief moves from `draft` to `accepted`**, write a highlight so the eval agent can turn it into a structured Graphiti episode:
+   **When the brief moves from `draft` to `accepted`**, write a highlight so the eval agent can record it:
    ```
    mcp__indusk__highlight({
      tag: "brief-accepted",
@@ -84,7 +84,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
      level: "critical"
    })
    ```
-   The working agent does not write Graphiti episodes directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts the full Problem + Proposed Direction + Scope context from the transcript, writes a structured episode into the project group, and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/indusk-docs/src/reference/tools/highlights.md`](../../indusk-docs/src/reference/tools/highlights.md) for the full flow.
+   The working agent does not materialize highlights directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts context from the transcript, records what's durable (usually the plan docs already carry it), and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/docs/src/reference/tools/highlights.md`](../../docs/src/reference/tools/highlights.md) for the full flow.
 
 5. **If brief is accepted** and the workflow includes a test plan (bugfix, refactor, or feature — anything that ships an impl), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **how it will be tested** — not the test code itself, but the test mechanism (vitest unit, vitest integration, end-to-end script, manual user test, manual smoke against running stack, etc.).
 
@@ -133,7 +133,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
      level: "critical"
    })
    ```
-   The eval agent reads the highlight, pulls the full Y-statement from the ADR file, writes a structured episode into the project group, and marks it processed. Graphiti's entity extraction will pick up the chosen option, rejected alternatives, constraint, and rationale, and will detect contradictions if a later ADR overrides this one. The working agent does not write the episode directly. Skip silently on highlight unavailability — degrade gracefully.
+   The eval agent reads the highlight, pulls the full Y-statement from the ADR file, records what's durable (the ADR itself is the canonical record), and marks it processed. The working agent does not materialize the highlight directly. Skip silently on highlight unavailability — degrade gracefully.
 
 7. **If ADR is accepted** (or brief is accepted for bugfix/refactor), write the impl. Break into phased checklists with concrete tasks. For refactor workflows, include a `## Boundary Map` section. For multi-phase impls of any type, consider adding a boundary map.
 
@@ -560,7 +560,7 @@ date: {YYYY-MM-DD}
 ## Important
 
 - Read relevant source code before writing. Documents should reference actual files, functions, and current behavior.
-- **Use the code graph for scoping.** Before writing a brief or impl, query `analyze_code_relationships` to understand what depends on what. "How many files import X?" and "What calls this function?" prevent underscoping.
+- **Grep for scoping.** Before writing a brief or impl, search for what depends on what. "How many files import X?" and "What calls this function?" prevent underscoping.
 - Keep Y-statements concise but complete. Every field filled in.
 - Impl checklists: granular enough to track, not so granular they're busywork.
 - When research produces broadly useful insights, also save to `.indusk/research/`.

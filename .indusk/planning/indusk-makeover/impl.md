@@ -129,10 +129,10 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 
 ### Phase 3: Graphiti + CGC removal, rail retargeted to lessons
 - [x] Retarget eval Step 4: `buildHighlightsInstructions` writes lessons (via `add_lesson`) instead of `graph_capture`/`mcp__graphiti__*`; keep the CRITICAL preamble + `already_processed` STOP path byte-intact; update the resume-prompt regression test's expectations
-- [ ] Remove graphiti + codegraphcontext registration from init/update `.mcp.json` upsert; extensions: disable/remove `graphiti` extension flow (on_disable fires — 1.28.0 symmetry rule); remove catchup/planner/work/retrospective skill references to Graphiti recall + CGC blast-radius queries (Grep/tests guidance replaces CGC)
-- [ ] `check_health` stops probing FalkorDB/Graphiti; `rail-check` skill updated to verify highlight→eval→**lessons** (not episodes)
-- [ ] Remove graphiti + codegraphcontext entries from **this repo's** `.mcp.json`; disable both extensions here (A7 target — full keep-list finalization stays Phase 6)
-- [ ] Grep-gone check: no live-code references to `GraphitiClient`/`graph_capture` outside archived docs + changelog
+- [x] Remove graphiti + codegraphcontext registration from init/update `.mcp.json` upsert; extensions: disable/remove `graphiti` extension flow (on_disable fires — 1.28.0 symmetry rule); remove catchup/planner/work/retrospective skill references to Graphiti recall + CGC blast-radius queries (Grep/tests guidance replaces CGC)
+- [x] `check_health` stops probing FalkorDB/Graphiti; `rail-check` skill updated to verify highlight→eval→**lessons** (not episodes)
+- [x] Remove graphiti + codegraphcontext entries from **this repo's** `.mcp.json`; disable both extensions here (A7 target — full keep-list finalization stays Phase 6)
+- [x] Grep-gone check: no live-code references to `GraphitiClient`/`graph_capture` outside archived docs + changelog
 
 #### Phase 3 Verification
 - [ ] A7 script flips green (graphiti/CGC absent, `check_health` passes)

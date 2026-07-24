@@ -78,7 +78,7 @@ After writing a retrospective, read the "Insights Worth Carrying Forward" and "W
 - If it changes the project's architecture or structure → update **Architecture**
 - Update **Current State** to reflect the plan's completion
 - If the retrospective's "Quality Ratchet" section adds a new Biome rule, also add the enforced pattern to **Conventions**
-- **Query the code graph** (see toolbelt "Before Modifying Code") to verify Architecture still reflects reality after the plan's changes.
+- **Grep the affected modules** to verify Architecture still reflects reality after the plan's changes.
 
 Do this immediately after writing the retrospective, before moving on.
 
@@ -146,4 +146,4 @@ Context items block phase advancement. See work skill "Per-phase completion orde
 - The six-section structure is fixed. Never add new `##` sections.
 - Trigger discipline matters. If you skip a post-retro or post-ADR update, knowledge is lost.
 - When in doubt about where something goes, Known Gotchas is the safest default.
-- **Use the code graph to enrich retrospectives.** Query `get_repository_stats` and `analyze_code_relationships` to compare what was actually touched vs what was planned. Structural data makes retrospectives factual, not anecdotal.
+- **Use `git diff --stat` against the plan branch to enrich retrospectives.** Compare what was actually touched vs what was planned. Structural data makes retrospectives factual, not anecdotal.

@@ -6,7 +6,7 @@ You have MCP tools from multiple servers. This skill tells you when to use them 
 
 There are two types of MCP servers in your `.mcp.json`:
 
-**Command-based** (`"command": "..."`) — a local process that runs on your machine. Examples: indusk, codegraphcontext. These start when Claude Code starts and communicate via stdio.
+**Command-based** (`"command": "..."`) — a local process that runs on your machine. Example: indusk. These start when Claude Code starts and communicate via stdio.
 
 **Streamable HTTP** (`"type": "streamableHttp"`) — a remote server hosted externally. Example: Dash0. These connect over HTTPS to a URL. No local process, no npm package, no `npx`. They just need a URL and auth credentials in `.mcp.json`.
 
@@ -44,7 +44,7 @@ The lesson system is how this project teaches you. Before writing any code, **al
 When a new session begins:
 
 1. Call `list_lessons` — **read all lessons first**. Internalize these patterns before touching anything.
-2. Call `check_health` — verify FalkorDB and CGC are running. If unhealthy, tell the user what's down and how to fix it before proceeding.
+2. Call `check_health` — runs every enabled extension's health checks. If unhealthy, tell the user what's down and how to fix it before proceeding.
 3. Call `list_plans` — understand what plans exist, their stages, and what's in progress.
 4. Call `get_context` — read the project's CLAUDE.md to understand architecture, conventions, and current state.
 
@@ -124,7 +124,7 @@ If `.indusk/extensions/dash0/.env` has credentials, this auto-configures the MCP
 Before touching any file:
 
 1. Call `get_plan_status` for the active plan — know which phase you're in and what items remain.
-2. Use CGC's `analyze_code_relationships` on the files you're about to change — understand dependencies and blast radius.
+2. Grep for importers/callers of the files you're about to change — understand dependencies and blast radius.
 3. If the blast radius is large (many downstream consumers), flag it to the user before proceeding.
 
 ## During Work
@@ -176,7 +176,7 @@ For composable.env: enable the `composable-env` extension. It provides Docker ne
 
 ## Code Graph
 
-Enable the `cgc` extension for code graph tools (`extensions enable cgc`). The CGC extension skill has the full reference for when to use each tool. Key ones: `query_dependencies` (blast radius), `find_code` (search), `visualize_graph_query` (browser visualization).
+Blast-radius and code-search questions are answered with Grep/Glob/Read — search for the symbol's importers before changing it. (The former CGC code-graph extension was retired by indusk-makeover.)
 
 ## Tool Reference
 

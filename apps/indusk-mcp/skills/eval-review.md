@@ -27,7 +27,7 @@ When the user says `/eval review` or asks for a quality check:
 3. Present the scorecard to the user:
    - Overall summary
    - Per-question results with evidence
-   - Any Graphiti writes made
+   - Any lessons written
 
 ## Important
 

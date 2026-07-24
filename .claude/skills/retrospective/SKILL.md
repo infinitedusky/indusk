@@ -87,7 +87,7 @@ Key sections to fill in honestly:
 
 ### Step 2: Structural Audit (Code Graph)
 
-**Query the code graph** (see toolbelt "Before Modifying Code") to understand what actually changed. Include structural findings in "What Actually Happened" — e.g., "Plan touched 8 files with 23 downstream dependents." Also check `find_most_complex_functions` and `find_dead_code` for cleanup opportunities.
+**Run `git diff --stat` against the plan's base** to understand what actually changed. Include structural findings in "What Actually Happened" — e.g., "Plan touched 8 files, +900/−250 lines."
 
 ### Step 3: Docs Audit
 
@@ -130,7 +130,7 @@ For each finding, act on it:
 - **Deferred rows classified as `downstream-plan`** — verify the referenced plan exists and is either `accepted` or `in-progress`. If it's `draft` or missing, either accept the referenced plan now or pick a different mitigation.
 - **Deferred rows classified as `telemetry-alert`** — verify the named metric actually exists in the codebase (grep for it). If the metric hasn't been wired up, the mitigation is aspirational — either wire it up now or change the mitigation.
 
-Flag findings as a highlight — the eval agent reads it, writes the `retrospective-audit-{plan-slug}` Graphiti episode, and marks it processed:
+Flag findings as a highlight — the eval agent reads it, materializes a lesson when a durable rule emerged, and marks it processed:
 
 ```
 mcp__indusk__highlight({
@@ -167,7 +167,7 @@ If yes, call `add_lesson` for each one. These become personal lessons in `.claud
 
 If no lessons emerged, that's fine — not every plan produces new knowledge. Move on.
 
-**Also flag each retrospective insight as a highlight** so the eval agent can turn it into a structured Graphiti episode and surface it in future searches and contradiction detection.
+**Also flag each retrospective insight as a highlight** so the eval agent can materialize durable ones into lessons that surface in every future catchup.
 
 For each item in the retrospective's **What We Learned** section:
 ```
@@ -187,11 +187,11 @@ mcp__indusk__highlight({
 })
 ```
 
-The eval agent reads each highlight, writes the full Graphiti episode (project group by default; `shared` if the insight is clearly cross-project), and marks it processed. The working agent does not write the episode directly.
+The eval agent reads each highlight, writes a lesson when it carries a durable rule (`community-` prefix if clearly cross-project), and marks it processed. The working agent does not write the lesson directly.
 
-**Contradictions:** If the retrospective surfaces a moment where "we thought X but found Y", write two highlights (one per fact). Graphiti's contradiction detection will invalidate the older fact when it sees the conflicting one once the eval agent materializes the episodes. This is one of Graphiti's most useful features — it remembers that a previous assumption was overturned, so the agent doesn't accidentally re-introduce it later.
+**Contradictions:** If the retrospective surfaces a moment where "we thought X but found Y", flag it as a highlight naming BOTH the old assumption and the overturning fact — the resulting lesson records the reversal explicitly so a future session doesn't re-introduce the overturned assumption.
 
-Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort, and lesson recording via `add_lesson` remains the canonical local path. Highlight-driven Graphiti capture is supplementary.
+Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort, and lesson recording via `add_lesson` remains the canonical local path.
 
 ### Step 7: Context Audit
 

@@ -18,7 +18,7 @@ mcp__indusk__update_current_section({
   sessionId: "<your $CLAUDE_CODE_SESSION_ID, or pid-<N> if env unset>",
   task: "<one-line description of what this session is working on>",
   sections: {
-    in_flight: "What's actively in progress. Plan name + phase + current focus. Examples: 'auth-refactor Phase 3 — middleware rewrite', 'investigating slow Graphiti queries (no plan yet)'. Be specific; vague entries waste the next session's time.",
+    in_flight: "What's actively in progress. Plan name + phase + current focus. Examples: 'auth-refactor Phase 3 — middleware rewrite', 'investigating slow catchup reads (no plan yet)'. Be specific; vague entries waste the next session's time.",
     open_questions: "Hypotheses you haven't confirmed; design decisions mid-conversation; things you want the next agent to think about before continuing.",
     cursor: "Where you stopped, in enough detail that re-entering doesn't require rediscovery. File paths + line numbers + the next concrete step. Examples: 'apps/backend/src/auth/middleware.ts:42 — about to extract refreshToken helper', 'Phase 2 verification gate — T7 written + scaffolded, needs Phase 3 lib lands'."
   }
