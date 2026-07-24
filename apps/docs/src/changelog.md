@@ -2,6 +2,14 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.33.5] — 2026-07-24
+
+### Removed
+- **`indusk infra` CLI is gone.** The command managed the retired FalkorDB+Graphiti container and its output invited resurrecting it ("run `indusk infra start`") — observed steering an agent back toward the dead infrastructure. Stop/remove any remaining container with plain docker commands.
+
+### Fixed
+- **rail-check skill summary no longer renders as `"|"`** — its multiline frontmatter description defeated the `get_skill_summaries` parser; collapsed to one line.
+
 ## [1.33.4] — 2026-07-24
 
 ### Fixed

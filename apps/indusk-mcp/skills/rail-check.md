@@ -1,15 +1,6 @@
 ---
 name: rail-check
-description: |
-  Verify the eval→lessons rail works on this project, surface and clean stray
-  state, and drain any backlog of unprocessed highlights through a single
-  manual eval-agent invocation. Run this skill when: (a) the user says "I just
-  updated indusk" or any phrasing of "post-update", "rail check", "backfill",
-  or "the eval pipeline" / "verify the rail"; (b) `mcp__indusk__check_health`
-  surfaces a `workbench/stray-state-*` error; (c) `.indusk/highlights.jsonl`
-  has > 10 unprocessed entries OR `.indusk/eval/results.log` is empty when it
-  should not be. This skill is the canonical post-update procedure for
-  workbench-mode projects.
+description: Verify the eval→lessons rail works on this project, surface and clean stray state, and drain any highlight backlog via one manual eval-agent invocation. Run post-update, on "rail check"/"backfill" phrasing, on stray-state health errors, or when highlights back up while results.log is silent.
 ---
 
 # /rail-check — Post-update Rail Integrity Verification
