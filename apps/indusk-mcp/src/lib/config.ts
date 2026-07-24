@@ -176,6 +176,30 @@ export function getDeadDraftDays(projectRoot: string): number {
 }
 
 /**
+ * Scaffold the decay config keys (`agents.sweep_ttl_minutes`,
+ * `planning.dead_draft_days`) into `.indusk/config.json` so they're
+ * discoverable. Keys on block/key PRESENCE — user-customized values are never
+ * clobbered (the `ensureCleanupConfig` H8 precedent). Absence of the keys is
+ * never "disabled": the readers above default regardless.
+ */
+export function ensureDecayConfig(projectRoot: string): "added" | "already-set" | "no-config" {
+	const config = readConfig(projectRoot);
+	if (!config) return "no-config";
+	const hasSweep = typeof config.agents?.sweep_ttl_minutes === "number";
+	const hasDeadDraft = typeof config.planning?.dead_draft_days === "number";
+	if (hasSweep && hasDeadDraft) return "already-set";
+	const next: InduskConfig = { ...config };
+	if (!hasSweep) {
+		next.agents = { ...config.agents, sweep_ttl_minutes: DEFAULT_SWEEP_TTL_MINUTES };
+	}
+	if (!hasDeadDraft) {
+		next.planning = { ...config.planning, dead_draft_days: DEFAULT_DEAD_DRAFT_DAYS };
+	}
+	writeConfig(projectRoot, next);
+	return "added";
+}
+
+/**
  * True if the given extension is listed in `.indusk/config.json`'s
  * `disabled_extensions` array. Single source of truth for the required-
  * by-default escape hatch.

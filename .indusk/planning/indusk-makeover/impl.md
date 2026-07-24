@@ -97,10 +97,10 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 
 ### Phase 1: Decay mechanisms — current.md sweep + dead-draft auto-archive
 - [x] `apps/indusk-mcp/src/lib/agents/sweep.ts`: `sweepStaleSections(projectRoot, opts?)` — parses via `parseCurrentMd`, moves session sections whose `Last updated` exceeds `agents.stale_ttl_minutes` (separate, longer `agents.sweep_ttl_minutes` default 7 days — display-TTL ≠ sweep-TTL) into `.indusk/archive/current-md-archive.md` (append, with sweep timestamp header); never touches Project (shared) or fresh sections; malformed `lastUpdated` KEPT (existing prune convention); runs inside `withLock` — archive-before-rewrite ordering so a crash duplicates rather than loses; `serializeSectionBlock` exported from current-md.ts
-- [ ] CLI `indusk agent sweep [--dry-run]` in `commands/agent.ts`, printing what moved/would move
-- [ ] `apps/indusk-mcp/src/lib/planning/archive-dead.ts`: dead-draft detector — plan is dead when no doc has status beyond `draft` AND newest file mtime older than `planning.dead_draft_days` (default 30); `indusk plans archive-dead [--dry-run]` moves folder to `.indusk/planning/archive/`, never deletes, skips plans referenced as in-progress in master.md
-- [ ] Config keys `agents.sweep_ttl_minutes` + `planning.dead_draft_days` read via `lib/config.ts` (defaults in reader, presence-keyed migration per `ensureCleanupConfig` precedent)
-- [ ] Vitest: A9 (expired section archived + retrievable), A10 (adversarial fixtures: Project shared with stale-looking body, live section at TTL boundary, malformed timestamp, injected `## Session` text in a body) + dry-run and lock-contention supporting cases
+- [x] CLI `indusk agent sweep [--dry-run]` in `commands/agent.ts`, printing what moved/would move
+- [x] `apps/indusk-mcp/src/lib/planning/archive-dead.ts`: dead-draft detector — plan is dead when no doc has status beyond `draft` AND newest file mtime older than `planning.dead_draft_days` (default 30); `indusk plans archive-dead [--dry-run]` moves folder to `.indusk/planning/archive/`, never deletes, skips plans referenced as in-progress in master.md — master protection rule: linked name on a non-"draft" line; unparseable frontmatter blocks (conservative); abandoned is archive-eligible
+- [x] Config keys `agents.sweep_ttl_minutes` + `planning.dead_draft_days` read via `lib/config.ts` (defaults in reader, presence-keyed migration per `ensureCleanupConfig` precedent) — `ensureDecayConfig` wired into update.ts after the cleanup block
+- [x] Vitest: A9 (expired section archived + retrievable), A10 (adversarial fixtures: Project shared with stale-looking body, live section at TTL boundary, malformed timestamp, injected `## Session` text in a body) + dry-run and lock-contention supporting cases — 10 sweep + 9 archive-dead tests
 
 #### Phase 1 Verification
 - [ ] A9 passes (`pnpm turbo test --filter=indusk-mcp -- sweep`)

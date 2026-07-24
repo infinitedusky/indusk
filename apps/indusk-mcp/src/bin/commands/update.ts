@@ -611,6 +611,19 @@ export async function update(projectRoot: string): Promise<void> {
 		);
 	}
 
+	// [Decay — indusk-makeover] scaffold sweep + dead-draft keys idempotently.
+	// Presence-keyed; user-customized values never clobbered. Readers default
+	// regardless, so absence is never "disabled".
+	const { ensureDecayConfig } = await import("../../lib/config.js");
+	const _decayStatus = ensureDecayConfig(projectRoot);
+	if (_decayStatus === "added") {
+		console.info(
+			"  add: agents.sweep_ttl_minutes: 10080 + planning.dead_draft_days: 30 to .indusk/config.json",
+		);
+	} else if (_decayStatus === "already-set") {
+		console.info("  ok: decay config (sweep_ttl_minutes + dead_draft_days) already set");
+	}
+
 	// 8. Ensure ignores: in full mode, refresh tracked .gitignore. In local
 	// mode, leave .gitignore untouched and refresh .git/info/exclude (per-clone,
 	// never committed) so InDusk patterns ignore correctly without a PR diff.
