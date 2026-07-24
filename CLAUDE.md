@@ -110,7 +110,7 @@ dusk/
 
 ## Current State
 
-**Version**: indusk-mcp 1.32.0 published; the indusk-makeover branch (unpublished) carries the next minor.
+**Version**: indusk-mcp 1.33.0 (indusk-makeover — budgets + decay + Graphiti/CGC removal + hub sync).
 
 **In flight:**
 

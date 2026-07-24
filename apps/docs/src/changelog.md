@@ -2,7 +2,7 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] — indusk-makeover (in progress)
+## [1.33.0] — 2026-07-23
 
 ### Changed (InDusk Makeover — budgets + decay + removal)
 - **CLAUDE.md hard budget (60 KB) enforced at write time.** New `claude-md-budget.js` PreToolUse hook blocks over-budget Edit/Write on any file named CLAUDE.md and warns at 90%; budget configurable via `context.claude_md_budget_bytes`. Discipline-only compression was tried and failed — the hook is the ratchet. New `indusk context check-pointers` verifies every path reference in CLAUDE.md resolves (under rule+pointer compression, a dead pointer is a lost rule body). See [the context-budget guide](/guide/context-budget).
