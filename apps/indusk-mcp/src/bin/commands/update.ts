@@ -256,6 +256,42 @@ export async function update(projectRoot: string): Promise<void> {
 			} catch {
 				console.info("  could not register eval hook in settings.json");
 			}
+
+			// Ensure the CLAUDE.md budget hook is registered (indusk-makeover P2).
+			// Same targeted-ensure shape as the eval-trigger block above — update
+			// syncs hook FILES via globSync, but a new hook still needs its
+			// settings.json registration on pre-existing projects.
+			try {
+				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+				const preHooks = settings.hooks?.PreToolUse ?? [];
+				const editEntry = preHooks.find(
+					(entry: { matcher?: string }) => entry.matcher === "Edit|Write",
+				);
+				const hasBudgetHook = editEntry?.hooks?.some((h: { command?: string }) =>
+					h.command?.includes("claude-md-budget"),
+				);
+				if (!hasBudgetHook) {
+					if (!settings.hooks) settings.hooks = {};
+					if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
+					if (editEntry) {
+						editEntry.hooks = editEntry.hooks || [];
+						editEntry.hooks.push({
+							type: "command",
+							command: "node .claude/hooks/claude-md-budget.js",
+						});
+					} else {
+						settings.hooks.PreToolUse.push({
+							matcher: "Edit|Write",
+							hooks: [{ type: "command", command: "node .claude/hooks/claude-md-budget.js" }],
+						});
+					}
+					const { writeFileSync } = await import("node:fs");
+					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+					console.info("  registered claude-md-budget hook in settings.json");
+				}
+			} catch {
+				console.info("  could not register claude-md-budget hook in settings.json");
+			}
 		}
 	}
 

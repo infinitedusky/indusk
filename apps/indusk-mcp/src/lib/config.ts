@@ -145,6 +145,15 @@ export interface InduskConfig {
 		sweep_ttl_minutes?: number;
 	};
 	/**
+	 * Context-budget configuration (indusk-makeover). `claude_md_budget_bytes`
+	 * is the hard size budget the `claude-md-budget.js` PreToolUse hook
+	 * enforces on files named CLAUDE.md (default 61440 = 60 KB; warn at 90%).
+	 * Raising it is a deliberate, recorded act.
+	 */
+	context?: {
+		claude_md_budget_bytes?: number;
+	};
+	/**
 	 * Planning-lifecycle housekeeping. `dead_draft_days` is the age threshold
 	 * for `indusk plans archive-dead` — a plan whose docs are all draft-or-
 	 * abandoned AND whose newest file is older than this many days is moved to

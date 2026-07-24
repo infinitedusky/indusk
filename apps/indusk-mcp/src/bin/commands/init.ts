@@ -1090,6 +1090,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 					{ type: "command", command: "node .claude/hooks/check-gates.js" },
 					{ type: "command", command: "node .claude/hooks/validate-impl-structure.js" },
 					{ type: "command", command: "node .claude/hooks/check-catchup.js" },
+					{ type: "command", command: "node .claude/hooks/claude-md-budget.js" },
 				],
 			},
 		],
