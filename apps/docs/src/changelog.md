@@ -23,6 +23,7 @@ The first complete 1.33.x release: indusk-makeover + posthog extension together.
 
 ### Fixed (Phase 7 falsification)
 - **Budget hook predicts Edits with literal splice, not `String.replace`** — `$`-substitution patterns in a replacement string (plausible in shell/regex snippets) made the size prediction diverge from what the Edit tool actually writes, in either direction. Empty `old_string` is guarded.
+- **The legacy `check-catchup.js` hook is removed and migrated away** — it gated every Edit/Write on `.claude/handoff.md` checkboxes the post-1.29 catchup never writes, with a manual path probing the retired FalkorDB/Graphiti: permanently unsatisfiable (found by the versioned-workbench POC on a fresh project). `init` no longer ships it or the handoff.md scaffold; `update` deletes the installed hook and strips its settings registration.
 - **Legacy-server removal is a shared, tested migration helper** (`lib/mcp-migration.ts`) — init and update call one implementation; future MCP retirements extend its list.
 - **`list_plans { active: true }` includes `completed`** — a completed impl still in `planning/` is awaiting close-out rituals; hiding it from the dieted catchup hid exactly the plans mid-close.
 

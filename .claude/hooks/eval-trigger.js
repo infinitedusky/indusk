@@ -219,9 +219,7 @@ const candidates = [
 		try {
 			const pnpmRoot = execSync("pnpm root -g", { encoding: "utf8" }).trim();
 			if (pnpmRoot)
-				return [
-					resolve(pnpmRoot, "@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js"),
-				];
+				return [resolve(pnpmRoot, "@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js")];
 		} catch {}
 		return [];
 	})(),
@@ -232,9 +230,7 @@ const candidates = [
 		try {
 			const npmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
 			if (npmRoot)
-				return [
-					resolve(npmRoot, "@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js"),
-				];
+				return [resolve(npmRoot, "@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js")];
 		} catch {}
 		return [];
 	})(),

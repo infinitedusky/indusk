@@ -24,7 +24,7 @@ import { describe, expect, it } from "vitest";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOOKS_DIR = resolve(__dirname, "../../hooks");
 
-const HOOKS_TO_REFACTOR = ["check-catchup.js", "check-gates.js", "validate-impl-structure.js"];
+const HOOKS_TO_REFACTOR = ["check-gates.js", "validate-impl-structure.js"];
 
 describe("T6: 3 non-eval hooks import the shared helper", () => {
 	for (const hookName of HOOKS_TO_REFACTOR) {

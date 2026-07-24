@@ -972,8 +972,6 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		"mcp__indusk__get_system_version",
 		"mcp__indusk__get_skill_versions",
 		"mcp__indusk__get_skill_summaries",
-		"Read(.claude/handoff.md)",
-		"Edit(.claude/handoff.md)",
 	];
 	const hookConfig = {
 		PreToolUse: [
@@ -982,7 +980,6 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				hooks: [
 					{ type: "command", command: "node .claude/hooks/check-gates.js" },
 					{ type: "command", command: "node .claude/hooks/validate-impl-structure.js" },
-					{ type: "command", command: "node .claude/hooks/check-catchup.js" },
 					{ type: "command", command: "node .claude/hooks/claude-md-budget.js" },
 				],
 			},
@@ -1205,45 +1202,8 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		);
 	}
 
-	// Create initial handoff so /catchup runs full orientation on first session
-	const handoffPath = join(projectRoot, ".claude/handoff.md");
-	if (!existsSync(handoffPath) || force) {
-		const today = new Date().toISOString().split("T")[0];
-		const handoffContent = [
-			"# Handoff",
-			"",
-			`**Date:** ${today}`,
-			"**Session:** Fresh init — first session orientation needed",
-			"",
-			"## Catchup Status",
-			"- [ ] mcp-ready",
-			"- [ ] handoff",
-			"- [ ] lessons",
-			"- [ ] health",
-			"- [ ] context",
-			"- [ ] plans",
-			"- [ ] skills",
-			"- [ ] extensions",
-			"",
-			"## What Was Being Worked On",
-			"`indusk init` just set up this project. No prior session.",
-			"",
-			"## Where It Stopped",
-			"Init complete. Agent needs full orientation (lessons, context, skills, extensions).",
-			"",
-			"## What's Next",
-			"1. Run `/catchup` to orient the agent (reads lessons, context, skills, extensions)",
-			"2. Edit CLAUDE.md with project details",
-			"3. Start planning: `/planner your-first-feature`",
-			"",
-			"## Open Issues",
-			"None — fresh project.",
-			"",
-		].join("\n");
-		writeFileSync(handoffPath, handoffContent);
-		console.info("\n[Handoff]");
-		console.info("  create: .claude/handoff.md (first-session orientation)");
-	}
+	// (Legacy .claude/handoff.md creation removed — indusk-makeover follow-up: the
+	// check-catchup hook it fed was permanently unsatisfiable post-1.29 catchup.)
 
 	// 13. Register this project in ~/.indusk/projects.json so the admin-ui
 	// daemon can find it. `addProject` is idempotent on the path (returns the

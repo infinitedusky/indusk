@@ -257,6 +257,40 @@ export async function update(projectRoot: string): Promise<void> {
 				console.info("  could not register eval hook in settings.json");
 			}
 
+			// Remove the legacy check-catchup hook (indusk-makeover follow-up, found
+			// by the avoca versioned-workbench POC): it gates every Edit/Write on
+			// .claude/handoff.md checkboxes the post-1.29 catchup never writes, and
+			// its manual path probes the retired FalkorDB/Graphiti — permanently
+			// unsatisfiable. Delete the file AND strip its settings registration.
+			try {
+				const staleHook = join(projectRoot, ".claude/hooks/check-catchup.js");
+				if (existsSync(staleHook)) {
+					const { rmSync } = await import("node:fs");
+					rmSync(staleHook);
+					console.info("  removed: .claude/hooks/check-catchup.js (unsatisfiable legacy gate)");
+				}
+				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+				let stripped = false;
+				for (const entries of Object.values(settings.hooks ?? {})) {
+					for (const entry of entries as Array<{ hooks?: Array<{ command?: string }> }>) {
+						const before = entry.hooks?.length ?? 0;
+						if (entry.hooks) {
+							entry.hooks = entry.hooks.filter((h) => !h.command?.includes("check-catchup"));
+							if (entry.hooks.length !== before) stripped = true;
+						}
+					}
+				}
+				if (stripped) {
+					const { writeFileSync } = await import("node:fs");
+					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+					console.info("  deregistered: check-catchup hook from settings.json");
+				}
+			} catch {
+				console.info(
+					"  could not remove legacy check-catchup hook — delete .claude/hooks/check-catchup.js manually",
+				);
+			}
+
 			// Ensure the CLAUDE.md budget hook is registered (indusk-makeover P2).
 			// Same targeted-ensure shape as the eval-trigger block above — update
 			// syncs hook FILES via globSync, but a new hook still needs its

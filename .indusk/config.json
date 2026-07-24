@@ -46,10 +46,14 @@
 		]
 	},
 	"agents": {
-		"stale_ttl_minutes": 60
+		"stale_ttl_minutes": 60,
+		"sweep_ttl_minutes": 10080
 	},
 	"cleanup": {
 		"max_file_loc": 400,
 		"scopes": []
+	},
+	"planning": {
+		"dead_draft_days": 30
 	}
 }
