@@ -32,7 +32,7 @@ describe("buildEvaluatorPrompt", () => {
 		expect(prompt).not.toContain("jj diff -r abc123");
 	});
 
-	it("includes Graphiti write instructions in eval mode", () => {
+	it("includes findings-persistence instructions in eval mode (no knowledge-graph write — indusk-makeover)", () => {
 		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc",
@@ -41,11 +41,12 @@ describe("buildEvaluatorPrompt", () => {
 			projectGroup: "myproject",
 		});
 
-		expect(prompt).toContain("Write findings to the knowledge graph");
+		expect(prompt).toContain("Findings persistence");
+		expect(prompt).not.toContain("knowledge graph");
 		expect(prompt).toContain("myproject");
 	});
 
-	it("skips Graphiti writes in baseline mode", () => {
+	it("baseline mode findings persist via the scorecard only", () => {
 		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc",
@@ -54,10 +55,10 @@ describe("buildEvaluatorPrompt", () => {
 			projectGroup: "myproject",
 		});
 
-		expect(prompt).toContain("do NOT write to Graphiti");
+		expect(prompt).toContain("findings persist via the scorecard only");
 	});
 
-	it("T10: includes highlight-processing instructions with level→weight mapping in eval mode", () => {
+	it("T10: includes highlight-processing instructions targeting the lessons rail in eval mode", () => {
 		const prompt = buildEvaluatorPrompt({
 			rubric: V1_RUBRIC,
 			changeId: "abc",
@@ -69,9 +70,10 @@ describe("buildEvaluatorPrompt", () => {
 		expect(prompt).toContain("mcp__indusk__highlights_unprocessed");
 		expect(prompt).toContain("mcp__indusk__highlight_mark_processed");
 
-		expect(prompt).toMatch(/critical[^\n]*1\.0/);
-		expect(prompt).toMatch(/important[^\n]*0\.6/);
-		expect(prompt).toMatch(/note[^\n]*0\.3/);
+		// Post-makeover the rail materializes lessons, not weighted graph episodes.
+		expect(prompt).toContain("mcp__indusk__add_lesson");
+		expect(prompt).not.toContain("graph_capture");
+		expect(prompt).not.toContain("mcp__graphiti__");
 
 		expect(prompt).toMatch(/additive context[^.]*not a constraint/i);
 	});

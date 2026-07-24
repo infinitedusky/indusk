@@ -77,15 +77,7 @@ function clearSession(projectRoot: string): void {
 	}
 }
 
-const ALLOWED_TOOLS = [
-	"Read",
-	"Grep",
-	"Glob",
-	"Bash(jj:*)",
-	"Bash(git:*)",
-	"mcp__graphiti__*",
-	"mcp__indusk__*",
-];
+const ALLOWED_TOOLS = ["Read", "Grep", "Glob", "Bash(git:*)", "mcp__indusk__*"];
 
 function parseClaudeOutput(stdout: string): {
 	scorecardText: string;

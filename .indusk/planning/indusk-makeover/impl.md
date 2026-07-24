@@ -128,7 +128,7 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - [x] Write `apps/docs/src/guide/context-budget.md`: budget rationale, hook behavior, compaction ritual, decay-loop Mermaid diagram — registered in the guide sidebar
 
 ### Phase 3: Graphiti + CGC removal, rail retargeted to lessons
-- [ ] Retarget eval Step 4: `buildHighlightsInstructions` writes lessons (via `add_lesson`) instead of `graph_capture`/`mcp__graphiti__*`; keep the CRITICAL preamble + `already_processed` STOP path byte-intact; update the resume-prompt regression test's expectations
+- [x] Retarget eval Step 4: `buildHighlightsInstructions` writes lessons (via `add_lesson`) instead of `graph_capture`/`mcp__graphiti__*`; keep the CRITICAL preamble + `already_processed` STOP path byte-intact; update the resume-prompt regression test's expectations
 - [ ] Remove graphiti + codegraphcontext registration from init/update `.mcp.json` upsert; extensions: disable/remove `graphiti` extension flow (on_disable fires — 1.28.0 symmetry rule); remove catchup/planner/work/retrospective skill references to Graphiti recall + CGC blast-radius queries (Grep/tests guidance replaces CGC)
 - [ ] `check_health` stops probing FalkorDB/Graphiti; `rail-check` skill updated to verify highlight→eval→**lessons** (not episodes)
 - [ ] Remove graphiti + codegraphcontext entries from **this repo's** `.mcp.json`; disable both extensions here (A7 target — full keep-list finalization stays Phase 6)

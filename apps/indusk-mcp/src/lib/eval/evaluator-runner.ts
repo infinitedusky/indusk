@@ -84,14 +84,7 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 		projectGroup,
 	});
 
-	const allowedTools = [
-		"Read",
-		"Grep",
-		"Glob",
-		"Bash(git:*)",
-		"mcp__graphiti__*",
-		"mcp__indusk__*",
-	];
+	const allowedTools = ["Read", "Grep", "Glob", "Bash(git:*)", "mcp__indusk__*"];
 
 	const args = [
 		"--print",
@@ -239,15 +232,7 @@ async function runEvaluatorSyncInner(
 		projectGroup,
 	});
 
-	const allowedTools = [
-		"Read",
-		"Grep",
-		"Glob",
-		"Bash(jj:*)",
-		"Bash(git:*)",
-		"mcp__graphiti__*",
-		"mcp__indusk__*",
-	];
+	const allowedTools = ["Read", "Grep", "Glob", "Bash(git:*)", "mcp__indusk__*"];
 
 	const args = [
 		"--print",

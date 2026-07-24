@@ -38,10 +38,13 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 		expect(promptBuilderSource).toMatch(/export function buildHighlightsInstructions\b/);
 	});
 
-	it("the shared helper produces the load-bearing MCP tool calls (highlights_unprocessed → graph_capture → mark_processed)", () => {
+	it("the shared helper produces the load-bearing MCP tool calls (highlights_unprocessed → add_lesson → mark_processed)", () => {
 		expect(promptBuilderSource).toMatch(/mcp__indusk__highlights_unprocessed/);
-		expect(promptBuilderSource).toMatch(/mcp__indusk__graph_capture/);
+		expect(promptBuilderSource).toMatch(/mcp__indusk__add_lesson/);
 		expect(promptBuilderSource).toMatch(/mcp__indusk__highlight_mark_processed/);
+		// indusk-makeover P3: the Graphiti rail is gone — a graph_capture reference
+		// reappearing in the prompt source is a regression to the removed rail.
+		expect(promptBuilderSource).not.toMatch(/graph_capture|mcp__graphiti__/);
 	});
 
 	it("persistent-evaluator.ts imports `buildHighlightsInstructions`", () => {
