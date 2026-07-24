@@ -7,6 +7,8 @@ audience: indusk-mcp maintainers + Sandy
 
 # Context Budget — Brief
 
+> **SUPERSEDED (2026-07-23) by [`indusk-makeover`](../indusk-makeover/adr.md).** Pieces 1 (prune measurement CLI) and 2 (one-line retrospective entries — shipped, but numero's Current State regrew to ~120 KB, proving discipline-only doesn't hold) and piece 3's current.md auto-archive are **absorbed** into the makeover's impl. Piece 3's central thesis — Graphiti as canonical store with beam-default retrieval — is **rejected** on field evidence (generic recall, ~1 query/session, query-formulation problem); the makeover removes Graphiti entirely and keeps push-based curated artifacts canonical. No further work happens under this plan.
+
 ## Why
 
 Numero's per-prompt token cost has ballooned to the point that it's affecting both the speed and the dollar cost of every interaction. The cause is structural — InDusk currently auto-loads four artifacts into every conversation, each of which accretes monotonically with no pruning discipline:
