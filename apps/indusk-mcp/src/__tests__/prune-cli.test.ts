@@ -19,7 +19,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../..");
 const INDUSK_BIN = resolve(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
 
-function runIndusk(args: string[], cwd: string): { stdout: string; stderr: string; status: number | null } {
+function runIndusk(
+	args: string[],
+	cwd: string,
+): { stdout: string; stderr: string; status: number | null } {
 	const r = spawnSync("node", [INDUSK_BIN, ...args], {
 		cwd,
 		encoding: "utf-8",
@@ -30,10 +33,7 @@ function runIndusk(args: string[], cwd: string): { stdout: string; stderr: strin
 
 function writeInduskProject(projectRoot: string, claudeMdSections?: Record<string, string>): void {
 	mkdirSync(join(projectRoot, ".indusk"), { recursive: true });
-	writeFileSync(
-		join(projectRoot, ".indusk/config.json"),
-		JSON.stringify({ project_name: "test" }),
-	);
+	writeFileSync(join(projectRoot, ".indusk/config.json"), JSON.stringify({ project_name: "test" }));
 	if (claudeMdSections) {
 		const body = [
 			"# Test — CLAUDE.md",
@@ -59,7 +59,7 @@ describe("Phase 2: indusk prune CLI", () => {
 		it("runs against a clean project, exits 0, prints report sections, makes no file changes", () => {
 			writeInduskProject(tmpRoot, {
 				"What This Is": "small",
-				"Architecture": "small",
+				Architecture: "small",
 			});
 
 			const before = readFileChecksums(tmpRoot);

@@ -1,12 +1,5 @@
 import { spawn } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -40,11 +33,7 @@ interface Spawned {
 	status: number | null;
 }
 
-function runCli(
-	cwd: string,
-	args: string[],
-	env: NodeJS.ProcessEnv,
-): Promise<Spawned> {
+function runCli(cwd: string, args: string[], env: NodeJS.ProcessEnv): Promise<Spawned> {
 	return new Promise((resolveP) => {
 		const child = spawn("node", [CLI_BIN, ...args], { cwd, env });
 		let stdout = "";
@@ -119,11 +108,7 @@ describe.skipIf(SHOULD_SKIP)(
 				const ids = parsed.sections.map((s) => s.sessionId).sort();
 				const expected = [idA, idB].sort();
 
-				if (
-					ids.length !== 2 ||
-					ids[0] !== expected[0] ||
-					ids[1] !== expected[1]
-				) {
+				if (ids.length !== 2 || ids[0] !== expected[0] || ids[1] !== expected[1]) {
 					lostCount++;
 				}
 			}
@@ -133,11 +118,10 @@ describe.skipIf(SHOULD_SKIP)(
 
 		// Sanity check that the test fixture is sound — single register works.
 		it("T15 supporting: single register lands a section deterministically", async () => {
-			const res = await runCli(
-				projectDir,
-				["agent", "register", "--task", "single"],
-				{ ...process.env, CLAUDE_CODE_SESSION_ID: "uuid-single-aaaa-aaaa-aaaa-aaaaaaaaaaaa" },
-			);
+			const res = await runCli(projectDir, ["agent", "register", "--task", "single"], {
+				...process.env,
+				CLAUDE_CODE_SESSION_ID: "uuid-single-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+			});
 			expect(res.status).toBe(0);
 
 			const content = readFileSync(join(projectDir, ".indusk/current.md"), "utf-8");

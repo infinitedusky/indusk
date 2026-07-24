@@ -86,10 +86,7 @@ describe("cleanup-ritual T5: a Cleanup phase passes the existing hooks unchanged
 });
 
 describe("cleanup-ritual T9: skill defers to enabled domain extensions", () => {
-	const skill = readFileSync(
-		new URL("../../skills/cleanup.md", import.meta.url).pathname,
-		"utf-8",
-	);
+	const skill = readFileSync(new URL("../../skills/cleanup.md", import.meta.url).pathname, "utf-8");
 
 	it("cleanup.md directs the agent to the enabled domain extensions for what-to-extract", () => {
 		expect(skill).toMatch(/enabled domain extension/i);

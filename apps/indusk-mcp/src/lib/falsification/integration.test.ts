@@ -10,8 +10,8 @@ const retrospectiveSkill = readFileSync(join(packageRoot, "skills/retrospective.
 const workSkill = readFileSync(join(packageRoot, "skills/work.md"), "utf-8");
 
 describe("T7: retrospective.md skill references the falsification gate and the skip escape hatch", () => {
-	it("has a Step 0 Falsification Gate section", () => {
-		expect(retrospectiveSkill).toMatch(/###\s+Step 0:\s+Falsification Gate/);
+	it("has a Step 0 Ritual Gate section (renamed by cleanup-ritual; was 'Falsification Gate')", () => {
+		expect(retrospectiveSkill).toMatch(/###\s+Step 0:\s+Ritual Gate — Falsification \+ Cleanup/);
 	});
 
 	it("describes checking both the completion log and the skip frontmatter", () => {

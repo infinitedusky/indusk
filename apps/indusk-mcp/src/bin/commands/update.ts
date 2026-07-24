@@ -302,25 +302,38 @@ export async function update(projectRoot: string): Promise<void> {
 			const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
 			let mcpChanged = false;
 
-			// Ensure CGC config is correct: localhost, cgc-{project} graph name
-			const cgcEnv = mcpConfig.mcpServers?.codegraphcontext?.env;
-			if (cgcEnv) {
-				const { basename } = await import("node:path");
-				const projectName = basename(projectRoot);
-				const correctHost = "localhost";
-				const correctGraph = `cgc-${projectName}`;
-				const needsFix =
-					cgcEnv.FALKORDB_HOST !== correctHost || cgcEnv.FALKORDB_GRAPH_NAME !== correctGraph;
-				if (needsFix) {
+			// [indusk-makeover] Graphiti + CGC are retired — remove stale MCP
+			// registrations on update so pre-makeover projects converge without
+			// manual steps. The graphiti/cgc extension manifests are disabled below.
+			for (const legacy of ["codegraphcontext", "graphiti"]) {
+				if (mcpConfig.mcpServers?.[legacy]) {
 					try {
-						run("claude mcp remove -s project codegraphcontext");
-						run(
-							`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=${correctHost} -e FALKORDB_GRAPH_NAME=${correctGraph} -- codegraphcontext cgc mcp start`,
-						);
-						console.info(`  fixed: codegraphcontext → ${correctHost}, ${correctGraph}`);
+						run(`claude mcp remove -s project ${legacy}`);
+						console.info(`  removed: ${legacy} MCP server (retired — indusk-makeover)`);
 						mcpChanged = true;
 					} catch {
-						console.info("  could not fix codegraphcontext — update .mcp.json manually");
+						console.info(
+							`  could not remove legacy ${legacy} MCP server — run: claude mcp remove -s project ${legacy}`,
+						);
+					}
+				}
+			}
+
+			// Disable the retired graphiti/cgc extension manifests if enabled.
+			for (const legacyExt of ["graphiti", "cgc"]) {
+				const extDir = join(projectRoot, ".indusk/extensions", legacyExt);
+				if (existsSync(join(extDir, "manifest.json"))) {
+					try {
+						const { mkdirSync, renameSync } = await import("node:fs");
+						const disabledDir = join(projectRoot, ".indusk/extensions/.disabled");
+						mkdirSync(disabledDir, { recursive: true });
+						renameSync(extDir, join(disabledDir, legacyExt));
+						console.info(`  disabled: ${legacyExt} extension (retired — indusk-makeover)`);
+						mcpChanged = true;
+					} catch {
+						console.info(
+							`  could not disable ${legacyExt} extension — move .indusk/extensions/${legacyExt} aside manually`,
+						);
 					}
 				}
 			}

@@ -19,7 +19,7 @@
  * repo path is flagged.
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 export interface StrayStateFinding {

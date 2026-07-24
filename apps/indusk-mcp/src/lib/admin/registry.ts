@@ -1,10 +1,4 @@
-import {
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	renameSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
 
@@ -83,9 +77,7 @@ function quarantine(path: string, _raw: string): void {
 	const backupPath = `${path}.corrupt.${iso}.bak`;
 	try {
 		renameSync(path, backupPath);
-		process.stderr.write(
-			`warning: quarantined malformed registry to ${backupPath}\n`,
-		);
+		process.stderr.write(`warning: quarantined malformed registry to ${backupPath}\n`);
 	} catch {
 		// rename failed (permissions, race) — best effort; caller gets empty
 		// registry and the damaged file stays in place. Next write would still

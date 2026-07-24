@@ -36,9 +36,7 @@ describe("Phase 3: retrospective skill one-line Current State discipline (1.31.1
 			const step7Body = source.slice(step7Idx, step8Idx);
 
 			// The discipline is documented with explicit phrasing
-			expect(step7Body, "Step 7 should contain 'one-line' or 'one line'").toMatch(
-				/one[- ]line/i,
-			);
+			expect(step7Body, "Step 7 should contain 'one-line' or 'one line'").toMatch(/one[- ]line/i);
 			expect(step7Body, "Step 7 should mention 'link to archive'").toMatch(
 				/link to (the )?archive|See \[archive\]/i,
 			);
@@ -49,9 +47,7 @@ describe("Phase 3: retrospective skill one-line Current State discipline (1.31.1
 			expect(source, "concrete example with markdown code-block").toMatch(
 				/\*\*\{plan-name\}.*\(\{version\}\)\*\*/i,
 			);
-			expect(source, "example references archive path").toMatch(
-				/\.indusk\/planning\/archive\//,
-			);
+			expect(source, "example references archive path").toMatch(/\.indusk\/planning\/archive\//);
 		});
 	});
 

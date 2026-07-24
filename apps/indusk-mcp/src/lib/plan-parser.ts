@@ -58,9 +58,7 @@ function parseFrontmatter(filePath: string): ParseFrontmatterResult {
 		};
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
-		process.stderr.write(
-			`[plan-parser] frontmatter parse error in ${filePath}: ${message}\n`,
-		);
+		process.stderr.write(`[plan-parser] frontmatter parse error in ${filePath}: ${message}\n`);
 		return {
 			frontmatter: null,
 			parseError: { file: filePath, message },

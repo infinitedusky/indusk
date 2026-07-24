@@ -213,12 +213,9 @@ describe("wt.sh slug resolution (T5/T6/T8)", () => {
 				join(fixture.workbenchDir, "alpha", "apps", "web", "package.json"),
 				JSON.stringify({ name: "web", version: "0.0.0" }),
 			);
-			const r = run(
-				WT_SCRIPT,
-				fixture.workbenchDir,
-				["alpha:web", "--", "echo", "from-app"],
-				{ PATH: pnpmStubPath(stubBin) },
-			);
+			const r = run(WT_SCRIPT, fixture.workbenchDir, ["alpha:web", "--", "echo", "from-app"], {
+				PATH: pnpmStubPath(stubBin),
+			});
 			expect(r.code, r.stderr).toBe(0);
 			expect(r.stdout).toContain("[alpha/apps/web] echo from-app");
 			expect(r.stdout).not.toContain("[alpha/apps/web] pnpm");

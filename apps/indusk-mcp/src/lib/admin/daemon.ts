@@ -1,12 +1,5 @@
 import { spawn } from "node:child_process";
-import {
-	existsSync,
-	mkdirSync,
-	openSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createConnection, createServer } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -70,19 +63,15 @@ export async function daemonStart(opts: DaemonStartOptions): Promise<DaemonMeta>
 	ensureHome();
 
 	const logFd = openSync(logFilePath(), "a");
-	const child = spawn(
-		"node",
-		[opts.nextBin, "start", "--port", String(opts.port)],
-		{
-			cwd: opts.adminDir,
-			detached: true,
-			stdio: ["ignore", logFd, logFd],
-			env: {
-				...process.env,
-				...(opts.projectRoot ? { INDUSK_PROJECT_ROOT: opts.projectRoot } : {}),
-			},
+	const child = spawn("node", [opts.nextBin, "start", "--port", String(opts.port)], {
+		cwd: opts.adminDir,
+		detached: true,
+		stdio: ["ignore", logFd, logFd],
+		env: {
+			...process.env,
+			...(opts.projectRoot ? { INDUSK_PROJECT_ROOT: opts.projectRoot } : {}),
 		},
-	);
+	});
 	child.unref();
 
 	if (typeof child.pid !== "number") {

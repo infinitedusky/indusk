@@ -34,9 +34,7 @@ describe("eval-trigger.js — pnpm/npm-global candidate lookup", () => {
 		// After `pnpm root -g` returns `<root>`, the candidate must be
 		// `<root>/@infinitedusky/indusk-mcp/dist/lib/eval/evaluator-runner.js`.
 		// Same for npm root.
-		expect(source).toMatch(
-			/@infinitedusky\/indusk-mcp\/dist\/lib\/eval\/evaluator-runner\.js/,
-		);
+		expect(source).toMatch(/@infinitedusky\/indusk-mcp\/dist\/lib\/eval\/evaluator-runner\.js/);
 		// The candidate-building IIFE must reference pnpmRoot/npmRoot variables
 		// (sanity: it actually uses the result, not just calls the command).
 		expect(source).toMatch(/pnpmRoot/);
@@ -48,11 +46,7 @@ describe("eval-trigger.js — pnpm/npm-global candidate lookup", () => {
 		// PATH in every environment. The candidate-array entry simply contributes
 		// nothing rather than throwing. Match a window that brackets the
 		// `pnpm root -g` / `npm root -g` literal: `try { ... <literal> ... } catch {}`.
-		expect(source).toMatch(
-			/try\s*\{[\s\S]*?pnpm root -g[\s\S]*?\}\s*catch\s*\{\}/,
-		);
-		expect(source).toMatch(
-			/try\s*\{[\s\S]*?npm root -g[\s\S]*?\}\s*catch\s*\{\}/,
-		);
+		expect(source).toMatch(/try\s*\{[\s\S]*?pnpm root -g[\s\S]*?\}\s*catch\s*\{\}/);
+		expect(source).toMatch(/try\s*\{[\s\S]*?npm root -g[\s\S]*?\}\s*catch\s*\{\}/);
 	});
 });

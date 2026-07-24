@@ -100,7 +100,11 @@ describe("sweepStaleSections", () => {
 	it("A10: keeps a section exactly at the TTL boundary", () => {
 		const ttlMinutes = 60;
 		const boundaryTs = new Date(NOW.getTime() - ttlMinutes * 60_000).toISOString();
-		const boundary = makeSection("cccccccc-3333-4333-8333-333333333333", "boundary task", boundaryTs);
+		const boundary = makeSection(
+			"cccccccc-3333-4333-8333-333333333333",
+			"boundary task",
+			boundaryTs,
+		);
 		writeCurrentMd([boundary]);
 
 		const result = sweepStaleSections(projectRoot, { now: NOW, ttlMinutes });
@@ -110,7 +114,11 @@ describe("sweepStaleSections", () => {
 	});
 
 	it("A10: keeps sections with malformed timestamps (never archive on bad input)", () => {
-		const malformed = makeSection("dddddddd-4444-4444-8444-444444444444", "mystery task", "not-a-date");
+		const malformed = makeSection(
+			"dddddddd-4444-4444-8444-444444444444",
+			"mystery task",
+			"not-a-date",
+		);
 		writeCurrentMd([malformed]);
 
 		const result = sweepStaleSections(projectRoot, { now: NOW });
@@ -200,9 +208,9 @@ describe("sweepStaleSections", () => {
 		const lockPath = join(projectRoot, ".indusk/current.md.lock");
 		const release = acquireLock(lockPath);
 		try {
-			expect(() =>
-				sweepStaleSections(projectRoot, { now: NOW, lockTimeoutMs: 100 }),
-			).toThrow(/lock/i);
+			expect(() => sweepStaleSections(projectRoot, { now: NOW, lockTimeoutMs: 100 })).toThrow(
+				/lock/i,
+			);
 		} finally {
 			release();
 		}

@@ -167,10 +167,9 @@ describe("T9: markProcessed rejects duplicate IDs at write time (Phase 6 dedup f
 		const linesAfterSecond = readFileSync(processedPath, "utf-8")
 			.split("\n")
 			.filter((l) => l.length > 0).length;
-		expect(
-			linesAfterSecond,
-			"file must NOT grow on duplicate markProcessed — write rejected",
-		).toBe(1);
+		expect(linesAfterSecond, "file must NOT grow on duplicate markProcessed — write rejected").toBe(
+			1,
+		);
 	});
 
 	it("the original processedAt timestamp is surfaced when already_processed: true", () => {

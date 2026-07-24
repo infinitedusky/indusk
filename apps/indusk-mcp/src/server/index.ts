@@ -17,7 +17,6 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { registerAgentTools } from "../tools/agent-tools.js";
 import { registerContextTools } from "../tools/context-tools.js";
 import { registerDocumentTools } from "../tools/document-tools.js";
-import { registerGraphTools } from "../tools/graph-tools.js";
 import { registerHighlightTools } from "../tools/highlight-tools.js";
 import { registerLessonTools } from "../tools/lesson-tools.js";
 import { registerPlanTools } from "../tools/plan-tools.js";
@@ -68,7 +67,6 @@ export async function startServer(): Promise<void> {
 		registerQualityTools(server, projectRoot);
 		registerDocumentTools(server, projectRoot);
 		registerSystemTools(server, projectRoot);
-		registerGraphTools(server, projectRoot);
 		registerLessonTools(server, projectRoot);
 		registerHighlightTools(server, projectRoot);
 		registerAgentTools(server, projectRoot);
