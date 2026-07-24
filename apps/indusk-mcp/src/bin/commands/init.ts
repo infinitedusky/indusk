@@ -649,20 +649,16 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	// The lessons registry carries curated knowledge; Grep/Read replace
 	// code-graph queries. The indusk-infra container is no longer checked or
 	// auto-started.
-	for (const legacy of ["codegraphcontext", "graphiti"]) {
-		if (existingServers.has(legacy)) {
-			try {
-				execSync(`claude mcp remove -s project ${legacy}`, {
-					cwd: projectRoot,
-					stdio: "pipe",
-					timeout: 10000,
-				});
-				console.info(`  removed: ${legacy} MCP server (retired — indusk-makeover)`);
-			} catch {
-				console.info(
-					`  note: could not remove legacy ${legacy} MCP server — run: claude mcp remove -s project ${legacy}`,
-				);
-			}
+	{
+		const { removeLegacyMcpServers } = await import("../../lib/mcp-migration.js");
+		const legacyResult = removeLegacyMcpServers(projectRoot);
+		for (const name of legacyResult.removed) {
+			console.info(`  removed: ${name} MCP server (retired — indusk-makeover)`);
+		}
+		for (const name of legacyResult.failed) {
+			console.info(
+				`  note: could not remove legacy ${name} MCP server — run: claude mcp remove -s project ${name}`,
+			);
 		}
 	}
 

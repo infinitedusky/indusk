@@ -1,7 +1,7 @@
 ---
 title: "InDusk Makeover — Implementation"
 date: 2026-07-23
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -57,7 +57,7 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 | A16 | The budget hook's predicted post-edit content is byte-identical to what the Edit tool writes, even when `new_string` contains `$$`/`$&`/`` $` ``/`$'` substitution patterns or `old_string` is empty | Phase 0 | Phase 7 | passing |
 | A17 | `list_plans { active: true }` includes plans whose impl is `completed` but which are still in `planning/` (awaiting falsify/cleanup/retrospective) | Phase 0 | Phase 7 | passing |
 | A18 | The A11 gate FAILS loudly (not vacuous-PASS) when the classifier CLI cannot run | Phase 0 | Phase 7 | passing |
-| A19 | init and update share ONE legacy-MCP-removal implementation (`lib/mcp-migration.ts`), unit-tested for both the remove-success and remove-failure paths | Phase 8 | Phase 8 | planned |
+| A19 | init and update share ONE legacy-MCP-removal implementation (`lib/mcp-migration.ts`), unit-tested for both the remove-success and remove-failure paths | Phase 8 | Phase 8 | passing |
 
 ### Deferred Verification
 
@@ -224,22 +224,22 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 
 **Goal**: decompose the one genuine repeat this plan introduced — `init.ts` and `update.ts` each carry their own copy of the "remove stale graphiti/codegraphcontext MCP registrations" loop — per the library idiom (extract a module; dusk has no framework extensions enabled, so the unit is a function). Every other flagged file is a reasoned leave-as-is below.
 
-- [ ] Extract the legacy-MCP-removal loop into `apps/indusk-mcp/src/lib/mcp-migration.ts` — `removeLegacyMcpServers(projectRoot, opts?): { removed: string[]; failed: string[] }` (reads `.mcp.json` for presence, shells `claude mcp remove -s project <name>`, injectable runner for tests); `init.ts` and `update.ts` both call it; the extension-manifest disable loop stays in update.ts (it has no second call site)
-- [ ] (reviewed `init.ts` 1275 / `update.ts` 745 — left as-is beyond the extraction: this plan NET-SHRANK both; whole-file decomposition of the init/update monoliths is the cleanup-ritual plan's standing "first customer" follow-up, out of this plan's diff)
-- [ ] (reviewed `cli.ts` 706 — left as-is: declarative commander registration table; every action already lives in `commands/*`; this plan shrank it by deleting the graph/beam blocks)
-- [ ] (reviewed `config.ts` 434 — left as-is: flat registry of small config readers; splitting 10-line readers into per-domain files creates import churn without cohesion gain)
-- [ ] (reviewed `current-md.ts` 417 — left as-is: parser + serializer are a round-trip pair for one file format; splitting them scatters the invariant)
-- [ ] (reviewed `persistent-evaluator.ts` 432 — left as-is: cohesive evaluator lifecycle, net-shrunk by this plan)
-- [ ] (reviewed `planner.md`/`SKILL.md` 568, `changelog.md` 404, `eval-trigger.js` 413, `current-md.test.ts` 452 — left as-is: prose files, or incidental biome-formatting touches only; not code this plan grew)
+- [x] Extract the legacy-MCP-removal loop into `apps/indusk-mcp/src/lib/mcp-migration.ts` — `removeLegacyMcpServers(projectRoot, opts?): { removed: string[]; failed: string[] }` (reads `.mcp.json` for presence, shells `claude mcp remove -s project <name>`, injectable runner for tests); `init.ts` and `update.ts` both call it; the extension-manifest disable loop stays in update.ts (it has no second call site)
+- [x] (reviewed `init.ts` 1275 / `update.ts` 745 — left as-is beyond the extraction: this plan NET-SHRANK both; whole-file decomposition of the init/update monoliths is the cleanup-ritual plan's standing "first customer" follow-up, out of this plan's diff)
+- [x] (reviewed `cli.ts` 706 — left as-is: declarative commander registration table; every action already lives in `commands/*`; this plan shrank it by deleting the graph/beam blocks)
+- [x] (reviewed `config.ts` 434 — left as-is: flat registry of small config readers; splitting 10-line readers into per-domain files creates import churn without cohesion gain)
+- [x] (reviewed `current-md.ts` 417 — left as-is: parser + serializer are a round-trip pair for one file format; splitting them scatters the invariant)
+- [x] (reviewed `persistent-evaluator.ts` 432 — left as-is: cohesive evaluator lifecycle, net-shrunk by this plan)
+- [x] (reviewed `planner.md`/`SKILL.md` 568, `changelog.md` 404, `eval-trigger.js` 413, `current-md.test.ts` 452 — left as-is: prose files, or incidental biome-formatting touches only; not code this plan grew)
 
 #### Phase 8 Verification
-- [ ] A19: `lib/mcp-migration.ts` unit test covers remove-success and remove-failure (runner injection); init/update call-site parity pinned by a grep-style assertion that neither file carries its own removal loop
+- [x] A19: `lib/mcp-migration.ts` unit test covers remove-success and remove-failure (runner injection); init/update call-site parity pinned by a grep-style assertion that neither file carries its own removal loop — 5 tests green; tsc + biome clean
 
 #### Phase 8 Context
-- [ ] Extend the indusk-mcp Architecture bullet in CLAUDE.md: name `lib/mcp-migration.ts` as the migration surface for retired MCP servers (future removals reuse it, not hand-rolled loops)
+- [x] Extend the indusk-mcp Architecture bullet in CLAUDE.md: name `lib/mcp-migration.ts` as the migration surface for retired MCP servers (future removals reuse it, not hand-rolled loops)
 
 #### Phase 8 Document
-- [ ] One line in the changelog's Unreleased makeover entry: legacy-server removal is a shared, tested migration helper
+- [x] One line in the changelog's Unreleased makeover entry: legacy-server removal is a shared, tested migration helper
 
 ## Files Affected
 

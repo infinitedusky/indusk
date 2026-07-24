@@ -10,6 +10,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Fixed (Phase 7 falsification)
 - **Budget hook predicts Edits with literal splice, not `String.replace`** — `$`-substitution patterns in a replacement string (plausible in shell/regex snippets) made the size prediction diverge from what the Edit tool actually writes, in either direction. Empty `old_string` is guarded.
+- **Legacy-server removal is a shared, tested migration helper** (`lib/mcp-migration.ts`) — init and update call one implementation; future MCP retirements extend its list.
 - **`list_plans { active: true }` includes `completed`** — a completed impl still in `planning/` is awaiting close-out rituals; hiding it from the dieted catchup hid exactly the plans mid-close.
 
 ### Removed (Graphiti + CGC)

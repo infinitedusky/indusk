@@ -305,17 +305,17 @@ export async function update(projectRoot: string): Promise<void> {
 			// [indusk-makeover] Graphiti + CGC are retired — remove stale MCP
 			// registrations on update so pre-makeover projects converge without
 			// manual steps. The graphiti/cgc extension manifests are disabled below.
-			for (const legacy of ["codegraphcontext", "graphiti"]) {
-				if (mcpConfig.mcpServers?.[legacy]) {
-					try {
-						run(`claude mcp remove -s project ${legacy}`);
-						console.info(`  removed: ${legacy} MCP server (retired — indusk-makeover)`);
-						mcpChanged = true;
-					} catch {
-						console.info(
-							`  could not remove legacy ${legacy} MCP server — run: claude mcp remove -s project ${legacy}`,
-						);
-					}
+			{
+				const { removeLegacyMcpServers } = await import("../../lib/mcp-migration.js");
+				const legacyResult = removeLegacyMcpServers(projectRoot, { run });
+				for (const name of legacyResult.removed) {
+					console.info(`  removed: ${name} MCP server (retired — indusk-makeover)`);
+					mcpChanged = true;
+				}
+				for (const name of legacyResult.failed) {
+					console.info(
+						`  could not remove legacy ${name} MCP server — run: claude mcp remove -s project ${name}`,
+					);
 				}
 			}
 
