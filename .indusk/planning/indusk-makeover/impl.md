@@ -51,8 +51,8 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 | A10 | Sweep never touches the Project (shared) section or a live session's section (adversarial fixtures) | Phase 1 | Phase 1 | passing |
 | A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | written |
 | A12 | Project MCP config is exactly indusk/dash0/posthog/jaeger; global is playwright only | Phase 0 | Phase 6 | written |
-| A13 | A rule promoted from this project is received by a second project via the pull flow, with provenance | Phase 5 | Phase 5 | planned |
-| A14 | Pulling twice changes nothing the second time; local (personal) lessons are never overwritten | Phase 5 | Phase 5 | planned |
+| A13 | A rule promoted from this project is received by a second project via the pull flow, with provenance | Phase 5 | Phase 5 | passing |
+| A14 | Pulling twice changes nothing the second time; local (personal) lessons are never overwritten | Phase 5 | Phase 5 | passing |
 | A15 | A plan close produces a compact CLAUDE.md entry (rule + pointer), via the wired ritual — verified by dry-run diff | Phase 6 | Phase 6 | planned |
 
 ### Deferred Verification
@@ -162,20 +162,20 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - [x] Update `apps/docs/src/reference/skills/catchup.md` to the new read set + sweep wiring
 
 ### Phase 5: Hub push/pull rule distribution
-- [ ] Promote flow: `indusk sync promote <lesson-id>` copies a project lesson into the InDusk package's shared channel (`apps/indusk-mcp/lessons/community/`), stamping provenance (source project, date); refuses non-existent/already-promoted ids
-- [ ] Pull flow: `indusk sync pull` merges hub channel into the project's lessons — additive only, never overwrites a local lesson, idempotent (content-hash comparison); catchup runs it (surfacing "N new rules")
-- [ ] Version surface: hub channel carries a monotonically bumped manifest consumed by `get_skill_versions`-style check so pull can short-circuit on no-change
-- [ ] Vitest: A14 (pull-twice no-op; local-lesson collision preserved; provenance stamped) + promote-refusal cases
+- [x] Promote flow: `indusk sync promote <lesson-id>` copies a project lesson into the InDusk package's shared channel (`apps/indusk-mcp/lessons/community/`), stamping provenance (source project, date); refuses non-existent/already-promoted ids — DESIGN REFINEMENT: the hub is `$INDUSK_HOME/hub/lessons/` (machine-global) rather than the installed package dir, which is clobbered on npm upgrade; package channel remains the bundled source pull also merges; promoting into the published package = move hub lesson into `lessons/community/` in the dusk checkout + publish
+- [x] Pull flow: `indusk sync pull` merges hub channel into the project's lessons — additive only, never overwrites a local lesson, idempotent (content-hash comparison); catchup runs it (surfacing "N new rules")
+- [x] Version surface: hub channel carries a monotonically bumped manifest consumed by `get_skill_versions`-style check so pull can short-circuit on no-change — `$INDUSK_HOME/hub/manifest.json` bumps per promote; pull reports it
+- [x] Vitest: A14 (pull-twice no-op; local-lesson collision preserved; provenance stamped) + promote-refusal cases — 7 tests green
 
 #### Phase 5 Verification
-- [ ] A14 passes (`pnpm turbo test --filter=indusk-mcp -- sync`)
-- [ ] A13 e2e smoke: promote a rule from this project, run `indusk sync pull` in a second project (scratch or chitin-sportsbook), rule file present there with provenance
+- [x] A14 passes (`pnpm turbo test --filter=indusk-mcp -- sync`) — 7 hub tests green
+- [x] A13 e2e smoke: promote a rule from this project, run `indusk sync pull` in a second project (scratch or chitin-sportsbook), rule file present there with provenance — promoted `highlight-materializes-to-lessons-not-graphiti` from this worktree → scratch project pulled 19 rules incl. it, provenance line intact, second pull no-op (scratch INDUSK_HOME)
 
 #### Phase 5 Context
-- [ ] Add CLAUDE.md Conventions one-liner: promote/pull flow, catchup cadence, additive-only invariant — pointer to `reference/cli/sync.md`
+- [x] Add CLAUDE.md Conventions one-liner: promote/pull flow, catchup cadence, additive-only invariant — pointer to `reference/cli/sync.md`
 
 #### Phase 5 Document
-- [ ] Write `apps/docs/src/reference/cli/sync.md` with promote/pull Mermaid flow diagram
+- [x] Write `apps/docs/src/reference/cli/sync.md` with promote/pull Mermaid flow diagram — in the sidebar CLI group
 
 ### Phase 6: Workbench migration, compaction ritual, backfill
 - [ ] Wire compaction into `/retrospective` skill: plan-close step demotes the plan's Current State narrative to one line + pointer and compresses any Conventions entries it authored; document the periodic pass

@@ -639,6 +639,30 @@ agentCmd
 		agentPrune(rootOrExit());
 	});
 
+const syncCmd = program
+	.command("sync")
+	.description("Hub push/pull rule distribution (promote / pull) — InDusk is the hub");
+
+syncCmd
+	.command("promote <lesson>")
+	.description(
+		"Push a proven-general project lesson into the machine-global hub channel ($INDUSK_HOME/hub/lessons/)",
+	)
+	.action(async (lesson: string) => {
+		const { syncPromote } = await import("./commands/sync.js");
+		syncPromote(rootOrExit(), lesson);
+	});
+
+syncCmd
+	.command("pull")
+	.description(
+		"Merge the hub channel + bundled community lessons into this project's .claude/lessons/ — additive-only, local always wins",
+	)
+	.action(async () => {
+		const { syncPull } = await import("./commands/sync.js");
+		syncPull(rootOrExit());
+	});
+
 const contextCmd = program
 	.command("context")
 	.description("Project-context housekeeping (check-pointers)");

@@ -75,3 +75,45 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 (empty)
 
 ---
+
+## Session 6dd91742 — starting catchup (indusk-makeover worktree)
+
+**Session ID**: 6dd91742-bec6-47ff-86b8-12193abf9407
+**Last updated**: 2026-07-24T01:19:10.124Z
+**Branch**: plan/indusk-makeover-phase-0
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/indusk-makeover
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 22c42faa — eval agent: scoring commit d7fd01d1 (indusk-makeover P3 close)
+
+**Session ID**: 22c42faa-f26e-4314-8a74-8478a71f2d86
+**Last updated**: 2026-07-24T01:20:31.698Z
+**Branch**: plan/indusk-makeover-phase-0
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/indusk-makeover
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

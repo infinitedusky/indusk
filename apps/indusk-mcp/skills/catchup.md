@@ -71,6 +71,14 @@ indusk agent sweep --dry-run
 
 Surface the count in your summary. If it reports more than a handful of sweepable sections, suggest the user let you run `indusk agent sweep` for real — decayed sections are exactly what makes Step 3's file expensive. (The `/handoff` ritual runs the real sweep automatically; this dry-run is the visibility layer.)
 
+Then pull the hub channel:
+
+```bash
+indusk sync pull
+```
+
+Additive-only merge of the machine-global hub (`$INDUSK_HOME/hub/lessons/`) + the package's bundled community lessons into this project's `.claude/lessons/`. Surface "N new rules pulled" in the summary when non-zero. Local lessons always win on conflict — the pull can never clobber project knowledge.
+
 ### 5. Skim Lessons (Lazy-Load)
 
 Call `list_lessons`. As of 1.31.5, the tool returns `title` + `path` per lesson — **not** the full content. Titles ARE the actionable rules in most cases.
