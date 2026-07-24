@@ -10,12 +10,42 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 		"list_plans",
 		{
 			description:
-				"List all plans in the planning/ directory with their stage, status, next step, and dependencies",
+				"List plans in the planning/ directory with their stage, status, next step, and dependencies. Pass active: true (the catchup default — indusk-makeover diet) to return only genuinely in-motion plans (any doc accepted/approved/in-progress) instead of every draft.",
+			inputSchema: {
+				active: z
+					.boolean()
+					.optional()
+					.describe(
+						"When true, return only active plans — stage status is accepted/approved/in-progress/proposed. Dead drafts and completed stages are omitted (with a count).",
+					),
+			},
 		},
-		async () => {
+		async ({ active }) => {
 			const plans = parseAllPlans(projectRoot);
+			if (!active) {
+				return {
+					content: [{ type: "text" as const, text: JSON.stringify(plans, null, 2) }],
+				};
+			}
+			const ACTIVE_STATUSES = new Set(["accepted", "approved", "in-progress", "proposed"]);
+			const filtered = plans.filter((p) =>
+				ACTIVE_STATUSES.has((p.stageStatus ?? "").toLowerCase()),
+			);
 			return {
-				content: [{ type: "text" as const, text: JSON.stringify(plans, null, 2) }],
+				content: [
+					{
+						type: "text" as const,
+						text: JSON.stringify(
+							{
+								active: filtered,
+								omitted: plans.length - filtered.length,
+								note: "omitted = drafts/completed/archived-stage plans; call without `active` for the full list",
+							},
+							null,
+							2,
+						),
+					},
+				],
 			};
 		},
 	);

@@ -47,18 +47,31 @@ Empty output means you're the only agent currently active. That's fine — just 
 
 Calling `agent list` also implicitly self-heartbeats your section (refreshes `Last updated`), so this is the canonical "I am still here" surface for long-running sessions.
 
-### 3. Read Operational State
+### 3. Read Operational State (targeted — do NOT read the whole file)
 
-Read `.indusk/current.md`. It has two regions worth surfacing:
+**Do NOT read `.indusk/current.md` end-to-end.** The file accumulates every session's history between sweeps; a full read re-pays all of it every catchup (the pre-makeover cost was ~22k tokens). Read exactly two things:
+
+1. **The `## Project (shared)` region only** — read from the top of the file to the first `---` delimiter (offset/limit read or head). This is the cross-cutting state.
+2. **Live sessions' sections only** — `indusk agent list` (Step 2) already printed the fresh partition. For each live session it lists (other than yourself), Grep for its `## Session <short>` heading and read just that section. Skip every section `agent list` filtered out.
+
+The two regions:
 
 - **`## Project (shared)`** — cross-cutting state that's true for the whole project right now ("pre-launch crunch mode", "telemetry endpoint changed last week", "merge freeze through Thursday"). Any agent can edit this section. Read it to know the project-wide context.
 - **Per-agent sections** (`## Session <short> — <task>`) — operational state from other working agents. Each section's `### In Flight`, `### Open Questions`, and `### Cursor` subsections tell you what other agents are doing in detail.
 
-**Filter per-agent sections by `Last updated` against `agents.stale_ttl_minutes`** (read the TTL from `.indusk/config.json`, default 60). Only surface sections whose `Last updated` is within the TTL — sections from agents that ran `/handoff` but skipped `indusk agent done` linger in the file and would otherwise look active forever. **Exclude stale sections from your catchup summary**; do not present a stale section as if its owner were currently working. (`indusk agent list` performs the same filter; this rule keeps the catchup output consistent with it.)
+**Never surface a section that `agent list` filtered out as stale.** Sections from agents that ran `/handoff` but skipped `indusk agent done` linger in the file until the sweep archives them; targeted reads keyed off `agent list`'s fresh partition keep them out of your summary by construction.
 
 **Do NOT edit `.indusk/current.md` during catchup.** Catchup is read-only for shared content. Your own section's content (in-flight / open-questions / cursor) is written via the [`mcp__indusk__update_current_section` MCP tool](apps/docs/src/reference/tools/indusk-mcp.md#agent-tools) — typically at `/handoff`, not during catchup. The `agent register` call in Step 1 only refreshes the heading + `Last updated`; it preserves any existing body content.
 
-### 4. Skim Lessons (Lazy-Load)
+### 4. Sweep Check (dry-run)
+
+```bash
+indusk agent sweep --dry-run
+```
+
+Surface the count in your summary. If it reports more than a handful of sweepable sections, suggest the user let you run `indusk agent sweep` for real — decayed sections are exactly what makes Step 3's file expensive. (The `/handoff` ritual runs the real sweep automatically; this dry-run is the visibility layer.)
+
+### 5. Skim Lessons (Lazy-Load)
 
 Call `list_lessons`. As of 1.31.5, the tool returns `title` + `path` per lesson — **not** the full content. Titles ARE the actionable rules in most cases.
 
@@ -73,29 +86,22 @@ The shift from "read every lesson's full content" (status quo through 1.31.4) to
 
 These are rules learned from past mistakes — not suggestions. Internalize the titles before touching any code; reach for full content when the work calls for it.
 
-### 5. Check Infrastructure
+### 6. Check Infrastructure
 
 Call `check_health`. It runs every enabled extension's health checks. If unhealthy, tell the user what's down and how to fix it.
 
-### 6. Read Project Context
+### 7. Project Context — already loaded, do NOT re-fetch
 
-Call `get_context` to read CLAUDE.md. This contains:
-- **Architecture** — what the project is, how it's structured
-- **Conventions** — rules to follow (commit style, no DB from Next.js, no fallback URLs, etc.)
-- **Key Decisions** — ADRs that have been accepted (with links)
-- **Known Gotchas** — things that will bite you if you don't know about them
-- **Current State** — what's been built, what's working, what's in progress
+CLAUDE.md is auto-injected into every session by Claude Code. **Do NOT call `get_context` and do NOT `Read` CLAUDE.md during catchup** — that duplicates content already in your context window (the single biggest line item in the pre-makeover ~55k catchup). You already have Architecture, Conventions, Key Decisions, Known Gotchas, and Current State. If (and only if) your context was compacted and the injected copy is genuinely absent, read it then.
 
-Read it fully. Don't skim.
+### 8. Check Active Plans
 
-### 7. Check Active Plans
-
-Call `list_plans`. This shows every plan and its status. Pay attention to:
+Call `list_plans` with `{ active: true }` — this returns only genuinely in-motion plans (any doc accepted/approved/in-progress/proposed) plus a count of what was omitted. Do NOT list every draft. Pay attention to:
 - Plans with status `in-progress` — these are actively being worked on
 - The current phase of each active plan — this is where `/work` will pick up
 - Dependencies between plans — don't start a blocked plan
 
-### 8. Review Skills and Extensions
+### 9. Review Skills and Extensions
 
 Call `extensions_status` to see what extensions are enabled and their capabilities.
 
@@ -108,7 +114,7 @@ Skill types:
 
 Understand what each skill does and when to use it. You should be able to answer: "What slash commands are available and what do they do?"
 
-### 9. Summarize
+### 10. Summarize
 
 After completing all steps, present a brief summary to the user:
 
@@ -119,11 +125,12 @@ After completing all steps, present a brief summary to the user:
 - Other agents currently working: [list from `indusk agent list`, with each agent's task, worktree, and branch — or "none"]
 - Worktree collision: [if `indusk agent list` prints a `⚠ collision` warning — two or more live sessions sharing one worktree (typically the shared trunk) — surface it prominently; this is the exact class worktree-per-plan prevents]
 - Notable in-flight from other agents: [if anyone's section is on something that might affect this session, surface it]
-- Lessons: N loaded
+- Lessons: N titles skimmed
+- Sweep: [N sections sweepable (dry-run) / clean]
 - Infrastructure: [healthy / issues]
 - Skills: N installed [list names]
 - Extensions: N enabled [list names]
-- Active plans: [list with current phase]
+- Active plans: [list with current phase] (M inactive omitted)
 
 Ready to pick up. What would you like to do?
 ```

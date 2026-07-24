@@ -37,3 +37,4 @@ All gates FAIL by design; they flip green at their `Passes at` phases.
 | Date | Phase | A5 ~tokens | A6 graphiti calls | A6 dup CLAUDE.md read |
 |------|-------|-----------|-------------------|----------------------|
 | 2026-07-23 | 0 | ~55k (provisional, research.md) | ≥1 | yes |
+| 2026-07-23 | 4 (post-diet, pre-backfill) | **~8,221** (cold `claude --print` session 6dd91742) | **0** | **no** |

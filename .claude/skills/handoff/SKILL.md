@@ -50,6 +50,14 @@ indusk agent done
 
 Removes your section from `.indusk/current.md`. After this, you no longer show up in `indusk agent list` from other sessions. Optional — sections age out automatically via the `Last updated` TTL — but explicit `done` makes the bulletin tidier for concurrent agents.
 
+Then run the decay sweep (indusk-makeover — handoff owns the real sweep; catchup only dry-runs it):
+
+```bash
+indusk agent sweep
+```
+
+Sections older than `agents.sweep_ttl_minutes` (default 7 days) move to `.indusk/archive/current-md-archive.md` — archived, never deleted. Usually a no-op; when it does move sections, mention the count in your sign-off so the user knows the file got lighter.
+
 ### 4. Fire the eval trigger
 
 So the eval agent processes any unprocessed highlights before the session closes. Highlights written after the last `git commit` would otherwise sit in the queue until the next session's first commit.

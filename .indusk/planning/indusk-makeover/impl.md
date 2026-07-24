@@ -44,7 +44,7 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 | A3 | Every compressed entry's pointer resolves to an existing docs page or archived doc (link walker) | Phase 0 | Phase 6 | written |
 | A4 | 15 randomly sampled pre-compression entries have their operative rule still stated post-compression | Phase 6 | Phase 6 | planned |
 | A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | written |
-| A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | written |
+| A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | passing |
 | A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | passing |
 | A8 | A highlight written in a session is processed by the eval agent into a lesson at commit time, with Graphiti gone, without error | Phase 3 | Phase 3 | passing |
 | A9 | Sweep archives sections older than the stale TTL; archived content is retrievable from the archive file | Phase 1 | Phase 1 | passing |
@@ -146,20 +146,20 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - [x] Removal notices on Graphiti/CGC guide pages (what replaced them: lessons rail, Grep); changelog entry
 
 ### Phase 4: Catchup diet + sweep wiring
-- [ ] Rewrite `apps/indusk-mcp/skills/catchup.md`: drop Graphiti step, drop duplicate CLAUDE.md fetch, read Project (shared) + live sections only (via `indusk agent list` fresh partition), plans via status-filtered listing; keep lessons titles-hot pattern
-- [ ] `list_plans` (tool + CLI) gains `--active` filter (frontmatter status ∈ in-progress set) used by catchup
-- [ ] Wire sweep into rhythm: catchup runs `indusk agent sweep --dry-run` and surfaces the count; handoff runs the real sweep after `agent done`
-- [ ] Resync installed `.claude/skills/` copies (skill-sync-parity test pins byte-equality)
+- [x] Rewrite `apps/indusk-mcp/skills/catchup.md`: drop Graphiti step, drop duplicate CLAUDE.md fetch, read Project (shared) + live sections only (via `indusk agent list` fresh partition), plans via status-filtered listing; keep lessons titles-hot pattern — also: current.md reads are now TARGETED (shared region up to first `---`; live sections by Grep) instead of whole-file
+- [x] `list_plans` (tool + CLI) gains `--active` filter (frontmatter status ∈ in-progress set) used by catchup — MCP tool `{ active: true }` returns active plans + omitted count
+- [x] Wire sweep into rhythm: catchup runs `indusk agent sweep --dry-run` and surfaces the count; handoff runs the real sweep after `agent done`
+- [x] Resync installed `.claude/skills/` copies (skill-sync-parity test pins byte-equality) — parity green
 
 #### Phase 4 Verification
-- [ ] A6 passes: fresh `/catchup` transcript shows zero Graphiti calls, single CLAUDE.md ingestion, completes clean
-- [ ] A5 re-measured and recorded (expected still red on this workbench until Phase 6 backfill — the diet mechanism is verified, the local win lands with the sweep)
+- [x] A6 passes: fresh `/catchup` transcript shows zero Graphiti calls, single CLAUDE.md ingestion, completes clean — cold `claude --print "/catchup"` session 6dd91742: 0 graphiti tool calls, 0 get_context, 0 CLAUDE.md Reads; the collision detector even flagged the working session correctly
+- [x] A5 re-measured and recorded — **~8,221 tokens of tool-result content — ALREADY under the 15k target at Phase 4** (55k → 8.2k, −85%); formal A5 green still lands at Phase 6 with the full backfill
 
 #### Phase 4 Context
-- [ ] Update CLAUDE.md Conventions catchup entry to the dieted read-set one-liner + pointer
+- [x] Update CLAUDE.md Conventions catchup entry to the dieted read-set one-liner + pointer
 
 #### Phase 4 Document
-- [ ] Update `apps/docs/src/reference/skills/catchup.md` to the new read set + sweep wiring
+- [x] Update `apps/docs/src/reference/skills/catchup.md` to the new read set + sweep wiring
 
 ### Phase 5: Hub push/pull rule distribution
 - [ ] Promote flow: `indusk sync promote <lesson-id>` copies a project lesson into the InDusk package's shared channel (`apps/indusk-mcp/lessons/community/`), stamping provenance (source project, date); refuses non-existent/already-promoted ids

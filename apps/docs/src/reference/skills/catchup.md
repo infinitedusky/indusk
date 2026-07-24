@@ -11,14 +11,16 @@ Given a fresh session, catchup:
 1. **Waits for required MCP servers** (`indusk`) to be available, blocking up to 30 seconds. Refuses to proceed without them.
 2. **Registers presence** via `indusk agent register --task "..."`. The session ID comes from `$CLAUDE_CODE_SESSION_ID`; the section lands in `.indusk/current.md`.
 3. **Reads the bulletin** via `indusk agent list`. Surfaces other agents currently working on the project. Self-heartbeats the caller's own section.
-4. **Reads operational state** from `.indusk/current.md` — both the `## Project (shared)` anchor (cross-cutting state any agent can edit) and per-agent `## Session <short> — <task>` blocks (other agents' in-flight / open-questions / cursor).
-5. **Reads lessons** via `list_lessons`.
-6. **Checks infrastructure** via `check_health`.
-7. **Reads project context** from `CLAUDE.md`.
-8. **Recalls from Graphiti** via `search_nodes`.
-9. **Lists active plans**.
+4. **Reads operational state — targeted, never the whole file.** From `.indusk/current.md`: the `## Project (shared)` anchor region (top of file to the first `---`) plus only the live sessions' `## Session` blocks keyed off `agent list`'s fresh partition. Stale sections are never read or surfaced.
+5. **Sweep check** via `indusk agent sweep --dry-run` — surfaces how many decayed sections are archivable. (`/handoff` runs the real sweep.)
+6. **Skims lesson titles** via `list_lessons` — titles are the rules; bodies load on demand.
+7. **Checks infrastructure** via `check_health`.
+8. **Does NOT re-read CLAUDE.md.** It's auto-injected into every session; re-fetching it was the single biggest line item of the pre-makeover catchup (~30k tokens of pure duplication).
+9. **Lists active plans** via `list_plans { active: true }` — in-motion plans only, plus a count of what was omitted.
 10. **Reviews installed skills and enabled extensions**.
-11. **Summarizes** to the user with the active plan list, other agents present, project (shared) state, and Graphiti recall highlights.
+11. **Summarizes** to the user with the active plan list, other agents present, project (shared) state, and the sweep count.
+
+The dieted read-set (indusk-makeover) measures ~8k tokens of tool results per catchup, down from ~55k.
 
 ## Pure-Read Invariant
 
