@@ -47,8 +47,8 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 | A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | written |
 | A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | written |
 | A8 | A highlight written in a session is processed by the eval agent into a lesson at commit time, with Graphiti gone, without error | Phase 3 | Phase 3 | planned |
-| A9 | Sweep archives sections older than the stale TTL; archived content is retrievable from the archive file | Phase 1 | Phase 1 | planned |
-| A10 | Sweep never touches the Project (shared) section or a live session's section (adversarial fixtures) | Phase 1 | Phase 1 | planned |
+| A9 | Sweep archives sections older than the stale TTL; archived content is retrievable from the archive file | Phase 1 | Phase 1 | passing |
+| A10 | Sweep never touches the Project (shared) section or a live session's section (adversarial fixtures) | Phase 1 | Phase 1 | passing |
 | A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | written |
 | A12 | Project MCP config is exactly indusk/dash0/posthog/jaeger; global is playwright only | Phase 0 | Phase 6 | written |
 | A13 | A rule promoted from this project is received by a second project via the pull flow, with provenance | Phase 5 | Phase 5 | planned |
@@ -103,14 +103,14 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - [x] Vitest: A9 (expired section archived + retrievable), A10 (adversarial fixtures: Project shared with stale-looking body, live section at TTL boundary, malformed timestamp, injected `## Session` text in a body) + dry-run and lock-contention supporting cases — 10 sweep + 9 archive-dead tests
 
 #### Phase 1 Verification
-- [ ] A9 passes (`pnpm turbo test --filter=indusk-mcp -- sweep`)
-- [ ] A10 passes (same suite, adversarial fixtures)
+- [x] A9 passes (`pnpm turbo test --filter=indusk-mcp -- sweep`) — 10 sweep tests green; tsc + biome clean
+- [x] A10 passes (same suite, adversarial fixtures) — 4 adversarial fixtures green
 
 #### Phase 1 Context
-- [ ] Add CLAUDE.md Conventions one-liner: sweep + archive-dead commands, the display-TTL vs sweep-TTL distinction, archive-never-delete invariant — pointer to this plan
+- [x] Add CLAUDE.md Conventions one-liner: sweep + archive-dead commands, the display-TTL vs sweep-TTL distinction, archive-never-delete invariant — pointer to this plan
 
 #### Phase 1 Document
-- [ ] New section in `apps/docs/src/reference/cli/agent.md` for `agent sweep`; new `apps/docs/src/reference/cli/plans.md` for `plans archive-dead`
+- [x] New section in `apps/docs/src/reference/cli/agent.md` for `agent sweep`; new `apps/docs/src/reference/cli/plans.md` for `plans archive-dead` — both in the sidebar CLI group
 
 ### Phase 2: CLAUDE.md size-budget hook + pointer walker productized
 - [ ] `apps/indusk-mcp/hooks/claude-md-budget.js` (PreToolUse on Edit/Write targeting `CLAUDE.md`): computes post-edit size; > budget → block with message naming the compaction ritual; > 90% → warn; budget from `context.claude_md_budget_bytes` (default 61440) via inlined config reader (hook precedent)
