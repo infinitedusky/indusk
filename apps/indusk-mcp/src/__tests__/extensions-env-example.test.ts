@@ -125,6 +125,30 @@ describe(".env.example copy + missing-.env hint", () => {
 	);
 
 	it.skipIf(SHOULD_SKIP)(
+		"posthog enable lands .env.example even when credentials are missing, and points the user at a cp command",
+		() => {
+			const result = runCli(["extensions", "enable", "posthog"]);
+
+			const examplePath = join(projectDir, ".indusk/extensions/posthog/.env.example");
+			expect(existsSync(examplePath), `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`).toBe(
+				true,
+			);
+
+			const contents = readFileSync(examplePath, "utf-8");
+			expect(contents).toMatch(/POSTHOG_MCP_URL/);
+			expect(contents).toMatch(/POSTHOG_MCP_API_KEY/);
+			// The template must steer users to the phx_ personal key, not the
+			// phc_ project ingestion token — the #1 misconfiguration.
+			expect(contents).toMatch(/phx_/);
+
+			expect(result.stdout).toMatch(
+				/cp \.indusk\/extensions\/posthog\/\.env\.example \.indusk\/extensions\/posthog\/\.env/,
+			);
+		},
+		30_000,
+	);
+
+	it.skipIf(SHOULD_SKIP)(
 		"local-telemetry ships an .env.example that documents its OTLP endpoints",
 		() => {
 			// Smoke: just confirm the source file exists and contains the
@@ -150,6 +174,11 @@ describe("envIsFunctional gate", () => {
 	it("returns true for dash0 (auth-required MCP server)", async () => {
 		const { envIsFunctional } = await import("../bin/commands/extensions.js");
 		expect(envIsFunctional("dash0")).toBe(true);
+	});
+
+	it("returns true for posthog (auth-required MCP server)", async () => {
+		const { envIsFunctional } = await import("../bin/commands/extensions.js");
+		expect(envIsFunctional("posthog")).toBe(true);
 	});
 
 	it("returns false for local-telemetry (no MCP server on the manifest)", async () => {

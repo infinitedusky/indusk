@@ -2,6 +2,11 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+- **`posthog` extension — PostHog product analytics via the official remote MCP server.** Backported from numero's third-party extension into the built-in catalog. Manifest wires `mcp.posthog.com` into `.mcp.json` with Bearer auth from `.indusk/extensions/posthog/.env` (`POSTHOG_MCP_URL` + `POSTHOG_MCP_API_KEY` — a `phx_` **personal** API key, not the `phc_` project ingestion token; the key's project access is the visibility boundary). Ships `.env.example` + an agent-facing `skill.md` (query events/persons/insights/replays/flags/experiments/errors; read-side only — app event capture stays a runtime concern). Health checks: `posthog-mcp-configured` + `posthog-token-present`. Opt-in via `indusk extensions enable posthog`; auto-detected when a `posthog` entry already exists in `.mcp.json`. Catalog entries under a new "Product analytics" group in both extension indexes — PostHog is the what-users-do layer, complementary to the `dash0`/`datadog`/`local-telemetry` what-services-do layer.
+
 ## [1.32.0] — 2026-07-13
 
 ### Added (Worktree Visibility — worktree-per-plan, observable in the bulletin)

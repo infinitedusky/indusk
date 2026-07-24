@@ -15,6 +15,7 @@ When extensions overlap on problem space, this table tells you which one to reac
 | Local-only OTel during dev (no SaaS account, no internet) | [`local-telemetry`](#local-telemetry) |
 | Add OpenTelemetry instrumentation to your service | [`otel`](#otel) (emit side, not query side) |
 | Coordinate work via Asana (tasks, projects, comments) | [`asana`](#asana) |
+| Query product analytics — events, funnels, persons, replays, feature flags, experiments | [`posthog`](#posthog) |
 | Check a PR/MR/CL for unresolved comments + failing checks; fix and resolve | [`check-pr`](#check-pr) |
 | Loop a PR through Greptile until 5/5 confidence + zero comments | [`greploop`](#greploop) |
 | Walk code structure (callers, callees, dead code) | [`cgc`](#cgc) |
@@ -62,6 +63,12 @@ OpenTelemetry instrumentation patterns — auto-instrumentation, Pino structured
 ### `asana`
 
 Asana Work Graph — tasks, projects, sections, comments, custom fields, time tracking. Official V2 remote MCP server, OAuth 2.0 with PKCE. Tokens scoped to MCP only (not reusable with the Asana REST API), 1-hour expiry, refresh tokens handle renewal. All actions appear as the authorizing user; bounded by their existing Asana permissions. **When**: coordinating work via Asana; cross-referencing PRs to tasks; pulling task spec/comments into context for code work.
+
+## Product analytics
+
+### `posthog`
+
+PostHog's official remote MCP server (`mcp.posthog.com`) — query events, persons, insights (HogQL), session replays, feature flags, experiments, and error tracking. Bearer auth with a `phx_` **personal API key** (NOT the `phc_` project ingestion token); the key's project access is the visibility boundary. Read-side only — event capture in your app (`posthog-js` / `posthog-node`) is configured separately. **When**: behavior questions ("do users hit this flow?"), feature-flag debugging, session-replay and error triage, experiment readouts, pre-refactor usage checks. PostHog is the what-users-do layer; [`dash0`](#dash0) / [`datadog`](#datadog) / [`local-telemetry`](#local-telemetry) are the what-services-do layer — complementary, not alternatives.
 
 ## PR review workflows
 

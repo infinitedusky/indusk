@@ -17,6 +17,7 @@ When extensions overlap on problem space, this table tells you which one to reac
 | Local-only OTel during dev (no SaaS account, no internet) | `local-telemetry` |
 | Add OpenTelemetry instrumentation to your service | `otel` (skill — emit side, not query side) |
 | Coordinate work via Asana (tasks, projects, comments) | `asana` |
+| Query product analytics — events, funnels, persons, replays, feature flags, experiments | `posthog` |
 | Check a PR/MR/CL for unresolved comments + failing checks; fix and resolve | `check-pr` |
 | Loop a PR through Greptile until 5/5 confidence + zero comments | `greploop` |
 | Walk code structure (callers, callees, dead code) | `cgc` |
@@ -58,6 +59,14 @@ When extensions overlap on problem space, this table tells you which one to reac
 | Extension | One-liner | Auth | When |
 |---|---|---|---|
 | `asana` | Asana Work Graph — tasks, projects, comments, custom fields | OAuth (browser flow) | Coordinating work via Asana; cross-referencing PRs to tasks |
+
+### Product analytics
+
+| Extension | One-liner | Auth | When |
+|---|---|---|---|
+| `posthog` | PostHog remote MCP — events, persons, insights, replays, feature flags, experiments, error tracking | `phx_` personal API key in env | Behavior questions, flag debugging, replay/error triage, experiment readouts |
+
+PostHog is the what-users-do layer; `dash0` / `datadog` / `local-telemetry` are the what-services-do layer. Complementary, not alternatives.
 
 ### PR review workflows
 
