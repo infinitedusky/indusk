@@ -12,6 +12,7 @@ import {
 } from "../../lib/agents/current-md.js";
 import { withLock } from "../../lib/agents/lock.js";
 import { getSessionId, sanitizeSessionId } from "../../lib/agents/session.js";
+import { sweepStaleSections } from "../../lib/agents/sweep.js";
 import { readConfig } from "../../lib/config.js";
 
 /**
@@ -327,4 +328,31 @@ export function agentPrune(projectRoot: string): void {
 		writeAtomic(projectRoot, updated, sessionId);
 		console.info(`Pruned ${stale.length} stale section(s).`);
 	});
+}
+
+export interface AgentSweepOptions {
+	dryRun?: boolean;
+}
+
+/**
+ * `indusk agent sweep [--dry-run]` — move sections older than the sweep TTL
+ * (`agents.sweep_ttl_minutes`, default 7 days) into
+ * `.indusk/archive/current-md-archive.md`. Unlike `prune` (which drops stale
+ * sections by the 60-minute DISPLAY TTL), sweep archives by the much longer
+ * DECAY TTL and never deletes — recovery is a copy from the archive file.
+ */
+export function agentSweep(projectRoot: string, opts: AgentSweepOptions = {}): void {
+	const result = sweepStaleSections(projectRoot, { dryRun: opts.dryRun });
+	if (result.swept.length === 0) {
+		console.info("Nothing to sweep — no sections older than the sweep TTL.");
+		return;
+	}
+	const verb = result.dryRun ? "Would sweep" : "Swept";
+	console.info(`${verb} ${result.swept.length} section(s) → ${result.archivePath}`);
+	for (const s of result.swept) {
+		console.info(`  - ${s.sessionShort} — ${s.task} (last updated ${s.lastUpdated})`);
+	}
+	if (result.keptMalformed > 0) {
+		console.info(`Kept ${result.keptMalformed} section(s) with unparseable timestamps.`);
+	}
 }

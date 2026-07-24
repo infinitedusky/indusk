@@ -644,123 +644,22 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	}
 
-	// Install CGC if not present
-	const cgcInstalled = run("cgc --version");
-	if (cgcInstalled) {
-		console.info(`  skip: codegraphcontext (${cgcInstalled})`);
-	} else {
-		const hasPipx = run("pipx --version");
-		if (hasPipx) {
-			console.info("  installing: codegraphcontext via pipx...");
-			try {
-				execSync("pipx install codegraphcontext", {
-					timeout: 60000,
-					stdio: ["ignore", "pipe", "pipe"],
-				});
-				console.info("  installed: codegraphcontext");
-			} catch {
-				console.info("  failed: could not install codegraphcontext — run manually:");
-				console.info("    pipx install codegraphcontext");
-			}
-		} else {
+	// [indusk-makeover] Graphiti + CGC are retired. Instead of registering
+	// them, MIGRATE AWAY: drop stale MCP entries so re-init cleans old projects.
+	// The lessons registry carries curated knowledge; Grep/Read replace
+	// code-graph queries. The indusk-infra container is no longer checked or
+	// auto-started.
+	{
+		const { removeLegacyMcpServers } = await import("../../lib/mcp-migration.js");
+		const legacyResult = removeLegacyMcpServers(projectRoot);
+		for (const name of legacyResult.removed) {
+			console.info(`  removed: ${name} MCP server (retired — indusk-makeover)`);
+		}
+		for (const name of legacyResult.failed) {
 			console.info(
-				"  skip: codegraphcontext (pipx not found — install pipx first, then: pipx install codegraphcontext)",
+				`  note: could not remove legacy ${name} MCP server — run: claude mcp remove -s project ${name}`,
 			);
 		}
-	}
-
-	// Ensure CGC config is correct: localhost, cgc-{project} graph name
-	if (existingServers.has("codegraphcontext") && !force) {
-		try {
-			const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
-			const cgcEnv = mcpConfig.mcpServers?.codegraphcontext?.env;
-			const correctGraph = `cgc-${projectName}`;
-			if (
-				cgcEnv &&
-				(cgcEnv.FALKORDB_HOST !== "localhost" || cgcEnv.FALKORDB_GRAPH_NAME !== correctGraph)
-			) {
-				execSync("claude mcp remove -s project codegraphcontext", {
-					cwd: projectRoot,
-					stdio: "pipe",
-					timeout: 10000,
-				});
-				execSync(
-					`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=localhost -e FALKORDB_GRAPH_NAME=${correctGraph} -- codegraphcontext cgc mcp start`,
-					{ cwd: projectRoot, stdio: "pipe", timeout: 10000 },
-				);
-				console.info(`  fixed: codegraphcontext → localhost, ${correctGraph}`);
-			}
-		} catch {}
-	}
-
-	// Add codegraphcontext MCP server (no secrets)
-	if (!existingServers.has("codegraphcontext") || force) {
-		try {
-			execSync(
-				`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=localhost -e FALKORDB_GRAPH_NAME=cgc-${projectName} -- codegraphcontext cgc mcp start`,
-				{ cwd: projectRoot, stdio: "pipe", timeout: 10000 },
-			);
-			console.info(`  added: codegraphcontext MCP server (graph: cgc-${projectName})`);
-		} catch {
-			console.info("  failed: could not add codegraphcontext MCP server — run manually:");
-			console.info(
-				`    claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=localhost -e FALKORDB_GRAPH_NAME=cgc-${projectName} -- codegraphcontext cgc mcp start`,
-			);
-		}
-	} else {
-		console.info("  skip: codegraphcontext MCP server (already exists)");
-	}
-
-	// Add graphiti MCP server (Phase 5.5 — Streamable HTTP, runs in indusk-infra container)
-	const graphitiAddCommand = "claude mcp add -t http -s project graphiti http://localhost:8100/mcp";
-	if (!existingServers.has("graphiti") || force) {
-		try {
-			execSync(graphitiAddCommand, { cwd: projectRoot, stdio: "pipe", timeout: 10000 });
-			console.info("  added: graphiti MCP server (http://localhost:8100/mcp)");
-		} catch {
-			console.info("  failed: could not add graphiti MCP server — run manually:");
-			console.info(`    ${graphitiAddCommand}`);
-		}
-	} else {
-		console.info("  skip: graphiti MCP server (already exists)");
-	}
-
-	// 4b. Check infrastructure container
-	console.info("\n[Infrastructure]");
-	try {
-		const infraStatus = execSync("docker inspect --format='{{.State.Running}}' indusk-infra", {
-			encoding: "utf-8",
-			timeout: 5000,
-			stdio: ["ignore", "pipe", "pipe"],
-		}).trim();
-		if (infraStatus === "true") {
-			console.info("  ok: indusk-infra container is running");
-		} else {
-			console.info("  starting: indusk-infra container...");
-			execSync("docker start indusk-infra", {
-				timeout: 15000,
-				stdio: ["ignore", "pipe", "pipe"],
-			});
-			console.info("  started: indusk-infra");
-		}
-	} catch {
-		console.info("  skip: indusk-infra container not found");
-		console.info("    To set up infrastructure: indusk infra start");
-	}
-
-	// 4c. Copy Graphiti extension manifest
-	const graphitiExtDir = join(projectRoot, ".indusk/extensions/graphiti");
-	const graphitiManifest = join(graphitiExtDir, "manifest.json");
-	if (existsSync(graphitiManifest) && !force) {
-		console.info("  skip: graphiti extension (already exists)");
-	} else {
-		mkdirSync(graphitiExtDir, { recursive: true });
-		cpSync(join(packageRoot, "extensions/graphiti/manifest.json"), graphitiManifest);
-		const skillSource = join(packageRoot, "extensions/graphiti/skill.md");
-		if (existsSync(skillSource)) {
-			cpSync(skillSource, join(graphitiExtDir, "skill.md"));
-		}
-		console.info("  create: .indusk/extensions/graphiti/ (manifest + skill)");
 	}
 
 	// 5. Generate .vscode/settings.json
@@ -1070,15 +969,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		"mcp__indusk__get_project_info",
 		"mcp__indusk__list_plans",
 		"mcp__indusk__extensions_status",
-		"mcp__indusk__graph_ensure",
-		"mcp__indusk__graph_stats",
 		"mcp__indusk__get_system_version",
 		"mcp__indusk__get_skill_versions",
 		"mcp__indusk__get_skill_summaries",
-		"mcp__indusk__index_project",
-		"mcp__indusk__graph_doctor",
-		"mcp__codegraphcontext__get_repository_stats",
-		"mcp__codegraphcontext__list_indexed_repositories",
 		"Read(.claude/handoff.md)",
 		"Edit(.claude/handoff.md)",
 	];
@@ -1090,6 +983,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 					{ type: "command", command: "node .claude/hooks/check-gates.js" },
 					{ type: "command", command: "node .claude/hooks/validate-impl-structure.js" },
 					{ type: "command", command: "node .claude/hooks/check-catchup.js" },
+					{ type: "command", command: "node .claude/hooks/claude-md-budget.js" },
 				],
 			},
 		],
@@ -1219,26 +1113,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		console.info("  no extensions enabled — run 'extensions enable' to add tool integrations");
 	}
 
-	// 10. Auto-index the codebase into the graph (if CGC extension is enabled)
-	const cgcEnabled = enabledExts.some((e) => e.manifest.name === "cgc");
-	if (noIndex) {
-		console.info("\n[Code Graph]");
-		console.info("  skipped (--no-index)");
-	} else if (cgcEnabled) {
-		console.info("\n[Code Graph]");
-		console.info("  indexing: scanning codebase...");
-		try {
-			const { indexProject } = await import("../../tools/graph-tools.js");
-			const result = indexProject(projectRoot);
-			if (result.success) {
-				console.info(`  done: ${result.output}`);
-			} else {
-				console.info(`  error: ${result.output}`);
-			}
-		} catch {
-			console.info("  skipped (CGC not available)");
-		}
-	}
+	// (Step 10, CGC auto-index, removed — indusk-makeover retired the code graph.)
 
 	// 11. Auto-enable detected extensions
 	console.info("\n[Extensions]");

@@ -50,10 +50,7 @@ function findStatePath(startDir) {
 	// Hard cap to defend against pathological symlink loops. 40 ancestors is
 	// vastly more than any real filesystem path.
 	for (let i = 0; i < 40; i++) {
-		if (
-			existsSync(resolve(current, ".indusk")) ||
-			existsSync(resolve(current, ".claude"))
-		) {
+		if (existsSync(resolve(current, ".indusk")) || existsSync(resolve(current, ".claude"))) {
 			try {
 				return realpathSync(current);
 			} catch {

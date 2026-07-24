@@ -184,11 +184,11 @@ export function readUnprocessedHighlights(projectRoot: string): Highlight[] {
  * duplicate lines, and `readUnprocessedHighlights` deduped via Set at
  * read time. T4's runtime audit (2026-06-28) showed the eval agent
  * sometimes processes highlights from session memory rather than calling
- * `highlights_unprocessed`, producing duplicate `graph_capture` writes to
+ * `highlights_unprocessed`, producing duplicate materialization writes to
  * Graphiti. The fix: check the processed log first; if the ID is present,
  * return `{ already_processed: true, original_processedAt }` WITHOUT
  * appending. The agent's tool result signals the redundancy so it can
- * skip the duplicate `graph_capture` call.
+ * skip the duplicate materialization call.
  *
  * `readUnprocessedHighlights` still uses a Set on read — defense against
  * historic duplicates already in the file from pre-1.31.2 runs.

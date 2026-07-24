@@ -1,7 +1,7 @@
 ---
 name: rail-check
 description: |
-  Verify the eval→Graphiti rail works on this project, surface and clean stray
+  Verify the eval→lessons rail works on this project, surface and clean stray
   state, and drain any backlog of unprocessed highlights through a single
   manual eval-agent invocation. Run this skill when: (a) the user says "I just
   updated indusk" or any phrasing of "post-update", "rail check", "backfill",
@@ -14,7 +14,7 @@ description: |
 
 # /rail-check — Post-update Rail Integrity Verification
 
-The user just updated their InDusk version (typically 1.31.7+) OR is concerned the eval→Graphiti rail isn't working. This skill walks through the canonical verification procedure and, if the queue is dark, drains it through a single manual eval-agent invocation.
+The user just updated their InDusk version OR is concerned the eval→lessons rail isn't working. This skill walks through the canonical verification procedure and, if the queue is dark, drains it through a single manual eval-agent invocation.
 
 ## When to invoke
 
@@ -36,7 +36,7 @@ A 6-step procedure that handles workbench AND single-repo projects:
 3. If stray-state errors: present them to the user with the recommended `rm -rf` commands and ask for confirmation BEFORE acting
 4. Smoke-test the rail with a sanity commit
 5. Count unprocessed highlights and decide whether to backfill
-6. Backfill drain (if needed) + verify Graphiti got the episodes
+6. Backfill drain (if needed) + verify lessons got written
 
 ## Procedure
 
@@ -106,7 +106,7 @@ You should see lines like:
 
 **The load-bearing line is `evaluator spawned` with a real PID.** If you see `skip — no git commit ID available` or `skip — no git repo at cwd`, the workbench fix has not taken effect — report this to the user as a regression and stop. They may need to re-run `indusk update` or check that 1.31.7 actually installed.
 
-After ~60s, check `.indusk/eval/results.log` for a new scorecard entry. If present, the full rail (hook → spawn → claude --print → Graphiti) is working.
+After ~60s, check `.indusk/eval/results.log` for a new scorecard entry. If present, the full rail (hook → spawn → claude --print → lessons) is working.
 
 ### Step 5 — Count unprocessed highlights
 
@@ -128,7 +128,7 @@ Highlights queue:
 ```
 
 **Decision tree**:
-- Unprocessed ≤ 5: rail is healthy, no backfill needed. Skip to Step 6 to verify Graphiti.
+- Unprocessed ≤ 5: rail is healthy, no backfill needed. Skip to Step 6 to verify the lessons landed.
 - Unprocessed 6-20: small backfill. Proceed to backfill in Step 5b.
 - Unprocessed > 20: significant dark-queue case (e.g., the numero_workbench 86-entry backfill scenario). Confirm with user that the rail-integrity fix just landed and proceed to backfill in Step 5b.
 
@@ -140,7 +140,7 @@ The eval-agent's prompt drains `highlights_unprocessed` in one pass per invocati
 node {path-to-eval-trigger.js} --source rail-check-backfill
 ```
 
-The `--source` flag puts the agent in CLI mode (no stdin event read; no commit-trigger filter). The agent processes the queue, writes Graphiti episodes, marks each highlight processed.
+The `--source` flag puts the agent in CLI mode (no stdin event read; no commit-trigger filter). The agent processes the queue, writes lessons for durable rules, marks each highlight processed.
 
 Locate the hook:
 
@@ -172,21 +172,11 @@ wc -l .indusk/highlights.jsonl .indusk/highlights-processed.jsonl
 
 Unprocessed should now be 0 (or close — the agent skips entries that fail the inner validation).
 
-### Step 6 — Verify Graphiti got the episodes
+### Step 6 — Verify the lessons landed
 
-Query Graphiti with the project group:
+List the lessons registry (`mcp__indusk__list_lessons`) and compare against `.indusk/highlights-processed.jsonl`: every entry with `action: "wrote-episode"` names the lesson it materialized in its `detail`. Skipped entries carry their reason — a healthy drain shows a mix (accepted-doc highlights are usually skips because the plan docs already record them; corrections usually become lessons).
 
-```
-projectInfo = mcp__indusk__get_project_info()
-mcp__graphiti__get_episodes({
-  group_ids: [projectInfo.project_group],
-  max_episodes: 100
-})
-```
-
-Compare the episode count to the highlights-processed count. Should be close to 1:1 (each processed highlight produces one episode, but the agent may merge contradictions).
-
-Sample 2-3 of the most recent episodes and read their summaries to the user as proof of life.
+Sample 2-3 of the most recent materialized lessons and read their titles to the user as proof of life.
 
 ## What to report to the user
 
@@ -197,8 +187,7 @@ Rail check complete (post-1.31.7).
   Mode: {workbench / single-repo}
   check_health: {clean / N stray-state findings cleaned / N pending}
   Sanity commit: {evaluator spawned with PID X — rail working / FAILED, see error}
-  Highlights backfill: {drained {N} unprocessed → {M} Graphiti episodes / not needed (already clean)}
-  Graphiti recall: episodes group `{project_group}` now has {N} entries.
+  Highlights backfill: {drained {N} unprocessed → {M} lessons / not needed (already clean)}
 ```
 
 If anything failed at Step 4 (rail not firing), prioritize that — the user needs to know the fix didn't take and investigate before backfilling.
@@ -215,10 +204,9 @@ If anything failed at Step 4 (rail not firing), prioritize that — the user nee
 
 - If the user is mid-plan and hasn't asked about the rail — don't interrupt their workflow to verify it
 - If the project has no `.indusk/` directory (not an InDusk project) — `check_health` will say so; stop early
-- If Graphiti container is down — stop at Step 1, tell the user to `indusk infra start` first
 
 ## Cross-references
 
 - The plan that shipped this skill: `workbench-mode-rail-integrity` in master.md (I.4)
 - The lesson the fix illustrates: `community-hook-bypass-is-rail-integrity-not-pacing`
-- The community lesson on the three-tier discipline: `community-use-highlight-not-direct-graphiti-writes`
+- The community lesson on the three-tier discipline: `community-use-highlight-not-direct-graphiti-writes` (name is historical; the discipline — flag, don't materialize — is unchanged)

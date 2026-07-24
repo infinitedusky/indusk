@@ -56,7 +56,10 @@ function buildHookEvent(cwd: string, command = 'git commit -m "test"'): HookEven
 	};
 }
 
-function runHook(event: HookEvent, hookCwd: string): { stdout: string; stderr: string; status: number | null } {
+function runHook(
+	event: HookEvent,
+	hookCwd: string,
+): { stdout: string; stderr: string; status: number | null } {
 	const result = spawnSync("node", [HOOK_PATH], {
 		cwd: hookCwd,
 		input: JSON.stringify(event),

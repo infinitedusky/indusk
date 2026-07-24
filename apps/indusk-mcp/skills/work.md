@@ -34,7 +34,7 @@ Implementation plans live in `.indusk/planning/{plan-name}/impl.md` as checklist
 7. **Work through the checklist in order.**
    - Start from the first unchecked item (`- [ ]`)
    - For each item:
-     a. **Query the code graph** — see toolbelt "Before Modifying Code." Check dependencies and blast radius before touching any file.
+     a. **Check blast radius** — grep for the symbol's importers/callers before touching any file.
      b. **Check for existing code** — call `find_code` before writing new functions. Reuse, don't duplicate.
      c. Read the relevant source files
      d. Implement the change
@@ -198,7 +198,7 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
     - See the document skill for guidance on what to document, where, and how to use Mermaid diagrams
     - If a phase has no document items, that's fine — not every phase produces user-facing documentation
 
-14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase. **Semantic graph sync:** If the project has a `.indusk/` directory and `mcp__indusk__graph_sync` is available, call it after all phase gates succeed to keep the semantic graph current with code changes. This is best-effort — if sync fails, log a warning and continue.
+14. **Phase transitions.** When all items in a phase (implementation + verification + context + document) are checked, note it and move to the next phase.
 
 15. **Completion.** When all phases are checked:
     - Update impl status to `completed`
@@ -260,7 +260,7 @@ When you are corrected mid-work — the user says "no, not that way" or "don't d
 
 Don't wait to be told. Corrections are the most valuable source of project knowledge.
 
-**When the user confirms `context learn`, ALSO write a highlight so the eval agent can capture it in Graphiti:**
+**When the user confirms `context learn`, ALSO write a highlight so the eval agent can materialize it as a lesson:**
 ```
 mcp__indusk__highlight({
   tag: "correction",
@@ -269,7 +269,7 @@ mcp__indusk__highlight({
 })
 ```
 
-The working agent does not write the Graphiti episode directly. The eval agent reads the highlight, decides whether it's a cross-project convention (→ `shared` group) or a project-specific fact (→ project group), phrases the episode, and writes it. The working agent just flags the moment and keeps working.
+The working agent does not write the lesson directly. The eval agent reads the highlight, decides whether it's a cross-project convention (→ `community-` prefixed lesson) or a project-specific fact, phrases the lesson, and writes it. The working agent just flags the moment and keeps working.
 
 **What to include in the `note`:** enough for the eval agent to reconstruct the lesson and classify its scope. Example: `pnpm-ce: always use pnpm ce, not npx — skill doc specifies pnpm and mixing causes cache drift`. The eval agent has the full transcript, so concision over completeness is fine.
 
@@ -348,5 +348,5 @@ If your work changes something referenced by another plan (e.g., a schema field,
 - Always read the research, brief, and ADR before starting. They contain context that matters.
 - Check items off one at a time, immediately. The checklist should always reflect reality.
 - Explain what you're doing and why as you work through items.
-- **Before touching shared code, query the graph to understand blast radius.** Use `analyze_code_relationships` to see what depends on a file before modifying it.
+- **Before touching shared code, grep to understand blast radius.** Search for importers/callers of a file before modifying it.
 - The user's input is: $ARGUMENTS

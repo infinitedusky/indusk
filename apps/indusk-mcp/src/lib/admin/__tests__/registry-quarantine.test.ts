@@ -2,8 +2,8 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
-	readFileSync,
 	readdirSync,
+	readFileSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs";
@@ -101,9 +101,7 @@ describe("registry quarantine — T24", () => {
 		readRegistry();
 		readRegistry();
 
-		const backups = readdirSync(testHome).filter((e) =>
-			e.startsWith("projects.json.corrupt."),
-		);
+		const backups = readdirSync(testHome).filter((e) => e.startsWith("projects.json.corrupt."));
 		// After the first read quarantines, subsequent reads see NO
 		// registryPath (because the rename moved it away) and return empty
 		// without creating a second backup. So exactly one .bak should exist.

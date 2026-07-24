@@ -47,7 +47,7 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 		"get_project_info",
 		{
 			description:
-				'Return runtime project metadata: project_group (Graphiti group ID — sanitized form, hyphens → underscores), planning_dir, otel_role, eval_model, eval_enabled. Use `project_group` as the value for `group_ids` when querying `mcp__graphiti__*` tools — the sanitized form is what writes use, so reads must match. Always pass `[project_group, "shared"]` to recall both project-specific and cross-project knowledge.',
+				"Return runtime project metadata: project_group (sanitized project identifier — hyphens → underscores), planning_dir, otel_role, eval_model, eval_enabled.",
 		},
 		async () => {
 			const config = readConfig(projectRoot);
@@ -59,10 +59,6 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 				otel_gate_emits: shouldEmitOtelGate(projectRoot),
 				eval_enabled: config?.eval?.enabled !== false,
 				eval_model: getEvalModel(projectRoot),
-				graphiti_group_recall_example: {
-					note: 'Pass `group_ids: [project_group, "shared"]` to graphiti queries. Omitting group_ids does NOT scan all groups — it returns empty.',
-					group_ids: [getProjectGroupId(projectRoot), "shared"],
-				},
 			};
 
 			return {
@@ -117,7 +113,7 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 					name: "extensions",
 					status: "ok",
 					detail:
-						"No extensions with health checks enabled. Run 'extensions enable falkordb cgc' to add checks.",
+						"No extensions with health checks enabled. Run 'indusk extensions list' to see what's available.",
 				});
 			}
 

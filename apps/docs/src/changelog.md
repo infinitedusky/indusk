@@ -2,10 +2,30 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.33.2] — 2026-07-23
 
 ### Added
 - **`posthog` extension — PostHog product analytics via the official remote MCP server.** Backported from numero's third-party extension into the built-in catalog. Manifest wires `mcp.posthog.com` into `.mcp.json` with Bearer auth from `.indusk/extensions/posthog/.env` (`POSTHOG_MCP_URL` + `POSTHOG_MCP_API_KEY` — a `phx_` **personal** API key, not the `phc_` project ingestion token; the key's project access is the visibility boundary). Ships `.env.example` + an agent-facing `skill.md` (query events/persons/insights/replays/flags/experiments/errors; read-side only — app event capture stays a runtime concern). Health checks: `posthog-mcp-configured` + `posthog-token-present`. Opt-in via `indusk extensions enable posthog`; auto-detected when a `posthog` entry already exists in `.mcp.json`. Catalog entries under a new "Product analytics" group in both extension indexes — PostHog is the what-users-do layer, complementary to the `dash0`/`datadog`/`local-telemetry` what-services-do layer.
+
+(Also a version-alignment republish of 1.33.1's makeover content, plus the merge to main.)
+
+## [1.33.1] — 2026-07-23
+
+(1.33.0 was an accidental publish of 1.32.0-era trunk code and is deprecated on npm — 1.33.1 is the real indusk-makeover release. Content below.)
+
+### Changed (InDusk Makeover — budgets + decay + removal)
+- **CLAUDE.md hard budget (60 KB) enforced at write time.** New `claude-md-budget.js` PreToolUse hook blocks over-budget Edit/Write on any file named CLAUDE.md and warns at 90%; budget configurable via `context.claude_md_budget_bytes`. Discipline-only compression was tried and failed — the hook is the ratchet. New `indusk context check-pointers` verifies every path reference in CLAUDE.md resolves (under rule+pointer compression, a dead pointer is a lost rule body). See [the context-budget guide](/guide/context-budget).
+- **Decay layer.** `indusk agent sweep` archives current.md sections older than `agents.sweep_ttl_minutes` (default 7 days — distinct from the 60-minute display TTL) to `.indusk/archive/current-md-archive.md`; `indusk plans archive-dead` moves all-draft stale plans (older than `planning.dead_draft_days`, default 30) to `planning/archive/`. Archive, never delete. See [`plans` CLI reference](/reference/cli/plans).
+
+### Fixed (Phase 7 falsification)
+- **Budget hook predicts Edits with literal splice, not `String.replace`** — `$`-substitution patterns in a replacement string (plausible in shell/regex snippets) made the size prediction diverge from what the Edit tool actually writes, in either direction. Empty `old_string` is guarded.
+- **Legacy-server removal is a shared, tested migration helper** (`lib/mcp-migration.ts`) — init and update call one implementation; future MCP retirements extend its list.
+- **`list_plans { active: true }` includes `completed`** — a completed impl still in `planning/` is awaiting close-out rituals; hiding it from the dieted catchup hid exactly the plans mid-close.
+
+### Removed (Graphiti + CGC)
+- **Graphiti and CodeGraphContext are retired.** MCP registrations, extensions (`graphiti`/`cgc`/`falkordb`), the semantic-graph event pipeline, the context beam, and `indusk graph`/`indusk beam` CLI are all removed. Field measurement: ~1 generic Graphiti query per session, near-zero CGC reads, standing infra + schema cost. `indusk init`/`update` now REMOVE stale registrations and disable the retired extension manifests on existing projects.
+- **The indusk-infra container (FalkorDB + Graphiti) is retired.** `indusk init` no longer checks or auto-starts it. Stop yours with `docker stop indusk-infra`; the `indusk-data` volume is retained until you remove it manually (`docker volume rm indusk-data` once you're sure nothing in the graph is still wanted).
+- **The highlight→eval rail is preserved and retargets to lessons.** The eval agent materializes durable highlights via `add_lesson` (titles-hot/bodies-cold); findings persist via the eval scorecard/findings log. The CRITICAL live-delta and `already_processed` STOP guards from 1.31.x carry over unchanged — a reappearing `graph_capture` reference is now itself a test failure.
 
 ## [1.32.0] — 2026-07-13
 

@@ -34,29 +34,29 @@ export interface PromptBuilderOptions {
 export function buildHighlightsInstructions(opts: { projectGroup: string }): string {
 	return `### Step 4: Process unprocessed highlights
 
-Before answering the rubric, process the working agent's highlights queue. Highlights are the working agent's flagged moments — brief acceptances, ADR acceptances, corrections, retrospective lessons — and the eval agent is responsible for materializing them into structured Graphiti episodes.
+Before answering the rubric, process the working agent's highlights queue. Highlights are the working agent's flagged moments — brief acceptances, ADR acceptances, corrections, retrospective lessons — and the eval agent is responsible for materializing the durable ones into lessons (the project's curated, always-loaded knowledge artifacts).
 
 **CRITICAL — read this before doing anything else.** You MUST call \`mcp__indusk__highlights_unprocessed\` first to get the live delta of unprocessed entries. Do NOT process highlights you remember from previous turns of this session — your memory of highlight IDs is stale across resume runs. Do NOT read \`.indusk/highlights.jsonl\` directly with Read or Bash — that file contains both processed and unprocessed entries; the tool returns ONLY the delta. ONLY process IDs returned by the live \`mcp__indusk__highlights_unprocessed\` tool call.
 
-If \`mcp__indusk__highlight_mark_processed\` returns \`{ already_processed: true }\` for an ID, that highlight was processed in an earlier eval run — STOP processing it immediately. Do NOT call \`mcp__indusk__graph_capture\` for it, do not retry, do not re-mark. Move on to the next highlight in the list.
+If \`mcp__indusk__highlight_mark_processed\` returns \`{ already_processed: true }\` for an ID, that highlight was processed in an earlier eval run — STOP processing it immediately. Do NOT call \`mcp__indusk__add_lesson\` for it, do not retry, do not re-mark. Move on to the next highlight in the list.
 
-For each highlight returned by \`mcp__indusk__highlights_unprocessed\`, the level drives effort and Graphiti edge weight:
+For each highlight returned by \`mcp__indusk__highlights_unprocessed\`, the level drives effort:
 
-- **critical** (architectural decision, accepted ADR, accepted brief): extract full context from the transcript and the changed files, write a structured Graphiti episode with weight **1.0**.
-- **important** (correction, retro lesson, confirmed pattern): extract context, write a Graphiti episode with weight **0.6**.
-- **note** (observation, partially-formed thought): consider it. Write a low-weight (**0.3**) episode if it adds signal; skip if it's already captured in an existing episode.
+- **critical** (architectural decision, accepted ADR, accepted brief): extract full context from the transcript and the changed files. If it carries a durable rule future sessions need, write a lesson via \`mcp__indusk__add_lesson\` — the title IS the rule (titles load hot every catchup; bodies stay cold), the content carries the why and the pointer to the plan/decision doc. If the moment is already fully recorded in the plan's ADR/brief (the usual case for accepted-doc highlights), mark it processed with \`action: "skipped"\`, \`detail: "recorded in {plan}/adr.md"\` — do not duplicate plan docs into lessons.
+- **important** (correction, retro lesson, confirmed pattern): these are the highest-value lesson candidates — a correction is a rule the project learned the hard way. Write a lesson unless it's already captured by an existing lesson (check \`mcp__indusk__list_lessons\`).
+- **note** (observation, partially-formed thought): skip unless it states a rule with teeth.
 
-Write each episode using \`mcp__indusk__graph_capture\` so it attaches to the relevant file anchor in the semantic graph — not raw \`mcp__graphiti__add_memory\`. Pick the group sensibly: \`${opts.projectGroup}\` for project-specific facts, \`shared\` for cross-project conventions (e.g., "always use pnpm ce"). Use the level to set the edge weight in the body's metadata section so downstream context-beam queries can rank by importance.
+Prefix cross-project lessons with \`community-\` in the name (e.g., "always use pnpm ce"); project-specific lessons get plain kebab-case names. Project group for reference: \`${opts.projectGroup}\`.
 
-After processing each highlight (whether you wrote an episode or decided to skip), call \`mcp__indusk__highlight_mark_processed\` with the highlight ID and the action:
-- \`action: "wrote-episode"\`, \`detail: "{episode name}"\` — if you wrote an episode.
+After processing each highlight (whether you wrote a lesson or decided to skip), call \`mcp__indusk__highlight_mark_processed\` with the highlight ID and the action:
+- \`action: "wrote-episode"\`, \`detail: "{lesson name}"\` — if you wrote a lesson (the action name is legacy; it means "materialized").
 - \`action: "skipped"\`, \`detail: "{brief reason}"\` — if you decided not to (e.g., already captured, or not meaningful enough).
 
 **Highlights are additive context, not a constraint.** Continue reading the full transcript and inferring knowledge independently — highlights ensure important moments aren't missed, but they don't bound your analysis. The transcript may contain insights the working agent didn't flag.
 
 If \`mcp__indusk__highlights_unprocessed\` is unavailable, skip this step silently and continue.
 
-If the tool returns an empty list (no unprocessed highlights), note "(no unprocessed highlights)" once in your output and continue to the rubric — do not invent highlights, do not loop searching for them, do not call \`graph_capture\` speculatively.`;
+If the tool returns an empty list (no unprocessed highlights), note "(no unprocessed highlights)" once in your output and continue to the rubric — do not invent highlights, do not loop searching for them, do not call \`add_lesson\` speculatively.`;
 }
 
 export function buildEvaluatorPrompt(opts: PromptBuilderOptions): string {
@@ -75,41 +75,25 @@ Baseline mode — do NOT process highlights or write to Graphiti. Skip to Step 5
 	const graphitiInstructions =
 		opts.mode === "eval"
 			? `
-### Step 6: Write findings to the knowledge graph
+### Step 6: Findings persistence
 
-For each finding with severity "warning" or "critical", write it using \`mcp__indusk__graph_capture\`. This dual-writes to both Graphiti AND the semantic graph, connecting the finding to the existing file anchor — so the context beam can find it later.
+Your findings persist through the scorecard itself — warning/critical findings land in the eval findings log at ingestion, where they surface on every future eval until fixed or ignored (\`indusk eval findings\`). Do NOT write findings anywhere else; there is no knowledge-graph write step.
 
-**Use \`graph_capture\`, NOT \`mcp__graphiti__add_memory\`.** graph_capture attaches the finding to the file's existing node in the graph. add_memory creates a disconnected episode.
-
-For each finding, identify the **primary file** it relates to and pass it as \`file_path\`. Include all relevant file paths in the body text too.
-
-\`\`\`
-mcp__indusk__graph_capture({
-  name: "eval-finding-{question-id}-{short-slug}",
-  body: "In {file1} and {file2}: {finding text with evidence}",
-  file_path: "{primary file path}",
-  relation: "eval-finding",
-  group_id: "${opts.projectGroup}"
-})
-\`\`\`
-
-Only write facts that would have changed the outcome. Be selective — quality over quantity.
-Count how many graph_capture calls you made for the scorecard (this count includes any highlight episodes written in Step 4).
-If the tool is unavailable, skip silently and set graphitiWrites to 0.`
+Set \`graphitiWrites\` in the scorecard to the number of lessons you wrote in Step 4 (the field name is legacy; it counts materialized knowledge artifacts). If you wrote none, set 0.`
 			: `
-### Step 6: Graphiti writes
+### Step 6: Findings persistence
 
-Baseline mode — do NOT write to Graphiti. Set graphitiWrites to 0.`;
+Baseline mode — findings persist via the scorecard only. Set graphitiWrites to 0.`;
 
 	return `You are the InDusk eval agent (evaluator). Your job is to evaluate the quality of work done by an AI agent on a software project.
 
-You have full read access to the codebase, MCP tools (Graphiti, code graph, InDusk), and the session transcript. You cannot edit files.
+You have full read access to the codebase, the InDusk MCP tools, and the session transcript. You cannot edit files.
 
 ## Your process
 
 ### Step 1: Catch up
 
-Run /catchup to understand the project — lessons, context, health, plans, extensions, graph. This gives you the same understanding a working agent would have.
+Run /catchup to understand the project — lessons, context, health, plans, extensions. This gives you the same understanding a working agent would have.
 
 ### Step 2: Read the transcript
 
@@ -131,7 +115,7 @@ ${highlightsInstructions}
 
 ### Step 5: Answer the evaluation questions
 
-For each question, investigate thoroughly using MCP tools — search the codebase, query the code graph, check Graphiti for relevant facts. Then answer with this exact JSON shape per question:
+For each question, investigate thoroughly — search the codebase with Grep/Read, check the lessons registry via \`mcp__indusk__list_lessons\`. Then answer with this exact JSON shape per question:
 
 \`\`\`json
 {

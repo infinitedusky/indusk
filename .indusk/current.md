@@ -17,10 +17,12 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 9f1ead50 — fresh-eyes review of code-reviewer-agent plan
+## Session c6257c42 — work indusk-makeover (Phase 0: baseline tripwires)
 
-**Session ID**: 9f1ead50-3c0c-40c2-87e0-2ac8bbfc8b06
-**Last updated**: 2026-06-28T10:19:55.206Z
+**Session ID**: c6257c42-ad34-41a2-b090-d161a282c5c3
+**Last updated**: 2026-07-24T00:25:31.233Z
+**Branch**: plan/indusk-makeover-phase-0
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/indusk-makeover
 
 ### In Flight
 
@@ -36,10 +38,33 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session baf66f0a — brief: per-phase code cleanup/quality gate
+## Session 6dd91742 — starting catchup (indusk-makeover worktree)
 
-**Session ID**: baf66f0a-62d9-4f32-8654-461bbef2716b
-**Last updated**: 2026-07-06T18:14:59.540Z
+**Session ID**: 6dd91742-bec6-47ff-86b8-12193abf9407
+**Last updated**: 2026-07-24T01:19:10.124Z
+**Branch**: plan/indusk-makeover-phase-0
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/indusk-makeover
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 22c42faa — eval agent: scoring commit d7fd01d1 (indusk-makeover P3 close)
+
+**Session ID**: 22c42faa-f26e-4314-8a74-8478a71f2d86
+**Last updated**: 2026-07-24T01:20:31.698Z
+**Branch**: plan/indusk-makeover-phase-0
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/indusk-makeover
 
 ### In Flight
 

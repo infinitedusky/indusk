@@ -38,10 +38,13 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 		expect(promptBuilderSource).toMatch(/export function buildHighlightsInstructions\b/);
 	});
 
-	it("the shared helper produces the load-bearing MCP tool calls (highlights_unprocessed → graph_capture → mark_processed)", () => {
+	it("the shared helper produces the load-bearing MCP tool calls (highlights_unprocessed → add_lesson → mark_processed)", () => {
 		expect(promptBuilderSource).toMatch(/mcp__indusk__highlights_unprocessed/);
-		expect(promptBuilderSource).toMatch(/mcp__indusk__graph_capture/);
+		expect(promptBuilderSource).toMatch(/mcp__indusk__add_lesson/);
 		expect(promptBuilderSource).toMatch(/mcp__indusk__highlight_mark_processed/);
+		// indusk-makeover P3: the Graphiti rail is gone — a graph_capture reference
+		// reappearing in the prompt source is a regression to the removed rail.
+		expect(promptBuilderSource).not.toMatch(/graph_capture|mcp__graphiti__/);
 	});
 
 	it("persistent-evaluator.ts imports `buildHighlightsInstructions`", () => {
@@ -66,9 +69,7 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 		// Locate the resumePrompt template literal itself — not the surrounding
 		// code or comments. The template literal starts with `${highlightsBlock}`
 		// and continues through to the closing backtick.
-		const resumePromptMatch = persistentSource.match(
-			/const\s+resumePrompt\s*=\s*`([\s\S]*?)`;/,
-		);
+		const resumePromptMatch = persistentSource.match(/const\s+resumePrompt\s*=\s*`([\s\S]*?)`;/);
 		expect(resumePromptMatch, "could not locate resumePrompt template literal").not.toBeNull();
 		const resumePromptText = resumePromptMatch?.[1] ?? "";
 		// The pre-fix phrasing was "the same evaluation questions as before"
@@ -133,8 +134,14 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 		// the presence somewhere. The args literal must reference both.
 		const mcpConfigCount = (persistentSource.match(/--mcp-config/g) ?? []).length;
 		const bypassCount = (persistentSource.match(/bypassPermissions/g) ?? []).length;
-		expect(mcpConfigCount, "expected --mcp-config in at least both spawn-arg sites").toBeGreaterThanOrEqual(2);
-		expect(bypassCount, "expected bypassPermissions in at least both spawn-arg sites").toBeGreaterThanOrEqual(2);
+		expect(
+			mcpConfigCount,
+			"expected --mcp-config in at least both spawn-arg sites",
+		).toBeGreaterThanOrEqual(2);
+		expect(
+			bypassCount,
+			"expected bypassPermissions in at least both spawn-arg sites",
+		).toBeGreaterThanOrEqual(2);
 	});
 
 	it("the resume-prompt construction is NOT the pre-fix minimal shape", () => {
@@ -145,15 +152,25 @@ describe("T3: resume prompt reaches the Step 4 highlights instructions", () => {
 		const resumeBranchMatch = persistentSource.match(
 			/if\s*\(session\)\s*\{[\s\S]{0,3000}?return\s*\{[\s\S]{0,1500}?prompt:\s*\w+,\s*\}/,
 		);
-		expect(resumeBranchMatch, "could not locate the resume branch in buildArgsAndPrompt").not.toBeNull();
+		expect(
+			resumeBranchMatch,
+			"could not locate the resume branch in buildArgsAndPrompt",
+		).not.toBeNull();
 		const resumeBranch = resumeBranchMatch?.[0] ?? "";
 		const highlightsCallIdx = resumeBranch.indexOf("buildHighlightsInstructions");
 		// Look for the commit-evaluation literal in either case (the fix lowercases the 'e')
 		const evaluateLiteralIdx = resumeBranch.search(/[Ee]valuate a new commit/);
-		expect(highlightsCallIdx, "buildHighlightsInstructions call missing from resume branch").toBeGreaterThan(-1);
-		expect(evaluateLiteralIdx, "commit-evaluation literal missing from resume branch").toBeGreaterThan(-1);
-		expect(highlightsCallIdx, "highlights call must appear BEFORE the evaluate literal").toBeLessThan(
+		expect(
+			highlightsCallIdx,
+			"buildHighlightsInstructions call missing from resume branch",
+		).toBeGreaterThan(-1);
+		expect(
 			evaluateLiteralIdx,
-		);
+			"commit-evaluation literal missing from resume branch",
+		).toBeGreaterThan(-1);
+		expect(
+			highlightsCallIdx,
+			"highlights call must appear BEFORE the evaluate literal",
+		).toBeLessThan(evaluateLiteralIdx);
 	});
 });

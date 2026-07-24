@@ -91,9 +91,7 @@ function printCurrentMd(report: PruneReport): void {
 			);
 		}
 		console.info("    → Consider archiving stale sections from .indusk/current.md.");
-		console.info(
-			"    → Auto-archive will land in context-budget Piece 3; manual edit for now.",
-		);
+		console.info("    → Auto-archive will land in context-budget Piece 3; manual edit for now.");
 	}
 	console.info("");
 }
@@ -109,9 +107,13 @@ function printLessons(report: PruneReport): void {
 	if (flagged.length > 0) {
 		console.info("  ⚠ Stale (consider reviewing or removing):");
 		for (const lesson of flagged) {
-			console.info(`      ${lesson.name.padEnd(50)} ${lesson.ageDays}d old (${lesson.lastModified.slice(0, 10)})`);
+			console.info(
+				`      ${lesson.name.padEnd(50)} ${lesson.ageDays}d old (${lesson.lastModified.slice(0, 10)})`,
+			);
 		}
-		console.info("    → Lessons referencing code/conventions that no longer exist are dead weight.");
+		console.info(
+			"    → Lessons referencing code/conventions that no longer exist are dead weight.",
+		);
 		console.info("    → Review each; `rm -i <path>` after confirming irrelevance.");
 	}
 	console.info("");
@@ -124,16 +126,16 @@ function printSummary(report: PruneReport): void {
 	const totalFlagged = flaggedClaudeMd + flaggedLessons + staleSections;
 
 	console.info("Summary:");
-	console.info(`  Estimated auto-loaded bytes per catchup: ${formatBytes(report.estimatedAutoLoadBytes)}`);
+	console.info(
+		`  Estimated auto-loaded bytes per catchup: ${formatBytes(report.estimatedAutoLoadBytes)}`,
+	);
 	console.info(
 		`  Flagged: ${flaggedClaudeMd} CLAUDE.md section(s), ${flaggedLessons} lesson(s), ${staleSections} current.md section(s)`,
 	);
 	if (totalFlagged === 0) {
 		console.info("  ✓ No bloat detected at current thresholds.");
 	} else {
-		console.info(
-			"  → No destructive action taken (this is --dry-run; v1 has no --apply mode).",
-		);
+		console.info("  → No destructive action taken (this is --dry-run; v1 has no --apply mode).");
 		console.info("  → See .indusk/planning/context-budget/ for the distillation discipline.");
 	}
 	console.info("");

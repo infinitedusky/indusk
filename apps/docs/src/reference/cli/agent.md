@@ -82,19 +82,32 @@ indusk agent prune
 
 Removes every section whose `Last updated` is older than `agents.stale_ttl_minutes`. Prints `Pruned N stale section(s).` (or `No stale sections to prune.`).
 
+### `agent sweep`
+
+```bash
+indusk agent sweep [--dry-run]
+```
+
+Moves sections older than the **sweep TTL** (`agents.sweep_ttl_minutes`, default 10080 = 7 days) into the append-only archive at `.indusk/archive/current-md-archive.md`. Archived, never deleted — recovery is a copy-paste from the archive file. `--dry-run` reports what would move without mutating anything.
+
+The sweep TTL is deliberately much longer than the 60-minute *display* TTL: `agent list` hides quiet sessions after an hour, but the sweep only evicts sessions that have been silent for a week. Sections with unparseable `Last updated` timestamps are always kept (never archive on bad input), and the `## Project (shared)` section is untouchable.
+
+`prune` vs `sweep`: `prune` **drops** stale sections by the display TTL (destructive, no archive); `sweep` **archives** by the much longer decay TTL. Prefer `sweep` — it's the decay mechanism the catchup/handoff rhythm runs automatically.
+
 ## Configuration
 
-The stale TTL is controlled by `agents.stale_ttl_minutes` in `.indusk/config.json`:
+Both TTLs live under `agents` in `.indusk/config.json`:
 
 ```json
 {
   "agents": {
-    "stale_ttl_minutes": 60
+    "stale_ttl_minutes": 60,
+    "sweep_ttl_minutes": 10080
   }
 }
 ```
 
-If the field is absent, the CLI defaults to 60 minutes.
+If a field is absent, the CLI defaults apply (60 minutes display, 7 days sweep). `indusk update` scaffolds the sweep key idempotently without touching customized values.
 
 ## Path safety
 

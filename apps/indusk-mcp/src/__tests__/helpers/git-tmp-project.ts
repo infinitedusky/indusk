@@ -87,7 +87,11 @@ export function cleanupGitTmpProject(p: GitTmpProject): void {
  *  - INDUSK_BIN pointed at the same CLI for in-process `indusk ...` rewrites
  *  - INDUSK_SKIP_SELF_UPDATE=1 so offline test runs don't hit npm
  */
-export function runCli(p: GitTmpProject, args: string[], extraEnv: NodeJS.ProcessEnv = {}): CliResult {
+export function runCli(
+	p: GitTmpProject,
+	args: string[],
+	extraEnv: NodeJS.ProcessEnv = {},
+): CliResult {
 	const result: SpawnSyncReturns<string> = spawnSync("node", [CLI_BIN, ...args], {
 		cwd: p.projectDir,
 		env: {
@@ -111,7 +115,12 @@ export function runCli(p: GitTmpProject, args: string[], extraEnv: NodeJS.Proces
  * Write a file in the project dir and commit it with the given message.
  * Returns the new HEAD's short SHA.
  */
-export function gitCommit(p: GitTmpProject, relPath: string, content: string, message: string): string {
+export function gitCommit(
+	p: GitTmpProject,
+	relPath: string,
+	content: string,
+	message: string,
+): string {
 	const fullPath = join(p.projectDir, relPath);
 	const parent = dirname(fullPath);
 	if (!existsSync(parent)) {

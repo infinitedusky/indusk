@@ -256,6 +256,42 @@ export async function update(projectRoot: string): Promise<void> {
 			} catch {
 				console.info("  could not register eval hook in settings.json");
 			}
+
+			// Ensure the CLAUDE.md budget hook is registered (indusk-makeover P2).
+			// Same targeted-ensure shape as the eval-trigger block above — update
+			// syncs hook FILES via globSync, but a new hook still needs its
+			// settings.json registration on pre-existing projects.
+			try {
+				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+				const preHooks = settings.hooks?.PreToolUse ?? [];
+				const editEntry = preHooks.find(
+					(entry: { matcher?: string }) => entry.matcher === "Edit|Write",
+				);
+				const hasBudgetHook = editEntry?.hooks?.some((h: { command?: string }) =>
+					h.command?.includes("claude-md-budget"),
+				);
+				if (!hasBudgetHook) {
+					if (!settings.hooks) settings.hooks = {};
+					if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
+					if (editEntry) {
+						editEntry.hooks = editEntry.hooks || [];
+						editEntry.hooks.push({
+							type: "command",
+							command: "node .claude/hooks/claude-md-budget.js",
+						});
+					} else {
+						settings.hooks.PreToolUse.push({
+							matcher: "Edit|Write",
+							hooks: [{ type: "command", command: "node .claude/hooks/claude-md-budget.js" }],
+						});
+					}
+					const { writeFileSync } = await import("node:fs");
+					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+					console.info("  registered claude-md-budget hook in settings.json");
+				}
+			} catch {
+				console.info("  could not register claude-md-budget hook in settings.json");
+			}
 		}
 	}
 
@@ -266,25 +302,38 @@ export async function update(projectRoot: string): Promise<void> {
 			const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf-8"));
 			let mcpChanged = false;
 
-			// Ensure CGC config is correct: localhost, cgc-{project} graph name
-			const cgcEnv = mcpConfig.mcpServers?.codegraphcontext?.env;
-			if (cgcEnv) {
-				const { basename } = await import("node:path");
-				const projectName = basename(projectRoot);
-				const correctHost = "localhost";
-				const correctGraph = `cgc-${projectName}`;
-				const needsFix =
-					cgcEnv.FALKORDB_HOST !== correctHost || cgcEnv.FALKORDB_GRAPH_NAME !== correctGraph;
-				if (needsFix) {
+			// [indusk-makeover] Graphiti + CGC are retired — remove stale MCP
+			// registrations on update so pre-makeover projects converge without
+			// manual steps. The graphiti/cgc extension manifests are disabled below.
+			{
+				const { removeLegacyMcpServers } = await import("../../lib/mcp-migration.js");
+				const legacyResult = removeLegacyMcpServers(projectRoot, { run });
+				for (const name of legacyResult.removed) {
+					console.info(`  removed: ${name} MCP server (retired — indusk-makeover)`);
+					mcpChanged = true;
+				}
+				for (const name of legacyResult.failed) {
+					console.info(
+						`  could not remove legacy ${name} MCP server — run: claude mcp remove -s project ${name}`,
+					);
+				}
+			}
+
+			// Disable the retired graphiti/cgc extension manifests if enabled.
+			for (const legacyExt of ["graphiti", "cgc"]) {
+				const extDir = join(projectRoot, ".indusk/extensions", legacyExt);
+				if (existsSync(join(extDir, "manifest.json"))) {
 					try {
-						run("claude mcp remove -s project codegraphcontext");
-						run(
-							`claude mcp add -t stdio -s project -e DATABASE_TYPE=falkordb-remote -e FALKORDB_HOST=${correctHost} -e FALKORDB_GRAPH_NAME=${correctGraph} -- codegraphcontext cgc mcp start`,
-						);
-						console.info(`  fixed: codegraphcontext → ${correctHost}, ${correctGraph}`);
+						const { mkdirSync, renameSync } = await import("node:fs");
+						const disabledDir = join(projectRoot, ".indusk/extensions/.disabled");
+						mkdirSync(disabledDir, { recursive: true });
+						renameSync(extDir, join(disabledDir, legacyExt));
+						console.info(`  disabled: ${legacyExt} extension (retired — indusk-makeover)`);
 						mcpChanged = true;
 					} catch {
-						console.info("  could not fix codegraphcontext — update .mcp.json manually");
+						console.info(
+							`  could not disable ${legacyExt} extension — move .indusk/extensions/${legacyExt} aside manually`,
+						);
 					}
 				}
 			}
@@ -609,6 +658,19 @@ export async function update(projectRoot: string): Promise<void> {
 		console.info(
 			`  ok: cleanup.max_file_loc: ${getCleanupConfig(projectRoot).max_file_loc} (already set)`,
 		);
+	}
+
+	// [Decay — indusk-makeover] scaffold sweep + dead-draft keys idempotently.
+	// Presence-keyed; user-customized values never clobbered. Readers default
+	// regardless, so absence is never "disabled".
+	const { ensureDecayConfig } = await import("../../lib/config.js");
+	const _decayStatus = ensureDecayConfig(projectRoot);
+	if (_decayStatus === "added") {
+		console.info(
+			"  add: agents.sweep_ttl_minutes: 10080 + planning.dead_draft_days: 30 to .indusk/config.json",
+		);
+	} else if (_decayStatus === "already-set") {
+		console.info("  ok: decay config (sweep_ttl_minutes + dead_draft_days) already set");
 	}
 
 	// 8. Ensure ignores: in full mode, refresh tracked .gitignore. In local

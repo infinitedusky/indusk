@@ -1,14 +1,10 @@
 {
   "mcpServers": {
-    "excalidraw": {
-      "type": "http",
-      "url": "https://mcp.excalidraw.com"
-    },
     "dash0": {
       "type": "http",
       "url": "https://api.europe-west4.gcp.dash0.com/mcp",
       "headers": {
-        "Authorization": "Bearer auth_WTdiqJdsPrOO2iUQ1yUIzDTuCyY9uVXO"
+        "Authorization": "Bearer ${DASH0_AUTH_TOKEN}"
       }
     },
     "indusk": {
@@ -21,36 +17,13 @@
         "PROJECT_ROOT": "."
       }
     },
-    "graphiti": {
-      "type": "http",
-      "url": "http://localhost:8100/mcp"
-    },
-    "codegraphcontext": {
-      "type": "stdio",
-      "command": "cgc",
-      "args": [
-        "mcp",
-        "start"
-      ],
-      "env": {
-        "DATABASE_TYPE": "falkordb-remote",
-        "FALKORDB_HOST": "localhost",
-        "FALKORDB_GRAPH_NAME": "cgc-dusk"
-      }
-    },
-    "chrome-devtools": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "chrome-devtools-mcp@latest",
-        "--autoConnect"
-      ],
-      "env": {}
-    },
     "jaeger": {
       "type": "http",
       "url": "http://localhost:51555/mcp"
+    },
+    "posthog": {
+      "type": "http",
+      "url": "https://mcp.posthog.com/mcp"
     }
   }
 }

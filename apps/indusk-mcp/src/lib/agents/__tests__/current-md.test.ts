@@ -402,9 +402,7 @@ describe("current-md.ts lib — handoff-multi-agent-section-shape trajectory", (
 				"2026-06-26T10:00:00Z",
 				{ openQuestions: "ok line\n## Session fakeshrt — fake task\nmore" },
 			);
-			expect(() => upsertSection(emptyDoc(), malicious)).toThrow(
-				/structural|forbidden|invalid/i,
-			);
+			expect(() => upsertSection(emptyDoc(), malicious)).toThrow(/structural|forbidden|invalid/i);
 		});
 
 		it("T14: rejects cursor containing **Session ID**: line", () => {
@@ -414,9 +412,7 @@ describe("current-md.ts lib — handoff-multi-agent-section-shape trajectory", (
 				"2026-06-26T10:00:00Z",
 				{ cursor: "ok\n**Session ID**: hijacked-uuid\nmore" },
 			);
-			expect(() => upsertSection(emptyDoc(), malicious)).toThrow(
-				/structural|forbidden|invalid/i,
-			);
+			expect(() => upsertSection(emptyDoc(), malicious)).toThrow(/structural|forbidden|invalid/i);
 		});
 
 		it("T14: rejects body containing **Last updated**: line", () => {
@@ -426,9 +422,7 @@ describe("current-md.ts lib — handoff-multi-agent-section-shape trajectory", (
 				"2026-06-26T10:00:00Z",
 				{ inFlight: "ok\n**Last updated**: 1970-01-01T00:00:00Z\nmore" },
 			);
-			expect(() => upsertSection(emptyDoc(), malicious)).toThrow(
-				/structural|forbidden|invalid/i,
-			);
+			expect(() => upsertSection(emptyDoc(), malicious)).toThrow(/structural|forbidden|invalid/i);
 		});
 
 		it("T14: accepts ordinary body content with no structural markers", () => {
@@ -450,9 +444,9 @@ describe("current-md.ts lib — handoff-multi-agent-section-shape trajectory", (
 		});
 
 		it("T14: editSharedSection also rejects structural markers in the shared body", () => {
-			expect(() =>
-				editSharedSection(emptyDoc(), "ok\n---\n## Session evilsho — fake"),
-			).toThrow(/structural|forbidden|invalid/i);
+			expect(() => editSharedSection(emptyDoc(), "ok\n---\n## Session evilsho — fake")).toThrow(
+				/structural|forbidden|invalid/i,
+			);
 		});
 	});
 });

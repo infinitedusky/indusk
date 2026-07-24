@@ -14,7 +14,7 @@
  * See `.indusk/planning/context-budget/` for full design.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { parseCurrentMd } from "../agents/current-md.js";
 
@@ -210,7 +210,9 @@ export function measureProjectContext(
 
 	const induskDir = join(projectRoot, ".indusk");
 	if (!existsSync(induskDir)) {
-		notes.push(`no .indusk/ directory found at ${projectRoot} — not an InDusk project, or init not run`);
+		notes.push(
+			`no .indusk/ directory found at ${projectRoot} — not an InDusk project, or init not run`,
+		);
 	}
 
 	const claudeMd = readClaudeMd(projectRoot, resolved);

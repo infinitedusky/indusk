@@ -24,11 +24,7 @@ import { describe, expect, it } from "vitest";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const HOOKS_DIR = resolve(__dirname, "../../hooks");
 
-const HOOKS_TO_REFACTOR = [
-	"check-catchup.js",
-	"check-gates.js",
-	"validate-impl-structure.js",
-];
+const HOOKS_TO_REFACTOR = ["check-catchup.js", "check-gates.js", "validate-impl-structure.js"];
 
 describe("T6: 3 non-eval hooks import the shared helper", () => {
 	for (const hookName of HOOKS_TO_REFACTOR) {
@@ -39,7 +35,9 @@ describe("T6: 3 non-eval hooks import the shared helper", () => {
 			expect(
 				source,
 				`${hookName} should import resolveStateAndGitPaths from ./_hook-paths.js`,
-			).toMatch(/import\s+\{[^}]*resolveStateAndGitPaths[^}]*\}\s+from\s+["']\.\/_hook-paths\.js["']/);
+			).toMatch(
+				/import\s+\{[^}]*resolveStateAndGitPaths[^}]*\}\s+from\s+["']\.\/_hook-paths\.js["']/,
+			);
 		});
 
 		it(`${hookName} does NOT carry a local findProjectRoot function declaration`, () => {

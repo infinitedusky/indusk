@@ -1,6 +1,6 @@
 ---
 name: catchup
-description: Get caught up on the project. Pure-read — registers presence, reads .indusk/current.md sections to surface other working agents + the project's operational state, then reads lessons, plans, and Graphiti. Run at the start of every new session.
+description: Get caught up on the project. Pure-read — registers presence, reads .indusk/current.md sections to surface other working agents + the project's operational state, then reads lessons and plans. Run at the start of every new session.
 ---
 
 You are starting a new session on this project. Before doing anything else, get caught up.
@@ -12,7 +12,7 @@ You are starting a new session on this project. Before doing anything else, get 
 Before running any catchup steps, verify that ALL required MCP servers are available. Catchup depends on these tools and **cannot proceed without them**.
 
 **Required MCP servers:**
-- **indusk** — `get_system_version` (provides lessons, health, context, plans, extensions, graph tools)
+- **indusk** — `get_system_version` (provides lessons, health, context, plans, extensions)
 
 **How to check:** Call `get_system_version`. If the tool is not available or errors, wait 5 seconds and retry. Retry up to 6 times (30 seconds total).
 
@@ -47,18 +47,39 @@ Empty output means you're the only agent currently active. That's fine — just 
 
 Calling `agent list` also implicitly self-heartbeats your section (refreshes `Last updated`), so this is the canonical "I am still here" surface for long-running sessions.
 
-### 3. Read Operational State
+### 3. Read Operational State (targeted — do NOT read the whole file)
 
-Read `.indusk/current.md`. It has two regions worth surfacing:
+**Do NOT read `.indusk/current.md` end-to-end.** The file accumulates every session's history between sweeps; a full read re-pays all of it every catchup (the pre-makeover cost was ~22k tokens). Read exactly two things:
+
+1. **The `## Project (shared)` region only** — read from the top of the file to the first `---` delimiter (offset/limit read or head). This is the cross-cutting state.
+2. **Live sessions' sections only** — `indusk agent list` (Step 2) already printed the fresh partition. For each live session it lists (other than yourself), Grep for its `## Session <short>` heading and read just that section. Skip every section `agent list` filtered out.
+
+The two regions:
 
 - **`## Project (shared)`** — cross-cutting state that's true for the whole project right now ("pre-launch crunch mode", "telemetry endpoint changed last week", "merge freeze through Thursday"). Any agent can edit this section. Read it to know the project-wide context.
 - **Per-agent sections** (`## Session <short> — <task>`) — operational state from other working agents. Each section's `### In Flight`, `### Open Questions`, and `### Cursor` subsections tell you what other agents are doing in detail.
 
-**Filter per-agent sections by `Last updated` against `agents.stale_ttl_minutes`** (read the TTL from `.indusk/config.json`, default 60). Only surface sections whose `Last updated` is within the TTL — sections from agents that ran `/handoff` but skipped `indusk agent done` linger in the file and would otherwise look active forever. **Exclude stale sections from your catchup summary**; do not present a stale section as if its owner were currently working. (`indusk agent list` performs the same filter; this rule keeps the catchup output consistent with it.)
+**Never surface a section that `agent list` filtered out as stale.** Sections from agents that ran `/handoff` but skipped `indusk agent done` linger in the file until the sweep archives them; targeted reads keyed off `agent list`'s fresh partition keep them out of your summary by construction.
 
 **Do NOT edit `.indusk/current.md` during catchup.** Catchup is read-only for shared content. Your own section's content (in-flight / open-questions / cursor) is written via the [`mcp__indusk__update_current_section` MCP tool](apps/docs/src/reference/tools/indusk-mcp.md#agent-tools) — typically at `/handoff`, not during catchup. The `agent register` call in Step 1 only refreshes the heading + `Last updated`; it preserves any existing body content.
 
-### 4. Skim Lessons (Lazy-Load)
+### 4. Sweep Check (dry-run)
+
+```bash
+indusk agent sweep --dry-run
+```
+
+Surface the count in your summary. If it reports more than a handful of sweepable sections, suggest the user let you run `indusk agent sweep` for real — decayed sections are exactly what makes Step 3's file expensive. (The `/handoff` ritual runs the real sweep automatically; this dry-run is the visibility layer.)
+
+Then pull the hub channel:
+
+```bash
+indusk sync pull
+```
+
+Additive-only merge of the machine-global hub (`$INDUSK_HOME/hub/lessons/`) + the package's bundled community lessons into this project's `.claude/lessons/`. Surface "N new rules pulled" in the summary when non-zero. Local lessons always win on conflict — the pull can never clobber project knowledge.
+
+### 5. Skim Lessons (Lazy-Load)
 
 Call `list_lessons`. As of 1.31.5, the tool returns `title` + `path` per lesson — **not** the full content. Titles ARE the actionable rules in most cases.
 
@@ -73,57 +94,17 @@ The shift from "read every lesson's full content" (status quo through 1.31.4) to
 
 These are rules learned from past mistakes — not suggestions. Internalize the titles before touching any code; reach for full content when the work calls for it.
 
-### 5. Check Infrastructure
+### 6. Check Infrastructure
 
-Call `check_health`. Verify FalkorDB and Graphiti are running. If unhealthy, tell the user what's down and how to fix it.
+Call `check_health`. It runs every enabled extension's health checks. If unhealthy, tell the user what's down and how to fix it.
 
-### 6. Read Project Context
+### 7. Project Context — already loaded, do NOT re-fetch
 
-Call `get_context` to read CLAUDE.md. This contains:
-- **Architecture** — what the project is, how it's structured
-- **Conventions** — rules to follow (commit style, no DB from Next.js, no fallback URLs, etc.)
-- **Key Decisions** — ADRs that have been accepted (with links)
-- **Known Gotchas** — things that will bite you if you don't know about them
-- **Current State** — what's been built, what's working, what's in progress
-
-Read it fully. Don't skim.
-
-### 7. Recall from Graphiti
-
-CLAUDE.md is the stable, slow-changing layer of project memory. Graphiti is the fast, temporal layer — it captures decisions, corrections, and retrospective insights as they happen. Catchup pulls both layers so the agent starts the session with full context.
-
-**Recall recent decisions and lessons:**
-
-First, fetch the project's Graphiti group via the InDusk MCP (do NOT guess from project basename — InDusk applies sanitization rules):
-
-```
-mcp__indusk__get_project_info()
-// returns { project_group: "<sanitized>", scm: ..., ... }
-```
-
-Then query Graphiti with that group plus `"shared"` for cross-project knowledge:
-
-```
-mcp__graphiti__search_nodes({
-  query: "recent decisions and lessons",
-  group_ids: [<project_group from get_project_info>, "shared"],
-  max_nodes: 8
-})
-```
-
-**Why the explicit group lookup matters**: hyphen-containing group IDs (`dawn-fde-toolkit`) hit a RediSearch syntax error and silently return empty. Omitting `group_ids` entirely also returns empty — Graphiti does NOT scan all groups by default. Both failure modes look identical to "graph empty," so always pass the sanitized `project_group` value plus `"shared"` explicitly. See the `community-graphiti-group-id-underscores` lesson for the full pattern.
-
-**Surface contradictions:** look at the returned nodes for any whose `attributes` reference recently invalidated facts (Graphiti marks superseded facts with `invalid_at`). If a recently invalidated fact relates to an active plan or current code area, flag it to the user — those are places where assumptions changed.
-
-**Output format:** include a "Graphiti recall" section in the catchup summary with the most relevant 3-5 nodes by name + summary. Don't dump everything — surface what's actionable.
-
-**Graceful degradation:** If `mcp__graphiti__search_nodes` is unavailable (Graphiti container down, transport error), skip this step silently and add a note to the catchup summary: `Graphiti: unavailable (run \`indusk infra start\` to recall episodic memory)`. Catchup should not fail if Graphiti is down — the rest of the layers are still valid.
-
-**Reads only.** Catchup queries Graphiti — it does not write to it. As a working agent, **you never call `mcp__graphiti__add_memory` or `mcp__indusk__graph_capture` directly in process skills**. When you have a moment worth remembering, write a highlight via `mcp__indusk__highlight` (tag + level + note); the eval agent materializes it into a structured Graphiti episode at the next `git commit` or session end. See the `community-use-highlight-not-direct-graphiti-writes` lesson for the full discipline.
+CLAUDE.md is auto-injected into every session by Claude Code. **Do NOT call `get_context` and do NOT `Read` CLAUDE.md during catchup** — that duplicates content already in your context window (the single biggest line item in the pre-makeover ~55k catchup). You already have Architecture, Conventions, Key Decisions, Known Gotchas, and Current State. If (and only if) your context was compacted and the injected copy is genuinely absent, read it then.
 
 ### 8. Check Active Plans
 
-Call `list_plans`. This shows every plan and its status. Pay attention to:
+Call `list_plans` with `{ active: true }` — this returns only genuinely in-motion plans (any doc accepted/approved/in-progress/proposed) plus a count of what was omitted. Do NOT list every draft. Pay attention to:
 - Plans with status `in-progress` — these are actively being worked on
 - The current phase of each active plan — this is where `/work` will pick up
 - Dependencies between plans — don't start a blocked plan
@@ -152,12 +133,12 @@ After completing all steps, present a brief summary to the user:
 - Other agents currently working: [list from `indusk agent list`, with each agent's task, worktree, and branch — or "none"]
 - Worktree collision: [if `indusk agent list` prints a `⚠ collision` warning — two or more live sessions sharing one worktree (typically the shared trunk) — surface it prominently; this is the exact class worktree-per-plan prevents]
 - Notable in-flight from other agents: [if anyone's section is on something that might affect this session, surface it]
-- Lessons: N loaded
+- Lessons: N titles skimmed
+- Sweep: [N sections sweepable (dry-run) / clean]
 - Infrastructure: [healthy / issues]
 - Skills: N installed [list names]
 - Extensions: N enabled [list names]
-- Active plans: [list with current phase]
-- Graphiti recall: [3-5 most relevant nodes by name + summary, or "unavailable" if Graphiti is down]
+- Active plans: [list with current phase] (M inactive omitted)
 
 Ready to pick up. What would you like to do?
 ```

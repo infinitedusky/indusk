@@ -87,7 +87,7 @@ Key sections to fill in honestly:
 
 ### Step 2: Structural Audit (Code Graph)
 
-**Query the code graph** (see toolbelt "Before Modifying Code") to understand what actually changed. Include structural findings in "What Actually Happened" — e.g., "Plan touched 8 files with 23 downstream dependents." Also check `find_most_complex_functions` and `find_dead_code` for cleanup opportunities.
+**Run `git diff --stat` against the plan's base** to understand what actually changed. Include structural findings in "What Actually Happened" — e.g., "Plan touched 8 files, +900/−250 lines."
 
 ### Step 3: Docs Audit
 
@@ -130,7 +130,7 @@ For each finding, act on it:
 - **Deferred rows classified as `downstream-plan`** — verify the referenced plan exists and is either `accepted` or `in-progress`. If it's `draft` or missing, either accept the referenced plan now or pick a different mitigation.
 - **Deferred rows classified as `telemetry-alert`** — verify the named metric actually exists in the codebase (grep for it). If the metric hasn't been wired up, the mitigation is aspirational — either wire it up now or change the mitigation.
 
-Flag findings as a highlight — the eval agent reads it, writes the `retrospective-audit-{plan-slug}` Graphiti episode, and marks it processed:
+Flag findings as a highlight — the eval agent reads it, materializes a lesson when a durable rule emerged, and marks it processed:
 
 ```
 mcp__indusk__highlight({
@@ -167,7 +167,7 @@ If yes, call `add_lesson` for each one. These become personal lessons in `.claud
 
 If no lessons emerged, that's fine — not every plan produces new knowledge. Move on.
 
-**Also flag each retrospective insight as a highlight** so the eval agent can turn it into a structured Graphiti episode and surface it in future searches and contradiction detection.
+**Also flag each retrospective insight as a highlight** so the eval agent can materialize durable ones into lessons that surface in every future catchup.
 
 For each item in the retrospective's **What We Learned** section:
 ```
@@ -187,11 +187,11 @@ mcp__indusk__highlight({
 })
 ```
 
-The eval agent reads each highlight, writes the full Graphiti episode (project group by default; `shared` if the insight is clearly cross-project), and marks it processed. The working agent does not write the episode directly.
+The eval agent reads each highlight, writes a lesson when it carries a durable rule (`community-` prefix if clearly cross-project), and marks it processed. The working agent does not write the lesson directly.
 
-**Contradictions:** If the retrospective surfaces a moment where "we thought X but found Y", write two highlights (one per fact). Graphiti's contradiction detection will invalidate the older fact when it sees the conflicting one once the eval agent materializes the episodes. This is one of Graphiti's most useful features — it remembers that a previous assumption was overturned, so the agent doesn't accidentally re-introduce it later.
+**Contradictions:** If the retrospective surfaces a moment where "we thought X but found Y", flag it as a highlight naming BOTH the old assumption and the overturning fact — the resulting lesson records the reversal explicitly so a future session doesn't re-introduce the overturned assumption.
 
-Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort, and lesson recording via `add_lesson` remains the canonical local path. Highlight-driven Graphiti capture is supplementary.
+Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort, and lesson recording via `add_lesson` remains the canonical local path.
 
 ### Step 7: Context Audit
 
@@ -234,6 +234,16 @@ Example:
 The counter-example is **token bloat on every catchup**, paid by every Claude Code session forever. The one-line shape preserves discoverability (the plan name + version + link is enough for the agent to know what to query) at a fraction of the cost.
 
 Existing multi-paragraph entries (pre-1.31.11) can be collapsed via `indusk prune --dry-run` (which surfaces them) plus manual operator cleanup — they are not auto-migrated.
+
+#### Compaction step (indusk-makeover — the decay half of the budget)
+
+Adding one-line entries stops NEW growth; this step produces shrinkage. As part of every plan close:
+
+1. **Demote this plan's own narratives.** The plan accumulated Current State prose while in flight (per-phase context updates, in-flight markers). Replace all of it with the single one-line entry above. Any multi-paragraph Conventions/Gotchas entries this plan authored get compressed to 1–3 lines: the operative rule sentence(s) + a pointer to the decisions/lessons page or archived plan doc. **The rule stays; the narrative moves behind the pointer.**
+2. **Sweep one stale narrative while you're here** (the periodic pass): pick the oldest multi-paragraph Current State entry for an already-shipped plan and collapse it to the one-line shape. One per retrospective keeps the backlog draining without a dedicated session.
+3. **Verify pointers**: run `indusk context check-pointers` — every pointer you just wrote must resolve. A dead pointer under this regime is a lost rule body.
+
+The `claude-md-budget.js` hook enforces the 60 KB ceiling at write time (`context.claude_md_budget_bytes`); if your retrospective edit trips it, do more of step 1/2 rather than fighting the hook. See [the context-budget guide](../../docs/src/guide/context-budget.md).
 
 Why this matters: CLAUDE.md is auto-loaded into every Claude Code session. Every byte you add accrues to every prompt indefinitely. The discipline is "thinner navigation layer, queryable detail" — see [context-budget brief](../../.indusk/planning/context-budget/brief.md) for the full rationale.
 

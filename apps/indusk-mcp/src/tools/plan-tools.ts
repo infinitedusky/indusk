@@ -10,12 +10,39 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 		"list_plans",
 		{
 			description:
-				"List all plans in the planning/ directory with their stage, status, next step, and dependencies",
+				"List plans in the planning/ directory with their stage, status, next step, and dependencies. Pass active: true (the catchup default — indusk-makeover diet) to return only genuinely in-motion plans (any doc accepted/approved/in-progress) instead of every draft.",
+			inputSchema: {
+				active: z
+					.boolean()
+					.optional()
+					.describe(
+						"When true, return only active plans — stage status is accepted/approved/in-progress/proposed/completed (completed = awaiting close-out rituals). Dead drafts and finished spikes are omitted (with a count).",
+					),
+			},
 		},
-		async () => {
+		async ({ active }) => {
 			const plans = parseAllPlans(projectRoot);
+			if (!active) {
+				return {
+					content: [{ type: "text" as const, text: JSON.stringify(plans, null, 2) }],
+				};
+			}
+			const filtered = plans.filter((p) => isActivePlanStatus(p.stageStatus ?? ""));
 			return {
-				content: [{ type: "text" as const, text: JSON.stringify(plans, null, 2) }],
+				content: [
+					{
+						type: "text" as const,
+						text: JSON.stringify(
+							{
+								active: filtered,
+								omitted: plans.length - filtered.length,
+								note: "omitted = dead drafts and finished spikes; call without `active` for the full list",
+							},
+							null,
+							2,
+						),
+					},
+				],
 			};
 		},
 	);
@@ -204,3 +231,24 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 		},
 	);
 }
+
+/**
+ * Whether a plan's most-advanced-doc status counts as ACTIVE for
+ * `list_plans { active: true }`. Includes `completed` — a completed impl
+ * still inside planning/ is awaiting close-out rituals (falsify / cleanup /
+ * retrospective); only archival removes a plan from the active list
+ * (indusk-makeover Phase 7 falsification, A17). `complete` (research-doc
+ * terminal status) stays excluded — a finished spike with no further docs
+ * is not in-motion work.
+ */
+export function isActivePlanStatus(status: string): boolean {
+	return ACTIVE_PLAN_STATUSES.has(status.toLowerCase());
+}
+
+const ACTIVE_PLAN_STATUSES = new Set([
+	"accepted",
+	"approved",
+	"in-progress",
+	"proposed",
+	"completed",
+]);

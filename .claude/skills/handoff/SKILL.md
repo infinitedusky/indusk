@@ -18,7 +18,7 @@ mcp__indusk__update_current_section({
   sessionId: "<your $CLAUDE_CODE_SESSION_ID, or pid-<N> if env unset>",
   task: "<one-line description of what this session is working on>",
   sections: {
-    in_flight: "What's actively in progress. Plan name + phase + current focus. Examples: 'auth-refactor Phase 3 — middleware rewrite', 'investigating slow Graphiti queries (no plan yet)'. Be specific; vague entries waste the next session's time.",
+    in_flight: "What's actively in progress. Plan name + phase + current focus. Examples: 'auth-refactor Phase 3 — middleware rewrite', 'investigating slow catchup reads (no plan yet)'. Be specific; vague entries waste the next session's time.",
     open_questions: "Hypotheses you haven't confirmed; design decisions mid-conversation; things you want the next agent to think about before continuing.",
     cursor: "Where you stopped, in enough detail that re-entering doesn't require rediscovery. File paths + line numbers + the next concrete step. Examples: 'apps/backend/src/auth/middleware.ts:42 — about to extract refreshToken helper', 'Phase 2 verification gate — T7 written + scaffolded, needs Phase 3 lib lands'."
   }
@@ -49,6 +49,14 @@ indusk agent done
 ```
 
 Removes your section from `.indusk/current.md`. After this, you no longer show up in `indusk agent list` from other sessions. Optional — sections age out automatically via the `Last updated` TTL — but explicit `done` makes the bulletin tidier for concurrent agents.
+
+Then run the decay sweep (indusk-makeover — handoff owns the real sweep; catchup only dry-runs it):
+
+```bash
+indusk agent sweep
+```
+
+Sections older than `agents.sweep_ttl_minutes` (default 7 days) move to `.indusk/archive/current-md-archive.md` — archived, never deleted. Usually a no-op; when it does move sections, mention the count in your sign-off so the user knows the file got lighter.
 
 ### 4. Fire the eval trigger
 

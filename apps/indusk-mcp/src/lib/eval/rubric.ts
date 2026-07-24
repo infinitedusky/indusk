@@ -33,13 +33,13 @@ export const V1_RUBRIC: RubricQuestion[] = [
 		question:
 			"Is there information missing from the graph that would have helped? (context sufficiency)",
 		guidance:
-			"Consider what the agent struggled with or got wrong. Would a Graphiti fact, a lesson, or a CLAUDE.md entry have prevented the mistake?",
+			"Consider what the agent struggled with or got wrong. Would a lesson or a CLAUDE.md entry have prevented the mistake?",
 	},
 	{
 		id: "user-intent",
 		question:
-			"Did the user express decisions, concerns, reasoning, or preferences that should be captured in the knowledge graph?",
+			"Did the user express decisions, concerns, reasoning, or preferences that should be captured as lessons?",
 		guidance:
-			"Read the transcript for user statements that reveal WHY something was done, not just what. Look for: design reasoning ('the reason we do X is...'), concerns ('I'm worried about...'), preferences ('I don't like this DX'), constraints ('we need this for promotion'), corrections ('no, do it this way'). These are the most valuable knowledge — they're only in the transcript and will be lost if not captured. Write each one to the graph via graph_capture with the relevant file_path.",
+			"Read the transcript for user statements that reveal WHY something was done, not just what. Look for: design reasoning ('the reason we do X is...'), concerns ('I'm worried about...'), preferences ('I don't like this DX'), constraints ('we need this for promotion'), corrections ('no, do it this way'). These are the most valuable knowledge — they're only in the transcript and will be lost if not captured. Materialize each durable one as a lesson via add_lesson (title = the rule; body = the why + pointer).",
 	},
 ];

@@ -264,6 +264,15 @@ export function parseCurrentMd(content: string): CurrentMd {
 	return { preamble, sharedSection, sections };
 }
 
+/**
+ * Serialize a single AgentSection into the markdown block form. Exported for
+ * the sweep (indusk-makeover Phase 1), which archives swept sections in the
+ * same canonical shape they had in current.md.
+ */
+export function serializeSectionBlock(section: AgentSection): string {
+	return serializeSection(section);
+}
+
 /** Serialize a single AgentSection into the markdown block form. */
 function serializeSection(section: AgentSection): string {
 	// **Branch**: / **Worktree**: are emitted only when non-empty, so absence

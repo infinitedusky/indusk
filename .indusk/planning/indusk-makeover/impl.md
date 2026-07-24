@@ -1,7 +1,7 @@
 ---
 title: "InDusk Makeover — Implementation"
 date: 2026-07-23
-status: approved
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -39,21 +39,25 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | Project CLAUDE.md is ≤ 60 KB on disk (`wc -c` gate script) | Phase 0 | Phase 6 | planned |
-| A2 | Editing CLAUDE.md past budget produces a visible warn/block at write time | Phase 2 | Phase 2 | planned |
-| A3 | Every compressed entry's pointer resolves to an existing docs page or archived doc (link walker) | Phase 0 | Phase 6 | planned |
-| A4 | 15 randomly sampled pre-compression entries have their operative rule still stated post-compression | Phase 6 | Phase 6 | planned |
-| A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | planned |
-| A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | planned |
-| A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | planned |
-| A8 | A highlight written in a session is processed by the eval agent into a lesson at commit time, with Graphiti gone, without error | Phase 3 | Phase 3 | planned |
-| A9 | Sweep archives sections older than the stale TTL; archived content is retrievable from the archive file | Phase 1 | Phase 1 | planned |
-| A10 | Sweep never touches the Project (shared) section or a live session's section (adversarial fixtures) | Phase 1 | Phase 1 | planned |
-| A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | planned |
-| A12 | Project MCP config is exactly indusk/dash0/posthog/jaeger; global is playwright only | Phase 0 | Phase 6 | planned |
-| A13 | A rule promoted from this project is received by a second project via the pull flow, with provenance | Phase 5 | Phase 5 | planned |
-| A14 | Pulling twice changes nothing the second time; local (personal) lessons are never overwritten | Phase 5 | Phase 5 | planned |
-| A15 | A plan close produces a compact CLAUDE.md entry (rule + pointer), via the wired ritual — verified by dry-run diff | Phase 6 | Phase 6 | planned |
+| A1 | Project CLAUDE.md is ≤ 60 KB on disk (`wc -c` gate script) | Phase 0 | Phase 6 | passing |
+| A2 | Editing CLAUDE.md past budget produces a visible warn/block at write time | Phase 2 | Phase 2 | passing |
+| A3 | Every compressed entry's pointer resolves to an existing docs page or archived doc (link walker) | Phase 0 | Phase 6 | passing |
+| A4 | 15 randomly sampled pre-compression entries have their operative rule still stated post-compression | Phase 6 | Phase 6 | passing |
+| A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | passing |
+| A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | passing |
+| A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | passing |
+| A8 | A highlight written in a session is processed by the eval agent into a lesson at commit time, with Graphiti gone, without error | Phase 3 | Phase 3 | passing |
+| A9 | Sweep archives sections older than the stale TTL; archived content is retrievable from the archive file | Phase 1 | Phase 1 | passing |
+| A10 | Sweep never touches the Project (shared) section or a live session's section (adversarial fixtures) | Phase 1 | Phase 1 | passing |
+| A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | passing |
+| A12 | Project MCP config is exactly indusk/dash0/posthog/jaeger; global is playwright only | Phase 0 | Phase 6 | passing |
+| A13 | A rule promoted from this project is received by a second project via the pull flow, with provenance | Phase 5 | Phase 5 | passing |
+| A14 | Pulling twice changes nothing the second time; local (personal) lessons are never overwritten | Phase 5 | Phase 5 | passing |
+| A15 | A plan close produces a compact CLAUDE.md entry (rule + pointer), via the wired ritual — verified by dry-run diff | Phase 6 | Phase 6 | passing |
+| A16 | The budget hook's predicted post-edit content is byte-identical to what the Edit tool writes, even when `new_string` contains `$$`/`$&`/`` $` ``/`$'` substitution patterns or `old_string` is empty | Phase 0 | Phase 7 | passing |
+| A17 | `list_plans { active: true }` includes plans whose impl is `completed` but which are still in `planning/` (awaiting falsify/cleanup/retrospective) | Phase 0 | Phase 7 | passing |
+| A18 | The A11 gate FAILS loudly (not vacuous-PASS) when the classifier CLI cannot run | Phase 0 | Phase 7 | passing |
+| A19 | init and update share ONE legacy-MCP-removal implementation (`lib/mcp-migration.ts`), unit-tested for both the remove-success and remove-failure paths | Phase 8 | Phase 8 | passing |
 
 ### Deferred Verification
 
@@ -76,125 +80,166 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - **A13** `Writable at: Phase 5` — subject is the `indusk sync` promote/pull surface authored in Phase 5; no command exists to invoke earlier.
 - **A14** `Writable at: Phase 5` — same subject as A13; idempotency fixtures target the Phase 5 pull implementation.
 - **A15** `Writable at: Phase 6` — the dry-run diff exercises the retrospective skill's compaction step, which is wired in Phase 6.
+- **A19** `Writable at: Phase 8` — subject is the `lib/mcp-migration.ts` module extracted in Phase 8; the test's import line is a compile error today.
 
 ## Checklist
 
 ### Phase 0: Baseline measurement scripts (red tripwires)
-- [ ] Create/confirm this plan's worktree (`git worktree` branch `plan/indusk-makeover`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] Author `scripts/makeover-gates.sh` in the plan folder (or `apps/indusk-mcp/scripts/`): A1 `wc -c` gate (CLAUDE.md ≤ 61440 bytes), A7 config grep (graphiti/codegraphcontext absent from `.mcp.json` + `.indusk/extensions/`), A11 active-plan count vs frontmatter status, A12 keep-list diff for project + global MCP configs — each printing PASS/FAIL
-- [ ] Author A3 pointer-walker (scan CLAUDE.md for `.indusk/`/`apps/docs/` path references; verify each resolves on disk)
-- [ ] Author A5/A6 measurement procedure as a checked-in doc: run `/catchup`, sum tool-result chars/4, grep transcript for Graphiti calls + duplicate CLAUDE.md reads
-- [ ] Run all of the above; record the red baseline numbers in this plan folder (`baseline.md`)
+- [x] Create/confirm this plan's worktree (`git worktree` branch `plan/indusk-makeover`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Author `scripts/makeover-gates.sh` in the plan folder (or `apps/indusk-mcp/scripts/`): A1 `wc -c` gate (CLAUDE.md ≤ 61440 bytes), A7 config grep (graphiti/codegraphcontext absent from `.mcp.json` + `.indusk/extensions/`), A11 active-plan count vs frontmatter status, A12 keep-list diff for project + global MCP configs — each printing PASS/FAIL
+- [x] Author A3 pointer-walker (scan CLAUDE.md for `.indusk/`/`apps/docs/` path references; verify each resolves on disk) — `scripts/check-pointers.sh`; red at 38/142 dead
+- [x] Author A5/A6 measurement procedure as a checked-in doc: run `/catchup`, sum tool-result chars/4, grep transcript for Graphiti calls + duplicate CLAUDE.md reads — `scripts/catchup-measurement.md`
+- [x] Run all of the above; record the red baseline numbers in this plan folder (`baseline.md`) — dusk: 142,653 B CLAUDE.md, 38 dead pointers, 23 plan dirs, both MCP configs off keep-list; A5/A6 red provisional from research.md (dusk-specific cold-session number pending — see baseline.md notes)
 
 #### Phase 0 Verification
-- [ ] A1, A3, A7, A11, A12 scripts run and FAIL red against today's state (write red); A5/A6 measured red (~55k, Graphiti query present)
+- [x] A1, A3, A7, A11, A12 scripts run and FAIL red against today's state (write red); A5/A6 measured red (~55k, Graphiti query present) — all red confirmed 2026-07-23, outputs in baseline.md; A5/A6 provisional from research.md pending a cold-session run
 
 #### Phase 0 Context
-- [ ] Add one line to CLAUDE.md Current State: indusk-makeover in-flight, baseline measured (numbers + pointer to `baseline.md`)
+- [x] Add one line to CLAUDE.md Current State: indusk-makeover in-flight, baseline measured (numbers + pointer to `baseline.md`)
 
 #### Phase 0 Document
-- [ ] Record baseline table in `baseline.md` in the plan folder (feeds the retrospective's before/after metrics)
+- [x] Record baseline table in `baseline.md` in the plan folder (feeds the retrospective's before/after metrics)
 
 ### Phase 1: Decay mechanisms — current.md sweep + dead-draft auto-archive
-- [ ] `apps/indusk-mcp/src/lib/agents/sweep.ts`: `sweepStaleSections(projectRoot, opts?)` — parses via `parseCurrentMd`, moves session sections whose `Last updated` exceeds `agents.stale_ttl_minutes` (separate, longer `agents.sweep_ttl_minutes` default 7 days — display-TTL ≠ sweep-TTL) into `.indusk/archive/current-md-archive.md` (append, with sweep timestamp header); never touches Project (shared) or fresh sections; malformed `lastUpdated` KEPT (existing prune convention); runs inside `withLock`
-- [ ] CLI `indusk agent sweep [--dry-run]` in `commands/agent.ts`, printing what moved/would move
-- [ ] `apps/indusk-mcp/src/lib/planning/archive-dead.ts`: dead-draft detector — plan is dead when no doc has status beyond `draft` AND newest file mtime older than `planning.dead_draft_days` (default 30); `indusk plans archive-dead [--dry-run]` moves folder to `.indusk/planning/archive/`, never deletes, skips plans referenced as in-progress in master.md
-- [ ] Config keys `agents.sweep_ttl_minutes` + `planning.dead_draft_days` read via `lib/config.ts` (defaults in reader, presence-keyed migration per `ensureCleanupConfig` precedent)
-- [ ] Vitest: A9 (expired section archived + retrievable), A10 (adversarial fixtures: Project shared with stale-looking body, live section at TTL boundary, malformed timestamp, injected `## Session` text in a body) + dry-run and lock-contention supporting cases
+- [x] `apps/indusk-mcp/src/lib/agents/sweep.ts`: `sweepStaleSections(projectRoot, opts?)` — parses via `parseCurrentMd`, moves session sections whose `Last updated` exceeds `agents.stale_ttl_minutes` (separate, longer `agents.sweep_ttl_minutes` default 7 days — display-TTL ≠ sweep-TTL) into `.indusk/archive/current-md-archive.md` (append, with sweep timestamp header); never touches Project (shared) or fresh sections; malformed `lastUpdated` KEPT (existing prune convention); runs inside `withLock` — archive-before-rewrite ordering so a crash duplicates rather than loses; `serializeSectionBlock` exported from current-md.ts
+- [x] CLI `indusk agent sweep [--dry-run]` in `commands/agent.ts`, printing what moved/would move
+- [x] `apps/indusk-mcp/src/lib/planning/archive-dead.ts`: dead-draft detector — plan is dead when no doc has status beyond `draft` AND newest file mtime older than `planning.dead_draft_days` (default 30); `indusk plans archive-dead [--dry-run]` moves folder to `.indusk/planning/archive/`, never deletes, skips plans referenced as in-progress in master.md — master protection rule: linked name on a non-"draft" line; unparseable frontmatter blocks (conservative); abandoned is archive-eligible
+- [x] Config keys `agents.sweep_ttl_minutes` + `planning.dead_draft_days` read via `lib/config.ts` (defaults in reader, presence-keyed migration per `ensureCleanupConfig` precedent) — `ensureDecayConfig` wired into update.ts after the cleanup block
+- [x] Vitest: A9 (expired section archived + retrievable), A10 (adversarial fixtures: Project shared with stale-looking body, live section at TTL boundary, malformed timestamp, injected `## Session` text in a body) + dry-run and lock-contention supporting cases — 10 sweep + 9 archive-dead tests
 
 #### Phase 1 Verification
-- [ ] A9 passes (`pnpm turbo test --filter=indusk-mcp -- sweep`)
-- [ ] A10 passes (same suite, adversarial fixtures)
+- [x] A9 passes (`pnpm turbo test --filter=indusk-mcp -- sweep`) — 10 sweep tests green; tsc + biome clean
+- [x] A10 passes (same suite, adversarial fixtures) — 4 adversarial fixtures green
 
 #### Phase 1 Context
-- [ ] Add CLAUDE.md Conventions one-liner: sweep + archive-dead commands, the display-TTL vs sweep-TTL distinction, archive-never-delete invariant — pointer to this plan
+- [x] Add CLAUDE.md Conventions one-liner: sweep + archive-dead commands, the display-TTL vs sweep-TTL distinction, archive-never-delete invariant — pointer to this plan
 
 #### Phase 1 Document
-- [ ] New section in `apps/docs/src/reference/cli/agent.md` for `agent sweep`; new `apps/docs/src/reference/cli/plans.md` for `plans archive-dead`
+- [x] New section in `apps/docs/src/reference/cli/agent.md` for `agent sweep`; new `apps/docs/src/reference/cli/plans.md` for `plans archive-dead` — both in the sidebar CLI group
 
 ### Phase 2: CLAUDE.md size-budget hook + pointer walker productized
-- [ ] `apps/indusk-mcp/hooks/claude-md-budget.js` (PreToolUse on Edit/Write targeting `CLAUDE.md`): computes post-edit size; > budget → block with message naming the compaction ritual; > 90% → warn; budget from `context.claude_md_budget_bytes` (default 61440) via inlined config reader (hook precedent)
-- [ ] Hook registered in init/update settings template; confirm globSync (both sides) picks it up — the eval-trigger lesson
-- [ ] Productize the pointer walker as `indusk context check-pointers` (walks CLAUDE.md path references, reports dead ones)
-- [ ] Vitest: hook unit (under/at/over budget, warn band, non-CLAUDE.md files untouched) + walker unit
+- [x] `apps/indusk-mcp/hooks/claude-md-budget.js` (PreToolUse on Edit/Write targeting `CLAUDE.md`): computes post-edit size; > budget → block with message naming the compaction ritual; > 90% → warn; budget from `context.claude_md_budget_bytes` (default 61440) via inlined config reader (hook precedent) — applies to any file named CLAUDE.md; never blocks on its own parse failure
+- [x] Hook registered in init/update settings template; confirm globSync (both sides) picks it up — the eval-trigger lesson — init hookConfig entry + targeted ensure-block in update.ts (eval-trigger pattern); globSync confirmed at init.ts:1050 + update.ts:206
+- [x] Productize the pointer walker as `indusk context check-pointers` (walks CLAUDE.md path references, reports dead ones) — `lib/context-pointers.ts` + `commands/context.ts`, exit 1 on dead pointers
+- [x] Vitest: hook unit (under/at/over budget, warn band, non-CLAUDE.md files untouched) + walker unit — 8 hook e2e (subprocess + stdin event) + 4 walker tests
 
 #### Phase 2 Verification
-- [ ] A2 passes: manual hook-fire test — attempt an over-budget CLAUDE.md edit in a scratch project, observe block message; vitest hook unit green
+- [x] A2 passes: manual hook-fire test — attempt an over-budget CLAUDE.md edit in a scratch project, observe block message; vitest hook unit green — the e2e suite runs the real hook binary via subprocess against a scratch project (block message asserted verbatim); 12 tests green, tsc + biome clean
 
 #### Phase 2 Context
-- [ ] Add CLAUDE.md Conventions one-liner: the 60 KB budget, hook name, config key, how to raise the budget deliberately — pointer to `guide/context-budget.md`
+- [x] Add CLAUDE.md Conventions one-liner: the 60 KB budget, hook name, config key, how to raise the budget deliberately — pointer to `guide/context-budget.md`
 
 #### Phase 2 Document
-- [ ] Write `apps/docs/src/guide/context-budget.md`: budget rationale, hook behavior, compaction ritual, decay-loop Mermaid diagram
+- [x] Write `apps/docs/src/guide/context-budget.md`: budget rationale, hook behavior, compaction ritual, decay-loop Mermaid diagram — registered in the guide sidebar
 
 ### Phase 3: Graphiti + CGC removal, rail retargeted to lessons
-- [ ] Retarget eval Step 4: `buildHighlightsInstructions` writes lessons (via `add_lesson`) instead of `graph_capture`/`mcp__graphiti__*`; keep the CRITICAL preamble + `already_processed` STOP path byte-intact; update the resume-prompt regression test's expectations
-- [ ] Remove graphiti + codegraphcontext registration from init/update `.mcp.json` upsert; extensions: disable/remove `graphiti` extension flow (on_disable fires — 1.28.0 symmetry rule); remove catchup/planner/work/retrospective skill references to Graphiti recall + CGC blast-radius queries (Grep/tests guidance replaces CGC)
-- [ ] `check_health` stops probing FalkorDB/Graphiti; `rail-check` skill updated to verify highlight→eval→**lessons** (not episodes)
-- [ ] Remove graphiti + codegraphcontext entries from **this repo's** `.mcp.json`; disable both extensions here (A7 target — full keep-list finalization stays Phase 6)
-- [ ] Grep-gone check: no live-code references to `GraphitiClient`/`graph_capture` outside archived docs + changelog
+- [x] Retarget eval Step 4: `buildHighlightsInstructions` writes lessons (via `add_lesson`) instead of `graph_capture`/`mcp__graphiti__*`; keep the CRITICAL preamble + `already_processed` STOP path byte-intact; update the resume-prompt regression test's expectations
+- [x] Remove graphiti + codegraphcontext registration from init/update `.mcp.json` upsert; extensions: disable/remove `graphiti` extension flow (on_disable fires — 1.28.0 symmetry rule); remove catchup/planner/work/retrospective skill references to Graphiti recall + CGC blast-radius queries (Grep/tests guidance replaces CGC)
+- [x] `check_health` stops probing FalkorDB/Graphiti; `rail-check` skill updated to verify highlight→eval→**lessons** (not episodes)
+- [x] Remove graphiti + codegraphcontext entries from **this repo's** `.mcp.json`; disable both extensions here (A7 target — full keep-list finalization stays Phase 6)
+- [x] Grep-gone check: no live-code references to `GraphitiClient`/`graph_capture` outside archived docs + changelog
 
 #### Phase 3 Verification
-- [ ] A7 script flips green (graphiti/CGC absent, `check_health` passes)
-- [ ] A8 manual smoke: write a highlight, `git commit`, observe eval agent produce a lesson entry and mark the highlight processed, zero errors in `.indusk/eval/results.log`
-- [ ] Full suite green (`pnpm test`) — the eval-resume-prompt + rail regression tests updated, not deleted
+- [x] A7 script flips green (graphiti/CGC absent, `check_health` passes) — verified 2026-07-23
+- [x] A8 manual smoke: write a highlight, `git commit`, observe eval agent produce a lesson entry and mark the highlight processed, zero errors in `.indusk/eval/results.log` — smoke highlight h-20260724-a8smoke drained through the retargeted rail (reasoned skip + real lesson `highlight-materializes-to-lessons-not-graphiti.md`); side-finds: stale-model 404 on old persistent eval sessions (recovery: fresh spawn)
+- [x] Full suite green (`pnpm test`) — eval-resume-prompt + rail regression tests updated, not deleted; graph-sync friendly-error tests removed with their command; admin tests green after building the bundle (were environmental)
 
 #### Phase 3 Context
-- [ ] Update CLAUDE.md: Architecture MCP-server list loses graphiti/codegraphcontext; Conventions eval-rail entry retargeted to lessons — one-liners + pointer
+- [x] Update CLAUDE.md: Architecture MCP-server list loses graphiti/codegraphcontext; Conventions eval-rail entry retargeted to lessons — one-liners + pointer
 
 #### Phase 3 Document
-- [ ] Removal notices on Graphiti/CGC guide pages (what replaced them: lessons rail, Grep); changelog entry
+- [x] Removal notices on Graphiti/CGC guide pages (what replaced them: lessons rail, Grep); changelog entry
 
 ### Phase 4: Catchup diet + sweep wiring
-- [ ] Rewrite `apps/indusk-mcp/skills/catchup.md`: drop Graphiti step, drop duplicate CLAUDE.md fetch, read Project (shared) + live sections only (via `indusk agent list` fresh partition), plans via status-filtered listing; keep lessons titles-hot pattern
-- [ ] `list_plans` (tool + CLI) gains `--active` filter (frontmatter status ∈ in-progress set) used by catchup
-- [ ] Wire sweep into rhythm: catchup runs `indusk agent sweep --dry-run` and surfaces the count; handoff runs the real sweep after `agent done`
-- [ ] Resync installed `.claude/skills/` copies (skill-sync-parity test pins byte-equality)
+- [x] Rewrite `apps/indusk-mcp/skills/catchup.md`: drop Graphiti step, drop duplicate CLAUDE.md fetch, read Project (shared) + live sections only (via `indusk agent list` fresh partition), plans via status-filtered listing; keep lessons titles-hot pattern — also: current.md reads are now TARGETED (shared region up to first `---`; live sections by Grep) instead of whole-file
+- [x] `list_plans` (tool + CLI) gains `--active` filter (frontmatter status ∈ in-progress set) used by catchup — MCP tool `{ active: true }` returns active plans + omitted count
+- [x] Wire sweep into rhythm: catchup runs `indusk agent sweep --dry-run` and surfaces the count; handoff runs the real sweep after `agent done`
+- [x] Resync installed `.claude/skills/` copies (skill-sync-parity test pins byte-equality) — parity green
 
 #### Phase 4 Verification
-- [ ] A6 passes: fresh `/catchup` transcript shows zero Graphiti calls, single CLAUDE.md ingestion, completes clean
-- [ ] A5 re-measured and recorded (expected still red on this workbench until Phase 6 backfill — the diet mechanism is verified, the local win lands with the sweep)
+- [x] A6 passes: fresh `/catchup` transcript shows zero Graphiti calls, single CLAUDE.md ingestion, completes clean — cold `claude --print "/catchup"` session 6dd91742: 0 graphiti tool calls, 0 get_context, 0 CLAUDE.md Reads; the collision detector even flagged the working session correctly
+- [x] A5 re-measured and recorded — **~8,221 tokens of tool-result content — ALREADY under the 15k target at Phase 4** (55k → 8.2k, −85%); formal A5 green still lands at Phase 6 with the full backfill
 
 #### Phase 4 Context
-- [ ] Update CLAUDE.md Conventions catchup entry to the dieted read-set one-liner + pointer
+- [x] Update CLAUDE.md Conventions catchup entry to the dieted read-set one-liner + pointer
 
 #### Phase 4 Document
-- [ ] Update `apps/docs/src/reference/skills/catchup.md` to the new read set + sweep wiring
+- [x] Update `apps/docs/src/reference/skills/catchup.md` to the new read set + sweep wiring
 
 ### Phase 5: Hub push/pull rule distribution
-- [ ] Promote flow: `indusk sync promote <lesson-id>` copies a project lesson into the InDusk package's shared channel (`apps/indusk-mcp/lessons/community/`), stamping provenance (source project, date); refuses non-existent/already-promoted ids
-- [ ] Pull flow: `indusk sync pull` merges hub channel into the project's lessons — additive only, never overwrites a local lesson, idempotent (content-hash comparison); catchup runs it (surfacing "N new rules")
-- [ ] Version surface: hub channel carries a monotonically bumped manifest consumed by `get_skill_versions`-style check so pull can short-circuit on no-change
-- [ ] Vitest: A14 (pull-twice no-op; local-lesson collision preserved; provenance stamped) + promote-refusal cases
+- [x] Promote flow: `indusk sync promote <lesson-id>` copies a project lesson into the InDusk package's shared channel (`apps/indusk-mcp/lessons/community/`), stamping provenance (source project, date); refuses non-existent/already-promoted ids — DESIGN REFINEMENT: the hub is `$INDUSK_HOME/hub/lessons/` (machine-global) rather than the installed package dir, which is clobbered on npm upgrade; package channel remains the bundled source pull also merges; promoting into the published package = move hub lesson into `lessons/community/` in the dusk checkout + publish
+- [x] Pull flow: `indusk sync pull` merges hub channel into the project's lessons — additive only, never overwrites a local lesson, idempotent (content-hash comparison); catchup runs it (surfacing "N new rules")
+- [x] Version surface: hub channel carries a monotonically bumped manifest consumed by `get_skill_versions`-style check so pull can short-circuit on no-change — `$INDUSK_HOME/hub/manifest.json` bumps per promote; pull reports it
+- [x] Vitest: A14 (pull-twice no-op; local-lesson collision preserved; provenance stamped) + promote-refusal cases — 7 tests green
 
 #### Phase 5 Verification
-- [ ] A14 passes (`pnpm turbo test --filter=indusk-mcp -- sync`)
-- [ ] A13 e2e smoke: promote a rule from this project, run `indusk sync pull` in a second project (scratch or chitin-sportsbook), rule file present there with provenance
+- [x] A14 passes (`pnpm turbo test --filter=indusk-mcp -- sync`) — 7 hub tests green
+- [x] A13 e2e smoke: promote a rule from this project, run `indusk sync pull` in a second project (scratch or chitin-sportsbook), rule file present there with provenance — promoted `highlight-materializes-to-lessons-not-graphiti` from this worktree → scratch project pulled 19 rules incl. it, provenance line intact, second pull no-op (scratch INDUSK_HOME)
 
 #### Phase 5 Context
-- [ ] Add CLAUDE.md Conventions one-liner: promote/pull flow, catchup cadence, additive-only invariant — pointer to `reference/cli/sync.md`
+- [x] Add CLAUDE.md Conventions one-liner: promote/pull flow, catchup cadence, additive-only invariant — pointer to `reference/cli/sync.md`
 
 #### Phase 5 Document
-- [ ] Write `apps/docs/src/reference/cli/sync.md` with promote/pull Mermaid flow diagram
+- [x] Write `apps/docs/src/reference/cli/sync.md` with promote/pull Mermaid flow diagram — in the sidebar CLI group
 
 ### Phase 6: Workbench migration, compaction ritual, backfill
-- [ ] Wire compaction into `/retrospective` skill: plan-close step demotes the plan's Current State narrative to one line + pointer and compresses any Conventions entries it authored; document the periodic pass
-- [ ] A15 dry-run: run the compaction step against a sample archived plan's entries; review the diff shape (rule + pointer, not narrative)
-- [ ] Compress this repo's CLAUDE.md to ≤ 60 KB: Conventions → 1–3-line rule + pointer; Current State → live/unmerged only, shipped plans one line + pointer; preserve the operative rule sentence of every entry (A4's subject)
-- [ ] A4 sample gate: randomly sample 15 pre-compression entries (from git history), verify each operative rule still stated; record the sample in the plan folder
-- [ ] Backfill: run `indusk agent sweep` (real) on this workbench's current.md; run `indusk plans archive-dead` (review `--dry-run` list first — master.md-referenced plans protected)
-- [ ] Final MCP diet: project `.mcp.json` → exactly indusk/dash0/posthog/jaeger; global `~/.claude.json` → playwright only; **move the dash0 bearer token out of the committed `.mcp.json` into env/local config while editing it** (side finding, 2026-07-23)
-- [ ] Retire indusk-infra: `docker stop`; docs note on data retention (FalkorDB volume kept until manually removed)
+- [x] Wire compaction into `/retrospective` skill: plan-close step demotes the plan's Current State narrative to one line + pointer and compresses any Conventions entries it authored; document the periodic pass — new 'Compaction step' subsection in Step 7 (demote-own + one-old-entry periodic pass + check-pointers)
+- [x] A15 dry-run: run the compaction step against a sample archived plan's entries; review the diff shape (rule + pointer, not narrative) — exercised at scale by the P6 compression itself; reviewed pair: eval-agent-mcp-access's 4-paragraph Current State narrative → one Gotchas rule-line + archive pointer (shape confirmed rule+pointer)
+- [x] Compress this repo's CLAUDE.md to ≤ 60 KB: Conventions → 1–3-line rule + pointer; Current State → live/unmerged only, shipped plans one line + pointer; preserve the operative rule sentence of every entry (A4's subject) — 144,127 → 22,663 bytes (−84%)
+- [x] A4 sample gate: randomly sample 15 pre-compression entries (from git history), verify each operative rule still stated; record the sample in the plan folder — `a4-sample.md`: 14 intact (1 restored BY the gate — react-markdown swap-point), 1 superseded-with-statement (deprecated ce layer), 0 lost
+- [x] Backfill: run `indusk agent sweep` (real) on this workbench's current.md; run `indusk plans archive-dead` (review `--dry-run` list first — master.md-referenced plans protected) — 2 sections swept; 6 dead drafts + superseded context-budget archived (classified against trunk mtimes — a fresh worktree's checkout mtimes are useless for age detection); master.md rows annotated
+- [x] Final MCP diet: project `.mcp.json` → exactly indusk/dash0/posthog/jaeger; global `~/.claude.json` → playwright only; **move the dash0 bearer token out of the committed `.mcp.json` into env/local config while editing it** (side finding, 2026-07-23) — token now in ~/.indusk/config.env, .mcp.json uses ${DASH0_AUTH_TOKEN} (Sandy: export it in the shell for dash0 MCP to connect); global backup at ~/.claude.json.pre-makeover.bak
+- [x] Retire indusk-infra: `docker stop`; docs note on data retention (FalkorDB volume kept until manually removed) — container stopped (was up 14h); retention note in changelog
 
 #### Phase 6 Verification
-- [ ] A1 green (`wc -c` gate), A3 green (pointer walker), A4 sample recorded green, A11 green (plan list + archive intact), A12 green (keep-list diff), A15 dry-run diff reviewed
-- [ ] A5 green: fresh `/catchup` measured ≤ ~15k tokens; numbers recorded against `baseline.md`
+- [x] A1 green (`wc -c` gate), A3 green (pointer walker), A4 sample recorded green, A11 green (plan list + archive intact), A12 green (keep-list diff), A15 dry-run diff reviewed — makeover-gates.sh exits 0, all four PASS; check-pointers PASS (35/35)
+- [x] A5 green: fresh `/catchup` measured ≤ ~15k tokens; numbers recorded against `baseline.md` — ~8,221 tokens (cold session, Phase 4 measurement stands; compression shrinks injected content further)
 
 #### Phase 6 Context
-- [ ] Rewrite CLAUDE.md Current State entry for this plan to the shipped one-liner (the compaction ritual eating its own dogfood)
+- [x] Rewrite CLAUDE.md Current State entry for this plan to the shipped one-liner (the compaction ritual eating its own dogfood) — Current State is now live-items-only with one In-flight block for this plan
 
 #### Phase 6 Document
-- [ ] Publish ADR to `apps/docs/src/decisions/indusk-makeover.md` (+ supersession note on context-budget references); changelog entry; before/after numbers into the context-budget guide
+- [x] Publish ADR to `apps/docs/src/decisions/indusk-makeover.md` (+ supersession note on context-budget references); changelog entry; before/after numbers into the context-budget guide — sidebar registered; measured-results table in the guide
+
+### Phase 7: Falsification — hook Edit-prediction fidelity, hidden close-out plans, vacuous gate
+
+**Goal**: verify whether the attested state holds against three confirmed-by-investigation failure modes: (1) `claude-md-budget.js` predicts Edit results with `String.replace`, whose `$`-substitution semantics diverge from the Edit tool's literal replacement — a `new_string` containing `` $` ``/`$'`/`$&`/`$$` (plausible in shell/regex snippets) makes the size check wrong in either direction, and an empty `old_string` explodes the replace_all prediction; (2) `list_plans { active: true }`'s status set omits `completed`, hiding exactly the plans mid-close-out (this plan, today, is the live counterexample) from the dieted catchup; (3) the makeover-gates A11 check swallows CLI failure (`2>/dev/null | grep -c`) and reports PASS when the classifier never ran.
+
+- [x] `hooks/claude-md-budget.js`: replace the `.replace()` prediction with an index-based splice (`idx = current.indexOf(old); current.slice(0, idx) + newStr + current.slice(idx + old.length)`) so substitution patterns are never interpreted; guard `old_string === ""` → exit 0 (the Edit tool rejects it anyway); replace_all keeps split/join (already literal)
+- [x] `src/tools/plan-tools.ts`: add `"completed"` to `ACTIVE_STATUSES` — a completed impl still inside `planning/` is by definition awaiting close-out rituals; only archival removes it from the active list. Update the tool description's status enumeration
+- [x] `scripts/makeover-gates.sh` (plan folder): A11 runs the CLI without `2>/dev/null` discard-everything; on non-zero exit or empty output, `gate FAIL A11 "classifier could not run"` instead of counting an empty stream as zero
+
+#### Phase 7 Verification
+- [x] A16: hook e2e cases with `new_string` containing `` $` ``, `$&`, `$$`, `$'` land byte-exact predictions (block/allow decisions match true post-edit size); empty `old_string` exits 0 — red today, green after the splice fix — 11 hook tests green
+- [x] A17: unit test — a plan fixture with impl status `completed` appears in `list_plans { active: true }` output — red today, green after the status set fix — `isActivePlanStatus` predicate, 10 tests green
+- [x] A18: gates script run with a deliberately broken CLI path reports FAIL for A11 — red today (vacuous PASS), green after the script hardening — broken-root run prints `FAIL A11 classifier could not run`; real root still PASSes with a real count
+
+#### Phase 7 Context
+- [x] Add CLAUDE.md Known Gotchas one-liner: never predict Edit results with `String.replace` — `$`-substitution patterns in the replacement diverge from the tool's literal semantics; use index-splice (the claude-md-budget lesson)
+
+#### Phase 7 Document
+- [x] Add the `$`-substitution fix + active-filter widening to the changelog's Unreleased makeover entry
+
+### Phase 8: Cleanup — deduplicate the legacy-MCP-removal migration
+
+**Goal**: decompose the one genuine repeat this plan introduced — `init.ts` and `update.ts` each carry their own copy of the "remove stale graphiti/codegraphcontext MCP registrations" loop — per the library idiom (extract a module; dusk has no framework extensions enabled, so the unit is a function). Every other flagged file is a reasoned leave-as-is below.
+
+- [x] Extract the legacy-MCP-removal loop into `apps/indusk-mcp/src/lib/mcp-migration.ts` — `removeLegacyMcpServers(projectRoot, opts?): { removed: string[]; failed: string[] }` (reads `.mcp.json` for presence, shells `claude mcp remove -s project <name>`, injectable runner for tests); `init.ts` and `update.ts` both call it; the extension-manifest disable loop stays in update.ts (it has no second call site)
+- [x] (reviewed `init.ts` 1275 / `update.ts` 745 — left as-is beyond the extraction: this plan NET-SHRANK both; whole-file decomposition of the init/update monoliths is the cleanup-ritual plan's standing "first customer" follow-up, out of this plan's diff)
+- [x] (reviewed `cli.ts` 706 — left as-is: declarative commander registration table; every action already lives in `commands/*`; this plan shrank it by deleting the graph/beam blocks)
+- [x] (reviewed `config.ts` 434 — left as-is: flat registry of small config readers; splitting 10-line readers into per-domain files creates import churn without cohesion gain)
+- [x] (reviewed `current-md.ts` 417 — left as-is: parser + serializer are a round-trip pair for one file format; splitting them scatters the invariant)
+- [x] (reviewed `persistent-evaluator.ts` 432 — left as-is: cohesive evaluator lifecycle, net-shrunk by this plan)
+- [x] (reviewed `planner.md`/`SKILL.md` 568, `changelog.md` 404, `eval-trigger.js` 413, `current-md.test.ts` 452 — left as-is: prose files, or incidental biome-formatting touches only; not code this plan grew)
+
+#### Phase 8 Verification
+- [x] A19: `lib/mcp-migration.ts` unit test covers remove-success and remove-failure (runner injection); init/update call-site parity pinned by a grep-style assertion that neither file carries its own removal loop — 5 tests green; tsc + biome clean
+
+#### Phase 8 Context
+- [x] Extend the indusk-mcp Architecture bullet in CLAUDE.md: name `lib/mcp-migration.ts` as the migration surface for retired MCP servers (future removals reuse it, not hand-rolled loops)
+
+#### Phase 8 Document
+- [x] One line in the changelog's Unreleased makeover entry: legacy-server removal is a shared, tested migration helper
 
 ## Files Affected
 

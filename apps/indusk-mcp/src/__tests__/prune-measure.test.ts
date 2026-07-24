@@ -61,14 +61,11 @@ describe("Phase 1: measureProjectContext", () => {
 		it("returns a PruneReport with claudeMd, lessons, currentMd, and estimatedAutoLoadBytes", () => {
 			writeClaudeMd(tmpRoot, {
 				"What This Is": "A test project.",
-				"Architecture": "Simple monorepo.",
+				Architecture: "Simple monorepo.",
 				"Current State": "All systems green.",
 			});
 			mkdirSync(join(tmpRoot, ".indusk"), { recursive: true });
-			writeFileSync(
-				join(tmpRoot, ".indusk/config.json"),
-				JSON.stringify({ project_name: "test" }),
-			);
+			writeFileSync(join(tmpRoot, ".indusk/config.json"), JSON.stringify({ project_name: "test" }));
 			writeLesson(join(tmpRoot, ".claude/lessons"), "community-test", "# Test lesson\n\nBody.");
 
 			const report = measureProjectContext(tmpRoot);
@@ -104,7 +101,7 @@ describe("Phase 1: measureProjectContext", () => {
 			const bigBody = "x".repeat(5000); // > 4000 default
 			writeClaudeMd(tmpRoot, {
 				"Current State": bigBody,
-				"Architecture": "small",
+				Architecture: "small",
 			});
 
 			const report = measureProjectContext(tmpRoot, { large_section_chars: 4000 });
@@ -197,9 +194,7 @@ describe("Phase 1: measureProjectContext", () => {
 
 			expect(report.currentMd.exists).toBe(true);
 			expect(report.currentMd.staleSections.length).toBeGreaterThanOrEqual(1);
-			const stale = report.currentMd.staleSections.find((s) =>
-				s.sessionId.startsWith("bbbbbbbb"),
-			);
+			const stale = report.currentMd.staleSections.find((s) => s.sessionId.startsWith("bbbbbbbb"));
 			expect(stale).toBeDefined();
 			expect(stale?.lastUpdated).toBe(staleTs);
 		});

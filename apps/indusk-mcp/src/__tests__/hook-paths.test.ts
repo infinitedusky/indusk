@@ -25,9 +25,10 @@ const HELPER_PATH = resolve(__dirname, "../../hooks/_hook-paths.js");
 
 async function loadHelper() {
 	const mod = await import(HELPER_PATH);
-	return mod.resolveStateAndGitPaths as (
-		cwd: string,
-	) => { statePath: string | null; gitPath: string | null };
+	return mod.resolveStateAndGitPaths as (cwd: string) => {
+		statePath: string | null;
+		gitPath: string | null;
+	};
 }
 
 function gitInit(dir: string): void {

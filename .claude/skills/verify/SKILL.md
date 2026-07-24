@@ -69,7 +69,7 @@ Use the `resolveTestIdCommand(trajectory, id)` helper from [`apps/indusk-mcp/src
    - Skip for: markdown changes, config-only changes with no test files
    - Catches: behavioral regressions, broken logic
    - Run affected app's tests, not the full suite
-   - **Use the code graph to find affected tests** — see toolbelt "Before Modifying Code." Call `query_dependencies` with direction "dependents" to find test files that depend on the changed code.
+   - **Grep for affected tests** — search for imports of the changed modules to find test files that depend on the changed code.
 
 4. **Build** — `pnpm turbo build --filter={app}`
    - Only for: shared package changes, build config changes
