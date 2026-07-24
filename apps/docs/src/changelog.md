@@ -10,6 +10,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Removed (Graphiti + CGC)
 - **Graphiti and CodeGraphContext are retired.** MCP registrations, extensions (`graphiti`/`cgc`/`falkordb`), the semantic-graph event pipeline, the context beam, and `indusk graph`/`indusk beam` CLI are all removed. Field measurement: ~1 generic Graphiti query per session, near-zero CGC reads, standing infra + schema cost. `indusk init`/`update` now REMOVE stale registrations and disable the retired extension manifests on existing projects.
+- **The indusk-infra container (FalkorDB + Graphiti) is retired.** `indusk init` no longer checks or auto-starts it. Stop yours with `docker stop indusk-infra`; the `indusk-data` volume is retained until you remove it manually (`docker volume rm indusk-data` once you're sure nothing in the graph is still wanted).
 - **The highlight→eval rail is preserved and retargets to lessons.** The eval agent materializes durable highlights via `add_lesson` (titles-hot/bodies-cold); findings persist via the eval scorecard/findings log. The CRITICAL live-delta and `already_processed` STOP guards from 1.31.x carry over unchanged — a reappearing `graph_capture` reference is now itself a test failure.
 
 ## [1.32.0] — 2026-07-13

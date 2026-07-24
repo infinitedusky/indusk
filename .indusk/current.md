@@ -17,44 +17,6 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 9f1ead50 — fresh-eyes review of code-reviewer-agent plan
-
-**Session ID**: 9f1ead50-3c0c-40c2-87e0-2ac8bbfc8b06
-**Last updated**: 2026-06-28T10:19:55.206Z
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session baf66f0a — brief: per-phase code cleanup/quality gate
-
-**Session ID**: baf66f0a-62d9-4f32-8654-461bbef2716b
-**Last updated**: 2026-07-06T18:14:59.540Z
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
 ## Session c6257c42 — work indusk-makeover (Phase 0: baseline tripwires)
 
 **Session ID**: c6257c42-ad34-41a2-b090-d161a282c5c3

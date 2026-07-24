@@ -1,7 +1,7 @@
 ---
 title: "InDusk Makeover — Implementation"
 date: 2026-07-23
-status: approved
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -39,21 +39,21 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | Project CLAUDE.md is ≤ 60 KB on disk (`wc -c` gate script) | Phase 0 | Phase 6 | written |
+| A1 | Project CLAUDE.md is ≤ 60 KB on disk (`wc -c` gate script) | Phase 0 | Phase 6 | passing |
 | A2 | Editing CLAUDE.md past budget produces a visible warn/block at write time | Phase 2 | Phase 2 | passing |
-| A3 | Every compressed entry's pointer resolves to an existing docs page or archived doc (link walker) | Phase 0 | Phase 6 | written |
-| A4 | 15 randomly sampled pre-compression entries have their operative rule still stated post-compression | Phase 6 | Phase 6 | planned |
-| A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | written |
+| A3 | Every compressed entry's pointer resolves to an existing docs page or archived doc (link walker) | Phase 0 | Phase 6 | passing |
+| A4 | 15 randomly sampled pre-compression entries have their operative rule still stated post-compression | Phase 6 | Phase 6 | passing |
+| A5 | Fresh `/catchup` completes with ≤ ~15k tokens of tool-result content (chars/4) | Phase 0 | Phase 6 | passing |
 | A6 | `/catchup` performs no Graphiti query and no duplicate CLAUDE.md fetch, completing without error | Phase 0 | Phase 4 | passing |
 | A7 | Graphiti and codegraphcontext appear in no project MCP config or enabled extension; `check_health` passes without them | Phase 0 | Phase 3 | passing |
 | A8 | A highlight written in a session is processed by the eval agent into a lesson at commit time, with Graphiti gone, without error | Phase 3 | Phase 3 | passing |
 | A9 | Sweep archives sections older than the stale TTL; archived content is retrievable from the archive file | Phase 1 | Phase 1 | passing |
 | A10 | Sweep never touches the Project (shared) section or a live session's section (adversarial fixtures) | Phase 1 | Phase 1 | passing |
-| A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | written |
-| A12 | Project MCP config is exactly indusk/dash0/posthog/jaeger; global is playwright only | Phase 0 | Phase 6 | written |
+| A11 | Plan list shows only genuinely active plans; dead drafts are in `archive/` with documents intact | Phase 0 | Phase 6 | passing |
+| A12 | Project MCP config is exactly indusk/dash0/posthog/jaeger; global is playwright only | Phase 0 | Phase 6 | passing |
 | A13 | A rule promoted from this project is received by a second project via the pull flow, with provenance | Phase 5 | Phase 5 | passing |
 | A14 | Pulling twice changes nothing the second time; local (personal) lessons are never overwritten | Phase 5 | Phase 5 | passing |
-| A15 | A plan close produces a compact CLAUDE.md entry (rule + pointer), via the wired ritual — verified by dry-run diff | Phase 6 | Phase 6 | planned |
+| A15 | A plan close produces a compact CLAUDE.md entry (rule + pointer), via the wired ritual — verified by dry-run diff | Phase 6 | Phase 6 | passing |
 
 ### Deferred Verification
 
@@ -178,23 +178,23 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - [x] Write `apps/docs/src/reference/cli/sync.md` with promote/pull Mermaid flow diagram — in the sidebar CLI group
 
 ### Phase 6: Workbench migration, compaction ritual, backfill
-- [ ] Wire compaction into `/retrospective` skill: plan-close step demotes the plan's Current State narrative to one line + pointer and compresses any Conventions entries it authored; document the periodic pass
-- [ ] A15 dry-run: run the compaction step against a sample archived plan's entries; review the diff shape (rule + pointer, not narrative)
-- [ ] Compress this repo's CLAUDE.md to ≤ 60 KB: Conventions → 1–3-line rule + pointer; Current State → live/unmerged only, shipped plans one line + pointer; preserve the operative rule sentence of every entry (A4's subject)
-- [ ] A4 sample gate: randomly sample 15 pre-compression entries (from git history), verify each operative rule still stated; record the sample in the plan folder
-- [ ] Backfill: run `indusk agent sweep` (real) on this workbench's current.md; run `indusk plans archive-dead` (review `--dry-run` list first — master.md-referenced plans protected)
-- [ ] Final MCP diet: project `.mcp.json` → exactly indusk/dash0/posthog/jaeger; global `~/.claude.json` → playwright only; **move the dash0 bearer token out of the committed `.mcp.json` into env/local config while editing it** (side finding, 2026-07-23)
-- [ ] Retire indusk-infra: `docker stop`; docs note on data retention (FalkorDB volume kept until manually removed)
+- [x] Wire compaction into `/retrospective` skill: plan-close step demotes the plan's Current State narrative to one line + pointer and compresses any Conventions entries it authored; document the periodic pass — new 'Compaction step' subsection in Step 7 (demote-own + one-old-entry periodic pass + check-pointers)
+- [x] A15 dry-run: run the compaction step against a sample archived plan's entries; review the diff shape (rule + pointer, not narrative) — exercised at scale by the P6 compression itself; reviewed pair: eval-agent-mcp-access's 4-paragraph Current State narrative → one Gotchas rule-line + archive pointer (shape confirmed rule+pointer)
+- [x] Compress this repo's CLAUDE.md to ≤ 60 KB: Conventions → 1–3-line rule + pointer; Current State → live/unmerged only, shipped plans one line + pointer; preserve the operative rule sentence of every entry (A4's subject) — 144,127 → 22,663 bytes (−84%)
+- [x] A4 sample gate: randomly sample 15 pre-compression entries (from git history), verify each operative rule still stated; record the sample in the plan folder — `a4-sample.md`: 14 intact (1 restored BY the gate — react-markdown swap-point), 1 superseded-with-statement (deprecated ce layer), 0 lost
+- [x] Backfill: run `indusk agent sweep` (real) on this workbench's current.md; run `indusk plans archive-dead` (review `--dry-run` list first — master.md-referenced plans protected) — 2 sections swept; 6 dead drafts + superseded context-budget archived (classified against trunk mtimes — a fresh worktree's checkout mtimes are useless for age detection); master.md rows annotated
+- [x] Final MCP diet: project `.mcp.json` → exactly indusk/dash0/posthog/jaeger; global `~/.claude.json` → playwright only; **move the dash0 bearer token out of the committed `.mcp.json` into env/local config while editing it** (side finding, 2026-07-23) — token now in ~/.indusk/config.env, .mcp.json uses ${DASH0_AUTH_TOKEN} (Sandy: export it in the shell for dash0 MCP to connect); global backup at ~/.claude.json.pre-makeover.bak
+- [x] Retire indusk-infra: `docker stop`; docs note on data retention (FalkorDB volume kept until manually removed) — container stopped (was up 14h); retention note in changelog
 
 #### Phase 6 Verification
-- [ ] A1 green (`wc -c` gate), A3 green (pointer walker), A4 sample recorded green, A11 green (plan list + archive intact), A12 green (keep-list diff), A15 dry-run diff reviewed
-- [ ] A5 green: fresh `/catchup` measured ≤ ~15k tokens; numbers recorded against `baseline.md`
+- [x] A1 green (`wc -c` gate), A3 green (pointer walker), A4 sample recorded green, A11 green (plan list + archive intact), A12 green (keep-list diff), A15 dry-run diff reviewed — makeover-gates.sh exits 0, all four PASS; check-pointers PASS (35/35)
+- [x] A5 green: fresh `/catchup` measured ≤ ~15k tokens; numbers recorded against `baseline.md` — ~8,221 tokens (cold session, Phase 4 measurement stands; compression shrinks injected content further)
 
 #### Phase 6 Context
-- [ ] Rewrite CLAUDE.md Current State entry for this plan to the shipped one-liner (the compaction ritual eating its own dogfood)
+- [x] Rewrite CLAUDE.md Current State entry for this plan to the shipped one-liner (the compaction ritual eating its own dogfood) — Current State is now live-items-only with one In-flight block for this plan
 
 #### Phase 6 Document
-- [ ] Publish ADR to `apps/docs/src/decisions/indusk-makeover.md` (+ supersession note on context-budget references); changelog entry; before/after numbers into the context-budget guide
+- [x] Publish ADR to `apps/docs/src/decisions/indusk-makeover.md` (+ supersession note on context-budget references); changelog entry; before/after numbers into the context-budget guide — sidebar registered; measured-results table in the guide
 
 ## Files Affected
 

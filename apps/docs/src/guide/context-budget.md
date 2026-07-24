@@ -66,3 +66,14 @@ flowchart LR
 - **[`indusk plans archive-dead`](/reference/cli/plans)**: all-draft plans untouched for 30 days move to `planning/archive/`.
 
 Everything decays by **archiving, never deleting** — recovery is always a file away.
+
+## Measured results (dusk, 2026-07-23)
+
+| Metric | Before | After |
+|--------|--------|-------|
+| CLAUDE.md on disk | 144,127 B (~35k tokens) | 22,663 B (~5.5k tokens) |
+| `/catchup` tool-result cost | ~55k tokens | ~8.2k tokens |
+| Dead pointers in CLAUDE.md | 38 | 0 |
+| Dead-draft plans outside archive | 7 | 0 |
+
+A 15-entry random sample of pre-compression entries verified every operative rule survived compression (one drop was caught and restored by the sample gate itself).

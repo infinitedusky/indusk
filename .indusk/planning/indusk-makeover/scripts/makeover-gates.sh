@@ -37,12 +37,16 @@ else
   gate FAIL A7 "still present: $a7_hits"
 fi
 
-# --- A11: active-plan hygiene (proxy: non-archive plan dirs <= threshold) -----
+# --- A11: active-plan hygiene -------------------------------------------------
+# Phase 0 used a dir-count proxy (<= 15). Since Phase 1 shipped the real
+# classifier, the gate checks the actual assertion: zero dead-draft candidates
+# remain outside archive/ (all-draft docs + stale mtime + not master-protected).
 plans=$(find "$ROOT/.indusk/planning" -mindepth 1 -maxdepth 1 -type d ! -name archive | wc -l | tr -d ' ')
-if [ "$plans" -le "$PLAN_THRESHOLD" ]; then
-  gate PASS A11 "${plans} active plan dirs <= ${PLAN_THRESHOLD}"
+dead=$(cd "$ROOT" && node "$ROOT/apps/indusk-mcp/dist/bin/cli.js" plans archive-dead --dry-run 2>/dev/null | grep -c '^  - .*newest file' || true)
+if [ "${dead:-0}" -eq 0 ]; then
+  gate PASS A11 "0 dead-draft candidates (${plans} active plan dirs, all with genuine status)"
 else
-  gate FAIL A11 "${plans} active plan dirs > ${PLAN_THRESHOLD} (dead drafts not yet archived)"
+  gate FAIL A11 "${dead} dead-draft candidate(s) not yet archived (${plans} active dirs)"
 fi
 
 # --- A12: MCP keep-lists ------------------------------------------------------

@@ -235,6 +235,16 @@ The counter-example is **token bloat on every catchup**, paid by every Claude Co
 
 Existing multi-paragraph entries (pre-1.31.11) can be collapsed via `indusk prune --dry-run` (which surfaces them) plus manual operator cleanup — they are not auto-migrated.
 
+#### Compaction step (indusk-makeover — the decay half of the budget)
+
+Adding one-line entries stops NEW growth; this step produces shrinkage. As part of every plan close:
+
+1. **Demote this plan's own narratives.** The plan accumulated Current State prose while in flight (per-phase context updates, in-flight markers). Replace all of it with the single one-line entry above. Any multi-paragraph Conventions/Gotchas entries this plan authored get compressed to 1–3 lines: the operative rule sentence(s) + a pointer to the decisions/lessons page or archived plan doc. **The rule stays; the narrative moves behind the pointer.**
+2. **Sweep one stale narrative while you're here** (the periodic pass): pick the oldest multi-paragraph Current State entry for an already-shipped plan and collapse it to the one-line shape. One per retrospective keeps the backlog draining without a dedicated session.
+3. **Verify pointers**: run `indusk context check-pointers` — every pointer you just wrote must resolve. A dead pointer under this regime is a lost rule body.
+
+The `claude-md-budget.js` hook enforces the 60 KB ceiling at write time (`context.claude_md_budget_bytes`); if your retrospective edit trips it, do more of step 1/2 rather than fighting the hook. See [the context-budget guide](../../docs/src/guide/context-budget.md).
+
 Why this matters: CLAUDE.md is auto-loaded into every Claude Code session. Every byte you add accrues to every prompt indefinitely. The discipline is "thinner navigation layer, queryable detail" — see [context-budget brief](../../.indusk/planning/context-budget/brief.md) for the full rationale.
 
 ### Step 8: Knowledge Handoff
