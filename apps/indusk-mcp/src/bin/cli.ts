@@ -794,6 +794,20 @@ agentCmd
 		agentPrune(rootOrExit());
 	});
 
+const contextCmd = program
+	.command("context")
+	.description("Project-context housekeeping (check-pointers)");
+
+contextCmd
+	.command("check-pointers")
+	.description(
+		"Verify every path-shaped reference in CLAUDE.md resolves on disk — a dead pointer under the rule+pointer regime is a lost rule body",
+	)
+	.action(async () => {
+		const { contextCheckPointers } = await import("./commands/context.js");
+		contextCheckPointers(rootOrExit());
+	});
+
 const plansCmd = program
 	.command("plans")
 	.description("Planning-lifecycle housekeeping (archive-dead)");
