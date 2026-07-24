@@ -104,7 +104,11 @@ program
 	.description(
 		"Audit auto-loaded context bloat (CLAUDE.md sections, lessons, current.md). --dry-run is the default and only mode in this version; no destructive action.",
 	)
-	.option("--dry-run", "Report only, no destructive action (default; only mode in this version)", true)
+	.option(
+		"--dry-run",
+		"Report only, no destructive action (default; only mode in this version)",
+		true,
+	)
 	.option(
 		"--large-section-chars <n>",
 		"Flag CLAUDE.md sections larger than this many chars (default 4000)",
@@ -302,7 +306,7 @@ graph
 			} else if (/unknown revision|HEAD/i.test(msg)) {
 				process.stderr.write(
 					"Error: this git repository has no commits yet.\n" +
-						"  Run `git commit --allow-empty -m \"init\"` first, then re-run `indusk graph sync`.\n",
+						'  Run `git commit --allow-empty -m "init"` first, then re-run `indusk graph sync`.\n',
 				);
 			} else {
 				process.stderr.write(`Error: ${msg}\n`);
@@ -788,6 +792,32 @@ agentCmd
 	.action(async () => {
 		const { agentPrune } = await import("./commands/agent.js");
 		agentPrune(rootOrExit());
+	});
+
+const plansCmd = program
+	.command("plans")
+	.description("Planning-lifecycle housekeeping (archive-dead)");
+
+plansCmd
+	.command("archive-dead")
+	.description(
+		"Move dead-draft plans (all docs draft/abandoned, older than planning.dead_draft_days) to .indusk/planning/archive/ — moved, never deleted",
+	)
+	.option("--dry-run", "Report candidates without moving anything")
+	.action(async (opts: { dryRun?: boolean }) => {
+		const { plansArchiveDead } = await import("./commands/plans.js");
+		plansArchiveDead(rootOrExit(), opts);
+	});
+
+agentCmd
+	.command("sweep")
+	.description(
+		"Archive sections older than agents.sweep_ttl_minutes (default 7d) to .indusk/archive/current-md-archive.md — moved, never deleted",
+	)
+	.option("--dry-run", "Report what would be swept without mutating anything")
+	.action(async (opts: { dryRun?: boolean }) => {
+		const { agentSweep } = await import("./commands/agent.js");
+		agentSweep(rootOrExit(), opts);
 	});
 
 program.parse();
