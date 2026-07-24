@@ -84,16 +84,16 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - [x] Author `scripts/makeover-gates.sh` in the plan folder (or `apps/indusk-mcp/scripts/`): A1 `wc -c` gate (CLAUDE.md ≤ 61440 bytes), A7 config grep (graphiti/codegraphcontext absent from `.mcp.json` + `.indusk/extensions/`), A11 active-plan count vs frontmatter status, A12 keep-list diff for project + global MCP configs — each printing PASS/FAIL
 - [x] Author A3 pointer-walker (scan CLAUDE.md for `.indusk/`/`apps/docs/` path references; verify each resolves on disk) — `scripts/check-pointers.sh`; red at 38/142 dead
 - [x] Author A5/A6 measurement procedure as a checked-in doc: run `/catchup`, sum tool-result chars/4, grep transcript for Graphiti calls + duplicate CLAUDE.md reads — `scripts/catchup-measurement.md`
-- [ ] Run all of the above; record the red baseline numbers in this plan folder (`baseline.md`)
+- [x] Run all of the above; record the red baseline numbers in this plan folder (`baseline.md`) — dusk: 142,653 B CLAUDE.md, 38 dead pointers, 23 plan dirs, both MCP configs off keep-list; A5/A6 red provisional from research.md (dusk-specific cold-session number pending — see baseline.md notes)
 
 #### Phase 0 Verification
-- [ ] A1, A3, A7, A11, A12 scripts run and FAIL red against today's state (write red); A5/A6 measured red (~55k, Graphiti query present)
+- [x] A1, A3, A7, A11, A12 scripts run and FAIL red against today's state (write red); A5/A6 measured red (~55k, Graphiti query present) — all red confirmed 2026-07-23, outputs in baseline.md; A5/A6 provisional from research.md pending a cold-session run
 
 #### Phase 0 Context
-- [ ] Add one line to CLAUDE.md Current State: indusk-makeover in-flight, baseline measured (numbers + pointer to `baseline.md`)
+- [x] Add one line to CLAUDE.md Current State: indusk-makeover in-flight, baseline measured (numbers + pointer to `baseline.md`)
 
 #### Phase 0 Document
-- [ ] Record baseline table in `baseline.md` in the plan folder (feeds the retrospective's before/after metrics)
+- [x] Record baseline table in `baseline.md` in the plan folder (feeds the retrospective's before/after metrics)
 
 ### Phase 1: Decay mechanisms — current.md sweep + dead-draft auto-archive
 - [ ] `apps/indusk-mcp/src/lib/agents/sweep.ts`: `sweepStaleSections(projectRoot, opts?)` — parses via `parseCurrentMd`, moves session sections whose `Last updated` exceeds `agents.stale_ttl_minutes` (separate, longer `agents.sweep_ttl_minutes` default 7 days — display-TTL ≠ sweep-TTL) into `.indusk/archive/current-md-archive.md` (append, with sweep timestamp header); never touches Project (shared) or fresh sections; malformed `lastUpdated` KEPT (existing prune convention); runs inside `withLock`
