@@ -29,7 +29,7 @@ my-workbench/                  # the indusk project
 ├── <repo>                     # symlink → canonical clone (the trunk; name matches `wrapped_repo`)
 ├── <slug-1>/                  # active worktree (git worktree add'd from the trunk)
 ├── <slug-2>/                  # another active worktree
-├── ce.json                    # composable.env config, optionally with `composeProjectName: "<repo>"`
+├── ce.json                    # LEGACY composable.env config (deprecated — doppler is the default env layer); optional `composeProjectName: "<repo>"`
 └── package.json               # has `wt`, `wt:pm2`, `preflight` scripts
 ```
 
@@ -95,7 +95,7 @@ Examples (workbench is wrapping `numero`):
 
 The trunk is addressable by its repo name (`pnpm wt numero ...`). No `pnpm wt trunk` alias — keeps the surface minimal; the repo name is already in `worktree.wrapped_repo` config and stable.
 
-### Composing with composable.env
+### Composing with composable.env (legacy — deprecated in favor of doppler)
 
 ce composition works inside the bare form: `pnpm wt <slug> ce <ce-cmd>`. wt.sh cd's into the worktree dir, then invokes `pnpm ce <ce-cmd>` from there — composable.env picks up the worktree's `.env.local` because that's the cwd.
 
@@ -186,7 +186,8 @@ Malformed configs produce clear errors at validation time naming the offending f
 
 ## Cross-references
 
-- **composable-env skill** — for ce-specific commands (`dc:up`, profiles, `env:build`). Worktree extension composes with ce; doesn't replace it
+- **doppler skill** — the default env layer; `indusk worktree create` auto-provisions each worktree's env from the workbench-level service token
+- **composable-env skill** (legacy, deprecated) — ce-specific commands for projects still on ce; the worktree extension composes with it but new projects should use doppler
 - **git skill** (`skills/git.md`) — for the underlying git operations the worktree extension orchestrates
 - **handoff-multi-agent plan** (`.indusk/planning/handoff-multi-agent/brief.md`) — the multi-agent-coordination plan this extension unblocks
 - **ADR** (`.indusk/planning/indusk-worktree-extension/adr.md`) — full decision rationale including why bash port, why bare `pnpm wt`, why workbench-only, why flat-vs-split layout

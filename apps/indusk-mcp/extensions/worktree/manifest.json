@@ -1,6 +1,6 @@
 {
 	"name": "worktree",
-	"description": "Worktree management for workbench-shaped indusk projects — per-repo config, scripts that author and refresh worktrees with upstream-file-overlay support, and a `pnpm wt <slug> <cmd>` execution surface that composes with composable.env",
+	"description": "Worktree management for workbench-shaped indusk projects — per-repo config, scripts that author and refresh worktrees with upstream-file-overlay support, and a `pnpm wt <slug> <cmd>` execution surface for running commands inside any worktree (env layering via the doppler extension or worktree-config copy/append; legacy composable.env setups still compose)",
 	"required": false,
 	"provides": {
 		"skill": true
