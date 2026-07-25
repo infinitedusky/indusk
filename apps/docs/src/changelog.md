@@ -2,6 +2,11 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.35.0] — 2026-07-25
+
+### Added
+- **`/work --autopilot {plan}` — hands-off phase-loop with fresh context per phase.** Multi-phase plans no longer need the manual per-phase `/handoff` → new session → `/catchup` → `/work` dance: autopilot executes each remaining phase in a **fresh subagent** (clean context, discarded after — only a compact result returns), advancing only on green. Its safety is structural, not trust-based: a spike this release **verified empirically that subagent tool calls fire — and are blocked by — this project's PreToolUse gate hooks**, so an autopilot subagent physically cannot skip test-first-RED or check off a phase whose trajectory rows aren't green. Human-judgment gates are **derived** from the plan's own Deferred Verification / manual-smoke / visual rows (no new marker); the loop hard-stops at impl-complete and hands back for `/falsify` — it never auto-runs the close-out rituals. A goalpost guard forbids autopilot subagents from editing the trajectory table or test assertions and snapshots-and-verifies the trajectory across each phase, so a gate can't be gamed. Additive — interactive `/work` is unchanged. Captured as the `community-subagents-inherit-pretooluse-hooks` lesson (a reusable harness fact for any subagent-orchestration feature).
+
 ## [1.34.0] — 2026-07-24
 
 ### Added

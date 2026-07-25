@@ -252,6 +252,41 @@ See the document skill's "Two Documentation Layers" section for details. The lea
 - Always give both layers: the **what** (the feature/code) and the **why** (the InDusk system's reasoning)
 - Normal `/work` (without teach) remains unchanged — fast execution, no pauses
 
+## Autopilot Mode
+
+When invoked as `/work --autopilot {plan}`, execute the plan's remaining phases **hands-off, each phase in a fresh subagent context**, advancing only when a phase's gates pass, and pausing at human-judgment gates. This is interactive `/work` looped through fresh contexts — same gate rigor, no per-phase manual handoff.
+
+**Why fresh-context-per-phase, and why it's safe.** Each phase executes best in a clean context window (accumulated context degrades careful/fund-critical work), and a subagent spawn gives that for free — its heavy working context is discarded; only a compact result returns. The safety is not "trust the subagent" — it's structural: **subagent tool calls fire this project's PreToolUse gate hooks, and a gate hook's block (exit 2) denies the subagent's edit exactly as it denies the main session's** (verified empirically — the `work-autopilot` spike). So an autopilot subagent physically cannot check off a phase whose trajectory `Passes at` rows aren't green, cannot skip test-first-RED, cannot advance a red gate. Autopilot inherits the rails; it does not re-implement them.
+
+### The loop
+
+**Before launching:** confirm the plan has an `approved`/`in-progress` impl with remaining phases and a worktree (create it if the frontmatter doesn't say `worktree: none`). **State the cost and get a go** — N fresh subagents each do a catchup + a full phase; this spends real tokens. Autopilot is opt-in per run.
+
+**For each remaining phase, in order:**
+
+1. **Is this phase a human gate? Derive it — don't require a new marker.** A phase is a pause point when its Verification references a **Deferred Verification** row, or a manual/smoke/visual-judgment item ("manual smoke", "browser smoke", "does it look right", a `U`-prefixed deferred row). Those are the plan's already-declared "cannot be structurally verified — a human must look" points. If the phase is a human gate: **PAUSE**, tell the user exactly what to check and why, and resume only on their approval. Do not spawn a subagent to self-approve visual/UX/fund-boundary judgment.
+2. **Otherwise, spawn a fresh subagent** (Task/Agent tool) with a tight contract:
+   > "Execute **only Phase N** of `{plan}` in worktree `{path}`. Catch up from the plan docs + `.indusk/current.md` cursor, then work the Phase N checklist under the gate hooks: test-first (author the writable-at-phase tests RED), implement, verify, commit per item. **You MUST NOT edit the `## Test Trajectory` table or any test's assertion text — you may only check off items and write implementation code.** When done, report a COMPACT result: what shipped, which tests are green (by name), and any blocker. Do not touch other phases."
+3. **Keep only the compact result** — not the phase's working context. That is the fresh-context-per-phase property, and it's what lets the orchestrator run a long plan without exhausting its own window.
+4. **Confirm green independently before advancing** (defense in depth on top of the subagent's inherited hooks): run `check-gates` for the phase (the same hook, invoked deliberately) and confirm every `Passes at: Phase N` trajectory row is terminal. Trust the structure, not the subagent's self-report.
+5. **Goalpost guard (R4).** Before the phase, snapshot the Test Trajectory table (each row's `Asserts` text + `Passes at`). After the phase, verify **no `Asserts` text changed and no `Passes at` moved to a later phase** — a subagent that couldn't reach green must not have weakened a test or deferred a row to fake completion. If the trajectory drifted, **STOP LOUD** and surface it; that's a gamed gate, not a passed one.
+6. **Red or blocker → STOP LOUD.** A failing verification, a blocked edit the subagent couldn't resolve, or a drifted trajectory halts the loop and surfaces the blocker to the human. Never advance on red. Do **not** auto-retry-and-mutate — one honest attempt per phase; a phase that can't reach green is a human decision, not a machine loop. (Per-phase iteration inside the subagent is fine; cross-phase barreling-on is not.)
+7. **Per-phase commit + eval.** Each phase's subagent commits per item, so a bad phase is an isolated, revertable unit and the eval trigger fires at its natural granularity.
+
+**Hard stop at impl-complete.** When the last phase closes, **stop and hand back to the human for `/falsify`.** Autopilot loops *impl phases only* — it never auto-runs the close-out rituals (`/falsify`, `/cleanup`, `/retrospective`). Those are human-gated by design: falsification is adversarial self-examination the author is worst-placed to automate, and cleanup + retrospective need judgment. Autopilot gets the plan to "impl complete, all phases green"; the human drives it home.
+
+### What autopilot does NOT do
+
+- It does not replace interactive `/work` — `/work` stays the default; autopilot is additive.
+- It does not run phases in parallel (they're a dependency chain).
+- It does not auto-fix a red gate beyond the subagent's own in-phase attempt — it STOPS.
+- It does not edit trajectories or test assertions (the goalpost guard forbids it).
+- It does not run the close-out rituals.
+
+### Deterministic engine (optional)
+
+Where the harness `Workflow` tool is available, the loop can run as a Workflow (sequential, one phase per stage, budget-bounded) instead of a hand-driven subagent loop — this adds a hard token budget and deterministic control flow. The contract above is identical either way; Workflow is the more rigorous executor, the sequential Agent-tool loop is the always-available fallback.
+
 ## Corrections and Context Learning
 
 When you are corrected mid-work — the user says "no, not that way" or "don't do X, do Y" — suggest capturing it with `context learn`:

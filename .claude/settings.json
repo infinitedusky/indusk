@@ -230,7 +230,7 @@
       "Bash(python3 -c \"import sys,json; r=json.load\\(sys.stdin\\); s=r.get\\('data',[]\\); print\\('graphiti in jaeger?', 'graphiti' in s\\); print\\('indusk-infra still in jaeger?', 'indusk-infra' in s\\)\")",
       "Bash(mise which *)",
       "Bash(python3 -c \"import sys,json; c=json.load\\(sys.stdin\\); hosts=[h for s in c.values\\(\\) for r in s.get\\('routes',[]\\) for m in r.get\\('match',[]\\) for h in m.get\\('host',[]\\)]; print\\('docs.dft.dawn in loaded routes:', 'docs.dft.dawn' in hosts\\)\")",
-      "Bash(/usr/bin/curl -sS -o /dev/null -w \"https://docs.dft.dawn/ → HTTP %{http_code}\\\\n\" https://docs.dft.dawn/)",
+      "Bash(/usr/bin/curl -sS -o /dev/null -w \"https://docs.dft.dawn/ \u2192 HTTP %{http_code}\\\\n\" https://docs.dft.dawn/)",
       "Bash(indusk telemetry *)",
       "Bash(curl -sf -o /dev/null -w \"Jaeger UI: %{http_code}\\\\n\" http://localhost:16686/)",
       "Bash(curl -sf -o /dev/null -w \"OTLP HTTP: %{http_code}\\\\n\" http://localhost:4318/v1/traces -X POST -H \"Content-Type: application/json\" -d '{}')",
