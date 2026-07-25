@@ -2,6 +2,11 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.34.0] — 2026-07-24
+
+### Added
+- **`/compact-context` skill — the bulk compaction ritual the budget hook has been promising.** The `claude-md-budget.js` error message told agents to "run the compaction ritual," but compaction shipped only as an incremental step inside `/retrospective` (demote one plan's narrative at close) — nothing could pay down a CLAUDE.md already multiples over budget, so the hook blocked *every* project's Key-Decision line once the file was over (numero: 497 KB / ~125k tokens/session). The new skill classifies every entry (load-bearing convention / shipped narrative / operational state / dead), reports what it would demote and where each pointer targets (report mode is the default — `--apply` executes only on confirmation), creates any missing pointer-home pages, moves operational state to `.indusk/current.md`, and lands the file under budget in a single write with `indusk context check-pointers` verifying no dangling pointers. Complements — does not replace — the retrospective's incremental step. Hook error message now names the runnable command. Same defect class as the retired check-catchup hook (tooling demanding an action it didn't provide).
+
 ## [1.33.5] — 2026-07-24
 
 ### Removed

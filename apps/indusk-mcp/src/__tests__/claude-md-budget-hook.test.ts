@@ -47,7 +47,7 @@ describe("claude-md-budget hook (A2)", () => {
 		rmSync(projectRoot, { recursive: true, force: true });
 	});
 
-	it("A2: blocks a Write that exceeds the budget, naming the compaction ritual", () => {
+	it("A2: blocks a Write that exceeds the budget, naming the /compact-context ritual", () => {
 		const result = runHook({
 			tool_name: "Write",
 			tool_input: { file_path: claudeMdPath, content: "x".repeat(2000) },
@@ -55,7 +55,7 @@ describe("claude-md-budget hook (A2)", () => {
 		});
 		expect(result.exitCode).toBe(2);
 		expect(result.stderr).toMatch(/budget exceeded/i);
-		expect(result.stderr).toMatch(/compaction ritual/i);
+		expect(result.stderr).toMatch(/compact-context/i);
 		expect(result.stderr).toMatch(/claude_md_budget_bytes/);
 	});
 

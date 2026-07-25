@@ -120,9 +120,9 @@ if (size > budget) {
 	console.error(
 		`CLAUDE.md budget exceeded: this edit brings ${filePath} to ${size} bytes ` +
 			`(budget ${budget}). CLAUDE.md is injected into every session — do not grow it; compact it.\n` +
-			`Run the compaction ritual instead: demote shipped narratives to one-line rule + pointer ` +
-			`(pointer targets the docs/decisions page or archived plan), move operational state to ` +
-			`.indusk/current.md, and let lessons carry the bodies (titles-hot/bodies-cold).\n` +
+			`Run \`/compact-context\` (report mode first) to compact instead of grow: it demotes shipped ` +
+			`narratives to one-line rule + pointer (docs/decisions page or archived plan), moves operational ` +
+			`state to .indusk/current.md, and lands the file under budget in one pass.\n` +
 			`If the budget itself is wrong for this project, raise context.claude_md_budget_bytes in ` +
 			`.indusk/config.json as a deliberate, recorded act.`,
 	);

@@ -77,3 +77,7 @@ Everything decays by **archiving, never deleting** — recovery is always a file
 | Dead-draft plans outside archive | 7 | 0 |
 
 A 15-entry random sample of pre-compression entries verified every operative rule survived compression (one drop was caught and restored by the sample gate itself).
+
+## Running compaction on an over-budget file
+
+The budget hook blocks growth but cannot retroactively shrink a file that was already over budget when the hook was installed (the common case on projects that adopted the makeover late, or on a CLAUDE.md copied from an older workbench). For that, run **`/compact-context`** — the on-demand bulk companion to the retrospective's incremental step. It reports first (what it would demote, where each pointer targets), and on `--apply` lands the file under budget in one pass with every pointer resolving. The retrospective step keeps the file from re-accruing; `/compact-context` pays down debt that already exists.

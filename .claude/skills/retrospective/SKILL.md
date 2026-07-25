@@ -243,7 +243,7 @@ Adding one-line entries stops NEW growth; this step produces shrinkage. As part 
 2. **Sweep one stale narrative while you're here** (the periodic pass): pick the oldest multi-paragraph Current State entry for an already-shipped plan and collapse it to the one-line shape. One per retrospective keeps the backlog draining without a dedicated session.
 3. **Verify pointers**: run `indusk context check-pointers` — every pointer you just wrote must resolve. A dead pointer under this regime is a lost rule body.
 
-The `claude-md-budget.js` hook enforces the 60 KB ceiling at write time (`context.claude_md_budget_bytes`); if your retrospective edit trips it, do more of step 1/2 rather than fighting the hook. See [the context-budget guide](../../docs/src/guide/context-budget.md).
+The `claude-md-budget.js` hook enforces the 60 KB ceiling at write time (`context.claude_md_budget_bytes`); if your retrospective edit trips it, do more of step 1/2 rather than fighting the hook. If the file is *already* multiples over budget (the hook was installed after it grew, or incremental compaction never ran), this per-close step can't catch up on its own — run `/compact-context` (the bulk-remediation companion) for a full editorial pass. See [the context-budget guide](../../docs/src/guide/context-budget.md).
 
 Why this matters: CLAUDE.md is auto-loaded into every Claude Code session. Every byte you add accrues to every prompt indefinitely. The discipline is "thinner navigation layer, queryable detail" — see [context-budget brief](../../.indusk/planning/context-budget/brief.md) for the full rationale.
 
