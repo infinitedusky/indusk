@@ -17,6 +17,14 @@
 export interface ProviderConfig {
 	/** Environment variable the provider's own API key is read from. */
 	apiKeyEnv: string;
+	/**
+	 * Alternate env names accepted for the same key, checked in order after
+	 * `apiKeyEnv` — the bridge for machines whose key lives under a different
+	 * conventional name (e.g. `GOOGLE_API_KEY` vs the AI SDK's default
+	 * `GOOGLE_GENERATIVE_AI_API_KEY`). The resolved key is passed to the
+	 * provider factory explicitly; it is never logged.
+	 */
+	apiKeyEnvAliases?: readonly string[];
 	/** Default model id used when `--model` names the provider, not a model. */
 	defaultModel: string;
 }
@@ -25,7 +33,13 @@ export interface ProviderConfig {
 export const PROVIDER_REGISTRY = {
 	anthropic: { apiKeyEnv: "ANTHROPIC_API_KEY", defaultModel: "claude-sonnet-4-5" },
 	openai: { apiKeyEnv: "OPENAI_API_KEY", defaultModel: "gpt-5" },
-	google: { apiKeyEnv: "GOOGLE_GENERATIVE_AI_API_KEY", defaultModel: "gemini-2.5-pro" },
+	google: {
+		apiKeyEnv: "GOOGLE_GENERATIVE_AI_API_KEY",
+		apiKeyEnvAliases: ["GOOGLE_API_KEY"],
+		// Phase 4: current stable flash-class model — free-tier friendly, which
+		// is the credit-arbitrage reason Gemini is the second driver.
+		defaultModel: "gemini-2.5-flash",
+	},
 	xai: { apiKeyEnv: "XAI_API_KEY", defaultModel: "grok-4" },
 } as const satisfies Record<string, ProviderConfig>;
 
@@ -47,10 +61,12 @@ const MODEL_ALIASES: Record<string, ProviderName> = {
 	xai: "xai",
 };
 
-/** A resolved driver config: which provider, its key env, and the model id. */
+/** A resolved driver config: which provider, its key env(s), and the model id. */
 export interface DriverConfig {
 	provider: ProviderName;
 	apiKeyEnv: string;
+	/** Every accepted key env name, primary (SDK default) first. */
+	apiKeyEnvs: readonly string[];
 	model: string;
 }
 
@@ -67,6 +83,24 @@ export function resolveModel(name: string): DriverConfig {
 		const known = Object.keys(MODEL_ALIASES).sort().join(", ");
 		throw new Error(`Unknown model "${name}". Known models: ${known}.`);
 	}
-	const cfg = PROVIDER_REGISTRY[provider];
-	return { provider, apiKeyEnv: cfg.apiKeyEnv, model: cfg.defaultModel };
+	const cfg: ProviderConfig = PROVIDER_REGISTRY[provider];
+	return {
+		provider,
+		apiKeyEnv: cfg.apiKeyEnv,
+		apiKeyEnvs: [cfg.apiKeyEnv, ...(cfg.apiKeyEnvAliases ?? [])],
+		model: cfg.defaultModel,
+	};
+}
+
+/**
+ * The key-env bridge: the first non-empty env among the driver's accepted key
+ * names (primary first, then aliases). Returns the key VALUE for the provider
+ * factory to consume — callers must never log or echo it.
+ */
+export function resolveProviderKey(driver: Pick<DriverConfig, "apiKeyEnvs">): string | undefined {
+	for (const env of driver.apiKeyEnvs) {
+		const value = process.env[env];
+		if (value) return value;
+	}
+	return undefined;
 }

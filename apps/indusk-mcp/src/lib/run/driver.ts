@@ -1,9 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { LanguageModel } from "ai";
 import { generateText, stepCountIs } from "ai";
 import { createGatedWorktreeTools, createGateToolApproval } from "./gate.js";
-import { type DriverConfig, resolveModel } from "./registry.js";
+import { type DriverConfig, resolveModel, resolveProviderKey } from "./registry.js";
 import { createWorktreeTools } from "./tools.js";
 
 /**
@@ -88,17 +89,25 @@ const DEFAULT_SYSTEM = [
 	"When the task is complete, reply with a short summary instead of calling a tool.",
 ].join(" ");
 
-/** Build the real provider model from a registry driver config. */
+/**
+ * Build the real provider model from a registry driver config — the
+ * provider-agnostic factory (one `@ai-sdk/*` line per provider, ADR Decision
+ * 1). The API key resolves through the registry's key-env bridge and is
+ * passed explicitly, so alternate conventional env names work without
+ * touching the SDK's own env lookup.
+ */
 export function createDriverModel(driver: DriverConfig): LanguageModel {
-	if (driver.provider !== "anthropic") {
-		throw new Error(
-			`Provider "${driver.provider}" has no driver yet — Claude is the Phase 1 driver; others land in Phase 4.`,
-		);
+	const apiKey = resolveProviderKey(driver);
+	switch (driver.provider) {
+		case "anthropic":
+			return createAnthropic({ apiKey })(driver.model);
+		case "google":
+			return createGoogleGenerativeAI({ apiKey })(driver.model);
+		default:
+			throw new Error(
+				`Provider "${driver.provider}" has no driver yet — anthropic (Phase 1) and google (Phase 4) are wired.`,
+			);
 	}
-	const anthropic = createAnthropic({
-		apiKey: process.env[driver.apiKeyEnv],
-	});
-	return anthropic(driver.model);
 }
 
 /**

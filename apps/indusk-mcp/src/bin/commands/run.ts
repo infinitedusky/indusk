@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { type PhaseReport, runLoop } from "../../lib/run/loop.js";
-import { resolveModel } from "../../lib/run/registry.js";
+import { resolveModel, resolveProviderKey } from "../../lib/run/registry.js";
 
 export interface RunOptions {
 	/** `--model <name>` — an alias (claude/gpt/gemini/grok) or bare provider name. */
@@ -65,9 +65,10 @@ export async function run(
 		return;
 	}
 
-	if (!process.env[driver.apiKeyEnv]) {
+	if (!resolveProviderKey(driver)) {
+		const names = driver.apiKeyEnvs.map((env) => `$${env}`).join(" or ");
 		console.error(
-			`$${driver.apiKeyEnv} is not set — the ${driver.provider} driver authenticates with a direct provider key (no gateway).`,
+			`${names} is not set — the ${driver.provider} driver authenticates with a direct provider key (no gateway).`,
 		);
 		process.exitCode = 1;
 		return;

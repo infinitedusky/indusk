@@ -103,7 +103,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 
 ### Phase 4: Second driver + registry
 
-- [ ] Add a non-Claude driver — **GPT-5 (`@ai-sdk/openai`) or Gemini (`@ai-sdk/google`), chosen by available credits at this phase** — as one registry entry.
+- [x] Add a non-Claude driver — **GPT-5 (`@ai-sdk/openai`) or Gemini (`@ai-sdk/google`), chosen by available credits at this phase** — as one registry entry. Chose **Gemini** (`@ai-sdk/google@4.0.24` pinned exact): `GOOGLE_API_KEY` exists in `~/.indusk/config.env`, no OpenAI key on this machine, free tier fits the credit-arbitrage ethos. Default model **`gemini-2.5-flash`** (current stable flash-class). `createDriverModel` is now a provider switch (anthropic + google resolve; openai/xai keep a clear "no driver yet" error). Key-env bridge: the registry entry lists accepted key envs in order (`GOOGLE_GENERATIVE_AI_API_KEY`, then `GOOGLE_API_KEY`); `resolveProviderKey` picks the first set one and the factory passes it as `apiKey` explicitly — never logged.
 - [ ] Run the same guinea-pig plan via `--model <non-claude>`.
 
 #### Phase 4 Verification
