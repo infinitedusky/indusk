@@ -27,7 +27,7 @@ function toolCallStep(toolName: string, input: Record<string, unknown>) {
 				input: JSON.stringify(input),
 			},
 		],
-		finishReason: "tool-calls" as const,
+		finishReason: { unified: "tool-calls" as const, raw: "tool_use" },
 		usage: {
 			inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 },
 			outputTokens: { total: 10, text: 10, reasoning: 0 },
@@ -40,7 +40,7 @@ function toolCallStep(toolName: string, input: Record<string, unknown>) {
 function finishStep(text: string) {
 	return {
 		content: [{ type: "text" as const, text }],
-		finishReason: "stop" as const,
+		finishReason: { unified: "stop" as const, raw: "end_turn" },
 		usage: {
 			inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 },
 			outputTokens: { total: 10, text: 10, reasoning: 0 },
@@ -88,10 +88,7 @@ describe("Claude driver — rented multi-step tool loop (T1)", () => {
 		expect(content).toBe('export const X = "two";\n');
 
 		// The loop made exactly the two scripted tool calls, in order.
-		expect(result.toolCalls.map((c) => c.toolName)).toEqual([
-			"writeFile",
-			"edit",
-		]);
+		expect(result.toolCalls.map((c) => c.toolName)).toEqual(["writeFile", "edit"]);
 
 		// Three model steps: write, edit, finish.
 		expect(result.steps).toBe(3);
@@ -119,8 +116,6 @@ describe("Claude driver — rented multi-step tool loop (T1)", () => {
 		// The loop completes (tool errors feed back to the model as results),
 		// but nothing was written outside the worktree root.
 		expect(result.finishReason).toBe("stop");
-		await expect(
-			readFile(join(worktree, "..", "escape.txt"), "utf8"),
-		).rejects.toThrow();
+		await expect(readFile(join(worktree, "..", "escape.txt"), "utf8")).rejects.toThrow();
 	});
 });

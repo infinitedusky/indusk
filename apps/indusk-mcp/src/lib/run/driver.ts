@@ -1,0 +1,107 @@
+import { createAnthropic } from "@ai-sdk/anthropic";
+import type { LanguageModel } from "ai";
+import { generateText, stepCountIs } from "ai";
+import { type DriverConfig, resolveModel } from "./registry.js";
+import { createWorktreeTools } from "./tools.js";
+
+/**
+ * The rented agentic loop (ADR Decision 1): Vercel AI SDK `generateText` as a
+ * multi-step tool loop, driving the worktree-bound tool set. Claude is the
+ * first driver; the provider is a one-line swap behind the registry.
+ *
+ * Phase 1 scope: NO gates. The Phase 2 gate adapter owns the edit tool's
+ * execute path; this loop is deliberately enforcement-free.
+ *
+ * The model client is injectable so tests drive the loop with a scripted
+ * mock (`ai/test`) — the default is the real `@ai-sdk/anthropic` factory
+ * built from the registry's driver config.
+ */
+
+export interface RunDriverOptions {
+	/** Absolute path to the worktree the tools are bound to. */
+	worktree: string;
+	/** The task prompt for the model. */
+	prompt: string;
+	/** Optional system prompt. */
+	system?: string;
+	/**
+	 * Resolved provider config (registry). Defaults to the Claude driver.
+	 * Ignored when `model` is injected.
+	 */
+	driver?: DriverConfig;
+	/**
+	 * Injectable model client — tests pass a mock; production omits it and
+	 * gets the real provider built from `driver`.
+	 */
+	model?: LanguageModel;
+	/** Max model steps before the loop stops. Default 16. */
+	maxSteps?: number;
+}
+
+export interface DriverToolCall {
+	toolName: string;
+	input: unknown;
+}
+
+export interface DriverRunResult {
+	/** Final text the model produced. */
+	text: string;
+	/** Number of model steps the loop took. */
+	steps: number;
+	/** Every tool call the loop executed, in order. */
+	toolCalls: DriverToolCall[];
+	/** The loop's final finish reason (e.g. "stop"). */
+	finishReason: string;
+}
+
+const DEFAULT_MAX_STEPS = 16;
+
+const DEFAULT_SYSTEM = [
+	"You are a coding agent operating on a git worktree.",
+	"Use the tools (readFile, writeFile, edit, bash, list) to complete the task.",
+	"All paths are relative to the worktree root; you cannot touch anything outside it.",
+	"When the task is complete, reply with a short summary instead of calling a tool.",
+].join(" ");
+
+/** Build the real provider model from a registry driver config. */
+export function createDriverModel(driver: DriverConfig): LanguageModel {
+	if (driver.provider !== "anthropic") {
+		throw new Error(
+			`Provider "${driver.provider}" has no driver yet — Claude is the Phase 1 driver; others land in Phase 4.`,
+		);
+	}
+	const anthropic = createAnthropic({
+		apiKey: process.env[driver.apiKeyEnv],
+	});
+	return anthropic(driver.model);
+}
+
+/**
+ * Run the multi-step tool loop against a worktree. Resolves when the model
+ * finishes (no more tool calls) or the step cap is hit.
+ */
+export async function runDriver(options: RunDriverOptions): Promise<DriverRunResult> {
+	const driver = options.driver ?? resolveModel("claude");
+	const model = options.model ?? createDriverModel(driver);
+	const tools = createWorktreeTools(options.worktree);
+
+	const result = await generateText({
+		model,
+		tools,
+		system: options.system ?? DEFAULT_SYSTEM,
+		prompt: options.prompt,
+		stopWhen: stepCountIs(options.maxSteps ?? DEFAULT_MAX_STEPS),
+	});
+
+	return {
+		text: result.text,
+		steps: result.steps.length,
+		toolCalls: result.steps.flatMap((step) =>
+			step.toolCalls.map((call) => ({
+				toolName: call.toolName,
+				input: call.input,
+			})),
+		),
+		finishReason: result.finishReason,
+	};
+}
