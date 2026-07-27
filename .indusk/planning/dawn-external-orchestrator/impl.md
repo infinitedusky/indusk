@@ -78,7 +78,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - [x] Pass test: a compliant edit → gate exits 0, edit applied. Green = **T4**. (Trajectory rows primed to `passing` in the copy; same checkoff edit applies on disk.) Full run: `pnpm vitest run src/lib/run/` → 3 files, 20/20 passing (gate 11 + driver 2 + registry 7); `pnpm exec tsc --noEmit` clean; `biome check` clean on gate.ts/gate.test.ts/driver.ts.
 
 #### Phase 2 Context
-- [ ] Record that the discipline is the *shared scripts*; the SDK gate is a thin invoker (no rules in the invoker).
+- [x] Record that the discipline is the *shared scripts*; the SDK gate is a thin invoker (no rules in the invoker). Recorded: the discipline is the shared scripts; the SDK gate is a thin invoker. `gate.ts` contains zero rule content — it adapts the tool-call to the `{ tool_name, tool_input, cwd }` envelope, spawns the scripts, and relays exit codes; rules change by changing the scripts, never the invoker. (Also in the `gate.ts` header comment.)
 
 #### Phase 2 Document
 - [x] (none needed — internal enforcement wiring, no user-facing surface; documented with the loop in Phase 3)
