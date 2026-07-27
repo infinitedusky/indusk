@@ -38,7 +38,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 ### Implementation
 - [x] Add an `indusk run <plan>` subcommand to the indusk-mcp CLI with a `--model <name>` flag.
 - [x] Provider registry config: `provider → { apiKeyEnv, defaultModel }` for `anthropic` / `openai` / `google` / `xai`; `--model` resolves to a driver config (direct keys, no gateway).
-- [ ] Add the guinea-pig fixture — a small `semver` parse/compare/bump CLI plan (brief + trajectory-bearing impl) with one phase whose checkoff requires green tests — under a fixtures directory.
+- [x] Add the guinea-pig fixture — a small `semver` parse/compare/bump CLI plan (brief + trajectory-bearing impl) with one phase whose checkoff requires green tests — under a fixtures directory.
 
 ### Verification
 - `indusk run --help` prints usage including `--model`. Expected: help text lists the flag.
