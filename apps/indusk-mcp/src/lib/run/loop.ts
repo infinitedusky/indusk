@@ -79,8 +79,33 @@ export function snapshotTrajectory(implContent: string): Trajectory {
  * Passes-at-moved-later, and row removal are violations; State-cell
  * transitions and added rows are allowed.
  */
-export function checkGoalposts(_before: Trajectory, _after: Trajectory): string[] {
-	throw new Error("not implemented");
+export function checkGoalposts(before: Trajectory, after: Trajectory): string[] {
+	const violations: string[] = [];
+	const afterById = new Map(after.rows.map((row) => [row.id, row]));
+
+	for (const row of before.rows) {
+		const now = afterById.get(row.id);
+		if (!now) {
+			violations.push(`Trajectory row ${row.id} was removed mid-phase — a deleted goalpost.`);
+			continue;
+		}
+		if (now.asserts !== row.asserts) {
+			violations.push(
+				`Trajectory row ${row.id} Asserts changed mid-phase — a moved goalpost. Was: "${row.asserts}" — now: "${now.asserts}".`,
+			);
+		}
+		if (
+			Number.isFinite(row.passesAt) &&
+			Number.isFinite(now.passesAt) &&
+			now.passesAt > row.passesAt
+		) {
+			violations.push(
+				`Trajectory row ${row.id} Passes at moved later mid-phase (Phase ${row.passesAt} → Phase ${now.passesAt}) — a deferred goalpost.`,
+			);
+		}
+	}
+
+	return violations;
 }
 
 /**
@@ -239,6 +264,9 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 
 		options.onPhaseStart?.(phase.number, phase.name);
 
+		// Goalpost baseline: snapshot the trajectory before the phase runs.
+		const trajectoryBefore = snapshotTrajectory(content);
+
 		// One honest attempt — both gate layers live on every edit tool call.
 		const result = await runDriver({
 			worktree: root,
@@ -248,6 +276,14 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			maxSteps: options.maxStepsPerPhase ?? DEFAULT_PHASE_STEPS,
 			gate,
 		});
+
+		// Goalpost guard: STOP LOUD if the trajectory drifted — a gamed gate,
+		// not a passed one. Detection, not reversion: the drift stays visible.
+		const trajectoryAfter = snapshotTrajectory(await readFile(implPath, "utf8"));
+		const violations = checkGoalposts(trajectoryBefore, trajectoryAfter);
+		if (violations.length > 0) {
+			return { status: "stopped-goalpost", phase: phase.number, violations, phases };
+		}
 
 		// Advance only on green: the deliberate check-gates probe, not the
 		// model's self-report, decides whether the phase closed.

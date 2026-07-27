@@ -86,7 +86,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 ### Phase 3: Loop-control port
 
 - [x] Port the autopilot loop control: scope per phase; advance only when the phase's gates pass (invoke `check-gates` deliberately). `runLoop` in `src/lib/run/loop.ts`: one gated driver run per phase (tight autopilot-ported contract), then `probePhaseClose` — a synthetic next-phase checkoff envelope fed to the REAL `check-gates` on a temp copy, exit 0 required — decides advance, never the model's self-report. Rows writable at the probe phase are neutralized (`skipped`, probe copy only) so next-phase test-first duty can't false-block this phase's close.
-- [ ] Goalpost guard: snapshot the Test Trajectory table pre-phase; STOP LOUD if any `Asserts` text changed or a `Passes at` moved later.
+- [x] Goalpost guard: snapshot the Test Trajectory table pre-phase; STOP LOUD if any `Asserts` text changed or a `Passes at` moved later. `checkGoalposts` (pure): Asserts change / Passes-at-later / row removal are violations; State transitions + added rows allowed. `runLoop` returns `{ status: "stopped-goalpost", violations }` — detection, not reversion (the drift stays visible on disk).
 - [ ] Pause-at-human-gate: detect deferred/manual rows and pause instead of self-approving.
 - [ ] Run the full guinea-pig plan via Claude with gates live.
 
