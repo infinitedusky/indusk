@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
-import { resolve } from "node:path";
+import { existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import type { ToolApprovalStatus, ToolSet } from "ai";
 import { createWorktreeTools, resolveInWorktree } from "./tools.js";
 
@@ -94,9 +95,30 @@ export function toGateEnvelope(
  * project: from the target project's `.claude/hooks/`, walking up from the
  * worktree root. Throws (loud, never silently vacuous) when absent.
  */
-export function resolveGateScripts(_worktreeRoot: string): string[] {
-	throw new Error("not implemented (Phase 2)");
+export function resolveGateScripts(worktreeRoot: string): string[] {
+	let current = resolve(worktreeRoot);
+	// Walk up (hard-capped like the hooks' own findStatePath) — the worktree
+	// may carry .claude/hooks itself, or the project/workbench root above it
+	// does. First ancestor with BOTH scripts wins.
+	for (let i = 0; i < 40; i++) {
+		const hooksDir = join(current, ".claude", "hooks");
+		const candidates = GATE_SCRIPT_NAMES.map((name) => join(hooksDir, name));
+		if (candidates.every((p) => existsSync(p))) {
+			return candidates;
+		}
+		const parent = dirname(current);
+		if (parent === current) break;
+		current = parent;
+	}
+	throw new Error(
+		`Gate scripts not found: no ancestor of ${resolve(worktreeRoot)} has .claude/hooks/ containing ${GATE_SCRIPT_NAMES.join(
+			" + ",
+		)}. The target project needs the InDusk hooks installed (indusk init/update), or pass explicit script paths.`,
+	);
 }
+
+/** Validator first, then gates — mirrors the PreToolUse hook chain. */
+const GATE_SCRIPT_NAMES = ["validate-impl-structure.js", "check-gates.js"] as const;
 
 /**
  * Spawn each gate script in order, writing the envelope to stdin. Exit 2
@@ -198,7 +220,10 @@ type ToolExecuteFn = (input: unknown, executionOptions: unknown) => unknown;
 export function createGateToolApproval(
 	worktreeRoot: string,
 	options: GateOptions = {},
-): Record<GatedToolName, (input: unknown, approvalOptions: unknown) => Promise<ToolApprovalStatus>> {
+): Record<
+	GatedToolName,
+	(input: unknown, approvalOptions: unknown) => Promise<ToolApprovalStatus>
+> {
 	const root = resolve(worktreeRoot);
 	const scripts = options.scripts ?? resolveGateScripts(root);
 
