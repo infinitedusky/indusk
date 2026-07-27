@@ -5,7 +5,7 @@ import type { LanguageModel } from "ai";
 import matter from "gray-matter";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
 import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
-import { type RunGateOptions, runDriver } from "./driver.js";
+import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";
 import { type GateEnvelope, type GateResult, resolveGateScripts, runGateScripts } from "./gate.js";
 import type { DriverConfig } from "./registry.js";
 
@@ -37,10 +37,12 @@ export interface RunLoopOptions {
 	driver?: DriverConfig;
 	/** Gate wiring — scripts injectable for tests. Never omitted internally. */
 	gate?: RunGateOptions;
-	/** Max model steps per phase. Default 24. */
+	/** Max model steps per phase. Default 48. */
 	maxStepsPerPhase?: number;
 	/** Progress callback fired before each phase's driver run. */
 	onPhaseStart?: (phase: number, name: string) => void;
+	/** Live per-step progress from the driver (tool calls as they land). */
+	onStep?: RunDriverOptions["onStep"];
 }
 
 export interface PhaseReport {
@@ -54,7 +56,14 @@ export interface PhaseReport {
 export type RunLoopResult =
 	| { status: "complete"; phases: PhaseReport[] }
 	| { status: "stopped-goalpost"; phase: number; violations: string[]; phases: PhaseReport[] }
-	| { status: "stopped-red"; phase: number; reason: string; phases: PhaseReport[] }
+	| {
+			status: "stopped-red";
+			phase: number;
+			reason: string;
+			phases: PhaseReport[];
+			/** Cost of the failed attempt (F4: red stops must report too). */
+			attempt?: PhaseReport;
+	  }
 	| {
 			status: "paused-human-gate";
 			phase: number;
@@ -324,6 +333,7 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			driver: options.driver,
 			maxSteps: options.maxStepsPerPhase ?? DEFAULT_PHASE_STEPS,
 			gate,
+			onStep: options.onStep,
 		});
 
 		// Goalpost guard: STOP LOUD if the trajectory drifted — a gamed gate,
@@ -343,6 +353,13 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 				phase: phase.number,
 				reason: probe.blockMessage ?? `check-gates refused the Phase ${phase.number} close probe.`,
 				phases,
+				attempt: {
+					phase: phase.number,
+					name: phase.name,
+					steps: result.steps,
+					toolCalls: result.toolCalls.length,
+					usage: result.usage,
+				},
 			};
 		}
 

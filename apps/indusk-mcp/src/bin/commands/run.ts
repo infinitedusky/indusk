@@ -33,6 +33,21 @@ function usageSuffix(report: PhaseReport): string {
 	return ` (${inputTokens ?? "?"} in / ${outputTokens ?? "?"} out tokens)`;
 }
 
+/** One human line per tool call for the live ticker: name(path-or-command). */
+function describeToolCall(call: { toolName: string; input: unknown }): string {
+	const input = call.input as Record<string, unknown> | null | undefined;
+	const arg =
+		typeof input?.path === "string"
+			? input.path
+			: typeof input?.file_path === "string"
+				? input.file_path
+				: typeof input?.command === "string"
+					? input.command
+					: "";
+	const short = arg.length > 64 ? `${arg.slice(0, 61)}...` : arg;
+	return short ? `${call.toolName}(${short})` : call.toolName;
+}
+
 /**
  * `indusk run <plan> --model <name>` — the external orchestrator entry point.
  *
@@ -85,6 +100,12 @@ export async function run(
 		driver,
 		maxStepsPerPhase: options.maxSteps,
 		onPhaseStart: (phase, name) => console.info(`— Phase ${phase}: ${name}`),
+		onStep: (step) => {
+			const calls = step.toolCalls.map(describeToolCall).join(", ");
+			console.info(
+				`  · step ${step.index + 1}: ${calls || "(no tool call — model text/thinking)"}`,
+			);
+		},
 	});
 
 	for (const report of result.phases) {
@@ -110,6 +131,11 @@ export async function run(
 			process.exitCode = 1;
 			break;
 		case "stopped-red":
+			if (result.attempt) {
+				console.error(
+					`  attempt cost — ${result.attempt.steps} steps, ${result.attempt.toolCalls} tool calls${usageSuffix(result.attempt)}`,
+				);
+			}
 			console.error(
 				`STOPPED LOUD — Phase ${result.phase} did not close green (no auto-retry; a red phase is a human decision):\n${result.reason}`,
 			);

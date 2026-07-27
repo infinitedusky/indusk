@@ -40,6 +40,12 @@ export interface RunDriverOptions {
 	/** Max model steps before the loop stops. Default 16. */
 	maxSteps?: number;
 	/**
+	 * Live progress: called after every model step with the step's tool calls.
+	 * The CLI uses this to print a ticker — a multi-minute run must never be
+	 * silent (Sandy's staging feedback, 2026-07-27).
+	 */
+	onStep?: (step: { index: number; toolCalls: DriverToolCall[] }) => void;
+	/**
 	 * Tier-1 gate wiring (Phase 2). When set, the edit/writeFile tools are
 	 * gate-owned (primary, own-the-execute) AND the SDK-native `toolApproval`
 	 * layer runs the same gate scripts above the provider swap (secondary,
@@ -127,6 +133,18 @@ export async function runDriver(options: RunDriverOptions): Promise<DriverRunRes
 		system: options.system ?? DEFAULT_SYSTEM,
 		prompt: options.prompt,
 		stopWhen: stepCountIs(options.maxSteps ?? DEFAULT_MAX_STEPS),
+		onStepFinish: (() => {
+			let index = 0;
+			return (step: { toolCalls: ReadonlyArray<{ toolName: string; input: unknown }> }) => {
+				options.onStep?.({
+					index: index++,
+					toolCalls: step.toolCalls.map((call) => ({
+						toolName: call.toolName,
+						input: call.input,
+					})),
+				});
+			};
+		})(),
 		...(options.gate
 			? {
 					toolApproval: createGateToolApproval(options.worktree, {
