@@ -51,8 +51,8 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 
 ### Phase 1: Rent the loop (Claude driver)
 
-- [ ] Worktree kickoff: confirm the plan worktree (already created for the autopilot run).
-- [ ] Add `ai` + `@ai-sdk/anthropic`; pin versions; confirm the `toolApproval` API is present on install (ADR risk).
+- [x] Worktree kickoff: confirm the plan worktree (already created for the autopilot run). Verified: `git rev-parse --show-toplevel` → `dusk-worktrees/dawn-external-orchestrator`, branch `plan/dawn-external-orchestrator`.
+- [x] Add `ai` + `@ai-sdk/anthropic`; pin versions; confirm the `toolApproval` API is present on install (ADR risk). Pinned exact: `ai@7.0.37`, `@ai-sdk/anthropic@4.0.21`. `toolApproval` CONFIRMED present on `generateText`/`streamText`/`ToolLoopAgent`, plus `experimental_toolApprovalSecret` (HMAC) and tool-level `needsApproval`. Drift note: `ai/test` mocks are `MockLanguageModelV3/V4` (not V2); `LanguageModel` accepts spec v2/v3/v4.
 - [ ] Define the minimal tool set — `readFile`, `writeFile`/`edit`, `bash`, `list` — bound to the worktree path.
 - [ ] Wire the Claude driver as a multi-step loop (`generateText`/`ToolLoopAgent` with `stopWhen`); no gates yet.
 
