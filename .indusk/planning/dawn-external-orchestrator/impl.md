@@ -96,7 +96,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - [x] Goalpost test: inject a trajectory mutation mid-run → the loop STOPS and surfaces it. Green = **T6**. (`loop.test.ts` "T6: a tool step rewriting an Asserts cell STOPS the loop and surfaces it" — the scripted model weakens T1's Asserts via a non-checkbox edit the gate scripts allow; the loop returns `stopped-goalpost` naming T1. Plus 5 pure `checkGoalposts` unit cases: asserts change / passes-at-later / row removal flagged; state transitions + added rows + passes-at-earlier allowed.)
 
 #### Phase 3 Context
-- [ ] Add the `indusk run` surface to CLAUDE.md Architecture now that it's stable (1–2 lines + pointer).
+- [x] Add the `indusk run` surface to CLAUDE.md Architecture now that it's stable (1–2 lines + pointer). One bullet after the indusk-mcp entry: the loop contract in a line + `— see /reference/cli/run`.
 
 #### Phase 3 Document
 - [ ] Fill `/reference/cli/run` with the loop behavior + `--model`.
