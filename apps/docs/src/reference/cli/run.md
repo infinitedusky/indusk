@@ -40,7 +40,7 @@ Two drivers are wired:
 | Alias | Provider | Default model |
 |-------|----------|---------------|
 | `claude` | `anthropic` (`@ai-sdk/anthropic`) | `claude-sonnet-4-5` |
-| `gemini` | `google` (`@ai-sdk/google`) | `gemini-2.5-flash` |
+| `gemini` | `google` (`@ai-sdk/google`) | `gemini-3.6-flash` |
 
 `gpt` / `grok` resolve in the registry but have no driver yet — selecting them fails with a clear error until their `@ai-sdk/*` factory line lands (the acceptance-matrix phase decides which comes next).
 

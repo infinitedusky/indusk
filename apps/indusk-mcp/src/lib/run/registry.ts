@@ -36,9 +36,10 @@ export const PROVIDER_REGISTRY = {
 	google: {
 		apiKeyEnv: "GOOGLE_GENERATIVE_AI_API_KEY",
 		apiKeyEnvAliases: ["GOOGLE_API_KEY"],
-		// Phase 4: current stable flash-class model — free-tier friendly, which
-		// is the credit-arbitrage reason Gemini is the second driver.
-		defaultModel: "gemini-2.5-flash",
+		// Flash-class default — free-tier friendly, which is the credit-arbitrage
+		// reason Gemini is the second driver. Sandy picked 3.6 (2026-07-27);
+		// access verified live against the models endpoint before switching.
+		defaultModel: "gemini-3.6-flash",
 	},
 	xai: { apiKeyEnv: "XAI_API_KEY", defaultModel: "grok-4" },
 } as const satisfies Record<string, ProviderConfig>;
