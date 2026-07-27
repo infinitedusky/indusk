@@ -118,8 +118,8 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 ### Phase 5: Matrix + acceptance
 
 - [x] (discovered 2026-07-27) Raw model-id passthrough in `resolveModel` (family prefix → provider, id verbatim) + revert google default to `gemini-2.5-flash`. Finding: gemini-3.x is SDK-blocked — responses carry `thoughtSignature` parts `@ai-sdk/google@4.0.24` (latest) doesn't round-trip, so tool calls never surface and the loop stops red with zero edits (raw REST `functionCall` verified; both local and remote cells reproduced — matrix cells C3/C4). Matrix lesson: provider parity is bounded by SDK model-support lag.
-- [ ] Matrix harness: run the guinea-pig across {Claude, one non-Claude} × {local, one remote}; capture gate-hold, outcome quality, and cost-to-durably-done per cell — see [matrix.md](matrix.md) (2026-07-27: Claude column deferred, no API key — Gemini-only across environments; Claude cells append when a key lands).
-- [ ] Record the results table for review.
+- [x] Matrix harness: run the guinea-pig across {Claude, one non-Claude} × {local, one remote}; capture gate-hold, outcome quality, and cost-to-durably-done per cell — see [matrix.md](matrix.md) (2026-07-27: Claude column deferred, no API key — Gemini-only across environments; Claude cells append when a key lands. Cells C1–C4 run: gate-hold ✅ in all four including both failure cells).
+- [x] Record the results table for review. (matrix.md: cells table + findings F1–F5 + provisioning method record; A8 read pending — the human gate.)
 
 #### Phase 5 Verification
 - [ ] **Deferred Verification** (A8):
@@ -128,7 +128,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
   - mitigation: cap to Claude + one non-Claude × local + one remote; record raw gate-hold + cost-to-done data so the comparison is evidence-backed rather than impression.
 
 #### Phase 5 Context
-- [ ] Capture the matrix findings as the first data point on "which model is cheapest-to-done per task class."
+- [x] Capture the matrix findings as the first data point on "which model is cheapest-to-done per task class." (matrix.md findings F1–F5: gemini-2.5-flash is the current cheapest-to-done reference — remote first-attempt 48s/167k tokens; 3.x blocked by SDK lag; failed attempts cost real time (8m45s) but never false-advance. Claude comparison pending a key.)
 
 #### Phase 5 Document
 - [ ] Publish the matrix results + method as the acceptance record.
