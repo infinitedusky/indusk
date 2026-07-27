@@ -99,7 +99,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - [x] Add the `indusk run` surface to CLAUDE.md Architecture now that it's stable (1–2 lines + pointer). One bullet after the indusk-mcp entry: the loop contract in a line + `— see /reference/cli/run`.
 
 #### Phase 3 Document
-- [ ] Fill `/reference/cli/run` with the loop behavior + `--model`.
+- [x] Fill `/reference/cli/run` with the loop behavior + `--model`. Stub replaced with the full reference: the loop contract, the three gate-enforcement layers, `--model` + provider-key table, exit codes, headless `gate_policy: auto` requirement, usage reporting. (Phase 4 appends the second provider.)
 
 ### Phase 4: Second driver + registry
 
