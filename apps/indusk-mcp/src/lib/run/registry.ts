@@ -37,13 +37,12 @@ export const PROVIDER_REGISTRY = {
 		apiKeyEnv: "GOOGLE_GENERATIVE_AI_API_KEY",
 		apiKeyEnvAliases: ["GOOGLE_API_KEY"],
 		// Flash-class default — free-tier friendly, which is the credit-arbitrage
-		// reason Gemini is the second driver. Sandy's 3.6-flash pick (2026-07-27)
-		// is SDK-blocked: gemini-3.x responses carry `thoughtSignature` parts that
-		// @ai-sdk/google@4.0.24 (latest) doesn't round-trip, so tool calls never
-		// surface and the loop starves (verified: raw REST returns functionCall;
-		// the SDK loop makes zero edits). Re-flip when the SDK supports it; until
-		// then specific ids remain reachable via the raw-id passthrough.
-		defaultModel: "gemini-2.5-flash",
+		// reason Gemini is the second driver. 3.6-flash (Sandy's pick 2026-07-27)
+		// explores read-heavy before writing (it even reads the gate scripts) and
+		// needs a larger per-phase step budget than 2.5 — the zero-edit failures
+		// were step starvation at the old 24-step cap, NOT an SDK issue
+		// (thoughtSignature round-trips fine; verified by wire-logged probes).
+		defaultModel: "gemini-3.6-flash",
 	},
 	xai: { apiKeyEnv: "XAI_API_KEY", defaultModel: "grok-4" },
 } as const satisfies Record<string, ProviderConfig>;

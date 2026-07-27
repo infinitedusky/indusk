@@ -4,8 +4,10 @@ import { type PhaseReport, runLoop } from "../../lib/run/loop.js";
 import { resolveModel, resolveProviderKey } from "../../lib/run/registry.js";
 
 export interface RunOptions {
-	/** `--model <name>` — an alias (claude/gpt/gemini/grok) or bare provider name. */
+	/** `--model <name>` — an alias (claude/gpt/gemini/grok), bare provider name, or raw model id. */
 	model?: string;
+	/** `--max-steps <n>` — per-phase step budget for the one honest attempt. */
+	maxSteps?: number;
 }
 
 /** Default driver when `--model` is omitted — Claude is the first driver (ADR Decision 4). */
@@ -81,6 +83,7 @@ export async function run(
 		worktree: projectRoot,
 		implPath,
 		driver,
+		maxStepsPerPhase: options.maxSteps,
 		onPhaseStart: (phase, name) => console.info(`— Phase ${phase}: ${name}`),
 	});
 

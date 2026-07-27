@@ -63,7 +63,11 @@ export type RunLoopResult =
 			phases: PhaseReport[];
 	  };
 
-const DEFAULT_PHASE_STEPS = 24;
+// One honest attempt still needs room for a thinking model's read-first style:
+// gemini-3.6-flash burned 24 steps mid-ritual (tests already green, checkoffs
+// pending) where 2.5-flash finished in 18. 48 bounds the attempt without
+// starving cautious models; tune per-run via --max-steps.
+const DEFAULT_PHASE_STEPS = 48;
 
 /** Terminal trajectory states — a row in one of these needs no further authoring. */
 const TERMINAL_STATES: ReadonlySet<string> = new Set(["written", "passing", "skipped", "blocked"]);

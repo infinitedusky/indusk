@@ -338,12 +338,17 @@ program
 	)
 	.option(
 		"--model <name>",
-		"Model/provider to drive the loop: claude | gpt | gemini | grok (alias) or a bare provider name (anthropic/openai/google/xai)",
+		"Model/provider to drive the loop: claude | gpt | gemini | grok (alias), a bare provider name (anthropic/openai/google/xai), or a raw model id (gemini-2.5-pro, ...)",
 		"claude",
 	)
-	.action(async (plan: string, opts: { model?: string }) => {
+	.option(
+		"--max-steps <n>",
+		"Per-phase step budget for the one honest attempt (default 48; thinking models explore read-heavy and need more room)",
+	)
+	.action(async (plan: string, opts: { model?: string; maxSteps?: string }) => {
 		const { run } = await import("./commands/run.js");
-		await run(rootOrExit(), plan, { model: opts.model });
+		const maxSteps = opts.maxSteps ? Number.parseInt(opts.maxSteps, 10) : undefined;
+		await run(rootOrExit(), plan, { model: opts.model, maxSteps });
 	});
 
 // Commander quirk: options declared on BOTH a parent and a subcommand cause
