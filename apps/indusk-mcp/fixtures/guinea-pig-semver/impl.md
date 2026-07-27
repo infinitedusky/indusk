@@ -3,13 +3,15 @@ title: "Guinea-pig: semver CLI — Implementation"
 date: 2026-07-26
 status: accepted
 trajectory: required
-gate_policy: ask
+gate_policy: auto
 fixture: dawn-external-orchestrator
 ---
 
 # Guinea-pig: semver CLI — Implementation
 
 Builds the [brief](brief.md). A one-phase fixture the [dawn-external-orchestrator](../../../../.indusk/planning/dawn-external-orchestrator/impl.md) loop runs end-to-end in later phases. Phase 1's checkoff **depends on green tests** — that hard gate is the reason this fixture exists. The orchestrator writes the source + tests; this document is the plan it works.
+
+Structure note (Phase 2 finding): headings follow the canonical gate-parsed shape — `### Phase N: …` for phases, `#### Phase N Verification/Context/Document` for gates, checkbox items throughout. The gate scripts (`check-gates.js`, `validate-impl-structure.js`) parse exactly this shape; the Phase-0 draft used `## Phase 1 —` headings, which the gate parser cannot see (verified empirically: a premature checkoff exited 0 against that shape). `gate_policy: auto` because the orchestrator runs this plan headless — there is no user to give conversation-proof skips to.
 
 ## Test Trajectory
 
@@ -23,19 +25,21 @@ Builds the [brief](brief.md). A one-phase fixture the [dawn-external-orchestrato
 
 - **T1–T3** are writable at Phase 1 because the `semver` module (parse / compare / bump) first exists there; there is nothing earlier to assert against. They are authored red before the implementation, and Phase 1 cannot be checked off until all three are green — the single load-bearing gate the orchestrator must hold.
 
-## Phase 1 — semver core (parse / compare / bump)
+### Phase 1: semver core (parse / compare / bump)
 
-### Implementation
 - [ ] `parse(input): { major, minor, patch }` — accept exactly three dot-separated non-negative integers; reject leading zeros, missing/extra segments, and non-numeric segments (throw).
 - [ ] `compare(a, b): -1 | 0 | 1` — precedence major → minor → patch, comparing parsed integers.
 - [ ] `bump(version, level): string` — `level` ∈ `{ major, minor, patch }`; increment the named field and zero every lower field.
 - [ ] Thin CLI wrapper: `semver parse <v>` / `semver compare <a> <b>` / `semver bump <v> <level>`.
 
-### Verification
-- `pnpm vitest run` on the semver tests is green: parse round-trips + rejects malformed input (**T1**), compare orders correctly (**T2**), bump increments and zeroes lower fields (**T3**). This phase MUST NOT be checked off until **T1**, **T2**, and **T3** are green.
+#### Phase 1 Verification
 
-### Context
-- None — this is a fixture; it carries no project memory.
+- [ ] `pnpm vitest run` on the semver tests is green: parse round-trips + rejects malformed input (**T1**), compare orders correctly (**T2**), bump increments and zeroes lower fields (**T3**). This phase MUST NOT be checked off until **T1**, **T2**, and **T3** are green.
 
-### Document
-- None — this is a fixture; no docs surface.
+#### Phase 1 Context
+
+- [ ] (none needed) — this is a fixture; it carries no project memory.
+
+#### Phase 1 Document
+
+- [ ] (none needed) — this is a fixture; no docs surface.
