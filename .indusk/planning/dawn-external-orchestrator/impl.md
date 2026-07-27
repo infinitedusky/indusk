@@ -16,9 +16,9 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 |----|---------|-------------|-----------|-------|
 | T0 | `indusk run` command exists and the provider registry parses a `--model` name into a driver config | Phase 0 | Phase 0 | passing |
 | T1 | the Claude driver runs a multi-step tool loop that creates + edits a file in the worktree | Phase 1 | Phase 1 | passing |
-| T2 | the adapter maps an AI SDK edit tool-call into the gate-script `{ tool_input, cwd }` envelope | Phase 2 | Phase 2 | written |
-| T3 | a premature phase-checkoff edit is BLOCKED — the gate script exits 2, the edit is not applied, and the block message is returned to the model | Phase 2 | Phase 2 | written |
-| T4 | a compliant edit passes the gate (exit 0) and is applied | Phase 2 | Phase 2 | written |
+| T2 | the adapter maps an AI SDK edit tool-call into the gate-script `{ tool_input, cwd }` envelope | Phase 2 | Phase 2 | passing |
+| T3 | a premature phase-checkoff edit is BLOCKED — the gate script exits 2, the edit is not applied, and the block message is returned to the model | Phase 2 | Phase 2 | passing |
+| T4 | a compliant edit passes the gate (exit 0) and is applied | Phase 2 | Phase 2 | passing |
 | T5 | the full loop runs the guinea-pig plan to impl-complete via Claude, advancing only on green gates | Phase 3 | Phase 3 | ⬜ |
 | T6 | the goalpost guard STOPS the loop if the Test Trajectory table is mutated mid-phase | Phase 3 | Phase 3 | ⬜ |
 | T7 | the same guinea-pig plan runs via a non-Claude driver with the identical gate firing (a premature checkoff is still blocked) | Phase 4 | Phase 4 | ⬜ |
@@ -73,9 +73,9 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - [x] Point the gate at the real scripts (`check-gates.js`, `validate-impl-structure.js`). `resolveGateScripts` walks up from the worktree root to the first ancestor whose `.claude/hooks/` holds BOTH scripts (validator first, then gates — the PreToolUse chain order) and throws loudly when none does — never silently vacuous. Tests inject this repo's installed `.claude/hooks/` scripts. Found + fixed en route: the guinea-pig fixture's `## Phase 1 —` headings were invisible to the gate parser (premature checkoff exited 0) — reshaped to the canonical `### Phase 1:` + `#### Phase 1 <Gate>` shape, verified exit 2.
 
 #### Phase 2 Verification
-- [ ] Adapter unit test: a sample edit tool-call produces the exact expected envelope. Green = **T2**.
-- [ ] Block test: a premature `- [ ] → - [x]` checkoff on the guinea-pig impl → gate exits 2, edit not applied, block message surfaced. Green = **T3**.
-- [ ] Pass test: a compliant edit → gate exits 0, edit applied. Green = **T4**.
+- [x] Adapter unit test: a sample edit tool-call produces the exact expected envelope. Green = **T2**. (`gate.test.ts` "maps an edit tool-call to the exact Edit envelope" + Write variant + escape rejection — 3/3.)
+- [x] Block test: a premature `- [ ] → - [x]` checkoff on the guinea-pig impl → gate exits 2, edit not applied, block message surfaced. Green = **T3**. (Real `.claude/hooks/check-gates.js` spawned against a temp fixture copy; stderr "Phase 1 test-first violation…" returned as the tool result; file byte-identical after.)
+- [x] Pass test: a compliant edit → gate exits 0, edit applied. Green = **T4**. (Trajectory rows primed to `passing` in the copy; same checkoff edit applies on disk.) Full run: `pnpm vitest run src/lib/run/` → 3 files, 20/20 passing (gate 11 + driver 2 + registry 7); `pnpm exec tsc --noEmit` clean; `biome check` clean on gate.ts/gate.test.ts/driver.ts.
 
 #### Phase 2 Context
 - [ ] Record that the discipline is the *shared scripts*; the SDK gate is a thin invoker (no rules in the invoker).
