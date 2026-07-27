@@ -1,6 +1,7 @@
+import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import type { ToolApprovalStatus, ToolSet } from "ai";
-import { resolveInWorktree } from "./tools.js";
+import { createWorktreeTools, resolveInWorktree } from "./tools.js";
 
 /**
  * Tier-1 gate adapter + invoker (ADR Decision 2/3).
@@ -103,10 +104,52 @@ export function resolveGateScripts(_worktreeRoot: string): string[] {
  * parity, where non-2 non-zero is a non-blocking script error.
  */
 export async function runGateScripts(
-	_envelope: GateEnvelope,
-	_scripts: string[],
+	envelope: GateEnvelope,
+	scripts: string[],
 ): Promise<GateResult> {
-	throw new Error("not implemented (Phase 2)");
+	const payload = JSON.stringify(envelope);
+	for (const script of scripts) {
+		const { exitCode, stderr } = await spawnGateScript(script, payload, envelope.cwd);
+		if (exitCode === 2) {
+			return {
+				allowed: false,
+				blockMessage: stderr.trim() || `Blocked by gate script ${script} (exit 2).`,
+			};
+		}
+	}
+	return { allowed: true };
+}
+
+/** Spawn one gate script, write the envelope to stdin, collect exit + stderr. */
+function spawnGateScript(
+	script: string,
+	payload: string,
+	cwd: string,
+): Promise<{ exitCode: number | null; stderr: string }> {
+	return new Promise((resolvePromise, rejectPromise) => {
+		// --no-warnings keeps Node module-type warnings out of the block message
+		// (the hooks are ESM .js files whose consumer package.json may not set
+		// "type": "module" — Node 22 detects the syntax but warns on stderr).
+		const child = spawn(process.execPath, ["--no-warnings", script], {
+			cwd,
+			stdio: ["pipe", "ignore", "pipe"],
+			timeout: 30_000,
+		});
+		let stderr = "";
+		child.stderr.on("data", (chunk: Buffer) => {
+			stderr += chunk.toString("utf8");
+		});
+		child.on("error", rejectPromise);
+		child.on("close", (code) => {
+			resolvePromise({ exitCode: code, stderr });
+		});
+		child.stdin.on("error", () => {
+			// Script exited before reading stdin (e.g. fast-path allow) — EPIPE
+			// here is fine; the close handler still resolves with the exit code.
+		});
+		child.stdin.write(payload);
+		child.stdin.end();
+	});
 }
 
 /**
@@ -114,9 +157,39 @@ export async function runGateScripts(
  * owned by the gate — spawn scripts, apply on exit 0, refuse (returning the
  * block message as the tool result) on exit 2.
  */
-export function createGatedWorktreeTools(_worktreeRoot: string, _options: GateOptions = {}): ToolSet {
-	throw new Error("not implemented (Phase 2)");
+export function createGatedWorktreeTools(worktreeRoot: string, options: GateOptions = {}): ToolSet {
+	const root = resolve(worktreeRoot);
+	const scripts = options.scripts ?? resolveGateScripts(root);
+	const base = createWorktreeTools(root);
+	const gated: ToolSet = { ...base };
+
+	for (const name of GATED_TOOL_NAMES) {
+		const original = base[name];
+		const originalExecute = (original as { execute?: ToolExecuteFn }).execute;
+		if (!originalExecute) {
+			throw new Error(`Worktree tool "${name}" has no execute to gate.`);
+		}
+		gated[name] = {
+			...original,
+			execute: async (input: unknown, executionOptions: unknown) => {
+				const envelope = toGateEnvelope(root, name, input as EditToolInput | WriteToolInput);
+				const gate = await runGateScripts(envelope, scripts);
+				if (!gate.allowed) {
+					// The block message IS the tool result — the model reads it and
+					// corrects course. The edit was never applied.
+					return `Gate blocked this ${name} — the change was NOT applied.\n${gate.blockMessage}`;
+				}
+				return originalExecute(input, executionOptions);
+			},
+		} as ToolSet[string];
+	}
+
+	return gated;
 }
+
+const GATED_TOOL_NAMES: readonly GatedToolName[] = ["edit", "writeFile"];
+
+type ToolExecuteFn = (input: unknown, executionOptions: unknown) => unknown;
 
 /**
  * SECONDARY enforcement: an AI SDK `toolApproval` configuration that runs the

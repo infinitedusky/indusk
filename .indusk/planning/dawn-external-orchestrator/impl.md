@@ -68,7 +68,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 ### Phase 2: Gate adapter + Tier-1 enforcement
 
 - [x] Adapter (~50 lines): map an AI SDK edit tool-call → `{ tool_input: { file_path, old_string, new_string }, cwd }`. `toGateEnvelope` in `src/lib/run/gate.ts` — edit → `tool_name: "Edit"` + old/new strings, writeFile → `tool_name: "Write"` + content; paths resolve through `resolveInWorktree` (escapes rejected before the gate ever runs).
-- [ ] Own-the-`execute`: the edit tool spawns the gate script, writes the envelope to stdin, reads the exit code — exit `2` → return the block message as the tool result (edit **not** applied); exit `0` → apply.
+- [x] Own-the-`execute`: the edit tool spawns the gate script, writes the envelope to stdin, reads the exit code — exit `2` → return the block message as the tool result (edit **not** applied); exit `0` → apply. `createGatedWorktreeTools` + `runGateScripts` in `gate.ts`; scripts spawned with `--no-warnings` (keeps Node module-type noise out of the block message); non-2 exits allow — PreToolUse parity.
 - [ ] Wire the SDK-native `toolApproval` as the second layer, with `experimental_toolApprovalSecret` HMAC signing.
 - [ ] Point the gate at the real scripts (`check-gates.js`, `validate-impl-structure.js`).
 
