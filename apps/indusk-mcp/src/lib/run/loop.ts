@@ -112,9 +112,41 @@ export function checkGoalposts(before: Trajectory, after: Trajectory): string[] 
  * Derive whether a phase is a human gate — no new marker required. Returns
  * the matching item texts (empty = machine-verifiable phase).
  */
-export function detectHumanGate(_phase: ImplPhase, _trajectory: Trajectory): string[] {
-	throw new Error("not implemented");
+export function detectHumanGate(phase: ImplPhase, trajectory: Trajectory): string[] {
+	// Ids named in the Deferred Verification block — an item referencing one
+	// is deferred human judgment even without matching a text pattern.
+	const deferredIds = new Set(
+		trajectory.deferred.flatMap((row) => row.name.match(/\b[TAU]\d+\b/g) ?? []),
+	);
+
+	const matches: string[] = [];
+	for (const gate of phase.gates) {
+		for (const item of gate.items) {
+			if (item.checked) continue; // already handled by a human
+			const referencesDeferredRow = (item.text.match(/\b[TAU]\d+\b/g) ?? []).some((id) =>
+				deferredIds.has(id),
+			);
+			if (referencesDeferredRow || HUMAN_GATE_PATTERNS.some((p) => p.test(item.text))) {
+				matches.push(item.text);
+			}
+		}
+	}
+	return matches;
 }
+
+/**
+ * The plan's already-declared "a human must look" phrasings (autopilot step 1)
+ * — a Deferred Verification reference, a `U`-prefixed deferred row, or a
+ * manual/visual-judgment item.
+ */
+const HUMAN_GATE_PATTERNS: readonly RegExp[] = [
+	/deferred verification/i,
+	/\bU\d+\b/,
+	/\bmanual smoke\b/i,
+	/\bbrowser smoke\b/i,
+	/\bmanual(?:ly)?\s+(?:check|verify|verification|test|review)\b/i,
+	/does it look right/i,
+];
 
 /** The probe checklist item injected into the temp copy — unique by construction. */
 const PROBE_ITEM = "__indusk-run phase-close probe__";
@@ -262,10 +294,23 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		const phase = current.phases.find((p) => p.number === planned.number) ?? planned;
 		if (isPhaseDone(phase)) continue;
 
-		options.onPhaseStart?.(phase.number, phase.name);
-
 		// Goalpost baseline: snapshot the trajectory before the phase runs.
 		const trajectoryBefore = snapshotTrajectory(content);
+
+		// Human gate? Pause BEFORE spending a model step — deferred/manual
+		// verification is the plan saying "a machine cannot approve this."
+		const humanItems = detectHumanGate(phase, trajectoryBefore);
+		if (humanItems.length > 0) {
+			return {
+				status: "paused-human-gate",
+				phase: phase.number,
+				reason: `Phase ${phase.number} ("${phase.name}") declares verification a machine must not self-approve — a human must check: ${humanItems.join(" · ")}`,
+				items: humanItems,
+				phases,
+			};
+		}
+
+		options.onPhaseStart?.(phase.number, phase.name);
 
 		// One honest attempt — both gate layers live on every edit tool call.
 		const result = await runDriver({
