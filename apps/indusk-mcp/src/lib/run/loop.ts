@@ -337,8 +337,7 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			return {
 				status: "stopped-red",
 				phase: phase.number,
-				reason:
-					probe.blockMessage ?? `check-gates refused the Phase ${phase.number} close probe.`,
+				reason: probe.blockMessage ?? `check-gates refused the Phase ${phase.number} close probe.`,
 				phases,
 			};
 		}

@@ -326,7 +326,7 @@ program
 program
 	.command("run <plan>")
 	.description(
-		"External orchestrator — run a plan through a model-agnostic gated loop (Dawn). Phase 0: resolves --model to a provider driver config; the agentic loop lands in later phases.",
+		"External orchestrator — run a plan through a model-agnostic gated loop (Dawn): per-phase scope, advance-on-green via a deliberate check-gates probe, goalpost guard, pause-at-human-gate.",
 	)
 	.option(
 		"--model <name>",

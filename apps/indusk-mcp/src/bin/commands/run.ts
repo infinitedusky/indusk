@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { type PhaseReport, runLoop } from "../../lib/run/loop.js";
 import { resolveModel } from "../../lib/run/registry.js";
 
 export interface RunOptions {
@@ -9,15 +12,36 @@ export interface RunOptions {
 const DEFAULT_MODEL = "claude";
 
 /**
+ * Resolve `<plan>` to an impl.md: an explicit impl.md path, a directory
+ * containing one, or a plan name under `.indusk/planning/`.
+ */
+function resolveImplPath(projectRoot: string, plan: string): string | null {
+	const candidates = plan.endsWith("impl.md")
+		? [resolve(projectRoot, plan)]
+		: [
+				resolve(projectRoot, plan, "impl.md"),
+				resolve(projectRoot, ".indusk", "planning", plan, "impl.md"),
+			];
+	return candidates.find((p) => existsSync(p)) ?? null;
+}
+
+function usageSuffix(report: PhaseReport): string {
+	const { inputTokens, outputTokens } = report.usage ?? {};
+	if (inputTokens === undefined && outputTokens === undefined) return "";
+	return ` (${inputTokens ?? "?"} in / ${outputTokens ?? "?"} out tokens)`;
+}
+
+/**
  * `indusk run <plan> --model <name>` — the external orchestrator entry point.
  *
- * Phase 0 scaffold: parse the plan name + resolve `--model` through the provider
- * registry into a driver config, and report it. The agentic tool-loop (Vercel AI
- * SDK) + the gate adapter land in later phases — this command intentionally does
- * NOT drive any edits yet.
+ * Runs the plan's remaining phases through the model-agnostic gated loop
+ * (`src/lib/run/loop.ts`): per-phase scope, advance-on-green via a deliberate
+ * check-gates probe, goalpost guard, pause-at-human-gate. Exit codes: 0 =
+ * impl-complete, 3 = paused at a human gate, 1 = stopped (red gate or moved
+ * goalposts) or bad invocation.
  */
 export async function run(
-	_projectRoot: string,
+	projectRoot: string,
 	plan: string,
 	options: RunOptions = {},
 ): Promise<void> {
@@ -32,9 +56,60 @@ export async function run(
 		return;
 	}
 
-	console.info(`Plan:   ${plan}`);
-	console.info(
-		`Model:  ${modelName} → provider ${driver.provider} (${driver.model}), key from $${driver.apiKeyEnv}`,
-	);
-	console.info("Agentic loop not yet wired — Phase 0 scaffold. The rented loop lands in Phase 1.");
+	const implPath = resolveImplPath(projectRoot, plan);
+	if (!implPath) {
+		console.error(
+			`Plan "${plan}" not found — expected an impl.md path, a directory containing impl.md, or a plan under .indusk/planning/.`,
+		);
+		process.exitCode = 1;
+		return;
+	}
+
+	if (!process.env[driver.apiKeyEnv]) {
+		console.error(
+			`$${driver.apiKeyEnv} is not set — the ${driver.provider} driver authenticates with a direct provider key (no gateway).`,
+		);
+		process.exitCode = 1;
+		return;
+	}
+
+	console.info(`Plan:   ${implPath}`);
+	console.info(`Model:  ${modelName} → provider ${driver.provider} (${driver.model})`);
+
+	const result = await runLoop({
+		worktree: projectRoot,
+		implPath,
+		driver,
+		onPhaseStart: (phase, name) => console.info(`— Phase ${phase}: ${name}`),
+	});
+
+	for (const report of result.phases) {
+		console.info(
+			`  Phase ${report.phase} closed green — ${report.steps} steps, ${report.toolCalls} tool calls${usageSuffix(report)}`,
+		);
+	}
+
+	switch (result.status) {
+		case "complete":
+			console.info(
+				"Impl complete — every phase closed on a green check-gates probe. Hand back to a human for /falsify: the loop never runs the close-out rituals.",
+			);
+			break;
+		case "paused-human-gate":
+			console.info(`PAUSED at a human gate — ${result.reason}`);
+			process.exitCode = 3;
+			break;
+		case "stopped-goalpost":
+			console.error(
+				`STOPPED LOUD — the Test Trajectory drifted during Phase ${result.phase} (a gamed gate, not a passed one):\n${result.violations.map((v) => `  - ${v}`).join("\n")}`,
+			);
+			process.exitCode = 1;
+			break;
+		case "stopped-red":
+			console.error(
+				`STOPPED LOUD — Phase ${result.phase} did not close green (no auto-retry; a red phase is a human decision):\n${result.reason}`,
+			);
+			process.exitCode = 1;
+			break;
+	}
 }
