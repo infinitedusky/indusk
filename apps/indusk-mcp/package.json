@@ -17,7 +17,8 @@
 	],
 	"bin": {
 		"indusk": "dist/bin/cli.js",
-		"dev-system": "dist/bin/cli.js"
+		"dev-system": "dist/bin/cli.js",
+		"atdawn": "dist/bin/cli.js"
 	},
 	"exports": {
 		".": "./dist/server/index.js",

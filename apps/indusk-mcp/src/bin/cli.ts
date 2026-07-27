@@ -35,8 +35,16 @@ function rootOrExit(): string {
 
 const program = new Command();
 
+// Brand help/usage by the name this process was invoked as (`indusk`,
+// `atdawn`, `dev-system` — all bins of this package). Direct `node cli.js`
+// invocations fall back to `indusk`.
+const invokedName = (() => {
+	const base = process.argv[1]?.split(/[\\/]/).pop() ?? "";
+	return base in (pkg.bin ?? {}) ? base : "indusk";
+})();
+
 program
-	.name("dev-system")
+	.name(invokedName)
 	.description("InDusk development system — skills, MCP tools, and CLI")
 	.version(pkg.version);
 

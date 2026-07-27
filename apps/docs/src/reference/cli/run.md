@@ -6,6 +6,8 @@ The external orchestrator: run a plan through a model-agnostic, gated agentic lo
 indusk run <plan> --model claude|gpt|gemini|grok
 ```
 
+The CLI also installs as **`atdawn`** — the CLI command for the Dawn system (the system is named Dawn; `atdawn` is just the command). `atdawn run <plan>` and every other subcommand (e.g. `atdawn upgrade`) are byte-identical to the `indusk` invocation; help output brands itself by the name it was invoked as.
+
 `<plan>` resolves to an `impl.md`: an explicit path, a directory containing one, or a plan name under `.indusk/planning/`. The run is bound to the current project tree — tools cannot touch paths outside it.
 
 ## The loop
