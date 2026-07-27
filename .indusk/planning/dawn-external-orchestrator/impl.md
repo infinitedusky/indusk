@@ -15,7 +15,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
 | T0 | `indusk run` command exists and the provider registry parses a `--model` name into a driver config | Phase 0 | Phase 0 | passing |
-| T1 | the Claude driver runs a multi-step tool loop that creates + edits a file in the worktree | Phase 1 | Phase 1 | ⬜ |
+| T1 | the Claude driver runs a multi-step tool loop that creates + edits a file in the worktree | Phase 1 | Phase 1 | written |
 | T2 | the adapter maps an AI SDK edit tool-call into the gate-script `{ tool_input, cwd }` envelope | Phase 2 | Phase 2 | ⬜ |
 | T3 | a premature phase-checkoff edit is BLOCKED — the gate script exits 2, the edit is not applied, and the block message is returned to the model | Phase 2 | Phase 2 | ⬜ |
 | T4 | a compliant edit passes the gate (exit 0) and is applied | Phase 2 | Phase 2 | ⬜ |

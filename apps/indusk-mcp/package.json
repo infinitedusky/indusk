@@ -50,6 +50,7 @@
 		"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js"
 	},
 	"dependencies": {
+		"@ai-sdk/anthropic": "4.0.21",
 		"@modelcontextprotocol/sdk": "^1.12.1",
 		"@opentelemetry/api": "^1.9.0",
 		"@opentelemetry/api-logs": "^0.214.0",
@@ -60,6 +61,7 @@
 		"@opentelemetry/sdk-trace-base": "^2.6.0",
 		"@opentelemetry/sdk-trace-node": "^2.6.0",
 		"@opentelemetry/semantic-conventions": "^1.40.0",
+		"ai": "7.0.37",
 		"ajv": "^8.20.0",
 		"commander": "^13.0.0",
 		"falkordb": "^6.6.2",
