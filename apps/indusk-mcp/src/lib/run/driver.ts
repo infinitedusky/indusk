@@ -75,6 +75,8 @@ export interface DriverRunResult {
 	toolCalls: DriverToolCall[];
 	/** The loop's final finish reason (e.g. "stop"). */
 	finishReason: string;
+	/** Aggregated token usage across the run — the cost-to-done raw datum. */
+	usage: { inputTokens?: number; outputTokens?: number };
 }
 
 const DEFAULT_MAX_STEPS = 16;
@@ -136,5 +138,9 @@ export async function runDriver(options: RunDriverOptions): Promise<DriverRunRes
 			})),
 		),
 		finishReason: result.finishReason,
+		usage: {
+			inputTokens: result.totalUsage.inputTokens,
+			outputTokens: result.totalUsage.outputTokens,
+		},
 	};
 }

@@ -1,8 +1,12 @@
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, join, relative, resolve } from "node:path";
 import type { LanguageModel } from "ai";
-import type { ImplPhase } from "../impl-parser.js";
-import type { Trajectory } from "../trajectory/parser.js";
-import type { RunGateOptions } from "./driver.js";
-import type { GateResult } from "./gate.js";
+import matter from "gray-matter";
+import { type ImplPhase, parseImplString } from "../impl-parser.js";
+import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
+import { type RunGateOptions, runDriver } from "./driver.js";
+import { type GateEnvelope, type GateResult, resolveGateScripts, runGateScripts } from "./gate.js";
 import type { DriverConfig } from "./registry.js";
 
 /**
@@ -59,9 +63,14 @@ export type RunLoopResult =
 			phases: PhaseReport[];
 	  };
 
+const DEFAULT_PHASE_STEPS = 24;
+
+/** Terminal trajectory states — a row in one of these needs no further authoring. */
+const TERMINAL_STATES: ReadonlySet<string> = new Set(["written", "passing", "skipped", "blocked"]);
+
 /** Parse the Test Trajectory table out of full impl.md content (frontmatter included). */
-export function snapshotTrajectory(_implContent: string): Trajectory {
-	throw new Error("not implemented");
+export function snapshotTrajectory(implContent: string): Trajectory {
+	return parseTrajectory(matter(implContent).content);
 }
 
 /**
@@ -82,20 +91,185 @@ export function detectHumanGate(_phase: ImplPhase, _trajectory: Trajectory): str
 	throw new Error("not implemented");
 }
 
+/** The probe checklist item injected into the temp copy — unique by construction. */
+const PROBE_ITEM = "__indusk-run phase-close probe__";
+
 /**
  * Deliberate phase-close probe: feed `check-gates` a would-be next-phase
- * checkoff envelope against a temp copy of the impl and require exit 0.
+ * checkoff envelope and require exit 0 — never trust the model's self-report.
+ *
+ * Mechanics: a temp copy of the impl gets a synthetic `Phase N+1` appended
+ * with one unchecked implementation item; the probe envelope checks that item
+ * off. check-gates then enforces, against the REAL current content: every
+ * Phase ≤ N gate item checked (or policy-overridden) and every trajectory row
+ * with `Passes at ≤ N` terminal. Rows *writable* at N+1 are the next phase's
+ * test-first duty, not part of Phase N's greenness — the probe copy marks the
+ * non-terminal ones `skipped` so Gate A cannot misfire on them (their
+ * `Passes at` is ≥ N+1, so this cannot mask a Phase ≤ N obligation).
  */
-export async function probePhaseClose(_options: {
+export async function probePhaseClose(options: {
 	implPath: string;
 	worktree: string;
 	phase: number;
 	scripts: string[];
 }): Promise<GateResult> {
-	throw new Error("not implemented");
+	const content = await readFile(options.implPath, "utf8");
+	const probePhase = options.phase + 1;
+	const probeContent = [
+		neutralizeRowsWritableAt(content, probePhase),
+		"",
+		`### Phase ${probePhase}: __orchestrator phase-close probe__`,
+		"",
+		`- [ ] ${PROBE_ITEM}`,
+		"",
+	].join("\n");
+
+	const dir = await mkdtemp(join(tmpdir(), "indusk-run-probe-"));
+	try {
+		const probePath = join(dir, "impl.md");
+		await writeFile(probePath, probeContent, "utf8");
+		const envelope: GateEnvelope = {
+			tool_name: "Edit",
+			tool_input: {
+				file_path: probePath,
+				old_string: `- [ ] ${PROBE_ITEM}`,
+				new_string: `- [x] ${PROBE_ITEM}`,
+			},
+			cwd: resolve(options.worktree),
+		};
+		// The probe is check-gates' question ("may the next phase advance?") —
+		// the validator gates write shapes, not phase transitions.
+		const checkGates = options.scripts.filter((s) => basename(s) === "check-gates.js");
+		return await runGateScripts(envelope, checkGates.length > 0 ? checkGates : options.scripts);
+	} finally {
+		await rm(dir, { recursive: true, force: true });
+	}
+}
+
+/**
+ * In the probe copy only: set non-terminal trajectory rows writable at the
+ * probe phase to `skipped` so Gate A (test-first for the NEXT phase) cannot
+ * fail a probe that is only asking about THIS phase's closure.
+ */
+function neutralizeRowsWritableAt(content: string, phase: number): string {
+	const trajectory = snapshotTrajectory(content);
+	const targets = new Set(
+		trajectory.rows
+			.filter((row) => row.writableAt === phase && !TERMINAL_STATES.has(row.state))
+			.map((row) => row.id),
+	);
+	if (targets.size === 0) return content;
+
+	const lines = content.split("\n");
+	let idColumn = -1;
+	let stateColumn = -1;
+
+	return lines
+		.map((line) => {
+			const trimmed = line.trim();
+			if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return line;
+			const cells = trimmed.slice(1, -1).split("|");
+			const normalized = cells.map((c) => c.trim().toLowerCase());
+			if (idColumn === -1 || stateColumn === -1) {
+				const id = normalized.indexOf("id");
+				const state = normalized.indexOf("state");
+				if (id !== -1 && state !== -1) {
+					idColumn = id;
+					stateColumn = state;
+				}
+				return line;
+			}
+			const id = cells[idColumn]?.trim();
+			if (id === undefined || !targets.has(id)) return line;
+			cells[stateColumn] = " skipped ";
+			return `|${cells.join("|")}|`;
+		})
+		.join("\n");
+}
+
+/**
+ * A phase needs no run when every item is checked or carries a bare opt-out —
+ * headless runs are `gate_policy: auto` by contract (there is no user to give
+ * conversation-proof skips to), so the auto-policy override markers apply.
+ */
+function isPhaseDone(phase: ImplPhase): boolean {
+	return phase.gates.every((gate) =>
+		gate.items.every(
+			(item) =>
+				item.checked ||
+				item.text.includes("(none needed)") ||
+				item.text.includes("(not applicable)") ||
+				item.text.includes("skip-reason:"),
+		),
+	);
+}
+
+/** The tight per-phase contract handed to the driver — ported from autopilot. */
+function phasePrompt(phase: ImplPhase, implFile: string): string {
+	return [
+		`Execute ONLY Phase ${phase.number} ("${phase.name}") of the implementation plan in \`${implFile}\`.`,
+		`1. Read \`${implFile}\` first to see the phase's checklist and the Test Trajectory table.`,
+		`2. Work test-first: author the tests for trajectory rows writable at Phase ${phase.number} RED, set their State cells to "written", then implement until green and set them to "passing".`,
+		`3. Complete every Phase ${phase.number} checklist item, checking each off in \`${implFile}\` as you finish it. Items marked "(none needed)" may stay unchecked.`,
+		`4. You MUST NOT change the Test Trajectory table's Asserts, Writable at, or Passes at columns, any test's assertion text, or any other phase. State cells and Phase ${phase.number} checkoffs are the only plan edits allowed.`,
+		`When every Phase ${phase.number} item is done, reply with a short summary instead of calling a tool.`,
+	].join("\n");
 }
 
 /** Run the plan's remaining phases through the gated driver, advancing only on green. */
-export async function runLoop(_options: RunLoopOptions): Promise<RunLoopResult> {
-	throw new Error("not implemented");
+export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
+	const root = resolve(options.worktree);
+	const implPath = options.implPath ? resolve(options.implPath) : join(root, "impl.md");
+	const implFile = relative(root, implPath) || "impl.md";
+	const scripts = options.gate?.scripts ?? resolveGateScripts(root);
+	const gate: RunGateOptions = { ...options.gate, scripts };
+	const phases: PhaseReport[] = [];
+
+	const initial = parseImplString(await readFile(implPath, "utf8"));
+	if (initial.phases.length === 0) {
+		throw new Error(`No phases found in ${implPath} — nothing to run.`);
+	}
+
+	for (const planned of initial.phases) {
+		// Re-read on every iteration — earlier phases edited the plan.
+		const content = await readFile(implPath, "utf8");
+		const current = parseImplString(content);
+		const phase = current.phases.find((p) => p.number === planned.number) ?? planned;
+		if (isPhaseDone(phase)) continue;
+
+		options.onPhaseStart?.(phase.number, phase.name);
+
+		// One honest attempt — both gate layers live on every edit tool call.
+		const result = await runDriver({
+			worktree: root,
+			prompt: phasePrompt(phase, implFile),
+			model: options.model,
+			driver: options.driver,
+			maxSteps: options.maxStepsPerPhase ?? DEFAULT_PHASE_STEPS,
+			gate,
+		});
+
+		// Advance only on green: the deliberate check-gates probe, not the
+		// model's self-report, decides whether the phase closed.
+		const probe = await probePhaseClose({ implPath, worktree: root, phase: phase.number, scripts });
+		if (!probe.allowed) {
+			return {
+				status: "stopped-red",
+				phase: phase.number,
+				reason:
+					probe.blockMessage ?? `check-gates refused the Phase ${phase.number} close probe.`,
+				phases,
+			};
+		}
+
+		phases.push({
+			phase: phase.number,
+			name: phase.name,
+			steps: result.steps,
+			toolCalls: result.toolCalls.length,
+			usage: result.usage,
+		});
+	}
+
+	return { status: "complete", phases };
 }
