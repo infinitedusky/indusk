@@ -171,7 +171,7 @@ describe("gemini registry entry + provider-agnostic driver factory (T7 surface)"
 	it("resolves `gemini` to the google driver config with the flash default model", () => {
 		const driver = resolveModel("gemini");
 		expect(driver.provider).toBe("google");
-		expect(driver.model).toBe("gemini-3.6-flash");
+		expect(driver.model).toBe("gemini-2.5-flash");
 		expect(driver.apiKeyEnv).toBe("GOOGLE_GENERATIVE_AI_API_KEY");
 		// The key-env bridge: accepted names in order, SDK default first, then
 		// the machine convention this box actually uses.
@@ -183,7 +183,7 @@ describe("gemini registry entry + provider-agnostic driver factory (T7 surface)"
 			modelId: string;
 			provider: string;
 		};
-		expect(model.modelId).toBe("gemini-3.6-flash");
+		expect(model.modelId).toBe("gemini-2.5-flash");
 		expect(model.provider).toContain("google");
 	});
 

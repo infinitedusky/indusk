@@ -45,4 +45,14 @@ describe("resolveModel — --model name → driver config", () => {
 		expect(() => resolveModel("llama")).toThrow(/unknown model/i);
 		expect(() => resolveModel("")).toThrow(/unknown model/i);
 	});
+
+	it("passes a raw model id through to its family's provider verbatim", () => {
+		const pro = resolveModel("gemini-2.5-pro");
+		expect(pro.provider).toBe("google");
+		expect(pro.model).toBe("gemini-2.5-pro");
+		expect(resolveModel("claude-sonnet-4-5").provider).toBe("anthropic");
+		expect(resolveModel("Gemini-3.6-Flash").model).toBe("gemini-3.6-flash");
+		// unknown family prefix still throws
+		expect(() => resolveModel("llama-3-70b")).toThrow(/unknown model/i);
+	});
 });

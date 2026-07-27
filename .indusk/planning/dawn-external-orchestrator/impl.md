@@ -22,7 +22,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 | T5 | the full loop runs the guinea-pig plan to impl-complete via Claude, advancing only on green gates | Phase 3 | Phase 3 | passing |
 | T6 | the goalpost guard STOPS the loop if the Test Trajectory table is mutated mid-phase | Phase 3 | Phase 3 | passing |
 | T7 | the same guinea-pig plan runs via a non-Claude driver with the identical gate firing (a premature checkoff is still blocked) | Phase 4 | Phase 4 | passing |
-| A8 | the matrix run (models × environments) yields comparable gate-hold, outcome-quality, and cost-to-durably-done data | Phase 5 | Phase 5 | ⬜ |
+| A8 | the matrix run (models × environments) yields comparable gate-hold, outcome-quality, and cost-to-durably-done data | Phase 5 | Phase 5 | written |
 
 ### Trajectory Rationale
 
@@ -117,7 +117,8 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 
 ### Phase 5: Matrix + acceptance
 
-- [ ] Matrix harness: run the guinea-pig across {Claude, one non-Claude} × {local, one remote}; capture gate-hold, outcome quality, and cost-to-durably-done per cell.
+- [x] (discovered 2026-07-27) Raw model-id passthrough in `resolveModel` (family prefix → provider, id verbatim) + revert google default to `gemini-2.5-flash`. Finding: gemini-3.x is SDK-blocked — responses carry `thoughtSignature` parts `@ai-sdk/google@4.0.24` (latest) doesn't round-trip, so tool calls never surface and the loop stops red with zero edits (raw REST `functionCall` verified; both local and remote cells reproduced — matrix cells C3/C4). Matrix lesson: provider parity is bounded by SDK model-support lag.
+- [ ] Matrix harness: run the guinea-pig across {Claude, one non-Claude} × {local, one remote}; capture gate-hold, outcome quality, and cost-to-durably-done per cell — see [matrix.md](matrix.md) (2026-07-27: Claude column deferred, no API key — Gemini-only across environments; Claude cells append when a key lands).
 - [ ] Record the results table for review.
 
 #### Phase 5 Verification

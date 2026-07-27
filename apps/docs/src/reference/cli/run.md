@@ -42,9 +42,15 @@ Two drivers are wired:
 | Alias | Provider | Default model |
 |-------|----------|---------------|
 | `claude` | `anthropic` (`@ai-sdk/anthropic`) | `claude-sonnet-4-5` |
-| `gemini` | `google` (`@ai-sdk/google`) | `gemini-3.6-flash` |
+| `gemini` | `google` (`@ai-sdk/google`) | `gemini-2.5-flash` |
 
 `gpt` / `grok` resolve in the registry but have no driver yet — selecting them fails with a clear error until their `@ai-sdk/*` factory line lands (the acceptance-matrix phase decides which comes next).
+
+`--model` also accepts a **raw model id** with a known family prefix (`gemini-2.5-pro`, `claude-sonnet-4-5`, …) — the id passes through to the family's provider verbatim, so the matrix can compare models within a family without touching the registry default.
+
+::: warning Model support lags the SDK
+Gemini **3.x** models are currently unusable through `@ai-sdk/google@4.0.24` (latest): their responses carry `thoughtSignature` parts the SDK doesn't round-trip, so tool calls never surface and the loop stops red having made zero edits — verified empirically 2026-07-27 (raw REST returns a clean `functionCall`; the SDK loop starves). Provider parity is bounded by SDK model-support lag. Stay on `gemini-2.5-flash` until the SDK catches up.
+:::
 
 ## Provider keys
 

@@ -37,9 +37,13 @@ export const PROVIDER_REGISTRY = {
 		apiKeyEnv: "GOOGLE_GENERATIVE_AI_API_KEY",
 		apiKeyEnvAliases: ["GOOGLE_API_KEY"],
 		// Flash-class default — free-tier friendly, which is the credit-arbitrage
-		// reason Gemini is the second driver. Sandy picked 3.6 (2026-07-27);
-		// access verified live against the models endpoint before switching.
-		defaultModel: "gemini-3.6-flash",
+		// reason Gemini is the second driver. Sandy's 3.6-flash pick (2026-07-27)
+		// is SDK-blocked: gemini-3.x responses carry `thoughtSignature` parts that
+		// @ai-sdk/google@4.0.24 (latest) doesn't round-trip, so tool calls never
+		// surface and the loop starves (verified: raw REST returns functionCall;
+		// the SDK loop makes zero edits). Re-flip when the SDK supports it; until
+		// then specific ids remain reachable via the raw-id passthrough.
+		defaultModel: "gemini-2.5-flash",
 	},
 	xai: { apiKeyEnv: "XAI_API_KEY", defaultModel: "grok-4" },
 } as const satisfies Record<string, ProviderConfig>;
@@ -62,6 +66,20 @@ const MODEL_ALIASES: Record<string, ProviderName> = {
 	xai: "xai",
 };
 
+/**
+ * Raw model-id passthrough: a `--model` value that isn't an alias but starts
+ * with a known family prefix resolves to that provider with the id used
+ * verbatim (`gemini-2.5-pro`, `claude-sonnet-4-5`, …). Lets the matrix compare
+ * models within a family without touching the registry default.
+ */
+const MODEL_ID_PREFIXES: ReadonlyArray<[string, ProviderName]> = [
+	["claude-", "anthropic"],
+	["gpt-", "openai"],
+	["gemini-", "google"],
+	["gemma-", "google"],
+	["grok-", "xai"],
+];
+
 /** A resolved driver config: which provider, its key env(s), and the model id. */
 export interface DriverConfig {
 	provider: ProviderName;
@@ -79,17 +97,23 @@ export interface DriverConfig {
  */
 export function resolveModel(name: string): DriverConfig {
 	const key = name.toLowerCase().trim();
-	const provider = MODEL_ALIASES[key];
+	const aliased = MODEL_ALIASES[key];
+	const prefixed = aliased
+		? undefined
+		: MODEL_ID_PREFIXES.find(([prefix]) => key.startsWith(prefix))?.[1];
+	const provider = aliased ?? prefixed;
 	if (!provider) {
 		const known = Object.keys(MODEL_ALIASES).sort().join(", ");
-		throw new Error(`Unknown model "${name}". Known models: ${known}.`);
+		throw new Error(
+			`Unknown model "${name}". Known models: ${known} — or a raw model id starting with claude-/gpt-/gemini-/gemma-/grok-.`,
+		);
 	}
 	const cfg: ProviderConfig = PROVIDER_REGISTRY[provider];
 	return {
 		provider,
 		apiKeyEnv: cfg.apiKeyEnv,
 		apiKeyEnvs: [cfg.apiKeyEnv, ...(cfg.apiKeyEnvAliases ?? [])],
-		model: cfg.defaultModel,
+		model: aliased ? cfg.defaultModel : key,
 	};
 }
 
