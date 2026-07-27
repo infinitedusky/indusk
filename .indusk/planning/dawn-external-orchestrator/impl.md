@@ -15,7 +15,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
 | T0 | `indusk run` command exists and the provider registry parses a `--model` name into a driver config | Phase 0 | Phase 0 | passing |
-| T1 | the Claude driver runs a multi-step tool loop that creates + edits a file in the worktree | Phase 1 | Phase 1 | written |
+| T1 | the Claude driver runs a multi-step tool loop that creates + edits a file in the worktree | Phase 1 | Phase 1 | passing |
 | T2 | the adapter maps an AI SDK edit tool-call into the gate-script `{ tool_input, cwd }` envelope | Phase 2 | Phase 2 | ⬜ |
 | T3 | a premature phase-checkoff edit is BLOCKED — the gate script exits 2, the edit is not applied, and the block message is returned to the model | Phase 2 | Phase 2 | ⬜ |
 | T4 | a compliant edit passes the gate (exit 0) and is applied | Phase 2 | Phase 2 | ⬜ |
@@ -53,14 +53,14 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 
 - [x] Worktree kickoff: confirm the plan worktree (already created for the autopilot run). Verified: `git rev-parse --show-toplevel` → `dusk-worktrees/dawn-external-orchestrator`, branch `plan/dawn-external-orchestrator`.
 - [x] Add `ai` + `@ai-sdk/anthropic`; pin versions; confirm the `toolApproval` API is present on install (ADR risk). Pinned exact: `ai@7.0.37`, `@ai-sdk/anthropic@4.0.21`. `toolApproval` CONFIRMED present on `generateText`/`streamText`/`ToolLoopAgent`, plus `experimental_toolApprovalSecret` (HMAC) and tool-level `needsApproval`. Drift note: `ai/test` mocks are `MockLanguageModelV3/V4` (not V2); `LanguageModel` accepts spec v2/v3/v4.
-- [ ] Define the minimal tool set — `readFile`, `writeFile`/`edit`, `bash`, `list` — bound to the worktree path.
-- [ ] Wire the Claude driver as a multi-step loop (`generateText`/`ToolLoopAgent` with `stopWhen`); no gates yet.
+- [x] Define the minimal tool set — `readFile`, `writeFile`/`edit`, `bash`, `list` — bound to the worktree path. `src/lib/run/tools.ts`: every path resolves through `resolveInWorktree` (escapes rejected); tools are gate-free by design.
+- [x] Wire the Claude driver as a multi-step loop (`generateText`/`ToolLoopAgent` with `stopWhen`); no gates yet. `src/lib/run/driver.ts`: `generateText` + `stopWhen: stepCountIs(16)`; model client injectable (mock in tests, `createAnthropic` from registry config in prod).
 
 #### Phase 1 Verification
-- [ ] Integration test: run the loop on a trivial task ("create `foo.ts` exporting `X`, then edit `X`") against a temp worktree → the file exists with the expected content. Green = **T1**.
+- [x] Integration test: run the loop on a trivial task ("create `foo.ts` exporting `X`, then edit `X`") against a temp worktree → the file exists with the expected content. Green = **T1**. `pnpm vitest run src/lib/run/` → 2 files, 9/9 passing (driver.test.ts 2/2 + registry.test.ts 7/7); `tsc --noEmit` clean; `biome check` clean.
 
 #### Phase 1 Context
-- [ ] Note in the plan's cursor that the rented loop is proven independent of gates.
+- [x] Note in the plan's cursor that the rented loop is proven independent of gates. Recorded via `mcp__indusk__update_current_section` (session 930d7469, cursor: "The rented loop is proven independent of gates — T1 green with a scripted mock model; no gate code exists yet").
 
 #### Phase 1 Document
 - [x] (none needed — Phase 1 is internal loop wiring with no user-facing surface; the CLI reference lands in Phase 3)
