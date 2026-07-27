@@ -62,3 +62,9 @@ Note the existing `current.md` file lock (`lib/agents/lock.ts`) serializes write
 
 ## Blocks
 - (none yet — a future shared-Graphiti plan would build on this)
+
+## Field Note — Avoca POC grows internal docs (2026-07-27)
+
+The avoca-next-workbench POC (workbench root as a git repo with a private remote + root-level directory whitelist) gained a `docs/` directory: a self-contained VitePress **internal engagement docs** site (runbooks / notes / decisions), whitelisted into the context repo alongside `.indusk/`, `.claude/`, `env/`, `scripts/`. Rationale: third-party engagements can't take docs PRs into the client repo, so the internal-vs-published docs split lands as *internal → workbench context repo (shared via its remote), published → client repo (when accepted)*. This plan should adopt the internal-docs directory as part of the canonical versioned-workbench shape.
+
+Tooling gap surfaced: `indusk init-docs` hardcodes `apps/${projectName}-docs` (monorepo-shaped) and can't scaffold a workbench-root `docs/` — wants a `--dir` (or workbench-aware default) when this plan lands.
