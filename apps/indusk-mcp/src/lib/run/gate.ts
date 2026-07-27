@@ -1,4 +1,6 @@
+import { resolve } from "node:path";
 import type { ToolApprovalStatus, ToolSet } from "ai";
+import { resolveInWorktree } from "./tools.js";
 
 /**
  * Tier-1 gate adapter + invoker (ADR Decision 2/3).
@@ -64,11 +66,26 @@ export interface WriteToolInput {
  * `{ tool_name, tool_input, cwd }` envelope.
  */
 export function toGateEnvelope(
-	_worktreeRoot: string,
-	_toolName: GatedToolName,
-	_input: EditToolInput | WriteToolInput,
+	worktreeRoot: string,
+	toolName: GatedToolName,
+	input: EditToolInput | WriteToolInput,
 ): GateEnvelope {
-	throw new Error("not implemented (Phase 2)");
+	const root = resolve(worktreeRoot);
+	const filePath = resolveInWorktree(root, input.path);
+	if (toolName === "edit") {
+		const { old_string, new_string } = input as EditToolInput;
+		return {
+			tool_name: "Edit",
+			tool_input: { file_path: filePath, old_string, new_string },
+			cwd: root,
+		};
+	}
+	const { content } = input as WriteToolInput;
+	return {
+		tool_name: "Write",
+		tool_input: { file_path: filePath, content },
+		cwd: root,
+	};
 }
 
 /**
