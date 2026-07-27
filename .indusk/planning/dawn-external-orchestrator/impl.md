@@ -19,8 +19,8 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 | T2 | the adapter maps an AI SDK edit tool-call into the gate-script `{ tool_input, cwd }` envelope | Phase 2 | Phase 2 | passing |
 | T3 | a premature phase-checkoff edit is BLOCKED — the gate script exits 2, the edit is not applied, and the block message is returned to the model | Phase 2 | Phase 2 | passing |
 | T4 | a compliant edit passes the gate (exit 0) and is applied | Phase 2 | Phase 2 | passing |
-| T5 | the full loop runs the guinea-pig plan to impl-complete via Claude, advancing only on green gates | Phase 3 | Phase 3 | written |
-| T6 | the goalpost guard STOPS the loop if the Test Trajectory table is mutated mid-phase | Phase 3 | Phase 3 | written |
+| T5 | the full loop runs the guinea-pig plan to impl-complete via Claude, advancing only on green gates | Phase 3 | Phase 3 | passing |
+| T6 | the goalpost guard STOPS the loop if the Test Trajectory table is mutated mid-phase | Phase 3 | Phase 3 | passing |
 | T7 | the same guinea-pig plan runs via a non-Claude driver with the identical gate firing (a premature checkoff is still blocked) | Phase 4 | Phase 4 | ⬜ |
 | A8 | the matrix run (models × environments) yields comparable gate-hold, outcome-quality, and cost-to-durably-done data | Phase 5 | Phase 5 | ⬜ |
 
@@ -92,8 +92,8 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
   - **DEFERRED — live API run**: no headless `ANTHROPIC_API_KEY` available (checked env + `~/.indusk/config.env`, 2026-07-27). The one real-API guinea-pig run (gate-hold + cost datum) awaits a key; checked off on the strength of the deterministic full-loop run. Surface this to the orchestrator.
 
 #### Phase 3 Verification
-- [ ] Full-loop test: the guinea-pig plan runs to impl-complete via Claude with every gate held. Green = **T5**.
-- [ ] Goalpost test: inject a trajectory mutation mid-run → the loop STOPS and surfaces it. Green = **T6**.
+- [x] Full-loop test: the guinea-pig plan runs to impl-complete via Claude with every gate held. Green = **T5**. (`loop.test.ts` "T5: runs the plan to impl-complete via the scripted Claude driver, advancing only on green gates" + companions "stops RED when the phase did not actually close" / "pauses at a human gate". `pnpm vitest run src/lib/run/` → 4 files, 33/33 passing; `tsc --noEmit` clean; biome clean. One re-run flaked on 5s spawn timeouts under background eval-agent load, green on retry — pre-existing Phase 2 tests, not a regression.)
+- [x] Goalpost test: inject a trajectory mutation mid-run → the loop STOPS and surfaces it. Green = **T6**. (`loop.test.ts` "T6: a tool step rewriting an Asserts cell STOPS the loop and surfaces it" — the scripted model weakens T1's Asserts via a non-checkbox edit the gate scripts allow; the loop returns `stopped-goalpost` naming T1. Plus 5 pure `checkGoalposts` unit cases: asserts change / passes-at-later / row removal flagged; state transitions + added rows + passes-at-earlier allowed.)
 
 #### Phase 3 Context
 - [ ] Add the `indusk run` surface to CLAUDE.md Architecture now that it's stable (1–2 lines + pointer).
