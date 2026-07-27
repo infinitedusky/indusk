@@ -14,7 +14,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T0 | `indusk run` command exists and the provider registry parses a `--model` name into a driver config | Phase 0 | Phase 0 | written |
+| T0 | `indusk run` command exists and the provider registry parses a `--model` name into a driver config | Phase 0 | Phase 0 | passing |
 | T1 | the Claude driver runs a multi-step tool loop that creates + edits a file in the worktree | Phase 1 | Phase 1 | ⬜ |
 | T2 | the adapter maps an AI SDK edit tool-call into the gate-script `{ tool_input, cwd }` envelope | Phase 2 | Phase 2 | ⬜ |
 | T3 | a premature phase-checkoff edit is BLOCKED — the gate script exits 2, the edit is not applied, and the block message is returned to the model | Phase 2 | Phase 2 | ⬜ |
@@ -36,7 +36,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 ## Phase 0 — Scaffold + reference task
 
 ### Implementation
-- [ ] Add an `indusk run <plan>` subcommand to the indusk-mcp CLI with a `--model <name>` flag.
+- [x] Add an `indusk run <plan>` subcommand to the indusk-mcp CLI with a `--model <name>` flag.
 - [x] Provider registry config: `provider → { apiKeyEnv, defaultModel }` for `anthropic` / `openai` / `google` / `xai`; `--model` resolves to a driver config (direct keys, no gateway).
 - [ ] Add the guinea-pig fixture — a small `semver` parse/compare/bump CLI plan (brief + trajectory-bearing impl) with one phase whose checkoff requires green tests — under a fixtures directory.
 

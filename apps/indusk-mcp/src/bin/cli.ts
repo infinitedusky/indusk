@@ -323,6 +323,21 @@ program
 		await startServer();
 	});
 
+program
+	.command("run <plan>")
+	.description(
+		"External orchestrator — run a plan through a model-agnostic gated loop (Dawn). Phase 0: resolves --model to a provider driver config; the agentic loop lands in later phases.",
+	)
+	.option(
+		"--model <name>",
+		"Model/provider to drive the loop: claude | gpt | gemini | grok (alias) or a bare provider name (anthropic/openai/google/xai)",
+		"claude",
+	)
+	.action(async (plan: string, opts: { model?: string }) => {
+		const { run } = await import("./commands/run.js");
+		await run(rootOrExit(), plan, { model: opts.model });
+	});
+
 // Commander quirk: options declared on BOTH a parent and a subcommand cause
 // the subcommand to silently receive the default for duplicated flags (the
 // parent consumes the token). Declaring `--port`/`--no-open` only on the
