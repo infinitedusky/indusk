@@ -196,8 +196,25 @@ type ToolExecuteFn = (input: unknown, executionOptions: unknown) => unknown;
  * same gate chain above the provider swap and denies blocked calls.
  */
 export function createGateToolApproval(
-	_worktreeRoot: string,
-	_options: GateOptions = {},
+	worktreeRoot: string,
+	options: GateOptions = {},
 ): Record<GatedToolName, (input: unknown, approvalOptions: unknown) => Promise<ToolApprovalStatus>> {
-	throw new Error("not implemented (Phase 2)");
+	const root = resolve(worktreeRoot);
+	const scripts = options.scripts ?? resolveGateScripts(root);
+
+	const approvalFor =
+		(name: GatedToolName) =>
+		async (input: unknown, _approvalOptions: unknown): Promise<ToolApprovalStatus> => {
+			const envelope = toGateEnvelope(root, name, input as EditToolInput | WriteToolInput);
+			const gate = await runGateScripts(envelope, scripts);
+			if (!gate.allowed) {
+				return { type: "denied", reason: gate.blockMessage };
+			}
+			return "approved";
+		};
+
+	return {
+		edit: approvalFor("edit"),
+		writeFile: approvalFor("writeFile"),
+	};
 }

@@ -1,6 +1,8 @@
+import { randomBytes } from "node:crypto";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import type { LanguageModel } from "ai";
 import { generateText, stepCountIs } from "ai";
+import { createGatedWorktreeTools, createGateToolApproval } from "./gate.js";
 import { type DriverConfig, resolveModel } from "./registry.js";
 import { createWorktreeTools } from "./tools.js";
 
@@ -36,6 +38,27 @@ export interface RunDriverOptions {
 	model?: LanguageModel;
 	/** Max model steps before the loop stops. Default 16. */
 	maxSteps?: number;
+	/**
+	 * Tier-1 gate wiring (Phase 2). When set, the edit/writeFile tools are
+	 * gate-owned (primary, own-the-execute) AND the SDK-native `toolApproval`
+	 * layer runs the same gate scripts above the provider swap (secondary,
+	 * defense-in-depth) with HMAC-signed approvals. Omit for a gate-free loop.
+	 */
+	gate?: RunGateOptions;
+}
+
+export interface RunGateOptions {
+	/**
+	 * Absolute paths to the gate scripts, run in order. Injectable for tests;
+	 * defaults to resolving from the target project's `.claude/hooks/`.
+	 */
+	scripts?: string[];
+	/**
+	 * Secret for `experimental_toolApprovalSecret` HMAC signing so a forged or
+	 * tampered approval is rejected before execution. Default: a random
+	 * per-run secret.
+	 */
+	approvalSecret?: string | Uint8Array;
 }
 
 export interface DriverToolCall {
@@ -83,7 +106,9 @@ export function createDriverModel(driver: DriverConfig): LanguageModel {
 export async function runDriver(options: RunDriverOptions): Promise<DriverRunResult> {
 	const driver = options.driver ?? resolveModel("claude");
 	const model = options.model ?? createDriverModel(driver);
-	const tools = createWorktreeTools(options.worktree);
+	const tools = options.gate
+		? createGatedWorktreeTools(options.worktree, { scripts: options.gate.scripts })
+		: createWorktreeTools(options.worktree);
 
 	const result = await generateText({
 		model,
@@ -91,6 +116,14 @@ export async function runDriver(options: RunDriverOptions): Promise<DriverRunRes
 		system: options.system ?? DEFAULT_SYSTEM,
 		prompt: options.prompt,
 		stopWhen: stepCountIs(options.maxSteps ?? DEFAULT_MAX_STEPS),
+		...(options.gate
+			? {
+					toolApproval: createGateToolApproval(options.worktree, {
+						scripts: options.gate.scripts,
+					}),
+					experimental_toolApprovalSecret: options.gate.approvalSecret ?? randomBytes(32),
+				}
+			: {}),
 	});
 
 	return {
