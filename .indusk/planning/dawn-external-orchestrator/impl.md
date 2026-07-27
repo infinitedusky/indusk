@@ -21,7 +21,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 | T4 | a compliant edit passes the gate (exit 0) and is applied | Phase 2 | Phase 2 | passing |
 | T5 | the full loop runs the guinea-pig plan to impl-complete via Claude, advancing only on green gates | Phase 3 | Phase 3 | passing |
 | T6 | the goalpost guard STOPS the loop if the Test Trajectory table is mutated mid-phase | Phase 3 | Phase 3 | passing |
-| T7 | the same guinea-pig plan runs via a non-Claude driver with the identical gate firing (a premature checkoff is still blocked) | Phase 4 | Phase 4 | written |
+| T7 | the same guinea-pig plan runs via a non-Claude driver with the identical gate firing (a premature checkoff is still blocked) | Phase 4 | Phase 4 | passing |
 | A8 | the matrix run (models × environments) yields comparable gate-hold, outcome-quality, and cost-to-durably-done data | Phase 5 | Phase 5 | ⬜ |
 
 ### Trajectory Rationale
@@ -107,7 +107,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - [ ] Run the same guinea-pig plan via `--model <non-claude>`.
 
 #### Phase 4 Verification
-- [ ] Swap test: the same plan under the non-Claude model runs the identical gates; a premature checkoff is still blocked. Green = **T7**.
+- [x] Swap test: the same plan under the non-Claude model runs the identical gates; a premature checkoff is still blocked. Green = **T7**. (`swap.test.ts`: the google driver config + scripted mock through the SAME `runLoop` with the REAL gate scripts — premature checkoff denied (`execution-denied`, gate stderr "test-first violation" surfaced in the next model call's prompt), impl.md byte-identical after; plus the recovery run to impl-complete, steps 10. Red→green note: authored red exposed the layering — `toolApproval` denies ABOVE the provider swap before own-the-execute runs, so the surfaced message is the denial reason, not the primary layer's wrapper text. Full run: `pnpm vitest run src/lib/run/` → 5 files, 41/41 passing (swap 8 + loop 13 + gate 11 + registry 7 + driver 2); `pnpm exec tsc --noEmit` clean; `biome check` clean on registry.ts/driver.ts/swap.test.ts/run.ts.)
 
 #### Phase 4 Context
 - [ ] Record the proof point: same discipline, different model, byte-identical gate behavior.
