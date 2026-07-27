@@ -33,20 +33,29 @@ Headless runs need `gate_policy: auto` in the impl frontmatter — there is no u
 
 ## `--model`
 
-Selects the driver. Accepts a friendly alias — `claude`, `gpt`, `gemini`, `grok` — or a bare provider name (`anthropic`, `openai`, `google`, `xai`), resolved through the provider registry into a driver config (`provider`, key env var, default model). Defaults to `claude` (the first driver; the others land with the second-driver phase). Swapping models changes one provider factory line — gate behavior is structural, not per-model.
+Selects the driver. Accepts a friendly alias — `claude`, `gpt`, `gemini`, `grok` — or a bare provider name (`anthropic`, `openai`, `google`, `xai`), resolved through the provider registry into a driver config (`provider`, key env var, default model). Defaults to `claude`. Swapping models changes one provider factory line — gate behavior is structural, not per-model.
+
+Two drivers are wired:
+
+| Alias | Provider | Default model |
+|-------|----------|---------------|
+| `claude` | `anthropic` (`@ai-sdk/anthropic`) | `claude-sonnet-4-5` |
+| `gemini` | `google` (`@ai-sdk/google`) | `gemini-2.5-flash` |
+
+`gpt` / `grok` resolve in the registry but have no driver yet — selecting them fails with a clear error until their `@ai-sdk/*` factory line lands (the acceptance-matrix phase decides which comes next).
 
 ## Provider keys
 
 Direct per-provider API keys, no commercial gateway — each provider is hit with your own key so per-provider credit arbitrage is preserved:
 
-| Provider | Key env |
-|----------|---------|
+| Provider | Key env (accepted names, first set wins) |
+|----------|------------------------------------------|
 | `anthropic` | `ANTHROPIC_API_KEY` |
 | `openai` | `OPENAI_API_KEY` |
-| `google` | `GOOGLE_GENERATIVE_AI_API_KEY` |
+| `google` | `GOOGLE_GENERATIVE_AI_API_KEY`, `GOOGLE_API_KEY` |
 | `xai` | `XAI_API_KEY` |
 
-The command refuses to start when the selected driver's key env is unset. Note the Claude driver is metered API usage — a Claude Max/Pro subscription cannot authenticate SDK calls; keep Claude Code (native, flat-rate) for judgment-heavy work and route mechanical runs here by cost-to-durably-done.
+Where a provider's key conventionally lives under more than one env name, the registry lists the accepted names in order (the AI SDK default first) and the first non-empty one is passed to the provider factory explicitly — so a machine keeping its key under `GOOGLE_API_KEY` works without renaming. The command refuses to start when none of the selected driver's key envs is set. Note the Claude driver is metered API usage — a Claude Max/Pro subscription cannot authenticate SDK calls; keep Claude Code (native, flat-rate) for judgment-heavy work and route mechanical runs here by cost-to-durably-done.
 
 ## Reporting
 

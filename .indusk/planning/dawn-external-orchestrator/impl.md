@@ -113,7 +113,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - [x] Record the proof point: same discipline, different model, byte-identical gate behavior. Recorded: **T7** (`swap.test.ts`) proves it structurally — the google driver config through the SAME `runLoop` with the REAL gate scripts denies a premature checkoff (`execution-denied`, gate stderr surfaced) and leaves impl.md byte-identical, then the identical loop recovers to impl-complete; the gate layers (own-the-execute below the swap, `toolApproval` above it, the phase-close probe) never consult the provider, so gate behavior is invariant by construction. The live `--model gemini` run is the empirical datum on top: same fixture, same scripts, impl-complete with the checkoff earned only on green tests (98,972 in / 5,740 out tokens). Different model, same discipline — the swap is one registry entry + one provider factory line.
 
 #### Phase 4 Document
-- [ ] Note the second provider in `/reference/cli/run`.
+- [x] Note the second provider in `/reference/cli/run`. Added the wired-drivers table (claude → `claude-sonnet-4-5`, gemini → `gemini-2.5-flash`; gpt/grok resolve but error until their factory line lands) and the key-env bridge note (google accepts `GOOGLE_GENERATIVE_AI_API_KEY` or `GOOGLE_API_KEY`, first set wins).
 
 ### Phase 5: Matrix + acceptance
 
