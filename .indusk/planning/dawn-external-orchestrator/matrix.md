@@ -18,6 +18,8 @@ Deviation from the planned matrix (recorded 2026-07-27): **Claude column deferre
 | C2 | gemini-2.5-flash | remote (Fly ubuntu 24.04, sjc, shared-cpu-2x) | ✅ held | **impl-complete, first attempt** | 1 | 48s | 161,164 / 6,239 | 24 steps / 23 tool calls; built at the worktree root rather than the fixture dir (see F5); 4/4 tests green, independently verified on the box |
 | C3 | gemini-3.6-flash | local | ✅ held (stopped red, no false advance) | did-not-run: zero edits | 1 | 59s | n/a | SDK-blocked: `thoughtSignature` not round-tripped by @ai-sdk/google@4.0.24 — tool calls never surface |
 | C4 | gemini-3.6-flash | remote (Fly) | ✅ held (stopped red, no false advance) | did-not-run: zero edits | 1 | 68s | n/a | same signature as C3 — environment-independent |
+| C3′ | gemini-3.6-flash | local | ✅ held | **impl-complete, first attempt** | 1 | 3m04s | 322,588 / 9,580 | after the step-budget fix (24→48): 31 steps / 30 tool calls — over the old cap, proving the starvation diagnosis; 6/6 tests green, independently verified |
+| C4′ | gemini-3.6-flash | remote (Fly) | ✅ held | **impl-complete, first attempt** | 1 | 1m31s | 508,315 / 13,410 | 33 steps / 32 tool calls; 5 checkoffs confirmed; independent test re-run n/a (machine stopped first — sequencing miss), green close rests on the loop's own probe |
 | — | claude (any) | — | — | — | — | — | — | **deferred: no API key** |
 
 ## Findings log
@@ -29,9 +31,11 @@ Deviation from the planned matrix (recorded 2026-07-27): **Claude column deferre
 - **F4 (2026-07-27)**: the loop reports steps/tool-calls/tokens **only on green phase close** — red stops report nothing, so failed-attempt cost is invisible in CLI output. Joins the Phase 4 exit-2-count gap: matrix-grade telemetry (per-attempt usage + per-edit block counts) is a needed indusk fix.
 - **F5 (2026-07-27)**: layout variance across runs — C1 built inside a nested `semver/` dir, C2 at the worktree root with its own workspace files. The fixture's impl doesn't pin paths, so structure is model-mood. Outcome-quality note for A8, and an argument for path-pinning in reference-task fixtures.
 
+- **F6 (2026-07-27)**: Fly Machine **rootfs is ephemeral across stop/start** (plain image, no volume) — the reprovisioned box lost node/pnpm/key on restart. Also: nodesource started 403ing from the Fly IP on the second pass (fallback: official nodejs.org tarball, more reliable anyway). Consequence for cloud-deployment: the box needs a bootstrap script, a baked image, or a volume — exactly the workspace-lifecycle layer RDEs productize; this is the first concrete datum for the Fly-vs-RDE evaluation.
+
 ## Environment provisioning (method record)
 
-Remote cell: Fly Machine `894075b6d50718` (app `dawn-box`, sjc, shared-cpu-2x/2GB, ubuntu:24.04) — Node 24.18.0 + pnpm 11.17.0 via nodesource; branch shipped as `git archive` tarball over `fly ssh sftp` (no repo creds on the box); key transferred the same way. Machine stopped after the run (~$0.02/hr while up; restart + re-run any time, e.g. to append Claude cells).
+Remote cell: Fly Machine `894075b6d50718` (app `dawn-box`, sjc, shared-cpu-2x/2GB, ubuntu:24.04) — Node 24.18.0 (nodejs.org tarball → `/usr/local`; nodesource 403s intermittently from Fly IPs) + pnpm via npm; branch shipped as `git archive` tarball over `fly ssh sftp` (no repo creds on the box); key transferred the same way. **Rootfs resets on stop/start (F6) — reprovision from scratch each time until a bootstrap script/baked image exists.** Machine stopped after the runs (~$0.02/hr while up).
 
 ## A8 read (Sandy)
 
