@@ -23,13 +23,13 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 | T6 | the goalpost guard STOPS the loop if the Test Trajectory table is mutated mid-phase | Phase 3 | Phase 3 | passing |
 | T7 | the same guinea-pig plan runs via a non-Claude driver with the identical gate firing (a premature checkoff is still blocked) | Phase 4 | Phase 4 | passing |
 | A8 | the matrix run (models × environments) yields comparable gate-hold, outcome-quality, and cost-to-durably-done data | Phase 5 | Phase 5 | written |
-| T10 | a phase-checkoff performed through the `bash` tool (`sed -i` / `echo >>` / `cat >`) is gated identically to the `edit` tool — the premature checkoff does NOT survive | Phase 0 | Phase 6 | planned |
-| T11 | the `bash` tool cannot mutate files outside the worktree root (absolute path, `cd ..`, `~`) — the attempt is refused, not merely started in the root | Phase 0 | Phase 6 | planned |
-| T12 | a symlink inside the worktree pointing outside it cannot be used by the file tools to read or write beyond the root | Phase 0 | Phase 6 | planned |
-| T13 | flipping a non-terminal trajectory row to `skipped`/`blocked` mid-phase does NOT let the phase-close probe advance — self-assigned terminality is a moved goalpost | Phase 0 | Phase 6 | planned |
-| T14 | a gate script that exits non-zero-non-2 (crash, malformed impl, zero parsed phases) never silently allows the edit — the run stops loud | Phase 0 | Phase 6 | planned |
-| T15 | a gate script killed by the spawn timeout never counts as allow — a null exit code blocks and says why | Phase 0 | Phase 6 | planned |
-| T16 | `--max-steps` rejects non-numeric, zero, and negative values instead of silently producing an unbounded or zero-step run | Phase 0 | Phase 6 | planned |
+| T10 | a phase-checkoff performed through the `bash` tool (`sed -i` / `echo >>` / `cat >`) is gated identically to the `edit` tool — the premature checkoff does NOT survive | Phase 0 | Phase 6 | written |
+| T11 | the `bash` tool cannot mutate files outside the worktree root (absolute path, `cd ..`, `~`) — the attempt is refused, not merely started in the root | Phase 0 | Phase 6 | written |
+| T12 | a symlink inside the worktree pointing outside it cannot be used by the file tools to read or write beyond the root | Phase 0 | Phase 6 | written |
+| T13 | flipping a non-terminal trajectory row to `skipped`/`blocked` mid-phase does NOT let the phase-close probe advance — self-assigned terminality is a moved goalpost | Phase 0 | Phase 6 | written |
+| T14 | a gate script that exits non-zero-non-2 (crash, malformed impl, zero parsed phases) never silently allows the edit — the run stops loud | Phase 0 | Phase 6 | written |
+| T15 | a gate script killed by the spawn timeout never counts as allow — a null exit code blocks and says why | Phase 0 | Phase 6 | written |
+| T16 | `--max-steps` rejects non-numeric, zero, and negative values instead of silently producing an unbounded or zero-step run | Phase 0 | Phase 6 | written |
 
 ### Trajectory Rationale
 
