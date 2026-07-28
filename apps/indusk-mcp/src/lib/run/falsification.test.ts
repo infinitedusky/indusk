@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { run } from "../../bin/commands/run.js";
 import { createGatedWorktreeTools, runGateScripts } from "./gate.js";
-import { checkGoalposts, snapshotTrajectory } from "./loop.js";
+import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
 import { createWorktreeTools } from "./tools.js";
 
 /**

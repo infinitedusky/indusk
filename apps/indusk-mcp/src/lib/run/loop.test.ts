@@ -7,7 +7,8 @@ import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseImplString } from "../impl-parser.js";
-import { checkGoalposts, detectHumanGate, runLoop, snapshotTrajectory } from "./loop.js";
+import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
+import { detectHumanGate, runLoop } from "./loop.js";
 
 /**
  * T5 — the full loop runs the guinea-pig plan to impl-complete via Claude,

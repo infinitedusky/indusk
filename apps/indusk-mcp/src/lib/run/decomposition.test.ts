@@ -40,11 +40,17 @@ describe("T17 — the decomposed modules are real seams", () => {
 	});
 
 	it("goalposts owns the anti-gaming policy", () => {
+		// The heading is load-bearing: the parser anchors the table to it, and a
+		// fixture without it yields zero rows — which would make the violation
+		// assertion below pass or fail for the wrong reason.
 		const table = (state: string) =>
 			[
+				"## Test Trajectory",
+				"",
 				"| ID | Asserts | Writable at | Passes at | State |",
 				"|----|---------|-------------|-----------|-------|",
 				`| T1 | a claim | Phase 1 | Phase 1 | ${state} |`,
+				"",
 			].join("\n");
 
 		expect(
