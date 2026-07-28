@@ -23,6 +23,13 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 | T6 | the goalpost guard STOPS the loop if the Test Trajectory table is mutated mid-phase | Phase 3 | Phase 3 | passing |
 | T7 | the same guinea-pig plan runs via a non-Claude driver with the identical gate firing (a premature checkoff is still blocked) | Phase 4 | Phase 4 | passing |
 | A8 | the matrix run (models × environments) yields comparable gate-hold, outcome-quality, and cost-to-durably-done data | Phase 5 | Phase 5 | written |
+| T10 | a phase-checkoff performed through the `bash` tool (`sed -i` / `echo >>` / `cat >`) is gated identically to the `edit` tool — the premature checkoff does NOT survive | Phase 0 | Phase 6 | planned |
+| T11 | the `bash` tool cannot mutate files outside the worktree root (absolute path, `cd ..`, `~`) — the attempt is refused, not merely started in the root | Phase 0 | Phase 6 | planned |
+| T12 | a symlink inside the worktree pointing outside it cannot be used by the file tools to read or write beyond the root | Phase 0 | Phase 6 | planned |
+| T13 | flipping a non-terminal trajectory row to `skipped`/`blocked` mid-phase does NOT let the phase-close probe advance — self-assigned terminality is a moved goalpost | Phase 0 | Phase 6 | planned |
+| T14 | a gate script that exits non-zero-non-2 (crash, malformed impl, zero parsed phases) never silently allows the edit — the run stops loud | Phase 0 | Phase 6 | planned |
+| T15 | a gate script killed by the spawn timeout never counts as allow — a null exit code blocks and says why | Phase 0 | Phase 6 | planned |
+| T16 | `--max-steps` rejects non-numeric, zero, and negative values instead of silently producing an unbounded or zero-step run | Phase 0 | Phase 6 | planned |
 
 ### Trajectory Rationale
 
@@ -32,6 +39,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - **T5–T6** are writable at Phase 3 — advance-on-green and the goalpost guard are the ported loop control landing in Phase 3; they require Phases 1–2 (a gated driver) to exist first.
 - **T7** is writable at Phase 4 — proving model-invariance requires a second driver, which Phase 4 adds.
 - **A8** is writable at Phase 5 — the matrix is the acceptance harness built in Phase 5; it is a deferred (human-judgment) verification (see Phase 5).
+- **T10–T16** are writable at Phase 0 — every one asserts against behavior that exists *today*; each is red now and turns green when its Phase 6 fix lands. They are falsification hypotheses, not new-surface tests.
 
 ### Phase 0: Scaffold + reference task
 
@@ -132,3 +140,30 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 
 #### Phase 5 Document
 - [ ] Publish the matrix results + method as the acceptance record.
+
+### Phase 6: Falsification — the gate has an ungated door (bash), and it fails open
+
+**Goal**: verify whether the attested Tier-1 claim ("the gate scripts fire on each edit; exit 2 → the edit is refused; discipline is structural, not per-model") holds against the *system* rather than the `edit` tool alone. Three failure families: (a) the `bash` tool is a completely ungated write surface bound to nothing, (b) the trajectory's terminality can be self-assigned by the model the guard is meant to police, (c) the gate invoker treats every non-2 exit — including crashes and timeout kills — as permission to proceed. Each trajectory row below is one hypothesis; each item below is the fix it needs.
+
+- [ ] Gate the `bash` write surface (T10): snapshot the gate-relevant files (the impl under run, at minimum) before each `bash` call; if the command mutated one, run the same `{tool_name, tool_input, cwd}` envelope against the resulting change and REVERT + return the block message when the gate refuses. Today `bash("sed -i 's/- \[ \]/- [x]/' impl.md")` checks off a phase with zero gate involvement — the one move a blocked model is most likely to reach for.
+- [ ] Confine `bash` to the worktree (T11): `cwd: root` sets a starting directory, not a boundary — absolute paths, `cd ~`, and `..` all escape today while the file tools carefully reject exactly that. Add a best-effort guard AND state plainly (code comment + docs) that real confinement needs the sandboxed run cell (roadmap); never let the guard imply isolation it does not provide.
+- [ ] Harden `resolveInWorktree` against symlink escape (T12): it normalizes textually via `resolve()` and never calls `realpath`, so a symlink inside the root that points outside passes the check and the write lands outside. Resolve the real path (of the file, or its nearest existing parent for new files) before the containment comparison. Note the compounding path: `bash` can *create* the symlink, then the "safe" file tools walk through it.
+- [ ] Close self-assigned terminality (T13): `checkGoalposts` permits every State transition, and `TERMINAL_STATES` includes `skipped`/`blocked` — so a model that cannot make a test pass can write `skipped` into the State cell and the phase-close probe will happily advance. Treat non-terminal → `skipped`/`blocked` *inside a phase* as a goalpost violation (STOP LOUD); human-authored skips outside the loop stay legal. Also flag `Writable at` moved later, which the guard ignores today.
+- [ ] Make the gate invoker fail LOUD, not open (T14): `runGateScripts` blocks only on exit 2 and allows everything else "for PreToolUse parity" — but Claude Code has a human watching, and this loop does not. A gate script that crashes (or vacuously passes a zero-phase impl — the known `validator-must-reject-zero-parsed-phases` lesson) silently disarms enforcement for the rest of the run. Treat non-zero-non-2 as a hard stop that surfaces the script's stderr and halts the loop, rather than a quiet allow.
+- [ ] Treat a killed gate script as a block (T15): `spawnGateScript` has `timeout: 30_000`; on kill the exit code is `null`, which is `!== 2`, which means **allow**. A loaded machine can therefore disarm the gate — and this is not theoretical: Phase 3 observed 5s gate-spawn timeouts under background load. Block on null exit with an explicit "gate script timed out — refusing the edit" message, and make the timeout configurable.
+- [ ] Validate `--max-steps` (T16): `Number.parseInt` yields `NaN` for `--max-steps abc`, and `stepCountIs(NaN)` never fires — the loop's only cost bound silently disappears. `0`/negative give an instant zero-work red. Reject non-numeric and `<1` at the CLI boundary with a clear message.
+
+#### Phase 6 Verification
+- [ ] T10: a `bash`-driven premature checkoff on the guinea-pig impl is gated identically to the `edit` path — the checkoff does not survive the call.
+- [ ] T11: a `bash` command writing to an absolute path outside the worktree root is refused.
+- [ ] T12: a symlink inside the worktree pointing outside it cannot be used by `readFile`/`writeFile`/`edit` to cross the root.
+- [ ] T13: flipping a non-terminal row to `skipped` mid-phase is caught as a goalpost violation and the loop STOPS instead of advancing.
+- [ ] T14: a gate script exiting 1 (crash/malformed impl) stops the run loud instead of allowing the edit.
+- [ ] T15: a gate script killed by timeout blocks the edit with a timeout-specific message.
+- [ ] T16: `--max-steps abc` / `--max-steps 0` are rejected with a clear error before any model call.
+
+#### Phase 6 Context
+- [ ] Add a Known Gotcha to CLAUDE.md recording the enforcement boundary this ritual exposed: the orchestrator's gate covers the `edit`/`writeFile` tools, so any *new* tool that can mutate files (starting with `bash`) must be routed through the same envelope or it is a hole in Tier-1 by construction.
+
+#### Phase 6 Document
+- [ ] Update `/reference/cli/run` with an explicit "what is and is not gated" section — the enforcement boundary, the bash caveat, and the fail-loud semantics — so the page never over-claims isolation the MVP does not have.
