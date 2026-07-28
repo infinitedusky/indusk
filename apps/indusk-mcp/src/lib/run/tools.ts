@@ -1,11 +1,12 @@
 import { execFile } from "node:child_process";
-import { mkdirSync, realpathSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { readdir, readFile, writeFile } from "node:fs/promises";
-import { basename, dirname, relative, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { promisify } from "node:util";
 import type { ToolSet } from "ai";
 import { tool } from "ai";
 import { z } from "zod";
+import { resolveInWorktree } from "./worktree-paths.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -22,63 +23,6 @@ const execFileAsync = promisify(execFile);
  * NO gates here — the Phase 2 gate adapter wraps the edit/write execute path;
  * this file is deliberately gate-free loop plumbing.
  */
-
-/**
- * Resolve `p` inside `root`, throwing if the result escapes the root.
- *
- * Textual containment is checked first, then the REAL path (T12): `resolve()`
- * only normalizes `..` lexically, so a symlink living inside the root but
- * pointing outside it passes a purely textual check while the subsequent
- * read/write lands wherever the link points. Both the target and its nearest
- * existing ancestor (for files being created) are realpath-ed, and the root
- * itself is realpath-ed so a symlinked root — e.g. macOS `/tmp` →
- * `/private/tmp`, or a workbench trunk symlink — doesn't false-positive.
- */
-export function resolveInWorktree(root: string, p: string): string {
-	const absRoot = resolve(root);
-	const abs = resolve(absRoot, p);
-	const rel = relative(absRoot, abs);
-	if (rel.startsWith("..") || resolve(absRoot, rel) !== abs) {
-		throw new Error(
-			`Path "${p}" escapes the worktree root — all paths must stay inside ${absRoot}.`,
-		);
-	}
-
-	// Both sides resolve the same way — realpath-ing only one of them makes a
-	// not-yet-created root under a symlinked parent (macOS `/tmp` →
-	// `/private/tmp`) look like an escape.
-	const realRoot = realpathOfNearestExisting(absRoot);
-	const realTarget = realpathOfNearestExisting(abs);
-	const realRel = relative(realRoot, realTarget);
-	if (realRel.startsWith("..") || resolve(realRoot, realRel) !== realTarget) {
-		throw new Error(
-			`Path "${p}" escapes the worktree root through a symlink — it resolves to ${realTarget}, outside ${realRoot}.`,
-		);
-	}
-
-	return abs;
-}
-
-/**
- * realpath of `p` if it exists; otherwise realpath of its nearest existing
- * ancestor with the not-yet-created remainder appended — so a write to a new
- * file under a symlinked directory is still checked against the real location.
- */
-function realpathOfNearestExisting(p: string): string {
-	let current = p;
-	const trailing: string[] = [];
-	for (let i = 0; i < 64; i++) {
-		try {
-			return resolve(realpathSync(current), ...trailing.reverse());
-		} catch {
-			const parent = dirname(current);
-			if (parent === current) return p;
-			trailing.push(basename(current));
-			current = parent;
-		}
-	}
-	return p;
-}
 
 /** Bash output cap — keeps a runaway command from flooding the model context. */
 const MAX_BASH_OUTPUT = 16_000;

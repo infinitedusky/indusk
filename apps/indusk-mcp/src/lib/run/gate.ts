@@ -1,10 +1,10 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { readdir, readFile, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { ToolApprovalStatus, ToolSet } from "ai";
-import { createWorktreeTools, resolveInWorktree } from "./tools.js";
+import { gateBashTool } from "./bash-gate.js";
+import { createWorktreeTools } from "./tools.js";
+import { resolveInWorktree } from "./worktree-paths.js";
 
 /**
  * Tier-1 gate adapter + invoker (ADR Decision 2/3).
@@ -244,124 +244,6 @@ export function createGatedWorktreeTools(worktreeRoot: string, options: GateOpti
 	gated.bash = gateBashTool(base.bash, root, scripts, timeoutMs);
 
 	return gated;
-}
-
-/**
- * Gate the `bash` write surface (T10/T11).
- *
- * `bash` is the hole falsification found: the gate wrapped `edit`/`writeFile`
- * while a shell command could rewrite the very same bytes untouched — and
- * `sed -i` on a checkbox is exactly what a blocked model reaches for. Two
- * defenses, both deliberately modest about what they are:
- *
- *   1. **Escape refusal (T11)** — the command is scanned for absolute paths
- *      that resolve outside the root and refused before running. This is
- *      BEST-EFFORT, not isolation: `cwd` is a starting directory, and a
- *      command can still reach outside through indirection the scanner cannot
- *      see (a variable, a tool's own config path, `pnpm` writing to its global
- *      store). Real confinement needs the sandboxed run cell (roadmap). Never
- *      describe this guard as a sandbox.
- *   2. **Post-hoc gating (T10)** — gate-relevant files (`impl.md`) are hashed
- *      before the command and re-checked after. A mutation is replayed through
- *      the SAME gate envelope the edit tool uses; if the gate refuses, the file
- *      is restored and the block message becomes the tool result. The gate
- *      still decides; only the moment of asking moves.
- */
-function gateBashTool(
-	baseBash: ToolSet[string],
-	root: string,
-	scripts: string[],
-	timeoutMs: number | undefined,
-): ToolSet[string] {
-	const originalExecute = (baseBash as { execute?: ToolExecuteFn }).execute;
-	if (!originalExecute) throw new Error('Worktree tool "bash" has no execute to gate.');
-
-	return {
-		...baseBash,
-		execute: async (input: unknown, executionOptions: unknown) => {
-			const command = (input as { command?: string })?.command ?? "";
-
-			const escaping = findEscapingPaths(command, root);
-			if (escaping.length > 0) {
-				return (
-					`Refused: this bash command references ${escaping.join(", ")}, outside the worktree root ${root}. ` +
-					"Commands must operate inside the worktree."
-				);
-			}
-
-			const before = await snapshotGateRelevantFiles(root);
-			const result = await originalExecute(input, executionOptions);
-			const after = await snapshotGateRelevantFiles(root);
-
-			for (const [file, previous] of before) {
-				const current = after.get(file);
-				if (current === undefined || current === previous) continue;
-
-				const gate = await runGateScripts(
-					{
-						tool_name: "Write",
-						tool_input: { file_path: file, content: current },
-						cwd: root,
-					},
-					scripts,
-					{ timeoutMs },
-				);
-				if (!gate.allowed) {
-					await writeFile(file, previous, "utf8");
-					return (
-						`Gate blocked this bash command's change to ${relative(root, file)} — it was REVERTED. ` +
-						`A shell command is gated exactly like an edit.\n${gate.blockMessage}`
-					);
-				}
-			}
-
-			return result;
-		},
-	} as ToolSet[string];
-}
-
-/** Files the gate scripts have opinions about — cheap to hash, worth watching. */
-const GATE_RELEVANT_FILE = "impl.md";
-const SNAPSHOT_SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next", "coverage"]);
-
-/** Absolute paths in a command that land outside the worktree root. */
-export function findEscapingPaths(command: string, worktreeRoot: string): string[] {
-	const root = resolve(worktreeRoot);
-	const escaping = new Set<string>();
-	// Tokens that look like filesystem paths: absolute, or home-relative.
-	for (const rawToken of command.split(/[\s;|&<>()"']+/)) {
-		const token = rawToken.trim();
-		if (!token.startsWith("/") && !token.startsWith("~")) continue;
-		const candidate = token.startsWith("~") ? join(homedir(), token.slice(1)) : token;
-		const abs = resolve(candidate);
-		const rel = relative(root, abs);
-		if (rel.startsWith("..") || resolve(root, rel) !== abs) escaping.add(token);
-	}
-	return [...escaping];
-}
-
-/** Hash-free content snapshot of every gate-relevant file under the root. */
-async function snapshotGateRelevantFiles(root: string): Promise<Map<string, string>> {
-	const found = new Map<string, string>();
-	const walk = async (dir: string, depth: number): Promise<void> => {
-		if (depth > 8) return;
-		const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
-		for (const entry of entries) {
-			const full = join(dir, entry.name);
-			if (entry.isDirectory()) {
-				if (SNAPSHOT_SKIP_DIRS.has(entry.name)) continue;
-				await walk(full, depth + 1);
-			} else if (entry.name === GATE_RELEVANT_FILE) {
-				try {
-					found.set(full, await readFile(full, "utf8"));
-				} catch {
-					// unreadable — nothing to compare against later
-				}
-			}
-		}
-	};
-	await walk(root, 0);
-	return found;
 }
 
 const GATED_TOOL_NAMES: readonly GatedToolName[] = ["edit", "writeFile"];
