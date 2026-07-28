@@ -183,6 +183,10 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/lessons/" },
 						{
+							text: "Dawn Orchestrator — Acceptance Matrix (Gate-Hold Across Models + Environments)",
+							link: "/lessons/dawn-orchestrator-acceptance-matrix",
+						},
+						{
 							text: "Cleanup Ritual (Ritual vs Gate + Mirrored-Artifact Parity)",
 							link: "/lessons/cleanup-ritual",
 						},

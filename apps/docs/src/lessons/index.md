@@ -15,6 +15,7 @@ Baked-in rules every InDusk project inherits — they ship with the MCP package:
 
 Insights captured during specific plans' retrospectives — narrower than community lessons but generalize beyond their plan of origin:
 
+- **[Dawn Orchestrator — Acceptance Matrix](/lessons/dawn-orchestrator-acceptance-matrix)** — gate-hold held in 6/6 model × environment cells including the failure cells; cost-to-durably-done (with rework) separates models where tokens-per-run flatters the cheaper one; a red stop over green code is the system working; wire-level evidence beat a plausible misdiagnosis.
 - **[Agent Roles](/lessons/agent-roles)** — three-tier agent role separation (working / eval / infrastructure) and the highlights queue as the boundary mechanism.
 - **[Eval Agent Bug Fix](/lessons/eval-agent-bug-fix)** — silent-failure modes when subprocess stderr is swallowed; ESM-vs-CJS pitfalls in spawned Node subprocesses.
 - **[Eval Agent OTel](/lessons/eval-agent-otel)** — opt-in observability for background agents; OTel as the diagnostic tool that unblocked the bug-fix plan.

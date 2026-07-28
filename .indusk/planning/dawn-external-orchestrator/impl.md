@@ -139,7 +139,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - [x] Capture the matrix findings as the first data point on "which model is cheapest-to-done per task class." (matrix.md findings F1–F5: gemini-2.5-flash is the current cheapest-to-done reference — remote first-attempt 48s/167k tokens; 3.x blocked by SDK lag; failed attempts cost real time (8m45s) but never false-advance. Claude comparison pending a key.)
 
 #### Phase 5 Document
-- [ ] Publish the matrix results + method as the acceptance record.
+- [x] Publish the matrix results + method as the acceptance record. `/lessons/dawn-orchestrator-acceptance-matrix` — method, the 6-cell results table, what the data says (universal gate-hold incl. failure cells; red-over-green is the system working; cost-to-durably-done vs tokens-per-run; remote not slower), and the carry-forward findings. Sidebar + lessons index updated.
 
 ### Phase 6: Falsification — the gate has an ungated door (bash), and it fails open
 
