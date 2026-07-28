@@ -149,9 +149,9 @@ describe("T13 — terminality cannot be self-assigned mid-phase", () => {
 				"",
 			].join("\n");
 
-		expect(checkGoalposts(snapshotTrajectory(table("written")), snapshotTrajectory(table("passing")))).toEqual(
-			[],
-		);
+		expect(
+			checkGoalposts(snapshotTrajectory(table("written")), snapshotTrajectory(table("passing"))),
+		).toEqual([]);
 	});
 });
 

@@ -64,6 +64,19 @@ export async function run(
 ): Promise<void> {
 	const modelName = options.model ?? DEFAULT_MODEL;
 
+	// Validate the step budget BEFORE anything spends a token (T16). NaN is the
+	// dangerous one: `stepCountIs(NaN)` never fires, silently removing the run's
+	// only cost bound — the failure mode is an unbounded bill, not an error.
+	if (options.maxSteps !== undefined) {
+		if (!Number.isFinite(options.maxSteps) || options.maxSteps < 1) {
+			console.error(
+				`--max-steps must be a positive whole number (got "${options.maxSteps}"). It bounds the per-phase attempt; a non-numeric value would leave the run unbounded.`,
+			);
+			process.exitCode = 1;
+			return;
+		}
+	}
+
 	let driver: ReturnType<typeof resolveModel>;
 	try {
 		driver = resolveModel(modelName);

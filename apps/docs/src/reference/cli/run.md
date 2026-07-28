@@ -30,6 +30,26 @@ The discipline lives in the shared gate scripts (`validate-impl-structure.js`, `
 1. **Own-the-execute (primary, model-invariant).** The edit/write tools' `execute` adapts each call to the scripts' `{ tool_name, tool_input, cwd }` stdin envelope and spawns them: exit `2` refuses the edit and returns the block message as the tool result; exit `0` applies. Lives below the provider swap, so it cannot vary per model.
 2. **`toolApproval` (secondary, SDK-native).** The same gate chain runs as an AI SDK approval callback above the provider swap, with `experimental_toolApprovalSecret` HMAC-signing approvals — defense in depth and PreToolUse parity.
 3. **The deliberate phase-close probe (loop-level).** `check-gates` invoked at each phase boundary, as described above.
+4. **Post-hoc `bash` gating.** Gate-relevant files (`impl.md`) are snapshotted before each shell command and re-checked after; a mutation is replayed through the same envelope, and a refusal reverts the file and returns the block message. A shell command is gated exactly like an edit — see the boundary section below for why this layer exists.
+
+### What is and is not gated
+
+The gate covers **tool surfaces, not intentions**. Any tool that can mutate files must be routed through the envelope, or it is a hole in Tier-1 by construction. The falsification round found exactly that hole: `bash` could rewrite a checkbox the `edit` tool would have refused, which is the first move a blocked model makes.
+
+| Surface | Enforcement |
+|---------|-------------|
+| `edit` / `writeFile` | Gated before the write — refused edits never touch disk |
+| `bash` mutations of gate-relevant files | Gated after the command — a refused change is reverted |
+| `bash` reaching outside the worktree | **Best-effort refusal** — absolute paths outside the root are scanned for and rejected |
+| Everything else `bash` can do | **Not confined** |
+
+::: warning `bash` confinement is best-effort, not a sandbox
+`cwd` is a starting directory, not a boundary. The escape scanner catches absolute paths written literally into the command; it cannot see a path built from a variable, or a tool writing to its own global location (`pnpm` and its store, for one). Real confinement requires running the loop in a sandboxed cell — an isolated container or a disposable remote box. Do not treat this guard as isolation, and prefer a throwaway worktree or a remote cell for untrusted runs.
+:::
+
+**Fail loud, not open.** The invoker blocks on exit `2` (the gate's own refusal), on any other non-zero exit (a crashed or confused script), and on a timeout kill (`null` exit code). Claude Code's PreToolUse treats non-2 as non-blocking because a human is watching; an unattended loop must never read silence as permission — a disarmed gate would void the discipline for the rest of the run without anyone noticing.
+
+**Goalposts include the State column.** The guard rejects changed `Asserts` text, `Passes at` or `Writable at` moved later, removed rows, and a row flipped to `skipped`/`blocked` mid-phase. Terminality is a status a human documents with a reason, not one a run declares for itself when a test won't pass.
 
 Headless runs need `gate_policy: auto` in the impl frontmatter — there is no user in the loop to give conversation-proof skips to (`ask`, the default, would refuse bare opt-outs).
 
