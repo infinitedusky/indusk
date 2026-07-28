@@ -30,6 +30,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 | T14 | a gate script that exits non-zero-non-2 (crash, malformed impl, zero parsed phases) never silently allows the edit — the run stops loud | Phase 0 | Phase 6 | passing |
 | T15 | a gate script killed by the spawn timeout never counts as allow — a null exit code blocks and says why | Phase 0 | Phase 6 | passing |
 | T16 | `--max-steps` rejects non-numeric, zero, and negative values instead of silently producing an unbounded or zero-step run | Phase 0 | Phase 6 | passing |
+| T17 | behavior parity across the Phase 7 decomposition — the extracted modules are imported by their consumers and the full `src/lib/run` suite passes with unchanged assertions | Phase 7 | Phase 7 | planned |
 
 ### Trajectory Rationale
 
@@ -40,6 +41,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - **T7** is writable at Phase 4 — proving model-invariance requires a second driver, which Phase 4 adds.
 - **A8** is writable at Phase 5 — the matrix is the acceptance harness built in Phase 5; it is a deferred (human-judgment) verification (see Phase 5).
 - **T10–T16** are writable at Phase 0 — every one asserts against behavior that exists *today*; each is red now and turns green when its Phase 6 fix lands. They are falsification hypotheses, not new-surface tests.
+- **T17** is writable at Phase 7 because the modules whose imports it asserts do not exist until that phase's extractions land. It is deliberately ONE parity row rather than one row per extracted module: the decomposition is structure-preserving, the behavior is already pinned by T0–T16, and minting four rows that re-assert existing coverage would be trajectory theater.
 
 ### Phase 0: Scaffold + reference task
 
@@ -168,3 +170,26 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 
 #### Phase 6 Document
 - [x] Update `/reference/cli/run` with an explicit "what is and is not gated" section — the enforcement boundary, the bash caveat, and the fail-loud semantics — so the page never over-claims isolation the MVP does not have.
+
+### Phase 7: Cleanup — split the two files Phase 6 doubled, and stop copy-pasting the test harness
+
+**Goal**: decompose the modules that absorbed a second concern during falsification, and remove the four-way duplicated test setup. This is a TypeScript/CLI codebase (the enabled domain extensions are `typescript` + `testing` — no react/nextjs), so the idiom is extract-a-module, not extract-a-component. Every extraction below is structure-preserving under the 51 green tests falsification just hardened; behavior parity is the single new trajectory row.
+
+- [ ] Extract the bash-gating surface from `src/lib/run/gate.ts` into `src/lib/run/bash-gate.ts` — `gateBashTool`, `findEscapingPaths`, `snapshotGateRelevantFiles`, `GATE_RELEVANT_FILE`, `SNAPSHOT_SKIP_DIRS` (~130 lines). Basis: gate.ts went 245 → 400 lines in Phase 6 by absorbing a genuinely different concern. Adapting an edit call into an envelope and spawning scripts is *pre-flight*; watching a shell command's effects and reverting them is *post-hoc surveillance*. Two responsibilities, two files; `gate.ts` keeps the envelope/adapter/invoker and re-exports nothing it doesn't own.
+- [ ] Extract the goalpost guard from `src/lib/run/loop.ts` into `src/lib/run/goalposts.ts` — `snapshotTrajectory`, `checkGoalposts`, `SELF_ASSIGNABLE_STATES`. Basis: pure functions over a parsed trajectory with no loop dependency, already exercised independently by T6/T13. They are the plan's anti-gaming policy and read better as one named unit than as a middle section of the orchestrator.
+- [ ] Extract the phase-close probe from `src/lib/run/loop.ts` into `src/lib/run/probe.ts` — `probePhaseClose`, `neutralizeRowsWritableAt`, `PROBE_ITEM`, `TERMINAL_STATES`. Basis: distinct machinery (synthesize a temp impl copy, neutralize next-phase rows, ask `check-gates` one question) with the subtlest invariant in the plan — worth its own file and its own tests rather than living beside the loop it advises. After this and the goalpost extraction, `loop.ts` is ~200 lines of orchestration + human-gate detection.
+- [ ] Extract worktree path containment from `src/lib/run/tools.ts` into `src/lib/run/worktree-paths.ts` — `resolveInWorktree` + `realpathOfNearestExisting`. Basis: two consumers already (`tools.ts`, `gate.ts`), and Phase 6 gave it non-obvious semantics (textual containment, then realpath of the nearest existing ancestor, both sides resolved the same way — the asymmetry was a real bug caught by existing tests). This function is the boundary the entire confinement claim rests on; it deserves a named home and a focused test file.
+- [ ] Extract the shared run-test harness into `src/lib/run/__tests__/harness.ts` — `hooksDir`, `realGateScripts`, `fixtureDir`, `executeOf`, and a `makeGatedWorktree()` that mkdtemps a root, copies `.claude/hooks` + the guinea-pig fixture, and returns cleanup. Basis: rule of three, exceeded — `gate.test.ts`, `falsification.test.ts`, `loop.test.ts`, and `swap.test.ts` each redeclare the same four constants, and three repeat the same temp-worktree setup verbatim. One harness, four consumers.
+- [ ] Split `src/lib/run/loop.test.ts` (470 lines, over the 400 cap) so tests live beside the modules they now target — goalpost tests to `goalposts.test.ts`, probe tests to `probe.test.ts`, leaving `loop.test.ts` for T5's full-loop and human-gate behavior. Basis: tests mirror source structure; the file only exceeds the cap because it currently covers three modules' worth of behavior.
+- [ ] (reviewed `src/bin/cli.ts` — left as-is: 706 lines, but this plan added ~15 of them (the `run` subcommand registration + the invoked-name branding). Decomposing a 700-line command registry is a legitimate refactor and an illegitimate rider on this plan; it belongs to its own plan with its own trajectory.)
+- [ ] (reviewed `driver.ts` 173, `registry.ts` 130, `run.ts` 158, `tools.ts` — left as-is: each is one cohesive unit well under the 400-line cap. `tools.ts` drops to ~145 after the path extraction and is otherwise just five tool definitions.)
+- [ ] (reviewed `gate.test.ts` 291, `swap.test.ts` 347, `falsification.test.ts` 237 — left as-is: all under cap, and each shrinks further once the shared harness lands. Splitting them further would scatter a single trajectory row's evidence across files.)
+
+#### Phase 7 Verification
+- [ ] T17: behavior parity across the decomposition — every extracted module is imported by its consumers, and the full `src/lib/run` suite passes with its assertions unchanged (`pnpm vitest run src/lib/run/` → 51+ passing), plus `tsc --noEmit` and `biome check` clean.
+
+#### Phase 7 Context
+- [ ] (none needed — internal decomposition; CLAUDE.md's Architecture entry points at `apps/indusk-mcp/src/lib/run/` as a directory, which stays accurate, and the Phase 6 gotcha describes the enforcement boundary, not the file layout)
+
+#### Phase 7 Document
+- [ ] (none needed — no public surface changes: same CLI, same flags, same exported behavior; `/reference/cli/run` describes the contract, not the module structure)
