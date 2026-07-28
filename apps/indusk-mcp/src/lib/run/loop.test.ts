@@ -7,7 +7,15 @@ import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseImplString } from "../impl-parser.js";
-import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
+import { snapshotTrajectory } from "./goalposts.js";
+import {
+	execOptions,
+	executeOf,
+	fixtureDir,
+	hooksDir,
+	realGateScripts,
+	repoRoot,
+} from "./harness.test-support.js";
 import { detectHumanGate, runLoop } from "./loop.js";
 
 /**
@@ -23,14 +31,6 @@ import { detectHumanGate, runLoop } from "./loop.js";
  */
 
 const execFileAsync = promisify(execFile);
-const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(here, "../../../../..");
-const hooksDir = join(repoRoot, ".claude/hooks");
-const realGateScripts = [
-	join(hooksDir, "validate-impl-structure.js"),
-	join(hooksDir, "check-gates.js"),
-];
-const fixtureDir = resolve(here, "../../../fixtures/guinea-pig-semver");
 
 /** One scripted model step that calls a tool. */
 function toolCallStep(toolName: string, input: Record<string, unknown>) {
@@ -340,67 +340,6 @@ describe("goalpost guard stops a mutated trajectory mid-run (T6)", () => {
 	});
 });
 
-describe("checkGoalposts (pure guard semantics)", () => {
-	const base = () =>
-		snapshotTrajectory(
-			[
-				"---",
-				"title: x",
-				"---",
-				"",
-				"## Test Trajectory",
-				"",
-				"| ID | Asserts | Writable at | Passes at | State |",
-				"|----|---------|-------------|-----------|-------|",
-				"| T1 | parse works | Phase 1 | Phase 1 | written |",
-				"| T2 | compare orders | Phase 1 | Phase 2 | planned |",
-				"",
-			].join("\n"),
-		);
-
-	it("returns no violations for an unchanged table", () => {
-		expect(checkGoalposts(base(), base())).toEqual([]);
-	});
-
-	it("allows State-cell transitions and added rows", () => {
-		const after = base();
-		after.rows[0].state = "passing";
-		after.rows.push({ ...after.rows[0], id: "T9", asserts: "new row added by falsify" });
-		expect(checkGoalposts(base(), after)).toEqual([]);
-	});
-
-	it("flags an Asserts text change", () => {
-		const after = base();
-		after.rows[0].asserts = "parse never throws";
-		const violations = checkGoalposts(base(), after);
-		expect(violations).toHaveLength(1);
-		expect(violations[0]).toMatch(/T1/);
-		expect(violations[0]).toMatch(/Asserts/i);
-	});
-
-	it("flags a Passes-at moved later, allows moved earlier", () => {
-		const later = base();
-		later.rows[1].passesAt = 3;
-		const violations = checkGoalposts(base(), later);
-		expect(violations).toHaveLength(1);
-		expect(violations[0]).toMatch(/T2/);
-		expect(violations[0]).toMatch(/later/i);
-
-		const earlier = base();
-		earlier.rows[1].passesAt = 1;
-		expect(checkGoalposts(base(), earlier)).toEqual([]);
-	});
-
-	it("flags a removed row", () => {
-		const after = base();
-		after.rows.splice(1, 1);
-		const violations = checkGoalposts(base(), after);
-		expect(violations).toHaveLength(1);
-		expect(violations[0]).toMatch(/T2/);
-		expect(violations[0]).toMatch(/removed/i);
-	});
-});
-
 describe("detectHumanGate (derived, no new marker)", () => {
 	function phaseOf(md: string) {
 		const parsed = parseImplString(md);
@@ -457,15 +396,5 @@ describe("detectHumanGate (derived, no new marker)", () => {
 			].join("\n"),
 		);
 		expect(detectHumanGate(phase, emptyTrajectory)).toEqual([]);
-	});
-});
-
-describe("snapshotTrajectory", () => {
-	it("parses rows out of full impl.md content, frontmatter included", async () => {
-		const impl = await readFile(join(fixtureDir, "impl.md"), "utf8");
-		const trajectory = snapshotTrajectory(impl);
-		expect(trajectory.present).toBe(true);
-		expect(trajectory.rows.map((r) => r.id)).toEqual(["T1", "T2", "T3"]);
-		expect(trajectory.rows[0].passesAt).toBe(1);
 	});
 });

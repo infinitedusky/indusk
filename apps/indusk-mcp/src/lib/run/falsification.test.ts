@@ -7,6 +7,14 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { run } from "../../bin/commands/run.js";
 import { createGatedWorktreeTools, runGateScripts } from "./gate.js";
 import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
+import {
+	execOptions,
+	executeOf,
+	fixtureDir,
+	hooksDir,
+	realGateScripts,
+	repoRoot,
+} from "./harness.test-support.js";
 import { createWorktreeTools } from "./tools.js";
 
 /**
@@ -19,27 +27,8 @@ import { createWorktreeTools } from "./tools.js";
  * the whole family vacuous.
  */
 
-const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(here, "../../../../..");
-const hooksDir = join(repoRoot, ".claude/hooks");
-const realGateScripts = [
-	join(hooksDir, "validate-impl-structure.js"),
-	join(hooksDir, "check-gates.js"),
-];
-const fixtureDir = resolve(here, "../../../fixtures/guinea-pig-semver");
-
 const PARSE_ITEM_UNCHECKED =
 	"- [ ] `parse(input): { major, minor, patch }` — accept exactly three dot-separated non-negative integers; reject leading zeros, missing/extra segments, and non-numeric segments (throw).";
-
-const execOptions = { toolCallId: "call-1", messages: [] };
-
-type Exec = (input: unknown, options: unknown) => Promise<unknown>;
-
-function executeOf(toolSet: Record<string, unknown>, name: string): Exec {
-	const candidate = (toolSet[name] as { execute?: Exec } | undefined)?.execute;
-	if (!candidate) throw new Error(`tool ${name} has no execute`);
-	return candidate;
-}
 
 let worktree: string;
 let outside: string;

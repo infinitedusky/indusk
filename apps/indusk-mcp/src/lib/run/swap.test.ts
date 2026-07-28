@@ -7,6 +7,14 @@ import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createDriverModel } from "./driver.js";
+import {
+	execOptions,
+	executeOf,
+	fixtureDir,
+	hooksDir,
+	realGateScripts,
+	repoRoot,
+} from "./harness.test-support.js";
 import { runLoop } from "./loop.js";
 import { resolveModel, resolveProviderKey } from "./registry.js";
 
@@ -24,14 +32,6 @@ import { resolveModel, resolveProviderKey } from "./registry.js";
  */
 
 const execFileAsync = promisify(execFile);
-const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(here, "../../../../..");
-const hooksDir = join(repoRoot, ".claude/hooks");
-const realGateScripts = [
-	join(hooksDir, "validate-impl-structure.js"),
-	join(hooksDir, "check-gates.js"),
-];
-const fixtureDir = resolve(here, "../../../fixtures/guinea-pig-semver");
 
 /** The guinea-pig Phase 1 implementation item a premature checkoff flips. */
 const PARSE_ITEM_UNCHECKED =
