@@ -318,7 +318,7 @@ function FalsificationSection({
 }) {
   // Priority: phase-authoring flow (new, 1.27.4+) > legacy log file > empty state.
   if (phase) {
-    return <FalsificationPhaseSection phase={phase} />;
+    return <FalsificationPhaseSection planName={plan.name} phase={phase} />;
   }
   if (!plan.falsification) {
     return (
@@ -326,15 +326,19 @@ function FalsificationSection({
         className="flex flex-col gap-2"
         data-testid="falsification-section"
       >
-        <header className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">
-            Falsification
-          </h2>
-          <CopyButton text={falsificationLogMarkdown(undefined)} />
-        </header>
-        <p className="text-sm text-gray-500" data-testid="falsification-empty">
-          No falsification ritual run for this plan.
-        </p>
+        <CollapsibleSection
+          title="Falsification"
+          defaultOpen={true}
+          persistKey={`plan:${plan.name}:section:falsification`}
+          copyMarkdown={falsificationLogMarkdown(undefined)}
+        >
+          <p
+            className="text-sm text-gray-500"
+            data-testid="falsification-empty"
+          >
+            No falsification ritual run for this plan.
+          </p>
+        </CollapsibleSection>
       </section>
     );
   }
@@ -347,39 +351,45 @@ function FalsificationSection({
       className="flex flex-col gap-2"
       data-testid="falsification-section"
     >
-      <header className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-gray-900">Falsification</h2>
-        <span className="flex items-center gap-2">
+      <CollapsibleSection
+        title="Falsification"
+        defaultOpen={true}
+        persistKey={`plan:${plan.name}:section:falsification`}
+        headerRight={
           <Badge variant={plan.falsification.complete ? "passing" : "writable"}>
             {plan.falsification.complete ? "complete" : "in-progress"}
           </Badge>
-          <CopyButton text={falsificationLogMarkdown(plan.falsification)} />
-        </span>
-      </header>
-      {hypotheses.length === 0 && (
-        <p className="text-sm text-gray-500">No hypotheses logged yet.</p>
-      )}
-      {hypotheses.length > 0 && (
-        <ul
-          className="flex flex-col gap-3"
-          data-testid="falsification-hypotheses"
-        >
-          {hypotheses.map((entry) => (
-            <HypothesisItem
-              key={`${entry.timestamp}-${entry.hypothesis.slice(0, 32)}`}
-              entry={entry}
-            />
-          ))}
-        </ul>
-      )}
-      {terminator && (
-        <div
-          className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-          data-testid="falsification-terminator"
-        >
-          <span className="font-semibold">Terminated:</span> {terminator.reason}
+        }
+        copyMarkdown={falsificationLogMarkdown(plan.falsification)}
+      >
+        <div className="flex flex-col gap-2">
+          {hypotheses.length === 0 && (
+            <p className="text-sm text-gray-500">No hypotheses logged yet.</p>
+          )}
+          {hypotheses.length > 0 && (
+            <ul
+              className="flex flex-col gap-3"
+              data-testid="falsification-hypotheses"
+            >
+              {hypotheses.map((entry) => (
+                <HypothesisItem
+                  key={`${entry.timestamp}-${entry.hypothesis.slice(0, 32)}`}
+                  entry={entry}
+                />
+              ))}
+            </ul>
+          )}
+          {terminator && (
+            <div
+              className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+              data-testid="falsification-terminator"
+            >
+              <span className="font-semibold">Terminated:</span>{" "}
+              {terminator.reason}
+            </div>
+          )}
         </div>
-      )}
+      </CollapsibleSection>
     </section>
   );
 }
@@ -390,7 +400,13 @@ function FalsificationSection({
  * come from the phase's checklist. Status badge derives from the combined state
  * of trajectory rows + unchecked checklist items.
  */
-function FalsificationPhaseSection({ phase }: { phase: Phase }) {
+function FalsificationPhaseSection({
+  planName,
+  phase,
+}: {
+  planName: string;
+  phase: Phase;
+}) {
   const checklistItems = extractChecklistItems(phase.content);
   const allTrajectoryTerminal = phase.trajectoryRows.every(
     (r) => r.state === "passing" || r.state === "skipped",
@@ -403,75 +419,85 @@ function FalsificationPhaseSection({ phase }: { phase: Phase }) {
       className="flex flex-col gap-2"
       data-testid="falsification-section"
     >
-      <header className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-gray-900">
-          Falsification
-          {phase.title ? (
-            <span className="ml-2 text-sm font-normal text-gray-500">
-              (Phase {phase.number}: {phase.title})
-            </span>
-          ) : null}
-        </h2>
-        <span className="flex items-center gap-2">
+      <CollapsibleSection
+        title={
+          <>
+            Falsification
+            {phase.title ? (
+              <span className="ml-2 text-xs font-normal text-gray-500">
+                (Phase {phase.number}: {phase.title})
+              </span>
+            ) : null}
+          </>
+        }
+        defaultOpen={true}
+        persistKey={`plan:${planName}:section:falsification`}
+        headerRight={
           <Badge variant={complete ? "passing" : "writable"}>
             {complete ? "complete" : "in-progress"}
           </Badge>
-          <CopyButton text={falsificationPhaseMarkdown(phase)} />
-        </span>
-      </header>
+        }
+        copyMarkdown={falsificationPhaseMarkdown(phase)}
+      >
+        <div className="flex flex-col gap-2">
+          {phase.trajectoryRows.length > 0 && (
+            <div data-testid="falsification-hypotheses">
+              <h3 className="text-sm font-semibold text-gray-800 mt-1">
+                Hypotheses
+              </h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Asserts</TableHead>
+                    <TableHead>State</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {phase.trajectoryRows.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        <span className="font-mono text-xs">{row.id}</span>
+                      </TableCell>
+                      <TableCell>{row.asserts}</TableCell>
+                      <TableCell>
+                        <Badge variant={stateToBadge(row.state)}>
+                          {row.state}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
-      {phase.trajectoryRows.length > 0 && (
-        <div data-testid="falsification-hypotheses">
-          <h3 className="text-sm font-semibold text-gray-800 mt-1">
-            Hypotheses
-          </h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Asserts</TableHead>
-                <TableHead>State</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {phase.trajectoryRows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>
-                    <span className="font-mono text-xs">{row.id}</span>
-                  </TableCell>
-                  <TableCell>{row.asserts}</TableCell>
-                  <TableCell>
-                    <Badge variant={stateToBadge(row.state)}>{row.state}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {checklistItems.length > 0 && (
+            <div data-testid="falsification-fix-items" className="mt-2">
+              <h3 className="text-sm font-semibold text-gray-800">Fix items</h3>
+              <ul className="flex flex-col gap-1">
+                {checklistItems.map((item) => (
+                  <li
+                    key={`${item.checked ? "x" : "o"}-${item.text}`}
+                    className="flex items-start gap-2 text-sm text-gray-700"
+                  >
+                    <span className="font-mono text-xs text-gray-500">
+                      [{item.checked ? "x" : " "}]
+                    </span>
+                    <span
+                      className={
+                        item.checked ? "text-gray-500 line-through" : ""
+                      }
+                    >
+                      {item.text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-      )}
-
-      {checklistItems.length > 0 && (
-        <div data-testid="falsification-fix-items" className="mt-2">
-          <h3 className="text-sm font-semibold text-gray-800">Fix items</h3>
-          <ul className="flex flex-col gap-1">
-            {checklistItems.map((item) => (
-              <li
-                key={`${item.checked ? "x" : "o"}-${item.text}`}
-                className="flex items-start gap-2 text-sm text-gray-700"
-              >
-                <span className="font-mono text-xs text-gray-500">
-                  [{item.checked ? "x" : " "}]
-                </span>
-                <span
-                  className={item.checked ? "text-gray-500 line-through" : ""}
-                >
-                  {item.text}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      </CollapsibleSection>
     </section>
   );
 }
