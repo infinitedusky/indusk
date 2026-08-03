@@ -75,9 +75,7 @@ async function readJsonl(path: string): Promise<Array<Record<string, unknown>>> 
 export async function listPending(worktreeRoot: string): Promise<PendingEvalRecord[]> {
 	const dir = resolveEvalStateDir(worktreeRoot);
 	const pending = (await readJsonl(join(dir, PENDING_FILE))) as unknown as PendingEvalRecord[];
-	const drained = new Set(
-		(await readJsonl(join(dir, DRAINED_FILE))).map((r) => r.sha as string),
-	);
+	const drained = new Set((await readJsonl(join(dir, DRAINED_FILE))).map((r) => r.sha as string));
 	return pending.filter((r) => typeof r.sha === "string" && !drained.has(r.sha));
 }
 

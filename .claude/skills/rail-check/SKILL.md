@@ -99,6 +99,24 @@ You should see lines like:
 
 After ~60s, check `.indusk/eval/results.log` for a new scorecard entry. If present, the full rail (hook → spawn → claude --print → lessons) is working.
 
+### Step 4b — Drain the thin lane's pending-eval queue
+
+`atdawn run` (the Dawn thin lane) cannot spawn the evaluator itself — it may be running on a machine with no `claude` CLI — so every loop-owned commit is queued in `.indusk/eval/pending.jsonl` for a later drain from a `claude`-capable environment. This skill owns that drain.
+
+```bash
+wc -l .indusk/eval/pending.jsonl .indusk/eval/pending-drained.jsonl 2>/dev/null
+```
+
+Pending minus drained is the backlog. When it is non-zero, drain it:
+
+```bash
+node .claude/hooks/eval-trigger.js --drain-pending
+```
+
+Each record is marked drained **before** its evaluator spawns, so a crashed spawn is a logged gap rather than a double-evaluation — re-running the drain is always safe and never re-evaluates a sha. Report the count drained; the scorecards land in `.indusk/eval/results.log` like any other eval.
+
+A backlog that keeps growing across rail-checks means thin-lane runs are happening but nobody is draining — the queue is durable, so nothing is lost, but the lane's lessons are not reaching the registry until it runs.
+
 ### Step 5 — Count unprocessed highlights
 
 Read both files (line counts):

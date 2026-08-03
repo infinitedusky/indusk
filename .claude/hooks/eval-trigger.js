@@ -95,7 +95,10 @@ const { statePath: resolvedStatePath, gitPath } = resolveStateAndGitPaths(cwd);
 const statePath = resolvedStatePath ?? cwd;
 
 if (cliSource !== null || drainPending) {
-	syslog(statePath, drainPending ? "drain invocation (--drain-pending)" : `cli invocation — source: ${cliSource}`);
+	syslog(
+		statePath,
+		drainPending ? "drain invocation (--drain-pending)" : `cli invocation — source: ${cliSource}`,
+	);
 } else {
 	syslog(statePath, `hook fired — tool: Bash, command: ${command.slice(0, 100)}`);
 
@@ -187,7 +190,9 @@ if (drainPending) {
 			});
 	};
 	const pending = readJsonl(resolve(evalDir, "pending.jsonl"));
-	const drainedShas = new Set(readJsonl(resolve(evalDir, "pending-drained.jsonl")).map((r) => r.sha));
+	const drainedShas = new Set(
+		readJsonl(resolve(evalDir, "pending-drained.jsonl")).map((r) => r.sha),
+	);
 	const todo = pending.filter((r) => typeof r.sha === "string" && !drainedShas.has(r.sha));
 
 	const runOne = (record) =>
@@ -196,7 +201,15 @@ if (drainPending) {
 			const override = process.env.INDUSK_EVAL_CMD;
 			const [cmd, ...baseArgs] = override
 				? override.split(" ").filter(Boolean)
-				: [process.execPath, "--no-warnings", fileURLToPath(import.meta.url), "--source", recordSource, "--change-id", record.sha];
+				: [
+						process.execPath,
+						"--no-warnings",
+						fileURLToPath(import.meta.url),
+						"--source",
+						recordSource,
+						"--change-id",
+						record.sha,
+					];
 			const args = override ? [...baseArgs, record.sha, recordSource] : baseArgs;
 			const child = spawn(cmd, args, { cwd, stdio: ["ignore", "ignore", "inherit"] });
 			child.on("close", () => resolveRun());
@@ -214,7 +227,10 @@ if (drainPending) {
 		await runOne(record);
 		drainedCount++;
 	}
-	syslog(statePath, `drain complete — ${drainedCount} drained, ${pending.length - todo.length} already drained`);
+	syslog(
+		statePath,
+		`drain complete — ${drainedCount} drained, ${pending.length - todo.length} already drained`,
+	);
 	process.stderr.write(
 		`📊 Drained ${drainedCount} pending eval(s); ${pending.length - todo.length} already drained. Results land in .indusk/eval/results.log\n`,
 	);

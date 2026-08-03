@@ -10,6 +10,14 @@ import { getEnabledExtensions } from "../lib/extension-loader.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../..");
 
+/**
+ * Pending thin-lane evals above this count report as an error rather than
+ * information (dawn-hook-parity): a handful between rail-checks is the
+ * design working; a large standing backlog means the drain is not running
+ * and the lane's lessons are stalled.
+ */
+const PENDING_EVAL_ERROR_THRESHOLD = 25;
+
 function fileHash(path: string): string {
 	return createHash("sha256").update(readFileSync(path)).digest("hex").slice(0, 12);
 }
@@ -131,6 +139,23 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 					name: `workbench/stray-state-${finding.type}`,
 					status: "error",
 					detail: `${finding.path} — recommended cleanup: ${finding.recommendation}`,
+				});
+			}
+
+			// Pending-eval backlog (dawn-hook-parity). The thin lane queues one
+			// record per loop-owned commit and cannot drain itself (it may run
+			// where no `claude` CLI exists), so an un-drained queue is the rail
+			// stalled, not lost. Informational while small; an error once the
+			// backlog is large enough that lessons are meaningfully delayed.
+			const { listPending } = await import("../lib/run/pending-evals.js");
+			const pendingEvals = await listPending(projectRoot).catch(() => []);
+			if (pendingEvals.length > 0) {
+				checks.push({
+					name: "eval/pending-queue",
+					status: pendingEvals.length > PENDING_EVAL_ERROR_THRESHOLD ? "error" : "ok",
+					detail:
+						`${pendingEvals.length} thin-lane commit(s) awaiting evaluation — ` +
+						"drain with `/rail-check` (or `node .claude/hooks/eval-trigger.js --drain-pending`).",
 				});
 			}
 
