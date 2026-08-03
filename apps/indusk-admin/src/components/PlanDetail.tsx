@@ -44,9 +44,11 @@ interface PlanDetailProps {
   plan: Plan;
   /**
    * Declared subplans when this plan is a parent (its master.md names
-   * `subplans:`). Non-empty → the detail view renders a card per subplan
-   * instead of the standard document sections, which a parent doesn't carry
-   * (its documents are master.md/maxims.md — outside DOC_FILES).
+   * `subplans:`). Non-empty → the detail view renders master prose + a card
+   * per subplan first, then whatever standard document sections the plan
+   * actually carries — additive, never suppressing (T12). A typical parent
+   * carries only master.md/maxims.md (outside DOC_FILES), so usually the
+   * cards stand alone.
    */
   subplans?: SubplanEntry[];
   /** The parent's own master.md prose, rendered above the cards. */
@@ -108,7 +110,7 @@ export function PlanDetail({
         />
       )}
 
-      {!isParent && plan.research && (
+      {plan.research && (
         <CollapsibleSection
           title="Research"
           defaultOpen={!plan.brief}
@@ -119,11 +121,11 @@ export function PlanDetail({
         </CollapsibleSection>
       )}
 
-      {!isParent && plan.brief && (
+      {plan.brief && (
         <BriefSection planName={plan.name} content={plan.brief.content} />
       )}
 
-      {!isParent && plan.testPlan && (
+      {plan.testPlan && (
         <CollapsibleSection
           title="Test Plan"
           defaultOpen={false}
@@ -134,7 +136,7 @@ export function PlanDetail({
         </CollapsibleSection>
       )}
 
-      {!isParent && plan.adr && (
+      {plan.adr && (
         <CollapsibleSection
           title="ADR — Goal + Decision"
           defaultOpen={false}
@@ -148,8 +150,8 @@ export function PlanDetail({
         </CollapsibleSection>
       )}
 
-      {!isParent && plan.impl && <ImplSections plan={plan} />}
-      {!isParent && !plan.impl && hasAnyDocument && (
+      {plan.impl && <ImplSections plan={plan} />}
+      {!plan.impl && hasAnyDocument && (
         <FalsificationSection plan={plan} phase={null} />
       )}
     </article>
