@@ -65,10 +65,10 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 - [x] `tsc --noEmit` exit 0; `biome check` exit 0 — including clearing pre-existing unused-import debt across the run lib left by the orchestrator's harness extraction (confirmed present on `main`; mechanically fixed as discovered work).
 
 #### Phase 1 Context
-- [ ] Update CLAUDE.md's `indusk run` Architecture line: the gate chain is three scripts (`validate-impl-structure`, `check-gates`, `claude-md-budget`).
+- [x] Update CLAUDE.md's `indusk run` Architecture line: the gate chain is three scripts (`validate-impl-structure`, `check-gates`, `claude-md-budget`); shed noted inline.
 
 #### Phase 1 Document
-- [ ] Update `/reference/cli/run` "Gate enforcement layers": the chain lists three scripts; note the deliberate `gate-reminder` shed with the ADR pointer.
+- [x] Update `/reference/cli/run` "Gate enforcement layers": the chain lists three scripts; the deliberate `gate-reminder` shed recorded with the ADR pointer and its reasoning.
 
 ### Phase 2: Loop-owned commit cadence
 
