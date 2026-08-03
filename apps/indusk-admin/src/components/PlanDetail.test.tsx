@@ -345,82 +345,10 @@ describe("PlanDetail — malformed banner (T13 prep)", () => {
   });
 });
 
-describe("PlanDetail — falsification section (T10)", () => {
-  it("T10 — renders one entry per hypothesis with outcome-colored badges", async () => {
-    const plan = mockPlan({
-      falsification: {
-        complete: true,
-        entries: [
-          {
-            kind: "hypothesis",
-            timestamp: "2026-04-19T10:00:00Z",
-            hypothesis: "the dropdown leaks state on unmount",
-            testPath: "src/dropdown.test.tsx",
-            outcome: "fix-in-scope",
-          },
-          {
-            kind: "hypothesis",
-            timestamp: "2026-04-19T10:05:00Z",
-            hypothesis: "race condition between two callers",
-            testPath: null,
-            outcome: "spawn-plan",
-          },
-          {
-            kind: "hypothesis",
-            timestamp: "2026-04-19T10:10:00Z",
-            hypothesis: "overflow on extreme input",
-            testPath: null,
-            outcome: "accept-finding",
-          },
-          {
-            kind: "terminator",
-            timestamp: "2026-04-19T10:15:00Z",
-            reason: "investigated all three; no further attack vector",
-          },
-        ],
-      },
-    });
-    const { container } = await render(<PlanDetail plan={plan} />);
-    const section = container.querySelector(
-      '[data-testid="falsification-section"]',
-    );
-    expect(section).not.toBeNull();
-
-    // One entry per hypothesis, outcomes color-coded by data-testid
-    expect(
-      section?.querySelector('[data-testid="hypothesis-fix-in-scope"]'),
-    ).not.toBeNull();
-    expect(
-      section?.querySelector('[data-testid="hypothesis-spawn-plan"]'),
-    ).not.toBeNull();
-    expect(
-      section?.querySelector('[data-testid="hypothesis-accept-finding"]'),
-    ).not.toBeNull();
-
-    // Terminator entry rendered as the closer
-    const terminator = section?.querySelector(
-      '[data-testid="falsification-terminator"]',
-    );
-    expect(terminator?.textContent).toContain("investigated all three");
-
-    // Each hypothesis surfaces its prose
-    expect(section?.textContent).toContain(
-      "the dropdown leaks state on unmount",
-    );
-    expect(section?.textContent).toContain("race condition");
-    expect(section?.textContent).toContain("overflow on extreme input");
-  });
-
-  it("T10 — renders 'no falsification ritual run' when the log is missing", async () => {
-    const plan = mockPlan({ falsification: undefined });
-    const { container } = await render(<PlanDetail plan={plan} />);
-    const empty = container.querySelector(
-      '[data-testid="falsification-empty"]',
-    );
-    expect(empty).not.toBeNull();
-    expect(empty?.textContent).toContain("No falsification ritual run");
-  });
-});
+// The "PlanDetail — falsification section (T10)" describe moved to
+// FalsificationSection.test.tsx alongside the component extraction
+// (dawn-ui-plan-grouping cleanup). The T26/T27/T28 phase-splitting describes
+// below stay — they exercise PlanDetail's orchestration, not the section.
 
 // T11 (scorecards rendered) was originally tested as a per-plan section here.
 // PlanDetail no longer renders scorecards — they moved to the global
