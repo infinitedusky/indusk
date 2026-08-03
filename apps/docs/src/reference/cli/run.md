@@ -83,7 +83,9 @@ Direct per-provider API keys, no commercial gateway — each provider is hit wit
 | `google` | `GOOGLE_GENERATIVE_AI_API_KEY`, `GOOGLE_API_KEY` |
 | `xai` | `XAI_API_KEY` |
 
-Where a provider's key conventionally lives under more than one env name, the registry lists the accepted names in order (the AI SDK default first) and the first non-empty one is passed to the provider factory explicitly — so a machine keeping its key under `GOOGLE_API_KEY` works without renaming. The command refuses to start when none of the selected driver's key envs is set. Note the Claude driver is metered API usage — a Claude Max/Pro subscription cannot authenticate SDK calls; keep Claude Code (native, flat-rate) for judgment-heavy work and route mechanical runs here by cost-to-durably-done.
+Where a provider's key conventionally lives under more than one env name, the registry lists the accepted names in order (the AI SDK default first) and the first non-empty one is passed to the provider factory explicitly — so a machine keeping its key under `GOOGLE_API_KEY` works without renaming. The command refuses to start when none of the selected driver's key envs is set.
+
+Keys are read from the **process environment only** — the machine-global `~/.indusk/config.env` (where InDusk parks machine-wide secrets) is *not* loaded automatically. Until a loader is wired (a recorded close-out item), source it first: `set -a; source ~/.indusk/config.env; set +a`. Note the Claude driver is metered API usage — a Claude Max/Pro subscription cannot authenticate SDK calls; keep Claude Code (native, flat-rate) for judgment-heavy work and route mechanical runs here by cost-to-durably-done.
 
 ## Reporting
 

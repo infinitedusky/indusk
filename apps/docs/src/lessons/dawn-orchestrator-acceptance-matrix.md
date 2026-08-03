@@ -35,10 +35,24 @@ sftp` — no repository credentials ever live on it — and the provider key the
 | C4 | gemini-3.6-flash | remote | held (stopped red) | starved, zero edits | 1 | 68s | — |
 | C3′ | gemini-3.6-flash | local | held | impl-complete | 1 | 3m04s | 322,588 / 9,580 |
 | C4′ | gemini-3.6-flash | remote | held | impl-complete | 1 | 1m31s | 508,315 / 13,410 |
+| C5 | claude-sonnet-4-5 | local | held | impl-complete | 1 | 2m38s | 274,183 / 8,236 |
+| C6 | claude-sonnet-4-5 | local, **Claude Code harness** | held | impl-complete | 1 | 2m06s | 68,037 (harness accounting; not comparable) |
+| C7 | gemini-3.6-flash | local (quality-read re-run) | held | impl-complete | 1 | 3m22s | 627,681 / 11,738 |
 
-Claude cells are **deferred** — no Anthropic API key was available at the time of the run (the
-subscription OAuth cannot fund SDK calls; see the ADR's billing-lane split). The key is a
-hot-swappable env var, so those cells append without any harness change.
+The Claude cells were deferred for a week (no Anthropic API key — subscription OAuth cannot fund
+SDK calls; see the ADR's billing-lane split), then appended on 2026-08-03 the same day a key
+landed. The hot-swap claim held: zero harness changes.
+
+**The quality read (2026-08-03, closing A8):** mutation testing — 8 hand-injected semantic bugs per
+suite — showed **identical detection power (8/8 kills) across all three quality cells**, at 15, 14,
+and 9 tests: test *count* measured style, never quality. The C5/C6 pair (same model, different
+harness) showed no measurable quality difference — the discipline travels with the loop, not the
+harness. And no cell shipped a complete CLI (runnable *and* tested), because the fixture's
+trajectory named only the pure functions: **models converge coverage precisely onto named
+acceptance; what the trajectory doesn't name, nobody tests — or everybody builds differently.**
+A8 signed off on this data: route mechanical single-phase work to flash (~2 orders of magnitude
+cheaper, quality-equivalent); reserve sonnet+ for work where unprompted test-first ordering and
+richer diagnostics are load-bearing.
 
 ## What the data says
 
