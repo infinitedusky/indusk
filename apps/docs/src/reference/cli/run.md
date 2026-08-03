@@ -21,7 +21,24 @@ The loop control is the `/work --autopilot` contract, ported:
 - **Red never auto-retries.** One honest driver attempt per phase; a phase that cannot reach green halts the run for a human decision.
 - **Hard stop at impl-complete.** The loop runs impl phases only — it never runs `/falsify`, `/cleanup`, or `/retrospective`. Those are human-gated by design.
 
-Exit codes: `0` impl-complete · `3` paused at a human gate · `1` stopped (red gate, moved goalposts, or bad invocation).
+Exit codes: `0` impl-complete · `3` paused for a human (a declared human gate, or an unanswered gate question — see below) · `1` stopped (red gate, moved goalposts, or bad invocation).
+
+### Gate policy, headless
+
+**`ask` is the default in both lanes.** When a plan's gates carry proof-less `(none needed)` / `skip-reason:` opt-outs under `ask`, `check-gates` refuses them — they require conversation proof, which a headless run cannot invent. The loop recognizes that specific refusal and **pauses (exit 3) with the question** instead of reporting a red:
+
+```
+Phase 2 needs a human decision: gate_policy is 'ask', and these gate items
+can only be skipped with conversation proof —
+  [context] (none needed)
+
+Either complete them, or record the conversation in the impl:
+  - [x] (none needed — asked: "your question" — user: "their answer")
+
+Then re-run: completed phases are skipped, so the run resumes where it paused.
+```
+
+Answer it by editing the impl, then re-invoke — already-complete phases are skipped, so the run picks up where it stopped. For a deliberately unattended run, set `gate_policy: auto` in the impl frontmatter and bare opt-outs are accepted as before. (`strict` accepts nothing but real checkoffs.)
 
 ## Gate enforcement layers
 

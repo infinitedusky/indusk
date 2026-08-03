@@ -1,7 +1,7 @@
 ---
 title: "Dawn Hook Parity — Implementation"
 date: 2026-08-03
-status: draft
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -115,10 +115,10 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 - [x] A1–A5, A9 still green — **run lib 66/66**. Full `apps/indusk-mcp` suite: **852 passed, 3 failed — all three pre-existing** (`agent-roles-phase4`, the `daemon-identity` PID-reuse pair), unchanged from the plan's baseline. `tsc` exit 0; `biome` clean on this plan's files. **Two honest consequences recorded:** (1) the fresh worktree needed `pnpm build` in indusk-mcp *then* indusk-admin + `bundle-admin.js` to reach env parity — 13 of the initial 16 "failures" were that gap, exactly the lesson written this morning; (2) the orchestrator's driver-swap end-to-end test tipped over vitest's 5s default because this plan grew the gate chain 2→3 scripts (one more spawn per edit) — raised to 30s with the cause in-comment, not a logic regression.
 
 #### Phase 4 Context
-- [ ] Update CLAUDE.md's `indusk run` Architecture line: `ask` is the default in both lanes; headless `ask` pauses (exit 3); `auto` is explicit opt-in — retire the "headless = auto by contract" phrasing wherever it appears.
+- [x] CLAUDE.md's `indusk run` line records `ask`-default in both lanes, the exit-3 pause, and `auto` as explicit opt-in; the loop's "auto by contract" comment is retired in code.
 
 #### Phase 4 Document
-- [ ] Update `/reference/cli/run`: exit-code semantics (3 now covers gate-skip pauses), the `ask`-default change, and the `gate_policy: auto` note for deliberately unattended runs. Changelog entry per the ADR's Documentation Plan.
+- [x] `/reference/cli/run`: exit-code line now distinguishes both pause kinds, plus a "Gate policy, headless" section with the actual pause output, how to answer it, and the `auto`/`strict` alternatives. Changelog gains an `[Unreleased]` entry covering all four moves + the recorded shed + the inventory correction.
 
 ## Files Affected
 

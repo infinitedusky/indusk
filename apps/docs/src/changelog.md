@@ -2,6 +2,11 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+- **Hook parity for the Dawn thin lane** (`dawn-hook-parity`, Component 2 of the Dawn master plan). `atdawn run` now enforces every InDusk *invariant* and feeds the eval→lessons rail, closing the gap where the control-group lane produced no history, no scorecards, and no lessons. Four moves: **`claude-md-budget.js` joined the gate chain** (three shared scripts now; the block message is the script's own, so both lanes refuse an over-budget CLAUDE.md write identically); **loop-owned per-item commits** (the loop, not the model, commits each checkoff — deterministic across drivers, with commit failures surfaced loudly but never gating, and non-git worktrees disabling the cadence loudly); **a durable pending-eval queue** (`.indusk/eval/pending.jsonl` — each commit queues a record, `eval-trigger.js --drain-pending` evaluates each exactly once from any `claude`-capable machine, ledger written *before* spawn so a crash is a gap rather than a double-eval; `/rail-check` owns the drain and `check_health` surfaces the backlog); and **headless `ask` = pause** (a proof-less gate skip now pauses with the question and the exact proof format instead of red-stopping, making `ask` the default policy in both lanes with `auto` an explicit opt-in). `gate-reminder.js` is **deliberately shed** — an advisory nudge is not an invariant, and an unattended loop would spend scarce steps on advice the boundary gates already enforce; recorded as the first entry of the invariant/procedure keep-shed audit. Also corrects the Dawn master's hook inventory (5 on disk, not 6 — `check-plan-order.js` was deleted in the context-beam cleanup).
+
 ## [1.35.0] — 2026-07-25
 
 ### Added
