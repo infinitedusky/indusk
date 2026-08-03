@@ -121,6 +121,7 @@ dusk/
 - **worktree-visibility (unpublished)** — worktree-per-plan default + observable bulletin; T7–T9 manual smokes unrun. See [archive](.indusk/planning/archive/worktree-visibility/).
 - **indusk-worktree-extension** — shipped + verified; awaits publish + `/falsify` + `/retrospective` before archive. See `.indusk/planning/indusk-worktree-extension/`.
 - **workbench-mode-rail-integrity** — Phases 1–4 + falsification shipped (1.31.7–1.31.10); awaiting Numero auto-rail verification before close. See `.indusk/planning/workbench-mode-rail-integrity/`.
+- **dawn-external-orchestrator (2026-08-03, unpublished)** — `indusk run`/`atdawn`: model-agnostic gated execution loop, gates ported unchanged, 9-cell acceptance matrix, A8 signed off (flash-for-mechanical routing). See [archive](.indusk/planning/archive/dawn-external-orchestrator/) for full detail.
 
 **Active plans** (dead drafts archived 2026-07-23 by the makeover backfill; sidebar order canonical from `.indusk/planning/master.md`):
 

@@ -1,7 +1,7 @@
 ---
 title: "Dawn External Orchestrator (MVP) — Implementation"
 date: 2026-07-26
-status: in-progress
+status: completed
 trajectory: required
 gate_policy: auto
 ---
