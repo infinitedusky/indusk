@@ -71,9 +71,20 @@ A child declares **nothing** about its lineage. Only one place declares each par
 
 **Broken declarations degrade, never fail.** A missing `master.md`, an absent key, a non-array value, or malformed YAML each yield empty declarations and the flat list. Losing structure is acceptable; losing a plan is not.
 
+### Name hygiene
+
+Declaration names are boundary values — they get joined into filesystem paths and rendered verbatim, so the parser guards them on the way in:
+
+- A name that isn't a single clean path segment (contains `/` or `\`, or is `.` / `..` / blank) is **dropped** from `parents:`, `roadmap:`, and `subplans:` alike. A traversal name can never cause a read outside the planning directory.
+- Duplicate names in one list collapse to the **first occurrence**, preserving declared order — a child is never rendered twice.
+
+Both are silent degrades, consistent with the rule above: a bad name loses its structure, never a plan.
+
 ### Declared-but-uncreated subplans
 
 A parent may name a subplan whose folder doesn't exist yet — that is the **normal** case for a sequence, not an error. Those entries render in the admin sidebar as greyed placeholders, so the plan list shows work queued ahead as well as work underway.
+
+A subplan whose folder has moved to `archive/` is the opposite of uncreated — it renders as a navigable item with its real status, never as a placeholder. If the same name somehow exists both active and archived, the active copy wins.
 
 ### API
 

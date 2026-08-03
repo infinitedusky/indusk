@@ -219,14 +219,22 @@ Two behaviours worth knowing when reading the sidebar:
 - **A plan at the top level means no parent claims it.** That is the fallback, not a bug in the reader.
 - **Broken declarations degrade to the flat list.** A missing `master.md`, an absent key, or malformed YAML yields no grouping and no error. Structure can be lost; a plan never is.
 
+Three more, from the falsification pass:
+
+- **An archived subplan is not a placeholder.** A child whose folder lives in `archive/` renders as a navigable item with its real status — finished work never presents as queued. (It also stays in the Archived collapsible.)
+- **With multiple parents, groups follow the roadmap's order** — not the order declarations happen to be read in.
+- **Declaration names are sanitized at the parser** — non-segment names (`/`, `\`, `..`) and duplicates are dropped before they reach a path join or the render. See [name hygiene](/reference/cli/plans#name-hygiene).
+
 Grouping is display-only — it does not change which plans the CLI or MCP report as active.
 
 ## Parent plan detail view
 
-Opening a parent plan (one whose `master.md` declares `subplans:`) does not show the standard document sections — a parent carries `master.md`, not `brief.md`/`impl.md`. Instead the page renders:
+Opening a parent plan (one whose `master.md` declares `subplans:`) renders, before anything else:
 
 - **The parent's own `master.md` prose** first — the sequence and its reasoning on one page.
 - **A card per declared subplan**, in declared order. A real subplan's card shows its name, status badge, and stage (the furthest lifecycle document it carries), and links to its plan page.
 - **A placeholder card** for each declared-but-uncreated subplan — dashed border, greyed, `queued` badge, non-navigable. Same semantics as the sidebar placeholder.
+
+The parent view is **additive**: if the parent also carries standard documents (a brief, an impl), those sections render below the cards exactly as on any other plan — cards never suppress content. A typical parent carries only `master.md`, so usually the cards stand alone.
 
 The same degrade rules apply: if the parent's declarations are missing or corrupt, the page falls back to the standard document view. A plan with no documents at all renders its header only — no empty sections (through 1.35.x a doc-less plan rendered a stray empty "Falsification" heading; that was a bug, fixed by this view).

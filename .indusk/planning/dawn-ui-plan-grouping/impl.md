@@ -187,4 +187,4 @@ Investigation notes (what was found, ritual 2026-08-03):
 - [x] Extend CLAUDE.md's plan-hierarchy convention line: declaration names are boundary values — segment-guarded and deduped in `readPlanDeclarations`; archived children resolve as real items, not placeholders.
 
 #### Phase 4 Document
-- [ ] Update `/reference/cli/plans` (declaration hygiene: non-segment names and duplicates are ignored) and `/reference/admin-ui/overview` (archived subplans render with their real status; parents with documents show both cards and sections).
+- [x] Update `/reference/cli/plans` (new "Name hygiene" section: segment guard + first-occurrence dedupe; archived-subplan note under placeholders) and `/reference/admin-ui/overview` (three falsification-pass behaviours in the sidebar section; parent detail view reworded as additive).
