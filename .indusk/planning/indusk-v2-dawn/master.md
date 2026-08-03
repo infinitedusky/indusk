@@ -52,7 +52,7 @@ Open this file to answer "where are we." If the answer isn't here, the answer do
 
 - **Component 4 — does the harness stay thin?** The strategy says yes: it is the control group and the cheap mechanical lane, not a product. Every Claude Code feature it lacks (context compaction, subagents, an ask channel, conventions injection, grep/glob) is then *scope*, not a gap. **Until this is written down as a decision, those gaps will keep resurfacing as bugs.** Recommended: decide thin, record as an ADR under this plan.
 - **`gate_policy` under headless runs.** Dawn can currently only run `auto`, the most permissive mode. Either teach it a headless equivalent of `ask` (a real pause), or state plainly that headless runs are `auto`-only and accept the weaker policy. Belongs to component 2.
-- **The acceptance experiment (A8).** The original matrix varied model *and* harness at once, so its comparison is uninterpretable. The clean experiment holds the model constant and varies the harness: `Opus + Claude Code` vs `Opus + atdawn`, same plan, same starting commit, comparing process parity (expect none) and outcome quality (expect a delta). Needs an Anthropic key. Belongs to component 1's close-out.
+- ~~**The acceptance experiment (A8).**~~ **Resolved 2026-08-03** — run at sonnet (C5 atdawn vs C6 Claude Code, same model/task/state): process parity held, no measurable quality delta (mutation kill-rate identical); signed off in the archived plan's matrix.md. The Opus pair remains available as a refinement, not a blocker.
 
 ## Horizon — direction, not commitments
 
