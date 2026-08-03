@@ -46,7 +46,7 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 | T7 | a plan that exists on disk but is named by no declaration is never hidden — every planning folder is accounted for | Phase 1 | Phase 1 | passing |
 | T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | passing |
 | T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | passing |
-| T10 | opening a parent plan shows its subplans as cards with their status, instead of an empty page | Phase 3 | Phase 3 | planned |
+| T10 | opening a parent plan shows its subplans as cards with their status, instead of an empty page | Phase 3 | Phase 3 | written |
 
 ### Trajectory Rationale
 
