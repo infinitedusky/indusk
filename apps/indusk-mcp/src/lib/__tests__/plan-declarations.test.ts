@@ -52,7 +52,11 @@ describe("T6 — a broken declaration degrades to the flat list", () => {
 		expect(declarations.roadmap).toEqual([]);
 		expect(declarations.subplans).toEqual({});
 		// The plans themselves are untouched by the absent declaration.
-		expect(parseAllPlans(root).map((p) => p.name).sort()).toEqual(["alpha", "beta"]);
+		expect(
+			parseAllPlans(root)
+				.map((p) => p.name)
+				.sort(),
+		).toEqual(["alpha", "beta"]);
 	});
 
 	it("survives malformed YAML in a master file without throwing", () => {
@@ -89,7 +93,9 @@ describe("T7 — every plan on disk is accounted for", () => {
 			"utf8",
 		);
 
-		const names = parseAllPlans(root).map((p) => p.name).sort();
+		const names = parseAllPlans(root)
+			.map((p) => p.name)
+			.sort();
 
 		expect(names).toEqual(["declared-child", "declared-parent", "mentioned-by-nobody"]);
 	});
@@ -101,7 +107,9 @@ describe("T7 — every plan on disk is accounted for", () => {
 		makePlan("real-child");
 
 		const declarations = readPlanDeclarations(planning);
-		const names = parseAllPlans(root).map((p) => p.name).sort();
+		const names = parseAllPlans(root)
+			.map((p) => p.name)
+			.sort();
 
 		// The declaration names both; only the real one is a plan on disk. The
 		// difference is what the UI renders as a placeholder.

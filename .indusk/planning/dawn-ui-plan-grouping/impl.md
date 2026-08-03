@@ -67,7 +67,7 @@ Every row is authorable against the current stack — the sidebar and the reader
 
 - [x] Worktree kickoff: created at `~/code/sandbox/dusk-worktrees/dawn-ui-plan-grouping` on branch `plan/dawn-ui-plan-grouping` (matching the existing worktree convention); `pnpm install` run, since a fresh worktree has no `node_modules`.
 - [x] Author T1–T9 red (test-first). `apps/indusk-mcp/src/lib/__tests__/plan-declarations.test.ts` (T6–T9, temp-dir fixtures: corrupt master, no-subplans key, empty parent, undeclared plan) and `apps/indusk-admin/src/components/PlanList.grouping.test.tsx` (T1–T5). Red verified for the intended reason: mcp fails `readPlanDeclarations is not a function`; admin fails "expected a group element…: expected null not to be null". T3/T5 and the parseAllPlans-only cases are green from birth by design — they assert current behaviour is preserved. **Correction during authoring:** the first draft of the admin tests used `screen.getByTestId`, which this repo's browser setup doesn't expose — they failed on the wrong thing (`getByTestId is not a function`) rather than on missing grouping. Rewrote to the repo's `const { container } = await render(...)` + `querySelector` convention so the red is real.
-- [ ] Add `readPlanDeclarations(planningDir)` to `apps/indusk-mcp/src/lib/plan-parser.ts` (or a sibling module it re-exports): reads the root `master.md` frontmatter for `parents: string[]` and `roadmap: string[]`, and a named plan's own `master.md` for `subplans: string[]`.
+- [x] Add `readPlanDeclarations(planningDir)` to `apps/indusk-mcp/src/lib/plan-parser.ts` (or a sibling module it re-exports): reads the root `master.md` frontmatter for `parents: string[]` and `roadmap: string[]`, and a named plan's own `master.md` for `subplans: string[]`.
   ```typescript
   export interface PlanDeclarations {
     /** Folder names declared as parent plans in the root master. */
@@ -78,21 +78,21 @@ Every row is authorable against the current stack — the sidebar and the reader
     subplans: Record<string, string[]>;
   }
   ```
-  Every field defaults to empty on a missing file, absent key, or malformed YAML — **never throws, never drops a plan** (T6). Follow the existing `parsePlan` precedent: malformed frontmatter is reported, not fatal.
-- [ ] Export it for the admin app through the package's subpath exports, alongside the existing parser exports — the admin must consume this, never re-read frontmatter itself.
-- [ ] Apply the frontmatter to the real files: `parents:` + `roadmap:` on `.indusk/planning/master.md`, and `subplans:` on `.indusk/planning/indusk-v2-dawn/master.md` listing this plan, `dawn-external-orchestrator`, and the not-yet-created `dawn-hook-parity` / `dawn-verify` / `dawn-agents` / `dawn-linear`.
-- [ ] Retire the prose-scraping path in `readMasterPlanOrder` (`apps/indusk-admin/src/lib/planning-reader.ts`) in favour of the declaration reader — its link regex matches nothing against the Dawn master today, so this removes a silent-failure surface rather than replacing working code.
+  Every field defaults to empty on a missing file, absent key, or malformed YAML — **never throws, never drops a plan** (T6). Follow the existing `parsePlan` precedent: malformed frontmatter is reported, not fatal. Implemented with `stringArray()` (non-array or non-string entries yield `[]`) and `readMasterFrontmatter()` (absent/unreadable → `null`); parent candidates are the union of `parents:` and any folder carrying a `master.md`, so a stale root entry can't suppress a real declaration.
+- [x] Export it for the admin app through the package's subpath exports, alongside the existing parser exports — the admin must consume this, never re-read frontmatter itself. Added `"./planning/plan-parser"` → `dist/lib/plan-parser.{d.ts,js}`.
+- [x] Apply the frontmatter to the real files: `parents:` + `roadmap:` on `.indusk/planning/master.md`, and `subplans:` on `.indusk/planning/indusk-v2-dawn/master.md`. Verified against the built lib — parents `[indusk-v2-dawn]`, 14-entry roadmap, 7 Dawn subplans. **The `roadmap:` list preserves the exact order the retired link-regex derived**, so replacing it doesn't silently reshuffle the sidebar. Note `dawn-external-orchestrator` has no folder on `main` (it lives on its own branch), making it a live placeholder case for T4.
+- [x] Retire the prose-scraping path in `readMasterPlanOrder` in favour of the declaration reader. `readPlanHierarchy()` now delegates to the shared `readPlanDeclarations`, and `readMasterPlanOrder` returns its `roadmap`, so the admin consumes the parser rather than re-reading frontmatter. The link regex is gone — a silent-failure surface removed.
 
 #### Phase 1 Verification
-- [ ] T6, T7, T8, T9 green: `pnpm vitest run` in `apps/indusk-mcp` — corrupt/missing/empty declarations all fall back safely, every folder is still accounted for, and the existing plan-list output is unchanged.
-- [ ] T1–T5 authored and red, each failing for its stated reason (not a fixture or import error). Capture the failure output.
-- [ ] `pnpm exec tsc --noEmit` and `pnpm exec biome check` clean in `apps/indusk-mcp`.
+- [x] T6, T7, T8, T9 green: `pnpm vitest run src/lib/` in `apps/indusk-mcp` → 7/7 in `plan-declarations.test.ts`; suite 431 passed. The only 2 failures are `daemon-identity` (PID/port daemon tests), **verified pre-existing via `git stash`** — identical on the unmodified baseline, untouched by this change.
+- [x] T1–T5 authored and red for their stated reasons: T1 `expected a group element for the parent plan: expected null not to be null`, T2 `grouping child missing: expected -1 to be greater than -1`, T4 `expected a placeholder for the uncreated subplan: expected null not to be null`. T3 and T5 pass — green from birth, exactly as the rationale predicted, since they assert current behaviour is *preserved*. They also fail `tsc` in `apps/indusk-admin` (the `grouping` prop lands in Phase 2) — expected red at the type level too, confined to the new test file.
+- [x] `pnpm exec tsc --noEmit` exit 0 and `biome check` clean in `apps/indusk-mcp` (two files auto-formatted).
 
 #### Phase 1 Context
-- [ ] Add to CLAUDE.md Conventions: plan hierarchy is declared top-down only — the root `master.md` frontmatter names `parents:` and the `roadmap:` order, each parent's own `master.md` names its ordered `subplans:`, children declare nothing, and the plan inventory always comes from disk rather than any list. One rule + pointer, per the context budget.
+- [x] Add to CLAUDE.md Conventions: plan hierarchy is declared top-down only — the root `master.md` frontmatter names `parents:` and the `roadmap:` order, each parent's own `master.md` names its ordered `subplans:`, children declare nothing, and the plan inventory always comes from disk rather than any list. One rule + pointer, per the context budget.
 
 #### Phase 1 Document
-- [ ] Document the declaration convention in `apps/docs/src/reference/cli/plans.md` — the frontmatter keys, the top-down rule, and the never-hides-a-plan fallback. It sits with the other planning-directory reference material.
+- [x] Document the declaration convention in `apps/docs/src/reference/cli/plans.md` — the frontmatter keys, the top-down rule, and the never-hides-a-plan fallback. It sits with the other planning-directory reference material.
 
 ### Phase 2: Grouped sidebar
 

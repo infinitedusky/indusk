@@ -7,6 +7,10 @@ import {
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
 import {
+  type PlanDeclarations,
+  readPlanDeclarations,
+} from "@infinitedusky/indusk-mcp/planning/plan-parser";
+import {
   parseTrajectory,
   type Trajectory,
 } from "@infinitedusky/indusk-mcp/trajectory/parser";
@@ -296,21 +300,26 @@ export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
  * `[plan-name](plan-name/brief.md)`. Plans listed by string only (no link)
  * are skipped — they don't have a folder yet.
  */
+/**
+ * Plan hierarchy declarations for this project — parents, top-level order, and
+ * each parent's ordered children.
+ *
+ * Reads frontmatter through the shared parser rather than scraping prose. The
+ * previous implementation matched markdown links shaped `[name](name/doc.md)`
+ * with a regex, which silently matched *nothing* against a master whose links
+ * carry a `../` prefix — structure derived from prose fails quietly, which is
+ * the worst way for it to fail.
+ */
+export function readPlanHierarchy(projectRoot: string): PlanDeclarations {
+  return readPlanDeclarations(join(projectRoot, PLANNING_DIR));
+}
+
+/**
+ * Top-level display order. Plans absent from the declaration keep today's
+ * behaviour — they fall through to the "Unordered" group rather than vanishing.
+ */
 export function readMasterPlanOrder(projectRoot: string): string[] {
-  const masterPath = join(projectRoot, PLANNING_DIR, MASTER_FILE);
-  if (!existsSync(masterPath)) return [];
-  const raw = readFileSync(masterPath, "utf-8");
-  const order: string[] = [];
-  const seen = new Set<string>();
-  const linkRe = /\[([a-z0-9-]+)\]\(\1\/[a-z0-9-]+\.md\)/gi;
-  for (const match of raw.matchAll(linkRe)) {
-    const name = match[1];
-    if (!seen.has(name)) {
-      seen.add(name);
-      order.push(name);
-    }
-  }
-  return order;
+  return readPlanHierarchy(projectRoot).roadmap;
 }
 
 /**

@@ -153,6 +153,96 @@ export function parsePlan(planDir: string): PlanSummary {
 	};
 }
 
+/**
+ * Plan hierarchy, declared top-down.
+ *
+ * The root `master.md` names which folders are parent plans (`parents:`) and
+ * the top-level display order (`roadmap:`). Each parent's own `master.md`
+ * names its ordered children (`subplans:`). Children declare nothing — one
+ * direction, one source of truth per relationship, so the two sides can never
+ * disagree.
+ *
+ * Note what is NOT here: the list of plans. The filesystem is the inventory
+ * (see {@link parseAllPlans}); declarations only add structure over it. That
+ * asymmetry is the load-bearing property — a declaration can group plans but
+ * can never subtract one.
+ */
+export interface PlanDeclarations {
+	/** Folder names declared as parent plans in the root master. */
+	parents: string[];
+	/** Top-level display order from the root master. Unlisted plans follow. */
+	roadmap: string[];
+	/** Parent folder name → its declared, ordered subplan names. */
+	subplans: Record<string, string[]>;
+}
+
+/** Read a frontmatter key as a string array; anything else yields []. */
+function stringArray(data: Record<string, unknown>, key: string): string[] {
+	const value = data[key];
+	if (!Array.isArray(value)) return [];
+	return value.filter((entry): entry is string => typeof entry === "string");
+}
+
+/**
+ * Frontmatter of a `master.md`, or null when absent/unreadable/malformed.
+ *
+ * gray-matter throws on malformed YAML in plain Node but returns `data: {}`
+ * inside vitest — so this treats both the throw and the empty-object case as
+ * "no declaration", which is the same safe outcome either way.
+ */
+function readMasterFrontmatter(masterPath: string): Record<string, unknown> | null {
+	if (!existsSync(masterPath)) return null;
+	try {
+		return matter(readFileSync(masterPath, "utf-8")).data as Record<string, unknown>;
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err);
+		process.stderr.write(
+			`[plan-parser] master frontmatter unreadable in ${masterPath}: ${message}\n`,
+		);
+		return null;
+	}
+}
+
+/**
+ * Read the plan hierarchy declarations from a planning directory.
+ *
+ * Never throws and never reports a plan: a missing file, absent key, or
+ * malformed YAML each degrade to empty, which renders as today's flat list.
+ * Losing structure is acceptable; losing a plan is not.
+ */
+export function readPlanDeclarations(planningDir: string): PlanDeclarations {
+	const empty: PlanDeclarations = { parents: [], roadmap: [], subplans: {} };
+	if (!existsSync(planningDir)) return empty;
+
+	const rootData = readMasterFrontmatter(join(planningDir, "master.md"));
+	const parents = rootData ? stringArray(rootData, "parents") : [];
+	const roadmap = rootData ? stringArray(rootData, "roadmap") : [];
+
+	// A folder's own master.md is what makes it a parent in practice, so read
+	// every candidate — those named in `parents:` plus any plan carrying a
+	// master.md — and let the presence of children decide. This keeps a stale
+	// `parents:` entry from suppressing a real declaration, and vice versa.
+	const candidates = new Set(parents);
+	try {
+		for (const entry of readdirSync(planningDir, { withFileTypes: true })) {
+			if (entry.isDirectory() && existsSync(join(planningDir, entry.name, "master.md"))) {
+				candidates.add(entry.name);
+			}
+		}
+	} catch {
+		// Unreadable planning dir — fall through with whatever `parents:` gave us.
+	}
+
+	const subplans: Record<string, string[]> = {};
+	for (const parent of candidates) {
+		const data = readMasterFrontmatter(join(planningDir, parent, "master.md"));
+		if (!data) continue;
+		subplans[parent] = stringArray(data, "subplans");
+	}
+
+	return { parents, roadmap, subplans };
+}
+
 export function parseAllPlans(projectRoot: string): PlanSummary[] {
 	const planningDir = getPlanningDir(projectRoot);
 	if (!existsSync(planningDir)) return [];

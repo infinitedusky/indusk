@@ -2,6 +2,16 @@
 title: "Dawn — Master Plan"
 date: 2026-08-02
 status: living
+# Ordered children. A name here that has no folder yet is normal — it renders
+# as a placeholder, which is how the sidebar shows the sequence ahead.
+subplans:
+  - dawn-ui-plan-grouping
+  - dawn-external-orchestrator
+  - dawn-hook-parity
+  - dawn-verify
+  - dawn-agents
+  - dawn-linear
+  - dawn-cloud
 ---
 
 # Dawn — Master Plan
