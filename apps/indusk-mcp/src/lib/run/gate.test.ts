@@ -91,17 +91,20 @@ describe("gate script resolution — target project's .claude/hooks/", () => {
 		await rm(root, { recursive: true, force: true });
 	});
 
-	it("finds both scripts by walking up from the worktree root", async () => {
+	it("finds the full chain by walking up from the worktree root", async () => {
 		const project = join(root, "project");
 		const worktree = join(project, "trees", "plan-x");
 		await mkdir(join(project, ".claude/hooks"), { recursive: true });
 		await mkdir(worktree, { recursive: true });
 		await writeFile(join(project, ".claude/hooks/check-gates.js"), "// stub\n");
 		await writeFile(join(project, ".claude/hooks/validate-impl-structure.js"), "// stub\n");
+		// dawn-hook-parity A1: the budget invariant joined the chain.
+		await writeFile(join(project, ".claude/hooks/claude-md-budget.js"), "// stub\n");
 
 		expect(resolveGateScripts(worktree)).toEqual([
 			join(project, ".claude/hooks/validate-impl-structure.js"),
 			join(project, ".claude/hooks/check-gates.js"),
+			join(project, ".claude/hooks/claude-md-budget.js"),
 		]);
 	});
 

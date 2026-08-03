@@ -22,10 +22,11 @@ export const repoRoot = resolve(here, "../../../../..");
 /** This repo's installed hooks — the REAL gate scripts, never mocked. */
 export const hooksDir = join(repoRoot, ".claude/hooks");
 
-/** Validator first, then gates — the PreToolUse chain order. */
+/** Validator first, then gates, then budget — the PreToolUse chain order. */
 export const realGateScripts = [
 	join(hooksDir, "validate-impl-structure.js"),
 	join(hooksDir, "check-gates.js"),
+	join(hooksDir, "claude-md-budget.js"),
 ];
 
 /** The guinea-pig reference plan every end-to-end test runs against. */

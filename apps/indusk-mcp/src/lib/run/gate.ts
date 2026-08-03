@@ -124,8 +124,19 @@ export function resolveGateScripts(worktreeRoot: string): string[] {
 	);
 }
 
-/** Validator first, then gates — mirrors the PreToolUse hook chain. */
-const GATE_SCRIPT_NAMES = ["validate-impl-structure.js", "check-gates.js"] as const;
+/**
+ * Validator first, then gates, then the budget invariant — mirrors the
+ * PreToolUse hook chain. `claude-md-budget.js` self-filters by target
+ * basename (non-CLAUDE.md edits exit 0 immediately), so chain membership is
+ * the whole wiring (dawn-hook-parity A1). Note: `resolveGateScripts` requires
+ * every name present — a consumer project missing the budget hook fails loud
+ * with the run-indusk-update message, per the fail-loud contract.
+ */
+const GATE_SCRIPT_NAMES = [
+	"validate-impl-structure.js",
+	"check-gates.js",
+	"claude-md-budget.js",
+] as const;
 
 /**
  * Spawn each gate script in order, writing the envelope to stdin.
