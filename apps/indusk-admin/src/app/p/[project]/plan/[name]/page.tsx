@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { PlanDetail, type SubplanEntry } from "@/components/PlanDetail";
+import { type SubplanEntry } from "@/components/ParentPlanView";
+import { PlanDetail } from "@/components/PlanDetail";
 import {
   readActivePlans,
   readArchivedPlans,
