@@ -173,6 +173,7 @@ const config = defineConfig({
 						{ text: "Worktree Visibility", link: "/decisions/worktree-visibility" },
 						{ text: "InDusk Makeover", link: "/decisions/indusk-makeover" },
 						{ text: "Git-Only Substrate", link: "/decisions/git-only-substrate" },
+						{ text: "Dawn External Orchestrator", link: "/decisions/dawn-external-orchestrator" },
 						{ text: "Git-or-jj Substrate (Superseded)", link: "/decisions/git-or-jj-substrate" },
 					],
 				},

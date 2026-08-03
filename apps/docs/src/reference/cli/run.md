@@ -1,6 +1,6 @@
 # `indusk run`
 
-The external orchestrator: run a plan through a model-agnostic, gated agentic loop — InDusk's discipline lifted out of Claude Code so the same gates fire behind any model. Built by the [dawn-external-orchestrator](/decisions/) plan as Dawn's first buildable piece: the agentic loop is rented (Vercel AI SDK), the gate scripts are reused as-is, and only a thin adapter plus the loop control ported from `/work --autopilot` is owned.
+The external orchestrator: run a plan through a model-agnostic, gated agentic loop — InDusk's discipline lifted out of Claude Code so the same gates fire behind any model. Built by the [dawn-external-orchestrator](/decisions/dawn-external-orchestrator) plan as Dawn's first buildable piece: the agentic loop is rented (Vercel AI SDK), the gate scripts are reused as-is, and only a thin adapter plus the loop control ported from `/work --autopilot` is owned.
 
 ```bash
 indusk run <plan> --model claude|gpt|gemini|grok
