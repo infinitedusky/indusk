@@ -45,14 +45,22 @@ interface PlanGroup {
  * they never subtract a plan. A declared child with no folder becomes a
  * placeholder rather than silently vanishing, and a parent with no resolvable
  * children is not a group at all — it stays an ordinary plan.
+ *
+ * Children resolve against active AND archived plans (active wins a name
+ * collision) — an archived subplan is finished work and renders with its real
+ * status, never as a "not created yet" placeholder (T11). `rest` is the
+ * unclaimed ACTIVE plans; archived plans always keep their own section.
  */
 function buildGroups(
-  plans: Plan[],
+  active: Plan[],
+  archived: Plan[],
   grouping: PlanDeclarations | undefined,
 ): { groups: PlanGroup[]; rest: Plan[] } {
-  if (!grouping) return { groups: [], rest: plans };
+  if (!grouping) return { groups: [], rest: active };
 
-  const byName = new Map(plans.map((p) => [p.name, p]));
+  const byName = new Map(
+    [...archived, ...active].map((p) => [p.name, p] as const),
+  );
   const claimed = new Set<string>();
   const groups: PlanGroup[] = [];
 
@@ -78,7 +86,7 @@ function buildGroups(
     groups.push({ parent, children, placeholders });
   }
 
-  return { groups, rest: plans.filter((p) => !claimed.has(p.name)) };
+  return { groups, rest: active.filter((p) => !claimed.has(p.name)) };
 }
 
 /**
@@ -104,7 +112,7 @@ export function PlanList({
     return <EmptyPlansSidebarSlot />;
   }
 
-  const { groups, rest } = buildGroups(active, grouping);
+  const { groups, rest } = buildGroups(active, archived, grouping);
   const orderedActive = orderByMaster(rest, masterOrder);
   const unordered = rest.filter((p) => !masterOrder.includes(p.name));
 

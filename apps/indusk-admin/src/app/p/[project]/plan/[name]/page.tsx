@@ -49,8 +49,10 @@ export default async function PlanPage({ params }: PlanPageProps) {
   let subplans: SubplanEntry[] | undefined;
   let masterContent: string | undefined;
   if (declared.length > 0) {
+    // Archived first so an active plan overwrites it on a name collision —
+    // matching the `active.find ?? archived.find` precedence above (T11).
     const byName = new Map(
-      [...active, ...archived].map((p) => [p.name, p] as const),
+      [...archived, ...active].map((p) => [p.name, p] as const),
     );
     subplans = declared.map((n) => ({ name: n, plan: byName.get(n) }));
     masterContent =
