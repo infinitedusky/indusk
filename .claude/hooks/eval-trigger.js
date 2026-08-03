@@ -175,86 +175,15 @@ if (!evalConfig.enabled) {
 // rail-check cadence rather than letting the queue grow unbounded.
 // ---------------------------------------------------------------------------
 if (drainPending) {
-	const evalDir = resolve(statePath, ".indusk", "eval");
-	const readJsonl = (path) => {
-		if (!existsSync(path)) return [];
-		return readFileSync(path, "utf8")
-			.split("\n")
-			.filter((line) => line.trim())
-			.flatMap((line) => {
-				try {
-					return [JSON.parse(line)];
-				} catch {
-					return []; // partial lines from crashed writers — skip, never fatal
-				}
-			});
-	};
-	const pending = readJsonl(resolve(evalDir, "pending.jsonl"));
-	const drainedShas = new Set(
-		readJsonl(resolve(evalDir, "pending-drained.jsonl")).map((r) => r.sha),
-	);
-	const todo = pending.filter((r) => typeof r.sha === "string" && !drainedShas.has(r.sha));
-
-	const runOne = (record) =>
-		new Promise((resolveRun) => {
-			const recordSource = record.source ?? "atdawn";
-			const override = process.env.INDUSK_EVAL_CMD;
-			const [cmd, ...baseArgs] = override
-				? override.split(" ").filter(Boolean)
-				: [
-						process.execPath,
-						"--no-warnings",
-						fileURLToPath(import.meta.url),
-						"--source",
-						recordSource,
-						"--change-id",
-						record.sha,
-					];
-			const args = override ? [...baseArgs, record.sha, recordSource] : baseArgs;
-			const child = spawn(cmd, args, { cwd, stdio: ["ignore", "ignore", "inherit"] });
-			// Resolve with the outcome: a non-zero exit (or a spawn error) means
-			// this record was NOT evaluated, and must stay re-drainable.
-			child.on("close", (code) => resolveRun(code === 0));
-			child.on("error", () => resolveRun(false));
-		});
-
-	// Ledger-before-spawn keeps a CRASHED drain from double-evaluating, but the
-	// ledger entry is provisional: a record whose evaluator exits non-zero was
-	// never evaluated, so it is un-drained (rewriting the ledger without it)
-	// and stays queued. Otherwise a machine that cannot evaluate — no
-	// `claude`, broken runner — would silently empty the whole backlog while
-	// writing no scorecards, destroying exactly what the queue exists to
-	// protect (A12).
-	const drainedPath = resolve(evalDir, "pending-drained.jsonl");
-	const failed = [];
-	let drainedCount = 0;
-	for (const record of todo) {
-		mkdirSync(evalDir, { recursive: true });
-		appendFileSync(
-			drainedPath,
-			`${JSON.stringify({ sha: record.sha, drainedAt: new Date().toISOString() })}\n`,
-			"utf8",
-		);
-		const ok = await runOne(record);
-		if (ok) {
-			drainedCount++;
-		} else {
-			failed.push(record.sha);
-			// Un-drain: rewrite the ledger without this sha so it is retried.
-			const kept = readJsonl(drainedPath).filter((r) => r.sha !== record.sha);
-			writeFileSync(
-				drainedPath,
-				kept.map((r) => JSON.stringify(r)).join("\n") + (kept.length ? "\n" : ""),
-				"utf8",
-			);
-		}
-	}
-	syslog(
+	const { drainPendingEvals } = await import("./_pending-drain.js");
+	const { drained, failed, alreadyDrained } = await drainPendingEvals({
 		statePath,
-		`drain complete — ${drainedCount} drained, ${failed.length} failed (still queued), ${pending.length - todo.length} already drained`,
-	);
+		cwd,
+		triggerScript: fileURLToPath(import.meta.url),
+		log: (msg) => syslog(statePath, msg),
+	});
 	process.stderr.write(
-		`📊 Drained ${drainedCount} pending eval(s); ${failed.length} FAILED and remain queued for retry; ${pending.length - todo.length} already drained. Results land in .indusk/eval/results.log\n`,
+		`📊 Drained ${drained} pending eval(s); ${failed.length} FAILED and remain queued for retry; ${alreadyDrained} already drained. Results land in .indusk/eval/results.log\n`,
 	);
 	if (failed.length > 0) {
 		process.stderr.write(
