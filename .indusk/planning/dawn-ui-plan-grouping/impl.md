@@ -1,7 +1,7 @@
 ---
 title: "Dawn UI — Plan Grouping — Implementation"
 date: 2026-08-02
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
