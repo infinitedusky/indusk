@@ -35,8 +35,16 @@ function rootOrExit(): string {
 
 const program = new Command();
 
+// Brand help/usage by the name this process was invoked as (`indusk`,
+// `atdawn`, `dev-system` — all bins of this package). Direct `node cli.js`
+// invocations fall back to `indusk`.
+const invokedName = (() => {
+	const base = process.argv[1]?.split(/[\\/]/).pop() ?? "";
+	return base in (pkg.bin ?? {}) ? base : "indusk";
+})();
+
 program
-	.name("dev-system")
+	.name(invokedName)
 	.description("InDusk development system — skills, MCP tools, and CLI")
 	.version(pkg.version);
 
@@ -321,6 +329,26 @@ program
 	.action(async () => {
 		const { startServer } = await import("../server/index.js");
 		await startServer();
+	});
+
+program
+	.command("run <plan>")
+	.description(
+		"External orchestrator — run a plan through a model-agnostic gated loop (Dawn): per-phase scope, advance-on-green via a deliberate check-gates probe, goalpost guard, pause-at-human-gate.",
+	)
+	.option(
+		"--model <name>",
+		"Model/provider to drive the loop: claude | gpt | gemini | grok (alias), a bare provider name (anthropic/openai/google/xai), or a raw model id (gemini-2.5-pro, ...)",
+		"claude",
+	)
+	.option(
+		"--max-steps <n>",
+		"Per-phase step budget for the one honest attempt (default 48; thinking models explore read-heavy and need more room)",
+	)
+	.action(async (plan: string, opts: { model?: string; maxSteps?: string }) => {
+		const { run } = await import("./commands/run.js");
+		const maxSteps = opts.maxSteps ? Number.parseInt(opts.maxSteps, 10) : undefined;
+		await run(rootOrExit(), plan, { model: opts.model, maxSteps });
 	});
 
 // Commander quirk: options declared on BOTH a parent and a subcommand cause
