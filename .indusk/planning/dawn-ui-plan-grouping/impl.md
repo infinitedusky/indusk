@@ -209,4 +209,4 @@ Investigation notes (what was found, ritual 2026-08-03):
 - [x] Update CLAUDE.md's admin-UI gotcha line with the post-decomposition structure: parent-detail cards live in `ParentPlanView.tsx`, falsification renderers in `FalsificationSection.tsx`, badge maps in `ui/badge-variant.ts`, research reading in `lib/research-reader.ts`.
 
 #### Phase 5 Document
-- [ ] Update `/reference/admin-ui/component-conventions`: the "Data layer" section notes the `planning-reader` / `research-reader` split, and the primitives section gains `badge-variant.ts` as the shared status/state→variant map.
+- [x] Update `/reference/admin-ui/component-conventions`: the "Data layer" section notes the `planning-reader` / `research-reader` split (and the mock-the-right-module corollary), and the primitives section gains `badge-variant.ts` as the shared status/state→variant map.
