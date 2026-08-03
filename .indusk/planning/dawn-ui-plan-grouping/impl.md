@@ -37,15 +37,15 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | a parent plan appears in the sidebar with its subplans shown beneath it, not in one flat list | Phase 1 | Phase 2 | planned |
-| T2 | subplans appear in the order their parent declares — not alphabetical, not filesystem order | Phase 1 | Phase 2 | planned |
-| T3 | a plan no parent claims appears at the top level, exactly as today | Phase 1 | Phase 2 | planned |
-| T4 | a subplan a parent names but that does not exist yet appears as a greyed placeholder | Phase 1 | Phase 2 | planned |
-| T5 | clicking a subplan opens that plan's page, the same as any other plan | Phase 1 | Phase 2 | planned |
-| T6 | when a parent's declaration is missing, corrupt, or has no subplan list, every plan on disk still appears — the sidebar falls back to the flat list | Phase 1 | Phase 1 | planned |
-| T7 | a plan that exists on disk but is named by no declaration is never hidden — every planning folder is accounted for | Phase 1 | Phase 1 | planned |
-| T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | planned |
-| T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | planned |
+| T1 | a parent plan appears in the sidebar with its subplans shown beneath it, not in one flat list | Phase 1 | Phase 2 | written |
+| T2 | subplans appear in the order their parent declares — not alphabetical, not filesystem order | Phase 1 | Phase 2 | written |
+| T3 | a plan no parent claims appears at the top level, exactly as today | Phase 1 | Phase 2 | written |
+| T4 | a subplan a parent names but that does not exist yet appears as a greyed placeholder | Phase 1 | Phase 2 | written |
+| T5 | clicking a subplan opens that plan's page, the same as any other plan | Phase 1 | Phase 2 | written |
+| T6 | when a parent's declaration is missing, corrupt, or has no subplan list, every plan on disk still appears — the sidebar falls back to the flat list | Phase 1 | Phase 1 | written |
+| T7 | a plan that exists on disk but is named by no declaration is never hidden — every planning folder is accounted for | Phase 1 | Phase 1 | written |
+| T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | written |
+| T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | written |
 
 ### Trajectory Rationale
 
@@ -65,8 +65,8 @@ Every row is authorable against the current stack — the sidebar and the reader
 
 ### Phase 1: Declarations in the shared parser
 
-- [ ] Worktree kickoff: create/confirm this plan's worktree (`indusk worktree create dawn-ui-plan-grouping`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter.
-- [ ] Author T1–T9 red (test-first). Reader/parser tests in `apps/indusk-mcp/src/lib/__tests__/`; sidebar tests in `apps/indusk-admin/src/`. Fixtures are plain temp directories — a parent with subplans, a parent with a corrupt master, a parent with no subplan list, and an unparented plan. Confirm each fails for its intended reason before implementing.
+- [x] Worktree kickoff: created at `~/code/sandbox/dusk-worktrees/dawn-ui-plan-grouping` on branch `plan/dawn-ui-plan-grouping` (matching the existing worktree convention); `pnpm install` run, since a fresh worktree has no `node_modules`.
+- [x] Author T1–T9 red (test-first). `apps/indusk-mcp/src/lib/__tests__/plan-declarations.test.ts` (T6–T9, temp-dir fixtures: corrupt master, no-subplans key, empty parent, undeclared plan) and `apps/indusk-admin/src/components/PlanList.grouping.test.tsx` (T1–T5). Red verified for the intended reason: mcp fails `readPlanDeclarations is not a function`; admin fails "expected a group element…: expected null not to be null". T3/T5 and the parseAllPlans-only cases are green from birth by design — they assert current behaviour is preserved. **Correction during authoring:** the first draft of the admin tests used `screen.getByTestId`, which this repo's browser setup doesn't expose — they failed on the wrong thing (`getByTestId is not a function`) rather than on missing grouping. Rewrote to the repo's `const { container } = await render(...)` + `querySelector` convention so the red is real.
 - [ ] Add `readPlanDeclarations(planningDir)` to `apps/indusk-mcp/src/lib/plan-parser.ts` (or a sibling module it re-exports): reads the root `master.md` frontmatter for `parents: string[]` and `roadmap: string[]`, and a named plan's own `master.md` for `subplans: string[]`.
   ```typescript
   export interface PlanDeclarations {
