@@ -1,7 +1,7 @@
 ---
 title: "Dawn UI — Plan Grouping — Implementation"
 date: 2026-08-02
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -47,6 +47,11 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 | T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | passing |
 | T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | passing |
 | T10 | opening a parent plan shows its subplans as cards with their status, instead of an empty page | Phase 3 | Phase 3 | passing |
+| T11 | a subplan whose folder lives in `archive/` renders as a navigable item with its real status — in both the sidebar group and the parent detail cards — never as a "queued" placeholder | Phase 0 | Phase 4 | planned |
+| T12 | a parent plan that also carries standard documents (e.g. a brief) still renders those documents alongside its subplan cards — the parent branch adds, it never suppresses | Phase 0 | Phase 4 | planned |
+| T13 | with two or more parents, sidebar groups follow the roadmap's declared order, not parser iteration order | Phase 0 | Phase 4 | planned |
+| T14 | a declared name that is not a single clean path segment (`/`, `\`, or `..`) is ignored everywhere — it reaches neither a filesystem path join nor the rendered sidebar | Phase 0 | Phase 4 | planned |
+| T15 | a name declared twice in one `subplans:` list renders once (first occurrence) — no duplicate sidebar items, no duplicate React keys | Phase 0 | Phase 4 | planned |
 
 ### Trajectory Rationale
 
@@ -148,10 +153,38 @@ Every row is authorable against the current stack — the sidebar and the reader
 - [x] (discovered, user feedback during P3) Placeholder badge relabelled `planned` → `queued` in both surfaces (sidebar + detail cards). "planned" collided with the plan-lifecycle/trajectory vocabulary and implied a stage the name hasn't reached — these entries are declared-but-uncreated, i.e. work queued ahead (the brief's own phrasing). No test asserted the badge text.
 
 #### Phase 3 Verification
-- [x] T10 green: `pnpm vitest run --project browser src/components/PlanDetail.parent.test.tsx` → 4/4 (card with status+stage+link, placeholder card, prose-above-cards, no stray Falsification). Live check on `/p/dawn-wt/plan/indusk-v2-dawn`: full Dawn master prose, `dawn-ui-plan-grouping` card (in-progress/impl), six `queued` placeholders, no empty sections — screenshot `p3-parent-detail-subplan-cards.png`. Full suites: admin 141/141 (earlier 15 http failures were the leftover dev server holding port 3000 — retested clean after killing it); mcp 783 passed with 3 pre-existing failures (`agent-roles-phase4` fails identically on unmodified main — makeover CLAUDE.md compaction, cross-plan finding; `daemon-identity` T22/T23 pair documented pre-existing in Phase 1). The daemon-test failures initially looked like 12 — root cause was the worktree lacking the gitignored admin production bundle; `pnpm build` + `bundle-admin.js` reproduced trunk's environment and they pass. `tsc --noEmit` exit 0, `biome check` clean in both apps; `next build` succeeds with the new page code.
+- [x] T10 green: `pnpm vitest run --project browser src/components/PlanDetail.parent.test.tsx` → 4/4 (card with status+stage+link, placeholder card, prose-above-cards, no stray Falsification). Live check on `/p/dawn-wt/plan/indusk-v2-dawn`: full Dawn master prose, `dawn-ui-plan-grouping` card (in-progress/impl), six `queued` placeholders, no empty sections — screenshot `p3-parent-detail-subplan-cards.png`. Full suites: admin 141/141 (earlier 15 http failures were the leftover dev server holding port 3000 — retested clean after killing it); mcp 783 passed with 3 pre-existing failures (`agent-roles-phase4` fails identically on unmodified main — makeover CLAUDE.md compaction, cross-plan finding; the `daemon-identity` PID-reuse pair documented pre-existing in Phase 1). The daemon-test failures initially looked like 12 — root cause was the worktree lacking the gitignored admin production bundle; `pnpm build` + `bundle-admin.js` reproduced trunk's environment and they pass. `tsc --noEmit` exit 0, `biome check` clean in both apps; `next build` succeeds with the new page code.
 
 #### Phase 3 Context
 - [x] Record in CLAUDE.md's admin-UI gotcha that a plan whose documents fall outside `DOC_FILES` (a parent carrying only `master.md`) renders empty unless the detail view has a branch for it. Appended to the existing declarations gotcha line rather than a new bullet (budget discipline).
 
 #### Phase 3 Document
 - [x] Update `/reference/admin-ui/overview` with the parent plan detail view: subplan cards, placeholder cards, and the parent's own prose. Also fixed the grouped-sidebar section's badge wording (`planned` → `queued`) to match the rename, with a note on why `queued` isn't a lifecycle stage.
+
+### Phase 4: Falsification — declaration edges the happy path never exercised
+
+**Goal**: verify whether the attested state holds against the lifecycle and hygiene edges the T1–T10 fixtures never touch: subplans that have been archived, parents that grow standard documents, more than one parent, and declaration names treated as trusted path segments. Each trajectory row (T11–T15) captures one hypothesis about what's broken today; each checklist item is the fix the code needs when the hypothesis confirms.
+
+Investigation notes (what was found, ritual 2026-08-03):
+- `layout.tsx` resolves groups from `active` only, while `plan/[name]/page.tsx` resolves cards from `[...active, ...archived]` — an archived subplan is a `queued` placeholder in the sidebar and a real card in the detail view, and the spread order makes archived win a name collision, inverting the page's own `active.find ?? archived.find` precedence (T11).
+- Every standard section in `PlanDetail` is gated `!isParent` — a parent carrying a brief/impl silently hides them (T12).
+- `buildGroups` iterates `Object.keys(subplans)` = the parser's candidate-`Set` insertion order (`parents:` order, then readdir order), not roadmap order (T13).
+- `plan-parser.ts` `readPlanDeclarations` joins declared parent names into `join(planningDir, parent, "master.md")` unsanitized — `parents: ["../../../x"]` reads a `master.md` outside the planning dir and renders its `subplans:` strings; the repo convention (sanitize at the boundary, `readResearchContent` precedent) is not applied to declarations (T14). `stringArray` also passes duplicates through, double-rendering a child with duplicate React keys (T15).
+
+- [ ] Resolve group children against active + archived plans (layout passes both into `buildGroups`; active wins on name collision — also fix the `[...active, ...archived]` Map precedence in `plan/[name]/page.tsx`). An archived child renders as a navigable item with its real status in both surfaces; it may also remain in the Archived collapsible.
+- [ ] Make the parent branch in `PlanDetail` additive: master prose + subplan cards first, then whatever standard document sections the plan actually carries. Only a doc-less parent renders cards alone.
+- [ ] Order sidebar groups by roadmap position; parents not in the roadmap follow after, in declaration order.
+- [ ] Guard declaration names at the parser boundary: `readPlanDeclarations` drops names that aren't single clean path segments (no `/`, `\`, or `..` — mirror `readResearchContent`'s guard) and dedupes each list to first occurrence. Degrade silently to structure-loss, never a path join or raw render.
+
+#### Phase 4 Verification
+- [ ] T11: sidebar group + detail cards render an archived subplan as navigable-with-status (red today: sidebar shows a `queued` placeholder; detail already resolves it — assert both surfaces agree)
+- [ ] T12: a parent with a brief renders the brief section alongside its cards (red today: `!isParent` suppresses it)
+- [ ] T13: two parents whose roadmap order differs from parser order render groups in roadmap order (red today: parser order wins)
+- [ ] T14: `parents: ["../outside"]` never causes a read outside the planning dir and never renders (red today: the join happens)
+- [ ] T15: a `subplans:` list naming the same child twice renders one child item (red today: two, with a duplicate-key warning)
+
+#### Phase 4 Context
+- [ ] Extend CLAUDE.md's plan-hierarchy convention line: declaration names are boundary values — segment-guarded and deduped in `readPlanDeclarations`; archived children resolve as real items, not placeholders.
+
+#### Phase 4 Document
+- [ ] Update `/reference/cli/plans` (declaration hygiene: non-segment names and duplicates are ignored) and `/reference/admin-ui/overview` (archived subplans render with their real status; parents with documents show both cards and sections).
