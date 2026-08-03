@@ -1,7 +1,7 @@
 ---
 title: "Dawn Hook Parity — Implementation"
 date: 2026-08-03
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -51,8 +51,13 @@ Give the thin lane the same footprint as a Claude Code session: every invariant 
 | A11 | after a commit fails, the commit that actually carries its work names it — history never contains an item its message does not account for | Phase 0 | Phase 5 | passing |
 | A12 | a drain whose evaluator cannot run leaves the backlog re-drainable and says so loudly — it never silently empties the queue | Phase 0 | Phase 5 | passing |
 | A13 | a commit that lands but whose queue append fails is reported as a commit that landed, and its sha is not lost | Phase 0 | Phase 5 | passing |
+| A14 | the cleanup decomposition is behavior-parity — every existing assertion passes unchanged, and a drain still works when invoked as an installed hook (the extracted module resolves in a consumer project) | Phase 6 | Phase 6 | planned |
 
-All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness.test-support.ts`) drives the real loop today, and every assertion fails red against current behavior for its real reason (no budget script in the chain, zero commits, no queue file, exit 1 instead of 3, auto-by-contract). No Trajectory Rationale subsection is required — no row is Writable at Phase 1+.
+A1–A13 are all Phase 0 writable: the scripted-driver harness (`src/lib/run/harness.test-support.ts`) drives the real loop today, and every assertion fails red against current behavior for its real reason (no budget script in the chain, zero commits, no queue file, exit 1 instead of 3, auto-by-contract).
+
+### Trajectory Rationale
+
+- **A14** `Writable at: Phase 6` — The row asserts *parity of the Phase 6 extractions*: that the converged shared helpers and the extracted drain module behave identically to the code they replace. Neither exists before Phase 6, so there is nothing to assert parity of — the test's subjects are the new module path and the de-duplicated imports, both compile errors today.
 
 ## Checklist
 
@@ -151,6 +156,24 @@ Investigation notes (ritual 2026-08-03):
 
 #### Phase 5 Document
 - [x] `/reference/cli/run`: the Commits section gained the accounting rule (batched subjects + carried items, and why unstaging isn't the remedy) plus the landed-commit-with-failed-queue-record channel; the eval-queue section records that a failed evaluation un-drains and is reported, so a machine that cannot evaluate never destroys the backlog.
+
+### Phase 6: Cleanup — pay the deferred helper duplication and split the hook's two jobs
+
+**Goal**: decompose what this plan grew, per module-extraction (the enabled domain extensions are typescript + testing — no react/nextjs, so the idiom is cohesive-module extraction, not framework splitting). The oversized check flags exactly one real file — `hooks/eval-trigger.js` at 527/400 (its installed copy is byte-identical, so it is one file counted twice; `changelog.md` is a changelog). The larger finding is duplication the check cannot see, and which Phase 1 explicitly deferred to this ritual.
+
+- [ ] **Converge the scripted-model helpers.** `loop.test.ts` and `swap.test.ts` each still define their own `toolCallStep`, `finishStep`, `SEMVER_MJS`, `SEMVER_TEST_MJS`, `CLI_MJS`, `rowLine`, `phase1ImplBlock`, `verificationLine` — 8 duplicated definitions apiece, now that `harness.test-support.ts` exports all of them (21 exports). Three copies of each: rule of three exceeded, and Phase 1's authoring note promised this ritual would converge them. Delete the local copies, import from the shared harness, keeping each file's genuinely local fixtures (swap's google-driver scripting, loop's `phase1ImplBlock` block-form variant if its shape differs from the shared `phase1ImplItems`).
+- [ ] **Extract the drain into `hooks/_pending-drain.js`.** `eval-trigger.js` now does two jobs: decide-and-spawn-an-evaluator (trigger detection, config, path resolution, the evaluator script) and maintain-the-queue (read pending, ledger, spawn per record, un-drain failures). The drain block is self-contained and the repo already has the pattern — `_hook-paths.js` is an underscore-prefixed hook-local module the hooks import, copied into consumers by the same globSync that copies the hooks themselves. Move the drain there; `eval-trigger.js` keeps the `--drain-pending` dispatch. **Verify the copy path**: the extraction is only safe if `_pending-drain.js` lands in a consumer's `.claude/hooks/` — confirm globSync picks it up on both init and update (the hardcoded-hook-list gotcha), and that no settings registration is needed (underscore modules are imports, not registered hooks — `_hook-paths.js` has no settings entry).
+- [ ] (reviewed the `readJsonl` duplication between `hooks/eval-trigger.js` (JS) and `src/lib/run/pending-evals.ts` (TS) — **left as-is**: the hook must run standalone via `node .claude/hooks/…` in consumer projects where the package's `dist/` may be absent, and the evaluator-runner's five-candidate resolution dance is exactly what that coupling costs. A ~10-line reader duplicated across a language boundary is cheaper than making a hook depend on the built package. Recorded so the next reader knows it is deliberate, not missed.)
+- [ ] (reviewed `loop.ts` (319 LOC, under cap) — **left as-is**: it grew by wiring, not by absorbing logic; every piece it composes is already its own module — `commit-cadence`, `pending-evals`, `gate-question`, `probe`, `goalposts`. Extracting further would scatter the loop's readable top-to-bottom sequence. Also reviewed and left: `commit-cadence.ts` (~160, one cohesive concern), `pending-evals.ts` (~100, one cohesive concern), `system-tools.ts` (332, under cap; this plan added ~15 lines to an existing tool registry).)
+
+#### Phase 6 Verification
+- [ ] A14: behavior parity — the full `src/lib/run/` suite passes unchanged (no assertion edits), `tsc --noEmit` and `biome check` clean, and a drain still works through the **installed** hook path (`node .claude/hooks/eval-trigger.js --drain-pending`) proving the extracted module resolves as a consumer would load it.
+
+#### Phase 6 Context
+- [ ] Update CLAUDE.md's hooks gotcha line: hook-local `_`-prefixed modules (`_hook-paths.js`, `_pending-drain.js`) are imported by hooks and copied by the same globSync — they need no settings registration, but they DO need to exist in `.claude/hooks/` for the importing hook to run.
+
+#### Phase 6 Document
+- [ ] (none needed — internal decomposition: the shared-helper convergence is test-only and the drain extraction preserves the exact `--drain-pending` surface already documented in `/reference/cli/run` and the rail-check guide. Will confirm with the user at execution time per `ask` policy.)
 
 ## Files Affected
 
