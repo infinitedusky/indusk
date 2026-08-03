@@ -207,3 +207,16 @@ See [Component conventions](./component-conventions) for the visual primitive di
 - [Component conventions](./component-conventions) — the primitives, the no-shadcn rationale, the audit
 - [`apps/indusk-docs/src/changelog.md`](/changelog) — the 1.26.0 and 1.27.0 entries
 - [`apps/indusk-docs/src/lessons/`](/lessons) — retrospective lessons
+
+## Grouped plan sidebar
+
+Parent plans render as groups with their declared subplans indented beneath, in the order the parent's `master.md` declares (see [`plans`](/reference/cli/plans) for the frontmatter). Everything else renders exactly as before, at the top level.
+
+A subplan the parent names but which has **no folder yet** renders as a greyed, non-navigable placeholder with a `planned` badge — there is no page to open. That is the normal state of a sequence, not an error: it lets the sidebar show work queued ahead as well as work underway.
+
+Two behaviours worth knowing when reading the sidebar:
+
+- **A plan at the top level means no parent claims it.** That is the fallback, not a bug in the reader.
+- **Broken declarations degrade to the flat list.** A missing `master.md`, an absent key, or malformed YAML yields no grouping and no error. Structure can be lost; a plan never is.
+
+Grouping is display-only — it does not change which plans the CLI or MCP report as active.

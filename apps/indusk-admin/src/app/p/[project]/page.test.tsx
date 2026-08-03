@@ -42,6 +42,14 @@ vi.mock("@/lib/planning-reader", () => ({
   ],
   readArchivedPlans: async () => [],
   readMasterPlanOrder: () => ["alpha", "beta"],
+  // dawn-ui-plan-grouping: the layout reads the hierarchy for sidebar grouping.
+  // No parents here — this fixture asserts the flat-list shape, which is also
+  // the fallback whenever declarations are absent.
+  readPlanHierarchy: () => ({
+    parents: [],
+    roadmap: ["alpha", "beta"],
+    subplans: {},
+  }),
   readProjectResearch: async () => [],
 }));
 

@@ -37,15 +37,15 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | a parent plan appears in the sidebar with its subplans shown beneath it, not in one flat list | Phase 1 | Phase 2 | written |
-| T2 | subplans appear in the order their parent declares — not alphabetical, not filesystem order | Phase 1 | Phase 2 | written |
-| T3 | a plan no parent claims appears at the top level, exactly as today | Phase 1 | Phase 2 | written |
-| T4 | a subplan a parent names but that does not exist yet appears as a greyed placeholder | Phase 1 | Phase 2 | written |
-| T5 | clicking a subplan opens that plan's page, the same as any other plan | Phase 1 | Phase 2 | written |
-| T6 | when a parent's declaration is missing, corrupt, or has no subplan list, every plan on disk still appears — the sidebar falls back to the flat list | Phase 1 | Phase 1 | written |
-| T7 | a plan that exists on disk but is named by no declaration is never hidden — every planning folder is accounted for | Phase 1 | Phase 1 | written |
-| T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | written |
-| T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | written |
+| T1 | a parent plan appears in the sidebar with its subplans shown beneath it, not in one flat list | Phase 1 | Phase 2 | passing |
+| T2 | subplans appear in the order their parent declares — not alphabetical, not filesystem order | Phase 1 | Phase 2 | passing |
+| T3 | a plan no parent claims appears at the top level, exactly as today | Phase 1 | Phase 2 | passing |
+| T4 | a subplan a parent names but that does not exist yet appears as a greyed placeholder | Phase 1 | Phase 2 | passing |
+| T5 | clicking a subplan opens that plan's page, the same as any other plan | Phase 1 | Phase 2 | passing |
+| T6 | when a parent's declaration is missing, corrupt, or has no subplan list, every plan on disk still appears — the sidebar falls back to the flat list | Phase 1 | Phase 1 | passing |
+| T7 | a plan that exists on disk but is named by no declaration is never hidden — every planning folder is accounted for | Phase 1 | Phase 1 | passing |
+| T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | passing |
+| T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | passing |
 
 ### Trajectory Rationale
 
@@ -96,20 +96,20 @@ Every row is authorable against the current stack — the sidebar and the reader
 
 ### Phase 2: Grouped sidebar
 
-- [ ] Build the grouped tree in `apps/indusk-admin/src/lib/planning-reader.ts`: given the declarations plus `readActivePlans`, return parents with their ordered children, placeholder entries for declared-but-absent subplans, and every remaining plan at top level in `roadmap:` order (unlisted plans after, current ordering preserved).
-- [ ] Render it in `apps/indusk-admin/src/app/p/[project]/layout.tsx`: parent as a group header, children indented in declared order, placeholders greyed and non-navigable, unparented plans unchanged.
-- [ ] Verify a plan declared as a parent but owning no subplans renders as an ordinary plan (T8's rendering half).
+- [x] Build the grouped tree. **Deviation from the plan, deliberate:** the grouping lives in `PlanList.tsx` (`buildGroups`) rather than `planning-reader.ts`. The reader stays a pure data layer exposing declarations (`readPlanHierarchy`); grouping is a display concern, and T1–T5 exercise the component directly. `buildGroups` guarantees every plan passed in comes back out — inside a group or in `rest`.
+- [x] Render it: `layout.tsx` reads `readPlanHierarchy` and passes `grouping` to `PlanList`; `PlanGroupSection` renders the parent with children indented behind a left border, placeholders greyed with a `planned` badge and no link, unparented plans untouched.
+- [x] Verify a parent owning no subplans renders as an ordinary plan — `buildGroups` skips any parent whose declared list is empty or resolves to nothing, so it falls through to `rest` and renders as a normal item.
 
 #### Phase 2 Verification
-- [ ] T1–T5 flip to green: `pnpm vitest run` in `apps/indusk-admin` — nesting, declared order, unparented plans unchanged, placeholders rendered, subplan navigation intact.
-- [ ] T6–T9 still green (no regression from the rendering work): `pnpm test` across both apps.
+- [x] T1–T5 green: `pnpm vitest run --project browser src/components/PlanList.grouping.test.tsx` → 5 passed.
+- [x] T6–T9 still green (7/7 in `plan-declarations.test.ts`); admin suite 134 passed. **Two real regressions found and fixed here, both caused by retiring the link-scraping in Phase 1:** (1) `planning-reader.test.ts` pinned the old regex — migrated the fixture to `roadmap:` frontmatter and rewrote the one test that asserted link-shaped parsing; (2) `page.test.tsx` mocks `planning-reader` and the mock lacked the layout's new `readPlanHierarchy` import — added it. Remaining 3 failures are `http-*` tests that spawn `next dev`; two fail on the stashed baseline, and `http-smoke` passes 4/4 in isolation — CPU contention, exactly what the vitest config's `fileParallelism: false` comment warns about.
 - [ ] Visual check: `indusk ui` shows `indusk-v2-dawn` as a group with its subplans beneath in declared order, four of them greyed as not-yet-created.
 
 #### Phase 2 Context
-- [ ] Update CLAUDE.md's admin-UI Known Gotchas line with the grouping behaviour: the sidebar tree is derived entirely from declarations, so a plan that appears at top level unexpectedly means no parent claims it — not a bug in the reader.
+- [x] Updated CLAUDE.md's admin-UI Known Gotchas: the sidebar tree is derived entirely from declarations (top-level = unclaimed, not a reader bug), grouping lives in `PlanList.buildGroups` not the reader, and a browser test mocking `planning-reader` must include every export the layout imports — the failure mode that cost a debug cycle here.
 
 #### Phase 2 Document
-- [ ] Update `apps/docs/src/reference/admin-ui/overview.md` with the grouped sidebar: what a parent group looks like, what a greyed placeholder means, and the fallback behaviour when declarations are missing.
+- [x] Updated `/reference/admin-ui/overview` with the grouped sidebar: parent groups, greyed `planned` placeholders for uncreated subplans, top-level-means-unclaimed, and degrade-to-flat-list on broken declarations.
 
 ## Files Affected
 
