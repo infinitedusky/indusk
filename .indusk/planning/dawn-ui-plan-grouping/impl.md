@@ -206,7 +206,7 @@ Investigation notes (what was found, ritual 2026-08-03):
 - [x] T16: behavior parity — admin 145/145 across 24 files (same test count, one more file from the falsification-test split; zero assertion/testid changes — the only test-file edits are the moved describe and the split `research-reader` mock), mcp 786 passed with the identical 3 pre-existing failures, `tsc --noEmit` exit 0 + `biome check` clean in both apps (4 import-style nits from the moves auto-fixed). Flagged files after: `PlanDetail.tsx` 704→345, `planning-reader.ts` 465→378 (both under cap); `PlanDetail.test.tsx` 803→731 — still over cap, accepted: the phase's decision was tests-follow-the-unit, not mechanical splitting.
 
 #### Phase 5 Context
-- [ ] Update CLAUDE.md's admin-UI gotcha line with the post-decomposition structure: parent-detail cards live in `ParentPlanView.tsx`, falsification renderers in `FalsificationSection.tsx`, badge maps in `ui/badge-variant.ts`, research reading in `lib/research-reader.ts`.
+- [x] Update CLAUDE.md's admin-UI gotcha line with the post-decomposition structure: parent-detail cards live in `ParentPlanView.tsx`, falsification renderers in `FalsificationSection.tsx`, badge maps in `ui/badge-variant.ts`, research reading in `lib/research-reader.ts`.
 
 #### Phase 5 Document
 - [ ] Update `/reference/admin-ui/component-conventions`: the "Data layer" section notes the `planning-reader` / `research-reader` split, and the primitives section gains `badge-variant.ts` as the shared status/state→variant map.
