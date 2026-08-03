@@ -1,7 +1,7 @@
 ---
 title: "Dawn Hook Parity — Implementation"
 date: 2026-08-03
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -147,10 +147,10 @@ Investigation notes (ritual 2026-08-03):
 - [x] No regressions: run lib **70/70**; `tsc --noEmit` exit 0; `biome check` clean on this plan's files.
 
 #### Phase 5 Context
-- [ ] Record in CLAUDE.md's thin-lane rail entry that a drain never discards a record whose evaluator failed — the queue's durability promise covers evaluator failure, not just crashes.
+- [x] CLAUDE.md's thin-lane rail entry now records both durability facts: a drain never discards a record whose evaluator failed (the ledger entry is provisional until exit 0), and commit messages account for every item a commit contains — batched checkoffs and items carried from a failed attempt included.
 
 #### Phase 5 Document
-- [ ] Update `/reference/cli/run`'s Commits + eval-queue sections: what a multi-item checkoff commit looks like, and the drain's failure semantics (failed evaluations stay re-drainable, and are reported).
+- [x] `/reference/cli/run`: the Commits section gained the accounting rule (batched subjects + carried items, and why unstaging isn't the remedy) plus the landed-commit-with-failed-queue-record channel; the eval-queue section records that a failed evaluation un-drains and is reported, so a machine that cannot evaluate never destroys the backlog.
 
 ## Files Affected
 
