@@ -80,27 +80,6 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 4adeb3eb — starting catchup
-
-**Session ID**: 4adeb3eb-b03d-4d0a-b5e9-581ffda852d5
-**Last updated**: 2026-07-20T01:45:35.042Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
 ## Session 80563054 — Dawn v1 — building the model-agnostic external orchestrator
 
 **Session ID**: 80563054-36cb-45db-a2b1-e4f027406a0b
@@ -119,5 +98,37 @@ Dawn v1 kicked off. Foundation: 10 maxims (`.indusk/planning/indusk-v2-dawn/maxi
 ### Cursor
 
 Resume by running `/work --autopilot dawn-external-orchestrator` FROM the worktree `~/code/sandbox/dusk-worktrees/dawn-external-orchestrator` — it picks up at Phase 1 (Rent the loop: add `ai` + `@ai-sdk/anthropic`, minimal worktree-scoped tools, Claude driver multi-step loop; target T1). Phase 0 code is in `apps/indusk-mcp/src/lib/run/` + `src/bin/commands/run.ts` + `apps/indusk-mcp/fixtures/guinea-pig-semver/`. CRITICAL context: Phase 0 originally ran with NO real gate enforcement because the impl was authored with the wrong phase-header level (`## Phase N` instead of `### Phase N` + `#### Phase N Gate`), so `validate-impl-structure.js` parsed zero phases and vacuous-passed it. FIXED — impl reformatted, 6 phases + 18 gate subsections now parse, `gate_policy: auto`. The vacuous-pass is queued as highlight h-20260727-001 and should become a lesson + an indusk-mcp fix (reject a `trajectory: required` impl that parses to 0 phases, rather than passing silently).
+
+---
+
+## Session 930d7469 — dawn-ui-plan-grouping Phase 3 (parent-plan cards) — Phases 1-2 shipped; also Dawn master plan restructure + orchestrator Phases 1-5
+
+**Session ID**: 930d7469-8a78-4e35-bc48-6a041378bfa7
+**Last updated**: 2026-08-03T04:01:33.528Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+**dawn-ui-plan-grouping** (worktree `~/code/sandbox/dusk-worktrees/dawn-ui-plan-grouping`, branch `plan/dawn-ui-plan-grouping`): Phases 1-2 shipped + committed, T1-T9 passing. Plan hierarchy is now declared top-down in frontmatter — root `master.md` carries `parents:`+`roadmap:`, each parent's own `master.md` carries ordered `subplans:`, children declare nothing. `readPlanDeclarations()` in the shared parser (exported at `@infinitedusky/indusk-mcp/planning/plan-parser`); prose link-scraping in `readMasterPlanOrder` RETIRED. Sidebar renders parent groups with declared-order children + greyed placeholders for uncreated subplans. **Phase 3 authored but NOT started** — parent plans render as a blank page today.
+
+Also this session: Dawn re-founded as a real master plan (`indusk-v2-dawn/master.md`, 8 components with status/acceptance/order, trunk commit 0135927d) + `positioning.md`; pre-refounding research archived. dawn-external-orchestrator Phases 1-5 shipped on its own worktree (falsification found + fixed a bash gate bypass; cleanup split gate.ts/loop.ts).
+
+### Open Questions
+
+(1) **Two falsification findings recorded, unfixed:** (a) opening a parent plan is a blank page — a parent carries master/maxims/positioning, none in the admin's `DOC_FILES`, and `PlanDetail.tsx:107` (`{!plan.impl && <FalsificationSection/>}`) then renders unconditionally; Phase 3 fixes this. (b) **Un-migrated projects lose sidebar order** — retiring the link-regex means any project whose master.md has no `roadmap:` frontmatter now shows everything as Unordered. This repo's order was preserved by hand; the other 8 registered projects were never considered. Needs a fallback or a migration note.
+(2) Kanban with drag-reorder: Sandy wants it, no plan exists (only passing mentions in archived indusk-admin-ui ADR). It REVERSES a documented decision — brief + `/decisions/indusk-admin-ui` commit the admin to read-only — so it needs its own plan with an explicit writable-admin decision. Now feasible because order lives in frontmatter, not prose.
+(3) dawn-external-orchestrator: A8 redefined as the clean experiment (same model, vary harness: Opus+ClaudeCode vs Opus+atdawn) — needs an Anthropic key; then /retrospective + merge + publish.
+(4) Registry test-pollution: `multi-agent-init.test.ts:66` registers temp dirs in the REAL `~/.indusk/projects.json` (pruned 398→9 by hand this session). Candidate plan `registry-test-isolation`.
+
+### Cursor
+
+**Next: `/work dawn-ui-plan-grouping` → Phase 3.** Fully specified in the impl with the exact fix location. Four items: detect a parent (has declared subplans) and render a card per subplan with status; placeholder cards for uncreated ones; guard the doc-less path (fixes the stray Falsification heading at `apps/indusk-admin/src/components/PlanDetail.tsx:107`); surface the parent's own `master.md` prose above the cards via `<Markdown>`. T10 is `planned` — author it RED first.
+
+To preview: `pnpm --filter indusk-admin dev` from the worktree, then `/p/dawn-wt/` (NOT `/p/dusk/` — trunk has no declarations yet, so it correctly shows the flat fallback). `dawn-wt` is a temporary registry entry pointing at the worktree; delete it after merge.
+
+After Phase 3: /falsify (carry both findings above) → /cleanup → /retrospective → merge → publish (only then does `indusk ui` show grouping, since it serves the pre-built bundle).
+
+**Hazard hit twice:** shell cwd resets between Bash calls, so relative-path edits landed in the TRUNK instead of the worktree. Both caught and reverted; use absolute paths when working across trees.
 
 ---
