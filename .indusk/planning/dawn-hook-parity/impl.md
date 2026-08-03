@@ -81,10 +81,10 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 - [x] A1 still green; A3/A4/A6–A9 still red for their reasons (suite 60 passed / 6 failed — exactly the Phase 3/4 claims). `tsc` exit 0, `biome` clean.
 
 #### Phase 2 Context
-- [ ] Update CLAUDE.md's `indusk run` Architecture line: per-item commits (loop-owned, intent-derived messages).
+- [x] Update CLAUDE.md's `indusk run` Architecture line: per-item commits (loop-owned, intent-derived messages; failures loud-but-non-gating; non-git disables loudly).
 
 #### Phase 2 Document
-- [ ] Update `/reference/cli/run`: a "Commits" section — cadence, message shape, loud-failure semantics, non-git-worktree behavior.
+- [x] Update `/reference/cli/run`: "Commits" section — cadence, message shape, the deliberately asymmetric failure semantics (loud bookkeeping vs gating), non-git behavior, and the bash-checkoff boundary.
 
 ### Phase 3: Pending-eval queue + drain
 

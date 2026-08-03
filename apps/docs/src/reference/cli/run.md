@@ -53,6 +53,14 @@ The gate covers **tool surfaces, not intentions**. Any tool that can mutate file
 
 Headless runs need `gate_policy: auto` in the impl frontmatter — there is no user in the loop to give conversation-proof skips to (`ask`, the default, would refuse bare opt-outs).
 
+## Commits
+
+The loop — not the model — commits after each checklist-item checkoff survives the gate chain: one commit per item, message `item({plan} P{phase}): {item summary}`, staging everything changed since the previous commit (the item's work product). This restores the `/work` convention's granularity in the thin lane: bisectable history, per-item revert, and the eval rail's natural firing points.
+
+Failure semantics, deliberately asymmetric to the gates: a failed commit (nothing staged, a rejecting hook, signing trouble) is **surfaced loudly on the run report and enqueues nothing — but never stops the run**. Commits are bookkeeping; gates are enforcement. A worktree that is not a git repository disables the cadence with a loud notice (fixture and staging dirs run gate-only).
+
+One boundary worth knowing: a checkoff performed through `bash` rather than the edit tool is still *gated* (the bash snapshot layer) but fires no commit — the phase contract instructs models to check off via the edit tool.
+
 ## `--model`
 
 Selects the driver. Accepts a friendly alias — `claude`, `gpt`, `gemini`, `grok` — or a bare provider name (`anthropic`, `openai`, `google`, `xai`), resolved through the provider registry into a driver config (`provider`, key env var, default model). Defaults to `claude`. Swapping models changes one provider factory line — gate behavior is structural, not per-model.
