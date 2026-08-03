@@ -184,7 +184,7 @@ Investigation notes (what was found, ritual 2026-08-03):
 - [x] T15: green — `[twin, other, twin]` → `[twin, other]`. All five red-first, confirmed against the pre-fix code. Suites: admin 145/145 (`tsc` + `biome` clean), mcp 786 passed with the same 3 pre-existing failures as the Phase 3 baseline (`agent-roles-phase4`, the `daemon-identity` PID-reuse pair) — zero new. mcp dist rebuilt so the admin consumes the guarded parser.
 
 #### Phase 4 Context
-- [ ] Extend CLAUDE.md's plan-hierarchy convention line: declaration names are boundary values — segment-guarded and deduped in `readPlanDeclarations`; archived children resolve as real items, not placeholders.
+- [x] Extend CLAUDE.md's plan-hierarchy convention line: declaration names are boundary values — segment-guarded and deduped in `readPlanDeclarations`; archived children resolve as real items, not placeholders.
 
 #### Phase 4 Document
 - [ ] Update `/reference/cli/plans` (declaration hygiene: non-segment names and duplicates are ignored) and `/reference/admin-ui/overview` (archived subplans render with their real status; parents with documents show both cards and sections).
