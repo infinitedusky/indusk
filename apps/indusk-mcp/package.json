@@ -40,6 +40,10 @@
 		"./worktree/validate-config": {
 			"types": "./dist/lib/worktree/validate-config.d.ts",
 			"default": "./dist/lib/worktree/validate-config.js"
+		},
+		"./planning/plan-parser": {
+			"types": "./dist/lib/plan-parser.d.ts",
+			"default": "./dist/lib/plan-parser.js"
 		}
 	},
 	"scripts": {

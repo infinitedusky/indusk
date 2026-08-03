@@ -42,6 +42,21 @@ vi.mock("@/lib/planning-reader", () => ({
   ],
   readArchivedPlans: async () => [],
   readMasterPlanOrder: () => ["alpha", "beta"],
+  // dawn-ui-plan-grouping: the layout reads the hierarchy for sidebar grouping.
+  // No parents here — this fixture asserts the flat-list shape, which is also
+  // the fallback whenever declarations are absent.
+  readPlanHierarchy: () => ({
+    parents: [],
+    roadmap: ["alpha", "beta"],
+    subplans: {},
+  }),
+}));
+
+// Research reads split out of planning-reader in the dawn-ui-plan-grouping
+// cleanup — the layout imports them from research-reader, so the mock follows
+// (a mock must cover every export the layout imports, per the known gotcha).
+vi.mock("@/lib/research-reader", () => ({
+  __esModule: true,
   readProjectResearch: async () => [],
 }));
 

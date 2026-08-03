@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
@@ -6,6 +6,10 @@ import {
   type LogEntry,
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
+import {
+  type PlanDeclarations,
+  readPlanDeclarations,
+} from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import {
   parseTrajectory,
   type Trajectory,
@@ -296,21 +300,44 @@ export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
  * `[plan-name](plan-name/brief.md)`. Plans listed by string only (no link)
  * are skipped — they don't have a folder yet.
  */
+/**
+ * Plan hierarchy declarations for this project — parents, top-level order, and
+ * each parent's ordered children.
+ *
+ * Reads frontmatter through the shared parser rather than scraping prose. The
+ * previous implementation matched markdown links shaped `[name](name/doc.md)`
+ * with a regex, which silently matched *nothing* against a master whose links
+ * carry a `../` prefix — structure derived from prose fails quietly, which is
+ * the worst way for it to fail.
+ */
+export function readPlanHierarchy(projectRoot: string): PlanDeclarations {
+  return readPlanDeclarations(join(projectRoot, PLANNING_DIR));
+}
+
+/**
+ * Top-level display order. Plans absent from the declaration keep today's
+ * behaviour — they fall through to the "Unordered" group rather than vanishing.
+ */
 export function readMasterPlanOrder(projectRoot: string): string[] {
-  const masterPath = join(projectRoot, PLANNING_DIR, MASTER_FILE);
-  if (!existsSync(masterPath)) return [];
-  const raw = readFileSync(masterPath, "utf-8");
-  const order: string[] = [];
-  const seen = new Set<string>();
-  const linkRe = /\[([a-z0-9-]+)\]\(\1\/[a-z0-9-]+\.md\)/gi;
-  for (const match of raw.matchAll(linkRe)) {
-    const name = match[1];
-    if (!seen.has(name)) {
-      seen.add(name);
-      order.push(name);
-    }
-  }
-  return order;
+  return readPlanHierarchy(projectRoot).roadmap;
+}
+
+/**
+ * The prose body of a plan's own `master.md` — a parent plan's sequence and
+ * its reasoning. Returns null when the file is absent or malformed; the
+ * detail view simply omits the prose. Subplan cards never depend on it —
+ * declarations come from `readPlanHierarchy`, not from here.
+ */
+export async function readPlanMasterContent(
+  projectRoot: string,
+  planName: string,
+): Promise<string | null> {
+  const doc = await readDoc(
+    join(projectRoot, PLANNING_DIR, planName),
+    MASTER_FILE,
+  );
+  if (doc === null || isMalformed(doc)) return null;
+  return doc.content;
 }
 
 /**
@@ -346,93 +373,6 @@ export async function readEvalScorecards(
   return out;
 }
 
-// ---------------------------------------------------------------------------
-// Research directory reader (.indusk/research/)
-// ---------------------------------------------------------------------------
-
-export interface ResearchEntry {
-  slug: string;
-  path: string;
-  title: string | null;
-  isDirectory: boolean;
-}
-
-/**
- * List the top-level research slugs under `projectRoot/.indusk/research/`.
- *
- * For each entry:
- *   - Top-level `.md` file → slug is the basename without `.md`, title is the
- *     first `# H1` if present, else `null`.
- *   - Nested directory → slug is the directory name; title is read from
- *     `README.md`'s `# H1` if present, else `null`. `isDirectory: true`.
- *
- * Returns `[]` when the research directory is missing or empty — not an error.
- * Server-side only.
- */
-export async function readProjectResearch(
-  projectRoot: string,
-): Promise<ResearchEntry[]> {
-  const dir = join(projectRoot, ".indusk/research");
-  if (!existsSync(dir)) return [];
-  const entries = await readdir(dir, { withFileTypes: true });
-  const out: ResearchEntry[] = [];
-  for (const entry of entries) {
-    if (entry.name.startsWith(".")) continue;
-    if (entry.isFile() && entry.name.endsWith(".md")) {
-      const slug = entry.name.slice(0, -3);
-      const fullPath = join(dir, entry.name);
-      const title = await readFirstH1(fullPath);
-      out.push({ slug, path: fullPath, title, isDirectory: false });
-      continue;
-    }
-    if (entry.isDirectory()) {
-      const slug = entry.name;
-      const readmePath = join(dir, slug, "README.md");
-      const title = existsSync(readmePath)
-        ? await readFirstH1(readmePath)
-        : null;
-      out.push({
-        slug,
-        path: join(dir, slug),
-        title,
-        isDirectory: true,
-      });
-    }
-  }
-  out.sort((a, b) => a.slug.localeCompare(b.slug));
-  return out;
-}
-
-/**
- * Read the markdown content for a single research slug. Returns `null` when
- * the slug doesn't exist — route handler maps that to `notFound()`.
- *
- * Resolves in two shapes:
- *   - `{slug}.md` — top-level file
- *   - `{slug}/README.md` — directory with README (nested research)
- */
-export async function readResearchContent(
-  projectRoot: string,
-  slug: string,
-): Promise<string | null> {
-  // Reject path-traversal attempts — slug must be a single path segment.
-  if (slug.includes("/") || slug.includes("..") || slug.startsWith(".")) {
-    return null;
-  }
-  const base = join(projectRoot, ".indusk/research");
-  const filePath = join(base, `${slug}.md`);
-  if (existsSync(filePath)) return readFile(filePath, "utf-8");
-  const dirReadme = join(base, slug, "README.md");
-  if (existsSync(dirReadme)) return readFile(dirReadme, "utf-8");
-  return null;
-}
-
-async function readFirstH1(filePath: string): Promise<string | null> {
-  try {
-    const content = await readFile(filePath, "utf-8");
-    const match = content.match(/^#\s+(.+?)\s*$/m);
-    return match ? match[1] : null;
-  } catch {
-    return null;
-  }
-}
+// The research-directory reader (.indusk/research/) lives in
+// research-reader.ts — extracted in the dawn-ui-plan-grouping cleanup; it
+// shares nothing with plan parsing.

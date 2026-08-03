@@ -6,14 +6,14 @@ import { Sidebar } from "@/components/ui/Sidebar";
 import {
   readActivePlans,
   readArchivedPlans,
-  readMasterPlanOrder,
-  readProjectResearch,
+  readPlanHierarchy,
 } from "@/lib/planning-reader";
 import {
   getProjectPath,
   projectPathExists,
   readRegistryProjects,
 } from "@/lib/registry-client";
+import { readProjectResearch } from "@/lib/research-reader";
 
 interface PerProjectLayoutProps {
   children: React.ReactNode;
@@ -57,7 +57,8 @@ export default async function PerProjectLayout({
     readArchivedPlans(projectPath),
     readProjectResearch(projectPath),
   ]);
-  const masterOrder = readMasterPlanOrder(projectPath);
+  const hierarchy = readPlanHierarchy(projectPath);
+  const masterOrder = hierarchy.roadmap;
   const registered = readRegistryProjects().map((p) => ({ name: p.name }));
 
   return (
@@ -87,6 +88,7 @@ export default async function PerProjectLayout({
           active={active}
           archived={archived}
           masterOrder={masterOrder}
+          grouping={hierarchy}
           planHrefPrefix={`/p/${project}/plan/`}
         />
         {research.length > 0 && (

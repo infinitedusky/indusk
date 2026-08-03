@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { Markdown } from "@/components/Markdown";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
-import { readResearchContent } from "@/lib/planning-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { readResearchContent } from "@/lib/research-reader";
 
 interface ResearchRouteProps {
   params: Promise<{ project: string; slug: string }>;

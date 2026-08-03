@@ -20,6 +20,8 @@ The InDusk admin UI (`apps/indusk-admin/`) follows a load-bearing component-reus
 
 The `Badge` variant set deliberately mirrors the trajectory state lifecycle from `apps/indusk-mcp/src/lib/trajectory/parser.ts` (`planned → writable → written → passing → skipped/blocked`). Mapping a trajectory row's `State` cell to a Badge is one prop pass.
 
+The string→variant maps themselves are shared, not per-component: `src/components/ui/badge-variant.ts` exports `statusToBadge` (free-form frontmatter status → variant) and `stateToBadge` (trajectory state → variant). A new status convention is mapped in exactly one place — don't re-derive a variant inline.
+
 ## The discipline
 
 **No inline JSX for primitive concerns.** Anywhere a primitive exists, use it.
@@ -81,7 +83,7 @@ The cleanup-debt cost of duplicated components compounds: every duplicate is a d
 
 ## Data layer — reuse, don't duplicate
 
-The admin UI's data layer (`apps/indusk-admin/src/lib/planning-reader.ts`) follows the same single-source discipline as the components, but applied to *parsing*: it reads `.indusk/planning/` and `.indusk/eval/` directly from disk and **reuses indusk-mcp's parsers** rather than reimplementing them.
+The admin UI's data layer follows the same single-source discipline as the components, but applied to *parsing*: it reads `.indusk/planning/` and `.indusk/eval/` directly from disk and **reuses indusk-mcp's parsers** rather than reimplementing them. It is split by concern: `apps/indusk-admin/src/lib/planning-reader.ts` owns plans, scorecards, and hierarchy declarations; `apps/indusk-admin/src/lib/research-reader.ts` owns the `.indusk/research/` directory (split out in the dawn-ui-plan-grouping cleanup — research reads share nothing with plan parsing). A browser test that mocks one of these modules must mock whichever module the component under test actually imports from.
 
 | Concern | Source | How admin-ui uses it |
 |---------|--------|----------------------|

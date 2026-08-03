@@ -143,9 +143,9 @@ describe("planning-reader: readArchivedPlans", () => {
 });
 
 describe("planning-reader: readMasterPlanOrder", () => {
-  it("returns plan names in the order they appear in master.md links (T3 prep)", () => {
+  it("returns plan names in the order the master declares (T3 prep)", () => {
     const order = readMasterPlanOrder(FIXTURE_ROOT);
-    expect(order).toEqual([
+    expect(order.slice(0, 4)).toEqual([
       "alpha-feature",
       "beta-bugfix",
       "gamma-missing-adr",
@@ -153,9 +153,15 @@ describe("planning-reader: readMasterPlanOrder", () => {
     ]);
   });
 
-  it("skips entries that aren't markdown links (no folder yet)", () => {
+  it("may declare a plan that has no folder yet without inventing one", async () => {
+    // dawn-ui-plan-grouping replaced link-scraping with `roadmap:` frontmatter.
+    // A declared name with no folder is legal — it orders nothing and, crucially,
+    // never becomes a plan. (The sidebar renders declared-but-absent SUBplans as
+    // placeholders; top-level roadmap entries simply have nothing to order.)
     const order = readMasterPlanOrder(FIXTURE_ROOT);
-    expect(order).not.toContain("not-yet-created");
+    expect(order).toContain("not-yet-created");
+    const plans = await readActivePlans(FIXTURE_ROOT);
+    expect(plans.map((p) => p.name)).not.toContain("not-yet-created");
   });
 
   it("returns [] when master.md does not exist", () => {

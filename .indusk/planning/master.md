@@ -1,7 +1,28 @@
 ---
 title: "Master Plan — Execution Order"
 date: 2026-04-19
-updated: 2026-05-25
+updated: 2026-08-02
+# Machine-readable plan hierarchy (dawn-ui-plan-grouping). Prose below is for
+# humans; these keys are what the parser and admin sidebar read.
+# `roadmap` preserves the order the previous link-scraping regex derived, so
+# retiring that regex does not silently reshuffle the sidebar.
+parents:
+  - indusk-v2-dawn
+roadmap:
+  - indusk-v2-dawn
+  - indusk-worktree-extension
+  - workbench-mode-rail-integrity
+  - indusk-makeover
+  - versioned-workbench
+  - rationale-baseline-frontmatter
+  - indusk-admin-ui
+  - local-telemetry
+  - evaluator-structured-scorecard-output
+  - graph-knowledge-architecture
+  - hermes-inspired-improvements
+  - work-autopilot
+  - react-native-support
+  - dusk-v2
 ---
 
 # Master Plan

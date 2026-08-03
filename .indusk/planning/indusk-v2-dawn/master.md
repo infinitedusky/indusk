@@ -2,6 +2,16 @@
 title: "Dawn — Master Plan"
 date: 2026-08-02
 status: living
+# Ordered children. A name here that has no folder yet is normal — it renders
+# as a placeholder, which is how the sidebar shows the sequence ahead.
+subplans:
+  - dawn-ui-plan-grouping
+  - dawn-external-orchestrator
+  - dawn-hook-parity
+  - dawn-verify
+  - dawn-agents
+  - dawn-linear
+  - dawn-cloud
 ---
 
 # Dawn — Master Plan
@@ -63,6 +73,7 @@ Kept so the intent isn't lost. None of these are scheduled, and none should star
 | Plan | Component(s) | Stage |
 |------|--------------|-------|
 | [dawn-external-orchestrator](../dawn-external-orchestrator/) | 1, 3 (+ partial 2, spike 5) | impl complete; awaiting A8 + retrospective |
+| [dawn-ui-plan-grouping](../archive/dawn-ui-plan-grouping/) | 0 — hierarchy visible in the admin UI | complete; archived 2026-08-03 |
 
 Everything else in the components table is unwritten. Create each with `/planner` when its turn comes — not before.
 

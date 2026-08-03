@@ -1,6 +1,14 @@
 ---
 title: "Sample Project Master Plan"
 date: 2026-04-19
+# Declared order (dawn-ui-plan-grouping). `not-yet-created` is listed
+# deliberately: a roadmap may name a plan that has no folder yet.
+roadmap:
+  - alpha-feature
+  - beta-bugfix
+  - gamma-missing-adr
+  - delta-malformed
+  - not-yet-created
 ---
 
 # Master Plan
