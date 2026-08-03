@@ -46,6 +46,7 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 | T7 | a plan that exists on disk but is named by no declaration is never hidden — every planning folder is accounted for | Phase 1 | Phase 1 | passing |
 | T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | passing |
 | T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | passing |
+| T10 | opening a parent plan shows its subplans as cards with their status, instead of an empty page | Phase 3 | Phase 3 | planned |
 
 ### Trajectory Rationale
 
@@ -60,6 +61,7 @@ Every row is authorable against the current stack — the sidebar and the reader
 - **T7** `Writable at: Phase 1` — Reader returns every folder today; the assertion pins that against the change about to be made.
 - **T8** `Writable at: Phase 1` — An empty-parent fixture is authorable now.
 - **T9** `Writable at: Phase 1` — Regression guard over the shared parser's existing output; green from birth, and its whole job is to stay green.
+- **T10** `Writable at: Phase 3` — The card component does not exist until Phase 3; a test asserting on it cannot be authored against today's `PlanDetail`, which renders nothing for a doc-less plan.
 
 ## Checklist
 
@@ -134,3 +136,21 @@ Every row is authorable against the current stack — the sidebar and the reader
 - `readMasterPlanOrder`'s regex only matches `[name](name/doc.md)` and therefore matches nothing against the Dawn master, whose links carry a `../` prefix. Phase 1 removes it rather than fixing it — the replacement reads frontmatter, which fails loudly instead of silently.
 - The admin app must never duplicate frontmatter parsing; it consumes InDusk parsers through workspace subpath exports.
 - One level of nesting only. If a subplan ever needs children of its own, that is a new plan with its own decision, not an extension smuggled in here.
+
+### Phase 3: Parent plan detail — subplan cards
+
+**Discovered during the Phase 2 visual check.** Making parents first-class in the sidebar left them unrenderable in the detail view: a parent carries `master.md` / `maxims.md` / `positioning.md`, none of which are in `DOC_FILES`, so every section resolves to undefined. `PlanDetail.tsx:107` (`{!plan.impl && <FalsificationSection …>}`) then renders unconditionally, producing the blank page with a stray "Falsification" heading. Rendering a parent is the completion of the feature, not an addition to it.
+
+- [ ] Detect a parent plan in `PlanDetail` — it has declared subplans — and render a card per subplan (name, status badge, stage) linking to that plan, instead of the standard document sections.
+- [ ] Render a placeholder card, visually distinct and non-navigable, for declared subplans with no folder yet — same semantics as the sidebar.
+- [ ] Guard the doc-less path: sections whose documents are all absent must not render (fixes the stray Falsification heading at `PlanDetail.tsx:107`).
+- [ ] Surface the parent's own prose — `master.md` — above the cards via the existing `<Markdown>` wrapper, so the sequence and its reasoning are on one page.
+
+#### Phase 3 Verification
+- [ ] T10 green: opening `indusk-v2-dawn` shows a card per declared subplan with status, placeholders for uncreated ones, and no empty document sections.
+
+#### Phase 3 Context
+- [ ] Record in CLAUDE.md's admin-UI gotcha that a plan whose documents fall outside `DOC_FILES` (a parent carrying only `master.md`) renders empty unless the detail view has a branch for it.
+
+#### Phase 3 Document
+- [ ] Update `/reference/admin-ui/overview` with the parent plan detail view: subplan cards, placeholder cards, and the parent's own prose.
