@@ -174,7 +174,7 @@ Investigation notes (what was found, ritual 2026-08-03):
 - [x] Resolve group children against active + archived plans (active wins on name collision — the `[...archived, ...active]` spread order is the fix in both `buildGroups` and `plan/[name]/page.tsx`). An archived child renders as a navigable item with its real status in both surfaces; it remains in the Archived collapsible; `rest` stays active-only.
 - [x] Make the parent branch in `PlanDetail` additive: master prose + subplan cards first, then whatever standard document sections the plan actually carries. Only a doc-less parent renders cards alone. All `!isParent` gates removed; sections gate on document presence alone (the falsification empty-state keeps its `hasAnyDocument` guard from Phase 3).
 - [x] Order sidebar groups by roadmap position; parents not in the roadmap follow after, in declaration order (stable sort by roadmap index in `buildGroups`).
-- [ ] Guard declaration names at the parser boundary: `readPlanDeclarations` drops names that aren't single clean path segments (no `/`, `\`, or `..` — mirror `readResearchContent`'s guard) and dedupes each list to first occurrence. Degrade silently to structure-loss, never a path join or raw render.
+- [x] Guard declaration names at the parser boundary: `isCleanSegment` + dedupe inside `stringArray`, so all three lists (`parents`, `roadmap`, `subplans`) are filtered before any join or render. Degrade silently to structure-loss, never a path join or raw render.
 
 #### Phase 4 Verification
 - [ ] T11: sidebar group + detail cards render an archived subplan as navigable-with-status (red today: sidebar shows a `queued` placeholder; detail already resolves it — assert both surfaces agree)

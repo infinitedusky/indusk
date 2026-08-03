@@ -176,11 +176,37 @@ export interface PlanDeclarations {
 	subplans: Record<string, string[]>;
 }
 
-/** Read a frontmatter key as a string array; anything else yields []. */
+/**
+ * A declaration name must be a single clean path segment — it gets joined
+ * into filesystem paths (`join(planningDir, name, "master.md")`) and rendered
+ * verbatim in the sidebar. Anything else is dropped at this boundary: degrade
+ * to structure-loss, never a path traversal or a raw render.
+ */
+function isCleanSegment(name: string): boolean {
+	return (
+		name.trim() !== "" &&
+		name !== "." &&
+		name !== ".." &&
+		!name.includes("/") &&
+		!name.includes("\\")
+	);
+}
+
+/**
+ * Read a frontmatter key as a string array; anything else yields [].
+ * Non-string entries, non-segment names, and duplicates are dropped —
+ * duplicates collapse to first occurrence so declared order is preserved.
+ */
 function stringArray(data: Record<string, unknown>, key: string): string[] {
 	const value = data[key];
 	if (!Array.isArray(value)) return [];
-	return value.filter((entry): entry is string => typeof entry === "string");
+	const out: string[] = [];
+	for (const entry of value) {
+		if (typeof entry !== "string" || !isCleanSegment(entry)) continue;
+		if (out.includes(entry)) continue;
+		out.push(entry);
+	}
+	return out;
 }
 
 /**
