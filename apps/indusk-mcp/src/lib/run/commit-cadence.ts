@@ -111,7 +111,13 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 		const phase = options.getPhase();
 		const message = `item(${planName} P${phase}): ${summarize(item)}`;
 		try {
-			await execFileAsync("git", ["add", "-A"], { cwd: root });
+			// Stage the item's work product, but never the run's own eval
+			// bookkeeping: `.indusk/eval/` (the pending queue + drained ledger)
+			// is machine state written AFTER each commit, so including it would
+			// both trail by one record and put run telemetry in plan history.
+			await execFileAsync("git", ["add", "-A", "--", ".", ":(exclude).indusk/eval"], {
+				cwd: root,
+			});
 			await execFileAsync("git", ["commit", "-m", message], { cwd: root });
 			const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: root });
 			const record: CommitRecord = { sha: stdout.trim(), item, phase };

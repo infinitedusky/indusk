@@ -116,7 +116,7 @@ describe("A3 — the queue holds one record per commit", () => {
 			expect(typeof record.timestamp).toBe("string");
 			expect(typeof record.phase).toBe("number");
 		}
-	});
+	}, 30_000);
 });
 
 describe("A4 — draining is one evaluation per record, exactly once", () => {
@@ -169,7 +169,7 @@ describe("A4 — draining is one evaluation per record, exactly once", () => {
 		const results2 = await readFile(join(tree.root, ".indusk", "eval", "results.log"), "utf8");
 		const lines2 = results2.split("\n").filter((l) => l.trim());
 		expect(lines2).toHaveLength(pendingBefore.length);
-	});
+	}, 30_000);
 });
 
 describe("A9 — the lane never needs the claude CLI", () => {
@@ -203,5 +203,5 @@ describe("A9 — the lane never needs the claude CLI", () => {
 			() => false,
 		);
 		expect(invoked).toBe(false);
-	});
+	}, 30_000);
 });

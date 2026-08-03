@@ -13,7 +13,17 @@
  *    via INDUSK_EVAL_SOURCE. The evaluator may skip diff-based scoring when
  *    source != "commit" but still processes the highlights queue.
  *
- * Commit ID extraction: `git rev-parse --short HEAD`.
+ * 3) Drain mode (`--drain-pending`, dawn-hook-parity): evaluates every
+ *    not-yet-drained record the thin lane queued in
+ *    `.indusk/eval/pending.jsonl`, exactly once each. The drained ledger
+ *    (`pending-drained.jsonl`) is written BEFORE each spawn — a crashed
+ *    spawn is a logged gap, never a double-eval (the markProcessed
+ *    invariant). Each record re-invokes this script in CLI mode with
+ *    `--change-id <sha>`; `INDUSK_EVAL_CMD` overrides the per-record
+ *    command for tests (receives `<sha> <source>` as argv).
+ *
+ * Commit ID extraction: `git rev-parse --short HEAD`, or `--change-id <sha>`
+ * when given (drain mode's per-record invocations).
  *
  * Exit 0 always — this is advisory, not blocking.
  */
@@ -37,22 +47,24 @@ function syslog(statePath, msg) {
 	}
 }
 
-// Parse --source <tag> from argv. Returns null if not in CLI mode.
-function parseSourceArg(argv) {
-	const idx = argv.indexOf("--source");
+// Parse a `--flag value` pair from argv. Returns null when absent.
+function parseArgValue(argv, flag) {
+	const idx = argv.indexOf(flag);
 	if (idx === -1 || idx === argv.length - 1) return null;
 	const value = argv[idx + 1];
 	if (!value || value.startsWith("--")) return null;
 	return value;
 }
 
-const cliSource = parseSourceArg(process.argv);
+const cliSource = parseArgValue(process.argv, "--source");
+const changeIdArg = parseArgValue(process.argv, "--change-id");
+const drainPending = process.argv.includes("--drain-pending");
 let cwd;
 let command = "";
 let exitCode = 0;
 
-if (cliSource !== null) {
-	// CLI mode — no stdin, no git commit filter
+if (cliSource !== null || drainPending) {
+	// CLI/drain mode — no stdin, no git commit filter
 	cwd = process.cwd();
 } else {
 	// Hook mode — read event from stdin
@@ -82,8 +94,8 @@ if (cliSource !== null) {
 const { statePath: resolvedStatePath, gitPath } = resolveStateAndGitPaths(cwd);
 const statePath = resolvedStatePath ?? cwd;
 
-if (cliSource !== null) {
-	syslog(statePath, `cli invocation — source: ${cliSource}`);
+if (cliSource !== null || drainPending) {
+	syslog(statePath, drainPending ? "drain invocation (--drain-pending)" : `cli invocation — source: ${cliSource}`);
 } else {
 	syslog(statePath, `hook fired — tool: Bash, command: ${command.slice(0, 100)}`);
 
@@ -150,12 +162,71 @@ if (!evalConfig.enabled) {
 	process.exit(0);
 }
 
+// ---------------------------------------------------------------------------
+// Drain mode (dawn-hook-parity): evaluate the thin lane's queued commits,
+// exactly once each. Ledger-before-spawn: a crashed spawn is a logged gap,
+// never a double-eval. Sequential and awaited — a drain is a foreground
+// maintenance command (rail-check), and awaiting serializes evaluator
+// pressure. NOTE (recorded limitation): the real per-record child detaches
+// its inner evaluator, so a large backlog still fans out; keep drains at
+// rail-check cadence rather than letting the queue grow unbounded.
+// ---------------------------------------------------------------------------
+if (drainPending) {
+	const evalDir = resolve(statePath, ".indusk", "eval");
+	const readJsonl = (path) => {
+		if (!existsSync(path)) return [];
+		return readFileSync(path, "utf8")
+			.split("\n")
+			.filter((line) => line.trim())
+			.flatMap((line) => {
+				try {
+					return [JSON.parse(line)];
+				} catch {
+					return []; // partial lines from crashed writers — skip, never fatal
+				}
+			});
+	};
+	const pending = readJsonl(resolve(evalDir, "pending.jsonl"));
+	const drainedShas = new Set(readJsonl(resolve(evalDir, "pending-drained.jsonl")).map((r) => r.sha));
+	const todo = pending.filter((r) => typeof r.sha === "string" && !drainedShas.has(r.sha));
+
+	const runOne = (record) =>
+		new Promise((resolveRun) => {
+			const recordSource = record.source ?? "atdawn";
+			const override = process.env.INDUSK_EVAL_CMD;
+			const [cmd, ...baseArgs] = override
+				? override.split(" ").filter(Boolean)
+				: [process.execPath, "--no-warnings", fileURLToPath(import.meta.url), "--source", recordSource, "--change-id", record.sha];
+			const args = override ? [...baseArgs, record.sha, recordSource] : baseArgs;
+			const child = spawn(cmd, args, { cwd, stdio: ["ignore", "ignore", "inherit"] });
+			child.on("close", () => resolveRun());
+			child.on("error", () => resolveRun());
+		});
+
+	let drainedCount = 0;
+	for (const record of todo) {
+		mkdirSync(evalDir, { recursive: true });
+		appendFileSync(
+			resolve(evalDir, "pending-drained.jsonl"),
+			`${JSON.stringify({ sha: record.sha, drainedAt: new Date().toISOString() })}\n`,
+			"utf8",
+		);
+		await runOne(record);
+		drainedCount++;
+	}
+	syslog(statePath, `drain complete — ${drainedCount} drained, ${pending.length - todo.length} already drained`);
+	process.stderr.write(
+		`📊 Drained ${drainedCount} pending eval(s); ${pending.length - todo.length} already drained. Results land in .indusk/eval/results.log\n`,
+	);
+	process.exit(0);
+}
+
 // Get the current commit ID. Runs against gitPath, not statePath — in
 // workbench mode the two differ (statePath = workbench root, NOT a git repo;
 // gitPath = wrapped repo or worktree). Pre-1.31.7 ran against statePath
 // and bailed on every commit in workbench-shaped projects.
-let changeId;
-if (gitPath) {
+let changeId = changeIdArg ?? undefined;
+if (!changeId && gitPath) {
 	try {
 		changeId = execSync("git rev-parse --short HEAD", {
 			cwd: gitPath,

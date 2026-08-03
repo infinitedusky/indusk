@@ -40,13 +40,13 @@ Give the thin lane the same footprint as a Claude Code session: every invariant 
 |----|---------|-------------|-----------|-------|
 | A1 | a thin-lane run that pushes CLAUDE.md past budget has the write refused with the shared script's own block message | Phase 0 | Phase 1 | passing |
 | A2 | a run leaves one git commit per completed checklist item, each message naming its item | Phase 0 | Phase 2 | passing |
-| A3 | after a run, the pending queue holds exactly one record per commit made | Phase 0 | Phase 3 | written |
-| A4 | draining produces one scorecard per pending record; a second drain produces nothing new | Phase 0 | Phase 3 | written |
+| A3 | after a run, the pending queue holds exactly one record per commit made | Phase 0 | Phase 3 | passing |
+| A4 | draining produces one scorecard per pending record; a second drain produces nothing new | Phase 0 | Phase 3 | passing |
 | A5 | a failed commit is surfaced loudly and adds no queue record | Phase 0 | Phase 2 | passing |
 | A6 | an `ask` plan whose model attempts a proof-less gate skip pauses: exit 3, gate question printed — no red-stop, no proceed | Phase 0 | Phase 4 | written |
 | A7 | after conversation proof is added to the impl, a re-run continues past the paused phase | Phase 0 | Phase 4 | written |
 | A8 | no `gate_policy` frontmatter behaves as `ask` in the thin lane; explicit `auto` runs unpaused as today | Phase 0 | Phase 4 | written |
-| A9 | a run on a machine without the `claude` CLI completes normally and still fills the queue | Phase 0 | Phase 3 | written |
+| A9 | a run on a machine without the `claude` CLI completes normally and still fills the queue | Phase 0 | Phase 3 | passing |
 
 All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness.test-support.ts`) drives the real loop today, and every assertion fails red against current behavior for its real reason (no budget script in the chain, zero commits, no queue file, exit 1 instead of 3, auto-by-contract). No Trajectory Rationale subsection is required — no row is Writable at Phase 1+.
 

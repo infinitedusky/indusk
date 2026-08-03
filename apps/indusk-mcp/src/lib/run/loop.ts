@@ -1,9 +1,10 @@
 import { readFile } from "node:fs/promises";
-import { join, relative, resolve } from "node:path";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import type { LanguageModel } from "ai";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
 import type { Trajectory } from "../trajectory/parser.js";
 import { type CommitRecord, createCommitCadence } from "./commit-cadence.js";
+import { appendPendingEval } from "./pending-evals.js";
 import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";
 import { resolveGateScripts } from "./gate.js";
 import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
@@ -162,11 +163,24 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 
 	// Loop-owned commit cadence (A2/A5): commits fire when a gated edit checks
 	// off an impl item; the loop, not the model, owns the git bookkeeping.
+	// Every successful commit feeds the pending-eval queue (A3) — the thin
+	// lane's half of the eval rail; a later drain evaluates from any
+	// claude-capable environment (A9: nothing here needs Claude Code).
 	let currentPhase = 0;
+	const planName = basename(dirname(implPath));
 	const cadence = await createCommitCadence({
 		worktreeRoot: root,
 		implPath,
 		getPhase: () => currentPhase,
+		onCommit: async (record) => {
+			await appendPendingEval(root, {
+				sha: record.sha,
+				plan: planName,
+				phase: record.phase,
+				source: "atdawn",
+				timestamp: new Date().toISOString(),
+			});
+		},
 	});
 	if (cadence.disabledReason) {
 		console.error(cadence.disabledReason);

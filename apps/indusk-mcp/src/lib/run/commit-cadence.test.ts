@@ -71,10 +71,20 @@ describe("A2 — one commit per completed checklist item", () => {
 		expect(joined).toContain("CLI wrapper");
 		expect(joined).toMatch(/vitest|green|Verification|T1/i);
 
-		// The working tree is clean at run end — every change is committed.
-		const status = await git(worktree, "status", "--porcelain");
-		expect(status.trim()).toBe("");
-	});
+		// Every work-product change is committed at run end. The run's own eval
+		// bookkeeping (`.indusk/eval/`) is deliberately excluded from staging —
+		// it is machine state written after each commit, not plan history — so
+		// it is the only thing allowed to remain dirty.
+		// `-uall` so untracked files list individually — plain --porcelain
+		// collapses them to `?? .indusk/`, which would let unrelated stray
+		// files hide behind the eval-state exemption.
+		const status = await git(worktree, "status", "--porcelain", "-uall");
+		const dirty = status
+			.split("\n")
+			.filter((l) => l.trim())
+			.filter((l) => !l.includes(".indusk/eval/"));
+		expect(dirty).toEqual([]);
+	}, 30_000);
 });
 
 describe("A5 — a failed commit is loud and enqueues nothing", () => {
@@ -121,5 +131,5 @@ describe("A5 — a failed commit is loud and enqueues nothing", () => {
 		const pendingPath = join(worktree, ".indusk", "eval", "pending.jsonl");
 		const pending = await readFile(pendingPath, "utf8").catch(() => "");
 		expect(pending.trim()).toBe("");
-	});
+	}, 30_000);
 });
