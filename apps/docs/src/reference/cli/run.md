@@ -61,6 +61,32 @@ Failure semantics, deliberately asymmetric to the gates: a failed commit (nothin
 
 One boundary worth knowing: a checkoff performed through `bash` rather than the edit tool is still *gated* (the bash snapshot layer) but fires no commit — the phase contract instructs models to check off via the edit tool.
 
+## The eval queue
+
+The lane cannot evaluate its own work: the evaluator needs the `claude` CLI, and a run may be happening on a remote cell that has never heard of Claude Code. So each commit appends one record to `.indusk/eval/pending.jsonl`, and evaluation happens later, from wherever `claude` lives.
+
+```mermaid
+sequenceDiagram
+    participant M as Model
+    participant L as Loop
+    participant G as Gate scripts
+    participant Q as pending.jsonl
+    participant D as Drain (claude host)
+    M->>L: edit — check off an item
+    L->>G: envelope (stdin JSON)
+    G-->>L: exit 0 (allow)
+    L->>L: apply, then commit the item
+    L->>Q: append {sha, plan, phase, source, timestamp}
+    Note over Q,D: later, possibly another machine
+    D->>Q: read pending minus drained
+    D->>D: mark drained, then spawn evaluator per sha
+    D-->>Q: scorecards → results.log
+```
+
+Draining is `/rail-check`'s job (or `node .claude/hooks/eval-trigger.js --drain-pending` directly). Each record is marked drained **before** its evaluator spawns, so a crashed spawn is a logged gap rather than a double-evaluation — re-running a drain is always safe. `check_health` reports a standing backlog: the queue is durable, so nothing is lost, but un-drained records mean the lane's lessons have not reached the registry yet.
+
+The queue and its ledger live under `.indusk/eval/` and are deliberately excluded from the run's own commits — run bookkeeping is not plan history.
+
 ## `--model`
 
 Selects the driver. Accepts a friendly alias — `claude`, `gpt`, `gemini`, `grok` — or a bare provider name (`anthropic`, `openai`, `google`, `xai`), resolved through the provider registry into a driver config (`provider`, key env var, default model). Defaults to `claude`. Swapping models changes one provider factory line — gate behavior is structural, not per-model.

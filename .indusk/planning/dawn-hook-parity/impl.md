@@ -99,10 +99,10 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 - [x] Manual smoke with the REAL evaluator (not the stub): seeded one record for this branch's own HEAD, ran `node .claude/hooks/eval-trigger.js --drain-pending` → evaluator spawned with `source=atdawn` for that exact sha (confirmed in `system.log`: "evaluator process started — changeId: cde0889…", followed by its `git show` of that commit), scorecard written to `results.log`. Immediate re-drain reported "Drained 0; 1 already drained" with the ledger still at one line — **idempotence proven on the real path, not just the stub.**
 
 #### Phase 3 Context
-- [ ] Update CLAUDE.md's eval-rail Conventions entry: the thin lane feeds `.indusk/eval/pending.jsonl`; drain via `eval-trigger` CLI mode from any `claude`-capable environment; `/rail-check` owns the drain; health surfaces backlog.
+- [x] Update CLAUDE.md's eval-rail Conventions: new "Thin-lane eval rail" entry above the eval-agent line — queue file, ledger-before-spawn, `/rail-check` ownership, health backlog, staging exclusion, ADR pointer.
 
 #### Phase 3 Document
-- [ ] Update `/reference/cli/run`: queue section + the Mermaid sequence diagram from the ADR's Documentation Plan (checkoff → gates → commit → queue → later drain → scorecard). Update the rail-check reference page with the drain step.
+- [x] Update `/reference/cli/run`: "The eval queue" section with the Mermaid sequence diagram (checkoff → gates → commit → queue → later drain → scorecard), safe-to-rerun rationale, and the staging exclusion. Rail-check guide (`/guide/rail-check`) gained step 4b with the drain command and backlog interpretation.
 
 ### Phase 4: Headless ask = pause
 
