@@ -47,11 +47,11 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 | T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | passing |
 | T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | passing |
 | T10 | opening a parent plan shows its subplans as cards with their status, instead of an empty page | Phase 3 | Phase 3 | passing |
-| T11 | a subplan whose folder lives in `archive/` renders as a navigable item with its real status — in both the sidebar group and the parent detail cards — never as a "queued" placeholder | Phase 0 | Phase 4 | planned |
-| T12 | a parent plan that also carries standard documents (e.g. a brief) still renders those documents alongside its subplan cards — the parent branch adds, it never suppresses | Phase 0 | Phase 4 | planned |
-| T13 | with two or more parents, sidebar groups follow the roadmap's declared order, not parser iteration order | Phase 0 | Phase 4 | planned |
-| T14 | a declared name that is not a single clean path segment (`/`, `\`, or `..`) is ignored everywhere — it reaches neither a filesystem path join nor the rendered sidebar | Phase 0 | Phase 4 | planned |
-| T15 | a name declared twice in one `subplans:` list renders once (first occurrence) — no duplicate sidebar items, no duplicate React keys | Phase 0 | Phase 4 | planned |
+| T11 | a subplan whose folder lives in `archive/` renders as a navigable item with its real status — in both the sidebar group and the parent detail cards — never as a "queued" placeholder | Phase 0 | Phase 4 | written |
+| T12 | a parent plan that also carries standard documents (e.g. a brief) still renders those documents alongside its subplan cards — the parent branch adds, it never suppresses | Phase 0 | Phase 4 | written |
+| T13 | with two or more parents, sidebar groups follow the roadmap's declared order, not parser iteration order | Phase 0 | Phase 4 | written |
+| T14 | a declared name that is not a single clean path segment (`/`, `\`, or `..`) is ignored everywhere — it reaches neither a filesystem path join nor the rendered sidebar | Phase 0 | Phase 4 | written |
+| T15 | a name declared twice in one `subplans:` list renders once (first occurrence) — no duplicate sidebar items, no duplicate React keys | Phase 0 | Phase 4 | written |
 
 ### Trajectory Rationale
 

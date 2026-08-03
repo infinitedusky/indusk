@@ -130,6 +130,49 @@ describe("T8 — a parent with no children is an ordinary plan", () => {
 	});
 });
 
+describe("T14 — declaration names are path segments, not paths", () => {
+	it("ignores a parent name that traverses outside the planning dir", () => {
+		// A master.md OUTSIDE the planning dir, reachable only by traversal.
+		const outside = join(root, "outside");
+		mkdirSync(outside, { recursive: true });
+		writeFileSync(join(outside, "master.md"), "---\nsubplans: [leaked-plan]\n---\n", "utf8");
+		makePlan("alpha");
+		writeFileSync(join(planning, "master.md"), '---\nparents: ["../outside"]\n---\n', "utf8");
+
+		const declarations = readPlanDeclarations(planning);
+
+		// The traversal name is dropped at the boundary: never a subplans key,
+		// never a path join, nothing leaked from the foreign file.
+		expect(declarations.parents).toEqual([]);
+		expect(Object.keys(declarations.subplans)).not.toContain("../outside");
+		expect(JSON.stringify(declarations)).not.toContain("leaked-plan");
+	});
+
+	it("drops non-segment names from a subplans list", () => {
+		makePlan("parent-plan", {
+			"master.md": `---\nsubplans: ["real-child", "../evil", "a/b", "..", "c\\\\d"]\n---\n\n# p\n`,
+		});
+
+		const declarations = readPlanDeclarations(planning);
+
+		expect(declarations.subplans["parent-plan"]).toEqual(["real-child"]);
+	});
+});
+
+describe("T15 — duplicate declared names collapse to first occurrence", () => {
+	it("dedupes a subplans list, preserving first-occurrence order", () => {
+		makePlan("parent-plan", {
+			"master.md": `---\nsubplans: [twin, other, twin]\n---\n\n# p\n`,
+		});
+		makePlan("twin");
+		makePlan("other");
+
+		const declarations = readPlanDeclarations(planning);
+
+		expect(declarations.subplans["parent-plan"]).toEqual(["twin", "other"]);
+	});
+});
+
 describe("T9 — the plan list itself is unchanged by declarations", () => {
 	it("returns identical plan summaries with and without declarations present", () => {
 		makePlan("alpha");

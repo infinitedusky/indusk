@@ -132,6 +132,31 @@ describe("T10 — a parent plan renders subplan cards, not an empty page", () =>
     expect(proseIdx).toBeLessThan(cardIdx);
   });
 
+  it("T12 — renders a parent's own documents alongside the cards, never suppressed", async () => {
+    const parentWithBrief = mockPlan("indusk-v2-dawn", {
+      brief: {
+        frontmatter: { title: "Dawn", status: "accepted" },
+        content: "## Problem\n\nThe discipline layer is unowned.",
+      },
+    });
+    const { container } = await render(
+      <PlanDetail
+        plan={parentWithBrief}
+        subplans={subplans}
+        planHrefPrefix="/p/dusk/plan/"
+      />,
+    );
+
+    expect(
+      container.querySelector('[data-testid="subplan-cards"]'),
+      "subplan cards must render for a parent",
+    ).not.toBeNull();
+    expect(
+      container.querySelector('[data-testid="brief-section"]'),
+      "a parent's brief must not be suppressed by the cards view",
+    ).not.toBeNull();
+  });
+
   it("does not render a stray empty Falsification section on a doc-less parent", async () => {
     const { container } = await render(
       <PlanDetail
