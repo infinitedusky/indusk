@@ -46,7 +46,7 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 | T7 | a plan that exists on disk but is named by no declaration is never hidden — every planning folder is accounted for | Phase 1 | Phase 1 | passing |
 | T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | passing |
 | T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | passing |
-| T10 | opening a parent plan shows its subplans as cards with their status, instead of an empty page | Phase 3 | Phase 3 | written |
+| T10 | opening a parent plan shows its subplans as cards with their status, instead of an empty page | Phase 3 | Phase 3 | passing |
 
 ### Trajectory Rationale
 
@@ -148,7 +148,7 @@ Every row is authorable against the current stack — the sidebar and the reader
 - [x] (discovered, user feedback during P3) Placeholder badge relabelled `planned` → `queued` in both surfaces (sidebar + detail cards). "planned" collided with the plan-lifecycle/trajectory vocabulary and implied a stage the name hasn't reached — these entries are declared-but-uncreated, i.e. work queued ahead (the brief's own phrasing). No test asserted the badge text.
 
 #### Phase 3 Verification
-- [ ] T10 green: opening `indusk-v2-dawn` shows a card per declared subplan with status, placeholders for uncreated ones, and no empty document sections.
+- [x] T10 green: `pnpm vitest run --project browser src/components/PlanDetail.parent.test.tsx` → 4/4 (card with status+stage+link, placeholder card, prose-above-cards, no stray Falsification). Live check on `/p/dawn-wt/plan/indusk-v2-dawn`: full Dawn master prose, `dawn-ui-plan-grouping` card (in-progress/impl), six `queued` placeholders, no empty sections — screenshot `p3-parent-detail-subplan-cards.png`. Full suites: admin 141/141 (earlier 15 http failures were the leftover dev server holding port 3000 — retested clean after killing it); mcp 783 passed with 3 pre-existing failures (`agent-roles-phase4` fails identically on unmodified main — makeover CLAUDE.md compaction, cross-plan finding; `daemon-identity` T22/T23 pair documented pre-existing in Phase 1). The daemon-test failures initially looked like 12 — root cause was the worktree lacking the gitignored admin production bundle; `pnpm build` + `bundle-admin.js` reproduced trunk's environment and they pass. `tsc --noEmit` exit 0, `biome check` clean in both apps; `next build` succeeds with the new page code.
 
 #### Phase 3 Context
 - [ ] Record in CLAUDE.md's admin-UI gotcha that a plan whose documents fall outside `DOC_FILES` (a parent carrying only `master.md`) renders empty unless the detail view has a branch for it.
