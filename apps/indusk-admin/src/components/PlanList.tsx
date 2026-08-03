@@ -86,6 +86,18 @@ function buildGroups(
     groups.push({ parent, children, placeholders });
   }
 
+  // Groups follow the roadmap's declared order, not subplans-object iteration
+  // order (T13). Parents the roadmap doesn't list follow after, keeping their
+  // declaration order (sort is stable).
+  const roadmapIndex = new Map(
+    grouping.roadmap.map((name, i) => [name, i] as const),
+  );
+  groups.sort(
+    (a, b) =>
+      (roadmapIndex.get(a.parent.name) ?? Number.MAX_SAFE_INTEGER) -
+      (roadmapIndex.get(b.parent.name) ?? Number.MAX_SAFE_INTEGER),
+  );
+
   return { groups, rest: active.filter((p) => !claimed.has(p.name)) };
 }
 
