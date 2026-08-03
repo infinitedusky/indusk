@@ -2,6 +2,28 @@ import type { Trajectory } from "@infinitedusky/indusk-mcp/trajectory/parser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import type { Plan } from "@/lib/planning-reader";
+
+// PlanDetail imports next/link (subplan cards) — stub it like every other
+// browser test; see PlanList.test.tsx for the canonical reason.
+vi.mock("next/link", () => {
+  function MockLink({
+    href,
+    children,
+    ...rest
+  }: {
+    href: string;
+    children: React.ReactNode;
+    [key: string]: unknown;
+  }) {
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    );
+  }
+  return { default: MockLink, __esModule: true };
+});
+
 import { PlanDetail } from "./PlanDetail";
 
 function stubClipboard() {
@@ -512,7 +534,12 @@ describe("PlanDetail — missing-document graceful render (T14)", () => {
     ).toBeNull();
   });
 
-  it("T14 — plan with no documents at all still renders header + falsification empty state", async () => {
+  // Originally asserted the falsification empty state also renders here; that
+  // pinned the pre-grouping bug where a doc-less plan (e.g. a parent carrying
+  // only master.md) showed a stray "Falsification" heading on an otherwise
+  // blank page. dawn-ui-plan-grouping Phase 3 declares that a bug: a plan
+  // with no documents renders header-only.
+  it("T14 — plan with no documents at all renders header only, no stray empty sections", async () => {
     const plan: Plan = {
       name: "empty-plan",
       status: "draft",
@@ -526,8 +553,8 @@ describe("PlanDetail — missing-document graceful render (T14)", () => {
       container.querySelector('[data-testid="plan-header"]'),
     ).not.toBeNull();
     expect(
-      container.querySelector('[data-testid="falsification-empty"]'),
-    ).not.toBeNull();
+      container.querySelector('[data-testid="falsification-section"]'),
+    ).toBeNull();
   });
 });
 

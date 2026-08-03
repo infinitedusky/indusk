@@ -143,7 +143,7 @@ Every row is authorable against the current stack — the sidebar and the reader
 
 - [x] Detect a parent plan in `PlanDetail` — it has declared subplans — and render a card per subplan (name, status badge, stage) linking to that plan, instead of the standard document sections. Detection is a `subplans?: SubplanEntry[]` prop resolved by the page (`plan/[name]/page.tsx` reads `readPlanHierarchy` and maps declared names against active+archived plans) — the component stays data-source-agnostic, same layering as the sidebar. Stage derives from the furthest lifecycle document the child carries (`planStage`).
 - [x] Render a placeholder card, visually distinct and non-navigable, for declared subplans with no folder yet — same semantics as the sidebar. Dashed border + greyed text + `planned` badge, no link; `data-testid="subplan-placeholder-{name}"`.
-- [ ] Guard the doc-less path: sections whose documents are all absent must not render (fixes the stray Falsification heading at `PlanDetail.tsx:107`).
+- [x] Guard the doc-less path: sections whose documents are all absent must not render (fixes the stray Falsification heading at `PlanDetail.tsx:107`). `hasAnyDocument` gates the falsification empty-state; a doc-less plan renders header-only. **Deliberate test change:** `PlanDetail.test.tsx`'s old T14 pinned the buggy behaviour ("still renders falsification empty state") — rewritten to assert header-only, with a comment recording why. Also added the `next/link` vi.mock stub to `PlanDetail.test.tsx` (PlanDetail now imports next/link for cards — the known browser-test gotcha).
 - [ ] Surface the parent's own prose — `master.md` — above the cards via the existing `<Markdown>` wrapper, so the sequence and its reasoning are on one page.
 
 #### Phase 3 Verification

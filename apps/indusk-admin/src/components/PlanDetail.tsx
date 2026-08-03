@@ -74,6 +74,17 @@ export function PlanDetail({
   planHrefPrefix = "/plan/",
 }: PlanDetailProps) {
   const isParent = subplans !== undefined && subplans.length > 0;
+  // A plan with no documents at all (a parent whose declarations are missing
+  // or corrupt, a bare folder) renders header-only — an empty Falsification
+  // section on a doc-less plan is noise, not information.
+  const hasAnyDocument =
+    plan.research !== undefined ||
+    plan.brief !== undefined ||
+    plan.testPlan !== undefined ||
+    plan.adr !== undefined ||
+    plan.impl !== undefined ||
+    plan.falsification !== undefined ||
+    plan.retrospective !== undefined;
   return (
     <article
       className="flex flex-col gap-6"
@@ -133,7 +144,7 @@ export function PlanDetail({
       )}
 
       {!isParent && plan.impl && <ImplSections plan={plan} />}
-      {!isParent && !plan.impl && (
+      {!isParent && !plan.impl && hasAnyDocument && (
         <FalsificationSection plan={plan} phase={null} />
       )}
     </article>
