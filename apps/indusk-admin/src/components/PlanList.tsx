@@ -1,8 +1,8 @@
+import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import Link from "next/link";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
-import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanListProps {
@@ -193,7 +193,7 @@ function PlanGroupSection({
               title="Declared in the parent's master.md — not created yet"
             >
               <span className="truncate">{name}</span>
-              <Badge variant="neutral">planned</Badge>
+              <Badge variant="neutral">queued</Badge>
             </div>
           </li>
         ))}

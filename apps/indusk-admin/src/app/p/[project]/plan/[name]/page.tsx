@@ -53,7 +53,8 @@ export default async function PlanPage({ params }: PlanPageProps) {
       [...active, ...archived].map((p) => [p.name, p] as const),
     );
     subplans = declared.map((n) => ({ name: n, plan: byName.get(n) }));
-    masterContent = (await readPlanMasterContent(projectPath, name)) ?? undefined;
+    masterContent =
+      (await readPlanMasterContent(projectPath, name)) ?? undefined;
   }
 
   return (

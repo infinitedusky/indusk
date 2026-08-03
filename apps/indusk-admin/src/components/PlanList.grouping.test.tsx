@@ -81,7 +81,10 @@ describe("T1 — a parent shows its subplans beneath it", () => {
     const group = container.querySelector(
       '[data-testid="plan-group-indusk-v2-dawn"]',
     );
-    expect(group, "expected a group element for the parent plan").not.toBeNull();
+    expect(
+      group,
+      "expected a group element for the parent plan",
+    ).not.toBeNull();
     expect(group?.textContent).toContain("dawn-external-orchestrator");
     expect(group?.textContent).toContain("dawn-ui-plan-grouping");
   });
@@ -148,7 +151,10 @@ describe("T4 — declared-but-uncreated subplans render as placeholders", () => 
     const placeholder = container.querySelector(
       '[data-testid="plan-placeholder-dawn-verify"]',
     );
-    expect(placeholder, "expected a placeholder for the uncreated subplan").not.toBeNull();
+    expect(
+      placeholder,
+      "expected a placeholder for the uncreated subplan",
+    ).not.toBeNull();
     expect(placeholder?.textContent).toContain("dawn-verify");
     // A placeholder is not a link — there is no plan page to open yet.
     expect(placeholder?.querySelector("a")).toBeNull();

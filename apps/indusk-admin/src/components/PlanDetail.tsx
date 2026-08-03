@@ -265,7 +265,7 @@ function SubplanPlaceholderCard({ name }: { name: string }) {
     >
       <div className="flex items-center justify-between gap-2">
         <span className="truncate text-sm text-gray-400">{name}</span>
-        <Badge variant="neutral">planned</Badge>
+        <Badge variant="neutral">queued</Badge>
       </div>
       <span className="text-xs text-gray-400">not created yet</span>
     </div>
