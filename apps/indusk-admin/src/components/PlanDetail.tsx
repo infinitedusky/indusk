@@ -342,4 +342,3 @@ function RawDocumentsSection({
     </section>
   );
 }
-

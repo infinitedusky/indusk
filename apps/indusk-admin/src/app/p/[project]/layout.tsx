@@ -8,12 +8,12 @@ import {
   readArchivedPlans,
   readPlanHierarchy,
 } from "@/lib/planning-reader";
-import { readProjectResearch } from "@/lib/research-reader";
 import {
   getProjectPath,
   projectPathExists,
   readRegistryProjects,
 } from "@/lib/registry-client";
+import { readProjectResearch } from "@/lib/research-reader";
 
 interface PerProjectLayoutProps {
   children: React.ReactNode;
