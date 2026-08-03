@@ -4,6 +4,7 @@ import type {
   LogEntry,
   TerminatorEntry,
 } from "@infinitedusky/indusk-mcp/falsification/log";
+import Link from "next/link";
 import { Markdown } from "@/components/Markdown";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -31,8 +32,27 @@ import {
 } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
+/** A declared subplan resolved for the parent detail view. */
+export interface SubplanEntry {
+  /** Declared name from the parent's master.md `subplans:` list. */
+  name: string;
+  /** The resolved plan when its folder exists; absent → placeholder card. */
+  plan?: Plan;
+}
+
 interface PlanDetailProps {
   plan: Plan;
+  /**
+   * Declared subplans when this plan is a parent (its master.md names
+   * `subplans:`). Non-empty → the detail view renders a card per subplan
+   * instead of the standard document sections, which a parent doesn't carry
+   * (its documents are master.md/maxims.md — outside DOC_FILES).
+   */
+  subplans?: SubplanEntry[];
+  /** The parent's own master.md prose, rendered above the cards. */
+  masterContent?: string;
+  /** Route prefix for subplan card links — same convention as PlanList. */
+  planHrefPrefix?: string;
 }
 
 /**
@@ -48,7 +68,12 @@ interface PlanDetailProps {
  * surface a banner indicating malformed YAML; the components-that-can-render
  * still render with whatever data they have.
  */
-export function PlanDetail({ plan }: PlanDetailProps) {
+export function PlanDetail({
+  plan,
+  subplans,
+  planHrefPrefix = "/plan/",
+}: PlanDetailProps) {
+  const isParent = subplans !== undefined && subplans.length > 0;
   return (
     <article
       className="flex flex-col gap-6"
@@ -63,7 +88,11 @@ export function PlanDetail({ plan }: PlanDetailProps) {
         <RawDocumentsSection rawDocuments={plan.rawDocuments} />
       )}
 
-      {plan.research && (
+      {isParent && subplans && (
+        <ParentPlanView subplans={subplans} prefix={planHrefPrefix} />
+      )}
+
+      {!isParent && plan.research && (
         <CollapsibleSection
           title="Research"
           defaultOpen={!plan.brief}
@@ -74,11 +103,11 @@ export function PlanDetail({ plan }: PlanDetailProps) {
         </CollapsibleSection>
       )}
 
-      {plan.brief && (
+      {!isParent && plan.brief && (
         <BriefSection planName={plan.name} content={plan.brief.content} />
       )}
 
-      {plan.testPlan && (
+      {!isParent && plan.testPlan && (
         <CollapsibleSection
           title="Test Plan"
           defaultOpen={false}
@@ -89,7 +118,7 @@ export function PlanDetail({ plan }: PlanDetailProps) {
         </CollapsibleSection>
       )}
 
-      {plan.adr && (
+      {!isParent && plan.adr && (
         <CollapsibleSection
           title="ADR — Goal + Decision"
           defaultOpen={false}
@@ -103,8 +132,10 @@ export function PlanDetail({ plan }: PlanDetailProps) {
         </CollapsibleSection>
       )}
 
-      {plan.impl && <ImplSections plan={plan} />}
-      {!plan.impl && <FalsificationSection plan={plan} phase={null} />}
+      {!isParent && plan.impl && <ImplSections plan={plan} />}
+      {!isParent && !plan.impl && (
+        <FalsificationSection plan={plan} phase={null} />
+      )}
     </article>
   );
 }
@@ -144,6 +175,64 @@ function ImplSections({ plan }: { plan: Plan }) {
       )}
     </>
   );
+}
+
+/**
+ * Detail view for a parent plan — a card per declared subplan, in declared
+ * order, instead of the standard document sections (a parent's documents are
+ * master.md/maxims.md, none of which are DOC_FILES). Same semantics as the
+ * sidebar group: real subplans navigate, declared-but-uncreated ones render
+ * as placeholders.
+ */
+function ParentPlanView({
+  subplans,
+  prefix,
+}: {
+  subplans: SubplanEntry[];
+  prefix: string;
+}) {
+  return (
+    <section className="flex flex-col gap-2" data-testid="subplan-cards">
+      <h2 className="text-base font-semibold text-gray-900">Subplans</h2>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {subplans.map((entry) =>
+          entry.plan ? (
+            <SubplanCard key={entry.name} plan={entry.plan} prefix={prefix} />
+          ) : null,
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SubplanCard({ plan, prefix }: { plan: Plan; prefix: string }) {
+  return (
+    <div data-testid={`subplan-card-${plan.name}`}>
+      <Link
+        href={`${prefix}${plan.name}`}
+        className="flex flex-col gap-1 rounded border border-gray-200 px-3 py-2 hover:bg-gray-50"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="truncate text-sm font-medium text-gray-900">
+            {plan.name}
+          </span>
+          <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
+        </div>
+        <span className="text-xs text-gray-500">{planStage(plan)}</span>
+      </Link>
+    </div>
+  );
+}
+
+/** Furthest lifecycle document the plan carries — the card's "stage". */
+function planStage(plan: Plan): string {
+  if (plan.retrospective) return "retrospective";
+  if (plan.impl) return "impl";
+  if (plan.adr) return "adr";
+  if (plan.testPlan) return "test-plan";
+  if (plan.brief) return "brief";
+  if (plan.research) return "research";
+  return "no documents yet";
 }
 
 function PlanHeader({ plan }: { plan: Plan }) {
