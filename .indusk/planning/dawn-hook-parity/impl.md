@@ -54,7 +54,7 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 
 ### Phase 1: Budget hook + red suite
 
-- [ ] Worktree kickoff: create/confirm this plan's worktree (`indusk worktree create dawn-hook-parity`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter.
+- [x] Worktree kickoff: created at `~/code/sandbox/dusk-worktrees/dawn-hook-parity` on branch `plan/dawn-hook-parity` + `pnpm install`. Note: `indusk worktree create` errored (`_resolve_workbench_root: no workbench-shaped .indusk/config.json`) — the worktree extension assumes workbench mode; plain `git worktree add` per the established convention. Same limitation hit by prior plans; candidate fix belongs to the worktree extension, not this plan.
 - [ ] Author A1–A9 red (test-first) against the scripted-driver harness: gate-chain tests beside `gate.test.ts`, loop-behavior tests beside `loop.test.ts`, queue tests in a new `pending-queue.test.ts`. Fixtures: temp project with near-budget CLAUDE.md (A1), temp git repo with a two-item single-phase plan (A2/A3/A5), `ask`/`auto`/unset-policy plan variants (A6–A8), child env with `claude`-less PATH (A9). Confirm each fails for its stated reason; capture the failure output.
 - [ ] Extend `GATE_SCRIPT_NAMES` in `src/lib/run/gate.ts` with `claude-md-budget.js` (chain membership only — the script self-filters by basename; block message passes through verbatim).
 - [ ] Correct the Dawn master's Component 2 row: hook inventory is 5 (`check-plan-order.js` deleted in `62186774`), 3 unwired at plan start; note the `gate-reminder` shed with a pointer to the ADR.
