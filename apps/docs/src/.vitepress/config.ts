@@ -209,6 +209,10 @@ const config = defineConfig({
 							text: "Worktree Visibility (YAML Boolean Coercion + Non-Git-CWD)",
 							link: "/lessons/worktree-visibility",
 						},
+						{
+							text: "Dawn UI Plan Grouping (Lifecycle Edges + Boundary Names)",
+							link: "/lessons/dawn-ui-plan-grouping",
+						},
 					],
 				},
 			],
