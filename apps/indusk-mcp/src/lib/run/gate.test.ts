@@ -1,7 +1,6 @@
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runDriver } from "./driver.js";
@@ -12,14 +11,7 @@ import {
 	runGateScripts,
 	toGateEnvelope,
 } from "./gate.js";
-import {
-	execOptions,
-	executeOf,
-	fixtureDir,
-	hooksDir,
-	realGateScripts,
-	repoRoot,
-} from "./harness.test-support.js";
+import { execOptions, executeOf, fixtureDir, realGateScripts } from "./harness.test-support.js";
 
 /**
  * T2/T3/T4 — the gate adapter + Tier-1 enforcement.

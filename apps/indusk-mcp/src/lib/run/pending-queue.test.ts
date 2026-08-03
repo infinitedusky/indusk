@@ -6,11 +6,7 @@ import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	fixtureDir,
-	guineaPigHappyPathSteps,
-	realGateScripts,
-} from "./harness.test-support.js";
+import { fixtureDir, guineaPigHappyPathSteps, realGateScripts } from "./harness.test-support.js";
 import { runLoop } from "./loop.js";
 
 /**
@@ -50,7 +46,10 @@ async function makeQueueWorktree(prefix: string): Promise<QueueWorktree> {
 	await cp(fixtureDir, root, { recursive: true });
 	// Anchor InDusk state in-tree so the queue resolves here, not an ancestor.
 	await mkdir(join(root, ".indusk", "eval"), { recursive: true });
-	await writeFile(join(root, ".indusk", "config.json"), JSON.stringify({ eval: { enabled: true } }));
+	await writeFile(
+		join(root, ".indusk", "config.json"),
+		JSON.stringify({ eval: { enabled: true } }),
+	);
 	await git(root, "init");
 	await git(root, "config", "user.email", "dawn@test.local");
 	await git(root, "config", "user.name", "Dawn Test");
@@ -76,7 +75,9 @@ async function runHappyPath(root: string): Promise<void> {
 }
 
 async function readPending(root: string): Promise<Array<Record<string, unknown>>> {
-	const raw = await readFile(join(root, ".indusk", "eval", "pending.jsonl"), "utf8").catch(() => "");
+	const raw = await readFile(join(root, ".indusk", "eval", "pending.jsonl"), "utf8").catch(
+		() => "",
+	);
 	return raw
 		.split("\n")
 		.filter((l) => l.trim())
@@ -141,7 +142,8 @@ describe("A4 — draining is one evaluation per record, exactly once", () => {
 			stubPath,
 			[
 				'import { appendFileSync } from "node:fs";',
-				'appendFileSync(".indusk/eval/results.log", `${JSON.stringify({ timestamp: new Date().toISOString(), stub: true, args: process.argv.slice(2) })}\\n`);',
+				"const record = { timestamp: new Date().toISOString(), stub: true, args: process.argv.slice(2) };",
+				'appendFileSync(".indusk/eval/results.log", JSON.stringify(record) + "\\n");',
 			].join("\n"),
 		);
 

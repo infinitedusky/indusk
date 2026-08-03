@@ -60,9 +60,9 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 - [x] Correct the Dawn master's Component 2 row: hook inventory is 5 (`check-plan-order.js` deleted in `62186774`), 3 unwired at plan start; the `gate-reminder` shed recorded in-row with the ADR pointer; acceptance wording amended per the brief ("…for every hook that is an invariant; sheds are recorded"); row status → In flight with this plan linked.
 
 #### Phase 1 Verification
-- [ ] A1 green: `pnpm vitest run src/lib/run/` in `apps/indusk-mcp` — over-budget CLAUDE.md write refused in the thin lane with the shared script's message.
-- [ ] A2–A9 authored and red, each for its stated reason (not a harness or import error). Capture output.
-- [ ] `pnpm exec tsc --noEmit` and `pnpm exec biome check` clean in `apps/indusk-mcp`.
+- [x] A1 green: `pnpm vitest run src/lib/run/` — over-budget write refused with "CLAUDE.md budget exceeded" (the shared script's stderr passed through verbatim); under-budget writes still apply. Suite: 58 passed / 8 failed (the 8 being exactly A2–A9's reds).
+- [x] A2–A9 authored and red for stated reasons: A2 zero commits, A3 empty queue (post-hardening), A4 no drain mechanism, A5 no failure surfaced, A6–A8 `stopped-red` where `paused-gate-question` is claimed, A9 empty queue. None red from harness or import errors.
+- [x] `tsc --noEmit` exit 0; `biome check` exit 0 — including clearing pre-existing unused-import debt across the run lib left by the orchestrator's harness extraction (confirmed present on `main`; mechanically fixed as discovered work).
 
 #### Phase 1 Context
 - [ ] Update CLAUDE.md's `indusk run` Architecture line: the gate chain is three scripts (`validate-impl-structure`, `check-gates`, `claude-md-budget`).

@@ -2,10 +2,10 @@ import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MockLanguageModelV4 } from "ai/test";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
-	fixtureDir,
 	finishStep,
+	fixtureDir,
 	guineaPigHappyPathSteps,
 	realGateScripts,
 } from "./harness.test-support.js";

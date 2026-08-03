@@ -5,11 +5,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	fixtureDir,
-	guineaPigHappyPathSteps,
-	realGateScripts,
-} from "./harness.test-support.js";
+import { fixtureDir, guineaPigHappyPathSteps, realGateScripts } from "./harness.test-support.js";
 import { runLoop } from "./loop.js";
 
 /**

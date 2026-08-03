@@ -1,8 +1,6 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { basename, join, relative, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { join, relative, resolve } from "node:path";
 import type { LanguageModel } from "ai";
-import matter from "gray-matter";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
 import type { Trajectory } from "../trajectory/parser.js";
 import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";

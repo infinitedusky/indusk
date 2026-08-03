@@ -1,21 +1,12 @@
 import { execFile } from "node:child_process";
 import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseImplString } from "../impl-parser.js";
-import { snapshotTrajectory } from "./goalposts.js";
-import {
-	execOptions,
-	executeOf,
-	fixtureDir,
-	hooksDir,
-	realGateScripts,
-	repoRoot,
-} from "./harness.test-support.js";
+import { fixtureDir, realGateScripts } from "./harness.test-support.js";
 import { detectHumanGate, runLoop } from "./loop.js";
 
 /**
