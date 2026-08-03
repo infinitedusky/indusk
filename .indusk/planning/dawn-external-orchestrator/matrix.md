@@ -10,6 +10,8 @@ The A8 record: guinea-pig (`fixtures/guinea-pig-semver`) run via `indusk run` ac
 
 Deviation from the planned matrix (recorded 2026-07-27): **Claude column deferred** — no Anthropic API key available (org-managed account blocks Console org creation; personal-key route declined for now). Gemini-only across environments; Claude cells append when a key lands (key is a hot-swappable env var, no harness change).
 
+**Key landed 2026-08-03** (stored in `~/.indusk/config.env`; note `atdawn run` reads only `process.env` — source the file first, or wire the loader as a close-out item). Driver smoke-verified, then C5 run the same day — the hot-swap claim held: zero harness changes.
+
 ## Cells
 
 | Cell | Model | Env | Gate-hold | Outcome | Attempts | Wall | Tokens (in/out) | Notes |
@@ -20,7 +22,7 @@ Deviation from the planned matrix (recorded 2026-07-27): **Claude column deferre
 | C4 | gemini-3.6-flash | remote (Fly) | ✅ held (stopped red, no false advance) | did-not-run: zero edits | 1 | 68s | n/a | same signature as C3 — environment-independent |
 | C3′ | gemini-3.6-flash | local | ✅ held | **impl-complete, first attempt** | 1 | 3m04s | 322,588 / 9,580 | after the step-budget fix (24→48): 31 steps / 30 tool calls — over the old cap, proving the starvation diagnosis; 6/6 tests green, independently verified |
 | C4′ | gemini-3.6-flash | remote (Fly) | ✅ held | **impl-complete, first attempt** | 1 | 1m31s | 508,315 / 13,410 | 33 steps / 32 tool calls; 5 checkoffs confirmed; independent test re-run n/a (machine stopped first — sequencing miss), green close rests on the loop's own probe |
-| — | claude (any) | — | — | — | — | — | — | **deferred: no API key** |
+| C5 | claude-sonnet-4-5 | local (darwin arm64) | ✅ held | **impl-complete, first attempt** | 1 | 2m38s | 274,183 / 8,236 | 28 steps / 27 tool calls; test-first honored unprompted (tests authored + run red at step 11 before any source existed); built entirely inside the fixture dir — the F5 layout variance did not reproduce; CLI probed by hand (4 bash invocations) before checkoff; wrote 27 tests vs the Gemini cells' 4–6; 27/27 green, independently verified |
 
 ## Findings log
 
@@ -31,6 +33,7 @@ Deviation from the planned matrix (recorded 2026-07-27): **Claude column deferre
 - **F4 (2026-07-27)**: the loop reports steps/tool-calls/tokens **only on green phase close** — red stops report nothing, so failed-attempt cost is invisible in CLI output. Joins the Phase 4 exit-2-count gap: matrix-grade telemetry (per-attempt usage + per-edit block counts) is a needed indusk fix.
 - **F5 (2026-07-27)**: layout variance across runs — C1 built inside a nested `semver/` dir, C2 at the worktree root with its own workspace files. The fixture's impl doesn't pin paths, so structure is model-mood. Outcome-quality note for A8, and an argument for path-pinning in reference-task fixtures.
 
+- **F7 (2026-08-03)**: first Claude cell (C5, sonnet-4-5). Cost-to-durably-done ≈ **$0.95** (274k in / 8.2k out at $3/$15 per M) vs 2.5-flash's near-free cells — but the *behavioral* deltas are the finding: test-first honored without being told (red run before source existed), the tidiest layout of any cell (all files inside the fixture dir; F5 variance absent), manual CLI probing before checkoff, and ~5× the test coverage (27 assertions vs 4–6). One model-routing datum: flash is cheapest-to-done on mechanical tasks; sonnet buys discipline-adjacent behaviors nobody asked for. The A8 Opus/harness-comparison cell remains open — C5 is the *driver* proof, not the harness comparison.
 - **F6 (2026-07-27)**: Fly Machine **rootfs is ephemeral across stop/start** (plain image, no volume) — the reprovisioned box lost node/pnpm/key on restart. Also: nodesource started 403ing from the Fly IP on the second pass (fallback: official nodejs.org tarball, more reliable anyway). Consequence for cloud-deployment: the box needs a bootstrap script, a baked image, or a volume — exactly the workspace-lifecycle layer RDEs productize; this is the first concrete datum for the Fly-vs-RDE evaluation.
 
 ## Environment provisioning (method record)
