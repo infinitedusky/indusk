@@ -212,7 +212,7 @@ See [Component conventions](./component-conventions) for the visual primitive di
 
 Parent plans render as groups with their declared subplans indented beneath, in the order the parent's `master.md` declares (see [`plans`](/reference/cli/plans) for the frontmatter). Everything else renders exactly as before, at the top level.
 
-A subplan the parent names but which has **no folder yet** renders as a greyed, non-navigable placeholder with a `planned` badge — there is no page to open. That is the normal state of a sequence, not an error: it lets the sidebar show work queued ahead as well as work underway.
+A subplan the parent names but which has **no folder yet** renders as a greyed, non-navigable placeholder with a `queued` badge — there is no page to open. That is the normal state of a sequence, not an error: it lets the sidebar show work queued ahead as well as work underway. (`queued` deliberately isn't a lifecycle stage: a greyed entry means the name is declared and nothing more. A plan that exists at *any* stage — research, brief, impl — renders as a normal navigable item with its real status.)
 
 Two behaviours worth knowing when reading the sidebar:
 
@@ -220,3 +220,13 @@ Two behaviours worth knowing when reading the sidebar:
 - **Broken declarations degrade to the flat list.** A missing `master.md`, an absent key, or malformed YAML yields no grouping and no error. Structure can be lost; a plan never is.
 
 Grouping is display-only — it does not change which plans the CLI or MCP report as active.
+
+## Parent plan detail view
+
+Opening a parent plan (one whose `master.md` declares `subplans:`) does not show the standard document sections — a parent carries `master.md`, not `brief.md`/`impl.md`. Instead the page renders:
+
+- **The parent's own `master.md` prose** first — the sequence and its reasoning on one page.
+- **A card per declared subplan**, in declared order. A real subplan's card shows its name, status badge, and stage (the furthest lifecycle document it carries), and links to its plan page.
+- **A placeholder card** for each declared-but-uncreated subplan — dashed border, greyed, `queued` badge, non-navigable. Same semantics as the sidebar placeholder.
+
+The same degrade rules apply: if the parent's declarations are missing or corrupt, the page falls back to the standard document view. A plan with no documents at all renders its header only — no empty sections (through 1.35.x a doc-less plan rendered a stray empty "Falsification" heading; that was a bug, fixed by this view).

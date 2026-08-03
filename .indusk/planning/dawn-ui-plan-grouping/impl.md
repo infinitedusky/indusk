@@ -154,4 +154,4 @@ Every row is authorable against the current stack — the sidebar and the reader
 - [x] Record in CLAUDE.md's admin-UI gotcha that a plan whose documents fall outside `DOC_FILES` (a parent carrying only `master.md`) renders empty unless the detail view has a branch for it. Appended to the existing declarations gotcha line rather than a new bullet (budget discipline).
 
 #### Phase 3 Document
-- [ ] Update `/reference/admin-ui/overview` with the parent plan detail view: subplan cards, placeholder cards, and the parent's own prose.
+- [x] Update `/reference/admin-ui/overview` with the parent plan detail view: subplan cards, placeholder cards, and the parent's own prose. Also fixed the grouped-sidebar section's badge wording (`planned` → `queued`) to match the rename, with a note on why `queued` isn't a lifecycle stage.
