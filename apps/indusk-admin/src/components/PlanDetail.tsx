@@ -198,7 +198,9 @@ function ParentPlanView({
         {subplans.map((entry) =>
           entry.plan ? (
             <SubplanCard key={entry.name} plan={entry.plan} prefix={prefix} />
-          ) : null,
+          ) : (
+            <SubplanPlaceholderCard key={entry.name} name={entry.name} />
+          ),
         )}
       </div>
     </section>
@@ -220,6 +222,27 @@ function SubplanCard({ plan, prefix }: { plan: Plan; prefix: string }) {
         </div>
         <span className="text-xs text-gray-500">{planStage(plan)}</span>
       </Link>
+    </div>
+  );
+}
+
+/**
+ * A declared subplan with no folder yet — same semantics as the sidebar's
+ * greyed placeholder: visually distinct, non-navigable, showing the work
+ * queued ahead.
+ */
+function SubplanPlaceholderCard({ name }: { name: string }) {
+  return (
+    <div
+      data-testid={`subplan-placeholder-${name}`}
+      className="flex flex-col gap-1 rounded border border-dashed border-gray-200 px-3 py-2"
+      title="Declared in the parent's master.md — not created yet"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-sm text-gray-400">{name}</span>
+        <Badge variant="neutral">planned</Badge>
+      </div>
+      <span className="text-xs text-gray-400">not created yet</span>
     </div>
   );
 }
