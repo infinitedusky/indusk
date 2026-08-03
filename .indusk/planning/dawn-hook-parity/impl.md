@@ -38,11 +38,11 @@ Give the thin lane the same footprint as a Claude Code session: every invariant 
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | a thin-lane run that pushes CLAUDE.md past budget has the write refused with the shared script's own block message | Phase 0 | Phase 1 | written |
-| A2 | a run leaves one git commit per completed checklist item, each message naming its item | Phase 0 | Phase 2 | written |
+| A1 | a thin-lane run that pushes CLAUDE.md past budget has the write refused with the shared script's own block message | Phase 0 | Phase 1 | passing |
+| A2 | a run leaves one git commit per completed checklist item, each message naming its item | Phase 0 | Phase 2 | passing |
 | A3 | after a run, the pending queue holds exactly one record per commit made | Phase 0 | Phase 3 | written |
 | A4 | draining produces one scorecard per pending record; a second drain produces nothing new | Phase 0 | Phase 3 | written |
-| A5 | a failed commit is surfaced loudly and adds no queue record | Phase 0 | Phase 2 | written |
+| A5 | a failed commit is surfaced loudly and adds no queue record | Phase 0 | Phase 2 | passing |
 | A6 | an `ask` plan whose model attempts a proof-less gate skip pauses: exit 3, gate question printed — no red-stop, no proceed | Phase 0 | Phase 4 | written |
 | A7 | after conversation proof is added to the impl, a re-run continues past the paused phase | Phase 0 | Phase 4 | written |
 | A8 | no `gate_policy` frontmatter behaves as `ask` in the thin lane; explicit `auto` runs unpaused as today | Phase 0 | Phase 4 | written |
@@ -72,13 +72,13 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 
 ### Phase 2: Loop-owned commit cadence
 
-- [ ] Implement the per-item commit step in `src/lib/run/loop.ts`: after an item's checkoff survives the gate chain, capture the item's changed files (git status delta since the item began), stage exactly those, and commit with message `item({plan} P{phase}): {item summary, truncated}`. Skip the step cleanly when the worktree is not a git repo (fixture dirs) — loudly, never silently.
-- [ ] Surface commit failure loudly: a non-zero commit (nothing staged, hook rejection, signing failure) prints the git error into the run output and adds nothing downstream; the run continues (the failure is bookkeeping, not a gate).
+- [x] Implement the per-item commit step: new `src/lib/run/commit-cadence.ts` wired through a new `GateOptions.onGatedApply` after-apply seam (gate.ts stays rule-free; driver passes it through; loop owns the cadence). Checkoff detection = a gated `edit` to the impl file whose replacement nets a new `- [x]`; staging is `git add -A` (everything since the previous commit is the item's work product); message `item({plan} P{phase}): {summary, 72-char cap}`. Non-git worktree → cadence disabled with a LOUD `disabledReason` on stderr (loop fixtures unaffected). Known boundary noted in-code: bash-performed checkoffs bypass cadence (gated but uncommitted).
+- [x] Surface commit failure loudly: failures collect per-phase as `PhaseReport.commitFailures` (git stderr verbatim) and the run continues — bookkeeping, not a gate; `PhaseReport.commits` carries `{sha, item, phase}` records; the cadence exposes an `onCommit` seam for Phase 3's queue append.
 
 #### Phase 2 Verification
-- [ ] A2 green: one commit per completed item, messages name their items.
-- [ ] A5 green: a nothing-staged item surfaces the failure and (once Phase 3 lands) enqueues nothing — the no-enqueue half re-asserts in Phase 3.
-- [ ] A1 still green; A3/A4/A6–A9 still red for their reasons. `tsc` + `biome` clean.
+- [x] A2 green: 5 commits for 5 itemwise checkoffs, messages name their items, tree clean at run end.
+- [x] A5 green: pre-commit-hook rejection surfaces verbatim in `commitFailures`, zero commits land, run completes; no-enqueue half re-asserts in Phase 3.
+- [x] A1 still green; A3/A4/A6–A9 still red for their reasons (suite 60 passed / 6 failed — exactly the Phase 3/4 claims). `tsc` exit 0, `biome` clean.
 
 #### Phase 2 Context
 - [ ] Update CLAUDE.md's `indusk run` Architecture line: per-item commits (loop-owned, intent-derived messages).

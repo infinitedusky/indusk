@@ -52,6 +52,12 @@ export interface GateOptions {
 	scripts?: string[];
 	/** Per-script spawn timeout. Default 30s. A timeout BLOCKS (see T15). */
 	timeoutMs?: number;
+	/**
+	 * Fires AFTER a gated edit/writeFile is applied (never on a refusal) —
+	 * the loop's commit-cadence seam (dawn-hook-parity). Awaited, so commits
+	 * serialize with steps. No rule content: purely an after-apply observer.
+	 */
+	onGatedApply?: (name: GatedToolName, input: EditToolInput | WriteToolInput) => Promise<void>;
 }
 
 /** Default per-script spawn timeout — a killed script blocks, never allows. */
@@ -247,7 +253,9 @@ export function createGatedWorktreeTools(worktreeRoot: string, options: GateOpti
 					// corrects course. The edit was never applied.
 					return `Gate blocked this ${name} — the change was NOT applied.\n${gate.blockMessage}`;
 				}
-				return originalExecute(input, executionOptions);
+				const applied = await originalExecute(input, executionOptions);
+				await options.onGatedApply?.(name, input as EditToolInput | WriteToolInput);
+				return applied;
 			},
 		} as ToolSet[string];
 	}

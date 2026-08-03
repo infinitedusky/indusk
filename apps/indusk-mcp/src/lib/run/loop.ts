@@ -3,6 +3,7 @@ import { join, relative, resolve } from "node:path";
 import type { LanguageModel } from "ai";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
 import type { Trajectory } from "../trajectory/parser.js";
+import { type CommitRecord, createCommitCadence } from "./commit-cadence.js";
 import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";
 import { resolveGateScripts } from "./gate.js";
 import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
@@ -51,6 +52,10 @@ export interface PhaseReport {
 	steps: number;
 	toolCalls: number;
 	usage?: { inputTokens?: number; outputTokens?: number };
+	/** Loop-owned per-item commits landed during this phase (dawn-hook-parity A2). */
+	commits?: CommitRecord[];
+	/** Failed commit attempts, surfaced loudly — bookkeeping, never a gate (A5). */
+	commitFailures?: string[];
 }
 
 export type RunLoopResult =
@@ -153,8 +158,20 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 	const implPath = options.implPath ? resolve(options.implPath) : join(root, "impl.md");
 	const implFile = relative(root, implPath) || "impl.md";
 	const scripts = options.gate?.scripts ?? resolveGateScripts(root);
-	const gate: RunGateOptions = { ...options.gate, scripts };
 	const phases: PhaseReport[] = [];
+
+	// Loop-owned commit cadence (A2/A5): commits fire when a gated edit checks
+	// off an impl item; the loop, not the model, owns the git bookkeeping.
+	let currentPhase = 0;
+	const cadence = await createCommitCadence({
+		worktreeRoot: root,
+		implPath,
+		getPhase: () => currentPhase,
+	});
+	if (cadence.disabledReason) {
+		console.error(cadence.disabledReason);
+	}
+	const gate: RunGateOptions = { ...options.gate, scripts, onGatedApply: cadence.onGatedApply };
 
 	const initial = parseImplString(await readFile(implPath, "utf8"));
 	if (initial.phases.length === 0) {
@@ -185,6 +202,7 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		}
 
 		options.onPhaseStart?.(phase.number, phase.name);
+		currentPhase = phase.number;
 
 		// One honest attempt — both gate layers live on every edit tool call.
 		const result = await runDriver({
@@ -230,6 +248,10 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			steps: result.steps,
 			toolCalls: result.toolCalls.length,
 			usage: result.usage,
+			commits: cadence.commits.filter((c) => c.phase === phase.number),
+			commitFailures: cadence.failures
+				.filter((f) => f.phase === phase.number)
+				.map((f) => f.message),
 		});
 	}
 

@@ -66,6 +66,11 @@ export interface RunGateOptions {
 	 * per-run secret.
 	 */
 	approvalSecret?: string | Uint8Array;
+	/**
+	 * After-apply observer for gated edits — the loop's commit-cadence seam
+	 * (dawn-hook-parity). Passed through to the gated tool set.
+	 */
+	onGatedApply?: import("./gate.js").GateOptions["onGatedApply"];
 }
 
 export interface DriverToolCall {
@@ -124,7 +129,10 @@ export async function runDriver(options: RunDriverOptions): Promise<DriverRunRes
 	const driver = options.driver ?? resolveModel("claude");
 	const model = options.model ?? createDriverModel(driver);
 	const tools = options.gate
-		? createGatedWorktreeTools(options.worktree, { scripts: options.gate.scripts })
+		? createGatedWorktreeTools(options.worktree, {
+				scripts: options.gate.scripts,
+				onGatedApply: options.gate.onGatedApply,
+			})
 		: createWorktreeTools(options.worktree);
 
 	const result = await generateText({
