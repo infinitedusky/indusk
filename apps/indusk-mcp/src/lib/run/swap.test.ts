@@ -335,5 +335,5 @@ describe("the swap: guinea-pig plan via the google driver, identical gates (T7)"
 		await expect(
 			execFileAsync(process.execPath, ["--test", "semver.test.mjs"], { cwd: worktree }),
 		).resolves.toBeTruthy();
-	});
+	}, 30_000); // dawn-hook-parity: chain grew 2→3 gate scripts (a spawn per edit); this end-to-end run outgrew vitest's 5s default
 });

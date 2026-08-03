@@ -43,9 +43,9 @@ Give the thin lane the same footprint as a Claude Code session: every invariant 
 | A3 | after a run, the pending queue holds exactly one record per commit made | Phase 0 | Phase 3 | passing |
 | A4 | draining produces one scorecard per pending record; a second drain produces nothing new | Phase 0 | Phase 3 | passing |
 | A5 | a failed commit is surfaced loudly and adds no queue record | Phase 0 | Phase 2 | passing |
-| A6 | an `ask` plan whose model attempts a proof-less gate skip pauses: exit 3, gate question printed — no red-stop, no proceed | Phase 0 | Phase 4 | written |
-| A7 | after conversation proof is added to the impl, a re-run continues past the paused phase | Phase 0 | Phase 4 | written |
-| A8 | no `gate_policy` frontmatter behaves as `ask` in the thin lane; explicit `auto` runs unpaused as today | Phase 0 | Phase 4 | written |
+| A6 | an `ask` plan whose model attempts a proof-less gate skip pauses: exit 3, gate question printed — no red-stop, no proceed | Phase 0 | Phase 4 | passing |
+| A7 | after conversation proof is added to the impl, a re-run continues past the paused phase | Phase 0 | Phase 4 | passing |
+| A8 | no `gate_policy` frontmatter behaves as `ask` in the thin lane; explicit `auto` runs unpaused as today | Phase 0 | Phase 4 | passing |
 | A9 | a run on a machine without the `claude` CLI completes normally and still fills the queue | Phase 0 | Phase 3 | passing |
 
 All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness.test-support.ts`) drives the real loop today, and every assertion fails red against current behavior for its real reason (no budget script in the chain, zero commits, no queue file, exit 1 instead of 3, auto-by-contract). No Trajectory Rationale subsection is required — no row is Writable at Phase 1+.
@@ -106,13 +106,13 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 
 ### Phase 4: Headless ask = pause
 
-- [ ] Refusal classifier in `src/lib/run/loop.ts` (or `gate.ts`): recognize `check-gates`' ask-mode proof-less-skip refusal by its structured message (match on the existing conversation-proof requirement text — do NOT modify the shared hook; the TS/JS port parity gotcha stays untouched), distinct from generic reds.
-- [ ] Pause semantics: on classification, exit 3 printing the gate item, the required conversation-proof format, and the resume instruction (`re-run after amending the impl`). Existing human-gate pause plumbing reused.
-- [ ] Policy default: unset `gate_policy` resolves to `ask` in the thin lane (replacing the `loop.ts:125` auto-by-contract); explicit `auto` unchanged.
+- [x] Refusal classifier in a new `src/lib/run/gate-question.ts`: `isGateQuestion` requires BOTH the hook's `blocked (policy: ask)` tag AND its printed proof format (either alone is ambiguous); `gateQuestionItems` extracts the listed `[gate] text` lines. The shared hook is untouched — classification is loop-side, so the TS↔JS mirror-port gotcha never fires.
+- [x] Pause semantics: new `paused-gate-question` result status carrying the phase, the named items, and a reason that prints the items, the exact conversation-proof line to add, and the resume instruction. Reuses the human-gate pause's exit path (3).
+- [x] Policy default: `resolveGatePolicy` reads the frontmatter, defaulting **unset → `ask`**; `isPhaseDone` now honors it — bare `(none needed)`/`skip-reason:` opt-outs count as done only under `auto`, so `ask`/`strict` plans stop for them instead of silently proceeding. Retires the `loop.ts` auto-by-contract comment.
 
 #### Phase 4 Verification
-- [ ] A6 green: proof-less skip on an `ask` plan → exit 3 + question printed. A7 green: proof added → re-run continues past the phase. A8 green: unset policy = `ask`; explicit `auto` unpaused.
-- [ ] A1–A5, A9 still green (no regressions): full `pnpm vitest run` in `apps/indusk-mcp`; `tsc` + `biome` clean.
+- [x] A6/A7/A8 green (4/4 in `ask-pause.test.ts`): proof-less skip pauses with the question, proof added → re-run completes, unset = `ask` while explicit `auto` stays unpaused.
+- [x] A1–A5, A9 still green — **run lib 66/66**. Full `apps/indusk-mcp` suite: **852 passed, 3 failed — all three pre-existing** (`agent-roles-phase4`, the `daemon-identity` PID-reuse pair), unchanged from the plan's baseline. `tsc` exit 0; `biome` clean on this plan's files. **Two honest consequences recorded:** (1) the fresh worktree needed `pnpm build` in indusk-mcp *then* indusk-admin + `bundle-admin.js` to reach env parity — 13 of the initial 16 "failures" were that gap, exactly the lesson written this morning; (2) the orchestrator's driver-swap end-to-end test tipped over vitest's 5s default because this plan grew the gate chain 2→3 scripts (one more spawn per edit) — raised to 30s with the cause in-comment, not a logic regression.
 
 #### Phase 4 Context
 - [ ] Update CLAUDE.md's `indusk run` Architecture line: `ask` is the default in both lanes; headless `ask` pauses (exit 3); `auto` is explicit opt-in — retire the "headless = auto by contract" phrasing wherever it appears.

@@ -7,6 +7,7 @@ import { type CommitRecord, createCommitCadence } from "./commit-cadence.js";
 import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";
 import { resolveGateScripts } from "./gate.js";
 import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
+import { gateQuestionItems, gateQuestionReason, isGateQuestion } from "./gate-question.js";
 import { appendPendingEval } from "./pending-evals.js";
 import { probePhaseClose } from "./probe.js";
 import type { DriverConfig } from "./registry.js";
@@ -76,6 +77,19 @@ export type RunLoopResult =
 			reason: string;
 			items: string[];
 			phases: PhaseReport[];
+	  }
+	| {
+			/**
+			 * `ask` policy hit a gate the model wanted to skip without proof —
+			 * a question for a human, not a red (dawn-hook-parity A6). Same
+			 * exit code as a human-gate pause; the run resumes on re-invocation
+			 * once the conversation is recorded in the impl.
+			 */
+			status: "paused-gate-question";
+			phase: number;
+			reason: string;
+			items: string[];
+			phases: PhaseReport[];
 	  };
 
 // One honest attempt still needs room for a thinking model's read-first style:
@@ -125,19 +139,33 @@ const HUMAN_GATE_PATTERNS: readonly RegExp[] = [
 ];
 
 /**
- * A phase needs no run when every item is checked or carries a bare opt-out —
- * headless runs are `gate_policy: auto` by contract (there is no user to give
- * conversation-proof skips to), so the auto-policy override markers apply.
+ * The plan's effective gate policy. Unset resolves to `ask` — the same
+ * default Claude Code uses (dawn-hook-parity A8, retiring the old
+ * headless-is-`auto`-by-contract assumption). `auto` stays an explicit
+ * per-plan opt-in for deliberately unattended runs.
  */
-function isPhaseDone(phase: ImplPhase): boolean {
+export function resolveGatePolicy(implContent: string): "strict" | "ask" | "auto" {
+	const match = implContent.match(/^gate_policy:\s*(strict|ask|auto)\s*$/m);
+	return (match?.[1] as "strict" | "ask" | "auto" | undefined) ?? "ask";
+}
+
+/**
+ * A phase needs no run when every item is checked, or carries an opt-out the
+ * plan's policy actually accepts: bare markers count only under `auto`; under
+ * `ask` a bare opt-out is an unanswered question (the run pauses for it), and
+ * under `strict` nothing but a real checkoff counts.
+ */
+function isPhaseDone(phase: ImplPhase, policy: "strict" | "ask" | "auto"): boolean {
 	return phase.gates.every((gate) =>
-		gate.items.every(
-			(item) =>
-				item.checked ||
+		gate.items.every((item) => {
+			if (item.checked) return true;
+			if (policy !== "auto") return false;
+			return (
 				item.text.includes("(none needed)") ||
 				item.text.includes("(not applicable)") ||
-				item.text.includes("skip-reason:"),
-		),
+				item.text.includes("skip-reason:")
+			);
+		}),
 	);
 }
 
@@ -197,7 +225,7 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		const content = await readFile(implPath, "utf8");
 		const current = parseImplString(content);
 		const phase = current.phases.find((p) => p.number === planned.number) ?? planned;
-		if (isPhaseDone(phase)) continue;
+		if (isPhaseDone(phase, resolveGatePolicy(content))) continue;
 
 		// Goalpost baseline: snapshot the trajectory before the phase runs.
 		const trajectoryBefore = snapshotTrajectory(content);
@@ -240,6 +268,19 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		// Advance only on green: the deliberate check-gates probe, not the
 		// model's self-report, decides whether the phase closed.
 		const probe = await probePhaseClose({ implPath, worktree: root, phase: phase.number, scripts });
+		if (!probe.allowed && isGateQuestion(probe.blockMessage)) {
+			// Not a red: `ask` policy refused a proof-less skip, which is a
+			// question only a human can answer (A6). Pause instead of stopping —
+			// the human records the conversation and re-runs.
+			const message = probe.blockMessage ?? "";
+			return {
+				status: "paused-gate-question",
+				phase: phase.number,
+				reason: gateQuestionReason(phase.number, message),
+				items: gateQuestionItems(message),
+				phases,
+			};
+		}
 		if (!probe.allowed) {
 			return {
 				status: "stopped-red",
