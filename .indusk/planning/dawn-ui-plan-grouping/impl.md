@@ -1,7 +1,7 @@
 ---
 title: "Dawn UI — Plan Grouping — Implementation"
 date: 2026-08-02
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -52,6 +52,7 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 | T13 | with two or more parents, sidebar groups follow the roadmap's declared order, not parser iteration order | Phase 0 | Phase 4 | passing |
 | T14 | a declared name that is not a single clean path segment (`/`, `\`, or `..`) is ignored everywhere — it reaches neither a filesystem path join nor the rendered sidebar | Phase 0 | Phase 4 | passing |
 | T15 | a name declared twice in one `subplans:` list renders once (first occurrence) — no duplicate sidebar items, no duplicate React keys | Phase 0 | Phase 4 | passing |
+| T16 | the cleanup decomposition is behavior-parity — every existing suite passes with zero assertion or testid changes after the extractions | Phase 5 | Phase 5 | planned |
 
 ### Trajectory Rationale
 
@@ -67,6 +68,7 @@ Every row is authorable against the current stack — the sidebar and the reader
 - **T8** `Writable at: Phase 1` — An empty-parent fixture is authorable now.
 - **T9** `Writable at: Phase 1` — Regression guard over the shared parser's existing output; green from birth, and its whole job is to stay green.
 - **T10** `Writable at: Phase 3` — The card component does not exist until Phase 3; a test asserting on it cannot be authored against today's `PlanDetail`, which renders nothing for a doc-less plan.
+- **T16** `Writable at: Phase 5` — A parity check over the decomposition can only run once the extractions exist; its whole claim is that Phase 5 is structure-preserving (suites green, no assertion or testid edits), which is unverifiable before the phase.
 
 ## Checklist
 
@@ -188,3 +190,23 @@ Investigation notes (what was found, ritual 2026-08-03):
 
 #### Phase 4 Document
 - [x] Update `/reference/cli/plans` (new "Name hygiene" section: segment guard + first-occurrence dedupe; archived-subplan note under placeholders) and `/reference/admin-ui/overview` (three falsification-pass behaviours in the sidebar section; parent detail view reworded as additive).
+
+### Phase 5: Cleanup — decompose the two 400-cap-busting admin files this plan grew
+
+**Goal**: decompose what this plan grew per cohesive-module extraction (the enabled domain extensions are typescript + testing — no react/nextjs extension, so the idiom is module/function extraction, not framework-specific splitting). Flagged by `listOversizedChangedFiles` vs `main`: `PlanDetail.tsx` 704/400, `PlanDetail.test.tsx` 803/400, `planning-reader.ts` 465/400. Each item is a concrete extraction or a reasoned leave-as-is; T16 pins the whole phase as behavior-parity.
+
+- [ ] Extract the parent-detail unit — `ParentPlanView`, `SubplanCard`, `SubplanPlaceholderCard`, `planStage`, and the `SubplanEntry` type — from `PlanDetail.tsx` into `apps/indusk-admin/src/components/ParentPlanView.tsx`. This is the cohesive unit Phase 3 added to a file already past its cap; `PlanDetail` and `plan/[name]/page.tsx` import from the new file.
+- [ ] Extract the falsification renderers — `FalsificationSection`, `FalsificationPhaseSection`, `HypothesisItem`, `isHypothesis`, `isTerminator`, `outcomeToBadge` — from `PlanDetail.tsx` into `apps/indusk-admin/src/components/FalsificationSection.tsx`, and move their describe blocks from `PlanDetail.test.tsx` into a new `FalsificationSection.test.tsx` (tests follow the unit; this also relieves the 803-line test file). Largest self-contained unit in the flagged file, with its own helpers and no coupling beyond the `Plan`/`Phase` types.
+- [ ] Extract the duplicated badge maps — `statusToBadge` (verbatim-identical in `PlanList.tsx` and `PlanDetail.tsx`) plus `stateToBadge` — into `apps/indusk-admin/src/components/ui/badge-variant.ts`; both components import the single source.
+- [ ] Extract the research-directory reader — `ResearchEntry`, `readProjectResearch`, `readResearchContent`, `readFirstH1` — from `planning-reader.ts` into `apps/indusk-admin/src/lib/research-reader.ts` (the section is already boundary-commented and shares nothing with plan parsing). **Watch the known gotcha:** `page.test.tsx` mocks `@/lib/planning-reader` with every export the layout imports — the layout will now import research reads from the new module, so the mock must split accordingly.
+- [ ] (reviewed the `vi.mock("next/link")` block repeated in 10 test files — left as-is: vitest hoists mock factories per-file by design, and the repo's convention is an inline copy with a comment pointing at `PlanList.test.tsx` as canonical; extracting through an async factory helper would add indirection exactly where debugging needs explicitness)
+- [ ] (reviewed `PlanList.tsx` (~300 LOC, under cap) — left as-is: `buildGroups` + the group/item renderers are one cohesive sidebar concern; `plan/[name]/page.tsx` — thin route wrapper by design; `plan-parser.ts` — under cap, the declarations section is cohesive with the rest of the parser)
+
+#### Phase 5 Verification
+- [ ] T16: behavior parity — full admin suite green after the extractions with zero assertion or testid changes (`pnpm vitest run` in `apps/indusk-admin`), mcp suite unchanged vs baseline, `pnpm exec tsc --noEmit` + `biome check` clean in both apps.
+
+#### Phase 5 Context
+- [ ] Update CLAUDE.md's admin-UI gotcha line with the post-decomposition structure: parent-detail cards live in `ParentPlanView.tsx`, falsification renderers in `FalsificationSection.tsx`, badge maps in `ui/badge-variant.ts`, research reading in `lib/research-reader.ts`.
+
+#### Phase 5 Document
+- [ ] Update `/reference/admin-ui/component-conventions`: the "Data layer" section notes the `planning-reader` / `research-reader` split, and the primitives section gains `badge-variant.ts` as the shared status/state→variant map.
