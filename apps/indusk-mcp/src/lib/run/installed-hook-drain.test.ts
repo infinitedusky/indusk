@@ -81,7 +81,11 @@ describe("A14 — the drain works through the installed hook path", () => {
 
 		const { stderr } = await execFileAsync(
 			process.execPath,
-			["--no-warnings", join(project.root, ".claude", "hooks", "eval-trigger.js"), "--drain-pending"],
+			[
+				"--no-warnings",
+				join(project.root, ".claude", "hooks", "eval-trigger.js"),
+				"--drain-pending",
+			],
 			{
 				cwd: project.root,
 				env: { ...process.env, INDUSK_EVAL_CMD: `${process.execPath} ${stubPath}` },
@@ -92,9 +96,7 @@ describe("A14 — the drain works through the installed hook path", () => {
 		expect(stderr).toContain("Drained 2 pending eval(s)");
 
 		// …and actually evaluated both records.
-		const results = (
-			await readFile(join(project.root, ".indusk", "eval", "results.log"), "utf8")
-		)
+		const results = (await readFile(join(project.root, ".indusk", "eval", "results.log"), "utf8"))
 			.split("\n")
 			.filter((l) => l.trim());
 		expect(results).toHaveLength(2);
@@ -102,7 +104,11 @@ describe("A14 — the drain works through the installed hook path", () => {
 		// Both are ledgered, so a re-drain is a no-op.
 		const second = await execFileAsync(
 			process.execPath,
-			["--no-warnings", join(project.root, ".claude", "hooks", "eval-trigger.js"), "--drain-pending"],
+			[
+				"--no-warnings",
+				join(project.root, ".claude", "hooks", "eval-trigger.js"),
+				"--drain-pending",
+			],
 			{
 				cwd: project.root,
 				env: { ...process.env, INDUSK_EVAL_CMD: `${process.execPath} ${stubPath}` },

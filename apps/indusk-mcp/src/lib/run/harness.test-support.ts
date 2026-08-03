@@ -167,6 +167,15 @@ export function phase1ImplItems(content: string): string[] {
 		.filter((l) => l.startsWith("- [ ]"));
 }
 
+/**
+ * The Phase 1 implementation items as one contiguous block — the shape an
+ * `edit` old_string needs when a scripted model checks them off in a single
+ * call. (`phase1ImplItems` is the same content per-line.)
+ */
+export function phase1ImplBlock(content: string): string {
+	return phase1ImplItems(content).join("\n");
+}
+
 /** The single Phase 1 Verification checklist line of the guinea-pig impl. */
 export function phase1VerificationLine(content: string): string {
 	const start = content.indexOf("#### Phase 1 Verification");
