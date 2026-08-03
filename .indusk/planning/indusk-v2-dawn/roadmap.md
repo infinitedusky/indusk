@@ -6,6 +6,8 @@ status: living
 
 # Dawn — Roadmap
 
+> **The live sequence is [master.md](master.md)** — components, status, order, and acceptance tests. This file holds direction and horizon only.
+
 Horizons for Dawn, near → far. Everything is checked against the [maxims](maxims.md). The **Later / ambitious** items are captured on purpose — direction we believe in even if we won't reach it soon. They are *not* commitments or scheduled work; they exist so the intent isn't lost.
 
 ## Now — in flight
