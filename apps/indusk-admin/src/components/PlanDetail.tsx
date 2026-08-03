@@ -1,11 +1,8 @@
-import type {
-  HypothesisEntry,
-  HypothesisOutcome,
-  LogEntry,
-  TerminatorEntry,
-} from "@infinitedusky/indusk-mcp/falsification/log";
+import { FalsificationSection } from "@/components/FalsificationSection";
 import { Markdown } from "@/components/Markdown";
-import { Badge, type BadgeVariant } from "@/components/ui/Badge";
+import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
+import { Badge } from "@/components/ui/Badge";
+import { stateToBadge, statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
 import {
@@ -17,14 +14,11 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import {
-  falsificationLogMarkdown,
-  falsificationPhaseMarkdown,
   phaseMarkdown,
   planMarkdown,
   sectionMarkdown,
 } from "@/lib/markdown-export";
 import {
-  extractChecklistItems,
   extractPhases,
   type Phase,
   splitPhasesAroundFalsification,
@@ -33,6 +27,19 @@ import type { Plan } from "@/lib/planning-reader";
 
 interface PlanDetailProps {
   plan: Plan;
+  /**
+   * Declared subplans when this plan is a parent (its master.md names
+   * `subplans:`). Non-empty → the detail view renders master prose + a card
+   * per subplan first, then whatever standard document sections the plan
+   * actually carries — additive, never suppressing (T12). A typical parent
+   * carries only master.md/maxims.md (outside DOC_FILES), so usually the
+   * cards stand alone.
+   */
+  subplans?: SubplanEntry[];
+  /** The parent's own master.md prose, rendered above the cards. */
+  masterContent?: string;
+  /** Route prefix for subplan card links — same convention as PlanList. */
+  planHrefPrefix?: string;
 }
 
 /**
@@ -48,7 +55,24 @@ interface PlanDetailProps {
  * surface a banner indicating malformed YAML; the components-that-can-render
  * still render with whatever data they have.
  */
-export function PlanDetail({ plan }: PlanDetailProps) {
+export function PlanDetail({
+  plan,
+  subplans,
+  masterContent,
+  planHrefPrefix = "/plan/",
+}: PlanDetailProps) {
+  const isParent = subplans !== undefined && subplans.length > 0;
+  // A plan with no documents at all (a parent whose declarations are missing
+  // or corrupt, a bare folder) renders header-only — an empty Falsification
+  // section on a doc-less plan is noise, not information.
+  const hasAnyDocument =
+    plan.research !== undefined ||
+    plan.brief !== undefined ||
+    plan.testPlan !== undefined ||
+    plan.adr !== undefined ||
+    plan.impl !== undefined ||
+    plan.falsification !== undefined ||
+    plan.retrospective !== undefined;
   return (
     <article
       className="flex flex-col gap-6"
@@ -61,6 +85,14 @@ export function PlanDetail({ plan }: PlanDetailProps) {
 
       {plan.malformed && plan.rawDocuments && (
         <RawDocumentsSection rawDocuments={plan.rawDocuments} />
+      )}
+
+      {isParent && subplans && (
+        <ParentPlanView
+          subplans={subplans}
+          masterContent={masterContent}
+          prefix={planHrefPrefix}
+        />
       )}
 
       {plan.research && (
@@ -104,7 +136,9 @@ export function PlanDetail({ plan }: PlanDetailProps) {
       )}
 
       {plan.impl && <ImplSections plan={plan} />}
-      {!plan.impl && <FalsificationSection plan={plan} phase={null} />}
+      {!plan.impl && hasAnyDocument && (
+        <FalsificationSection plan={plan} phase={null} />
+      )}
     </article>
   );
 }
@@ -307,233 +341,4 @@ function RawDocumentsSection({
       </div>
     </section>
   );
-}
-
-function FalsificationSection({
-  plan,
-  phase,
-}: {
-  plan: Plan;
-  phase: Phase | null;
-}) {
-  // Priority: phase-authoring flow (new, 1.27.4+) > legacy log file > empty state.
-  if (phase) {
-    return <FalsificationPhaseSection phase={phase} />;
-  }
-  if (!plan.falsification) {
-    return (
-      <section
-        className="flex flex-col gap-2"
-        data-testid="falsification-section"
-      >
-        <header className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900">
-            Falsification
-          </h2>
-          <CopyButton text={falsificationLogMarkdown(undefined)} />
-        </header>
-        <p className="text-sm text-gray-500" data-testid="falsification-empty">
-          No falsification ritual run for this plan.
-        </p>
-      </section>
-    );
-  }
-
-  const hypotheses = plan.falsification.entries.filter(isHypothesis);
-  const terminator = plan.falsification.entries.find(isTerminator);
-
-  return (
-    <section
-      className="flex flex-col gap-2"
-      data-testid="falsification-section"
-    >
-      <header className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-gray-900">Falsification</h2>
-        <span className="flex items-center gap-2">
-          <Badge variant={plan.falsification.complete ? "passing" : "writable"}>
-            {plan.falsification.complete ? "complete" : "in-progress"}
-          </Badge>
-          <CopyButton text={falsificationLogMarkdown(plan.falsification)} />
-        </span>
-      </header>
-      {hypotheses.length === 0 && (
-        <p className="text-sm text-gray-500">No hypotheses logged yet.</p>
-      )}
-      {hypotheses.length > 0 && (
-        <ul
-          className="flex flex-col gap-3"
-          data-testid="falsification-hypotheses"
-        >
-          {hypotheses.map((entry) => (
-            <HypothesisItem
-              key={`${entry.timestamp}-${entry.hypothesis.slice(0, 32)}`}
-              entry={entry}
-            />
-          ))}
-        </ul>
-      )}
-      {terminator && (
-        <div
-          className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-          data-testid="falsification-terminator"
-        >
-          <span className="font-semibold">Terminated:</span> {terminator.reason}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/**
- * Render a falsification phase (new phase-authoring flow, 1.27.4+). Hypotheses
- * come from the phase's trajectory rows (each row == one hypothesis); fix items
- * come from the phase's checklist. Status badge derives from the combined state
- * of trajectory rows + unchecked checklist items.
- */
-function FalsificationPhaseSection({ phase }: { phase: Phase }) {
-  const checklistItems = extractChecklistItems(phase.content);
-  const allTrajectoryTerminal = phase.trajectoryRows.every(
-    (r) => r.state === "passing" || r.state === "skipped",
-  );
-  const allItemsChecked = checklistItems.every((i) => i.checked);
-  const complete = allTrajectoryTerminal && allItemsChecked;
-
-  return (
-    <section
-      className="flex flex-col gap-2"
-      data-testid="falsification-section"
-    >
-      <header className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-gray-900">
-          Falsification
-          {phase.title ? (
-            <span className="ml-2 text-sm font-normal text-gray-500">
-              (Phase {phase.number}: {phase.title})
-            </span>
-          ) : null}
-        </h2>
-        <span className="flex items-center gap-2">
-          <Badge variant={complete ? "passing" : "writable"}>
-            {complete ? "complete" : "in-progress"}
-          </Badge>
-          <CopyButton text={falsificationPhaseMarkdown(phase)} />
-        </span>
-      </header>
-
-      {phase.trajectoryRows.length > 0 && (
-        <div data-testid="falsification-hypotheses">
-          <h3 className="text-sm font-semibold text-gray-800 mt-1">
-            Hypotheses
-          </h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Asserts</TableHead>
-                <TableHead>State</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {phase.trajectoryRows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>
-                    <span className="font-mono text-xs">{row.id}</span>
-                  </TableCell>
-                  <TableCell>{row.asserts}</TableCell>
-                  <TableCell>
-                    <Badge variant={stateToBadge(row.state)}>{row.state}</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {checklistItems.length > 0 && (
-        <div data-testid="falsification-fix-items" className="mt-2">
-          <h3 className="text-sm font-semibold text-gray-800">Fix items</h3>
-          <ul className="flex flex-col gap-1">
-            {checklistItems.map((item) => (
-              <li
-                key={`${item.checked ? "x" : "o"}-${item.text}`}
-                className="flex items-start gap-2 text-sm text-gray-700"
-              >
-                <span className="font-mono text-xs text-gray-500">
-                  [{item.checked ? "x" : " "}]
-                </span>
-                <span
-                  className={item.checked ? "text-gray-500 line-through" : ""}
-                >
-                  {item.text}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function HypothesisItem({ entry }: { entry: HypothesisEntry }) {
-  return (
-    <li
-      className="flex flex-col gap-1 rounded border border-gray-200 px-3 py-2"
-      data-testid={`hypothesis-${entry.outcome}`}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold text-gray-900">Hypothesis</span>
-        <Badge variant={outcomeToBadge(entry.outcome)}>{entry.outcome}</Badge>
-      </div>
-      <p className="text-sm text-gray-700">{entry.hypothesis}</p>
-      {entry.testPath && (
-        <p className="text-xs text-gray-500 font-mono">{entry.testPath}</p>
-      )}
-      {entry.note && <p className="text-xs text-gray-500">{entry.note}</p>}
-    </li>
-  );
-}
-
-function isHypothesis(entry: LogEntry): entry is HypothesisEntry {
-  return entry.kind === "hypothesis";
-}
-
-function isTerminator(entry: LogEntry): entry is TerminatorEntry {
-  return entry.kind === "terminator";
-}
-
-function outcomeToBadge(outcome: HypothesisOutcome): BadgeVariant {
-  if (outcome === "fix-in-scope") return "passing";
-  if (outcome === "spawn-plan") return "writable";
-  return "neutral"; // accept-finding
-}
-
-function statusToBadge(status: string): BadgeVariant {
-  const normalized = status.toLowerCase();
-  if (normalized.includes("completed") || normalized.includes("passing"))
-    return "passing";
-  if (normalized.includes("blocked")) return "blocked";
-  if (normalized.includes("in-progress") || normalized.includes("accepted"))
-    return "writable";
-  if (normalized.includes("draft") || normalized.includes("planned"))
-    return "planned";
-  return "neutral";
-}
-
-function stateToBadge(state: string): BadgeVariant {
-  const normalized = state.toLowerCase();
-  if (
-    [
-      "passing",
-      "blocked",
-      "skipped",
-      "planned",
-      "writable",
-      "written",
-    ].includes(normalized)
-  ) {
-    return normalized as BadgeVariant;
-  }
-  return "neutral";
 }
