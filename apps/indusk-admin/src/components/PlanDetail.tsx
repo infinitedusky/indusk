@@ -71,6 +71,7 @@ interface PlanDetailProps {
 export function PlanDetail({
   plan,
   subplans,
+  masterContent,
   planHrefPrefix = "/plan/",
 }: PlanDetailProps) {
   const isParent = subplans !== undefined && subplans.length > 0;
@@ -100,7 +101,11 @@ export function PlanDetail({
       )}
 
       {isParent && subplans && (
-        <ParentPlanView subplans={subplans} prefix={planHrefPrefix} />
+        <ParentPlanView
+          subplans={subplans}
+          masterContent={masterContent}
+          prefix={planHrefPrefix}
+        />
       )}
 
       {!isParent && plan.research && (
@@ -197,24 +202,33 @@ function ImplSections({ plan }: { plan: Plan }) {
  */
 function ParentPlanView({
   subplans,
+  masterContent,
   prefix,
 }: {
   subplans: SubplanEntry[];
+  masterContent?: string;
   prefix: string;
 }) {
   return (
-    <section className="flex flex-col gap-2" data-testid="subplan-cards">
-      <h2 className="text-base font-semibold text-gray-900">Subplans</h2>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {subplans.map((entry) =>
-          entry.plan ? (
-            <SubplanCard key={entry.name} plan={entry.plan} prefix={prefix} />
-          ) : (
-            <SubplanPlaceholderCard key={entry.name} name={entry.name} />
-          ),
-        )}
-      </div>
-    </section>
+    <>
+      {masterContent && (
+        <section data-testid="parent-master-prose">
+          <Markdown>{masterContent}</Markdown>
+        </section>
+      )}
+      <section className="flex flex-col gap-2" data-testid="subplan-cards">
+        <h2 className="text-base font-semibold text-gray-900">Subplans</h2>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {subplans.map((entry) =>
+            entry.plan ? (
+              <SubplanCard key={entry.name} plan={entry.plan} prefix={prefix} />
+            ) : (
+              <SubplanPlaceholderCard key={entry.name} name={entry.name} />
+            ),
+          )}
+        </div>
+      </section>
+    </>
   );
 }
 

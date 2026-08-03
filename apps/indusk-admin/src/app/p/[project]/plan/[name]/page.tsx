@@ -4,6 +4,7 @@ import {
   readActivePlans,
   readArchivedPlans,
   readPlanHierarchy,
+  readPlanMasterContent,
 } from "@/lib/planning-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
@@ -46,17 +47,20 @@ export default async function PlanPage({ params }: PlanPageProps) {
   // grouping never hides a plan.
   const declared = readPlanHierarchy(projectPath).subplans[name] ?? [];
   let subplans: SubplanEntry[] | undefined;
+  let masterContent: string | undefined;
   if (declared.length > 0) {
     const byName = new Map(
       [...active, ...archived].map((p) => [p.name, p] as const),
     );
     subplans = declared.map((n) => ({ name: n, plan: byName.get(n) }));
+    masterContent = (await readPlanMasterContent(projectPath, name)) ?? undefined;
   }
 
   return (
     <PlanDetail
       plan={plan}
       subplans={subplans}
+      masterContent={masterContent}
       planHrefPrefix={`/p/${project}/plan/`}
     />
   );

@@ -323,6 +323,24 @@ export function readMasterPlanOrder(projectRoot: string): string[] {
 }
 
 /**
+ * The prose body of a plan's own `master.md` — a parent plan's sequence and
+ * its reasoning. Returns null when the file is absent or malformed; the
+ * detail view simply omits the prose. Subplan cards never depend on it —
+ * declarations come from `readPlanHierarchy`, not from here.
+ */
+export async function readPlanMasterContent(
+  projectRoot: string,
+  planName: string,
+): Promise<string | null> {
+  const doc = await readDoc(
+    join(projectRoot, PLANNING_DIR, planName),
+    MASTER_FILE,
+  );
+  if (doc === null || isMalformed(doc)) return null;
+  return doc.content;
+}
+
+/**
  * Read `.indusk/eval/results.log` (jsonl, one scorecard per line) and return
  * scorecards filtered to the supplied date range. Malformed lines are skipped
  * silently — `results.log` is append-only and may contain partial entries from
