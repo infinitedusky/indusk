@@ -38,15 +38,15 @@ Give the thin lane the same footprint as a Claude Code session: every invariant 
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | a thin-lane run that pushes CLAUDE.md past budget has the write refused with the shared script's own block message | Phase 0 | Phase 1 | planned |
-| A2 | a run leaves one git commit per completed checklist item, each message naming its item | Phase 0 | Phase 2 | planned |
-| A3 | after a run, the pending queue holds exactly one record per commit made | Phase 0 | Phase 3 | planned |
-| A4 | draining produces one scorecard per pending record; a second drain produces nothing new | Phase 0 | Phase 3 | planned |
-| A5 | a failed commit is surfaced loudly and adds no queue record | Phase 0 | Phase 2 | planned |
-| A6 | an `ask` plan whose model attempts a proof-less gate skip pauses: exit 3, gate question printed — no red-stop, no proceed | Phase 0 | Phase 4 | planned |
-| A7 | after conversation proof is added to the impl, a re-run continues past the paused phase | Phase 0 | Phase 4 | planned |
-| A8 | no `gate_policy` frontmatter behaves as `ask` in the thin lane; explicit `auto` runs unpaused as today | Phase 0 | Phase 4 | planned |
-| A9 | a run on a machine without the `claude` CLI completes normally and still fills the queue | Phase 0 | Phase 3 | planned |
+| A1 | a thin-lane run that pushes CLAUDE.md past budget has the write refused with the shared script's own block message | Phase 0 | Phase 1 | written |
+| A2 | a run leaves one git commit per completed checklist item, each message naming its item | Phase 0 | Phase 2 | written |
+| A3 | after a run, the pending queue holds exactly one record per commit made | Phase 0 | Phase 3 | written |
+| A4 | draining produces one scorecard per pending record; a second drain produces nothing new | Phase 0 | Phase 3 | written |
+| A5 | a failed commit is surfaced loudly and adds no queue record | Phase 0 | Phase 2 | written |
+| A6 | an `ask` plan whose model attempts a proof-less gate skip pauses: exit 3, gate question printed — no red-stop, no proceed | Phase 0 | Phase 4 | written |
+| A7 | after conversation proof is added to the impl, a re-run continues past the paused phase | Phase 0 | Phase 4 | written |
+| A8 | no `gate_policy` frontmatter behaves as `ask` in the thin lane; explicit `auto` runs unpaused as today | Phase 0 | Phase 4 | written |
+| A9 | a run on a machine without the `claude` CLI completes normally and still fills the queue | Phase 0 | Phase 3 | written |
 
 All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness.test-support.ts`) drives the real loop today, and every assertion fails red against current behavior for its real reason (no budget script in the chain, zero commits, no queue file, exit 1 instead of 3, auto-by-contract). No Trajectory Rationale subsection is required — no row is Writable at Phase 1+.
 
@@ -55,7 +55,7 @@ All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness
 ### Phase 1: Budget hook + red suite
 
 - [x] Worktree kickoff: created at `~/code/sandbox/dusk-worktrees/dawn-hook-parity` on branch `plan/dawn-hook-parity` + `pnpm install`. Note: `indusk worktree create` errored (`_resolve_workbench_root: no workbench-shaped .indusk/config.json`) — the worktree extension assumes workbench mode; plain `git worktree add` per the established convention. Same limitation hit by prior plans; candidate fix belongs to the worktree extension, not this plan.
-- [ ] Author A1–A9 red (test-first) against the scripted-driver harness: gate-chain tests beside `gate.test.ts`, loop-behavior tests beside `loop.test.ts`, queue tests in a new `pending-queue.test.ts`. Fixtures: temp project with near-budget CLAUDE.md (A1), temp git repo with a two-item single-phase plan (A2/A3/A5), `ask`/`auto`/unset-policy plan variants (A6–A8), child env with `claude`-less PATH (A9). Confirm each fails for its stated reason; capture the failure output.
+- [x] Author A1–A9 red (test-first): `hook-parity.gate.test.ts` (A1), `commit-cadence.test.ts` (A2/A5), `pending-queue.test.ts` (A3/A4/A9), `ask-pause.test.ts` (A6–A8). Shared scripted-model helpers (`toolCallStep`/`finishStep`/`guineaPigHappyPathSteps` + fixture sources) extracted to `harness.test-support.ts` (fourth consumer — loop.test.ts keeps its local copies for the cleanup ritual to converge). Red confirmed for stated reasons: A1 "Wrote 62475 chars to CLAUDE.md." (write sailed through), A2 zero commits, A3 caught VACUOUS-GREEN in first draft (0 records == 0 commits) — hardened with an explicit `> 0` guard, A5 no failure surfaced, A6–A8 `stopped-red` instead of `paused-gate-question`, A9 empty queue. Deviations from the item's sketch: A5 uses a rejecting pre-commit hook (deterministic regardless of machine git identity), A9 uses a poison-`claude` PATH stub asserting zero invocations (absence-of-PATH would break git/node too) — the poison stub also keeps A4's red run from ever spawning a real evaluator. Preservation greens from birth: under-budget writes still apply; explicit-`auto` runs unpaused.
 - [ ] Extend `GATE_SCRIPT_NAMES` in `src/lib/run/gate.ts` with `claude-md-budget.js` (chain membership only — the script self-filters by basename; block message passes through verbatim).
 - [ ] Correct the Dawn master's Component 2 row: hook inventory is 5 (`check-plan-order.js` deleted in `62186774`), 3 unwired at plan start; note the `gate-reminder` shed with a pointer to the ADR.
 
