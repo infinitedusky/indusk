@@ -48,6 +48,16 @@ Open this file to answer "where are we." If the answer isn't here, the answer do
 - **6 is the keystone.** The whole integration strategy rests on one untested assumption: *phase-boundary verification is sufficient enforcement when Dawn doesn't control the agent.* Nothing after it is safe to plan until that's answered.
 - **7 and 8 branch on 6's result.** If boundary verification holds, integration is a thin skin over a proven command. If it leaks, 7 becomes per-agent seam work — starting with Claude Code's PreToolUse, the one seam known to be real — and the ACP question needs its own spike.
 
+## The enforcement ladder
+
+Three tiers, by who owns the tool executor (recorded 2026-08-03; this is the rationale behind the 2 → 6 → 7 order):
+
+1. **atdawn** — Dawn owns the executor; gates are wired into the write path itself (components 1–3, completed by component 2's parity work). Prevention: a refused write never exists.
+2. **Harnesses with deny-capable hooks** — use theirs, same gate scripts, their seam. Claude Code's PreToolUse is the **one seam verified real**; every other harness's (Cursor, ACP) must be verified deny-capable before being trusted — that verification is component 7's first task.
+3. **Harnesses Dawn doesn't control** — prompting is alignment lubricant, never enforcement. The enforcement is phase-boundary verification + reject-and-rerun (component 6): git before-snapshot, catch premature checkoff / goalpost drift / red tests, revert to snapshot — never rewrite history.
+
+Component 6's verify is also the **universal floor**: it runs on every tier as detection defense-in-depth, which is why nothing after it is safe to plan until it's proven.
+
 ## Open decisions
 
 - **Component 4 — does the harness stay thin?** The strategy says yes: it is the control group and the cheap mechanical lane, not a product. Every Claude Code feature it lacks (context compaction, subagents, an ask channel, conventions injection, grep/glob) is then *scope*, not a gap. **Until this is written down as a decision, those gaps will keep resurfacing as bugs.** Recommended: decide thin, record as an ADR under this plan.

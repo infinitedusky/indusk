@@ -87,6 +87,7 @@ dusk/
 - Git-only substrate (1.31.0): jj ripped out entirely; parity via deletion; content-keyed dedup handles rebase — see `/decisions/git-only-substrate` (supersedes `/decisions/git-or-jj-substrate`)
 - Worktree visibility: worktree-per-plan default + live worktree/branch columns + collision flag; kickoff is a nudge, not a gate — see `/decisions/worktree-visibility`
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
+- Dawn hook parity: invariants + eval rail in the thin lane — loop-owned per-item commits, pending-eval queue with external drain, headless `ask`=pause (ask default both lanes), gate-reminder shed — see `.indusk/planning/dawn-hook-parity/adr.md`
 - InDusk Makeover (2026-07-23): budgets + decay + removal — 60 KB CLAUDE.md hard budget w/ write-time hook + compaction ritual; Graphiti + CGC removed entirely (highlight→eval→**lessons** rail preserved); current.md sweep + dead-draft auto-archive; catchup diet ≤15k; MCP keep-lists (project: indusk/dash0/posthog/jaeger — jaeger critical; global: playwright only); hub push/pull at catchup cadence. Supersedes context-budget; rejects Graphiti-as-canonical-store, CGC-with-hygiene, discipline-only compression, load-time truncation. — see `.indusk/planning/indusk-makeover/adr.md`
 
 ## Known Gotchas
