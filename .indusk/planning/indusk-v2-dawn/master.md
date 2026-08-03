@@ -30,9 +30,9 @@ Open this file to answer "where are we." If the answer isn't here, the answer do
 
 | # | Component | Status | What remains | Acceptance test | Sub-plan |
 |---|-----------|--------|--------------|-----------------|----------|
-| 1 | **Model-agnostic execution** — call any provider's model through one loop | **Done — A8 signed off 2026-08-03** | Acceptance met (matrix.md: 9 cells, mutation-based quality read — 8/8 kills across all models/harnesses; flash-for-mechanical routing; trajectories must name every deliverable). Remaining close-out items: config.env loader gap; `gpt`/`grok` factories | `atdawn run <plan> --model X` takes a plan to impl-complete | [dawn-external-orchestrator](../dawn-external-orchestrator/) |
+| 1 | **Model-agnostic execution** — call any provider's model through one loop | **Done — A8 signed off 2026-08-03** | Acceptance met (matrix.md: 9 cells, mutation-based quality read — 8/8 kills across all models/harnesses; flash-for-mechanical routing; trajectories must name every deliverable). Remaining close-out items: config.env loader gap; `gpt`/`grok` factories | `atdawn run <plan> --model X` takes a plan to impl-complete | [dawn-external-orchestrator](../archive/dawn-external-orchestrator/) |
 | 2 | **Gate portability** — InDusk's hooks enforce outside Claude Code | **Partial** | 4 of 6 hooks unwired (`check-plan-order`, `claude-md-budget`, `gate-reminder`, `eval-trigger`); `gate_policy` forced to `auto` | A fresh plan executes identically under both lanes, hook for hook | `dawn-hook-parity` *(not created)* |
-| 3 | **Loop control** — the autopilot contract, ported | **Done** | — | Per-phase scope, advance-on-green probe, goalpost guard, human-gate pause, red-stop — all green (T5/T6) | [dawn-external-orchestrator](../dawn-external-orchestrator/) |
+| 3 | **Loop control** — the autopilot contract, ported | **Done** | — | Per-phase scope, advance-on-green probe, goalpost guard, human-gate pause, red-stop — all green (T5/T6) | [dawn-external-orchestrator](../archive/dawn-external-orchestrator/) |
 | 4 | **Harness** — the tools the model works through | **Deliberately thin** | *A decision, not a gap* — see Open Decisions | n/a until the decision lands | — |
 | 5 | **Headless/remote execution** | **Spiked once** | Manual provisioning; Fly rootfs is ephemeral; no bootstrap script or baked image | One command produces a working box that runs a plan | `dawn-cloud` *(not created)* |
 | 6 | **Verification of work Dawn didn't do** | **Not started** | Everything — `atdawn verify <plan> --phase N`, git-based before-snapshot | Catches a bad phase executed in Cursor: premature checkoff, goalpost drift, red tests | `dawn-verify` *(not created)* |
@@ -72,7 +72,7 @@ Kept so the intent isn't lost. None of these are scheduled, and none should star
 
 | Plan | Component(s) | Stage |
 |------|--------------|-------|
-| [dawn-external-orchestrator](../dawn-external-orchestrator/) | 1, 3 (+ partial 2, spike 5) | impl complete; awaiting A8 + retrospective |
+| [dawn-external-orchestrator](../archive/dawn-external-orchestrator/) | 1, 3 (+ partial 2, spike 5) | closed; archived 2026-08-03 (A8 signed off) |
 | [dawn-ui-plan-grouping](../archive/dawn-ui-plan-grouping/) | 0 — hierarchy visible in the admin UI | complete; archived 2026-08-03 |
 
 Everything else in the components table is unwritten. Create each with `/planner` when its turn comes — not before.
