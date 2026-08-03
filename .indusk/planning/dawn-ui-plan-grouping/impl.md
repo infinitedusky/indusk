@@ -47,11 +47,11 @@ The invariant that outranks the feature: **grouping never hides a plan.** Any mi
 | T8 | declaring a plan as a parent when it owns no subplans leaves it displayed as an ordinary plan, not an empty group | Phase 1 | Phase 1 | passing |
 | T9 | the plan list the CLI and MCP report is unchanged by this feature — grouping is display-only | Phase 1 | Phase 1 | passing |
 | T10 | opening a parent plan shows its subplans as cards with their status, instead of an empty page | Phase 3 | Phase 3 | passing |
-| T11 | a subplan whose folder lives in `archive/` renders as a navigable item with its real status — in both the sidebar group and the parent detail cards — never as a "queued" placeholder | Phase 0 | Phase 4 | written |
-| T12 | a parent plan that also carries standard documents (e.g. a brief) still renders those documents alongside its subplan cards — the parent branch adds, it never suppresses | Phase 0 | Phase 4 | written |
-| T13 | with two or more parents, sidebar groups follow the roadmap's declared order, not parser iteration order | Phase 0 | Phase 4 | written |
-| T14 | a declared name that is not a single clean path segment (`/`, `\`, or `..`) is ignored everywhere — it reaches neither a filesystem path join nor the rendered sidebar | Phase 0 | Phase 4 | written |
-| T15 | a name declared twice in one `subplans:` list renders once (first occurrence) — no duplicate sidebar items, no duplicate React keys | Phase 0 | Phase 4 | written |
+| T11 | a subplan whose folder lives in `archive/` renders as a navigable item with its real status — in both the sidebar group and the parent detail cards — never as a "queued" placeholder | Phase 0 | Phase 4 | passing |
+| T12 | a parent plan that also carries standard documents (e.g. a brief) still renders those documents alongside its subplan cards — the parent branch adds, it never suppresses | Phase 0 | Phase 4 | passing |
+| T13 | with two or more parents, sidebar groups follow the roadmap's declared order, not parser iteration order | Phase 0 | Phase 4 | passing |
+| T14 | a declared name that is not a single clean path segment (`/`, `\`, or `..`) is ignored everywhere — it reaches neither a filesystem path join nor the rendered sidebar | Phase 0 | Phase 4 | passing |
+| T15 | a name declared twice in one `subplans:` list renders once (first occurrence) — no duplicate sidebar items, no duplicate React keys | Phase 0 | Phase 4 | passing |
 
 ### Trajectory Rationale
 
@@ -177,11 +177,11 @@ Investigation notes (what was found, ritual 2026-08-03):
 - [x] Guard declaration names at the parser boundary: `isCleanSegment` + dedupe inside `stringArray`, so all three lists (`parents`, `roadmap`, `subplans`) are filtered before any join or render. Degrade silently to structure-loss, never a path join or raw render.
 
 #### Phase 4 Verification
-- [ ] T11: sidebar group + detail cards render an archived subplan as navigable-with-status (red today: sidebar shows a `queued` placeholder; detail already resolves it — assert both surfaces agree)
-- [ ] T12: a parent with a brief renders the brief section alongside its cards (red today: `!isParent` suppresses it)
-- [ ] T13: two parents whose roadmap order differs from parser order render groups in roadmap order (red today: parser order wins)
-- [ ] T14: `parents: ["../outside"]` never causes a read outside the planning dir and never renders (red today: the join happens)
-- [ ] T15: a `subplans:` list naming the same child twice renders one child item (red today: two, with a duplicate-key warning)
+- [x] T11: green — `PlanList.falsify.test.tsx` (archived child renders as link with `completed` badge, no placeholder) + `plan/[name]/page.test.tsx` (name collision resolves the active copy; red output before the fix showed `twincompletedno documents yet`, the archived copy winning verbatim).
+- [x] T12: green — parent with a brief renders `brief-section` alongside `subplan-cards` (`PlanDetail.parent.test.tsx`); full PlanDetail suite 33/33.
+- [x] T13: green — groups render `[plan-group-parent-a, plan-group-parent-b]` per roadmap despite subplans-object order b-first.
+- [x] T14: green — traversal parent name dropped (`parents: []`, no subplans key, `leaked-plan` never read); non-segment subplan names filtered.
+- [x] T15: green — `[twin, other, twin]` → `[twin, other]`. All five red-first, confirmed against the pre-fix code. Suites: admin 145/145 (`tsc` + `biome` clean), mcp 786 passed with the same 3 pre-existing failures as the Phase 3 baseline (`agent-roles-phase4`, the `daemon-identity` PID-reuse pair) — zero new. mcp dist rebuilt so the admin consumes the guarded parser.
 
 #### Phase 4 Context
 - [ ] Extend CLAUDE.md's plan-hierarchy convention line: declaration names are boundary values — segment-guarded and deduped in `readPlanDeclarations`; archived children resolve as real items, not placeholders.
