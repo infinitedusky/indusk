@@ -7,8 +7,8 @@ import {
   readActivePlans,
   readArchivedPlans,
   readPlanHierarchy,
-  readProjectResearch,
 } from "@/lib/planning-reader";
+import { readProjectResearch } from "@/lib/research-reader";
 import {
   getProjectPath,
   projectPathExists,

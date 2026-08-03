@@ -50,6 +50,13 @@ vi.mock("@/lib/planning-reader", () => ({
     roadmap: ["alpha", "beta"],
     subplans: {},
   }),
+}));
+
+// Research reads split out of planning-reader in the dawn-ui-plan-grouping
+// cleanup — the layout imports them from research-reader, so the mock follows
+// (a mock must cover every export the layout imports, per the known gotcha).
+vi.mock("@/lib/research-reader", () => ({
+  __esModule: true,
   readProjectResearch: async () => [],
 }));
 
