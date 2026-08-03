@@ -51,13 +51,11 @@ Give the thin lane the same footprint as a Claude Code session: every invariant 
 | A11 | after a commit fails, the commit that actually carries its work names it — history never contains an item its message does not account for | Phase 0 | Phase 5 | passing |
 | A12 | a drain whose evaluator cannot run leaves the backlog re-drainable and says so loudly — it never silently empties the queue | Phase 0 | Phase 5 | passing |
 | A13 | a commit that lands but whose queue append fails is reported as a commit that landed, and its sha is not lost | Phase 0 | Phase 5 | passing |
-| A14 | the cleanup decomposition is behavior-parity — every existing assertion passes unchanged, and a drain still works when invoked as an installed hook (the extracted module resolves in a consumer project) | Phase 6 | Phase 6 | planned |
+| A14 | the cleanup decomposition is behavior-parity — every existing assertion passes unchanged, and a drain still works when invoked as an installed hook (the extracted module resolves in a consumer project) | Phase 0 | Phase 6 | written |
 
 A1–A13 are all Phase 0 writable: the scripted-driver harness (`src/lib/run/harness.test-support.ts`) drives the real loop today, and every assertion fails red against current behavior for its real reason (no budget script in the chain, zero commits, no queue file, exit 1 instead of 3, auto-by-contract).
 
-### Trajectory Rationale
-
-- **A14** `Writable at: Phase 6` — The row asserts *parity of the Phase 6 extractions*: that the converged shared helpers and the extracted drain module behave identically to the code they replace. Neither exists before Phase 6, so there is nothing to assert parity of — the test's subjects are the new module path and the de-duplicated imports, both compile errors today.
+A14 is Phase 0 writable too, and **green from birth by design** — a preservation guard. The cleanup ritual first wrote it `Writable at: Phase 6` claiming its subjects wouldn't compile beforehand; that was wrong on inspection (a drain through a copied `.claude/hooks/` is runnable today), so it was corrected to Phase 0 rather than left as a rubber-stamped rationale. Its whole job is to stay green across the Phase 6 extractions: if lifting the drain into a hook-local module breaks the installed-hook path, this is the tripwire.
 
 ## Checklist
 
