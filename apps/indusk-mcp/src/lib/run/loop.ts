@@ -6,8 +6,8 @@ import type { Trajectory } from "../trajectory/parser.js";
 import { type CommitRecord, createCommitCadence } from "./commit-cadence.js";
 import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";
 import { resolveGateScripts } from "./gate.js";
-import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
 import { gateQuestionItems, gateQuestionReason, isGateQuestion } from "./gate-question.js";
+import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
 import { appendPendingEval } from "./pending-evals.js";
 import { probePhaseClose } from "./probe.js";
 import type { DriverConfig } from "./registry.js";
@@ -58,6 +58,8 @@ export interface PhaseReport {
 	commits?: CommitRecord[];
 	/** Failed commit attempts, surfaced loudly — bookkeeping, never a gate (A5). */
 	commitFailures?: string[];
+	/** Commits that landed but whose eval-queue append failed (A13). */
+	queueFailures?: string[];
 }
 
 export type RunLoopResult =
@@ -305,6 +307,9 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			usage: result.usage,
 			commits: cadence.commits.filter((c) => c.phase === phase.number),
 			commitFailures: cadence.failures
+				.filter((f) => f.phase === phase.number)
+				.map((f) => f.message),
+			queueFailures: cadence.queueFailures
 				.filter((f) => f.phase === phase.number)
 				.map((f) => f.message),
 		});

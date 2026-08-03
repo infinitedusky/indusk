@@ -47,10 +47,10 @@ Give the thin lane the same footprint as a Claude Code session: every invariant 
 | A7 | after conversation proof is added to the impl, a re-run continues past the paused phase | Phase 0 | Phase 4 | passing |
 | A8 | no `gate_policy` frontmatter behaves as `ask` in the thin lane; explicit `auto` runs unpaused as today | Phase 0 | Phase 4 | passing |
 | A9 | a run on a machine without the `claude` CLI completes normally and still fills the queue | Phase 0 | Phase 3 | passing |
-| A10 | a single edit that checks off several items still yields history that accounts for every one of them — no item silently rides along inside another item's commit | Phase 0 | Phase 5 | written |
-| A11 | after a commit fails, the next successful commit contains only its own item's work — a failed attempt never leaves its files staged to be misattributed | Phase 0 | Phase 5 | written |
-| A12 | a drain whose evaluator cannot run leaves the backlog re-drainable and says so loudly — it never silently empties the queue | Phase 0 | Phase 5 | written |
-| A13 | a commit that lands but whose queue append fails is reported as a commit that landed, and its sha is not lost | Phase 0 | Phase 5 | written |
+| A10 | a single edit that checks off several items still yields history that accounts for every one of them — no item silently rides along inside another item's commit | Phase 0 | Phase 5 | passing |
+| A11 | after a commit fails, the commit that actually carries its work names it — history never contains an item its message does not account for | Phase 0 | Phase 5 | passing |
+| A12 | a drain whose evaluator cannot run leaves the backlog re-drainable and says so loudly — it never silently empties the queue | Phase 0 | Phase 5 | passing |
+| A13 | a commit that lands but whose queue append fails is reported as a commit that landed, and its sha is not lost | Phase 0 | Phase 5 | passing |
 
 All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness.test-support.ts`) drives the real loop today, and every assertion fails red against current behavior for its real reason (no budget script in the chain, zero commits, no queue file, exit 1 instead of 3, auto-by-contract). No Trajectory Rationale subsection is required — no row is Writable at Phase 1+.
 
@@ -134,16 +134,17 @@ Investigation notes (ritual 2026-08-03):
 - **A12 — a broken evaluator silently empties the queue.** The drain appends to the drained ledger *before* spawning and resolves on `close` **regardless of exit code**. Ledger-before-spawn is deliberate (a crash must not double-eval), but the consequence is unguarded: run a drain where the evaluator exits non-zero every time (no `claude`, bad `INDUSK_EVAL_CMD`, missing runner) and every queued record is marked drained with no scorecard written. The backlog vanishes, `check_health` goes quiet, and the lane's lessons are lost — the exact durability the queue exists to provide.
 - **A13 — a landed commit reported as failed.** `appendPendingEval` is inside the same `try` as the git calls, so a queue-write failure (permissions, full disk) is caught as a *commit* failure: the run reports a commit that actually landed as failed, and drops its sha from `commits[]` — the phase report lies about history in the opposite direction.
 
-- [ ] Detect **every** newly-checked item in an edit, not just the first: name them all in the message (or the count plus the first), so no item's work is silently absorbed into another's commit. One commit per edit stays correct (A3's one-record-per-commit invariant holds); what changes is that the message accounts for everything the commit contains.
-- [ ] Reset the index when a commit fails (`git reset` after a failed commit attempt) so a rejected item's files are never carried into the next item's commit. Keep the failure loud as today.
-- [ ] Make the drain honest about evaluator failures: treat a non-zero child exit as a failed drain — keep the record re-drainable (or record it in a failures ledger the drain reports and `check_health` surfaces) instead of leaving it silently marked drained with nothing to show. Report the failed count in the drain's stderr summary.
-- [ ] Separate queue-append failure from commit failure: a landed commit is recorded in `commits[]` and reported as landed even when its queue append throws; the append failure surfaces on its own channel.
+- [x] Detect **every** newly-checked item in an edit: `newlyCheckedItem` → `newlyCheckedItems` (all fresh checkoffs), plus `commitMessageFor` — one item keeps today's subject; several produce `N items checked off` with every item listed in the body. One commit per edit stays correct (A3's invariant holds); the message now accounts for everything the commit contains.
+- [x] Reset the index when a commit fails — **and carry the attribution forward**. `git reset` after a failed attempt, but the falsification's own hypothesis was **refuted while fixing it**: unstaging cannot un-write the working tree, so the failed item's change *is* in the next commit and destroying it would be worse. The real remedy is attribution: failed items go into a `carriedItems` list and the next successful commit names them alongside its own. A11's assertion was rewritten to the achievable invariant — *whatever a commit contains, its message accounts for* — with the refutation recorded in-test and here.
+- [x] Make the drain honest about evaluator failures: `runOne` now resolves with the child's success, and a non-zero exit **un-drains** the record (rewriting the ledger without it) so it stays queued. Ledger-before-spawn survives for crash-safety; the entry is provisional until the evaluator succeeds. Drain stderr reports `N FAILED and remain queued for retry` plus the short shas, and says nothing was lost.
+- [x] Separate queue-append failure from commit failure: the git calls own their `try`, and a landed commit is pushed to `commits[]` before the queue append is attempted in its own `try` → new `queueFailures` channel (`CommitCadence.queueFailures`, surfaced as `PhaseReport.queueFailures`). A commit that lands is reported as landed even when the rail record fails.
 
 #### Phase 5 Verification
-- [ ] A10: a single edit checking off three items yields history accounting for all three (red today: one commit names one item, two ride along unnamed).
-- [ ] A11: a rejected commit followed by a successful one leaves the successful commit containing only its own item's files (red today: the earlier item's files are still staged and get absorbed).
-- [ ] A12: a drain whose evaluator always exits non-zero leaves the backlog re-drainable and reports the failures (red today: queue silently empties, nothing written).
-- [ ] A13: a commit that lands while the queue append throws is reported as landed with its sha retained (red today: reported as a commit failure, sha dropped).
+- [x] A10 green — red first with `expected 'item(… P1): \`pn…' to contain 'compare('`: the batched edit's commit named 1 of 4 items. Now every item appears in the history.
+- [x] A11 green — red first with `expected [ …(2) ] to have a length of 1`, literally showing two checkoffs absorbed into one commit. **The fix refuted the hypothesis**: unstaging is insufficient by construction, so the assertion moved to attribution ("whatever a commit contains, its message accounts for"). Recorded, not silently rewritten.
+- [x] A12 green — red first with `expected 'evaluator unavailable…' to match /fail/i` (the drain said nothing) and all three records marked drained. Now: failures reported, all three still queued.
+- [x] A13 green — red first with `expected [ …(5) ] to have a length of +0`: five landed commits reported as commit failures. Now: shas retained, zero commit failures, the append failure on its own channel.
+- [x] No regressions: run lib **70/70**; `tsc --noEmit` exit 0; `biome check` clean on this plan's files.
 
 #### Phase 5 Context
 - [ ] Record in CLAUDE.md's thin-lane rail entry that a drain never discards a record whose evaluator failed — the queue's durability promise covers evaluator failure, not just crashes.

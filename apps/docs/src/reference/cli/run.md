@@ -76,6 +76,10 @@ The loop — not the model — commits after each checklist-item checkoff surviv
 
 Failure semantics, deliberately asymmetric to the gates: a failed commit (nothing staged, a rejecting hook, signing trouble) is **surfaced loudly on the run report and enqueues nothing — but never stops the run**. Commits are bookkeeping; gates are enforcement. A worktree that is not a git repository disables the cadence with a loud notice (fixture and staging dirs run gate-only).
 
+**A commit's message accounts for everything the commit contains.** Two cases make that non-trivial. When a model checks several items in one edit, the subject counts them and the body lists each. And when a commit fails, its item's work is still in the working tree — unstaging cannot un-write it, and discarding it would destroy real work — so the item is *carried* and named by whichever commit next succeeds. History may batch, but it never contains an item its message doesn't mention.
+
+A commit that lands but whose eval-queue record fails to write is reported as **landed**, with the queue problem on its own channel — the report never claims history that exists doesn't.
+
 One boundary worth knowing: a checkoff performed through `bash` rather than the edit tool is still *gated* (the bash snapshot layer) but fires no commit — the phase contract instructs models to check off via the edit tool.
 
 ## The eval queue
@@ -100,7 +104,7 @@ sequenceDiagram
     D-->>Q: scorecards → results.log
 ```
 
-Draining is `/rail-check`'s job (or `node .claude/hooks/eval-trigger.js --drain-pending` directly). Each record is marked drained **before** its evaluator spawns, so a crashed spawn is a logged gap rather than a double-evaluation — re-running a drain is always safe. `check_health` reports a standing backlog: the queue is durable, so nothing is lost, but un-drained records mean the lane's lessons have not reached the registry yet.
+Draining is `/rail-check`'s job (or `node .claude/hooks/eval-trigger.js --drain-pending` directly). Each record is marked drained **before** its evaluator spawns, so a crashed spawn is a logged gap rather than a double-evaluation — re-running a drain is always safe. That ledger entry is **provisional**: if the evaluator exits non-zero (no `claude` on the machine, a broken runner), the record is un-drained and stays queued, and the drain reports how many failed. A machine that cannot evaluate never destroys the backlog — it just doesn't shrink it. `check_health` reports a standing backlog: the queue is durable, so nothing is lost, but un-drained records mean the lane's lessons have not reached the registry yet.
 
 The queue and its ledger live under `.indusk/eval/` and are deliberately excluded from the run's own commits — run bookkeeping is not plan history.
 

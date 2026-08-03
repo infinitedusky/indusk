@@ -29,7 +29,7 @@
  */
 
 import { execSync, spawn } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
@@ -212,28 +212,55 @@ if (drainPending) {
 					];
 			const args = override ? [...baseArgs, record.sha, recordSource] : baseArgs;
 			const child = spawn(cmd, args, { cwd, stdio: ["ignore", "ignore", "inherit"] });
-			child.on("close", () => resolveRun());
-			child.on("error", () => resolveRun());
+			// Resolve with the outcome: a non-zero exit (or a spawn error) means
+			// this record was NOT evaluated, and must stay re-drainable.
+			child.on("close", (code) => resolveRun(code === 0));
+			child.on("error", () => resolveRun(false));
 		});
 
+	// Ledger-before-spawn keeps a CRASHED drain from double-evaluating, but the
+	// ledger entry is provisional: a record whose evaluator exits non-zero was
+	// never evaluated, so it is un-drained (rewriting the ledger without it)
+	// and stays queued. Otherwise a machine that cannot evaluate — no
+	// `claude`, broken runner — would silently empty the whole backlog while
+	// writing no scorecards, destroying exactly what the queue exists to
+	// protect (A12).
+	const drainedPath = resolve(evalDir, "pending-drained.jsonl");
+	const failed = [];
 	let drainedCount = 0;
 	for (const record of todo) {
 		mkdirSync(evalDir, { recursive: true });
 		appendFileSync(
-			resolve(evalDir, "pending-drained.jsonl"),
+			drainedPath,
 			`${JSON.stringify({ sha: record.sha, drainedAt: new Date().toISOString() })}\n`,
 			"utf8",
 		);
-		await runOne(record);
-		drainedCount++;
+		const ok = await runOne(record);
+		if (ok) {
+			drainedCount++;
+		} else {
+			failed.push(record.sha);
+			// Un-drain: rewrite the ledger without this sha so it is retried.
+			const kept = readJsonl(drainedPath).filter((r) => r.sha !== record.sha);
+			writeFileSync(
+				drainedPath,
+				kept.map((r) => JSON.stringify(r)).join("\n") + (kept.length ? "\n" : ""),
+				"utf8",
+			);
+		}
 	}
 	syslog(
 		statePath,
-		`drain complete — ${drainedCount} drained, ${pending.length - todo.length} already drained`,
+		`drain complete — ${drainedCount} drained, ${failed.length} failed (still queued), ${pending.length - todo.length} already drained`,
 	);
 	process.stderr.write(
-		`📊 Drained ${drainedCount} pending eval(s); ${pending.length - todo.length} already drained. Results land in .indusk/eval/results.log\n`,
+		`📊 Drained ${drainedCount} pending eval(s); ${failed.length} FAILED and remain queued for retry; ${pending.length - todo.length} already drained. Results land in .indusk/eval/results.log\n`,
 	);
+	if (failed.length > 0) {
+		process.stderr.write(
+			`⚠ Evaluation failed for: ${failed.map((s) => s.slice(0, 8)).join(", ")} — nothing was lost; re-run the drain once the evaluator works.\n`,
+		);
+	}
 	process.exit(0);
 }
 

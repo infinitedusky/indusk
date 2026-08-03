@@ -49,6 +49,11 @@ export interface CommitCadence {
 	disabledReason: string | null;
 	commits: CommitRecord[];
 	failures: CommitFailure[];
+	/**
+	 * Commits that LANDED but whose eval-queue append failed (A13). Distinct
+	 * from `failures`: history exists, the rail record does not.
+	 */
+	queueFailures: CommitFailure[];
 }
 
 export interface CommitCadenceOptions {
@@ -62,22 +67,41 @@ export interface CommitCadenceOptions {
 	onCommit?: (record: CommitRecord) => Promise<void>;
 }
 
-/** First newly-checked item's text: present as checked in next, unchecked in prev. */
-export function newlyCheckedItem(oldText: string, newText: string): string | null {
+/**
+ * EVERY item newly checked by an edit — checked in the replacement, unchecked
+ * before it. Returning only the first (pre-falsification behavior) let a
+ * batched checkoff commit several items' work while naming one, so the
+ * history stopped accounting for the rest (A10).
+ */
+export function newlyCheckedItems(oldText: string, newText: string): string[] {
 	const checkedLines = (s: string) =>
 		s
 			.split("\n")
 			.map((l) => l.trim())
 			.filter((l) => l.startsWith("- [x]"));
 	const before = new Set(checkedLines(oldText));
-	const fresh = checkedLines(newText).find((l) => !before.has(l));
-	return fresh ? fresh.replace(/^- \[x\]\s*/, "").trim() : null;
+	return checkedLines(newText)
+		.filter((l) => !before.has(l))
+		.map((l) => l.replace(/^- \[x\]\s*/, "").trim());
 }
 
 /** Truncate an item summary for a one-line commit message. */
 function summarize(item: string): string {
 	const oneLine = item.replace(/\s+/g, " ").trim();
 	return oneLine.length > 72 ? `${oneLine.slice(0, 69)}...` : oneLine;
+}
+
+/**
+ * The commit message for a checkoff event. One item → its summary. Several
+ * (a batched checkoff) → the subject counts them and the body lists every
+ * one, so the commit accounts for all the work it actually contains.
+ */
+export function commitMessageFor(planName: string, phase: number, items: string[]): string {
+	if (items.length === 1) {
+		return `item(${planName} P${phase}): ${summarize(items[0])}`;
+	}
+	const body = items.map((item) => `- ${summarize(item)}`).join("\n");
+	return `item(${planName} P${phase}): ${items.length} items checked off\n\n${body}`;
 }
 
 export async function createCommitCadence(options: CommitCadenceOptions): Promise<CommitCadence> {
@@ -96,6 +120,9 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 
 	const commits: CommitRecord[] = [];
 	const failures: CommitFailure[] = [];
+	const queueFailures: CommitFailure[] = [];
+	/** Items from failed attempts, still uncommitted — named by the next commit. */
+	const carriedItems: string[] = [];
 
 	const onGatedApply = async (
 		name: GatedToolName,
@@ -105,11 +132,20 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 		if (name !== "edit") return;
 		const edit = input as EditToolInput;
 		if (resolveInWorktree(root, edit.path) !== implAbsolute) return;
-		const item = newlyCheckedItem(edit.old_string, edit.new_string);
-		if (!item) return;
+		const items = newlyCheckedItems(edit.old_string, edit.new_string);
+		if (items.length === 0) return;
 
 		const phase = options.getPhase();
-		const message = `item(${planName} P${phase}): ${summarize(item)}`;
+		// Items from earlier failed attempts are still uncommitted in the
+		// working tree, so this commit will contain them — name them (A11).
+		const attributed = [...carriedItems, ...items];
+		const message = commitMessageFor(planName, phase, attributed);
+
+		// The commit itself. A failure here is bookkeeping, never a gate — but
+		// it MUST leave a clean index: `git add` already staged this item's
+		// work, and leaving it staged would silently fold it into whatever
+		// commit succeeds next, misattributing history (A11).
+		let sha: string;
 		try {
 			// Stage the item's work product, but never the run's own eval
 			// bookkeeping: `.indusk/eval/` (the pending queue + drained ledger)
@@ -120,17 +156,47 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 			});
 			await execFileAsync("git", ["commit", "-m", message], { cwd: root });
 			const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: root });
-			const record: CommitRecord = { sha: stdout.trim(), item, phase };
-			commits.push(record);
-			await options.onCommit?.(record);
+			sha = stdout.trim();
 		} catch (error) {
 			const err = error as { stderr?: string; message?: string };
 			failures.push({
 				phase,
 				message: (err.stderr?.trim() || err.message || String(error)).trim(),
 			});
+			// Unstage, so a later `git add` decides staging afresh rather than
+			// inheriting this attempt's index state.
+			await execFileAsync("git", ["reset"], { cwd: root }).catch(() => {
+				// A reset that itself fails is visible in the next commit's diff;
+				// never mask the original failure with this one.
+			});
+			// The work itself is still in the WORKING TREE — unstaging cannot
+			// un-write it, and destroying it would be worse than mis-naming it.
+			// So carry the attribution: whichever commit next succeeds names
+			// these items too, and history accounts for everything it contains
+			// (A11's real remedy — see the Phase 5 note on the refuted "unstage
+			// is enough" hypothesis).
+			carriedItems.push(...items);
+			return;
+		}
+
+		// The commit LANDED. Queue-append failure past this point is its own
+		// channel — reporting it as a commit failure would claim history that
+		// exists does not (A13).
+		const record: CommitRecord = { sha, item: attributed.join(" · "), phase };
+		commits.push(record);
+		carriedItems.length = 0; // attributed — nothing left riding along unnamed
+		try {
+			await options.onCommit?.(record);
+		} catch (error) {
+			const err = error as { message?: string };
+			queueFailures.push({
+				phase,
+				message: `commit ${sha.slice(0, 8)} landed but its eval-queue append failed: ${
+					err.message ?? String(error)
+				}`,
+			});
 		}
 	};
 
-	return { onGatedApply, disabledReason, commits, failures };
+	return { onGatedApply, disabledReason, commits, failures, queueFailures };
 }

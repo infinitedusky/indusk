@@ -113,9 +113,7 @@ describe("A12 — a drain whose evaluator always fails does not eat the queue", 
 
 		// …so nothing may be lost: a second drain must still see all 3 records
 		// as work to do. (Today they are all marked drained and vanish.)
-		const drained = await readJsonl(
-			join(fixture.root, ".indusk", "eval", "pending-drained.jsonl"),
-		);
+		const drained = await readJsonl(join(fixture.root, ".indusk", "eval", "pending-drained.jsonl"));
 		const drainedShas = new Set(drained.map((r) => r.sha as string));
 		const stillPending = fixture.shas.filter((sha) => !drainedShas.has(sha));
 		expect(

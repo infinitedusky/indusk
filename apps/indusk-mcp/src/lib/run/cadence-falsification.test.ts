@@ -23,9 +23,16 @@ import { runLoop } from "./loop.js";
  * returns only the first, so today the other items' work rides along inside a
  * commit that never names them — A2's claim is false off the itemwise path.
  *
- * A11: a failed commit followed by a successful one. `git add -A` already
- * staged the failed item's work and nothing unstages it, so today the next
- * commit silently absorbs it while naming only the later item.
+ * A11: a failed commit followed by a successful one. Today the next commit
+ * silently absorbs the failed item's work while naming only the later item.
+ *
+ * The original hypothesis ("unstage and the next commit contains only its own
+ * work") was REFUTED while fixing it: `git reset` unstages, but the failed
+ * item's change is still in the WORKING TREE — it was never committed, so the
+ * next commit necessarily contains it, and un-writing it would destroy real
+ * work. The defect is misattribution, not staging, so the assertion below
+ * pins the achievable invariant: whatever a commit contains, its message
+ * accounts for. (Recorded in the plan's Phase 5 notes.)
  *
  * A13: a commit that lands while the queue append throws. The append shares
  * the git calls' try block, so today the landed commit is reported as a
@@ -98,7 +105,7 @@ describe("A11 — a failed commit does not poison the next one", () => {
 		await rm(worktree, { recursive: true, force: true });
 	});
 
-	it("leaves the next successful commit containing only its own item's work", async () => {
+	it("names the failed attempt's item in the commit that actually carries it", async () => {
 		// A pre-commit hook that rejects exactly ONCE — so a failed commit is
 		// followed by a successful one (A5's always-reject hook can never
 		// produce this sequence, which is why it missed the bug).
@@ -133,31 +140,34 @@ describe("A11 — a failed commit does not poison the next one", () => {
 		const report = result.phases[0] as { commitFailures?: string[] };
 		expect(report.commitFailures ?? []).not.toHaveLength(0);
 
-		// The first SUCCESSFUL commit must not carry the rejected attempt's
-		// staged work. The rejected attempt was the first checkoff, whose edit
-		// touched impl.md only; the following commit should therefore not be
-		// the one that introduces the earlier item's checkoff line — i.e. the
-		// index was reset between the failure and the next attempt.
+		// The first SUCCESSFUL commit carries the rejected attempt's work (it
+		// was never committed, and destroying it would be worse) — so its
+		// message MUST account for every checkoff it contains. Anything less
+		// is history that lies.
 		const firstSuccessSha = (await git(worktree, "log", "--format=%H", "HEAD"))
 			.trim()
 			.split("\n")
 			.filter(Boolean)
 			.at(-2); // -1 is the fixture baseline
 		expect(firstSuccessSha).toBeTruthy();
-		const staged = await git(worktree, "show", "--stat", "--format=", String(firstSuccessSha));
 
-		// One checkoff per commit means the diff touches impl.md with a small
-		// delta — a poisoned commit carries the earlier attempt's changes too,
-		// showing up as strictly more than one changed checkbox line.
-		const implDiff = await git(worktree, "show", "--format=", "-U0", String(firstSuccessSha));
-		const checkoffLines = implDiff
+		const sha = String(firstSuccessSha);
+		const implDiff = await git(worktree, "show", "--format=", "-U0", sha);
+		const carriedCheckoffs = implDiff
 			.split("\n")
-			.filter((l) => l.startsWith("+- [x]") || l.startsWith("-- [ ]"));
-		expect(staged).toContain("impl.md");
-		expect(
-			checkoffLines.filter((l) => l.startsWith("+- [x]")),
-			"the first successful commit absorbed the failed attempt's checkoff",
-		).toHaveLength(1);
+			.filter((l) => l.startsWith("+- [x]"))
+			.map((l) => l.replace(/^\+- \[x\]\s*/, "").trim());
+		expect(carriedCheckoffs.length).toBeGreaterThan(1); // the poisoning condition
+
+		const message = await git(worktree, "show", "--format=%s%n%b", "--no-patch", sha);
+		for (const checkoff of carriedCheckoffs) {
+			// A distinctive fragment of each carried item must appear.
+			const fragment = checkoff.slice(0, 24).replace(/[`*]/g, "");
+			expect(
+				message.replace(/[`*]/g, ""),
+				`commit ${sha.slice(0, 8)} carries an item its message never names: "${fragment}"`,
+			).toContain(fragment);
+		}
 	}, 30_000);
 });
 
@@ -200,9 +210,7 @@ describe("A13 — a landed commit whose queue append fails is still reported as 
 		expect(landed.length).toBeGreaterThan(1); // baseline + item commits
 
 		// …so the report must say so too: shas retained, no commit failures.
-		expect(report.commits ?? [], "landed commits were dropped from the report").not.toHaveLength(
-			0,
-		);
+		expect(report.commits ?? [], "landed commits were dropped from the report").not.toHaveLength(0);
 		expect(
 			report.commitFailures ?? [],
 			"a queue-append failure was misreported as a commit failure",
