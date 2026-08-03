@@ -7,6 +7,7 @@ import type {
 import Link from "next/link";
 import { Markdown } from "@/components/Markdown";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
+import { stateToBadge, statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
 import {
@@ -672,33 +673,4 @@ function outcomeToBadge(outcome: HypothesisOutcome): BadgeVariant {
   if (outcome === "fix-in-scope") return "passing";
   if (outcome === "spawn-plan") return "writable";
   return "neutral"; // accept-finding
-}
-
-function statusToBadge(status: string): BadgeVariant {
-  const normalized = status.toLowerCase();
-  if (normalized.includes("completed") || normalized.includes("passing"))
-    return "passing";
-  if (normalized.includes("blocked")) return "blocked";
-  if (normalized.includes("in-progress") || normalized.includes("accepted"))
-    return "writable";
-  if (normalized.includes("draft") || normalized.includes("planned"))
-    return "planned";
-  return "neutral";
-}
-
-function stateToBadge(state: string): BadgeVariant {
-  const normalized = state.toLowerCase();
-  if (
-    [
-      "passing",
-      "blocked",
-      "skipped",
-      "planned",
-      "writable",
-      "written",
-    ].includes(normalized)
-  ) {
-    return normalized as BadgeVariant;
-  }
-  return "neutral";
 }

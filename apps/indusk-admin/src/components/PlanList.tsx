@@ -1,7 +1,8 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import Link from "next/link";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
-import { Badge, type BadgeVariant } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/Badge";
+import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import type { Plan } from "@/lib/planning-reader";
 
@@ -252,20 +253,4 @@ function orderByMaster(plans: Plan[], masterOrder: string[]): Plan[] {
     if (p) out.push(p);
   }
   return out;
-}
-
-/**
- * Map a free-form `status` string from frontmatter to a Badge variant. Unknown
- * statuses fall back to `neutral` so the UI never breaks on a new convention.
- */
-function statusToBadge(status: string): BadgeVariant {
-  const normalized = status.toLowerCase();
-  if (normalized.includes("completed") || normalized.includes("passing"))
-    return "passing";
-  if (normalized.includes("blocked")) return "blocked";
-  if (normalized.includes("in-progress") || normalized.includes("accepted"))
-    return "writable";
-  if (normalized.includes("draft") || normalized.includes("planned"))
-    return "planned";
-  return "neutral";
 }
