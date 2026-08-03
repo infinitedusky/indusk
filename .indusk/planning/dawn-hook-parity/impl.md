@@ -47,10 +47,10 @@ Give the thin lane the same footprint as a Claude Code session: every invariant 
 | A7 | after conversation proof is added to the impl, a re-run continues past the paused phase | Phase 0 | Phase 4 | passing |
 | A8 | no `gate_policy` frontmatter behaves as `ask` in the thin lane; explicit `auto` runs unpaused as today | Phase 0 | Phase 4 | passing |
 | A9 | a run on a machine without the `claude` CLI completes normally and still fills the queue | Phase 0 | Phase 3 | passing |
-| A10 | a single edit that checks off several items still yields history that accounts for every one of them — no item silently rides along inside another item's commit | Phase 0 | Phase 5 | planned |
-| A11 | after a commit fails, the next successful commit contains only its own item's work — a failed attempt never leaves its files staged to be misattributed | Phase 0 | Phase 5 | planned |
-| A12 | a drain whose evaluator cannot run leaves the backlog re-drainable and says so loudly — it never silently empties the queue | Phase 0 | Phase 5 | planned |
-| A13 | a commit that lands but whose queue append fails is reported as a commit that landed, and its sha is not lost | Phase 0 | Phase 5 | planned |
+| A10 | a single edit that checks off several items still yields history that accounts for every one of them — no item silently rides along inside another item's commit | Phase 0 | Phase 5 | written |
+| A11 | after a commit fails, the next successful commit contains only its own item's work — a failed attempt never leaves its files staged to be misattributed | Phase 0 | Phase 5 | written |
+| A12 | a drain whose evaluator cannot run leaves the backlog re-drainable and says so loudly — it never silently empties the queue | Phase 0 | Phase 5 | written |
+| A13 | a commit that lands but whose queue append fails is reported as a commit that landed, and its sha is not lost | Phase 0 | Phase 5 | written |
 
 All rows are Phase 0 writable: the scripted-driver harness (`src/lib/run/harness.test-support.ts`) drives the real loop today, and every assertion fails red against current behavior for its real reason (no budget script in the chain, zero commits, no queue file, exit 1 instead of 3, auto-by-contract). No Trajectory Rationale subsection is required — no row is Writable at Phase 1+.
 
