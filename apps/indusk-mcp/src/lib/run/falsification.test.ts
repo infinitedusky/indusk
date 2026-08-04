@@ -1,8 +1,7 @@
 import { existsSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { run } from "../../bin/commands/run.js";
 import { createGatedWorktreeTools, runGateScripts } from "./gate.js";
@@ -13,7 +12,6 @@ import {
 	fixtureDir,
 	hooksDir,
 	realGateScripts,
-	repoRoot,
 } from "./harness.test-support.js";
 import { createWorktreeTools } from "./tools.js";
 

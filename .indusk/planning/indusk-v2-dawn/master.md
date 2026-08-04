@@ -31,7 +31,7 @@ Open this file to answer "where are we." If the answer isn't here, the answer do
 | # | Component | Status | What remains | Acceptance test | Sub-plan |
 |---|-----------|--------|--------------|-----------------|----------|
 | 1 | **Model-agnostic execution** — call any provider's model through one loop | **Done — A8 signed off 2026-08-03** | Acceptance met (matrix.md: 9 cells, mutation-based quality read — 8/8 kills across all models/harnesses; flash-for-mechanical routing; trajectories must name every deliverable). Remaining close-out items: config.env loader gap; `gpt`/`grok` factories | `atdawn run <plan> --model X` takes a plan to impl-complete | [dawn-external-orchestrator](../archive/dawn-external-orchestrator/) |
-| 2 | **Gate portability** — InDusk's hooks enforce outside Claude Code | **Partial** | 4 of 6 hooks unwired (`check-plan-order`, `claude-md-budget`, `gate-reminder`, `eval-trigger`); `gate_policy` forced to `auto` | A fresh plan executes identically under both lanes, hook for hook | `dawn-hook-parity` *(not created)* |
+| 2 | **Gate portability** — InDusk's hooks enforce outside Claude Code | **Done — closed 2026-08-03** | Every invariant hook now enforces in the thin lane (`claude-md-budget` wired; `eval-trigger` served by the pending-eval queue + external drain); `ask` is the default in both lanes with a real headless pause; `gate-reminder` **deliberately shed** (advisory nudge, not an invariant — first keep-shed audit entry). Inventory corrected: 5 hooks on disk, not 6. Unpublished — consumers get it at the next publish | A fresh plan executes identically under both lanes, hook for hook, for every hook that is an invariant; sheds are recorded | [dawn-hook-parity](../archive/dawn-hook-parity/) |
 | 3 | **Loop control** — the autopilot contract, ported | **Done** | — | Per-phase scope, advance-on-green probe, goalpost guard, human-gate pause, red-stop — all green (T5/T6) | [dawn-external-orchestrator](../archive/dawn-external-orchestrator/) |
 | 4 | **Harness** — the tools the model works through | **Deliberately thin** | *A decision, not a gap* — see Open Decisions | n/a until the decision lands | — |
 | 5 | **Headless/remote execution** | **Spiked once** | Manual provisioning; Fly rootfs is ephemeral; no bootstrap script or baked image | One command produces a working box that runs a plan | `dawn-cloud` *(not created)* |
@@ -43,8 +43,7 @@ Open this file to answer "where are we." If the answer isn't here, the answer do
 
 **1 → 3 → 2 → 6 → 7 → 8**, with 5 pulled in whenever the always-on box is actually wanted, and 4 settled as a decision rather than built.
 
-- **1 and 3 are done.** Their sub-plan closes with an honest scope statement: it delivered components 1 and 3, partially delivered 2, held 4 thin by design, and spiked 5.
-- **2 comes next and is small.** Not for completeness — because a lane that never fires the eval agent cannot teach you anything, which destroys the one job the thin harness has left (being the control group).
+- **1, 2 and 3 are done.** 1 and 3 closed with dawn-external-orchestrator (which also held 4 thin by design and spiked 5); 2 closed 2026-08-03 with dawn-hook-parity — the thin lane now fires the eval agent via the queue + drain, so it can finally teach the system, which was the whole reason to do it before the keystone.
 - **6 is the keystone.** The whole integration strategy rests on one untested assumption: *phase-boundary verification is sufficient enforcement when Dawn doesn't control the agent.* Nothing after it is safe to plan until that's answered.
 - **7 and 8 branch on 6's result.** If boundary verification holds, integration is a thin skin over a proven command. If it leaks, 7 becomes per-agent seam work — starting with Claude Code's PreToolUse, the one seam known to be real — and the ACP question needs its own spike.
 
@@ -61,7 +60,7 @@ Component 6's verify is also the **universal floor**: it runs on every tier as d
 ## Open decisions
 
 - **Component 4 — does the harness stay thin?** The strategy says yes: it is the control group and the cheap mechanical lane, not a product. Every Claude Code feature it lacks (context compaction, subagents, an ask channel, conventions injection, grep/glob) is then *scope*, not a gap. **Until this is written down as a decision, those gaps will keep resurfacing as bugs.** Recommended: decide thin, record as an ADR under this plan.
-- **`gate_policy` under headless runs.** Dawn can currently only run `auto`, the most permissive mode. Either teach it a headless equivalent of `ask` (a real pause), or state plainly that headless runs are `auto`-only and accept the weaker policy. Belongs to component 2.
+- ~~**`gate_policy` under headless runs.**~~ **Resolved 2026-08-03 by component 2** — headless `ask` is a real pause: the loop classifies `check-gates`' proof-less-skip refusal and exits 3 with the question and required proof format. `ask` is now the default in both lanes; `auto` is an explicit per-plan opt-in for deliberately unattended runs.
 - ~~**The acceptance experiment (A8).**~~ **Resolved 2026-08-03** — run at sonnet (C5 atdawn vs C6 Claude Code, same model/task/state): process parity held, no measurable quality delta (mutation kill-rate identical); signed off in the archived plan's matrix.md. The Opus pair remains available as a refinement, not a blocker.
 
 ## Horizon — direction, not commitments

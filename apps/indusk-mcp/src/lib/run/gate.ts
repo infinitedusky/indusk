@@ -52,6 +52,12 @@ export interface GateOptions {
 	scripts?: string[];
 	/** Per-script spawn timeout. Default 30s. A timeout BLOCKS (see T15). */
 	timeoutMs?: number;
+	/**
+	 * Fires AFTER a gated edit/writeFile is applied (never on a refusal) —
+	 * the loop's commit-cadence seam (dawn-hook-parity). Awaited, so commits
+	 * serialize with steps. No rule content: purely an after-apply observer.
+	 */
+	onGatedApply?: (name: GatedToolName, input: EditToolInput | WriteToolInput) => Promise<void>;
 }
 
 /** Default per-script spawn timeout — a killed script blocks, never allows. */
@@ -124,8 +130,19 @@ export function resolveGateScripts(worktreeRoot: string): string[] {
 	);
 }
 
-/** Validator first, then gates — mirrors the PreToolUse hook chain. */
-const GATE_SCRIPT_NAMES = ["validate-impl-structure.js", "check-gates.js"] as const;
+/**
+ * Validator first, then gates, then the budget invariant — mirrors the
+ * PreToolUse hook chain. `claude-md-budget.js` self-filters by target
+ * basename (non-CLAUDE.md edits exit 0 immediately), so chain membership is
+ * the whole wiring (dawn-hook-parity A1). Note: `resolveGateScripts` requires
+ * every name present — a consumer project missing the budget hook fails loud
+ * with the run-indusk-update message, per the fail-loud contract.
+ */
+const GATE_SCRIPT_NAMES = [
+	"validate-impl-structure.js",
+	"check-gates.js",
+	"claude-md-budget.js",
+] as const;
 
 /**
  * Spawn each gate script in order, writing the envelope to stdin.
@@ -236,7 +253,9 @@ export function createGatedWorktreeTools(worktreeRoot: string, options: GateOpti
 					// corrects course. The edit was never applied.
 					return `Gate blocked this ${name} — the change was NOT applied.\n${gate.blockMessage}`;
 				}
-				return originalExecute(input, executionOptions);
+				const applied = await originalExecute(input, executionOptions);
+				await options.onGatedApply?.(name, input as EditToolInput | WriteToolInput);
+				return applied;
 			},
 		} as ToolSet[string];
 	}

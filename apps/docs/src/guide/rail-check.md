@@ -67,6 +67,16 @@ The agent makes a tiny commit (e.g., a comment update in a docs file) and watche
 
 **The load-bearing line is `evaluator spawned` with a real PID.** If you see `skip — no git commit ID available` or `skip — no git repo at cwd`, the workbench fix didn't take — the agent stops here and tells you to re-run `indusk update`.
 
+### 4b. Drain the thin lane's pending evals
+
+`atdawn run` (the Dawn thin lane) queues one record per loop-owned commit in `.indusk/eval/pending.jsonl` instead of spawning the evaluator itself — it may be running on a machine that has no `claude` CLI at all. The rail check is where those get evaluated:
+
+```bash
+node .claude/hooks/eval-trigger.js --drain-pending
+```
+
+Each record is marked drained **before** its evaluator spawns, so re-running a drain never double-evaluates a commit — a crashed spawn shows up as a gap in the log, not a duplicate scorecard. A backlog that keeps growing across rail checks means thin-lane runs are happening but nobody is draining; nothing is lost (the queue is durable), but that lane's lessons haven't reached the registry yet.
+
 ### 5. Count unprocessed highlights
 
 Reads both jsonl files and reports:

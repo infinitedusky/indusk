@@ -21,11 +21,28 @@ The loop control is the `/work --autopilot` contract, ported:
 - **Red never auto-retries.** One honest driver attempt per phase; a phase that cannot reach green halts the run for a human decision.
 - **Hard stop at impl-complete.** The loop runs impl phases only — it never runs `/falsify`, `/cleanup`, or `/retrospective`. Those are human-gated by design.
 
-Exit codes: `0` impl-complete · `3` paused at a human gate · `1` stopped (red gate, moved goalposts, or bad invocation).
+Exit codes: `0` impl-complete · `3` paused for a human (a declared human gate, or an unanswered gate question — see below) · `1` stopped (red gate, moved goalposts, or bad invocation).
+
+### Gate policy, headless
+
+**`ask` is the default in both lanes.** When a plan's gates carry proof-less `(none needed)` / `skip-reason:` opt-outs under `ask`, `check-gates` refuses them — they require conversation proof, which a headless run cannot invent. The loop recognizes that specific refusal and **pauses (exit 3) with the question** instead of reporting a red:
+
+```
+Phase 2 needs a human decision: gate_policy is 'ask', and these gate items
+can only be skipped with conversation proof —
+  [context] (none needed)
+
+Either complete them, or record the conversation in the impl:
+  - [x] (none needed — asked: "your question" — user: "their answer")
+
+Then re-run: completed phases are skipped, so the run resumes where it paused.
+```
+
+Answer it by editing the impl, then re-invoke — already-complete phases are skipped, so the run picks up where it stopped. For a deliberately unattended run, set `gate_policy: auto` in the impl frontmatter and bare opt-outs are accepted as before. (`strict` accepts nothing but real checkoffs.)
 
 ## Gate enforcement layers
 
-The discipline lives in the shared gate scripts (`validate-impl-structure.js`, `check-gates.js`), resolved from the target project's `.claude/hooks/` (walking up from the tree root; missing hooks fail loud — run `indusk init`/`update` first). Three layers invoke them, none contains rule content:
+The discipline lives in the shared gate scripts — `validate-impl-structure.js`, `check-gates.js`, and `claude-md-budget.js` (the CLAUDE.md byte-budget invariant, which self-filters to CLAUDE.md writes; added by the dawn-hook-parity plan) — resolved from the target project's `.claude/hooks/` (walking up from the tree root; a project missing any of the three fails loud — run `indusk init`/`update` first). The fourth installed hook, `gate-reminder.js`, is **deliberately not wired**: it is an advisory nudge for a watching human, not an invariant, and an unattended loop would spend scarce steps on advice the boundary gates already enforce — the shed is recorded in the dawn-hook-parity ADR as the first entry of the invariant/procedure keep-shed audit. Four layers invoke the chain, none contains rule content:
 
 1. **Own-the-execute (primary, model-invariant).** The edit/write tools' `execute` adapts each call to the scripts' `{ tool_name, tool_input, cwd }` stdin envelope and spawns them: exit `2` refuses the edit and returns the block message as the tool result; exit `0` applies. Lives below the provider swap, so it cannot vary per model.
 2. **`toolApproval` (secondary, SDK-native).** The same gate chain runs as an AI SDK approval callback above the provider swap, with `experimental_toolApprovalSecret` HMAC-signing approvals — defense in depth and PreToolUse parity.
@@ -52,6 +69,44 @@ The gate covers **tool surfaces, not intentions**. Any tool that can mutate file
 **Goalposts include the State column.** The guard rejects changed `Asserts` text, `Passes at` or `Writable at` moved later, removed rows, and a row flipped to `skipped`/`blocked` mid-phase. Terminality is a status a human documents with a reason, not one a run declares for itself when a test won't pass.
 
 Headless runs need `gate_policy: auto` in the impl frontmatter — there is no user in the loop to give conversation-proof skips to (`ask`, the default, would refuse bare opt-outs).
+
+## Commits
+
+The loop — not the model — commits after each checklist-item checkoff survives the gate chain: one commit per item, message `item({plan} P{phase}): {item summary}`, staging everything changed since the previous commit (the item's work product). This restores the `/work` convention's granularity in the thin lane: bisectable history, per-item revert, and the eval rail's natural firing points.
+
+Failure semantics, deliberately asymmetric to the gates: a failed commit (nothing staged, a rejecting hook, signing trouble) is **surfaced loudly on the run report and enqueues nothing — but never stops the run**. Commits are bookkeeping; gates are enforcement. A worktree that is not a git repository disables the cadence with a loud notice (fixture and staging dirs run gate-only).
+
+**A commit's message accounts for everything the commit contains.** Two cases make that non-trivial. When a model checks several items in one edit, the subject counts them and the body lists each. And when a commit fails, its item's work is still in the working tree — unstaging cannot un-write it, and discarding it would destroy real work — so the item is *carried* and named by whichever commit next succeeds. History may batch, but it never contains an item its message doesn't mention.
+
+A commit that lands but whose eval-queue record fails to write is reported as **landed**, with the queue problem on its own channel — the report never claims history that exists doesn't.
+
+One boundary worth knowing: a checkoff performed through `bash` rather than the edit tool is still *gated* (the bash snapshot layer) but fires no commit — the phase contract instructs models to check off via the edit tool.
+
+## The eval queue
+
+The lane cannot evaluate its own work: the evaluator needs the `claude` CLI, and a run may be happening on a remote cell that has never heard of Claude Code. So each commit appends one record to `.indusk/eval/pending.jsonl`, and evaluation happens later, from wherever `claude` lives.
+
+```mermaid
+sequenceDiagram
+    participant M as Model
+    participant L as Loop
+    participant G as Gate scripts
+    participant Q as pending.jsonl
+    participant D as Drain (claude host)
+    M->>L: edit — check off an item
+    L->>G: envelope (stdin JSON)
+    G-->>L: exit 0 (allow)
+    L->>L: apply, then commit the item
+    L->>Q: append {sha, plan, phase, source, timestamp}
+    Note over Q,D: later, possibly another machine
+    D->>Q: read pending minus drained
+    D->>D: mark drained, then spawn evaluator per sha
+    D-->>Q: scorecards → results.log
+```
+
+Draining is `/rail-check`'s job (or `node .claude/hooks/eval-trigger.js --drain-pending` directly). Each record is marked drained **before** its evaluator spawns, so a crashed spawn is a logged gap rather than a double-evaluation — re-running a drain is always safe. That ledger entry is **provisional**: if the evaluator exits non-zero (no `claude` on the machine, a broken runner), the record is un-drained and stays queued, and the drain reports how many failed. A machine that cannot evaluate never destroys the backlog — it just doesn't shrink it. `check_health` reports a standing backlog: the queue is durable, so nothing is lost, but un-drained records mean the lane's lessons have not reached the registry yet.
+
+The queue and its ledger live under `.indusk/eval/` and are deliberately excluded from the run's own commits — run bookkeeping is not plan history.
 
 ## `--model`
 

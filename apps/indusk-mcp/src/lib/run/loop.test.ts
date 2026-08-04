@@ -1,20 +1,22 @@
 import { execFile } from "node:child_process";
 import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { promisify } from "node:util";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { parseImplString } from "../impl-parser.js";
-import { snapshotTrajectory } from "./goalposts.js";
 import {
-	execOptions,
-	executeOf,
+	CLI_MJS,
+	finishStep,
 	fixtureDir,
-	hooksDir,
+	phase1ImplBlock,
 	realGateScripts,
-	repoRoot,
+	rowLine,
+	SEMVER_MJS,
+	SEMVER_TEST_MJS,
+	toolCallStep,
+	phase1VerificationLine as verificationLine,
 } from "./harness.test-support.js";
 import { detectHumanGate, runLoop } from "./loop.js";
 
@@ -33,133 +35,6 @@ import { detectHumanGate, runLoop } from "./loop.js";
 const execFileAsync = promisify(execFile);
 
 /** One scripted model step that calls a tool. */
-function toolCallStep(toolName: string, input: Record<string, unknown>) {
-	return {
-		content: [
-			{
-				type: "tool-call" as const,
-				toolCallId: `call-${toolName}-${Math.random().toString(36).slice(2, 8)}`,
-				toolName,
-				input: JSON.stringify(input),
-			},
-		],
-		finishReason: { unified: "tool-calls" as const, raw: "tool_use" },
-		usage: {
-			inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 },
-			outputTokens: { total: 10, text: 10, reasoning: 0 },
-		},
-		warnings: [],
-	};
-}
-
-/** The final scripted model step: plain text, no tool call. */
-function finishStep(text: string) {
-	return {
-		content: [{ type: "text" as const, text }],
-		finishReason: { unified: "stop" as const, raw: "end_turn" },
-		usage: {
-			inputTokens: { total: 10, noCache: 10, cacheRead: 0, cacheWrite: 0 },
-			outputTokens: { total: 10, text: 10, reasoning: 0 },
-		},
-		warnings: [],
-	};
-}
-
-/** Find the trajectory table line for a row id in impl.md content. */
-function rowLine(content: string, id: string): string {
-	const line = content.split("\n").find((l) => l.startsWith(`| ${id} |`));
-	if (!line) throw new Error(`trajectory row ${id} not found in fixture`);
-	return line;
-}
-
-/** The contiguous block of unchecked implementation items in Phase 1. */
-function phase1ImplBlock(content: string): string {
-	const start = content.indexOf("### Phase 1:");
-	const end = content.indexOf("#### Phase 1 Verification");
-	if (start === -1 || end === -1) throw new Error("fixture phase structure not found");
-	return content
-		.slice(start, end)
-		.split("\n")
-		.filter((l) => l.startsWith("- [ ]"))
-		.join("\n");
-}
-
-/** The single Phase 1 Verification checklist line. */
-function verificationLine(content: string): string {
-	const start = content.indexOf("#### Phase 1 Verification");
-	const end = content.indexOf("#### Phase 1 Context");
-	const line = content
-		.slice(start, end)
-		.split("\n")
-		.find((l) => l.startsWith("- [ ]"));
-	if (!line) throw new Error("fixture verification item not found");
-	return line;
-}
-
-const SEMVER_MJS = `const RE = /^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$/;
-
-export function parse(input) {
-	const m = RE.exec(input);
-	if (!m) throw new Error(\`invalid semver: \${input}\`);
-	return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) };
-}
-
-export function compare(a, b) {
-	const pa = parse(a);
-	const pb = parse(b);
-	for (const key of ["major", "minor", "patch"]) {
-		if (pa[key] < pb[key]) return -1;
-		if (pa[key] > pb[key]) return 1;
-	}
-	return 0;
-}
-
-export function bump(version, level) {
-	const v = parse(version);
-	if (level === "major") return \`\${v.major + 1}.0.0\`;
-	if (level === "minor") return \`\${v.major}.\${v.minor + 1}.0\`;
-	if (level === "patch") return \`\${v.major}.\${v.minor}.\${v.patch + 1}\`;
-	throw new Error(\`invalid level: \${level}\`);
-}
-`;
-
-const SEMVER_TEST_MJS = `import assert from "node:assert/strict";
-import test from "node:test";
-import { bump, compare, parse } from "./semver.mjs";
-
-test("T1: parse yields fields and rejects malformed input", () => {
-	assert.deepEqual(parse("1.2.3"), { major: 1, minor: 2, patch: 3 });
-	for (const bad of ["01.2.3", "1.2", "1.x.3"]) {
-		assert.throws(() => parse(bad));
-	}
-});
-
-test("T2: compare orders by major, then minor, then patch", () => {
-	assert.equal(compare("1.9.9", "2.0.0"), -1);
-	assert.equal(compare("2.1.0", "2.0.9"), 1);
-	assert.equal(compare("1.2.3", "1.2.3"), 0);
-	assert.equal(compare("1.2.3", "1.2.4"), -1);
-});
-
-test("T3: bump increments the level and zeroes lower fields", () => {
-	assert.equal(bump("1.2.3", "minor"), "1.3.0");
-	assert.equal(bump("1.2.3", "major"), "2.0.0");
-	assert.equal(bump("1.2.3", "patch"), "1.2.4");
-});
-`;
-
-const CLI_MJS = `#!/usr/bin/env node
-import { bump, compare, parse } from "./semver.mjs";
-
-const [cmd, ...args] = process.argv.slice(2);
-if (cmd === "parse") console.log(JSON.stringify(parse(args[0])));
-else if (cmd === "compare") console.log(compare(args[0], args[1]));
-else if (cmd === "bump") console.log(bump(args[0], args[1]));
-else {
-	console.error("usage: semver parse <v> | compare <a> <b> | bump <v> <level>");
-	process.exit(1);
-}
-`;
 
 describe("full loop over the guinea-pig plan (T5)", () => {
 	let worktree: string;

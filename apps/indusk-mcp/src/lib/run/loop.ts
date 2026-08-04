@@ -1,13 +1,14 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { basename, join, relative, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { basename, dirname, join, relative, resolve } from "node:path";
 import type { LanguageModel } from "ai";
-import matter from "gray-matter";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
 import type { Trajectory } from "../trajectory/parser.js";
+import { type CommitRecord, createCommitCadence } from "./commit-cadence.js";
 import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";
 import { resolveGateScripts } from "./gate.js";
+import { gateQuestionItems, gateQuestionReason, isGateQuestion } from "./gate-question.js";
 import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
+import { appendPendingEval } from "./pending-evals.js";
 import { probePhaseClose } from "./probe.js";
 import type { DriverConfig } from "./registry.js";
 
@@ -53,6 +54,12 @@ export interface PhaseReport {
 	steps: number;
 	toolCalls: number;
 	usage?: { inputTokens?: number; outputTokens?: number };
+	/** Loop-owned per-item commits landed during this phase (dawn-hook-parity A2). */
+	commits?: CommitRecord[];
+	/** Failed commit attempts, surfaced loudly — bookkeeping, never a gate (A5). */
+	commitFailures?: string[];
+	/** Commits that landed but whose eval-queue append failed (A13). */
+	queueFailures?: string[];
 }
 
 export type RunLoopResult =
@@ -68,6 +75,19 @@ export type RunLoopResult =
 	  }
 	| {
 			status: "paused-human-gate";
+			phase: number;
+			reason: string;
+			items: string[];
+			phases: PhaseReport[];
+	  }
+	| {
+			/**
+			 * `ask` policy hit a gate the model wanted to skip without proof —
+			 * a question for a human, not a red (dawn-hook-parity A6). Same
+			 * exit code as a human-gate pause; the run resumes on re-invocation
+			 * once the conversation is recorded in the impl.
+			 */
+			status: "paused-gate-question";
 			phase: number;
 			reason: string;
 			items: string[];
@@ -121,19 +141,33 @@ const HUMAN_GATE_PATTERNS: readonly RegExp[] = [
 ];
 
 /**
- * A phase needs no run when every item is checked or carries a bare opt-out —
- * headless runs are `gate_policy: auto` by contract (there is no user to give
- * conversation-proof skips to), so the auto-policy override markers apply.
+ * The plan's effective gate policy. Unset resolves to `ask` — the same
+ * default Claude Code uses (dawn-hook-parity A8, retiring the old
+ * headless-is-`auto`-by-contract assumption). `auto` stays an explicit
+ * per-plan opt-in for deliberately unattended runs.
  */
-function isPhaseDone(phase: ImplPhase): boolean {
+export function resolveGatePolicy(implContent: string): "strict" | "ask" | "auto" {
+	const match = implContent.match(/^gate_policy:\s*(strict|ask|auto)\s*$/m);
+	return (match?.[1] as "strict" | "ask" | "auto" | undefined) ?? "ask";
+}
+
+/**
+ * A phase needs no run when every item is checked, or carries an opt-out the
+ * plan's policy actually accepts: bare markers count only under `auto`; under
+ * `ask` a bare opt-out is an unanswered question (the run pauses for it), and
+ * under `strict` nothing but a real checkoff counts.
+ */
+function isPhaseDone(phase: ImplPhase, policy: "strict" | "ask" | "auto"): boolean {
 	return phase.gates.every((gate) =>
-		gate.items.every(
-			(item) =>
-				item.checked ||
+		gate.items.every((item) => {
+			if (item.checked) return true;
+			if (policy !== "auto") return false;
+			return (
 				item.text.includes("(none needed)") ||
 				item.text.includes("(not applicable)") ||
-				item.text.includes("skip-reason:"),
-		),
+				item.text.includes("skip-reason:")
+			);
+		}),
 	);
 }
 
@@ -155,8 +189,33 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 	const implPath = options.implPath ? resolve(options.implPath) : join(root, "impl.md");
 	const implFile = relative(root, implPath) || "impl.md";
 	const scripts = options.gate?.scripts ?? resolveGateScripts(root);
-	const gate: RunGateOptions = { ...options.gate, scripts };
 	const phases: PhaseReport[] = [];
+
+	// Loop-owned commit cadence (A2/A5): commits fire when a gated edit checks
+	// off an impl item; the loop, not the model, owns the git bookkeeping.
+	// Every successful commit feeds the pending-eval queue (A3) — the thin
+	// lane's half of the eval rail; a later drain evaluates from any
+	// claude-capable environment (A9: nothing here needs Claude Code).
+	let currentPhase = 0;
+	const planName = basename(dirname(implPath));
+	const cadence = await createCommitCadence({
+		worktreeRoot: root,
+		implPath,
+		getPhase: () => currentPhase,
+		onCommit: async (record) => {
+			await appendPendingEval(root, {
+				sha: record.sha,
+				plan: planName,
+				phase: record.phase,
+				source: "atdawn",
+				timestamp: new Date().toISOString(),
+			});
+		},
+	});
+	if (cadence.disabledReason) {
+		console.error(cadence.disabledReason);
+	}
+	const gate: RunGateOptions = { ...options.gate, scripts, onGatedApply: cadence.onGatedApply };
 
 	const initial = parseImplString(await readFile(implPath, "utf8"));
 	if (initial.phases.length === 0) {
@@ -168,7 +227,7 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		const content = await readFile(implPath, "utf8");
 		const current = parseImplString(content);
 		const phase = current.phases.find((p) => p.number === planned.number) ?? planned;
-		if (isPhaseDone(phase)) continue;
+		if (isPhaseDone(phase, resolveGatePolicy(content))) continue;
 
 		// Goalpost baseline: snapshot the trajectory before the phase runs.
 		const trajectoryBefore = snapshotTrajectory(content);
@@ -187,6 +246,7 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		}
 
 		options.onPhaseStart?.(phase.number, phase.name);
+		currentPhase = phase.number;
 
 		// One honest attempt — both gate layers live on every edit tool call.
 		const result = await runDriver({
@@ -210,6 +270,19 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		// Advance only on green: the deliberate check-gates probe, not the
 		// model's self-report, decides whether the phase closed.
 		const probe = await probePhaseClose({ implPath, worktree: root, phase: phase.number, scripts });
+		if (!probe.allowed && isGateQuestion(probe.blockMessage)) {
+			// Not a red: `ask` policy refused a proof-less skip, which is a
+			// question only a human can answer (A6). Pause instead of stopping —
+			// the human records the conversation and re-runs.
+			const message = probe.blockMessage ?? "";
+			return {
+				status: "paused-gate-question",
+				phase: phase.number,
+				reason: gateQuestionReason(phase.number, message),
+				items: gateQuestionItems(message),
+				phases,
+			};
+		}
 		if (!probe.allowed) {
 			return {
 				status: "stopped-red",
@@ -232,6 +305,13 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			steps: result.steps,
 			toolCalls: result.toolCalls.length,
 			usage: result.usage,
+			commits: cadence.commits.filter((c) => c.phase === phase.number),
+			commitFailures: cadence.failures
+				.filter((f) => f.phase === phase.number)
+				.map((f) => f.message),
+			queueFailures: cadence.queueFailures
+				.filter((f) => f.phase === phase.number)
+				.map((f) => f.message),
 		});
 	}
 
