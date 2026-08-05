@@ -1,0 +1,236 @@
+---
+title: "Dawn Verify — Implementation"
+date: 2026-08-05
+status: in-progress
+trajectory: required
+rationale: required
+gate_policy: ask
+---
+
+# Dawn Verify — Implementation
+
+## Goal
+
+Ship `atdawn verify <plan> --phase N` — a read-only phase-boundary detector for work Dawn did not execute. It reconstructs the boundary from a chained verify ledger, reuses the existing probe and goalpost machinery for the detections that already have machinery, adds the system's first test-execution-backed check of trajectory `passing` claims, and renders a verdict without touching the working tree.
+
+Closes Dawn component 6 — the keystone — and produces the recorded evidence component 7's shape depends on.
+
+## Scope
+
+### In Scope
+- `atdawn verify <plan> --phase N` with `--full-suite`, registered like `run`.
+- Five detections: premature checkoff, skipped test-first duty, goalpost drift, red tests, phantom work.
+- The chained verify ledger with merge-base bootstrap and loud refusal on corruption.
+- An optional trajectory `Test` column naming test files, backward-compatible both directions.
+- A runner-agnostic test invocation resolved from the existing `verify` config block.
+- The recorded acceptance experiment against an agent Dawn does not control.
+
+### Out of Scope
+- Reverting, re-dispatching, or any repair — component 7.
+- Agent adapters; the acceptance experiment drives an external agent by hand.
+- Tier-2 judgment checking (diff review for "broke something / ignored the instruction").
+- Retrofitting test references into archived plans.
+- Verifying uncommitted working-tree state.
+
+## Boundary Map
+
+| Phase | Produces | Consumes |
+|-------|----------|----------|
+| Phase 1 | `lib/verify/ledger.ts` (append, chained lookup, bootstrap, corruption refusal); `lib/verify/verify.ts` exporting `runVerify()` returning a report with a resolved baseline and no detections; git-root guard | `cleanup/oversized.ts` merge-base fallback chain; `pending-evals.ts` ledger shape |
+| Phase 2 | Static detections wired into `runVerify()`; report rendering; `bin/commands/verify.ts` + commander registration; ledger append on clean verdict only | Phase 1's baseline + report shape; `run/probe.ts`; `run/goalposts.ts`; `run/gate.ts` |
+| Phase 3 | `Test` column in the trajectory parser; test-command resolution from `.indusk/config.json`; per-file invocation; unverified-row accounting | Phase 2's report; `trajectory/parser.ts`; `lib/config.ts` |
+| Phase 4 | Phantom-work detection from the diff since baseline | Phase 2's report; Phase 1's baseline SHA |
+| Phase 5 | Recorded acceptance experiment (`matrix.md`); master component 6 verdict; docs | The complete command from Phases 1–4 |
+
+## Test Trajectory
+
+| ID | Asserts | Test | Writable at | Passes at | State |
+|----|---------|------|-------------|-----------|-------|
+| A1 | Verifying a phase that checked an item while an earlier phase has an unchecked gate item reports a rejection naming that item and its phase | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | planned |
+| A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | planned |
+| A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | planned |
+| A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | planned |
+| A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | planned |
+| A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | planned |
+| A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | planned |
+| A8 | A rejecting verify exits non-zero so a calling script or CI step fails rather than continuing | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | planned |
+| A9 | After a phase verifies clean, verifying the next phase judges against the commit that verification recorded, not the merge base | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | planned |
+| A10 | Verifying a plan never verified before reports which baseline it bootstrapped from and proceeds | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | planned |
+| A11 | A rejecting verify records nothing — re-running produces the identical rejection rather than treating the bad phase as a baseline | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | planned |
+| A12 | A corrupted or unreadable ledger causes verify to refuse loudly naming the problem, never silently proceeding as if never verified | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | planned |
+| A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | planned |
+| A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | planned |
+| A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | planned |
+| A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `.indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | planned |
+
+### Deferred Verification
+
+- **U1 — phase-boundary verification is sufficient enforcement for agents Dawn does not control**
+  - reason: a universal claim over all agents, plans, and failure modes; no finite test proves it and a single counterexample disproves it, so it can only be sampled
+  - would require: longitudinal dogfooding across many external-agent phases, plus a corpus of real (not planted) violations — neither exists and neither can be manufactured inside this plan
+  - mitigation: the Phase 5 acceptance experiment samples it deliberately with a planted violation; the result, held or leaked, is written into the Dawn master's component 6 row and `matrix.md`, and component 7's plan branches on it explicitly rather than assuming it. Any miss found later in dogfooding reopens the question as a falsification hypothesis against this plan.
+
+### Trajectory Rationale
+
+Every row is writable at Phase 1 rather than Phase 0 for one shared and legitimate reason: **the tests import `runVerify()` and the ledger module, which do not exist until Phase 1, so the test files' import lines are compile errors today.** This is the "subject is a symbol introduced in that phase" case, not a weak excuse — and it is deliberately the *only* phase-shifted boundary in the plan: once Phase 1 lands, all sixteen rows are authorable, and the twelve that pass in Phases 2–4 stay red across intermediate phases as live tripwires.
+
+The alternative was authoring every test as a subprocess spawn of the `atdawn` binary, which would make them Phase 0-writable (an unknown-command error is real-red). Rejected on two grounds: sixteen subprocess spawns are slow enough to discourage running the suite, and every existing test in `src/lib/run/` tests the library function while the CLI stays a thin renderer. Matching that precedent keeps the tests fast and pointed at the logic rather than the shell.
+
+- **A1** `Writable at: Phase 1` — imports `runVerify()` from the Phase 1 module; the import line does not compile today.
+- **A2** `Writable at: Phase 1` — same import; asserts on the report shape Phase 1 introduces.
+- **A3** `Writable at: Phase 1` — same import; needs the baseline-resolution result Phase 1 returns.
+- **A4** `Writable at: Phase 1` — same import; the fixture asserts on report fields defined in Phase 1.
+- **A5** `Writable at: Phase 1` — same import; needs Phase 1's resolved baseline SHA on the report.
+- **A6** `Writable at: Phase 1` — same import.
+- **A7** `Writable at: Phase 1` — same import; snapshots the tree around a `runVerify()` call.
+- **A8** `Writable at: Phase 1` — same import; asserts the verdict field the CLI maps to an exit code.
+- **A9** `Writable at: Phase 1` — imports the Phase 1 ledger module directly.
+- **A10** `Writable at: Phase 1` — imports the Phase 1 ledger module directly.
+- **A11** `Writable at: Phase 1` — imports both the ledger module and `runVerify()`.
+- **A12** `Writable at: Phase 1` — imports the Phase 1 ledger module directly.
+- **A13** `Writable at: Phase 1` — imports `runVerify()`; asserts on the unverified-row accounting field.
+- **A14** `Writable at: Phase 1` — imports `runVerify()`.
+- **A15** `Writable at: Phase 1` — imports `runVerify()`.
+- **A16** `Writable at: Phase 5` — a manual recorded experiment, not a test file; it requires the complete working command from Phases 1–4 to have something to run an external agent against.
+
+## Checklist
+
+### Phase 1: Ledger, baseline resolution, and the verify entry point
+
+- [ ] Create/confirm this plan's worktree (`indusk worktree create dawn-verify`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [ ] Add `src/lib/verify/ledger.ts` — append-only JSONL over `.indusk/verify/ledger.jsonl`
+  ```typescript
+  export interface VerifyRecord {
+    plan: string; phase: number; sha: string; trajectory: string; timestamp: string;
+  }
+  /** Baseline = the record for the highest phase < N of this plan; null when none. */
+  export function findBaselineRecord(records: VerifyRecord[], plan: string, phase: number): VerifyRecord | null
+  export async function appendVerifyRecord(root: string, record: VerifyRecord): Promise<void>
+  export async function readLedger(root: string): Promise<VerifyRecord[]>
+  ```
+- [ ] Make `readLedger` refuse loudly on a malformed line rather than skipping it — a corrupt ledger must never degrade silently into bootstrap mode, because that failure is indistinguishable from success
+- [ ] Add merge-base bootstrap reusing the candidate-fallback chain from `cleanup/oversized.ts` (`baseRef` → `origin/main` → `main` → `origin/master` → `master`)
+- [ ] Add `src/lib/verify/verify.ts` with `runVerify()` returning a report carrying the resolved baseline and an empty findings list
+  ```typescript
+  export interface VerifyReport {
+    plan: string; phase: number;
+    baseline: { sha: string; source: "ledger" | "merge-base" };
+    findings: VerifyFinding[];
+    unverifiedRows: string[];
+    verdict: "clean" | "rejected";
+  }
+  ```
+- [ ] Guard a non-git root: throw naming the missing repository, never return a clean report (the cleanup library's silent-`[]` bug on workbench roots is the precedent)
+- [ ] Register `.indusk/verify/ledger.jsonl` as `merge=union` in `.gitattributes`, matching the `current.md` precedent
+
+#### Phase 1 Verification
+- [ ] A10, A12, A15 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [ ] A1–A9, A11, A13, A14 authored and committed RED against the Phase 1 module (they fail because no detection exists yet — the intended tripwire state); States set to `written`
+
+#### Phase 1 Context
+- [ ] Add to Known Gotchas: the verify ledger is append-only and refuses on malformed lines — the inverse of the pending-eval ledger's write-before-spawn pattern, because a bad phase silently becoming the next baseline is worse than a gap
+
+#### Phase 1 Document
+- [ ] Create `apps/docs/src/reference/cli/verify.md` with the command's purpose, the ledger format, and the baseline-chain Mermaid diagram (bootstrap → phase records)
+
+### Phase 2: Static detections, report rendering, and the CLI
+
+- [ ] Add `src/lib/verify/detect.ts` — premature checkoff + skipped test-first duty by calling `probePhaseClose` against the current impl, mapping its block message into findings
+- [ ] Add goalpost-drift detection: read the baseline impl via `git show <baseline-sha>:<impl-path>`, parse with `snapshotTrajectory`, compare with `checkGoalposts` against the current table
+- [ ] Wire all three into `runVerify()`; set `verdict: "rejected"` when findings exist
+- [ ] Append the ledger record **only** on a clean verdict — a rejecting verify must record nothing
+- [ ] Add `src/bin/commands/verify.ts` rendering the report: one line per finding with its kind, the baseline SHA and its source, and a trailing summary
+- [ ] Register `verify <plan>` in `src/bin/cli.ts` with `--phase <n>` and `--full-suite`, lazily imported, mirroring the `run` registration; exit 0 clean, 1 rejected
+
+#### Phase 2 Verification
+- [ ] A1, A2, A3, A6, A7, A8, A9, A11 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [ ] A4, A5, A13, A14 still red (their detections land in Phases 3–4) — confirm they fail for their own reason, not an import error
+
+#### Phase 2 Context
+- [ ] Add to Architecture: `atdawn verify <plan> --phase N` as the tier-3 read-only counterpart to `atdawn run`, reusing the probe and goalpost machinery unchanged
+
+#### Phase 2 Document
+- [ ] Extend `reference/cli/verify.md` with the five-detection decision-flow Mermaid diagram and the exit-code table
+
+### Phase 3: Red-test detection
+
+- [ ] Add the optional `Test` column to `src/lib/trajectory/parser.ts` — a `test?: string[]` field parsed from a comma-separated cell; absent column stays `undefined` (the header alias map already passes unknown columns through, so old plans are unaffected)
+- [ ] Add test-command resolution from the `verify` block in `.indusk/config.json`, producing a runnable command plus a per-file argument
+- [ ] Add `src/lib/verify/red-tests.ts` — deduplicate referenced files across in-scope rows, invoke the command once per file, and treat a non-zero exit as failure for every row referencing that file
+- [ ] Report a `passing` row with no test reference as unverified rather than passed, and count them in the report summary
+- [ ] Honor `--full-suite` by running the whole command once instead of per-file
+
+#### Phase 3 Verification
+- [ ] A4, A13, A14 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [ ] Existing trajectory parser tests still pass, proving the added column broke no prior plan (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+
+#### Phase 3 Context
+- [ ] Add to Conventions: trajectory rows may carry an optional `Test` column naming test files; verify runs them by exit code, never by parsing runner output — runner-specific parsing belongs in an extension, not core
+
+#### Phase 3 Document
+- [ ] Update `apps/docs/src/guide/test-trajectory.md` with the `Test` column, what it unlocks, and the explicit note that an unreferenced row is reported unverified rather than passed
+
+### Phase 4: Phantom-work detection
+
+- [ ] Add `src/lib/verify/phantom.ts` — compute the diff since the baseline SHA; if the phase has newly-checked implementation items and the diff contains no change outside the plan's own `impl.md`, report every checked implementation item in that phase as phantom
+- [ ] Keep the rule narrow: any real change outside `impl.md` silences the detection entirely, so a trivially-satisfied checkoff is deliberately not flagged
+- [ ] Wire into `runVerify()` and the report renderer
+
+#### Phase 4 Verification
+- [ ] A5 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [ ] Full suite green (`pnpm test`)
+
+#### Phase 4 Context
+- [ ] Add to Known Gotchas: phantom-work detection is deliberately narrow — it fires only when a phase's diff touches nothing but `impl.md`; broadening it produces false positives that get the detector disabled
+
+#### Phase 4 Document
+- [ ] Document the phantom-work rule and its explicit limit in `reference/cli/verify.md`
+
+### Phase 5: Acceptance experiment and the keystone verdict
+
+- [ ] Author the experiment procedure: a fixture plan, a phase dispatched to a hookless `claude` session, and a specific planted violation
+- [ ] Run the experiment manually against the external agent and capture the raw output
+- [ ] Record `matrix.md` — what was planted, what verify caught, what it missed, and the resulting judgement on whether boundary verification held or leaked
+- [ ] Update the Dawn master's component 6 row with the verdict and mark the component's status
+- [ ] Record the component 7 consequence: thin skin over a proven command if it held, per-agent seam work if it leaked
+
+#### Phase 5 Verification
+- [ ] A16 passes — manual verification: the recorded experiment shows verify catching the planted violation, with the result written into `matrix.md`
+- [ ] Full suite green (`pnpm test`) and lint clean (`pnpm check`)
+
+#### Phase 5 Context
+- [ ] Update Current State with a one-line dawn-verify entry and the keystone verdict, per the Current State one-line convention
+
+#### Phase 5 Document
+- [ ] Cross-reference verify from `apps/docs/src/reference/cli/run.md` as the out-of-lane counterpart, and add the changelog entry
+
+## Files Affected
+
+| File | Change |
+|------|--------|
+| `apps/indusk-mcp/src/lib/verify/ledger.ts` | New — chained verify ledger, bootstrap, corruption refusal |
+| `apps/indusk-mcp/src/lib/verify/verify.ts` | New — `runVerify()` orchestration and report shape |
+| `apps/indusk-mcp/src/lib/verify/detect.ts` | New — premature checkoff, test-first duty, goalpost drift |
+| `apps/indusk-mcp/src/lib/verify/red-tests.ts` | New — per-file test invocation and row attribution |
+| `apps/indusk-mcp/src/lib/verify/phantom.ts` | New — phantom-work detection |
+| `apps/indusk-mcp/src/bin/commands/verify.ts` | New — CLI rendering and exit codes |
+| `apps/indusk-mcp/src/bin/cli.ts` | Register the `verify` command |
+| `apps/indusk-mcp/src/lib/trajectory/parser.ts` | Optional `Test` column |
+| `.gitattributes` | `merge=union` for the verify ledger |
+| `apps/docs/src/reference/cli/verify.md` | New reference page with two Mermaid diagrams |
+| `apps/docs/src/guide/test-trajectory.md` | Document the `Test` column |
+| `apps/docs/src/reference/cli/run.md` | Cross-reference verify |
+| `CLAUDE.md` | Architecture, Conventions, Known Gotchas, Current State entries |
+| `.indusk/planning/indusk-v2-dawn/master.md` | Component 6 verdict |
+
+## Dependencies
+
+- `probePhaseClose` and `checkGoalposts` from the completed `dawn-external-orchestrator` work.
+- The gate scripts' externalizable contract, proven by `dawn-hook-parity`.
+- A git repository with a resolvable trunk for the bootstrap path.
+
+## Notes
+
+- Phase 5 is a human gate by construction: its verification is manual, so an unattended run pauses there rather than self-approving. That is intended.
+- The `--full-suite` path may be *faster* than per-file invocation on runners with heavy startup; worth measuring during Phase 3 rather than assuming.
+- If file-level attribution proves too coarse in practice, test-title tags return as an extension-owned capability — never as runner-specific parsing in core.

@@ -89,6 +89,7 @@ dusk/
 - Worktree visibility: worktree-per-plan default + live worktree/branch columns + collision flag; kickoff is a nudge, not a gate — see `/decisions/worktree-visibility`
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
 - Dawn hook parity: invariants + eval rail in the thin lane — loop-owned per-item commits, pending-eval queue with external drain, headless `ask`=pause (ask default both lanes), gate-reminder shed — see `/decisions/dawn-hook-parity`
+- Dawn verify: read-only phase-boundary verification for work Dawn didn't execute — chained verify ledger for the baseline, runner-agnostic red-test detection via an optional trajectory `Test` column (files + exit codes, never runner-specific output parsing), scoped to referenced files; reverting deferred to component 7 — see `.indusk/planning/dawn-verify/adr.md`
 - InDusk Makeover (2026-07-23): budgets + decay + removal — 60 KB CLAUDE.md hard budget w/ write-time hook + compaction ritual; Graphiti + CGC removed entirely (highlight→eval→**lessons** rail preserved); current.md sweep + dead-draft auto-archive; catchup diet ≤15k; MCP keep-lists (project: indusk/dash0/posthog/jaeger — jaeger critical; global: playwright only); hub push/pull at catchup cadence. Supersedes context-budget; rejects Graphiti-as-canonical-store, CGC-with-hygiene, discipline-only compression, load-time truncation. — see `.indusk/planning/indusk-makeover/adr.md`
 
 ## Known Gotchas
