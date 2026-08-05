@@ -1,7 +1,7 @@
-import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { relative, resolve, sep } from "node:path";
 import matter from "gray-matter";
+import { resolveImplPath } from "../impl-parser.js";
 import { parseTrajectory } from "../trajectory/parser.js";
 import {
 	detectGoalpostDrift,
@@ -75,14 +75,6 @@ export interface RunVerifyOptions {
 	fullSuite?: boolean;
 	/** Gate scripts, injectable for tests. Defaults to the project's own. */
 	scripts?: string[];
-}
-
-/** Resolve `<plan>` to an impl.md the same way `run` does. */
-export function resolveImplPath(root: string, plan: string): string | null {
-	const candidates = plan.endsWith("impl.md")
-		? [resolve(root, plan)]
-		: [resolve(root, plan, "impl.md"), resolve(root, ".indusk", "planning", plan, "impl.md")];
-	return candidates.find((p) => existsSync(p)) ?? null;
 }
 
 /** A rejected verdict must fail a calling script; a clean one must not. */

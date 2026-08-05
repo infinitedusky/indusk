@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import matter from "gray-matter";
 
 export type GateType = "implementation" | "verification" | "context" | "document";
@@ -132,6 +133,26 @@ export function parseImplString(raw: string): ParsedImpl {
 	if (currentPhase) phases.push(currentPhase);
 
 	return { title, status, phases };
+}
+
+/**
+ * Resolve a `<plan>` argument to its impl.md: an explicit impl.md path, a
+ * directory containing one, or a plan name under `.indusk/planning/`.
+ *
+ * **One definition on purpose.** `atdawn run` and `atdawn verify` both take a
+ * plan argument, and if they resolved it differently, verify would judge a file
+ * run never executed. That is not a duplicated-lines problem — it is a silent
+ * divergence between two enforcement lanes, so the rule lives here and both
+ * callers import it.
+ */
+export function resolveImplPath(projectRoot: string, plan: string): string | null {
+	const candidates = plan.endsWith("impl.md")
+		? [resolve(projectRoot, plan)]
+		: [
+				resolve(projectRoot, plan, "impl.md"),
+				resolve(projectRoot, ".indusk", "planning", plan, "impl.md"),
+			];
+	return candidates.find((p) => existsSync(p)) ?? null;
 }
 
 export function parseImpl(filePath: string): ParsedImpl {

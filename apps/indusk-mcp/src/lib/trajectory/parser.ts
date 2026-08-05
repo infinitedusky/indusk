@@ -60,6 +60,26 @@ const VALID_STATES: ReadonlySet<TrajectoryState> = new Set([
 	"unknown",
 ]);
 
+/**
+ * States in which a row's authoring obligation is discharged.
+ *
+ * **One definition on purpose.** The phase-close probe (`run/probe.ts`) and
+ * `atdawn verify` (`verify/detect.ts`) both ask "has this row been dealt with?",
+ * and if they answered differently a phase would close in one lane and not the
+ * other. A second copy would not be a duplicated line — it would be a silent
+ * divergence between two enforcement lanes, so the rule lives here.
+ *
+ * `hooks/check-gates.js` encodes the same set inline; that JS port is a
+ * deliberate mirror under the existing hook-port convention (change the TS and
+ * every JS port together), not an accidental third copy.
+ */
+export const TERMINAL_STATES: ReadonlySet<string> = new Set([
+	"written",
+	"passing",
+	"skipped",
+	"blocked",
+]);
+
 const VALID_KINDS: ReadonlySet<TrajectoryKind> = new Set([
 	"example",
 	"property",

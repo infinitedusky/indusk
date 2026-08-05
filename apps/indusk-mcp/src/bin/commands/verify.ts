@@ -1,4 +1,5 @@
-import { exitCodeForReport, runVerify, type VerifyFinding } from "../../lib/verify/verify.js";
+import { formatReport } from "../../lib/verify/report.js";
+import { exitCodeForReport, runVerify } from "../../lib/verify/verify.js";
 
 export interface VerifyOptions {
 	/** `--phase <n>` — the phase boundary to judge. */
@@ -6,15 +7,6 @@ export interface VerifyOptions {
 	/** `--full-suite` — run the whole test command instead of referenced files. */
 	fullSuite?: boolean;
 }
-
-/** Human labels for each detection — the report's left column. */
-const KIND_LABELS: Record<VerifyFinding["kind"], string> = {
-	"premature-checkoff": "premature ",
-	"test-first": "test-first ",
-	goalpost: "goalpost   ",
-	"red-test": "red-test   ",
-	phantom: "phantom    ",
-};
 
 /**
  * `atdawn verify <plan> --phase N` — phase-boundary verification for work Dawn
@@ -57,39 +49,9 @@ export async function verify(
 		return;
 	}
 
-	console.info(`Plan:     ${report.plan}`);
-	console.info(`Phase:    ${report.phase}`);
-	console.info(`Baseline: ${report.baseline.sha} (${report.baseline.source})`);
-	console.info("");
-
-	if (report.findings.length > 0) {
-		console.error(
-			`✗ PHASE ${report.phase} REJECTED (${report.findings.length} ${
-				report.findings.length === 1 ? "violation" : "violations"
-			})`,
-		);
-		console.error("");
-		for (const finding of report.findings) {
-			const label = KIND_LABELS[finding.kind];
-			const subject = finding.row ?? finding.item;
-			const head = subject ? `${subject} — ` : "";
-			console.error(`  ${label} ${head}${finding.message.split("\n").join("\n             ")}`);
-		}
-		console.error("");
-	}
-
-	if (report.unverifiedRows.length > 0) {
-		// Never silent: an unverifiable row is a gap in the evidence, not a pass.
-		console.info(
-			`unverified: ${report.unverifiedRows.length} row(s) claim "passing" with no test reference — not checked: ${report.unverifiedRows.join(", ")}`,
-		);
-	}
-
-	if (report.verdict === "clean") {
-		console.info(
-			`✓ Phase ${report.phase} verified — the claims hold against ${report.baseline.sha}. Recorded as the baseline for the next phase.`,
-		);
-	}
+	const { out, err } = formatReport(report);
+	for (const line of out) console.info(line);
+	for (const line of err) console.error(line);
 
 	process.exitCode = exitCodeForReport(report);
 }

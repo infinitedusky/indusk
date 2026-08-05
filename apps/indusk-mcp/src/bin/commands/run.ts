@@ -1,5 +1,4 @@
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolveImplPath } from "../../lib/impl-parser.js";
 import { type PhaseReport, runLoop } from "../../lib/run/loop.js";
 import { resolveModel, resolveProviderKey } from "../../lib/run/registry.js";
 
@@ -12,20 +11,6 @@ export interface RunOptions {
 
 /** Default driver when `--model` is omitted — Claude is the first driver (ADR Decision 4). */
 const DEFAULT_MODEL = "claude";
-
-/**
- * Resolve `<plan>` to an impl.md: an explicit impl.md path, a directory
- * containing one, or a plan name under `.indusk/planning/`.
- */
-function resolveImplPath(projectRoot: string, plan: string): string | null {
-	const candidates = plan.endsWith("impl.md")
-		? [resolve(projectRoot, plan)]
-		: [
-				resolve(projectRoot, plan, "impl.md"),
-				resolve(projectRoot, ".indusk", "planning", plan, "impl.md"),
-			];
-	return candidates.find((p) => existsSync(p)) ?? null;
-}
 
 function usageSuffix(report: PhaseReport): string {
 	const { inputTokens, outputTokens } = report.usage ?? {};

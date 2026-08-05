@@ -1,6 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
+import { TERMINAL_STATES } from "../trajectory/parser.js";
 import { type GateEnvelope, type GateResult, runGateScripts } from "./gate.js";
 import { snapshotTrajectory } from "./goalposts.js";
 
@@ -14,8 +15,9 @@ import { snapshotTrajectory } from "./goalposts.js";
  * own file and its own tests.
  */
 
-/** Terminal trajectory states — a row in one of these needs no further authoring. */
-const TERMINAL_STATES: ReadonlySet<string> = new Set(["written", "passing", "skipped", "blocked"]);
+// Terminal trajectory states come from the trajectory module — one definition,
+// so this probe and `atdawn verify` cannot disagree about whether a row's
+// obligation is discharged.
 
 /** The probe checklist item injected into the temp copy — unique by construction. */
 export const PROBE_ITEM = "__indusk-run phase-close probe__";

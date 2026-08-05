@@ -25,7 +25,18 @@ export interface VerifyRecord {
 	phase: number;
 	/** The commit this verification judged as the phase boundary. */
 	sha: string;
-	/** Hash of the trajectory table at that boundary — the goalpost fingerprint. */
+	/**
+	 * Fingerprint of the goalposts at that boundary.
+	 *
+	 * **Forensic only — nothing reads this field.** It is written so the
+	 * append-only evidence trail records what the trajectory *was* when a phase
+	 * was blessed, which is worth having in an audit artifact. But drift
+	 * detection deliberately does not use it: it compares against the baseline's
+	 * actual `impl.md` via `git show`, and when that is unreachable it reports a
+	 * finding rather than falling back to a weaker hash comparison. Do not
+	 * assume this field is load-bearing, and do not wire it in without deciding
+	 * what a hash mismatch means when the real file is available.
+	 */
 	trajectory: string;
 	timestamp: string;
 }

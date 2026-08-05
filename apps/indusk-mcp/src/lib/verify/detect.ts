@@ -1,7 +1,7 @@
 import { resolveGateScripts } from "../run/gate.js";
 import { checkGoalposts, snapshotTrajectory } from "../run/goalposts.js";
 import { probePhaseClose } from "../run/probe.js";
-import type { Trajectory } from "../trajectory/parser.js";
+import { TERMINAL_STATES, type Trajectory } from "../trajectory/parser.js";
 import { showFileAt } from "./git.js";
 import type { VerifyFinding } from "./verify.js";
 
@@ -14,8 +14,8 @@ import type { VerifyFinding } from "./verify.js";
  * test taught — see `detectTestFirstDuty` below.
  */
 
-/** States that end a row's authoring obligation — mirrors check-gates Gate A. */
-const TERMINAL_STATES: ReadonlySet<string> = new Set(["written", "passing", "skipped", "blocked"]);
+// Terminal states come from the trajectory module — see TERMINAL_STATES there
+// for why this must not be a local copy.
 
 /**
  * Premature checkoff — run the REAL `check-gates` against the committed impl.

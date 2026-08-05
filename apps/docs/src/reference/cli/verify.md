@@ -92,6 +92,26 @@ That means it catches the flipped-boxes-wrote-nothing case exactly, and **does n
 
 This is deliberate. Reverting belongs to Dawn's agent-integration component, and it inherits a constraint established the hard way during `dawn-hook-parity`'s falsification: `git reset` unstages, but it cannot un-write a working tree. **What has been written can only be accounted for, not unwritten.** A detector that reports is honest about that.
 
+## What a report looks like
+
+```
+Plan:     dawn-verify
+Phase:    5
+Baseline: a2c95bd0 (ledger)
+
+✗ PHASE 5 REJECTED (2 violations)
+
+  red-test    A4 — Row A4 claims "passing", but its test does not pass:
+              apps/indusk-mcp/src/lib/verify/red-tests.test.ts exited non-zero.
+  phantom     "add the parser" was checked off in Phase 5, but nothing outside
+              the plan file changed since a2c95bd0 — the checkbox moved and the
+              work did not.
+
+unverified: 1 row(s) could not be checked — A16
+```
+
+The subject prefix before the em-dash is always a **trajectory row id** (`A4`) or absent. A finding about a checklist item names that item inside its message instead — the item's full text is too long to serve as a prefix, and printing it in both places was a real defect this page's contract now pins.
+
 ## Exit codes
 
 | Code | Meaning |
