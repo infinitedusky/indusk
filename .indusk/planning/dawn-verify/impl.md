@@ -49,7 +49,7 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 | A1 | Verifying a phase that checked an item while an earlier phase has an unchecked gate item reports a rejection naming that item and its phase | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
 | A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
 | A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
-| A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
+| A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
 | A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | written |
 | A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
 | A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
@@ -58,8 +58,8 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 | A10 | Verifying a plan never verified before reports which baseline it bootstrapped from and proceeds | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | passing |
 | A11 | A rejecting verify records nothing — re-running produces the identical rejection rather than treating the bad phase as a baseline | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | passing |
 | A12 | A corrupted or unreadable ledger causes verify to refuse loudly naming the problem, never silently proceeding as if never verified | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | passing |
-| A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
-| A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
+| A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
+| A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
 | A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | passing |
 | A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `.indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | planned |
 
@@ -160,21 +160,22 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
 
 ### Phase 3: Red-test detection
 
-- [ ] Add the optional `Test` column to `src/lib/trajectory/parser.ts` — a `test?: string[]` field parsed from a comma-separated cell; absent column stays `undefined` (the header alias map already passes unknown columns through, so old plans are unaffected)
-- [ ] Add test-command resolution from the `verify` block in `.indusk/config.json`, producing a runnable command plus a per-file argument
-- [ ] Add `src/lib/verify/red-tests.ts` — deduplicate referenced files across in-scope rows, invoke the command once per file, and treat a non-zero exit as failure for every row referencing that file
-- [ ] Report a `passing` row with no test reference as unverified rather than passed, and count them in the report summary
-- [ ] Honor `--full-suite` by running the whole command once instead of per-file
+- [x] Add the optional `Test` column to `src/lib/trajectory/parser.ts` — a `test?: string[]` field parsed from a comma-separated cell; absent column stays `undefined` (the header alias map already passes unknown columns through, so old plans are unaffected)
+- [x] Add test-command resolution from the `verify` block in `.indusk/config.json`, producing a runnable command plus a per-file argument — `verify.testCommand` is the explicit escape hatch and wins outright; the derived map covers common runners only, and an unknown runner with no explicit command is a refusal rather than a guess
+- [x] Add `src/lib/verify/red-tests.ts` — deduplicate referenced files across in-scope rows, invoke the command once per file, and treat a non-zero exit as failure for every row referencing that file
+- [x] Report a `passing` row with no test reference as unverified rather than passed, and count them in the report summary
+- [x] Honor `--full-suite` by running the whole command once instead of per-file
 
 #### Phase 3 Verification
-- [ ] A4, A13, A14 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Existing trajectory parser tests still pass, proving the added column broke no prior plan (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] A4, A13, A14 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] Existing trajectory parser tests still pass, proving the added column broke no prior plan (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+  - measured: 881 passed / 4 failed = 3 known pre-existing + A5 (Phase 4's). Every `trajectory/parser` and `validator` test green with the new column in place.
 
 #### Phase 3 Context
-- [ ] Add to Conventions: trajectory rows may carry an optional `Test` column naming test files; verify runs them by exit code, never by parsing runner output — runner-specific parsing belongs in an extension, not core
+- [x] Add to Conventions: trajectory rows may carry an optional `Test` column naming test files; verify runs them by exit code, never by parsing runner output — runner-specific parsing belongs in an extension, not core
 
 #### Phase 3 Document
-- [ ] Update `apps/docs/src/guide/test-trajectory.md` with the `Test` column, what it unlocks, and the explicit note that an unreferenced row is reported unverified rather than passed
+- [x] Update `apps/docs/src/guide/test-trajectory.md` with the `Test` column, what it unlocks, and the explicit note that an unreferenced row is reported unverified rather than passed
 
 ### Phase 4: Phantom-work detection
 
