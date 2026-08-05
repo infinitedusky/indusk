@@ -46,21 +46,21 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 
 | ID | Asserts | Test | Writable at | Passes at | State |
 |----|---------|------|-------------|-----------|-------|
-| A1 | Verifying a phase that checked an item while an earlier phase has an unchecked gate item reports a rejection naming that item and its phase | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | planned |
-| A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | planned |
-| A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | planned |
-| A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | planned |
-| A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | planned |
-| A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | planned |
-| A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | planned |
-| A8 | A rejecting verify exits non-zero so a calling script or CI step fails rather than continuing | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | planned |
-| A9 | After a phase verifies clean, verifying the next phase judges against the commit that verification recorded, not the merge base | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | planned |
-| A10 | Verifying a plan never verified before reports which baseline it bootstrapped from and proceeds | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | planned |
-| A11 | A rejecting verify records nothing — re-running produces the identical rejection rather than treating the bad phase as a baseline | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | planned |
-| A12 | A corrupted or unreadable ledger causes verify to refuse loudly naming the problem, never silently proceeding as if never verified | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | planned |
-| A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | planned |
-| A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | planned |
-| A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | planned |
+| A1 | Verifying a phase that checked an item while an earlier phase has an unchecked gate item reports a rejection naming that item and its phase | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | written |
+| A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | written |
+| A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | written |
+| A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
+| A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | written |
+| A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | written |
+| A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | written |
+| A8 | A rejecting verify exits non-zero so a calling script or CI step fails rather than continuing | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | written |
+| A9 | After a phase verifies clean, verifying the next phase judges against the commit that verification recorded, not the merge base | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | written |
+| A10 | Verifying a plan never verified before reports which baseline it bootstrapped from and proceeds | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | written |
+| A11 | A rejecting verify records nothing — re-running produces the identical rejection rather than treating the bad phase as a baseline | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | written |
+| A12 | A corrupted or unreadable ledger causes verify to refuse loudly naming the problem, never silently proceeding as if never verified | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | written |
+| A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
+| A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
+| A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | written |
 | A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `.indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | planned |
 
 ### Deferred Verification
@@ -97,7 +97,8 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
 
 ### Phase 1: Ledger, baseline resolution, and the verify entry point
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create dawn-verify`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Create/confirm this plan's worktree (`indusk worktree create dawn-verify`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+  - note: `indusk worktree create` still fails outside workbench mode (`_resolve_workbench_root`); used `git worktree add -b plan/dawn-verify`. Worktree needed `pnpm install` + mcp build + admin build + `bundle-admin.js` to reach test-env parity (gitignored-artifact lesson). Baseline: 857 passing, 3 known pre-existing failures (`agent-roles-phase4`, `daemon-identity` T22/T23).
 - [ ] Add `src/lib/verify/ledger.ts` — append-only JSONL over `.indusk/verify/ledger.jsonl`
   ```typescript
   export interface VerifyRecord {
