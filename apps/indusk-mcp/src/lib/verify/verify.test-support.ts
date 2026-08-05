@@ -39,8 +39,9 @@ export interface TrajectoryRowSpec {
 	asserts: string;
 	/** The optional `Test` column — omitted entirely when undefined. */
 	test?: string;
-	writableAt: number;
-	passesAt: number;
+	/** A string emits the cell verbatim — how a malformed phase ref is built. */
+	writableAt: number | string;
+	passesAt: number | string;
 	state: string;
 }
 
@@ -71,10 +72,11 @@ export function buildImpl(spec: ImplSpec): string {
 		? "| ID | Asserts | Test | Writable at | Passes at | State |\n|----|---------|------|-------------|-----------|-------|"
 		: "| ID | Asserts | Writable at | Passes at | State |\n|----|---------|-------------|-----------|-------|";
 
+	const phaseCell = (v: number | string) => (typeof v === "number" ? `Phase ${v}` : v);
 	const rows = spec.rows.map((r) =>
 		spec.withTestColumn
-			? `| ${r.id} | ${r.asserts} | ${r.test ?? ""} | Phase ${r.writableAt} | Phase ${r.passesAt} | ${r.state} |`
-			: `| ${r.id} | ${r.asserts} | Phase ${r.writableAt} | Phase ${r.passesAt} | ${r.state} |`,
+			? `| ${r.id} | ${r.asserts} | ${r.test ?? ""} | ${phaseCell(r.writableAt)} | ${phaseCell(r.passesAt)} | ${r.state} |`
+			: `| ${r.id} | ${r.asserts} | ${phaseCell(r.writableAt)} | ${phaseCell(r.passesAt)} | ${r.state} |`,
 	);
 
 	const phases = spec.phases.map((p) => {
@@ -115,7 +117,7 @@ export function buildImpl(spec: ImplSpec): string {
 		"### Trajectory Rationale",
 		"",
 		...spec.rows
-			.filter((r) => r.writableAt >= 1)
+			.filter((r) => typeof r.writableAt === "number" && r.writableAt >= 1)
 			.map((r) => `- **${r.id}** \`Writable at: Phase ${r.writableAt}\` — fixture row.`),
 		"",
 		"## Checklist",

@@ -62,13 +62,13 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 | A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
 | A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | passing |
 | A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `.indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | passing |
-| A17 | A row whose referenced test file does not exist is reported as unverified naming the unresolvable path, never as a failing test | `src/lib/verify/red-tests.test.ts` | Phase 0 | Phase 6 | planned |
-| A18 | A row referencing a non-executable artifact (a manual record) is reported as unverified rather than run as a test | `src/lib/verify/red-tests.test.ts` | Phase 0 | Phase 6 | planned |
-| A19 | An item checked off with only NEW UNTRACKED files alongside it is not reported as phantom — untracked work is still work | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | planned |
-| A20 | Phantom detection still fires when the only other changed paths are InDusk machine state (`.indusk/verify/`, `.indusk/eval/`) | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | planned |
-| A21 | An item whose text was edited in the same commit that checked it off is still reported as phantom | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | planned |
-| A22 | A baseline whose impl.md is unreachable (plan renamed/moved, blob absent) reports a finding rather than silently reporting no goalpost drift | `src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | planned |
-| A23 | A trajectory row with a malformed phase reference is reported as a finding rather than silently excluded from every detection | `src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | planned |
+| A17 | A row whose referenced test file does not exist is reported as unverified naming the unresolvable path, never as a failing test | `src/lib/verify/red-tests.test.ts` | Phase 0 | Phase 6 | written |
+| A18 | A row referencing a non-executable artifact (a manual record) is reported as unverified rather than run as a test | `src/lib/verify/red-tests.test.ts` | Phase 0 | Phase 6 | written |
+| A19 | An item checked off with only NEW UNTRACKED files alongside it is not reported as phantom — untracked work is still work | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | written |
+| A20 | Phantom detection still fires when the only other changed paths are InDusk machine state (`.indusk/verify/`, `.indusk/eval/`) | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | written |
+| A21 | An item whose text was edited in the same commit that checked it off is still reported as phantom | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | written |
+| A22 | A baseline whose impl.md is unreachable (plan renamed/moved, blob absent) reports a finding rather than silently reporting no goalpost drift | `src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | written |
+| A23 | A trajectory row with a malformed phase reference is reported as a finding rather than silently excluded from every detection | `src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | written |
 
 ### Deferred Verification
 

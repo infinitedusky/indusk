@@ -165,6 +165,91 @@ describe("A3 — goalpost drift since the baseline", () => {
 		expect(finding?.message).toContain("accepts a version string");
 	});
 
+	it("A22 — a LEDGER baseline whose impl is unreachable is a finding, not silence", async () => {
+		// `showFileAt` swallows every error into null, and drift detection reads
+		// null as "the plan did not exist yet — nothing moved." That is right when
+		// bootstrapping. It is wrong when a previous verification DEMONSTRABLY saw
+		// this plan at that commit: then unreachable means moved/renamed/missing,
+		// and returning clean erases the goalposts silently.
+		const fixture = await makeVerifyFixture({
+			impl: buildImpl({
+				rows: [
+					{ id: "A1", asserts: "the widget parses", writableAt: 1, passesAt: 1, state: "passing" },
+				],
+				phases: [
+					{
+						n: 1,
+						name: "Parse",
+						items: [[true, "add the parser"]],
+						verification: [[true, "A1 passes"]],
+					},
+					{
+						n: 2,
+						name: "Render",
+						items: [[true, "add the renderer"]],
+						verification: [[true, "(none needed)"]],
+					},
+				],
+			}),
+		});
+		roots.push(fixture.root);
+
+		// A ledger record pointing at a commit where THIS plan path does not exist.
+		const orphan = await commitAll(fixture.root, "unrelated");
+		await writeFixtureFile(
+			fixture.root,
+			join(".indusk", "verify", "ledger.jsonl"),
+			`${JSON.stringify({
+				plan: fixture.plan,
+				phase: 1,
+				// A well-formed but unreachable tree-ish: the empty tree.
+				sha: "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+				trajectory: "sha256:whatever",
+				timestamp: "2026-08-05T00:00:00.000Z",
+			})}\n`,
+		);
+		expect(orphan).toBeTruthy();
+
+		const report = await runVerify({ root: fixture.root, plan: fixture.plan, phase: 2 });
+
+		expect(report.baseline.source).toBe("ledger");
+		expect(report.findings.filter((f) => f.kind === "goalpost").length).toBeGreaterThan(0);
+	});
+
+	it("A23 — a malformed phase reference is a finding, not a silently ignored row", async () => {
+		// `Phase one` parses to NaN. Every filter uses `=== phase` or `<= phase`,
+		// and NaN satisfies neither — so the row drops out of red-test, test-first
+		// AND the probe's Gate B while still looking like a real row to a human.
+		// Corrupt one cell and the row stops being checked at all.
+		const impl = buildImpl({
+			rows: [
+				{
+					id: "A1",
+					asserts: "the widget parses",
+					writableAt: "Phase one",
+					passesAt: "Phase one",
+					state: "planned",
+				},
+			],
+			phases: [
+				{
+					n: 1,
+					name: "Parse",
+					items: [[true, "add the parser"]],
+					verification: [[true, "A1 passes"]],
+				},
+			],
+		});
+		const fixture = await makeVerifyFixture({ impl });
+		roots.push(fixture.root);
+
+		const report = await runVerify({ root: fixture.root, plan: fixture.plan, phase: 1 });
+
+		expect(report.verdict).toBe("rejected");
+		const finding = report.findings.find((f) => f.row === "A1");
+		expect(finding).toBeDefined();
+	});
+
 	it("does not flag honest forward progress on the State column", async () => {
 		const original = buildImpl({
 			rows: [
