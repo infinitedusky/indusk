@@ -110,7 +110,10 @@ describe("T14: CLAUDE.md contains three-tier agent roles subsection AND agent-ro
 		expect(keyDecisionsSection).not.toBeNull();
 		const text = keyDecisionsSection?.[1] ?? "";
 		expect(text).toMatch(/agent-roles/);
-		// Must link to the ADR path
-		expect(text).toMatch(/\.indusk\/planning\/agent-roles\/adr\.md/);
+		// Must link to the ADR — accepting the archived location, because closing
+		// a plan MOVES its ADR under `planning/archive/`. Pinning the pre-archive
+		// path made this assert that the plan is still open, which is the opposite
+		// of what it means to verify a decision was recorded.
+		expect(text).toMatch(/\.indusk\/planning\/(?:archive\/)?agent-roles\/adr\.md/);
 	});
 });
