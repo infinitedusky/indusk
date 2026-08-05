@@ -195,7 +195,8 @@ describe("A3 — goalpost drift since the baseline", () => {
 		roots.push(fixture.root);
 
 		// A ledger record pointing at a commit where THIS plan path does not exist.
-		const orphan = await commitAll(fixture.root, "unrelated");
+		await writeFixtureFile(fixture.root, "src/renderer.js", "export const render = () => 'x';\n");
+		const orphan = await commitAll(fixture.root, "phase 2 work");
 		await writeFixtureFile(
 			fixture.root,
 			join(".indusk", "verify", "ledger.jsonl"),

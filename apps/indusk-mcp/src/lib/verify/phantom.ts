@@ -29,7 +29,9 @@ export async function detectPhantomWork(options: {
 	// phase that did nothing, which the gate detections already speak to.
 	if (changed.length === 0) return [];
 
-	const somethingRealChanged = changed.some((path) => path !== options.implRepoRelPath);
+	const somethingRealChanged = changed.some(
+		(path) => path !== options.implRepoRelPath && !isMachineState(path),
+	);
 	if (somethingRealChanged) return [];
 
 	// Only the plan file moved. Which implementation items became checked?
@@ -54,6 +56,20 @@ export async function detectPhantomWork(options: {
 }
 
 /**
+ * InDusk's own bookkeeping — never evidence that a phase did work.
+ *
+ * This exclusion is load-bearing rather than tidy. The verify ledger is tracked,
+ * so from the first clean run onward it appears in every later phase's diff —
+ * which made "nothing but impl.md changed" permanently false and silently
+ * switched this detection off. Verify's own success artifact was disabling
+ * verify. The commit cadence excludes `.indusk/eval` from staging for the
+ * adjacent reason.
+ */
+function isMachineState(repoRelPath: string): boolean {
+	return repoRelPath.startsWith(".indusk/verify/") || repoRelPath.startsWith(".indusk/eval/");
+}
+
+/**
  * Implementation items in the given phase that went unchecked → checked.
  *
  * Gate items (Verification/Context/Document) are excluded: checking a gate item
@@ -68,9 +84,12 @@ function newlyCheckedImplementationItems(
 	const before = implementationItemsAt(baselineContent, phase);
 	const after = implementationItemsAt(currentContent, phase);
 
-	const wasChecked = new Map(before.map((item) => [item.text, item.checked]));
+	// Match by POSITION, not by text. Matching on text let a reworded item read
+	// as brand-new rather than as a checkoff, and brand-new items are never
+	// flagged — so editing the wording while ticking the box walked straight
+	// past this detection. Position survives the edit; text does not.
 	return after
-		.filter((item) => item.checked && wasChecked.get(item.text) === false)
+		.filter((item, index) => item.checked && before[index]?.checked === false)
 		.map((item) => item.text);
 }
 

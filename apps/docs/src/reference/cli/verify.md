@@ -53,6 +53,27 @@ flowchart TD
 
 Detections are **not** short-circuited in practice — a run reports every violation it finds, not just the first. The flow above reads top-to-bottom for clarity.
 
+### Test references: paths, and the difference between red and unchecked
+
+The `red-test` detection reads the trajectory's optional [`Test` column](../../guide/test-trajectory.md), which names the test **files** backing a row.
+
+**Paths are repo-root-relative.** The test command runs with its working directory at the repository root, so in a monorepo a package-relative path (`src/lib/…`) resolves to nothing. Write `apps/indusk-mcp/src/lib/…`.
+
+**A reference that cannot be executed is `unverified`, never `red`.** Verify stats every path before running anything. Two cases report as unverified rather than as failures:
+
+| Reference | Reported as | Why |
+|---|---|---|
+| `apps/x/foo.test.ts` (exists) | checked — red or green | It ran; the exit code is the verdict |
+| `apps/x/gone.test.ts` (missing) | **unverified**, naming the path | Nothing was observed; asserting failure would be a lie |
+| `manual: path/to/record.md` | **unverified** (by design) | A human verified it; shelling it to a test runner guarantees a false red |
+| *(no `Test` column)* | **unverified** (by omission) | Nothing to run |
+
+This distinction is the page's central promise pointed at itself. Reporting a failure you never observed is exactly as dishonest as reporting a pass you never observed — and the second kind is the one this whole command exists to catch. It was found the only way it could be: by running verify against its own plan, where 16 rows reported red while every test passed.
+
+::: tip Derived commands are best-effort
+`verify.testRunner` in `.indusk/config.json` derives a command for common runners. If your runner needs a different invocation, set **`verify.testCommand`** explicitly — it wins outright. An unknown runner with no explicit command is a refusal, not a guess.
+:::
+
 ### Phantom work, and what it deliberately misses
 
 `phantom` is the detection with the narrowest rule in the command, on purpose.

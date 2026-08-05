@@ -127,11 +127,21 @@ export async function showFileAt(
 	}
 }
 
-/** Repo-relative paths that changed between a commit and the working tree. */
+/**
+ * Repo-relative paths that changed between a commit and the working tree —
+ * including files that are new and **not yet staged**.
+ *
+ * The untracked half is not a nicety. `git diff` reports tracked modifications
+ * only, so an agent that writes real code without `git add`ing it produced a
+ * diff containing nothing but the plan file — and looked, to phantom detection,
+ * exactly like an agent that wrote nothing at all. Half-in/half-out on the
+ * working tree is the bug; either stance is defensible, the mixture is not.
+ */
 export async function changedPathsSince(root: string, sha: string): Promise<string[]> {
-	const tracked = await git(root, "diff", "--name-only", sha, "HEAD");
-	const uncommitted = await git(root, "diff", "--name-only", "HEAD");
-	return [...new Set([...tracked.split("\n"), ...uncommitted.split("\n")])]
+	const committed = await git(root, "diff", "--name-only", sha, "HEAD");
+	const unstaged = await git(root, "diff", "--name-only", "HEAD");
+	const untracked = await git(root, "ls-files", "--others", "--exclude-standard");
+	return [...new Set([...committed.split("\n"), ...unstaged.split("\n"), ...untracked.split("\n")])]
 		.map((line) => line.trim())
 		.filter((line) => line.length > 0);
 }

@@ -74,6 +74,8 @@ Until this column exists on a row, the row's `State` is an **unverified self-rep
 
 Three rules worth knowing before you use it:
 
+- **Paths are repo-root-relative.** The test command runs from the repository root, so in a monorepo a package-relative path resolves to nothing. Write `apps/pkg/src/foo.test.ts`, not `src/foo.test.ts`. A path that does not resolve reports the row **unverified** — never as a failing test.
+- **A manually-verified row says so.** Prefix the reference with `manual:` (e.g. `manual: .indusk/planning/x/matrix.md`) when a human signed it off. Verify reports it unverified-by-design instead of shelling a record out to a test runner.
 - **Files, not test names or line numbers.** Verify runs each file through the project's own test command and reads the **exit code**. That keeps attribution runner-agnostic — matching per-test tags would need runner-specific output parsing, which belongs in an extension, not in core. Line numbers were rejected outright: they move on every refactor, and false failures train you to ignore the tool.
 - **A shared file's failure is attributed to every row referencing it.** Over-attribution, deliberately — conservative in the safe direction.
 - **A row claiming `passing` with no `Test` reference is reported as _unverified_, never as passed.** The distinction is the point: "could not be checked" and "checked and passed" are different claims, and collapsing them would make the backward-compatible omission a silent hole.

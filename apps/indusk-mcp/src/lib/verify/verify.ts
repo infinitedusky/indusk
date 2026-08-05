@@ -3,7 +3,12 @@ import { readFile } from "node:fs/promises";
 import { relative, resolve, sep } from "node:path";
 import matter from "gray-matter";
 import { parseTrajectory } from "../trajectory/parser.js";
-import { detectGoalpostDrift, detectPrematureCheckoff, detectTestFirstDuty } from "./detect.js";
+import {
+	detectGoalpostDrift,
+	detectMalformedRows,
+	detectPrematureCheckoff,
+	detectTestFirstDuty,
+} from "./detect.js";
 import { assertGitRepo, headSha, resolveBootstrapBaseline } from "./git.js";
 import { appendVerifyRecord, findBaselineRecord, hashTrajectory, readLedger } from "./ledger.js";
 import { detectPhantomWork } from "./phantom.js";
@@ -120,11 +125,13 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 			scripts: options.scripts,
 		})),
 		...detectTestFirstDuty(trajectory, options.phase),
+		...detectMalformedRows(trajectory),
 		...(await detectGoalpostDrift({
 			root,
 			baselineSha: baseline.sha,
 			implRepoRelPath,
 			currentContent: content,
+			baselineSource: baseline.source,
 		})),
 	];
 

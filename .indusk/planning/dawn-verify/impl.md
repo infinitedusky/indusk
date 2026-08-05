@@ -1,7 +1,7 @@
 ---
 title: "Dawn Verify — Implementation"
 date: 2026-08-05
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -46,29 +46,29 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 
 | ID | Asserts | Test | Writable at | Passes at | State |
 |----|---------|------|-------------|-----------|-------|
-| A1 | Verifying a phase that checked an item while an earlier phase has an unchecked gate item reports a rejection naming that item and its phase | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
-| A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
-| A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
-| A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
-| A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | passing |
-| A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
-| A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
-| A8 | A rejecting verify exits non-zero so a calling script or CI step fails rather than continuing | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
-| A9 | After a phase verifies clean, verifying the next phase judges against the commit that verification recorded, not the merge base | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | passing |
-| A10 | Verifying a plan never verified before reports which baseline it bootstrapped from and proceeds | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | passing |
-| A11 | A rejecting verify records nothing — re-running produces the identical rejection rather than treating the bad phase as a baseline | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | passing |
-| A12 | A corrupted or unreadable ledger causes verify to refuse loudly naming the problem, never silently proceeding as if never verified | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | passing |
-| A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
-| A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
-| A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | passing |
-| A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `.indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | passing |
-| A17 | A row whose referenced test file does not exist is reported as unverified naming the unresolvable path, never as a failing test | `src/lib/verify/red-tests.test.ts` | Phase 0 | Phase 6 | written |
-| A18 | A row referencing a non-executable artifact (a manual record) is reported as unverified rather than run as a test | `src/lib/verify/red-tests.test.ts` | Phase 0 | Phase 6 | written |
-| A19 | An item checked off with only NEW UNTRACKED files alongside it is not reported as phantom — untracked work is still work | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | written |
-| A20 | Phantom detection still fires when the only other changed paths are InDusk machine state (`.indusk/verify/`, `.indusk/eval/`) | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | written |
-| A21 | An item whose text was edited in the same commit that checked it off is still reported as phantom | `src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | written |
-| A22 | A baseline whose impl.md is unreachable (plan renamed/moved, blob absent) reports a finding rather than silently reporting no goalpost drift | `src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | written |
-| A23 | A trajectory row with a malformed phase reference is reported as a finding rather than silently excluded from every detection | `src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | written |
+| A1 | Verifying a phase that checked an item while an earlier phase has an unchecked gate item reports a rejection naming that item and its phase | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
+| A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
+| A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
+| A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `apps/indusk-mcp/src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
+| A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `apps/indusk-mcp/src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | passing |
+| A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `apps/indusk-mcp/src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
+| A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `apps/indusk-mcp/src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
+| A8 | A rejecting verify exits non-zero so a calling script or CI step fails rather than continuing | `apps/indusk-mcp/src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
+| A9 | After a phase verifies clean, verifying the next phase judges against the commit that verification recorded, not the merge base | `apps/indusk-mcp/src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | passing |
+| A10 | Verifying a plan never verified before reports which baseline it bootstrapped from and proceeds | `apps/indusk-mcp/src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | passing |
+| A11 | A rejecting verify records nothing — re-running produces the identical rejection rather than treating the bad phase as a baseline | `apps/indusk-mcp/src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | passing |
+| A12 | A corrupted or unreadable ledger causes verify to refuse loudly naming the problem, never silently proceeding as if never verified | `apps/indusk-mcp/src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | passing |
+| A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `apps/indusk-mcp/src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
+| A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `apps/indusk-mcp/src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
+| A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `apps/indusk-mcp/src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | passing |
+| A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `manual: .indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | passing |
+| A17 | A row whose referenced test file does not exist is reported as unverified naming the unresolvable path, never as a failing test | `apps/indusk-mcp/src/lib/verify/red-tests.test.ts` | Phase 0 | Phase 6 | passing |
+| A18 | A row referencing a non-executable artifact (a manual record) is reported as unverified rather than run as a test | `apps/indusk-mcp/src/lib/verify/red-tests.test.ts` | Phase 0 | Phase 6 | passing |
+| A19 | An item checked off with only NEW UNTRACKED files alongside it is not reported as phantom — untracked work is still work | `apps/indusk-mcp/src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | passing |
+| A20 | Phantom detection still fires when the only other changed paths are InDusk machine state (`.indusk/verify/`, `.indusk/eval/`) | `apps/indusk-mcp/src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | passing |
+| A21 | An item whose text was edited in the same commit that checked it off is still reported as phantom | `apps/indusk-mcp/src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | passing |
+| A22 | A baseline whose impl.md is unreachable (plan renamed/moved, blob absent) reports a finding rather than silently reporting no goalpost drift | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | passing |
+| A23 | A trajectory row with a malformed phase reference is reported as a finding rather than silently excluded from every detection | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | passing |
 
 ### Deferred Verification
 
@@ -233,29 +233,33 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
 
 The theme, stated plainly: **every remaining defect is verify lying in the confident direction** — either asserting a failure it never observed (A17, A18) or asserting cleanliness it never established (A19–A23).
 
-- [ ] Resolve each `Test` reference against the repo root and **stat it before running**. A path that does not resolve is reported `unverified` naming the unresolvable path — never `red-test`. Fixes the 16-false-positive result from running verify on this very plan.
-- [ ] Document the path convention in `reference/cli/verify.md` and the trajectory guide: `Test` paths are **repo-root-relative**. The monorepo case is what broke it — every fixture used a throwaway repo where root and package coincide, so the ambiguity could not appear.
-- [ ] Give a row a way to declare a **non-executable / manually-verified** artifact so an acceptance record (A16's `matrix.md`) is not shelled out to a test runner. Treat it as unverified-by-design, distinct from unverified-by-omission.
-- [ ] Make `changedPathsSince` see **untracked files** (`git ls-files --others --exclude-standard`), or make the working-tree stance consistent. Today it reports tracked modifications but not new untracked files — so an agent that writes code without staging it looks like it wrote nothing.
-- [ ] Exclude InDusk machine state (`.indusk/verify/`, `.indusk/eval/`) from phantom's "something real changed" test — same exclusion the commit cadence already applies to `.indusk/eval` when staging.
-- [ ] Match checklist items across the baseline by a key that survives a text edit (index within its phase, or normalized prefix), so editing an item's wording while checking it off no longer evades phantom.
-- [ ] Report an unreachable baseline impl as a finding instead of returning `[]`, and use the ledger's stored `trajectory` hash as the fallback comparison — the field is written today and never read.
-- [ ] Treat a malformed phase reference (`Writable at`/`Passes at` that does not parse) as a finding rather than letting the row fall out of every filter unnoticed.
+- [x] Resolve each `Test` reference against the repo root and **stat it before running**. A path that does not resolve is reported `unverified` naming the unresolvable path — never `red-test`. Fixes the 16-false-positive result from running verify on this very plan.
+- [x] Document the path convention in `reference/cli/verify.md` and the trajectory guide: `Test` paths are **repo-root-relative**. The monorepo case is what broke it — every fixture used a throwaway repo where root and package coincide, so the ambiguity could not appear.
+- [x] Give a row a way to declare a **non-executable / manually-verified** artifact so an acceptance record (A16's `matrix.md`) is not shelled out to a test runner. Treat it as unverified-by-design, distinct from unverified-by-omission. *(`manual:` prefix.)*
+- [x] **Discovered:** drop `--silent` from the derived vitest command. It is a BOOLEAN flag in vitest 4, so an appended file path is parsed as its value and the run dies with `Unexpected value "--silent=<path>"` — making every row report red for a CLI-parsing reason unrelated to the tests. Found only by running the real command against the real repo.
+- [x] **Discovered:** apply the new convention to this plan's own trajectory — 22 references rewritten repo-root-relative, A16 marked `manual:`. Documenting a convention while leaving the authoring plan in violation would have left 15 rows permanently unverified.
+- [x] Make `changedPathsSince` see **untracked files** (`git ls-files --others --exclude-standard`), or make the working-tree stance consistent. Today it reports tracked modifications but not new untracked files — so an agent that writes code without staging it looks like it wrote nothing.
+- [x] Exclude InDusk machine state (`.indusk/verify/`, `.indusk/eval/`) from phantom's "something real changed" test — same exclusion the commit cadence already applies to `.indusk/eval` when staging.
+- [x] Match checklist items across the baseline by a key that survives a text edit (index within its phase, or normalized prefix), so editing an item's wording while checking it off no longer evades phantom. *(Matched by position.)*
+- [x] Report an unreachable baseline impl as a finding instead of returning `[]` — **scoped to a ledger baseline only**. When bootstrapping, an absent impl genuinely means the plan did not exist yet and silence is correct; when a previous verification demonstrably read the plan at that commit, unreachable means moved/renamed/missing and silence would erase the goalposts.
+  - note: the ledger's stored `trajectory` hash is still written and never read. Left deliberately — the source-aware check above covers the failure without introducing a second, weaker comparison path. Flagged for `/cleanup` as dead-ish state.
+- [x] Treat a malformed phase reference (`Writable at`/`Passes at` that does not parse) as a finding rather than letting the row fall out of every filter unnoticed. *(Also covers an unparseable `State`.)*
 
 #### Phase 6 Verification
-- [ ] A17: a row whose `Test` path does not resolve reports `unverified` naming the path, not `red-test`
-- [ ] A18: a row referencing a non-executable artifact is not shelled to the test runner
-- [ ] A19: an item checked off alongside new **untracked** files is not phantom
-- [ ] A20: phantom still fires when the only other changed paths are `.indusk/verify/` or `.indusk/eval/`
-- [ ] A21: an item whose text changed in the checking commit is still phantom
-- [ ] A22: an unreachable baseline impl produces a finding, not silence
-- [ ] A23: a malformed phase reference produces a finding, not silent exclusion
+- [x] A17: a row whose `Test` path does not resolve reports `unverified` naming the path, not `red-test`
+- [x] A18: a row referencing a non-executable artifact is not shelled to the test runner
+- [x] A19: an item checked off alongside new **untracked** files is not phantom
+- [x] A20: phantom still fires when the only other changed paths are `.indusk/verify/` or `.indusk/eval/`
+- [x] A21: an item whose text changed in the checking commit is still phantom
+- [x] A22: an unreachable baseline impl produces a finding, not silence
+- [x] A23: a malformed phase reference produces a finding, not silent exclusion
+- [x] End-to-end on the case that exposed the defects: `verify dawn-verify --phase 5` went from **16 false red-tests → 0**, with 15 rows now genuinely executed and green and A16 correctly reported unverified-by-design. 890 passed / 3 failed (the known pre-existing set).
 
 #### Phase 6 Context
-- [ ] Add to Known Gotchas: verify's own success artifact (`.indusk/verify/ledger.jsonl`) is tracked, so once committed it appears in every later phase's diff — any detection keyed on "what else changed" must exclude InDusk machine state or it silently disables itself after the first clean run
+- [x] Add to Known Gotchas: verify's own success artifact (`.indusk/verify/ledger.jsonl`) is tracked, so once committed it appears in every later phase's diff — any detection keyed on "what else changed" must exclude InDusk machine state or it silently disables itself after the first clean run
 
 #### Phase 6 Document
-- [ ] Update `reference/cli/verify.md`: state the repo-root-relative `Test` path convention, and document that an unresolvable or non-executable reference reports **unverified** rather than red — the distinction between "could not check" and "checked and failed" is the page's central promise
+- [x] Update `reference/cli/verify.md`: state the repo-root-relative `Test` path convention, and document that an unresolvable or non-executable reference reports **unverified** rather than red — the distinction between "could not check" and "checked and failed" is the page's central promise *(also mirrored into the trajectory guide)*
 
 ## Files Affected
 

@@ -74,6 +74,35 @@ export function detectTestFirstDuty(trajectory: Trajectory, phase: number): Veri
 }
 
 /**
+ * Rows whose phase references do not parse.
+ *
+ * `Phase one` becomes NaN, and every filter in this command is `=== phase` or
+ * `<= phase` — neither of which NaN ever satisfies. So the row silently drops
+ * out of red-test checking, out of the test-first duty, and out of the probe's
+ * Gate B, while still reading as a perfectly ordinary row to a human. Corrupt
+ * one cell and the row stops being checked at all, with no signal anywhere.
+ *
+ * A row the command cannot interpret is unverifiable, and unverifiable is
+ * reported — never treated as satisfied.
+ */
+export function detectMalformedRows(trajectory: Trajectory): VerifyFinding[] {
+	const findings: VerifyFinding[] = [];
+	for (const row of trajectory.rows) {
+		const bad: string[] = [];
+		if (!Number.isFinite(row.writableAt)) bad.push("Writable at");
+		if (!Number.isFinite(row.passesAt)) bad.push("Passes at");
+		if (row.state === "unknown") bad.push("State");
+		if (bad.length === 0) continue;
+		findings.push({
+			kind: "test-first",
+			row: row.id,
+			message: `Row ${row.id} has an unparseable ${bad.join(" and ")} cell, so it is invisible to every phase-scoped check (red tests, test-first duty, and phase close). An uninterpretable row is unverified, not satisfied — fix the cell.`,
+		});
+	}
+	return findings;
+}
+
+/**
  * Goalpost drift — compare the trajectory at the baseline against the current
  * one.
  *
@@ -88,15 +117,29 @@ export async function detectGoalpostDrift(options: {
 	baselineSha: string;
 	implRepoRelPath: string;
 	currentContent: string;
+	/** Where the baseline came from — changes what an unreachable impl means. */
+	baselineSource: "ledger" | "merge-base";
 }): Promise<VerifyFinding[]> {
 	const baselineContent = await showFileAt(
 		options.root,
 		options.baselineSha,
 		options.implRepoRelPath,
 	);
-	// The plan did not exist at the baseline — every row is new, so nothing
-	// moved. Silence here is correct, not a missed detection.
-	if (baselineContent === null) return [];
+	if (baselineContent === null) {
+		// Bootstrap: the plan simply did not exist yet, every row is new, and
+		// nothing can have moved. Silence is correct.
+		if (options.baselineSource === "merge-base") return [];
+		// Ledger: a previous verification DEMONSTRABLY read this plan at this
+		// commit. Unreachable now means renamed, moved, or a missing blob — and
+		// returning "no drift" would erase the goalposts silently, which is the
+		// one thing this command exists not to do.
+		return [
+			{
+				kind: "goalpost",
+				message: `Baseline ${options.baselineSha.slice(0, 7)} was recorded by a previous verification, but ${options.implRepoRelPath} cannot be read at that commit — the plan was moved, renamed, or its history is unavailable. Goalpost drift cannot be checked, so it is reported rather than assumed clean.`,
+			},
+		];
+	}
 
 	const before = snapshotTrajectory(baselineContent);
 	const after = snapshotTrajectory(options.currentContent);

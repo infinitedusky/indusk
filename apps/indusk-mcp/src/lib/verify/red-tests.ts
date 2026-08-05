@@ -1,8 +1,8 @@
 import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { access, readFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import { promisify } from "node:util";
-import type { Trajectory } from "../trajectory/parser.js";
+import type { Trajectory, TrajectoryRow } from "../trajectory/parser.js";
 import type { VerifyFinding } from "./verify.js";
 
 /**
@@ -66,7 +66,11 @@ export async function resolveTestCommand(root: string): Promise<TestCommand | nu
 
 	switch (config.verify?.testRunner?.tool) {
 		case "vitest":
-			return { command: "npx", args: ["vitest", "run", "--silent"] };
+			// No `--silent`: it is a BOOLEAN flag in vitest 4, so a file path
+			// appended after it is parsed as its value and the run dies with
+			// `Unexpected value "--silent=<path>"`. Every row then reports red for
+			// a CLI-parsing reason that has nothing to do with the tests.
+			return { command: "npx", args: ["vitest", "run"] };
 		case "jest":
 			return { command: "npx", args: ["jest"] };
 		case "node":
@@ -110,8 +114,24 @@ export async function detectRedTests(options: {
 		return { findings: [], unverifiedRows: inScope.map((row) => row.id) };
 	}
 
-	const unverifiedRows = inScope.filter((row) => !row.test?.length).map((row) => row.id);
-	const checkable = inScope.filter((row) => row.test?.length);
+	// A reference we cannot EXECUTE is a gap in the evidence, not a failure we
+	// observed. Reporting it red is the same lie as reporting an unchecked row
+	// green — just pointed the other way. Found by running verify on its own
+	// plan: 16 false red-test findings, every referenced test actually passing.
+	const unverifiedRows: string[] = [];
+	const checkable: TrajectoryRow[] = [];
+	for (const row of inScope) {
+		if (!row.test?.length) {
+			unverifiedRows.push(row.id);
+			continue;
+		}
+		const runnable = await runnableRefs(options.root, row.test);
+		if (runnable.length === 0) {
+			unverifiedRows.push(row.id);
+			continue;
+		}
+		checkable.push({ ...row, test: runnable });
+	}
 	if (checkable.length === 0) return { findings: [], unverifiedRows };
 
 	if (options.fullSuite) {
@@ -148,6 +168,35 @@ export async function detectRedTests(options: {
 
 function describe(command: TestCommand, extra: string[]): string {
 	return [command.command, ...command.args, ...extra].join(" ");
+}
+
+/** Marks a reference as verified by a human, not by a runner. */
+const MANUAL_PREFIX = /^manual:\s*/i;
+
+/**
+ * Keep only references this machine can actually execute.
+ *
+ * Two things get filtered out, and both must report as *unverified* rather than
+ * as failures: a `manual:` reference (an acceptance record a human signed off —
+ * shelling it to a test runner guarantees a false red), and a path that does not
+ * resolve at all.
+ *
+ * **`Test` paths are repo-root-relative.** That convention exists because the
+ * command runs with `cwd` = repo root; in a monorepo a package-relative path
+ * silently resolves to nothing, which is exactly how this defect was found.
+ */
+async function runnableRefs(root: string, refs: string[]): Promise<string[]> {
+	const runnable: string[] = [];
+	for (const ref of refs) {
+		if (MANUAL_PREFIX.test(ref)) continue;
+		try {
+			await access(resolve(root, ref));
+			runnable.push(ref);
+		} catch {
+			// Unresolvable — the caller reports the row unverified.
+		}
+	}
+	return runnable;
 }
 
 /** True when the command exits non-zero — the whole verdict, runner-agnostic. */
