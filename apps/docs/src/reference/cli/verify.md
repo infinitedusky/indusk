@@ -24,6 +24,35 @@ It also closes a gap that was never tier-specific. Nothing in InDusk has ever ex
 | **red-test** | A row marked `passing` whose referenced test does not pass |
 | **phantom** | An item checked off with no corresponding change in the diff |
 
+```mermaid
+flowchart TD
+    S["Phase N claimed complete"] --> G{"git repo?"}
+    G -->|no| X1["REFUSE — loud"]
+    G -->|yes| L{"ledger readable?"}
+    L -->|corrupt| X2["REFUSE — loud"]
+    L -->|yes| B["resolve baseline"]
+
+    B --> D1{"prior phase gates<br/>all closed?"}
+    D1 -->|no| F1["premature-checkoff"]
+    D1 -->|yes| D2{"rows writable at N<br/>authored?"}
+    D2 -->|no| F2["test-first"]
+    D2 -->|yes| D3{"trajectory same<br/>as baseline?"}
+    D3 -->|drifted| F3["goalpost"]
+    D3 -->|yes| D4{"referenced tests<br/>actually pass?"}
+    D4 -->|no| F4["red-test"]
+    D4 -->|yes| D5{"diff touches more<br/>than impl.md?"}
+    D5 -->|no| F5["phantom"]
+    D5 -->|yes| OK["✓ clean — append ledger record"]
+
+    F1 --> R["✗ REJECTED (exit 1)<br/>nothing recorded"]
+    F2 --> R
+    F3 --> R
+    F4 --> R
+    F5 --> R
+```
+
+Detections are **not** short-circuited in practice — a run reports every violation it finds, not just the first. The flow above reads top-to-bottom for clarity.
+
 ## It never repairs
 
 `verify` renders a verdict and exits. It performs no revert, no re-dispatch, no repair. The only write it ever makes is appending its own ledger record — and only on a clean verdict.

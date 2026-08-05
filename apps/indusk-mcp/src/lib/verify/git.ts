@@ -70,6 +70,46 @@ export async function resolveMergeBase(root: string, baseRef?: string): Promise<
 	return first;
 }
 
+/**
+ * The bootstrap baseline, hardened against the degenerate on-trunk case.
+ *
+ * `merge-base(main, HEAD)` is the right answer on a plan branch — it is where
+ * the branch left the trunk. But when the work was committed ON the trunk, the
+ * merge base IS HEAD, and a baseline of "now" makes every comparison vacuously
+ * clean. That is the same silent-nothing failure as reporting `[]` on a non-git
+ * root, so it gets the same treatment: fall back to something meaningful.
+ *
+ * The fallback is "where this plan's work began" — the parent of the earliest
+ * commit that touched the plan's directory. When the plan arrived with the
+ * repository's first commit, that commit itself is the floor.
+ */
+export async function resolveBootstrapBaseline(
+	root: string,
+	planDirRepoRelPath: string,
+): Promise<string> {
+	const mergeBase = await resolveMergeBase(root);
+	const head = await headSha(root);
+	if (mergeBase !== head) return mergeBase;
+
+	const touching = await git(
+		root,
+		"log",
+		"--format=%H",
+		"--reverse",
+		"--",
+		planDirRepoRelPath,
+	).catch(() => "");
+	const earliest = touching.split("\n")[0]?.trim();
+	if (!earliest) return mergeBase;
+
+	try {
+		return await git(root, "rev-parse", `${earliest}^`);
+	} catch {
+		// The plan arrived with the root commit — nothing earlier exists.
+		return earliest;
+	}
+}
+
 /** File contents at a commit, or null when the path did not exist there. */
 export async function showFileAt(
 	root: string,

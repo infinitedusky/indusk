@@ -1,9 +1,10 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { relative, resolve, sep } from "node:path";
 import matter from "gray-matter";
 import { parseTrajectory } from "../trajectory/parser.js";
-import { assertGitRepo, headSha, resolveMergeBase } from "./git.js";
+import { detectGoalpostDrift, detectPrematureCheckoff, detectTestFirstDuty } from "./detect.js";
+import { assertGitRepo, headSha, resolveBootstrapBaseline } from "./git.js";
 import { appendVerifyRecord, findBaselineRecord, hashTrajectory, readLedger } from "./ledger.js";
 
 /**
@@ -65,6 +66,8 @@ export interface RunVerifyOptions {
 	phase: number;
 	/** Run the project's whole suite instead of only referenced test files. */
 	fullSuite?: boolean;
+	/** Gate scripts, injectable for tests. Defaults to the project's own. */
+	scripts?: string[];
 }
 
 /** Resolve `<plan>` to an impl.md the same way `run` does. */
@@ -95,16 +98,33 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 
 	// Read the ledger BEFORE forming any verdict: a corrupt ledger has to
 	// refuse, not silently degrade into bootstrap mode against a wrong baseline.
+	const implRepoRelPath = relative(root, implPath).split(sep).join("/");
+	const planDirRepoRelPath = implRepoRelPath.replace(/\/impl\.md$/, "");
+
 	const ledger = await readLedger(root);
 	const record = findBaselineRecord(ledger, planNameFor(options.plan, implPath), options.phase);
 	const baseline: VerifyBaseline = record
 		? { sha: record.sha, source: "ledger" }
-		: { sha: await resolveMergeBase(root), source: "merge-base" };
+		: { sha: await resolveBootstrapBaseline(root, planDirRepoRelPath), source: "merge-base" };
 
 	const content = await readFile(implPath, "utf8");
 	const trajectory = parseTrajectory(matter(content).content);
 
-	const findings: VerifyFinding[] = [];
+	const findings: VerifyFinding[] = [
+		...(await detectPrematureCheckoff({
+			root,
+			implPath,
+			phase: options.phase,
+			scripts: options.scripts,
+		})),
+		...detectTestFirstDuty(trajectory, options.phase),
+		...(await detectGoalpostDrift({
+			root,
+			baselineSha: baseline.sha,
+			implRepoRelPath,
+			currentContent: content,
+		})),
+	];
 	const unverifiedRows: string[] = [];
 
 	const verdict: VerifyReport["verdict"] = findings.length > 0 ? "rejected" : "clean";

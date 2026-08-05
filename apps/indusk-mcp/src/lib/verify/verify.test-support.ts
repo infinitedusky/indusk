@@ -1,8 +1,9 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 /**
@@ -15,6 +16,15 @@ import { promisify } from "node:util";
  */
 
 const execFileAsync = promisify(execFile);
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * The package's own hooks — the canonical copies, not a project's installed
+ * ones. Fixtures get these at `.claude/hooks/` so `resolveGateScripts` finds a
+ * real chain and the probe runs the REAL check-gates, never a stand-in.
+ */
+const packageHooksDir = join(here, "../../../hooks");
 
 export async function git(cwd: string, ...args: string[]): Promise<string> {
 	const { stdout } = await execFileAsync("git", args, { cwd });
@@ -143,6 +153,10 @@ export async function makeVerifyFixture(options: FixtureOptions): Promise<{
 	for (const [path, content] of Object.entries(options.files ?? {})) {
 		await writeFixtureFile(root, path, content);
 	}
+
+	// A real consumer project carries the gate scripts; a fixture without them
+	// would make the probe silently unavailable rather than genuinely exercised.
+	await cp(packageHooksDir, join(root, ".claude", "hooks"), { recursive: true });
 
 	await git(root, "init", "--initial-branch=main");
 	await git(root, "config", "user.email", "dawn@test.local");

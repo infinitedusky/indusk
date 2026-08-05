@@ -351,6 +351,22 @@ program
 		await run(rootOrExit(), plan, { model: opts.model, maxSteps });
 	});
 
+program
+	.command("verify <plan>")
+	.description(
+		"Phase-boundary verification for work Dawn did NOT execute (Cursor, a hookless session, by hand): premature checkoff, skipped test-first duty, goalpost drift, red tests, phantom work. Detects and reports — never reverts.",
+	)
+	.option("--phase <n>", "The phase boundary to judge (required; phases are numbered from 1)")
+	.option(
+		"--full-suite",
+		"Run the project's whole test command instead of only the test files the trajectory references",
+	)
+	.action(async (plan: string, opts: { phase?: string; fullSuite?: boolean }) => {
+		const { verify } = await import("./commands/verify.js");
+		const phase = opts.phase === undefined ? undefined : Number.parseInt(opts.phase, 10);
+		await verify(rootOrExit(), plan, { phase, fullSuite: opts.fullSuite });
+	});
+
 // Commander quirk: options declared on BOTH a parent and a subcommand cause
 // the subcommand to silently receive the default for duplicated flags (the
 // parent consumes the token). Declaring `--port`/`--no-open` only on the

@@ -46,21 +46,21 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 
 | ID | Asserts | Test | Writable at | Passes at | State |
 |----|---------|------|-------------|-----------|-------|
-| A1 | Verifying a phase that checked an item while an earlier phase has an unchecked gate item reports a rejection naming that item and its phase | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | written |
-| A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | written |
-| A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | written |
+| A1 | Verifying a phase that checked an item while an earlier phase has an unchecked gate item reports a rejection naming that item and its phase | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
+| A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
+| A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
 | A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
 | A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | written |
-| A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | written |
-| A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | written |
-| A8 | A rejecting verify exits non-zero so a calling script or CI step fails rather than continuing | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | written |
-| A9 | After a phase verifies clean, verifying the next phase judges against the commit that verification recorded, not the merge base | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | written |
-| A10 | Verifying a plan never verified before reports which baseline it bootstrapped from and proceeds | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | written |
-| A11 | A rejecting verify records nothing — re-running produces the identical rejection rather than treating the bad phase as a baseline | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | written |
-| A12 | A corrupted or unreadable ledger causes verify to refuse loudly naming the problem, never silently proceeding as if never verified | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | written |
+| A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
+| A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
+| A8 | A rejecting verify exits non-zero so a calling script or CI step fails rather than continuing | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
+| A9 | After a phase verifies clean, verifying the next phase judges against the commit that verification recorded, not the merge base | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | passing |
+| A10 | Verifying a plan never verified before reports which baseline it bootstrapped from and proceeds | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | passing |
+| A11 | A rejecting verify records nothing — re-running produces the identical rejection rather than treating the bad phase as a baseline | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 2 | passing |
+| A12 | A corrupted or unreadable ledger causes verify to refuse loudly naming the problem, never silently proceeding as if never verified | `src/lib/verify/ledger.test.ts` | Phase 1 | Phase 1 | passing |
 | A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
 | A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | written |
-| A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | written |
+| A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | passing |
 | A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `.indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | planned |
 
 ### Deferred Verification
@@ -138,22 +138,25 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
 
 ### Phase 2: Static detections, report rendering, and the CLI
 
-- [ ] Add `src/lib/verify/detect.ts` — premature checkoff + skipped test-first duty by calling `probePhaseClose` against the current impl, mapping its block message into findings
-- [ ] Add goalpost-drift detection: read the baseline impl via `git show <baseline-sha>:<impl-path>`, parse with `snapshotTrajectory`, compare with `checkGoalposts` against the current table
-- [ ] Wire all three into `runVerify()`; set `verdict: "rejected"` when findings exist
-- [ ] Append the ledger record **only** on a clean verdict — a rejecting verify must record nothing
-- [ ] Add `src/bin/commands/verify.ts` rendering the report: one line per finding with its kind, the baseline SHA and its source, and a trailing summary
-- [ ] Register `verify <plan>` in `src/bin/cli.ts` with `--phase <n>` and `--full-suite`, lazily imported, mirroring the `run` registration; exit 0 clean, 1 rejected
+- [x] Add `src/lib/verify/detect.ts` — premature checkoff + skipped test-first duty by calling `probePhaseClose` against the current impl, mapping its block message into findings
+- [x] Add goalpost-drift detection: read the baseline impl via `git show <baseline-sha>:<impl-path>`, parse with `snapshotTrajectory`, compare with `checkGoalposts` against the current table
+- [x] Harden the bootstrap baseline against the degenerate on-trunk case *(discovered by A3: `merge-base(main, HEAD)` **is** HEAD when work is committed on the trunk, so the baseline became "now" and every comparison was vacuously clean — the same silent-nothing failure as reporting `[]` on a non-git root. Falls back to the parent of the earliest commit touching the plan dir; the root commit is the floor.)*
+- [x] Install the package's canonical hooks into every test fixture *(discovered: `resolveGateScripts` walks up for `.claude/hooks` and throws when absent, so `/tmp` fixtures had no gate chain. Copying the real hooks in keeps `runVerify({root, plan, phase})` as the honest public API and makes the probe run the REAL check-gates rather than a stand-in.)*
+- [x] Wire all three into `runVerify()`; set `verdict: "rejected"` when findings exist
+- [x] Append the ledger record **only** on a clean verdict — a rejecting verify must record nothing
+- [x] Add `src/bin/commands/verify.ts` rendering the report: one line per finding with its kind, the baseline SHA and its source, and a trailing summary
+- [x] Register `verify <plan>` in `src/bin/cli.ts` with `--phase <n>` and `--full-suite`, lazily imported, mirroring the `run` registration; exit 0 clean, 1 rejected
 
 #### Phase 2 Verification
-- [ ] A1, A2, A3, A6, A7, A8, A9, A11 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] A4, A5, A13, A14 still red (their detections land in Phases 3–4) — confirm they fail for their own reason, not an import error
+- [x] A1, A2, A3, A6, A7, A8, A9, A11 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] A4, A5, A13, A14 still red (their detections land in Phases 3–4) — confirm they fail for their own reason, not an import error
+  - measured: 877 passed / 8 failed = 3 known pre-existing + 5 intended reds, each failing on its own assertion. Dogfooded against this plan: `verify dawn-verify --phase 1` → clean, exit 0, record appended; `--phase 2` → rejected, exit 1, naming all four open Phase 2 gate items, baseline sourced from the ledger.
 
 #### Phase 2 Context
-- [ ] Add to Architecture: `atdawn verify <plan> --phase N` as the tier-3 read-only counterpart to `atdawn run`, reusing the probe and goalpost machinery unchanged
+- [x] Add to Architecture: `atdawn verify <plan> --phase N` as the tier-3 read-only counterpart to `atdawn run`, reusing the probe and goalpost machinery unchanged
 
 #### Phase 2 Document
-- [ ] Extend `reference/cli/verify.md` with the five-detection decision-flow Mermaid diagram and the exit-code table
+- [x] Extend `reference/cli/verify.md` with the five-detection decision-flow Mermaid diagram and the exit-code table
 
 ### Phase 3: Red-test detection
 
