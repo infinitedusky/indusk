@@ -245,6 +245,18 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
 
 ## Notes
 
+### Defects found by dogfooding after impl-complete — for `/falsify`
+
+Running the finished command against **this plan** (`verify dawn-verify --phase 5`) produced **16 false `red-test` findings** while every referenced test actually passes. Two real defects, both in scope for the falsification phase:
+
+1. **Verify cannot distinguish "the test file is missing or not runnable" from "the test ran and failed."** Both surface as a non-zero exit and are reported identically as a red test. This is the plan's own honesty principle — the one that made an unreferenced row report `unverified` rather than `passing` (A13) — applied inconsistently: a reference that *cannot be executed* is a gap in the evidence, not proof of failure. A missing file should report as unverified-or-error, never as red.
+2. **`Test` path resolution is ambiguous in a monorepo.** The command runs with `cwd` = repo root, but this plan's own rows name paths relative to the package (`src/lib/verify/…`, which only resolves under `apps/indusk-mcp/`). Nothing states the convention and nothing warns when a path resolves to nothing — so the author's most natural choice silently produces a wall of false reds. A16 compounds it: its reference is `matrix.md`, a manual record rather than an executable test, and there is no way for a row to say "verified by hand."
+
+This is the falsification ritual's exact purpose, arriving on schedule: happy-path authoring produced happy-path fixtures, every unit test used repo-root-relative paths inside a throwaway repo, and the monorepo case never appeared until the tool was pointed at itself. Impl status stays `completed`; `/falsify` reopens it with a fix phase.
+
+### Other
+
 - Phase 5 is a human gate by construction: its verification is manual, so an unattended run pauses there rather than self-approving. That is intended.
+- The report renderer prints a finding's `item` text twice for phantom findings (once as the subject prefix, once inside the message) — cosmetic, a candidate for `/cleanup`.
 - The `--full-suite` path may be *faster* than per-file invocation on runners with heavy startup; worth measuring during Phase 3 rather than assuming.
 - If file-level attribution proves too coarse in practice, test-title tags return as an extension-owned capability — never as runner-specific parsing in core.
