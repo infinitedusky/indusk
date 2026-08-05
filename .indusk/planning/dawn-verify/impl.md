@@ -69,9 +69,9 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 | A21 | An item whose text was edited in the same commit that checked it off is still reported as phantom | `apps/indusk-mcp/src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | passing |
 | A22 | A baseline whose impl.md is unreachable (plan renamed/moved, blob absent) reports a finding rather than silently reporting no goalpost drift | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | passing |
 | A23 | A trajectory row with a malformed phase reference is reported as a finding rather than silently excluded from every detection | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | passing |
-| A24 | Exactly one implementation of "a plan argument → its impl.md" exists in the codebase, so `run` and `verify` cannot resolve a plan differently | `apps/indusk-mcp/src/lib/verify/shared-resolution.test.ts` | Phase 0 | Phase 7 | planned |
-| A25 | Exactly one definition of the terminal-state set exists, so the phase-close probe and verify cannot disagree about whether a row's obligation is discharged | `apps/indusk-mcp/src/lib/verify/shared-resolution.test.ts` | Phase 0 | Phase 7 | planned |
-| A26 | A phantom finding's checklist-item text appears exactly once in the rendered report, not twice | `apps/indusk-mcp/src/lib/verify/report.test.ts` | Phase 0 | Phase 7 | planned |
+| A24 | Exactly one implementation of "a plan argument → its impl.md" exists in the codebase, so `run` and `verify` cannot resolve a plan differently | `apps/indusk-mcp/src/lib/verify/shared-resolution.test.ts` | Phase 0 | Phase 7 | written |
+| A25 | Exactly one definition of the terminal-state set exists, so the phase-close probe and verify cannot disagree about whether a row's obligation is discharged | `apps/indusk-mcp/src/lib/verify/shared-resolution.test.ts` | Phase 0 | Phase 7 | written |
+| A26 | A phantom finding's checklist-item text appears exactly once in the rendered report, not twice | `apps/indusk-mcp/src/lib/verify/report.test.ts` | Phase 0 | Phase 7 | written |
 
 ### Deferred Verification
 
