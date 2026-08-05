@@ -22,7 +22,9 @@ afterEach(async () => {
 
 function honestImpl(): string {
 	return buildImpl({
-		rows: [{ id: "A1", asserts: "the widget parses", writableAt: 1, passesAt: 1, state: "passing" }],
+		rows: [
+			{ id: "A1", asserts: "the widget parses", writableAt: 1, passesAt: 1, state: "passing" },
+		],
 		phases: [
 			{
 				n: 1,
@@ -37,7 +39,9 @@ function honestImpl(): string {
 /** Phase 2 checked off while Phase 1's verification gate is still open. */
 function dishonestImpl(): string {
 	return buildImpl({
-		rows: [{ id: "A1", asserts: "the widget parses", writableAt: 1, passesAt: 1, state: "passing" }],
+		rows: [
+			{ id: "A1", asserts: "the widget parses", writableAt: 1, passesAt: 1, state: "passing" },
+		],
 		phases: [
 			{
 				n: 1,

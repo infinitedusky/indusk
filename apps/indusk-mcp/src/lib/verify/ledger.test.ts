@@ -84,9 +84,9 @@ describe("A12 — a corrupt ledger refuses loudly", () => {
 		);
 
 		// The dangerous failure is a clean-looking report built on no baseline.
-		await expect(
-			runVerify({ root: fixture.root, plan: fixture.plan, phase: 1 }),
-		).rejects.toThrow(/ledger/i);
+		await expect(runVerify({ root: fixture.root, plan: fixture.plan, phase: 1 })).rejects.toThrow(
+			/ledger/i,
+		);
 	});
 });
 

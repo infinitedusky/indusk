@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { promisify } from "node:util";
@@ -150,7 +150,12 @@ export async function makeVerifyFixture(options: FixtureOptions): Promise<{
 	await git(root, "add", "-A");
 	await git(root, "commit", "-m", "fixture baseline");
 
-	return { root, plan, implPath: join(root, implRel), baselineSha: await git(root, "rev-parse", "HEAD") };
+	return {
+		root,
+		plan,
+		implPath: join(root, implRel),
+		baselineSha: await git(root, "rev-parse", "HEAD"),
+	};
 }
 
 export async function writeFixtureFile(
@@ -197,6 +202,6 @@ export async function treeSnapshot(root: string): Promise<string> {
 /** A node test script that exits 0 (green) or 1 (red) — runner-agnostic by design. */
 export function nodeTestScript(passes: boolean): string {
 	return passes
-		? 'process.exit(0);\n'
+		? "process.exit(0);\n"
 		: 'console.error("fixture assertion failed");\nprocess.exit(1);\n';
 }

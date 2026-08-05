@@ -99,7 +99,8 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
 
 - [x] Create/confirm this plan's worktree (`indusk worktree create dawn-verify`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
   - note: `indusk worktree create` still fails outside workbench mode (`_resolve_workbench_root`); used `git worktree add -b plan/dawn-verify`. Worktree needed `pnpm install` + mcp build + admin build + `bundle-admin.js` to reach test-env parity (gitignored-artifact lesson). Baseline: 857 passing, 3 known pre-existing failures (`agent-roles-phase4`, `daemon-identity` T22/T23).
-- [ ] Add `src/lib/verify/ledger.ts` — append-only JSONL over `.indusk/verify/ledger.jsonl`
+- [x] Add `src/lib/verify/git.ts` — the read-only git surface verify reads through (`assertGitRepo`, `headSha`, `resolveMergeBase`, `showFileAt`, `changedPathsSince`) *(discovered: every later detection needs git, and one module keeps the "no write helper lives here" invariant enforceable by inspection)*
+- [x] Add `src/lib/verify/ledger.ts` — append-only JSONL over `.indusk/verify/ledger.jsonl`
   ```typescript
   export interface VerifyRecord {
     plan: string; phase: number; sha: string; trajectory: string; timestamp: string;
@@ -109,9 +110,9 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
   export async function appendVerifyRecord(root: string, record: VerifyRecord): Promise<void>
   export async function readLedger(root: string): Promise<VerifyRecord[]>
   ```
-- [ ] Make `readLedger` refuse loudly on a malformed line rather than skipping it — a corrupt ledger must never degrade silently into bootstrap mode, because that failure is indistinguishable from success
-- [ ] Add merge-base bootstrap reusing the candidate-fallback chain from `cleanup/oversized.ts` (`baseRef` → `origin/main` → `main` → `origin/master` → `master`)
-- [ ] Add `src/lib/verify/verify.ts` with `runVerify()` returning a report carrying the resolved baseline and an empty findings list
+- [x] Make `readLedger` refuse loudly on a malformed line rather than skipping it — a corrupt ledger must never degrade silently into bootstrap mode, because that failure is indistinguishable from success
+- [x] Add merge-base bootstrap reusing the candidate-fallback chain from `cleanup/oversized.ts` (`baseRef` → `origin/main` → `main` → `origin/master` → `master`)
+- [x] Add `src/lib/verify/verify.ts` with `runVerify()` returning a report carrying the resolved baseline and an empty findings list
   ```typescript
   export interface VerifyReport {
     plan: string; phase: number;
@@ -121,18 +122,19 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
     verdict: "clean" | "rejected";
   }
   ```
-- [ ] Guard a non-git root: throw naming the missing repository, never return a clean report (the cleanup library's silent-`[]` bug on workbench roots is the precedent)
-- [ ] Register `.indusk/verify/ledger.jsonl` as `merge=union` in `.gitattributes`, matching the `current.md` precedent
+- [x] Guard a non-git root: throw naming the missing repository, never return a clean report (the cleanup library's silent-`[]` bug on workbench roots is the precedent)
+- [x] Register `.indusk/verify/ledger.jsonl` as `merge=union` in `.gitattributes`, matching the `current.md` precedent
 
 #### Phase 1 Verification
-- [ ] A10, A12, A15 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] A1–A9, A11, A13, A14 authored and committed RED against the Phase 1 module (they fail because no detection exists yet — the intended tripwire state); States set to `written`
+- [x] A10, A12, A15 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] A1–A9, A11, A13, A14 authored and committed RED against the Phase 1 module (they fail because no detection exists yet — the intended tripwire state); States set to `written`
+  - measured: 871 passed / 14 failed = 3 known pre-existing (`agent-roles-phase4`, `daemon-identity` T22/T23) + 11 intended reds. Every red now fails on an **assertion**, not an import — the tripwires are live rather than merely absent.
 
 #### Phase 1 Context
-- [ ] Add to Known Gotchas: the verify ledger is append-only and refuses on malformed lines — the inverse of the pending-eval ledger's write-before-spawn pattern, because a bad phase silently becoming the next baseline is worse than a gap
+- [x] Add to Known Gotchas: the verify ledger is append-only and refuses on malformed lines — the inverse of the pending-eval ledger's write-before-spawn pattern, because a bad phase silently becoming the next baseline is worse than a gap
 
 #### Phase 1 Document
-- [ ] Create `apps/docs/src/reference/cli/verify.md` with the command's purpose, the ledger format, and the baseline-chain Mermaid diagram (bootstrap → phase records)
+- [x] Create `apps/docs/src/reference/cli/verify.md` with the command's purpose, the ledger format, and the baseline-chain Mermaid diagram (bootstrap → phase records) — plus a sidebar entry beside `run`
 
 ### Phase 2: Static detections, report rendering, and the CLI
 

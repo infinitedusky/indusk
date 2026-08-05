@@ -1,2 +1,6 @@
 # InDusk: combine per-agent section additions on merge
 .indusk/current.md merge=union
+
+# InDusk: the verify ledger is append-only evidence — concurrent verifications
+# on different branches must both survive a merge, never clobber each other.
+.indusk/verify/ledger.jsonl merge=union

@@ -168,7 +168,13 @@ describe("A3 — goalpost drift since the baseline", () => {
 	it("does not flag honest forward progress on the State column", async () => {
 		const original = buildImpl({
 			rows: [
-				{ id: "A1", asserts: "rejects a malformed version", writableAt: 1, passesAt: 1, state: "written" },
+				{
+					id: "A1",
+					asserts: "rejects a malformed version",
+					writableAt: 1,
+					passesAt: 1,
+					state: "written",
+				},
 			],
 			phases: [
 				{
@@ -184,7 +190,13 @@ describe("A3 — goalpost drift since the baseline", () => {
 
 		const advanced = buildImpl({
 			rows: [
-				{ id: "A1", asserts: "rejects a malformed version", writableAt: 1, passesAt: 1, state: "passing" },
+				{
+					id: "A1",
+					asserts: "rejects a malformed version",
+					writableAt: 1,
+					passesAt: 1,
+					state: "passing",
+				},
 			],
 			phases: [
 				{
