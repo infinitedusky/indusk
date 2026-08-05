@@ -133,6 +133,7 @@ dusk/
 - **dawn-external-orchestrator (2026-08-03, unpublished)** — `indusk run`/`atdawn`: model-agnostic gated execution loop, gates ported unchanged, 9-cell acceptance matrix, A8 signed off (flash-for-mechanical routing). See [archive](.indusk/planning/archive/dawn-external-orchestrator/) for full detail.
 - **dawn-ui-plan-grouping (2026-08-03, unpublished)** — plan hierarchy in the admin UI: top-down frontmatter declarations, grouped sidebar + parent detail cards, five falsification fixes, cleanup decomposition. See [archive](.indusk/planning/archive/dawn-ui-plan-grouping/) for full detail.
 - **dawn-hook-parity (2026-08-03, unpublished)** — Dawn Component 2: thin lane enforces every invariant hook, commits per item, and feeds the eval rail via a durable queue; `ask` now the default in both lanes. See [archive](.indusk/planning/archive/dawn-hook-parity/) for full detail.
+- **dawn-verify (2026-08-05, unpublished)** — Dawn Component 6, the keystone: `atdawn verify <plan> --phase N` detects premature checkoff, skipped test-first duty, goalpost drift, red tests, and phantom work over a chained ledger; the first thing in InDusk ever to execute a test as a gate check. Acceptance met — 5/5 planted classes caught against a hookless agent, no false positive. See [plan](.indusk/planning/dawn-verify/) for full detail.
 
 **Active plans** (dead drafts archived 2026-07-23 by the makeover backfill; sidebar order canonical from `.indusk/planning/master.md`):
 

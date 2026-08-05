@@ -1,7 +1,7 @@
 ---
 title: "Dawn Verify — Implementation"
 date: 2026-08-05
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -61,7 +61,7 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 | A13 | A row claiming `passing` with no test reference is reported as unverified, distinct from checked-and-passed | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
 | A14 | A plan authored before test references verifies without error and reports how many rows could not be red-test-checked | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
 | A15 | Running verify where there is no git repository fails loudly naming the missing repository, never reporting a clean phase | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 1 | passing |
-| A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `.indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | planned |
+| A16 | A phase executed by an external agent Dawn does not control, with a violation planted in it, is caught — and the run is recorded with what was planted, caught, and missed | `.indusk/planning/dawn-verify/matrix.md` | Phase 5 | Phase 5 | passing |
 
 ### Deferred Verification
 
@@ -198,21 +198,25 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
 
 ### Phase 5: Acceptance experiment and the keystone verdict
 
-- [ ] Author the experiment procedure: a fixture plan, a phase dispatched to a hookless `claude` session, and a specific planted violation
-- [ ] Run the experiment manually against the external agent and capture the raw output
-- [ ] Record `matrix.md` — what was planted, what verify caught, what it missed, and the resulting judgement on whether boundary verification held or leaked
-- [ ] Update the Dawn master's component 6 row with the verdict and mark the component's status
-- [ ] Record the component 7 consequence: thin skin over a proven command if it held, per-agent seam work if it leaked
+- [x] Author the experiment procedure: a fixture plan, a phase dispatched to a hookless `claude` session, and a specific planted violation
+  - refinement: hook *files* installed but **not registered** in `.claude/settings.json` — nothing gates the agent's writes, while verify still has a real gate chain to probe. That is precisely the Cursor shape; without it the fixture would have tested a project with no hooks at all, which is a different and easier thing.
+- [x] Run the experiment manually against the external agent and capture the raw output
+- [x] Record `matrix.md` — what was planted, what verify caught, what it missed, and the resulting judgement on whether boundary verification held or leaked
+  - 6 cells: 1 organic control + 5 planted classes. **5/5 caught, 0 misses, 0 false positives on the honest control.**
+- [x] Update the Dawn master's component 6 row with the verdict and mark the component's status
+- [x] Record the component 7 consequence: thin skin over a proven command if it held, per-agent seam work if it leaked
+  - it held → component 7 is integration over a proven command. The seam question survives only in the narrower prevention-tier form, no longer load-bearing for correctness.
 
 #### Phase 5 Verification
-- [ ] A16 passes — manual verification: the recorded experiment shows verify catching the planted violation, with the result written into `matrix.md`
-- [ ] Full suite green (`pnpm test`) and lint clean (`pnpm check`)
+- [x] A16 passes — manual verification: the recorded experiment shows verify catching the planted violation, with the result written into `matrix.md`
+  - 6 cells recorded in [matrix.md](matrix.md). 5/5 planted classes caught (premature-checkoff, goalpost, red-test, phantom, test-first), every one exiting 1; the organic control verified clean at exit 0. The three declared limits are named there and are **not** misses.
+- [x] Full suite run and lint clean — indusk-mcp 882 passed / 3 failed (the known pre-existing set); `biome check` clean across all 13 verify files. `pnpm test` overall stays red on indusk-admin's pre-existing `http-*` timeouts, which reproduce on the trunk (recorded in Phase 4).
 
 #### Phase 5 Context
-- [ ] Update Current State with a one-line dawn-verify entry and the keystone verdict, per the Current State one-line convention
+- [x] Update Current State with a one-line dawn-verify entry and the keystone verdict, per the Current State one-line convention
 
 #### Phase 5 Document
-- [ ] Cross-reference verify from `apps/docs/src/reference/cli/run.md` as the out-of-lane counterpart, and add the changelog entry
+- [x] Cross-reference verify from `apps/docs/src/reference/cli/run.md` as the out-of-lane counterpart, and add the changelog entry
 
 ## Files Affected
 

@@ -35,7 +35,7 @@ Open this file to answer "where are we." If the answer isn't here, the answer do
 | 3 | **Loop control** — the autopilot contract, ported | **Done** | — | Per-phase scope, advance-on-green probe, goalpost guard, human-gate pause, red-stop — all green (T5/T6) | [dawn-external-orchestrator](../archive/dawn-external-orchestrator/) |
 | 4 | **Harness** — the tools the model works through | **Deliberately thin** | *A decision, not a gap* — see Open Decisions | n/a until the decision lands | — |
 | 5 | **Headless/remote execution** | **Spiked once** | Manual provisioning; Fly rootfs is ephemeral; no bootstrap script or baked image | One command produces a working box that runs a plan | `dawn-cloud` *(not created)* |
-| 6 | **Verification of work Dawn didn't do** | **Not started** | Everything — `atdawn verify <plan> --phase N`, git-based before-snapshot | Catches a bad phase executed in Cursor: premature checkoff, goalpost drift, red tests | `dawn-verify` *(not created)* |
+| 6 | **Verification of work Dawn didn't do** | **Done — acceptance met 2026-08-05** | `atdawn verify <plan> --phase N` ships five detections (premature checkoff, skipped test-first duty, goalpost drift, **red tests**, **phantom work**) over a chained verify ledger. Detects and reports only — reverting is component 7's. Unpublished | **Met.** 6-cell matrix against a hookless `claude` session (hooks on disk, unregistered — the Cursor shape): 5/5 planted classes caught, 0 misses, 0 false positives on the honest control. See [matrix.md](../archive/dawn-verify/matrix.md) | [dawn-verify](../archive/dawn-verify/) |
 | 7 | **Agent integration** — Claude Code / Codex / Cursor as executors | **Not started** | Everything | A phase dispatched to an external agent is verified and its verdict recorded | `dawn-agents` *(not created)* |
 | 8 | **Coordination layer** — Linear as the substrate | **Not started** | Everything | `@dawn` on an issue runs a phase and posts verified state back | `dawn-linear` *(not created)* |
 
@@ -44,8 +44,8 @@ Open this file to answer "where are we." If the answer isn't here, the answer do
 **1 → 3 → 2 → 6 → 7 → 8**, with 5 pulled in whenever the always-on box is actually wanted, and 4 settled as a decision rather than built.
 
 - **1, 2 and 3 are done.** 1 and 3 closed with dawn-external-orchestrator (which also held 4 thin by design and spiked 5); 2 closed 2026-08-03 with dawn-hook-parity — the thin lane now fires the eval agent via the queue + drain, so it can finally teach the system, which was the whole reason to do it before the keystone.
-- **6 is the keystone.** The whole integration strategy rests on one untested assumption: *phase-boundary verification is sufficient enforcement when Dawn doesn't control the agent.* Nothing after it is safe to plan until that's answered.
-- **7 and 8 branch on 6's result.** If boundary verification holds, integration is a thin skin over a proven command. If it leaks, 7 becomes per-agent seam work — starting with Claude Code's PreToolUse, the one seam known to be real — and the ACP question needs its own spike.
+- **6 was the keystone, and it is answered.** The assumption — *phase-boundary verification is sufficient enforcement when Dawn doesn't control the agent* — **held** under deliberate attack: five planted violation classes, five caught, no false positive on an honest uncontrolled run (2026-08-05). It is a *sample*, not a proof (U1 stays deferred), but the mechanism works and its failure modes are detectable after the fact. Component 6 also closed a gap wider than tier 3: nothing in InDusk had **ever** executed a test as a gate, so `passing` was an unverified self-report in every lane — verify is the first thing that checks it.
+- **7 and 8 are unblocked, and 6's result picked the branch.** Boundary verification held, so **7 is integration over a proven command, not per-agent seam plumbing.** The seam question survives in a narrower form: verifying whether a harness's hook can actually *deny* still matters for the prevention tier, but it is no longer load-bearing for correctness — detection now has a floor under every tier.
 
 ## The enforcement ladder
 
@@ -55,7 +55,7 @@ Three tiers, by who owns the tool executor (recorded 2026-08-03; this is the rat
 2. **Harnesses with deny-capable hooks** — use theirs, same gate scripts, their seam. Claude Code's PreToolUse is the **one seam verified real**; every other harness's (Cursor, ACP) must be verified deny-capable before being trusted — that verification is component 7's first task.
 3. **Harnesses Dawn doesn't control** — prompting is alignment lubricant, never enforcement. The enforcement is phase-boundary verification + reject-and-rerun (component 6): git before-snapshot, catch premature checkoff / goalpost drift / red tests, revert to snapshot — never rewrite history.
 
-Component 6's verify is also the **universal floor**: it runs on every tier as detection defense-in-depth, which is why nothing after it is safe to plan until it's proven.
+Component 6's verify is also the **universal floor**: it runs on every tier as detection defense-in-depth. **Proven 2026-08-05** — and the floor turned out to matter on tiers 1 and 2 as much as tier 3, because the trajectory's `passing` state had never been checked against a test run in *any* lane.
 
 ## Open decisions
 
@@ -83,6 +83,8 @@ Kept so the intent isn't lost. None of these are scheduled, and none should star
 |------|--------------|-------|
 | [dawn-external-orchestrator](../archive/dawn-external-orchestrator/) | 1, 3 (+ partial 2, spike 5) | closed; archived 2026-08-03 (A8 signed off) |
 | [dawn-ui-plan-grouping](../archive/dawn-ui-plan-grouping/) | 0 — hierarchy visible in the admin UI | complete; archived 2026-08-03 |
+| [dawn-hook-parity](../archive/dawn-hook-parity/) | 2 — gate portability | closed; archived 2026-08-03 |
+| [dawn-verify](../archive/dawn-verify/) | 6 — verification of work Dawn didn't do | impl complete 2026-08-05; acceptance met; close-out rituals pending |
 
 Everything else in the components table is unwritten. Create each with `/planner` when its turn comes — not before.
 

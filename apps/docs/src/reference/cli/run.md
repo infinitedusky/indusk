@@ -145,3 +145,7 @@ Keys are read from the **process environment only** — the machine-global `~/.i
 ## Reporting
 
 Each closed phase reports steps, tool calls, and aggregated token usage (input/output) — the raw data for the cost-to-durably-done comparison the acceptance matrix runs across models and environments.
+
+## See also
+
+- [`atdawn verify`](./verify.md) — the out-of-lane counterpart. `run` **prevents** (gates sit in the write path and refuse the edit); `verify` **detects** after the fact, for phases executed where Dawn had no seam to hook. Verify is also useful *after* a `run`: it is the only thing that checks a trajectory row's `passing` claim against an actual test execution, which no gate in either lane has ever done.
