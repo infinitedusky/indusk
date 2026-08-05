@@ -3,8 +3,17 @@
 Phase-boundary verification for work Dawn **didn't** execute.
 
 ```bash
-atdawn verify <plan> --phase <n>
+atdawn verify <plan> --phase <n> [--full-suite]
 ```
+
+| Flag | Meaning |
+|---|---|
+| `--phase <n>` | **Required.** The phase boundary to judge; phases are numbered from 1. |
+| `--full-suite` | Run the project's whole test command once instead of only the files the trajectory references. |
+
+`<plan>` is a plan name under `.indusk/planning/`, a directory containing an `impl.md`, or a path to one — the same resolution [`atdawn run`](./run.md) uses, deliberately sharing one implementation so the two lanes cannot disagree about which plan they mean.
+
+**On `--full-suite`:** by default verify runs only the test files the in-scope rows name, so its cost scales with the phase being verified rather than with the project. That is the deliberate trade-off, and it has a consequence worth knowing — **verify does not detect regressions in tests outside the referenced files.** "Did this phase break something unrelated" is a different question, and a different component's job. Pass `--full-suite` when you want the whole suite to be the verdict; on a runner with heavy startup it may also simply be faster than many per-file invocations.
 
 ## Why this exists
 

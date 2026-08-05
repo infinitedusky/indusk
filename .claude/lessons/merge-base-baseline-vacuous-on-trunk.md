@@ -1,0 +1,7 @@
+# A merge-base diff baseline is vacuous for work committed ON the trunk — guard merge-base == HEAD
+
+`merge-base(main, HEAD)` is the right "before" on a plan branch — it is where the branch left the trunk. But when the work being examined was committed directly ON the trunk, the merge base IS HEAD: the baseline becomes "now", every comparison is vacuously clean, and the tool confidently reports nothing — a silent-nothing failure indistinguishable from success (the same shape as the cleanup library's old silent-`[]` on non-git workbench roots).
+
+Discovered in dawn-verify Phase 2 (commit ee0ef810): the A3 goalpost-drift test surfaced that verify's bootstrap baseline collapsed to HEAD when the fixture committed on `main`, so drift detection was comparing the current impl against itself. Fix pattern: detect `mergeBase === HEAD` and fall back to a meaningful floor — dawn-verify uses the parent of the earliest commit touching the plan's directory (`git log --reverse -- <plan-dir>`), with the root commit as the final floor. See `apps/indusk-mcp/src/lib/verify/git.ts` (`resolveBootstrapBaseline`).
+
+Blast radius: any tool that diffs against a merge base inherits this blind spot for trunk-committed work — `cleanup/oversized.ts`'s changed-files listing has the same shape (its staged/unstaged ranges still see uncommitted work, but committed-on-trunk work is invisible to its `<mergeBase>..HEAD` range). When building or reviewing anything that says "changed since the baseline", ask what the baseline resolves to when the work never left the trunk.

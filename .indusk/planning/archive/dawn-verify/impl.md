@@ -78,7 +78,7 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 - **U1 — phase-boundary verification is sufficient enforcement for agents Dawn does not control**
   - reason: a universal claim over all agents, plans, and failure modes; no finite test proves it and a single counterexample disproves it, so it can only be sampled
   - would require: longitudinal dogfooding across many external-agent phases, plus a corpus of real (not planted) violations — neither exists and neither can be manufactured inside this plan
-  - mitigation: the Phase 5 acceptance experiment samples it deliberately with a planted violation; the result, held or leaked, is written into the Dawn master's component 6 row and `matrix.md`, and component 7's plan branches on it explicitly rather than assuming it. Any miss found later in dogfooding reopens the question as a falsification hypothesis against this plan.
+  - mitigation: **downstream plan `dawn-agents` (Dawn component 7) cannot close until it re-runs this plan's acceptance matrix against a non-Claude agent** — written into the master's component 7 acceptance criterion at close, so the commitment lives in the roadmap rather than in a retrospective. The re-runnable procedure is documented in [matrix.md](matrix.md) (6 cells: 1 organic control + 5 planted classes). Review trigger: any verify miss found during dogfooding reopens U1 as a falsification hypothesis against this plan.
 
 ### Trajectory Rationale
 

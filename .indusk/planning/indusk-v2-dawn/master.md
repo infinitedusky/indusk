@@ -36,7 +36,7 @@ Open this file to answer "where are we." If the answer isn't here, the answer do
 | 4 | **Harness** — the tools the model works through | **Deliberately thin** | *A decision, not a gap* — see Open Decisions | n/a until the decision lands | — |
 | 5 | **Headless/remote execution** | **Spiked once** | Manual provisioning; Fly rootfs is ephemeral; no bootstrap script or baked image | One command produces a working box that runs a plan | `dawn-cloud` *(not created)* |
 | 6 | **Verification of work Dawn didn't do** | **Done — acceptance met 2026-08-05** | `atdawn verify <plan> --phase N` ships five detections (premature checkoff, skipped test-first duty, goalpost drift, **red tests**, **phantom work**) over a chained verify ledger. Detects and reports only — reverting is component 7's. Unpublished | **Met.** 6-cell matrix against a hookless `claude` session (hooks on disk, unregistered — the Cursor shape): 5/5 planted classes caught, 0 misses, 0 false positives on the honest control. See [matrix.md](../archive/dawn-verify/matrix.md) | [dawn-verify](../archive/dawn-verify/) |
-| 7 | **Agent integration** — Claude Code / Codex / Cursor as executors | **Not started** | Everything | A phase dispatched to an external agent is verified and its verdict recorded | `dawn-agents` *(not created)* |
+| 7 | **Agent integration** — Claude Code / Codex / Cursor as executors | **Not started** | Everything | A phase dispatched to an external agent is verified and its verdict recorded — **and component 6's acceptance matrix is re-run against a non-Claude agent before this component closes** (the U1 carry-forward: boundary verification was sampled once, against one model family; a second agent is the cheapest evidence that the sample generalizes) | `dawn-agents` *(not created)* |
 | 8 | **Coordination layer** — Linear as the substrate | **Not started** | Everything | `@dawn` on an issue runs a phase and posts verified state back | `dawn-linear` *(not created)* |
 
 ## Order
@@ -84,7 +84,7 @@ Kept so the intent isn't lost. None of these are scheduled, and none should star
 | [dawn-external-orchestrator](../archive/dawn-external-orchestrator/) | 1, 3 (+ partial 2, spike 5) | closed; archived 2026-08-03 (A8 signed off) |
 | [dawn-ui-plan-grouping](../archive/dawn-ui-plan-grouping/) | 0 — hierarchy visible in the admin UI | complete; archived 2026-08-03 |
 | [dawn-hook-parity](../archive/dawn-hook-parity/) | 2 — gate portability | closed; archived 2026-08-03 |
-| [dawn-verify](../archive/dawn-verify/) | 6 — verification of work Dawn didn't do | impl complete 2026-08-05; acceptance met; close-out rituals pending |
+| [dawn-verify](../archive/dawn-verify/) | 6 — verification of work Dawn didn't do | closed; archived 2026-08-05 (acceptance met, both rituals terminal) |
 
 Everything else in the components table is unwritten. Create each with `/planner` when its turn comes — not before.
 
