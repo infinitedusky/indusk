@@ -1,7 +1,7 @@
 ---
 title: "Dawn Verify — Implementation"
 date: 2026-08-05
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -69,6 +69,9 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 | A21 | An item whose text was edited in the same commit that checked it off is still reported as phantom | `apps/indusk-mcp/src/lib/verify/phantom.test.ts` | Phase 0 | Phase 6 | passing |
 | A22 | A baseline whose impl.md is unreachable (plan renamed/moved, blob absent) reports a finding rather than silently reporting no goalpost drift | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | passing |
 | A23 | A trajectory row with a malformed phase reference is reported as a finding rather than silently excluded from every detection | `apps/indusk-mcp/src/lib/verify/detect.test.ts` | Phase 0 | Phase 6 | passing |
+| A24 | Exactly one implementation of "a plan argument → its impl.md" exists in the codebase, so `run` and `verify` cannot resolve a plan differently | `apps/indusk-mcp/src/lib/verify/shared-resolution.test.ts` | Phase 0 | Phase 7 | planned |
+| A25 | Exactly one definition of the terminal-state set exists, so the phase-close probe and verify cannot disagree about whether a row's obligation is discharged | `apps/indusk-mcp/src/lib/verify/shared-resolution.test.ts` | Phase 0 | Phase 7 | planned |
+| A26 | A phantom finding's checklist-item text appears exactly once in the rendered report, not twice | `apps/indusk-mcp/src/lib/verify/report.test.ts` | Phase 0 | Phase 7 | planned |
 
 ### Deferred Verification
 
@@ -260,6 +263,31 @@ The theme, stated plainly: **every remaining defect is verify lying in the confi
 
 #### Phase 6 Document
 - [x] Update `reference/cli/verify.md`: state the repo-root-relative `Test` path convention, and document that an unresolvable or non-executable reference reports **unverified** rather than red — the distinction between "could not check" and "checked and failed" is the page's central promise *(also mirrored into the trajectory guide)*
+
+### Phase 7: Cleanup — one definition per shared rule
+
+**Goal**: this plan added a second enforcement lane over machinery the first lane already had, and in two places it copied a *rule* rather than sharing it. Both copies are correctness hazards, not tidiness: if `run` and `verify` resolve a plan differently, verify judges a file `run` never executed; if the probe and verify disagree about which states discharge a row's obligation, a phase closes in one lane and not the other. Nothing this plan authored is oversized (largest is a 307-line test file against a 400 cap), so decomposition-by-size has nothing to say here — every item below is about a duplicated rule or a reasoned decision to leave a file alone.
+
+- [ ] Extract `resolveImplPath` into one shared module and have both `bin/commands/run.ts` and `lib/verify/verify.ts` call it — the logic is currently byte-equivalent in both, and the `one-resolution-function-per-shared-relationship` lesson is exactly this shape. Two lanes resolving "which plan?" independently is a drift waiting to happen.
+- [ ] Extract the terminal-state set (`written`/`passing`/`skipped`/`blocked`) into the `trajectory/` module and have `run/probe.ts` and `verify/detect.ts` import it. Same rule, written twice; `check-gates.js` encodes it a third time inline (the JS hook stays a mirror by the existing port convention, but the TS copies should collapse to one).
+- [ ] Fix the report renderer to use only `finding.row` as the subject prefix. For phantom findings `finding.item` is the whole checklist-item text and the message already quotes it, so the item prints twice — once as a runaway prefix, once in the sentence.
+- [ ] (reviewed `src/bin/cli.ts` — left as-is: 722 lines, over the 400 cap, but **pre-existing**; this plan added ~18 lines registering one command. Splitting command registration is a repo-wide refactor that would touch every command and belongs to its own plan, not to this one's cleanup.)
+- [ ] (reviewed `lib/verify/red-tests.ts` — left as-is: 213 lines with two coherent halves, config→command resolution and execution/attribution. `resolveTestCommand` has exactly one caller, so extracting a ~35-line module now would be speculative structure. Revisit if the run lane or `--full-suite` grows a second consumer.)
+- [ ] (reviewed `lib/verify/git.ts` — deliberately NOT merged with `lib/scm/index.ts` or the git usage in `run/commit-cadence.ts`. It carries a stated invariant — *no write helper lives in this module* — which is what makes "detect, never repair" auditable by inspection. Consolidating read and write helpers into one git module would destroy exactly that property.)
+- [ ] (reviewed `lib/verify/verify.test-support.ts` against `run/harness.test-support.ts` — left as-is: both build throwaway git repos, but the genuinely shared part is ~8 lines of `mkdtemp` + `git init` + identity + commit. Coupling two independent suites to save eight lines is the wrong trade, and their fixtures diverge substantially after that point.)
+- [ ] Document the ledger's `trajectory` hash as a **forensic/audit field with no reader** in `ledger.ts` — it fingerprints the goalposts at each verified boundary, which is worth keeping in an append-only evidence trail, but nothing consumes it and a future maintainer must not assume it is load-bearing. (Falsification's A22 fix is source-aware and deliberately does not use it; adding a second, weaker comparison path would be worse than leaving it unread.)
+
+#### Phase 7 Verification
+- [ ] A24: exactly one implementation of plan→impl.md resolution exists
+- [ ] A25: exactly one definition of the terminal-state set exists
+- [ ] A26: a phantom finding's item text appears exactly once in the rendered report
+- [ ] Behavior parity: the full verify suite stays green (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`) — this phase is structure-preserving apart from the renderer fix
+
+#### Phase 7 Context
+- [ ] Add to Known Gotchas: `resolveImplPath` and the terminal-state set are single-definition on purpose — both are rules two enforcement lanes must agree on, and a copy is a silent divergence rather than a duplicate line
+
+#### Phase 7 Document
+- [ ] Re-read `reference/cli/verify.md` against the post-fix renderer and correct any sample output or wording that still implies a finding's subject prefix can be a full checklist item — the page is the contract for what a report looks like, and the prefix is now always a row ID or absent
 
 ## Files Affected
 
