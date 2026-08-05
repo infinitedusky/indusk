@@ -6,6 +6,7 @@ import { parseTrajectory } from "../trajectory/parser.js";
 import { detectGoalpostDrift, detectPrematureCheckoff, detectTestFirstDuty } from "./detect.js";
 import { assertGitRepo, headSha, resolveBootstrapBaseline } from "./git.js";
 import { appendVerifyRecord, findBaselineRecord, hashTrajectory, readLedger } from "./ledger.js";
+import { detectPhantomWork } from "./phantom.js";
 import { detectRedTests } from "./red-tests.js";
 
 /**
@@ -135,6 +136,16 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 	});
 	findings.push(...redTests.findings);
 	const unverifiedRows = redTests.unverifiedRows;
+
+	findings.push(
+		...(await detectPhantomWork({
+			root,
+			baselineSha: baseline.sha,
+			implRepoRelPath,
+			currentContent: content,
+			phase: options.phase,
+		})),
+	);
 
 	const verdict: VerifyReport["verdict"] = findings.length > 0 ? "rejected" : "clean";
 	const report: VerifyReport = {

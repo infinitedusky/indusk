@@ -53,6 +53,18 @@ flowchart TD
 
 Detections are **not** short-circuited in practice — a run reports every violation it finds, not just the first. The flow above reads top-to-bottom for clarity.
 
+### Phantom work, and what it deliberately misses
+
+`phantom` is the detection with the narrowest rule in the command, on purpose.
+
+It fires only when **every** condition holds: the phase has newly-checked *implementation* items, and the diff since the baseline touches **nothing but the plan's own `impl.md`**. Any real change anywhere else silences it completely.
+
+That means it catches the flipped-boxes-wrote-nothing case exactly, and **does not** catch a phase that wrote something trivial to satisfy the check. This is an accepted trade, not an oversight:
+
+- Attributing a specific checklist item to a specific diff hunk is not reliably possible.
+- Gate items are excluded because checking a Verification/Context/Document item legitimately changes only the plan file — counting them would fire on every honest phase close.
+- A detector that cries wolf gets switched off, which costs more than the cases a broader rule would have caught.
+
 ## It never repairs
 
 `verify` renders a verdict and exits. It performs no revert, no re-dispatch, no repair. The only write it ever makes is appending its own ledger record — and only on a clean verdict.

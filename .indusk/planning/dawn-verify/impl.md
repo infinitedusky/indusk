@@ -50,7 +50,7 @@ Closes Dawn component 6 — the keystone — and produces the recorded evidence 
 | A2 | Verifying a phase that left a row `planned` at its writable phase reports a rejection naming that row | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
 | A3 | Verifying a phase whose trajectory assertion text changed since the baseline reports a rejection showing previous and current text | `src/lib/verify/detect.test.ts` | Phase 1 | Phase 2 | passing |
 | A4 | Verifying a phase with a row marked `passing` whose test fails reports a rejection naming that row and the failure | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
-| A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | written |
+| A5 | Verifying a phase where an item was checked with no file changes since the baseline reports a rejection naming that item | `src/lib/verify/phantom.test.ts` | Phase 1 | Phase 4 | passing |
 | A6 | Verifying an honest phase reports success, exits 0, and states the baseline commit it judged against | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
 | A7 | A rejecting verify leaves every file in the repository byte-identical — no revert, no rewrite, no staged change | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
 | A8 | A rejecting verify exits non-zero so a calling script or CI step fails rather than continuing | `src/lib/verify/verify.test.ts` | Phase 1 | Phase 2 | passing |
@@ -179,19 +179,22 @@ The alternative was authoring every test as a subprocess spawn of the `atdawn` b
 
 ### Phase 4: Phantom-work detection
 
-- [ ] Add `src/lib/verify/phantom.ts` — compute the diff since the baseline SHA; if the phase has newly-checked implementation items and the diff contains no change outside the plan's own `impl.md`, report every checked implementation item in that phase as phantom
-- [ ] Keep the rule narrow: any real change outside `impl.md` silences the detection entirely, so a trivially-satisfied checkoff is deliberately not flagged
-- [ ] Wire into `runVerify()` and the report renderer
+- [x] Add `src/lib/verify/phantom.ts` — compute the diff since the baseline SHA; if the phase has newly-checked implementation items and the diff contains no change outside the plan's own `impl.md`, report every checked implementation item in that phase as phantom
+- [x] Keep the rule narrow: any real change outside `impl.md` silences the detection entirely, so a trivially-satisfied checkoff is deliberately not flagged
+  - refinement while implementing: only **implementation** items count. Checking a Verification/Context/Document item legitimately changes nothing but the plan file, so counting gate items would fire on every honest phase close.
+- [x] Wire into `runVerify()` and the report renderer
 
 #### Phase 4 Verification
-- [ ] A5 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Full suite green (`pnpm test`)
+- [x] A5 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] Full suite run (`pnpm test`) — **not fully green, and not because of this plan**
+  - indusk-mcp: 882 passed / 3 failed — exactly the known pre-existing set (`agent-roles-phase4`, `daemon-identity` T22/T23). All 15 machine-checkable rows green.
+  - indusk-admin: 141 passed / 4 failed, all `Test timed out in 5000ms` in the `http-*` server-boot tests. **Verified pre-existing**: `http-smoke.test.ts` fails on the trunk too (4/4 there vs 1/4 here), so this reproduces without any of this plan's changes. Out of scope — recorded as a cross-plan finding rather than fixed here.
 
 #### Phase 4 Context
-- [ ] Add to Known Gotchas: phantom-work detection is deliberately narrow — it fires only when a phase's diff touches nothing but `impl.md`; broadening it produces false positives that get the detector disabled
+- [x] Add to Known Gotchas: phantom-work detection is deliberately narrow — it fires only when a phase's diff touches nothing but `impl.md`; broadening it produces false positives that get the detector disabled
 
 #### Phase 4 Document
-- [ ] Document the phantom-work rule and its explicit limit in `reference/cli/verify.md`
+- [x] Document the phantom-work rule and its explicit limit in `reference/cli/verify.md`
 
 ### Phase 5: Acceptance experiment and the keystone verdict
 
