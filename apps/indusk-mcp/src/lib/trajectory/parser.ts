@@ -19,6 +19,17 @@ export interface TrajectoryRow {
 	state: TrajectoryState;
 	kind?: TrajectoryKind;
 	scope?: TrajectoryScope;
+	/**
+	 * Optional `Test` column — the test FILES backing this row, comma-separated.
+	 *
+	 * Files rather than test names or line numbers, because `atdawn verify` runs
+	 * them through the project's own command and reads the exit code. That keeps
+	 * attribution runner-agnostic: parsing a runner's structured output to match
+	 * per-test tags would be more precise but would hardcode tool knowledge into
+	 * core, which extensions own. Absent means the row is not red-test-checkable
+	 * — reported as unverified, never counted as passed.
+	 */
+	test?: string[];
 }
 
 export interface DeferredRow {
@@ -47,6 +58,26 @@ const VALID_STATES: ReadonlySet<TrajectoryState> = new Set([
 	"blocked",
 	"skipped",
 	"unknown",
+]);
+
+/**
+ * States in which a row's authoring obligation is discharged.
+ *
+ * **One definition on purpose.** The phase-close probe (`run/probe.ts`) and
+ * `atdawn verify` (`verify/detect.ts`) both ask "has this row been dealt with?",
+ * and if they answered differently a phase would close in one lane and not the
+ * other. A second copy would not be a duplicated line — it would be a silent
+ * divergence between two enforcement lanes, so the rule lives here.
+ *
+ * `hooks/check-gates.js` encodes the same set inline; that JS port is a
+ * deliberate mirror under the existing hook-port convention (change the TS and
+ * every JS port together), not an accidental third copy.
+ */
+export const TERMINAL_STATES: ReadonlySet<string> = new Set([
+	"written",
+	"passing",
+	"skipped",
+	"blocked",
 ]);
 
 const VALID_KINDS: ReadonlySet<TrajectoryKind> = new Set([
@@ -116,6 +147,24 @@ function parseOptionalKind(cell: string): TrajectoryKind | undefined {
 		return normalized as TrajectoryKind;
 	}
 	return undefined;
+}
+
+/**
+ * Parse the optional `Test` cell into file paths. Comma-separated, backticks
+ * stripped (authors write them as code spans). Empty → undefined, which the
+ * verifier reads as "not checkable", distinct from "checked and passed".
+ */
+function parseOptionalTestRefs(cell: string): string[] | undefined {
+	const refs = cell
+		.split(",")
+		.map((ref) =>
+			ref
+				.trim()
+				.replace(/^`+|`+$/g, "")
+				.trim(),
+		)
+		.filter((ref) => ref.length > 0);
+	return refs.length > 0 ? refs : undefined;
 }
 
 function parseOptionalScope(cell: string): TrajectoryScope | undefined {
@@ -276,6 +325,7 @@ function parseTrajectoryTable(lines: string[]): TrajectoryRow[] {
 			state: parseState(record.state ?? ""),
 			kind: parseOptionalKind(record.kind ?? ""),
 			scope: parseOptionalScope(record.scope ?? ""),
+			test: parseOptionalTestRefs(record.test ?? ""),
 		});
 	}
 

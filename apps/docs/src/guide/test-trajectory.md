@@ -58,6 +58,29 @@ Add when the plan benefits from the extra dimension; the template does not inclu
 |--------|--------|-------------|
 | `Kind` | `example`, `property`, `contract`, `approval`, `formal` | The plan mixes kinds and the distinction matters |
 | `Scope` | `unit`, `integration`, `e2e` | Phase cost/runtime varies meaningfully by scope |
+| `Test` | Test **file** paths, comma-separated | The plan may be verified with [`atdawn verify`](../reference/cli/verify.md) — which is any plan whose phases might be executed outside a lane Dawn controls |
+
+### The `Test` column and what it unlocks
+
+Until this column exists on a row, the row's `State` is an **unverified self-report**. `check-gates` reads the word `passing` and trusts it; the goalpost guard permits `planned → written → passing` as honest progress. Nothing has ever run the test.
+
+`atdawn verify` closes that — but only for rows that say which files back them:
+
+```markdown
+| ID | Asserts                        | Test                     | Writable at | Passes at | State   |
+|----|--------------------------------|--------------------------|-------------|-----------|---------|
+| A4 | a red row is rejected          | `src/lib/verify/red-tests.test.ts` | Phase 1 | Phase 3 | passing |
+```
+
+Three rules worth knowing before you use it:
+
+- **Paths are repo-root-relative.** The test command runs from the repository root, so in a monorepo a package-relative path resolves to nothing. Write `apps/pkg/src/foo.test.ts`, not `src/foo.test.ts`. A path that does not resolve reports the row **unverified** — never as a failing test.
+- **A manually-verified row says so.** Prefix the reference with `manual:` (e.g. `manual: .indusk/planning/x/matrix.md`) when a human signed it off. Verify reports it unverified-by-design instead of shelling a record out to a test runner.
+- **Files, not test names or line numbers.** Verify runs each file through the project's own test command and reads the **exit code**. That keeps attribution runner-agnostic — matching per-test tags would need runner-specific output parsing, which belongs in an extension, not in core. Line numbers were rejected outright: they move on every refactor, and false failures train you to ignore the tool.
+- **A shared file's failure is attributed to every row referencing it.** Over-attribution, deliberately — conservative in the safe direction.
+- **A row claiming `passing` with no `Test` reference is reported as _unverified_, never as passed.** The distinction is the point: "could not be checked" and "checked and passed" are different claims, and collapsing them would make the backward-compatible omission a silent hole.
+
+Plans authored before this column existed parse and verify unchanged; their rows simply report as unverified.
 
 ## Authoring a Trajectory
 

@@ -94,6 +94,7 @@ const config = defineConfig({
 					items: [
 						{ text: "setup", link: "/reference/cli/setup" },
 						{ text: "run", link: "/reference/cli/run" },
+						{ text: "verify", link: "/reference/cli/verify" },
 						{ text: "agent", link: "/reference/cli/agent" },
 						{ text: "plans", link: "/reference/cli/plans" },
 						{ text: "sync", link: "/reference/cli/sync" },
@@ -175,6 +176,7 @@ const config = defineConfig({
 						{ text: "Git-Only Substrate", link: "/decisions/git-only-substrate" },
 						{ text: "Dawn External Orchestrator", link: "/decisions/dawn-external-orchestrator" },
 						{ text: "Dawn Hook Parity", link: "/decisions/dawn-hook-parity" },
+						{ text: "Dawn Verify", link: "/decisions/dawn-verify" },
 						{ text: "Git-or-jj Substrate (Superseded)", link: "/decisions/git-or-jj-substrate" },
 					],
 				},
@@ -223,6 +225,10 @@ const config = defineConfig({
 						{
 							text: "Dawn Hook Parity (Route Coverage + Durability)",
 							link: "/lessons/dawn-hook-parity",
+						},
+						{
+							text: "Dawn Verify (Could-Not-Check ≠ Passed)",
+							link: "/lessons/dawn-verify",
 						},
 					],
 				},
