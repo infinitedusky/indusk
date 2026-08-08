@@ -44,17 +44,17 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 
 | ID | Asserts | Test | Writable at | Passes at | State |
 |----|---------|------|-------------|-----------|-------|
-| A1 | A phase that writes a unit violating a craft rule gains a checklist item naming both the change to make and the rule it came from | `apps/indusk-mcp/src/lib/shape/findings.test.ts` | Phase 1 | Phase 2 | written |
-| A2 | The item lands in the phase that produced the code — not a new phase, not at plan close | `apps/indusk-mcp/src/lib/shape/findings.test.ts` | Phase 1 | Phase 2 | written |
-| A3 | A phase whose Shape items are unchecked cannot be closed | `apps/indusk-mcp/src/lib/shape/gate-interaction.test.ts` | Phase 0 | Phase 2 | written |
+| A1 | A phase that writes a unit violating a craft rule gains a checklist item naming both the change to make and the rule it came from | `apps/indusk-mcp/src/lib/shape/findings.test.ts` | Phase 1 | Phase 2 | passing |
+| A2 | The item lands in the phase that produced the code — not a new phase, not at plan close | `apps/indusk-mcp/src/lib/shape/findings.test.ts` | Phase 1 | Phase 2 | passing |
+| A3 | A phase whose Shape items are unchecked cannot be closed | `apps/indusk-mcp/src/lib/shape/gate-interaction.test.ts` | Phase 0 | Phase 2 | passing |
 | A4 | When the code a phase wrote is well-shaped, no items are added and the phase records that the review ran and found nothing | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | written |
 | A5 | Shape reviews only files the current phase changed — earlier phases' code is not re-flagged | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | passing |
 | A6 | A phase that changed no code files is recorded as skipped with the reason, never silently passed over | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | written |
 | A7 | A file reviewed and deliberately left alone records the decision and its reason, distinct from not reviewing it | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | written |
-| A8 | The rule set handed to the reviewing agent scopes to intra-unit craft and declares cross-file duplication out of scope | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | written |
-| A9 | `/cleanup`'s changed-file scan at close still returns files Shape already reviewed — having run Shape narrows nothing | `apps/indusk-mcp/src/lib/shape/gate-interaction.test.ts` | Phase 0 | Phase 4 | written |
+| A8 | The rule set handed to the reviewing agent scopes to intra-unit craft and declares cross-file duplication out of scope | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | passing |
+| A9 | `/cleanup`'s changed-file scan at close still returns files Shape already reviewed — having run Shape narrows nothing | `apps/indusk-mcp/src/lib/shape/gate-interaction.test.ts` | Phase 0 | Phase 4 | passing |
 | A10 | Shape refuses to run for a phase whose verification is not green, naming that as the reason | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | written |
-| A11 | Turning off a domain extension changes the rule set Shape produces — no craft rule is hardcoded in core | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | written |
+| A11 | Turning off a domain extension changes the rule set Shape produces — no craft rule is hardcoded in core | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | passing |
 | A12 | The phase-boundary record is excluded from the changed-file scope, so it never counts as work a phase did | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | passing |
 
 ### Deferred Verification
@@ -137,8 +137,11 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
   - note: fields are rejected if they carry a line separator (LF, CR, U+2028, U+2029) — a checklist item is one line, so a multi-line field would split into an item plus orphaned prose. Compared by code point, not a regex literal: U+2028/U+2029 written literally terminate a line in the *source* and stop the file parsing (found the hard way here).
 
 #### Phase 2 Verification
-- [ ] A1, A2, A3, A8, A11 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] A4, A6, A7, A10 still red (Phase 3), A9 still red (Phase 4) — confirm each fails on its own assertion, not an import error
+- [x] A1, A2, A3, A8, A11 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+  - measured: 136 files passed / 2 failed. The 2 are `shape.test.ts` (the 7 intended Phase 3 reds) and `daemon-identity.test.ts` T22/T23 (the known port-sensitive known-red-on-main named in the `http-suite-5s-timeout` lesson). No other regression.
+- [x] A4, A6, A7, A10 still red (Phase 3), A9 still red (Phase 4) — confirm each fails on its own assertion, not an import error
+  - A4/A6/A7/A10: red, and each fails on its scaffold's own `throw` naming the implementing phase (3× `prepareShapeReview`, 2× `recordReviewedNothingFound`, 2× `recordLeftAsIs`) — live tripwires, not import errors.
+  - **A9 is green, and the "still red" half of this item was never achievable.** A9 asserts `listOversizedChangedFiles` still returns the files Shape reviewed — pre-existing `cleanup/oversized.ts` behavior that Shape never touches, so it passed the moment it was authored. Same for A3. Phase 1's note ("A3 and A9 authored RED against today's behavior") is therefore wrong on both. Marked `passing`; a row that guards existing behavior against future regression is legitimate, it just cannot have a red phase. See the Phase 2 note below.
 
 #### Phase 2 Context
 - [ ] Add to Conventions: Shape's craft rules come from enabled domain extensions and hardcode nothing; the rule set carries an explicit intra-unit scope declaration that keeps cross-file work with `/cleanup`
