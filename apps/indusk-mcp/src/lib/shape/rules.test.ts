@@ -1,0 +1,89 @@
+import { rm } from "node:fs/promises";
+import { afterEach, describe, expect, it } from "vitest";
+import { collectCraftRules } from "./rules.js";
+import { enableExtension, makeRepo, packageExtension } from "./shape.test-support.js";
+
+/**
+ * A8, A11 — where craft standards come from, and where Shape stops.
+ *
+ * The rules are the enabled extensions' own prose. Core hardcodes none of them:
+ * a project sets its standard by choosing extensions, the same way `/cleanup`
+ * already delegates "what counts as a cohesive unit". This is the maxim-7
+ * argument that kept runner-specific output parsing out of `atdawn verify`.
+ */
+
+const roots: string[] = [];
+afterEach(async () => {
+	await Promise.all(roots.splice(0).map((r) => rm(r, { recursive: true, force: true })));
+});
+
+describe("A11 — rules trace to enabled extensions, not to core", () => {
+	it("includes an enabled extension's craft prose", async () => {
+		const root = await makeRepo();
+		const pkg = await makeRepo("shape-pkg");
+		roots.push(root, pkg);
+		await enableExtension(root, "react");
+		await packageExtension(pkg, "react", "# react\n\n## Craft\n\nOne component per file.\n");
+
+		const rules = await collectCraftRules(root, pkg);
+
+		expect(rules.sources.map((s) => s.extension)).toContain("react");
+		expect(rules.sources.find((s) => s.extension === "react")?.rules).toContain(
+			"One component per file",
+		);
+	});
+
+	it("drops the extension's rules when it is disabled", async () => {
+		// Turning an extension off must change what Shape flags. If it does not,
+		// the rule is really hardcoded somewhere and the project cannot set its
+		// own standard.
+		const root = await makeRepo();
+		const pkg = await makeRepo("shape-pkg");
+		roots.push(root, pkg);
+		await packageExtension(pkg, "react", "# react\n\n## Craft\n\nOne component per file.\n");
+		// Note: never enabled in `.indusk/extensions/`.
+
+		const rules = await collectCraftRules(root, pkg);
+
+		expect(rules.sources.map((s) => s.extension)).not.toContain("react");
+	});
+
+	it("still yields a usable standard when no domain extension is enabled", async () => {
+		// A library or CLI project gets the general move — extract a function or
+		// module — rather than nothing at all.
+		const root = await makeRepo();
+		const pkg = await makeRepo("shape-pkg");
+		roots.push(root, pkg);
+
+		const rules = await collectCraftRules(root, pkg);
+
+		expect(rules.scope.inScope.length).toBeGreaterThan(0);
+	});
+});
+
+describe("A8 — the rule set declares where Shape stops", () => {
+	it("scopes to intra-unit craft", async () => {
+		const root = await makeRepo();
+		const pkg = await makeRepo("shape-pkg");
+		roots.push(root, pkg);
+
+		const rules = await collectCraftRules(root, pkg);
+
+		expect(rules.scope.inScope.join(" ").toLowerCase()).toMatch(/unit|function|component|file/);
+	});
+
+	it("declares cross-file duplication out of scope, leaving it to cleanup", async () => {
+		// The line that keeps the two rituals from arguing over territory.
+		// Its other half is asserted from cleanup's side (A9): cleanup must still
+		// see these files, so "Shape ignores it" never means nobody catches it.
+		const root = await makeRepo();
+		const pkg = await makeRepo("shape-pkg");
+		roots.push(root, pkg);
+
+		const rules = await collectCraftRules(root, pkg);
+
+		const outOfScope = rules.scope.outOfScope.join(" ").toLowerCase();
+		expect(outOfScope).toMatch(/duplicat/);
+		expect(outOfScope).toMatch(/cleanup/);
+	});
+});
