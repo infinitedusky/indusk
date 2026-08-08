@@ -1,18 +1,8 @@
 import { rm } from "node:fs/promises";
 import { afterEach, describe, expect, it } from "vitest";
 import { recordPhaseStart } from "./boundary.js";
-import {
-	prepareShapeReview,
-	recordLeftAsIs,
-	recordReviewedNothingFound,
-} from "./shape.js";
-import {
-	commitAll,
-	git,
-	implWithPhase,
-	makeRepo,
-	writeFixtureFile,
-} from "./shape.test-support.js";
+import { prepareShapeReview, recordLeftAsIs, recordReviewedNothingFound } from "./shape.js";
+import { commitAll, git, implWithPhase, makeRepo, writeFixtureFile } from "./shape.test-support.js";
 
 /**
  * A4, A6, A7, A10 — the review surface, and the three outcomes it must be able

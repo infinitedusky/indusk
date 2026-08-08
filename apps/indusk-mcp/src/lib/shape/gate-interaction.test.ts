@@ -2,8 +2,7 @@ import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { listOversizedChangedFiles } from "../cleanup/oversized.js";
-import { getPhaseCompletion } from "../impl-parser.js";
-import { parseImplString } from "../impl-parser.js";
+import { getPhaseCompletion, parseImplString } from "../impl-parser.js";
 import { commitAll, git, implWithPhase, makeRepo, writeFixtureFile } from "./shape.test-support.js";
 
 /**

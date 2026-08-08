@@ -53,9 +53,7 @@ describe("A1 — the item names both the change and the rule", () => {
 		});
 
 		const out = appendFindingToPhase(body, 3, FINDING);
-		const added = out
-			.split("\n")
-			.find((l) => l.includes("Extract the finding renderer"));
+		const added = out.split("\n").find((l) => l.includes("Extract the finding renderer"));
 
 		expect(added?.trimStart().startsWith("- [ ]")).toBe(true);
 	});
@@ -87,8 +85,7 @@ describe("A2 — the item lands in the phase that produced the code", () => {
 				phase: 2,
 				items: [[true, "phase two work"]],
 				verification: [[true, "tests pass"]],
-			})
-				.split("## Checklist")[1],
+			}).split("## Checklist")[1],
 		].join("\n");
 
 		const out = appendFindingToPhase(body, 1, FINDING);

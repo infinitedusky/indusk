@@ -1,7 +1,7 @@
 ---
 title: "Lifecycle Rebalance — the Shape check"
 date: 2026-08-08
-status: draft
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -48,14 +48,14 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | A2 | The item lands in the phase that produced the code — not a new phase, not at plan close | `apps/indusk-mcp/src/lib/shape/findings.test.ts` | Phase 1 | Phase 2 | written |
 | A3 | A phase whose Shape items are unchecked cannot be closed | `apps/indusk-mcp/src/lib/shape/gate-interaction.test.ts` | Phase 0 | Phase 2 | written |
 | A4 | When the code a phase wrote is well-shaped, no items are added and the phase records that the review ran and found nothing | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | written |
-| A5 | Shape reviews only files the current phase changed — earlier phases' code is not re-flagged | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | written |
+| A5 | Shape reviews only files the current phase changed — earlier phases' code is not re-flagged | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | passing |
 | A6 | A phase that changed no code files is recorded as skipped with the reason, never silently passed over | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | written |
 | A7 | A file reviewed and deliberately left alone records the decision and its reason, distinct from not reviewing it | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | written |
 | A8 | The rule set handed to the reviewing agent scopes to intra-unit craft and declares cross-file duplication out of scope | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | written |
 | A9 | `/cleanup`'s changed-file scan at close still returns files Shape already reviewed — having run Shape narrows nothing | `apps/indusk-mcp/src/lib/shape/gate-interaction.test.ts` | Phase 0 | Phase 4 | written |
 | A10 | Shape refuses to run for a phase whose verification is not green, naming that as the reason | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | written |
 | A11 | Turning off a domain extension changes the rule set Shape produces — no craft rule is hardcoded in core | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | written |
-| A12 | The phase-boundary record is excluded from the changed-file scope, so it never counts as work a phase did | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | written |
+| A12 | The phase-boundary record is excluded from the changed-file scope, so it never counts as work a phase did | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | passing |
 
 ### Deferred Verification
 
@@ -92,7 +92,7 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 
 - [x] Create/confirm this plan's worktree (`indusk worktree create lifecycle-rebalance`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
   - note: `indusk worktree create` still requires workbench mode; used `git worktree add -b plan/lifecycle-rebalance`. Brought to test-env parity with `pnpm install` + mcp build + admin build + `bundle-admin.js` (the gitignored-artifact lesson).
-- [ ] Add `src/lib/shape/boundary.ts` — a **generic** phase-boundary record, not a Shape-specific one
+- [x] Add `src/lib/shape/boundary.ts` — a **generic** phase-boundary record, not a Shape-specific one
   ```typescript
   export interface PhaseBoundaryRecord {
     plan: string; phase: number; sha: string; at: string;
@@ -103,20 +103,21 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
   export async function readBoundaries(root: string): Promise<PhaseBoundaryRecord[]>
   ```
   Future boundary checks (`verify` when it wires into this lane, `Challenge` when it lands) read this same artifact — the point is to avoid a family of near-identical single-consumer ledgers.
-- [ ] Make `readBoundaries` refuse loudly on a malformed line rather than skipping it — a skipped line silently widens the review scope to include earlier phases' code, which looks like Shape working
-- [ ] Add `src/lib/shape/changed.ts` — files changed since the phase's recorded start, including untracked (the `dawn-verify` A19 lesson: unstaged work is still work)
-- [ ] **Exclude InDusk machine state** (`.indusk/`) from the changed-file scope, the boundary record above all — a record written at phase start must never count as work the phase did
-- [ ] Scaffold `src/lib/shape/rules.ts`, `findings.ts`, and `shape.ts` with their exported signatures so the Phase 2–3 tests have import targets
+- [x] Make `readBoundaries` refuse loudly on a malformed line rather than skipping it — a skipped line silently widens the review scope to include earlier phases' code, which looks like Shape working
+- [x] Add `src/lib/shape/changed.ts` — files changed since the phase's recorded start, including untracked (the `dawn-verify` A19 lesson: unstaged work is still work)
+- [x] **Exclude InDusk machine state** (`.indusk/`) from the changed-file scope, the boundary record above all — a record written at phase start must never count as work the phase did
+- [x] Scaffold `src/lib/shape/rules.ts`, `findings.ts`, and `shape.ts` with their exported signatures so the Phase 2–3 tests have import targets
 
 #### Phase 1 Verification
-- [ ] A5, A12 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] A1–A4, A6–A8, A10, A11 authored and committed RED against the Phase 1 scaffold; A3 and A9 authored RED against today's behavior; States set to `written`
+- [x] A5, A12 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] A1–A4, A6–A8, A10, A11 authored and committed RED against the Phase 1 scaffold; A3 and A9 authored RED against today's behavior; States set to `written`
+  - measured: 902 passed / 21 failed = 18 intended Shape reds + the 3 known pre-existing. Every red fails on its scaffold's explicit throw naming the phase that implements it, not an import error — live tripwires rather than absent code.
 
 #### Phase 1 Context
-- [ ] Add to Known Gotchas: the phase-boundary record is generic and machine state — every changed-file scope must exclude `.indusk/`, or the record a phase writes at its start counts as work that phase did
+- [x] Add to Known Gotchas: the phase-boundary record is generic and machine state — every changed-file scope must exclude `.indusk/`, or the record a phase writes at its start counts as work that phase did
 
 #### Phase 1 Document
-- [ ] Create `apps/docs/src/guide/shape.md` with the per-phase order Mermaid (implementation → verification → **shape** → context → document) and the phase-boundary record's shape
+- [x] Create `apps/docs/src/guide/shape.md` with the per-phase order Mermaid (implementation → verification → **shape** → context → document) and the phase-boundary record's shape
 
 ### Phase 2: Rules from extensions, findings into the phase
 
