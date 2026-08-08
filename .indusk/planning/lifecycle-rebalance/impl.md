@@ -122,9 +122,10 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 ### Phase 2: Rules from extensions, findings into the phase
 
 - [x] **Discovered in Phase 2** — give the shape suite's real-git tests a 30s timeout (dawn-hook-parity precedent, `run/swap.test.ts:222`): A5's `excludes files an earlier phase changed` intermittently times out on vitest's 5s default because it spawns ~10 `git` subprocesses. A tripwire that flakes is worse than no tripwire — it trains the reader to ignore it. Not an assertion change; the goalposts stay where Phase 1 set them.
-- [ ] Add `src/lib/shape/rules.ts` — collect craft rules from **enabled domain extensions**, hardcoding none
-- [ ] Include an explicit **scope declaration** in the produced rule set: intra-unit craft is in scope; cross-file duplication and module-boundary decomposition are `/cleanup`'s at close
-- [ ] Fall back to the general move (extract a function or module) when no domain extension is enabled — a library/CLI project still gets a standard
+- [x] Add `src/lib/shape/rules.ts` — collect craft rules from **enabled domain extensions**, hardcoding none
+- [x] Include an explicit **scope declaration** in the produced rule set: intra-unit craft is in scope; cross-file duplication and module-boundary decomposition are `/cleanup`'s at close
+- [x] Fall back to the general move (extract a function or module) when no domain extension is enabled — a library/CLI project still gets a standard
+  - note: no filtering by "domain vs tool" extension — the manifest carries no such taxonomy, and inventing one in core is exactly the hardcoded judgment A11 exists to prevent. Every enabled extension that `provides.skill` and has readable prose contributes; the reviewing agent reads prose and can tell what bears on craft. Cost is ~48 KB of prose across dusk's 9 enabled extensions — the per-phase token cost the ADR already accepted under Consequences.
 - [ ] Add `src/lib/shape/findings.ts` — append a finding as an unchecked checklist item to a **named phase** in impl.md
   ```typescript
   export interface ShapeFinding { file: string; change: string; rule: string; }
