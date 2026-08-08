@@ -126,14 +126,15 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] Include an explicit **scope declaration** in the produced rule set: intra-unit craft is in scope; cross-file duplication and module-boundary decomposition are `/cleanup`'s at close
 - [x] Fall back to the general move (extract a function or module) when no domain extension is enabled — a library/CLI project still gets a standard
   - note: no filtering by "domain vs tool" extension — the manifest carries no such taxonomy, and inventing one in core is exactly the hardcoded judgment A11 exists to prevent. Every enabled extension that `provides.skill` and has readable prose contributes; the reviewing agent reads prose and can tell what bears on craft. Cost is ~48 KB of prose across dusk's 9 enabled extensions — the per-phase token cost the ADR already accepted under Consequences.
-- [ ] Add `src/lib/shape/findings.ts` — append a finding as an unchecked checklist item to a **named phase** in impl.md
+- [x] Add `src/lib/shape/findings.ts` — append a finding as an unchecked checklist item to a **named phase** in impl.md
   ```typescript
   export interface ShapeFinding { file: string; change: string; rule: string; }
   /** Returns the edited impl body; never writes. The caller owns the write. */
   export function appendFindingToPhase(implBody: string, phase: number, finding: ShapeFinding): string
   ```
   Return-a-string rather than write-a-file so the caller's edit flows through the PreToolUse gate chain like any other impl edit
-- [ ] Ensure each appended item names both the change and the originating rule — a finding without its basis is unreviewable
+- [x] Ensure each appended item names both the change and the originating rule — a finding without its basis is unreviewable
+  - note: fields are rejected if they carry a line separator (LF, CR, U+2028, U+2029) — a checklist item is one line, so a multi-line field would split into an item plus orphaned prose. Compared by code point, not a regex literal: U+2028/U+2029 written literally terminate a line in the *source* and stop the file parsing (found the hard way here).
 
 #### Phase 2 Verification
 - [ ] A1, A2, A3, A8, A11 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
