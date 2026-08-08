@@ -82,5 +82,6 @@ describe("A9 — running Shape narrows nothing for cleanup at close", () => {
 		expect(flagged.map((f) => f.path)).toEqual(
 			expect.arrayContaining(["src/one.ts", "src/two.ts"]),
 		);
-	});
+		// 30s, not vitest's 5s default — real repo, real git. See changed.test.ts.
+	}, 30_000);
 });

@@ -52,7 +52,8 @@ describe("A10 — Shape does not review code whose correctness is unproven", () 
 
 		expect(outcome.kind).toBe("skipped");
 		if (outcome.kind === "skipped") expect(outcome.reason).toMatch(/verification/i);
-	});
+		// 30s, not vitest's 5s default — real repo, real git. See changed.test.ts.
+	}, 30_000);
 
 	it("proceeds once verification is green", async () => {
 		const root = await repoAtPhase(1);
@@ -62,7 +63,7 @@ describe("A10 — Shape does not review code whose correctness is unproven", () 
 		const outcome = await prepareShapeReview({ root, plan: "demo", phase: 1, implBody: GREEN });
 
 		expect(outcome.kind).toBe("review");
-	});
+	}, 30_000);
 });
 
 describe("A6 — a phase with no code surface is skipped, not silently passed", () => {
@@ -77,7 +78,7 @@ describe("A6 — a phase with no code surface is skipped, not silently passed", 
 
 		expect(outcome.kind).toBe("skipped");
 		if (outcome.kind === "skipped") expect(outcome.reason).toMatch(/no code/i);
-	});
+	}, 30_000);
 });
 
 describe("A4 — well-shaped code adds no items and says the review ran", () => {

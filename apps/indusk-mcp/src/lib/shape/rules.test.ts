@@ -31,7 +31,9 @@ describe("A11 — rules trace to enabled extensions, not to core", () => {
 		expect(rules.sources.find((s) => s.extension === "react")?.rules).toContain(
 			"One component per file",
 		);
-	});
+		// 30s, not vitest's 5s default — each case builds two real repos. See the
+		// note in changed.test.ts.
+	}, 30_000);
 
 	it("drops the extension's rules when it is disabled", async () => {
 		// Turning an extension off must change what Shape flags. If it does not,
@@ -46,7 +48,7 @@ describe("A11 — rules trace to enabled extensions, not to core", () => {
 		const rules = await collectCraftRules(root, pkg);
 
 		expect(rules.sources.map((s) => s.extension)).not.toContain("react");
-	});
+	}, 30_000);
 
 	it("still yields a usable standard when no domain extension is enabled", async () => {
 		// A library or CLI project gets the general move — extract a function or
@@ -58,7 +60,7 @@ describe("A11 — rules trace to enabled extensions, not to core", () => {
 		const rules = await collectCraftRules(root, pkg);
 
 		expect(rules.scope.inScope.length).toBeGreaterThan(0);
-	});
+	}, 30_000);
 });
 
 describe("A8 — the rule set declares where Shape stops", () => {
@@ -70,7 +72,7 @@ describe("A8 — the rule set declares where Shape stops", () => {
 		const rules = await collectCraftRules(root, pkg);
 
 		expect(rules.scope.inScope.join(" ").toLowerCase()).toMatch(/unit|function|component|file/);
-	});
+	}, 30_000);
 
 	it("declares cross-file duplication out of scope, leaving it to cleanup", async () => {
 		// The line that keeps the two rituals from arguing over territory.
@@ -85,5 +87,5 @@ describe("A8 — the rule set declares where Shape stops", () => {
 		const outOfScope = rules.scope.outOfScope.join(" ").toLowerCase();
 		expect(outOfScope).toMatch(/duplicat/);
 		expect(outOfScope).toMatch(/cleanup/);
-	});
+	}, 30_000);
 });

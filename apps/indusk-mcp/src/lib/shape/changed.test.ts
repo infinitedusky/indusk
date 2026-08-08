@@ -42,7 +42,10 @@ describe("A5 — only this phase's files are in scope", () => {
 
 		expect(changed).toContain("src/phase-two.ts");
 		expect(changed).not.toContain("src/phase-one.ts");
-	});
+		// 30s, not vitest's 5s default: this builds a real repo and spawns ~10
+		// `git` subprocesses, which overran 5s under load and made the tripwire
+		// flaky. Same call dawn-hook-parity made at `run/swap.test.ts:222`.
+	}, 30_000);
 
 	it("includes work that was written but never staged", async () => {
 		// An agent that writes code without `git add` has still done the work —
@@ -61,7 +64,7 @@ describe("A5 — only this phase's files are in scope", () => {
 		const changed = await changedFilesForPhase({ root, plan: "demo", phase: 1 });
 
 		expect(changed).toContain("src/unstaged.ts");
-	});
+	}, 30_000);
 });
 
 describe("A12 — InDusk machine state is never counted as work", () => {
@@ -83,7 +86,7 @@ describe("A12 — InDusk machine state is never counted as work", () => {
 		const changed = await changedFilesForPhase({ root, plan: "demo", phase: 1 });
 
 		expect(changed.some((p) => p.startsWith(".indusk/"))).toBe(false);
-	});
+	}, 30_000);
 
 	it("excludes plan documents so editing impl.md is not mistaken for code", async () => {
 		const root = await makeRepo();
@@ -102,5 +105,5 @@ describe("A12 — InDusk machine state is never counted as work", () => {
 
 		expect(changed).toContain("src/real.ts");
 		expect(changed.some((p) => p.includes("planning/demo/impl.md"))).toBe(false);
-	});
+	}, 30_000);
 });
