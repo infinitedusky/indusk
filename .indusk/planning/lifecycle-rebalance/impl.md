@@ -147,7 +147,9 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] Add to Conventions: Shape's craft rules come from enabled domain extensions and hardcode nothing; the rule set carries an explicit intra-unit scope declaration that keeps cross-file work with `/cleanup`
 
 #### Phase 2 Document
-- [ ] Extend `guide/shape.md` with the Shape-vs-Cleanup table and worked examples of each (the inline renderer; the cross-lane duplicate)
+- [x] Extend `guide/shape.md` with the Shape-vs-Cleanup table and worked examples of each (the inline renderer; the cross-lane duplicate)
+  - also corrected the page against what Phase 2 actually ships: the finding format it showed was not the one `appendFindingToPhase` emits, and a docs page showing a format the code does not produce is worse than no page. Added the one-line/placement/never-writes constraints and the rule-set scope declaration.
+  - added the sidebar entry (`community-add-to-sidebar`). **Pre-existing, out of scope:** 19 guide pages exist and only 3 are now in the sidebar — `cleanup-ritual`, `falsification-ritual`, `test-trajectory`, `context-budget` and 12 others are unreachable by navigation. Belongs to the rebalance's documentation-restructure slice, not here.
 
 ### Phase 3: The review surface and the `/work` step
 

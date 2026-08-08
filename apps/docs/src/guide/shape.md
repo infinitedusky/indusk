@@ -40,6 +40,36 @@ Both make code better. They answer different questions, and need different amoun
 
 `dawn-verify` supplies one of each. The inline renderer was wrong at Phase 2 — Shape. `resolveImplPath` duplicated across two lanes **could not exist** until Phase 2 built the second copy — Cleanup.
 
+### Worked example — Shape
+
+Phase 2 of `dawn-verify` wrote its report rendering inline:
+
+```ts
+for (const finding of findings) {
+  console.error(`  ${finding.kind}: ${finding.detail}`);
+  if (finding.file) console.error(`    at ${finding.file}`);
+}
+```
+
+About fifteen lines, in one file, no threshold crossed. It is still wrong the moment it is written: the formatting has its own reason to change, and nothing can assert what the report *says* without running the whole command. Shape's question — "should this have a name and a test?" — catches it in Phase 2. Without Shape it surfaced in **Phase 7**, where `formatFinding` had to be extracted before the fix could be tested at all.
+
+Note what a heuristic would have done here: nothing. The file was not oversized and the function was not long. This is why the judgment is performed by a reader of prose rather than a line counter.
+
+### Worked example — Cleanup
+
+The same plan resolved an impl path in `run/` and, later, in `verify/`:
+
+```ts
+// lib/run/gates.ts        — Phase 2
+const implPath = join(root, ".indusk", "planning", plan, "impl.md");
+// lib/verify/baseline.ts  — Phase 3
+const implPath = join(root, ".indusk", "planning", plan, "impl.md");
+```
+
+Shape cannot see this, and should not pretend to: reviewing Phase 3 it sees only `verify/`, where one path join is entirely reasonable. The duplication is a fact *about two files*, and it did not exist until the second copy was written. Cleanup at close sees both and extracts `resolveImplPath` — now a single-definition invariant with a test asserting exactly one definition exists.
+
+The line is not a matter of taste. It follows from what each check can see.
+
 ## Where the rules come from
 
 **The enabled domain extensions**, never from core. `react` says one component per file; `nextjs` says push `"use client"` boundaries as deep as they go; a library or CLI project with neither falls back to the general move — extract a function or module.
@@ -48,15 +78,36 @@ Turning an extension off changes what Shape flags. That is the point: a project 
 
 Those rules are **prose**, which is why Shape's judgment is performed by the executing agent rather than by a heuristic. A line-count threshold cannot read "minimize client boundaries" — and would have missed the motivating case entirely, since the inline renderer was about fifteen lines.
 
+Every enabled extension that provides a skill contributes its prose, unparsed. There is deliberately **no domain-vs-tool filter**: extension manifests carry no such taxonomy, so a filter would mean core deciding which extensions count — the exact hardcoded judgment the extension-sourced design exists to avoid. The reviewing agent reads prose and can tell what bears on craft.
+
+The rule set also carries its own **scope declaration**, so the boundary travels with the rules rather than living only in a skill file:
+
+```
+inScope     Does this unit have one reason to change?
+            Should this inline block have been a named function or module?
+            Does the name say what the code is for, rather than how it works?
+            Is there a seam a test could reach?
+
+outOfScope  Cross-file duplication and the rule of three  → /cleanup at close
+            Module boundaries and package structure       → /cleanup at close
+            Anything requiring files this phase did not change
+```
+
+The `inScope` entries are the fallback standard on their own — a library or CLI with no domain extension enabled still gets the general move.
+
 ## What a finding does
 
 It becomes an ordinary unchecked checklist item in the phase being worked, naming both the change and the rule it came from:
 
 ```markdown
-- [ ] Extract the finding renderer into a named pure function —
-      react/one-component-per-file: a unit with its own reason to change
-      wants its own name
+- [ ] Shape (`src/lib/verify/report.ts`) — Extract the finding renderer into a named pure function. Rule: react/one-component-per-file — a unit with its own reason to change wants its own name
 ```
+
+One line, always: a checklist item that wrapped onto a second line would read as an item plus orphaned prose, so `appendFindingToPhase` refuses a finding whose fields carry a line separator rather than emitting a broken item.
+
+It lands in the phase's **implementation** block, above the first `####` gate heading. That placement is load-bearing rather than cosmetic — an item written past that heading falls inside a gate block and gets classified as a verification or context item instead of work.
+
+`appendFindingToPhase` returns the edited body and never writes it. The caller owns the write, so the edit passes through the same PreToolUse gate chain as any other impl edit. A library writing `impl.md` directly would be a hole in the gate by construction — which is precisely what `atdawn run`'s falsification found when `bash` was rewriting checkboxes the `edit` gate would have refused.
 
 Not blocking — a craft judgment is fuzzier than the structural gates, and a false positive should not halt an unattended run. But not ignorable either: a phase cannot close with unchecked items.
 
