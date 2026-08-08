@@ -144,7 +144,7 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
   - **A9 is green, and the "still red" half of this item was never achievable.** A9 asserts `listOversizedChangedFiles` still returns the files Shape reviewed — pre-existing `cleanup/oversized.ts` behavior that Shape never touches, so it passed the moment it was authored. Same for A3. Phase 1's note ("A3 and A9 authored RED against today's behavior") is therefore wrong on both. Marked `passing`; a row that guards existing behavior against future regression is legitimate, it just cannot have a red phase. See the Phase 2 note below.
 
 #### Phase 2 Context
-- [ ] Add to Conventions: Shape's craft rules come from enabled domain extensions and hardcode nothing; the rule set carries an explicit intra-unit scope declaration that keeps cross-file work with `/cleanup`
+- [x] Add to Conventions: Shape's craft rules come from enabled domain extensions and hardcode nothing; the rule set carries an explicit intra-unit scope declaration that keeps cross-file work with `/cleanup`
 
 #### Phase 2 Document
 - [ ] Extend `guide/shape.md` with the Shape-vs-Cleanup table and worked examples of each (the inline renderer; the cross-lane duplicate)
