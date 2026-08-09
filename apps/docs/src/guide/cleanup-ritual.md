@@ -6,6 +6,20 @@ Invoke via `/cleanup {plan-name}`. The ritual is required before `/retrospective
 
 It is the structural twin of the [Falsification Ritual](/guide/falsification-ritual). Where `/falsify` hunts failures that shouldn't be producible if success is real, `/cleanup` hunts accretion that no delta-scoped checkpoint ever sees. Same agent, same phase-authoring shape, same retrospective gate — inverse purpose.
 
+## Which check answers which question
+
+Three checks review a plan's code, and each is placed where its question becomes answerable — the phase's delta, or the finished whole.
+
+| Check | When | Question | Needs |
+|---|---|---|---|
+| [Shape](/guide/shape) | Every phase, during `/work` | Is this unit well-formed *as written*? | The code that phase just wrote |
+| [Falsification](/guide/falsification-ritual) | Once, before cleanup | What failure should be producible if this is not really done? | The whole system |
+| **Cleanup** (this page) | Once, after falsification | What should the finished output decompose into? | The whole plan's output |
+
+**Cleanup's scope is inter-file.** Intra-unit craft — an inline block that wanted a name, a function doing two jobs, a unit with no testable seam — was already reviewed by Shape in the phase that wrote it. Spend your attention here on what only the finished whole reveals: duplication across files, the rule of three, settled module boundaries.
+
+The division is operational, not taste. A phase-scoped review structurally *cannot* catch cross-file duplication, because the second copy usually does not exist until a later phase writes it. And Shape leaves no marker that shrinks cleanup's input — the changed-file scan still returns every file Shape reviewed, deliberately, so that "Shape looked at it" never comes to mean nobody looks again.
+
 ## Why this exists
 
 Every existing quality layer inspects something *local*. Tests inspect behavior. Gates inspect process (docs, context, verification). The eval agent inspects the per-commit delta. **None of them inspect the accumulated shape of the code a plan produced.**

@@ -202,7 +202,10 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] Update Current State with a one-line lifecycle-rebalance entry naming Shape as shipped and the remaining rebalance slices as follow-ons
 
 #### Phase 4 Document
-- [ ] Cross-reference Shape from the cleanup guide and the falsification guide so all three rituals state which question they answer and when
+- [x] Cross-reference Shape from the cleanup guide and the falsification guide so all three rituals state which question they answer and when
+  - the same "which check answers which question" table now appears on all three pages, each marking itself — whichever page a reader lands on first, they get the whole map rather than a pointer elsewhere.
+  - the falsification page states explicitly why it did **not** move to the phase boundary (two of `dawn-verify`'s seven defects were structurally impossible to find before Phase 4), so this plan's decision does not read as an argument for moving everything.
+  - `pnpm --filter docs build` passes, which is also the dead-link check.
 
 ## Files Affected
 

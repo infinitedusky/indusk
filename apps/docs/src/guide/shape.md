@@ -141,6 +141,16 @@ The honest limit: whether a unit "should have been extracted" depends on the cod
 
 So the mechanism is tested and the judgment is measured. A12 rows prove Shape fires, scopes correctly, and records outcomes; the counts above are the only evidence about whether it fires *wisely*. Treating the passing test suite as evidence of good judgment would be the mistake this section exists to prevent.
 
+## Which check answers which question
+
+| Check | When | Question | Needs |
+|---|---|---|---|
+| **Shape** (this page) | Every phase, during `/work` | Is this unit well-formed *as written*? | The code that phase just wrote |
+| [Falsification](/guide/falsification-ritual) | Once, after `/work` | What failure should be producible if this is not really done? | The whole system |
+| [Cleanup](/guide/cleanup-ritual) | Once, after falsification | What should the finished output decompose into? | The whole plan's output |
+
+One rule places all three: **a check belongs at the phase boundary when it can be answered from the phase's delta, and at close when it needs the finished whole.** Craft can. Falsification and structural decomposition cannot — and that is why only Shape moved.
+
 ## See also
 
 - [The cleanup ritual](./cleanup-ritual.md) — the inter-file half
