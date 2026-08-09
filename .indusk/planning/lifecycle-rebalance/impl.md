@@ -182,7 +182,9 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] Add a test fixture with the same logic duplicated across two files, and confirm Shape's rule set does not put it in scope while `/cleanup`'s changed-file scan still returns those files
   - note: deliberately **one** fixture asserting both halves. A8 and A9 hold each half separately, but separately they cannot see the gap they actually guard — Shape declining a duplicate is only safe *because* cleanup still reports it. Each copy is small and unremarkable alone; the defect is a fact about the pair, which is exactly what a phase-scoped review structurally cannot see.
   - no new trajectory row: A8 and A9 are the assertions; this is where they meet.
-- [ ] Narrow `apps/indusk-mcp/skills/cleanup.md`'s stated scope to inter-file structural decomposition, pointing at Shape for local craft — and resync its installed copy
+- [x] Narrow `apps/indusk-mcp/skills/cleanup.md`'s stated scope to inter-file structural decomposition, pointing at Shape for local craft — and resync its installed copy
+  - narrowed the frontmatter `description` too, not just the body: the description is what `get_skill_summaries` surfaces, so a body-only narrowing would leave every skill listing still advertising the old scope.
+  - states both consequences explicitly — don't re-litigate craft already recorded as left-as-is, and cleanup's scan is deliberately **unchanged**, so "Shape looked at it" can never come to mean nobody looks again.
 - [ ] Record U1's calibration obligation in `guide/shape.md`: finding + false-positive counts go in each retrospective's Quality Ratchet, and two consecutive plans of human-judged-wrong findings reopens calibration
 - [ ] Add the changelog entry
 
