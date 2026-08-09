@@ -1,7 +1,7 @@
 ---
 title: "Lifecycle Rebalance — the Shape check"
 date: 2026-08-08
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -56,6 +56,11 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | A10 | Shape refuses to run for a phase whose verification is not green, naming that as the reason | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | passing |
 | A11 | Turning off a domain extension changes the rule set Shape produces — no craft rule is hardcoded in core | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | passing |
 | A12 | The phase-boundary record is excluded from the changed-file scope, so it never counts as work a phase did | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | passing |
+| T13 | A phase opened twice (resumed in a later session) still scopes from where it FIRST began — work done before the resume is reviewed, not silently dropped | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 5 | planned |
+| T14 | A verification gate whose only unchecked item is nested under another item counts as NOT green — Shape refuses to review code whose correctness is unproven | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 0 | Phase 5 | planned |
+| T15 | A file the phase deleted is not offered for review, and a phase that only deleted files is recorded as having no code surface | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | planned |
+| T16 | An untracked file written by an EARLIER phase is not attributed to this phase | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | planned |
+| T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | planned |
 
 ### Deferred Verification
 
@@ -206,6 +211,32 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
   - the same "which check answers which question" table now appears on all three pages, each marking itself — whichever page a reader lands on first, they get the whole map rather than a pointer elsewhere.
   - the falsification page states explicitly why it did **not** move to the phase boundary (two of `dawn-verify`'s seven defects were structurally impossible to find before Phase 4), so this plan's decision does not read as an argument for moving everything.
   - `pnpm --filter docs build` passes, which is also the dead-link check.
+
+### Phase 5: Falsification — the review scope lies in four directions, and one silence
+
+**Goal**: verify whether the attested state holds against the ways `changedFilesForPhase` and `verificationIsGreen` can be wrong. Shape's entire value rests on two claims — *these are the files this phase wrote* (A5, A12) and *this code's correctness is proven* (A10) — and every hypothesis below attacks one of them with a specific input. Four of the five make Shape review the wrong set silently; the fifth makes an enabled craft standard vanish without a word.
+
+The common shape: each failure looks exactly like Shape working. That is what makes them worth hunting rather than the crash-on-bad-input class, which announces itself.
+
+- [ ] **A phase start is where it FIRST opened (T13).** `findPhaseStart` deliberately returns the *last* matching record ("a phase re-opened after a stop starts from where it actually resumed"). That rationalization silently under-scopes: `/work` records phase start, commits items 1–3, the session ends; the next session runs `/work` again, appends a second record at the *current* HEAD, and items 1–3 become invisible to Shape. Return the earliest record instead, and make `recordPhaseStart` a no-op when a record for that plan+phase already exists. The safe direction for a review scope is wider, never narrower — a phase's beginning happens once.
+- [ ] **Make `verificationIsGreen` see nested unchecked items (T14).** `parseChecklistItems` is anchored at column 0 (`/^-\s+\[([ x])\]/`), so an indented `  - [ ] still failing` inside a Verification gate is invisible and the gate reads as green. Shape then reviews code whose correctness is unproven — exactly what A10 forbids — and `/cleanup` already treats nested unchecked items as blocking, so the two rituals currently disagree about what "done" means. Decide during `/work` whether to fix this in `impl-parser` (both enforcement lanes benefit, higher blast radius) or with a nesting-aware check local to `shape.ts` (contained, but a second definition of gate-completeness — weigh against the one-resolution-function rule).
+- [ ] **Drop deleted paths from the changed-file scope (T15).** `git diff --name-only <sha> HEAD` reports deletions, and nothing filters them, so Shape hands the agent paths that no longer exist and a deletion-only phase reports a code surface it does not have. `cleanup/oversized.ts` already filters "to files that still exist on disk" — the precedent exists in the sibling library and this omitted it.
+- [ ] **Scope untracked files to this phase (T16).** `git ls-files --others --exclude-standard` is repo-wide with no phase filter, so an uncommitted file written during Phase 1 is attributed to Phase 2, 3, and every phase after — A5's exact claim, failing on the path A5 does not test (its fixture commits the earlier phase's work). Filter untracked files by mtime against the boundary record's `timestamp`, which is recorded today and currently has no consumer.
+- [ ] **Report an unreadable extension instead of dropping it (T17).** `collectCraftRules` skips any enabled extension whose prose it cannot find, so an extension declaring `provides.skill: true` with a missing or unreadable skill file contributes nothing and says nothing. The project believes its craft standard is in force; it is not. This is "could not check" reported as "nothing to say" — carry the unreadable names on the rule set so the skill can surface them.
+
+#### Phase 5 Verification
+- [ ] T13: a second `recordPhaseStart` for the same plan+phase does not move the scope forward — work committed before the resume is still returned
+- [ ] T14: a Verification gate whose only unchecked item is nested reads as not-green, and `prepareShapeReview` skips with the verification reason
+- [ ] T15: a path deleted during the phase is absent from the review set, and a deletion-only phase is skipped as having no code surface
+- [ ] T16: an untracked file written before the phase-start record is not returned for that phase
+- [ ] T17: an enabled extension with a declared-but-unreadable skill is reported as unreadable rather than silently absent
+- [ ] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
+
+#### Phase 5 Context
+- [ ] Add to Known Gotchas: a phase-boundary scope is only as honest as its widest failure — `findPhaseStart` takes the earliest record (a resume is not a new start), deleted paths are dropped, and untracked files are filtered by mtime against the record's timestamp. Every one of these fails by *under*-reporting, which looks identical to Shape working.
+
+#### Phase 5 Document
+- [ ] Update `guide/shape.md` with what the review scope does and does not include (resumed phases, deletions, pre-existing untracked files) and what an unreadable extension looks like — the scope's edges are the part a reader has to trust
 
 ## Files Affected
 
