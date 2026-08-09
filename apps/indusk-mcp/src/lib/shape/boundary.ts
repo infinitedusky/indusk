@@ -83,10 +83,21 @@ function isBoundaryRecord(value: unknown): value is PhaseBoundaryRecord {
 	);
 }
 
+/**
+ * Open a phase. Idempotent: re-recording an already-open phase does nothing.
+ *
+ * A phase spans sessions, and `/work` records the start every time it reaches
+ * the phase-start instruction. Appending on the second pass would move the
+ * boundary to the *current* head, and everything the first session committed
+ * would drop out of the review scope while the review still reported success.
+ */
 export async function recordPhaseStart(
 	root: string,
 	record: { plan: string; phase: number; sha: string; at: string },
 ): Promise<void> {
+	const existing = await readBoundaries(root);
+	if (findPhaseStart(existing, record.plan, record.phase) !== null) return;
+
 	const path = boundaryPath(root);
 	await mkdir(dirname(path), { recursive: true });
 	const line: PhaseBoundaryRecord = {
@@ -102,18 +113,20 @@ export async function recordPhaseStart(
  * Where phase N of this plan began. Null when the phase was never opened —
  * callers must treat that as "cannot scope the review", never as "review
  * everything".
+ *
+ * The **earliest** record wins when a file already carries duplicates (written
+ * before `recordPhaseStart` became idempotent, or merged from two branches). A
+ * phase begins once; a resume is not a new beginning. Erring earlier makes the
+ * review scope too wide, which costs a re-read — erring later makes it too
+ * narrow, which loses work silently. Only one of those is recoverable.
  */
 export function findPhaseStart(
 	records: PhaseBoundaryRecord[],
 	plan: string,
 	phase: number,
 ): PhaseBoundaryRecord | null {
-	let best: PhaseBoundaryRecord | null = null;
 	for (const record of records) {
-		if (record.plan !== plan || record.phase !== phase) continue;
-		// A later record for the same phase supersedes an earlier one — a phase
-		// re-opened after a stop starts from where it actually resumed.
-		best = record;
+		if (record.plan === plan && record.phase === phase) return record;
 	}
-	return best;
+	return null;
 }
