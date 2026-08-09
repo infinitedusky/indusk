@@ -174,7 +174,8 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] Add to Architecture: `/work`'s per-phase order gains Shape between Verification and Context; the judgment is performed by the executing agent (already a model — no extra call), with `lib/shape/` supplying only facts
 
 #### Phase 3 Document
-- [ ] Update `apps/docs/src/reference/skills/work.md` with the new per-phase completion order and what Shape does at that step
+- [x] Update `apps/docs/src/reference/skills/work.md` with the new per-phase completion order and what Shape does at that step
+  - the gate Mermaid now shows Shape between Verification and Context with its findings arrow looping back to implementation; the "four gates" framing is kept deliberately (Shape is not a fifth gate) with the silent-misclassification reason stated. Also inserted the step into the worked walkthrough, which otherwise stepped straight from verification to context and would have contradicted the diagram above it.
 
 ### Phase 4: The boundary against Cleanup, and the docs
 

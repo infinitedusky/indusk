@@ -62,7 +62,10 @@ flowchart TD
     ImplDone -->|Yes| Verif["Verification items"]
     Verif --> VerifDone{"All verification\nitems checked?"}
     VerifDone -->|No| Verif
-    VerifDone -->|Yes| Ctx["Context items"]
+    VerifDone -->|Yes| Shape["Shape review<br/>(a step, not a gate)"]
+    Shape --> ShapeOut{"Findings?"}
+    ShapeOut -->|Yes| Impl
+    ShapeOut -->|No| Ctx["Context items"]
     Ctx --> CtxDone{"All context\nitems checked?"}
     CtxDone -->|No| Ctx
     CtxDone -->|Yes| Doc["Document items"]
@@ -82,6 +85,16 @@ flowchart TD
 | **Document** | Docs pages to write or update in the VitePress site | `Write API reference at apps/indusk-docs/src/reference/api/subscriptions.md` |
 
 Not every phase needs all four gates. A phase with no context changes simply has no context section. But if the section exists, every item in it must be completed before advancing.
+
+### The Shape step sits between Verification and Context
+
+**Shape is not a fifth gate.** It has no heading, no items of its own, and nothing to add to any impl — it is a step the executor performs, the way running the test suite is. Between a phase's Verification going green and its Context gate, `/work` reviews the code *that phase wrote* against the craft rules of the project's enabled extensions.
+
+It is deliberately not a gate type. Gate vocabulary is defined independently in four places, and an unrecognized `#### Phase N Shape` heading does not error — it silently misclassifies the items beneath it as implementation items. A step costs none of that and needs no migration of the 51 existing impls.
+
+Anything the review finds is appended as an ordinary **unchecked implementation item in the same phase** — which is why the arrow in the diagram loops back. The existing machinery already refuses to close a phase with outstanding items, so a finding is non-ignorable without Shape blocking anything itself. Finding nothing is a recorded, already-checked outcome, and should be a common one.
+
+See [The Shape check](/guide/shape) for what it reviews, where its rules come from, and the intra-unit line against `/cleanup`.
 
 The impl parser recognizes these sections by their heading format:
 
@@ -165,7 +178,21 @@ All implementation items are checked. The agent moves to `#### Phase 1 Verificat
 
 The agent runs each command, captures the output, confirms they pass, and checks the items off. If a check fails, it reads the error, fixes the code, and re-runs — up to 3 attempts before flagging as a blocker.
 
-### 8. Move to the context gate
+### 8. Run the Shape review
+
+Verification is green, so the agent asks what this phase changed and what standard applies, then reads those files and judges them — no extra model call, because the agent is already a model and the extensions' rules are prose.
+
+Say it notices that the Stripe webhook handler formats its error payload inline, twenty lines of string building with no name and no seam a test can reach. That is an intra-unit craft problem, and it is wrong now rather than at plan close, so it becomes an item in *this* phase:
+
+```markdown
+- [ ] Shape (`src/billing/webhooks.ts`) — Extract the error payload builder into a named pure function. Rule: typescript/one-reason-to-change — formatting has its own reason to change and no test can reach it inline
+```
+
+The agent then works that item like any other, and the phase cannot close until it does. Had the review found nothing, it would have written an already-checked note saying so — silence is not an outcome.
+
+What it would *not* flag: the same payload shape duplicated in a second file added three phases ago. That is cross-file, needs the finished whole, and belongs to `/cleanup` at close.
+
+### 9. Move to the context gate
 
 ```markdown
 - [ ] Add to Architecture: "billing module now includes subscription support via Stripe Subscription Billing"
@@ -173,7 +200,7 @@ The agent runs each command, captures the output, confirms they pass, and checks
 
 The agent edits `CLAUDE.md`, adding the line to the Architecture section, then checks the item off.
 
-### 9. Move to the document gate
+### 10. Move to the document gate
 
 ```markdown
 - [ ] Write API reference for subscription endpoints at `apps/indusk-docs/src/reference/api/subscriptions.md`
@@ -181,7 +208,7 @@ The agent edits `CLAUDE.md`, adding the line to the Architecture section, then c
 
 The agent writes the docs page following the [Document](/reference/skills/document) skill guidance, then checks the item off.
 
-### 10. Advance
+### 11. Advance
 
 All four gates are complete. The agent calls `advance_plan`:
 
@@ -213,7 +240,7 @@ Work continues to Phase 2.
 
 The agent must complete the missing item before advancing.
 
-### 11. Plan completion — run `/falsify` next
+### 12. Plan completion — run `/falsify` next
 
 When every phase is complete, the impl status flips to `completed`. But the plan is **not** ready for `/retrospective` yet. Before retrospective, the user runs `/falsify {plan}` — the [falsification ritual](/guide/falsification-ritual) — to exercise a goal-flipped bounty hunt against the attested state.
 
