@@ -56,11 +56,11 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | A10 | Shape refuses to run for a phase whose verification is not green, naming that as the reason | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | passing |
 | A11 | Turning off a domain extension changes the rule set Shape produces — no craft rule is hardcoded in core | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | passing |
 | A12 | The phase-boundary record is excluded from the changed-file scope, so it never counts as work a phase did | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | passing |
-| T13 | A phase opened twice (resumed in a later session) still scopes from where it FIRST began — work done before the resume is reviewed, not silently dropped | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 5 | planned |
-| T14 | A verification gate whose only unchecked item is nested under another item counts as NOT green — Shape refuses to review code whose correctness is unproven | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 0 | Phase 5 | planned |
-| T15 | A file the phase deleted is not offered for review, and a phase that only deleted files is recorded as having no code surface | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | planned |
-| T16 | An untracked file written by an EARLIER phase is not attributed to this phase | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | planned |
-| T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | planned |
+| T13 | A phase opened twice (resumed in a later session) still scopes from where it FIRST began — work done before the resume is reviewed, not silently dropped | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 5 | written |
+| T14 | A verification gate whose only unchecked item is nested under another item counts as NOT green — Shape refuses to review code whose correctness is unproven | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 0 | Phase 5 | written |
+| T15 | A file the phase deleted is not offered for review, and a phase that only deleted files is recorded as having no code surface | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | written |
+| T16 | An untracked file written by an EARLIER phase is not attributed to this phase | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | written |
+| T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | written |
 
 ### Deferred Verification
 

@@ -1,4 +1,4 @@
-import { rm } from "node:fs/promises";
+import { rm, utimes } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { recordPhaseStart } from "./boundary.js";
@@ -64,6 +64,85 @@ describe("A5 — only this phase's files are in scope", () => {
 		const changed = await changedFilesForPhase({ root, plan: "demo", phase: 1 });
 
 		expect(changed).toContain("src/unstaged.ts");
+	}, 30_000);
+});
+
+describe("T15 — a file the phase deleted is not offered for review", () => {
+	it("excludes a path the phase removed", async () => {
+		// `git diff --name-only` reports deletions, so without a filter Shape hands
+		// the agent a path that is not there to read. cleanup/oversized.ts already
+		// filters to files that still exist; this is the same requirement.
+		const root = await makeRepo();
+		roots.push(root);
+		await writeFixtureFile(root, "src/doomed.ts", "export const d = 1;\n");
+		await commitAll(root, "before the phase");
+		await recordPhaseStart(root, {
+			plan: "demo",
+			phase: 2,
+			sha: await git(root, "rev-parse", "HEAD"),
+			at: "2026-08-09T00:00:00.000Z",
+		});
+
+		await rm(join(root, "src", "doomed.ts"));
+		await commitAll(root, "delete it");
+
+		const changed = await changedFilesForPhase({ root, plan: "demo", phase: 2 });
+
+		expect(changed).not.toContain("src/doomed.ts");
+	}, 30_000);
+
+	it("reports no code surface for a phase that only deleted files", async () => {
+		// Otherwise a deletion-only phase claims a code surface it does not have,
+		// and the review is asked to read files that are gone.
+		const root = await makeRepo();
+		roots.push(root);
+		await writeFixtureFile(root, "src/doomed.ts", "export const d = 1;\n");
+		await commitAll(root, "before the phase");
+		await recordPhaseStart(root, {
+			plan: "demo",
+			phase: 2,
+			sha: await git(root, "rev-parse", "HEAD"),
+			at: "2026-08-09T00:00:00.000Z",
+		});
+
+		await rm(join(root, "src", "doomed.ts"));
+		await commitAll(root, "delete it");
+
+		const changed = await changedFilesForPhase({ root, plan: "demo", phase: 2 });
+
+		expect(changed).toHaveLength(0);
+	}, 30_000);
+});
+
+describe("T16 — untracked work belongs to the phase that wrote it", () => {
+	it("excludes an untracked file written before this phase opened", async () => {
+		// `git ls-files --others` is repo-wide with no phase filter, so an
+		// uncommitted file from Phase 1 is attributed to Phase 2 and every phase
+		// after it. This is A5's own claim, on the path A5's fixture does not take
+		// — that one commits the earlier phase's work, and committed work is
+		// scoped by the sha. Untracked work has only its mtime.
+		const root = await makeRepo();
+		roots.push(root);
+
+		// Phase 1 leaves a scratch file behind, never staged.
+		await writeFixtureFile(root, "src/phase-one-scratch.ts", "export const s = 1;\n");
+		const anHourAgo = new Date(Date.now() - 3_600_000);
+		await utimes(join(root, "src", "phase-one-scratch.ts"), anHourAgo, anHourAgo);
+
+		// Phase 2 opens half an hour later — after the scratch file, before now.
+		await recordPhaseStart(root, {
+			plan: "demo",
+			phase: 2,
+			sha: await git(root, "rev-parse", "HEAD"),
+			at: new Date(Date.now() - 1_800_000).toISOString(),
+		});
+
+		await writeFixtureFile(root, "src/phase-two.ts", "export const t = 2;\n");
+
+		const changed = await changedFilesForPhase({ root, plan: "demo", phase: 2 });
+
+		expect(changed).toContain("src/phase-two.ts");
+		expect(changed).not.toContain("src/phase-one-scratch.ts");
 	}, 30_000);
 });
 

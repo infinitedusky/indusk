@@ -66,6 +66,45 @@ describe("A10 — Shape does not review code whose correctness is unproven", () 
 	}, 30_000);
 });
 
+describe("T14 — a nested unchecked verification item still means not green", () => {
+	it("declines when the only unchecked verification item is nested", async () => {
+		// parseChecklistItems is anchored at column 0, so an indented checkbox is
+		// invisible to it and the gate reads as fully checked. Shape would then
+		// review code whose correctness is unproven — the exact thing A10 forbids.
+		// /cleanup already treats nested unchecked items as blocking, so today the
+		// two rituals disagree about what "done" means.
+		const root = await repoAtPhase(1);
+		roots.push(root);
+		await writeFixtureFile(root, "src/thing.ts", "export const x = 1;\n");
+
+		const nested = GREEN.replace(
+			"- [x] tests pass",
+			"- [x] tests pass\n  - [ ] except the one that still fails",
+		);
+
+		const outcome = await prepareShapeReview({ root, plan: "demo", phase: 1, implBody: nested });
+
+		expect(outcome.kind).toBe("skipped");
+		if (outcome.kind === "skipped") expect(outcome.reason).toMatch(/verification/i);
+	}, 30_000);
+
+	it("still proceeds when the nested item is checked", async () => {
+		// The guard must key on the checkbox state, not on the presence of nesting.
+		const root = await repoAtPhase(1);
+		roots.push(root);
+		await writeFixtureFile(root, "src/thing.ts", "export const x = 1;\n");
+
+		const nested = GREEN.replace(
+			"- [x] tests pass",
+			"- [x] tests pass\n  - [x] and the slow suite too",
+		);
+
+		const outcome = await prepareShapeReview({ root, plan: "demo", phase: 1, implBody: nested });
+
+		expect(outcome.kind).toBe("review");
+	}, 30_000);
+});
+
 describe("A6 — a phase with no code surface is skipped, not silently passed", () => {
 	it("records the reason when the phase changed no code files", async () => {
 		const root = await repoAtPhase(1);

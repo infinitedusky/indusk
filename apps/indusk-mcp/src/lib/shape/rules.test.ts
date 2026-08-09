@@ -63,6 +63,38 @@ describe("A11 — rules trace to enabled extensions, not to core", () => {
 	}, 30_000);
 });
 
+describe("T17 — an extension whose prose cannot be read is reported, not dropped", () => {
+	it("names the extension as unreadable", async () => {
+		// Silently skipping it means the project believes its craft standard is in
+		// force when it is not — "could not check" reported as "nothing to say",
+		// which is the distinction this whole feature exists to preserve.
+		const root = await makeRepo();
+		const pkg = await makeRepo("shape-pkg");
+		roots.push(root, pkg);
+		await enableExtension(root, "ghost");
+		// Enabled, declares a skill, and no prose exists on either side.
+
+		const rules = await collectCraftRules(root, pkg);
+
+		expect(rules.sources.map((s) => s.extension)).not.toContain("ghost");
+		expect(rules.unreadable).toContain("ghost");
+	}, 30_000);
+
+	it("leaves unreadable empty when every enabled extension was readable", async () => {
+		// The report must distinguish "nothing was broken" from "nothing was
+		// checked" — an always-populated field would be as useless as an absent one.
+		const root = await makeRepo();
+		const pkg = await makeRepo("shape-pkg");
+		roots.push(root, pkg);
+		await enableExtension(root, "react");
+		await packageExtension(pkg, "react", "# react\n\n## Craft\n\nOne component per file.\n");
+
+		const rules = await collectCraftRules(root, pkg);
+
+		expect(rules.unreadable).toEqual([]);
+	}, 30_000);
+});
+
 describe("A8 — the rule set declares where Shape stops", () => {
 	it("scopes to intra-unit craft", async () => {
 		const root = await makeRepo();
