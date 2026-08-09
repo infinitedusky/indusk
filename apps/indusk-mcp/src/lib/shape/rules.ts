@@ -23,6 +23,15 @@ export interface CraftRuleSource {
 export interface CraftRuleSet {
 	scope: { inScope: string[]; outOfScope: string[] };
 	sources: CraftRuleSource[];
+	/**
+	 * Enabled extensions that declare a skill whose prose could not be read.
+	 *
+	 * Empty means every enabled extension was readable — not that none was
+	 * checked. Without this the two cases are the same silence, and a project
+	 * whose craft standard has quietly stopped applying looks identical to one
+	 * that never had extra rules.
+	 */
+	unreadable: string[];
 }
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -89,16 +98,24 @@ export async function collectCraftRules(
 	packageRoot: string = defaultPackageRoot,
 ): Promise<CraftRuleSet> {
 	const sources: CraftRuleSource[] = [];
+	const unreadable: string[] = [];
 
 	for (const extension of getEnabledExtensions(root)) {
 		if (!extension.manifest.provides.skill) continue;
 		const rules = readExtensionProse(root, packageRoot, extension.manifest.name);
-		if (rules === null) continue;
+		// An extension that promised craft prose and delivered none is reported,
+		// never dropped: the project believes that standard is in force, and
+		// silence here is "could not check" wearing the face of "nothing to say".
+		if (rules === null) {
+			unreadable.push(extension.manifest.name);
+			continue;
+		}
 		sources.push({ extension: extension.manifest.name, rules });
 	}
 
 	return {
 		scope: { inScope: [...IN_SCOPE], outOfScope: [...OUT_OF_SCOPE] },
 		sources,
+		unreadable,
 	};
 }
