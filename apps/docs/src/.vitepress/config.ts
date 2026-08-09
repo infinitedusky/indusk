@@ -64,6 +64,7 @@ const config = defineConfig({
 						{ text: "Context Beam", link: "/guide/context-beam" },
 						{ text: "Context Budget", link: "/guide/context-budget" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
+						{ text: "The Shape Check", link: "/guide/shape" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Cleanup Ritual", link: "/guide/cleanup-ritual" },
 						{ text: "Worktree Setup (Workbench)", link: "/guide/worktree-setup" },

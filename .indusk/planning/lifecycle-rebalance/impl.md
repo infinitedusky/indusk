@@ -149,7 +149,8 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 #### Phase 2 Document
 - [x] Extend `guide/shape.md` with the Shape-vs-Cleanup table and worked examples of each (the inline renderer; the cross-lane duplicate)
   - also corrected the page against what Phase 2 actually ships: the finding format it showed was not the one `appendFindingToPhase` emits, and a docs page showing a format the code does not produce is worse than no page. Added the one-line/placement/never-writes constraints and the rule-set scope declaration.
-  - added the sidebar entry (`community-add-to-sidebar`). **Pre-existing, out of scope:** 19 guide pages exist and only 3 are now in the sidebar — `cleanup-ritual`, `falsification-ritual`, `test-trajectory`, `context-budget` and 12 others are unreachable by navigation. Belongs to the rebalance's documentation-restructure slice, not here.
+  - added the sidebar entry (`community-add-to-sidebar`).
+  - **corrected in Phase 3 — the Phase 2 edit had zero effect.** It went into `apps/docs/.vitepress/config.ts`, a stale 24-line scaffold. `apps/docs/package.json` runs `vitepress dev/build src`, so the live config is `apps/docs/src/.vitepress/config.ts` (280+ lines). The real entry is now added there. The "16 of 19 pages unreachable" claim in the same commit was also measured against the scaffold and is wrong — the real config registers 15 of 19, so the gap is ~3 pages. A green diff and a checked box are not evidence the change reached the thing it was aimed at.
 
 ### Phase 3: The review surface and the `/work` step
 
