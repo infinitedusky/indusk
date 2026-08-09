@@ -153,10 +153,12 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 
 ### Phase 3: The review surface and the `/work` step
 
-- [ ] Add `src/lib/shape/shape.ts` — the surface the skill calls: given plan + phase, return the review inputs (changed files, rule set) or a recorded reason not to review
-- [ ] Refuse to review when the phase's verification is not green, naming that as the reason (same ordering `/cleanup` obeys — never restructure code whose correctness is unproven)
-- [ ] Record **three distinct outcomes**, never silence: `reviewed — findings`, `reviewed — nothing found`, `skipped — no code surface`. A check that cannot distinguish "nothing to do" from "did not run" reports the shape of success without doing the work
-- [ ] Support a reasoned per-file "left as-is" that is recorded with its reason, distinct from a file never reviewed
+- [x] Add `src/lib/shape/shape.ts` — the surface the skill calls: given plan + phase, return the review inputs (changed files, rule set) or a recorded reason not to review
+  - note: extracted `appendItemToPhase` out of `findings.ts` rather than letting the three writers (finding, nothing-found, left-as-is) each carry their own copy of the block-boundary walk. Three copies would be three chances to disagree silently about where an item belongs — and landing past the first `####` misclassifies the item into a gate block.
+- [x] Refuse to review when the phase's verification is not green, naming that as the reason (same ordering `/cleanup` obeys — never restructure code whose correctness is unproven)
+  - note: a phase with **no** Verification gate counts as not-green. An absent gate proves nothing, and reading absence as permission is how a check passes for the wrong reason.
+- [x] Record **three distinct outcomes**, never silence: `reviewed — findings`, `reviewed — nothing found`, `skipped — no code surface`. A check that cannot distinguish "nothing to do" from "did not run" reports the shape of success without doing the work
+- [x] Support a reasoned per-file "left as-is" that is recorded with its reason, distinct from a file never reviewed
 - [ ] Add the Shape step to `apps/indusk-mcp/skills/work.md` — after Verification, before Context — instructing the agent to review the supplied files against the supplied rules and append findings
 - [ ] Resync the installed copy at `.claude/skills/work.md` (`skill-sync-parity` pins byte-equality; dusk has no global `indusk update`)
 

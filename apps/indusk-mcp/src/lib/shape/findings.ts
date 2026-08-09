@@ -48,33 +48,27 @@ function findPhaseHeading(lines: string[], phase: number): number {
 }
 
 /**
- * Append a finding as an unchecked implementation item in the phase that wrote
- * the code.
+ * Put a checklist item in a phase's implementation block.
  *
- * Unchecked is the mechanism: the existing gate machinery already refuses to
- * close a phase with outstanding items, so a finding is non-ignorable without
- * Shape needing to block anything itself. Placement matters as much as the text
- * — an item that lands past the first `####` heading is inside a gate block and
- * gets classified as a verification/context/document item instead.
+ * Shared by all three things Shape writes — a finding, a nothing-found note, a
+ * left-as-is note — because they differ only in their text. Three copies of this
+ * walk would be three chances to disagree about where an item belongs, and the
+ * disagreement would be silent: an item landing past the first `####` heading is
+ * inside a gate block and gets classified as a verification/context/document
+ * item instead of implementation work.
  */
-export function appendFindingToPhase(
-	implBody: string,
-	phase: number,
-	finding: ShapeFinding,
-): string {
-	for (const [field, value] of Object.entries(finding)) {
-		if (hasLineSeparator(value)) {
-			throw new Error(
-				`Shape finding's \`${field}\` contains a line separator — a checklist item is one line, so this would split the plan's structure. Collapse it to a single line.`,
-			);
-		}
+export function appendItemToPhase(implBody: string, phase: number, item: string): string {
+	if (hasLineSeparator(item)) {
+		throw new Error(
+			`Cannot append a multi-line checklist item to Phase ${phase} — a checklist item is one line, so this would split the plan's structure.`,
+		);
 	}
 
 	const lines = implBody.split("\n");
 	const headingAt = findPhaseHeading(lines, phase);
 	if (headingAt === -1) {
 		throw new Error(
-			`Cannot append a Shape finding to Phase ${phase} — this impl has no such phase. Refusing to guess which phase wrote the code.`,
+			`Cannot append to Phase ${phase} — this impl has no such phase. Refusing to guess which phase the item belongs to.`,
 		);
 	}
 
@@ -94,6 +88,33 @@ export function appendFindingToPhase(
 	let insertAt = blockEnd;
 	while (insertAt > headingAt + 1 && lines[insertAt - 1].trim() === "") insertAt--;
 
-	const item = `- [ ] Shape (\`${finding.file}\`) — ${finding.change}. Rule: ${finding.rule}`;
 	return [...lines.slice(0, insertAt), item, ...lines.slice(insertAt)].join("\n");
+}
+
+/**
+ * Append a finding as an unchecked implementation item in the phase that wrote
+ * the code.
+ *
+ * Unchecked is the mechanism: the existing gate machinery already refuses to
+ * close a phase with outstanding items, so a finding is non-ignorable without
+ * Shape needing to block anything itself.
+ */
+export function appendFindingToPhase(
+	implBody: string,
+	phase: number,
+	finding: ShapeFinding,
+): string {
+	for (const [field, value] of Object.entries(finding)) {
+		if (hasLineSeparator(value)) {
+			throw new Error(
+				`Shape finding's \`${field}\` contains a line separator — a checklist item is one line, so this would split the plan's structure. Collapse it to a single line.`,
+			);
+		}
+	}
+
+	return appendItemToPhase(
+		implBody,
+		phase,
+		`- [ ] Shape (\`${finding.file}\`) — ${finding.change}. Rule: ${finding.rule}`,
+	);
 }
