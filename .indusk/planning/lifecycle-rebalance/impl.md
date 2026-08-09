@@ -159,8 +159,10 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
   - note: a phase with **no** Verification gate counts as not-green. An absent gate proves nothing, and reading absence as permission is how a check passes for the wrong reason.
 - [x] Record **three distinct outcomes**, never silence: `reviewed — findings`, `reviewed — nothing found`, `skipped — no code surface`. A check that cannot distinguish "nothing to do" from "did not run" reports the shape of success without doing the work
 - [x] Support a reasoned per-file "left as-is" that is recorded with its reason, distinct from a file never reviewed
-- [ ] Add the Shape step to `apps/indusk-mcp/skills/work.md` — after Verification, before Context — instructing the agent to review the supplied files against the supplied rules and append findings
-- [ ] Resync the installed copy at `.claude/skills/work.md` (`skill-sync-parity` pins byte-equality; dusk has no global `indusk update`)
+- [x] Add the Shape step to `apps/indusk-mcp/skills/work.md` — after Verification, before Context — instructing the agent to review the supplied files against the supplied rules and append findings
+  - also documents the **phase-start boundary record**, which the impl's Notes assign to this step. Without it `changedFilesForPhase` throws rather than guessing, so Shape could never run — essential wiring, not scope creep.
+- [x] Resync the installed copy at `.claude/skills/work.md` (`skill-sync-parity` pins byte-equality; dusk has no global `indusk update`)
+  - correction: the installed path is `.claude/skills/work/SKILL.md`, not `.claude/skills/work.md` — the item named a path that does not exist (the `SKILL.md`-in-a-directory convention in CLAUDE.md's gotchas). Copying to the path as written produced a stray file and left the real copy stale; `skill-sync-parity` caught it.
 
 #### Phase 3 Verification
 - [ ] A4, A6, A7, A10 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)

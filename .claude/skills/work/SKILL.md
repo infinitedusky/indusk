@@ -57,10 +57,13 @@ Implementation plans live in `.indusk/planning/{plan-name}/impl.md` as checklist
    **Implementation items** → build the thing
    **OTel items** → instrument it (spans, categories, error recording — see OTel skill)
    **Verification items** → prove it works (tests, type checks, commands — can include trace verification)
+   → **Shape** → review the code this phase wrote for craft (see "The Shape Step" below) — *not an item type; a step you perform*
    **Context items** → capture what changed (concrete CLAUDE.md edits)
    **Document items** → write or update docs pages (see document skill)
 
    A phase is not complete until all five are done. **Enforced by hooks:** if you try to check off a Phase N+1 implementation item while Phase N has unchecked gates, the edit will be blocked with a message listing what's missing. Complete the gates first.
+
+   Shape sits between Verification and Context and is **executor behavior, not plan structure** — there is no `#### Phase N Shape` heading and nothing to add to any impl. It runs after Verification because restructuring code whose correctness is unproven is how a refactor hides a bug.
 
 ## Test Trajectory — Phase Responsibilities
 
@@ -117,6 +120,56 @@ Call these via `tsx` or through the InDusk MCP (once wired) rather than re-parsi
 ### Deferred Verification audit
 
 The retrospective skill audits Deferred Verification rows at plan close — checking that each row's `mitigation:` field was actually wired up (telemetry configured, review scheduled, downstream plan linked). Work skill just maintains the Trajectory; retrospective validates completeness at the end.
+
+## The Shape Step
+
+Craft feedback belongs in the phase that wrote the code, not four phases later at plan close. Shape is the check that puts it there: after a phase's Verification is green, you review the code that phase wrote against the craft rules of the project's enabled extensions, and anything you find becomes a checklist item in that same phase.
+
+**You perform this review yourself.** There is no extra model call, no spawned checker, and no heuristic — you are already a model, the extensions' rules are prose, and prose needs a reader. `lib/shape/` supplies only facts.
+
+### At phase start — open the boundary
+
+Before the first implementation item of Phase N, record where the phase began. Without this Shape cannot tell your work from the previous phase's, and it refuses to guess:
+
+```bash
+tsx -e '
+  import { recordPhaseStart } from "./apps/indusk-mcp/src/lib/shape/boundary.js";
+  await recordPhaseStart(process.cwd(), {
+    plan: "<plan>", phase: <N>,
+    sha: "<git rev-parse HEAD>", at: new Date().toISOString(),
+  });
+'
+```
+
+The record is generic (`{plan, phase, sha, at}`) and shared — `verify` and `Challenge` read the same artifact rather than each growing their own ledger.
+
+### After Verification — run the review
+
+1. **Ask for the review inputs.** `prepareShapeReview({ root, plan, phase, implBody })` returns either the files this phase changed plus the rule set, or a reason there is nothing to review.
+
+2. **If it returns `skipped`, record the reason and move on.** Two reasons exist: verification is not green (finish it first, then come back), or the phase changed no code files. Never skip silently — a check that cannot distinguish "nothing to do" from "did not run" reports the shape of success without doing the work.
+
+3. **If it returns `review`, read the files and judge them against the rules.** The question is *intra-unit*: is this unit well-formed as written?
+   - Does it have one reason to change, or is it doing two jobs?
+   - Should this inline block have been a named function or module?
+   - Does the name say what it is for, rather than how it works?
+   - Is there a seam a test can reach?
+
+   **Not in scope:** cross-file duplication, the rule of three, module boundaries. Those need the finished whole and belong to `/cleanup` at close. The rule set states this explicitly — respect it, or the two rituals fight over the same territory and neither owns it.
+
+4. **Append what you find** via `appendFindingToPhase(implBody, phase, { file, change, rule })`, naming both the change and the rule it came from — a finding without its basis is unreviewable. It lands as an *unchecked implementation item in the current phase*, so the existing gate machinery makes it non-ignorable without Shape blocking anything itself. Then work it like any other item.
+
+   These functions return the edited body and never write. **You** make the edit, so it passes through the same PreToolUse gate chain as any other impl edit.
+
+5. **If you find nothing, say so** — `recordReviewedNothingFound(implBody, phase)` appends an already-checked note. This should be a common answer. If Shape fires on every phase its items become noise to tick through, which is worse than not running it.
+
+6. **If you considered a file and deliberately left it alone**, record that with its reasoning — `recordLeftAsIs(implBody, phase, file, reason)`. "Considered, and here is why it stays" is a different claim from "no finding," and only one of them is reviewable later.
+
+### What Shape is not
+
+- Not a gate type. No heading, no validator rule, nothing to retrofit into existing impls.
+- Not blocking. A craft judgment is fuzzier than the structural gates; a false positive halting an unattended run is worse than an extraction landing one phase late.
+- Not a line counter. The motivating case was fifteen lines and crossed no threshold — it was wrong because it should have had a name and a test.
 
 ## Gate Override Policy
 
