@@ -199,7 +199,7 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
   - `pnpm --filter docs build` completes, so the new guide page and sidebar entry render.
 
 #### Phase 4 Context
-- [ ] Update Current State with a one-line lifecycle-rebalance entry naming Shape as shipped and the remaining rebalance slices as follow-ons
+- [x] Update Current State with a one-line lifecycle-rebalance entry naming Shape as shipped and the remaining rebalance slices as follow-ons
 
 #### Phase 4 Document
 - [ ] Cross-reference Shape from the cleanup guide and the falsification guide so all three rituals state which question they answer and when
