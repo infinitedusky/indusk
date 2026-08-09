@@ -111,6 +111,25 @@ It lands in the phase's **implementation** block, above the first `####` gate he
 
 Not blocking — a craft judgment is fuzzier than the structural gates, and a false positive should not halt an unattended run. But not ignorable either: a phase cannot close with unchecked items.
 
+## What counts as "this phase's files"
+
+The review is only as good as its scope, and every way the scope can be wrong is silent — it under-reports, and an under-scoped review still says it succeeded. So the edges are worth stating.
+
+| Situation | In scope? | Why |
+|---|---|---|
+| Committed since the phase opened | Yes | The ordinary case |
+| Written but never staged | Yes | Unstaged work is still work |
+| Untracked, but written *before* the phase opened | No | Scoped by mtime against the boundary record — otherwise a Phase 1 scratch file belongs to every later phase |
+| Deleted during the phase | No | A path that is gone cannot be read, and a deletion-only phase must not claim a code surface |
+| `.indusk/` machine state | No | The boundary record is written when a phase *opens*; counting it would make every phase look productive before doing anything |
+| Changed by an earlier phase | No | That is what the boundary record is for |
+
+**A phase resumed in a later session keeps its original start.** `/work` records the phase start each time it reaches that instruction, so a phase spanning two sessions records twice. The earliest record wins and re-recording is a no-op — otherwise everything the first session committed would fall out of scope while the review still reported success.
+
+Every ambiguous case resolves toward including the file: an unreadable timestamp, a stat that fails, a file whose age cannot be determined. Over-reporting costs a re-read. Under-reporting loses real work and says nothing.
+
+**If an enabled extension's craft prose cannot be read**, its name comes back in `rules.unreadable` and the step surfaces it. An empty list means every enabled extension was readable — which is a different fact from "no extension had anything to say," and worth telling apart, because a project whose craft standard has quietly stopped applying otherwise looks exactly like one that never had extra rules.
+
 ## Three outcomes, never silence
 
 | Outcome | Meaning |
