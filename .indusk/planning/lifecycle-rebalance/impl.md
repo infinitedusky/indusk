@@ -56,11 +56,11 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | A10 | Shape refuses to run for a phase whose verification is not green, naming that as the reason | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 1 | Phase 3 | passing |
 | A11 | Turning off a domain extension changes the rule set Shape produces — no craft rule is hardcoded in core | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 1 | Phase 2 | passing |
 | A12 | The phase-boundary record is excluded from the changed-file scope, so it never counts as work a phase did | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 1 | Phase 1 | passing |
-| T13 | A phase opened twice (resumed in a later session) still scopes from where it FIRST began — work done before the resume is reviewed, not silently dropped | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 5 | written |
-| T14 | A verification gate whose only unchecked item is nested under another item counts as NOT green — Shape refuses to review code whose correctness is unproven | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 0 | Phase 5 | written |
-| T15 | A file the phase deleted is not offered for review, and a phase that only deleted files is recorded as having no code surface | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | written |
-| T16 | An untracked file written by an EARLIER phase is not attributed to this phase | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | written |
-| T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | written |
+| T13 | A phase opened twice (resumed in a later session) still scopes from where it FIRST began — work done before the resume is reviewed, not silently dropped | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 5 | passing |
+| T14 | A verification gate whose only unchecked item is nested under another item counts as NOT green — Shape refuses to review code whose correctness is unproven | `apps/indusk-mcp/src/lib/shape/shape.test.ts` | Phase 0 | Phase 5 | passing |
+| T15 | A file the phase deleted is not offered for review, and a phase that only deleted files is recorded as having no code surface | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | passing |
+| T16 | An untracked file written by an EARLIER phase is not attributed to this phase | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | passing |
+| T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | passing |
 
 ### Deferred Verification
 
@@ -225,12 +225,14 @@ The common shape: each failure looks exactly like Shape working. That is what ma
 - [x] **Report an unreadable extension instead of dropping it (T17).** `collectCraftRules` skips any enabled extension whose prose it cannot find, so an extension declaring `provides.skill: true` with a missing or unreadable skill file contributes nothing and says nothing. The project believes its craft standard is in force; it is not. This is "could not check" reported as "nothing to say" — carry the unreadable names on the rule set so the skill can surface them.
 
 #### Phase 5 Verification
-- [ ] T13: a second `recordPhaseStart` for the same plan+phase does not move the scope forward — work committed before the resume is still returned
-- [ ] T14: a Verification gate whose only unchecked item is nested reads as not-green, and `prepareShapeReview` skips with the verification reason
-- [ ] T15: a path deleted during the phase is absent from the review set, and a deletion-only phase is skipped as having no code surface
-- [ ] T16: an untracked file written before the phase-start record is not returned for that phase
-- [ ] T17: an enabled extension with a declared-but-unreadable skill is reported as unreadable rather than silently absent
-- [ ] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
+- [x] T13: a second `recordPhaseStart` for the same plan+phase does not move the scope forward — work committed before the resume is still returned
+- [x] T14: a Verification gate whose only unchecked item is nested reads as not-green, and `prepareShapeReview` skips with the verification reason
+- [x] T15: a path deleted during the phase is absent from the review set, and a deletion-only phase is skipped as having no code surface
+- [x] T16: an untracked file written before the phase-start record is not returned for that phase
+- [x] T17: an enabled extension with a declared-but-unreadable skill is reported as unreadable rather than silently absent
+- [x] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
+  - measured: 138 files passed / 1 failed (the two known PID-reuse cases). Shape suite 37/37. `pnpm check` exit 0.
+  - two of the nine new assertions were green from the start by design — they are the control cases (a nested *checked* item must still proceed; each phase keeps its own first opening), and they exist so the fixes cannot be over-applied.
 
 #### Phase 5 Context
 - [ ] Add to Known Gotchas: a phase-boundary scope is only as honest as its widest failure — `findPhaseStart` takes the earliest record (a resume is not a new start), deleted paths are dropped, and untracked files are filtered by mtime against the record's timestamp. Every one of these fails by *under*-reporting, which looks identical to Shape working.
