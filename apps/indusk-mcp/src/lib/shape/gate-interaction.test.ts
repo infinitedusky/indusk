@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { listOversizedChangedFiles } from "../cleanup/oversized.js";
 import { getPhaseCompletion, parseImplString } from "../impl-parser.js";
+import { collectCraftRules } from "./rules.js";
 import { commitAll, git, implWithPhase, makeRepo, writeFixtureFile } from "./shape.test-support.js";
 
 /**
@@ -83,5 +84,54 @@ describe("A9 — running Shape narrows nothing for cleanup at close", () => {
 			expect.arrayContaining(["src/one.ts", "src/two.ts"]),
 		);
 		// 30s, not vitest's 5s default — real repo, real git. See changed.test.ts.
+	}, 30_000);
+
+	it("the same logic in two files is out of Shape's scope and still in cleanup's", async () => {
+		// A8 and A9 hold the two halves of the line separately. This holds them
+		// together on ONE fixture, which is the only way to see the gap they are
+		// really guarding: if Shape declined a duplicate AND cleanup no longer
+		// reported it, "Shape reviewed it" would quietly mean nobody looked.
+		const root = await makeRepo();
+		const pkg = await makeRepo("shape-pkg");
+		roots.push(root, pkg);
+		await writeFixtureFile(
+			root,
+			join(".indusk", "config.json"),
+			JSON.stringify({ cleanup: { max_file_loc: 5, scopes: [] } }, null, 2),
+		);
+		await commitAll(root, "config");
+		await git(root, "checkout", "-q", "-b", "plan/demo");
+
+		// The same helper, written twice. Each copy is small and unremarkable on
+		// its own — the defect is a fact ABOUT THE PAIR, which is exactly what a
+		// per-phase review scoped to one phase's files cannot see.
+		const duplicated = [
+			"export interface Finding { kind: string; detail: string }",
+			"",
+			"export function formatFinding(f: Finding): string {",
+			"\treturn `${f.kind}: ${f.detail}`;",
+			"}",
+			"",
+			"export function formatAll(fs: Finding[]): string {",
+			"\treturn fs.map(formatFinding).join('\\n');",
+			"}",
+			"",
+		].join("\n");
+		await writeFixtureFile(root, "src/run/report.ts", duplicated);
+		await writeFixtureFile(root, "src/verify/report.ts", duplicated);
+		await commitAll(root, "phase work");
+
+		const rules = await collectCraftRules(root, pkg);
+
+		// Shape declines it, in writing. Not silently absent from the rules —
+		// declared out of scope, with the owner named.
+		const outOfScope = rules.scope.outOfScope.join(" ").toLowerCase();
+		expect(outOfScope).toMatch(/duplicat/);
+		expect(outOfScope).toMatch(/cleanup/);
+		expect(rules.scope.inScope.join(" ").toLowerCase()).not.toMatch(/duplicat/);
+
+		// And cleanup still sees both files at close.
+		const flagged = listOversizedChangedFiles(root, "main").map((f) => f.path);
+		expect(flagged).toEqual(expect.arrayContaining(["src/run/report.ts", "src/verify/report.ts"]));
 	}, 30_000);
 });
