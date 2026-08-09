@@ -166,8 +166,9 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
   - correction: the installed path is `.claude/skills/work/SKILL.md`, not `.claude/skills/work.md` — the item named a path that does not exist (the `SKILL.md`-in-a-directory convention in CLAUDE.md's gotchas). Copying to the path as written produced a stray file and left the real copy stale; `skill-sync-parity` caught it.
 
 #### Phase 3 Verification
-- [ ] A4, A6, A7, A10 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] `skill-sync-parity` passes, proving the installed skill copy matches the package copy
+- [x] A4, A6, A7, A10 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+  - measured: 137 files passed / 1 failed. The 1 is `daemon-identity` T22/T23, the known port-sensitive known-red-on-main. All 5 shape files green (25/25) — every trajectory row is now terminal.
+- [x] `skill-sync-parity` passes, proving the installed skill copy matches the package copy
 
 #### Phase 3 Context
 - [ ] Add to Architecture: `/work`'s per-phase order gains Shape between Verification and Context; the judgment is performed by the executing agent (already a model — no extra call), with `lib/shape/` supplying only facts
