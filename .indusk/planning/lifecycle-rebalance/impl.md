@@ -188,7 +188,7 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] Record U1's calibration obligation in `guide/shape.md`: finding + false-positive counts go in each retrospective's Quality Ratchet, and two consecutive plans of human-judged-wrong findings reopens calibration
   - **also wired the destination**, which the item did not ask for but the mitigation requires: `/retrospective`'s Quality Audit step now asks for both counts by name and for the two-in-a-row streak, and `planner.md`'s retrospective template carries a slot. Recorded only in the guide, the obligation was a promise nobody is ever prompted to keep — the calibration sample would never be collected and U1's trigger could never fire.
   - both counts are required **even when zero**: an absent number cannot be told apart from a plan that never ran Shape. That is Shape's own three-outcomes rule applied to Shape itself.
-- [ ] Add the changelog entry
+- [x] Add the changelog entry
 
 #### Phase 4 Verification
 - [ ] A8, A9 pass together — the intra-unit / inter-file line holds from both sides (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
