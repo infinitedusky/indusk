@@ -36,6 +36,8 @@ dusk/
 
 **Skills** (process): planner, work, verify, context, document, retrospective, catchup, handoff, falsify, cleanup, highlight, rail-check, git, eval-review, toolbelt. Each concept has one canonical skill; edit in `apps/indusk-mcp/skills/`, never `.claude/skills/` directly.
 
+**`/work`'s per-phase order gains Shape between Verification and Context** (`apps/indusk-mcp/src/lib/shape/`) — craft review of the code *that phase* wrote, against the enabled extensions' prose rules. It is a **step, not a gate type**: no `#### Phase N Shape` heading, no validator rule, nothing retrofitted into the 51 existing impls (gate vocab is closed in 4 sites and an unknown heading fails *silently*, misclassifying its items). The executing agent performs the judgment — it is already a model, so no extra call — while the library supplies only facts: `changedFilesForPhase` (scoped by a generic `{plan, phase, sha, at}` boundary record written at phase start, `.indusk/` excluded), `collectCraftRules`, and three writers that all route through one `appendItemToPhase`. Findings land as unchecked implementation items in the current phase, so existing gate machinery makes them non-ignorable without Shape blocking anything. — see `/guide/shape`
+
 **Agent roles** (three tiers — see `.indusk/planning/archive/agent-roles/adr.md`): the **working agent** does the user's task and flags moments via `mcp__indusk__highlight`; the **eval agent** (background, fires on `git commit` + session end) scores work and materializes durable highlights into **lessons** via `add_lesson` (indusk-makeover retargeted it from Graphiti); **infrastructure** (hooks, CLI, validators) enforces invariants. The working agent never materializes highlights itself.
 
 ## Conventions

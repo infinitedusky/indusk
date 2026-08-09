@@ -171,7 +171,7 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] `skill-sync-parity` passes, proving the installed skill copy matches the package copy
 
 #### Phase 3 Context
-- [ ] Add to Architecture: `/work`'s per-phase order gains Shape between Verification and Context; the judgment is performed by the executing agent (already a model — no extra call), with `lib/shape/` supplying only facts
+- [x] Add to Architecture: `/work`'s per-phase order gains Shape between Verification and Context; the judgment is performed by the executing agent (already a model — no extra call), with `lib/shape/` supplying only facts
 
 #### Phase 3 Document
 - [ ] Update `apps/docs/src/reference/skills/work.md` with the new per-phase completion order and what Shape does at that step
