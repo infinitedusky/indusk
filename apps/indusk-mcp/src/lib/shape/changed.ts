@@ -1,4 +1,7 @@
 import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
+import { stat } from "node:fs/promises";
+import { join } from "node:path";
 import { promisify } from "node:util";
 import { findPhaseStart, readBoundaries } from "./boundary.js";
 
@@ -39,6 +42,24 @@ function isNotCode(repoRelPath: string): boolean {
  * an agent that wrote code without `git add` looked identical to one that wrote
  * nothing).
  */
+/**
+ * Did this untracked file appear during the phase?
+ *
+ * Untracked work has no commit to place it in time, so its mtime is the only
+ * evidence available — and without this filter, a scratch file written in
+ * Phase 1 and never staged is attributed to Phase 2 and every phase after it.
+ * Unreadable stat means keep the file: over-reporting costs a re-read, while
+ * dropping real work is the failure this whole scope exists to prevent.
+ */
+async function appearedAfter(root: string, relPath: string, opened: Date): Promise<boolean> {
+	try {
+		const info = await stat(join(root, relPath));
+		return info.mtime >= opened;
+	} catch {
+		return true;
+	}
+}
+
 export async function changedFilesForPhase(options: {
 	root: string;
 	plan: string;
@@ -55,8 +76,32 @@ export async function changedFilesForPhase(options: {
 	const unstaged = await git(options.root, "diff", "--name-only", "HEAD");
 	const untracked = await git(options.root, "ls-files", "--others", "--exclude-standard");
 
-	return [...new Set([...committed.split("\n"), ...unstaged.split("\n"), ...untracked.split("\n")])]
+	const tracked = [...committed.split("\n"), ...unstaged.split("\n")]
 		.map((line) => line.trim())
-		.filter((line) => line.length > 0)
-		.filter((line) => !isNotCode(line));
+		.filter((line) => line.length > 0);
+
+	// An unparseable timestamp must not silently narrow the scope, so fall back
+	// to the epoch — every untracked file then counts as this phase's.
+	const opened = new Date(start.timestamp);
+	const openedAt = Number.isNaN(opened.getTime()) ? new Date(0) : opened;
+
+	const untrackedThisPhase: string[] = [];
+	for (const line of untracked.split("\n")) {
+		const rel = line.trim();
+		if (rel.length === 0) continue;
+		if (await appearedAfter(options.root, rel, openedAt)) untrackedThisPhase.push(rel);
+	}
+
+	const candidates = [...new Set([...tracked, ...untrackedThisPhase])].filter(
+		(line) => !isNotCode(line),
+	);
+
+	// Deletions come back from `git diff` too. A path that is gone cannot be
+	// reviewed, and counting it would give a deletion-only phase a code surface
+	// it does not have — the same existence filter `cleanup/oversized.ts` applies.
+	const present: string[] = [];
+	for (const rel of candidates) {
+		if (existsSync(join(options.root, rel))) present.push(rel);
+	}
+	return present;
 }
