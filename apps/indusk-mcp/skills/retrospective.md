@@ -152,6 +152,10 @@ Review mistakes made during this plan's implementation.
 
 The quality ratchet only gets tighter. Every retrospective is an opportunity to prevent the same class of mistake from happening again.
 
+**Also record this plan's Shape numbers** — how many findings the Shape step raised across all phases, and how many of those a human judged wrong. Shape's judgment quality has no test and can only be calibrated by observation, so these two counts are the entire evidence base. Write them even when both are zero: "Shape raised nothing" is a data point about whether the check is too quiet, and an absent number is indistinguishable from a plan that never ran it.
+
+**If this is the second consecutive plan reporting findings a human judged wrong, say so explicitly** — that is the trigger to reopen Shape's calibration as a falsification hypothesis against `lifecycle-rebalance`. Nobody else is watching for the streak; it is only visible from here.
+
 ### Step 6: Lesson Capture
 
 Review the plan's journey — research, implementation, debugging, surprises — and ask:

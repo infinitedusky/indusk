@@ -529,6 +529,8 @@ date: {YYYY-MM-DD}
 ## Quality Ratchet
 {Could any mistakes in this plan have been caught automatically by a Biome rule? If yes, add the rule to biome.json and document it in biome-rationale.md. The quality ratchet only gets tighter.}
 
+{Shape findings: N raised, M judged wrong by a human. Record both even when zero — an absent number cannot be told apart from a plan that never ran the check, and these counts are the only evidence Shape's judgment quality has.}
+
 ## Metrics
 - Sessions spent: {N}
 - Files touched: {N}

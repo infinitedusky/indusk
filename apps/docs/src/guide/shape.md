@@ -131,6 +131,16 @@ So it is calibrated by observation, and this is a standing obligation on whoever
 
 > **Every plan run with Shape records its finding count and false-positive count in the retrospective's Quality Ratchet section.** The first three plans after Shape ships are the calibration sample. **If two consecutive plans report findings a human judged wrong, calibration reopens as a falsification hypothesis.**
 
+This is not left to memory. `/retrospective`'s Quality Audit step asks for both counts by name, and the retrospective template carries a slot for them, so the obligation arrives at the moment it has to be honored rather than sitting in this page hoping to be read.
+
+Record both **even when they are zero.** "Shape raised nothing" is a real data point — it is how you would learn the check has gone quiet — and a missing number cannot be told apart from a plan that never ran Shape at all. That distinction is the same one Shape's own three outcomes exist to preserve, applied to Shape itself.
+
+### Why this can't be a test
+
+The honest limit: whether a unit "should have been extracted" depends on the codebase, the domain, and taste the extensions encode only partially. Testing it would need a labelled corpus of craft violations and non-violations drawn from real plans — which does not exist and cannot be manufactured without inventing the very judgments under test.
+
+So the mechanism is tested and the judgment is measured. A12 rows prove Shape fires, scopes correctly, and records outcomes; the counts above are the only evidence about whether it fires *wisely*. Treating the passing test suite as evidence of good judgment would be the mistake this section exists to prevent.
+
 ## See also
 
 - [The cleanup ritual](./cleanup-ritual.md) — the inter-file half

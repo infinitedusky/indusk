@@ -185,7 +185,9 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] Narrow `apps/indusk-mcp/skills/cleanup.md`'s stated scope to inter-file structural decomposition, pointing at Shape for local craft — and resync its installed copy
   - narrowed the frontmatter `description` too, not just the body: the description is what `get_skill_summaries` surfaces, so a body-only narrowing would leave every skill listing still advertising the old scope.
   - states both consequences explicitly — don't re-litigate craft already recorded as left-as-is, and cleanup's scan is deliberately **unchanged**, so "Shape looked at it" can never come to mean nobody looks again.
-- [ ] Record U1's calibration obligation in `guide/shape.md`: finding + false-positive counts go in each retrospective's Quality Ratchet, and two consecutive plans of human-judged-wrong findings reopens calibration
+- [x] Record U1's calibration obligation in `guide/shape.md`: finding + false-positive counts go in each retrospective's Quality Ratchet, and two consecutive plans of human-judged-wrong findings reopens calibration
+  - **also wired the destination**, which the item did not ask for but the mitigation requires: `/retrospective`'s Quality Audit step now asks for both counts by name and for the two-in-a-row streak, and `planner.md`'s retrospective template carries a slot. Recorded only in the guide, the obligation was a promise nobody is ever prompted to keep — the calibration sample would never be collected and U1's trigger could never fire.
+  - both counts are required **even when zero**: an absent number cannot be told apart from a plan that never ran Shape. That is Shape's own three-outcomes rule applied to Shape itself.
 - [ ] Add the changelog entry
 
 #### Phase 4 Verification
