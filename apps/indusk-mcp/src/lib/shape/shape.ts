@@ -20,26 +20,57 @@ export type ShapeOutcome =
 	| { kind: "review"; files: string[]; rules: CraftRuleSet }
 	| { kind: "skipped"; reason: string };
 
+/** An unchecked box at ANY indentation — `impl-parser` only sees column 0. */
+const UNCHECKED_AT_ANY_DEPTH = /^\s*-\s+\[ \]/;
+const CHECKBOX_AT_ANY_DEPTH = /^\s*-\s+\[[ x]\]/;
+
+/** The lines of phase N's Verification gate, or null when it has none. */
+function verificationGateLines(implBody: string, phase: number): string[] | null {
+	const lines = implBody.split("\n");
+	const start = lines.findIndex((line) =>
+		new RegExp(`^####\\s+Phase\\s+${phase}\\s+Verification\\b`).test(line),
+	);
+	if (start === -1) return null;
+
+	const block: string[] = [];
+	for (let i = start + 1; i < lines.length; i++) {
+		if (/^#{2,4}\s/.test(lines[i])) break;
+		block.push(lines[i]);
+	}
+	return block;
+}
+
 /**
  * Is this phase's Verification gate fully checked?
  *
- * A phase with no Verification gate at all counts as not-green. That is the safe
- * direction: the question Shape needs answered is "has correctness been proven",
- * and an absent gate proves nothing. Reading absence as permission is how a
- * check ends up passing for the wrong reason.
+ * Two deliberate strictnesses, both erring toward refusing to review:
+ *
+ * A phase with **no Verification gate** counts as not-green. An absent gate
+ * proves nothing, and reading absence as permission is how a check passes for
+ * the wrong reason.
+ *
+ * A **nested** unchecked item counts too. `impl-parser`'s `parseChecklistItems`
+ * is anchored at column 0, so `  - [ ] except the flaky one` is invisible to it
+ * and the gate reads as complete. This is NOT a second copy of
+ * `getPhaseCompletion` — the two answer different questions. That one decides
+ * whether a phase may close, which is the gate's rule and not Shape's to
+ * change; this one decides whether correctness is proven enough to restructure
+ * against, where being stricter is free and being wrong is not. `/cleanup`
+ * already treats nested unchecked items as blocking, so this also stops the two
+ * rituals disagreeing about what "done" means.
  */
 function verificationIsGreen(implBody: string, phase: number): boolean {
 	const parsed = parseImplString(implBody);
-	const target = parsed.phases.find((p) => p.number === phase);
-	if (!target) {
+	if (!parsed.phases.some((p) => p.number === phase)) {
 		throw new Error(
 			`Cannot prepare a Shape review for Phase ${phase} — this impl has no such phase.`,
 		);
 	}
 
-	const verification = target.gates.find((gate) => gate.type === "verification");
-	if (!verification || verification.items.length === 0) return false;
-	return verification.items.every((item) => item.checked);
+	const block = verificationGateLines(implBody, phase);
+	if (block === null) return false;
+	if (!block.some((line) => CHECKBOX_AT_ANY_DEPTH.test(line))) return false;
+	return !block.some((line) => UNCHECKED_AT_ANY_DEPTH.test(line));
 }
 
 /**
