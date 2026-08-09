@@ -109,7 +109,9 @@ describe("A9 — running Shape narrows nothing for cleanup at close", () => {
 			"export interface Finding { kind: string; detail: string }",
 			"",
 			"export function formatFinding(f: Finding): string {",
-			"\treturn `${f.kind}: ${f.detail}`;",
+			// Concatenation rather than a template literal purely so this fixture
+			// text is not read as an unfinished template string in THIS file.
+			'\treturn f.kind + ": " + f.detail;',
 			"}",
 			"",
 			"export function formatAll(fs: Finding[]): string {",

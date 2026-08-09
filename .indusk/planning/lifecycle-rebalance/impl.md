@@ -191,8 +191,12 @@ Every other row imports `lib/shape/*`, which does not exist until Phase 1, so it
 - [x] Add the changelog entry
 
 #### Phase 4 Verification
-- [ ] A8, A9 pass together — the intra-unit / inter-file line holds from both sides (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Full suite green apart from known pre-existing failures; `pnpm check` clean on touched files
+- [x] A8, A9 pass together — the intra-unit / inter-file line holds from both sides (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+  - both green, and now on one fixture as well as separately: `gate-interaction.test.ts` is 4 tests (was 3).
+- [x] Full suite green apart from known pre-existing failures; `pnpm check` clean on touched files
+  - measured: 137 files passed / 1 failed — `daemon-identity` T22/T23, the known port-sensitive known-red-on-main. All 5 shape files green (26/26).
+  - `pnpm check` clean (exit 0). It first warned `noTemplateCurlyInString` on the duplication fixture's source text — a false positive on generated code, resolved by writing the fixture with concatenation rather than by silencing the rule.
+  - `pnpm --filter docs build` completes, so the new guide page and sidebar entry render.
 
 #### Phase 4 Context
 - [ ] Update Current State with a one-line lifecycle-rebalance entry naming Shape as shipped and the remaining rebalance slices as follow-ons
