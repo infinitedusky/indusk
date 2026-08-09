@@ -235,7 +235,7 @@ The common shape: each failure looks exactly like Shape working. That is what ma
   - two of the nine new assertions were green from the start by design — they are the control cases (a nested *checked* item must still proceed; each phase keeps its own first opening), and they exist so the fixes cannot be over-applied.
 
 #### Phase 5 Context
-- [ ] Add to Known Gotchas: a phase-boundary scope is only as honest as its widest failure — `findPhaseStart` takes the earliest record (a resume is not a new start), deleted paths are dropped, and untracked files are filtered by mtime against the record's timestamp. Every one of these fails by *under*-reporting, which looks identical to Shape working.
+- [x] Add to Known Gotchas: a phase-boundary scope is only as honest as its widest failure — `findPhaseStart` takes the earliest record (a resume is not a new start), deleted paths are dropped, and untracked files are filtered by mtime against the record's timestamp. Every one of these fails by *under*-reporting, which looks identical to Shape working.
 
 #### Phase 5 Document
 - [ ] Update `guide/shape.md` with what the review scope does and does not include (resumed phases, deletions, pre-existing untracked files) and what an unreadable extension looks like — the scope's edges are the part a reader has to trust
