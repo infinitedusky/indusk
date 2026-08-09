@@ -14,7 +14,6 @@ export default defineConfig({
 				items: [
 					{ text: "Getting Started", link: "/guide/" },
 					{ text: "Architecture", link: "/guide/architecture" },
-					{ text: "The Shape check", link: "/guide/shape" },
 				],
 			},
 		],
