@@ -1,11 +1,17 @@
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { findPhaseStart, readBoundaries, recordPhaseStart } from "./boundary.js";
 import { changedFilesForPhase } from "./changed.js";
-import { commitAll, git, makeRepo, trackedRoots, writeFixtureFile } from "./shape.test-support.js";
+import {
+	commitAll,
+	git,
+	makeRepo,
+	thisRepoRoot,
+	trackedRoots,
+	writeFixtureFile,
+} from "./shape.test-support.js";
 
 /**
  * T13 — a phase begins once.
@@ -29,10 +35,7 @@ describe("T24 — concurrent branches both keep their boundary record", () => {
 		// one. Its sibling the verify ledger carries this declaration with a
 		// comment explaining exactly why; the boundary record was committed
 		// without one.
-		const root = execFileSync("git", ["rev-parse", "--show-toplevel"], {
-			cwd: dirname(fileURLToPath(import.meta.url)),
-			encoding: "utf-8",
-		}).trim();
+		const root = thisRepoRoot(dirname(fileURLToPath(import.meta.url)));
 
 		const attributes = readFileSync(join(root, ".gitattributes"), "utf-8");
 

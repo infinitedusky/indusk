@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { filesMatching } from "../../structural.test-support.js";
 
 /**
  * A18, A19 — one definition per shared rule, asserted structurally.
@@ -20,37 +21,14 @@ import { describe, expect, it } from "vitest";
 const srcDir = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const shapeDir = join(dirname(fileURLToPath(import.meta.url)));
 
-async function sourceFiles(dir: string): Promise<string[]> {
-	const out: string[] = [];
-	for (const entry of await readdir(dir, { withFileTypes: true })) {
-		const full = join(dir, entry.name);
-		if (entry.isDirectory()) {
-			if (entry.name === "__tests__" || entry.name === "node_modules") continue;
-			out.push(...(await sourceFiles(full)));
-			continue;
-		}
-		if (!entry.name.endsWith(".ts")) continue;
-		if (entry.name.includes(".test.") || entry.name.includes(".test-support.")) continue;
-		out.push(full);
-	}
-	return out;
-}
-
-async function filesMatching(dir: string, pattern: RegExp): Promise<string[]> {
-	const hits: string[] = [];
-	for (const file of await sourceFiles(dir)) {
-		if (pattern.test(await readFile(file, "utf8"))) hits.push(file);
-	}
-	return hits;
-}
-
 /**
- * Every `.ts` file under `src/`, INCLUDING tests and test support.
+ * Every `.ts` file under `dir`, INCLUDING tests and test support.
  *
- * The scanner below deliberately skips those, which is right for asking "how
+ * The shared scanner deliberately skips those, which is right for asking "how
  * many definitions ship" and wrong for asking "how many copies of the scanner
  * exist" — both copies lived in `.test.ts` files, invisible to the very walk
- * they were copies of.
+ * they were copies of. That blind spot is part of why the duplication survived
+ * long enough to drift.
  */
 async function allTypeScriptFiles(dir: string): Promise<string[]> {
 	const out: string[] = [];

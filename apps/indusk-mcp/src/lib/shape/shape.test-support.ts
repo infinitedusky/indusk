@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -29,6 +29,21 @@ export async function writeFixtureFile(
 	const full = join(root, relPath);
 	await mkdir(dirname(full), { recursive: true });
 	await writeFile(full, content, "utf8");
+}
+
+/**
+ * The repository these tests run inside — resolved by asking git.
+ *
+ * Used by the suites that assert on real repo state rather than a fixture.
+ * Counting `..` from `import.meta.url` was the first version, and Shape flagged
+ * it: an unexplained magic path in a file whose job is asserting about the repo
+ * silently points somewhere else the moment the file moves.
+ */
+export function thisRepoRoot(fromDir: string): string {
+	return execFileSync("git", ["rev-parse", "--show-toplevel"], {
+		cwd: fromDir,
+		encoding: "utf-8",
+	}).trim();
 }
 
 /**

@@ -1,9 +1,9 @@
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { readBoundaries } from "./boundary.js";
+import { thisRepoRoot } from "./shape.test-support.js";
 
 /**
  * A21 — Shape has actually been run here, against this repository.
@@ -18,19 +18,7 @@ import { readBoundaries } from "./boundary.js";
  * `point-the-tool-at-itself-before-calling-it-done` as a structural check.
  */
 
-/**
- * The repository this test asserts about — resolved by asking git, not by
- * counting `..`.
- *
- * The counted form was five unexplained levels, in the one file whose entire job
- * is asserting on real repo state: move the file and it silently points at some
- * other directory, where the assertions either fail confusingly or pass against
- * the wrong tree. Shape flagged this on its first real run.
- */
-const repoRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], {
-	cwd: dirname(fileURLToPath(import.meta.url)),
-	encoding: "utf-8",
-}).trim();
+const repoRoot = thisRepoRoot(dirname(fileURLToPath(import.meta.url)));
 
 describe("A21 — the boundary artifact exists because Shape was really used", () => {
 	it("this repository has at least one phase-boundary record", async () => {
