@@ -309,7 +309,7 @@ This is `point-the-tool-at-itself-before-calling-it-done` — fixtures share the
 - [x] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
 
 #### Phase 7 Context
-- [ ] Add to Known Gotchas: a library the skills call is not shipped until it is in `package.json` `exports` **and** the documented invocation has been run verbatim — `lib/shape/` passed every test in this repo while being unreachable from a consumer and unrunnable from its own instructions
+- [x] Add to Known Gotchas: a library the skills call is not shipped until it is in `package.json` `exports` **and** the documented invocation has been run verbatim — `lib/shape/` passed every test in this repo while being unreachable from a consumer and unrunnable from its own instructions
 
 #### Phase 7 Document
 - [ ] Update `guide/shape.md` with how Shape is actually invoked (consumer import path and monorepo path), and record the first calibration numbers alongside the obligation that asks for them
