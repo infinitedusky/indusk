@@ -1,7 +1,7 @@
 ---
 title: "Lifecycle Rebalance — the Shape check"
 date: 2026-08-08
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
