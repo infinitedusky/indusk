@@ -287,7 +287,7 @@ Three independent breakages, each sufficient on its own to make the feature iner
 
 This is `point-the-tool-at-itself-before-calling-it-done` — fixtures share the author's blind spots by construction, and every fixture here passed while the feature was unusable.
 
-- [ ] **Declare Shape's entry points in `package.json` `exports`** — the surfaces the `/work` skill actually names (`shape/shape`, `shape/boundary`, `shape/findings`, `shape/rules`), each mapping to its `dist` build with types, mirroring the `cleanup/oversized` + `cleanup/gate` precedent.
+- [x] **Declare Shape's entry points in `package.json` `exports`** — the surfaces the `/work` skill actually names (`shape/shape`, `shape/boundary`, `shape/findings`, `shape/rules`), each mapping to its `dist` build with types, mirroring the `cleanup/oversized` + `cleanup/gate` precedent.
 - [ ] **Fix the phase-start invocation in `skills/work.md` and resync.** Name both paths the way `cleanup.md` does — the consumer import (`@infinitedusky/indusk-mcp/shape/boundary`) and the monorepo source path — and stop promising a bare `tsx` that does not resolve. Verify the replacement command actually runs before writing it down.
 - [ ] **Open Phase 7's boundary for real** — the first genuine write of `.indusk/phase-boundary.jsonl`, using the command exactly as the skill now documents it. If the documented command does not work here, it does not work anywhere.
 - [ ] **Run Shape against Phase 7 and act on the result.** Findings become items in this phase; nothing found gets `recordReviewedNothingFound`; no code surface gets the skipped reason. Whatever it returns is the answer — do not steer it toward a tidy one.
