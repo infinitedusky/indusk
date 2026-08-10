@@ -63,8 +63,8 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | passing |
 | A18 | The `git()` runner has exactly one definition in `src/lib` outside test-support — shape does not carry a private copy of verify's | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | passing |
 | A19 | The phase-block scan (heading match + block bounds) has exactly one definition — `findings.ts` and `shape.ts` do not each carry one | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | passing |
-| A20 | Shape's review surface is reachable from a consumer install — every entry point the `/work` skill names is declared in package exports and resolves to a built file | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 7 | planned |
-| A21 | Shape runs end-to-end against **this repository**, not a fixture — a real boundary record, a real review of real changed files, a real recorded outcome | `apps/indusk-mcp/src/lib/shape/dogfood.test.ts` | Phase 0 | Phase 7 | planned |
+| A20 | Shape's review surface is reachable from a consumer install — every entry point the `/work` skill names is declared in package exports and resolves to a built file | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 7 | written |
+| A21 | Shape runs end-to-end against **this repository**, not a fixture — a real boundary record, a real review of real changed files, a real recorded outcome | `apps/indusk-mcp/src/lib/shape/dogfood.test.ts` | Phase 0 | Phase 7 | written |
 
 ### Deferred Verification
 
