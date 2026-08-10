@@ -1,6 +1,7 @@
 import { parseImplString } from "../impl-parser.js";
 import { changedFilesForPhase } from "./changed.js";
 import { appendItemToPhase } from "./findings.js";
+import { blockLines, findHeadingIndex, gateHeading } from "./impl-blocks.js";
 import { type CraftRuleSet, collectCraftRules } from "./rules.js";
 
 /**
@@ -27,17 +28,9 @@ const CHECKBOX_AT_ANY_DEPTH = /^\s*-\s+\[[ x]\]/;
 /** The lines of phase N's Verification gate, or null when it has none. */
 function verificationGateLines(implBody: string, phase: number): string[] | null {
 	const lines = implBody.split("\n");
-	const start = lines.findIndex((line) =>
-		new RegExp(`^####\\s+Phase\\s+${phase}\\s+Verification\\b`).test(line),
-	);
+	const start = findHeadingIndex(lines, gateHeading(phase, "Verification"));
 	if (start === -1) return null;
-
-	const block: string[] = [];
-	for (let i = start + 1; i < lines.length; i++) {
-		if (/^#{2,4}\s/.test(lines[i])) break;
-		block.push(lines[i]);
-	}
-	return block;
+	return blockLines(lines, start);
 }
 
 /**

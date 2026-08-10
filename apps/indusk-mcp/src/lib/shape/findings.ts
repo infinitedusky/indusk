@@ -8,6 +8,8 @@
  * found when `bash` was rewriting checkboxes the `edit` gate would have refused.
  */
 
+import { blockEnd, findHeadingIndex, phaseHeading } from "./impl-blocks.js";
+
 export interface ShapeFinding {
 	file: string;
 	/** The concrete change to make. */
@@ -38,15 +40,6 @@ function hasLineSeparator(value: string): boolean {
 	return false;
 }
 
-/** The gate sub-headings (`#### Phase N Verification`) close the implementation block. */
-function isImplementationBlockEnd(line: string): boolean {
-	return /^#{2,4}\s/.test(line);
-}
-
-function findPhaseHeading(lines: string[], phase: number): number {
-	return lines.findIndex((line) => new RegExp(`^###\\s+Phase\\s+${phase}\\b`).test(line));
-}
-
 /**
  * Put a checklist item in a phase's implementation block.
  *
@@ -65,27 +58,17 @@ export function appendItemToPhase(implBody: string, phase: number, item: string)
 	}
 
 	const lines = implBody.split("\n");
-	const headingAt = findPhaseHeading(lines, phase);
+	const headingAt = findHeadingIndex(lines, phaseHeading(phase));
 	if (headingAt === -1) {
 		throw new Error(
 			`Cannot append to Phase ${phase} — this impl has no such phase. Refusing to guess which phase the item belongs to.`,
 		);
 	}
 
-	// The implementation block runs from the phase heading to the first heading
-	// after it, whatever that heading is.
-	let blockEnd = lines.length;
-	for (let i = headingAt + 1; i < lines.length; i++) {
-		if (isImplementationBlockEnd(lines[i])) {
-			blockEnd = i;
-			break;
-		}
-	}
-
 	// Land directly after the last item, not in the trailing blank line — the
 	// blank before the next heading is separation, and writing into it puts the
 	// item visually adrift from the list it belongs to.
-	let insertAt = blockEnd;
+	let insertAt = blockEnd(lines, headingAt);
 	while (insertAt > headingAt + 1 && lines[insertAt - 1].trim() === "") insertAt--;
 
 	return [...lines.slice(0, insertAt), item, ...lines.slice(insertAt)].join("\n");
