@@ -1,8 +1,7 @@
-import { rm } from "node:fs/promises";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { findPhaseStart, readBoundaries, recordPhaseStart } from "./boundary.js";
 import { changedFilesForPhase } from "./changed.js";
-import { commitAll, git, makeRepo, writeFixtureFile } from "./shape.test-support.js";
+import { commitAll, git, makeRepo, trackedRoots, writeFixtureFile } from "./shape.test-support.js";
 
 /**
  * T13 — a phase begins once.
@@ -14,10 +13,7 @@ import { commitAll, git, makeRepo, writeFixtureFile } from "./shape.test-support
  * review still reports success, which is the failure mode worth guarding.
  */
 
-const roots: string[] = [];
-afterEach(async () => {
-	await Promise.all(roots.splice(0).map((r) => rm(r, { recursive: true, force: true })));
-});
+const roots = trackedRoots();
 
 const AT_OPEN = "2026-08-09T00:00:00.000Z";
 const AT_RESUME = "2026-08-09T01:00:00.000Z";

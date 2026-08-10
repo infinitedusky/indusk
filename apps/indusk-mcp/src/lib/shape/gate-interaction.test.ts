@@ -1,10 +1,16 @@
-import { rm } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { listOversizedChangedFiles } from "../cleanup/oversized.js";
 import { getPhaseCompletion, parseImplString } from "../impl-parser.js";
 import { collectCraftRules } from "./rules.js";
-import { commitAll, git, implWithPhase, makeRepo, writeFixtureFile } from "./shape.test-support.js";
+import {
+	commitAll,
+	git,
+	implWithPhase,
+	makeRepo,
+	trackedRoots,
+	writeFixtureFile,
+} from "./shape.test-support.js";
 
 /**
  * A3, A9 — how Shape sits against machinery that already exists.
@@ -16,10 +22,7 @@ import { commitAll, git, implWithPhase, makeRepo, writeFixtureFile } from "./sha
  * "Shape reviewed it" quietly meaning nobody looks again.
  */
 
-const roots: string[] = [];
-afterEach(async () => {
-	await Promise.all(roots.splice(0).map((r) => rm(r, { recursive: true, force: true })));
-});
+const roots = trackedRoots();
 
 describe("A3 — an unchecked Shape item keeps the phase open", () => {
 	it("a phase with an outstanding item is not complete", () => {

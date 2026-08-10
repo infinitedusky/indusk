@@ -1,7 +1,6 @@
-import { rm } from "node:fs/promises";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { collectCraftRules } from "./rules.js";
-import { enableExtension, makeRepo, packageExtension } from "./shape.test-support.js";
+import { enableExtension, makeRepo, packageExtension, trackedRoots } from "./shape.test-support.js";
 
 /**
  * A8, A11 — where craft standards come from, and where Shape stops.
@@ -12,10 +11,7 @@ import { enableExtension, makeRepo, packageExtension } from "./shape.test-suppor
  * argument that kept runner-specific output parsing out of `atdawn verify`.
  */
 
-const roots: string[] = [];
-afterEach(async () => {
-	await Promise.all(roots.splice(0).map((r) => rm(r, { recursive: true, force: true })));
-});
+const roots = trackedRoots();
 
 describe("A11 — rules trace to enabled extensions, not to core", () => {
 	it("includes an enabled extension's craft prose", async () => {

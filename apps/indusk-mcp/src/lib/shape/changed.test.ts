@@ -1,9 +1,9 @@
 import { rm, utimes } from "node:fs/promises";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { recordPhaseStart } from "./boundary.js";
 import { changedFilesForPhase } from "./changed.js";
-import { commitAll, git, makeRepo, writeFixtureFile } from "./shape.test-support.js";
+import { commitAll, git, makeRepo, trackedRoots, writeFixtureFile } from "./shape.test-support.js";
 
 /**
  * A5, A12 — what a phase actually changed.
@@ -13,10 +13,7 @@ import { commitAll, git, makeRepo, writeFixtureFile } from "./shape.test-support
  * too narrow and real work goes unreviewed.
  */
 
-const roots: string[] = [];
-afterEach(async () => {
-	await Promise.all(roots.splice(0).map((r) => rm(r, { recursive: true, force: true })));
-});
+const roots = trackedRoots();
 
 describe("A5 — only this phase's files are in scope", () => {
 	it("excludes files an earlier phase changed", async () => {

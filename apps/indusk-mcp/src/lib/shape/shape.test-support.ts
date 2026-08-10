@@ -1,8 +1,10 @@
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
+import { afterEach } from "vitest";
+import { recordPhaseStart } from "./boundary.js";
 
 /**
  * Fixtures for the Shape suite.
@@ -27,6 +29,40 @@ export async function writeFixtureFile(
 	const full = join(root, relPath);
 	await mkdir(dirname(full), { recursive: true });
 	await writeFile(full, content, "utf8");
+}
+
+/**
+ * Register a self-cleaning set of throwaway roots for the calling suite.
+ *
+ * Every shape test file needs the same two things — somewhere to put repos, and
+ * an afterEach that removes them — and five copies of that block is five places
+ * for a leak to hide. Call once at module scope:
+ *
+ *     const roots = trackedRoots();
+ *     roots.push(await makeRepo());
+ */
+export function trackedRoots(): string[] {
+	const roots: string[] = [];
+	afterEach(async () => {
+		await Promise.all(roots.splice(0).map((r) => rm(r, { recursive: true, force: true })));
+	});
+	return roots;
+}
+
+/** A throwaway repo with phase N of `plan` already opened at HEAD. */
+export async function repoWithPhaseOpen(
+	phase: number,
+	plan = "demo",
+	at = "2026-08-09T00:00:00.000Z",
+): Promise<string> {
+	const root = await makeRepo();
+	await recordPhaseStart(root, {
+		plan,
+		phase,
+		sha: await git(root, "rev-parse", "HEAD"),
+		at,
+	});
+	return root;
 }
 
 /** A throwaway git repo with an initial commit. */

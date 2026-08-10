@@ -1,8 +1,12 @@
-import { rm } from "node:fs/promises";
-import { afterEach, describe, expect, it } from "vitest";
-import { recordPhaseStart } from "./boundary.js";
+import { describe, expect, it } from "vitest";
 import { prepareShapeReview, recordLeftAsIs, recordReviewedNothingFound } from "./shape.js";
-import { commitAll, git, implWithPhase, makeRepo, writeFixtureFile } from "./shape.test-support.js";
+import {
+	commitAll,
+	implWithPhase,
+	repoWithPhaseOpen,
+	trackedRoots,
+	writeFixtureFile,
+} from "./shape.test-support.js";
 
 /**
  * A4, A6, A7, A10 — the review surface, and the three outcomes it must be able
@@ -14,21 +18,7 @@ import { commitAll, git, implWithPhase, makeRepo, writeFixtureFile } from "./sha
  * surface" are both RECORDED outcomes, never silence.
  */
 
-const roots: string[] = [];
-afterEach(async () => {
-	await Promise.all(roots.splice(0).map((r) => rm(r, { recursive: true, force: true })));
-});
-
-async function repoAtPhase(phase: number): Promise<string> {
-	const root = await makeRepo();
-	await recordPhaseStart(root, {
-		plan: "demo",
-		phase,
-		sha: await git(root, "rev-parse", "HEAD"),
-		at: "2026-08-08T00:00:00.000Z",
-	});
-	return root;
-}
+const roots = trackedRoots();
 
 const GREEN = implWithPhase({
 	phase: 1,
@@ -38,7 +28,7 @@ const GREEN = implWithPhase({
 
 describe("A10 — Shape does not review code whose correctness is unproven", () => {
 	it("declines when the phase's verification is not green, naming that reason", async () => {
-		const root = await repoAtPhase(1);
+		const root = await repoWithPhaseOpen(1);
 		roots.push(root);
 		await writeFixtureFile(root, "src/thing.ts", "export const x = 1;\n");
 
@@ -56,7 +46,7 @@ describe("A10 — Shape does not review code whose correctness is unproven", () 
 	}, 30_000);
 
 	it("proceeds once verification is green", async () => {
-		const root = await repoAtPhase(1);
+		const root = await repoWithPhaseOpen(1);
 		roots.push(root);
 		await writeFixtureFile(root, "src/thing.ts", "export const x = 1;\n");
 
@@ -73,7 +63,7 @@ describe("T14 — a nested unchecked verification item still means not green", (
 		// review code whose correctness is unproven — the exact thing A10 forbids.
 		// /cleanup already treats nested unchecked items as blocking, so today the
 		// two rituals disagree about what "done" means.
-		const root = await repoAtPhase(1);
+		const root = await repoWithPhaseOpen(1);
 		roots.push(root);
 		await writeFixtureFile(root, "src/thing.ts", "export const x = 1;\n");
 
@@ -90,7 +80,7 @@ describe("T14 — a nested unchecked verification item still means not green", (
 
 	it("still proceeds when the nested item is checked", async () => {
 		// The guard must key on the checkbox state, not on the presence of nesting.
-		const root = await repoAtPhase(1);
+		const root = await repoWithPhaseOpen(1);
 		roots.push(root);
 		await writeFixtureFile(root, "src/thing.ts", "export const x = 1;\n");
 
@@ -107,7 +97,7 @@ describe("T14 — a nested unchecked verification item still means not green", (
 
 describe("A6 — a phase with no code surface is skipped, not silently passed", () => {
 	it("records the reason when the phase changed no code files", async () => {
-		const root = await repoAtPhase(1);
+		const root = await repoWithPhaseOpen(1);
 		roots.push(root);
 		// Only plan/machine state moved — no code.
 		await writeFixtureFile(root, ".indusk/planning/demo/impl.md", "# plan\n");
