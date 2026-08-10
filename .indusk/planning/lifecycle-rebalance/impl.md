@@ -1,7 +1,7 @@
 ---
 title: "Lifecycle Rebalance — the Shape check"
 date: 2026-08-08
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -70,7 +70,7 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | T24 | Two branches that each open a phase both survive a merge of the boundary record, with neither append lost | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 8 | passing |
 | T25 | A Shape surface named by the `/work` skill but missing from package exports fails the reachability check — the list is derived from the skill, not hardcoded beside it | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | passing |
 | T26 | The reachability check passes on a fresh checkout with no build — it must not depend on gitignored `dist/` output | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | passing |
-| A27 | The source-scanning helper the structural tests are built on has exactly one definition — the one-definition rule applied to the tests that enforce it | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 9 | written |
+| A27 | The source-scanning helper the structural tests are built on has exactly one definition — the one-definition rule applied to the tests that enforce it | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 9 | passing |
 
 ### Deferred Verification
 
@@ -359,15 +359,15 @@ The theme: an artifact is not finished when it is written correctly. It is finis
 - [x] **Discovered in Phase 9** — give `run/ask-pause.test.ts` the 30s timeout its siblings already have. It surfaced as a *new* failure in this phase's full-suite run at 5028 ms, and passed in isolation: the four cases each spawn the gate-script chain and run 3.2–4.6 s solo, so under full-suite load the first one tipped over vitest's 5 s default. Pre-existing, from `dawn-hook-parity`, which applied `30_000` to `commit-cadence.test.ts` next door and missed this file. Fixed rather than filed: a flaky test in the verification path makes every future "full suite green" claim unreliable, including this plan's.
 
 #### Phase 9 Verification
-- [ ] A27 passes — one definition of the source scanner (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Both structural suites still assert what they did before — `shared-resolution.test.ts` and `shared-definitions.test.ts` green, with the same assertions
-- [ ] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
+- [x] A27 passes — one definition of the source scanner (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] Both structural suites still assert what they did before — `shared-resolution.test.ts` and `shared-definitions.test.ts` green, with the same assertions
+- [x] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
 
 #### Phase 9 Context
-- [ ] (none needed — internal test-support decomposition; the convention it serves is already in Known Gotchas, so this adds an instance rather than a rule — asked: "Phase 9 is two test-infrastructure extractions (a shared source-scanner, a shared repo-root helper). No public surface, no behavior, no skill/CLI contract change — and the one-definition convention it serves is already in Known Gotchas. Can I skip both the Context and Document gates?" — user: "Skip both")
+- [x] (none needed — internal test-support decomposition; the convention it serves is already in Known Gotchas, so this adds an instance rather than a rule — asked: "Phase 9 is two test-infrastructure extractions (a shared source-scanner, a shared repo-root helper). No public surface, no behavior, no skill/CLI contract change — and the one-definition convention it serves is already in Known Gotchas. Can I skip both the Context and Document gates?" — user: "Skip both")
 
 #### Phase 9 Document
-- [ ] (none needed — no public surface, documented behavior, or skill/CLI contract changes; both extractions are test infrastructure — asked: "Phase 9 is two test-infrastructure extractions (a shared source-scanner, a shared repo-root helper). No public surface, no behavior, no skill/CLI contract change — and the one-definition convention it serves is already in Known Gotchas. Can I skip both the Context and Document gates?" — user: "Skip both")
+- [x] (none needed — no public surface, documented behavior, or skill/CLI contract changes; both extractions are test infrastructure — asked: "Phase 9 is two test-infrastructure extractions (a shared source-scanner, a shared repo-root helper). No public surface, no behavior, no skill/CLI contract change — and the one-definition convention it serves is already in Known Gotchas. Can I skip both the Context and Document gates?" — user: "Skip both")
 
 ## Files Affected
 
