@@ -49,6 +49,30 @@ async function appearedAfter(root: string, relPath: string, opened: Date): Promi
 	}
 }
 
+/**
+ * Which untracked files belong to this phase.
+ *
+ * Untracked work has no commit to place it in time, so mtime against the
+ * boundary record is the only evidence there is. An unparseable timestamp falls
+ * back to the epoch, keeping every file rather than silently narrowing the
+ * scope — the direction all of this leans, because over-reporting costs a
+ * re-read and under-reporting loses work while still reporting success.
+ */
+async function untrackedDuringPhase(
+	root: string,
+	untracked: string[],
+	start: { timestamp: string },
+): Promise<string[]> {
+	const opened = new Date(start.timestamp);
+	const openedAt = Number.isNaN(opened.getTime()) ? new Date(0) : opened;
+
+	const during: string[] = [];
+	for (const rel of untracked) {
+		if (await appearedAfter(root, rel, openedAt)) during.push(rel);
+	}
+	return during;
+}
+
 export async function changedFilesForPhase(options: {
 	root: string;
 	plan: string;
@@ -62,16 +86,7 @@ export async function changedFilesForPhase(options: {
 	}
 
 	const { tracked, untracked } = await changedPathsPartitioned(options.root, start.sha);
-
-	// An unparseable timestamp must not silently narrow the scope, so fall back
-	// to the epoch — every untracked file then counts as this phase's.
-	const opened = new Date(start.timestamp);
-	const openedAt = Number.isNaN(opened.getTime()) ? new Date(0) : opened;
-
-	const untrackedThisPhase: string[] = [];
-	for (const rel of untracked) {
-		if (await appearedAfter(options.root, rel, openedAt)) untrackedThisPhase.push(rel);
-	}
+	const untrackedThisPhase = await untrackedDuringPhase(options.root, untracked, start);
 
 	const candidates = [...new Set([...tracked, ...untrackedThisPhase])].filter(
 		(line) => !isNotCode(line),
