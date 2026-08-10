@@ -1,8 +1,7 @@
-import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { join } from "node:path";
-import { promisify } from "node:util";
+import { changedPathsPartitioned } from "../git.js";
 import { findPhaseStart, readBoundaries } from "./boundary.js";
 
 /**
@@ -12,16 +11,6 @@ import { findPhaseStart, readBoundaries } from "./boundary.js";
  * re-flags code an earlier phase already reviewed; too narrow and real work
  * goes unlooked-at.
  */
-
-const execFileAsync = promisify(execFile);
-
-async function git(root: string, ...args: string[]): Promise<string> {
-	const { stdout } = await execFileAsync("git", args, {
-		cwd: root,
-		maxBuffer: 32 * 1024 * 1024,
-	});
-	return stdout.trim();
-}
 
 /**
  * InDusk's own bookkeeping and the plan documents — never code a phase "wrote".
@@ -72,13 +61,7 @@ export async function changedFilesForPhase(options: {
 		);
 	}
 
-	const committed = await git(options.root, "diff", "--name-only", start.sha, "HEAD");
-	const unstaged = await git(options.root, "diff", "--name-only", "HEAD");
-	const untracked = await git(options.root, "ls-files", "--others", "--exclude-standard");
-
-	const tracked = [...committed.split("\n"), ...unstaged.split("\n")]
-		.map((line) => line.trim())
-		.filter((line) => line.length > 0);
+	const { tracked, untracked } = await changedPathsPartitioned(options.root, start.sha);
 
 	// An unparseable timestamp must not silently narrow the scope, so fall back
 	// to the epoch — every untracked file then counts as this phase's.
@@ -86,9 +69,7 @@ export async function changedFilesForPhase(options: {
 	const openedAt = Number.isNaN(opened.getTime()) ? new Date(0) : opened;
 
 	const untrackedThisPhase: string[] = [];
-	for (const line of untracked.split("\n")) {
-		const rel = line.trim();
-		if (rel.length === 0) continue;
+	for (const rel of untracked) {
 		if (await appearedAfter(options.root, rel, openedAt)) untrackedThisPhase.push(rel);
 	}
 
