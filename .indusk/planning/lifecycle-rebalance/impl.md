@@ -1,7 +1,7 @@
 ---
 title: "Lifecycle Rebalance — the Shape check"
 date: 2026-08-08
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -61,6 +61,8 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | T15 | A file the phase deleted is not offered for review, and a phase that only deleted files is recorded as having no code surface | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | passing |
 | T16 | An untracked file written by an EARLIER phase is not attributed to this phase | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | passing |
 | T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | passing |
+| A18 | The `git()` runner has exactly one definition in `src/lib` outside test-support — shape does not carry a private copy of verify's | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | planned |
+| A19 | The phase-block scan (heading match + block bounds) has exactly one definition — `findings.ts` and `shape.ts` do not each carry one | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | planned |
 
 ### Deferred Verification
 
@@ -239,6 +241,32 @@ The common shape: each failure looks exactly like Shape working. That is what ma
 
 #### Phase 5 Document
 - [x] Update `guide/shape.md` with what the review scope does and does not include (resumed phases, deletions, pre-existing untracked files) and what an unreadable extension looks like — the scope's edges are the part a reader has to trust
+
+### Phase 6: Cleanup — one definition for the things two files now know
+
+**Goal**: remove the inter-file duplication this plan created, and pin each removal with a structural single-definition test rather than a behavioral one. Every item is a fact **about two files**, which is why none of it was visible to Shape at any phase boundary — the second copy of a thing is not a property of the phase that wrote it.
+
+Two of the three duplications were introduced across *different* phases (Phase 1 vs the pre-existing `verify/`, Phase 3 vs Phase 5), which is the shape the intra-unit/inter-file line predicts: the duplication did not exist until the later copy landed.
+
+- [ ] **Reuse `verify/git.ts`'s `git()` instead of `changed.ts`'s private copy.** They are identical down to the 32 MB `maxBuffer`. The Boundary Map said Phase 1 consumes "`verify/git.ts` change-listing precedent" and what actually happened was the precedent got copied rather than the function reused. Move the runner to a module both can import (`lib/git.ts`, or export verify's if that reads better once seen) — the direction is one definition, not a particular file name.
+- [ ] **Decide the `changedPathsSince` overlap deliberately, and record the decision.** `verify/git.ts` already exports the exact committed+unstaged+untracked union `changedFilesForPhase` re-implements — same three commands, same dedup/trim chain, same rationale in its doc comment. It is not a straight swap: Phase 5 made shape need the *partition* (untracked filtered by mtime, tracked not), which the union has already discarded. Either give the shared helper a partition-returning variant that the union builds on, or keep them separate **with a comment at both sites naming the other**. What is not acceptable is leaving two copies that neither share nor acknowledge each other — a fix to one silently skips the other, and the untracked half of that function is already a hard-won lesson.
+- [ ] **Extract the phase-block scan used by both `findings.ts` and `shape.ts`.** `findings.ts` has `findPhaseHeading` + `isImplementationBlockEnd`; Phase 5 added `verificationGateLines` to `shape.ts`, which re-implements the same walk with its own `/^#{2,4}\s/`. Both encode "how markdown headings delimit a phase's blocks". One definition, taking the heading to scan from — the two callers differ only in which heading they start at.
+- [ ] **Lift the test-fixture boilerplate into `shape.test-support.ts`.** The `const roots: string[] = []` + `afterEach(rm …)` block is verbatim in five test files, and "make a repo with a phase already opened" is now in three (`repoAtPhase` in `shape.test.ts`, open-coded in `changed.test.ts` and `boundary.test.ts`). Rule of three, twice over, in the file that exists to hold exactly this.
+- [ ] (reviewed `apps/indusk-mcp/skills/work.md` (442 LOC, flagged) — left as-is: a skill file is loaded whole by the agent, so splitting it across files would break the single-file skill contract that `skill-sync-parity` pins. Length is inherent to the artifact, not accretion.)
+- [ ] (reviewed `apps/docs/src/changelog.md` (448 LOC, flagged) — left as-is: an append-only log grows without bound by design. Splitting by release is a docs-restructure decision that belongs to the rebalance's documentation slice, not to this plan.)
+- [ ] (reviewed `apps/indusk-mcp/skills/planner.md` (570 LOC, flagged) — left as-is: this plan added three lines to it. Decomposing a 570-line skill on the strength of a three-line touch would be exactly the extraction-for-its-own-sake the ritual warns against.)
+- [ ] (reviewed every `lib/shape/*.ts` file — left as-is: the largest is 147 LOC against a 400 cap, and each module owns one question — where a phase began, what it changed, what the rules are, how a finding becomes an item, what the review surface returns. The decomposition is already right; the duplication above is between them, not inside them.)
+
+#### Phase 6 Verification
+- [ ] A18, A19 pass — each shared rule has exactly one definition (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [ ] Full shape suite still 37/37 green — the extractions are structure-preserving, so any behavioral change is a defect
+- [ ] `pnpm check` clean on touched files
+
+#### Phase 6 Context
+- [ ] Add to Known Gotchas: `git()` and the phase-block scan join `resolveImplPath`/`TERMINAL_STATES` as single-definition-on-purpose, pinned by a structural test — a behavioral test cannot catch a divergence that has not happened yet
+
+#### Phase 6 Document
+- [ ] (none needed — asked: "Phase 6 is pure inter-file decomposition — a shared git helper, a shared phase-block scan, and test fixtures moved into test-support. No public surface, documented behavior, or skill/CLI contract changes. Can I skip the Document gate?" — user: "Yes, skip it")
 
 ## Files Affected
 
