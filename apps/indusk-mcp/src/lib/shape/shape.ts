@@ -120,6 +120,22 @@ export function recordReviewedNothingFound(implBody: string, phase: number): str
 }
 
 /**
+ * Record that the review did not run, and why.
+ *
+ * The third outcome needed a recorder as much as the other two — arguably more.
+ * "Reviewed and found nothing" is a result someone is pleased to write down;
+ * "did not run" is the one that gets quietly dropped, and dropping it is exactly
+ * how a check comes to report the shape of success without doing the work.
+ *
+ * Checked, like the other notes: a skip is not outstanding work, it is a fact
+ * about this phase. The reason carries whether it was unproven correctness or an
+ * absent code surface.
+ */
+export function recordSkipped(implBody: string, phase: number, reason: string): string {
+	return appendItemToPhase(implBody, phase, `- [x] Shape — skipped: ${reason}`);
+}
+
+/**
  * Record a file that was looked at and deliberately left alone.
  *
  * Distinct from a file never reviewed, and the reason is the whole point: it is

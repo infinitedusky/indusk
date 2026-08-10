@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { prepareShapeReview, recordLeftAsIs, recordReviewedNothingFound } from "./shape.js";
+import {
+	prepareShapeReview,
+	recordLeftAsIs,
+	recordReviewedNothingFound,
+	recordSkipped,
+} from "./shape.js";
 import {
 	commitAll,
 	implWithPhase,
@@ -125,6 +130,21 @@ describe("A4 — well-shaped code adds no items and says the review ran", () => 
 		const note = out.split("\n").find((l) => /shape/i.test(l) && /nothing/i.test(l));
 
 		expect(note?.trimStart().startsWith("- [x]")).toBe(true);
+	});
+});
+
+describe("the skipped outcome has a recorder too", () => {
+	it("writes the reason as a checked note", () => {
+		// Found by running Shape for real: two of the three outcomes had
+		// recorders, and the missing one was "did not run" — the outcome most
+		// likely to be quietly dropped, which is the failure the vocabulary exists
+		// to prevent.
+		const out = recordSkipped(GREEN, 1, "Phase 1's verification is not green");
+
+		const note = out.split("\n").find((l) => /shape/i.test(l) && /skipped/i.test(l));
+
+		expect(note?.trimStart().startsWith("- [x]")).toBe(true);
+		expect(note).toContain("verification is not green");
 	});
 });
 
