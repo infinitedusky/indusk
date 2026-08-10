@@ -1,3 +1,7 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { findPhaseStart, readBoundaries, recordPhaseStart } from "./boundary.js";
 import { changedFilesForPhase } from "./changed.js";
@@ -17,6 +21,48 @@ const roots = trackedRoots();
 
 const AT_OPEN = "2026-08-09T00:00:00.000Z";
 const AT_RESUME = "2026-08-09T01:00:00.000Z";
+
+describe("T24 — concurrent branches both keep their boundary record", () => {
+	it("this repo declares merge=union for the boundary record", async () => {
+		// The record is tracked, and worktree-per-plan is the DEFAULT here — two
+		// plans opening phases on two branches is the expected case, not an exotic
+		// one. Its sibling the verify ledger carries this declaration with a
+		// comment explaining exactly why; the boundary record was committed
+		// without one.
+		const root = execFileSync("git", ["rev-parse", "--show-toplevel"], {
+			cwd: dirname(fileURLToPath(import.meta.url)),
+			encoding: "utf-8",
+		}).trim();
+
+		const attributes = readFileSync(join(root, ".gitattributes"), "utf-8");
+
+		expect(attributes).toMatch(/\.indusk\/phase-boundary\.jsonl\s+merge=union/);
+	}, 30_000);
+
+	it("union merge actually keeps both appends", async () => {
+		// Proves the strategy does what the declaration claims, rather than
+		// trusting the attribute name.
+		const root = await makeRepo();
+		roots.push(root);
+		await writeFixtureFile(root, ".gitattributes", "boundary.jsonl merge=union\n");
+		await writeFixtureFile(root, "boundary.jsonl", '{"plan":"base","phase":0}\n');
+		await commitAll(root, "baseline");
+
+		await git(root, "checkout", "-q", "-b", "plan/a");
+		await writeFixtureFile(root, "boundary.jsonl", '{"plan":"base","phase":0}\n{"plan":"a"}\n');
+		await commitAll(root, "a opens a phase");
+
+		await git(root, "checkout", "-q", "main");
+		await writeFixtureFile(root, "boundary.jsonl", '{"plan":"base","phase":0}\n{"plan":"b"}\n');
+		await commitAll(root, "b opens a phase");
+
+		await git(root, "merge", "--no-edit", "plan/a");
+
+		const merged = readFileSync(join(root, "boundary.jsonl"), "utf-8");
+		expect(merged).toContain('"plan":"a"');
+		expect(merged).toContain('"plan":"b"');
+	}, 30_000);
+});
 
 describe("T13 — a resumed phase still scopes from where it first began", () => {
 	it("findPhaseStart returns the earliest record for the phase, not the latest", async () => {

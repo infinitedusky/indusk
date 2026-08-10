@@ -44,7 +44,24 @@ describe("A21 — the boundary artifact exists because Shape was really used", (
 		expect(records.length).toBeGreaterThan(0);
 	});
 
-	it("the plan that opened a phase records a Shape outcome for it", async () => {
+	it("T23 — stays green while a phase is open with no outcome yet", async () => {
+		// The original coupled these: it took the NEWEST record and demanded that
+		// plan already carry an outcome. But the outcome is written at phase
+		// CLOSE, so between opening a phase and finishing it — the entire time
+		// anyone is working — this suite went red for following the workflow it
+		// documents. It passed only because the plan happened to be closed when
+		// it was written.
+		const records = await readBoundaries(repoRoot);
+		const newest = records[records.length - 1];
+
+		// A record with no outcome yet is the normal mid-phase state. The only
+		// thing that must hold is that the plan it names exists.
+		const implPath = join(repoRoot, ".indusk", "planning", newest.plan, "impl.md");
+
+		expect(existsSync(implPath), `${newest.plan} has no impl.md`).toBe(true);
+	});
+
+	it("some plan in this repo carries a recorded Shape outcome", async () => {
 		// A record on its own only proves a phase was opened. The outcome is what
 		// proves the review actually ran and said something — the distinction
 		// between "did not run" and "nothing to do" that Shape exists to preserve,
@@ -52,20 +69,18 @@ describe("A21 — the boundary artifact exists because Shape was really used", (
 		const records = await readBoundaries(repoRoot);
 		expect(records.length).toBeGreaterThan(0);
 
-		const record = records[records.length - 1];
-		const implPath = join(repoRoot, ".indusk", "planning", record.plan, "impl.md");
-		expect(existsSync(implPath), `${record.plan} has no impl.md`).toBe(true);
-
-		const impl = readFileSync(implPath, "utf-8");
-		const outcomes = impl
-			.split("\n")
-			.filter(
-				(line) => /^\s*-\s+\[x\]\s+Shape\b/.test(line) || /^\s*-\s+\[ \]\s+Shape\b/.test(line),
-			);
+		// ANY plan that has opened a phase, not specifically the newest one —
+		// evidence that Shape has really run is a claim about this repository's
+		// history, not about whichever phase happens to be open right now.
+		const outcomes = [...new Set(records.map((r) => r.plan))]
+			.map((plan) => join(repoRoot, ".indusk", "planning", plan, "impl.md"))
+			.filter((path) => existsSync(path))
+			.flatMap((path) => readFileSync(path, "utf-8").split("\n"))
+			.filter((line) => /^\s*-\s+\[[ x]\]\s+Shape\b/.test(line));
 
 		expect(
 			outcomes.length,
-			`${record.plan} opened phase ${record.phase} but recorded no Shape outcome`,
+			"a phase has been opened in this repo, but no plan records a Shape outcome — the review has never run",
 		).toBeGreaterThan(0);
 	});
 });
