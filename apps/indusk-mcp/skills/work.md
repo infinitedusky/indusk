@@ -129,17 +129,34 @@ Craft feedback belongs in the phase that wrote the code, not four phases later a
 
 ### At phase start — open the boundary
 
-Before the first implementation item of Phase N, record where the phase began. Without this Shape cannot tell your work from the previous phase's, and it refuses to guess:
+Before the first implementation item of Phase N, record where the phase began. Without this Shape cannot tell your work from the previous phase's, and it refuses to guess.
+
+**In a consumer project** — import the published subpath, from the repo root:
 
 ```bash
-tsx -e '
-  import { recordPhaseStart } from "./apps/indusk-mcp/src/lib/shape/boundary.js";
-  await recordPhaseStart(process.cwd(), {
-    plan: "<plan>", phase: <N>,
-    sha: "<git rev-parse HEAD>", at: new Date().toISOString(),
-  });
+node -e '
+  import("@infinitedusky/indusk-mcp/shape/boundary").then(({ recordPhaseStart }) =>
+    recordPhaseStart(process.cwd(), {
+      plan: "<plan>", phase: <N>,
+      sha: process.env.SHA, at: new Date().toISOString(),
+    }));
+' SHA="$(git rev-parse HEAD)"
+```
+
+**In the dusk monorepo** — run through the package that owns the source:
+
+```bash
+cd apps/indusk-mcp && pnpm exec tsx -e '
+  import { recordPhaseStart } from "./src/lib/shape/boundary.ts";
+  import { execFileSync } from "node:child_process";
+  const root = process.cwd().replace(/\/apps\/indusk-mcp$/, "");
+  const sha = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf-8" }).trim();
+  recordPhaseStart(root, { plan: "<plan>", phase: <N>, sha, at: new Date().toISOString() })
+    .then(() => console.log("opened phase <N>"));
 '
 ```
+
+Two things that will bite you, both found by running these rather than reasoning about them: **`tsx` is not on `PATH`** (it is a dependency of `indusk-mcp`, so it needs `pnpm exec` from inside that package — `pnpm exec tsx` at the repo root fails too), and **top-level `await` does not work in `tsx -e`** — use `.then()`. An earlier version of this section documented a bare `tsx -e` with top-level `await`; it failed on both counts, and nobody noticed because no test executes a command written in a skill.
 
 The record is generic (`{plan, phase, sha, at}`) and shared — `verify` and `Challenge` read the same artifact rather than each growing their own ledger.
 
