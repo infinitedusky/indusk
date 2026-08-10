@@ -1,7 +1,7 @@
 ---
 title: "Lifecycle Rebalance — the Shape check"
 date: 2026-08-08
-status: completed
+status: in-progress
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -70,6 +70,7 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | T24 | Two branches that each open a phase both survive a merge of the boundary record, with neither append lost | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 8 | passing |
 | T25 | A Shape surface named by the `/work` skill but missing from package exports fails the reachability check — the list is derived from the skill, not hardcoded beside it | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | passing |
 | T26 | The reachability check passes on a fresh checkout with no build — it must not depend on gitignored `dist/` output | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | passing |
+| A27 | The source-scanning helper the structural tests are built on has exactly one definition — the one-definition rule applied to the tests that enforce it | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 9 | planned |
 
 ### Deferred Verification
 
@@ -344,6 +345,27 @@ The theme: an artifact is not finished when it is written correctly. It is finis
 
 #### Phase 8 Document
 - [x] Update `guide/shape.md`'s scope section to state that the boundary record is tracked, why (so a resumed phase survives a fresh clone), and what that obliges — the exclusion registration and the merge strategy
+
+### Phase 9: Cleanup — the one-definition rule, applied to the tests that enforce it
+
+**Goal**: remove the inter-file duplication Phases 6–8 introduced. The earlier cleanup pass *was* Phase 6, so everything it created and everything after it has never been through this ritual. Two duplications, and the first one has already drifted — in the pair of files whose entire job is asserting that things have exactly one definition.
+
+- [ ] **Extract the source-scanning helpers (`sourceFiles`, `filesMatching`) used by both structural test files.** `verify/shared-resolution.test.ts` and `shape/shared-definitions.test.ts` each carry a copy; I wrote the second in Phase 6 by copying the first. **They have already diverged** — one signature defaults `dir`, the other requires it — within hours, which is the argument for this being a rule rather than a preference. Placement constraint: the shared helper must be excluded from its own scan (the walker skips `__tests__/` and `*.test-support.*`, so either satisfies it) and must not ship in `dist`, so it does not belong under `lib/`.
+- [ ] **Extract repo-root resolution for the shape test files.** `dogfood.test.ts` and `boundary.test.ts` both compute it with the same `git rev-parse --show-toplevel` from `import.meta.url` — added by Phases 7 and 8 respectively, so the second copy did not exist when the first was written. `shape.test-support.ts` already holds this suite's shared fixtures (`trackedRoots`, `repoWithPhaseOpen`); this belongs beside them. The three non-test callers (`agent.ts`, `worktree/decision.ts`, `cleanup/oversized.ts`) are out of scope — each resolves a root for its own command's cwd, not a fixed repository.
+- [ ] (reviewed the machine-state predicates in `phantom.ts` / `shape/changed.ts` / `cleanup/oversized.ts` — left as-is: **deliberately** three definitions, decided and recorded in Phase 8. `shape` excludes all of `.indusk/` including plan documents; `phantom` cannot, because `impl.md` is the file it needs to see; `cleanup` excludes for a third reason. Sharing them would merge three rules, not de-duplicate one. Recorded here so a later cleanup pass does not re-open a settled decision.)
+- [ ] (reviewed the six flagged markdown files — left as-is: same set as Phase 6 reviewed, plus `work.md` grown from 442 to 459 by the Shape step. A skill file is loaded whole by the agent, so splitting it breaks the single-file contract `skill-sync-parity` pins; the changelog is append-only by design; `planner.md` took three lines from this plan. Length is inherent to these artifacts, not accretion.)
+- [ ] (reviewed `lib/shape/*.ts` and `lib/git.ts` — left as-is: largest is `shape.ts` at ~165 LOC against a 400 cap, and the Phase 6 extractions (`impl-blocks.ts`, `git.ts`) landed the module boundaries where they belong. The three outcome recorders are near-identical one-liners and stay that way: each has its own wording and its own reason to change, and folding them into one function with a discriminant would hide the distinction the three-outcome vocabulary exists to make.)
+
+#### Phase 9 Verification
+- [ ] A27 passes — one definition of the source scanner (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [ ] Both structural suites still assert what they did before — `shared-resolution.test.ts` and `shared-definitions.test.ts` green, with the same assertions
+- [ ] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
+
+#### Phase 9 Context
+- [ ] (none needed — internal test-support decomposition; the convention it serves is already in Known Gotchas, so this adds an instance rather than a rule — asked: "Phase 9 is two test-infrastructure extractions (a shared source-scanner, a shared repo-root helper). No public surface, no behavior, no skill/CLI contract change — and the one-definition convention it serves is already in Known Gotchas. Can I skip both the Context and Document gates?" — user: "Skip both")
+
+#### Phase 9 Document
+- [ ] (none needed — no public surface, documented behavior, or skill/CLI contract changes; both extractions are test infrastructure — asked: "Phase 9 is two test-infrastructure extractions (a shared source-scanner, a shared repo-root helper). No public surface, no behavior, no skill/CLI contract change — and the one-definition convention it serves is already in Known Gotchas. Can I skip both the Context and Document gates?" — user: "Skip both")
 
 ## Files Affected
 
