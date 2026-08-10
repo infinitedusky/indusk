@@ -295,6 +295,7 @@ This is `point-the-tool-at-itself-before-calling-it-done` — fixtures share the
 - [ ] **Run Shape against Phase 7 and act on the result.** Findings become items in this phase; nothing found gets `recordReviewedNothingFound`; no code surface gets the skipped reason. Whatever it returns is the answer — do not steer it toward a tidy one.
 - [ ] **Review the five phases Shape never saw, as one catch-up pass**, and record it honestly as a whole-plan review rather than a per-phase one. The per-phase records cannot be reconstructed and back-dating a boundary would be a lie about when the code was looked at.
 - [ ] **Record U1's first calibration data point** in the plan — findings raised, and how many a human judged wrong — so the retrospective's Quality Ratchet has real numbers instead of the obligation this plan invented and then skipped.
+- [x] Shape — skipped: Phase 7's verification is not green. Shape does not review code whose correctness is unproven — finish the Verification gate first.
 
 #### Phase 7 Verification
 - [ ] A20 passes — every entry point the skill names resolves from the package's declared exports
