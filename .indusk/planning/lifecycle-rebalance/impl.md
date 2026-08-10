@@ -1,7 +1,7 @@
 ---
 title: "Lifecycle Rebalance — the Shape check"
 date: 2026-08-08
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -61,8 +61,8 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | T15 | A file the phase deleted is not offered for review, and a phase that only deleted files is recorded as having no code surface | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | passing |
 | T16 | An untracked file written by an EARLIER phase is not attributed to this phase | `apps/indusk-mcp/src/lib/shape/changed.test.ts` | Phase 0 | Phase 5 | passing |
 | T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | passing |
-| A18 | The `git()` runner has exactly one definition in `src/lib` outside test-support — shape does not carry a private copy of verify's | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | written |
-| A19 | The phase-block scan (heading match + block bounds) has exactly one definition — `findings.ts` and `shape.ts` do not each carry one | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | written |
+| A18 | The `git()` runner has exactly one definition in `src/lib` outside test-support — shape does not carry a private copy of verify's | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | passing |
+| A19 | The phase-block scan (heading match + block bounds) has exactly one definition — `findings.ts` and `shape.ts` do not each carry one | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | passing |
 
 ### Deferred Verification
 
@@ -257,21 +257,21 @@ Two of the three duplications were introduced across *different* phases (Phase 1
 - [x] **Lift the test-fixture boilerplate into `shape.test-support.ts`.**
   - `trackedRoots()` registers the `afterEach` itself and returns the array, so all five files became one line each. `repoWithPhaseOpen` replaced `shape.test.ts`'s local `repoAtPhase`.
   - **partly left as-is, and the cleanup phase over-claimed here:** the "repo with a phase open" pattern only unified cleanly in one of the three places. In `changed.test.ts` and `boundary.test.ts` the phase opens *after* some commits, and exactly when it opens relative to the work is the variable under test — routing those through a helper would hide the thing the test exists to vary. The `const roots: string[] = []` + `afterEach(rm …)` block is verbatim in five test files, and "make a repo with a phase already opened" is now in three (`repoAtPhase` in `shape.test.ts`, open-coded in `changed.test.ts` and `boundary.test.ts`). Rule of three, twice over, in the file that exists to hold exactly this.
-- [ ] (reviewed `apps/indusk-mcp/skills/work.md` (442 LOC, flagged) — left as-is: a skill file is loaded whole by the agent, so splitting it across files would break the single-file skill contract that `skill-sync-parity` pins. Length is inherent to the artifact, not accretion.)
-- [ ] (reviewed `apps/docs/src/changelog.md` (448 LOC, flagged) — left as-is: an append-only log grows without bound by design. Splitting by release is a docs-restructure decision that belongs to the rebalance's documentation slice, not to this plan.)
-- [ ] (reviewed `apps/indusk-mcp/skills/planner.md` (570 LOC, flagged) — left as-is: this plan added three lines to it. Decomposing a 570-line skill on the strength of a three-line touch would be exactly the extraction-for-its-own-sake the ritual warns against.)
-- [ ] (reviewed every `lib/shape/*.ts` file — left as-is: the largest is 147 LOC against a 400 cap, and each module owns one question — where a phase began, what it changed, what the rules are, how a finding becomes an item, what the review surface returns. The decomposition is already right; the duplication above is between them, not inside them.)
+- [x] (reviewed `apps/indusk-mcp/skills/work.md` (442 LOC, flagged) — left as-is: a skill file is loaded whole by the agent, so splitting it across files would break the single-file skill contract that `skill-sync-parity` pins. Length is inherent to the artifact, not accretion.)
+- [x] (reviewed `apps/docs/src/changelog.md` (448 LOC, flagged) — left as-is: an append-only log grows without bound by design. Splitting by release is a docs-restructure decision that belongs to the rebalance's documentation slice, not to this plan.)
+- [x] (reviewed `apps/indusk-mcp/skills/planner.md` (570 LOC, flagged) — left as-is: this plan added three lines to it. Decomposing a 570-line skill on the strength of a three-line touch would be exactly the extraction-for-its-own-sake the ritual warns against.)
+- [x] (reviewed every `lib/shape/*.ts` file — left as-is: the largest is 147 LOC against a 400 cap, and each module owns one question — where a phase began, what it changed, what the rules are, how a finding becomes an item, what the review surface returns. The decomposition is already right; the duplication above is between them, not inside them.)
 
 #### Phase 6 Verification
-- [ ] A18, A19 pass — each shared rule has exactly one definition (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Full shape suite still 37/37 green — the extractions are structure-preserving, so any behavioral change is a defect
-- [ ] `pnpm check` clean on touched files
+- [x] A18, A19 pass — each shared rule has exactly one definition (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] Full shape suite still 41/41 green — the extractions are structure-preserving, so any behavioral change is a defect
+- [x] `pnpm check` clean on touched files
 
 #### Phase 6 Context
-- [ ] Add to Known Gotchas: `git()` and the phase-block scan join `resolveImplPath`/`TERMINAL_STATES` as single-definition-on-purpose, pinned by a structural test — a behavioral test cannot catch a divergence that has not happened yet
+- [x] Add to Known Gotchas: `git()` and the phase-block scan join `resolveImplPath`/`TERMINAL_STATES` as single-definition-on-purpose, pinned by a structural test — a behavioral test cannot catch a divergence that has not happened yet
 
 #### Phase 6 Document
-- [ ] (none needed — asked: "Phase 6 is pure inter-file decomposition — a shared git helper, a shared phase-block scan, and test fixtures moved into test-support. No public surface, documented behavior, or skill/CLI contract changes. Can I skip the Document gate?" — user: "Yes, skip it")
+- [x] (none needed — asked: "Phase 6 is pure inter-file decomposition — a shared git helper, a shared phase-block scan, and test fixtures moved into test-support. No public surface, documented behavior, or skill/CLI contract changes. Can I skip the Document gate?" — user: "Yes, skip it")
 
 ## Files Affected
 
