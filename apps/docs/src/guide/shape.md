@@ -154,11 +154,48 @@ This is not left to memory. `/retrospective`'s Quality Audit step asks for both 
 
 Record both **even when they are zero.** "Shape raised nothing" is a real data point — it is how you would learn the check has gone quiet — and a missing number cannot be told apart from a plan that never ran Shape at all. That distinction is the same one Shape's own three outcomes exist to preserve, applied to Shape itself.
 
+### The first data point
+
+Recorded here so the sample starts honestly rather than flatteringly.
+
+| Plan | Findings raised | Judged wrong | Notes |
+|---|---|---|---|
+| `lifecycle-rebalance` | 2 | 0 | Author, reviewer and judge were the same agent, on diffs written minutes earlier. Only one finding came from a live per-phase run; the other came from a whole-plan catch-up. |
+
+A 0% false-positive rate from a reviewer grading their own morning's work is not evidence the judgment is calibrated — it is barely evidence the mechanism fires. **The first useful numbers come from the next two plans**, where the code under review will not be the reviewer's own from an hour ago.
+
 ### Why this can't be a test
 
 The honest limit: whether a unit "should have been extracted" depends on the codebase, the domain, and taste the extensions encode only partially. Testing it would need a labelled corpus of craft violations and non-violations drawn from real plans — which does not exist and cannot be manufactured without inventing the very judgments under test.
 
 So the mechanism is tested and the judgment is measured. A12 rows prove Shape fires, scopes correctly, and records outcomes; the counts above are the only evidence about whether it fires *wisely*. Treating the passing test suite as evidence of good judgment would be the mistake this section exists to prevent.
+
+## Running it
+
+Shape is a library the `/work` skill calls; there is no `indusk shape` command yet. Two invocations, both verified by running them:
+
+**Consumer project** — the published subpaths (`shape/shape`, `shape/boundary`, `shape/findings`, `shape/rules`):
+
+```bash
+node -e 'import("@infinitedusky/indusk-mcp/shape/boundary").then(({ recordPhaseStart }) => …)'
+```
+
+**The dusk monorepo** — through the package that owns the source:
+
+```bash
+cd apps/indusk-mcp && pnpm exec tsx -e 'import { recordPhaseStart } from "./src/lib/shape/boundary.ts"; …'
+```
+
+Two things will bite you, and both did:
+
+- **`tsx` is not on `PATH`.** It is a dependency of `indusk-mcp`, so it needs `pnpm exec` from inside that package. `pnpm exec tsx` at the repo root fails too.
+- **Top-level `await` does not work in `tsx -e`.** Use `.then()`.
+
+Shape shipped with neither of these known, because the first version of this section was written without being run. Nothing in the repo executes a command that lives in a skill — the only thing that closes that gap is pasting the command and running it.
+
+### One ordering trap
+
+Shape refuses until the phase's Verification gate is green. So a trajectory row that asserts *"Shape ran"* cannot live in that same phase's Verification gate: the row cannot pass until verification is green, and verification cannot be green until the row passes. **Dogfood evidence belongs in the next phase**, or outside the trajectory entirely.
 
 ## Which check answers which question
 
