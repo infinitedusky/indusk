@@ -1,7 +1,7 @@
 ---
 title: "Lifecycle Rebalance — the Shape check"
 date: 2026-08-08
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -65,11 +65,11 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | A19 | The phase-block scan (heading match + block bounds) has exactly one definition — `findings.ts` and `shape.ts` do not each carry one | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | passing |
 | A20 | Shape's review surface is reachable from a consumer install — every entry point the `/work` skill names is declared in package exports and resolves to a built file | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 7 | passing |
 | A21 | Shape runs end-to-end against **this repository**, not a fixture — a real boundary record, a real review of real changed files, a real recorded outcome | `apps/indusk-mcp/src/lib/shape/dogfood.test.ts` | Phase 0 | Phase 7 | passing |
-| T22 | Phantom detection still fires when a phase's only non-`impl.md` change is the phase-boundary record — the record must not read as work | `apps/indusk-mcp/src/lib/verify/phantom.test.ts` | Phase 0 | Phase 8 | written |
-| T23 | The dogfood assertion stays green while a phase is open — a recorded boundary with no outcome yet is the normal mid-phase state, not a failure | `apps/indusk-mcp/src/lib/shape/dogfood.test.ts` | Phase 0 | Phase 8 | written |
-| T24 | Two branches that each open a phase both survive a merge of the boundary record, with neither append lost | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 8 | written |
-| T25 | A Shape surface named by the `/work` skill but missing from package exports fails the reachability check — the list is derived from the skill, not hardcoded beside it | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | written |
-| T26 | The reachability check passes on a fresh checkout with no build — it must not depend on gitignored `dist/` output | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | written |
+| T22 | Phantom detection still fires when a phase's only non-`impl.md` change is the phase-boundary record — the record must not read as work | `apps/indusk-mcp/src/lib/verify/phantom.test.ts` | Phase 0 | Phase 8 | passing |
+| T23 | The dogfood assertion stays green while a phase is open — a recorded boundary with no outcome yet is the normal mid-phase state, not a failure | `apps/indusk-mcp/src/lib/shape/dogfood.test.ts` | Phase 0 | Phase 8 | passing |
+| T24 | Two branches that each open a phase both survive a merge of the boundary record, with neither append lost | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 8 | passing |
+| T25 | A Shape surface named by the `/work` skill but missing from package exports fails the reachability check — the list is derived from the skill, not hardcoded beside it | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | passing |
+| T26 | The reachability check passes on a fresh checkout with no build — it must not depend on gitignored `dist/` output | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | passing |
 
 ### Deferred Verification
 
@@ -332,18 +332,18 @@ The theme: an artifact is not finished when it is written correctly. It is finis
 - [x] **T26 — stop the reachability check depending on gitignored build output.** It asserts `existsSync` against `dist/`, which is gitignored and absent on a fresh clone, so `pnpm test` without a prior build fails for environmental reasons — the `worktree-test-env-parity-gitignored-artifacts` lesson. Assert the mapping against the source that produces the artifact, and leave build-output checks to whatever actually builds.
 
 #### Phase 8 Verification
-- [ ] T22: a phase whose only non-`impl.md` change is the boundary record is still reported as phantom work
-- [ ] T23: with a boundary record and no outcome recorded for it, the dogfood assertions stay green
-- [ ] T24: a merge of two branches that each opened a phase retains both records
-- [ ] T25: a Shape subpath named in `skills/work.md` but absent from `exports` fails the check
-- [ ] T26: the reachability check passes with `dist/` absent
-- [ ] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
+- [x] T22: a phase whose only non-`impl.md` change is the boundary record is still reported as phantom work
+- [x] T23: with a boundary record and no outcome recorded for it, the dogfood assertions stay green
+- [x] T24: a merge of two branches that each opened a phase retains both records
+- [x] T25: a Shape subpath named in `skills/work.md` but absent from `exports` fails the check
+- [x] T26: the reachability check passes with `dist/` absent
+- [x] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
 
 #### Phase 8 Context
-- [ ] Update the Known Gotchas entry on machine-state exclusion to name `.indusk/phase-boundary.jsonl` explicitly alongside `verify/` and `eval/`, and record the general rule the second occurrence proves: a newly tracked InDusk artifact must be registered with every "what changed" detector **and** given a merge strategy, in the same commit that first writes it
+- [x] Update the Known Gotchas entry on machine-state exclusion to name `.indusk/phase-boundary.jsonl` explicitly alongside `verify/` and `eval/`, and record the general rule the second occurrence proves: a newly tracked InDusk artifact must be registered with every "what changed" detector **and** given a merge strategy, in the same commit that first writes it
 
 #### Phase 8 Document
-- [ ] Update `guide/shape.md`'s scope section to state that the boundary record is tracked, why (so a resumed phase survives a fresh clone), and what that obliges — the exclusion registration and the merge strategy
+- [x] Update `guide/shape.md`'s scope section to state that the boundary record is tracked, why (so a resumed phase survives a fresh clone), and what that obliges — the exclusion registration and the merge strategy
 
 ## Files Affected
 

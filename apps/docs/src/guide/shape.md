@@ -124,6 +124,8 @@ The review is only as good as its scope, and every way the scope can be wrong is
 | `.indusk/` machine state | No | The boundary record is written when a phase *opens*; counting it would make every phase look productive before doing anything |
 | Changed by an earlier phase | No | That is what the boundary record is for |
 
+**The boundary record is tracked, and that has obligations.** It is committed rather than gitignored so a phase resumed after a fresh clone still knows where it began. Being tracked means it appears in every later diff, which makes it evidence to anything reasoning about "what changed" — so a newly tracked InDusk artifact has to be registered with every such detector *and* given a merge strategy in the same commit that first writes it. Shape's record was committed doing neither: it silently switched off `verify`'s phantom detection (worse than the verify ledger did, because a boundary is written when a phase *opens*, so it lands in the diff of a phase that has not done anything yet), and it lacked the `merge=union` its sibling ledger carries, which matters because worktree-per-plan is the default and two branches opening phases is the expected case.
+
 **A phase resumed in a later session keeps its original start.** `/work` records the phase start each time it reaches that instruction, so a phase spanning two sessions records twice. The earliest record wins and re-recording is a no-op — otherwise everything the first session committed would fall out of scope while the review still reported success.
 
 Every ambiguous case resolves toward including the file: an unreadable timestamp, a stat that fails, a file whose age cannot be determined. Over-reporting costs a re-read. Under-reporting loses real work and says nothing.
