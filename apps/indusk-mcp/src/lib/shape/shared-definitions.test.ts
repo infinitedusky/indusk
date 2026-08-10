@@ -44,6 +44,43 @@ async function filesMatching(dir: string, pattern: RegExp): Promise<string[]> {
 	return hits;
 }
 
+/**
+ * Every `.ts` file under `src/`, INCLUDING tests and test support.
+ *
+ * The scanner below deliberately skips those, which is right for asking "how
+ * many definitions ship" and wrong for asking "how many copies of the scanner
+ * exist" — both copies lived in `.test.ts` files, invisible to the very walk
+ * they were copies of.
+ */
+async function allTypeScriptFiles(dir: string): Promise<string[]> {
+	const out: string[] = [];
+	for (const entry of await readdir(dir, { withFileTypes: true })) {
+		const full = join(dir, entry.name);
+		if (entry.isDirectory()) {
+			if (entry.name === "node_modules") continue;
+			out.push(...(await allTypeScriptFiles(full)));
+			continue;
+		}
+		if (entry.name.endsWith(".ts")) out.push(full);
+	}
+	return out;
+}
+
+describe("A27 — one definition of the source scanner the structural tests use", () => {
+	it("is defined exactly once across src/, tests included", async () => {
+		// The one-definition rule turned on the tests that enforce it. Two copies
+		// existed — verify/shared-resolution.test.ts and this file — and they had
+		// ALREADY diverged within hours: one signature defaulted `dir`, the other
+		// required it. That drift is the whole argument.
+		const hits: string[] = [];
+		for (const file of await allTypeScriptFiles(srcDir)) {
+			if (/async function sourceFiles\s*\(/.test(await readFile(file, "utf8"))) hits.push(file);
+		}
+
+		expect(hits).toHaveLength(1);
+	});
+});
+
 describe("A18 — one definition of the async git runner", () => {
 	it("is defined exactly once across src/", async () => {
 		const definitions = await filesMatching(srcDir, /async function git\s*\(/);

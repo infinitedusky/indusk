@@ -70,7 +70,7 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | T24 | Two branches that each open a phase both survive a merge of the boundary record, with neither append lost | `apps/indusk-mcp/src/lib/shape/boundary.test.ts` | Phase 0 | Phase 8 | passing |
 | T25 | A Shape surface named by the `/work` skill but missing from package exports fails the reachability check — the list is derived from the skill, not hardcoded beside it | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | passing |
 | T26 | The reachability check passes on a fresh checkout with no build — it must not depend on gitignored `dist/` output | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 8 | passing |
-| A27 | The source-scanning helper the structural tests are built on has exactly one definition — the one-definition rule applied to the tests that enforce it | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 9 | planned |
+| A27 | The source-scanning helper the structural tests are built on has exactly one definition — the one-definition rule applied to the tests that enforce it | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 9 | written |
 
 ### Deferred Verification
 
