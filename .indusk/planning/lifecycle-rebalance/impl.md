@@ -63,8 +63,8 @@ Craft feedback arrives in the phase that wrote the code instead of at plan close
 | T17 | An enabled extension that declares a skill but whose prose cannot be read is reported as unreadable, never silently omitted from the rule set | `apps/indusk-mcp/src/lib/shape/rules.test.ts` | Phase 0 | Phase 5 | passing |
 | A18 | The `git()` runner has exactly one definition in `src/lib` outside test-support — shape does not carry a private copy of verify's | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | passing |
 | A19 | The phase-block scan (heading match + block bounds) has exactly one definition — `findings.ts` and `shape.ts` do not each carry one | `apps/indusk-mcp/src/lib/shape/shared-definitions.test.ts` | Phase 0 | Phase 6 | passing |
-| A20 | Shape's review surface is reachable from a consumer install — every entry point the `/work` skill names is declared in package exports and resolves to a built file | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 7 | written |
-| A21 | Shape runs end-to-end against **this repository**, not a fixture — a real boundary record, a real review of real changed files, a real recorded outcome | `apps/indusk-mcp/src/lib/shape/dogfood.test.ts` | Phase 0 | Phase 7 | written |
+| A20 | Shape's review surface is reachable from a consumer install — every entry point the `/work` skill names is declared in package exports and resolves to a built file | `apps/indusk-mcp/src/__tests__/shape-consumer-reachability.test.ts` | Phase 0 | Phase 7 | passing |
+| A21 | Shape runs end-to-end against **this repository**, not a fixture — a real boundary record, a real review of real changed files, a real recorded outcome | `apps/indusk-mcp/src/lib/shape/dogfood.test.ts` | Phase 0 | Phase 7 | passing |
 
 ### Deferred Verification
 
@@ -292,16 +292,17 @@ This is `point-the-tool-at-itself-before-calling-it-done` — fixtures share the
 - [x] **Open Phase 7's boundary for real** — the first genuine write of `.indusk/phase-boundary.jsonl`, using the command exactly as the skill now documents it. If the documented command does not work here, it does not work anywhere.
 - [x] **Discovered by the first real run — add `recordSkipped(implBody, phase, reason)`.** The design promises "three outcomes, never silence" and ships recorders for two: `recordReviewedNothingFound` and `recordLeftAsIs`. The skill says "if it returns `skipped`, record the reason and move on" with no function to do it, so the agent hand-writes the line and the one outcome most likely to be quietly dropped is the one with no support. Found by running it, not by reading it.
 - [ ] **Discovered by the first real run — a row asserting "Shape ran" cannot live in the same phase's Verification gate.** Shape refuses until verification is green; A21 sits *inside* Phase 7's verification; so A21 cannot pass until verification is green, which cannot happen until A21 passes. Resolve it here by recording the refusal outcome (a real, correct first invocation) and re-running after the gate closes; note in the guide that dogfood evidence belongs in the *next* phase, not the one being verified.
-- [ ] **Run Shape against Phase 7 and act on the result.** Findings become items in this phase; nothing found gets `recordReviewedNothingFound`; no code surface gets the skipped reason. Whatever it returns is the answer — do not steer it toward a tidy one.
+- [x] **Run Shape against Phase 7 and act on the result.** Findings become items in this phase; nothing found gets `recordReviewedNothingFound`; no code surface gets the skipped reason. Whatever it returns is the answer — do not steer it toward a tidy one.
 - [ ] **Review the five phases Shape never saw, as one catch-up pass**, and record it honestly as a whole-plan review rather than a per-phase one. The per-phase records cannot be reconstructed and back-dating a boundary would be a lie about when the code was looked at.
 - [ ] **Record U1's first calibration data point** in the plan — findings raised, and how many a human judged wrong — so the retrospective's Quality Ratchet has real numbers instead of the obligation this plan invented and then skipped.
 - [x] Shape — skipped: Phase 7's verification is not green. Shape does not review code whose correctness is unproven — finish the Verification gate first.
+- [x] Shape (`apps/indusk-mcp/src/lib/shape/dogfood.test.ts`) — Derive the repo root instead of counting five levels of `..` — give it a name and a reason, or resolve it with `git rev-parse --show-toplevel`. Rule: typescript/clarity — an unexplained magic path in the one file whose job is asserting on real repo state fails silently if the file ever moves
 
 #### Phase 7 Verification
-- [ ] A20 passes — every entry point the skill names resolves from the package's declared exports
-- [ ] A21 passes — Shape produces a recorded outcome against this repository, not a fixture
-- [ ] The documented phase-start command runs successfully when pasted verbatim (paste it; do not paraphrase it)
-- [ ] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
+- [x] A20 passes — every entry point the skill names resolves from the package's declared exports
+- [x] A21 passes — Shape produces a recorded outcome against this repository, not a fixture
+- [x] The documented phase-start command runs successfully when pasted verbatim (paste it; do not paraphrase it)
+- [x] Full suite green apart from the known-red-on-main `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
 
 #### Phase 7 Context
 - [ ] Add to Known Gotchas: a library the skills call is not shipped until it is in `package.json` `exports` **and** the documented invocation has been run verbatim — `lib/shape/` passed every test in this repo while being unreachable from a consumer and unrunnable from its own instructions
