@@ -4,3 +4,8 @@
 # InDusk: the verify ledger is append-only evidence — concurrent verifications
 # on different branches must both survive a merge, never clobber each other.
 .indusk/verify/ledger.jsonl merge=union
+
+# InDusk: the phase-boundary record is the same shape of artifact, and
+# worktree-per-plan is the default — two plans opening phases on two branches is
+# the expected case. Losing either append loses a phase's scope.
+.indusk/phase-boundary.jsonl merge=union
