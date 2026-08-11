@@ -1,0 +1,7 @@
+# Chase a blocking credential as an explicit Phase 0 checklist item, not an ambient hope
+
+dawn-external-orchestrator's Claude driver sat unexercised for roughly a week because an Anthropic API key wasn't available — the plan proceeded on Gemini-only cells and treated the key as something that would "land eventually," rather than as a named blocker to actively resolve. When the key finally arrived, unblocking it took one paste — the wait was entirely about the credential not being chased, not about any real difficulty in obtaining or wiring it.
+
+**Why it matters:** a plan that depends on an external credential, account, or access grant should surface that dependency as a concrete, owned checklist item at Phase 0 (get the key / request the access / confirm the account) rather than letting it sit as an implicit assumption that "someone will handle it." An assumption with no owner and no deadline doesn't get chased — it just waits, and the plan silently loses a week of the very work it was blocking (here, an entire model column of the acceptance matrix).
+
+**What to do instead:** when a plan's brief or impl identifies an external dependency outside the author's direct control (an API key, a service account, a partner's sign-off), add it as an explicit Phase 0 (or earliest-relevant-phase) checklist item with a named owner — not a footnote or an aside in the Context section. Treat "waiting on X" the same as any other blocked checklist item: visible, owned, and revisited, not ambient.

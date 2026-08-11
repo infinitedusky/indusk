@@ -1,0 +1,9 @@
+# Bookkeeping and enforcement failures need different severities AND different error channels, not just different severities
+
+When a system does two things of different criticality in sequence — an enforcement action that must halt on failure, and a bookkeeping action that must not — sharing one `try`/error-reporting path for both makes the reported failure ambiguous even when the severities are handled correctly.
+
+**The concrete case:** dawn-hook-parity's loop made a per-item git commit (bookkeeping — a failure here shouldn't stop the run) and then appended a pending-eval queue record (also bookkeeping, but on top of the commit). Both lived inside one try-block. When the queue-append step failed after the commit had already landed successfully, the shared error handler reported it as a **commit failure** — the run's output claimed history that in fact existed. The commit succeeded; only the append after it failed; but the single failure channel couldn't distinguish the two, so it lied about which one broke.
+
+**The fix:** separate the channels, not just the severities. Each distinct action that can fail independently needs its own try/catch and its own reporting path, even when both actions are "non-fatal, log and continue" in policy. Merging them into one handler loses the information about *which* action actually failed, which matters even when neither failure stops the run — because a report that blames the wrong step sends the next debugging session to the wrong place.
+
+**Why it generalizes:** any pipeline of sequential side effects (write X, then write Y derived from X) is at risk of this the moment X and Y share error handling — even if both are correctly classified as non-blocking, conflating *which one* failed corrupts the diagnostic value of the failure report.

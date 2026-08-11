@@ -1,0 +1,9 @@
+# When two lanes must agree on a rule, pin it with a test that asserts exactly one definition exists — a behavioral test can't catch a divergence that hasn't happened yet
+
+`resolveImplPath` was byte-equivalent in `run.ts` and `verify.ts`, and `TERMINAL_STATES` was defined independently in both `probe.ts` and `detect.ts`. Two identical copies pass every behavioral test right up until someone edits one of them — a behavioral assertion (call both, compare outputs) only protects the invariant "these two lanes agree" for inputs the test happens to exercise, and says nothing about the next edit.
+
+**The fix shape:** the dawn-verify cleanup phase pinned both with tests that scan the source tree and assert EXACTLY ONE DEFINITION EXISTS (grep/count matches for the function or constant name across the lanes that must share it), not tests that compare behavior. This is the only test shape that catches a divergence that has not happened yet, because it fails the moment a second definition is introduced rather than waiting for an input that exposes disagreement.
+
+**When to reach for this:** any time a rule must be shared by two enforcement paths that can't literally import the same module (e.g. a TS lib mirrored into a JS hook port, a constant needed in two CLI entry points with different bundling). A copy in that situation is not a duplicated line to tolerate — it is a silent divergence waiting for the next edit. See `apps/indusk-mcp/src/lib/impl-parser.ts` (`resolveImplPath`) and `apps/indusk-mcp/src/lib/trajectory/parser.ts` (`TERMINAL_STATES`) for the pinned precedent.
+
+Distinct from [[mirrored-artifacts-need-structural-parity-tests]] (byte-equality across a source→replica sync pair, e.g. skill files or TS→JS hook ports) — this lesson is about a single logical rule that must have exactly one definition full stop, not about two files staying in sync with each other.

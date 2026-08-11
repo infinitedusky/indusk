@@ -1,0 +1,9 @@
+# A check belongs at the phase boundary if it's answerable from the phase's delta, and at close only if it needs the finished whole
+
+When deciding whether a new review/check/gate should run per-phase or wait until plan close, ask what the question needs to be answerable: the diff this phase just wrote, or the finished shape of the whole plan's output.
+
+Intra-unit craft (a block that wants a name, a component doing two jobs, a client island inlined into a server component) is wrong the moment it's written — there's no "wait for the third occurrence" argument, so it belongs at the phase boundary. Inter-file structural decomposition (duplicate logic across modules, a rule copied into two lanes) genuinely cannot be judged until the modules exist — it belongs at close.
+
+**Why:** `dawn-verify` is the concrete cost of getting this wrong: a Phase 2 decision to write report rendering inline surfaced only in Phase 7's `/cleanup`, where the code had to be extracted before the fix could even be tested. The `lifecycle-rebalance` plan (2026-08-08) used this principle to split what had been conflated as one "cleanup" activity into two — the phase-boundary `Shape` check (intra-unit) and the at-close `/cleanup` ritual (inter-file), pinned from both sides by paired test assertions (A8: Shape does not flag cross-file duplication; A9: `/cleanup` still does) so that "Shape ignores it" can never silently mean nobody catches it.
+
+**How to apply:** before adding any new review step to a plan lifecycle, ask "what does this question need in order to be answerable — the delta, or the whole?" If the delta suffices, don't defer it to close; deferring a decidable-now check is how a Phase 2 mistake becomes a Phase 7 extraction. See `.indusk/planning/lifecycle-rebalance/adr.md` for the full decision, including why the executing agent (not a heuristic or a spawned checker) performs the judgment when the executor is already a model.
