@@ -169,3 +169,6 @@
 {"id":"h-20260808-003","processedAt":"2026-08-08T04:16:12.778Z","action":"wrote-episode","detail":"check-placement-phase-boundary-vs-close"}
 {"id":"h-20260808-001","processedAt":"2026-08-08T04:16:15.562Z","action":"skipped","detail":"recorded in lifecycle-rebalance/brief.md; generalizable principle captured separately via the ADR highlight as check-placement-phase-boundary-vs-close"}
 {"id":"h-20260808-002","processedAt":"2026-08-08T04:16:15.957Z","action":"skipped","detail":"recorded in lifecycle-rebalance/test-plan.md; A8/A9 pairing and U1 calibration trigger fully captured there"}
+{"id":"h-20260811-001","processedAt":"2026-08-11T00:34:37.514Z","action":"skipped","detail":"already materialized in this commit as tested-is-not-reachable-run-the-documented-command.md"}
+{"id":"h-20260811-002","processedAt":"2026-08-11T00:34:38.611Z","action":"skipped","detail":"already materialized in this commit as never-write-conversation-proof-that-did-not-happen.md"}
+{"id":"h-20260811-003","processedAt":"2026-08-11T00:34:38.715Z","action":"wrote-episode","detail":"no-warning-from-a-classifier-is-not-a-correct-classification"}

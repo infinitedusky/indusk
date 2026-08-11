@@ -1,6 +1,63 @@
+---
+title: "Midnight — failure-anchored testing and the expectation corpus"
+date: 2026-06-14
+status: draft
+amended: 2026-08-11
+---
+
 # Brief — Midnight
 
+::: warning AMENDED 2026-08-11 — read this first
+This brief is **not superseded**. Its mechanism is the plan of record. But one of its four parts was replaced, and two are stale. See [Amendment](#amendment-2026-08-11) below before acting on anything here.
+:::
+
 **What this is:** the refactor of InDusk that establishes a different relationship between failures, tests, and planning. Specifically: **failures in production define the test cases.** We stop writing tests speculatively. We write tests when something has actually broken — captured as an expectation that should hold — and the test becomes the assertion that it never breaks the same way again.
+
+## Amendment 2026-08-11
+
+Four parts, reviewed against `lifecycle-rebalance`, `test-phase-structure`, and the Dawn master.
+
+### Kept — the linkage mechanism (the valuable core)
+
+**Unchanged and still the plan of record.** One shared ID threading a test, a code site, and a span: `E-N` comments at enforcement sites, `expectations.enforced` / `expectations.violated` span attributes, `expectTraceShape` naming the expectation it validates, and the collapse-signal query. Phases 1–5 and 7 stand as written.
+
+This is the part worth building, and it does **not** depend on the philosophy below. Splitting them is the point of this amendment: the mechanism should not have to win an argument about test authorship in order to proceed.
+
+### Replaced — "no test until a failure earns it"
+
+The strong claim — *"don't write a test until something has earned that test by failing in production"* — is **replaced by two authorities**:
+
+| | Written | Authority | Answers |
+|---|---|---|---|
+| Trajectory test | before the code | **specification** | did we build what the plan claimed? |
+| Expectation test | after a failure | **failure** | does the system still uphold what it must? |
+
+The brief's critique is correct about its actual target — a unit test written *after* the code, mirroring it, "catches the developer typing." But a test written *before*, derived from a stated commitment, is a different object: it constrains the implementation from an angle the implementation did not choose. Enough of them and the implementation is over-determined — fitted through fixed points rather than invented.
+
+**Consequence:** the success criterion *"every assertion traces back to a real F-N with a real failure date"* is amended to **"every assertion traces to an F-N or a plan assertion. No orphans."** As written it would have deleted every trajectory test.
+
+**And the sharper inversion this unlocks:** telemetry does not replace specification tests — it **grades** them. The highest-information object in the system is *a test that passed while production broke*, because it names your assertion as insufficient rather than merely reporting that code failed. The original framing cannot produce that object, because under it the test would not have existed yet.
+
+### Dropped — `subsystem` as a durable primitive
+
+Midnight's Phase (subsystem-scoped, append-only, never archived) is **not being built.** Its problem is real and correctly diagnosed — four plans for one concern, because plans close — but the fix is a lifecycle change rather than a new noun: **plans become reopenable and gain a `monitor` state.** Closed stays the resting state, so the active surface does not grow without bound.
+
+Recorded in [`/guide/plan-lifecycle`](../../../apps/docs/src/guide/plan-lifecycle.md).
+
+**What would reverse this:** an expectation that genuinely belongs to no plan, or one created by plan A and violated by code from plan B where "which plan reopens?" has no clean answer. If that happens twice, build subsystems then — with evidence, not prediction.
+
+Expectations still need an owner. Under the amendment, the owner is **the plan that created them**, and a violation reopens that plan.
+
+### Stale — the inventory and the sequencing
+
+- **The "What InDusk has today" section is out of date.** It lists Graphiti episodic memory, FalkorDB code graph, code-graph-context and the `/highlight → eval-agent → Graphiti` pipeline as live substrate. `indusk-makeover` removed all of them; highlights now materialize into `.claude/lessons/` via `add_lesson`. Phase 8's bloat audit is *more* right than when written — parts of it already happened.
+- **"Not Dawn. Dawn comes later. Dawn is built on top of Midnight"** is superseded by `.indusk/planning/indusk-v2-dawn/master.md`, which has components 1, 2, 3 and 6 done and does not mention Midnight. Dawn was re-founded 2026-07-26, after this brief. **The relationship between the two is an open question and neither document currently answers it.**
+
+### What did not change
+
+Phase 8 (the bloat audit), the collapse-signal concept, the F-corpus, and the claim that expectation-shaped regression is a higher-value class than unit-test regression. All stand.
+
+---
 
 **What this is not:** Midnight is not Dawn. Dawn comes later (loosely "Phase 3"). Dawn is a system multiple people can work on together — wraps any codebase, retrofits / fills in missing structure, supports shared documentation, expectations, and corpus across a team. Dawn is built **on top of Midnight**. Midnight is the engine; Dawn is the product surface that exposes it to teams.
 

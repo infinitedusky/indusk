@@ -64,6 +64,7 @@ const config = defineConfig({
 						{ text: "Context Beam", link: "/guide/context-beam" },
 						{ text: "Context Budget", link: "/guide/context-budget" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
+						{ text: "Plan Lifecycle (proposed)", link: "/guide/plan-lifecycle" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Cleanup Ritual", link: "/guide/cleanup-ritual" },
 						{ text: "Worktree Setup (Workbench)", link: "/guide/worktree-setup" },

@@ -1,0 +1,9 @@
+# A zero-warning result from an auditor means it didn't flag anything — not that what it silently accepted was correctly labeled
+
+An auditor that returns "0 blocked, N deferred, no warnings" is reporting that its checks passed — it is not reporting that every field it read off those rows was classified correctly. Checks and classification are different operations, and a keyword-matching classifier can get the label wrong on a row that is otherwise substantively fine.
+
+**What happened:** `lifecycle-rebalance`'s trajectory audit returned 0 blocked rows and 2 deferred rows with no warnings — but both deferred rows were mislabeled. U1 (whose mitigation named no downstream plan) came back classified `downstream-plan`; U2 (whose mitigation named no metric) came back classified `telemetry-alert`. The classifier had keyed on the word "metric" appearing anywhere in the mitigation text, not on whether the mitigation actually specified a metric or a plan. The mitigations themselves were genuinely wired into the retrospective skill and the planner template — the substance held — only the labels drifted.
+
+**Why it matters:** a "no warnings" result is easy to read as "everything here is correct," but a classifier can only warn about the failure modes it was built to detect. Mislabeling isn't one of them if the classifier assumes its own keyword match is ground truth. Treat a clean audit result as "the checks I wrote didn't fire," not as "this was independently verified."
+
+**How to apply:** when trusting an automated classifier's output (trajectory mitigation type, gate type, category tags, etc.), spot-check a sample of what it labeled — especially rows near its matching heuristic's edge cases — rather than treating zero warnings as proof of correctness. If a classifier keys on substring/keyword presence, that's a specific, checkable weakness: verify it against a row where the keyword appears but the substance doesn't match.
