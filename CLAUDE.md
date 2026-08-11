@@ -150,7 +150,8 @@ dusk/
 | local-telemetry | test-plan accepted | impl phases |
 | documentation-phase-gate / falsify-phase-authoring / evaluator-structured-scorecard-output / admin-ui-local-domain | accepted | queued |
 | indusk-v2-dawn | parent plan (living master) | re-founded 2026-07-26; component status in `.indusk/planning/indusk-v2-dawn/master.md`; Component 0 (dawn-ui-plan-grouping) shipped |
-| graph-knowledge-architecture / cursor-support / midnight | research/parked | **review against the makeover** — the graph-canonical direction is rejected; these need re-scoping or archiving |
+| midnight | brief amended 2026-08-11 | **active direction, referenced going forward** — expectation/telemetry linkage is the plan of record; failure-earned-tests replaced by two authorities; `subsystem` dropped for reopenable plans. See `/guide/plan-lifecycle` |
+| graph-knowledge-architecture / cursor-support | research/parked | **review against the makeover** — the graph-canonical direction is rejected; these need re-scoping or archiving |
 | react-native-support | impl approved, parked | roll into dusk-v2 or archive |
 
 **Test bed**: `~/code/sandbox/chitin-sportsbook` (real project on Base Sepolia) exercises the dev system end-to-end.

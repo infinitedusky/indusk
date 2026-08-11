@@ -172,3 +172,6 @@
 {"id":"h-20260811-001","processedAt":"2026-08-11T00:34:37.514Z","action":"skipped","detail":"already materialized in this commit as tested-is-not-reachable-run-the-documented-command.md"}
 {"id":"h-20260811-002","processedAt":"2026-08-11T00:34:38.611Z","action":"skipped","detail":"already materialized in this commit as never-write-conversation-proof-that-did-not-happen.md"}
 {"id":"h-20260811-003","processedAt":"2026-08-11T00:34:38.715Z","action":"wrote-episode","detail":"no-warning-from-a-classifier-is-not-a-correct-classification"}
+{"id":"h-20260811-006","processedAt":"2026-08-11T22:05:53.989Z","action":"wrote-episode","detail":"reopenable-beats-new-durable-primitive-when-resting-state-must-stay-bounded"}
+{"id":"h-20260811-004","processedAt":"2026-08-11T22:05:55.625Z","action":"skipped","detail":"recorded in test-phase-structure/brief.md and adr.md; the measurement (260/444 rows unenforceable) and design are plan-specific, independently verified accurate against the live corpus"}
+{"id":"h-20260811-005","processedAt":"2026-08-11T22:05:56.142Z","action":"skipped","detail":"recorded in test-phase-structure/test-plan.md; 16 assertions and U1's durable-artifact control fully captured there"}

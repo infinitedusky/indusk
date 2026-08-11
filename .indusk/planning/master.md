@@ -47,7 +47,7 @@ Three plans queued ahead of arc work because each is small, ready-or-near-ready,
 
 ## Arc 0 — Midnight (substrate refactor)
 
-**Goal**: refactor InDusk so failures earn tests, not specifications. Production-driven test authority + bloat audit + lean substrate. 8 phases, ~2 weeks distributed across normal feature work. See [midnight/brief.md](midnight/brief.md).
+**Goal** *(amended 2026-08-11)*: give tests, telemetry and plans one shared vocabulary — expectations named, enforced in code, observed in spans. The original framing ("failures earn tests, not specifications") is **replaced by two authorities**: specification tests written before the code, failure tests written after a violation. Telemetry does not replace specification tests — it grades them, and a test that *passed* while production broke is the signal nothing else produces. The `subsystem` primitive is **dropped** in favour of reopenable plans with a `monitor` state. See the brief's Amendment and [/guide/plan-lifecycle](../../apps/docs/src/guide/plan-lifecycle.md). Production-driven test authority + bloat audit + lean substrate. 8 phases, ~2 weeks distributed across normal feature work. See [midnight/brief.md](midnight/brief.md).
 
 **Why Arc 0**: Midnight reframes what Arc 2 should be building. If Arc 2 (graph-knowledge-architecture and downstream) ships before Midnight Phase 8 (bloat audit), Arc 2 builds typed-graph machinery for surfaces Phase 8 may flag as unused. Phases 1–3 are quick (~3 days total) and produce the convention + code annotations + telemetry-contract extension that Arc 2 will then build on top of.
 
@@ -58,7 +58,7 @@ Three plans queued ahead of arc work because each is small, ready-or-near-ready,
 | 0.3 | Telemetry contract extension | ~1d | `telemetry-contract.ts` entries declare `expectations:` field. Typecheck rejects E-IDs not in the relevant subsystem. |
 | 0.4 | `expectTraceShape` helper | ~2d | Trace-pattern assertion library. Each pattern names the E-N it validates. CI failure messages reference the expectation. **This is the test-writing primitive going forward.** |
 | 0.5 | Collapse-signal query | ~2d | `pnpm midnight:check <subsystem>` shows expectation violations over a window from Dash0 + local telemetry. Collapse signal becomes a number. |
-| 0.6 | Skill updates | ~1d | `/planner` recognizes subsystem-shaped work and appends phases. `/retrospective` distinguishes archive-eligible feature plans vs live subsystems. `/falsify` runs against the expectation list. |
+| 0.6 | Skill updates | ~1d | `/planner` appends a maintenance phase to a reopened plan. `/retrospective` distinguishes closing a round from closing a plan; `monitor` gains an exit condition from 0.5. *(amended — was subsystem-shaped)* `/retrospective` distinguishes archive-eligible feature plans vs live subsystems. `/falsify` runs against the expectation list. |
 | 0.7 | Production-to-corpus loop | ~2d | Dash0 alert → checks F-corpus → pages with "this is F-N, here's the fix path" or opens a new F-N. |
 | 0.8 | **InDusk bloat audit + drop** | ~2d | Inventory every extension, skill, hook, tool. Mark each: load-bearing / superseded / unused / unknown. Drop superseded + unused. cgc + Graphiti get specific scrutiny. **Phase 8 may flag parts of Arc 1/2/3 inventory as drop-eligible — Arc 2 start is gated on Phase 8 completing.** |
 
