@@ -1,6 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
+import { fencedLineMask, parsePhaseHeading } from "../impl-headings.js";
 import { TERMINAL_STATES } from "../trajectory/parser.js";
 import { type GateEnvelope, type GateResult, runGateScripts } from "./gate.js";
 import { snapshotTrajectory } from "./goalposts.js";
@@ -21,6 +22,36 @@ import { snapshotTrajectory } from "./goalposts.js";
 
 /** The probe checklist item injected into the temp copy — unique by construction. */
 export const PROBE_ITEM = "__indusk-run phase-close probe__";
+
+/**
+ * Everything up to and including phase `n`, with every later phase dropped.
+ *
+ * The probe's contract is "every phase up to N is closed". It used to get that
+ * by appending a synthetic `Phase N+1` and relying on `check-gates` stopping at
+ * the first phase whose *number* was not smaller — which silently depended on
+ * the real Phase N+1 sharing a number with the synthetic one. That coincidence
+ * disappeared the moment phases could be ordered by document position instead
+ * of by number, and its absence turned every unfinished next phase into a false
+ * "premature checkoff".
+ *
+ * Truncating states the contract directly: if the later phases are not in the
+ * document, no ordering rule can include them. Falls back to the full content
+ * when phase `n` cannot be located, which preserves the previous behaviour
+ * rather than silently probing an empty document.
+ */
+export function truncateAfterPhase(content: string, n: number): string {
+	const lines = content.split("\n");
+	const fenced = fencedLineMask(lines);
+	let seenTarget = false;
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		const heading = parsePhaseHeading(lines[i]);
+		if (!heading) continue;
+		if (seenTarget) return lines.slice(0, i).join("\n");
+		if (heading.kind === "build" && heading.number === n) seenTarget = true;
+	}
+	return content;
+}
 
 /**
  * Deliberate phase-close probe: feed `check-gates` a would-be next-phase
@@ -44,7 +75,10 @@ export async function probePhaseClose(options: {
 	const content = await readFile(options.implPath, "utf8");
 	const probePhase = options.phase + 1;
 	const probeContent = [
-		neutralizeRowsWritableAt(content, probePhase),
+		// Drop everything after phase N so "the phases before the probe" is
+		// exactly "phases up to N" under any ordering rule — see
+		// `truncateAfterPhase`.
+		truncateAfterPhase(neutralizeRowsWritableAt(content, probePhase), options.phase),
 		"",
 		`### Phase ${probePhase}: __orchestrator phase-close probe__`,
 		"",

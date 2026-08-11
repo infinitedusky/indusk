@@ -12,7 +12,12 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
-import { FORWARD_INTELLIGENCE_HEADING, gateHeading, PHASE_HEADING } from "./_impl-headings.js";
+import {
+	FORWARD_INTELLIGENCE_HEADING,
+	fencedLineMask,
+	gateHeading,
+	parsePhaseHeading,
+} from "./_impl-headings.js";
 
 // Read hook input from stdin
 let input = "";
@@ -166,17 +171,27 @@ function parsePhases(content) {
 	const body = fmMatch ? content.slice(fmMatch[0].length) : content;
 
 	const lines = body.split("\n");
+	// Fenced blocks are content, not structure — a deferral may carry the
+	// deferred test's body, which contains checkbox- and heading-shaped lines.
+	const fenced = fencedLineMask(lines);
 	const phases = [];
 	let currentPhase = null;
 	let currentGateType = "implementation";
 
-	for (const line of lines) {
-		const phaseMatch = line.match(PHASE_HEADING);
+	for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+		const line = lines[lineIndex];
+		if (fenced[lineIndex]) continue;
+
+		const phaseMatch = parsePhaseHeading(line);
 		if (phaseMatch) {
 			if (currentPhase) phases.push(currentPhase);
 			currentPhase = {
-				number: parseInt(phaseMatch[1], 10),
-				name: phaseMatch[2].trim(),
+				number: phaseMatch.number,
+				kind: phaseMatch.kind,
+				// Position in the document — the only thing that orders two
+				// independently-numbered sequences.
+				ordinal: phases.length,
+				name: phaseMatch.name,
 				items: [],
 			};
 			currentGateType = "implementation";
@@ -209,6 +224,11 @@ function parsePhases(content) {
 	}
 	if (currentPhase) phases.push(currentPhase);
 	return phases;
+}
+
+/** Name a phase unambiguously: the two sequences share their digits. */
+function phaseLabel(kind, number) {
+	return `${kind === "test" ? "Test " : ""}Phase ${number}`;
 }
 
 const workflow = detectWorkflow(fullContent);
@@ -252,6 +272,8 @@ for (let pi = 0; pi < newPhases.length; pi++) {
 		if (newItem.checked && !oldItem.checked) {
 			newlyChecked.push({
 				phase: newPhase.number,
+				phaseKind: newPhase.kind,
+				phaseOrdinal: newPhase.ordinal,
 				phaseName: newPhase.name,
 				text: newItem.text,
 				gate: newItem.gate,
@@ -270,9 +292,12 @@ for (const item of newlyChecked) {
 	// Checking gate items is always allowed
 	if (item.gate !== "implementation") continue;
 
-	// Check all phases before this item's phase
+	// Check all phases before this item's phase. Ordered by document position:
+	// with two sequences numbering independently, `Test Phase 1` and `Build
+	// Phase 1` both report number 1, so a number comparison would let build
+	// work start while the test phase that authors its tests is still open.
 	for (const phase of oldPhases) {
-		if (phase.number >= item.phase) break;
+		if (phase.ordinal >= item.phaseOrdinal) break;
 
 		const isOverridden = (text) => {
 			if (gatePolicy === "strict") return false;
@@ -307,7 +332,7 @@ for (const item of newlyChecked) {
 						? 'Gate policy is \'ask\' — to skip, you must ask the user and include proof.\nFormat: (none needed — asked: "your question" — user: "their answer")\n'
 						: "To skip a gate item, mark with (none needed) or skip-reason: {why}\n";
 			process.stderr.write(
-				`Phase ${item.phase} blocked (policy: ${gatePolicy}): complete Phase ${phase.number} gates first:\n${missing}\n${skipHint}`,
+				`${phaseLabel(item.phaseKind, item.phase)} blocked (policy: ${gatePolicy}): complete ${phaseLabel(phase.kind, phase.number)} gates first:\n${missing}\n${skipHint}`,
 			);
 			process.exit(2);
 		}

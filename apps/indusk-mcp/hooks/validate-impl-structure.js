@@ -23,6 +23,9 @@ import {
 	FORWARD_INTELLIGENCE_HEADING,
 	gateHeading,
 	PHASE_HEADING,
+	parsePhaseRef,
+	phaseOrdinal,
+	phaseSequence,
 } from "./_impl-headings.js";
 
 // Read hook input from stdin
@@ -394,7 +397,7 @@ function validateTrajectory(implBody, rationaleRequired, rationaleBaseline = 0) 
 
 	const trajectory = parseTrajectoryFromBody(implBody);
 	errors.push(...validateCrossReferenceIntegrity(implBody, trajectory));
-	errors.push(...validateTemporalCoherence(trajectory));
+	errors.push(...validateTemporalCoherence(trajectory, phaseSequence(body)));
 	errors.push(...validateDeferredCompleteness(trajectory));
 	if (rationaleRequired) {
 		errors.push(...validateRationaleCompleteness(implBody, trajectory, rationaleBaseline));
@@ -460,9 +463,12 @@ function normalizeHeader(header) {
 	return aliases[normalized] || normalized;
 }
 
-function parsePhaseRef(cell) {
-	const match = cell.match(/^\s*Phase\s+(\d+)\s*$/i);
-	return match ? Number.parseInt(match[1], 10) : Number.NaN;
+function parsePhaseRefNumber(cell) {
+	return parsePhaseRef(cell)?.number ?? Number.NaN;
+}
+
+function parsePhaseRefKind(cell) {
+	return parsePhaseRef(cell)?.kind ?? "build";
 }
 
 function parseTrajectoryTable(lines) {
@@ -483,8 +489,10 @@ function parseTrajectoryTable(lines) {
 		rows.push({
 			id: rec.id.trim(),
 			asserts: rec.asserts.trim(),
-			writableAt: parsePhaseRef(rec.writableAt || ""),
-			passesAt: parsePhaseRef(rec.passesAt || ""),
+			writableAt: parsePhaseRefNumber(rec.writableAt || ""),
+			passesAt: parsePhaseRefNumber(rec.passesAt || ""),
+			writableAtKind: parsePhaseRefKind(rec.writableAt || ""),
+			passesAtKind: parsePhaseRefKind(rec.passesAt || ""),
 		});
 	}
 	return rows;
@@ -624,7 +632,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 	return errors;
 }
 
-function validateTemporalCoherence(trajectory) {
+function validateTemporalCoherence(trajectory, trajectorySequence) {
 	const errors = [];
 	for (const row of trajectory.rows) {
 		if (!Number.isFinite(row.writableAt)) {
@@ -641,10 +649,22 @@ function validateTemporalCoherence(trajectory) {
 			});
 			continue;
 		}
-		if (row.writableAt > row.passesAt) {
+		// Ordered on the document's timeline, not by number — two sequences
+		// numbering independently share their digits. Reduces to the number
+		// when the document has no test phase.
+		const writableOrd = phaseOrdinal(
+			{ kind: row.writableAtKind, number: row.writableAt },
+			trajectorySequence,
+		);
+		const passesOrd = phaseOrdinal(
+			{ kind: row.passesAtKind, number: row.passesAt },
+			trajectorySequence,
+		);
+		if (writableOrd > passesOrd) {
+			const label = (n, kind) => `${kind === "test" ? "Test " : ""}Phase ${n}`;
 			errors.push({
 				rule: "temporal-coherence",
-				message: `Trajectory row \`${row.id}\` has "Writable at" Phase ${row.writableAt} > "Passes at" Phase ${row.passesAt}. A test cannot pass before its dependencies exist.`,
+				message: `Trajectory row \`${row.id}\` has "Writable at" ${label(row.writableAt, row.writableAtKind)} after "Passes at" ${label(row.passesAt, row.passesAtKind)}. A test cannot pass before its dependencies exist.`,
 			});
 		}
 	}

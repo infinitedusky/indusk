@@ -65,3 +65,70 @@ export function parsePhaseHeading(line) {
 	}
 	return null;
 }
+
+/** `Phase 3`, `Build Phase 3`, `Test Phase 1` — a whole trajectory cell. */
+export const PHASE_REFERENCE = /^\s*(Test\s+|Build\s+)?Phase\s+(\d+)\s*$/i;
+
+/** Parse a `Writable at` / `Passes at` cell. `null` if not a reference. */
+export function parsePhaseRef(cell) {
+	const match = PHASE_REFERENCE.exec(cell);
+	if (!match) return null;
+	const kind = match[1]?.trim().toLowerCase() === "test" ? "test" : "build";
+	return { kind, number: parseInt(match[2], 10) };
+}
+
+/** True for a line that opens or closes a fenced code block. */
+const FENCE = /^\s*(?:```|~~~)/;
+
+/**
+ * Mark every line inside a fenced code block. Structure-scanning must skip
+ * these: a Test Phase 1 deferral may carry the deferred test's body, and that
+ * body contains lines that look exactly like checklist items and gate
+ * headings — which is the point of carrying it.
+ */
+export function fencedLineMask(lines) {
+	const mask = [];
+	let inFence = false;
+	for (const line of lines) {
+		if (FENCE.test(line)) {
+			mask.push(true);
+			inFence = !inFence;
+			continue;
+		}
+		mask.push(inFence);
+	}
+	return mask;
+}
+
+/** The document's phases, in the order they appear. Fenced blocks ignored. */
+export function phaseSequence(body) {
+	const lines = body.split("\n");
+	const fenced = fencedLineMask(lines);
+	const out = [];
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		const heading = parsePhaseHeading(lines[i]);
+		if (heading) out.push({ kind: heading.kind, number: heading.number });
+	}
+	return out;
+}
+
+/**
+ * Where `ref` sits on the document's single phase timeline.
+ *
+ * **A document with no test phase reduces to the phase number**, exactly as
+ * before — backward compatibility is a property of this function rather than a
+ * claim made about it elsewhere, and `Phase 0` keeps ordering before `Phase 1`
+ * by arithmetic with no special case.
+ */
+export function phaseOrdinal(ref, sequence) {
+	if (!sequence.some((p) => p.kind === "test")) return ref.number;
+	const exact = sequence.findIndex((p) => p.kind === ref.kind && p.number === ref.number);
+	if (exact !== -1) return exact;
+	let lastBefore = -1;
+	for (let i = 0; i < sequence.length; i++) {
+		const p = sequence[i];
+		if (p.kind === ref.kind && p.number < ref.number) lastBefore = i;
+	}
+	return lastBefore + 0.5;
+}

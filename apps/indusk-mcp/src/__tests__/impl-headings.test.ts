@@ -54,13 +54,24 @@ describe("A13 — one definition of the phase heading", () => {
 		expect(definitions).toHaveLength(1);
 	});
 
-	// A behavioural companion — "the one definition accepts both spellings and
-	// rejects a test phase" — is deliberately NOT authored here. It imports
-	// `lib/impl-headings.js`, which Phase 1 creates, so at Phase 0 it fails to
-	// load and its assertion never runs: a fake red, and exactly what this plan
-	// forbids. It is written in Phase 1 alongside the module, which is the
-	// legitimate `Writable at = Passes at` case (the subject is a symbol
-	// introduced in that phase).
+	// Authored in Build Phase 1 rather than with the rest of the trajectory,
+	// and justified in Test Phase 1's register: it imports the module Build
+	// Phase 1 creates, so at Test Phase 1 it would have failed to *load* — the
+	// assertion never running, a red that says nothing about behaviour. This is
+	// the legitimate `Writable at = Passes at` case, where the subject is a
+	// symbol introduced in the same phase.
+	it("the one definition accepts both spellings and rejects a test phase", async () => {
+		// Guards the guard. A single definition that quietly matched `Test Phase`
+		// as well would collapse the distinction this plan exists to create, and
+		// it would do so silently: every test phase would satisfy the build-phase
+		// rules and nothing would report a problem.
+		const { PHASE_HEADING, TEST_PHASE_HEADING } = await import("../lib/impl-headings.js");
+
+		expect("### Phase 1: Thing").toMatch(PHASE_HEADING);
+		expect("### Build Phase 1: Thing").toMatch(PHASE_HEADING);
+		expect("### Test Phase 1: Thing").not.toMatch(PHASE_HEADING);
+		expect("### Test Phase 1: Thing").toMatch(TEST_PHASE_HEADING);
+	});
 });
 
 describe("A17 — an impl in which no phase parses is refused, not passed", () => {

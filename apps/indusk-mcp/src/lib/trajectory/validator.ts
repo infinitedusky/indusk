@@ -1,4 +1,11 @@
-import { ANY_PHASE_HEADING, gateHeading } from "../impl-headings.js";
+import {
+	ANY_PHASE_HEADING,
+	gateHeading,
+	type PhaseKind,
+	type PhaseRef,
+	phaseOrdinal,
+	phaseSequence,
+} from "../impl-headings.js";
 import { parseTrajectory, type Trajectory } from "./parser.js";
 
 export interface ValidationError {
@@ -193,8 +200,12 @@ export function validateCrossReferenceIntegrity(
  * be ≤ the phase number in `Passes at`. A test cannot pass before its
  * dependencies exist. Also catches NaN from malformed `Phase N` references.
  */
-export function validateTemporalCoherence(trajectory: Trajectory): ValidationError[] {
+export function validateTemporalCoherence(
+	trajectory: Trajectory,
+	sequence: readonly PhaseRef[] = [],
+): ValidationError[] {
 	const errors: ValidationError[] = [];
+	const label = (n: number, kind: PhaseKind) => `${kind === "test" ? "Test " : ""}Phase ${n}`;
 	for (const row of trajectory.rows) {
 		if (!Number.isFinite(row.writableAt)) {
 			errors.push({
@@ -210,10 +221,17 @@ export function validateTemporalCoherence(trajectory: Trajectory): ValidationErr
 			});
 			continue;
 		}
-		if (row.writableAt > row.passesAt) {
+		// Ordered on the document's timeline rather than by number: with two
+		// sequences numbering independently, Test Phase 1 and Build Phase 1 are
+		// different phases wearing the same digit. `phaseOrdinal` reduces to the
+		// number when the document has no test phase, so every existing impl
+		// compares exactly as it did before.
+		const writable = phaseOrdinal({ kind: row.writableAtKind, number: row.writableAt }, sequence);
+		const passes = phaseOrdinal({ kind: row.passesAtKind, number: row.passesAt }, sequence);
+		if (writable > passes) {
 			errors.push({
 				rule: "temporal-coherence",
-				message: `Trajectory row \`${row.id}\` has "Writable at" Phase ${row.writableAt} > "Passes at" Phase ${row.passesAt}. A test cannot pass before its dependencies exist. If phases were reordered, update the trajectory to reflect the new dependency order.`,
+				message: `Trajectory row \`${row.id}\` has "Writable at" ${label(row.writableAt, row.writableAtKind)} after "Passes at" ${label(row.passesAt, row.passesAtKind)}. A test cannot pass before its dependencies exist. If phases were reordered, update the trajectory to reflect the new dependency order.`,
 			});
 		}
 	}
@@ -351,7 +369,7 @@ export function validateTrajectory(
 	const trajectory = parseTrajectory(body);
 	const errors: ValidationError[] = [
 		...validateCrossReferenceIntegrity(body, trajectory),
-		...validateTemporalCoherence(trajectory),
+		...validateTemporalCoherence(trajectory, phaseSequence(body)),
 		...validateDeferredCompleteness(trajectory),
 	];
 	if (options.rationaleRequired) {

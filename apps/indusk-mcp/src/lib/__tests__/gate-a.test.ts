@@ -84,6 +84,13 @@ describe("A6 — build work cannot proceed while a test phase has unauthored tes
 
 		expect(result.exitCode).toBe(2);
 		expect(result.stderr).toMatch(/T1/);
+		// Pinned to Gate A specifically. Without this the case passes on the
+		// *gate-completeness* refusal instead — Test Phase 1's Verification is
+		// also unchecked here, and its item text happens to contain "T1", so
+		// `/T1/` alone is satisfied by a message that says nothing about the
+		// test being unauthored. A green for the wrong reason is worse than a
+		// red, because it retires the question.
+		expect(result.stderr).toMatch(/test-first/i);
 	}, 30_000);
 });
 

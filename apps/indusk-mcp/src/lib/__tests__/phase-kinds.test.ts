@@ -13,12 +13,15 @@ import { check, gateTransition, validateWrite } from "../../__tests__/helpers/ho
  * parser recognises exactly one of the two spellings.
  */
 
+// Deliberately no `rationale: required`. These fixtures are about phase kinds
+// and inert deferral bodies; opting into the legacy `### Trajectory Rationale`
+// rule would make them fail on a claim they do not make — that the register
+// absorbs that section, which is A14's, tested directly there.
 const FRONTMATTER = [
 	"---",
 	'title: "Fixture"',
 	"status: in-progress",
 	"trajectory: required",
-	"rationale: required",
 	"gate_policy: auto",
 	"---",
 	"",
