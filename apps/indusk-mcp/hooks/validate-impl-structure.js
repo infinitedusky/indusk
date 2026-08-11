@@ -17,6 +17,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
+import {
+	ANY_PHASE_HEADING,
+	ANY_PHASE_HEADING_LOOSE,
+	FORWARD_INTELLIGENCE_HEADING,
+	gateHeading,
+	PHASE_HEADING,
+} from "./_impl-headings.js";
 
 // Read hook input from stdin
 let input = "";
@@ -130,7 +137,7 @@ if (event.tool_name === "Edit" && toolInput.old_string) {
 // Only validate if this edit is adding/modifying phase structure
 // Check if the edit contains phase headers
 const editContent = toolInput.new_string ?? toolInput.content ?? "";
-const hasPhaseHeader = /###\s+Phase\s+\d+/.test(editContent);
+const hasPhaseHeader = ANY_PHASE_HEADING_LOOSE.test(editContent);
 const hasChecklistItem = /- \[ \]/.test(editContent);
 
 // If the edit doesn't touch phase structure, allow it
@@ -165,7 +172,7 @@ let currentPhase = null;
 let currentSection = "implementation";
 
 for (const line of lines) {
-	const phaseMatch = line.match(/^###\s+Phase\s+(\d+)[:\s]+(.*)/);
+	const phaseMatch = line.match(PHASE_HEADING);
 	if (phaseMatch) {
 		if (currentPhase) phases.push(currentPhase);
 		currentPhase = {
@@ -188,28 +195,28 @@ for (const line of lines) {
 	if (!currentPhase) continue;
 
 	// Detect gate section headers
-	const verMatch = line.match(/^####\s+Phase\s+\d+\s+Verification\b/);
+	const verMatch = line.match(gateHeading("Verification"));
 	if (verMatch) {
 		currentPhase.hasVerification = true;
 		currentSection = "verification";
 		continue;
 	}
 
-	const otelMatch = line.match(/^####\s+Phase\s+\d+\s+OTel\b/);
+	const otelMatch = line.match(gateHeading("OTel"));
 	if (otelMatch) {
 		currentPhase.hasOtel = true;
 		currentSection = "otel";
 		continue;
 	}
 
-	const ctxMatch = line.match(/^####\s+Phase\s+\d+\s+Context\b/);
+	const ctxMatch = line.match(gateHeading("Context"));
 	if (ctxMatch) {
 		currentPhase.hasContext = true;
 		currentSection = "context";
 		continue;
 	}
 
-	const docMatch = line.match(/^####\s+Phase\s+\d+\s+Document\b/);
+	const docMatch = line.match(gateHeading("Document"));
 	if (docMatch) {
 		currentPhase.hasDocument = true;
 		currentSection = "document";
@@ -234,11 +241,36 @@ for (const line of lines) {
 	}
 
 	// Forward intelligence doesn't count as a gate
-	if (line.match(/^####\s+Phase\s+\d+\s+Forward Intelligence\b/)) {
+	if (line.match(FORWARD_INTELLIGENCE_HEADING)) {
 		currentSection = "fi";
 	}
 }
 if (currentPhase) phases.push(currentPhase);
+
+// ------------------------------------------------------------------
+// Zero-parsed-phases rejection.
+//
+// Every structural rule below is keyed on parsed phases, so when none parse
+// there is nothing to enforce against and the write sails through. A typo in a
+// heading therefore does not fail — it silently disables the entire validator,
+// which is the worst possible failure mode for a change that alters what a
+// heading looks like.
+//
+// The condition is deliberately "there is work here and no phase claims it",
+// not merely "no phases": a plan mid-authoring legitimately has frontmatter
+// and prose before its first phase exists, and refusing that would block the
+// document from ever being written.
+// ------------------------------------------------------------------
+const bodyHasChecklistItems = /^\s*-\s+\[[ xX]\]/m.test(body);
+if (phases.length === 0 && bodyHasChecklistItems) {
+	process.stderr.write(
+		"Impl structure invalid: the document has checklist items but no phase heading parses, " +
+			"so every structural rule would be skipped silently.\n" +
+			"Expected `### Test Phase N: Name`, `### Build Phase N: Name`, or `### Phase N: Name` " +
+			"(the last two are the same thing). Check for a typo in a heading.\n",
+	);
+	process.exit(2);
+}
 
 // Validate each phase
 const errors = [];
@@ -530,7 +562,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
-		const phaseMatch = line.match(/^###\s+Phase\s+(\d+)\b/);
+		const phaseMatch = line.match(ANY_PHASE_HEADING);
 		if (phaseMatch) {
 			flushPhase();
 			currentPhase = Number.parseInt(phaseMatch[1], 10);
@@ -540,7 +572,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 			itemCount = 0;
 			continue;
 		}
-		const verMatch = line.match(/^####\s+Phase\s+(\d+)\s+Verification\b/);
+		const verMatch = line.match(gateHeading("Verification"));
 		if (verMatch && currentPhase !== null) {
 			flushPhase();
 			inVerification = true;
@@ -549,10 +581,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 			itemCount = 0;
 			continue;
 		}
-		if (
-			inVerification &&
-			/^####\s+Phase\s+\d+\s+(OTel|Context|Document|Forward Intelligence)\b/.test(line)
-		) {
+		if (inVerification && gateHeading("(OTel|Context|Document|Forward Intelligence)").test(line)) {
 			flushPhase();
 			inVerification = false;
 			continue;

@@ -34,7 +34,7 @@ Add React Native/Expo support to indusk-mcp: `init` detects Expo projects and sc
 | Phase 3 | `init.ts` Expo detection + scaffolding | Phase 0 auto-add, Phase 1 extensions, Phase 2 template |
 | Phase 4 | End-to-end validation on fresh Expo project | All prior phases |
 
-## Phase 0: Auto-Add MCP Servers from Extensions
+### Phase 0: Auto-Add MCP Servers from Extensions
 
 Any extension with `mcp_server` in its manifest should be auto-added to `.mcp.json` via `claude mcp add` during `init`. No manual `.mcp.json` editing — ever.
 
@@ -66,7 +66,7 @@ Any extension with `mcp_server` in its manifest should be auto-added to `.mcp.js
 #### Phase 0 Document
 - [ ] Update extension authoring docs: `mcp_server` manifest field auto-adds during init
 
-## Phase 1: Extensions
+### Phase 1: Extensions
 
 ### Implementation
 - [ ] Create `extensions/expo/manifest.json`:
@@ -148,7 +148,7 @@ Any extension with `mcp_server` in its manifest should be auto-added to `.mcp.js
 #### Phase 1 Document
 - [ ] Add extension descriptions to docs sidebar and reference pages
 
-## Phase 2: OTel Template
+### Phase 2: OTel Template
 
 ### Implementation
 - [ ] Create `templates/instrumentation.rn.ts`:
@@ -197,7 +197,7 @@ Any extension with `mcp_server` in its manifest should be auto-added to `.mcp.js
 #### Phase 2 Document
 - [ ] Add OTel React Native setup guide to `reference/extensions/expo.md`
 
-## Phase 3: `init` Expo Detection
+### Phase 3: `init` Expo Detection
 
 ### Implementation
 - [ ] Add Expo detection in `init.ts` OTel section — before `isNextJs` check:
@@ -244,7 +244,7 @@ Any extension with `mcp_server` in its manifest should be auto-added to `.mcp.js
 #### Phase 3 Document
 - [ ] Update Getting Started guide with React Native/Expo as supported project type
 
-## Phase 4: Validation
+### Phase 4: Validation
 
 ### Implementation
 - [ ] Create a fresh Expo project: `npx create-expo-app test-rn-otel`

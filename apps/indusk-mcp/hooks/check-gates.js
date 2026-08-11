@@ -12,6 +12,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
+import { FORWARD_INTELLIGENCE_HEADING, gateHeading, PHASE_HEADING } from "./_impl-headings.js";
 
 // Read hook input from stdin
 let input = "";
@@ -170,7 +171,7 @@ function parsePhases(content) {
 	let currentGateType = "implementation";
 
 	for (const line of lines) {
-		const phaseMatch = line.match(/^###\s+Phase\s+(\d+)[:\s]+(.*)/);
+		const phaseMatch = line.match(PHASE_HEADING);
 		if (phaseMatch) {
 			if (currentPhase) phases.push(currentPhase);
 			currentPhase = {
@@ -182,14 +183,15 @@ function parsePhases(content) {
 			continue;
 		}
 
-		const gateMatch = line.match(/^####\s+Phase\s+\d+\s+(Verification|OTel|Context|Document)\b/);
+		// [1] is the phase number, [2] the gate kind — see gateHeading().
+		const gateMatch = line.match(gateHeading("(Verification|OTel|Context|Document)"));
 		if (gateMatch) {
-			currentGateType = gateMatch[1].toLowerCase();
+			currentGateType = gateMatch[2].toLowerCase();
 			continue;
 		}
 
 		// Forward intelligence — skip
-		if (line.match(/^####\s+Phase\s+\d+\s+Forward Intelligence\b/)) {
+		if (line.match(FORWARD_INTELLIGENCE_HEADING)) {
 			currentGateType = "_fi";
 			continue;
 		}
@@ -213,6 +215,27 @@ const workflow = detectWorkflow(fullContent);
 const requiredGates = WORKFLOW_GATES[workflow] || WORKFLOW_GATES.feature;
 const oldPhases = parsePhases(fullContent);
 const newPhases = parsePhases(newFullContent);
+
+// ------------------------------------------------------------------
+// Zero-parsed-phases rejection.
+//
+// Control flow below is driven entirely by `newlyChecked`, which is derived
+// from parsed phases — so an incoming edit in which no heading parses produces
+// an empty list and every gate is skipped. A checkoff arriving alongside a
+// broken heading is exactly the shape of that hazard, and it currently exits 0.
+//
+// This fires only when the incoming content *checks something off* (the caller
+// already established a checkbox transition) and still yields no phase: work
+// is being claimed as done, and no phase can be held responsible for it.
+// ------------------------------------------------------------------
+if (newPhases.length === 0) {
+	process.stderr.write(
+		"Gate check refused: an item was checked off but no phase heading parses in impl.md, " +
+			"so no gate could be evaluated. Expected `### Test Phase N: Name`, " +
+			"`### Build Phase N: Name`, or `### Phase N: Name`. Check for a typo in a heading.\n",
+	);
+	process.exit(2);
+}
 
 // Find which items were just checked (were unchecked before, checked now)
 const newlyChecked = [];

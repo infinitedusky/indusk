@@ -7,6 +7,7 @@
  */
 
 import { readFileSync } from "node:fs";
+import { FORWARD_INTELLIGENCE_HEADING, gateHeading, PHASE_HEADING } from "./_impl-headings.js";
 
 // Read hook input from stdin
 let input = "";
@@ -42,7 +43,7 @@ function parsePhases(text) {
 	let currentGateType = "implementation";
 
 	for (const line of lines) {
-		const phaseMatch = line.match(/^###\s+Phase\s+(\d+)[:\s]+(.*)/);
+		const phaseMatch = line.match(PHASE_HEADING);
 		if (phaseMatch) {
 			if (currentPhase) phases.push(currentPhase);
 			currentPhase = {
@@ -54,13 +55,14 @@ function parsePhases(text) {
 			continue;
 		}
 
-		const gateMatch = line.match(/^####\s+Phase\s+\d+\s+(Verification|Context|Document)\b/);
+		// [1] is the phase number, [2] the gate kind — see gateHeading().
+		const gateMatch = line.match(gateHeading("(Verification|Context|Document)"));
 		if (gateMatch) {
-			currentGateType = gateMatch[1].toLowerCase();
+			currentGateType = gateMatch[2].toLowerCase();
 			continue;
 		}
 
-		if (line.match(/^####\s+Phase\s+\d+\s+Forward Intelligence\b/)) {
+		if (line.match(FORWARD_INTELLIGENCE_HEADING)) {
 			currentGateType = "_fi";
 			continue;
 		}

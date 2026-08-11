@@ -1,3 +1,4 @@
+import { ANY_PHASE_HEADING, gateHeading } from "../impl-headings.js";
 import { parseTrajectory, type Trajectory } from "./parser.js";
 
 export interface ValidationError {
@@ -33,9 +34,8 @@ export interface ValidateTrajectoryOptions {
 }
 
 const TRAJECTORY_HEADING = /^##\s+Test Trajectory\b/;
-const PHASE_HEADING = /^###\s+Phase\s+(\d+)\b/;
-const VERIFICATION_HEADING = /^####\s+Phase\s+(\d+)\s+Verification\b/;
-const NEXT_GATE_HEADING = /^####\s+Phase\s+\d+\s+(OTel|Context|Document|Forward Intelligence)\b/;
+const VERIFICATION_HEADING = gateHeading("Verification");
+const NEXT_GATE_HEADING = gateHeading("(OTel|Context|Document|Forward Intelligence)");
 const CHECKLIST_ITEM = /^-\s+\[[ xX]\]\s+(.*)/;
 // Accept T-prefixed (test) and A-prefixed (acceptance) IDs. Bounded to [TA]
 // deliberately — broadening to [A-Z] would false-match H-prefixed hypothesis
@@ -87,7 +87,9 @@ function extractPhaseVerifications(body: string): PhaseVerification[] {
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
 
-		const phaseMatch = line.match(PHASE_HEADING);
+		// Any kind: a test phase ends the previous phase's Verification block
+		// just as surely as another build phase does.
+		const phaseMatch = line.match(ANY_PHASE_HEADING);
 		if (phaseMatch) {
 			if (currentVerification) result.push(currentVerification);
 			currentPhase = Number.parseInt(phaseMatch[1], 10);

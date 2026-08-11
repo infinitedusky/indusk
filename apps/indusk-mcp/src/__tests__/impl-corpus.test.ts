@@ -33,6 +33,23 @@ import { runHook } from "./helpers/hook-runner.js";
 /**
  * Impls that already fail, for reasons that predate this plan: each is missing
  * gate sections that became mandatory after it was archived.
+ *
+ * `archive/graphiti-infrastructure` is here for a different reason and is worth
+ * naming separately: it writes its phases as `## Phase N` rather than `### Phase
+ * N`, so no phase parses and it passed **vacuously** until this plan's
+ * zero-phase rejection landed. It is not a regression — it is the bug that
+ * rejection exists to catch, found in the wild. Archived plans are read-only
+ * history, so it is recorded rather than repaired.
+ *
+ * `react-native-support` had the identical defect and is *active*, so its
+ * headings were repaired instead: an active plan whose gates are silently
+ * disabled is a live hazard, and baselining the defect would have hidden that
+ * behind a green test. Repairing it turned enforcement back on, which promptly
+ * found a real violation underneath — Phase 2's Context gate is an opt-out at
+ * write time under `ask` policy. That is left as-is and recorded here. Writing
+ * a Context item for a plan this one does not own would be inventing content to
+ * make a test green, and the violation is exactly the kind the guard exists to
+ * surface. The plan is parked; whoever picks it up fixes the gate.
  */
 const PRE_EXISTING_FAILURES = [
 	"archive/code-quality-system",
@@ -41,9 +58,11 @@ const PRE_EXISTING_FAILURES = [
 	"archive/document-skill",
 	"archive/extension-system",
 	"archive/gate-policy-enforcement",
+	"archive/graphiti-infrastructure",
 	"archive/gsd-inspired-improvements",
 	"archive/mcp-dev-system",
 	"archive/verify-skill",
+	"react-native-support",
 ];
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");

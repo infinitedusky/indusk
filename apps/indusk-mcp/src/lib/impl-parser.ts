@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import matter from "gray-matter";
+import { FORWARD_INTELLIGENCE_HEADING, gateHeading, PHASE_HEADING } from "./impl-headings.js";
 
 export type GateType = "implementation" | "verification" | "context" | "document";
 
@@ -71,8 +72,8 @@ export function parseImplString(raw: string): ParsedImpl {
 	}
 
 	for (const line of lines) {
-		// Phase header: ### Phase N: Name
-		const phaseMatch = line.match(/^###\s+Phase\s+(\d+)[:\s]+(.*)/);
+		// Phase header: ### Phase N: Name / ### Build Phase N: Name
+		const phaseMatch = line.match(PHASE_HEADING);
 		if (phaseMatch) {
 			flushGate();
 			if (currentPhase) phases.push(currentPhase);
@@ -89,7 +90,7 @@ export function parseImplString(raw: string): ParsedImpl {
 		}
 
 		// Forward Intelligence header: #### Phase N Forward Intelligence
-		const fiMatch = line.match(/^####\s+Phase\s+\d+\s+Forward Intelligence\b/);
+		const fiMatch = line.match(FORWARD_INTELLIGENCE_HEADING);
 		if (fiMatch) {
 			flushGate();
 			inForwardIntelligence = true;
@@ -98,14 +99,15 @@ export function parseImplString(raw: string): ParsedImpl {
 		}
 
 		// Gate header: #### Phase N Verification|Context|Document
-		const gateMatch = line.match(/^####\s+Phase\s+\d+\s+(Verification|Context|Document)\b/);
+		const gateMatch = line.match(gateHeading("(Verification|Context|Document)"));
 		if (gateMatch) {
 			if (inForwardIntelligence && currentPhase) {
 				currentPhase.forwardIntelligence = forwardIntelligenceLines.join("\n").trim() || null;
 				inForwardIntelligence = false;
 			}
 			flushGate();
-			currentGateType = GATE_SUFFIXES[gateMatch[1]];
+			// [1] is the phase number, [2] the gate kind — see gateHeading().
+			currentGateType = GATE_SUFFIXES[gateMatch[2]];
 			continue;
 		}
 

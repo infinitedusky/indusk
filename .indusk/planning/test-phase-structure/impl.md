@@ -45,10 +45,10 @@ Give test authoring a phase, so the system's central discipline has a moment and
 
 | ID | Asserts | Test | Writable at | Passes at | State |
 |----|---------|------|-------------|-----------|-------|
-| A13 | The phase heading has exactly one definition in the source — a second copy fails the build | `apps/indusk-mcp/src/__tests__/impl-headings.test.ts` | Phase 0 | Phase 1 | written |
-| A17 | An impl in which no phase parses is **refused**, not vacuously passed — in both the validator and the gate hook | `apps/indusk-mcp/src/__tests__/impl-headings.test.ts` | Phase 0 | Phase 1 | written |
-| A5 | A plan written `### Phase 1` and one written `### Build Phase 1` behave identically — same phases found, same gates enforced | `apps/indusk-mcp/src/lib/__tests__/phase-kinds.test.ts` | Phase 0 | Phase 2 | written |
-| A4 | **Every impl already in this repository still writes and validates with no edits** — regression guard, green today and must stay green | `apps/indusk-mcp/src/__tests__/impl-corpus.test.ts` | Phase 0 | Phase 2 | written |
+| A13 | The phase heading has exactly one definition in the source — a second copy fails the build | `apps/indusk-mcp/src/__tests__/impl-headings.test.ts` | Phase 0 | Phase 1 | passing |
+| A17 | An impl in which no phase parses is **refused**, not vacuously passed — in both the validator and the gate hook | `apps/indusk-mcp/src/__tests__/impl-headings.test.ts` | Phase 0 | Phase 1 | passing |
+| A5 | A plan written `### Phase 1` and one written `### Build Phase 1` behave identically — same phases found, same gates enforced | `apps/indusk-mcp/src/lib/__tests__/phase-kinds.test.ts` | Phase 0 | Phase 2 | passing |
+| A4 | **Every impl already in this repository still writes and validates with no edits** — regression guard, green today and must stay green | `apps/indusk-mcp/src/__tests__/impl-corpus.test.ts` | Phase 0 | Phase 2 | passing |
 | A16 | A deferral entry carrying the deferred test's body is accepted, and the body is not mistaken for a checklist item or a gate | `apps/indusk-mcp/src/lib/__tests__/phase-kinds.test.ts` | Phase 0 | Phase 2 | written |
 | A1 | Writing a new impl that has no test phase is refused, and the message names what is missing | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | written |
 | A2 | Writing an impl whose second test phase has no justification in the first is refused, naming the unjustified phase | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | written |
@@ -60,7 +60,7 @@ Give test authoring a phase, so the system's central discipline has a moment and
 | A9 | A test phase cannot close while any test it authors has not been written | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | written |
 | A10 | A plan containing test phases runs to completion under `atdawn run`, closing each phase in order | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | written |
 | A11 | The same violation is refused identically in both lanes, with the same message | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | written |
-| A15 | A test file whose import cannot be resolved fails to load **even when every test in it is skipped** | `apps/indusk-mcp/src/__tests__/skip-does-not-defer.test.ts` | Phase 0 | Phase 1 | written |
+| A15 | A test file whose import cannot be resolved fails to load **even when every test in it is skipped** | `apps/indusk-mcp/src/__tests__/skip-does-not-defer.test.ts` | Phase 0 | Phase 1 | passing |
 | A12 | A plan created by `/planner` contains a test phase as its first phase | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` | Phase 0 | Phase 5 | written |
 
 ### Deferred Verification
@@ -88,8 +88,8 @@ Two rows are **regression guards, green on arrival, and declared as such** per A
 
 ### Phase 1: One definition, and a floor under it
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create test-phase-structure`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
-- [ ] Add `src/lib/impl-headings.ts` — the single definition of every phase and gate heading pattern
+- [x] Create/confirm this plan's worktree (`indusk worktree create test-phase-structure`) — worktree-per-plan default; skip only if `worktree: none` in frontmatter
+- [x] Add `src/lib/impl-headings.ts` — the single definition of every phase and gate heading pattern
   ```typescript
   export const PHASE_HEADING = /^###\s+(?:Build\s+)?Phase\s+(\d+)[:\s]+(.*)/;
   export const TEST_PHASE_HEADING = /^###\s+Test\s+Phase\s+(\d+)[:\s]+(.*)/;
@@ -97,20 +97,23 @@ Two rows are **regression guards, green on arrival, and declared as such** per A
   export function isAnyHeading(line: string): boolean
   ```
   The `Build ` group is optional so every existing impl parses unchanged (A5, A4). `Test Phase` is a separate pattern, not a variant — the two must never be confusable by a regex that "helpfully" matches both.
-- [ ] Replace all seven copies with imports from it — `impl-parser.ts`, `check-gates.js`, `gate-reminder.js`, `validate-impl-structure.js` (×2), `trajectory/validator.ts`, `shape/impl-blocks.ts`
+- [x] Replace all seven copies with imports from it — `impl-parser.ts`, `check-gates.js`, `gate-reminder.js`, `validate-impl-structure.js` (×2), `trajectory/validator.ts`, `shape/impl-blocks.ts`
   - the JS hooks cannot import a `.ts` module; mirror the constant with the deliberate-port comment the trajectory hooks already use, and let A13 count definitions in `src/` only
-- [ ] **Discovered — reject an impl in which zero phases parse** (A17), in both `validate-impl-structure.js` and `check-gates.js`. Two lessons name this and neither hook implements it: a file whose headings are all malformed currently sails through every structural rule. That is unacceptable generally and disqualifying here, because this plan changes what a heading looks like — a typo in the new syntax must fail loudly, not silently disable enforcement.
+  - **six reachable, not seven.** `shape/impl-blocks.ts` lives on `plan/lifecycle-rebalance`, which is pushed but unmerged, so it is not on this branch. A13 counts `src/` and will go **red at that merge** rather than silently accepting a seventh copy — which is the behaviour a structural single-definition test exists for, so this is caught rather than missed. Whoever merges consolidates that call site.
+  - the JS mirror is **one** hook-local module (`hooks/_impl-headings.js`), not three: `check-gates`, `gate-reminder` and `validate-impl-structure` each carried their own copy, which is how the fan-out grew unnoticed. Installed copies in `.claude/hooks/` synced by hand — dusk has no `indusk update`.
+  - `cleanup/gate.ts` was case-insensitive (`/i`) and is now case-sensitive via `parsePhaseHeading`. Deliberate: `### phase 1:` was never a shape this project writes, and the ritual-detection suite is green.
+- [x] **Discovered — reject an impl in which zero phases parse** (A17), in both `validate-impl-structure.js` and `check-gates.js`. Two lessons name this and neither hook implements it: a file whose headings are all malformed currently sails through every structural rule. That is unacceptable generally and disqualifying here, because this plan changes what a heading looks like — a typo in the new syntax must fail loudly, not silently disable enforcement.
 
 #### Phase 1 Verification
-- [ ] A13, A17, A15 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] All other rows still red, each failing on its own assertion rather than an import error
-- [ ] Full suite green apart from the known-red `daemon-identity` PID-reuse cases; `pnpm check` clean on touched files
+- [x] A13, A17, A15 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] All other rows still red, each failing on its own assertion rather than an import error — **except A5 and A4, which went green here rather than at Phase 2.** Consolidating onto one definition *is* what makes `### Build Phase 1` work, so A5 had nothing left to prove by Phase 2; A4 was a declared regression guard. Recorded rather than left to look like drift. Nothing else moved early.
+- [x] Full suite green apart from **three** pre-existing groups, named so the next run can tell expected from new: this plan's own Phase 2–5 rows (A1–A3, A6–A12, A14, A16 — red by design); the `daemon-identity` PID-reuse pair (known-red); and `admin-cli-lifecycle` / `cli-bare-ui-cwd-aware` / `admin-bundle-pack`, which need a built admin app and a packed tarball that a fresh worktree does not have. The `prune` and `stray-state` failures in the first run were the same class and disappeared after `pnpm turbo build` — which is why the build was run rather than the failures reasoned about. `pnpm check` clean on all nine touched files.
 
 #### Phase 1 Context
-- [ ] Add to Known Gotchas: the phase and gate heading patterns have one definition in `lib/impl-headings.ts`, pinned by A13; the JS hook mirrors are deliberate ports. A validator that parses zero phases must refuse — silence there disables every structural rule at once.
+- [x] Add to Known Gotchas: the phase and gate heading patterns have one definition in `lib/impl-headings.ts`, pinned by A13; the JS hook mirrors are deliberate ports. A validator that parses zero phases must refuse — silence there disables every structural rule at once.
 
 #### Phase 1 Document
-- [ ] (deferred to Phase 5 — the guide should describe the finished shape once, not be rewritten each phase, which is the measured churn `lifecycle-rebalance` found. Recorded here so the deferral is visible rather than silent.)
+- [x] (deferred to Phase 5 — the guide should describe the finished shape once, not be rewritten each phase, which is the measured churn `lifecycle-rebalance` found. Recorded here so the deferral is visible rather than silent.)
 
 ### Phase 2: Both heading kinds, and this impl converts itself
 
