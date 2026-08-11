@@ -178,6 +178,7 @@ const config = defineConfig({
 						{ text: "Dawn External Orchestrator", link: "/decisions/dawn-external-orchestrator" },
 						{ text: "Dawn Hook Parity", link: "/decisions/dawn-hook-parity" },
 						{ text: "Dawn Verify", link: "/decisions/dawn-verify" },
+						{ text: "Lifecycle Rebalance (Shape)", link: "/decisions/lifecycle-rebalance" },
 						{ text: "Git-or-jj Substrate (Superseded)", link: "/decisions/git-or-jj-substrate" },
 					],
 				},
@@ -230,6 +231,10 @@ const config = defineConfig({
 						{
 							text: "Dawn Verify (Could-Not-Check ≠ Passed)",
 							link: "/lessons/dawn-verify",
+						},
+						{
+							text: "Lifecycle Rebalance (Tested ≠ Reachable)",
+							link: "/lessons/lifecycle-rebalance",
 						},
 					],
 				},

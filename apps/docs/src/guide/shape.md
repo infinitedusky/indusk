@@ -134,13 +134,16 @@ Every ambiguous case resolves toward including the file: an unreadable timestamp
 
 ## Three outcomes, never silence
 
-| Outcome | Meaning |
-|---|---|
-| reviewed — findings | Items appended to the phase |
-| reviewed — nothing found | Recorded, already checked; costs nothing |
-| skipped — no code surface | Recorded with the reason (docs-only, schema-only) |
+| Outcome | Recorder | Meaning |
+|---|---|---|
+| reviewed — findings | `appendFindingToPhase` | Unchecked items appended to the phase |
+| reviewed — nothing found | `recordReviewedNothingFound` | Recorded already-checked; costs nothing |
+| skipped — verification not green | `recordSkipped` | Finish the Verification gate, then come back |
+| skipped — no code surface | `recordSkipped` | The phase changed no code files (docs-only, planning-only) |
 
-Plus a per-file "reviewed and left as-is" with its reasoning, distinct from a file never looked at.
+Plus a per-file "reviewed and left as-is" (`recordLeftAsIs`) with its reasoning, distinct from a file never looked at.
+
+`recordSkipped` was missing at first — the design promised three outcomes and shipped recorders for two, leaving the skill to tell the agent to "record the reason" with nothing to record it with. The gap was found by running Shape rather than reading it, and it is the outcome most likely to go unwritten: "reviewed and found nothing" is a result someone is pleased to record; "did not run" is not.
 
 The rule behind all of it, learned expensively elsewhere in this system: **a check that cannot distinguish "nothing to do" from "did not run" reports the shape of success without doing the work.** "Nothing to do" must be a common, cheap, *recorded* answer — otherwise Shape becomes a nag, and a nag gets ignored.
 

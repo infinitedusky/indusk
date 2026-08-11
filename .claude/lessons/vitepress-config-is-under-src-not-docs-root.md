@@ -1,0 +1,7 @@
+# dusk's live VitePress sidebar config is apps/docs/src/.vitepress/config.ts, not apps/docs/.vitepress/config.ts — the root one is a stale scaffold
+
+Two VitePress config files exist in apps/docs: a 24-line scaffold at apps/docs/.vitepress/config.ts (generic "Project Docs" title, near-empty sidebar) and the real one at apps/docs/src/.vitepress/config.ts (280+ lines, every real guide/reference/decisions/lessons entry). apps/docs/package.json's dev and build scripts both run `vitepress dev/build src`, so VitePress resolves config from the `src` copy — the root one is dead and not served.
+
+Editing the root config (e.g. to add a new guide page to the sidebar, per community-add-to-sidebar) produces a real diff, a green commit, and a checked-off checklist item, but has zero effect on the live site — the page stays unreachable by navigation. This happened for real: lifecycle-rebalance's dfe608b1 added `/guide/shape` to the root config and reported the sidebar fixed; it wasn't, and the same commit's diagnostic count of "16 of 19 guide pages unreachable" was itself computed against the stale root config's near-empty sidebar rather than the real one (which actually registers 15 of 19 — the true gap is ~3 pages, not 16).
+
+When adding any docs page to the sidebar in this repo: edit `apps/docs/src/.vitepress/config.ts`, and verify with `grep -rn "<page-slug>" apps/docs/src/.vitepress/config.ts` (or run `pnpm --filter docs dev` and look). Never trust a source-tree count of "how many pages are (un)registered" without checking which config file was actually queried.
