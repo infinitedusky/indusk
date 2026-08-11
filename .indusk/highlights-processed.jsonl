@@ -175,3 +175,4 @@
 {"id":"h-20260811-006","processedAt":"2026-08-11T22:05:53.989Z","action":"wrote-episode","detail":"reopenable-beats-new-durable-primitive-when-resting-state-must-stay-bounded"}
 {"id":"h-20260811-004","processedAt":"2026-08-11T22:05:55.625Z","action":"skipped","detail":"recorded in test-phase-structure/brief.md and adr.md; the measurement (260/444 rows unenforceable) and design are plan-specific, independently verified accurate against the live corpus"}
 {"id":"h-20260811-005","processedAt":"2026-08-11T22:05:56.142Z","action":"skipped","detail":"recorded in test-phase-structure/test-plan.md; 16 assertions and U1's durable-artifact control fully captured there"}
+{"id":"h-20260811-007","processedAt":"2026-08-11T22:08:11.947Z","action":"skipped","detail":"recorded in test-phase-structure/adr.md; plan-specific design mechanics fully captured there and in CLAUDE.md's new Key Decisions bullet"}
