@@ -1,7 +1,7 @@
 ---
 title: "Test phases as structure"
 date: 2026-08-11
-status: proposed
+status: accepted
 ---
 
 # Test phases as structure
