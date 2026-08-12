@@ -133,8 +133,6 @@ describe("A19 — a fence closes only on its own marker", () => {
 		// The mirror: over-masking would be its own bug. A fence rule that fixed
 		// the leak by swallowing the document would satisfy the case above and
 		// reintroduce A18.
-		expect(phaseSequence(lines.join("\n")).map((p) => `${p.kind}:${p.number}`)).toEqual([
-			"test:1",
-		]);
+		expect(phaseSequence(lines.join("\n")).map((p) => `${p.kind}:${p.number}`)).toEqual(["test:1"]);
 	});
 });

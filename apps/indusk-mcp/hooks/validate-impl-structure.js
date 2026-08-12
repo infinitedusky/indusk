@@ -26,8 +26,10 @@ import {
 	PHASE_HEADING,
 	parsePhaseHeading,
 	parsePhaseRef,
+	phaseExists,
 	phaseOrdinal,
 	phaseSequence,
+	unterminatedFenceLine,
 } from "./_impl-headings.js";
 
 // The register: the subsections Test Phase 1 carries. `#### Deferred to Test
@@ -419,6 +421,19 @@ function validateTrajectory(
 		return errors;
 	}
 
+	// Before anything structural: an unterminated fence means the document does
+	// not say what it appears to say. The mask fails open so the phases survive,
+	// but the author needs to hear the real problem rather than the downstream
+	// noise a leaked code body produces.
+	const fenceLine = unterminatedFenceLine(implBody);
+	if (fenceLine !== null) {
+		errors.push({
+			rule: "unterminated-fence",
+			message: `Unterminated code fence opened at body line ${fenceLine}. A deferral's carried test body must be closed, or the block runs to the end of the file. To nest a fence inside a carried body, make the outer marker longer (four backticks around a block containing three).`,
+		});
+		return errors;
+	}
+
 	const trajectory = parseTrajectoryFromBody(implBody);
 	const sequence = phaseSequence(implBody);
 	const hasTestPhase = sequence.some((p) => p.kind === "test");
@@ -427,7 +442,8 @@ function validateTrajectory(
 	errors.push(...validateDeferredCompleteness(trajectory));
 	errors.push(...validateTestPhasePresence(sequence, testPhasesRequired));
 	errors.push(...validateTestPhaseJustification(implBody, sequence));
-	errors.push(...validateRegressionGuards(implBody, trajectory));
+	errors.push(...validateTestPhaseGates(implBody, sequence));
+	errors.push(...validateRegressionGuards(implBody, trajectory, sequence));
 	// The register absorbs `### Trajectory Rationale`: when a test phase exists,
 	// deferral justification lives in Test Phase 1, and requiring the legacy
 	// section too would be two homes for one fact. Impls without a test phase
@@ -500,6 +516,44 @@ function validateTestPhasePresence(sequence, required) {
 	];
 }
 
+/**
+ * Every test phase must carry its Verification gate.
+ *
+ * The four-gate loop deliberately skips test phases — a test phase carries one
+ * gate, not four, because Context and Document on a phase that ships nothing
+ * would be `(none needed)` noise. But nothing then required the one, and that
+ * gate is the U1 compensating control: the deferral review that stands in for
+ * a check nobody can write. An author who omits it deletes the plan's answer
+ * to its own Deferred Verification row, silently.
+ */
+function validateTestPhaseGates(implBody, sequence) {
+	const testPhases = sequence.filter((p) => p.kind === "test");
+	if (testPhases.length === 0) return [];
+	const lines = implBody.split("\n");
+	const fenced = fencedLineMask(lines);
+
+	const withGate = new Set();
+	let current = null;
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		const heading = parsePhaseHeading(lines[i]);
+		if (heading) {
+			current = heading.kind === "test" ? heading.number : null;
+			continue;
+		}
+		if (current === null) continue;
+		const gate = lines[i].match(gateHeading("Verification"));
+		if (gate) withGate.add(current);
+	}
+
+	return testPhases
+		.filter((p) => !withGate.has(p.number))
+		.map((p) => ({
+			rule: "test-phase-gate",
+			message: `Test Phase ${p.number} has no \`#### Test Phase ${p.number} Verification\` gate. That gate is where its deferred test bodies get reviewed — "will this compile at the phase it names, and does it assert what it claims?" — which is the only control standing in for a check nobody can write. Without it the phase can close having reviewed nothing.`,
+		}));
+}
+
 /** Every test phase after the first must be justified in the first. */
 function validateTestPhaseJustification(implBody, sequence) {
 	const later = sequence.filter((p) => p.kind === "test" && p.number > 1);
@@ -520,13 +574,19 @@ function validateTestPhaseJustification(implBody, sequence) {
  * build-phase row where writable equals passes is the ordinary
  * unit-test-for-new-code case, which is why no existing impl is affected.
  */
-function validateRegressionGuards(implBody, trajectory) {
+function validateRegressionGuards(implBody, trajectory, sequence) {
 	const greenOnArrival = trajectory.rows.filter(
 		(r) =>
 			r.writableAtKind === "test" &&
 			r.passesAtKind === "test" &&
 			Number.isFinite(r.writableAt) &&
-			r.writableAt === r.passesAt,
+			r.writableAt === r.passesAt &&
+			// Only for a test phase the document actually contains. Otherwise the
+			// instruction — "add an entry under `#### Regression Guards` in Test
+			// Phase 1" — names a heading that does not exist and cannot be
+			// followed. Same reasoning `phaseExists` applies to Gate A;
+			// `test-phase-presence` is the rule that names the real problem.
+			phaseExists({ kind: r.writableAtKind, number: r.writableAt }, sequence),
 	);
 	if (greenOnArrival.length === 0) return [];
 	const { regressionGuards } = parseRegister(implBody);

@@ -77,27 +77,64 @@ export function parsePhaseRef(cell) {
 	return { kind, number: parseInt(match[2], 10) };
 }
 
-/** True for a line that opens or closes a fenced code block. */
-const FENCE = /^\s*(?:```|~~~)/;
+/** A fence marker: three or more backticks or tildes, optionally indented. */
+const FENCE = /^\s*(`{3,}|~{3,})(.*)$/;
+
+function parseFence(line) {
+	const m = FENCE.exec(line);
+	if (!m) return null;
+	return { char: m[1][0], length: m[1].length, info: m[2].trim() };
+}
+
+/**
+ * CommonMark's closing rule: same character, at least the same length, nothing
+ * after it. That is what lets a carried body nest a fence by lengthening the
+ * marker, and what stops a `~~~` inside a ``` block from ending it early.
+ */
+function findFenceClose(lines, start, open) {
+	for (let i = start + 1; i < lines.length; i++) {
+		const c = parseFence(lines[i]);
+		if (c && c.char === open.char && c.length >= open.length && c.info === "") return i;
+	}
+	return -1;
+}
 
 /**
  * Mark every line inside a fenced code block. Structure-scanning must skip
  * these: a Test Phase 1 deferral may carry the deferred test's body, and that
  * body contains lines that look exactly like checklist items and gate
  * headings — which is the point of carrying it.
+ *
+ * **An unterminated fence masks nothing** — failing open, deliberately. One
+ * missing backtick would otherwise delete every phase below it from every
+ * parser at once with nothing reporting a problem, and the zero-phase guard
+ * cannot save it because the phases above still parse. Silence is the failure
+ * mode this plan exists to remove; the validator refuses such an impl outright.
  */
 export function fencedLineMask(lines) {
-	const mask = [];
-	let inFence = false;
-	for (const line of lines) {
-		if (FENCE.test(line)) {
-			mask.push(true);
-			inFence = !inFence;
-			continue;
-		}
-		mask.push(inFence);
+	const mask = new Array(lines.length).fill(false);
+	for (let i = 0; i < lines.length; i++) {
+		const open = parseFence(lines[i]);
+		if (!open) continue;
+		const close = findFenceClose(lines, i, open);
+		if (close === -1) continue;
+		for (let j = i; j <= close; j++) mask[j] = true;
+		i = close;
 	}
 	return mask;
+}
+
+/** 1-based line of an unterminated fence, or `null`. See `fencedLineMask`. */
+export function unterminatedFenceLine(body) {
+	const lines = body.split("\n");
+	for (let i = 0; i < lines.length; i++) {
+		const open = parseFence(lines[i]);
+		if (!open) continue;
+		const close = findFenceClose(lines, i, open);
+		if (close === -1) return i + 1;
+		i = close;
+	}
+	return null;
 }
 
 /** The document's phases, in the order they appear. Fenced blocks ignored. */

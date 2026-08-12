@@ -123,8 +123,45 @@ export function parsePhaseRef(cell: string): PhaseRef | null {
 	return { kind, number: Number.parseInt(match[2], 10) };
 }
 
-/** True for a line that opens or closes a fenced code block. */
-const FENCE = /^\s*(?:```|~~~)/;
+/** A fence marker: three or more backticks or tildes, optionally indented. */
+const FENCE = /^\s*(`{3,}|~{3,})(.*)$/;
+
+interface FenceMarker {
+	char: "`" | "~";
+	length: number;
+	/** Text after the marker — an info string, which only an *opener* may have. */
+	info: string;
+}
+
+function parseFence(line: string): FenceMarker | null {
+	const m = FENCE.exec(line);
+	if (!m) return null;
+	return { char: m[1][0] as "`" | "~", length: m[1].length, info: m[2].trim() };
+}
+
+/**
+ * The index of the line closing the fence opened at `start`, or `-1`.
+ *
+ * CommonMark's rule, and it is the rule that matters here: a fence closes only
+ * on a marker of the **same character** and **at least the same length**, with
+ * nothing after it. That is what lets a carried test body contain a fence of
+ * its own — you nest by lengthening the marker — and it is what stops a `~~~`
+ * inside a ```` ``` ```` block from ending the block early.
+ */
+function findFenceClose(lines: string[], start: number, open: FenceMarker): number {
+	for (let i = start + 1; i < lines.length; i++) {
+		const candidate = parseFence(lines[i]);
+		if (
+			candidate &&
+			candidate.char === open.char &&
+			candidate.length >= open.length &&
+			candidate.info === ""
+		) {
+			return i;
+		}
+	}
+	return -1;
+}
 
 /**
  * Mark every line that sits inside a fenced code block.
@@ -134,20 +171,43 @@ const FENCE = /^\s*(?:```|~~~)/;
  * exactly like checklist items and gate headings — which is the point of
  * carrying it. A parser that reads them as structure turns a piece of evidence
  * into a phantom phase.
+ *
+ * **An unterminated fence masks nothing.** Failing open is deliberate: the
+ * alternative is that one missing backtick deletes every phase below it from
+ * every parser at once, and nothing reports a problem — the zero-phase guard
+ * cannot save it, because the phases *above* the fence still parse. A leaked
+ * code body produces loud, confusing errors; a swallowed document produces
+ * silence, and silence is the failure mode this whole plan exists to remove.
+ * The validator separately refuses an impl with an unterminated fence, so the
+ * confusing errors are not what the author actually sees.
  */
 export function fencedLineMask(lines: string[]): boolean[] {
-	const mask: boolean[] = [];
-	let inFence = false;
-	for (const line of lines) {
-		if (FENCE.test(line)) {
-			// The fence markers themselves count as inside: neither is structure.
-			mask.push(true);
-			inFence = !inFence;
-			continue;
-		}
-		mask.push(inFence);
+	const mask = new Array<boolean>(lines.length).fill(false);
+	for (let i = 0; i < lines.length; i++) {
+		const open = parseFence(lines[i]);
+		if (!open) continue;
+		const close = findFenceClose(lines, i, open);
+		if (close === -1) continue; // unterminated — not a fence at all
+		for (let j = i; j <= close; j++) mask[j] = true;
+		i = close;
 	}
 	return mask;
+}
+
+/**
+ * The 1-based line number of an unterminated fence, or `null` if every fence
+ * in `body` is closed. Reported rather than tolerated — see `fencedLineMask`.
+ */
+export function unterminatedFenceLine(body: string): number | null {
+	const lines = body.split("\n");
+	for (let i = 0; i < lines.length; i++) {
+		const open = parseFence(lines[i]);
+		if (!open) continue;
+		const close = findFenceClose(lines, i, open);
+		if (close === -1) return i + 1;
+		i = close;
+	}
+	return null;
 }
 
 /** The document's phases, in the order they appear. Fenced blocks ignored. */

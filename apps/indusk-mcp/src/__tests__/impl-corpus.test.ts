@@ -60,6 +60,12 @@ const PRE_EXISTING_FAILURES = [
 	"archive/gate-policy-enforcement",
 	"archive/graphiti-infrastructure",
 	"archive/gsd-inspired-improvements",
+	// Closes a fence with `` ``` **Done — …** `` — trailing text on the closing
+	// line, which CommonMark does not accept as a closer, so the block runs to
+	// the end of the file. Genuinely malformed rather than newly-strict: any
+	// markdown renderer already treats the rest of that document as code. The
+	// falsification's fence rule is what surfaced it. Archived, so recorded.
+	"archive/handoff-multi-agent-section-shape",
 	"archive/mcp-dev-system",
 	"archive/verify-skill",
 	"react-native-support",

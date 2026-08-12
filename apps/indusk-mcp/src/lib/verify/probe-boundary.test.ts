@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { buildImpl, makeVerifyFixture } from "./verify.test-support.js";
 import { runVerify } from "./verify.js";
+import { buildImpl, makeVerifyFixture } from "./verify.test-support.js";
 
 /**
  * A20 — `verify --phase N` must judge the boundary at phase N, including in a

@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { phaseSequence } from "../impl-headings.js";
 import { resolveGateScripts } from "../run/gate.js";
 import { checkGoalposts, snapshotTrajectory } from "../run/goalposts.js";
 import { probePhaseClose } from "../run/probe.js";
@@ -26,6 +28,17 @@ import type { VerifyFinding } from "./verify.js";
  * have been terminal. That is the same question a phase transition asks in the
  * controlled lanes — asked here after the fact instead of before the edit.
  */
+/**
+ * Document position of build phase `n`, or `n - 1` when the plan has no such
+ * phase — the previous default, kept for a caller naming a phase that isn't
+ * written, so an unresolvable lookup degrades to today's behaviour rather than
+ * silently probing position −1.
+ */
+function buildPhaseOrdinal(content: string, n: number): number {
+	const at = phaseSequence(content).findIndex((p) => p.kind === "build" && p.number === n);
+	return at === -1 ? n - 1 : at;
+}
+
 export async function detectPrematureCheckoff(options: {
 	root: string;
 	implPath: string;
@@ -33,10 +46,18 @@ export async function detectPrematureCheckoff(options: {
 	scripts?: string[];
 }): Promise<VerifyFinding[]> {
 	const scripts = options.scripts ?? resolveGateScripts(options.root);
+	// Resolve the phase's position rather than letting the probe assume
+	// `phase - 1`. That assumption holds only when Phase 1 is the first phase;
+	// seven impls in this repo open at `### Phase 0`, and in those, verifying
+	// phase 1 would truncate after Phase 0 and report on the wrong boundary —
+	// premature-checkoff detection silently ceasing at exactly the boundary it
+	// was asked about.
+	const ordinal = buildPhaseOrdinal(await readFile(options.implPath, "utf8"), options.phase);
 	const probe = await probePhaseClose({
 		implPath: options.implPath,
 		worktree: options.root,
 		phase: options.phase,
+		ordinal,
 		scripts,
 	});
 	if (probe.allowed) return [];

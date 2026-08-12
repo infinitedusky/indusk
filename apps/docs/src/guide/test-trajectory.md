@@ -47,6 +47,11 @@ It authors every test that can honestly be authored, and **records every test th
 
 A deferral **may carry the deferred test's body** as a fenced code block, and should. It turns a promise into something a reader can check — does this compile at the phase it names, does it assert what it claims — and the artifact persists, unlike terminal output. Code fences are inert to every parser, so the body can contain checkbox- and heading-shaped lines freely.
 
+Two rules about that fence, because the body is arbitrary text and the parsers now depend on it:
+
+- **A fence closes only on its own marker** — same character, at least the same length, nothing after it (CommonMark's rule). So **nest by lengthening**: wrap a body containing ```` ``` ```` in four backticks. A `~~~` inside a ```` ``` ```` block is just text, not a closer.
+- **An unterminated fence is refused.** The write is blocked, naming the line the block opened at. The mask deliberately fails *open* underneath — an unclosed fence masks nothing — because the alternative is that one missing backtick silently deletes every phase below it from every parser at once. A loud refusal beats a document that quietly stops meaning what it says.
+
 A **regression guard** is a row whose `Writable at` and `Passes at` name the same test phase: it has no red window. That is legitimate for a guard against regression, or for an assertion about the runner rather than about your code. It is also exactly what a rubber stamp looks like, and nothing can tell the two apart mechanically — so the author says which.
 
 ```mermaid

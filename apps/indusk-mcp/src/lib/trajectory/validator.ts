@@ -5,8 +5,10 @@ import {
 	type PhaseKind,
 	type PhaseRef,
 	parsePhaseHeading,
+	phaseExists,
 	phaseOrdinal,
 	phaseSequence,
+	unterminatedFenceLine,
 } from "../impl-headings.js";
 import { parseTrajectory, type Trajectory } from "./parser.js";
 
@@ -19,7 +21,9 @@ export interface ValidationError {
 		| "rationale-completeness"
 		| "test-phase-presence"
 		| "test-phase-justification"
-		| "regression-guard-declaration";
+		| "test-phase-gate"
+		| "regression-guard-declaration"
+		| "unterminated-fence";
 	message: string;
 	/** The rough line number in the impl body, if known. */
 	line?: number;
@@ -348,6 +352,45 @@ export function validateTestPhasePresence(
 }
 
 /**
+ * Every test phase must carry its Verification gate — the one gate it has.
+ *
+ * The four-gate loop skips test phases deliberately (Context and Document on a
+ * phase that ships nothing would be `(none needed)` noise), and nothing then
+ * required the one. But that gate is the U1 compensating control: the deferral
+ * review standing in for a check nobody can write. Omitting it deletes the
+ * plan's answer to its own Deferred Verification row, silently.
+ */
+export function validateTestPhaseGates(
+	body: string,
+	sequence: readonly PhaseRef[],
+): ValidationError[] {
+	const testPhases = sequence.filter((p) => p.kind === "test");
+	if (testPhases.length === 0) return [];
+	const lines = body.split("\n");
+	const fenced = fencedLineMask(lines);
+	const verification = gateHeading("Verification");
+
+	const withGate = new Set<number>();
+	let current: number | null = null;
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		const heading = parsePhaseHeading(lines[i]);
+		if (heading) {
+			current = heading.kind === "test" ? heading.number : null;
+			continue;
+		}
+		if (current !== null && verification.test(lines[i])) withGate.add(current);
+	}
+
+	return testPhases
+		.filter((p) => !withGate.has(p.number))
+		.map((p) => ({
+			rule: "test-phase-gate" as const,
+			message: `Test Phase ${p.number} has no \`#### Test Phase ${p.number} Verification\` gate. That gate is where its deferred test bodies get reviewed — "will this compile at the phase it names, and does it assert what it claims?" — which is the only control standing in for a check nobody can write. Without it the phase can close having reviewed nothing.`,
+		}));
+}
+
+/**
  * Every test phase after the first must be justified in the first.
  *
  * Structural rather than prose-inspected: the rule looks for a heading, so it
@@ -383,9 +426,17 @@ export function validateTestPhaseJustification(
  * `Writable at` equals `Passes at` is the ordinary unit-test-for-new-code case
  * and stays untouched, which is why no existing impl is affected.
  */
-export function validateRegressionGuards(body: string, trajectory: Trajectory): ValidationError[] {
+export function validateRegressionGuards(
+	body: string,
+	trajectory: Trajectory,
+	sequence: readonly PhaseRef[] = [],
+): ValidationError[] {
 	const greenOnArrival = trajectory.rows.filter(
 		(r) =>
+			// Only for a phase the document contains — otherwise the message
+			// names a heading that does not exist and cannot be acted on. Same
+			// reasoning `phaseExists` applies to Gate A.
+			phaseExists({ kind: r.writableAtKind, number: r.writableAt }, sequence) &&
 			r.writableAtKind === "test" &&
 			r.passesAtKind === "test" &&
 			Number.isFinite(r.writableAt) &&
@@ -527,6 +578,16 @@ export function validateTrajectory(
 	body: string,
 	options: ValidateTrajectoryOptions = {},
 ): ValidationError[] {
+	const fenceLine = unterminatedFenceLine(body);
+	if (fenceLine !== null) {
+		return [
+			{
+				rule: "unterminated-fence",
+				message: `Unterminated code fence opened at body line ${fenceLine}. A deferral's carried test body must be closed, or the block runs to the end of the file. To nest a fence inside a carried body, make the outer marker longer (four backticks around a block containing three).`,
+			},
+		];
+	}
+
 	const presenceErrors = validateTrajectoryPresence(body);
 	if (presenceErrors.length > 0) return presenceErrors;
 
@@ -539,7 +600,8 @@ export function validateTrajectory(
 		...validateDeferredCompleteness(trajectory),
 		...validateTestPhasePresence(body, sequence, options.testPhasesRequired ?? false),
 		...validateTestPhaseJustification(body, sequence),
-		...validateRegressionGuards(body, trajectory),
+		...validateTestPhaseGates(body, sequence),
+		...validateRegressionGuards(body, trajectory, sequence),
 	];
 	// The register absorbs `### Trajectory Rationale`: when a test phase exists,
 	// deferral justification lives in Test Phase 1 and requiring the legacy

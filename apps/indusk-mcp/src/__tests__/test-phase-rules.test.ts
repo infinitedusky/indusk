@@ -301,7 +301,11 @@ describe("A21 — a test phase must carry its Verification gate", () => {
 			"- [ ] Author T1 as RED",
 			"",
 			...(withVerification
-				? ["#### Test Phase 1 Verification", "- [ ] T1 is authored and fails on its own assertion", ""]
+				? [
+						"#### Test Phase 1 Verification",
+						"- [ ] T1 is authored and fails on its own assertion",
+						"",
+					]
 				: []),
 			...buildPhase(1, ["T1"]),
 		].join("\n");
