@@ -75,8 +75,16 @@ describe("T13: impl.md template includes Test Trajectory skeleton with required 
 	});
 
 	it("Phase 1 Verification references test IDs rather than generic 'tests pass'", () => {
-		const phaseVerSection = template.slice(template.indexOf("#### Phase 1 Verification"));
-		expect(phaseVerSection).toMatch(/T\d+/);
+		// Either spelling: `#### Phase 1 Verification` and `#### Build Phase 1
+		// Verification` name the same gate, and the template moved to the
+		// explicit one when test phases arrived.
+		const at = template.search(/^####\s+(?:Build\s+)?Phase 1 Verification/m);
+		// Asserted, because `indexOf` returning -1 slices to the last character
+		// of the template and the assertion below then fails on `}` — a real
+		// break reported as a nonsense mismatch, which is how this test read
+		// when the heading was renamed.
+		expect(at).toBeGreaterThan(-1);
+		expect(template.slice(at)).toMatch(/T\d+/);
 	});
 
 	it("frontmatter declares `trajectory: required`", () => {

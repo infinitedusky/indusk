@@ -17,6 +17,21 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
+import {
+	ANY_PHASE_HEADING,
+	ANY_PHASE_HEADING_LOOSE,
+	FORWARD_INTELLIGENCE_HEADING,
+	fencedLineMask,
+	gateHeading,
+	PHASE_HEADING,
+	parsePhaseHeading,
+	phaseExists,
+	phaseOrdinal,
+	phaseSequence,
+	unterminatedFenceLine,
+} from "./_impl-headings.js";
+import { parseRegister } from "./_register.js";
+import { parseTrajectoryFromBody } from "./_trajectory-parser.js";
 
 // Read hook input from stdin
 let input = "";
@@ -130,7 +145,7 @@ if (event.tool_name === "Edit" && toolInput.old_string) {
 // Only validate if this edit is adding/modifying phase structure
 // Check if the edit contains phase headers
 const editContent = toolInput.new_string ?? toolInput.content ?? "";
-const hasPhaseHeader = /###\s+Phase\s+\d+/.test(editContent);
+const hasPhaseHeader = ANY_PHASE_HEADING_LOOSE.test(editContent);
 const hasChecklistItem = /- \[ \]/.test(editContent);
 
 // If the edit doesn't touch phase structure, allow it
@@ -165,7 +180,7 @@ let currentPhase = null;
 let currentSection = "implementation";
 
 for (const line of lines) {
-	const phaseMatch = line.match(/^###\s+Phase\s+(\d+)[:\s]+(.*)/);
+	const phaseMatch = line.match(PHASE_HEADING);
 	if (phaseMatch) {
 		if (currentPhase) phases.push(currentPhase);
 		currentPhase = {
@@ -188,28 +203,28 @@ for (const line of lines) {
 	if (!currentPhase) continue;
 
 	// Detect gate section headers
-	const verMatch = line.match(/^####\s+Phase\s+\d+\s+Verification\b/);
+	const verMatch = line.match(gateHeading("Verification"));
 	if (verMatch) {
 		currentPhase.hasVerification = true;
 		currentSection = "verification";
 		continue;
 	}
 
-	const otelMatch = line.match(/^####\s+Phase\s+\d+\s+OTel\b/);
+	const otelMatch = line.match(gateHeading("OTel"));
 	if (otelMatch) {
 		currentPhase.hasOtel = true;
 		currentSection = "otel";
 		continue;
 	}
 
-	const ctxMatch = line.match(/^####\s+Phase\s+\d+\s+Context\b/);
+	const ctxMatch = line.match(gateHeading("Context"));
 	if (ctxMatch) {
 		currentPhase.hasContext = true;
 		currentSection = "context";
 		continue;
 	}
 
-	const docMatch = line.match(/^####\s+Phase\s+\d+\s+Document\b/);
+	const docMatch = line.match(gateHeading("Document"));
 	if (docMatch) {
 		currentPhase.hasDocument = true;
 		currentSection = "document";
@@ -234,11 +249,36 @@ for (const line of lines) {
 	}
 
 	// Forward intelligence doesn't count as a gate
-	if (line.match(/^####\s+Phase\s+\d+\s+Forward Intelligence\b/)) {
+	if (line.match(FORWARD_INTELLIGENCE_HEADING)) {
 		currentSection = "fi";
 	}
 }
 if (currentPhase) phases.push(currentPhase);
+
+// ------------------------------------------------------------------
+// Zero-parsed-phases rejection.
+//
+// Every structural rule below is keyed on parsed phases, so when none parse
+// there is nothing to enforce against and the write sails through. A typo in a
+// heading therefore does not fail — it silently disables the entire validator,
+// which is the worst possible failure mode for a change that alters what a
+// heading looks like.
+//
+// The condition is deliberately "there is work here and no phase claims it",
+// not merely "no phases": a plan mid-authoring legitimately has frontmatter
+// and prose before its first phase exists, and refusing that would block the
+// document from ever being written.
+// ------------------------------------------------------------------
+const bodyHasChecklistItems = /^\s*-\s+\[[ xX]\]/m.test(body);
+if (phases.length === 0 && bodyHasChecklistItems) {
+	process.stderr.write(
+		"Impl structure invalid: the document has checklist items but no phase heading parses, " +
+			"so every structural rule would be skipped silently.\n" +
+			"Expected `### Test Phase N: Name`, `### Build Phase N: Name`, or `### Phase N: Name` " +
+			"(the last two are the same thing). Check for a typo in a heading.\n",
+	);
+	process.exit(2);
+}
 
 // Validate each phase
 const errors = [];
@@ -304,6 +344,10 @@ const rationaleRequiredFrontmatter = /rationale:\s*required/.test(frontmatter);
 // Surfaced by /falsify hypothesis 1: a documentation plan whose title contained
 // the literal `rationale_baseline: 1` silently inherited that baseline from the
 // title's substring. See .indusk/planning/rationale-baseline-frontmatter/falsification.md.
+// Line-anchored, like every value-bearing frontmatter key here — the
+// `rationale_baseline` lesson was a title's substring silently setting a
+// baseline, and the same shape of bug is available to any unanchored match.
+const testPhasesRequiredFrontmatter = /^test_phases:\s*required/m.test(frontmatter);
 const rationaleBaselineMatch = frontmatter.match(/^rationale_baseline:\s*(\d+)/m);
 const rationaleBaseline = rationaleBaselineMatch
 	? Number.parseInt(rationaleBaselineMatch[1], 10)
@@ -314,6 +358,7 @@ if (trajectoryValidationEnabled) {
 		body,
 		rationaleRequiredFrontmatter,
 		rationaleBaseline,
+		testPhasesRequiredFrontmatter,
 	);
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
@@ -347,7 +392,12 @@ process.exit(0);
 // apps/indusk-mcp/src/lib/trajectory/validator.ts and parser.ts)
 // ------------------------------------------------------------------
 
-function validateTrajectory(implBody, rationaleRequired, rationaleBaseline = 0) {
+function validateTrajectory(
+	implBody,
+	rationaleRequired,
+	rationaleBaseline = 0,
+	testPhasesRequired = false,
+) {
 	const errors = [];
 
 	// Rule 1: trajectory presence
@@ -360,147 +410,139 @@ function validateTrajectory(implBody, rationaleRequired, rationaleBaseline = 0) 
 		return errors;
 	}
 
+	// Before anything structural: an unterminated fence means the document does
+	// not say what it appears to say. The mask fails open so the phases survive,
+	// but the author needs to hear the real problem rather than the downstream
+	// noise a leaked code body produces.
+	const fenceLine = unterminatedFenceLine(implBody);
+	if (fenceLine !== null) {
+		errors.push({
+			rule: "unterminated-fence",
+			message: `Unterminated code fence opened at body line ${fenceLine}. A deferral's carried test body must be closed, or the block runs to the end of the file. To nest a fence inside a carried body, make the outer marker longer (four backticks around a block containing three).`,
+		});
+		return errors;
+	}
+
 	const trajectory = parseTrajectoryFromBody(implBody);
+	const sequence = phaseSequence(implBody);
+	const hasTestPhase = sequence.some((p) => p.kind === "test");
 	errors.push(...validateCrossReferenceIntegrity(implBody, trajectory));
-	errors.push(...validateTemporalCoherence(trajectory));
+	errors.push(...validateTemporalCoherence(trajectory, sequence));
 	errors.push(...validateDeferredCompleteness(trajectory));
-	if (rationaleRequired) {
+	errors.push(...validateTestPhasePresence(sequence, testPhasesRequired));
+	errors.push(...validateTestPhaseJustification(implBody, sequence));
+	errors.push(...validateTestPhaseGates(implBody, sequence));
+	errors.push(...validateRegressionGuards(implBody, trajectory, sequence));
+	// The register absorbs `### Trajectory Rationale`: when a test phase exists,
+	// deferral justification lives in Test Phase 1, and requiring the legacy
+	// section too would be two homes for one fact. Impls without a test phase
+	// are unaffected — which is every impl written before this rule existed.
+	if (rationaleRequired && !hasTestPhase) {
 		errors.push(...validateRationaleCompleteness(implBody, trajectory, rationaleBaseline));
 	}
 	return errors;
 }
 
-function parseTrajectoryFromBody(implBody) {
+/**
+ * Read Test Phase 1's register. Scanning stops at the next phase heading — the
+ * register belongs to the FIRST test phase, and an entry written under a later
+ * phase is not a justification recorded up front, which is its whole purpose.
+ * Fenced lines are skipped so a carried test body cannot pose as an entry.
+ */
+
+/** A new impl must open with a test phase. Gated on `test_phases: required`. */
+function validateTestPhasePresence(sequence, required) {
+	if (!required) return [];
+	if (sequence.some((p) => p.kind === "test")) return [];
+	return [
+		{
+			rule: "test-phase-presence",
+			message:
+				"`test_phases: required` is set but this impl has no test phase. Add `### Test Phase 1` as the first phase — it authors every test that can honestly be authored and records, in its register, every test that cannot. Naming the omission matters more than naming the rule: without it, the discipline the whole document is built around is the only one with nowhere to happen.",
+		},
+	];
+}
+
+/**
+ * Every test phase must carry its Verification gate.
+ *
+ * The four-gate loop deliberately skips test phases — a test phase carries one
+ * gate, not four, because Context and Document on a phase that ships nothing
+ * would be `(none needed)` noise. But nothing then required the one, and that
+ * gate is the U1 compensating control: the deferral review that stands in for
+ * a check nobody can write. An author who omits it deletes the plan's answer
+ * to its own Deferred Verification row, silently.
+ */
+function validateTestPhaseGates(implBody, sequence) {
+	const testPhases = sequence.filter((p) => p.kind === "test");
+	if (testPhases.length === 0) return [];
 	const lines = implBody.split("\n");
-	let inTrajectory = false;
-	let inDeferred = false;
-	const tableLines = [];
-	const deferredLines = [];
+	const fenced = fencedLineMask(lines);
 
-	for (const line of lines) {
-		if (/^##\s+Test Trajectory\b/.test(line)) {
-			inTrajectory = true;
-			inDeferred = false;
-			continue;
-		}
-		if (!inTrajectory) continue;
-
-		if (/^###\s+Deferred Verification\b/.test(line)) {
-			inDeferred = true;
-			continue;
-		}
-
-		if (/^#{1,3}\s+/.test(line) && !/^###\s+Deferred Verification\b/.test(line)) {
-			const depth = (line.match(/^(#{1,6})/) || ["", ""])[1].length;
-			if (depth <= 3) break;
-		}
-
-		if (inDeferred) deferredLines.push(line);
-		else tableLines.push(line);
-	}
-
-	return {
-		rows: parseTrajectoryTable(tableLines),
-		deferred: parseDeferredBlock(deferredLines),
-	};
-}
-
-function parseTableRow(line) {
-	const trimmed = line.trim();
-	if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return [];
-	return trimmed
-		.slice(1, -1)
-		.split("|")
-		.map((cell) => cell.trim());
-}
-
-function normalizeHeader(header) {
-	const normalized = header.toLowerCase().replace(/\s+/g, " ").trim();
-	const aliases = {
-		id: "id",
-		asserts: "asserts",
-		"writable at": "writableAt",
-		"passes at": "passesAt",
-		state: "state",
-		kind: "kind",
-		scope: "scope",
-	};
-	return aliases[normalized] || normalized;
-}
-
-function parsePhaseRef(cell) {
-	const match = cell.match(/^\s*Phase\s+(\d+)\s*$/i);
-	return match ? Number.parseInt(match[1], 10) : Number.NaN;
-}
-
-function parseTrajectoryTable(lines) {
-	const pipeLines = lines.filter((l) => l.trim().startsWith("|"));
-	if (pipeLines.length < 2) return [];
-	const header = parseTableRow(pipeLines[0]);
-	const sep = parseTableRow(pipeLines[1]);
-	if (!sep.every((c) => /^:?-+:?$/.test(c))) return [];
-	const keys = header.map(normalizeHeader);
-
-	const rows = [];
-	for (let i = 2; i < pipeLines.length; i++) {
-		const cells = parseTableRow(pipeLines[i]);
-		if (cells.length !== keys.length) continue;
-		const rec = {};
-		for (let j = 0; j < keys.length; j++) rec[keys[j]] = cells[j];
-		if (!rec.id || !rec.asserts) continue;
-		rows.push({
-			id: rec.id.trim(),
-			asserts: rec.asserts.trim(),
-			writableAt: parsePhaseRef(rec.writableAt || ""),
-			passesAt: parsePhaseRef(rec.passesAt || ""),
-		});
-	}
-	return rows;
-}
-
-function parseDeferredBlock(lines) {
-	const rows = [];
+	const withGate = new Set();
 	let current = null;
-	const flush = () => {
-		if (current && current.name !== undefined) {
-			rows.push({
-				name: current.name,
-				reason: current.reason || "",
-				wouldRequire: current.wouldRequire || "",
-				mitigation: current.mitigation || "",
-			});
-		}
-		current = null;
-	};
-	for (const rawLine of lines) {
-		const line = rawLine.replace(/\s+$/, "");
-		const nameMatch = line.match(/^-\s+\*\*(.+?)\*\*\s*(?:—\s*(.*))?$/);
-		if (nameMatch) {
-			flush();
-			current = { name: nameMatch[1].trim() };
-			const rest = nameMatch[2];
-			if (rest) {
-				const rm = rest.match(/reason:\s*([^—]+?)(?:\s*—|$)/i);
-				const wm = rest.match(/would require:\s*([^—]+?)(?:\s*—|$)/i);
-				const mm = rest.match(/mitigation:\s*(.+)$/i);
-				if (rm) current.reason = rm[1].trim();
-				if (wm) current.wouldRequire = wm[1].trim();
-				if (mm) current.mitigation = mm[1].trim();
-			}
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		const heading = parsePhaseHeading(lines[i]);
+		if (heading) {
+			current = heading.kind === "test" ? heading.number : null;
 			continue;
 		}
-		if (!current) continue;
-		const subMatch = line.match(/^\s+-\s+(reason|would require|mitigation):\s*(.*)$/i);
-		if (subMatch) {
-			const key = subMatch[1].toLowerCase();
-			const value = subMatch[2].trim();
-			if (key === "reason") current.reason = value;
-			else if (key === "would require") current.wouldRequire = value;
-			else if (key === "mitigation") current.mitigation = value;
-		}
+		if (current === null) continue;
+		const gate = lines[i].match(gateHeading("Verification"));
+		if (gate) withGate.add(current);
 	}
-	flush();
-	return rows;
+
+	return testPhases
+		.filter((p) => !withGate.has(p.number))
+		.map((p) => ({
+			rule: "test-phase-gate",
+			message: `Test Phase ${p.number} has no \`#### Test Phase ${p.number} Verification\` gate. That gate is where its deferred test bodies get reviewed — "will this compile at the phase it names, and does it assert what it claims?" — which is the only control standing in for a check nobody can write. Without it the phase can close having reviewed nothing.`,
+		}));
+}
+
+/** Every test phase after the first must be justified in the first. */
+function validateTestPhaseJustification(implBody, sequence) {
+	const later = sequence.filter((p) => p.kind === "test" && p.number > 1);
+	if (later.length === 0) return [];
+	const { justifiedTestPhases } = parseRegister(implBody);
+	return later
+		.filter((p) => !justifiedTestPhases.has(p.number))
+		.map((p) => ({
+			rule: "test-phase-justification",
+			message: `Test Phase ${p.number} exists but Test Phase 1 does not justify it. Add a \`#### Deferred to Test Phase ${p.number}\` entry there saying why those tests cannot be authored up front — a later test phase is a deviation from "author everything first", and the register is where every deviation is recorded.`,
+		}));
+}
+
+/**
+ * A row that passes in the same test phase that authors it has no red window.
+ * That is legitimate and is also what a rubber stamp looks like, so the author
+ * must say which. Scoped to rows whose BOTH ends name a test phase: a
+ * build-phase row where writable equals passes is the ordinary
+ * unit-test-for-new-code case, which is why no existing impl is affected.
+ */
+function validateRegressionGuards(implBody, trajectory, sequence) {
+	const greenOnArrival = trajectory.rows.filter(
+		(r) =>
+			r.writableAtKind === "test" &&
+			r.passesAtKind === "test" &&
+			Number.isFinite(r.writableAt) &&
+			r.writableAt === r.passesAt &&
+			// Only for a test phase the document actually contains. Otherwise the
+			// instruction — "add an entry under `#### Regression Guards` in Test
+			// Phase 1" — names a heading that does not exist and cannot be
+			// followed. Same reasoning `phaseExists` applies to Gate A;
+			// `test-phase-presence` is the rule that names the real problem.
+			phaseExists({ kind: r.writableAtKind, number: r.writableAt }, sequence),
+	);
+	if (greenOnArrival.length === 0) return [];
+	const { regressionGuards } = parseRegister(implBody);
+	return greenOnArrival
+		.filter((r) => !regressionGuards.has(r.id))
+		.map((r) => ({
+			rule: "regression-guard-declaration",
+			message: `Trajectory row \`${r.id}\` passes in the same test phase that authors it, so it has no red phase. That is allowed, but it must be declared: add a \`- **${r.id}** — {why}\` entry under \`#### Regression Guards\` in Test Phase 1. A row green on arrival is either a regression guard or a rubber stamp, and only the author knows which.`,
+		}));
 }
 
 function validateCrossReferenceIntegrity(implBody, trajectory) {
@@ -530,7 +572,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
-		const phaseMatch = line.match(/^###\s+Phase\s+(\d+)\b/);
+		const phaseMatch = line.match(ANY_PHASE_HEADING);
 		if (phaseMatch) {
 			flushPhase();
 			currentPhase = Number.parseInt(phaseMatch[1], 10);
@@ -540,7 +582,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 			itemCount = 0;
 			continue;
 		}
-		const verMatch = line.match(/^####\s+Phase\s+(\d+)\s+Verification\b/);
+		const verMatch = line.match(gateHeading("Verification"));
 		if (verMatch && currentPhase !== null) {
 			flushPhase();
 			inVerification = true;
@@ -549,10 +591,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 			itemCount = 0;
 			continue;
 		}
-		if (
-			inVerification &&
-			/^####\s+Phase\s+\d+\s+(OTel|Context|Document|Forward Intelligence)\b/.test(line)
-		) {
+		if (inVerification && gateHeading("(OTel|Context|Document|Forward Intelligence)").test(line)) {
 			flushPhase();
 			inVerification = false;
 			continue;
@@ -595,7 +634,7 @@ function validateCrossReferenceIntegrity(implBody, trajectory) {
 	return errors;
 }
 
-function validateTemporalCoherence(trajectory) {
+function validateTemporalCoherence(trajectory, trajectorySequence) {
 	const errors = [];
 	for (const row of trajectory.rows) {
 		if (!Number.isFinite(row.writableAt)) {
@@ -612,10 +651,22 @@ function validateTemporalCoherence(trajectory) {
 			});
 			continue;
 		}
-		if (row.writableAt > row.passesAt) {
+		// Ordered on the document's timeline, not by number — two sequences
+		// numbering independently share their digits. Reduces to the number
+		// when the document has no test phase.
+		const writableOrd = phaseOrdinal(
+			{ kind: row.writableAtKind, number: row.writableAt },
+			trajectorySequence,
+		);
+		const passesOrd = phaseOrdinal(
+			{ kind: row.passesAtKind, number: row.passesAt },
+			trajectorySequence,
+		);
+		if (writableOrd > passesOrd) {
+			const label = (n, kind) => `${kind === "test" ? "Test " : ""}Phase ${n}`;
 			errors.push({
 				rule: "temporal-coherence",
-				message: `Trajectory row \`${row.id}\` has "Writable at" Phase ${row.writableAt} > "Passes at" Phase ${row.passesAt}. A test cannot pass before its dependencies exist.`,
+				message: `Trajectory row \`${row.id}\` has "Writable at" ${label(row.writableAt, row.writableAtKind)} after "Passes at" ${label(row.passesAt, row.passesAtKind)}. A test cannot pass before its dependencies exist.`,
 			});
 		}
 	}

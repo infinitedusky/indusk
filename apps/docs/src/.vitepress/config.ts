@@ -180,6 +180,7 @@ const config = defineConfig({
 						{ text: "Dawn Hook Parity", link: "/decisions/dawn-hook-parity" },
 						{ text: "Dawn Verify", link: "/decisions/dawn-verify" },
 						{ text: "Lifecycle Rebalance (Shape)", link: "/decisions/lifecycle-rebalance" },
+						{ text: "Test Phases as Structure", link: "/decisions/test-phase-structure" },
 						{ text: "Git-or-jj Substrate (Superseded)", link: "/decisions/git-or-jj-substrate" },
 					],
 				},
@@ -236,6 +237,8 @@ const config = defineConfig({
 						{
 							text: "Lifecycle Rebalance (Tested ≠ Reachable)",
 							link: "/lessons/lifecycle-rebalance",
+							text: "Test Phases (A Refusal Catches a Dead Validator)",
+							link: "/lessons/test-phase-structure",
 						},
 					],
 				},

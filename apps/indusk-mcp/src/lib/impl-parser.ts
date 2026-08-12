@@ -1,6 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import matter from "gray-matter";
+import {
+	FORWARD_INTELLIGENCE_HEADING,
+	fencedLineMask,
+	gateHeading,
+	type PhaseKind,
+	parsePhaseHeading,
+} from "./impl-headings.js";
 
 export type GateType = "implementation" | "verification" | "context" | "document";
 
@@ -15,7 +22,19 @@ export interface PhaseGate {
 }
 
 export interface ImplPhase {
+	/**
+	 * The phase's number **within its own sequence**. Test Phase 1 and Build
+	 * Phase 1 both have number 1 and are different phases — order them by
+	 * `ordinal`, never by this.
+	 */
 	number: number;
+	/**
+	 * Which sequence this phase belongs to. `"build"` for `### Phase N` as well
+	 * as `### Build Phase N`, which are the same thing spelled two ways.
+	 */
+	kind: PhaseKind;
+	/** Position in the document: the only thing that orders two sequences. */
+	ordinal: number;
 	name: string;
 	gates: PhaseGate[];
 	blocker: string | null;
@@ -70,15 +89,25 @@ export function parseImplString(raw: string): ParsedImpl {
 		currentGateLines = [];
 	}
 
-	for (const line of lines) {
-		// Phase header: ### Phase N: Name
-		const phaseMatch = line.match(/^###\s+Phase\s+(\d+)[:\s]+(.*)/);
+	// Fenced blocks are content, not structure: a Test Phase 1 deferral may
+	// carry the deferred test's body, and that body contains lines shaped
+	// exactly like checklist items and gate headings.
+	const fenced = fencedLineMask(lines);
+
+	for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+		const line = lines[lineIndex];
+		if (fenced[lineIndex]) continue;
+
+		// Phase header: ### Phase N / ### Build Phase N / ### Test Phase N
+		const phaseMatch = parsePhaseHeading(line);
 		if (phaseMatch) {
 			flushGate();
 			if (currentPhase) phases.push(currentPhase);
 			currentPhase = {
-				number: Number.parseInt(phaseMatch[1], 10),
-				name: phaseMatch[2].trim(),
+				number: phaseMatch.number,
+				kind: phaseMatch.kind,
+				ordinal: phases.length,
+				name: phaseMatch.name,
 				gates: [],
 				blocker: null,
 				forwardIntelligence: null,
@@ -89,7 +118,7 @@ export function parseImplString(raw: string): ParsedImpl {
 		}
 
 		// Forward Intelligence header: #### Phase N Forward Intelligence
-		const fiMatch = line.match(/^####\s+Phase\s+\d+\s+Forward Intelligence\b/);
+		const fiMatch = line.match(FORWARD_INTELLIGENCE_HEADING);
 		if (fiMatch) {
 			flushGate();
 			inForwardIntelligence = true;
@@ -98,14 +127,15 @@ export function parseImplString(raw: string): ParsedImpl {
 		}
 
 		// Gate header: #### Phase N Verification|Context|Document
-		const gateMatch = line.match(/^####\s+Phase\s+\d+\s+(Verification|Context|Document)\b/);
+		const gateMatch = line.match(gateHeading("(Verification|Context|Document)"));
 		if (gateMatch) {
 			if (inForwardIntelligence && currentPhase) {
 				currentPhase.forwardIntelligence = forwardIntelligenceLines.join("\n").trim() || null;
 				inForwardIntelligence = false;
 			}
 			flushGate();
-			currentGateType = GATE_SUFFIXES[gateMatch[1]];
+			// [1] is the phase number, [2] the gate kind — see gateHeading().
+			currentGateType = GATE_SUFFIXES[gateMatch[2]];
 			continue;
 		}
 

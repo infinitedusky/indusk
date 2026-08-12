@@ -3,6 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
+import { parsePhaseHeading } from "../impl-headings.js";
 
 export interface SkipCheck {
 	skipped: boolean;
@@ -49,9 +50,9 @@ function isRitualPhaseTerminal(implContent: string, ritualWord: string): boolean
 	let found = false;
 	let itemCount = 0;
 	for (const line of lines) {
-		const phaseMatch = /^###\s+Phase\s+\d+\s*:\s*(.*)$/i.exec(line);
+		const phaseMatch = parsePhaseHeading(line);
 		if (phaseMatch) {
-			if (startsWith.test(phaseMatch[1].trim())) {
+			if (startsWith.test(phaseMatch.name)) {
 				inPhase = true;
 				found = true;
 			} else {

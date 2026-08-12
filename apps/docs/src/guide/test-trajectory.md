@@ -19,6 +19,73 @@ The shape draws on:
 
 The `Writable at` vs `Passes at` distinction — making it explicit that a test can be authored at one phase and only flip to passing at a later phase — does not appear as a named pattern in mainstream practitioner writing. That's our synthesis.
 
+## The test phase
+
+The trajectory says *when* each test is authored. The **test phase** is where authoring actually happens.
+
+That distinction took a measurement to notice. Across 52 impls, **260 of 444 trajectory rows say `Writable at: Phase 0`** — and the gate that enforces authoring compared `row.writableAt === advancingPhase`, where the advancing phase is never 0. The default path of the system's central discipline could not fire. Worse, "write the tests first" was the only discipline with no home in the document: verification, context, documentation, falsification and cleanup are all sections with checkboxes, while test-first lived as a column value. The deviation had machinery; the rule did not.
+
+So an impl now has **two sequences of phases**, numbered independently and ordered by their position in the document:
+
+```markdown
+### Test Phase 1: Author every assertion, RED
+### Build Phase 1: The first slice
+### Build Phase 2: The second slice
+```
+
+`### Phase N` still means build phase N — every impl written before this existed keeps validating, untouched. New impls declare `test_phases: required` and open with `### Test Phase 1`.
+
+### Test Phase 1 is the register
+
+It authors every test that can honestly be authored, and **records every test that cannot**. Three subsections, all read structurally rather than as prose:
+
+| Subsection | Records | Enforced |
+|---|---|---|
+| `#### Deferred to Test Phase N` | why a *later test phase* exists | required for every `### Test Phase N` where N > 1 |
+| `#### Deferred to Build Phase N` | why one test is authored late | reviewed at the phase's close |
+| `#### Regression Guards` | rows that pass the moment they are written | required, or the row is refused by name |
+
+A deferral **may carry the deferred test's body** as a fenced code block, and should. It turns a promise into something a reader can check — does this compile at the phase it names, does it assert what it claims — and the artifact persists, unlike terminal output. Code fences are inert to every parser, so the body can contain checkbox- and heading-shaped lines freely.
+
+Two rules about that fence, because the body is arbitrary text and the parsers now depend on it:
+
+- **A fence closes only on its own marker** — same character, at least the same length, nothing after it (CommonMark's rule). So **nest by lengthening**: wrap a body containing ```` ``` ```` in four backticks. A `~~~` inside a ```` ``` ```` block is just text, not a closer.
+- **An unterminated fence is refused.** The write is blocked, naming the line the block opened at. The mask deliberately fails *open* underneath — an unclosed fence masks nothing — because the alternative is that one missing backtick silently deletes every phase below it from every parser at once. A loud refusal beats a document that quietly stops meaning what it says.
+
+A **regression guard** is a row whose `Writable at` and `Passes at` name the same test phase: it has no red window. That is legitimate for a guard against regression, or for an assertion about the runner rather than about your code. It is also exactly what a rubber stamp looks like, and nothing can tell the two apart mechanically — so the author says which.
+
+**Every test phase must carry a `#### Test Phase N Verification` gate**, and an impl without one is refused. A test phase has one gate rather than the usual four — Context and Document on a phase that ships nothing would be `(none needed)` noise — but that one is not optional, because it is where the deferred bodies get reviewed. Omitting it would let the phase close having reviewed nothing.
+
+```mermaid
+flowchart LR
+  TP1["Test Phase 1<br/>author + register"]
+  BP1["Build Phase 1"]
+  TP2["Test Phase 2"]
+  BP2["Build Phase 2"]
+  TP1 --> BP1 --> TP2 --> BP2
+  TP1 -. "#### Deferred to Test Phase 2<br/>(justifies its existence)" .-> TP2
+  TP2 -. "carried body uncommented,<br/>now fails on its own assertion" .-> BP2
+```
+
+### Real red and fake red
+
+**A test that fails to load has not been authored.** Module resolution happens before test collection, so a file importing a symbol that does not exist yet fails to *load* — the assertion never runs. The exit code is identical to a genuine failure, which is exactly why this needs saying.
+
+`.skip()` does not rescue it. A file whose import cannot resolve fails **even when every test in it is skipped** (asserted against the real runner, not reasoned about). `.skip()` is right when the *symbol exists and the behaviour does not*; it is not a deferral mechanism.
+
+The boundary rule tells you which tests can be authored early:
+
+| Reaches its subject via | Red on day one? |
+|---|---|
+| HTTP, a CLI, a query, the filesystem, a spawned process | **Yes** — 404, non-zero exit, missing table, no such file |
+| `import` of a symbol the plan will create | **No** — the file cannot load |
+
+Prefer the boundary when authoring early. When you cannot, defer into the register with the body carried — which is honest, checkable, and does not pretend.
+
+::: tip Why this is a review and not a check
+Distinguishing an assertion failure from a load failure requires reading and interpreting runner output, which this project refuses on principle — that refusal is what kept tool knowledge out of `atdawn verify`. So the compensating control is human: **Test Phase 1 cannot close until its deferred bodies have been reviewed.** Structure can require the field; it cannot require the honesty.
+:::
+
 ## The shape
 
 Every impl document that opts in (via `trajectory: required` in the frontmatter) has a `## Test Trajectory` section positioned after `## Boundary Map` and before `## Checklist`.
@@ -125,6 +192,10 @@ The `validate-impl-structure.js` hook enforces four core rules when the impl has
 5. **Rationale completeness** *(opt-in via `rationale: required` in frontmatter)* — every row whose `Writable at` is later than the configured baseline must have a `- **TN** \`Writable at: Phase N\` — {reason}` entry in a `### Trajectory Rationale` subsection. Stale entries (entries for IDs not in the trajectory) are always flagged. See the dedicated section below for the `rationale_baseline` frontmatter key.
 
 ## Trajectory Rationale and the `rationale_baseline` key
+
+::: warning Superseded by the register
+**A plan with a test phase does not author `### Trajectory Rationale` at all.** Test Phase 1's register is where justification lives now, and the validator skips this rule entirely when a test phase is present — two homes for one fact is a failure this codebase has three separate lessons about. Everything below describes the legacy shape, kept because it is what the existing 52 impls use and they validate unchanged.
+:::
 
 Plans that opt in via `rationale: required` in their frontmatter must justify, in a `### Trajectory Rationale` subsection, every row whose test cannot be authored at the writable baseline. The default baseline is **Phase 0** — "writable today against the current stack, before any plan code lands." A row at `Writable at: Phase 0` needs no rationale; a row at `Writable at: Phase 3` does.
 

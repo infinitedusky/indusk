@@ -49,3 +49,41 @@ describe("cleanup-ritual T25: installed skills match package sources", () => {
 		expect(problems).toEqual([]);
 	});
 });
+
+/**
+ * A12 (test-phase-structure) — a plan created by `/planner` opens with a test
+ * phase.
+ *
+ * The assertion is about a document a model will write, and there is no way to
+ * check that mechanically without running one. So this pins the nearest thing
+ * that is checkable and is genuinely load-bearing: the instruction itself. A
+ * skill that does not say to author Test Phase 1 will not produce plans that
+ * have one, and that failure is silent — the plan simply comes out in the old
+ * shape and every rule this plan adds is dormant.
+ *
+ * It lives beside the sync check on purpose. An instruction that is correct in
+ * the package and stale on disk is the same outcome as an instruction that was
+ * never written, and `cleanup-ritual`'s falsification found exactly that: four
+ * of five ritual skills stale, one of them silently disabling a gate.
+ */
+describe("A12: /planner authors a test phase first", () => {
+	const plannerSource = join(SKILLS_SOURCE, "planner.md");
+
+	it("the planner skill instructs Test Phase 1 as the first phase", () => {
+		const text = readFileSync(plannerSource, "utf-8");
+
+		expect(text).toMatch(/###\s+Test Phase 1/);
+		// Not merely mentioned — named as first. The whole discipline is an
+		// ordering claim, and a skill that describes test phases without saying
+		// they come first has documented a feature rather than a rule.
+		expect(text.toLowerCase()).toMatch(/test phase 1[^.]{0,120}\bfirst\b/);
+	});
+
+	it("the planner skill explains the deferral register", () => {
+		const text = readFileSync(plannerSource, "utf-8");
+
+		// The register is what makes an honest deferral a first-class outcome
+		// rather than something to work around with `.skip()`.
+		expect(text).toMatch(/Deferred to Test Phase/);
+	});
+});

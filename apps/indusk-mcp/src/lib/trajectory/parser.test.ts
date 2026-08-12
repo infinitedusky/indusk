@@ -22,9 +22,14 @@ describe("parseTrajectory — T1: extracts the Test Trajectory table into typed 
 				asserts: "checks a thing",
 				writableAt: 1,
 				passesAt: 2,
+				// A cell with no sequence prefix means the build sequence, so
+				// every row written before test phases existed keeps its meaning.
+				writableAtKind: "build",
+				passesAtKind: "build",
 				state: "planned",
 				kind: undefined,
 				scope: undefined,
+				test: undefined,
 			},
 		]);
 	});

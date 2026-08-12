@@ -152,7 +152,23 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    Challenge each row before you write it down: *"could this test be authored earlier than the phase that makes it pass?"* If yes, `Writable at` must point to that earlier phase. The Writable-phase's Verification block gains a `(write red)` item that commits the test against the current implementation and asserts the expected failure symptom; the Passes-phase's Verification block keeps its `(goes green)` item. Both reference the same test ID — the validator accepts multiple phase references to one trajectory row.
 
-   **Phase 0 is the default; rationale is required only for Phase 1+ rows.** Every new impl sets `rationale: required` in its frontmatter. The `### Trajectory Rationale` subsection (placed after `### Deferred Verification`) is required ONLY when at least one trajectory row has `Writable at` later than Phase 0. Phase 0 means "writable today against the current stack, before any plan code lands" — it's the default and needs no justification. We only require rationale when a test will be authored AFTER some plan implementation has happened (Writable at: Phase 1+). This keeps the subsection from filling with "trivially writable today" boilerplate when most rows are correctly Phase 0.
+   **Test Phase 1 comes first, and it is the register.** Every new impl sets `test_phases: required` in its frontmatter and opens with `### Test Phase 1`, before any build phase. Build phases are spelled `### Build Phase N` (`### Phase N` still means the same thing, so no existing plan needs editing). The two sequences number independently and are ordered by their position in the document.
+
+   Test Phase 1 does two jobs. It **authors every test that can honestly be authored**, and it **records every test that cannot**, with a reason. That second job is why the phase exists: "write the tests first" was previously expressed only as a column value, which meant the deviation had machinery behind it and the rule did not.
+
+   Its register has two subsections, both read structurally rather than as prose:
+
+   - `#### Deferred to Test Phase N` — justifies the *existence* of a later test phase. Any `### Test Phase N` where N > 1 requires a matching entry here, or the impl is refused, naming the phase.
+   - `#### Deferred to Build Phase N` — justifies a single test authored later than Test Phase 1, usually because its subject is a symbol that build phase introduces.
+   - `#### Regression Guards` — declares rows that pass the moment they are authored. A row whose `Writable at` and `Passes at` both name the same test phase has no red window; that is legitimate for a regression guard or an assertion about the runner, and it is also what a rubber stamp looks like. Nothing can separate them mechanically, so the author says which, with a `- **T1** — {why}` entry.
+
+   **A deferral may carry the deferred test's body** as a fenced code block. This is the preferred shape, because it turns a promise into something a reader can check: does this compile at the phase it names, and does it assert what it claims? Code fences are inert to every parser, so the body can contain checkbox- and heading-shaped lines freely.
+
+   **Deferring means deferring — do not reach for `.skip()`.** A test whose file cannot load has not been authored; it is an absent test wearing a failure's clothes, and `.skip()` does not rescue it, because module resolution happens before test collection. `.skip()` is right when the *symbol exists* and the behaviour does not. A commented body in the Test Phase 1 register is right when the symbol does not exist yet.
+
+   **Phase 0 is the default; rationale is required only for Phase 1+ rows.** ***In a plan with a test phase, the register replaces this section entirely — do not author both.*** `### Trajectory Rationale` is the pre-test-phase spelling of the same idea, kept so that existing impls keep validating; when a test phase is present the validator skips the rule outright, because two homes for one fact is a failure this codebase has three lessons about. What follows describes the legacy shape.
+
+   Every new impl sets `rationale: required` in its frontmatter. The `### Trajectory Rationale` subsection (placed after `### Deferred Verification`) is required ONLY when at least one trajectory row has `Writable at` later than Phase 0. Phase 0 means "writable today against the current stack, before any plan code lands" — it's the default and needs no justification. We only require rationale when a test will be authored AFTER some plan implementation has happened (Writable at: Phase 1+). This keeps the subsection from filling with "trivially writable today" boilerplate when most rows are correctly Phase 0.
 
    The `validate-impl-structure.js` hook enforces completeness: every Phase 1+ T-ID must appear as a `- **TN** \`Writable at: Phase N\` — {reason}` entry, the subsection itself must exist when any Phase 1+ row exists, and stale entries (entries for IDs not in the trajectory table) are flagged.
 
@@ -409,6 +425,7 @@ title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft | approved | in-progress | completed | abandoned
 trajectory: required
+test_phases: required
 rationale: required
 gate_policy: ask
 ---
@@ -449,39 +466,61 @@ For multi-phase impls, include a boundary map showing what each phase produces a
   - would require: {what would unlock a proper test — a new environment, a future plan, production data}
   - mitigation: {compensating control — telemetry alert, scheduled review, downstream plan, canary procedure, feedback signal}
 
-### Trajectory Rationale
-
-**Starting assumption: every test is writable at Phase 0 (pre-plan) against the current stack — Phase 0 rows need no rationale.** This subsection is required ONLY when one or more rows have `Writable at` later than Phase 0. List one entry per Phase 1+ row, naming what prevents authoring the test before plan code lands. Read the entries together — if multiple rows share the same weak excuse, the plan is over-sequenced.
-
-- **T3** `Writable at: Phase 2` — {one-sentence reason — typically because the subject under test is a TypeScript symbol authored in Phase 2 and the test file would not compile against today's stack}
-- **T14** `Writable at: Phase 5` — {reason — e.g., "subject is the zod schema introduced in Phase 5; the test's import line is a compile error today"}
-
-The `validate-impl-structure.js` hook enforces that every Phase 1+ T-ID from the trajectory table appears as an entry here. Phase 0 rows are exempt. Stale entries (rationale entries for IDs not in the trajectory) are flagged.
+{`### Trajectory Rationale` is the LEGACY shape and belongs only in plans with no test phase. A plan with `### Test Phase 1` puts its justifications in that phase's register instead, and the validator skips this rule entirely — do not author both. The legacy form, for reference: one `- **T3** \`Writable at: Phase 2\` — {reason}` entry per row whose `Writable at` is later than Phase 0.}
 
 ## Checklist
-### Phase 1: {Name}
+
+### Test Phase 1: {Name — e.g. "Author every assertion, RED"}
+
+**Goal**: author every test that can honestly be authored now, and record every test that cannot.
+
+- [ ] Author {T1, T2, …} against {the subject}, RED
+- [ ] Confirm each fails on its own assertion rather than on a missing import
+
+{Include a `#### Deferred to Test Phase N` block for EACH later test phase — required, and the impl is refused without it.}
+
+#### Deferred to Build Phase 2
+
+- **T4** — {why it cannot be authored yet — typically its subject is a symbol Build Phase 2 introduces, so the file would fail to *load* rather than fail an assertion}. Body reviewed:
+
+  ```typescript
+  // the deferred test, so the justification is checkable rather than a promise
+  ```
+
+{Include `#### Regression Guards` only if some row passes the moment it is written.}
+
+#### Regression Guards
+
+- **T7** — {why it has no red phase and should not be given one}
+
+#### Test Phase 1 Verification
+
+- [ ] {T1, T2, …} are authored, and each red one fails on its own assertion
+- [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
+
+### Build Phase 1: {Name}
 - [ ] {Task — include code snippets when syntax matters}
   ```typescript
   // Example: function signature that must match this shape
   function withdrawFor(wallet: address, player: address, amount: uint256, historyHash: bytes32)
   ```
 
-{OPTIONAL: #### Phase 1 OTel — include ONLY if the project's `otel.role` in `.indusk/config.json` is unset or `"service"`. Skip the entire OTel block for projects with `otel.role: "library" | "tool" | "none"`. Use `shouldEmitOtelGate(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to decide.}
+{OPTIONAL: #### Build Phase 1 OTel — include ONLY if the project's `otel.role` in `.indusk/config.json` is unset or `"service"`. Skip the entire OTel block for projects with `otel.role: "library" | "tool" | "none"`. Use `shouldEmitOtelGate(projectRoot)` from `apps/indusk-mcp/src/lib/config.ts` to decide.}
 
-#### Phase 1 OTel
+#### Build Phase 1 OTel
 - [ ] {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
 
-#### Phase 1 Verification
+#### Build Phase 1 Verification
 - [ ] T1 passes (`{runnable command, e.g. pnpm test}`)
 - [ ] T2 flips to `written` state (skipped until Phase 2)
 
 {If a phase has no tests flipping at it, declare it explicitly — NOT silently:}
 {- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})}
 
-#### Phase 1 Context
+#### Build Phase 1 Context
 - [ ] {Concrete CLAUDE.md edit this phase produces — e.g., "Add to Architecture: ...", "Add to Conventions: ...", "Update Current State: ...". Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
 
-#### Phase 1 Document
+#### Build Phase 1 Document
 - [ ] {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}
 
 ## Files Affected

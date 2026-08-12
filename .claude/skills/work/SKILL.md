@@ -69,13 +69,26 @@ Implementation plans live in `.indusk/planning/{plan-name}/impl.md` as checklist
 
 If the impl has a `## Test Trajectory` table (frontmatter `trajectory: required`), the work skill takes on two additional responsibilities at phase boundaries.
 
+### Executing a test phase
+
+An impl with `test_phases: required` opens with `### Test Phase 1` before any `### Build Phase N`. Its checklist items *are* the authoring work, so executing it means:
+
+1. **Author every row the phase names**, then run them and read each failure. A row is `written` when its test exists and fails **on its own assertion**.
+2. **Reject a red that is really a load error.** A test whose file cannot resolve an import has not been authored — it is an absent test wearing a failure's clothes, and the exit code looks identical to a real failure. When that happens the honest move is to defer the row into the register, not to keep the file.
+3. **Review the register before opening any build phase.** Read each `#### Deferred to …` entry's carried body against two questions: *will this compile at the phase it names*, and *does it assert the behaviour it claims?* This is the compensating control for the fact that a fake red cannot be detected mechanically — and it is a pause point under autopilot, because it is human judgement rather than a check.
+4. The phase's Verification gate cannot be checked while any row it authors is still unwritten. `check-gates` enforces that; the review above is what makes closing it mean something.
+
+**Real red vs fake red — the boundary rule.** A test that reaches its subject *over a boundary* — HTTP, a CLI, a query, the filesystem, a spawned process — gives a genuine red on day one: 404, non-zero exit, missing table, no such file. A test that `import`s its subject cannot, because module resolution precedes test collection. When authoring early, prefer the boundary.
+
 ### At phase start — author writable-at-phase tests
 
 Before starting implementation items for Phase N:
 
 1. Read the Test Trajectory. Collect every row with `Writable at: Phase N` whose `State` is `planned` or `writable`.
-2. For each such row: create the test file (or add the test case to an existing file) implementing the `Asserts` description. Commit it as failing. If the test cannot yet run against a compiled symbol, use `.skip()` with a comment naming the unlock phase.
+2. For each such row: create the test file (or add the test case to an existing file) implementing the `Asserts` description. Commit it as failing.
 3. Update each row's `State` to `written` in the trajectory table.
+
+**Do not use `.skip()` to defer a test whose subject does not exist.** It does not work: module resolution happens before test collection, so a file importing a symbol that isn't there fails to load *even when every test in it is skipped* — the suite goes red and the row is not authored in any meaningful sense. (Asserted against the real runner, not reasoned about: `skip-does-not-defer.test.ts`.) `.skip()` is right when the **symbol exists and the behaviour does not** — a placeholder for a code path not yet wired. When the symbol does not exist, defer the row into Test Phase 1's register with its body carried as a fenced block, which is checkable and does not pretend.
 
 These tests are the contract for the phase. They fail when the phase begins; they pass when it ends.
 

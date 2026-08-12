@@ -1,3 +1,5 @@
+import { type PhaseKind, parsePhaseRef } from "../impl-headings.js";
+
 export type TrajectoryState =
 	| "planned"
 	| "writable"
@@ -14,8 +16,19 @@ export type TrajectoryScope = "unit" | "integration" | "e2e";
 export interface TrajectoryRow {
 	id: string;
 	asserts: string;
+	/**
+	 * The phase number from the cell — `3` for both `Phase 3` and `Test Phase
+	 * 3`. It stays a bare number so every consumer written before test phases
+	 * existed keeps working unchanged; the companion `*Kind` field carries
+	 * which sequence it counts in, and `phaseOrdinal` puts the two on one
+	 * timeline for callers that compare across them.
+	 */
 	writableAt: number;
 	passesAt: number;
+	/** Which sequence `writableAt` counts in. `"build"` when unspecified. */
+	writableAtKind: PhaseKind;
+	/** Which sequence `passesAt` counts in. `"build"` when unspecified. */
+	passesAtKind: PhaseKind;
 	state: TrajectoryState;
 	kind?: TrajectoryKind;
 	scope?: TrajectoryScope;
@@ -48,7 +61,6 @@ export interface Trajectory {
 const TRAJECTORY_HEADING = /^##\s+Test Trajectory\b/;
 const DEFERRED_HEADING = /^###\s+Deferred Verification\b/;
 const NEXT_SECTION_HEADING = /^#{1,3}\s+/;
-const PHASE_REFERENCE = /^\s*Phase\s+(\d+)\s*$/i;
 
 const VALID_STATES: ReadonlySet<TrajectoryState> = new Set([
 	"planned",
@@ -123,13 +135,17 @@ function normalizeHeader(header: string): string {
 }
 
 /**
- * Parse a "Phase N" cell into a number. Returns NaN if the cell is not a
- * valid phase reference. The validator catches NaN and emits a specific error.
+ * Parse a "Phase N" / "Build Phase N" / "Test Phase N" cell into a number.
+ * Returns NaN if the cell is not a valid phase reference — the validator
+ * catches NaN and emits a specific error.
  */
 function parsePhaseReference(cell: string): number {
-	const match = cell.match(PHASE_REFERENCE);
-	if (!match) return Number.NaN;
-	return Number.parseInt(match[1], 10);
+	return parsePhaseRef(cell)?.number ?? Number.NaN;
+}
+
+/** Which sequence a phase cell counts in. Build when unspecified. */
+function parsePhaseReferenceKind(cell: string): PhaseKind {
+	return parsePhaseRef(cell)?.kind ?? "build";
 }
 
 function parseState(cell: string): TrajectoryState {
@@ -322,6 +338,8 @@ function parseTrajectoryTable(lines: string[]): TrajectoryRow[] {
 			asserts,
 			writableAt: parsePhaseReference(record.writableAt ?? ""),
 			passesAt: parsePhaseReference(record.passesAt ?? ""),
+			writableAtKind: parsePhaseReferenceKind(record.writableAt ?? ""),
+			passesAtKind: parsePhaseReferenceKind(record.passesAt ?? ""),
 			state: parseState(record.state ?? ""),
 			kind: parseOptionalKind(record.kind ?? ""),
 			scope: parseOptionalScope(record.scope ?? ""),

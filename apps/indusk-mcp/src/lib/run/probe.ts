@@ -1,6 +1,12 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
+import {
+	fencedLineMask,
+	type PhaseRef,
+	parsePhaseHeading,
+	phaseSequence,
+} from "../impl-headings.js";
 import { TERMINAL_STATES } from "../trajectory/parser.js";
 import { type GateEnvelope, type GateResult, runGateScripts } from "./gate.js";
 import { snapshotTrajectory } from "./goalposts.js";
@@ -23,6 +29,39 @@ import { snapshotTrajectory } from "./goalposts.js";
 export const PROBE_ITEM = "__indusk-run phase-close probe__";
 
 /**
+ * Everything up to and including phase `n`, with every later phase dropped.
+ *
+ * The probe's contract is "every phase up to N is closed". It used to get that
+ * by appending a synthetic `Phase N+1` and relying on `check-gates` stopping at
+ * the first phase whose *number* was not smaller — which silently depended on
+ * the real Phase N+1 sharing a number with the synthetic one. That coincidence
+ * disappeared the moment phases could be ordered by document position instead
+ * of by number, and its absence turned every unfinished next phase into a false
+ * "premature checkoff".
+ *
+ * Truncating states the contract directly: if the later phases are not in the
+ * document, no ordering rule can include them. Falls back to the full content
+ * when the ordinal is past the end, which preserves the previous behaviour
+ * rather than silently probing an empty document.
+ *
+ * Cuts by document **position**, not by phase number: with two sequences,
+ * `Phase 1` names two different phases, and truncating at "the build phase
+ * numbered N" would keep or drop the wrong half of the plan.
+ */
+export function truncateAfterPhase(content: string, ordinal: number): string {
+	const lines = content.split("\n");
+	const fenced = fencedLineMask(lines);
+	let seen = -1;
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		if (!parsePhaseHeading(lines[i])) continue;
+		seen++;
+		if (seen > ordinal) return lines.slice(0, i).join("\n");
+	}
+	return content;
+}
+
+/**
  * Deliberate phase-close probe: feed `check-gates` a would-be next-phase
  * checkoff envelope and require exit 0 — never trust the model's self-report.
  *
@@ -39,14 +78,30 @@ export async function probePhaseClose(options: {
 	implPath: string;
 	worktree: string;
 	phase: number;
+	/**
+	 * Position of the phase being closed. Defaults to `phase - 1`, which is the
+	 * right answer for a single-sequence plan (Phase 1 sits at position 0) and
+	 * keeps every existing caller working unchanged.
+	 */
+	ordinal?: number;
 	scripts: string[];
 }): Promise<GateResult> {
 	const content = await readFile(options.implPath, "utf8");
+	const ordinal = options.ordinal ?? options.phase - 1;
 	const probePhase = options.phase + 1;
+	// The phase that would come next, if the plan has one. Its rows are the
+	// NEXT phase's test-first duty, not part of this phase's greenness.
+	const next = phaseSequence(content)[ordinal + 1];
 	const probeContent = [
-		neutralizeRowsWritableAt(content, probePhase),
+		// Drop everything after the phase being closed, so "the phases before
+		// the probe" is exactly "phases up to this one" under any ordering rule
+		// — see `truncateAfterPhase`.
+		truncateAfterPhase(next ? neutralizeRowsWritableAt(content, next) : content, ordinal),
 		"",
-		`### Phase ${probePhase}: __orchestrator phase-close probe__`,
+		// A build phase numbered past anything real: the probe must not collide
+		// with a phase the plan actually has, and after truncation it is the
+		// only phase past the boundary anyway.
+		`### Build Phase ${probePhase}: __orchestrator phase-close probe__`,
 		"",
 		`- [ ] ${PROBE_ITEM}`,
 		"",
@@ -79,11 +134,16 @@ export async function probePhaseClose(options: {
  * probe phase to `skipped` so Gate A (test-first for the NEXT phase) cannot
  * fail a probe that is only asking about THIS phase's closure.
  */
-function neutralizeRowsWritableAt(content: string, phase: number): string {
+function neutralizeRowsWritableAt(content: string, phase: PhaseRef): string {
 	const trajectory = snapshotTrajectory(content);
 	const targets = new Set(
 		trajectory.rows
-			.filter((row) => row.writableAt === phase && !TERMINAL_STATES.has(row.state))
+			.filter(
+				(row) =>
+					row.writableAt === phase.number &&
+					row.writableAtKind === phase.kind &&
+					!TERMINAL_STATES.has(row.state),
+			)
 			.map((row) => row.id),
 	);
 	if (targets.size === 0) return content;

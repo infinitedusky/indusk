@@ -1,0 +1,11 @@
+# A manual survey of "how many copies of this pattern exist" undercounts — script the census before an ADR's sequencing depends on the number
+
+When an ADR's central argument and sequencing rest on a count of duplicated logic ("this pattern exists in N places, so consolidate before extending it"), get that count from a script that greps/parses the source, not from a manual read-through of the codebase — even a careful one.
+
+**What happened:** `test-phase-structure`'s ADR argued that the phase-heading regex existed in seven places and had to be consolidated into one definition before a second heading kind (`Test Phase N`) could be added safely. The danger was correctly identified — but the count was wrong. There were actually **nine** copies: an eighth was a phase-*reference* regex (a structurally different but related sibling, distinct enough in shape to slip past a manual survey), and a ninth was an entire second trajectory-row parser, both hiding inside `check-gates.js`. Neither the eighth nor the ninth copy was found by reading the code — both were found only because something downstream silently stopped working (a gate stopped firing; a merge broke a test suite).
+
+**Why it matters:** the fan-out estimate wasn't a minor detail — it was the number the plan's entire phased sequencing was built on (consolidate first, so extending the pattern later costs one change instead of seven). An undercount of 7-vs-9 doesn't just mean "two extra edits later" — it means two of the copies were free to silently diverge and stop enforcing while the plan proceeded as if they'd already been unified.
+
+**The rule:** before an ADR commits to a specific count of structural duplication as load-bearing for its sequencing, write (or reuse) a script that scans the source and counts matches of the actual pattern — including near-neighbor siblings that share shape but not exact wording (a *reference* to a heading is a different regex from the heading *definition*, but both need auditing together). A scripted census catches what a manual read, however careful, structurally cannot: patterns that look different enough to skip past a human skim but are still copies of the same underlying logic.
+
+See `.indusk/planning/archive/test-phase-structure/` and [[pin-deliberate-duplicates-with-a-count]] for the companion rule about pinning duplicates once found.
