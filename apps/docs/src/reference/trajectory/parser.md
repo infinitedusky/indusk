@@ -2,6 +2,23 @@
 
 Technical reference for the parser and validator primitives at `apps/indusk-mcp/src/lib/trajectory/`. For the user-facing guide on authoring Test Trajectories in impl documents, see the [Test Trajectory guide](/guide/test-trajectory). For the design rationale, see [`.indusk/planning/tests-first-planning/adr.md`](https://github.com/infinite-dusky/dusk/blob/main/.indusk/planning/tests-first-planning/adr.md).
 
+## Module layout, and the port
+
+The hooks are plain JavaScript and cannot import a `.ts` module, so every piece of this logic exists twice: once as the TypeScript source, once as a hand-written mirror under `hooks/`. That duplication is structural and is not going away. What keeps it honest is a **one-to-one file correspondence** — each `_`-prefixed hook module mirrors exactly one `src/lib` module, so *"change the TS and every JS port together"* is a rule you follow by reading two filenames rather than by hunting through a thousand-line hook.
+
+| Concern | TypeScript | JS port | Read by |
+|---|---|---|---|
+| Phase/gate headings, phase ordering, fences | `lib/impl-headings.ts` | `hooks/_impl-headings.js` | every parser |
+| Trajectory table + Deferred Verification rows | `lib/trajectory/parser.ts` | `hooks/_trajectory-parser.js` | `check-gates`, `validate-impl-structure` |
+| Test Phase 1's register | `lib/trajectory/register.ts` | `hooks/_register.js` | `validate-impl-structure` |
+| The validation rules | `lib/trajectory/validator.ts` | inline in `validate-impl-structure.js` | — |
+
+`_`-prefixed modules are **imported by hooks, never registered as hooks**: they need no `settings.json` entry, but they must exist in `.claude/hooks/` or the importing hook dies at load. `globSync("*.js")` copies them on init and update.
+
+::: warning Why the parser is shared rather than copied
+`check-gates.js` and `validate-impl-structure.js` each carried their own trajectory-row parser until they were unified, and the copies had already diverged in two ways at once. One kept a local `Phase N` regex, so when `Test Phase N` became a legal cell it read every row as `NaN` and Gate A matched nothing — silently. The other never produced a `state` field at all, which surfaced the moment the two were merged. A duplicated parser does not announce itself when it falls behind; it just stops enforcing. A structural test now asserts there is exactly **one** definition under `hooks/`, because no behavioural test can catch a divergence that has not happened yet.
+:::
+
 ## Types
 
 ```ts

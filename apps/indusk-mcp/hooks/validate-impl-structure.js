@@ -25,24 +25,13 @@ import {
 	gateHeading,
 	PHASE_HEADING,
 	parsePhaseHeading,
-	parsePhaseRef,
 	phaseExists,
 	phaseOrdinal,
 	phaseSequence,
 	unterminatedFenceLine,
 } from "./_impl-headings.js";
-
-// The register: the subsections Test Phase 1 carries. `#### Deferred to Test
-// Phase N` justifies a later test phase's existence; `#### Regression Guards`
-// declares rows that are green the moment they are written.
-//
-// Declared up here, not beside the functions that use them: this hook runs its
-// validation at module top level, so a `const` sitting below that call is in
-// the temporal dead zone when the call happens — a ReferenceError, and exit 1
-// rather than the exit 2 that means "blocked".
-const DEFERRED_TO_TEST_PHASE = /^####\s+Deferred to Test Phase\s+(\d+)\b/;
-const REGRESSION_GUARDS_HEADING = /^####\s+Regression Guards\b/;
-const REGISTER_ENTRY_ID = /^\s*-\s+\*\*([TA]\d+)\*\*/;
+import { parseRegister } from "./_register.js";
+import { parseTrajectoryFromBody } from "./_trajectory-parser.js";
 
 // Read hook input from stdin
 let input = "";
@@ -460,48 +449,6 @@ function validateTrajectory(
  * phase is not a justification recorded up front, which is its whole purpose.
  * Fenced lines are skipped so a carried test body cannot pose as an entry.
  */
-function parseRegister(implBody) {
-	const lines = implBody.split("\n");
-	const fenced = fencedLineMask(lines);
-	const justifiedTestPhases = new Set();
-	const regressionGuards = new Set();
-
-	let inTestPhaseOne = false;
-	let inGuards = false;
-	for (let i = 0; i < lines.length; i++) {
-		if (fenced[i]) continue;
-		const line = lines[i];
-
-		const heading = parsePhaseHeading(line);
-		if (heading) {
-			inTestPhaseOne = heading.kind === "test" && heading.number === 1;
-			inGuards = false;
-			continue;
-		}
-		if (!inTestPhaseOne) continue;
-
-		const deferred = DEFERRED_TO_TEST_PHASE.exec(line);
-		if (deferred) {
-			justifiedTestPhases.add(Number.parseInt(deferred[1], 10));
-			inGuards = false;
-			continue;
-		}
-		if (REGRESSION_GUARDS_HEADING.test(line)) {
-			inGuards = true;
-			continue;
-		}
-		if (/^####\s+/.test(line)) {
-			inGuards = false;
-			continue;
-		}
-		if (inGuards) {
-			const entry = REGISTER_ENTRY_ID.exec(line);
-			if (entry) regressionGuards.add(entry[1]);
-		}
-	}
-
-	return { justifiedTestPhases, regressionGuards };
-}
 
 /** A new impl must open with a test phase. Gated on `test_phases: required`. */
 function validateTestPhasePresence(sequence, required) {
@@ -596,144 +543,6 @@ function validateRegressionGuards(implBody, trajectory, sequence) {
 			rule: "regression-guard-declaration",
 			message: `Trajectory row \`${r.id}\` passes in the same test phase that authors it, so it has no red phase. That is allowed, but it must be declared: add a \`- **${r.id}** — {why}\` entry under \`#### Regression Guards\` in Test Phase 1. A row green on arrival is either a regression guard or a rubber stamp, and only the author knows which.`,
 		}));
-}
-
-function parseTrajectoryFromBody(implBody) {
-	const lines = implBody.split("\n");
-	let inTrajectory = false;
-	let inDeferred = false;
-	const tableLines = [];
-	const deferredLines = [];
-
-	for (const line of lines) {
-		if (/^##\s+Test Trajectory\b/.test(line)) {
-			inTrajectory = true;
-			inDeferred = false;
-			continue;
-		}
-		if (!inTrajectory) continue;
-
-		if (/^###\s+Deferred Verification\b/.test(line)) {
-			inDeferred = true;
-			continue;
-		}
-
-		if (/^#{1,3}\s+/.test(line) && !/^###\s+Deferred Verification\b/.test(line)) {
-			const depth = (line.match(/^(#{1,6})/) || ["", ""])[1].length;
-			if (depth <= 3) break;
-		}
-
-		if (inDeferred) deferredLines.push(line);
-		else tableLines.push(line);
-	}
-
-	return {
-		rows: parseTrajectoryTable(tableLines),
-		deferred: parseDeferredBlock(deferredLines),
-	};
-}
-
-function parseTableRow(line) {
-	const trimmed = line.trim();
-	if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return [];
-	return trimmed
-		.slice(1, -1)
-		.split("|")
-		.map((cell) => cell.trim());
-}
-
-function normalizeHeader(header) {
-	const normalized = header.toLowerCase().replace(/\s+/g, " ").trim();
-	const aliases = {
-		id: "id",
-		asserts: "asserts",
-		"writable at": "writableAt",
-		"passes at": "passesAt",
-		state: "state",
-		kind: "kind",
-		scope: "scope",
-	};
-	return aliases[normalized] || normalized;
-}
-
-function parsePhaseRefNumber(cell) {
-	return parsePhaseRef(cell)?.number ?? Number.NaN;
-}
-
-function parsePhaseRefKind(cell) {
-	return parsePhaseRef(cell)?.kind ?? "build";
-}
-
-function parseTrajectoryTable(lines) {
-	const pipeLines = lines.filter((l) => l.trim().startsWith("|"));
-	if (pipeLines.length < 2) return [];
-	const header = parseTableRow(pipeLines[0]);
-	const sep = parseTableRow(pipeLines[1]);
-	if (!sep.every((c) => /^:?-+:?$/.test(c))) return [];
-	const keys = header.map(normalizeHeader);
-
-	const rows = [];
-	for (let i = 2; i < pipeLines.length; i++) {
-		const cells = parseTableRow(pipeLines[i]);
-		if (cells.length !== keys.length) continue;
-		const rec = {};
-		for (let j = 0; j < keys.length; j++) rec[keys[j]] = cells[j];
-		if (!rec.id || !rec.asserts) continue;
-		rows.push({
-			id: rec.id.trim(),
-			asserts: rec.asserts.trim(),
-			writableAt: parsePhaseRefNumber(rec.writableAt || ""),
-			passesAt: parsePhaseRefNumber(rec.passesAt || ""),
-			writableAtKind: parsePhaseRefKind(rec.writableAt || ""),
-			passesAtKind: parsePhaseRefKind(rec.passesAt || ""),
-		});
-	}
-	return rows;
-}
-
-function parseDeferredBlock(lines) {
-	const rows = [];
-	let current = null;
-	const flush = () => {
-		if (current && current.name !== undefined) {
-			rows.push({
-				name: current.name,
-				reason: current.reason || "",
-				wouldRequire: current.wouldRequire || "",
-				mitigation: current.mitigation || "",
-			});
-		}
-		current = null;
-	};
-	for (const rawLine of lines) {
-		const line = rawLine.replace(/\s+$/, "");
-		const nameMatch = line.match(/^-\s+\*\*(.+?)\*\*\s*(?:—\s*(.*))?$/);
-		if (nameMatch) {
-			flush();
-			current = { name: nameMatch[1].trim() };
-			const rest = nameMatch[2];
-			if (rest) {
-				const rm = rest.match(/reason:\s*([^—]+?)(?:\s*—|$)/i);
-				const wm = rest.match(/would require:\s*([^—]+?)(?:\s*—|$)/i);
-				const mm = rest.match(/mitigation:\s*(.+)$/i);
-				if (rm) current.reason = rm[1].trim();
-				if (wm) current.wouldRequire = wm[1].trim();
-				if (mm) current.mitigation = mm[1].trim();
-			}
-			continue;
-		}
-		if (!current) continue;
-		const subMatch = line.match(/^\s+-\s+(reason|would require|mitigation):\s*(.*)$/i);
-		if (subMatch) {
-			const key = subMatch[1].toLowerCase();
-			const value = subMatch[2].trim();
-			if (key === "reason") current.reason = value;
-			else if (key === "would require") current.wouldRequire = value;
-			else if (key === "mitigation") current.mitigation = value;
-		}
-	}
-	flush();
-	return rows;
 }
 
 function validateCrossReferenceIntegrity(implBody, trajectory) {

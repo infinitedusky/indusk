@@ -1,7 +1,7 @@
 ---
 title: "Test phases as structure"
 date: 2026-08-11
-status: in-progress
+status: completed
 trajectory: required
 rationale: required
 gate_policy: ask
@@ -67,8 +67,8 @@ Give test authoring a phase, so the system's central discipline has a moment and
 | A20 | `verify --phase N` judges the boundary at phase N even when the plan opens at `Phase 0` | `apps/indusk-mcp/src/lib/verify/probe-boundary.test.ts` | Phase 0 | Phase 6 | passing |
 | A21 | A test phase with no Verification gate is refused — the deferral review must have somewhere to happen | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 6 | passing |
 | A22 | A green-on-arrival row is not refused into a Test Phase 1 the document does not contain | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 6 | passing |
-| A23 | Trajectory-row parsing has exactly one definition under `hooks/` — a second copy fails the build | `apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts` | Phase 0 | Phase 7 | planned |
-| A24 | The TS validator and the JS hook reach the same verdict on every test-phase rule, across a shared fixture set | `apps/indusk-mcp/src/__tests__/test-phase-parity.test.ts` | Phase 0 | Phase 7 | planned |
+| A23 | Trajectory-row parsing has exactly one definition under `hooks/` — a second copy fails the build | `apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts` | Phase 0 | Phase 7 | passing |
+| A24 | The TS validator and the JS hook reach the same verdict on every test-phase rule, across a shared fixture set | `apps/indusk-mcp/src/__tests__/test-phase-parity.test.ts` | Phase 0 | Phase 7 | passing |
 
 ### Deferred Verification
 
@@ -271,25 +271,25 @@ Each hypothesis below was confirmed by running the shipped code against a fixtur
 
 Each item below is a concrete extraction or a reasoned leave-as-is. The theme is one definition per concern and a one-to-one file correspondence across the port, so "change the TS and every JS port together" becomes something you verify by looking at two filenames instead of hunting inside a thousand lines.
 
-- [ ] Extract `hooks/_trajectory-parser.js` — the trajectory-row parser, imported by **both** hooks. `check-gates.js` and `validate-impl-structure.js` each carry their own today; the eighth-copy bug this plan hit came from exactly that, and a shared module is the only fix that survives the next person adding a column. Hook-local `_`-prefixed module, the established pattern (`_hook-paths.js`, `_impl-headings.js`) — no settings entry, must live in `hooks/` or the importer dies at load.
-- [ ] Extract `src/lib/trajectory/register.ts` — `parseRegister` plus its three heading patterns. Reading Test Phase 1's register is a distinct concern from validating rows, it is used by two rules, and pulling it out is what makes the mirror correspondence one-to-one.
-- [ ] Extract `hooks/_register.js` as that module's port, and have `validate-impl-structure.js` import it — same reasoning, other side of the boundary.
-- [ ] Extend the TS↔JS parity test to the five test-phase rules (A24). `rationale-baseline-parity.test.ts` already pins this discipline for the rationale rule and was written *because* the port is a manual mirror; this plan added five rules to both sides and put none of them under it. Note that A24 is **green on arrival** — both implementations were written together, so it has no red phase. It earns its place as a regression guard, not as a discovery.
-- [ ] (reviewed `src/lib/trajectory/validator.ts`, 619 lines — left as-is once the register moves out: eight rule functions, each small, each independently exported and tested, all read and changed together. Splitting them across files would scatter a single cohesive responsibility and force every rule change to touch an import graph instead of a function.)
-- [ ] (reviewed Gates A and B in `check-gates.js` — left in place: ~90 lines tightly coupled to `newlyChecked`, `sequence` and the phase ordinals computed just above them. Lifting them into a module would mean threading all three through a new signature, and would separate the ordering rule from the ordering data it reads. The parser extraction already takes ~130 lines out of this file.)
-- [ ] (reviewed `skills/planner.md`, 607 lines — left as-is: a skill is one file by contract (`.claude/skills/{name}/SKILL.md`), and the sync-parity test pins byte-equality against exactly one source. Splitting it would break the installer.)
-- [ ] (reviewed `apps/docs/src/changelog.md`, 448 lines — left as-is: an append-only historical record, where length is the point.)
+- [x] Extract `hooks/_trajectory-parser.js` — the trajectory-row parser, imported by **both** hooks. `check-gates.js` and `validate-impl-structure.js` each carry their own today; the eighth-copy bug this plan hit came from exactly that, and a shared module is the only fix that survives the next person adding a column. Hook-local `_`-prefixed module, the established pattern (`_hook-paths.js`, `_impl-headings.js`) — no settings entry, must live in `hooks/` or the importer dies at load.
+- [x] Extract `src/lib/trajectory/register.ts` — `parseRegister` plus its three heading patterns. Reading Test Phase 1's register is a distinct concern from validating rows, it is used by two rules, and pulling it out is what makes the mirror correspondence one-to-one.
+- [x] Extract `hooks/_register.js` as that module's port, and have `validate-impl-structure.js` import it — same reasoning, other side of the boundary.
+- [x] Extend the TS↔JS parity test to the five test-phase rules (A24). `rationale-baseline-parity.test.ts` already pins this discipline for the rationale rule and was written *because* the port is a manual mirror; this plan added five rules to both sides and put none of them under it. Note that A24 is **green on arrival** — both implementations were written together, so it has no red phase. It earns its place as a regression guard, not as a discovery.
+- [x] (reviewed `src/lib/trajectory/validator.ts`, 619 lines — left as-is once the register moves out: eight rule functions, each small, each independently exported and tested, all read and changed together. Splitting them across files would scatter a single cohesive responsibility and force every rule change to touch an import graph instead of a function.)
+- [x] (reviewed Gates A and B in `check-gates.js` — left in place: ~90 lines tightly coupled to `newlyChecked`, `sequence` and the phase ordinals computed just above them. Lifting them into a module would mean threading all three through a new signature, and would separate the ordering rule from the ordering data it reads. The parser extraction already takes ~130 lines out of this file.)
+- [x] (reviewed `skills/planner.md`, 607 lines — left as-is: a skill is one file by contract (`.claude/skills/{name}/SKILL.md`), and the sync-parity test pins byte-equality against exactly one source. Splitting it would break the installer.)
+- [x] (reviewed `apps/docs/src/changelog.md`, 448 lines — left as-is: an append-only historical record, where length is the point.)
 
 #### Build Phase 7 Verification
-- [ ] A23: a structural count over `hooks/` finds exactly one trajectory-row parser — the same shape as A13, and for the same reason: no behavioural test can catch a divergence that has not happened yet
-- [ ] A24: the TS validator and the JS hook agree on every test-phase rule across the shared fixture set, with the fixtures covering both the accept and the refuse side of each rule
-- [ ] Full suite green apart from the known-red admin/tarball and PID-reuse cases; `pnpm check` and `tsc --noEmit` clean
+- [x] A23: a structural count over `hooks/` finds exactly one trajectory-row parser — the same shape as A13, and for the same reason: no behavioural test can catch a divergence that has not happened yet
+- [x] A24: the TS validator and the JS hook agree on every test-phase rule across the shared fixture set, with the fixtures covering both the accept and the refuse side of each rule
+- [x] Full suite green apart from the known-red admin/tarball and PID-reuse cases; `pnpm check` and `tsc --noEmit` clean
 
 #### Build Phase 7 Context
-- [ ] Update the Known Gotchas entry on hook ports: each `_`-prefixed hook module mirrors exactly one `src/lib` module, one-to-one, and the trajectory parser has a single definition under `hooks/` pinned by A23 — the eighth-copy bug is the reason the correspondence is now a rule rather than a habit
+- [x] Update the Known Gotchas entry on hook ports: each `_`-prefixed hook module mirrors exactly one `src/lib` module, one-to-one, and the trajectory parser has a single definition under `hooks/` pinned by A23 — the eighth-copy bug is the reason the correspondence is now a rule rather than a habit
 
 #### Build Phase 7 Document
-- [ ] Update `reference/trajectory/parser.md` with the module layout after the split — which module owns row parsing, which owns the register, and which JS port mirrors each — so a contributor changing a rule knows every file they must touch
+- [x] Update `reference/trajectory/parser.md` with the module layout after the split — which module owns row parsing, which owns the register, and which JS port mirrors each — so a contributor changing a rule knows every file they must touch
 
 ## Files Affected
 

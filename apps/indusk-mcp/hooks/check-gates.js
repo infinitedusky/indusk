@@ -17,11 +17,11 @@ import {
 	fencedLineMask,
 	gateHeading,
 	parsePhaseHeading,
-	parsePhaseRef,
 	phaseExists,
 	phaseOrdinal,
 	phaseSequence,
 } from "./_impl-headings.js";
+import { parseTrajectoryFromBody, stripFrontmatter } from "./_trajectory-parser.js";
 
 // Read hook input from stdin
 let input = "";
@@ -312,7 +312,7 @@ if (hasTrajectorySection) {
 	}
 
 	if (advancingPhases.size > 0) {
-		const trajectory = parseTrajectoryFromBody(newFullContent);
+		const trajectory = parseTrajectoryFromBody(stripFrontmatter(newFullContent));
 		const sequence = phaseSequence(newFullContent);
 
 		// Gate A: test-first authoring, at or before the advancing phase.
@@ -464,76 +464,3 @@ process.exit(0);
 // Trajectory parser (pure JS, mirrors parser.ts — simplified to read
 // just id, passesAt, and state which is all this hook needs).
 // ------------------------------------------------------------------
-
-function parseTrajectoryFromBody(implContent) {
-	const fmMatch = implContent.match(/^---\n[\s\S]*?\n---\n/);
-	const body = fmMatch ? implContent.slice(fmMatch[0].length) : implContent;
-	const lines = body.split("\n");
-
-	let inTrajectory = false;
-	const tableLines = [];
-	for (const line of lines) {
-		if (/^##\s+Test Trajectory\b/.test(line)) {
-			inTrajectory = true;
-			continue;
-		}
-		if (!inTrajectory) continue;
-		if (/^#{1,3}\s+/.test(line) && !/^###\s+Deferred Verification\b/.test(line)) {
-			const depth = (line.match(/^(#{1,6})/) || ["", ""])[1].length;
-			if (depth <= 3) break;
-		}
-		if (/^###\s+Deferred Verification\b/.test(line)) break;
-		tableLines.push(line);
-	}
-
-	const pipeLines = tableLines.filter((l) => l.trim().startsWith("|"));
-	if (pipeLines.length < 2) return { rows: [] };
-	const header = parseRowCells(pipeLines[0]);
-	const sep = parseRowCells(pipeLines[1]);
-	if (!sep.every((c) => /^:?-+:?$/.test(c))) return { rows: [] };
-
-	const keys = header.map((h) => {
-		const n = h.toLowerCase().trim();
-		if (n === "id") return "id";
-		if (n === "passes at") return "passesAt";
-		if (n === "state") return "state";
-		if (n === "writable at") return "writableAt";
-		if (n === "asserts") return "asserts";
-		return n;
-	});
-
-	const rows = [];
-	for (let i = 2; i < pipeLines.length; i++) {
-		const cells = parseRowCells(pipeLines[i]);
-		if (cells.length !== keys.length) continue;
-		const rec = {};
-		for (let j = 0; j < keys.length; j++) rec[keys[j]] = cells[j];
-		if (!rec.id) continue;
-		// Through the shared parser, not a local regex. This was an eighth copy
-		// of the phase-reference pattern, found only because Gate A silently
-		// stopped firing: it could not read `Test Phase 1`, so every row parsed
-		// as NaN and no row ever matched. A duplicated pattern does not announce
-		// itself when it falls behind — it just stops enforcing.
-		const writable = parsePhaseRef(rec.writableAt || "");
-		const passes = parsePhaseRef(rec.passesAt || "");
-		rows.push({
-			id: rec.id.trim(),
-			asserts: (rec.asserts || "").trim(),
-			writableAt: writable ? writable.number : Number.NaN,
-			passesAt: passes ? passes.number : Number.NaN,
-			writableAtKind: writable ? writable.kind : "build",
-			passesAtKind: passes ? passes.kind : "build",
-			state: (rec.state || "").toLowerCase().trim(),
-		});
-	}
-	return { rows };
-}
-
-function parseRowCells(line) {
-	const trimmed = line.trim();
-	if (!trimmed.startsWith("|") || !trimmed.endsWith("|")) return [];
-	return trimmed
-		.slice(1, -1)
-		.split("|")
-		.map((c) => c.trim());
-}
