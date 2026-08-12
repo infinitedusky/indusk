@@ -93,11 +93,20 @@ describe("A19 — one definition of the phase-block scan", () => {
 		expect(definitions).toHaveLength(1);
 	});
 
-	it("only one file builds a phase-heading matcher", async () => {
-		// Both callers interpolate the phase number into a heading regex. After
-		// the extraction exactly one file should still be doing that.
+	it("no file under shape/ builds a phase-heading matcher any more", async () => {
+		// This asserted "exactly one file" when the matcher lived here. It now
+		// lives in `lib/impl-headings.ts` with every other heading pattern, and
+		// `shape/` re-exports it — so the correct count here is zero, which is
+		// strictly stronger than the one this test was written to protect.
+		//
+		// The move was not tidiness. Building the matcher here meant it was a
+		// *template* string, whose escaped `\\s` slipped past the project-wide
+		// single-definition guard; it kept matching `### Phase N` alone while
+		// `/planner` began emitting `### Build Phase N`, so Shape silently found
+		// no phase in any newly-authored impl. Two guards for one invariant,
+		// each blind where the other looked.
 		const definitions = await filesMatching(shapeDir, /new RegExp\([^)]*Phase/);
 
-		expect(definitions).toHaveLength(1);
+		expect(definitions).toEqual([]);
 	});
 });

@@ -1,3 +1,5 @@
+import { buildPhaseHeadingFor, gateHeadingFor } from "../impl-headings.js";
+
 /**
  * How markdown headings delimit a phase's blocks in an impl.md.
  *
@@ -23,15 +25,23 @@ export function findHeadingIndex(lines: string[], pattern: RegExp): number {
 	return lines.findIndex((line) => pattern.test(line));
 }
 
-/** The `### Phase N` heading matcher. `\b` keeps Phase 1 from matching Phase 10. */
-export function phaseHeading(phase: number): RegExp {
-	return new RegExp(`^###\\s+Phase\\s+${phase}\\b`);
-}
+/**
+ * The `### Phase N` heading matcher, for one specific phase.
+ *
+ * Re-exported from `lib/impl-headings.ts` rather than built here. It *was*
+ * built here, as its own template string, and the escaped-in-a-template form
+ * slipped past the single-definition guard — so it kept matching `### Phase N`
+ * alone while `/planner` started emitting `### Build Phase N`, and Shape
+ * silently found no phase at all in every newly-authored impl.
+ *
+ * Note it deliberately does not match `### Test Phase N`: a test phase writes
+ * tests, not the code Shape reviews, and matching it would land a finding in
+ * the other sequence's phase N.
+ */
+export const phaseHeading = buildPhaseHeadingFor;
 
-/** The `#### Phase N <Gate>` heading matcher. */
-export function gateHeading(phase: number, gate: string): RegExp {
-	return new RegExp(`^####\\s+Phase\\s+${phase}\\s+${gate}\\b`);
-}
+/** The `#### Phase N <Gate>` heading matcher, for one specific phase. */
+export const gateHeading = gateHeadingFor;
 
 /**
  * Where the block under the heading at `headingAt` ends — the index of the next

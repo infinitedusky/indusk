@@ -20,6 +20,23 @@ import { thisRepoRoot } from "./shape.test-support.js";
 
 const repoRoot = thisRepoRoot(dirname(fileURLToPath(import.meta.url)));
 
+/**
+ * A plan's impl.md, whether the plan is still active or has been archived.
+ *
+ * Both locations, because **every plan eventually archives** — that is what
+ * `/retrospective` does at close. Resolving only the active path meant this
+ * suite went red the moment the plan it was dogfooding finished, which is the
+ * one outcome the plan was working toward. Active wins a name collision, the
+ * same precedent the plan reader and admin sidebar already follow.
+ */
+function implPathFor(plan: string): string | null {
+	for (const dir of ["planning", "planning/archive"]) {
+		const candidate = join(repoRoot, ".indusk", ...dir.split("/"), plan, "impl.md");
+		if (existsSync(candidate)) return candidate;
+	}
+	return null;
+}
+
 describe("A21 — the boundary artifact exists because Shape was really used", () => {
 	it("this repository has at least one phase-boundary record", async () => {
 		expect(
@@ -44,9 +61,7 @@ describe("A21 — the boundary artifact exists because Shape was really used", (
 
 		// A record with no outcome yet is the normal mid-phase state. The only
 		// thing that must hold is that the plan it names exists.
-		const implPath = join(repoRoot, ".indusk", "planning", newest.plan, "impl.md");
-
-		expect(existsSync(implPath), `${newest.plan} has no impl.md`).toBe(true);
+		expect(implPathFor(newest.plan), `${newest.plan} has no impl.md`).not.toBeNull();
 	});
 
 	it("some plan in this repo carries a recorded Shape outcome", async () => {
@@ -61,8 +76,8 @@ describe("A21 — the boundary artifact exists because Shape was really used", (
 		// evidence that Shape has really run is a claim about this repository's
 		// history, not about whichever phase happens to be open right now.
 		const outcomes = [...new Set(records.map((r) => r.plan))]
-			.map((plan) => join(repoRoot, ".indusk", "planning", plan, "impl.md"))
-			.filter((path) => existsSync(path))
+			.map(implPathFor)
+			.filter((path): path is string => path !== null)
 			.flatMap((path) => readFileSync(path, "utf-8").split("\n"))
 			.filter((line) => /^\s*-\s+\[[ x]\]\s+Shape\b/.test(line));
 

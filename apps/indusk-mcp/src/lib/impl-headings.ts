@@ -20,6 +20,12 @@
  */
 
 /**
+ * The heading text every build-phase pattern is built from — declared once so
+ * the "any phase" and "this phase" forms cannot drift apart.
+ */
+const BUILD_PHASE = String.raw`###\s+(?:Build\s+)?Phase`;
+
+/**
  * A build phase: `### Phase 1: Name` or `### Build Phase 1: Name`.
  *
  * The `Build ` group is optional, which is the whole backward-compatibility
@@ -29,7 +35,28 @@
  *
  * Capture 1 is the number, capture 2 the name.
  */
-export const PHASE_HEADING = /^###\s+(?:Build\s+)?Phase\s+(\d+)[:\s]+(.*)/;
+export const PHASE_HEADING = new RegExp(`^${BUILD_PHASE}\\s+(\\d+)[:\\s]+(.*)`);
+
+/**
+ * The same heading, pinned to one specific phase number — what a caller needs
+ * when it is walking to *this* phase's block rather than recognising any phase.
+ * `\b` keeps Phase 1 from matching Phase 10.
+ *
+ * Composed from `BUILD_PHASE` rather than restating it. That matters: this
+ * pattern previously lived as its own template string in `shape/impl-blocks.ts`,
+ * where the escaped-in-a-template form (`\\s`) slipped past the
+ * single-definition guard entirely. It matched `### Phase N` only, so once
+ * `/planner` began emitting `### Build Phase N`, Shape found no phase at all
+ * and appended its findings nowhere — silently.
+ */
+export function buildPhaseHeadingFor(phase: number): RegExp {
+	return new RegExp(`^${BUILD_PHASE}\\s+${phase}\\b`);
+}
+
+/** `#### Phase N <Gate>` for one specific phase, either build spelling. */
+export function gateHeadingFor(phase: number, gate: string): RegExp {
+	return new RegExp(`^####\\s+(?:Build\\s+)?Phase\\s+${phase}\\s+${gate}\\b`);
+}
 
 /**
  * A test phase: `### Test Phase 1: Name`.

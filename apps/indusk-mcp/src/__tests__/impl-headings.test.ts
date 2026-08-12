@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { filesMatching } from "../structural.test-support.js";
 import { gateTransition, validateWrite } from "./helpers/hook-runner.js";
 
 /**
@@ -17,39 +18,25 @@ import { gateTransition, validateWrite } from "./helpers/hook-runner.js";
 
 const srcDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Every `.ts` file under `src/`, tests and test support excluded. */
-async function sourceFiles(dir: string): Promise<string[]> {
-	const out: string[] = [];
-	for (const entry of await readdir(dir, { withFileTypes: true })) {
-		const full = join(dir, entry.name);
-		if (entry.isDirectory()) {
-			if (entry.name === "__tests__" || entry.name === "node_modules") continue;
-			out.push(...(await sourceFiles(full)));
-			continue;
-		}
-		if (!entry.name.endsWith(".ts")) continue;
-		if (entry.name.includes(".test.") || entry.name.includes(".test-support.")) continue;
-		out.push(full);
-	}
-	return out;
-}
-
-async function filesMatching(pattern: RegExp): Promise<string[]> {
-	const hits: string[] = [];
-	for (const file of await sourceFiles(srcDir)) {
-		if (pattern.test(await readFile(file, "utf8"))) hits.push(file);
-	}
-	return hits;
-}
-
 describe("A13 — one definition of the phase heading", () => {
 	it("is defined exactly once across src/", async () => {
-		// Seven copies across six files today: impl-parser.ts, check-gates.js,
+		// Seven copies across six files originally: impl-parser.ts, check-gates.js,
 		// gate-reminder.js, validate-impl-structure.js (x2), trajectory/validator.ts
 		// and shape/impl-blocks.ts. The JS hooks are deliberate ports and live
 		// outside src/, so this scan covers src/ only — the same carve-out the
 		// verify suite makes for its hook mirrors.
-		const definitions = await filesMatching(/###\\s\+\(\?:Build|###\\s\+Phase/);
+		//
+		// Two spellings, because a literal-only scan has a false negative and it
+		// cost us one: `shape/impl-blocks.ts` built its matcher with
+		// `new RegExp(\`^###\\\\s+Phase...\`)`, where the source text carries a
+		// DOUBLE backslash. The single-backslash pattern skipped straight past
+		// it, the guard reported one definition, and the copy stayed — matching
+		// `### Phase N` only, so Shape found no phase at all in impls written
+		// the new way. A guard with a false negative is worth less than no
+		// guard, because it is believed.
+		const literal = await filesMatching(srcDir, /###\\s\+\(\?:Build|###\\s\+Phase/);
+		const templated = await filesMatching(srcDir, /###\\\\s\+\(\?:Build|###\\\\s\+Phase/);
+		const definitions = [...new Set([...literal, ...templated])];
 
 		expect(definitions).toHaveLength(1);
 	});
