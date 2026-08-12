@@ -61,7 +61,7 @@ Give test authoring a phase, so the system's central discipline has a moment and
 | A10 | A plan containing test phases runs to completion under `atdawn run`, closing each phase in order | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | passing |
 | A11 | The same violation is refused identically in both lanes, with the same message | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | passing |
 | A15 | A test file whose import cannot be resolved fails to load **even when every test in it is skipped** | `apps/indusk-mcp/src/__tests__/skip-does-not-defer.test.ts` | Phase 0 | Phase 1 | passing |
-| A12 | A plan created by `/planner` contains a test phase as its first phase | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` | Phase 0 | Phase 5 | written |
+| A12 | A plan created by `/planner` contains a test phase as its first phase | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` | Phase 0 | Phase 5 | passing |
 
 ### Deferred Verification
 
@@ -215,22 +215,23 @@ Two rows are **regression guards, green on arrival, and declared as such** per A
 
 ### Build Phase 5: The skills, and the guide
 
-- [ ] `/planner` authors Test Phase 1 first, with the deferral shape and the register rule (A12); resync the installed copy
-- [ ] `/work` executes a test phase — author, run, confirm red, review the deferrals before opening any build phase; resync
-- [ ] **Correct `/work`'s `.skip()` advice.** It currently says to use `.skip()` when a test cannot run against a compiled symbol; A15 proves that does not work, because module resolution precedes test collection. `.skip()` is right when the symbol exists and the behavior does not; a commented body in the Test Phase 1 deferral is right when the symbol does not exist.
-- [ ] Update `guide/test-trajectory.md`: the test phase, the register, the deferral shape, and the real-red/fake-red distinction with the boundary rule — a test reaching its subject over HTTP, a CLI, a query or the filesystem gives a real red on day one; one that `import`s its subject cannot
-- [ ] Add the changelog entry
+- [x] `/planner` authors Test Phase 1 first, with the deferral shape and the register rule (A12); resync the installed copy — guidance section, the impl template's frontmatter (`test_phases: required`), and the template's own phases now spelled `### Test Phase 1` + `### Build Phase N`
+- [x] `/work` executes a test phase — author, run, confirm red, review the deferrals before opening any build phase; resync
+- [x] **Correct `/work`'s `.skip()` advice.** It currently says to use `.skip()` when a test cannot run against a compiled symbol; A15 proves that does not work, because module resolution precedes test collection. `.skip()` is right when the symbol exists and the behavior does not; a commented body in the Test Phase 1 deferral is right when the symbol does not exist.
+- [x] Update `guide/test-trajectory.md`: the test phase, the register, the deferral shape, and the real-red/fake-red distinction with the boundary rule — a test reaching its subject over HTTP, a CLI, a query or the filesystem gives a real red on day one; one that `import`s its subject cannot
+- [x] Add the changelog entry
+- [x] **Discovered — `template.test.ts` anchored on `#### Phase 1 Verification`.** Renaming the template's gate headings broke it, and it broke *badly*: `indexOf` returned −1, `slice(-1)` yielded the template's last character, and the assertion reported `expected '}' to match /T\d+/` — a real break wearing a nonsense message. Now accepts either spelling and asserts the anchor was found, so the next rename fails legibly.
 
 #### Build Phase 5 Verification
-- [ ] A12 passes; `skill-sync-parity` green
-- [ ] All 17 rows terminal
-- [ ] Full suite green apart from the known-red cases; `pnpm check` clean; `pnpm --filter docs build` completes
+- [x] A12 passes; `skill-sync-parity` green
+- [x] All 17 rows terminal
+- [x] Full suite green apart from the known-red cases; `pnpm check` clean; `pnpm --filter docs build` completes — 11 remaining failures are 9 admin/tarball tests needing a built app and a packed tarball, plus the known-red PID-reuse pair; none belong to this plan
 
 #### Build Phase 5 Context
-- [ ] Update Current State with a one-line entry naming the structure as shipped and the remaining lifecycle questions as follow-ons
+- [x] Update Current State with a one-line entry naming the structure as shipped and the remaining lifecycle questions as follow-ons
 
 #### Build Phase 5 Document
-- [ ] The guide updates above, plus a Mermaid of the two sequences and a deferral's path — Test Phase 1 entry → later test phase → the build phase that turns it green
+- [x] The guide updates above, plus a Mermaid of the two sequences and a deferral's path — Test Phase 1 entry → later test phase → the build phase that turns it green
 
 ## Files Affected
 
