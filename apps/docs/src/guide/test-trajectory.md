@@ -54,6 +54,8 @@ Two rules about that fence, because the body is arbitrary text and the parsers n
 
 A **regression guard** is a row whose `Writable at` and `Passes at` name the same test phase: it has no red window. That is legitimate for a guard against regression, or for an assertion about the runner rather than about your code. It is also exactly what a rubber stamp looks like, and nothing can tell the two apart mechanically — so the author says which.
 
+**Every test phase must carry a `#### Test Phase N Verification` gate**, and an impl without one is refused. A test phase has one gate rather than the usual four — Context and Document on a phase that ships nothing would be `(none needed)` noise — but that one is not optional, because it is where the deferred bodies get reviewed. Omitting it would let the phase close having reviewed nothing.
+
 ```mermaid
 flowchart LR
   TP1["Test Phase 1<br/>author + register"]
