@@ -62,11 +62,11 @@ Give test authoring a phase, so the system's central discipline has a moment and
 | A11 | The same violation is refused identically in both lanes, with the same message | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | passing |
 | A15 | A test file whose import cannot be resolved fails to load **even when every test in it is skipped** | `apps/indusk-mcp/src/__tests__/skip-does-not-defer.test.ts` | Phase 0 | Phase 1 | passing |
 | A12 | A plan created by `/planner` contains a test phase as its first phase | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` | Phase 0 | Phase 5 | passing |
-| A18 | An impl whose fenced block is never closed is **refused**, not silently stripped of every phase after it | `apps/indusk-mcp/src/lib/__tests__/fence-falsification.test.ts` | Phase 0 | Phase 6 | planned |
-| A19 | A `~~~` line inside a backtick-fenced block does not end the block — a checklist item in a carried test body stays inert | `apps/indusk-mcp/src/lib/__tests__/fence-falsification.test.ts` | Phase 0 | Phase 6 | planned |
-| A20 | `verify --phase N` judges the boundary at phase N even when the plan opens at `Phase 0` | `apps/indusk-mcp/src/lib/verify/probe-boundary.test.ts` | Phase 0 | Phase 6 | planned |
-| A21 | A test phase with no Verification gate is refused — the deferral review must have somewhere to happen | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 6 | planned |
-| A22 | A green-on-arrival row is not refused into a Test Phase 1 the document does not contain | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 6 | planned |
+| A18 | An impl whose fenced block is never closed is **refused**, not silently stripped of every phase after it | `apps/indusk-mcp/src/lib/__tests__/fence-falsification.test.ts` | Phase 0 | Phase 6 | written |
+| A19 | A `~~~` line inside a backtick-fenced block does not end the block — a checklist item in a carried test body stays inert | `apps/indusk-mcp/src/lib/__tests__/fence-falsification.test.ts` | Phase 0 | Phase 6 | written |
+| A20 | `verify --phase N` judges the boundary at phase N even when the plan opens at `Phase 0` | `apps/indusk-mcp/src/lib/verify/probe-boundary.test.ts` | Phase 0 | Phase 6 | written |
+| A21 | A test phase with no Verification gate is refused — the deferral review must have somewhere to happen | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 6 | written |
+| A22 | A green-on-arrival row is not refused into a Test Phase 1 the document does not contain | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 6 | written |
 
 ### Deferred Verification
 

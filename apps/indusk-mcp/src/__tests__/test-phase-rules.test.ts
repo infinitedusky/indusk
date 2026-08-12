@@ -259,4 +259,66 @@ describe("A8 — a row green on arrival must declare itself a regression guard",
 		expect(result.stderr).toBe("");
 		expect(result.exitCode).toBe(0);
 	}, 30_000);
+
+	it("A22 — is not demanded of a Test Phase 1 the document does not contain", async () => {
+		// The rule fires on the trajectory cells alone, so it can instruct an
+		// author to add an entry under a heading that does not exist. Reachable
+		// in the mid-conversion state this plan itself passed through: the
+		// trajectory already used test-phase cells while the checklist still
+		// said `### Phase N`. You cannot be required to declare something in a
+		// phase nobody has written — the same reasoning `phaseExists` applies
+		// to Gate A, and `test-phase-presence` is the rule that should complain.
+		const noTestPhase = [
+			frontmatter(),
+			trajectory(["| T1 | a thing is already true | Test Phase 1 | Test Phase 1 | passing |"]),
+			"## Checklist",
+			"",
+			...buildPhase(1, ["T1"]),
+		].join("\n");
+
+		const result = await validateWrite(noTestPhase);
+
+		expect(result.stderr).not.toMatch(/regression guard/i);
+	}, 30_000);
+});
+
+describe("A21 — a test phase must carry its Verification gate", () => {
+	/**
+	 * The four-gate loop deliberately skips test phases: a test phase carries
+	 * one gate, not four. Nothing then requires the one — and that gate IS the
+	 * U1 compensating control ("Test Phase 1 cannot close until its deferred
+	 * bodies have been reviewed"). An author who omits it deletes the review
+	 * the plan's only Deferred Verification row rests on, and nothing objects.
+	 */
+	function testPhase(withVerification: boolean): string {
+		return [
+			frontmatter(["test_phases: required"]),
+			trajectory(["| T1 | a thing is true | Test Phase 1 | Build Phase 1 | written |"]),
+			"## Checklist",
+			"",
+			"### Test Phase 1: Author the tests",
+			"",
+			"- [ ] Author T1 as RED",
+			"",
+			...(withVerification
+				? ["#### Test Phase 1 Verification", "- [ ] T1 is authored and fails on its own assertion", ""]
+				: []),
+			...buildPhase(1, ["T1"]),
+		].join("\n");
+	}
+
+	it("one without it is refused, and the phase is named", async () => {
+		const result = await validateWrite(testPhase(false));
+
+		expect(result.exitCode).not.toBe(0);
+		expect(result.stderr).toMatch(/Test Phase 1/);
+		expect(result.stderr).toMatch(/Verification/);
+	}, 30_000);
+
+	it("one with it is accepted", async () => {
+		const result = await validateWrite(testPhase(true));
+
+		expect(result.stderr).toBe("");
+		expect(result.exitCode).toBe(0);
+	}, 30_000);
 });
