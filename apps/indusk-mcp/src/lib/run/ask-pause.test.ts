@@ -77,7 +77,10 @@ describe("A6 — ask-policy gate skips pause the run with the question", () => {
 		// conversation-proof format check-gates demands.
 		expect(result.reason).toContain("ask");
 		expect(result.reason).toMatch(/asked:.*user:/s);
-	});
+		// 30s, not vitest's 5s default: each case spawns the gate-script chain,
+		// and these run 3-5s solo — the first one tipped over 5s under full-suite
+		// load. Sibling commit-cadence.test.ts already carries this timeout.
+	}, 30_000);
 });
 
 describe("A7 — proof added, the re-run continues past the phase", () => {
@@ -102,7 +105,7 @@ describe("A7 — proof added, the re-run continues past the phase", () => {
 			gate: { scripts: realGateScripts },
 		});
 		expect(second.status).toBe("complete");
-	});
+	}, 30_000);
 });
 
 describe("A8 — unset policy means ask; explicit auto stays unpaused", () => {
@@ -116,11 +119,11 @@ describe("A8 — unset policy means ask; explicit auto stays unpaused", () => {
 		root = await makeFixtureWorktree("dawn-ask-a8-unset", "unset");
 		const result = await runScripted(root);
 		expect(result.status).toBe("paused-gate-question");
-	});
+	}, 30_000);
 
 	it("runs an explicit gate_policy: auto plan to complete, as today", async () => {
 		root = await makeFixtureWorktree("dawn-ask-a8-auto", "auto");
 		const result = await runScripted(root);
 		expect(result.status).toBe("complete");
-	});
+	}, 30_000);
 });

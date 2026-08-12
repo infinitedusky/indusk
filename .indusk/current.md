@@ -128,6 +128,12 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-08-08T10:19:36.784Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+## Session db0f20a7 — eval agent: score commit f7cb78d2 (lifecycle-rebalance Phase 9 close)
+
+**Session ID**: db0f20a7-74c2-42b9-8e26-72f353591d95
+**Last updated**: 2026-08-10T23:48:45.491Z
+**Branch**: plan/lifecycle-rebalance
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/lifecycle-rebalance
 
 ### In Flight
 

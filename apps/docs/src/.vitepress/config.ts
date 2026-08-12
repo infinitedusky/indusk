@@ -65,6 +65,7 @@ const config = defineConfig({
 						{ text: "Context Budget", link: "/guide/context-budget" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
 						{ text: "Plan Lifecycle (proposed)", link: "/guide/plan-lifecycle" },
+						{ text: "The Shape Check", link: "/guide/shape" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Cleanup Ritual", link: "/guide/cleanup-ritual" },
 						{ text: "Worktree Setup (Workbench)", link: "/guide/worktree-setup" },
@@ -178,6 +179,7 @@ const config = defineConfig({
 						{ text: "Dawn External Orchestrator", link: "/decisions/dawn-external-orchestrator" },
 						{ text: "Dawn Hook Parity", link: "/decisions/dawn-hook-parity" },
 						{ text: "Dawn Verify", link: "/decisions/dawn-verify" },
+						{ text: "Lifecycle Rebalance (Shape)", link: "/decisions/lifecycle-rebalance" },
 						{ text: "Git-or-jj Substrate (Superseded)", link: "/decisions/git-or-jj-substrate" },
 					],
 				},
@@ -230,6 +232,10 @@ const config = defineConfig({
 						{
 							text: "Dawn Verify (Could-Not-Check ≠ Passed)",
 							link: "/lessons/dawn-verify",
+						},
+						{
+							text: "Lifecycle Rebalance (Tested ≠ Reachable)",
+							link: "/lessons/lifecycle-rebalance",
 						},
 					],
 				},

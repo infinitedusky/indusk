@@ -110,6 +110,33 @@ describe("A5 — an item checked off with no corresponding change", () => {
 		expect(report.findings.filter((f) => f.kind === "phantom").length).toBeGreaterThan(0);
 	});
 
+	it("T22 — still fires when the only other change is the phase-boundary record", async () => {
+		// The same trap as A20, sprung a second time by a different plan. Shape's
+		// boundary record is tracked too, and it is written when a phase OPENS —
+		// so it lands in the diff of a phase that has not yet done anything, which
+		// is the worst possible timing for something that reads as evidence of
+		// work. isMachineState listed `.indusk/verify/` and `.indusk/eval/` and
+		// was never told about it.
+		const fixture = await makeVerifyFixture({ impl: impl(false) });
+		roots.push(fixture.root);
+
+		await writeFixtureFile(
+			fixture.root,
+			join(".indusk", "planning", fixture.plan, "impl.md"),
+			impl(true),
+		);
+		await writeFixtureFile(
+			fixture.root,
+			join(".indusk", "phase-boundary.jsonl"),
+			'{"plan":"other","phase":1,"sha":"deadbee","timestamp":"t"}\n',
+		);
+		await commitAll(fixture.root, "phase 1 (allegedly) + a boundary record");
+
+		const report = await runVerify({ root: fixture.root, plan: fixture.plan, phase: 1 });
+
+		expect(report.findings.filter((f) => f.kind === "phantom").length).toBeGreaterThan(0);
+	});
+
 	it("A21 — still fires when the item's text was edited in the same commit", async () => {
 		// Items were matched across the baseline by text, so rewording an item
 		// while checking it off made it look like a brand-new item rather than a

@@ -1,6 +1,6 @@
 ---
 name: cleanup
-description: Run the cleanup ritual against a plan whose /work (and /falsify) have completed. Review the plan's changed files for decomposition opportunities, apply the enabled domain extensions' best practices, and author a Cleanup Phase in the plan's impl.md capturing the extractions/refactors as checklist items. The ritual authors; /work executes. Runs after /falsify, before /retrospective.
+description: Run the cleanup ritual against a plan whose /work (and /falsify) have completed. Review the plan's changed files for INTER-FILE decomposition — cross-file duplication, the rule of three, settled module boundaries — apply the enabled domain extensions' best practices, and author a Cleanup Phase in the plan's impl.md capturing the extractions/refactors as checklist items. Intra-unit craft is the Shape step's during /work, not this ritual's. The ritual authors; /work executes. Runs after /falsify, before /retrospective.
 argument-hint: "{plan-name}"
 ---
 
@@ -15,6 +15,25 @@ Why this shape: cleanup phases are **visible** (admin UI renders all phases), **
 ## Runs after falsification
 
 The close-out sequence is: `/work` → `/falsify` → `/work` → **`/cleanup`** → `/work` → `/retrospective`. Cleanup runs AFTER falsification deliberately — you refactor under the maximal green coverage falsification just hardened. Never restructure code whose correctness hasn't been proven.
+
+## Your scope is inter-file. Local craft is already handled
+
+**Cleanup is the *inter-file* ritual.** Intra-unit craft — an inline block that wanted a name, a function doing two jobs, a unit with no testable seam — is reviewed by the **Shape step** during `/work` (see the "The Shape Step" section of the `work` skill), in the phase that wrote the code, and has already been dealt with by the time you run.
+
+The division is operational, not a matter of taste. It follows from what each check can *see*:
+
+| | Shape (per phase, during `/work`) | Cleanup (at close, this ritual) |
+|---|---|---|
+| Question | Is this unit well-formed *as written*? | What should the finished output decompose into? |
+| Scope | Within a file or unit | Across files |
+| Needs | The code the phase just wrote | The whole plan's output |
+
+So spend your attention on what only you can answer: **duplication across files, the rule of three, settled module boundaries, and units that should move.** A phase-scoped review structurally cannot see any of these — the second copy of a helper often does not exist until a later phase writes it.
+
+Two consequences worth being explicit about:
+
+- **Do not re-litigate local craft.** If a file's internals were already reviewed and deliberately left as-is, the impl records that decision with its reasoning. Read it before overriding it.
+- **Your scan is unchanged.** `listOversizedChangedFiles` still returns every changed file, including ones Shape reviewed. Shape leaves no marker that shrinks your input, and that is deliberate: "Shape looked at it" must never come to mean nobody looks again.
 
 ## How to investigate
 

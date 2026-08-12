@@ -1,7 +1,7 @@
 {
 	"name": "@infinitedusky/indusk-mcp",
 	"version": "1.36.0",
-	"description": "InDusk development system — skills, MCP tools, and CLI for structured AI-assisted development",
+	"description": "InDusk development system \u2014 skills, MCP tools, and CLI for structured AI-assisted development",
 	"type": "module",
 	"files": [
 		"dist",
@@ -45,6 +45,22 @@
 		"./planning/plan-parser": {
 			"types": "./dist/lib/plan-parser.d.ts",
 			"default": "./dist/lib/plan-parser.js"
+		},
+		"./shape/shape": {
+			"types": "./dist/lib/shape/shape.d.ts",
+			"default": "./dist/lib/shape/shape.js"
+		},
+		"./shape/boundary": {
+			"types": "./dist/lib/shape/boundary.d.ts",
+			"default": "./dist/lib/shape/boundary.js"
+		},
+		"./shape/findings": {
+			"types": "./dist/lib/shape/findings.d.ts",
+			"default": "./dist/lib/shape/findings.js"
+		},
+		"./shape/rules": {
+			"types": "./dist/lib/shape/rules.d.ts",
+			"default": "./dist/lib/shape/rules.js"
 		}
 	},
 	"scripts": {

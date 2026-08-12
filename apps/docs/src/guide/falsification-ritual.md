@@ -4,6 +4,18 @@ The Falsification Ritual runs between `/work` completion and `/retrospective`. I
 
 Invoke via `/falsify {plan-name}`. The ritual is required before `/retrospective`.
 
+## Which check answers which question
+
+Falsification is one of three code reviews in a plan's life, and the one that most needs the finished system. Each is placed where its question becomes answerable:
+
+| Check | When | Question | Needs |
+|---|---|---|---|
+| [Shape](/guide/shape) | Every phase, during `/work` | Is this unit well-formed *as written*? | The code that phase just wrote |
+| **Falsification** (this page) | Once, after `/work` | What failure should be producible if this is not really done? | The whole system |
+| [Cleanup](/guide/cleanup-ritual) | Once, after falsification | What should the finished output decompose into? | The whole plan's output |
+
+Falsification is deliberately **not** moved to the phase boundary. `dawn-verify` is the evidence: two of its seven confirmed defects were structurally impossible to find before Phase 4, because the interactions that produced them did not exist yet. A per-phase falsification would have reported green on both. Shape moved to the boundary precisely because craft *is* answerable from a single phase's delta — the same test, applied to a different question, gives a different answer.
+
 ## Why this exists
 
 `tests-first-planning` (archived 2026-04-16) solved universal deferral structurally — `check-gates` refuses to close a phase whose named tests aren't passing. But it left a deeper problem untouched: **the author only writes the tests they can think of**. Happy-path thinking produces happy-path tests. Edge cases, implicit invariants, "I don't know what I don't know" — none of these show up in the Trajectory, because the author never thought to include them. The plan closes green, and the blind spots ship.

@@ -64,9 +64,25 @@ export async function detectPhantomWork(options: {
  * switched this detection off. Verify's own success artifact was disabling
  * verify. The commit cadence excludes `.indusk/eval` from staging for the
  * adjacent reason.
+ *
+ * Shape's phase-boundary record sprang the same trap a second time, and worse:
+ * it is written when a phase **opens**, so it lands in the diff of a phase that
+ * has not done anything yet. **Any newly tracked InDusk artifact has to be
+ * registered here in the commit that first writes it** — this list is not
+ * discovered, it is maintained.
+ *
+ * Deliberately NOT shared with `shape/changed.ts`'s `isNotCode`, which excludes
+ * all of `.indusk/` including plan documents. Phantom cannot do that: `impl.md`
+ * is precisely the file it needs to see. Same shape of question, genuinely
+ * different answers — one definition here would be a merge of two rules, not a
+ * de-duplication of one.
  */
 function isMachineState(repoRelPath: string): boolean {
-	return repoRelPath.startsWith(".indusk/verify/") || repoRelPath.startsWith(".indusk/eval/");
+	return (
+		repoRelPath.startsWith(".indusk/verify/") ||
+		repoRelPath.startsWith(".indusk/eval/") ||
+		repoRelPath === ".indusk/phase-boundary.jsonl"
+	);
 }
 
 /**

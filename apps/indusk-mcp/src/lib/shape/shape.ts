@@ -1,0 +1,156 @@
+import { parseImplString } from "../impl-parser.js";
+import { changedFilesForPhase } from "./changed.js";
+import { appendItemToPhase } from "./findings.js";
+import { blockLines, findHeadingIndex, gateHeading } from "./impl-blocks.js";
+import { type CraftRuleSet, collectCraftRules } from "./rules.js";
+
+/**
+ * The surface `/work`'s Shape step calls.
+ *
+ * The library supplies facts — which files this phase changed, which rules
+ * apply — and the executing agent performs the judgment. In this lane the
+ * executor is already a model, so the review costs no extra call; that is the
+ * observation the whole design turns on.
+ *
+ * Three outcomes, never silence: reviewed-with-findings, reviewed-nothing-found,
+ * and skipped-with-reason. A check that cannot distinguish "nothing to do" from
+ * "did not run" reports the shape of success without doing the work.
+ */
+
+export type ShapeOutcome =
+	| { kind: "review"; files: string[]; rules: CraftRuleSet }
+	| { kind: "skipped"; reason: string };
+
+/** An unchecked box at ANY indentation — `impl-parser` only sees column 0. */
+const UNCHECKED_AT_ANY_DEPTH = /^\s*-\s+\[ \]/;
+const CHECKBOX_AT_ANY_DEPTH = /^\s*-\s+\[[ x]\]/;
+
+/** The lines of phase N's Verification gate, or null when it has none. */
+function verificationGateLines(implBody: string, phase: number): string[] | null {
+	const lines = implBody.split("\n");
+	const start = findHeadingIndex(lines, gateHeading(phase, "Verification"));
+	if (start === -1) return null;
+	return blockLines(lines, start);
+}
+
+/**
+ * Is this phase's Verification gate fully checked?
+ *
+ * Two deliberate strictnesses, both erring toward refusing to review:
+ *
+ * A phase with **no Verification gate** counts as not-green. An absent gate
+ * proves nothing, and reading absence as permission is how a check passes for
+ * the wrong reason.
+ *
+ * A **nested** unchecked item counts too. `impl-parser`'s `parseChecklistItems`
+ * is anchored at column 0, so `  - [ ] except the flaky one` is invisible to it
+ * and the gate reads as complete. This is NOT a second copy of
+ * `getPhaseCompletion` — the two answer different questions. That one decides
+ * whether a phase may close, which is the gate's rule and not Shape's to
+ * change; this one decides whether correctness is proven enough to restructure
+ * against, where being stricter is free and being wrong is not. `/cleanup`
+ * already treats nested unchecked items as blocking, so this also stops the two
+ * rituals disagreeing about what "done" means.
+ */
+function verificationIsGreen(implBody: string, phase: number): boolean {
+	const parsed = parseImplString(implBody);
+	if (!parsed.phases.some((p) => p.number === phase)) {
+		throw new Error(
+			`Cannot prepare a Shape review for Phase ${phase} — this impl has no such phase.`,
+		);
+	}
+
+	const block = verificationGateLines(implBody, phase);
+	if (block === null) return false;
+	if (!block.some((line) => CHECKBOX_AT_ANY_DEPTH.test(line))) return false;
+	return !block.some((line) => UNCHECKED_AT_ANY_DEPTH.test(line));
+}
+
+/**
+ * Gather what a Shape review needs, or the reason there is nothing to review.
+ *
+ * Order matters. Verification is checked first because restructuring code whose
+ * correctness is unproven is how a refactor hides a bug — the same ordering
+ * `/cleanup` already obeys — and because a phase with failing tests has a more
+ * urgent problem than shape.
+ */
+export async function prepareShapeReview(options: {
+	root: string;
+	plan: string;
+	phase: number;
+	implBody: string;
+}): Promise<ShapeOutcome> {
+	if (!verificationIsGreen(options.implBody, options.phase)) {
+		return {
+			kind: "skipped",
+			reason: `Phase ${options.phase}'s verification is not green. Shape does not review code whose correctness is unproven — finish the Verification gate first.`,
+		};
+	}
+
+	const files = await changedFilesForPhase({
+		root: options.root,
+		plan: options.plan,
+		phase: options.phase,
+	});
+
+	if (files.length === 0) {
+		return {
+			kind: "skipped",
+			reason: `Phase ${options.phase} changed no code files — no code surface to review. (InDusk machine state and plan documents are excluded by design, so a docs-only or planning-only phase lands here.)`,
+		};
+	}
+
+	return { kind: "review", files, rules: await collectCraftRules(options.root) };
+}
+
+/**
+ * Record that the review ran and found nothing.
+ *
+ * Checked, not unchecked: "nothing to do" must be a cheap and common answer, or
+ * Shape becomes a nag and a nag gets ticked through without reading. What it
+ * must never be is *absent* — silence cannot be told apart from never having
+ * run, which is the failure this whole outcome vocabulary exists to prevent.
+ */
+export function recordReviewedNothingFound(implBody: string, phase: number): string {
+	return appendItemToPhase(
+		implBody,
+		phase,
+		"- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.",
+	);
+}
+
+/**
+ * Record that the review did not run, and why.
+ *
+ * The third outcome needed a recorder as much as the other two — arguably more.
+ * "Reviewed and found nothing" is a result someone is pleased to write down;
+ * "did not run" is the one that gets quietly dropped, and dropping it is exactly
+ * how a check comes to report the shape of success without doing the work.
+ *
+ * Checked, like the other notes: a skip is not outstanding work, it is a fact
+ * about this phase. The reason carries whether it was unproven correctness or an
+ * absent code surface.
+ */
+export function recordSkipped(implBody: string, phase: number, reason: string): string {
+	return appendItemToPhase(implBody, phase, `- [x] Shape — skipped: ${reason}`);
+}
+
+/**
+ * Record a file that was looked at and deliberately left alone.
+ *
+ * Distinct from a file never reviewed, and the reason is the whole point: it is
+ * what makes the decision reviewable later. "No finding" and "considered, and
+ * here is why it stays" are different claims.
+ */
+export function recordLeftAsIs(
+	implBody: string,
+	phase: number,
+	file: string,
+	reason: string,
+): string {
+	return appendItemToPhase(
+		implBody,
+		phase,
+		`- [x] Shape (\`${file}\`) — reviewed, left as-is: ${reason}`,
+	);
+}
