@@ -62,6 +62,11 @@ Give test authoring a phase, so the system's central discipline has a moment and
 | A11 | The same violation is refused identically in both lanes, with the same message | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | passing |
 | A15 | A test file whose import cannot be resolved fails to load **even when every test in it is skipped** | `apps/indusk-mcp/src/__tests__/skip-does-not-defer.test.ts` | Phase 0 | Phase 1 | passing |
 | A12 | A plan created by `/planner` contains a test phase as its first phase | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` | Phase 0 | Phase 5 | passing |
+| A18 | An impl whose fenced block is never closed is **refused**, not silently stripped of every phase after it | `apps/indusk-mcp/src/lib/__tests__/fence-falsification.test.ts` | Phase 0 | Phase 6 | planned |
+| A19 | A `~~~` line inside a backtick-fenced block does not end the block — a checklist item in a carried test body stays inert | `apps/indusk-mcp/src/lib/__tests__/fence-falsification.test.ts` | Phase 0 | Phase 6 | planned |
+| A20 | `verify --phase N` judges the boundary at phase N even when the plan opens at `Phase 0` | `apps/indusk-mcp/src/lib/verify/probe-boundary.test.ts` | Phase 0 | Phase 6 | planned |
+| A21 | A test phase with no Verification gate is refused — the deferral review must have somewhere to happen | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 6 | planned |
+| A22 | A green-on-arrival row is not refused into a Test Phase 1 the document does not contain | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 6 | planned |
 
 ### Deferred Verification
 
@@ -232,6 +237,31 @@ Two rows are **regression guards, green on arrival, and declared as such** per A
 
 #### Build Phase 5 Document
 - [x] The guide updates above, plus a Mermaid of the two sequences and a deferral's path — Test Phase 1 entry → later test phase → the build phase that turns it green
+
+### Build Phase 6: Falsification — the fence is load-bearing now, and two guards have holes
+
+**Goal**: this plan made fenced code blocks structural — a deferral *carries the deferred test's body*, so impls now contain arbitrary code where before they contained prose. `fencedLineMask` became load-bearing in three parsers in one commit, and it is 12 lines that assume every fence is balanced and that all fence markers are interchangeable. Neither assumption survives contact with a real carried body. Alongside it: the phase-close probe's new ordinal defaulting is wrong for the seven impls that open at `Phase 0`, and two rules have gaps where they are unenforced or unsatisfiable.
+
+Each hypothesis below was confirmed by running the shipped code against a fixture during the ritual, not predicted.
+
+- [ ] **A18 — an unterminated fence deletes every phase after it.** `fencedLineMask` toggles on each marker, so an unclosed block masks the rest of the file. Confirmed: an impl whose register carries a body missing its closing fence reports `[{test 1}]` from `phaseSequence` — Build Phases 1 and 2 simply vanish. The zero-phase rejection does not fire, because one phase parsed. Every downstream rule then reads a truncated document: gate completeness cannot see the missing phases, and Gate A's `phaseExists` reports their rows' phases absent and skips them. **A silent disable, reintroduced by the very feature that motivated the zero-phase guard.** Fix: track the opening marker's character and length, and **refuse an impl with an unterminated fence**, naming the opening line. Failing open would leak the body's checkboxes into structure; failing silent is what this plan exists to stop; refusing is the only outcome that is loud.
+- [ ] **A19 — a `~~~` inside a backtick block ends the block.** The mask treats ``` and `~~~` as interchangeable, so a carried body containing the other marker un-masks the remainder. Confirmed: a register entry carrying a markdown sample with a tilde fence leaks `- [ ] not a real item` back into structure — precisely the thing A16 asserts cannot happen, which A16 misses because it only ever tested backticks. A carried test body is arbitrary text by design, and in this repo it is frequently markdown *about* markdown. Fix: a fence closes only on a marker of the **same character** and **at least the same length** (CommonMark's rule), which also makes nested examples expressible.
+- [ ] **A20 — `verify` probes the wrong boundary on a `Phase 0` plan.** `probePhaseClose` gained an `ordinal` parameter defaulting to `phase - 1`; `verify/detect.ts` does not pass one. In a plan opening at `### Phase 0`, Phase 1 sits at position 1, so verifying phase 1 truncates after **Phase 0** and asks whether *that* phase closed. Phase 1's own incomplete gates become invisible, and premature checkoff — verify's first detection — silently stops detecting at exactly the boundary it was asked about. Seven impls in this repo open at `Phase 0`. Fix: resolve the phase's ordinal from the parsed impl in `detect.ts` and pass it; the default stays for callers that genuinely have a single sequence.
+- [ ] **A21 — a test phase with no Verification gate is accepted.** Confirmed against the validator. The four-gate loop deliberately skips test phases (a test phase carries one gate, not four), and nothing then requires the one. But that gate *is* the U1 compensating control — "Test Phase 1 cannot close until its deferred bodies have been reviewed" — so an author who omits it removes the review entirely and the plan's own answer to its only Deferred Verification row evaporates. Fix: require a `#### Test Phase N Verification` on every test phase, refusing by name when absent.
+- [ ] **A22 — the regression-guard rule can demand an entry in a phase that does not exist.** `validateRegressionGuards` fires on any row whose two ends name the same test phase, without checking that the phase is in the document, and its message says to add an entry under `#### Regression Guards` in Test Phase 1. When Test Phase 1 is absent the instruction cannot be followed — reachable in the mid-conversion state this plan itself passed through in Build Phase 2, where the trajectory already used test-phase cells and the checklist still said `### Phase N`. Fix: skip the rule when the named test phase is absent, exactly as Gate A does; `test-phase-presence` is the rule that should complain, and it names the real problem.
+
+#### Build Phase 6 Verification
+- [ ] A18: an unterminated fenced block is refused, and the message names the opening line rather than reporting a structural error elsewhere
+- [ ] A19: a `~~~` inside a backtick-fenced body leaves the body inert — the checklist item in it is not read as structure, and the enclosing phases still parse
+- [ ] A20: `verify --phase 1` on a plan opening at `Phase 0` reports Phase 1's premature checkoff; the same plan with an honest Phase 1 reports clean
+- [ ] A21: a test phase with no Verification gate is refused by name; one with a Verification gate is accepted
+- [ ] A22: a green-on-arrival row whose test phase is absent is not refused for a missing register entry; with the test phase present and no entry, it still is
+
+#### Build Phase 6 Context
+- [ ] Add to Known Gotchas: `fencedLineMask` is load-bearing structure, not cosmetics — a carried test body is arbitrary text, so fences close on the same character at the same-or-greater length and an unterminated fence is a refusal, never a silent truncation of the document
+
+#### Build Phase 6 Document
+- [ ] Update `guide/test-trajectory.md`'s carried-body section with the fence rule an author needs to know: nest by lengthening the marker, and an unclosed fence is refused
 
 ## Files Affected
 
