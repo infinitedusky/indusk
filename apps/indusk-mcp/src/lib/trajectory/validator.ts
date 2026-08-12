@@ -1,8 +1,10 @@
 import {
 	ANY_PHASE_HEADING,
+	fencedLineMask,
 	gateHeading,
 	type PhaseKind,
 	type PhaseRef,
+	parsePhaseHeading,
 	phaseOrdinal,
 	phaseSequence,
 } from "../impl-headings.js";
@@ -14,7 +16,10 @@ export interface ValidationError {
 		| "cross-reference-integrity"
 		| "temporal-coherence"
 		| "deferred-completeness"
-		| "rationale-completeness";
+		| "rationale-completeness"
+		| "test-phase-presence"
+		| "test-phase-justification"
+		| "regression-guard-declaration";
 	message: string;
 	/** The rough line number in the impl body, if known. */
 	line?: number;
@@ -38,6 +43,13 @@ export interface ValidateTrajectoryOptions {
 	 * authored at Phase 1 don't require justification entries.
 	 */
 	rationaleBaseline?: number;
+	/**
+	 * When true, the impl must open with a test phase. Set from `test_phases:
+	 * required` in the frontmatter. Absent means exempt — which is how every
+	 * impl written before test phases existed keeps validating without being
+	 * edited.
+	 */
+	testPhasesRequired?: boolean;
 }
 
 const TRAJECTORY_HEADING = /^##\s+Test Trajectory\b/;
@@ -239,6 +251,158 @@ export function validateTemporalCoherence(
 }
 
 /**
+ * The register: the subsections Test Phase 1 carries.
+ *
+ * `#### Deferred to Test Phase N` justifies the *existence* of a later test
+ * phase. `#### Deferred to Build Phase N` justifies a single test authored
+ * later than the test phase — usually because its subject is a symbol that
+ * phase introduces, so authoring it earlier would produce a file that fails to
+ * load rather than an assertion that fails. `#### Regression Guards` declares
+ * rows that are green the moment they are written.
+ */
+const DEFERRED_TO_TEST_PHASE = /^####\s+Deferred to Test Phase\s+(\d+)\b/;
+const REGRESSION_GUARDS_HEADING = /^####\s+Regression Guards\b/;
+const REGISTER_ENTRY_ID = /^\s*-\s+\*\*([TA]\d+)\*\*/;
+
+interface Register {
+	/** Test-phase numbers with a `#### Deferred to Test Phase N` entry. */
+	justifiedTestPhases: Set<number>;
+	/** Row IDs declared under `#### Regression Guards`. */
+	regressionGuards: Set<string>;
+}
+
+/**
+ * Read Test Phase 1's register.
+ *
+ * Scanning stops at the next `###` phase heading: the register belongs to the
+ * first test phase, and an entry written under some later phase is not a
+ * justification recorded up front — which is the entire point of putting it
+ * there. Fenced lines are skipped so a carried test body cannot masquerade as
+ * a register entry.
+ */
+export function parseRegister(body: string): Register {
+	const lines = body.split("\n");
+	const fenced = fencedLineMask(lines);
+	const justifiedTestPhases = new Set<number>();
+	const regressionGuards = new Set<string>();
+
+	let inTestPhaseOne = false;
+	let inGuards = false;
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		const line = lines[i];
+
+		const heading = parsePhaseHeading(line);
+		if (heading) {
+			inTestPhaseOne = heading.kind === "test" && heading.number === 1;
+			inGuards = false;
+			continue;
+		}
+		if (!inTestPhaseOne) continue;
+
+		const deferred = DEFERRED_TO_TEST_PHASE.exec(line);
+		if (deferred) {
+			justifiedTestPhases.add(Number.parseInt(deferred[1], 10));
+			inGuards = false;
+			continue;
+		}
+		if (REGRESSION_GUARDS_HEADING.test(line)) {
+			inGuards = true;
+			continue;
+		}
+		if (/^####\s+/.test(line)) {
+			inGuards = false;
+			continue;
+		}
+		if (inGuards) {
+			const entry = REGISTER_ENTRY_ID.exec(line);
+			if (entry) regressionGuards.add(entry[1]);
+		}
+	}
+
+	return { justifiedTestPhases, regressionGuards };
+}
+
+/**
+ * A new impl must open with a test phase.
+ *
+ * Gated on `test_phases: required` in the frontmatter, the same way
+ * `trajectory: required` rolled out across 52 files without migrating one of
+ * them. The alternative — exempting `archive/` by path — would make the rule a
+ * property of where a file lives rather than of what it claims about itself.
+ */
+export function validateTestPhasePresence(
+	_body: string,
+	sequence: readonly PhaseRef[],
+	required: boolean,
+): ValidationError[] {
+	if (!required) return [];
+	if (sequence.some((p) => p.kind === "test")) return [];
+	return [
+		{
+			rule: "test-phase-presence",
+			message:
+				"`test_phases: required` is set but this impl has no test phase. Add `### Test Phase 1` as the first phase — it authors every test that can honestly be authored and records, in its register, every test that cannot. Naming the omission matters more than naming the rule: without it, the discipline the whole document is built around is the only one with nowhere to happen.",
+		},
+	];
+}
+
+/**
+ * Every test phase after the first must be justified in the first.
+ *
+ * Structural rather than prose-inspected: the rule looks for a heading, so it
+ * can say which phase is unjustified instead of asking a human to decide
+ * whether some paragraph counts.
+ */
+export function validateTestPhaseJustification(
+	body: string,
+	sequence: readonly PhaseRef[],
+): ValidationError[] {
+	const later = sequence.filter((p) => p.kind === "test" && p.number > 1);
+	if (later.length === 0) return [];
+
+	const { justifiedTestPhases } = parseRegister(body);
+	return later
+		.filter((p) => !justifiedTestPhases.has(p.number))
+		.map((p) => ({
+			rule: "test-phase-justification" as const,
+			message: `Test Phase ${p.number} exists but Test Phase 1 does not justify it. Add a \`#### Deferred to Test Phase ${p.number}\` entry there saying why those tests cannot be authored up front — a later test phase is a deviation from "author everything first", and the register is where every deviation is recorded.`,
+		}));
+}
+
+/**
+ * A row that passes the moment it is authored must say so.
+ *
+ * Green on arrival means the row has no red window: the test phase that
+ * authors it is the phase it passes at. That is legitimate — a regression
+ * guard, or an assertion about the runner rather than about our code — and it
+ * is also exactly what a rubber stamp looks like. Nothing can tell the two
+ * apart mechanically, so the rule makes the author say which.
+ *
+ * Scoped to rows whose *both* ends name a test phase. A build-phase row where
+ * `Writable at` equals `Passes at` is the ordinary unit-test-for-new-code case
+ * and stays untouched, which is why no existing impl is affected.
+ */
+export function validateRegressionGuards(body: string, trajectory: Trajectory): ValidationError[] {
+	const greenOnArrival = trajectory.rows.filter(
+		(r) =>
+			r.writableAtKind === "test" &&
+			r.passesAtKind === "test" &&
+			Number.isFinite(r.writableAt) &&
+			r.writableAt === r.passesAt,
+	);
+	if (greenOnArrival.length === 0) return [];
+
+	const { regressionGuards } = parseRegister(body);
+	return greenOnArrival
+		.filter((r) => !regressionGuards.has(r.id))
+		.map((r) => ({
+			rule: "regression-guard-declaration" as const,
+			message: `Trajectory row \`${r.id}\` passes in the same test phase that authors it, so it has no red phase. That is allowed, but it must be declared: add a \`- **${r.id}** — {why}\` entry under \`#### Regression Guards\` in Test Phase 1. A row green on arrival is either a regression guard or a rubber stamp, and only the author knows which.`,
+		}));
+}
+
+/**
  * Rule 4: Every Deferred Verification row must have non-empty `reason:`,
  * `would require:`, and `mitigation:` fields. The mitigation field is the
  * compensating control — without it, deferring a test means flying blind.
@@ -367,12 +531,22 @@ export function validateTrajectory(
 	if (presenceErrors.length > 0) return presenceErrors;
 
 	const trajectory = parseTrajectory(body);
+	const sequence = phaseSequence(body);
+	const hasTestPhase = sequence.some((p) => p.kind === "test");
 	const errors: ValidationError[] = [
 		...validateCrossReferenceIntegrity(body, trajectory),
-		...validateTemporalCoherence(trajectory, phaseSequence(body)),
+		...validateTemporalCoherence(trajectory, sequence),
 		...validateDeferredCompleteness(trajectory),
+		...validateTestPhasePresence(body, sequence, options.testPhasesRequired ?? false),
+		...validateTestPhaseJustification(body, sequence),
+		...validateRegressionGuards(body, trajectory),
 	];
-	if (options.rationaleRequired) {
+	// The register absorbs `### Trajectory Rationale`: when a test phase exists,
+	// deferral justification lives in Test Phase 1 and requiring the legacy
+	// section too would create two homes for one fact — the failure this
+	// codebase has three lessons about. Impls without a test phase are
+	// unaffected, which is every impl written before this rule existed.
+	if (options.rationaleRequired && !hasTestPhase) {
 		errors.push(
 			...validateRationaleCompleteness(body, trajectory, {
 				baseline: options.rationaleBaseline,

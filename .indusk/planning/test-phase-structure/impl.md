@@ -50,11 +50,11 @@ Give test authoring a phase, so the system's central discipline has a moment and
 | A5 | A plan written `### Phase 1` and one written `### Build Phase 1` behave identically — same phases found, same gates enforced | `apps/indusk-mcp/src/lib/__tests__/phase-kinds.test.ts` | Phase 0 | Phase 2 | passing |
 | A4 | **Every impl already in this repository still writes and validates with no edits** — regression guard, green today and must stay green | `apps/indusk-mcp/src/__tests__/impl-corpus.test.ts` | Phase 0 | Phase 2 | passing |
 | A16 | A deferral entry carrying the deferred test's body is accepted, and the body is not mistaken for a checklist item or a gate | `apps/indusk-mcp/src/lib/__tests__/phase-kinds.test.ts` | Phase 0 | Phase 2 | passing |
-| A1 | Writing a new impl that has no test phase is refused, and the message names what is missing | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | written |
-| A2 | Writing an impl whose second test phase has no justification in the first is refused, naming the unjustified phase | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | written |
-| A3 | Writing an impl whose every additional test phase is justified in the first is accepted | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | written |
-| A14 | An impl carrying no separate `Trajectory Rationale` section still validates when its deferrals live in Test Phase 1 | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | written |
-| A8 | A row that passes the moment it is authored is accepted only when declared a regression guard; an undeclared one is refused, naming it | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | written |
+| A1 | Writing a new impl that has no test phase is refused, and the message names what is missing | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | passing |
+| A2 | Writing an impl whose second test phase has no justification in the first is refused, naming the unjustified phase | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | passing |
+| A3 | Writing an impl whose every additional test phase is justified in the first is accepted | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | passing |
+| A14 | An impl carrying no separate `Trajectory Rationale` section still validates when its deferrals live in Test Phase 1 | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | passing |
+| A8 | A row that passes the moment it is authored is accepted only when declared a regression guard; an undeclared one is refused, naming it | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | passing |
 | A6 | Checking off build work while a test phase still has unauthored tests is refused, naming the unauthored test | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | written |
 | A7 | A test that should have been authored earlier and still isn't is caught when any later phase closes — not only at the phase it was due | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | written |
 | A9 | A test phase cannot close while any test it authors has not been written | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | written |
@@ -171,23 +171,24 @@ Two rows are **regression guards, green on arrival, and declared as such** per A
 
 ### Build Phase 3: The rules that make Test Phase 1 a register
 
-- [ ] **Discovered — the rule needs an opt-in: `test_phases: required`.** A1 says an impl with no test phase is refused; A4 says every impl already in the repository still validates; every impl already in the repository has no test phase. Read literally the two contradict, and authoring them together is what surfaced it. The resolution is the one `trajectory: required` already established — the rule fires only when the frontmatter asks for it, `/planner` writes it into new impls, and existing impls are exempt by saying nothing. The rejected alternative is exempting `archive/` by path, which makes the rule a property of where a file lives rather than of what it claims about itself.
-- [ ] Require a test phase in any impl carrying `test_phases: required` (A1) — the message names what is missing, not merely that something is
-- [ ] Require every `### Test Phase N` where N > 1 to have a matching justification entry in Test Phase 1 (A2, A3) — the register's two subsections are `#### Deferred to Test Phase N` and `#### Regression Guards`, pinned by the tests. Structural, so the rule reads a heading rather than interpreting prose.
-- [ ] Accept a deferral entry that carries the deferred test's body, without treating the code block as a checklist item or gate (A16 extends here)
-- [ ] Accept an impl whose deferrals live in Test Phase 1 and which has no `Trajectory Rationale` section (A14); keep parsing the legacy section so existing impls validate
-- [ ] Require a green-on-arrival row to be **declared a regression guard**, and refuse an undeclared one (A8)
+- [x] **Discovered — the rule needs an opt-in: `test_phases: required`.** A1 says an impl with no test phase is refused; A4 says every impl already in the repository still validates; every impl already in the repository has no test phase. Read literally the two contradict, and authoring them together is what surfaced it. The resolution is the one `trajectory: required` already established — the rule fires only when the frontmatter asks for it, `/planner` writes it into new impls, and existing impls are exempt by saying nothing. The rejected alternative is exempting `archive/` by path, which makes the rule a property of where a file lives rather than of what it claims about itself.
+- [x] Require a test phase in any impl carrying `test_phases: required` (A1) — the message names what is missing, not merely that something is
+- [x] Require every `### Test Phase N` where N > 1 to have a matching justification entry in Test Phase 1 (A2, A3) — the register's two subsections are `#### Deferred to Test Phase N` and `#### Regression Guards`, pinned by the tests. Structural, so the rule reads a heading rather than interpreting prose.
+- [x] Accept a deferral entry that carries the deferred test's body, without treating the code block as a checklist item or gate (A16 extends here) — delivered by `fencedLineMask` in Build Phase 2; `parseRegister` skips fenced lines too, so a carried body cannot pose as a register entry
+- [x] Accept an impl whose deferrals live in Test Phase 1 and which has no `Trajectory Rationale` section (A14); keep parsing the legacy section so existing impls validate — the rationale rule is skipped **when a test phase exists**, so absorption is a property of the document rather than of a second frontmatter flag
+- [x] Require a green-on-arrival row to be **declared a regression guard**, and refuse an undeclared one (A8) — scoped to rows whose *both* ends name a test phase, so the ordinary unit-test-for-new-code shape (`Writable at` = `Passes at` on a build phase) is untouched and no existing impl is affected
+- [x] **Discovered — the hook's new constants had to move above its top-level call.** The register regexes were declared beside the functions that use them; this hook runs validation at module top level, so they sat in the temporal dead zone and threw `ReferenceError` — exit 1, not the exit 2 that means "blocked". A validator that crashes is a validator that is not enforcing anything, which is the same failure class as the zero-phase silence Build Phase 1 closed.
 
 #### Build Phase 3 Verification
-- [ ] A1, A2, A3, A14, A8 pass
-- [ ] A6, A7, A9, A10, A11 still red (Phase 4); A12 still red (Phase 5)
-- [ ] `pnpm check` clean on touched files
+- [x] A1, A2, A3, A14, A8 pass
+- [x] A6, A7, A9, A10 still red (Phase 4); A12 still red (Phase 5). A11 went green in Build Phase 2 and stays green — recorded there.
+- [x] `pnpm check` clean on touched files; `tsc --noEmit` clean; A4 still green, so none of the three new rules touches the existing corpus — which is the claim that matters, since all three are new refusals
 
 #### Build Phase 3 Context
-- [ ] Add to Conventions: Test Phase 1 is the register — every deferral justified there, optionally carrying the deferred test's body; a row green on arrival must declare itself a regression guard
+- [x] Add to Conventions: Test Phase 1 is the register — every deferral justified there, optionally carrying the deferred test's body; a row green on arrival must declare itself a regression guard
 
 #### Build Phase 3 Document
-- [ ] (deferred to Phase 5 — same reason as Phase 1)
+- [x] (deferred to Phase 5 — same reason as Phase 1)
 
 ### Build Phase 4: Gate A, and both lanes
 

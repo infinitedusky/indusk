@@ -21,12 +21,26 @@ import {
 	ANY_PHASE_HEADING,
 	ANY_PHASE_HEADING_LOOSE,
 	FORWARD_INTELLIGENCE_HEADING,
+	fencedLineMask,
 	gateHeading,
 	PHASE_HEADING,
+	parsePhaseHeading,
 	parsePhaseRef,
 	phaseOrdinal,
 	phaseSequence,
 } from "./_impl-headings.js";
+
+// The register: the subsections Test Phase 1 carries. `#### Deferred to Test
+// Phase N` justifies a later test phase's existence; `#### Regression Guards`
+// declares rows that are green the moment they are written.
+//
+// Declared up here, not beside the functions that use them: this hook runs its
+// validation at module top level, so a `const` sitting below that call is in
+// the temporal dead zone when the call happens — a ReferenceError, and exit 1
+// rather than the exit 2 that means "blocked".
+const DEFERRED_TO_TEST_PHASE = /^####\s+Deferred to Test Phase\s+(\d+)\b/;
+const REGRESSION_GUARDS_HEADING = /^####\s+Regression Guards\b/;
+const REGISTER_ENTRY_ID = /^\s*-\s+\*\*([TA]\d+)\*\*/;
 
 // Read hook input from stdin
 let input = "";
@@ -339,6 +353,10 @@ const rationaleRequiredFrontmatter = /rationale:\s*required/.test(frontmatter);
 // Surfaced by /falsify hypothesis 1: a documentation plan whose title contained
 // the literal `rationale_baseline: 1` silently inherited that baseline from the
 // title's substring. See .indusk/planning/rationale-baseline-frontmatter/falsification.md.
+// Line-anchored, like every value-bearing frontmatter key here — the
+// `rationale_baseline` lesson was a title's substring silently setting a
+// baseline, and the same shape of bug is available to any unanchored match.
+const testPhasesRequiredFrontmatter = /^test_phases:\s*required/m.test(frontmatter);
 const rationaleBaselineMatch = frontmatter.match(/^rationale_baseline:\s*(\d+)/m);
 const rationaleBaseline = rationaleBaselineMatch
 	? Number.parseInt(rationaleBaselineMatch[1], 10)
@@ -349,6 +367,7 @@ if (trajectoryValidationEnabled) {
 		body,
 		rationaleRequiredFrontmatter,
 		rationaleBaseline,
+		testPhasesRequiredFrontmatter,
 	);
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
@@ -382,7 +401,12 @@ process.exit(0);
 // apps/indusk-mcp/src/lib/trajectory/validator.ts and parser.ts)
 // ------------------------------------------------------------------
 
-function validateTrajectory(implBody, rationaleRequired, rationaleBaseline = 0) {
+function validateTrajectory(
+	implBody,
+	rationaleRequired,
+	rationaleBaseline = 0,
+	testPhasesRequired = false,
+) {
 	const errors = [];
 
 	// Rule 1: trajectory presence
@@ -396,13 +420,122 @@ function validateTrajectory(implBody, rationaleRequired, rationaleBaseline = 0) 
 	}
 
 	const trajectory = parseTrajectoryFromBody(implBody);
+	const sequence = phaseSequence(implBody);
+	const hasTestPhase = sequence.some((p) => p.kind === "test");
 	errors.push(...validateCrossReferenceIntegrity(implBody, trajectory));
-	errors.push(...validateTemporalCoherence(trajectory, phaseSequence(body)));
+	errors.push(...validateTemporalCoherence(trajectory, sequence));
 	errors.push(...validateDeferredCompleteness(trajectory));
-	if (rationaleRequired) {
+	errors.push(...validateTestPhasePresence(sequence, testPhasesRequired));
+	errors.push(...validateTestPhaseJustification(implBody, sequence));
+	errors.push(...validateRegressionGuards(implBody, trajectory));
+	// The register absorbs `### Trajectory Rationale`: when a test phase exists,
+	// deferral justification lives in Test Phase 1, and requiring the legacy
+	// section too would be two homes for one fact. Impls without a test phase
+	// are unaffected — which is every impl written before this rule existed.
+	if (rationaleRequired && !hasTestPhase) {
 		errors.push(...validateRationaleCompleteness(implBody, trajectory, rationaleBaseline));
 	}
 	return errors;
+}
+
+/**
+ * Read Test Phase 1's register. Scanning stops at the next phase heading — the
+ * register belongs to the FIRST test phase, and an entry written under a later
+ * phase is not a justification recorded up front, which is its whole purpose.
+ * Fenced lines are skipped so a carried test body cannot pose as an entry.
+ */
+function parseRegister(implBody) {
+	const lines = implBody.split("\n");
+	const fenced = fencedLineMask(lines);
+	const justifiedTestPhases = new Set();
+	const regressionGuards = new Set();
+
+	let inTestPhaseOne = false;
+	let inGuards = false;
+	for (let i = 0; i < lines.length; i++) {
+		if (fenced[i]) continue;
+		const line = lines[i];
+
+		const heading = parsePhaseHeading(line);
+		if (heading) {
+			inTestPhaseOne = heading.kind === "test" && heading.number === 1;
+			inGuards = false;
+			continue;
+		}
+		if (!inTestPhaseOne) continue;
+
+		const deferred = DEFERRED_TO_TEST_PHASE.exec(line);
+		if (deferred) {
+			justifiedTestPhases.add(Number.parseInt(deferred[1], 10));
+			inGuards = false;
+			continue;
+		}
+		if (REGRESSION_GUARDS_HEADING.test(line)) {
+			inGuards = true;
+			continue;
+		}
+		if (/^####\s+/.test(line)) {
+			inGuards = false;
+			continue;
+		}
+		if (inGuards) {
+			const entry = REGISTER_ENTRY_ID.exec(line);
+			if (entry) regressionGuards.add(entry[1]);
+		}
+	}
+
+	return { justifiedTestPhases, regressionGuards };
+}
+
+/** A new impl must open with a test phase. Gated on `test_phases: required`. */
+function validateTestPhasePresence(sequence, required) {
+	if (!required) return [];
+	if (sequence.some((p) => p.kind === "test")) return [];
+	return [
+		{
+			rule: "test-phase-presence",
+			message:
+				"`test_phases: required` is set but this impl has no test phase. Add `### Test Phase 1` as the first phase — it authors every test that can honestly be authored and records, in its register, every test that cannot. Naming the omission matters more than naming the rule: without it, the discipline the whole document is built around is the only one with nowhere to happen.",
+		},
+	];
+}
+
+/** Every test phase after the first must be justified in the first. */
+function validateTestPhaseJustification(implBody, sequence) {
+	const later = sequence.filter((p) => p.kind === "test" && p.number > 1);
+	if (later.length === 0) return [];
+	const { justifiedTestPhases } = parseRegister(implBody);
+	return later
+		.filter((p) => !justifiedTestPhases.has(p.number))
+		.map((p) => ({
+			rule: "test-phase-justification",
+			message: `Test Phase ${p.number} exists but Test Phase 1 does not justify it. Add a \`#### Deferred to Test Phase ${p.number}\` entry there saying why those tests cannot be authored up front — a later test phase is a deviation from "author everything first", and the register is where every deviation is recorded.`,
+		}));
+}
+
+/**
+ * A row that passes in the same test phase that authors it has no red window.
+ * That is legitimate and is also what a rubber stamp looks like, so the author
+ * must say which. Scoped to rows whose BOTH ends name a test phase: a
+ * build-phase row where writable equals passes is the ordinary
+ * unit-test-for-new-code case, which is why no existing impl is affected.
+ */
+function validateRegressionGuards(implBody, trajectory) {
+	const greenOnArrival = trajectory.rows.filter(
+		(r) =>
+			r.writableAtKind === "test" &&
+			r.passesAtKind === "test" &&
+			Number.isFinite(r.writableAt) &&
+			r.writableAt === r.passesAt,
+	);
+	if (greenOnArrival.length === 0) return [];
+	const { regressionGuards } = parseRegister(implBody);
+	return greenOnArrival
+		.filter((r) => !regressionGuards.has(r.id))
+		.map((r) => ({
+			rule: "regression-guard-declaration",
+			message: `Trajectory row \`${r.id}\` passes in the same test phase that authors it, so it has no red phase. That is allowed, but it must be declared: add a \`- **${r.id}** — {why}\` entry under \`#### Regression Guards\` in Test Phase 1. A row green on arrival is either a regression guard or a rubber stamp, and only the author knows which.`,
+		}));
 }
 
 function parseTrajectoryFromBody(implBody) {
