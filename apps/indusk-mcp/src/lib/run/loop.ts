@@ -226,7 +226,10 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		// Re-read on every iteration — earlier phases edited the plan.
 		const content = await readFile(implPath, "utf8");
 		const current = parseImplString(content);
-		const phase = current.phases.find((p) => p.number === planned.number) ?? planned;
+		// By position, not by number. With two sequences `Phase 1` names two
+		// different phases, and matching on the number made the loop re-run the
+		// test phase instead of advancing to the build phase behind it.
+		const phase = current.phases.find((p) => p.ordinal === planned.ordinal) ?? planned;
 		if (isPhaseDone(phase, resolveGatePolicy(content))) continue;
 
 		// Goalpost baseline: snapshot the trajectory before the phase runs.
@@ -269,7 +272,13 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 
 		// Advance only on green: the deliberate check-gates probe, not the
 		// model's self-report, decides whether the phase closed.
-		const probe = await probePhaseClose({ implPath, worktree: root, phase: phase.number, scripts });
+		const probe = await probePhaseClose({
+			implPath,
+			worktree: root,
+			phase: phase.number,
+			ordinal: phase.ordinal,
+			scripts,
+		});
 		if (!probe.allowed && isGateQuestion(probe.blockMessage)) {
 			// Not a red: `ask` policy refused a proof-less skip, which is a
 			// question only a human can answer (A6). Pause instead of stopping —

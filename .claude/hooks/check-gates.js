@@ -17,6 +17,10 @@ import {
 	fencedLineMask,
 	gateHeading,
 	parsePhaseHeading,
+	parsePhaseRef,
+	phaseExists,
+	phaseOrdinal,
+	phaseSequence,
 } from "./_impl-headings.js";
 
 // Read hook input from stdin
@@ -273,7 +277,7 @@ for (let pi = 0; pi < newPhases.length; pi++) {
 			newlyChecked.push({
 				phase: newPhase.number,
 				phaseKind: newPhase.kind,
-				phaseOrdinal: newPhase.ordinal,
+				ordinal: newPhase.ordinal,
 				phaseName: newPhase.name,
 				text: newItem.text,
 				gate: newItem.gate,
@@ -284,6 +288,120 @@ for (let pi = 0; pi < newPhases.length; pi++) {
 
 if (newlyChecked.length === 0) {
 	process.exit(0);
+}
+
+// Trajectory gates run BEFORE the gate-completeness loop, deliberately.
+// Both violations can be present at once — an unauthored test is usually WHY
+// a test phase's gate is still open — and the hook reports the first one it
+// finds. Reporting "complete Phase 1 gates first" when the cause is a test
+// that was never written sends the reader to the symptom; reporting the
+// test-first violation sends them to the cause, and fixing the cause clears
+// the symptom.
+
+const hasTrajectorySection = /^##\s+Test Trajectory\b/m.test(newFullContent);
+if (hasTrajectorySection) {
+	const advancingPhases = new Set();
+	// Two things advance the test-first obligation: starting build work, and
+	// closing a test phase. The second is new — a test phase's items ARE the
+	// authoring, so its Verification gate is the moment it claims to be done,
+	// and a test phase that can close with unwritten tests has nothing to
+	// review, which is the compensating control the whole register rests on.
+	for (const item of newlyChecked) {
+		if (item.gate === "implementation") advancingPhases.add(item);
+		else if (item.gate === "verification" && item.phaseKind === "test") advancingPhases.add(item);
+	}
+
+	if (advancingPhases.size > 0) {
+		const trajectory = parseTrajectoryFromBody(newFullContent);
+		const sequence = phaseSequence(newFullContent);
+
+		// Gate A: test-first authoring, at or before the advancing phase.
+		//
+		// The comparison used to be `===`, which meant a row was asked about at
+		// exactly one moment: miss it and no later phase ever asks again. That
+		// is how five rows in `lifecycle-rebalance` were authored four phases
+		// late with nothing objecting. Worse, `advancingPhase` is never 0, so
+		// `Writable at: Phase 0` — 260 of 444 rows across this repo — could
+		// never match at all, and the DEFAULT path of the test-first rule was
+		// unenforced by construction.
+		//
+		// `<=` on the document timeline fixes both: a row due earlier and still
+		// unwritten blocks every subsequent checkoff until it is authored.
+		const testFirstBlockers = [];
+		for (const advancing of advancingPhases) {
+			const advancingOrdinal = phaseOrdinal(
+				{ kind: advancing.phaseKind, number: advancing.phase },
+				sequence,
+			);
+			const unauthored = trajectory.rows.filter(
+				(row) =>
+					// A row can only be *late* for a phase the document contains.
+					// One naming a phase nobody has written yet is a forward
+					// reference, not a missed obligation. `Phase 0` counts as
+					// present by definition — it is where the 260 unenforceable
+					// rows live, and it is the whole point of this correction.
+					phaseExists({ kind: row.writableAtKind, number: row.writableAt }, sequence) &&
+					phaseOrdinal({ kind: row.writableAtKind, number: row.writableAt }, sequence) <=
+						advancingOrdinal &&
+					row.state !== "written" &&
+					row.state !== "passing" &&
+					row.state !== "skipped" &&
+					row.state !== "blocked",
+			);
+			for (const row of unauthored) {
+				testFirstBlockers.push({ advancing, row });
+			}
+		}
+
+		if (testFirstBlockers.length > 0) {
+			const rowLabel = (row) =>
+				`${row.writableAtKind === "test" ? "Test " : ""}Phase ${row.writableAt}`;
+			const msg = testFirstBlockers
+				.map(
+					(b) =>
+						`${phaseLabel(b.advancing.phaseKind, b.advancing.phase)} test-first violation: row ${b.row.id} is Writable at: ${rowLabel(b.row)} but still ${b.row.state}. Author it as RED before marking work at or after that phase done.`,
+				)
+				.join("\n");
+			process.stderr.write(`${msg}\n`);
+			process.exit(2);
+		}
+
+		// Gate B: every prior phase must be closable.
+		//
+		// Expressed over the document timeline rather than by counting from 1:
+		// with two sequences there is no "phase 1..N-1" to count through, and
+		// the phases that must be closed are simply the ones that come earlier
+		// in the document than the phase being advanced.
+		const allBlockers = [];
+		for (const advancing of advancingPhases) {
+			const advancingOrdinal = phaseOrdinal(
+				{ kind: advancing.phaseKind, number: advancing.phase },
+				sequence,
+			);
+			for (const row of trajectory.rows) {
+				const ref = { kind: row.passesAtKind, number: row.passesAt };
+				if (!phaseExists(ref, sequence)) continue;
+				const passesOrdinal = phaseOrdinal(ref, sequence);
+				if (passesOrdinal >= advancingOrdinal) continue;
+				if (row.state !== "passing" && row.state !== "skipped" && row.state !== "blocked") {
+					allBlockers.push({ ref, row });
+				}
+			}
+		}
+
+		if (allBlockers.length > 0) {
+			const msg = allBlockers
+				.map(
+					(b) =>
+						`  [${b.row.id}] ${b.row.asserts} — state: ${b.row.state} (${phaseLabel(b.ref.kind, b.ref.number)} cannot close until this row is 'passing' or 'skipped')`,
+				)
+				.join("\n");
+			process.stderr.write(
+				`Trajectory blocks phase advance (policy: ${gatePolicy}):\n${msg}\n\nEvery trajectory row with 'Passes at: Phase N' must be 'passing', 'skipped', or 'blocked' before advancing past Phase N. See .indusk/planning/tests-first-planning/adr.md Section 6.\n`,
+			);
+			process.exit(2);
+		}
+	}
 }
 
 // For each newly checked item: if it's an implementation item,
@@ -297,7 +415,7 @@ for (const item of newlyChecked) {
 	// Phase 1` both report number 1, so a number comparison would let build
 	// work start while the test phase that authors its tests is still open.
 	for (const phase of oldPhases) {
-		if (phase.ordinal >= item.phaseOrdinal) break;
+		if (phase.ordinal >= item.ordinal) break;
 
 		const isOverridden = (text) => {
 			if (gatePolicy === "strict") return false;
@@ -333,94 +451,6 @@ for (const item of newlyChecked) {
 						: "To skip a gate item, mark with (none needed) or skip-reason: {why}\n";
 			process.stderr.write(
 				`${phaseLabel(item.phaseKind, item.phase)} blocked (policy: ${gatePolicy}): complete ${phaseLabel(phase.kind, phase.number)} gates first:\n${missing}\n${skipHint}`,
-			);
-			process.exit(2);
-		}
-	}
-}
-
-// ------------------------------------------------------------------
-// Trajectory enforcement: two gates fire when an implementation item
-// in Phase N is checked.
-//
-// Gate A — test-first authoring (per advancing phase):
-//   Every trajectory row with `Writable at: Phase N` must be in state
-//   `written`, `passing`, `skipped`, or `blocked` — NOT `planned`,
-//   `writable`, or `unknown`. Phase N's tests must exist (as RED at
-//   minimum) before its implementation items can be marked done.
-//
-// Gate B — phase close (per closed prior phase):
-//   Every trajectory row with `Passes at: Phase K` where K < N must
-//   be in state `passing`, `skipped`, or `blocked`. The whole point
-//   of tests-first is that deferral is structurally impossible.
-//
-// Both skipped if the impl has no `## Test Trajectory` section.
-// ------------------------------------------------------------------
-
-const hasTrajectorySection = /^##\s+Test Trajectory\b/m.test(newFullContent);
-if (hasTrajectorySection) {
-	const advancingPhases = new Set();
-	for (const item of newlyChecked) {
-		if (item.gate === "implementation") advancingPhases.add(item.phase);
-	}
-
-	if (advancingPhases.size > 0) {
-		const trajectory = parseTrajectoryFromBody(newFullContent);
-
-		// Gate A: test-first authoring for the advancing phase itself.
-		const testFirstBlockers = [];
-		for (const advancingPhase of advancingPhases) {
-			const unauthored = trajectory.rows.filter(
-				(row) =>
-					row.writableAt === advancingPhase &&
-					row.state !== "written" &&
-					row.state !== "passing" &&
-					row.state !== "skipped" &&
-					row.state !== "blocked",
-			);
-			for (const row of unauthored) {
-				testFirstBlockers.push({ phase: advancingPhase, row });
-			}
-		}
-
-		if (testFirstBlockers.length > 0) {
-			const msg = testFirstBlockers
-				.map(
-					(b) =>
-						`Phase ${b.phase} test-first violation: row ${b.row.id} is Writable at: Phase ${b.phase} but still ${b.row.state}. Author it as RED before marking implementation items done.`,
-				)
-				.join("\n");
-			process.stderr.write(`${msg}\n`);
-			process.exit(2);
-		}
-
-		// Gate B: every prior phase must be closable.
-		const allBlockers = [];
-		for (const advancingPhase of advancingPhases) {
-			// Closing phases = every phase strictly before advancingPhase
-			for (let closingPhase = 1; closingPhase < advancingPhase; closingPhase++) {
-				const blockers = trajectory.rows.filter(
-					(row) =>
-						row.passesAt === closingPhase &&
-						row.state !== "passing" &&
-						row.state !== "skipped" &&
-						row.state !== "blocked",
-				);
-				for (const row of blockers) {
-					allBlockers.push({ phase: closingPhase, row });
-				}
-			}
-		}
-
-		if (allBlockers.length > 0) {
-			const msg = allBlockers
-				.map(
-					(b) =>
-						`  [${b.row.id}] ${b.row.asserts} — state: ${b.row.state} (Phase ${b.phase} cannot close until this row is 'passing' or 'skipped')`,
-				)
-				.join("\n");
-			process.stderr.write(
-				`Trajectory blocks phase advance (policy: ${gatePolicy}):\n${msg}\n\nEvery trajectory row with 'Passes at: Phase N' must be 'passing', 'skipped', or 'blocked' before advancing past Phase N. See .indusk/planning/tests-first-planning/adr.md Section 6.\n`,
 			);
 			process.exit(2);
 		}
@@ -479,13 +509,20 @@ function parseTrajectoryFromBody(implContent) {
 		const rec = {};
 		for (let j = 0; j < keys.length; j++) rec[keys[j]] = cells[j];
 		if (!rec.id) continue;
-		const writableMatch = (rec.writableAt || "").match(/^\s*Phase\s+(\d+)\s*$/i);
-		const passesMatch = (rec.passesAt || "").match(/^\s*Phase\s+(\d+)\s*$/i);
+		// Through the shared parser, not a local regex. This was an eighth copy
+		// of the phase-reference pattern, found only because Gate A silently
+		// stopped firing: it could not read `Test Phase 1`, so every row parsed
+		// as NaN and no row ever matched. A duplicated pattern does not announce
+		// itself when it falls behind — it just stops enforcing.
+		const writable = parsePhaseRef(rec.writableAt || "");
+		const passes = parsePhaseRef(rec.passesAt || "");
 		rows.push({
 			id: rec.id.trim(),
 			asserts: (rec.asserts || "").trim(),
-			writableAt: writableMatch ? Number.parseInt(writableMatch[1], 10) : Number.NaN,
-			passesAt: passesMatch ? Number.parseInt(passesMatch[1], 10) : Number.NaN,
+			writableAt: writable ? writable.number : Number.NaN,
+			passesAt: passes ? passes.number : Number.NaN,
+			writableAtKind: writable ? writable.kind : "build",
+			passesAtKind: passes ? passes.kind : "build",
 			state: (rec.state || "").toLowerCase().trim(),
 		});
 	}

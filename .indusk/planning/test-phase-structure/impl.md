@@ -55,11 +55,11 @@ Give test authoring a phase, so the system's central discipline has a moment and
 | A3 | Writing an impl whose every additional test phase is justified in the first is accepted | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | passing |
 | A14 | An impl carrying no separate `Trajectory Rationale` section still validates when its deferrals live in Test Phase 1 | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | passing |
 | A8 | A row that passes the moment it is authored is accepted only when declared a regression guard; an undeclared one is refused, naming it | `apps/indusk-mcp/src/__tests__/test-phase-rules.test.ts` | Phase 0 | Phase 3 | passing |
-| A6 | Checking off build work while a test phase still has unauthored tests is refused, naming the unauthored test | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | written |
-| A7 | A test that should have been authored earlier and still isn't is caught when any later phase closes — not only at the phase it was due | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | written |
-| A9 | A test phase cannot close while any test it authors has not been written | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | written |
-| A10 | A plan containing test phases runs to completion under `atdawn run`, closing each phase in order | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | written |
-| A11 | The same violation is refused identically in both lanes, with the same message | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | written |
+| A6 | Checking off build work while a test phase still has unauthored tests is refused, naming the unauthored test | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | passing |
+| A7 | A test that should have been authored earlier and still isn't is caught when any later phase closes — not only at the phase it was due | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | passing |
+| A9 | A test phase cannot close while any test it authors has not been written | `apps/indusk-mcp/src/lib/__tests__/gate-a.test.ts` | Phase 0 | Phase 4 | passing |
+| A10 | A plan containing test phases runs to completion under `atdawn run`, closing each phase in order | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | passing |
+| A11 | The same violation is refused identically in both lanes, with the same message | `apps/indusk-mcp/src/lib/run/test-phase-parity.test.ts` | Phase 0 | Phase 4 | passing |
 | A15 | A test file whose import cannot be resolved fails to load **even when every test in it is skipped** | `apps/indusk-mcp/src/__tests__/skip-does-not-defer.test.ts` | Phase 0 | Phase 1 | passing |
 | A12 | A plan created by `/planner` contains a test phase as its first phase | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` | Phase 0 | Phase 5 | written |
 
@@ -192,21 +192,26 @@ Two rows are **regression guards, green on arrival, and declared as such** per A
 
 ### Build Phase 4: Gate A, and both lanes
 
-- [ ] Correct Gate A: authoring is enforced against test phases, and a row whose authoring phase has passed while still unwritten is caught when any later phase closes (A6, A7)
-- [ ] A test phase cannot close while any row it authors is unwritten (A9)
-- [ ] Prove the thin lane walks a plan with two numbering sequences (A10)
-- [ ] Prove both lanes refuse the same violation with the same message (A11) — the gate scripts are shared, which makes this assumable and therefore worth asserting
+- [x] Correct Gate A: authoring is enforced against test phases, and a row whose authoring phase has passed while still unwritten is caught when any later phase closes (A6, A7) — `===` became `<=` on the document timeline, plus a `phaseExists` guard so a row naming a phase nobody has written yet is a forward reference rather than a missed obligation. `Phase 0` counts as present by definition, which is what finally makes the 260 unenforceable rows enforceable.
+  - **Measured before shipping**: of the active plans in this repo, exactly **two** are now blocked on their next checkoff — `falsify-phase-authoring` (5 of 6 rows non-terminal) and `local-telemetry` (4 of 23). Both are legitimately blocked: those tests were never authored. That is the rule working rather than collateral damage, but it is a real operational consequence and belongs in the record rather than in a surprise.
+- [x] A test phase cannot close while any row it authors is unwritten (A9) — a test phase's Verification gate now also advances the obligation, because a test phase's items *are* the authoring and one that can close with unwritten tests has nothing to review
+- [x] Prove the thin lane walks a plan with two numbering sequences (A10)
+- [x] Prove both lanes refuse the same violation with the same message (A11) — the gate scripts are shared, which makes this assumable and therefore worth asserting
+- [x] **Discovered — an eighth copy of the phase-reference pattern, inside `check-gates.js` itself.** Its local `parseTrajectoryFromBody` had its own `/^\s*Phase\s+(\d+)\s*$/i`, so every `Test Phase N` cell parsed as `NaN` and Gate A matched nothing at all. Found only because the gate silently stopped firing — a duplicated pattern does not announce itself when it falls behind, it just stops enforcing. Routed through the shared parser. This is the plan's own thesis landing on the plan.
+- [x] **Discovered — Gate B had to move to the timeline too.** It counted `for (closingPhase = 1; closingPhase < advancingPhase; closingPhase++)`, which has no meaning across two sequences. Now: every row whose `Passes at` sits earlier in the document than the advancing phase.
+- [x] **Discovered — the loop identified phases by number.** `find(p => p.number === planned.number)` returns Test Phase 1 for both Test Phase 1 and Build Phase 1, so `atdawn run` re-ran the test phase instead of advancing. Now matched by `ordinal`, and the phase-close probe truncates by position rather than by phase number.
 
 #### Build Phase 4 Verification
-- [ ] A6, A7, A9, A10, A11 pass
-- [ ] A12 still red (Phase 5)
-- [ ] Full suite green apart from the known-red cases; `pnpm check` clean
+- [x] A6, A7, A9, A10, A11 pass
+- [x] A12 still red (Phase 5)
+- [x] Full suite green apart from the known-red cases; `pnpm check` clean — 13 failures: A12's two, 9 admin/tarball needing a built app, and the known-red PID-reuse pair
+- [x] **A hole I opened and closed inside this phase**: moving the trajectory gates ahead of the gate-completeness loop put that loop *after* the terminal `process.exit(0)`, so gate completeness stopped running entirely. Exit code 0 with no message — the failure mode is indistinguishable from "everything passed", which is precisely the class of bug this plan exists to remove. Caught by A16's "the phases around it are really parsed" case, which asserts a refusal rather than an acceptance; an acceptance-only test would have gone green on a disabled validator.
 
 #### Build Phase 4 Context
-- [ ] Add to Known Gotchas: Gate A enforces authoring at or before the advancing phase, so a row left unwritten surfaces at the next phase close rather than only at its own — and it is enforced identically in both lanes because the gate scripts are shared
+- [x] Add to Known Gotchas: Gate A enforces authoring at or before the advancing phase, so a row left unwritten surfaces at the next phase close rather than only at its own — and it is enforced identically in both lanes because the gate scripts are shared
 
 #### Build Phase 4 Document
-- [ ] (deferred to Phase 5 — same reason as Phase 1)
+- [x] (deferred to Phase 5 — same reason as Phase 1)
 
 ### Build Phase 5: The skills, and the guide
 

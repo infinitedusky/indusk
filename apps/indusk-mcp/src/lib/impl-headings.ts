@@ -184,6 +184,24 @@ export function phaseSequence(body: string): PhaseRef[] {
  * a reference to the future should sort into the future rather than collapse to
  * zero.
  */
+/**
+ * Whether `ref` names a phase this document actually contains.
+ *
+ * `Phase 0` is always present by definition: it means "before any of this
+ * plan's work", which is a real moment in a plan's life and deliberately has no
+ * heading. Every other reference has to point at something written down.
+ *
+ * The distinction matters for enforcement rather than for ordering. A row whose
+ * authoring phase exists can be late; a row naming a phase nobody has written
+ * yet cannot be — you cannot miss a deadline that has not been scheduled — and
+ * treating the two alike turns a plan's forward reference into a false
+ * accusation.
+ */
+export function phaseExists(ref: PhaseRef, sequence: readonly PhaseRef[]): boolean {
+	if (ref.kind === "build" && ref.number === 0) return true;
+	return sequence.some((p) => p.kind === ref.kind && p.number === ref.number);
+}
+
 export function phaseOrdinal(ref: PhaseRef, sequence: readonly PhaseRef[]): number {
 	if (!sequence.some((p) => p.kind === "test")) return ref.number;
 

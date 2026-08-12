@@ -121,6 +121,20 @@ export function phaseSequence(body) {
  * claim made about it elsewhere, and `Phase 0` keeps ordering before `Phase 1`
  * by arithmetic with no special case.
  */
+/**
+ * Whether `ref` names a phase this document actually contains.
+ *
+ * `Phase 0` is always present by definition — it means "before any of this
+ * plan's work", a real moment that deliberately has no heading. Everything else
+ * must point at something written down: a row whose authoring phase exists can
+ * be late, a row naming a phase nobody has written yet cannot be, and treating
+ * the two alike turns a forward reference into a false accusation.
+ */
+export function phaseExists(ref, sequence) {
+	if (ref.kind === "build" && ref.number === 0) return true;
+	return sequence.some((p) => p.kind === ref.kind && p.number === ref.number);
+}
+
 export function phaseOrdinal(ref, sequence) {
 	if (!sequence.some((p) => p.kind === "test")) return ref.number;
 	const exact = sequence.findIndex((p) => p.kind === ref.kind && p.number === ref.number);
