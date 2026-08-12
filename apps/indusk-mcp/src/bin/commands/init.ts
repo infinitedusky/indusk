@@ -4,6 +4,7 @@ import { homedir } from "node:os";
 import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
+import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../../..");
@@ -957,6 +958,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				console.info(`  ${existsSync(targetFile) ? "overwrite" : "create"}: .claude/hooks/${file}`);
 			}
 		}
+		// Not part of the `*.js` glob, and required: without it the hooks do
+		// not LOAD in a consumer that declares `"type": "commonjs"`.
+		ensureHooksModuleType(hooksTarget);
 	}
 
 	// Merge hook config + permissions into .claude/settings.json

@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { loadExtension } from "../../lib/extension-loader.js";
+import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { envIsFunctional } from "./extensions.js";
 
@@ -198,6 +199,7 @@ export async function update(projectRoot: string): Promise<void> {
 			console.info(`  added: ${file}`);
 			hooksUpdated++;
 		}
+		ensureHooksModuleType(hooksTarget);
 		console.info(`\n  ${hooksUpdated} added.`);
 	} else {
 		// Both dirs exist — sync by hash compare. Discover bundled hooks from
@@ -228,6 +230,11 @@ export async function update(projectRoot: string): Promise<void> {
 				hooksUpdated++;
 			}
 		}
+
+		// The upgrade path that matters: a consumer created before this marker
+		// existed has hooks on disk that do not load under `"type":
+		// "commonjs"`. Copying newer hooks over them fixes nothing without it.
+		ensureHooksModuleType(hooksTarget);
 
 		console.info(`\n  ${hooksUpdated} updated, ${hooksCurrent} current.`);
 
