@@ -49,11 +49,7 @@ const PRESERVED_HISTORY = [
 ];
 
 /** Live source across BOTH apps — the scope the predecessor was missing. */
-const SCAN = [
-	"apps/indusk-mcp/**/*.ts",
-	"apps/indusk-admin/**/*.ts",
-	"apps/indusk-admin/**/*.tsx",
-];
+const SCAN = ["apps/indusk-mcp/**/*.ts", "apps/indusk-admin/**/*.ts", "apps/indusk-admin/**/*.tsx"];
 
 const IGNORE = [
 	"**/node_modules/**",
@@ -91,29 +87,44 @@ function auditedFiles(): string[] {
 	return globSync(SCAN, { cwd: REPO_ROOT, ignore: IGNORE, absolute: true });
 }
 
-function lineNumberAt(content: string, index: number): number {
-	return content.slice(0, index).split("\n").length;
-}
-
 interface Violation {
 	file: string;
 	line: number;
 	text: string;
 }
 
+/**
+ * Every pattern that matches in whole-file content, with line numbers.
+ *
+ * Whole-file rather than line-at-a-time is the load-bearing part: the call site
+ * this audit exists to catch spans two lines, so a per-line scan misses it even
+ * with a correct pattern. Shared by A1 and A5 — they differ on globs, ignores
+ * and reporting, but this mechanic must not drift between them.
+ *
+ * Returns *all* matching patterns, not the first. Reporting one violation per
+ * file would converge (fix, re-run, see the next), but it would also hide a
+ * second distinct violation behind the first — and no file currently matches
+ * two patterns, so that narrowing would look identical today and bite later.
+ */
+function matchesIn(content: string, patterns: RegExp[]): { line: number; match: string }[] {
+	const hits: { line: number; match: string }[] = [];
+	for (const pattern of patterns) {
+		const found = pattern.exec(content);
+		if (found) {
+			hits.push({
+				line: content.slice(0, found.index).split("\n").length,
+				match: found[0].replace(/\s+/g, " ").trim(),
+			});
+		}
+	}
+	return hits;
+}
+
 function findViolations(): Violation[] {
 	const violations: Violation[] = [];
 	for (const file of auditedFiles()) {
-		const content = readFileSync(file, "utf-8");
-		for (const pattern of FORBIDDEN_PATTERNS) {
-			const match = pattern.exec(content);
-			if (match) {
-				violations.push({
-					file: relative(REPO_ROOT, file),
-					line: lineNumberAt(content, match.index),
-					text: match[0].replace(/\s+/g, " ").trim(),
-				});
-			}
+		for (const hit of matchesIn(readFileSync(file, "utf-8"), FORBIDDEN_PATTERNS)) {
+			violations.push({ file: relative(REPO_ROOT, file), line: hit.line, text: hit.match });
 		}
 	}
 	return violations;
@@ -161,12 +172,12 @@ describe("jj rip-out audit", () => {
 		const offenders: Violation[] = [];
 		for (const file of tsxFiles) {
 			const content = readFileSync(file, "utf-8");
-			const match = /\bjj\b/.exec(content);
-			if (match) {
+			for (const hit of matchesIn(content, [/\bjj\b/])) {
 				offenders.push({
 					file: relative(REPO_ROOT, file),
-					line: lineNumberAt(content, match.index),
-					text: content.split("\n")[lineNumberAt(content, match.index) - 1].trim(),
+					line: hit.line,
+					// The whole source line, not the bare match — "jj" alone says nothing.
+					text: content.split("\n")[hit.line - 1].trim(),
 				});
 			}
 		}
