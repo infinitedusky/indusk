@@ -1,26 +1,84 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { relative, resolve } from "node:path";
 import { globSync } from "glob";
 import { describe, expect, it } from "vitest";
 
 /**
- * T6 (git-only-substrate Phase 4) — the SCM abstraction layer is gone.
+ * A1 / A2 / A5 (jj-residue-rip-out) — the jj rip-out audit.
  *
- * After Phase 4, no production code in `apps/indusk-mcp/src/` calls
- * `getScm()`, imports `lib/scm/detect.js`, imports `lib/semantic-graph/jj.js`,
- * or references `NotAJjRepoError` / `getJjReachable`. The few remaining
- * occurrences in the source tree are:
+ * This replaces the `git-only-substrate` Phase 4 audit, which was green for
+ * seven weeks while `apps/indusk-admin/src/lib/vcs.ts` shelled out to jj on
+ * every scorecard render. It was green for three structural reasons, and all
+ * three are corrected here:
  *
- *  - **Negative-assertion test strings** — these are allowed.
- *  - **Comment prose** explaining historical context — also allowed.
+ *  1. **Path scope.** `SRC_ROOT` resolved to `apps/indusk-mcp`, so
+ *     `apps/indusk-admin/` was never scanned. That is where the violation was.
+ *  2. **Pattern scope.** All five patterns were TypeScript *identifiers*
+ *     (`getScm`, `NotAJjRepoError`, …). The surviving violation was the string
+ *     `"jj"` in an `execFileSync` argument list, which no identifier matches.
+ *  3. **Line-at-a-time matching.** The old audit tested each line in isolation.
+ *     The real call site is formatted across lines —
  *
- * This test enforces "no imports / no usage as code" by inspecting non-test
- * source files only.
+ *         const out = execFileSync(
+ *           "jj",
+ *
+ *     — so even a correct argv pattern would still have missed it. Patterns
+ *     here are matched against whole-file content, and `\s*` spans newlines.
+ *
+ * Negative-assertion strings inside test files remain allowed, and the
+ * preserved historical record is exempt by construction (see A2).
  */
 
-const SRC_ROOT = resolve(__dirname, "../..");
+const REPO_ROOT = resolve(__dirname, "../../../..");
 
+/**
+ * Paths that deliberately keep jj and must never be flagged.
+ *
+ * The decision record (`git-or-jj-substrate`) and the three bundled community
+ * lessons that use jj as their worked example are evidence, not residue —
+ * stripping jj from them would leave them asserting that something happened
+ * without saying what. An audit that fires on these gets switched off, which
+ * is the failure this audit exists to correct.
+ */
+const PRESERVED_HISTORY = [
+	".indusk/planning/**",
+	"apps/docs/src/decisions/**",
+	"apps/docs/src/lessons/**",
+	"apps/docs/src/guide/scm.md",
+	"apps/indusk-mcp/lessons/**",
+];
+
+/** Live source across BOTH apps — the scope the predecessor was missing. */
+const SCAN = [
+	"apps/indusk-mcp/**/*.ts",
+	"apps/indusk-admin/**/*.ts",
+	"apps/indusk-admin/**/*.tsx",
+];
+
+const IGNORE = [
+	"**/node_modules/**",
+	"**/dist/**",
+	"**/.next/**",
+	"**/__tests__/**",
+	"**/*.test.ts",
+	"**/*.test.tsx",
+	...PRESERVED_HISTORY,
+];
+
+/**
+ * jj as an *executed command* and as a *configured option* — the two shapes
+ * that mean the substrate is still live. Identifier patterns from the
+ * predecessor are kept: they still hold, they were just never sufficient.
+ */
 const FORBIDDEN_PATTERNS = [
+	// argv-level: the class the predecessor could not see
+	/execFileSync\s*\(\s*["'`]jj["'`]/,
+	/execFile\s*\(\s*["'`]jj["'`]/,
+	/spawnSync\s*\(\s*["'`]jj["'`]/,
+	/spawn\s*\(\s*["'`]jj["'`]/,
+	// config-level: jj offered as a choice
+	/\bscm\s*\??\s*:\s*["'`]jj["'`]/,
+	// identifier-level: the predecessor's five, still valid
 	/import\s+[^;]*\bgetScm\b/,
 	/from\s+["'][^"']*lib\/scm\/detect/,
 	/from\s+["'][^"']*semantic-graph\/jj/,
@@ -28,40 +86,105 @@ const FORBIDDEN_PATTERNS = [
 	/\bgetJjReachable\b/,
 ];
 
-describe("SCM abstraction rip-out — grep audit (T6)", () => {
-	const files = globSync(["**/*.ts"], {
-		cwd: SRC_ROOT,
-		ignore: ["**/__tests__/**", "**/*.test.ts", "**/node_modules/**", "**/dist/**"],
-		absolute: true,
-	});
+/** Files the audit actually inspects. Exported shape so A2 can assert on it. */
+function auditedFiles(): string[] {
+	return globSync(SCAN, { cwd: REPO_ROOT, ignore: IGNORE, absolute: true });
+}
 
-	it("no production source file imports getScm, lib/scm/detect, or semantic-graph/jj", () => {
-		const violations: { file: string; line: number; text: string }[] = [];
-		for (const file of files) {
-			const content = readFileSync(file, "utf-8");
-			content.split("\n").forEach((line, idx) => {
-				for (const pattern of FORBIDDEN_PATTERNS) {
-					if (pattern.test(line)) {
-						violations.push({ file, line: idx + 1, text: line.trim() });
-					}
-				}
-			});
+function lineNumberAt(content: string, index: number): number {
+	return content.slice(0, index).split("\n").length;
+}
+
+interface Violation {
+	file: string;
+	line: number;
+	text: string;
+}
+
+function findViolations(): Violation[] {
+	const violations: Violation[] = [];
+	for (const file of auditedFiles()) {
+		const content = readFileSync(file, "utf-8");
+		for (const pattern of FORBIDDEN_PATTERNS) {
+			const match = pattern.exec(content);
+			if (match) {
+				violations.push({
+					file: relative(REPO_ROOT, file),
+					line: lineNumberAt(content, match.index),
+					text: match[0].replace(/\s+/g, " ").trim(),
+				});
+			}
 		}
+	}
+	return violations;
+}
+
+describe("jj rip-out audit", () => {
+	it("A1 — no live source executes jj or offers it as a config option", () => {
+		const violations = findViolations();
 		expect(
 			violations,
-			`Found references that should be gone after Phase 4 rip-out:\n${violations
-				.map((v) => `  ${v.file.replace(SRC_ROOT, "src")}:${v.line} — ${v.text}`)
+			`jj is still live in:\n${violations
+				.map((v) => `  ${v.file}:${v.line} — ${v.text}`)
+				.join("\n")}`,
+		).toEqual([]);
+	});
+
+	it("A2 — the audit does not inspect the preserved historical record", () => {
+		const audited = auditedFiles().map((f) => relative(REPO_ROOT, f));
+
+		// The exemption must be load-bearing, not decorative: this lesson really
+		// does contain jj, and really must not be flagged.
+		const lesson =
+			"apps/indusk-mcp/lessons/community/community-anchor-shell-trigger-patterns-no-substring.md";
+		expect(existsSync(resolve(REPO_ROOT, lesson)), `${lesson} should exist`).toBe(true);
+		expect(readFileSync(resolve(REPO_ROOT, lesson), "utf-8")).toContain("jj describe");
+		expect(audited).not.toContain(lesson);
+
+		// And no audited path may fall inside a preserved-history root.
+		const preservedRoots = [
+			".indusk/planning/",
+			"apps/docs/src/decisions/",
+			"apps/docs/src/lessons/",
+			"apps/indusk-mcp/lessons/",
+		];
+		const leaked = audited.filter((f) => preservedRoots.some((r) => f.startsWith(r)));
+		expect(leaked, `audit reached preserved history: ${leaked.join(", ")}`).toEqual([]);
+	});
+
+	it("A5 — no admin UI copy instructs the reader to run a jj command", () => {
+		const tsxFiles = globSync("apps/indusk-admin/**/*.tsx", {
+			cwd: REPO_ROOT,
+			ignore: ["**/node_modules/**", "**/.next/**", "**/*.test.tsx"],
+			absolute: true,
+		});
+		const offenders: Violation[] = [];
+		for (const file of tsxFiles) {
+			const content = readFileSync(file, "utf-8");
+			const match = /\bjj\b/.exec(content);
+			if (match) {
+				offenders.push({
+					file: relative(REPO_ROOT, file),
+					line: lineNumberAt(content, match.index),
+					text: content.split("\n")[lineNumberAt(content, match.index) - 1].trim(),
+				});
+			}
+		}
+		expect(
+			offenders,
+			`admin UI still names jj:\n${offenders
+				.map((v) => `  ${v.file}:${v.line} — ${v.text}`)
 				.join("\n")}`,
 		).toEqual([]);
 	});
 
 	it("lib/semantic-graph/jj.ts does not exist", () => {
-		const path = resolve(SRC_ROOT, "lib/semantic-graph/jj.ts");
-		expect(() => readFileSync(path, "utf-8")).toThrow();
+		expect(existsSync(resolve(REPO_ROOT, "apps/indusk-mcp/src/lib/semantic-graph/jj.ts"))).toBe(
+			false,
+		);
 	});
 
 	it("lib/scm/detect.ts does not exist", () => {
-		const path = resolve(SRC_ROOT, "lib/scm/detect.ts");
-		expect(() => readFileSync(path, "utf-8")).toThrow();
+		expect(existsSync(resolve(REPO_ROOT, "apps/indusk-mcp/src/lib/scm/detect.ts"))).toBe(false);
 	});
 });
