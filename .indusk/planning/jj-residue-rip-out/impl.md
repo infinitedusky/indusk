@@ -101,22 +101,24 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 
 ### Build Phase 1: Remove the executing jj path
 
-- [ ] Collapse `getCommitMessage` in `apps/indusk-admin/src/lib/vcs.ts` to a single git lookup — delete the jj `execFileSync` branch and its `try`/fall-through
-- [ ] Rewrite the file's doc comment, which currently asserts jj is "the project default in dusk" — false since 1.31.0
-- [ ] Confirm `getCommitMessages` bulk path still deduplicates by id
+- [x] Collapse `getCommitMessage` in `apps/indusk-admin/src/lib/vcs.ts` to a single git lookup — delete the jj `execFileSync` branch and its `try`/fall-through. Blast radius checked first: only `scorecards/page.tsx` imports the module, via `getCommitMessages`, whose signature is unchanged
+- [x] Rewrite the file's doc comment, which currently asserts jj is "the project default in dusk" — false since 1.31.0
+- [x] Confirm `getCommitMessages` bulk path still deduplicates by id — asserted by A4's bulk case (`[sha, sha]` resolves to a map of size 1)
+- [x] **Shape finding** — `apps/indusk-mcp/src/__tests__/scm-rip-out-grep.test.ts`: A5 re-implements the glob → read → match → report loop inline instead of reusing `findViolations`, so the audit file now holds two independent scanners with different globs. *Rule (typescript, intra-unit): should this inline block have been a named function?* — sharpened by this plan's own subject: it exists because an audit's scope silently drifted from the thing it audited, and two scanners are two things that must agree. **Narrowed on execution:** extracting the whole loop was wrong — the two scans differ on globs, ignores, patterns AND reporting, so a 4-parameter shared function called once each is extraction for its own sake, and it degraded A5's message. Extracted only the genuinely shared mechanic, `matchesIn(content, patterns)` (whole-file matching + line numbers); each scan keeps its own glob and report. **Caught during the refactor:** the first version returned the *first* match per file rather than all, which produced byte-identical output today because no file matches two patterns — a silent narrowing that would look correct until it wasn't. Reverted to returning all
+- [x] Shape: considered `apps/indusk-admin/src/lib/vcs.ts` and left it as is — one reason to change, accurate doc comment, exported seam a test already reaches; the swallowing `catch` is deliberate and documented
 
 #### Build Phase 1 Verification
 
-- [ ] A3 and A4 still pass — the removal did not break commit-message display
-- [ ] A1 still fails, now naming only the `scm?: "jj" | "git"` field (`vcs.ts` no longer flagged)
+- [x] A3 and A4 still pass — the removal did not break commit-message display (`4 passed`)
+- [x] A1 still fails, now naming only the `scm?: "jj" | "git"` field (`vcs.ts` no longer flagged) — violation list went 3 → 2, exactly the intermediate-phase behavior the sequencing is for
 
 #### Build Phase 1 Context
 
-- [ ] Check whether any CLAUDE.md entry describes the admin's commit-message lookup as SCM-agnostic or jj-first; correct it if found
+- [x] Check whether any CLAUDE.md entry describes the admin's commit-message lookup as SCM-agnostic or jj-first; correct it if found — checked, none. The admin-ui gotchas block covers `Markdown.tsx`, the registry, daemon identity and the scorecard-to-plan join, but never the commit-message lookup
 
 #### Build Phase 1 Document
 
-- [ ] Check `apps/docs/src/reference/admin-ui/` for any page describing the scorecard commit-message lookup as trying jj first; correct it if found
+- [x] Check `apps/docs/src/reference/admin-ui/` for any page describing the scorecard commit-message lookup as trying jj first; correct it if found — checked all three pages (`overview.md`, `cli.md`, `component-conventions.md`), zero jj references and no description of the lookup
 
 ### Build Phase 2: Remove jj from user-facing copy
 
