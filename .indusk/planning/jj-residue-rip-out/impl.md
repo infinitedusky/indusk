@@ -122,21 +122,23 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 
 ### Build Phase 2: Remove jj from user-facing copy
 
-- [ ] Rewrite the three jj references in `apps/indusk-admin/src/components/Scorecards.tsx` to name `git commit`
-- [ ] Rewrite the empty-state copy in `apps/indusk-admin/src/app/p/[project]/scorecards/page.tsx`
+- [x] Rewrite the three jj references in `apps/indusk-admin/src/components/Scorecards.tsx` to name `git commit`
+- [x] **Discovered work** — `Scorecards.tsx` also threads a **`jjDescription` prop** through `ScorecardCard` (7 sites). The impl scoped this phase as "three copy strings"; the prop is jj residue too, and **A5 cannot see it**: `/\bjj\b/` needs a word boundary and `jjDescription` has none. Renamed to `commitMessage`, which is the name the file was already reaching for (`data-testid="scorecard-commit-message"` predates this). Confined to that one file — `ScorecardCard` is not exported and no test referenced the prop
+- [x] Rewrite the empty-state copy in `apps/indusk-admin/src/app/p/[project]/scorecards/page.tsx`
 
 #### Build Phase 2 Verification
 
-- [ ] A5 passes — no admin UI text names a jj command
-- [ ] Scorecards page renders correctly with the new copy (`pnpm turbo test --filter=indusk-admin`)
+- [x] A5 passes — no admin UI text names a jj command (audit file now `1 failed | 4 passed`; only A1 remains red, on the config shim)
+- [x] Scorecards page renders correctly with the new copy (`pnpm turbo test --filter=indusk-admin`) — `148 passed | 1 failed (149)`. The one failure is `http-project-research.test.ts`, which **passes in isolation** (`5 passed`, 6.70s): it boots a Next server and exceeds vitest's 5s default under full-suite parallel load. Known-red-on-main per the `http-suite-5s-timeout-too-tight-for-server-boot-tests` lesson, and unrelated to this phase's files — confirmed by re-running it alone, not assumed from the lesson
 
 #### Build Phase 2 Context
 
-- [ ] Verify the admin-ui gotchas block in CLAUDE.md does not quote the jj-worded scorecards copy; correct if it does
+- [x] Verify the admin-ui gotchas block in CLAUDE.md does not quote the jj-worded scorecards copy; correct if it does — checked, it does not
+- [x] Shape (Build Phase 2): reviewed `Scorecards.tsx` and `scorecards/page.tsx`, nothing found. The change was a prop rename plus copy strings; `ScorecardCard` stays cohesive and no new inline block wants a name. `rules.unreadable` empty, so this was judged against every enabled extension's full rule set
 
 #### Build Phase 2 Document
 
-- [ ] Check whether any docs page screenshots or quotes the old scorecards copy; update if so
+- [x] Check whether any docs page screenshots or quotes the old scorecards copy; update if so — no page quotes it. **Scope call the plan did not cover:** `apps/docs/src/changelog.md` carries ~10 jj references, but every one is a historical entry describing a change as it was made ("`TRIGGER_RE` narrowed from `/\b(jj describe|git commit)\b/`…"). A changelog is a record of what happened; rewriting those entries would falsify history for no gain, so it joins the preserved set alongside the ADRs. A1 never flags them — it scans `.ts`/`.tsx` only
 
 ### Build Phase 3: Close the back-compat shim and sweep the remainder
 
