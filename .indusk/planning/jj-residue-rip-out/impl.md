@@ -87,17 +87,17 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 
 #### Test Phase 1 Verification
 
-- [ ] A1, A5, A6 observed RED against the pre-removal tree; each failure names its expected violation rather than erroring on a missing import
-- [ ] A2, A3, A4 observed GREEN, consistent with their declaration as guards
-- [ ] A1's failure output lists `vcs.ts` — confirming the widened audit sees the file the predecessor's scope excluded
+- [x] A1, A5, A6 observed RED against the pre-removal tree; each failure names its expected violation rather than erroring on a missing import — `3 failed | 8 passed (11)`, all three failures are `AssertionError`s carrying their violation list
+- [x] A2, A3, A4 observed GREEN, consistent with their declaration as guards
+- [x] A1's failure output lists `vcs.ts` — confirming the widened audit sees the file the predecessor's scope excluded (`apps/indusk-admin/src/lib/vcs.ts:28 — execFileSync( "jj"`)
 
 #### Test Phase 1 Context
 
-- [ ] Record in the plan's notes which paths the audit exempts, so the Build Phase 3 CLAUDE.md edit can state the boundary rather than restate the removal
+- [x] Record in the plan's notes which paths the audit exempts, so the Build Phase 3 CLAUDE.md edit can state the boundary rather than restate the removal — see "The audit's preserved-history boundary" in Notes
 
 #### Test Phase 1 Document
 
-- [ ] Capture A1's red output verbatim into the plan folder as the evidence artifact — the predecessor's failure was an audit no one had ever seen fail, and a claim that this one did needs a record
+- [x] Capture A1's red output verbatim into the plan folder as the evidence artifact — the predecessor's failure was an audit no one had ever seen fail, and a claim that this one did needs a record. See [`a1-red-evidence.md`](./a1-red-evidence.md)
 
 ### Build Phase 1: Remove the executing jj path
 
@@ -190,3 +190,31 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 - Deleting `update-scm-jj-nudge.test.ts` also removes one of four test files leaking orphaned telemetry daemon pairs. Incidental; the other three still need the separate fix.
 - `guide/scm.md` is out of scope as a *jj* edit but gains one factual correction in Build Phase 3 — it currently documents a nudge this plan deletes.
 - The VitePress sidebar config lives at `apps/docs/src/.vitepress/config.ts`; the root-level one is a stale scaffold (per the `vitepress-config-is-under-src-not-docs-root` lesson).
+
+### The audit's preserved-history boundary (Test Phase 1 Context)
+
+The widened audit exempts these paths, and Build Phase 3's CLAUDE.md edit should
+state this boundary rather than restate the removal — the boundary is the part a
+future reader cannot re-derive:
+
+| Exempt path | Why it keeps jj |
+|---|---|
+| `.indusk/planning/**` | The historical archive, including both predecessor plan folders (~60 files) |
+| `apps/docs/src/decisions/**` | `git-or-jj-substrate.md` is the superseded decision record; superseded is a status, not a deletion trigger |
+| `apps/docs/src/lessons/**` | The published lesson counterpart of the same record |
+| `apps/docs/src/guide/scm.md` | Already the git-only page; its jj mentions are an accurate migration note |
+| `apps/indusk-mcp/lessons/**` | Three bundled community lessons ship to every consumer and use jj as their worked example |
+
+A2 asserts this boundary is load-bearing rather than decorative: it checks that a
+lesson which really does contain `jj describe` is really not audited. An audit
+that fires on the decision record gets switched off — the same end state as the
+audit this plan replaces.
+
+### Shape (Test Phase 1)
+
+Shape does not apply to a test phase, by design — `lib/shape/impl-blocks.ts`
+deliberately excludes `### Test Phase N` because "a test phase writes tests, not
+the code Shape reviews." `prepareShapeReview({ phase: 1 })` therefore resolved to
+*Build* Phase 1 and skipped on its not-yet-green verification, which is correct
+behavior reported through a misleading message. Recorded rather than skipped
+silently. Build Phases 1–3 each get a real Shape pass.
