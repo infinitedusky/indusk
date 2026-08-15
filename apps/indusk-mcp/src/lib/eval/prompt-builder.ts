@@ -1,9 +1,10 @@
 /**
  * Builds the evaluator agent's system prompt.
  *
- * The prompt instructs the evaluator to: do catchup, read the transcript, read the
- * diff itself via jj, answer each rubric question, write findings to Graphiti
- * (eval mode only), and output a JSON scorecard.
+ * The prompt instructs the evaluator to: do catchup, read the transcript, read
+ * the diff itself via git, answer each rubric question, materialize durable
+ * highlights into lessons via `add_lesson` (eval mode only), and output a JSON
+ * scorecard.
  *
  * The diff is NOT embedded in the prompt — the evaluator reads it via tool calls.
  * This keeps the prompt small regardless of commit size.

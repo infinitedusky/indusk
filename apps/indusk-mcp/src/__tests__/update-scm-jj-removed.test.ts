@@ -47,8 +47,11 @@ describe.skipIf(SHOULD_SKIP)(
 		}
 
 		beforeEach(() => {
-			projectDir = mkdtempSync(join(tmpdir(), "scm-jj-removed-proj-"));
-			testHome = mkdtempSync(join(tmpdir(), "scm-jj-removed-home-"));
+			// Fixture names must not contain "jj": `update` echoes the project path,
+			// and the assertion below matches /\bjj\b/, so a prefix like
+			// "scm-jj-removed-" makes the test fail on its own scaffolding.
+			projectDir = mkdtempSync(join(tmpdir(), "legacy-scm-proj-"));
+			testHome = mkdtempSync(join(tmpdir(), "legacy-scm-home-"));
 			spawnSync("git", ["init", "-q", "-b", "main"], { cwd: projectDir });
 			spawnSync("git", ["config", "user.email", "test@test.invalid"], { cwd: projectDir });
 			spawnSync("git", ["config", "user.name", "Test"], { cwd: projectDir });
@@ -73,9 +76,17 @@ describe.skipIf(SHOULD_SKIP)(
 
 		it("emits no jj nudge", () => {
 			const res = runUpdate();
+			const output = `${res.stderr}\n${res.stdout}`;
 			expect(res.status, `update failed: ${res.stderr}`).toBe(0);
-			expect(`${res.stderr}\n${res.stdout}`).not.toMatch(/scm field no longer used/);
-			expect(`${res.stderr}\n${res.stdout}`).not.toMatch(/\bjj\b/);
+			expect(output).not.toMatch(/scm field no longer used/);
+
+			// Matches jj used as a *command*, not the bare substring. A plain
+			// /\bjj\b/ here was path-sensitive and failed on this plan's own
+			// worktree name (`dusk-worktrees/jj-residue-rip-out`), which `update`
+			// echoes as the hooks source — a fixture flagging itself rather than
+			// the product. The behavioral claim is "no jj-related instruction",
+			// and a filesystem path cannot contain `jj <subcommand>`.
+			expect(output).not.toMatch(/\bjj\s+(describe|log|new|git|status|diff)\b/);
 		});
 
 		it("succeeds and leaves the legacy field untouched", () => {

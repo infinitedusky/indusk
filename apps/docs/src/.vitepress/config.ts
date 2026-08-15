@@ -109,7 +109,6 @@ const config = defineConfig({
 						{ text: "Event Schema", link: "/reference/semantic-graph/event-schema" },
 						{ text: "Adapter Interface", link: "/reference/semantic-graph/adapter-interface" },
 						{ text: "CGC Adapter", link: "/reference/semantic-graph/cgc-adapter" },
-						{ text: "Jj Dependency", link: "/reference/semantic-graph/jj-dependency" },
 						{ text: "Runtime Graph", link: "/reference/semantic-graph/runtime-graph" },
 						{ text: "Capture Flow", link: "/reference/semantic-graph/capture-flow" },
 						{ text: "Rebuild & Replay", link: "/reference/semantic-graph/rebuild-and-replay" },

@@ -1,7 +1,7 @@
 ---
 title: "jj Residue Rip-Out"
 date: 2026-08-13
-status: in-progress
+status: completed
 workflow: refactor
 trajectory: required
 test_phases: required
@@ -48,12 +48,12 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | A repo-wide audit across `indusk-mcp` and `indusk-admin` finds no code executing jj and no config field offering jj as an option | Test Phase 1 | Build Phase 3 | written |
+| A1 | A repo-wide audit across `indusk-mcp` and `indusk-admin` finds no code executing jj and no config field offering jj as an option | Test Phase 1 | Build Phase 3 | passing |
 | A2 | The audit reports no violation against preserved history — planning archive, superseded decision/lesson pages, `guide/scm.md`, and the bundled community lessons | Test Phase 1 | Test Phase 1 | passing |
 | A3 | With no `jj` on PATH, the scorecards page still displays a commit message for every scorecard that has one | Test Phase 1 | Test Phase 1 | passing |
 | A4 | The commit message displayed for a scorecard matches that commit's actual git message | Test Phase 1 | Test Phase 1 | passing |
-| A5 | No text rendered in the admin UI instructs the reader to run a jj command | Test Phase 1 | Build Phase 2 | written |
-| A6 | A project whose config still contains `scm: "jj"` runs `indusk update` to completion with no error and no jj nudge | Test Phase 1 | Build Phase 3 | written |
+| A5 | No text rendered in the admin UI instructs the reader to run a jj command | Test Phase 1 | Build Phase 2 | passing |
+| A6 | A project whose config still contains `scm: "jj"` runs `indusk update` to completion with no error and no jj nudge | Test Phase 1 | Build Phase 3 | passing |
 
 ## Checklist
 
@@ -142,29 +142,31 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 
 ### Build Phase 3: Close the back-compat shim and sweep the remainder
 
-- [ ] Remove the `scm?: "jj" | "git"` field from `InduskConfig` in `apps/indusk-mcp/src/lib/config.ts`
-- [ ] Remove the `scm: "jj"` nudge from `apps/indusk-mcp/src/bin/commands/update.ts`
-- [ ] Delete `apps/indusk-mcp/src/__tests__/update-scm-jj-nudge.test.ts`
-- [ ] Remove the `".jj/"` ignore entry and the stale `git-or-jj-substrate` comment from `apps/indusk-mcp/src/bin/commands/init.ts`
-- [ ] Rewrite the stale doc comments in `apps/indusk-mcp/src/lib/eval/findings.ts` and `lib/eval/prompt-builder.ts` — the latter also describes writing findings to Graphiti, removed in the makeover
-- [ ] Delete `apps/docs/src/reference/semantic-graph/jj-dependency.md` and remove its sidebar entry from `apps/docs/src/.vitepress/config.ts`
+- [x] Remove the `scm?: "jj" | "git"` field from `InduskConfig` in `apps/indusk-mcp/src/lib/config.ts`
+- [x] Remove the `scm: "jj"` nudge from `apps/indusk-mcp/src/bin/commands/update.ts` — the whole `[SCM]` section goes. The `readConfig`/`writeConfig`/`ensureCleanupConfig`/`getCleanupConfig` import that lived inside that block is **kept**: four later migration steps depend on it, so deleting the block wholesale would have broken them
+- [x] Delete `apps/indusk-mcp/src/__tests__/update-scm-jj-nudge.test.ts`
+- [x] Remove the `".jj/"` ignore entry and the stale `git-or-jj-substrate` comment from `apps/indusk-mcp/src/bin/commands/init.ts`
+- [x] Rewrite the stale doc comments in `apps/indusk-mcp/src/lib/eval/findings.ts` and `lib/eval/prompt-builder.ts` — the latter also describes writing findings to Graphiti, removed in the makeover
+- [x] Delete `apps/docs/src/reference/semantic-graph/jj-dependency.md` and remove its sidebar entry from `apps/docs/src/.vitepress/config.ts`
+- [x] **Bookkeeping correction** — the gate refused this phase because A5 was still `written` after Build Phase 2 closed, though it had been passing since then. Exactly the `update-trajectory-state-column-when-checking-off-verification` lesson: checking off a Verification item does not move the State column, and the table silently lags the checklist unless both happen in one edit. Caught by the hook, not by me
 
 #### Build Phase 3 Verification
 
-- [ ] A1 passes — the audit is green across both apps
-- [ ] A6 passes — `indusk update` on a `scm: "jj"` config completes silently
-- [ ] A2 still passes — no preserved-history path became a violation
-- [ ] Full suite green (`pnpm test`) and `pnpm check` clean
-- [ ] Docs site builds with the deleted page removed from the sidebar (`pnpm turbo build --filter=docs`)
+- [x] A1 passes — the audit is green across both apps
+- [x] A6 passes — `indusk update` on a `scm: "jj"` config completes silently. Two fixture faults found and fixed on the way: the temp dirs were named `scm-jj-*` and `update` echoes the project path, so `/\bjj\b/` flagged the test's own scaffolding; and the same assertion then matched **this plan's worktree name** (`dusk-worktrees/jj-residue-rip-out`, printed as the hooks source). Narrowed to `/\bjj\s+(describe|log|new|git|status|diff)\b/` — jj as a *command*, which is what A6 actually claims and which no filesystem path can contain
+- [x] A2 still passes — no preserved-history path became a violation
+- [x] Full suite and `pnpm check` — **neither is clean, and none of it is this plan's.** Attributed causally, not by inference: `indusk ui`'s code (`bin/commands/ui.ts`, `lib/admin/daemon.ts`) is not in this plan's diff at all, so it cannot break those tests. Detail: `indusk-mcp` `992 passed | 9 failed`, every failure an `indusk ui` daemon-lifecycle test failing because a **machine-global admin daemon has been running since Aug 12 18:33** (PID 98095, port 3939), predating this session; the same three files pass 12/12 on unmodified `main`. `indusk-admin` `148 passed | 1 failed` — `http-project-research.test.ts`, which passes in isolation (the 5s-timeout lesson). `pnpm check` errors are all pre-existing at baseline `0350930a` (verified per-file: the vitepress duplicate keys and init.ts's unused `noIndex` are both untouched by this diff)
+- [x] Docs site builds with the deleted page removed from the sidebar — `pnpm turbo build --filter=@infinitedusky/docs`, build complete in 31.25s (note: the package is `@infinitedusky/docs`, not `docs` as the impl guessed)
 
 #### Build Phase 3 Context
 
-- [ ] Update CLAUDE.md's git-only-substrate Key Decisions line so it states what is now true, and name the preserved-history boundary the audit enforces
+- [x] Update CLAUDE.md's git-only-substrate Key Decisions line so it states what is now true, and name the preserved-history boundary the audit enforces (41,247 → ~41,800 bytes, well inside the 61,440 budget)
+- [x] Shape (Build Phase 3): reviewed all 7 changed files, nothing found. The phase was deletions and comment rewrites — no new structure to judge. `rules.unreadable` empty
 
 #### Build Phase 3 Document
 
-- [ ] Changelog entry for the removal, including the `scm` config field deprecation close
-- [ ] Update `apps/docs/src/guide/scm.md`'s note that `indusk update` nudges about `scm: "jj"` — that nudge no longer exists
+- [x] Changelog entry for the removal, including the `scm` config field deprecation close — filed under a new `### Removed` heading in `[Unreleased]`
+- [x] Update `apps/docs/src/guide/scm.md`'s note that `indusk update` nudges about `scm: "jj"` — that nudge no longer exists. **Two** places said it, not one (lines 3 and 63); both now say the field is inert, and line 63 records that the nudge existed through 1.35.x so a reader on an older version isn't confused by its absence
 
 ## Files Affected
 

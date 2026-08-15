@@ -99,7 +99,6 @@ function createCgcIgnore(projectRoot: string): void {
 			"dist/",
 			"build/",
 			".git/",
-			".jj/",
 			".indusk/",
 			".claude/",
 			"*.png",
@@ -938,9 +937,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	// from the package source via globSync rather than maintaining a hardcoded
 	// list — matches the pattern in `update.ts:240` so any new hook the
 	// package ships gets installed on next `init` without code changes.
-	// Pre-Phase-6 (git-or-jj-substrate) the array was hardcoded and missed
-	// `eval-trigger.js`; settings.json registered it but the file was never
-	// copied, so the eval hook silently never fired on fresh-init projects.
+	// The array was once hardcoded and missed `eval-trigger.js`; settings.json
+	// registered it but the file was never copied, so the eval hook silently
+	// never fired on fresh-init projects.
 	console.info("\n[Hooks]");
 	const hooksSource = join(packageRoot, "hooks");
 	const hooksTarget = join(projectRoot, ".claude/hooks");

@@ -90,7 +90,7 @@ dusk/
 - `rationale_baseline` frontmatter for refactor-baseline plans — see `/lessons/rationale-baseline-frontmatter`
 - Doppler extension as the default env layer (replacing composable.env); worktree env auto-provisioning from one service token — see `.indusk/planning/doppler-extension/adr.md`
 - Multi-agent coordination: per-agent sections in one current.md + `update_current_section` MCP write surface + worktrees per agent — see `/decisions/multi-agent-coordination`
-- Git-only substrate (1.31.0): jj ripped out entirely; parity via deletion; content-keyed dedup handles rebase — see `/decisions/git-only-substrate` (supersedes `/decisions/git-or-jj-substrate`)
+- Git-only substrate (1.31.0; residue swept 2026-08-14): jj ripped out; parity via deletion; content-keyed dedup handles rebase. The `scm` config field + `update` nudge are gone (deprecation closed at 1.36.0). `scm-rip-out-grep.test.ts` scans **both apps**, matches jj at **argv level against whole-file content**, and **exempts the record** (`.indusk/planning/**`, `/decisions/**`, `/lessons/**`, `guide/scm.md`, `indusk-mcp/lessons/**`) — an audit that fires on the archive gets switched off — see `/decisions/git-only-substrate` (supersedes `/decisions/git-or-jj-substrate`)
 - Worktree visibility: worktree-per-plan default + live worktree/branch columns + collision flag; kickoff is a nudge, not a gate — see `/decisions/worktree-visibility`
 - Workbench setup one-shot (`indusk setup`) — see `.indusk/planning/archive/workbench-setup-command/`
 - Dawn hook parity: invariants + eval rail in the thin lane — loop-owned per-item commits, pending-eval queue with external drain, headless `ask`=pause (ask default both lanes), gate-reminder shed — see `/decisions/dawn-hook-parity`
