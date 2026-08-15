@@ -54,6 +54,11 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 | A4 | The commit message displayed for a scorecard matches that commit's actual git message | Test Phase 1 | Test Phase 1 | passing |
 | A5 | No text rendered in the admin UI instructs the reader to run a jj command | Test Phase 1 | Build Phase 2 | passing |
 | A6 | A project whose config still contains `scm: "jj"` runs `indusk update` to completion with no error and no jj nudge | Test Phase 1 | Build Phase 3 | passing |
+| A7 | Every slash command the getting-started guide advertises resolves to a skill file that exists | Phase 0 | Build Phase 4 | planned |
+| A8 | The jj audit inspects the hooks (`.js`), skills (`.md`) and extension manifests (`.json`) that ship to consumers — not only `.ts`/`.tsx` | Phase 0 | Build Phase 4 | planned |
+| A9 | The admin copy audit inspects every file that produces user-facing text, including `.ts` generators, not only `.tsx` | Phase 0 | Build Phase 4 | planned |
+| A10 | The audit finds a violation in every file it scans, independent of a pattern's regex flags | Phase 0 | Build Phase 4 | planned |
+| A11 | With the audit widened to prose, the preserved record stays unflagged — changelog, strategy, dawn, and the semantic-graph reference | Phase 0 | Build Phase 4 | planned |
 
 ## Checklist
 
@@ -167,6 +172,34 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 
 - [x] Changelog entry for the removal, including the `scm` config field deprecation close — filed under a new `### Removed` heading in `[Unreleased]`
 - [x] Update `apps/docs/src/guide/scm.md`'s note that `indusk update` nudges about `scm: "jj"` — that nudge no longer exists. **Two** places said it, not one (lines 3 and 63); both now say the field is inert, and line 63 records that the nudge existed through 1.35.x so a reader on an older version isn't confused by its absence
+
+### Build Phase 4: Falsification — the audit's file-type scope, and the `/jj` skill it could not see
+
+**Goal**: the plan corrected the predecessor audit on two axes — path scope and pattern scope — and left a third open. `SCAN` covers `.ts` and `.tsx` in two apps, so the audit cannot see the **hooks (`.js`), skills (`.md`) and extension manifests (`.json`) that ship to every consumer**, nor any prose. That is not hypothetical: `apps/docs/src/guide/getting-started.md:68` advertises **`/jj`** in its list of available skills, and `apps/indusk-mcp/skills/jj.md` was deleted in 1.31.0. The first page a new user reads names a slash command that does not exist, the plan shipped without noticing, and the new guard is structurally incapable of noticing either. A7 is the missed residue; A8 is why it survived.
+
+- [ ] Fix `apps/docs/src/guide/getting-started.md:68` — remove `/jj`, and correct the rest of the list against the skills that actually exist (it also omits `/falsify`, `/cleanup`, `/git`, `/highlight`, `/rail-check`)
+- [ ] Widen `SCAN` in `scm-rip-out-grep.test.ts` to the consumer-shipped surfaces: `apps/indusk-mcp/hooks/**/*.js`, `apps/indusk-mcp/skills/**/*.md`, `apps/indusk-mcp/extensions/**/*.json`, and `apps/docs/src/**/*.md`
+- [ ] Give prose its own pattern set — jj as an **instruction**, not the bare token. `/\bjj\s+(describe|log|new|git|status|diff)\b/` plus the slash-command form `/`\/jj`/`. A bare `/\bjj\b/` flags legitimate cross-references: `guide/context-budget.md:36` links to `/lessons/git-or-jj-substrate`, and `-jj-` has word boundaries on both sides
+- [ ] Extend `PRESERVED_HISTORY` with the record the widened scope newly reaches: `apps/docs/src/changelog.md`, `apps/docs/src/strategy/**`, `apps/docs/src/dawn/**`, `apps/docs/src/reference/semantic-graph/**`. The changelog decision was made in Build Phase 2 and recorded only in prose — it was never encoded, because nothing scanned `.md`
+- [ ] Widen A5's file set to admin files that produce user-facing text but are not `.tsx` — `src/lib/markdown-export.ts` generates markdown a user reads
+- [ ] Make the matcher flag-safe: `matchesIn` calls `pattern.exec(content)` on module-level regexes reused across every file, so a pattern carrying `/g` would advance `lastIndex` between files and skip matches. Reset `lastIndex` (or use `matchAll`) and export `matchesIn` so A10 can exercise it directly
+
+#### Build Phase 4 Verification
+
+- [ ] A7 passes — no advertised slash command lacks a skill file (red today on `/jj`)
+- [ ] A8 passes — the audited file set includes hooks, skills and extension manifests (red today; the set is `.ts`/`.tsx` only)
+- [ ] A9 passes — the admin copy audit reaches `.ts` text producers (red today)
+- [ ] A10 passes — a `/g`-flagged pattern still finds a violation in every scanned file (red today: `exec` on a shared global regex skips every other file)
+- [ ] A11 passes — guard, in the same relationship to A8 that A2 has to A1: it is trivially true while nothing scans prose, and becomes load-bearing the moment A8's fix lands. Its job is to stop the widened audit from firing on the decision record, which is how the *predecessor* audit would have ended up switched off
+
+#### Build Phase 4 Context
+
+- [ ] Amend the CLAUDE.md git-only-substrate line: the audit's scope is now file-type-explicit (hooks/skills/manifests/prose, not just `.ts`/`.tsx`), and prose is matched on jj-as-instruction rather than the bare token
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/guide/getting-started.md` is itself the fix — verify the corrected skill list against `get_skill_summaries` rather than against memory
+- [ ] Changelog: append to the `Removed` entry that the sweep missed a user-facing `/jj` advertisement, and that the audit's file-type scope was the reason
 
 ## Files Affected
 
