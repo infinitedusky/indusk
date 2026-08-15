@@ -9,8 +9,7 @@ import { dirname, join, resolve } from "node:path";
  * Used by the `git-only-substrate` plan's Phase 1 trajectory tests
  * (T1, T3, T4) and Phase 5 (T10). Hands callers a sandboxed git project
  * + a sandboxed INDUSK_HOME + a CLI runner that points at the built
- * dist/bin/cli.js with all the env knobs set (PATH stripped of jj so
- * scm detection produces a clean git result, INDUSK_SKIP_SELF_UPDATE=1
+ * dist/bin/cli.js with all the env knobs set (INDUSK_SKIP_SELF_UPDATE=1
  * so offline test runs don't reach npm, INDUSK_BIN pointed at the same
  * CLI so any in-process `indusk ...` hook substitutions stay self-
  * consistent).
@@ -35,23 +34,6 @@ export interface CliResult {
 	code: number;
 	stdout: string;
 	stderr: string;
-}
-
-/**
- * PATH without the jj binary's directory. Used so SCM detection on
- * the test's git-only project doesn't accidentally find a real jj
- * binary that would shift detection to "jj". Defensive: in Phase 4
- * the SCM abstraction goes away entirely and this stops mattering;
- * for Phases 1-3 it's load-bearing.
- */
-export function pathWithoutJj(): string {
-	const which = spawnSync("which", ["jj"], { encoding: "utf-8" });
-	if (which.status !== 0) return process.env.PATH ?? "";
-	const jjDir = dirname(which.stdout.trim());
-	return (process.env.PATH ?? "")
-		.split(":")
-		.filter((p) => p !== jjDir)
-		.join(":");
 }
 
 /**
@@ -82,7 +64,6 @@ export function cleanupGitTmpProject(p: GitTmpProject): void {
 
 /**
  * Run the built indusk CLI against the project. Pre-configured env:
- *  - PATH stripped of jj
  *  - INDUSK_HOME pointed at testHome
  *  - INDUSK_BIN pointed at the same CLI for in-process `indusk ...` rewrites
  *  - INDUSK_SKIP_SELF_UPDATE=1 so offline test runs don't hit npm
@@ -96,7 +77,6 @@ export function runCli(
 		cwd: p.projectDir,
 		env: {
 			...process.env,
-			PATH: pathWithoutJj(),
 			INDUSK_HOME: p.testHome,
 			INDUSK_BIN: `node ${CLI_BIN}`,
 			INDUSK_SKIP_SELF_UPDATE: "1",

@@ -1,7 +1,7 @@
 ---
 title: "jj Residue Rip-Out"
 date: 2026-08-13
-status: in-progress
+status: completed
 workflow: refactor
 trajectory: required
 test_phases: required
@@ -59,7 +59,7 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 | A9 | The admin copy audit inspects every file that produces user-facing text, including `.ts` generators, not only `.tsx` | Phase 0 | Build Phase 4 | passing |
 | A10 | The audit finds a violation in every file it scans, independent of a pattern's regex flags | Phase 0 | Build Phase 4 | passing |
 | A11 | With the audit widened to prose, the preserved record stays unflagged — changelog, strategy, dawn, and the semantic-graph reference | Phase 0 | Build Phase 4 | passing |
-| A12 | A jj-absent PATH still resolves git when both binaries live in the same directory | Phase 0 | Build Phase 5 | planned |
+| A12 | A jj-absent PATH still resolves git when both binaries live in the same directory | Build Phase 5 | Build Phase 5 | passing |
 
 ## Checklist
 
@@ -211,25 +211,34 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 
 The enabled domain extensions here are **typescript** and **testing** — no react/nextjs, so the idiom is *extract a function or module*, not *split a component*.
 
-- [ ] Extract the robust jj-absent PATH construction from `apps/indusk-admin/src/lib/vcs.test.ts` into a named helper, and have the test use it. The inline form builds a directory containing only a `git` symlink and points `PATH` at it
-- [ ] Delete `pathWithoutJj()` from `apps/indusk-mcp/src/__tests__/helpers/git-tmp-project.ts`. It strips **jj's directory** from `PATH`, so it also removes git whenever the two share one — and Homebrew installs both into `/opt/homebrew/bin` by default. It passes here only because this machine has git at `/usr/bin/git`. Its doc comment also states "in Phase 4 the SCM abstraction goes away entirely and this stops mattering; for Phases 1-3 it's load-bearing" — Phase 4 shipped in 1.31.0, so the stated rationale is now false while the function is load-bearing for a different reason (A3 needs jj genuinely absent)
-- [ ] (reviewed the **REPO_ROOT triplication** across this plan's three new test files — left as-is: **39 test files in `apps/indusk-mcp/src` already define their own `REPO_ROOT = resolve(__dirname, …)`**. Three more are house style; consolidating only this plan's copies would make them the inconsistent ones, and a repo-wide consolidation is its own plan)
-- [ ] (reviewed the **four files the oversized scan flagged** — left as-is: `init.ts` 1234/400, `update.ts` 773/400 and `config.ts` 424/400 are all pre-existing and were *shrunk* by this plan; decomposing a 1234-line init command is a refactor plan of its own, not a jj rip-out's job. `changelog.md` 459/400 is a changelog — length is the point)
-- [ ] (reviewed **`update-scm-jj-removed.test.ts` hand-rolling `CLI_BIN`/`SHOULD_SKIP`/temp-project/temp-home against `helpers/git-tmp-project.ts`** — left as-is: that helper was added 2026-06-27 and has had **zero importers since the day it was written**, while **30 test files hand-roll the same CLI spawning**. Adopting a dead abstraction for one caller is not consolidation, and migrating 30 files is a repo-level decision that has nothing to do with jj. Recorded so the next reader knows the helper is dead rather than merely unused-by-me)
+- [x] **Constraint the ritual missed, recorded before acting on it.** `/cleanup` framed this as "consolidate two implementations into one," but `vcs.test.ts` lives in **`apps/indusk-admin`** and `pathWithoutJj()` lives in **`apps/indusk-mcp/src/__tests__/helpers/`**. indusk-admin importing indusk-mcp's *test internals* across an app boundary is worse than the duplication it would remove. So consolidation resolves by **deletion**, not by sharing: the dead+fragile copy goes, the correct one stays where its only consumer lives. Same end state — one implementation — reached the other way
+- [x] **A12's `Writable at` corrected from Phase 0 to Build Phase 5.** Its subject is the helper this phase creates; authoring it at Phase 0 would fail on module resolution, which is an absent test wearing a failure's clothes rather than a red one. `Asserts` text and `Passes at` are unchanged — this is an authoring correction, not a moved goalpost
+- [x] Extract the jj-absent PATH construction into `apps/indusk-admin/src/lib/git-only-path.ts`, carrying over the existing strip-jj's-directory algorithm first so A12 went genuinely red against it
+- [x] Fix `gitOnlyPath()` to the robust form — an **allow-list** (populate a caller-owned dir with a `git` symlink) rather than a subtraction from ambient PATH, resolving git through an absolute `/bin/sh` and **throwing** rather than degrading if git is not found
+- [x] **The red exposed a worse defect than the one predicted.** `/cleanup` claimed `pathWithoutJj()` fails when git and jj share a directory. The real failure is broader: it locates jj by spawning bare `which`, so once a caller has already narrowed PATH, `which` itself is unresolvable, the lookup fails, and the function returns **PATH unchanged** — leaving jj fully reachable while reporting success. A3's precondition would be silently false and every assertion downstream would still pass. `git still resolves` passed while `jj does not resolve` failed, which is exactly the wrong half to be green
+- [x] **Discovered — the same defect was in A3's own guard.** `vcs.test.ts` asserted jj's absence with `execFileSync("sh", …)` under the narrowed PATH, where `sh` is not resolvable; `.toThrow()` therefore passed on the ENOENT spawn failure and would have passed *whether or not jj was reachable*. Replaced with an absolute `/bin/sh` and an explicit `env`. It still passes, so jj genuinely is absent — but it was proving nothing before
+- [x] **Also caught while verifying:** the `turbo typecheck` step this plan ran in Build Phase 3 does not exist as a task (`Could not find task 'typecheck' in project`) — it had been silently doing nothing. Typechecking is real but arrives via `build`, which is literally `tsc`; both apps build clean after this phase
+- [x] Delete `pathWithoutJj()` from `apps/indusk-mcp/src/__tests__/helpers/git-tmp-project.ts`, drop its use inside `runCli`, and correct the two doc comments advertising "PATH stripped of jj". Safe: zero importers repo-wide, and the SCM detection it defended against was deleted in 1.31.0
+- [x] **Shape finding** — `git-only-path.test.ts` and `vcs.test.ts` both resolved `REAL_GIT` with bare `execFileSync("sh", …)` at module load, while the same files carry comments teaching that a probe must use an absolute `/bin/sh` because a bare one dies with ENOENT under a narrowed PATH. Correct today (module load runs before any PATH mutation) and wrong as an example: the next person to move that line into a `beforeEach` reintroduces the exact defect this phase just fixed twice. *Rule (typescript, intra-unit): a unit should not demonstrate the opposite of what it documents.* Both now use `/bin/sh`; 6 tests still green
+- [x] Shape (Build Phase 5): also reviewed `git-only-path.ts` (one exported function, one job, seam a test reaches, doc comment carrying both failure modes it fixes) and the now-shorter `git-tmp-project.ts` — nothing further. That the whole helper is now unused is inter-file and already recorded above as a leave-as-is; not re-litigated here
+- [x] (superseded by the item above — the deletion landed together with `runCli`'s use of it and the two doc comments that advertised the stripping, since removing the function alone would have left `runCli` referencing a symbol that no longer exists)
+- [x] (reviewed the **REPO_ROOT triplication** across this plan's three new test files — left as-is: **39 test files in `apps/indusk-mcp/src` already define their own `REPO_ROOT = resolve(__dirname, …)`**. Three more are house style; consolidating only this plan's copies would make them the inconsistent ones, and a repo-wide consolidation is its own plan)
+- [x] (reviewed the **four files the oversized scan flagged** — left as-is: `init.ts` 1234/400, `update.ts` 773/400 and `config.ts` 424/400 are all pre-existing and were *shrunk* by this plan; decomposing a 1234-line init command is a refactor plan of its own, not a jj rip-out's job. `changelog.md` 459/400 is a changelog — length is the point)
+- [x] (reviewed **`update-scm-jj-removed.test.ts` hand-rolling `CLI_BIN`/`SHOULD_SKIP`/temp-project/temp-home against `helpers/git-tmp-project.ts`** — left as-is: that helper has **zero importers today**, while **30 test files hand-roll the same CLI spawning**. Adopting an unused abstraction for one caller is not consolidation, and migrating 30 files is a repo-level decision that has nothing to do with jj. **Correction to what `/cleanup` recorded:** I wrote that it had "zero importers since the day it was written." That is wrong — `git grep` at its adding commit `a2b61935` shows one importer, `git-tmp-project-graph-sync.test.ts`, which the makeover deleted along with the rest of the semantic-graph test surface. The helper was **orphaned**, not unadopted. The leave-as-is conclusion is unchanged, but the characterisation matters: an abstraction whose domain was removed is a different thing from one nobody wanted)
 
 #### Build Phase 5 Verification
 
-- [ ] A12 passes — the extracted helper resolves git from a PATH where git and jj share a directory (the case `pathWithoutJj()` fails). Red before the extraction: no such helper exists
-- [ ] A3 and A4 still pass — behavior parity for the tests that consume the PATH construction
-- [ ] A1 still passes — deleting `pathWithoutJj()` removes a `jj` reference from a file the audit exempts (`**/__tests__/**`), so the audit's result must not move
+- [x] A12 passes — the extracted helper resolves git from a PATH where git and jj share a directory. Genuinely red first against the carried-over algorithm, and the red was itself corrected once: the initial probe spawned bare `sh` under the narrowed PATH and died with `spawnSync sh ENOENT`, so both assertions "failed" without ever running
+- [x] A3 and A4 still pass — behavior parity for the tests that consume the PATH construction (`16 passed` across the four affected files)
+- [x] A1 still passes — deleting `pathWithoutJj()` removes a `jj` reference from a file the audit exempts (`**/__tests__/**`), so the audit's result did not move
 
 #### Build Phase 5 Context
 
-- [ ] Check whether any CLAUDE.md entry describes `pathWithoutJj` or the `git-tmp-project` helper as the way tests reach a jj-free environment; correct it if so. CLAUDE.md already carries a convention for exactly this shape — "two lanes that must agree are single-definition on purpose, pinned by a test asserting one definition exists" — so if the consolidated helper warrants a line, it belongs with that group rather than as a new entry
+- [x] Check whether any CLAUDE.md entry describes `pathWithoutJj` or the `git-tmp-project` helper as the way tests reach a jj-free environment; correct it if so — checked, none. No CLAUDE.md line warranted either: `gitOnlyPath` has exactly one consumer in one app, so it is not the "two lanes that must agree" shape that group exists for
 
 #### Build Phase 5 Document
 
-- [ ] Check `apps/docs/src/` for any page referencing `pathWithoutJj`, the `git-tmp-project` helper, or "PATH stripped of jj" as documented test infrastructure; correct or remove if found
+- [x] Check `apps/docs/src/` for any page referencing `pathWithoutJj`, the `git-tmp-project` helper, or "PATH stripped of jj" as documented test infrastructure; correct or remove if found — one hit, `changelog.md:190`, naming `git-tmp-project-graph-sync.test.ts`. Left alone: it is a historical entry describing what a release did, not documentation of live test infrastructure. Both tests it names were later deleted by the makeover, which does not make the entry false — a changelog describes the past
 
 ## Files Affected
 

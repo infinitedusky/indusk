@@ -1,14 +1,9 @@
-import { execFileSync } from "node:child_process";
-import {
-  mkdirSync,
-  mkdtempSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { gitOnlyPath } from "./git-only-path";
 import { getCommitMessage, getCommitMessages } from "./vcs";
 
 /**
@@ -27,7 +22,7 @@ import { getCommitMessage, getCommitMessages } from "./vcs";
  */
 
 /** Resolved before any PATH manipulation, so setup never depends on the stub PATH. */
-const REAL_GIT = execFileSync("sh", ["-c", "command -v git"], {
+const REAL_GIT = execFileSync("/bin/sh", ["-c", "command -v git"], {
   encoding: "utf-8",
 }).trim();
 
@@ -36,6 +31,7 @@ const MESSAGE = "feat(vcs): a distinctive subject line for A4 to match";
 describe("commit-message lookup", { timeout: 30000 }, () => {
   let repo: string;
   let gitOnlyBin: string;
+  let gitPath: string;
   let sha: string;
   let originalPath: string | undefined;
 
@@ -58,8 +54,7 @@ describe("commit-message lookup", { timeout: 30000 }, () => {
 
     // A PATH with git and nothing else — jj cannot be found from here.
     gitOnlyBin = mkdtempSync(join(tmpdir(), "vcs-bin-"));
-    mkdirSync(join(gitOnlyBin, "bin"), { recursive: true });
-    symlinkSync(REAL_GIT, join(gitOnlyBin, "bin", "git"));
+    gitPath = gitOnlyPath(join(gitOnlyBin, "bin"));
 
     originalPath = process.env.PATH;
   });
@@ -71,30 +66,37 @@ describe("commit-message lookup", { timeout: 30000 }, () => {
   });
 
   it("A3 — displays a commit message when jj is not installed", () => {
-    process.env.PATH = join(gitOnlyBin, "bin");
+    process.env.PATH = gitPath;
 
     // Guard the guard: if jj were still reachable, A3 would prove nothing.
-    expect(() =>
-      execFileSync("sh", ["-c", "command -v jj"], { encoding: "utf-8" }),
-    ).toThrow();
+    // Absolute /bin/sh with an explicit env — spawning bare `sh` here dies with
+    // ENOENT (the narrowed PATH holds only git), and `.toThrow()` would then
+    // pass on the spawn failure whether or not jj was reachable.
+    const jjLookup = spawnSync("/bin/sh", ["-c", "command -v jj"], {
+      env: { ...process.env, PATH: gitPath },
+    });
+    expect(
+      jjLookup.status,
+      "jj must be unreachable, or A3 proves nothing",
+    ).not.toBe(0);
 
     expect(getCommitMessage(repo, sha)).not.toBeNull();
   });
 
   it("A4 — the displayed message is the commit's actual git message", () => {
-    process.env.PATH = join(gitOnlyBin, "bin");
+    process.env.PATH = gitPath;
     expect(getCommitMessage(repo, sha)).toBe(MESSAGE);
   });
 
   it("A4 — bulk lookup resolves each id once and keys by id", () => {
-    process.env.PATH = join(gitOnlyBin, "bin");
+    process.env.PATH = gitPath;
     const out = getCommitMessages(repo, [sha, sha]);
     expect(out.size).toBe(1);
     expect(out.get(sha)).toBe(MESSAGE);
   });
 
   it("returns null for an id no vcs resolves", () => {
-    process.env.PATH = join(gitOnlyBin, "bin");
+    process.env.PATH = gitPath;
     expect(
       getCommitMessage(repo, "deadbeefdeadbeefdeadbeefdeadbeef"),
     ).toBeNull();
