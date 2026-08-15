@@ -65,7 +65,7 @@ See [Local Mode](./local-mode) for details on using InDusk without touching comm
 ### 4. Start coding
 
 Open the project in Claude Code. You should see:
-- Skills available (`/planner`, `/work`, `/verify`, `/context`, `/document`, `/retrospective`, `/catchup`, `/handoff`, `/jj`)
+- Skills available — the plan lifecycle (`/planner`, `/work`, `/verify`, `/context`, `/document`, `/falsify`, `/cleanup`, `/retrospective`), and the session and workflow skills (`/catchup`, `/handoff`, `/git`, `/highlight`, `/research`, `/rail-check`, `/compact-context`)
 - **InDusk MCP tools** — lessons, plans, context, extensions, code graph
 - **CodeGraphContext MCP tools** — structural code intelligence (`graph_find`, `query_dependencies`, `find_dead_code`, …)
 - **Graphiti MCP tools** (≥ v1.10.0) — temporal knowledge graph (`add_memory`, `search_nodes`, `search_memory_facts`, …). See [Graphiti reference](/reference/tools/graphiti). Episodes are written automatically by the planner/work/retrospective skills at trigger points; recall happens at the start of every `/catchup`.

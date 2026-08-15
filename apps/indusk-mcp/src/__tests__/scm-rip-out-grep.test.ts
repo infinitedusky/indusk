@@ -4,7 +4,7 @@ import { globSync } from "glob";
 import { describe, expect, it } from "vitest";
 
 /**
- * A1 / A2 / A5 (jj-residue-rip-out) — the jj rip-out audit.
+ * A1 / A2 / A5 / A8–A11 (jj-residue-rip-out) — the jj rip-out audit.
  *
  * This replaces the `git-only-substrate` Phase 4 audit, which was green for
  * seven weeks while `apps/indusk-admin/src/lib/vcs.ts` shelled out to jj on
@@ -46,10 +46,40 @@ const PRESERVED_HISTORY = [
 	"apps/docs/src/lessons/**",
 	"apps/docs/src/guide/scm.md",
 	"apps/indusk-mcp/lessons/**",
+	// Reached only once prose came into scope. The changelog records changes as
+	// they were made; strategy and dawn record analysis at a point in time; the
+	// semantic-graph reference documents a subsystem the makeover removed and is
+	// a separate plan's problem. Rewriting any of them would falsify a record.
+	"apps/docs/src/changelog.md",
+	"apps/docs/src/strategy/**",
+	"apps/docs/src/dawn/**",
+	"apps/docs/src/reference/semantic-graph/**",
 ];
 
-/** Live source across BOTH apps — the scope the predecessor was missing. */
-const SCAN = ["apps/indusk-mcp/**/*.ts", "apps/indusk-admin/**/*.ts", "apps/indusk-admin/**/*.tsx"];
+/**
+ * Code surfaces — jj as an executed command or a configured option.
+ *
+ * Hooks are `.js` and extension manifests are `.json`; both are copied into
+ * every consumer's project, and neither is TypeScript. Scanning only `.ts`/
+ * `.tsx` was this audit's own blind spot, found by falsification: it is the
+ * same failure as the predecessor's (scope narrower than the codebase), in a
+ * third dimension after path and pattern.
+ */
+const CODE_SCAN = [
+	"apps/indusk-mcp/**/*.ts",
+	"apps/indusk-admin/**/*.ts",
+	"apps/indusk-admin/**/*.tsx",
+	"apps/indusk-mcp/hooks/**/*.js",
+	"apps/indusk-mcp/extensions/**/*.json",
+];
+
+/**
+ * Prose surfaces — skills instruct agents which commands to run, guides
+ * instruct users. A dead instruction here is as live a defect as dead code:
+ * `getting-started.md` advertised `/jj` for seven weeks after the skill file
+ * was deleted, and nothing could see it.
+ */
+const PROSE_SCAN = ["apps/indusk-mcp/skills/**/*.md", "apps/docs/src/**/*.md"];
 
 const IGNORE = [
 	"**/node_modules/**",
@@ -82,13 +112,36 @@ const FORBIDDEN_PATTERNS = [
 	/\bgetJjReachable\b/,
 ];
 
-/** Files the audit actually inspects. Exported shape so A2 and A8 can assert on it. */
+/**
+ * jj as an *instruction* — the only shape that means residue in prose.
+ *
+ * A bare `/\bjj\b/` cannot be used here: `guide/context-budget.md` links to
+ * `/lessons/git-or-jj-substrate`, and `-jj-` has word boundaries on both sides,
+ * so the bare token flags a legitimate cross-reference to a page this plan
+ * deliberately preserved. Same A1-vs-A2 tension as the code scan, one level up.
+ */
+const PROSE_PATTERNS = [/\bjj\s+(describe|log|new|git|status|diff|init)\b/, /`\/jj`/];
+
+function codeFiles(): string[] {
+	return globSync(CODE_SCAN, { cwd: REPO_ROOT, ignore: IGNORE, absolute: true });
+}
+
+function proseFiles(): string[] {
+	return globSync(PROSE_SCAN, { cwd: REPO_ROOT, ignore: IGNORE, absolute: true });
+}
+
+/** Everything the audit inspects. A2, A8 and A11 assert on this set. */
 function auditedFiles(): string[] {
-	return globSync(SCAN, { cwd: REPO_ROOT, ignore: IGNORE, absolute: true });
+	return [...codeFiles(), ...proseFiles()];
 }
 
 /** Admin files that produce user-facing text. A9 asserts on this set. */
-const ADMIN_COPY_GLOBS = ["apps/indusk-admin/**/*.tsx"];
+const ADMIN_COPY_GLOBS = [
+	"apps/indusk-admin/**/*.tsx",
+	// markdown-export.ts generates markdown a user reads — user-facing text
+	// that happens not to be JSX.
+	"apps/indusk-admin/src/lib/markdown-export.ts",
+];
 
 function adminCopyFiles(): string[] {
 	return globSync(ADMIN_COPY_GLOBS, {
@@ -120,6 +173,12 @@ interface Violation {
 function matchesIn(content: string, patterns: RegExp[]): { line: number; match: string }[] {
 	const hits: { line: number; match: string }[] = [];
 	for (const pattern of patterns) {
+		// Patterns are module-level and reused across every scanned file. A
+		// pattern carrying /g keeps `lastIndex` between calls, so the next file
+		// resumes mid-string and silently reports nothing — the audit would
+		// under-report without ever failing. Falsification proved it: two calls
+		// with the same /g pattern returned 1 match, then 0.
+		pattern.lastIndex = 0;
 		const found = pattern.exec(content);
 		if (found) {
 			hits.push({
@@ -133,9 +192,15 @@ function matchesIn(content: string, patterns: RegExp[]): { line: number; match: 
 
 function findViolations(): Violation[] {
 	const violations: Violation[] = [];
-	for (const file of auditedFiles()) {
-		for (const hit of matchesIn(readFileSync(file, "utf-8"), FORBIDDEN_PATTERNS)) {
-			violations.push({ file: relative(REPO_ROOT, file), line: hit.line, text: hit.match });
+	const scans: [string[], RegExp[]][] = [
+		[codeFiles(), FORBIDDEN_PATTERNS],
+		[proseFiles(), PROSE_PATTERNS],
+	];
+	for (const [files, patterns] of scans) {
+		for (const file of files) {
+			for (const hit of matchesIn(readFileSync(file, "utf-8"), patterns)) {
+				violations.push({ file: relative(REPO_ROOT, file), line: hit.line, text: hit.match });
+			}
 		}
 	}
 	return violations;
@@ -229,9 +294,7 @@ describe("jj rip-out audit", () => {
 		const first = matchesIn("a needle here", [global]);
 		const second = matchesIn("a needle here", [global]);
 		expect(first).toHaveLength(1);
-		expect(second, "second call missed the match — lastIndex leaked between files").toHaveLength(
-			1,
-		);
+		expect(second, "second call missed the match — lastIndex leaked between files").toHaveLength(1);
 	});
 
 	it("A11 — the widened audit still leaves the preserved record alone", () => {
