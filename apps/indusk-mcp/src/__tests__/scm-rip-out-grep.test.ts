@@ -82,9 +82,20 @@ const FORBIDDEN_PATTERNS = [
 	/\bgetJjReachable\b/,
 ];
 
-/** Files the audit actually inspects. Exported shape so A2 can assert on it. */
+/** Files the audit actually inspects. Exported shape so A2 and A8 can assert on it. */
 function auditedFiles(): string[] {
 	return globSync(SCAN, { cwd: REPO_ROOT, ignore: IGNORE, absolute: true });
+}
+
+/** Admin files that produce user-facing text. A9 asserts on this set. */
+const ADMIN_COPY_GLOBS = ["apps/indusk-admin/**/*.tsx"];
+
+function adminCopyFiles(): string[] {
+	return globSync(ADMIN_COPY_GLOBS, {
+		cwd: REPO_ROOT,
+		ignore: ["**/node_modules/**", "**/.next/**", "**/*.test.tsx", "**/*.test.ts"],
+		absolute: true,
+	});
 }
 
 interface Violation {
@@ -164,13 +175,8 @@ describe("jj rip-out audit", () => {
 	});
 
 	it("A5 — no admin UI copy instructs the reader to run a jj command", () => {
-		const tsxFiles = globSync("apps/indusk-admin/**/*.tsx", {
-			cwd: REPO_ROOT,
-			ignore: ["**/node_modules/**", "**/.next/**", "**/*.test.tsx"],
-			absolute: true,
-		});
 		const offenders: Violation[] = [];
-		for (const file of tsxFiles) {
+		for (const file of adminCopyFiles()) {
 			const content = readFileSync(file, "utf-8");
 			for (const hit of matchesIn(content, [/\bjj\b/])) {
 				offenders.push({
@@ -187,6 +193,60 @@ describe("jj rip-out audit", () => {
 				.map((v) => `  ${v.file}:${v.line} — ${v.text}`)
 				.join("\n")}`,
 		).toEqual([]);
+	});
+
+	it("A8 — the audit inspects the surfaces that ship to consumers, not only .ts/.tsx", () => {
+		const audited = auditedFiles().map((f) => relative(REPO_ROOT, f));
+
+		// Hooks and skills are copied into every consumer's .claude/ directory,
+		// and skills are what tell an agent which commands to run — the highest-
+		// risk place for a jj instruction to reappear. Extension manifests carry
+		// shell command strings. None of the three is TypeScript.
+		const mustBeCovered = [
+			"apps/indusk-mcp/hooks/eval-trigger.js",
+			"apps/indusk-mcp/skills/work.md",
+			"apps/indusk-mcp/extensions/local-telemetry/manifest.json",
+			"apps/docs/src/guide/getting-started.md",
+		];
+		const uncovered = mustBeCovered.filter((f) => !audited.includes(f));
+		expect(
+			uncovered,
+			`the audit cannot see these consumer-facing surfaces: ${uncovered.join(", ")}`,
+		).toEqual([]);
+	});
+
+	it("A9 — the admin copy audit reaches every file that produces user-facing text", () => {
+		const covered = adminCopyFiles().map((f) => relative(REPO_ROOT, f));
+		// markdown-export.ts generates markdown a user reads; it is not .tsx.
+		expect(covered).toContain("apps/indusk-admin/src/lib/markdown-export.ts");
+	});
+
+	it("A10 — a global-flagged pattern finds a violation in every file, not every other one", () => {
+		// FORBIDDEN_PATTERNS are module-level and reused across every scanned
+		// file. `exec` on a /g regex advances lastIndex, so the second file
+		// silently reports nothing — the audit under-reports without failing.
+		const global = /needle/g;
+		const first = matchesIn("a needle here", [global]);
+		const second = matchesIn("a needle here", [global]);
+		expect(first).toHaveLength(1);
+		expect(second, "second call missed the match — lastIndex leaked between files").toHaveLength(
+			1,
+		);
+	});
+
+	it("A11 — the widened audit still leaves the preserved record alone", () => {
+		const audited = auditedFiles().map((f) => relative(REPO_ROOT, f));
+		// Ruled preserved in Build Phase 2 (changelog) and at brief time (the
+		// rest). Encoded here because prose is now in scope.
+		const preserved = [
+			"apps/docs/src/changelog.md",
+			"apps/docs/src/guide/scm.md",
+			"apps/docs/src/decisions/git-or-jj-substrate.md",
+			"apps/docs/src/lessons/git-or-jj-substrate.md",
+			"apps/indusk-mcp/lessons/community/community-graceful-degrade-architecture-trap.md",
+		];
+		const leaked = preserved.filter((f) => audited.includes(f));
+		expect(leaked, `audit reached preserved history: ${leaked.join(", ")}`).toEqual([]);
 	});
 
 	it("lib/semantic-graph/jj.ts does not exist", () => {

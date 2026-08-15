@@ -1,7 +1,7 @@
 ---
 title: "jj Residue Rip-Out"
 date: 2026-08-13
-status: completed
+status: in-progress
 workflow: refactor
 trajectory: required
 test_phases: required
@@ -54,11 +54,11 @@ Finish the jj removal that [`git-only-substrate`](../archive/git-only-substrate/
 | A4 | The commit message displayed for a scorecard matches that commit's actual git message | Test Phase 1 | Test Phase 1 | passing |
 | A5 | No text rendered in the admin UI instructs the reader to run a jj command | Test Phase 1 | Build Phase 2 | passing |
 | A6 | A project whose config still contains `scm: "jj"` runs `indusk update` to completion with no error and no jj nudge | Test Phase 1 | Build Phase 3 | passing |
-| A7 | Every slash command the getting-started guide advertises resolves to a skill file that exists | Phase 0 | Build Phase 4 | planned |
-| A8 | The jj audit inspects the hooks (`.js`), skills (`.md`) and extension manifests (`.json`) that ship to consumers — not only `.ts`/`.tsx` | Phase 0 | Build Phase 4 | planned |
-| A9 | The admin copy audit inspects every file that produces user-facing text, including `.ts` generators, not only `.tsx` | Phase 0 | Build Phase 4 | planned |
-| A10 | The audit finds a violation in every file it scans, independent of a pattern's regex flags | Phase 0 | Build Phase 4 | planned |
-| A11 | With the audit widened to prose, the preserved record stays unflagged — changelog, strategy, dawn, and the semantic-graph reference | Phase 0 | Build Phase 4 | planned |
+| A7 | Every slash command the getting-started guide advertises resolves to a skill file that exists | Phase 0 | Build Phase 4 | written |
+| A8 | The jj audit inspects the hooks (`.js`), skills (`.md`) and extension manifests (`.json`) that ship to consumers — not only `.ts`/`.tsx` | Phase 0 | Build Phase 4 | written |
+| A9 | The admin copy audit inspects every file that produces user-facing text, including `.ts` generators, not only `.tsx` | Phase 0 | Build Phase 4 | written |
+| A10 | The audit finds a violation in every file it scans, independent of a pattern's regex flags | Phase 0 | Build Phase 4 | written |
+| A11 | With the audit widened to prose, the preserved record stays unflagged — changelog, strategy, dawn, and the semantic-graph reference | Phase 0 | Build Phase 4 | written |
 
 ## Checklist
 
