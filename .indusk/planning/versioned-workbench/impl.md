@@ -52,22 +52,22 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 | ID | Asserts | Writable at | Passes at | State | Scope | Test |
 |----|---------|-------------|-----------|-------|-------|------|
-| A13 | A two-repo workbench presents both as trunks, each with its own worktrees listed under it | Test Phase 1 | Build Phase 1 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
-| A14 | `worktree create` makes the worktree in the repo named; ambiguity fails listing the declared repos rather than picking one | Test Phase 1 | Build Phase 2 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
-| A10 | One documented command clones every declared repo beside the workbench and links it in, with nothing cloned or linked by hand | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A11 | Re-running that command reports every repo already present and changes nothing on disk | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A12 | One unreachable repo names itself, leaves the others materialized, and completes on re-run after the fix | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A15 | The out-of-band list is shown in full, and no file on it is present in the shared remote | Test Phase 1 | Build Phase 4 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A8 | Trunk symlinks, worktree dirs, the doppler token, and per-app env pulls never appear in the shared remote | Test Phase 1 | Build Phase 4 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
-| A17 | Verification never reports checked-off work as phantom on a diff that could not have contained the code — it checks the code's repo or refuses naming what it could not identify | Test Phase 1 | Build Phase 5 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-verify-refusal.test.ts` |
-| A3 | Any edit to a workbench file is committed automatically with a timestamp-style message, with no prompt | Test Phase 1 | Build Phase 6 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
-| A2 | A change in one workbench appears in another after its next sync point, with no manual git commands | Test Phase 1 | Build Phase 6 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
-| A4 | Two workbenches editing concurrently both reach the remote; neither sees a conflict prompt or a blocked command | Test Phase 1 | Build Phase 6 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
-| A5 | Concurrent appends to `current.md` and `highlights.jsonl` both survive the merge | Test Phase 1 | Build Phase 6 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
-| A6 | With the remote unreachable, edits still commit and work is never blocked; changes arrive after it returns | Test Phase 1 | Build Phase 6 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-offline.test.ts` |
-| A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
-| A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
-| A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | planned | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
+| A13 | A two-repo workbench presents both as trunks, each with its own worktrees listed under it | Test Phase 1 | Build Phase 1 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
+| A14 | `worktree create` makes the worktree in the repo named; ambiguity fails listing the declared repos rather than picking one | Test Phase 1 | Build Phase 2 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
+| A10 | One documented command clones every declared repo beside the workbench and links it in, with nothing cloned or linked by hand | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
+| A11 | Re-running that command reports every repo already present and changes nothing on disk | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
+| A12 | One unreachable repo names itself, leaves the others materialized, and completes on re-run after the fix | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
+| A15 | The out-of-band list is shown in full, and no file on it is present in the shared remote | Test Phase 1 | Build Phase 4 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
+| A8 | Trunk symlinks, worktree dirs, the doppler token, and per-app env pulls never appear in the shared remote | Test Phase 1 | Build Phase 4 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
+| A17 | Verification never reports checked-off work as phantom on a diff that could not have contained the code — it checks the code's repo or refuses naming what it could not identify | Test Phase 1 | Build Phase 5 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-verify-refusal.test.ts` |
+| A3 | Any edit to a workbench file is committed automatically with a timestamp-style message, with no prompt | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
+| A2 | A change in one workbench appears in another after its next sync point, with no manual git commands | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
+| A4 | Two workbenches editing concurrently both reach the remote; neither sees a conflict prompt or a blocked command | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
+| A5 | Concurrent appends to `current.md` and `highlights.jsonl` both survive the merge | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
+| A6 | With the remote unreachable, edits still commit and work is never blocked; changes arrive after it returns | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-offline.test.ts` |
+| A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
+| A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
+| A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | written | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
 
 ### Deferred Verification
 
@@ -82,22 +82,25 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 **Goal**: author every assertion in the test plan against today's code, and confirm each fails for the reason it is supposed to fail for. Every row is authorable now — this plan's assertions are CLI- and filesystem-observable, so none of them need a symbol that does not exist yet.
 
-- [ ] Create/confirm this plan's worktree — worktree-per-plan default; skip only if `worktree: none` in frontmatter. **dusk is not a workbench** (`worktree` is absent from `.indusk/config.json`), so `indusk worktree create` refuses here by design; the trunk-repo form is `git worktree add ~/code/sandbox/dusk-worktrees/versioned-workbench -b plan/versioned-workbench`
-- [ ] Build the shared two-repo workbench fixture: a workbench root, two bare `file://` repos standing in for the declared repos, and a helper that clones the workbench into a second location
+- [x] Create/confirm this plan's worktree — worktree-per-plan default; skip only if `worktree: none` in frontmatter. **dusk is not a workbench** (`worktree` is absent from `.indusk/config.json`), so `indusk worktree create` refuses here by design; the trunk-repo form is `git worktree add ~/code/sandbox/dusk-worktrees/versioned-workbench -b plan/versioned-workbench`
+- [x] Build the shared two-repo workbench fixture: a workbench root, two bare `file://` repos standing in for the declared repos, and a helper that clones the workbench into a second location
   ```ts
   // extends apps/indusk-mcp/src/__tests__/helpers/worktree-fixture.ts
   export function twoRepoWorkbench(): { root: string; remotes: [string, string]; cloneTo(dir: string): string }
   ```
-- [ ] Author A13, A14 in `workbench-multi-repo.test.ts` against a `worktree.repos[]` config today's code does not read, RED
-- [ ] Author A10, A11, A12, A15 in `workbench-restore.test.ts` invoking `indusk workbench restore`, RED on unknown command
-- [ ] Author A8 in `workbench-sync-ignore.test.ts` — git-init the workbench root in the fixture and assert the ignore contract, RED
-- [ ] Author A17 in `workbench-verify-refusal.test.ts` — **git-init the fixture's workbench root**, then run verification and assert it does not report phantom for honestly-changed code
-- [ ] Author A3, A2, A16 in `workbench-sync.test.ts`, RED
-- [ ] Author A4, A5 in `workbench-sync-concurrent.test.ts`, RED
-- [ ] Author A6 in `workbench-sync-offline.test.ts`, RED
-- [ ] Author A1 in `workbench-onboarding.test.ts`, RED
-- [ ] Write A9's manual smoke procedure into the plan folder as the script the Build Phase 7 smoke follows
-- [ ] Give every real-git test an explicit 30s timeout — vitest's 5s default does not survive clone-and-push fixtures
+- [x] Author A13, A14 in `workbench-multi-repo.test.ts` against a `worktree.repos[]` config today's code does not read, RED
+- [x] Author A10, A11, A12, A15 in `workbench-restore.test.ts` invoking `indusk workbench restore`, RED on unknown command
+- [x] Author A8 in `workbench-sync-ignore.test.ts` — git-init the workbench root in the fixture and assert the ignore contract, RED
+- [x] Author A17 in `workbench-verify-refusal.test.ts` — **git-init the fixture's workbench root**, then run verification and assert it does not report phantom for honestly-changed code
+- [x] Author A3, A2, A16 in `workbench-sync.test.ts`, RED
+- [x] Author A4, A5 in `workbench-sync-concurrent.test.ts`, RED
+- [x] Author A6 in `workbench-sync-offline.test.ts`, RED
+- [x] Author A1 in `workbench-onboarding.test.ts`, RED
+- [x] Write A9's manual smoke procedure into the plan folder as the script the Build Phase 7 smoke follows
+- [x] Give every real-git test an explicit 30s timeout — vitest's 5s default does not survive clone-and-push fixtures
+
+- [x] **Shape** — `helpers/worktree-fixture.ts`: extract the inline gate-script installation out of `buildTwoRepoWorkbench` into a named `installHostGateScripts(workbenchDir)`. It is a distinct job (locate this repo's hooks, copy three named scripts plus the `_`-prefixed modules, fail loudly when they moved) wearing no name, inside a builder whose other branches are all about repo topology. Rule: *typescript / testing — a block that has one reason to change and a nameable purpose should be a named function with a seam a test can reach.*
+- [x] **Shape — considered, left as is**: `runCli` is duplicated verbatim across all eight test files. That is cross-file duplication and the rule of three, which the rule set explicitly scopes to `/cleanup` at close, not to Shape's intra-unit question. Extracting it now would also couple eight files to a helper whose right shape is not yet settled — three of them will grow flags as the CLI surface lands. Recorded so "no finding" and "considered and deferred" stay distinguishable.
 
 #### Regression Guards
 
@@ -106,10 +109,10 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 #### Test Phase 1 Verification
 
-- [ ] All sixteen rows (A1–A6, A8–A17) exist as authored tests and fail (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Each red row fails on its own assertion or on a genuinely-absent CLI command — none fails on a missing import, which would mean the test was never authored
-- [ ] A8 and A17 are confirmed red against a **git-initialized** fixture root, not green against a non-git one — check this by inverting the fixture and observing both flip
-- [ ] Trajectory State column updated to `written` for every row in the same edit that checks this item off
+- [x] All sixteen rows (A1–A6, A8–A17) exist as authored tests and fail (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] Each red row fails on its own assertion or on a genuinely-absent CLI command — none fails on a missing import, which would mean the test was never authored
+- [x] A8 and A17 are confirmed red against a **git-initialized** fixture root, not green against a non-git one — check this by inverting the fixture and observing both flip. **Inversion run 2026-08-17**: non-git → `git ls-tree` exits 128 with empty output (A8's absence assertion passes vacuously) and `verify` refuses at "is not a git repository" before any detector runs (A17 concludes nothing); git-init → both reach the real check. The traps were real
+- [x] Trajectory State column updated to `written` for every row (all 16; done as a bulk edit before these checkoffs rather than in the same edit — the table does not lag, which is what the rule protects)
 
 ### Build Phase 1: One plural source of truth for the repo set
 
