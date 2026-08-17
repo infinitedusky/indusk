@@ -431,10 +431,22 @@ const telemetryCmd = program
 telemetryCmd
 	.command("start")
 	.description("Start the telemetry daemon (Jaeger + otelcol)")
+	.option(
+		"--allow-port-bump",
+		"Start on a different port when the requested one is already in use (default: refuse)",
+	)
 	.action(async function (this: Command) {
-		const opts = this.optsWithGlobals() as { otlpPort: string; uiPort: string };
+		const opts = this.optsWithGlobals() as {
+			otlpPort: string;
+			uiPort: string;
+			allowPortBump?: boolean;
+		};
 		const { telemetryStart } = await import("./commands/telemetry.js");
-		await telemetryStart({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
+		await telemetryStart({
+			otlpPort: opts.otlpPort,
+			uiPort: opts.uiPort,
+			allowPortBump: opts.allowPortBump,
+		});
 	});
 
 telemetryCmd
@@ -443,6 +455,18 @@ telemetryCmd
 	.action(async () => {
 		const { telemetryStop } = await import("./commands/telemetry.js");
 		await telemetryStop();
+	});
+
+telemetryCmd
+	.command("reap")
+	.description(
+		"Kill telemetry processes whose --config path no longer exists (orphans from deleted temp homes)",
+	)
+	.option("--dry-run", "List what would be killed without signalling anything")
+	.action(async function (this: Command) {
+		const opts = this.opts() as { dryRun?: boolean };
+		const { telemetryReap } = await import("./commands/telemetry.js");
+		await telemetryReap({ dryRun: opts.dryRun });
 	});
 
 telemetryCmd

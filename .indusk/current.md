@@ -247,3 +247,24 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 (empty)
 
 ---
+
+## Session f1fd8278 — eval agent: scoring commit c2d8de79 (lessons materialized from jj-residue-rip-out retro)
+
+**Session ID**: f1fd8278-62cb-4542-b83f-af36197b27bf
+**Last updated**: 2026-08-17T01:41:22.711Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

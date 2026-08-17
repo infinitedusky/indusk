@@ -71,6 +71,11 @@ export interface DaemonMeta {
 export interface DaemonStartOptions {
 	otlpPort?: number; // 0 = auto-pick; default 4318
 	uiPort?: number; // 0 = auto-pick; default 16686
+	/**
+	 * Start on a different port when the requested one is already served by
+	 * something this daemon does not own. Off by default — see `assertRequestedPortsFree`.
+	 */
+	allowPortBump?: boolean;
 }
 
 export type DaemonStatusResult =
@@ -358,6 +363,50 @@ service:
 
 // ---- daemonStart / daemonStop / daemonStatus / daemonRestart ---------------
 
+/**
+ * Refuse to start when a requested port is already served by something we do
+ * not own.
+ *
+ * `findFreePort` silently falls back to a random high port when the requested
+ * one is taken, and that silence is how the reported failure happened: a leaked
+ * jaeger held `:4318`, this daemon came up on a random port instead, and the
+ * dev stack — configured for the canonical port — kept exporting into the
+ * stray, which answered `404` because it is not an OTLP receiver. Every trace
+ * vanished, and every component reported healthy.
+ *
+ * The caller already asked for a specific port. Coming up somewhere else and
+ * saying nothing is the one behaviour that cannot be right. A port of `0` means
+ * "any", so it is exempt.
+ *
+ * Note this deliberately does NOT adopt the listener: without its PIDs the
+ * daemon cannot be managed, so claiming to reuse it would be a lie. Refuse,
+ * name the port, and point at the command that fixes the common cause.
+ */
+export async function assertRequestedPortsFree(opts: DaemonStartOptions): Promise<void> {
+	if (opts.allowPortBump) return;
+
+	const requested: { name: string; port: number }[] = [
+		{ name: "OTLP", port: opts.otlpPort ?? 4318 },
+		{ name: "Jaeger UI", port: opts.uiPort ?? 16686 },
+	].filter((p) => p.port !== 0);
+
+	const occupied: { name: string; port: number }[] = [];
+	for (const p of requested) {
+		if (await isPortListening(p.port)) occupied.push(p);
+	}
+	if (occupied.length === 0) return;
+
+	const detail = occupied.map((p) => `${p.name} :${p.port}`).join(", ");
+	throw new Error(
+		`Refusing to start: ${detail} already in use by a process this daemon does not own.\n` +
+			`Starting anyway would bind a random port instead, and anything configured for the ` +
+			`requested port would keep talking to whatever is there — silently.\n` +
+			`  If it is a leaked telemetry process:  indusk telemetry reap\n` +
+			`  If it is another tool you want to keep: indusk telemetry start --allow-port-bump\n` +
+			`  Or choose explicitly:                  indusk telemetry start --otlp-port <n> --ui-port <n>`,
+	);
+}
+
 export async function daemonStart(opts: DaemonStartOptions = {}): Promise<DaemonMeta> {
 	ensureHome();
 
@@ -368,6 +417,8 @@ export async function daemonStart(opts: DaemonStartOptions = {}): Promise<Daemon
 			`Telemetry daemon is already running (Jaeger PID ${existing.jaegerPid}, otelcol PID ${existing.otelcolPid}, OTLP :${existing.otlpPort}, UI :${existing.uiPort}). Run 'indusk telemetry stop' first.`,
 		);
 	}
+
+	await assertRequestedPortsFree(opts);
 
 	const jaegerBin = resolveBinary("jaeger");
 	const otelcolBin = resolveBinary("otelcol");
