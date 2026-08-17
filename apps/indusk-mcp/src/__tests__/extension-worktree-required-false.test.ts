@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { stopTelemetryForHome } from "./helpers/telemetry-reap.js";
 
 /**
  * T15 — Worktree extension posture: required: false, opt-in only.
@@ -51,6 +52,8 @@ describe("worktree extension is required: false and opt-in only", () => {
 		});
 
 		afterEach(() => {
+			// Before the home goes — it holds the only record of the daemon's PIDs.
+			stopTelemetryForHome(testHome);
 			if (existsSync(testHome)) rmSync(testHome, { recursive: true, force: true });
 			if (existsSync(projectDir)) rmSync(projectDir, { recursive: true, force: true });
 		});

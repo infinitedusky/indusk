@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { stopTelemetryForHome } from "./helpers/telemetry-reap.js";
 
 /**
  * Test plan: workbench-setup-command (T1–T7).
@@ -61,6 +62,8 @@ describe.skipIf(SHOULD_SKIP)(
 		});
 
 		afterEach(() => {
+			// Before the home goes — it holds the only record of the daemon's PIDs.
+			stopTelemetryForHome(home);
 			rmSync(sibling, { recursive: true, force: true });
 			rmSync(home, { recursive: true, force: true });
 		});

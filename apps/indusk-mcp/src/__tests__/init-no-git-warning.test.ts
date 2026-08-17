@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { stopTelemetryForHome } from "./helpers/telemetry-reap.js";
 
 /**
  * T14 (git-only-substrate Phase 6, falsification fix for H1) —
@@ -34,6 +35,8 @@ describe.skipIf(SHOULD_SKIP)(
 		});
 
 		afterEach(() => {
+			// Before the home goes — it holds the only record of the daemon's PIDs.
+			stopTelemetryForHome(testHome);
 			rmSync(projectDir, { recursive: true, force: true });
 			rmSync(testHome, { recursive: true, force: true });
 		});
