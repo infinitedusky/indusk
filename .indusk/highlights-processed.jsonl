@@ -181,3 +181,10 @@
 {"id":"h-20260812-005","processedAt":"2026-08-12T20:26:19.442Z","action":"skipped","detail":"same classifier bug already captured as no-warning-from-a-classifier-is-not-a-correct-classification.md (U2/telemetry-alert misfire recurring from lifecycle-rebalance in a second plan, test-phase-structure) — confirms the existing lesson generalizes, no new lesson needed"}
 {"id":"h-20260812-003","processedAt":"2026-08-12T20:26:43.869Z","action":"wrote-episode","detail":"write-the-trajectory-tests-first-even-for-the-plan-itself"}
 {"id":"h-20260812-004","processedAt":"2026-08-12T20:26:44.370Z","action":"wrote-episode","detail":"scripted-census-over-manual-survey-for-fan-out-counts"}
+{"id":"h-20260813-001","processedAt":"2026-08-17T00:41:09.904Z","action":"wrote-episode","detail":"enforcement-grep-test-scope-has-two-independent-blind-spots"}
+{"id":"h-20260814-001","processedAt":"2026-08-17T00:41:10.939Z","action":"skipped","detail":"recorded in jj-residue-rip-out/test-plan.md; the driver/guard classification is plan-specific mechanics fully captured there, and the underlying general principle is covered by the ADR-highlight lesson enforcement-grep-test-scope-has-two-independent-blind-spots"}
+{"id":"h-20260817-001","processedAt":"2026-08-17T01:37:11.294Z","action":"wrote-episode","detail":"extended enforcement-grep-test-scope-has-two-independent-blind-spots.md in place to cover all 4 dimensions (path, pattern, matching granularity, file-type) plus the stateful-regex lastIndex trap, rather than writing a duplicate lesson"}
+{"id":"h-20260817-002","processedAt":"2026-08-17T01:40:18.684Z","action":"wrote-episode","detail":"encode-exemptions-in-the-mechanism-not-just-prose"}
+{"id":"h-20260817-003","processedAt":"2026-08-17T01:40:19.735Z","action":"wrote-episode","detail":"precondition-helpers-must-throw-not-degrade"}
+{"id":"h-20260817-004","processedAt":"2026-08-17T01:40:20.312Z","action":"wrote-episode","detail":"read-verification-output-not-just-exit-code"}
+{"id":"h-20260817-005","processedAt":"2026-08-17T01:40:20.782Z","action":"wrote-episode","detail":"carry-the-broken-implementation-forward-before-fixing-it"}
