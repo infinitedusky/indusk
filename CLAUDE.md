@@ -135,13 +135,13 @@ dusk/
 
 ## Current State
 
-**Version**: **1.35.1 published**; local tree is ahead of it (the Dawn components are unreleased — next publish is **1.36.0**, not 2.0: the thin lane covers execution + verification, while every authoring ritual is still a Claude Code skill). 1.33.0 is a deprecated accidental publish of 1.32.0-era code.
+**Version**: **1.36.0 published**; `main` is bumped to **1.36.1** and ready to publish. 1.33.0 is a deprecated accidental publish of 1.32.0-era code.
 
-**Publish blockers** (2026-08-05): no `LEGACY_HOOKS` removal path — a hook deleted from the package stays on disk *and registered in `.claude/settings.json`* in every consumer forever (`check-plan-order.js` is the live instance); `indusk update` untested against a consumer for this batch; `agent-roles-phase4` red on main (stale assertion).
+**Publish blockers** (2026-08-16): no `LEGACY_HOOKS` removal path — a hook deleted from the package stays on disk *and registered in `.claude/settings.json`* in every consumer forever (`check-plan-order.js` is the live instance, still orphaned); `indusk update` untested against a consumer for this batch. **The changelog has no `[1.36.0]` heading**, so `[Unreleased]` mixes shipped Dawn-component entries with unshipped ones — untangle before cutting `[1.36.1]`. (`agent-roles-phase4` cleared 2026-08-16 — 11/11.)
 
 **In flight:**
 
-- **indusk-makeover (close-out pending)** — budgets + decay + Graphiti/CGC removal + catchup diet + hub sync. **Open: `agent-roles-phase4` red on main** (asserts a Key Decisions bullet this plan's compaction removed); Numero-workbench migrates after publish. See `.indusk/planning/indusk-makeover/`.
+- **indusk-makeover (close-out pending)** — budgets + decay + Graphiti/CGC removal + catchup diet + hub sync. Its `agent-roles-phase4` blocker cleared 2026-08-16 (11/11); Numero-workbench migrates after publish. **Note**: `guide/getting-started.md` still advertises CodeGraphContext + Graphiti MCP tools this plan removed — belongs here, not in a jj rip-out. See `.indusk/planning/indusk-makeover/`.
 - **cleanup-ritual (2026-07-13, pending 1.32.0 publish)** — `/cleanup` ritual + config block + Ritual Gate + A-prefixed trajectory IDs. See [archive](.indusk/planning/archive/cleanup-ritual/).
 - **worktree-visibility (unpublished)** — worktree-per-plan default + observable bulletin; T7–T9 manual smokes unrun. See [archive](.indusk/planning/archive/worktree-visibility/).
 - **indusk-worktree-extension** — shipped + verified; awaits publish + `/falsify` + `/retrospective` before archive. See `.indusk/planning/indusk-worktree-extension/`.
@@ -151,6 +151,7 @@ dusk/
 - **dawn-hook-parity (2026-08-03, unpublished)** — Dawn Component 2: thin lane enforces every invariant hook, commits per item, and feeds the eval rail via a durable queue; `ask` now the default in both lanes. See [archive](.indusk/planning/archive/dawn-hook-parity/) for full detail.
 - **dawn-verify (2026-08-05, unpublished)** — Dawn Component 6, the keystone: `atdawn verify` — the first thing in InDusk ever to execute a test as a gate check; boundary verification held (5/5 planted classes, 0 false positives). See [archive](.indusk/planning/archive/dawn-verify/) for full detail.
 - **lifecycle-rebalance (2026-08-10, unpublished)** — the **Shape** check: per-phase craft review in `/work`, extension-sourced rules, findings as items in the phase that wrote the code. 9 phases, 27 rows; two falsification passes found 10 confirmed defects. Remaining rebalance slices (thin-lane Shape, Challenge, docs restructure, `verify` into `runLoop`) are follow-ons. See [archive](.indusk/planning/archive/lifecycle-rebalance/) for full detail.
+- **jj-residue-rip-out (1.36.1)** — finished the 1.31.0 jj removal and replaced the enforcement test that hid it; four independent scope blind spots (path, pattern, match granularity, file type), two of them found in this plan's own output by `/falsify` and `/cleanup`. See [archive](.indusk/planning/archive/jj-residue-rip-out/) and `/lessons/jj-residue-rip-out`.
 - **test-phase-structure (2026-08-12, unpublished)** — test authoring became a phase; Gate A now enforces the 260 previously-unenforceable `Phase 0` rows. **Follow-ons**: `falsify-phase-authoring` + `local-telemetry` are legitimately blocked by the correction (rows never authored); `react-native-support` blocks on edit until its Phase 2 Context gate is fixed; `plan/lifecycle-rebalance` is unmerged and holds a seventh phase-heading copy in `shape/impl-blocks.ts`, so A13 goes red at that merge by design. See [archive](.indusk/planning/archive/test-phase-structure/) for full detail.
 
 **Active plans** (dead drafts archived 2026-07-23 by the makeover backfill; sidebar order canonical from `.indusk/planning/master.md`):

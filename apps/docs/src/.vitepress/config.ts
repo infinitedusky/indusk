@@ -210,6 +210,10 @@ const config = defineConfig({
 							link: "/lessons/git-or-jj-substrate",
 						},
 						{
+							text: "jj Residue Rip-Out (Enforcement-Test Scope Is Untested)",
+							link: "/lessons/jj-residue-rip-out",
+						},
+						{
 							text: "Eval Agent MCP Access (Fresh-vs-Resume Path Divergence)",
 							link: "/lessons/eval-agent-mcp-access",
 						},
