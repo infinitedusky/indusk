@@ -61,8 +61,8 @@ export default async function PerProjectScorecardsPage({
           Scorecards — {project}
         </h1>
         <p className="text-sm text-gray-500">
-          No eval scorecards recorded for this project yet. Commit via `jj
-          describe` to trigger the eval agent.
+          No eval scorecards recorded for this project yet. Make a `git commit`
+          to trigger the eval agent.
         </p>
       </div>
     );

@@ -71,16 +71,6 @@ export interface InduskConfig {
 		role?: "service" | "library" | "tool" | "none";
 	};
 	/**
-	 * Legacy SCM field. No longer read or written by InDusk as of 1.31.0
-	 * (git-only-substrate Phase 4) — git is the only SCM. The field is
-	 * retained in the type so config-readers don't reject existing
-	 * `scm: "jj"` entries; `indusk update` emits a one-time stderr nudge
-	 * telling the user the field is safe to remove.
-	 *
-	 * @deprecated Remove from `.indusk/config.json` — no longer used.
-	 */
-	scm?: "jj" | "git";
-	/**
 	 * Eval-agent configuration. Most of this is read directly via JSON
 	 * traversal in `lib/eval/otel.ts`; the schema here is documentary.
 	 */

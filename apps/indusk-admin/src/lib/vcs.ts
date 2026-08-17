@@ -1,21 +1,16 @@
 import { execFileSync } from "node:child_process";
 
 /**
- * Look up the commit message for a change-or-commit identifier.
+ * Look up the commit message for a commit identifier.
  *
- * The eval agent fires on EITHER `jj describe` OR a git commit — both
- * produce a commit-like artifact with a message. The scorecard's
- * `changeId` is whichever the trigger captured. We try jj first (it's
- * the project default in dusk and InDusk-using repos) and fall back to
- * git (for repos where the trigger comes from a git commit instead).
+ * The eval agent fires on `git commit`, so the scorecard's `changeId` is the
+ * commit the trigger captured. Git is the only substrate as of 1.31.0.
  *
  * Returns `null` when:
- *   - neither jj nor git resolves the id
  *   - id is empty / non-alphanumeric
- *   - both lookups fail (not a vcs repo, id abandoned, etc.)
+ *   - git does not resolve it (not a repo, unknown commit, empty message)
  *
- * Both calls are read-only — `jj log --ignore-working-copy` doesn't snapshot,
- * and `git log` is always read-only.
+ * The call is read-only — `git log` never mutates.
  */
 export function getCommitMessage(
   projectRoot: string,
@@ -23,32 +18,6 @@ export function getCommitMessage(
 ): string | null {
   if (!id || !/^[a-z0-9]+$/i.test(id)) return null;
 
-  // Try jj first
-  try {
-    const out = execFileSync(
-      "jj",
-      [
-        "log",
-        "-r",
-        id,
-        "--no-graph",
-        "-T",
-        "description",
-        "--ignore-working-copy",
-      ],
-      {
-        cwd: projectRoot,
-        encoding: "utf-8",
-        stdio: ["ignore", "pipe", "ignore"],
-      },
-    );
-    const trimmed = out.trim();
-    if (trimmed !== "") return trimmed;
-  } catch {
-    // jj missing or id not in jj — fall through to git
-  }
-
-  // Fall back to git
   try {
     const out = execFileSync("git", ["log", "-1", "--format=%B", id], {
       cwd: projectRoot,
@@ -58,7 +27,7 @@ export function getCommitMessage(
     const trimmed = out.trim();
     if (trimmed !== "") return trimmed;
   } catch {
-    // git missing or id not in git either
+    // git missing, not a repo, or id unknown
   }
 
   return null;

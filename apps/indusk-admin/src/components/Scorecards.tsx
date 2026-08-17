@@ -33,10 +33,10 @@ interface ScorecardQuestion {
 export interface ScorecardsListProps {
   scorecards: Scorecard[];
   /**
-   * Optional commit message per change-or-commit ID. Surfaces the human-
-   * authored intent of the commit alongside the LLM-generated summary —
-   * the real "what was being scored" signal. Resolved by `getCommitMessages`
-   * in `src/lib/vcs.ts` (tries jj, falls back to git).
+   * Optional commit message per commit ID. Surfaces the human-authored
+   * intent of the commit alongside the LLM-generated summary — the real
+   * "what was being scored" signal. Resolved by `getCommitMessages` in
+   * `src/lib/vcs.ts`.
    */
   descriptions?: Map<string, string>;
 }
@@ -58,7 +58,7 @@ export function ScorecardsList({
         <p className="text-sm text-gray-600">
           Per-commit scores produced by the eval agent on every{" "}
           <code className="rounded bg-gray-100 px-1 text-xs font-mono">
-            jj describe
+            git commit
           </code>
           . This is a self-improvement signal — what worked, what didn't, what
           the system could improve. Not tied to any single plan.
@@ -72,9 +72,9 @@ export function ScorecardsList({
 
       {sorted.length === 0 ? (
         <p className="text-sm text-gray-500" data-testid="scorecards-empty">
-          No scorecards yet — run a few{" "}
-          <code className="font-mono">jj describe</code> commands inside Claude
-          Code, and they'll start appearing.
+          No scorecards yet — make a few{" "}
+          <code className="font-mono">git commit</code>s inside Claude Code, and
+          they'll start appearing.
         </p>
       ) : (
         <div className="flex flex-col gap-2">
@@ -82,7 +82,7 @@ export function ScorecardsList({
             <ScorecardCard
               key={`${card.timestamp}-${card.changeId ?? "unknown"}-${card.project ?? ""}`}
               card={card}
-              jjDescription={
+              commitMessage={
                 card.changeId
                   ? descriptions?.get(String(card.changeId))
                   : undefined
@@ -97,20 +97,20 @@ export function ScorecardsList({
 
 function ScorecardCard({
   card,
-  jjDescription,
+  commitMessage,
 }: {
   card: Scorecard;
-  jjDescription?: string;
+  commitMessage?: string;
 }) {
   const status = card.error ? "error" : "ok";
   const llmSummary =
     (card.summary as string | undefined) ??
     (card.message as string | undefined);
-  // Prefer the actual jj describe text when we have it — it's the human-
+  // Prefer the actual commit message when we have it — it's the human-
   // authored intent of the commit being scored. Fall back to the LLM-
   // generated summary, then to a placeholder.
   const headerLine =
-    jjDescription?.split("\n")[0]?.trim() || llmSummary || "(no description)";
+    commitMessage?.split("\n")[0]?.trim() || llmSummary || "(no description)";
   const questions = Array.isArray(card.questions)
     ? (card.questions as ScorecardQuestion[])
     : [];
@@ -151,7 +151,7 @@ function ScorecardCard({
       defaultOpen={false}
     >
       <div className="flex flex-col gap-3">
-        {jjDescription && (
+        {commitMessage && (
           <section
             className="rounded border border-blue-200 bg-blue-50 p-3"
             data-testid="scorecard-commit-message"
@@ -160,7 +160,7 @@ function ScorecardCard({
               Commit message
             </h3>
             <pre className="mt-1 text-sm text-gray-800 whitespace-pre-wrap font-sans">
-              {jjDescription}
+              {commitMessage}
             </pre>
           </section>
         )}
@@ -179,7 +179,7 @@ function ScorecardCard({
             {String(card.message)}
           </pre>
         ) : null}
-        {!card.error && !jjDescription && llmSummary ? (
+        {!card.error && !commitMessage && llmSummary ? (
           // Fallback when we couldn't resolve the commit message — show the
           // LLM-generated summary so the card isn't completely contextless.
           <Markdown>{`**Eval-agent summary:** ${llmSummary}`}</Markdown>

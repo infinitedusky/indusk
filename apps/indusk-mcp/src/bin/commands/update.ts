@@ -611,23 +611,10 @@ export async function update(projectRoot: string): Promise<void> {
 	const ceNotice = ceDeprecationNotice(projectRoot);
 	if (ceNotice) console.info(ceNotice);
 
-	// 7c. SCM field migration. Pre-1.28.x projects don't have `scm` in their
-	// Legacy `scm` field migration (git-only-substrate Phase 5).
-	// git is the only SCM as of 1.31.0. Existing `scm: "jj"` config fields
-	// become a no-op; emit one stderr nudge so the user knows the field
-	// is safe to remove from `.indusk/config.json`. The file itself is
-	// NOT modified — removing the field is the user's call.
-	console.info("\n[SCM]\n");
+	// Config helpers, loaded once — several later migration steps need them.
 	const { readConfig, writeConfig, ensureCleanupConfig, getCleanupConfig } = await import(
 		"../../lib/config.js"
 	);
-	const scmConfig = readConfig(projectRoot);
-	if (scmConfig?.scm) {
-		process.stderr.write("scm field no longer used; safe to remove from .indusk/config.json\n");
-		console.info(`  nudge: scm: "${scmConfig.scm}" (no longer used; safe to remove)`);
-	} else {
-		console.info("  ok: (no scm field; git is the only SCM as of 1.31.0)");
-	}
 
 	// 7c. Multi-agent scaffolding (handoff-multi-agent Phase 4, reshaped in
 	// handoff-multi-agent-section-shape Phase 4). Idempotently migrate

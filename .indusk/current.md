@@ -191,6 +191,12 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-08-13T17:54:18.210Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+## Session 7e3e61d1 — status check on jj-residue-rip-out plan
+
+**Session ID**: 7e3e61d1-965e-46ef-a279-5af6ee54fdb1
+**Last updated**: 2026-08-14T12:35:47.047Z
+**Branch**: plan/jj-residue-rip-out
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/jj-residue-rip-out
 
 ### In Flight
 

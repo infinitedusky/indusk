@@ -1,6 +1,6 @@
 # Source Control: Git
 
-InDusk uses [git](https://git-scm.com/) as the only source control system as of 1.31.0. Earlier versions (1.28.x–1.30.x) supported [Jujutsu](https://github.com/jj-vcs/jj) (jj) as an alternate substrate; that support was removed in the [`git-only-substrate`](/decisions/git-only-substrate) plan. If your project still has `scm: "jj"` in its `.indusk/config.json`, the field is now a no-op and `indusk update` nudges you to remove it.
+InDusk uses [git](https://git-scm.com/) as the only source control system as of 1.31.0. Earlier versions (1.28.x–1.30.x) supported [Jujutsu](https://github.com/jj-vcs/jj) (jj) as an alternate substrate; that support was removed in the [`git-only-substrate`](/decisions/git-only-substrate) plan. If your project still has `scm: "jj"` in its `.indusk/config.json`, the field is inert — nothing reads it, and you can delete it whenever convenient.
 
 ## The git workflow
 
@@ -60,7 +60,7 @@ Context prefixes name the app or area (`indusk-mcp:`, `indusk-docs:`, `root:`, `
 
 Prior to 1.31.0 InDusk shipped with dual-SCM support — projects could pick `scm: "jj"` or `scm: "git"` in their config, and InDusk would branch on the field at runtime (eval prompts, baseline CLI, semantic graph sync, even per-phase commit cadence). The strategic shift to single-SCM is recorded in the [`git-only-substrate`](/decisions/git-only-substrate) decision; the historical dual-SCM design is preserved in the superseded [`git-or-jj-substrate`](https://github.com/infinitedusky/indusk/tree/main/.indusk/planning/git-or-jj-substrate) planning folder.
 
-If you had `scm: "jj"` in a project's config, `indusk update` will nudge you to remove the field — InDusk silently ignores it. Removing the field is the user's call; nothing breaks if you leave it.
+If you had `scm: "jj"` in a project's config, the field is inert — InDusk ignores it entirely. Removing it is your call; nothing breaks if you leave it. Up to 1.35.x `indusk update` printed a one-time nudge about it; that nudge was removed in 1.36.0 once the deprecation window had run its course.
 
 ## See also
 

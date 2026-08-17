@@ -2,8 +2,7 @@
  * Tracks eval finding resolution state.
  *
  * Findings persist as "unresolved" until explicitly fixed or ignored.
- * The eval hook surfaces unresolved findings on every commit (jj describe
- * on jj projects, git commit on git projects).
+ * The eval hook surfaces unresolved findings on every `git commit`.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
