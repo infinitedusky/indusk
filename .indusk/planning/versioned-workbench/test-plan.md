@@ -1,8 +1,8 @@
 ---
 title: "Versioned Workbench — Test Plan"
 date: 2026-07-23
-revised: 2026-08-16
-status: draft
+revised: 2026-08-17
+status: accepted
 ---
 
 # Versioned Workbench — Test Plan
@@ -41,6 +41,8 @@ Second revision driver: the brief's In Scope gained the workbench manifest + boo
 | A13 | A workbench declaring two repos presents both as trunks, each with its own worktrees listed under it — no repo's worktrees are attributed to the other. | vitest integration + manual smoke (avoca-next-workbench) |
 | A14 | In a workbench declaring two repos, creating a worktree makes it in the repo the developer named; naming no repo when the choice is ambiguous fails with a message listing the declared repos rather than picking one. | vitest integration |
 | A15 | After materializing a fresh workbench, the developer is shown the complete list of files they must still supply out-of-band, and no file on that list is present in the shared remote. | vitest integration (cross-check the printed list against `git ls-tree` of the remote) |
+| A16 | A developer who pulls a plan phase marked complete, whose code has not reached them, can tell that the code is missing rather than reading the phase as delivered. | vitest integration (two clones; push plan docs only, withhold the code repo's commits) |
+| A17 | In a workbench where the plan documents and the code live in different repos, verification never reports checked-off work as phantom on the strength of a diff that could not have contained the code — it either checks the repo holding the code, or refuses and says which repo it could not identify. | vitest integration (workbench fixture with a real second repo; assert the refusal path, not only the pass path) |
 
 ## Untestable Assertions
 
@@ -56,4 +58,6 @@ Second revision driver: the brief's In Scope gained the workbench manifest + boo
 - "Within seconds" latency is not pinned to a number in A2; the assertion is about zero manual steps, with latency observed qualitatively in A9's smoke.
 - A12 is the assertion that forbids a partial restore from reporting success. The failure this codebase keeps re-learning is a checker that cannot distinguish "could not do the job" from "job done" — a restore that clones 1 of 2 repos and exits 0 is that failure wearing new clothes.
 - A13 and A14 exist because the singular is currently load-bearing in 10 non-test files (80 occurrences), 35 of them in shell scripts with no type checker. Both assertions are observable at the CLI, so they hold regardless of how the singular gets widened.
+- A17 is a **refusal** assertion by design. Phantom detection currently cannot run in a workbench at all — `assertGitRepo` refuses because the root is not a git repo — and this plan makes the root a git repo, which removes that refusal by accident rather than by decision. An acceptance-shaped test ("verify reports correctly on a healthy workbench") cannot detect a detector that has quietly stopped checking; only asserting the refusal can. Same reasoning as the standing lesson that every rule needs a test asserting a refusal.
+- A16 keeps the two-clock skew observable without committing to a design for it. The assertion is that the developer can *tell*, not that any particular banner, badge, or ref-check exists — the ADR records the skew as accepted, so the bar is visibility, not prevention.
 - A10–A12 are authorable against `scripts/bootstrap.sh` in the avoca POC today — the behavior exists, it just isn't in the product. That makes them Phase 0 rows in the impl's trajectory, not deferred ones.

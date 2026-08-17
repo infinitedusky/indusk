@@ -1,7 +1,8 @@
 ---
 title: "Versioned Workbench"
 date: 2026-08-16
-status: proposed
+accepted: 2026-08-17
+status: accepted
 ---
 
 # Versioned Workbench
@@ -30,7 +31,7 @@ a separate `.indusk/workbench.json` manifest holding the repo list (the POC's sh
 a workbench that is reconstructible from its remote by anyone who can read it, with the reconstruction step honest about what it could not do; context that flows between machines within seconds with zero manual git; and one source of truth for "which repos is this workbench made of," so the singular cannot survive in one lane while the plural ships in another.
 
 **Accepting:**
-that blind conflict resolution can silently revert a checkbox and an agent might trust a stale "done" mark; that widening `wrapped_repo` touches 10 files including four shell scripts where a missed site fails at runtime rather than at compile time; that restore can never supply secrets or SSH host aliases, so onboarding keeps an irreducible manual step; that branches must be pushed to be recreatable and uncommitted worktree work never travels; and that `indusk workbench restore` is a second command a developer must know about rather than an automatic effect of `update`.
+that blind conflict resolution can silently revert a checkbox and an agent might trust a stale "done" mark; that widening `wrapped_repo` touches 10 files including four shell scripts where a missed site fails at runtime rather than at compile time; that restore can never supply secrets or SSH host aliases, so onboarding keeps an irreducible manual step; that branches must be pushed to be recreatable and uncommitted worktree work never travels; that `indusk workbench restore` is a second command a developer must know about rather than an automatic effect of `update`; and that making the workbench root a git repo removes a refusal that several detectors currently rely on, so this plan has to re-establish that refusal deliberately instead of inheriting it.
 
 **Because:**
 the alternative to a shared remote is a shared database, which is real infrastructure and an auth burden for a benefit files already deliver; the alternative to widening the config is two disagreeing definitions of the workbench's repo set, which this codebase has three lessons about and has already paid for twice; and the alternative to a loud partial restore is a restore that exits 0 having done half the job, which is the exact failure mode — a checker that cannot distinguish "could not do it" from "did it" — that `verify`, phantom detection, and the pending-eval queue were each separately built to avoid.
@@ -128,6 +129,22 @@ No composition. The hub is machine-global and lessons-only; workbench sync is wo
 
 The engagement-docs split (internal → workbench context repo, published → client repo) is adopted. Two consequences: `docs` joins the reserved-directory set in `worktreeList` ([worktree.ts:196-208](../../../apps/indusk-mcp/src/bin/commands/worktree.ts#L196-L208)), where it is currently absent and would be rendered as a worktree; and `indusk init-docs` needs a `--dir` or workbench-aware default, since it hardcodes the monorepo-shaped `apps/${projectName}-docs`.
 
+### D8 — Detectors get a plan root and a code root; where they cannot tell them apart, they refuse
+
+Making the workbench root a git repo silently converts a loud refusal into a confident wrong answer, which is the single most dangerous change in this ADR.
+
+Today `assertGitRepo` ([verify/git.ts:31-39](../../../apps/indusk-mcp/src/lib/verify/git.ts#L31-L39)) refuses to run verify on a workbench root, and its comment names the reason exactly: *"A workbench root is deliberately not a git repo, and the cleanup library's silent-`[]` on that shape made its ritual vacuous there. The same silence in a verifier would report 'clean' for a phase it never examined."* That refusal is load-bearing, and it is currently free — it holds because the root happens not to be a repo.
+
+D4 makes it a repo. The refusal stops firing, verify runs, and it runs against a repo whose diff **structurally cannot contain the code it is checking**: `impl.md` lives in the workbench repo, the code lives across a symlink in the wrapped repo. The consequences are not subtle:
+
+- **Phantom detection inverts.** It fires when nothing outside `impl.md` and machine state changed ([phantom.ts:32-35](../../../apps/indusk-mcp/src/lib/verify/phantom.ts#L32-L35)). In a workbench repo nothing outside `.indusk/` and `.claude/` *ever* changes when you write code, so `somethingRealChanged` is false essentially always and every honestly-checked item is reported phantom. That file's own comment states the cost: *"a detector that cries wolf gets disabled, which costs more than the cases it would have caught."*
+- **The auto-commit loop compounds it.** D4 commits `impl.md` continuously, so the diff since any baseline fills with timestamp commits touching only plan documents — the exact shape phantom reads as "the checkbox moved and the work did not."
+- **Red-test detection resolves `Test` paths repo-root-relative**, and "repo root" now has two candidate answers.
+
+The decision: verify, Shape, and cleanup take **two roots** — a plan root (where `impl.md` lives) and a code root (where the phase's code lives). In a workbench the code root is the wrapped repo the plan targets. **Where the code root cannot be determined — the plan names no repo, or its work spans several — the detector refuses and names why, exactly as `assertGitRepo` does today.** It never falls back to the plan root, because a diff of plan documents is not evidence about code and reporting it as such is the failure mode this whole cluster of detectors exists to avoid.
+
+**Scoping.** This plan owns *preserving the refusal* — the cheap, mandatory half: no detector may silently start answering because a precondition changed underneath it. The full two-root split across verify, Shape, and cleanup is named as a follow-on plan and does not block this one. Shipping the sync loop without the refusal is not an option; shipping it without the split is.
+
 ## Alternatives Considered
 
 ### Keep the workbench single-repo; restore clones only the wrapped repo
@@ -170,6 +187,12 @@ Moot rather than rejected — the makeover removed both. Recorded so a future re
 - Widening the singular touches 10 files, 4 of them bash, where a missed read site fails at runtime with a confusing message rather than at compile time.
 - Onboarding keeps an irreducible manual step: secrets and SSH host aliases cannot travel in the remote and never will.
 - The workbench remote accumulates a high-frequency commit history that is a sync log, not a narrative. `git log` on the workbench root stops being human-readable — an accepted cost of the dumb loop.
+- **A plan's documents and its code now move on two different clocks.** `impl.md` auto-pushes within seconds; the code it describes pushes when the author decides. A second developer can pull a phase marked complete before the commits behind it are reachable anywhere. Nothing corrupts — but "done" in the plan and "present" in the code become two separate questions, and the plan answers faster. This is the inverse of the brief's accepted blind-merge risk (a checkbox silently reverting); here the checkbox is correct and early.
+- Detectors that were previously unable to run in a workbench can now run there, so their correctness in that shape has to be established rather than assumed (D8).
+
+### Neutral
+
+- `assertGitRepo`'s refusal stops being free. It currently holds because a workbench root is not a repo; after this plan it holds only because something deliberately maintains it. The guarantee is unchanged; its cost moves from zero to maintained.
 
 ### Risks
 
@@ -177,6 +200,8 @@ Moot rather than rejected — the makeover removed both. Recorded so a future re
 - **Blind merge silently reverts a checkbox and an agent trusts a stale "done".** Accepted in the brief; low probability (worktree-per-plan keeps two developers off one `impl.md`, and gate hooks re-validate at the next edit), recoverable from history. Belongs to the falsification ritual — it deliberately has no success-contract assertion.
 - **Partial restore reported as success.** Mitigation: A12 asserts the failure path directly — named repo, preserved progress, non-zero exit — because an acceptance-only test cannot detect a restore that has stopped checking.
 - **Auto-commit captures a secret a developer dropped into the workbench root.** The whitelist-not-blacklist `.gitignore` shape from the POC is the control: the root is deny-by-default and directories are added explicitly, so a stray `.env` at the root is untracked by construction rather than by remembering to ignore it.
+- **Phantom detection fires on every honestly-checked item in a workbench, gets called noise, and gets switched off — taking its real catches with it.** This is the highest-probability failure in this ADR: it needs no unusual conditions, only a workbench with the sync loop running. Mitigation: D8's refusal, asserted directly by A17, which is a *refusal* assertion rather than an acceptance — a detector that has quietly stopped checking passes every acceptance test ever written for it.
+- **The two-clock skew leads an agent to build on a phase whose code it cannot see.** Lower severity than it sounds: the agent's next edit re-validates structure through the gate hooks, and the missing code surfaces as an import error rather than silent wrongness. Recorded as a consequence with A16 asserting the developer can tell, not designed around.
 - **The sync loop races the `current.md` file lock.** The lock serializes writers on one machine only; cross-machine serialization is push contention plus blind merge. That is the intended model, not a gap — recorded here so it is not later mistaken for a bug.
 
 ## Documentation Plan
