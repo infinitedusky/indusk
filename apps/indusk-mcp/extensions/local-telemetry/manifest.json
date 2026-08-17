@@ -1,13 +1,13 @@
 {
 	"name": "local-telemetry",
-	"description": "Local OTel telemetry daemon — Jaeger + OTel Collector running natively, agent-queryable via MCP tools for fast 'why did this just fail' diagnosis",
+	"description": "Local OTel telemetry daemon \u2014 Jaeger + OTel Collector running natively, agent-queryable via MCP tools for fast 'why did this just fail' diagnosis",
 	"required": true,
 	"provides": {
 		"skill": true,
 		"health_checks": [
 			{
 				"name": "telemetry-daemon-running",
-				"command": "node -e \"const p=require('os').homedir()+'/.indusk/telemetry.pid';const fs=require('fs');process.exit(fs.existsSync(p) ? 0 : 1)\""
+				"command": "node -e \"const p=require('os').homedir()+'/.indusk/telemetry.json';const fs=require('fs');if(!fs.existsSync(p))process.exit(1);let m;try{m=JSON.parse(fs.readFileSync(p,'utf-8'))}catch{process.exit(1)}for(const pid of [m.jaegerPid,m.otelcolPid]){if(!pid)process.exit(1);try{process.kill(pid,0)}catch{process.exit(1)}}process.exit(0)\""
 			},
 			{
 				"name": "telemetry-otlp-listening",
