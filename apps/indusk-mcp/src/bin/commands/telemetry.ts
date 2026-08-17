@@ -112,6 +112,8 @@ function syncAllRegisteredProjectsMcp(mcpPort: number): {
 export interface TelemetryStartOptions {
 	otlpPort: string;
 	uiPort: string;
+	/** Proceed on a different port when the requested one is already served. */
+	allowPortBump?: boolean;
 }
 
 /**
@@ -146,6 +148,7 @@ export async function telemetryStart(opts: TelemetryStartOptions): Promise<void>
 		const meta = await daemonStart({
 			otlpPort: otlpRequested,
 			uiPort: uiRequested,
+			allowPortBump: opts.allowPortBump,
 		});
 		console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
 		console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
@@ -163,6 +166,50 @@ export async function telemetryStart(opts: TelemetryStartOptions): Promise<void>
  * Stop the telemetry daemon. Reports whether it was running, the PIDs it
  * signaled, and whether SIGKILL was required.
  */
+export interface TelemetryReapOptions {
+	dryRun?: boolean;
+}
+
+/**
+ * Kill telemetry processes whose config no longer exists.
+ *
+ * The daemon is spawned detached so it survives its terminal, and its PIDs live
+ * only in `$INDUSK_HOME/telemetry.json`. Anything that deletes that home severs
+ * the only handle on the processes — they keep running against a config path
+ * that is gone, holding memory and, worse, binding ports the real daemon wants.
+ */
+export async function telemetryReap(opts: TelemetryReapOptions = {}): Promise<void> {
+	const { reapOrphans } = await import("../../lib/telemetry/orphans.js");
+	const status = await daemonStatus();
+	// The running daemon is never a candidate, whatever its config looks like.
+	const protectPids = status.running ? [status.jaegerPid, status.otelcolPid] : [];
+
+	const result = reapOrphans({ dryRun: opts.dryRun, protectPids });
+
+	if (result.orphans.length === 0) {
+		console.info("No orphaned telemetry processes found.");
+		if (result.protectedPids.length > 0) {
+			console.info(`  (${result.protectedPids.length} skipped — claimed by the running daemon)`);
+		}
+		return;
+	}
+
+	const verb = opts.dryRun ? "Would reap" : "Reaped";
+	console.info(`${verb} ${result.orphans.length} orphaned telemetry process(es):`);
+	for (const o of result.orphans) {
+		console.info(`  ${o.binary} pid=${o.pid} — config gone: ${o.configPath}`);
+	}
+	if (result.protectedPids.length > 0) {
+		console.info(`  skipped ${result.protectedPids.length} claimed by the running daemon`);
+	}
+	if (result.failed.length > 0) {
+		for (const f of result.failed) {
+			console.error(`  could not signal pid=${f.pid}: ${f.reason}`);
+		}
+		process.exitCode = 1;
+	}
+}
+
 export async function telemetryStop(): Promise<void> {
 	const result = await daemonStop();
 	if (!result.stopped) {
