@@ -152,6 +152,43 @@ export interface InduskConfig {
 	planning?: {
 		dead_draft_days?: number;
 	};
+	/**
+	 * Workbench topology (versioned-workbench). A workbench wraps N >= 1 repos.
+	 *
+	 * `repos[]` is the single source of truth for which repos a workbench is
+	 * made of; the older singular `wrapped_repo` reduces to a one-element list,
+	 * so no existing workbench needs a config edit. Both are read through
+	 * `readWorkbenchRepos` in `lib/worktree/repos.ts` — never destructured
+	 * directly, because the reduction lives in that one function and a caller
+	 * that reads the raw field skips it.
+	 *
+	 * Typed here rather than in the resolver so the shape has one home:
+	 * `worktree.ts`, `stray-state-audit.ts` and `hooks/_hook-paths.js` each
+	 * hand-rolled a private copy of it before this existed.
+	 */
+	worktree?: WorktreeConfig;
+}
+
+/** One repo a workbench wraps. */
+export interface WorkbenchRepo {
+	name: string;
+	/**
+	 * Where to clone from, for `indusk workbench restore`. Optional: a repo
+	 * declared without one is declared-but-unrestorable, which restore reports
+	 * by name rather than skipping silently. Absent is a real state, not a
+	 * malformed one — the singular `wrapped_repo` shape never carried a remote.
+	 */
+	remote?: string;
+}
+
+export interface WorktreeConfig {
+	shape?: "workbench";
+	/** The repos this workbench wraps. Supersedes `wrapped_repo`. */
+	repos?: WorkbenchRepo[];
+	/** Legacy singular form. Reduces to `repos: [{ name }]`. */
+	wrapped_repo?: string;
+	/** Parent directory the sibling clones live in. */
+	sibling_parent?: string;
 }
 
 /** Default sweep TTL: 7 days. Distinct from the 60-minute display TTL. */

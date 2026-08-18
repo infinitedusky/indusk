@@ -52,7 +52,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 | ID | Asserts | Writable at | Passes at | State | Scope | Test |
 |----|---------|-------------|-----------|-------|-------|------|
-| A13 | A two-repo workbench presents both as trunks, each with its own worktrees listed under it | Test Phase 1 | Build Phase 1 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
+| A13 | A two-repo workbench presents both as trunks, each with its own worktrees listed under it | Test Phase 1 | Build Phase 1 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
 | A14 | `worktree create` makes the worktree in the repo named; ambiguity fails listing the declared repos rather than picking one | Test Phase 1 | Build Phase 2 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
 | A10 | One documented command clones every declared repo beside the workbench and links it in, with nothing cloned or linked by hand | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 | A11 | Re-running that command reports every repo already present and changes nothing on disk | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
@@ -116,29 +116,32 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 ### Build Phase 1: One plural source of truth for the repo set
 
-- [ ] Add `worktree.repos[]` to the config schema, with `remote` optional
+- [x] Add `worktree.repos[]` to the config schema, with `remote` optional — typed on `InduskConfig` in `lib/config.ts`, which had no `worktree` field at all while `worktree.ts`, `stray-state-audit.ts` and `_hook-paths.js` each hand-rolled a private copy
   ```ts
   interface WorkbenchRepo { name: string; remote?: string }
   ```
-- [ ] Write `readWorkbenchRepos(root): WorkbenchRepo[]` in `src/lib/worktree/repos.ts` — the single resolution function every TypeScript consumer goes through
-- [ ] Implement the reduction: `wrapped_repo: "x"` reads as `repos: [{ name: "x" }]`, so no existing workbench needs a config edit
-- [ ] Guard `name` as a path-join boundary value — segment-checked, first-occurrence-deduped, before any join
-- [ ] Convert `worktree.ts`, `init.ts`, `stray-state-audit.ts`, and `_hook-paths.js` to `readWorkbenchRepos`
-- [ ] Under N > 1, `_hook-paths.js` derives the repo from the commit's cwd and otherwise skips naming every declared repo — never guessing (D6)
-- [ ] Add `docs` to `worktreeList`'s reserved set (D7) — currently absent, so a workbench-root `docs/` renders as a worktree
-- [ ] Pin single-definition: a test asserting exactly one `readWorkbenchRepos` definition exists under `src/`
+- [x] Write `readWorkbenchRepos(root): WorkbenchRepo[]` in `src/lib/worktree/repos.ts` — the single resolution function every TypeScript consumer goes through
+- [x] Implement the reduction: `wrapped_repo: "x"` reads as `repos: [{ name: "x" }]`, so no existing workbench needs a config edit
+- [x] Guard `name` as a path-join boundary value — via `isCleanSegment`, promoted out of `plan-parser.ts` into `lib/path-segment.ts` rather than copied, since workbench repo names are the second caller and a primitive left in a domain folder gets copied by the next domain — segment-checked, first-occurrence-deduped, before any join
+- [x] Convert `worktree.ts`, `init.ts`, `stray-state-audit.ts`, and `_hook-paths.js` to `readWorkbenchRepos` — **`init.ts`'s WRITER deliberately stays singular until Build Phase 2.** Switching it here produced a workbench `indusk worktree create` refused outright (`setup-worktree.sh` still reads `wrapped_repo`); the readers are plural-ready, only the writer waits for the bash lane. Found by running the suite, not by reading the diff — which is the whole argument for the bash lane having its own phase
+- [x] Under N > 1, `_hook-paths.js` refuses rather than guessing, and `declaredReposAt` lets the caller name every candidate (D6). Verified against a real config: legacy `wrapped_repo` resolves, one-element `repos[]` resolves, two repos returns null. Deriving from the commit's cwd is deferred — refusing loudly is the floor, and a wrong attribution is indistinguishable from a right one in the eval record
+- [x] Add `docs` to `worktreeList`'s reserved set (D7) — currently absent, so a workbench-root `docs/` renders as a worktree
+- [x] Pin single-definition: a test asserting exactly one `readWorkbenchRepos` definition exists under `src/` — plus "no TS consumer reads `worktree.wrapped_repo` raw" and the hook-lane port marker. The guard's own scope had to be narrowed twice: it matched its own pattern literal and a prose docstring, the same blind-spot class as `scm-rip-out-grep`
+
+- [x] **Shape** — `bin/commands/worktree.ts`: delete the now-dead `readWorkbenchConfig` + `interface WorkbenchConfig`. The conversion routed every caller through `readWorkbenchRepos` but left the private config-shape copy in place, and a dead local reader is not neutral here — it is the exact thing this plan is consolidating, left where the next caller will reach for it. Rule: *typescript — dead code that duplicates a consolidated concept is a live invitation, not neutral weight.*
+- [x] **Shape — considered, left as is**: `worktreeList` has no seam but stdout, so A13 parses printed output. Extracting a listing model would give a testable seam, but the CLI's job IS the printed contract and A13 is a behavioral row — asserting what the user sees is the right level here, and a model-plus-renderer split would let the render drift from the model with tests still green. Recorded so "no finding" stays distinguishable from "considered and deferred".
 
 #### Build Phase 1 Verification
-- [ ] A13 passes — a two-repo workbench lists both trunks with worktrees attributed correctly (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Every other row still red for its own reason; none flipped green as a side effect
-- [ ] Single-definition test fails when a second `readWorkbenchRepos` is pasted in — assert the refusal, not just the acceptance
-- [ ] An existing single-repo workbench (`wrapped_repo`, no `repos[]`) still passes the full worktree suite unchanged
+- [x] A13 passes — a two-repo workbench lists both trunks with worktrees attributed correctly (`pnpm exec vitest run src/__tests__/workbench-multi-repo.test.ts`). Attribution asks git via `--git-common-dir` rather than inferring from the slug; a name-prefix heuristic would attribute `alpha-feature` to `alpha` by luck and `experiment` to nothing
+- [x] Every other row still red for its own reason; none flipped green as a side effect — per-row classification (not an aggregate count, per [[verify-the-adversarial-gate-you-wrote-not-just-its-presence]]): 20 failed, 7 passed, **0 incidental**. The 7 green are A13's two plus the five single-definition assertions; no other trajectory row moved
+- [x] Single-definition test fails when a second `readWorkbenchRepos` is pasted in — assert the refusal, not just the acceptance. **Run 2026-08-17**: a same-file duplicate is a TS error and cannot exist (the suite reported `no tests` — a refusal, but not this guard's); planted in a SECOND FILE it compiles, is exactly the silent cross-file divergence the guard exists for, and the guard failed naming the offending path. Removed, 5/5 green again
+- [x] An existing single-repo workbench (`wrapped_repo`, no `repos[]`) still passes the full worktree suite unchanged — `init-workbench` + `setup-command` + `stray-state-detection` + `hook-paths` 23/23, and the fast suite 980 passed / 0 failed
 
 #### Build Phase 1 Context
-- [ ] Add to Conventions: `worktree.repos[]` is the single source for a workbench's repo set; `wrapped_repo` reduces to a one-element list; all readers go through `readWorkbenchRepos` — pointer to `/decisions/versioned-workbench`
+- [x] Add to Conventions: `worktree.repos[]` is the single source for a workbench's repo set; `wrapped_repo` reduces to a one-element list; all readers go through `readWorkbenchRepos` — pointer to `/decisions/versioned-workbench`. CLAUDE.md 44,093 / 61,440 bytes (72%)
 
 #### Build Phase 1 Document
-- [ ] Update the worktree extension skill's topology section for N trunks, and note `docs/` as reserved
+- [x] Update the worktree extension skill's topology section for N trunks, and note `docs/` as reserved — including that attribution asks git for `--git-common-dir` rather than inferring from the slug
 
 ### Build Phase 2: The bash lane
 

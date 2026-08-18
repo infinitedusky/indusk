@@ -131,6 +131,9 @@ describe.skipIf(SHOULD_SKIP)("indusk init --workbench (T16)", () => {
 		// 2. .indusk/config.json marks workbench shape
 		const cfg = JSON.parse(readFileSync(join(workbenchDir, ".indusk/config.json"), "utf-8"));
 		expect(cfg.worktree?.shape).toBe("workbench");
+		// The writer stays singular until Build Phase 2 lands the bash readers;
+		// what Phase 1 guarantees is that every READER resolves it through the
+		// reduction, which `worktree list` below demonstrates.
 		expect(cfg.worktree?.wrapped_repo).toBe("demo");
 		expect(cfg.worktree?.sibling_parent).toBe(root);
 
@@ -156,7 +159,10 @@ describe.skipIf(SHOULD_SKIP)("indusk init --workbench (T16)", () => {
 		// 6. `worktree list` works end-to-end
 		const listResult = runCli(workbenchDir, ["worktree", "list"]);
 		expect(listResult.code, listResult.stderr).toBe(0);
-		expect(listResult.stdout).toContain("Wrapped repo: demo");
+		expect(listResult.stdout).toContain("Repos (1): demo");
+		// The trunk line moved under a per-repo block; assert the block, not
+		// just the name, so a regression to a flat single-repo render fails.
+		expect(listResult.stdout).toMatch(/^demo$/m);
 		expect(listResult.stdout).toContain("(config valid)");
 	});
 });

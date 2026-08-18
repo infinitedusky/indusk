@@ -38,6 +38,24 @@ function runCli(cwd: string, args: string[]): { code: number; stdout: string; st
 	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
 }
 
+/**
+ * The block of `worktree list` output belonging to one repo.
+ *
+ * Parsed structurally — a block opens on a column-0 line that is exactly the
+ * repo name and closes at the next column-0 line — rather than by slicing
+ * between the first occurrence of each name. The naive slice silently matched
+ * inside the `Repos (2): alpha, beta` summary line and produced the section
+ * "alpha, ", so the assertion was reading a header, not a block.
+ */
+function repoBlock(stdout: string, repo: string): string {
+	const lines = stdout.split("\n");
+	const start = lines.findIndex((l) => l.trimEnd() === repo);
+	if (start === -1) return "";
+	const rest = lines.slice(start + 1);
+	const end = rest.findIndex((l) => l.trim() !== "" && /^\S/.test(l));
+	return (end === -1 ? rest : rest.slice(0, end)).join("\n");
+}
+
 describe.skipIf(SHOULD_SKIP)("A13 — both declared repos present as trunks", () => {
 	it("lists every declared repo, each with its own worktrees", { timeout: 30_000 }, () => {
 		fixture = buildTwoRepoWorkbench({ materialize: true });
@@ -56,14 +74,33 @@ describe.skipIf(SHOULD_SKIP)("A13 — both declared repos present as trunks", ()
 		// A worktree of `alpha` only. `beta` has none — so a reader must be
 		// able to tell that apart from "both have one", which is exactly what
 		// a single-trunk renderer cannot express.
-		const created = runCli(fixture.workbenchDir, ["worktree", "create", "alpha", "alpha-feature"]);
-		expect(created.code).toBe(0);
+		//
+		// Set up with plain git rather than `worktree create <repo> <slug>`:
+		// that CLI surface lands a phase later, and this row is about how the
+		// listing ATTRIBUTES a worktree, not about how it was made. Coupling
+		// the two would make an attribution bug and a missing CLI argument
+		// indistinguishable.
+		const added = spawnSync(
+			"git",
+			[
+				"-C",
+				join(fixture.root, "alpha"),
+				"worktree",
+				"add",
+				"-b",
+				"alpha-feature",
+				join(fixture.workbenchDir, "alpha-feature"),
+			],
+			{ encoding: "utf-8" },
+		);
+		expect(added.status, added.stderr).toBe(0);
 
 		const { stdout } = runCli(fixture.workbenchDir, ["worktree", "list"]);
 
-		const alphaSection = stdout.slice(stdout.indexOf("alpha"), stdout.indexOf("beta"));
-		expect(alphaSection).toContain("alpha-feature");
-		expect(stdout.slice(stdout.indexOf("beta"))).not.toContain("alpha-feature");
+		expect(repoBlock(stdout, "alpha")).toContain("alpha-feature");
+		expect(repoBlock(stdout, "beta")).not.toContain("alpha-feature");
+		// beta having none must be legible as such, not merely as an absence.
+		expect(repoBlock(stdout, "beta")).toMatch(/\(none\)/);
 	});
 });
 

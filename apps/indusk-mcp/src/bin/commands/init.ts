@@ -1157,6 +1157,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			max_file_loc: 400,
 			scopes: [],
 		},
+		// Still written in the SINGULAR here, deliberately. Switching the writer
+		// to `repos[]` belongs in Build Phase 2, with the bash readers: this
+		// phase converted the TypeScript lane, and `setup-worktree.sh` et al
+		// still read `wrapped_repo`. Writing the plural shape now produced a
+		// workbench that `indusk worktree create` refused outright — found by
+		// running the suite, not by reading the diff, because nothing
+		// type-checks the shell lane. The reduction means readers are already
+		// plural-ready; only the writer waits.
 		...(workbench && options.wrappedRepo && options.siblingParent
 			? {
 					worktree: {
@@ -1171,7 +1179,7 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 
 	// Workbench mode: explicitly enable the worktree extension AFTER the
 	// config write so the on_enable hook sees worktree.shape="workbench"
-	// + worktree.wrapped_repo. The extension is required:false so
+	// + worktree.repos[]. The extension is required:false so
 	// autoEnableExtensions doesn't pick it up.
 	if (workbench) {
 		console.info("\n[Workbench] enabling worktree extension");

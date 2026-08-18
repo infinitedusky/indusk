@@ -1,7 +1,15 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from "node:fs";
+import {
+	existsSync,
+	lstatSync,
+	readdirSync,
+	readFileSync,
+	readlinkSync,
+	realpathSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isWorkbench, readWorkbenchRepos } from "../../lib/worktree/repos.js";
 import { validateWorktreeConfig } from "../../lib/worktree/validate-config.js";
 import { provisionWorktreeEnv } from "./doppler.js";
 
@@ -138,7 +146,7 @@ export function worktreeCreate(slug: string, baseBranch?: string): never {
 
 /** Read `post_create` commands from the workbench's worktree config — run in each new worktree after create. */
 function readPostCreate(workbenchRoot: string): string[] {
-	const repo = readWorkbenchConfig(workbenchRoot)?.worktree?.wrapped_repo;
+	const repo = readWorkbenchRepos(workbenchRoot)[0]?.name;
 	if (!repo) return [];
 	const p = join(workbenchRoot, ".indusk", "worktree-configs", `${repo}.json`);
 	if (!existsSync(p)) return [];
@@ -156,7 +164,7 @@ function readPostCreate(workbenchRoot: string): string[] {
 function resolveWorkbenchRoot(start: string): string | null {
 	let dir = resolve(start);
 	for (let i = 0; i < 40; i++) {
-		if (readWorkbenchConfig(dir)?.worktree?.shape === "workbench") return dir;
+		if (isWorkbench(dir)) return dir;
 		const parent = dirname(dir);
 		if (parent === dir) break;
 		dir = parent;
@@ -174,24 +182,6 @@ export function worktreePreflight(slug: string, baseBranch?: string): never {
 
 // ---- list (TS-implemented; uses the Phase 2 validator) ----------------------
 
-interface WorkbenchConfig {
-	worktree?: {
-		shape?: string;
-		wrapped_repo?: string;
-		sibling_parent?: string;
-	};
-}
-
-function readWorkbenchConfig(workbenchRoot: string): WorkbenchConfig | null {
-	const cfg = join(workbenchRoot, ".indusk", "config.json");
-	if (!existsSync(cfg)) return null;
-	try {
-		return JSON.parse(readFileSync(cfg, "utf-8")) as WorkbenchConfig;
-	} catch {
-		return null;
-	}
-}
-
 function listSubdirs(workbenchRoot: string): string[] {
 	const reserved = new Set([
 		".indusk",
@@ -205,6 +195,10 @@ function listSubdirs(workbenchRoot: string): string[] {
 		".next",
 		"scripts",
 		"env",
+		// D7: the workbench-root internal-docs directory the versioned-workbench
+		// shape adopts. Absent from this set it renders as a worktree, which is
+		// how the avoca POC's `docs/` looked before anyone noticed.
+		"docs",
 	]);
 	const entries: string[] = [];
 	for (const name of readdirSync(workbenchRoot)) {
@@ -227,80 +221,132 @@ function listSubdirs(workbenchRoot: string): string[] {
  *   - worktree config status badge: (config valid) / (config missing) /
  *     (config invalid: <reason>) / (no worktrees)
  */
-export function worktreeList(projectRoot: string): void {
-	const config = readWorkbenchConfig(projectRoot);
-	const wrappedRepo = config?.worktree?.wrapped_repo;
-	const shape = config?.worktree?.shape;
+/**
+ * Which declared repo does this worktree belong to?
+ *
+ * Asked of git rather than inferred from the slug: `--git-common-dir` resolves
+ * to the OWNING repo's `.git`, so the answer survives any naming convention a
+ * developer invents. A name-prefix heuristic would attribute `alpha-feature`
+ * to `alpha` by luck and `experiment` to nothing at all — and a wrong
+ * attribution reads exactly like a right one.
+ *
+ * Null means "could not tell", which renders as unattributed rather than being
+ * quietly assigned to the first repo.
+ */
+function worktreeOwner(worktreePath: string, repoPaths: Map<string, string>): string | null {
+	const r = spawnSync(
+		"git",
+		["-C", worktreePath, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+		{
+			encoding: "utf-8",
+		},
+	);
+	if (r.status !== 0 || !r.stdout) return null;
+	const commonDir = r.stdout.trim();
+	for (const [name, repoPath] of repoPaths) {
+		try {
+			if (realpathSync(commonDir).startsWith(realpathSync(repoPath))) return name;
+		} catch {
+			// unresolvable path — treat as no match rather than guessing
+		}
+	}
+	return null;
+}
 
-	if (shape !== "workbench" || !wrappedRepo) {
+/** Trunk symlink status for one declared repo. */
+function trunkStatusFor(trunkPath: string): string {
+	if (!existsSync(trunkPath)) {
+		return "missing — run `indusk workbench restore` to materialize it";
+	}
+	try {
+		const st = lstatSync(trunkPath);
+		if (!st.isSymbolicLink()) return "directory (not a symlink — unusual for a workbench trunk)";
+		const target = readlinkSync(trunkPath);
+		return existsSync(trunkPath)
+			? `→ ${target} (resolves)`
+			: `symlink broken (target ${target} not found)`;
+	} catch (err) {
+		return `error: ${(err as Error).message}`;
+	}
+}
+
+/** Per-repo worktree config badge. */
+function configStatusFor(projectRoot: string, repo: string): { path: string; status: string } {
+	const configPath = join(projectRoot, ".indusk", "worktree-configs", `${repo}.json`);
+	if (!existsSync(configPath)) return { path: configPath, status: "(config missing)" };
+	try {
+		const result = validateWorktreeConfig(JSON.parse(readFileSync(configPath, "utf-8")));
+		if (result.valid) return { path: configPath, status: "(config valid)" };
+		const first = result.errors[0];
+		return {
+			path: configPath,
+			status: first ? `(config invalid: ${first.field} — ${first.message})` : "(config invalid)",
+		};
+	} catch (err) {
+		return {
+			path: configPath,
+			status: `(config invalid: parse error — ${(err as Error).message})`,
+		};
+	}
+}
+
+/**
+ * `indusk worktree list` — the workbench's current state, one block per
+ * declared repo.
+ *
+ * N repos rather than one wrapped repo: each declared repo gets its own trunk
+ * line, its own config badge, and its own worktrees. Attribution matters more
+ * than layout here — a reader has to be able to tell "beta has no worktrees"
+ * from "beta's worktrees are listed under alpha".
+ */
+export function worktreeList(projectRoot: string): void {
+	const repos = readWorkbenchRepos(projectRoot);
+
+	if (!isWorkbench(projectRoot) || repos.length === 0) {
 		console.error(
-			'Error: this project is not a workbench (set worktree.shape="workbench" and worktree.wrapped_repo in .indusk/config.json, or run `indusk init --workbench`).',
+			'Error: this project is not a workbench (set worktree.shape="workbench" and worktree.repos[] in .indusk/config.json, or run `indusk init --workbench`).',
 		);
 		process.exit(1);
 	}
 
-	// Trunk: symlink at workbench/<wrapped_repo>
-	const trunkPath = join(projectRoot, wrappedRepo);
-	let trunkStatus = "";
-	let trunkTarget = "";
-	if (!existsSync(trunkPath)) {
-		trunkStatus = "missing — run `indusk init --workbench` to create it";
-	} else {
-		try {
-			const st = lstatSync(trunkPath);
-			if (st.isSymbolicLink()) {
-				trunkTarget = readlinkSync(trunkPath);
-				// Resolve to verify the target exists.
-				if (!existsSync(trunkPath)) {
-					trunkStatus = `symlink broken (target ${trunkTarget} not found)`;
-				} else {
-					trunkStatus = `→ ${trunkTarget} (resolves)`;
-				}
-			} else {
-				trunkStatus = "directory (not a symlink — unusual for a workbench trunk)";
-			}
-		} catch (err) {
-			trunkStatus = `error: ${(err as Error).message}`;
-		}
-	}
+	const repoPaths = new Map(repos.map((r) => [r.name, join(projectRoot, r.name)]));
+	const declaredNames = new Set(repos.map((r) => r.name));
+	const slugs = listSubdirs(projectRoot).filter((name) => !declaredNames.has(name));
 
-	// Per-repo config: .indusk/worktree-configs/<wrapped_repo>.json
-	const configPath = join(projectRoot, ".indusk", "worktree-configs", `${wrappedRepo}.json`);
-	let configStatus = "";
-	if (!existsSync(configPath)) {
-		configStatus = "(config missing)";
-	} else {
-		try {
-			const raw = JSON.parse(readFileSync(configPath, "utf-8"));
-			const result = validateWorktreeConfig(raw);
-			if (result.valid) {
-				configStatus = "(config valid)";
-			} else {
-				const firstErr = result.errors[0];
-				configStatus = firstErr
-					? `(config invalid: ${firstErr.field} — ${firstErr.message})`
-					: "(config invalid)";
-			}
-		} catch (err) {
-			configStatus = `(config invalid: parse error — ${(err as Error).message})`;
-		}
+	const byRepo = new Map<string, string[]>(repos.map((r) => [r.name, []]));
+	const unattributed: string[] = [];
+	for (const slug of slugs) {
+		const owner = worktreeOwner(join(projectRoot, slug), repoPaths);
+		if (owner) byRepo.get(owner)?.push(slug);
+		else unattributed.push(slug);
 	}
-
-	// Worktrees: subdirs at workbench root excluding the trunk + reserved.
-	const allSubdirs = listSubdirs(projectRoot);
-	const worktreeSlugs = allSubdirs.filter((name) => name !== wrappedRepo);
 
 	console.info(`Workbench:    ${projectRoot}`);
-	console.info(`Wrapped repo: ${wrappedRepo}`);
-	console.info(`Trunk:        ${wrappedRepo} ${trunkStatus}`);
-	console.info(`Config:       ${configPath} ${configStatus}`);
-	console.info("");
-	if (worktreeSlugs.length === 0) {
-		console.info("Worktrees:    (no worktrees) — `indusk worktree create <slug>` to add one");
-	} else {
-		console.info(`Worktrees (${worktreeSlugs.length}):`);
-		for (const slug of worktreeSlugs) {
-			console.info(`  ${slug}`);
+	console.info(`Repos (${repos.length}): ${repos.map((r) => r.name).join(", ")}`);
+
+	for (const repo of repos) {
+		const cfg = configStatusFor(projectRoot, repo.name);
+		const mine = byRepo.get(repo.name) ?? [];
+		console.info("");
+		console.info(`${repo.name}`);
+		console.info(`  Trunk:      ${repo.name} ${trunkStatusFor(join(projectRoot, repo.name))}`);
+		console.info(
+			`  Remote:     ${repo.remote ?? "(none declared — `workbench restore` cannot clone it)"}`,
+		);
+		console.info(`  Config:     ${cfg.path} ${cfg.status}`);
+		if (mine.length === 0) {
+			console.info(
+				`  Worktrees:  (none) — \`indusk worktree create ${repo.name} <slug>\` to add one`,
+			);
+		} else {
+			console.info(`  Worktrees (${mine.length}):`);
+			for (const slug of mine) console.info(`    ${slug}`);
 		}
+	}
+
+	if (unattributed.length > 0) {
+		console.info("");
+		console.info(`Unattributed (${unattributed.length}) — not a worktree of any declared repo:`);
+		for (const slug of unattributed) console.info(`  ${slug}`);
 	}
 }
