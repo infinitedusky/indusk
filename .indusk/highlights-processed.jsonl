@@ -188,3 +188,5 @@
 {"id":"h-20260817-003","processedAt":"2026-08-17T01:40:19.735Z","action":"wrote-episode","detail":"precondition-helpers-must-throw-not-degrade"}
 {"id":"h-20260817-004","processedAt":"2026-08-17T01:40:20.312Z","action":"wrote-episode","detail":"read-verification-output-not-just-exit-code"}
 {"id":"h-20260817-005","processedAt":"2026-08-17T01:40:20.782Z","action":"wrote-episode","detail":"carry-the-broken-implementation-forward-before-fixing-it"}
+{"id":"h-20260817-006","processedAt":"2026-08-17T21:40:06.220Z","action":"skipped","detail":"recorded in versioned-workbench/adr.md — the repos[] vs workbench.json decision is plan-specific mechanics fully captured there"}
+{"id":"h-20260817-007","processedAt":"2026-08-17T21:40:09.949Z","action":"wrote-episode","detail":"a-refusal-that-holds-by-accident-is-not-a-guarantee"}
