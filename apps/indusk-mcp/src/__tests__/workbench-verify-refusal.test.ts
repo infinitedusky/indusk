@@ -125,19 +125,17 @@ describe.skipIf(SHOULD_SKIP)("A17 — no phantom finding for code in another rep
 	it("does not call honestly-done work phantom when the code lives in the wrapped repo", {
 		timeout: 30_000,
 	}, () => {
+		// The unchecked impl goes into the INITIAL commit, so the baseline verify
+		// reconstructs actually contains it. A plan added after the baseline makes
+		// phantom return [] without comparing anything.
 		fixture = buildTwoRepoWorkbench({
 			gitInitWorkbench: true,
 			materialize: true,
 			installGateScripts: true,
+			planImpl: implDoc(false),
 		});
 		const wb = fixture.workbenchDir;
 		const planDir = join(wb, ".indusk", "planning", PLAN);
-		mkdirSync(planDir, { recursive: true });
-
-		// Baseline: the plan exists, nothing is checked off yet.
-		writeFileSync(join(planDir, "impl.md"), implDoc(false));
-		git(wb, ["add", "-A"]);
-		git(wb, ["commit", "-q", "-m", "plan baseline"]);
 
 		// Real work, in the repo where code actually lives.
 		const codeRepo = join(fixture.root, "alpha");
