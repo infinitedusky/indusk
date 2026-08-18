@@ -46,10 +46,24 @@ function git(cwd: string, args: string[]): { code: number; stdout: string } {
 	return { code: r.status ?? -1, stdout: r.stdout };
 }
 
+function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
+	const r = spawnSync("node", [CLI_BIN, ...args], {
+		cwd,
+		encoding: "utf-8",
+		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
+	});
+	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
+}
+
 describe.skipIf(SHOULD_SKIP)("A8 — residue stays out of the shared remote", () => {
 	it("keeps trunk symlinks, worktrees, and env out of the remote", { timeout: 30_000 }, () => {
 		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true, materialize: true });
 		const wb = fixture.workbenchDir;
+
+		// The PRODUCT writes the ignore rules, not the fixture. A fixture-written
+		// .gitignore would make this test verify its own setup — the trap A15
+		// and A17 both fell into earlier in this plan.
+		expect(runCli(wb, ["workbench", "restore"]).code).toBe(0);
 
 		// The four residue classes named in the ADR, all present on disk.
 		mkdirSync(join(wb, ".indusk", "extensions", "doppler"), { recursive: true });
@@ -80,6 +94,7 @@ describe.skipIf(SHOULD_SKIP)("A8 — residue stays out of the shared remote", ()
 	it("ignores a worktree directory nobody listed in advance", { timeout: 30_000 }, () => {
 		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true, materialize: true });
 		const wb = fixture.workbenchDir;
+		expect(runCli(wb, ["workbench", "restore"]).code).toBe(0);
 
 		// The whole case for a whitelist: this name is invented at runtime, so
 		// no deny-list could have contained it.

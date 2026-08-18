@@ -149,12 +149,17 @@ describe.skipIf(SHOULD_SKIP)("A15 — what restore cannot supply, it names", () 
 	it("prints the out-of-band set, and none of it is in the remote", { timeout: 30_000 }, () => {
 		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true });
 
-		// PLANT the secrets before checking they do not travel. Without this the
-		// cross-check passes because the fixture never created an `.env` — green
-		// for the absence of a subject rather than the presence of a guard,
-		// which is the same trap A8 carries and the reason that row is
-		// git-initialized. The whitelist .gitignore that makes this pass lands
-		// in Build Phase 4; until then this is honestly red.
+		// Restore FIRST — it scaffolds the ignore rules. Then plant the secrets
+		// and commit. That is the real order: rules exist, then work happens.
+		// Planting before restore would demand history rewriting, which restore
+		// cannot do and should not attempt.
+		const { stdout } = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+
+		// The list exists and is specific — "configure your secrets" is not a
+		// list, it is a shrug.
+		expect(stdout).toMatch(/doppler|\.env|ssh/i);
+
+		// Now create exactly what the list named, and try to publish it.
 		mkdirSync(join(fixture.workbenchDir, ".indusk", "extensions", "doppler"), { recursive: true });
 		writeFileSync(
 			join(fixture.workbenchDir, ".indusk", "extensions", "doppler", ".env"),
@@ -174,18 +179,12 @@ describe.skipIf(SHOULD_SKIP)("A15 — what restore cannot supply, it names", () 
 				"commit",
 				"-q",
 				"-m",
-				"sync",
+				"work",
 			],
 			{ encoding: "utf-8" },
 		);
 
-		const { stdout } = runCli(fixture.workbenchDir, ["workbench", "restore"]);
-
-		// The list exists and is specific — "configure your secrets" is not a
-		// list, it is a shrug.
-		expect(stdout).toMatch(/doppler|\.env|ssh/i);
-
-		// Cross-check: nothing it names actually reached the shared remote.
+		// Cross-check: nothing the list named actually reached the remote.
 		const tracked = spawnSync(
 			"git",
 			["-C", fixture.workbenchDir, "ls-tree", "-r", "--name-only", "HEAD"],
@@ -193,5 +192,8 @@ describe.skipIf(SHOULD_SKIP)("A15 — what restore cannot supply, it names", () 
 		).stdout;
 		expect(tracked).not.toMatch(/\.env$/m);
 		expect(tracked).not.toContain("extensions/doppler/.env");
+		// …and the context that IS supposed to travel still does, so this cannot
+		// pass by ignoring everything.
+		expect(tracked).toContain(".indusk/planning/sample-plan/brief.md");
 	});
 });

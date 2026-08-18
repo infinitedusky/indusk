@@ -57,8 +57,8 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A10 | One documented command clones every declared repo beside the workbench and links it in, with nothing cloned or linked by hand | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 | A11 | Re-running that command reports every repo already present and changes nothing on disk | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 | A12 | One unreachable repo names itself, leaves the others materialized, and completes on re-run after the fix | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A15 | The out-of-band list is shown in full, and no file on it is present in the shared remote | Test Phase 1 | Build Phase 4 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A8 | Trunk symlinks, worktree dirs, the doppler token, and per-app env pulls never appear in the shared remote | Test Phase 1 | Build Phase 4 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
+| A15 | The out-of-band list is shown in full, and no file on it is present in the shared remote | Test Phase 1 | Build Phase 4 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
+| A8 | Trunk symlinks, worktree dirs, the doppler token, and per-app env pulls never appear in the shared remote | Test Phase 1 | Build Phase 4 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A17 | Verification never reports checked-off work as phantom on a diff that could not have contained the code — it checks the code's repo or refuses naming what it could not identify | Test Phase 1 | Build Phase 5 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-verify-refusal.test.ts` |
 | A3 | Any edit to a workbench file is committed automatically with a timestamp-style message, with no prompt | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
 | A2 | A change in one workbench appears in another after its next sync point, with no manual git commands | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
@@ -194,22 +194,22 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 ### Build Phase 4: What never travels
 
-- [ ] Print the out-of-band set after restore: `env/*.env`, `.indusk/extensions/doppler/.env`, repo-local config, required SSH host aliases
-- [ ] Scaffold the root-directory-**whitelist** `.gitignore` — deny by default, directories added explicitly, so an unpredicted worktree directory is untracked by construction
-- [ ] Scaffold `.gitattributes` with `merge=union` on `current.md` and `highlights.jsonl`
-- [ ] `indusk update` detects declared-but-unmaterialized repos and nudges to `indusk workbench restore` without cloning anything itself
+- [x] Print the out-of-band set after restore: `env/*.env`, `.indusk/extensions/doppler/.env`, repo-local config, required SSH host aliases — landed early, in Phase 3, because restore had nothing honest to say at its end without it
+- [x] Scaffold the root-directory-**whitelist** `.gitignore` — deny by default, directories added explicitly, so an unpredicted worktree directory is untracked by construction. **The deny rule is `/*`, not `/*/`**: git stores a trunk symlink as a blob, so a directory-only rule leaves every trunk tracked — caught by A8, not by reading. Ported from the avoca POC's months-tested file rather than authored fresh, including its comment on why the trailing `.env*` glob is load-bearing. Scaffolds only when absent; a hand-tuned ignore file is a decision, not drift
+- [x] Scaffold `.gitattributes` with `merge=union` on `current.md` and `highlights.jsonl` (plus `highlights-processed.jsonl`) — deliberately NOT on plan documents, where a blind union interleaves prose
+- [x] `indusk update` detects declared-but-unmaterialized repos and nudges to `indusk workbench restore` without cloning anything itself — verified on a workbench declaring a repo that does not exist: it names the repo, points at restore, and performs no network call. **Plus `untrackNowIgnored`**, which the tests forced: ignoring a path does not untrack it, so a workbench git-initialized before these rules kept publishing its symlinks and secrets while `git status` looked clean. Index-only (`--cached`); files stay on disk
 
 #### Build Phase 4 Verification
-- [ ] A15, A8 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Create a worktree with an unpredicted name, then assert the remote never receives it — the whitelist's whole purpose is the directory nobody listed
-- [ ] Drop a stray `.env` at the workbench root and confirm `git status` leaves it untracked
-- [ ] `indusk update` on a workbench with a missing repo prints the nudge and performs no network operation
+- [x] A15, A8 pass (`pnpm exec vitest run src/__tests__/workbench-restore.test.ts src/__tests__/workbench-sync-ignore.test.ts`, 8/8). **Both now drive the PRODUCT to write the ignore rules** — a fixture-written `.gitignore` would have made each test verify its own setup, the trap A15 and A17 each fell into earlier here
+- [x] Create a worktree with an unpredicted name, then assert the remote never receives it — the whitelist's whole purpose is the directory nobody listed (`feature-nobody-predicted-2026`, invented at runtime, stays untracked)
+- [x] Drop a stray `.env` at the workbench root and confirm `git status` leaves it untracked — and that the context which SHOULD travel still does, so this cannot pass by ignoring everything
+- [x] `indusk update` on a workbench with a missing repo prints the nudge and performs no network operation — run against a workbench declaring an unreachable `ghost` repo. The run also caught `missingIgnoreRules` still checking for `/*/` after the emitted rule became `/*`: the generator and its checker had drifted, so a correct workbench reported a gap
 
 #### Build Phase 4 Context
-- [ ] Add to Known Gotchas: the workbench `.gitignore` is a whitelist because worktree directories appear at the root with unpredicted names — a blacklist silently starts tracking the next one
+- [x] Add to Known Gotchas: the workbench `.gitignore` is a whitelist because worktree directories appear at the root with unpredicted names — a blacklist silently starts tracking the next one. Folded into the versioned-workbench Conventions entry with the `/*` vs `/*/` symlink reason and the ignoring-is-not-untracking rule
 
 #### Build Phase 4 Document
-- [ ] Document the whitelist shape and the out-of-band set in the sharing guide, including why the ignore file is inverted
+- [x] Document the whitelist shape and the out-of-band set in the sharing guide, including why the ignore file is inverted — added to `/reference/cli/workbench` as "The sharing rules it scaffolds", covering both reasons for inversion and the ignoring-is-not-untracking trap
 
 ### Build Phase 5: Keep the refusal
 

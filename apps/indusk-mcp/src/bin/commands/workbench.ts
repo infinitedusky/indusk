@@ -8,6 +8,7 @@ import {
 	readWorkbenchRepos,
 	type WorkbenchRepo,
 } from "../../lib/worktree/repos.js";
+import { ensureShareableScaffolding, untrackNowIgnored } from "../../lib/worktree/shareable.js";
 
 /**
  * `indusk workbench restore` — materialize a workbench that has only been
@@ -170,6 +171,21 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
 
 	console.info(`Workbench: ${projectRoot}`);
 	console.info(`Repos (${repos.length}): ${repos.map((r) => r.name).join(", ")}`);
+
+	// Scaffolded here rather than at git-init time so a workbench that was
+	// made shareable by hand (the POC's path) still gets the rules, and so the
+	// ignore file exists BEFORE anything can be committed. Never overwrites.
+	const scaffold = ensureShareableScaffolding(projectRoot);
+	if (scaffold.created.length > 0) {
+		console.info(`Scaffolded: ${scaffold.created.join(", ")}`);
+	}
+	// Ignoring a path does not untrack it. A workbench git-initialized before
+	// these rules existed keeps publishing its symlinks and secrets while
+	// `git status` looks clean.
+	const untracked = untrackNowIgnored(projectRoot);
+	if (untracked.length > 0) {
+		console.info(`Untracked ${untracked.length} now-ignored path(s) (index only, files kept)`);
+	}
 	console.info("");
 
 	// Every repo is attempted. A first failure must not decide the fate of the

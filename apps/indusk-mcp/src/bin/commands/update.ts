@@ -1,12 +1,14 @@
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { loadExtension } from "../../lib/extension-loader.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
+import { readSiblingParent, readWorkbenchRepos } from "../../lib/worktree/repos.js";
+import { missingIgnoreRules } from "../../lib/worktree/shareable.js";
 import { envIsFunctional } from "./extensions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -752,6 +754,13 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 	}
 
+	// Workbench topology check — NUDGE ONLY, never a clone.
+	//
+	// `update` runs constantly, must stay fast, and must work offline; a network
+	// clone as a side effect of a routine sync is a surprise nobody asked for.
+	// So it notices and points at `workbench restore` rather than doing it.
+	nudgeUnmaterializedRepos(projectRoot);
+
 	console.info("\nDone.");
 
 	// Non-blocking version notice. Uses the 6h-cached lookup so we don't
@@ -769,5 +778,39 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 	} catch {
 		// Best-effort — never let the notice break the update.
+	}
+}
+
+/**
+ * Tell the developer when declared repos are not on disk.
+ *
+ * The counterpart to `restore` living in its own command: a developer who
+ * clones a workbench has no reason to know `restore` exists, and `update` is
+ * the command they WILL run. Noticing costs a few `existsSync` calls and no
+ * network.
+ */
+function nudgeUnmaterializedRepos(projectRoot: string): void {
+	const repos = readWorkbenchRepos(projectRoot);
+	if (repos.length === 0) return;
+
+	const declaredParent = readSiblingParent(projectRoot);
+	const parent =
+		declaredParent && existsSync(resolvePath(declaredParent))
+			? resolvePath(declaredParent)
+			: resolvePath(projectRoot, "..");
+
+	const missing = repos.filter((r) => !existsSync(join(parent, r.name, ".git")));
+	if (missing.length === 0) return;
+
+	console.info("");
+	console.info(
+		`Workbench: ${missing.length} of ${repos.length} declared repo(s) are not materialized — ${missing
+			.map((r) => r.name)
+			.join(", ")}`,
+	);
+	console.info("  Run `indusk workbench restore` to clone them and relink the trunks.");
+	const ignoreGaps = missingIgnoreRules(projectRoot);
+	if (ignoreGaps.length > 0) {
+		console.info(`  (it will also scaffold the sharing rules — ${ignoreGaps[0]})`);
 	}
 }

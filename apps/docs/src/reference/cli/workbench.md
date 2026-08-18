@@ -88,6 +88,52 @@ Note: worktree.sibling_parent points at /Users/someone-else/code/x, which does
 That fallback is the topology `indusk setup` actually builds — `<parent>/<repo>`
 beside `<parent>/<repo>-workbench` — not a guess.
 
+## The sharing rules it scaffolds
+
+`restore` writes two files when they are absent, and never rewrites them — a
+hand-tuned ignore file is a decision somebody made, not drift.
+
+**`.gitignore` is a root whitelist, not a blacklist.** Everything at the root is
+denied, then specific entries are opted back in:
+
+```gitignore
+/*
+!/.indusk/
+!/.claude/
+!/env/
+!/scripts/
+!/docs/
+!/package.json
+...
+```
+
+Two reasons it is inverted:
+
+- **Worktree directories get names invented at runtime.** `indusk worktree
+  create <slug>` can produce any name, so a deny-list is always one command
+  behind — and the thing it misses is a whole checkout of another repo
+  committed into your context remote.
+- **The rule is `/*`, not `/*/`.** Git stores a trunk symlink as a *blob*, not
+  a directory, so a directory-only rule leaves every trunk link tracked.
+
+**`.gitattributes`** sets `merge=union` on the append-shaped coordination files
+(`current.md`, `highlights.jsonl`) — two machines appending different lines both
+mean it, and a conflict marker there blocks every agent on both sides. It is
+deliberately *not* applied to plan documents, where a blind union interleaves
+prose.
+
+### Ignoring is not untracking
+
+Adding an ignore rule does nothing to a file that is already tracked. A
+workbench git-initialized before these rules keeps publishing its symlinks and
+secrets to the shared remote while `git status` looks perfectly clean. `restore`
+therefore also drops now-ignored paths from the **index** (`--cached` — the
+files stay on disk):
+
+```
+Untracked 3 now-ignored path(s) (index only, files kept)
+```
+
 ## Why not `init` or `update`?
 
 `indusk init` is written to *refuse* an already-initialized workbench; a cloned
