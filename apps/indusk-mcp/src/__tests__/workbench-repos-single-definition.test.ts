@@ -32,7 +32,9 @@ const SRC = join(PKG, "src");
 function grepCode(pattern: string, dir: string): string[] {
 	let out: string;
 	try {
-		out = execFileSync("grep", ["-rn", "--include", "*.ts", "-E", pattern, dir], { encoding: "utf-8" });
+		out = execFileSync("grep", ["-rn", "--include", "*.ts", "-E", pattern, dir], {
+			encoding: "utf-8",
+		});
 	} catch {
 		return []; // grep exits 1 on no matches
 	}
@@ -70,13 +72,59 @@ describe("readWorkbenchRepos is single-definition", () => {
 		// in the file, and pin that the naming exists.
 		const hook = readFileSync(join(PKG, "hooks", "_hook-paths.js"), "utf-8");
 		expect(hook).toContain("declaredRepoNames");
-        expect(hook).toMatch(/port of .*readWorkbenchRepos|readWorkbenchRepos.*repos\.ts/s);
+		expect(hook).toMatch(/port of .*readWorkbenchRepos|readWorkbenchRepos.*repos\.ts/s);
+	});
+});
+
+describe("the bash lane resolves the repo set once", () => {
+	const EXT = join(PKG, "extensions", "worktree");
+
+	it("defines _read_workbench_repos exactly once", () => {
+		const hits = (() => {
+			try {
+				return execFileSync("grep", ["-rn", "-E", "^_read_workbench_repos\\(\\)", EXT], {
+					encoding: "utf-8",
+				})
+					.trim()
+					.split("\n")
+					.filter(Boolean);
+			} catch {
+				return [];
+			}
+		})();
+		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(hits[0]).toContain("scripts/lib/workbench-helpers.sh");
+	});
+
+	it("leaves no script reading the singular field directly", () => {
+		// `_read_workbench_field wrapped_repo` skips the reduction. In the shell
+		// lane that bypass is invisible — no compiler, no types, and the failure
+		// surfaces as a workbench that silently refuses to make a worktree.
+		let hits: string[] = [];
+		try {
+			hits = execFileSync("grep", ["-rn", "_read_workbench_field wrapped_repo", EXT], {
+				encoding: "utf-8",
+			})
+				.trim()
+				.split("\n")
+				.filter(Boolean);
+		} catch {
+			hits = [];
+		}
+		expect(hits, `these bypass _read_workbench_repos:\n${hits.join("\n")}`).toHaveLength(0);
+	});
+
+	it("marks the helper as a deliberate port of the TypeScript resolver", () => {
+		const helpers = readFileSync(join(EXT, "scripts", "lib", "workbench-helpers.sh"), "utf-8");
+		expect(helpers).toMatch(/DELIBERATE PORT/i);
+		expect(helpers).toContain("repos.ts");
 	});
 });
 
 describe("the singular reduces to the plural", () => {
 	it("is the backward-compatibility guarantee, not a claim about one", () => {
-		const { mkdtempSync, mkdirSync, writeFileSync } = require("node:fs") as typeof import("node:fs");
+		const { mkdtempSync, mkdirSync, writeFileSync } =
+			require("node:fs") as typeof import("node:fs");
 		const { tmpdir } = require("node:os") as typeof import("node:os");
 
 		const mk = (worktree: unknown): string => {
@@ -87,17 +135,19 @@ describe("the singular reduces to the plural", () => {
 		};
 
 		expect(readWorkbenchRepos(mk({ wrapped_repo: "solo" }))).toEqual([{ name: "solo" }]);
-		expect(readWorkbenchRepos(mk({ repos: [{ name: "a" }, { name: "b", remote: "git@x:b.git" }] }))).toEqual([
-			{ name: "a" },
-			{ name: "b", remote: "git@x:b.git" },
-		]);
+		expect(
+			readWorkbenchRepos(mk({ repos: [{ name: "a" }, { name: "b", remote: "git@x:b.git" }] })),
+		).toEqual([{ name: "a" }, { name: "b", remote: "git@x:b.git" }]);
 		// repos[] wins when both are present — otherwise a half-migrated config
 		// silently keeps using the legacy field.
-		expect(readWorkbenchRepos(mk({ wrapped_repo: "old", repos: [{ name: "new" }] }))).toEqual([{ name: "new" }]);
+		expect(readWorkbenchRepos(mk({ wrapped_repo: "old", repos: [{ name: "new" }] }))).toEqual([
+			{ name: "new" },
+		]);
 	});
 
 	it("drops names that are not clean path segments, and dedupes", () => {
-		const { mkdtempSync, mkdirSync, writeFileSync } = require("node:fs") as typeof import("node:fs");
+		const { mkdtempSync, mkdirSync, writeFileSync } =
+			require("node:fs") as typeof import("node:fs");
 		const { tmpdir } = require("node:os") as typeof import("node:os");
 		const root = mkdtempSync(join(tmpdir(), "repos-red-"));
 		mkdirSync(join(root, ".indusk"), { recursive: true });

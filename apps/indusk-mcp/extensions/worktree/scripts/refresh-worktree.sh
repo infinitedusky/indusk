@@ -33,17 +33,13 @@ ARG="${1:?Usage: refresh-worktree.sh <slug|--all>}"
 WORKBENCH_ROOT="$(_resolve_workbench_root)"
 export WORKBENCH_ROOT
 
-WRAPPED_REPO="$(_read_workbench_field wrapped_repo)"
-if [[ -z "$WRAPPED_REPO" ]]; then
-	echo "Error: .indusk/config.json missing worktree.wrapped_repo" >&2
-	exit 1
-fi
+REPO="$(_resolve_workbench_repo "${REPO_ARG:-}")"
 
 SIBLING_PARENT_RAW="$(_read_workbench_field sibling_parent)"
 SIBLING_PARENT="$(_expand_path "$SIBLING_PARENT_RAW")"
-CLIENT_ROOT="$SIBLING_PARENT/$WRAPPED_REPO"
+CLIENT_ROOT="$SIBLING_PARENT/$REPO"
 
-CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${WRAPPED_REPO}.json"
+CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${REPO}.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
 	echo "Error: no worktree config at $CONFIG_FILE" >&2
 	exit 1
@@ -59,7 +55,7 @@ refresh_one() {
 		echo "  SKIP: $slug — directory not found"
 		return 0
 	fi
-	if [[ "$slug" == "$WRAPPED_REPO" ]]; then
+	if [[ "$slug" == "$REPO" ]]; then
 		return 0 # trunk symlink, not a worktree
 	fi
 	# Check this is actually a git worktree (has a .git file pointing into

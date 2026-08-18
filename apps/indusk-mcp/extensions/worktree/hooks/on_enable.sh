@@ -27,11 +27,18 @@ source "$EXT_DIR/scripts/lib/workbench-helpers.sh"
 WORKBENCH_ROOT="$(_resolve_workbench_root)"
 export WORKBENCH_ROOT
 
-WRAPPED_REPO="$(_read_workbench_field wrapped_repo)"
-if [[ -z "$WRAPPED_REPO" ]]; then
-	echo "Warning: .indusk/config.json missing worktree.wrapped_repo." >&2
-	echo "Worktree extension is enabled but won't function until that field is set." >&2
-	echo "Run 'indusk init --workbench --wrapped-repo <name>' (Phase 6) or hand-edit the config." >&2
+# Every declared repo, not just the first: a workbench that wraps N repos needs
+# N starter configs, and scaffolding only one leaves the others silently
+# unconfigured until someone tries to make a worktree in them.
+DECLARED_REPOS=()
+while IFS= read -r line; do
+	[[ -n "$line" ]] && DECLARED_REPOS+=("$line")
+done < <(_read_workbench_repos 2>/dev/null || true)
+
+if [[ ${#DECLARED_REPOS[@]} -eq 0 ]]; then
+	echo "Warning: .indusk/config.json declares no repos (worktree.repos[] or worktree.wrapped_repo)." >&2
+	echo "Worktree extension is enabled but won't function until one is set." >&2
+	echo "Run 'indusk init --workbench --wrapped-repo <name>' or hand-edit the config." >&2
 	# Don't fail — the extension is enabled, just inert until configured.
 fi
 
@@ -70,17 +77,17 @@ else
 fi
 
 # 3. Materialize starter worktree-config if absent.
-if [[ -n "$WRAPPED_REPO" ]]; then
-	CONFIG_DIR="$WORKBENCH_ROOT/.indusk/worktree-configs"
-	CONFIG_FILE="$CONFIG_DIR/${WRAPPED_REPO}.json"
+CONFIG_DIR="$WORKBENCH_ROOT/.indusk/worktree-configs"
+for REPO_NAME in ${DECLARED_REPOS+"${DECLARED_REPOS[@]}"}; do
+	CONFIG_FILE="$CONFIG_DIR/${REPO_NAME}.json"
 	if [[ ! -f "$CONFIG_FILE" ]]; then
 		mkdir -p "$CONFIG_DIR"
-		sed "s/WRAPPED_REPO_NAME/${WRAPPED_REPO}/g" \
+		sed "s/WRAPPED_REPO_NAME/${REPO_NAME}/g" \
 			"$EXT_DIR/templates/worktree-config.template.json" > "$CONFIG_FILE"
 		echo "  starter config: $CONFIG_FILE"
 	else
 		echo "  starter config: $CONFIG_FILE already exists, leaving in place"
 	fi
-fi
+done
 
 echo "Worktree extension scaffolding complete."

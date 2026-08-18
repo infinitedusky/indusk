@@ -102,14 +102,37 @@ function runWorktreeScript(scriptName: string, args: string[]): never {
 	process.exit(r.status ?? 1);
 }
 
-export function worktreeCreate(slug: string, baseBranch?: string): never {
+/**
+ * `indusk worktree create [repo] <slug> [base-branch]`.
+ *
+ * The repo argument returns from the pre-v1 multi-repo design. Disambiguated
+ * against the DECLARED SET rather than by arity: a leading token is a repo
+ * only if the workbench actually declares it, so `create my-feature` in a
+ * one-repo workbench still means what it always meant, and `create alpha
+ * my-feature` means alpha. Guessing by position would silently reinterpret
+ * every existing single-repo invocation whose slug happened to arrive first.
+ *
+ * When the repo cannot be determined here the args pass through untouched and
+ * `_resolve_workbench_repo` in the shell refuses, naming the candidates —
+ * one refusal, in one place, rather than two that can disagree.
+ */
+export function worktreeCreate(args: string[], projectRoot?: string): never {
+	const declared = new Set(readWorkbenchRepos(projectRoot ?? process.cwd()).map((r) => r.name));
+	const named = args.length >= 2 && declared.has(args[0]);
+	const repo = named ? args[0] : undefined;
+	const [slug, baseBranch] = named ? args.slice(1) : args;
+	return worktreeCreateResolved(slug, baseBranch, repo);
+}
+
+function worktreeCreateResolved(slug: string, baseBranch?: string, repo?: string): never {
 	const pkgRoot = indusKMcpPackageRoot();
 	const script = resolve(pkgRoot, "extensions/worktree/scripts/setup-worktree.sh");
 	if (!existsSync(script)) {
 		console.error(`Error: setup-worktree.sh not found at ${script}`);
 		process.exit(1);
 	}
-	const r = spawnSync("bash", [script, ...(baseBranch ? [slug, baseBranch] : [slug])], {
+	const scriptArgs = [...(repo ? ["--repo", repo] : []), slug, ...(baseBranch ? [baseBranch] : [])];
+	const r = spawnSync("bash", [script, ...scriptArgs], {
 		cwd: process.cwd(),
 		stdio: "inherit",
 	});

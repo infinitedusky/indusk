@@ -50,10 +50,14 @@ describe.skipIf(SHOULD_SKIP)("indusk worktree <subcommand>", () => {
 			});
 			const r = runCli(fixture.workbenchDir, ["worktree", "list"]);
 			expect(r.code, r.stderr).toBe(0);
-			expect(r.stdout).toContain("Wrapped repo: clone");
+			// versioned-workbench: the listing is one block per declared repo.
+			// A legacy `wrapped_repo` workbench reduces to exactly one, which is
+			// what this line now pins — the reduction, seen from the CLI.
+			expect(r.stdout).toContain("Repos (1): clone");
+			expect(r.stdout).toMatch(/^clone$/m);
 			expect(r.stdout).toContain("clone → ../clone");
 			expect(r.stdout).toContain("(config valid)");
-			expect(r.stdout).toMatch(/Worktrees:\s+\(no worktrees\)/);
+			expect(r.stdout).toMatch(/Worktrees:\s+\(none\)/);
 		});
 
 		it("config-missing state: prints '(config missing)' when no worktree-config exists", () => {

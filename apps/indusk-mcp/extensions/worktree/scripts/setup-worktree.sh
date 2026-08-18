@@ -3,16 +3,21 @@
 # single-repo workbench.
 #
 # Usage:
-#   setup-worktree.sh <slug> [base-branch]
+#   setup-worktree.sh [--repo <name>] <slug> [base-branch]
 #
 # Examples:
 #   setup-worktree.sh feat-autoops-cancel-polish
-#   setup-worktree.sh feat-autoops-reschedule main
+#   setup-worktree.sh --repo avoca-next feat-thing main
+#
+# `--repo` names which declared repo to branch from. It is optional when the
+# workbench declares exactly one; with several it is REQUIRED, and omitting it
+# fails naming the candidates rather than defaulting to the first.
 #
 # What it does:
 #   1. Resolves the workbench root (walks up from cwd to find
 #      .indusk/config.json with worktree.shape == "workbench").
-#   2. Reads .indusk/config.json for worktree.wrapped_repo + worktree.sibling_parent.
+#   2. Resolves which declared repo to use (worktree.repos[], legacy
+#      wrapped_repo reduced) + worktree.sibling_parent.
 #   3. Reads .indusk/worktree-configs/<repo>.json for trunk_branch, base_branch,
 #      copy_files[], append_files[], apply_commits[].
 #   4. Creates a worktree at <workbench>/<slug>, branched off <base-branch>
@@ -33,17 +38,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/workbench-helpers.sh
 source "$SCRIPT_DIR/lib/workbench-helpers.sh"
 
-SLUG="${1:?Usage: setup-worktree.sh <slug> [base-branch]}"
+REPO_ARG=""
+if [[ "${1:-}" == "--repo" ]]; then
+	REPO_ARG="${2:?--repo requires a repo name}"
+	shift 2
+fi
+SLUG="${1:?Usage: setup-worktree.sh [--repo <name>] <slug> [base-branch]}"
 BASE_BRANCH_ARG="${2:-}"
 
 WORKBENCH_ROOT="$(_resolve_workbench_root)"
 export WORKBENCH_ROOT
 
-WRAPPED_REPO="$(_read_workbench_field wrapped_repo)"
-if [[ -z "$WRAPPED_REPO" ]]; then
-	echo "Error: .indusk/config.json missing worktree.wrapped_repo (required in single-repo workbench mode)" >&2
-	exit 1
-fi
+# One resolver for "which repo" — refuses rather than guessing when the
+# workbench declares several and the caller named none.
+REPO="$(_resolve_workbench_repo "$REPO_ARG")"
 
 SIBLING_PARENT_RAW="$(_read_workbench_field sibling_parent)"
 if [[ -z "$SIBLING_PARENT_RAW" ]]; then
@@ -52,26 +60,26 @@ if [[ -z "$SIBLING_PARENT_RAW" ]]; then
 fi
 SIBLING_PARENT="$(_expand_path "$SIBLING_PARENT_RAW")"
 
-CLIENT_ROOT="$SIBLING_PARENT/$WRAPPED_REPO"
+CLIENT_ROOT="$SIBLING_PARENT/$REPO"
 if [[ ! -d "$CLIENT_ROOT/.git" ]]; then
 	echo "Error: $CLIENT_ROOT is not a git repo" >&2
 	exit 1
 fi
 
-CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${WRAPPED_REPO}.json"
+CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${REPO}.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
 	echo "Error: no worktree config at $CONFIG_FILE" >&2
 	echo "Run 'indusk extensions enable worktree' to scaffold the starter, or hand-create the file." >&2
 	exit 1
 fi
 
-TRUNK_BRANCH="$(_read_worktree_config "$WRAPPED_REPO" '.trunk_branch // "main"')"
-CONFIG_BASE_BRANCH="$(_read_worktree_config "$WRAPPED_REPO" '.base_branch // .trunk_branch // "main"')"
+TRUNK_BRANCH="$(_read_worktree_config "$REPO" '.trunk_branch // "main"')"
+CONFIG_BASE_BRANCH="$(_read_worktree_config "$REPO" '.base_branch // .trunk_branch // "main"')"
 BASE_BRANCH="${BASE_BRANCH_ARG:-$CONFIG_BASE_BRANCH}"
 
 # Reject slug collisions with the wrapped repo's name (resolution would be
 # ambiguous; the trunk lives at that path).
-if [[ "$SLUG" == "$WRAPPED_REPO" ]]; then
+if [[ "$SLUG" == "$REPO" ]]; then
 	echo "Error: slug '$SLUG' collides with the wrapped repo name; pick a different slug" >&2
 	exit 1
 fi
@@ -91,7 +99,7 @@ BRANCH_NAME="$SLUG"
 
 echo "Setting up worktree:"
 echo "  Workbench:    $WORKBENCH_ROOT"
-echo "  Wrapped repo: $WRAPPED_REPO"
+echo "  Wrapped repo: $REPO"
 echo "  Slug:         $SLUG"
 echo "  Branch:       $BRANCH_NAME (off $BASE_BRANCH)"
 echo "  Trunk:        $TRUNK_BRANCH"

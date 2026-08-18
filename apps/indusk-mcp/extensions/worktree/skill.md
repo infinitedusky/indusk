@@ -23,10 +23,10 @@ A workbench is an indusk project with this shape:
 ```
 my-workbench/                  # the indusk project
 ├── .indusk/                   # single source of truth — plans, eval, highlights, worktree-configs
-│   ├── config.json            # `worktree.shape: "workbench"` + `worktree.wrapped_repo` + `worktree.sibling_parent`
+│   ├── config.json            # `worktree.shape: "workbench"` + `worktree.repos[]` (legacy `wrapped_repo` reduces) + `worktree.sibling_parent`
 │   └── worktree-configs/
 │       └── <repo>.json        # per-wrapped-repo config (copy_files, apply_commits, preflight, etc.)
-├── <repo>                     # symlink → canonical clone (the trunk; name matches `wrapped_repo`)
+├── <repo>                     # symlink → canonical clone (one trunk per declared repo)
 ├── <slug-1>/                  # active worktree (git worktree add'd from the trunk)
 ├── <slug-2>/                  # another active worktree
 ├── ce.json                    # LEGACY composable.env config (deprecated — doppler is the default env layer); optional `composeProjectName: "<repo>"`
@@ -55,9 +55,9 @@ Four state-management commands, all run from the workbench root:
 
 ### `indusk worktree create <slug> [base-branch]`
 
-Creates a new worktree at `<workbench-root>/<slug>/`, branched off `<base-branch>` (default per `.indusk/worktree-configs/<wrapped_repo>.json`'s `base_branch`). Applies the config's `copy_files[]` and `append_files[]` declarations. Applies any `apply_commits[]` entries as **upstream-file-overlay** (full-file replacement via `git show <sha>:<file>` followed by `git update-index --skip-worktree`), NOT cherry-pick — the overlay files are invisible to `git status` / `git diff` / `git commit -a`. After setup, env is **auto-provisioned** (doppler extension, if configured) and the config's **`post_create[]`** shell commands run in order inside the new worktree — `pnpm install`, build, anything — so `create` yields a *runnable* worktree in one shot, not a bare checkout. A `post_create` command that exits non-zero stops the rest and prints what to re-run. Idempotent: invoking twice with the same `<slug>` exits non-zero with "worktree already exists at <path>".
+Creates a new worktree at `<workbench-root>/<slug>/`, branched off `<base-branch>` (default per `.indusk/worktree-configs/<repo>.json`'s `base_branch`, keyed by the resolved repo). Applies the config's `copy_files[]` and `append_files[]` declarations. Applies any `apply_commits[]` entries as **upstream-file-overlay** (full-file replacement via `git show <sha>:<file>` followed by `git update-index --skip-worktree`), NOT cherry-pick — the overlay files are invisible to `git status` / `git diff` / `git commit -a`. After setup, env is **auto-provisioned** (doppler extension, if configured) and the config's **`post_create[]`** shell commands run in order inside the new worktree — `pnpm install`, build, anything — so `create` yields a *runnable* worktree in one shot, not a bare checkout. A `post_create` command that exits non-zero stops the rest and prints what to re-run. Idempotent: invoking twice with the same `<slug>` exits non-zero with "worktree already exists at <path>".
 
-The `<repo>` argument from the multi-repo design is dropped — single-repo workbenches know their wrapped repo from `worktree.wrapped_repo` in `.indusk/config.json`.
+The `<repo>` argument is BACK (versioned-workbench): `indusk worktree create [repo] <slug> [base-branch]`. It is optional when the workbench declares exactly one repo; with several it is required, and omitting it fails naming the candidates rather than picking the first. A leading token counts as a repo only when the workbench actually declares it, so existing single-repo invocations keep their meaning.
 
 ### `indusk worktree refresh <slug>`
 
@@ -93,7 +93,7 @@ Examples (workbench is wrapping `numero`):
 - `pnpm wt numero lint` — cd to `<workbench>/numero/` (the trunk symlink), run `pnpm lint`
 - `pnpm wt cancel-polish ce dc:up local` — cd to `<workbench>/cancel-polish/`, run `pnpm ce dc:up local` (ce reads the worktree's env)
 
-The trunk is addressable by its repo name (`pnpm wt numero ...`). No `pnpm wt trunk` alias — keeps the surface minimal; the repo name is already in `worktree.wrapped_repo` config and stable.
+Each trunk is addressable by its repo name (`pnpm wt numero ...`). No `pnpm wt trunk` alias — keeps the surface minimal; the names are already in `worktree.repos[]` and stable.
 
 ### Composing with composable.env (legacy — deprecated in favor of doppler)
 

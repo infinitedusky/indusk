@@ -585,13 +585,13 @@ worktreeCmd
 	});
 
 worktreeCmd
-	.command("create <slug> [base-branch]")
+	.command("create <args...>")
 	.description(
-		"Create a worktree at <workbench>/<slug>, branched off [base-branch] (default: config's base_branch or main)",
+		"Create a worktree: `create [repo] <slug> [base-branch]`. The repo is optional when the workbench declares exactly one; with several it is required, and omitting it fails naming the candidates.",
 	)
-	.action(async (slug: string, baseBranch?: string) => {
+	.action(async (args: string[]) => {
 		const { worktreeCreate } = await import("./commands/worktree.js");
-		worktreeCreate(slug, baseBranch);
+		worktreeCreate(args, rootOrExit());
 	});
 
 worktreeCmd

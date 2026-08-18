@@ -329,6 +329,19 @@ export function buildTwoRepoWorkbench(opts: TwoRepoOptions = {}): TwoRepoFixture
 		JSON.stringify({ name: "two-repo-workbench", version: "0.0.0", private: true }, null, 2),
 	);
 
+	// A starter worktree-config PER declared repo — what `on_enable.sh` does
+	// for a real workbench. Without it `worktree create` refuses on a missing
+	// config, which is a correct refusal about the wrong thing and makes a
+	// routing test look like a routing failure.
+	const worktreeConfigsDir = join(workbenchDir, ".indusk", "worktree-configs");
+	mkdirSync(worktreeConfigsDir, { recursive: true });
+	for (const name of TWO_REPO_NAMES) {
+		writeFileSync(
+			join(worktreeConfigsDir, `${name}.json`),
+			JSON.stringify({ trunk_branch: "main", base_branch: "main" }, null, 2),
+		);
+	}
+
 	if (opts.materialize) {
 		for (const [i, name] of TWO_REPO_NAMES.entries()) {
 			git(root, ["clone", "-q", remotes[i], join(root, name)]);

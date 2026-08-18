@@ -2,7 +2,12 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
+import {
+	buildTwoRepoWorkbench,
+	buildWorktreeFixture,
+	type TwoRepoFixture,
+	type WorktreeFixture,
+} from "./helpers/worktree-fixture.js";
 
 /**
  * A13 / A14 — a workbench that wraps more than one repo.
@@ -24,9 +29,11 @@ const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
 const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
 
 let fixture: TwoRepoFixture;
+let legacy: WorktreeFixture;
 
 afterEach(() => {
 	fixture?.cleanup();
+	legacy?.cleanup();
 });
 
 function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
@@ -137,12 +144,18 @@ describe.skipIf(SHOULD_SKIP)("A14 — creating a worktree names its repo", () =>
 	});
 
 	it("does not require the repo argument when only one is declared", { timeout: 30_000 }, () => {
-		// The reduction: a single-repo workbench must keep working untouched,
-		// which is the whole backward-compatibility claim. A claim about it is
-		// worth nothing; this is the check.
-		fixture = buildTwoRepoWorkbench({ materialize: true, omitRemoteFor: "beta" });
+		// The reduction, end-to-end through the SHELL lane: a legacy
+		// single-repo workbench (`wrapped_repo`, no `repos[]`) must keep
+		// working with the exact command it always used.
+		//
+		// Uses the legacy single-repo fixture deliberately. An earlier version
+		// of this test built a TWO-repo workbench and passed the repo argument
+		// explicitly — so it asserted nothing about the N=1 path it is named
+		// for, and the backward-compatibility claim went unchecked.
+		legacy = buildWorktreeFixture();
 
-		const { code } = runCli(fixture.workbenchDir, ["worktree", "create", "alpha", "solo-feature"]);
-		expect(code).toBe(0);
+		const { code, stderr } = runCli(legacy.workbenchDir, ["worktree", "create", "solo-feature"]);
+		expect(code, stderr).toBe(0);
+		expect(existsSync(join(legacy.workbenchDir, "solo-feature"))).toBe(true);
 	});
 });

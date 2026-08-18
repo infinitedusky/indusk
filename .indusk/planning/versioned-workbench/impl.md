@@ -147,24 +147,26 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 **Goal**: the four shell consumers, where 35 of the 80 `wrapped_repo` occurrences live and nothing type-checks a missed site.
 
-- [ ] Write `_read_workbench_repos` as one shared sourced helper under `extensions/worktree/scripts/`
-- [ ] Convert `setup-worktree.sh` (12 occurrences)
-- [ ] Convert `on_enable.sh` (10 occurrences)
-- [ ] Convert `refresh-worktree.sh` (7 occurrences)
-- [ ] Convert `preflight.sh` (6 occurrences)
-- [ ] Restore the `<repo>` argument: `indusk worktree create <repo> <slug>`, optional at N=1, refusing with the declared list when ambiguous
-- [ ] Pin single-definition for the bash helper the same way as the TypeScript one
+- [x] Write `_read_workbench_repos` as one shared sourced helper under `extensions/worktree/scripts/` — added to the existing `scripts/lib/workbench-helpers.sh` rather than a new file, alongside `_resolve_workbench_repo`. The reduction is jq, and deliberately avoids `unique` (it sorts, and declared order is meaningful — the first repo is the implied one at N=1)
+- [x] Convert `setup-worktree.sh` (12 occurrences) — gains `[--repo <name>]`, a flag rather than a positional so there is no arity ambiguity with `<slug> [base-branch]`
+- [x] Convert `on_enable.sh` (10 occurrences) — now scaffolds a starter worktree-config **per declared repo**; scaffolding only the first would leave the others silently unconfigured until someone tried to make a worktree in them
+- [x] Convert `refresh-worktree.sh` (7 occurrences)
+- [x] Convert `preflight.sh` (6 occurrences)
+- [x] Restore the `<repo>` argument: `indusk worktree create <repo> <slug>`, optional at N=1, refusing with the declared list when ambiguous. **Disambiguated against the declared set, not by arity** — a leading token is a repo only if the workbench declares it, so every existing single-repo `create my-feature` keeps its old meaning instead of being reinterpreted as a repo name
+- [x] Pin single-definition for the bash helper the same way as the TypeScript one — one `_read_workbench_repos` definition, zero `_read_workbench_field wrapped_repo` callers left, and the DELIBERATE PORT marker present so the pairing is checkable by reading two filenames
+
+- [x] **Shape** — `setup-worktree.sh` / `refresh-worktree.sh` / `preflight.sh`: rename the local `WRAPPED_REPO` to `REPO`. (Applied with `perl`, not `sed`: BSD `sed` on macOS does not support `\b` and **silently changes nothing** — the first attempt reported success while renaming zero occurrences. Same class as the half-applied python patches earlier in this plan; the count check is what caught it.) It no longer holds "the single wrapped repo" — it holds the one repo this invocation resolved to, out of N. Stale vocabulary is expensive precisely here: the shell lane has no type checker, so a reader's mental model is the only model. Confined to these three files (`WRAPPED_REPO_NAME` is a separate template placeholder living only in `on_enable.sh` + the template, and must not be touched). Rule: *typescript / testing — a name should say what the value is for, not what it used to be.*
 
 #### Build Phase 2 Verification
-- [ ] A14 passes — named repo targets that repo; ambiguity refuses listing the declared repos (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] `grep -rn 'wrapped_repo\|WRAPPED_REPO' apps/indusk-mcp/extensions apps/indusk-mcp/src apps/indusk-mcp/hooks` returns only the reduction site and prose — a scripted census, not a reading, because a manual survey of copies undercounts
-- [ ] Each converted script runs standalone under `set -u` with an N=1 config, proving the reduction holds in bash and not only in TypeScript
+- [x] A14 passes — named repo targets that repo; ambiguity refuses listing the declared repos (`pnpm exec vitest run src/__tests__/workbench-multi-repo.test.ts`, 5/5)
+- [x] `grep -rn 'wrapped_repo\|WRAPPED_REPO' apps/indusk-mcp/extensions apps/indusk-mcp/src apps/indusk-mcp/hooks` returns only the reduction site and prose — a scripted census, not a reading, because a manual survey of copies undercounts. **Run 2026-08-17**: zero `_read_workbench_field wrapped_repo` callers remain; the only field reads left are `_hook-paths.js`'s documented port and `repos.ts`/`config.ts` themselves. The census also caught three stale claims in `skill.md` (including "the `<repo>` argument is dropped", now false), fixed in this phase's Document gate
+- [x] Each converted script runs standalone under `set -u` with an N=1 config, proving the reduction holds in bash and not only in TypeScript — all four resolve `solo` from a legacy `wrapped_repo` config; `REPO_ARG` is read as `${REPO_ARG:-}` in the two scripts that never set it, so `set -u` cannot trip on it
 
 #### Build Phase 2 Context
-- [ ] Add to Known Gotchas: the bash lane reads the repo set through one sourced helper; a hand-rolled `jq`/`node -e` read in a new script is a silent divergence with no type checker to catch it
+- [x] Add to Known Gotchas: the bash lane reads the repo set through one sourced helper; a hand-rolled `jq`/`node -e` read in a new script is a silent divergence with no type checker to catch it — folded into the existing versioned-workbench Conventions entry (rule + pointer, per the budget discipline) along with the BSD-`sed`-has-no-`\b` trap. CLAUDE.md 44,500 / 61,440 bytes (72%)
 
 #### Build Phase 2 Document
-- [ ] Update the worktree extension skill: `worktree create <repo> <slug>`, when the repo argument is required, and what the ambiguity refusal says
+- [x] Update the worktree extension skill: `worktree create <repo> <slug>`, when the repo argument is required, and what the ambiguity refusal says — plus **five stale claims the census caught**, including the line asserting "the `<repo>` argument from the multi-repo design is dropped", which this phase made false. The only `wrapped_repo` mentions left are the two that deliberately describe the legacy shape reducing
 
 ### Build Phase 3: `indusk workbench restore`
 
