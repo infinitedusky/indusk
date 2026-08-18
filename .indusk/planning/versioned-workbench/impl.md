@@ -53,10 +53,10 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | ID | Asserts | Writable at | Passes at | State | Scope | Test |
 |----|---------|-------------|-----------|-------|-------|------|
 | A13 | A two-repo workbench presents both as trunks, each with its own worktrees listed under it | Test Phase 1 | Build Phase 1 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
-| A14 | `worktree create` makes the worktree in the repo named; ambiguity fails listing the declared repos rather than picking one | Test Phase 1 | Build Phase 2 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
-| A10 | One documented command clones every declared repo beside the workbench and links it in, with nothing cloned or linked by hand | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A11 | Re-running that command reports every repo already present and changes nothing on disk | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A12 | One unreachable repo names itself, leaves the others materialized, and completes on re-run after the fix | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
+| A14 | `worktree create` makes the worktree in the repo named; ambiguity fails listing the declared repos rather than picking one | Test Phase 1 | Build Phase 2 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
+| A10 | One documented command clones every declared repo beside the workbench and links it in, with nothing cloned or linked by hand | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
+| A11 | Re-running that command reports every repo already present and changes nothing on disk | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
+| A12 | One unreachable repo names itself, leaves the others materialized, and completes on re-run after the fix | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 | A15 | The out-of-band list is shown in full, and no file on it is present in the shared remote | Test Phase 1 | Build Phase 4 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 | A8 | Trunk symlinks, worktree dirs, the doppler token, and per-app env pulls never appear in the shared remote | Test Phase 1 | Build Phase 4 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A17 | Verification never reports checked-off work as phantom on a diff that could not have contained the code — it checks the code's repo or refuses naming what it could not identify | Test Phase 1 | Build Phase 5 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-verify-refusal.test.ts` |
@@ -66,7 +66,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A5 | Concurrent appends to `current.md` and `highlights.jsonl` both survive the merge | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
 | A6 | With the remote unreachable, edits still commit and work is never blocked; changes arrive after it returns | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-offline.test.ts` |
 | A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
-| A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
+| A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
 | A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | written | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
 
 ### Deferred Verification
@@ -170,25 +170,27 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 ### Build Phase 3: `indusk workbench restore`
 
-- [ ] Add the `indusk workbench` command group with `restore` as its first verb
-- [ ] Clone each declared repo missing at `<sibling_parent>/<name>`; skip and name any repo with no `remote`
-- [ ] Create or repair each trunk symlink using a relative target, so the workbench stays portable
-- [ ] `--worktrees` recreates declared worktrees via the existing `indusk worktree create`
-- [ ] Idempotence: re-running reports each repo already present and writes nothing
-- [ ] Partial-failure contract — a failed clone names the repo and its remote, the other repos still materialize, and the command exits non-zero
-- [ ] Never abort the loop on the first failure; collect and report every failure at the end
+- [x] Add the `indusk workbench` command group with `restore` as its first verb
+- [x] Clone each declared repo missing at `<sibling_parent>/<name>`; skip and name any repo with no `remote` — "no remote" is only a failure when the repo is also **absent from disk**. A locally-created repo that is already there needs no remote, and failing it would make restore permanently red on a legitimate workbench
+- [x] Create or repair each trunk symlink using a relative target, so the workbench stays portable — repairs a link pointing elsewhere, leaves a correct one untouched, and refuses to remove a real directory sitting at that path. Dangling links need `lstat`, not `existsSync`, which follows the link and reports absence
+- [x] `--worktrees` accepted, and honestly reports that **no worktree manifest is read yet** — `worktree.worktrees[]` is not in the schema, so recreating from it would be a flag that silently does nothing. Deferred to the phase that adds the declaration; a flag claiming work it cannot do is worse than an absent flag
+- [x] Idempotence: re-running reports each repo already present and writes nothing — A11 asserts it by diffing a full tree snapshot, not by trusting the exit code
+- [x] Partial-failure contract — a failed clone names the repo and its remote, the other repos still materialize, and the command exits non-zero
+- [x] Never abort the loop on the first failure; collect and report every failure at the end — otherwise restoring an N-repo workbench becomes a lottery decided by declaration order
+
+- [x] **Found by the real-workbench run** — `sibling_parent` is an absolute, machine-specific path committed to the SHARED context repo. avoca's says `/Users/sandycorsillo/code/lazer/avoca`; on another machine that directory does not exist and restore reports every repo missing. A fixture can never catch this, because a fixture sets `sibling_parent` to its own tmpdir. Resolve it as: declared-and-exists → use it; declared-and-missing → say so and fall back to the workbench's parent; absent → the workbench's parent. "Beside the workbench" is the topology `indusk setup` actually builds, so the parent is the right default rather than a guess
 
 #### Build Phase 3 Verification
-- [ ] A10, A11, A12 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] A12 specifically asserts the **failure** path: named repo, preserved siblings, non-zero exit — a restore that clones half and exits 0 must be a test failure, not a warning
-- [ ] Run `indusk workbench restore` verbatim from the docs against a real clone of the avoca workbench — a library is not shipped until its documented invocation has been run as written
-- [ ] Re-run against an already-materialized workbench and diff the tree: zero changes
+- [x] A10, A11, A12 pass (`pnpm exec vitest run src/__tests__/workbench-restore.test.ts`) — A1 flipped green early too, since clone+restore is exactly what it observes
+- [x] A12 specifically asserts the **failure** path: named repo, preserved siblings, non-zero exit — a restore that clones half and exits 0 must be a test failure, not a warning. Confirmed out-of-band too: the real avoca clone exits **1** (an earlier reading of `0` was my harness reporting `head`'s status through a pipe, not node's)
+- [x] Run `indusk workbench restore` verbatim from the docs against a real clone of the avoca workbench — a library is not shipped until its documented invocation has been run as written. **This single run found what no fixture could**: (1) the committed `sibling_parent` names another machine's home directory, fixed above; (2) `config.json` declares ONE repo while `workbench.json` declares TWO — the drift D2 rejected the separate manifest to prevent, already live in production; (3) a legacy `wrapped_repo` workbench carries no `remote`, so restore correctly refuses rather than pretending. The temp clone was removed afterwards; the live workbench was never written to
+- [x] Re-run against an already-materialized workbench and diff the tree: zero changes (A11's full-tree snapshot)
 
 #### Build Phase 3 Context
-- [ ] Add to Conventions: `indusk workbench restore` materializes a cloned workbench; partial failure is loud and non-zero; `init` and `update` never clone
+- [x] Add to Conventions: `indusk workbench restore` materializes a cloned workbench; partial failure is loud and non-zero; `init` and `update` never clone — plus the `sibling_parent` fallback, folded into the existing versioned-workbench entry as rule + pointer
 
 #### Build Phase 3 Document
-- [ ] Write `apps/docs/src/reference/cli/workbench.md` — flags, idempotence, the partial-failure contract; add it to the VitePress sidebar (`apps/docs/src/.vitepress/config.ts`, not the stale root scaffold)
+- [x] Write `apps/docs/src/reference/cli/workbench.md` — flags, idempotence, the partial-failure contract; add it to the VitePress sidebar (`apps/docs/src/.vitepress/config.ts`, not the stale root scaffold). Includes the `sibling_parent`-across-machines behavior and why `init`/`update` are the wrong homes
 
 ### Build Phase 4: What never travels
 

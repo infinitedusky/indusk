@@ -95,6 +95,7 @@ const config = defineConfig({
 					text: "CLI",
 					items: [
 						{ text: "setup", link: "/reference/cli/setup" },
+						{ text: "workbench", link: "/reference/cli/workbench" },
 						{ text: "run", link: "/reference/cli/run" },
 						{ text: "verify", link: "/reference/cli/verify" },
 						{ text: "agent", link: "/reference/cli/agent" },

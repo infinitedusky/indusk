@@ -564,6 +564,21 @@ telemetryCmd
 		await telemetryReset({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
 	});
 
+const workbenchCmd = program
+	.command("workbench")
+	.description("Workbench topology — materialize a cloned workbench");
+
+workbenchCmd
+	.command("restore")
+	.description(
+		"Clone every declared repo as a sibling, recreate the trunk symlinks, and print the out-of-band set. Idempotent; exits non-zero naming anything it could not resolve.",
+	)
+	.option("--worktrees", "Also recreate declared worktrees")
+	.action(async (opts: { worktrees?: boolean }) => {
+		const { workbenchRestore } = await import("./commands/workbench.js");
+		workbenchRestore(rootOrExit(), { worktrees: opts.worktrees });
+	});
+
 // ---- worktree extension lifecycle ----
 // Worktree extension lifecycle. Phase 4 shipped the internal _on-enable
 // hook; Phase 6 adds the user-facing create / refresh / list / preflight
