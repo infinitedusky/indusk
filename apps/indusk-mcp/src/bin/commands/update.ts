@@ -336,6 +336,24 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 	}
 
+	// 5c. Retire hooks removed from the package.
+	//
+	// Deliberately OUTSIDE the .mcp.json guard below: a project with no
+	// .mcp.json still has hooks. Nesting this inside that guard meant the
+	// removal never ran for those projects — found by running `indusk update`
+	// against a fixture that had the orphaned hook and no .mcp.json, where the
+	// block was skipped in silence.
+	{
+		const { removeLegacyHooks } = await import("../../lib/hook-migration.js");
+		const hookResult = removeLegacyHooks(projectRoot);
+		for (const name of hookResult.filesRemoved) {
+			console.info(`  removed: ${name} (retired hook)`);
+		}
+		for (const name of hookResult.registrationsRemoved) {
+			console.info(`  removed: ${name} registration from .claude/settings.json`);
+		}
+	}
+
 	// 5b. Migrate stale MCP configs
 	const mcpJsonPath = join(projectRoot, ".mcp.json");
 	if (existsSync(mcpJsonPath)) {

@@ -20,15 +20,7 @@ Set up the InDusk development system in a new or existing project.
 npm i -g @infinitedusky/indusk-mcp
 ```
 
-### 2. Start infrastructure
-
-```bash
-indusk infra start
-```
-
-First run creates `~/.indusk/config.env` — add your `GOOGLE_API_KEY` there for Graphiti (get one from [aistudio.google.com/apikey](https://aistudio.google.com/apikey)). Without it, FalkorDB and CGC still work, but the knowledge graph won't.
-
-### 3. Initialize a project
+### 2. Initialize a project
 
 ```bash
 cd your-project
@@ -49,26 +41,26 @@ See [Local Mode](./local-mode) for details on using InDusk without touching comm
 - `CLAUDE.md` — project context template (skipped in local mode)
 - `.indusk/planning/` — directory for plan documents
 - `.indusk/config.json` — project profile (mode, detected tooling, verify contract)
-- `.mcp.json` — MCP server config (InDusk, CodeGraphContext, **Graphiti** ≥ v1.10.0, plus optional dash0 / excalidraw)
+- `.mcp.json` — MCP server config (InDusk, plus whatever your enabled extensions register)
 - `.vscode/settings.json` — Biome integration (skipped in local mode)
 - `biome.json` — base quality config (`.indusk/biome.json` in local mode)
 - `instrumentation.ts` — OpenTelemetry auto-instrumentation (skipped in local mode)
-- `.indusk/extensions/` — extension manifests (graphiti, cgc, etc.)
-- `.cgcignore` — excludes build artifacts from code graph
+- `.indusk/extensions/` — extension manifests for the extensions you enable
+- `.claude/hooks/` — the gate hooks that enforce plan structure at write time
 
 `init` also:
-- Installs CodeGraphContext via pipx (if not already installed)
-- Checks the infrastructure container and starts it if stopped
-- Indexes the codebase into the code graph
 - Auto-enables detected extensions
+- Removes registrations for MCP servers InDusk has retired
+- Installs the gate hooks into `.claude/hooks/`
 
-### 4. Start coding
+### 3. Start coding
 
 Open the project in Claude Code. You should see:
 - Skills available — the plan lifecycle (`/planner`, `/work`, `/verify`, `/context`, `/document`, `/falsify`, `/cleanup`, `/retrospective`), and the session and workflow skills (`/catchup`, `/handoff`, `/git`, `/highlight`, `/research`, `/rail-check`, `/compact-context`)
-- **InDusk MCP tools** — lessons, plans, context, extensions, code graph
-- **CodeGraphContext MCP tools** — structural code intelligence (`graph_find`, `query_dependencies`, `find_dead_code`, …)
-- **Graphiti MCP tools** (≥ v1.10.0) — temporal knowledge graph (`add_memory`, `search_nodes`, `search_memory_facts`, …). See [Graphiti reference](/reference/tools/graphiti). Episodes are written automatically by the planner/work/retrospective skills at trigger points; recall happens at the start of every `/catchup`.
+- **InDusk MCP tools** — lessons, plans, context, extensions, health
+- **Extension MCP tools** — whatever your enabled extensions provide. On a project with `local-telemetry` on, that includes Jaeger's tools for querying traces.
+
+Durable knowledge lives in **lessons** (`.claude/lessons/`), written by the eval agent from highlights the working agent flags. `indusk sync pull` merges the shared channel in at `/catchup`.
 
 Run `/catchup` to verify everything is connected.
 
@@ -86,7 +78,7 @@ Then in each project:
 indusk init
 ```
 
-This migrates stale config (e.g., old FalkorDB host), syncs skills/lessons, and picks up new extensions. It never overwrites CLAUDE.md, planning/, or your code.
+This migrates stale config, syncs skills/lessons/hooks, removes registrations for MCP servers InDusk has retired, and picks up new extensions. It never overwrites CLAUDE.md, planning/, or your code.
 
 ### Update skills only
 
@@ -109,38 +101,33 @@ See the [Reference](/reference/) for detailed docs on each skill and tool.
 
 ## Troubleshooting
 
-### Container won't start
+### Hooks aren't firing
+
+The gate hooks live in `.claude/hooks/` and are registered in `.claude/settings.json`. Both halves must be present — a registration without the file, or a file without the registration, fails silently.
 
 ```bash
-indusk infra status   # check what's happening
-docker logs indusk-infra  # see container logs
+ls .claude/hooks/          # the hook files
+indusk update              # reinstall hooks + re-register them
 ```
 
-If the image doesn't exist, build it from the dusk repo:
-```bash
-docker build -f docker/Dockerfile.infra -t indusk-infra .
-```
+If your project's `package.json` declares `"type": "commonjs"`, you need 1.36.1 or newer: the hooks are ESM, and older versions did not scope a module type to the hooks directory, so every hook died at load without reporting anything.
 
-### API key not set
-
-Graphiti requires `GOOGLE_API_KEY` in `~/.indusk/config.env`. Without it:
-- FalkorDB works (CGC code graph functional)
-- Graphiti retries indefinitely (knowledge graph non-functional)
-
-Add the key and restart: `indusk infra stop && indusk infra start`
-
-### Port conflicts
-
-`indusk-infra` uses ports 6379 (FalkorDB) and 8100 (Graphiti). If another service uses these ports:
-- Stop the conflicting service
-- Or run the container with different port mappings and update `~/.indusk/config.env`
-
-### CGC not working
+### `check_health` reports an extension error
 
 ```bash
-cgc --version        # is it installed?
-cgc doctor           # run diagnostics
-indusk infra status  # is FalkorDB up?
+indusk extensions status   # which extension, which check
 ```
 
-If CGC isn't installed, `indusk init` installs it automatically via pipx.
+Each check is a shell command declared in the extension's manifest, so the failing command is shown verbatim — run it directly to see why. Errors from extensions you do not use are expected; disable them with `indusk extensions disable <name>`.
+
+### Telemetry: the daemon looks up but no traces arrive
+
+Usually a stray daemon holding the port your exporter targets. A telemetry process whose `--config` path no longer exists is an orphan — from a deleted temp home or worktree — and it answers on the port without being an OTLP receiver.
+
+```bash
+indusk telemetry reap --dry-run   # what is orphaned
+indusk telemetry reap             # kill them
+indusk telemetry status           # the real daemon's ports
+```
+
+Since 1.36.2, `indusk telemetry start` refuses to bind a different port than you asked for rather than silently choosing a random one, which is what made this failure invisible.
