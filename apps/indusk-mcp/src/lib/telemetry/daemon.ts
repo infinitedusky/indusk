@@ -364,6 +364,23 @@ service:
 // ---- daemonStart / daemonStop / daemonStatus / daemonRestart ---------------
 
 /**
+ * Thrown when a requested port is already served by a process we do not own.
+ *
+ * Typed so callers can tell it apart from a real start failure: an explicit
+ * `telemetry start` should surface it and stop, but the opportunistic auto-start
+ * on extension enable must NOT fail the whole command over it — a daemon is
+ * evidently already serving those ports, which is the state auto-start wanted.
+ */
+export class PortsOccupiedError extends Error {
+	readonly ports: { name: string; port: number }[];
+	constructor(message: string, ports: { name: string; port: number }[]) {
+		super(message);
+		this.name = "PortsOccupiedError";
+		this.ports = ports;
+	}
+}
+
+/**
  * Refuse to start when a requested port is already served by something we do
  * not own.
  *
@@ -397,13 +414,14 @@ export async function assertRequestedPortsFree(opts: DaemonStartOptions): Promis
 	if (occupied.length === 0) return;
 
 	const detail = occupied.map((p) => `${p.name} :${p.port}`).join(", ");
-	throw new Error(
+	throw new PortsOccupiedError(
 		`Refusing to start: ${detail} already in use by a process this daemon does not own.\n` +
 			`Starting anyway would bind a random port instead, and anything configured for the ` +
 			`requested port would keep talking to whatever is there — silently.\n` +
 			`  If it is a leaked telemetry process:  indusk telemetry reap\n` +
 			`  If it is another tool you want to keep: indusk telemetry start --allow-port-bump\n` +
 			`  Or choose explicitly:                  indusk telemetry start --otlp-port <n> --ui-port <n>`,
+		occupied,
 	);
 }
 

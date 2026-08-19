@@ -297,7 +297,13 @@ export async function telemetryRegister(projectPath: string): Promise<void> {
 	if (!status.running) {
 		console.info("Daemon not running — starting it now...");
 		try {
-			const meta = await daemonStart({});
+			// allowPortBump on purpose: this auto-start is opportunistic, not a
+			// user asking for :4318. The port guard belongs to explicit
+			// `telemetry start`, where the caller named a port and silently
+			// binding another is the bug. Applying it here made `indusk init`
+			// FAIL on any machine already running a daemon — a regression shipped
+			// in 1.36.2 and caught by the telemetry suite.
+			const meta = await daemonStart({ allowPortBump: true });
 			console.info(`  OTLP:      http://localhost:${meta.otlpPort}`);
 			console.info(`  Jaeger UI: http://localhost:${meta.uiPort}`);
 			console.info(`  Jaeger MCP: http://localhost:${meta.mcpPort}/mcp`);

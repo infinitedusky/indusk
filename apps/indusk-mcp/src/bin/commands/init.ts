@@ -662,6 +662,20 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	}
 
+	// Retired hooks: deleting one from the package leaves it on disk AND
+	// registered in every consumer forever. Removing both halves is the twin of
+	// the MCP migration above — extend LEGACY_HOOKS, never hand-roll a loop.
+	{
+		const { removeLegacyHooks } = await import("../../lib/hook-migration.js");
+		const hookResult = removeLegacyHooks(projectRoot);
+		for (const name of hookResult.filesRemoved) {
+			console.info(`  removed: ${name} (retired hook)`);
+		}
+		for (const name of hookResult.registrationsRemoved) {
+			console.info(`  removed: ${name} registration from .claude/settings.json`);
+		}
+	}
+
 	// 5. Generate .vscode/settings.json
 	if (!local) {
 		console.info("\n[Editor]");
