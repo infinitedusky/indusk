@@ -59,7 +59,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A12 | One unreachable repo names itself, leaves the others materialized, and completes on re-run after the fix | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 | A15 | The out-of-band list is shown in full, and no file on it is present in the shared remote | Test Phase 1 | Build Phase 4 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 | A8 | Trunk symlinks, worktree dirs, the doppler token, and per-app env pulls never appear in the shared remote | Test Phase 1 | Build Phase 4 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
-| A17 | Verification never reports checked-off work as phantom on a diff that could not have contained the code — it checks the code's repo or refuses naming what it could not identify | Test Phase 1 | Build Phase 5 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-verify-refusal.test.ts` |
+| A17 | Verification never reports checked-off work as phantom on a diff that could not have contained the code — it checks the code's repo or refuses naming what it could not identify | Test Phase 1 | Build Phase 5 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-verify-refusal.test.ts` |
 | A3 | Any edit to a workbench file is committed automatically with a timestamp-style message, with no prompt | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
 | A2 | A change in one workbench appears in another after its next sync point, with no manual git commands | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
 | A4 | Two workbenches editing concurrently both reach the remote; neither sees a conflict prompt or a blocked command | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
@@ -215,23 +215,23 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 **Goal**: land D8's floor **before** Build Phase 6 makes real workbench roots git repos. The order is the point — fix the detector before creating the condition that fools it.
 
-- [ ] Give verify's entry path a plan root (where `impl.md` lives) and a code root (where the phase's code lives)
-- [ ] In a workbench, resolve the code root to the wrapped repo the plan targets
-- [ ] Where the code root cannot be determined, **refuse and name what could not be identified** — never fall back to the plan root, because a diff of plan documents is not evidence about code
-- [ ] Update `assertGitRepo`'s comment: the refusal no longer holds because the root is not a repo; it holds because this code maintains it
-- [ ] Leave `phantom.ts`'s `isMachineState` narrow — do not widen it to paper over the root question
+- [x] Give verify's entry path a plan root (where `impl.md` lives) and a code root (where the phase's code lives) — `lib/verify/roots.ts`, called before any detector runs
+- [x] ~~In a workbench, resolve the code root to the wrapped repo the plan targets~~ — **deliberately NOT done; it refuses instead.** Resolving the path is easy, but the baseline sha comes from the plan repo's ledger and has no meaning in the code repo's history, so there would be nothing honest to diff against. Producing a verdict anyway means judging code by a diff that cannot contain it — the exact failure D8 exists to prevent. Cross-repo baselines are the named follow-on; this plan owns the floor
+- [x] Where the code root cannot be determined, **refuse and name what could not be identified** — never fall back to the plan root, because a diff of plan documents is not evidence about code. Three shape-specific refusals: no repos declared, several declared (names them all), and one declared (explains the ledger-baseline mismatch and points at the code repo)
+- [x] Update `assertGitRepo`'s comment: the refusal no longer holds because the root is not a repo; it holds because this code maintains it
+- [x] Leave `phantom.ts`'s `isMachineState` narrow — do not widen it to paper over the root question. Untouched; widening it would have hidden the root question behind a broader exclusion list
 
 #### Build Phase 5 Verification
-- [ ] A17 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] Check off a real implementation item in a git-initialized two-repo workbench, commit the code to the wrapped repo, and confirm **no** phantom finding — the false-positive case that would get the detector disabled
-- [ ] Delete the code-root resolution and confirm verification **refuses** rather than reporting clean — an acceptance test cannot detect a detector that stopped checking
-- [ ] The existing verify suite passes unchanged for normal-mode projects like dusk
+- [x] A17 passes (`pnpm exec vitest run src/__tests__/workbench-verify-refusal.test.ts`, 2/2)
+- [x] Check off a real implementation item in a git-initialized two-repo workbench, commit the code to the wrapped repo, and confirm **no** phantom finding — the false-positive case that would get the detector disabled. A17's first case is exactly this scenario, and it now passes via the refusal rather than via a verdict
+- [x] Delete the code-root resolution and confirm verification **refuses** rather than reporting clean — an acceptance test cannot detect a detector that stopped checking. **Run 2026-08-19**: neutralising the workbench branch made both A17 cases fail with a literal `phantom` verdict on honestly-done work; restoring it passed 2/2. The refusal is load-bearing, not incidental
+- [x] The existing verify suite passes unchanged for normal-mode projects like dusk — `src/lib/verify/` 41/41, and `indusk verify versioned-workbench --phase 1` run against **this repo** reports clean, which is the strongest available check: the tool pointed at its own project
 
 #### Build Phase 5 Context
-- [ ] Add to Known Gotchas: detectors take a plan root and a code root and refuse when they cannot tell them apart; `assertGitRepo`'s refusal is now maintained rather than incidental
+- [x] Add to Known Gotchas: detectors take a plan root and a code root and refuse when they cannot tell them apart; `assertGitRepo`'s refusal is now maintained rather than incidental — folded into the versioned-workbench Conventions entry, including that cross-repo baselines are the follow-on and normal-mode is untouched
 
 #### Build Phase 5 Document
-- [ ] Update `/decisions/dawn-verify` and the verify reference with the two-root model and the refusal, naming the follow-on that completes the split for Shape and cleanup
+- [x] Update `/decisions/dawn-verify` and the verify reference with the two-root model and the refusal, naming the follow-on that completes the split for Shape and cleanup — a shared "Two roots, and a maintained refusal" section with the per-shape behavior table and an explicit "what is deliberately not done"
 
 ### Build Phase 6: The workbench becomes shareable
 

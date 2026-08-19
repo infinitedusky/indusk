@@ -23,10 +23,17 @@ export { git };
 /**
  * Assert the root is inside a git work tree, failing LOUD when it is not.
  *
- * A workbench root is deliberately not a git repo, and the cleanup library's
- * silent-`[]` on that shape made its ritual vacuous there. The same silence in
- * a verifier would report "clean" for a phase it never examined — the worst
- * shape a verification bug can take.
+ * The cleanup library's silent-`[]` on a non-git root made its ritual vacuous
+ * there. The same silence in a verifier would report "clean" for a phase it
+ * never examined — the worst shape a verification bug can take.
+ *
+ * NOTE (versioned-workbench): this guard used to be free. A workbench root was
+ * deliberately not a git repo, so it refused there by a property nobody
+ * maintained. Making the root a git repo removes that accident, and the
+ * refusal is now MAINTAINED — by `resolveVerifyRoots`, which separates the
+ * repo holding `impl.md` from the repo holding the code and refuses when they
+ * differ. Changing this function is no longer the whole story; see
+ * `verify/roots.ts`.
  */
 export async function assertGitRepo(root: string): Promise<void> {
 	try {

@@ -52,3 +52,49 @@ Falsification and dogfooding found nine defects after "impl complete", and they 
 - [`atdawn run` reference](../reference/cli/run.md) — the controlled-lane counterpart
 - [Dawn Verify lessons](../lessons/dawn-verify.md)
 - [Dawn hook parity](./dawn-hook-parity.md) — component 2, whose A11 refutation constrains the no-repair decision
+
+## Two roots, and a maintained refusal
+
+*(versioned-workbench, 2026-08)*
+
+`verify` originally assumed one repository: the plan and the code it describes
+shared a root. A **workbench** breaks that assumption — `impl.md` lives in the
+workbench's `.indusk/planning/`, while the code sits across a trunk symlink in
+a wrapped repo with its own history.
+
+That was survivable only by accident. A workbench root was deliberately *not* a
+git repo, so `assertGitRepo` refused and no detector ever ran there. The
+refusal held because of a property nobody maintained.
+
+`versioned-workbench` makes the workbench root a git repo, which removes the
+accident. What is left is a repository whose diff **structurally cannot contain
+the code being judged**: phantom detection fires when nothing outside `impl.md`
+changed, which in a workbench is always true. Every honest checkoff would be
+reported as phantom — and a detector that cries wolf gets switched off, taking
+its real catches with it.
+
+So `verify/roots.ts` now maintains the refusal on purpose:
+
+| Project shape | Behavior |
+|---|---|
+| Normal mode (`.indusk/` inside the code repo) | Unchanged. Plan root and code root are the same directory. |
+| Workbench, no repos declared | Refuses — there is no code root to judge against. |
+| Workbench, several repos | Refuses, **naming every candidate**. A verdict against the wrong repository is indistinguishable from a correct one. |
+| Workbench, one repo | Refuses, explaining that the ledger's baseline sha comes from the plan repo and has no meaning in the code repo. |
+
+**It never falls back to the plan root.** A diff of plan documents is not
+evidence about code, and reporting it as such is exactly the "could not check"
+reported as "checked" failure this command exists to prevent.
+
+### What is deliberately not done
+
+Resolving the code root's *path* is easy; the missing piece is a **baseline**.
+The verify ledger records a sha from the plan repo, and that sha does not exist
+in the code repo's history — so there is nothing honest to diff against. Making
+verification work across two repositories requires the ledger to carry a
+per-repo baseline, and that is a **named follow-on**, together with the
+equivalent split for Shape and cleanup.
+
+Refusing costs nothing that previously worked: a workbench root was not a git
+repo, so every run already refused. What changed is that the refusal now says
+why.
