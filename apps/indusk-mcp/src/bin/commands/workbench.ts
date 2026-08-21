@@ -9,6 +9,7 @@ import {
 	type WorkbenchRepo,
 } from "../../lib/worktree/repos.js";
 import { ensureShareableScaffolding, untrackNowIgnored } from "../../lib/worktree/shareable.js";
+import { ensureContextRepo, repoPublishState, syncWorkbench } from "../../lib/worktree/sync.js";
 
 /**
  * `indusk workbench restore` — materialize a workbench that has only been
@@ -179,6 +180,13 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
 	if (scaffold.created.length > 0) {
 		console.info(`Scaffolded: ${scaffold.created.join(", ")}`);
 	}
+	// The context repo is created lazily, here and in `sync`, rather than
+	// demanded up front — a remote is a decision the developer makes, and
+	// local commits are useful before one exists. `git init` with no remote is
+	// a complete, working state, not a half-configured one.
+	if (ensureContextRepo(projectRoot)) {
+		console.info("Initialized the workbench context repo (add a remote to share it).");
+	}
 	// Ignoring a path does not untrack it. A workbench git-initialized before
 	// these rules existed keeps publishing its symlinks and secrets while
 	// `git status` looks clean.
@@ -225,5 +233,72 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
 
 	console.info("");
 	console.info("Workbench restored. Next: supply the out-of-band set, then `indusk update`.");
+	process.exit(0);
+}
+
+/**
+ * `indusk workbench sync` — one sync point: commit, pull, push, blindly resolved.
+ *
+ * Exits 0 even when the remote is unreachable. The work is committed locally
+ * and goes out on the next sync; someone else's outage must never become your
+ * inability to work.
+ */
+export function workbenchSyncCommand(projectRoot: string): never {
+	const repos = readWorkbenchRepos(projectRoot);
+	if (!isWorkbench(projectRoot) && repos.length === 0) {
+		console.error(
+			'Error: this project is not a workbench (needs worktree.shape="workbench" in .indusk/config.json).',
+		);
+		process.exit(1);
+	}
+
+	// The ignore rules must exist before anything is committed, or the first
+	// sync publishes exactly what they were written to keep out.
+	const scaffold = ensureShareableScaffolding(projectRoot);
+	if (scaffold.created.length > 0) console.info(`Scaffolded: ${scaffold.created.join(", ")}`);
+	untrackNowIgnored(projectRoot);
+
+	const result = syncWorkbench(projectRoot);
+	for (const note of result.notes) console.info(note);
+	if (!result.committed && result.notes.length === 0)
+		console.info("Nothing to sync — tree is clean.");
+	console.info(
+		`sync: committed=${result.committed} pulled=${result.pulled} pushed=${result.pushed}`,
+	);
+	process.exit(0);
+}
+
+/**
+ * `indusk workbench status` — is each declared repo materialized, and has its
+ * work actually left this machine?
+ */
+export function workbenchStatusCommand(projectRoot: string): never {
+	const repos = readWorkbenchRepos(projectRoot);
+	if (repos.length === 0) {
+		console.error(
+			"Error: this project declares no repos (worktree.repos[] in .indusk/config.json).",
+		);
+		process.exit(1);
+	}
+	const { siblingParent } = resolveSiblingParent(projectRoot);
+
+	console.info(`Workbench: ${projectRoot}`);
+	console.info("");
+	for (const repo of repos) {
+		const st = repoPublishState(siblingParent, repo.name);
+		if (!st.present) {
+			console.info(`  ${repo.name}: not materialized — run \`indusk workbench restore\``);
+			continue;
+		}
+		if (!st.hasRemote) {
+			console.info(`  ${repo.name}: present, no remote configured (nothing to publish to)`);
+			continue;
+		}
+		console.info(
+			st.ahead > 0
+				? `  ${repo.name}: ${st.ahead} commit(s) ahead of its remote — NOT PUSHED, so a teammate pulling this workbench cannot see that work yet`
+				: `  ${repo.name}: in sync with its remote`,
+		);
+	}
 	process.exit(0);
 }

@@ -60,12 +60,12 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A15 | The out-of-band list is shown in full, and no file on it is present in the shared remote | Test Phase 1 | Build Phase 4 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 | A8 | Trunk symlinks, worktree dirs, the doppler token, and per-app env pulls never appear in the shared remote | Test Phase 1 | Build Phase 4 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A17 | Verification never reports checked-off work as phantom on a diff that could not have contained the code — it checks the code's repo or refuses naming what it could not identify | Test Phase 1 | Build Phase 5 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-verify-refusal.test.ts` |
-| A3 | Any edit to a workbench file is committed automatically with a timestamp-style message, with no prompt | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
-| A2 | A change in one workbench appears in another after its next sync point, with no manual git commands | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
-| A4 | Two workbenches editing concurrently both reach the remote; neither sees a conflict prompt or a blocked command | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
-| A5 | Concurrent appends to `current.md` and `highlights.jsonl` both survive the merge | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
-| A6 | With the remote unreachable, edits still commit and work is never blocked; changes arrive after it returns | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-offline.test.ts` |
-| A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | written | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
+| A3 | Any edit to a workbench file is committed automatically with a timestamp-style message, with no prompt | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
+| A2 | A change in one workbench appears in another after its next sync point, with no manual git commands | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
+| A4 | Two workbenches editing concurrently both reach the remote; neither sees a conflict prompt or a blocked command | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
+| A5 | Concurrent appends to `current.md` and `highlights.jsonl` both survive the merge | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-concurrent.test.ts` |
+| A6 | With the remote unreachable, edits still commit and work is never blocked; changes arrive after it returns | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-offline.test.ts` |
+| A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
 | A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
 | A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | written | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
 
@@ -235,25 +235,29 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 ### Build Phase 6: The workbench becomes shareable
 
-- [ ] `git init` the workbench root with its own remote during `setup` / `update`, wrapped repo untouched
-- [ ] Auto-commit on change with a timestamp message; push immediately; on reject, pull, re-resolve, push again
-- [ ] Pull-first on read and mutation paths, including `/catchup`
-- [ ] Blind resolution: `merge=union` on the append-shaped files, take-changes elsewhere
-- [ ] Add `indusk update` to the mutation chokepoints — POC friction #1 was update mutating tracked files and leaving them to block the next pull; regenerable-file conflicts discard and regenerate
-- [ ] Offline: commits always succeed locally, push and pull are best-effort with retry, and nothing ever blocks an agent
-- [ ] Make the two-clock skew visible: a pulled phase whose commits have not arrived is distinguishable from one whose have (A16)
+- [x] `git init` the workbench root, wrapped repo untouched — created **lazily** by `restore` and `sync` rather than demanded up front. A remote is a decision the developer makes; local commits are useful before one exists, so `git init` with no remote is a complete working state, not a half-configured one
+- [x] Auto-commit on change with a timestamp message; push immediately; on reject, pull, re-resolve, push again. **Commit BEFORE pull**, despite the brief's "pull before everything": the safety property it actually names is *both sides committed before any merge*, which is what makes blind resolution recoverable. Pulling into a dirty tree would either refuse (blocking an agent) or stash (a third state nobody can see)
+- [x] Pull-first on read and mutation paths, including `/catchup` — the skill now runs `indusk workbench sync` after `indusk sync pull`. Session start is when shared context is most likely stale and a stale read most expensive
+- [x] Blind resolution: `merge=union` on the append-shaped files, `-X theirs` elsewhere. **Verified load-bearing**: removing the union rule for `highlights.jsonl` made A5 fail with `from-b` lost — `-X theirs` picked one side, exactly the multi-writer failure the brief flagged as this plan's falsification surface
+- [x] Add `indusk update` to the mutation chokepoints — POC friction #1 was update mutating tracked files and leaving them to block the next pull. Workbench-only and never fatal: a failed sync must not fail an update
+- [x] Offline: commits always succeed locally, push and pull are best-effort with retry, and nothing ever blocks an agent. A6 also forced the *wording*: echoing git's raw `fatal:` presents a routine outage as a hard failure, so the cause is kept and the alarm stripped
+- [x] Make the two-clock skew visible via `indusk workbench status`: per-repo materialized/ahead state, naming the repo and saying a teammate cannot see that work yet (A16)
+
+- [x] **Trigger decision (the ADR left this open)** — `indusk workbench sync` is the MECHANISM; the trigger is a debounced `PostToolUse` hook plus `/catchup`. A watcher daemon is deferred, not rejected: it is the only option that sees a human editing in their IDE, and it can call the same entry point when that gap is felt. Chokepoints-alone were rejected — they structurally cannot see a direct file edit, so they would ship a promise the mechanism cannot keep
+- [x] **Discovered work — the trigger's blast radius.** A hook that auto-commits would, in a NORMAL-MODE project, commit half-finished source on every edit; dusk itself is such a project. Guarded by one `worktree.shape === "workbench"` check, debounced via a stamp under the **gitdir** (untracked by construction, not by a rule), and never blocking. `workbench-sync-hook.test.ts` asserts it from the outside — negative (no commit in normal mode), **paired positive** (does commit in a workbench, so a permanently-off guard cannot pass), and never-fails-an-edit
+- [x] **Registered in BOTH init and update** — `globSync` copies a hook file, but settings registration is separate; a hook that exists and is never registered is a file that never runs (the eval-trigger lesson)
 
 #### Build Phase 6 Verification
-- [ ] A2, A3, A4, A5, A6, A16 pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
-- [ ] A4 and A5 run interleaved often enough to be meaningful, not once — the union-merge dedup was built for rebase noise, not multi-writer logs
-- [ ] Remove the bare remote mid-run and confirm agent work continues, then restore it and confirm the backlog arrives with no user action
-- [ ] Confirm the wrapped repo has zero new commits after a full sync-loop run — commit siloing is the contract, and this is the check that can fail
+- [x] A2, A3, A4, A5, A6, A16 pass — per-row classification across every workbench + worktree suite: **102 passed, 0 failed, 0 incidental**. All 15 automated rows green; only A9 (manual smoke, Phase 7) remains
+- [x] A4 and A5 run interleaved often enough to be meaningful, not once — A4 runs four interleaved rounds. **A5's dependency proven by removal**: deleting the `merge=union` rule for `highlights.jsonl` made it fail with `from-b` lost, because `-X theirs` picked a side. The union rule is load-bearing, not decorative
+- [x] Remove the bare remote mid-run and confirm agent work continues, then restore it and confirm the backlog arrives with no user action — A6 renames the bare repo out from under the configured URL and back, which is as close to unreachable as a local fixture gets
+- [x] Confirm the wrapped repo has zero new commits after a full sync-loop run — commit siloing is the contract, and this is the check that can fail. **Run 2026-08-21**: three sync runs against a two-repo workbench with BOTH wrapped repos left deliberately dirty — each repo's HEAD unchanged and the uncommitted source still uncommitted. The sync loop never touches product code
 
 #### Build Phase 6 Context
-- [ ] Update Current State and add to Conventions: workbench root is a git repo with its own remote; sync is pull-first / auto-commit / push-immediately / blind-resolve; the wrapped repo is never auto-committed
+- [x] Update Current State and add to Conventions: workbench root is a git repo with its own remote; sync is commit → pull → push, blindly resolved; the wrapped repo is never auto-committed
 
 #### Build Phase 6 Document
-- [ ] Write `apps/docs/src/guide/workbench-sharing.md` with the topology mermaid diagram (what travels, what does not) and the two-clock skew; add to the sidebar
+- [x] Write `apps/docs/src/guide/workbench-sharing.md` with the topology mermaid diagram (what travels, what does not) and the two-clock skew; add to the sidebar — plus a **Known limits** section stating plainly that verify refuses in a workbench and that IDE edits outside a session do not auto-sync yet. A guide that omits its limits is how the next person discovers them as bugs
 
 ### Build Phase 7: Onboarding, end to end
 

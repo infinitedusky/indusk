@@ -990,7 +990,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		PostToolUse: [
 			{
 				matcher: "Edit|Write",
-				hooks: [{ type: "command", command: "node .claude/hooks/gate-reminder.js" }],
+				hooks: [
+					{ type: "command", command: "node .claude/hooks/gate-reminder.js" },
+					// Workbench sync trigger. Inert unless worktree.shape is
+					// "workbench" — a normal-mode project keeps `.indusk/` inside
+					// its own product repo, where auto-committing every edit would
+					// commit half-finished source.
+					{ type: "command", command: "node .claude/hooks/workbench-sync.js" },
+				],
 			},
 			{
 				matcher: "Bash",

@@ -77,6 +77,23 @@ Then pull the hub channel:
 indusk sync pull
 ```
 
+Then, **if this project is a workbench**, pull the shared context repo:
+
+```bash
+indusk workbench sync
+```
+
+This is the pull-first half of workbench sync: it commits anything left
+uncommitted locally, pulls whatever teammates (or your other machine) pushed,
+and pushes back. It is a no-op in a normal-mode project, exits 0 when the
+remote is unreachable, and never blocks — an unreachable remote leaves your
+work committed locally and going out on the next sync.
+
+Session start is the moment the shared context is most likely to be stale, and
+the moment a stale read is most expensive: every plan you are about to read,
+every lesson, every other agent's `current.md` section. Surface "pulled N
+change(s)" in the summary when it reports any.
+
 Additive-only merge of the machine-global hub (`$INDUSK_HOME/hub/lessons/`) + the package's bundled community lessons into this project's `.claude/lessons/`. Surface "N new rules pulled" in the summary when non-zero. Local lessons always win on conflict — the pull can never clobber project knowledge.
 
 ### 5. Skim Lessons (Lazy-Load)

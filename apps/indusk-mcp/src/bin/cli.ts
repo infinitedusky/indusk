@@ -569,6 +569,26 @@ const workbenchCmd = program
 	.description("Workbench topology — materialize a cloned workbench");
 
 workbenchCmd
+	.command("sync")
+	.description(
+		"Commit local changes, pull, and push — blindly resolved, never blocking. Exits 0 offline; work goes out on the next sync.",
+	)
+	.action(async () => {
+		const { workbenchSyncCommand } = await import("./commands/workbench.js");
+		workbenchSyncCommand(rootOrExit());
+	});
+
+workbenchCmd
+	.command("status")
+	.description(
+		"Per-repo publish state: materialized, and whether its commits have actually left this machine.",
+	)
+	.action(async () => {
+		const { workbenchStatusCommand } = await import("./commands/workbench.js");
+		workbenchStatusCommand(rootOrExit());
+	});
+
+workbenchCmd
 	.command("restore")
 	.description(
 		"Clone every declared repo as a sibling, recreate the trunk symlinks, and print the out-of-band set. Idempotent; exits non-zero naming anything it could not resolve.",

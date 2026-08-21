@@ -39,6 +39,7 @@ const config = defineConfig({
 
 		nav: [
 			{ text: "Guide", link: "/guide/" },
+						{ text: "Workbench Sharing", link: "/guide/workbench-sharing" },
 			{ text: "Reference", link: "/reference/" },
 			{ text: "Decisions", link: "/decisions/" },
 			{ text: "Lessons", link: "/lessons/" },

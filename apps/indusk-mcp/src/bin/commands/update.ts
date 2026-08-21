@@ -9,6 +9,7 @@ import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { readSiblingParent, readWorkbenchRepos } from "../../lib/worktree/repos.js";
 import { missingIgnoreRules } from "../../lib/worktree/shareable.js";
+import { syncWorkbench } from "../../lib/worktree/sync.js";
 import { envIsFunctional } from "./extensions.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -261,6 +262,27 @@ export async function update(projectRoot: string): Promise<void> {
 					const { writeFileSync } = await import("node:fs");
 					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
 					console.info("  registered eval-trigger hook in settings.json");
+				}
+				// Same targeted-ensure shape as the eval-trigger block above.
+				// A hook copied by globSync but never registered in settings is
+				// a file that exists and never runs — the eval-trigger lesson.
+				const editHooks = settings.hooks?.PostToolUse ?? [];
+				const hasSyncHook = editHooks.some(
+					(entry: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
+						entry.hooks?.some((h: { command?: string }) => h.command?.includes("workbench-sync")),
+				);
+				if (!hasSyncHook) {
+					if (!settings.hooks) settings.hooks = {};
+					if (!settings.hooks.PostToolUse) settings.hooks.PostToolUse = [];
+					const editEntry = (
+						settings.hooks.PostToolUse as Array<{ matcher?: string; hooks?: unknown[] }>
+					).find((e) => e.matcher === "Edit|Write");
+					const hookDef = { type: "command", command: "node .claude/hooks/workbench-sync.js" };
+					if (editEntry?.hooks) editEntry.hooks.push(hookDef);
+					else settings.hooks.PostToolUse.push({ matcher: "Edit|Write", hooks: [hookDef] });
+					const { writeFileSync: wf } = await import("node:fs");
+					wf(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+					console.info("  registered workbench-sync hook in settings.json");
 				}
 			} catch {
 				console.info("  could not register eval hook in settings.json");
@@ -761,6 +783,13 @@ export async function update(projectRoot: string): Promise<void> {
 	// So it notices and points at `workbench restore` rather than doing it.
 	nudgeUnmaterializedRepos(projectRoot);
 
+	// `update` is a MUTATION CHOKEPOINT, not just a reader. POC friction #1 was
+	// exactly this: update rewrites tracked workbench files (settings.json,
+	// config.json, .gitignore), and on the second machine those sat uncommitted
+	// and blocked the next pull. Syncing here closes that loop. Workbench-only,
+	// and never fatal — a failed sync must not fail an update.
+	syncAfterUpdate(projectRoot);
+
 	console.info("\nDone.");
 
 	// Non-blocking version notice. Uses the 6h-cached lookup so we don't
@@ -812,5 +841,23 @@ function nudgeUnmaterializedRepos(projectRoot: string): void {
 	const ignoreGaps = missingIgnoreRules(projectRoot);
 	if (ignoreGaps.length > 0) {
 		console.info(`  (it will also scaffold the sharing rules — ${ignoreGaps[0]})`);
+	}
+}
+
+/** Commit + push what `update` just rewrote. Workbench-only, never fatal. */
+function syncAfterUpdate(projectRoot: string): void {
+	try {
+		const cfg = JSON.parse(readFileSync(join(projectRoot, ".indusk/config.json"), "utf-8"));
+		if (cfg?.worktree?.shape !== "workbench") return;
+	} catch {
+		return;
+	}
+	try {
+		const result = syncWorkbench(projectRoot);
+		if (result.committed) console.info("  workbench: committed what update rewrote");
+		if (result.pushed === "failed")
+			console.info("  workbench: push deferred (offline) — goes out next sync");
+	} catch {
+		console.info("  workbench: sync skipped (see `indusk workbench sync`)");
 	}
 }

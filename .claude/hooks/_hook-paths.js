@@ -107,18 +107,24 @@ function findGitPathFromCwd(cwd) {
  * against it fails even though the commit DID happen in a real git repo
  * inside the workbench.
  *
- * The fallback reads `${statePath}/.indusk/config.json` for the
- * `worktree.wrapped_repo` field. If present and the path exists, returns
- * the realpath of `${statePath}/${wrapped_repo}`. Otherwise returns null
- * (caller logs an actionable skip message naming `statePath`).
+ * The fallback reads `${statePath}/.indusk/config.json` for the declared repo
+ * set — `worktree.repos[]`, with the legacy `worktree.wrapped_repo` reducing
+ * to a one-element list. **Deliberate port of `lib/worktree/repos.ts`'s
+ * reduction**: a hook cannot import TypeScript, so the rule lives in two
+ * places and they must change together.
  *
- * Trade-off accepted: if the user committed in a SIBLING WORKTREE rather
- * than the wrapped repo, this resolves `gitPath` to the wrapped repo
- * (giving the eval agent the wrapped repo's HEAD, which may not be the
- * commit just made). That's a known incompleteness — Phase N+1 work
- * could read `tool_input.command` for a `cd <worktree>` prefix to
- * disambiguate. Until then, the wrapped-repo fallback is strictly better
- * than the pre-1.31.10 behavior of silently bailing every commit.
+ * With exactly ONE declared repo the behaviour is unchanged from 1.31.10.
+ *
+ * With MORE THAN ONE (versioned-workbench D6) the fallback is ambiguous, so it
+ * does not guess: it returns null, and the caller can name every declared repo
+ * via `declaredReposAt`. Picking the first would attribute a commit to the
+ * wrong repo, and a wrong attribution is indistinguishable from a right one in
+ * the eval record — a silent gap is recoverable, a confident wrong answer is
+ * not.
+ *
+ * Trade-off accepted (single-repo case, unchanged): if the user committed in a
+ * SIBLING WORKTREE rather than the wrapped repo, this resolves `gitPath` to the
+ * wrapped repo, whose HEAD may not be the commit just made.
  *
  * @param {string | null} statePath
  * @returns {string | null}
@@ -133,14 +139,71 @@ function findGitPathFromWorkbenchConfig(statePath) {
 	} catch {
 		return null;
 	}
-	const wrappedRepo = config?.worktree?.wrapped_repo;
-	if (!wrappedRepo || typeof wrappedRepo !== "string") return null;
-	const candidate = resolve(statePath, wrappedRepo);
+	const declared = declaredRepoNames(config);
+	// Ambiguous: more than one repo could hold this commit. Refuse rather than
+	// attribute it to whichever happens to be declared first.
+	if (declared.length !== 1) return null;
+	const candidate = resolve(statePath, declared[0]);
 	if (!existsSync(candidate)) return null;
 	try {
 		return realpathSync(candidate);
 	} catch {
 		return candidate;
+	}
+}
+
+/**
+ * The declared repo names, singular reduced into plural.
+ *
+ * Deliberate port of `readWorkbenchRepos` in `src/lib/worktree/repos.ts` —
+ * hooks are plain JS and cannot import the TS module. Change both together.
+ * Name-only: the hook never needs remotes.
+ *
+ * @param {unknown} config
+ * @returns {string[]}
+ */
+function declaredRepoNames(config) {
+	const worktree = config && typeof config === "object" ? config.worktree : null;
+	if (!worktree || typeof worktree !== "object") return [];
+	const raw = Array.isArray(worktree.repos)
+		? worktree.repos
+		: typeof worktree.wrapped_repo === "string"
+			? [{ name: worktree.wrapped_repo }]
+			: [];
+	const seen = new Set();
+	const names = [];
+	for (const entry of raw) {
+		if (!entry || typeof entry !== "object") continue;
+		const name = entry.name;
+		if (typeof name !== "string") continue;
+		const clean =
+			name.trim() !== "" &&
+			name !== "." &&
+			name !== ".." &&
+			!name.includes("/") &&
+			!name.includes("\\");
+		if (!clean || seen.has(name)) continue;
+		seen.add(name);
+		names.push(name);
+	}
+	return names;
+}
+
+/**
+ * Every declared repo name at a workbench root, so a caller that refuses can
+ * SAY what it could not choose between.
+ *
+ * @param {string | null} statePath
+ * @returns {string[]}
+ */
+export function declaredReposAt(statePath) {
+	if (!statePath) return [];
+	const configPath = resolve(statePath, ".indusk/config.json");
+	if (!existsSync(configPath)) return [];
+	try {
+		return declaredRepoNames(JSON.parse(readFileSync(configPath, "utf-8")));
+	} catch {
+		return [];
 	}
 }
 
