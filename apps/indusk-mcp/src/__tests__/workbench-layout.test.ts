@@ -162,3 +162,102 @@ describe.skipIf(SHOULD_SKIP)("A20 — listing groups by repo, disk stays the inv
 		expect(stdout).toMatch(/feature-x\s+\(a worktree of alpha\)/);
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)("A23 — a flat workbench opts in with one command", () => {
+	function flatWorkbenchWithWorktrees(): TwoRepoFixture {
+		const f = buildTwoRepoWorkbench({ materialize: true });
+		// Flat: nothing declared, worktrees at the root — a workbench that
+		// predates declared layout.
+		expect(runCli(f.workbenchDir, ["worktree", "create", "alpha", "feat-a"]).code).toBe(0);
+		expect(runCli(f.workbenchDir, ["worktree", "create", "beta", "feat-b"]).code).toBe(0);
+		return f;
+	}
+
+	it("moves worktrees under the declared location, and each still works", {
+		timeout: 60_000,
+	}, () => {
+		fixture = flatWorkbenchWithWorktrees();
+		const wb = fixture.workbenchDir;
+
+		const r = runCli(wb, ["workbench", "migrate-layout", "--apply"]);
+		expect(r.code, r.stderr).toBe(0);
+
+		// Moved…
+		expect(existsSync(join(wb, "alpha-worktrees", "feat-a"))).toBe(true);
+		expect(existsSync(join(wb, "beta-worktrees", "feat-b"))).toBe(true);
+		expect(existsSync(join(wb, "feat-a"))).toBe(false);
+
+		// …and STILL A WORKING WORKTREE. Moving the directory without repairing
+		// git's back-reference leaves something that looks right and is broken —
+		// which is the only failure mode of this command that matters.
+		const st = spawnSync(
+			"git",
+			["-C", join(wb, "alpha-worktrees", "feat-a"), "status", "--porcelain"],
+			{
+				encoding: "utf-8",
+			},
+		);
+		expect(st.status, st.stderr).toBe(0);
+
+		// The declaration was written, so the layout is now the config's.
+		const cfg = JSON.parse(readFileSync(join(wb, ".indusk", "config.json"), "utf-8"));
+		const alpha = cfg.worktree.repos.find((x: { name: string }) => x.name === "alpha");
+		expect(alpha.worktrees).toBe("alpha-worktrees");
+	});
+
+	it("dry-runs by default, changing nothing", { timeout: 60_000 }, () => {
+		fixture = flatWorkbenchWithWorktrees();
+		const wb = fixture.workbenchDir;
+		const before = readFileSync(join(wb, ".indusk", "config.json"), "utf-8");
+
+		const r = runCli(wb, ["workbench", "migrate-layout"]);
+
+		expect(r.code).toBe(0);
+		expect(r.stdout).toMatch(/would move|dry.run/i);
+		// A command that relocates directories shows its plan before doing it.
+		expect(existsSync(join(wb, "feat-a"))).toBe(true);
+		expect(existsSync(join(wb, "alpha-worktrees"))).toBe(false);
+		expect(readFileSync(join(wb, ".indusk", "config.json"), "utf-8")).toBe(before);
+	});
+
+	it("names what it could not move, moves the rest, and exits non-zero", {
+		timeout: 60_000,
+	}, () => {
+		// A partial migration that exits 0 is the shape this plan has refused
+		// throughout: half-done work reported as success.
+		fixture = buildTwoRepoWorkbench({ materialize: true });
+		const wb = fixture.workbenchDir;
+		expect(runCli(wb, ["worktree", "create", "alpha", "movable"]).code).toBe(0);
+		expect(runCli(wb, ["worktree", "create", "alpha", "locked-one"]).code).toBe(0);
+		spawnSync(
+			"git",
+			["-C", join(fixture.root, "alpha"), "worktree", "lock", join(wb, "locked-one")],
+			{
+				encoding: "utf-8",
+			},
+		);
+
+		const r = runCli(wb, ["workbench", "migrate-layout", "--apply"]);
+
+		expect(r.code).not.toBe(0);
+		expect(`${r.stdout}${r.stderr}`).toContain("locked-one");
+		// The one that could move, moved; the one that could not, stayed put.
+		expect(existsSync(join(wb, "alpha-worktrees", "movable"))).toBe(true);
+		expect(existsSync(join(wb, "locked-one"))).toBe(true);
+	});
+
+	it("leaves the wrapped repos untouched", { timeout: 60_000 }, () => {
+		fixture = flatWorkbenchWithWorktrees();
+		const head = (n: string) =>
+			spawnSync("git", ["-C", join(fixture.root, n), "rev-parse", "HEAD"], {
+				encoding: "utf-8",
+			}).stdout.trim();
+		const before = { alpha: head("alpha"), beta: head("beta") };
+
+		expect(runCli(fixture.workbenchDir, ["workbench", "migrate-layout", "--apply"]).code).toBe(0);
+
+		// Commit siloing again: this moves worktrees, never product code.
+		expect(head("alpha")).toBe(before.alpha);
+		expect(head("beta")).toBe(before.beta);
+	});
+});

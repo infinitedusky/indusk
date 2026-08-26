@@ -77,7 +77,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A20 | `worktree list` groups worktrees under their repo, and a worktree outside every declared location is shown as unattributed rather than dropped | Build Phase 9 | Build Phase 9 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A21 | A workbench with declared locations needs no deny-by-default rule, and its generated ignore lines can be appended to a hand-written `.gitignore` without changing that file's meaning | Build Phase 10 | Build Phase 10 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A22 | A flat workbench whose own `.gitignore` cannot carry the contract is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 10 | Build Phase 10 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
-| A23 | An existing flat workbench opts in with one command: its worktrees move under the declared location and every one of them still works | Build Phase 11 | Build Phase 11 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A23 | An existing flat workbench opts in with one command: its worktrees move under the declared location and every one of them still works | Build Phase 11 | Build Phase 11 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 
 ### Deferred Verification
 
@@ -285,7 +285,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 - [ ] Trajectory State column reads terminal for all sixteen rows
 
 #### Build Phase 7 Context
-- [ ] Demote this plan's Current State narrative to one line plus an archive link, and compress the Conventions entries this plan authored to rule plus pointer
+- [x] Compress the Conventions entries this plan authored to rule plus pointer — the single bullet had grown to **2,997 characters** against a documented standard of "1–3-line rules + pointer"; split into four rules with pointers, 1,505 chars, CLAUDE.md 46,690 → 45,209 bytes. The stale Active Plans row (still reading "brief accepted") was corrected in the same pass. **The Current State narrative demotion belongs to `/retrospective`**, which archives the plan and can write the archive link — doing it now would point at a directory that has not moved
 
 #### Build Phase 7 Document
 - [ ] Publish the ADR to `/decisions/versioned-workbench.md`; add the superseded-in-part pointer to the worktree extension's ADR; write the changelog entries
@@ -368,23 +368,23 @@ This closes the hole Phase 7 found on a real workbench: scaffolding only tops up
 
 **Goal**: an existing flat workbench opts in without hand-moving anything.
 
-- [ ] Author A23 in `workbench-layout.test.ts`, RED
-- [ ] `indusk workbench migrate-layout` — declare a worktrees location per repo, move existing worktrees into it, and repair each one's gitdir link so it still works
-- [ ] Dry-run by default; `--apply` performs it. A command that relocates directories should show its plan first
-- [ ] Refuse loudly on anything it cannot move — a partial migration that exits 0 is the failure this plan has fought throughout
-- [ ] Leave the wrapped repos untouched: this moves worktrees, never product code
+- [x] Author A23 in `workbench-layout.test.ts`, RED
+- [x] `indusk workbench migrate-layout` — declare a worktrees location per repo, move existing worktrees into it, and repair each one's gitdir link so it still works. Uses **`git worktree move`**, never a manual rename: a worktree is two cross-references (its `.git` file and the repo's `.git/worktrees/<name>/gitdir` pointing back), and moving the directory without repairing both leaves something that looks right and is broken. That is the only failure of this command that matters, so it is handed to the tool that knows
+- [x] Dry-run by default; `--apply` performs it. A command that relocates directories should show its plan first
+- [x] Refuse loudly on anything it cannot move — a partial migration that exits 0 is the failure this plan has fought throughout. A directory that resolves to no declared repo is left alone and reported, never guessed at
+- [x] Leave the wrapped repos untouched: this moves worktrees, never product code
 
 #### Build Phase 11 Verification
-- [ ] A23 passes — worktrees move and every one of them still resolves (`git -C <wt> status` succeeds)
-- [ ] Dry-run changes nothing on disk — diff a full tree snapshot
-- [ ] A blocked move exits non-zero naming what it could not move, leaving the rest untouched
-- [ ] Wrapped repos have zero new commits after a migration, as with the sync loop
+- [x] A23 passes — worktrees move and every one still resolves (`git -C <wt> status` succeeds), 10/10. Asserting the worktree still WORKS is the point: a moved directory with a stale back-reference looks correct and is not
+- [x] Dry-run changes nothing on disk — worktrees stay put, no destination directory appears, and `config.json` is byte-identical
+- [x] A blocked move exits non-zero naming what it could not move, leaving the rest untouched — verified with a `git worktree lock`: the movable one moved, the locked one stayed, exit 1 naming it. Proven load-bearing by making the failure exit 0 and watching the test fail
+- [x] Wrapped repos have zero new commits after a migration, as with the sync loop
 
 #### Build Phase 11 Context
 - [ ] Demote this plan's Current State narrative to one line plus an archive link, and compress the Conventions entries this plan authored to rule plus pointer
 
 #### Build Phase 11 Document
-- [ ] Document the migration in `/reference/cli/workbench`, including the dry-run default and what it refuses
+- [x] Document the migration in `/reference/cli/workbench`, including the dry-run default and what it refuses
 
 ## Files Affected
 

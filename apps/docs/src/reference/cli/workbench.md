@@ -165,6 +165,49 @@ each must be a single clean path segment. A declared value containing `/` or
 `..` is dropped and the default applies — degrade to structure-loss, never a
 traversal.
 
+## `indusk workbench migrate-layout`
+
+Move a flat workbench's worktrees under a declared per-repo location.
+
+```bash
+indusk workbench migrate-layout            # dry run — shows the plan
+indusk workbench migrate-layout --apply    # performs it
+```
+
+**Dry-run by default**, because a command that relocates directories should
+show its plan before doing anything:
+
+```
+Dry run — would move:
+
+  feat-a   ->  alpha-worktrees/feat-a
+  feat-b   ->  beta-worktrees/feat-b
+
+Nothing changed. Re-run with --apply to perform the migration.
+```
+
+It uses `git worktree move` rather than renaming directories. A worktree is two
+cross-references — its own `.git` file, and the repo's
+`.git/worktrees/<name>/gitdir` pointing back — and moving the directory without
+repairing both leaves something that *looks* right and is broken.
+
+**It refuses loudly and partially.** A worktree that cannot move (locked, dirty,
+destination occupied) is named, the rest still move, and the command exits
+non-zero:
+
+```
+  ✓ movable
+  ✗ locked-one — cannot move a locked working tree
+
+Migration incomplete — 1 worktree(s) could not be moved:
+  - locked-one: cannot move a locked working tree
+Fix those and re-run — the command is safe to repeat.
+```
+
+A directory that resolves to no declared repo is left alone and reported, never
+guessed at. Wrapped repos are never committed to — this moves worktrees, not
+product code. Re-running once everything is declared is a no-op.
+
 ## Why not `init` or `update`?
 
 `indusk init` is written to *refuse* an already-initialized workbench; a cloned

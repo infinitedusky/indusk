@@ -569,6 +569,17 @@ const workbenchCmd = program
 	.description("Workbench topology — materialize a cloned workbench");
 
 workbenchCmd
+	.command("migrate-layout")
+	.description(
+		"Move a flat workbench's worktrees under a declared per-repo location. Dry-run by default; --apply performs it.",
+	)
+	.option("--apply", "Perform the migration instead of showing the plan")
+	.action(async (opts: { apply?: boolean }) => {
+		const { workbenchMigrateLayout } = await import("./commands/workbench.js");
+		workbenchMigrateLayout(rootOrExit(), { apply: opts.apply });
+	});
+
+workbenchCmd
 	.command("sync")
 	.description(
 		"Commit local changes, pull, and push — blindly resolved, never blocking. Exits 0 offline; work goes out on the next sync.",

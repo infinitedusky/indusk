@@ -1,11 +1,23 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, readlinkSync, rmSync, symlinkSync } from "node:fs";
+import {
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	readlinkSync,
+	realpathSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import {
 	isWorkbench,
 	readSiblingParent,
 	readWorkbenchRepos,
+	repoDir,
 	type WorkbenchRepo,
 } from "../../lib/worktree/repos.js";
 import {
@@ -380,4 +392,187 @@ export function workbenchStatusCommand(projectRoot: string): never {
 		);
 	}
 	process.exit(0);
+}
+
+/**
+ * `indusk workbench migrate-layout` — move a flat workbench into declared layout.
+ *
+ * DRY-RUN BY DEFAULT. A command that relocates directories shows its plan
+ * before doing anything; `--apply` performs it.
+ *
+ * Uses `git worktree move`, never a manual rename. A git worktree is two
+ * cross-references — the worktree's `.git` file and the repo's
+ * `.git/worktrees/<name>/gitdir` pointing back — and moving the directory
+ * without repairing both leaves something that looks right and is broken. That
+ * is the only failure of this command that would matter, so it is handed to
+ * the tool that knows.
+ *
+ * Wrapped repos are never committed to or modified beyond the worktree
+ * bookkeeping: this moves worktrees, not product code.
+ */
+export function workbenchMigrateLayout(projectRoot: string, opts: { apply?: boolean } = {}): never {
+	const repos = readWorkbenchRepos(projectRoot);
+	if (repos.length === 0) {
+		console.error(
+			"Error: this project declares no repos (worktree.repos[] in .indusk/config.json).",
+		);
+		process.exit(1);
+	}
+
+	const alreadyDeclared = repos.filter((r) => r.worktrees);
+	if (alreadyDeclared.length === repos.length) {
+		console.info("Every repo already declares a worktrees location — nothing to migrate.");
+		process.exit(0);
+	}
+
+	const repoPaths = new Map(repos.map((r) => [r.name, join(projectRoot, repoDir(r))]));
+	const occupied = new Set(repos.map((r) => repoDir(r)));
+	const loose = listWorkbenchSubdirs(projectRoot).filter((n) => !occupied.has(n));
+
+	// Attribute each loose directory to a repo, and plan its destination.
+	interface Move {
+		repo: string;
+		slug: string;
+		from: string;
+		to: string;
+	}
+	const moves: Move[] = [];
+	const unplaceable: string[] = [];
+	for (const slug of loose) {
+		const owner = worktreeOwnerOf(join(projectRoot, slug), repoPaths);
+		if (!owner) {
+			unplaceable.push(slug);
+			continue;
+		}
+		const dest = `${owner}-worktrees`;
+		moves.push({
+			repo: owner,
+			slug,
+			from: join(projectRoot, slug),
+			to: join(projectRoot, dest, slug),
+		});
+	}
+
+	console.info(`Workbench: ${projectRoot}`);
+	console.info(opts.apply ? "Applying layout migration:" : "Dry run — would move:");
+	console.info("");
+	for (const m of moves) {
+		console.info(`  ${m.slug}  ->  ${m.repo}-worktrees/${m.slug}`);
+	}
+	if (moves.length === 0) console.info("  (no worktrees to move)");
+	if (unplaceable.length > 0) {
+		console.info("");
+		console.info("Left where they are — not resolvable to any declared repo:");
+		for (const slug of unplaceable) console.info(`  ${slug}`);
+	}
+
+	if (!opts.apply) {
+		console.info("");
+		console.info("Nothing changed. Re-run with --apply to perform the migration.");
+		process.exit(0);
+	}
+
+	// Perform. Every failure is collected and named; a partial migration that
+	// exits 0 is the shape this plan has refused throughout.
+	const failures: string[] = [];
+	const migrated = new Set<string>();
+	for (const m of moves) {
+		mkdirSync(join(projectRoot, `${m.repo}-worktrees`), { recursive: true });
+		const repoPath = repoPaths.get(m.repo);
+		const r = spawnSync("git", ["-C", repoPath ?? projectRoot, "worktree", "move", m.from, m.to], {
+			encoding: "utf-8",
+		});
+		if (r.status === 0) {
+			console.info(`  ✓ ${m.slug}`);
+			migrated.add(m.repo);
+		} else {
+			const why = (r.stderr ?? "").trim().split("\n")[0] ?? "unknown error";
+			console.error(`  ✗ ${m.slug} — ${why}`);
+			failures.push(`${m.slug}: ${why}`);
+		}
+	}
+
+	// Declare the layout for every repo whose worktrees actually moved, plus
+	// any repo that had none — the declaration is what makes the ignore rule
+	// precise, and a repo with no worktrees still benefits.
+	const declared = declareWorktreeLocations(
+		projectRoot,
+		repos.filter(
+			(r) => !r.worktrees && (migrated.has(r.name) || !moves.some((m) => m.repo === r.name)),
+		),
+	);
+	if (declared.length > 0) {
+		console.info("");
+		console.info(`Declared worktrees location for: ${declared.join(", ")}`);
+	}
+
+	if (failures.length > 0) {
+		console.error("");
+		console.error(`Migration incomplete — ${failures.length} worktree(s) could not be moved:`);
+		for (const f of failures) console.error(`  - ${f}`);
+		console.error("Fix those and re-run — the command is safe to repeat.");
+		process.exit(1);
+	}
+
+	console.info("");
+	console.info("Layout migrated. `indusk worktree list` now groups by repo.");
+	process.exit(0);
+}
+
+/** Root entries that are neither InDusk state nor tooling. */
+function listWorkbenchSubdirs(root: string): string[] {
+	const reserved = new Set([
+		".indusk",
+		".claude",
+		".git",
+		".vscode",
+		".cursor",
+		"node_modules",
+		"dist",
+		"build",
+		".next",
+		"scripts",
+		"env",
+		"docs",
+	]);
+	return readdirSync(root, { withFileTypes: true })
+		.filter((e) => (e.isDirectory() || e.isSymbolicLink()) && !reserved.has(e.name))
+		.map((e) => e.name)
+		.sort();
+}
+
+/** Which declared repo owns this worktree, asked of git rather than guessed. */
+function worktreeOwnerOf(worktreePath: string, repoPaths: Map<string, string>): string | null {
+	const r = spawnSync(
+		"git",
+		["-C", worktreePath, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+		{ encoding: "utf-8" },
+	);
+	if (r.status !== 0 || !r.stdout) return null;
+	const commonDir = r.stdout.trim();
+	for (const [name, repoPath] of repoPaths) {
+		try {
+			if (realpathSync(commonDir).startsWith(realpathSync(repoPath))) return name;
+		} catch {
+			// unresolvable — no match rather than a guess
+		}
+	}
+	return null;
+}
+
+/** Write `worktrees` for the given repos. Returns the names it declared. */
+function declareWorktreeLocations(projectRoot: string, repos: readonly WorkbenchRepo[]): string[] {
+	if (repos.length === 0) return [];
+	const cfgPath = join(projectRoot, ".indusk", "config.json");
+	const cfg = JSON.parse(readFileSync(cfgPath, "utf-8"));
+	const names = new Set(repos.map((r) => r.name));
+	const done: string[] = [];
+	for (const entry of cfg.worktree?.repos ?? []) {
+		if (names.has(entry.name) && !entry.worktrees) {
+			entry.worktrees = `${entry.name}-worktrees`;
+			done.push(entry.name);
+		}
+	}
+	if (done.length > 0) writeFileSync(cfgPath, `${JSON.stringify(cfg, null, 2)}\n`);
+	return done;
 }
