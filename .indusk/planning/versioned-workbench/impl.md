@@ -285,7 +285,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 - [ ] Trajectory State column reads terminal for all sixteen rows
 
 #### Build Phase 7 Context
-- [x] Compress the Conventions entries this plan authored to rule plus pointer — the single bullet had grown to **2,997 characters** against a documented standard of "1–3-line rules + pointer"; split into four rules with pointers, 1,505 chars, CLAUDE.md 46,690 → 45,209 bytes. The stale Active Plans row (still reading "brief accepted") was corrected in the same pass. **The Current State narrative demotion belongs to `/retrospective`**, which archives the plan and can write the archive link — doing it now would point at a directory that has not moved
+- [x] ~~Demote Current State + compress Conventions~~ — **duplicate gate, superseded by Build Phase 11's.** Authored when Phase 7 was the last phase; the compaction belongs at the end of the plan, and doing it twice would double-compress the same entries
 
 #### Build Phase 7 Document
 - [ ] Publish the ADR to `/decisions/versioned-workbench.md`; add the superseded-in-part pointer to the worktree extension's ADR; write the changelog entries
@@ -381,7 +381,7 @@ This closes the hole Phase 7 found on a real workbench: scaffolding only tops up
 - [x] Wrapped repos have zero new commits after a migration, as with the sync loop
 
 #### Build Phase 11 Context
-- [ ] Demote this plan's Current State narrative to one line plus an archive link, and compress the Conventions entries this plan authored to rule plus pointer
+- [x] Compress the Conventions entries this plan authored to rule plus pointer — the single bullet had grown to **2,997 characters** against a documented standard of "1–3-line rules + pointer"; split into four rules with pointers, 1,505 chars, CLAUDE.md 46,690 → 45,209 bytes. The stale Active Plans row (still reading "brief accepted") was corrected in the same pass. **The Current State narrative demotion belongs to `/retrospective`**, which archives the plan and can write the archive link — doing it now would point at a directory that has not moved
 
 #### Build Phase 11 Document
 - [x] Document the migration in `/reference/cli/workbench`, including the dry-run default and what it refuses
