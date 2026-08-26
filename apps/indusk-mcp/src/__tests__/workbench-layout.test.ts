@@ -119,3 +119,46 @@ describe.skipIf(SHOULD_SKIP)("A19 — nothing infers layout from a name", () => 
 		expect(code).not.toBe(-1);
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)("A20 — listing groups by repo, disk stays the inventory", () => {
+	it("lists a declared repo's worktrees under that repo", { timeout: 30_000 }, () => {
+		fixture = buildTwoRepoWorkbench({ materialize: true });
+		declare(fixture.workbenchDir, { alpha: { worktrees: "alpha-worktrees" } });
+
+		expect(runCli(fixture.workbenchDir, ["worktree", "create", "alpha", "feature-x"]).code).toBe(0);
+
+		const { stdout } = runCli(fixture.workbenchDir, ["worktree", "list"]);
+		const alphaBlock = stdout.slice(stdout.indexOf("\nalpha\n"), stdout.indexOf("\nbeta\n"));
+		expect(alphaBlock).toContain("feature-x");
+		// The worktrees directory itself is structure, not a worktree.
+		expect(stdout).not.toMatch(/^\s+alpha-worktrees$/m);
+	});
+
+	it("shows a worktree outside every declared location as UNATTRIBUTED, never dropped", {
+		timeout: 30_000,
+	}, () => {
+		// The standing rule: declarations add structure and can never subtract.
+		// A directory renamed on disk without updating config must still be
+		// visible — a declaration that silently removes work from the listing is
+		// worse than one that admits it cannot place it.
+		fixture = buildTwoRepoWorkbench({ materialize: true });
+		declare(fixture.workbenchDir, { alpha: { worktrees: "alpha-worktrees" } });
+		expect(runCli(fixture.workbenchDir, ["worktree", "create", "alpha", "feature-x"]).code).toBe(0);
+
+		// Rename the declared directory WITHOUT telling config.
+		renameSync(
+			join(fixture.workbenchDir, "alpha-worktrees"),
+			join(fixture.workbenchDir, "moved-elsewhere"),
+		);
+
+		const { stdout } = runCli(fixture.workbenchDir, ["worktree", "list"]);
+
+		expect(stdout).toMatch(/Unattributed/i);
+		expect(stdout).toContain("moved-elsewhere");
+		// Not just the container — the WORKTREES inside it, each named, with the
+		// repo they belong to. Reporting only the folder is its own subtraction:
+		// a reader sees a directory and cannot tell it holds work.
+		expect(stdout).toContain("feature-x");
+		expect(stdout).toMatch(/feature-x\s+\(a worktree of alpha\)/);
+	});
+});

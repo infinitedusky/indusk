@@ -35,6 +35,8 @@ my-workbench/                  # the indusk project
 
 The wrapped repo's canonical clone lives elsewhere on disk (typically `~/code/<area>/<repo>`); the workbench's `<repo>` symlink points to it. The clone keeps its own `.git/`; the workbench keeps the `.indusk/`. Worktrees are created via `git worktree add` from inside the trunk symlink and land as siblings of the trunk.
 
+**Declared layout**: a repo entry may carry `path` (where its checkout lives) and `worktrees` (where its worktrees go), both relative to the workbench and both single clean segments. Absent means flat — the workbench root — so an existing workbench is untouched and nesting is opt-in per repo. `worktree list` then groups structurally from the declared directory rather than asking git who owns what, and anything on disk it cannot place renders under **Unattributed**, naming the worktrees inside it: declarations add structure and can never subtract.
+
 **Trunk vs worktrees**: a workbench declares its repos in `worktree.repos[]` (the legacy `worktree.wrapped_repo` reduces to a one-element list, so existing workbenches need no edit). Each declared repo gets its own trunk symlink at the workbench root; worktrees are real directories beside them. `indusk worktree list` renders one block per repo and attributes each worktree to its owning repo by asking git for `--git-common-dir` — not by guessing from the slug, because a wrong attribution reads exactly like a right one. Worktree slugs must not collide with any declared repo name. `docs/` is reserved at the workbench root (internal engagement docs), alongside `scripts/` and `env/`.
 
 ## When to enable

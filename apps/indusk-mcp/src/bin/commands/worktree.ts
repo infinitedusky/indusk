@@ -354,6 +354,24 @@ export function worktreeList(projectRoot: string): void {
 
 	const byRepo = new Map<string, string[]>(repos.map((r) => [r.name, []]));
 	const unattributed: string[] = [];
+
+	// STRUCTURAL first: a repo that declares a worktrees directory owns what is
+	// inside it, by construction. No git call, no inference — the containing
+	// directory IS the answer, which is the whole point of declaring it.
+	for (const repo of repos) {
+		if (!repo.worktrees) continue;
+		const dir = join(projectRoot, repo.worktrees);
+		if (!existsSync(dir)) continue;
+		byRepo.get(repo.name)?.push(...listSubdirs(dir));
+	}
+
+	// Then whatever is loose at the root — the flat layout, and anything a
+	// declaration does not place. Attribution falls back to asking git.
+	//
+	// Discovery stays on DISK. Declarations add structure and can never
+	// subtract: a directory renamed without updating config must still appear,
+	// as unattributed, rather than vanish from the listing. A declaration that
+	// silently removes work is worse than one that admits it cannot place it.
 	for (const slug of slugs) {
 		const owner = worktreeOwner(join(projectRoot, slug), repoPaths);
 		if (owner) byRepo.get(owner)?.push(slug);
@@ -387,7 +405,20 @@ export function worktreeList(projectRoot: string): void {
 
 	if (unattributed.length > 0) {
 		console.info("");
-		console.info(`Unattributed (${unattributed.length}) — not a worktree of any declared repo:`);
-		for (const slug of unattributed) console.info(`  ${slug}`);
+		console.info(
+			`Unattributed (${unattributed.length}) — present on disk, but not inside any declared worktrees location and not resolvable to a declared repo:`,
+		);
+		for (const slug of unattributed) {
+			console.info(`  ${slug}`);
+			// Name what is INSIDE it, one level down. A renamed worktrees
+			// directory is the common way to land here, and reporting only the
+			// container is its own kind of subtraction: the reader sees a folder
+			// and cannot tell it holds work. Naming them is the difference
+			// between "not dropped" and "actually visible".
+			for (const inner of listSubdirs(join(projectRoot, slug))) {
+				const owner = worktreeOwner(join(projectRoot, slug, inner), repoPaths);
+				console.info(`    ${inner}${owner ? `  (a worktree of ${owner})` : ""}`);
+			}
+		}
 	}
 }

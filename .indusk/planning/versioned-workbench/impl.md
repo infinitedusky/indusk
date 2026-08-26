@@ -74,7 +74,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | written | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
 | A18 | A worktree created in a workbench that declares a worktrees location lands there, not at the workbench root | Build Phase 8 | Build Phase 8 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A19 | Renaming a declared directory and updating config keeps everything working — nothing infers layout from a name | Build Phase 8 | Build Phase 8 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
-| A20 | `worktree list` groups worktrees under their repo, and a worktree outside every declared location is shown as unattributed rather than dropped | Build Phase 9 | Build Phase 9 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A20 | `worktree list` groups worktrees under their repo, and a worktree outside every declared location is shown as unattributed rather than dropped | Build Phase 9 | Build Phase 9 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A21 | A workbench with declared locations needs no deny-by-default rule, and its generated ignore lines can be appended to a hand-written `.gitignore` without changing that file's meaning | Build Phase 10 | Build Phase 10 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A22 | A flat workbench whose own `.gitignore` cannot carry the contract is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 10 | Build Phase 10 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A23 | An existing flat workbench opts in with one command: its worktrees move under the declared location and every one of them still works | Build Phase 11 | Build Phase 11 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
@@ -320,22 +320,22 @@ Absence means today's behavior — a repo with no `worktrees` declared stays fla
 
 **Declarations add structure; they can never subtract.** A worktree found outside every declared location renders as **unattributed**, never dropped — the standing rule that keeps a renamed folder from making work disappear.
 
-- [ ] Author A20 in `workbench-layout.test.ts`, RED
-- [ ] Group the listing by declared repo, using the declared worktrees location as the structural signal
-- [ ] Keep discovery on disk — enumerate what is there, then attribute it, rather than listing what config claims
-- [ ] Fall back to `--git-common-dir` for anything outside a declared location, and render it under an explicit **Unattributed** heading
-- [ ] Drop the slug-vs-repo-name collision invariant where a declared layout makes it impossible
+- [x] Author A20 in `workbench-layout.test.ts`, RED
+- [x] Group the listing by declared repo, using the declared worktrees location as the structural signal — no git call and no inference: the containing directory IS the answer, which is the point of declaring it
+- [x] Keep discovery on disk — enumerate what is there, then attribute it, rather than listing what config claims
+- [x] Fall back to `--git-common-dir` for anything outside a declared location, and render it under an explicit **Unattributed** heading — and **name what is inside it**, one level down, with the repo each belongs to. Found by reading the output rather than the assertion: reporting only the container is its own subtraction, since a reader sees a folder and cannot tell it holds two worktrees
+- [x] Drop the slug-vs-repo-name collision invariant where a declared layout makes it impossible — done in Phase 8's shell change; the guard now applies only to flat layouts
 
 #### Build Phase 9 Verification
-- [ ] A20 passes (`pnpm exec vitest run src/__tests__/workbench-layout.test.ts`)
-- [ ] Rename a declared worktrees directory WITHOUT updating config and confirm its worktrees appear as unattributed — not missing. Assert the survival, because a declaration that silently subtracts is the failure this rule exists to prevent
-- [ ] Flat workbenches still list exactly as they do today
+- [x] A20 passes (`pnpm exec vitest run src/__tests__/workbench-layout.test.ts`, 6/6)
+- [x] Rename a declared worktrees directory WITHOUT updating config and confirm its worktrees appear as unattributed — not missing. **Both the container and each worktree inside it are named**, with the repo each resolves to. Proven load-bearing by removing the structural grouping and watching A20 fail
+- [x] Flat workbenches still list exactly as they do today — 108 passed / 0 failed across every workbench and worktree suite; fast suite 983 passed
 
 #### Build Phase 9 Context
-- [ ] Add to Known Gotchas: listing discovers from disk and attributes via declarations; anything unattributable renders as such rather than vanishing
+- [x] Add to Known Gotchas: listing discovers from disk and attributes via declarations; anything unattributable renders as such rather than vanishing
 
 #### Build Phase 9 Document
-- [ ] Update the worktree extension skill's topology section for declared layouts and the unattributed case
+- [x] Update the worktree extension skill's topology section for declared layouts and the unattributed case
 
 ### Build Phase 10: Ignore rules become precise
 
