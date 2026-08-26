@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -25,32 +25,24 @@ import { join } from "node:path";
  * committed into your context remote. Deny-by-default is the only shape that
  * is correct for a name nobody has thought of yet.
  */
-const GITIGNORE = `# InDusk workbench context repo.
+const GITIGNORE_HEADER = `# InDusk workbench context repo.
 #
-# ROOT WHITELIST — deny everything at the root, then opt in.
+# ROOT DIRECTORY whitelist. Every root DIRECTORY is ignored unless opted in
+# below — worktree directories are created at runtime by \`indusk worktree
+# create <slug>\`, so a deny-list is always one command behind, and what it
+# misses is a whole checkout of another repo committed into the context repo.
 #
-# \`/*\` (not \`/*/\`) is deliberate: git stores a trunk symlink as a BLOB, not
-# a directory, so a directory-only rule leaves every trunk link tracked. One
-# rule covering files, directories and symlinks alike is the only shape that
-# is correct for a name nobody has invented yet — worktree directories are
-# created at runtime by \`indusk worktree create <slug>\`, so a blacklist is
-# always one command behind.
-/*
-
-# Directories that carry shared context.
+# Root FILES are deliberately NOT denied. An earlier version used \`/*\` to
+# also catch trunk symlinks (git stores those as blobs, so \`/*/\` misses them)
+# and thereby untracked every root file a real workbench had — .mcp.json,
+# biome.json, instrumentation.ts. Those are shared context. Symlinks are named
+# explicitly instead, in the generated block below.
+/*/
 !/.indusk/
 !/.claude/
 !/env/
 !/scripts/
 !/docs/
-
-# Root files that describe the workbench itself.
-!/.gitignore
-!/.gitattributes
-!/package.json
-!/README.md
-!/CLAUDE.md
-!/AGENTS.md
 
 # Secrets — transferred out-of-band, never committed.
 # NOTE the trailing glob: extensions also emit .env.local / .env.production
@@ -58,6 +50,9 @@ const GITIGNORE = `# InDusk workbench context repo.
 .indusk/extensions/*/.env*
 !.indusk/extensions/*/.env.example
 env/*.env
+.env
+.env.*
+!.env.example
 
 # Machine-local state — real content, but true only for this machine.
 .indusk/eval/
@@ -69,6 +64,21 @@ node_modules/
 docs/src/.vitepress/cache/
 docs/src/.vitepress/dist/
 `;
+
+/** Marker for the generated trunk-symlink block, so it can be extended later. */
+const TRUNK_BLOCK_MARKER = "# --- InDusk trunk symlinks (generated) ---";
+
+/**
+ * The trunk symlinks, named one per declared repo.
+ *
+ * Git stores a symlink as a blob, so the directory-only rule above (slash-star-slash)
+ * cannot see them. Naming them is more precise than broadening the rule — and precision
+ * is what keeps real root files tracked.
+ */
+function trunkBlock(repoNames: readonly string[]): string {
+	if (repoNames.length === 0) return "";
+	return [TRUNK_BLOCK_MARKER, ...repoNames.map((n) => `/${n}`), ""].join("\n");
+}
 
 /**
  * `merge=union` on the append-shaped coordination files.
@@ -100,22 +110,42 @@ export interface ScaffoldResult {
  * Idempotent and non-destructive: an existing file is reported as kept, never
  * rewritten.
  */
-export function ensureShareableScaffolding(workbenchRoot: string): ScaffoldResult {
+export function ensureShareableScaffolding(
+	workbenchRoot: string,
+	repoNames: readonly string[] = [],
+): ScaffoldResult {
 	const created: string[] = [];
 	const kept: string[] = [];
 
-	for (const [name, content] of [
-		[".gitignore", GITIGNORE],
-		[".gitattributes", GITATTRIBUTES],
-	] as const) {
-		const path = join(workbenchRoot, name);
-		if (existsSync(path)) {
-			kept.push(name);
-			continue;
+	const ignorePath = join(workbenchRoot, ".gitignore");
+	if (!existsSync(ignorePath)) {
+		writeFileSync(ignorePath, `${GITIGNORE_HEADER}\n${trunkBlock(repoNames)}`);
+		created.push(".gitignore");
+	} else {
+		// TOP UP rather than rewrite. An existing ignore file is a decision
+		// somebody made; a repo declared later still needs its symlink named, so
+		// only the missing lines are appended.
+		const body = readFileSync(ignorePath, "utf-8");
+		const missing = repoNames.filter((n) => !new RegExp(`^/${n}$`, "m").test(body));
+		if (missing.length > 0) {
+			const block = body.includes(TRUNK_BLOCK_MARKER)
+				? `${missing.map((n) => `/${n}`).join("\n")}\n`
+				: `\n${trunkBlock(missing)}`;
+			appendFileSync(ignorePath, block);
+			kept.push(`.gitignore (+${missing.length} trunk rule${missing.length === 1 ? "" : "s"})`);
+		} else {
+			kept.push(".gitignore");
 		}
-		writeFileSync(path, content);
-		created.push(name);
 	}
+
+	const attrPath = join(workbenchRoot, ".gitattributes");
+	if (existsSync(attrPath)) {
+		kept.push(".gitattributes");
+	} else {
+		writeFileSync(attrPath, GITATTRIBUTES);
+		created.push(".gitattributes");
+	}
+
 	return { created, kept };
 }
 

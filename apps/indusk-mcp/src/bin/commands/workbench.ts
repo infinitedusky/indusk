@@ -176,7 +176,10 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
 	// Scaffolded here rather than at git-init time so a workbench that was
 	// made shareable by hand (the POC's path) still gets the rules, and so the
 	// ignore file exists BEFORE anything can be committed. Never overwrites.
-	const scaffold = ensureShareableScaffolding(projectRoot);
+	const scaffold = ensureShareableScaffolding(
+		projectRoot,
+		repos.map((r) => r.name),
+	);
 	if (scaffold.created.length > 0) {
 		console.info(`Scaffolded: ${scaffold.created.join(", ")}`);
 	}
@@ -190,9 +193,15 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
 	// Ignoring a path does not untrack it. A workbench git-initialized before
 	// these rules existed keeps publishing its symlinks and secrets while
 	// `git status` looks clean.
+	// NAMED, never counted. This drops files out of a SHARED repo's index —
+	// a workbench's own rules decide which, and "untracked 3 paths" gives a
+	// reader no way to notice that one of them was something they wanted.
+	// (Found on a real workbench: `.mcp.json` was both tracked AND ignored,
+	// so restore untracked it. Correct per their rule, surprising in silence.)
 	const untracked = untrackNowIgnored(projectRoot);
 	if (untracked.length > 0) {
-		console.info(`Untracked ${untracked.length} now-ignored path(s) (index only, files kept)`);
+		console.info(`Untracked ${untracked.length} now-ignored path(s) — index only, files kept on disk:`);
+		for (const path of untracked) console.info(`  - ${path}`);
 	}
 	console.info("");
 
@@ -254,7 +263,10 @@ export function workbenchSyncCommand(projectRoot: string): never {
 
 	// The ignore rules must exist before anything is committed, or the first
 	// sync publishes exactly what they were written to keep out.
-	const scaffold = ensureShareableScaffolding(projectRoot);
+	const scaffold = ensureShareableScaffolding(
+		projectRoot,
+		repos.map((r) => r.name),
+	);
 	if (scaffold.created.length > 0) console.info(`Scaffolded: ${scaffold.created.join(", ")}`);
 	untrackNowIgnored(projectRoot);
 

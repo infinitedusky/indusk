@@ -47,6 +47,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | Build Phase 5 | plan-root/code-root resolution + refusal in verify's entry path | existing `assertGitRepo`, `phantom.ts` |
 | Build Phase 6 | workbench root git-init + the sync loop | Phase 4's ignore shape, Phase 5's preserved refusal |
 | Build Phase 7 | documented onboarding path, end-to-end | every prior phase |
+| Build Phase 8 | refusal when a pre-existing `.gitignore` cannot carry the sharing contract | Phase 4's scaffolding, Phase 6's sync |
 
 ## Test Trajectory
 
@@ -68,6 +69,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
 | A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
 | A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | written | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
+| A18 | A workbench whose own `.gitignore` lacks the deny-by-default rule is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 8 | Build Phase 8 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 
 ### Deferred Verification
 
@@ -262,13 +264,16 @@ Make a workbench reconstructible from its remote and shared between machines: th
 ### Build Phase 7: Onboarding, end to end
 
 - [ ] Walk the documented onboarding path verbatim on a second checkout location: clone, restore, supply out-of-band, update
-- [ ] Migrate the avoca POC — `.indusk/workbench.json` folds into `worktree.repos[]`, `scripts/bootstrap.sh` retires
-- [ ] Point the tool at its own repo family: restore a workbench other than the one the fixtures were built from
+- [x] ~~Migrate the avoca POC~~ — **BLOCKED, scoped out 2026-08-26: repository access was revoked mid-plan** (SSH authenticates, the repo returns "not found"). Its findings were already harvested and shipped before access ended — the `sibling_parent`-names-another-machine fix, the config-vs-manifest drift that is D2's evidence, and the root-file whitelist bug. What is lost is the ability to verify an upgrade against a workbench that predates this plan; `numero-workbench` covers that ground instead
+- [x] Point the tool at its own repo family: restore a workbench other than the one the fixtures were built from — **`numero-workbench`, and it found two bugs no fixture could.** Copying was impossible (91 GB, 44 live worktrees) and running in place would have `git init`-ed a directory that has never been a repo, so the run used a faithful MINIATURE: its real `config.json` (legacy `wrapped_repo`, `sibling_parent` pointing at the workbench itself), its real hand-written `.gitignore`, a trunk that is a **real directory rather than a symlink**, and worktree-shaped siblings. Every one of those differs from what the fixtures model
+
+- [x] **Fix found by that run (a Phase 4 bug):** the root whitelist used `/*`, which denies root FILES as well as directories — so `restore` untracked `.mcp.json`, `biome.json`, `instrumentation.ts`, `logger.ts` and more from any real workbench. Narrowed to `/*/` (directories) plus the declared trunk names generated per repo, so root files stay tracked. Verified on the miniature: 5 of 6 previously-lost files kept, the 6th excluded by that workbench's own deliberate rule
+- [x] **Second finding, deferred to Build Phase 8:** scaffolding only TOPS UP an existing `.gitignore`, so a workbench that already had one never receives the deny-by-default rule and `sync` commits worktree contents. Fixing it means either rewriting a human's file or refusing; the refusal is Phase 8
 
 #### Build Phase 7 Verification
-- [ ] A1 passes (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] A1 passes (`pnpm exec vitest run src/__tests__/workbench-onboarding.test.ts`) — clone plus restore yields context and every declared repo
 - [ ] A9's manual smoke completes on a real second checkout, following the written guide with no undocumented step — an undocumented step discovered here is a documentation bug, not a smoke failure
-- [ ] The migrated avoca workbench restores from its remote with `bootstrap.sh` deleted
+- [x] ~~The migrated avoca workbench restores from its remote with `bootstrap.sh` deleted~~ — unreachable, same cause as above
 - [ ] Trajectory State column reads terminal for all sixteen rows
 
 #### Build Phase 7 Context
@@ -276,6 +281,31 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 #### Build Phase 7 Document
 - [ ] Publish the ADR to `/decisions/versioned-workbench.md`; add the superseded-in-part pointer to the worktree extension's ADR; write the changelog entries
+
+### Build Phase 8: Refuse rather than publish what the rules cannot cover
+
+**Goal**: close the hole Phase 7 found by pointing the tool at a real pre-existing workbench. `numero-workbench` has its own `.gitignore`, so the scaffold only appended the trunk block and the deny-by-default rule was never added — `sync` then committed worktree contents. On the real workbench that is 44 checkouts of a client repo entering a shared context repo.
+
+**Why refuse rather than fix the file.** Appending `/*/` plus an allow-list to a `.gitignore` somebody else wrote inverts that file's semantics: every root directory becomes denied unless listed. Given what is at stake, a loud stop beats an opinionated rewrite of a human's decision. `workbench-declared-layout` removes the need for the rule entirely; this phase is the honest stopgap until then.
+
+- [ ] Author A18 against a fixture carrying a **pre-existing `.gitignore` with no `/*/` rule** — today it passes (sync succeeds and commits worktree contents), so it is authored RED against the behavior we want
+- [ ] Call `missingIgnoreRules` from `restore` and `sync`, not only from `update`'s nudge — the check already exists and is correct; it is simply never consulted at the moment it matters
+- [ ] Refuse with a **non-zero exit** naming each missing rule and what it protects, and pointing at the file to edit. Never rewrite the developer's `.gitignore`
+- [ ] `--i-know` (or equivalent) escape hatch so a workbench that genuinely wants the current behavior can proceed — a refusal with no override becomes a reason to stop using the tool
+- [ ] Report untracked paths **by name**, not as a count. It drops files from a shared repo's index, and "untracked 3 paths" gives a reader no way to notice one mattered (`.mcp.json` on a real workbench)
+- [ ] Correct the trunk message: `restore` prints `✓ <repo> — already present, trunk linked` when the trunk is a real directory and no link was created or needed
+
+#### Build Phase 8 Verification
+- [ ] A18 passes: a workbench with a pre-existing rule-less `.gitignore` is refused, exits non-zero, and names the missing rules (`pnpm exec vitest run src/__tests__/workbench-sync-ignore.test.ts`)
+- [ ] A8 gains a **second case with a pre-existing `.gitignore`** — it is currently green for a fixture-shaped reason, since its fixture ships none and the scaffold therefore always writes the full whitelist
+- [ ] Confirm the refusal is load-bearing by removing it and watching A18 fail — an acceptance test cannot detect a check that stopped being consulted
+- [ ] The escape hatch actually proceeds, so the refusal is not merely always-on
+
+#### Build Phase 8 Context
+- [ ] Add to Known Gotchas: scaffolding only tops up an existing `.gitignore`, so a workbench that already had one never receives the deny-by-default rule — `restore`/`sync` refuse instead, and `workbench-declared-layout` removes the need
+
+#### Build Phase 8 Document
+- [ ] Update `/reference/cli/workbench` and `/guide/workbench-sharing` with the refusal, what it protects against, and the escape hatch
 
 ## Files Affected
 
@@ -310,3 +340,4 @@ Make a workbench reconstructible from its remote and shared between machines: th
 - Follow-on, named and out of scope: the full plan-root/code-root split across Shape and cleanup. This plan owns the refusal only.
 - The worktree kickoff lives in **Test Phase 1**, not Build Phase 1 — with `test_phases: required` the test phase is the first phase that writes code, so a kickoff sitting in Build Phase 1 would fire one phase after the first commit. Found by executing the plan, not by reading it.
 - `indusk init-docs` hardcodes `apps/${projectName}-docs` and cannot scaffold a workbench-root `docs/` (D7). Not blocking — recorded so the next plan touching docs scaffolding has it.
+- **Build Phase 8 exists because Phase 7 pointed the tool at a real workbench.** `numero-workbench` has its own `.gitignore`, so the scaffold only topped up the trunk block and the deny-by-default rule was never applied — `sync` committed worktree contents. A8 could not see it: its fixture ships no `.gitignore`, so the scaffold always writes the full whitelist and the guard is green for a fixture-shaped reason. The layout fix that removes the need for the rule is its own plan — see `.indusk/planning/workbench-declared-layout/`
