@@ -5,7 +5,7 @@ import { join } from "node:path";
 /**
  * The two files that make a workbench root safe to share.
  *
- * Derived from the avoca POC's hand-written pair, which had already survived
+ * Derived from the POC's hand-written pair, which had already survived
  * months of real use — including two rules nobody would invent from first
  * principles (see the comments in the generated file). Productizing a working
  * artifact beats authoring a fresh one and discovering its gaps in a client

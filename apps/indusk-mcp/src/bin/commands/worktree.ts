@@ -220,7 +220,7 @@ function listSubdirs(workbenchRoot: string): string[] {
 		"env",
 		// D7: the workbench-root internal-docs directory the versioned-workbench
 		// shape adopts. Absent from this set it renders as a worktree, which is
-		// how the avoca POC's `docs/` looked before anyone noticed.
+		// how the POC's `docs/` looked before anyone noticed.
 		"docs",
 	]);
 	const entries: string[] = [];

@@ -39,7 +39,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 | Phase | Produces | Consumes |
 |-------|----------|----------|
-| Test Phase 1 | 16 authored assertions, red, plus the two-repo workbench fixture they share | existing `helpers/worktree-fixture.ts`, the avoca POC's `bootstrap.sh` as behavioral reference |
+| Test Phase 1 | 16 authored assertions, red, plus the two-repo workbench fixture they share | existing `helpers/worktree-fixture.ts`, the POC's `bootstrap.sh` as behavioral reference |
 | Build Phase 1 | `worktree.repos[]` schema, `readWorkbenchRepos()`, singular→plural reduction, `worktree list` over N trunks | `.indusk/config.json`, `worktree.ts` |
 | Build Phase 2 | `_read_workbench_repos` bash helper; 4 scripts converted; `worktree create <repo> <slug>` | Phase 1's config shape |
 | Build Phase 3 | `indusk workbench restore` — clone, symlink, `--worktrees`, partial-failure contract | Phase 1's `readWorkbenchRepos`, Phase 2's `worktree create` |
@@ -74,7 +74,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 ### Deferred Verification
 
 - **Onboarding on a machine with no prior SSH host-alias configuration**
-  - reason: SSH host aliases (e.g. `github-avoca`) are machine configuration outside every repo; a test that provisioned them would be asserting against its own fixture rather than against the product.
+  - reason: SSH host aliases (e.g. `github-<org>`) are machine configuration outside every repo; a test that provisioned them would be asserting against its own fixture rather than against the product.
   - would require: a second physical machine with a clean `~/.ssh/config`, or a container image standing in for one — neither available to this plan's test lane.
   - mitigation: A15 forces the alias requirement into the printed out-of-band list, so the gap announces itself at restore time rather than surfacing as a failed clone with no explanation. A9's manual smoke walks it once on a real second checkout.
 
@@ -180,12 +180,12 @@ Make a workbench reconstructible from its remote and shared between machines: th
 - [x] Partial-failure contract — a failed clone names the repo and its remote, the other repos still materialize, and the command exits non-zero
 - [x] Never abort the loop on the first failure; collect and report every failure at the end — otherwise restoring an N-repo workbench becomes a lottery decided by declaration order
 
-- [x] **Found by the real-workbench run** — `sibling_parent` is an absolute, machine-specific path committed to the SHARED context repo. avoca's says `/Users/sandycorsillo/code/lazer/avoca`; on another machine that directory does not exist and restore reports every repo missing. A fixture can never catch this, because a fixture sets `sibling_parent` to its own tmpdir. Resolve it as: declared-and-exists → use it; declared-and-missing → say so and fall back to the workbench's parent; absent → the workbench's parent. "Beside the workbench" is the topology `indusk setup` actually builds, so the parent is the right default rather than a guess
+- [x] **Found by the real-workbench run** — `sibling_parent` is an absolute, machine-specific path committed to the SHARED context repo. the POC's says `another machine's home directory`; on another machine that directory does not exist and restore reports every repo missing. A fixture can never catch this, because a fixture sets `sibling_parent` to its own tmpdir. Resolve it as: declared-and-exists → use it; declared-and-missing → say so and fall back to the workbench's parent; absent → the workbench's parent. "Beside the workbench" is the topology `indusk setup` actually builds, so the parent is the right default rather than a guess
 
 #### Build Phase 3 Verification
 - [x] A10, A11, A12 pass (`pnpm exec vitest run src/__tests__/workbench-restore.test.ts`) — A1 flipped green early too, since clone+restore is exactly what it observes
-- [x] A12 specifically asserts the **failure** path: named repo, preserved siblings, non-zero exit — a restore that clones half and exits 0 must be a test failure, not a warning. Confirmed out-of-band too: the real avoca clone exits **1** (an earlier reading of `0` was my harness reporting `head`'s status through a pipe, not node's)
-- [x] Run `indusk workbench restore` verbatim from the docs against a real clone of the avoca workbench — a library is not shipped until its documented invocation has been run as written. **This single run found what no fixture could**: (1) the committed `sibling_parent` names another machine's home directory, fixed above; (2) `config.json` declares ONE repo while `workbench.json` declares TWO — the drift D2 rejected the separate manifest to prevent, already live in production; (3) a legacy `wrapped_repo` workbench carries no `remote`, so restore correctly refuses rather than pretending. The temp clone was removed afterwards; the live workbench was never written to
+- [x] A12 specifically asserts the **failure** path: named repo, preserved siblings, non-zero exit — a restore that clones half and exits 0 must be a test failure, not a warning. Confirmed out-of-band too: the real the POC clone exits **1** (an earlier reading of `0` was my harness reporting `head`'s status through a pipe, not node's)
+- [x] Run `indusk workbench restore` verbatim from the docs against a real clone of the POC workbench — a library is not shipped until its documented invocation has been run as written. **This single run found what no fixture could**: (1) the committed `sibling_parent` names another machine's home directory, fixed above; (2) `config.json` declares ONE repo while `workbench.json` declares TWO — the drift D2 rejected the separate manifest to prevent, already live in production; (3) a legacy `wrapped_repo` workbench carries no `remote`, so restore correctly refuses rather than pretending. The temp clone was removed afterwards; the live workbench was never written to
 - [x] Re-run against an already-materialized workbench and diff the tree: zero changes (A11's full-tree snapshot)
 
 #### Build Phase 3 Context
@@ -197,7 +197,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 ### Build Phase 4: What never travels
 
 - [x] Print the out-of-band set after restore: `env/*.env`, `.indusk/extensions/doppler/.env`, repo-local config, required SSH host aliases — landed early, in Phase 3, because restore had nothing honest to say at its end without it
-- [x] Scaffold the root-directory-**whitelist** `.gitignore` — deny by default, directories added explicitly, so an unpredicted worktree directory is untracked by construction. **The deny rule is `/*`, not `/*/`**: git stores a trunk symlink as a blob, so a directory-only rule leaves every trunk tracked — caught by A8, not by reading. Ported from the avoca POC's months-tested file rather than authored fresh, including its comment on why the trailing `.env*` glob is load-bearing. Scaffolds only when absent; a hand-tuned ignore file is a decision, not drift
+- [x] Scaffold the root-directory-**whitelist** `.gitignore` — deny by default, directories added explicitly, so an unpredicted worktree directory is untracked by construction. **The deny rule is `/*`, not `/*/`**: git stores a trunk symlink as a blob, so a directory-only rule leaves every trunk tracked — caught by A8, not by reading. Ported from the POC's months-tested file rather than authored fresh, including its comment on why the trailing `.env*` glob is load-bearing. Scaffolds only when absent; a hand-tuned ignore file is a decision, not drift
 - [x] Scaffold `.gitattributes` with `merge=union` on `current.md` and `highlights.jsonl` (plus `highlights-processed.jsonl`) — deliberately NOT on plan documents, where a blind union interleaves prose
 - [x] `indusk update` detects declared-but-unmaterialized repos and nudges to `indusk workbench restore` without cloning anything itself — verified on a workbench declaring a repo that does not exist: it names the repo, points at restore, and performs no network call. **Plus `untrackNowIgnored`**, which the tests forced: ignoring a path does not untrack it, so a workbench git-initialized before these rules kept publishing its symlinks and secrets while `git status` looked clean. Index-only (`--cached`); files stay on disk
 
@@ -264,7 +264,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 ### Build Phase 7: Onboarding, end to end
 
 - [ ] Walk the documented onboarding path verbatim on a second checkout location: clone, restore, supply out-of-band, update
-- [x] ~~Migrate the avoca POC~~ — **BLOCKED, scoped out 2026-08-26: repository access was revoked mid-plan** (SSH authenticates, the repo returns "not found"). Its findings were already harvested and shipped before access ended — the `sibling_parent`-names-another-machine fix, the config-vs-manifest drift that is D2's evidence, and the root-file whitelist bug. What is lost is the ability to verify an upgrade against a workbench that predates this plan; `numero-workbench` covers that ground instead
+- [x] ~~Migrate the POC~~ — **BLOCKED, scoped out 2026-08-26: repository access was revoked mid-plan** (SSH authenticates, the repo returns "not found"). Its findings were already harvested and shipped before access ended — the `sibling_parent`-names-another-machine fix, the config-vs-manifest drift that is D2's evidence, and the root-file whitelist bug. What is lost is the ability to verify an upgrade against a workbench that predates this plan; `numero-workbench` covers that ground instead
 - [x] Point the tool at its own repo family: restore a workbench other than the one the fixtures were built from — **`numero-workbench`, and it found two bugs no fixture could.** Copying was impossible (91 GB, 44 live worktrees) and running in place would have `git init`-ed a directory that has never been a repo, so the run used a faithful MINIATURE: its real `config.json` (legacy `wrapped_repo`, `sibling_parent` pointing at the workbench itself), its real hand-written `.gitignore`, a trunk that is a **real directory rather than a symlink**, and worktree-shaped siblings. Every one of those differs from what the fixtures model
 
 - [x] **Fix found by that run (a Phase 4 bug):** the root whitelist used `/*`, which denies root FILES as well as directories — so `restore` untracked `.mcp.json`, `biome.json`, `instrumentation.ts`, `logger.ts` and more from any real workbench. Narrowed to `/*/` (directories) plus the declared trunk names generated per repo, so root files stay tracked. Verified on the miniature: 5 of 6 previously-lost files kept, the 6th excluded by that workbench's own deliberate rule
@@ -273,7 +273,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 #### Build Phase 7 Verification
 - [x] A1 passes (`pnpm exec vitest run src/__tests__/workbench-onboarding.test.ts`) — clone plus restore yields context and every declared repo
 - [ ] A9's manual smoke completes on a real second checkout, following the written guide with no undocumented step — an undocumented step discovered here is a documentation bug, not a smoke failure
-- [x] ~~The migrated avoca workbench restores from its remote with `bootstrap.sh` deleted~~ — unreachable, same cause as above
+- [x] ~~The migrated the POC workbench restores from its remote with `bootstrap.sh` deleted~~ — unreachable, same cause as above
 - [ ] Trajectory State column reads terminal for all sixteen rows
 
 #### Build Phase 7 Context

@@ -86,9 +86,9 @@ function isSymlink(p: string): boolean {
  * Where the sibling clones live.
  *
  * `sibling_parent` is an ABSOLUTE path committed to a SHARED context repo,
- * which is a contradiction this plan has to absorb rather than inherit: the
- * avoca workbench's committed value is `/Users/sandycorsillo/...`, so on any
- * other machine it names a directory that does not exist and every repo reads
+ * which is a contradiction this plan has to absorb rather than inherit. One
+ * real workbench's committed value was another machine's home directory, so
+ * on this machine it named a directory that did not exist and every repo read
  * as missing. No fixture catches this — a fixture writes its own tmpdir there.
  *
  * The fallback is the workbench's PARENT, which is not a guess: `indusk setup`

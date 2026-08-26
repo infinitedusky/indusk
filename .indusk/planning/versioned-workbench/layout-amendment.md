@@ -1,10 +1,12 @@
 ---
-title: "Workbench Declared Layout"
+title: "Workbench Declared Layout — Amendment to Versioned Workbench"
 date: 2026-08-26
-status: draft
+status: accepted
 ---
 
-# Workbench Declared Layout — Brief
+# Workbench Declared Layout — Amendment
+
+*Design note for Build Phases 8-11 of `versioned-workbench`. Folded into this plan rather than deferred: the layout removes the cause of the ignore-rule fragility instead of patching it, and patching it separately would be work thrown away.*
 
 ## Problem
 
@@ -81,9 +83,12 @@ Supersedes part of `indusk-worktree-extension`'s layout decision — deliberatel
 - An existing flat workbench with no new keys behaves exactly as it does today
 - `worktree list` over three repos is readable without asking git which repo a worktree belongs to
 
-## Depends On
+## Executed As
 
-- `versioned-workbench` (Phases 1–6 shipped) — `worktree.repos[]`, the ignore scaffolding, and the sync loop this refines
+- Build Phase 8 — declared paths, honoured at creation
+- Build Phase 9 — listing groups by repo, discovers from disk
+- Build Phase 10 — ignore rules generated per declared location; flat workbenches refused
+- Build Phase 11 — migration for an existing flat workbench
 
 ## Blocks
 

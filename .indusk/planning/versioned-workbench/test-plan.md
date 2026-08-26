@@ -20,7 +20,7 @@ The brief's `Depends On` required revisiting this document once `indusk-makeover
 - **A7 is withdrawn, not renumbered.** The semantic-graph rebuild assertion has no subject: nothing reads or writes `.indusk/graph/semantic-graph.log` post-makeover. The brief predicted this drop by ID, so the ID stays visible as withdrawn rather than being recycled onto an unrelated assertion.
 - **`semantic-graph.log` leaves the union-merge set in A5.** The remaining append-shaped coordination files are `current.md` sections and `highlights.jsonl`.
 
-Second revision driver: the brief's In Scope gained the workbench manifest + bootstrap bullet (2026-07-24, from the avoca POC) but no assertion ever covered it. A10–A15 close that gap. They are the assertions the ADR's central multi-repo decision has to satisfy.
+Second revision driver: the brief's In Scope gained the workbench manifest + bootstrap bullet (2026-07-24, from the POC) but no assertion ever covered it. A10–A15 close that gap. They are the assertions the ADR's central multi-repo decision has to satisfy.
 
 ## Behavioral Assertions
 
@@ -38,7 +38,7 @@ Second revision driver: the brief's In Scope gained the workbench manifest + boo
 | A10 | A developer who has cloned only the workbench repo runs one documented command and ends up with every declared repo cloned beside the workbench and linked into it — without cloning or linking anything by hand. | vitest integration (bare `file://` remotes standing in for the declared repos) |
 | A11 | Running that same command again on an already-materialized workbench reports every repo as already present and changes nothing on disk. | vitest integration (re-run, diff the tree) |
 | A12 | When one declared repo cannot be cloned, the developer is told which repo failed and what to fix, the other declared repos are still materialized, and re-running after the fix completes the workbench. | vitest integration (one unreachable remote among several) |
-| A13 | A workbench declaring two repos presents both as trunks, each with its own worktrees listed under it — no repo's worktrees are attributed to the other. | vitest integration + manual smoke (avoca-next-workbench) |
+| A13 | A workbench declaring two repos presents both as trunks, each with its own worktrees listed under it — no repo's worktrees are attributed to the other. | vitest integration + manual smoke (the POC workbench) |
 | A14 | In a workbench declaring two repos, creating a worktree makes it in the repo the developer named; naming no repo when the choice is ambiguous fails with a message listing the declared repos rather than picking one. | vitest integration |
 | A15 | After materializing a fresh workbench, the developer is shown the complete list of files they must still supply out-of-band, and no file on that list is present in the shared remote. | vitest integration (cross-check the printed list against `git ls-tree` of the remote) |
 | A16 | A developer who pulls a plan phase marked complete, whose code has not reached them, can tell that the code is missing rather than reading the phase as delivered. | vitest integration (two clones; push plan docs only, withhold the code repo's commits) |
@@ -48,7 +48,7 @@ Second revision driver: the brief's In Scope gained the workbench manifest + boo
 
 | ID | Assertion | Reason untestable | Compensating control |
 |----|-----------|-------------------|----------------------|
-| U1 | A developer on a machine with no prior SSH host-alias configuration can complete onboarding. | SSH host aliases (e.g. `github-avoca`) are machine config outside any repo; a test that provisioned them would be testing the fixture, not the product. | A15 forces the alias requirement into the printed out-of-band list, so the gap is announced at the moment it bites rather than discovered by a failed clone. |
+| U1 | A developer on a machine with no prior SSH host-alias configuration can complete onboarding. | SSH host aliases (e.g. `github-<org>`) are machine config outside any repo; a test that provisioned them would be testing the fixture, not the product. | A15 forces the alias requirement into the printed out-of-band list, so the gap is announced at the moment it bites rather than discovered by a failed clone. |
 
 ## Notes
 
@@ -60,4 +60,4 @@ Second revision driver: the brief's In Scope gained the workbench manifest + boo
 - A13 and A14 exist because the singular is currently load-bearing in 10 non-test files (80 occurrences), 35 of them in shell scripts with no type checker. Both assertions are observable at the CLI, so they hold regardless of how the singular gets widened.
 - A17 is a **refusal** assertion by design. Phantom detection currently cannot run in a workbench at all — `assertGitRepo` refuses because the root is not a git repo — and this plan makes the root a git repo, which removes that refusal by accident rather than by decision. An acceptance-shaped test ("verify reports correctly on a healthy workbench") cannot detect a detector that has quietly stopped checking; only asserting the refusal can. Same reasoning as the standing lesson that every rule needs a test asserting a refusal.
 - A16 keeps the two-clock skew observable without committing to a design for it. The assertion is that the developer can *tell*, not that any particular banner, badge, or ref-check exists — the ADR records the skew as accepted, so the bar is visibility, not prevention.
-- A10–A12 are authorable against `scripts/bootstrap.sh` in the avoca POC today — the behavior exists, it just isn't in the product. That makes them Phase 0 rows in the impl's trajectory, not deferred ones.
+- A10–A12 are authorable against `scripts/bootstrap.sh` in the POC today — the behavior exists, it just isn't in the product. That makes them Phase 0 rows in the impl's trajectory, not deferred ones.

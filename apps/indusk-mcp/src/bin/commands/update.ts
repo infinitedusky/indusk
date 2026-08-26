@@ -289,7 +289,7 @@ export async function update(projectRoot: string): Promise<void> {
 			}
 
 			// Remove the legacy check-catchup hook (indusk-makeover follow-up, found
-			// by the avoca versioned-workbench POC): it gates every Edit/Write on
+			// by the POC versioned-workbench POC): it gates every Edit/Write on
 			// .claude/handoff.md checkboxes the post-1.29 catchup never writes, and
 			// its manual path probes the retired FalkorDB/Graphiti — permanently
 			// unsatisfiable. Delete the file AND strip its settings registration.
