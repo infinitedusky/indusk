@@ -47,7 +47,10 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | Build Phase 5 | plan-root/code-root resolution + refusal in verify's entry path | existing `assertGitRepo`, `phantom.ts` |
 | Build Phase 6 | workbench root git-init + the sync loop | Phase 4's ignore shape, Phase 5's preserved refusal |
 | Build Phase 7 | documented onboarding path, end-to-end | every prior phase |
-| Build Phase 8 | refusal when a pre-existing `.gitignore` cannot carry the sharing contract | Phase 4's scaffolding, Phase 6's sync |
+| Build Phase 8 | `path` + `worktrees` declarations; creation honours them | Phase 1's `readWorkbenchRepos` |
+| Build Phase 9 | listing grouped by repo, discovered from disk | Phase 8's declarations |
+| Build Phase 10 | ignore rules generated per declared location; flat workbenches refused | Phase 4's scaffolding, Phase 9's grouping |
+| Build Phase 11 | opt-in migration for an existing flat workbench | Phases 8-10 |
 
 ## Test Trajectory
 
@@ -69,7 +72,12 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
 | A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
 | A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | written | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
-| A18 | A workbench whose own `.gitignore` lacks the deny-by-default rule is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 8 | Build Phase 8 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
+| A18 | A worktree created in a workbench that declares a worktrees location lands there, not at the workbench root | Build Phase 8 | Build Phase 8 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A19 | Renaming a declared directory and updating config keeps everything working — nothing infers layout from a name | Build Phase 8 | Build Phase 8 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A20 | `worktree list` groups worktrees under their repo, and a worktree outside every declared location is shown as unattributed rather than dropped | Build Phase 9 | Build Phase 9 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A21 | A workbench with declared locations needs no deny-by-default rule, and its generated ignore lines can be appended to a hand-written `.gitignore` without changing that file's meaning | Build Phase 10 | Build Phase 10 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
+| A22 | A flat workbench whose own `.gitignore` cannot carry the contract is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 10 | Build Phase 10 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
+| A23 | An existing flat workbench opts in with one command: its worktrees move under the declared location and every one of them still works | Build Phase 11 | Build Phase 11 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 
 ### Deferred Verification
 
@@ -282,30 +290,99 @@ Make a workbench reconstructible from its remote and shared between machines: th
 #### Build Phase 7 Document
 - [ ] Publish the ADR to `/decisions/versioned-workbench.md`; add the superseded-in-part pointer to the worktree extension's ADR; write the changelog entries
 
-### Build Phase 8: Refuse rather than publish what the rules cannot cover
+### Build Phase 8: Declare the layout, stop inferring it
 
-**Goal**: close the hole Phase 7 found by pointing the tool at a real pre-existing workbench. `numero-workbench` has its own `.gitignore`, so the scaffold only appended the trunk block and the deny-by-default rule was never added — `sync` then committed worktree contents. On the real workbench that is 44 checkouts of a client repo entering a shared context repo.
+**Goal**: a repo declares where its trunk and its worktrees live; nothing derives layout from a name. See [`layout-amendment.md`](layout-amendment.md).
 
-**Why refuse rather than fix the file.** Appending `/*/` plus an allow-list to a `.gitignore` somebody else wrote inverts that file's semantics: every root directory becomes denied unless listed. Given what is at stake, a loud stop beats an opinionated rewrite of a human's decision. `workbench-declared-layout` removes the need for the rule entirely; this phase is the honest stopgap until then.
+Absence means today's behavior — a repo with no `worktrees` declared stays flat. That is the whole migration story, the same reduction shape that made `wrapped_repo` → `repos[]` free.
 
-- [ ] Author A18 against a fixture carrying a **pre-existing `.gitignore` with no `/*/` rule** — today it passes (sync succeeds and commits worktree contents), so it is authored RED against the behavior we want
-- [ ] Call `missingIgnoreRules` from `restore` and `sync`, not only from `update`'s nudge — the check already exists and is correct; it is simply never consulted at the moment it matters
-- [ ] Refuse with a **non-zero exit** naming each missing rule and what it protects, and pointing at the file to edit. Never rewrite the developer's `.gitignore`
-- [ ] `--i-know` (or equivalent) escape hatch so a workbench that genuinely wants the current behavior can proceed — a refusal with no override becomes a reason to stop using the tool
-- [ ] Report untracked paths **by name**, not as a count. It drops files from a shared repo's index, and "untracked 3 paths" gives a reader no way to notice one mattered (`.mcp.json` on a real workbench)
-- [ ] Correct the trunk message: `restore` prints `✓ <repo> — already present, trunk linked` when the trunk is a real directory and no link was created or needed
+- [ ] Author A18, A19 in `workbench-layout.test.ts`, RED
+- [ ] Add optional `path` and `worktrees` to `WorkbenchRepo` in `lib/config.ts`, alongside `name` and `remote`
+- [ ] Resolve them in `readWorkbenchRepos` — absent `path` ⇒ `name`, absent `worktrees` ⇒ flat (the workbench root)
+- [ ] Guard both as **path-join boundary values** via `isCleanSegment`, exactly as `name` already is. A declared path is a single segment; anything else is dropped rather than joined
+- [ ] `worktree create` puts the new worktree in the declared location, creating it if absent
+- [ ] The trunk resolves through `path`, so a repo directory can be renamed by editing config
 
 #### Build Phase 8 Verification
-- [ ] A18 passes: a workbench with a pre-existing rule-less `.gitignore` is refused, exits non-zero, and names the missing rules (`pnpm exec vitest run src/__tests__/workbench-sync-ignore.test.ts`)
-- [ ] A8 gains a **second case with a pre-existing `.gitignore`** — it is currently green for a fixture-shaped reason, since its fixture ships none and the scaffold therefore always writes the full whitelist
-- [ ] Confirm the refusal is load-bearing by removing it and watching A18 fail — an acceptance test cannot detect a check that stopped being consulted
-- [ ] The escape hatch actually proceeds, so the refusal is not merely always-on
+- [ ] A18, A19 pass (`pnpm exec vitest run src/__tests__/workbench-layout.test.ts`)
+- [ ] A workbench declaring nothing new behaves **byte-identically** to today — run the existing worktree suites unchanged
+- [ ] A declared path containing `..` or `/` is dropped, not joined — assert the refusal, since this is the boundary a malicious or careless config crosses
 
 #### Build Phase 8 Context
-- [ ] Add to Known Gotchas: scaffolding only tops up an existing `.gitignore`, so a workbench that already had one never receives the deny-by-default rule — `restore`/`sync` refuse instead, and `workbench-declared-layout` removes the need
+- [ ] Add to Conventions: a workbench's layout is declared (`path`, `worktrees`), never inferred from a name; absence means flat
 
 #### Build Phase 8 Document
-- [ ] Update `/reference/cli/workbench` and `/guide/workbench-sharing` with the refusal, what it protects against, and the escape hatch
+- [ ] Update `/reference/cli/workbench` with the declaration fields and the absence-means-flat rule
+
+### Build Phase 9: Listing groups by repo, disk stays the inventory
+
+**Goal**: `worktree list` reads structurally instead of asking git which repo owns each worktree.
+
+**Declarations add structure; they can never subtract.** A worktree found outside every declared location renders as **unattributed**, never dropped — the standing rule that keeps a renamed folder from making work disappear.
+
+- [ ] Author A20 in `workbench-layout.test.ts`, RED
+- [ ] Group the listing by declared repo, using the declared worktrees location as the structural signal
+- [ ] Keep discovery on disk — enumerate what is there, then attribute it, rather than listing what config claims
+- [ ] Fall back to `--git-common-dir` for anything outside a declared location, and render it under an explicit **Unattributed** heading
+- [ ] Drop the slug-vs-repo-name collision invariant where a declared layout makes it impossible
+
+#### Build Phase 9 Verification
+- [ ] A20 passes (`pnpm exec vitest run src/__tests__/workbench-layout.test.ts`)
+- [ ] Rename a declared worktrees directory WITHOUT updating config and confirm its worktrees appear as unattributed — not missing. Assert the survival, because a declaration that silently subtracts is the failure this rule exists to prevent
+- [ ] Flat workbenches still list exactly as they do today
+
+#### Build Phase 9 Context
+- [ ] Add to Known Gotchas: listing discovers from disk and attributes via declarations; anything unattributable renders as such rather than vanishing
+
+#### Build Phase 9 Document
+- [ ] Update the worktree extension skill's topology section for declared layouts and the unattributed case
+
+### Build Phase 10: Ignore rules become precise
+
+**Goal**: replace deny-by-default with one generated line per declared worktrees location — and refuse where that is impossible.
+
+This closes the hole Phase 7 found on a real workbench: scaffolding only tops up an existing `.gitignore`, so one that predates this plan never receives the deny-by-default rule and `sync` commits worktree contents.
+
+- [ ] Author A21, A22 in `workbench-sync-ignore.test.ts`, RED
+- [ ] Generate `/<worktrees>/` per declared location — precise, appendable to a hand-written `.gitignore` without inverting its meaning
+- [ ] Drop deny-by-default for workbenches that declare their locations
+- [ ] For a FLAT workbench, call `missingIgnoreRules` from `restore` and `sync` — it already exists and is correct, and is simply never consulted where it matters — and **refuse**, non-zero, naming each missing rule. Never rewrite a human's `.gitignore`
+- [ ] Point that refusal at Phase 11's migration as the way out, with an explicit override for a workbench that wants today's behavior
+- [ ] Report untracked paths **by name**, not as a count — it drops files from a shared repo's index
+
+#### Build Phase 10 Verification
+- [ ] A21, A22 pass (`pnpm exec vitest run src/__tests__/workbench-sync-ignore.test.ts`)
+- [ ] A8 gains a case with a **pre-existing `.gitignore`** — it is currently green for a fixture-shaped reason, since its fixture ships none and the scaffold therefore always writes the full whitelist
+- [ ] Remove the refusal and confirm A22 fails, so it is load-bearing rather than incidental
+- [ ] The override actually proceeds, so the refusal is not merely always-on
+
+#### Build Phase 10 Context
+- [ ] Add to Known Gotchas: declared layouts generate precise ignore lines; flat workbenches are refused because worktree names cannot be known in advance
+
+#### Build Phase 10 Document
+- [ ] Update `/guide/workbench-sharing` with the refusal, what it protects, and the override
+
+### Build Phase 11: Migrate a flat workbench in one command
+
+**Goal**: an existing flat workbench opts in without hand-moving anything.
+
+- [ ] Author A23 in `workbench-layout.test.ts`, RED
+- [ ] `indusk workbench migrate-layout` — declare a worktrees location per repo, move existing worktrees into it, and repair each one's gitdir link so it still works
+- [ ] Dry-run by default; `--apply` performs it. A command that relocates directories should show its plan first
+- [ ] Refuse loudly on anything it cannot move — a partial migration that exits 0 is the failure this plan has fought throughout
+- [ ] Leave the wrapped repos untouched: this moves worktrees, never product code
+
+#### Build Phase 11 Verification
+- [ ] A23 passes — worktrees move and every one of them still resolves (`git -C <wt> status` succeeds)
+- [ ] Dry-run changes nothing on disk — diff a full tree snapshot
+- [ ] A blocked move exits non-zero naming what it could not move, leaving the rest untouched
+- [ ] Wrapped repos have zero new commits after a migration, as with the sync loop
+
+#### Build Phase 11 Context
+- [ ] Demote this plan's Current State narrative to one line plus an archive link, and compress the Conventions entries this plan authored to rule plus pointer
+
+#### Build Phase 11 Document
+- [ ] Document the migration in `/reference/cli/workbench`, including the dry-run default and what it refuses
 
 ## Files Affected
 
