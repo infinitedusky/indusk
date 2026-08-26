@@ -76,6 +76,34 @@ incoming side. You will never be asked to resolve a workbench conflict.
 unreachable, sync says so calmly and exits 0; the backlog goes out on the next
 sync. Someone else's outage never becomes your inability to work.
 
+## When a workbench cannot keep worktrees out
+
+Worktree directories are created at runtime with names nobody listed in
+advance, so a **flat** workbench needs a deny-by-default rule to keep them out
+of the shared remote. If yours predates this and its `.gitignore` lacks that
+rule, `restore` and `sync` **refuse** rather than rewrite your file:
+
+```
+Error: this workbench's .gitignore cannot keep worktrees out of the shared remote.
+
+  missing: /*/ — the root is not deny-by-default, so the next worktree
+           directory gets committed
+
+Fix it one of these ways:
+  - declare where worktrees live (worktree.repos[].worktrees), which names them precisely
+  - add the missing rule(s) to .gitignore yourself
+  - re-run with --no-ignore-check to proceed anyway
+```
+
+Refusing rather than rewriting is deliberate: appending a deny-by-default rule
+to a file you wrote would invert its meaning — every root entry becomes denied
+unless listed. Given that the alternative is committing someone else's checkout
+into a shared repo, a loud stop beats an opinionated rewrite.
+
+**Declaring the locations removes the problem entirely.** A repo that says where
+its worktrees live gets one precise ignore line, appendable to any hand-written
+file without changing what that file already means.
+
 ## The two-clock skew
 
 Plan documents sync in seconds. The code they describe pushes when you decide.

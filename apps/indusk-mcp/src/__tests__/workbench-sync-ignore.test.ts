@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
@@ -106,3 +106,83 @@ describe.skipIf(SHOULD_SKIP)("A8 — residue stays out of the shared remote", ()
 		expect(status).not.toContain("feature-nobody-predicted-2026");
 	});
 });
+
+/** Rewrite declared repo entries — the only way layout is expressed. */
+function declareLayout(workbenchDir: string, edits: Record<string, { worktrees?: string }>): void {
+	const cfgPath = join(workbenchDir, ".indusk", "config.json");
+	const cfg = JSON.parse(readFileSync(cfgPath, "utf-8"));
+	for (const repo of cfg.worktree.repos as Array<{ name: string; [k: string]: unknown }>) {
+		const edit = edits[repo.name];
+		if (edit) Object.assign(repo, edit);
+	}
+	writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+}
+
+describe.skipIf(SHOULD_SKIP)("A21 — declared locations make the ignore rule precise", () => {
+	it("needs no deny-by-default rule, and appends cleanly to a hand-written file", {
+		timeout: 30_000,
+	}, () => {
+		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true, materialize: true });
+		const wb = fixture.workbenchDir;
+		declareLayout(wb, { alpha: { worktrees: "alpha-wt" }, beta: { worktrees: "beta-wt" } });
+
+		// A hand-written ignore file with its own meaning. Appending to it must
+		// not invert that meaning — which is exactly what `/*/` plus an
+		// allow-list would do to somebody else's decisions.
+		writeFileSync(join(wb, ".gitignore"), "# mine\n*.log\nbuild/\n");
+
+		expect(runCli(wb, ["workbench", "restore"]).code).toBe(0);
+
+		const body = readFileSync(join(wb, ".gitignore"), "utf-8");
+		expect(body).toContain("# mine");
+		expect(body).toContain("*.log");
+		// Precise lines, one per declared location — not a whole-root denial.
+		expect(body).toContain("/alpha-wt/");
+		expect(body).toContain("/beta-wt/");
+		expect(body).not.toMatch(/^\/\*\/?$/m);
+
+		// And it actually works: a worktree in a declared location stays out.
+		expect(runCli(wb, ["worktree", "create", "alpha", "feat"]).code).toBe(0);
+		git(wb, ["add", "-A"]);
+		git(wb, ["commit", "-q", "-m", "work"]);
+		expect(git(wb, ["ls-tree", "-r", "--name-only", "HEAD"]).stdout).not.toContain("alpha-wt/");
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)(
+	"A22 — a flat workbench that cannot carry the contract is refused",
+	() => {
+		it("refuses by name rather than committing worktree contents", { timeout: 30_000 }, () => {
+			// The Phase 7 finding, from a real workbench: scaffolding only TOPS UP
+			// an existing .gitignore, so one that predates this plan never receives
+			// the deny-by-default rule and sync commits worktree contents.
+			fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true, materialize: true });
+			const wb = fixture.workbenchDir;
+			writeFileSync(join(wb, ".gitignore"), "# pre-existing, no root rule\n.env\n");
+			mkdirSync(join(wb, "some-worktree"), { recursive: true });
+			writeFileSync(join(wb, "some-worktree", "code.ts"), "export const x = 1;\n");
+
+			const r = runCli(wb, ["workbench", "sync"]);
+
+			expect(r.code).not.toBe(0);
+			const out = `${r.stdout}${r.stderr}`;
+			// Name what is missing and what it protects — a refusal a reader cannot
+			// act on is just a blocked command.
+			expect(out).toMatch(/gitignore/i);
+			expect(out).toMatch(/\/\*\//);
+			// And the worktree did NOT reach the remote.
+			expect(git(wb, ["ls-tree", "-r", "--name-only", "HEAD"]).stdout).not.toContain(
+				"some-worktree/",
+			);
+		});
+
+		it("proceeds when the developer explicitly overrides", { timeout: 30_000 }, () => {
+			// A refusal with no way past it becomes a reason to stop using the tool.
+			fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true, materialize: true });
+			const wb = fixture.workbenchDir;
+			writeFileSync(join(wb, ".gitignore"), "# pre-existing, no root rule\n.env\n");
+
+			expect(runCli(wb, ["workbench", "sync", "--no-ignore-check"]).code).toBe(0);
+		});
+	},
+);

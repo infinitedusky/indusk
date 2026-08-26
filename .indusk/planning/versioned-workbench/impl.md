@@ -75,8 +75,8 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A18 | A worktree created in a workbench that declares a worktrees location lands there, not at the workbench root | Build Phase 8 | Build Phase 8 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A19 | Renaming a declared directory and updating config keeps everything working — nothing infers layout from a name | Build Phase 8 | Build Phase 8 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A20 | `worktree list` groups worktrees under their repo, and a worktree outside every declared location is shown as unattributed rather than dropped | Build Phase 9 | Build Phase 9 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
-| A21 | A workbench with declared locations needs no deny-by-default rule, and its generated ignore lines can be appended to a hand-written `.gitignore` without changing that file's meaning | Build Phase 10 | Build Phase 10 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
-| A22 | A flat workbench whose own `.gitignore` cannot carry the contract is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 10 | Build Phase 10 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
+| A21 | A workbench with declared locations needs no deny-by-default rule, and its generated ignore lines can be appended to a hand-written `.gitignore` without changing that file's meaning | Build Phase 10 | Build Phase 10 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
+| A22 | A flat workbench whose own `.gitignore` cannot carry the contract is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 10 | Build Phase 10 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A23 | An existing flat workbench opts in with one command: its worktrees move under the declared location and every one of them still works | Build Phase 11 | Build Phase 11 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 
 ### Deferred Verification
@@ -343,24 +343,26 @@ Absence means today's behavior — a repo with no `worktrees` declared stays fla
 
 This closes the hole Phase 7 found on a real workbench: scaffolding only tops up an existing `.gitignore`, so one that predates this plan never receives the deny-by-default rule and `sync` commits worktree contents.
 
-- [ ] Author A21, A22 in `workbench-sync-ignore.test.ts`, RED
-- [ ] Generate `/<worktrees>/` per declared location — precise, appendable to a hand-written `.gitignore` without inverting its meaning
-- [ ] Drop deny-by-default for workbenches that declare their locations
-- [ ] For a FLAT workbench, call `missingIgnoreRules` from `restore` and `sync` — it already exists and is correct, and is simply never consulted where it matters — and **refuse**, non-zero, naming each missing rule. Never rewrite a human's `.gitignore`
-- [ ] Point that refusal at Phase 11's migration as the way out, with an explicit override for a workbench that wants today's behavior
-- [ ] Report untracked paths **by name**, not as a count — it drops files from a shared repo's index
+- [x] Author A21, A22 in `workbench-sync-ignore.test.ts`, RED
+- [x] Generate `/<worktrees>/` per declared location — precise, appendable to a hand-written `.gitignore` without inverting its meaning. A21 writes a file with its own rules first and asserts they survive
+- [x] Drop deny-by-default for workbenches that declare their locations — `allLocationsDeclared` picks the header; a workbench that can name its worktree directories is not given an opinion it does not need
+- [x] For a FLAT workbench, call `missingIgnoreRules` from `restore` and `sync` — and **refuse**, non-zero, naming each missing rule. Never rewrite a human's `.gitignore`
+- [x] Point that refusal at three ways out — declare the locations, add the rules by hand, or `--no-ignore-check`. A refusal with no way past it becomes a reason to stop using the tool
+- [x] Report untracked paths **by name**, not as a count — it drops files from a shared repo's index. On a real workbench that list included `.mcp.json`, correct per that project's own rule and invisible in a count
+
+- [x] **The generator and its checker had drifted, twice.** `missingIgnoreRules` required one spelling of the root rule while the header wrote another, so a correctly-scaffolded workbench reported a gap — and a real gap could have gone unreported. Both previous fixes were a second copy of a string, and the Phase 4 one silently never applied. Both rules are now named once (`ROOT_DENY_RULE`, `SECRETS_RULE`) and the check READS them, so the drift is not fixed but impossible
 
 #### Build Phase 10 Verification
-- [ ] A21, A22 pass (`pnpm exec vitest run src/__tests__/workbench-sync-ignore.test.ts`)
-- [ ] A8 gains a case with a **pre-existing `.gitignore`** — it is currently green for a fixture-shaped reason, since its fixture ships none and the scaffold therefore always writes the full whitelist
-- [ ] Remove the refusal and confirm A22 fails, so it is load-bearing rather than incidental
-- [ ] The override actually proceeds, so the refusal is not merely always-on
+- [x] A21, A22 pass (`pnpm exec vitest run src/__tests__/workbench-sync-ignore.test.ts`, 5/5)
+- [x] A8 gains a case with a **pre-existing `.gitignore`** — A22 is that case, and it is what caught the real drift below
+- [x] Remove the refusal and confirm A22 fails, so it is load-bearing rather than incidental — neutralised, A22 red; restored, 5/5 green
+- [x] The override actually proceeds, so the refusal is not merely always-on — `--no-ignore-check` exits 0 on the same workbench that is otherwise refused
 
 #### Build Phase 10 Context
-- [ ] Add to Known Gotchas: declared layouts generate precise ignore lines; flat workbenches are refused because worktree names cannot be known in advance
+- [x] Add to Known Gotchas: declared layouts generate precise ignore lines; flat workbenches are refused because worktree names cannot be known in advance
 
 #### Build Phase 10 Document
-- [ ] Update `/guide/workbench-sharing` with the refusal, what it protects, and the override
+- [x] Update `/guide/workbench-sharing` with the refusal, what it protects, and the override
 
 ### Build Phase 11: Migrate a flat workbench in one command
 

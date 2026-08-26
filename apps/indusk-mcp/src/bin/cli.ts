@@ -573,9 +573,10 @@ workbenchCmd
 	.description(
 		"Commit local changes, pull, and push — blindly resolved, never blocking. Exits 0 offline; work goes out on the next sync.",
 	)
-	.action(async () => {
+	.option("--no-ignore-check", "Proceed even if .gitignore cannot keep worktrees out of the remote")
+	.action(async (opts: { ignoreCheck?: boolean }) => {
 		const { workbenchSyncCommand } = await import("./commands/workbench.js");
-		workbenchSyncCommand(rootOrExit());
+		workbenchSyncCommand(rootOrExit(), { noIgnoreCheck: opts.ignoreCheck === false });
 	});
 
 workbenchCmd
@@ -594,9 +595,13 @@ workbenchCmd
 		"Clone every declared repo as a sibling, recreate the trunk symlinks, and print the out-of-band set. Idempotent; exits non-zero naming anything it could not resolve.",
 	)
 	.option("--worktrees", "Also recreate declared worktrees")
-	.action(async (opts: { worktrees?: boolean }) => {
+	.option("--no-ignore-check", "Proceed even if .gitignore cannot keep worktrees out of the remote")
+	.action(async (opts: { worktrees?: boolean; ignoreCheck?: boolean }) => {
 		const { workbenchRestore } = await import("./commands/workbench.js");
-		workbenchRestore(rootOrExit(), { worktrees: opts.worktrees });
+		workbenchRestore(rootOrExit(), {
+			worktrees: opts.worktrees,
+			noIgnoreCheck: opts.ignoreCheck === false,
+		});
 	});
 
 // ---- worktree extension lifecycle ----

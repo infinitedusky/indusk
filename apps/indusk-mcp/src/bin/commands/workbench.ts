@@ -8,7 +8,12 @@ import {
 	readWorkbenchRepos,
 	type WorkbenchRepo,
 } from "../../lib/worktree/repos.js";
-import { ensureShareableScaffolding, untrackNowIgnored } from "../../lib/worktree/shareable.js";
+import {
+	allLocationsDeclared,
+	ensureShareableScaffolding,
+	missingIgnoreRules,
+	untrackNowIgnored,
+} from "../../lib/worktree/shareable.js";
 import { ensureContextRepo, repoPublishState, syncWorkbench } from "../../lib/worktree/sync.js";
 
 /**
@@ -113,6 +118,56 @@ function resolveSiblingParent(projectRoot: string): { siblingParent: string; not
 	};
 }
 
+/**
+ * Refuse when a workbench's own ignore file cannot carry the sharing contract.
+ *
+ * Found by pointing the tool at a real pre-existing workbench: scaffolding only
+ * TOPS UP an existing `.gitignore`, so one written before this plan never
+ * receives the deny-by-default rule — and `sync` then commits worktree
+ * contents. On a real workbench that is dozens of checkouts of someone else's
+ * repo entering a shared context repo.
+ *
+ * **Refuse rather than rewrite.** Appending `/*` plus an allow-list to a file
+ * somebody else wrote inverts its meaning: every root entry becomes denied
+ * unless listed. Given what is at stake, a loud stop beats an opinionated
+ * rewrite of a human's decision.
+ *
+ * `missingIgnoreRules` has existed and been correct since Phase 4 — it was
+ * simply never consulted at the moment it mattered.
+ */
+function refuseIfIgnoreCannotHold(
+	projectRoot: string,
+	repos: WorkbenchRepo[],
+	skip: boolean,
+): void {
+	if (skip) return;
+	// A declared layout names its worktree directories exactly, so no
+	// deny-by-default rule is required and nothing to refuse.
+	if (allLocationsDeclared(repos)) return;
+
+	const gaps = missingIgnoreRules(projectRoot);
+	if (gaps.length === 0) return;
+
+	console.error(
+		"Error: this workbench's .gitignore cannot keep worktrees out of the shared remote.",
+	);
+	console.error("");
+	for (const gap of gaps) console.error(`  missing: ${gap}`);
+	console.error("");
+	console.error(
+		"Worktree directories are created at runtime, so they cannot be named in advance —",
+	);
+	console.error("a flat workbench needs the deny-by-default rule to keep them out.");
+	console.error("");
+	console.error("Fix it one of these ways:");
+	console.error(
+		"  - declare where worktrees live (worktree.repos[].worktrees), which names them precisely",
+	);
+	console.error("  - add the missing rule(s) to .gitignore yourself");
+	console.error("  - re-run with --no-ignore-check to proceed anyway");
+	process.exit(1);
+}
+
 /** A symlink whose target is missing — `existsSync` follows links and says no. */
 function isDanglingLink(p: string): boolean {
 	return isSymlink(p) && !existsSync(p);
@@ -158,7 +213,10 @@ function restoreOne(
 	return { status: "cloned" };
 }
 
-export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolean } = {}): never {
+export function workbenchRestore(
+	projectRoot: string,
+	opts: { worktrees?: boolean; noIgnoreCheck?: boolean } = {},
+): never {
 	const repos = readWorkbenchRepos(projectRoot);
 	if (!isWorkbench(projectRoot) || repos.length === 0) {
 		console.error(
@@ -176,10 +234,7 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
 	// Scaffolded here rather than at git-init time so a workbench that was
 	// made shareable by hand (the POC's path) still gets the rules, and so the
 	// ignore file exists BEFORE anything can be committed. Never overwrites.
-	const scaffold = ensureShareableScaffolding(
-		projectRoot,
-		repos.map((r) => r.name),
-	);
+	const scaffold = ensureShareableScaffolding(projectRoot, repos);
 	if (scaffold.created.length > 0) {
 		console.info(`Scaffolded: ${scaffold.created.join(", ")}`);
 	}
@@ -190,6 +245,7 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
 	if (ensureContextRepo(projectRoot)) {
 		console.info("Initialized the workbench context repo (add a remote to share it).");
 	}
+	refuseIfIgnoreCannotHold(projectRoot, repos, opts.noIgnoreCheck === true);
 	// Ignoring a path does not untrack it. A workbench git-initialized before
 	// these rules existed keeps publishing its symlinks and secrets while
 	// `git status` looks clean.
@@ -200,7 +256,9 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
 	// so restore untracked it. Correct per their rule, surprising in silence.)
 	const untracked = untrackNowIgnored(projectRoot);
 	if (untracked.length > 0) {
-		console.info(`Untracked ${untracked.length} now-ignored path(s) — index only, files kept on disk:`);
+		console.info(
+			`Untracked ${untracked.length} now-ignored path(s) — index only, files kept on disk:`,
+		);
 		for (const path of untracked) console.info(`  - ${path}`);
 	}
 	console.info("");
@@ -252,7 +310,10 @@ export function workbenchRestore(projectRoot: string, opts: { worktrees?: boolea
  * and goes out on the next sync; someone else's outage must never become your
  * inability to work.
  */
-export function workbenchSyncCommand(projectRoot: string): never {
+export function workbenchSyncCommand(
+	projectRoot: string,
+	opts: { noIgnoreCheck?: boolean } = {},
+): never {
 	const repos = readWorkbenchRepos(projectRoot);
 	if (!isWorkbench(projectRoot) && repos.length === 0) {
 		console.error(
@@ -263,12 +324,18 @@ export function workbenchSyncCommand(projectRoot: string): never {
 
 	// The ignore rules must exist before anything is committed, or the first
 	// sync publishes exactly what they were written to keep out.
-	const scaffold = ensureShareableScaffolding(
-		projectRoot,
-		repos.map((r) => r.name),
-	);
+	const scaffold = ensureShareableScaffolding(projectRoot, repos);
 	if (scaffold.created.length > 0) console.info(`Scaffolded: ${scaffold.created.join(", ")}`);
-	untrackNowIgnored(projectRoot);
+	refuseIfIgnoreCannotHold(projectRoot, repos, opts.noIgnoreCheck === true);
+	// Named here too, not only in `restore`. Sync runs unattended on a hook, so
+	// a silent index change is the one most likely to go unnoticed.
+	const dropped = untrackNowIgnored(projectRoot);
+	if (dropped.length > 0) {
+		console.info(
+			`Untracked ${dropped.length} now-ignored path(s) — index only, files kept on disk:`,
+		);
+		for (const path of dropped) console.info(`  - ${path}`);
+	}
 
 	const result = syncWorkbench(projectRoot);
 	for (const note of result.notes) console.info(note);
