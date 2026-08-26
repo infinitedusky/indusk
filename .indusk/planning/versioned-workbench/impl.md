@@ -1,7 +1,7 @@
 ---
 title: "Versioned Workbench"
 date: 2026-08-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -51,6 +51,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | Build Phase 9 | listing grouped by repo, discovered from disk | Phase 8's declarations |
 | Build Phase 10 | ignore rules generated per declared location; flat workbenches refused | Phase 4's scaffolding, Phase 9's grouping |
 | Build Phase 11 | opt-in migration for an existing flat workbench | Phases 8-10 |
+| Build Phase 12 | falsification fixes — claims the code did not enforce | every prior phase |
 
 ## Test Trajectory
 
@@ -78,6 +79,13 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A21 | A workbench with declared locations needs no deny-by-default rule, and its generated ignore lines can be appended to a hand-written `.gitignore` without changing that file's meaning | Build Phase 10 | Build Phase 10 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A22 | A flat workbench whose own `.gitignore` cannot carry the contract is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 10 | Build Phase 10 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A23 | An existing flat workbench opts in with one command: its worktrees move under the declared location and every one of them still works | Build Phase 11 | Build Phase 11 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A24 | A sync whose commit fails stops there, rather than running a blind merge over work that is still uncommitted | Phase 0 | Build Phase 12 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
+| A25 | The sync trigger works on a workbench that is not yet a git repo, instead of silently never firing | Phase 0 | Build Phase 12 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-hook.test.ts` |
+| A26 | A repo whose branch has never been pushed is reported as unpublished, not as "in sync with its remote" | Phase 0 | Build Phase 12 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A27 | A declared `path` or `worktrees` naming a reserved directory (`.git`, `.indusk`, `.claude`) is refused, not joined | Phase 0 | Build Phase 12 | planned | unit | `apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts` |
+| A28 | `migrate-layout` refuses a move whose destination lies inside the directory being moved | Phase 0 | Build Phase 12 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A29 | `workbench status` finds a repo at its DECLARED path, not at its name | Phase 0 | Build Phase 12 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A30 | `restore` never reports a trunk as linked when it created no link | Phase 0 | Build Phase 12 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
 
 ### Deferred Verification
 
@@ -420,3 +428,33 @@ This closes the hole Phase 7 found on a real workbench: scaffolding only tops up
 - The worktree kickoff lives in **Test Phase 1**, not Build Phase 1 — with `test_phases: required` the test phase is the first phase that writes code, so a kickoff sitting in Build Phase 1 would fire one phase after the first commit. Found by executing the plan, not by reading it.
 - `indusk init-docs` hardcodes `apps/${projectName}-docs` and cannot scaffold a workbench-root `docs/` (D7). Not blocking — recorded so the next plan touching docs scaffolding has it.
 - **Build Phase 8 exists because Phase 7 pointed the tool at a real workbench.** `numero-workbench` has its own `.gitignore`, so the scaffold only topped up the trunk block and the deny-by-default rule was never applied — `sync` committed worktree contents. A8 could not see it: its fixture ships no `.gitignore`, so the scaffold always writes the full whitelist and the guard is green for a fixture-shaped reason. The layout fix that removes the need for the rule is its own plan — see `.indusk/planning/workbench-declared-layout/`
+
+### Phase 12: Falsification — the safety arguments that do not hold
+
+**Goal**: verify whether the attested state holds against seven specific failures found by reading the implementation against its own claims. Each row below is a named failure mode, not a candidate; each item is the change the code needs.
+
+The theme that connects most of them: **a claim in a comment or a message that the code does not actually enforce.** The blind-merge safety argument, the "in sync" report, the "trunk linked" line — each asserts something the surrounding code can fail to deliver.
+
+- [ ] **A24 — sync must stop when the commit fails.** `syncWorkbench` records `Commit failed: …` in its notes and then pulls anyway, while the comment above the pull says *"Losing a hunk here is recoverable — step 1 committed it."* That is false exactly when step 1 failed, and a failed commit is not exotic: a pre-commit hook, a missing git identity, a full disk, or an `index.lock` held by a concurrent sync all produce it. Return after a failed commit with the reason, leaving the tree untouched
+- [ ] **A25 — the trigger must work before the repo exists.** `stampPath` runs `git rev-parse --absolute-git-dir` and returns null when the workbench is not a git repo; `dueForSync(null)` is false, so the hook exits 0 and never syncs. But the only thing that git-inits a workbench is `sync` itself, so a workbench that has never been initialized is **silently never synced, forever**. numero-workbench is exactly this shape. Fall back to a stamp location that does not presuppose a repo
+- [ ] **A26 — "in sync" must not mean "never pushed".** `repoPublishState` runs `rev-list --count <remote>/<branch>..HEAD`, which ERRORS when the branch has no remote-tracking ref, and the error path sets `ahead = 0` → "in sync with its remote". The worst case reports the most reassuring message, inverting the very skew A16 exists to expose. Detect the missing upstream and say so
+- [ ] **A27 — the segment guard must reject reserved names.** `isCleanSegment` blocks traversal but accepts `.git`, `.indusk`, and `.claude`, so `worktrees: ".git"` would place worktrees inside the workbench's own git directory. Reject reserved names at the same boundary, since these are joined into paths
+- [ ] **A28 — a move must not target its own source.** `migrate-layout` computes `dest = <owner>-worktrees` and excludes only `repoDir` from the loose set, so a worktree already named `alpha-worktrees` gets destination `alpha-worktrees/alpha-worktrees` — moved into itself. Skip and report any move whose destination is inside its source
+- [ ] **A29 — status must resolve by declared path.** `workbenchStatusCommand` calls `repoPublishState(siblingParent, repo.name)` while every other consumer uses `repoDir(repo)`. A repo with a declared `path` reports "not materialized" in status and lists fine in `worktree list`. This is Phase 8's own rule broken in the one place that was missed
+- [ ] **A30 — never claim a link that was not made.** `restore` prints `✓ <repo> — already present, trunk linked` unconditionally, but `linkTrunk` returns early when a real directory occupies the path, correctly refusing to remove it. On a workbench whose trunk is a real checkout rather than a symlink — the shape numero-workbench actually has — the message is simply false. Report what happened
+
+#### Phase 12 Verification
+- [ ] A24: a sync whose commit fails stops there and says so; the working tree is unchanged and no merge ran
+- [ ] A25: the hook syncs a workbench that is not yet a git repo, and the stamp does not require one
+- [ ] A26: a repo with a remote but a never-pushed branch is reported as unpublished, distinct from both "in sync" and "no remote"
+- [ ] A27: `.git`, `.indusk`, `.claude` are refused as declared paths — assert the refusal, since accepting them is the failure
+- [ ] A28: a worktree named `<repo>-worktrees` is reported as unmovable rather than moved into itself, and the other moves still complete
+- [ ] A29: a repo with a declared `path` reports its real publish state in `workbench status`
+- [ ] A30: a workbench whose trunk is a real directory does not get told a link was created
+- [ ] Each fix proven load-bearing by reverting it and watching its row go red — every row here targets a case that passes today for the wrong reason
+
+#### Phase 12 Context
+- [ ] Add to Known Gotchas: a safety argument written in a comment is not enforced by the code around it — sync's blind merge, status's "in sync", and restore's "trunk linked" each asserted something their own control flow could fail to deliver
+
+#### Phase 12 Document
+- [ ] Update `/reference/cli/workbench` for the corrected `status` states (unpublished vs in-sync vs no-remote) and the reserved-name refusal
