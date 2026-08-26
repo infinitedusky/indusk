@@ -3,7 +3,7 @@
 # single-repo workbench.
 #
 # Usage:
-#   setup-worktree.sh [--repo <name>] <slug> [base-branch]
+#   setup-worktree.sh [--repo <name>] [--worktrees-dir <dir>] <slug> [base-branch]
 #
 # Examples:
 #   setup-worktree.sh feat-autoops-cancel-polish
@@ -39,10 +39,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/workbench-helpers.sh"
 
 REPO_ARG=""
-if [[ "${1:-}" == "--repo" ]]; then
-	REPO_ARG="${2:?--repo requires a repo name}"
-	shift 2
-fi
+WORKTREES_DIR=""
+# Flags in any order; both optional. `--worktrees-dir` is passed by the TS
+# wrapper when the repo DECLARES a worktrees location. Absent, worktrees land
+# at the workbench root — today's flat layout, unchanged.
+while [[ "${1:-}" == --* ]]; do
+	case "$1" in
+		--repo) REPO_ARG="${2:?--repo requires a repo name}"; shift 2 ;;
+		--worktrees-dir) WORKTREES_DIR="${2:?--worktrees-dir requires a directory}"; shift 2 ;;
+		*) echo "Error: unknown flag $1" >&2; exit 1 ;;
+	esac
+done
 SLUG="${1:?Usage: setup-worktree.sh [--repo <name>] <slug> [base-branch]}"
 BASE_BRANCH_ARG="${2:-}"
 
@@ -79,12 +86,21 @@ BASE_BRANCH="${BASE_BRANCH_ARG:-$CONFIG_BASE_BRANCH}"
 
 # Reject slug collisions with the wrapped repo's name (resolution would be
 # ambiguous; the trunk lives at that path).
-if [[ "$SLUG" == "$REPO" ]]; then
+if [[ -z "$WORKTREES_DIR" && "$SLUG" == "$REPO" ]]; then
+	# Only a flat layout can collide — a declared worktrees directory puts the
+	# worktree somewhere the trunk can never be.
 	echo "Error: slug '$SLUG' collides with the wrapped repo name; pick a different slug" >&2
 	exit 1
 fi
 
-WORKTREE_PATH="$WORKBENCH_ROOT/$SLUG"
+# A declared location is a single clean segment (guarded on the TS side before
+# it ever reaches here), so this join cannot escape the workbench.
+if [[ -n "$WORKTREES_DIR" ]]; then
+	WORKTREE_PATH="$WORKBENCH_ROOT/$WORKTREES_DIR/$SLUG"
+	mkdir -p "$WORKBENCH_ROOT/$WORKTREES_DIR"
+else
+	WORKTREE_PATH="$WORKBENCH_ROOT/$SLUG"
+fi
 if [[ -e "$WORKTREE_PATH" ]]; then
 	echo "Error: worktree already exists at $WORKTREE_PATH" >&2
 	echo "To remove: git -C $CLIENT_ROOT worktree remove --force $WORKTREE_PATH" >&2

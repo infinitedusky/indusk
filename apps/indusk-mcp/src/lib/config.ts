@@ -179,6 +179,30 @@ export interface WorkbenchRepo {
 	 * malformed one — the singular `wrapped_repo` shape never carried a remote.
 	 */
 	remote?: string;
+	/**
+	 * The directory holding this repo's checkout, relative to the workbench.
+	 * Absent ⇒ `name`.
+	 *
+	 * Declaring it is what lets a directory be renamed without breaking
+	 * anything: `name` becomes an identifier rather than a location. Nothing
+	 * derives a path from a name — the same rule the listing already follows
+	 * when it asks git who owns a worktree rather than guessing from a prefix.
+	 */
+	path?: string;
+	/**
+	 * The directory this repo's worktrees live in, relative to the workbench.
+	 * Absent ⇒ the workbench root, which is today's flat layout.
+	 *
+	 * **Absence meaning flat is the whole migration story.** An existing
+	 * workbench declares nothing and behaves exactly as it does now; the nested
+	 * layout is opt-in per repo. Same reduction shape that made `wrapped_repo`
+	 * → `repos[]` cost nothing.
+	 *
+	 * Declaring it also makes the ignore rule precise: worktree names are
+	 * invented at runtime and cannot be listed in advance, but the directory
+	 * containing them can be named exactly.
+	 */
+	worktrees?: string;
 }
 
 export interface WorktreeConfig {

@@ -9,7 +9,7 @@ import {
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { isWorkbench, readWorkbenchRepos } from "../../lib/worktree/repos.js";
+import { isWorkbench, readWorkbenchRepos, repoDir } from "../../lib/worktree/repos.js";
 import { validateWorktreeConfig } from "../../lib/worktree/validate-config.js";
 import { provisionWorktreeEnv } from "./doppler.js";
 
@@ -131,7 +131,17 @@ function worktreeCreateResolved(slug: string, baseBranch?: string, repo?: string
 		console.error(`Error: setup-worktree.sh not found at ${script}`);
 		process.exit(1);
 	}
-	const scriptArgs = [...(repo ? ["--repo", repo] : []), slug, ...(baseBranch ? [baseBranch] : [])];
+	// The shell script places the worktree; tell it where when a location is
+	// declared. Absent, it keeps putting worktrees at the workbench root.
+	const declared = repo
+		? readWorkbenchRepos(process.cwd()).find((r) => r.name === repo)
+		: undefined;
+	const scriptArgs = [
+		...(declared?.worktrees ? ["--worktrees-dir", declared.worktrees] : []),
+		...(repo ? ["--repo", repo] : []),
+		slug,
+		...(baseBranch ? [baseBranch] : []),
+	];
 	const r = spawnSync("bash", [script, ...scriptArgs], {
 		cwd: process.cwd(),
 		stdio: "inherit",
@@ -332,9 +342,15 @@ export function worktreeList(projectRoot: string): void {
 		process.exit(1);
 	}
 
-	const repoPaths = new Map(repos.map((r) => [r.name, join(projectRoot, r.name)]));
-	const declaredNames = new Set(repos.map((r) => r.name));
-	const slugs = listSubdirs(projectRoot).filter((name) => !declaredNames.has(name));
+	// Trunks are found at their DECLARED path; `name` is an identifier, not a
+	// location. A repo whose directory was renamed still resolves, because
+	// nothing here derives a path from a name.
+	const repoPaths = new Map(repos.map((r) => [r.name, join(projectRoot, repoDir(r))]));
+	const occupied = new Set([
+		...repos.map((r) => repoDir(r)),
+		...repos.map((r) => r.worktrees).filter((w): w is string => typeof w === "string"),
+	]);
+	const slugs = listSubdirs(projectRoot).filter((name) => !occupied.has(name));
 
 	const byRepo = new Map<string, string[]>(repos.map((r) => [r.name, []]));
 	const unattributed: string[] = [];
@@ -352,7 +368,9 @@ export function worktreeList(projectRoot: string): void {
 		const mine = byRepo.get(repo.name) ?? [];
 		console.info("");
 		console.info(`${repo.name}`);
-		console.info(`  Trunk:      ${repo.name} ${trunkStatusFor(join(projectRoot, repo.name))}`);
+		console.info(
+			`  Trunk:      ${repoDir(repo)} ${trunkStatusFor(join(projectRoot, repoDir(repo)))}`,
+		);
 		console.info(
 			`  Remote:     ${repo.remote ?? "(none declared — `workbench restore` cannot clone it)"}`,
 		);

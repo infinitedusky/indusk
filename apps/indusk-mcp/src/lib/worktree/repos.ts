@@ -67,7 +67,17 @@ export function readWorkbenchRepos(root: string): WorkbenchRepo[] {
 		if (typeof name !== "string" || !isCleanSegment(name)) continue;
 		if (seen.has(name)) continue;
 		seen.add(name);
-		repos.push(typeof remote === "string" && remote.trim() !== "" ? { name, remote } : { name });
+
+		// `path` and `worktrees` are joined into filesystem paths, so they are
+		// boundary values exactly as `name` is. A declared value that is not a
+		// clean segment is DROPPED, degrading to the default rather than
+		// resolving to a traversal.
+		const { path, worktrees } = entry as { path?: unknown; worktrees?: unknown };
+		const repo: WorkbenchRepo = { name };
+		if (typeof remote === "string" && remote.trim() !== "") repo.remote = remote;
+		if (typeof path === "string" && isCleanSegment(path)) repo.path = path;
+		if (typeof worktrees === "string" && isCleanSegment(worktrees)) repo.worktrees = worktrees;
+		repos.push(repo);
 	}
 	return repos;
 }
@@ -114,4 +124,25 @@ export function resolveRepo(
 	return {
 		error: `this workbench declares more than one repo, so the repo must be named: ${repos.map((r) => r.name).join(", ")}.`,
 	};
+}
+
+/**
+ * Where this repo's checkout lives, relative to the workbench root.
+ *
+ * The declared `path`, or the name when nothing is declared. One function so
+ * no caller re-derives it — a second copy would be the place the two answers
+ * quietly diverge.
+ */
+export function repoDir(repo: WorkbenchRepo): string {
+	return repo.path ?? repo.name;
+}
+
+/**
+ * Where this repo's worktrees go, relative to the workbench root.
+ *
+ * `"."` means the workbench root itself — today's flat layout, and what every
+ * workbench that declares nothing gets.
+ */
+export function worktreesDir(repo: WorkbenchRepo): string {
+	return repo.worktrees ?? ".";
 }

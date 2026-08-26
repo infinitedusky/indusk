@@ -72,8 +72,8 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
 | A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
 | A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | written | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
-| A18 | A worktree created in a workbench that declares a worktrees location lands there, not at the workbench root | Build Phase 8 | Build Phase 8 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
-| A19 | Renaming a declared directory and updating config keeps everything working — nothing infers layout from a name | Build Phase 8 | Build Phase 8 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A18 | A worktree created in a workbench that declares a worktrees location lands there, not at the workbench root | Build Phase 8 | Build Phase 8 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
+| A19 | Renaming a declared directory and updating config keeps everything working — nothing infers layout from a name | Build Phase 8 | Build Phase 8 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A20 | `worktree list` groups worktrees under their repo, and a worktree outside every declared location is shown as unattributed rather than dropped | Build Phase 9 | Build Phase 9 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A21 | A workbench with declared locations needs no deny-by-default rule, and its generated ignore lines can be appended to a hand-written `.gitignore` without changing that file's meaning | Build Phase 10 | Build Phase 10 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
 | A22 | A flat workbench whose own `.gitignore` cannot carry the contract is refused by name, rather than syncing worktree contents into the shared remote | Build Phase 10 | Build Phase 10 | planned | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-ignore.test.ts` |
@@ -296,23 +296,23 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 Absence means today's behavior — a repo with no `worktrees` declared stays flat. That is the whole migration story, the same reduction shape that made `wrapped_repo` → `repos[]` free.
 
-- [ ] Author A18, A19 in `workbench-layout.test.ts`, RED
-- [ ] Add optional `path` and `worktrees` to `WorkbenchRepo` in `lib/config.ts`, alongside `name` and `remote`
-- [ ] Resolve them in `readWorkbenchRepos` — absent `path` ⇒ `name`, absent `worktrees` ⇒ flat (the workbench root)
-- [ ] Guard both as **path-join boundary values** via `isCleanSegment`, exactly as `name` already is. A declared path is a single segment; anything else is dropped rather than joined
-- [ ] `worktree create` puts the new worktree in the declared location, creating it if absent
-- [ ] The trunk resolves through `path`, so a repo directory can be renamed by editing config
+- [x] Author A18, A19 in `workbench-layout.test.ts`, RED — two red for their own reasons (worktree lands at the root; a renamed trunk is not followed), two green as guards that must stay green
+- [x] Add optional `path` and `worktrees` to `WorkbenchRepo` in `lib/config.ts`, alongside `name` and `remote`
+- [x] Resolve them in `readWorkbenchRepos` — absent `path` ⇒ `name`, absent `worktrees` ⇒ flat (the workbench root). Exposed as `repoDir()` / `worktreesDir()` so no caller re-derives either; a second copy is where the two answers quietly diverge
+- [x] Guard both as **path-join boundary values** via `isCleanSegment`, exactly as `name` already is. A declared path is a single segment; anything else is dropped rather than joined
+- [x] `worktree create` puts the new worktree in the declared location, creating it if absent — the TS wrapper passes `--worktrees-dir` only when one is declared, so the flat path is byte-identical to before. The slug-vs-repo-name collision guard now applies **only to flat layouts**, since a declared directory puts the worktree somewhere the trunk cannot be
+- [x] The trunk resolves through `path`, so a repo directory can be renamed by editing config
 
 #### Build Phase 8 Verification
-- [ ] A18, A19 pass (`pnpm exec vitest run src/__tests__/workbench-layout.test.ts`)
-- [ ] A workbench declaring nothing new behaves **byte-identically** to today — run the existing worktree suites unchanged
-- [ ] A declared path containing `..` or `/` is dropped, not joined — assert the refusal, since this is the boundary a malicious or careless config crosses
+- [x] A18, A19 pass (`pnpm exec vitest run src/__tests__/workbench-layout.test.ts`, 4/4)
+- [x] A workbench declaring nothing new behaves **byte-identically** to today — 106 passed / 0 failed across every workbench and worktree suite; fast suite 983 passed
+- [x] A declared path containing `..` or `/` is dropped, not joined — assert the refusal. **Proven load-bearing**: removing `isCleanSegment` from the `worktrees` read makes the escape test fail, i.e. a directory really is created outside the workbench without it
 
 #### Build Phase 8 Context
-- [ ] Add to Conventions: a workbench's layout is declared (`path`, `worktrees`), never inferred from a name; absence means flat
+- [x] Add to Conventions: a workbench's layout is declared (`path`, `worktrees`), never inferred from a name; absence means flat
 
 #### Build Phase 8 Document
-- [ ] Update `/reference/cli/workbench` with the declaration fields and the absence-means-flat rule
+- [x] Update `/reference/cli/workbench` with the declaration fields and the absence-means-flat rule — plus why declaring beats inferring, and that both are boundary values
 
 ### Build Phase 9: Listing groups by repo, disk stays the inventory
 

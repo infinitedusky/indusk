@@ -134,6 +134,37 @@ files stay on disk):
 Untracked 3 now-ignored path(s) (index only, files kept)
 ```
 
+## Declaring where things live
+
+A repo entry can say where its checkout and its worktrees are:
+
+```jsonc
+{ "name": "service-api", "path": "service-api", "worktrees": "service-api-worktrees" }
+```
+
+| Field | Absent means |
+|---|---|
+| `path` | the repo's `name` |
+| `worktrees` | the workbench root — today's flat layout |
+
+**Absence means flat**, so an existing workbench declares nothing and behaves
+exactly as it does now. The nested layout is opt-in per repo.
+
+Two things follow from declaring rather than inferring:
+
+- **A directory can be renamed.** Update `path` and everything keeps working —
+  `name` is an identifier, not a location. Nothing derives a path from a name,
+  the same rule the listing follows when it asks git who owns a worktree instead
+  of guessing from a slug prefix.
+- **The ignore rule becomes precise.** Worktree names are invented at runtime and
+  cannot be listed in advance, but the directory containing them can be named
+  exactly — one generated line instead of denying the whole root by default.
+
+Both values are joined into filesystem paths, so both are **boundary values**:
+each must be a single clean path segment. A declared value containing `/` or
+`..` is dropped and the default applies — degrade to structure-loss, never a
+traversal.
+
 ## Why not `init` or `update`?
 
 `indusk init` is written to *refuse* an already-initialized workbench; a cloned
