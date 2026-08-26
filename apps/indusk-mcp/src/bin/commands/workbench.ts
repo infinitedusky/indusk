@@ -24,6 +24,7 @@ import {
 	allLocationsDeclared,
 	ensureShareableScaffolding,
 	missingIgnoreRules,
+	topUpManagedIgnore,
 	untrackNowIgnored,
 } from "../../lib/worktree/shareable.js";
 import { ensureContextRepo, repoPublishState, syncWorkbench } from "../../lib/worktree/sync.js";
@@ -156,6 +157,13 @@ function refuseIfIgnoreCannotHold(
 	// A declared layout names its worktree directories exactly, so no
 	// deny-by-default rule is required and nothing to refuse.
 	if (allLocationsDeclared(repos)) return;
+
+	// InDusk wrote this file, so InDusk may extend it. Every freshly created
+	// workbench lands here — `init` scaffolds a `.gitignore`, so without this
+	// the refusal fires on the product's own output.
+	if (topUpManagedIgnore(projectRoot)) {
+		console.info("Added the workbench rules to the InDusk-managed .gitignore.");
+	}
 
 	const gaps = missingIgnoreRules(projectRoot);
 	if (gaps.length === 0) return;

@@ -186,3 +186,37 @@ describe.skipIf(SHOULD_SKIP)(
 		});
 	},
 );
+
+describe.skipIf(SHOULD_SKIP)("a freshly created workbench can sync", () => {
+	it("tops up an InDusk-managed .gitignore instead of refusing it", { timeout: 30_000 }, () => {
+		// Found by running `indusk setup` and then `workbench sync`: init
+		// scaffolds a `.gitignore`, so EVERY newly created workbench tripped the
+		// Phase 10 refusal and could not sync at all. A guard that blocks the
+		// product's own output is a bug, not a guard — and no fixture caught it,
+		// because fixtures ship no ignore file.
+		//
+		// The line is provenance: InDusk wrote the file, so InDusk may extend it.
+		// A file a human wrote is still refused.
+		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true, materialize: true });
+		const wb = fixture.workbenchDir;
+		writeFileSync(join(wb, ".gitignore"), "\n# InDusk managed\n.mcp.json\n.indusk/eval/\n");
+
+		const r = runCli(wb, ["workbench", "sync"]);
+
+		expect(r.code, r.stderr).toBe(0);
+		const body = readFileSync(join(wb, ".gitignore"), "utf-8");
+		expect(body).toContain(".mcp.json"); // their rules survive
+		expect(body).toMatch(/^\/\*\/$/m); // ours were added
+	});
+
+	it("still refuses a .gitignore InDusk did not write", { timeout: 30_000 }, () => {
+		// The paired negative: without it, "top up everything" would pass the
+		// test above and look correct.
+		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true, materialize: true });
+		const wb = fixture.workbenchDir;
+		writeFileSync(join(wb, ".gitignore"), "# hand-written by a person\n*.log\n");
+
+		expect(runCli(wb, ["workbench", "sync"]).code).not.toBe(0);
+		expect(readFileSync(join(wb, ".gitignore"), "utf-8")).not.toMatch(/^\/\*\/$/m);
+	});
+});

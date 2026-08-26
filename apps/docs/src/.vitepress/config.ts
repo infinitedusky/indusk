@@ -42,6 +42,7 @@ const config = defineConfig({
 						{ text: "Workbench Sharing", link: "/guide/workbench-sharing" },
 			{ text: "Reference", link: "/reference/" },
 			{ text: "Decisions", link: "/decisions/" },
+						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 			{ text: "Lessons", link: "/lessons/" },
 			{ text: "Dawn", link: "/dawn/" },
 			{ text: "Strategy", link: "/strategy/" },

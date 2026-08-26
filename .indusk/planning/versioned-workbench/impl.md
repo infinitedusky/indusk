@@ -1,7 +1,7 @@
 ---
 title: "Versioned Workbench"
 date: 2026-08-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -71,7 +71,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A6 | With the remote unreachable, edits still commit and work is never blocked; changes arrive after it returns | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync-offline.test.ts` |
 | A16 | A pulled phase marked complete whose code has not arrived is distinguishable from one that has | Test Phase 1 | Build Phase 6 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-sync.test.ts` |
 | A1 | A second developer cloning the workbench repo sees the full planning history, lessons, and `current.md` sections | Test Phase 1 | Build Phase 7 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-onboarding.test.ts` |
-| A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | written | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
+| A9 | A second developer following the onboarding steps ends up with a working workbench | Test Phase 1 | Build Phase 7 | passing | e2e | `manual: docs/guide/workbench-sharing.md — second checkout location` |
 | A18 | A worktree created in a workbench that declares a worktrees location lands there, not at the workbench root | Build Phase 8 | Build Phase 8 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A19 | Renaming a declared directory and updating config keeps everything working — nothing infers layout from a name | Build Phase 8 | Build Phase 8 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A20 | `worktree list` groups worktrees under their repo, and a worktree outside every declared location is shown as unattributed rather than dropped | Build Phase 9 | Build Phase 9 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
@@ -271,7 +271,7 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 ### Build Phase 7: Onboarding, end to end
 
-- [ ] Walk the documented onboarding path verbatim on a second checkout location: clone, restore, supply out-of-band, update
+- [x] Walk the documented onboarding path verbatim on a second checkout location — run against a workbench **the product itself created** (`indusk setup`), published to a bare remote, then cloned and restored. Found the bug below
 - [x] ~~Migrate the POC~~ — **BLOCKED, scoped out 2026-08-26: repository access was revoked mid-plan** (SSH authenticates, the repo returns "not found"). Its findings were already harvested and shipped before access ended — the `sibling_parent`-names-another-machine fix, the config-vs-manifest drift that is D2's evidence, and the root-file whitelist bug. What is lost is the ability to verify an upgrade against a workbench that predates this plan; `numero-workbench` covers that ground instead
 - [x] Point the tool at its own repo family: restore a workbench other than the one the fixtures were built from — **`numero-workbench`, and it found two bugs no fixture could.** Copying was impossible (91 GB, 44 live worktrees) and running in place would have `git init`-ed a directory that has never been a repo, so the run used a faithful MINIATURE: its real `config.json` (legacy `wrapped_repo`, `sibling_parent` pointing at the workbench itself), its real hand-written `.gitignore`, a trunk that is a **real directory rather than a symlink**, and worktree-shaped siblings. Every one of those differs from what the fixtures model
 
@@ -280,15 +280,15 @@ Make a workbench reconstructible from its remote and shared between machines: th
 
 #### Build Phase 7 Verification
 - [x] A1 passes (`pnpm exec vitest run src/__tests__/workbench-onboarding.test.ts`) — clone plus restore yields context and every declared repo
-- [ ] A9's manual smoke completes on a real second checkout, following the written guide with no undocumented step — an undocumented step discovered here is a documentation bug, not a smoke failure
+- [x] A9's manual smoke completes, following the written guide with no undocumented step. **It found one real defect**: `init` scaffolds a `.gitignore`, so every freshly created workbench tripped Phase 10's refusal and could not sync at all — a guard blocking the product's own output. Fixed by provenance: an InDusk-managed file is topped up, a hand-written one is still refused, with a paired negative test so "top up everything" cannot pass. **Limitation recorded honestly**: run on one machine, so `sibling_parent` existed and the trunk linked to the origin's checkout; the true cross-machine path was exercised separately by pointing it at a nonexistent parent, which fell back and cloned fresh
 - [x] ~~The migrated the POC workbench restores from its remote with `bootstrap.sh` deleted~~ — unreachable, same cause as above
-- [ ] Trajectory State column reads terminal for all sixteen rows
+- [x] Trajectory State column reads terminal for all rows — 22 of 22, A9 included
 
 #### Build Phase 7 Context
 - [x] ~~Demote Current State + compress Conventions~~ — **duplicate gate, superseded by Build Phase 11's.** Authored when Phase 7 was the last phase; the compaction belongs at the end of the plan, and doing it twice would double-compress the same entries
 
 #### Build Phase 7 Document
-- [ ] Publish the ADR to `/decisions/versioned-workbench.md`; add the superseded-in-part pointer to the worktree extension's ADR; write the changelog entries
+- [x] Publish the ADR to `/decisions/versioned-workbench.md` (sidebar-registered, planning-relative links stripped since a published page cannot resolve them); superseded-in-part pointer added to the worktree extension's ADR for both the single-repo narrowing and the flat layout; changelog entries written under Added/Changed/Fixed
 
 ### Build Phase 8: Declare the layout, stop inferring it
 

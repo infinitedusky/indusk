@@ -154,6 +154,54 @@ const GITATTRIBUTES = `# InDusk workbench context repo.
 .indusk/highlights-processed.jsonl merge=union
 `;
 
+/**
+ * Marker `indusk init` writes into the ignore files it owns.
+ *
+ * The line between "extend this" and "refuse to touch this". InDusk wrote the
+ * file, so InDusk may add rules to it; a file a human wrote is a decision, and
+ * appending deny-by-default to it would invert what they meant.
+ */
+const INDUSK_MANAGED_MARKER = "# InDusk managed";
+
+/** Rules a flat workbench needs, in the order they should be appended. */
+const FLAT_WORKBENCH_RULES = `
+# --- InDusk workbench (generated) ---
+# Worktree directories are created at runtime, so they cannot be named in
+# advance — the root is deny-by-default and shared directories are opted back
+# in below. Root FILES are untouched.
+${ROOT_DENY_RULE}
+!/.indusk/
+!/.claude/
+!/env/
+!/scripts/
+!/docs/
+${SECRETS_RULE}*
+!${SECRETS_RULE}.example
+env/*.env
+.indusk/current.md.lock
+`;
+
+/**
+ * Add the flat-workbench rules to an ignore file InDusk already owns.
+ *
+ * Found by running `indusk setup` and then `workbench sync`: init scaffolds a
+ * `.gitignore`, so EVERY freshly created workbench tripped the refusal and
+ * could not sync at all. A guard that blocks the product's own output is not a
+ * guard, it is a bug — and no fixture caught it because fixtures ship no
+ * ignore file.
+ *
+ * Returns true when it topped up.
+ */
+export function topUpManagedIgnore(workbenchRoot: string): boolean {
+	const path = join(workbenchRoot, ".gitignore");
+	if (!existsSync(path)) return false;
+	const body = readFileSync(path, "utf-8");
+	if (!body.includes(INDUSK_MANAGED_MARKER)) return false; // a human's file — refuse elsewhere
+	if (body.includes(ROOT_DENY_RULE)) return false; // already correct
+	appendFileSync(path, FLAT_WORKBENCH_RULES);
+	return true;
+}
+
 export interface ScaffoldResult {
 	created: string[];
 	kept: string[];

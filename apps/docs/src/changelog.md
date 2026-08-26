@@ -4,6 +4,23 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added — versioned workbench
+
+- **Workbenches wrap multiple repos.** `worktree.repos[]` in `.indusk/config.json`; the legacy `wrapped_repo` reduces to a one-element list, so existing workbenches need no edit. `indusk worktree create [repo] <slug>` takes the repo argument again, optional when only one is declared.
+- **`indusk workbench restore`** materializes a cloned workbench — clones every declared repo as a sibling, recreates the trunk links, and prints the out-of-band set it cannot supply. Idempotent; a partial restore exits non-zero naming what it could not do.
+- **`indusk workbench sync`** shares a workbench between machines: commit → pull → push, resolved blindly (`merge=union` on `current.md` and `highlights.jsonl`). Triggered by a debounced hook and at `/catchup`, inert outside a workbench, and never blocking — offline commits locally and goes out on the next sync. The wrapped repos are never auto-committed.
+- **`indusk workbench status`** shows, per repo, whether its commits have actually left this machine.
+- **Layout is declared, not inferred.** Optional `path` and `worktrees` per repo; absence means today's flat layout. `indusk workbench migrate-layout` moves an existing flat workbench, dry-run by default.
+
+### Changed
+
+- `indusk worktree list` renders one block per declared repo, groups worktrees structurally, and shows anything it cannot place as **Unattributed** rather than dropping it.
+- `indusk update` notices declared repos that are not materialized and points at `workbench restore` without cloning anything itself.
+
+### Fixed
+
+- `indusk verify` no longer reports honestly-done work as phantom inside a workbench. Plan documents and code live in different repositories there, so it refuses rather than judging code by a diff that cannot contain it.
+
 ### Removed
 - **The last of jj, and the audit that could not see it** (`jj-residue-rip-out`). `git-only-substrate` declared jj removed in 1.31.0 and its enforcement test has been green ever since — for a structural reason, not a factual one. That plan's assertion scoped the search to `apps/indusk-mcp/src/` and to five TypeScript *identifiers*, matched **one line at a time**. `apps/indusk-admin/src/lib/vcs.ts` fell outside all three: it lives in the other app, calls jj as an argv string, and formats `execFileSync(` and `"jj",` on separate lines. It had been running `jj log` **first, per commit id, on every scorecard render** for seven weeks, with a doc comment asserting jj was "the project default in dusk." The file predates the rip-out by two months, so this was residue the sweep never looked at rather than a reintroduction. Removed: the jj execution path, four pieces of UI copy telling users to run `jj describe` (the eval hook has fired on `git commit` only since 1.31.0, so following those instructions produced nothing), a `jjDescription` prop the audit's own pattern could not match (`/\bjj\b/` needs a word boundary), the `scm?: "jj" | "git"` config field and its `indusk update` nudge — a deprecation opened at 1.31.0 and closed here at 1.36.0 — plus stale comments and one docs page. **Deliberately preserved**: the superseded `git-or-jj-substrate` decision and lesson pages, ~60 archived planning files, `guide/scm.md`, the changelog's own historical entries, and the three bundled community lessons that use jj as their worked example. Those are evidence; evidence with the specifics removed stops teaching, and an audit that fires on the archive gets switched off — which is how the first one ended up unable to fail. The replacement audit scans **both apps**, matches jj at **argv level against whole-file content**, exempts the record explicitly, and — the actual deliverable — **was observed red before any removal**, naming all three violations including the one seven weeks of green had hidden.
 
