@@ -44,3 +44,27 @@ const RESERVED_SEGMENTS = new Set([".git", ".indusk", ".claude"]);
 export function isUsableSegment(name: string): boolean {
 	return isCleanSegment(name) && !RESERVED_SEGMENTS.has(name);
 }
+
+/**
+ * A layout value: a relative path inside the workbench, of any depth.
+ *
+ * `isUsableSegment` answers the same question for a NAME, where one segment is
+ * the whole point. A location is different — `worktrees/alpha` and `repos` are
+ * both legitimate places to put things, and forcing them into one segment made
+ * the only expressible nesting a per-repo directory at the root.
+ *
+ * What must still hold is that the value cannot leave the workbench. That is
+ * three separate checks, and `..` is the one worth stating: it is refused in
+ * ANY position, not just the front, because `a/../../b` escapes just as surely
+ * as `../b` does. `.` alone is allowed and means the workbench root itself.
+ */
+export function isUsableRelPath(p: string): boolean {
+	if (p.trim() === "" || p === "..") return false;
+	if (p.startsWith("/") || p.startsWith("~") || p.includes("\\")) return false;
+	if (p === ".") return true;
+	const parts = p.split("/");
+	if (parts.some((seg) => seg === "" || seg === "..")) return false;
+	// The first segment lands at the workbench root, where machine-owned
+	// directories live. `.git/x` is a perfectly clean relative path.
+	return !RESERVED_SEGMENTS.has(parts[0]);
+}

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { WorkbenchRepo, WorktreeConfig } from "../config.js";
-import { isCleanSegment, isUsableSegment } from "../path-segment.js";
+import { isCleanSegment, isUsableRelPath, isUsableSegment } from "../path-segment.js";
 
 export type { WorkbenchRepo } from "../config.js";
 
@@ -75,8 +75,8 @@ export function readWorkbenchRepos(root: string): WorkbenchRepo[] {
 		const { path, worktrees } = entry as { path?: unknown; worktrees?: unknown };
 		const repo: WorkbenchRepo = { name };
 		if (typeof remote === "string" && remote.trim() !== "") repo.remote = remote;
-		if (typeof path === "string" && isUsableSegment(path)) repo.path = path;
-		if (typeof worktrees === "string" && isUsableSegment(worktrees)) repo.worktrees = worktrees;
+		if (typeof path === "string" && isUsableRelPath(path)) repo.path = path;
+		if (typeof worktrees === "string" && isUsableRelPath(worktrees)) repo.worktrees = worktrees;
 		repos.push(repo);
 	}
 	return repos;
@@ -91,6 +91,27 @@ export function isWorkbench(root: string): boolean {
 export function readSiblingParent(root: string): string | null {
 	const value = readRawConfig(root)?.worktree?.sibling_parent;
 	return typeof value === "string" && value.trim() !== "" ? value : null;
+}
+
+/**
+ * Where this workbench's repos live.
+ *
+ * `repos_root` supersedes `sibling_parent`, which named a *relationship*
+ * ("the parent of the siblings") rather than the value. The relationship stops
+ * being true the moment the repos live inside the workbench, and a field that
+ * describes a layout it no longer governs is worse than a bland one.
+ *
+ * The old key is still read, so no existing workbench needs an edit — the same
+ * reduction `wrapped_repo` gets. Returns the declared string verbatim;
+ * resolving it (relative to the workbench, or absolute) belongs to the caller
+ * that knows where the workbench is.
+ */
+export function readReposRoot(root: string): string | undefined {
+	const w = readRawConfig(root)?.worktree;
+	for (const value of [w?.repos_root, w?.sibling_parent]) {
+		if (typeof value === "string" && value.trim() !== "") return value;
+	}
+	return undefined;
 }
 
 /**

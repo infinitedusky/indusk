@@ -213,6 +213,8 @@ export interface WorktreeConfig {
 	wrapped_repo?: string;
 	/** Parent directory the sibling clones live in. */
 	sibling_parent?: string;
+	/** Where the repos live. Relative resolves against the workbench; supersedes `sibling_parent`. */
+	repos_root?: string;
 }
 
 /** Default sweep TTL: 7 days. Distinct from the 60-minute display TTL. */

@@ -89,49 +89,98 @@ _is_reserved_name() {
 	esac
 }
 
-# Single-pass slug resolution against subdirs at workbench root.
-# Exact matches collected first; if none, fall back to suffix matches.
-exact_paths=()
-suffix_paths=()
-for entry in "$WORKBENCH_ROOT"/*; do
-	[[ -e "$entry" ]] || continue
-	# Real dirs OR symlinks-to-dirs both count (the trunk is a symlink).
-	[[ -d "$entry" ]] || continue
-	name="$(basename "$entry")"
-	_is_reserved_name "$name" && continue
-	if [[ "$name" == "$SLUG" ]]; then
-		exact_paths+=("$entry")
-	elif [[ "$name" == *"-$SLUG" ]]; then
-		suffix_paths+=("$entry")
-	fi
+# Slug resolution across the workbench root AND every declared worktrees
+# directory. Scanning the root alone made a declared layout invisible: the
+# worktrees were one level down, so `wt <slug>` reported "no worktree matching"
+# for a worktree that plainly existed.
+#
+# A slug may be qualified as `<repo>/<slug>` to disambiguate. Repo-qualified,
+# not directory-qualified: the repo name and the slug are what a person knows,
+# while the directory is a config detail that changes when the layout does.
+QUALIFIER=""
+if [[ "$SLUG" == */* ]]; then
+	QUALIFIER="${SLUG%%/*}"
+	SLUG="${SLUG#*/}"
+fi
+
+# "<repo>\t<dir>" per declared repo; dir empty means the workbench root.
+declare -a search_repos=() search_dirs=()
+while IFS=$'\t' read -r _name _dir; do
+	[[ -n "$_name" ]] || continue
+	# Only DECLARED directories get their own pass. A repo that declares none
+	# keeps its worktrees at the root, which the root pass below already
+	# covers — searching the root twice found every entry twice and turned
+	# every flat-layout slug into a false "multiple targets match".
+	[[ -n "$_dir" ]] || continue
+	search_repos+=("$_name")
+	search_dirs+=("$_dir")
+done < <(_read_workbench_worktree_dirs)
+
+# The root is always searched too — trunks live there, and so do the worktrees
+# of any repo that declares no location (the flat layout).
+search_repos+=("")
+search_dirs+=("")
+
+exact_paths=(); exact_repos=()
+suffix_paths=(); suffix_repos=()
+for idx in "${!search_dirs[@]}"; do
+	repo="${search_repos[$idx]}"
+	dir="${search_dirs[$idx]}"
+	# A qualifier narrows the search to that repo, so `alpha/x` cannot match
+	# beta's `x`. The unqualified root pass is kept for trunks.
+	if [[ -n "$QUALIFIER" && -n "$repo" && "$repo" != "$QUALIFIER" ]]; then continue; fi
+	if [[ -n "$QUALIFIER" && -z "$repo" ]]; then continue; fi
+	base="$WORKBENCH_ROOT"
+	[[ -n "$dir" ]] && base="$WORKBENCH_ROOT/$dir"
+	[[ -d "$base" ]] || continue
+	for entry in "$base"/*; do
+		[[ -e "$entry" ]] || continue
+		[[ -d "$entry" ]] || continue
+		name="$(basename "$entry")"
+		[[ -z "$dir" ]] && _is_reserved_name "$name" && continue
+		if [[ "$name" == "$SLUG" ]]; then
+			exact_paths+=("$entry"); exact_repos+=("$repo")
+		elif [[ "$name" == *"-$SLUG" ]]; then
+			suffix_paths+=("$entry"); suffix_repos+=("$repo")
+		fi
+	done
 done
 
 # Exact match wins; suffix only if no exact.
-candidate_paths=()
+candidate_paths=(); candidate_repos=()
 if [[ ${#exact_paths[@]} -gt 0 ]]; then
-	candidate_paths=("${exact_paths[@]}")
+	candidate_paths=("${exact_paths[@]}"); candidate_repos=("${exact_repos[@]}")
 elif [[ ${#suffix_paths[@]} -gt 0 ]]; then
-	candidate_paths=("${suffix_paths[@]}")
+	candidate_paths=("${suffix_paths[@]}"); candidate_repos=("${suffix_repos[@]}")
 fi
 
 if [[ ${#candidate_paths[@]} -eq 0 ]]; then
 	echo "Error: no worktree or trunk matching slug '$SLUG' at $WORKBENCH_ROOT" >&2
 	echo "Available targets:" >&2
-	for entry in "$WORKBENCH_ROOT"/*; do
-		[[ -d "$entry" ]] || continue
-		name="$(basename "$entry")"
-		_is_reserved_name "$name" && continue
-		printf '  %s\n' "$name" >&2
+	for idx in "${!search_dirs[@]}"; do
+		repo="${search_repos[$idx]}"; dir="${search_dirs[$idx]}"
+		base="$WORKBENCH_ROOT"; [[ -n "$dir" ]] && base="$WORKBENCH_ROOT/$dir"
+		[[ -d "$base" ]] || continue
+		for entry in "$base"/*; do
+			[[ -d "$entry" ]] || continue
+			name="$(basename "$entry")"
+			[[ -z "$dir" ]] && _is_reserved_name "$name" && continue
+			if [[ -n "$repo" ]]; then printf '  %s/%s\n' "$repo" "$name" >&2; else printf '  %s\n' "$name" >&2; fi
+		done
 	done
 	exit 1
 fi
 
 if [[ ${#candidate_paths[@]} -gt 1 ]]; then
 	echo "Error: multiple targets match slug '$SLUG':" >&2
-	for p in "${candidate_paths[@]}"; do
-		printf '  %s\n' "$(basename "$p")" >&2
+	for i in "${!candidate_paths[@]}"; do
+		if [[ -n "${candidate_repos[$i]}" ]]; then
+			printf '  %s/%s\n' "${candidate_repos[$i]}" "$(basename "${candidate_paths[$i]}")" >&2
+		else
+			printf '  %s\n' "$(basename "${candidate_paths[$i]}")" >&2
+		fi
 	done
-	echo "Use the full name." >&2
+	echo "Name the repo to disambiguate, e.g. \`wt <repo>/$SLUG\`." >&2
 	exit 1
 fi
 

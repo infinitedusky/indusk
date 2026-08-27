@@ -125,6 +125,39 @@ _read_workbench_repos() {
 	' "$config" 2>/dev/null || echo ""
 }
 
+# Emit "<name>\t<worktrees-dir>" per declared repo. The dir is the declared
+# `worktrees` value, or empty meaning the workbench root — absence is the flat
+# layout, which is what every workbench had before layouts could be declared.
+#
+# DELIBERATE PORT of the same reduction readWorkbenchRepos() performs in
+# src/lib/worktree/repos.ts — bash cannot import the TS module. Keep the two in
+# step: the accepted shape of `worktrees` is a relative path inside the
+# workbench, so it may contain "/" but may never escape.
+_read_workbench_worktree_dirs() {
+	local root="${WORKBENCH_ROOT:-}"
+	[[ -n "$root" ]] || { echo "Error: _read_workbench_worktree_dirs: WORKBENCH_ROOT must be set" >&2; return 1; }
+	local config="$root/.indusk/config.json"
+	[[ -f "$config" ]] || return 0
+	jq -r '
+		(.worktree // {}) as $w
+		| (
+			if ($w.repos | type) == "array" then $w.repos
+			elif ($w.wrapped_repo | type) == "string" then [{ name: $w.wrapped_repo }]
+			else []
+			end
+		)
+		| map(select(type == "object"))
+		| map(select((.name | type) == "string" and .name != ""))
+		| map([
+			.name,
+			(if (.worktrees | type) == "string"
+				and (.worktrees | test("^/|^~|(^|/)\\.\\.(/|$)") | not)
+			 then .worktrees else "" end)
+		  ])
+		| .[] | @tsv
+	' "$config" 2>/dev/null || echo ""
+}
+
 _resolve_workbench_repo() {
 	local requested="${1:-}"
 	local repos=()

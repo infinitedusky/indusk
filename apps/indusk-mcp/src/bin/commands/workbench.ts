@@ -2,9 +2,11 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import { isUsableRelPath } from "../../lib/path-segment.js";
 import { linkTrunk, listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
 import {
 	isWorkbench,
+	readReposRoot,
 	readSiblingParent,
 	readWorkbenchRepos,
 	repoDir,
@@ -87,8 +89,30 @@ function expandHome(p: string): string {
  */
 function resolveSiblingParent(projectRoot: string): { siblingParent: string; note?: string } {
 	const parent = resolve(projectRoot, "..");
-	const declared = readSiblingParent(projectRoot);
+	const declared = readReposRoot(projectRoot);
 	if (!declared) return { siblingParent: parent };
+
+	// RELATIVE resolves against the workbench, and that is the whole point: a
+	// relative value means the same place on every machine, so the layout it
+	// describes reproduces when the workbench is cloned. `repos_root: "."` is
+	// how a workbench says its repos live inside it.
+	//
+	// An ABSOLUTE value keeps its old meaning, and its old problem — it names
+	// whichever machine wrote it. It is still honored where it resolves, and
+	// still falls back loudly where it does not, because silently cloning
+	// somewhere unexpected is worse than saying so.
+	if (!declared.startsWith("/") && !declared.startsWith("~")) {
+		if (!isUsableRelPath(declared)) {
+			return {
+				siblingParent: parent,
+				note:
+					`Note: worktree.repos_root is "${declared}", which is not a usable location ` +
+					`inside the workbench (it must not escape it, or name .git/.indusk/.claude).\n` +
+					`      Using this workbench's parent instead: ${parent}`,
+			};
+		}
+		return { siblingParent: resolve(projectRoot, declared) };
+	}
 
 	const expanded = resolve(expandHome(declared));
 	if (existsSync(expanded)) return { siblingParent: expanded };
@@ -96,8 +120,9 @@ function resolveSiblingParent(projectRoot: string): { siblingParent: string; not
 	return {
 		siblingParent: parent,
 		note:
-			`Note: worktree.sibling_parent points at ${expanded}, which does not exist here — ` +
-			`it is an absolute path from whichever machine wrote it.\n` +
+			`Note: worktree.repos_root points at ${expanded}, which does not exist here — ` +
+			`it is an absolute path from whichever machine wrote it. A path relative to the ` +
+			`workbench (e.g. "." or "repos") reproduces on every machine.\n` +
 			`      Using this workbench's parent instead: ${parent}`,
 	};
 }
