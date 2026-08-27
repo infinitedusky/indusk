@@ -221,9 +221,11 @@ describe("A31 — the reserved root-directory set is single-definition", () => {
 	});
 
 	it("leaves no command hand-rolling its own reserved set", () => {
-		// The tell is the literal set of names, not the variable holding it: both
-		// copies spelled `.indusk` and `node_modules` inline inside a `new Set([`.
-		const hits = grepCode('"node_modules",', join(SRC, "bin"));
+		// The tell is a reserved NAME on its own line — how both copies spelled
+		// their `new Set([` literal. An earlier version of this scan looked for
+		// `"node_modules",` and matched `join(projectRoot, "node_modules", pkg)`
+		// in an unrelated command: a path argument, not a reserved set.
+		const hits = grepCode('^\\s*"\\.indusk",$', join(SRC, "bin"));
 		expect(
 			hits,
 			`a reserved-directory list is still inline in a command:\n${hits.join("\n")}`,
@@ -260,7 +262,12 @@ describe("A32 — worktree-to-repo attribution is single-definition", () => {
 	});
 
 	it("keeps the reasoning that makes the git call non-negotiable", () => {
-		const source = readFileSync(join(SRC, "lib", "worktree", "layout.ts"), "utf-8");
+		// Whitespace-normalized: the sentence is prose in a docblock, so it wraps
+		// wherever the formatter puts it. Asserting the contiguous string pins the
+		// line width, not the reasoning.
+		const source = readFileSync(join(SRC, "lib", "worktree", "layout.ts"), "utf-8")
+			.replace(/\n\s*\*\s?/g, " ")
+			.replace(/\s+/g, " ");
 		expect(source).toMatch(/wrong attribution reads exactly like a right one/);
 	});
 });

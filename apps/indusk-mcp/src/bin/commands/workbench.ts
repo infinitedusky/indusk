@@ -13,6 +13,7 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { join, relative, resolve } from "node:path";
+import { linkTrunk, listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
 import {
 	isWorkbench,
 	readSiblingParent,
@@ -79,38 +80,6 @@ function git(args: string[], cwd: string): { ok: boolean; stderr: string } {
 
 function expandHome(p: string): string {
 	return p.startsWith("~/") ? join(homedir(), p.slice(2)) : p;
-}
-
-/**
- * Point `<workbench>/<name>` at the sibling clone, with a RELATIVE target.
- *
- * Relative so the workbench survives being cloned to a different absolute path
- * on the next machine — an absolute link works perfectly on the machine that
- * created it and breaks silently everywhere else, which is the worst place for
- * this to be wrong.
- */
-function linkTrunk(workbenchRoot: string, name: string, target: string): boolean {
-	const link = join(workbenchRoot, name);
-	const rel = relative(workbenchRoot, target);
-	if (existsSync(link) || isDanglingLink(link)) {
-		// A correct link needs nothing doing — report it as linked.
-		if (isSymlink(link) && readlinkSync(link) === rel) return true;
-		// Repair a link that points somewhere else.
-		if (isSymlink(link)) rmSync(link);
-		// A real directory here is not ours to remove, and reporting it as
-		// "linked" would be a claim about something that never happened.
-		else return false;
-	}
-	symlinkSync(rel, link);
-	return true;
-}
-
-function isSymlink(p: string): boolean {
-	try {
-		return lstatSync(p).isSymbolicLink();
-	} catch {
-		return false;
-	}
 }
 
 /**
@@ -199,11 +168,6 @@ function refuseIfIgnoreCannotHold(
 	console.error("  - add the missing rule(s) to .gitignore yourself");
 	console.error("  - re-run with --no-ignore-check to proceed anyway");
 	process.exit(1);
-}
-
-/** A symlink whose target is missing — `existsSync` follows links and says no. */
-function isDanglingLink(p: string): boolean {
-	return isSymlink(p) && !existsSync(p);
 }
 
 /**
@@ -497,7 +461,7 @@ export function workbenchMigrateLayout(projectRoot: string, opts: { apply?: bool
 	const unplaceable: string[] = [];
 	const unmovable: string[] = [];
 	for (const slug of loose) {
-		const owner = worktreeOwnerOf(join(projectRoot, slug), repoPaths);
+		const owner = worktreeOwner(join(projectRoot, slug), repoPaths);
 		if (!owner) {
 			unplaceable.push(slug);
 			continue;
@@ -588,47 +552,6 @@ export function workbenchMigrateLayout(projectRoot: string, opts: { apply?: bool
 	console.info("");
 	console.info("Layout migrated. `indusk worktree list` now groups by repo.");
 	process.exit(0);
-}
-
-/** Root entries that are neither InDusk state nor tooling. */
-function listWorkbenchSubdirs(root: string): string[] {
-	const reserved = new Set([
-		".indusk",
-		".claude",
-		".git",
-		".vscode",
-		".cursor",
-		"node_modules",
-		"dist",
-		"build",
-		".next",
-		"scripts",
-		"env",
-		"docs",
-	]);
-	return readdirSync(root, { withFileTypes: true })
-		.filter((e) => (e.isDirectory() || e.isSymbolicLink()) && !reserved.has(e.name))
-		.map((e) => e.name)
-		.sort();
-}
-
-/** Which declared repo owns this worktree, asked of git rather than guessed. */
-function worktreeOwnerOf(worktreePath: string, repoPaths: Map<string, string>): string | null {
-	const r = spawnSync(
-		"git",
-		["-C", worktreePath, "rev-parse", "--path-format=absolute", "--git-common-dir"],
-		{ encoding: "utf-8" },
-	);
-	if (r.status !== 0 || !r.stdout) return null;
-	const commonDir = r.stdout.trim();
-	for (const [name, repoPath] of repoPaths) {
-		try {
-			if (realpathSync(commonDir).startsWith(realpathSync(repoPath))) return name;
-		} catch {
-			// unresolvable — no match rather than a guess
-		}
-	}
-	return null;
 }
 
 /** Write `worktrees` for the given repos. Returns the names it declared. */

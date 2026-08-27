@@ -9,6 +9,7 @@ import {
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
 import { isWorkbench, readWorkbenchRepos, repoDir } from "../../lib/worktree/repos.js";
 import { validateWorktreeConfig } from "../../lib/worktree/validate-config.js";
 import { provisionWorktreeEnv } from "./doppler.js";
@@ -215,38 +216,6 @@ export function worktreePreflight(slug: string, baseBranch?: string): never {
 
 // ---- list (TS-implemented; uses the Phase 2 validator) ----------------------
 
-function listSubdirs(workbenchRoot: string): string[] {
-	const reserved = new Set([
-		".indusk",
-		".claude",
-		".vscode",
-		".cursor",
-		"node_modules",
-		"dist",
-		"build",
-		".git",
-		".next",
-		"scripts",
-		"env",
-		// D7: the workbench-root internal-docs directory the versioned-workbench
-		// shape adopts. Absent from this set it renders as a worktree, which is
-		// how the POC's `docs/` looked before anyone noticed.
-		"docs",
-	]);
-	const entries: string[] = [];
-	for (const name of readdirSync(workbenchRoot)) {
-		if (reserved.has(name)) continue;
-		const full = join(workbenchRoot, name);
-		try {
-			const st = lstatSync(full);
-			if (st.isDirectory() || st.isSymbolicLink()) entries.push(name);
-		} catch {
-			// fall through
-		}
-	}
-	return entries.sort();
-}
-
 /**
  * `indusk worktree list` — print the workbench's current state:
  *   - wrapped repo + trunk symlink path + resolves status
@@ -254,38 +223,6 @@ function listSubdirs(workbenchRoot: string): string[] {
  *   - worktree config status badge: (config valid) / (config missing) /
  *     (config invalid: <reason>) / (no worktrees)
  */
-/**
- * Which declared repo does this worktree belong to?
- *
- * Asked of git rather than inferred from the slug: `--git-common-dir` resolves
- * to the OWNING repo's `.git`, so the answer survives any naming convention a
- * developer invents. A name-prefix heuristic would attribute `alpha-feature`
- * to `alpha` by luck and `experiment` to nothing at all — and a wrong
- * attribution reads exactly like a right one.
- *
- * Null means "could not tell", which renders as unattributed rather than being
- * quietly assigned to the first repo.
- */
-function worktreeOwner(worktreePath: string, repoPaths: Map<string, string>): string | null {
-	const r = spawnSync(
-		"git",
-		["-C", worktreePath, "rev-parse", "--path-format=absolute", "--git-common-dir"],
-		{
-			encoding: "utf-8",
-		},
-	);
-	if (r.status !== 0 || !r.stdout) return null;
-	const commonDir = r.stdout.trim();
-	for (const [name, repoPath] of repoPaths) {
-		try {
-			if (realpathSync(commonDir).startsWith(realpathSync(repoPath))) return name;
-		} catch {
-			// unresolvable path — treat as no match rather than guessing
-		}
-	}
-	return null;
-}
-
 /** Trunk symlink status for one declared repo. */
 function trunkStatusFor(trunkPath: string): string {
 	if (!existsSync(trunkPath)) {
@@ -350,7 +287,7 @@ export function worktreeList(projectRoot: string): void {
 		...repos.map((r) => repoDir(r)),
 		...repos.map((r) => r.worktrees).filter((w): w is string => typeof w === "string"),
 	]);
-	const slugs = listSubdirs(projectRoot).filter((name) => !occupied.has(name));
+	const slugs = listWorkbenchSubdirs(projectRoot).filter((name) => !occupied.has(name));
 
 	const byRepo = new Map<string, string[]>(repos.map((r) => [r.name, []]));
 	const unattributed: string[] = [];
@@ -362,7 +299,7 @@ export function worktreeList(projectRoot: string): void {
 		if (!repo.worktrees) continue;
 		const dir = join(projectRoot, repo.worktrees);
 		if (!existsSync(dir)) continue;
-		byRepo.get(repo.name)?.push(...listSubdirs(dir));
+		byRepo.get(repo.name)?.push(...listWorkbenchSubdirs(dir));
 	}
 
 	// Then whatever is loose at the root — the flat layout, and anything a
@@ -415,7 +352,7 @@ export function worktreeList(projectRoot: string): void {
 			// container is its own kind of subtraction: the reader sees a folder
 			// and cannot tell it holds work. Naming them is the difference
 			// between "not dropped" and "actually visible".
-			for (const inner of listSubdirs(join(projectRoot, slug))) {
+			for (const inner of listWorkbenchSubdirs(join(projectRoot, slug))) {
 				const owner = worktreeOwner(join(projectRoot, slug, inner), repoPaths);
 				console.info(`    ${inner}${owner ? `  (a worktree of ${owner})` : ""}`);
 			}
