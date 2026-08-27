@@ -117,7 +117,7 @@ function isSymlink(p: string): boolean {
  * a naive "create it if it does not exist" throws EEXIST on a workbench whose
  * sibling parent moved.
  */
-function isDanglingLink(p: string): boolean {
+export function isDanglingLink(p: string): boolean {
 	return isSymlink(p) && !existsSync(p);
 }
 

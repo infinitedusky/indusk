@@ -179,7 +179,7 @@ describe("doppler extension — Test Trajectory", () => {
 	// (what init/update call) enables it by default. local-telemetry is disabled
 	// here only to isolate doppler from its daemon-starting on_enable hook.
 	it.skipIf(SHOULD_SKIP)(
-		"T4: a fresh project enables doppler by default and gets no composable.env env/ tree",
+		"T4: doppler is NOT force-enabled on a project that has not configured it",
 		async () => {
 			writeFileSync(
 				join(projectDir, ".indusk/config.json"),
@@ -191,8 +191,15 @@ describe("doppler extension — Test Trajectory", () => {
 			);
 			const { autoEnableExtensions } = await import("../bin/commands/extensions.js");
 			await autoEnableExtensions(projectDir);
-			expect(existsSync(join(projectDir, ".indusk/extensions/doppler"))).toBe(true);
-			// composable.env contract tree is never scaffolded
+			// AMENDED: this row asserted doppler enabled by default, which was the
+			// decision when the plan shipped. `required: true` bypasses doppler's
+			// own `detect` rule, so it enabled on projects with no Doppler account
+			// and then hard-errored demanding a token they had no use for. A health
+			// check that is permanently red stops being read, which costs more than
+			// the check is worth. Doppler is now detect-driven; `local-telemetry`
+			// stays required because InDusk ships that daemon itself.
+			expect(existsSync(join(projectDir, ".indusk/extensions/doppler"))).toBe(false);
+			// composable.env contract tree is still never scaffolded
 			expect(existsSync(join(projectDir, "env"))).toBe(false);
 		},
 		30_000,

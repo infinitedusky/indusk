@@ -4,6 +4,14 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.38.2] — 2026-08-27
+
+### Changed
+- **Doppler is no longer required-by-default.** `required: true` bypasses an extension's own `detect` rule, so doppler enabled on every project regardless of whether it was configured — then its token check hard-errored demanding a credential the project had no use for. Its `detect` (`.indusk/extensions/doppler/.env`) already asked exactly the right question. The cost was not noise: a health check that is permanently red on every project stops being read, which is worse than not having it. `local-telemetry` remains required because InDusk ships that daemon itself; a test now pins the required set so adding to it is a deliberate edit.
+
+### Fixed
+- **`workbench restore` clears a dangling link at the clone target.** A workbench created on another machine arrives with `<repo> -> ../<repo>` pointing at a path that does not exist here. `existsSync` follows the link and reports absent, so restore decided to clone — and git refused with `File exists` for a path every check had seen as empty. Bites the nested layout specifically, where the clone target and the trunk path are the same.
+
 ## [1.38.1] — 2026-08-27
 
 ### Fixed

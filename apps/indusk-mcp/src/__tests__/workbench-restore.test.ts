@@ -5,6 +5,7 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
+	symlinkSync,
 	writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
@@ -208,5 +209,34 @@ describe.skipIf(SHOULD_SKIP)("A30 — never claim a link that was not created", 
 
 		expect(alphaLine).not.toMatch(/trunk linked/i);
 		expect(alphaLine).toMatch(/real directory|not a symlink|left as is/i);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("a dangling link at the clone target is cleared", () => {
+	it("restores a workbench whose old sibling link points nowhere", { timeout: 30_000 }, () => {
+		// The shape a workbench arrives in when it was created on another
+		// machine: `career -> ../career`, whose target does not exist here.
+		// `existsSync` FOLLOWS the link and reports false, so restore decided
+		// nothing was there and tried to clone — and git refused, because the
+		// directory entry does exist. `File exists`, for a path that appears
+		// absent to every check restore made.
+		fixture = buildTwoRepoWorkbench();
+		const wb = fixture.workbenchDir;
+		// NESTED: the clone target and the trunk path are the same path, which
+		// is what makes this bite. In the sibling layout the dangling link sits
+		// at the trunk path only, where `linkTrunk` already clears it.
+		const cfgPath = join(wb, ".indusk", "config.json");
+		const cfg = JSON.parse(readFileSync(cfgPath, "utf-8"));
+		cfg.worktree.repos_root = ".";
+		writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+		symlinkSync("../gone-on-this-machine", join(wb, "alpha"));
+		expect(existsSync(join(wb, "alpha"))).toBe(false); // follows, reports absent
+		expect(lstatSync(join(wb, "alpha")).isSymbolicLink()).toBe(true); // but it is there
+
+		const r = runCli(wb, ["workbench", "restore"]);
+
+		expect(r.code, `${r.stdout}${r.stderr}`).toBe(0);
+		expect(`${r.stdout}${r.stderr}`).not.toMatch(/File exists/);
+		expect(existsSync(join(wb, "alpha", ".git"))).toBe(true);
 	});
 });

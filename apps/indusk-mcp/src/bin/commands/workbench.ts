@@ -1,9 +1,14 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { isUsableRelPath } from "../../lib/path-segment.js";
-import { linkTrunk, listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
+import {
+	isDanglingLink,
+	linkTrunk,
+	listWorkbenchSubdirs,
+	worktreeOwner,
+} from "../../lib/worktree/layout.js";
 import {
 	isWorkbench,
 	readReposRoot,
@@ -255,6 +260,14 @@ function restoreOne(
 			},
 		};
 	}
+
+	// A dangling link occupying the clone target is the shape a workbench
+	// arrives in from another machine: `alpha -> ../alpha`, whose target does
+	// not exist here. Every check above uses existsSync, which FOLLOWS the link
+	// and reports absent — so restore decides to clone and git refuses with
+	// "File exists" for a path nothing could see. Clear it; a link pointing
+	// nowhere is not something anyone loses.
+	if (isDanglingLink(target)) rmSync(target);
 
 	mkdirSync(siblingParent, { recursive: true });
 	const { ok, stderr } = git(["clone", "--quiet", repo.remote, target], siblingParent);
