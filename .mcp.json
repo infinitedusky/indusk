@@ -19,7 +19,7 @@
     },
     "jaeger": {
       "type": "http",
-      "url": "http://localhost:62347/mcp"
+      "url": "http://localhost:63296/mcp"
     },
     "posthog": {
       "type": "http",
