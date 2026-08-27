@@ -4,6 +4,16 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.38.1] — 2026-08-27
+
+### Fixed
+- **`worktree create` worked in TypeScript and died in bash.** 1.38.0 taught the TS lane `repos_root` and left the shell scripts reading `sibling_parent` only, so a workbench using the new key failed with `missing worktree.sibling_parent` — a two-lane contract broken on one side. `_read_repos_root` is now the bash port, marked as one.
+- **Worktree provisioning ran in the wrong directory.** `worktreeDir` assumed the flat layout, so doppler provisioning and every `post_create` command ran with a cwd that did not exist on a declared layout. The worktree itself was created correctly, which is what made it look like the commands were at fault.
+- **A nested repo is no longer reported as a problem.** `repos_root: "."` puts the repo at its trunk path deliberately; restore called it a collision and `worktree list` called it "unusual for a workbench trunk".
+
+### Changed
+- **Agent conduct gains a Brevity section.** Scaffolded into every project's `AGENTS.md`: lead with the answer, no preamble or process narration, length needs a reason.
+
 ## [1.38.0] — 2026-08-27
 
 ### Added

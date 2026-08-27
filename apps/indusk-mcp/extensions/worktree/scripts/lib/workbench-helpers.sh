@@ -133,6 +133,30 @@ _read_workbench_repos() {
 # src/lib/worktree/repos.ts — bash cannot import the TS module. Keep the two in
 # step: the accepted shape of `worktrees` is a relative path inside the
 # workbench, so it may contain "/" but may never escape.
+# Where this workbench's repos live, as an absolute path.
+#
+# DELIBERATE PORT of readReposRoot() + the resolution in resolveReposRoot(),
+# src/lib/worktree/repos.ts and bin/commands/workbench.ts. bash cannot import
+# them, so the rule is written twice and must move together:
+#   repos_root, else sibling_parent, else the workbench's parent;
+#   a RELATIVE value resolves against the workbench (that is what makes a
+#   nested layout reproduce on another machine); absolute is used as given.
+_read_repos_root() {
+	local root="${WORKBENCH_ROOT:-}"
+	[[ -n "$root" ]] || { echo "Error: _read_repos_root: WORKBENCH_ROOT must be set" >&2; return 1; }
+	local declared
+	declared="$(_read_workbench_field repos_root)"
+	[[ -n "$declared" ]] || declared="$(_read_workbench_field sibling_parent)"
+	if [[ -z "$declared" ]]; then
+		cd "$root/.." && pwd
+		return 0
+	fi
+	case "$declared" in
+		/* | "~"*) _expand_path "$declared" ;;
+		*) (cd "$root" && cd "$declared" 2>/dev/null && pwd) || echo "$root/$declared" ;;
+	esac
+}
+
 _read_workbench_worktree_dirs() {
 	local root="${WORKBENCH_ROOT:-}"
 	[[ -n "$root" ]] || { echo "Error: _read_workbench_worktree_dirs: WORKBENCH_ROOT must be set" >&2; return 1; }

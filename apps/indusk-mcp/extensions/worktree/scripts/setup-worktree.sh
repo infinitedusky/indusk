@@ -60,12 +60,11 @@ export WORKBENCH_ROOT
 # workbench declares several and the caller named none.
 REPO="$(_resolve_workbench_repo "$REPO_ARG")"
 
-SIBLING_PARENT_RAW="$(_read_workbench_field sibling_parent)"
-if [[ -z "$SIBLING_PARENT_RAW" ]]; then
-	echo "Error: .indusk/config.json missing worktree.sibling_parent" >&2
+SIBLING_PARENT="$(_read_repos_root)"
+if [[ -z "$SIBLING_PARENT" ]]; then
+	echo "Error: could not resolve worktree.repos_root for this workbench" >&2
 	exit 1
 fi
-SIBLING_PARENT="$(_expand_path "$SIBLING_PARENT_RAW")"
 
 CLIENT_ROOT="$SIBLING_PARENT/$REPO"
 if [[ ! -d "$CLIENT_ROOT/.git" ]]; then

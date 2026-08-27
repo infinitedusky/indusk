@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { git, REPO_ROOT } from "./helpers/cli.js";
+import { CLI_BIN, git, REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
 /**
  * `pnpm wt <slug>` must find worktrees in DECLARED locations.
@@ -97,5 +97,45 @@ describe.skipIf(!existsSync(WT))("wt.sh finds worktrees in declared locations", 
 		expect(r.code, r.out).toBe(0);
 		expect(r.out).toContain(join("beta-worktrees", "cool-name"));
 		expect(r.out).not.toContain(join("alpha-worktrees", "cool-name"));
+	});
+});
+
+describe.skipIf(SHOULD_SKIP || !existsSync(CLI_BIN))("the bash lane honors repos_root", () => {
+	it("creates a worktree in the declared directory, provisioning in the right cwd", {
+		timeout: 90_000,
+	}, () => {
+		// The TS lane learned `repos_root` and the shell scripts did not, so
+		// `worktree create` died on "missing worktree.sibling_parent" — a
+		// two-lane contract broken on one side. `worktreeDir` was flat too, so
+		// post_create ran in a directory that did not exist.
+		root = mkdtempSync(join(tmpdir(), "bash-repos-root-"));
+		const wb = join(root, "wb");
+		mkdirSync(join(wb, ".indusk", "worktree-configs"), { recursive: true });
+		writeFileSync(
+			join(wb, ".indusk", "config.json"),
+			JSON.stringify({
+				mode: "local",
+				worktree: {
+					shape: "workbench",
+					repos_root: ".",
+					repos: [{ name: "alpha", worktrees: "alpha-worktrees" }],
+				},
+			}),
+		);
+		writeFileSync(
+			join(wb, ".indusk", "worktree-configs", "alpha.json"),
+			JSON.stringify({ trunk_branch: "main", base_branch: "main", post_create: [] }),
+		);
+		const repo = join(wb, "alpha");
+		mkdirSync(repo, { recursive: true });
+		git(repo, ["init", "-q", "-b", "main"]);
+		writeFileSync(join(repo, "README.md"), "# alpha\n");
+		git(repo, ["add", "-A"]);
+		git(repo, ["commit", "-qm", "init"]);
+
+		const r = runCli(wb, ["worktree", "create", "feat-x"]);
+		expect(r.code, `${r.stdout}${r.stderr}`).toBe(0);
+		expect(existsSync(join(wb, "alpha-worktrees", "feat-x")), "declared location").toBe(true);
+		expect(existsSync(join(wb, "feat-x")), "must not land at the root").toBe(false);
 	});
 });

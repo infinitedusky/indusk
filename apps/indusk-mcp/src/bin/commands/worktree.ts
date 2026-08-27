@@ -179,7 +179,18 @@ function worktreeCreateResolved(slug: string, baseBranch?: string, repo?: string
 		try {
 			const workbenchRoot = resolveWorkbenchRoot(process.cwd());
 			if (workbenchRoot) {
-				const worktreeDir = join(workbenchRoot, slug);
+				// The worktree is where the repo DECLARED it goes, not always the
+				// workbench root. This is not just the message below: it is the
+				// cwd for doppler provisioning and every post_create command, so
+				// a flat assumption ran them in a directory that does not exist —
+				// which is why `pnpm install` failed on a declared layout with a
+				// worktree that had been created perfectly well.
+				const declaredDir = readWorkbenchRepos(workbenchRoot).find(
+					(r) => r.name === repo,
+				)?.worktrees;
+				const worktreeDir = declaredDir
+					? join(workbenchRoot, declaredDir, slug)
+					: join(workbenchRoot, slug);
 				if (provisionWorktreeEnv(workbenchRoot, worktreeDir)) {
 					console.info(`  doppler: auto-provisioned env for ${slug}`);
 				}

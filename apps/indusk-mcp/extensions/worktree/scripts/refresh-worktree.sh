@@ -35,8 +35,7 @@ export WORKBENCH_ROOT
 
 REPO="$(_resolve_workbench_repo "${REPO_ARG:-}")"
 
-SIBLING_PARENT_RAW="$(_read_workbench_field sibling_parent)"
-SIBLING_PARENT="$(_expand_path "$SIBLING_PARENT_RAW")"
+SIBLING_PARENT="$(_read_repos_root)"
 CLIENT_ROOT="$SIBLING_PARENT/$REPO"
 
 CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${REPO}.json"
