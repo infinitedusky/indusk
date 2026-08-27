@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.37.0] — 2026-08-27
+
 ### Added — versioned workbench
 
 - **Workbenches wrap multiple repos.** `worktree.repos[]` in `.indusk/config.json`; the legacy `wrapped_repo` reduces to a one-element list, so existing workbenches need no edit. `indusk worktree create [repo] <slug>` takes the repo argument again, optional when only one is declared.

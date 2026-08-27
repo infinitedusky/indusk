@@ -1,111 +1,111 @@
 {
-	"name": "@infinitedusky/indusk-mcp",
-	"version": "1.36.3",
-	"description": "InDusk development system — skills, MCP tools, and CLI for structured AI-assisted development",
-	"type": "module",
-	"files": [
-		"dist",
-		"skills",
-		"templates",
-		"hooks",
-		"lessons",
-		"extensions",
-		"admin",
-		"scripts/bundle-admin.js",
-		"!dist/**/*.test.*",
-		"!dist/__tests__"
-	],
-	"bin": {
-		"indusk": "dist/bin/cli.js",
-		"dev-system": "dist/bin/cli.js",
-		"atdawn": "dist/bin/cli.js"
-	},
-	"exports": {
-		".": "./dist/server/index.js",
-		"./trajectory/parser": {
-			"types": "./dist/lib/trajectory/parser.d.ts",
-			"default": "./dist/lib/trajectory/parser.js"
-		},
-		"./falsification/log": {
-			"types": "./dist/lib/falsification/log.d.ts",
-			"default": "./dist/lib/falsification/log.js"
-		},
-		"./cleanup/oversized": {
-			"types": "./dist/lib/cleanup/oversized.d.ts",
-			"default": "./dist/lib/cleanup/oversized.js"
-		},
-		"./cleanup/gate": {
-			"types": "./dist/lib/cleanup/gate.d.ts",
-			"default": "./dist/lib/cleanup/gate.js"
-		},
-		"./worktree/validate-config": {
-			"types": "./dist/lib/worktree/validate-config.d.ts",
-			"default": "./dist/lib/worktree/validate-config.js"
-		},
-		"./planning/plan-parser": {
-			"types": "./dist/lib/plan-parser.d.ts",
-			"default": "./dist/lib/plan-parser.js"
-		},
-		"./shape/shape": {
-			"types": "./dist/lib/shape/shape.d.ts",
-			"default": "./dist/lib/shape/shape.js"
-		},
-		"./shape/boundary": {
-			"types": "./dist/lib/shape/boundary.d.ts",
-			"default": "./dist/lib/shape/boundary.js"
-		},
-		"./shape/findings": {
-			"types": "./dist/lib/shape/findings.d.ts",
-			"default": "./dist/lib/shape/findings.js"
-		},
-		"./shape/rules": {
-			"types": "./dist/lib/shape/rules.d.ts",
-			"default": "./dist/lib/shape/rules.js"
-		}
-	},
-	"scripts": {
-		"dev": "tsx watch src/server/index.ts",
-		"build": "tsc",
-		"start": "node dist/server/index.js",
-		"test": "vitest run",
-		"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js"
-	},
-	"dependencies": {
-		"@ai-sdk/anthropic": "4.0.21",
-		"@ai-sdk/google": "4.0.24",
-		"@modelcontextprotocol/sdk": "^1.12.1",
-		"@opentelemetry/api": "^1.9.0",
-		"@opentelemetry/api-logs": "^0.214.0",
-		"@opentelemetry/exporter-logs-otlp-http": "^0.214.0",
-		"@opentelemetry/exporter-trace-otlp-http": "^0.214.0",
-		"@opentelemetry/resources": "^2.6.0",
-		"@opentelemetry/sdk-logs": "^0.214.0",
-		"@opentelemetry/sdk-trace-base": "^2.6.0",
-		"@opentelemetry/sdk-trace-node": "^2.6.0",
-		"@opentelemetry/semantic-conventions": "^1.40.0",
-		"ai": "7.0.37",
-		"ajv": "^8.20.0",
-		"commander": "^13.0.0",
-		"falkordb": "^6.6.2",
-		"glob": "^11.0.0",
-		"gray-matter": "^4.0.3",
-		"lucide-react": "^1.8.0",
-		"next": "16.2.4",
-		"react": "19.2.4",
-		"react-dom": "19.2.4",
-		"react-markdown": "^10.1.0",
-		"remark-gfm": "^4.0.1",
-		"zod": "^4.3.6"
-	},
-	"optionalDependencies": {
-		"@infinitedusky/telemetry-binaries-darwin-arm64": "^1.28.0",
-		"@infinitedusky/telemetry-binaries-darwin-x64": "^1.28.0",
-		"@infinitedusky/telemetry-binaries-linux-arm64": "^1.28.0",
-		"@infinitedusky/telemetry-binaries-linux-x64": "^1.28.0"
-	},
-	"devDependencies": {
-		"@types/node": "^22.0.0",
-		"tsx": "^4.19.0",
-		"typescript": "^5.7.0"
-	}
+  "name": "@infinitedusky/indusk-mcp",
+  "version": "1.37.0",
+  "description": "InDusk development system \u2014 skills, MCP tools, and CLI for structured AI-assisted development",
+  "type": "module",
+  "files": [
+    "dist",
+    "skills",
+    "templates",
+    "hooks",
+    "lessons",
+    "extensions",
+    "admin",
+    "scripts/bundle-admin.js",
+    "!dist/**/*.test.*",
+    "!dist/__tests__"
+  ],
+  "bin": {
+    "indusk": "dist/bin/cli.js",
+    "dev-system": "dist/bin/cli.js",
+    "atdawn": "dist/bin/cli.js"
+  },
+  "exports": {
+    ".": "./dist/server/index.js",
+    "./trajectory/parser": {
+      "types": "./dist/lib/trajectory/parser.d.ts",
+      "default": "./dist/lib/trajectory/parser.js"
+    },
+    "./falsification/log": {
+      "types": "./dist/lib/falsification/log.d.ts",
+      "default": "./dist/lib/falsification/log.js"
+    },
+    "./cleanup/oversized": {
+      "types": "./dist/lib/cleanup/oversized.d.ts",
+      "default": "./dist/lib/cleanup/oversized.js"
+    },
+    "./cleanup/gate": {
+      "types": "./dist/lib/cleanup/gate.d.ts",
+      "default": "./dist/lib/cleanup/gate.js"
+    },
+    "./worktree/validate-config": {
+      "types": "./dist/lib/worktree/validate-config.d.ts",
+      "default": "./dist/lib/worktree/validate-config.js"
+    },
+    "./planning/plan-parser": {
+      "types": "./dist/lib/plan-parser.d.ts",
+      "default": "./dist/lib/plan-parser.js"
+    },
+    "./shape/shape": {
+      "types": "./dist/lib/shape/shape.d.ts",
+      "default": "./dist/lib/shape/shape.js"
+    },
+    "./shape/boundary": {
+      "types": "./dist/lib/shape/boundary.d.ts",
+      "default": "./dist/lib/shape/boundary.js"
+    },
+    "./shape/findings": {
+      "types": "./dist/lib/shape/findings.d.ts",
+      "default": "./dist/lib/shape/findings.js"
+    },
+    "./shape/rules": {
+      "types": "./dist/lib/shape/rules.d.ts",
+      "default": "./dist/lib/shape/rules.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsx watch src/server/index.ts",
+    "build": "tsc",
+    "start": "node dist/server/index.js",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "4.0.21",
+    "@ai-sdk/google": "4.0.24",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api-logs": "^0.214.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.214.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.214.0",
+    "@opentelemetry/resources": "^2.6.0",
+    "@opentelemetry/sdk-logs": "^0.214.0",
+    "@opentelemetry/sdk-trace-base": "^2.6.0",
+    "@opentelemetry/sdk-trace-node": "^2.6.0",
+    "@opentelemetry/semantic-conventions": "^1.40.0",
+    "ai": "7.0.37",
+    "ajv": "^8.20.0",
+    "commander": "^13.0.0",
+    "falkordb": "^6.6.2",
+    "glob": "^11.0.0",
+    "gray-matter": "^4.0.3",
+    "lucide-react": "^1.8.0",
+    "next": "16.2.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "zod": "^4.3.6"
+  },
+  "optionalDependencies": {
+    "@infinitedusky/telemetry-binaries-darwin-arm64": "^1.28.0",
+    "@infinitedusky/telemetry-binaries-darwin-x64": "^1.28.0",
+    "@infinitedusky/telemetry-binaries-linux-arm64": "^1.28.0",
+    "@infinitedusky/telemetry-binaries-linux-x64": "^1.28.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
 }
