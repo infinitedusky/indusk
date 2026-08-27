@@ -1,18 +1,7 @@
 import { spawnSync } from "node:child_process";
-import {
-	existsSync,
-	lstatSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	readlinkSync,
-	realpathSync,
-	rmSync,
-	symlinkSync,
-	writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, relative, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { linkTrunk, listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
 import {
 	isWorkbench,

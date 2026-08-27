@@ -1,6 +1,5 @@
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";

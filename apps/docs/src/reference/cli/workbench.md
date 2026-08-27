@@ -26,6 +26,18 @@ closes that gap:
    workbench stays portable.
 4. Prints the out-of-band set it cannot supply.
 
+### Trunk links: created, repaired, or refused
+
+Three outcomes, and every command that makes a trunk link gives the same three
+— `restore`, and `indusk init --workbench`, which routes through the same
+function rather than keeping its own simpler version:
+
+| On disk | What happens |
+|---|---|
+| Nothing there | The symlink is created, with a relative target. |
+| A symlink, wrong or **dangling** | Replaced. A dangling link's target no longer exists, so `existsSync` follows it and reports *false* — a naive "create it if it is not there" throws `EEXIST` on exactly the workbench whose sibling parent moved. |
+| A **real directory** | Left alone, and reported as left alone. It is not ours to remove, and describing it as linked would be a claim about something that never happened. |
+
 ### Flags
 
 | Flag | Effect |

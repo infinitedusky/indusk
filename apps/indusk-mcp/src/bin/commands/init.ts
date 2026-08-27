@@ -1,5 +1,5 @@
 import { execSync, spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";

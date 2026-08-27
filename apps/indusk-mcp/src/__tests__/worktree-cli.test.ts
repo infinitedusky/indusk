@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { buildWorktreeFixture, type WorktreeFixture } from "./helpers/worktree-fixture.js";

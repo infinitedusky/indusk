@@ -101,8 +101,8 @@ export function worktreeOwner(worktreePath: string, repoPaths: Map<string, strin
 	return null;
 }
 
-/** Whether `p` is a symlink, dangling or not. */
-export function isSymlink(p: string): boolean {
+/** Whether `p` is a symlink, dangling or not. Private: `linkTrunk` is the surface. */
+function isSymlink(p: string): boolean {
 	try {
 		return lstatSync(p).isSymbolicLink();
 	} catch {
@@ -117,7 +117,7 @@ export function isSymlink(p: string): boolean {
  * a naive "create it if it does not exist" throws EEXIST on a workbench whose
  * sibling parent moved.
  */
-export function isDanglingLink(p: string): boolean {
+function isDanglingLink(p: string): boolean {
 	return isSymlink(p) && !existsSync(p);
 }
 
