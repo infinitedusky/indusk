@@ -1,7 +1,14 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
+import {
+	isWorkbench,
+	NOT_A_WORKBENCH,
+	readWorkbenchRepos,
+	repoDir,
+} from "../../lib/worktree/repos.js";
 import { validateWorktreeConfig } from "../../lib/worktree/validate-config.js";
 import { provisionWorktreeEnv } from "./doppler.js";
 
@@ -94,14 +101,47 @@ function runWorktreeScript(scriptName: string, args: string[]): never {
 	process.exit(r.status ?? 1);
 }
 
-export function worktreeCreate(slug: string, baseBranch?: string): never {
+/**
+ * `indusk worktree create [repo] <slug> [base-branch]`.
+ *
+ * The repo argument returns from the pre-v1 multi-repo design. Disambiguated
+ * against the DECLARED SET rather than by arity: a leading token is a repo
+ * only if the workbench actually declares it, so `create my-feature` in a
+ * one-repo workbench still means what it always meant, and `create alpha
+ * my-feature` means alpha. Guessing by position would silently reinterpret
+ * every existing single-repo invocation whose slug happened to arrive first.
+ *
+ * When the repo cannot be determined here the args pass through untouched and
+ * `_resolve_workbench_repo` in the shell refuses, naming the candidates —
+ * one refusal, in one place, rather than two that can disagree.
+ */
+export function worktreeCreate(args: string[], projectRoot?: string): never {
+	const declared = new Set(readWorkbenchRepos(projectRoot ?? process.cwd()).map((r) => r.name));
+	const named = args.length >= 2 && declared.has(args[0]);
+	const repo = named ? args[0] : undefined;
+	const [slug, baseBranch] = named ? args.slice(1) : args;
+	return worktreeCreateResolved(slug, baseBranch, repo);
+}
+
+function worktreeCreateResolved(slug: string, baseBranch?: string, repo?: string): never {
 	const pkgRoot = indusKMcpPackageRoot();
 	const script = resolve(pkgRoot, "extensions/worktree/scripts/setup-worktree.sh");
 	if (!existsSync(script)) {
 		console.error(`Error: setup-worktree.sh not found at ${script}`);
 		process.exit(1);
 	}
-	const r = spawnSync("bash", [script, ...(baseBranch ? [slug, baseBranch] : [slug])], {
+	// The shell script places the worktree; tell it where when a location is
+	// declared. Absent, it keeps putting worktrees at the workbench root.
+	const declared = repo
+		? readWorkbenchRepos(process.cwd()).find((r) => r.name === repo)
+		: undefined;
+	const scriptArgs = [
+		...(declared?.worktrees ? ["--worktrees-dir", declared.worktrees] : []),
+		...(repo ? ["--repo", repo] : []),
+		slug,
+		...(baseBranch ? [baseBranch] : []),
+	];
+	const r = spawnSync("bash", [script, ...scriptArgs], {
 		cwd: process.cwd(),
 		stdio: "inherit",
 	});
@@ -138,7 +178,7 @@ export function worktreeCreate(slug: string, baseBranch?: string): never {
 
 /** Read `post_create` commands from the workbench's worktree config — run in each new worktree after create. */
 function readPostCreate(workbenchRoot: string): string[] {
-	const repo = readWorkbenchConfig(workbenchRoot)?.worktree?.wrapped_repo;
+	const repo = readWorkbenchRepos(workbenchRoot)[0]?.name;
 	if (!repo) return [];
 	const p = join(workbenchRoot, ".indusk", "worktree-configs", `${repo}.json`);
 	if (!existsSync(p)) return [];
@@ -156,7 +196,7 @@ function readPostCreate(workbenchRoot: string): string[] {
 function resolveWorkbenchRoot(start: string): string | null {
 	let dir = resolve(start);
 	for (let i = 0; i < 40; i++) {
-		if (readWorkbenchConfig(dir)?.worktree?.shape === "workbench") return dir;
+		if (isWorkbench(dir)) return dir;
 		const parent = dirname(dir);
 		if (parent === dir) break;
 		dir = parent;
@@ -174,52 +214,6 @@ export function worktreePreflight(slug: string, baseBranch?: string): never {
 
 // ---- list (TS-implemented; uses the Phase 2 validator) ----------------------
 
-interface WorkbenchConfig {
-	worktree?: {
-		shape?: string;
-		wrapped_repo?: string;
-		sibling_parent?: string;
-	};
-}
-
-function readWorkbenchConfig(workbenchRoot: string): WorkbenchConfig | null {
-	const cfg = join(workbenchRoot, ".indusk", "config.json");
-	if (!existsSync(cfg)) return null;
-	try {
-		return JSON.parse(readFileSync(cfg, "utf-8")) as WorkbenchConfig;
-	} catch {
-		return null;
-	}
-}
-
-function listSubdirs(workbenchRoot: string): string[] {
-	const reserved = new Set([
-		".indusk",
-		".claude",
-		".vscode",
-		".cursor",
-		"node_modules",
-		"dist",
-		"build",
-		".git",
-		".next",
-		"scripts",
-		"env",
-	]);
-	const entries: string[] = [];
-	for (const name of readdirSync(workbenchRoot)) {
-		if (reserved.has(name)) continue;
-		const full = join(workbenchRoot, name);
-		try {
-			const st = lstatSync(full);
-			if (st.isDirectory() || st.isSymbolicLink()) entries.push(name);
-		} catch {
-			// fall through
-		}
-	}
-	return entries.sort();
-}
-
 /**
  * `indusk worktree list` — print the workbench's current state:
  *   - wrapped repo + trunk symlink path + resolves status
@@ -227,80 +221,137 @@ function listSubdirs(workbenchRoot: string): string[] {
  *   - worktree config status badge: (config valid) / (config missing) /
  *     (config invalid: <reason>) / (no worktrees)
  */
-export function worktreeList(projectRoot: string): void {
-	const config = readWorkbenchConfig(projectRoot);
-	const wrappedRepo = config?.worktree?.wrapped_repo;
-	const shape = config?.worktree?.shape;
+/** Trunk symlink status for one declared repo. */
+function trunkStatusFor(trunkPath: string): string {
+	if (!existsSync(trunkPath)) {
+		return "missing — run `indusk workbench restore` to materialize it";
+	}
+	try {
+		const st = lstatSync(trunkPath);
+		if (!st.isSymbolicLink()) return "directory (not a symlink — unusual for a workbench trunk)";
+		const target = readlinkSync(trunkPath);
+		return existsSync(trunkPath)
+			? `→ ${target} (resolves)`
+			: `symlink broken (target ${target} not found)`;
+	} catch (err) {
+		return `error: ${(err as Error).message}`;
+	}
+}
 
-	if (shape !== "workbench" || !wrappedRepo) {
-		console.error(
-			'Error: this project is not a workbench (set worktree.shape="workbench" and worktree.wrapped_repo in .indusk/config.json, or run `indusk init --workbench`).',
-		);
+/** Per-repo worktree config badge. */
+function configStatusFor(projectRoot: string, repo: string): { path: string; status: string } {
+	const configPath = join(projectRoot, ".indusk", "worktree-configs", `${repo}.json`);
+	if (!existsSync(configPath)) return { path: configPath, status: "(config missing)" };
+	try {
+		const result = validateWorktreeConfig(JSON.parse(readFileSync(configPath, "utf-8")));
+		if (result.valid) return { path: configPath, status: "(config valid)" };
+		const first = result.errors[0];
+		return {
+			path: configPath,
+			status: first ? `(config invalid: ${first.field} — ${first.message})` : "(config invalid)",
+		};
+	} catch (err) {
+		return {
+			path: configPath,
+			status: `(config invalid: parse error — ${(err as Error).message})`,
+		};
+	}
+}
+
+/**
+ * `indusk worktree list` — the workbench's current state, one block per
+ * declared repo.
+ *
+ * N repos rather than one wrapped repo: each declared repo gets its own trunk
+ * line, its own config badge, and its own worktrees. Attribution matters more
+ * than layout here — a reader has to be able to tell "beta has no worktrees"
+ * from "beta's worktrees are listed under alpha".
+ */
+export function worktreeList(projectRoot: string): void {
+	const repos = readWorkbenchRepos(projectRoot);
+
+	if (!isWorkbench(projectRoot) || repos.length === 0) {
+		console.error(`Error: ${NOT_A_WORKBENCH}`);
 		process.exit(1);
 	}
 
-	// Trunk: symlink at workbench/<wrapped_repo>
-	const trunkPath = join(projectRoot, wrappedRepo);
-	let trunkStatus = "";
-	let trunkTarget = "";
-	if (!existsSync(trunkPath)) {
-		trunkStatus = "missing — run `indusk init --workbench` to create it";
-	} else {
-		try {
-			const st = lstatSync(trunkPath);
-			if (st.isSymbolicLink()) {
-				trunkTarget = readlinkSync(trunkPath);
-				// Resolve to verify the target exists.
-				if (!existsSync(trunkPath)) {
-					trunkStatus = `symlink broken (target ${trunkTarget} not found)`;
-				} else {
-					trunkStatus = `→ ${trunkTarget} (resolves)`;
-				}
-			} else {
-				trunkStatus = "directory (not a symlink — unusual for a workbench trunk)";
-			}
-		} catch (err) {
-			trunkStatus = `error: ${(err as Error).message}`;
-		}
+	// Trunks are found at their DECLARED path; `name` is an identifier, not a
+	// location. A repo whose directory was renamed still resolves, because
+	// nothing here derives a path from a name.
+	const repoPaths = new Map(repos.map((r) => [r.name, join(projectRoot, repoDir(r))]));
+	const occupied = new Set([
+		...repos.map((r) => repoDir(r)),
+		...repos.map((r) => r.worktrees).filter((w): w is string => typeof w === "string"),
+	]);
+	const slugs = listWorkbenchSubdirs(projectRoot).filter((name) => !occupied.has(name));
+
+	const byRepo = new Map<string, string[]>(repos.map((r) => [r.name, []]));
+	const unattributed: string[] = [];
+
+	// STRUCTURAL first: a repo that declares a worktrees directory owns what is
+	// inside it, by construction. No git call, no inference — the containing
+	// directory IS the answer, which is the whole point of declaring it.
+	for (const repo of repos) {
+		if (!repo.worktrees) continue;
+		const dir = join(projectRoot, repo.worktrees);
+		if (!existsSync(dir)) continue;
+		byRepo.get(repo.name)?.push(...listWorkbenchSubdirs(dir));
 	}
 
-	// Per-repo config: .indusk/worktree-configs/<wrapped_repo>.json
-	const configPath = join(projectRoot, ".indusk", "worktree-configs", `${wrappedRepo}.json`);
-	let configStatus = "";
-	if (!existsSync(configPath)) {
-		configStatus = "(config missing)";
-	} else {
-		try {
-			const raw = JSON.parse(readFileSync(configPath, "utf-8"));
-			const result = validateWorktreeConfig(raw);
-			if (result.valid) {
-				configStatus = "(config valid)";
-			} else {
-				const firstErr = result.errors[0];
-				configStatus = firstErr
-					? `(config invalid: ${firstErr.field} — ${firstErr.message})`
-					: "(config invalid)";
-			}
-		} catch (err) {
-			configStatus = `(config invalid: parse error — ${(err as Error).message})`;
-		}
+	// Then whatever is loose at the root — the flat layout, and anything a
+	// declaration does not place. Attribution falls back to asking git.
+	//
+	// Discovery stays on DISK. Declarations add structure and can never
+	// subtract: a directory renamed without updating config must still appear,
+	// as unattributed, rather than vanish from the listing. A declaration that
+	// silently removes work is worse than one that admits it cannot place it.
+	for (const slug of slugs) {
+		const owner = worktreeOwner(join(projectRoot, slug), repoPaths);
+		if (owner) byRepo.get(owner)?.push(slug);
+		else unattributed.push(slug);
 	}
-
-	// Worktrees: subdirs at workbench root excluding the trunk + reserved.
-	const allSubdirs = listSubdirs(projectRoot);
-	const worktreeSlugs = allSubdirs.filter((name) => name !== wrappedRepo);
 
 	console.info(`Workbench:    ${projectRoot}`);
-	console.info(`Wrapped repo: ${wrappedRepo}`);
-	console.info(`Trunk:        ${wrappedRepo} ${trunkStatus}`);
-	console.info(`Config:       ${configPath} ${configStatus}`);
-	console.info("");
-	if (worktreeSlugs.length === 0) {
-		console.info("Worktrees:    (no worktrees) — `indusk worktree create <slug>` to add one");
-	} else {
-		console.info(`Worktrees (${worktreeSlugs.length}):`);
-		for (const slug of worktreeSlugs) {
+	console.info(`Repos (${repos.length}): ${repos.map((r) => r.name).join(", ")}`);
+
+	for (const repo of repos) {
+		const cfg = configStatusFor(projectRoot, repo.name);
+		const mine = byRepo.get(repo.name) ?? [];
+		console.info("");
+		console.info(`${repo.name}`);
+		console.info(
+			`  Trunk:      ${repoDir(repo)} ${trunkStatusFor(join(projectRoot, repoDir(repo)))}`,
+		);
+		console.info(
+			`  Remote:     ${repo.remote ?? "(none declared — `workbench restore` cannot clone it)"}`,
+		);
+		console.info(`  Config:     ${cfg.path} ${cfg.status}`);
+		if (mine.length === 0) {
+			console.info(
+				`  Worktrees:  (none) — \`indusk worktree create ${repo.name} <slug>\` to add one`,
+			);
+		} else {
+			console.info(`  Worktrees (${mine.length}):`);
+			for (const slug of mine) console.info(`    ${slug}`);
+		}
+	}
+
+	if (unattributed.length > 0) {
+		console.info("");
+		console.info(
+			`Unattributed (${unattributed.length}) — present on disk, but not inside any declared worktrees location and not resolvable to a declared repo:`,
+		);
+		for (const slug of unattributed) {
 			console.info(`  ${slug}`);
+			// Name what is INSIDE it, one level down. A renamed worktrees
+			// directory is the common way to land here, and reporting only the
+			// container is its own kind of subtraction: the reader sees a folder
+			// and cannot tell it holds work. Naming them is the difference
+			// between "not dropped" and "actually visible".
+			for (const inner of listWorkbenchSubdirs(join(projectRoot, slug))) {
+				const owner = worktreeOwner(join(projectRoot, slug, inner), repoPaths);
+				console.info(`    ${inner}${owner ? `  (a worktree of ${owner})` : ""}`);
+			}
 		}
 	}
 }

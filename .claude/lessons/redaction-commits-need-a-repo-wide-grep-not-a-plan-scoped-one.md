@@ -1,0 +1,14 @@
+# A commit removing client/private identity from a public repo must grep the whole tree for the sensitive term, not just the plan folder it's editing — and its "not touched" list must be the full grep result, not a partial recollection
+
+Commit 9bab32c0 ("remove client identity from a public repo") correctly removed a client engagement's private repo URLs (`git@github-avoca:...`), the engagement name, and a personal home-directory path from `versioned-workbench`'s own plan docs (adr.md, brief.md, impl.md, test-plan.md) — verified: zero remaining "avoca" mentions anywhere under `.indusk/planning/versioned-workbench/`.
+
+But the commit's own reasoning is a general privacy principle ("recording a finding by citing the instance... put someone else's private repos in a public place"), and by that same principle, the client engagement name is still present dozens of times across files this commit did not touch: `.indusk/planning/indusk-worktree-extension/{brief,research,adr,test-plan,impl}.md` (the single largest concentration — literal repo names, business-context detail like specific CI check names, org structure), `.indusk/planning/indusk-v2-dawn/archive/*.md`, `apps/docs/src/dawn/{who,decisions}.md`, `apps/docs/src/decisions/git-or-jj-substrate.md`, and `apps/indusk-mcp/extensions/worktree/skill.md`. The commit message names only 3 of these as "NOT touched, worth a separate decision" (git-or-jj-substrate.md, dawn/who.md, dawn/decisions.md) — a materially incomplete list that omits the largest exposure (`indusk-worktree-extension/`) entirely.
+
+## Why
+
+A privacy/redaction fix is exactly the case where partial completeness reads as false safety: the commit message states a clear, credible-sounding principle and names a short "not yet done" list, which invites the reader (a future agent, a reviewer, the plan's own retrospective) to trust that the scope has been fully accounted for. Grep evidence shows it was not — the actual remaining surface is roughly 10x larger than what was flagged, in a repo confirmed `PUBLIC` by the same commit's own opening line.
+
+## How to apply
+
+Before committing a fix that removes a sensitive identifier from "the docs it appears in," run the search across the WHOLE repository (`grep -rn "<term>" --include="*.md" .` from the repo root, not scoped to the plan folder being edited) and either fix every hit or enumerate literally every remaining file in the commit message — not a representative sample. If the list is too long to fix in one commit, say so explicitly ("N files still contain X, not addressed here") rather than naming 3 examples that implies the search was exhaustive when it was not. This complements [[scripted-census-over-manual-survey-for-fan-out-counts]] — a privacy sweep is exactly the kind of fan-out count a manual survey undercounts.
+

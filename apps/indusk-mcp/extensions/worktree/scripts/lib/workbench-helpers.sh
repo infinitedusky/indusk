@@ -15,6 +15,23 @@
 #       Caller is responsible for calling _resolve_workbench_root first
 #       and cd'ing or passing the path explicitly via WORKBENCH_ROOT env.
 #
+#   _read_workbench_repos
+#       Echoes the declared repo names, one per line, in declared order.
+#       DELIBERATE PORT of readWorkbenchRepos() in
+#       src/lib/worktree/repos.ts — bash cannot import the TS module, so
+#       the reduction lives in two places and they change together.
+#       `worktree.repos[]` is canonical; the legacy `worktree.wrapped_repo`
+#       reduces to a one-element list. Names that are not clean path
+#       segments are dropped and duplicates collapse to first occurrence,
+#       because every caller joins these into a filesystem path.
+#
+#   _resolve_workbench_repo [requested]
+#       Echoes the one repo the caller means. With `requested` it must
+#       match a declared repo. Without it, a single declared repo is
+#       implied; with several, this FAILS and names the candidates on
+#       stderr rather than picking one — putting a worktree in the wrong
+#       repo looks exactly like success until someone reads the branch.
+#
 #   _read_worktree_config <repo> <jq-filter>
 #       Reads a value from .indusk/worktree-configs/<repo>.json using the
 #       provided jq filter. Echoes the value or empty string if config
@@ -76,6 +93,73 @@ _read_workbench_field() {
 		return 1
 	fi
 	jq -r ".worktree.${field} // \"\"" "$config" 2>/dev/null || echo ""
+}
+
+_read_workbench_repos() {
+	local root="${WORKBENCH_ROOT:-}"
+	if [[ -z "$root" ]]; then
+		echo "Error: _read_workbench_repos: WORKBENCH_ROOT must be set" >&2
+		return 1
+	fi
+	local config="$root/.indusk/config.json"
+	if [[ ! -f "$config" ]]; then
+		echo "Error: _read_workbench_repos: $config not found" >&2
+		return 1
+	fi
+	# The reduction, in jq. `unique` is deliberately NOT used: it sorts, and
+	# declared order is meaningful (the first repo is the implied one at N=1).
+	jq -r '
+		(.worktree // {}) as $w
+		| (
+			if ($w.repos | type) == "array" then $w.repos
+			elif ($w.wrapped_repo | type) == "string" then [{ name: $w.wrapped_repo }]
+			else []
+			end
+		)
+		| map(select(type == "object"))
+		| map(.name)
+		| map(select(type == "string"))
+		| map(select(. != "" and . != "." and . != ".." and (contains("/") | not) and (contains("\\") | not)))
+		| reduce .[] as $n ([]; if (index($n) == null) then . + [$n] else . end)
+		| .[]
+	' "$config" 2>/dev/null || echo ""
+}
+
+_resolve_workbench_repo() {
+	local requested="${1:-}"
+	local repos=()
+	while IFS= read -r line; do
+		[[ -n "$line" ]] && repos+=("$line")
+	done < <(_read_workbench_repos)
+
+	if [[ ${#repos[@]} -eq 0 ]]; then
+		echo "Error: this project is not a workbench (set worktree.shape=\"workbench\" and worktree.repos[] in .indusk/config.json, or run \`indusk init --workbench\`)." >&2
+		return 1
+	fi
+
+	local joined
+	joined="$(printf '%s, ' "${repos[@]}")"
+	joined="${joined%, }"
+
+	if [[ -n "$requested" ]]; then
+		local r
+		for r in "${repos[@]}"; do
+			if [[ "$r" == "$requested" ]]; then
+				echo "$r"
+				return 0
+			fi
+		done
+		echo "Error: no declared repo named \"$requested\". This workbench declares: ${joined}." >&2
+		return 1
+	fi
+
+	if [[ ${#repos[@]} -eq 1 ]]; then
+		echo "${repos[0]}"
+		return 0
+	fi
+
+	echo "Error: this workbench declares more than one repo, so the repo must be named: ${joined}." >&2
+	return 1
 }
 
 _read_worktree_config() {

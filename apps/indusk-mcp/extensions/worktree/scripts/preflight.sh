@@ -53,20 +53,16 @@ fi
 WORKBENCH_ROOT="$(_resolve_workbench_root)"
 export WORKBENCH_ROOT
 
-WRAPPED_REPO="$(_read_workbench_field wrapped_repo)"
-if [[ -z "$WRAPPED_REPO" ]]; then
-	echo "Error: .indusk/config.json missing worktree.wrapped_repo" >&2
-	exit 1
-fi
+REPO="$(_resolve_workbench_repo "${REPO_ARG:-}")"
 
-CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${WRAPPED_REPO}.json"
+CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${REPO}.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
 	echo "Error: no worktree config at $CONFIG_FILE" >&2
 	exit 1
 fi
 
 # Reject preflighting the trunk — preflight is a feature-branch concept.
-if [[ "$SLUG" == "$WRAPPED_REPO" ]]; then
+if [[ "$SLUG" == "$REPO" ]]; then
 	echo "Error: preflight cannot target the trunk; pick a worktree slug" >&2
 	exit 1
 fi
@@ -86,7 +82,7 @@ for entry in "$WORKBENCH_ROOT"/*; do
 	name="$(basename "$entry")"
 	_is_reserved_name "$name" && continue
 	# Skip the trunk symlink — preflight is for feature worktrees.
-	[[ "$name" == "$WRAPPED_REPO" ]] && continue
+	[[ "$name" == "$REPO" ]] && continue
 	if [[ "$name" == "$SLUG" ]]; then
 		exact_paths+=("$entry")
 	elif [[ "$name" == *"-$SLUG" ]]; then

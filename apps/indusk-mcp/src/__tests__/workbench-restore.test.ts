@@ -1,0 +1,212 @@
+import { spawnSync } from "node:child_process";
+import {
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
+
+/**
+ * A10 / A11 / A12 / A15 — `indusk workbench restore`.
+ *
+ * Red today on "unknown command": the `workbench` group does not exist. That
+ * is a real red rather than a contrived one — a fresh clone of a workbench
+ * context repo genuinely leaves you with no way to materialize it, which is
+ * the gap this plan opened with.
+ *
+ * A12 is the row that matters most and the one an acceptance-only suite would
+ * never have: it asserts the FAILURE path. A restore that clones one repo of
+ * two and exits 0 looks identical to success from the outside, and this
+ * codebase has three separate mechanisms built to avoid exactly that shape.
+ */
+
+let fixture: TwoRepoFixture;
+
+afterEach(() => {
+	fixture?.cleanup();
+});
+
+/** Every path under `dir`, sorted — the cheapest honest "did anything change". */
+function treeSnapshot(dir: string): string[] {
+	const out: string[] = [];
+	const walk = (d: string, prefix: string): void => {
+		for (const entry of readdirSync(d, { withFileTypes: true }).sort((a, b) =>
+			a.name.localeCompare(b.name),
+		)) {
+			if (entry.name === ".git") continue;
+			const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+			out.push(rel);
+			if (entry.isDirectory() && !entry.isSymbolicLink()) walk(join(d, entry.name), rel);
+		}
+	};
+	walk(dir, "");
+	return out;
+}
+
+describe.skipIf(SHOULD_SKIP)("A10 — one command materializes the whole workbench", () => {
+	it("clones every declared repo as a sibling and links it in", { timeout: 30_000 }, () => {
+		fixture = buildTwoRepoWorkbench();
+
+		// Precondition: this is what a fresh clone of the context repo looks like.
+		for (const name of fixture.repoNames) {
+			expect(existsSync(join(fixture.root, name))).toBe(false);
+		}
+
+		const { code } = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+		expect(code).toBe(0);
+
+		for (const name of fixture.repoNames) {
+			expect(existsSync(join(fixture.root, name, "README.md"))).toBe(true);
+			const trunk = join(fixture.workbenchDir, name);
+			expect(lstatSync(trunk).isSymbolicLink()).toBe(true);
+			// Relative target, so the workbench stays portable across machines —
+			// an absolute target would work here and break on the next machine,
+			// which is the kind of pass that teaches nothing.
+			expect(existsSync(join(trunk, "README.md"))).toBe(true);
+		}
+	});
+
+	it("names a declared repo that has no remote instead of skipping it", { timeout: 30_000 }, () => {
+		fixture = buildTwoRepoWorkbench({ omitRemoteFor: "beta" });
+
+		const { stdout, stderr } = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+
+		expect(`${stdout}${stderr}`).toContain("beta");
+		expect(existsSync(join(fixture.root, "alpha", "README.md"))).toBe(true);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A11 — restore is idempotent", () => {
+	it("reports every repo already present and writes nothing", { timeout: 30_000 }, () => {
+		fixture = buildTwoRepoWorkbench();
+
+		const first = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+		expect(first.code).toBe(0);
+		const after = treeSnapshot(fixture.root);
+
+		const second = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+		expect(second.code).toBe(0);
+
+		expect(treeSnapshot(fixture.root)).toEqual(after);
+		for (const name of fixture.repoNames) {
+			expect(second.stdout).toContain(name);
+		}
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A12 — a failed clone is loud and partial progress is kept", () => {
+	it("names the failed repo, keeps the others, and exits non-zero", { timeout: 30_000 }, () => {
+		fixture = buildTwoRepoWorkbench({ breakRemoteFor: "beta" });
+
+		const { code, stdout, stderr } = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+
+		// Non-zero is the whole point: half a workbench must never read as done.
+		expect(code).not.toBe(0);
+		expect(`${stdout}${stderr}`).toContain("beta");
+		// The reachable repo still got materialized — a first failure must not
+		// abort the rest, or restoring a 5-repo workbench becomes a lottery.
+		expect(existsSync(join(fixture.root, "alpha", "README.md"))).toBe(true);
+	});
+
+	it("completes on re-run once the remote is reachable", { timeout: 30_000 }, () => {
+		fixture = buildTwoRepoWorkbench({ breakRemoteFor: "beta" });
+		runCli(fixture.workbenchDir, ["workbench", "restore"]);
+
+		// Repair the declaration the way a developer would, then re-run.
+		const cfgPath = join(fixture.workbenchDir, ".indusk", "config.json");
+		const cfg = JSON.parse(readFileSync(cfgPath, "utf-8"));
+		cfg.worktree.repos[1].remote = fixture.remotes[1];
+		spawnSync("node", [
+			"-e",
+			`require("fs").writeFileSync(${JSON.stringify(cfgPath)}, ${JSON.stringify(JSON.stringify(cfg, null, 2))})`,
+		]);
+
+		const retry = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+		expect(retry.code).toBe(0);
+		expect(existsSync(join(fixture.root, "beta", "README.md"))).toBe(true);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A15 — what restore cannot supply, it names", () => {
+	it("prints the out-of-band set, and none of it is in the remote", { timeout: 30_000 }, () => {
+		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true });
+
+		// Restore FIRST — it scaffolds the ignore rules. Then plant the secrets
+		// and commit. That is the real order: rules exist, then work happens.
+		// Planting before restore would demand history rewriting, which restore
+		// cannot do and should not attempt.
+		const { stdout } = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+
+		// The list exists and is specific — "configure your secrets" is not a
+		// list, it is a shrug.
+		expect(stdout).toMatch(/doppler|\.env|ssh/i);
+
+		// Now create exactly what the list named, and try to publish it.
+		mkdirSync(join(fixture.workbenchDir, ".indusk", "extensions", "doppler"), { recursive: true });
+		writeFileSync(
+			join(fixture.workbenchDir, ".indusk", "extensions", "doppler", ".env"),
+			"DOPPLER_TOKEN=secret\n",
+		);
+		writeFileSync(join(fixture.workbenchDir, ".env.local"), "SECRET=nope\n");
+		spawnSync("git", ["-C", fixture.workbenchDir, "add", "-A"], { encoding: "utf-8" });
+		spawnSync(
+			"git",
+			[
+				"-C",
+				fixture.workbenchDir,
+				"-c",
+				"user.email=t@t.l",
+				"-c",
+				"user.name=t",
+				"commit",
+				"-q",
+				"-m",
+				"work",
+			],
+			{ encoding: "utf-8" },
+		);
+
+		// Cross-check: nothing the list named actually reached the remote.
+		const tracked = spawnSync(
+			"git",
+			["-C", fixture.workbenchDir, "ls-tree", "-r", "--name-only", "HEAD"],
+			{ encoding: "utf-8" },
+		).stdout;
+		expect(tracked).not.toMatch(/\.env$/m);
+		expect(tracked).not.toContain("extensions/doppler/.env");
+		// …and the context that IS supposed to travel still does, so this cannot
+		// pass by ignoring everything.
+		expect(tracked).toContain(".indusk/planning/sample-plan/brief.md");
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A30 — never claim a link that was not created", () => {
+	it("does not say `trunk linked` when a real directory occupies the path", {
+		timeout: 30_000,
+	}, () => {
+		// `linkTrunk` correctly refuses to remove a real directory sitting where
+		// the trunk goes — but restore prints "trunk linked" unconditionally. On
+		// a workbench whose trunk is a real checkout rather than a symlink, that
+		// message is simply false.
+		fixture = buildTwoRepoWorkbench();
+		// A real directory, not a symlink, at the trunk path.
+		const trunk = join(fixture.workbenchDir, "alpha");
+		spawnSync("git", ["clone", "--quiet", fixture.remotes[0], trunk], { encoding: "utf-8" });
+
+		const { stdout } = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+		// The PER-REPO report line, not the `Repos (2): alpha, beta` header —
+		// which contains the name too, and made the negative assertion below
+		// pass without ever reading what restore claimed about the link.
+		const alphaLine = stdout.split("\n").find((l) => /^\s+[✓✗].*\balpha\b/.test(l)) ?? "";
+		expect(alphaLine, stdout).not.toBe("");
+
+		expect(alphaLine).not.toMatch(/trunk linked/i);
+		expect(alphaLine).toMatch(/real directory|not a symlink|left as is/i);
+	});
+});

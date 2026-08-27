@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "./config.js";
+import { isCleanSegment } from "./path-segment.js";
 
 export interface PlanFrontmatter {
 	title: string;
@@ -176,21 +177,10 @@ export interface PlanDeclarations {
 	subplans: Record<string, string[]>;
 }
 
-/**
- * A declaration name must be a single clean path segment — it gets joined
- * into filesystem paths (`join(planningDir, name, "master.md")`) and rendered
- * verbatim in the sidebar. Anything else is dropped at this boundary: degrade
- * to structure-loss, never a path traversal or a raw render.
- */
-function isCleanSegment(name: string): boolean {
-	return (
-		name.trim() !== "" &&
-		name !== "." &&
-		name !== ".." &&
-		!name.includes("/") &&
-		!name.includes("\\")
-	);
-}
+// A declaration name must be a single clean path segment — it gets joined into
+// filesystem paths (`join(planningDir, name, "master.md")`) and rendered
+// verbatim in the sidebar. The guard now lives in `lib/path-segment.ts`,
+// shared with workbench repo names, which are the same question.
 
 /**
  * Read a frontmatter key as a string array; anything else yields [].

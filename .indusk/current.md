@@ -227,12 +227,12 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 171f945c — starting catchup
+## Session 171f945c — versioned-workbench: Test Phase 1 — author 16 assertions RED
 
 **Session ID**: 171f945c-541c-4d9a-9721-73821d2b905f
-**Last updated**: 2026-08-17T01:32:02.467Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
+**Last updated**: 2026-08-17T21:39:35.967Z
+**Branch**: plan/versioned-workbench
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/versioned-workbench
 
 ### In Flight
 
@@ -254,6 +254,48 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-08-17T01:41:22.711Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 172c4189 — eval: reviewing 8c33a96a (test plan Phase 1 RED)
+
+**Session ID**: 172c4189-b859-46f8-8e68-d7a2a2b02e4a
+**Last updated**: 2026-08-17T21:56:59.131Z
+**Branch**: plan/versioned-workbench
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/versioned-workbench
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 567f052c — eval: reviewing commit 776eac4f (Phase 13 cleanup ritual)
+
+**Session ID**: 567f052c-e3a6-4ad2-8422-926ac6848c52
+**Last updated**: 2026-08-27T18:14:52.548Z
+**Branch**: plan/versioned-workbench
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/versioned-workbench
 
 ### In Flight
 

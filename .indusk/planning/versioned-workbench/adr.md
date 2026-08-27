@@ -16,7 +16,7 @@ Today neither half works. Workbench context is per-developer by construction: `.
 ## Y-Statement
 
 **In the context of:**
-teams and single developers working across machines on an InDusk workbench — a root directory that wraps one or more cloned repos, holds the shared `.indusk/` context (plans, lessons, current.md, eval state), and hosts sibling worktrees. The concrete instance driving this is the avoca engagement, whose workbench at `~/code/lazer/avoca/avoca-next-workbench` already wraps two repos (`avoca-next`, `avoca-local-db`) and has already carried a real bug fix laptop→desktop→laptop.
+teams and single developers working across machines on an InDusk workbench — a root directory that wraps one or more cloned repos, holds the shared `.indusk/` context (plans, lessons, current.md, eval state), and hosts sibling worktrees. The concrete instance driving this is a client engagement, whose workbench at `the POC workbench` already wraps two repos (`service-api`, `local-db`) and has already carried a real bug fix laptop→desktop→laptop.
 
 **Facing:**
 the workbench root is not a git repo, so context never travels; and even once it is one, cloning it yields a shell — the repos it wraps are absent, the trunk symlinks are dangling, and nothing in the product knows how to reconstruct them. Meanwhile the product's model of a workbench is singular: `worktree.wrapped_repo` is one string, read in 10 non-test files across 80 occurrences, 35 of them in shell scripts with no type checker. The only real versioned workbench that exists declares two repos, so shipping the singular means shipping a restore command that cannot restore the workbench it was built for.
@@ -81,10 +81,10 @@ A workbench wraps N ≥ 1 repos. This overrides `brief.md`'s Out of Scope line a
 {
   "worktree": {
     "shape": "workbench",
-    "sibling_parent": "~/code/lazer/avoca",
+    "sibling_parent": "~/code/lazer/the POC",
     "repos": [
-      { "name": "avoca-next",     "remote": "git@github-avoca:AvocaAI/avoca-next.git" },
-      { "name": "avoca-local-db", "remote": "git@github-avoca:lazer-sandyc/avoca-local-db.git" }
+      { "name": "service-api",     "remote": "git@github:example-org/service-api.git" },
+      { "name": "local-db", "remote": "git@github:example-org/local-db.git" }
     ]
   }
 }
@@ -178,7 +178,7 @@ Moot rather than rejected — the makeover removed both. Recorded so a future re
 - A workbench becomes reconstructible from its remote by anyone who can read it — one clone, one command.
 - Planning history, lessons, and `current.md` sections reach teammates and second machines with no shared database.
 - One definition of "which repos is this workbench made of," reachable from TypeScript, bash, and hooks through one function each.
-- The avoca POC's bash bootstrap retires into the product, and its accumulated friction log becomes impl input rather than tribal knowledge.
+- the POC's bash bootstrap retires into the product, and its accumulated friction log becomes impl input rather than tribal knowledge.
 - `indusk worktree create <repo> <slug>` regains the repo argument, which multi-repo engagements need and single-repo workbenches never have to type.
 
 ### Negative
@@ -237,7 +237,7 @@ Publish to `/decisions/versioned-workbench.md`. It supersedes the single-repo na
 - `.indusk/planning/indusk-makeover/adr.md` — Graphiti/CGC removal (withdraws A7), hub push/pull (D5)
 - `/decisions/multi-agent-coordination` — per-agent `current.md` sections + `merge=union`, extended cross-machine here
 - `/decisions/worktree-visibility` — worktree-per-plan default, the topology being widened
-- POC: `~/code/lazer/avoca/avoca-next-workbench` — `.indusk/workbench.json`, `scripts/bootstrap.sh`, root-directory-whitelist `.gitignore`
+- POC: `the POC workbench` — `.indusk/workbench.json`, `scripts/bootstrap.sh`, root-directory-whitelist `.gitignore`
 - [init.ts:456-495](../../../apps/indusk-mcp/src/bin/commands/init.ts#L456-L495) — workbench validation + trunk symlink
 - [setup.ts](../../../apps/indusk-mcp/src/bin/commands/setup.ts) — one-shot workbench creation over an already-cloned repo
 - [worktree.ts:139-280](../../../apps/indusk-mcp/src/bin/commands/worktree.ts#L139-L280) — config reads, `worktree-configs/<repo>.json`, reserved dirs

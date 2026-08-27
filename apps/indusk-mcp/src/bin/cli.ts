@@ -564,6 +564,57 @@ telemetryCmd
 		await telemetryReset({ otlpPort: opts.otlpPort, uiPort: opts.uiPort });
 	});
 
+const workbenchCmd = program
+	.command("workbench")
+	.description("Workbench topology — materialize a cloned workbench");
+
+workbenchCmd
+	.command("migrate-layout")
+	.description(
+		"Move a flat workbench's worktrees under a declared per-repo location. Dry-run by default; --apply performs it.",
+	)
+	.option("--apply", "Perform the migration instead of showing the plan")
+	.action(async (opts: { apply?: boolean }) => {
+		const { workbenchMigrateLayout } = await import("./commands/workbench.js");
+		workbenchMigrateLayout(rootOrExit(), { apply: opts.apply });
+	});
+
+workbenchCmd
+	.command("sync")
+	.description(
+		"Commit local changes, pull, and push — blindly resolved, never blocking. Exits 0 offline; work goes out on the next sync.",
+	)
+	.option("--no-ignore-check", "Proceed even if .gitignore cannot keep worktrees out of the remote")
+	.action(async (opts: { ignoreCheck?: boolean }) => {
+		const { workbenchSyncCommand } = await import("./commands/workbench.js");
+		workbenchSyncCommand(rootOrExit(), { noIgnoreCheck: opts.ignoreCheck === false });
+	});
+
+workbenchCmd
+	.command("status")
+	.description(
+		"Per-repo publish state: materialized, and whether its commits have actually left this machine.",
+	)
+	.action(async () => {
+		const { workbenchStatusCommand } = await import("./commands/workbench.js");
+		workbenchStatusCommand(rootOrExit());
+	});
+
+workbenchCmd
+	.command("restore")
+	.description(
+		"Clone every declared repo as a sibling, recreate the trunk symlinks, and print the out-of-band set. Idempotent; exits non-zero naming anything it could not resolve.",
+	)
+	.option("--worktrees", "Also recreate declared worktrees")
+	.option("--no-ignore-check", "Proceed even if .gitignore cannot keep worktrees out of the remote")
+	.action(async (opts: { worktrees?: boolean; ignoreCheck?: boolean }) => {
+		const { workbenchRestore } = await import("./commands/workbench.js");
+		workbenchRestore(rootOrExit(), {
+			worktrees: opts.worktrees,
+			noIgnoreCheck: opts.ignoreCheck === false,
+		});
+	});
+
 // ---- worktree extension lifecycle ----
 // Worktree extension lifecycle. Phase 4 shipped the internal _on-enable
 // hook; Phase 6 adds the user-facing create / refresh / list / preflight
@@ -585,13 +636,13 @@ worktreeCmd
 	});
 
 worktreeCmd
-	.command("create <slug> [base-branch]")
+	.command("create <args...>")
 	.description(
-		"Create a worktree at <workbench>/<slug>, branched off [base-branch] (default: config's base_branch or main)",
+		"Create a worktree: `create [repo] <slug> [base-branch]`. The repo is optional when the workbench declares exactly one; with several it is required, and omitting it fails naming the candidates.",
 	)
-	.action(async (slug: string, baseBranch?: string) => {
+	.action(async (args: string[]) => {
 		const { worktreeCreate } = await import("./commands/worktree.js");
-		worktreeCreate(slug, baseBranch);
+		worktreeCreate(args, rootOrExit());
 	});
 
 worktreeCmd

@@ -10,6 +10,9 @@ inputs:
   - research.md (2026-05-26 survey of dawn-fde-toolkit + numero + indusk init flow)
 ---
 
+
+> **Superseded in part (2026-08-26)** — the single-repo v1 narrowing and the flat-workbench layout recorded here are superseded by `versioned-workbench`: a workbench wraps N repos via `worktree.repos[]`, and layout is **declared** (`path` / `worktrees`) rather than fixed. Absence of those keys means flat, so nothing recorded here stopped working. See `.indusk/planning/versioned-workbench/adr.md`.
+
 # Worktree Extension — Architecture Decisions
 
 ## Shape revision (2026-05-28) — supersedes Decisions 3 + 4 below

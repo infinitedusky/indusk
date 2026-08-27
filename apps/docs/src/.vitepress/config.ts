@@ -39,8 +39,10 @@ const config = defineConfig({
 
 		nav: [
 			{ text: "Guide", link: "/guide/" },
+						{ text: "Workbench Sharing", link: "/guide/workbench-sharing" },
 			{ text: "Reference", link: "/reference/" },
 			{ text: "Decisions", link: "/decisions/" },
+						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 			{ text: "Lessons", link: "/lessons/" },
 			{ text: "Dawn", link: "/dawn/" },
 			{ text: "Strategy", link: "/strategy/" },
@@ -95,6 +97,7 @@ const config = defineConfig({
 					text: "CLI",
 					items: [
 						{ text: "setup", link: "/reference/cli/setup" },
+						{ text: "workbench", link: "/reference/cli/workbench" },
 						{ text: "run", link: "/reference/cli/run" },
 						{ text: "verify", link: "/reference/cli/verify" },
 						{ text: "agent", link: "/reference/cli/agent" },

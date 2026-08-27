@@ -4,10 +4,25 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
-### Added
+### Added — versioned workbench
+
+- **Workbenches wrap multiple repos.** `worktree.repos[]` in `.indusk/config.json`; the legacy `wrapped_repo` reduces to a one-element list, so existing workbenches need no edit. `indusk worktree create [repo] <slug>` takes the repo argument again, optional when only one is declared.
+- **`indusk workbench restore`** materializes a cloned workbench — clones every declared repo as a sibling, recreates the trunk links, and prints the out-of-band set it cannot supply. Idempotent; a partial restore exits non-zero naming what it could not do.
+- **`indusk workbench sync`** shares a workbench between machines: commit → pull → push, resolved blindly (`merge=union` on `current.md` and `highlights.jsonl`). Triggered by a debounced hook and at `/catchup`, inert outside a workbench, and never blocking — offline commits locally and goes out on the next sync. The wrapped repos are never auto-committed.
+- **`indusk workbench status`** shows, per repo, whether its commits have actually left this machine.
+- **Layout is declared, not inferred.** Optional `path` and `worktrees` per repo; absence means today's flat layout. `indusk workbench migrate-layout` moves an existing flat workbench, dry-run by default.
+
 - **Retired hooks are now removed from consumers, not just from the package** (`LEGACY_HOOKS`). Deleting a hook from the package source did nothing to projects that had already installed it: the file stayed in `.claude/hooks/` *and* stayed registered in `.claude/settings.json`, so it kept being invoked forever — or, once someone deleted the file by hand, the registration kept invoking a script that no longer existed. `check-plan-order.js` had been in exactly that state since the context-beam cleanup. `init` and `update` now remove both halves, mirroring the `LEGACY_MCP_SERVERS` migration; future retirements extend the list rather than hand-rolling a loop. A matcher entry whose hooks all disappear is dropped rather than left as an empty shell that matches tool calls and runs nothing.
 
+### Changed
+
+- `indusk worktree list` renders one block per declared repo, groups worktrees structurally, and shows anything it cannot place as **Unattributed** rather than dropping it.
+- `indusk update` notices declared repos that are not materialized and points at `workbench restore` without cloning anything itself.
+
 ### Fixed
+
+- `indusk verify` no longer reports honestly-done work as phantom inside a workbench. Plan documents and code live in different repositories there, so it refuses rather than judging code by a diff that cannot contain it.
+
 - **`indusk init` no longer fails when a telemetry daemon is already running — a regression shipped in 1.36.2.** The port guard added in that release was applied to *every* start path, including the opportunistic auto-start that fires when `init` enables the `local-telemetry` extension. On any machine already running a daemon — which is most machines that use InDusk — `init` printed `Project registered but daemon failed to start` and the project got no `jaeger` MCP entry. The guard is right where a caller **named** a port and silently binding another is the bug; it is wrong for an auto-start that never asked for `:4318`. It is now scoped to explicit `indusk telemetry start`, and the auto-start bumps as before. Found by the telemetry suite, which encoded the correct behaviour and went red — nine tests across five files, all of which I initially mistook for tests needing updating rather than a regression they had caught.
 
 ## [1.36.2] — 2026-08-17

@@ -4,3 +4,16 @@
 {"plan":"jj-residue-rip-out","phase":3,"sha":"5d8828786f2b2b84a2fab82ca743cf535e693ca4","timestamp":"2026-08-14T08:50:00.000Z"}
 {"plan":"jj-residue-rip-out","phase":4,"sha":"8fb146325826f36dd509f0a7cb24992936fc9660","timestamp":"2026-08-15T18:00:00.000Z"}
 {"plan":"jj-residue-rip-out","phase":5,"sha":"21e1c0afe07265f5f461ab41edd29e66d3e7fe1d","timestamp":"2026-08-15T19:00:00.000Z"}
+{"plan":"versioned-workbench","phase":1,"sha":"8c33a96a16b9b8ce8d723f21c2f697b22a7cfa1d","timestamp":"2026-08-18T00:37:31.550Z"}
+{"plan":"versioned-workbench","phase":2,"sha":"9883b140a101724b29df43888092d6ea733531b1","timestamp":"2026-08-18T03:13:55.342Z"}
+{"plan":"versioned-workbench","phase":3,"sha":"5d688ec36c0c8e8747c7a67f37d078bbf5d5c7d8","timestamp":"2026-08-18T03:28:58.520Z"}
+{"plan":"versioned-workbench","phase":4,"sha":"d3d2b166c656a365dcfbf9f03bd79144621b924d","timestamp":"2026-08-18T04:46:08.065Z"}
+{"plan":"versioned-workbench","phase":5,"sha":"bedef2ffc35083bcd3c3a3ca124789abc15b46b2","timestamp":"2026-08-19T21:31:57.227Z"}
+{"plan":"versioned-workbench","phase":6,"sha":"a5b30976a8b40b7f205eb2a8f78d58ce4fe155b8","timestamp":"2026-08-21T18:18:01.742Z"}
+{"plan":"versioned-workbench","phase":7,"sha":"90ea0676b08e70018b00c7e077ef71b6ae8f54cf","timestamp":"2026-08-26T00:19:12.924Z"}
+{"plan":"versioned-workbench","phase":8,"sha":"d0611acef343c784e34b1843469c81221c14ca1f","timestamp":"2026-08-26T20:57:27.322Z"}
+{"plan":"versioned-workbench","phase":9,"sha":"f3958ff3f2a99ad0b8dd95e65838f7e4737dbca1","timestamp":"2026-08-26T21:06:45.962Z"}
+{"plan":"versioned-workbench","phase":10,"sha":"8d7e420ca4cba70a9c9f3461da0ff11cdd423c77","timestamp":"2026-08-26T21:19:15.413Z"}
+{"plan":"versioned-workbench","phase":11,"sha":"4b7bea0db8e1b91a20778b4c1d56e8ba5725d88a","timestamp":"2026-08-26T21:37:00.115Z"}
+{"plan":"versioned-workbench","phase":12,"sha":"7f917bc655e5881efc5f2220cfcb791b9d1393e2","timestamp":"2026-08-27T00:27:15.877Z"}
+{"plan":"versioned-workbench","phase":13,"sha":"776eac4fec5deb27b0c6e506cf4dffa5b4d2ebc6","timestamp":"2026-08-27T18:20:29.858Z"}

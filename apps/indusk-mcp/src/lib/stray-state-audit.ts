@@ -10,7 +10,8 @@
  * operator can manually `rm -rf` after confirming nothing important is in them.
  *
  * Workbench mode is detected by reading `.indusk/config.json` at the
- * `workbenchRoot` and checking for a `worktree.wrapped_repo` field. Single-
+ * `workbenchRoot` and resolving its declared repo set via `readWorkbenchRepos`
+ * (which reduces the legacy `wrapped_repo` into a one-element list). Single-
  * repo mode skips the audit entirely (no false positives).
  *
  * Worktrees that live at the workbench-root level (sibling to the wrapped
@@ -21,6 +22,7 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { readWorkbenchRepos } from "./worktree/repos.js";
 
 export interface StrayStateFinding {
 	/** Absolute path to the stray `.indusk/` directory. */
@@ -32,27 +34,11 @@ export interface StrayStateFinding {
 	recommendation: string;
 }
 
-interface WorkbenchConfig {
-	worktree?: {
-		wrapped_repo?: string;
-	};
-}
-
-function readWorkbenchConfig(workbenchRoot: string): WorkbenchConfig | null {
-	const configPath = join(workbenchRoot, ".indusk/config.json");
-	if (!existsSync(configPath)) return null;
-	try {
-		return JSON.parse(readFileSync(configPath, "utf-8")) as WorkbenchConfig;
-	} catch {
-		return null;
-	}
-}
-
 /**
  * Find stray `.indusk/` directories in a workbench-shaped project.
  *
  * Returns an empty array if:
- * - `workbenchRoot` is not a workbench-mode project (no `worktree.wrapped_repo`
+ * - `workbenchRoot` is not a workbench-mode project (no declared repos
  *   in config) — single-repo projects are not audited
  * - the wrapped repo doesn't exist (nothing to audit)
  * - no stray state is found (clean workbench)
@@ -62,17 +48,19 @@ function readWorkbenchConfig(workbenchRoot: string): WorkbenchConfig | null {
  * to the wrapped repo) are permitted to have their own `.indusk/` for scratch.
  */
 export function findStrayState(workbenchRoot: string): StrayStateFinding[] {
-	const config = readWorkbenchConfig(workbenchRoot);
-	const wrappedRepoName = config?.worktree?.wrapped_repo;
+	// Every declared repo is audited, not just the first. A workbench that
+	// wraps N repos can accumulate stray state in any of them, and auditing
+	// only one produces a clean report about a dirty workbench.
+	const repos = readWorkbenchRepos(workbenchRoot);
 
 	// Not a workbench project — skip audit.
-	if (!wrappedRepoName) return [];
+	if (repos.length === 0) return [];
 
 	const findings: StrayStateFinding[] = [];
 
-	// Check the wrapped repo for a stray `.indusk/`.
-	const wrappedRepoPath = join(workbenchRoot, wrappedRepoName);
-	if (existsSync(wrappedRepoPath)) {
+	for (const repo of repos) {
+		const wrappedRepoPath = join(workbenchRoot, repo.name);
+		if (!existsSync(wrappedRepoPath)) continue;
 		const strayInsideWrapped = walkForStrayIndusk(wrappedRepoPath, 2);
 		for (const strayPath of strayInsideWrapped) {
 			findings.push({

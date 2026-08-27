@@ -13,6 +13,7 @@ import { assertGitRepo, headSha, resolveBootstrapBaseline } from "./git.js";
 import { appendVerifyRecord, findBaselineRecord, hashTrajectory, readLedger } from "./ledger.js";
 import { detectPhantomWork } from "./phantom.js";
 import { detectRedTests } from "./red-tests.js";
+import { isRefusal, resolveVerifyRoots } from "./roots.js";
 
 /**
  * `atdawn verify <plan> --phase N` — phase-boundary verification for work Dawn
@@ -88,6 +89,14 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 	// LOUD before anything else: a non-git root must never yield a clean report.
 	await assertGitRepo(root);
 
+	// Where the plan lives is not always where its code lives. In a workbench
+	// they are different repositories, and judging a phase against the plan
+	// repo's diff would report every honest checkoff as phantom.
+	const roots = resolveVerifyRoots(root);
+	if (isRefusal(roots)) throw new Error(roots.error);
+	const codeRoot = roots.codeRoot;
+	if (roots.split) await assertGitRepo(codeRoot);
+
 	const implPath = resolveImplPath(root, options.plan);
 	if (implPath === null) {
 		throw new Error(
@@ -137,8 +146,12 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 	const unverifiedRows = redTests.unverifiedRows;
 
 	findings.push(
+		// Phantom asks "did anything but the plan file change?", which is a
+		// question about the CODE repo. `resolveVerifyRoots` has already
+		// guaranteed the two are the same repository here — a workbench refuses
+		// before reaching this point rather than diffing the wrong history.
 		...(await detectPhantomWork({
-			root,
+			root: codeRoot,
 			baselineSha: baseline.sha,
 			implRepoRelPath,
 			currentContent: content,
