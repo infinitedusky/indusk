@@ -4,12 +4,14 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
-## [1.37.2] — 2026-08-27
+## [1.38.0] — 2026-08-27
 
 ### Added
 - **`repos_root` — where a workbench's repos live, expressible relative to the workbench.** Supersedes `sibling_parent`, which named a *relationship* ("the parent of the siblings") rather than the value, and stopped being true the moment the repos lived inside the workbench. The old key is still read, so no existing workbench needs an edit. A **relative** value resolves against the workbench, which is the point: `repos_root: "."` means "the repos live here" and means the same thing on every machine, so the layout reproduces when the workbench is cloned. An absolute value keeps its old meaning and its old problem — it names whichever machine wrote it — and still falls back loudly where it does not resolve. Demonstrated before the change: a nested workbench cloned to a second machine fell back to the parent and rebuilt itself as the *sibling* layout instead.
 - **Layout values may be nested.** `path` and `worktrees` accept a relative path of any depth (`worktrees/alpha`, `repos`), not just one segment. "Cannot escape the workbench" and "must be one segment" were never the same requirement; the guard now rejects absolute paths, `~`, and `..` in **any** position, plus `.git`/`.indusk`/`.claude` as the first segment — `.git/x` is a perfectly clean relative path and still catastrophic.
 - **`pnpm wt <slug>` searches declared worktree locations.** `wt.sh` scanned the workbench root and nothing else, so the moment a repo declared `worktrees`, its worktrees were one level down and **invisible** — not ambiguous, absent, reported as "no worktree or trunk matching slug". Declared layouts shipped in 1.37.0 and this was broken by them from the start: the execution surface was never taught the layout the config had learned to express. An ambiguous slug now refuses and names the candidates in the form that resolves them, and **`wt <repo>/<slug>`** disambiguates — repo-qualified rather than directory-qualified, because the repo and the slug are what a person knows while the directory is a config detail that changes when the layout does.
+
+## [1.37.2] — 2026-08-27
 
 ### Fixed
 - **`workbench migrate-layout` now sticks on the workbenches it was built for.** The migration moves a flat workbench's worktrees under `<repo>-worktrees/` and then declares where they went, so the layout holds. The declaration step iterated `cfg.worktree.repos` — a key a **legacy `wrapped_repo` config does not have** — so on exactly the workbenches this migration exists for, the moves happened and nothing was recorded. It now materializes the singular shape into `repos[]` first, taking the repo set from `readWorkbenchRepos` rather than re-reading the singular field, so the reduction keeps its one definition. Two visible consequences fixed: `worktree list` filed the moved worktrees under **Unattributed** instead of under their repo, and the layout silently undid itself as new worktrees returned to the root.
