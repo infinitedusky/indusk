@@ -86,9 +86,9 @@ Make a workbench reconstructible from its remote and shared between machines: th
 | A28 | `migrate-layout` refuses a move whose destination lies inside the directory being moved | Phase 0 | Build Phase 12 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A29 | `workbench status` finds a repo at its DECLARED path, not at its name | Phase 0 | Build Phase 12 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-layout.test.ts` |
 | A30 | `restore` never reports a trunk as linked when it created no link | Phase 0 | Build Phase 12 | passing | integration | `apps/indusk-mcp/src/__tests__/workbench-restore.test.ts` |
-| A31 | The reserved root-directory set has exactly one definition, and both listings return the same names for the same workbench | Phase 13 | Build Phase 13 | planned | unit | `apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts` |
-| A32 | Worktree-to-repo attribution has exactly one definition, and `worktree list` still attributes correctly after the move | Phase 13 | Build Phase 13 | planned | unit + integration | `apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts`, `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
-| A33 | `init --workbench` repairs a dangling trunk symlink and refuses to replace a real directory, the same as `restore` | Phase 13 | Build Phase 13 | planned | integration | `apps/indusk-mcp/src/__tests__/init-workbench.test.ts` |
+| A31 | The reserved root-directory set has exactly one definition, and both listings return the same names for the same workbench | Phase 13 | Build Phase 13 | written | unit | `apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts` |
+| A32 | Worktree-to-repo attribution has exactly one definition, and `worktree list` still attributes correctly after the move | Phase 13 | Build Phase 13 | written | unit + integration | `apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts`, `apps/indusk-mcp/src/__tests__/workbench-multi-repo.test.ts` |
+| A33 | `init --workbench` repairs a dangling trunk symlink and refuses to replace a real directory, the same as `restore` | Phase 13 | Build Phase 13 | written | integration | `apps/indusk-mcp/src/__tests__/init-workbench.test.ts` |
 
 ### Deferred Verification
 

@@ -1,5 +1,15 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	realpathSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -164,5 +174,69 @@ describe.skipIf(SHOULD_SKIP)("indusk init --workbench (T16)", () => {
 		// just the name, so a regression to a flat single-repo render fails.
 		expect(listResult.stdout).toMatch(/^demo$/m);
 		expect(listResult.stdout).toContain("(config valid)");
+	});
+});
+
+/**
+ * A33 — `init --workbench` links the trunk the same way `restore` does.
+ *
+ * init hand-rolled the trunk symlink: it creates one when nothing is there and
+ * prints "already exists" otherwise. That is a strict subset of `linkTrunk`,
+ * missing both of the cases A30 spent a falsification round on — a DANGLING
+ * link (points at a path that no longer exists, so `existsSync` is false but
+ * the entry is real) and a REAL DIRECTORY sitting at the trunk path, which is
+ * not ours to remove and must not be reported as linked.
+ *
+ * Both are ordinary on a workbench that has been moved or hand-assembled.
+ */
+describe.skipIf(SHOULD_SKIP)("A33 — init repairs and refuses like restore does", () => {
+	it("repairs a dangling trunk symlink rather than leaving it", () => {
+		// A link left over from a previous layout: the entry exists, its target
+		// does not. `existsSync` reports false, so init's `existsSync` check took
+		// the create branch and `symlinkSync` threw EEXIST — or, worse, the guard
+		// passed and the stale link survived.
+		symlinkSync("../somewhere-that-moved", join(workbenchDir, "demo"));
+		expect(lstatSync(join(workbenchDir, "demo")).isSymbolicLink()).toBe(true);
+		expect(existsSync(join(workbenchDir, "demo"))).toBe(false);
+
+		const r = runCli(workbenchDir, [
+			"init",
+			"--workbench",
+			"--wrapped-repo",
+			"demo",
+			"--sibling-parent",
+			root,
+			"--no-index",
+		]);
+
+		expect(r.code, `${r.stdout}${r.stderr}`).toBe(0);
+		// Repaired: still a symlink, now pointing at the real clone.
+		expect(lstatSync(join(workbenchDir, "demo")).isSymbolicLink()).toBe(true);
+		expect(realpathSync(join(workbenchDir, "demo"))).toBe(realpathSync(cloneDir));
+	});
+
+	it("leaves a real directory alone and does not claim it linked", () => {
+		// Not ours to remove — and saying "trunk symlink already exists" about a
+		// directory that is not a symlink is the exact false claim A30 removed
+		// from `restore`.
+		mkdirSync(join(workbenchDir, "demo"), { recursive: true });
+		writeFileSync(join(workbenchDir, "demo", "real.txt"), "not a symlink\n");
+
+		const r = runCli(workbenchDir, [
+			"init",
+			"--workbench",
+			"--wrapped-repo",
+			"demo",
+			"--sibling-parent",
+			root,
+			"--no-index",
+		]);
+
+		// The file survives, whatever else happens.
+		expect(existsSync(join(workbenchDir, "demo", "real.txt"))).toBe(true);
+		expect(lstatSync(join(workbenchDir, "demo")).isSymbolicLink()).toBe(false);
+		// And it must not be described as a symlink that exists.
+		expect(`${r.stdout}${r.stderr}`).not.toMatch(/trunk symlink already exists/);
+		expect(`${r.stdout}${r.stderr}`).toMatch(/real directory|not a symlink|left as is/i);
 	});
 });

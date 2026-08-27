@@ -200,3 +200,67 @@ describe("A27 — reserved names are refused as declared paths", () => {
 		}
 	});
 });
+
+/**
+ * A31 / A32 — the workbench's layout facts have one definition each.
+ *
+ * Same structural shape as the resolver guards above, for the same reason: a
+ * divergence here is silent. A name missing from one reserved set renders a
+ * machine directory as a worktree (or hides a real one), and a drifted
+ * attribution reads exactly like a correct one — the words are the
+ * `worktreeOwner` docblock's own.
+ *
+ * Both facts were re-authored, not shared, when this plan added the
+ * `workbench` command group beside `worktree` — which is precisely the moment
+ * the rule of three says to lift them out.
+ */
+describe("A31 — the reserved root-directory set is single-definition", () => {
+	it("has exactly one definition under src/", () => {
+		const hits = grepCode("RESERVED_ROOT_DIRS", SRC).filter((l) => /const RESERVED_ROOT_DIRS/.test(l));
+		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+	});
+
+	it("leaves no command hand-rolling its own reserved set", () => {
+		// The tell is the literal set of names, not the variable holding it: both
+		// copies spelled `.indusk` and `node_modules` inline inside a `new Set([`.
+		const hits = grepCode('"node_modules",', join(SRC, "bin"));
+		expect(
+			hits,
+			`a reserved-directory list is still inline in a command:\n${hits.join("\n")}`,
+		).toHaveLength(0);
+	});
+
+	it("names `docs`, and carries the reason with it", () => {
+		// D7's reserved workbench-root docs directory. Absent from the set it
+		// renders as a worktree — which is how the POC's `docs/` looked before
+		// anyone noticed, and the sentence that says so must survive the move.
+		const source = readFileSync(join(SRC, "lib", "worktree", "layout.ts"), "utf-8");
+		expect(source).toContain('"docs"');
+		expect(source).toMatch(/renders as a worktree/);
+	});
+});
+
+describe("A32 — worktree-to-repo attribution is single-definition", () => {
+	it("has exactly one definition under src/", () => {
+		const hits = grepCode("function worktreeOwner", SRC);
+		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+	});
+
+	it("leaves no second caller asking git for the common dir directly", () => {
+		// The primitive, not the name: both copies were the same `rev-parse
+		// --git-common-dir` spawn under different function names, so scanning for
+		// the name alone would have called two copies one.
+		const hits = grepCode("git-common-dir", SRC).filter(
+			(l) => !l.includes("lib/worktree/layout.ts"),
+		);
+		expect(
+			hits,
+			`attribution is being re-derived outside the shared module:\n${hits.join("\n")}`,
+		).toHaveLength(0);
+	});
+
+	it("keeps the reasoning that makes the git call non-negotiable", () => {
+		const source = readFileSync(join(SRC, "lib", "worktree", "layout.ts"), "utf-8");
+		expect(source).toMatch(/wrong attribution reads exactly like a right one/);
+	});
+});
