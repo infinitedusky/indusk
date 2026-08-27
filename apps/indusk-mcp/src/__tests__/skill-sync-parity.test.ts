@@ -87,3 +87,36 @@ describe("A12: /planner authors a test phase first", () => {
 		expect(text).toMatch(/Deferred to Test Phase/);
 	});
 });
+
+/**
+ * Every shipped skill must be registrable.
+ *
+ * A skill file without a YAML frontmatter block carrying `name` and
+ * `description` is invisible to Claude Code — it sits on disk, syncs cleanly,
+ * passes the parity check above, and never appears in the skill list. There is
+ * no error anywhere; the only symptom is a skill nobody can invoke.
+ *
+ * `eval-review.md` and `toolbelt.md` shipped that way for at least two
+ * releases. Nothing caught it because every existing check compares the
+ * package copy to the installed copy — and two identical unregistrable files
+ * are perfectly in parity. Byte-equality is the wrong question for "does this
+ * work"; this asks the other one.
+ */
+describe("every shipped skill can actually register", () => {
+	const sources = globSync("*.md", { cwd: SKILLS_SOURCE }).sort();
+
+	it.each(sources)("%s declares name and description in frontmatter", (file) => {
+		const body = readFileSync(join(SKILLS_SOURCE, file), "utf-8");
+		const fm = /^---\n([\s\S]*?)\n---\n/.exec(body);
+		expect(fm, `${file} has no --- frontmatter block, so it can never be listed`).not.toBeNull();
+
+		const block = fm?.[1] ?? "";
+		expect(block, `${file} frontmatter has no \`name:\``).toMatch(/^name:\s*\S/m);
+		expect(block, `${file} frontmatter has no \`description:\``).toMatch(/^description:\s*\S/m);
+
+		// The name is the invocation (`/<name>`), so a mismatch with the
+		// filename means the skill answers to something nobody would guess.
+		const name = /^name:\s*(.+)$/m.exec(block)?.[1].trim();
+		expect(name, `${file} declares name "${name}"`).toBe(file.replace(/\.md$/, ""));
+	});
+});

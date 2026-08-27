@@ -1,3 +1,8 @@
+---
+name: eval-review
+description: Evaluate the current session's work quality on demand. Runs the eval evaluator against the working copy rather than a commit, scoring uncommitted changes against the project's rubric before you commit them.
+---
+
 You can evaluate the current session's work quality on demand.
 
 ## When to Use

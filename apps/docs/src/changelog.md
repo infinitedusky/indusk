@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.37.1] — 2026-08-27
+
+### Fixed
+- **Two shipped skills could never be listed.** `eval-review` and `toolbelt` had no YAML frontmatter at all — no `---` block, no `name`, no `description` — so Claude Code skipped them silently. They installed correctly, synced correctly, and were simply invisible: no error anywhere, the only symptom a skill nobody can invoke. Present in every release that shipped them, not a 1.37.0 regression. Both now declare `name` + `description`, and a new test asserts every `skills/*.md` carries a frontmatter block whose `name` matches its filename. The existing parity test could not catch this by construction — it compares the package copy against the installed copy, and two identical unregistrable files are perfectly in parity. Byte-equality answers "did it sync", not "does it work".
+
 ## [1.37.0] — 2026-08-27
 
 ### Added — versioned workbench

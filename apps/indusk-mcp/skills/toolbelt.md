@@ -1,3 +1,8 @@
+---
+name: toolbelt
+description: Which MCP tool to reach for, and how the servers connect. Covers the command-based vs streamable-HTTP split in `.mcp.json`, what each configured server is for, and when to prefer one over another.
+---
+
 # InDusk Toolbelt
 
 You have MCP tools from multiple servers. This skill tells you when to use them and how they connect.
