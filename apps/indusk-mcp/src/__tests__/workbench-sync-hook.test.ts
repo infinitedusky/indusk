@@ -115,3 +115,25 @@ describe.skipIf(SHOULD_SKIP)("the sync trigger is inert outside a workbench", ()
 		expect(r.status).toBe(0);
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)("A25 — the trigger works before the repo exists", () => {
+	it("syncs a workbench that is not yet a git repo", { timeout: 30_000 }, () => {
+		// Chicken-and-egg: the debounce stamp lives under the gitdir, so
+		// `stampPath` returns null on a workbench that has never been
+		// git-initialized, `dueForSync` says no, and the hook exits 0. But the
+		// only thing that git-inits a workbench is `sync` itself — so such a
+		// workbench is silently never synced, forever.
+		fixture = buildTwoRepoWorkbench(); // deliberately NOT gitInitWorkbench
+		const root = fixture.workbenchDir;
+		expect(existsSync(join(root, ".git"))).toBe(false);
+
+		writeFileSync(join(root, ".indusk", "planning", "sample-plan", "note.md"), "a thought\n");
+
+		expect(fireHook(root, fixture.root)).toBe(0);
+
+		// The hook must have driven a sync, which initializes the repo and
+		// commits — not exited quietly because no repo existed yet.
+		expect(existsSync(join(root, ".git"))).toBe(true);
+		expect(git(root, ["log", "-1", "--pretty=%s"])).toMatch(/sync \d{4}-\d{2}-\d{2}/);
+	});
+});

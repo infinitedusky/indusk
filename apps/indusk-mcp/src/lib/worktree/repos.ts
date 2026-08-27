@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { WorkbenchRepo, WorktreeConfig } from "../config.js";
-import { isCleanSegment } from "../path-segment.js";
+import { isCleanSegment, isUsableSegment } from "../path-segment.js";
 
 export type { WorkbenchRepo } from "../config.js";
 
@@ -75,8 +75,8 @@ export function readWorkbenchRepos(root: string): WorkbenchRepo[] {
 		const { path, worktrees } = entry as { path?: unknown; worktrees?: unknown };
 		const repo: WorkbenchRepo = { name };
 		if (typeof remote === "string" && remote.trim() !== "") repo.remote = remote;
-		if (typeof path === "string" && isCleanSegment(path)) repo.path = path;
-		if (typeof worktrees === "string" && isCleanSegment(worktrees)) repo.worktrees = worktrees;
+		if (typeof path === "string" && isUsableSegment(path)) repo.path = path;
+		if (typeof worktrees === "string" && isUsableSegment(worktrees)) repo.worktrees = worktrees;
 		repos.push(repo);
 	}
 	return repos;

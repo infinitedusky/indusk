@@ -28,3 +28,19 @@ export function isCleanSegment(name: string): boolean {
 		!name.includes("\\")
 	);
 }
+
+/**
+ * Directories a declared path must never resolve onto.
+ *
+ * `isCleanSegment` answers "could this traverse?" — it cannot answer "does
+ * this collide?". `.git`, `.indusk` and `.claude` are all single clean
+ * segments, so a config declaring `worktrees: ".git"` would place worktrees
+ * inside the workbench's own git directory. Collision is a different question
+ * from traversal and needs its own answer.
+ */
+const RESERVED_SEGMENTS = new Set([".git", ".indusk", ".claude"]);
+
+/** A clean segment that does not collide with machine-owned state. */
+export function isUsableSegment(name: string): boolean {
+	return isCleanSegment(name) && !RESERVED_SEGMENTS.has(name);
+}

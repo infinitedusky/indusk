@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
@@ -120,5 +120,46 @@ describe.skipIf(SHOULD_SKIP)("A16 — the two-clock skew is visible", () => {
 		// or the signal is indistinguishable from noise.
 		const betaLine = stdout.split("\n").find((l) => l.includes("beta")) ?? "";
 		expect(betaLine).not.toMatch(/ahead|unpushed|not pushed/i);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A24 — a failed commit stops the sync", () => {
+	it("does not run a blind merge over work that is still uncommitted", { timeout: 30_000 }, () => {
+		// The whole safety argument for `-X theirs` is "both sides are committed
+		// before any merge". When the commit FAILS that argument evaporates, and
+		// a failed commit is ordinary: a pre-commit hook, a missing identity, a
+		// full disk, an index.lock held by a concurrent sync.
+		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true });
+		const wb = fixture.workbenchDir;
+
+		// A pre-commit hook that always refuses — the cheapest honest way to
+		// make `git commit` fail without breaking anything else.
+		const hookDir = join(wb, ".git", "hooks");
+		writeFileSync(join(hookDir, "pre-commit"), "#!/bin/sh\nexit 1\n");
+		chmodSync(join(hookDir, "pre-commit"), 0o755);
+
+		// The remote must actually DIVERGE, or the pull is a no-op and the
+		// dangerous path never runs — an earlier version of this test passed
+		// for exactly that reason.
+		const machineB = join(fixture.root, "machine-b");
+		fixture.cloneWorkbenchTo(machineB);
+		writeFileSync(join(machineB, ".indusk", "planning", "sample-plan", "theirs.md"), "from B\n");
+		expect(runCli(machineB, ["workbench", "sync"]).code).toBe(0);
+
+		writeFileSync(join(wb, ".indusk", "planning", "sample-plan", "unsaved.md"), "not committed\n");
+		const headBefore = git(wb, ["rev-parse", "HEAD"]).trim();
+
+		const r = runCli(wb, ["workbench", "sync"]);
+
+		// It must SAY the commit failed and stop — not proceed to merge.
+		expect(`${r.stdout}${r.stderr}`).toMatch(/commit failed/i);
+		expect(git(wb, ["rev-parse", "HEAD"]).trim()).toBe(headBefore);
+		// The uncommitted work is still there, untouched.
+		expect(git(wb, ["status", "--porcelain"])).toContain("unsaved.md");
+		// And no merge happened.
+		expect(existsSync(join(wb, ".git", "MERGE_HEAD"))).toBe(false);
+		// The remote's commit must NOT have been merged in — stopping means
+		// stopping, not "merged anyway but did not say so".
+		expect(existsSync(join(wb, ".indusk", "planning", "sample-plan", "theirs.md"))).toBe(false);
 	});
 });

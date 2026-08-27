@@ -68,6 +68,7 @@ env/*.env
 # Machine-local state — real content, but true only for this machine.
 .indusk/eval/
 .indusk/current.md.lock
+.indusk/sync-stamp
 .claude/settings.local.json
 node_modules/
 
@@ -101,6 +102,7 @@ env/*.env
 # Machine-local state — real content, but true only for this machine.
 .indusk/eval/
 .indusk/current.md.lock
+.indusk/sync-stamp
 .claude/settings.local.json
 node_modules/
 `;

@@ -197,3 +197,26 @@ describe.skipIf(SHOULD_SKIP)("A15 — what restore cannot supply, it names", () 
 		expect(tracked).toContain(".indusk/planning/sample-plan/brief.md");
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)("A30 — never claim a link that was not created", () => {
+	it("does not say `trunk linked` when a real directory occupies the path", { timeout: 30_000 }, () => {
+		// `linkTrunk` correctly refuses to remove a real directory sitting where
+		// the trunk goes — but restore prints "trunk linked" unconditionally. On
+		// a workbench whose trunk is a real checkout rather than a symlink, that
+		// message is simply false.
+		fixture = buildTwoRepoWorkbench();
+		// A real directory, not a symlink, at the trunk path.
+		const trunk = join(fixture.workbenchDir, "alpha");
+		spawnSync("git", ["clone", "--quiet", fixture.remotes[0], trunk], { encoding: "utf-8" });
+
+		const { stdout } = runCli(fixture.workbenchDir, ["workbench", "restore"]);
+		// The PER-REPO report line, not the `Repos (2): alpha, beta` header —
+		// which contains the name too, and made the negative assertion below
+		// pass without ever reading what restore claimed about the link.
+		const alphaLine = stdout.split("\n").find((l) => /^\s+[✓✗].*\balpha\b/.test(l)) ?? "";
+		expect(alphaLine, stdout).not.toBe("");
+
+		expect(alphaLine).not.toMatch(/trunk linked/i);
+		expect(alphaLine).toMatch(/real directory|not a symlink|left as is/i);
+	});
+});

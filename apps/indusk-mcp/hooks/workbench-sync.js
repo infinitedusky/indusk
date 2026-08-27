@@ -38,15 +38,24 @@ function isWorkbench(root) {
 	}
 }
 
-/** Stamp path under the gitdir — untracked by construction, not by a rule. */
+/**
+ * Stamp path — under the gitdir when there is one, which keeps it untracked by
+ * construction rather than by a rule.
+ *
+ * CHICKEN-AND-EGG: a workbench that has never been git-initialized has no
+ * gitdir, and the only thing that git-inits a workbench is `sync` itself. A
+ * null here used to mean "not due", so exactly the workbenches that most need
+ * their first sync were the ones that never got one. The fallback is inside
+ * `.indusk/`, which every workbench has and which the managed ignore covers.
+ */
 function stampPath(root) {
 	const r = spawnSync("git", ["rev-parse", "--absolute-git-dir"], { cwd: root, encoding: "utf-8" });
-	if (r.status !== 0) return null;
-	return join(r.stdout.trim(), "indusk-sync-stamp");
+	if (r.status === 0) return join(r.stdout.trim(), "indusk-sync-stamp");
+	return join(root, ".indusk", "sync-stamp");
 }
 
 function dueForSync(stamp) {
-	if (!stamp) return false;
+	if (!stamp) return true;
 	if (!existsSync(stamp)) return true;
 	try {
 		return (Date.now() - statSync(stamp).mtimeMs) / 1000 >= DEBOUNCE_SECONDS;

@@ -50,6 +50,15 @@ import { ensureContextRepo, repoPublishState, syncWorkbench } from "../../lib/wo
  * "did" — is the failure this codebase has three separate mechanisms to avoid.
  */
 
+/**
+ * What restore did to one repo, including whether the trunk link happened.
+ *
+ * The `-unlinked` variants exist because `linkTrunk` deliberately refuses to
+ * remove a real directory sitting at the trunk path — and reporting that as
+ * "linked" is a claim about something that never happened.
+ */
+export type RestoreStatus = "present" | "present-unlinked" | "cloned" | "cloned-unlinked";
+
 interface RestoreFailure {
 	repo: string;
 	reason: string;
@@ -80,16 +89,20 @@ function expandHome(p: string): string {
  * created it and breaks silently everywhere else, which is the worst place for
  * this to be wrong.
  */
-function linkTrunk(workbenchRoot: string, name: string, target: string): void {
+function linkTrunk(workbenchRoot: string, name: string, target: string): boolean {
 	const link = join(workbenchRoot, name);
 	const rel = relative(workbenchRoot, target);
 	if (existsSync(link) || isDanglingLink(link)) {
-		// Repair a link that points somewhere else; leave a correct one alone.
-		if (isSymlink(link) && readlinkSync(link) === rel) return;
+		// A correct link needs nothing doing — report it as linked.
+		if (isSymlink(link) && readlinkSync(link) === rel) return true;
+		// Repair a link that points somewhere else.
 		if (isSymlink(link)) rmSync(link);
-		else return; // a real directory here is not ours to remove
+		// A real directory here is not ours to remove, and reporting it as
+		// "linked" would be a claim about something that never happened.
+		else return false;
 	}
 	symlinkSync(rel, link);
+	return true;
 }
 
 function isSymlink(p: string): boolean {
@@ -193,16 +206,45 @@ function isDanglingLink(p: string): boolean {
 	return isSymlink(p) && !existsSync(p);
 }
 
+/**
+ * Phrase one repo's outcome.
+ *
+ * Separated from the loop that prints it so the four cases can be read — and
+ * tested — without spawning the CLI. The loop decides what happened; this says
+ * it. They are two jobs, and the four-way ternary that used to sit inline made
+ * that hard to see.
+ */
+export function restoreLine(
+	repo: WorkbenchRepo,
+	status: RestoreStatus,
+	siblingParent: string,
+): string {
+	// `linkTrunk` deliberately refuses to replace a real directory sitting at
+	// the trunk path, so both `-unlinked` cases are correct behavior that the
+	// message must not describe as a link.
+	const unlinked = `a real directory occupies ${repoDir(repo)}/ in the workbench, so no trunk symlink was made — left as is`;
+	switch (status) {
+		case "cloned":
+			return `${repo.name} — cloned into ${siblingParent} and linked`;
+		case "cloned-unlinked":
+			return `${repo.name} — cloned into ${siblingParent}/${repo.name}, but ${unlinked}`;
+		case "present-unlinked":
+			return `${repo.name} — already present, but ${unlinked}`;
+		case "present":
+			return `${repo.name} — already present, trunk linked`;
+	}
+}
+
 function restoreOne(
 	repo: WorkbenchRepo,
 	workbenchRoot: string,
 	siblingParent: string,
-): { status: "present" | "cloned"; failure?: RestoreFailure } {
+): { status: RestoreStatus; failure?: RestoreFailure } {
 	const target = join(siblingParent, repo.name);
 
 	if (existsSync(join(target, ".git"))) {
-		linkTrunk(workbenchRoot, repo.name, target);
-		return { status: "present" };
+		const linked = linkTrunk(workbenchRoot, repoDir(repo), target);
+		return { status: linked ? "present" : "present-unlinked" };
 	}
 
 	// Declared but unrestorable. Reported by name — a repo silently absent from
@@ -229,8 +271,11 @@ function restoreOne(
 			},
 		};
 	}
-	linkTrunk(workbenchRoot, repo.name, target);
-	return { status: "cloned" };
+	// By declared path, and reporting what the link attempt actually did —
+	// the clone branch had BOTH bugs the present branch had: it resolved by
+	// name rather than declared path, and it discarded the result.
+	const linked = linkTrunk(workbenchRoot, repoDir(repo), target);
+	return { status: linked ? "cloned" : "cloned-unlinked" };
 }
 
 export function workbenchRestore(
@@ -294,11 +339,7 @@ export function workbenchRestore(
 			console.error(`  ✗ ${repo.name} — ${failure.reason}`);
 			continue;
 		}
-		console.info(
-			status === "cloned"
-				? `  ✓ ${repo.name} — cloned into ${siblingParent} and linked`
-				: `  ✓ ${repo.name} — already present, trunk linked`,
-		);
+		console.info(`  ✓ ${restoreLine(repo, status, siblingParent)}`);
 	}
 
 	if (opts.worktrees) {
@@ -384,13 +425,21 @@ export function workbenchStatusCommand(projectRoot: string): never {
 	console.info(`Workbench: ${projectRoot}`);
 	console.info("");
 	for (const repo of repos) {
-		const st = repoPublishState(siblingParent, repo.name);
+		// By DECLARED path, like every other consumer. This was the one place
+		// still deriving a location from a name.
+		const st = repoPublishState(siblingParent, repoDir(repo));
 		if (!st.present) {
 			console.info(`  ${repo.name}: not materialized — run \`indusk workbench restore\``);
 			continue;
 		}
 		if (!st.hasRemote) {
 			console.info(`  ${repo.name}: present, no remote configured (nothing to publish to)`);
+			continue;
+		}
+		if (!st.published) {
+			console.info(
+				`  ${repo.name}: has a remote, but this branch has NEVER BEEN PUSHED — none of its work is visible to anyone else`,
+			);
 			continue;
 		}
 		console.info(
@@ -446,6 +495,7 @@ export function workbenchMigrateLayout(projectRoot: string, opts: { apply?: bool
 	}
 	const moves: Move[] = [];
 	const unplaceable: string[] = [];
+	const unmovable: string[] = [];
 	for (const slug of loose) {
 		const owner = worktreeOwnerOf(join(projectRoot, slug), repoPaths);
 		if (!owner) {
@@ -453,6 +503,14 @@ export function workbenchMigrateLayout(projectRoot: string, opts: { apply?: bool
 			continue;
 		}
 		const dest = `${owner}-worktrees`;
+		// A worktree already NAMED `<repo>-worktrees` would be moved inside
+		// itself. git refuses that, but only at execution — so the plan would
+		// show an impossible move and then fail on `Invalid argument`, which
+		// tells the reader nothing. Catch it while planning.
+		if (slug === dest) {
+			unmovable.push(`${slug}: cannot move — the destination is inside itself`);
+			continue;
+		}
 		moves.push({
 			repo: owner,
 			slug,
@@ -472,6 +530,11 @@ export function workbenchMigrateLayout(projectRoot: string, opts: { apply?: bool
 		console.info("");
 		console.info("Left where they are — not resolvable to any declared repo:");
 		for (const slug of unplaceable) console.info(`  ${slug}`);
+	}
+	if (unmovable.length > 0) {
+		console.info("");
+		console.info("Skipped — cannot be moved:");
+		for (const why of unmovable) console.info(`  ${why}`);
 	}
 
 	if (!opts.apply) {

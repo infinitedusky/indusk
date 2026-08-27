@@ -107,9 +107,21 @@ export function syncWorkbench(root: string, at: Date = new Date()): SyncResult {
 		git(root, ["add", "-A"]);
 		const c = git(root, ["commit", "--quiet", "-m", syncMessage(at)]);
 		result.committed = c.ok;
-		notes.push(
-			c.ok ? `Committed local changes (${syncMessage(at)}).` : `Commit failed: ${c.err.trim()}`,
-		);
+		if (!c.ok) {
+			// STOP. The entire safety argument for the blind merge below is
+			// "both sides are committed before any merge" — that is what makes a
+			// lost hunk recoverable from `git log`. When the commit fails the
+			// argument is void, and pulling would merge someone else's history
+			// over work that exists nowhere but this working tree.
+			//
+			// A failed commit is ordinary, not exotic: a pre-commit hook, a
+			// missing git identity, a full disk, or an `index.lock` held by a
+			// concurrent sync all produce it.
+			notes.push(`Commit failed, so nothing was pulled or pushed: ${calmly(c.err)}`);
+			notes.push("Your working tree is untouched. Fix the commit, then sync again.");
+			return result;
+		}
+		notes.push(`Committed local changes (${syncMessage(at)}).`);
 	}
 
 	if (!remote) {
@@ -207,18 +219,37 @@ export interface RepoPublishState {
 	present: boolean;
 	ahead: number;
 	hasRemote: boolean;
+	/**
+	 * Whether this branch exists on the remote at all.
+	 *
+	 * Distinct from `ahead === 0`. A branch that was never pushed has no
+	 * remote-tracking ref, so no count is meaningful — and calling that "in
+	 * sync" is the inversion this field exists to prevent.
+	 *
+	 * REQUIRED, not optional: every return path sets it, so an optional type
+	 * would describe a state the code cannot produce while forcing readers into
+	 * `=== false` comparisons to stay correct about it.
+	 */
+	published: boolean;
 }
 
 export function repoPublishState(siblingParent: string, name: string): RepoPublishState {
 	const path = join(siblingParent, name);
 	if (!existsSync(join(path, ".git"))) {
-		return { name, present: false, ahead: 0, hasRemote: false };
+		return { name, present: false, ahead: 0, hasRemote: false, published: false };
 	}
 	const remote = remoteName(path);
-	if (!remote) return { name, present: true, ahead: 0, hasRemote: false };
+	if (!remote) return { name, present: true, ahead: 0, hasRemote: false, published: false };
 
 	const branch = currentBranch(path);
+
+	// Does a remote-tracking ref exist at all? `rev-list A..B` ERRORS when it
+	// does not, and reading that error as "0 commits ahead" reports the worst
+	// case — nothing has ever left this machine — as the most reassuring one.
+	const tracked = git(path, ["rev-parse", "--verify", "--quiet", `${remote}/${branch}`]).ok;
+	if (!tracked) return { name, present: true, ahead: 0, hasRemote: true, published: false };
+
 	const counted = git(path, ["rev-list", "--count", `${remote}/${branch}..HEAD`]);
 	const ahead = counted.ok ? Number.parseInt(counted.out.trim(), 10) || 0 : 0;
-	return { name, present: true, ahead, hasRemote: true };
+	return { name, present: true, ahead, hasRemote: true, published: true };
 }

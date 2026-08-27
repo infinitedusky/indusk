@@ -261,3 +261,78 @@ describe.skipIf(SHOULD_SKIP)("A23 — a flat workbench opts in with one command"
 		expect(head("beta")).toBe(before.beta);
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)("A26 — never-pushed is not the same as in sync", () => {
+	it("reports a repo whose branch was never pushed as unpublished", { timeout: 30_000 }, () => {
+		// `rev-list <remote>/<branch>..HEAD` ERRORS when there is no
+		// remote-tracking ref, and the error path defaults `ahead` to 0 — so the
+		// worst case (nothing has ever left this machine) gets the most
+		// reassuring message. That inverts the very skew A16 exists to expose.
+		fixture = buildTwoRepoWorkbench({ materialize: true });
+		const alpha = join(fixture.root, "alpha");
+		// A remote is configured, but this branch has never been pushed to it.
+		spawnSync("git", ["-C", alpha, "checkout", "-q", "-b", "never-pushed"], { encoding: "utf-8" });
+		writeFileSync(join(alpha, "local-only.ts"), "export const x = 1;\n");
+		spawnSync("git", ["-C", alpha, "add", "-A"], { encoding: "utf-8" });
+		spawnSync(
+			"git",
+			["-C", alpha, "-c", "user.email=t@t.l", "-c", "user.name=t", "commit", "-q", "-m", "local"],
+			{ encoding: "utf-8" },
+		);
+
+		const { stdout } = runCli(fixture.workbenchDir, ["workbench", "status"]);
+		const alphaLine = stdout.split("\n").find((l) => l.includes("alpha")) ?? "";
+
+		expect(alphaLine).not.toMatch(/in sync/i);
+		expect(alphaLine).toMatch(/never been pushed|no upstream|not published/i);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A28 — a move never targets its own source", () => {
+	it("refuses to move a worktree into itself", { timeout: 60_000 }, () => {
+		// `dest = <owner>-worktrees` and only repoDir is excluded from the loose
+		// set, so a worktree already NAMED `alpha-worktrees` gets a destination
+		// inside itself.
+		fixture = buildTwoRepoWorkbench({ materialize: true });
+		const wb = fixture.workbenchDir;
+		expect(runCli(wb, ["worktree", "create", "alpha", "alpha-worktrees"]).code).toBe(0);
+		expect(runCli(wb, ["worktree", "create", "alpha", "ordinary"]).code).toBe(0);
+
+		// The DRY RUN is where this must surface. git does refuse the move, so
+		// nothing ends up nested — but planning an impossible move and then
+		// failing on `fatal: ... Invalid argument` mid-apply tells the reader
+		// nothing. The original hypothesis (silent self-nesting) was wrong; this
+		// is the real residue.
+		const plan = runCli(wb, ["workbench", "migrate-layout"]);
+		expect(plan.stdout).not.toContain("alpha-worktrees/alpha-worktrees");
+		expect(plan.stdout).toMatch(/cannot move|inside itself|skipped/i);
+
+		const applied = runCli(wb, ["workbench", "migrate-layout", "--apply"]);
+		// Apply must not die on the move it cannot make, and the reader running
+		// `--apply` must see the same skip the dry run showed them — otherwise
+		// the one place the skip matters is the one place it is invisible.
+		expect(applied.code, applied.stderr).toBe(0);
+		expect(applied.stdout).toMatch(/cannot move|inside itself|skipped/i);
+		// Never nested inside itself, and the one that CAN move still does.
+		expect(existsSync(join(wb, "alpha-worktrees", "alpha-worktrees"))).toBe(false);
+		expect(existsSync(join(wb, "alpha-worktrees", "ordinary"))).toBe(true);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A29 — status resolves by declared path", () => {
+	it("finds a repo at its declared path, not at its name", { timeout: 30_000 }, () => {
+		// Every other consumer uses repoDir(); status alone used repo.name, so a
+		// repo with a declared `path` reported "not materialized" while
+		// `worktree list` found it fine. Phase 8's own rule, missed in one place.
+		fixture = buildTwoRepoWorkbench({ materialize: true });
+		const wb = fixture.workbenchDir;
+		renameSync(join(fixture.root, "alpha"), join(fixture.root, "alpha-elsewhere"));
+		renameSync(join(wb, "alpha"), join(wb, "alpha-elsewhere"));
+		declare(wb, { alpha: { path: "alpha-elsewhere" } });
+
+		const { stdout } = runCli(wb, ["workbench", "status"]);
+		const alphaLine = stdout.split("\n").find((l) => l.includes("alpha")) ?? "";
+
+		expect(alphaLine).not.toMatch(/not materialized/i);
+	});
+});

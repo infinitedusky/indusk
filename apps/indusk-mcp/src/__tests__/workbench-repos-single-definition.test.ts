@@ -171,3 +171,32 @@ describe("the singular reduces to the plural", () => {
 		expect(readWorkbenchRepos(root)).toEqual([{ name: "good" }]);
 	});
 });
+
+describe("A27 — reserved names are refused as declared paths", () => {
+	it("drops `.git`, `.indusk`, `.claude` rather than joining them", () => {
+		// The guard blocks traversal but not COLLISION: these are single clean
+		// segments, so `worktrees: ".git"` would place worktrees inside the
+		// workbench's own git directory, and `path: ".indusk"` would resolve a
+		// trunk onto InDusk's state.
+		const { mkdtempSync, mkdirSync, writeFileSync } = require("node:fs") as typeof import("node:fs");
+		const { tmpdir } = require("node:os") as typeof import("node:os");
+
+		const mk = (repo: Record<string, unknown>): string => {
+			const root = mkdtempSync(join(tmpdir(), "reserved-"));
+			mkdirSync(join(root, ".indusk"), { recursive: true });
+			writeFileSync(
+				join(root, ".indusk", "config.json"),
+				JSON.stringify({ worktree: { shape: "workbench", repos: [repo] } }),
+			);
+			return root;
+		};
+
+		for (const reserved of [".git", ".indusk", ".claude"]) {
+			const byPath = readWorkbenchRepos(mk({ name: "alpha", path: reserved }));
+			expect(byPath[0]?.path, `path: ${reserved} must be dropped`).toBeUndefined();
+
+			const byWorktrees = readWorkbenchRepos(mk({ name: "alpha", worktrees: reserved }));
+			expect(byWorktrees[0]?.worktrees, `worktrees: ${reserved} must be dropped`).toBeUndefined();
+		}
+	});
+});
