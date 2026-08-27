@@ -6,6 +6,7 @@ import { listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.j
 import {
 	isWorkbench,
 	NOT_A_WORKBENCH,
+	readReposRoot,
 	readWorkbenchRepos,
 	repoDir,
 } from "../../lib/worktree/repos.js";
@@ -247,13 +248,21 @@ export function worktreePreflight(slug: string, baseBranch?: string): never {
  *     (config invalid: <reason>) / (no worktrees)
  */
 /** Trunk symlink status for one declared repo. */
-function trunkStatusFor(trunkPath: string): string {
+function trunkStatusFor(trunkPath: string, nested = false): string {
 	if (!existsSync(trunkPath)) {
 		return "missing — run `indusk workbench restore` to materialize it";
 	}
 	try {
 		const st = lstatSync(trunkPath);
-		if (!st.isSymbolicLink()) return "directory (not a symlink — unusual for a workbench trunk)";
+		if (!st.isSymbolicLink()) {
+			// A workbench that declares `repos_root: "."` keeps its repos inside
+			// itself, so a real directory here is the declared layout rather than
+			// something odd. Calling it "unusual" made a supported shape read as a
+			// mistake on every listing.
+			return nested
+				? "in the workbench (repos_root keeps repos here)"
+				: "directory (not a symlink — unusual for a workbench trunk)";
+		}
 		const target = readlinkSync(trunkPath);
 		return existsSync(trunkPath)
 			? `→ ${target} (resolves)`
@@ -303,6 +312,15 @@ export function worktreeList(projectRoot: string): void {
 	// Trunks are found at their DECLARED path; `name` is an identifier, not a
 	// location. A repo whose directory was renamed still resolves, because
 	// nothing here derives a path from a name.
+	// Does this workbench keep its repos inside itself? A relative `repos_root`
+	// resolving to the workbench is exactly that declaration.
+	const declaredRoot = readReposRoot(projectRoot);
+	const nestsRepos =
+		declaredRoot !== undefined &&
+		!declaredRoot.startsWith("/") &&
+		!declaredRoot.startsWith("~") &&
+		resolve(projectRoot, declaredRoot) === resolve(projectRoot);
+
 	const repoPaths = new Map(repos.map((r) => [r.name, join(projectRoot, repoDir(r))]));
 	const occupied = new Set([
 		...repos.map((r) => repoDir(r)),
@@ -345,7 +363,7 @@ export function worktreeList(projectRoot: string): void {
 		console.info("");
 		console.info(`${repo.name}`);
 		console.info(
-			`  Trunk:      ${repoDir(repo)} ${trunkStatusFor(join(projectRoot, repoDir(repo)))}`,
+			`  Trunk:      ${repoDir(repo)} ${trunkStatusFor(join(projectRoot, repoDir(repo)), nestsRepos)}`,
 		);
 		console.info(
 			`  Remote:     ${repo.remote ?? "(none declared — `workbench restore` cannot clone it)"}`,

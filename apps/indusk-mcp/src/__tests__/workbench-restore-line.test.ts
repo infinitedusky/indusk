@@ -11,6 +11,17 @@ import { type RestoreStatus, restoreLine } from "../bin/commands/workbench.js";
 describe("restoreLine — what restore says it did", () => {
 	const repo = { name: "alpha", path: "alpha-checkout" } as const;
 
+	it("describes a nested repo as present, never as a failed link", () => {
+		// `repos_root: "."` puts the repo at its trunk path on purpose. There is
+		// no link to make, so saying "a real directory occupies alpha-checkout/"
+		// would report a working layout as a collision — which is what it did.
+		for (const status of ["nested", "nested-cloned"] as RestoreStatus[]) {
+			const line = restoreLine(repo, status, "/parent");
+			expect(line).toContain("alpha-checkout/");
+			expect(line).not.toMatch(/no trunk symlink|occupies|left as is/);
+		}
+	});
+
 	it("claims a link only in the two cases where one was made", () => {
 		const linked: RestoreStatus[] = ["cloned", "present"];
 		for (const status of linked) {

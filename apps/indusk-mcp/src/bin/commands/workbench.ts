@@ -49,7 +49,13 @@ import { ensureContextRepo, repoPublishState, syncWorkbench } from "../../lib/wo
  * remove a real directory sitting at the trunk path — and reporting that as
  * "linked" is a claim about something that never happened.
  */
-export type RestoreStatus = "present" | "present-unlinked" | "cloned" | "cloned-unlinked";
+export type RestoreStatus =
+	| "present"
+	| "present-unlinked"
+	| "cloned"
+	| "cloned-unlinked"
+	| "nested"
+	| "nested-cloned";
 
 interface RestoreFailure {
 	repo: string;
@@ -202,6 +208,12 @@ export function restoreLine(
 	// message must not describe as a link.
 	const unlinked = `a real directory occupies ${repoDir(repo)}/ in the workbench, so no trunk symlink was made — left as is`;
 	switch (status) {
+		// The repo lives inside the workbench at its own trunk path. No link is
+		// possible and none is wanted — `repos_root: "."` exists to say so.
+		case "nested":
+			return `${repo.name} — present in the workbench at ${repoDir(repo)}/`;
+		case "nested-cloned":
+			return `${repo.name} — cloned into the workbench at ${repoDir(repo)}/`;
 		case "cloned":
 			return `${repo.name} — cloned into ${siblingParent} and linked`;
 		case "cloned-unlinked":
@@ -219,8 +231,14 @@ function restoreOne(
 	siblingParent: string,
 ): { status: RestoreStatus; failure?: RestoreFailure } {
 	const target = join(siblingParent, repo.name);
+	// When the repo lives INSIDE the workbench at its trunk path — the nested
+	// layout `repos_root: "."` exists to express — there is no link to make and
+	// nothing wrong. Reporting that as "a real directory occupies …" describes
+	// a working layout as a collision.
+	const isNested = resolve(target) === resolve(join(workbenchRoot, repoDir(repo)));
 
 	if (existsSync(join(target, ".git"))) {
+		if (isNested) return { status: "nested" };
 		const linked = linkTrunk(workbenchRoot, repoDir(repo), target);
 		return { status: linked ? "present" : "present-unlinked" };
 	}
@@ -252,6 +270,7 @@ function restoreOne(
 	// By declared path, and reporting what the link attempt actually did —
 	// the clone branch had BOTH bugs the present branch had: it resolved by
 	// name rather than declared path, and it discarded the result.
+	if (isNested) return { status: "nested-cloned" };
 	const linked = linkTrunk(workbenchRoot, repoDir(repo), target);
 	return { status: linked ? "cloned" : "cloned-unlinked" };
 }
