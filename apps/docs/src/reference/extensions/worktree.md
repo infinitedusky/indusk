@@ -110,6 +110,30 @@ flowchart TD
 
 Reserved subdirs (`.indusk`, `node_modules`, `dist`, `build`, `.git`, `.next`, `scripts`, `env`) are skipped during resolution. Exact-match wins over suffix-match. The trunk (whose name matches `worktree.wrapped_repo`) is just another subdir from wt.sh's perspective — `pnpm wt <wrapped-repo-name> <cmd>` runs from the trunk symlink.
 
+## Naming the repo
+
+A workbench wraps N repos, so `create` takes an optional repo argument:
+
+```bash
+indusk worktree create <slug> [base-branch]           # one repo declared
+indusk worktree create <repo> <slug> [base-branch]    # several declared
+```
+
+The argument is **optional when exactly one repo is declared** and **required
+when several are**. Naming nothing with several declared is a refusal listing
+the candidates, never a silent pick — a worktree created against the wrong repo
+looks exactly like success until someone reads the branch.
+
+The same rule decides where the worktree goes. A repo that declares
+`worktrees` gets its worktrees inside that directory; a repo that declares
+nothing gets them at the workbench root, which is the flat layout every
+pre-existing workbench has. Absence means today's behavior.
+
+> Before 1.37.2 the location was only honored when the repo was named
+> explicitly — so on a single-repo workbench, where nobody names it, a declared
+> location was ignored and new worktrees went back to the root, silently
+> undoing a `migrate-layout`.
+
 ## Create + refresh lifecycle
 
 The `setup-worktree.sh` and `refresh-worktree.sh` bash scripts (under `apps/indusk-mcp/extensions/worktree/scripts/`) implement the per-worktree state machine. The TS CLI in Phase 6 wraps them as `indusk worktree create` and `indusk worktree refresh`.

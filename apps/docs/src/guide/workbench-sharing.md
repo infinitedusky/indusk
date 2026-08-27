@@ -145,6 +145,22 @@ that — "zero commits ahead" — would report the worst case as the best one. S
   an agent-write hook plus `/catchup`; a watcher daemon that would catch IDE
   edits is deferred until the gap is felt. Run `indusk workbench sync` by hand.
 
+## What actually triggers a sync
+
+Three things, and only the third is something you type:
+
+| Trigger | When |
+|---|---|
+| `workbench-sync.js` PostToolUse hook | after an agent Edit/Write, debounced to one sync per 20s |
+| `/catchup` | session start |
+| `indusk workbench sync` | when you want one now |
+
+The hook is registered in `.claude/settings.json` by `indusk init`/`update`,
+and is **inert outside a workbench** — a normal-mode project keeps `.indusk/`
+inside its own product repo, where auto-committing on every edit would commit
+half-finished source. It also never blocks: a sync failure must not fail your
+edit, and an unreachable remote is a normal condition, not an error.
+
 ## See also
 
 - [`indusk workbench`](../reference/cli/workbench.md) — restore, sync, status

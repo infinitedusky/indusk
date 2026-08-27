@@ -197,6 +197,68 @@ directory. Collision is a different question from traversal, and it gets its
 own answer: a declared value naming one of those three is dropped like any
 other bad value, and the default applies.
 
+## `indusk workbench sync`
+
+Share the workbench between machines. Commit whatever changed, pull, push.
+
+```bash
+indusk workbench sync                    # the loop
+indusk workbench sync --no-ignore-check  # override the refusal below
+```
+
+**You do not normally type this.** A debounced `PostToolUse` hook runs it after
+agent edits, and `/catchup` runs it at session start. The explicit command
+exists for forcing one, and for machines where no agent is editing.
+
+### What one run does
+
+1. **Commit** everything not ignored at the workbench root, with a timestamp
+   message. The wrapped repos are never touched — your code commits stay yours
+   to make.
+2. **Pull**, resolving conflicts blindly rather than stopping.
+3. **Push**, if a remote exists.
+
+The output is one line naming what happened:
+
+```
+sync: committed=true pulled=ok pushed=ok
+```
+
+### Why resolving blindly is safe
+
+Two rules, and both are load-bearing:
+
+- **Both sides are committed before any merge**, so a hunk lost to a bad
+  resolution is still in `git log`. This is why **a failed commit aborts the
+  whole sync** — the moment step 1 fails, the argument for step 2 is void, and
+  pulling would merge someone else's history over work that exists nowhere but
+  your working tree. Failed commits are ordinary: a pre-commit hook, a missing
+  git identity, a full disk, an `index.lock` held by a concurrent sync.
+- **`merge=union` on the append-shaped files** — `current.md` and
+  `highlights.jsonl`, where two machines appending different lines both mean
+  it. A conflict marker in `current.md` blocks every agent on both sides.
+
+### Offline, and before a remote exists
+
+Neither is an error. With no network the commit lands locally and goes out on
+the next sync; with no remote configured it says so and stops after committing:
+
+```
+No remote configured — commits are local only. `git remote add origin <url>` to share.
+```
+
+`git init` with no remote is a complete working state, not a half-configured
+one — local history is useful before you decide where to share it.
+
+### It refuses when the ignore file cannot hold
+
+A workbench whose `.gitignore` predates these rules has no root rule, so a sync
+would commit whole worktree checkouts into the shared repo. Rather than doing
+that, sync **stops** and names what is missing. An InDusk-managed ignore file
+is topped up automatically instead — provenance decides: InDusk wrote it, so
+InDusk may extend it. A hand-written file is never rewritten, and
+`--no-ignore-check` is the deliberate way past.
+
 ## `indusk workbench status`
 
 Per repo, whether its commits have actually left this machine.
