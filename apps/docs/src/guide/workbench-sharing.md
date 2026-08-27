@@ -117,11 +117,24 @@ and the plan is the faster one. `indusk workbench status` answers the second:
   repo-a: 3 commit(s) ahead of its remote — NOT PUSHED, so a teammate
           pulling this workbench cannot see that work yet
   repo-b: in sync with its remote
+  repo-c: has a remote, but this branch has NEVER BEEN PUSHED — none of its
+          work is visible to anyone else
 ```
+
+The third line is its own state on purpose. A branch that has never been
+pushed has no remote-tracking ref to count from, and the natural reading of
+that — "zero commits ahead" — would report the worst case as the best one. See
+[`indusk workbench status`](../reference/cli/workbench.md).
 
 ## Known limits
 
 - **Branches must be pushed to be recreatable**, and uncommitted work never travels.
+- **A sync whose commit fails stops there.** Resolving a merge blindly is only
+  safe because both sides were committed first — that is what makes a lost hunk
+  recoverable from `git log`. When the commit fails, that argument is void, so
+  sync says why and leaves the working tree untouched rather than merging over
+  work that exists nowhere else. Failed commits are ordinary: a pre-commit hook,
+  a missing git identity, a full disk.
 - **Secrets and SSH host aliases are permanently out of band.** Not a gap to close — a boundary.
 - **`indusk verify` refuses inside a workbench.** Plan documents and code live in
   different repositories, and the verify ledger's baseline has no meaning in the

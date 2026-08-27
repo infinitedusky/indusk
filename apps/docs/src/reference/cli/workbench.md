@@ -93,28 +93,41 @@ beside `<parent>/<repo>-workbench` — not a guess.
 `restore` writes two files when they are absent, and never rewrites them — a
 hand-tuned ignore file is a decision somebody made, not drift.
 
-**`.gitignore` is a root whitelist, not a blacklist.** Everything at the root is
-denied, then specific entries are opted back in:
+**For a flat workbench, `.gitignore` is a root-DIRECTORY whitelist**, not a
+blacklist. Every root directory is denied, then specific ones are opted back
+in, and the trunk symlinks are named:
 
 ```gitignore
-/*
+/*/
 !/.indusk/
 !/.claude/
 !/env/
 !/scripts/
 !/docs/
-!/package.json
-...
+
+# --- InDusk trunk symlinks (generated) ---
+/service-api
+/service-web
 ```
 
-Two reasons it is inverted:
+Why it is inverted, and why it stops where it does:
 
 - **Worktree directories get names invented at runtime.** `indusk worktree
   create <slug>` can produce any name, so a deny-list is always one command
   behind — and the thing it misses is a whole checkout of another repo
   committed into your context remote.
-- **The rule is `/*`, not `/*/`.** Git stores a trunk symlink as a *blob*, not
-  a directory, so a directory-only rule leaves every trunk link tracked.
+- **The rule is `/*/`, and root FILES are deliberately not denied.** An earlier
+  version used `/*` to also catch trunk symlinks — git stores those as blobs,
+  so a directory-only rule misses them — and thereby untracked every root file
+  a real workbench had: `.mcp.json`, `biome.json`, `instrumentation.ts`. Those
+  are shared context. The symlinks are named explicitly instead, one generated
+  line per declared repo.
+
+**A workbench that declares its layout needs none of this.** Every worktree
+lives inside a directory the config names, so each gets one precise line and
+no deny-by-default rule is imposed — which is what makes the block safe to
+append to a `.gitignore` somebody else wrote. See
+[Declaring where things live](#declaring-where-things-live).
 
 **`.gitattributes`** sets `merge=union` on the append-shaped coordination files
 (`current.md`, `highlights.jsonl`) — two machines appending different lines both
@@ -164,6 +177,41 @@ Both values are joined into filesystem paths, so both are **boundary values**:
 each must be a single clean path segment. A declared value containing `/` or
 `..` is dropped and the default applies — degrade to structure-loss, never a
 traversal.
+
+**Reserved names are refused too.** `.git`, `.indusk`, and `.claude` are all
+perfectly clean single segments, so the traversal guard accepts them — and
+`"worktrees": ".git"` would then place worktrees inside the workbench's own git
+directory. Collision is a different question from traversal, and it gets its
+own answer: a declared value naming one of those three is dropped like any
+other bad value, and the default applies.
+
+## `indusk workbench status`
+
+Per repo, whether its commits have actually left this machine.
+
+```bash
+indusk workbench status
+```
+
+```
+  service-api: 3 commit(s) ahead of its remote — NOT PUSHED, so a teammate
+               pulling this workbench cannot see that work yet
+  service-web: in sync with its remote
+  scratch:     has a remote, but this branch has NEVER BEEN PUSHED — none of
+               its work is visible to anyone else
+  tooling:     present, no remote configured (nothing to publish to)
+  archived:    not materialized — run `indusk workbench restore`
+```
+
+Five states, and the third exists because it used to be reported as the
+second. `git rev-list <remote>/<branch>..HEAD` does not return `0` when the
+branch has never been pushed — it **errors**, because the ref it is counting
+from does not exist. Reading that error as "0 commits ahead" turned the worst
+case (nothing has ever left this machine) into the most reassuring message
+(everything is published), inverting the exact skew status exists to expose.
+
+Each repo is resolved by its **declared `path`**, never by its `name` — the
+same rule as everything else that touches the layout.
 
 ## `indusk workbench migrate-layout`
 
