@@ -5,6 +5,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
+import { linkTrunk } from "../../lib/worktree/layout.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../../..");
@@ -483,14 +484,19 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			);
 			process.exit(1);
 		}
-		const trunkLink = join(projectRoot, wrappedRepo);
-		if (existsSync(trunkLink)) {
-			console.info(`[Workbench] trunk symlink already exists: ${wrappedRepo}`);
+		// Through the shared `linkTrunk`, not a local `symlinkSync`. The inline
+		// version here was a strict subset: it created a link when nothing was
+		// there and said "already exists" otherwise, so a DANGLING link (target
+		// gone — `existsSync` follows the link and reports false) took the create
+		// branch and threw EEXIST, and a REAL DIRECTORY was reported as a symlink
+		// that exists. `restore` learned both cases the hard way in A30.
+		const rel = relative(projectRoot, canonicalClone);
+		if (linkTrunk(projectRoot, wrappedRepo, canonicalClone)) {
+			console.info(`[Workbench] trunk symlink: ${wrappedRepo} -> ${rel}`);
 		} else {
-			// Use a relative target so the workbench is portable.
-			const rel = relative(projectRoot, canonicalClone);
-			symlinkSync(rel, trunkLink);
-			console.info(`[Workbench] created trunk symlink: ${wrappedRepo} -> ${rel}`);
+			console.info(
+				`[Workbench] ${wrappedRepo} is a real directory, not a symlink — left as is, no trunk link made`,
+			);
 		}
 	}
 
