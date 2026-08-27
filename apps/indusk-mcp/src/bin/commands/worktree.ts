@@ -115,11 +115,36 @@ function runWorktreeScript(scriptName: string, args: string[]): never {
  * `_resolve_workbench_repo` in the shell refuses, naming the candidates —
  * one refusal, in one place, rather than two that can disagree.
  */
+/**
+ * Which repo a `worktree create` means, and what to call the worktree.
+ *
+ * Pure, so the resolution is testable without spawning the shell script that
+ * does the work. The single-repo branch is the one that was missing: on a
+ * workbench declaring one repo you type `worktree create <slug>` with no repo
+ * argument, nothing resolved the repo, and so the repo's declared worktrees
+ * location was never passed — every new worktree went back to the workbench
+ * root, silently undoing a `migrate-layout`.
+ *
+ * With several declared and none named it still returns no repo, because
+ * guessing would put a worktree in the wrong repo — which looks exactly like
+ * success until someone reads the branch. The shell lane refuses that case by
+ * name.
+ */
+export function resolveCreateTarget(
+	repos: readonly { name: string }[],
+	args: string[],
+): { repo?: string; slug: string; baseBranch?: string } {
+	const names = new Set(repos.map((r) => r.name));
+	const named = args.length >= 2 && names.has(args[0]);
+	const rest = named ? args.slice(1) : args;
+	const repo = named ? args[0] : repos.length === 1 ? repos[0].name : undefined;
+	const [slug, baseBranch] = rest;
+	return baseBranch ? { repo, slug, baseBranch } : { repo, slug };
+}
+
 export function worktreeCreate(args: string[], projectRoot?: string): never {
-	const declared = new Set(readWorkbenchRepos(projectRoot ?? process.cwd()).map((r) => r.name));
-	const named = args.length >= 2 && declared.has(args[0]);
-	const repo = named ? args[0] : undefined;
-	const [slug, baseBranch] = named ? args.slice(1) : args;
+	const repos = readWorkbenchRepos(projectRoot ?? process.cwd());
+	const { repo, slug, baseBranch } = resolveCreateTarget(repos, args);
 	return worktreeCreateResolved(slug, baseBranch, repo);
 }
 

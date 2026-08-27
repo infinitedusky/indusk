@@ -543,14 +543,38 @@ export function workbenchMigrateLayout(projectRoot: string, opts: { apply?: bool
 	process.exit(0);
 }
 
-/** Write `worktrees` for the given repos. Returns the names it declared. */
+/**
+ * Write `worktrees` for the given repos. Returns the names it declared.
+ *
+ * MATERIALIZES the singular shape on the way. A legacy workbench declares
+ * `wrapped_repo` and has no `repos[]` at all, so iterating `cfg.worktree.repos`
+ * found nothing and the migration recorded nothing — on exactly the workbenches
+ * this migration exists for. The moves still happened, so the layout changed
+ * and the config did not, and the next `worktree create` put a worktree back at
+ * the root.
+ *
+ * The repo set comes from `readWorkbenchRepos`, never from re-reading the
+ * singular field here: the reduction has one definition and this is a caller,
+ * not a second copy of it. What this adds is writing that reduction down.
+ */
 function declareWorktreeLocations(projectRoot: string, repos: readonly WorkbenchRepo[]): string[] {
 	if (repos.length === 0) return [];
 	const cfgPath = join(projectRoot, ".indusk", "config.json");
 	const cfg = JSON.parse(readFileSync(cfgPath, "utf-8"));
+	cfg.worktree ??= {};
+	if (!Array.isArray(cfg.worktree.repos)) {
+		// Carry every field the reduction produced, so materializing loses
+		// nothing a declared entry would have held.
+		cfg.worktree.repos = repos.map((r) => ({
+			name: r.name,
+			...(r.remote ? { remote: r.remote } : {}),
+			...(r.path ? { path: r.path } : {}),
+			...(r.worktrees ? { worktrees: r.worktrees } : {}),
+		}));
+	}
 	const names = new Set(repos.map((r) => r.name));
 	const done: string[] = [];
-	for (const entry of cfg.worktree?.repos ?? []) {
+	for (const entry of cfg.worktree.repos) {
 		if (names.has(entry.name) && !entry.worktrees) {
 			entry.worktrees = `${entry.name}-worktrees`;
 			done.push(entry.name);

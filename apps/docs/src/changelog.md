@@ -4,6 +4,14 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.37.2] — 2026-08-27
+
+### Fixed
+- **`workbench migrate-layout` now sticks on the workbenches it was built for.** The migration moves a flat workbench's worktrees under `<repo>-worktrees/` and then declares where they went, so the layout holds. The declaration step iterated `cfg.worktree.repos` — a key a **legacy `wrapped_repo` config does not have** — so on exactly the workbenches this migration exists for, the moves happened and nothing was recorded. It now materializes the singular shape into `repos[]` first, taking the repo set from `readWorkbenchRepos` rather than re-reading the singular field, so the reduction keeps its one definition. Two visible consequences fixed: `worktree list` filed the moved worktrees under **Unattributed** instead of under their repo, and the layout silently undid itself as new worktrees returned to the root.
+- **`worktree create <slug>` respects a declared worktrees location on a single-repo workbench.** The location was only passed when the repo was named explicitly, and on a one-repo workbench nobody names it — so every new worktree landed at the workbench root regardless of what the config declared. Resolution now lives in a pure `resolveCreateTarget`, which picks the only declared repo when none is named and still refuses to guess when several are declared.
+
+Both were found by running `migrate-layout` against a copy of a real legacy workbench's config. Every fixture in the suite used the plural shape, so nothing covered the case the feature was built for.
+
 ## [1.37.1] — 2026-08-27
 
 ### Fixed
