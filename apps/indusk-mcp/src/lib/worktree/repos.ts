@@ -94,37 +94,21 @@ export function readSiblingParent(root: string): string | null {
 }
 
 /**
- * Resolve which declared repo a caller means.
+ * The refusal a command owes a project that is not a workbench.
  *
- * The rule the CLI surface needs in one place: naming a repo picks it, naming
- * nothing picks the only one when there is only one, and naming nothing with
- * several declared is a **refusal carrying the candidates** — never a silent
- * pick. Guessing here would put a worktree in the wrong repo, which looks
- * exactly like success until someone reads the branch.
+ * One string, because the *rule* it belongs to lives in bash. `worktree
+ * create`/`refresh`/`preflight` all resolve which repo the user meant inside
+ * `_resolve_workbench_repo`, and `worktreeCreate` deliberately passes `--repo`
+ * straight through rather than deciding first — so there is exactly one
+ * implementation of pick-one and it is the shell one.
+ *
+ * A TypeScript `resolveRepo` stood here with no caller, its docblock claiming
+ * to be "the rule the CLI surface needs in one place" while the CLI surface
+ * read the shell. Dead code that describes itself as authoritative is worse
+ * than dead code; what the TS lane actually shares with bash is this message.
  */
-export function resolveRepo(
-	repos: WorkbenchRepo[],
-	requested?: string,
-): { repo: WorkbenchRepo } | { error: string } {
-	if (repos.length === 0) {
-		return {
-			error:
-				'this project is not a workbench (set worktree.shape="workbench" and worktree.repos[] in .indusk/config.json, or run `indusk init --workbench`).',
-		};
-	}
-	if (requested !== undefined) {
-		const match = repos.find((r) => r.name === requested);
-		return match
-			? { repo: match }
-			: {
-					error: `no declared repo named "${requested}". This workbench declares: ${repos.map((r) => r.name).join(", ")}.`,
-				};
-	}
-	if (repos.length === 1) return { repo: repos[0] };
-	return {
-		error: `this workbench declares more than one repo, so the repo must be named: ${repos.map((r) => r.name).join(", ")}.`,
-	};
-}
+export const NOT_A_WORKBENCH =
+	'this project is not a workbench (set worktree.shape="workbench" and worktree.repos[] in .indusk/config.json, or run `indusk init --workbench`).';
 
 /**
  * Where this repo's checkout lives, relative to the workbench root.
@@ -135,14 +119,4 @@ export function resolveRepo(
  */
 export function repoDir(repo: WorkbenchRepo): string {
 	return repo.path ?? repo.name;
-}
-
-/**
- * Where this repo's worktrees go, relative to the workbench root.
- *
- * `"."` means the workbench root itself — today's flat layout, and what every
- * workbench that declares nothing gets.
- */
-export function worktreesDir(repo: WorkbenchRepo): string {
-	return repo.worktrees ?? ".";
 }

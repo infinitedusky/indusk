@@ -10,7 +10,12 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
-import { isWorkbench, readWorkbenchRepos, repoDir } from "../../lib/worktree/repos.js";
+import {
+	isWorkbench,
+	NOT_A_WORKBENCH,
+	readWorkbenchRepos,
+	repoDir,
+} from "../../lib/worktree/repos.js";
 import { validateWorktreeConfig } from "../../lib/worktree/validate-config.js";
 import { provisionWorktreeEnv } from "./doppler.js";
 
@@ -273,9 +278,7 @@ export function worktreeList(projectRoot: string): void {
 	const repos = readWorkbenchRepos(projectRoot);
 
 	if (!isWorkbench(projectRoot) || repos.length === 0) {
-		console.error(
-			'Error: this project is not a workbench (set worktree.shape="workbench" and worktree.repos[] in .indusk/config.json, or run `indusk init --workbench`).',
-		);
+		console.error(`Error: ${NOT_A_WORKBENCH}`);
 		process.exit(1);
 	}
 
