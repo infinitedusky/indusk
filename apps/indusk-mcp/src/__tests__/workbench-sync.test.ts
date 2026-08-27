@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { gitOut, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
 
 /**
@@ -19,38 +20,11 @@ import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-f
  * Red today on "unknown command": the `workbench` group does not exist.
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
-
 let fixture: TwoRepoFixture;
 
 afterEach(() => {
 	fixture?.cleanup();
 });
-
-function git(cwd: string, args: string[]): string {
-	return spawnSync("git", args, {
-		cwd,
-		encoding: "utf-8",
-		env: {
-			...process.env,
-			GIT_AUTHOR_NAME: "test",
-			GIT_AUTHOR_EMAIL: "test@test.local",
-			GIT_COMMITTER_NAME: "test",
-			GIT_COMMITTER_EMAIL: "test@test.local",
-		},
-	}).stdout;
-}
-
-function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
-	const r = spawnSync("node", [CLI_BIN, ...args], {
-		cwd,
-		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
-	});
-	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
-}
 
 describe.skipIf(SHOULD_SKIP)("A3 — every change commits itself", () => {
 	it("commits an edit with a timestamp-style message, unprompted", { timeout: 30_000 }, () => {
@@ -64,10 +38,10 @@ describe.skipIf(SHOULD_SKIP)("A3 — every change commits itself", () => {
 
 		// Nothing left uncommitted — "any change commits" is the contract, and a
 		// dirty tree is the thing that blocks the other machine's next pull.
-		expect(git(wb, ["status", "--porcelain"]).trim()).toBe("");
+		expect(gitOut(wb, ["status", "--porcelain"]).trim()).toBe("");
 		// The message is a sync log entry, not a narrative — it just has to be
 		// machine-recognizable and unprompted.
-		expect(git(wb, ["log", "-1", "--pretty=%s"])).toMatch(/\d{4}-\d{2}-\d{2}|sync/i);
+		expect(gitOut(wb, ["log", "-1", "--pretty=%s"])).toMatch(/\d{4}-\d{2}-\d{2}|sync/i);
 	});
 });
 
@@ -106,8 +80,8 @@ describe.skipIf(SHOULD_SKIP)("A16 — the two-clock skew is visible", () => {
 		// Local work in the wrapped repo that has NOT been pushed.
 		const codeRepo = join(fixture.root, "alpha");
 		writeFileSync(join(codeRepo, "unpushed.ts"), "export const x = 1;\n");
-		git(codeRepo, ["add", "-A"]);
-		git(codeRepo, ["commit", "-q", "-m", "work the other machine cannot see"]);
+		gitOut(codeRepo, ["add", "-A"]);
+		gitOut(codeRepo, ["commit", "-q", "-m", "work the other machine cannot see"]);
 
 		const { code, stdout } = runCli(wb, ["workbench", "status"]);
 
@@ -147,15 +121,15 @@ describe.skipIf(SHOULD_SKIP)("A24 — a failed commit stops the sync", () => {
 		expect(runCli(machineB, ["workbench", "sync"]).code).toBe(0);
 
 		writeFileSync(join(wb, ".indusk", "planning", "sample-plan", "unsaved.md"), "not committed\n");
-		const headBefore = git(wb, ["rev-parse", "HEAD"]).trim();
+		const headBefore = gitOut(wb, ["rev-parse", "HEAD"]).trim();
 
 		const r = runCli(wb, ["workbench", "sync"]);
 
 		// It must SAY the commit failed and stop — not proceed to merge.
 		expect(`${r.stdout}${r.stderr}`).toMatch(/commit failed/i);
-		expect(git(wb, ["rev-parse", "HEAD"]).trim()).toBe(headBefore);
+		expect(gitOut(wb, ["rev-parse", "HEAD"]).trim()).toBe(headBefore);
 		// The uncommitted work is still there, untouched.
-		expect(git(wb, ["status", "--porcelain"])).toContain("unsaved.md");
+		expect(gitOut(wb, ["status", "--porcelain"])).toContain("unsaved.md");
 		// And no merge happened.
 		expect(existsSync(join(wb, ".git", "MERGE_HEAD"))).toBe(false);
 		// The remote's commit must NOT have been merged in — stopping means

@@ -9,6 +9,7 @@ import {
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
 
 /**
@@ -25,24 +26,11 @@ import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-f
  * codebase has three separate mechanisms built to avoid exactly that shape.
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
-
 let fixture: TwoRepoFixture;
 
 afterEach(() => {
 	fixture?.cleanup();
 });
-
-function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
-	const r = spawnSync("node", [CLI_BIN, ...args], {
-		cwd,
-		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
-	});
-	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
-}
 
 /** Every path under `dir`, sorted — the cheapest honest "did anything change". */
 function treeSnapshot(dir: string): string[] {
@@ -199,7 +187,9 @@ describe.skipIf(SHOULD_SKIP)("A15 — what restore cannot supply, it names", () 
 });
 
 describe.skipIf(SHOULD_SKIP)("A30 — never claim a link that was not created", () => {
-	it("does not say `trunk linked` when a real directory occupies the path", { timeout: 30_000 }, () => {
+	it("does not say `trunk linked` when a real directory occupies the path", {
+		timeout: 30_000,
+	}, () => {
 		// `linkTrunk` correctly refuses to remove a real directory sitting where
 		// the trunk goes — but restore prints "trunk linked" unconditionally. On
 		// a workbench whose trunk is a real checkout rather than a symlink, that

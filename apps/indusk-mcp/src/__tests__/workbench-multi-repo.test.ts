@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	buildTwoRepoWorkbench,
 	buildWorktreeFixture,
@@ -24,10 +25,6 @@ import {
  * authoring now is a red that means something.
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
-
 let fixture: TwoRepoFixture;
 let legacy: WorktreeFixture;
 
@@ -35,15 +32,6 @@ afterEach(() => {
 	fixture?.cleanup();
 	legacy?.cleanup();
 });
-
-function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
-	const r = spawnSync("node", [CLI_BIN, ...args], {
-		cwd,
-		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
-	});
-	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
-}
 
 /**
  * The block of `worktree list` output belonging to one repo.

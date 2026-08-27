@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, renameSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { gitOut, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
 
 /**
@@ -16,28 +17,11 @@ import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-f
  * because it converts someone else's outage into your inability to work.
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
-
 let fixture: TwoRepoFixture;
 
 afterEach(() => {
 	fixture?.cleanup();
 });
-
-function git(cwd: string, args: string[]): string {
-	return spawnSync("git", args, { cwd, encoding: "utf-8" }).stdout;
-}
-
-function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
-	const r = spawnSync("node", [CLI_BIN, ...args], {
-		cwd,
-		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
-	});
-	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
-}
 
 describe.skipIf(SHOULD_SKIP)("A6 — offline degrades gracefully", () => {
 	it("keeps committing locally, then drains when the remote returns", { timeout: 30_000 }, () => {
@@ -54,8 +38,8 @@ describe.skipIf(SHOULD_SKIP)("A6 — offline degrades gracefully", () => {
 
 		// The work is committed locally even though the push cannot land. An
 		// unreachable remote is not a reason to lose an edit.
-		expect(git(wb, ["status", "--porcelain"]).trim()).toBe("");
-		expect(git(wb, ["log", "--oneline"])).toContain("");
+		expect(gitOut(wb, ["status", "--porcelain"]).trim()).toBe("");
+		expect(gitOut(wb, ["log", "--oneline"])).toContain("");
 		// It may warn — it must not present the outage as the developer's
 		// problem to solve before continuing.
 		expect(`${offline.stdout}${offline.stderr}`).not.toMatch(/aborted|cannot continue|fatal:/i);
@@ -67,9 +51,9 @@ describe.skipIf(SHOULD_SKIP)("A6 — offline degrades gracefully", () => {
 		expect(back.code).toBe(0);
 
 		// The backlog arrived with no manual git from anyone.
-		const remoteLog = git(remote, ["log", "--oneline", "--all"]);
-		const localHead = git(wb, ["rev-parse", "HEAD"]).trim();
+		const remoteLog = gitOut(remote, ["log", "--oneline", "--all"]);
+		const localHead = gitOut(wb, ["rev-parse", "HEAD"]).trim();
 		expect(remoteLog.length).toBeGreaterThan(0);
-		expect(git(remote, ["cat-file", "-t", localHead]).trim()).toBe("commit");
+		expect(gitOut(remote, ["cat-file", "-t", localHead]).trim()).toBe("commit");
 	});
 });

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { buildWorktreeFixture, type WorktreeFixture } from "./helpers/worktree-fixture.js";
 
 /**
@@ -23,24 +24,11 @@ import { buildWorktreeFixture, type WorktreeFixture } from "./helpers/worktree-f
  * create + preflight wrap their bash scripts via runWorktreeScript).
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
-
 let fixture: WorktreeFixture;
 
 afterEach(() => {
 	fixture?.cleanup();
 });
-
-function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
-	const r = spawnSync("node", [CLI_BIN, ...args], {
-		cwd,
-		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
-	});
-	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
-}
 
 describe.skipIf(SHOULD_SKIP)("indusk worktree <subcommand>", () => {
 	describe("T11: list shows wrapped repo + trunk + config + worktrees", () => {

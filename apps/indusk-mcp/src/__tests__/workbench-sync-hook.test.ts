@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { CLI_BIN, gitOut, REPO_ROOT, SHOULD_SKIP } from "./helpers/cli.js";
 import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
 
 /**
@@ -18,20 +19,13 @@ import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-f
  * assert it from the outside: run the hook, see whether a commit appeared.
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
 const HOOK = join(REPO_ROOT, "apps/indusk-mcp/hooks/workbench-sync.js");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
 
 let fixture: TwoRepoFixture;
 
 afterEach(() => {
 	fixture?.cleanup();
 });
-
-function git(cwd: string, args: string[]): string {
-	return spawnSync("git", args, { cwd, encoding: "utf-8" }).stdout ?? "";
-}
 
 /**
  * A real executable standing in for `indusk` on PATH.
@@ -74,14 +68,14 @@ describe.skipIf(SHOULD_SKIP)("the sync trigger is inert outside a workbench", ()
 			{ encoding: "utf-8" },
 		);
 
-		const before = git(root, ["rev-parse", "HEAD"]).trim();
+		const before = gitOut(root, ["rev-parse", "HEAD"]).trim();
 		writeFileSync(join(root, ".indusk", "planning", "sample-plan", "wip.md"), "half a thought\n");
 
 		expect(fireHook(root, fixture.root)).toBe(0);
 
 		// The edit is untouched and uncommitted — the developer's tree is theirs.
-		expect(git(root, ["rev-parse", "HEAD"]).trim()).toBe(before);
-		expect(git(root, ["status", "--porcelain"])).toContain("wip.md");
+		expect(gitOut(root, ["rev-parse", "HEAD"]).trim()).toBe(before);
+		expect(gitOut(root, ["status", "--porcelain"])).toContain("wip.md");
 	});
 
 	it("does commit in a real workbench, so the guard is not just always-off", {
@@ -92,13 +86,13 @@ describe.skipIf(SHOULD_SKIP)("the sync trigger is inert outside a workbench", ()
 		fixture = buildTwoRepoWorkbench({ gitInitWorkbench: true });
 		const root = fixture.workbenchDir;
 
-		const before = git(root, ["rev-parse", "HEAD"]).trim();
+		const before = gitOut(root, ["rev-parse", "HEAD"]).trim();
 		writeFileSync(join(root, ".indusk", "planning", "sample-plan", "note.md"), "a thought\n");
 
 		expect(fireHook(root, fixture.root)).toBe(0);
 
-		expect(git(root, ["rev-parse", "HEAD"]).trim()).not.toBe(before);
-		expect(git(root, ["log", "-1", "--pretty=%s"])).toMatch(/sync \d{4}-\d{2}-\d{2}/);
+		expect(gitOut(root, ["rev-parse", "HEAD"]).trim()).not.toBe(before);
+		expect(gitOut(root, ["log", "-1", "--pretty=%s"])).toMatch(/sync \d{4}-\d{2}-\d{2}/);
 	});
 
 	it("never fails an edit, even when the sync itself cannot run", { timeout: 30_000 }, () => {
@@ -134,6 +128,6 @@ describe.skipIf(SHOULD_SKIP)("A25 — the trigger works before the repo exists",
 		// The hook must have driven a sync, which initializes the repo and
 		// commits — not exited quietly because no repo existed yet.
 		expect(existsSync(join(root, ".git"))).toBe(true);
-		expect(git(root, ["log", "-1", "--pretty=%s"])).toMatch(/sync \d{4}-\d{2}-\d{2}/);
+		expect(gitOut(root, ["log", "-1", "--pretty=%s"])).toMatch(/sync \d{4}-\d{2}-\d{2}/);
 	});
 });

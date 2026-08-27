@@ -178,7 +178,8 @@ describe("A27 — reserved names are refused as declared paths", () => {
 		// segments, so `worktrees: ".git"` would place worktrees inside the
 		// workbench's own git directory, and `path: ".indusk"` would resolve a
 		// trunk onto InDusk's state.
-		const { mkdtempSync, mkdirSync, writeFileSync } = require("node:fs") as typeof import("node:fs");
+		const { mkdtempSync, mkdirSync, writeFileSync } =
+			require("node:fs") as typeof import("node:fs");
 		const { tmpdir } = require("node:os") as typeof import("node:os");
 
 		const mk = (repo: Record<string, unknown>): string => {
@@ -216,7 +217,9 @@ describe("A27 — reserved names are refused as declared paths", () => {
  */
 describe("A31 — the reserved root-directory set is single-definition", () => {
 	it("has exactly one definition under src/", () => {
-		const hits = grepCode("RESERVED_ROOT_DIRS", SRC).filter((l) => /const RESERVED_ROOT_DIRS/.test(l));
+		const hits = grepCode("RESERVED_ROOT_DIRS", SRC).filter((l) =>
+			/const RESERVED_ROOT_DIRS/.test(l),
+		);
 		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
 	});
 

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-fixture.js";
 
 /**
@@ -21,39 +22,11 @@ import { buildTwoRepoWorkbench, type TwoRepoFixture } from "./helpers/worktree-f
  * one `worktree create` behind.
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
-
 let fixture: TwoRepoFixture;
 
 afterEach(() => {
 	fixture?.cleanup();
 });
-
-function git(cwd: string, args: string[]): { code: number; stdout: string } {
-	const r = spawnSync("git", args, {
-		cwd,
-		encoding: "utf-8",
-		env: {
-			...process.env,
-			GIT_AUTHOR_NAME: "test",
-			GIT_AUTHOR_EMAIL: "test@test.local",
-			GIT_COMMITTER_NAME: "test",
-			GIT_COMMITTER_EMAIL: "test@test.local",
-		},
-	});
-	return { code: r.status ?? -1, stdout: r.stdout };
-}
-
-function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
-	const r = spawnSync("node", [CLI_BIN, ...args], {
-		cwd,
-		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
-	});
-	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
-}
 
 describe.skipIf(SHOULD_SKIP)("A8 — residue stays out of the shared remote", () => {
 	it("keeps trunk symlinks, worktrees, and env out of the remote", { timeout: 30_000 }, () => {
