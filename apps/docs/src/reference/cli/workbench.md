@@ -172,6 +172,27 @@ A repo entry can say where its checkout and its worktrees are:
 | `path` | the repo's `name` |
 | `worktrees` | the workbench root — today's flat layout |
 
+And at the workbench level, `repos_root` says where the repos themselves live:
+
+```jsonc
+"worktree": {
+  "shape": "workbench",
+  "repos_root": ".",                 // the repos live inside the workbench
+  "repos": [{ "name": "svc", "remote": "…", "worktrees": "worktrees/svc" }]
+}
+```
+
+**Relative resolves against the workbench, and that is what makes a layout
+portable.** `repos_root: "."` means "here" on every machine, so a clone
+rebuilds the same shape. An **absolute** value keeps its older meaning — it
+names whichever machine wrote it, and restore says so and falls back to the
+workbench's parent where it does not resolve. `repos_root` supersedes
+`sibling_parent`, which is still read, so no existing workbench needs an edit.
+
+> `sibling_parent` named a relationship — "the parent of the siblings" — which
+> stops being true once the repos live inside the workbench. `repos_root` names
+> the value instead, and stays true in both layouts.
+
 **Absence means flat**, so an existing workbench declares nothing and behaves
 exactly as it does now. The nested layout is opt-in per repo.
 
@@ -186,9 +207,13 @@ Two things follow from declaring rather than inferring:
   exactly — one generated line instead of denying the whole root by default.
 
 Both values are joined into filesystem paths, so both are **boundary values**:
-each must be a single clean path segment. A declared value containing `/` or
-`..` is dropped and the default applies — degrade to structure-loss, never a
-traversal.
+each must be a relative path that cannot escape the workbench. Depth is fine —
+`worktrees/svc` and `repos` are both legal — but an absolute path, a `~`, or a
+`..` in **any** position is dropped and the default applies. Degrade to
+structure-loss, never a traversal.
+
+"Cannot escape" and "one segment" were conflated before 1.37.2, which is why
+nesting was previously inexpressible.
 
 **Reserved names are refused too.** `.git`, `.indusk`, and `.claude` are all
 perfectly clean single segments, so the traversal guard accepts them — and

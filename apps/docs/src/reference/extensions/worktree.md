@@ -112,6 +112,25 @@ Reserved subdirs (`.indusk`, `node_modules`, `dist`, `build`, `.git`, `.next`, `
 
 ## Naming the repo
 
+`pnpm wt <slug>` searches the workbench root **and every declared worktrees
+directory**. An unambiguous slug resolves bare; an ambiguous one refuses and
+names the candidates:
+
+```
+Error: multiple targets match slug 'cool-name':
+  alpha/cool-name
+  beta/cool-name
+Name the repo to disambiguate, e.g. `wt <repo>/cool-name`.
+```
+
+`wt alpha/cool-name` resolves it. **Repo-qualified, not directory-qualified** —
+the repo name and the slug are what you know, while the directory is a config
+detail that changes when the layout does.
+
+> Before 1.37.2, `wt.sh` scanned only the workbench root, so a worktree inside
+> a declared directory was invisible rather than ambiguous.
+
+
 A workbench wraps N repos, so `create` takes an optional repo argument:
 
 ```bash
