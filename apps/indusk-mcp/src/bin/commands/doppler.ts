@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { readReposRoot, readWorkbenchRepos, repoDir } from "../../lib/worktree/repos.js";
+import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
 
 /**
  * doppler extension — `env-pull` + worktree auto-provisioning.
@@ -237,13 +237,7 @@ export function dopplerEnvPull(projectRoot: string, profile: string): void {
 function appRepoRoot(projectRoot: string): string {
 	const repos = readWorkbenchRepos(projectRoot);
 	if (repos.length !== 1) return projectRoot;
-	const declared = readReposRoot(projectRoot);
-	const base = !declared
-		? join(projectRoot, "..")
-		: declared.startsWith("/") || declared.startsWith("~")
-			? declared
-			: join(projectRoot, declared);
-	return join(base, repoDir(repos[0]));
+	return join(resolveReposRoot(projectRoot), repoDir(repos[0]));
 }
 
 /**

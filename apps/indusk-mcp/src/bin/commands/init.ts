@@ -53,7 +53,20 @@ const GITIGNORE_MARKER = "# InDusk managed";
 
 export function ensureGitignore(projectRoot: string): void {
 	const gitignorePath = join(projectRoot, ".gitignore");
-	const content = existsSync(gitignorePath) ? readFileSync(gitignorePath, "utf-8") : "";
+	let content = existsSync(gitignorePath) ? readFileSync(gitignorePath, "utf-8") : "";
+
+	// Retire the blanket `.indusk/extensions/` rule from projects that already
+	// have it. Adding the narrower secrets rules beside it does nothing while
+	// the blanket line stands — manifests stay untracked, and `indusk update`
+	// keeps replacing local fixes with no diff and no message.
+	if (/^\.indusk\/extensions\/$/m.test(content)) {
+		content = content.replace(/^# Extension manifests are package-owned[^\n]*\n/m, "");
+		content = content.replace(/^\.indusk\/extensions\/$\n?/m, "");
+		writeFileSync(gitignorePath, content);
+		console.info(
+			"  updated: .gitignore — extension manifests are now tracked (only their .env files are ignored)",
+		);
+	}
 
 	// Collect entries that are missing from the current .gitignore
 	const missing = GITIGNORE_ENTRIES.filter((e) => !content.includes(e.pattern));

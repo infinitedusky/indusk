@@ -1,15 +1,7 @@
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { readReposRoot, readWorkbenchRepos, repoDir } from "../../lib/worktree/repos.js";
-
-/** `repos_root`, resolved — relative against the workbench, absolute as given. */
-function reposRootFor(projectRoot: string): string {
-	const declared = readReposRoot(projectRoot);
-	if (!declared) return join(projectRoot, "..");
-	if (declared.startsWith("/") || declared.startsWith("~")) return declared;
-	return join(projectRoot, declared);
-}
+import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
 
 export async function initDocs(projectRoot: string): Promise<void> {
 	// Docs describe the APPLICATION and must travel with it. In a workbench,
@@ -23,7 +15,7 @@ export async function initDocs(projectRoot: string): Promise<void> {
 	const repos = readWorkbenchRepos(projectRoot);
 	let target = projectRoot;
 	if (repos.length === 1) {
-		target = join(reposRootFor(projectRoot), repoDir(repos[0]));
+		target = join(resolveReposRoot(projectRoot), repoDir(repos[0]));
 		console.info(`Workbench detected — scaffolding into the application repo: ${repos[0].name}\n`);
 	} else if (repos.length > 1) {
 		console.error(

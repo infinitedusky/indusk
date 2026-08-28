@@ -4,6 +4,14 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.39.1] — 2026-08-28
+
+### Fixed
+- **`indusk update` told a nested workbench its repo was missing, and to run a command that would have duplicated it.** The materialization nudge read only the legacy `sibling_parent`, never resolved a relative value, and looked repos up by `name` rather than declared `path` — so on a workbench using `repos_root: "."` it reported every repo unmaterialized and recommended `workbench restore`, which would have cloned a second copy beside the workbench and relinked the trunks at it. **The first defect in this family to recommend a destructive action.** `workbench status` had it right the whole time; two code paths, different path logic, one wrong.
+- **`repos_root` resolution has one definition.** It had four — `workbench restore`, the health-check runner, doppler's env-pull, and the nudge above — and they disagreed. `resolveReposRoot` is now the single definition, pinned by a test, with the test lane excluded from its own scan because an enforcement grep that matches its own pattern literal is green or red for reasons unrelated to the code.
+- **otel health checks find Python.** `python -c "import opentelemetry"` exits 127 on a machine with only `python3`, which is indistinguishable from "package missing" in a boolean result. Tries `python3` first, and `instrumentation.py` is recognised at `src/` as well as the root.
+- **`indusk update` retires the blanket `.indusk/extensions/` ignore rule** on projects that still carry it. 1.39.0 added the narrower secrets rules but left the blanket line standing in existing projects, which did nothing — manifests stayed untracked and update kept replacing local fixes silently.
+
 ## [1.39.0] — 2026-08-28
 
 Four defects from a report written while building a polyglot workbench. Three

@@ -7,7 +7,7 @@ import { globSync } from "glob";
 import { loadExtension } from "../../lib/extension-loader.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
-import { readSiblingParent, readWorkbenchRepos } from "../../lib/worktree/repos.js";
+import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
 import { missingIgnoreRules } from "../../lib/worktree/shareable.js";
 import { syncWorkbench } from "../../lib/worktree/sync.js";
 import { envIsFunctional } from "./extensions.js";
@@ -840,13 +840,13 @@ function nudgeUnmaterializedRepos(projectRoot: string): void {
 	const repos = readWorkbenchRepos(projectRoot);
 	if (repos.length === 0) return;
 
-	const declaredParent = readSiblingParent(projectRoot);
-	const parent =
-		declaredParent && existsSync(resolvePath(declaredParent))
-			? resolvePath(declaredParent)
-			: resolvePath(projectRoot, "..");
-
-	const missing = repos.filter((r) => !existsSync(join(parent, r.name, ".git")));
+	// One definition, shared with `workbench restore`/`status`. This read only
+	// the legacy `sibling_parent`, never resolved a relative value, and looked
+	// repos up by `name` rather than declared `path` — so a nested workbench was
+	// told every repo was missing, and to run `workbench restore`, which would
+	// have cloned a second copy beside it and relinked the trunks at that.
+	const parent = resolveReposRoot(projectRoot);
+	const missing = repos.filter((r) => !existsSync(join(parent, repoDir(r), ".git")));
 	if (missing.length === 0) return;
 
 	console.info("");

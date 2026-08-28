@@ -17,7 +17,7 @@
 
 import { execSync } from "node:child_process";
 import { join } from "node:path";
-import { readReposRoot, readWorkbenchRepos, repoDir } from "./worktree/repos.js";
+import { readWorkbenchRepos, repoDir, resolveReposRoot } from "./worktree/repos.js";
 
 export interface HealthCheckSpec {
 	name: string;
@@ -47,13 +47,7 @@ export function resolveCheckRoots(projectRoot: string): string[] {
 
 	// `repos_root` decides where repos live; `repoDir` decides each one's
 	// directory name. Both already have single definitions — this is a caller.
-	const declared = readReposRoot(projectRoot);
-	const base = !declared
-		? join(projectRoot, "..")
-		: declared.startsWith("/") || declared.startsWith("~")
-			? declared
-			: join(projectRoot, declared);
-	return repos.map((r) => join(base, repoDir(r)));
+	return repos.map((r) => join(resolveReposRoot(projectRoot), repoDir(r)));
 }
 
 /**

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import type { WorkbenchRepo, WorktreeConfig } from "../config.js";
 import { isCleanSegment, isUsableRelPath, isUsableSegment } from "../path-segment.js";
 
@@ -112,6 +112,31 @@ export function readReposRoot(root: string): string | undefined {
 		if (typeof value === "string" && value.trim() !== "") return value;
 	}
 	return undefined;
+}
+
+/**
+ * Where this workbench's repos live, as an absolute path.
+ *
+ * THE one definition. It had four — `workbench restore`, the health-check
+ * runner, doppler's env-pull, and `indusk update`'s materialization nudge — and
+ * they disagreed. The nudge read only the legacy `sibling_parent`, never
+ * resolved a relative value, and looked repos up by `name` rather than declared
+ * `path`, so on a nested workbench it reported every repo missing and told the
+ * operator to run `workbench restore` — which would have cloned a second copy
+ * beside the workbench and relinked the trunks at it.
+ *
+ * The first defect in this family to recommend a destructive action, and the
+ * reason a copy of this rule is unacceptable rather than merely untidy.
+ *
+ * The rule: relative resolves against the workbench (which is what makes a
+ * nested layout reproduce on a clone), absolute is used as given, absent means
+ * the workbench's parent.
+ */
+export function resolveReposRoot(projectRoot: string): string {
+	const declared = readReposRoot(projectRoot);
+	if (!declared) return resolve(projectRoot, "..");
+	if (declared.startsWith("/") || declared.startsWith("~")) return declared;
+	return resolve(projectRoot, declared);
 }
 
 /**
