@@ -4,7 +4,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:f
 import { dirname, join, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
-import { loadExtension } from "../../lib/extension-loader.js";
+import { loadExtensionTolerant, localOverrideErrors } from "../../lib/extension-loader.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
@@ -575,7 +575,7 @@ export async function update(projectRoot: string): Promise<void> {
 			}
 
 			// Run update hooks if present
-			const manifest = loadExtension(enabledManifest);
+			const manifest = loadExtensionTolerant(enabledManifest);
 			const updateHook = manifest?.hooks?.on_update ?? manifest?.hooks?.on_post_update;
 			if (updateHook) {
 				console.info(`  ${name}: running update hook...`);
@@ -808,6 +808,17 @@ export async function update(projectRoot: string): Promise<void> {
 	// and never fatal — a failed sync must not fail an update.
 	syncAfterUpdate(projectRoot);
 
+	if (localOverrideErrors.length > 0) {
+		// Loud, specific, and non-fatal to the rest of the update. The built-in
+		// manifest was used for these; the override did not apply.
+		console.error("");
+		console.error(
+			`${localOverrideErrors.length} manifest.local.json override(s) could not be applied:`,
+		);
+		for (const e of localOverrideErrors) console.error(`  - ${e}`);
+		console.error("  Those extensions are running the built-in manifest until this is fixed.");
+		process.exitCode = 1;
+	}
 	console.info("\nDone.");
 
 	// Non-blocking version notice. Uses the 6h-cached lookup so we don't

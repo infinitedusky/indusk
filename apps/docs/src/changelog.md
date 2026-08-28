@@ -4,6 +4,14 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.40.1] — 2026-08-28
+
+1.40.0 shipped an override mechanism whose file could not be committed. This makes it usable.
+
+### Fixed
+- **`manifest.local.json` is trackable, and so is `.env.example`.** Two ordering bugs met in the same block. The blanket `.indusk/extensions/` rule excluded the directory, and **git does not descend into an excluded directory** — so every file negation inside it was a dead letter and `.env.example` had never been tracked on any machine, in any project. Then 1.39.0 appended `.env.*` *after* the existing negation, so even with the directory un-excluded the last rule won. `indusk update` now normalizes the whole block instead of appending to it: secrets ignored, negation last, manifests and `.env.example` tracked.
+- **A malformed `manifest.local.json` no longer takes `indusk update` down.** It threw all the way out, with a stack trace, over one bad file — stopping every other extension from updating and burying the message. It now names the file, falls back to the built-in manifest for that extension only, continues, and still fails the exit code. Loud and specific, not catastrophic.
+
 ## [1.40.0] — 2026-08-28
 
 ### Added

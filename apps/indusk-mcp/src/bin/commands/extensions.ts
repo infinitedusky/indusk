@@ -21,8 +21,9 @@ import {
 	extensionsDir,
 	getEnabledExtensions,
 	isEnabled,
-	loadExtension,
 	loadExtensions,
+	loadExtensionTolerant,
+	localOverrideErrors,
 	resolveManifestPath,
 } from "../../lib/extension-loader.js";
 import { runHealthCheck } from "../../lib/health.js";
@@ -35,7 +36,7 @@ function getBuiltinExtensions(): ExtensionManifest[] {
 	if (!existsSync(builtinDir)) return [];
 	const dirs = globSync("*/manifest.json", { cwd: builtinDir });
 	return dirs
-		.map((d) => loadExtension(join(builtinDir, d)))
+		.map((d) => loadExtensionTolerant(join(builtinDir, d)))
 		.filter((m): m is ExtensionManifest => m !== null);
 }
 
@@ -116,7 +117,7 @@ export async function extensionsEnable(projectRoot: string, names: string[]): Pr
 		// Check if extension requires auth — if so, .env must exist before enabling
 		const builtinManifest = join(builtinDir, name, "manifest.json");
 		if (existsSync(builtinManifest)) {
-			const manifest = loadExtension(builtinManifest);
+			const manifest = loadExtensionTolerant(builtinManifest);
 			if (manifest?.mcp_server?.headers && Object.keys(manifest.mcp_server.headers).length > 0) {
 				const envVars = readExtensionEnv(name);
 				if (Object.keys(envVars).length === 0) {
@@ -715,7 +716,7 @@ function copyExtensionAssets(projectRoot: string, name: string): void {
 export function envIsFunctional(name: string): boolean {
 	const manifestPath = join(builtinDir, name, "manifest.json");
 	if (!existsSync(manifestPath)) return false;
-	const manifest = loadExtension(manifestPath);
+	const manifest = loadExtensionTolerant(manifestPath);
 	const headers = manifest?.mcp_server?.headers;
 	return !!headers && Object.keys(headers).length > 0;
 }
@@ -748,7 +749,7 @@ function printEnvSetupHint(projectRoot: string, name: string): void {
 function runHook(projectRoot: string, name: string, hook: string): void {
 	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
 	if (!manifestPath) return;
-	const manifest = loadExtension(manifestPath);
+	const manifest = loadExtensionTolerant(manifestPath);
 	if (!manifest?.hooks) return;
 	const command = manifest.hooks[hook as keyof typeof manifest.hooks];
 	if (!command) return;
@@ -778,12 +779,12 @@ function printMcpSetup(projectRoot: string, name: string): void {
 		// Try built-in
 		const builtinPath = join(builtinDir, name, "manifest.json");
 		if (!existsSync(builtinPath)) return;
-		const manifest = loadExtension(builtinPath);
+		const manifest = loadExtensionTolerant(builtinPath);
 		if (!manifest?.mcp_server) return;
 		printMcpInstructions(name, manifest);
 		return;
 	}
-	const manifest = loadExtension(manifestPath);
+	const manifest = loadExtensionTolerant(manifestPath);
 	if (!manifest?.mcp_server) return;
 	printMcpInstructions(name, manifest);
 }
@@ -970,7 +971,7 @@ function printMcpInstructions(name: string, manifest: ExtensionManifest): void {
 function installSkill(projectRoot: string, name: string): void {
 	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
 	if (!manifestPath) return;
-	const manifest = loadExtension(manifestPath);
+	const manifest = loadExtensionTolerant(manifestPath);
 	if (!manifest?.provides.skill) return;
 
 	// Look for skill.md in built-in extensions

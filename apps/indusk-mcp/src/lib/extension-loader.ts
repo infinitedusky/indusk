@@ -94,6 +94,42 @@ export function ensureExtensionsDirs(projectRoot: string): void {
 
 // --- Loading ---
 
+/**
+ * Names every extension whose `manifest.local.json` could not be parsed.
+ *
+ * A malformed override must be LOUD but must not be CATASTROPHIC. Throwing all
+ * the way out of `indusk update` took the whole command down with a stack trace
+ * over one bad file — which stops the other twenty extensions from updating and
+ * buries the actual message. Callers that enumerate extensions collect here,
+ * report clearly, and still fail their exit code so nothing is silent.
+ */
+export const localOverrideErrors: string[] = [];
+
+/**
+ * Load a manifest, tolerating a broken local override.
+ *
+ * Returns the built-in manifest and records the error, so one bad override
+ * degrades that extension rather than the command.
+ */
+export function loadExtensionTolerant(manifestPath: string): ExtensionManifest | null {
+	try {
+		return loadExtension(manifestPath);
+	} catch (e) {
+		localOverrideErrors.push(e instanceof Error ? e.message : String(e));
+		return loadExtensionRaw(manifestPath);
+	}
+}
+
+/** The built-in manifest, with no override applied. */
+function loadExtensionRaw(manifestPath: string): ExtensionManifest | null {
+	try {
+		const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as ExtensionManifest;
+		return manifest.name && manifest.provides ? manifest : null;
+	} catch {
+		return null;
+	}
+}
+
 export function loadExtension(manifestPath: string): ExtensionManifest | null {
 	let manifest: ExtensionManifest;
 	try {

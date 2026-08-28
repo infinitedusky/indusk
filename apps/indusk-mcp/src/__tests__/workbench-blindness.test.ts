@@ -104,3 +104,61 @@ describe.skipIf(SHOULD_SKIP || !existsSync(CLI_BIN))(
 		});
 	},
 );
+
+describe("the extensions ignore block is normalized, negation last", () => {
+	it("leaves manifest.local.json and .env.example trackable, .env ignored", () => {
+		// Two bugs met here. The blanket `.indusk/extensions/` rule excluded the
+		// directory, and git does not descend into an excluded directory, so every
+		// file negation inside it was a dead letter — `.env.example` had never
+		// been tracked on any machine. Then 1.39.0 appended `.env.*` AFTER the
+		// existing negation, so even with the directory un-excluded the later rule
+		// won. Order is the whole bug: a negation must follow what it negates.
+		root = mkdtempSync(join(tmpdir(), "ignore-order-"));
+		git(root, ["init", "-q", "-b", "main"]);
+		mkdirSync(join(root, ".indusk", "extensions", "otel"), { recursive: true });
+		writeFileSync(join(root, "package.json"), '{"name":"x","version":"0.0.0"}\n');
+		writeFileSync(join(root, ".indusk", "config.json"), '{"mode":"full","verify":{}}\n');
+		// A project carrying the pre-1.39 shape.
+		writeFileSync(
+			join(root, ".gitignore"),
+			"# InDusk managed\n.indusk/extensions/\n.indusk/extensions/*/.env*\n!.indusk/extensions/*/.env.example\n",
+		);
+		// Valid JSON — a malformed override is a different test, below.
+		writeFileSync(join(root, ".indusk", "extensions", "otel", "manifest.json"), "{}\n");
+		writeFileSync(join(root, ".indusk", "extensions", "otel", "manifest.local.json"), "{}\n");
+		writeFileSync(join(root, ".indusk", "extensions", "otel", ".env"), "X=1\n");
+		writeFileSync(join(root, ".indusk", "extensions", "otel", ".env.example"), "X=\n");
+
+		expect(runCli(root, ["update"]).code).toBe(0);
+
+		const ignored = (f: string) =>
+			git(root, ["check-ignore", "-q", `.indusk/extensions/otel/${f}`]).code === 0;
+
+		expect(ignored("manifest.json"), "manifests are configuration").toBe(false);
+		expect(ignored("manifest.local.json"), "the override must be committable").toBe(false);
+		expect(ignored(".env.example"), "the example is documentation").toBe(false);
+		expect(ignored(".env"), "secrets stay ignored").toBe(true);
+	});
+});
+
+describe("a malformed override is loud but not catastrophic", () => {
+	it("reports the file, keeps updating, and fails the exit code", () => {
+		// Throwing all the way out took `indusk update` down with a stack trace
+		// over one bad file, stopping every other extension from updating and
+		// burying the message. Loud and specific, not catastrophic.
+		root = mkdtempSync(join(tmpdir(), "bad-override-"));
+		git(root, ["init", "-q", "-b", "main"]);
+		mkdirSync(join(root, ".indusk", "extensions", "otel"), { recursive: true });
+		writeFileSync(join(root, "package.json"), '{"name":"x","version":"0.0.0"}\n');
+		writeFileSync(join(root, ".indusk", "config.json"), '{"mode":"full","verify":{}}\n');
+		writeFileSync(join(root, ".indusk", "extensions", "otel", "manifest.json"), "{}\n");
+		writeFileSync(join(root, ".indusk", "extensions", "otel", "manifest.local.json"), "{ not json");
+
+		const r = runCli(root, ["update"]);
+		const out = `${r.stdout}${r.stderr}`;
+
+		expect(out, "names the file").toMatch(/manifest\.local\.json/);
+		expect(out, "not a stack trace").not.toMatch(/at applyLocalOverride/);
+		expect(r.code, "still fails, so it is not silent").not.toBe(0);
+	});
+});

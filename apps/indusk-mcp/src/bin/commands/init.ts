@@ -55,17 +55,37 @@ export function ensureGitignore(projectRoot: string): void {
 	const gitignorePath = join(projectRoot, ".gitignore");
 	let content = existsSync(gitignorePath) ? readFileSync(gitignorePath, "utf-8") : "";
 
-	// Retire the blanket `.indusk/extensions/` rule from projects that already
-	// have it. Adding the narrower secrets rules beside it does nothing while
-	// the blanket line stands — manifests stay untracked, and `indusk update`
-	// keeps replacing local fixes with no diff and no message.
-	if (/^\.indusk\/extensions\/$/m.test(content)) {
-		content = content.replace(/^# Extension manifests are package-owned[^\n]*\n/m, "");
-		content = content.replace(/^\.indusk\/extensions\/$\n?/m, "");
-		writeFileSync(gitignorePath, content);
-		console.info(
-			"  updated: .gitignore — extension manifests are now tracked (only their .env files are ignored)",
-		);
+	// Normalize the whole extensions block rather than patching lines into it.
+	//
+	// Two bugs met here and neither is fixable by appending. The blanket
+	// `.indusk/extensions/` rule excluded the directory, and **git does not
+	// descend into an excluded directory**, so every file negation inside it was
+	// a dead letter — `.env.example` had never been tracked on any machine. Then
+	// a later release appended `.env.*` AFTER the existing negation, so even with
+	// the directory un-excluded the last rule won.
+	//
+	// Order is the bug in both cases: a negation must follow what it negates, and
+	// nothing may re-ignore it afterwards. So every `.indusk/extensions/` line is
+	// removed and the canonical block is written once, in order.
+	const EXTENSIONS_BLOCK = [
+		"# Extension secrets (manifests and .env.example are tracked configuration)",
+		".indusk/extensions/*/.env",
+		".indusk/extensions/*/.env.*",
+		"!.indusk/extensions/*/.env.example",
+	];
+	if (/^!?\.indusk\/extensions\//m.test(content)) {
+		const kept = content
+			.split("\n")
+			.filter((l) => !/^!?\.indusk\/extensions\//.test(l))
+			.filter((l) => !/^# Extension (manifests are package-owned|secrets)/.test(l));
+		const normalized = `${kept.join("\n").trimEnd()}\n${EXTENSIONS_BLOCK.join("\n")}\n`;
+		if (normalized !== content) {
+			content = normalized;
+			writeFileSync(gitignorePath, content);
+			console.info(
+				"  updated: .gitignore — extension manifests and .env.example are tracked; only secrets ignored",
+			);
+		}
 	}
 
 	// Collect entries that are missing from the current .gitignore
