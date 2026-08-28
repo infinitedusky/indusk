@@ -1160,17 +1160,36 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	const { writeConfig } = await import("../../lib/config.js");
 	const linterTool = "biome";
 	const linterConfig = local ? ".indusk/biome.json" : "biome.json";
-	const testTool = detected.testRunner ?? "vitest";
-	const testConfig = local
-		? `.indusk/${testTool === "jest" ? "jest.config.js" : "vitest.config.ts"}`
-		: `${testTool}.config.${testTool === "jest" ? "js" : "ts"}`;
+	// NOT `?? "vitest"`. Detection finding nothing means we do not know the
+	// runner, and recording a guess is worse than recording nothing: `/verify`
+	// acts on this field, so a wrong value makes it invoke a runner that is not
+	// installed and report the failure as the project's. An absent value makes
+	// verify skip a check it has no basis for, which is the honest outcome.
+	//
+	// Detection is also JS-only today — it looks for vitest and jest configs and
+	// nothing else — so every Python project reached this line and was told it
+	// used vitest.
+	const testTool = detected.testRunner;
+	if (!testTool) {
+		console.warn(
+			"[verify] No test runner detected — `verify.testRunner` is unset, so `/verify` will skip the test step.",
+		);
+		console.warn(
+			"         Detection currently looks for vitest and jest configs only. Set it by hand in .indusk/config.json if this project has one.",
+		);
+	}
+	const testConfig = testTool
+		? local
+			? `.indusk/${testTool === "jest" ? "jest.config.js" : "vitest.config.ts"}`
+			: `${testTool}.config.${testTool === "jest" ? "js" : "ts"}`
+		: undefined;
 	// git is the only SCM as of 1.31.0 (git-only-substrate Phase 4) —
 	// no SCM detection or scm field write needed.
 	const config = {
 		mode: local ? ("local" as const) : ("full" as const),
 		verify: {
 			linter: { tool: linterTool, config: linterConfig },
-			testRunner: { tool: testTool, config: testConfig },
+			...(testTool && testConfig ? { testRunner: { tool: testTool, config: testConfig } } : {}),
 			...(detected.typeCheck ? { typeCheck: "tsc" } : {}),
 		},
 		detected: {

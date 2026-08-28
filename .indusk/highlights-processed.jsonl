@@ -190,3 +190,6 @@
 {"id":"h-20260817-005","processedAt":"2026-08-17T01:40:20.782Z","action":"wrote-episode","detail":"carry-the-broken-implementation-forward-before-fixing-it"}
 {"id":"h-20260817-006","processedAt":"2026-08-17T21:40:06.220Z","action":"skipped","detail":"recorded in versioned-workbench/adr.md — the repos[] vs workbench.json decision is plan-specific mechanics fully captured there"}
 {"id":"h-20260817-007","processedAt":"2026-08-17T21:40:09.949Z","action":"wrote-episode","detail":"a-refusal-that-holds-by-accident-is-not-a-guarantee"}
+{"id":"h-20260828-001","processedAt":"2026-08-28T14:43:25.203Z","action":"skipped","detail":"already captured by ask-what-a-check-proves.md, which lists this exact resolve(\\\".\\\") portability-test case as one of its three instances"}
+{"id":"h-20260828-002","processedAt":"2026-08-28T14:43:25.922Z","action":"wrote-episode","detail":"two-lane-config-must-be-tested-on-shared-keys-not-shared-definition-count"}
+{"id":"h-20260828-003","processedAt":"2026-08-28T14:43:26.627Z","action":"skipped","detail":"already captured by point-the-tool-at-itself-before-calling-it-done.md and test-tools-on-second-project-early.md, both stating the same run-against-a-real-target-before-close rule"}

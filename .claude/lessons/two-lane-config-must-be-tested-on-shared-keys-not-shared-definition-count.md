@@ -1,0 +1,11 @@
+# When two lanes read the same config key, pin that they read the SAME KEY — a single-definition-count test cannot catch a rename on one side only
+
+A structural single-definition test ("exactly one definition of this function/constant exists") catches a *second copy* appearing. It cannot catch a *rename* where each lane still has exactly one definition — just not the same one anymore.
+
+**What happened:** `dusk` states the rule explicitly for TS/bash pairs that can't share an import: a TS module and its bash port must change together (`workbench-helpers.sh` carries deliberate ports of `apps/indusk-mcp/src/lib/worktree/`). The `versioned-workbench` plan (1.38.0) renamed a config key from `sibling_parent` to `repos_root` in the TypeScript lane (`readReposRoot`), correctly keeping the old key as a fallback. The shell lane's `_read_repos_root` was never updated — it still read only `sibling_parent`. Both lanes still had exactly one definition of "how to read the repo-root config key," so a single-definition-count test would report clean on both sides. The divergence was in *which key each definition read*, not in how many definitions existed. `worktree create` died on every workbench that had adopted the new key, because the bash lane's single source of truth had quietly become wrong.
+
+**Why it matters:** [[structural-single-definition-test-for-must-agree-invariants]] is the right tool for "did a second copy get introduced" and cannot answer "do these two single copies still agree on what they read." Knowing the two-lane invariant exists (the project's own CLAUDE.md states it) is not the same as having a test that verifies it holds — the invariant was documented and violated in the same release.
+
+**The rule:** when two lanes (TS + bash, or any pair that can't literally share an import) must read the same config keys, write a test that asserts they read the *same set of keys*, not just that each lane has one reader. Concretely: a fixture with the *new* key only, asserting the shell lane resolves it — the same shape as [[test-the-migration-input-not-the-output]], because a rename is a migration from key A to key B and the bash lane is the "old" input path most likely to go untested by a TS-lane-authored fixture.
+
+See `.indusk/planning/archive/versioned-workbench/retrospective.md` for the full incident.
