@@ -25,6 +25,7 @@ import {
 	loadExtensions,
 	resolveManifestPath,
 } from "../../lib/extension-loader.js";
+import { runHealthCheck } from "../../lib/health.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../../..");
@@ -76,18 +77,9 @@ export async function extensionsStatus(projectRoot: string): Promise<void> {
 		let healthStatus = "no health check";
 
 		if (checks.length > 0) {
-			const results = checks.map((check) => {
-				try {
-					execSync(check.command, {
-						cwd: projectRoot,
-						timeout: 10000,
-						stdio: ["ignore", "pipe", "pipe"],
-					});
-					return { name: check.name, ok: true };
-				} catch {
-					return { name: check.name, ok: false };
-				}
-			});
+			// Once per declared repo — see lib/health.ts. In a workbench the code
+			// lives in the repos, not beside `.indusk/`.
+			const results = checks.map((check) => runHealthCheck(projectRoot, check));
 			const allOk = results.every((r) => r.ok);
 			healthStatus = allOk
 				? "healthy"

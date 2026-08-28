@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getEvalModel, getProjectGroupId, readConfig, shouldEmitOtelGate } from "../lib/config.js";
 import { getEnabledExtensions } from "../lib/extension-loader.js";
+import { runHealthCheck } from "../lib/health.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../..");
@@ -93,20 +94,20 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 			for (const ext of extensions) {
 				const healthChecks = ext.manifest.provides.health_checks ?? [];
 				for (const check of healthChecks) {
-					try {
-						const output = execSync(check.command, {
-							encoding: "utf-8",
-							timeout: 10000,
-							stdio: ["ignore", "pipe", "pipe"],
-							cwd: projectRoot,
-						}).trim();
+					// Runs once per declared repo — a manifest's shell cannot resolve
+					// a workbench path, so the runner supplies the cwd instead.
+					const r = runHealthCheck(projectRoot, check);
+					if (r.ok) {
 						checks.push({
 							name: `${ext.manifest.name}/${check.name}`,
 							status: "ok",
-							detail: output || "ok",
+							detail: r.output?.trim() || "ok",
 						});
-					} catch (err: unknown) {
-						const execErr = err as { stderr?: string; message?: string };
+					} else {
+						const execErr = { message: r.output, stderr: undefined } as {
+							stderr?: string;
+							message?: string;
+						};
 						checks.push({
 							name: `${ext.manifest.name}/${check.name}`,
 							status: "error",
