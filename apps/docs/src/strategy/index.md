@@ -1,5 +1,7 @@
 # Strategy
 
+- [Roadmap](/strategy/roadmap) — where InDusk is and where it is going (2026-08-28, 1.38.3)
+
 Positioning and landscape memos for the InDusk / Midnight / Dawn arc.
 
 These are **dated snapshots**, not evergreen reference. A competitive-landscape claim has a short half-life — the research that backs these pages explicitly flags vendor convergence on a ~12-month horizon. Re-date on revisit; don't trust a memo older than its subject matter.
