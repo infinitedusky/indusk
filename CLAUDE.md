@@ -102,7 +102,7 @@ dusk/
 - Shape check: per-phase craft review in `/work` (intra-unit) vs `/cleanup` at close (inter-file) — executor behavior, not a gate type (gate vocab is closed in 4 sites and unknown headings fail silently); the executing agent judges (it is already a model, so no extra call) against **prose** craft rules the enabled extensions own; findings append as items to the current phase — see `/decisions/lifecycle-rebalance`
 - Dawn verify (component 6, the keystone): read-only phase-boundary verification for work Dawn didn't execute — chained ledger baseline, runner-agnostic red-test detection (files + exit codes, never runner-output parsing), scoped to referenced files; reverting deferred to component 7. Boundary verification held: 5/5 planted classes caught, 0 false positives — see `/decisions/dawn-verify`
 - InDusk Makeover (2026-07-23): budgets + decay + removal — 60 KB CLAUDE.md hard budget w/ write-time hook + compaction ritual; Graphiti + CGC removed entirely (highlight→eval→**lessons** rail preserved); current.md sweep + dead-draft auto-archive; catchup diet ≤15k; MCP keep-lists (project: indusk/dash0/posthog/jaeger — jaeger critical; global: playwright only); hub push/pull at catchup cadence. Supersedes context-budget; rejects Graphiti-as-canonical-store, CGC-with-hygiene, discipline-only compression, load-time truncation. — see `.indusk/planning/indusk-makeover/adr.md`
-- Versioned workbench (2026-08-17): workbench root becomes a git repo with a shared remote + dumb sync loop; **multi-repo via `worktree.repos[]` in `config.json`** (`wrapped_repo` reduces to a one-element list) — no `workbench.json`, since `worktree-configs/<repo>.json` is already plural and a third representation would drift silently in bash; materialization is `indusk workbench restore` (not `init`, not `update` — which nudges); partial restore fails loud. Supersedes the worktree extension's single-repo v1 narrowing. **Making the root a git repo removes `assertGitRepo`'s refusal by accident — `verify/roots.ts` now maintains it deliberately: a plan root + a code root, and `runVerify` REFUSES in any workbench rather than judging code by a plan-repo diff that cannot contain it (the ledger's baseline sha has no meaning in the code repo). Cross-repo baselines are a named follow-on; normal-mode projects are untouched.** — see `.indusk/planning/versioned-workbench/adr.md`
+- Versioned workbench (1.37.0–1.38.3): the workbench root is a git repo with its own remote and a commit→pull→push sync loop; repos are declared in `worktree.repos[]` (`wrapped_repo` reduces to a one-element list) and `repos_root` says where they live — **relative resolves against the workbench**, which is what makes a nested layout reproduce on a clone. Detectors take a plan root and a code root and refuse when they cannot tell them apart. — see `/decisions/versioned-workbench`
 
 ## Known Gotchas
 
@@ -147,9 +147,10 @@ dusk/
 **In flight:**
 
 - **indusk-makeover (close-out pending)** — budgets + decay + Graphiti/CGC removal + catchup diet + hub sync. Its `agent-roles-phase4` blocker cleared 2026-08-16 (11/11); Numero-workbench migrates after publish. **Note**: `guide/getting-started.md` still advertises CodeGraphContext + Graphiti MCP tools this plan removed — belongs here, not in a jj rip-out. See `.indusk/planning/indusk-makeover/`.
+- **versioned-workbench (1.37.0–1.38.3)** — workbenches are shareable: declared multi-repo sets, `workbench restore/sync/status/migrate-layout`, portable nested layouts via `repos_root`. Twelve defects were found by *using* it after the plan closed green — see the lessons page. See [archive](.indusk/planning/archive/versioned-workbench/) for full detail.
 - **cleanup-ritual (2026-07-13, pending 1.32.0 publish)** — `/cleanup` ritual + config block + Ritual Gate + A-prefixed trajectory IDs. See [archive](.indusk/planning/archive/cleanup-ritual/).
 - **worktree-visibility (unpublished)** — worktree-per-plan default + observable bulletin; T7–T9 manual smokes unrun. See [archive](.indusk/planning/archive/worktree-visibility/).
-- **indusk-worktree-extension** — shipped + verified; awaits publish + `/falsify` + `/retrospective` before archive. See `.indusk/planning/indusk-worktree-extension/`.
+- **indusk-worktree-extension** — shipped; superseded in practice by versioned-workbench's multi-repo model. See [archive](.indusk/planning/indusk-worktree-extension/).
 - **workbench-mode-rail-integrity** — Phases 1–4 + falsification shipped (1.31.7–1.31.10); awaiting Numero auto-rail verification before close. See `.indusk/planning/workbench-mode-rail-integrity/`.
 - **dawn-external-orchestrator (2026-08-03, unpublished)** — `indusk run`/`atdawn`: model-agnostic gated execution loop, gates ported unchanged, 9-cell acceptance matrix, A8 signed off (flash-for-mechanical routing). See [archive](.indusk/planning/archive/dawn-external-orchestrator/) for full detail.
 - **dawn-ui-plan-grouping (2026-08-03, unpublished)** — plan hierarchy in the admin UI: top-down frontmatter declarations, grouped sidebar + parent detail cards, five falsification fixes, cleanup decomposition. See [archive](.indusk/planning/archive/dawn-ui-plan-grouping/) for full detail.
@@ -164,7 +165,6 @@ dusk/
 | Plan | Stage | Next Step |
 |------|-------|-----------|
 | indusk-makeover | impl in-progress (P6) | finish migration, falsify, cleanup, retrospective |
-| versioned-workbench | impl in-progress (P1-P6, P8-P11 shipped) | A9 manual smoke + ADR publish, then falsify/cleanup/retro |
 | hermes-inspired-improvements | brief accepted | ADR |
 | doppler-extension | impl (phases landing) | continue phases |
 | local-telemetry | test-plan accepted | impl phases |

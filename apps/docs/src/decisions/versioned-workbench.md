@@ -242,3 +242,32 @@ Publish to `/decisions/versioned-workbench.md`. It supersedes the single-repo na
 - [setup.ts]() — one-shot workbench creation over an already-cloned repo
 - [worktree.ts:139-280]() — config reads, `worktree-configs/<repo>.json`, reserved dirs
 - [_hook-paths.js:108-145]() — the git-path fallback D6 changes
+
+## Amended after shipping (1.37.1 – 1.38.3)
+
+The ADR settled the repo *set*; using the result settled the repo *location*.
+
+**`sibling_parent` became `repos_root`.** The old name asserted a relationship —
+"the parent of the siblings" — that stops being true the moment the repos live
+inside the workbench. It was also resolved as an absolute path against the
+process cwd, so the only way to express nesting was a path unique to one machine.
+A workbench cloned elsewhere fell back to its parent and rebuilt itself in the
+*sibling* shape. `repos_root` names the value instead of the relationship, and a
+**relative** value resolves against the workbench — which is what makes a layout
+reproduce. The old key is still read.
+
+**Layout values may be nested.** `path` and `worktrees` accept a relative path of
+any depth. "Cannot escape the workbench" and "must be a single segment" had been
+conflated; the guard now rejects absolute paths, `~`, `..` in any position, and
+`.git`/`.indusk`/`.claude` as a first segment.
+
+**The execution surface had to learn the layout too.** `pnpm wt <slug>` scanned
+only the workbench root, so declared layouts shipped with their worktrees
+invisible to it. It now searches declared directories, refuses an ambiguous slug
+by naming the candidates, and takes `<repo>/<slug>` to disambiguate —
+repo-qualified rather than directory-qualified, because the directory is a config
+detail that changes when the layout does.
+
+**Nesting is not a collision.** `restore` reported a repo at its own trunk path as
+"a real directory occupies …", and `worktree list` called it "unusual for a
+workbench trunk". Both described a supported layout as a mistake.
