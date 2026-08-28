@@ -4,6 +4,15 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.40.0] — 2026-08-28
+
+### Added
+- **`manifest.local.json` — override a shipped extension manifest without forking it.** `.indusk/extensions/` is package-owned: `update` flat-copies the built-in over yours on any hash mismatch, so a hand-edited `manifest.json` is a fork parked in a directory whose purpose is to be replaced, silently reverted on every update. Local changes now go in a separate file that `update` never writes, merged over the built-in at load. **Health checks merge by name**, so overriding one check does not fork the rest and upstream improvements to the others keep arriving.
+
+  This is deliberately *not* a preserve-local-edits rule in `update`. Preserving edits pins a project to a stale fork and hides every upstream fix behind it — trading a loud-once problem for a silent-forever one. Observed in practice: a project forked the otel manifest, a later release improved that same manifest, and the fork would have masked the improvement indefinitely.
+
+  `extensions status` marks an overridden extension with `[manifest.local.json applied]`, and a malformed override **throws** rather than falling back to the built-in — degrading silently would restore the silence this removes.
+
 ## [1.39.1] — 2026-08-28
 
 ### Fixed

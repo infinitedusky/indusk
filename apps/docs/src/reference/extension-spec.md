@@ -150,3 +150,42 @@ Once enabled, both types sit in `.indusk/extensions/` and work identically.
   "detect": { "file": "ce.json" }
 }
 ```
+
+## Overriding a shipped manifest
+
+`.indusk/extensions/` is **package-owned**. `indusk update` flat-copies the
+built-in manifest over yours whenever the hashes differ — no merge, no
+local-preserve path. A hand-edited `manifest.json` is a fork parked in a
+directory whose purpose is to be replaced, and every update silently reverts it.
+
+Put local changes in **`manifest.local.json`**, beside the manifest. `update`
+never writes that file, and it is merged over the built-in at load:
+
+```jsonc
+// .indusk/extensions/otel/manifest.local.json
+{
+  "provides": {
+    "health_checks": [
+      { "name": "otel-packages-installed",
+        "command": "backend/.venv/bin/python -c 'import opentelemetry'" }
+    ]
+  }
+}
+```
+
+**Health checks merge by name.** An entry replaces the built-in of the same
+name; a new name is appended. Overriding one check does not fork the rest, so
+upstream improvements to the others keep arriving.
+
+That is the reason this is a separate file rather than a preserve-local-edits
+rule in `update`. Preserving edits would pin the project to a stale fork and
+hide every upstream fix behind it — trading a loud-once problem for a
+silent-forever one. Observed in practice: a project forked the otel manifest,
+a later release improved that same manifest, and the fork would have masked the
+improvement indefinitely.
+
+`indusk extensions status` marks an extension whose manifest was overridden with
+`[manifest.local.json applied]`, so a check you are reading can be told apart
+from the one upstream ships. A malformed override **throws** rather than falling
+back to the built-in — silently ignoring it would restore the silence this
+mechanism exists to remove.

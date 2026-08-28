@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 // --- Manifest Types ---
 
@@ -27,6 +27,8 @@ export interface ExtensionManifest {
 	description: string;
 	version?: string;
 	_source?: string;
+	/** Set when a `manifest.local.json` was merged over this manifest. */
+	_localOverride?: string;
 	/**
 	 * `required: true` means the extension is enabled-by-default on every
 	 * project unless listed in `.indusk/config.json`'s `disabled_extensions`
@@ -93,14 +95,62 @@ export function ensureExtensionsDirs(projectRoot: string): void {
 // --- Loading ---
 
 export function loadExtension(manifestPath: string): ExtensionManifest | null {
+	let manifest: ExtensionManifest;
 	try {
 		const content = readFileSync(manifestPath, "utf-8");
-		const manifest = JSON.parse(content) as ExtensionManifest;
+		manifest = JSON.parse(content) as ExtensionManifest;
 		if (!manifest.name || !manifest.provides) return null;
-		return manifest;
 	} catch {
 		return null;
 	}
+	return applyLocalOverride(manifestPath, manifest);
+}
+
+/**
+ * Merge `manifest.local.json` over a built-in manifest, if one exists.
+ *
+ * `.indusk/extensions/` is package-owned: `update` flat-copies the built-in over
+ * it whenever hashes differ, with no merge and no local-preserve path. A project
+ * that hand-edits a manifest has parked a fork inside a directory whose purpose
+ * is to be replaced, and every update silently reverts it.
+ *
+ * The tempting fix — teach `update` to preserve local edits — is worse. It pins
+ * the project to a stale fork and hides upstream improvements behind it
+ * indefinitely, trading a loud-once problem for a silent-forever one. So the
+ * override lives in a SEPARATE file that update never writes: upstream keeps
+ * arriving for everything not overridden, and the local change keeps applying.
+ *
+ * Health checks merge BY NAME — an entry replaces the built-in of the same name
+ * and a new name is appended — so overriding one check does not fork the rest.
+ *
+ * A malformed override THROWS rather than degrading to the built-in. Silently
+ * ignoring it would restore exactly the silence this exists to remove.
+ */
+function applyLocalOverride(manifestPath: string, manifest: ExtensionManifest): ExtensionManifest {
+	const localPath = join(dirname(manifestPath), "manifest.local.json");
+	if (!existsSync(localPath)) return manifest;
+
+	let local: Partial<ExtensionManifest>;
+	try {
+		local = JSON.parse(readFileSync(localPath, "utf-8")) as Partial<ExtensionManifest>;
+	} catch (e) {
+		throw new Error(
+			`${localPath}: manifest.local.json is not valid JSON — ${e instanceof Error ? e.message : String(e)}`,
+		);
+	}
+
+	const merged: ExtensionManifest = { ...manifest, ...local, provides: { ...manifest.provides } };
+	if (local.provides) {
+		merged.provides = { ...manifest.provides, ...local.provides };
+		const localChecks = local.provides.health_checks;
+		if (localChecks) {
+			const byName = new Map((manifest.provides.health_checks ?? []).map((c) => [c.name, c]));
+			for (const c of localChecks) byName.set(c.name, c);
+			merged.provides.health_checks = [...byName.values()];
+		}
+	}
+	merged._localOverride = localPath;
+	return merged;
 }
 
 /**

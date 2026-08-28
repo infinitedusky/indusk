@@ -90,8 +90,12 @@ export async function extensionsStatus(projectRoot: string): Promise<void> {
 		}
 
 		const source = ext.manifest._source ? ` (from ${ext.manifest._source})` : " (built-in)";
+		// An override that applied silently would restore the very silence this
+		// mechanism exists to remove — the operator must be able to see that a
+		// check they are reading is not the one upstream ships.
+		const overridden = ext.manifest._localOverride ? " [manifest.local.json applied]" : "";
 
-		console.info(`  ${ext.manifest.name}${source} — ${healthStatus}`);
+		console.info(`  ${ext.manifest.name}${source}${overridden} — ${healthStatus}`);
 	}
 }
 
