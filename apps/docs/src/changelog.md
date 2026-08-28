@@ -4,6 +4,22 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.39.0] — 2026-08-28
+
+Four defects from a report written while building a polyglot workbench. Three
+share a root cause — **tooling resolves paths from "the project root", which in
+a workbench is the wrapper, where there is no code.**
+
+### Fixed
+- **Extension health checks run where the code is.** A check is a shell string in a manifest (`test -f instrumentation.py`), and it ran with cwd at the project root — the wrapper — so in a workbench it could **never** pass, before the work or after it. Fixed in the runner rather than the manifests: each check now runs once per declared repo with cwd set there, so the shell stays naive and becomes correct and every shipped manifest is fixed without being edited. Passes if any repo satisfies it; **does not** pass when nothing does anywhere, because a scope fix that goes green immediately is a relaxation in disguise.
+- **`indusk init-docs` scaffolds into the application repo.** Run from a workbench it created `apps/<wrapper-name>-docs/` **in the wrapper** — docs describing the application, orphaned the moment the application is cloned standalone, and named after the wrapper. Now targets the single declared repo and writes `apps/docs/`; with several declared repos it refuses and says to run it from the one the docs belong to.
+- **`doppler.apps[].path` means one thing.** Two callers resolved it against different roots — manual `env-pull` against the workbench, worktree auto-provisioning against the worktree — so `path: "app/backend"` made the manual pull work and every worktree silently get nothing. It is now relative to the **application repo** in both.
+- **`env-pull` fails when it wrote no files.** It printed `wrote 0 file(s)` and exited 0, and worktree provisioning printed `auto-provisioned env` on top of it. A developer saw two success lines and had no env. A check must distinguish "nothing to do" from "did not run".
+- **`indusk init` no longer guesses vitest.** `detected.testRunner ?? "vitest"` asserted vitest wherever detection found nothing — and detection is JS-only, so every Python project was told it used vitest. `verify.testRunner` is now omitted when nothing is detected, with a warning naming what detection looks for.
+
+### Changed
+- **Extension manifests are tracked, not gitignored.** `.indusk/extensions/` was ignored wholesale, so a patched manifest was untracked: no diff, no history, and `indusk update` replaced it with no message. The revert was undetectable except by re-running the check it affected — which is how it was found. Only `.env` files are ignored now; manifests are configuration and belong in version control.
+
 ## [1.38.3] — 2026-08-27
 
 ### Fixed

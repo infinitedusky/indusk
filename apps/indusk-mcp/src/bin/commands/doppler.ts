@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
+import { readReposRoot, readWorkbenchRepos, repoDir } from "../../lib/worktree/repos.js";
 
 /**
  * doppler extension — `env-pull` + worktree auto-provisioning.
@@ -193,6 +194,19 @@ function runEnvPull(
 		if (!opts.quiet) console.info(`  ${relDir} → ${relDir}/.env.${profile} (${leaf})`);
 		written++;
 	}
+	if (written === 0) {
+		// A success line over a no-op is the failure this fixes. The observed
+		// case: "auto-provisioned env for <slug>" printed while zero files were
+		// written, so a developer saw success and got a worktree with no env.
+		// A check must distinguish "nothing to do" from "did not run".
+		console.error(
+			`env-pull (${profile}): wrote NO files. ${apps.length} target(s) configured, none produced a file.`,
+		);
+		console.error(
+			`       Check that each doppler.apps[].path exists relative to the app repo, and that the Doppler configs exist under project "${project}".`,
+		);
+		return -1;
+	}
 	if (!opts.quiet) {
 		console.info(
 			`env-pull (${profile}): wrote ${written} file(s) from Doppler project "${project}".`,
@@ -203,9 +217,33 @@ function runEnvPull(
 
 /** CLI entry: `indusk doppler env-pull <profile>` — token + apps both at projectRoot. */
 export function dopplerEnvPull(projectRoot: string, profile: string): void {
-	if (runEnvPull(projectRoot, projectRoot, profile, { manageGitignore: true }) < 0) {
+	// `path` is relative to the APPLICATION REPO, so it means one thing to both
+	// callers. Previously this passed the workbench root while worktree
+	// provisioning passed the worktree, so `path: "looper/backend"` made the
+	// manual pull work and every worktree silently get nothing — one value that
+	// could not be both.
+	if (runEnvPull(projectRoot, appRepoRoot(projectRoot), profile, { manageGitignore: true }) < 0) {
 		process.exit(1);
 	}
+}
+
+/**
+ * Where the application code is, for resolving `doppler.apps[].path`.
+ *
+ * A workbench with one declared repo resolves to that repo. Several declared
+ * repos, or none, resolves to the project itself — the same behavior every
+ * non-workbench project already had.
+ */
+function appRepoRoot(projectRoot: string): string {
+	const repos = readWorkbenchRepos(projectRoot);
+	if (repos.length !== 1) return projectRoot;
+	const declared = readReposRoot(projectRoot);
+	const base = !declared
+		? join(projectRoot, "..")
+		: declared.startsWith("/") || declared.startsWith("~")
+			? declared
+			: join(projectRoot, declared);
+	return join(base, repoDir(repos[0]));
 }
 
 /**

@@ -1,10 +1,40 @@
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
+import { readReposRoot, readWorkbenchRepos, repoDir } from "../../lib/worktree/repos.js";
+
+/** `repos_root`, resolved — relative against the workbench, absolute as given. */
+function reposRootFor(projectRoot: string): string {
+	const declared = readReposRoot(projectRoot);
+	if (!declared) return join(projectRoot, "..");
+	if (declared.startsWith("/") || declared.startsWith("~")) return declared;
+	return join(projectRoot, declared);
+}
 
 export async function initDocs(projectRoot: string): Promise<void> {
-	const projectName = basename(projectRoot);
-	const docsDir = join(projectRoot, `apps/${projectName}-docs`);
+	// Docs describe the APPLICATION and must travel with it. In a workbench,
+	// `projectRoot` is the wrapper — scaffolding there produces a site that is
+	// orphaned the moment the app is cloned standalone, and named after the
+	// wrapper besides (`looper-workbench-docs`, for looper's docs).
+	//
+	// A workbench with exactly one declared repo has an unambiguous target. With
+	// several it does not, so it refuses and asks rather than guessing which
+	// repo the docs belong to.
+	const repos = readWorkbenchRepos(projectRoot);
+	let target = projectRoot;
+	if (repos.length === 1) {
+		target = join(reposRootFor(projectRoot), repoDir(repos[0]));
+		console.info(`Workbench detected — scaffolding into the application repo: ${repos[0].name}\n`);
+	} else if (repos.length > 1) {
+		console.error(
+			`Error: this workbench declares ${repos.length} repos (${repos.map((r) => r.name).join(", ")}).`,
+		);
+		console.error("       Run `indusk init-docs` from inside the repo the docs belong to.");
+		process.exit(1);
+	}
+
+	const projectName = basename(target);
+	const docsDir = join(target, "apps/docs");
 
 	if (existsSync(docsDir)) {
 		console.info(`Docs app already exists at apps/${projectName}-docs/`);
