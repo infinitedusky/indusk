@@ -48,7 +48,7 @@ If the design partner wants autonomous agent execution, that's Paperclip's domai
 
 ### Not a memory product
 
-Mem0, Letta, MemGPT, and others position as "agent memory." Dawn's lessons + Graphiti integration look superficially similar but the framing is different: Dawn provides *project memory* (what the project has decided, learned, tried), not *conversation memory* (what the agent remembers about the user).
+Mem0, Letta, MemGPT, and others position as "agent memory." Dawn's lessons + the lessons registry integration look superficially similar but the framing is different: Dawn provides *project memory* (what the project has decided, learned, tried), not *conversation memory* (what the agent remembers about the user).
 
 If the design partner needs conversational memory across personal sessions, Dawn isn't it; recommend a memory product.
 

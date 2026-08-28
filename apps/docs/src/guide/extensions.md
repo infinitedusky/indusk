@@ -11,7 +11,7 @@ These ship with indusk-mcp. Enable the ones you need:
 npx @infinitedusky/indusk-mcp extensions list
 
 # Enable extensions
-npx @infinitedusky/indusk-mcp extensions enable falkordb cgc typescript
+indusk extensions enable typescript testing
 
 # See what's active
 npx @infinitedusky/indusk-mcp extensions status
@@ -21,8 +21,6 @@ npx @infinitedusky/indusk-mcp extensions status
 
 | Extension | What it provides |
 |-----------|-----------------|
-| **falkordb** | FalkorDB health check, OrbStack networking |
-| **cgc** | CodeGraphContext skill, health check, verification |
 | **typescript** | TypeScript best practices skill, type check verification |
 | **testing** | Testing patterns skill, vitest/jest verification |
 | **nextjs** | Next.js patterns skill |

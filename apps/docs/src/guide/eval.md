@@ -37,7 +37,7 @@ Over time, you want to see:
 - `conventions` trending toward 100% — the agent follows project rules
 - `skipped-steps` at 100% — no instructions ignored
 - `better-approaches` improving — the agent finds existing code
-- `missing-context` driving action — you add what's missing to Graphiti/CLAUDE.md
+- `missing-context` driving action — you add what's missing to the lessons registry / CLAUDE.md
 
 ## Running a Baseline
 

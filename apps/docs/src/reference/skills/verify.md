@@ -310,7 +310,7 @@ Each command has a 60-second timeout. Output is truncated to the last 2000 chara
 
 ### `query_dependencies`
 
-Before running affected tests, verify uses `query_dependencies` from [CodeGraphContext](/reference/tools/codegraph) to find which test files depend on the changed code:
+Before running affected tests, verify scopes them by the files the phase changed.
 
 ```json
 // Input
@@ -339,7 +339,6 @@ This returns all files that import or depend on the changed file. Filter the res
 
 - **Do not skip verification for "just a small change."** Small changes break things too. A one-line type change can cascade through 12 dependents. Run the checks.
 
-- **Affected tests require the code graph to be indexed.** The `query_dependencies` call only works if [CodeGraphContext](/reference/tools/codegraph) has indexed the project. If the graph is stale or missing, fall back to running the full test suite for the affected app.
 
 - **Verification items are per-phase, not per-plan.** Each phase in an impl has its own verification section. Do not put all verification at the end of the impl — each phase must prove itself before the next begins.
 

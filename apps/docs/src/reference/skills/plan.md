@@ -647,20 +647,18 @@ Plans with no dependencies appear first. Plans whose dependencies are all satisf
 
 ## Capture and Recall
 
-The planner skill captures key planning decisions in [Graphiti](/reference/tools/graphiti) automatically. This is part of Phase 5.5 of `graphiti-infrastructure` — the capture happens at trigger points so the agent doesn't have to remember to call `mcp__graphiti__add_memory` directly.
+The planner skill records key planning decisions as lessons automatically.
 
 | Trigger | Episode written | Body |
 |---------|-----------------|------|
 | Brief moves from `draft` to `accepted` | `brief-accepted-{plan-name}` | Problem statement + Proposed Direction (and optionally Scope summary) |
 | ADR moves from `proposed` to `accepted` | `adr-{plan-name}` | The full Y-statement (in/facing/decided/against/achieve/accepting/because) |
 
-Both capture sites use the project's group id from `getProjectGroupId(projectRoot)` (`apps/indusk-mcp/src/lib/config.ts`), which defaults to the project directory basename and can be overridden via `.indusk/config.json` `graphiti.groupId`.
 
-If `mcp__graphiti__add_memory` is unavailable (Graphiti container down, transport error), the trigger **skips silently** — capture is best-effort and never blocks brief or ADR acceptance.
+If `mcp__indusk__add_lesson` is unavailable (transport error), the trigger **skips silently** — capture is best-effort and never blocks brief or ADR acceptance.
 
-The corresponding **recall** happens in the [catchup skill](/reference/skills/catchup) Step 4.5: at the start of every session, `mcp__graphiti__search_nodes` is called for "recent decisions and lessons" across `[project-group, "shared"]` and the most relevant nodes are surfaced in the catchup summary. This is what makes the capture pay off — decisions captured during planning resurface when the next session starts working.
+The corresponding **recall** happens in the [catchup skill](/reference/skills/catchup) Step 4.5: at the start of every session, `mcp__indusk__list_lessons` is called for "recent decisions and lessons" across `[project-group, "shared"]` and the most relevant nodes are surfaced in the catchup summary. This is what makes the capture pay off — decisions captured during planning resurface when the next session starts working.
 
-For the full capture and recall sequence including work-skill corrections and retrospective lessons, see [Graphiti — Capture and Recall Lifecycle](/reference/tools/graphiti#capture-and-recall-lifecycle).
 
 ## Gotchas
 

@@ -103,7 +103,7 @@ The 6 canonical sections: What This Is, Architecture, Conventions, Key Decisions
 |------|-------|-------------|
 | `get_system_version` | — | Package name and version |
 | `get_skill_versions` | — | Compares installed skills to package skills: current, outdated, or missing |
-| `check_health` | — | Checks FalkorDB connectivity, CGC installation, Docker container status |
+| `check_health` | — | Runs every enabled extension's health checks and the stray-state audit |
 | `list_domain_skills` | — | Lists available domain skills and their installation status |
 
 ### Lesson Tools
@@ -117,9 +117,6 @@ The 6 canonical sections: What This Is, Architecture, Conventions, Key Decisions
 
 | Tool | Input | Description |
 |------|-------|-------------|
-| `index_project` | — | Indexes the codebase into the code graph via CGC. Run after init or significant changes. |
-| `query_dependencies` | `target`, `direction` | Queries what depends on a file/module (`dependents`), what it depends on (`dependencies`), or `both`. See [CodeGraphContext](/reference/tools/codegraph). |
-| `query_graph` | `cypher` | Runs a custom Cypher query against the code graph for advanced structural analysis. |
 
 ### Agent Tools
 
@@ -243,7 +240,6 @@ flowchart TD
     end
 
     subgraph External["External Services"]
-        falkor["FalkorDB"]
         cgc["CGC"]
     end
 

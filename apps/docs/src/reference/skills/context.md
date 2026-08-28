@@ -77,7 +77,6 @@ dusk/
 
 - Context skill is pure markdown instructions, not MCP tools — see `planning/context-skill/adr.md`
 - Biome over ESLint: single binary, no plugin config hell — see `planning/code-quality-system/adr.md`
-- CodeGraphContext with global FalkorDB + local CGC via pipx — see `planning/codegraph-context/adr.md`
 ```
 
 **Known Gotchas:**
@@ -321,7 +320,7 @@ Returns CLAUDE.md parsed into its 6 canonical sections with validation status. T
     },
     {
       "name": "Key Decisions",
-      "content": "- Context skill is pure markdown instructions, not MCP tools — see `planning/context-skill/adr.md`\n..."
+      "content": "- Context skill is pure markdown instructions, not MCP tools — see the archived context-skill ADR"
     },
     {
       "name": "Known Gotchas",
@@ -436,7 +435,7 @@ The post-ADR trigger fires. The agent reads the ADR's Y-statement and extracts a
   "tool": "update_context",
   "arguments": {
     "section": "Key Decisions",
-    "content": "- Context skill is pure markdown instructions, not MCP tools — see `planning/context-skill/adr.md`\n- CLAUDE.md has a fixed 6-section structure maintained by the context skill — see `planning/context-skill/adr.md`\n- Biome over ESLint: single binary, no plugin config hell, fast enough for per-item verification\n- CodeGraphContext with global FalkorDB + local CGC via pipx for structural code intelligence — see `planning/codegraph-context/adr.md`"
+    "content": "- Context skill is pure markdown instructions, not MCP tools — see the archived context-skill ADR"
   }
 }
 ```
@@ -449,7 +448,6 @@ The post-ADR trigger fires. The agent reads the ADR's Y-statement and extracts a
 - Context skill is pure markdown instructions, not MCP tools — see `planning/context-skill/adr.md`
 - CLAUDE.md has a fixed 6-section structure maintained by the context skill — see `planning/context-skill/adr.md`
 - Biome over ESLint: single binary, no plugin config hell, fast enough for per-item verification
-- CodeGraphContext with global FalkorDB + local CGC via pipx for structural code intelligence — see `planning/codegraph-context/adr.md`
 ```
 
 One line added. No rationale duplicated. The ADR link is the documentation.

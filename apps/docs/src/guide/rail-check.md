@@ -4,7 +4,7 @@
 >
 > **Manual procedure**: [`apps/indusk-mcp/test-fixtures/numero-workbench-shape/README.md`](https://github.com/infinite-dusky/dusk/blob/main/apps/indusk-mcp/test-fixtures/numero-workbench-shape/README.md) — for operators driving without the agent.
 
-After you update InDusk, the eval→Graphiti rail should "just work." But two structural patterns can leave it silently broken — and you should know how to verify, fix, and (if needed) backfill what the broken rail missed.
+After you update InDusk, the eval→the lessons registry rail should "just work." But two structural patterns can leave it silently broken — and you should know how to verify, fix, and (if needed) backfill what the broken rail missed.
 
 This page exists because workbench-shaped projects ([introduced in `indusk-worktree-extension`](/decisions/git-only-substrate)) had the eval pipeline structurally broken for two months between when the worktree extension shipped and when [`workbench-mode-rail-integrity`](https://github.com/infinite-dusky/dusk/tree/main/.indusk/planning/workbench-mode-rail-integrity) fixed it (1.31.7). The fix is in place; the procedure for verifying and backfilling is what this page documents.
 
@@ -16,7 +16,7 @@ After ANY of the following:
 - `mcp__indusk__check_health` returned `workbench/stray-state-*` errors
 - You haven't seen new scorecards in `.indusk/eval/results.log` for several commits
 - `.indusk/highlights.jsonl` has grown without `.indusk/highlights-processed.jsonl` catching up
-- Anyone says "the eval pipeline isn't writing anything" or "Graphiti seems empty"
+- Anyone says "the eval pipeline isn't writing anything" or "the lessons registry seems empty"
 
 ## The easy path — ask the agent
 
@@ -96,18 +96,18 @@ The agent invokes `node .claude/hooks/eval-trigger.js --source rail-check-backfi
 
 For 86 highlights, expect 5-10 minutes wall-clock and ~$0.50-2 in Sonnet tokens.
 
-After the drain, the agent queries Graphiti to confirm the episodes landed and gives you a structured summary:
+After the drain, the agent queries the lessons registry to confirm the episodes landed and gives you a structured summary:
 
 ```
 Rail check complete (post-1.31.8).
   Mode: workbench
   check_health: 1 stray-state finding cleaned (with your confirmation)
   Sanity commit: evaluator spawned with PID 47213 — rail working
-  Highlights backfill: drained 86 unprocessed → 84 Graphiti episodes
-  Graphiti recall: episodes group `numero_workbench` now has 84 entries.
+  Highlights backfill: drained 86 unprocessed → 84 lessons
+  the lessons registry recall: episodes group `numero_workbench` now has 84 entries.
 ```
 
-(The 86 → 84 delta is normal — Graphiti's contradiction detection may merge near-duplicate facts.)
+(The 86 → 84 delta is normal — the lessons registry's contradiction detection may merge near-duplicate facts.)
 
 ## The manual path — driving without the agent
 
@@ -118,10 +118,10 @@ If for any reason the `/rail-check` skill isn't available or you want to drive d
 For the `numero_workbench` project specifically, the rail was broken from when the worktree extension shipped (~April 2026) through 1.31.7 (2026-06-28). During those 2 months:
 
 - 86 highlights accumulated in `.indusk/highlights.jsonl` — every brief acceptance, ADR acceptance, mid-session correction, retrospective lesson the working agent flagged
-- 0 episodes landed in the `numero_workbench` Graphiti group
+- 0 episodes landed in the `numero_workbench` the lessons registry group
 - `.indusk/eval/results.log` stayed empty
 - `.indusk/eval/system.log` had `skip — no git commit ID available` on every commit
-- The working agent's `/catchup` Step 7 (Graphiti recall) returned only `shared`-group entries from cross-project knowledge, with nothing specific to Numero's actual work history
+- The working agent's `/catchup` Step 7 (the lessons registry recall) returned only `shared`-group entries from cross-project knowledge, with nothing specific to Numero's actual work history
 
 This is the **dark queue** failure mode. The pipeline was silently broken for 2 months because the failure surface was a single log line in a file the operator didn't routinely read.
 
@@ -140,7 +140,7 @@ Full architectural rationale lives in [`workbench-mode-rail-integrity` brief](ht
 
 ## Detecting the broken rail early
 
-Even with the 1.31.7 fix shipped, the dark-queue pattern can re-emerge from other causes (Graphiti container down for an extended period, `eval.enabled: false` in config, claude binary not on PATH, etc.). Two cheap signals to monitor:
+Even with the 1.31.7 fix shipped, the dark-queue pattern can re-emerge from other causes (the lessons registry container down for an extended period, `eval.enabled: false` in config, claude binary not on PATH, etc.). Two cheap signals to monitor:
 
 | Signal | Where | Healthy | Concerning |
 |---|---|---|---|
@@ -153,7 +153,7 @@ Add a daily / weekly `indusk check_health` to your routine — the 1.31.7 stray-
 ## Related
 
 - [Agent Roles](/guide/agent-roles) — the three-tier architecture this rail implements
-- [Highlights — Working Agent's Write Path](/reference/tools/highlights) — how highlights flow to Graphiti
+- [Highlights — Working Agent's Write Path](/reference/tools/highlights) — how highlights flow to the lessons registry
 - [Eval Overview](/reference/eval/overview) — the eval agent's pipeline including the rubric and findings
 - Plan: [`workbench-mode-rail-integrity`](https://github.com/infinite-dusky/dusk/tree/main/.indusk/planning/workbench-mode-rail-integrity) — the full architectural rationale and trajectory
 - Lesson: `community-hook-bypass-is-rail-integrity-not-pacing` — the discipline this fix illustrates

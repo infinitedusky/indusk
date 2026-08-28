@@ -109,7 +109,7 @@ Skills should contain best practices, patterns, gotchas, and conventions for you
 
 | Source | How to get it | Example |
 |--------|--------------|---------|
-| **Built-in** | Ships with indusk-mcp. `extensions enable {name}` | falkordb, typescript, nextjs |
+| **Built-in** | Ships with indusk-mcp. `extensions enable {name}` | typescript, nextjs, worktree |
 | **Third-party** | `extensions add {name} --from npm:pkg` or `--from github:user/repo` | composable-env |
 
 Once enabled, both types sit in `.indusk/extensions/` and work identically.

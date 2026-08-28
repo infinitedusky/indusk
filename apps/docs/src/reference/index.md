@@ -28,5 +28,4 @@ Auto-detected during `init` based on dependencies and file patterns: **Next.js**
 |------|---------|
 | [InDusk MCP](/reference/tools/indusk-mcp) | Dev system MCP server — 20 tools across 7 categories, plus hooks, lessons, and domain skills |
 | [Composable.env](/reference/tools/composable-env) | Environment management — builds .env files and Docker Compose from contracts |
-| [CodeGraphContext](/reference/tools/codegraph) | Structural code intelligence via FalkorDB graph database |
 | [Biome](/reference/tools/biome) | Linting and formatting with quality ratchet |

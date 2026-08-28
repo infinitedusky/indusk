@@ -10,7 +10,7 @@ A Claude Code PostToolUse hook fires after every `git commit`. It spawns a backg
 2. Reads the session transcript
 3. Reads the diff of what was just committed
 4. Answers evaluation questions against the rubric
-5. Writes derived insights to Graphiti
+5. Writes derived insights to the lessons registry
 6. Logs a structured scorecard to `.indusk/eval/results.log`
 7. Optionally POSTs the scorecard to a configured endpoint
 
@@ -21,7 +21,7 @@ sequenceDiagram
     participant Hook as PostToolUse Hook
     participant Eval as Eval Agent
     participant Log as results.log
-    participant G as Graphiti
+    participant G as the lessons registry
 
     Agent->>Git: git commit -m "..."
     Git-->>Hook: Bash tool completed
@@ -38,7 +38,7 @@ sequenceDiagram
 
 ### Eval Mode (always on)
 
-Every commit is scored. The evaluator writes findings to Graphiti so the next session picks them up. This is the learning loop — the context system gets smarter over time.
+Every commit is scored. The evaluator writes findings to the lessons registry so the next session picks them up. This is the learning loop — the context system gets smarter over time.
 
 ### Baseline Mode (controlled experiment)
 
@@ -59,7 +59,7 @@ indusk eval baseline --task tasks/add-auth.md --keep
 | `conventions` | Did the agent follow the project's conventions? | Naming violations, wrong tools, skipped patterns |
 | `skipped-steps` | Did it skip instructed steps? | Missing gates, skipped verification, ignored skills |
 | `better-approaches` | Were better approaches available? | Reinvented utilities, missed patterns |
-| `missing-context` | Is context missing from the graph? | Gaps in Graphiti, lessons, CLAUDE.md |
+| `missing-context` | Is context missing from the graph? | Gaps in the lessons registry, lessons, CLAUDE.md |
 
 ### Adding Questions
 
@@ -93,7 +93,7 @@ indusk eval summary --json
 
 ## Two Dimensions of Measurement
 
-**Absolute quality (per commit):** Each scorecard answers "was this good work?" Findings go to Graphiti and improve future sessions.
+**Absolute quality (per commit):** Each scorecard answers "was this good work?" Findings go to the lessons registry and improve future sessions.
 
 **System improvement (over time):** Because the rubric is consistent, scores form a time series. `indusk eval summary` shows rolling averages and trends. The baseline gives the floor; the trend shows the trajectory.
 
@@ -118,9 +118,9 @@ In `.indusk/config.json`:
 The evaluator writes two kinds of output:
 
 - **Scorecards** — logged to `.indusk/eval/results.log` (JSONL)
-- **Graphiti facts** — derived insights written to the project's knowledge graph
+- **the lessons registry facts** — derived insights written to the project's knowledge graph
 
-The evaluator's Graphiti writes are selective — only facts that would have changed the outcome. Combined with user-side capture (corrections, brief acceptance, retro lessons), this creates a complete feedback loop.
+The evaluator's the lessons registry writes are selective — only facts that would have changed the outcome. Combined with user-side capture (corrections, brief acceptance, retro lessons), this creates a complete feedback loop.
 
 ## Findings Lifecycle
 
@@ -187,7 +187,7 @@ Check this log when evals aren't appearing in `results.log`.
 
 ### Scorecard parse failure from prose-prefixed JSON
 
-**Symptom:** an `error: true` entry lands in `.indusk/eval/results.log` with a `message` like `Unexpected token 'N', "Now I've g"... is not valid JSON`. The evaluator otherwise ran to completion (system.log shows `evaluator completed`), and side-effects of its work landed (highlights got marked processed, Graphiti episodes were written) — but the final scorecard never made it into `results.log`. The eval system silently under-counts its own work because error-entries default `graphitiWrites: 0` even when MCP writes happened.
+**Symptom:** an `error: true` entry lands in `.indusk/eval/results.log` with a `message` like `Unexpected token 'N', "Now I've g"... is not valid JSON`. The evaluator otherwise ran to completion (system.log shows `evaluator completed`), and side-effects of its work landed (highlights got marked processed, lessons were written) — but the final scorecard never made it into `results.log`. The eval system silently under-counts its own work because error-entries default `lessonWrites: 0` even when MCP writes happened.
 
 **Cause:** the model sometimes prefixes natural-language prose to its JSON output despite the prompt saying "output only JSON" (e.g., `"Now I've got everything I need. Here's the scorecard:\n\n{...}"`). The previous parser tried `JSON.parse(stdout)` directly and a fenced-code-block regex; neither tolerated raw prose-prefixed JSON, so the call landed in the catch handler and produced an error-entry whose `message` field contained only the parse-error string — no snippet of what Claude actually wrote.
 
@@ -195,9 +195,9 @@ Check this log when evals aren't appearing in `results.log`.
 
 ### MCP tools unreachable from the spawned subprocess
 
-**Symptom:** every scorecard in `.indusk/eval/results.log` records `graphitiWrites: 0` and `mcpToolCalls: 0`, even when `.indusk/highlights.jsonl` has unprocessed entries that the evaluator's prompt explicitly asks Claude to read and write to Graphiti. `.indusk/highlights-processed.jsonl` is never created. The evaluator runs to completion, writes a scorecard, but never invokes any `mcp__*` tool.
+**Symptom:** every scorecard in `.indusk/eval/results.log` records `lessonWrites: 0` and `mcpToolCalls: 0`, even when `.indusk/highlights.jsonl` has unprocessed entries that the evaluator's prompt explicitly asks Claude to read and write to the lessons registry. `.indusk/highlights-processed.jsonl` is never created. The evaluator runs to completion, writes a scorecard, but never invokes any `mcp__*` tool.
 
-**Cause:** `claude --print` does NOT auto-discover the project's `.mcp.json` from cwd. Without `--mcp-config <path>`, only globally-configured MCP servers (typically `context7`, `tmux`, `playwright` — whatever's in the user's global Claude Code config) are loaded into the subprocess. The project's MCP servers — `indusk`, `graphiti`, `codegraphcontext`, etc. — are absent regardless of what `--allowed-tools` permits. `--allowed-tools` controls which tools the model may *call*; `--mcp-config` controls which tools *exist* in the subprocess at all.
+**Cause:** `claude --print` does NOT auto-discover the project's `.mcp.json` from cwd. Without `--mcp-config`, the evaluator has no MCP tools at all.
 
 A secondary trap: even with `--mcp-config` set, `claude --print` denies tool calls unless `--permission-mode acceptEdits` is also passed. The fresh-session evaluator path includes that flag; the resume-session path historically did not, so resumed sessions saw the tools but couldn't call them.
 

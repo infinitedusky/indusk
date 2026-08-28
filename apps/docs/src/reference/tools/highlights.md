@@ -1,8 +1,8 @@
-# Highlights — The Working Agent's Write Path to Graphiti
+# Highlights — The Working Agent's Write Path to Lessons
 
-Highlights are the working agent's low-cost, append-only queue of "something worth remembering." The working agent writes them; the eval agent processes them into structured [Graphiti](/reference/tools/graphiti) episodes. This split is the core of the agent-roles boundary: the working agent stays in flow, and the eval agent does the heavier knowledge work asynchronously.
+Highlights are the working agent's low-cost, append-only queue of "something worth remembering." The working agent writes them; the eval agent processes them into structured [the lessons registry](/reference/tools/highlights) episodes. This split is the core of the agent-roles boundary: the working agent stays in flow, and the eval agent does the heavier knowledge work asynchronously.
 
-Before highlights, the working agent called `graph_capture` directly at trigger points. Direct Graphiti writes require the agent to pick a group, phrase the episode as a Y-statement or correction, and swallow the failure if Graphiti is down — every one of these is out-of-flow work. Highlights flip the model: the working agent flags a moment with a tag, a note, and a level. That's it. The eval agent handles the rest on its own cadence.
+Before highlights, the working agent called `add_lesson` directly at trigger points. Direct lesson writes require the agent to pick a group, phrase the episode as a Y-statement or correction, and swallow the failure if the lessons registry is down — every one of these is out-of-flow work. Highlights flip the model: the working agent flags a moment with a tag, a note, and a level. That's it. The eval agent handles the rest on its own cadence.
 
 ## File Layout
 
@@ -48,7 +48,7 @@ Processed entries (in `highlights-processed.jsonl`) have this shape:
 }
 ```
 
-`action` is either `wrote-episode` (eval agent turned it into a Graphiti episode, `detail` is the episode name) or `skipped` (eval agent decided no episode was needed, `detail` is the reason).
+`action` is either `wrote-episode` (eval agent turned it into a lessons, `detail` is the episode name) or `skipped` (eval agent decided no episode was needed, `detail` is the reason).
 
 ## Levels
 
@@ -56,11 +56,11 @@ The level is the only real contract between the working agent and the eval agent
 
 | Level | Meaning | Eval agent response |
 |-------|---------|---------------------|
-| `critical` | Architectural decision, accepted ADR, accepted brief. Must not be lost. | Extract full context from transcript, write a structured Graphiti episode with high weight (1.0). |
+| `critical` | Architectural decision, accepted ADR, accepted brief. Must not be lost. | Extract full context from transcript, write a structured lessons with high weight (1.0). |
 | `important` | Correction, retro lesson, confirmed pattern. Worth remembering. | Extract and write with medium weight (0.6). |
 | `note` | Observation, surprise, partially-formed thought. | Consider. Write with low weight (0.3) or skip if already captured elsewhere. |
 
-The working agent does not decide which Graphiti group the episode lands in, how the Y-statement is phrased, or whether it supersedes an earlier fact. Those are eval-agent concerns.
+The working agent does not decide which the lessons registry group the episode lands in, how the Y-statement is phrased, or whether it supersedes an earlier fact. Those are eval-agent concerns.
 
 ## MCP Tools
 
@@ -82,7 +82,7 @@ highlight({
 })
 ```
 
-Returns the full entry including auto-generated `id` and `timestamp`. The call is idempotent from the working agent's perspective — if Graphiti is down, the highlight is still on disk for the eval agent to process later.
+Returns the full entry including auto-generated `id` and `timestamp`. The call is idempotent from the working agent's perspective — if the lessons registry is down, the highlight is still on disk for the eval agent to process later.
 
 ### `highlights_unprocessed`
 
@@ -106,7 +106,7 @@ Appends to `highlights-processed.jsonl`. The next call to `highlights_unprocesse
 
 ## Trigger Points (Phase 2 and beyond)
 
-In Phase 1, only the library and the MCP tools ship. In Phase 2 of the agent-roles plan, the planner / work / retrospective skills migrate from direct `graph_capture` calls to `highlight` calls:
+In Phase 1, only the library and the MCP tools ship. In Phase 2 of the agent-roles plan, the planner / work / retrospective skills migrate from direct `add_lesson` calls to `highlight` calls:
 
 | Trigger | Skill | Level | Tag |
 |---------|-------|-------|-----|
@@ -124,7 +124,7 @@ The eval agent's prompt (built by [`prompt-builder.ts`](https://github.com/infin
 
 For each highlight returned by `highlights_unprocessed`, the evaluator:
 
-1. **Reads the level** and maps it to a Graphiti edge weight:
+1. **Reads the level** and maps it to a the lessons registry edge weight:
 
    | Level | Edge weight | Expected effort |
    |-------|-------------|-----------------|
@@ -132,7 +132,7 @@ For each highlight returned by `highlights_unprocessed`, the evaluator:
    | `important` | **0.6** | Extract relevant context, write a medium-weight episode. |
    | `note` | **0.3** | Consider — write a low-weight episode if it adds signal, otherwise skip. |
 
-2. **Writes a Graphiti episode** via `mcp__indusk__graph_capture` (not raw `mcp__graphiti__add_memory`). `graph_capture` attaches the episode to the relevant file anchor in the semantic graph, so [context-beam](/reference/tools/context-beam) queries can find it later. The group is typically the project group for project-specific facts, or `shared` for cross-project conventions (e.g., "always use pnpm ce"). The level is encoded in the body's metadata so downstream queries can rank by importance.
+2. **Writes a lessons** via `mcp__indusk__add_lesson`. `add_lesson` attaches the episode to the relevant file anchor in the semantic graph, so [context-beam](/reference/tools/context-beam) queries can find it later. The group is typically the project group for project-specific facts, or `shared` for cross-project conventions (e.g., "always use pnpm ce"). The level is encoded in the body's metadata so downstream queries can rank by importance.
 
 3. **Marks the highlight processed** via `mcp__indusk__highlight_mark_processed`:
    - `action: "wrote-episode"` with `detail: "{episode name}"` if an episode was written
@@ -146,13 +146,13 @@ This matters because the working agent operates under time/flow pressure and may
 
 ### Graceful degradation
 
-If `mcp__indusk__highlights_unprocessed` is unavailable (InDusk MCP down, transport error), Step 4 is skipped silently and the evaluator continues to the rubric. Highlights are best-effort — the broader scoring flow never fails because of a Graphiti or InDusk hiccup.
+If `mcp__indusk__highlights_unprocessed` is unavailable (InDusk MCP down, transport error), Step 4 is skipped silently and the evaluator continues to the rubric. Highlights are best-effort — the broader scoring flow never fails because of a the lessons registry or InDusk hiccup.
 
-## Why Highlights and Not Direct Graphiti Writes
+## Why Highlights and Not Direct the lessons registry Writes
 
-1. **The working agent stays in flow.** Writing a highlight is two lines — a tag and a note. Writing a structured episode requires picking a group, phrasing a Y-statement, deciding whether this supersedes earlier facts, and handling Graphiti being down.
+1. **The working agent stays in flow.** Writing a highlight is two lines — a tag and a note. Writing a structured episode requires picking a group, phrasing a Y-statement, deciding whether this supersedes earlier facts, and handling the lessons registry being down.
 2. **The eval agent is the authoritative knowledge writer.** It already has the full transcript, the scorecard, and cross-session context. It can produce higher-quality episodes than the working agent can mid-task.
-3. **Highlights are observable.** A plain JSONL file is trivial to inspect, replay, and migrate. Direct Graphiti writes are opaque once they leave the agent.
+3. **Highlights are observable.** A plain JSONL file is trivial to inspect, replay, and migrate. Direct lesson writes are opaque once they leave the agent.
 4. **Levels give the eval agent a budget.** Not every highlight deserves a full episode. The level lets the eval agent spend more effort on `critical` moments and skip redundant `note`s.
 
 See [the agent-roles ADR](https://github.com/infinitedusky/dusk/tree/main/.indusk/planning/agent-roles/adr.md) for the full reasoning.

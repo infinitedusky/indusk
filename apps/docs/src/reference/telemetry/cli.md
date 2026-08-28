@@ -128,7 +128,7 @@ indusk telemetry tail [--service <name>] [--level <level>] [--since <minutes>] [
 **Sample output**:
 
 ```
-2026-04-20T22:46:10.123Z [ERROR] indusk-mcp           Failed to reach FalkorDB: ECONNREFUSED
+2026-04-20T22:46:10.123Z [ERROR] indusk-mcp           Failed to reach the collector: ECONNREFUSED
 2026-04-20T22:46:11.445Z [INFO ] indusk-mcp           Retrying in 500ms
 ...
 (showing last 50 of 87 matching records — raise --limit to see more)

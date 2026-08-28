@@ -50,7 +50,7 @@ Concepts demoted from "load-bearing infrastructure" to "optional or absent."
 
 | ID | Removed | Why | State |
 |----|---------|-----|-------|
-| D1 | **Semantic graph bridge as central substrate** | Claim registry + Graphiti + OTel become the substrate. The CGC+Graphiti projection becomes legacy infrastructure or removed | new |
+| D1 | **Semantic graph bridge as central substrate** | Claim registry + the lessons registry + OTel become the substrate. The CGC+the lessons registry projection becomes legacy infrastructure or removed | new |
 | D2 | **CGC as required infrastructure** | Becomes bring-your-own optional petal. Static-code queries aren't load-bearing once runtime claim correlation works | new |
 
 ---
@@ -61,7 +61,7 @@ The architectural shape of Dawn. Each is stable enough to design against; ratifi
 
 ### A1 — Claim/evidence model is the core data model {#a1}
 
-Claims live in the codebase (trajectory rows, plan documents). Evidence is emitted by petals with a 6-field stamp. Graphiti holds state history. The correlation engine queries federated across them.
+Claims live in the codebase (trajectory rows, plan documents). Evidence is emitted by petals with a 6-field stamp. the lessons registry holds state history. The correlation engine queries federated across them.
 
 ### A2 — Three-agent architecture {#a2}
 
@@ -144,7 +144,7 @@ This is what makes fork-and-extract clean.
 
 Plus an optional thin gitignored pointer.
 
-**No durable Dawn state in the codebase:** no planning, no lessons, no Graphiti episodes, no skill files, no memory.
+**No durable Dawn state in the codebase:** no planning, no lessons, no lessons, no skill files, no memory.
 
 All durable state is in the Dawn app, which lives outside the codebase. Worktrees never have a Dawn install. The Dawn app discovers codebases (via git remote, gitignored pointer, or explicit user assignment); they don't announce themselves.
 
@@ -210,7 +210,7 @@ The full evolution log lives in the planning ledger ([`.indusk/planning/indusk-v
 
 - **2026-04-21** — Initial ledger created. Carried K1–K6 from April 7 research; added U1–U3 updates, D1–D2 deletes, A1–A6 new decisions reflecting signal-correlation vision. K6 rewritten same day from "bespoke migration script" to "coexistence, not migration." A7 added (adapter-extension boundary). A8 added (agent-neutral skills with per-agent adapters).
 - **2026-04-30** — Workbench-mode surfaced as research alt. Originated from real FDE consulting usage. Load-bearing prerequisite: Claude Code currently resolves `.mcp.json`/skills/hooks only from cwd at session launch.
-- **2026-05-01** — Captured fork-and-extract pattern + AST-rule-engine thread from the Avoca FDE engagement. Permanent-fork dev pattern; marker-based extraction rejected (refactor-fragile); declare-rules + AST-aware re-application chosen. Surfaced that *only* OTel needs structural code insertion (planning, Graphiti, tests, lessons all live outside production code).
+- **2026-05-01** — Captured fork-and-extract pattern + AST-rule-engine thread from the Avoca FDE engagement. Permanent-fork dev pattern; marker-based extraction rejected (refactor-fragile); declare-rules + AST-aware re-application chosen. Surfaced that *only* OTel needs structural code insertion (planning, the lessons registry, tests, lessons all live outside production code).
 - **2026-05-02** — Captured Dawn project architecture as companion doc. Sharpened the architecture: Dawn projects are two distinct surfaces — Dawn app outside the codebase; codebase contains only production code + tests + OTel rules. Worktrees inherit tests + OTel rules tree-shaped from their parent. Direction is emission-only. Added A9–A14 and O10–O15. Revised A8 — skills/hooks moved from "codebase `.dawn/` source of truth" to "Dawn app source of truth, projected into the codebase per active agent."
 
 ---

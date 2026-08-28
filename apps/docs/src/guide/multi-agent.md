@@ -75,7 +75,7 @@ Catchup will:
 1. Register your presence via `indusk agent register --task "<description>"`. A section block lands in `.indusk/current.md` for your session (empty body initially).
 2. Read the bulletin via `indusk agent list`. Surfaces other agents currently working on the project (their sessions in `current.md`). Also self-heartbeats your own section's `Last updated`.
 3. Read `.indusk/current.md` — both the `## Project (shared)` anchor and per-agent sections from other working agents.
-4. Pull lessons, infrastructure health, CLAUDE.md, Graphiti recall, active plans, installed skills.
+4. Pull lessons, infrastructure health, CLAUDE.md, the lessons registry recall, active plans, installed skills.
 5. Summarize.
 
 You can run `/catchup` at the same time as another agent on the same project — neither will block or corrupt the other.
