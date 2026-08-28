@@ -9,8 +9,8 @@
         "command": "command -v doppler >/dev/null 2>&1"
       },
       {
-        "name": "doppler-token-present",
-        "command": "node -e \"const fs=require('fs');const p='.indusk/extensions/doppler/.env';if(!fs.existsSync(p))process.exit(1);process.exit(/DOPPLER_TOKEN=\\S/.test(fs.readFileSync(p,'utf-8'))?0:1)\""
+        "name": "doppler-authenticated",
+        "command": "doppler me >/dev/null 2>&1 || node -e \"const fs=require('fs');const p='.indusk/extensions/doppler/.env';process.exit(fs.existsSync(p)&&/DOPPLER_TOKEN=\\S/.test(fs.readFileSync(p,'utf-8'))?0:1)\""
       }
     ]
   },

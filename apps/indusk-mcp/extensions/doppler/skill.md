@@ -131,8 +131,10 @@ shared. (Inherited from the worktree extension's `compose_project_name` model.)
 ## Health
 
 - `doppler-cli-installed` — the `doppler` binary is on PATH (`brew install dopplerhq/cli/doppler`).
-- `doppler-token-present` — checks for a token file. **With `doppler login` you don't
-  need one**, so this check can fail while env-pull still works via your CLI session.
+- `doppler-authenticated` — asks whether Doppler can actually authenticate
+  (`doppler me`), falling back to a service-token file. `doppler login` satisfies
+  it. It used to test only for the token file, so it went red for anyone logged
+  in — a check that reports a working setup as broken.
 
 If a worktree comes up without env: confirm the CLI is installed and you're either
 logged in (`doppler login`) or have a token (file / `DOPPLER_TOKEN`), and that
