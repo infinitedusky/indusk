@@ -75,6 +75,26 @@ expectTraceShape("seat-never-double-books", { … });
 indusk.promise = "seat-never-double-books"     // span attribute
 ```
 
+**Promise state** — a promise is `enforced`, `known-violated`, or `retired`.
+
+| State | Meaning | Build |
+|---|---|---|
+| `enforced` | the system upholds it; a violation is a bug | fails |
+| `known-violated` | declared, and the current implementation provably cannot uphold it yet | does not fail |
+| `retired` | no longer a promise | ignored |
+
+**The middle state is not a convenience, it is what makes declaring honest.** A
+promise you cannot yet uphold leaves two options without it: do not declare it —
+which hides a commitment you have actually made — or declare it and keep the build
+red forever. A permanently red check stops being read, and then gets switched off.
+That failure mode has already cost this project twice: a Doppler health check that
+was red on every project that had no Doppler, and an audit that was green for seven
+weeks because its scope was wrong.
+
+`known-violated` carries the incident that proves it, so the state is evidence
+rather than an excuse. Found by building it — looper's first promise is one its v0
+detector cannot uphold.
+
 **Incident** — what happened when a promise broke. Symptom, root cause, which
 promise it violated, status, fix commit.
 
@@ -124,23 +144,38 @@ created by plan A and violated by code from plan B where "which plan reopens?" h
 no clean answer. If that happens **twice**, build subsystems then — with evidence,
 not prediction.
 
-## What InDusk already has
+## What this needs from a project
 
-**Telemetry (mature).** OTel spans and structured logs; per-service
-`telemetry-contract.ts` with typecheck-enforced missing-span and orphan-span gates;
-local Jaeger + MCP for dev-time query; Dash0 for production; an in-process test-span
-buffer for vitest; W3C traceparent across services and WS messages.
-
-**Tests (mature).** Vitest, Playwright, the Test Trajectory, `/falsify`.
-
-**Memory (uneven).** `.claude/lessons/`, retrospectives, CLAUDE.md conventions and
-gotchas — all prose, all curated by hand, none anchored to running code.
-
-**Planning (mature for waterfall, weak for evolution).** Plans end in archive. The
-`monitor` state is the missing piece.
-
-The telemetry substrate is the reason this plan is small: **the spans already exist.**
+**Portable — required everywhere.** OTel spans with attributes. A test runner that
+can assert over captured spans. A way to grep code comments. That is the whole
+dependency list, and it is why this plan is small: **the spans already exist.**
 Midnight adds a name that links them to a test and a code site.
+
+**Not portable — do not assume it.** An earlier version of this section described
+*Numero's* substrate and called it InDusk's: per-service `telemetry-contract.ts`
+with typecheck-enforced span gates, and an in-process span buffer for vitest. Both
+are TypeScript-specific and neither exists in looper, which this brief names as the
+proving ground two sections later. The inventory and the proving ground pointed at
+different projects.
+
+**What InDusk itself supplies**, in any language: OTel wiring via the `otel`
+extension, local Jaeger + MCP for dev-time query, Dash0 for production, the Test
+Trajectory, `/falsify`, and the lessons registry — the last being prose curated by
+hand, anchored to nothing that runs. Plans end in archive; the `monitor` state is
+the missing piece.
+
+### Already built in looper
+
+Evidence, not projection — these exist and run today:
+
+| Step | Status in looper |
+|---|---|
+| 2 — annotation + span attribute + "every promise has a site or test" | **built**; validator runs in `turbo lint`, enforced both directions |
+| 4 — `expectTraceShape` | **built** as `assert_trace_shape` for pytest; requires naming the promise |
+| 3 — telemetry contract | **not buildable** — no contract file, no typechecker over Python |
+
+Step 4 being built twice, in two languages, is the evidence it is portable. Step 3
+is the one that is not.
 
 ## Incremental path
 
@@ -151,7 +186,7 @@ working.
 |---|---|---|
 | 1 | ~3h | **Convention + one seeded promise.** The file shape, and one real promise in a live project with a real incident behind it. |
 | 2 | ~1d | **Code annotation.** Greppable `promise:` comments at enforcement sites; the span-attribute convention. A check that every named promise has ≥1 code site or test. |
-| 3 | ~1d | **Telemetry contract extension.** `telemetry-contract.ts` entries declare which promises they carry. Typecheck rejects a span claiming a promise that does not exist. |
+| 3 | ~1d | **Contract enforcement, where a contract exists.** *Optional and language-specific.* Where a project has a typed telemetry contract, its entries declare which promises they carry and the typechecker rejects a span claiming a promise that does not exist. Projects without one get the same guarantee at runtime from step 2's validator, more weakly. This step is **not** a prerequisite for any other. |
 | 4 | ~2d | **`expectTraceShape`.** The trace-pattern assertion library. Each pattern names the promise it validates; CI failures reference it by name. |
 | 5 | ~2d | **Collapse signal.** `indusk promises check` — violations in the last 24h from Dash0 + local telemetry. The signal becomes a number. |
 | 6 | ~1d | **Lifecycle.** The `monitor` plan state; reopening on violation; `/retrospective` distinguishes archive-eligible from monitored. |
