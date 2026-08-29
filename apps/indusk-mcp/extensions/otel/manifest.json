@@ -18,6 +18,10 @@
     ]
   },
   "detect": {
-    "file_pattern": "**/instrumentation.{ts,py}"
+    "file_pattern": "**/instrumentation.{ts,py}",
+    "exclude": [
+      "**/templates/**",
+      "**/node_modules/**"
+    ]
   }
 }

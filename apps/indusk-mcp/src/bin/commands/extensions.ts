@@ -11,6 +11,7 @@ import {
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
+import { readConfig, shouldEmitOtelGate } from "../../lib/config.js";
 import {
 	disabledDir,
 	disableExtension,
@@ -77,7 +78,18 @@ export async function extensionsStatus(projectRoot: string): Promise<void> {
 		const checks = ext.manifest.provides.health_checks ?? [];
 		let healthStatus = "no health check";
 
-		if (checks.length > 0) {
+		// An enabled extension that cannot apply to this project shape must say
+		// so, not fail. dusk declares `otel.role: "library"` and correctly ships
+		// no instrumentation — its otel checks were permanently red demanding
+		// some, which is how a report stops being read.
+		const inapplicable =
+			ext.manifest.name === "otel" && !shouldEmitOtelGate(projectRoot)
+				? `not applicable — otel.role is "${readConfig(projectRoot)?.otel?.role}" (disable with \`indusk extensions disable otel\`)`
+				: null;
+
+		if (inapplicable) {
+			healthStatus = inapplicable;
+		} else if (checks.length > 0) {
 			// Once per declared repo — see lib/health.ts. In a workbench the code
 			// lives in the repos, not beside `.indusk/`.
 			const results = checks.map((check) => runHealthCheck(projectRoot, check));
@@ -547,7 +559,19 @@ export async function extensionsSuggest(projectRoot: string): Promise<void> {
 		}
 
 		if (ext.detect.file_pattern) {
-			const matches = globSync(ext.detect.file_pattern, { cwd: projectRoot, maxDepth: 3 });
+			// `otel.role` is core config, not extension config — InDusk defines it,
+			// so core honouring it is not tool knowledge leaking inward. A library
+			// or tool should never emit telemetry, so enabling otel there produces
+			// health checks that cannot pass, which is how checks get ignored.
+			if (ext.name === "otel" && !shouldEmitOtelGate(projectRoot)) continue;
+
+			const matches = globSync(ext.detect.file_pattern, {
+				cwd: projectRoot,
+				maxDepth: 3,
+				// A template shipped by a package is not evidence that this project
+				// instruments anything. Matching one enabled otel on a library.
+				ignore: ext.detect.exclude ?? [],
+			});
 			if (matches.length > 0) {
 				suggestions.push({ name: ext.name, reason: `${ext.detect.file_pattern} found` });
 				continue;

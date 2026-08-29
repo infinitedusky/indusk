@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.40.3] — 2026-08-29
+
+### Fixed
+- **A library is no longer asked for telemetry it should not emit.** dusk declares `otel.role: "library"` and correctly ships no instrumentation, and its otel health checks were permanently red demanding some — the same class as the Doppler check that was red on every project without Doppler. Two causes: `otel.role` was consulted for impl gates but never for enablement, and otel's `detect` pattern `**/instrumentation.{ts,py}` matched a **packaged template** rather than real instrumentation. Detect now takes an `exclude` list (templates, `node_modules`), auto-enable skips otel when the role is not `service`, and an already-enabled otel on a non-service project reports **"not applicable — otel.role is …"** with the disable command, rather than failing two checks forever.
+
 ## [1.40.2] — 2026-08-29
 
 ### Fixed

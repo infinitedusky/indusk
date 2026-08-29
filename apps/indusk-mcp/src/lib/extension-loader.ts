@@ -6,6 +6,8 @@ import { dirname, join } from "node:path";
 export interface DetectRule {
 	file?: string;
 	file_pattern?: string;
+	/** Globs whose matches are NOT evidence — packaged templates, vendored deps. */
+	exclude?: string[];
 	dependency?: string;
 	devDependency?: string;
 	mcp_server?: string;
