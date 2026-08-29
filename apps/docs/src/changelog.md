@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.40.2] — 2026-08-29
+
+### Fixed
+- **`verification` entries in a `manifest.local.json` merge by name, like health checks do.** They were replaced wholesale, so an override wanting to fix one command had to restate every other one — and then silently froze them at that day's values. That is the forking the override mechanism exists to avoid, reintroduced one key deeper. Both named-entry arrays now merge the same way; anything else in `provides` is still replaced wholesale, which the spec now states.
+
 ## [1.40.1] — 2026-08-28
 
 1.40.0 shipped an override mechanism whose file could not be committed. This makes it usable.

@@ -173,9 +173,10 @@ never writes that file, and it is merged over the built-in at load:
 }
 ```
 
-**Health checks merge by name.** An entry replaces the built-in of the same
-name; a new name is appended. Overriding one check does not fork the rest, so
-upstream improvements to the others keep arriving.
+**Named entries merge by name** — `health_checks` and `verification` alike. An
+entry replaces the built-in of the same name; a new name is appended. Overriding
+one entry does not fork the rest, so upstream improvements to the others keep
+arriving. Anything else in `provides` is replaced wholesale.
 
 That is the reason this is a separate file rather than a preserve-local-edits
 rule in `update`. Preserving edits would pin the project to a stale fork and

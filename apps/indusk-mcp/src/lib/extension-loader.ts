@@ -178,11 +178,17 @@ function applyLocalOverride(manifestPath: string, manifest: ExtensionManifest): 
 	const merged: ExtensionManifest = { ...manifest, ...local, provides: { ...manifest.provides } };
 	if (local.provides) {
 		merged.provides = { ...manifest.provides, ...local.provides };
-		const localChecks = local.provides.health_checks;
-		if (localChecks) {
-			const byName = new Map((manifest.provides.health_checks ?? []).map((c) => [c.name, c]));
-			for (const c of localChecks) byName.set(c.name, c);
-			merged.provides.health_checks = [...byName.values()];
+		// EVERY array of named entries merges by name — health_checks and
+		// verification alike. A wholesale replace would force an override that
+		// wants to fix one command to restate all the others, and then silently
+		// freeze them at today's values: the forking this exists to avoid,
+		// reintroduced one key deeper.
+		for (const key of ["health_checks", "verification"] as const) {
+			const localEntries = local.provides[key];
+			if (!localEntries) continue;
+			const byName = new Map((manifest.provides[key] ?? []).map((e) => [e.name, e]));
+			for (const e of localEntries) byName.set(e.name, e);
+			merged.provides[key] = [...byName.values()];
 		}
 	}
 	merged._localOverride = localPath;

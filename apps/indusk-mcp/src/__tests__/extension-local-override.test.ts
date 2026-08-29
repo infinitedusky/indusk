@@ -110,3 +110,41 @@ describe("manifest.local.json overrides by name", () => {
 		expect(() => loadExtension(join(dir, "manifest.json"))).toThrow(/manifest\.local\.json/);
 	});
 });
+
+describe("every named-entry array merges by name, not just health_checks", () => {
+	const WITH_VERIFY = {
+		name: "otel",
+		description: "OpenTelemetry",
+		provides: {
+			health_checks: [{ name: "hc-a", command: "true" }],
+			verification: [
+				{ name: "typecheck", command: "npx tsc --noEmit" },
+				{ name: "lint", command: "biome check" },
+			],
+		},
+	};
+
+	it("replaces one verification entry and keeps the others from upstream", () => {
+		// Before: `{...manifest.provides, ...local.provides}` replaced the whole
+		// `verification` array, so an override that wanted to fix ONE command had
+		// to restate every other one — and then silently froze them, which is the
+		// forking this mechanism exists to avoid.
+		const base = ext(WITH_VERIFY, {
+			provides: { verification: [{ name: "typecheck", command: "backend/.venv/bin/mypy ." }] },
+		});
+		const m = loadExtension(resolveManifestPath(base, "otel") as string);
+		const v = m?.provides.verification ?? [];
+
+		expect(v).toHaveLength(2);
+		expect(v.find((e) => e.name === "typecheck")?.command).toContain("mypy");
+		expect(v.find((e) => e.name === "lint")?.command).toBe("biome check");
+	});
+
+	it("leaves health_checks alone when the override only touches verification", () => {
+		const base = ext(WITH_VERIFY, {
+			provides: { verification: [{ name: "typecheck", command: "x" }] },
+		});
+		const m = loadExtension(resolveManifestPath(base, "otel") as string);
+		expect(m?.provides.health_checks).toHaveLength(1);
+	});
+});
