@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.41.0] — 2026-08-30
+
 ### Added
 - **`indusk context check-pointers` refuses hand-copied version claims in CLAUDE.md.** A `**Version**:` line carrying a literal semver fails when it doesn't match `package.json` — or when there is no `package.json` version to check it against (monorepo roots). dusk's CLAUDE.md said "1.36.0 published" for twelve days and four releases while npm served 1.40.3; nothing in the release flow touches CLAUDE.md, so the only safe version line is a pointer. A matching literal passes today and fails at the next bump — the check catches the copy exactly when it becomes a lie.
 
