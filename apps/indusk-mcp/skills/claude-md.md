@@ -1,12 +1,14 @@
 ---
-name: context
+name: claude-md
 description: Maintain CLAUDE.md as living project memory. Update on triggers (post-retro, post-ADR, corrections). Shape impl documents to include per-phase context updates.
 argument-hint: "learn \"lesson to remember\""
 ---
 
 You know how to maintain project context in this project.
 
-## What Context Does
+(This skill was named `context`. Claude Code ships a built-in `/context` command — the context-window usage view — and a built-in shadows any skill of the same name, so `/context learn "…"` opened the token chart instead of running this. Nothing else changed.)
+
+## What It Does
 
 Context ensures that project knowledge compounds across sessions. It does this in two ways:
 
@@ -92,22 +94,22 @@ When an ADR's status changes to `accepted`, add a one-liner to **Key Decisions**
 
 Do not duplicate the ADR's rationale. The link is the documentation.
 
-### 3. `context learn`
+### 3. `claude-md learn`
 
-When invoked as `/context learn "lesson"`, or when you detect you've been corrected mid-session:
+When invoked as `/claude-md learn "lesson"`, or when you detect you've been corrected mid-session:
 
 1. Categorize the lesson:
    - **Conventions** — patterns to follow or avoid ("use Biome not ESLint", "no default exports")
    - **Known Gotchas** — mistakes ("don't run npx ce, use pnpm ce", "always env:build before docker compose")
 2. If ambiguous, default to **Known Gotchas** — better to over-capture than miss a lesson
 3. Append a concise one-liner to the appropriate section
-4. Never add to Key Decisions via `context learn` — that's only via the post-ADR trigger
-5. Never add to Current State via `context learn` — that's updated by triggers or manually
+4. Never add to Key Decisions via `claude-md learn` — that's only via the post-ADR trigger
+5. Never add to Current State via `claude-md learn` — that's updated by triggers or manually
 
-**When you detect you've been corrected** — the user says "no, not that way" or "don't do X, do Y" — suggest running `context learn`. Don't wait to be told. Example:
+**When you detect you've been corrected** — the user says "no, not that way" or "don't do X, do Y" — suggest running `claude-md learn`. Don't wait to be told. Example:
 
 > User: "No, use pnpm ce, not npx"
-> Agent: *fixes the command* — "Should I capture this? `/context learn 'use pnpm ce, not npx — the skill doc specifies pnpm'`"
+> Agent: *fixes the command* — "Should I capture this? `/claude-md learn 'use pnpm ce, not npx — the skill doc specifies pnpm'`"
 
 ## Shaping Impl Documents
 

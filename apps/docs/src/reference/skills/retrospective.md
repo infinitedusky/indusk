@@ -164,7 +164,7 @@ Re-read CLAUDE.md in full via `get_context`. After the entire impl is done, veri
 - **Known Gotchas** — captures all surprises and corrections
 - **Current State** — reflects what is actually in progress
 
-Fix inaccuracies via `update_context`. The impl may have changed things that were not anticipated in the per-phase [Context](/reference/skills/context) updates.
+Fix inaccuracies via `update_context`. The impl may have changed things that were not anticipated in the per-phase [Context](/reference/skills/claude-md) updates.
 
 ### Step 8: Knowledge Handoff
 

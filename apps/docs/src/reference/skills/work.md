@@ -436,4 +436,4 @@ Follow the monorepo rule: commits should be siloed between different contexts (w
 
 - **Cross-plan impact requires updates.** If your work changes something referenced by another plan (a schema field, a function signature, a contract interface), update that plan's impl or notes to reflect the change.
 
-- **Corrections are learning opportunities.** When the user corrects you mid-work, suggest capturing it with `/context learn`. Corrections are the most valuable source of project knowledge.
+- **Corrections are learning opportunities.** When the user corrects you mid-work, suggest capturing it with `/claude-md learn`. Corrections are the most valuable source of project knowledge.

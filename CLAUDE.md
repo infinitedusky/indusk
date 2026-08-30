@@ -4,7 +4,7 @@
 
 ## What This Is
 
-A pnpm + Turborepo monorepo containing the InDusk development system. The repo dogfoods its own skill system — the same plan/work/verify/context skills used to build features are also the product being showcased.
+A pnpm + Turborepo monorepo containing the InDusk development system. The repo dogfoods its own skill system — the same plan/work/verify/claude-md skills used to build features are also the product being showcased.
 
 ## Architecture
 
@@ -34,7 +34,7 @@ dusk/
 
 **MCP servers** (project `.mcp.json` keep-list, indusk-makeover): **indusk** (dev-system tools), **dash0** (hosted observability; `Authorization: Bearer ${DASH0_AUTH_TOKEN}` — token lives in `~/.indusk/config.env`, never committed), **jaeger** (local-telemetry daemon's MCP — critical), **posthog**. Global keep-list: **playwright** only. Graphiti + codegraphcontext are retired — `init`/`update` remove stale registrations. — see `.indusk/planning/indusk-makeover/adr.md`
 
-**Skills** (process): planner, work, verify, context, document, retrospective, catchup, handoff, falsify, cleanup, highlight, rail-check, git, eval-review, toolbelt. Each concept has one canonical skill; edit in `apps/indusk-mcp/skills/`, never `.claude/skills/` directly.
+**Skills** (process): planner, work, verify, claude-md (was `context` — shadowed by Claude Code's built-in `/context`), document, retrospective, catchup, handoff, falsify, cleanup, highlight, rail-check, git, eval-review, toolbelt. Each concept has one canonical skill; edit in `apps/indusk-mcp/skills/`, never `.claude/skills/` directly.
 
 **`/work`'s per-phase order gains Shape between Verification and Context** (`apps/indusk-mcp/src/lib/shape/`) — craft review of the code *that phase* wrote, against the enabled extensions' prose rules. It is a **step, not a gate type**: no `#### Phase N Shape` heading, no validator rule, nothing retrofitted into the 51 existing impls (gate vocab is closed in 4 sites and an unknown heading fails *silently*, misclassifying its items). The executing agent performs the judgment — it is already a model, so no extra call — while the library supplies only facts: `changedFilesForPhase` (scoped by a generic `{plan, phase, sha, at}` boundary record written at phase start, `.indusk/` excluded), `collectCraftRules`, and three writers that all route through one `appendItemToPhase`. Findings land as unchecked implementation items in the current phase, so existing gate machinery makes them non-ignorable without Shape blocking anything. — see `/guide/shape`
 

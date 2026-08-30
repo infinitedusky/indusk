@@ -374,13 +374,13 @@ Where the harness `Workflow` tool is available, the loop can run as a Workflow (
 
 ## Corrections and Context Learning
 
-When you are corrected mid-work — the user says "no, not that way" or "don't do X, do Y" — suggest capturing it with `context learn`:
+When you are corrected mid-work — the user says "no, not that way" or "don't do X, do Y" — suggest capturing it with `claude-md learn`:
 
-> "Should I capture this? `/context learn 'use pnpm ce, not npx — the skill doc specifies pnpm'`"
+> "Should I capture this? `/claude-md learn 'use pnpm ce, not npx — the skill doc specifies pnpm'`"
 
 Don't wait to be told. Corrections are the most valuable source of project knowledge.
 
-**When the user confirms `context learn`, ALSO write a highlight so the eval agent can materialize it as a lesson:**
+**When the user confirms `claude-md learn`, ALSO write a highlight so the eval agent can materialize it as a lesson:**
 ```
 mcp__indusk__highlight({
   tag: "correction",
@@ -393,7 +393,7 @@ The working agent does not write the lesson directly. The eval agent reads the h
 
 **What to include in the `note`:** enough for the eval agent to reconstruct the lesson and classify its scope. Example: `pnpm-ce: always use pnpm ce, not npx — skill doc specifies pnpm and mixing causes cache drift`. The eval agent has the full transcript, so concision over completeness is fine.
 
-Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail the work item or the `context learn` recording (which is the canonical, local copy of the lesson).
+Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail the work item or the `claude-md learn` recording (which is the canonical, local copy of the lesson).
 
 ## Worktree Kickoff
 

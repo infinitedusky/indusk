@@ -726,6 +726,22 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		}
 	}
 
+	// Renamed skills: globSync installs the new name and leaves the old
+	// directory behind — still listed, still answering to its old slash command.
+	// Fingerprint-checked, so a user's own skill under that name is left alone.
+	{
+		const { removeLegacySkills } = await import("../../lib/skill-migration.js");
+		const skillResult = removeLegacySkills(projectRoot);
+		for (const s of skillResult.removed) {
+			console.info(`  removed: .claude/skills/${s.name} (renamed to ${s.replacedBy})`);
+		}
+		for (const s of skillResult.foreign) {
+			console.info(
+				`  note: .claude/skills/${s.name} is not the InDusk skill — left in place (InDusk's is now ${s.replacedBy})`,
+			);
+		}
+	}
+
 	// 5. Generate .vscode/settings.json
 	if (!local) {
 		console.info("\n[Editor]");

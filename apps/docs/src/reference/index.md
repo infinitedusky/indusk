@@ -13,7 +13,7 @@ The development lifecycle is powered by six process skills that work together, p
 | [Plan](/reference/skills/plan) | Structured planning lifecycle: research → brief → ADR → impl → retrospective |
 | [Work](/reference/skills/work) | Execute impl checklists with four-gate enforcement per phase |
 | [Verify](/reference/skills/verify) | Automated checks (type, lint, test, build) with auto-discovery |
-| [Context](/reference/skills/context) | Maintain CLAUDE.md as living project memory |
+| [claude-md](/reference/skills/claude-md) | Maintain CLAUDE.md as living project memory |
 | [Document](/reference/skills/document) | Per-phase documentation gate with Mermaid diagram guidance |
 | [Retrospective](/reference/skills/retrospective) | Closing audit, quality ratchet, and knowledge handoff |
 | [Onboard](/reference/skills/onboard) | Session-start protocol — reads lessons, health, context, plans, graph |

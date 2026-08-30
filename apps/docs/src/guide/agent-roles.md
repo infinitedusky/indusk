@@ -188,7 +188,7 @@ The three-tier model is reinforced in the skill content the working agent loads:
 
 - **`catchup`** — reads the lessons registry via `mcp__indusk__list_lessons` (read is allowed). Doesn't write.
 - **`planner`** — writes plan documents in `.indusk/planning/`. Calls `mcp__indusk__highlight` at brief/ADR acceptance trigger points.
-- **`work`** — writes code and updates trajectory state. Calls `mcp__indusk__highlight` on mid-session corrections (`context learn`).
+- **`work`** — writes code and updates trajectory state. Calls `mcp__indusk__highlight` on mid-session corrections (`claude-md learn`).
 - **`falsify`** — writes hypotheses into the impl.md as a Falsification Phase. No direct the lessons registry writes.
 - **`retrospective`** — writes the retrospective document. Calls `mcp__indusk__highlight` on each "What We Learned" and "What We'd Do Differently" item with the `retro-lesson` / `retro-hindsight` tag. Calls `add_lesson` for cross-project applicable insights (writes to `.claude/lessons/`).
 - **`handoff`** — writes the operational state via `mcp__indusk__update_current_section`. Fires the eval-trigger explicitly at session end.

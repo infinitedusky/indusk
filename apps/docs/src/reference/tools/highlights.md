@@ -112,7 +112,7 @@ In Phase 1, only the library and the MCP tools ship. In Phase 2 of the agent-rol
 |---------|-------|-------|-----|
 | Brief moves to `accepted` | planner | `critical` | `brief-accepted` |
 | ADR moves to `accepted` | planner | `critical` | `adr-accepted` |
-| User confirms `context learn` | work | `important` | `correction` |
+| User confirms `claude-md learn` | work | `important` | `correction` |
 | Retrospective "What We Learned" item | retrospective | `important` | `retro-lesson` |
 | User runs `/highlight ...` (Phase 4) | highlight skill | user-specified (default `important`) | user-specified or `observation` |
 

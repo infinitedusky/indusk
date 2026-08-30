@@ -1,12 +1,16 @@
-# Context
+# claude-md
 
-The context skill maintains CLAUDE.md as living project memory — a structured file that Claude Code reads at the start of every conversation. Instead of starting each session from scratch, the agent inherits accumulated knowledge about architecture, conventions, decisions, gotchas, and current state. Context ensures that project knowledge compounds across sessions rather than evaporating when a conversation ends.
+The claude-md skill maintains CLAUDE.md as living project memory — a structured file that Claude Code reads at the start of every conversation. Instead of starting each session from scratch, the agent inherits accumulated knowledge about architecture, conventions, decisions, gotchas, and current state. Context ensures that project knowledge compounds across sessions rather than evaporating when a conversation ends.
+
+::: info Renamed from `context`
+Claude Code ships a built-in `/context` command (the context-window usage view), and a built-in shadows any skill of the same name — `/context learn "…"` opened the token chart instead of running this skill. Only the name and the invocation changed. The `#### Phase N Context` gate, the `indusk context` CLI, and the `get_context` / `update_context` tools keep their names.
+:::
 
 ## What It Does
 
-Context operates in two modes:
+It operates in two modes:
 
-1. **Maintains CLAUDE.md** — keeps the living project memory file accurate through three update triggers (post-retrospective, post-ADR, and `context learn`).
+1. **Maintains CLAUDE.md** — keeps the living project memory file accurate through three update triggers (post-retrospective, post-ADR, and `claude-md learn`).
 2. **Shapes impl documents** — when writing an impl via the [Plan](/reference/skills/plan) skill, every phase includes a Context section that specifies exactly what CLAUDE.md updates that phase produces.
 
 The skill does not generate CLAUDE.md from scratch. It maintains one that already exists, keeping it in sync with reality as the project evolves.
@@ -125,7 +129,7 @@ Context updates happen at three specific moments. These are the only times CLAUD
 flowchart TD
     T1["Post-Retrospective"]
     T2["Post-ADR Acceptance"]
-    T3["context learn"]
+    T3["claude-md learn"]
 
     T1 --> R1["Read 'Insights Worth Carrying Forward'"]
     T1 --> R2["Read 'What We'd Do Differently'"]
@@ -151,7 +155,7 @@ flowchart TD
 
 ### Trigger 1: Post-Retrospective
 
-After the [Retrospective](/reference/skills/retrospective) skill completes, the context skill reads two retrospective sections and maps insights to CLAUDE.md sections:
+After the [Retrospective](/reference/skills/retrospective) skill completes, the claude-md skill reads two retrospective sections and maps insights to CLAUDE.md sections:
 
 | Retrospective Section | Maps To |
 |----------------------|---------|
@@ -178,12 +182,12 @@ When an ADR's frontmatter status changes to `accepted`, add exactly one line to 
 
 No rationale is duplicated. The link is the documentation. Key Decisions is never updated via any other trigger.
 
-### Trigger 3: `context learn`
+### Trigger 3: `claude-md learn`
 
-Invoked as `/context learn "lesson"`, or triggered when the agent detects it has been corrected mid-session:
+Invoked as `/claude-md learn "lesson"`, or triggered when the agent detects it has been corrected mid-session:
 
 > **User:** "No, use pnpm ce, not npx"
-> **Agent:** *fixes the command* — "Should I capture this? `/context learn 'use pnpm ce, not npx — the skill doc specifies pnpm'`"
+> **Agent:** *fixes the command* — "Should I capture this? `/claude-md learn 'use pnpm ce, not npx — the skill doc specifies pnpm'`"
 
 The lesson is categorized:
 
@@ -191,7 +195,7 @@ The lesson is categorized:
 - **Known Gotchas** — mistakes (`don't run npx ce, use pnpm ce`, `always env:build before docker compose`)
 - If ambiguous, default to **Known Gotchas** — better to over-capture than miss a lesson
 
-`context learn` never adds to Key Decisions (that is ADR-only) and never adds to Current State (that is updated by triggers or manually).
+`claude-md learn` never adds to Key Decisions (that is ADR-only) and never adds to Current State (that is updated by triggers or manually).
 
 ## What Stays Out
 
@@ -206,7 +210,7 @@ CLAUDE.md is an index, not an encyclopedia. The following do not belong:
 
 ## Shaping Impl Documents
 
-When the [Plan](/reference/skills/plan) skill writes an impl document, the context skill ensures every phase ends with a Context section specifying concrete CLAUDE.md edits. This is how knowledge transfer is built into the work itself, not bolted on after the fact.
+When the [Plan](/reference/skills/plan) skill writes an impl document, the claude-md skill ensures every phase ends with a Context section specifying concrete CLAUDE.md edits. This is how knowledge transfer is built into the work itself, not bolted on after the fact.
 
 Each phase follows this structure:
 
@@ -414,7 +418,7 @@ status: accepted
 ---
 ```
 
-### 2. Context Skill Triggers
+### 2. claude-md Skill Triggers
 
 The post-ADR trigger fires. The agent reads the ADR's Y-statement and extracts a one-liner summary.
 
@@ -462,8 +466,8 @@ One line added. No rationale duplicated. The ADR link is the documentation.
 
 - **CLAUDE.md must have exactly 6 sections.** The parser validates structure by checking for exactly these six `##` headings: What This Is, Architecture, Conventions, Key Decisions, Known Gotchas, Current State. Extra headings or missing headings cause validation to fail, and `update_context` will refuse to write until the structure is fixed.
 
-- **Trigger discipline matters.** If you skip a post-retrospective or post-ADR update, knowledge is lost. The context skill exists because session boundaries erase memory. Every skipped trigger is a lesson that a future agent will have to relearn the hard way.
+- **Trigger discipline matters.** If you skip a post-retrospective or post-ADR update, knowledge is lost. The claude-md skill exists because session boundaries erase memory. Every skipped trigger is a lesson that a future agent will have to relearn the hard way.
 
-- **Key Decisions only comes from ADRs.** Never add to Key Decisions via `context learn` or during a retrospective. The ADR acceptance trigger is the only path. This keeps the section authoritative — every entry links to a formal decision record.
+- **Key Decisions only comes from ADRs.** Never add to Key Decisions via `claude-md learn` or during a retrospective. The ADR acceptance trigger is the only path. This keeps the section authoritative — every entry links to a formal decision record.
 
 - **When in doubt, use Known Gotchas.** If you are unsure whether something is a Convention or a Gotcha, default to Known Gotchas. Over-capturing in Gotchas is better than losing a lesson entirely.

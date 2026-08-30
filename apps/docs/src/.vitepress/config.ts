@@ -97,7 +97,7 @@ const config = defineConfig({
 						{ text: "Plan", link: "/reference/skills/plan" },
 						{ text: "Work", link: "/reference/skills/work" },
 						{ text: "Verify", link: "/reference/skills/verify" },
-						{ text: "Context", link: "/reference/skills/context" },
+						{ text: "claude-md", link: "/reference/skills/claude-md" },
 						{ text: "Document", link: "/reference/skills/document" },
 						{ text: "Retrospective", link: "/reference/skills/retrospective" },
 						{ text: "Onboard", link: "/reference/skills/onboard" },

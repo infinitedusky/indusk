@@ -123,7 +123,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    ```
    Skip silently on highlight unavailability.
 
-6. **If test plan is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the context skill: `- {decision summary} — see .indusk/planning/{plan}/adr.md`
+6. **If test plan is accepted** and the workflow includes an ADR (feature only), write the ADR. The ADR formalizes the decisions that were discussed during research and led to the brief. It records what was chosen, what was rejected, and why. **After the ADR is accepted**, add a one-liner to CLAUDE.md's Key Decisions section per the claude-md skill: `- {decision summary} — see .indusk/planning/{plan}/adr.md`
 
    **When the ADR moves from `proposed` to `accepted`**, write a highlight so the eval agent can turn it into a structured Y-statement episode:
    ```

@@ -7,6 +7,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ### Added
 - **`indusk context check-pointers` refuses hand-copied version claims in CLAUDE.md.** A `**Version**:` line carrying a literal semver fails when it doesn't match `package.json` — or when there is no `package.json` version to check it against (monorepo roots). dusk's CLAUDE.md said "1.36.0 published" for twelve days and four releases while npm served 1.40.3; nothing in the release flow touches CLAUDE.md, so the only safe version line is a pointer. A matching literal passes today and fails at the next bump — the check catches the copy exactly when it becomes a lie.
 
+### Changed
+- **The `context` skill is now `claude-md`.** Claude Code ships a built-in `/context` command (the context-window usage view), and a built-in shadows any skill of the same name — `/context learn "…"` opened the token chart instead of running the skill. Only the name and invocation changed (`/claude-md learn "…"`); the `#### Phase N Context` gate, the `indusk context` CLI, and `get_context` / `update_context` keep their names. `init` and `update` remove the stale `.claude/skills/context/` directory through the new `LEGACY_SKILLS` migration (`lib/skill-migration.ts`, the third twin after retired MCP servers and hooks). It is fingerprint-checked: a user's own skill that happens to be named `context` is reported and left alone.
+
 
 ## [1.40.3] — 2026-08-29
 

@@ -56,7 +56,7 @@ See [Local Mode](./local-mode) for details on using InDusk without touching comm
 ### 3. Start coding
 
 Open the project in Claude Code. You should see:
-- Skills available — the plan lifecycle (`/planner`, `/work`, `/verify`, `/context`, `/document`, `/falsify`, `/cleanup`, `/retrospective`), and the session and workflow skills (`/catchup`, `/handoff`, `/git`, `/highlight`, `/research`, `/rail-check`, `/compact-context`)
+- Skills available — the plan lifecycle (`/planner`, `/work`, `/verify`, `/claude-md`, `/document`, `/falsify`, `/cleanup`, `/retrospective`), and the session and workflow skills (`/catchup`, `/handoff`, `/git`, `/highlight`, `/research`, `/rail-check`, `/compact-context`)
 - **InDusk MCP tools** — lessons, plans, context, extensions, health
 - **Extension MCP tools** — whatever your enabled extensions provide. On a project with `local-telemetry` on, that includes Jaeger's tools for querying traces.
 

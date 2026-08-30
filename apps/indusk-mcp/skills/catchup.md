@@ -172,6 +172,6 @@ Ready to pick up. What would you like to do?
 - Do NOT skip any step. Each one prevents a class of mistake.
 - Do NOT mutate any shared file during catchup. The only writes are `indusk agent register` and the implicit self-heartbeat in `indusk agent list`, both touching only the current session's own section.
 - Do NOT start coding before completing onboarding. The lessons and context exist because of past failures.
-- If CLAUDE.md seems outdated, flag it to the user — it may need a `/context` update.
+- If CLAUDE.md seems outdated, flag it to the user — it may need a `/claude-md` update.
 - If a plan's impl has unchecked items from a previous session, that's where `/work` picks up. Don't re-do completed work.
 - If you see other agents in `indusk agent list` working on something that overlaps with what the user wants you to do, surface that explicitly before proceeding. The bulletin is visibility, not coordination — the working agent owns the "avoid stepping on each other" judgment. `agent list` now shows each session's **worktree** and **branch**, and prints a `⚠ collision` line to stderr when two live sessions share a worktree — read both when judging overlap.

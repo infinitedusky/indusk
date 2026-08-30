@@ -21,7 +21,7 @@ The user runs `/highlight {free-form text} [level: critical|important|note]`.
    - `observation` — general flag (default)
    - `decision` — an informal decision the user wants recorded
    - `surprise` — something unexpected
-   - `correction` — a mid-session correction (but the work skill already does this on `context learn`; prefer that path)
+   - `correction` — a mid-session correction (but the work skill already does this on `claude-md learn`; prefer that path)
    - A user-supplied tag if the message contains one (`tag=architecture` etc.)
 
 3. **Write the highlight** via the InDusk MCP:

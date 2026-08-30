@@ -1,6 +1,6 @@
 # Document
 
-The document skill is a per-phase documentation gate during impl execution. It sits alongside [Verify](/reference/skills/verify) and [Context](/reference/skills/context) in the phase completion sequence, ensuring that user-facing and developer-facing documentation stays current as work progresses. Every phase asks one question: does this change need docs? If yes, write them. If no, move on.
+The document skill is a per-phase documentation gate during impl execution. It sits alongside [Verify](/reference/skills/verify) and [Context](/reference/skills/claude-md) in the phase completion sequence, ensuring that user-facing and developer-facing documentation stays current as work progresses. Every phase asks one question: does this change need docs? If yes, write them. If no, move on.
 
 ## What It Does
 
@@ -190,7 +190,7 @@ Example output:
     "reference/skills/plan.md",
     "reference/skills/work.md",
     "reference/skills/verify.md",
-    "reference/skills/context.md",
+    "reference/skills/claude-md.md",
     "reference/skills/document.md",
     "reference/skills/retrospective.md",
     "reference/tools/indusk-mcp.md",
@@ -315,7 +315,7 @@ Pages not listed in the sidebar will still be accessible by URL but will not app
 
 - **Use `<FullscreenDiagram>` for all Mermaid diagrams.** Never use bare `` ```mermaid `` blocks. Diagrams are often too small to read inline, and the FullscreenDiagram component provides zoom and pan controls that make dense diagrams usable.
 
-- **Documentation is human-facing, CLAUDE.md is agent-facing.** They serve different audiences. Do not duplicate content between them. The [Context](/reference/skills/context) skill maintains CLAUDE.md for the agent; the document skill maintains VitePress pages for humans.
+- **Documentation is human-facing, CLAUDE.md is agent-facing.** They serve different audiences. Do not duplicate content between them. The [claude-md](/reference/skills/claude-md) skill maintains CLAUDE.md for the agent; the document skill maintains VitePress pages for humans.
 
 - **Link, do not duplicate.** If something is fully documented in a skill file or ADR, link to the docs page rather than copying content. One source of truth.
 

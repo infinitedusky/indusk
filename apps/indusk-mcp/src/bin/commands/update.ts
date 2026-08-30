@@ -378,6 +378,23 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 	}
 
+	// 5d. Retire skills renamed in the package. Same shape as 5c: the skills
+	// sync above added the new name; this removes the old directory, which
+	// would otherwise stay listed and keep answering to its old slash command.
+	// Fingerprint-checked, so a user's own skill under that name is left alone.
+	{
+		const { removeLegacySkills } = await import("../../lib/skill-migration.js");
+		const skillResult = removeLegacySkills(projectRoot);
+		for (const s of skillResult.removed) {
+			console.info(`  removed: .claude/skills/${s.name} (renamed to ${s.replacedBy})`);
+		}
+		for (const s of skillResult.foreign) {
+			console.info(
+				`  note: .claude/skills/${s.name} is not the InDusk skill — left in place (InDusk's is now ${s.replacedBy})`,
+			);
+		}
+	}
+
 	// 5b. Migrate stale MCP configs
 	const mcpJsonPath = join(projectRoot, ".mcp.json");
 	if (existsSync(mcpJsonPath)) {
