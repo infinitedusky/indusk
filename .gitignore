@@ -39,8 +39,6 @@ apps/docs/src/.vitepress/dist/
 .indusk/graph/
 # Eval results (local-only)
 .indusk/eval/
-# Extension manifests are package-owned; env files contain secrets
-.indusk/extensions/
 
 # Sub-app .claude/ and .indusk/ dirs — these should only exist at the
 # repo root. They get accidentally created when `indusk init` or
@@ -66,10 +64,13 @@ nginx.production.conf
 Caddyfile
 
 # doppler env-pull (machine-local, provisioned from Doppler)
-.indusk/extensions/doppler/.env
 apps/*/.env.local
 apps/*/.env.staging
 apps/*/.env.production
 # InDusk managed
 # Multi-agent presence bulletin (per-session, machine-local)
 .indusk/agents/
+# Extension secrets (manifests and .env.example are tracked configuration)
+.indusk/extensions/*/.env
+.indusk/extensions/*/.env.*
+!.indusk/extensions/*/.env.example
