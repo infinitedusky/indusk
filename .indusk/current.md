@@ -13,7 +13,7 @@ Two regions:
 
 _Any agent can edit this section. Cross-cutting state that's true for the whole project right now._
 
-(empty)
+- 2026-08-30: the 2026-08-16 publish blockers are all resolved — `LEGACY_HOOKS` removal shipped (`lib/hook-migration.ts`; `check-plan-order.js` gone from disk and settings), the changelog was split per release in 1.36.2, and the batch published through 1.40.x. CLAUDE.md no longer carries version/plan-table copies; operational blockers belong here.
 
 ---
 
@@ -296,6 +296,27 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-08-27T18:14:52.548Z
 **Branch**: plan/versioned-workbench
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/versioned-workbench
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 7216db4f — claude-md skill rename + CLAUDE.md derivable-facts purge + check-pointers version guard
+
+**Session ID**: 7216db4f-a4b3-4455-b90c-90ad85c5a93a
+**Last updated**: 2026-08-30T19:42:15.715Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 

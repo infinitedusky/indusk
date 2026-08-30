@@ -41,8 +41,10 @@ The rule sentence is what a working session needs in context; the narrative (how
 A dead pointer under this regime is a **lost rule body** — so pointer integrity is a first-class check:
 
 ```bash
-indusk context check-pointers   # exit 1 + list of dead pointers
+indusk context check-pointers   # exit 1 + dead pointers and hand-copied version claims
 ```
+
+The same check refuses a `**Version**:` line carrying a literal semver that does not match `package.json` — or that cannot be checked because the root `package.json` has no version field. A hand-copied version drifts by default: nothing in the release flow touches CLAUDE.md, and dusk's said 1.36 for twelve days while npm served 1.40. State the version as a pointer to `package.json` and the changelog instead.
 
 ## The decay loop
 

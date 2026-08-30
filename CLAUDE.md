@@ -45,7 +45,7 @@ dusk/
 - pnpm workspaces + Turborepo; **Node 22 required** (Tailwind 4 native bindings).
 - **Biome, not ESLint** — `pnpm check` / `pnpm check:fix` / `pnpm format`. Biome config is a knowledge artifact (`biome-rationale.md`); the ratchet only tightens. After each retrospective ask if a mistake could become a Biome rule.
 - `pnpm test` runs all; `pnpm turbo test --filter={app}` scopes. Vitest `passWithNoTests: true` must be set per-app (root `extends: true` doesn't inherit it).
-- **CLAUDE.md has a hard 60 KB budget enforced at write time** — `claude-md-budget.js` PreToolUse hook blocks past `context.claude_md_budget_bytes` (61440 default; warns at 90%). Entries are 1–3-line rules + pointer. Compact, don't grow; raise the budget only as a deliberate config edit. `indusk context check-pointers` verifies pointers resolve. — see `/guide/context-budget`
+- **CLAUDE.md has a hard 60 KB budget enforced at write time** — `claude-md-budget.js` PreToolUse hook blocks past `context.claude_md_budget_bytes` (61440 default; warns at 90%). Entries are 1–3-line rules + pointer. Compact, don't grow; raise the budget only as a deliberate config edit. `indusk context check-pointers` verifies pointers resolve and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
 - **Decay layer**: `indusk agent sweep` archives current.md sections older than `agents.sweep_ttl_minutes` (7d default; ≫ the 60-min display TTL) to `.indusk/archive/current-md-archive.md`; `indusk plans archive-dead` moves all-draft stale plans (`planning.dead_draft_days`, 30d) to `planning/archive/`. Archive, never delete; malformed input blocks/keeps; master.md non-draft rows protect plans. — see `/reference/cli/plans`
 - **Hub push/pull**: `indusk sync promote <lesson>` → machine-global hub (`$INDUSK_HOME/hub/lessons/`, provenance-stamped, manifest-versioned); `indusk sync pull` (run by catchup) merges hub + bundled community channel — additive-only, idempotent, local wins. — see `/reference/cli/sync`
 - **`/catchup` is dieted**: no CLAUDE.md re-read (auto-injected), targeted current.md reads (shared region + live sections keyed off `agent list`), `list_plans { active: true }`, sweep dry-run + hub pull. `/handoff` runs the real sweep. Measured 55k → ~8.2k tokens. — see `/reference/skills/catchup`
@@ -140,38 +140,29 @@ dusk/
 
 ## Current State
 
-**Version**: **1.36.0 published**; `main` is bumped to **1.36.1** and ready to publish. 1.33.0 is a deprecated accidental publish of 1.32.0-era code.
-
-**Publish blockers** (2026-08-16): no `LEGACY_HOOKS` removal path — a hook deleted from the package stays on disk *and registered in `.claude/settings.json`* in every consumer forever (`check-plan-order.js` is the live instance, still orphaned); `indusk update` untested against a consumer for this batch. **The changelog has no `[1.36.0]` heading**, so `[Unreleased]` mixes shipped Dawn-component entries with unshipped ones — untangle before cutting `[1.36.1]`. (`agent-roles-phase4` cleared 2026-08-16 — 11/11.)
+**Version**: never hand-copied here — read `apps/indusk-mcp/package.json` (published: `npm view @infinitedusky/indusk-mcp version`); history and release stories (including the deprecated-release accident) in `apps/docs/src/changelog.md`. `indusk context check-pointers` refuses a literal version claim on this line — it drifted 4 releases behind within 12 days when hand-copied.
 
 **In flight:**
 
 - **indusk-makeover (close-out pending)** — budgets + decay + Graphiti/CGC removal + catchup diet + hub sync. Its `agent-roles-phase4` blocker cleared 2026-08-16 (11/11); Numero-workbench migrates after publish. **Note**: `guide/getting-started.md` still advertises CodeGraphContext + Graphiti MCP tools this plan removed — belongs here, not in a jj rip-out. See `.indusk/planning/indusk-makeover/`.
 - **versioned-workbench (1.37.0–1.38.3)** — workbenches are shareable: declared multi-repo sets, `workbench restore/sync/status/migrate-layout`, portable nested layouts via `repos_root`. Twelve defects were found by *using* it after the plan closed green — see the lessons page. See [archive](.indusk/planning/archive/versioned-workbench/) for full detail.
-- **cleanup-ritual (2026-07-13, pending 1.32.0 publish)** — `/cleanup` ritual + config block + Ritual Gate + A-prefixed trajectory IDs. See [archive](.indusk/planning/archive/cleanup-ritual/).
-- **worktree-visibility (unpublished)** — worktree-per-plan default + observable bulletin; T7–T9 manual smokes unrun. See [archive](.indusk/planning/archive/worktree-visibility/).
+- **cleanup-ritual (2026-07-13)** — `/cleanup` ritual + config block + Ritual Gate + A-prefixed trajectory IDs. See [archive](.indusk/planning/archive/cleanup-ritual/).
+- **worktree-visibility** — worktree-per-plan default + observable bulletin; T7–T9 manual smokes unrun. See [archive](.indusk/planning/archive/worktree-visibility/).
 - **indusk-worktree-extension** — shipped; superseded in practice by versioned-workbench's multi-repo model. See [archive](.indusk/planning/indusk-worktree-extension/).
 - **workbench-mode-rail-integrity** — Phases 1–4 + falsification shipped (1.31.7–1.31.10); awaiting Numero auto-rail verification before close. See `.indusk/planning/workbench-mode-rail-integrity/`.
-- **dawn-external-orchestrator (2026-08-03, unpublished)** — `indusk run`/`atdawn`: model-agnostic gated execution loop, gates ported unchanged, 9-cell acceptance matrix, A8 signed off (flash-for-mechanical routing). See [archive](.indusk/planning/archive/dawn-external-orchestrator/) for full detail.
-- **dawn-ui-plan-grouping (2026-08-03, unpublished)** — plan hierarchy in the admin UI: top-down frontmatter declarations, grouped sidebar + parent detail cards, five falsification fixes, cleanup decomposition. See [archive](.indusk/planning/archive/dawn-ui-plan-grouping/) for full detail.
-- **dawn-hook-parity (2026-08-03, unpublished)** — Dawn Component 2: thin lane enforces every invariant hook, commits per item, and feeds the eval rail via a durable queue; `ask` now the default in both lanes. See [archive](.indusk/planning/archive/dawn-hook-parity/) for full detail.
-- **dawn-verify (2026-08-05, unpublished)** — Dawn Component 6, the keystone: `atdawn verify` — the first thing in InDusk ever to execute a test as a gate check; boundary verification held (5/5 planted classes, 0 false positives). See [archive](.indusk/planning/archive/dawn-verify/) for full detail.
-- **lifecycle-rebalance (2026-08-10, unpublished)** — the **Shape** check: per-phase craft review in `/work`, extension-sourced rules, findings as items in the phase that wrote the code. 9 phases, 27 rows; two falsification passes found 10 confirmed defects. Remaining rebalance slices (thin-lane Shape, Challenge, docs restructure, `verify` into `runLoop`) are follow-ons. See [archive](.indusk/planning/archive/lifecycle-rebalance/) for full detail.
+- **dawn-external-orchestrator (2026-08-03)** — `indusk run`/`atdawn`: model-agnostic gated execution loop, gates ported unchanged, 9-cell acceptance matrix, A8 signed off (flash-for-mechanical routing). See [archive](.indusk/planning/archive/dawn-external-orchestrator/) for full detail.
+- **dawn-ui-plan-grouping (2026-08-03)** — plan hierarchy in the admin UI: top-down frontmatter declarations, grouped sidebar + parent detail cards, five falsification fixes, cleanup decomposition. See [archive](.indusk/planning/archive/dawn-ui-plan-grouping/) for full detail.
+- **dawn-hook-parity (2026-08-03)** — Dawn Component 2: thin lane enforces every invariant hook, commits per item, and feeds the eval rail via a durable queue; `ask` now the default in both lanes. See [archive](.indusk/planning/archive/dawn-hook-parity/) for full detail.
+- **dawn-verify (2026-08-05)** — Dawn Component 6, the keystone: `atdawn verify` — the first thing in InDusk ever to execute a test as a gate check; boundary verification held (5/5 planted classes, 0 false positives). See [archive](.indusk/planning/archive/dawn-verify/) for full detail.
+- **lifecycle-rebalance (2026-08-10)** — the **Shape** check: per-phase craft review in `/work`, extension-sourced rules, findings as items in the phase that wrote the code. 9 phases, 27 rows; two falsification passes found 10 confirmed defects. Remaining rebalance slices (thin-lane Shape, Challenge, docs restructure, `verify` into `runLoop`) are follow-ons. See [archive](.indusk/planning/archive/lifecycle-rebalance/) for full detail.
 - **jj-residue-rip-out (1.36.1)** — finished the 1.31.0 jj removal and replaced the enforcement test that hid it; four independent scope blind spots (path, pattern, match granularity, file type), two of them found in this plan's own output by `/falsify` and `/cleanup`. See [archive](.indusk/planning/archive/jj-residue-rip-out/) and `/lessons/jj-residue-rip-out`.
-- **test-phase-structure (2026-08-12, unpublished)** — test authoring became a phase; Gate A now enforces the 260 previously-unenforceable `Phase 0` rows. **Follow-ons**: `falsify-phase-authoring` + `local-telemetry` are legitimately blocked by the correction (rows never authored); `react-native-support` blocks on edit until its Phase 2 Context gate is fixed; `plan/lifecycle-rebalance` is unmerged and holds a seventh phase-heading copy in `shape/impl-blocks.ts`, so A13 goes red at that merge by design. See [archive](.indusk/planning/archive/test-phase-structure/) for full detail.
+- **test-phase-structure (2026-08-12)** — test authoring became a phase; Gate A now enforces the 260 previously-unenforceable `Phase 0` rows. **Follow-ons**: `falsify-phase-authoring` + `local-telemetry` are legitimately blocked by the correction (rows never authored); `react-native-support` blocks on edit until its Phase 2 Context gate is fixed; `plan/lifecycle-rebalance` is unmerged and holds a seventh phase-heading copy in `shape/impl-blocks.ts`, so A13 goes red at that merge by design. See [archive](.indusk/planning/archive/test-phase-structure/) for full detail.
 
-**Active plans** (dead drafts archived 2026-07-23 by the makeover backfill; sidebar order canonical from `.indusk/planning/master.md`):
+**Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `.indusk/planning/master.md`); operational blockers live in `.indusk/current.md` → `## Project (shared)`. Standing direction notes that stage/next-step cannot derive:
 
-| Plan | Stage | Next Step |
-|------|-------|-----------|
-| indusk-makeover | impl in-progress (P6) | finish migration, falsify, cleanup, retrospective |
-| hermes-inspired-improvements | brief accepted | ADR |
-| doppler-extension | impl (phases landing) | continue phases |
-| local-telemetry | test-plan accepted | impl phases |
-| documentation-phase-gate / falsify-phase-authoring / evaluator-structured-scorecard-output / admin-ui-local-domain | accepted | queued |
-| indusk-v2-dawn | parent plan (living master) | re-founded 2026-07-26; component status in `.indusk/planning/indusk-v2-dawn/master.md`; Component 0 (dawn-ui-plan-grouping) shipped |
-| midnight | brief amended 2026-08-11 | **active direction, referenced going forward** — expectation/telemetry linkage is the plan of record; failure-earned-tests replaced by two authorities; `subsystem` dropped for reopenable plans. See `/guide/plan-lifecycle` |
-| graph-knowledge-architecture / cursor-support | research/parked | **review against the makeover** — the graph-canonical direction is rejected; these need re-scoping or archiving |
-| react-native-support | impl approved, parked | roll into dusk-v2 or archive |
+- **midnight** — **active direction, referenced going forward**: expectation/telemetry linkage is the plan of record; failure-earned-tests replaced by two authorities; `subsystem` dropped for reopenable plans. See `/guide/plan-lifecycle`
+- **indusk-v2-dawn** — parent plan (living master), re-founded 2026-07-26; component status in `.indusk/planning/indusk-v2-dawn/master.md`
+- **graph-knowledge-architecture / cursor-support** — **review against the makeover**: the graph-canonical direction is rejected; re-scope or archive
+- **react-native-support** — parked; roll into dusk-v2 or archive
 
 **Test bed**: `~/code/sandbox/chitin-sportsbook` (real project on Base Sepolia) exercises the dev system end-to-end.
