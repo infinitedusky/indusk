@@ -85,7 +85,7 @@ Out of scope: `remove`, `prune`, orphan-worktree detection. These are manual ope
 
 The user-facing run-anything surface is `pnpm wt <slug>[:<app>] <command> [args...]`. This matches the shape `dawn-fde-toolkit` ships today, simplified for single-repo.
 
-Resolution is a single-pass lookup against subdirs at workbench root. Exact match wins; suffix-match fallback; ambiguous match errors with the candidates listed; zero match errors with the searched directory.
+Resolution is one function shared with `wt:pm2` (`_wt_resolve_target`). Trunks come first, from config: `main`, `<repo>/main`, or a declared repo name resolve to the declared workbench-side path, else `<repos_root>/<name>`. Worktree slugs then scan the workbench root and every declared `worktrees` directory. Exact match wins; suffix-match fallback; ambiguous match errors with the qualified `<repo>/<slug>` candidates listed; zero match errors with the available targets.
 
 `:<app>` suffix changes the resolved dir from `<resolved>` to `<resolved>/apps/<app>`.
 
@@ -93,9 +93,10 @@ Examples (workbench is wrapping `numero`):
 - `pnpm wt cancel-polish dev` — cd to `<workbench>/cancel-polish/`, run `pnpm dev`
 - `pnpm wt cancel-polish:web build` — cd to `<workbench>/cancel-polish/apps/web/`, run `pnpm build`
 - `pnpm wt numero lint` — cd to `<workbench>/numero/` (the trunk symlink), run `pnpm lint`
+- `pnpm wt main lint` — the same trunk, without naming it (single-repo workbench)
 - `pnpm wt cancel-polish ce dc:up local` — cd to `<workbench>/cancel-polish/`, run `pnpm ce dc:up local` (ce reads the worktree's env)
 
-Each trunk is addressable by its repo name (`pnpm wt numero ...`). No `pnpm wt trunk` alias — keeps the surface minimal; the names are already in `worktree.repos[]` and stable.
+Each trunk is addressable by its repo name (`pnpm wt numero ...`) or as `main` (`pnpm wt main ...`; `<repo>/main` when several repos are declared). Trunks resolve from `worktree.repos[]` + `repos_root`, never by scanning — a workbench whose trunk symlink was never made still routes.
 
 ### Composing with composable.env (legacy — deprecated in favor of doppler)
 

@@ -4,6 +4,12 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **`pnpm wt main` — trunks route from config, never from scanning.** `main` (or `<repo>/main` when several repos are declared, refusing unqualified exactly like an ambiguous slug) and a declared repo name now resolve through the declared layout: the workbench-side `path` when it exists (trunk symlink or nested checkout), else `<repos_root>/<name>`. A sibling-layout workbench whose trunk link was never made had a config that said exactly where the trunk was, and `wt` could not find it — trunk addressing only worked when a root symlink happened to exist.
+
+### Fixed
+- **`pnpm wt:pm2` resolution is wt.sh's again, by construction.** It carried its own root-only copy whose header claimed "resolution matches wt.sh" — false since declared layouts shipped in 1.37.0: a worktree in a declared `worktrees` directory was invisible to it. Both scripts now call one `_wt_resolve_target` in `workbench-helpers.sh`, so declared directories, `<repo>/<slug>` disambiguation, and the new trunk targets work identically in both. The bash reserved-name set also picks up `docs`, which both copies had drifted from `RESERVED_ROOT_DIRS`.
+
 ## [1.41.0] — 2026-08-30
 
 ### Added

@@ -234,3 +234,226 @@ _read_worktree_config() {
 	fi
 	jq -r "$filter" "$config" 2>/dev/null
 }
+
+# Emit "<name>\t<path>" per declared repo. The path is the declared `path`
+# (the repo's workbench-side trunk location), or empty meaning `<name>` at the
+# workbench root. Same sanitization as the worktrees variant above: relative
+# only, no `~`, no `..` in any position — a bad value degrades to the default,
+# never to a traversal.
+#
+# DELIBERATE PORT of repoDir() in src/lib/worktree/repos.ts — bash cannot
+# import the TS module, so the rule lives twice and must move together.
+_read_workbench_repo_paths() {
+	local root="${WORKBENCH_ROOT:-}"
+	[[ -n "$root" ]] || { echo "Error: _read_workbench_repo_paths: WORKBENCH_ROOT must be set" >&2; return 1; }
+	local config="$root/.indusk/config.json"
+	[[ -f "$config" ]] || return 0
+	jq -r '
+		(.worktree // {}) as $w
+		| (
+			if ($w.repos | type) == "array" then $w.repos
+			elif ($w.wrapped_repo | type) == "string" then [{ name: $w.wrapped_repo }]
+			else []
+			end
+		)
+		| map(select(type == "object"))
+		| map(select((.name | type) == "string" and .name != ""))
+		| map([
+			.name,
+			(if (.path | type) == "string"
+				and (.path | test("^/|^~|(^|/)\\.\\.(/|$)") | not)
+			 then .path else "" end)
+		  ])
+		| .[] | @tsv
+	' "$config" 2>/dev/null || echo ""
+}
+
+# Root entries that are never worktrees. ONE definition for the bash lane —
+# wt.sh and wt-pm2.sh each carried a copy, and they had already drifted from
+# RESERVED_ROOT_DIRS in src/lib/worktree/layout.ts (`docs` was missing from
+# both). DELIBERATE PORT of that set; change TS and this together.
+_wt_is_reserved_name() {
+	case "$1" in
+		.indusk | .claude | .vscode | .cursor | node_modules | dist | build | .git | .next | scripts | env | docs) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
+# Where <repo>'s trunk checkout is, from CONFIG — never from scanning.
+#   1. The declared workbench-side location: <workbench>/<path-or-name>,
+#      which is the trunk symlink in a linked layout or the real directory in
+#      a nested one (`repos_root: "."`).
+#   2. Else <repos_root>/<name> — the checkout itself, for a workbench whose
+#      trunk link was never made. Routing there is what "the config says where
+#      things are" means; failing because a symlink is missing is scan-luck.
+_wt_resolve_trunk_dir() {
+	local repo="$1"
+	local declared_path="" name path
+	while IFS=$'\t' read -r name path; do
+		[[ "$name" == "$repo" ]] || continue
+		declared_path="$path"
+		break
+	done < <(_read_workbench_repo_paths)
+	local side="$WORKBENCH_ROOT/${declared_path:-$repo}"
+	if [[ -d "$side" ]]; then
+		echo "$side"
+		return 0
+	fi
+	local repos_root
+	repos_root="$(_read_repos_root)" || return 1
+	if [[ -d "$repos_root/$repo" ]]; then
+		echo "$repos_root/$repo"
+		return 0
+	fi
+	echo "Error: trunk for repo '$repo' not found — looked at $side and $repos_root/$repo. Run \`indusk workbench restore\`." >&2
+	return 1
+}
+
+# _wt_resolve_target <slug-or-qualified-slug> — the ONE resolution surface
+# behind `pnpm wt` and `pnpm wt:pm2`. Each script carried its own copy once,
+# and only one of them learned declared layouts — wt-pm2.sh stayed root-only
+# for a full release while its header claimed "resolution matches wt.sh".
+#
+# Order:
+#   1. Trunks, from config: `main` (qualified `<repo>/main` when several repos
+#      are declared) or a declared repo name routes via _wt_resolve_trunk_dir.
+#   2. Worktrees, by scanning the workbench root and every DECLARED worktrees
+#      directory. Exact match wins; `-<slug>` suffix as fallback; ambiguity
+#      refuses and names the qualified `<repo>/<slug>` forms.
+#
+# Echoes the resolved absolute path. Errors to stderr, non-zero return.
+_wt_resolve_target() {
+	local target="$1"
+	local qualifier="" slug="$target"
+	if [[ "$slug" == */* ]]; then
+		qualifier="${slug%%/*}"
+		slug="${slug#*/}"
+	fi
+
+	local repos=() r
+	while IFS= read -r r; do
+		[[ -n "$r" ]] && repos+=("$r")
+	done < <(_read_workbench_repos)
+
+	# --- 1. trunks come from config, never from scanning ---
+	if [[ "$slug" == "main" ]]; then
+		local repo=""
+		if [[ -n "$qualifier" ]]; then
+			if [[ ${#repos[@]} -gt 0 ]]; then
+				for r in "${repos[@]}"; do
+					[[ "$r" == "$qualifier" ]] && repo="$r"
+				done
+			fi
+			if [[ -z "$repo" ]]; then
+				echo "Error: no declared repo named '$qualifier' in .indusk/config.json." >&2
+				return 1
+			fi
+		elif [[ ${#repos[@]} -eq 1 ]]; then
+			repo="${repos[0]}"
+		elif [[ ${#repos[@]} -gt 1 ]]; then
+			echo "Error: 'main' is ambiguous — this workbench declares several repos:" >&2
+			for r in "${repos[@]}"; do printf '  %s/main\n' "$r" >&2; done
+			return 1
+		else
+			echo "Error: no repos declared in .indusk/config.json — not a workbench?" >&2
+			return 1
+		fi
+		_wt_resolve_trunk_dir "$repo"
+		return $?
+	fi
+
+	if [[ ${#repos[@]} -gt 0 && ( -z "$qualifier" || "$qualifier" == "$slug" ) ]]; then
+		for r in "${repos[@]}"; do
+			if [[ "$r" == "$slug" ]]; then
+				_wt_resolve_trunk_dir "$r"
+				return $?
+			fi
+		done
+	fi
+
+	# --- 2. worktrees, from the root and every declared worktrees dir ---
+	local search_repos=() search_dirs=() _name _dir
+	while IFS=$'\t' read -r _name _dir; do
+		[[ -n "$_name" ]] || continue
+		# Only DECLARED directories get their own pass — the root pass below
+		# covers repos that declare none (the flat layout). Searching the root
+		# twice turned every flat-layout slug into a false ambiguity.
+		[[ -n "$_dir" ]] || continue
+		search_repos+=("$_name")
+		search_dirs+=("$_dir")
+	done < <(_read_workbench_worktree_dirs)
+	search_repos+=("")
+	search_dirs+=("")
+
+	local exact_paths=() exact_repos=() suffix_paths=() suffix_repos=()
+	local idx repo dir base entry name
+	for idx in "${!search_dirs[@]}"; do
+		repo="${search_repos[$idx]}"
+		dir="${search_dirs[$idx]}"
+		if [[ -n "$qualifier" && -n "$repo" && "$repo" != "$qualifier" ]]; then continue; fi
+		if [[ -n "$qualifier" && -z "$repo" ]]; then continue; fi
+		base="$WORKBENCH_ROOT"
+		[[ -n "$dir" ]] && base="$WORKBENCH_ROOT/$dir"
+		[[ -d "$base" ]] || continue
+		for entry in "$base"/*; do
+			[[ -e "$entry" ]] || continue
+			[[ -d "$entry" ]] || continue
+			name="$(basename "$entry")"
+			[[ -z "$dir" ]] && _wt_is_reserved_name "$name" && continue
+			if [[ "$name" == "$slug" ]]; then
+				exact_paths+=("$entry"); exact_repos+=("$repo")
+			elif [[ "$name" == *"-$slug" ]]; then
+				suffix_paths+=("$entry"); suffix_repos+=("$repo")
+			fi
+		done
+	done
+
+	local candidate_paths=() candidate_repos=()
+	if [[ ${#exact_paths[@]} -gt 0 ]]; then
+		candidate_paths=("${exact_paths[@]}"); candidate_repos=("${exact_repos[@]}")
+	elif [[ ${#suffix_paths[@]} -gt 0 ]]; then
+		candidate_paths=("${suffix_paths[@]}"); candidate_repos=("${suffix_repos[@]}")
+	fi
+
+	if [[ ${#candidate_paths[@]} -eq 0 ]]; then
+		echo "Error: no worktree or trunk matching slug '$slug' at $WORKBENCH_ROOT" >&2
+		echo "Available targets:" >&2
+		if [[ ${#repos[@]} -gt 0 ]]; then
+			for r in "${repos[@]}"; do
+				if [[ ${#repos[@]} -eq 1 ]]; then
+					printf '  %s (trunk — also `wt main`)\n' "$r" >&2
+				else
+					printf '  %s (trunk — also `wt %s/main`)\n' "$r" "$r" >&2
+				fi
+			done
+		fi
+		for idx in "${!search_dirs[@]}"; do
+			repo="${search_repos[$idx]}"; dir="${search_dirs[$idx]}"
+			base="$WORKBENCH_ROOT"; [[ -n "$dir" ]] && base="$WORKBENCH_ROOT/$dir"
+			[[ -d "$base" ]] || continue
+			for entry in "$base"/*; do
+				[[ -d "$entry" ]] || continue
+				name="$(basename "$entry")"
+				[[ -z "$dir" ]] && _wt_is_reserved_name "$name" && continue
+				if [[ -n "$repo" ]]; then printf '  %s/%s\n' "$repo" "$name" >&2; else printf '  %s\n' "$name" >&2; fi
+			done
+		done
+		return 1
+	fi
+
+	if [[ ${#candidate_paths[@]} -gt 1 ]]; then
+		echo "Error: multiple targets match slug '$slug':" >&2
+		local i
+		for i in "${!candidate_paths[@]}"; do
+			if [[ -n "${candidate_repos[$i]}" ]]; then
+				printf '  %s/%s\n' "${candidate_repos[$i]}" "$(basename "${candidate_paths[$i]}")" >&2
+			else
+				printf '  %s\n' "$(basename "${candidate_paths[$i]}")" >&2
+			fi
+		done
+		echo "Name the repo to disambiguate, e.g. \`wt <repo>/$slug\`." >&2
+		return 1
+	fi
+
+	echo "${candidate_paths[0]}"
+}

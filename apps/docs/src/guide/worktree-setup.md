@@ -188,7 +188,7 @@ cd feat-cancel-polish
 pnpm wt feat-cancel-polish dev
 ```
 
-`pnpm wt <slug> <cmd>` cd's into the worktree dir and runs `pnpm <cmd>` there — so `pnpm wt feat-cancel-polish dev` runs the worktree's `dev` script in the worktree's env. `pnpm wt feat-cancel-polish ce dc:up local` runs ce composition inside the worktree (worktree's `.env.local` wins over trunk's).
+`pnpm wt <slug> <cmd>` cd's into the worktree dir and runs `pnpm <cmd>` there — so `pnpm wt feat-cancel-polish dev` runs the worktree's `dev` script in the worktree's env. `pnpm wt main <cmd>` runs from the trunk (`<repo>/main` when the workbench declares several repos). `pnpm wt feat-cancel-polish ce dc:up local` runs ce composition inside the worktree (worktree's `.env.local` wins over trunk's).
 
 #### 8. Standard work loop
 

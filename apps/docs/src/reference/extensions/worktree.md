@@ -91,24 +91,29 @@ After `indusk extensions enable worktree`, the workbench's `package.json` gets f
 }
 ```
 
-`pnpm wt <slug>[:<app>] <command> [args...]` runs `pnpm <command>` from the resolved directory:
+`pnpm wt <target>[:<app>] <command> [args...]` runs `pnpm <command>` from the resolved directory:
 
 ```mermaid
 flowchart TD
-    A[pnpm wt &lt;slug&gt; &lt;cmd&gt;] --> B[scan subdirs at workbench root]
+    A[pnpm wt &lt;target&gt; &lt;cmd&gt;] --> T{main, &lt;repo&gt;/main,<br/>or a declared repo name?}
+    T -- yes --> U[trunk from config:<br/>workbench-side path, else repos_root/&lt;name&gt;]
+    T -- no --> B[scan workbench root +<br/>every declared worktrees dir]
     B --> C{exact match on slug?}
-    C -- yes --> H[cwd = workbench/&lt;match&gt;]
+    C -- yes --> H[cwd = match]
     C -- no --> D{any subdir ending in -&lt;slug&gt;?}
     D -- one --> H
     D -- multiple --> E[error: 'multiple targets match']
     D -- zero --> F[error: 'no worktree or trunk matching']
-    H --> I{:&lt;app&gt; suffix?}
+    U --> I{:&lt;app&gt; suffix?}
+    H --> I
     I -- yes --> J[cwd = cwd/apps/&lt;app&gt;]
     I -- no --> K[exec pnpm &lt;cmd&gt;]
     J --> K
 ```
 
-Reserved subdirs (`.indusk`, `node_modules`, `dist`, `build`, `.git`, `.next`, `scripts`, `env`) are skipped during resolution. Exact-match wins over suffix-match. The trunk (whose name matches `worktree.wrapped_repo`) is just another subdir from wt.sh's perspective — `pnpm wt <wrapped-repo-name> <cmd>` runs from the trunk symlink.
+Resolution is one function (`_wt_resolve_target` in `workbench-helpers.sh`), shared by `wt.sh` and `wt-pm2.sh`. **Trunks route from config, never from scanning**: `main` (or `<repo>/main` when several repos are declared — unqualified `main` refuses and names the candidates) and any declared repo name resolve to the repo's workbench-side path (`path`, defaulting to `<name>` — a trunk symlink or a nested checkout), falling back to `<repos_root>/<name>` when no workbench-side directory exists. A workbench whose trunk link was never made still routes correctly.
+
+Worktree slugs scan the workbench root and every declared `worktrees` directory. Reserved subdirs (`.indusk`, `node_modules`, `dist`, `build`, `.git`, `.next`, `scripts`, `env`, `docs`) are skipped. Exact-match wins over suffix-match; `<repo>/<slug>` disambiguates.
 
 ## Naming the repo
 
