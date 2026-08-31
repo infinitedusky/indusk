@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.42.0] — 2026-08-31
+
 ### Added
 - **`pnpm wt main` — trunks route from config, never from scanning.** `main` (or `<repo>/main` when several repos are declared, refusing unqualified exactly like an ambiguous slug) and a declared repo name now resolve through the declared layout: the workbench-side `path` when it exists (trunk symlink or nested checkout), else `<repos_root>/<name>`. A sibling-layout workbench whose trunk link was never made had a config that said exactly where the trunk was, and `wt` could not find it — trunk addressing only worked when a root symlink happened to exist.
 
