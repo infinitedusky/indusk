@@ -4,6 +4,7 @@ import { homedir } from "node:os";
 import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
+import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { linkTrunk } from "../../lib/worktree/layout.js";
 
@@ -609,12 +610,18 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			console.info("  create: CLAUDE.md");
 		}
 
-		// AGENTS.md — agent conduct directives, imported by CLAUDE.md via @AGENTS.md
+		// AGENTS.md — agent conduct directives, imported by CLAUDE.md via @AGENTS.md.
+		// An existing file is never overwritten, but template sections it lacks are
+		// appended — the same additive shape `update` uses.
 		const agentsMdPath = join(projectRoot, "AGENTS.md");
 		if (existsSync(agentsMdPath)) {
-			console.info(
-				"  skip: AGENTS.md (already exists — review templates/AGENTS.md for conduct directives)",
-			);
+			const ensured = ensureAgentsMdSections(projectRoot, packageRoot);
+			if (ensured.added.length > 0) {
+				const names = ensured.added.map((h) => h.replace(/^## /, "")).join(", ");
+				console.info(`  update: AGENTS.md (appended: ${names})`);
+			} else {
+				console.info("  skip: AGENTS.md (already exists)");
+			}
 		} else {
 			cpSync(join(packageRoot, "templates/AGENTS.md"), agentsMdPath);
 			console.info("  create: AGENTS.md");

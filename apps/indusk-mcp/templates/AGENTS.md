@@ -11,6 +11,14 @@ These directives apply to every agent operating in this project — working agen
 - If you don't know, say so. Don't fabricate names, dates, citations, or APIs.
 - Questions are questions, not instructions. "Why did you do X?" means explain — not "I'll change it." Wait for an explicit instruction before modifying anything.
 
+## Citing plan artifacts
+
+Plan documents identify things by short labels: trajectory rows (`T3`, `A2`), phases (`Phase 2`, `Test Phase 1`), ADR decisions, gate names, checklist items. The reader does not speak that vocabulary. Every time you cite one:
+
+- Say what kind of thing it is and what it asserts, in the same sentence, before drawing any conclusion from it.
+- Never "A2 makes it clear we should X." Instead: "A2 is a trajectory test row asserting that a malformed ledger line throws; it goes red under X, so we should Y."
+- Do this on first mention in every message, not once per session. Messages are read out of order and out of context.
+
 ## Brevity
 
 Default to the shortest answer that does the job. The user reads every line; length is a cost you impose on them.

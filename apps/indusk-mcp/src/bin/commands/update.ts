@@ -4,6 +4,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:f
 import { dirname, join, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
+import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
 import { loadExtensionTolerant, localOverrideErrors } from "../../lib/extension-loader.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
@@ -493,13 +494,20 @@ export async function update(projectRoot: string): Promise<void> {
 	}
 
 	// 5b. Ensure AGENTS.md exists (agent conduct directives, imported by CLAUDE.md
-	// via @AGENTS.md). Never overwrites — users may extend the file. Pre-1.28.x
-	// projects pick it up on next update; new projects get it from init.
+	// via @AGENTS.md). Never overwrites — users may extend the file — but template
+	// sections an existing file lacks are appended (`ensureAgentsMdSections`):
+	// copy-only-when-absent shipped a new conduct rule to no existing project.
 	console.info("\n[Project files]\n");
 	{
 		const agentsMdPath = join(projectRoot, "AGENTS.md");
 		if (existsSync(agentsMdPath)) {
-			console.info("  current: AGENTS.md");
+			const ensured = ensureAgentsMdSections(projectRoot, packageRoot);
+			if (ensured.added.length > 0) {
+				const names = ensured.added.map((h) => h.replace(/^## /, "")).join(", ");
+				console.info(`  updated: AGENTS.md (appended: ${names})`);
+			} else {
+				console.info("  current: AGENTS.md");
+			}
 		} else {
 			cpSync(join(packageRoot, "templates/AGENTS.md"), agentsMdPath);
 			console.info("  added: AGENTS.md");
