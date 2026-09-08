@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.43.0] — 2026-09-08
+
 ### Added
 - **AGENTS.md: cite plan artifacts with their provenance.** New `## Citing plan artifacts` conduct section — every `A2` / `T5` / `Phase 3` / gate reference must say what kind of thing it is and what it asserts before any conclusion is drawn from it, on first mention in every message. The reader does not speak the plan vocabulary.
 - **`init` and `update` append template sections an existing AGENTS.md lacks** (`ensureAgentsMdSections` in `lib/agents-md-sections.ts`). The file is user-owned and was copy-only-when-absent, so a new conduct rule reached only projects that did not exist yet. The ensure is additive and idempotent: a present section is never rewritten (the heading is the identity, matched as a whole line), an absent file is never created, and a template missing a section it promises throws rather than silently shipping the rule to nobody. Extend `ENSURED_AGENTS_MD_SECTIONS` on future rules. dusk's own `AGENTS.md` is now pinned byte-equal to the template (`agents-md-parity.test.ts`).
