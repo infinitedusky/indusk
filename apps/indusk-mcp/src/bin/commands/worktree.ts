@@ -194,7 +194,7 @@ function worktreeCreateResolved(slug: string, baseBranch?: string, repo?: string
 				if (provisionWorktreeEnv(workbenchRoot, worktreeDir)) {
 					console.info(`  doppler: auto-provisioned env for ${slug}`);
 				}
-				for (const cmd of readPostCreate(workbenchRoot)) {
+				for (const cmd of readPostCreate(workbenchRoot, repo)) {
 					console.info(`  post_create: ${cmd}`);
 					const pc = spawnSync(cmd, { cwd: worktreeDir, stdio: "inherit", shell: true });
 					if (pc.status !== 0) {
@@ -213,9 +213,16 @@ function worktreeCreateResolved(slug: string, baseBranch?: string, repo?: string
 	process.exit(code);
 }
 
-/** Read `post_create` commands from the workbench's worktree config — run in each new worktree after create. */
-function readPostCreate(workbenchRoot: string): string[] {
-	const repo = readWorkbenchRepos(workbenchRoot)[0]?.name;
+/**
+ * Read `post_create` commands from the worktree config of THE repo being
+ * created — run in each new worktree after create.
+ *
+ * It read `repos[0]`'s config for every repo, so in a multi-repo workbench
+ * `worktree create beta <slug>` ran alpha's install steps in beta's worktree
+ * (workbench-trust-fixes, F6 / A15). The caller names the repo; with none
+ * named the bash script has already refused, so there is nothing to run.
+ */
+export function readPostCreate(workbenchRoot: string, repo: string | undefined): string[] {
 	if (!repo) return [];
 	const p = join(workbenchRoot, ".indusk", "worktree-configs", `${repo}.json`);
 	if (!existsSync(p)) return [];
@@ -229,7 +236,7 @@ function readPostCreate(workbenchRoot: string): string[] {
 	}
 }
 
-/** Walk up from `start` to the nearest workbench root (`.indusk/config.json` with worktree.shape === "workbench"). */
+/** Walk up from `start` to the nearest workbench root — the one `isWorkbench` rule, so a shapeless `repos[]` config counts too. */
 function resolveWorkbenchRoot(start: string): string | null {
 	let dir = resolve(start);
 	for (let i = 0; i < 40; i++) {

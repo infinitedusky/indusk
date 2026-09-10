@@ -72,12 +72,12 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A7 | A `git commit` from a cwd at a versioned workbench root is never attributed to the workbench repo: one declared repo resolves to that repo at its declared `path`; several refuse naming the candidates | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
 | A8 | The eval hook's multi-repo refusal reaches the session as `hookSpecificOutput.additionalContext`, not only `system.log` | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
 | A9 | `workbench restore` on a repo declaring `path`: already present → reported present, nothing created; absent → cloned at the declared path; the printed path is the path used; a second run is a no-op | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/workbench-restore-declared-path.test.ts |
-| A10 | `worktree create <slug>` and `worktree refresh <slug>` succeed on a workbench whose repo declares `path`, resolving the trunk where `wt` does | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/wt-declared-path-parity.test.ts |
-| A11 | `worktree refresh --all` and `worktree preflight` see worktrees in a declared `worktrees/` dir; preflight excludes a trunk at a declared `path` | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/wt-declared-path-parity.test.ts |
-| A12 | The stray-state audit inspects each repo at its declared path and reports a stray there | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/stray-state-audit-declared-path.test.ts |
-| A13 | `resolveVerifyRoots`'s refusal on nested and sibling layouts names a directory that exists | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/lib/verify/roots.test.ts |
-| A14 | A config declaring `repos[]` without `shape: "workbench"` is workbench-shaped to `isWorkbench`, so verify refuses rather than verifying the wrapper repo | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/lib/verify/roots.test.ts |
-| A15 | In a multi-repo workbench, `worktree create <repo> <slug>` applies that repo's config, not the first repo's | Build Phase 6 | Build Phase 6 | planned | apps/indusk-mcp/src/__tests__/worktree-multi-repo-config.test.ts |
+| A10 | `worktree create <slug>` and `worktree refresh <slug>` succeed on a workbench whose repo declares `path`, resolving the trunk where `wt` does | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/wt-declared-path-parity.test.ts |
+| A11 | `worktree refresh --all` and `worktree preflight` see worktrees in a declared `worktrees/` dir; preflight excludes a trunk at a declared `path` | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/wt-declared-path-parity.test.ts |
+| A12 | The stray-state audit inspects each repo at its declared path and reports a stray there | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/stray-state-audit-declared-path.test.ts |
+| A13 | `resolveVerifyRoots`'s refusal on nested and sibling layouts names a directory that exists | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/lib/verify/roots.test.ts |
+| A14 | A config declaring `repos[]` without `shape: "workbench"` is workbench-shaped to `isWorkbench`, so verify refuses rather than verifying the wrapper repo | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/lib/verify/roots.test.ts |
+| A15 | In a multi-repo workbench, `worktree create <repo> <slug>` applies that repo's config, not the first repo's | Build Phase 6 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/worktree-multi-repo-config.test.ts |
 | A16 | A search for "not a git repo" across CLAUDE.md, `apps/indusk-mcp/skills/`, and `apps/docs/src/` (excluding decisions, lessons, archives, changelog) finds nothing | Test Phase 1 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/record-not-a-git-repo-grep.test.ts |
 | A17 | `guide/index.md`'s stated hook count equals the rows in its own hook table, and the Dawn master's keep/shed record names every hook on disk, including `workbench-sync.js` | Test Phase 1 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/hooks-record-parity.test.ts |
 | A18 | No active plan's `impl.md` names a deleted MCP tool (`mcp__graphiti__*`, `mcp__codegraphcontext__*`) as an acceptance criterion | Test Phase 1 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/active-plans-no-deleted-tools.test.ts |
@@ -261,28 +261,28 @@ its own assertion.
 
 ### Build Phase 6: Layout parity and the silent degradations
 
-- [ ] `src/lib/worktree/repos.ts` `isWorkbench`: `shape === "workbench"` **or** at least one declared repo (`repos[]` or legacy `wrapped_repo`); update the docblock. `run`, cleanup, verify inherit the rule through the one reader.
-- [ ] `hooks/setup-worktree.sh`, `hooks/refresh-worktree.sh`: resolve `CLIENT_ROOT` via `_wt_resolve_trunk_dir` from `workbench-helpers.sh`; delete the name-based construction
-- [ ] `hooks/refresh-worktree.sh` (`--all` and single) and `hooks/preflight.sh`: enumerate worktrees under each declared `worktrees/` dir as well as the root; preflight's reserved list and trunk exclusion come from the shared helper, by resolved path, not name
-- [ ] `src/lib/stray-state-audit.ts`: `join(workbenchRoot, repoDir(repo))`
-- [ ] `src/lib/verify/roots.ts`: the single-repo refusal suggests `join(planRoot, repoDir(repo))`
-- [ ] `src/bin/commands/worktree.ts` post_create: read the config of the repo being created, not `repos[0]`
-- [ ] Resync installed bash hooks under `.claude/hooks/`
+- [x] `src/lib/worktree/repos.ts` `isWorkbench`: `shape === "workbench"` **or** at least one declared repo (`repos[]` or legacy `wrapped_repo`); update the docblock. `run`, cleanup, verify inherit the rule through the one reader. (Seven callers audited: `workbench.ts` ×2 and `worktree.ts` ×2 already pair it with `repos.length`, the rest are this plan's refusals.)
+- [x] `extensions/worktree/scripts/setup-worktree.sh`, `refresh-worktree.sh` (the scripts live under the extension, not `hooks/`): resolve `CLIENT_ROOT` via `_wt_resolve_trunk_dir` from `workbench-helpers.sh`; delete the name-based construction. **Also**: `_wt_resolve_trunk_dir` itself looked at `<repos_root>/<name>` as its second candidate — fixed to `<repos_root>/<path-or-name>`, so `wt` gains the sibling-plus-`path` case too; and setup-worktree.sh now reads the declared `worktrees` dir itself (`_wt_declared_worktrees_dir`) when run without the TS wrapper's `--worktrees-dir`
+- [x] `refresh-worktree.sh` (`--all` and single) and `preflight.sh`: enumerate worktrees under each declared `worktrees/` dir as well as the root; preflight's reserved list and trunk exclusion come from the shared helper, by resolved path, not name. Single-slug refresh and preflight both go through `_wt_resolve_target` (one resolution surface); `--all` iterates a new `_wt_list_worktree_dirs`; preflight's private scan and reserved list are deleted; a slug that resolves to nothing is now an error rather than a `SKIP` at exit 0
+- [x] `src/lib/stray-state-audit.ts`: `join(workbenchRoot, repoDir(repo))`
+- [x] `src/lib/verify/roots.ts`: the single-repo refusal suggests `join(planRoot, repoDir(repo))` — shipped as `join(resolveReposRoot(planRoot), repoDir(repo))`: under `planRoot` alone the sibling layout's checkout does not exist either (A13's sibling case), and `resolveReposRoot` is the one definition of where checkouts live
+- [x] `src/bin/commands/worktree.ts` post_create: read the config of the repo being created, not `repos[0]` — `readPostCreate(workbenchRoot, repo)` exported; A15 authored from the register body and green
+- [x] Resync installed bash hooks under `.claude/hooks/` — nothing to resync: the worktree scripts are run from the package directory (`indusKMcpPackageRoot()`), never copied under `.claude/`; only the `*.js` hooks are installed
 
 #### Build Phase 6 Verification
 
-- [ ] A10–A15 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/wt-declared-path-parity.test.ts src/__tests__/wt-trunk-routing.test.ts src/__tests__/stray-state-audit-declared-path.test.ts src/lib/verify/roots.test.ts src/__tests__/worktree-multi-repo-config.test.ts` — expected: all pass
-- [ ] Full package suite: `cd apps/indusk-mcp && pnpm test` — expected: green (the `isWorkbench` widening touches every reader)
+- [x] A10–A15 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/wt-declared-path-parity.test.ts src/__tests__/wt-trunk-routing.test.ts src/__tests__/stray-state-audit-declared-path.test.ts src/lib/verify/roots.test.ts src/__tests__/worktree-multi-repo-config.test.ts` — expected: all pass (2026-09-10: 5 files, 18 passed)
+- [x] Full package suite: `cd apps/indusk-mcp && pnpm test` — expected: green (the `isWorkbench` widening touches every reader). **Result: 1214 passed, 5 skipped, 4 failed — the four are A16, A17 (×2) and A18, red by design until Build Phase 7.** Two things the run surfaced: (1) a fresh worktree needs `pnpm build` *and* `pnpm --filter indusk-admin build && node scripts/bundle-admin.js` before its suite matches main's — without them 150 tests skip and 9 fail for environment reasons (the lesson on file; main was green throughout, checked); (2) two existing tests encoded the rules this phase replaced and were updated with the reason in a comment: `worktree-preflight.test.ts` expected the private scan's exact wording (now the shared resolver's, which also lists trunks), and `worktree-cli.test.ts`'s "non-workbench" fixture only dropped `shape` while keeping `wrapped_repo` — which A14 says IS a workbench — so it now drops the whole `worktree` key.
 
 #### Build Phase 6 Context
 
-- [ ] Update the "Workbench topology is DECLARED" Conventions entry: `isWorkbench` is true for any config declaring repos, with or without `shape`; the three bash scripts share `_wt_resolve_trunk_dir`
+- [x] Update the "Workbench topology is DECLARED" Conventions entry: `isWorkbench` is true for any config declaring repos, with or without `shape`; the three bash scripts share `_wt_resolve_trunk_dir`
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/reference/cli/workbench.md` worktree section: declared `path` / `worktrees` honored by create, refresh, preflight
-- [ ] `apps/docs/src/reference/cli/verify.md`: refusal message wording
-- [ ] `apps/docs/src/changelog.md` Unreleased entry
+- [x] `apps/docs/src/reference/cli/workbench.md` worktree section: declared `path` / `worktrees` honored by create, refresh, preflight
+- [x] `apps/docs/src/reference/cli/verify.md`: refusal message wording (and its "deliberately not a git repo" line is now the declaration-based refusal, retiring that page from Build Phase 7's list)
+- [x] `apps/docs/src/changelog.md` Unreleased entry
 
 ### Build Phase 7: The record says the truth
 
