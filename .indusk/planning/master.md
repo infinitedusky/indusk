@@ -43,7 +43,7 @@ actually stands: **three streams, in order — trust the substrate, then
 Midnight, then finish Dawn.**
 
 The organizing finding (2026-09-03 audit, evidence in
-[workbench-trust-fixes/research.md](workbench-trust-fixes/research.md)): every
+[workbench-trust-fixes/research.md](archive/workbench-trust-fixes/research.md)): every
 real project is now a versioned workbench, and four enforcement surfaces fail
 *silently* there. Nothing downstream is worth building on signals that lie, so
 the streams are ordered by trust, not by feature value.
@@ -52,7 +52,8 @@ the streams are ordered by trust, not by feature value.
 
 | Plan | Stage | What it delivers |
 |------|-------|------------------|
-| [workbench-trust-fixes](workbench-trust-fixes/brief.md) | **impl complete 2026-09-10** on `plan/workbench-trust-fixes` (Test Phase 1 + 7 build phases, 18 rows green); close-out rituals next — `/falsify`, `/cleanup`, `/retrospective` — then merge. **Stream 1's gate is met**: zero silent wrong answers from run / cleanup / eval / restore in a versioned workbench | **Phase A (blocking, small)**: make the gate-reminder advisor actually speak (F9 — first, because it makes every later plan cheaper to execute correctly), then the four tourniquets — `indusk run` entry refusal, cleanup re-guard, eval-attribution guard, restore's destructive clone. **Phase B (trails, non-blocking)**: bash lane parity, record de-contradiction, close/re-scope of workbench-mode-rail-integrity. |
+| [workbench-trust-fixes](archive/workbench-trust-fixes/brief.md) | **closed 2026-09-10** — nine phases, 24 rows green, falsified, cleaned, retrospective written, archived; `plan/workbench-trust-fixes` awaits merge into main. **Stream 1's gate is met**: zero silent wrong answers from run / cleanup / eval / restore in a versioned workbench | **Phase A (blocking, small)**: make the gate-reminder advisor actually speak (F9 — first, because it makes every later plan cheaper to execute correctly), then the four tourniquets — `indusk run` entry refusal, cleanup re-guard, eval-attribution guard, restore's destructive clone. **Phase B (trails, non-blocking)**: bash lane parity, record de-contradiction, close/re-scope of workbench-mode-rail-integrity. |
+| [hook-cwd-independence](hook-cwd-independence/brief.md) | brief draft (2026-09-10, from trust-fixes' retrospective) — **recommended before 6.5** | Every hook is registered `node .claude/hooks/<name>.js` and Claude Code runs hooks in the session's drifting cwd; from `apps/indusk-mcp` every gate fails to load with a non-blocking exit 1 and is silently off (observed: eight checkoffs passed Gate B with two rows non-terminal). Absolute hook commands in `init`/`update`/this repo's settings, plus a row-terminality check in the close-out gate. |
 | [workbench-code-roots](workbench-code-roots/brief.md) | brief draft | One `codeRoots` answer to "where is code *inside* the repo" — detection, health, init-docs; the data verify-plural needs later. |
 
 **Gate out of Stream 1:** only **Phase A** of workbench-trust-fixes gates
@@ -92,7 +93,7 @@ authority, this is only the order: **6.5 → (component-4 "thin" ADR, paper) →
 
 | Component | Sub-plan | Stage |
 |-----------|----------|-------|
-| 6.5 workbench execution | [dawn-workbench-execution](dawn-workbench-execution/brief.md) | brief draft — depends on workbench-trust-fixes |
+| 6.5 workbench execution | [dawn-workbench-execution](dawn-workbench-execution/brief.md) | brief draft — workbench-trust-fixes closed 2026-09-10; soft-depends on hook-cwd-independence (the gates it runs under) |
 | 4 harness stays thin | ADR under indusk-v2-dawn | unwritten (paper only) |
 | 7 agent integration | dawn-agents | not created — create with `/planner` when 6.5 closes; closes U1 via a non-Claude model |
 | 8 Linear substrate | dawn-linear | not created |

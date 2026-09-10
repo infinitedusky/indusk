@@ -91,7 +91,8 @@ component 6.5 — between the keystone (6) and agent integration (7).
 - Dawn master's "universal floor" claim is true again, unqualified.
 
 ## Depends On
-- `.indusk/planning/workbench-trust-fixes/` (refusals + record)
+- `.indusk/planning/archive/workbench-trust-fixes/` (refusals + record; closed 2026-09-10)
+- Soft: `.indusk/planning/hook-cwd-independence/` — the gates this plan runs under are cwd-relative and silently off from a subdirectory (found at trust-fixes' retrospective); fix first or `cd` to the root before every gated edit
 - Soft: `.indusk/planning/workbench-code-roots/` (polyglot runner detection)
 
 ## Blocks

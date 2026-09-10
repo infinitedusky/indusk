@@ -63,9 +63,9 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | Editing an `impl.md` so a build phase opens with unauthored rows puts a nudge naming those rows on stdout as `hookSpecificOutput.additionalContext`, exit 0 | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/gate-reminder-speaks.test.ts |
+| A1 | Editing an `impl.md` so a build phase opens with unauthored rows puts a nudge naming those rows on stdout as `hookSpecificOutput.additionalContext`, exit 0 | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/gate-reminder-speaks.test.ts |
 | A2 | Editing a non-`impl.md` file produces no output from the gate-reminder hook | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/gate-reminder-speaks.test.ts |
-| A3 | Exactly one implementation of the phase-start nudge text exists in the package | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/phase-start-nudge-single-definition.test.ts |
+| A3 | Exactly one implementation of the phase-start nudge text exists in the package | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/phase-start-nudge-single-definition.test.ts |
 | A4 | `indusk run <plan>` at a versioned workbench root exits non-zero before any tool call, names the declared repos and where to run instead, makes no commit, writes no pending-eval record | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/run-refuses-workbench-root.test.ts |
 | A5 | `indusk run <plan>` in a flat repo gets past the workbench check unchanged | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/run-refuses-workbench-root.test.ts |
 | A6 | The cleanup file scan at a versioned workbench root throws naming the workbench shape and its declared repos; it never returns an empty list there | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/lib/cleanup/oversized-workbench-refusal.test.ts |
