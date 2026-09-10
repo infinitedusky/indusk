@@ -1,7 +1,7 @@
 ---
 title: "Workbench Trust Fixes — Implementation"
 date: 2026-09-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -355,6 +355,7 @@ its own assertion.
 - [x] (reviewed `src/bin/commands/workbench.ts` at 657 lines — left as-is: this plan added `cloneTarget` and eleven lines to `restoreOne`; the file is four subcommands that predate it, and splitting them by subcommand is a hygiene plan of its own, not this plan's output)
 - [x] (reviewed `extensions/worktree/scripts/lib/workbench-helpers.sh` at 513 lines — left as-is: `_wt_list_worktree_dirs` and `_wt_resolve_target` each scan the root plus declared dirs, but the resolver needs per-entry repo attribution for qualifier filtering; two scans, not three, and the resolver is the `wt` path every caller depends on — recorded the same way in Build Phase 6's Shape)
 - [x] (reviewed `hooks/eval-trigger.js` at 482 and `src/bin/commands/worktree.ts` at 418 — left as-is: this plan's deltas are a guarded refusal branch, a log field, and an exported reader; the sizes are pre-existing)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (`_impl-phases.js` is one function with one job and a docblock that names its TS twin; `test-git.ts` is three functions sharing one contract; every other file lost a copy and gained an import. All rule sets readable.)
 
 #### Phase 9 Verification
 - [x] A24 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-shared-modules.test.ts src/__tests__/hooks-load-in-cjs-consumer.test.ts` — expected: all pass (red today: `check-gates.js` and `gate-reminder.js` both match) (2026-09-10: 5 passed)
@@ -363,10 +364,10 @@ its own assertion.
 - [x] Full package suite: `cd apps/indusk-mcp && pnpm test` — expected: green; installed copies resynced (`.claude/hooks/_impl-phases.js` exists byte-equal, `check-gates.js` and `gate-reminder.js` resynced) (1225 passed, 5 skipped, 0 failed; three installed copies byte-equal)
 
 #### Phase 9 Context
-- [ ] Update the "Heading/parsing definitions are single-definition on purpose" Known Gotchas entry: `_impl-phases.js` is the one hook-side phase/item walk (mirrors the TS walk), joining `_impl-headings.js` and `_trajectory-parser.js`; note the test-helper module `helpers/test-git.ts` as the one throwing git runner for fixtures
+- [x] Update the "Heading/parsing definitions are single-definition on purpose" Known Gotchas entry: `_impl-phases.js` is the one hook-side phase/item walk (mirrors the TS walk), joining `_impl-headings.js` and `_trajectory-parser.js`; note the test-helper module `helpers/test-git.ts` as the one throwing git runner for fixtures
 
 #### Phase 9 Document
-- [ ] `apps/docs/src/changelog.md` Unreleased: one line — hook-side phase/item walk shared by check-gates and gate-reminder; test fixtures share one git runner and one hook runner
+- [x] `apps/docs/src/changelog.md` Unreleased: one line — hook-side phase/item walk shared by check-gates and gate-reminder; test fixtures share one git runner and one hook runner
 
 ## Files Affected
 
