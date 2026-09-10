@@ -287,11 +287,27 @@ _wt_declared_worktrees_dir() {
 # that need "all worktrees" (refresh --all) iterate this rather than scanning
 # the root alone, which could not see a declared worktrees dir at all.
 _wt_list_worktree_dirs() {
-	local entry name dir _name
+	local entry name dir _name path
+	# Root entries that are declared LOCATIONS rather than worktrees: a declared
+	# worktrees dir itself, and the first segment of a declared repo path
+	# (`code` for `code/alpha`). Listing them as candidates produced a SKIP line
+	# per layout element on every `refresh --all` (falsification A23).
+	local -a declared_dirs=()
+	while IFS=$'\t' read -r _name dir; do
+		[[ -n "$dir" ]] && declared_dirs+=("${dir%%/*}")
+	done < <(_read_workbench_worktree_dirs)
+	while IFS=$'\t' read -r _name path; do
+		[[ -n "$path" ]] && declared_dirs+=("${path%%/*}")
+	done < <(_read_workbench_repo_paths)
 	for entry in "$WORKBENCH_ROOT"/*; do
 		[[ -d "$entry" ]] || continue
 		name="$(basename "$entry")"
 		_wt_is_reserved_name "$name" && continue
+		local skip=0 d
+		for d in "${declared_dirs[@]+"${declared_dirs[@]}"}"; do
+			[[ "$name" == "$d" ]] && skip=1
+		done
+		[[ "$skip" -eq 1 ]] && continue
 		echo "$entry"
 	done
 	while IFS=$'\t' read -r _name dir; do
