@@ -121,11 +121,14 @@ function writableAtNudge(next) {
 const parts = [];
 
 // A phase that just became fully complete, with the next one not yet started.
+// "Not started" means NOTHING in it is checked — once the next phase has
+// begun, repeating the send-off on every edit is noise, and the phase in
+// progress needs its own blockers instead (falsification A19).
 for (let i = 0; i + 1 < phases.length; i++) {
 	const phase = phases[i];
 	const next = phases[i + 1];
 	if (phase.items.length === 0 || !phase.items.every((x) => x.checked)) continue;
-	if (!next.items.some((x) => !x.checked)) continue;
+	if (next.items.some((x) => x.checked)) continue;
 	parts.push(
 		`${label(phase)} (${phase.name}) is fully complete. Call advance_plan to validate gates before starting ${label(next)}.`,
 	);
