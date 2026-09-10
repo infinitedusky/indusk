@@ -24,14 +24,8 @@
  */
 
 import { readFileSync } from "node:fs";
-import {
-	FORWARD_INTELLIGENCE_HEADING,
-	fencedLineMask,
-	gateHeading,
-	parsePhaseHeading,
-	phaseOrdinal,
-	phaseSequence,
-} from "./_impl-headings.js";
+import { phaseOrdinal, phaseSequence } from "./_impl-headings.js";
+import { parseImplPhases } from "./_impl-phases.js";
 import { parseTrajectoryFromBody, stripFrontmatter } from "./_trajectory-parser.js";
 
 let input = "";
@@ -54,46 +48,12 @@ try {
 	process.exit(0);
 }
 
-const GATE_HEADING = gateHeading("(Verification|Context|Document)");
 const AUTHORABLE = new Set(["planned", "writable", ""]);
 const CLOSES_PHASE = new Set(["passing", "skipped", "blocked"]);
 
-/** Phases in document order, each with its checkbox items (gates included). */
-function parsePhases(body) {
-	const lines = body.split("\n");
-	const fenced = fencedLineMask(lines);
-	const phases = [];
-	let current = null;
-	let section = "items";
-	for (let i = 0; i < lines.length; i++) {
-		if (fenced[i]) continue;
-		const line = lines[i];
-		const heading = parsePhaseHeading(line);
-		if (heading) {
-			if (current) phases.push(current);
-			current = { kind: heading.kind, number: heading.number, name: heading.name, items: [] };
-			section = "items";
-			continue;
-		}
-		if (GATE_HEADING.test(line)) {
-			section = "items";
-			continue;
-		}
-		if (FORWARD_INTELLIGENCE_HEADING.test(line)) {
-			section = "forward-intelligence";
-			continue;
-		}
-		if (!current || section !== "items") continue;
-		const item = /^-\s+\[([ x])\]\s+/.exec(line);
-		if (item) current.items.push({ checked: item[1] === "x" });
-	}
-	if (current) phases.push(current);
-	return phases;
-}
-
 const body = stripFrontmatter(content);
 const sequence = phaseSequence(body);
-const phases = parsePhases(body);
+const phases = parseImplPhases(content);
 const { rows } = parseTrajectoryFromBody(body);
 const hasTestPhases = sequence.some((p) => p.kind === "test");
 

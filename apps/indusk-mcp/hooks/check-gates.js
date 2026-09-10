@@ -12,15 +12,8 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
-import {
-	FORWARD_INTELLIGENCE_HEADING,
-	fencedLineMask,
-	gateHeading,
-	parsePhaseHeading,
-	phaseExists,
-	phaseOrdinal,
-	phaseSequence,
-} from "./_impl-headings.js";
+import { phaseExists, phaseOrdinal, phaseSequence } from "./_impl-headings.js";
+import { parseImplPhases as parsePhases } from "./_impl-phases.js";
 import { parseTrajectoryFromBody, stripFrontmatter } from "./_trajectory-parser.js";
 
 // Read hook input from stdin
@@ -168,67 +161,7 @@ const WORKFLOW_GATES = Object.fromEntries(
 	]),
 );
 
-// Parse phases from the NEW content (after edit) and OLD content (before edit)
-function parsePhases(content) {
-	// Strip frontmatter
-	const fmMatch = content.match(/^---\n[\s\S]*?\n---\n/);
-	const body = fmMatch ? content.slice(fmMatch[0].length) : content;
-
-	const lines = body.split("\n");
-	// Fenced blocks are content, not structure — a deferral may carry the
-	// deferred test's body, which contains checkbox- and heading-shaped lines.
-	const fenced = fencedLineMask(lines);
-	const phases = [];
-	let currentPhase = null;
-	let currentGateType = "implementation";
-
-	for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-		const line = lines[lineIndex];
-		if (fenced[lineIndex]) continue;
-
-		const phaseMatch = parsePhaseHeading(line);
-		if (phaseMatch) {
-			if (currentPhase) phases.push(currentPhase);
-			currentPhase = {
-				number: phaseMatch.number,
-				kind: phaseMatch.kind,
-				// Position in the document — the only thing that orders two
-				// independently-numbered sequences.
-				ordinal: phases.length,
-				name: phaseMatch.name,
-				items: [],
-			};
-			currentGateType = "implementation";
-			continue;
-		}
-
-		// [1] is the phase number, [2] the gate kind — see gateHeading().
-		const gateMatch = line.match(gateHeading("(Verification|OTel|Context|Document)"));
-		if (gateMatch) {
-			currentGateType = gateMatch[2].toLowerCase();
-			continue;
-		}
-
-		// Forward intelligence — skip
-		if (line.match(FORWARD_INTELLIGENCE_HEADING)) {
-			currentGateType = "_fi";
-			continue;
-		}
-
-		if (currentPhase && currentGateType !== "_fi") {
-			const itemMatch = line.match(/^-\s+\[([ x])\]\s+(.*)/);
-			if (itemMatch) {
-				currentPhase.items.push({
-					checked: itemMatch[1] === "x",
-					text: itemMatch[2].trim(),
-					gate: currentGateType,
-				});
-			}
-		}
-	}
-	if (currentPhase) phases.push(currentPhase);
-	return phases;
-}
+// The phase/item walk is shared with gate-reminder.js — one definition, pinned by A24.
 
 /** Name a phase unambiguously: the two sequences share their digits. */
 function phaseLabel(kind, number) {
