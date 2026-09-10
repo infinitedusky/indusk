@@ -17,6 +17,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(__dirname, "../../..");
 
 /**
+ * One line for a config-block ensure: what was added, or that it was already
+ * there. Silent on `no-config`, which the update reports once, earlier.
+ * Three identical if/else-if blocks (cleanup, papers, decay) became this.
+ */
+function reportEnsured(
+	status: "added" | "already-set" | "no-config",
+	added: string,
+	ok: string,
+): void {
+	if (status === "added") console.info(`  add: ${added}`);
+	else if (status === "already-set") console.info(`  ok: ${ok}`);
+}
+
+/**
  * composable.env deprecation notice. Returns a non-destructive nudge toward the
  * `doppler` extension when the project still has a `ce.json`, else null. Pure
  * read — never mutates or removes the project's composable.env setup, so the
@@ -746,37 +760,30 @@ export async function update(projectRoot: string): Promise<void> {
 
 	// [Cleanup ritual] scaffold the cleanup config block idempotently — the
 	// /cleanup skill reads it to decide which changed files to scrutinize.
-	const _clStatus = ensureCleanupConfig(projectRoot);
-	if (_clStatus === "added") {
-		console.info("  add: cleanup.max_file_loc: 400 to .indusk/config.json");
-	} else if (_clStatus === "already-set") {
-		console.info(
-			`  ok: cleanup.max_file_loc: ${getCleanupConfig(projectRoot).max_file_loc} (already set)`,
-		);
-	}
+	reportEnsured(
+		ensureCleanupConfig(projectRoot),
+		"cleanup.max_file_loc: 400 to .indusk/config.json",
+		`cleanup.max_file_loc: ${getCleanupConfig(projectRoot).max_file_loc} (already set)`,
+	);
 
 	// [Papers — writing-skill] scaffold the papers block idempotently so the
 	// key is always present; the first publish writes the first destination.
 	const { ensurePapersConfig } = await import("../../lib/papers/config.js");
-	const _papersStatus = ensurePapersConfig(projectRoot);
-	if (_papersStatus === "added") {
-		console.info("  add: papers.destinations: [] to .indusk/config.json");
-	} else if (_papersStatus === "already-set") {
-		console.info("  ok: papers.destinations (already set)");
-	}
+	reportEnsured(
+		ensurePapersConfig(projectRoot),
+		"papers.destinations: [] to .indusk/config.json",
+		"papers.destinations (already set)",
+	);
 
 	// [Decay — indusk-makeover] scaffold sweep + dead-draft keys idempotently.
 	// Presence-keyed; user-customized values never clobbered. Readers default
 	// regardless, so absence is never "disabled".
 	const { ensureDecayConfig } = await import("../../lib/config.js");
-	const _decayStatus = ensureDecayConfig(projectRoot);
-	if (_decayStatus === "added") {
-		console.info(
-			"  add: agents.sweep_ttl_minutes: 10080 + planning.dead_draft_days: 30 to .indusk/config.json",
-		);
-	} else if (_decayStatus === "already-set") {
-		console.info("  ok: decay config (sweep_ttl_minutes + dead_draft_days) already set");
-	}
+	reportEnsured(
+		ensureDecayConfig(projectRoot),
+		"agents.sweep_ttl_minutes: 10080 + planning.dead_draft_days: 30 to .indusk/config.json",
+		"decay config (sweep_ttl_minutes + dead_draft_days) already set",
+	);
 
 	// 8. Ensure ignores: in full mode, refresh tracked .gitignore. In local
 	// mode, leave .gitignore untouched and refresh .git/info/exclude (per-clone,
