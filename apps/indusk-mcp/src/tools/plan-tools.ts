@@ -27,7 +27,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 					content: [{ type: "text" as const, text: JSON.stringify(plans, null, 2) }],
 				};
 			}
-			const filtered = plans.filter((p) => isActivePlanStatus(p.stageStatus ?? ""));
+			const filtered = plans.filter((p) => isActivePlan(p));
 			return {
 				content: [
 					{
@@ -243,6 +243,20 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
  */
 export function isActivePlanStatus(status: string): boolean {
 	return ACTIVE_PLAN_STATUSES.has(status.toLowerCase());
+}
+
+/**
+ * A paper-stage plan is in motion while any paper is still a draft or awaits
+ * its first publish; every paper published is done, even if one has gone
+ * stale since (the next step still says "Publish", the active list does not
+ * resurrect a finished plan for a hotfix). Every other stage uses the
+ * document-status rule above.
+ */
+export function isActivePlan(plan: { stage: string; stageStatus?: string }): boolean {
+	if (plan.stage === "paper") {
+		return plan.stageStatus === "draft" || plan.stageStatus === "accepted";
+	}
+	return isActivePlanStatus(plan.stageStatus ?? "");
 }
 
 const ACTIVE_PLAN_STATUSES = new Set([
