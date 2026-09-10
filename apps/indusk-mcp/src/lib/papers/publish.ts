@@ -4,7 +4,6 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
-	rmSync,
 	writeFileSync,
 } from "node:fs";
 import { dirname, join, relative } from "node:path";
