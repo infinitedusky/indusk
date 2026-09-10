@@ -52,7 +52,7 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 | A3 | A paper's status is one of `draft`, `accepted`, `published`; any other value reports `malformed`, never a silent draft | Test Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
 | A4 | `indusk-v4-day`, once its documents declare `kind: paper`, reports a real stage in `list_plans` and the admin UI | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
 | A5 | The admin UI renders a paper under its plan with title and status, and a papers-only plan renders without error | Test Phase 1 | Build Phase 4 | written | browser | `apps/indusk-admin/src/components/PlanDetail.papers.test.tsx` |
-| A6 | After `update`, a project with no `papers` block has `papers.destinations: []`; a project with destinations keeps them byte-for-byte | Build Phase 2 | Build Phase 2 | planned | unit | `apps/indusk-mcp/src/lib/papers/config.test.ts` |
+| A6 | After `update`, a project with no `papers` block has `papers.destinations: []`; a project with destinations keeps them byte-for-byte | Build Phase 2 | Build Phase 2 | passing | unit | `apps/indusk-mcp/src/lib/papers/config.test.ts` |
 | A7 | Publishing puts the rendered page in the destination directory with mapped frontmatter, regenerates the index between its markers, and commits on the destination's current branch with no push | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
 | A8 | After a publish the paper's frontmatter records destination, path, destination commit, source commit, and hash, and status reads `published` | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
 | A9 | Editing the plan copy after a publish reports `published (stale)`; publishing again clears it; publishing an unchanged paper twice is a no-op with no new commit | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
@@ -169,30 +169,33 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 - [x] `indusk-v4-day` still reports `unknown` (no document declares `kind` yet), and every existing plan in `list_plans` reports the same stage as before this phase — `parseAllPlans` captured before the change and compared after: 20 plans, 0 differences in stage, status, or next step, no plan gained a `papers` field; `archive` and `indusk-v2-dawn` still `unknown`. (`indusk-v4-day` is untracked on main and so absent from this worktree; it joins at Build Phase 6)
 
 #### Build Phase 1 Context
-- [x] Add to Conventions: `kind: paper` is declared in frontmatter, never inferred; a `paper` stage exists beside the lifecycle stages and never enters `STAGE_ORDER`; staleness is derived from `paperContentHash`, never stored as a status — pointer to `.indusk/planning/writing-skill/adr.md`. Added after the "Plans live in" line through the budget hook; CLAUDE.md 46,0xx / 61,440 bytes
+- [x] Add to Conventions: `kind: paper` is declared in frontmatter, never inferred; a `paper` stage exists beside the lifecycle stages and never enters `STAGE_ORDER`; staleness is derived from `paperContentHash`, never stored as a status — pointer to `.indusk/planning/writing-skill/adr.md`. Added after the "Plans live in" line through the budget hook; CLAUDE.md 45,889 / 61,440 bytes (75%) after it
 
 #### Build Phase 1 Document
 - [x] Update `reference/cli/plans.md`: the `paper` stage, the `papers` field, the status vocabulary, and what "Publish n paper(s)" means. New "Papers (`kind: paper`)" section at the end of the page; names `indusk papers publish` without linking it, since `/reference/cli/papers` does not exist until Build Phase 5 and a dead link fails the VitePress build
 
 ### Build Phase 2: Destinations in config
 
-- [ ] Add `papers?: { destinations: PaperDestination[] }` to `InduskConfig` in `lib/config.ts`
+- [x] Add `papers?: { destinations: PaperDestination[] }` to `InduskConfig` in `lib/config.ts`
   ```ts
   export interface PaperDestination { name: string; path?: string; repo?: string; dir: string; index: string; frontmatter?: Record<string, string> }
   ```
-- [ ] `ensurePapersConfig(projectRoot)` in `lib/papers/config.ts`, keyed on block presence, same contract as `ensureCleanupConfig` (`"added" | "already-set" | "no-config"`); call it from `update.ts` beside `ensureCleanupConfig`
-- [ ] `resolveDestination(projectRoot, name?)` in `lib/papers/destination.ts`: `path` expands `~` and resolves relative to the project root; `repo` goes through `readWorkbenchRepos` + `repoDir` and refuses outside a workbench (`isWorkbench` false) with "only paths are accepted here"; no name with more than one destination refuses listing them; zero destinations refuses naming `papers.destinations`
+- [x] `ensurePapersConfig(projectRoot)` in `lib/papers/config.ts`, keyed on block presence, same contract as `ensureCleanupConfig` (`"added" | "already-set" | "no-config"`); call it from `update.ts` beside `ensureCleanupConfig`. A6 authored at phase start as a load error (its subject did not exist), then green; two more cases: a present-but-empty block is already-set, and a missing config is no-config
+- [x] `resolveDestination(projectRoot, name?)` in `lib/papers/destination.ts`: `path` expands `~` and resolves relative to the project root; `repo` goes through `readWorkbenchRepos` + `repoDir` and refuses outside a workbench (`isWorkbench` false) with "only paths are accepted here"; no name with more than one destination refuses listing them; zero destinations refuses naming `papers.destinations`. Pure (touches nothing on disk; existence and git-ness are the publish step's checks); an undeclared `repo` inside a workbench refuses listing what is declared; refusals are a `DestinationError` the command prints and exits on. Seven resolver cases in `destination.test.ts`
+
+- [x] **Shape — reviewed, nothing found** (boundary recorded at `d0a6afc5`; scope was exactly this phase's six code files plus CLAUDE.md and the new docs page; every extension's rules readable). `resolveDestination` selects and `destinationRoot` locates, one reason to change each, refusal messages beside the branch that raises them; the tests are one `it` per rule
+- [x] **Shape — considered, left as is**: `ensurePapersConfig` mirrors `ensureCleanupConfig` line for line, and `update.ts` now carries a third near-identical ensure-and-print block (cleanup, decay, papers). That is the rule of three across files, which the rule set scopes to `/cleanup` at close; extracting an `ensureBlock(key, defaults)` now would settle a shape while a fourth caller is still plausible
 
 #### Build Phase 2 Verification
-- [ ] A6 passes (`pnpm exec vitest run src/lib/papers/config.test.ts`)
-- [ ] A10 and A12 still red on the absent command, not on resolution; resolution is unit-covered here so Build Phase 3 can fail only on publish logic
-- [ ] `indusk update` on the scratch project prints the `papers` block added and a second run prints current
+- [x] A6 passes (`pnpm exec vitest run src/lib/papers/config.test.ts`) — 3/3 in the file, 10/10 across `src/lib/papers`, `tsc --noEmit` clean
+- [x] A10 and A12 still red on the absent command, not on resolution; resolution is unit-covered here so Build Phase 3 can fail only on publish logic — refusals file 7 failed / 0 passed, every failure `error: unknown command 'papers'`
+- [x] `indusk update` on the scratch project prints the `papers` block added and a second run prints current — rebuilt dist, fresh scratch project: run 1 `add: papers.destinations: [] to .indusk/config.json`, run 2 `ok: papers.destinations (already set)`, config reads `{"destinations":[]}`
 
 #### Build Phase 2 Context
-- [ ] Add to Conventions: `papers.destinations[]` is ensured on update and keyed on block presence; a `repo` destination is a workbench declaration, refused elsewhere — pointer to the ADR
+- [x] Add to Conventions: `papers.destinations[]` is ensured on update and keyed on block presence; a `repo` destination is a workbench declaration, refused elsewhere — pointer to the ADR. Added beneath the papers line, pointing at `/reference/cli/papers`, which now exists
 
 #### Build Phase 2 Document
-- [ ] Write the config block section of `reference/cli/papers.md` (every field, the `path` vs `repo` rule, the ensure behavior)
+- [x] Write the config block section of `reference/cli/papers.md` (every field, the `path` vs `repo` rule, the ensure behavior). Page created with the configuration section, the field table, the refusal list, and the first-destination note; the command section and the sidebar entry follow in Build Phases 3 and 5
 
 ### Build Phase 3: The publish step
 
