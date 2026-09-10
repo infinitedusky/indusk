@@ -236,7 +236,7 @@ its own assertion.
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/guide/rail-check.md`: the workbench attribution rule and what a refusal looks like
+- [x] `apps/docs/src/guide/rail-check.md`: the workbench attribution rule and what a refusal looks like (new section; the page's "NOT a git repo" line is now history, retiring it from Build Phase 7's docs list)
 - [x] `apps/docs/src/changelog.md` Unreleased entry
 
 ### Build Phase 5: `workbench restore` clones where everything else looks

@@ -127,7 +127,7 @@ This is the **dark queue** failure mode. The pipeline was silently broken for 2 
 
 ## What 1.31.7 changed
 
-The 4 InDusk hooks (`eval-trigger.js`, `check-catchup.js`, `check-gates.js`, `validate-impl-structure.js`) used to walk up the filesystem looking for `.indusk/` and lock that directory as "the project root." In workbench mode that landed at the workbench root — which is **NOT a git repo**. Hook then ran `git rev-parse` against it, got nothing, and silently exited.
+The 4 InDusk hooks (`eval-trigger.js`, `check-catchup.js`, `check-gates.js`, `validate-impl-structure.js`) used to walk up the filesystem looking for `.indusk/` and lock that directory as "the project root." In workbench mode that landed at the workbench root — which, before 1.37.0, was **not a git repo**. The hook then ran `git rev-parse` against it, got nothing, and silently exited.
 
 1.31.7 introduced a shared `apps/indusk-mcp/hooks/_hook-paths.js` that returns two distinct paths:
 
@@ -137,6 +137,38 @@ The 4 InDusk hooks (`eval-trigger.js`, `check-catchup.js`, `check-gates.js`, `va
 In single-repo mode they're the same. In workbench mode they differ — and the hooks now use the correct one for each operation.
 
 Full architectural rationale lives in [`workbench-mode-rail-integrity` brief](https://github.com/infinite-dusky/dusk/tree/main/.indusk/planning/workbench-mode-rail-integrity).
+
+## What 1.37.0 changed — and the attribution rule that came with it
+
+Versioned workbenches (1.37.0) made the workbench root a git repository of its
+own, so a team can share planning history. That inverted the old failure: the
+walk-up now *finds* a repo at the workbench root, and its history is plan
+documents, never code. Left alone, the hook would have scored a commit made
+from a session sitting at the root against the workbench's history — a diff
+with no code in it — and reported a scorecard like any other.
+
+The rule now (`workbench-trust-fixes`):
+
+- **The workbench repo is never the code repo.** If the git root found for the
+  session's cwd is the workbench itself, the hook discards it and resolves from
+  the declaration instead.
+- **One declared repo resolves at its declared location** — the `path` in
+  `worktree.repos[]`, else the name. (It used to look the repo up by name at the
+  root, which found nothing for any repo declared elsewhere, and logged that
+  only to `system.log`.)
+- **Several declared repos: the hook refuses, by name, in the session.** A
+  commit from the root could belong to any of them, and scoring the wrong one is
+  indistinguishable from scoring the right one. The refusal is written to
+  `system.log` *and* shown to the agent as additional context, so a commit the
+  evaluator declined to score never looks like one it scored:
+
+  > eval: a commit made from `/path/to/workbench` could belong to any of the 2
+  > repos this workbench declares (alpha, beta), and attributing it to the wrong
+  > one is indistinguishable from attributing it right. Refusing to score it.
+  > Commit from inside the repo the change lives in, or run the evaluator there.
+
+Commits made from inside a wrapped repo or a worktree are unaffected: the git
+root found is the code repo, exactly as before.
 
 ## Detecting the broken rail early
 
