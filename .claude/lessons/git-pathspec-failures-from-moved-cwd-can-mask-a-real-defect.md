@@ -1,0 +1,9 @@
+# Run git commands with absolute paths or an explicit cwd from the first command in a long session — a moved working directory produces pathspec failures that can mask a real defect underneath them
+
+During writing-skill's closing phases, three separate git pathspec failures traced back to the same root cause: the session's working directory had drifted (via an earlier `cd` in a prior tool call) away from where a later git command assumed it was running. Each failure looked like a git/pathspec problem in isolation. The dangerous instance was the third one: it landed close enough in time to the stash incident (see `a-focused-unit-for-a-moved-primitive-catches-tree-drift`) that the pathspec failure very nearly got diagnosed as "explaining" the missing file, when the actual cause was the external stash — a coincidental cwd-drift error almost provided a plausible-but-wrong explanation for an unrelated real defect.
+
+**Why it matters beyond the annoyance:** a `cmd | head`-style masking (see `pipe-to-head-swallows-the-real-command-exit-status`) hides a failure by construction; a cwd-drift pathspec failure hides it by coincidence — it produces a *different*, locally-plausible error that competes with the real one for attention, and whichever is investigated first can absorb the whole explanation.
+
+**How to apply:** in any session running more than a couple of git commands across tool calls, use absolute paths (or explicit `cwd` arguments to the git wrapper) from the very first command, not just after a pathspec failure appears. Don't assume the working directory is stable across a sequence of Bash-like tool calls in an agent session — it isn't, and a plausible-looking git error is not evidence that the error is the real defect until the cwd has been checked.
+
+See the writing-skill retrospective (2026-09-10) for the concrete incident.

@@ -1,0 +1,9 @@
+# A rollback/snapshot mechanism must capture every path an operation touches, including a rename's old name — restoring "the page" is not enough once the operation git-mv'd it
+
+`indusk papers publish`'s rollback (`snapshotPaths`/`restorePaths` in `apps/indusk-mcp/src/lib/git.ts`) originally snapshotted the destination page and the index before writing, so a failed publish could restore both. That covers the ordinary case. It does not cover a retitle: when a publish also renames the destination page (`git mv`), the operation's touched set is not {page, index} — it is {page, index, the page's OLD path}. A snapshot that only captures the current/new path has nothing to restore the old path from if the operation fails partway through the rename, leaving a partially-moved file with no way back.
+
+The fix: `snapshotPaths`/`restorePaths` take the full touched set explicitly — page, index, AND old path when a rename is in play — rather than inferring it from "whatever exists at the destination path right now." A31 (in writing-skill's test trajectory) is the test that specifically exercises the staged-rename case and proves the fix: stage a rename, fail mid-operation, confirm the old path is recoverable.
+
+**Why this generalizes:** any rollback/snapshot mechanism reasons by default about "the resource at its current location," which is exactly the assumption a rename invalidates. The general question to ask when building or reviewing a snapshot-and-restore path: does this operation ever change WHERE something lives, not just what its content is? If yes, the snapshot's touched-path set must include every location the operation might leave content at, not just the one it started or ends at — a partial rename is a state with content split across two paths, and a snapshot keyed on one path can't put it back together.
+
+See `.indusk/planning/archive/writing-skill/` (A31, `lib/git.ts`'s `snapshotPaths`/`restorePaths`) for the concrete case.
