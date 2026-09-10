@@ -4,10 +4,14 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.44.0] — 2026-09-10
+
 ### Added
 - **Papers are first-class plan documents.** A document declaring `kind: paper` in frontmatter is a paper; a folder of papers with no lifecycle document is a `paper`-stage plan instead of `unknown` / "Create a brief". Status vocabulary `draft | accepted | published`, anything else `malformed`; staleness is derived on every read from a content hash the publish records, never stored, and shows as `published (stale)`. `list_plans` carries a `papers` field; the admin UI renders a Papers section with derived badges.
 - **`/write` skill.** A writing session's catchup, voice sheet, outline discipline, read-as-the-reader and falsify-the-argument passes, and publish step, in prose only: no hooks, no gates. Its description names drafting, outlining, revising, reviewing, and publishing a paper, thesis, or essay, so a plain request routes to it.
 - **`indusk papers publish <plan>/<file> [--to <name>] [--push]`.** Renders the page into a configured destination outside the repo, regenerates the destination's index between two markers, commits there (never pushes without `--push`), and writes provenance (destination, commit, source commit, hash) back into the paper as a text edit of its frontmatter. Refuses with nothing written on an uncommitted source, a dirty target page, a missing or non-git destination, or an index without its markers; a committed hand edit at the destination is overwritten and named. `papers.destinations[]` is ensured on `update`; a `repo` destination is a workbench declaration and is refused elsewhere.
+- **Publish hardening from the plan's falsification.** Publishing a paper names every published sibling whose page is now behind, with the command that repairs it; two papers whose titles slug the same refuse rather than publish over each other; a retitled paper's page is moved, not duplicated; a destination commit that fails restores the destination to a clean tree and refuses with the reason; `--push` runs last and a failed push is a warning, never a failed publish.
+- **`indusk plans archive-dead` protects plans that carry a published paper.** `published` is a status word every status-keyed detector now knows.
 
 ## [1.43.0] — 2026-09-08
 
