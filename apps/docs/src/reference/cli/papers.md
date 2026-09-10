@@ -51,7 +51,8 @@ from.
 published` and a `published` block (`destination`, `path`, `commit`,
 `source_commit`, `hash`), written as a text edit so no other frontmatter
 line changes, and one commit `chore(papers): publish <file> to <name>
-(<destination sha>)`. The hash is what staleness is derived from on every
+(<destination sha>)`. `source_commit` is informational: rebasing the plan branch after a publish rewrites
+it, and nothing reads it back. The hash is what staleness is derived from on every
 later read.
 
 **Up to date.** A paper that is `published`, whose recorded hash matches
