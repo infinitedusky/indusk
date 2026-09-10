@@ -1,9 +1,10 @@
 import { execSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { oneRepoAtPath, twoRepos, type VersionedWorkbench } from "./helpers/versioned-workbench.js";
 
 /**
  * Tests for the workbench-aware path helper at apps/indusk-mcp/hooks/_hook-paths.js.
@@ -28,6 +29,7 @@ async function loadHelper() {
 	return mod.resolveStateAndGitPaths as (cwd: string) => {
 		statePath: string | null;
 		gitPath: string | null;
+		refusal: string | null;
 	};
 }
 
@@ -222,5 +224,46 @@ describe("resolveStateAndGitPaths — workbench-aware path resolution", () => {
 			expect(result.gitPath).toBe(worktreeReal);
 			expect(result.statePath).not.toBe(result.gitPath);
 		});
+	});
+});
+
+/**
+ * workbench-trust-fixes A7 — the shape every real project has had since
+ * 1.37.0: the workbench root is itself a git repo. The walk-up now FINDS it,
+ * and its history is plan documents, never the code. Until this block the
+ * regression net had no fixture with a git-initialized root, so the
+ * mis-attribution was invisible by construction.
+ */
+describe("versioned workbench root (a git repo) — never attributed as the code repo", () => {
+	let wb: VersionedWorkbench | null = null;
+	afterEach(() => {
+		wb?.cleanup();
+		wb = null;
+	});
+
+	it("one repo declared at a path: cwd at the root resolves gitPath to that repo, not the root", async () => {
+		wb = oneRepoAtPath();
+		const resolveStateAndGitPaths = await loadHelper();
+		const r = resolveStateAndGitPaths(wb.root);
+		expect(r.statePath).toBe(realpathSync(wb.root));
+		expect(r.gitPath).toBe(realpathSync(wb.repos[0].dir));
+		expect(r.refusal).toBeNull();
+	});
+
+	it("cwd inside the nested repo resolves to that repo, as before", async () => {
+		wb = oneRepoAtPath();
+		const resolveStateAndGitPaths = await loadHelper();
+		const r = resolveStateAndGitPaths(wb.repos[0].dir);
+		expect(r.statePath).toBe(realpathSync(wb.root));
+		expect(r.gitPath).toBe(realpathSync(wb.repos[0].dir));
+	});
+
+	it("two repos: gitPath is null and the refusal names both candidates", async () => {
+		wb = twoRepos();
+		const resolveStateAndGitPaths = await loadHelper();
+		const r = resolveStateAndGitPaths(wb.root);
+		expect(r.gitPath).toBeNull();
+		expect(r.refusal).toMatch(/alpha/);
+		expect(r.refusal).toMatch(/beta/);
 	});
 });

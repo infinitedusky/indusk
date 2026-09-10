@@ -91,7 +91,11 @@ if (cliSource !== null || drainPending) {
 // early syslog calls used raw `cwd` and silently created stray `.indusk/`
 // directories inside wrapped repos — exactly the "no lingering app-level
 // state" pattern this plan is fixing.
-const { statePath: resolvedStatePath, gitPath } = resolveStateAndGitPaths(cwd);
+const {
+	statePath: resolvedStatePath,
+	gitPath,
+	refusal: attributionRefusal,
+} = resolveStateAndGitPaths(cwd);
 const statePath = resolvedStatePath ?? cwd;
 
 if (cliSource !== null || drainPending) {
@@ -194,9 +198,10 @@ if (drainPending) {
 }
 
 // Get the current commit ID. Runs against gitPath, not statePath — in
-// workbench mode the two differ (statePath = workbench root, NOT a git repo;
-// gitPath = wrapped repo or worktree). Pre-1.31.7 ran against statePath
-// and bailed on every commit in workbench-shaped projects.
+// workbench mode the two differ (statePath = workbench root, whose own git
+// history is plan documents; gitPath = the declared code repo or a worktree).
+// Pre-1.31.7 ran against statePath and bailed on every commit in
+// workbench-shaped projects; post-1.37.0 it would have scored the workbench.
 let changeId = changeIdArg ?? undefined;
 if (!changeId && gitPath) {
 	try {
@@ -212,6 +217,20 @@ if (!changeId && gitPath) {
 	}
 }
 if (!changeId) {
+	if (!gitPath && attributionRefusal) {
+		// Refuse VISIBLY. system.log is where the eval rail talks to itself; a
+		// commit the evaluator silently declined to score looks, to the
+		// session, exactly like one it scored. stdout JSON is the one channel a
+		// PostToolUse hook has to the model at exit 0 (workbench-trust-fixes,
+		// F2 / A8).
+		syslog(statePath, `refusing to attribute — ${attributionRefusal}`);
+		console.info(
+			JSON.stringify({
+				hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: attributionRefusal },
+			}),
+		);
+		process.exit(0);
+	}
 	syslog(
 		statePath,
 		gitPath
