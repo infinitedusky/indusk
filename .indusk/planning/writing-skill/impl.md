@@ -61,12 +61,12 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 | A12 | Inside a workbench a `repo` destination resolves through the declared repos; outside one it refuses saying only paths are accepted | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
 | A13 | The publish command documented in the skill, run verbatim, publishes paper 1 to `~/code/site` and performs A7 and A8 there | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
 | A14 | The `write` skill is installed byte-identical to the package source and carries `name` and `description` | Test Phase 1 | Test Phase 1 | passing | unit | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` |
-| A15 | The skill's description names drafting, outlining, revising, and publishing a paper, thesis, or essay | Test Phase 1 | Build Phase 5 | written | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
-| A16 | The skill's instructions say to register presence, load the plan folder's prose documents, and skip lessons, health, and extensions | Test Phase 1 | Build Phase 5 | written | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
-| A17 | The skill carries Voice, Outline, Read as the reader, and Falsify the argument as named sections | Test Phase 1 | Build Phase 5 | written | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
+| A15 | The skill's description names drafting, outlining, revising, and publishing a paper, thesis, or essay | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
+| A16 | The skill's instructions say to register presence, load the plan folder's prose documents, and skip lessons, health, and extensions | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
+| A17 | The skill carries Voice, Outline, Read as the reader, and Falsify the argument as named sections | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
 | A18 | "Let's work on the grift paper" in a fresh session invokes the skill without the slash command | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
 | A19 | Running the skill on `indusk-v4-day` loads the thesis, outline, shape, and three papers, prints nothing from lessons or health, and leaves a read-as-reader pass and a falsify pass per paper in the plan folder | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
-| A20 | The docs sidebar links `reference/skills/write` and `reference/cli/papers` | Test Phase 1 | Build Phase 5 | written | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
+| A20 | The docs sidebar links `reference/skills/write` and `reference/cli/papers` | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
 | A21 | Publishing refuses while the plan copy has uncommitted changes, and a successful publish's destination commit message carries the source commit hash | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
 
 ### Deferred Verification
@@ -245,21 +245,23 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 ### Build Phase 5: The skill and its documentation
 
-- [ ] Write `apps/indusk-mcp/skills/write.md` with frontmatter `name: write`, the ADR's description, and the named sections: Load, Voice, Outline, Stance, Read as the reader, Falsify the argument, Publish (the command verbatim, the config block to write when none exists, the hotfix path), What this skill does not do
-- [ ] Sync the installed copy to `.claude/skills/write/SKILL.md` (the parity test pins byte-equality)
-- [ ] Write `reference/skills/write.md`; add `reference/skills/write` and `reference/cli/papers` to the sidebar in `apps/docs/src/.vitepress/config.ts` (the live config, not the root scaffold)
-- [ ] Changelog entry under Unreleased
+- [x] Write `apps/indusk-mcp/skills/write.md` with frontmatter `name: write`, the ADR's description, and the named sections: Load, Voice, Outline, Stance, Read as the reader, Falsify the argument, Publish (the command verbatim, the config block to write when none exists, the hotfix path), What this skill does not do. Plus an Invocation section. The Publish section carries the generic form and the concrete line the dogfood runs verbatim (`indusk papers publish indusk-v4-day/paper-1-the-grift.md --to blog`), since a placeholder cannot be run unchanged. The review passes are recorded as `<paper-stem>.review.md` in the plan folder, which is what A19 looks for
+- [x] Sync the installed copy to `.claude/skills/write/SKILL.md` (the parity test pins byte-equality)
+- [x] Write `reference/skills/write.md`; add `reference/skills/write` and `reference/cli/papers` to the sidebar in `apps/docs/src/.vitepress/config.ts` (the live config, not the root scaffold). Write after Catchup in the skills block; papers after plans in the CLI block
+- [x] Changelog entry under Unreleased — three entries: the document kind, the skill, the command
+
+- [x] **Shape — reviewed, nothing found** (boundary recorded at `4f856cd3`; scope was the skill and its installed copy, the reference page, the changelog, CLAUDE.md, and the sidebar config; every extension's rules readable). The only code this phase touched is two data lines in the VitePress sidebar; the rest is prose, which the craft rules do not address. Nothing considered and left, because there was nothing to consider
 
 #### Build Phase 5 Verification
-- [ ] A15, A16, A17, A20 pass (`pnpm exec vitest run src/__tests__/write-skill-pins.test.ts`)
-- [ ] A14 still passes with the new file present (`pnpm exec vitest run src/__tests__/skill-sync-parity.test.ts`)
-- [ ] `get_skill_summaries` lists `write` with its description
+- [x] A15, A16, A17, A20 pass (`pnpm exec vitest run src/__tests__/write-skill-pins.test.ts`) — 13/13 in the file (the existence check plus the twelve pins)
+- [x] A14 still passes with the new file present (`pnpm exec vitest run src/__tests__/skill-sync-parity.test.ts`) — 34/34 across pins + parity together
+- [x] `get_skill_summaries` lists `write` with its description — verified on the real path, not a re-implementation: an MCP client over stdio against the worktree's built CLI (`node dist/bin/cli.js serve`, `PROJECT_ROOT` set, which is what `.mcp.json` registers) returned total 27 and `{"name":"write","description":"Draft, outline, revise, review, or publish a paper, thesis, or essay …","type":"process","slash":"/write"}`. Two things bit on the way, both already in the work skill's warnings: top-level `await` does not run under `tsx -e`, and `dist/server/index.js` alone closes the connection; the registered entry point is `indusk serve`
 
 #### Build Phase 5 Context
-- [ ] Add `write` to the Skills line in Architecture; add to Conventions that the skill's description is the routing key and any change to it re-runs the manual invocation check — pointer to `/reference/skills/write`
+- [x] Add `write` to the Skills line in Architecture; add to Conventions that the skill's description is the routing key and any change to it re-runs the manual invocation check — pointer to `/reference/skills/write`. Both added; the Conventions line sits above the publish invariants
 
 #### Build Phase 5 Document
-- [ ] `reference/skills/write.md` written and in the sidebar; changelog entry present
+- [x] `reference/skills/write.md` written and in the sidebar; changelog entry present. Written, linked from the skills block; three Unreleased entries
 
 ### Build Phase 6: Dogfood on the Day papers
 
