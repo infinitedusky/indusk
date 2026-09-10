@@ -25,7 +25,10 @@ afterEach(() => {
 describe("otel detect does not match template files", () => {
 	it("excludes templates/ from the instrumentation pattern", () => {
 		const m = JSON.parse(
-			readFileSync(join(new URL("../../", import.meta.url).pathname, "extensions/otel/manifest.json"), "utf-8"),
+			readFileSync(
+				join(new URL("../../", import.meta.url).pathname, "extensions/otel/manifest.json"),
+				"utf-8",
+			),
 		);
 		// The exclusion is its own field rather than negation inside the glob —
 		// readable, and the runner can apply it as `ignore` without parsing.

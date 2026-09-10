@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -52,7 +52,10 @@ describe("manifest.local.json overrides by name", () => {
 		const base = ext(BUILTIN, {
 			provides: {
 				health_checks: [
-					{ name: "otel-packages-installed", command: "backend/.venv/bin/python -c 'import opentelemetry'" },
+					{
+						name: "otel-packages-installed",
+						command: "backend/.venv/bin/python -c 'import opentelemetry'",
+					},
 				],
 			},
 		});
@@ -76,7 +79,9 @@ describe("manifest.local.json overrides by name", () => {
 			"test -f instrumentation.ts || test -f src/instrumentation.py";
 		const base = ext(improved, {
 			provides: {
-				health_checks: [{ name: "otel-packages-installed", command: "backend/.venv/bin/python -c x" }],
+				health_checks: [
+					{ name: "otel-packages-installed", command: "backend/.venv/bin/python -c x" },
+				],
 			},
 		});
 		const m = loadExtension(resolveManifestPath(base, "otel") as string);
