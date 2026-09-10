@@ -58,6 +58,23 @@ function sameCommit(a: string, b: string): boolean {
 	return a !== "" && b !== "" && (a.startsWith(b) || b.startsWith(a));
 }
 
+/**
+ * The divergence rule, in one place: an existing destination page has
+ * diverged when its last destination commit is not the one the paper
+ * recorded at the previous publish, or when nothing was recorded at all (a
+ * hand-copied page the publish is taking over). A diverged page is
+ * overwritten — the destination is a build artifact — and the commit body
+ * says so. Uncommitted edits never reach here; step 4 refuses them.
+ */
+export async function pageDiverged(
+	destRoot: string,
+	pageRel: string,
+	recordedCommit: string | null,
+): Promise<boolean> {
+	const lastCommit = await git(destRoot, "log", "-1", "--format=%h", "--", pageRel);
+	return recordedCommit === null || !sameCommit(lastCommit, recordedCommit);
+}
+
 /** Every sibling document → its published path, for link rewriting. */
 function siblingPaths(planDir: string): SiblingPaths {
 	const map: SiblingPaths = new Map();
@@ -143,12 +160,13 @@ export async function publishPaper(opts: PublishOptions): Promise<PublishResult>
 			warnings: rendered.warnings,
 		};
 	}
-	let diverged = false;
-	if (existing !== null) {
-		const lastCommit = await git(dest.root, "log", "-1", "--format=%h", "--", pageRel);
-		const recordedCommit = typeof recorded?.commit === "string" ? recorded.commit : "";
-		diverged = !sameCommit(lastCommit, recordedCommit);
-	}
+	const diverged =
+		existing !== null &&
+		(await pageDiverged(
+			dest.root,
+			pageRel,
+			typeof recorded?.commit === "string" ? recorded.commit : null,
+		));
 
 	// 6. Write the page and regenerate the index; an index refusal undoes the page.
 	mkdirSync(dirname(pagePath), { recursive: true });
