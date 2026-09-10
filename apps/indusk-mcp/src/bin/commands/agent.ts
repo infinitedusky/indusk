@@ -277,9 +277,9 @@ export function agentList(projectRoot: string): void {
 			if (callerSection) {
 				const cwd = process.cwd();
 				// Recompute from cwd — but PRESERVE the last-known value when the
-				// recompute comes back empty (non-git cwd). The workbench root is
-				// intentionally not a git repo and is exactly where `.indusk/` lives,
-				// so running `agent list` there must NOT wipe the caller's worktree/
+				// recompute comes back empty (non-git cwd). A workbench root has no
+				// git history until its first sync/restore, and it is exactly where
+				// `.indusk/` lives, so running `agent list` there must NOT wipe the caller's worktree/
 				// branch to "" — that would drop the session off the board and out of
 				// the collision check (falsification T10, 2026-07-13).
 				const freshWorktree = currentWorktree(cwd);

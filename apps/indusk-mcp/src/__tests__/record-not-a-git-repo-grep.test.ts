@@ -16,7 +16,24 @@ import { describe, expect, it } from "vitest";
  */
 
 const REPO_ROOT = resolve(new URL("../../../../", import.meta.url).pathname);
-const PATTERN = /not a git repo/i;
+
+/**
+ * The dead invariant, as a present-tense claim about the workbench root —
+ * never a runtime message about some arbitrary directory ("<path> is not a
+ * git repo", which stays true of non-git paths), a quoted error, or history
+ * ("was not a git repo", "before 1.37.0"). Three shapes:
+ *   1. all-caps emphasis, which only ever meant the invariant;
+ *   2. "(the) (workbench) root … is/which is/are … not a git repo";
+ *   3. "deliberately/intentionally not a git repo", unless it is "was …".
+ */
+const PATTERNS = [
+	/\bNOT a git repo\b/,
+	/\b(workbench root|the root)\b[^.\n]{0,80}\b(is|which is|are)\b[^.\n]{0,40}\bnot\*? a git repo\b/i,
+	// "was … deliberately" is history; the lookbehind tolerates a comment line
+	// wrap between the two words (`was\n * deliberately`).
+	/(?<!was[\s*]{1,6})\b(deliberately|intentionally) \*?not\*? a git repo\b/i,
+];
+const matches = (text: string) => PATTERNS.some((re) => re.test(text));
 
 const EXEMPT = [
 	/\/decisions\//,
@@ -33,7 +50,9 @@ function walk(dir: string, keep: (p: string) => boolean): string[] {
 	const out: string[] = [];
 	for (const entry of readdirSync(dir, { withFileTypes: true })) {
 		const p = join(dir, entry.name);
-		if (EXEMPT.some((re) => re.test(`${p}/`))) continue;
+		// Test the bare path AND the path with a trailing slash: directory
+		// exemptions want the slash, `$`-anchored file exemptions want it gone.
+		if (EXEMPT.some((re) => re.test(p) || re.test(`${p}/`))) continue;
 		if (entry.isDirectory()) out.push(...walk(p, keep));
 		else if (keep(p)) out.push(p);
 	}
@@ -55,7 +74,7 @@ function livingRecord(): string[] {
 describe("A16 — no living document says the workbench root is not a git repo", () => {
 	it("finds zero matches outside the historical record", () => {
 		const hits = livingRecord()
-			.filter((p) => PATTERN.test(readFileSync(p, "utf-8")))
+			.filter((p) => matches(readFileSync(p, "utf-8")))
 			.map((p) => relative(REPO_ROOT, p));
 		expect(hits, `still asserting the dead invariant:\n  ${hits.join("\n  ")}`).toEqual([]);
 	});

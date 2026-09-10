@@ -10,7 +10,7 @@ import { repoDir, type WorkbenchRepo } from "../../lib/worktree/repos.js";
  * declared in `worktree.repos[]` with an optional `path` / `worktrees` each.
  *
  * The regression net never had this fixture. `worktree-fixture.ts` builds the
- * pre-1.37 shape (root NOT a git repo, singular `wrapped_repo`), which is why
+ * pre-1.37 shape (root never `git init`ed, singular `wrapped_repo`), which is why
  * none of the workbench-trust-fixes findings could be seen by a test: every
  * one of them appears only once the root becomes a repository.
  *
