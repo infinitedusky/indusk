@@ -794,4 +794,20 @@ agentCmd
 		agentSweep(rootOrExit(), opts);
 	});
 
+const papersCmd = program
+	.command("papers")
+	.description("Publish plan papers (kind: paper) to configured destinations outside the repo");
+
+papersCmd
+	.command("publish <target>")
+	.description(
+		"Publish <plan>/<file>: render the page into the destination, regenerate its index between the markers, commit in the destination (never pushes without --push), and write provenance back into the paper",
+	)
+	.option("--to <name>", "Destination name (required when more than one is configured)")
+	.option("--push", "Push the destination after committing")
+	.action(async (target: string, opts: { to?: string; push?: boolean }) => {
+		const { papersPublish } = await import("./commands/papers.js");
+		await papersPublish(rootOrExit(), target, opts);
+	});
+
 program.parse();
