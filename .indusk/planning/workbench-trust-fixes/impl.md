@@ -71,7 +71,7 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A6 | The cleanup file scan at a versioned workbench root throws naming the workbench shape and its declared repos; it never returns an empty list there | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/lib/cleanup/oversized-workbench-refusal.test.ts |
 | A7 | A `git commit` from a cwd at a versioned workbench root is never attributed to the workbench repo: one declared repo resolves to that repo at its declared `path`; several refuse naming the candidates | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
 | A8 | The eval hook's multi-repo refusal reaches the session as `hookSpecificOutput.additionalContext`, not only `system.log` | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
-| A9 | `workbench restore` on a repo declaring `path`: already present → reported present, nothing created; absent → cloned at the declared path; the printed path is the path used; a second run is a no-op | Test Phase 1 | Build Phase 5 | written | apps/indusk-mcp/src/__tests__/workbench-restore-declared-path.test.ts |
+| A9 | `workbench restore` on a repo declaring `path`: already present → reported present, nothing created; absent → cloned at the declared path; the printed path is the path used; a second run is a no-op | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/workbench-restore-declared-path.test.ts |
 | A10 | `worktree create <slug>` and `worktree refresh <slug>` succeed on a workbench whose repo declares `path`, resolving the trunk where `wt` does | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/wt-declared-path-parity.test.ts |
 | A11 | `worktree refresh --all` and `worktree preflight` see worktrees in a declared `worktrees/` dir; preflight excludes a trunk at a declared `path` | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/wt-declared-path-parity.test.ts |
 | A12 | The stray-state audit inspects each repo at its declared path and reports a stray there | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/stray-state-audit-declared-path.test.ts |
@@ -241,13 +241,13 @@ its own assertion.
 
 ### Build Phase 5: `workbench restore` clones where everything else looks
 
-- [ ] `src/bin/commands/workbench.ts` `restoreOne`: `const target = join(siblingParent, repoDir(repo))`; `mkdirSync(dirname(target), { recursive: true })` before the clone; the `cloned-unlinked` status line prints `target`, not `${siblingParent}/${repo.name}`
-- [ ] Re-read `isNested` against the new `target` and confirm the nested layout (`repos_root: "."`) still detects correctly
+- [x] `src/bin/commands/workbench.ts` `restoreOne`: `const target = join(siblingParent, repoDir(repo))`; `mkdirSync(dirname(target), { recursive: true })` before the clone; the `cloned-unlinked` status line prints `target`, not `${siblingParent}/${repo.name}` (the `cloned` line printed only the sibling parent — fixed to the same path)
+- [x] Re-read `isNested` against the new `target` and confirm the nested layout (`repos_root: "."`) still detects correctly — with `siblingParent === workbenchRoot` the new target *is* `join(workbenchRoot, repoDir(repo))`, so `isNested` is true by construction there; A9's nested fixture exercises exactly this and reports `present in the workbench at code/alpha/`
 
 #### Build Phase 5 Verification
 
-- [ ] A9 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/workbench-restore-declared-path.test.ts` — expected: 3 cases pass
-- [ ] `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__ -t "restore"` — expected: existing restore tests pass
+- [x] A9 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/workbench-restore-declared-path.test.ts` — expected: 3 cases pass (2026-09-10: authored as 2 `it`s covering the three cases — absent; present + second run — both pass)
+- [x] `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__ -t "restore"` — expected: existing restore tests pass (7 passed)
 
 #### Build Phase 5 Context
 
