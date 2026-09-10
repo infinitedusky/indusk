@@ -47,27 +47,27 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 | ID | Asserts | Writable at | Passes at | State | Scope | Test |
 |----|---------|-------------|-----------|-------|-------|------|
-| A1 | A plan folder whose documents all carry `kind: paper` reports stage `paper` with a status derived from those papers, never `unknown`, and a next step that is never "Create a brief" | Test Phase 1 | Build Phase 1 | planned | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
+| A1 | A plan folder whose documents all carry `kind: paper` reports stage `paper` with a status derived from those papers, never `unknown`, and a next step that is never "Create a brief" | Test Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
 | A2 | A plan folder with lifecycle documents and papers keeps its lifecycle stage and lists the papers beside it with their own statuses | Build Phase 1 | Build Phase 1 | planned | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
-| A3 | A paper's status is one of `draft`, `accepted`, `published`; any other value reports `malformed`, never a silent draft | Test Phase 1 | Build Phase 1 | planned | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
-| A4 | `indusk-v4-day`, once its documents declare `kind: paper`, reports a real stage in `list_plans` and the admin UI | Test Phase 1 | Build Phase 6 | planned | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
-| A5 | The admin UI renders a paper under its plan with title and status, and a papers-only plan renders without error | Test Phase 1 | Build Phase 4 | planned | browser | `apps/indusk-admin/src/components/PlanDetail.papers.test.tsx` |
+| A3 | A paper's status is one of `draft`, `accepted`, `published`; any other value reports `malformed`, never a silent draft | Test Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
+| A4 | `indusk-v4-day`, once its documents declare `kind: paper`, reports a real stage in `list_plans` and the admin UI | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
+| A5 | The admin UI renders a paper under its plan with title and status, and a papers-only plan renders without error | Test Phase 1 | Build Phase 4 | written | browser | `apps/indusk-admin/src/components/PlanDetail.papers.test.tsx` |
 | A6 | After `update`, a project with no `papers` block has `papers.destinations: []`; a project with destinations keeps them byte-for-byte | Build Phase 2 | Build Phase 2 | planned | unit | `apps/indusk-mcp/src/lib/papers/config.test.ts` |
-| A7 | Publishing puts the rendered page in the destination directory with mapped frontmatter, regenerates the index between its markers, and commits on the destination's current branch with no push | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
-| A8 | After a publish the paper's frontmatter records destination, path, destination commit, source commit, and hash, and status reads `published` | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
-| A9 | Editing the plan copy after a publish reports `published (stale)`; publishing again clears it; publishing an unchanged paper twice is a no-op with no new commit | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
-| A10 | Publishing with no destination configured refuses naming `papers.destinations` and writes nothing | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
-| A11 | A missing path, a non-git destination, or a dirty target page each refuse with the reason and write nothing; a committed hand edit is overwritten and the commit message says the page had diverged | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
-| A12 | Inside a workbench a `repo` destination resolves through the declared repos; outside one it refuses saying only paths are accepted | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
-| A13 | The publish command documented in the skill, run verbatim, publishes paper 1 to `~/code/site` and performs A7 and A8 there | Test Phase 1 | Build Phase 6 | planned | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
-| A14 | The `write` skill is installed byte-identical to the package source and carries `name` and `description` | Test Phase 1 | Test Phase 1 | planned | unit | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` |
-| A15 | The skill's description names drafting, outlining, revising, and publishing a paper, thesis, or essay | Test Phase 1 | Build Phase 5 | planned | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
-| A16 | The skill's instructions say to register presence, load the plan folder's prose documents, and skip lessons, health, and extensions | Test Phase 1 | Build Phase 5 | planned | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
-| A17 | The skill carries Voice, Outline, Read as the reader, and Falsify the argument as named sections | Test Phase 1 | Build Phase 5 | planned | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
-| A18 | "Let's work on the grift paper" in a fresh session invokes the skill without the slash command | Test Phase 1 | Build Phase 6 | planned | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
-| A19 | Running the skill on `indusk-v4-day` loads the thesis, outline, shape, and three papers, prints nothing from lessons or health, and leaves a read-as-reader pass and a falsify pass per paper in the plan folder | Test Phase 1 | Build Phase 6 | planned | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
-| A20 | The docs sidebar links `reference/skills/write` and `reference/cli/papers` | Test Phase 1 | Build Phase 5 | planned | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
-| A21 | Publishing refuses while the plan copy has uncommitted changes, and a successful publish's destination commit message carries the source commit hash | Test Phase 1 | Build Phase 3 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
+| A7 | Publishing puts the rendered page in the destination directory with mapped frontmatter, regenerates the index between its markers, and commits on the destination's current branch with no push | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
+| A8 | After a publish the paper's frontmatter records destination, path, destination commit, source commit, and hash, and status reads `published` | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
+| A9 | Editing the plan copy after a publish reports `published (stale)`; publishing again clears it; publishing an unchanged paper twice is a no-op with no new commit | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
+| A10 | Publishing with no destination configured refuses naming `papers.destinations` and writes nothing | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
+| A11 | A missing path, a non-git destination, or a dirty target page each refuse with the reason and write nothing; a committed hand edit is overwritten and the commit message says the page had diverged | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
+| A12 | Inside a workbench a `repo` destination resolves through the declared repos; outside one it refuses saying only paths are accepted | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
+| A13 | The publish command documented in the skill, run verbatim, publishes paper 1 to `~/code/site` and performs A7 and A8 there | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
+| A14 | The `write` skill is installed byte-identical to the package source and carries `name` and `description` | Test Phase 1 | Test Phase 1 | passing | unit | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` |
+| A15 | The skill's description names drafting, outlining, revising, and publishing a paper, thesis, or essay | Test Phase 1 | Build Phase 5 | written | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
+| A16 | The skill's instructions say to register presence, load the plan folder's prose documents, and skip lessons, health, and extensions | Test Phase 1 | Build Phase 5 | written | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
+| A17 | The skill carries Voice, Outline, Read as the reader, and Falsify the argument as named sections | Test Phase 1 | Build Phase 5 | written | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
+| A18 | "Let's work on the grift paper" in a fresh session invokes the skill without the slash command | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
+| A19 | Running the skill on `indusk-v4-day` loads the thesis, outline, shape, and three papers, prints nothing from lessons or health, and leaves a read-as-reader pass and a falsify pass per paper in the plan folder | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
+| A20 | The docs sidebar links `reference/skills/write` and `reference/cli/papers` | Test Phase 1 | Build Phase 5 | written | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
+| A21 | Publishing refuses while the plan copy has uncommitted changes, and a successful publish's destination commit message carries the source commit hash | Test Phase 1 | Build Phase 3 | written | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
 
 ### Deferred Verification
 
@@ -86,21 +86,21 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 **Goal**: author every test that can honestly be authored today against the current code, and confirm each fails for its own reason. Two rows need symbols that do not exist yet and are deferred with bodies below. The six publish rows go through the CLI and are red on an unknown command, the same shape the versioned-workbench plan used.
 
-- [ ] Create/confirm this plan's worktree — worktree-per-plan default; skip only if `worktree: none` in frontmatter. dusk is not a workbench, so the trunk-repo form is `git worktree add ~/code/sandbox/dusk-worktrees/writing-skill -b plan/writing-skill`
-- [ ] Build the fixture: a temporary plan folder builder that writes documents with arbitrary frontmatter, and a temporary destination builder that `git init`s a directory with a `writing/index.md` carrying the marker pair
+- [x] Create/confirm this plan's worktree — worktree-per-plan default; skip only if `worktree: none` in frontmatter. dusk is not a workbench, so the trunk-repo form is `git worktree add ~/code/sandbox/dusk-worktrees/writing-skill -b plan/writing-skill`. **Done**: worktree on `plan/writing-skill` from `6721eaee`; plan docs committed on main first so the worktree carries them; `pnpm install` and `pnpm -C apps/indusk-mcp build` clean (the CLI tests run `dist/`, and `SHOULD_SKIP` would have turned an unbuilt worktree into a silently green suite). Shape boundary for phase 1 recorded at `6721eaee`; Shape keys by plain phase number, so Build Phase 1 will share this start and review the test files too — over-reporting, the direction the design prefers
+- [x] Build the fixture: a temporary plan folder builder that writes documents with arbitrary frontmatter, and a temporary destination builder that `git init`s a directory with a `writing/index.md` carrying the marker pair. Shipped with two additions the publish tests needed: `paperProject` (a git-initialized project with a config and a committed plan folder, because the publish step's first precondition is a committed source) and `destinationRepo({ at })` so A12 can place the destination at a workbench's declared repo path
   ```ts
   // apps/indusk-mcp/src/__tests__/helpers/papers-fixture.ts
   export function planFolder(docs: Record<string, { frontmatter: Record<string, unknown>; body: string }>): string
   export function destinationRepo(opts?: { withMarkers?: boolean; git?: boolean }): { root: string; index: string }
   export const INDEX_MARKERS = ["<!-- papers:start -->", "<!-- papers:end -->"] as const
   ```
-- [ ] Author A1, A3 in `plan-parser.papers.test.ts` against `parsePlan` on a papers-only folder, RED (today: stage `unknown`, next step "Create a brief"; a bad status is not reported)
-- [ ] Author A5 in `PlanDetail.papers.test.tsx` with a plan fixture carrying `papers`, asserting a `papers-section` test id and one badge per paper, RED (no such section renders)
-- [ ] Author A7, A8, A9, A21 in `papers-publish.test.ts` invoking `indusk papers publish <plan>/<file>` through the CLI runner against the destination fixture, RED on unknown command
-- [ ] Author A10, A11, A12 in `papers-publish-refusals.test.ts` the same way, one `it` per refusal, RED on unknown command
-- [ ] Author A15, A16, A17, A20 in `write-skill-pins.test.ts`: read `apps/indusk-mcp/skills/write.md` and the live sidebar config `apps/docs/src/.vitepress/config.ts`, RED (the skill file does not exist; the sidebar has no entry)
-- [ ] Write the manual procedures for A4, A13, A18, A19 into `.indusk/planning/writing-skill/dogfood.md`, each with its expected observation
-- [ ] Give every real-git test an explicit 30s timeout
+- [x] Author A1, A3 in `plan-parser.papers.test.ts` against `parsePlan` on a papers-only folder, RED (today: stage `unknown`, next step "Create a brief"; a bad status is not reported). Observed: both fail on `expected 'unknown' to be 'paper'`
+- [x] Author A5 in `PlanDetail.papers.test.tsx` with a plan fixture carrying `papers`, asserting a `papers-section` test id and one badge per paper, RED (no such section renders). The fixture is cast through `unknown` because `Plan` has no `papers` field yet; the cast leaves with Build Phase 4. Observed: two of three red on `expected null not to be null`; the third (no papers, no section) is green today by construction and stays as the negative guard
+- [x] Author A7, A8, A9, A21 in `papers-publish.test.ts` invoking `indusk papers publish <plan>/<file>` through the CLI runner against the destination fixture, RED on unknown command. Observed: all four fail on `error: unknown command 'papers'`, exit 1
+- [x] Author A10, A11, A12 in `papers-publish-refusals.test.ts` the same way, one `it` per refusal, RED on unknown command. Seven `it`s (A11 has four cases, A12 two); all fail on the unknown command
+- [x] Author A15, A16, A17, A20 in `write-skill-pins.test.ts`: read `apps/indusk-mcp/skills/write.md` and the live sidebar config `apps/docs/src/.vitepress/config.ts`, RED (the skill file does not exist; the sidebar has no entry). Reads fall back to `""` so each pin fails on its own regex, not on ENOENT; observed twelve red, each on its regex
+- [x] Write the manual procedures for A4, A13, A18, A19 into `.indusk/planning/writing-skill/dogfood.md`, each with its expected observation
+- [x] Give every real-git test an explicit 30s timeout. Applied inline as the third argument to each `it` that commits or publishes (eight tests); the parser and pin tests stay on the default
 
 #### Deferred to Build Phase 1
 
@@ -120,11 +120,11 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 #### Deferred to Build Phase 2
 
-- **A6** — imports `ensurePapersConfig`, which does not exist; the file would fail to load rather than fail an assertion. Body reviewed:
+- **A6** — imports `ensurePapersConfig`, which does not exist; the file would fail to load rather than fail an assertion. Body reviewed (first draft called a `tmpProject` helper that does not exist, which is exactly the load error this review exists to catch; corrected to the fixture that does):
 
   ```ts
   it("A6: ensurePapersConfig adds an empty destinations list once and never clobbers one", () => {
-  	const root = tmpProject({ config: {} });
+  	const { root } = paperProject({ docs: {} });
   	expect(ensurePapersConfig(root)).toBe("added");
   	expect(readConfig(root)?.papers).toEqual({ destinations: [] });
   	writeConfig(root, { ...readConfig(root)!, papers: { destinations: [{ name: "blog", path: "/x", dir: "w", index: "w/index.md" }] } });
