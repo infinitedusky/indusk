@@ -1,7 +1,7 @@
 ---
 title: "Workbench Trust Fixes — Implementation"
 date: 2026-09-10
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 rationale: required
