@@ -99,6 +99,9 @@ follow-on, not assumed.
 
 ### Out of Scope
 - Any write/mutation surface (stays read-only)
+- A real dark theme. Forced light on 2026-09-10 (the scaffold's
+  `prefers-color-scheme` block was the only dark handling and every component
+  is hardcoded light); `dark:` variants + `prose-invert` are a follow-on here
 - The scorecard load fix (separate)
 - Websocket/push infrastructure
 - Rendering eval/verify verdicts inline (natural follow-on once 6.5 lands)
