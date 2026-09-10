@@ -32,6 +32,9 @@ const BLOCKING_STATUSES = new Set([
 	"completed",
 	"complete",
 	"proposed",
+	// A published paper (writing-skill): archiving its plan moves the source
+	// the hotfix path publishes from. Not a dead draft, whatever its age.
+	"published",
 ]);
 
 export interface DeadPlanCandidate {
