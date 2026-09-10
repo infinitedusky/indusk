@@ -95,6 +95,7 @@ const {
 	statePath: resolvedStatePath,
 	gitPath,
 	refusal: attributionRefusal,
+	attribution,
 } = resolveStateAndGitPaths(cwd);
 const statePath = resolvedStatePath ?? cwd;
 
@@ -160,7 +161,7 @@ const evalConfig = readEvalConfig(statePath);
 
 syslog(
 	statePath,
-	`statePath: ${statePath}, gitPath: ${gitPath ?? "(none)"}, eval.enabled: ${evalConfig.enabled}`,
+	`statePath: ${statePath}, gitPath: ${gitPath ?? "(none)"}, eval.enabled: ${evalConfig.enabled}${attribution ? ` — attributed to ${attribution}` : ""}`,
 );
 
 // Check if eval is disabled
@@ -222,13 +223,19 @@ if (!changeId) {
 		// commit the evaluator silently declined to score looks, to the
 		// session, exactly like one it scored. stdout JSON is the one channel a
 		// PostToolUse hook has to the model at exit 0 (workbench-trust-fixes,
-		// F2 / A8).
+		// F2 / A8) — and only there: in CLI and drain modes stdout is a
+		// terminal or a parent process, not the model (falsification A21).
 		syslog(statePath, `refusing to attribute — ${attributionRefusal}`);
-		console.info(
-			JSON.stringify({
-				hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: attributionRefusal },
-			}),
-		);
+		if (cliSource === null && !drainPending) {
+			console.info(
+				JSON.stringify({
+					hookSpecificOutput: {
+						hookEventName: "PostToolUse",
+						additionalContext: attributionRefusal,
+					},
+				}),
+			);
+		}
 		process.exit(0);
 	}
 	syslog(

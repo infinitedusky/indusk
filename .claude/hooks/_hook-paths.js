@@ -254,24 +254,45 @@ export function declaredReposAt(statePath) {
  *   - Git operations (`git rev-parse --short HEAD`, etc.) → use `gitPath`
  *
  * @param {string} cwd
- * @returns {{ statePath: string | null, gitPath: string | null, refusal: string | null }}
+ * @returns {{ statePath: string | null, gitPath: string | null, refusal: string | null, attribution: string | null }}
  */
 export function resolveStateAndGitPaths(cwd) {
 	const statePath = findStatePath(cwd);
 	let gitPath = findGitPathFromCwd(cwd);
 	let refusal = null;
-	// A versioned workbench root IS a git repo, so the walk-up finds it — and
-	// its history is plan documents, never the code. When the repo found is the
-	// workbench itself, discard it and resolve from the declaration instead
-	// (workbench-trust-fixes, F2). A flat project declares no repos and keeps
-	// gitPath === statePath exactly as before.
+	let attribution = null;
+	// A versioned workbench root IS a git repo, so the walk-up finds it. Its
+	// history is plan documents, and it CAN receive commits (a checkoff, a
+	// brief) — so when the repo found is the workbench itself, the commit may
+	// have gone to it or to the code repo, and the event cannot say which
+	// (`event.cwd` is the session cwd, not the subprocess's). With one repo
+	// declared, whichever has the NEWER HEAD received the commit; a tie or a
+	// missing code repo prefers the code repo, the 1.31.10 behaviour
+	// (workbench-trust-fixes F2, refined by falsification A20 — "never the
+	// workbench" was the wrong invariant). With several declared, refuse. A
+	// flat project declares no repos and keeps gitPath === statePath.
 	if (
 		gitPath &&
 		statePath &&
 		declaredReposAt(statePath).length > 0 &&
 		samePath(gitPath, statePath)
 	) {
-		gitPath = null;
+		const workbenchRoot = gitPath;
+		const codeRepo = findGitPathFromWorkbenchConfig(statePath);
+		if (declaredReposAt(statePath).length === 1) {
+			if (!codeRepo) {
+				gitPath = workbenchRoot;
+				attribution = "the workbench (the one declared repo is not on disk)";
+			} else if (headCommitTime(workbenchRoot) > headCommitTime(codeRepo)) {
+				gitPath = workbenchRoot;
+				attribution = "the workbench (newer HEAD than the declared repo)";
+			} else {
+				gitPath = codeRepo;
+				attribution = "the declared repo (newer or equal HEAD)";
+			}
+		} else {
+			gitPath = null;
+		}
 	}
 	if (!gitPath) {
 		// Workbench-mode fallback (1.31.10). When event.cwd is the workbench
@@ -292,5 +313,20 @@ export function resolveStateAndGitPaths(cwd) {
 			}
 		}
 	}
-	return { statePath, gitPath, refusal };
+	return { statePath, gitPath, refusal, attribution };
+}
+
+/** HEAD's committer timestamp (seconds), or -1 when the repo has no commits or is not one. */
+function headCommitTime(dir) {
+	try {
+		const out = execFileSync("git", ["log", "-1", "--format=%ct"], {
+			cwd: dir,
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		});
+		const n = Number.parseInt(out.trim(), 10);
+		return Number.isFinite(n) ? n : -1;
+	} catch {
+		return -1;
+	}
 }
