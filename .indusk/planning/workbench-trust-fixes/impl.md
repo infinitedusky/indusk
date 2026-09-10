@@ -325,20 +325,21 @@ its own assertion.
 - [x] `hooks/eval-trigger.js`: emit the refusal envelope only in hook mode (`cliSource === null && !drainPending`); CLI and drain modes syslog the refusal and exit 0 silently (A21). Resync `.claude/hooks/eval-trigger.js` and `_hook-paths.js`
 - [x] `src/lib/worktree/layout.ts` `linkTrunk`: `mkdirSync(dirname(link), { recursive: true })` before `symlinkSync` — the one primitive every caller shares, so restore, setup and worktree all gain it (A22). **Second defect on the same path, found while fixing**: `rel` was `relative(workbenchRoot, target)`, but a symlink's relative target resolves from the link's own directory, so a link at `code/alpha` pointed at itself; now `relative(dirname(link), target)`. A22 asserts the link resolves to the clone, which is what caught it
 - [x] `extensions/worktree/scripts/lib/workbench-helpers.sh` `_wt_list_worktree_dirs`: skip a root entry that is a declared `worktrees` dir or the first segment of a declared repo `path` (A23)
+- [x] Shape (`apps/indusk-mcp/hooks/_hook-paths.js`) — name the rule: "which repository received a root-cwd commit" was three inline branches inside `resolveStateAndGitPaths`; `attributeRootCommit(workbenchRoot, codeRepo)` says what it decides and gives the tie-break a home. Rule: typescript — a decision with its own reason to change gets its own function. **Fixed in this phase**; the eval and hook-paths suites green after. Everything else this phase touched is a one-line condition, a guard, or a test. All rule sets readable.
 
 #### Phase 8 Verification
-- [ ] A19: mid-phase modern fixture (Build Phase 1 half checked) — `additionalContext` names Build Phase 1's blocking rows and does not contain "Test Phase 1 … fully complete": `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/gate-reminder-speaks.test.ts` — expected: all pass, A1/A2 included
-- [ ] A20 + A21: one-repo fixture, commit to the root then run the hook → `system.log` shows `gitPath: <root>`; commit to `code/alpha` then run → `gitPath: <code/alpha>`; two-repo fixture with `--source handoff` → stdout empty, refusal in `system.log`: `pnpm exec vitest run src/__tests__/eval-trigger-versioned-workbench.test.ts src/__tests__/hook-paths.test.ts src/__tests__/eval-trigger-workbench-mode.test.ts` — expected: all pass
-- [ ] A22: sibling layout, repo `alpha` at `path: "code/alpha"` with a local bare remote: restore exits 0, `<repos_root>/code/alpha/.git` exists, `<workbench>/code/alpha` is a symlink to it, second run reports present: `pnpm exec vitest run src/__tests__/workbench-restore-declared-path.test.ts` — expected: all pass, 30 s timeout
-- [ ] A23: fixture with `worktrees: "wts"` and `path: "code/alpha"`: `refresh --all` output has no `SKIP: wts` and no `SKIP: code` line: `pnpm exec vitest run src/__tests__/wt-declared-path-parity.test.ts src/__tests__/wt-trunk-routing.test.ts src/__tests__/worktree-preflight.test.ts` — expected: all pass
-- [ ] Full package suite: `cd apps/indusk-mcp && pnpm test` — expected: green
+- [x] A19: mid-phase modern fixture (Build Phase 1 half checked) — `additionalContext` names Build Phase 1's blocking rows and does not contain "Test Phase 1 … fully complete": `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/gate-reminder-speaks.test.ts` — expected: all pass, A1/A2 included (2026-09-10: 5 passed)
+- [x] A20 + A21: one-repo fixture, commit to the root then run the hook → `system.log` shows `gitPath: <root>`; commit to `code/alpha` then run → `gitPath: <code/alpha>`; two-repo fixture with `--source handoff` → stdout empty, refusal in `system.log`: `pnpm exec vitest run src/__tests__/eval-trigger-versioned-workbench.test.ts src/__tests__/hook-paths.test.ts src/__tests__/eval-trigger-workbench-mode.test.ts` — expected: all pass (all pass, in the 50-test run across nine files)
+- [x] A22: sibling layout, repo `alpha` at `path: "code/alpha"` with a local bare remote: restore exits 0, `<repos_root>/code/alpha/.git` exists, `<workbench>/code/alpha` is a symlink to it, second run reports present: `pnpm exec vitest run src/__tests__/workbench-restore-declared-path.test.ts` — expected: all pass, 30 s timeout (3 passed)
+- [x] A23: fixture with `worktrees: "wts"` and `path: "code/alpha"`: `refresh --all` output has no `SKIP: wts` and no `SKIP: code` line: `pnpm exec vitest run src/__tests__/wt-declared-path-parity.test.ts src/__tests__/wt-trunk-routing.test.ts src/__tests__/worktree-preflight.test.ts` — expected: all pass (all pass)
+- [x] Full package suite: `cd apps/indusk-mcp && pnpm test` — expected: green (1224 passed, 5 skipped, 0 failed)
 
 #### Phase 8 Context
-- [ ] Update the eval-rail Known Gotchas entry: in a single-repo workbench, a commit from the root is attributed to whichever repository has the newer HEAD, because the workbench repo can receive commits too (plan documents) — "never the workbench" was the wrong invariant
+- [x] Update the eval-rail Known Gotchas entry: in a single-repo workbench, a commit from the root is attributed to whichever repository has the newer HEAD, because the workbench repo can receive commits too (plan documents) — "never the workbench" was the wrong invariant
 
 #### Phase 8 Document
-- [ ] `apps/docs/src/guide/rail-check.md`: the attribution rule's one-repo bullet says "newer HEAD wins", with the plan-document commit as the example
-- [ ] `apps/docs/src/changelog.md` Unreleased: the five falsification fixes, one entry
+- [x] `apps/docs/src/guide/rail-check.md`: the attribution rule's one-repo bullet says "newer HEAD wins", with the plan-document commit as the example
+- [x] `apps/docs/src/changelog.md` Unreleased: the five falsification fixes, one entry
 
 ## Files Affected
 
