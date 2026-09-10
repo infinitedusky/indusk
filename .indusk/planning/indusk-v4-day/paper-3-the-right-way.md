@@ -2,6 +2,7 @@
 title: "The right way"
 date: 2026-09-08
 status: draft
+kind: paper
 ---
 
 # The right way

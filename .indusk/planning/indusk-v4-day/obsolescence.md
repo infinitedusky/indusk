@@ -2,6 +2,7 @@
 title: "The future people are afraid of"
 date: 2026-09-04
 status: draft
+kind: paper
 ---
 
 # The future people are afraid of

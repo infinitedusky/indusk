@@ -2,6 +2,7 @@
 title: "What it means to engineer software in the age of AI"
 date: 2026-09-04
 status: draft
+kind: paper
 ---
 
 # What it means to engineer software in the age of AI

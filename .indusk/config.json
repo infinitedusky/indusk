@@ -55,5 +55,15 @@
 	},
 	"planning": {
 		"dead_draft_days": 30
+	},
+	"papers": {
+		"destinations": [
+			{
+				"name": "blog",
+				"path": "~/code/site",
+				"dir": "writing",
+				"index": "writing/index.md"
+			}
+		]
 	}
 }

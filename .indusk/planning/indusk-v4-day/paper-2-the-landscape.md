@@ -2,6 +2,7 @@
 title: "The landscape"
 date: 2026-09-08
 status: draft
+kind: paper
 ---
 
 # The landscape

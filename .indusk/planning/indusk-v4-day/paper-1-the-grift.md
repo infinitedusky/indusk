@@ -1,7 +1,8 @@
 ---
 title: "The pernicious grift"
 date: 2026-09-08
-status: draft
+status: accepted
+kind: paper
 ---
 
 # The pernicious grift
