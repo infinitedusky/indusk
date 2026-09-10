@@ -1,3 +1,4 @@
+import type { PaperStatus } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import type { BadgeVariant } from "@/components/ui/Badge";
 
 /**
@@ -46,17 +47,16 @@ export function stateToBadge(state: string): BadgeVariant {
  * so it reads as written (in hand, not final) rather than passing.
  */
 export function paperStatusToBadge(
-  status: string,
+  status: PaperStatus,
   stale: boolean,
 ): BadgeVariant {
   if (status === "malformed") return "blocked";
   if (status === "draft") return "planned";
   if (status === "accepted") return "writable";
-  if (status === "published") return stale ? "written" : "passing";
-  return "neutral";
+  return stale ? "written" : "passing";
 }
 
 /** The label beside a paper: its status, or `published (stale)` when derived stale. */
-export function paperStatusLabel(status: string, stale: boolean): string {
+export function paperStatusLabel(status: PaperStatus, stale: boolean): string {
   return status === "published" && stale ? "published (stale)" : status;
 }
