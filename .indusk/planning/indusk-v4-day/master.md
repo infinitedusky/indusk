@@ -2,14 +2,21 @@
 title: "Day — Master Plan"
 date: 2026-09-04
 status: living
-# Ordered children. A name here that has no folder yet renders as a
-# placeholder, which is how the sidebar shows the sequence ahead. Plans this
-# master depends on but does not own (Midnight, Dawn 6.5, the UI, trust fixes)
-# are referenced in the table below, not declared here — one parent per plan.
+# Ordered children — the whole V4 sequence, in build order, so the admin
+# sidebar shows it under one parent. A name with no folder yet renders as a
+# placeholder. Day owns only the day-* plans; the others keep their own
+# homes (dawn-* are also declared under indusk-v2-dawn and appear in both
+# groups — the UI groups one level deep, and a link declared in two parents
+# is two links, not a drift).
 subplans:
+  - workbench-trust-fixes
+  - dawn-workbench-execution
+  - admin-ui-phase-progress
+  - midnight
   - day-claim-evidence
   - day-claim-binding
   - day-uncovered-surface
+  - dawn-agents
   - day-probe
   - day-pr-review
 ---
