@@ -183,6 +183,7 @@ apps/indusk-admin/
 │   │   ├── StaleProjectFailurePage.tsx   # 200-page for deleted registry entries
 │   │   ├── Markdown.tsx                  # react-markdown wrapper (single swap surface)
 │   │   ├── PlanList.tsx                  # Sidebar list (accepts planHrefPrefix prop)
+│   │   ├── PapersSection.tsx             # Papers (kind: paper) with derived status badges
 │   │   └── PlanDetail.tsx                # Main pane composition
 │   ├── lib/
 │   │   ├── registry-client.ts            # Reads ~/.indusk/projects.json

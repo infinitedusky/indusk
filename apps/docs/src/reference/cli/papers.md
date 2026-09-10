@@ -101,6 +101,20 @@ artifact; the plan copy is the source.
 | The index page is missing or has no marker pair | the marker pair to add |
 | A `repo` destination outside a workbench, or an undeclared repo | "only paths are accepted here", or the declared names |
 
+### Module map
+
+One home per fact, so the reader and the writer of each cannot drift:
+
+| Fact | File |
+|------|------|
+| Paper parsing: vocabulary, summary, content hash, staleness, next step | `apps/indusk-mcp/src/lib/papers/summary.ts` (re-exported by `plan-parser.ts` for the `planning/plan-parser` subpath) |
+| The `published` block, read and write shapes | `apps/indusk-mcp/src/lib/papers/provenance.ts` (`PublishedRecord`, `Provenance`, `readPublishedRecord`, `withProvenance`; keys pinned equal by `papers/shared-definitions.test.ts`) |
+| Destinations | `apps/indusk-mcp/src/lib/papers/destination.ts`, `config.ts` |
+| Rendering and the index | `apps/indusk-mcp/src/lib/papers/render.ts`, `index-page.ts` |
+| Snapshot and restore of a destination tree | `apps/indusk-mcp/src/lib/git.ts` (`snapshotPaths`, `restorePaths`) |
+| The ten-step procedure | `apps/indusk-mcp/src/lib/papers/publish.ts` |
+| The command | `apps/indusk-mcp/src/bin/commands/papers.ts` |
+
 ### archive-dead and published papers
 
 `indusk plans archive-dead` treats a `published` paper as a blocking status:
