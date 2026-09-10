@@ -5,6 +5,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ## [Unreleased]
 
 ### Fixed
+- **`indusk run` refuses at a versioned workbench root.** The loop takes one root as its whole world; at a workbench root it would commit checkbox edits to the workbench and never reach the code, reporting every item done. Its only guard was commit-cadence tripping on "not a git repo", which a versioned workbench no longer is. The refusal names the declared repo directories and precedes the provider-key check. Lifted case by case by Dawn 6.5.
 - **The gate reminder has never reached the model.** `gate-reminder.js` wrote its nudge to stderr and exited 0, which a PostToolUse hook's host routes to the debug log; it now emits a stdout envelope with `hookSpecificOutput.additionalContext`. Its private phase model also predated test phases (`Build Phase N` cells read as `NaN`, "next phase" was `N + 1`), so it is rewritten on the shared `_impl-headings.js` / `_trajectory-parser.js`. The orphaned library twin `getPhaseStartNudge` is deleted; the nudge has one definition, pinned by a count.
 
 ### Added
