@@ -21,7 +21,7 @@ export interface IndexEntry {
 	/** Site-root-relative href, without the `.md`. */
 	href: string;
 	description?: string;
-	/** Seconds since the epoch of the page's last destination commit; now for an uncommitted page. */
+	/** Seconds since the epoch of the commit that added the page; now for an uncommitted page. */
 	at: number;
 }
 
@@ -44,16 +44,23 @@ export async function collectIndexEntries(
 			title: typeof data.title === "string" ? data.title : stem,
 			href: `/${dir}/${stem}`,
 			description: typeof data.description === "string" ? data.description : undefined,
-			at: await lastCommitSeconds(root, rel),
+			at: await firstCommitSeconds(root, rel),
 		});
 	}
 	return entries;
 }
 
-async function lastCommitSeconds(root: string, rel: string): Promise<number> {
+/**
+ * When the page first appeared: the oldest commit that added it, so a hotfix
+ * republish keeps its place in the list. Dating by the last commit moved an
+ * old page to the top on the next regeneration (falsification A25). Now for a
+ * page not yet committed, which is the one being published.
+ */
+async function firstCommitSeconds(root: string, rel: string): Promise<number> {
 	try {
-		const out = await git(root, "log", "-1", "--format=%ct", "--", rel);
-		return out === "" ? Math.floor(Date.now() / 1000) : Number(out);
+		const out = await git(root, "log", "--diff-filter=A", "--format=%ct", "--", rel);
+		const lines = out.split("\n").filter((l) => l !== "");
+		return lines.length === 0 ? Math.floor(Date.now() / 1000) : Number(lines[lines.length - 1]);
 	} catch {
 		return Math.floor(Date.now() / 1000);
 	}
