@@ -50,12 +50,15 @@ export interface RunResult {
 	stderr: string;
 }
 
-/** Run the built CLI in `cwd`. */
-export function runCli(cwd: string, args: string[]): RunResult {
+/**
+ * Run the built CLI in `cwd`. `env` overlays the inherited environment — for
+ * a test that needs git to see a fixed date or no identity at all.
+ */
+export function runCli(cwd: string, args: string[], env: NodeJS.ProcessEnv = {}): RunResult {
 	const r = spawnSync("node", [CLI_BIN, ...args], {
 		cwd,
 		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1" },
+		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1", ...env },
 	});
 	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
 }
