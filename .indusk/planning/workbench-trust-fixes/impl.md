@@ -268,6 +268,8 @@ its own assertion.
 - [x] `src/lib/verify/roots.ts`: the single-repo refusal suggests `join(planRoot, repoDir(repo))` — shipped as `join(resolveReposRoot(planRoot), repoDir(repo))`: under `planRoot` alone the sibling layout's checkout does not exist either (A13's sibling case), and `resolveReposRoot` is the one definition of where checkouts live
 - [x] `src/bin/commands/worktree.ts` post_create: read the config of the repo being created, not `repos[0]` — `readPostCreate(workbenchRoot, repo)` exported; A15 authored from the register body and green
 - [x] Resync installed bash hooks under `.claude/hooks/` — nothing to resync: the worktree scripts are run from the package directory (`indusKMcpPackageRoot()`), never copied under `.claude/`; only the `*.js` hooks are installed
+- [x] Shape (`apps/indusk-mcp/extensions/worktree/scripts/lib/workbench-helpers.sh`) — reviewed, left as-is: the new _wt_list_worktree_dirs scans the root + declared worktrees dirs the way _wt_resolve_target already does; the resolver needs per-entry repo attribution for qualifier filtering, so folding it onto the list helper means changing the resolver every wt caller depends on — two scans in one file, not yet three, left for /cleanup with the inter-file view
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (TS: `isWorkbench` is two lines with one rule; `readPostCreate` takes the repo it reads for; the audit and the refusal each swap one expression. All rule sets readable.)
 
 #### Build Phase 6 Verification
 

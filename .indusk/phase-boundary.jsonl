@@ -18,3 +18,8 @@
 {"plan":"versioned-workbench","phase":12,"sha":"7f917bc655e5881efc5f2220cfcb791b9d1393e2","timestamp":"2026-08-27T00:27:15.877Z"}
 {"plan":"versioned-workbench","phase":13,"sha":"776eac4fec5deb27b0c6e506cf4dffa5b4d2ebc6","timestamp":"2026-08-27T18:20:29.858Z"}
 {"plan":"workbench-trust-fixes","phase":1,"sha":"0b4faa542ee2a7976125c3b39e5bf586e25c03b5","timestamp":"2026-09-10T01:43:43.709Z"}
+{"plan":"workbench-trust-fixes","phase":2,"sha":"12c0150ec8c78ddd6ccef5c7041890070e87acc0","timestamp":"2026-09-10T02:01:21.494Z"}
+{"plan":"workbench-trust-fixes","phase":3,"sha":"858ab8a0b00087cc9aeb725760e04cee7143975e","timestamp":"2026-09-10T02:03:58.576Z"}
+{"plan":"workbench-trust-fixes","phase":4,"sha":"566da6966aa8d18b5da414fa9f2684ec08bca793","timestamp":"2026-09-10T02:05:55.705Z"}
+{"plan":"workbench-trust-fixes","phase":5,"sha":"3d395e1312bfc4437ff80c3fdbb8bbd872c34585","timestamp":"2026-09-10T02:09:43.693Z"}
+{"plan":"workbench-trust-fixes","phase":6,"sha":"43a5ef85e8c69f8e8e249ac874c78cb94f716397","timestamp":"2026-09-10T02:12:04.274Z"}
