@@ -46,9 +46,15 @@ export async function papersPublish(
 			`  destination commit ${result.destinationCommit}${result.diverged ? " (the page had diverged; overwritten from the plan copy)" : ""}`,
 		);
 		console.info(`  source commit ${result.sourceCommit}; provenance written back and committed`);
-		console.info(
-			opts.push ? "  pushed" : "  not pushed: push the destination yourself, or pass --push",
-		);
+		if (result.pushError !== undefined) {
+			console.error(
+				`warning: push failed; the publish is complete and committed, push it yourself: ${result.pushError}`,
+			);
+		} else {
+			console.info(
+				opts.push ? "  pushed" : "  not pushed: push the destination yourself, or pass --push",
+			);
+		}
 	} catch (err) {
 		if (err instanceof PublishRefusal) {
 			console.error(err.message);
