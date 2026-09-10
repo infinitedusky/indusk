@@ -1,7 +1,7 @@
 ---
 title: "Workbench Trust Fixes — Implementation"
 date: 2026-09-10
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -90,7 +90,7 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 workbench root, and author every row against current behavior so each fails on
 its own assertion.
 
-- [ ] Confirm this plan's worktree: `dusk-worktrees/workbench-trust-fixes` on `plan/workbench-trust-fixes` (created 2026-09-10; worktree-per-plan default)
+- [x] Confirm this plan's worktree: `dusk-worktrees/workbench-trust-fixes` on `plan/workbench-trust-fixes` (created 2026-09-10; worktree-per-plan default)
 - [ ] Write `src/__tests__/helpers/versioned-workbench.ts`: `makeVersionedWorkbench({ repos })` creates a temp dir, `git init`s the **root** (README + initial commit), writes `.indusk/config.json` with `worktree.shape: "workbench"` and the declared `repos[]` (each with optional `path`, `worktrees`), `git init`s each repo at `repoDir`, and returns `{ root, repos: { name, dir }[], cleanup }`. Two presets: `oneRepoAtPath()` (repo `alpha` at `path: "code/alpha"`) and `twoRepos()`. Real git, no mocks.
 - [ ] Author A1 + A2 in `gate-reminder-speaks.test.ts`: spawn `hooks/gate-reminder.js` with a PostToolUse Edit event whose `file_path` is a fixture `impl.md` where Build Phase 1 is fully checked and Build Phase 2 has rows `Writable at: Build Phase 2`, state `planned`. A1 expects stdout to parse as JSON with `hookSpecificOutput.additionalContext` containing each row ID; A2 expects empty stdout for a `.ts` path. A1 RED (stdout empty today), A2 green.
 - [ ] Author A3 in `phase-start-nudge-single-definition.test.ts`: grep `apps/indusk-mcp/{hooks,src}` for the literal `opens with these tests to author`; expect exactly one file. RED (two today: the hook and `state-ops.ts`).
