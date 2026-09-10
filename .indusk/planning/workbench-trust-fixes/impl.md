@@ -68,7 +68,7 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A3 | Exactly one implementation of the phase-start nudge text exists in the package | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/phase-start-nudge-single-definition.test.ts |
 | A4 | `indusk run <plan>` at a versioned workbench root exits non-zero before any tool call, names the declared repos and where to run instead, makes no commit, writes no pending-eval record | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/run-refuses-workbench-root.test.ts |
 | A5 | `indusk run <plan>` in a flat repo gets past the workbench check unchanged | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/run-refuses-workbench-root.test.ts |
-| A6 | The cleanup file scan at a versioned workbench root throws naming the workbench shape and its declared repos; it never returns an empty list there | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/lib/cleanup/oversized-workbench-refusal.test.ts |
+| A6 | The cleanup file scan at a versioned workbench root throws naming the workbench shape and its declared repos; it never returns an empty list there | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/lib/cleanup/oversized-workbench-refusal.test.ts |
 | A7 | A `git commit` from a cwd at a versioned workbench root is never attributed to the workbench repo: one declared repo resolves to that repo at its declared `path`; several refuse naming the candidates | Test Phase 1 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
 | A8 | The eval hook's multi-repo refusal reaches the session as `hookSpecificOutput.additionalContext`, not only `system.log` | Test Phase 1 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
 | A9 | `workbench restore` on a repo declaring `path`: already present → reported present, nothing created; absent → cloned at the declared path; the printed path is the path used; a second run is a no-op | Test Phase 1 | Build Phase 5 | written | apps/indusk-mcp/src/__tests__/workbench-restore-declared-path.test.ts |
@@ -199,12 +199,12 @@ its own assertion.
 
 ### Build Phase 3: The cleanup scan refuses at a workbench root
 
-- [ ] `src/lib/cleanup/oversized.ts` `listOversizedChangedFiles`: after the git check, `if (isWorkbench(projectRoot)) throw new Error(...)` naming the declared repo dirs and telling the caller to run against the code repo; fix the docblock that still says the root is "deliberately NOT a git repo"
-- [ ] Confirm the `/cleanup` skill's call site surfaces the thrown message rather than swallowing it (grep `apps/indusk-mcp/skills/cleanup.md` and the cleanup lib entry)
+- [x] `src/lib/cleanup/oversized.ts` `listOversizedChangedFiles`: after the git check, `if (isWorkbench(projectRoot)) throw new Error(...)` naming the declared repo dirs and telling the caller to run against the code repo; fix the docblock that still says the root is "deliberately NOT a git repo"
+- [x] Confirm the `/cleanup` skill's call site surfaces the thrown message rather than swallowing it (grep `apps/indusk-mcp/skills/cleanup.md` and the cleanup lib entry) — no TypeScript caller exists; the skill invokes the function through `tsx`, so a throw is a script failure the agent sees. The skill's "workbench caveat" sentence asserted the dead invariant; corrected here (and resynced to `.claude/skills/cleanup/SKILL.md`), which retires that entry from Build Phase 7's list.
 
 #### Build Phase 3 Verification
 
-- [ ] A6 green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/cleanup src/lib/shape/gate-interaction.test.ts` — expected: all pass, including the existing flat-repo cases
+- [x] A6 green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/cleanup src/lib/shape/gate-interaction.test.ts` — expected: all pass, including the existing flat-repo cases (2026-09-10: 2 files, 5 passed)
 
 #### Build Phase 3 Context
 
