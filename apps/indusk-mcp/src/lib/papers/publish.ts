@@ -13,7 +13,7 @@ import { getPlanningDir } from "../config.js";
 import { git } from "../git.js";
 import { DestinationError, type ResolvedDestination, resolveDestination } from "./destination.js";
 import { collectIndexEntries, IndexError, regenerateIndex } from "./index-page.js";
-import { withProvenance } from "./provenance.js";
+import { type PublishedRecord, readPublishedRecord, withProvenance } from "./provenance.js";
 import { renderForDestination, type SiblingPaths, slugForTitle } from "./render.js";
 import { paperContentHash } from "./summary.js";
 
@@ -57,14 +57,6 @@ export interface PublishResult {
 	/** Set when `--push` was asked for and failed. The publish itself completed. */
 	pushError?: string;
 	warnings: string[];
-}
-
-/** The `published` block as read from frontmatter, before any narrowing. */
-interface Recorded {
-	destination?: unknown;
-	path?: unknown;
-	commit?: unknown;
-	hash?: unknown;
 }
 
 async function isGitRepo(dir: string): Promise<boolean> {
@@ -111,7 +103,7 @@ function siblingPaths(planDir: string): SiblingPaths {
 		if (!file.endsWith(".md")) continue;
 		try {
 			const { data } = matter(readFileSync(join(planDir, file), "utf-8"));
-			const published = data.published as Recorded | undefined;
+			const published = readPublishedRecord(data);
 			map.set(file, typeof published?.path === "string" ? published.path : null);
 		} catch {
 			map.set(file, null);
@@ -149,9 +141,9 @@ function otherPaperPublishedAt(
 				continue;
 			}
 			if (!entry.name.endsWith(".md") || full === selfPath) continue;
-			let published: Recorded | undefined;
+			let published: PublishedRecord | undefined;
 			try {
-				published = matter(readFileSync(full, "utf-8")).data.published as Recorded | undefined;
+				published = readPublishedRecord(matter(readFileSync(full, "utf-8")).data);
 			} catch {
 				continue;
 			}
@@ -210,9 +202,9 @@ function behindSiblings(
 	for (const [sibling, path] of siblings) {
 		if (sibling === file || path === null) continue;
 		const raw = readFileSync(join(planDir, sibling), "utf-8");
-		let recorded: Recorded | undefined;
+		let recorded: PublishedRecord | undefined;
 		try {
-			recorded = matter(raw).data.published as Recorded | undefined;
+			recorded = readPublishedRecord(matter(raw).data);
 		} catch {
 			continue;
 		}
@@ -246,7 +238,7 @@ export async function publishPaper(opts: PublishOptions): Promise<PublishResult>
 			`${plan}/${file} is ${typeof data.status === "string" ? data.status : "unstatused"}; a paper publishes once it is accepted.`,
 		);
 	}
-	const recorded = data.published as Recorded | undefined;
+	const recorded = readPublishedRecord(data);
 	const recordedCommit = typeof recorded?.commit === "string" ? recorded.commit : null;
 	const recordedPath = typeof recorded?.path === "string" ? recorded.path : null;
 

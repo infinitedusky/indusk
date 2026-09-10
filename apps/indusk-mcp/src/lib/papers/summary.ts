@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
+import { readPublishedRecord } from "./provenance.js";
 
 /**
  * Papers as documents: the status vocabulary, the summary the parser reports,
@@ -94,7 +95,7 @@ export function paperIsStale(
 	status: PaperStatus,
 ): boolean {
 	if (status !== "published") return false;
-	const published = data.published as { hash?: unknown } | undefined;
+	const published = readPublishedRecord(data);
 	const recorded = typeof published?.hash === "string" ? published.hash : null;
 	return recorded === null || recorded !== paperContentHash(raw);
 }

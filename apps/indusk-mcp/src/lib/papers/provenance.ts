@@ -21,6 +21,27 @@ export interface Provenance {
 	hash: string;
 }
 
+/**
+ * The same block as read back from frontmatter, before any narrowing: every
+ * key optional and `unknown`, because a paper can carry a hand-written or
+ * partial block and each reader narrows the one key it needs. The one
+ * definition the parser, the publish step, and this writer all agree on;
+ * `shared-definitions.test.ts` pins that the keys match `Provenance`.
+ */
+export interface PublishedRecord {
+	destination?: unknown;
+	path?: unknown;
+	commit?: unknown;
+	source_commit?: unknown;
+	hash?: unknown;
+}
+
+/** The `published` block of a parsed frontmatter, or undefined when absent or not an object. */
+export function readPublishedRecord(data: Record<string, unknown>): PublishedRecord | undefined {
+	const block = data.published;
+	return block !== null && typeof block === "object" ? (block as PublishedRecord) : undefined;
+}
+
 const FENCE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/;
 
 export function withProvenance(raw: string, prov: Provenance): string {
