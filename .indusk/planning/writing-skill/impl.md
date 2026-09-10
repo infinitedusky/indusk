@@ -1,7 +1,7 @@
 ---
 title: "Writing skill — papers as first-class plan documents"
 date: 2026-09-09
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -68,6 +68,14 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 | A19 | Running the skill on `indusk-v4-day` loads the thesis, outline, shape, and three papers, prints nothing from lessons or health, and leaves a read-as-reader pass and a falsify pass per paper in the plan folder | Test Phase 1 | Build Phase 6 | passing | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
 | A20 | The docs sidebar links `reference/skills/write` and `reference/cli/papers` | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
 | A21 | Publishing refuses while the plan copy has uncommitted changes, and a successful publish's destination commit message carries the source commit hash | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
+| A22 | After a sibling paper publishes, every published paper whose page links to it is reported as behind, naming the command that republishes it; today the earlier page keeps the dead plan-file link and its paper reads `published`, not stale | Phase 0 | Build Phase 7 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
+| A23 | Two papers whose titles slug to the same destination filename cannot publish over each other: the second refuses naming the first, and the first's page and the index are untouched | Phase 0 | Build Phase 7 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
+| A24 | A paper whose status was hand-set back to `accepted` after a publish, content unchanged, is republished (provenance rewritten, status `published`) rather than reported up to date; with the page byte-identical no destination commit is made and no "nothing to commit" error escapes | Phase 0 | Build Phase 7 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
+| A25 | The index orders pages by first publish, so a hotfix republish of an older page does not move it above pages published later | Phase 0 | Build Phase 7 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
+| A26 | A `--push` that fails after the destination commit still writes provenance and commits it in the source, reports the push failure as a warning with exit 0, and a second publish reports up to date rather than overwriting a "diverged" page | Phase 0 | Build Phase 7 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
+| A27 | Republishing a retitled paper moves its page to the new slug: the old page is gone from the destination and from the index, which lists the new one once | Phase 0 | Build Phase 7 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
+| A28 | A destination commit that fails (no git identity) leaves the destination tree clean and refuses with git's reason, never a stack trace; a source commit that fails refuses naming the destination commit that exists and leaves the provenance written for a hand commit | Phase 0 | Build Phase 7 | planned | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
+| A29 | `indusk plans archive-dead` never moves a plan that carries a published paper, regardless of its age or its other documents' statuses | Phase 0 | Build Phase 7 | planned | unit | `apps/indusk-mcp/src/lib/planning/archive-dead-papers.test.ts` |
 
 ### Deferred Verification
 
@@ -285,6 +293,30 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 #### Build Phase 6 Document
 - [x] Write `dogfood.md` results; add the "first publish to a destination" walkthrough (markers, nav, first command) to `reference/cli/papers.md`. All four procedures carry results; the walkthrough sits above "The first destination" on the papers page
+
+### Phase 7: Falsification — what the publish step leaves behind
+
+**Goal**: verify whether the attested state holds against the things a publish leaves behind it: pages of *other* papers, a second paper with the same slug, a page under its old title, a half-applied run after a failed push or commit, an index whose order depends on when a page was last touched, and a status word this plan invented that no status-keyed detector was told about. Each trajectory row captures one hypothesis about what is broken; each checklist item captures the fix the code needs when the hypothesis confirms. Every hypothesis was formed by reading the code against the ADR's claims; none is a hopeful guess.
+
+- [ ] `lib/papers/publish.ts`, a ninth step after the source commit: for every sibling document recorded as published at the same destination, render it with the current sibling map and compare to its destination page; for each that differs, print `warning: <file> links to this paper and is now behind; run: indusk papers publish <plan>/<file>`. The ADR's link-rewriting only sees siblings published *before* the paper being published, and staleness cannot see it at all because the earlier paper's content did not change (A22)
+- [ ] Slug-collision guard before the target-page check: scan every `.md` under `.indusk/planning/**` (active and archive) for a `published.path` equal to the target page at the same destination name from a *different* file; refuse naming that paper. Two titles can slug identically, and a title in a script `slugForTitle` reduces to nothing slugs to `paper`; today the second publish reads the first's page as "diverged" and overwrites it (A23)
+- [ ] Up to date requires `data.status === "published"`, not only a matching hash and an identical page; an `accepted` paper with both is republished so provenance and status are rewritten. When the written page and index are byte-identical to HEAD (`git status --porcelain` on both empty after writing), skip the destination commit and record the page's last commit as `destinationCommit` instead of letting `git commit` fail with "nothing to commit" (A24)
+- [ ] `collectIndexEntries` dates a page by the commit that **added** it (`git log --diff-filter=A --format=%ct -- <rel>`, last line), now for an untracked page; today it uses the last commit touching the page, so a hotfix republish jumps an old page to the top (A25)
+- [ ] Move `--push` after the source commit and make its failure a reported warning with exit 0: the publish is complete without the push. Today a failed push (no remote, rejected) throws out of step 7 after the destination commit and before provenance, and the next run reads the page as a hand divergence and commits it a second time (A26)
+- [ ] When the paper records a `published.path` that differs from the new page path (retitled), `git mv` the old page to the new one before writing, so the old page leaves the destination and the regenerated index; today both pages exist and both are listed (A27)
+- [ ] Wrap steps 6 through 8 so no git failure escapes as a stack trace: a destination commit failure restores the page and index (`git checkout --` for tracked, `rm` for untracked) and refuses with git's message; a source commit failure refuses naming the destination commit that now exists and says the provenance is written and needs a hand commit. Today a missing git identity leaves the destination dirty, and the next publish refuses on "uncommitted changes" it caused itself (A28)
+- [ ] `lib/planning/archive-dead.ts`: add `published` to `BLOCKING_STATUSES`. A plan with a published paper is not a dead draft; archiving it moves the source the hotfix path publishes from. The status word was introduced in Build Phase 1 and never registered with the one detector keyed on status words (A29)
+
+#### Phase 7 Verification
+- [ ] A22 through A29 authored red at phase start, each failing on its own assertion against today's code, then green after the fixes (`pnpm exec vitest run src/__tests__/papers-publish-falsification.test.ts src/lib/planning/archive-dead-papers.test.ts`)
+- [ ] A7 through A12 and A21 still green after the changes to `publish.ts` and `index-page.ts` (`pnpm exec vitest run src/__tests__/papers-publish.test.ts src/__tests__/papers-publish-refusals.test.ts`), and the existing archive-dead suite unchanged
+- [ ] The documented command re-run verbatim against the scratch destination twice after the fixes: the first run publishes, the second reports up to date and makes no commit in either repo; then `--push` against a destination with no remote exits 0 with the push failure as a warning and provenance committed
+
+#### Phase 7 Context
+- [ ] Add to Known Gotchas: a new status word must be registered with every status-keyed detector in the commit that introduces it (`published` was missing from archive-dead's blocking set for six build phases); `indusk papers publish` pushes last and never lets a git failure escape past a commit it made — pointer to the ADR
+
+#### Phase 7 Document
+- [ ] Update `reference/cli/papers.md`: the behind-siblings warning, the slug-collision refusal, first-publish index order, push-last semantics, what a commit failure leaves behind, and that `archive-dead` treats a published paper as blocking
 
 ## Files Affected
 
