@@ -6,6 +6,88 @@ outside the repo, with the discipline of code: the plan copy is the source,
 the destination is a build artifact, and every publish is traceable to a
 commit. The design is `.indusk/planning/writing-skill/adr.md`.
 
+## `papers publish`
+
+```
+indusk papers publish <plan>/<file> [--to <name>] [--push]
+```
+
+`<plan>/<file>` names the paper by its plan folder and filename, for example
+`indusk-v4-day/paper-1-the-grift.md`. `--to` is required only when more than
+one destination is configured. `--push` pushes the destination after
+committing; without it nothing leaves the machine.
+
+Eight steps, in order. Each refuses with the reason on stderr and exit 1,
+having written nothing, when its precondition does not hold.
+
+```mermaid
+sequenceDiagram
+    participant P as Plan copy (source repo)
+    participant C as papers publish
+    participant D as Destination repo
+    C->>P: 1. read the paper: kind is paper, status accepted or published
+    C->>P: 2. git status on the paper is clean (source committed)
+    C->>C: 3. resolve the destination; its root exists and is a git repo
+    C->>D: 4. git status on the target page is clean
+    C->>C: 5. render (map frontmatter, rewrite sibling links); stop if up to date
+    C->>D: 6. write the page, regenerate the index between the markers
+    C->>D: 7. commit "publish: <title> (source <sha>)"; push only with --push
+    C->>P: 8. write provenance into the frontmatter; commit "chore(papers): publish …"
+```
+
+**What lands in the destination.** The page at `<dir>/<title-slug>.md`,
+with the frontmatter keys the destination's map names (default `title` and
+`description`) and the body verbatim; and the index page with the block
+between its markers rewritten, newest first. One commit, on the
+destination's current branch, whose subject is `publish: <title> (source
+<short sha>)` where the sha is the plan repo commit the copy was published
+from.
+
+**What lands in the source.** The paper's frontmatter gains `status:
+published` and a `published` block (`destination`, `path`, `commit`,
+`source_commit`, `hash`), written as a text edit so no other frontmatter
+line changes, and one commit `chore(papers): publish <file> to <name>
+(<destination sha>)`. The hash is what staleness is derived from on every
+later read.
+
+**Up to date.** A paper whose recorded hash matches its content and whose
+rendered page equals the destination page exits 0, says so, and makes no
+commit in either repo.
+
+**Divergence.** If the target page's last destination commit is not the one
+the paper recorded (someone committed to the page by hand), the publish
+overwrites it and says so in the commit body. The destination is a build
+artifact; the plan copy is the source.
+
+### Refusals
+
+| Situation | Message names |
+|-----------|---------------|
+| The document does not declare `kind: paper`, or is still `draft` | the file and its status |
+| The plan copy has uncommitted changes | "uncommitted changes; commit the plan copy first" |
+| No destination configured | `papers.destinations` |
+| The destination path does not exist | the path |
+| The destination is not a git repository | the path |
+| The target page has uncommitted changes | the page path, and that nobody hand-edits the destination |
+| The index page is missing or has no marker pair | the marker pair to add |
+| A `repo` destination outside a workbench, or an undeclared repo | "only paths are accepted here", or the declared names |
+
+### The index markers
+
+The index page carries two HTML comments; everything between them is owned
+by the publish step and rewritten on every publish. Everything outside them
+is yours.
+
+```markdown
+# Writing
+
+<!-- papers:start -->
+<!-- papers:end -->
+```
+
+The nav points at this page once (`/writing/`), by hand. The publish step
+never edits the site's VitePress config.
+
 ## Configuration
 
 Destinations live in `.indusk/config.json` under `papers.destinations`. The
