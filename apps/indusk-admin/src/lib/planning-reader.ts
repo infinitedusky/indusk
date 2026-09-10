@@ -244,14 +244,8 @@ async function readPlanFolder(
   // Papers come from the shared parser (status vocabulary, derived staleness)
   // with the body read once here for rendering.
   const parsed = parsePlan(planDir);
-  const papers: PaperEntry[] | undefined = parsed.papers
-    ? await Promise.all(
-        parsed.papers.map(async (p) => ({
-          ...p,
-          content: matter(await readFile(join(planDir, p.file), "utf-8"))
-            .content,
-        })),
-      )
+  const papers = parsed.papers
+    ? await readPapers(planDir, parsed.papers)
     : undefined;
 
   const status =
@@ -282,6 +276,20 @@ async function readPlanFolder(
         : undefined,
     ...(malformed ? { malformed: true, rawDocuments } : {}),
   };
+}
+
+/** Each paper's summary from the shared parser, plus its markdown body for rendering. */
+async function readPapers(
+  planDir: string,
+  summaries: PaperSummary[],
+): Promise<PaperEntry[]> {
+  return Promise.all(
+    summaries.map(async (summary) => ({
+      ...summary,
+      content: matter(await readFile(join(planDir, summary.file), "utf-8"))
+        .content,
+    })),
+  );
 }
 
 async function listPlanFolders(dir: string): Promise<string[]> {
