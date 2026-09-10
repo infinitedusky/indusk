@@ -1,7 +1,7 @@
 ---
 title: "Writing skill — papers as first-class plan documents"
 date: 2026-09-09
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -76,6 +76,8 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 | A27 | Republishing a retitled paper moves its page to the new slug: the old page is gone from the destination and from the index, which lists the new one once | Phase 0 | Build Phase 7 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
 | A28 | A destination commit that fails (no git identity) leaves the destination tree clean and refuses with git's reason, never a stack trace; a source commit that fails refuses naming the destination commit that exists and leaves the provenance written for a hand commit | Phase 0 | Build Phase 7 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish-falsification.test.ts` |
 | A29 | `indusk plans archive-dead` never moves a plan that carries a published paper, regardless of its age or its other documents' statuses | Phase 0 | Build Phase 7 | passing | unit | `apps/indusk-mcp/src/lib/planning/archive-dead-papers.test.ts` |
+| A30 | The `published` block's read shape has exactly one definition under `src/lib`: a second `data.published as {…}` narrowing outside `papers/provenance.ts` fails the pin, and the parser, the publish step, and the provenance writer all agree on the same keys | Phase 0 | Build Phase 8 | planned | unit | `apps/indusk-mcp/src/lib/papers/shared-definitions.test.ts` |
+| A31 | `restorePaths` puts back exactly what `snapshotPaths` took: a tracked path's prior content, an untracked path's absence, and a staged rename's old name, with nothing left staged | Phase 8 | Build Phase 8 | planned | unit | `apps/indusk-mcp/src/lib/git.paths.test.ts` |
 
 ### Deferred Verification
 
@@ -320,6 +322,37 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 #### Phase 7 Document
 - [x] Update `reference/cli/papers.md`: the behind-siblings warning, the slug-collision refusal, first-publish index order, push-last semantics, what a commit failure leaves behind, and that `archive-dead` treats a published paper as blocking. Sequence diagram now ten steps; new paragraphs for up to date (status required), siblings left behind, retitle, push, order; three refusal rows; an archive-dead section
+
+### Phase 8: Cleanup — one home for each paper fact, and the primitives where the rule says they go
+
+**Goal**: decompose what this plan grew per the typescript and testing rules and the codebase's own rule that a primitive kept in a domain folder gets copied by the next domain. Eight files came back over their caps; three of them are this plan's growth and decompose along real seams, four are pre-existing sizes this plan nudged by a few lines and stay, one is prose. Two cross-file duplications reached the rule of three (the publish argv builder in three test files; the `published` block's shape in the parser, the publish step, and the provenance module) and one is a git primitive sitting in a domain folder. Each item below is a concrete extraction or a reasoned leave-as-is; the two new public units get trajectory rows.
+
+- [ ] Extract the paper parsing out of `lib/plan-parser.ts` into `lib/papers/summary.ts`: `PAPER_STATUSES`, `PaperStatus`, `PaperSummary`, `paperContentHash`, `isPaperStatus`, `readPaper`, `paperIsStale`, `PAPER_STATUS_ORDER`, `leastAdvancedPaperStatus`, `paperNextStep`. `resolvePlanStage` stays in the parser (it is the stage rule, not a paper fact). `plan-parser.ts` re-exports the public names so the `planning/plan-parser` subpath and the admin's import keep working; `publish.ts` imports `paperContentHash` from `summary.ts` directly. `summary.ts` must not import the parser (no cycle: it needs only gray-matter and crypto). Basis: the parser is the lifecycle-document parser and gained ninety lines of a different document kind; `papers/` is that kind's home. Brings `plan-parser.ts` (436) under its cap
+- [ ] One definition of the `published` block's shape: `lib/papers/provenance.ts` (which already owns the write shape, `Provenance`) exports `PublishedRecord` (the all-`unknown` read shape) and `readPublishedRecord(data): PublishedRecord | undefined`; `publish.ts`'s `Recorded` and its four cast sites, and the parser's `{ hash?: unknown }` in `paperIsStale`, use them. Basis: rule of three across files, and the single-definition rule the codebase pins by count for must-agree facts; pinned by A30 in `papers/shared-definitions.test.ts`, alongside the existing pins
+- [ ] Move `snapshot` / `restore` out of `lib/papers/publish.ts` into `lib/git.ts` as `snapshotPaths(root, rels)` and `restorePaths(root, snapshot)`. Basis: the rule in Known Gotchas that a git primitive belongs in `lib/git.ts` because one kept in a domain folder gets copied by the next domain, which is exactly how two earlier duplications arose. A31 is the focused unit; A28 stays the behavior parity. Brings `publish.ts` (426, new) under its cap
+- [ ] Extract `PapersSection` from `apps/indusk-admin/src/components/PlanDetail.tsx` into `components/PapersSection.tsx`. Basis: the precedent in the same folder, `FalsificationSection` and `ParentPlanView` are sections that grew their own file; the unit imports only the badge helpers and two primitives. A5 is the parity. Brings `PlanDetail.tsx` (402) under its cap
+- [ ] Type the admin badge helpers with `PaperStatus` from the parser subpath instead of string literals (`paperStatusToBadge(status: PaperStatus, stale)`, same for the label), so the status vocabulary has one definition the type checker enforces across the app boundary. Basis: single definition of a fixed vocabulary
+- [ ] Move the three copies of the publish argv builder (`PUBLISH` in `papers-publish.test.ts`, `papers-publish-refusals.test.ts`, `papers-publish-falsification.test.ts`) into `helpers/papers-fixture.ts` as `publishArgs(plan, file, ...extra)`, and the two copies of the marker-splitting `indexBlock(dest)` with it. Basis: rule of three; the fixture module is where the other shared papers test helpers already live
+- [ ] Fold the three identical ensure-and-print blocks in `bin/commands/update.ts` (cleanup, papers, decay) into one `reportEnsured(status, addedLine, okLine)` helper in that file. Basis: rule of three; the third copy was this plan's
+- [ ] (reviewed `lib/config.ts`'s `ensureCleanupConfig` and `lib/papers/config.ts`'s `ensurePapersConfig` — left as-is: they share the block-presence shape line for line, but `ensureDecayConfig` is key-presence on two nested keys and not a third copy; the rule of three is not met, and a generic `ensureBlock(key, defaults)` would settle a shape with two callers)
+- [ ] (reviewed `bin/cli.ts` (813) and `bin/commands/update.ts` (927) — left as-is beyond the helper above: pre-existing sizes this plan grew by eighteen and twenty lines; splitting the CLI registration table or the update pipeline is a project-level decomposition, not this plan's, and is recorded here as a candidate for whichever plan next touches them)
+- [ ] (reviewed `lib/config.ts` (512) — left as-is: a types module; this plan added one interface and one optional field)
+- [ ] (reviewed `apps/indusk-admin/src/lib/planning-reader.ts` (415) — left as-is: this plan added one reader function, already named by Shape; extracting a twelve-line function to its own module would scatter the data layer)
+- [ ] (reviewed `otherPaperPublishedAt`'s recursive walk of the planning directory — left as-is: one caller today; at the second detector that needs every plan document it becomes a `lib/planning` primitive, and that second caller does not exist)
+- [ ] (reviewed the `frontmatter()` fence regex shared by `write-skill-pins.test.ts` and `skill-sync-parity.test.ts`, and the `next/link` mock every admin browser test carries — left as-is: two copies of the first, and the second is a project convention that CLAUDE.md states, not this plan's duplication)
+- [ ] (reviewed `apps/docs/src/changelog.md` (620) — left as-is: prose, per release; not code)
+
+#### Phase 8 Verification
+- [ ] A30 authored red at phase start (four narrowings under `src/lib` today) and green once the block's shape has one definition (`pnpm exec vitest run src/lib/papers/shared-definitions.test.ts`)
+- [ ] A31 authored when `snapshotPaths` / `restorePaths` exist and green (`pnpm exec vitest run src/lib/git.paths.test.ts`)
+- [ ] Behavior parity across every move: A1–A3 and the staleness unit, A5, A7–A12, A21–A29 all green (`pnpm exec vitest run src/lib/papers src/lib/plan-parser.papers.test.ts src/lib/plan-parser.test.ts src/lib/planning src/__tests__/papers-publish.test.ts src/__tests__/papers-publish-refusals.test.ts src/__tests__/papers-publish-falsification.test.ts` and `pnpm turbo test --filter=indusk-admin`); `shape/shared-definitions.test.ts` and `shared-resolution.test.ts` still green; `tsc --noEmit` clean in both apps; `pnpm build`
+- [ ] The documented command run once more against the scratch pair after the moves: publishes, then up to date (the subpath contract and the CLI path survived the move)
+
+#### Phase 8 Context
+- [ ] Add to Known Gotchas: the papers module map — `lib/papers/summary.ts` owns paper parsing (re-exported by the parser for the subpath contract), `provenance.ts` owns the `published` block's read and write shapes, `lib/git.ts` owns `snapshotPaths` / `restorePaths`, `publish.ts` is the ten-step procedure only — and that the single-definition pin for the block shape sits in `papers/shared-definitions.test.ts`
+
+#### Phase 8 Document
+- [ ] Update `reference/admin-ui/overview.md`'s component tree with `PapersSection.tsx`, and add a short module map to `reference/cli/papers.md` naming which file owns which paper fact
 
 ## Files Affected
 
