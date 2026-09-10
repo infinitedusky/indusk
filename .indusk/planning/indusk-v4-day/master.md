@@ -47,8 +47,8 @@ Open this file to answer "where are we." The shape itself lives in
 
 | # | Component | Shape rows | Status | Acceptance test | Sub-plan |
 |---|-----------|------------|--------|-----------------|----------|
-| 0 | **The shape defined** | all | **draft 2026-09-04** | `pr-shape.md` accepted; every later component names its row | [pr-shape.md](pr-shape.md) |
-| 1 | **Trust the substrate** | 10 | brief draft | Zero silent wrong answers from run / cleanup / eval in every workbench shape (its brief) | [workbench-trust-fixes](../workbench-trust-fixes/brief.md), Phase A |
+| 0 | **The shape defined** | all | **accepted 2026-09-10** | `pr-shape.md` accepted; every later component names its row | [pr-shape.md](pr-shape.md) |
+| 1 | **Trust the substrate** | 10 | brief accepted 2026-09-10; test plan drafted, awaiting sign-off | Zero silent wrong answers from run / cleanup / eval in every workbench shape (its brief) | [workbench-trust-fixes](../workbench-trust-fixes/brief.md), Phase A |
 | 2 | **The floor runs in workbenches** | 5 | brief draft | dawn-verify's 6-cell matrix re-run inside a workbench, 5/5 caught, 0 false positives | [dawn-workbench-execution](../dawn-workbench-execution/brief.md), Dawn 6.5 |
 | 3 | **Execution visible live** | 10 | brief draft | Active phase and per-stage gate states update without reload; Test/Build sequences render | [admin-ui-phase-progress](../admin-ui-phase-progress/brief.md) |
 | 4 | **Promises and monitor** | 9 | brief, rewritten 2026-08-28 | A production alert names the promise that broke; the owning plan reopens | [midnight](../midnight/brief.md) |
