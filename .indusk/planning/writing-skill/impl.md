@@ -48,7 +48,7 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 | ID | Asserts | Writable at | Passes at | State | Scope | Test |
 |----|---------|-------------|-----------|-------|-------|------|
 | A1 | A plan folder whose documents all carry `kind: paper` reports stage `paper` with a status derived from those papers, never `unknown`, and a next step that is never "Create a brief" | Test Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
-| A2 | A plan folder with lifecycle documents and papers keeps its lifecycle stage and lists the papers beside it with their own statuses | Build Phase 1 | Build Phase 1 | planned | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
+| A2 | A plan folder with lifecycle documents and papers keeps its lifecycle stage and lists the papers beside it with their own statuses | Build Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
 | A3 | A paper's status is one of `draft`, `accepted`, `published`; any other value reports `malformed`, never a silent draft | Test Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
 | A4 | `indusk-v4-day`, once its documents declare `kind: paper`, reports a real stage in `list_plans` and the admin UI | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
 | A5 | The admin UI renders a paper under its plan with title and status, and a papers-only plan renders without error | Test Phase 1 | Build Phase 4 | written | browser | `apps/indusk-admin/src/components/PlanDetail.papers.test.tsx` |
@@ -150,25 +150,29 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 ### Build Phase 1: The document kind
 
-- [ ] Add `"paper"` to `PlanStage`; add `PaperSummary` and `papers?: PaperSummary[]` to `PlanSummary` in `lib/plan-parser.ts`
+- [x] Add `"paper"` to `PlanStage`; add `PaperSummary` and `papers?: PaperSummary[]` to `PlanSummary` in `lib/plan-parser.ts`. `PAPER_STATUSES` is the exported vocabulary and `PaperStatus` derives from it plus `malformed`
   ```ts
   export interface PaperSummary { file: string; title: string; status: "draft" | "accepted" | "published" | "malformed"; stale: boolean }
   ```
-- [ ] Read `kind` in `parseFrontmatter` (currently drops everything but title, date, status); collect papers in `parsePlan` from documents whose `kind` is `paper`, in filename order
-- [ ] `determineStage` unchanged on the lifecycle walk; when it returns `unknown` and papers exist, stage is `paper` with `stageStatus` the least-advanced paper status; `determineNextStep` for `paper`: "Review paper: {file}" (any draft), "Publish {n} paper(s)" (any accepted or stale), "Done"
-- [ ] `paperContentHash(raw)`: SHA-256 over the document with the `published` frontmatter block removed, via gray-matter round-trip; `stale = status === "published" && hash !== published.hash`
-- [ ] `list_plans` passes `papers` through unchanged; `active: true` counts a `paper`-stage plan with any draft or accepted paper as active
+- [x] Read `kind` in `parseFrontmatter` (currently drops everything but title, date, status); collect papers in `parsePlan` from documents whose `kind` is `paper`, in filename order. Done as a separate `readPaper` reader rather than widening `parseFrontmatter`: the lifecycle reader's parse-error contract (report the file, mark the plan malformed) is the wrong contract for a document that cannot even declare its kind, so an unparseable file is simply not a paper and the lifecycle walk keeps reporting it
+- [x] `determineStage` unchanged on the lifecycle walk; when it returns `unknown` and papers exist, stage is `paper` with `stageStatus` the least-advanced paper status; `determineNextStep` for `paper`: "Review paper: {file}" (any draft), "Publish {n} paper(s)" (any accepted or stale), "Done". Plus "Fix paper status in {file} (expected draft | accepted | published)" when any paper is malformed, which outranks the rest
+- [x] `paperContentHash(raw)`: SHA-256 over the document with the `published` frontmatter block removed, via gray-matter round-trip; `stale = status === "published" && hash !== published.hash`. **The hash also drops `status`**: a publish flips `accepted` to `published` in the same write-back, so a hash that included it would read stale the instant it was written. A `published` paper with no recorded hash reads stale (cannot be confirmed current), which is the site's hand-copied thesis today. Covered by a staleness unit added beside A2
+- [x] `list_plans` passes `papers` through unchanged; `active: true` counts a `paper`-stage plan with any draft or accepted paper as active. The tool returns `PlanSummary` whole, so the field needed no change; the active rule is `isActivePlan` in `plan-tools.ts`, with five cases added to the existing `plan-tools-active.test.ts` (15/15)
+
+- [x] **Shape** — `lib/plan-parser.ts`: extract the staleness derivation out of `readPaper` into a named `paperIsStale(raw, data, status)`. Done, exported; 26/26 across the parser and active-filter files after both extractions. It is the one policy Build Phase 3's publish step must agree with (what the recorded hash is compared against, and that a missing record reads stale), and it currently has no name and no seam; the staleness unit reaches it only through `parsePlan`. Rule: *typescript / testing — a block with one reason to change and a nameable purpose is a named function with a seam a test can reach.*
+- [x] **Shape** — `lib/plan-parser.ts` (done, `resolvePlanStage` returns the triple; the orphaned comment above the old block was folded into its docblock): the paper-stage override in `parsePlan` is three ternaries on one condition (`paperStage ? … : …` for stage, status, next step). One rule, three fields: fold into `resolvePlanStage(walked, papers)` returning the triple, so the "lifecycle document wins, papers only when nothing else" decision is one unit. Rule: *typescript — a decision spread across parallel conditionals wants to be one named function.*
+- [x] **Shape — considered, left as is**: `paperContentHash` re-parses `raw` although `readPaper` already has `data`; the duplication is one `matter()` call per paper and buys a hash function with a single-string contract that the publish step can call on a file it has not otherwise parsed. `isActivePlan` in `plan-tools.ts` is two branches with a comment each and stays. The review scope also listed CLAUDE.md, the docs page, and an eval-materialized lesson file, none of which are code; and Shape's phase-1 scope includes the Test Phase 1 files because both phases share the number, as recorded above
 
 #### Build Phase 1 Verification
-- [ ] A1, A2, A3 pass (`pnpm exec vitest run src/lib/plan-parser.papers.test.ts`)
-- [ ] Every other row still red for its own reason; per-row classification, none flipped green as a side effect
-- [ ] `indusk-v4-day` still reports `unknown` (no document declares `kind` yet), and every existing plan in `list_plans` reports the same stage as before this phase
+- [x] A1, A2, A3 pass (`pnpm exec vitest run src/lib/plan-parser.papers.test.ts`) — 4/4 in the file (A1, A2, A3, staleness), and the pre-existing `plan-parser.test.ts` 7/7 beside it
+- [x] Every other row still red for its own reason; per-row classification, none flipped green as a side effect — publish + refusals + pins: 23 failed, 0 passed; admin A5: 2 failed, 1 passed (the negative guard, green by construction since Test Phase 1). `tsc --noEmit` clean
+- [x] `indusk-v4-day` still reports `unknown` (no document declares `kind` yet), and every existing plan in `list_plans` reports the same stage as before this phase — `parseAllPlans` captured before the change and compared after: 20 plans, 0 differences in stage, status, or next step, no plan gained a `papers` field; `archive` and `indusk-v2-dawn` still `unknown`. (`indusk-v4-day` is untracked on main and so absent from this worktree; it joins at Build Phase 6)
 
 #### Build Phase 1 Context
-- [ ] Add to Conventions: `kind: paper` is declared in frontmatter, never inferred; a `paper` stage exists beside the lifecycle stages and never enters `STAGE_ORDER`; staleness is derived from `paperContentHash`, never stored as a status — pointer to `.indusk/planning/writing-skill/adr.md`
+- [x] Add to Conventions: `kind: paper` is declared in frontmatter, never inferred; a `paper` stage exists beside the lifecycle stages and never enters `STAGE_ORDER`; staleness is derived from `paperContentHash`, never stored as a status — pointer to `.indusk/planning/writing-skill/adr.md`. Added after the "Plans live in" line through the budget hook; CLAUDE.md 46,0xx / 61,440 bytes
 
 #### Build Phase 1 Document
-- [ ] Update `reference/cli/plans.md`: the `paper` stage, the `papers` field, the status vocabulary, and what "Publish n paper(s)" means
+- [x] Update `reference/cli/plans.md`: the `paper` stage, the `papers` field, the status vocabulary, and what "Publish n paper(s)" means. New "Papers (`kind: paper`)" section at the end of the page; names `indusk papers publish` without linking it, since `/reference/cli/papers` does not exist until Build Phase 5 and a dead link fails the VitePress build
 
 ### Build Phase 2: Destinations in config
 

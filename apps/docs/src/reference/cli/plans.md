@@ -89,3 +89,40 @@ A subplan whose folder has moved to `archive/` is the opposite of uncreated — 
 ### API
 
 `readPlanDeclarations(planningDir)` in `apps/indusk-mcp/src/lib/plan-parser.ts` returns `{ parents, roadmap, subplans }`. It is exported for consumers at `@infinitedusky/indusk-mcp/planning/plan-parser` — the admin UI consumes it rather than re-reading frontmatter, per the never-duplicate-parsing rule.
+
+## Papers (`kind: paper`)
+
+A document that declares `kind: paper` in its frontmatter is a paper: a
+thesis, an essay, a shape document, any prose that belongs to the plan.
+Declared, never inferred from a filename, because nothing about a name says
+whether a document is a paper.
+
+- Every paper in a folder appears under the plan's `papers` field in
+  `list_plans`, as `{ file, title, status, stale }`, in filename order.
+- A folder with lifecycle documents keeps its lifecycle stage; the papers
+  ride alongside. A folder with papers and **no** lifecycle document is a
+  **`paper`-stage plan**. Before this, such a folder read as `unknown` with
+  next step "Create a brief", which is wrong for a folder of finished essays.
+- **Status vocabulary**: `draft`, `accepted`, `published`. Anything else
+  reports `malformed`, and the next step names the file. A paper is never
+  silently read as a draft.
+- A `paper`-stage plan's `stageStatus` is the least-advanced paper's status,
+  with `malformed` outranking everything so it surfaces. Its next step is one
+  of `Fix paper status in <file>`, `Review paper: <file>`, `Publish n
+  paper(s)`, or `Done`.
+- **Staleness is derived, never stored.** A publish records `published.hash`,
+  the SHA-256 of the document with `status` and the `published` block
+  removed (so writing either back does not change the hash). Every read
+  recomputes it; a mismatch, or a `published` paper with no recorded hash,
+  reads `stale: true` and displays as `published (stale)`. It reports only.
+  The ordinary state between a plan commit and its publish is stale, and the
+  publish clears it.
+- `list_plans { active: true }` counts a `paper`-stage plan as active while
+  its least-advanced paper is `draft` or `accepted`. Every paper published is
+  done, even if one has gone stale since; the next step still says
+  `Publish`, but a finished plan is not resurrected into the active list by a
+  hotfix.
+
+Publishing a paper to a destination outside the repo is `indusk papers
+publish`; the ADR is `.indusk/planning/writing-skill/adr.md`.
+
