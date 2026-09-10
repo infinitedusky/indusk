@@ -181,6 +181,7 @@ its own assertion.
   }
   ```
 - [x] Note in the code that Dawn 6.5 replaces this check with the shared `resolveExecutionRoots`; do not add a second resolver here
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (`run.ts` only, plus docs: the refusal is one more guard in `run()`'s existing sequence of guards, reads the shape through the one reader, and has a test over the command boundary. All rule sets readable.)
 
 #### Build Phase 2 Verification
 
@@ -189,12 +190,12 @@ its own assertion.
 
 #### Build Phase 2 Context
 
-- [ ] Add to Conventions (the `indusk run` entry): "**Refuses at a workbench root** until Dawn 6.5 lands cross-repo execution — the loop's one root cannot reach the code."
+- [x] Add to Conventions (the `indusk run` entry): "**Refuses at a workbench root** until Dawn 6.5 lands cross-repo execution — the loop's one root cannot reach the code."
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/run.md`: a "Workbenches" note stating the refusal and pointing at `dawn-workbench-execution`
-- [ ] `apps/docs/src/changelog.md` Unreleased entry
+- [x] `apps/docs/src/reference/cli/run.md`: a "Workbenches" note stating the refusal and pointing at `dawn-workbench-execution`
+- [x] `apps/docs/src/changelog.md` Unreleased entry
 
 ### Build Phase 3: The cleanup scan refuses at a workbench root
 
