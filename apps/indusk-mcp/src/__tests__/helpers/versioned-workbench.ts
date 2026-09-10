@@ -1,8 +1,11 @@
-import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { repoDir, type WorkbenchRepo } from "../../lib/worktree/repos.js";
+import { git, headOf, initRepoWithCommit } from "./test-git.js";
+
+// Re-exported: every test that builds a versioned workbench also drives git in it.
+export { git, headOf };
 
 /**
  * A *versioned* workbench, the shape every real project has had since 1.37.0:
@@ -68,38 +71,6 @@ export interface MakeVersionedWorkbenchOptions {
 	initRepos?: boolean;
 	/** Merged over the generated `.indusk/config.json`. */
 	extraConfig?: Record<string, unknown>;
-}
-
-const TEST_GIT_ENV = {
-	GIT_AUTHOR_NAME: "test",
-	GIT_AUTHOR_EMAIL: "test@test.local",
-	GIT_COMMITTER_NAME: "test",
-	GIT_COMMITTER_EMAIL: "test@test.local",
-};
-
-/** Run git and throw on a non-zero exit — a fixture that half-builds proves nothing. */
-export function git(cwd: string, args: string[], env: NodeJS.ProcessEnv = {}): string {
-	const r = spawnSync("git", args, {
-		cwd,
-		env: { ...process.env, ...TEST_GIT_ENV, ...env },
-		encoding: "utf-8",
-	});
-	if (r.status !== 0) {
-		throw new Error(`git ${args.join(" ")} failed (cwd=${cwd}, code=${r.status}): ${r.stderr}`);
-	}
-	return r.stdout.trim();
-}
-
-export function headOf(dir: string): string {
-	return git(dir, ["rev-parse", "HEAD"]);
-}
-
-function initRepoWithCommit(dir: string, label: string): void {
-	mkdirSync(dir, { recursive: true });
-	git(dir, ["init", "-q", "-b", "main"]);
-	writeFileSync(join(dir, "README.md"), `# ${label}\n`);
-	git(dir, ["add", "-A"]);
-	git(dir, ["commit", "-q", "-m", `init ${label}`]);
 }
 
 export function makeVersionedWorkbench(opts: MakeVersionedWorkbenchOptions): VersionedWorkbench {

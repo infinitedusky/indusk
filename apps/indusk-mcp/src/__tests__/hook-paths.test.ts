@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { initRepoWithCommit } from "./helpers/test-git.js";
 import { oneRepoAtPath, twoRepos, type VersionedWorkbench } from "./helpers/versioned-workbench.js";
 
 /**
@@ -33,14 +34,6 @@ async function loadHelper() {
 	};
 }
 
-function gitInit(dir: string): void {
-	execSync("git init -q", { cwd: dir });
-	execSync('git config user.email "test@example.com"', { cwd: dir });
-	execSync('git config user.name "test"', { cwd: dir });
-	writeFileSync(join(dir, "README.md"), "test");
-	execSync("git add . && git commit -q -m 'init'", { cwd: dir });
-}
-
 describe("resolveStateAndGitPaths — workbench-aware path resolution", () => {
 	let tmpRoot: string;
 
@@ -57,7 +50,7 @@ describe("resolveStateAndGitPaths — workbench-aware path resolution", () => {
 			// Single-repo shape: project root has BOTH .git/ and .indusk/
 			mkdirSync(join(tmpRoot, ".indusk"));
 			writeFileSync(join(tmpRoot, ".indusk/config.json"), "{}");
-			gitInit(tmpRoot);
+			initRepoWithCommit(tmpRoot);
 
 			const subDir = join(tmpRoot, "src/foo");
 			mkdirSync(subDir, { recursive: true });
@@ -86,7 +79,7 @@ describe("resolveStateAndGitPaths — workbench-aware path resolution", () => {
 
 			const wrappedRepo = join(tmpRoot, "numero");
 			mkdirSync(wrappedRepo);
-			gitInit(wrappedRepo);
+			initRepoWithCommit(wrappedRepo);
 
 			const subDir = join(wrappedRepo, "src/api");
 			mkdirSync(subDir, { recursive: true });
@@ -123,7 +116,7 @@ describe("resolveStateAndGitPaths — workbench-aware path resolution", () => {
 
 			const wrappedRepo = join(tmpRoot, "numero");
 			mkdirSync(wrappedRepo);
-			gitInit(wrappedRepo);
+			initRepoWithCommit(wrappedRepo);
 
 			// NB: cwd is the workbench root, NOT the wrapped repo or a worktree
 			const resolveStateAndGitPaths = await loadHelper();
@@ -162,7 +155,7 @@ describe("resolveStateAndGitPaths — workbench-aware path resolution", () => {
 
 			const wrappedRepo = join(tmpRoot, "numero");
 			mkdirSync(wrappedRepo);
-			gitInit(wrappedRepo);
+			initRepoWithCommit(wrappedRepo);
 
 			const resolveStateAndGitPaths = await loadHelper();
 			// cwd is INSIDE the wrapped repo
@@ -203,7 +196,7 @@ describe("resolveStateAndGitPaths — workbench-aware path resolution", () => {
 
 			const canonicalRepo = join(tmpRoot, "numero");
 			mkdirSync(canonicalRepo);
-			gitInit(canonicalRepo);
+			initRepoWithCommit(canonicalRepo);
 
 			// Create a sibling worktree
 			const worktreePath = join(tmpRoot, "feat-new");

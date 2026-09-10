@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { git } from "./test-git.js";
 
 /** The three scripts `indusk verify` requires before it will run any detector. */
 const GATE_SCRIPTS = [
@@ -56,23 +57,6 @@ export interface BuildFixtureOptions {
 }
 
 const REPO_NAME = "clone";
-
-function git(cwd: string, args: string[]): void {
-	const r = spawnSync("git", args, {
-		cwd,
-		env: {
-			...process.env,
-			GIT_AUTHOR_NAME: "test",
-			GIT_AUTHOR_EMAIL: "test@test.local",
-			GIT_COMMITTER_NAME: "test",
-			GIT_COMMITTER_EMAIL: "test@test.local",
-		},
-		encoding: "utf-8",
-	});
-	if (r.status !== 0) {
-		throw new Error(`git ${args.join(" ")} failed (cwd=${cwd}, code=${r.status}): ${r.stderr}`);
-	}
-}
 
 export function buildWorktreeFixture(opts: BuildFixtureOptions = {}): WorktreeFixture {
 	const root = mkdtempSync(join(tmpdir(), "wt-fixture-"));
