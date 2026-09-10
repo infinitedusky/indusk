@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+- **The gate reminder has never reached the model.** `gate-reminder.js` wrote its nudge to stderr and exited 0, which a PostToolUse hook's host routes to the debug log; it now emits a stdout envelope with `hookSpecificOutput.additionalContext`. Its private phase model also predated test phases (`Build Phase N` cells read as `NaN`, "next phase" was `N + 1`), so it is rewritten on the shared `_impl-headings.js` / `_trajectory-parser.js`. The orphaned library twin `getPhaseStartNudge` is deleted; the nudge has one definition, pinned by a count.
+
 ### Added
 - **Tests: a git-initialized workbench fixture** (`src/__tests__/helpers/versioned-workbench.ts`). The regression net can now see the versioned-workbench shape — root as a git repo, repos declared with `path` / `worktrees`, nested or sibling layout. Every finding in `workbench-trust-fixes` appears only in that shape, and no test could reproduce it before. The hook runner (`helpers/hook-runner.ts`) now captures stdout, the one PostToolUse channel that reaches the model.
 

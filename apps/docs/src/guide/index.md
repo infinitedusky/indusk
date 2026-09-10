@@ -66,6 +66,7 @@ Four PreToolUse hooks run on every file write:
 | `check-gates` | closing a phase whose gates or trajectory rows are open |
 | `claude-md-budget` | a CLAUDE.md write past the 60 KB ceiling |
 | `workbench-sync` | *(PostToolUse)* — commits workbench context after edits |
+| `gate-reminder` | *(PostToolUse, advisory)* — nothing; when an edit closes a phase it puts the next phase's tests-to-author in front of the agent as additional context |
 
 These are not linting. They block the edit. An agent that wants to mark a phase
 done with a red test simply cannot.
