@@ -36,7 +36,9 @@ export WORKBENCH_ROOT
 REPO="$(_resolve_workbench_repo "${REPO_ARG:-}")"
 
 SIBLING_PARENT="$(_read_repos_root)"
-CLIENT_ROOT="$SIBLING_PARENT/$REPO"
+# Trunk from CONFIG (declared `path` honored) — workbench-trust-fixes, F5.
+CLIENT_ROOT="$(_wt_resolve_trunk_dir "$REPO")"
+CLIENT_ROOT_REAL="$(cd "$CLIENT_ROOT" && pwd -P)"
 
 CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${REPO}.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
@@ -54,8 +56,10 @@ refresh_one() {
 		echo "  SKIP: $slug — directory not found"
 		return 0
 	fi
-	if [[ "$slug" == "$REPO" ]]; then
-		return 0 # trunk symlink, not a worktree
+	# The trunk is excluded by resolved path, not by name — under a declared
+	# `path` its basename need not be the repo name.
+	if [[ "$(cd "$worktree_path" && pwd -P)" == "$CLIENT_ROOT_REAL" ]]; then
+		return 0 # the trunk checkout, not a worktree
 	fi
 	# Check this is actually a git worktree (has a .git file pointing into
 	# the canonical clone's worktrees/ dir).
@@ -65,7 +69,7 @@ refresh_one() {
 	fi
 
 	echo ""
-	echo "Refreshing: $slug"
+	echo "Refreshing: $slug ($worktree_path)"
 
 	local gitdir
 	gitdir="$(cd "$worktree_path" && git rev-parse --git-dir)"
@@ -180,13 +184,17 @@ refresh_one() {
 }
 
 if [[ "$ARG" == "--all" ]]; then
-	echo "Refreshing all worktrees in $WORKBENCH_ROOT (excluding the trunk symlink)..."
-	for d in "$WORKBENCH_ROOT"/*/; do
-		[[ -d "$d" ]] || continue
-		refresh_one "${d%/}"
-	done
+	echo "Refreshing all worktrees in $WORKBENCH_ROOT and its declared worktrees dirs (excluding the trunk)..."
+	while IFS= read -r d; do
+		[[ -n "$d" ]] && refresh_one "$d"
+	done < <(_wt_list_worktree_dirs)
 else
-	refresh_one "$WORKBENCH_ROOT/$ARG"
+	# One resolution surface for a slug — the root and every declared worktrees
+	# dir, exact match first, `-<slug>` suffix as fallback, ambiguity refused by
+	# name — the resolver behind `wt` (workbench-trust-fixes, F5). A slug that
+	# resolves to nothing is an error, not a SKIP that exits 0.
+	target="$(_wt_resolve_target "$ARG")" || exit 1
+	refresh_one "$target"
 fi
 
 echo ""

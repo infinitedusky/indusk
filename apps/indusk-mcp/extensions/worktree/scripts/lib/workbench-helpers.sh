@@ -268,6 +268,41 @@ _read_workbench_repo_paths() {
 	' "$config" 2>/dev/null || echo ""
 }
 
+# The worktrees directory <repo> DECLARES, relative to the workbench root, or
+# empty when it declares none (worktrees then live at the root). One reader so
+# setup-worktree.sh run directly agrees with the TS wrapper that passes
+# --worktrees-dir (workbench-trust-fixes, F5).
+_wt_declared_worktrees_dir() {
+	local repo="$1" name dir
+	while IFS=$'\t' read -r name dir; do
+		[[ "$name" == "$repo" ]] || continue
+		echo "$dir"
+		return 0
+	done < <(_read_workbench_worktree_dirs)
+	echo ""
+}
+
+# Every directory that could be a worktree: the workbench root's entries minus
+# the reserved names, plus every entry of every DECLARED worktrees dir. Callers
+# that need "all worktrees" (refresh --all) iterate this rather than scanning
+# the root alone, which could not see a declared worktrees dir at all.
+_wt_list_worktree_dirs() {
+	local entry name dir _name
+	for entry in "$WORKBENCH_ROOT"/*; do
+		[[ -d "$entry" ]] || continue
+		name="$(basename "$entry")"
+		_wt_is_reserved_name "$name" && continue
+		echo "$entry"
+	done
+	while IFS=$'\t' read -r _name dir; do
+		[[ -n "$dir" && -d "$WORKBENCH_ROOT/$dir" ]] || continue
+		for entry in "$WORKBENCH_ROOT/$dir"/*; do
+			[[ -d "$entry" ]] || continue
+			echo "$entry"
+		done
+	done < <(_read_workbench_worktree_dirs)
+}
+
 # Root entries that are never worktrees. ONE definition for the bash lane —
 # wt.sh and wt-pm2.sh each carried a copy, and they had already drifted from
 # RESERVED_ROOT_DIRS in src/lib/worktree/layout.ts (`docs` was missing from
@@ -283,7 +318,7 @@ _wt_is_reserved_name() {
 #   1. The declared workbench-side location: <workbench>/<path-or-name>,
 #      which is the trunk symlink in a linked layout or the real directory in
 #      a nested one (`repos_root: "."`).
-#   2. Else <repos_root>/<name> — the checkout itself, for a workbench whose
+#   2. Else <repos_root>/<path-or-name> — the checkout itself, for a workbench whose
 #      trunk link was never made. Routing there is what "the config says where
 #      things are" means; failing because a symlink is missing is scan-luck.
 _wt_resolve_trunk_dir() {
@@ -301,11 +336,14 @@ _wt_resolve_trunk_dir() {
 	fi
 	local repos_root
 	repos_root="$(_read_repos_root)" || return 1
-	if [[ -d "$repos_root/$repo" ]]; then
-		echo "$repos_root/$repo"
+	# The checkout itself, at its DECLARED location under repos_root — not by
+	# name, which missed every repo declared at a `path` on a sibling layout
+	# (workbench-trust-fixes, F5).
+	if [[ -d "$repos_root/${declared_path:-$repo}" ]]; then
+		echo "$repos_root/${declared_path:-$repo}"
 		return 0
 	fi
-	echo "Error: trunk for repo '$repo' not found — looked at $side and $repos_root/$repo. Run \`indusk workbench restore\`." >&2
+	echo "Error: trunk for repo '$repo' not found — looked at $side and $repos_root/${declared_path:-$repo}. Run \`indusk workbench restore\`." >&2
 	return 1
 }
 
