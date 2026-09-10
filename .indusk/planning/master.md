@@ -16,7 +16,6 @@ roadmap:
   - indusk-v2-dawn
   - indusk-v4-day
   - indusk-makeover
-  - workbench-mode-rail-integrity
   - doppler-extension
   - local-telemetry
   - falsify-phase-authoring
@@ -29,7 +28,6 @@ roadmap:
   - hermes-inspired-improvements
   - work-autopilot
   - indusk-worktree-extension
-  - graph-knowledge-architecture
   - cursor-support
   - react-native-support
   - dusk-v2
@@ -54,7 +52,7 @@ the streams are ordered by trust, not by feature value.
 
 | Plan | Stage | What it delivers |
 |------|-------|------------------|
-| [workbench-trust-fixes](workbench-trust-fixes/brief.md) | brief + test plan accepted 2026-09-10; impl next | **Phase A (blocking, small)**: make the gate-reminder advisor actually speak (F9 — first, because it makes every later plan cheaper to execute correctly), then the four tourniquets — `indusk run` entry refusal, cleanup re-guard, eval-attribution guard, restore's destructive clone. **Phase B (trails, non-blocking)**: bash lane parity, record de-contradiction, close/re-scope of workbench-mode-rail-integrity. |
+| [workbench-trust-fixes](workbench-trust-fixes/brief.md) | **impl complete 2026-09-10** on `plan/workbench-trust-fixes` (Test Phase 1 + 7 build phases, 18 rows green); close-out rituals next — `/falsify`, `/cleanup`, `/retrospective` — then merge. **Stream 1's gate is met**: zero silent wrong answers from run / cleanup / eval / restore in a versioned workbench | **Phase A (blocking, small)**: make the gate-reminder advisor actually speak (F9 — first, because it makes every later plan cheaper to execute correctly), then the four tourniquets — `indusk run` entry refusal, cleanup re-guard, eval-attribution guard, restore's destructive clone. **Phase B (trails, non-blocking)**: bash lane parity, record de-contradiction, close/re-scope of workbench-mode-rail-integrity. |
 | [workbench-code-roots](workbench-code-roots/brief.md) | brief draft | One `codeRoots` answer to "where is code *inside* the repo" — detection, health, init-docs; the data verify-plural needs later. |
 
 **Gate out of Stream 1:** only **Phase A** of workbench-trust-fixes gates
@@ -138,10 +136,12 @@ The shape is on paper first and is accepted before any `day-*` plan is created.
 
 ## Parked / needs re-scope
 
-- [graph-knowledge-architecture](graph-knowledge-architecture/) and
-  [cursor-support](cursor-support/) — written against the Graphiti-canonical
+- [cursor-support](cursor-support/) — written against the Graphiti-canonical
   direction the makeover rejected; **re-scope or archive**, don't resume as-is.
   (Cursor as an *executor* is Dawn component 7's business now.)
+  `graph-knowledge-architecture`, its sibling, was archived 2026-09-10 by
+  workbench-trust-fixes: its impl still named Graphiti tools as acceptance
+  criteria (A18), and the direction is rejected.
 - [react-native-support](react-native-support/) — parked; roll into dusk-v2 or
   archive.
 - [dusk-v2](dusk-v2/) — research parked.
