@@ -144,10 +144,10 @@ its own assertion.
 
 ### Build Phase 1: The reminder speaks
 
-- [ ] `hooks/gate-reminder.js`: build one `additionalContext` string from the phase-complete message plus `writableAtNudge`, and from the mid-phase blockers message; emit `console.info(JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext } }))` on stdout, exit 0. Delete the `_result` shell and the `console.error` calls (the linter allowlist admits `info`; `log` would be swept again).
-- [ ] Rewrite the file's docblock to describe the actual channel and the fast path
-- [ ] Delete `getPhaseStartNudge` from `src/lib/trajectory/state-ops.ts` and its case in `state-ops.test.ts` (zero production callers; the hook is the one definition because hooks cannot import TS)
-- [ ] Resync the installed copy: `cp apps/indusk-mcp/hooks/gate-reminder.js .claude/hooks/gate-reminder.js` (hooks are package-owned; parity is byte-equality)
+- [x] `hooks/gate-reminder.js`: build one `additionalContext` string from the phase-complete message plus `writableAtNudge`, and from the mid-phase blockers message; emit `console.info(JSON.stringify({ hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext } }))` on stdout, exit 0. Delete the `_result` shell and the `console.error` calls (the linter allowlist admits `info`; `log` would be swept again). **Also**: the hook's phase model predated test-phase-structure — its private trajectory-row parser read `Build Phase 2` as `NaN` and its "next phase" was `number + 1`, so it could never have nudged a modern impl even with the channel fixed. Rewritten on the shared `_impl-headings.js` (`phaseSequence` / `phaseOrdinal`, document order) and `_trajectory-parser.js`, deleting the private parser copy.
+- [x] Rewrite the file's docblock to describe the actual channel and the fast path
+- [x] Delete `getPhaseStartNudge` from `src/lib/trajectory/state-ops.ts` and its case in `state-ops.test.ts` (zero production callers; the hook is the one definition because hooks cannot import TS)
+- [x] Resync the installed copy: `cp apps/indusk-mcp/hooks/gate-reminder.js .claude/hooks/gate-reminder.js` (hooks are package-owned; parity is byte-equality)
 
 #### Build Phase 1 Verification
 

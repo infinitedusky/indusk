@@ -122,20 +122,6 @@ export function computePhaseCloseBlockers(
 }
 
 /**
- * Convenience: nudge text for phase start. Returns a string listing rows
- * whose `Writable at` equals the phase and are not yet written, or null
- * if nothing needs authoring.
- */
-export function getPhaseStartNudge(body: string, phase: number): string | null {
-	const trajectory = parseTrajectory(body);
-	if (!trajectory.present) return null;
-	const rows = getRowsWritableAt(trajectory, phase);
-	if (rows.length === 0) return null;
-	const lines = rows.map((r) => `  [${r.id}] ${r.asserts}`);
-	return `Phase ${phase} opens with these tests to author (commit as failing before implementation work):\n${lines.join("\n")}`;
-}
-
-/**
  * Convenience: nudge text for near-phase-close. Returns a string listing
  * rows whose `Passes at` equals the phase but state is not yet `passing`
  * or `skipped`, or null if the trajectory for this phase is green.
