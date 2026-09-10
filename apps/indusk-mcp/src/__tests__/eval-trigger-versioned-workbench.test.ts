@@ -101,3 +101,63 @@ describe("A8 — the refusal reaches the session, not only system.log", () => {
 		expect(ctx).toContain("beta");
 	});
 });
+
+/**
+ * Falsification A20 — the workbench repo can receive commits too (plan
+ * documents). "Never the workbench" was the wrong invariant; the right one is
+ * "the repository that received the commit". With one declared repo and the
+ * session at the root, that is whichever HEAD is newer.
+ */
+describe("A20 — one declared repo: the commit goes where the newer HEAD is", () => {
+	let wb: VersionedWorkbench;
+	afterEach(() => wb?.cleanup());
+
+	const OLD = {
+		GIT_COMMITTER_DATE: "2020-01-01T00:00:00Z",
+		GIT_AUTHOR_DATE: "2020-01-01T00:00:00Z",
+	};
+
+	it("a plan-document commit to the root after an older code commit → attributed to the workbench", async () => {
+		wb = oneRepoAtPath("nested", { extraConfig: { eval: { enabled: false } } });
+		commitFile(wb.repos[0].dir, "src/a.ts", "export const a = 1;\n", "feat: a (old)", OLD);
+		commitFile(wb.root, ".indusk/planning/demo/impl.md", "# demo\n", "docs(plan): demo");
+
+		const r = await runHook("eval-trigger.js", commitEvent(wb.root), { cwd: wb.root });
+		expect(r.exitCode).toBe(0);
+		const line = systemLog(wb)
+			.split("\n")
+			.find((l) => l.includes("gitPath:"));
+		expect(line, "no gitPath line").toBeDefined();
+		expect(line).toContain(`gitPath: ${realpathSync(wb.root)},`);
+	});
+
+	it("a code commit after an older plan-document commit → attributed to the code repo (guard)", async () => {
+		wb = oneRepoAtPath("nested", { extraConfig: { eval: { enabled: false } } });
+		commitFile(wb.root, ".indusk/planning/demo/impl.md", "# demo\n", "docs(plan): demo (old)", OLD);
+		commitFile(wb.repos[0].dir, "src/a.ts", "export const a = 1;\n", "feat: a");
+
+		const r = await runHook("eval-trigger.js", commitEvent(wb.root), { cwd: wb.root });
+		expect(r.exitCode).toBe(0);
+		const line = systemLog(wb)
+			.split("\n")
+			.find((l) => l.includes("gitPath:"));
+		expect(line).toContain(`gitPath: ${realpathSync(wb.repos[0].dir)}`);
+	});
+});
+
+describe("A21 — CLI mode never prints the refusal envelope to a terminal", () => {
+	let wb: VersionedWorkbench;
+	afterEach(() => wb?.cleanup());
+
+	it("--source handoff at a two-repo root: refusal in system.log, stdout empty", async () => {
+		wb = twoRepos("nested", { extraConfig: { eval: { enabled: true } } });
+		const r = await runHook("eval-trigger.js", commitEvent(wb.root), {
+			cwd: wb.root,
+			env: { PATH: QUIET_PATH },
+			args: ["--source", "handoff"],
+		});
+		expect(r.exitCode).toBe(0);
+		expect(r.stdout.trim(), `stdout: ${r.stdout}`).toBe("");
+		expect(systemLog(wb)).toMatch(/refus/i);
+	});
+});

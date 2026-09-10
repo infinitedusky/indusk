@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -104,5 +104,46 @@ describe("A9 — restore on a repo declaring `path`", () => {
 		const second = restore(wb.root);
 		expect(second.code, second.out).toBe(0);
 		expect(existsSync(join(wb.root, "alpha"))).toBe(false);
+	}, 30_000);
+});
+
+/**
+ * Falsification A22 — the sibling layout with a two-segment declared path.
+ * The nested fixture above never links (the repo IS at its trunk path), so it
+ * could not see that `linkTrunk` neither creates the link's parent nor
+ * computes the relative target from the link's own directory.
+ */
+describe("A22 — restore on a sibling layout with `path: code/alpha`", () => {
+	let tmp: string;
+	let wb: VersionedWorkbench;
+	let remote: string;
+
+	beforeEach(() => {
+		tmp = mkdtempSync(join(tmpdir(), "restore-sibling-"));
+		remote = makeBareRemote(tmp);
+		wb = makeVersionedWorkbench({
+			repos: [{ name: "alpha", path: "code/alpha", remote }],
+			layout: "sibling",
+			shape: "workbench",
+			initRepos: false,
+		});
+	});
+	afterEach(() => {
+		wb.cleanup();
+		rmSync(tmp, { recursive: true, force: true });
+	});
+
+	it("clones beside the workbench, links the trunk through a created parent, resolves, and is idempotent", () => {
+		const first = restore(wb.root);
+		expect(first.code, first.out).toBe(0);
+		const clone = join(wb.reposRoot, "code", "alpha");
+		const link = join(wb.root, "code", "alpha");
+		expect(existsSync(join(clone, ".git")), first.out).toBe(true);
+		expect(lstatSync(link).isSymbolicLink(), `no trunk link at ${link}:\n${first.out}`).toBe(true);
+		expect(realpathSync(link), "the link does not resolve to the clone").toBe(realpathSync(clone));
+
+		const second = restore(wb.root);
+		expect(second.code, second.out).toBe(0);
+		expect(second.out).toMatch(/alpha — (already )?present/);
 	}, 30_000);
 });

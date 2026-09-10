@@ -39,6 +39,8 @@ export interface RunHookOptions {
 	/** Working directory for the hook process (PostToolUse hooks read `event.cwd`, but some resolve relative paths from here too). */
 	cwd?: string;
 	env?: NodeJS.ProcessEnv;
+	/** CLI arguments after the script path — `eval-trigger.js --source handoff` is a different mode from hook mode. */
+	args?: string[];
 }
 
 export function runHook(
@@ -51,7 +53,7 @@ export function runHook(
 
 function spawnHook(hook: string, event: unknown, opts: RunHookOptions = {}): Promise<HookResult> {
 	return new Promise((resolve, reject) => {
-		const child = spawn("node", [join(HOOKS_DIR, hook)], {
+		const child = spawn("node", [join(HOOKS_DIR, hook), ...(opts.args ?? [])], {
 			stdio: ["pipe", "pipe", "pipe"],
 			cwd: opts.cwd,
 			env: opts.env ? { ...process.env, ...opts.env } : process.env,

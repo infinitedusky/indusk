@@ -21,7 +21,7 @@ import { repoDir, type WorkbenchRepo } from "../../lib/worktree/repos.js";
  *                                    ├── .gitignore        ← ignores each repo dir
  *                                    └── code/alpha/       ← wrapped repo (git)
  *
- *   sibling  (`repos_root: ".."`)  <tmp>/
+ *   sibling  (`repos_root: <tmp>`, absolute)  <tmp>/
  *                                    ├── workbench/        ← workbench root (git)
  *                                    │   └── .indusk/config.json
  *                                    └── code/alpha/       ← wrapped repo (git)
@@ -78,10 +78,10 @@ const TEST_GIT_ENV = {
 };
 
 /** Run git and throw on a non-zero exit — a fixture that half-builds proves nothing. */
-export function git(cwd: string, args: string[]): string {
+export function git(cwd: string, args: string[], env: NodeJS.ProcessEnv = {}): string {
 	const r = spawnSync("git", args, {
 		cwd,
-		env: { ...process.env, ...TEST_GIT_ENV },
+		env: { ...process.env, ...TEST_GIT_ENV, ...env },
 		encoding: "utf-8",
 	});
 	if (r.status !== 0) {
@@ -120,7 +120,9 @@ export function makeVersionedWorkbench(opts: MakeVersionedWorkbenchOptions): Ver
 		worktree: {
 			...(opts.shape ? { shape: opts.shape } : {}),
 			repos: opts.repos,
-			repos_root: layout === "sibling" ? ".." : ".",
+			// A sibling layout declares its parent ABSOLUTELY, as real configs do:
+			// restore refuses a relative `..` (it must not escape the workbench).
+			repos_root: layout === "sibling" ? reposRoot : ".",
 		},
 		...(opts.extraConfig ?? {}),
 	};
@@ -181,11 +183,18 @@ export function writePlan(wb: VersionedWorkbench, name: string, impl: string): s
 }
 
 /** Write a file under a repo checkout and commit it there. */
-export function commitFile(dir: string, rel: string, content: string, message: string): string {
+export function commitFile(
+	dir: string,
+	rel: string,
+	content: string,
+	message: string,
+	/** e.g. `{ GIT_COMMITTER_DATE: "2020-01-01T00:00:00Z" }` to order commits across repos by timestamp. */
+	env: NodeJS.ProcessEnv = {},
+): string {
 	const path = join(dir, rel);
 	mkdirSync(dirname(path), { recursive: true });
 	writeFileSync(path, content);
 	git(dir, ["add", "-A"]);
-	git(dir, ["commit", "-q", "-m", message]);
+	git(dir, ["commit", "-q", "-m", message], env);
 	return headOf(dir);
 }

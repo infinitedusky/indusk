@@ -177,3 +177,28 @@ describe("A2 — regression guard: a non-impl edit stays silent", () => {
 		}
 	});
 });
+
+/** Build Phase 1 half done: its item checked, its verification open, T1 still `written`. */
+const MODERN_BUILD_1_MID_FLIGHT = MODERN_BUILD_1_JUST_CLOSED.replace(
+	"- [x] T1 passes",
+	"- [ ] T1 passes",
+).replace(
+	"| T1 | the first phase's thing works | Test Phase 1 | Build Phase 1 | passing |",
+	"| T1 | the first phase's thing works | Test Phase 1 | Build Phase 1 | written |",
+);
+
+describe("A19 — a phase in progress gets its own blockers, not the previous phase's send-off", () => {
+	it("names Build Phase 1's blocking rows and does not repeat that Test Phase 1 is complete", async () => {
+		const fixture = writeImpl(MODERN_BUILD_1_MID_FLIGHT, "gate-reminder-");
+		try {
+			const r = await runHook("gate-reminder.js", editEvent(fixture), { cwd: fixture.dir });
+			expect(r.exitCode).toBe(0);
+			const out = envelopeOf(r.stdout);
+			expect(out.additionalContext).toContain("T1");
+			expect(out.additionalContext).toMatch(/still not passing/);
+			expect(out.additionalContext).not.toMatch(/fully complete/);
+		} finally {
+			fixture.dispose();
+		}
+	});
+});

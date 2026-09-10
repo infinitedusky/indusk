@@ -96,5 +96,13 @@ describe.skipIf(!existsSync(REFRESH))(
 			const r = sh(PREFLIGHT, ["feature-y"], wb.root);
 			expect(r.code, r.out).toBe(0);
 		});
+
+		// Falsification A23 — the scan lists the declared worktrees dir and the
+		// first segment of the declared repo path as if they were worktrees.
+		it("refresh --all never treats `wts/` itself or `code/` as a worktree candidate", () => {
+			const r = sh(REFRESH, ["--all"], wb.root);
+			expect(r.code, r.out).toBe(0);
+			expect(r.out, r.out).not.toMatch(/SKIP: (wts|code)\b/);
+		});
 	},
 );
