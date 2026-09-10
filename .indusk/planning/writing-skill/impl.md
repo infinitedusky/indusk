@@ -102,6 +102,9 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 - [x] Write the manual procedures for A4, A13, A18, A19 into `.indusk/planning/writing-skill/dogfood.md`, each with its expected observation
 - [x] Give every real-git test an explicit 30s timeout. Applied inline as the third argument to each `it` that commits or publishes (eight tests); the parser and pin tests stay on the default
 
+- [x] **Shape — reviewed, nothing found** (six files: the fixture, four package test files, one admin test) against the testing and typescript rules; every enabled extension's rules were readable. **The library could not run this review**: `prepareShapeReview` keys by phase number and `verificationIsGreen(body, 1)` reads Build Phase 1's gate, so it reports Test Phase 1 as "not green" after the gate is closed. The inputs were gathered by hand from the same sources (`git diff --name-only` since the phase 1 boundary, `collectCraftRules`); the writers were not used because they would file under Build Phase 1. Shape predates test phases; recorded as a gap, not a skip
+- [x] **Shape — considered, left as is**: `PUBLISH` (the argv builder) is repeated in both publish test files, `frontmatter()` in the pins test repeats the parity test's regex, and the `next/link` mock is the copy every admin browser test carries. All three are cross-file duplication, which the rule set scopes to `/cleanup` at close. `A9` bundles four behaviours in one `it` because it is one trajectory row; the row, not the `it`, is the unit here. The admin fixture's `as unknown as Plan` is a cast around a field that does not exist yet and leaves with Build Phase 4
+
 #### Deferred to Build Phase 1
 
 - **A2** — asserts on `summary.papers`, a field `PlanSummary` does not have; the test would not type-check today. Body reviewed:
