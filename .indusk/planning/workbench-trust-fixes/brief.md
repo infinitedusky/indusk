@@ -25,8 +25,8 @@ stopped. That was a coincidence, not a guard. The moment the workbench
 became a repository, nothing tripped, and each tool started doing its job
 on a folder that holds the plan and none of the code. Because each one
 reports the reassuring case on that path, the result was not an error. It
-was a run loop that ticks the checkboxes and commits them as if they were
-code, a cleanup check that reports "nothing to clean" without seeing any
+was a run loop that reports items done and commits them with no code in the
+commit, a cleanup check that reports "nothing to clean" without seeing any
 code, an evaluator that scores a diff with no code in it, and a restore
 command that makes a second copy of a repo you already have.
 
@@ -88,12 +88,15 @@ Enforcement of the underlying rule went on 2026-08-12 when Gate A moved from
 a model with nobody watching ([reference](../../../apps/docs/src/reference/cli/run.md)).
 It takes one folder as its whole world: it reads the plan there, edits code
 there, and after each checklist item commits there. In a workbench the plan
-is in that folder and the code is not. So the loop reads the plan fine,
-cannot touch the code (it is outside the folder it is allowed to edit, or
-inside one the workbench's git ignores), ticks the checkboxes anyway,
-commits those to the workbench, queues the commit for evaluation, and prints
-every item green. Commits that contain plan documents and no code, reported
-as success.
+is in that folder and the code is not. So the model reads the plan fine
+and cannot touch the code: it is either outside the folder it is allowed to
+edit, so every edit is refused, or inside a folder the workbench's git
+ignores, so edits land but are never committed. The loop does not check
+that code exists. It runs the gates on whatever changed, commits it to the
+workbench, queues the commit for scoring, and reports the item done. "Done"
+here means the gates passed and a commit was made, which in one layout can
+only ever be the checkbox, and in the other is the checkbox with the real
+work left uncommitted in the other repository.
 
 The only thing that used to stop this was the auto-commit feature's own
 check, "do not commit if this folder is not a repository." Workbench folders
