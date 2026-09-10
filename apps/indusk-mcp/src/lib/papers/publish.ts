@@ -9,7 +9,7 @@ import {
 import { dirname, join, relative } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "../config.js";
-import { git } from "../git.js";
+import { git, restorePaths, snapshotPaths } from "../git.js";
 import { DestinationError, type ResolvedDestination, resolveDestination } from "./destination.js";
 import { collectIndexEntries, IndexError, regenerateIndex } from "./index-page.js";
 import { type PublishedRecord, readPublishedRecord, withProvenance } from "./provenance.js";
@@ -154,36 +154,6 @@ function otherPaperPublishedAt(
 	return null;
 }
 
-/** Each path's content before this publish touched it; null when it did not exist. */
-type Snapshot = Map<string, string | null>;
-
-function snapshot(root: string, rels: string[]): Snapshot {
-	const taken: Snapshot = new Map();
-	for (const rel of rels) {
-		const path = join(root, rel);
-		taken.set(rel, existsSync(path) ? readFileSync(path, "utf-8") : null);
-	}
-	return taken;
-}
-
-/** Put the destination back: unstage, then restore or remove each path. */
-async function restore(root: string, taken: Snapshot): Promise<void> {
-	try {
-		await git(root, "reset", "-q", "--", ...taken.keys());
-	} catch {
-		// Nothing was staged, or a path was never tracked. The rewrite below is what matters.
-	}
-	for (const [rel, previous] of taken) {
-		const path = join(root, rel);
-		if (previous === null) {
-			rmSync(path, { force: true });
-		} else {
-			mkdirSync(dirname(path), { recursive: true });
-			writeFileSync(path, previous);
-		}
-	}
-}
-
 /**
  * Published siblings whose page would render differently now — because this
  * publish gave them a target their links can point at. Link rewriting only
@@ -323,7 +293,7 @@ export async function publishPaper(opts: PublishOptions): Promise<PublishResult>
 	// 6. Write the page (moving a retitled one) and regenerate the index. From
 	// here to the destination commit, any failure restores the destination.
 	const touched = oldRel === null ? [pageRel, dest.index] : [pageRel, dest.index, oldRel];
-	const before = snapshot(dest.root, touched);
+	const before = snapshotPaths(dest.root, touched);
 	try {
 		if (oldRel !== null) await git(dest.root, "mv", "--", oldRel, pageRel);
 		mkdirSync(dirname(pagePath), { recursive: true });
@@ -333,7 +303,7 @@ export async function publishPaper(opts: PublishOptions): Promise<PublishResult>
 			await collectIndexEntries(dest.root, dest.dir, dest.index),
 		);
 	} catch (err) {
-		await restore(dest.root, before);
+		await restorePaths(dest.root, before);
 		if (err instanceof IndexError) throw new PublishRefusal(err.message);
 		throw new PublishRefusal(`Could not write the destination page: ${gitMessage(err)}`);
 	}
@@ -359,7 +329,7 @@ export async function publishPaper(opts: PublishOptions): Promise<PublishResult>
 			destinationCommit = await git(dest.root, "rev-parse", "--short", "HEAD");
 		}
 	} catch (err) {
-		await restore(dest.root, before);
+		await restorePaths(dest.root, before);
 		throw new PublishRefusal(
 			`Destination commit failed in ${dest.root}; the destination was restored and nothing was published. git said: ${gitMessage(err)}`,
 		);

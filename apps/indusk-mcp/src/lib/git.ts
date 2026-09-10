@@ -1,4 +1,6 @@
 import { execFile } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { promisify } from "node:util";
 
 /**
@@ -57,4 +59,44 @@ export async function changedPathsPartitioned(root: string, sha: string): Promis
 		tracked: [...new Set([...clean(committed), ...clean(unstaged)])],
 		untracked: clean(untracked),
 	};
+}
+
+/**
+ * A working-tree snapshot: each path's content before a step touched it, or
+ * null when it did not exist. Taken before a multi-file write so a failure
+ * part-way can put the tree back exactly.
+ */
+export type PathSnapshot = Map<string, string | null>;
+
+export function snapshotPaths(root: string, rels: string[]): PathSnapshot {
+	const taken: PathSnapshot = new Map();
+	for (const rel of rels) {
+		const path = join(root, rel);
+		taken.set(rel, existsSync(path) ? readFileSync(path, "utf-8") : null);
+	}
+	return taken;
+}
+
+/**
+ * Put the tree back to a snapshot: unstage every path, then rewrite each
+ * to its prior content or remove it. A path that was a staged rename's new
+ * name is removed and its old name rewritten, because both were in the
+ * snapshot. Lifted out of `papers/publish.ts` (writing-skill cleanup) on the
+ * rule that a git primitive kept in a domain folder gets copied by the next.
+ */
+export async function restorePaths(root: string, taken: PathSnapshot): Promise<void> {
+	try {
+		await git(root, "reset", "-q", "--", ...taken.keys());
+	} catch {
+		// Nothing was staged, or a path was never tracked. The rewrite below is what matters.
+	}
+	for (const [rel, previous] of taken) {
+		const path = join(root, rel);
+		if (previous === null) {
+			rmSync(path, { force: true });
+		} else {
+			mkdirSync(dirname(path), { recursive: true });
+			writeFileSync(path, previous);
+		}
+	}
 }
