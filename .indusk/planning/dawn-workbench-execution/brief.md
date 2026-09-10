@@ -53,6 +53,15 @@ component 6.5 — between the keystone (6) and agent integration (7).
 - The cross-repo baseline was named as a follow-on in three documents
   (decisions/dawn-verify, reference/cli/verify, versioned-workbench D8) and
   scheduled in none — this plan is that follow-on.
+- **Three refusal sites now exist, and this plan's resolver absorbs all
+  three.** `workbench-trust-fixes` (2026-09-10) installed the same
+  "this is a workbench; its code lives in X; run inside Y" refusal at
+  `bin/commands/run.ts`, `lib/cleanup/oversized.ts` and `lib/verify/roots.ts`,
+  each reading the shape through `isWorkbench` / `readWorkbenchRepos` /
+  `repoDir`. Its cleanup ritual met the rule of three and deliberately did not
+  extract a refusal helper, because `resolveExecutionRoots` is the designated
+  single home — so the single-definition pin here must cover run, cleanup and
+  verify, not run and verify alone.
 
 ## Scope
 
