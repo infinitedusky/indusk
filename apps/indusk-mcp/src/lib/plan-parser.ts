@@ -129,10 +129,31 @@ function readPaper(planDir: string, file: string): PaperSummary | null {
 	}
 	if (data.kind !== "paper") return null;
 	const status: PaperStatus = isPaperStatus(data.status) ? data.status : "malformed";
+	return {
+		file,
+		title: typeof data.title === "string" ? data.title : file,
+		status,
+		stale: paperIsStale(raw, data, status),
+	};
+}
+
+/**
+ * The staleness policy, in one place: a published paper is stale when its
+ * current content hash differs from the one the publish recorded, or when
+ * no hash was recorded at all (published by hand; cannot be confirmed
+ * current, so it reads stale rather than reassuringly fresh). Anything not
+ * yet published has nothing to be stale against. The publish step records
+ * exactly what this compares, so the two must agree here, not in two places.
+ */
+export function paperIsStale(
+	raw: string,
+	data: Record<string, unknown>,
+	status: PaperStatus,
+): boolean {
+	if (status !== "published") return false;
 	const published = data.published as { hash?: unknown } | undefined;
 	const recorded = typeof published?.hash === "string" ? published.hash : null;
-	const stale = status === "published" && (recorded === null || recorded !== paperContentHash(raw));
-	return { file, title: typeof data.title === "string" ? data.title : file, status, stale };
+	return recorded === null || recorded !== paperContentHash(raw);
 }
 
 const PAPER_STATUS_ORDER: Record<PaperStatus, number> = {
@@ -160,6 +181,30 @@ function paperNextStep(papers: PaperSummary[]): string {
 	const owed = papers.filter((p) => p.status === "accepted" || p.stale).length;
 	if (owed > 0) return `Publish ${owed} paper(s)`;
 	return "Done";
+}
+
+/**
+ * One rule for what a plan's stage is when papers are present: a lifecycle
+ * document always wins, and only a folder with no lifecycle document at all
+ * is a paper-stage plan. So no existing plan changes stage by gaining a
+ * paper, and a folder of papers stops reading as unknown / "Create a brief".
+ */
+function resolvePlanStage(
+	walked: ReturnType<typeof determineStage>,
+	papers: PaperSummary[],
+): { stage: PlanStage; stageStatus: string; nextStep: string } {
+	if (walked.stage === "unknown" && papers.length > 0) {
+		return {
+			stage: "paper",
+			stageStatus: leastAdvancedPaperStatus(papers),
+			nextStep: paperNextStep(papers),
+		};
+	}
+	return {
+		stage: walked.stage,
+		stageStatus: walked.stageStatus,
+		nextStep: determineNextStep(walked.stage, walked.stageStatus, walked.parseError),
+	};
 }
 
 function parseDependsOn(filePath: string): string[] {
@@ -240,15 +285,7 @@ export function parsePlan(planDir: string): PlanSummary {
 		.map((file) => readPaper(planDir, file))
 		.filter((p): p is PaperSummary => p !== null);
 
-	// A lifecycle document wins the stage; papers ride alongside it. Only a
-	// folder with no lifecycle document at all is a paper-stage plan, so no
-	// existing plan changes stage by gaining a paper.
-	const paperStage = walked.stage === "unknown" && papers.length > 0;
-	const stage: PlanStage = paperStage ? "paper" : walked.stage;
-	const stageStatus = paperStage ? leastAdvancedPaperStatus(papers) : walked.stageStatus;
-	const nextStep = paperStage
-		? paperNextStep(papers)
-		: determineNextStep(walked.stage, walked.stageStatus, walked.parseError);
+	const { stage, stageStatus, nextStep } = resolvePlanStage(walked, papers);
 
 	return {
 		name,
