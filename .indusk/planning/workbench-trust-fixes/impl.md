@@ -1,7 +1,7 @@
 ---
 title: "Workbench Trust Fixes — Implementation"
 date: 2026-09-10
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -81,6 +81,11 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A16 | A search for "not a git repo" across CLAUDE.md, `apps/indusk-mcp/skills/`, and `apps/docs/src/` (excluding decisions, lessons, archives, changelog) finds nothing | Test Phase 1 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/record-not-a-git-repo-grep.test.ts |
 | A17 | `guide/index.md`'s stated hook count equals the rows in its own hook table, and the Dawn master's keep/shed record names every hook on disk, including `workbench-sync.js` | Test Phase 1 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/hooks-record-parity.test.ts |
 | A18 | No active plan's `impl.md` names a deleted MCP tool (`mcp__graphiti__*`, `mcp__codegraphcontext__*`) as an acceptance criterion | Test Phase 1 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/active-plans-no-deleted-tools.test.ts |
+| A19 | While a build phase is in progress (some items checked), the reminder names that phase's rows still blocking its close and does not repeat that the previous phase is complete | Phase 0 | Phase 8 | planned | apps/indusk-mcp/src/__tests__/gate-reminder-speaks.test.ts |
+| A20 | A commit made to the workbench repo itself (plan documents) from a root cwd with one declared repo is attributed to the workbench, not to the code repo's unrelated HEAD; a commit made to the code repo from the same cwd is attributed to the code repo | Phase 0 | Phase 8 | planned | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
+| A21 | In CLI mode (`--source`) at a multi-repo root, the eval hook logs the refusal and prints no JSON envelope to the terminal | Phase 0 | Phase 8 | planned | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
+| A22 | `workbench restore` on a sibling layout with a multi-segment declared `path` clones, links the trunk (creating the link's parent), reports it, and is idempotent — never crashes | Phase 0 | Phase 8 | planned | apps/indusk-mcp/src/__tests__/workbench-restore-declared-path.test.ts |
+| A23 | `refresh --all` never treats a declared `worktrees` dir itself, or the first segment of a declared repo `path`, as a worktree candidate | Phase 0 | Phase 8 | planned | apps/indusk-mcp/src/__tests__/wt-declared-path-parity.test.ts |
 
 ## Checklist
 
@@ -309,6 +314,30 @@ its own assertion.
 
 - [x] `apps/docs/src/changelog.md` Unreleased: the record corrections, in one entry
 - [x] Root `master.md` Stream 1 row and Day master component 1: status updated at close
+
+### Phase 8: Falsification — what the fixes assumed about where commits, links and worktrees live
+
+**Goal**: verify whether the attested state holds against five specific failure modes found by re-reading the code this plan wrote: a reminder that keeps announcing the previous phase after the next one has started; an evaluator that, having stopped scoring the workbench repo, now scores the code repo's unrelated HEAD when the commit went to the workbench; a refusal envelope printed to a terminal in CLI mode; a trunk link whose parent directory nobody creates on a sibling layout with a two-segment path; and a worktree scan that lists the declared worktrees dir itself as a candidate. Each trajectory row captures one hypothesis; each checklist item captures the fix if it confirms. Discarded after investigation: "the widened `isWorkbench` misclassifies a flat project carrying a stray `wrapped_repo`" — only the workbench init path ever writes that key.
+
+- [ ] `hooks/gate-reminder.js`: "the next phase has not started" means it has **zero checked items**, not "has unchecked items"; when the next phase has started, skip the transition nudge so the mid-phase blockers nudge for the in-progress phase is what gets delivered (A19 — observed in this session: "Build Phase 3 is fully complete… before starting Build Phase 4" repeated on every edit while Build Phase 4 was half done). Resync `.claude/hooks/gate-reminder.js`
+- [ ] `hooks/_hook-paths.js` `resolveStateAndGitPaths`: when the git root found IS the workbench and exactly one repo is declared, the commit may have gone to either repository — attribute to whichever of the workbench root and the declared repo has the **newer HEAD commit** (`git log -1 --format=%ct`); on a tie or a missing code repo prefer the code repo (the 1.31.10 behavior); record the choice in the returned object so `eval-trigger.js` logs it (A20). This corrects A7's over-claim: the invariant is "a commit is attributed to the repository that received it", not "never the workbench"
+- [ ] `hooks/eval-trigger.js`: emit the refusal envelope only in hook mode (`cliSource === null && !drainPending`); CLI and drain modes syslog the refusal and exit 0 silently (A21). Resync `.claude/hooks/eval-trigger.js` and `_hook-paths.js`
+- [ ] `src/lib/worktree/layout.ts` `linkTrunk`: `mkdirSync(dirname(link), { recursive: true })` before `symlinkSync` — the one primitive every caller shares, so restore, setup and worktree all gain it (A22)
+- [ ] `extensions/worktree/scripts/lib/workbench-helpers.sh` `_wt_list_worktree_dirs`: skip a root entry that is a declared `worktrees` dir or the first segment of a declared repo `path` (A23)
+
+#### Phase 8 Verification
+- [ ] A19: mid-phase modern fixture (Build Phase 1 half checked) — `additionalContext` names Build Phase 1's blocking rows and does not contain "Test Phase 1 … fully complete": `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/gate-reminder-speaks.test.ts` — expected: all pass, A1/A2 included
+- [ ] A20 + A21: one-repo fixture, commit to the root then run the hook → `system.log` shows `gitPath: <root>`; commit to `code/alpha` then run → `gitPath: <code/alpha>`; two-repo fixture with `--source handoff` → stdout empty, refusal in `system.log`: `pnpm exec vitest run src/__tests__/eval-trigger-versioned-workbench.test.ts src/__tests__/hook-paths.test.ts src/__tests__/eval-trigger-workbench-mode.test.ts` — expected: all pass
+- [ ] A22: sibling layout, repo `alpha` at `path: "code/alpha"` with a local bare remote: restore exits 0, `<repos_root>/code/alpha/.git` exists, `<workbench>/code/alpha` is a symlink to it, second run reports present: `pnpm exec vitest run src/__tests__/workbench-restore-declared-path.test.ts` — expected: all pass, 30 s timeout
+- [ ] A23: fixture with `worktrees: "wts"` and `path: "code/alpha"`: `refresh --all` output has no `SKIP: wts` and no `SKIP: code` line: `pnpm exec vitest run src/__tests__/wt-declared-path-parity.test.ts src/__tests__/wt-trunk-routing.test.ts src/__tests__/worktree-preflight.test.ts` — expected: all pass
+- [ ] Full package suite: `cd apps/indusk-mcp && pnpm test` — expected: green
+
+#### Phase 8 Context
+- [ ] Update the eval-rail Known Gotchas entry: in a single-repo workbench, a commit from the root is attributed to whichever repository has the newer HEAD, because the workbench repo can receive commits too (plan documents) — "never the workbench" was the wrong invariant
+
+#### Phase 8 Document
+- [ ] `apps/docs/src/guide/rail-check.md`: the attribution rule's one-repo bullet says "newer HEAD wins", with the plan-document commit as the example
+- [ ] `apps/docs/src/changelog.md` Unreleased: the five falsification fixes, one entry
 
 ## Files Affected
 
