@@ -24,6 +24,7 @@ roadmap:
   - evaluator-structured-scorecard-output
   - admin-ui-local-domain
   - admin-ui-phase-progress
+  - project-list-workbenches-only
   - compaction-skill
   - hermes-inspired-improvements
   - work-autopilot
@@ -127,6 +128,10 @@ The shape is on paper first and is accepted before any `day-*` plan is created.
   (Sandy, 2026-09-03): phases and their gate stages visible live while work
   runs; also fixes the UI's private phase regex, which cannot see
   `Test Phase` / `Build Phase` sequences today.
+- [project-list-workbenches-only](project-list-workbenches-only/brief.md) — brief
+  draft (Sandy, 2026-09-10): the registry holds 1,588 entries, 1,577 of them
+  dead temp dirs from four tests that never set `INDUSK_HOME`; isolate tests,
+  add an explicit `ui prune`, show workbenches only.
 - The admin-UI scorecard-loads-only-after-a-prompt issue (Sandy, 2026-08-31)
   has no plan yet — likely folds into evaluator-structured-scorecard-output or
   admin-ui-local-domain when picked up.
