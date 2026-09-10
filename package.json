@@ -15,7 +15,8 @@
 		"dev": "ce run -- turbo dev",
 		"build": "ce run -- turbo build",
 		"start": "ce run -- turbo start",
-		"env:start": "ce start"
+		"env:start": "ce start",
+		"release": "pnpm --filter @infinitedusky/indusk-mcp release"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.1",

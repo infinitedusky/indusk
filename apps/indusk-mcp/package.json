@@ -68,7 +68,11 @@
     "build": "tsc",
     "start": "node dist/server/index.js",
     "test": "vitest run",
-    "prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js"
+    "prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js",
+    "release": "npm whoami && pnpm publish --no-git-checks"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.21",
