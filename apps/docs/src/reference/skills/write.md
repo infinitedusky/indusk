@@ -7,7 +7,7 @@ what a paper was, the close-out rituals assume a diff, catchup loads
 engineering lessons and a telemetry health check, and nothing packaged the
 two things that make a writing session work, the plan folder as a corpus and
 the conduct rules in AGENTS.md. The design is
-`.indusk/planning/writing-skill/adr.md`.
+`.indusk/planning/archive/writing-skill/adr.md`.
 
 It is prose only. No hooks, no gates, nothing blocks a write.
 

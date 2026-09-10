@@ -124,5 +124,5 @@ whether a document is a paper.
   hotfix.
 
 Publishing a paper to a destination outside the repo is `indusk papers
-publish`; the ADR is `.indusk/planning/writing-skill/adr.md`.
+publish`; the ADR is `.indusk/planning/archive/writing-skill/adr.md`.
 

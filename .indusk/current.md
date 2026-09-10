@@ -331,3 +331,45 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 (empty)
 
 ---
+
+## Session dd0c95d9 — eval: reviewing writing-skill commit 49042d49
+
+**Session ID**: dd0c95d9-cb48-4fd8-91c4-ec31ad7e2bfd
+**Last updated**: 2026-09-10T00:32:44.427Z
+**Branch**: plan/writing-skill
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/writing-skill
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 2dfae2ea — indusk-v4-day: writing — read-as-reader + falsify passes on papers 1-3
+
+**Session ID**: 2dfae2ea-94f9-46f5-a54c-cf61eb7548f3
+**Last updated**: 2026-09-10T01:08:38.346Z
+**Branch**: plan/writing-skill
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/writing-skill
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

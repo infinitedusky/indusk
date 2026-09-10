@@ -4,7 +4,7 @@ Publishing a paper — a plan document that declares `kind: paper` (see
 [`indusk plans`](/reference/cli/plans#papers-kind-paper)) — to a destination
 outside the repo, with the discipline of code: the plan copy is the source,
 the destination is a build artifact, and every publish is traceable to a
-commit. The design is `.indusk/planning/writing-skill/adr.md`.
+commit. The design is `.indusk/planning/archive/writing-skill/adr.md`.
 
 ## `papers publish`
 
@@ -33,7 +33,7 @@ sequenceDiagram
     C->>D: 4. the page is this paper's (no other paper owns the slug); nothing there is dirty
     C->>C: 5. render (map frontmatter, rewrite sibling links); stop if up to date
     C->>D: 6. write the page (git mv a retitled one), regenerate the index between the markers
-    C->>D: 7. commit "publish: <title> (source <sha>)", or nothing when the page is byte-identical
+    C->>D: 7. commit "publish: TITLE (source SHA)", or nothing when the page is byte-identical
     C->>P: 8. write provenance into the frontmatter; commit "chore(papers): publish …"
     C->>D: 9. push only with --push, and last; a failed push is a warning
     C->>C: 10. name every published sibling whose page is now behind
@@ -43,8 +43,8 @@ sequenceDiagram
 with the frontmatter keys the destination's map names (default `title` and
 `description`) and the body verbatim; and the index page with the block
 between its markers rewritten, newest first. One commit, on the
-destination's current branch, whose subject is `publish: <title> (source
-<short sha>)` where the sha is the plan repo commit the copy was published
+destination's current branch, whose subject is `publish: <title> (source <short sha>)`
+where the sha is the plan repo commit the copy was published
 from.
 
 **What lands in the source.** The paper's frontmatter gains `status:
