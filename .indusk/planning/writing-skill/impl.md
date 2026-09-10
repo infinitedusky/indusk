@@ -47,11 +47,11 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 | ID | Asserts | Writable at | Passes at | State | Scope | Test |
 |----|---------|-------------|-----------|-------|-------|------|
-| A1 | A plan folder whose documents all carry `kind: paper` reports stage `paper` with a status derived from those papers, never `unknown`, and a next step that is never "Create a brief" | Test Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
-| A2 | A plan folder with lifecycle documents and papers keeps its lifecycle stage and lists the papers beside it with their own statuses | Build Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
-| A3 | A paper's status is one of `draft`, `accepted`, `published`; any other value reports `malformed`, never a silent draft | Test Phase 1 | Build Phase 1 | written | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
+| A1 | A plan folder whose documents all carry `kind: paper` reports stage `paper` with a status derived from those papers, never `unknown`, and a next step that is never "Create a brief" | Test Phase 1 | Build Phase 1 | passing | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
+| A2 | A plan folder with lifecycle documents and papers keeps its lifecycle stage and lists the papers beside it with their own statuses | Build Phase 1 | Build Phase 1 | passing | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
+| A3 | A paper's status is one of `draft`, `accepted`, `published`; any other value reports `malformed`, never a silent draft | Test Phase 1 | Build Phase 1 | passing | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
 | A4 | `indusk-v4-day`, once its documents declare `kind: paper`, reports a real stage in `list_plans` and the admin UI | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
-| A5 | The admin UI renders a paper under its plan with title and status, and a papers-only plan renders without error | Test Phase 1 | Build Phase 4 | written | browser | `apps/indusk-admin/src/components/PlanDetail.papers.test.tsx` |
+| A5 | The admin UI renders a paper under its plan with title and status, and a papers-only plan renders without error | Test Phase 1 | Build Phase 4 | passing | browser | `apps/indusk-admin/src/components/PlanDetail.papers.test.tsx` |
 | A6 | After `update`, a project with no `papers` block has `papers.destinations: []`; a project with destinations keeps them byte-for-byte | Build Phase 2 | Build Phase 2 | passing | unit | `apps/indusk-mcp/src/lib/papers/config.test.ts` |
 | A7 | Publishing puts the rendered page in the destination directory with mapped frontmatter, regenerates the index between its markers, and commits on the destination's current branch with no push | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
 | A8 | After a publish the paper's frontmatter records destination, path, destination commit, source commit, and hash, and status reads `published` | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
@@ -225,19 +225,23 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 ### Build Phase 4: Papers in the admin UI
 
-- [ ] `Plan` gains `papers?: PaperSummary[]` in `planning-reader.ts`, read from the shared parser; no admin-side re-parse
-- [ ] `PlanDetail` renders a `papers-section` after the lifecycle sections: one `CollapsibleSection` per paper with a `<Markdown>` render and a status badge; absent when there are no papers
-- [ ] Badge variants for `draft`, `accepted`, `published`, `published (stale)`, `malformed` in `ui/badge-variant.ts`
+- [x] `Plan` gains `papers?: PaperSummary[]` in `planning-reader.ts`, read from the shared parser; no admin-side re-parse. As `PaperEntry extends PaperSummary { content }`: the summary is the parser's, the reader adds only the body it needs to render. A papers-only plan's header status is the parser's paper-stage status rather than `unknown`
+- [x] `PlanDetail` renders a `papers-section` after the lifecycle sections: one `CollapsibleSection` per paper with a `<Markdown>` render and a status badge; absent when there are no papers. Placed after the ADR section, before the phases; kept out of `hasAnyDocument` so a papers-only plan renders no Falsification section
+- [x] Badge variants for `draft`, `accepted`, `published`, `published (stale)`, `malformed` in `ui/badge-variant.ts`. `paperStatusToBadge` (draft→planned, accepted→writable, published→passing, stale→written, malformed→blocked) and `paperStatusLabel`, so the derived label is produced in one place. The A5 fixture's `as unknown as Plan` cast is gone with the field, as its comment promised. **The gate caught a miss on the way in**: A1–A3 had passed at Build Phase 1 but their rows still read `written`; corrected before this checkoff could land (the table-lags-the-checklist lesson, again)
+
+- [x] **Shape** — `lib/planning-reader.ts` (done: `readPapers(planDir, summaries)`; 52/52 across the A5 file and `src/lib`): "read each paper's body" is an inline `Promise.all(map)` inside `readPlanFolder`, a function that already reads every lifecycle document. Extract `readPapers(planDir, summaries)` so the job has a name and a seam. Rule: *typescript — a block with one reason to change and a nameable purpose is a named function.*
+- [x] **Shape — considered, left as is**: `PapersSection` renders each paper's badge row and collapsible inline in its map; twenty lines, one reason to change, and a `PaperCard` split would give a second component nothing else uses. `paperStatusToBadge` and `paperStatusLabel` are two functions rather than one returning a pair, so the label can be tested without the variant. The scope also listed `reference/cli/papers.md` because its phase 3 commit landed after this phase's boundary; not code
+- [x] **Shape — reviewed**: boundary recorded at `e20d83e7`; every extension's rules readable
 
 #### Build Phase 4 Verification
-- [ ] A5 passes (`pnpm turbo test --filter=indusk-admin`)
-- [ ] A plan with no papers renders no `papers-section` and the existing PlanDetail suite is unchanged
+- [x] A5 passes (`pnpm turbo test --filter=indusk-admin`) — 154 passed, 27 files
+- [x] A plan with no papers renders no `papers-section` and the existing PlanDetail suite is unchanged — the negative case in the A5 file, and `PlanDetail.test.tsx` + `PlanDetail.parent.test.tsx` 31/31 alongside it
 
 #### Build Phase 4 Context
-- [ ] Add to Known Gotchas: the Papers section renders from the shared parser's `papers` field; the stale badge is derived, so a paper edited after publish shows stale with no write anywhere — pointer to `/reference/admin-ui/overview`
+- [x] Add to Known Gotchas: the Papers section renders from the shared parser's `papers` field; the stale badge is derived, so a paper edited after publish shows stale with no write anywhere — pointer to `/reference/admin-ui/overview`. Added above the `next/link` gotcha, naming the badge helpers and the papers-only header status
 
 #### Build Phase 4 Document
-- [ ] Update `reference/admin-ui/overview.md` with the Papers section and its badges
+- [x] Update `reference/admin-ui/overview.md` with the Papers section and its badges. A `Papers` row in the plan-detail sections table, before `Phases`, linking `/reference/cli/papers`
 
 ### Build Phase 5: The skill and its documentation
 
