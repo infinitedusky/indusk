@@ -10,8 +10,14 @@ status: accepted
 ## The story
 
 Five weeks ago we made the workbench a real git repository so that a team
-could share one. That was the right change. It also quietly broke four
-safety mechanisms, and none of them told us.
+could share one. That was the right change. It also removed, without
+anyone noticing, the thing that made four safety mechanisms safe.
+
+To be clear about what kind of finding this is: we have not seen any of
+the four fail. They were found by reading the code during an audit on
+2026-09-03. What follows describes scenarios that nothing now prevents, not
+incidents that happened. The one exception is the fifth item, the gate
+reminder, which is not a scenario: it has demonstrably never worked.
 
 A workbench keeps the plan in one folder and the code in a separate
 repository next to it. Every one of the four tools was built when plan and
@@ -20,15 +26,16 @@ treats it as the whole world: read the plan here, look at the code here,
 commit here. Nobody taught them the code might be somewhere else.
 
 For as long as the workbench folder was not itself a repository, that gap
-never showed, because each tool tripped over "this is not a repository" and
-stopped. That was a coincidence, not a guard. The moment the workbench
-became a repository, nothing tripped, and each tool started doing its job
-on a folder that holds the plan and none of the code. Because each one
-reports the reassuring case on that path, the result was not an error. It
-was a run loop that reports items done and commits them with no code in the
-commit, a cleanup check that reports "nothing to clean" without seeing any
-code, an evaluator that scores a diff with no code in it, and a restore
-command that makes a second copy of a repo you already have.
+could not show, because each tool tripped over "this is not a repository"
+and stopped. That was a coincidence, not a guard. Now that the workbench is
+a repository, nothing trips, and each tool is free to do its job on a folder
+that holds the plan and none of the code. Because each one reports the
+reassuring case on that path, none of the following would surface as an
+error. Nothing prevents a run loop from reporting items done and committing
+them with no code in the commit. Nothing prevents the cleanup check from
+reporting "nothing to clean" without seeing any code. Nothing prevents the
+evaluator from scoring a diff with no code in it. Nothing prevents the
+restore command from making a second copy of a repository you already have.
 
 While auditing those we found a fifth thing, older and unrelated to
 workbenches: the reminder that is supposed to tell an agent which tests to
@@ -51,9 +58,10 @@ that trails alongside Midnight and Dawn.
 
 #### 0. The reminder that never spoke
 
-When an agent opens a new phase of work, InDusk is supposed to remind it
-which tests it promised to write before touching code. We built that
-reminder. It has never once been heard. It writes its message to a channel
+This one is not a scenario. When an agent opens a new phase of work,
+InDusk is supposed to remind it which tests it promised to write before
+touching code. We built that reminder. It has never once been heard, on
+any project, in any session. It writes its message to a channel
 the model cannot see, and the one line that would have delivered it was
 deleted by an automated lint cleanup. Since August the rule itself is
 enforced, so agents are now refused at the gate for tests nobody told them
@@ -88,15 +96,18 @@ Enforcement of the underlying rule went on 2026-08-12 when Gate A moved from
 a model with nobody watching ([reference](../../../apps/docs/src/reference/cli/run.md)).
 It takes one folder as its whole world: it reads the plan there, edits code
 there, and after each checklist item commits there. In a workbench the plan
-is in that folder and the code is not. So the model reads the plan fine
-and cannot touch the code: it is either outside the folder it is allowed to
-edit, so every edit is refused, or inside a folder the workbench's git
-ignores, so edits land but are never committed. The loop does not check
-that code exists. It runs the gates on whatever changed, commits it to the
-workbench, queues the commit for scoring, and reports the item done. "Done"
-here means the gates passed and a commit was made, which in one layout can
-only ever be the checkbox, and in the other is the checkbox with the real
-work left uncommitted in the other repository.
+is in that folder and the code is not.
+
+Nobody has run a plan in a workbench and watched what happens. What the
+audit established is the code path, and that nothing stops it. The model
+would read the plan fine and could not touch the code: it is either outside
+the folder it is allowed to edit, so every edit is refused, or inside a
+folder the workbench's git ignores, so edits land but are never committed.
+The loop does not check that code exists. It would run the gates on
+whatever changed, commit it to the workbench, queue the commit for scoring,
+and report the item done. Whether a refused model then ticks the box anyway
+is up to the model; nothing prevents it, and a system that advances on a
+ticked box invites it.
 
 The only thing that used to stop this was the auto-commit feature's own
 check, "do not commit if this folder is not a repository." Workbench folders
@@ -124,11 +135,13 @@ refusal `run` lacks. No commit, no pending-eval record, before the refusal.
 #### 2. The cleanup ritual reports "nothing to clean" without seeing any code
 
 The cleanup ritual asks git which files a plan changed and flags any that
-grew too large. At a workbench folder, git's answer is the plan documents,
-because the code is in another repository. So cleanup inspects the plan,
-finds nothing oversized, and reports the ritual complete and clean. It used
-to stop here because the folder was not a repository; `verify` had the
-identical bug and was fixed to refuse on purpose; cleanup was not.
+grew too large. At a workbench folder, git's answer would be the plan
+documents, because the code is in another repository. So cleanup would
+inspect the plan, find nothing oversized, and report the ritual complete
+and clean. Nothing prevents this; it used to be prevented only because the
+folder was not a repository. `verify` had the identical gap and was fixed
+to refuse on purpose; cleanup was not. We have not seen a cleanup run
+report clean this way, and we would not know if one had.
 
 We will give cleanup the same deliberate refusal.
 
@@ -149,11 +162,14 @@ and root files, never code. Returns `[]` as checked-and-clean. Refuse when
 Every commit is scored by a background evaluator that reads the commit's
 diff. To find which repository to read, it walks up from the session's
 folder to the nearest one. In a workbench the nearest repository is now the
-workbench itself, whose history is plan documents, so a commit made from
-there is scored against a diff with no code in it. The refusal written for
-this situation, "I found more than one repository and will not pick," is
-now unreachable, and the helper that would list the candidates has never
-been called.
+workbench itself, whose history is plan documents. Commits of plan
+documents made from the workbench root do fire the evaluator today and get
+scored against a code rubric; that part is observed. What nothing prevents
+is the worse case: a commit of real code, made from a session sitting at
+the root, being scored against the workbench's history, a diff with no
+code in it. The refusal written for this situation, "I found more than one
+repository and will not pick," is now unreachable, and the helper that
+would list the candidates has never been called.
 
 We will make the evaluator find the declared code repository at its declared
 location when there is exactly one, and refuse by name when there are
@@ -180,10 +196,11 @@ a git-initialized workbench root, which is why the net could not see this.
 `restore` is the command that turns a freshly cloned workbench into a
 working one by fetching each declared repo. When a repo is declared at a
 custom path, every other command looks for it there, but restore clones it
-at the default location instead. The result on a machine that already has
-the repo: `update` reports it missing, tells you to run restore, and
-restore silently clones a second copy beside the first and links to the
-wrong one.
+at the default location instead. Nothing prevents this sequence on a
+machine that already has the repo: `update` reports it missing, tells you
+to run restore, and restore silently clones a second copy beside the first
+and links to the wrong one. We have not seen it happen; the audit traced
+the path.
 
 We will make restore clone where everything else looks, and print the path
 it actually used.
@@ -204,10 +221,11 @@ Idempotent on a declared-`path` repo already present.
 #### 5. Three scripts still look for repos by name
 
 The worktree helper scripts were fixed in 1.42.0 to find a repo by its
-declared path. Three sibling scripts that do the same job were not, so
-creating or refreshing a worktree fails outright on a workbench with a
-custom path, and refresh and preflight cannot see worktrees that live where
-the config says they live.
+declared path. Three sibling scripts that do the same job were not, so on
+a workbench with a custom path, creating or refreshing a worktree would
+fail outright, and refresh and preflight would not see worktrees that live
+where the config says they live. Found by reading; no such workbench has
+been exercised through these scripts yet.
 
 <details>
 <summary>Technical</summary>
