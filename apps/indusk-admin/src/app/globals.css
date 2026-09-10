@@ -18,3 +18,17 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
 }
+
+/* <details> blocks in plan documents: a plain-language narrative with the
+   technical detail folded under a "Technical" summary. Typography has no
+   opinion on these, so give the summary an affordance and the block room. */
+.prose details {
+  margin: 1em 0;
+  border-left: 2px solid #e5e7eb;
+  padding-left: 0.75em;
+}
+.prose summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #6b7280;
+}

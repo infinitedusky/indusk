@@ -1,6 +1,8 @@
 import { isValidElement, type ReactNode } from "react";
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { Mermaid } from "@/components/Mermaid";
 import {
@@ -33,9 +35,16 @@ interface MarkdownProps {
  * GFM (GitHub Flavored Markdown) is enabled via `remark-gfm` so pipe-tables,
  * task lists, strikethrough, and autolinks all render correctly.
  *
+ * Inline HTML is allowed, sanitized. Plan documents use `<details>` /
+ * `<summary>` to fold technical detail under a plain-language narrative, and
+ * react-markdown drops raw HTML by default — the tags rendered as literal
+ * text. `rehype-raw` parses the HTML into the element tree and
+ * `rehype-sanitize` (GitHub's default schema, which admits details/summary
+ * and `language-*` code classes) strips everything unsafe. Still no
+ * `dangerouslySetInnerHTML` anywhere.
+ *
  * Picked `react-markdown` over `marked` because it returns a React element
- * tree (XSS-safe by construction; no `dangerouslySetInnerHTML`) and is
- * idiomatic for Next.js server components. To swap libraries later, change
+ * tree and is idiomatic for Next.js server components. To swap libraries later, change
  * only this file — every callsite imports `<Markdown>`, not `<ReactMarkdown>`.
  */
 function isMermaidCodeElement(node: ReactNode): boolean {
@@ -77,7 +86,11 @@ const components: Components = {
 export function Markdown({ children, className = "" }: MarkdownProps) {
   return (
     <div className={`prose prose-sm max-w-none ${className}`.trim()}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, defaultSchema]]}
+        components={components}
+      >
         {children}
       </ReactMarkdown>
     </div>
