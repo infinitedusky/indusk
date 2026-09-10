@@ -223,20 +223,21 @@ its own assertion.
 - [x] `src/__tests__/hook-paths.test.ts`: add the git-initialized workbench root fixture (from the helper) so the regression net sees this class from now on — three cases: root cwd with one repo at a path, cwd inside the nested repo, two repos
 - [x] Resync the installed copies: `.claude/hooks/_hook-paths.js`, `.claude/hooks/eval-trigger.js`
 - [x] Discovered: both hooks' comments still asserted "workbench root, NOT a git repo" (`_hook-paths.js` header, `eval-trigger.js` change-id comment) — rewritten as history here, retiring those two entries from Build Phase 7's code-comment list; the `oversized.ts` comment was retired in Build Phase 3
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (`_hook-paths.js`: the resolver keeps one job, resolve two paths, with the discard rule and refusal composed in place and two small named helpers, `usableRelPath` and `samePath`; `eval-trigger.js`: the refusal branch sits in the existing no-change-id block; the test reaches the helper by dynamic import, as its siblings do. All rule sets readable.)
 
 #### Build Phase 4 Verification
 
-- [ ] A7 and A8 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/eval-trigger-versioned-workbench.test.ts src/__tests__/eval-trigger-workbench-mode.test.ts src/__tests__/hook-paths.test.ts` — expected: all pass
-- [ ] `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hooks-load-in-cjs-consumer.test.ts src/__tests__/hook-shared-modules.test.ts` — expected: pass (the `_`-module contract holds)
+- [x] A7 and A8 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/eval-trigger-versioned-workbench.test.ts src/__tests__/eval-trigger-workbench-mode.test.ts src/__tests__/hook-paths.test.ts` — expected: all pass (2026-09-10: 3 files, 15 passed)
+- [x] `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hooks-load-in-cjs-consumer.test.ts src/__tests__/hook-shared-modules.test.ts` — expected: pass (the `_`-module contract holds) (2 passed, 2 skipped — the cjs-consumer file skips without a built `dist/`)
 
 #### Build Phase 4 Context
 
-- [ ] Update the eval-rail Known Gotchas entry: "In a workbench the hook never attributes a commit to the workbench repo; one declared repo resolves at its declared path, several refuse and say so in the session."
+- [x] Update the eval-rail Known Gotchas entry: "In a workbench the hook never attributes a commit to the workbench repo; one declared repo resolves at its declared path, several refuse and say so in the session."
 
 #### Build Phase 4 Document
 
 - [ ] `apps/docs/src/guide/rail-check.md`: the workbench attribution rule and what a refusal looks like
-- [ ] `apps/docs/src/changelog.md` Unreleased entry
+- [x] `apps/docs/src/changelog.md` Unreleased entry
 
 ### Build Phase 5: `workbench restore` clones where everything else looks
 
