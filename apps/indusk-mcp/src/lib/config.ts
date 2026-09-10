@@ -122,6 +122,14 @@ export interface InduskConfig {
 		scopes?: CleanupScope[];
 	};
 	/**
+	 * Paper publishing — destinations outside the repo that `indusk papers
+	 * publish` writes to. Ensured as an empty list on update; never clobbered.
+	 * See `.indusk/planning/writing-skill/adr.md`.
+	 */
+	papers?: {
+		destinations: PaperDestination[];
+	};
+	/**
 	 * Multi-agent bulletin configuration (`.indusk/current.md`).
 	 *
 	 * `stale_ttl_minutes` is the DISPLAY TTL — sections older than this are
@@ -388,6 +396,23 @@ export interface CleanupScope {
 	include: string;
 	max_file_loc?: number;
 	test_sibling?: boolean;
+}
+
+/**
+ * One place a paper can be published to. Exactly one of `path` (absolute,
+ * `~`-prefixed, or relative to the project root) or `repo` (a name from
+ * `worktree.repos[]`, valid only inside a workbench) says where it is.
+ */
+export interface PaperDestination {
+	name: string;
+	path?: string;
+	repo?: string;
+	/** Directory pages land in, relative to the destination root. */
+	dir: string;
+	/** Index page regenerated between markers, relative to the destination root. */
+	index: string;
+	/** Frontmatter key map, paper key → destination key. Default: title and description pass through. */
+	frontmatter?: Record<string, string>;
 }
 
 /** Resolved cleanup config — global cap plus a normalized scope list. */
