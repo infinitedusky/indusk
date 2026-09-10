@@ -149,9 +149,16 @@ with no code in it — and reported a scorecard like any other.
 
 The rule now (`workbench-trust-fixes`):
 
-- **The workbench repo is never the code repo.** If the git root found for the
-  session's cwd is the workbench itself, the hook discards it and resolves from
-  the declaration instead.
+- **A commit is attributed to the repository that received it.** The workbench
+  repo is never *assumed* to be the code repo — but it receives commits too: a
+  checkoff, a brief, a plan document. When the git root found for the session's
+  cwd is the workbench itself and one repo is declared, the hook cannot tell
+  from the event which repository the commit went to (the event carries the
+  session's cwd, not the subprocess's), so it attributes to **whichever of the
+  two has the newer HEAD commit**. A tie, or a declared repo not yet on disk,
+  prefers the code repo — the pre-1.37 behavior. The choice is written to
+  `system.log` on the `statePath:/gitPath:` line: `attributed to the workbench
+  (newer HEAD than the declared repo)`.
 - **One declared repo resolves at its declared location** — the `path` in
   `worktree.repos[]`, else the name. (It used to look the repo up by name at the
   root, which found nothing for any repo declared elsewhere, and logged that
