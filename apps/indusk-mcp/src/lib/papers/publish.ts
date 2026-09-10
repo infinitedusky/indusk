@@ -11,11 +11,11 @@ import { dirname, join, relative } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "../config.js";
 import { git } from "../git.js";
-import { paperContentHash } from "../plan-parser.js";
 import { DestinationError, type ResolvedDestination, resolveDestination } from "./destination.js";
 import { collectIndexEntries, IndexError, regenerateIndex } from "./index-page.js";
 import { withProvenance } from "./provenance.js";
 import { renderForDestination, type SiblingPaths, slugForTitle } from "./render.js";
+import { paperContentHash } from "./summary.js";
 
 /**
  * `indusk papers publish` — the plan copy is the source, the destination is
