@@ -13,16 +13,22 @@ Five weeks ago we made the workbench a real git repository so that a team
 could share one. That was the right change. It also quietly broke four
 safety mechanisms, and none of them told us.
 
-Each of those mechanisms had been asking "is this directory a git repo?"
-when what it actually needed to know was "is this where the code lives?"
-For as long as the workbench root was not a repo, the two questions had the
-same answer, so the shortcut held. The moment the root became a repo, every
-shortcut flipped to the wrong answer at once. And because each tool reports
-the reassuring case on its wrong path, the result was not an error. It was
-a run loop that commits plan documents and calls it code, a cleanup check
-that reports "nothing to clean" without looking at any code, an evaluator
-that grades the wrong repository, and a restore command that makes a second
-copy of a repo you already have.
+A workbench keeps the plan in one folder and the code in a separate
+repository next to it. Every one of the four tools was built when plan and
+code always lived in the same repository, so each takes one folder and
+treats it as the whole world: read the plan here, look at the code here,
+commit here. Nobody taught them the code might be somewhere else.
+
+For as long as the workbench folder was not itself a repository, that gap
+never showed, because each tool tripped over "this is not a repository" and
+stopped. That was a coincidence, not a guard. The moment the workbench
+became a repository, nothing tripped, and each tool started doing its job
+on a folder that holds the plan and none of the code. Because each one
+reports the reassuring case on that path, the result was not an error. It
+was a run loop that ticks the checkboxes and commits them as if they were
+code, a cleanup check that reports "nothing to clean" without seeing any
+code, an evaluator that scores a diff with no code in it, and a restore
+command that makes a second copy of a repo you already have.
 
 While auditing those we found a fifth thing, older and unrelated to
 workbenches: the reminder that is supposed to tell an agent which tests to
@@ -78,16 +84,24 @@ Enforcement of the underlying rule went on 2026-08-12 when Gate A moved from
 
 #### 1. `indusk run` commits the plan and calls it code
 
-The unattended run loop was built to refuse to run anywhere it cannot reach
-the code. Its only guard was "if this is not a git repo, disarm." A
-versioned workbench is a git repo, so the guard never fires, the loop runs
-with the workbench root as its whole world, every edit to real code is
-refused as an escape, and the loop commits checkbox ticks to the workbench
-and reports green per-item commits. It cannot do the work and it says it
-did.
+`indusk run` is the unattended loop that executes a plan's phases through
+a model with nobody watching ([reference](../../../apps/docs/src/reference/cli/run.md)).
+It takes one folder as its whole world: it reads the plan there, edits code
+there, and after each checklist item commits there. In a workbench the plan
+is in that folder and the code is not. So the loop reads the plan fine,
+cannot touch the code (it is outside the folder it is allowed to edit, or
+inside one the workbench's git ignores), ticks the checkboxes anyway,
+commits those to the workbench, queues the commit for evaluation, and prints
+every item green. Commits that contain plan documents and no code, reported
+as success.
 
-We will make it refuse at the door, naming the declared repos and where to
-run instead. Making it actually work across the split is the next plan.
+The only thing that used to stop this was the auto-commit feature's own
+check, "do not commit if this folder is not a repository." Workbench folders
+were not repositories, so the loop happened to stop there. Now they are.
+
+We will make the loop refuse at the door when its folder is a workbench,
+naming the declared repos and where to run instead. Teaching it to work
+across the two locations is the next plan.
 
 <details>
 <summary>Technical</summary>
@@ -106,14 +120,14 @@ refusal `run` lacks. No commit, no pending-eval record, before the refusal.
 
 #### 2. The cleanup ritual reports "nothing to clean" without seeing any code
 
-The cleanup ritual looks at every file a plan changed and flags the ones
-that grew too large. At a workbench root, the only files it can see are the
-plan documents, because the code lives in repos the workbench ignores. So
-it inspects the plan, finds nothing oversized, and reports the ritual
-complete and clean. `verify` had the identical bug and was fixed to refuse;
-cleanup was not.
+The cleanup ritual asks git which files a plan changed and flags any that
+grew too large. At a workbench folder, git's answer is the plan documents,
+because the code is in another repository. So cleanup inspects the plan,
+finds nothing oversized, and reports the ritual complete and clean. It used
+to stop here because the folder was not a repository; `verify` had the
+identical bug and was fixed to refuse on purpose; cleanup was not.
 
-We will give cleanup the same maintained refusal.
+We will give cleanup the same deliberate refusal.
 
 <details>
 <summary>Technical</summary>
@@ -130,18 +144,18 @@ and root files, never code. Returns `[]` as checked-and-clean. Refuse when
 #### 3. The evaluator grades the wrong repository
 
 Every commit is scored by a background evaluator that reads the commit's
-diff. To find the diff it walks up from the session's directory to the
-nearest git repo. In a versioned workbench, the nearest repo is the
-workbench itself, so a commit made from the workbench root is scored
-against the workbench's history, which contains plan documents and no
-code. The refusal written for this case, "I found more than one repo and
-cannot pick," is dead code, and the helper that would name the candidates
-has never been called.
+diff. To find which repository to read, it walks up from the session's
+folder to the nearest one. In a workbench the nearest repository is now the
+workbench itself, whose history is plan documents, so a commit made from
+there is scored against a diff with no code in it. The refusal written for
+this situation, "I found more than one repository and will not pick," is
+now unreachable, and the helper that would list the candidates has never
+been called.
 
-We will make the hook find the declared repo at its declared location when
-there is one, and refuse by name when there are several or when the only
-repo it can find is the workbench itself. The refusal will be visible in
-the session, not only in a log file.
+We will make the evaluator find the declared code repository at its declared
+location when there is exactly one, and refuse by name when there are
+several or when the only repository it can find is the workbench. The
+refusal will be visible in the session, not only in a log file.
 
 <details>
 <summary>Technical</summary>
