@@ -7,7 +7,9 @@ import {
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
 import {
+  type PaperSummary,
   type PlanDeclarations,
+  parsePlan,
   readPlanDeclarations,
 } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import {
@@ -71,6 +73,15 @@ export interface RetroData {
   content: string;
 }
 
+/**
+ * A paper (a document declaring `kind: paper`) as the UI renders it: the
+ * shared parser's summary — status, and staleness derived from the content
+ * hash — plus the markdown body. Never re-parsed here; `parsePlan` owns it.
+ */
+export interface PaperEntry extends PaperSummary {
+  content: string;
+}
+
 export interface Plan {
   /** Folder name (kebab-case) under `.indusk/planning/` or `.indusk/planning/archive/`. */
   name: string;
@@ -85,6 +96,8 @@ export interface Plan {
   impl?: ImplData;
   falsification?: FalsificationData;
   retrospective?: RetroData;
+  /** Every `kind: paper` document, in filename order, with its body. Absent when there are none. */
+  papers?: PaperEntry[];
   /** True when ANY document in the plan failed to parse (malformed YAML frontmatter). */
   malformed?: boolean;
   /**
@@ -228,16 +241,32 @@ async function readPlanFolder(
     }
   }
 
+  // Papers come from the shared parser (status vocabulary, derived staleness)
+  // with the body read once here for rendering.
+  const parsed = parsePlan(planDir);
+  const papers: PaperEntry[] | undefined = parsed.papers
+    ? await Promise.all(
+        parsed.papers.map(async (p) => ({
+          ...p,
+          content: matter(await readFile(join(planDir, p.file), "utf-8"))
+            .content,
+        })),
+      )
+    : undefined;
+
   const status =
     (implData?.frontmatter.status as string | undefined) ??
     (brief !== null && !isMalformed(brief)
       ? (brief.frontmatter.status as string | undefined)
       : undefined) ??
+    // A papers-only plan reports the parser's paper-stage status rather than unknown.
+    (parsed.stage === "paper" ? parsed.stageStatus : undefined) ??
     "unknown";
 
   return {
     name,
     status,
+    ...(papers ? { papers } : {}),
     archived,
     research:
       research !== null && !isMalformed(research) ? research : undefined,

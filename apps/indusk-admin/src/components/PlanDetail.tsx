@@ -2,7 +2,12 @@ import { FalsificationSection } from "@/components/FalsificationSection";
 import { Markdown } from "@/components/Markdown";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { Badge } from "@/components/ui/Badge";
-import { stateToBadge, statusToBadge } from "@/components/ui/badge-variant";
+import {
+  paperStatusLabel,
+  paperStatusToBadge,
+  stateToBadge,
+  statusToBadge,
+} from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
 import {
@@ -135,6 +140,10 @@ export function PlanDetail({
         </CollapsibleSection>
       )}
 
+      {plan.papers && plan.papers.length > 0 && (
+        <PapersSection planName={plan.name} papers={plan.papers} />
+      )}
+
       {plan.impl && <ImplSections plan={plan} />}
       {!plan.impl && hasAnyDocument && (
         <FalsificationSection plan={plan} phase={null} />
@@ -233,6 +242,55 @@ function BriefSection({
       >
         <Markdown>{content}</Markdown>
       </CollapsibleSection>
+    </section>
+  );
+}
+
+/**
+ * Papers — one collapsible per `kind: paper` document, its status badge
+ * beside the title. The label `published (stale)` is derived by the shared
+ * parser from the content hash, never stored; a papers-only plan renders this
+ * section and nothing else.
+ */
+function PapersSection({
+  planName,
+  papers,
+}: {
+  planName: string;
+  papers: NonNullable<Plan["papers"]>;
+}) {
+  return (
+    <section className="flex flex-col gap-2" data-testid="papers-section">
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        Papers
+      </h2>
+      {papers.map((paper) => {
+        const label = paperStatusLabel(paper.status, paper.stale);
+        return (
+          <div
+            key={paper.file}
+            className="flex flex-col gap-1"
+            data-testid={`paper-${paper.file}`}
+          >
+            <div className="flex items-center gap-2">
+              <Badge variant={paperStatusToBadge(paper.status, paper.stale)}>
+                {label}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {paper.file}
+              </span>
+            </div>
+            <CollapsibleSection
+              title={paper.title}
+              defaultOpen={false}
+              persistKey={`plan:${planName}:paper:${paper.file}`}
+              copyMarkdown={sectionMarkdown(paper.title, paper.content ?? "")}
+            >
+              <Markdown>{paper.content ?? ""}</Markdown>
+            </CollapsibleSection>
+          </div>
+        );
+      })}
     </section>
   );
 }

@@ -32,9 +32,9 @@ import { PlanDetail } from "./PlanDetail";
  * `published (stale)` string. A papers-only plan (no lifecycle documents)
  * renders that section and nothing else, without an error.
  *
- * Authored red at Test Phase 1: `Plan` has no `papers` field and `PlanDetail`
- * renders no such section, so the cast below is the only way to hand it one
- * today. The cast goes away when Build Phase 4 lands the field.
+ * Authored red at Test Phase 1 through an `as unknown as Plan` cast, because
+ * `Plan` had no `papers` field; Build Phase 4 landed the field and the cast
+ * left with it.
  */
 
 function papersOnlyPlan(): Plan {
@@ -48,15 +48,17 @@ function papersOnlyPlan(): Plan {
         title: "The Grift",
         status: "published",
         stale: true,
+        content: "# The Grift\n\nThere is real skill here.\n",
       },
       {
         file: "paper-2.md",
         title: "The Landscape",
         status: "draft",
         stale: false,
+        content: "# The Landscape\n",
       },
     ],
-  } as unknown as Plan;
+  };
 }
 
 describe("A5 — a plan's papers render with title and status", () => {

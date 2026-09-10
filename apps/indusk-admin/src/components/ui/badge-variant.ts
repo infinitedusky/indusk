@@ -39,3 +39,24 @@ export function stateToBadge(state: string): BadgeVariant {
   }
   return "neutral";
 }
+
+/**
+ * A paper's badge. `published (stale)` is the derived label for a published
+ * paper whose plan copy has changed since; it is a signal a publish is owed,
+ * so it reads as written (in hand, not final) rather than passing.
+ */
+export function paperStatusToBadge(
+  status: string,
+  stale: boolean,
+): BadgeVariant {
+  if (status === "malformed") return "blocked";
+  if (status === "draft") return "planned";
+  if (status === "accepted") return "writable";
+  if (status === "published") return stale ? "written" : "passing";
+  return "neutral";
+}
+
+/** The label beside a paper: its status, or `published (stale)` when derived stale. */
+export function paperStatusLabel(status: string, stale: boolean): string {
+  return status === "published" && stale ? "published (stale)" : status;
+}
