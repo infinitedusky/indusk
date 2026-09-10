@@ -280,16 +280,7 @@ export function resolveStateAndGitPaths(cwd) {
 		const workbenchRoot = gitPath;
 		const codeRepo = findGitPathFromWorkbenchConfig(statePath);
 		if (declaredReposAt(statePath).length === 1) {
-			if (!codeRepo) {
-				gitPath = workbenchRoot;
-				attribution = "the workbench (the one declared repo is not on disk)";
-			} else if (headCommitTime(workbenchRoot) > headCommitTime(codeRepo)) {
-				gitPath = workbenchRoot;
-				attribution = "the workbench (newer HEAD than the declared repo)";
-			} else {
-				gitPath = codeRepo;
-				attribution = "the declared repo (newer or equal HEAD)";
-			}
+			({ gitPath, attribution } = attributeRootCommit(workbenchRoot, codeRepo));
 		} else {
 			gitPath = null;
 		}
@@ -314,6 +305,33 @@ export function resolveStateAndGitPaths(cwd) {
 		}
 	}
 	return { statePath, gitPath, refusal, attribution };
+}
+
+/**
+ * Which repository received a commit made from a session sitting at the
+ * workbench root, when exactly one code repo is declared: the one whose HEAD
+ * is newer. A tie, or a code repo not yet on disk, goes to the code repo — the
+ * 1.31.10 behaviour, and the safer error (a plan-document commit scored as
+ * code is odd; a code commit never scored is a gap in the rail).
+ *
+ * @param {string} workbenchRoot
+ * @param {string | null} codeRepo
+ * @returns {{ gitPath: string, attribution: string }}
+ */
+function attributeRootCommit(workbenchRoot, codeRepo) {
+	if (!codeRepo) {
+		return {
+			gitPath: workbenchRoot,
+			attribution: "the workbench (the one declared repo is not on disk)",
+		};
+	}
+	if (headCommitTime(workbenchRoot) > headCommitTime(codeRepo)) {
+		return {
+			gitPath: workbenchRoot,
+			attribution: "the workbench (newer HEAD than the declared repo)",
+		};
+	}
+	return { gitPath: codeRepo, attribution: "the declared repo (newer or equal HEAD)" };
 }
 
 /** HEAD's committer timestamp (seconds), or -1 when the repo has no commits or is not one. */
