@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **Tests: a git-initialized workbench fixture** (`src/__tests__/helpers/versioned-workbench.ts`). The regression net can now see the versioned-workbench shape — root as a git repo, repos declared with `path` / `worktrees`, nested or sibling layout. Every finding in `workbench-trust-fixes` appears only in that shape, and no test could reproduce it before. The hook runner (`helpers/hook-runner.ts`) now captures stdout, the one PostToolUse channel that reaches the model.
+
 ## [1.43.0] — 2026-09-08
 
 ### Added
