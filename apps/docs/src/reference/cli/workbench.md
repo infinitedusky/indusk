@@ -46,6 +46,15 @@ function rather than keeping its own simpler version:
 
 ### It is idempotent
 
+A repo is materialized at its **declared location** — the `path` in
+`worktree.repos[]`, else its name — which is where every other command
+(`status`, health, doppler, the `update` nudge) looks for it. Restore used to
+clone at the name regardless of `path`; on a machine that already had the repo
+at its declared path, `update` reported it missing, told you to run restore,
+and restore made a second copy beside the first. Now a repo present at its
+declared path is reported present and nothing is created; an absent one is
+cloned at that path, and the path printed is the path used.
+
 Re-running reports each repo as already present and writes nothing. Safe to run
 whenever you are unsure whether a workbench is complete.
 
