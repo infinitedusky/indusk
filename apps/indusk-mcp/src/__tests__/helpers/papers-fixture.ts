@@ -15,7 +15,10 @@ import { git } from "./cli.js";
  * fixture has to look like a real project and a real site, not a mock.
  */
 
-export const INDEX_MARKERS = ["<!-- papers:start -->", "<!-- papers:end -->"] as const;
+// One definition: the marker pair the publish step rewrites between.
+import { INDEX_MARKERS } from "../../lib/papers/index-page.js";
+
+export { INDEX_MARKERS };
 
 export interface DocSpec {
 	frontmatter: Record<string, unknown>;
