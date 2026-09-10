@@ -1,8 +1,14 @@
 ---
 title: "The pernicious grift"
 date: 2026-09-08
-status: accepted
 kind: paper
+status: published
+published:
+  destination: blog
+  path: writing/the-pernicious-grift.md
+  commit: "c12faa3"
+  source_commit: "1ad363e1"
+  hash: sha256:e4867e788a2b1908e1a8da5a778beaa93ecd17421a0c9aa3f64f39d719d1b33e
 ---
 
 # The pernicious grift
