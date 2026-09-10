@@ -243,6 +243,7 @@ its own assertion.
 
 - [x] `src/bin/commands/workbench.ts` `restoreOne`: `const target = join(siblingParent, repoDir(repo))`; `mkdirSync(dirname(target), { recursive: true })` before the clone; the `cloned-unlinked` status line prints `target`, not `${siblingParent}/${repo.name}` (the `cloned` line printed only the sibling parent — fixed to the same path)
 - [x] Re-read `isNested` against the new `target` and confirm the nested layout (`repos_root: "."`) still detects correctly — with `siblingParent === workbenchRoot` the new target *is* `join(workbenchRoot, repoDir(repo))`, so `isNested` is true by construction there; A9's nested fixture exercises exactly this and reports `present in the workbench at code/alpha/`
+- [x] Shape (`apps/indusk-mcp/src/bin/commands/workbench.ts`) — name the clone target: `join(siblingParent, repoDir(repo))` is written three times (restoreOne + two restoreLine cases); one `cloneTarget(repo, siblingParent)` says what it is and cannot drift. Rule: typescript — a repeated expression that means one thing gets one name. **Fixed in this phase**: `cloneTarget` extracted, three call sites, A9 and the restore suite green after. All rule sets readable.
 
 #### Build Phase 5 Verification
 
@@ -251,12 +252,12 @@ its own assertion.
 
 #### Build Phase 5 Context
 
-- [ ] Update the `indusk workbench` Conventions entry: restore materializes each repo at `repoDir(repo)` and is idempotent under a declared `path`
+- [x] Update the `indusk workbench` Conventions entry: restore materializes each repo at `repoDir(repo)` and is idempotent under a declared `path`
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/cli/workbench.md` restore section: declared `path` honored; idempotent
-- [ ] `apps/docs/src/changelog.md` Unreleased entry
+- [x] `apps/docs/src/reference/cli/workbench.md` restore section: declared `path` honored; idempotent
+- [x] `apps/docs/src/changelog.md` Unreleased entry
 
 ### Build Phase 6: Layout parity and the silent degradations
 
