@@ -1,7 +1,7 @@
 ---
 title: "Workbench Trust Fixes — Implementation"
 date: 2026-09-10
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -86,6 +86,7 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A21 | In CLI mode (`--source`) at a multi-repo root, the eval hook logs the refusal and prints no JSON envelope to the terminal | Phase 0 | Phase 8 | passing | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
 | A22 | `workbench restore` on a sibling layout with a multi-segment declared `path` clones, links the trunk (creating the link's parent), reports it, and is idempotent — never crashes | Phase 0 | Phase 8 | passing | apps/indusk-mcp/src/__tests__/workbench-restore-declared-path.test.ts |
 | A23 | `refresh --all` never treats a declared `worktrees` dir itself, or the first segment of a declared repo `path`, as a worktree candidate | Phase 0 | Phase 8 | passing | apps/indusk-mcp/src/__tests__/wt-declared-path-parity.test.ts |
+| A24 | Exactly one phase-and-checkbox-item walk exists under `hooks/` (`_impl-phases.js`), pinned by count; `check-gates.js` and `gate-reminder.js` both import it rather than carrying a copy | Phase 0 | Phase 9 | planned | apps/indusk-mcp/src/__tests__/hook-shared-modules.test.ts |
 
 ## Checklist
 
@@ -340,6 +341,32 @@ its own assertion.
 #### Phase 8 Document
 - [x] `apps/docs/src/guide/rail-check.md`: the attribution rule's one-repo bullet says "newer HEAD wins", with the plan-document commit as the example
 - [x] `apps/docs/src/changelog.md` Unreleased: the five falsification fixes, one entry
+
+### Phase 9: Cleanup — the copies this plan's files sit beside
+
+**Goal**: decompose what this plan grew into shared units where the rule of three (or this repo's stricter rule for hook-side parsers: extract at two, because divergence is silent) says so, per the typescript and testing extensions — the idiom here is "extract a module", there being no framework extension on. Each item is a concrete extraction or a reasoned leave-as-is; the one new hook-side module gets a count-pinned trajectory row. The oversized scan flagged `workbench.ts` (657), `workbench-helpers.sh` (513), `eval-trigger.js` (482) and `worktree.ts` (418) against a 400-line cap; every one predates this plan and took a small delta from it, and none is split here — the number is attention, not a gate.
+
+- [ ] Extract `src/__tests__/helpers/test-git.ts` — `git(cwd, args, env?)` (throws on non-zero), `initRepoWithCommit(dir, label)`, `headOf(dir)` — out of `helpers/versioned-workbench.ts`, and migrate the three copies that do the same job to it: `helpers/worktree-fixture.ts`'s private `git()`, `hook-paths.test.ts`'s `gitInit`, `eval-trigger-workbench-mode.test.ts`'s `gitInit`. Basis: the rule of three (the suite carries fourteen private git runners; this plan added one, and these four share one contract — throw on failure, init with a README commit). The ten others return `{ code, stdout }` or swallow failures and are a different contract; leave them
+- [ ] Migrate `eval-trigger-workbench-mode.test.ts` from its private `runHook` / `buildHookEvent` to `helpers/hook-runner.ts`, which this plan extended with stdout, `cwd`, `env` and `args` precisely so that no eval test needs its own runner. Basis: rule of three (five test files define a `runHook`); this plan's own Test Phase 1 item named the migration and deferred it. The other three private runners (`claude-md-budget-hook`, `trajectory-a-prefix-ids`, `rationale-baseline-*`) are outside this plan's files — a follow-on hygiene candidate, not an item here
+- [ ] Extract `hooks/_impl-phases.js` — the fence-masked walk that turns an impl body into phase blocks `{ kind, number, ordinal, name, items: [{ checked, text, gate }] }` (phase heading → gate-kind sections → checkbox items, Forward Intelligence excluded) — from `check-gates.js`, and make `gate-reminder.js` consume it instead of its own copy (whose only difference is dropping `text`). Basis: this repo's standing rule for hook-side parsers, established when `_trajectory-parser.js` was extracted from the same two-copy state ("the copies had already diverged; a duplicated parser does not announce itself"). Annotate it as the deliberate port of the TS phase/item walk (`impl-parser.ts`'s `getPhaseCompletion` family); register it in `hook-shared-modules.test.ts`'s mirror table; `validate-impl-structure.js`'s narrower test-phase/Verification walk is a different question and stays. **Behavior-preserving**: check-gates' scan is the source of truth for the extraction, and its suite is the parity check
+- [ ] Add A24's pin to `hook-shared-modules.test.ts`: the set of hook modules matching the checkbox-item pattern `^-\s+\[([ x])\]` is exactly `["_impl-phases.js"]`, the way `definers()` already pins the trajectory-row parser to `["_trajectory-parser.js"]`
+- [ ] Cross-plan note: add to `.indusk/planning/dawn-workbench-execution/brief.md` Context that three refusal sites now compose the same "this is a workbench, its code lives in X" message — `run.ts`, `cleanup/oversized.ts`, `verify/roots.ts` — and that `resolveExecutionRoots` should absorb all three, with the single-definition pin covering them
+- [ ] (reviewed `src/bin/commands/run.ts`, `src/lib/cleanup/oversized.ts`, `src/lib/verify/roots.ts` — left as-is: the rule of three IS met by their refusal messages, but `dawn-workbench-execution`'s `resolveExecutionRoots` is their designated single home; extracting a refusal helper now would be the abstraction 6.5 replaces a phase later, and this plan's Notes already forbid a second resolver)
+- [ ] (reviewed `src/bin/commands/workbench.ts` at 657 lines — left as-is: this plan added `cloneTarget` and eleven lines to `restoreOne`; the file is four subcommands that predate it, and splitting them by subcommand is a hygiene plan of its own, not this plan's output)
+- [ ] (reviewed `extensions/worktree/scripts/lib/workbench-helpers.sh` at 513 lines — left as-is: `_wt_list_worktree_dirs` and `_wt_resolve_target` each scan the root plus declared dirs, but the resolver needs per-entry repo attribution for qualifier filtering; two scans, not three, and the resolver is the `wt` path every caller depends on — recorded the same way in Build Phase 6's Shape)
+- [ ] (reviewed `hooks/eval-trigger.js` at 482 and `src/bin/commands/worktree.ts` at 418 — left as-is: this plan's deltas are a guarded refusal branch, a log field, and an exported reader; the sizes are pre-existing)
+
+#### Phase 9 Verification
+- [ ] A24 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-shared-modules.test.ts src/__tests__/hooks-load-in-cjs-consumer.test.ts` — expected: all pass (red today: `check-gates.js` and `gate-reminder.js` both match)
+- [ ] Hook behavior unchanged after the extraction: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/gate-reminder-speaks.test.ts src/__tests__/hooks-workbench-refactor.test.ts src/__tests__/trajectory-a-prefix-ids.test.ts src/__tests__/rationale-baseline-parity.test.ts src/__tests__/test-phase-*.test.ts src/__tests__/check-gates*.test.ts` — expected: all pass (the check-gates suites are the parity check for the walk)
+- [ ] (no tests flip at this phase for the test-helper migrations — reason: refactor) — the migrated suites pass unchanged: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-paths.test.ts src/__tests__/eval-trigger-workbench-mode.test.ts src/__tests__/worktree-cli.test.ts src/__tests__/worktree-preflight.test.ts src/__tests__/worktree-setup.test.ts` — expected: all pass
+- [ ] Full package suite: `cd apps/indusk-mcp && pnpm test` — expected: green; installed copies resynced (`.claude/hooks/_impl-phases.js` exists byte-equal, `check-gates.js` and `gate-reminder.js` resynced)
+
+#### Phase 9 Context
+- [ ] Update the "Heading/parsing definitions are single-definition on purpose" Known Gotchas entry: `_impl-phases.js` is the one hook-side phase/item walk (mirrors the TS walk), joining `_impl-headings.js` and `_trajectory-parser.js`; note the test-helper module `helpers/test-git.ts` as the one throwing git runner for fixtures
+
+#### Phase 9 Document
+- [ ] `apps/docs/src/changelog.md` Unreleased: one line — hook-side phase/item walk shared by check-gates and gate-reminder; test fixtures share one git runner and one hook runner
 
 ## Files Affected
 
