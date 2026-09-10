@@ -755,6 +755,16 @@ export async function update(projectRoot: string): Promise<void> {
 		);
 	}
 
+	// [Papers — writing-skill] scaffold the papers block idempotently so the
+	// key is always present; the first publish writes the first destination.
+	const { ensurePapersConfig } = await import("../../lib/papers/config.js");
+	const _papersStatus = ensurePapersConfig(projectRoot);
+	if (_papersStatus === "added") {
+		console.info("  add: papers.destinations: [] to .indusk/config.json");
+	} else if (_papersStatus === "already-set") {
+		console.info("  ok: papers.destinations (already set)");
+	}
+
 	// [Decay — indusk-makeover] scaffold sweep + dead-draft keys idempotently.
 	// Presence-keyed; user-customized values never clobbered. Readers default
 	// regardless, so absence is never "disabled".
