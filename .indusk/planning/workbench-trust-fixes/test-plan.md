@@ -1,7 +1,7 @@
 ---
 title: "Workbench Trust Fixes — Test Plan"
 date: 2026-09-10
-status: draft
+status: accepted
 ---
 
 # Workbench Trust Fixes — Test Plan
@@ -42,17 +42,19 @@ never guesses, never reports the happy case.
 
 ### Phase B — trailing
 
+IDs continue the A sequence (the trajectory parser accepts `T`/`A` prefixes only).
+
 | ID | Assertion (user-visible behavior) | Mechanism |
 |----|-----------------------------------|-----------|
-| B1 | `indusk worktree create <slug>` and `worktree refresh <slug>` succeed on a workbench whose repo declares `path`, resolving the trunk where `wt` does. | vitest integration spawning the bash scripts (extends `wt-trunk-routing.test.ts`) |
-| B2 | `worktree refresh --all` and `worktree preflight` see worktrees living in a declared `worktrees/` dir, and preflight excludes a trunk at a declared `path`. | same harness |
-| B3 | The stray-state audit inspects each repo at its declared path; a stray under a declared `path` is reported, not missed. | vitest unit against `stray-state-audit.ts` |
-| B4 | verify's refusal on a nested or sibling layout names a directory that exists. | vitest unit for `resolveVerifyRoots` (its first tests) |
-| B5 | A config declaring `repos[]` without `shape: "workbench"` is treated as workbench-shaped by verify's refusal; it never verifies the wrapper repo. | same |
-| B6 | In a multi-repo workbench, `worktree create <repo> <slug>` applies that repo's config, not the first repo's. | vitest unit against the worktree command's config selection |
-| B7 | A search for "not a git repo" across CLAUDE.md, the skills, and the docs returns only historical records (decisions, lessons, archives, changelog). | vitest grep test scoped like `scm-rip-out-grep.test.ts` |
-| B8 | The docs guide index's hook count matches its own table, and the hook keep/shed record names `workbench-sync.js`. | vitest doc-parity test |
-| B9 | `workbench-mode-rail-integrity` is archived, or re-scoped with a runnable acceptance criterion. | manual: that plan's documents, checked at this plan's close |
+| A10 | `indusk worktree create <slug>` and `worktree refresh <slug>` succeed on a workbench whose repo declares `path`, resolving the trunk where `wt` does. | vitest integration spawning the bash scripts (extends `wt-trunk-routing.test.ts`) |
+| A11 | `worktree refresh --all` and `worktree preflight` see worktrees living in a declared `worktrees/` dir, and preflight excludes a trunk at a declared `path`. | same harness |
+| A12 | The stray-state audit inspects each repo at its declared path; a stray under a declared `path` is reported, not missed. | vitest unit against `stray-state-audit.ts` |
+| A13 | verify's refusal on a nested or sibling layout names a directory that exists. | vitest unit for `resolveVerifyRoots` (its first tests) |
+| A14 | A config declaring `repos[]` without `shape: "workbench"` is treated as workbench-shaped by verify's refusal; it never verifies the wrapper repo. | same |
+| A15 | In a multi-repo workbench, `worktree create <repo> <slug>` applies that repo's config, not the first repo's. | vitest unit against the worktree command's config selection |
+| A16 | A search for "not a git repo" across CLAUDE.md, the skills, and the docs returns only historical records (decisions, lessons, archives, changelog). | vitest grep test scoped like `scm-rip-out-grep.test.ts` |
+| A17 | The docs guide index's hook count matches its own table, and the hook keep/shed record names `workbench-sync.js`. | vitest doc-parity test |
+| A18 | `workbench-mode-rail-integrity` is archived, or re-scoped with a runnable acceptance criterion. | manual: that plan's documents, checked at this plan's close |
 
 ## Untestable Assertions
 
@@ -72,5 +74,5 @@ None. Every finding is reproducible with a temp-directory fixture and real git.
   is the right answer and the hook should find it at `repoDir(repo)`. The
   refusal is for the multi-repo case and for the case where the only git
   root found is the workbench itself.
-- B9 is the one manual row. The rest of Phase B is deliberately mechanical so
+- A18 is the one manual row. The rest of Phase B is deliberately mechanical so
   it can trail alongside Midnight and Dawn 6.5 without attention.

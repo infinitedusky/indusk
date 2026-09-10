@@ -54,7 +54,7 @@ the streams are ordered by trust, not by feature value.
 
 | Plan | Stage | What it delivers |
 |------|-------|------------------|
-| [workbench-trust-fixes](workbench-trust-fixes/brief.md) | brief draft | **Phase A (blocking, small)**: make the gate-reminder advisor actually speak (F9 — first, because it makes every later plan cheaper to execute correctly), then the four tourniquets — `indusk run` entry refusal, cleanup re-guard, eval-attribution guard, restore's destructive clone. **Phase B (trails, non-blocking)**: bash lane parity, record de-contradiction, close/re-scope of workbench-mode-rail-integrity. |
+| [workbench-trust-fixes](workbench-trust-fixes/brief.md) | brief + test plan accepted 2026-09-10; impl next | **Phase A (blocking, small)**: make the gate-reminder advisor actually speak (F9 — first, because it makes every later plan cheaper to execute correctly), then the four tourniquets — `indusk run` entry refusal, cleanup re-guard, eval-attribution guard, restore's destructive clone. **Phase B (trails, non-blocking)**: bash lane parity, record de-contradiction, close/re-scope of workbench-mode-rail-integrity. |
 | [workbench-code-roots](workbench-code-roots/brief.md) | brief draft | One `codeRoots` answer to "where is code *inside* the repo" — detection, health, init-docs; the data verify-plural needs later. |
 
 **Gate out of Stream 1:** only **Phase A** of workbench-trust-fixes gates
