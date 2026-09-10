@@ -140,10 +140,10 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 #### Test Phase 1 Verification
 
-- [ ] Every authored row (A1, A3, A5, A7, A8, A9, A10, A11, A12, A15, A16, A17, A20, A21) exists and fails (`pnpm turbo test --filter=@infinitedusky/indusk-mcp` and `pnpm turbo test --filter=indusk-admin`)
-- [ ] Each red row fails on its own assertion or on the genuinely-absent `papers` command, classified per row, not as an aggregate count; none fails on a missing import
-- [ ] Both deferred bodies reviewed against both questions: will it compile at the phase it names, and does it assert what it claims
-- [ ] Trajectory State column updated to `written` for every authored row
+- [x] Every authored row (A1, A3, A5, A7, A8, A9, A10, A11, A12, A15, A16, A17, A20, A21) exists and fails (`pnpm turbo test --filter=@infinitedusky/indusk-mcp` and `pnpm turbo test --filter=indusk-admin`). **Run 2026-09-09**: indusk-mcp 34 failed in 7 files = these 25 in 4 files + the 9 pre-existing admin-daemon failures in 3 files that fail identically on a HEAD baseline; indusk-admin 2 failed in 1 file (a third failure in the turbo run did not reproduce on a direct rerun: 2 failed, 152 passed, the known flaky server-boot class)
+- [x] Each red row fails on its own assertion or on the genuinely-absent `papers` command, classified per row, not as an aggregate count; none fails on a missing import. **Per row**: A1, A3 on `expected 'unknown' to be 'paper'`; A5 on `expected null not to be null` (no `papers-section`); A7, A8, A9, A21, A10, A11a–d, A12a–b on `error: unknown command 'papers'` (exit 1 where 0 expected, or the message where a refusal message was expected); A15–A17 and the existence check on their own regex against `""`; A20 on the sidebar text lacking both links. Zero `ReferenceError` / `Cannot find module` in either suite's output
+- [x] Both deferred bodies reviewed against both questions: will it compile at the phase it names, and does it assert what it claims. A2: uses `planFolder` and `parsePlan` (exist) and `s.papers` (exists after Build Phase 1), asserts stage kept and the papers list — yes on both. A6: the first draft called `tmpProject`, which does not exist anywhere, so it would have failed to load at Build Phase 2 — corrected to `paperProject({ docs: {} })`; it asserts add-once and never-clobber — yes on both after the correction
+- [x] Trajectory State column updated to `written` for every authored row (eighteen rows; A14 to `passing` since the parity guard runs green today; A2 and A6 stay `planned` as deferred)
 
 ### Build Phase 1: The document kind
 
