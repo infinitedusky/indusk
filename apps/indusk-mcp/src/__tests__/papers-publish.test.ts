@@ -12,6 +12,7 @@ import {
 	INDEX_MARKERS,
 	paper,
 	paperProject,
+	publishArgs,
 } from "./helpers/papers-fixture.js";
 
 /**
@@ -25,15 +26,13 @@ import {
  * assertion failure, not a load error.
  */
 
-const PUBLISH = (plan: string, file = "paper-1.md") => ["papers", "publish", `${plan}/${file}`];
-
 describe.skipIf(SHOULD_SKIP)("indusk papers publish", () => {
 	it("A7: publishes the rendered page, regenerates the index between markers, and commits in the destination without pushing", () => {
 		const dest = destinationRepo();
 		const p = paperProject({ docs: { "paper-1.md": paper() }, config: blogConfig(dest) });
 		const destCommitsBefore = commitCount(dest.root);
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code, r.stderr).toBe(0);
 
 		const page = join(dest.root, dest.dir, "the-grift.md");
@@ -65,7 +64,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish", () => {
 		const sourceCommit = git(p.root, ["rev-parse", "HEAD"]).stdout.trim();
 		const sourceCommitsBefore = commitCount(p.root);
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code, r.stderr).toBe(0);
 
 		const data = matter(readFileSync(join(p.planDir, "paper-1.md"), "utf-8")).data;
@@ -90,7 +89,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish", () => {
 		const p = paperProject({ docs: { "paper-1.md": paper() }, config: blogConfig(dest) });
 		const paperPath = join(p.planDir, "paper-1.md");
 
-		expect(runCli(p.root, PUBLISH(p.plan)).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md")).code).toBe(0);
 		expect(parsePlan(p.planDir).papers?.[0]?.stale).toBe(false);
 
 		writeFileSync(paperPath, `${readFileSync(paperPath, "utf-8")}\nA new paragraph.\n`);
@@ -98,13 +97,13 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish", () => {
 		expect(parsePlan(p.planDir).papers?.[0]?.stale).toBe(true);
 
 		const destBefore = commitCount(dest.root);
-		expect(runCli(p.root, PUBLISH(p.plan)).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md")).code).toBe(0);
 		expect(parsePlan(p.planDir).papers?.[0]?.stale).toBe(false);
 		expect(commitCount(dest.root)).toBe(destBefore + 1);
 
 		const destAfter = commitCount(dest.root);
 		const sourceAfter = commitCount(p.root);
-		const again = runCli(p.root, PUBLISH(p.plan));
+		const again = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(again.code, again.stderr).toBe(0);
 		expect(again.stdout).toMatch(/up to date|no changes/i);
 		expect(commitCount(dest.root)).toBe(destAfter);
@@ -118,7 +117,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish", () => {
 		writeFileSync(paperPath, `${readFileSync(paperPath, "utf-8")}\nUncommitted.\n`);
 		const destBefore = commitCount(dest.root);
 
-		const refused = runCli(p.root, PUBLISH(p.plan));
+		const refused = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(refused.code).not.toBe(0);
 		expect(refused.stderr).toMatch(/uncommitted/i);
 		expect(commitCount(dest.root)).toBe(destBefore);
@@ -126,7 +125,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish", () => {
 
 		git(p.root, ["commit", "-q", "-am", "revise"]);
 		const sourceShort = git(p.root, ["rev-parse", "--short=8", "HEAD"]).stdout.trim();
-		const ok = runCli(p.root, PUBLISH(p.plan));
+		const ok = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(ok.code, ok.stderr).toBe(0);
 		expect(headSubject(dest.root)).toContain(`source ${sourceShort}`);
 	}, 30_000);

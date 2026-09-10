@@ -9,9 +9,10 @@ import {
 	commitCount,
 	destinationRepo,
 	headSubject,
-	INDEX_MARKERS,
+	indexBlock,
 	paper,
 	paperProject,
+	publishArgs,
 } from "./helpers/papers-fixture.js";
 
 /**
@@ -21,18 +22,6 @@ import {
  * ADR's claims, with the inputs that break the claim. Authored red at phase
  * start against today's code; green when the fix items land.
  */
-
-const PUBLISH = (plan: string, file: string, ...extra: string[]) => [
-	"papers",
-	"publish",
-	`${plan}/${file}`,
-	...extra,
-];
-
-const indexBlock = (dest: { root: string; index: string }) => {
-	const text = readFileSync(join(dest.root, dest.index), "utf-8");
-	return text.split(INDEX_MARKERS[0])[1]?.split(INDEX_MARKERS[1])[0] ?? "";
-};
 
 /** Env that pins the dates of the commits the CLI makes. */
 const at = (iso: string) => ({ GIT_AUTHOR_DATE: iso, GIT_COMMITTER_DATE: iso });
@@ -47,18 +36,18 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 			},
 			config: blogConfig(dest),
 		});
-		expect(runCli(p.root, PUBLISH(p.plan, "paper-1.md")).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md")).code).toBe(0);
 		const onePage = join(dest.root, dest.dir, "one.md");
 		// Two is unpublished, so one's link stayed a plan filename: dead on the site.
 		expect(readFileSync(onePage, "utf-8")).toContain("](paper-2.md)");
 
-		const r = runCli(p.root, PUBLISH(p.plan, "paper-2.md"));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-2.md"));
 		expect(r.code, r.stderr).toBe(0);
 		expect(r.stderr).toMatch(/paper-1\.md links to this paper and is now behind/);
 		expect(r.stderr).toContain(`indusk papers publish ${p.plan}/paper-1.md`);
 
 		// The named command repairs it.
-		expect(runCli(p.root, PUBLISH(p.plan, "paper-1.md")).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md")).code).toBe(0);
 		expect(readFileSync(onePage, "utf-8")).toContain("](/writing/two)");
 	}, 30_000);
 
@@ -71,13 +60,13 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 			},
 			config: blogConfig(dest),
 		});
-		expect(runCli(p.root, PUBLISH(p.plan, "a.md")).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "a.md")).code).toBe(0);
 		const page = join(dest.root, dest.dir, "same-title.md");
 		const before = readFileSync(page, "utf-8");
 		const index = indexBlock(dest);
 		const commits = commitCount(dest.root);
 
-		const r = runCli(p.root, PUBLISH(p.plan, "b.md"));
+		const r = runCli(p.root, publishArgs(p.plan, "b.md"));
 		expect(r.code).not.toBe(0);
 		expect(r.stderr).toContain("a.md");
 		expect(readFileSync(page, "utf-8")).toBe(before);
@@ -88,7 +77,7 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 	it("A24: a paper hand-set back to accepted with unchanged content is republished, not reported up to date", () => {
 		const dest = destinationRepo();
 		const p = paperProject({ docs: { "paper-1.md": paper() }, config: blogConfig(dest) });
-		expect(runCli(p.root, PUBLISH(p.plan, "paper-1.md")).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md")).code).toBe(0);
 		const paperPath = join(p.planDir, "paper-1.md");
 		writeFileSync(
 			paperPath,
@@ -97,7 +86,7 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 		git(p.root, ["commit", "-q", "-am", "status reverted by hand"]);
 		const destCommits = commitCount(dest.root);
 
-		const r = runCli(p.root, PUBLISH(p.plan, "paper-1.md"));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code, r.stderr).toBe(0);
 		expect(r.stdout).not.toMatch(/up to date/i);
 		expect(r.stderr).not.toMatch(/nothing to commit/i);
@@ -116,8 +105,12 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 			},
 			config: blogConfig(dest),
 		});
-		expect(runCli(p.root, PUBLISH(p.plan, "paper-1.md"), at("2026-01-01T00:00:00Z")).code).toBe(0);
-		expect(runCli(p.root, PUBLISH(p.plan, "paper-2.md"), at("2026-02-01T00:00:00Z")).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md"), at("2026-01-01T00:00:00Z")).code).toBe(
+			0,
+		);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-2.md"), at("2026-02-01T00:00:00Z")).code).toBe(
+			0,
+		);
 		const first = indexBlock(dest);
 		expect(first.indexOf("/writing/two")).toBeLessThan(first.indexOf("/writing/one"));
 
@@ -128,11 +121,15 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 		const one = join(p.planDir, "paper-1.md");
 		writeFileSync(one, `${readFileSync(one, "utf-8")}\nA fix.\n`);
 		git(p.root, ["commit", "-q", "-am", "hotfix one"]);
-		expect(runCli(p.root, PUBLISH(p.plan, "paper-1.md"), at("2026-03-01T00:00:00Z")).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md"), at("2026-03-01T00:00:00Z")).code).toBe(
+			0,
+		);
 		const two = join(p.planDir, "paper-2.md");
 		writeFileSync(two, `${readFileSync(two, "utf-8")}\nA fix.\n`);
 		git(p.root, ["commit", "-q", "-am", "hotfix two"]);
-		expect(runCli(p.root, PUBLISH(p.plan, "paper-2.md"), at("2026-04-01T00:00:00Z")).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-2.md"), at("2026-04-01T00:00:00Z")).code).toBe(
+			0,
+		);
 
 		const after = indexBlock(dest);
 		expect(after.indexOf("/writing/two")).toBeLessThan(after.indexOf("/writing/one"));
@@ -142,7 +139,7 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 		const dest = destinationRepo(); // no remote: the push cannot succeed
 		const p = paperProject({ docs: { "paper-1.md": paper() }, config: blogConfig(dest) });
 
-		const r = runCli(p.root, PUBLISH(p.plan, "paper-1.md", "--push"));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md", "--push"));
 		expect(r.code, r.stderr).toBe(0);
 		expect(r.stderr).toMatch(/push/i);
 		expect(r.stderr).not.toMatch(/\n\s+at /);
@@ -151,7 +148,7 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 		);
 		expect(headSubject(p.root)).toMatch(/^chore\(papers\): publish/);
 
-		const again = runCli(p.root, PUBLISH(p.plan, "paper-1.md"));
+		const again = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(again.code, again.stderr).toBe(0);
 		expect(again.stdout).toMatch(/up to date/i);
 		expect(git(dest.root, ["log", "-1", "--format=%B"]).stdout).not.toMatch(/diverged/i);
@@ -163,7 +160,7 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 			docs: { "paper-1.md": paper({ title: "The Grift" }) },
 			config: blogConfig(dest),
 		});
-		expect(runCli(p.root, PUBLISH(p.plan, "paper-1.md")).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md")).code).toBe(0);
 		const paperPath = join(p.planDir, "paper-1.md");
 		writeFileSync(
 			paperPath,
@@ -171,7 +168,7 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 		);
 		git(p.root, ["commit", "-q", "-am", "retitle"]);
 
-		const r = runCli(p.root, PUBLISH(p.plan, "paper-1.md"));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code, r.stderr).toBe(0);
 		expect(existsSync(join(dest.root, dest.dir, "the-grift.md"))).toBe(false);
 		expect(existsSync(join(dest.root, dest.dir, "the-grift-revisited.md"))).toBe(true);
@@ -195,7 +192,7 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 			GIT_COMMITTER_EMAIL: "",
 		};
 
-		const r = runCli(p.root, PUBLISH(p.plan, "paper-1.md"), noIdentity);
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"), noIdentity);
 		expect(r.code).not.toBe(0);
 		expect(r.stderr).toMatch(/destination commit failed/i);
 		expect(r.stderr).not.toMatch(/\n\s+at /);
@@ -210,7 +207,7 @@ describe.skipIf(SHOULD_SKIP)("publish — what it leaves behind", () => {
 		writeFileSync(hook, "#!/bin/sh\nexit 1\n");
 		chmodSync(hook, 0o755);
 
-		const r = runCli(p.root, PUBLISH(p.plan, "paper-1.md"));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code).not.toBe(0);
 		expect(r.stderr).not.toMatch(/\n\s+at /);
 		const destHead = git(dest.root, ["rev-parse", "--short", "HEAD"]).stdout.trim();

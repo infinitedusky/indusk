@@ -10,6 +10,7 @@ import {
 	headSubject,
 	paper,
 	paperProject,
+	publishArgs,
 } from "./helpers/papers-fixture.js";
 
 /**
@@ -22,8 +23,6 @@ import {
  * worse than none. Red today on `unknown command 'papers'`.
  */
 
-const PUBLISH = (plan: string, file = "paper-1.md") => ["papers", "publish", `${plan}/${file}`];
-
 function snapshot(dir: string): string {
 	return git(dir, ["status", "--porcelain"]).stdout + git(dir, ["rev-parse", "HEAD"]).stdout;
 }
@@ -33,7 +32,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 		const p = paperProject({ docs: { "paper-1.md": paper() } });
 		const before = readFileSync(join(p.planDir, "paper-1.md"), "utf-8");
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code).not.toBe(0);
 		expect(r.stderr).toMatch(/papers\.destinations/);
 		expect(readFileSync(join(p.planDir, "paper-1.md"), "utf-8")).toBe(before);
@@ -53,7 +52,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 			},
 		});
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code).not.toBe(0);
 		expect(r.stderr).toContain(missing);
 		expect(existsSync(missing)).toBe(false);
@@ -63,7 +62,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 		const dest = destinationRepo({ git: false });
 		const p = paperProject({ docs: { "paper-1.md": paper() }, config: blogConfig(dest) });
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code).not.toBe(0);
 		expect(r.stderr).toMatch(/not a git repo/i);
 		expect(existsSync(join(dest.root, dest.dir, "the-grift.md"))).toBe(false);
@@ -72,7 +71,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 	it("A11c: a dirty target page refuses and leaves the hand edit in place", () => {
 		const dest = destinationRepo();
 		const p = paperProject({ docs: { "paper-1.md": paper() }, config: blogConfig(dest) });
-		expect(runCli(p.root, PUBLISH(p.plan)).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md")).code).toBe(0);
 
 		const page = join(dest.root, dest.dir, "the-grift.md");
 		writeFileSync(page, `${readFileSync(page, "utf-8")}\nHand edit.\n`);
@@ -81,7 +80,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 		git(p.root, ["commit", "-q", "-am", "revise"]);
 		const before = snapshot(dest.root);
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code).not.toBe(0);
 		expect(r.stderr).toMatch(/uncommitted/i);
 		expect(r.stderr).toContain("the-grift.md");
@@ -92,7 +91,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 	it("A11d: a committed hand edit is overwritten, and the destination commit says the page had diverged", () => {
 		const dest = destinationRepo();
 		const p = paperProject({ docs: { "paper-1.md": paper() }, config: blogConfig(dest) });
-		expect(runCli(p.root, PUBLISH(p.plan)).code).toBe(0);
+		expect(runCli(p.root, publishArgs(p.plan, "paper-1.md")).code).toBe(0);
 
 		const page = join(dest.root, dest.dir, "the-grift.md");
 		writeFileSync(page, `${readFileSync(page, "utf-8")}\nHand edit.\n`);
@@ -101,7 +100,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 		writeFileSync(paperPath, `${readFileSync(paperPath, "utf-8")}\nRevised in the plan.\n`);
 		git(p.root, ["commit", "-q", "-am", "revise"]);
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code, r.stderr).toBe(0);
 		const body = readFileSync(page, "utf-8");
 		expect(body).toContain("Revised in the plan.");
@@ -124,7 +123,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 		mkdirSync(siteRoot);
 		destinationRepo({ at: siteRoot });
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code, r.stderr).toBe(0);
 		expect(existsSync(join(siteRoot, "writing/the-grift.md"))).toBe(true);
 		expect(headSubject(siteRoot)).toMatch(/^publish: The Grift/);
@@ -141,7 +140,7 @@ describe.skipIf(SHOULD_SKIP)("indusk papers publish refusals", () => {
 		});
 		const before = commitCount(p.root);
 
-		const r = runCli(p.root, PUBLISH(p.plan));
+		const r = runCli(p.root, publishArgs(p.plan, "paper-1.md"));
 		expect(r.code).not.toBe(0);
 		expect(r.stderr).toMatch(/only paths/i);
 		expect(commitCount(p.root)).toBe(before);

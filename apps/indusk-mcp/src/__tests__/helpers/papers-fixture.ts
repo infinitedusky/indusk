@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import matter from "gray-matter";
@@ -110,6 +110,17 @@ export function blogConfig(dest: DestinationRepo, name = "blog"): Record<string,
 	return {
 		papers: { destinations: [{ name, path: dest.root, dir: dest.dir, index: dest.index }] },
 	};
+}
+
+/** argv for `indusk papers publish <plan>/<file> …`. */
+export function publishArgs(plan: string, file: string, ...extra: string[]): string[] {
+	return ["papers", "publish", `${plan}/${file}`, ...extra];
+}
+
+/** The block a publish owns: everything between the index's marker pair. */
+export function indexBlock(dest: { root: string; index: string }): string {
+	const text = readFileSync(join(dest.root, dest.index), "utf-8");
+	return text.split(INDEX_MARKERS[0])[1]?.split(INDEX_MARKERS[1])[0] ?? "";
 }
 
 /** Commits reachable from HEAD, 0 for an empty repo. */
