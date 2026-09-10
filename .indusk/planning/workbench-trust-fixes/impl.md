@@ -1,7 +1,7 @@
 ---
 title: "Workbench Trust Fixes — Implementation"
 date: 2026-09-10
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -78,9 +78,9 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A13 | `resolveVerifyRoots`'s refusal on nested and sibling layouts names a directory that exists | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/lib/verify/roots.test.ts |
 | A14 | A config declaring `repos[]` without `shape: "workbench"` is workbench-shaped to `isWorkbench`, so verify refuses rather than verifying the wrapper repo | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/lib/verify/roots.test.ts |
 | A15 | In a multi-repo workbench, `worktree create <repo> <slug>` applies that repo's config, not the first repo's | Build Phase 6 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/worktree-multi-repo-config.test.ts |
-| A16 | A search for "not a git repo" across CLAUDE.md, `apps/indusk-mcp/skills/`, and `apps/docs/src/` (excluding decisions, lessons, archives, changelog) finds nothing | Test Phase 1 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/record-not-a-git-repo-grep.test.ts |
-| A17 | `guide/index.md`'s stated hook count equals the rows in its own hook table, and the Dawn master's keep/shed record names every hook on disk, including `workbench-sync.js` | Test Phase 1 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/hooks-record-parity.test.ts |
-| A18 | No active plan's `impl.md` names a deleted MCP tool (`mcp__graphiti__*`, `mcp__codegraphcontext__*`) as an acceptance criterion | Test Phase 1 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/active-plans-no-deleted-tools.test.ts |
+| A16 | A search for "not a git repo" across CLAUDE.md, `apps/indusk-mcp/skills/`, and `apps/docs/src/` (excluding decisions, lessons, archives, changelog) finds nothing | Test Phase 1 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/record-not-a-git-repo-grep.test.ts |
+| A17 | `guide/index.md`'s stated hook count equals the rows in its own hook table, and the Dawn master's keep/shed record names every hook on disk, including `workbench-sync.js` | Test Phase 1 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/hooks-record-parity.test.ts |
+| A18 | No active plan's `impl.md` names a deleted MCP tool (`mcp__graphiti__*`, `mcp__codegraphcontext__*`) as an acceptance criterion | Test Phase 1 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/active-plans-no-deleted-tools.test.ts |
 
 ## Checklist
 
@@ -104,7 +104,7 @@ its own assertion.
 - [x] A15 is deferred to Build Phase 6 (register below): its subject is the per-repo `post_create` reader that phase exports, and today the reader is private and takes no repo argument, so a test importing it fails to load rather than to assert. Reviewed the carried body against both register questions.
 - [x] Author A16 in `record-not-a-git-repo-grep.test.ts` (red: lists every living page and comment still asserting the dead invariant) (scoped like `scm-rip-out-grep.test.ts`, exempting `/decisions/**`, `/lessons/**`, `**/archive/**`, `changelog.md`, `.indusk/planning/**`): zero matches. RED.
 - [x] Author A17 in `hooks-record-parity.test.ts` (red: the guide's table lists 4 of 6 hooks; the Dawn master never names `validate-impl-structure`): parse the count in `guide/index.md`'s hooks heading and its table rows; parse hook names in `indusk-v2-dawn/master.md`'s keep/shed text; compare both to `globSync("hooks/*.js")` minus `_`-prefixed modules. RED.
-- [x] Author A18 in `active-plans-no-deleted-tools.test.ts` (red: `workbench-mode-rail-integrity: mcp__graphiti__get_episodes`): every `.indusk/planning/*/impl.md` outside `archive/` contains no `mcp__graphiti__` / `mcp__codegraphcontext__`. RED (`workbench-mode-rail-integrity`).
+- [x] Author A18 in `active-plans-no-deleted-tools.test.ts` (red: `workbench-mode-rail-integrity` names the deleted Graphiti episodes tool — and, once authored, this impl's own checkoff text did too, which the scan rightly caught): every `.indusk/planning/*/impl.md` outside `archive/` contains no `mcp__graphiti__` / `mcp__codegraphcontext__`. RED (`workbench-mode-rail-integrity`).
 
 #### Deferred to Build Phase 6
 
@@ -288,26 +288,27 @@ its own assertion.
 
 ### Build Phase 7: The record says the truth
 
-- [ ] CLAUDE.md: remove every "the workbench root is deliberately not a git repo" claim (multi-agent coordination, agent-list, cleanup gotchas); the versioned-workbench entry is the one statement of the shape
-- [ ] Docs carrying the dead invariant: `guide/multi-agent.md`, `guide/worktree-setup.md`, `reference/cli/setup.md`, `reference/cli/agent.md`, `reference/cli/verify.md`, `guide/rail-check.md`; and `apps/indusk-mcp/skills/cleanup.md` (resync `.claude/skills/cleanup/SKILL.md`)
-- [ ] Code comments: `hooks/_hook-paths.js`, `hooks/eval-trigger.js`, `src/lib/cleanup/oversized.ts`
-- [ ] `indusk-v2-dawn/master.md`: hook inventory is six, `workbench-sync.js` recorded as **shed** (sync cadence is a procedure, not an invariant gate); component 6's "runs on every tier" qualified until 6.5
-- [ ] `apps/docs/src/guide/index.md`: hook count matches its table
-- [ ] `workbench-mode-rail-integrity`: archive it (its Phases 1–4 shipped in 1.31.7–1.31.10; H2's premise is false since 1.37.0; U1's criterion names a deleted tool) with a one-paragraph closing note in its impl frontmatter, or re-scope with a runnable criterion — decide in the item, record which
+- [x] CLAUDE.md: remove every "the workbench root is deliberately not a git repo" claim (multi-agent coordination, agent-list, cleanup gotchas); the versioned-workbench entry is the one statement of the shape — the multi-agent lock sentence now says what the lock is for (concurrent processes on one machine; `merge=union` across machines), the agent-list sentence says a fresh root has no history until its first sync/restore, the cleanup gotcha was rewritten in Build Phase 3
+- [x] Docs carrying the dead invariant: `guide/multi-agent.md`, `guide/worktree-setup.md`, `reference/cli/setup.md`, `reference/cli/agent.md`, `reference/cli/verify.md`, `guide/rail-check.md`; and `apps/indusk-mcp/skills/cleanup.md` (resync `.claude/skills/cleanup/SKILL.md`) — multi-agent, worktree-setup, setup rewritten here (the setup pages now say the root gains its history on first sync/restore, which is the true reason the benign warning still prints); `guide/cleanup-ritual.md` found by A16 and rewritten too; `agent.md` had no such line left; verify.md (Build Phase 6), rail-check.md (Build Phase 4) and the cleanup skill (Build Phase 3) were done in their phases
+- [x] Code comments: `hooks/_hook-paths.js`, `hooks/eval-trigger.js`, `src/lib/cleanup/oversized.ts` — done in Build Phases 3 and 4; A16 also found `src/bin/commands/agent.ts` and `src/lib/eval/evaluator-runner.ts`, rewritten here. **A16 itself was refined**: the first pattern (`/not a git repo/i`) flagged runtime messages about arbitrary directories, quoted errors, and history, and matched "repository" through "repo"; it now targets present-tense claims about the workbench root (all-caps emphasis; "the/workbench root … is … not a git repo"; "deliberately/intentionally not a git repo" unless "was …", tolerant of a comment line wrap) with `\b` word boundaries, and its exemption check tests paths both bare and with a trailing slash — the `$`-anchored `changelog.md` exemption never matched before
+- [x] `indusk-v2-dawn/master.md`: hook inventory is six, `workbench-sync.js` recorded as **shed** (sync cadence is a procedure, not an invariant gate); component 6's "runs on every tier" qualified until 6.5 — the shed classification and the "proven in flat repos; refuses in every workbench" qualification were already recorded on 2026-09-03; what was missing was any naming of `validate-impl-structure`, so the cell now carries the full six-hook keep/shed record A17 pins
+- [x] `apps/docs/src/guide/index.md`: hook count matches its table — "Six hooks ship" with all six rows (three PreToolUse gates, three PostToolUse), `eval-trigger` added
+- [x] `workbench-mode-rail-integrity`: archive it (its Phases 1–4 shipped in 1.31.7–1.31.10; H2's premise is false since 1.37.0; U1's criterion names a deleted tool) with a one-paragraph closing note in its impl frontmatter, or re-scope with a runnable criterion — decide in the item, record which. **Decision: archived.** Frontmatter `status: abandoned` with `closed: 2026-09-10` and a `closed_reason` saying what shipped, why Phase 5 became impossible (Graphiti deleted), why H2's premise is false, and where the mis-attribution it hid was fixed (this plan's Build Phase 4); moved to `planning/archive/`; root master roadmap and CLAUDE.md Current State updated. **Discovered by A18 and done the same way**: `graph-knowledge-architecture` (parked, written against the rejected Graphiti direction, impl naming two Graphiti tools) archived; root master's parked note and CLAUDE.md's direction note updated; `cursor-support` stays parked (it names no deleted tool)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (Code this phase touched: two comment rewrites, the fixture docblock, and the A16 test, whose three patterns are named and explained in one place. All rule sets readable.)
 
 #### Build Phase 7 Verification
 
-- [ ] A16, A17, A18 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/record-not-a-git-repo-grep.test.ts src/__tests__/hooks-record-parity.test.ts src/__tests__/active-plans-no-deleted-tools.test.ts` — expected: all pass
-- [ ] `indusk context check-pointers` — expected: every CLAUDE.md pointer resolves
+- [x] A16, A17, A18 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/record-not-a-git-repo-grep.test.ts src/__tests__/hooks-record-parity.test.ts src/__tests__/active-plans-no-deleted-tools.test.ts` — expected: all pass (2026-09-10: 4 passed; full package suite 1218 passed, 5 skipped, 0 failed)
+- [x] `indusk context check-pointers` — expected: every CLAUDE.md pointer resolves (57 scanned, PASS)
 
 #### Build Phase 7 Context
 
-- [ ] CLAUDE.md Current State: workbench-mode-rail-integrity's line reflects its close or re-scope; the versioned-workbench entry notes the trust-fixes close
+- [x] CLAUDE.md Current State: workbench-mode-rail-integrity's line reflects its close or re-scope; the versioned-workbench entry notes the trust-fixes close
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: the record corrections, in one entry
-- [ ] Root `master.md` Stream 1 row and Day master component 1: status updated at close
+- [x] `apps/docs/src/changelog.md` Unreleased: the record corrections, in one entry
+- [x] Root `master.md` Stream 1 row and Day master component 1: status updated at close
 
 ## Files Affected
 
