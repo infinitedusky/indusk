@@ -1,7 +1,7 @@
 ---
 title: "Writing skill — papers as first-class plan documents"
 date: 2026-09-09
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -50,7 +50,7 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 | A1 | A plan folder whose documents all carry `kind: paper` reports stage `paper` with a status derived from those papers, never `unknown`, and a next step that is never "Create a brief" | Test Phase 1 | Build Phase 1 | passing | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
 | A2 | A plan folder with lifecycle documents and papers keeps its lifecycle stage and lists the papers beside it with their own statuses | Build Phase 1 | Build Phase 1 | passing | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
 | A3 | A paper's status is one of `draft`, `accepted`, `published`; any other value reports `malformed`, never a silent draft | Test Phase 1 | Build Phase 1 | passing | unit | `apps/indusk-mcp/src/lib/plan-parser.papers.test.ts` |
-| A4 | `indusk-v4-day`, once its documents declare `kind: paper`, reports a real stage in `list_plans` and the admin UI | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
+| A4 | `indusk-v4-day`, once its documents declare `kind: paper`, reports a real stage in `list_plans` and the admin UI | Test Phase 1 | Build Phase 6 | passing | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
 | A5 | The admin UI renders a paper under its plan with title and status, and a papers-only plan renders without error | Test Phase 1 | Build Phase 4 | passing | browser | `apps/indusk-admin/src/components/PlanDetail.papers.test.tsx` |
 | A6 | After `update`, a project with no `papers` block has `papers.destinations: []`; a project with destinations keeps them byte-for-byte | Build Phase 2 | Build Phase 2 | passing | unit | `apps/indusk-mcp/src/lib/papers/config.test.ts` |
 | A7 | Publishing puts the rendered page in the destination directory with mapped frontmatter, regenerates the index between its markers, and commits on the destination's current branch with no push | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
@@ -59,13 +59,13 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 | A10 | Publishing with no destination configured refuses naming `papers.destinations` and writes nothing | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
 | A11 | A missing path, a non-git destination, or a dirty target page each refuse with the reason and write nothing; a committed hand edit is overwritten and the commit message says the page had diverged | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
 | A12 | Inside a workbench a `repo` destination resolves through the declared repos; outside one it refuses saying only paths are accepted | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish-refusals.test.ts` |
-| A13 | The publish command documented in the skill, run verbatim, publishes paper 1 to `~/code/site` and performs A7 and A8 there | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
+| A13 | The publish command documented in the skill, run verbatim, publishes paper 1 to `~/code/site` and performs A7 and A8 there | Test Phase 1 | Build Phase 6 | passing | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
 | A14 | The `write` skill is installed byte-identical to the package source and carries `name` and `description` | Test Phase 1 | Test Phase 1 | passing | unit | `apps/indusk-mcp/src/__tests__/skill-sync-parity.test.ts` |
 | A15 | The skill's description names drafting, outlining, revising, and publishing a paper, thesis, or essay | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
 | A16 | The skill's instructions say to register presence, load the plan folder's prose documents, and skip lessons, health, and extensions | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
 | A17 | The skill carries Voice, Outline, Read as the reader, and Falsify the argument as named sections | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
-| A18 | "Let's work on the grift paper" in a fresh session invokes the skill without the slash command | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
-| A19 | Running the skill on `indusk-v4-day` loads the thesis, outline, shape, and three papers, prints nothing from lessons or health, and leaves a read-as-reader pass and a falsify pass per paper in the plan folder | Test Phase 1 | Build Phase 6 | written | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
+| A18 | "Let's work on the grift paper" in a fresh session invokes the skill without the slash command | Test Phase 1 | Build Phase 6 | skipped | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` (skipped: skill discovery is per project and the skill is not on the trunk until merge; re-run in a fresh trunk session after merge, see dogfood.md) |
+| A19 | Running the skill on `indusk-v4-day` loads the thesis, outline, shape, and three papers, prints nothing from lessons or health, and leaves a read-as-reader pass and a falsify pass per paper in the plan folder | Test Phase 1 | Build Phase 6 | passing | manual | `manual:` `.indusk/planning/writing-skill/dogfood.md` |
 | A20 | The docs sidebar links `reference/skills/write` and `reference/cli/papers` | Test Phase 1 | Build Phase 5 | passing | unit | `apps/indusk-mcp/src/__tests__/write-skill-pins.test.ts` |
 | A21 | Publishing refuses while the plan copy has uncommitted changes, and a successful publish's destination commit message carries the source commit hash | Test Phase 1 | Build Phase 3 | passing | integration | `apps/indusk-mcp/src/__tests__/papers-publish.test.ts` |
 
@@ -265,24 +265,26 @@ Make a paper in a plan folder a recognized document (`kind: paper`, a `paper` st
 
 ### Build Phase 6: Dogfood on the Day papers
 
-- [ ] Declare `kind: paper` on `thesis.md`, `obsolescence.md`, `paper-1-the-grift.md`, `paper-2-the-landscape.md`, `paper-3-the-right-way.md` in `indusk-v4-day`; set paper 1 to `accepted`
-- [ ] Add the `blog` destination to dusk's `.indusk/config.json`: `path: ~/code/site`, `dir: writing`, `index: writing/index.md`
-- [ ] In `~/code/site`: add the marker pair to a new `writing/index.md`, change the nav link to `/writing/`, commit by hand once
-- [ ] Run the documented publish command verbatim for paper 1; read the destination commit and the provenance block
-- [ ] Run the skill on `indusk-v4-day` in a fresh session; record the read-as-reader and falsify passes per paper in the plan folder
-- [ ] In a second fresh session, say "let's work on the grift paper" and record whether the skill was invoked
+- [x] Declare `kind: paper` on `thesis.md`, `obsolescence.md`, `paper-1-the-grift.md`, `paper-2-the-landscape.md`, `paper-3-the-right-way.md` in `indusk-v4-day`; set paper 1 to `accepted`. The Day folder was untracked on the trunk, so it was copied into the worktree and committed on this branch (`1ad363e1`); **at merge the trunk's untracked copy must be moved aside first or git will refuse to overwrite it**
+- [x] Add the `blog` destination to dusk's `.indusk/config.json`: `path: ~/code/site`, `dir: writing`, `index: writing/index.md`
+- [x] In `~/code/site`: add the marker pair to a new `writing/index.md`, change the nav link to `/writing/`, commit by hand once — `d995ddc`, on `main`, clean before and after
+- [x] Run the documented publish command verbatim for paper 1; read the destination commit and the provenance block — exit 0; site commit `c12faa3 publish: The pernicious grift (source 1ad363e1)`; provenance block written with the date line and quoted title untouched; source commit `86646e85`; five sibling-link warnings, correct and recorded (`indusk` here is the worktree's built CLI, since the global one is the published 1.43.0 without `papers`)
+- [x] Run the skill on `indusk-v4-day` in a fresh session; record the read-as-reader and falsify passes per paper in the plan folder — a fresh context followed the skill file verbatim (the Skill tool refused `write`: not registered on the trunk until merge); three `<stem>.review.md` files written with both passes, substantive findings recorded in `dogfood.md`
+- [x] In a second fresh session, say "let's work on the grift paper" and record whether the skill was invoked — recorded: not observable from the worktree (per-project skill discovery); the phrasing led the fresh context to find and choose the `write` skill by search; A18 is `skipped` with the reason and re-runs on the trunk after merge
 
 #### Build Phase 6 Verification
-- [ ] A4 observed: `list_plans` reports `indusk-v4-day` as stage `paper`, and the admin UI shows five papers with badges
-- [ ] A13 observed: `~/code/site` has one new commit with the page and the regenerated index, `git status` clean, `git log origin/main..main` shows it unpushed; paper 1's frontmatter carries the provenance block
-- [ ] A18 observed and recorded in `dogfood.md` with the exact phrasing used and the outcome
-- [ ] A19 observed: the session's load output lists the seven Day documents and nothing from lessons or health; both passes exist per paper
+- [x] A4 observed: `list_plans` reports `indusk-v4-day` as stage `paper`, and the admin UI shows five papers with badges — over stdio against the worktree's `indusk serve`: stage `paper`, status `draft`, next step "Review paper: obsolescence.md", five papers, paper 1 `published` and not stale; the admin reader reports the same five; the live daemon serves the published bundle and was not consulted (A5 proves the rendering of this shape)
+- [x] A13 observed: `~/code/site` has one new commit with the page and the regenerated index, `git status` clean, `git log origin/main..main` shows it unpushed; paper 1's frontmatter carries the provenance block — all observed; the index lists the new page first and the pre-split thesis page second with its description
+- [x] A18 observed and recorded in `dogfood.md` with the exact phrasing used and the outcome — recorded as not observable here, with the reason and the re-run instruction; row `skipped`
+- [x] A19 observed: the session's load output lists the seven Day documents and nothing from lessons or health; both passes exist per paper — nine documents listed (the folder has nine; the item's seven predates the outline and review files), nothing from lessons or health, three review files with both passes
+
+- [x] **Shape — reviewed, nothing found** (boundary recorded at `a134e88e`; scope was CLAUDE.md and `reference/cli/papers.md`; the Day documents, the config, and the review files live under `.indusk/` and are excluded from Shape's scope by design; every extension's rules readable). No code changed in this phase
 
 #### Build Phase 6 Context
-- [ ] Update Current State: the Day papers are `kind: paper`; paper 1 is published to the blog; the site's pre-split thesis page stays until an editorial call — pointer to `.indusk/planning/writing-skill/dogfood.md`
+- [x] Update Current State: the Day papers are `kind: paper`; paper 1 is published to the blog; the site's pre-split thesis page stays until an editorial call — pointer to `.indusk/planning/writing-skill/dogfood.md`. Added as an In-flight entry, including that A18 re-runs on the trunk after merge
 
 #### Build Phase 6 Document
-- [ ] Write `dogfood.md` results; add the "first publish to a destination" walkthrough (markers, nav, first command) to `reference/cli/papers.md`
+- [x] Write `dogfood.md` results; add the "first publish to a destination" walkthrough (markers, nav, first command) to `reference/cli/papers.md`. All four procedures carry results; the walkthrough sits above "The first destination" on the papers page
 
 ## Files Affected
 

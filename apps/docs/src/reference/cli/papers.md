@@ -129,6 +129,30 @@ Refusals, each naming its fix:
 - A `repo` outside a workbench: only paths are accepted here.
 - A `repo` the workbench does not declare: lists what it declares.
 
+### The first publish to a destination, end to end
+
+What dusk's first publish looked like, as a walkthrough for the next
+destination.
+
+1. **In the destination repo**, on its main branch and clean: create the
+   index page with the marker pair (here `writing/index.md`), point the
+   site's nav at it once (`/writing/`), and commit by hand. This is the only
+   hand commit the destination ever needs.
+2. **In the project**: add the destination to `.indusk/config.json` (or let
+   `/write` write it), declare `kind: paper` on the documents that are
+   papers, set the one you are publishing to `accepted`, and commit. The
+   publish refuses an uncommitted source.
+3. **Run the command**: `indusk papers publish <plan>/<file> --to <name>`.
+   Read the output: the destination commit, the source commit, and any
+   `warning:` lines. A warning that a sibling link was left as is means the
+   page links a plan document that is not published; on the site that link
+   is dead until the sibling publishes or the paragraph is revised, which is
+   an editorial hotfix (edit the plan copy, commit, publish again).
+4. **Check both repos**: the destination has one new commit and a clean
+   tree; the paper has its `published` block and the source has one
+   provenance commit. Nothing was pushed. Push the destination when you
+   want it live.
+
 ### The first destination
 
 `indusk update` writes the empty block. The first publish with no destination
