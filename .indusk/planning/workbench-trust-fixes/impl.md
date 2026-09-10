@@ -128,17 +128,19 @@ its own assertion.
 
 #### Test Phase 1 Verification
 
-- [ ] A1, A3, A4, A6, A7, A8, A9, A10–A14, A16–A18 authored and RED (A15 deferred, see register): `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/gate-reminder-speaks.test.ts src/__tests__/phase-start-nudge-single-definition.test.ts src/__tests__/run-refuses-workbench-root.test.ts src/lib/cleanup/oversized-workbench-refusal.test.ts src/__tests__/eval-trigger-versioned-workbench.test.ts src/__tests__/workbench-restore-declared-path.test.ts src/__tests__/wt-declared-path-parity.test.ts src/__tests__/stray-state-audit-declared-path.test.ts src/lib/verify/roots.test.ts src/__tests__/record-not-a-git-repo-grep.test.ts src/__tests__/hooks-record-parity.test.ts src/__tests__/active-plans-no-deleted-tools.test.ts` — expected: every red row fails on its own `expect`, none on a missing import or fixture error (read each failure message, not just the count)
-- [ ] A2 and A5 green in the same run
-- [ ] `pnpm exec biome check src/__tests__ src/lib/verify src/lib/cleanup` — expected: no errors
+- [x] (2026-09-10: 23 failed, every one an `AssertionError` on its own expect — none on a missing import or fixture error; 2 passed) A1, A3, A4, A6, A7, A8, A9, A10–A14, A16–A18 authored and RED (A15 deferred, see register): `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/gate-reminder-speaks.test.ts src/__tests__/phase-start-nudge-single-definition.test.ts src/__tests__/run-refuses-workbench-root.test.ts src/lib/cleanup/oversized-workbench-refusal.test.ts src/__tests__/eval-trigger-versioned-workbench.test.ts src/__tests__/workbench-restore-declared-path.test.ts src/__tests__/wt-declared-path-parity.test.ts src/__tests__/stray-state-audit-declared-path.test.ts src/lib/verify/roots.test.ts src/__tests__/record-not-a-git-repo-grep.test.ts src/__tests__/hooks-record-parity.test.ts src/__tests__/active-plans-no-deleted-tools.test.ts` — expected: every red row fails on its own `expect`, none on a missing import or fixture error (read each failure message, not just the count)
+- [x] A2 and A5 green in the same run (the 2 passed)
+- [x] `pnpm exec biome check src/__tests__ src/lib/verify src/lib/cleanup` — expected: no errors (this phase's 14 files: clean; the directory carried five pre-existing errors on untouched main, fixed in a separate hygiene commit; 2 warnings remain on deliberate bash `${VAR:-}` strings in `worktree-preflight.test.ts`)
+
+- [x] Shape (Test Phase 1, recorded by hand): reviewed the 14 files this phase wrote — the fixture helper, the hook-runner extension, and twelve test files — against the typescript and testing craft prose. Nothing found: each helper has one job and a name that says what it is for, every test reaches its subject over a boundary (spawned hook, spawned script, real git, the exported function), and the one considered-and-left-alone is `versioned-workbench.ts`'s `git()` runner, which repeats `worktree-fixture.ts`'s private one — cross-file, so `/cleanup`'s, not Shape's. **Discovered gap**: `prepareShapeReview` addresses phases by number and maps 1 to Build Phase 1, so it cannot review a test phase at all ("verification is not green" is Build Phase 1's). The Shape library predates test-phase-structure; follow-on noted in Notes.
 
 #### Test Phase 1 Context
 
-- [ ] Add to Known Gotchas: "Tests that need a versioned workbench use `src/__tests__/helpers/versioned-workbench.ts`; a fixture whose root is not `git init`ed reproduces the pre-1.37 shape and cannot see any of the trust-fixes class."
+- [x] Add to Known Gotchas: "Tests that need a versioned workbench use `src/__tests__/helpers/versioned-workbench.ts`; a fixture whose root is not `git init`ed reproduces the pre-1.37 shape and cannot see any of the trust-fixes class."
 
 #### Test Phase 1 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: "Tests: a git-initialized workbench fixture; the regression net can now see the versioned-workbench shape."
+- [x] `apps/docs/src/changelog.md` Unreleased: "Tests: a git-initialized workbench fixture; the regression net can now see the versioned-workbench shape."
 
 ### Build Phase 1: The reminder speaks
 
@@ -334,3 +336,9 @@ its own assertion.
   moot in a workbench.
 - Build Phase 7's `workbench-mode-rail-integrity` item makes a decision inside
   the checklist. Record the choice in that item's checkoff text.
+- **Follow-on found in Test Phase 1**: the Shape library (`lib/shape/`) has no
+  notion of a test phase — `prepareShapeReview({ phase: 1 })` means Build
+  Phase 1, so a test phase's craft review cannot be scoped or recorded by the
+  library and was done by hand here. Same class as the admin UI's private
+  phase regex (admin-ui-phase-progress): a reader that predates
+  test-phase-structure. Not this plan's; belongs with the next Shape change.
