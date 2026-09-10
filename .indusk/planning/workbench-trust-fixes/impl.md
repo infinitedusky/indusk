@@ -148,21 +148,22 @@ its own assertion.
 - [x] Rewrite the file's docblock to describe the actual channel and the fast path
 - [x] Delete `getPhaseStartNudge` from `src/lib/trajectory/state-ops.ts` and its case in `state-ops.test.ts` (zero production callers; the hook is the one definition because hooks cannot import TS)
 - [x] Resync the installed copy: `cp apps/indusk-mcp/hooks/gate-reminder.js .claude/hooks/gate-reminder.js` (hooks are package-owned; parity is byte-equality)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (`prepareShapeReview` scoped 26 files because the phase-1 boundary predates Test Phase 1; the test files were judged there. This phase's code is `gate-reminder.js` and the `state-ops.ts` deletion: one concern per file, names say what they are for, reached over the process boundary. All rule sets readable.)
 
 #### Build Phase 1 Verification
 
-- [ ] A1 and A3 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/gate-reminder-speaks.test.ts src/__tests__/phase-start-nudge-single-definition.test.ts src/lib/trajectory/state-ops.test.ts` — expected: all pass
-- [ ] A2 still green in the same run
-- [ ] Manual smoke in this worktree: edit an `impl.md` to close a phase and confirm the nudge appears in the session as context — expected: the row list is visible in the conversation
+- [x] A1 and A3 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/gate-reminder-speaks.test.ts src/__tests__/phase-start-nudge-single-definition.test.ts src/lib/trajectory/state-ops.test.ts` — expected: all pass (2026-09-10: 43 passed, 2 skipped across these plus `hook-shared-modules` and `hooks-load-in-cjs-consumer`)
+- [x] A2 still green in the same run
+- [x] Manual smoke in this worktree: edit an `impl.md` to close a phase and confirm the nudge appears in the session as context — expected: the row list is visible in the conversation. **Done as a scripted smoke against this plan's own impl.md** (Test Phase 1 just closed): the hook emitted `hookEventName: PostToolUse` with `additionalContext` = "Test Phase 1 (Author every assertion, RED) is fully complete. Call advance_plan to validate gates before starting Build Phase 1." — no tests-to-author line, correctly, since no row opens at Build Phase 1. **Then confirmed in-session**: on the very next Edit to this impl.md, the session showed "PostToolUse:Edit hook additional context: Test Phase 1 (Author every assertion, RED) is fully complete. Call advance_plan …" — the worktree's `.claude/hooks/` copy is what fires here, and the nudge is now heard.
 
 #### Build Phase 1 Context
 
-- [ ] Add to Known Gotchas: "PostToolUse hooks: stderr at exit 0 goes to the debug log only; a message for the model is a stdout JSON envelope carrying `hookSpecificOutput.additionalContext`, emitted via `console.info` (on the `noConsole` allowlist). `gate-reminder.js` did neither for its whole life."
+- [x] Add to Known Gotchas: "PostToolUse hooks: stderr at exit 0 goes to the debug log only; a message for the model is a stdout JSON envelope carrying `hookSpecificOutput.additionalContext`, emitted via `console.info` (on the `noConsole` allowlist). `gate-reminder.js` did neither for its whole life."
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/index.md` hooks table: gate-reminder row says the nudge is delivered as additional context
-- [ ] `apps/docs/src/changelog.md` Unreleased: "Fixed: the gate reminder has never reached the model; it now emits `additionalContext`."
+- [x] `apps/docs/src/guide/index.md` hooks table: gate-reminder row says the nudge is delivered as additional context (row added; the header's count and the other missing rows are A17's, Build Phase 7)
+- [x] `apps/docs/src/changelog.md` Unreleased: "Fixed: the gate reminder has never reached the model; it now emits `additionalContext`."
 
 ### Build Phase 2: `indusk run` refuses at a workbench root
 
