@@ -58,14 +58,16 @@ by discipline.
 
 ## 3. Hooks enforce what discipline won't
 
-Four PreToolUse hooks run on every file write:
+Six hooks ship. Three are PreToolUse gates that run on every file write and
+refuse; three are PostToolUse and act after the fact:
 
 | Hook | Refuses |
 |---|---|
 | `validate-impl-structure` | an implementation missing required sections |
 | `check-gates` | closing a phase whose gates or trajectory rows are open |
 | `claude-md-budget` | a CLAUDE.md write past the 60 KB ceiling |
-| `workbench-sync` | *(PostToolUse)* — commits workbench context after edits |
+| `eval-trigger` | *(PostToolUse)* — nothing; on every `git commit` it spawns the evaluator that scores the diff, and in a multi-repo workbench it refuses to guess which repo the commit belongs to |
+| `workbench-sync` | *(PostToolUse)* — nothing; commits workbench context after edits |
 | `gate-reminder` | *(PostToolUse, advisory)* — nothing; when an edit closes a phase it puts the next phase's tests-to-author in front of the agent as additional context |
 
 These are not linting. They block the edit. An agent that wants to mark a phase

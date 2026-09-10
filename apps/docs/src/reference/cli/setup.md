@@ -54,7 +54,7 @@ indusk worktree list
 
 ## Notes
 
-- **The workbench root is intentionally not a git repo.** `setup` (via `init`) prints a benign `not a git repository` warning at the end — expected, not an error. Git lives in the trunk + worktrees; the workbench is per-developer local-only scaffolding.
+- **A fresh workbench root has no git history yet.** `setup` (via `init`) prints a benign `not a git repository` warning at the end — expected, not an error. The root becomes its own repository (planning context only, with its own remote) on the first `indusk workbench sync` or `restore`; code lives in the trunk + worktrees.
 - **Topology is symlink-in-place by default.** numero's real-clone-inside-the-workbench layout is an artifact of how it was set up — functionally identical for daily work. There is no `--move` flag in v1.
 - **Zero flags in v1.** Override knobs (`--name`, `--into`) and resume-as-update on collision are possible later refinements; the v1 surface is just the path.
 - `setup` does **not** clone for you — it wraps an *already-cloned* repo, matching the "clone, then setup" mental model.
