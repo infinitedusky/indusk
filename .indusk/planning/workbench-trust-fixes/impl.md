@@ -66,7 +66,7 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A1 | Editing an `impl.md` so a build phase opens with unauthored rows puts a nudge naming those rows on stdout as `hookSpecificOutput.additionalContext`, exit 0 | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/gate-reminder-speaks.test.ts |
 | A2 | Editing a non-`impl.md` file produces no output from the gate-reminder hook | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/gate-reminder-speaks.test.ts |
 | A3 | Exactly one implementation of the phase-start nudge text exists in the package | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/phase-start-nudge-single-definition.test.ts |
-| A4 | `indusk run <plan>` at a versioned workbench root exits non-zero before any tool call, names the declared repos and where to run instead, makes no commit, writes no pending-eval record | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/run-refuses-workbench-root.test.ts |
+| A4 | `indusk run <plan>` at a versioned workbench root exits non-zero before any tool call, names the declared repos and where to run instead, makes no commit, writes no pending-eval record | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/run-refuses-workbench-root.test.ts |
 | A5 | `indusk run <plan>` in a flat repo gets past the workbench check unchanged | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/run-refuses-workbench-root.test.ts |
 | A6 | The cleanup file scan at a versioned workbench root throws naming the workbench shape and its declared repos; it never returns an empty list there | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/lib/cleanup/oversized-workbench-refusal.test.ts |
 | A7 | A `git commit` from a cwd at a versioned workbench root is never attributed to the workbench repo: one declared repo resolves to that repo at its declared `path`; several refuse naming the candidates | Test Phase 1 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/eval-trigger-versioned-workbench.test.ts |
@@ -167,7 +167,7 @@ its own assertion.
 
 ### Build Phase 2: `indusk run` refuses at a workbench root
 
-- [ ] `src/bin/commands/run.ts`: after `resolveImplPath` and before the provider-key check, refuse when `isWorkbench(projectRoot)`:
+- [x] `src/bin/commands/run.ts`: after `resolveImplPath` and before the provider-key check, refuse when `isWorkbench(projectRoot)`:
   ```typescript
   if (isWorkbench(projectRoot)) {
   	const dirs = readWorkbenchRepos(projectRoot).map(repoDir);
@@ -180,12 +180,12 @@ its own assertion.
   	return;
   }
   ```
-- [ ] Note in the code that Dawn 6.5 replaces this check with the shared `resolveExecutionRoots`; do not add a second resolver here
+- [x] Note in the code that Dawn 6.5 replaces this check with the shared `resolveExecutionRoots`; do not add a second resolver here
 
 #### Build Phase 2 Verification
 
-- [ ] A4 green, A5 still green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/run-refuses-workbench-root.test.ts` — expected: 2 passed
-- [ ] `cd apps/indusk-mcp && pnpm exec vitest run src/lib/run` — expected: no regressions
+- [x] A4 green, A5 still green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/run-refuses-workbench-root.test.ts` — expected: 2 passed (2026-09-10: 2 passed)
+- [x] `cd apps/indusk-mcp && pnpm exec vitest run src/lib/run` — expected: no regressions (16 files, 73 passed)
 
 #### Build Phase 2 Context
 

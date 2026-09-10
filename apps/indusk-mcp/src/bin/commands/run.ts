@@ -1,6 +1,7 @@
 import { resolveImplPath } from "../../lib/impl-parser.js";
 import { type PhaseReport, runLoop } from "../../lib/run/loop.js";
 import { resolveModel, resolveProviderKey } from "../../lib/run/registry.js";
+import { isWorkbench, readWorkbenchRepos, repoDir } from "../../lib/worktree/repos.js";
 
 export interface RunOptions {
 	/** `--model <name>` — an alias (claude/gpt/gemini/grok), bare provider name, or raw model id. */
@@ -75,6 +76,29 @@ export async function run(
 	if (!implPath) {
 		console.error(
 			`Plan "${plan}" not found — expected an impl.md path, a directory containing impl.md, or a plan under .indusk/planning/.`,
+		);
+		process.exitCode = 1;
+		return;
+	}
+
+	// A workbench keeps the plan in this folder and the code in another
+	// repository. This loop takes ONE root as its whole world — it reads the
+	// plan here, edits here, commits here — so at a workbench root it would
+	// commit checkbox edits to the workbench and never reach the code, while
+	// reporting every item done (workbench-trust-fixes, F1). The only thing
+	// that used to stop it was commit-cadence tripping on "not a git repo",
+	// which a versioned workbench no longer is. Refuse before the provider-key
+	// check: a refusal about the tree should not need a key to be reached.
+	//
+	// Dawn 6.5 (dawn-workbench-execution) replaces this check with the shared
+	// `resolveExecutionRoots` and lifts it case by case; do not grow a second
+	// resolver here.
+	if (isWorkbench(projectRoot)) {
+		const dirs = readWorkbenchRepos(projectRoot).map(repoDir);
+		console.error(
+			`${projectRoot} is a workbench: its plan documents and its code (${dirs.join(", ") || "no repos declared"}) live in different repositories, ` +
+				"and this loop takes one root as its whole world — it would commit checkbox edits to the workbench and never reach the code. " +
+				"Refusing. Run inside the repository the plan's code lives in; cross-repo execution is dawn-workbench-execution's.",
 		);
 		process.exitCode = 1;
 		return;
