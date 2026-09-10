@@ -1,111 +1,293 @@
 ---
 title: "Workbench Trust Fixes"
 date: 2026-09-03
+amended: 2026-09-10
 status: accepted
 ---
 
 # Workbench Trust Fixes — Brief
 
-## Problem
+## The story
 
-Versioned-workbench made the workbench root a git repo and the layout
-config-declared. Four enforcement surfaces that relied on the old shape now
-fail **silently instead of refusing**: `atdawn run` commits plan docs as if
-they were per-item code commits while the code is unreachable; the eval rail
-attributes commits to the wrong repo's HEAD; the cleanup ritual reports
-checked-and-clean without seeing any code; `workbench restore` clones a second
-repo copy under a declared `path`. Every one is a trust failure — the tool
-reports the reassuring case while doing the wrong thing (see
-[research.md](research.md), F1–F8, with file:line evidence).
+Five weeks ago we made the workbench a real git repository so that a team
+could share one. That was the right change. It also quietly broke four
+safety mechanisms, and none of them told us.
+
+Each of those mechanisms had been asking "is this directory a git repo?"
+when what it actually needed to know was "is this where the code lives?"
+For as long as the workbench root was not a repo, the two questions had the
+same answer, so the shortcut held. The moment the root became a repo, every
+shortcut flipped to the wrong answer at once. And because each tool reports
+the reassuring case on its wrong path, the result was not an error. It was
+a run loop that commits plan documents and calls it code, a cleanup check
+that reports "nothing to clean" without looking at any code, an evaluator
+that grades the wrong repository, and a restore command that makes a second
+copy of a repo you already have.
+
+While auditing those we found a fifth thing, older and unrelated to
+workbenches: the reminder that is supposed to tell an agent which tests to
+write when it opens a phase has never been delivered, on any project, since
+the day it was written.
+
+The principle for every fix is the same one `verify` already follows: a
+tool that cannot answer correctly refuses loudly and says why. It never
+guesses, and it never reports the happy case. The full evidence, with
+file-and-line references, is in [research.md](research.md).
 
 ## Proposed Direction
 
-**Restore every refusal first; teach surfaces the layout second; fix the
-record third.** Same policy verify already ships ("the refusal is now
-MAINTAINED"): a surface that cannot answer correctly in a workbench refuses
-loudly and names why — never guesses, never reports the happy case.
+Two halves, and only the first blocks anything. The findings are real but
+not equally urgent, and a prerequisite that grows without limit is how the
+next plan gets delayed. Phase A is short and finite. Phase B is hygiene
+that trails alongside Midnight and Dawn.
 
-**This plan is deliberately bounded into two halves, and only the first
-blocks anything.** The findings are real but not equally urgent, and a
-prerequisite that grows without limit is how the next plan gets delayed
-again. Phase A is the short blocking set; Phase B is hygiene that can trail
-alongside Midnight and Dawn work rather than gating it.
+### Phase A — blocking
 
-### Phase A — blocking (small, finite)
+#### 0. The reminder that never spoke
 
-0. **Make the advisor speak** (F9) — `gate-reminder.js` emits
-   `hookSpecificOutput.additionalContext` via `console.info` (stdout,
-   lint-allowlisted) at exit 0, and the duplicated nudge helper collapses to
-   one definition. **First, deliberately**: it is the only item here that makes
-   every *subsequent* plan cheaper to execute correctly — it tells the agent
-   which trajectory rows to author at the moment a phase opens, which is the
-   discipline every plan after this one has to follow. Enforcement went on
-   2026-08-12; the help has never been on.
-1. **Tourniquets** — `indusk run` refuses workbench-shaped roots at entry
-   (prior art `verify/roots.ts`); cleanup re-gains a maintained workbench
-   refusal; eval-trigger refuses/mis-attribution-guards the workbench-root-cwd
-   case and finally wires `declaredReposAt` into the message; `restore` clones
-   at `repoDir(repo)`.
-### Phase B — trailing (non-blocking)
+When an agent opens a new phase of work, InDusk is supposed to remind it
+which tests it promised to write before touching code. We built that
+reminder. It has never once been heard. It writes its message to a channel
+the model cannot see, and the one line that would have delivered it was
+deleted by an automated lint cleanup. Since August the rule itself is
+enforced, so agents are now refused at the gate for tests nobody told them
+to write. Two plans are parked today for exactly that reason.
 
-2. **Layout parity** — port the 1.42.0 shared-resolver fix to its three bash
-   siblings (`setup-worktree.sh`, `refresh-worktree.sh`, `preflight.sh`);
-   `_hook-paths.js` + `stray-state-audit.ts` resolve by `repoDir`, not name;
-   verify's refusal message prints a path that exists; `isWorkbench` treats
-   `repos[]`-without-`shape` as workbench-shaped (or the readers warn);
-   first-ever tests for `resolveVerifyRoots`.
-3. **Record honesty** — resolve CLAUDE.md's self-contradiction; fix the ~8
-   docs pages + cleanup skill carrying "the root is not a git repo"; record
-   `workbench-sync.js` in the hook keep/shed audit; fix `guide/index.md`'s
-   four-vs-five table; close or re-scope `workbench-mode-rail-integrity`
-   (its U1 blocker is gated on a deleted Graphiti tool).
+We will make the reminder reach the agent, and we do it first, on purpose:
+it is the one item here that makes every later plan in this sequence
+cheaper to execute correctly.
 
-Cross-repo *capability* (run/verify actually working across the plan/code
-split) is deliberately NOT here — that is `dawn-workbench-execution`. This
-plan makes every surface honest; that plan makes them able.
+<details>
+<summary>Technical</summary>
 
-## Context
+`gate-reminder.js` is registered as a `PostToolUse` hook on Edit and Write.
+Every message goes to `console.error` and every exit path is
+`process.exit(0)`; for a PostToolUse hook, stderr at exit 0 reaches the
+debug log only. Reaching the model needs a JSON envelope on stdout carrying
+`hookSpecificOutput.additionalContext`. The original commit emitted an
+envelope with only `hookEventName`; a later Biome sweep deleted the
+`console.log` under `noConsole` and renamed the variable `_result` to
+silence the unused-variable warning. Fix: emit the envelope via
+`console.info` (stdout, on the linter's allowlist, so it is not swept
+again). The nudge helper exists twice, `writableAtNudge` in the hook and
+`getPhaseStartNudge` in `state-ops.ts` with zero callers; collapse to one.
+Enforcement of the underlying rule went on 2026-08-12 when Gate A moved from
+`===` to `<=`.
 
-Full evidence in [research.md](research.md). The commit history shows the
-epic itself was thorough on the surfaces it touched — these are the surfaces
-it never reached. The recurring lesson is already on file:
-`a-refusal-that-holds-by-accident-is-not-a-guarantee`.
+</details>
+
+#### 1. `indusk run` commits the plan and calls it code
+
+The unattended run loop was built to refuse to run anywhere it cannot reach
+the code. Its only guard was "if this is not a git repo, disarm." A
+versioned workbench is a git repo, so the guard never fires, the loop runs
+with the workbench root as its whole world, every edit to real code is
+refused as an escape, and the loop commits checkbox ticks to the workbench
+and reports green per-item commits. It cannot do the work and it says it
+did.
+
+We will make it refuse at the door, naming the declared repos and where to
+run instead. Making it actually work across the split is the next plan.
+
+<details>
+<summary>Technical</summary>
+
+Commit-cadence's guard (`lib/run/commit-cadence.ts`) disables on a non-git
+root, which is now unreachable. There is one `root` in `loop.ts`; every
+tool path is confined to it by `worktree-paths.ts` and `bash-gate.ts`, so
+on a sibling `repos_root` every code edit is a path escape, and on a nested
+`repos_root: "."` edits land in a directory the workbench gitignores.
+Nothing under `src/lib/run/` imports the workbench readers. The refusal
+goes at the entry in `bin/commands/run.ts`, modeled on
+`resolveVerifyRoots` (`lib/verify/roots.ts`), which is the maintained
+refusal `run` lacks. No commit, no pending-eval record, before the refusal.
+
+</details>
+
+#### 2. The cleanup ritual reports "nothing to clean" without seeing any code
+
+The cleanup ritual looks at every file a plan changed and flags the ones
+that grew too large. At a workbench root, the only files it can see are the
+plan documents, because the code lives in repos the workbench ignores. So
+it inspects the plan, finds nothing oversized, and reports the ritual
+complete and clean. `verify` had the identical bug and was fixed to refuse;
+cleanup was not.
+
+We will give cleanup the same maintained refusal.
+
+<details>
+<summary>Technical</summary>
+
+`listOversizedChangedFiles` (`lib/cleanup/oversized.ts`) throws only when
+the root is not a git repo; its docblock still asserts the root is
+"deliberately NOT a git repo." The diff it then examines covers `.claude/`
+and root files, never code. Returns `[]` as checked-and-clean. Refuse when
+`isWorkbench(root)`, naming the declared repos, the same way
+`verify/git.ts` does.
+
+</details>
+
+#### 3. The evaluator grades the wrong repository
+
+Every commit is scored by a background evaluator that reads the commit's
+diff. To find the diff it walks up from the session's directory to the
+nearest git repo. In a versioned workbench, the nearest repo is the
+workbench itself, so a commit made from the workbench root is scored
+against the workbench's history, which contains plan documents and no
+code. The refusal written for this case, "I found more than one repo and
+cannot pick," is dead code, and the helper that would name the candidates
+has never been called.
+
+We will make the hook find the declared repo at its declared location when
+there is one, and refuse by name when there are several or when the only
+repo it can find is the workbench itself. The refusal will be visible in
+the session, not only in a log file.
+
+<details>
+<summary>Technical</summary>
+
+`hooks/_hook-paths.js`: `findGitPathFromCwd` now succeeds at a versioned
+root, so the `declared.length !== 1` refusal is unreachable in the shape it
+was written for. The single-repo fallback resolves `join(statePath,
+declared[0])` by name, so a declared `path` makes it null, fail-closed but
+dark (system.log only). `declaredReposAt` has zero consumers. Fix: when the
+found git root equals the workbench root, do not attribute; resolve the one
+declared repo via `repoDir(repo)`; on several, refuse with
+`declaredReposAt` in the message. `hook-paths.test.ts` has no fixture with
+a git-initialized workbench root, which is why the net could not see this.
+
+</details>
+
+#### 4. `workbench restore` makes a second copy
+
+`restore` is the command that turns a freshly cloned workbench into a
+working one by fetching each declared repo. When a repo is declared at a
+custom path, every other command looks for it there, but restore clones it
+at the default location instead. The result on a machine that already has
+the repo: `update` reports it missing, tells you to run restore, and
+restore silently clones a second copy beside the first and links to the
+wrong one.
+
+We will make restore clone where everything else looks, and print the path
+it actually used.
+
+<details>
+<summary>Technical</summary>
+
+`bin/commands/workbench.ts` `restoreOne`: `target = join(siblingParent,
+repo.name)` while health, status, doppler and the update nudge all read
+`repoDir(repo)`. The `path` half was fixed in the two `linkTrunk` calls but
+not the clone target, and the status line prints a path it did not use.
+Idempotent on a declared-`path` repo already present.
+
+</details>
+
+### Phase B — trailing
+
+#### 5. Three scripts still look for repos by name
+
+The worktree helper scripts were fixed in 1.42.0 to find a repo by its
+declared path. Three sibling scripts that do the same job were not, so
+creating or refreshing a worktree fails outright on a workbench with a
+custom path, and refresh and preflight cannot see worktrees that live where
+the config says they live.
+
+<details>
+<summary>Technical</summary>
+
+`setup-worktree.sh` and `refresh-worktree.sh` build `CLIENT_ROOT` by name
+and never call `_wt_resolve_trunk_dir` (`workbench-helpers.sh`, canonical
+since 1.42.0). `refresh --all`, single refresh and `preflight.sh` scan the
+workbench root only, so declared `worktrees/` dirs are invisible;
+preflight's private reserved list drifted (missing `docs`) and excludes the
+trunk by name. Port the shared resolver; first tests for
+`resolveVerifyRoots`.
+
+</details>
+
+#### 6. Small silent degradations
+
+A handful of places make the same name-for-path mistake with lower stakes:
+the audit that looks for stray state checks a directory that does not
+exist and reports clean; `verify`'s refusal tells you to run it at a path
+that does not exist; a config that declares repos but forgets the shape
+flag slips past `verify` entirely; multi-repo worktree creation applies the
+first repo's settings to every repo.
+
+<details>
+<summary>Technical</summary>
+
+`stray-state-audit.ts` joins `repo.name`; `verify/roots.ts` refusal
+message uses `join(planRoot, declared)`; `isWorkbench` gates on `shape ===
+"workbench"` only, and the refusal has zero test coverage; `worktree.ts`
+post_create reads repo-0's config for every repo. `indusk init` cannot
+author the declared shape at all, which stays an open question.
+
+</details>
+
+#### 7. The record says the opposite of the truth
+
+Our own documentation asserts, in seven places, that the workbench root is
+not a git repository. It has been one since 1.37.0. The project context file
+says both things in different sections. The Dawn master counts five hooks
+where there are six and claims `verify` runs everywhere when it refuses in
+every workbench. And one plan is still open with an acceptance criterion
+that depends on a tool that was deleted in July.
+
+<details>
+<summary>Technical</summary>
+
+CLAUDE.md contradiction (versioned-workbench entry vs multi-agent, agent
+list, cleanup gotchas); docs carrying the dead invariant:
+`guide/multi-agent.md`, `guide/worktree-setup.md`, `reference/cli/setup.md`,
+`reference/cli/agent.md`, `reference/cli/verify.md`, `guide/rail-check.md`,
+`skills/cleanup.md`; code comments in `_hook-paths.js`, `eval-trigger.js`,
+`oversized.ts`. Dawn master: `workbench-sync.js` (1.37.0) missing from the
+keep/shed record; `guide/index.md` header says four hooks, its table lists
+five. `workbench-mode-rail-integrity`: close or re-scope; its U1 blocker
+is gated on `mcp__graphiti__get_episodes`.
+
+</details>
+
+Cross-repo *capability*, making run and verify actually work across the
+plan/code split, is deliberately not here. That is
+`dawn-workbench-execution`. This plan makes every surface honest; that plan
+makes them able.
 
 ## Scope
 
 ### In Scope
-- **Phase A**: F9 advisor fix, F1 entry refusal, F2 eval attribution guard +
-  `declaredReposAt` wiring, F3 cleanup refusal, F4 restore clone target
-- **Phase B**: F5 bash sibling ports, F6 silent-degradation fixes +
-  `resolveVerifyRoots` tests, F7 record fixes, F8 close/re-scope of
-  workbench-mode-rail-integrity
+- **Phase A**: the reminder (0), the four refusals (1 through 4)
+- **Phase B**: script parity (5), silent degradations (6), the record (7)
 
 ### Out of Scope
-- Making run/verify/eval actually WORK cross-repo (→ `dawn-workbench-execution`)
-- `codeRoots` / where-is-code-inside-the-repo (→ `workbench-code-roots`)
-- `indusk init` authoring `repos[]`/`repos_root` (open question; feature-sized)
+- Making run, verify and eval actually work cross-repo (→ `dawn-workbench-execution`)
+- Where code lives *inside* a repo (→ `workbench-code-roots`)
+- `indusk init` authoring the declared shape (open question; feature-sized)
 - Multi-repo verify (stays refusing by design)
 
 ## Success Criteria
 
 - In every real workbench shape (flat legacy, sibling `repos_root`, nested,
   declared `path`, declared `worktrees`): `indusk run`, `/cleanup`, and the
-  eval hook either work correctly or refuse with a message naming the reason —
-  **zero silent wrong answers**, proven by tests per surface.
-- `workbench restore` on a declared-`path` workbench is idempotent — never a
+  eval hook either work correctly or refuse with a message naming the reason.
+  Zero silent wrong answers, proven by tests per surface.
+- Opening a phase with unauthored tests puts a reminder naming them in front
+  of the agent.
+- `workbench restore` on a declared-`path` workbench is idempotent. Never a
   second clone.
 - `worktree create/refresh/preflight` behave identically to `wt` on every
   declared layout.
-- Grep for "not a git repo" across CLAUDE.md + docs returns only historical
-  records (decisions/lessons/archives).
+- A search for "not a git repo" across CLAUDE.md and the docs returns only
+  historical records.
 - `workbench-mode-rail-integrity` is archived or re-scoped with a runnable
   acceptance criterion.
 
 ## Depends On
-- Nothing. (1.42.0's shared bash resolver is the pattern F5 ports.)
+- Nothing. (1.42.0's shared bash resolver is the pattern item 5 ports.)
 
 ## Blocks
-- `.indusk/planning/dawn-workbench-execution/` — refusals must exist before
+- `.indusk/planning/dawn-workbench-execution/`: refusals must exist before
   they are selectively lifted
-- `.indusk/planning/midnight/` — soft: Midnight's loop trusts eval/cleanup
-  signals this plan makes honest
+- `.indusk/planning/midnight/` (soft): Midnight's loop trusts the eval and
+  cleanup signals this plan makes honest
