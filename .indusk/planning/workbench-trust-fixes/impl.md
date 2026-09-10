@@ -201,6 +201,7 @@ its own assertion.
 
 - [x] `src/lib/cleanup/oversized.ts` `listOversizedChangedFiles`: after the git check, `if (isWorkbench(projectRoot)) throw new Error(...)` naming the declared repo dirs and telling the caller to run against the code repo; fix the docblock that still says the root is "deliberately NOT a git repo"
 - [x] Confirm the `/cleanup` skill's call site surfaces the thrown message rather than swallowing it (grep `apps/indusk-mcp/skills/cleanup.md` and the cleanup lib entry) — no TypeScript caller exists; the skill invokes the function through `tsx`, so a throw is a script failure the agent sees. The skill's "workbench caveat" sentence asserted the dead invariant; corrected here (and resynced to `.claude/skills/cleanup/SKILL.md`), which retires that entry from Build Phase 7's list.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (`oversized.ts`: a second guard beside the first, same shape, message built where it is thrown; the skill prose and CLAUDE.md are not code. All rule sets readable.)
 
 #### Build Phase 3 Verification
 
@@ -208,11 +209,11 @@ its own assertion.
 
 #### Build Phase 3 Context
 
-- [ ] Update the Known Gotchas cleanup entry: the lib throws on non-git roots **and** refuses workbench roots by declaration; drop "a workbench root is deliberately not a git repo"
+- [x] Update the Known Gotchas cleanup entry: the lib throws on non-git roots **and** refuses workbench roots by declaration; drop "a workbench root is deliberately not a git repo"
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased entry
+- [x] `apps/docs/src/changelog.md` Unreleased entry
 
 ### Build Phase 4: The evaluator finds the declared repo or refuses by name
 
