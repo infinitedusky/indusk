@@ -17,8 +17,10 @@ indusk papers publish <plan>/<file> [--to <name>] [--push]
 one destination is configured. `--push` pushes the destination after
 committing; without it nothing leaves the machine.
 
-Eight steps, in order. Each refuses with the reason on stderr and exit 1,
-having written nothing, when its precondition does not hold.
+Ten steps, in order. The first five refuse with the reason on stderr and
+exit 1, having written nothing, when a precondition does not hold; a
+failure between the write and the destination commit restores the
+destination to what it was and refuses the same way.
 
 ```mermaid
 sequenceDiagram
@@ -28,11 +30,13 @@ sequenceDiagram
     C->>P: 1. read the paper: kind is paper, status accepted or published
     C->>P: 2. git status on the paper is clean (source committed)
     C->>C: 3. resolve the destination; its root exists and is a git repo
-    C->>D: 4. git status on the target page is clean
+    C->>D: 4. the page is this paper's (no other paper owns the slug); nothing there is dirty
     C->>C: 5. render (map frontmatter, rewrite sibling links); stop if up to date
-    C->>D: 6. write the page, regenerate the index between the markers
-    C->>D: 7. commit "publish: <title> (source <sha>)"; push only with --push
+    C->>D: 6. write the page (git mv a retitled one), regenerate the index between the markers
+    C->>D: 7. commit "publish: <title> (source <sha>)", or nothing when the page is byte-identical
     C->>P: 8. write provenance into the frontmatter; commit "chore(papers): publish …"
+    C->>D: 9. push only with --push, and last; a failed push is a warning
+    C->>C: 10. name every published sibling whose page is now behind
 ```
 
 **What lands in the destination.** The page at `<dir>/<title-slug>.md`,
@@ -50,9 +54,31 @@ line changes, and one commit `chore(papers): publish <file> to <name>
 (<destination sha>)`. The hash is what staleness is derived from on every
 later read.
 
-**Up to date.** A paper whose recorded hash matches its content and whose
-rendered page equals the destination page exits 0, says so, and makes no
-commit in either repo.
+**Up to date.** A paper that is `published`, whose recorded hash matches
+its content, and whose rendered page equals the destination page exits 0,
+says so, and makes no commit in either repo. A paper hand-set back to
+`accepted` with the same content is republished instead, so its status and
+provenance are written; the page is byte-identical, so the destination gets
+no new commit.
+
+**Siblings left behind.** Links to sibling documents are rewritten only when
+the sibling is published at render time, and a paper whose own content did
+not change never reads stale. So after a publish, every published sibling
+whose page would now render differently is named on stderr with the command
+that repairs it: `warning: <file> links to this paper and is now behind;
+run: indusk papers publish <plan>/<file>`.
+
+**Retitle.** A paper whose title changed publishes to a new slug; the old
+page is moved with `git mv` in the same commit, so it leaves the
+destination and the index. Divergence is judged on the old page before the
+move.
+
+**Push.** `--push` runs last, after the provenance commit. A failed push
+(no remote, rejected) is a warning and exit 0: the publish is complete and
+committed, push it yourself.
+
+**Order.** The index lists pages newest first by the commit that first added
+each page, so a hotfix republish keeps an old essay in its place.
 
 **Divergence.** If the target page's last destination commit is not the one
 the paper recorded (someone committed to the page by hand), the publish
@@ -69,8 +95,17 @@ artifact; the plan copy is the source.
 | The destination path does not exist | the path |
 | The destination is not a git repository | the path |
 | The target page has uncommitted changes | the page path, and that nobody hand-edits the destination |
+| Another paper, anywhere under planning, already publishes to this slug | that paper's path; retitle one of them |
+| The destination commit fails (no git identity, a hook) | git's reason; the destination was restored, nothing was published |
+| The source commit fails after the destination commit | the destination commit that now exists, and that the provenance is written and needs a hand commit |
 | The index page is missing or has no marker pair | the marker pair to add |
 | A `repo` destination outside a workbench, or an undeclared repo | "only paths are accepted here", or the declared names |
+
+### archive-dead and published papers
+
+`indusk plans archive-dead` treats a `published` paper as a blocking status:
+a plan carrying one is never a dead draft, whatever its age, because
+archiving it would move the source the hotfix path publishes from.
 
 ### The index markers
 
