@@ -10,6 +10,22 @@ The CLI also installs as **`atdawn`** — the CLI command for the Dawn system (t
 
 `<plan>` resolves to an `impl.md`: an explicit path, a directory containing one, or a plan name under `.indusk/planning/`. The run is bound to the current project tree — tools cannot touch paths outside it.
 
+## Workbenches
+
+`indusk run` refuses at a versioned workbench root. A workbench keeps the plan
+in that folder and the code in another repository, and this loop takes one root
+as its whole world: read the plan here, edit here, commit here. At a workbench
+root it would read the plan fine, be unable to touch the code (outside the
+folder it may edit, or inside one the workbench's git ignores), commit checkbox
+edits to the workbench, and report every item done. The refusal names the
+declared repo directories and comes before the provider-key check, so no key is
+spent reaching it.
+
+Run the loop inside the repository the plan's code lives in. Cross-repo
+execution — one loop spanning the plan repo and the code repo — is
+[dawn-workbench-execution](/decisions/dawn-verify) (Dawn component 6.5), which
+lifts this refusal case by case.
+
 ## The loop
 
 The loop control is the `/work --autopilot` contract, ported:

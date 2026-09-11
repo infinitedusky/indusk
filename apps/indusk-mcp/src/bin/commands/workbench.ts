@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { isUsableRelPath } from "../../lib/path-segment.js";
 import {
 	isDanglingLink,
@@ -203,6 +203,17 @@ function refuseIfIgnoreCannotHold(
  * it. They are two jobs, and the four-way ternary that used to sit inline made
  * that hard to see.
  */
+/**
+ * Where restore materializes a repo: at its DECLARED location — `path`, else
+ * name — which is where health, status, doppler and the update nudge all look.
+ * Cloning at the name put a second copy beside a repo declared at a `path` and
+ * linked the trunk at the wrong one (workbench-trust-fixes, F4). One function so
+ * the clone and the line that reports it cannot name different places.
+ */
+function cloneTarget(repo: WorkbenchRepo, siblingParent: string): string {
+	return join(siblingParent, repoDir(repo));
+}
+
 export function restoreLine(
 	repo: WorkbenchRepo,
 	status: RestoreStatus,
@@ -219,10 +230,12 @@ export function restoreLine(
 			return `${repo.name} — present in the workbench at ${repoDir(repo)}/`;
 		case "nested-cloned":
 			return `${repo.name} — cloned into the workbench at ${repoDir(repo)}/`;
+		// The path printed is the path used — `restoreOne` clones at the
+		// declared location, so this must name it, not the sibling parent.
 		case "cloned":
-			return `${repo.name} — cloned into ${siblingParent} and linked`;
+			return `${repo.name} — cloned into ${cloneTarget(repo, siblingParent)} and linked`;
 		case "cloned-unlinked":
-			return `${repo.name} — cloned into ${siblingParent}/${repo.name}, but ${unlinked}`;
+			return `${repo.name} — cloned into ${cloneTarget(repo, siblingParent)}, but ${unlinked}`;
 		case "present-unlinked":
 			return `${repo.name} — already present, but ${unlinked}`;
 		case "present":
@@ -235,7 +248,7 @@ function restoreOne(
 	workbenchRoot: string,
 	siblingParent: string,
 ): { status: RestoreStatus; failure?: RestoreFailure } {
-	const target = join(siblingParent, repo.name);
+	const target = cloneTarget(repo, siblingParent);
 	// When the repo lives INSIDE the workbench at its trunk path — the nested
 	// layout `repos_root: "."` exists to express — there is no link to make and
 	// nothing wrong. Reporting that as "a real directory occupies …" describes
@@ -269,7 +282,9 @@ function restoreOne(
 	// nowhere is not something anyone loses.
 	if (isDanglingLink(target)) rmSync(target);
 
-	mkdirSync(siblingParent, { recursive: true });
+	// The declared path may have its own parent (`code/alpha`); make it, not
+	// just the sibling parent, or the clone fails on a directory nothing made.
+	mkdirSync(dirname(target), { recursive: true });
 	const { ok, stderr } = git(["clone", "--quiet", repo.remote, target], siblingParent);
 	if (!ok) {
 		return {

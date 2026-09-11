@@ -163,7 +163,7 @@ This is the deliberate **inverse** of the [pending-eval queue](./run.md), which 
 
 ## Requirements
 
-`verify` refuses to run outside a git repository rather than reporting a clean phase — a workbench root is deliberately not a git repo, and silence there would mean verifying nothing while appearing to verify everything.
+`verify` refuses to run outside a git repository rather than reporting a clean phase, and refuses at a workbench root by declaration (`resolveVerifyRoots`): a versioned workbench root *is* a git repository, but its diff holds plan documents and no code, and silence there would mean verifying nothing while appearing to verify everything. The refusal names where to run instead — the checkout's real location, `repos_root` plus the repo's declared `path` — on every layout, not only the flat one. A config that declares `repos[]` without the `shape` flag counts as a workbench for this purpose.
 
 ## See also
 

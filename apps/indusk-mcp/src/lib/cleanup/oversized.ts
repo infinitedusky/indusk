@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getCleanupConfig, resolveCapForPath } from "../config.js";
+import { isWorkbench, readWorkbenchRepos, repoDir } from "../worktree/repos.js";
 
 /** A changed file whose line count exceeds its resolved cleanup cap. */
 export interface OversizedFile {
@@ -101,15 +102,28 @@ export function listOversizedChangedFiles(
 	projectRoot: string,
 	baseRef = "origin/main",
 ): OversizedFile[] {
-	// Fail loudly on a non-git root. A workbench root (where .indusk/ lives) is
-	// deliberately NOT a git repo — silently returning [] there would make the
-	// ritual report "nothing to clean" on every workbench project (round-2 F1,
-	// the same statePath/gitPath split the eval-rail hit in 1.31.7/1.31.12).
+	// Fail loudly on a non-git root — silently returning [] would make the
+	// ritual report "nothing to clean" for a tree it never examined (round-2
+	// F1, the same statePath/gitPath split the eval rail hit in 1.31.7/1.31.12).
 	if (!git(projectRoot, ["rev-parse", "--show-toplevel"])) {
 		throw new Error(
 			`listOversizedChangedFiles: ${projectRoot} is not a git repo. ` +
 				"In workbench mode pass the wrapped repo/worktree path (where the code lives), " +
 				"not the workbench root (where .indusk/ lives).",
+		);
+	}
+	// A versioned workbench root IS a git repo, so the guard above passes and
+	// the diff it would examine is the plan documents — the code lives in repos
+	// the workbench's git ignores. Returning [] there is "checked and clean" for
+	// code that was never seen. `verify` had the identical gap and refuses by
+	// declaration (`resolveVerifyRoots`); this is cleanup's maintained refusal
+	// (workbench-trust-fixes, F3).
+	if (isWorkbench(projectRoot)) {
+		const dirs = readWorkbenchRepos(projectRoot).map(repoDir);
+		throw new Error(
+			`listOversizedChangedFiles: ${projectRoot} is a workbench — its code lives in ${dirs.join(", ") || "repos it does not declare"}, ` +
+				"not in this repository, so a diff here cannot contain it. Refusing rather than reporting nothing to clean. " +
+				"Run the cleanup scan inside the repository the plan's code lives in.",
 		);
 	}
 	const mergeBase = resolveMergeBase(projectRoot, baseRef);

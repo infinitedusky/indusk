@@ -87,7 +87,7 @@ indusk worktree list   # → config valid + trunk resolves
 
 Then skip ahead to [Tune the worktree config](#_5-tune-the-worktree-config-optional) and [Create your first worktree](#_7-create-your-first-worktree).
 
-> **Heads-up:** the workbench root is intentionally *not* a git repo, so `indusk setup` prints a benign "not a git repository" warning at the end — expected, not an error. Git lives in the trunk + worktrees.
+> **Heads-up:** a fresh workbench root has no git history until the first `indusk workbench sync` or `restore` creates its context repo (versioned workbenches, 1.37.0), so `indusk setup` prints a benign "not a git repository" warning at the end — expected, not an error. Code lives in the trunk + worktrees; the root's own repository holds only planning context.
 
 See the [`indusk setup` CLI reference](/reference/cli/setup) for the full derivation rule and error behavior.
 

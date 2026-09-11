@@ -4,9 +4,15 @@
  * The 4 hooks (eval-trigger, check-catchup, check-gates, validate-impl-structure)
  * each used to carry their own copy of `findProjectRoot()` that walked up looking
  * for `.indusk/`. In workbench-shaped projects that landed at the workbench root
- * — which is NOT a git repo. Hooks that then tried `git rev-parse` against that
- * path silently bailed. The eval pipeline never fired on numero_workbench for
- * 2 months. See `.indusk/planning/workbench-mode-rail-integrity/`.
+ * — which, before 1.37.0, was not a git repo. Hooks that then tried
+ * `git rev-parse` against that path silently bailed. The eval pipeline never
+ * fired on numero_workbench for 2 months. See
+ * `.indusk/planning/workbench-mode-rail-integrity/`.
+ *
+ * Since versioned-workbench (1.37.0) the root IS a git repo, and the failure
+ * inverted: the walk-up finds the workbench and would attribute a commit to
+ * its history of plan documents. `resolveStateAndGitPaths` refuses that
+ * (workbench-trust-fixes, F2).
  *
  * The fix: hooks need TWO paths, not one.
  *
@@ -139,11 +145,11 @@ function findGitPathFromWorkbenchConfig(statePath) {
 	} catch {
 		return null;
 	}
-	const declared = declaredRepoNames(config);
+	const declared = declaredRepos(config);
 	// Ambiguous: more than one repo could hold this commit. Refuse rather than
 	// attribute it to whichever happens to be declared first.
 	if (declared.length !== 1) return null;
-	const candidate = resolve(statePath, declared[0]);
+	const candidate = resolve(statePath, declared[0].dir);
 	if (!existsSync(candidate)) return null;
 	try {
 		return realpathSync(candidate);
@@ -153,16 +159,18 @@ function findGitPathFromWorkbenchConfig(statePath) {
 }
 
 /**
- * The declared repo names, singular reduced into plural.
+ * The declared repos, singular reduced into plural, each with the directory
+ * its checkout lives in relative to the workbench root.
  *
- * Deliberate port of `readWorkbenchRepos` in `src/lib/worktree/repos.ts` —
- * hooks are plain JS and cannot import the TS module. Change both together.
- * Name-only: the hook never needs remotes.
+ * Deliberate port of `readWorkbenchRepos` + `repoDir` in
+ * `src/lib/worktree/repos.ts` — hooks are plain JS and cannot import the TS
+ * module. Change both together. Name and dir only: the hook never needs
+ * remotes.
  *
  * @param {unknown} config
- * @returns {string[]}
+ * @returns {{ name: string, dir: string }[]}
  */
-function declaredRepoNames(config) {
+function declaredRepos(config) {
 	const worktree = config && typeof config === "object" ? config.worktree : null;
 	if (!worktree || typeof worktree !== "object") return [];
 	const raw = Array.isArray(worktree.repos)
@@ -171,7 +179,7 @@ function declaredRepoNames(config) {
 			? [{ name: worktree.wrapped_repo }]
 			: [];
 	const seen = new Set();
-	const names = [];
+	const repos = [];
 	for (const entry of raw) {
 		if (!entry || typeof entry !== "object") continue;
 		const name = entry.name;
@@ -184,9 +192,34 @@ function declaredRepoNames(config) {
 			!name.includes("\\");
 		if (!clean || seen.has(name)) continue;
 		seen.add(name);
-		names.push(name);
+		// Where the checkout lives: the declared `path`, else the name.
+		// Deliberate port of `repoDir` in `src/lib/worktree/repos.ts` — every
+		// other surface reads a repo at its declared path, and looking it up by
+		// name here returned null (dark) for any repo declared elsewhere (F2).
+		repos.push({ name, dir: usableRelPath(entry.path) ?? name });
 	}
-	return names;
+	return repos;
+}
+
+function declaredRepoNames(config) {
+	return declaredRepos(config).map((r) => r.name);
+}
+
+/** A relative path with no empty, `.` or `..` segment; else null. Port of `isUsableRelPath`. */
+function usableRelPath(value) {
+	if (typeof value !== "string") return null;
+	const v = value.trim();
+	if (v === "" || v.startsWith("/") || v.includes("\\")) return null;
+	if (v.split("/").some((s) => s === "" || s === "." || s === "..")) return null;
+	return v;
+}
+
+function samePath(a, b) {
+	try {
+		return realpathSync(a) === realpathSync(b);
+	} catch {
+		return a === b;
+	}
 }
 
 /**
@@ -211,7 +244,9 @@ export function declaredReposAt(statePath) {
  * Resolve both the InDusk state path and the git path for a given cwd. Either
  * may be null:
  *   - `statePath` is null if no `.indusk/` directory exists in any ancestor.
- *   - `gitPath` is null if `cwd` is not inside any git repo.
+ *   - `gitPath` is null if `cwd` is not inside any git repo — or if the only
+ *     repo found is the workbench itself and the declaration cannot name one
+ *     code repo. Then `refusal` says why, for the caller to surface.
  *
  * The two paths may be the SAME (single-repo mode) or DIFFERENT (workbench mode).
  * Callers must use the right path for the right operation:
@@ -219,11 +254,37 @@ export function declaredReposAt(statePath) {
  *   - Git operations (`git rev-parse --short HEAD`, etc.) → use `gitPath`
  *
  * @param {string} cwd
- * @returns {{ statePath: string | null, gitPath: string | null }}
+ * @returns {{ statePath: string | null, gitPath: string | null, refusal: string | null, attribution: string | null }}
  */
 export function resolveStateAndGitPaths(cwd) {
 	const statePath = findStatePath(cwd);
 	let gitPath = findGitPathFromCwd(cwd);
+	let refusal = null;
+	let attribution = null;
+	// A versioned workbench root IS a git repo, so the walk-up finds it. Its
+	// history is plan documents, and it CAN receive commits (a checkoff, a
+	// brief) — so when the repo found is the workbench itself, the commit may
+	// have gone to it or to the code repo, and the event cannot say which
+	// (`event.cwd` is the session cwd, not the subprocess's). With one repo
+	// declared, whichever has the NEWER HEAD received the commit; a tie or a
+	// missing code repo prefers the code repo, the 1.31.10 behaviour
+	// (workbench-trust-fixes F2, refined by falsification A20 — "never the
+	// workbench" was the wrong invariant). With several declared, refuse. A
+	// flat project declares no repos and keeps gitPath === statePath.
+	if (
+		gitPath &&
+		statePath &&
+		declaredReposAt(statePath).length > 0 &&
+		samePath(gitPath, statePath)
+	) {
+		const workbenchRoot = gitPath;
+		const codeRepo = findGitPathFromWorkbenchConfig(statePath);
+		if (declaredReposAt(statePath).length === 1) {
+			({ gitPath, attribution } = attributeRootCommit(workbenchRoot, codeRepo));
+		} else {
+			gitPath = null;
+		}
+	}
 	if (!gitPath) {
 		// Workbench-mode fallback (1.31.10). When event.cwd is the workbench
 		// root, `git rev-parse` against it fails because the workbench root
@@ -233,6 +294,57 @@ export function resolveStateAndGitPaths(cwd) {
 		// from the workbench root (the dominant operating model on Numero
 		// and any future FDE engagement).
 		gitPath = findGitPathFromWorkbenchConfig(statePath);
+		if (!gitPath) {
+			const names = declaredReposAt(statePath);
+			if (names.length > 1) {
+				refusal =
+					`eval: a commit made from ${cwd} could belong to any of the ${names.length} repos this workbench declares (${names.join(", ")}), ` +
+					"and attributing it to the wrong one is indistinguishable from attributing it right. Refusing to score it. " +
+					"Commit from inside the repo the change lives in, or run the evaluator there.";
+			}
+		}
 	}
-	return { statePath, gitPath };
+	return { statePath, gitPath, refusal, attribution };
+}
+
+/**
+ * Which repository received a commit made from a session sitting at the
+ * workbench root, when exactly one code repo is declared: the one whose HEAD
+ * is newer. A tie, or a code repo not yet on disk, goes to the code repo — the
+ * 1.31.10 behaviour, and the safer error (a plan-document commit scored as
+ * code is odd; a code commit never scored is a gap in the rail).
+ *
+ * @param {string} workbenchRoot
+ * @param {string | null} codeRepo
+ * @returns {{ gitPath: string, attribution: string }}
+ */
+function attributeRootCommit(workbenchRoot, codeRepo) {
+	if (!codeRepo) {
+		return {
+			gitPath: workbenchRoot,
+			attribution: "the workbench (the one declared repo is not on disk)",
+		};
+	}
+	if (headCommitTime(workbenchRoot) > headCommitTime(codeRepo)) {
+		return {
+			gitPath: workbenchRoot,
+			attribution: "the workbench (newer HEAD than the declared repo)",
+		};
+	}
+	return { gitPath: codeRepo, attribution: "the declared repo (newer or equal HEAD)" };
+}
+
+/** HEAD's committer timestamp (seconds), or -1 when the repo has no commits or is not one. */
+function headCommitTime(dir) {
+	try {
+		const out = execFileSync("git", ["log", "-1", "--format=%ct"], {
+			cwd: dir,
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		});
+		const n = Number.parseInt(out.trim(), 10);
+		return Number.isFinite(n) ? n : -1;
+	} catch {
+		return -1;
+	}
 }

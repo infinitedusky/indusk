@@ -22,7 +22,7 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { readWorkbenchRepos } from "./worktree/repos.js";
+import { readWorkbenchRepos, repoDir } from "./worktree/repos.js";
 
 export interface StrayStateFinding {
 	/** Absolute path to the stray `.indusk/` directory. */
@@ -59,7 +59,10 @@ export function findStrayState(workbenchRoot: string): StrayStateFinding[] {
 	const findings: StrayStateFinding[] = [];
 
 	for (const repo of repos) {
-		const wrappedRepoPath = join(workbenchRoot, repo.name);
+		// At the declared location (`path`, else name): by name, a repo declared
+		// elsewhere was a directory that did not exist, silently skipped, and
+		// the audit reported clean (workbench-trust-fixes, F6 / A12).
+		const wrappedRepoPath = join(workbenchRoot, repoDir(repo));
 		if (!existsSync(wrappedRepoPath)) continue;
 		const strayInsideWrapped = walkForStrayIndusk(wrappedRepoPath, 2);
 		for (const strayPath of strayInsideWrapped) {

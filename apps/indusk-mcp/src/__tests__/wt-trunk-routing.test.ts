@@ -90,7 +90,7 @@ describe.skipIf(!existsSync(WT))("wt routes trunks from config", () => {
 		expect(q.out.trim().endsWith(join("wb", "beta"))).toBe(true);
 	});
 
-	it("a nested repo (`repos_root: \".\"`) resolves at its workbench-side directory", () => {
+	it('a nested repo (`repos_root: "."`) resolves at its workbench-side directory', () => {
 		root = mkdtempSync(join(tmpdir(), "wt-trunk-"));
 		const wb = join(root, "wb");
 		writeConfig(wb, { repos_root: ".", repos: [{ name: "alpha" }] });

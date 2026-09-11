@@ -20,13 +20,14 @@ import { spawnSync } from "node:child_process";
 import {
 	existsSync,
 	lstatSync,
+	mkdirSync,
 	readdirSync,
 	readlinkSync,
 	realpathSync,
 	rmSync,
 	symlinkSync,
 } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 
 /**
  * Root entries that are never worktrees.
@@ -132,7 +133,12 @@ export function isDanglingLink(p: string): boolean {
  */
 export function linkTrunk(workbenchRoot: string, name: string, target: string): boolean {
 	const link = join(workbenchRoot, name);
-	const rel = relative(workbenchRoot, target);
+	// A symlink's relative target resolves from the link's OWN directory, not
+	// the workbench root — the two differ the moment `name` has more than one
+	// segment (`code/alpha`), and a link computed from the root pointed at
+	// itself. The parent must also exist before the link can (falsification
+	// A22; nothing in a flat layout could reach either).
+	const rel = relative(dirname(link), target);
 	if (existsSync(link) || isDanglingLink(link)) {
 		// A correct link needs nothing doing — report it as linked.
 		if (isSymlink(link) && readlinkSync(link) === rel) return true;
@@ -140,6 +146,7 @@ export function linkTrunk(workbenchRoot: string, name: string, target: string): 
 		if (isSymlink(link)) rmSync(link);
 		else return false;
 	}
+	mkdirSync(dirname(link), { recursive: true });
 	symlinkSync(rel, link);
 	return true;
 }

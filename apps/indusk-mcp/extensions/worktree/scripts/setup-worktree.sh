@@ -66,10 +66,18 @@ if [[ -z "$SIBLING_PARENT" ]]; then
 	exit 1
 fi
 
-CLIENT_ROOT="$SIBLING_PARENT/$REPO"
-if [[ ! -d "$CLIENT_ROOT/.git" ]]; then
-	echo "Error: $CLIENT_ROOT is not a git repo" >&2
+# The trunk checkout from CONFIG — declared `path` honored — through the one
+# resolver `wt` has used since 1.42.0. Building "$SIBLING_PARENT/$REPO" by
+# name failed outright on any repo declared at a path (workbench-trust-fixes, F5).
+CLIENT_ROOT="$(_wt_resolve_trunk_dir "$REPO")"
+if [[ ! -e "$CLIENT_ROOT/.git" ]]; then
+	echo "Error: $CLIENT_ROOT is not a git checkout" >&2
 	exit 1
+fi
+# A declared worktrees location applies whether or not the TS wrapper passed
+# --worktrees-dir — this script is also run directly.
+if [[ -z "$WORKTREES_DIR" ]]; then
+	WORKTREES_DIR="$(_wt_declared_worktrees_dir "$REPO")"
 fi
 
 CONFIG_FILE="$WORKBENCH_ROOT/.indusk/worktree-configs/${REPO}.json"

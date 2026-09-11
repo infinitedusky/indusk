@@ -3,7 +3,6 @@ import { parseTrajectory } from "./parser.js";
 import {
 	computePhaseCloseBlockers,
 	getPhaseCloseNudge,
-	getPhaseStartNudge,
 	getRowsBlockingPhaseClose,
 	getRowsPassingAt,
 	getRowsWritableAt,
@@ -119,23 +118,7 @@ describe("T18: check-gates allows phase close when all Passes at tests are passi
 	});
 });
 
-describe("T19: gate-reminder nudges about writable-at tests at phase start", () => {
-	it("getPhaseStartNudge lists writable-at rows for the phase", () => {
-		const raw = body(`| T1 | first test | Phase 2 | Phase 2 | planned |
-| T2 | second test | Phase 2 | Phase 3 | planned |
-| T3 | third test | Phase 1 | Phase 1 | passing |`);
-		const nudge = getPhaseStartNudge(raw, 2);
-		expect(nudge).toContain("Phase 2");
-		expect(nudge).toContain("T1");
-		expect(nudge).toContain("T2");
-		expect(nudge).not.toContain("T3");
-	});
-
-	it("returns null when phase has nothing to author", () => {
-		const raw = body("| T1 | a | Phase 1 | Phase 1 | passing |");
-		expect(getPhaseStartNudge(raw, 3)).toBeNull();
-	});
-
+describe("T19: phase-close nudge text (the phase-start nudge lives in hooks/gate-reminder.js — workbench-trust-fixes A3)", () => {
 	it("getPhaseCloseNudge names rows blocking the close", () => {
 		const raw = body(`| T1 | a | Phase 1 | Phase 3 | written |
 | T2 | b | Phase 1 | Phase 3 | passing |`);

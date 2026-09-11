@@ -46,6 +46,15 @@ function rather than keeping its own simpler version:
 
 ### It is idempotent
 
+A repo is materialized at its **declared location** — the `path` in
+`worktree.repos[]`, else its name — which is where every other command
+(`status`, health, doppler, the `update` nudge) looks for it. Restore used to
+clone at the name regardless of `path`; on a machine that already had the repo
+at its declared path, `update` reported it missing, told you to run restore,
+and restore made a second copy beside the first. Now a repo present at its
+declared path is reported present and nothing is created; an absent one is
+cloned at that path, and the path printed is the path used.
+
 Re-running reports each repo as already present and writes nothing. Safe to run
 whenever you are unsure whether a workbench is complete.
 
@@ -171,6 +180,15 @@ A repo entry can say where its checkout and its worktrees are:
 |---|---|
 | `path` | the repo's `name` |
 | `worktrees` | the workbench root — today's flat layout |
+
+Every surface reads these through the same resolvers. In the bash lane,
+`worktree create`, `refresh` (single and `--all`) and `preflight` find the trunk
+through `_wt_resolve_trunk_dir` and a slug through `_wt_resolve_target`, which
+searches the root and every declared `worktrees` dir — the same resolution `wt`
+uses. `create` honors a declared `worktrees` dir even when the script is run
+directly; `refresh --all` refreshes worktrees wherever they are declared to
+live and skips the trunk by resolved path, so a trunk at a declared `path`
+whose basename is not the repo name is still skipped.
 
 And at the workbench level, `repos_root` says where the repos themselves live:
 

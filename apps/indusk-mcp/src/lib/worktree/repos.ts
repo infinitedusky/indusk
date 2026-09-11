@@ -82,9 +82,19 @@ export function readWorkbenchRepos(root: string): WorkbenchRepo[] {
 	return repos;
 }
 
-/** Whether this project is workbench-shaped at all. */
+/**
+ * Whether this project is workbench-shaped at all.
+ *
+ * `shape: "workbench"` says so explicitly; declaring repos says so just as
+ * loudly. A config with `repos[]` and no `shape` flag used to read as a flat
+ * project here while every other reader (`readWorkbenchRepos`, the bash lane,
+ * the eval hook) treated it as a workbench — so `verify` would have judged the
+ * wrapper repo's plan documents as code (workbench-trust-fixes, F6 / A14). One
+ * rule, and every refusal inherits it through this function.
+ */
 export function isWorkbench(root: string): boolean {
-	return readRawConfig(root)?.worktree?.shape === "workbench";
+	if (readRawConfig(root)?.worktree?.shape === "workbench") return true;
+	return readWorkbenchRepos(root).length > 0;
 }
 
 /** The parent directory the sibling clones live in, or null when undeclared. */

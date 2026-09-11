@@ -26,7 +26,7 @@ interface Session {
 	env: NodeJS.ProcessEnv;
 }
 
-function makeSession(projectDir: string, id: string): Session {
+function makeSession(_projectDir: string, id: string): Session {
 	const env = { ...process.env, CLAUDE_CODE_SESSION_ID: id };
 	return { id, env };
 }

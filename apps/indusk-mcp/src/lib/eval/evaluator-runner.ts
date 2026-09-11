@@ -22,8 +22,9 @@ export interface EvaluatorRunOptions {
 	/**
 	 * Where `.indusk/` lives — the InDusk state root. All state paths
 	 * (results.log, evaluator-session.json, config.json, highlights) hang off
-	 * this. In workbench mode this is the workbench root (NOT a git repo);
-	 * in single-repo mode it equals `gitRoot`.
+	 * this. In workbench mode this is the workbench root (whose own git
+	 * history is plan documents, never the code); in single-repo mode it
+	 * equals `gitRoot`.
 	 *
 	 * CONTRACT: `hooks/eval-trigger.js` MUST pass this key as `projectRoot`.
 	 * It passed `statePath` between 1.31.7 and 1.31.11, leaving `projectRoot`

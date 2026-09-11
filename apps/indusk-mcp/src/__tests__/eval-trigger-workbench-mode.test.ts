@@ -1,9 +1,9 @@
-import { execSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { runHook } from "./helpers/hook-runner.js";
+import { initRepoWithCommit } from "./helpers/test-git.js";
 
 /**
  * End-to-end subprocess tests for eval-trigger.js after the 1.31.7
@@ -28,18 +28,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
  * trigger regex matched, exit_code check passed, and change ID was resolved.
  */
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const HOOK_PATH = resolve(__dirname, "../../hooks/eval-trigger.js");
-
-function gitInit(dir: string): string {
-	execSync("git init -q", { cwd: dir });
-	execSync('git config user.email "test@example.com"', { cwd: dir });
-	execSync('git config user.name "test"', { cwd: dir });
-	writeFileSync(join(dir, "README.md"), "test");
-	execSync("git add . && git commit -q -m 'init'", { cwd: dir });
-	return execSync("git rev-parse --short HEAD", { cwd: dir, encoding: "utf-8" }).trim();
-}
-
 interface HookEvent {
 	cwd: string;
 	tool_name: string;
@@ -53,23 +41,6 @@ function buildHookEvent(cwd: string, command = 'git commit -m "test"'): HookEven
 		tool_name: "Bash",
 		tool_input: { command },
 		tool_response: { exit_code: 0 },
-	};
-}
-
-function runHook(
-	event: HookEvent,
-	hookCwd: string,
-): { stdout: string; stderr: string; status: number | null } {
-	const result = spawnSync("node", [HOOK_PATH], {
-		cwd: hookCwd,
-		input: JSON.stringify(event),
-		encoding: "utf-8",
-		timeout: 10000,
-	});
-	return {
-		stdout: result.stdout,
-		stderr: result.stderr,
-		status: result.status,
 	};
 }
 
@@ -92,16 +63,16 @@ describe("T4: eval-trigger fires against workbench-shaped projects", () => {
 		writeEvalConfig(workbenchRoot);
 		wrappedRepo = join(workbenchRoot, "numero");
 		mkdirSync(wrappedRepo);
-		gitInit(wrappedRepo);
+		initRepoWithCommit(wrappedRepo);
 	});
 
 	afterEach(() => {
 		rmSync(tmpRoot, { recursive: true, force: true });
 	});
 
-	it("resolves change ID via gitPath (wrapped repo) and writes system.log under statePath (workbench root)", () => {
+	it("resolves change ID via gitPath (wrapped repo) and writes system.log under statePath (workbench root)", async () => {
 		const event = buildHookEvent(wrappedRepo);
-		runHook(event, wrappedRepo);
+		await runHook("eval-trigger.js", event, { cwd: wrappedRepo });
 
 		// system.log MUST be written under the workbench root (statePath), not the wrapped repo
 		const systemLogPath = join(workbenchRoot, ".indusk/eval/system.log");
@@ -128,16 +99,16 @@ describe("T5: eval-trigger continues to work in single-repo mode (regression)", 
 	beforeEach(() => {
 		tmpRoot = mkdtempSync(join(tmpdir(), "eval-trigger-single-repo-"));
 		writeEvalConfig(tmpRoot);
-		gitInit(tmpRoot);
+		initRepoWithCommit(tmpRoot);
 	});
 
 	afterEach(() => {
 		rmSync(tmpRoot, { recursive: true, force: true });
 	});
 
-	it("resolves change ID and writes lifecycle markers on a single-repo project — same as pre-1.31.7", () => {
+	it("resolves change ID and writes lifecycle markers on a single-repo project — same as pre-1.31.7", async () => {
 		const event = buildHookEvent(tmpRoot);
-		runHook(event, tmpRoot);
+		await runHook("eval-trigger.js", event, { cwd: tmpRoot });
 
 		const systemLogPath = join(tmpRoot, ".indusk/eval/system.log");
 		expect(existsSync(systemLogPath)).toBe(true);

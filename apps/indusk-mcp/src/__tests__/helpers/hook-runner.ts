@@ -19,23 +19,55 @@ const HOOKS_DIR = new URL("../../../hooks/", import.meta.url).pathname;
 export interface HookResult {
 	exitCode: number;
 	stderr: string;
+	/**
+	 * What the hook wrote to stdout. For a PostToolUse hook this is the only
+	 * channel that reaches the model at exit 0 — a JSON envelope carrying
+	 * `hookSpecificOutput.additionalContext`. stderr at exit 0 goes to the
+	 * debug log and nowhere else, which is why it is not enough to assert on.
+	 */
+	stdout: string;
 }
 
-export type HookName = "validate-impl-structure.js" | "check-gates.js" | "claude-md-budget.js";
+export type HookName =
+	| "validate-impl-structure.js"
+	| "check-gates.js"
+	| "claude-md-budget.js"
+	| "gate-reminder.js"
+	| "eval-trigger.js";
 
-export function runHook(hook: HookName, event: unknown): Promise<HookResult> {
-	return spawnHook(hook, event);
+export interface RunHookOptions {
+	/** Working directory for the hook process (PostToolUse hooks read `event.cwd`, but some resolve relative paths from here too). */
+	cwd?: string;
+	env?: NodeJS.ProcessEnv;
+	/** CLI arguments after the script path — `eval-trigger.js --source handoff` is a different mode from hook mode. */
+	args?: string[];
 }
 
-function spawnHook(hook: string, event: unknown): Promise<HookResult> {
+export function runHook(
+	hook: HookName,
+	event: unknown,
+	opts: RunHookOptions = {},
+): Promise<HookResult> {
+	return spawnHook(hook, event, opts);
+}
+
+function spawnHook(hook: string, event: unknown, opts: RunHookOptions = {}): Promise<HookResult> {
 	return new Promise((resolve, reject) => {
-		const child = spawn("node", [join(HOOKS_DIR, hook)], { stdio: ["pipe", "pipe", "pipe"] });
+		const child = spawn("node", [join(HOOKS_DIR, hook), ...(opts.args ?? [])], {
+			stdio: ["pipe", "pipe", "pipe"],
+			cwd: opts.cwd,
+			env: opts.env ? { ...process.env, ...opts.env } : process.env,
+		});
 		let stderr = "";
+		let stdout = "";
 		child.stderr.on("data", (d) => {
 			stderr += d.toString();
 		});
+		child.stdout.on("data", (d) => {
+			stdout += d.toString();
+		});
 		child.on("error", reject);
-		child.on("close", (code) => resolve({ exitCode: code ?? 0, stderr }));
+		child.on("close", (code) => resolve({ exitCode: code ?? 0, stderr, stdout }));
 		child.stdin.end(JSON.stringify(event));
 	});
 }

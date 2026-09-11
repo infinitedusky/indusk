@@ -279,7 +279,11 @@ describe("preflight.sh", () => {
 			expect(setup.code, setup.stderr).toBe(0);
 			const r = run(PREFLIGHT_SCRIPT, fixture.workbenchDir, ["nope", "main"]);
 			expect(r.code).not.toBe(0);
-			expect(r.stderr).toMatch(/no worktree matching slug 'nope'/);
+			// Resolution now goes through the shared `_wt_resolve_target` (the
+			// resolver behind `wt`), whose message also names trunks as targets
+			// — workbench-trust-fixes retired preflight's private root-only scan.
+			expect(r.stderr).toMatch(/no worktree (or trunk )?matching slug 'nope'/);
+			expect(r.stderr).toMatch(/Available targets:/);
 		});
 	});
 });

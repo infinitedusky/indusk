@@ -61,55 +61,19 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 	exit 1
 fi
 
-# Reject preflighting the trunk — preflight is a feature-branch concept.
-if [[ "$SLUG" == "$REPO" ]]; then
+# One resolution surface — the root and every declared worktrees dir, exact
+# match first, `-<slug>` suffix as fallback, ambiguity refused by name — the
+# same resolver behind `wt` (workbench-trust-fixes, F5). The private root-only
+# scan that stood here could not see a declared worktrees dir and carried its
+# own reserved-name list, already drifted from the shared one.
+WORKTREE_PATH="$(_wt_resolve_target "$SLUG")" || exit 1
+TRUNK_DIR="$(_wt_resolve_trunk_dir "$REPO")" || exit 1
+# Reject preflighting the trunk — preflight is a feature-branch concept. By
+# resolved path: under a declared `path` the trunk's basename is not the name.
+if [[ "$(cd "$WORKTREE_PATH" && pwd -P)" == "$(cd "$TRUNK_DIR" && pwd -P)" ]]; then
 	echo "Error: preflight cannot target the trunk; pick a worktree slug" >&2
 	exit 1
 fi
-
-# Slug resolution (single-pass against workbench root; same as wt.sh).
-_is_reserved_name() {
-	case "$1" in
-		.indusk | .claude | .vscode | .cursor | node_modules | dist | build | .git | .next | scripts | env) return 0 ;;
-		*) return 1 ;;
-	esac
-}
-
-exact_paths=()
-suffix_paths=()
-for entry in "$WORKBENCH_ROOT"/*; do
-	[[ -d "$entry" ]] || continue
-	name="$(basename "$entry")"
-	_is_reserved_name "$name" && continue
-	# Skip the trunk symlink — preflight is for feature worktrees.
-	[[ "$name" == "$REPO" ]] && continue
-	if [[ "$name" == "$SLUG" ]]; then
-		exact_paths+=("$entry")
-	elif [[ "$name" == *"-$SLUG" ]]; then
-		suffix_paths+=("$entry")
-	fi
-done
-
-candidate_paths=()
-if [[ ${#exact_paths[@]} -gt 0 ]]; then
-	candidate_paths=("${exact_paths[@]}")
-elif [[ ${#suffix_paths[@]} -gt 0 ]]; then
-	candidate_paths=("${suffix_paths[@]}")
-fi
-
-if [[ ${#candidate_paths[@]} -eq 0 ]]; then
-	echo "Error: no worktree matching slug '$SLUG' at $WORKBENCH_ROOT" >&2
-	exit 1
-fi
-if [[ ${#candidate_paths[@]} -gt 1 ]]; then
-	echo "Error: multiple worktrees match slug '$SLUG':" >&2
-	for p in "${candidate_paths[@]}"; do
-		printf '  %s\n' "$(basename "$p")" >&2
-	done
-	exit 1
-fi
-
-WORKTREE_PATH="${candidate_paths[0]}"
 WORKTREE_NAME="$(basename "$WORKTREE_PATH")"
 
 # Read preflight[] from config. Each entry: { name, command, when? }.

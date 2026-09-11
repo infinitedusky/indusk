@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { isWorkbench, readWorkbenchRepos } from "../worktree/repos.js";
+import { isWorkbench, readWorkbenchRepos, repoDir, resolveReposRoot } from "../worktree/repos.js";
 
 /**
  * Where the plan lives, and where its code lives.
@@ -87,7 +87,10 @@ export function resolveVerifyRoots(planRoot: string): VerifyRoots | VerifyRootsR
 			`${planRoot} is a workbench: its plan documents and its code (${declared}) live in different repositories, ` +
 			"and the verify ledger records a baseline from the plan repo that has no meaning in the code repo. " +
 			"Refusing rather than judging code against a diff that cannot contain it. " +
-			`Run verify inside ${join(planRoot, declared)} instead; cross-repo verification is a named follow-on.`,
+			// The checkout's real location — `repos_root` + declared `path` — not
+			// `<planRoot>/<name>`, which exists only on the flat legacy layout
+			// (workbench-trust-fixes, A13).
+			`Run verify inside ${join(resolveReposRoot(planRoot), repoDir(repos[0]))} instead; cross-repo verification is a named follow-on.`,
 	};
 }
 

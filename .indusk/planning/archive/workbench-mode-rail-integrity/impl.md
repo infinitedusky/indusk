@@ -1,7 +1,9 @@
 ---
 title: "Workbench Mode Rail Integrity — Impl"
 date: 2026-06-28
-status: in-progress
+status: abandoned
+closed: 2026-09-10
+closed_reason: "Phases 1–4 + falsification shipped in 1.31.7–1.31.10 and stay shipped. Phase 5 (backfill 86 highlights through Graphiti) became impossible when indusk-makeover deleted Graphiti; H2's premise — the workbench root is NOT a git repo — has been false since versioned-workbench (1.37.0), and the mis-attribution that premise hid is fixed in workbench-trust-fixes (Build Phase 4). Nothing left to work; archived by that plan's Build Phase 7."
 trajectory: required
 gate_policy: ask
 ---

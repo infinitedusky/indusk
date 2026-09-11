@@ -88,10 +88,14 @@ describe.skipIf(SHOULD_SKIP)("indusk worktree <subcommand>", () => {
 
 		it("non-workbench project: errors out cleanly", () => {
 			fixture = buildWorktreeFixture({ worktreeConfig: { trunk_branch: "main" } });
-			// Mutate the workbench config to drop worktree.shape.
+			// Mutate the workbench config into a genuinely flat project: no
+			// `worktree` key at all. Dropping only `shape` is not enough since
+			// workbench-trust-fixes (A14) — a config that declares repos IS a
+			// workbench to `isWorkbench`, flag or no flag, because every other
+			// reader already treated it as one.
 			const cfgPath = join(fixture.workbenchDir, ".indusk/config.json");
 			const cfg = JSON.parse(readFileSync(cfgPath, "utf-8"));
-			delete cfg.worktree.shape;
+			delete cfg.worktree;
 			writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
 
 			const r = runCli(fixture.workbenchDir, ["worktree", "list"]);

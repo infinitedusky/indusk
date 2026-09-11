@@ -53,6 +53,15 @@ component 6.5 — between the keystone (6) and agent integration (7).
 - The cross-repo baseline was named as a follow-on in three documents
   (decisions/dawn-verify, reference/cli/verify, versioned-workbench D8) and
   scheduled in none — this plan is that follow-on.
+- **Three refusal sites now exist, and this plan's resolver absorbs all
+  three.** `workbench-trust-fixes` (2026-09-10) installed the same
+  "this is a workbench; its code lives in X; run inside Y" refusal at
+  `bin/commands/run.ts`, `lib/cleanup/oversized.ts` and `lib/verify/roots.ts`,
+  each reading the shape through `isWorkbench` / `readWorkbenchRepos` /
+  `repoDir`. Its cleanup ritual met the rule of three and deliberately did not
+  extract a refusal helper, because `resolveExecutionRoots` is the designated
+  single home — so the single-definition pin here must cover run, cleanup and
+  verify, not run and verify alone.
 
 ## Scope
 
@@ -82,7 +91,8 @@ component 6.5 — between the keystone (6) and agent integration (7).
 - Dawn master's "universal floor" claim is true again, unqualified.
 
 ## Depends On
-- `.indusk/planning/workbench-trust-fixes/` (refusals + record)
+- `.indusk/planning/archive/workbench-trust-fixes/` (refusals + record; closed 2026-09-10)
+- Soft: `.indusk/planning/hook-cwd-independence/` — the gates this plan runs under are cwd-relative and silently off from a subdirectory (found at trust-fixes' retrospective); fix first or `cd` to the root before every gated edit
 - Soft: `.indusk/planning/workbench-code-roots/` (polyglot runner detection)
 
 ## Blocks
