@@ -1,7 +1,7 @@
 ---
 title: "Worktree config schema pointer — Implementation"
 date: 2026-09-14
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -42,10 +42,10 @@ Test paths are repo-root-relative.
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | After `init --workbench` on a fresh fixture, the starter config's `$schema`, resolved relative to the config file, names a file that exists | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
-| A2 | `.indusk/worktree-configs/config.schema.json` is byte-identical to `extensions/worktree/config.schema.json`; enabling again after the package copy is modified (via a temp `EXT_DIR` copy) refreshes it | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
-| A3 | A pre-seeded `<repo>.json` is byte-untouched after enable while its sibling `config.schema.json` is written | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
-| A4 | The shipped template's `$schema` contains no `../` segment | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
+| A1 | After `init --workbench` on a fresh fixture, the starter config's `$schema`, resolved relative to the config file, names a file that exists | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
+| A2 | `.indusk/worktree-configs/config.schema.json` is byte-identical to `extensions/worktree/config.schema.json`; enabling again after the package copy is modified (via a temp `EXT_DIR` copy) refreshes it | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
+| A3 | A pre-seeded `<repo>.json` is byte-untouched after enable while its sibling `config.schema.json` is written | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
+| A4 | The shipped template's `$schema` contains no `../` segment | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
 
 ### Deferred Verification
 
@@ -60,16 +60,16 @@ Test paths are repo-root-relative.
 
 **Goal**: author A1–A4 against the current hook and template, each red on its own assertion.
 
-- [ ] Confirm this plan's worktree: `dusk-worktrees/worktree-config-schema-pointer` on `plan/worktree-config-schema-pointer` (worktree-per-plan default)
-- [ ] Write `src/__tests__/worktree-config-schema-pointer.test.ts` with a fixture copied from `init-workbench.test.ts` (canonical clone `demo` with a commit, a workbench dir with `package.json`, `runCli` with `INDUSK_BIN`), plus a helper `enableWorktree(workbenchDir)` that runs `init --workbench --wrapped-repo demo --sibling-parent <root> --no-index` once and `extensions enable worktree` on later calls
-- [ ] Author A1: read `.indusk/worktree-configs/demo.json`, resolve its `$schema` against the config's directory, `existsSync` — RED today (resolves to `<workbench>/config.schema.json`, absent)
-- [ ] Author A2: compare the sibling schema to the package's; then point `EXT_DIR` at a temp copy of the extension whose `config.schema.json` has one extra `"description"` and enable again, expect the sibling to match the temp copy — RED today (no sibling schema)
-- [ ] Author A3: pre-seed `demo.json` with `{"trunk_branch":"keep-me"}` before enabling, expect it byte-equal after and the sibling schema present — RED today on the schema half
-- [ ] Author A4: read the template, expect `JSON.parse(...).$schema` not to match `/\.\.\//` — RED today (`../../config.schema.json`)
+- [x] Confirm this plan's worktree: `dusk-worktrees/worktree-config-schema-pointer` on `plan/worktree-config-schema-pointer` (worktree-per-plan default) — created 2026-09-14 from main, `pnpm install` + `pnpm --filter indusk-mcp build` run so the CLI-spawning tests do not skip
+- [x] (`extensions enable` short-circuits on "already enabled", so the later-enable helper runs `worktree _on-enable` directly, the same command the manifest's hook runs) Write `src/__tests__/worktree-config-schema-pointer.test.ts` with a fixture copied from `init-workbench.test.ts` (canonical clone `demo` with a commit, a workbench dir with `package.json`, `runCli` with `INDUSK_BIN`), plus a helper `enableWorktree(workbenchDir)` that runs `init --workbench --wrapped-repo demo --sibling-parent <root> --no-index` once and `extensions enable worktree` on later calls
+- [x] Author A1: read `.indusk/worktree-configs/demo.json`, resolve its `$schema` against the config's directory, `existsSync` — RED today (resolves to `<workbench>/config.schema.json`, absent) — observed: `$schema "../../config.schema.json" resolves to …/demo-workbench/config.schema.json: expected false to be true`
+- [x] Author A2: compare the sibling schema to the package's; then point `EXT_DIR` at a temp copy of the extension whose `config.schema.json` has one extra `"description"` and enable again, expect the sibling to match the temp copy — RED today (no sibling schema). **Mechanism changed while authoring**: the CLI resolves `on_enable.sh` from the package root, so a temp `EXT_DIR` cannot be injected; the refresh half instead overwrites the materialized sibling with `{"stale": true}` and expects the next `_on-enable` to restore the package's copy. Same claim (refreshed on every enable), no package file touched. Observed red: `no schema beside the configs after enable`
+- [x] Author A3: pre-seed `demo.json` with `{"trunk_branch":"keep-me"}` before enabling, expect it byte-equal after and the sibling schema present — RED today on the schema half — observed: config byte-equal, `schema not written beside a pre-existing config`
+- [x] Author A4: read the template, expect `JSON.parse(...).$schema` not to match `/\.\.\//` — RED today (`../../config.schema.json`) — observed: `expected '../../config.schema.json' not to match /\.\.\//`
 
 #### Test Phase 1 Verification
-- [ ] All four red on their own assertion, none on a load error: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-pointer.test.ts` — expected: 4 failed, each failure message naming the assertion (`existsSync` false / schema missing / template pointer)
-- [ ] Rows A1–A4 set to `written`
+- [x] All four red on their own assertion, none on a load error: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-pointer.test.ts` — expected: 4 failed, each failure message naming the assertion (`existsSync` false / schema missing / template pointer) — 2026-09-14: 4 failed, messages quoted on each authoring item above; no load error
+- [x] Rows A1–A4 set to `written`
 
 #### Test Phase 1 Context
 - [ ] Add to Known Gotchas: "Enabling an extension copies only its `manifest.json` into `.indusk/extensions/<name>/`; any file an extension's output must point at (a schema, a template) has to be shipped by its `on_enable` hook explicitly — the worktree config's `$schema` pointed at a file that never left the package."
