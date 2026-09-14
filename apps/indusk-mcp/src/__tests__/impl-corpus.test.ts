@@ -49,7 +49,14 @@ import { runHook } from "./helpers/hook-runner.js";
  * write time under `ask` policy. That is left as-is and recorded here. Writing
  * a Context item for a plan this one does not own would be inventing content to
  * make a test green, and the violation is exactly the kind the guard exists to
- * surface. The plan is parked; whoever picks it up fixes the gate.
+ * surface. The plan is parked; whoever picks it up fixes the gate. (Archived
+ * 2026-09-14 by the sequence reconciliation with that violation intact — its
+ * entry moved to the archive path, nothing about it changed.)
+ *
+ * `archive/stale-indusk-docs-path` was closed on a branch in July 2026 that
+ * never merged, and salvaged onto main on 2026-09-14 by copy; it is a hotfix-
+ * workflow impl written before the gate sections it lacks became mandatory —
+ * the same class as the first nine. Archived history, so recorded not repaired.
  */
 const PRE_EXISTING_FAILURES = [
 	"archive/code-quality-system",
@@ -67,8 +74,9 @@ const PRE_EXISTING_FAILURES = [
 	// falsification's fence rule is what surfaced it. Archived, so recorded.
 	"archive/handoff-multi-agent-section-shape",
 	"archive/mcp-dev-system",
+	"archive/react-native-support",
+	"archive/stale-indusk-docs-path",
 	"archive/verify-skill",
-	"react-native-support",
 ];
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..");
