@@ -6,10 +6,6 @@ trajectory: required
 test_phases: required
 rationale: required
 gate_policy: ask
-falsification: skipped
-falsification_reason: "Two-line bugfix (a cp in a bash hook and one JSON string) whose four assertions run the real hook over a workbench fixture; the one hypothesis worth holding — whether `indusk update` re-runs on_enable for an already-enabled extension, which the changelog entry promises — is recorded in the root master small queue for the next update-path change rather than authored here."
-cleanup: skipped
-cleanup_reason: "No new unit was created: one numbered step added to an existing hook and one test file shaped like its sibling init-workbench.test.ts; nothing to decompose."
 ---
 
 # Worktree config schema pointer — Implementation
