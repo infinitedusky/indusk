@@ -2,6 +2,8 @@
 title: "Admin UI Local Domain (indusk.dawn)"
 date: 2026-07-06
 status: accepted
+closed: 2026-09-14
+closed_reason: "Not now (2026-09-14) — a convenience outside the V4 sequence; revive when the admin UI is next touched."
 ---
 
 # Admin UI Local Domain (indusk.dawn) — Brief

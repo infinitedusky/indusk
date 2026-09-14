@@ -2,6 +2,8 @@
 title: "InDusk Worktree Extension — Impl"
 date: 2026-05-27
 status: in-progress
+closed: 2026-09-14
+closed_reason: "Shipped (115/118); superseded by versioned-workbench's multi-repo model. The three open rows (on-enable script copy, its own falsify and retrospective) are not owed. Closed 2026-09-14."
 trajectory: required
 rationale_baseline: 1
 inputs:

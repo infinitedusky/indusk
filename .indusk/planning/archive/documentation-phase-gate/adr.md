@@ -2,6 +2,9 @@
 title: "Documentation as a final gated phase, not per-phase"
 date: 2026-06-25
 status: proposed
+closed: 2026-09-14
+closed_reason: "Folded 2026-09-14 into day-pr-review (Day step 10) as an open question: where docs land is decided by the bundle, not per phase. The ADR stays proposed."
+folded_into: day-pr-review
 ---
 
 # Documentation as a final gated phase, not per-phase

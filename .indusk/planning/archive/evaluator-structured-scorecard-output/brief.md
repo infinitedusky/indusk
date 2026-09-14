@@ -2,6 +2,8 @@
 title: "Evaluator Structured Scorecard Output"
 date: 2026-04-19
 status: accepted
+closed: 2026-09-14
+closed_reason: "Superseded 2026-09-14 — Day replaces score-based review with binary verdicts (thesis §4), and the tolerant parser from 1.24.0 already handles the observed failure modes."
 workflow: feature
 ---
 

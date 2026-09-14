@@ -2,6 +2,9 @@
 title: "Cursor support for InDusk — Brief"
 date: 2026-06-28
 status: draft
+closed: 2026-09-14
+closed_reason: "Folded 2026-09-14 into dawn-agents (Day step 8): Cursor as an executor is Dawn 7's; the Graphiti-canonical direction this was written against is rejected."
+folded_into: dawn-agents
 audience: Sandy
 ---
 

@@ -55,9 +55,9 @@ Open this file to answer "where are we." The shape itself lives in
 | 5 | **Evidence per claim** | 3, 4 | not started | A born-green row and a silently amended claim are both reported; an honest plan is clean | `day-claim-evidence` |
 | 6 | **Binding** | 6 | not started | A test asserting the wrong property under the right name reports *unbound*; a real test reports *bound* | `day-claim-binding` |
 | 7 | **Uncovered surface** | 7 | not started | A changed file no row exercises is listed; acknowledgement is recorded and survives re-verification | `day-uncovered-surface` |
-| 8 | **Any executor** | 10 | not started | Dawn 7's own: a phase dispatched to a non-Claude agent is verified and its verdict recorded | [dawn-agents](../indusk-v2-dawn/master.md), Dawn 7 |
+| 8 | **Any executor** | 10 | not started; absorbs `cursor-support` (archived 2026-09-14): Cursor as an executor | Dawn 7's own: a phase dispatched to a non-Claude agent is verified and its verdict recorded | [dawn-agents](../indusk-v2-dawn/master.md), Dawn 7 |
 | 9 | **Probe** | 8 | not started | A reviewer's question becomes an executed scenario with a verdict; green accretes as a new row | `day-probe` |
-| 10 | **The bundle and the reviewer** | 1–10 | not started | The shape's own acceptance test: one plant per row class, all caught, approval reached from the bundle alone | `day-pr-review` |
+| 10 | **The bundle and the reviewer** | 1–10 | not started; carries `documentation-phase-gate`'s question (archived 2026-09-14): where docs land is decided by the bundle, not per phase | The shape's own acceptance test: one plant per row class, all caught, approval reached from the bundle alone | `day-pr-review` |
 
 ## Order
 

@@ -2,6 +2,9 @@
 title: "Workbench Code Roots — one answer to 'where is the code?'"
 date: 2026-08-28
 status: draft
+closed: 2026-09-14
+closed_reason: "Folded 2026-09-14 into dawn-workbench-execution (Day step 2) as its polyglot runner-detection input."
+folded_into: dawn-workbench-execution
 ---
 
 # Workbench Code Roots — Brief

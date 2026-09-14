@@ -2,6 +2,8 @@
 title: "Falsify Phase Authoring — Impl"
 date: 2026-04-20
 status: in-progress
+closed: 2026-09-14
+closed_reason: "Shipped in 1.27.4 — the phase-authoring /falsify is the current flow. The 13 open rows were publish and dogfood chores; closed shipped-with-residue 2026-09-14."
 trajectory: required
 rationale: required
 gate_policy: ask

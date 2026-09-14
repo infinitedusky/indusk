@@ -2,6 +2,8 @@
 title: "Compaction Skill — the makeover's missing companion"
 date: 2026-07-24
 status: accepted
+closed: 2026-09-14
+closed_reason: "Shipped as /compact-context; archived 2026-09-14 by the sequence reconciliation."
 ---
 
 # Compaction Skill — Brief

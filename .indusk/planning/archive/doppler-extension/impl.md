@@ -2,6 +2,8 @@
 title: "Doppler extension — Implementation"
 date: 2026-06-04
 status: in-progress
+closed: 2026-09-14
+closed_reason: "Shipped as the default env layer. The 8 open rows are dusk's own Doppler config restructure and compose, an ops chore rather than a plan; closed shipped-with-residue 2026-09-14."
 trajectory: required
 rationale: required
 gate_policy: ask

@@ -2,6 +2,8 @@
 title: "React Native Support — Implementation"
 date: 2026-04-05
 status: approved
+closed: 2026-09-14
+closed_reason: "Parked since August with 0/59 items; the dusk-v2 it was to roll into has no folder. Archived 2026-09-14; revive as its own plan if RN support is wanted."
 gate_policy: ask
 ---
 

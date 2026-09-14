@@ -2,6 +2,8 @@
 title: "Work Autopilot — phase-loop with fresh context per phase"
 date: 2026-07-25
 status: accepted
+closed: 2026-09-14
+closed_reason: "Shipped as the Autopilot Mode section of the work skill; archived 2026-09-14 by the sequence reconciliation. The parallel-children step (Day 6.5) cites it."
 ---
 
 # Work Autopilot — Brief

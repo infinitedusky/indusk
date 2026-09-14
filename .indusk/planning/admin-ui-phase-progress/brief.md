@@ -87,6 +87,11 @@ follow-on, not assumed.
   incidents next to its phases).
 - Related, not included: the scorecard-only-loads-after-a-prompt issue
   (2026-08-31) — same app, separate plan/note in the root master.
+- Folded in (2026-09-14): `.indusk/planning/archive/project-list-workbenches-only/`
+  — the registry holds 1,588 entries, 1,577 of them dead temp dirs from four
+  tests that never set `INDUSK_HOME`; test isolation, an explicit `ui prune`
+  with a dry run and a backup, and a workbenches-only project list. One phase
+  of this plan.
 
 ## Scope
 

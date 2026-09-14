@@ -11,25 +11,12 @@ parents:
   - indusk-v4-day
 roadmap:
   - workbench-trust-fixes
-  - workbench-code-roots
-  - midnight
+  - hook-cwd-independence
   - indusk-v2-dawn
   - indusk-v4-day
-  - indusk-makeover
-  - doppler-extension
-  - local-telemetry
-  - falsify-phase-authoring
-  - documentation-phase-gate
-  - evaluator-structured-scorecard-output
-  - admin-ui-local-domain
+  - midnight
   - admin-ui-phase-progress
-  - project-list-workbenches-only
-  - compaction-skill
-  - hermes-inspired-improvements
-  - work-autopilot
-  - indusk-worktree-extension
-  - cursor-support
-  - react-native-support
+  - indusk-makeover
   - dusk-v2
 ---
 
@@ -110,44 +97,35 @@ The shape is on paper first and is accepted before any `day-*` plan is created.
 
 ## Close-outs and the small queue
 
-- [indusk-makeover](indusk-makeover/brief.md) — impl complete; **owes its
-  retrospective** (falsify → cleanup → retrospective). Any time.
-- [doppler-extension](doppler-extension/) / [local-telemetry](local-telemetry/)
-  — impl in progress; continue opportunistically.
-- [falsify-phase-authoring](falsify-phase-authoring/) — was blocked by the
-  test-phase-structure correction; resume when touched.
-- [documentation-phase-gate](documentation-phase-gate/),
-  [evaluator-structured-scorecard-output](evaluator-structured-scorecard-output/),
-  [admin-ui-local-domain](admin-ui-local-domain/),
-  [compaction-skill](compaction-skill/),
-  [hermes-inspired-improvements](hermes-inspired-improvements/),
-  [work-autopilot](work-autopilot/) — accepted briefs, independent, no
-  ordering constraint; pull when adjacent work makes one cheap.
-- [admin-ui-phase-progress](admin-ui-phase-progress/brief.md) — brief draft
-  (Sandy, 2026-09-03): phases and their gate stages visible live while work
-  runs; also fixes the UI's private phase regex, which cannot see
-  `Test Phase` / `Build Phase` sequences today.
-- [project-list-workbenches-only](project-list-workbenches-only/brief.md) — brief
-  draft (Sandy, 2026-09-10): the registry holds 1,588 entries, 1,577 of them
-  dead temp dirs from four tests that never set `INDUSK_HOME`; isolate tests,
-  add an explicit `ui prune`, show workbenches only.
+Reconciled 2026-09-14 (batch one of the sequence reconciliation): every folder
+outside the V4 sequence now has exactly one fate. Each archived folder carries
+its reason in `closed_reason:` frontmatter.
+
+- [indusk-makeover](archive/indusk-makeover/brief.md) — closed 2026-09-14:
+  retrospective written 53 days after the impl completed, archived; its two
+  deferred rows now say what actually holds them.
+- [admin-ui-phase-progress](admin-ui-phase-progress/brief.md) — Day step 3;
+  absorbed `project-list-workbenches-only` (archived) as one phase.
+- **Shipped, archived**: `work-autopilot` (the work skill's autopilot mode),
+  `compaction-skill` (`/compact-context`), `falsify-phase-authoring` (1.27.4),
+  `local-telemetry`, `doppler-extension` — residue named per folder.
+- **Superseded, archived**: `indusk-worktree-extension` (by versioned-workbench),
+  `evaluator-structured-scorecard-output` (Day replaces scores with verdicts).
+- **Not now, archived, revivable**: `admin-ui-local-domain`,
+  `hermes-inspired-improvements`, `react-native-support`.
+- **Folded into a step, archived**: `workbench-code-roots` → Dawn 6.5,
+  `cursor-support` → dawn-agents (step 8), `documentation-phase-gate` →
+  day-pr-review (step 10, as an open question).
+- **Salvaged**: `stale-indusk-docs-path` and `planner-hotfix-mode` closed in
+  July on branches nobody merged; their archives and docs pages are on main
+  as of 2026-09-14, the code deltas dropped as superseded (tips kept as
+  `salvage/*` tags).
 - The admin-UI scorecard-loads-only-after-a-prompt issue (Sandy, 2026-08-31)
-  has no plan yet — likely folds into evaluator-structured-scorecard-output or
-  admin-ui-local-domain when picked up.
+  still has no plan; it belongs with admin-ui-phase-progress when picked up.
 
 ## Parked / needs re-scope
 
-- [cursor-support](cursor-support/) — written against the Graphiti-canonical
-  direction the makeover rejected; **re-scope or archive**, don't resume as-is.
-  (Cursor as an *executor* is Dawn component 7's business now.)
-  `graph-knowledge-architecture`, its sibling, was archived 2026-09-10 by
-  workbench-trust-fixes: its impl still named Graphiti tools as acceptance
-  criteria (A18), and the direction is rejected.
-- [react-native-support](react-native-support/) — parked; roll into dusk-v2 or
-  archive.
 - [dusk-v2](dusk-v2/) — research parked.
-- [indusk-worktree-extension](indusk-worktree-extension/) — shipped;
-  superseded in practice by versioned-workbench's model; owes archival.
 
 ## Change propagation
 

@@ -2,6 +2,8 @@
 title: "Local Telemetry — Impl"
 date: 2026-04-20
 status: in-progress
+closed: 2026-09-14
+closed_reason: "Shipped — `indusk telemetry`, the daemon and the jaeger MCP are live. The 17 open rows are a version bump, a changelog entry and doc polish; closed shipped-with-residue 2026-09-14."
 trajectory: required
 rationale: required
 gate_policy: ask

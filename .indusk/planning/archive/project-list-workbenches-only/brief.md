@@ -2,6 +2,9 @@
 title: "Project list shows workbenches only"
 date: 2026-09-10
 status: draft
+closed: 2026-09-14
+closed_reason: "Folded 2026-09-14 into admin-ui-phase-progress (Day step 3) as a phase."
+folded_into: admin-ui-phase-progress
 ---
 
 # Project list shows workbenches only — Brief

@@ -2,6 +2,8 @@
 title: "Hermes-Inspired Improvements"
 date: 2026-04-14
 status: accepted
+closed: 2026-09-14
+closed_reason: "Not now (2026-09-14) — transcript search; nothing in the V4 sequence needs it."
 blocked_by: [agent-roles]
 ---
 
