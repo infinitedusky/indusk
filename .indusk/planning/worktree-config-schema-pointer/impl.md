@@ -88,13 +88,13 @@ Test paths are repo-root-relative.
 - [x] A1–A4 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-pointer.test.ts` — expected: 4 passed (2026-09-14: 4 passed)
 - [x] The existing enable path still passes: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/init-workbench.test.ts src/__tests__/worktree-cli.test.ts` — expected: all pass (2026-09-14: 3 files, 16 passed in the combined run)
 - [ ] U1 manual smoke: open a materialized `demo.json` from a fixture in VS Code, type a new key, see completion from the schema — record the VS Code version in this checkoff
-- [ ] Rows A1–A4 set to `passing`
+- [x] Rows A1–A4 set to `passing`
 
 #### Build Phase 1 Context
-- [ ] Update the Workbench topology Conventions entry's pointer sentence, or the worktree-extension gotcha, with one clause: the worktree config schema lives at `.indusk/worktree-configs/config.schema.json`, refreshed on every enable
+- [x] (the worktree-extension gotcha, the `indusk setup` line) Update the Workbench topology Conventions entry's pointer sentence, or the worktree-extension gotcha, with one clause: the worktree config schema lives at `.indusk/worktree-configs/config.schema.json`, refreshed on every enable
 
 #### Build Phase 1 Document
-- [ ] `apps/docs/src/guide/worktree-setup.md`: in the "what init creates" list (around the starter-config line), add the schema file and that editors resolve `$schema` from it
+- [x] `apps/docs/src/guide/worktree-setup.md`: in the "what init creates" list (around the starter-config line), add the schema file and that editors resolve `$schema` from it
 
 ## Files Affected
 
