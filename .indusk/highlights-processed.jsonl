@@ -215,3 +215,6 @@
 {"id":"h-20260910-015","processedAt":"2026-09-10T21:18:15.662Z","action":"wrote-episode","detail":"a-refusal-is-a-user-interface-test-what-it-names"}
 {"id":"h-20260910-016","processedAt":"2026-09-10T21:18:30.834Z","action":"wrote-episode","detail":"dont-extract-the-abstraction-a-named-future-plan-already-owns"}
 {"id":"h-20260910-017","processedAt":"2026-09-10T21:18:54.314Z","action":"wrote-episode","detail":"attribution-invariant-is-whoever-received-the-commit-not-never-the-workbench"}
+{"id":"h-20260914-002","processedAt":"2026-09-14T14:30:11.492Z","action":"wrote-episode","detail":"completed-status-has-no-expiry-visibility-is-not-a-trigger"}
+{"id":"h-20260914-001","processedAt":"2026-09-14T14:30:16.739Z","action":"skipped","detail":"recorded in indusk-makeover retrospective's own trajectory audit; the durable rule from this same retrospective is captured separately (h-20260914-002, h-20260914-003)"}
+{"id":"h-20260914-003","processedAt":"2026-09-14T14:30:31.217Z","action":"wrote-episode","detail":"write-the-retrospective-immediately-a-late-one-audits-the-wrong-mitigation"}
