@@ -26,6 +26,14 @@ import { repoDir, type WorkbenchRepo } from "./repos.js";
  */
 const ROOT_DENY_RULE = "/*/";
 const SECRETS_RULE = ".indusk/extensions/*/.env";
+/**
+ * The worktree extension's editor schema, shipped beside the configs by its
+ * `on_enable` hook so each config's `$schema` resolves. Its contents track the
+ * installed package, so it is machine-local in the same sense as `.indusk/eval/`:
+ * real content, true only for this machine. Shared, two teammates on different
+ * versions rewrite it at each other on every enable.
+ */
+const WORKTREE_SCHEMA_RULE = ".indusk/worktree-configs/config.schema.json";
 
 /**
  * Root-level DIRECTORY whitelist, not a blacklist.
@@ -67,6 +75,7 @@ env/*.env
 
 # Machine-local state — real content, but true only for this machine.
 .indusk/eval/
+${WORKTREE_SCHEMA_RULE}
 .indusk/current.md.lock
 .indusk/sync-stamp
 .claude/settings.local.json
@@ -101,6 +110,7 @@ env/*.env
 
 # Machine-local state — real content, but true only for this machine.
 .indusk/eval/
+${WORKTREE_SCHEMA_RULE}
 .indusk/current.md.lock
 .indusk/sync-stamp
 .claude/settings.local.json
@@ -181,6 +191,7 @@ ${SECRETS_RULE}*
 !${SECRETS_RULE}.example
 env/*.env
 .indusk/current.md.lock
+${WORKTREE_SCHEMA_RULE}
 `;
 
 /**
@@ -199,8 +210,17 @@ export function topUpManagedIgnore(workbenchRoot: string): boolean {
 	if (!existsSync(path)) return false;
 	const body = readFileSync(path, "utf-8");
 	if (!body.includes(INDUSK_MANAGED_MARKER)) return false; // a human's file — refuse elsewhere
-	if (body.includes(ROOT_DENY_RULE)) return false; // already correct
-	appendFileSync(path, FLAT_WORKBENCH_RULES);
+
+	// Per-RULE, not per-file. An earlier version returned early whenever the
+	// root rule was present, so every rule added after that one could never
+	// reach a workbench scaffolded before it — the file looked correct and was
+	// a release behind. Each rule the flat block carries is topped up on its
+	// own, in the block's own order.
+	const missing = FLAT_WORKBENCH_RULES.split("\n").filter(
+		(line) => line.trim() !== "" && !line.startsWith("#") && !body.includes(line),
+	);
+	if (missing.length === 0) return false; // already correct
+	appendFileSync(path, `${missing.join("\n")}\n`);
 	return true;
 }
 
@@ -286,6 +306,10 @@ export function missingIgnoreRules(workbenchRoot: string): string[] {
 			"the root is not deny-by-default, so the next worktree directory gets committed",
 		],
 		[SECRETS_RULE, "extension secrets are not ignored"],
+		[
+			WORKTREE_SCHEMA_RULE,
+			"the worktree config schema is package-owned and would be committed, so teammates on different versions rewrite it at each other",
+		],
 	];
 	return required.filter(([rule]) => !body.includes(rule)).map(([rule, why]) => `${rule} — ${why}`);
 }
