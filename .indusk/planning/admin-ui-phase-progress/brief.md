@@ -85,8 +85,12 @@ follow-on, not assumed.
   *hierarchy* visible; this makes plan *execution* visible. It is also the
   surface a Midnight `monitor` state will want later (a reopened plan's
   incidents next to its phases).
-- Related, not included: the scorecard-only-loads-after-a-prompt issue
-  (2026-08-31) — same app, separate plan/note in the root master.
+- Carried (2026-09-14): the scorecard-only-loads-after-a-prompt issue
+  (2026-08-31) is this plan's now, not a separate note in the root master.
+- Considered, not committed (2026-09-14): provenance links between plan
+  documents, so a claim in a brief can point at the research line it came
+  from and the phase that acted on it (proposed 2026-09-10). Revisit if the
+  phase view makes them cheap; otherwise it stays a note.
 - Folded in (2026-09-14): `.indusk/planning/archive/project-list-workbenches-only/`
   — the registry holds 1,588 entries, 1,577 of them dead temp dirs from four
   tests that never set `INDUSK_HOME`; test isolation, an explicit `ui prune`
@@ -97,6 +101,12 @@ follow-on, not assumed.
 
 ### In Scope
 - Canonical phase parsing (Test/Build sequences included); delete the local regex
+- The Shape library's phase addressing takes `{ kind, number }`
+  (`prepareShapeReview`, `verificationIsGreen`, `recordReviewedNothingFound`
+  and siblings) so a Test Phase can be reviewed and recorded — the same class
+  as the local regex above, a reader that predates test-phase-structure
+  (carried 2026-09-14 from workbench-trust-fixes' notes and the
+  `shape-cannot-see-test-phases` lesson)
 - Per-phase stage breakdown with checked/unchecked counts and gate states
 - Active-phase indication (checklist + phase-boundary record)
 - Auto-refresh polling on the plan detail page

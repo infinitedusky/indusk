@@ -100,18 +100,57 @@ rather than the old promise.
 
 </details>
 
+The same gate file learns one more refusal, carried from the indusk-makeover
+retrospective (2026-09-14): a plan whose impl has been `completed` for more
+than seven days with no retrospective is reported by `check_health` as an
+error, not a pending item. The makeover sat 53 days in a queue labelled "any
+time"; every system that touched it was working as designed, and nothing
+treated the wait as a fault. Health is read at every catchup, so an error
+there is the one place visibility becomes a trigger.
+
 ### 3. The record
 
 `guide/index.md`'s hooks table says what the hooks do; it should say where
 they run from and what a load failure means. CLAUDE.md's gotcha for this
 finding moves from "until this lands, `cd` back" to the rule.
 
+### 4. A gate ledger
+
+Every hook invocation appends one line to `.indusk/gates.jsonl`: which hook,
+the file it judged, the verdict, the exit code, the time. Today a gate that
+ran and approved is indistinguishable from a gate that never loaded, and
+that is the finding this plan exists for. With the ledger, "the gates ran"
+becomes something a reader can check rather than assume, and the PR shape's
+Process record (artifact 10 in `indusk-v4-day/pr-shape.md`, amended
+2026-09-14) reads it: the reviewer sees that every checkoff was gated before
+reading a single verdict.
+
+<details>
+<summary>Technical</summary>
+
+One shared writer in a `_`-prefixed hook module (`_gate-ledger.js`, port of a
+`lib/gates/ledger.ts` twin, pinned by count like the other hook-side
+modules), called from `check-gates`, `validate-impl-structure` and
+`claude-md-budget` on every exit path including refusals. The record is
+machine state: register it with every "what changed" detector and give it
+`merge=union` in the commit that first writes it (the lifecycle-rebalance
+rule). A missing ledger line for a checkoff is what `verify` and the
+retrospective's replay look for.
+
+</details>
+
 ## Scope
 
 ### In Scope
 - Absolute hook commands in `init`, `update` (ensure + migration), and this
   repository's settings; a parity test
-- Row-level terminality in the ritual gate and the trajectory audit
+- Row-level terminality in the ritual gate and the trajectory audit; a
+  `completed`-without-retrospective health error after seven days
+- The gate ledger, written by every hook, read by the PR shape's Process record
+- Migrate the three remaining private `runHook` copies
+  (`claude-md-budget-hook`, `trajectory-a-prefix-ids`, `rationale-baseline-*`)
+  to `helpers/hook-runner.ts` while the hook tests are open (carried from
+  workbench-trust-fixes' cleanup phase)
 - Docs: hooks table, retrospective skill text
 
 ### Out of Scope
@@ -136,6 +175,12 @@ finding moves from "until this lands, `cd` back" to the rule.
   same impl with the row `passing`.
 - A grep across `init.ts`, `update.ts` and `.claude/settings.json` for
   `node .claude/hooks/` finds nothing.
+- After a phase closes, `.indusk/gates.jsonl` holds one line per hook
+  invocation for every checkoff in that phase, including the refused ones;
+  a checkoff with no line is reported by the retrospective's replay.
+- `check_health` on a fixture whose impl has been `completed` for eight days
+  with no `retrospective.md` reports an error naming the plan; the same
+  fixture at six days reports nothing.
 
 ## Depends On
 - Nothing. The evidence is in

@@ -48,7 +48,7 @@ in it. Change the shape here first; everything else follows.
 | 7 | **Uncovered surface** | Changed code no claim exercises | per-row coverage, runner-specific, extension-owned | list; each entry acknowledged / unacknowledged | **missing** |
 | 8 | **Probe log** | The reviewer's questions and their executed verdicts | the review itself | per probe: red (finding) / green (new claim) | **missing**: `/falsify` is author-side |
 | 9 | **Promise linkage** | Production invariants the change touches, and their health | Midnight | per promise: enforced / known-violated, with incidents | **missing**: Midnight brief |
-| 10 | **Process record** | Phases closed in order, gates passed, rituals run, commits scored | hooks, eval rail, phase-boundary record | present / absent | exists |
+| 10 | **Process record** | Phases closed in order, gates **ran** at every checkoff (a ledger line per hook invocation with its verdict) and passed, rituals run, commits scored | hooks, gate ledger (`hook-cwd-independence`), eval rail, phase-boundary record | present / absent | exists; amended 2026-09-14 — a gate whose absence is indistinguishable from its approval is not a gate, so "passed" without "ran" is absent |
 
 Rules that apply to every row:
 
@@ -79,6 +79,13 @@ Rules that apply to every row:
 **Stopping rule:** approve when every row has a verdict, every uncovered file
 is acknowledged, and you have no more probes. A diff review has no stopping
 rule, because there is always something to say about code. This one does.
+
+**Amended 2026-09-14.** "The verdicts are green" is not enough on its own.
+The Process record's gate ledger has to show that the gates *ran* at every
+checkoff, because the workbench-trust-fixes retrospective found eight
+checkoffs that passed a gate which had silently failed to load. The reviewer
+reads the ledger before the verdicts; a checkoff with no ledger line makes
+the Process record absent, and the stopping rule does not start.
 
 ## What it is not
 

@@ -101,6 +101,14 @@ Reconciled 2026-09-14 (batch one of the sequence reconciliation): every folder
 outside the V4 sequence now has exactly one fate. Each archived folder carries
 its reason in `closed_reason:` frontmatter.
 
+**Standing rule (2026-09-14):** every active folder has exactly one fate — a
+declared step in the sequence, archived with a reason, or standalone with a
+reason written here — and the retrospective's context audit checks it at
+every plan close. A folder with none is how a close-out goes unwritten for
+weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
+the brief of the step that owns them, never left in a retrospective, a
+lesson title, or a chat log.
+
 - [indusk-makeover](archive/indusk-makeover/brief.md) — closed 2026-09-14:
   retrospective written 53 days after the impl completed, archived; its two
   deferred rows now say what actually holds them.
@@ -121,7 +129,10 @@ its reason in `closed_reason:` frontmatter.
   as of 2026-09-14, the code deltas dropped as superseded (tips kept as
   `salvage/*` tags).
 - The admin-UI scorecard-loads-only-after-a-prompt issue (Sandy, 2026-08-31)
-  still has no plan; it belongs with admin-ui-phase-progress when picked up.
+  is carried by admin-ui-phase-progress as of 2026-09-14.
+- Writing-skill's plain-language invocation check (skill discovery is per
+  project, so it runs on the trunk): once, in a fresh session, five minutes.
+  Not a step.
 
 ## Parked / needs re-scope
 
