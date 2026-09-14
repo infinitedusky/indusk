@@ -89,6 +89,7 @@ Test paths are repo-root-relative.
 - [x] The existing enable path still passes: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/init-workbench.test.ts src/__tests__/worktree-cli.test.ts` — expected: all pass (2026-09-14: 3 files, 16 passed in the combined run)
 - [ ] U1 manual smoke: open a materialized `demo.json` from a fixture in VS Code, type a new key, see completion from the schema — record the VS Code version in this checkoff
 - [x] Rows A1–A4 set to `passing`
+- [x] Shape (Build Phase 1): `prepareShapeReview` returned skipped — "Phase 1's verification is not green" — because the U1 manual smoke above is unchecked. Recorded, not silent; the review runs once U1 is checked. (The phase's code is a `cp` + `echo` in bash and one JSON string; the module map is `src/lib/shape/shape.ts`, there is no `shape/index.ts` — the work skill's example import path is wrong)
 
 #### Build Phase 1 Context
 - [x] (the worktree-extension gotcha, the `indusk setup` line) Update the Workbench topology Conventions entry's pointer sentence, or the worktree-extension gotcha, with one clause: the worktree config schema lives at `.indusk/worktree-configs/config.schema.json`, refreshed on every enable
