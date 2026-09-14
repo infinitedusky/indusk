@@ -133,6 +133,15 @@ lesson title, or a chat log.
 - Writing-skill's plain-language invocation check (skill discovery is per
   project, so it runs on the trunk): once, in a fresh session, five minutes.
   Not a step.
+- **Bugfix, not a step** (Sandy, 2026-09-14, found in a consumer workbench):
+  the worktree extension's config template ships
+  `"$schema": "../../config.schema.json"`, which from
+  `.indusk/worktree-configs/<repo>.json` resolves to nowhere in any project;
+  the IDE loses validation and nothing else notices (the validator loads the
+  schema from the package, never from `$schema`). Fix in
+  `apps/indusk-mcp/extensions/worktree/templates/worktree-config.template.json`
+  plus `on_enable.sh` shipping the schema beside the configs, verified by
+  opening a materialized config in an IDE. `/planner bugfix` when picked up.
 
 ## Parked / needs re-scope
 
