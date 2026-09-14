@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	cpSync,
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -141,5 +149,64 @@ describe.skipIf(SHOULD_SKIP)("worktree-config-schema-pointer", () => {
 		const template = JSON.parse(readFileSync(TEMPLATE, "utf-8")) as { $schema?: string };
 		expect(template.$schema).toBeDefined();
 		expect(template.$schema).not.toMatch(/\.\.\//);
+	});
+
+	/**
+	 * Falsification A5. The 1.44.1 changelog tells existing projects the schema
+	 * "appears on the next enable or `indusk update`". `update` auto-enables only
+	 * extensions that are NOT yet enabled and refreshes third-party ones, so an
+	 * already-enabled worktree extension never has its hook re-run — and
+	 * `on_enable.sh`'s own docblock says the re-run is safe via `indusk update`.
+	 * A project enabled before this fix is the case the promise is made to.
+	 */
+	it("A5: `indusk update` refreshes the schema for an already-enabled extension", {
+		timeout: 120_000,
+	}, () => {
+		initWorkbench();
+		rmSync(siblingSchema());
+		expect(existsSync(siblingSchema())).toBe(false);
+
+		const r = runCli(workbenchDir, ["update"]);
+		expect(r.code, `update failed:\n${r.stderr}`).toBe(0);
+		expect(
+			existsSync(siblingSchema()),
+			`update did not restore the schema:\n${r.stdout.slice(-800)}`,
+		).toBe(true);
+		expect(readFileSync(siblingSchema(), "utf-8")).toBe(readFileSync(PACKAGE_SCHEMA, "utf-8"));
+	});
+
+	/**
+	 * Falsification A7. Once the schema is ignored (A6), a clone carries the
+	 * shared configs and no schema — so every `$schema` in a restored workbench
+	 * points at a file that is not there until something puts it back. The
+	 * documented next step after `workbench restore` is `indusk update`, which
+	 * is the same path A5 covers; this asserts it end to end on a clone.
+	 */
+	it("A7: a cloned workbench has the schema after the documented `indusk update`", {
+		timeout: 120_000,
+	}, () => {
+		initWorkbench();
+
+		// The clone a teammate gets: shared configs, no machine-local schema.
+		const clone = join(root, "cloned-workbench");
+		mkdirSync(join(clone, ".indusk", "worktree-configs"), { recursive: true });
+		cpSync(join(workbenchDir, ".indusk", "config.json"), join(clone, ".indusk", "config.json"));
+		cpSync(configPath(), join(clone, ".indusk", "worktree-configs", "demo.json"));
+		cpSync(join(workbenchDir, ".indusk", "extensions"), join(clone, ".indusk", "extensions"), {
+			recursive: true,
+		});
+		writeFileSync(
+			join(clone, "package.json"),
+			JSON.stringify({ name: "cloned-workbench", version: "0.0.0", private: true }, null, 2),
+		);
+		const cloneSchema = join(clone, ".indusk", "worktree-configs", "config.schema.json");
+		expect(existsSync(cloneSchema), "fixture is wrong: the clone already has a schema").toBe(false);
+
+		const r = runCli(clone, ["update"]);
+		expect(r.code, `update failed in the clone:\n${r.stderr}`).toBe(0);
+		expect(
+			existsSync(cloneSchema),
+			`the restored clone's $schema still points at nothing:\n${r.stdout.slice(-800)}`,
+		).toBe(true);
 	});
 });
