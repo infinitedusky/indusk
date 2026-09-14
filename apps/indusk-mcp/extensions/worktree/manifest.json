@@ -7,6 +7,7 @@
 	},
 	"hooks": {
 		"on_enable": "indusk worktree _on-enable",
+		"on_update": "indusk worktree _on-enable",
 		"on_disable": "echo 'worktree extension disabled — scripts in <workbench>/scripts/worktree/ + package.json entries are left in place for manual cleanup'"
 	}
 }

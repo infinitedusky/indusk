@@ -613,21 +613,26 @@ export async function update(projectRoot: string): Promise<void> {
 				}
 			}
 
-			// Run update hooks if present
+			// Run update hooks if present.
+			//
+			// Fired through `extensions.ts`'s runner rather than a local
+			// `execSync`, because that runner applies the `INDUSK_BIN`
+			// substitution: a manifest's hook command begins with a bare
+			// `indusk `, and firing it raw resolves to whatever is installed
+			// globally instead of the CLI doing the update. A hook that
+			// materializes package-owned files (the worktree extension's
+			// config schema) would then be refreshed by the wrong version.
 			const manifest = loadExtensionTolerant(enabledManifest);
-			const updateHook = manifest?.hooks?.on_update ?? manifest?.hooks?.on_post_update;
-			if (updateHook) {
+			const updateHookName = manifest?.hooks?.on_update
+				? "on_update"
+				: manifest?.hooks?.on_post_update
+					? "on_post_update"
+					: undefined;
+			if (updateHookName) {
 				console.info(`  ${name}: running update hook...`);
-				try {
-					execSync(updateHook, {
-						cwd: projectRoot,
-						timeout: 30000,
-						stdio: ["ignore", "pipe", "pipe"],
-					});
-					console.info(`  ${name}: update hook completed`);
-				} catch {
-					console.info(`  ${name}: update hook failed`);
-				}
+				const { runExtensionHook } = await import("./extensions.js");
+				runExtensionHook(projectRoot, name, updateHookName);
+				console.info(`  ${name}: update hook completed`);
 			}
 
 			// Phase 5.5: ensure declared MCP server is registered in .mcp.json.
@@ -687,22 +692,6 @@ export async function update(projectRoot: string): Promise<void> {
 	console.info("\n[Required Extensions]\n");
 	const { autoEnableExtensions } = await import("./extensions.js");
 	await autoEnableExtensions(projectRoot);
-
-	// 7d. Re-run `on_enable` for enabled extensions whose hook is idempotent and
-	// materializes package-owned files into the project. Neither step above does
-	// this: `autoEnableExtensions` skips anything already enabled, and
-	// `extensionsUpdate` covers third-party extensions only — so a project that
-	// enabled `worktree` before a given release keeps whatever its hook wrote at
-	// that time, forever. The worktree config schema is exactly that case: each
-	// `.indusk/worktree-configs/<repo>.json` points its editor at a sibling
-	// `config.schema.json` the hook ships, and an upgrade that changes the schema
-	// has no other way to reach the project.
-	const { isEnabled } = await import("../../lib/extension-loader.js");
-	if (isEnabled(projectRoot, "worktree")) {
-		const { runExtensionHook } = await import("./extensions.js");
-		console.info("  worktree: refreshing scripts + config schema (on_enable)");
-		runExtensionHook(projectRoot, "worktree", "on_enable");
-	}
 
 	// composable.env deprecation nudge (non-destructive — only prints).
 	const ceNotice = ceDeprecationNotice(projectRoot);

@@ -771,17 +771,15 @@ function printEnvSetupHint(projectRoot: string, name: string): void {
 }
 
 /**
- * Run one of an extension's declared hooks.
+ * The one hook runner.
  *
- * Exported because `update` re-runs `on_enable` for extensions that declare the
- * re-run idempotent: `autoEnableExtensions` skips everything already enabled and
- * `extensionsUpdate` is third-party only, so without this an enabled extension's
- * hook never fires again — and a file its hook materializes (the worktree config
- * schema) can never be refreshed by an upgrade.
+ * Exported as `runExtensionHook` so `update` fires a declared `on_update`
+ * through the same path as every other hook — including the `INDUSK_BIN`
+ * substitution below, which `update`'s own `execSync(updateHook)` did not do.
+ * Two hook runners meant a declared hook resolved `indusk` differently
+ * depending on which one fired it.
  */
-export function runExtensionHook(projectRoot: string, name: string, hook: string): void {
-	runHook(projectRoot, name, hook);
-}
+export { runHook as runExtensionHook };
 
 function runHook(projectRoot: string, name: string, hook: string): void {
 	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
