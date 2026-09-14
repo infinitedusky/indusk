@@ -1,12 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
 	ensureShareableScaffolding,
 	missingIgnoreRules,
 	topUpManagedIgnore,
 } from "../lib/worktree/shareable.js";
+import { CLI_BIN, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { makeVersionedWorkbench, type VersionedWorkbench } from "./helpers/versioned-workbench.js";
 
 /**
@@ -25,9 +26,6 @@ import { makeVersionedWorkbench, type VersionedWorkbench } from "./helpers/versi
  * on the managed marker, reported by `missingIgnoreRules`).
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
 const SCHEMA_REL = ".indusk/worktree-configs/config.schema.json";
 
 let wb: VersionedWorkbench | undefined;
@@ -37,15 +35,13 @@ afterEach(() => {
 	wb = undefined;
 });
 
-/** Run the extension's own hook the way its manifest does. */
-function enableWorktree(root: string): { code: number; stderr: string } {
-	const r = spawnSync("node", [CLI_BIN, "worktree", "_on-enable"], {
-		cwd: root,
-		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1", INDUSK_BIN: `node ${CLI_BIN}` },
-		timeout: 60_000,
-	});
-	return { code: r.status ?? -1, stderr: r.stderr ?? "" };
+/**
+ * Run the extension's own hook the way its manifest does. `INDUSK_BIN` points
+ * the hook's bare `indusk` at this build rather than whatever is installed
+ * globally.
+ */
+function enableWorktree(root: string) {
+	return runCli(root, ["worktree", "_on-enable"], { INDUSK_BIN: `node ${CLI_BIN}` });
 }
 
 /**

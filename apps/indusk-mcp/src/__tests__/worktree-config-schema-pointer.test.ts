@@ -1,4 +1,3 @@
-import { spawnSync } from "node:child_process";
 import {
 	cpSync,
 	existsSync,
@@ -11,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { CLI_BIN, REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { git, makeVersionedWorkbench } from "./helpers/versioned-workbench.js";
 
 /**
@@ -29,14 +29,11 @@ import { git, makeVersionedWorkbench } from "./helpers/versioned-workbench.js";
  * ships the schema beside the configs and points the template at it.
  */
 
-const REPO_ROOT = resolve(__dirname, "../../../..");
-const CLI_BIN = join(REPO_ROOT, "apps/indusk-mcp/dist/bin/cli.js");
 const PACKAGE_SCHEMA = join(REPO_ROOT, "apps/indusk-mcp/extensions/worktree/config.schema.json");
 const TEMPLATE = join(
 	REPO_ROOT,
 	"apps/indusk-mcp/extensions/worktree/templates/worktree-config.template.json",
 );
-const SHOULD_SKIP = process.env.SKIP_SLOW_TESTS === "1" || !existsSync(CLI_BIN);
 
 let root: string;
 let cloneDir: string;
@@ -49,19 +46,17 @@ beforeEach(() => {
 	mkdirSync(cloneDir, { recursive: true });
 	mkdirSync(workbenchDir, { recursive: true });
 
-	const gitOpts = { cwd: cloneDir, stdio: "ignore" as const };
-	spawnSync("git", ["init", "-q", "-b", "main"], gitOpts);
+	// `git` throws on a non-zero exit. A fixture that cannot establish its
+	// precondition must fail loudly here rather than let every assertion below
+	// pass against a repo that was never created.
+	git(cloneDir, ["init", "-q", "-b", "main"]);
 	writeFileSync(join(cloneDir, "README.md"), "# demo\n");
 	writeFileSync(
 		join(cloneDir, "package.json"),
 		JSON.stringify({ name: "demo", version: "0.0.0" }, null, 2),
 	);
-	spawnSync("git", ["add", "-A"], gitOpts);
-	spawnSync(
-		"git",
-		["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "initial"],
-		gitOpts,
-	);
+	git(cloneDir, ["add", "-A"]);
+	git(cloneDir, ["commit", "-q", "-m", "initial"]);
 
 	// The on_enable hook merges pnpm scripts into the workbench package.json.
 	writeFileSync(
@@ -74,27 +69,20 @@ afterEach(() => {
 	if (existsSync(root)) rmSync(root, { recursive: true, force: true });
 });
 
-function runCli(cwd: string, args: string[]): { code: number; stdout: string; stderr: string } {
-	const r = spawnSync("node", [CLI_BIN, ...args], {
-		cwd,
-		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1", INDUSK_BIN: `node ${CLI_BIN}` },
-		timeout: 60_000,
-	});
-	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
-}
+/**
+ * The extension hooks these tests exercise shell out to a bare `indusk`, so
+ * every call needs `INDUSK_BIN` pointed at this build — otherwise the hook runs
+ * whatever is installed globally and the assertions describe the wrong CLI.
+ */
+const DEV_CLI = { INDUSK_BIN: `node ${CLI_BIN}` };
 
 /** First enable goes through `init --workbench`, which enables the worktree extension. */
 function initWorkbench(): void {
-	const r = runCli(workbenchDir, [
-		"init",
-		"--workbench",
-		"--wrapped-repo",
-		"demo",
-		"--sibling-parent",
-		root,
-		"--no-index",
-	]);
+	const r = runCli(
+		workbenchDir,
+		["init", "--workbench", "--wrapped-repo", "demo", "--sibling-parent", root, "--no-index"],
+		DEV_CLI,
+	);
 	expect(r.code, `init failed:\n${r.stderr}`).toBe(0);
 }
 
@@ -104,7 +92,7 @@ function initWorkbench(): void {
  * `indusk worktree _on-enable`, cwd at the workbench.
  */
 function reEnable(): void {
-	const r = runCli(workbenchDir, ["worktree", "_on-enable"]);
+	const r = runCli(workbenchDir, ["worktree", "_on-enable"], DEV_CLI);
 	expect(r.code, `_on-enable failed:\n${r.stderr}`).toBe(0);
 }
 
@@ -167,7 +155,7 @@ describe.skipIf(SHOULD_SKIP)("worktree-config-schema-pointer", () => {
 		rmSync(siblingSchema());
 		expect(existsSync(siblingSchema())).toBe(false);
 
-		const r = runCli(workbenchDir, ["update"]);
+		const r = runCli(workbenchDir, ["update"], DEV_CLI);
 		expect(r.code, `update failed:\n${r.stderr}`).toBe(0);
 		expect(
 			existsSync(siblingSchema()),
@@ -223,10 +211,10 @@ describe.skipIf(SHOULD_SKIP)("worktree-config-schema-pointer", () => {
 			const wbSchema = join(wb.root, ".indusk", "worktree-configs", "config.schema.json");
 			expect(existsSync(wbSchema), "fixture is wrong: the clone already has a schema").toBe(false);
 
-			const restored = runCli(wb.root, ["workbench", "restore", "--no-ignore-check"]);
+			const restored = runCli(wb.root, ["workbench", "restore", "--no-ignore-check"], DEV_CLI);
 			expect(restored.code, `restore failed:\n${restored.stderr}`).toBe(0);
 
-			const updated = runCli(wb.root, ["update"]);
+			const updated = runCli(wb.root, ["update"], DEV_CLI);
 			expect(updated.code, `update failed:\n${updated.stderr}`).toBe(0);
 			expect(
 				existsSync(wbSchema),
