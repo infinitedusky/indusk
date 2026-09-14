@@ -206,6 +206,7 @@ Re-read CLAUDE.md in full. After the entire impl is done, verify:
 - **Key Decisions** — was the ADR decision added (post-ADR trigger)?
 - **Known Gotchas** — were all surprises and corrections captured?
 - **Current State** — does it reflect what's actually in progress?
+- **Sequence** — does every active plan folder have exactly one fate: a step declared in the root `master.md` sequence, archived with a `closed_reason`, or standalone with a reason written in the master? A folder with none is how a close-out goes unwritten for weeks (indusk-makeover sat `completed` for 53 days in a queue labelled "any time"). Fix it here — declare it, archive it, or write the reason — and write any follow-on this plan surfaced into the brief of the step that owns it, not into this retrospective alone.
 
 Fix any inaccuracies. The impl may have changed things that weren't anticipated in the per-phase context updates.
 
