@@ -9,9 +9,12 @@
 #      `indusk update` re-copies if upstream changes)
 #   3. Registers `wt`, `wt:pm2`, `preflight` scripts in the workbench's
 #      package.json (merges, doesn't duplicate)
-#   4. Materializes a starter `.indusk/worktree-configs/<wrapped_repo>.json`
-#      from the template if absent — substituting WRAPPED_REPO_NAME with
-#      the actual repo name from worktree.wrapped_repo config
+#   4. Ships `.indusk/worktree-configs/config.schema.json` (the editor
+#      schema the starter config's `$schema` points at), refreshed on every
+#      enable; then materializes a starter
+#      `.indusk/worktree-configs/<wrapped_repo>.json` from the template if
+#      absent — substituting WRAPPED_REPO_NAME with the actual repo name
+#      from worktree.wrapped_repo config
 #
 # Requires:
 #   - jq installed
@@ -76,8 +79,18 @@ else
 	echo "  WARN: no package.json at $PKG_JSON; skipping script registration"
 fi
 
-# 3. Materialize starter worktree-config if absent.
+# 3. Ship the config schema beside the configs, refreshed on every enable.
+#    The starter config's `$schema` points at `./config.schema.json`; enabling
+#    an extension copies only its manifest into the project, so nothing else
+#    puts the schema anywhere a relative pointer could reach. A config that
+#    already exists is left alone below; the schema is always refreshed so a
+#    package upgrade carries schema changes into the project.
 CONFIG_DIR="$WORKBENCH_ROOT/.indusk/worktree-configs"
+mkdir -p "$CONFIG_DIR"
+cp "$EXT_DIR/config.schema.json" "$CONFIG_DIR/config.schema.json"
+echo "  schema: $CONFIG_DIR/config.schema.json"
+
+# 4. Materialize starter worktree-config if absent.
 for REPO_NAME in ${DECLARED_REPOS+"${DECLARED_REPOS[@]}"}; do
 	CONFIG_FILE="$CONFIG_DIR/${REPO_NAME}.json"
 	if [[ ! -f "$CONFIG_FILE" ]]; then

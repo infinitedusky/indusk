@@ -137,6 +137,7 @@ What this does in order:
    - `scripts/worktree/` (setup, refresh, wt, wt-pm2, preflight scripts + lib helpers)
    - Five pnpm scripts in `package.json` (`wt`, `wt:pm2`, `wt-setup`, `wt-refresh`, `preflight`)
    - A starter `.indusk/worktree-configs/numero.json` with `compose_project_name: "numero"`
+   - `.indusk/worktree-configs/config.schema.json` beside it — the starter config's `$schema` points at `./config.schema.json`, so your editor validates and completes the config; the schema is refreshed on every enable, the config is never overwritten
 
 #### 4. Verify
 
