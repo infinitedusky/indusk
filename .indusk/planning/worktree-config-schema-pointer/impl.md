@@ -1,7 +1,7 @@
 ---
 title: "Worktree config schema pointer — Implementation"
 date: 2026-09-14
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -87,9 +87,10 @@ Test paths are repo-root-relative.
 #### Build Phase 1 Verification
 - [x] A1–A4 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-pointer.test.ts` — expected: 4 passed (2026-09-14: 4 passed)
 - [x] The existing enable path still passes: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/init-workbench.test.ts src/__tests__/worktree-cli.test.ts` — expected: all pass (2026-09-14: 3 files, 16 passed in the combined run)
-- [ ] U1 manual smoke: open a materialized `demo.json` from a fixture in VS Code, type a new key, see completion from the schema — record the VS Code version in this checkoff
+- [x] U1 manual smoke: open a materialized `demo.json` from a fixture in VS Code, type a new key, see completion from the schema — record the VS Code version in this checkoff — 2026-09-14, Sandy: typing `"pre` produced the schema-derived ghost completion `"preflight": []` (typed default from the schema), duplicate-key diagnostic on the existing key as expected, no schema-load warning; fixture materialized with the fixed CLI at the scratchpad `u1-smoke/demo-workbench`; VS Code version recorded in the commit body
 - [x] Rows A1–A4 set to `passing`
 - [x] Shape (Build Phase 1): `prepareShapeReview` returned skipped — "Phase 1's verification is not green" — because the U1 manual smoke above is unchecked. Recorded, not silent; the review runs once U1 is checked. (The phase's code is a `cp` + `echo` in bash and one JSON string; the module map is `src/lib/shape/shape.ts`, there is no `shape/index.ts` — the work skill's example import path is wrong)
+- [x] Shape (Build Phase 1, after U1) — reviewed the four files the phase changed (`on_enable.sh`, the template, CLAUDE.md, `worktree-setup.md`) against the typescript and testing craft rules; nothing to change. The hook gained one numbered step with one job, a comment that says why it is unconditional, and the per-repo guard untouched; the template is data; the two prose files are not code. All rule sets readable.
 
 #### Build Phase 1 Context
 - [x] (the worktree-extension gotcha, the `indusk setup` line) Update the Workbench topology Conventions entry's pointer sentence, or the worktree-extension gotcha, with one clause: the worktree config schema lives at `.indusk/worktree-configs/config.schema.json`, refreshed on every enable
