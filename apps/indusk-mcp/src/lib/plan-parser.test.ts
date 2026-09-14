@@ -34,10 +34,11 @@ describe("parseAllPlans", () => {
 		expect(plans.length).toBeGreaterThanOrEqual(2);
 
 		const names = plans.map((p) => p.name);
-		// Use stable active plans that exist in the root planning dir (not archived).
-		// Both are parked/long-term plans unlikely to be archived in the near term.
+		// Pin on the two parent masters, which are living documents and never
+		// archived. (This used to pin on react-native-support, "unlikely to be
+		// archived in the near term" — it was archived 2026-09-14.)
 		expect(names).toContain("indusk-v2-dawn");
-		expect(names).toContain("react-native-support");
+		expect(names).toContain("indusk-v4-day");
 
 		// Verify sorted
 		const sorted = [...names].sort();
