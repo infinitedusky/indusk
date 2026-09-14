@@ -207,5 +207,5 @@ Daemon restarted with fresh buffers.
 ## See also
 
 - [Overview](./overview) — architecture diagram, MCP tool surface, env routing, migration from Dash0-only.
-- ADR: `.indusk/planning/local-telemetry/adr.md` (source-of-truth architectural decision).
-- Spike findings: `.indusk/planning/local-telemetry/spike-findings.md` (Phase 1 measurements + binding decisions).
+- ADR: `.indusk/planning/archive/local-telemetry/adr.md` (source-of-truth architectural decision).
+- Spike findings: `.indusk/planning/archive/local-telemetry/spike-findings.md` (Phase 1 measurements + binding decisions).

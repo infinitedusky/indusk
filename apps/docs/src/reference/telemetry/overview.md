@@ -206,5 +206,5 @@ Two follow-up plans in the master plan build on this substrate — on independen
 ## See also
 
 - [CLI reference](./cli) — runnable surface for the `indusk telemetry` subcommand.
-- [ADR](https://github.com/infinite-dusky/dusk) — `.indusk/planning/local-telemetry/adr.md` (source-of-truth architectural decision).
-- [Phase 1 spike findings](https://github.com/infinite-dusky/dusk) — `.indusk/planning/local-telemetry/spike-findings.md` (measurements + binding decisions).
+- [ADR](https://github.com/infinite-dusky/dusk) — `.indusk/planning/archive/local-telemetry/adr.md` (source-of-truth architectural decision).
+- [Phase 1 spike findings](https://github.com/infinite-dusky/dusk) — `.indusk/planning/archive/local-telemetry/spike-findings.md` (measurements + binding decisions).

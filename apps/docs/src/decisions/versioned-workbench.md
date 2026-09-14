@@ -233,7 +233,7 @@ Publish to `/decisions/versioned-workbench.md`. It supersedes the single-repo na
 
 - `.indusk/planning/versioned-workbench/brief.md` — accepted 2026-07-23; In Scope amended 2026-07-24 (manifest + bootstrap); field note 2026-07-27 (workbench-root `docs/`)
 - `.indusk/planning/versioned-workbench/test-plan.md` — revised 2026-08-16; A7 withdrawn, A10–A15 added for restore + multi-repo, U1 for SSH aliases
-- `.indusk/planning/indusk-worktree-extension/adr.md` — the v1 single-repo narrowing this ADR supersedes
+- `.indusk/planning/archive/indusk-worktree-extension/adr.md` — the v1 single-repo narrowing this ADR supersedes
 - `.indusk/planning/indusk-makeover/adr.md` — Graphiti/CGC removal (withdraws A7), hub push/pull (D5)
 - `/decisions/multi-agent-coordination` — per-agent `current.md` sections + `merge=union`, extended cross-machine here
 - `/decisions/worktree-visibility` — worktree-per-plan default, the topology being widened
