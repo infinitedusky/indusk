@@ -1,5 +1,5 @@
 {
-	"$schema": "../../config.schema.json",
+	"$schema": "./config.schema.json",
 	"trunk_branch": "main",
 	"base_branch": "main",
 	"post_create": ["pnpm install"],
