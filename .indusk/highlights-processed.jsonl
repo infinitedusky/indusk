@@ -218,3 +218,5 @@
 {"id":"h-20260914-002","processedAt":"2026-09-14T14:30:11.492Z","action":"wrote-episode","detail":"completed-status-has-no-expiry-visibility-is-not-a-trigger"}
 {"id":"h-20260914-001","processedAt":"2026-09-14T14:30:16.739Z","action":"skipped","detail":"recorded in indusk-makeover retrospective's own trajectory audit; the durable rule from this same retrospective is captured separately (h-20260914-002, h-20260914-003)"}
 {"id":"h-20260914-003","processedAt":"2026-09-14T14:30:31.217Z","action":"wrote-episode","detail":"write-the-retrospective-immediately-a-late-one-audits-the-wrong-mitigation"}
+{"id":"h-20260914-004","processedAt":"2026-09-14T14:52:15.927Z","action":"wrote-episode","detail":"enabling-extension-ships-manifest-not-files-it-points-at"}
+{"id":"h-20260914-005","processedAt":"2026-09-14T14:52:16.936Z","action":"skipped","detail":"test strategy (real-hook integration over reproduced copy logic) is fully recorded in worktree-config-schema-pointer/test-plan.md; not a generalizable rule beyond this plan"}

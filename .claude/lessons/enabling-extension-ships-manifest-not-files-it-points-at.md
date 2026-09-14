@@ -1,0 +1,9 @@
+# Enabling an extension copies only manifest.json into a project — any file the extension's output points at (a schema, a template asset) must be shipped explicitly by on_enable
+
+A project's `.indusk/extensions/<name>/` holds only `manifest.json` after enable — nothing else from the package directory lands there automatically. If a generated file references another package file by relative path (e.g. a JSON `$schema` pointer), that reference can never resolve in the consumer project unless `on_enable` explicitly copies the referenced file alongside the generated one.
+
+Found 2026-09-14: the worktree extension's starter config template shipped `"$schema": "../../config.schema.json"`. That path assumed the schema lived two directories up from the materialized config, which was true inside the package but never true in a consumer project — enabling the extension only copied the manifest, so no relative path from `.indusk/worktree-configs/<repo>.json` could ever reach a schema file. Nothing caught it because the CLI validator loads the schema from inside the package directly and never reads `$schema` — only external tooling (an editor) reads that pointer, so the break was invisible to every automated check and every editor silently showed the config as unvalidated.
+
+Fix pattern: `on_enable.sh` copies the referenced file (`config.schema.json`) next to the generated output on every enable (so a package upgrade refreshes it), and the template's pointer becomes a same-directory relative path (`./config.schema.json`). See `.indusk/planning/worktree-config-schema-pointer/brief.md` and `impl.md`.
+
+How to apply: when writing or reviewing an `on_enable` hook for any extension, check every file the extension generates for embedded paths to other package files (schema pointers, imports, includes) — each one needs an explicit copy step, not just the manifest.
