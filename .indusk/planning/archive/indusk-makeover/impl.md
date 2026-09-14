@@ -64,11 +64,11 @@ Cut session-start fixed context ~123k → ~18k tokens and catchup ~55k → ≤15
 - **Compressed CLAUDE.md effectiveness (U1)**
   - reason: whether future sessions repeat mistakes the old narratives prevented is only observable over weeks of real sessions
   - would require: several weeks of normal multi-session use post-compression
-  - mitigation: A4's 15-entry sample gate now, plus a scheduled 2-week review greping new-session mistakes against archived entries; any repeat-bug traced to a compressed entry strengthens its rule sentence in place
+  - mitigation: A4's 15-entry sample gate now, plus the retrospective compaction step that every plan close runs (the scheduled 2-week review named here was never scheduled; recorded at the 2026-09-14 retrospective); any repeat-bug traced to a compressed entry strengthens its rule sentence in place
 - **Quota burn drops proportionally (U2)**
   - reason: depends on Anthropic-side caching/limit mechanics, not directly observable per-session
   - would require: instrumented before/after quota telemetry from the provider
-  - mitigation: before/after comparison of sessions-per-limit-window over a normal week of use; user reports
+  - mitigation: user reports only — no before/after comparison was recorded (noted at the 2026-09-14 retrospective); unverified as a number
 
 ### Trajectory Rationale
 
