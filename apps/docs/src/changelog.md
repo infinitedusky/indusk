@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.44.1] — 2026-09-14
+
 ### Fixed
 - **The worktree starter config's `$schema` pointer resolves.** It named `../../config.schema.json`, a file no project has: enabling an extension copies only its manifest, so the schema never left the package, and only editors noticed (the validator loads it from the package). `on_enable` now ships `config.schema.json` beside the configs, refreshed on every enable, and the pointer is `./config.schema.json`. Existing configs: change the pointer by hand; the schema appears on the next enable or `indusk update`.
 - **`indusk run` refuses at a versioned workbench root.** The loop takes one root as its whole world; at a workbench root it would commit checkbox edits to the workbench and never reach the code, reporting every item done. Its only guard was commit-cadence tripping on "not a git repo", which a versioned workbench no longer is. The refusal names the declared repo directories and precedes the provider-key check. Lifted case by case by Dawn 6.5.
