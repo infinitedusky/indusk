@@ -127,6 +127,30 @@ Test paths are repo-root-relative.
 - [x] `apps/docs/src/changelog.md` 1.44.1 entry: replace "the schema appears on the next enable or `indusk update`" with what is now true — `indusk update` refreshes it, a workbench that already committed the schema drops it from the index on its next `workbench sync`, and the ignore rule is topped up on managed ignore files
 - [x] `apps/docs/src/reference/cli/workbench.md` ignore-rules section: the schema is machine-local, listed with `.indusk/eval/` and the lock file, with the reason
 
+### Phase 3: Cleanup — two more private CLI runners, beside a helper that already exists
+
+**Goal**: fold this plan's test files onto `src/__tests__/helpers/cli.ts`, which already owns exactly what they re-derived. This is not a new extraction — the home is settled, and its own docblock records the consolidation (ten byte-identical `runCli` copies, deferred there from a Shape review because the rule of three is cleanup's question). Twenty-one suites import it; this plan wrote the eighteenth and nineteenth private copies instead. Each item below is one migration or a reasoned leave-as-is. The migration is structure-preserving, so no new trajectory row: A1–A7 are the behaviour coverage, and they must stay green through it.
+
+- [ ] `src/__tests__/worktree-config-schema-pointer.test.ts`: delete the private `REPO_ROOT`, `CLI_BIN`, `SHOULD_SKIP` and `runCli`; import all four from `./helpers/cli.js`. The private `runCli` differs only in passing `INDUSK_BIN` and a 60s timeout — `INDUSK_BIN` moves to the helper's `env` parameter (`runCli(cwd, args, { INDUSK_BIN: \`node ${CLI_BIN}\` })`), and the timeout goes: the helper deliberately has none, and a spawn that hangs should hang visibly rather than return a fabricated `code: -1` that reads as a CLI failure. Basis: the rule of three, already met and already homed
+- [ ] `src/__tests__/worktree-config-schema-versioned.test.ts`: same four, plus rewrite `enableWorktree` as a one-line wrapper over the shared `runCli` — the name is worth keeping (it says which CLI call this is, and every test in the file makes it), the second spawn body is not. Basis: rule of three
+- [ ] Re-derived `REPO_ROOT` is the specific hazard here, not just duplication: the helper's docblock records that computing it wrongly does not fail — it makes `CLI_BIN` point at nothing, `SHOULD_SKIP` go true, and the suite report green by not running, which cost ten silently-skipped files. Two files computing it by hand is two more chances at that. After the migration, `grep -c 'resolve(__dirname' ` over both files is 0
+- [ ] (reviewed `src/bin/commands/extensions.ts` at 1020 lines and `src/bin/commands/update.ts` at 939 — left as-is: this plan added an export alias and a docblock to one and reshaped ~30 lines in the other; both are pre-existing monoliths whose decomposition is the cleanup-ritual plan's standing "first customer" follow-up, named there and not this plan's output)
+- [ ] (reviewed `src/lib/worktree/shareable.ts` — left as-is: the new `WORKTREE_SCHEMA_RULE` sits with `ROOT_DENY_RULE` and `SECRETS_RULE` under the docblock that exists to keep the generator and its checker reading one constant. Moving it out would recreate the drift that comment records)
+- [ ] (reviewed the schema path crossing the TS/bash boundary — `WORKTREE_SCHEMA_RULE` in `shareable.ts`, `$CONFIG_DIR/config.schema.json` in `on_enable.sh`, `./config.schema.json` in the template — left as-is, and recorded as covered: bash and TS cannot share a constant, so the deliberate-port rule applies (`_hook-paths.js` / `workbench-helpers.sh`), and A6 is the pin that makes a drift fail. It runs the real hook and then asserts git does not offer the file, so the write path and the ignore rule must name the same thing or the test goes red)
+- [ ] (reviewed `apps/docs/src/changelog.md` at 646 lines and `reference/cli/workbench.md` at 403 — left as-is: prose, and the changelog is append-only by construction)
+- [ ] (Build Phase 1's files — `extensions/worktree/hooks/on_enable.sh` at 106 lines and the config template — are NOT in this scan: they merged to main before this phase branched, so `main...HEAD` cannot see them. Reviewed by reading: a `mkdir`/`cp`/`echo` inside the hook's existing numbered-step structure, and one JSON string. Nothing to decompose)
+
+#### Phase 3 Verification
+- [ ] (no tests flip at this phase — reason: refactor)
+- [ ] A1–A7 stay green through the migration, and the count that proves the suites actually ran: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-pointer.test.ts src/__tests__/worktree-config-schema-versioned.test.ts` — expected: 2 files, 8 passed, **0 skipped** (a wrong `REPO_ROOT` shows up as skipped, not failed)
+- [ ] The suites that already import the shared helper are unaffected: `cd apps/indusk-mcp && pnpm exec vitest run $(grep -rl 'from \"./helpers/cli.js\"' src/__tests__ | tr '\n' ' ')` — expected: all pass
+
+#### Phase 3 Context
+- [ ] (none — internal test decomposition onto an existing helper; the helper and its rationale are already recorded in CLAUDE.md's single-definition gotcha, and this plan adds no new rule)
+
+#### Phase 3 Document
+- [ ] (none — no public surface changes; `helpers/cli.ts` is test-only)
+
 ## Files Affected
 
 | File | Change |
