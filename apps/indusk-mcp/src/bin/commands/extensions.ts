@@ -770,6 +770,19 @@ function printEnvSetupHint(projectRoot: string, name: string): void {
 	console.info(`    Then edit .env and fill in values (see inline comments).`);
 }
 
+/**
+ * Run one of an extension's declared hooks.
+ *
+ * Exported because `update` re-runs `on_enable` for extensions that declare the
+ * re-run idempotent: `autoEnableExtensions` skips everything already enabled and
+ * `extensionsUpdate` is third-party only, so without this an enabled extension's
+ * hook never fires again — and a file its hook materializes (the worktree config
+ * schema) can never be refreshed by an upgrade.
+ */
+export function runExtensionHook(projectRoot: string, name: string, hook: string): void {
+	runHook(projectRoot, name, hook);
+}
+
 function runHook(projectRoot: string, name: string, hook: string): void {
 	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
 	if (!manifestPath) return;

@@ -688,6 +688,22 @@ export async function update(projectRoot: string): Promise<void> {
 	const { autoEnableExtensions } = await import("./extensions.js");
 	await autoEnableExtensions(projectRoot);
 
+	// 7d. Re-run `on_enable` for enabled extensions whose hook is idempotent and
+	// materializes package-owned files into the project. Neither step above does
+	// this: `autoEnableExtensions` skips anything already enabled, and
+	// `extensionsUpdate` covers third-party extensions only — so a project that
+	// enabled `worktree` before a given release keeps whatever its hook wrote at
+	// that time, forever. The worktree config schema is exactly that case: each
+	// `.indusk/worktree-configs/<repo>.json` points its editor at a sibling
+	// `config.schema.json` the hook ships, and an upgrade that changes the schema
+	// has no other way to reach the project.
+	const { isEnabled } = await import("../../lib/extension-loader.js");
+	if (isEnabled(projectRoot, "worktree")) {
+		const { runExtensionHook } = await import("./extensions.js");
+		console.info("  worktree: refreshing scripts + config schema (on_enable)");
+		runExtensionHook(projectRoot, "worktree", "on_enable");
+	}
+
 	// composable.env deprecation nudge (non-destructive — only prints).
 	const ceNotice = ceDeprecationNotice(projectRoot);
 	if (ceNotice) console.info(ceNotice);
