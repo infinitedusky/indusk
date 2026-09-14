@@ -42,10 +42,10 @@ Test paths are repo-root-relative.
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | After `init --workbench` on a fresh fixture, the starter config's `$schema`, resolved relative to the config file, names a file that exists | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
-| A2 | `.indusk/worktree-configs/config.schema.json` is byte-identical to `extensions/worktree/config.schema.json`; enabling again after the package copy is modified (via a temp `EXT_DIR` copy) refreshes it | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
-| A3 | A pre-seeded `<repo>.json` is byte-untouched after enable while its sibling `config.schema.json` is written | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
-| A4 | The shipped template's `$schema` contains no `../` segment | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
+| A1 | After `init --workbench` on a fresh fixture, the starter config's `$schema`, resolved relative to the config file, names a file that exists | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
+| A2 | `.indusk/worktree-configs/config.schema.json` is byte-identical to `extensions/worktree/config.schema.json`; enabling again after the package copy is modified (via a temp `EXT_DIR` copy) refreshes it | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
+| A3 | A pre-seeded `<repo>.json` is byte-untouched after enable while its sibling `config.schema.json` is written | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
+| A4 | The shipped template's `$schema` contains no `../` segment | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
 
 ### Deferred Verification
 
@@ -80,13 +80,13 @@ Test paths are repo-root-relative.
 
 ### Build Phase 1: Ship the schema beside the configs
 
-- [ ] `extensions/worktree/hooks/on_enable.sh` step 3: before the per-repo loop, `mkdir -p "$CONFIG_DIR"` and `cp "$EXT_DIR/config.schema.json" "$CONFIG_DIR/config.schema.json"` unconditionally, with an `echo "  schema: $CONFIG_DIR/config.schema.json"` line; the per-repo `if [[ ! -f "$CONFIG_FILE" ]]` guard is unchanged
-- [ ] `extensions/worktree/templates/worktree-config.template.json`: `"$schema": "./config.schema.json"`
-- [ ] Update the docblock at the top of `on_enable.sh` (step 4's description) to name the schema copy
+- [x] `extensions/worktree/hooks/on_enable.sh` step 3: before the per-repo loop, `mkdir -p "$CONFIG_DIR"` and `cp "$EXT_DIR/config.schema.json" "$CONFIG_DIR/config.schema.json"` unconditionally, with an `echo "  schema: $CONFIG_DIR/config.schema.json"` line; the per-repo `if [[ ! -f "$CONFIG_FILE" ]]` guard is unchanged
+- [x] `extensions/worktree/templates/worktree-config.template.json`: `"$schema": "./config.schema.json"`
+- [x] Update the docblock at the top of `on_enable.sh` (step 4's description) to name the schema copy
 
 #### Build Phase 1 Verification
-- [ ] A1–A4 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-pointer.test.ts` — expected: 4 passed
-- [ ] The existing enable path still passes: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/init-workbench.test.ts src/__tests__/worktree-cli.test.ts` — expected: all pass
+- [x] A1–A4 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-pointer.test.ts` — expected: 4 passed (2026-09-14: 4 passed)
+- [x] The existing enable path still passes: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/init-workbench.test.ts src/__tests__/worktree-cli.test.ts` — expected: all pass (2026-09-14: 3 files, 16 passed in the combined run)
 - [ ] U1 manual smoke: open a materialized `demo.json` from a fixture in VS Code, type a new key, see completion from the schema — record the VS Code version in this checkoff
 - [ ] Rows A1–A4 set to `passing`
 
