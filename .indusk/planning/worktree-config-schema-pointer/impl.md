@@ -70,12 +70,13 @@ Test paths are repo-root-relative.
 #### Test Phase 1 Verification
 - [x] All four red on their own assertion, none on a load error: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-pointer.test.ts` — expected: 4 failed, each failure message naming the assertion (`existsSync` false / schema missing / template pointer) — 2026-09-14: 4 failed, messages quoted on each authoring item above; no load error
 - [x] Rows A1–A4 set to `written`
+- [x] Shape (Test Phase 1, recorded by hand — the Shape library addresses phases by number and cannot see a test phase): reviewed `worktree-config-schema-pointer.test.ts` against the typescript and testing craft prose — one fixture with one job, two named helpers whose names say what they are for (`initWorkbench`, `reEnable`), every assertion reached over the process boundary. Nothing to change. All rule sets readable.
 
 #### Test Phase 1 Context
-- [ ] Add to Known Gotchas: "Enabling an extension copies only its `manifest.json` into `.indusk/extensions/<name>/`; any file an extension's output must point at (a schema, a template) has to be shipped by its `on_enable` hook explicitly — the worktree config's `$schema` pointed at a file that never left the package."
+- [x] Add to Known Gotchas: "Enabling an extension copies only its `manifest.json` into `.indusk/extensions/<name>/`; any file an extension's output must point at (a schema, a template) has to be shipped by its `on_enable` hook explicitly — the worktree config's `$schema` pointed at a file that never left the package."
 
 #### Test Phase 1 Document
-- [ ] `apps/docs/src/changelog.md` Unreleased, Fixed: "The worktree starter config's `$schema` pointer resolves. It named `../../config.schema.json`, a file no project has; `on_enable` now ships the schema beside the configs and the pointer is `./config.schema.json`. Existing configs: edit the pointer by hand, the schema is refreshed on the next enable."
+- [x] `apps/docs/src/changelog.md` Unreleased, Fixed: "The worktree starter config's `$schema` pointer resolves. It named `../../config.schema.json`, a file no project has; `on_enable` now ships the schema beside the configs and the pointer is `./config.schema.json`. Existing configs: edit the pointer by hand, the schema is refreshed on the next enable."
 
 ### Build Phase 1: Ship the schema beside the configs
 
