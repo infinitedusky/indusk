@@ -150,6 +150,22 @@ no deny-by-default rule is imposed — which is what makes the block safe to
 append to a `.gitignore` somebody else wrote. See
 [Declaring where things live](#declaring-where-things-live).
 
+**Machine-local files are ignored by name**, under a heading that says so:
+`.indusk/eval/`, `.indusk/current.md.lock`, `.indusk/sync-stamp`,
+`.claude/settings.local.json`, and
+`.indusk/worktree-configs/config.schema.json`. That last one is the editor
+schema the worktree extension ships beside its configs so each config's
+`$schema` resolves. It is package-owned and tracks the installed version, so
+sharing it would have two teammates on different InDusk versions rewriting it
+at each other on every enable — real content, true only for this machine, the
+same test the others pass. It arrives (and is refreshed) via the extension's
+`on_update` hook on `indusk update`, not through the shared repo.
+
+A managed ignore file missing any of these gains it: the top-up is per **rule**,
+so a workbench scaffolded before a rule existed still receives it. An earlier
+version topped up per *file* — a file already carrying the root deny rule was
+treated as complete, and every rule added afterwards could never reach it.
+
 **`.gitattributes`** sets `merge=union` on the append-shaped coordination files
 (`current.md`, `highlights.jsonl`) — two machines appending different lines both
 mean it, and a conflict marker there blocks every agent on both sides. It is
