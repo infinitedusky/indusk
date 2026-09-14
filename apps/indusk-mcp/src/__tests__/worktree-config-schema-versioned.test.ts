@@ -1,8 +1,12 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { missingIgnoreRules, topUpManagedIgnore } from "../lib/worktree/shareable.js";
+import {
+	ensureShareableScaffolding,
+	missingIgnoreRules,
+	topUpManagedIgnore,
+} from "../lib/worktree/shareable.js";
 import { makeVersionedWorkbench, type VersionedWorkbench } from "./helpers/versioned-workbench.js";
 
 /**
@@ -66,6 +70,12 @@ describe.skipIf(SHOULD_SKIP)("A6 — the schema is machine-local, never shared",
 			join(wb.root, "package.json"),
 			'{"name":"wb","version":"0.0.0","private":true}\n',
 		);
+
+		// The fixture hand-writes a minimal `.gitignore` (the repo dirs only).
+		// A real workbench's comes from the scaffolding generator, which is the
+		// artifact under test here — so replace it with the real one.
+		rmSync(join(wb.root, ".gitignore"));
+		ensureShareableScaffolding(wb.root, [{ name: "alpha" }]);
 
 		const r = enableWorktree(wb.root);
 		expect(r.code, `_on-enable failed:\n${r.stderr}`).toBe(0);

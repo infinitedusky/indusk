@@ -11,6 +11,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { git, makeVersionedWorkbench } from "./helpers/versioned-workbench.js";
 
 /**
  * worktree-config-schema-pointer — A1–A4.
@@ -179,34 +180,60 @@ describe.skipIf(SHOULD_SKIP)("worktree-config-schema-pointer", () => {
 	 * Falsification A7. Once the schema is ignored (A6), a clone carries the
 	 * shared configs and no schema — so every `$schema` in a restored workbench
 	 * points at a file that is not there until something puts it back. The
-	 * documented next step after `workbench restore` is `indusk update`, which
-	 * is the same path A5 covers; this asserts it end to end on a clone.
+	 * documented next step after `workbench restore` is `indusk update`, which is
+	 * the path A5 covers; this asserts it through a REAL restore (a bare remote,
+	 * `initRepos: false`, the same shape as the A22 restore fixture) rather than
+	 * a copied directory, because "restore then update" is the claim being made.
 	 */
-	it("A7: a cloned workbench has the schema after the documented `indusk update`", {
+	it("A7: a restored workbench has the schema after the documented `indusk update`", {
 		timeout: 120_000,
 	}, () => {
-		initWorkbench();
+		// A teammate's clone: the workbench root exists with its shared config,
+		// the wrapped repo is not on disk, and nothing machine-local came across.
+		const seed = join(root, "seed");
+		mkdirSync(seed, { recursive: true });
+		git(seed, ["init", "-q", "-b", "main"]);
+		git(seed, ["commit", "-q", "--allow-empty", "-m", "seed"]);
+		const remote = join(root, "remote", "alpha.git");
+		mkdirSync(join(root, "remote"), { recursive: true });
+		git(root, ["clone", "-q", "--bare", seed, remote]);
 
-		// The clone a teammate gets: shared configs, no machine-local schema.
-		const clone = join(root, "cloned-workbench");
-		mkdirSync(join(clone, ".indusk", "worktree-configs"), { recursive: true });
-		cpSync(join(workbenchDir, ".indusk", "config.json"), join(clone, ".indusk", "config.json"));
-		cpSync(configPath(), join(clone, ".indusk", "worktree-configs", "demo.json"));
-		cpSync(join(workbenchDir, ".indusk", "extensions"), join(clone, ".indusk", "extensions"), {
-			recursive: true,
+		const wb = makeVersionedWorkbench({
+			repos: [{ name: "alpha", path: "code/alpha", remote }],
+			layout: "sibling",
+			shape: "workbench",
+			initRepos: false,
 		});
-		writeFileSync(
-			join(clone, "package.json"),
-			JSON.stringify({ name: "cloned-workbench", version: "0.0.0", private: true }, null, 2),
-		);
-		const cloneSchema = join(clone, ".indusk", "worktree-configs", "config.schema.json");
-		expect(existsSync(cloneSchema), "fixture is wrong: the clone already has a schema").toBe(false);
+		try {
+			writeFileSync(
+				join(wb.root, "package.json"),
+				JSON.stringify({ name: "cloned-wb", version: "0.0.0", private: true }, null, 2),
+			);
+			// A clone receives the extension's manifest: the workbench ignore rules
+			// deny only `.env*` under `.indusk/extensions/`, so `manifest.json` is
+			// shared context and the extension is enabled on the other machine. The
+			// fixture does not model that on its own, and without it `update` sees no
+			// enabled worktree extension and correctly does nothing.
+			mkdirSync(join(wb.root, ".indusk", "extensions", "worktree"), { recursive: true });
+			cpSync(
+				join(REPO_ROOT, "apps/indusk-mcp/extensions/worktree/manifest.json"),
+				join(wb.root, ".indusk", "extensions", "worktree", "manifest.json"),
+			);
 
-		const r = runCli(clone, ["update"]);
-		expect(r.code, `update failed in the clone:\n${r.stderr}`).toBe(0);
-		expect(
-			existsSync(cloneSchema),
-			`the restored clone's $schema still points at nothing:\n${r.stdout.slice(-800)}`,
-		).toBe(true);
+			const wbSchema = join(wb.root, ".indusk", "worktree-configs", "config.schema.json");
+			expect(existsSync(wbSchema), "fixture is wrong: the clone already has a schema").toBe(false);
+
+			const restored = runCli(wb.root, ["workbench", "restore", "--no-ignore-check"]);
+			expect(restored.code, `restore failed:\n${restored.stderr}`).toBe(0);
+
+			const updated = runCli(wb.root, ["update"]);
+			expect(updated.code, `update failed:\n${updated.stderr}`).toBe(0);
+			expect(
+				existsSync(wbSchema),
+				`the restored workbench's $schema still points at nothing:\n${updated.stdout.slice(-800)}`,
+			).toBe(true);
+		} finally {
+			wb.cleanup();
+		}
 	});
 });
