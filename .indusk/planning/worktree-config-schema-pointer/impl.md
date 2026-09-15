@@ -1,7 +1,7 @@
 ---
 title: "Worktree config schema pointer — Implementation"
 date: 2026-09-14
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -50,6 +50,7 @@ Test paths are repo-root-relative.
 | A6 | In a versioned workbench (root is a git repo), after enable `git status --porcelain` does not list `.indusk/worktree-configs/config.schema.json` — a package-owned, per-machine file is never offered to `workbench sync` — and `workbench status`/`missingIgnoreRules` names the rule as missing on an ignore file that predates it | Phase 0 | Phase 2 | passing | apps/indusk-mcp/src/__tests__/worktree-config-schema-versioned.test.ts |
 | A7 | A workbench restored from a clone (`workbench restore` against a bare remote, no schema in the clone because it is ignored) has the schema after the documented next step, `indusk update` | Phase 0 | Phase 2 | passing | apps/indusk-mcp/src/__tests__/worktree-config-schema-pointer.test.ts |
 
+| A8 | On a workbench that declares every repo's `worktrees` location, an InDusk-managed ignore file written before this change gains the schema rule and does NOT gain the flat layout's root deny rule | Phase 0 | Phase 4 | planned | apps/indusk-mcp/src/__tests__/worktree-config-schema-versioned.test.ts |
 ### Deferred Verification
 
 - **Editor completion in a materialized config (U1)**
@@ -150,6 +151,23 @@ Test paths are repo-root-relative.
 
 #### Phase 3 Document
 - [x] (none — no public surface changes; `helpers/cli.ts` is test-only)
+
+### Phase 4: The declared layout never reached the top-up
+
+**Goal**: close the hole the retrospective's docs audit found in Phase 2's own fix. `refuseIfIgnoreCannotHold` returns early when `allLocationsDeclared(repos)` — correctly, since a declared layout needs no deny-by-default rule — and `topUpManagedIgnore` sits *after* that return. So a declared-layout workbench whose ignore file predates this plan never gains the schema rule and keeps offering `config.schema.json` to its shared repo: A6's claim ("the schema is machine-local, never shared") holds only for flat workbenches, and A6's own fixture declares no `worktrees`, so it could not see this. Verified by running the two functions against a declared fixture, not by reading. The naive fix is wrong too — the top-up block carries the root deny rule, and appending that to a declared workbench inverts an ignore file this code refuses to rewrite on purpose.
+
+- [ ] `src/lib/worktree/shareable.ts`: split the machine-local rules out of `FLAT_WORKBENCH_RULES` into `MACHINE_LOCAL_RULES` (`WORKTREE_SCHEMA_RULE`, `.indusk/current.md.lock`) — rules every workbench needs whatever its layout. `topUpManagedIgnore(root, { layoutDeclared })` tops up machine-local always and the flat block only when the layout is not declared
+- [ ] `src/bin/commands/workbench.ts` `refuseIfIgnoreCannotHold`: compute `allLocationsDeclared` once, run the top-up *before* the declared-layout early return, and pass the flag. The refusal itself stays flat-only — a declared layout has nothing to refuse
+
+#### Phase 4 Verification
+- [ ] A8: declared fixture (`repos: [{ name: "alpha", worktrees: "wts" }]`) with a managed ignore file carrying the marker and no schema rule — after the top-up the file contains `WORKTREE_SCHEMA_RULE` and still does not contain `/*/`: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-versioned.test.ts` — red today (the declared branch never tops up), green after
+- [ ] A6 and the flat top-up keep their behaviour, and the ignore-rule consumers stay green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/worktree-config-schema-versioned.test.ts src/__tests__/worktree-config-schema-pointer.test.ts $(grep -rl "topUpManagedIgnore\|missingIgnoreRules\|ensureShareableScaffolding" src --include='*.test.ts' | tr '\n' ' ')` — expected: all pass
+
+#### Phase 4 Context
+- [ ] Extend the gotcha this plan wrote: the machine-local rules reach every layout, the deny-by-default rules only a flat one — and a guard that returns early for one layout must not carry unrelated work behind it
+
+#### Phase 4 Document
+- [ ] `apps/docs/src/changelog.md`: the 1.44.1 ignore-rule entry currently says a managed file "gains it" without qualification, which was true only for flat workbenches — say what actually happens for both layouts
 
 ## Files Affected
 
