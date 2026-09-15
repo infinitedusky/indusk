@@ -338,6 +338,21 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-10T00:32:44.427Z
 **Branch**: plan/writing-skill
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/writing-skill
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session de9c469b — workbench-trust-fixes: /work Test Phase 1 (fixture + 18 rows RED) in dusk-worktrees/workbench-trust-fixes
 
 **Session ID**: de9c469b-afc6-476e-a080-7f7446748415
@@ -365,6 +380,21 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-10T01:08:38.346Z
 **Branch**: plan/writing-skill
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/writing-skill
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 2dfae2ea — writing-skill: /work Test Phase 1 (author every assertion RED)
 
 **Session ID**: 2dfae2ea-94f9-46f5-a54c-cf61eb7548f3
@@ -392,6 +422,27 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-08T19:06:54.253Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 30e64e93 — eval: reviewing commit 00bf46bd (worktree-config-schema-pointer Phase 2 red tests)
+
+**Session ID**: 30e64e93-bd7f-4969-a4c4-2a24454f7335
+**Last updated**: 2026-09-14T15:37:41.098Z
+**Branch**: plan/worktree-config-schema-pointer-phase-2
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/worktree-config-schema-pointer
 
 ### In Flight
 
