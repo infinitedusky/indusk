@@ -2,6 +2,8 @@
 title: "Hook cwd independence — Implementation"
 date: 2026-09-15
 status: completed
+cleanup: skipped
+cleanup_reason: "Five files changed across the whole plan (one new 100-line module, one call site each in init and update, one branch in settings-overlay, one test file). The only inter-file candidate is the settings.hooks walk, which hook-command.ts and hook-migration.ts each carry — two copies, not three, and each does a different thing to an entry; recorded in Build Phase 1's Shape note for whichever plan writes the third."
 trajectory: required
 test_phases: required
 rationale: required
