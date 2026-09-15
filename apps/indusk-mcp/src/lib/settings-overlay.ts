@@ -60,14 +60,18 @@ function deepMerge(
 	for (const [key, sourceVal] of Object.entries(source)) {
 		const targetVal = result[key];
 		if (Array.isArray(sourceVal) && Array.isArray(targetVal)) {
-			// Concatenate arrays, dedup strings
+			// Concatenate arrays, dedup strings — and objects, by serialization,
+			// the same equality `deepStrip` already uses. Hook entries are objects,
+			// and appending them unconditionally meant every `init --local` re-run
+			// registered the whole hook set again: six more entries, every hook
+			// running twice (hook-cwd-independence, A7).
 			const combined = [...targetVal];
+			const seen = new Set(combined.map((item) => JSON.stringify(item)));
 			for (const item of sourceVal) {
-				if (typeof item === "string") {
-					if (!combined.includes(item)) combined.push(item);
-				} else {
-					combined.push(item);
-				}
+				const key = JSON.stringify(item);
+				if (seen.has(key)) continue;
+				seen.add(key);
+				combined.push(item);
 			}
 			result[key] = combined;
 		} else if (isObject(sourceVal) && isObject(targetVal)) {

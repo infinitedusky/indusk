@@ -5,7 +5,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
-import { hookCommand } from "../../lib/hook-command.js";
+import { absolutizeHookCommands, hookCommand } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { linkTrunk } from "../../lib/worktree/layout.js";
 
@@ -1095,6 +1095,13 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 	};
 
 	if (existsSync(claudeSettingsPath)) {
+		// A project initialized before 1.45 registers the relative form. The
+		// merge below compares commands by string, so left as they are the six
+		// absolute commands would read as new and be appended beside them —
+		// six relative survivors for the next `update` to rewrite into six
+		// more, every hook then running twice. Absolutize first, so the merge
+		// sees them as already present.
+		absolutizeHookCommands(projectRoot);
 		const existing = JSON.parse(readFileSync(claudeSettingsPath, "utf-8"));
 		existing.hooks = existing.hooks || {};
 		existing.permissions = existing.permissions || {};

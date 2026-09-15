@@ -27,7 +27,7 @@ const UPDATE_TS = join(REPO_ROOT, "apps/indusk-mcp/src/bin/commands/update.ts");
 const REPO_SETTINGS = join(REPO_ROOT, ".claude/settings.json");
 
 /** The form this plan registers: the host's project-root variable, quoted. */
-const ABSOLUTE_COMMAND = /^node "\$\{CLAUDE_PROJECT_DIR\}"\/\.claude\/hooks\/([\w.-]+\.js)$/;
+const ABSOLUTE_COMMAND = /^node "\$\{CLAUDE_PROJECT_DIR:-\.\}"\/\.claude\/hooks\/([\w.-]+\.js)$/;
 /** The form every project carried before it. */
 const RELATIVE_COMMAND = /^node \.claude\/hooks\/([\w.-]+\.js)$/;
 
@@ -222,7 +222,7 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (CLI boundary)", () => {
 				for (const h of entry.hooks ?? []) {
 					const m = h.command?.match(RELATIVE_COMMAND);
 					if (m) {
-						h.command = `node "\${CLAUDE_PROJECT_DIR}"/.claude/hooks/${m[1]}`;
+						h.command = `node "\${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/${m[1]}`;
 						rewritten++;
 					}
 				}

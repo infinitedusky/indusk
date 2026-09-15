@@ -24,7 +24,7 @@ import { join } from "node:path";
 
 /** The registered command for a hook file in `.claude/hooks/`. */
 export function hookCommand(name: string): string {
-	return `node "\${CLAUDE_PROJECT_DIR}"/.claude/hooks/${name}`;
+	return `node "\${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/${name}`;
 }
 
 /**
