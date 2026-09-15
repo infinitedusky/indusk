@@ -353,25 +353,46 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session de9c469b — sequence reconciliation — triage of the 15 out-of-sequence plans; batch one awaiting Sandy's exceptions
-## Session de9c469b — workbench-trust-fixes: /work Test Phase 1 (fixture + 18 rows RED) in dusk-worktrees/workbench-trust-fixes
+## Session de9c469b — V4 sequence reconciliation, worktree-config-schema-pointer closed, release guard shipped in 1.44.2; next is the Day plan
 
 **Session ID**: de9c469b-afc6-476e-a080-7f7446748415
-**Last updated**: 2026-09-14T13:30:58.063Z
+**Last updated**: 2026-09-15T18:17:52.701Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-(empty)
+Nothing mid-flight. Everything this session touched is merged, archived, and published as 1.44.2.
+
+**Next up — the Day plan.** The V4 sequence is 13 steps; step 1 (workbench-trust-fixes) is closed and merged. Declared order lives in `.indusk/planning/indusk-v4-day/master.md` under `subplans:`, with the human-readable component table in the same file.
+
+Two steps were agreed in conversation on 2026-09-10 and have no folder yet:
+- **1.6 ritual forking** — `context: fork` on falsify, cleanup, verify, rail-check, eval-review. The rationale is reviewer independence, NOT token savings: a fork receives the skill body, its args and CLAUDE.md, and nothing from the conversation, so it cannot inherit the justifications the building session accumulated. Its brief must carry a dogfood check that the fork is genuinely clean — make a decision only in conversation, run falsify forked, confirm it cannot see it.
+- **6.5 parallel children** — edges as data first (`Depends On` / `Blocks` moved into frontmatter the declaration reader parses), then a runner that takes a parent and runs edge-free children concurrently in their own worktrees. Placed after day-claim-binding rather than after Dawn 6.5, because parallelism multiplies whatever the evidence lane cannot yet see.
+
+Immediate next actions: declare all 13 steps in both masters so the admin sidebar matches the component table, then write the three next briefs. 1.5 hook-cwd-independence is drafted and needs Sandy's acceptance read; 1.6 has nothing; step 2 dawn-workbench-execution has a draft from 2026-09-03 that predates everything learned since.
 
 ### Open Questions
 
-(empty)
+- **The Shape library cannot address a test phase.** `prepareShapeReview({ phase: 1 })` resolves to Build Phase 1, so a Test Phase 1 craft review has to be done by hand every time. Carried into `admin-ui-phase-progress`'s brief as in-scope work (the same class as the admin UI's private phase regex — readers that predate test-phase-structure).
+- **hook-cwd-independence is unstarted and every gate depends on it.** Hooks are registered `node .claude/hooks/<name>.js`, resolved against the session's drifting cwd, so after any Bash call ending in `apps/indusk-mcp` every gate fails to load with a non-blocking exit 1 and is silently off. Observed, not theorised. Until it lands: cd back to the repo root before impl edits and commits.
+- **Does this build offer a conversation-inheriting subagent type at all?** The Agent tool's description mentions a `fork` type but it is not in the listed agent types here. 1.6's brief should not assume one exists without running it.
+- **One manual check owed on a real workbench:** open a worktree config and confirm its `$schema` resolves, using the two-file contrast (two schemas that disagree, pointer flipped between them) rather than a single diagnostic. A single type error proves a schema loaded, not which one.
 
 ### Cursor
 
-(empty)
+Session ended clean: main at 1.44.2, published, working tree clean, no unmerged plan branches, no worktrees besides the trunk.
+
+What shipped this session, in order:
+1. **workbench-trust-fixes** retrospective, archived, merged (24 rows, nine phases).
+2. **Sequence reconciliation** — 14 folders archived with `closed_reason`, 4 folded into Day steps, every loose follow-on written into the brief of the step that owns it, standing one-fate rule added to the root master and to the retrospective skill's context audit.
+3. **indusk-makeover** closed 53 days after impl-complete; its two deferred rows rewritten to say what actually holds them.
+4. **worktree-config-schema-pointer** — four phases, 8 rows, archived. Falsification found three defects, the retrospective's docs audit found a fourth (declared-layout workbenches never reached the ignore top-up).
+5. **Release guard** (`apps/indusk-mcp/scripts/release-guard.sh`, wired into `pnpm release`) — four refusals: dirty tree, HEAD not the release commit, unmerged `plan/*` branch touching packaged paths, version already on the registry. Checks 2 and 3 share one PACKAGED_PATHS list so the guard cannot fire on changes that can't reach the tarball.
+
+**The rule that came out of it, now in CLAUDE.md:** `pnpm publish` packs the working tree, not a commit (verified against the published 1.44.1 tarball). Worktree-per-plan means every plan lives on a branch, so a publish from a clean main is blind to it by construction. Bump on main, after the branch merges. Before saying anything about whether a publish is current, read both `git rev-list <release-commit>..HEAD` and `git for-each-ref refs/heads/plan/* --no-merged HEAD`.
+
+Start the next session with `/catchup`, then the Day master.
 
 ---
 
@@ -444,6 +465,21 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-14T14:42:01.483Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 30e64e93 — eval: reviewing commit 00bf46bd (worktree-config-schema-pointer Phase 2 red tests)
 
 **Session ID**: 30e64e93-bd7f-4969-a4c4-2a24454f7335
