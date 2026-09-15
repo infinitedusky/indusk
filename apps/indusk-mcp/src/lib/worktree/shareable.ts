@@ -175,7 +175,30 @@ const GITATTRIBUTES = `# InDusk workbench context repo.
  */
 const INDUSK_MANAGED_MARKER = "# InDusk managed";
 
-/** Rules a flat workbench needs, in the order they should be appended. */
+/**
+ * Rules EVERY workbench needs, whatever its layout.
+ *
+ * Split out of the flat block because they were unreachable from a declared
+ * layout: `refuseIfIgnoreCannotHold` returns early there — a declared layout
+ * needs no deny-by-default rule — and the top-up sat behind that return, so a
+ * declared workbench scaffolded before a rule existed could never receive it
+ * and went on offering the file to its shared remote. A guard that returns
+ * early for one layout must not carry unrelated work behind it.
+ */
+const MACHINE_LOCAL_RULES = `
+# --- InDusk machine-local (generated) ---
+# Real content, true only for this machine: package-owned files that track the
+# installed version, and a lock.
+${WORKTREE_SCHEMA_RULE}
+.indusk/current.md.lock
+`;
+
+/**
+ * Rules only a FLAT workbench needs, in the order they should be appended.
+ *
+ * Deny-by-default belongs here and nowhere else. Appending it to a declared
+ * layout's ignore file would invert a file this module refuses to rewrite.
+ */
 const FLAT_WORKBENCH_RULES = `
 # --- InDusk workbench (generated) ---
 # Worktree directories are created at runtime, so they cannot be named in
@@ -190,8 +213,6 @@ ${ROOT_DENY_RULE}
 ${SECRETS_RULE}*
 !${SECRETS_RULE}.example
 env/*.env
-.indusk/current.md.lock
-${WORKTREE_SCHEMA_RULE}
 `;
 
 /**
@@ -205,7 +226,10 @@ ${WORKTREE_SCHEMA_RULE}
  *
  * Returns true when it topped up.
  */
-export function topUpManagedIgnore(workbenchRoot: string): boolean {
+export function topUpManagedIgnore(
+	workbenchRoot: string,
+	opts: { layoutDeclared?: boolean } = {},
+): boolean {
 	const path = join(workbenchRoot, ".gitignore");
 	if (!existsSync(path)) return false;
 	const body = readFileSync(path, "utf-8");
@@ -216,9 +240,14 @@ export function topUpManagedIgnore(workbenchRoot: string): boolean {
 	// reach a workbench scaffolded before it — the file looked correct and was
 	// a release behind. Each rule the flat block carries is topped up on its
 	// own, in the block's own order.
-	const missing = FLAT_WORKBENCH_RULES.split("\n").filter(
-		(line) => line.trim() !== "" && !line.startsWith("#") && !body.includes(line),
-	);
+	// A declared layout gets the machine-local rules only; the flat block's
+	// deny-by-default rule is the one thing that must never reach it.
+	const blocks = opts.layoutDeclared
+		? [MACHINE_LOCAL_RULES]
+		: [FLAT_WORKBENCH_RULES, MACHINE_LOCAL_RULES];
+	const missing = blocks
+		.flatMap((block) => block.split("\n"))
+		.filter((line) => line.trim() !== "" && !line.startsWith("#") && !body.includes(line));
 	if (missing.length === 0) return false; // already correct
 	appendFileSync(path, `${missing.join("\n")}\n`);
 	return true;
