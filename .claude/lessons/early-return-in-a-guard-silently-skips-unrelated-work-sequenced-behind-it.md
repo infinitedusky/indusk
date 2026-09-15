@@ -1,0 +1,9 @@
+# A guard that returns early for one case must not carry unrelated work behind it in the same function — the return is right about refusals and silently wrong about everything sequenced after it
+
+When a function both (a) refuses/short-circuits for a specific case and (b) performs unrelated follow-on work for the general case, an early return for (a) silently skips (b) too — even when (b) was intended to run unconditionally or for every case including the one that returns early.
+
+Found 2026-09-14/15 in `worktree-config-schema-pointer`: `refuseIfIgnoreCannotHold` correctly returns early for a declared-layout workbench (it needs no deny-by-default rule, so refusing there is right). But the ignore-rule top-up for machine-local rules (including the newly-added worktree schema ignore rule) was sequenced *after* that early return in the same call path — so declared-layout workbenches never received machine-local ignore rules at all, and kept offering a package-owned, per-machine file to their shared context repo. The falsification phase's own universal claim ("the schema is machine-local, never shared") was tested against only one of the two workbench layouts, so it initially looked satisfied.
+
+Fix pattern: split the rules into what must apply regardless of layout (`MACHINE_LOCAL_RULES`, every layout) versus what only applies to one layout (`FLAT_WORKBENCH_RULES`, deny-by-default, flat only), and move the universal top-up to run before the layout-specific early return — never leave general-case work sitting behind a specific-case guard's `return`.
+
+How to apply: when adding new unconditional/cross-cutting behavior to an existing function, check every early return already in that function and ask whether the new behavior is supposed to run before or after each one — do not assume "the function runs" means "every effect the function is supposed to have happens."

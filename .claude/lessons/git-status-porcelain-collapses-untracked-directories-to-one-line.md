@@ -1,0 +1,9 @@
+# `git status --porcelain` collapses an entire untracked directory to a single line for the directory — a test filtering for a specific file's path inside a new untracked directory matches nothing and passes for the wrong reason
+
+By default, `git status --porcelain` reports a newly-untracked directory as one `?? path/to/dir/` line, not one line per file inside it. A test or script that greps/filters porcelain output for a specific file path expecting to find (or not find) that file will see no match for files inside a directory that is itself entirely new and untracked — even though git is, in fact, offering every file in that directory for commit.
+
+Found 2026-09-14/15 in `worktree-config-schema-pointer`'s A6 (asserting the worktree config schema is never offered to a shared workbench's git status): the test passed *before* its corresponding fix even existed, because the filter was looking for the schema's exact file path and the whole `.indusk/worktree-configs/` directory was new and untracked, collapsing to one directory-level porcelain line the filter never matched. The test could not see the thing it was asking about.
+
+Fix: pass `--untracked-files=all` to `git status --porcelain` (or otherwise force per-file reporting) whenever a test needs to assert something about a specific file's tracked/untracked/staged state and that file might be the first file in a not-yet-tracked directory.
+
+General form: before trusting a filter or query over a command's output, check what that command actually outputs in the fixture's starting state — a query that silently matches nothing produces a test that's green for having asked the wrong question, not for having gotten the right answer. Caught here only because the assertion passed suspiciously early, before the fix that was supposed to make it pass had been written.
