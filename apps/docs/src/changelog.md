@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+- **Hook commands load from any cwd.** Every hook was registered as `node .claude/hooks/<name>.js`, relative to the directory Claude Code runs hooks in, which is the session's current directory; after a Bash call ending in a subdirectory every gate failed to load with a non-blocking exit 1 and was silently off (observed: eight checkoffs passed Gate B with two rows non-terminal). `init` and `update` now register `node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/<name>.js`, the host's own project-root variable, and `update` rewrites a command exactly equal to the old form in place, leaving customized commands alone. A session still has to be launched at the project root.
+
 ## [1.44.2] — 2026-09-15
 
 ### Fixed

@@ -71,15 +71,15 @@ Test paths are repo-root-relative.
 - [x] (observed red: 16 offenders — ten source lines from `init.ts:1071` on and the six registered commands; the settings check parses the `hooks` registrations rather than grepping the file, because the permissions allow-list legitimately carries `Bash(node .claude/hooks/…)` strings that are not registrations) Author A5: read `apps/indusk-mcp/src/bin/commands/init.ts`, `update.ts` and `.claude/settings.json` (paths from `REPO_ROOT` the way `hooks-record-parity.test.ts` resolves them); expect no line to contain `node .claude/hooks/`. RED today: ten source hits and six settings hits
 
 #### Test Phase 1 Verification
-- [ ] All five red on their own assertion, none on a load error: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-cwd-independence.test.ts` — expected: 5 failed, each failure message naming the assertion (exit 1 vs 2 / relative command / unchanged command / hits found); then `cd` back to the worktree root
-- [ ] Rows A1–A5 set to `written`
-- [ ] Shape (Test Phase 1, recorded by hand — the Shape library addresses phases by number and cannot see a test phase): review the test file against the typescript and testing craft prose
+- [x] All five red on their own assertion, none on a load error: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-cwd-independence.test.ts` — expected: 5 failed, each failure message naming the assertion (exit 1 vs 2 / relative command / unchanged command / hits found); then `cd` back to the worktree root — 2026-09-15: `Tests 5 failed (5)`, messages quoted on each authoring item above; no load error
+- [x] Rows A1–A5 set to `written`
+- [x] Shape (Test Phase 1, recorded by hand — the Shape library addresses phases by number and cannot see a test phase): review the test file against the typescript and testing craft prose — reviewed `hook-cwd-independence.test.ts`: two fixtures with one job each (`initProject`, `seededProject`), one named runner for the host's invocation shape (`runRegistered`), every assertion reached over a process boundary. Left as is: `LEGACY_SETTINGS` restates `init.ts`'s pre-fix `hookConfig` literal on purpose — it is the *before* shape a migration test must pin, and importing it would make the fixture follow the fix. Nothing to change
 
 #### Test Phase 1 Context
-- [ ] Known Gotchas, the hook-cwd entry: add the distinction A1 makes concrete — once a hook *loads*, it already resolves the state path from `event.cwd` via `_hook-paths.js`, so the load is the entire defect; the fix is the registered command, not the hooks
+- [x] Known Gotchas, the hook-cwd entry: add the distinction A1 makes concrete — once a hook *loads*, it already resolves the state path from `event.cwd` via `_hook-paths.js`, so the load is the entire defect; the fix is the registered command, not the hooks
 
 #### Test Phase 1 Document
-- [ ] `apps/docs/src/changelog.md` Unreleased, Fixed: "Hook commands load from any cwd. Every hook was registered as `node .claude/hooks/<name>.js`, relative to the directory Claude Code runs hooks in, which is the session's current directory; after a Bash call ending in a subdirectory every gate failed to load with a non-blocking exit 1 and was silently off. `init` and `update` now register `node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/<name>.js`, and `update` rewrites the old form in place."
+- [x] `apps/docs/src/changelog.md` Unreleased, Fixed: "Hook commands load from any cwd. Every hook was registered as `node .claude/hooks/<name>.js`, relative to the directory Claude Code runs hooks in, which is the session's current directory; after a Bash call ending in a subdirectory every gate failed to load with a non-blocking exit 1 and was silently off. `init` and `update` now register `node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/<name>.js`, and `update` rewrites the old form in place."
 
 ### Build Phase 1: Register hooks by the project root
 
