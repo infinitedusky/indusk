@@ -338,10 +338,25 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-10T00:32:44.427Z
 **Branch**: plan/writing-skill
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/writing-skill
-## Session de9c469b — workbench-trust-fixes: /work Test Phase 1 (fixture + 18 rows RED) in dusk-worktrees/workbench-trust-fixes
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session de9c469b — sequence reconciliation — triage of the 15 out-of-sequence plans; batch one awaiting Sandy's exceptions
 
 **Session ID**: de9c469b-afc6-476e-a080-7f7446748415
-**Last updated**: 2026-09-10T01:39:46.942Z
+**Last updated**: 2026-09-14T13:30:58.063Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
@@ -365,6 +380,21 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-10T01:08:38.346Z
 **Branch**: plan/writing-skill
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/writing-skill
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 2dfae2ea — writing-skill: /work Test Phase 1 (author every assertion RED)
 
 **Session ID**: 2dfae2ea-94f9-46f5-a54c-cf61eb7548f3
@@ -390,6 +420,27 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **Session ID**: f9c6df62-8ee7-4317-b88c-c7a17cfa0848
 **Last updated**: 2026-09-08T19:06:54.253Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session da8327e4 — eval: reviewing commit 3dbe9a1a (master.md queue entry)
+
+**Session ID**: da8327e4-4ba2-4939-a094-9055c134a4a6
+**Last updated**: 2026-09-14T14:42:01.483Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
