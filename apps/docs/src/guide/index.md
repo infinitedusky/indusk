@@ -78,7 +78,7 @@ Where they run from matters. Claude Code runs a hook command in the session's
 a hook that fails to load exits 1 — which the host treats as non-blocking, so
 the edit proceeds and nothing says the gate was off. For that reason every hook
 is registered by the project root, as
-`node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/<name>.js`, never by a path relative
+`node "${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/<name>.js`, never by a path relative
 to the cwd; `indusk update` rewrites the older relative form in place. The one
 thing the registration cannot fix is a session launched from a subdirectory,
 where `${CLAUDE_PROJECT_DIR}` *is* that subdirectory — launch at the root.
