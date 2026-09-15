@@ -156,7 +156,11 @@ fi
 # failure returns nothing and is NOT treated as "not published" — an offline
 # machine must not be told it is safe to republish, so silence skips the check
 # and says so rather than passing it.
-PUBLISHED="$(npm view "$(node -p "require('$PKG_DIR/package.json').name")" versions --json 2>/dev/null || true)"
+# `--fetch-timeout` bounds the network call. Without it a slow or unreachable
+# registry hangs the release with no output at all — found by running this
+# guard against a machine that could not reach npm, where it sat indefinitely.
+PKG_NAME="$(node -p "require('$PKG_DIR/package.json').name")"
+PUBLISHED="$(npm view "$PKG_NAME" versions --json --fetch-timeout=10000 2>/dev/null || true)"
 if [[ -z "$PUBLISHED" ]]; then
 	echo "release-guard: could not reach the registry — skipping the already-published check"
 elif node -e "process.exit(JSON.parse(process.argv[1]).includes(process.argv[2]) ? 0 : 1)" "$PUBLISHED" "$VERSION" 2>/dev/null; then
