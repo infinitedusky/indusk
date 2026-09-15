@@ -130,6 +130,7 @@ lesson title, or a chat log.
   `salvage/*` tags).
 - The admin-UI scorecard-loads-only-after-a-prompt issue (Sandy, 2026-08-31)
   is carried by admin-ui-phase-progress as of 2026-09-14.
+- **Small, not a step** (2026-09-15): `check_health` should report the three-way version state — installed, published (`lib/version-check.ts` already fetches and caches it), and the working tree — plus `git rev-list <release-commit>..HEAD` so every catchup states what is unpublished. The rule and the refusal already exist (CLAUDE.md; `scripts/release-guard.sh`); this makes the fact visible without anyone having to ask for it.
 - Writing-skill's plain-language invocation check (skill discovery is per
   project, so it runs on the trunk): once, in a fresh session, five minutes.
   Not a step.
