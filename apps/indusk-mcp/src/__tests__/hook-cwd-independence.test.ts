@@ -268,3 +268,57 @@ describe("hook-cwd-independence (source)", () => {
 		expect(offenders, offenders.join("\n")).toEqual([]);
 	});
 });
+
+/**
+ * Phase 2 falsification — two ways the fix can be wrong that none of A1–A5
+ * can see, because every one of them runs with the variable set and starts
+ * from a project with no settings file.
+ */
+describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (falsification)", () => {
+	it("A6: with CLAUDE_PROJECT_DIR unset, the registered command from the root still loads and refuses", {
+		timeout: 90_000,
+	}, () => {
+		// A host that does not set the variable must get the old cwd-relative
+		// gate, not `node /.claude/hooks/x.js`, which loads from nowhere.
+		const dir = initProject();
+		const command = hookCommands(readSettings(dir)).find((c) => c.includes("check-gates.js"));
+		expect(command).toBeDefined();
+
+		const planDir = join(dir, ".indusk/planning/demo");
+		mkdirSync(planDir, { recursive: true });
+		const implPath = join(planDir, "impl.md");
+		writeFileSync(implPath, GATE_B_BEFORE);
+		const event = {
+			tool_name: "Write",
+			tool_input: { file_path: implPath, content: GATE_B_AFTER },
+			cwd: dir,
+		};
+
+		const env = { ...process.env };
+		delete env.CLAUDE_PROJECT_DIR;
+		const r = spawnSync("sh", ["-c", command as string], {
+			cwd: dir,
+			encoding: "utf-8",
+			input: JSON.stringify(event),
+			env,
+		});
+		expect(r.status, `unset-variable run:\n${r.stderr}`).toBe(2);
+		expect(r.stderr).toMatch(/Trajectory blocks phase advance/);
+	});
+
+	it("A7: init re-run over a project carrying the relative form leaves six absolute registrations, no duplicates", {
+		timeout: 90_000,
+	}, () => {
+		// init merges by command string; six absolute commands look new next
+		// to six relative ones, and the relative ones would then be
+		// rewritten by update into six more — every hook running twice.
+		const dir = seededProject();
+		const r = runCli(dir, ["init", "--local", "--no-index"], ENV());
+		expect(r.code, `init failed:\n${r.stdout}\n${r.stderr}`).toBe(0);
+
+		const commands = hookCommands(readSettings(dir));
+		expect(commands.filter((c) => RELATIVE_COMMAND.test(c))).toEqual([]);
+		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(6);
+		expect(commands).toHaveLength(6);
+	});
+});

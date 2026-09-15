@@ -55,6 +55,8 @@ Test paths are repo-root-relative.
 | A3 | `indusk update` on a project seeded with the six relative commands leaves six absolute ones, and the parsed file equals the seeded file with only those six strings replaced | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
 | A4 | A second `indusk update` leaves `settings.json` byte-identical, and a seeded `node .claude/hooks/check-gates.js --strict` survives both updates unchanged | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
 | A5 | `init.ts`, `update.ts` and this repository's `.claude/settings.json` contain no `node .claude/hooks/` | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
+| A6 | With `CLAUDE_PROJECT_DIR` unset in the environment, the registered `check-gates` command run from the project root still loads and refuses the Gate B checkoff with exit 2 — it degrades to the old cwd-relative behaviour rather than to no gate at all | Phase 0 | Phase 2 | written | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
+| A7 | `indusk init` re-run on a project whose settings carry the six relative commands leaves exactly six hook registrations, all absolute — no second entry per matcher, no relative survivors for `update` to double later | Phase 0 | Phase 2 | written | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
 
 ## Checklist
 
@@ -107,6 +109,26 @@ Test paths are repo-root-relative.
 
 #### Build Phase 1 Document
 - [x] `apps/docs/src/guide/index.md`, the hooks section: one sentence after the table — hooks are registered by the project root (`${CLAUDE_PROJECT_DIR}`), run in the session's current directory, and a hook that fails to load exits 1, which Claude Code treats as non-blocking, so a relative registration is a gate that is off whenever the cwd moves
+
+### Phase 2: Falsification — the variable unset, and init over an old project
+
+**Goal**: verify whether the attested state holds against two failure modes found by reading the shipped command and `init`'s merge: (1) a harness or host that does not set `CLAUDE_PROJECT_DIR` turns `node "${CLAUDE_PROJECT_DIR}"/…` into `node /.claude/hooks/…`, which never loads from *any* cwd — the fix made every gate off everywhere instead of off from subdirectories (confirmed by hand on 2026-09-15: node throws module-not-found; with a `:-.` shell default it loads); (2) `init` on a project that already carries the relative form compares commands by string equality, sees six "new" absolute commands, and appends a second entry per matcher — six relative survivors that the next `update` then rewrites into six *more* absolute ones, so every hook runs twice. Each trajectory row captures one hypothesis; each checklist item the fix.
+
+- [ ] `hookCommand(name)` returns `node "${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/<name>` — a POSIX default, so an unset variable degrades to the pre-fix cwd-relative behaviour, never to a path that cannot exist; update the test file's `ABSOLUTE_COMMAND` and the A3 expected string, this repository's six registrations, and the form quoted in the changelog, the guide and CLAUDE.md
+- [ ] `init.ts` calls `absolutizeHookCommands(projectRoot)` before merging `hookConfig` into an existing settings file, so the six relative commands become the six absolute ones and `alreadyPresent` matches them instead of appending a second entry
+
+#### Phase 2 Verification
+- [ ] A6: with the variable unset from the environment, the registered command from the project root exits 2 with the Gate B message — RED today (module-not-found), green after the default lands
+- [ ] A7: `init --local --no-index` on the seeded project leaves six absolute registrations and nothing relative — RED today (twelve registrations, six relative), green after init absolutizes first
+- [ ] A1–A5 still green, and the corpus guard: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-cwd-independence.test.ts src/lib/hook-migration.test.ts src/__tests__/impl-corpus.test.ts` — expected: all pass; then `cd` back
+- [ ] Rows A6–A7 set to `passing`
+- [ ] Shape (Phase 2): the phase changes one template string and adds one call; record the review by hand as in Build Phase 1
+
+#### Phase 2 Context
+- [ ] Known Gotchas, the hook-command entry: the registered form carries a `:-.` default so a host that does not set `CLAUDE_PROJECT_DIR` gets the old cwd-relative gate rather than none; `init` absolutizes before it merges
+
+#### Phase 2 Document
+- [ ] `apps/docs/src/changelog.md` Unreleased entry and `apps/docs/src/guide/index.md`: the quoted form gains the `:-.` default, with one clause on why
 
 ## Files Affected
 
