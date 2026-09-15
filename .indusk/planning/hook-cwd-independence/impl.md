@@ -1,7 +1,7 @@
 ---
 title: "Hook cwd independence — Implementation"
 date: 2026-09-15
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
