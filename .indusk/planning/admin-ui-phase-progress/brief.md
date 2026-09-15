@@ -87,6 +87,14 @@ follow-on, not assumed.
   incidents next to its phases).
 - Carried (2026-09-14): the scorecard-only-loads-after-a-prompt issue
   (2026-08-31) is this plan's now, not a separate note in the root master.
+- Carried (2026-09-15, Sandy): **the sidebar draws no root node.** The root
+  `master.md` is read only for order (`roadmap:` sorts the parent groups; the
+  same list sorts the leftovers), so the parents sit at the top of the tree
+  and unclaimed plans read as their peers under "Active plans" rather than
+  as the root's leftover bucket. Add one layer, not N: a root master node
+  with the parents and the unclaimed plans under it. `PlanList.buildGroups`
+  plus a header row; the reader already returns the root declaration. Dawn
+  sub-plans stay declared under both parents (two links, not a drift).
 - Considered, not committed (2026-09-14): provenance links between plan
   documents, so a claim in a brief can point at the research line it came
   from and the phase that acted on it (proposed 2026-09-10). Revisit if the

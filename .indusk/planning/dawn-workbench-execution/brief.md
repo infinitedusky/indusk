@@ -63,6 +63,25 @@ component 6.5 — between the keystone (6) and agent integration (7).
   single home — so the single-definition pin here must cover run, cleanup and
   verify, not run and verify alone.
 
+- **Carried from `hook-cwd-independence` (cut 2026-09-15 to the cwd bug
+  alone):** (a) **row-level terminality at close** —
+  `checkRetrospectiveReadiness` (`lib/cleanup/gate.ts`) composes only the
+  two ritual phases' checkbox walks, and `auditPlanAtClose`
+  (`lib/trajectory/audit.ts`) returns `{ deferred, blocked }`; a row left
+  `written` is invisible to both, while the retrospective skill's Step 0
+  promises every row terminal. Add `rowsNonTerminal(implContent)` to the
+  gate's `missing` and `nonTerminal` to the audit; the two rows
+  workbench-trust-fixes left `written` are the fixture. (b) **the seven-day
+  `completed`-without-retrospective health error** — `check_health` reports
+  a plan whose impl has been `completed` for more than seven days with no
+  `retrospective.md` as an error (the makeover sat 53 days in a queue
+  labelled "any time"). (c) **the three private `runHook` copies**
+  (`claude-md-budget-hook`, `trajectory-a-prefix-ids`,
+  `rationale-baseline-*` tests) migrate to `helpers/hook-runner.ts` in
+  whichever phase here next opens the hook tests. This plan runs the
+  verify-at-close machinery in a workbench, which is where (a) and (b)
+  are first exercised for real.
+
 ## Scope
 
 ### In Scope
