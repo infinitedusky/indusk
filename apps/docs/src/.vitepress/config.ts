@@ -248,6 +248,10 @@ const config = defineConfig({
 						{ text: "Versioned Workbench — Lessons", link: "/lessons/versioned-workbench" },
 						{ text: "Workbench Setup Command — Lessons", link: "/lessons/workbench-setup-command" },
 						{ text: "Workbench Trust Fixes — Lessons", link: "/lessons/workbench-trust-fixes" },
+						{
+							text: "Worktree Config Schema Pointer — Lessons",
+							link: "/lessons/worktree-config-schema-pointer",
+						},
 						{ text: "Worktree Visibility — Lessons", link: "/lessons/worktree-visibility" },
 						{ text: "Writing Skill — Lessons", link: "/lessons/writing-skill" },
 					],

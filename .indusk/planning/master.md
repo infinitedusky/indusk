@@ -133,7 +133,8 @@ lesson title, or a chat log.
 - Writing-skill's plain-language invocation check (skill discovery is per
   project, so it runs on the trunk): once, in a fresh session, five minutes.
   Not a step.
-- **Bugfix, not a step** (Sandy, 2026-09-14, found in a consumer workbench):
+- **Closed 2026-09-15**: [worktree-config-schema-pointer](archive/worktree-config-schema-pointer/brief.md) — the bugfix below, shipped in four phases. Falsification found three more defects (the update path never re-ran an enabled extension's hook; the schema would have been shared into a workbench repo; restored clones got none) and the retrospective's docs audit found a fourth (declared layouts never reached the ignore top-up). See `/lessons/worktree-config-schema-pointer`.
+- ~~**Bugfix, not a step** (Sandy, 2026-09-14, found in a consumer workbench):~~
   the worktree extension's config template ships
   `"$schema": "../../config.schema.json"`, which from
   `.indusk/worktree-configs/<repo>.json` resolves to nowhere in any project;

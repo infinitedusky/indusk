@@ -770,6 +770,17 @@ function printEnvSetupHint(projectRoot: string, name: string): void {
 	console.info(`    Then edit .env and fill in values (see inline comments).`);
 }
 
+/**
+ * The one hook runner.
+ *
+ * Exported as `runExtensionHook` so `update` fires a declared `on_update`
+ * through the same path as every other hook — including the `INDUSK_BIN`
+ * substitution below, which `update`'s own `execSync(updateHook)` did not do.
+ * Two hook runners meant a declared hook resolved `indusk` differently
+ * depending on which one fired it.
+ */
+export { runHook as runExtensionHook };
+
 function runHook(projectRoot: string, name: string, hook: string): void {
 	const manifestPath = resolveManifestPath(extensionsDir(projectRoot), name);
 	if (!manifestPath) return;

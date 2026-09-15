@@ -354,6 +354,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 ---
 
 ## Session de9c469b — sequence reconciliation — triage of the 15 out-of-sequence plans; batch one awaiting Sandy's exceptions
+## Session de9c469b — workbench-trust-fixes: /work Test Phase 1 (fixture + 18 rows RED) in dusk-worktrees/workbench-trust-fixes
 
 **Session ID**: de9c469b-afc6-476e-a080-7f7446748415
 **Last updated**: 2026-09-14T13:30:58.063Z
@@ -443,6 +444,12 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-14T14:42:01.483Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+## Session 30e64e93 — eval: reviewing commit 00bf46bd (worktree-config-schema-pointer Phase 2 red tests)
+
+**Session ID**: 30e64e93-bd7f-4969-a4c4-2a24454f7335
+**Last updated**: 2026-09-14T15:37:41.098Z
+**Branch**: plan/worktree-config-schema-pointer-phase-2
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/worktree-config-schema-pointer
 
 ### In Flight
 

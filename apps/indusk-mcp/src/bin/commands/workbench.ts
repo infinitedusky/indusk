@@ -161,16 +161,22 @@ function refuseIfIgnoreCannotHold(
 	skip: boolean,
 ): void {
 	if (skip) return;
+
 	// A declared layout names its worktree directories exactly, so no
-	// deny-by-default rule is required and nothing to refuse.
-	if (allLocationsDeclared(repos)) return;
+	// deny-by-default rule is required and there is nothing to REFUSE. It
+	// still needs the machine-local rules, so the top-up runs first — before
+	// the early return, which used to strand every declared workbench without
+	// them.
+	const layoutDeclared = allLocationsDeclared(repos);
 
 	// InDusk wrote this file, so InDusk may extend it. Every freshly created
 	// workbench lands here — `init` scaffolds a `.gitignore`, so without this
 	// the refusal fires on the product's own output.
-	if (topUpManagedIgnore(projectRoot)) {
-		console.info("Added the workbench rules to the InDusk-managed .gitignore.");
+	if (topUpManagedIgnore(projectRoot, { layoutDeclared })) {
+		console.info("Added the missing InDusk rules to the managed .gitignore.");
 	}
+
+	if (layoutDeclared) return;
 
 	const gaps = missingIgnoreRules(projectRoot);
 	if (gaps.length === 0) return;
