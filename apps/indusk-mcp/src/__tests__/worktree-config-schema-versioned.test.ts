@@ -102,4 +102,46 @@ describe.skipIf(SHOULD_SKIP)("A6 — the schema is machine-local, never shared",
 		expect(readFileSync(ignorePath, "utf-8")).toContain(SCHEMA_REL);
 		expect(missingIgnoreRules(wb.root)).toEqual([]);
 	});
+
+	/**
+	 * Falsification-of-the-falsification (A8). A6 above declares no `worktrees`,
+	 * so `allLocationsDeclared` is false for its fixture and it exercises the
+	 * flat branch only. `refuseIfIgnoreCannotHold` returns early for a declared
+	 * layout — correctly, since it needs no deny-by-default rule — and the
+	 * ignore top-up sat behind that return, so a declared workbench whose ignore
+	 * file predates this change never gained the schema rule and kept offering
+	 * the file to its shared repo.
+	 *
+	 * Driven through `workbench sync` rather than the library function: the fix
+	 * changes that function's signature, so a unit test naming it would fail to
+	 * LOAD today rather than fail its assertion — an absent test wearing a
+	 * failure's clothes. The CLI is a boundary that exists now, and sync does
+	 * its ignore maintenance before it needs a remote.
+	 *
+	 * The rule reaching a declared layout must not bring the root deny rule with
+	 * it: appending `/*\/` there inverts an ignore file this code refuses to
+	 * rewrite on purpose.
+	 */
+	it("a declared layout gains the machine-local rule and not the flat deny rule", () => {
+		wb = makeVersionedWorkbench({
+			repos: [{ name: "alpha", worktrees: "wts" }],
+			shape: "workbench",
+		});
+		const ignorePath = join(wb.root, ".gitignore");
+		writeFileSync(
+			ignorePath,
+			["# InDusk managed", "/alpha", "/wts/", ".indusk/extensions/*/.env", ""].join("\n"),
+		);
+
+		const r = runCli(wb.root, ["workbench", "sync"], { INDUSK_BIN: `node ${CLI_BIN}` });
+		const body = readFileSync(ignorePath, "utf-8");
+		expect(
+			body,
+			`the declared layout never received the machine-local rule:\n${r.stdout}`,
+		).toContain(SCHEMA_REL);
+		expect(
+			body,
+			"the flat layout's deny-by-default rule was imposed on a declared one",
+		).not.toContain("\n/*/");
+	});
 });

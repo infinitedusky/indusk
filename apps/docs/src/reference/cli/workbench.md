@@ -166,6 +166,14 @@ so a workbench scaffolded before a rule existed still receives it. An earlier
 version topped up per *file* — a file already carrying the root deny rule was
 treated as complete, and every rule added afterwards could never reach it.
 
+The top-up runs in two blocks, and which you get depends on your layout.
+**Machine-local rules reach every workbench.** **Deny-by-default reaches only a
+flat one**, because appending `/*/` to a declared layout's ignore file would
+invert a file this command otherwise refuses to rewrite. That split exists
+because the maintenance step used to sit behind the early return for declared
+layouts: they need no refusal, so they got no top-up either, and a declared
+workbench predating a rule could never receive it.
+
 **`.gitattributes`** sets `merge=union` on the append-shaped coordination files
 (`current.md`, `highlights.jsonl`) — two machines appending different lines both
 mean it, and a conflict marker there blocks every agent on both sides. It is
