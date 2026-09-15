@@ -1,0 +1,11 @@
+# An enabled extension's on_enable hook never fires again — autoEnableExtensions skips what's already enabled and extensionsUpdate is third-party only, so any file the hook materializes is frozen at enable-time unless the manifest declares on_update
+
+`indusk update` does not refresh a built-in extension's materialized output. It calls `autoEnableExtensions` (which explicitly skips extensions already enabled — that's the point of "auto-enable," not "auto-refresh") and `extensionsUpdate` (which only processes third-party extensions). So a file `on_enable.sh` writes into a consumer project — a starter config, a copied schema, anything — is frozen at whatever version of the package enabled it. A changelog or doc that promises "this arrives on the next `indusk update`" is false unless the extension's manifest explicitly declares an `on_update` hook that the update path actually runs.
+
+Found 2026-09-14/15 in worktree-config-schema-pointer: the fix shipped a schema file via `on_enable.sh`, and the changelog said existing projects would get it "on the next enable or `indusk update`." The `indusk update` half of that promise was untested and false — falsification (Phase 2, hypothesis 1) caught it by reading `update.ts` rather than trusting the changelog sentence already written.
+
+Corollary: a package-owned file materialized under a project's `.indusk/` (like this schema) is machine-local, not shared project state — it must be listed by name in the workbench ignore rules, or `workbench sync` commits it into the shared context repo and two teammates on different package versions overwrite each other's copy on every enable.
+
+How to apply: before writing a changelog/doc sentence claiming a materialized file "updates automatically" or "arrives on next update," read the actual `update` code path for that extension — don't infer it from the hook's own docblock claiming it's idempotent (idempotent-if-rerun is not the same claim as actually-gets-rerun). If the promise is real, verify the extension declares `on_update` and that `update.ts` calls it for built-in extensions specifically.
+
+See `.indusk/planning/archive/worktree-config-schema-pointer/impl.md` Phase 2 and `apps/indusk-mcp/src/bin/commands/update.ts`.
