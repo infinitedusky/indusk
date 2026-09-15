@@ -60,7 +60,7 @@
 		"destinations": [
 			{
 				"name": "blog",
-				"path": "~/code/site",
+				"path": "~/code/career-workbench/site",
 				"dir": "writing",
 				"index": "writing/index.md"
 			}
