@@ -73,6 +73,16 @@ refuse; three are PostToolUse and act after the fact:
 These are not linting. They block the edit. An agent that wants to mark a phase
 done with a red test simply cannot.
 
+Where they run from matters. Claude Code runs a hook command in the session's
+*current* directory, which moves with every Bash call that ends in a `cd`, and
+a hook that fails to load exits 1 — which the host treats as non-blocking, so
+the edit proceeds and nothing says the gate was off. For that reason every hook
+is registered by the project root, as
+`node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/<name>.js`, never by a path relative
+to the cwd; `indusk update` rewrites the older relative form in place. The one
+thing the registration cannot fix is a session launched from a subdirectory,
+where `${CLAUDE_PROJECT_DIR}` *is* that subdirectory — launch at the root.
+
 ## 4. Three rituals run before a plan closes
 
 Each one asks a question the author is worst placed to ask themselves.
