@@ -1,7 +1,8 @@
 ---
 title: "Dawn Workbench Execution — the floor runs where the work is"
 date: 2026-09-03
-status: draft
+updated: 2026-09-15
+status: accepted
 ---
 
 # Dawn Workbench Execution — Brief
