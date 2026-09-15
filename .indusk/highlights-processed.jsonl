@@ -227,3 +227,4 @@
 {"id":"h-20260915-005","processedAt":"2026-09-15T17:24:00.750Z","action":"skipped","detail":"already captured by enabling-extension-ships-manifest-not-files-it-points-at, written earlier this session"}
 {"id":"h-20260915-001","processedAt":"2026-09-15T17:24:01.867Z","action":"skipped","detail":"plan-specific audit summary; general rule captured by a-positive-result-shows-a-mechanism-ran-not-which-mechanism"}
 {"id":"h-20260915-006","processedAt":"2026-09-15T17:24:02.510Z","action":"wrote-episode","detail":"audit-a-docs-claim-against-the-code-before-publishing-not-at-retrospective"}
+{"id":"h-20260915-008","processedAt":"2026-09-15T17:32:52.365Z","action":"wrote-episode","detail":"published-older-than-main-is-not-automatically-stale"}
