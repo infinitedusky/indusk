@@ -7,16 +7,27 @@
 # publish was correct when it was made; the work behind it was not accounted
 # for. `--no-git-checks` is what let that happen silently.
 #
-# Two refusals, both about the same fact — the thing being published must be
-# the thing the release commit named:
+# `pnpm publish` packs the WORKING TREE, not a commit — verified against the
+# published 1.44.1 tarball, whose files matched main exactly, including changes
+# made after the bump. So the question is never "was the bump recent enough".
+# It is always "does this tree contain the finished work".
 #
-#   1. The working tree is dirty, so the tarball would not match any commit.
-#   2. HEAD is not the release commit for this version, which means either the
-#      bump was never committed or work landed after it.
+# That makes worktree-per-plan the real hazard: every plan runs on a `plan/*`
+# branch in its own worktree, so a publish from a perfectly clean main is blind
+# to it by construction. On 2026-09-15 a publish went out 56 seconds before a
+# twelve-commit plan branch merged; nothing about main looked wrong.
 #
-# Neither is a judgement about whether the work is good. They are both "the
-# number you are about to publish does not describe the tree you are
-# publishing", which is the only thing a version number promises.
+# Three refusals, one fact — the tree being published must be the finished work:
+#
+#   1. The working tree is dirty, so the tarball matches no commit.
+#   2. HEAD is not the release commit, so the number does not describe the tree.
+#   3. An unmerged `plan/*` branch carries commits touching PACKAGED paths, so
+#      finished work may be missing from the tarball. Branches that only touch
+#      planning documents cannot change it and are reported, not refused.
+#
+# None is a judgement about whether the work is good. The rule they enforce is
+# "bump on main, after the branch is merged" — the simplest form of the same
+# thing.
 
 set -euo pipefail
 
@@ -75,4 +86,49 @@ if [[ "$RELEASE_COMMIT" != "$HEAD_COMMIT" ]]; then
 		"Bump again for the work above, then publish that commit."
 fi
 
-echo "release-guard: HEAD is the release commit for ${VERSION} — ok"
+# 3. Unmerged plan branches that could change the tarball.
+#
+# Packaged paths come from package.json `files` (dist is built from src). A
+# branch touching only `.indusk/planning/` cannot alter what ships, so it is
+# named rather than refused — refusing on every in-flight plan would make the
+# guard something people route around.
+PACKAGED_PATHS=(
+	"apps/indusk-mcp/src"
+	"apps/indusk-mcp/skills"
+	"apps/indusk-mcp/templates"
+	"apps/indusk-mcp/hooks"
+	"apps/indusk-mcp/lessons"
+	"apps/indusk-mcp/extensions"
+	"apps/indusk-mcp/package.json"
+	"apps/indusk-admin"
+)
+
+BLOCKING=""
+INFORMATIONAL=""
+while IFS= read -r branch; do
+	[[ -z "$branch" ]] && continue
+	count="$(git -C "$REPO_ROOT" rev-list --count "HEAD..${branch}")"
+	[[ "$count" == "0" ]] && continue
+	touched="$(git -C "$REPO_ROOT" diff --name-only "HEAD...${branch}" -- "${PACKAGED_PATHS[@]}" | head -5)"
+	if [[ -n "$touched" ]]; then
+		BLOCKING+="  ${branch} — ${count} commit(s), touches packaged files:"$'\n'
+		while IFS= read -r f; do BLOCKING+="      ${f}"$'\n'; done <<< "$touched"
+	else
+		INFORMATIONAL+="  ${branch} — ${count} commit(s), planning documents only"$'\n'
+	fi
+done < <(git -C "$REPO_ROOT" for-each-ref --format='%(refname:short)' 'refs/heads/plan/*' --no-merged HEAD)
+
+if [[ -n "$BLOCKING" ]]; then
+	fail "Unmerged plan branch(es) carry work that would change this tarball:" \
+		"" \
+		"${BLOCKING}" \
+		"Publishing packs the working tree, so this release would ship without them." \
+		"Merge the branch, bump on main, then publish that commit."
+fi
+
+if [[ -n "$INFORMATIONAL" ]]; then
+	echo "release-guard: unmerged plan branch(es), planning documents only — not blocking:"
+	printf '%s' "$INFORMATIONAL"
+fi
+
+echo "release-guard: HEAD is the release commit for ${VERSION}, tree clean, no unmerged packaged work — ok"
