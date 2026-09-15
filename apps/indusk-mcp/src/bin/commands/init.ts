@@ -5,6 +5,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
+import { hookCommand } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { linkTrunk } from "../../lib/worktree/layout.js";
 
@@ -1068,9 +1069,9 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			{
 				matcher: "Edit|Write",
 				hooks: [
-					{ type: "command", command: "node .claude/hooks/check-gates.js" },
-					{ type: "command", command: "node .claude/hooks/validate-impl-structure.js" },
-					{ type: "command", command: "node .claude/hooks/claude-md-budget.js" },
+					{ type: "command", command: hookCommand("check-gates.js") },
+					{ type: "command", command: hookCommand("validate-impl-structure.js") },
+					{ type: "command", command: hookCommand("claude-md-budget.js") },
 				],
 			},
 		],
@@ -1078,17 +1079,17 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 			{
 				matcher: "Edit|Write",
 				hooks: [
-					{ type: "command", command: "node .claude/hooks/gate-reminder.js" },
+					{ type: "command", command: hookCommand("gate-reminder.js") },
 					// Workbench sync trigger. Inert unless worktree.shape is
 					// "workbench" — a normal-mode project keeps `.indusk/` inside
 					// its own product repo, where auto-committing every edit would
 					// commit half-finished source.
-					{ type: "command", command: "node .claude/hooks/workbench-sync.js" },
+					{ type: "command", command: hookCommand("workbench-sync.js") },
 				],
 			},
 			{
 				matcher: "Bash",
-				hooks: [{ type: "command", command: "node .claude/hooks/eval-trigger.js" }],
+				hooks: [{ type: "command", command: hookCommand("eval-trigger.js") }],
 			},
 		],
 	};

@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { absolutizeHookCommands } from "./hook-command.js";
 import { LEGACY_HOOKS, removeLegacyHooks } from "./hook-migration.js";
 
 /**
@@ -100,5 +101,32 @@ describe("legacy hook removal", () => {
 
 	it("check-plan-order.js is on the list — the retirement this closes", () => {
 		expect(LEGACY_HOOKS).toContain("check-plan-order.js");
+	});
+});
+
+describe("hook command absolutization", () => {
+	let root: string;
+
+	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "hook-command-"));
+		mkdirSync(join(root, ".claude"), { recursive: true });
+	});
+
+	afterEach(() => rmSync(root, { recursive: true, force: true }));
+
+	it("absent state is nothing to do — no settings, no hooks key, bad JSON — and writes nothing", () => {
+		// The CLI-boundary suite proves the rewrite; this pins the contract that
+		// lets it run inside `update`: a migration that cannot fail the command.
+		expect(absolutizeHookCommands(root)).toEqual({ rewritten: [] });
+
+		const settingsPath = join(root, ".claude/settings.json");
+		const noHooks = '{\n\t"permissions": {\n\t\t"allow": []\n\t}\n}\n';
+		writeFileSync(settingsPath, noHooks);
+		expect(absolutizeHookCommands(root)).toEqual({ rewritten: [] });
+		expect(readFileSync(settingsPath, "utf-8")).toBe(noHooks);
+
+		writeFileSync(settingsPath, "{ not json");
+		expect(() => absolutizeHookCommands(root)).not.toThrow();
+		expect(readFileSync(settingsPath, "utf-8")).toBe("{ not json");
 	});
 });

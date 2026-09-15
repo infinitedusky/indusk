@@ -50,11 +50,11 @@ Test paths are repo-root-relative.
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | On a project set up by `indusk init`, the registered `check-gates` command run from a subdirectory through `sh -c` with `CLAUDE_PROJECT_DIR` set to the project root refuses a Gate B checkoff (exit 2) with the same stderr the root gives; today it exits 1 with a module-not-found error | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
-| A2 | After `indusk init`, every command under `hooks.*[].hooks[].command` in `.claude/settings.json` matches `^node "\$\{CLAUDE_PROJECT_DIR\}"/\.claude/hooks/[\w.-]+\.js$` | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
-| A3 | `indusk update` on a project seeded with the six relative commands leaves six absolute ones, and the parsed file equals the seeded file with only those six strings replaced | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
-| A4 | A second `indusk update` leaves `settings.json` byte-identical, and a seeded `node .claude/hooks/check-gates.js --strict` survives both updates unchanged | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
-| A5 | `init.ts`, `update.ts` and this repository's `.claude/settings.json` contain no `node .claude/hooks/` | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
+| A1 | On a project set up by `indusk init`, the registered `check-gates` command run from a subdirectory through `sh -c` with `CLAUDE_PROJECT_DIR` set to the project root refuses a Gate B checkoff (exit 2) with the same stderr the root gives; today it exits 1 with a module-not-found error | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
+| A2 | After `indusk init`, every command under `hooks.*[].hooks[].command` in `.claude/settings.json` matches `^node "\$\{CLAUDE_PROJECT_DIR\}"/\.claude/hooks/[\w.-]+\.js$` | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
+| A3 | `indusk update` on a project seeded with the six relative commands leaves six absolute ones, and the parsed file equals the seeded file with only those six strings replaced | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
+| A4 | A second `indusk update` leaves `settings.json` byte-identical, and a seeded `node .claude/hooks/check-gates.js --strict` survives both updates unchanged | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
+| A5 | `init.ts`, `update.ts` and this repository's `.claude/settings.json` contain no `node .claude/hooks/` | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/hook-cwd-independence.test.ts |
 
 ## Checklist
 
@@ -83,23 +83,23 @@ Test paths are repo-root-relative.
 
 ### Build Phase 1: Register hooks by the project root
 
-- [ ] `apps/indusk-mcp/src/lib/hook-command.ts`: `export function hookCommand(name: string): string` returning `node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/${name}`; `export const LEGACY_HOOK_COMMAND = /^node \.claude\/hooks\/([\w.-]+\.js)$/`; `export function absolutizeHookCommands(projectRoot: string): { rewritten: string[] }` that walks `settings.hooks[event][].hooks[].command` the way `removeLegacyHooks` does, replaces an exact `LEGACY_HOOK_COMMAND` match with `hookCommand(name)`, writes only when something changed (tab-indented, trailing newline, like `hook-migration.ts`), and treats absent or unparseable settings as nothing to do
+- [x] (the rewrite keeps the file's existing indentation — `init` writes two spaces, `hook-migration.ts` writes tabs — so A3's "changes nothing else" holds byte-for-byte on either) `apps/indusk-mcp/src/lib/hook-command.ts`: `export function hookCommand(name: string): string` returning `node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/${name}`; `export const LEGACY_HOOK_COMMAND = /^node \.claude\/hooks\/([\w.-]+\.js)$/`; `export function absolutizeHookCommands(projectRoot: string): { rewritten: string[] }` that walks `settings.hooks[event][].hooks[].command` the way `removeLegacyHooks` does, replaces an exact `LEGACY_HOOK_COMMAND` match with `hookCommand(name)`, writes only when something changed (tab-indented, trailing newline, like `hook-migration.ts`), and treats absent or unparseable settings as nothing to do
   ```typescript
   export function hookCommand(name: string): string {
   	return `node "\${CLAUDE_PROJECT_DIR}"/.claude/hooks/${name}`;
   }
   ```
-- [ ] `init.ts` `hookConfig` block: the six literals become `hookCommand("check-gates.js")` etc.
-- [ ] `update.ts`: the three ensure blocks (eval-trigger, workbench-sync, claude-md-budget) use `hookCommand(...)`; after the ensure blocks, call `absolutizeHookCommands(projectRoot)` and print `  hook commands: N rewritten to "${CLAUDE_PROJECT_DIR}" form` when N > 0
-- [ ] This repository's `.claude/settings.json`: the six commands to the absolute form by hand (dusk has no global `indusk update`)
-- [ ] `apps/indusk-mcp/src/lib/hook-migration.test.ts` (the existing `removeLegacyHooks` suite) gains one case that `absolutizeHookCommands` on a settings file with no hooks key returns `{ rewritten: [] }` and writes nothing — the "absent is nothing to do" contract, cheaper here than through the CLI
+- [x] `init.ts` `hookConfig` block: the six literals become `hookCommand("check-gates.js")` etc.
+- [x] (placed as step 5c′ beside the retired-hook removal, outside the `.mcp.json` guard for the reason 5c records; A5 caught the first draft of its comment quoting the old form verbatim) `update.ts`: the three ensure blocks (eval-trigger, workbench-sync, claude-md-budget) use `hookCommand(...)`; after the ensure blocks, call `absolutizeHookCommands(projectRoot)` and print `  hook commands: N rewritten to "${CLAUDE_PROJECT_DIR}" form` when N > 0
+- [x] This repository's `.claude/settings.json`: the six commands to the absolute form by hand (dusk has no global `indusk update`) — the `permissions.allow` strings that mention `node .claude/hooks/…` are shell allow-list entries, not registrations, and stay
+- [x] `apps/indusk-mcp/src/lib/hook-migration.test.ts` (the existing `removeLegacyHooks` suite) gains one case that `absolutizeHookCommands` on a settings file with no hooks key returns `{ rewritten: [] }` and writes nothing — the "absent is nothing to do" contract, cheaper here than through the CLI
 
 #### Build Phase 1 Verification
-- [ ] A1–A5 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-cwd-independence.test.ts` — expected: 5 passed; then `cd` back to the worktree root
-- [ ] The neighbours still pass: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/init-globsync-hooks.test.ts src/__tests__/hooks-record-parity.test.ts src/__tests__/telemetry-existing-project-upgrade.test.ts src/__tests__/detect-tooling-honesty.test.ts` — expected: all pass
-- [ ] `pnpm check` from the worktree root reports nothing new against the changed files (the pre-existing admin SVG / eval-trigger / biome-schema findings are not this plan's)
-- [ ] Live proof in this session: after the settings edit, from `apps/indusk-mcp` as cwd, attempt a checkoff this impl's Gate B should refuse and see the refusal; record the refusal text here
-- [ ] Rows A1–A5 set to `passing`
+- [x] A1–A5 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-cwd-independence.test.ts` — expected: 5 passed; then `cd` back to the worktree root — 2026-09-15: 5 passed, plus 8 in `hook-migration.test.ts` (13 in the combined run)
+- [x] The neighbours still pass: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/init-globsync-hooks.test.ts src/__tests__/hooks-record-parity.test.ts src/__tests__/telemetry-existing-project-upgrade.test.ts src/__tests__/detect-tooling-honesty.test.ts` — expected: all pass — 2026-09-15: 4 files, 8 passed
+- [x] `pnpm check` from the worktree root reports nothing new against the changed files (the pre-existing admin SVG / eval-trigger / biome-schema findings are not this plan's) — 2026-09-15: `biome check` over the five changed files reports two findings, both present on `main` before this branch (`init.ts:494` unused `noIndex`; `update.ts:4` unused `resolvePath` import); the new file and the test are clean
+- [x] Live proof in this session: after the settings edit, from `apps/indusk-mcp` as cwd, attempt a checkoff this impl's Gate B should refuse and see the refusal; record the refusal text here — **done through a real Claude Code session rather than this one**, because Claude Code snapshots hook registrations at session start, so this session still runs the relative form. A fixture project was `init`ed with the rebuilt CLI (registered `node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/check-gates.js`), given the A1 impl, and a headless `claude -p --model haiku --permission-mode bypassPermissions` session was told to `cd apps/x` and then Edit the checkoff. Its verbatim report: `PreToolUse:Edit hook error: [node "${CLAUDE_PROJECT_DIR}"/.claude/hooks/check-gates.js]: Trajectory blocks phase advance (policy: auto): [T1] a thing is true — state: written (Phase 1 cannot close until this row is 'passing' or 'skipped')`. The file was unchanged afterwards. The fixture path was trusted in `~/.claude.json` for the run and the entry removed after
+- [x] Rows A1–A5 set to `passing`
 - [ ] Shape (Build Phase 1): `prepareShapeReview` over the phase's changed files against the typescript and testing craft rules; record findings or "nothing to change"
 
 #### Build Phase 1 Context

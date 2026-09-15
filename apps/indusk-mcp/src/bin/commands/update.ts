@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
 import { loadExtensionTolerant, localOverrideErrors } from "../../lib/extension-loader.js";
+import { absolutizeHookCommands, hookCommand } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
@@ -272,7 +273,7 @@ export async function update(projectRoot: string): Promise<void> {
 					if (!settings.hooks.PostToolUse) settings.hooks.PostToolUse = [];
 					settings.hooks.PostToolUse.push({
 						matcher: "Bash",
-						hooks: [{ type: "command", command: "node .claude/hooks/eval-trigger.js" }],
+						hooks: [{ type: "command", command: hookCommand("eval-trigger.js") }],
 					});
 					const { writeFileSync } = await import("node:fs");
 					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
@@ -292,7 +293,7 @@ export async function update(projectRoot: string): Promise<void> {
 					const editEntry = (
 						settings.hooks.PostToolUse as Array<{ matcher?: string; hooks?: unknown[] }>
 					).find((e) => e.matcher === "Edit|Write");
-					const hookDef = { type: "command", command: "node .claude/hooks/workbench-sync.js" };
+					const hookDef = { type: "command", command: hookCommand("workbench-sync.js") };
 					if (editEntry?.hooks) editEntry.hooks.push(hookDef);
 					else settings.hooks.PostToolUse.push({ matcher: "Edit|Write", hooks: [hookDef] });
 					const { writeFileSync: wf } = await import("node:fs");
@@ -357,12 +358,12 @@ export async function update(projectRoot: string): Promise<void> {
 						editEntry.hooks = editEntry.hooks || [];
 						editEntry.hooks.push({
 							type: "command",
-							command: "node .claude/hooks/claude-md-budget.js",
+							command: hookCommand("claude-md-budget.js"),
 						});
 					} else {
 						settings.hooks.PreToolUse.push({
 							matcher: "Edit|Write",
-							hooks: [{ type: "command", command: "node .claude/hooks/claude-md-budget.js" }],
+							hooks: [{ type: "command", command: hookCommand("claude-md-budget.js") }],
 						});
 					}
 					const { writeFileSync } = await import("node:fs");
@@ -390,6 +391,23 @@ export async function update(projectRoot: string): Promise<void> {
 		}
 		for (const name of hookResult.registrationsRemoved) {
 			console.info(`  removed: ${name} registration from .claude/settings.json`);
+		}
+	}
+
+	// 5c'. Register hooks by the project root, not the cwd.
+	//
+	// Claude Code runs hook commands in the session's current directory, so a
+	// command registered relative to that directory stops loading the moment
+	// a Bash call ends in a subdirectory — exit 1, non-blocking, the gate off
+	// and nothing saying so. Every project initialized before 1.45 carries that
+	// form; this rewrites it in place. Same guard reasoning as 5c: outside the
+	// .mcp.json guard, because a project with no .mcp.json still has hooks.
+	{
+		const { rewritten } = absolutizeHookCommands(projectRoot);
+		if (rewritten.length > 0) {
+			console.info(
+				`  hook commands: ${rewritten.length} rewritten to the "\${CLAUDE_PROJECT_DIR}" form (${rewritten.join(", ")})`,
+			);
 		}
 	}
 
