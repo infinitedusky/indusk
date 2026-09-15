@@ -13,6 +13,7 @@ Two regions:
 
 _Any agent can edit this section. Cross-cutting state that's true for the whole project right now._
 
+- 2026-09-15: composable.env removed from dusk (ce.json, env/, scripts, dev dep); Doppler is the env layer. indusk-mcp reads its secrets from `~/.indusk/config.env`, not Doppler — do not map it. **Direction**: indusk-admin will be hosted on a server eventually; keep its Doppler mapping, and create the missing `admin` config in the Doppler `indusk` project when that plan starts (it needs a data source before it needs secrets).
 - 2026-08-30: the 2026-08-16 publish blockers are all resolved — `LEGACY_HOOKS` removal shipped (`lib/hook-migration.ts`; `check-plan-order.js` gone from disk and settings), the changelog was split per release in 1.36.2, and the batch published through 1.40.x. CLAUDE.md no longer carries version/plan-table copies; operational blockers belong here.
 
 ---
@@ -128,6 +129,27 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-14T15:37:41.098Z
 **Branch**: plan/worktree-config-schema-pointer-phase-2
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/worktree-config-schema-pointer
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 5292bc04 — starting catchup
+
+**Session ID**: 5292bc04-3949-4669-b4d2-4dedbebfa11b
+**Last updated**: 2026-09-15T18:18:49.891Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
