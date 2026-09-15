@@ -24,6 +24,9 @@
 #   3. An unmerged `plan/*` branch carries commits touching PACKAGED paths, so
 #      finished work may be missing from the tarball. Branches that only touch
 #      planning documents cannot change it and are reported, not refused.
+#   4. This version is already on the registry. npm would reject it anyway with
+#      a 403, but only after `whoami` and a pack — this says it first, in the
+#      vocabulary of the other refusals, and names the next free number.
 #
 # None is a judgement about whether the work is good. The rule they enforce is
 # "bump on main, after the branch is merged" — the simplest form of the same
@@ -50,6 +53,21 @@ if [[ "${SKIP_RELEASE_GUARD:-}" == "1" ]]; then
 	exit 0
 fi
 
+# What actually reaches the tarball, from package.json `files` (dist is built
+# from src). Shared by checks 2 and 3: both ask the same question — could this
+# change what ships? Note `scripts/` is absent except the bundler, so this
+# guard's own source cannot alter a release.
+PACKAGED_PATHS=(
+	"apps/indusk-mcp/src"
+	"apps/indusk-mcp/skills"
+	"apps/indusk-mcp/templates"
+	"apps/indusk-mcp/hooks"
+	"apps/indusk-mcp/lessons"
+	"apps/indusk-mcp/extensions"
+	"apps/indusk-mcp/package.json"
+	"apps/indusk-admin"
+)
+
 # 1. A dirty tree publishes something no commit describes.
 if [[ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]]; then
 	fail "The working tree has uncommitted changes, so the tarball would not" \
@@ -74,34 +92,34 @@ fi
 HEAD_COMMIT="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 if [[ "$RELEASE_COMMIT" != "$HEAD_COMMIT" ]]; then
 	AHEAD="$(git -C "$REPO_ROOT" rev-list --count "${RELEASE_COMMIT}..HEAD")"
-	fail "HEAD is ${AHEAD} commit(s) past the release commit for ${VERSION}, so this" \
-		"tarball would ship a version number that does not describe the tree." \
-		"" \
-		"  release commit: $(git -C "$REPO_ROOT" log -1 --format='%h %s' "$RELEASE_COMMIT")" \
-		"  HEAD:           $(git -C "$REPO_ROOT" log -1 --format='%h %s' "$HEAD_COMMIT")" \
-		"" \
-		"Unpublished work:" \
-		"$(git -C "$REPO_ROOT" log --oneline "${RELEASE_COMMIT}..HEAD" | head -10)" \
-		"" \
-		"Bump again for the work above, then publish that commit."
+	# Filtered by the same packaged paths as check 3, deliberately. Commits after
+	# the bump that cannot reach the tarball (this script, plan documents, the
+	# docs site) leave the version describing the tree exactly as the release
+	# commit would have. Refusing on those makes the guard fire on its own
+	# maintenance, which is how a guard earns a habit of being overridden.
+	SINCE_RELEASE="$(git -C "$REPO_ROOT" diff --name-only "${RELEASE_COMMIT}..HEAD" -- "${PACKAGED_PATHS[@]}")"
+	if [[ -n "$SINCE_RELEASE" ]]; then
+		fail "HEAD is ${AHEAD} commit(s) past the release commit for ${VERSION}, and those" \
+			"commits change packaged files — so this tarball would ship a version" \
+			"number that does not describe the tree." \
+			"" \
+			"  release commit: $(git -C "$REPO_ROOT" log -1 --format='%h %s' "$RELEASE_COMMIT")" \
+			"  HEAD:           $(git -C "$REPO_ROOT" log -1 --format='%h %s' "$HEAD_COMMIT")" \
+			"" \
+			"Packaged files changed since the bump:" \
+			"$(printf '      %s\n' $SINCE_RELEASE | head -10)" \
+			"" \
+			"Bump again for the work above, then publish that commit."
+	fi
+	echo "release-guard: ${AHEAD} commit(s) since the bump, none touching packaged files — ok"
 fi
 
 # 3. Unmerged plan branches that could change the tarball.
 #
-# Packaged paths come from package.json `files` (dist is built from src). A
-# branch touching only `.indusk/planning/` cannot alter what ships, so it is
-# named rather than refused — refusing on every in-flight plan would make the
-# guard something people route around.
-PACKAGED_PATHS=(
-	"apps/indusk-mcp/src"
-	"apps/indusk-mcp/skills"
-	"apps/indusk-mcp/templates"
-	"apps/indusk-mcp/hooks"
-	"apps/indusk-mcp/lessons"
-	"apps/indusk-mcp/extensions"
-	"apps/indusk-mcp/package.json"
-	"apps/indusk-admin"
-)
+# Uses the same PACKAGED_PATHS as check 2. A branch touching only
+# `.indusk/planning/` cannot alter what ships, so it is named rather than
+# refused — refusing on every in-flight plan would make the guard something
+# people route around.
 
 BLOCKING=""
 INFORMATIONAL=""
@@ -131,4 +149,26 @@ if [[ -n "$INFORMATIONAL" ]]; then
 	printf '%s' "$INFORMATIONAL"
 fi
 
-echo "release-guard: HEAD is the release commit for ${VERSION}, tree clean, no unmerged packaged work — ok"
+# 4. Already published.
+#
+# `npm view` is the authority (it honours scope-specific registry config in
+# ~/.npmrc, which a direct fetch to registry.npmjs.org does not). A network
+# failure returns nothing and is NOT treated as "not published" — an offline
+# machine must not be told it is safe to republish, so silence skips the check
+# and says so rather than passing it.
+PUBLISHED="$(npm view "$(node -p "require('$PKG_DIR/package.json').name")" versions --json 2>/dev/null || true)"
+if [[ -z "$PUBLISHED" ]]; then
+	echo "release-guard: could not reach the registry — skipping the already-published check"
+elif node -e "process.exit(JSON.parse(process.argv[1]).includes(process.argv[2]) ? 0 : 1)" "$PUBLISHED" "$VERSION" 2>/dev/null; then
+	NEXT="$(node -e '
+		const [maj, min, patch] = process.argv[1].split(".").map(Number);
+		process.stdout.write(`${maj}.${min}.${patch + 1}`);
+	' "$VERSION")"
+	fail "${VERSION} is already on the registry — npm would reject this with a 403." \
+		"" \
+		"`pnpm release` publishes whatever version package.json holds; it never bumps." \
+		"If there is new work to ship, bump to ${NEXT} as the last commit on main," \
+		"then publish that commit."
+fi
+
+echo "release-guard: HEAD is the release commit for ${VERSION}, tree clean, no unmerged packaged work, ${VERSION} not yet published — ok"
