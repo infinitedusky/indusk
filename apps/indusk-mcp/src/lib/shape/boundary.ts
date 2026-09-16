@@ -1,6 +1,10 @@
 import { appendFile, mkdir, readFile } from "node:fs/promises";
+import type { PhaseKind, PhaseRef } from "../impl-headings.js";
+import { findPhaseStart, type PhaseBoundaryRecord } from "./boundary-record.js";
+
+export * from "./boundary-record.js";
+
 import { dirname, join } from "node:path";
-import { type PhaseAddress, type PhaseKind, type PhaseRef, toPhaseRef } from "../impl-headings.js";
 
 /**
  * The phase-boundary record — where a phase began.
@@ -15,21 +19,6 @@ import { type PhaseAddress, type PhaseKind, type PhaseRef, toPhaseRef } from "..
  * Created on demand — an absent file means no phase has been opened, not that
  * anything is broken.
  */
-
-export interface PhaseBoundaryRecord {
-	plan: string;
-	phase: number;
-	/**
-	 * Which sequence `phase` numbers. **Absent means `build`** — every record
-	 * written before admin-ui-phase-progress was a build phase, because Shape
-	 * could not open a test phase then. A rule the reader states, not a
-	 * migration: no file is rewritten.
-	 */
-	kind?: PhaseKind;
-	/** The commit the phase opened at. */
-	sha: string;
-	timestamp: string;
-}
 
 export const BOUNDARY_REL_PATH = join(".indusk", "phase-boundary.jsonl");
 
@@ -117,33 +106,4 @@ export async function recordPhaseStart(
 		timestamp: record.at,
 	};
 	await appendFile(path, `${JSON.stringify(line)}\n`, "utf8");
-}
-
-/**
- * Where phase N of this plan began. Null when the phase was never opened —
- * callers must treat that as "cannot scope the review", never as "review
- * everything".
- *
- * The **earliest** record wins when a file already carries duplicates (written
- * before `recordPhaseStart` became idempotent, or merged from two branches). A
- * phase begins once; a resume is not a new beginning. Erring earlier makes the
- * review scope too wide, which costs a re-read — erring later makes it too
- * narrow, which loses work silently. Only one of those is recoverable.
- */
-export function findPhaseStart(
-	records: PhaseBoundaryRecord[],
-	plan: string,
-	phase: PhaseAddress,
-): PhaseBoundaryRecord | null {
-	const ref = toPhaseRef(phase);
-	for (const record of records) {
-		if (
-			record.plan === plan &&
-			record.phase === ref.number &&
-			(record.kind ?? "build") === ref.kind
-		) {
-			return record;
-		}
-	}
-	return null;
 }

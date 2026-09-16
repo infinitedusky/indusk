@@ -62,6 +62,10 @@
       "types": "./dist/lib/shape/rules.d.ts",
       "default": "./dist/lib/shape/rules.js"
     },
+    "./shape/boundary-record": {
+      "types": "./dist/lib/shape/boundary-record.d.ts",
+      "default": "./dist/lib/shape/boundary-record.js"
+    },
     "./lifecycle": {
       "types": "./dist/lib/lifecycle.d.ts",
       "default": "./dist/lib/lifecycle.js"
