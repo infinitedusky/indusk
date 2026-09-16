@@ -2,6 +2,7 @@ import { phaseLabel } from "@infinitedusky/indusk-mcp/impl-headings";
 import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
 import { ACTIVITY_LABELS } from "@/components/bars/labels";
 import { PhaseBar } from "@/components/bars/PhaseBar";
+import { PhasesBar } from "@/components/bars/PhasesBar";
 import { PlanBar } from "@/components/bars/PlanBar";
 import { FalsificationSection } from "@/components/FalsificationSection";
 import { Markdown } from "@/components/Markdown";
@@ -191,30 +192,39 @@ function activePhaseLabel(plan: Plan): string | null {
  */
 function ActivePhaseBar({ plan }: { plan: Plan }) {
   if (!plan.impl) return null;
-  const active = activePhaseOf(plan);
-  if (!active?.ref) return null;
   const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
-  const activePhase = phases.find(
-    (p) => p.kind === active.ref?.kind && p.number === active.ref?.number,
-  );
-  if (!activePhase) return null;
+  if (phases.length === 0) return null;
+  const active = activePhaseOf(plan);
+  const activePhase = active?.ref
+    ? phases.find(
+        (p) => p.kind === active.ref?.kind && p.number === active.ref?.number,
+      )
+    : undefined;
+  const activeKey = activePhase
+    ? `${activePhase.kind}-${activePhase.number}`
+    : null;
   return (
-    <section
-      className="flex flex-col gap-1"
-      data-testid="phase-bar-active"
-      data-phase={`${activePhase.kind}-${activePhase.number}`}
-    >
-      <h2 className="text-sm font-semibold text-gray-900">
-        Active: {phaseTitle(activePhase)}
-        {activePhase.title ? `: ${activePhase.title}` : ""}
-        {active.hint ? (
-          <span className="ml-2 text-xs font-normal text-amber-700">
-            ({active.hint} — first open phase in document order)
-          </span>
-        ) : null}
-      </h2>
-      <PhaseBar phase={activePhase} />
-    </section>
+    <div className="flex flex-col gap-3" data-testid="impl-progress">
+      <PhasesBar phases={phases} activeKey={activeKey} />
+      {activePhase && (
+        <section
+          className="flex flex-col gap-1"
+          data-testid="phase-bar-active"
+          data-phase={activeKey}
+        >
+          <h2 className="text-sm font-semibold text-gray-900">
+            Active: {phaseTitle(activePhase)}
+            {activePhase.title ? `: ${activePhase.title}` : ""}
+            {active?.hint ? (
+              <span className="ml-2 text-xs font-normal text-amber-700">
+                ({active.hint} — first open phase in document order)
+              </span>
+            ) : null}
+          </h2>
+          <PhaseBar phase={activePhase} />
+        </section>
+      )}
+    </div>
   );
 }
 
