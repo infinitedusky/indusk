@@ -7,8 +7,7 @@
       "passes": false,
       "missing": [
         "falsification",
-        "cleanup",
-        "rows"
+        "cleanup"
       ]
     }
   },
