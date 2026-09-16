@@ -42,7 +42,7 @@ export const ACTIVITY_LABELS = {
 } satisfies Record<PhaseActivity, string>;
 
 export const STAGE_LABELS = {
-  implementation: "items",
+  implementation: "implementation",
   Verification: "Verification",
   OTel: "OTel",
   Context: "Context",

@@ -15,9 +15,17 @@ export function PhaseBar({ phase }: { phase: Phase }) {
     short: STAGE_LABELS[stage.kind],
     fill: stage.total === 0 ? 0 : stage.checked / stage.total,
   }));
+  // The verb, then the changing part: the next unchecked item of the active
+  // stage — what is being worked right now — falling back to n of m.
   const active = phase.stages.find((s) => s.state === "active");
-  const activeLabel = active
-    ? `${ACTIVITY_LABELS[phase.activity]}: ${active.checked} of ${active.total}`
+  const next = active?.items.find((i) => !i.checked)?.text;
+  const comment = next
+    ? `${next.length > 110 ? `${next.slice(0, 110)}…` : next} (${active?.checked} of ${active?.total})`
+    : active
+      ? `${active.checked} of ${active.total}`
+      : null;
+  const activeLabel = comment
+    ? `${ACTIVITY_LABELS[phase.activity]}: ${comment}`
     : ACTIVITY_LABELS[phase.activity];
   return (
     <Bar

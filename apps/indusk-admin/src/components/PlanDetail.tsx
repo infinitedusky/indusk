@@ -1,6 +1,4 @@
-import { phaseLabel } from "@infinitedusky/indusk-mcp/impl-headings";
 import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
-import { ACTIVITY_LABELS } from "@/components/bars/labels";
 import { PhaseBar } from "@/components/bars/PhaseBar";
 import { PhasesBar } from "@/components/bars/PhasesBar";
 import { PlanBar } from "@/components/bars/PlanBar";
@@ -174,7 +172,11 @@ function activePhaseOf(plan: Plan) {
   );
 }
 
-/** "verifying Build Phase 2" — the plan bar's label while executing. */
+/**
+ * "Phase 4" — the plan bar's label while executing. Each line names the
+ * level below it: this one the phase, the phase line the stage, the stage bar
+ * the item being worked (Sandy, U1 review).
+ */
 function activePhaseLabel(plan: Plan): string | null {
   if (!plan.impl) return null;
   const active = activePhaseOf(plan);
@@ -183,7 +185,7 @@ function activePhaseLabel(plan: Plan): string | null {
     (p) => p.kind === active.ref?.kind && p.number === active.ref?.number,
   );
   if (!phase) return null;
-  return `${ACTIVITY_LABELS[phase.activity]} ${phaseLabel(active.ref)}`;
+  return phaseTitle(phase);
 }
 
 /**
@@ -213,16 +215,13 @@ function ActivePhaseBar({ plan }: { plan: Plan }) {
           data-testid="phase-bar-active"
           data-phase={activeKey}
         >
-          <h2 className="text-sm font-semibold text-gray-900">
-            Active: {phaseTitle(activePhase)}
-            {activePhase.title ? `: ${activePhase.title}` : ""}
-            {active?.hint ? (
-              <span className="ml-2 text-xs font-normal text-amber-700">
-                ({active.hint} — first open phase in document order)
-              </span>
-            ) : null}
-          </h2>
           <PhaseBar phase={activePhase} />
+          {active?.hint ? (
+            <p className="text-xs text-amber-700">
+              {active.hint} — the active phase is the first open one in document
+              order
+            </p>
+          ) : null}
         </section>
       )}
     </div>

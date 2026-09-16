@@ -1,5 +1,6 @@
 import { type Phase, phaseTitle } from "@/lib/phases";
 import { Bar, type BarSegment } from "./Bar";
+import { STAGE_LABELS } from "./labels";
 
 /**
  * The phase line: every phase of the impl in document order — Test Phase 1,
@@ -35,9 +36,13 @@ export function PhasesBar({
       fill: total === 0 ? 0 : checked / total,
     };
   });
+  // Each line names the level below it: the plan bar says which phase, this
+  // line says which stage of that phase, the stage bar says what is being
+  // worked (Sandy, U1 review).
   const active = phases.find((p) => `${p.kind}-${p.number}` === activeKey);
+  const activeStage = active?.stages.find((s) => s.state === "active");
   const activeLabel = active
-    ? `${phaseTitle(active)}${active.title ? `: ${active.title}` : ""}`
+    ? `${phaseTitle(active)}: ${activeStage ? STAGE_LABELS[activeStage.kind] : active.title}`
     : null;
   return (
     <Bar
