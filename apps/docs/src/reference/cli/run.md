@@ -21,16 +21,48 @@ would read the plan fine, be unable to touch the code (outside the folder it may
 edit, or inside one the workbench's git ignores), commit checkbox edits to the
 workbench, and report every item done.
 
-Zero or several declared repos refuse, naming every candidate. One declared repo
-resolves to a plan root and a code root — and, until dawn-workbench-execution's
-Build Phase 3 carries both roots into the loop, `run` still refuses that case in
-its own words, naming the code root. Every refusal comes before the
-provider-key check, so no key is spent reaching it.
+Zero or several declared repos refuse, naming every candidate, before the
+provider-key check so no key is spent reaching the refusal. One declared repo
+resolves to a **plan root** and a **code root**, and the loop runs across them
+(dawn-workbench-execution, Dawn component 6.5):
 
-Run the loop inside the repository the plan's code lives in. Cross-repo
-execution — one loop spanning the plan repo and the code repo — is
-[dawn-workbench-execution](/decisions/dawn-verify) (Dawn component 6.5), which
-lifts this refusal case by case.
+```mermaid
+flowchart LR
+  subgraph plan["plan root (the workbench)"]
+    impl[".indusk/planning/&lt;plan&gt;/impl.md"]
+    gates[".claude/hooks/ — the gate scripts"]
+    ledger[".indusk/verify/ledger.jsonl"]
+    queue[".indusk/eval/pending.jsonl"]
+  end
+  subgraph code["code root (the declared repo)"]
+    files["source + tests"]
+    bash["bash, cwd"]
+    commits["per-item code commits"]
+  end
+  loop((run loop))
+  loop -- "reads the phase, checks items off,<br/>commits the checkoff" --> impl
+  loop -- "every edit, through the envelope<br/>cwd = plan root" --> gates
+  loop -- "edits, runs, commits" --> code
+  loop -- "queues each code commit,<br/>naming the code repo" --> queue
+```
+
+- **Two places a run may write, and nothing else**: inside the code root, or
+  inside the plan's own folder under the plan root. Relative paths resolve
+  against the code root; the plan's folder is addressed as
+  `.indusk/planning/<plan>/…`; an absolute path is accepted wherever it lands
+  inside either. A write anywhere else is refused naming both roots. The bash
+  escape scan uses the same two roots.
+- **Gates are the plan's.** Scripts resolve from the plan root's `.claude/hooks/`
+  and every envelope runs with the plan root as `cwd`, so the hooks find the
+  workbench's `.indusk/` the way they do from a Claude Code session there.
+- **Two commit cadences, one per repository.** After each checklist item the
+  code cadence stages and commits the code repo; the plan cadence then stages
+  only the plan's folder and commits the checkoff with a trailer,
+  `Code-Commit: <sha>`, naming the code repo's HEAD at that moment — the code
+  state the checkoff attests. A cadence whose stage produces no diff makes no
+  commit. The checkoff commit is not queued for eval: a diff of checkboxes is
+  not work to score.
+- The command prints `Code: <root>` beside `Plan:` when the roots differ.
 
 ## The loop
 
