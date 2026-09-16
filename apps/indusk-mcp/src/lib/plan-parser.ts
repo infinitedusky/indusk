@@ -215,6 +215,13 @@ export function parsePlan(planDir: string): PlanSummary {
  * can never subtract one.
  */
 export interface PlanDeclarations {
+	/**
+	 * The root master itself, when `.indusk/planning/master.md` exists: its
+	 * title (frontmatter `title`, else the first `# ` heading, else "master").
+	 * The sidebar draws one node for it with the parents and the unclaimed
+	 * plans beneath (admin-ui-phase-progress).
+	 */
+	root?: { name: string; title: string };
 	/** Folder names declared as parent plans in the root master. */
 	parents: string[];
 	/** Top-level display order from the root master. Unlisted plans follow. */
@@ -276,9 +283,13 @@ export function readPlanDeclarations(planningDir: string): PlanDeclarations {
 	const empty: PlanDeclarations = { parents: [], roadmap: [], subplans: {} };
 	if (!existsSync(planningDir)) return empty;
 
-	const rootData = readMasterFrontmatter(join(planningDir, "master.md"));
+	const rootPath = join(planningDir, "master.md");
+	const rootData = readMasterFrontmatter(rootPath);
 	const parents = rootData ? stringArray(rootData, "parents") : [];
 	const roadmap = rootData ? stringArray(rootData, "roadmap") : [];
+	const root = existsSync(rootPath)
+		? { name: "master", title: rootTitle(rootPath, rootData) }
+		: undefined;
 
 	// A folder's own master.md is what makes it a parent in practice, so read
 	// every candidate — those named in `parents:` plus any plan carrying a
@@ -302,7 +313,7 @@ export function readPlanDeclarations(planningDir: string): PlanDeclarations {
 		subplans[parent] = stringArray(data, "subplans");
 	}
 
-	return { parents, roadmap, subplans };
+	return { ...(root ? { root } : {}), parents, roadmap, subplans };
 }
 
 export function parseAllPlans(projectRoot: string): PlanSummary[] {
@@ -334,4 +345,17 @@ export function parseAllPlans(projectRoot: string): PlanSummary[] {
 			}
 		})
 		.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The root master's display title: frontmatter `title`, else its first `# ` heading, else "master". */
+function rootTitle(masterPath: string, data: Record<string, unknown> | null): string {
+	const declared = data?.title;
+	if (typeof declared === "string" && declared.trim() !== "") return declared.trim();
+	try {
+		const heading = readFileSync(masterPath, "utf-8").match(/^#\s+(.+)$/m);
+		if (heading) return heading[1].trim();
+	} catch {
+		// unreadable — fall through to the folder-ish default
+	}
+	return "master";
 }
