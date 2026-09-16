@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { repoDir, type WorkbenchRepo } from "../../lib/worktree/repos.js";
@@ -17,7 +17,7 @@ export { git, headOf };
  * none of the workbench-trust-fixes findings could be seen by a test: every
  * one of them appears only once the root becomes a repository.
  *
- * Two layouts:
+ * Three layouts (plus `flat`, the legacy sibling shape with a trunk link):
  *
  *   nested   (`repos_root: "."`)   <tmp>/                 ← workbench root (git)
  *                                    ├── .indusk/config.json
@@ -82,8 +82,15 @@ export interface MakeVersionedWorkbenchOptions {
 export function makeVersionedWorkbench(opts: MakeVersionedWorkbenchOptions): VersionedWorkbench {
 	const layout = opts.layout ?? "nested";
 	const tmp = mkdtempSync(join(tmpdir(), "versioned-wb-"));
-	const root = layout === "sibling" ? join(tmp, "workbench") : tmp;
-	const reposRoot = layout === "sibling" ? tmp : root;
+	// The flat legacy layout is a sibling layout by another name: the canonical
+	// clone lives in `sibling_parent` (the workbench's parent) and the
+	// workbench root carries a trunk SYMLINK to it at `<root>/<name>` — what
+	// `init --workbench` wrote through `linkTrunk` before 1.37. Every reader
+	// resolves the clone through `sibling_parent`, so that is where the repo
+	// goes; the link is what makes the shape flat to the eye.
+	const sideBySide = layout === "sibling" || layout === "flat";
+	const root = sideBySide ? join(tmp, "workbench") : tmp;
+	const reposRoot = sideBySide ? tmp : root;
 
 	const repos: FixtureRepo[] = opts.repos.map((declared) => {
 		const rel = repoDir(declared as WorkbenchRepo);
@@ -97,9 +104,11 @@ export function makeVersionedWorkbench(opts: MakeVersionedWorkbenchOptions): Ver
 		worktree:
 			layout === "flat"
 				? {
-						// The legacy singular declaration, exactly as pre-1.37 init wrote it.
+						// The legacy singular declaration, exactly as pre-1.37 init wrote it:
+						// the name, and the ABSOLUTE parent the clone lives in.
 						...(opts.shape ? { shape: opts.shape } : {}),
 						wrapped_repo: opts.repos[0]?.name,
+						sibling_parent: reposRoot,
 					}
 				: {
 						...(opts.shape ? { shape: opts.shape } : {}),
@@ -121,6 +130,10 @@ export function makeVersionedWorkbench(opts: MakeVersionedWorkbenchOptions): Ver
 
 	if (opts.initRepos !== false) {
 		for (const repo of repos) initRepoWithCommit(repo.dir, repo.name);
+	}
+	if (layout === "flat") {
+		// The trunk link, as `linkTrunk` lays it: `<root>/<name>` → the clone.
+		for (const repo of repos) symlinkSync(repo.dir, join(root, repo.name), "dir");
 	}
 
 	return {
