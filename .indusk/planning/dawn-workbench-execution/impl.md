@@ -63,7 +63,7 @@ Test paths are repo-root-relative.
 | A9 | A scripted model that checks off a phase while a trajectory row is non-terminal is refused with the gate's message, read from the plan repo's impl | Build Phase 3 | Build Phase 3 | passing | apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
 | A10 | The loop's file tools refuse a write outside both the code repo and `<planRoot>/.indusk/planning/<plan>/`, naming both allowed roots, and allow a write inside either | Build Phase 3 | Build Phase 3 | passing | apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
 | A11 | `indusk run <plan>` at the root of a one-repo workbench with no provider key fails with the provider-key error, not the workbench refusal | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/run-workbench-cli.test.ts |
-| A12 | Every eval the loop queues carries `repo`, the code repo's absolute path; draining passes that path to the evaluator, which a stub observes as its git root; a record without `repo` drains as before | Test Phase 1 | Build Phase 4 | written | apps/indusk-mcp/src/lib/run/pending-repo-attribution.test.ts |
+| A12 | Every eval the loop queues carries `repo`, the code repo's absolute path; draining passes that path to the evaluator, which a stub observes as its git root; a record without `repo` drains as before | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/lib/run/pending-repo-attribution.test.ts |
 | A13 | A1, A7 and A8 hold on all four one-repo layouts: flat legacy, nested, sibling, declared `path` | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/lib/verify/workbench-split.test.ts, apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
 | A14 | Exactly one definition of `resolveExecutionRoots` exists under `src/lib`, `verify/roots.ts` is gone, and `run.ts`, `oversized.ts` and `verify.ts` each import it | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/execution-roots-single-definition.test.ts |
 | A15 | Inside a workbench, the dawn-verify matrix holds: an uncontrolled headless agent's honest phase verifies clean, and each of the five planted classes is caught | Build Phase 5 | Build Phase 5 | planned | manual: .indusk/planning/dawn-workbench-execution/matrix.md |
@@ -205,22 +205,22 @@ Test paths are repo-root-relative.
 
 ### Build Phase 4: Evals name their repo
 
-- [ ] `lib/run/pending-evals.ts`: `PendingEvalRecord.repo?: string` (absolute, realpath-normalized); `loop.ts` writes `repo: codeRoot` for code commits; plan-root checkoff commits are not queued
-- [ ] `hooks/_pending-drain.js` `runOne`: when `record.repo` is set, append `--git-root <repo>` to the trigger invocation and `<repo>` as a third argument under `INDUSK_EVAL_CMD`
-- [ ] `hooks/eval-trigger.js`: in drain/CLI mode, `--git-root` (parsed with `parseArgValue`) replaces the walk-up's `gitPath`; hook mode ignores it; the syslog line names the source of `gitPath`
-- [ ] Carried (brief): migrate the three private `runHook` copies in `claude-md-budget-hook.test.ts`, `trajectory-a-prefix-ids.test.ts`, `rationale-baseline-*.test.ts` to `helpers/hook-runner.ts` — this phase opens the hook tests
+- [x] (written from `CommitRecord.repo`, which Build Phase 3 gave every cadence record, so the queue says what the cadence knew rather than what the loop assumed) `lib/run/pending-evals.ts`: `PendingEvalRecord.repo?: string` (absolute, realpath-normalized); `loop.ts` writes `repo: codeRoot` for code commits; plan-root checkoff commits are not queued
+- [x] `hooks/_pending-drain.js` `runOne`: when `record.repo` is set, append `--git-root <repo>` to the trigger invocation and `<repo>` as a third argument under `INDUSK_EVAL_CMD`
+- [x] (the named repo also clears the walk-up's refusal and sets `attribution` to "the repository the queue record named", which the existing syslog line already prints; the installed `.claude/hooks/` copies synced in the same commit) `hooks/eval-trigger.js`: in drain/CLI mode, `--git-root` (parsed with `parseArgValue`) replaces the walk-up's `gitPath`; hook mode ignores it; the syslog line names the source of `gitPath`
+- [x] (four files, not three — both `rationale-baseline-*` tests carried one, and the parity test's was already dead behind a `void runHook`; three became `validateWrite`, the budget hook's synchronous copy became the shared async runner; 22 tests, same verdicts) Carried (brief): migrate the three private `runHook` copies in `claude-md-budget-hook.test.ts`, `trajectory-a-prefix-ids.test.ts`, `rationale-baseline-*.test.ts` to `helpers/hook-runner.ts` — this phase opens the hook tests
 
 #### Build Phase 4 Verification
-- [ ] A12 green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/run/pending-repo-attribution.test.ts` — expected: pass; then `cd` back
-- [ ] The eval rail's pins still hold: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/run/installed-hook-drain.test.ts src/lib/run/drain-falsification.test.ts src/__tests__/eval-trigger*.test.ts src/__tests__/claude-md-budget-hook.test.ts src/__tests__/trajectory-a-prefix-ids.test.ts` — expected: all pass
-- [ ] Row A12 set to `passing`
-- [ ] Shape (Build Phase 4): review the phase's files; record findings or "nothing to change"
+- [x] A12 green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/run/pending-repo-attribution.test.ts` — expected: pass; then `cd` back — 2026-09-16: passed; `dist/lib/run/loop.js` grepped for `repo: realpathSync` first, and the two changed hooks copied to `.claude/hooks/` before the installed-hook drain test ran
+- [x] The eval rail's pins still hold: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/run/installed-hook-drain.test.ts src/lib/run/drain-falsification.test.ts src/__tests__/eval-trigger*.test.ts src/__tests__/claude-md-budget-hook.test.ts src/__tests__/trajectory-a-prefix-ids.test.ts` — expected: all pass — 2026-09-16: the drain and eval-trigger suites 17 passed (6 files), the four migrated hook tests 22 passed
+- [x] Row A12 set to `passing`
+- [x] Shape (Build Phase 4): review the phase's files; record findings or "nothing to change" — recorded by hand (gate-position skip). Eight files: `pending-evals.ts` one optional field with its rule; `loop.ts` one line at the queue append; `_pending-drain.js` a named `repo` local and two spreads with the reason beside them; `eval-trigger.js` a destructured `resolvedPaths` with three derived names whose comment says why a named repo outranks the walk-up; the four migrated tests lost their private spawns and gained one import each. Left as is: `eval-trigger.js` line 32's unused-import lint predates this plan and Biome refuses to auto-fix the file because of it — not this phase's, noted for `/cleanup`. Nothing to change
 
 #### Build Phase 4 Context
-- [ ] Conventions, the thin-lane eval rail entry: queued records carry `repo` when the loop knows it and the drain honours it; a record without it resolves by the hook's walk-up as before
+- [x] Conventions, the thin-lane eval rail entry: queued records carry `repo` when the loop knows it and the drain honours it; a record without it resolves by the hook's walk-up as before
 
 #### Build Phase 4 Document
-- [ ] `apps/docs/src/guide/rail-check.md`: the drain's attribution — `repo` on the record, `--git-root` to the hook, what a legacy record does
+- [x] `apps/docs/src/guide/rail-check.md`: the drain's attribution — `repo` on the record, `--git-root` to the hook, what a legacy record does
 
 ### Build Phase 5: The matrix, inside a workbench
 

@@ -77,6 +77,8 @@ node .claude/hooks/eval-trigger.js --drain-pending
 
 Each record is marked drained **before** its evaluator spawns, so re-running a drain never double-evaluates a commit — a crashed spawn shows up as a gap in the log, not a duplicate scorecard. A backlog that keeps growing across rail checks means thin-lane runs are happening but nobody is draining; nothing is lost (the queue is durable), but that lane's lessons haven't reached the registry yet.
 
+**Which repository gets scored.** In a workbench the plan and its code are different repositories, and the hook's walk-up from the state path has to *infer* which one a commit belongs to (by newer HEAD, refusing when several repos are declared). The loop does not have to infer — it made the commit — so since dawn-workbench-execution each queued record carries `repo`, the repository the commit landed in, and the drain hands it to the per-record invocation as `--git-root`. In CLI mode that outranks the walk-up: the evaluator is invoked against the named repo, and the syslog line says so ("attributed to the repository the queue record named"). A record written before the field existed drains exactly as before. Hook mode ignores the flag — a live commit's repository is resolved from the event.
+
 ### 5. Count unprocessed highlights
 
 Reads both jsonl files and reports:
