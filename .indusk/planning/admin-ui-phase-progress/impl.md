@@ -1,7 +1,7 @@
 ---
 title: "Admin UI Phase Progress — Implementation"
 date: 2026-09-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -79,6 +79,12 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 | A25 | `pnpm exec tsc --noEmit -p .` in `apps/indusk-admin` exits 0, asserted by a test the suite runs | Test Phase 1 | Test Phase 1 | passing | apps/indusk-admin/src/__tests__/typecheck.test.ts |
 | A26 | The plan page shows a phase line between the plan bar and the active phase's stage bar: one segment per phase in document order, closed phases full, the active one partially filled by its own items and named, later phases empty | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/bars/PhasesBar.test.tsx |
 | A27 | The cleanup ritual's phase renders as its own Cleanup section beside Falsification — its items and rows, closed by default — and is not listed under Follow-up Phases; every plan section is closed by default so the page opens as the overview | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/CleanupSection.test.tsx |
+| A28 | A root `master.md` with no frontmatter `title` and a `# …` YAML comment inside its frontmatter titles the sidebar root from its first body heading, never from the comment | Build Phase 8 | Build Phase 8 | planned | apps/indusk-mcp/src/__tests__/plan-declarations-root-title.test.ts |
+| A29 | A completed impl whose readiness reports only `rows` missing shows a plan-bar message naming the non-terminal rows, not "cleaned, awaiting /retrospective"; a completed impl whose readiness could not be computed says so rather than claiming the rituals are done | Build Phase 8 | Build Phase 8 | planned | apps/indusk-mcp/src/lib/lifecycle-derive.test.ts |
+| A30 | `recordPhaseStart` given a record its own reader would refuse (non-numeric phase, empty plan or sha, unknown kind) throws naming the field and appends nothing, so `readBoundaries` still returns every record that was there | Build Phase 8 | Build Phase 8 | planned | apps/indusk-mcp/src/lib/shape/boundary-writer.test.ts |
+| A31 | A CLI spawned through the shared test helper with no explicit `INDUSK_HOME` writes no registry outside a temp directory even when the developer's shell exports `INDUSK_HOME`; the leak scan counts `setup` (which delegates to `init`) among the registering commands | Build Phase 8 | Build Phase 8 | planned | apps/indusk-mcp/src/__tests__/helpers/cli.test.ts, apps/indusk-mcp/src/__tests__/registry-leak-scan.test.ts |
+| A32 | A phase with no implementation items whose gates are all checked reports `closed`; one with no implementation items and an unchecked gate reports that gate's verb — never "implementing 0 of 0" | Build Phase 8 | Build Phase 8 | planned | apps/indusk-mcp/src/lib/lifecycle-derive.test.ts |
+| A33 | An `in-progress` impl with every item checked renders its active plan-bar segment with a message ("every item checked — impl status is still in-progress"), not an unlabelled active segment | Build Phase 8 | Build Phase 8 | planned | apps/indusk-mcp/src/lib/lifecycle-derive.test.ts |
 
 ### Deferred Verification
 
@@ -195,6 +201,10 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 - **A26** — added at the U1 review (Sandy, 2026-09-16: "a phase line under the active one, so that you see what phase you are in"); renders `PhasesBar` from `components/bars/`, created in the same phase. Body asserts one segment per phase in document order with `data-state` done/active/pending, the active segment's fill from its own items, and the active label naming the phase.
 - **A27** — added at the U1 review (Sandy, 2026-09-16: "we also need a cleanup section"; "default all to collapsed — we want overview before details"); renders `PlanDetail` with an impl carrying a `Phase N: Cleanup — …` phase and asserts a `cleanup-section` exists closed by default, shows the phase's items once opened, and that no `followup-phases-section` renders for it. Body in `CleanupSection.test.tsx`, created in the same phase.
 - **A17** — `lifecycle-render-parity.test.ts` imports `PLAN_POSITIONS`, `PHASE_ACTIVITIES`, `GATE_STAGES` from the `lifecycle` subpath and the admin's `LABELS` maps from `components/bars/labels.ts` (Build Phase 4); asserts every member has a non-empty label and that rendering each produces an element — the `satisfies Record<…>` types make a missing member a `tsc` error, this test makes it a named failure.
+
+#### Deferred to Build Phase 8
+
+- **A28–A33** — falsification hypotheses (`/falsify`, 2026-09-16), formed by reading the attested code after Build Phase 7 closed; each targets a specific line and could not have been written before the code existed. Authored red in the phase that fixes them, which is the ritual's shape: A28 against `rootTitle`'s raw-file heading match (`plan-parser.ts`), A29/A32/A33 against `resolvePosition` and `derivePhaseActivity` (`lifecycle.ts`), A30 against `recordPhaseStart`'s unvalidated append (`shape/boundary.ts`), A31 against `helpers/cli.ts`'s `runCli` spreading `process.env` and the scan's `init|update|ui` list.
 
 #### Regression Guards
 
@@ -414,6 +424,34 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 
 #### Build Phase 7 Document
 - [x] `apps/docs/src/guide/plan-lifecycle.md`: the convention paragraph — a plan that adds a position, activity or gate kind adds its rendering in the same plan; what the pin does when it does not
+
+### Build Phase 8: Falsification — a title read from a comment, a bar that hides the blocked rows, a writer that corrupts its own file, a leak the scan cannot see
+
+**Goal**: verify whether the attested state holds against six ways the finished picture can be confidently wrong. (1) **The root's title.** `rootTitle` falls back to the first `# ` line of the *raw* file, and the real root master's frontmatter carries four `# …` YAML comment lines before its body — a root master without `title:` would head the whole sidebar with "Machine-readable plan hierarchy (dawn-ui-plan-grouping). Prose below is for". (2) **The plan bar over readiness.** `resolvePosition` reads `readiness.missing` for `falsification` and `cleanup` and nothing else: a completed impl whose only problem is a `blocked` row (`missing: ["rows"]`) reads "cleaned, awaiting /retrospective", and a `null` readiness (malformed impl) reads the same — the gate would refuse, the bar says come ahead. (3) **The boundary writer.** `recordPhaseStart` appends whatever it is handed; `isBoundaryRecord` lives in the reader only. One malformed append (this plan's own Build Phase 7 record, written by hand with `phase: {kind, number}`) made every reader — Shape, the dogfood test, the admin's plan page — refuse the entire file. The writer accepts what its readers refuse. (4) **The leak, structurally.** `runCli` spreads `process.env` and sets no `INDUSK_HOME`, so every suite must remember to; the seven fixed in Build Phase 6 use `??=`, which yields to a developer who exports `INDUSK_HOME` in their shell — and the scan is satisfied by the string's presence. The scan's list is also narrower than the set of registering commands: `setup` delegates to `init`. No test spawns `setup` without the pin today; the gap is latent, not observed. (5) **The empty implementation stage.** `parseImplString` always emits an implementation gate; `derivePhaseActivity` marks a stage with `total === 0` active ("implementing 0 of 0") because `total > 0 && checked === total` is false — so a Falsification phase whose hypotheses all hold (no fix items) never reads `closed` while `deriveActivePhase` says nothing is open. No such phase exists in the corpus today (checked over every impl); the ritual's own shape produces one. (6) **The unlabelled active segment.** `executing` returns `awaiting: null` and the plan bar's label comes from the active phase's activity; an in-progress impl with every item checked has no active phase, so the bar's active segment carries nothing — D5 says it always carries the message. Each row is one hypothesis; each item the fix if it confirms.
+
+- [ ] `plan-parser.ts` `rootTitle`: match the heading against the document **body** (gray-matter's `content`, the same parse `readMasterFrontmatter` already does), never the raw file; frontmatter comments and fenced code cannot become a title
+- [ ] `lifecycle.ts` `resolvePosition`: a completed impl with `missing` containing `rows` resolves to `retrospective` with `awaiting: "rows not terminal — retrospective blocked"` (the position is right, the message names the block); `readiness === null` with a completed impl resolves with `awaiting: "impl complete — readiness unknown (impl unreadable)"`, never "cleaned"
+- [ ] `shape/boundary.ts`: export `isBoundaryRecord` from the reader and call it in `recordPhaseStart` before the append — a record that fails it throws naming the field (`phase must be a finite number; got object`), and `kind`, when present, must be `test` or `build`; nothing is written
+- [ ] `helpers/cli.ts` `runCli`: set `INDUSK_HOME` to a fresh per-process temp directory unless the caller passes one in `env` — the helper is the one place every CLI-spawning suite already goes through; the seven `??=` pins become unconditional assignments (a temp home is never wrong for a test); `registry-leak-scan.test.ts` adds `setup` to every spawn shape and asserts, from a fixture string, that a `"setup"` spawn is recognized
+- [ ] `lifecycle.ts` `derivePhaseActivity`: an implementation stage with zero items is omitted from `stages` and never active, so the first gate with unchecked items names the verb and all-checked gates read `closed`
+- [ ] `lifecycle.ts` `resolvePosition`: `executing` with a parsed impl in which no phase has an unchecked item returns `awaiting: "every item checked — impl status is still in-progress"`; the plan bar shows it when there is no active phase
+
+#### Build Phase 8 Verification
+- [ ] A28: `readPlanDeclarations` over a planning dir whose `master.md` has frontmatter without `title` and a `# comment` line, body `# Real Title` → `root.title === "Real Title"` — RED today (the comment wins), green after
+- [ ] A29: `derivePlanPosition` with `summary.stage === "impl"`, `stageStatus === "completed"`, `readiness.missing === ["rows"]` → `awaiting` matches `/rows/`; with `readiness: null` → `awaiting` matches `/unknown/` and never `/cleaned/` — RED today, green after
+- [ ] A30: `recordPhaseStart(root, { plan, phase: { kind: "build", number: 7 } as never, sha, at })` rejects naming `phase`; `readBoundaries(root)` afterwards returns exactly the records present before; `kind: "nope"` rejects the same way — RED today (it appends, and the next read throws "line N is missing required fields"), green after
+- [ ] A31: with `process.env.INDUSK_HOME` pointed at a temp "shell home", `runCli(dir, ["init", "--local", "--no-index"])` leaves that home without a `projects.json`; `SPAWN_SHAPES` match `runCli(cwd, ["setup", …])` — RED today on both, green after; then `registry-leak-scan.test.ts` and the seven pinned suites still green
+- [ ] A32: `derivePhaseActivity` on a phase whose implementation gate has no items and whose gates are all checked → `activity === "closed"` and no `implementation` stage; with one unchecked Verification item → `activity === "verifying"` — RED today (`implementing`), green after
+- [ ] A33: `derivePlanPosition` with `stageStatus === "in-progress"` and an impl in which every item is checked → `awaiting` matches `/every item checked/` — RED today (`null`), green after
+- [ ] A1–A27 still green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/lifecycle-single-definition.test.ts src/__tests__/lifecycle-parity.test.ts src/__tests__/plan-declarations.test.ts src/__tests__/registry-leak-scan.test.ts src/lib/shape` and `cd apps/indusk-admin && pnpm exec vitest run` — expected: all pass (A13's snapshot re-baselined by hand for this plan's folder if its status moved, named here); then `cd` back
+- [ ] Rows A28–A33 set to `passing`
+- [ ] Shape (Build Phase 8): review the phase's files; record findings or "nothing to change"
+
+#### Build Phase 8 Context
+- [ ] Known Gotchas, the phase-boundary entry: the writer validates with the reader's predicate — a record that would make `readBoundaries` throw is refused at write time, because one bad append blinds every reader; Known Gotchas, the admin entry: `runCli` pins `INDUSK_HOME` to a temp dir by default, the scan is the second line
+
+#### Build Phase 8 Document
+- [ ] `apps/docs/src/guide/shape.md` (the boundary record): the writer refuses what the reader would; `apps/docs/src/reference/admin-ui/overview.md`: the plan-bar messages for blocked rows, unknown readiness, and an all-checked in-progress impl; `apps/docs/src/reference/admin-ui/component-conventions.md`: `runCli` pins `INDUSK_HOME`
 
 ## Files Affected
 
