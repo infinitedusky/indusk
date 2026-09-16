@@ -167,7 +167,19 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 		// Items from earlier failed attempts are still uncommitted in the
 		// working tree, so this commit will contain them — name them (A11).
 		const attributed = [...carriedItems, ...items];
-		const trailer = await options.trailer?.();
+		// The trailer is bookkeeping too: a trailer that cannot be computed is
+		// recorded and the commit is made without it — never an exception
+		// through the tool after the edit already applied (A17).
+		let trailer: string | null = null;
+		try {
+			trailer = (await options.trailer?.()) ?? null;
+		} catch (error) {
+			const err = error as { message?: string };
+			failures.push({
+				phase,
+				message: `commit trailer could not be computed: ${err.message ?? String(error)}`,
+			});
+		}
 		const message = trailer
 			? `${commitMessageFor(planName, phase, attributed)}\n\n${trailer}`
 			: commitMessageFor(planName, phase, attributed);

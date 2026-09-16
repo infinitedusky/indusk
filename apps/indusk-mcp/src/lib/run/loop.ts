@@ -113,10 +113,19 @@ const DEFAULT_PHASE_STEPS = 48;
 
 const execFileAsync = promisify(execFile);
 
-/** HEAD of a repository — the code commit a plan-side checkoff attests. */
-async function headOf(repo: string): Promise<string> {
-	const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: repo });
-	return stdout.trim();
+/**
+ * HEAD of a repository — the code commit a plan-side checkoff attests — or
+ * null when there is none yet (an unborn branch: a greenfield repo before its
+ * first commit). Nothing to attest is a fact to record as absence, not an
+ * exception to throw through a tool call (A17).
+ */
+async function headOf(repo: string): Promise<string | null> {
+	try {
+		const { stdout } = await execFileAsync("git", ["rev-parse", "--verify", "HEAD"], { cwd: repo });
+		return stdout.trim() || null;
+	} catch {
+		return null;
+	}
 }
 
 /**
@@ -212,6 +221,14 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 	const root = resolve(options.worktree);
 	const planRoot = resolve(options.planRoot ?? options.worktree);
 	const split = planRoot !== root;
+	// Across a split the impl lives in the plan root, and the default
+	// `{worktree}/impl.md` would look for it in the code root — a library
+	// caller's mistake that used to surface as ENOENT (A18).
+	if (split && !options.implPath) {
+		throw new Error(
+			`runLoop: planRoot (${planRoot}) differs from worktree (${root}), so the impl lives in the plan root — pass implPath explicitly; the default {worktree}/impl.md would look in the code root.`,
+		);
+	}
 	const implPath = options.implPath ? resolve(options.implPath) : join(root, "impl.md");
 	// The model addresses the impl relative to the repository it lives in: the
 	// code root in a flat project, the plan root across a split.
@@ -266,7 +283,10 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 				getPhase: () => currentPhase,
 				resolveEditPath,
 				pathspec: [roots.planDir],
-				trailer: async () => `Code-Commit: ${await headOf(root)}`,
+				trailer: async () => {
+					const head = await headOf(root);
+					return head ? `Code-Commit: ${head}` : null;
+				},
 			})
 		: null;
 	if (planCadence?.disabledReason) {

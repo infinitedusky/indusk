@@ -5,6 +5,7 @@ import { dirname, join, resolve as resolvePath } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
+import { detectTooling } from "../../lib/detect-tooling.js";
 import { loadExtensionTolerant, localOverrideErrors } from "../../lib/extension-loader.js";
 import { absolutizeHookCommands, hookCommand } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
@@ -408,6 +409,38 @@ export async function update(projectRoot: string): Promise<void> {
 			console.info(
 				`  hook commands: ${rewritten.length} rewritten to the "\${CLAUDE_PROJECT_DIR}" form (${rewritten.join(", ")})`,
 			);
+		}
+	}
+
+	// 5c''. Ensure a test runner where one can be detected.
+	//
+	// `init` detected tooling against the project root, which in a workbench
+	// is the wrapper — no code, no config file, no runner — so `verify` there
+	// reported every row unverified under a clean verdict. Detection now runs
+	// over the declared repos; this writes the result into a config that
+	// predates the fix. An explicit `verify.testCommand` or an existing
+	// `testRunner` is never touched (dawn-workbench-execution A16).
+	{
+		const configPath = join(projectRoot, ".indusk/config.json");
+		if (existsSync(configPath)) {
+			try {
+				const config = JSON.parse(readFileSync(configPath, "utf-8"));
+				const verify = (config.verify ?? {}) as { testRunner?: unknown; testCommand?: unknown };
+				if (!verify.testRunner && !verify.testCommand) {
+					const tool = detectTooling(projectRoot).testRunner;
+					if (tool) {
+						config.verify = {
+							...verify,
+							testRunner: { tool, config: `${tool}.config.${tool === "jest" ? "js" : "ts"}` },
+						};
+						const { writeFileSync } = await import("node:fs");
+						writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+						console.info(`  verify.testRunner: ${tool} (detected in the declared code repo)`);
+					}
+				}
+			} catch {
+				console.info("  could not ensure verify.testRunner in .indusk/config.json");
+			}
 		}
 	}
 

@@ -238,3 +238,117 @@ describe("dawn-workbench-execution — the gate and the two allowed roots", () =
 		expect(existsSync(join(wb.root, PLAN_DIR_REL, "notes.md"))).toBe(true);
 	});
 });
+
+import { writeFileSync } from "node:fs";
+import { makeVersionedWorkbench } from "../../__tests__/helpers/versioned-workbench.js";
+import { finishStep, toolCallStep } from "./harness.test-support.js";
+
+/**
+ * Phase 6 falsification — A17, A18.
+ */
+const UNBORN_IMPL = `---
+title: "Unborn"
+status: in-progress
+trajectory: required
+gate_policy: auto
+---
+
+# Unborn
+
+## Test Trajectory
+
+| ID | Asserts | Writable at | Passes at | State |
+|----|---------|-------------|-----------|-------|
+| T1 | a thing is true | Phase 0 | Phase 1 | passing |
+
+## Checklist
+
+### Phase 1: First
+
+- [ ] note the plan
+- [ ] write the code
+
+#### Phase 1 Verification
+- [ ] T1 passes
+
+#### Phase 1 Context
+- [x] (none needed)
+
+#### Phase 1 Document
+- [x] (none needed)
+`;
+
+describe("dawn-workbench-execution — falsification: an unborn code repo, a forgotten impl path", () => {
+	it("A17: a checkoff before any code lands a plan commit with no trailer; later ones carry one", async () => {
+		wb = makeVersionedWorkbench({
+			repos: [{ name: "alpha", path: "code/alpha" }],
+			layout: "nested",
+			shape: "workbench",
+			initRepos: false,
+		});
+		const code = wb.repos[0].dir;
+		mkdirSync(code, { recursive: true });
+		git(code, ["init", "-q", "-b", "main"]); // no commit: an unborn branch
+		const planDir = join(wb.root, ".indusk", "planning", "demo");
+		mkdirSync(planDir, { recursive: true });
+		const implPath = join(planDir, "impl.md");
+		writeFileSync(implPath, UNBORN_IMPL);
+		mkdirSync(join(wb.root, ".claude"), { recursive: true });
+		cpSync(hooksDir, join(wb.root, ".claude", "hooks"), { recursive: true });
+		git(wb.root, ["add", "-A"]);
+		git(wb.root, ["commit", "-qm", "plan: unborn"]);
+		const planBaseline = headOfRepo(wb.root);
+		const IMPL = ".indusk/planning/demo/impl.md";
+
+		const model = new MockLanguageModelV4({
+			doGenerate: [
+				toolCallStep("edit", {
+					path: IMPL,
+					old_string: "- [ ] note the plan",
+					new_string: "- [x] note the plan",
+				}),
+				toolCallStep("writeFile", { path: "src/a.mjs", content: "export const a = 1;\n" }),
+				toolCallStep("edit", {
+					path: IMPL,
+					old_string: "- [ ] write the code",
+					new_string: "- [x] write the code",
+				}),
+				toolCallStep("edit", {
+					path: IMPL,
+					old_string: "- [ ] T1 passes",
+					new_string: "- [x] T1 passes",
+				}),
+				finishStep("done"),
+			],
+		});
+		const result = await runLoop({
+			worktree: code,
+			planRoot: wb.root,
+			implPath,
+			model,
+			gate: { scripts: realGateScripts },
+		});
+		expect(result.status, JSON.stringify(result, null, 2)).toBe("complete");
+
+		const planCommits = commitsAfter(wb.root, planBaseline);
+		expect(
+			planCommits.map((c) => c.message.split("\n")[0]),
+			"one plan commit per checkoff",
+		).toHaveLength(3);
+		expect(planCommits[0].message, "nothing to attest yet: no trailer").not.toMatch(/Code-Commit:/);
+		const codeHead = headOfRepo(code);
+		for (const c of planCommits.slice(1)) {
+			expect(c.message).toMatch(new RegExp(`^Code-Commit: ${codeHead}$`, "m"));
+		}
+		expect(result.phases[0]?.commitFailures ?? []).toEqual([]);
+	}, 180_000);
+
+	it("A18: planRoot without implPath is refused, naming both roots", async () => {
+		wb = oneRepoAtPath("nested");
+		const { code } = splitFixture(wb);
+		const model = new MockLanguageModelV4({ doGenerate: [finishStep("never")] });
+		await expect(
+			runLoop({ worktree: code, planRoot: wb.root, model, gate: { scripts: realGateScripts } }),
+		).rejects.toThrow(/implPath.*plan root|plan root.*implPath/s);
+	});
+});

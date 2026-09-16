@@ -5,6 +5,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
+import { detectTooling } from "../../lib/detect-tooling.js";
 import { absolutizeHookCommands, hookCommand } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { linkTrunk } from "../../lib/worktree/layout.js";
@@ -179,60 +180,6 @@ export interface InitOptions {
 	workbench?: boolean;
 	wrappedRepo?: string;
 	siblingParent?: string;
-}
-
-interface DetectedTooling {
-	linter?: string;
-	testRunner?: string;
-	otel?: boolean;
-	typeCheck?: boolean;
-}
-
-function detectTooling(projectRoot: string): DetectedTooling {
-	const detected: DetectedTooling = {};
-
-	// Detect linter
-	if (existsSync(join(projectRoot, "biome.json")) || existsSync(join(projectRoot, "biome.jsonc"))) {
-		detected.linter = "biome";
-	} else if (
-		existsSync(join(projectRoot, ".eslintrc.js")) ||
-		existsSync(join(projectRoot, ".eslintrc.json")) ||
-		existsSync(join(projectRoot, ".eslintrc.cjs")) ||
-		existsSync(join(projectRoot, "eslint.config.js")) ||
-		existsSync(join(projectRoot, "eslint.config.mjs")) ||
-		existsSync(join(projectRoot, "eslint.config.ts"))
-	) {
-		detected.linter = "eslint";
-	}
-
-	// Detect test runner
-	if (
-		existsSync(join(projectRoot, "vitest.config.ts")) ||
-		existsSync(join(projectRoot, "vitest.config.js"))
-	) {
-		detected.testRunner = "vitest";
-	} else if (
-		existsSync(join(projectRoot, "jest.config.js")) ||
-		existsSync(join(projectRoot, "jest.config.ts"))
-	) {
-		detected.testRunner = "jest";
-	}
-
-	// Detect OTel
-	if (
-		existsSync(join(projectRoot, "instrumentation.ts")) ||
-		existsSync(join(projectRoot, "src/instrumentation.ts")) ||
-		existsSync(join(projectRoot, "instrumentation.py"))
-	) {
-		detected.otel = true;
-	}
-
-	// Detect TypeScript
-	if (existsSync(join(projectRoot, "tsconfig.json"))) {
-		detected.typeCheck = true;
-	}
-
-	return detected;
 }
 
 // ---- Biome wiring (full mode only) -----------------------------------------
