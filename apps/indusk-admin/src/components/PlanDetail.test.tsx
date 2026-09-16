@@ -26,6 +26,24 @@ vi.mock("next/link", () => {
 
 import { PlanDetail } from "./PlanDetail";
 
+/** Every section is closed by default (admin-ui-phase-progress); open the Implementation Plan before reading phases. */
+async function openImplPlan(container: Element) {
+  const button = container.querySelector(
+    '[data-testid="phases-section"] [aria-expanded="false"]',
+  ) as HTMLElement | null;
+  button?.click();
+  await new Promise((r) => setTimeout(r, 50));
+}
+
+/** Every section is closed by default (admin-ui-phase-progress); open one before reading its body. */
+async function openSection(container: Element, testId: string) {
+  const button = container.querySelector(
+    `[data-testid="${testId}"] [aria-expanded="false"]`,
+  ) as HTMLElement | null;
+  button?.click();
+  await new Promise((r) => setTimeout(r, 50));
+}
+
 function stubClipboard() {
   const writeText = vi.fn().mockResolvedValue(undefined);
   Object.defineProperty(navigator, "clipboard", {
@@ -181,6 +199,7 @@ describe("PlanDetail — main pane renders plan content (T5)", () => {
 describe("PlanDetail — brief section (T6)", () => {
   it("T6 — main pane renders the brief content with Problem and Proposed Direction headings visible", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    await openSection(container, "brief-section");
     const brief = container.querySelector('[data-testid="brief-section"]');
     expect(brief).not.toBeNull();
     // Markdown-rendered headings
@@ -200,7 +219,7 @@ describe("PlanDetail — brief section (T6)", () => {
 });
 
 describe("PlanDetail — brief section is collapsible (T21, Phase 6)", () => {
-  it("T21 — Brief section is rendered inside a CollapsibleSection with aria-expanded control, defaulting to open", async () => {
+  it("T21 — Brief section is rendered inside a CollapsibleSection with aria-expanded control, defaulting to closed", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
     const brief = container.querySelector('[data-testid="brief-section"]');
     expect(brief).not.toBeNull();
@@ -212,23 +231,26 @@ describe("PlanDetail — brief section is collapsible (T21, Phase 6)", () => {
       toggle,
       "Brief section must contain an aria-expanded toggle (CollapsibleSection) — currently rendered inline without collapse control",
     ).not.toBeNull();
-    // Default state is expanded (defaultOpen={true}).
-    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
-    // Clicking collapses the section.
+    // Default state is collapsed — every section is, so the page opens as the
+    // overview (bars) and the details are a click away (admin-ui-phase-progress).
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    // Clicking expands the section.
     (toggle as HTMLElement | null)?.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("T21 — collapsing the Brief section hides its content", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
     const brief = container.querySelector('[data-testid="brief-section"]');
-    expect(brief?.textContent).toContain("Customers can't sort");
-
     const toggle = brief?.querySelector(
       "[aria-expanded]",
     ) as HTMLElement | null;
     expect(toggle).not.toBeNull();
+    // Closed by default: open it, the brief renders; collapse it, it is gone.
+    toggle?.click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(brief?.textContent).toContain("Customers can't sort");
     toggle?.click();
     await new Promise((r) => setTimeout(r, 50));
 
@@ -240,12 +262,13 @@ describe("PlanDetail — brief section is collapsible (T21, Phase 6)", () => {
 describe("PlanDetail — impl phases as collapsible sections (T7)", () => {
   it("T7 — main pane lists each phase as a collapsible section, defaulted to closed", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    await openImplPlan(container);
     const phases = container.querySelector('[data-testid="phases-section"]');
     expect(phases).not.toBeNull();
 
     // Two phase headers — both collapsible (have aria-expanded), both closed
     const collapsibles = Array.from(
-      phases?.querySelectorAll("[aria-expanded]") ?? [],
+      phases?.querySelectorAll('[data-testid="phase"] [aria-expanded]') ?? [],
     );
     expect(collapsibles.length).toBeGreaterThanOrEqual(2);
     for (const c of collapsibles) {
@@ -270,6 +293,7 @@ describe("PlanDetail — impl phases as collapsible sections (T7)", () => {
 describe("PlanDetail — trajectory table inside expanded phase (T8)", () => {
   it("T8 — when a phase is expanded, its trajectory rows render in a table with ID, Asserts, Writable at, Passes at, State columns", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    await openImplPlan(container);
     const phasesSection = container.querySelector(
       '[data-testid="phases-section"]',
     );
@@ -312,6 +336,7 @@ describe("PlanDetail — trajectory table inside expanded phase (T8)", () => {
 
   it("only includes trajectory rows whose Passes at matches the phase number", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    await openImplPlan(container);
     const phasesSection = container.querySelector(
       '[data-testid="phases-section"]',
     );
@@ -582,6 +607,7 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
     const { container } = await render(
       <PlanDetail plan={mockMixedPhasePlan()} />,
     );
+    await openImplPlan(container);
 
     // Main Phases section contains Phase 1 only (Phase 2 hoisted out)
     const phasesSection = container.querySelector(
@@ -597,6 +623,7 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
     const { container } = await render(
       <PlanDetail plan={mockMixedPhasePlan()} />,
     );
+    await openSection(container, "falsification-section");
 
     const falsification = container.querySelector(
       '[data-testid="falsification-section"]',
@@ -624,6 +651,7 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
     const { container } = await render(
       <PlanDetail plan={mockMixedPhasePlan()} />,
     );
+    await openSection(container, "followup-phases-section");
 
     const followup = container.querySelector(
       '[data-testid="followup-phases-section"]',
@@ -668,7 +696,7 @@ describe("PlanDetail — collapsible section state persists (T30, Phase 9)", () 
     expect(briefButton?.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("T30 — absent localStorage value falls back to defaultOpen (Brief open on first-ever visit)", async () => {
+  it("T30 — absent localStorage value falls back to defaultOpen (Brief closed on first-ever visit — every section is)", async () => {
     // No prior storage — fresh user
     expect(localStorage.getItem("plan:alpha-feature:section:brief")).toBeNull();
 
@@ -677,7 +705,7 @@ describe("PlanDetail — collapsible section state persists (T30, Phase 9)", () 
     const briefButton = container.querySelector(
       '[data-testid="brief-section"] button',
     );
-    expect(briefButton?.getAttribute("aria-expanded")).toBe("true");
+    expect(briefButton?.getAttribute("aria-expanded")).toBe("false");
   });
 });
 
@@ -716,6 +744,7 @@ describe("PlanDetail — legacy falsification.md rendering still works (T28, Pha
       },
     };
     const { container } = await render(<PlanDetail plan={legacyPlan} />);
+    await openSection(container, "falsification-section");
 
     // Falsification section renders — not the empty state, not the phase path
     expect(

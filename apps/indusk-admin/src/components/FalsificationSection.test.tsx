@@ -108,6 +108,15 @@ function mockPlan(overrides: Partial<Plan> = {}): Plan {
   };
 }
 
+/** Every section is closed by default (admin-ui-phase-progress); open one before reading its body. */
+async function openSection(container: Element, testId: string) {
+  const button = container.querySelector(
+    `[data-testid="${testId}"] [aria-expanded="false"]`,
+  ) as HTMLElement | null;
+  button?.click();
+  await new Promise((r) => setTimeout(r, 50));
+}
+
 describe("PlanDetail — falsification section (T10)", () => {
   it("T10 — renders one entry per hypothesis with outcome-colored badges", async () => {
     const plan = mockPlan({
@@ -144,6 +153,7 @@ describe("PlanDetail — falsification section (T10)", () => {
       },
     });
     const { container } = await render(<PlanDetail plan={plan} />);
+    await openSection(container, "falsification-section");
     const section = container.querySelector(
       '[data-testid="falsification-section"]',
     );
@@ -177,6 +187,7 @@ describe("PlanDetail — falsification section (T10)", () => {
   it("T10 — renders 'no falsification ritual run' when the log is missing", async () => {
     const plan = mockPlan({ falsification: undefined });
     const { container } = await render(<PlanDetail plan={plan} />);
+    await openSection(container, "falsification-section");
     const empty = container.querySelector(
       '[data-testid="falsification-empty"]',
     );

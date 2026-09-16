@@ -138,6 +138,15 @@ function plan(): Plan {
   };
 }
 
+/** The Implementation Plan section is closed by default; open it so the phases render. */
+async function openImplPlan(container: Element) {
+  const button = container.querySelector(
+    '[data-testid="phases-section"] [aria-expanded="false"]',
+  ) as HTMLElement | null;
+  button?.click();
+  await new Promise((r) => setTimeout(r, 50));
+}
+
 /** Every phase is a collapsible; open them all so content assertions see the body. */
 async function openAllPhases(container: Element) {
   for (const button of container.querySelectorAll(
@@ -159,6 +168,7 @@ function phases(container: Element): HTMLElement[] {
 describe("A1 — Test and Build phases render as their own phases, in document order", () => {
   it("shows three phases keyed test-1, build-1, build-2, each with only its own items", async () => {
     const { container } = await render(<PlanDetail plan={plan()} />);
+    await openImplPlan(container);
     await openAllPhases(container);
     const found = phases(container);
     expect(found.map((p) => p.getAttribute("data-phase"))).toEqual([
@@ -179,6 +189,7 @@ describe("A1 — Test and Build phases render as their own phases, in document o
 describe("A2 — rows attach to the phase they pass at, by kind", () => {
   it("A1 (passes at Test Phase 1) sits under test-1 and not under build-1", async () => {
     const { container } = await render(<PlanDetail plan={plan()} />);
+    await openImplPlan(container);
     await openAllPhases(container);
     expect(phases(container)).toHaveLength(3);
     const [test1, build1, build2] = phases(container);
@@ -191,6 +202,7 @@ describe("A2 — rows attach to the phase they pass at, by kind", () => {
 describe("A4 — each phase shows its stages with a state", () => {
   it("build-1: implementation 2 of 3, Verification done, Context pending, Document opted-out with proof", async () => {
     const { container } = await render(<PlanDetail plan={plan()} />);
+    await openImplPlan(container);
     expect(phases(container)).toHaveLength(3);
     const build1 = phases(container)[1];
     const stage = (name: string) =>
@@ -208,6 +220,7 @@ describe("A4 — each phase shows its stages with a state", () => {
 describe("A5 — an OTel gate is its own stage", () => {
   it("build-1's OTel items appear under an OTel stage, not inside implementation", async () => {
     const { container } = await render(<PlanDetail plan={plan()} />);
+    await openImplPlan(container);
     expect(phases(container)).toHaveLength(3);
     const build1 = phases(container)[1];
     const otel = build1.querySelector('[data-stage="OTel"]');
