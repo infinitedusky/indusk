@@ -70,7 +70,7 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 | A16 | The admin has no phase-heading regex; exactly one `PLAN_POSITIONS`, one `GATE_STAGES` and one phase-heading parser exist across the package and the admin | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/lifecycle-single-definition.test.ts |
 | A17 | Adding a member to `PlanPosition`, `PhaseActivity` or `GateKind` without a label and renderer fails a test naming the missing member | Build Phase 4 | Build Phase 4 | planned | apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
 | A18 | `prepareShapeReview` for `{kind: "test", number: 1}` on a test-phase impl returns a review, and `recordReviewedNothingFound` for it appends under `### Test Phase 1`'s block | Build Phase 2 | Build Phase 2 | planned | apps/indusk-mcp/src/lib/shape/test-phase-addressing.test.ts |
-| A19 | Test Phase 1 and Build Phase 1 of one plan report separate `getPhaseCompletion` counts and separate `findPhaseStart` records; a record without `kind` resolves as build | Build Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/src/lib/phase-ref-identity.test.ts |
+| A19 | Test Phase 1 and Build Phase 1 of one plan report separate `getPhaseCompletion` counts and separate `findPhaseStart` records; a record without `kind` resolves as build | Build Phase 2 | Build Phase 2 | planned | apps/indusk-mcp/src/lib/phase-ref-identity.test.ts |
 | A20 | The sidebar shows one root node with the parent plans and the unclaimed plans under it; a sub-plan declared under two parents appears under both | Test Phase 1 | Build Phase 6 | written | apps/indusk-admin/src/components/PlanList.root.test.tsx |
 | A21 | `indusk ui prune --dry-run` lists dead entries and writes nothing; `indusk ui prune` removes exactly those, writes `projects.json.bak.<ISO>`, keeps live entries | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/ui-prune.test.ts |
 | A22 | Every test file under both apps that spawns `init`, `update` or `ui` sets `INDUSK_HOME` | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/registry-leak-scan.test.ts |
@@ -108,6 +108,7 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 - [x] A23 `apps/indusk-admin/src/components/ProjectGrid.shape.test.tsx` (its own file; props widened through `unknown` so A25 stays green): render the grid with three registry entries (one workbench config, one normal-mode config, one whose path is missing); assert two cards, labelled `workbench` / `normal-mode`, and no card for the dead entry — RED (no labels; dead entry rendered as stale)
 - [x] A24 `apps/indusk-admin/src/components/Scorecards.empty.test.tsx` (its own file; renders the page component with the reader mocked): render the scorecards page's empty branch with `hasEvalDir: false`; assert the text "no evaluations recorded yet" — RED (current empty text differs)
 - [x] Run each authored file; confirm every red fails on its own assertion, not on a missing import; set rows A1, A2, A4, A5, A16, A20–A24 to `written`, A13 and A25 to `passing` — every red is an `AssertionError` on the row's own claim (A16 (d) is already green: one `PHASE_HEADING`; A20's two-parents case is already green: `buildGroups` lists a child under every parent that declares it, so that half is a guard); A13 wrote its 83-folder baseline; A25 green after the fixture fix
+- [x] Shape (Test Phase 1, recorded by hand — the library skips while its item sits inside the Verification gate, the same position problem the previous two plans hit): ten test files. `PhasesSection.test.tsx` has one fixture impl, one trajectory builder, one `openAllPhases` helper and one `phases()` selector shared by four cases; `lifecycle-single-definition.test.ts` has one `definers(pattern)` over one `libFiles()`; `lifecycle-parity.test.ts` has `planDirs()` → `observe()` → compare, and compares only shared folders so it pins the reader, not the corpus; `registry-leak-scan.test.ts` names its spawn shapes in one array; `ui-prune.test.ts` has one `fixture()` and one `names()`; the three admin rows widen future props through `unknown` with the reason beside each. Left as is: the `next/link` mock is copied into every browser test file verbatim (a fifteenth copy now) — inter-file, `/cleanup`'s question, and the admin's existing convention. Nothing to change
 
 #### Deferred to Test Phase 2
 
@@ -148,7 +149,11 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
   });
   ```
 
-- **A19** — calls `getPhaseCompletion(parsed, { kind: "test", number: 1 })` and `findPhaseStart(records, plan, { kind, number })`; both signatures are Build Phase 1's (`getPhaseCompletion`) and Build Phase 2's (`findPhaseStart`). Body:
+- **A19** — moved to `#### Deferred to Build Phase 2` at the Test Phase 1 register review (2026-09-16): the body calls both `getPhaseCompletion(parsed, ref)` (Build Phase 1's signature) and `findPhaseStart(records, plan, ref)` (Build Phase 2's), so the file would not compile at Build Phase 1. See the entry below.
+
+#### Deferred to Build Phase 2
+
+- **A19** — calls `getPhaseCompletion(parsed, { kind: "test", number: 1 })` (Build Phase 1's signature) and `findPhaseStart(records, plan, { kind, number })` (Build Phase 2's); the file compiles only once both exist. Body:
 
   ```typescript
   // apps/indusk-mcp/src/lib/phase-ref-identity.test.ts
@@ -159,8 +164,6 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
   expect(findPhaseStart(records, "p", { kind: "build", number: 1 })).toBe(records[0]);
   expect(findPhaseStart(records, "p", { kind: "test", number: 1 })).toBe(records[1]);
   ```
-
-#### Deferred to Build Phase 2
 
 - **A18** — calls `prepareShapeReview({ …, phase: { kind: "test", number: 1 } })`; the field is a `number` today, so the test does not type-check. Body:
 
@@ -195,15 +198,15 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 - **A25** — red at authoring (ten fixture errors), green in the same phase because the fixture fix is test work; from here on it is the gate that keeps the admin's type-check green.
 
 #### Test Phase 1 Verification
-- [ ] A1, A2, A4, A5, A16, A20, A21, A22, A23, A24 authored and RED on their own assertions: `cd apps/indusk-admin && pnpm exec vitest run src/components/PhasesSection.test.tsx src/components/PlanList.test.tsx src/components/ProjectGrid.test.tsx src/components/Scorecards.test.tsx` and `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/lifecycle-single-definition.test.ts src/__tests__/ui-prune.test.ts src/__tests__/registry-leak-scan.test.ts`; then `cd` back
-- [ ] A13 and A25 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/lifecycle-parity.test.ts` and `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/typecheck.test.ts`; then `cd` back
-- [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
+- [x] A1, A2, A4, A5, A16, A20, A21, A22, A23, A24 authored and RED on their own assertions: `cd apps/indusk-admin && pnpm exec vitest run src/components/PhasesSection.test.tsx src/components/PlanList.root.test.tsx src/components/ProjectGrid.shape.test.tsx src/components/Scorecards.empty.test.tsx` and `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/lifecycle-single-definition.test.ts src/__tests__/ui-prune.test.ts src/__tests__/registry-leak-scan.test.ts`; then `cd` back — admin: 4 files, 8 tests, 8 failed, every failure an `AssertionError` on the row's claim (`expected [] to deeply equal ['test-1','build-1','build-2']`, `no root node rendered`, `expected undefined to be 'workbench'`, `…to contain 'no evaluations recorded yet'`); mcp: 6 failed / 2 passed — A16 (a)(b)(c) red, (d) green; A21 exit 1 (`unknown command 'prune'`); A22 names seven offenders
+- [x] A13 and A25 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/lifecycle-parity.test.ts` and `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/typecheck.test.ts`; then `cd` back — A13 wrote `fixtures/lifecycle-parity.snapshot.json` (83 folders) and passes; A25 red with 10 errors before the fixture fix, green after (`tsc --noEmit` exit 0)
+- [x] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims? — one failed the first question: A19's body called Build Phase 2's `findPhaseStart(records, plan, ref)` while its `Writable at` said Build Phase 1, so the file would not have loaded there; moved to `Deferred to Build Phase 2` and the two build-phase items updated. A3 (Build 1: the `impl-parser` subpath), A18 (Build 2: `PhaseRef` on `prepareShapeReview`), A6/A7 (Build 4: `active-phase.ts`), A8–A12/A17 (Build 4: the bars and labels) and A14/A15 (Test Phase 2: the harness) each name the symbol that makes them loadable and assert the row's claim
 
 #### Test Phase 1 Context
-- [ ] Known Gotchas: the admin's `tsc --noEmit` had been red since 2026-08-12 (ten `TrajectoryRow` fixtures without `writableAtKind`/`passesAtKind`) and nothing gated on it — now `typecheck.test.ts` does; hand-written trajectory-row fixtures must carry both kind fields
+- [x] Known Gotchas: the admin's `tsc --noEmit` had been red since 2026-08-12 (ten `TrajectoryRow` fixtures without `writableAtKind`/`passesAtKind`) and nothing gated on it — now `typecheck.test.ts` does; hand-written trajectory-row fixtures must carry both kind fields — folded into the existing `next/link` admin gotcha line (the budget has ~270 bytes of headroom; no new line)
 
 #### Test Phase 1 Document
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: trajectory-row fixtures carry `writableAtKind` / `passesAtKind`; the type-check is a test the suite runs
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md`: trajectory-row fixtures carry `writableAtKind` / `passesAtKind`; the type-check is a test the suite runs — two subsections under Testing, including why `unknown`-widening beats `@ts-expect-error` for not-yet-existing props
 
 ### Build Phase 1: One lifecycle definition and the package exports
 
@@ -227,12 +230,12 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 - [ ] `cleanup/gate.ts`: `isFalsificationPhaseTerminal` / `isCleanupComplete` take their ritual word from `RITUAL_ORDER`; no behaviour change
 - [ ] `impl-parser.ts`: `getPhaseCompletion(parsed, ref: PhaseRef)`; `PhaseCompletion.ref: PhaseRef` (keep `phase: number` as a deprecated alias for one release); `getAllPhaseCompletions` fills `ref`; update callers `tools/plan-tools.ts:63,120`, `bin/commands/check-gates.ts:53`
 - [ ] `package.json` `exports`: `./lifecycle`, `./impl-headings`, `./impl-parser` → `dist/lib/*.js` with `types`; `pnpm exec tsc` then grep `dist/lib/lifecycle.js` for `PLAN_POSITIONS` before trusting any cross-package test
-- [ ] Author A3 and A19 (bodies in the register), RED; set them `written`
+- [ ] Author A3 (body in the register), RED; set it `written` (A19 moved to Build Phase 2 at the register review — its body needs Build Phase 2's `findPhaseStart` signature to compile)
 
 #### Build Phase 1 Verification
 - [ ] A16 partially green (b, c, d) and still red on (a) — expected until Build Phase 3: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/lifecycle-single-definition.test.ts`; then `cd` back
 - [ ] A13 diff reviewed and re-baselined by hand: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/lifecycle-parity.test.ts` — expected: only plans whose latest document is `test-plan.md` change `stage` (`brief` → `test-plan`); each named here in the checkoff; nothing else differs
-- [ ] A3 and A19 authored and RED on their own assertions (A19's completion half may already pass; the boundary half red until Build Phase 2)
+- [ ] A3 authored and RED on its own assertion
 - [ ] Existing suites hold: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/plan-parser src/lib/cleanup src/lib/impl-parser.test.ts src/tools src/bin/commands/check-gates.test.ts` — expected: all pass; then `cd` back
 - [ ] Shape (Build Phase 1): review `lifecycle.ts` and the three edited modules; record findings or "nothing to change"
 
@@ -251,7 +254,7 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 - [ ] `shape/shape.ts`, `shape/findings.ts`, `shape/changed.ts`: `phase: number` → `phase: PhaseRef` in `prepareShapeReview`, `verificationIsGreen`, `verificationGateLines`, `recordReviewedNothingFound`, `recordSkipped`, `recordLeftAsIs`, `appendItemToPhase`, `appendFindingToPhase`, `changedFilesForPhase`; the existence guard compares `kind` and `number`
 - [ ] `shape/boundary.ts`: `PhaseBoundaryRecord.kind?: "test" | "build"`; `recordPhaseStart(root, { plan, phase, kind?, sha, at })`; `findPhaseStart(records, plan, ref)` treats a record without `kind` as `build` — the rule stated in the docblock, no file rewritten
 - [ ] `skills/work.md` Shape section: the two `recordPhaseStart` snippets gain `kind: "<test|build>"`; the review calls pass `{ kind, number }`; resync `.claude/skills/work/SKILL.md`
-- [ ] Author A18 (body in the register), RED; set `written`
+- [ ] Author A18 and A19 (bodies in the register), RED; set them `written`
 
 #### Build Phase 2 Verification
 - [ ] A18 and A19 green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/shape/test-phase-addressing.test.ts src/lib/phase-ref-identity.test.ts`; then `cd` back
