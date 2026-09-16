@@ -65,8 +65,8 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 | A11 | An executing plan's plan-bar label is the active phase's activity and name ("executing: verifying Build Phase 2"); an archived plan has no active segment | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/bars/PlanBar.test.tsx |
 | A12 | A parent's master bar has one segment per declared subplan, filled by each subplan's position, labelled "n of m closed, k executing"; a declared-but-missing subplan is pending | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/bars/MasterBar.test.tsx |
 | A13 | `parseAllPlans` and `checkRetrospectiveReadiness` produce identical output over every plan folder before and after the lifecycle module lands (snapshot parity) | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/lifecycle-parity.test.ts |
-| A14 | With a plan page open, checking off an impl item on disk changes the phase bar within one polling interval with no reload, and an open collapsible stays open | Test Phase 2 | Build Phase 5 | written | apps/indusk-admin/src/__tests__/live-refresh.e2e.test.ts |
-| A15 | The page shows a "last updated" time that advances on each refresh and shows "refresh failed" and stops when a refresh rejects | Test Phase 2 | Build Phase 5 | written | apps/indusk-admin/src/__tests__/live-refresh.e2e.test.ts |
+| A14 | With a plan page open, checking off an impl item on disk changes the phase bar within one polling interval with no reload, and an open collapsible stays open | Test Phase 2 | Build Phase 5 | passing | apps/indusk-admin/src/__tests__/live-refresh.e2e.test.ts |
+| A15 | The page shows a "last updated" time that advances on each refresh and shows "refresh failed" and stops when a refresh rejects | Test Phase 2 | Build Phase 5 | passing | apps/indusk-admin/src/__tests__/live-refresh.e2e.test.ts |
 | A16 | The admin has no phase-heading regex; exactly one `PLAN_POSITIONS`, one `GATE_STAGES` and one phase-heading parser exist across the package and the admin | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/lifecycle-single-definition.test.ts |
 | A17 | Adding a member to `PlanPosition`, `PhaseActivity` or `GateKind` without a label and renderer fails a test naming the missing member | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
 | A18 | `prepareShapeReview` for `{kind: "test", number: 1}` on a test-phase impl returns a review, and `recordReviewedNothingFound` for it appends under `### Test Phase 1`'s block | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/lib/shape/test-phase-addressing.test.ts |
@@ -353,22 +353,22 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 
 **Goal**: the plan page refreshes itself on an interval with a visible "last updated", pauses when hidden, and stops loudly on failure.
 
-- [ ] `components/LiveRefresh.tsx` (`"use client"`): `useEffect` interval → `router.refresh()`; `document.hidden` pauses; a rejected refresh sets `failed` and clears the interval; renders `last updated HH:MM:SS` or `refresh failed — reload`; props `{ intervalMs }`
-- [ ] `admin.refresh_ms` in `.indusk/config.json` (default 5000, min 1000) read by `planning-reader.ts`'s config reader; `update.ts` ensure block does **not** write it (absent = default; a config key nobody set is not machine state to share)
-- [ ] `app/p/[project]/plan/[name]/page.tsx` wraps its body in `LiveRefresh`; no other page does
+- [x] `components/LiveRefresh.tsx` (`"use client"`): `useEffect` interval → `router.refresh()`; `document.hidden` pauses; a rejected refresh sets `failed` and clears the interval; renders `last updated HH:MM:SS` or `refresh failed — reload`; props `{ intervalMs }` — as shipped: `router.refresh()` never rejects, so each tick first HEADs the page itself as a reachability probe and treats a throw or non-2xx as the failure; before the first tick it reads `live — refreshes every Ns`
+- [x] `admin.refresh_ms` in `.indusk/config.json` (default 5000, min 1000) read by `planning-reader.ts`'s config reader; `update.ts` ensure block does **not** write it (absent = default; a config key nobody set is not machine state to share) — `readAdminRefreshMs(projectRoot)` in the reader (absent, unreadable or non-numeric → 5000; floored at 1000); `InduskConfig.admin?.refresh_ms` typed in the package
+- [x] `app/p/[project]/plan/[name]/page.tsx` wraps its body in `LiveRefresh`; no other page does
 
 #### Build Phase 5 Verification
-- [ ] A14, A15 green (or the manual procedure executed once and its result recorded here with date and observed interval): `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/live-refresh.e2e.test.ts`; then `cd` back
-- [ ] Full admin suite green; `LiveRefresh` has a component test for the failure state and the hidden-tab pause (mocked router)
-- [ ] Rows A14, A15 set to `passing`
-- [ ] Shape (Build Phase 5): review `LiveRefresh.tsx`; record findings or "nothing to change"
+- [x] A14, A15 green (or the manual procedure executed once and its result recorded here with date and observed interval): `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/live-refresh.e2e.test.ts`; then `cd` back — 2 passed, 6.9 s wall-clock including the `next dev` boot; a checkoff written to disk reached the open page within one 1 s interval with the Implementation Plan section still open, and killing the server produced "refresh failed"
+- [x] Full admin suite green; `LiveRefresh` has a component test for the failure state and the hidden-tab pause (mocked router) — 43 files: 40 passed, the 3 Build Phase 6 rows red as they should be (254 tests, 251 passed); `LiveRefresh.test.tsx` covers the tick, the failed probe (stops ticking, says so) and the hidden tab; the package's config tests still pass with the new `admin` field
+- [x] Rows A14, A15 set to `passing`
+- [x] Shape (Build Phase 5): review `LiveRefresh.tsx`; record findings or "nothing to change" — recorded by hand (position problem as before; boundary opened at `de005866` before the work). `LiveRefresh.tsx` is one component with one effect (probe, refresh, stamp) and two rendered states, the reason for the probe in the comment beside it; `readAdminRefreshMs` is one function with its fallbacks stated; the page wraps once. Left as is: a tick is two round-trips (HEAD, then the refresh) — merging them would mean a route handler that reports reachability and re-renders, which the ADR rejected as a second data path; at a 5 s default the cost is nothing. Nothing to change
 
 #### Build Phase 5 Context
-- [ ] Architecture, indusk-admin entry: the plan page is live via `router.refresh()` on `admin.refresh_ms` (default 5000); only the plan page; failure stops visibly
+- [x] Architecture, indusk-admin entry: the plan page is live via `router.refresh()` on `admin.refresh_ms` (default 5000); only the plan page; failure stops visibly
 
 #### Build Phase 5 Document
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: live refresh — the interval config, what "last updated" means, why there is no push channel; a Mermaid sequence `LiveRefresh → router.refresh() → server components → disk`
-- [ ] U2 note written to `.indusk/current.md` Project (shared): revisit the default on 2026-09-30
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: live refresh — the interval config, what "last updated" means, why there is no push channel; a Mermaid sequence `LiveRefresh → router.refresh() → server components → disk` — "The page is live" paragraph plus the sequence diagram in the plan-detail entry
+- [x] U2 note written to `.indusk/current.md` Project (shared): revisit the default on 2026-09-30
 
 ### Build Phase 6: Sidebar root, registry, project list, scorecards
 
