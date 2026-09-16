@@ -505,3 +505,13 @@ export function readAdminRefreshMs(projectRoot: string): number {
     return DEFAULT_REFRESH_MS;
   }
 }
+
+/**
+ * Whether the evaluator has ever written for this project: `.indusk/eval/` is
+ * created by the first append (`EvalLogWriter.ensureDirectory`), so its
+ * absence means "no evaluated commit yet", which the scorecards page says
+ * instead of showing an empty list (admin-ui-phase-progress A24).
+ */
+export function hasEvalDirectory(projectRoot: string): boolean {
+  return existsSync(join(projectRoot, ".indusk", "eval"));
+}

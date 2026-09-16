@@ -1,6 +1,6 @@
 import { ScorecardsList } from "@/components/Scorecards";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
-import { readEvalScorecards } from "@/lib/planning-reader";
+import { hasEvalDirectory, readEvalScorecards } from "@/lib/planning-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { getCommitMessages } from "@/lib/vcs";
 
@@ -54,15 +54,19 @@ export default async function PerProjectScorecardsPage({
   // ScorecardsList handles `undefined` / missing `project` fields by not
   // rendering the label.
   if (scorecards.length === 0) {
-    // Not an error — just no scorecards yet. Surface a calm empty state.
+    // Not an error — just no scorecards yet. Say WHY: the eval directory is
+    // created by the evaluator's first append, so a project that has never
+    // had an evaluated commit has no `.indusk/eval/` at all (A24).
+    const neverEvaluated = !hasEvalDirectory(projectPath);
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" data-testid="scorecards-empty">
         <h1 className="text-lg font-semibold text-gray-900">
           Scorecards — {project}
         </h1>
         <p className="text-sm text-gray-500">
-          No eval scorecards recorded for this project yet. Make a `git commit`
-          to trigger the eval agent.
+          {neverEvaluated
+            ? "no evaluations recorded yet — the first evaluated commit creates `.indusk/eval/`; make a `git commit` inside a Claude Code session to trigger the eval agent."
+            : "No eval scorecards recorded for this project yet. Make a `git commit` to trigger the eval agent."}
         </p>
       </div>
     );
