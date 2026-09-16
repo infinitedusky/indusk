@@ -228,3 +228,7 @@
 {"id":"h-20260915-001","processedAt":"2026-09-15T17:24:01.867Z","action":"skipped","detail":"plan-specific audit summary; general rule captured by a-positive-result-shows-a-mechanism-ran-not-which-mechanism"}
 {"id":"h-20260915-006","processedAt":"2026-09-15T17:24:02.510Z","action":"wrote-episode","detail":"audit-a-docs-claim-against-the-code-before-publishing-not-at-retrospective"}
 {"id":"h-20260915-008","processedAt":"2026-09-15T17:32:52.365Z","action":"wrote-episode","detail":"published-older-than-main-is-not-automatically-stale"}
+{"id":"h-20260915-009","processedAt":"2026-09-16T16:13:37.120Z","action":"wrote-episode","detail":"stale-dist-cli-boundary-tests"}
+{"id":"h-20260915-010","processedAt":"2026-09-16T16:13:39.108Z","action":"skipped","detail":"recorded in dawn-workbench-execution/brief.md"}
+{"id":"h-20260915-011","processedAt":"2026-09-16T16:13:39.878Z","action":"skipped","detail":"recorded in dawn-workbench-execution/test-plan.md"}
+{"id":"h-20260915-012","processedAt":"2026-09-16T16:13:40.434Z","action":"skipped","detail":"recorded in dawn-workbench-execution/adr.md"}
