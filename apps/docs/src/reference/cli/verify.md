@@ -223,6 +223,15 @@ while the command itself (`verify.testCommand`, or the detected runner) is read
 from the plan root, where `.indusk/config.json` lives. The report names the code
 repository and prints both baselines.
 
+**Where the runner comes from.** `init` detects tooling over the declared repos
+(the same roots the health checks run in), never the wrapper, and records
+`verify.testRunner` in the workbench config; a workbench initialized before this
+gets it on the next `indusk update`, or sets `verify.testCommand` explicitly. A
+workbench with neither has no runner, and every `passing` row then reads
+**unverified** on a clean report — the verdict is honest about what it did not
+check, but its exit code is 0, so read the `unverified:` line before trusting a
+clean split verify.
+
 A clean verdict records both repos' HEADs. **A record without `codeSha` is never
 a code baseline**: it was written before the split existed (or in a flat
 project, where `sha` *is* the code), and its `sha` names a commit the code repo
