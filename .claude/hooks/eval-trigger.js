@@ -58,6 +58,10 @@ function parseArgValue(argv, flag) {
 
 const cliSource = parseArgValue(process.argv, "--source");
 const changeIdArg = parseArgValue(process.argv, "--change-id");
+// The repository a queued commit landed in, when the queue record said. Only
+// meaningful with `--source`/`--change-id` (a drain's per-record invocation);
+// hook mode ignores it — a live commit's repo is resolved from the event.
+const gitRootArg = parseArgValue(process.argv, "--git-root");
 const drainPending = process.argv.includes("--drain-pending");
 let cwd;
 let command = "";
@@ -91,13 +95,15 @@ if (cliSource !== null || drainPending) {
 // early syslog calls used raw `cwd` and silently created stray `.indusk/`
 // directories inside wrapped repos — exactly the "no lingering app-level
 // state" pattern this plan is fixing.
-const {
-	statePath: resolvedStatePath,
-	gitPath,
-	refusal: attributionRefusal,
-	attribution,
-} = resolveStateAndGitPaths(cwd);
-const statePath = resolvedStatePath ?? cwd;
+const resolvedPaths = resolveStateAndGitPaths(cwd);
+const statePath = resolvedPaths.statePath ?? cwd;
+// A queued record that names its repository outranks the walk-up: the loop
+// knew where the commit landed, and a fact beats an inference by newer HEAD
+// (dawn-workbench-execution A12). CLI mode only — never from a hook event.
+const namedRepo = cliSource !== null && !drainPending ? gitRootArg : null;
+const gitPath = namedRepo ?? resolvedPaths.gitPath;
+const attributionRefusal = namedRepo ? null : resolvedPaths.refusal;
+const attribution = namedRepo ? "the repository the queue record named" : resolvedPaths.attribution;
 
 if (cliSource !== null || drainPending) {
 	syslog(

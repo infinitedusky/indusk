@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { promisify } from "node:util";
@@ -248,6 +249,9 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 				phase: record.phase,
 				source: "atdawn",
 				timestamp: new Date().toISOString(),
+				// The loop knows which repository this commit landed in; say so,
+				// so the drain never has to guess (A12).
+				repo: realpathSync(record.repo),
 			});
 		},
 	});

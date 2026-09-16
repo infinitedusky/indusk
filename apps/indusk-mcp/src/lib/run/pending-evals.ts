@@ -22,6 +22,14 @@ export interface PendingEvalRecord {
 	phase: number;
 	source: string;
 	timestamp: string;
+	/**
+	 * The repository the commit landed in (absolute, realpath-normalized).
+	 * Written by the loop, which knows; read by the drain, which hands it to
+	 * the evaluator as its git root instead of guessing by walking up from
+	 * the state path (dawn-workbench-execution A12). Absent on records written
+	 * before this field existed — those resolve as they always did.
+	 */
+	repo?: string;
 }
 
 const PENDING_FILE = "pending.jsonl";

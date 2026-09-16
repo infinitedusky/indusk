@@ -58,6 +58,11 @@ function readJsonl(path) {
 function runOne(record, { cwd, triggerScript }) {
 	return new Promise((resolveRun) => {
 		const recordSource = record.source ?? "atdawn";
+		// A record that names the repository its commit landed in hands it to
+		// the evaluator as its git root; the hook then skips the walk-up that
+		// would otherwise attribute by newer HEAD (dawn-workbench-execution
+		// A12). A record without one drains exactly as before.
+		const repo = typeof record.repo === "string" && record.repo !== "" ? record.repo : null;
 		const override = process.env.INDUSK_EVAL_CMD;
 		const [cmd, ...baseArgs] = override
 			? override.split(" ").filter(Boolean)
@@ -69,8 +74,11 @@ function runOne(record, { cwd, triggerScript }) {
 					recordSource,
 					"--change-id",
 					record.sha,
+					...(repo ? ["--git-root", repo] : []),
 				];
-		const args = override ? [...baseArgs, record.sha, recordSource] : baseArgs;
+		const args = override
+			? [...baseArgs, record.sha, recordSource, ...(repo ? [repo] : [])]
+			: baseArgs;
 		const child = spawn(cmd, args, { cwd, stdio: ["ignore", "ignore", "inherit"] });
 		child.on("close", (code) => resolveRun(code === 0));
 		child.on("error", () => resolveRun(false));
