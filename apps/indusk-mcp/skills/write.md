@@ -39,15 +39,42 @@ Every paper has an outline beside it, the way `thesis-outline.md` sits beside `t
 - The outline is where the arc is tested: does each section earn its verdict, does the close land as a finding, where does the paper depend on a term the reader does not have.
 - **Short pieces get the same discipline one level down.** For anything short that will be sent or submitted in the user's name (an application field, a cover note, a message), the outline is a numbered list of sentence jobs, not paragraphs. Before writing it, state the reader's prompt and its constraints: a direct question wants its answer in sentence one; an open box needs a framing sentence, because the reader does not know what is coming. Then one line per sentence saying what it does for the reader, one candidate sentence under each job drawn from the record or the user's own dictation, and only then does the user write the sentences. The agent repairs and strips tells; it flags a move it would drop rather than dropping it. Lock sentences one at a time, dated, in the working file. A wrong sentence is then caught as "wrong job," which is arguable, instead of "sounds off," which is not. See the lesson `community-plan-content-as-sentence-jobs-before-writing`.
 
-### Worked example: 10,000 feet to one sentence, planning purpose not prose
+### Worked example: piece to paragraphs to sentences, every level a goal
 
-The piece: an optional free-text box on a job application for a forward-deployed engineer seat.
+The piece: an optional free-text box on a job application for a forward-deployed engineer seat. At every level below, the entry is a purpose, never prose. Prose is written last, by the user, into the slots.
 
-- **10,000 ft, the piece.** Reader: a recruiter skimming, then a hiring manager. Prompt: "share anything else you want us to know, such as your motivation." No question is asked, so the piece needs a frame. Two paragraphs.
-- **1,000 ft, the moves.** (1) Frame. (2) Two reasons for applying. (3) Evidence for reason two, in two halves: what the work did for the customer, and what the writer fixed for every other engineer in the seat. (4) Tie to the posting's own success measure. (5) Next step and close.
-- **100 ft, the sentence jobs, paragraph one.** 1 frame. 2 reason one, flat. 3 reason two, both halves named. 4 the seat. 5 the stack, which earns the right to an observation. 6 the verdict. 7 the gate. 8 the action. 9 the primitives, in concrete nouns. 10 the reward.
-- **10 ft, one job filled.** Job 2. The writer wants to say "I want to learn how it is done" without the word learn, because learn reads as junior. Name the room, not the benefit: "The first is that I want to work at the cutting edge, and at the pace this company has set for it, with the people who set it."
-- **Ground level, what the plan caught.** The writer's own draft opened "I will share a few of my motivations." An earlier critique called that throat-clearing, applying a rule from a direct-question form. Checked against the actual prompt, an open box, the frame was correct and stayed; only the wording was repaired. The plan is what made that argument decidable.
+**The piece.** Reader: a recruiter skimming, then a hiring manager. Prompt: "share anything else you want us to know, such as your motivation." No question is asked, so the piece needs a frame. Goal: give two reasons for applying and prove the second one with evidence the reader cannot get from the resume. Two paragraphs.
+
+**The paragraphs.**
+
+- Paragraph one. Goal: frame the box, state both reasons, and spend the evidence on reason two in two halves, what the work did for the customer and what the writer fixed for every other engineer in the seat.
+- Paragraph two. Goal: tie that evidence to the posting's own success measure, state the next step, and close on the writer's energy rather than a summary.
+
+**The sentences, as an arc.** One line each: the job the sentence does for the reader.
+
+Paragraph one.
+1. Frame. Tell the reader what the open box is for.
+2. Reason one, flat. The cutting edge, no elaboration yet.
+3. Reason two, both halves named. Points forward to the evidence.
+4. The seat. Credibility and chronology.
+5. The stack. Earns the right to an observation about the model.
+6. Half one, the customer outcome. Numbers.
+7. The verdict. The honest critique, no swipe at the reader's product.
+8. The gate. The biggest instance of the verdict.
+9. The action. Short on purpose.
+10. The primitives. Concrete nouns so "primitives" lands.
+11. The reward. Why half two mattered to the writer.
+
+Paragraph two.
+12. Their measure. The posting's own words back to them.
+13. Position. Where the writer stood relative to that loop.
+14. Next step. Reason one made specific, so sentence 2 pays off.
+15. Personal proof. What the writer builds on their own time, and why it is the same focus.
+16. Close. The writer's own phrase, not a summary.
+
+**One slot filled, to show the grain.** Job 2. The writer wants to say "I want to learn how it is done" without the word learn, because learn reads as junior. Name the room, not the benefit: "The first is that I want to work at the cutting edge, and at the pace this company has set for it, with the people who set it."
+
+**What the plan caught.** The writer's own draft opened "I will share a few of my motivations." An earlier critique called that throat-clearing, applying a rule from a direct-question form. Checked against the actual prompt, an open box, job 1 is a frame and the sentence was doing it; only the wording was repaired. A wrong sentence is now an argument about which job it does, and that argument can be settled.
 
 ## Stance
 
