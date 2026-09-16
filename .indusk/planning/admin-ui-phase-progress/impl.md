@@ -65,8 +65,8 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 | A11 | An executing plan's plan-bar label is the active phase's activity and name ("executing: verifying Build Phase 2"); an archived plan has no active segment | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/bars/PlanBar.test.tsx |
 | A12 | A parent's master bar has one segment per declared subplan, filled by each subplan's position, labelled "n of m closed, k executing"; a declared-but-missing subplan is pending | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/bars/MasterBar.test.tsx |
 | A13 | `parseAllPlans` and `checkRetrospectiveReadiness` produce identical output over every plan folder before and after the lifecycle module lands (snapshot parity) | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/lifecycle-parity.test.ts |
-| A14 | With a plan page open, checking off an impl item on disk changes the phase bar within one polling interval with no reload, and an open collapsible stays open | Test Phase 2 | Build Phase 5 | planned | apps/indusk-admin/src/__tests__/live-refresh.e2e.test.ts |
-| A15 | The page shows a "last updated" time that advances on each refresh and shows "refresh failed" and stops when a refresh rejects | Test Phase 2 | Build Phase 5 | planned | apps/indusk-admin/src/__tests__/live-refresh.e2e.test.ts |
+| A14 | With a plan page open, checking off an impl item on disk changes the phase bar within one polling interval with no reload, and an open collapsible stays open | Test Phase 2 | Build Phase 5 | written | apps/indusk-admin/src/__tests__/live-refresh.e2e.test.ts |
+| A15 | The page shows a "last updated" time that advances on each refresh and shows "refresh failed" and stops when a refresh rejects | Test Phase 2 | Build Phase 5 | written | apps/indusk-admin/src/__tests__/live-refresh.e2e.test.ts |
 | A16 | The admin has no phase-heading regex; exactly one `PLAN_POSITIONS`, one `GATE_STAGES` and one phase-heading parser exist across the package and the admin | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/lifecycle-single-definition.test.ts |
 | A17 | Adding a member to `PlanPosition`, `PhaseActivity` or `GateKind` without a label and renderer fails a test naming the missing member | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
 | A18 | `prepareShapeReview` for `{kind: "test", number: 1}` on a test-phase impl returns a review, and `recordReviewedNothingFound` for it appends under `### Test Phase 1`'s block | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/lib/shape/test-phase-addressing.test.ts |
@@ -334,20 +334,20 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 
 **Goal**: a browser can drive a real `next dev` over a fixture project inside the suite, or the ADR is amended with the fallback; A14 and A15 exist RED either way.
 
-- [ ] Extract `startNextDev({ fixture, refreshMs })` from `http-smoke.test.ts` into `src/__tests__/helpers/next-dev.ts` (returns `{ url, projectRoot, stop }`), used by the four existing HTTP smokes unchanged
-- [ ] Author A14 and A15 in `src/__tests__/live-refresh.e2e.test.ts` (node project, serialized) with `chromium.launch()` from `playwright`; run once against the Build Phase 4 page — RED (no refresh happens; no "last updated")
-- [ ] Decide the mechanism by measurement: if the two tests add more than 60 s to the node project or flake in three consecutive runs, replace the file with `manual:`-prefixed rows in the trajectory (`Test` column `manual: docs/admin-ui/live-refresh-smoke.md`) carrying the written procedure, and amend `adr.md` D10 with a dated note; otherwise keep them
+- [x] Extract `startNextDev({ fixture, refreshMs })` from `http-smoke.test.ts` into `src/__tests__/helpers/next-dev.ts` (returns `{ url, projectRoot, stop }`), used by the four existing HTTP smokes unchanged — as shipped: `startNextDev({ home })` returns `{ url, port, stop }` and `makeHome(projects)` writes the registry, because each smoke builds a different fixture and the registry is the only thing they share; all four smokes lost their forty-line copies of the boot and pass on the helper (15 tests)
+- [x] Author A14 and A15 in `src/__tests__/live-refresh.e2e.test.ts` (node project, serialized) with `chromium.launch()` from `playwright`; run once against the Build Phase 4 page — RED (no refresh happens; no "last updated") — a temp fixture project (`admin.refresh_ms: 1000`, one two-item phase) registered as `fixture`; A14 red at `waiting for … /2 of 3/` after 3 s, A15 red at `waiting for getByTestId('last-updated')`; Playwright's locator waits rather than its `expect` (only `playwright` is installed, not `@playwright/test`)
+- [x] Decide the mechanism by measurement: if the two tests add more than 60 s to the node project or flake in three consecutive runs, replace the file with `manual:`-prefixed rows in the trajectory (`Test` column `manual: docs/admin-ui/live-refresh-smoke.md`) carrying the written procedure, and amend `adr.md` D10 with a dated note; otherwise keep them — kept: the file runs in ~11 s wall-clock including the `next dev` boot (the four smokes take ~14 s for comparison), no flake across the authoring runs; the ADR's D10 stands as written
 
 #### Test Phase 2 Verification
-- [ ] A14, A15 authored and RED on their own assertions (or converted per the item above, with the ADR amended): `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/live-refresh.e2e.test.ts`; then `cd` back
-- [ ] The four HTTP smokes still pass on the extracted helper: `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-smoke.test.ts src/__tests__/http-stale-project.test.ts src/__tests__/http-project-research.test.ts src/__tests__/http-project-scorecards.test.ts`; then `cd` back
-- [ ] Rows A14, A15 set to `written`
+- [x] A14, A15 authored and RED on their own assertions (or converted per the item above, with the ADR amended): `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/live-refresh.e2e.test.ts`; then `cd` back — 2 failed, both `TimeoutError: locator.waitFor` on the row's own wait, 10.6 s total
+- [x] The four HTTP smokes still pass on the extracted helper: `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-smoke.test.ts src/__tests__/http-stale-project.test.ts src/__tests__/http-project-research.test.ts src/__tests__/http-project-scorecards.test.ts`; then `cd` back — 4 files, 15 tests passed, 14 s
+- [x] Rows A14, A15 set to `written`
 
 #### Test Phase 2 Context
-- [ ] Known Gotchas: the admin's e2e rows drive `next dev` with Playwright from the node project (serialized; `fileParallelism: false` is load-bearing) — or, if converted, that live behaviour is a `manual:` row and why
+- [x] Known Gotchas: the admin's e2e rows drive `next dev` with Playwright from the node project (serialized; `fileParallelism: false` is load-bearing) — or, if converted, that live behaviour is a `manual:` row and why — added to the admin gotcha line, with the fact this phase found the hard way: a dev server left running on the app dir fails every smoke
 
 #### Test Phase 2 Document
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: the `next-dev` helper and how an e2e row is written (or the manual smoke procedure page, if converted)
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md`: the `next-dev` helper and how an e2e row is written (or the manual smoke procedure page, if converted) — a subsection under Testing: the helper's contract, the one-dev-server rule, and the e2e row shape with its Playwright-locator caveat
 
 ### Build Phase 5: Live
 
