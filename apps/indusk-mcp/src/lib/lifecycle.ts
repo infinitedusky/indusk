@@ -200,12 +200,28 @@ function resolvePosition(input: DerivePlanPositionInput): {
 	}
 	if (stage === "impl") {
 		if (status === "completed") {
-			const missing = readiness?.missing ?? [];
+			// A29: the bar may never say "cleaned" over a fact it does not hold.
+			// No readiness means the impl could not be read — say so; a
+			// non-terminal row means the gate would refuse — name it.
+			if (readiness === null) {
+				return {
+					position: "falsify",
+					awaiting: "impl complete — readiness unknown (impl unreadable)",
+				};
+			}
+			const missing = readiness.missing;
 			if (missing.includes("falsification")) {
 				return { position: "falsify", awaiting: "impl complete, awaiting /falsify" };
 			}
 			if (missing.includes("cleanup")) {
 				return { position: "cleanup", awaiting: "falsified, awaiting /cleanup" };
+			}
+			if (missing.includes("rows")) {
+				const rows = readiness.nonTerminalRows.join(", ");
+				return {
+					position: "retrospective",
+					awaiting: `rows not terminal — retrospective blocked${rows ? ` (${rows})` : ""}`,
+				};
 			}
 			return { position: "retrospective", awaiting: "cleaned, awaiting /retrospective" };
 		}
