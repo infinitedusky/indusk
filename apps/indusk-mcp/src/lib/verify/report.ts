@@ -41,6 +41,13 @@ export function formatReport(report: VerifyReport): { out: string[]; err: string
 		`Plan:     ${report.plan}`,
 		`Phase:    ${report.phase}`,
 		`Baseline: ${report.baseline.sha} (${report.baseline.source})`,
+		// A split project names the code repository it judged and the plan
+		// repo's own baseline, so a reader can tell which history each verdict
+		// is about. A flat project has one of each and prints nothing extra.
+		...(report.codeRoot ? [`Code:     ${report.codeRoot}`] : []),
+		...(report.planBaseline
+			? [`Plan baseline: ${report.planBaseline.sha} (${report.planBaseline.source})`]
+			: []),
 		"",
 	];
 	const err: string[] = [];

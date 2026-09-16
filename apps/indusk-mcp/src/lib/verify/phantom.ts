@@ -18,13 +18,25 @@ import type { VerifyFinding } from "./verify.js";
  * wolf gets disabled, which costs more than the cases it would have caught.
  */
 export async function detectPhantomWork(options: {
+	/** The CODE repo — where "did anything real change" is answered. */
 	root: string;
 	baselineSha: string;
 	implRepoRelPath: string;
 	currentContent: string;
 	phase: number;
+	/**
+	 * The PLAN repo, when it is a different repository (a one-repo workbench).
+	 * The impl lives there, so "which items became checked" reads its baseline
+	 * from here, and the impl counts as changed when it moved here — a code
+	 * diff can never contain it. Absent in a flat project: one repo, one root.
+	 */
+	plan?: { root: string; baselineSha: string };
 }): Promise<VerifyFinding[]> {
 	const changed = await changedPathsSince(options.root, options.baselineSha);
+	if (options.plan) {
+		const planChanged = await changedPathsSince(options.plan.root, options.plan.baselineSha);
+		if (planChanged.includes(options.implRepoRelPath)) changed.push(options.implRepoRelPath);
+	}
 	// Nothing changed at all: this is not a phase that claimed work — it is a
 	// phase that did nothing, which the gate detections already speak to.
 	if (changed.length === 0) return [];
@@ -36,8 +48,8 @@ export async function detectPhantomWork(options: {
 
 	// Only the plan file moved. Which implementation items became checked?
 	const baselineContent = await showFileAt(
-		options.root,
-		options.baselineSha,
+		options.plan?.root ?? options.root,
+		options.plan?.baselineSha ?? options.baselineSha,
 		options.implRepoRelPath,
 	);
 	if (baselineContent === null) return [];

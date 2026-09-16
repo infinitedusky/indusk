@@ -10,7 +10,12 @@ import {
 	detectPrematureCheckoff,
 	detectTestFirstDuty,
 } from "./detect.js";
-import { assertGitRepo, headSha, resolveBootstrapBaseline } from "./git.js";
+import {
+	assertGitRepo,
+	headSha,
+	resolveBootstrapBaseline,
+	resolveCodeBootstrapBaseline,
+} from "./git.js";
 import { appendVerifyRecord, findBaselineRecord, hashTrajectory, readLedger } from "./ledger.js";
 import { detectPhantomWork } from "./phantom.js";
 import { detectRedTests } from "./red-tests.js";
@@ -64,6 +69,14 @@ export interface VerifyReport {
 	 */
 	unverifiedRows: string[];
 	verdict: "clean" | "rejected";
+	/**
+	 * Present when the plan and its code are different repositories. `baseline`
+	 * is then the CODE repo's; this is the plan repo's, which goalposts and the
+	 * impl's own history were judged against.
+	 */
+	planBaseline?: VerifyBaseline;
+	/** The code repository judged, when it is not the plan's. */
+	codeRoot?: string;
 }
 
 export interface RunVerifyOptions {
@@ -94,17 +107,6 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 	// repo's diff would report every honest checkoff as phantom.
 	const roots = resolveExecutionRoots(root);
 	if (isRootsRefusal(roots)) throw new Error(roots.error);
-	// Build Phase 2 (dawn-workbench-execution) teaches the detections the split;
-	// until then a one-repo workbench is refused HERE, with the same words the
-	// resolver used to say, so nothing half-works in between.
-	if (roots.split) {
-		throw new Error(
-			`${root} is a workbench: its plan documents and its code (${roots.codeRoot}) live in different repositories, ` +
-				"and the verify ledger records a baseline from the plan repo that has no meaning in the code repo. " +
-				"Refusing rather than judging code against a diff that cannot contain it. " +
-				`Run verify inside ${roots.codeRoot} instead; cross-repo verification lands in dawn-workbench-execution Build Phase 2.`,
-		);
-	}
 	const codeRoot = roots.codeRoot;
 	if (roots.split) await assertGitRepo(codeRoot);
 
@@ -122,9 +124,20 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 
 	const ledger = await readLedger(root);
 	const record = findBaselineRecord(ledger, planNameFor(options.plan, implPath), options.phase);
-	const baseline: VerifyBaseline = record
+	// The PLAN repo's baseline: goalpost drift and "what did the impl say then"
+	// are questions about the plan's own history.
+	const planBaseline: VerifyBaseline = record
 		? { sha: record.sha, source: "ledger" }
 		: { sha: await resolveBootstrapBaseline(root, planDirRepoRelPath), source: "merge-base" };
+	// The CODE repo's baseline: red tests and "what else changed" are questions
+	// about the code. One repo, one commit. Two repos: the record's `codeSha`,
+	// and a record without one — written before the split existed — is never a
+	// code baseline; bootstrap the code repo and say so (A4).
+	const baseline: VerifyBaseline = !roots.split
+		? planBaseline
+		: record?.codeSha
+			? { sha: record.codeSha, source: "ledger" }
+			: { sha: await resolveCodeBootstrapBaseline(codeRoot), source: "merge-base" };
 
 	const content = await readFile(implPath, "utf8");
 	const trajectory = parseTrajectory(matter(content).content);
@@ -140,15 +153,18 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 		...detectMalformedRows(trajectory),
 		...(await detectGoalpostDrift({
 			root,
-			baselineSha: baseline.sha,
+			baselineSha: planBaseline.sha,
 			implRepoRelPath,
 			currentContent: content,
-			baselineSource: baseline.source,
+			baselineSource: planBaseline.source,
 		})),
 	];
 
+	// `Test` paths are code-repo-relative by definition: the command runs there.
+	// The command itself is configured where the plan lives.
 	const redTests = await detectRedTests({
-		root,
+		root: codeRoot,
+		configRoot: root,
 		trajectory,
 		phase: options.phase,
 		fullSuite: options.fullSuite,
@@ -158,15 +174,16 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 
 	findings.push(
 		// Phantom asks "did anything but the plan file change?", which is a
-		// question about the CODE repo. `resolveVerifyRoots` has already
-		// guaranteed the two are the same repository here — a workbench refuses
-		// before reaching this point rather than diffing the wrong history.
+		// question about the CODE repo — while "which items became checked" is a
+		// question about the plan repo's history. In a split project it reads
+		// both; in a flat one they are the same repository and `plan` is absent.
 		...(await detectPhantomWork({
 			root: codeRoot,
 			baselineSha: baseline.sha,
 			implRepoRelPath,
 			currentContent: content,
 			phase: options.phase,
+			plan: roots.split ? { root, baselineSha: planBaseline.sha } : undefined,
 		})),
 	);
 
@@ -179,6 +196,7 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 		findings,
 		unverifiedRows,
 		verdict,
+		...(roots.split ? { planBaseline, codeRoot } : {}),
 	};
 
 	// Only a clean verdict records a baseline. A rejected phase must never
@@ -188,6 +206,9 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 			plan: report.plan,
 			phase: report.phase,
 			sha: await headSha(root),
+			// Both repos' HEADs when split — the next phase chains from `codeSha`
+			// for the code and from `sha` for the plan. Never written flat.
+			...(roots.split ? { codeSha: await headSha(codeRoot) } : {}),
 			trajectory: hashTrajectory(trajectory),
 			timestamp: new Date().toISOString(),
 		});

@@ -39,6 +39,18 @@ export interface VerifyRecord {
 	 */
 	trajectory: string;
 	timestamp: string;
+	/**
+	 * The CODE repo's HEAD at the clean verdict — present only when the plan
+	 * and its code live in different repositories (a one-repo workbench).
+	 *
+	 * Absence is a rule, not a gap to fill: a record without `codeSha` was
+	 * written before the split existed (or in a flat project, where `sha` IS the
+	 * code) and is never used as a code baseline. Verify bootstraps the code
+	 * repo instead and says so. Never read `sha` as "same as codeSha" in a split
+	 * project — it names a commit in the plan repo that the code repo does not
+	 * have (dawn-workbench-execution A4).
+	 */
+	codeSha?: string;
 }
 
 export const LEDGER_REL_PATH = join(".indusk", "verify", "ledger.jsonl");

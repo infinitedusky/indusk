@@ -121,6 +121,25 @@ export async function resolveBootstrapBaseline(
 }
 
 /** File contents at a commit, or null when the path did not exist there. */
+/**
+ * The bootstrap baseline for the CODE repo of a split project.
+ *
+ * The plan folder is not in this repository, so `resolveBootstrapBaseline`'s
+ * "where this plan's work began" fallback has nothing to find and would return
+ * the merge base — which on a trunk-committed repo is HEAD, a baseline of "now"
+ * against which nothing ever changed and phantom work can never be seen. The
+ * floor here is the repository's root commit: the whole history is the diff,
+ * which over-reports rather than under-reports (dawn-workbench-execution).
+ */
+export async function resolveCodeBootstrapBaseline(codeRoot: string): Promise<string> {
+	const mergeBase = await resolveMergeBase(codeRoot);
+	const head = await headSha(codeRoot);
+	if (mergeBase !== head) return mergeBase;
+	const roots = await git(codeRoot, "rev-list", "--max-parents=0", "HEAD");
+	const first = roots.split("\n")[0]?.trim();
+	return first || mergeBase;
+}
+
 export async function showFileAt(
 	root: string,
 	sha: string,

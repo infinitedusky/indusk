@@ -96,7 +96,16 @@ export interface RedTestResult {
  * design rejects.
  */
 export async function detectRedTests(options: {
+	/** Where the tests RUN — the code repo. `Test` paths resolve here. */
 	root: string;
+	/**
+	 * Where `.indusk/config.json` lives — the plan repo. In a flat project it is
+	 * `root`; in a one-repo workbench the config sits at the workbench root and
+	 * the code repo has none, so reading the command from `root` found nothing
+	 * and every row went silently unverified (dawn-workbench-execution A2, and
+	 * the reason A1 now asserts `unverifiedRows` is empty).
+	 */
+	configRoot?: string;
 	trajectory: Trajectory;
 	phase: number;
 	fullSuite?: boolean;
@@ -107,7 +116,7 @@ export async function detectRedTests(options: {
 	);
 	if (inScope.length === 0) return { findings: [], unverifiedRows: [] };
 
-	const command = await resolveTestCommand(options.root);
+	const command = await resolveTestCommand(options.configRoot ?? options.root);
 	if (command === null) {
 		// No runnable command: every claim is unchecked. Say so — never silently
 		// treat "could not check" as "checked and passed".

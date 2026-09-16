@@ -50,9 +50,13 @@ function enableNodeRunner(root: string): void {
 }
 
 interface PhaseShape {
-	/** Phase 2 present, with one checked item — the phantom scenario needs it. */
+	/** Phase 2 present — the phantom and chaining scenarios need a phase after the first. */
 	withPhase2?: boolean;
+	/** Whether phase 2's one item starts checked. The phantom scenario checks it AFTER the phase 1 verdict. */
+	phase2Checked?: boolean;
 }
+
+const PHASE2_ITEM = "do the second thing";
 
 function demoImpl(shape: PhaseShape = {}): string {
 	return buildImpl({
@@ -79,7 +83,7 @@ function demoImpl(shape: PhaseShape = {}): string {
 						{
 							n: 2,
 							name: "Second thing",
-							items: [[true, "do the second thing"] as [boolean, string]],
+							items: [[shape.phase2Checked ?? true, PHASE2_ITEM] as [boolean, string]],
 							verification: [
 								[true, "(no tests flip at this phase — reason: infra)"] as [boolean, string],
 							],
@@ -121,6 +125,9 @@ describe("dawn-workbench-execution — verify across the split", () => {
 
 		const report = await verifyAt(wb.root, 1);
 		expect(report.findings, JSON.stringify(report.findings, null, 2)).toEqual([]);
+		// A clean verdict with the row UNVERIFIED would be "could not check"
+		// reported as "checked" — the test actually ran, in the code repo.
+		expect(report.unverifiedRows, "T1 was not actually run").toEqual([]);
 		expect(report.verdict).toBe("clean");
 		expect(exitCodeForReport(report)).toBe(0);
 	}, 60_000);
@@ -138,15 +145,18 @@ describe("dawn-workbench-execution — verify across the split", () => {
 
 	it("A3: a checkoff with no code change since the baseline is reported as phantom work", async () => {
 		wb = oneRepoAtPath("nested");
-		honestPhase(wb, { shape: { withPhase2: true } });
+		honestPhase(wb, { shape: { withPhase2: true, phase2Checked: false } });
 
 		// Phase 1 is honest and records the baseline (both repos' HEADs).
 		const first = await verifyAt(wb.root, 1);
 		expect(first.verdict, JSON.stringify(first.findings)).toBe("clean");
 
-		// Phase 2's item is checked in the plan repo; the code repo did not move.
-		// (The impl already carries phase 2 checked — committing the ledger the
-		// clean verdict wrote is the only plan-repo change between the two runs.)
+		// Phase 2's item is checked off in the plan repo; the code repo did not move.
+		const implPath = join(wb.root, ".indusk", "planning", PLAN, "impl.md");
+		writeFileSync(
+			implPath,
+			readFileSync(implPath, "utf-8").replace(`- [ ] ${PHASE2_ITEM}`, `- [x] ${PHASE2_ITEM}`),
+		);
 		git(wb.root, ["add", "-A"]);
 		git(wb.root, ["commit", "-qm", "plan: phase 2 checked off; ledger"]);
 
