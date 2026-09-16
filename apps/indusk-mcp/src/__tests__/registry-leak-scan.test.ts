@@ -38,6 +38,16 @@ function testFiles(): string[] {
 	}).sort();
 }
 
+describe("A31 — the scan recognizes every registering command", () => {
+	it("a `setup` spawn is a registering spawn: setup delegates to init", () => {
+		const fixture = 'const r = runCli(dir, ["setup", target]);';
+		expect(
+			SPAWN_SHAPES.some((re) => re.test(fixture)),
+			"setup registers the project through init and must be scanned like init",
+		).toBe(true);
+	});
+});
+
 describe("A22 — no test writes the developer's real registry", () => {
 	it("every test that spawns init, update or ui sets INDUSK_HOME", () => {
 		const self = __filename;
