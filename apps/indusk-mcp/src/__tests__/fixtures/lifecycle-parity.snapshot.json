@@ -1,12 +1,11 @@
 {
   "admin-ui-phase-progress": {
     "stage": "impl",
-    "stageStatus": "in-progress",
-    "nextStep": "Continue impl",
+    "stageStatus": "completed",
+    "nextStep": "Create retrospective",
     "readiness": {
       "passes": false,
       "missing": [
-        "falsification",
         "cleanup"
       ]
     }
