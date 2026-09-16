@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { LiveRefresh } from "@/components/LiveRefresh";
 import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
 import {
   readActivePlans,
+  readAdminRefreshMs,
   readArchivedPlans,
   readPlanHierarchy,
   readPlanMasterContent,
@@ -60,12 +62,17 @@ export default async function PlanPage({ params }: PlanPageProps) {
       (await readPlanMasterContent(projectPath, name)) ?? undefined;
   }
 
+  // Only the plan page is live: it re-renders itself on an interval so a
+  // checkoff on disk reaches an open page without a reload (Build Phase 5).
   return (
-    <PlanDetail
-      plan={plan}
-      subplans={subplans}
-      masterContent={masterContent}
-      planHrefPrefix={`/p/${project}/plan/`}
-    />
+    <>
+      <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
+      <PlanDetail
+        plan={plan}
+        subplans={subplans}
+        masterContent={masterContent}
+        planHrefPrefix={`/p/${project}/plan/`}
+      />
+    </>
   );
 }

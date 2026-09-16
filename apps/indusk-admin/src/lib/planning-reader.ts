@@ -478,3 +478,30 @@ export async function readEvalScorecards(
 // The research-directory reader (.indusk/research/) lives in
 // research-reader.ts — extracted in the dawn-ui-plan-grouping cleanup; it
 // shares nothing with plan parsing.
+
+/** `admin.refresh_ms` from the project's `.indusk/config.json`. */
+export const DEFAULT_REFRESH_MS = 5000;
+export const MIN_REFRESH_MS = 1000;
+
+/**
+ * The plan page's live-refresh interval (admin-ui-phase-progress, Build Phase
+ * 5). Absent, unreadable or out-of-range values fall back rather than throw —
+ * a config typo must not take the page down — and the floor keeps a stray
+ * `0` from hammering the daemon.
+ */
+export function readAdminRefreshMs(projectRoot: string): number {
+  try {
+    const raw = readFileSync(
+      join(projectRoot, ".indusk", "config.json"),
+      "utf-8",
+    );
+    const value = (JSON.parse(raw) as { admin?: { refresh_ms?: unknown } })
+      .admin?.refresh_ms;
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      return DEFAULT_REFRESH_MS;
+    }
+    return Math.max(MIN_REFRESH_MS, Math.round(value));
+  } catch {
+    return DEFAULT_REFRESH_MS;
+  }
+}
