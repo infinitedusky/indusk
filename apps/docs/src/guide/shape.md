@@ -191,6 +191,13 @@ node -e 'import("@infinitedusky/indusk-mcp/shape/boundary").then(({ recordPhaseS
 cd apps/indusk-mcp && pnpm exec tsx -e 'import { recordPhaseStart } from "./src/lib/shape/boundary.ts"; …'
 ```
 
+**A phase is addressed by its kind** (admin-ui-phase-progress, 2026-09-16). Every call that names a phase — `recordPhaseStart`, `prepareShapeReview`, `appendFindingToPhase`, `recordReviewedNothingFound`, `recordLeftAsIs`, `changedFilesForPhase`, `findPhaseStart` — takes `{ kind: "test" | "build", number }`. A bare number still works and means the build phase, the same shorthand `### Phase N` is for `### Build Phase N`; it can never name a test phase. The boundary record gained an optional `kind`, and **a record without one is a build phase by rule**: every record written before this change was one, because Shape could not open a test phase then, so nothing on disk is rewritten. Until this landed, Test Phase 1 and Build Phase 1 shared one boundary record and a test phase could not be reviewed at all (`shape-cannot-see-test-phases`).
+
+```bash
+recordPhaseStart(root, { plan: "<plan>", phase: <N>, kind: "<test|build>", sha, at })
+prepareShapeReview({ root, plan, phase: { kind: "build", number: <N> }, implBody })
+```
+
 Two things will bite you, and both did:
 
 - **`tsx` is not on `PATH`.** It is a dependency of `indusk-mcp`, so it needs `pnpm exec` from inside that package. `pnpm exec tsx` at the repo root fails too.
