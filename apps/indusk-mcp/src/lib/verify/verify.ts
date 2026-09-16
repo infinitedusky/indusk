@@ -4,18 +4,14 @@ import matter from "gray-matter";
 import { resolveImplPath } from "../impl-parser.js";
 import { parseTrajectory } from "../trajectory/parser.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
+import { resolveBaselines, type VerifyBaseline } from "./baselines.js";
 import {
 	detectGoalpostDrift,
 	detectMalformedRows,
 	detectPrematureCheckoff,
 	detectTestFirstDuty,
 } from "./detect.js";
-import {
-	assertGitRepo,
-	headSha,
-	resolveBootstrapBaseline,
-	resolveCodeBootstrapBaseline,
-} from "./git.js";
+import { assertGitRepo, headSha } from "./git.js";
 import { appendVerifyRecord, findBaselineRecord, hashTrajectory, readLedger } from "./ledger.js";
 import { detectPhantomWork } from "./phantom.js";
 import { detectRedTests } from "./red-tests.js";
@@ -50,11 +46,7 @@ export interface VerifyFinding {
 	item?: string;
 }
 
-export interface VerifyBaseline {
-	sha: string;
-	/** `ledger` = a previous verification recorded it; `merge-base` = bootstrap. */
-	source: "ledger" | "merge-base";
-}
+export type { VerifyBaseline } from "./baselines.js";
 
 export interface VerifyReport {
 	plan: string;
@@ -124,20 +116,15 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 
 	const ledger = await readLedger(root);
 	const record = findBaselineRecord(ledger, planNameFor(options.plan, implPath), options.phase);
-	// The PLAN repo's baseline: goalpost drift and "what did the impl say then"
-	// are questions about the plan's own history.
-	const planBaseline: VerifyBaseline = record
-		? { sha: record.sha, source: "ledger" }
-		: { sha: await resolveBootstrapBaseline(root, planDirRepoRelPath), source: "merge-base" };
-	// The CODE repo's baseline: red tests and "what else changed" are questions
-	// about the code. One repo, one commit. Two repos: the record's `codeSha`,
-	// and a record without one — written before the split existed — is never a
-	// code baseline; bootstrap the code repo and say so (A4).
-	const baseline: VerifyBaseline = !roots.split
-		? planBaseline
-		: record?.codeSha
-			? { sha: record.codeSha, source: "ledger" }
-			: { sha: await resolveCodeBootstrapBaseline(codeRoot), source: "merge-base" };
+	// Two repositories, two baselines; one commit when flat. The "no codeSha,
+	// no code baseline" rule lives with its docblock in `baselines.ts`.
+	const { planBaseline, baseline } = await resolveBaselines({
+		root,
+		codeRoot,
+		split: roots.split,
+		record,
+		planDirRepoRelPath,
+	});
 
 	const content = await readFile(implPath, "utf8");
 	const trajectory = parseTrajectory(matter(content).content);
