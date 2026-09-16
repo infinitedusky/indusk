@@ -76,7 +76,7 @@ describe("A20 — the sidebar draws the root", () => {
     expect(root, "no root node rendered").not.toBeNull();
     expect(root?.textContent).toContain("InDusk Roadmap");
     // Both parent groups sit inside the root, not beside it.
-    const groups = root?.querySelectorAll('[data-testid="plan-group"]') ?? [];
+    const groups = root?.querySelectorAll('[data-testid^="plan-group-"]') ?? [];
     expect(
       Array.from(groups).map((g) => g.getAttribute("data-parent")),
     ).toEqual(["dawn", "day"]);
