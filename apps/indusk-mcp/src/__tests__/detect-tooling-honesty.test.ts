@@ -4,6 +4,10 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { CLI_BIN, git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
+// Every CLI spawn below registers its temp project; keep that out of the
+// developer's real ~/.indusk/projects.json (admin-ui-phase-progress A22).
+process.env.INDUSK_HOME ??= mkdtempSync(join(tmpdir(), "indusk-home-"));
+
 /**
  * An undetected test runner is recorded as absent, not guessed.
  *

@@ -5,6 +5,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
+// Every CLI spawn below registers its temp project; keep that out of the
+// developer's real ~/.indusk/projects.json (admin-ui-phase-progress A22).
+process.env.INDUSK_HOME ??= mkdtempSync(join(tmpdir(), "indusk-home-"));
+
 /**
  * The hooks must actually LOAD in a consumer that declares
  * `"type": "commonjs"` — which is every project created by `npm init -y`
