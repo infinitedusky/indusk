@@ -39,6 +39,7 @@ export function PlanBar({
       activeLabel={activeLabel}
       caption="steps, not time"
       testId="plan-bar"
+      labels
     />
   );
 }

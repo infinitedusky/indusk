@@ -77,9 +77,11 @@ export function PlanDetail({
     >
       <PlanHeader plan={plan} />
 
-      {plan.position && (
+      {plan.position && !isParent && (
         <PlanBar position={plan.position} activity={activePhaseLabel(plan)} />
       )}
+
+      {!plan.boundaryError && <ActivePhaseBar plan={plan} />}
 
       {plan.malformed && <MalformedBanner />}
 
@@ -182,6 +184,40 @@ function activePhaseLabel(plan: Plan): string | null {
   return `${ACTIVITY_LABELS[phase.activity]} ${phaseLabel(active.ref)}`;
 }
 
+/**
+ * The active phase at the top of the page, under the plan bar — what is
+ * happening now, readable before any section is opened. The hint marks a
+ * guess (no boundary record) as a guess, never as a confident marker.
+ */
+function ActivePhaseBar({ plan }: { plan: Plan }) {
+  if (!plan.impl) return null;
+  const active = activePhaseOf(plan);
+  if (!active?.ref) return null;
+  const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
+  const activePhase = phases.find(
+    (p) => p.kind === active.ref?.kind && p.number === active.ref?.number,
+  );
+  if (!activePhase) return null;
+  return (
+    <section
+      className="flex flex-col gap-1"
+      data-testid="phase-bar-active"
+      data-phase={`${activePhase.kind}-${activePhase.number}`}
+    >
+      <h2 className="text-sm font-semibold text-gray-900">
+        Active: {phaseTitle(activePhase)}
+        {activePhase.title ? `: ${activePhase.title}` : ""}
+        {active.hint ? (
+          <span className="ml-2 text-xs font-normal text-amber-700">
+            ({active.hint} — first open phase in document order)
+          </span>
+        ) : null}
+      </h2>
+      <PhaseBar phase={activePhase} />
+    </section>
+  );
+}
+
 function ImplSections({ plan }: { plan: Plan }) {
   if (!plan.impl) return null;
   const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
@@ -190,9 +226,6 @@ function ImplSections({ plan }: { plan: Plan }) {
   const activeKey = active?.ref
     ? `${active.ref.kind}-${active.ref.number}`
     : null;
-  const activePhase = activeKey
-    ? phases.find((p) => `${p.kind}-${p.number}` === activeKey)
-    : undefined;
   return (
     <>
       {plan.boundaryError && (
@@ -204,24 +237,6 @@ function ImplSections({ plan }: { plan: Plan }) {
           The phase-boundary record could not be read, so no phase is marked
           active: {plan.boundaryError}
         </div>
-      )}
-      {activePhase && (
-        <section
-          className="flex flex-col gap-1"
-          data-testid="phase-bar-active"
-          data-phase={activeKey}
-        >
-          <h2 className="text-sm font-semibold text-gray-900">
-            Active: {phaseTitle(activePhase)}
-            {activePhase.title ? `: ${activePhase.title}` : ""}
-            {active?.hint ? (
-              <span className="ml-2 text-xs font-normal text-amber-700">
-                ({active.hint} — first open phase in document order)
-              </span>
-            ) : null}
-          </h2>
-          <PhaseBar phase={activePhase} />
-        </section>
       )}
       {split.pre.length > 0 && (
         <PhasesSection

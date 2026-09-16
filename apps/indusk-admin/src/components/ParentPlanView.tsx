@@ -30,17 +30,19 @@ export function ParentPlanView({
 }) {
   return (
     <>
+      <section data-testid="master-progress">
+        <MasterBar
+          subplans={subplans.map((entry) => ({
+            name: entry.name,
+            position: entry.plan?.position,
+          }))}
+        />
+      </section>
       {masterContent && (
         <section data-testid="parent-master-prose">
           <Markdown>{masterContent}</Markdown>
         </section>
       )}
-      <MasterBar
-        subplans={subplans.map((entry) => ({
-          name: entry.name,
-          position: entry.plan?.position,
-        }))}
-      />
       <section className="flex flex-col gap-2" data-testid="subplan-cards">
         <h2 className="text-base font-semibold text-gray-900">Subplans</h2>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

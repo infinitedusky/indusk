@@ -12,6 +12,7 @@ export function PhaseBar({ phase }: { phase: Phase }) {
     key: stage.kind,
     state: stage.state,
     label: `${STAGE_LABELS[stage.kind]}: ${stage.checked} of ${stage.total}`,
+    short: STAGE_LABELS[stage.kind],
     fill: stage.total === 0 ? 0 : stage.checked / stage.total,
   }));
   const active = phase.stages.find((s) => s.state === "active");
@@ -19,6 +20,11 @@ export function PhaseBar({ phase }: { phase: Phase }) {
     ? `${ACTIVITY_LABELS[phase.activity]}: ${active.checked} of ${active.total}`
     : ACTIVITY_LABELS[phase.activity];
   return (
-    <Bar segments={segments} activeLabel={activeLabel} testId="phase-bar" />
+    <Bar
+      segments={segments}
+      activeLabel={activeLabel}
+      testId="phase-bar"
+      labels
+    />
   );
 }

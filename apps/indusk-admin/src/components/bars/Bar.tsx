@@ -18,6 +18,8 @@ export interface BarSegment {
   label: string;
   /** How much of an active segment is filled, 0–1. Ignored for other states. */
   fill?: number;
+  /** The word under the segment when labels are shown; defaults to `label`. */
+  short?: string;
 }
 
 export interface BarProps {
@@ -26,6 +28,8 @@ export interface BarProps {
   activeLabel?: string | null;
   caption?: string;
   testId: string;
+  /** Render each segment's short label under it — the bar reads without hovering. */
+  labels?: boolean;
 }
 
 function fillPercent(segment: BarSegment): number {
@@ -40,7 +44,13 @@ function fillPercent(segment: BarSegment): number {
   }
 }
 
-export function Bar({ segments, activeLabel, caption, testId }: BarProps) {
+export function Bar({
+  segments,
+  activeLabel,
+  caption,
+  testId,
+  labels = false,
+}: BarProps) {
   return (
     <div className="flex flex-col gap-1" data-testid={testId}>
       <ol className="flex w-full gap-0.5" aria-label={testId}>
@@ -63,6 +73,26 @@ export function Bar({ segments, activeLabel, caption, testId }: BarProps) {
           </li>
         ))}
       </ol>
+      {labels ? (
+        <ol className="flex w-full gap-0.5" aria-hidden="true">
+          {segments.map((segment) => (
+            <li
+              key={segment.key}
+              className={`min-w-0 flex-1 truncate text-center text-[9px] leading-3 ${
+                segment.state === "active"
+                  ? "font-semibold text-blue-700"
+                  : segment.state === "pending"
+                    ? "text-gray-400"
+                    : segment.state === "skipped"
+                      ? "text-gray-300 line-through"
+                      : "text-gray-600"
+              }`}
+            >
+              {segment.short ?? segment.label}
+            </li>
+          ))}
+        </ol>
+      ) : null}
       {activeLabel ? (
         <p
           className="text-xs text-gray-700"

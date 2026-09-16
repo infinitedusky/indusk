@@ -44,6 +44,7 @@ export function MasterBar({ subplans }: { subplans: MasterBarEntry[] }) {
       key: entry.name,
       state: "active",
       label: `${entry.name}: ${POSITION_LABELS[entry.position.position]}`,
+      short: entry.name,
       fill: ARCHIVED_INDEX > 0 ? index / ARCHIVED_INDEX : 0,
     };
   });
@@ -52,6 +53,7 @@ export function MasterBar({ subplans }: { subplans: MasterBarEntry[] }) {
       segments={segments}
       activeLabel={`${closed} of ${subplans.length} closed, ${executing} executing`}
       testId="master-bar"
+      labels
     />
   );
 }
