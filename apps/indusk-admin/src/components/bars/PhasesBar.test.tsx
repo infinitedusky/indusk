@@ -81,7 +81,7 @@ describe("A26 — the phase line", () => {
     expect(
       container.querySelector('[data-testid="phases-bar-active-label"]')
         ?.textContent,
-    ).toBe("Phase 2: The middle");
+    ).toBe("Phase 2: implementation");
     expect(container.textContent).toContain("Test Phase 1");
   });
 
