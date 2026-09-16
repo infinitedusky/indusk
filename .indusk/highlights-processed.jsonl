@@ -236,3 +236,12 @@
 {"id":"h-20260915-010","processedAt":"2026-09-15T23:13:50.767Z","action":"skipped","detail":"recorded in dawn-workbench-execution/brief.md"}
 {"id":"h-20260915-011","processedAt":"2026-09-15T23:13:51.496Z","action":"skipped","detail":"recorded in dawn-workbench-execution/test-plan.md"}
 {"id":"h-20260915-012","processedAt":"2026-09-15T23:13:52.090Z","action":"skipped","detail":"recorded in dawn-workbench-execution/adr.md"}
+{"id":"h-20260916-001","processedAt":"2026-09-16T21:30:57.696Z","action":"skipped","detail":"audit result recorded in dawn-workbench-execution retrospective; no new rule, just a clean close confirmation"}
+{"id":"h-20260916-002","processedAt":"2026-09-16T21:30:58.560Z","action":"skipped","detail":"already captured verbatim by existing lesson fixture-hand-config-hides-detection-never-running.md"}
+{"id":"h-20260916-003","processedAt":"2026-09-16T21:30:59.425Z","action":"wrote-episode","detail":"single-definition-primitive-belongs-at-first-copy-site"}
+{"id":"h-20260916-004","processedAt":"2026-09-16T21:31:00.250Z","action":"wrote-episode","detail":"absence-of-a-newer-field-is-a-rule-not-a-migration"}
+{"id":"h-20260916-005","processedAt":"2026-09-16T21:31:01.111Z","action":"wrote-episode","detail":"unattestable-value-after-a-side-effect-is-absence-not-a-throw"}
+{"id":"h-20260916-006","processedAt":"2026-09-16T21:31:01.881Z","action":"wrote-episode","detail":"split-roots-ask-each-detectors-which-roots-question-it-answers"}
+{"id":"h-20260916-007","processedAt":"2026-09-16T21:31:02.884Z","action":"skipped","detail":"reinforces existing lesson the-fixture-for-the-shape-a-feature-exists-for-is-the-one-most-likely-missing; not a new rule"}
+{"id":"h-20260916-008","processedAt":"2026-09-16T21:31:03.797Z","action":"skipped","detail":"same incident/rule as h-20260916-002, already captured by fixture-hand-config-hides-detection-never-running.md"}
+{"id":"h-20260916-009","processedAt":"2026-09-16T21:31:04.784Z","action":"skipped","detail":"specific instance of existing lesson gate-covers-tool-surfaces-not-intentions.md (sed/Python heredoc bypassing PreToolUse gate is the same tool-surface-coverage gap)"}
