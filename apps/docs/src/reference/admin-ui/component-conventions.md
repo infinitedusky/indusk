@@ -205,6 +205,13 @@ A hand-written `TrajectoryRow` needs `writableAtKind` and `passesAtKind` (`"test
 
 `src/__tests__/typecheck.test.ts` spawns `pnpm exec tsc --noEmit -p .` and asserts exit 0. It lives in the node project so that `pnpm test` — the command every phase's Verification runs — is what keeps the admin type-clean. A test written against a component that does not exist yet must not break it: widen the not-yet-existing props through `unknown` (`as unknown as Parameters<typeof Component>[0]`) with a comment naming the phase that lands them, so the row is red on its assertion rather than on a compile error. `// @ts-expect-error` is the wrong tool here — spread object literals skip excess-property checks, so the directive reads as unused and fails the type-check itself.
 
+### HTTP-level tests boot one dev server, through one helper
+
+`src/__tests__/helpers/next-dev.ts` is the only place `next dev` is spawned in a test: `makeHome(projects)` writes a temp registry, `startNextDev({ home })` boots the server on a free port, waits for `✓ Ready`, and returns `{ url, port, stop }`. The four HTTP smokes and the live-refresh rows all use it. Two facts shape it:
+
+- **Only one `next dev` can run against this app directory** — Next holds a lock on `.next/`. The node project runs test files serially (`fileParallelism: false`) for that reason, and a dev server left running by hand fails every smoke until it is stopped.
+- **An e2e row is a node-project test that drives the dev server with Playwright** (`chromium.launch()` from the `playwright` package; only that package is installed, so use locator waits — `locator.waitFor`, `filter({ hasText })` — not `@playwright/test`'s `expect`). The fixture is a temp project registered by name; assertions read `data-testid`s the page renders. See `src/__tests__/live-refresh.e2e.test.ts` for the reference shape. The whole file boots and runs in about eleven seconds; a row that needs more than that, or flakes, is a candidate for a `manual:` procedure instead.
+
 ### Rationale
 
 Without persistence, every navigation reopens the Brief, the ADR, and every phase — each of which is long prose. Users close sections once they've read them; re-opening on every visit is a papercut that compounds. The `localStorage` approach is simple (no server round-trip, no schema), per-user (localStorage is browser-local), and scopable (per-plan keys mean navigation to another plan doesn't clobber state).
