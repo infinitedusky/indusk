@@ -739,3 +739,21 @@ describe("PlanDetail — legacy falsification.md rendering still works (T28, Pha
     ).toBeNull();
   });
 });
+
+describe("A7 — a malformed boundary record is an error, not a guess (admin-ui-phase-progress)", () => {
+  it("renders the boundary-error block and marks no phase active", async () => {
+    const plan = mockPlan({
+      boundaryError: "phase-boundary.jsonl line 3 is not valid JSON",
+    });
+    const { container } = await render(<PlanDetail plan={plan} />);
+    const error = container.querySelector('[data-testid="boundary-error"]');
+    expect(error).not.toBeNull();
+    expect(error?.textContent).toContain("line 3 is not valid JSON");
+    expect(
+      container.querySelector('[data-testid="phase-bar-active"]'),
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-testid="phase"][data-active="true"]'),
+    ).toBeNull();
+  });
+});
