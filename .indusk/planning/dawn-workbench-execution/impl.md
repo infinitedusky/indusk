@@ -1,7 +1,7 @@
 ---
 title: "Dawn Workbench Execution — Implementation"
 date: 2026-09-15
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -70,6 +70,7 @@ Test paths are repo-root-relative.
 | A16 | On a workbench whose declared code repo carries `vitest.config.ts` and no `verify.testCommand` is set, `indusk update` records `verify.testRunner` (tool `vitest`) in the workbench config — so a split verify has a runner, instead of reporting every row unverified under a clean verdict | Phase 0 | Phase 6 | passing | apps/indusk-mcp/src/__tests__/workbench-runner-detection.test.ts |
 | A17 | Under `runLoop` across a split whose code repo has no commits yet, a checkoff made before any code change completes without a tool error: the plan-side commit lands with no `Code-Commit:` trailer, and a later checkoff, after code exists, carries one | Phase 0 | Phase 6 | passing | apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
 | A18 | `runLoop` given `planRoot` but no `implPath` refuses, naming both roots, rather than looking for `impl.md` in the code root | Phase 0 | Phase 6 | passing | apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
+| A19 | Exactly one definition of the HEAD-sha primitive exists under `src/lib` (`headSha` / `headShaOrNull` in `lib/git.ts`), and `verify/git.ts`, `run/commit-cadence.ts` and `run/loop.ts` import it rather than spelling `rev-parse HEAD` themselves | Phase 0 | Phase 7 | planned | apps/indusk-mcp/src/__tests__/head-sha-single-definition.test.ts |
 
 ## Checklist
 
@@ -268,6 +269,32 @@ Test paths are repo-root-relative.
 
 #### Phase 6 Document
 - [x] `apps/docs/src/reference/cli/verify.md`, "Across the split": the runner is detected from the declared code repo at `init`/`update` and recorded in the workbench config; a workbench initialized before this fix gets it on the next `indusk update`, or sets `verify.testCommand` explicitly — and how to read "unverified" on a clean report
+
+### Phase 7: Cleanup — one HEAD primitive, the cadence wiring, the baseline pair
+
+**Goal**: decompose what this plan grew per the repository's own rule that a git *primitive* belongs in `lib/git.ts` (a primitive kept in a domain folder gets copied by the next domain — exactly what happened here, a third time) and per the typescript extension's one-job-per-module rule; the scan (`listOversizedChangedFiles(root, "main")`) flagged six files, and only one of them, `lib/run/loop.ts` at 417 lines against a 400 cap, grew past its cap in this plan. Each item is a concrete move or a reasoned leave-as-is; the one new public unit gets a trajectory row.
+
+- [ ] Extract the HEAD-sha primitive into `lib/git.ts`: `headSha(root)` (throws when there is no HEAD) and `headShaOrNull(root)` (an unborn branch is `null`), both on the shared async `git()` runner; `verify/git.ts` drops its own `headSha` and imports, `run/commit-cadence.ts` replaces its inline `execFileAsync("git", ["rev-parse", "HEAD"])`, `run/loop.ts` drops `headOf` and its `execFileAsync` import — three spellings of one primitive, the CLAUDE.md rule's fifth documented instance made real (`lib/scm/index.ts` and `papers/publish.ts` ask for `--short`, a different question, and stay)
+- [ ] Extract the two-cadence wiring out of `runLoop` into `lib/run/cadences.ts`: `createRunCadences({ root, planRoot, split, roots, implPath, planName, getPhase, onCodeCommit })` returning `{ onGatedApply, commits(), failures(), queueFailures(), disabledReasons }` — the loop orchestrates phases and should not also build cadences; this returns `loop.ts` under its cap, and the trailer logic (`headShaOrNull` → `Code-Commit:` or nothing) moves with it
+- [ ] Extract the two-baseline resolution out of `runVerify` into `lib/verify/baselines.ts`: `resolveBaselines({ root, codeRoot, split, record, planDirRepoRelPath })` returning `{ planBaseline, baseline }` — the Build Phase 2 Shape note deferred exactly this to cleanup; the "no `codeSha`, no code baseline" rule then has one home with its docblock rather than a comment inside a 110-line function
+- [ ] `run/workbench-split.test.ts`: replace the file-local `headOfRepo` with `headOf` from `helpers/test-git.ts` — the fixtures share one throwing git runner, and this was a second copy of one of its functions
+- [ ] (reviewed `bin/commands/init.ts` (1310) and `update.ts` (990) — left as-is: both predate this plan by far and this plan made init *smaller* by moving `detectTooling` out; update gained two ensure blocks in the shape its three existing ones already have, and the five "targeted ensure" blocks are a decomposition for a plan that owns `update`, not for this one — recorded here so the next plan that opens `update.ts` sees the count)
+- [ ] (reviewed `hooks/eval-trigger.js` (488) — left as-is: this plan added eight lines to a hook whose size predates it; its shape is the eval rail's concern)
+- [ ] (reviewed `run-workbench-cli.test.ts` against `run-refuses-workbench-root.test.ts` — left as-is: the provider-key-scrubbing harness appears twice, not three times, and the two suites assert opposite outcomes of the same shape; a third copy earns the extraction)
+- [ ] (reviewed `verify/git.ts`'s two bootstrap resolvers — left as-is: `resolveBootstrapBaseline` and `resolveCodeBootstrapBaseline` share the root-commit fallback in two lines each, inside one file; that is Shape's intra-file question and was judged there, and folding them into one function would put a plan-folder rule and a code-repo rule behind one name)
+
+#### Phase 7 Verification
+- [ ] A19: the single-definition pin — RED today (three spellings), green after the extraction: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/head-sha-single-definition.test.ts`; then `cd` back
+- [ ] Behaviour parity, no tests flip at this phase for the two module extractions (reason: refactor under the coverage A1–A18 already hold): `cd apps/indusk-mcp && pnpm exec vitest run src/lib/run src/lib/verify src/__tests__/run-workbench-cli.test.ts src/__tests__/execution-roots-single-definition.test.ts src/__tests__/workbench-runner-detection.test.ts` — expected: all pass; then `cd` back
+- [ ] `lib/run/loop.ts` is back under its cap: the scan (`listOversizedChangedFiles(root, "main")`) no longer lists it
+- [ ] Row A19 set to `passing`
+- [ ] Shape (Phase 7): review the three new modules; record findings or "nothing to change"
+
+#### Phase 7 Context
+- [ ] Known Gotchas, the single-definition entry: name `headSha` / `headShaOrNull` (`lib/git.ts`) as the primitive that had reached three copies (`verify/git.ts`, the cadence, the loop) — compact, the file is 300 bytes under budget; demote one older clause in the same entry if needed to stay under
+
+#### Phase 7 Document
+- [ ] `apps/docs/src/lessons/dawn-verify.md` (the page the single-definition rule points to): add the HEAD-sha primitive as the instance this plan produced — a primitive kept in `verify/` was copied by `run/` twice before it moved to `lib/git.ts`
 
 ## Files Affected
 
