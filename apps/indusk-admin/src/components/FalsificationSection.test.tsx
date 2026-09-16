@@ -47,6 +47,8 @@ function mockTrajectory(): Trajectory {
         asserts: "Dropdown renders in header",
         writableAt: 1,
         passesAt: 1,
+        writableAtKind: "build",
+        passesAtKind: "build",
         state: "passing",
       },
       {
@@ -54,6 +56,8 @@ function mockTrajectory(): Trajectory {
         asserts: "Selecting an option re-orders the rows",
         writableAt: 1,
         passesAt: 2,
+        writableAtKind: "build",
+        passesAtKind: "build",
         state: "written",
       },
     ],
