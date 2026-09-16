@@ -198,6 +198,8 @@ recordPhaseStart(root, { plan: "<plan>", phase: <N>, kind: "<test|build>", sha, 
 prepareShapeReview({ root, plan, phase: { kind: "build", number: <N> }, implBody })
 ```
 
+**The writer refuses what the reader would.** `recordPhaseStart` validates the record with the same predicate `readBoundaries` applies per line (`boundaryRecordProblem`, which names the field — `phase must be a finite number; got object`) and throws before appending. The reason is the reader's own rule: a malformed line makes `readBoundaries` throw for the *whole file*, so one bad append blinds every reader at once — Shape, `verify`, the admin's plan page. That happened once, during admin-ui-phase-progress, to a record written by hand with `phase: { kind, number }` where the call takes `phase: <N>, kind`; the writer took the object, and every reader refused the file until it was repaired. `tsx -e` does not type-check, so the shape of the argument is enforced at the write, not by the compiler.
+
 Two things will bite you, and both did:
 
 - **`tsx` is not on `PATH`.** It is a dependency of `indusk-mcp`, so it needs `pnpm exec` from inside that package. `pnpm exec tsx` at the repo root fails too.

@@ -205,6 +205,10 @@ A hand-written `TrajectoryRow` needs `writableAtKind` and `passesAtKind` (`"test
 
 `src/__tests__/typecheck.test.ts` spawns `pnpm exec tsc --noEmit -p .` and asserts exit 0. It lives in the node project so that `pnpm test` — the command every phase's Verification runs — is what keeps the admin type-clean. A test written against a component that does not exist yet must not break it: widen the not-yet-existing props through `unknown` (`as unknown as Parameters<typeof Component>[0]`) with a comment naming the phase that lands them, so the row is red on its assertion rather than on a compile error. `// @ts-expect-error` is the wrong tool here — spread object literals skip excess-property checks, so the directive reads as unused and fails the type-check itself.
 
+### Tests that register projects never touch the real registry
+
+The daemon's data source is `${INDUSK_HOME ?? ~/.indusk}/projects.json`, and every `init`, `update`, `setup` and `ui` spawn writes it. Two lines keep tests out of it. The package's CLI test helper (`apps/indusk-mcp/src/__tests__/helpers/cli.ts`, `runCli`) pins `INDUSK_HOME` to one temp directory per test process unless the caller passes an explicit `env.INDUSK_HOME` — the helper is the one place every CLI-spawning suite goes through, and a per-file `??=` pin had yielded to a shell that exports `INDUSK_HOME` (falsification A31). `registry-leak-scan.test.ts` is the second line: every test file that spawns one of those commands must mention `INDUSK_HOME`. Before both existed the developer's registry had reached 2,307 entries, 11 alive; `indusk ui prune` clears such a backlog, the two lines stop it forming. The admin's own HTTP tests use `makeHome(projects)` below for the same reason.
+
 ### HTTP-level tests boot one dev server, through one helper
 
 `src/__tests__/helpers/next-dev.ts` is the only place `next dev` is spawned in a test: `makeHome(projects)` writes a temp registry, `startNextDev({ home })` boots the server on a free port, waits for `✓ Ready`, and returns `{ url, port, stop }`. The four HTTP smokes and the live-refresh rows all use it. Two facts shape it:
