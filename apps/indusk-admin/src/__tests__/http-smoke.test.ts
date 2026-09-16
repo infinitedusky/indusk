@@ -109,7 +109,19 @@ describe("HTTP smoke — served admin UI is reachable and returns expected conte
     expect(html, "sidebar should not be in empty-state").not.toContain(
       'data-testid="sidebar-empty-state"',
     );
-    expect(html).toContain('data-testid="active-plans"');
+    // The sidebar reads the LIVE repository. A plan claimed by a parent's
+    // `subplans:` renders inside its group, not in the "Active plans" list —
+    // and when every active plan is claimed (as in a worktree with no stray
+    // folder) that list is legitimately absent. Either shape is a populated
+    // sidebar; only the empty state is a regression (admin-ui-phase-progress,
+    // Build Phase 3, where this first flipped on a clean tree).
+    const populated =
+      html.includes('data-testid="active-plans"') ||
+      html.includes('data-testid="plan-group-');
+    expect(
+      populated,
+      "sidebar rendered neither an active-plans list nor a plan group",
+    ).toBe(true);
   });
 
   it(`GET /p/${PROJECT_NAME}/plan/indusk-admin-ui returns 200 with detail sections`, async () => {
