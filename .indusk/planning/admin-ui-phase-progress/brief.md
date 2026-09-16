@@ -114,6 +114,20 @@ follow-on, not assumed.
   research through ADR is conversation, `/work` is most of the calendar time.
   Either weight the impl segment by phase count or state plainly that the bar
   is a checklist, not a time estimate; the first version must not mislead.
+- Carried (2026-09-16, Sandy): **the finished picture as of now, built so the
+  next picture is an addition, not a rewrite.** This plan renders everything
+  the system defines today, completely — every lifecycle stage from research
+  to archived, every gate kind, both rituals, the three bars, live. Nothing
+  that exists now is left as a placeholder. What stays out is only what is not
+  yet a defined stage (verify verdicts and eval scorecards inline, a Midnight
+  monitor state), and those arrive with the plan that defines them. **The
+  convention that makes that hold**: a plan that adds a lifecycle step, a gate
+  kind or a ritual also adds its rendering to the admin UI, in the same plan,
+  as a Document gate item — otherwise the UI drifts behind the system the way
+  its phase parser already has. State it in this plan's ADR and CLAUDE.md, and
+  pin it: the stage model reads one shared definition, and a test asserts the
+  UI renders every stage that definition names, so a new step that skips the
+  UI fails a test rather than going unnoticed.
 - Considered, not committed (2026-09-14): provenance links between plan
   documents, so a claim in a brief can point at the research line it came
   from and the phase that acted on it (proposed 2026-09-10). Revisit if the
@@ -146,7 +160,9 @@ follow-on, not assumed.
   is hardcoded light); `dark:` variants + `prose-invert` are a follow-on here
 - The scorecard load fix (separate)
 - Websocket/push infrastructure
-- Rendering eval/verify verdicts inline (natural follow-on once 6.5 lands)
+- Rendering eval/verify verdicts inline — 6.5 landed 2026-09-16, so the data
+  exists; it stays out because the plan that defines evidence as a stage (Day
+  step 5, `day-claim-evidence`) renders it, per the convention above
 
 ## Success Criteria
 
