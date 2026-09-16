@@ -87,7 +87,19 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 
 Switching projects via the header does not restart the daemon — the registry resolves on every request.
 
-**`/p/{project}/plan/{name}` (plan detail)** — sections render conditionally on which documents are present:
+**`/p/{project}/plan/{name}` (plan detail)** — opens as the overview: three progress lines under the header, then every document section collapsed (admin-ui-phase-progress, 2026-09-16). The lines are a zoom, and each one's label names the level below it:
+
+| Line | Segments | Active label |
+|---|---|---|
+| **Plan bar** | every lifecycle position, research → archived (→ monitor), from the package's `PLAN_POSITIONS` | what the position awaits — `brief draft, awaiting acceptance` — or, while executing, the phase: `executing: Phase 4` |
+| **Phase line** | every phase of the impl in document order | the phase and its active stage: `Phase 4: Verification` |
+| **Stage bar** | the active phase's stages — implementation items, then each gate it carries | the verb and the item being worked: `verifying: A6 green… (6 of 7)` |
+
+Every segment is one of `done` / `active` / `pending` / `skipped` (a gate can also be `opted-out`): done full, pending empty, skipped drawn empty with a dashed border so a plan's bar keeps its shape, active partially filled by its own n of m. Segments are equal width and the plan bar says so — *steps, not time*. A parent plan shows a **master bar** instead of a plan bar: one segment per declared subplan, closed ones full, in-flight ones partial, declared-but-missing ones empty, labelled `n of m closed, k executing`.
+
+**Which phase is active.** The phase with the most recent boundary record (`.indusk/phase-boundary.jsonl`) among phases that still have unchecked items. A phase with everything checked is closed whatever its record says. With no records at all, the first open phase in document order is shown with the hint *no boundary record*, never as a confident marker. A malformed record file renders an error block and marks nothing active.
+
+Sections render conditionally on which documents are present, all closed by default:
 
 | Section | Source | Behavior |
 |---------|--------|----------|
