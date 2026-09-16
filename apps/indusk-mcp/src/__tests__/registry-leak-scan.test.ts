@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { relative } from "node:path";
 import { globSync } from "glob";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT } from "./helpers/cli.js";
