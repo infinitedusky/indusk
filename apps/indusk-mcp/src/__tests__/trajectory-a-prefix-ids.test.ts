@@ -1,9 +1,6 @@
-import { spawn } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { validateTrajectory } from "../lib/trajectory/validator.js";
+import { validateWrite } from "./helpers/hook-runner.js";
 
 /**
  * Cleanup-ritual Phase 0 — the trajectory validator must accept `A`-prefixed
@@ -17,8 +14,6 @@ import { validateTrajectory } from "../lib/trajectory/validator.js";
  * T16 — an unknown `A`-ID referenced in Verification still errors (the prefix
  *       is broadened, the existence check is NOT disabled).
  */
-
-const HOOK_PATH = new URL("../../hooks/validate-impl-structure.js", import.meta.url).pathname;
 
 const CLEAN_A_BODY = `## Test Trajectory
 
@@ -83,27 +78,6 @@ const MISSING_RATIONALE_A_BODY = `## Test Trajectory
 - [ ] A7 passes
 `;
 
-function runHook(fullContent: string): Promise<{ exitCode: number; stderr: string }> {
-	const dir = mkdtempSync(join(tmpdir(), "a-prefix-parity-"));
-	const implPath = join(dir, "impl.md");
-	writeFileSync(implPath, fullContent);
-	const event = {
-		tool_name: "Write",
-		tool_input: { file_path: implPath, content: fullContent },
-		cwd: dir,
-	};
-	return new Promise((resolve, reject) => {
-		const child = spawn("node", [HOOK_PATH], { stdio: ["pipe", "pipe", "pipe"] });
-		let stderr = "";
-		child.stderr.on("data", (d) => {
-			stderr += d.toString();
-		});
-		child.on("error", reject);
-		child.on("close", (code) => resolve({ exitCode: code ?? 0, stderr }));
-		child.stdin.end(JSON.stringify(event));
-	});
-}
-
 describe("cleanup-ritual T14: A-prefixed IDs validate clean", () => {
 	it("an all-A impl produces no cross-reference or rationale errors", () => {
 		const errors = validateTrajectory(CLEAN_A_BODY, {
@@ -162,7 +136,7 @@ gate_policy: ask`;
 			// exit code — the JS hook also blocks on missing Context/Document gates,
 			// which are unrelated to A-prefix ID recognition (mirrors the approach in
 			// rationale-baseline-parity.test.ts).
-			const js = await runHook(full);
+			const js = await validateWrite(full);
 			const jsBlockedOnIds =
 				js.stderr.includes("cross-reference-integrity") ||
 				js.stderr.includes("rationale-completeness");

@@ -1,8 +1,5 @@
-import { spawn } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { validateWrite } from "./helpers/hook-runner.js";
 
 /**
  * Regression for /falsify hypothesis 1 (fix-in-scope, Phase 4).
@@ -26,29 +23,6 @@ import { describe, expect, it } from "vitest";
  *     with `rationale_baseline: 1` as a real top-level YAML key must
  *     exempt the Phase-1 row.
  */
-
-const HOOK_PATH = new URL("../../hooks/validate-impl-structure.js", import.meta.url).pathname;
-
-function runHook(
-	implPath: string,
-	fullContent: string,
-): Promise<{ exitCode: number; stderr: string }> {
-	const event = {
-		tool_name: "Write",
-		tool_input: { file_path: implPath, content: fullContent },
-		cwd: implPath.replace(/\/[^/]+$/, ""),
-	};
-	return new Promise((resolve, reject) => {
-		const child = spawn("node", [HOOK_PATH], { stdio: ["pipe", "pipe", "pipe"] });
-		let err = "";
-		child.stderr.on("data", (d) => {
-			err += d.toString();
-		});
-		child.on("error", reject);
-		child.on("close", (code) => resolve({ exitCode: code ?? 0, stderr: err }));
-		child.stdin.end(JSON.stringify(event));
-	});
-}
 
 describe("rationale-baseline T8: substring-in-string-value attack is rejected", () => {
 	it("does NOT inherit baseline from a substring inside a quoted title value", async () => {
@@ -78,10 +52,7 @@ gate_policy: ask
 #### Phase 1 Document
 - [ ] write the docs page
 `;
-		const dir = mkdtempSync(join(tmpdir(), "falsify-substring-"));
-		const implPath = join(dir, "impl.md");
-		writeFileSync(implPath, fullContent);
-		const { exitCode, stderr } = await runHook(implPath, fullContent);
+		const { exitCode, stderr } = await validateWrite(fullContent);
 
 		// Post-fix expectation: regex is line-anchored, so the title's substring
 		// is ignored. Baseline defaults to 0, T1 (Writable at: Phase 1) needs
@@ -120,10 +91,7 @@ gate_policy: ask
 #### Phase 1 Document
 - [ ] docs
 `;
-		const dir = mkdtempSync(join(tmpdir(), "falsify-positive-"));
-		const implPath = join(dir, "impl.md");
-		writeFileSync(implPath, fullContent);
-		const { exitCode, stderr } = await runHook(implPath, fullContent);
+		const { exitCode, stderr } = await validateWrite(fullContent);
 
 		// With baseline=1 set as a real top-level key, T1 (Writable at: Phase 1)
 		// is exempt from the rationale rule. Validator should exit 0.
