@@ -57,6 +57,14 @@ Falsification and dogfooding found nine defects after "impl complete", and they 
 
 *(versioned-workbench, 2026-08)*
 
+> **Superseded for the one-repo case** by dawn-workbench-execution (Dawn 6.5,
+> 2026-09): the resolver moved to `lib/worktree/roots.ts` as
+> `resolveExecutionRoots`, shared with `indusk run` and the cleanup scan, and a
+> workbench declaring one repo now *verifies* against the code repo with a
+> per-repo baseline (`codeSha` on the ledger record). The "named follow-on"
+> below is that plan. Zero or several declared repos still refuse as written
+> here. See `/reference/cli/verify`, "Across the split".
+
 `verify` originally assumed one repository: the plan and the code it describes
 shared a root. A **workbench** breaks that assumption — `impl.md` lives in the
 workbench's `.indusk/planning/`, while the code sits across a trunk symlink in

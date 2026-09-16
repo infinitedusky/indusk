@@ -200,11 +200,36 @@ all import:
 | Normal mode (`.indusk/` inside the code repo) | Unchanged. Plan root and code root are the same directory. |
 | Workbench, no repos declared | Refuses — there is no code root to judge against. |
 | Workbench, several repos | Refuses, **naming every candidate**. A verdict against the wrong repository is indistinguishable from a correct one. |
-| Workbench, one repo | Resolves to a plan root and a code root. `verify` still refuses this case until its detections learn the split (dawn-workbench-execution, Build Phase 2), explaining that the ledger's baseline sha comes from the plan repo and has no meaning in the code repo. |
+| Workbench, one repo | Resolves to a plan root and a code root, and **verifies** (dawn-workbench-execution): each detection reads the repository it is actually about — see below. |
 
 **It never falls back to the plan root.** A diff of plan documents is not
 evidence about code, and reporting it as such is exactly the "could not check"
 reported as "checked" failure this command exists to prevent.
+
+### Across the split
+
+*(dawn-workbench-execution, 2026-09)*
+
+In a one-repo workbench there are two histories, and `verify` keeps two
+baselines:
+
+| Question | Repository | Baseline |
+|---|---|---|
+| Did the trajectory table drift? Which items became checked? | the plan repo | `sha` on the ledger record |
+| Are the referenced tests red? Did anything besides the plan file change? | the code repo | `codeSha` on the ledger record |
+
+`Test` paths are **code-repo-relative** when split — the command runs there —
+while the command itself (`verify.testCommand`, or the detected runner) is read
+from the plan root, where `.indusk/config.json` lives. The report names the code
+repository and prints both baselines.
+
+A clean verdict records both repos' HEADs. **A record without `codeSha` is never
+a code baseline**: it was written before the split existed (or in a flat
+project, where `sha` *is* the code), and its `sha` names a commit the code repo
+does not have. The first cross-repo verify on such a ledger bootstraps the code
+repo — the merge base with its trunk, else its root commit, so the whole history
+is the diff and phantom work is over-reported rather than invisible — and says
+`merge-base`. The next phase chains from the recorded `codeSha`.
 
 ### What is deliberately not done
 
