@@ -146,6 +146,19 @@ the executing position expands into the phase bar, which names the current
 activity as a verb; the lifecycle definition carries both vocabularies so a
 plan can never render as "archived" and "verifying" at once.
 
+**Every segment is tri-state: done, active, pending (Sandy, 2026-09-16).** A
+bar that is only filled-or-empty cannot show the middle, and the middle is the
+whole point of watching. Done segments are filled. Pending segments are empty.
+Skipped positions are marked skipped, never empty, so the bar's shape is
+constant across plans. The one *active* segment carries the message: on the
+phase bar it is partially filled by its own n/m and labelled with the verb
+("verifying: 2 of 5"); on the plan bar it is labelled with what it awaits or
+does ("brief drafted, awaiting acceptance"; for executing, the current
+activity pulled up from the phase bar: "executing: verifying Build Phase 2");
+on the master bar active subplans are partially filled by their own plan-bar
+position and the label is the count ("3 of 10 closed, 2 executing"). Fill
+says how far; the label says what is happening.
+
 **A caution for the ADR.** A bar implies steps of similar size and they are
 not — research through ADR is conversation, `/work` is most of the calendar
 time. Either weight the impl segment by phase count or state plainly that the
