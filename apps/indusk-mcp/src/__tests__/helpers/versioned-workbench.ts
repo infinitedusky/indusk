@@ -122,8 +122,10 @@ export function makeVersionedWorkbench(opts: MakeVersionedWorkbenchOptions): Ver
 	writeFileSync(join(root, ".indusk", "config.json"), `${JSON.stringify(config, null, 2)}\n`);
 
 	// The workbench's own git must never track the wrapped code — one precise
-	// line per declared location, the way the real scaffolding writes it.
-	const ignore = repos.map((r) => `/${r.rel}/`).join("\n");
+	// line per declared location, the way the real scaffolding writes it — nor
+	// InDusk's machine state: `init` ignores `.indusk/eval/` in every project,
+	// and the run loop writes its pending-eval queue there.
+	const ignore = [...repos.map((r) => `/${r.rel}/`), ".indusk/eval/"].join("\n");
 	writeFileSync(join(root, ".gitignore"), `${ignore}\n`);
 
 	initRepoWithCommit(root, "workbench");
