@@ -24,7 +24,7 @@ workbench, and report every item done.
 Zero or several declared repos refuse, naming every candidate, before the
 provider-key check so no key is spent reaching the refusal. One declared repo
 resolves to a **plan root** and a **code root**, and the loop runs across them
-(dawn-workbench-execution, Dawn component 6.5):
+([dawn-workbench-execution](/decisions/dawn-workbench-execution), Dawn component 6.5):
 
 ```mermaid
 flowchart LR
