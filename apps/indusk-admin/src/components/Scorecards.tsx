@@ -195,7 +195,9 @@ function ScorecardMeta({ card }: { card: Scorecard }) {
     ["Timestamp", card.timestamp],
     ["Mode", card.mode ? String(card.mode) : undefined],
     [
-      "Graphiti writes",
+      // The scorecard key is still `graphitiWrites` (legacy name, kept so stored
+      // cards parse); since the makeover it counts lessons the evaluator wrote.
+      "Lessons written",
       typeof card.graphitiWrites === "number" ? card.graphitiWrites : undefined,
     ],
     [
