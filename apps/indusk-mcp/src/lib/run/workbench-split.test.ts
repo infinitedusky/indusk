@@ -2,7 +2,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { MockLanguageModelV4 } from "ai/test";
 import { afterEach, describe, expect, it } from "vitest";
-import { git } from "../../__tests__/helpers/test-git.js";
+import { git, headOf } from "../../__tests__/helpers/test-git.js";
 import {
 	LAYOUTS,
 	oneRepoAtPath,
@@ -53,11 +53,7 @@ function splitFixture(workbench: VersionedWorkbench) {
 	cpSync(hooksDir, join(workbench.root, ".claude", "hooks"), { recursive: true });
 	git(workbench.root, ["add", "-A"]);
 	git(workbench.root, ["commit", "-qm", "plan: semver"]);
-	return { code, implPath: join(planDir, "impl.md"), planBaseline: headOfRepo(workbench.root) };
-}
-
-function headOfRepo(dir: string): string {
-	return git(dir, ["rev-parse", "HEAD"]);
+	return { code, implPath: join(planDir, "impl.md"), planBaseline: headOf(workbench.root) };
 }
 
 /** The scripted happy path, with every edit of the plan addressed at the plan's own folder. */
@@ -87,7 +83,7 @@ function commitsAfter(dir: string, since: string) {
 
 async function runSplit(workbench: VersionedWorkbench) {
 	const { code, implPath, planBaseline } = splitFixture(workbench);
-	const codeBaseline = headOfRepo(code);
+	const codeBaseline = headOf(code);
 	const impl = readFileSync(implPath, "utf8");
 	const model = new MockLanguageModelV4({ doGenerate: stepsAddressingThePlan(impl) });
 	const options = {
@@ -297,7 +293,7 @@ describe("dawn-workbench-execution — falsification: an unborn code repo, a for
 		cpSync(hooksDir, join(wb.root, ".claude", "hooks"), { recursive: true });
 		git(wb.root, ["add", "-A"]);
 		git(wb.root, ["commit", "-qm", "plan: unborn"]);
-		const planBaseline = headOfRepo(wb.root);
+		const planBaseline = headOf(wb.root);
 		const IMPL = ".indusk/planning/demo/impl.md";
 
 		const model = new MockLanguageModelV4({
@@ -336,7 +332,7 @@ describe("dawn-workbench-execution — falsification: an unborn code repo, a for
 			"one plan commit per checkoff",
 		).toHaveLength(3);
 		expect(planCommits[0].message, "nothing to attest yet: no trailer").not.toMatch(/Code-Commit:/);
-		const codeHead = headOfRepo(code);
+		const codeHead = headOf(code);
 		for (const c of planCommits.slice(1)) {
 			expect(c.message).toMatch(new RegExp(`^Code-Commit: ${codeHead}$`, "m"));
 		}
