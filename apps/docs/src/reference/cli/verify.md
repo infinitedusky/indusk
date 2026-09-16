@@ -163,7 +163,7 @@ This is the deliberate **inverse** of the [pending-eval queue](./run.md), which 
 
 ## Requirements
 
-`verify` refuses to run outside a git repository rather than reporting a clean phase, and refuses at a workbench root by declaration (`resolveVerifyRoots`): a versioned workbench root *is* a git repository, but its diff holds plan documents and no code, and silence there would mean verifying nothing while appearing to verify everything. The refusal names where to run instead — the checkout's real location, `repos_root` plus the repo's declared `path` — on every layout, not only the flat one. A config that declares `repos[]` without the `shape` flag counts as a workbench for this purpose.
+`verify` refuses to run outside a git repository rather than reporting a clean phase. At a workbench root it reads the declaration through `resolveExecutionRoots` (`lib/worktree/roots.ts`), the one resolver it shares with `indusk run` and the cleanup scan: a versioned workbench root *is* a git repository, but its diff holds plan documents and no code, and silence there would mean verifying nothing while appearing to verify everything. Zero or several declared repos refuse, naming every candidate. One declared repo resolves to a plan root and a code root — and, until dawn-workbench-execution's Build Phase 2 teaches the detections the split, `verify` still refuses that case in its own words, naming the code root to run inside: the checkout's real location, `repos_root` plus the repo's declared `path`, on every layout. A config that declares `repos[]` without the `shape` flag counts as a workbench for this purpose.
 
 ## See also
 
@@ -190,14 +190,17 @@ changed, which in a workbench is always true. Every honest checkoff would be
 reported as phantom — and a detector that cries wolf gets switched off, taking
 its real catches with it.
 
-So `verify/roots.ts` now maintains the refusal on purpose:
+So the refusal is now maintained on purpose — since dawn-workbench-execution by
+`resolveExecutionRoots` in `lib/worktree/roots.ts`, the one answer to "where is
+the plan, where is the code" that `verify`, `indusk run` and the cleanup scan
+all import:
 
 | Project shape | Behavior |
 |---|---|
 | Normal mode (`.indusk/` inside the code repo) | Unchanged. Plan root and code root are the same directory. |
 | Workbench, no repos declared | Refuses — there is no code root to judge against. |
 | Workbench, several repos | Refuses, **naming every candidate**. A verdict against the wrong repository is indistinguishable from a correct one. |
-| Workbench, one repo | Refuses, explaining that the ledger's baseline sha comes from the plan repo and has no meaning in the code repo. |
+| Workbench, one repo | Resolves to a plan root and a code root. `verify` still refuses this case until its detections learn the split (dawn-workbench-execution, Build Phase 2), explaining that the ledger's baseline sha comes from the plan repo and has no meaning in the code repo. |
 
 **It never falls back to the plan root.** A diff of plan documents is not
 evidence about code, and reporting it as such is exactly the "could not check"

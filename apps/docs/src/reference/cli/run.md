@@ -12,14 +12,20 @@ The CLI also installs as **`atdawn`** — the CLI command for the Dawn system (t
 
 ## Workbenches
 
-`indusk run` refuses at a versioned workbench root. A workbench keeps the plan
-in that folder and the code in another repository, and this loop takes one root
-as its whole world: read the plan here, edit here, commit here. At a workbench
-root it would read the plan fine, be unable to touch the code (outside the
-folder it may edit, or inside one the workbench's git ignores), commit checkbox
-edits to the workbench, and report every item done. The refusal names the
-declared repo directories and comes before the provider-key check, so no key is
-spent reaching it.
+At a versioned workbench root `indusk run` reads the declaration through
+`resolveExecutionRoots` (`lib/worktree/roots.ts`), the one resolver it shares
+with `indusk verify` and the cleanup scan. A workbench keeps the plan in that
+folder and the code in another repository, and this loop takes one root as its
+whole world: read the plan here, edit here, commit here. At a workbench root it
+would read the plan fine, be unable to touch the code (outside the folder it may
+edit, or inside one the workbench's git ignores), commit checkbox edits to the
+workbench, and report every item done.
+
+Zero or several declared repos refuse, naming every candidate. One declared repo
+resolves to a plan root and a code root — and, until dawn-workbench-execution's
+Build Phase 3 carries both roots into the loop, `run` still refuses that case in
+its own words, naming the code root. Every refusal comes before the
+provider-key check, so no key is spent reaching it.
 
 Run the loop inside the repository the plan's code lives in. Cross-repo
 execution — one loop spanning the plan repo and the code repo — is
