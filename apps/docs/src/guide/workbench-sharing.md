@@ -136,11 +136,13 @@ that — "zero commits ahead" — would report the worst case as the best one. S
   work that exists nowhere else. Failed commits are ordinary: a pre-commit hook,
   a missing git identity, a full disk.
 - **Secrets and SSH host aliases are permanently out of band.** Not a gap to close — a boundary.
-- **`indusk verify` refuses inside a workbench.** Plan documents and code live in
-  different repositories, and the verify ledger's baseline has no meaning in the
-  code repo. It refuses rather than judging code by a diff that cannot contain
-  it. Cross-repo verification is a named follow-on. See
-  [`indusk verify`](../reference/cli/verify.md).
+- **`indusk verify` and `indusk run` judge the declared code repo in a
+  one-repo workbench.** Plan documents and code live in different
+  repositories; both commands resolve the split through one
+  `resolveExecutionRoots` and keep a baseline per repository (`codeSha` on the
+  verify ledger). A workbench declaring several repos still refuses, naming
+  every candidate. See [`indusk verify`](../reference/cli/verify.md), "Across
+  the split", and [Dawn workbench execution](../decisions/dawn-workbench-execution.md).
 - **Editing outside a Claude Code session does not auto-sync yet.** The trigger is
   an agent-write hook plus `/catchup`; a watcher daemon that would catch IDE
   edits is deferred until the gap is felt. Run `indusk workbench sync` by hand.

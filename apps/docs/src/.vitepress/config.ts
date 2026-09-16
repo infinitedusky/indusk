@@ -231,6 +231,7 @@ const config = defineConfig({
 						{ text: "Dawn Hook Parity — Lessons", link: "/lessons/dawn-hook-parity" },
 						{ text: "Dawn External Orchestrator — Acceptance Matrix", link: "/lessons/dawn-orchestrator-acceptance-matrix" },
 						{ text: "Dawn UI Plan Grouping — Lessons", link: "/lessons/dawn-ui-plan-grouping" },
+						{ text: "Dawn Workbench Execution — Lessons", link: "/lessons/dawn-workbench-execution" },
 						{ text: "Lessons from Dawn Verify", link: "/lessons/dawn-verify" },
 						{ text: "Lessons — Eval Agent Silent Failure Fix", link: "/lessons/eval-agent-bug-fix" },
 						{ text: "eval-agent-mcp-access — Lessons", link: "/lessons/eval-agent-mcp-access" },

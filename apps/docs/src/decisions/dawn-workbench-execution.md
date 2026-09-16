@@ -1,7 +1,7 @@
 # Dawn Workbench Execution — two roots, one resolver
 
 **Status:** accepted (2026-09-15) · Dawn component 6.5
-**Full ADR:** `.indusk/planning/dawn-workbench-execution/adr.md`
+**Full ADR:** `.indusk/planning/archive/dawn-workbench-execution/adr.md` · **Lessons:** [Dawn Workbench Execution — Lessons](../lessons/dawn-workbench-execution.md)
 
 ## What was decided
 
@@ -36,7 +36,7 @@ Two commits per item in a workbench, and a plan-repo history interleaving every 
 
 ## Acceptance
 
-The dawn-verify matrix re-run inside a workbench — an uncontrolled headless agent's honest phase, then five planted violation classes — is recorded in `.indusk/planning/dawn-workbench-execution/matrix.md`.
+The dawn-verify matrix re-run inside a workbench — an uncontrolled headless agent's honest phase, then five planted violation classes — is recorded in `.indusk/planning/archive/dawn-workbench-execution/matrix.md`.
 
 ## See also
 
