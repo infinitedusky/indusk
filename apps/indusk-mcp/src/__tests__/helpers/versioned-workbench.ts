@@ -40,7 +40,13 @@ export interface DeclaredRepo {
 	remote?: string;
 }
 
-export type WorkbenchLayout = "nested" | "sibling";
+/**
+ * `flat` is the legacy shape: `worktree.wrapped_repo: <name>` with no
+ * `repos_root`, the checkout at `<root>/<name>`. Every reader reduces it to a
+ * one-element `repos[]`; the fixture builds it so a test about "where the
+ * code is" runs against the shape older workbenches still have.
+ */
+export type WorkbenchLayout = "nested" | "sibling" | "flat";
 
 export interface FixtureRepo {
 	name: string;
@@ -88,13 +94,20 @@ export function makeVersionedWorkbench(opts: MakeVersionedWorkbenchOptions): Ver
 	const config = {
 		mode: "full",
 		otel: { role: "library" },
-		worktree: {
-			...(opts.shape ? { shape: opts.shape } : {}),
-			repos: opts.repos,
-			// A sibling layout declares its parent ABSOLUTELY, as real configs do:
-			// restore refuses a relative `..` (it must not escape the workbench).
-			repos_root: layout === "sibling" ? reposRoot : ".",
-		},
+		worktree:
+			layout === "flat"
+				? {
+						// The legacy singular declaration, exactly as pre-1.37 init wrote it.
+						...(opts.shape ? { shape: opts.shape } : {}),
+						wrapped_repo: opts.repos[0]?.name,
+					}
+				: {
+						...(opts.shape ? { shape: opts.shape } : {}),
+						repos: opts.repos,
+						// A sibling layout declares its parent ABSOLUTELY, as real configs do:
+						// restore refuses a relative `..` (it must not escape the workbench).
+						repos_root: layout === "sibling" ? reposRoot : ".",
+					},
 		...(opts.extraConfig ?? {}),
 	};
 	writeFileSync(join(root, ".indusk", "config.json"), `${JSON.stringify(config, null, 2)}\n`);
@@ -117,6 +130,38 @@ export function makeVersionedWorkbench(opts: MakeVersionedWorkbenchOptions): Ver
 		cleanup: () => rmSync(tmp, { recursive: true, force: true }),
 	};
 }
+
+/** The legacy flat shape: one repo, `alpha`, as `wrapped_repo`, checkout at `<root>/alpha`. */
+export function flatLegacy(extra: Partial<MakeVersionedWorkbenchOptions> = {}): VersionedWorkbench {
+	if (extra.repos && extra.repos.length !== 1) {
+		throw new Error("flatLegacy declares exactly one repo — the singular shape has no list");
+	}
+	return makeVersionedWorkbench({
+		repos: [{ name: "alpha" }],
+		layout: "flat",
+		shape: "workbench",
+		...extra,
+	});
+}
+
+/**
+ * Every one-repo layout a workbench can declare, for `describe.each`: a test
+ * about where the code lives runs over all four or it is blind to three.
+ */
+export const LAYOUTS: ReadonlyArray<[label: string, build: () => VersionedWorkbench]> = [
+	["flat legacy (wrapped_repo)", () => flatLegacy()],
+	[
+		"nested, repo at its name",
+		() =>
+			makeVersionedWorkbench({ repos: [{ name: "alpha" }], layout: "nested", shape: "workbench" }),
+	],
+	[
+		"sibling, repo at its name",
+		() =>
+			makeVersionedWorkbench({ repos: [{ name: "alpha" }], layout: "sibling", shape: "workbench" }),
+	],
+	["nested, repo at a declared path", () => oneRepoAtPath("nested")],
+];
 
 /** One repo, `alpha`, declared at `path: "code/alpha"`. */
 export function oneRepoAtPath(
