@@ -189,7 +189,7 @@ function resolvePosition(input: DerivePlanPositionInput): {
 	position: PlanPosition;
 	awaiting: string | null;
 } {
-	const { summary, readiness, archived } = input;
+	const { summary, impl, readiness, archived } = input;
 	if (archived) return { position: "archived", awaiting: null };
 
 	const stage = summary.stage;
@@ -225,7 +225,19 @@ function resolvePosition(input: DerivePlanPositionInput): {
 			}
 			return { position: "retrospective", awaiting: "cleaned, awaiting /retrospective" };
 		}
-		if (status === "in-progress") return { position: "executing", awaiting: null };
+		if (status === "in-progress") {
+			// A33: the active segment always carries the message. Normally the
+			// active phase speaks; when nothing is open there is no active
+			// phase, so the position itself says what it is waiting for.
+			const nothingOpen =
+				impl !== null &&
+				impl.phases.length > 0 &&
+				impl.phases.every((p) => p.gates.every((g) => g.items.every((i) => i.checked)));
+			return {
+				position: "executing",
+				awaiting: nothingOpen ? "every item checked — impl status is still in-progress" : null,
+			};
+		}
 		if (status === "approved")
 			return { position: "impl-approved", awaiting: "impl approved, awaiting /work" };
 		return { position: "impl-approved", awaiting: `impl ${status}, awaiting approval` };
