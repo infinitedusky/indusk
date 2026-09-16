@@ -70,7 +70,7 @@ Test paths are repo-root-relative.
 | A16 | On a workbench whose declared code repo carries `vitest.config.ts` and no `verify.testCommand` is set, `indusk update` records `verify.testRunner` (tool `vitest`) in the workbench config — so a split verify has a runner, instead of reporting every row unverified under a clean verdict | Phase 0 | Phase 6 | passing | apps/indusk-mcp/src/__tests__/workbench-runner-detection.test.ts |
 | A17 | Under `runLoop` across a split whose code repo has no commits yet, a checkoff made before any code change completes without a tool error: the plan-side commit lands with no `Code-Commit:` trailer, and a later checkoff, after code exists, carries one | Phase 0 | Phase 6 | passing | apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
 | A18 | `runLoop` given `planRoot` but no `implPath` refuses, naming both roots, rather than looking for `impl.md` in the code root | Phase 0 | Phase 6 | passing | apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
-| A19 | Exactly one definition of the HEAD-sha primitive exists under `src/lib` (`headSha` / `headShaOrNull` in `lib/git.ts`), and `verify/git.ts`, `run/commit-cadence.ts` and `run/loop.ts` import it rather than spelling `rev-parse HEAD` themselves | Phase 0 | Phase 7 | planned | apps/indusk-mcp/src/__tests__/head-sha-single-definition.test.ts |
+| A19 | Exactly one definition of the HEAD-sha primitive exists under `src/lib` (`headSha` / `headShaOrNull` in `lib/git.ts`), and `verify/git.ts`, `run/commit-cadence.ts` and `run/loop.ts` import it rather than spelling `rev-parse HEAD` themselves | Phase 0 | Phase 7 | written | apps/indusk-mcp/src/__tests__/head-sha-single-definition.test.ts |
 
 ## Checklist
 
