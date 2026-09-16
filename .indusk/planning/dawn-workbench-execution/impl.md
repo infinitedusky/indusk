@@ -1,7 +1,7 @@
 ---
 title: "Dawn Workbench Execution — Implementation"
 date: 2026-09-15
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -67,6 +67,9 @@ Test paths are repo-root-relative.
 | A13 | A1, A7 and A8 hold on all four one-repo layouts: flat legacy, nested, sibling, declared `path` | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/lib/verify/workbench-split.test.ts, apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
 | A14 | Exactly one definition of `resolveExecutionRoots` exists under `src/lib`, `verify/roots.ts` is gone, and `run.ts`, `oversized.ts` and `verify.ts` each import it | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/execution-roots-single-definition.test.ts |
 | A15 | Inside a workbench, the dawn-verify matrix holds: an uncontrolled headless agent's honest phase verifies clean, and each of the five planted classes is caught | Build Phase 5 | Build Phase 5 | passing | manual: .indusk/planning/dawn-workbench-execution/matrix.md |
+| A16 | On a workbench whose declared code repo carries `vitest.config.ts` and no `verify.testCommand` is set, `indusk update` records `verify.testRunner` (tool `vitest`) in the workbench config — so a split verify has a runner, instead of reporting every row unverified under a clean verdict | Phase 0 | Phase 6 | planned | apps/indusk-mcp/src/__tests__/workbench-runner-detection.test.ts |
+| A17 | Under `runLoop` across a split whose code repo has no commits yet, a checkoff made before any code change completes without a tool error: the plan-side commit lands with no `Code-Commit:` trailer, and a later checkoff, after code exists, carries one | Phase 0 | Phase 6 | planned | apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
+| A18 | `runLoop` given `planRoot` but no `implPath` refuses, naming both roots, rather than looking for `impl.md` in the code root | Phase 0 | Phase 6 | planned | apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
 
 ## Checklist
 
@@ -243,6 +246,28 @@ Test paths are repo-root-relative.
 
 #### Build Phase 5 Document
 - [x] (the two links left pending in Build Phases 1 and 2 — `run.md` and the dawn-verify superseded note — now point at the page) `apps/docs/src/decisions/dawn-workbench-execution.md` (this ADR, published) and the sidebar entry; `.indusk/planning/indusk-v2-dawn/master.md` component 6.5 → done with the acceptance result, the "universal floor" line rewritten; `.indusk/planning/master.md` Stream 3 row; `.indusk/planning/indusk-v4-day/master.md` component 2 → closed
+
+### Phase 6: Falsification — a runner nobody detected, a trailer with no commit to name, a plan root without an impl
+
+**Goal**: verify whether the attested state holds against three ways the split can be right in the tests and wrong in a real workbench. (1) **The runner.** `detectTooling` runs once at `init`, against the project root — in a workbench that is the wrapper, which holds no `vitest.config.ts`, so `verify.testRunner` is never written; every fixture here set `verify.testCommand` by hand, and a real workbench without it gets a *clean* verdict with every row unverified on the red-test axis — "could not check" wearing a green exit code. The health-check runner already solved this shape (`resolveCheckRoots`: run against the declared repos, first hit wins). (2) **The trailer.** `headOf(codeRoot)` is awaited *before* the cadence's try block; on a code repo with no commits yet (a greenfield plan, or a checkoff that precedes any code) `git rev-parse HEAD` throws on the unborn branch, the throw escapes `onGatedApply` after the edit was applied, the tool returns an error the model cannot act on, and neither `commits` nor `failures` records it. (3) **The default impl path.** `runLoop` with `planRoot` set and `implPath` omitted looks for `impl.md` in the code root — a library caller's misuse that today fails with ENOENT rather than a refusal naming what was wrong. Each row captures one hypothesis; each item the fix.
+
+- [ ] `init.ts` `detectTooling` runs over `resolveCheckRoots(projectRoot)` (`lib/health.ts`) — the declared repos in a workbench, the project itself otherwise — first root with a detection wins; `update.ts` gains a targeted ensure (the eval-trigger / claude-md-budget shape): when `verify.testRunner` is absent and detection over the declared repos finds one, write it and say so
+- [ ] `commit-cadence.ts`: `trailer()` is awaited inside the same failure channel as the commit — a throwing trailer is recorded in `failures` and the commit is made without it, never an exception through the tool; `loop.ts`'s trailer returns `null` when the code repo has no HEAD (nothing to attest yet) instead of throwing
+- [ ] `loop.ts`: `planRoot` given with `implPath` omitted throws naming both roots ("the impl lives in the plan root; pass implPath")
+
+#### Phase 6 Verification
+- [ ] A16: on a `oneRepoAtPath` fixture whose code repo carries `vitest.config.ts` + `package.json`, `indusk update` writes `verify.testRunner.tool === "vitest"` into the workbench config — RED today (nothing writes it), green after detection runs over the declared repos
+- [ ] A17: a workbench whose code repo is `git init` with no commit; the scripted model checks off one item before writing any code, then proceeds normally — RED today (the trailer throws on the unborn branch and the run stops or the checkoff is not committed), green after the trailer degrades to null
+- [ ] A18: `runLoop({ worktree: code, planRoot: wb.root, model })` rejects with a message naming both roots — RED today (ENOENT on `<code>/impl.md`)
+- [ ] A1–A15 still green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/verify/workbench-split.test.ts src/lib/run/workbench-split.test.ts src/__tests__/run-workbench-cli.test.ts src/lib/run/pending-repo-attribution.test.ts src/__tests__/execution-roots-single-definition.test.ts src/__tests__/workbench-runner-detection.test.ts src/lib/run` — expected: all pass; then `cd` back
+- [ ] Rows A16–A18 set to `passing`
+- [ ] Shape (Phase 6): review the phase's files; record findings or "nothing to change"
+
+#### Phase 6 Context
+- [ ] Known Gotchas: tooling detection (`detectTooling`) and the health checks both run over `resolveCheckRoots` — the declared repos, never the wrapper — because a workbench root holds no code and a detection against it silently records nothing; a split verify without a runner reports every row unverified under a clean verdict, which is the exit code lying by omission
+
+#### Phase 6 Document
+- [ ] `apps/docs/src/reference/cli/verify.md`, "Across the split": the runner is detected from the declared code repo at `init`/`update` and recorded in the workbench config; a workbench initialized before this fix gets it on the next `indusk update`, or sets `verify.testCommand` explicitly — and how to read "unverified" on a clean report
 
 ## Files Affected
 
