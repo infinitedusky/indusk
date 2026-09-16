@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import type { ToolSet } from "ai";
 import { type GateResult, runGateScripts } from "./gate.js";
+import { normalizeRoots, type RootSpec } from "./worktree-paths.js";
 
 /**
  * The `bash` write surface (T10/T11) — post-hoc gating and escape refusal.
@@ -36,29 +37,37 @@ type ToolExecuteFn = (input: unknown, executionOptions: unknown) => unknown;
 /** Wrap the worktree `bash` tool so its file effects answer to the gate. */
 export function gateBashTool(
 	baseBash: ToolSet[string],
-	root: string,
+	roots: RootSpec,
 	scripts: string[],
 	timeoutMs: number | undefined,
 ): ToolSet[string] {
 	const originalExecute = (baseBash as { execute?: ToolExecuteFn }).execute;
 	if (!originalExecute) throw new Error('Worktree tool "bash" has no execute to gate.');
+	const { codeRoot, planRoot, planDir } = normalizeRoots(roots);
+	// Where the gate-relevant files live: the plan's own folder when the roots
+	// differ (the impl is there, not in the code repo), else the one root.
+	const watchRoot = codeRoot === planRoot ? codeRoot : join(planRoot, planDir);
+	const allowed =
+		codeRoot === planRoot
+			? `the worktree root ${codeRoot}`
+			: `the code root ${codeRoot} and the plan's folder ${watchRoot}`;
 
 	return {
 		...baseBash,
 		execute: async (input: unknown, executionOptions: unknown) => {
 			const command = (input as { command?: string })?.command ?? "";
 
-			const escaping = findEscapingPaths(command, root);
+			const escaping = findEscapingPaths(command, roots);
 			if (escaping.length > 0) {
 				return (
-					`Refused: this bash command references ${escaping.join(", ")}, outside the worktree root ${root}. ` +
-					"Commands must operate inside the worktree."
+					`Refused: this bash command references ${escaping.join(", ")}, outside ${allowed}. ` +
+					"Commands must operate inside the run's roots."
 				);
 			}
 
-			const before = await snapshotGateRelevantFiles(root);
+			const before = await snapshotGateRelevantFiles(watchRoot);
 			const result = await originalExecute(input, executionOptions);
-			const after = await snapshotGateRelevantFiles(root);
+			const after = await snapshotGateRelevantFiles(watchRoot);
 
 			for (const [file, previous] of before) {
 				const current = after.get(file);
@@ -68,7 +77,7 @@ export function gateBashTool(
 					{
 						tool_name: "Write",
 						tool_input: { file_path: file, content: current },
-						cwd: root,
+						cwd: planRoot,
 					},
 					scripts,
 					{ timeoutMs },
@@ -76,7 +85,7 @@ export function gateBashTool(
 				if (!gate.allowed) {
 					await writeFile(file, previous, "utf8");
 					return (
-						`Gate blocked this bash command's change to ${relative(root, file)} — it was REVERTED. ` +
+						`Gate blocked this bash command's change to ${relative(planRoot, file)} — it was REVERTED. ` +
 						`A shell command is gated exactly like an edit.\n${gate.blockMessage}`
 					);
 				}
@@ -91,9 +100,14 @@ export function gateBashTool(
 const GATE_RELEVANT_FILE = "impl.md";
 const SNAPSHOT_SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next", "coverage"]);
 
-/** Absolute paths in a command that land outside the worktree root. */
-export function findEscapingPaths(command: string, worktreeRoot: string): string[] {
-	const root = resolve(worktreeRoot);
+/** Absolute paths in a command that land outside every allowed root. */
+export function findEscapingPaths(command: string, roots: RootSpec): string[] {
+	const { codeRoot, planRoot, planDir } = normalizeRoots(roots);
+	const allowedRoots = codeRoot === planRoot ? [codeRoot] : [codeRoot, join(planRoot, planDir)];
+	const inside = (root: string, abs: string) => {
+		const rel = relative(root, abs);
+		return !rel.startsWith("..") && resolve(root, rel) === abs;
+	};
 	const escaping = new Set<string>();
 	// Tokens that look like filesystem paths: absolute, or home-relative.
 	for (const rawToken of command.split(/[\s;|&<>()"']+/)) {
@@ -101,8 +115,7 @@ export function findEscapingPaths(command: string, worktreeRoot: string): string
 		if (!token.startsWith("/") && !token.startsWith("~")) continue;
 		const candidate = token.startsWith("~") ? join(homedir(), token.slice(1)) : token;
 		const abs = resolve(candidate);
-		const rel = relative(root, abs);
-		if (rel.startsWith("..") || resolve(root, rel) !== abs) escaping.add(token);
+		if (!allowedRoots.some((root) => inside(root, abs))) escaping.add(token);
 	}
 	return [...escaping];
 }

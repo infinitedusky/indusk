@@ -91,19 +91,6 @@ export async function run(
 		process.exitCode = 1;
 		return;
 	}
-	// Build Phase 3 carries both roots into the loop; until then a one-repo
-	// workbench is still refused here, so nothing half-works in between —
-	// with the old words, because the failure they describe is still real.
-	if (roots.split) {
-		console.error(
-			`${projectRoot} is a workbench: its plan documents and its code (${roots.codeRoot}) live in different repositories, ` +
-				"and this loop takes one root as its whole world — it would commit checkbox edits to the workbench and never reach the code. " +
-				"Refusing. Run inside the repository the plan's code lives in; cross-repo execution lands in dawn-workbench-execution Build Phase 3.",
-		);
-		process.exitCode = 1;
-		return;
-	}
-
 	if (!resolveProviderKey(driver)) {
 		const names = driver.apiKeyEnvs.map((env) => `$${env}`).join(" or ");
 		console.error(
@@ -114,10 +101,14 @@ export async function run(
 	}
 
 	console.info(`Plan:   ${implPath}`);
+	if (roots.split) console.info(`Code:   ${roots.codeRoot}`);
 	console.info(`Model:  ${modelName} → provider ${driver.provider} (${driver.model})`);
 
+	// Across a split the loop edits, runs and commits code in the code repo and
+	// reads the plan, runs the gates and commits checkoffs in the plan repo.
 	const result = await runLoop({
-		worktree: projectRoot,
+		worktree: roots.codeRoot,
+		planRoot: roots.planRoot,
 		implPath,
 		driver,
 		maxStepsPerPhase: options.maxSteps,

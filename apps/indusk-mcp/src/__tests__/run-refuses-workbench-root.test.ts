@@ -7,14 +7,14 @@ import { resolveModel } from "../lib/run/registry.js";
 import {
 	git,
 	headOf,
-	oneRepoAtPath,
+	twoRepos,
 	type VersionedWorkbench,
 	writePlan,
 } from "./helpers/versioned-workbench.js";
 
 /**
  * workbench-trust-fixes A4 + A5 — `indusk run` refuses at a versioned
- * workbench root, and is unchanged in a flat repo.
+ * workbench root it cannot resolve, and is unchanged in a flat repo.
  *
  * The loop takes one root as its whole world. In a workbench that root holds
  * the plan and none of the code, and the only thing that ever stopped the loop
@@ -22,6 +22,12 @@ import {
  * coincidence versioned-workbench removed. The refusal must come before the
  * provider-key check, because a refusal about the *tree* should not need a
  * key to be reached; that ordering is also what lets this test run without one.
+ *
+ * dawn-workbench-execution (Dawn 6.5) lifted the ONE-repo case: the loop now
+ * carries a plan root and a code root, and `run-workbench-cli.test.ts` A11
+ * asserts that shape gets past the tree check. What this file guards since
+ * then is the refusal that survives — a workbench declaring several repos,
+ * where nothing says which holds the plan's code.
  *
  * Provider keys are scrubbed for the test's duration so that, before the
  * refusal exists, the loop cannot possibly reach a model: the run stops at
@@ -73,14 +79,14 @@ afterEach(() => {
 	process.exitCode = exitCodeBefore;
 });
 
-describe("A4 — a versioned workbench root is refused at the door", () => {
+describe("A4 — a versioned workbench root that declares several repos is refused at the door", () => {
 	let wb: VersionedWorkbench;
 	beforeEach(() => {
-		wb = oneRepoAtPath();
+		wb = twoRepos();
 	});
 	afterEach(() => wb.cleanup());
 
-	it("exits 1 naming the declared repo dir, with no commit and no eval record", async () => {
+	it("exits 1 naming every declared repo, with no commit and no eval record", async () => {
 		writePlan(wb, "demo", IMPL);
 		const headBefore = headOf(wb.root);
 
@@ -89,7 +95,8 @@ describe("A4 — a versioned workbench root is refused at the door", () => {
 		expect(process.exitCode).toBe(1);
 		const message = errors.join("\n");
 		expect(message, message).toContain("workbench");
-		expect(message, message).toContain("code/alpha");
+		expect(message, message).toContain("alpha");
+		expect(message, message).toContain("beta");
 		expect(message, "stopped on a missing key, not on the tree shape").not.toMatch(/API_KEY/);
 		expect(headOf(wb.root), "the loop committed to the workbench").toBe(headBefore);
 		expect(existsSync(join(wb.root, ".indusk", "eval"))).toBe(false);

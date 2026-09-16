@@ -178,3 +178,63 @@ describe.each(LAYOUTS)("A13 (run) — the split holds on the %s layout", (_label
 		expectSplitOutcome(wb, run);
 	}, 180_000);
 });
+
+import { execOptions, executeOf } from "./harness.test-support.js";
+import { createWorktreeTools } from "./tools.js";
+
+/**
+ * A9 and A10 — authored at Build Phase 3, per Test Phase 1's register: their
+ * subjects (`planRoot` on the loop, the object-form tool set) exist only now.
+ */
+describe("dawn-workbench-execution — the gate and the two allowed roots", () => {
+	it("A9: a scripted checkoff while a row is non-terminal is refused by the gate read from the plan repo", async () => {
+		wb = oneRepoAtPath("nested");
+		const { code, implPath } = splitFixture(wb);
+		const impl = readFileSync(implPath, "utf8");
+		// Tests written and rows → written, then the model checks off the
+		// items and the Verification line without ever making T1–T3 pass.
+		const steps = stepsAddressingThePlan(impl).filter(
+			(s) => !JSON.stringify(s).includes("| passing |"),
+		);
+		const model = new MockLanguageModelV4({ doGenerate: steps });
+		const result = await runLoop({
+			worktree: code,
+			planRoot: wb.root,
+			implPath,
+			model,
+			gate: { scripts: realGateScripts },
+		});
+		expect(result.status, JSON.stringify(result, null, 2)).toBe("stopped-red");
+		if (result.status !== "stopped-red") return;
+		expect(result.reason).toMatch(/T1|T2|T3|Trajectory|written/);
+		// The verdict came from the plan repo's impl: its rows are still `written`.
+		const after = readFileSync(implPath, "utf8");
+		expect(after).toMatch(/\| T1 \|.*\| written \|/);
+		expect(after).not.toMatch(/\| T1 \|.*\| passing \|/);
+	}, 180_000);
+
+	it("A10: a write outside both roots is refused, naming them; inside either is allowed", async () => {
+		wb = oneRepoAtPath("nested");
+		const { code } = splitFixture(wb);
+		const tools = createWorktreeTools({
+			codeRoot: code,
+			planRoot: wb.root,
+			planDir: PLAN_DIR_REL,
+		});
+		const write = executeOf(tools, "writeFile");
+
+		await expect(
+			write({ path: join(wb.root, ".indusk", "config.json"), content: "{}" }, execOptions),
+		).rejects.toThrow(/outside both the code root .* and the plan's folder/);
+		await expect(write({ path: "../escape.txt", content: "" }, execOptions)).rejects.toThrow(
+			/outside both/,
+		);
+
+		await expect(write({ path: "src/ok.mjs", content: "" }, execOptions)).resolves.toMatch(/Wrote/);
+		await expect(
+			write({ path: `${PLAN_DIR_REL}/notes.md`, content: "" }, execOptions),
+		).resolves.toMatch(/Wrote/);
+		expect(existsSync(join(code, "src", "ok.mjs"))).toBe(true);
+		expect(existsSync(join(wb.root, PLAN_DIR_REL, "notes.md"))).toBe(true);
+	});
+});

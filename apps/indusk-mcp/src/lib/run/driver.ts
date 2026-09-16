@@ -6,6 +6,7 @@ import { generateText, stepCountIs } from "ai";
 import { createGatedWorktreeTools, createGateToolApproval } from "./gate.js";
 import { type DriverConfig, resolveModel, resolveProviderKey } from "./registry.js";
 import { createWorktreeTools } from "./tools.js";
+import type { ToolRoots } from "./worktree-paths.js";
 
 /**
  * The rented agentic loop (ADR Decision 1): Vercel AI SDK `generateText` as a
@@ -23,6 +24,12 @@ import { createWorktreeTools } from "./tools.js";
 export interface RunDriverOptions {
 	/** Absolute path to the worktree the tools are bound to. */
 	worktree: string;
+	/**
+	 * The two-root shape when the plan and its code are different repositories
+	 * (dawn-workbench-execution): tools resolve in `codeRoot`, gates run from
+	 * `planRoot`. Omit for a flat project — `worktree` is then the one root.
+	 */
+	roots?: ToolRoots;
 	/** The task prompt for the model. */
 	prompt: string;
 	/** Optional system prompt. */
@@ -128,12 +135,13 @@ export function createDriverModel(driver: DriverConfig): LanguageModel {
 export async function runDriver(options: RunDriverOptions): Promise<DriverRunResult> {
 	const driver = options.driver ?? resolveModel("claude");
 	const model = options.model ?? createDriverModel(driver);
+	const roots = options.roots ?? options.worktree;
 	const tools = options.gate
-		? createGatedWorktreeTools(options.worktree, {
+		? createGatedWorktreeTools(roots, {
 				scripts: options.gate.scripts,
 				onGatedApply: options.gate.onGatedApply,
 			})
-		: createWorktreeTools(options.worktree);
+		: createWorktreeTools(roots);
 
 	const result = await generateText({
 		model,
@@ -155,7 +163,7 @@ export async function runDriver(options: RunDriverOptions): Promise<DriverRunRes
 		})(),
 		...(options.gate
 			? {
-					toolApproval: createGateToolApproval(options.worktree, {
+					toolApproval: createGateToolApproval(roots, {
 						scripts: options.gate.scripts,
 					}),
 					experimental_toolApprovalSecret: options.gate.approvalSecret ?? randomBytes(32),

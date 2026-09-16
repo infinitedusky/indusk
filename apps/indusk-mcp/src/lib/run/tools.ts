@@ -1,12 +1,12 @@
 import { execFile } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { readdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname } from "node:path";
 import { promisify } from "node:util";
 import type { ToolSet } from "ai";
 import { tool } from "ai";
 import { z } from "zod";
-import { resolveInWorktree } from "./worktree-paths.js";
+import { normalizeRoots, type RootSpec, resolveInRoots } from "./worktree-paths.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -35,8 +35,13 @@ function truncate(s: string): string {
  * Build the worktree-bound tool set: readFile, writeFile, edit, bash, list.
  * The returned object plugs straight into `generateText({ tools })`.
  */
-export function createWorktreeTools(worktreeRoot: string): ToolSet {
-	const root = resolve(worktreeRoot);
+export function createWorktreeTools(roots: RootSpec): ToolSet {
+	// One directory in a flat project; in a one-repo workbench the code root
+	// (relative paths, bash, code commits) and the plan's own folder under the
+	// plan root are the only two places a path may resolve to
+	// (dawn-workbench-execution A10). `resolveInRoots` is the one rule.
+	const { codeRoot: root } = normalizeRoots(roots);
+	const at = (path: string) => resolveInRoots(roots, path);
 
 	return {
 		readFile: tool({
@@ -45,7 +50,7 @@ export function createWorktreeTools(worktreeRoot: string): ToolSet {
 				path: z.string().describe("File path relative to the worktree root."),
 			}),
 			execute: async ({ path }) => {
-				const abs = resolveInWorktree(root, path);
+				const abs = at(path);
 				return await readFile(abs, "utf8");
 			},
 		}),
@@ -58,7 +63,7 @@ export function createWorktreeTools(worktreeRoot: string): ToolSet {
 				content: z.string().describe("Full file content to write."),
 			}),
 			execute: async ({ path, content }) => {
-				const abs = resolveInWorktree(root, path);
+				const abs = at(path);
 				mkdirSync(dirname(abs), { recursive: true });
 				await writeFile(abs, content, "utf8");
 				return `Wrote ${content.length} chars to ${path}.`;
@@ -74,7 +79,7 @@ export function createWorktreeTools(worktreeRoot: string): ToolSet {
 				new_string: z.string().describe("Replacement text."),
 			}),
 			execute: async ({ path, old_string, new_string }) => {
-				const abs = resolveInWorktree(root, path);
+				const abs = at(path);
 				const current = await readFile(abs, "utf8");
 				const first = current.indexOf(old_string);
 				if (first === -1) {
@@ -131,7 +136,7 @@ export function createWorktreeTools(worktreeRoot: string): ToolSet {
 				path: z.string().default(".").describe("Directory path relative to the worktree root."),
 			}),
 			execute: async ({ path }) => {
-				const abs = resolveInWorktree(root, path);
+				const abs = at(path);
 				const entries = await readdir(abs, { withFileTypes: true });
 				return entries.map((e) => (e.isDirectory() ? `${e.name}/` : e.name)).sort();
 			},

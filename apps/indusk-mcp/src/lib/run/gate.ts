@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import type { ToolApprovalStatus, ToolSet } from "ai";
 import { gateBashTool } from "./bash-gate.js";
 import { createWorktreeTools } from "./tools.js";
-import { resolveInWorktree } from "./worktree-paths.js";
+import { normalizeRoots, type RootSpec, resolveInRoots } from "./worktree-paths.js";
 
 /**
  * Tier-1 gate adapter + invoker (ADR Decision 2/3).
@@ -81,12 +81,15 @@ export interface WriteToolInput {
  * `{ tool_name, tool_input, cwd }` envelope.
  */
 export function toGateEnvelope(
-	worktreeRoot: string,
+	roots: RootSpec,
 	toolName: GatedToolName,
 	input: EditToolInput | WriteToolInput,
 ): GateEnvelope {
-	const root = resolve(worktreeRoot);
-	const filePath = resolveInWorktree(root, input.path);
+	// The hooks resolve their state path by walking up from `cwd` to `.indusk/`,
+	// so the envelope's cwd is the PLAN root — in a flat project the same
+	// directory as before; in a workbench the one that holds the impl.
+	const root = normalizeRoots(roots).planRoot;
+	const filePath = resolveInRoots(roots, input.path);
 	if (toolName === "edit") {
 		const { old_string, new_string } = input as EditToolInput;
 		return {
@@ -230,11 +233,11 @@ function spawnGateScript(
  * owned by the gate — spawn scripts, apply on exit 0, refuse (returning the
  * block message as the tool result) on exit 2.
  */
-export function createGatedWorktreeTools(worktreeRoot: string, options: GateOptions = {}): ToolSet {
-	const root = resolve(worktreeRoot);
-	const scripts = options.scripts ?? resolveGateScripts(root);
+export function createGatedWorktreeTools(roots: RootSpec, options: GateOptions = {}): ToolSet {
+	const { planRoot } = normalizeRoots(roots);
+	const scripts = options.scripts ?? resolveGateScripts(planRoot);
 	const timeoutMs = options.timeoutMs;
-	const base = createWorktreeTools(root);
+	const base = createWorktreeTools(roots);
 	const gated: ToolSet = { ...base };
 
 	for (const name of GATED_TOOL_NAMES) {
@@ -246,7 +249,7 @@ export function createGatedWorktreeTools(worktreeRoot: string, options: GateOpti
 		gated[name] = {
 			...original,
 			execute: async (input: unknown, executionOptions: unknown) => {
-				const envelope = toGateEnvelope(root, name, input as EditToolInput | WriteToolInput);
+				const envelope = toGateEnvelope(roots, name, input as EditToolInput | WriteToolInput);
 				const gate = await runGateScripts(envelope, scripts, { timeoutMs });
 				if (!gate.allowed) {
 					// The block message IS the tool result — the model reads it and
@@ -260,7 +263,7 @@ export function createGatedWorktreeTools(worktreeRoot: string, options: GateOpti
 		} as ToolSet[string];
 	}
 
-	gated.bash = gateBashTool(base.bash, root, scripts, timeoutMs);
+	gated.bash = gateBashTool(base.bash, roots, scripts, timeoutMs);
 
 	return gated;
 }
@@ -274,19 +277,18 @@ type ToolExecuteFn = (input: unknown, executionOptions: unknown) => unknown;
  * same gate chain above the provider swap and denies blocked calls.
  */
 export function createGateToolApproval(
-	worktreeRoot: string,
+	roots: RootSpec,
 	options: GateOptions = {},
 ): Record<
 	GatedToolName,
 	(input: unknown, approvalOptions: unknown) => Promise<ToolApprovalStatus>
 > {
-	const root = resolve(worktreeRoot);
-	const scripts = options.scripts ?? resolveGateScripts(root);
+	const scripts = options.scripts ?? resolveGateScripts(normalizeRoots(roots).planRoot);
 
 	const approvalFor =
 		(name: GatedToolName) =>
 		async (input: unknown, _approvalOptions: unknown): Promise<ToolApprovalStatus> => {
-			const envelope = toGateEnvelope(root, name, input as EditToolInput | WriteToolInput);
+			const envelope = toGateEnvelope(roots, name, input as EditToolInput | WriteToolInput);
 			const gate = await runGateScripts(envelope, scripts);
 			if (!gate.allowed) {
 				return { type: "denied", reason: gate.blockMessage };

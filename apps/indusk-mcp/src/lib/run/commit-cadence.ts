@@ -35,6 +35,8 @@ export interface CommitRecord {
 	sha: string;
 	item: string;
 	phase: number;
+	/** The repository the commit landed in (absolute). Two cadences, two repos, one record shape. */
+	repo: string;
 }
 
 export interface CommitFailure {
@@ -65,6 +67,26 @@ export interface CommitCadenceOptions {
 	planName?: string;
 	/** Phase 3 seam: fires after each successful commit (queue append). */
 	onCommit?: (record: CommitRecord) => Promise<void>;
+	/**
+	 * What to stage, relative to `worktreeRoot`. Default: everything but the
+	 * eval bookkeeping. The plan-side cadence of a split run stages only the
+	 * plan's own folder, so a checkoff commit never carries anything else
+	 * (dawn-workbench-execution A8).
+	 */
+	pathspec?: string[];
+	/**
+	 * A trailer appended to every commit message, computed at commit time —
+	 * the plan-side cadence names the code commit it records
+	 * (`Code-Commit: <sha>`). Null adds nothing.
+	 */
+	trailer?: () => Promise<string | null>;
+	/**
+	 * How an edit's `path` resolves to an absolute file, so "is this the impl"
+	 * is answered by the same rule the tools used to write it. Default: inside
+	 * `worktreeRoot`. A split run passes the two-root resolver, because the impl
+	 * is addressed as `.indusk/planning/<plan>/impl.md` from the code root.
+	 */
+	resolveEditPath?: (path: string) => string;
 }
 
 /**
@@ -131,7 +153,13 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 		if (disabledReason) return;
 		if (name !== "edit") return;
 		const edit = input as EditToolInput;
-		if (resolveInWorktree(root, edit.path) !== implAbsolute) return;
+		let edited: string;
+		try {
+			edited = (options.resolveEditPath ?? ((p: string) => resolveInWorktree(root, p)))(edit.path);
+		} catch {
+			return; // not a path this cadence can see — not the impl
+		}
+		if (edited !== implAbsolute) return;
 		const items = newlyCheckedItems(edit.old_string, edit.new_string);
 		if (items.length === 0) return;
 
@@ -139,7 +167,10 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 		// Items from earlier failed attempts are still uncommitted in the
 		// working tree, so this commit will contain them — name them (A11).
 		const attributed = [...carriedItems, ...items];
-		const message = commitMessageFor(planName, phase, attributed);
+		const trailer = await options.trailer?.();
+		const message = trailer
+			? `${commitMessageFor(planName, phase, attributed)}\n\n${trailer}`
+			: commitMessageFor(planName, phase, attributed);
 
 		// The commit itself. A failure here is bookkeeping, never a gate — but
 		// it MUST leave a clean index: `git add` already staged this item's
@@ -151,9 +182,21 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 			// bookkeeping: `.indusk/eval/` (the pending queue + drained ledger)
 			// is machine state written AFTER each commit, so including it would
 			// both trail by one record and put run telemetry in plan history.
-			await execFileAsync("git", ["add", "-A", "--", ".", ":(exclude).indusk/eval"], {
+			await execFileAsync(
+				"git",
+				["add", "-A", "--", ...(options.pathspec ?? [".", ":(exclude).indusk/eval"])],
+				{ cwd: root },
+			);
+			// Nothing staged: this root did not move for this item (in a split
+			// run the code repo may have no diff for a checkoff-only item). Not
+			// a failure — there is simply no commit to make here; the other
+			// cadence records the checkoff.
+			const staged = await execFileAsync("git", ["diff", "--cached", "--quiet"], {
 				cwd: root,
-			});
+			})
+				.then(() => false)
+				.catch(() => true);
+			if (!staged) return;
 			await execFileAsync("git", ["commit", "-m", message], { cwd: root });
 			const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: root });
 			sha = stdout.trim();
@@ -182,7 +225,7 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 		// The commit LANDED. Queue-append failure past this point is its own
 		// channel — reporting it as a commit failure would claim history that
 		// exists does not (A13).
-		const record: CommitRecord = { sha, item: attributed.join(" · "), phase };
+		const record: CommitRecord = { sha, item: attributed.join(" · "), phase, repo: root };
 		commits.push(record);
 		carriedItems.length = 0; // attributed — nothing left riding along unnamed
 		try {

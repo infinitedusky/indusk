@@ -1,5 +1,7 @@
+import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
+import { promisify } from "node:util";
 import type { LanguageModel } from "ai";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
 import type { Trajectory } from "../trajectory/parser.js";
@@ -11,6 +13,7 @@ import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
 import { appendPendingEval } from "./pending-evals.js";
 import { probePhaseClose } from "./probe.js";
 import type { DriverConfig } from "./registry.js";
+import { resolveInRoots, type ToolRoots } from "./worktree-paths.js";
 
 /**
  * Loop control for the external orchestrator — the `/work --autopilot`
@@ -30,8 +33,15 @@ import type { DriverConfig } from "./registry.js";
  */
 
 export interface RunLoopOptions {
-	/** Absolute path to the worktree the run is bound to. */
+	/** Absolute path to the worktree the run is bound to — where the CODE lives. */
 	worktree: string;
+	/**
+	 * Absolute path to the repository the PLAN lives in, when it is not
+	 * `worktree` (a one-repo workbench — dawn-workbench-execution). The impl,
+	 * the gate scripts, the eval queue and the checkoff commits belong here;
+	 * code edits, bash and code commits belong to `worktree`. Default: `worktree`.
+	 */
+	planRoot?: string;
 	/** Absolute path to the plan's impl.md. Default: `{worktree}/impl.md`. */
 	implPath?: string;
 	/** Injectable model client — tests pass a mock; production omits it. */
@@ -99,6 +109,14 @@ export type RunLoopResult =
 // pending) where 2.5-flash finished in 18. 48 bounds the attempt without
 // starving cautious models; tune per-run via --max-steps.
 const DEFAULT_PHASE_STEPS = 48;
+
+const execFileAsync = promisify(execFile);
+
+/** HEAD of a repository — the code commit a plan-side checkoff attests. */
+async function headOf(repo: string): Promise<string> {
+	const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: repo });
+	return stdout.trim();
+}
 
 /**
  * Derive whether a phase is a human gate — no new marker required. Returns
@@ -172,9 +190,14 @@ function isPhaseDone(phase: ImplPhase, policy: "strict" | "ask" | "auto"): boole
 }
 
 /** The tight per-phase contract handed to the driver — ported from autopilot. */
-function phasePrompt(phase: ImplPhase, implFile: string): string {
+function phasePrompt(phase: ImplPhase, implFile: string, split: boolean): string {
 	return [
 		`Execute ONLY Phase ${phase.number} ("${phase.name}") of the implementation plan in \`${implFile}\`.`,
+		...(split
+			? [
+					`The plan and the code live in different repositories: code paths are relative to the code repository you are working in, and the plan's own folder is addressed as \`${dirname(implFile)}/…\` — those are the only two places you may write.`,
+				]
+			: []),
 		`1. Read \`${implFile}\` first to see the phase's checklist and the Test Trajectory table.`,
 		`2. Work test-first: author the tests for trajectory rows writable at Phase ${phase.number} RED, set their State cells to "written", then implement until green and set them to "passing".`,
 		`3. Complete every Phase ${phase.number} checklist item, checking each off in \`${implFile}\` as you finish it. Items marked "(none needed)" may stay unchecked.`,
@@ -186,24 +209,40 @@ function phasePrompt(phase: ImplPhase, implFile: string): string {
 /** Run the plan's remaining phases through the gated driver, advancing only on green. */
 export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 	const root = resolve(options.worktree);
+	const planRoot = resolve(options.planRoot ?? options.worktree);
+	const split = planRoot !== root;
 	const implPath = options.implPath ? resolve(options.implPath) : join(root, "impl.md");
-	const implFile = relative(root, implPath) || "impl.md";
-	const scripts = options.gate?.scripts ?? resolveGateScripts(root);
+	// The model addresses the impl relative to the repository it lives in: the
+	// code root in a flat project, the plan root across a split.
+	const implFile = relative(split ? planRoot : root, implPath) || "impl.md";
+	const roots: ToolRoots = { codeRoot: root, planRoot, planDir: dirname(implFile) };
+	// Gates are the plan's: their scripts sit at the plan root and they read
+	// the impl there.
+	const scripts = options.gate?.scripts ?? resolveGateScripts(planRoot);
 	const phases: PhaseReport[] = [];
 
 	// Loop-owned commit cadence (A2/A5): commits fire when a gated edit checks
 	// off an impl item; the loop, not the model, owns the git bookkeeping.
-	// Every successful commit feeds the pending-eval queue (A3) — the thin
+	// Every successful CODE commit feeds the pending-eval queue (A3) — the thin
 	// lane's half of the eval rail; a later drain evaluates from any
 	// claude-capable environment (A9: nothing here needs Claude Code).
+	//
+	// Across a split there are two cadences, one per repository, each staging
+	// only its own tree: the code cadence commits the item's code, then the
+	// plan cadence commits the checkoff naming the code HEAD it attests in a
+	// `Code-Commit:` trailer (dawn-workbench-execution A8). The checkoff commit
+	// is not queued — a diff of checkboxes is not work to score.
 	let currentPhase = 0;
 	const planName = basename(dirname(implPath));
-	const cadence = await createCommitCadence({
+	const resolveEditPath = (p: string) => resolveInRoots(roots, p);
+	const codeCadence = await createCommitCadence({
 		worktreeRoot: root,
 		implPath,
+		planName,
 		getPhase: () => currentPhase,
+		resolveEditPath,
 		onCommit: async (record) => {
-			await appendPendingEval(root, {
+			await appendPendingEval(planRoot, {
 				sha: record.sha,
 				plan: planName,
 				phase: record.phase,
@@ -212,10 +251,33 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			});
 		},
 	});
-	if (cadence.disabledReason) {
-		console.error(cadence.disabledReason);
+	if (codeCadence.disabledReason) {
+		console.error(codeCadence.disabledReason);
 	}
-	const gate: RunGateOptions = { ...options.gate, scripts, onGatedApply: cadence.onGatedApply };
+	const planCadence = split
+		? await createCommitCadence({
+				worktreeRoot: planRoot,
+				implPath,
+				planName,
+				getPhase: () => currentPhase,
+				resolveEditPath,
+				pathspec: [roots.planDir],
+				trailer: async () => `Code-Commit: ${await headOf(root)}`,
+			})
+		: null;
+	if (planCadence?.disabledReason) {
+		console.error(planCadence.disabledReason);
+	}
+	const onGatedApply: RunGateOptions["onGatedApply"] = async (name, input) => {
+		await codeCadence.onGatedApply(name, input);
+		await planCadence?.onGatedApply(name, input);
+	};
+	const gate: RunGateOptions = { ...options.gate, scripts, onGatedApply };
+	const cadence = {
+		commits: () => [...codeCadence.commits, ...(planCadence?.commits ?? [])],
+		failures: () => [...codeCadence.failures, ...(planCadence?.failures ?? [])],
+		queueFailures: () => [...codeCadence.queueFailures, ...(planCadence?.queueFailures ?? [])],
+	};
 
 	const initial = parseImplString(await readFile(implPath, "utf8"));
 	if (initial.phases.length === 0) {
@@ -254,7 +316,8 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		// One honest attempt — both gate layers live on every edit tool call.
 		const result = await runDriver({
 			worktree: root,
-			prompt: phasePrompt(phase, implFile),
+			roots: split ? roots : undefined,
+			prompt: phasePrompt(phase, implFile, split),
 			model: options.model,
 			driver: options.driver,
 			maxSteps: options.maxStepsPerPhase ?? DEFAULT_PHASE_STEPS,
@@ -274,7 +337,7 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 		// model's self-report, decides whether the phase closed.
 		const probe = await probePhaseClose({
 			implPath,
-			worktree: root,
+			worktree: planRoot,
 			phase: phase.number,
 			ordinal: phase.ordinal,
 			scripts,
@@ -314,11 +377,13 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			steps: result.steps,
 			toolCalls: result.toolCalls.length,
 			usage: result.usage,
-			commits: cadence.commits.filter((c) => c.phase === phase.number),
-			commitFailures: cadence.failures
+			commits: cadence.commits().filter((c) => c.phase === phase.number),
+			commitFailures: cadence
+				.failures()
 				.filter((f) => f.phase === phase.number)
 				.map((f) => f.message),
-			queueFailures: cadence.queueFailures
+			queueFailures: cadence
+				.queueFailures()
 				.filter((f) => f.phase === phase.number)
 				.map((f) => f.message),
 		});
