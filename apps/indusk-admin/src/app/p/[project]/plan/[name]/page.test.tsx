@@ -22,6 +22,8 @@ vi.mock("next/link", () => {
 });
 
 vi.mock("next/navigation", () => ({
+  // LiveRefresh (the plan page's live wrapper) reads the router.
+  useRouter: () => ({ refresh: () => {} }),
   __esModule: true,
   notFound: () => {
     throw new Error("not found");
@@ -45,6 +47,8 @@ vi.mock("@/lib/planning-reader", () => ({
   readArchivedPlans: async () => [
     { name: "twin", status: "completed", archived: true },
   ],
+  // The plan page reads the live-refresh interval (admin-ui-phase-progress).
+  readAdminRefreshMs: () => 5000,
   readPlanHierarchy: () => ({
     parents: ["parent"],
     roadmap: [],
