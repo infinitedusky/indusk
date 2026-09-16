@@ -181,19 +181,27 @@ export function extractPhases(
 export interface PhaseSplit {
   pre: Phase[];
   falsification: Phase | null;
+  /** Follow-up phases after falsification, the cleanup phase excluded. */
   post: Phase[];
+  /** The first phase whose title starts with the cleanup ritual word, or null. */
+  cleanup: Phase | null;
 }
 
 export function splitPhasesAroundFalsification(phases: Phase[]): PhaseSplit {
-  const word = RITUAL_ORDER[0];
-  const idx = phases.findIndex((p) => p.title.toLowerCase().startsWith(word));
+  const [falsifyWord, cleanupWord] = RITUAL_ORDER;
+  const isRitual = (p: Phase, word: string) =>
+    p.title.toLowerCase().startsWith(word);
+  const cleanup = phases.find((p) => isRitual(p, cleanupWord)) ?? null;
+  const rest = cleanup ? phases.filter((p) => p !== cleanup) : phases;
+  const idx = rest.findIndex((p) => isRitual(p, falsifyWord));
   if (idx === -1) {
-    return { pre: phases, falsification: null, post: [] };
+    return { pre: rest, falsification: null, post: [], cleanup };
   }
   return {
-    pre: phases.slice(0, idx),
-    falsification: phases[idx],
-    post: phases.slice(idx + 1),
+    pre: rest.slice(0, idx),
+    falsification: rest[idx],
+    post: rest.slice(idx + 1),
+    cleanup,
   };
 }
 

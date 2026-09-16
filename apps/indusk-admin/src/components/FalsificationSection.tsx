@@ -49,7 +49,7 @@ export function FalsificationSection({
       >
         <CollapsibleSection
           title="Falsification"
-          defaultOpen={true}
+          defaultOpen={false}
           persistKey={`plan:${plan.name}:section:falsification`}
           copyMarkdown={falsificationLogMarkdown(undefined)}
         >
@@ -74,7 +74,7 @@ export function FalsificationSection({
     >
       <CollapsibleSection
         title="Falsification"
-        defaultOpen={true}
+        defaultOpen={false}
         persistKey={`plan:${plan.name}:section:falsification`}
         headerRight={
           <Badge variant={plan.falsification.complete ? "passing" : "writable"}>
@@ -151,7 +151,7 @@ function FalsificationPhaseSection({
             ) : null}
           </>
         }
-        defaultOpen={true}
+        defaultOpen={false}
         persistKey={`plan:${planName}:section:falsification`}
         headerRight={
           <Badge variant={complete ? "passing" : "writable"}>

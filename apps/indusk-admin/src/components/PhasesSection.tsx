@@ -15,7 +15,7 @@ import { phaseMarkdown } from "@/lib/markdown-export";
 import { type Phase, phaseTitle, type Stage } from "@/lib/phases";
 
 /**
- * An impl's phases, each a collapsible keyed by kind and number, with its
+ * The implementation plan: an impl's phases, each a collapsible keyed by kind and number, with its
  * stages (implementation items, then each gate) shown in the header as a
  * strip of states — done / active / pending / opted-out — so the shape of a
  * phase is readable without opening it. The body holds the trajectory rows
@@ -85,76 +85,82 @@ export function PhasesSection({
 
   return (
     <section className="flex flex-col gap-2" data-testid={testId}>
-      <h2 className="text-base font-semibold text-gray-900">{heading}</h2>
-      <div className="flex flex-col gap-2">
-        {phases.map((phase) => {
-          const key = `${phase.kind}-${phase.number}`;
-          return (
-            <div
-              key={key}
-              data-testid="phase"
-              data-phase={key}
-              data-active={key === activeKey ? "true" : undefined}
-            >
-              <CollapsibleSection
-                title={`${phaseTitle(phase)}${phase.title ? `: ${phase.title}` : ""}`}
-                defaultOpen={false}
-                persistKey={`plan:${planName}:phase:${key}`}
-                copyMarkdown={phaseMarkdown(phase)}
-                headerRight={<StageList stages={phase.stages} />}
+      <CollapsibleSection
+        title={heading}
+        defaultOpen={false}
+        persistKey={`plan:${planName}:section:${testId}`}
+        copyMarkdown={phases.map(phaseMarkdown).join("\n\n---\n\n")}
+      >
+        <div className="flex flex-col gap-2">
+          {phases.map((phase) => {
+            const key = `${phase.kind}-${phase.number}`;
+            return (
+              <div
+                key={key}
+                data-testid="phase"
+                data-phase={key}
+                data-active={key === activeKey ? "true" : undefined}
               >
-                <div className="flex flex-col gap-3">
-                  {phase.trajectoryRows.length > 0 && (
-                    <div data-testid={`phase-${key}-trajectory`}>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>ID</TableHead>
-                            <TableHead>Asserts</TableHead>
-                            <TableHead>Writable at</TableHead>
-                            <TableHead>Passes at</TableHead>
-                            <TableHead>State</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {phase.trajectoryRows.map((row) => (
-                            <TableRow key={row.id}>
-                              <TableCell>
-                                <span className="font-mono text-xs">
-                                  {row.id}
-                                </span>
-                              </TableCell>
-                              <TableCell>{row.asserts}</TableCell>
-                              <TableCell>
-                                {phaseLabel({
-                                  kind: row.writableAtKind,
-                                  number: row.writableAt,
-                                })}
-                              </TableCell>
-                              <TableCell>
-                                {phaseLabel({
-                                  kind: row.passesAtKind,
-                                  number: row.passesAt,
-                                })}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant={stateToBadge(row.state)}>
-                                  {row.state}
-                                </Badge>
-                              </TableCell>
+                <CollapsibleSection
+                  title={`${phaseTitle(phase)}${phase.title ? `: ${phase.title}` : ""}`}
+                  defaultOpen={false}
+                  persistKey={`plan:${planName}:phase:${key}`}
+                  copyMarkdown={phaseMarkdown(phase)}
+                  headerRight={<StageList stages={phase.stages} />}
+                >
+                  <div className="flex flex-col gap-3">
+                    {phase.trajectoryRows.length > 0 && (
+                      <div data-testid={`phase-${key}-trajectory`}>
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>ID</TableHead>
+                              <TableHead>Asserts</TableHead>
+                              <TableHead>Writable at</TableHead>
+                              <TableHead>Passes at</TableHead>
+                              <TableHead>State</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                  <Markdown>{phase.content}</Markdown>
-                </div>
-              </CollapsibleSection>
-            </div>
-          );
-        })}
-      </div>
+                          </TableHeader>
+                          <TableBody>
+                            {phase.trajectoryRows.map((row) => (
+                              <TableRow key={row.id}>
+                                <TableCell>
+                                  <span className="font-mono text-xs">
+                                    {row.id}
+                                  </span>
+                                </TableCell>
+                                <TableCell>{row.asserts}</TableCell>
+                                <TableCell>
+                                  {phaseLabel({
+                                    kind: row.writableAtKind,
+                                    number: row.writableAt,
+                                  })}
+                                </TableCell>
+                                <TableCell>
+                                  {phaseLabel({
+                                    kind: row.passesAtKind,
+                                    number: row.passesAt,
+                                  })}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={stateToBadge(row.state)}>
+                                    {row.state}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                    <Markdown>{phase.content}</Markdown>
+                  </div>
+                </CollapsibleSection>
+              </div>
+            );
+          })}
+        </div>
+      </CollapsibleSection>
     </section>
   );
 }

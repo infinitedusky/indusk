@@ -4,6 +4,7 @@ import { ACTIVITY_LABELS } from "@/components/bars/labels";
 import { PhaseBar } from "@/components/bars/PhaseBar";
 import { PhasesBar } from "@/components/bars/PhasesBar";
 import { PlanBar } from "@/components/bars/PlanBar";
+import { CleanupSection } from "@/components/CleanupSection";
 import { FalsificationSection } from "@/components/FalsificationSection";
 import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
@@ -101,7 +102,7 @@ export function PlanDetail({
       {plan.research && (
         <CollapsibleSection
           title="Research"
-          defaultOpen={!plan.brief}
+          defaultOpen={false}
           persistKey={`plan:${plan.name}:section:research`}
           copyMarkdown={sectionMarkdown("Research", plan.research.content)}
         >
@@ -251,13 +252,16 @@ function ImplSections({ plan }: { plan: Plan }) {
       {split.pre.length > 0 && (
         <PhasesSection
           phases={split.pre}
-          heading="Phases"
+          heading="Implementation Plan"
           testId="phases-section"
           planName={plan.name}
           activeKey={activeKey}
         />
       )}
       <FalsificationSection plan={plan} phase={split.falsification} />
+      {split.cleanup && (
+        <CleanupSection planName={plan.name} phase={split.cleanup} />
+      )}
       {split.post.length > 0 && (
         <PhasesSection
           phases={split.post}
@@ -318,7 +322,7 @@ function BriefSection({
     <section className="flex flex-col gap-2" data-testid="brief-section">
       <CollapsibleSection
         title="Brief"
-        defaultOpen={true}
+        defaultOpen={false}
         persistKey={`plan:${planName}:section:brief`}
         copyMarkdown={sectionMarkdown("Brief", content)}
       >

@@ -122,6 +122,7 @@ export function planMarkdown(plan: Plan): string {
         ? falsificationPhaseMarkdown(split.falsification)
         : falsificationLogMarkdown(plan.falsification),
     );
+    if (split.cleanup) sections.push(phaseMarkdown(split.cleanup));
     for (const phase of split.post) sections.push(phaseMarkdown(phase));
   } else {
     sections.push(falsificationLogMarkdown(plan.falsification));
