@@ -325,7 +325,10 @@ export function derivePhaseActivity(
 	let activity: PhaseActivity = "closed";
 	for (const kind of order) {
 		const items = byStage.get(kind);
-		if (!items || (kind !== "implementation" && items.length === 0)) continue;
+		// A32: a stage with nothing in it is not a stage — the parser always
+		// emits an implementation gate, and an empty one read "implementing
+		// 0 of 0" forever while the active-phase rule said nothing was open.
+		if (!items || items.length === 0) continue;
 		const checked = items.filter((i) => i.checked).length;
 		const total = items.length;
 		const optOut = items.find((i) => i.checked && OPT_OUT.test(i.text));
