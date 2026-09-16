@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MasterBar } from "@/components/bars/MasterBar";
 import { Markdown } from "@/components/Markdown";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
@@ -34,6 +35,12 @@ export function ParentPlanView({
           <Markdown>{masterContent}</Markdown>
         </section>
       )}
+      <MasterBar
+        subplans={subplans.map((entry) => ({
+          name: entry.name,
+          position: entry.plan?.position,
+        }))}
+      />
       <section className="flex flex-col gap-2" data-testid="subplan-cards">
         <h2 className="text-base font-semibold text-gray-900">Subplans</h2>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

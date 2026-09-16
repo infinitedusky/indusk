@@ -27,6 +27,8 @@ interface PhasesSectionProps {
   heading: string;
   testId: string;
   planName: string;
+  /** `kind-number` of the active phase, marked `data-active="true"`. */
+  activeKey?: string | null;
 }
 
 const STAGE_LABEL: Record<Stage["kind"], string> = {
@@ -77,6 +79,7 @@ export function PhasesSection({
   heading,
   testId,
   planName,
+  activeKey = null,
 }: PhasesSectionProps) {
   if (phases.length === 0) return null;
 
@@ -87,7 +90,12 @@ export function PhasesSection({
         {phases.map((phase) => {
           const key = `${phase.kind}-${phase.number}`;
           return (
-            <div key={key} data-testid="phase" data-phase={key}>
+            <div
+              key={key}
+              data-testid="phase"
+              data-phase={key}
+              data-active={key === activeKey ? "true" : undefined}
+            >
               <CollapsibleSection
                 title={`${phaseTitle(phase)}${phase.title ? `: ${phase.title}` : ""}`}
                 defaultOpen={false}

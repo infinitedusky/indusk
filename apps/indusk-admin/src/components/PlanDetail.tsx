@@ -1,3 +1,8 @@
+import { phaseLabel } from "@infinitedusky/indusk-mcp/impl-headings";
+import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
+import { ACTIVITY_LABELS } from "@/components/bars/labels";
+import { PhaseBar } from "@/components/bars/PhaseBar";
+import { PlanBar } from "@/components/bars/PlanBar";
 import { FalsificationSection } from "@/components/FalsificationSection";
 import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
@@ -7,8 +12,13 @@ import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { deriveActivePhase } from "@/lib/active-phase";
 import { planMarkdown, sectionMarkdown } from "@/lib/markdown-export";
-import { extractPhases, splitPhasesAroundFalsification } from "@/lib/phases";
+import {
+  extractPhases,
+  phaseTitle,
+  splitPhasesAroundFalsification,
+} from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanDetailProps {
@@ -66,6 +76,10 @@ export function PlanDetail({
       data-plan-name={plan.name}
     >
       <PlanHeader plan={plan} />
+
+      {plan.position && (
+        <PlanBar position={plan.position} activity={activePhaseLabel(plan)} />
+      )}
 
       {plan.malformed && <MalformedBanner />}
 
@@ -143,18 +157,79 @@ export function PlanDetail({
  * When no impl is present, the PlanDetail top-level still shows a
  * FalsificationSection directly (legacy-log-only path).
  */
+/**
+ * The active phase, by ADR D4: most recent boundary record among open phases,
+ * else the first open phase with a hint. Null when the record file is
+ * malformed — the page shows the error instead of guessing.
+ */
+function activePhaseOf(plan: Plan) {
+  if (!plan.impl || plan.boundaryError) return null;
+  return deriveActivePhase(
+    parseImplString(plan.impl.content).phases,
+    plan.boundaries ?? [],
+  );
+}
+
+/** "verifying Build Phase 2" — the plan bar's label while executing. */
+function activePhaseLabel(plan: Plan): string | null {
+  if (!plan.impl) return null;
+  const active = activePhaseOf(plan);
+  if (!active?.ref) return null;
+  const phase = extractPhases(plan.impl.content, plan.impl.trajectory).find(
+    (p) => p.kind === active.ref?.kind && p.number === active.ref?.number,
+  );
+  if (!phase) return null;
+  return `${ACTIVITY_LABELS[phase.activity]} ${phaseLabel(active.ref)}`;
+}
+
 function ImplSections({ plan }: { plan: Plan }) {
   if (!plan.impl) return null;
   const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
   const split = splitPhasesAroundFalsification(phases);
+  const active = activePhaseOf(plan);
+  const activeKey = active?.ref
+    ? `${active.ref.kind}-${active.ref.number}`
+    : null;
+  const activePhase = activeKey
+    ? phases.find((p) => `${p.kind}-${p.number}` === activeKey)
+    : undefined;
   return (
     <>
+      {plan.boundaryError && (
+        <div
+          role="alert"
+          data-testid="boundary-error"
+          className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+        >
+          The phase-boundary record could not be read, so no phase is marked
+          active: {plan.boundaryError}
+        </div>
+      )}
+      {activePhase && (
+        <section
+          className="flex flex-col gap-1"
+          data-testid="phase-bar-active"
+          data-phase={activeKey}
+        >
+          <h2 className="text-sm font-semibold text-gray-900">
+            Active: {phaseTitle(activePhase)}
+            {activePhase.title ? `: ${activePhase.title}` : ""}
+            {active?.hint ? (
+              <span className="ml-2 text-xs font-normal text-amber-700">
+                ({active.hint} — first open phase in document order)
+              </span>
+            ) : null}
+          </h2>
+          <PhaseBar phase={activePhase} />
+        </section>
+      )}
       {split.pre.length > 0 && (
         <PhasesSection
           phases={split.pre}
           heading="Phases"
           testId="phases-section"
           planName={plan.name}
+          activeKey={activeKey}
         />
       )}
       <FalsificationSection plan={plan} phase={split.falsification} />
@@ -164,6 +239,7 @@ function ImplSections({ plan }: { plan: Plan }) {
           heading="Follow-up Phases"
           testId="followup-phases-section"
           planName={plan.name}
+          activeKey={activeKey}
         />
       )}
     </>

@@ -9,6 +9,7 @@ import {
 } from "@infinitedusky/indusk-mcp/impl-parser";
 import {
   derivePhaseActivity,
+  type PhaseActivity,
   RITUAL_ORDER,
   type StageKind,
   type StageState,
@@ -55,6 +56,8 @@ export interface Phase {
   ordinal: number;
   title: string;
   stages: Stage[];
+  /** What is happening in this phase now — the lifecycle's verb (`closed` when every stage is done). */
+  activity: PhaseActivity;
   /** Every checklist item across the phase's stages. */
   itemCount: number;
   /** Raw markdown content (everything between this phase's heading and the next). */
@@ -139,7 +142,8 @@ export function extractPhases(
         ...gate.items.map((i) => ({ text: i.text, checked: i.checked })),
       ]);
     }
-    const states = implPhase ? derivePhaseActivity(implPhase, null).stages : [];
+    const derived = implPhase ? derivePhaseActivity(implPhase, null) : null;
+    const states = derived?.stages ?? [];
     const stages: Stage[] = states.map((s) => ({
       kind: s.kind,
       state: s.state,
@@ -154,6 +158,7 @@ export function extractPhases(
       ordinal: implPhase?.ordinal ?? 0,
       title: block.title,
       stages,
+      activity: derived?.activity ?? "closed",
       itemCount: stages.reduce((n, s) => n + s.items.length, 0),
       content: block.lines.join("\n").trim(),
       trajectoryRows: trajectory
