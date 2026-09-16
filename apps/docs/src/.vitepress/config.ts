@@ -191,6 +191,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Overview", link: "/decisions/" },
 						{ text: "Admin UI Hosting — Decision Summary", link: "/decisions/admin-ui-hosting" },
+						{ text: "Admin UI Phase Progress — one lifecycle, three bars", link: "/decisions/admin-ui-phase-progress" },
 						{ text: "Cleanup Ritual — Decision Summary", link: "/decisions/cleanup-ritual" },
 						{ text: "Context Beam", link: "/decisions/context-beam" },
 						{ text: "Context System Evaluation", link: "/decisions/context-eval" },

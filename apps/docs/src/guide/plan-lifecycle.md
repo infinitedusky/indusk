@@ -113,11 +113,20 @@ stateDiagram-v2
 </FullscreenDiagram>
 
 **A plan that adds a position, an activity or a gate kind also adds its
-rendering in the admin UI, in the same plan.** The admin's label maps are
-typed against these unions, so a new member fails the type-check, and a
-render-parity test names the member until a renderer exists. That is what
-keeps the UI from drifting behind the system the way its phase parser once
-did.
+rendering in the admin UI, in the same plan** — as a Document gate item in
+the phase that adds the member, so the gate machinery holds it. What the pin
+does when a plan does not: the admin's label maps
+(`apps/indusk-admin/src/components/bars/labels.ts`) are declared `satisfies
+Record<PlanPosition, …>` / `Record<PhaseActivity, …>` / `Record<GateKind, …>`,
+so a union with a new member no longer type-checks, and the admin's
+type-check is itself a test (`typecheck.test.ts`); on top of that,
+`lifecycle-render-parity.test.ts` renders every member of every union and
+fails naming the one with no label. The failure therefore says *which*
+stage is unrendered, not merely that something is. Midnight's `monitor` is
+the first case: listed, labelled, and drawn as pending until Midnight
+derives it. That is what keeps the UI from drifting behind the system the
+way its phase parser once did — for a month, silently, while every impl
+written since August rendered wrong.
 
 ## `monitor` is the load-bearing addition
 
