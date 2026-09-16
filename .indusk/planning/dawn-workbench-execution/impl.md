@@ -132,17 +132,17 @@ Test paths are repo-root-relative.
 - **A6** — the existing flat-project verify suite; green today and must stay so through every phase, which is the whole reason it is a row
 
 #### Test Phase 1 Verification
-- [ ] Every red row red on its own assertion, none on a load error: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/verify/workbench-split.test.ts src/lib/run/workbench-split.test.ts src/__tests__/run-workbench-cli.test.ts src/lib/run/pending-repo-attribution.test.ts src/__tests__/execution-roots-single-definition.test.ts` — expected: A1–A4, A7–A9, A11–A14 failed with the refusal or the missing trailer/field in the message; A5 and both A6 halves green; then `cd` back to the worktree root
-- [ ] A6 green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/verify/verify.test.ts` — expected: all pass
-- [ ] Rows A1–A5, A7–A9, A11–A14 set to `written`; A6 to `passing`
-- [ ] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims?
-- [ ] Shape (Test Phase 1, recorded by hand): review the five test files and the fixture helper against the typescript and testing craft prose
+- [x] Every red row red on its own assertion, none on a load error: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/verify/workbench-split.test.ts src/lib/run/workbench-split.test.ts src/__tests__/run-workbench-cli.test.ts src/lib/run/pending-repo-attribution.test.ts src/__tests__/execution-roots-single-definition.test.ts` — expected: A1–A4, A7–A9, A11–A14 failed with the refusal or the missing trailer/field in the message; A5 and both A6 halves green; then `cd` back to the worktree root — 2026-09-16: 19 failed (A1–A4 + four A13 verify layouts on the refusal; A7, A8 + four A13 run layouts on `stopped-red`; A11 on the refusal text; A12 on two arguments not three; A14's three checks), A5 both halves green, no load errors; A9 deferred rather than kept red for the wrong reason
+- [x] A6 green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/verify/verify.test.ts` — expected: all pass — 2026-09-16: passed in the combined run (the one green file of five)
+- [x] Rows A1–A5, A7–A8, A11–A14 set to `written`; A6 to `passing`; A9 stays `planned` with Writable at Build Phase 3 (deferred, see the register)
+- [x] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims? — A9: uses `planRoot` on `RunLoopOptions` (Build Phase 3 adds it) and the file's own `splitFixture`/`stepsAddressingThePlan`; asserts `stopped-red` naming the rows and that the refused checkoff is absent from the plan repo's impl — the claim. A10: uses the object-form `createWorktreeTools` (Build Phase 3's signature) and `executeOf`/`execOptions` from the harness; asserts a refusal naming both roots for an outside path and success for one inside each root — the claim. A15: a procedure, reviewed against the archive's matrix cell for cell
+- [x] Shape (Test Phase 1, recorded by hand): review the five test files and the fixture helper against the typescript and testing craft prose — the verify file has one fixture builder (`honestPhase`) with two named knobs and one runner (`verifyAt`); the run file has one fixture (`splitFixture`), one step rewriter that re-parses tool inputs rather than string-replacing JSON, one commit reader (`commitsAfter`) and one shared outcome check (`expectSplitOutcome`) the A13 table reuses; the drain, CLI and pin files are single-purpose. Left as is: `run-workbench-cli.test.ts` restates `run-refuses-workbench-root.test.ts`'s key-scrubbing harness — two copies, inter-file, `/cleanup`'s question. Nothing to change
 
 #### Test Phase 1 Context
-- [ ] Known Gotchas, the versioned-workbench fixture entry: the helper now builds four one-repo layouts and exports `LAYOUTS`; a test about "where the code is" runs over all four or it is blind to three
+- [x] Known Gotchas, the versioned-workbench fixture entry: the helper now builds four one-repo layouts and exports `LAYOUTS`; a test about "where the code is" runs over all four or it is blind to three
 
 #### Test Phase 1 Document
-- [ ] `apps/docs/src/changelog.md` Unreleased, Added: "`indusk run` and `indusk verify` execute in a single-repo workbench across the plan-root/code-root split; queued evals name their repo; one shared root resolver behind run, verify and the cleanup scan" (the entry is written now and amended as phases land)
+- [x] `apps/docs/src/changelog.md` Unreleased, Added: "`indusk run` and `indusk verify` execute in a single-repo workbench across the plan-root/code-root split; queued evals name their repo; one shared root resolver behind run, verify and the cleanup scan" (the entry is written now and amended as phases land)
 
 ### Build Phase 1: One resolver
 

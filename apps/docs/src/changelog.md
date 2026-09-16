@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **`indusk run` and `indusk verify` execute in a single-repo workbench** (Dawn 6.5, in progress). The plan's documents live in the workbench and the code in the declared repo; both commands now read the declaration through one shared resolver and judge, edit and commit in the repository each artifact is actually about. Queued evals name the repo their commit landed in. Two declared repos still refuse, by name.
+
 ### Fixed
 - **Hook commands load from any cwd.** Every hook was registered as `node .claude/hooks/<name>.js`, relative to the directory Claude Code runs hooks in, which is the session's current directory; after a Bash call ending in a subdirectory every gate failed to load with a non-blocking exit 1 and was silently off (observed: eight checkoffs passed Gate B with two rows non-terminal). `init` and `update` now register `node "${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/<name>.js`, the host's own project-root variable, and `update` rewrites a command exactly equal to the old form in place, leaving customized commands alone. A session still has to be launched at the project root.
 
