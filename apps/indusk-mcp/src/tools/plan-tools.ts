@@ -91,15 +91,32 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 				content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
 			});
 
-			// Brief → ADR: brief status must be "accepted"
+			// Brief → test plan: brief status must be "accepted"
 			if (plan.stage === "brief") {
 				if (plan.stageStatus === "accepted") {
-					return respond({ allowed: true, transition: "brief → adr", nextStage: "Create adr" });
+					return respond({
+						allowed: true,
+						transition: "brief → test-plan",
+						nextStage: "Create test-plan",
+					});
 				}
 				return respond({
 					allowed: false,
-					transition: "brief → adr",
+					transition: "brief → test-plan",
 					missing: [`Brief status is '${plan.stageStatus}', must be 'accepted'`],
+				});
+			}
+
+			// Test plan → ADR: test plan status must be "accepted" (the stage the
+			// lifecycle's DOCUMENT_POSITIONS added — admin-ui-phase-progress)
+			if (plan.stage === "test-plan") {
+				if (plan.stageStatus === "accepted") {
+					return respond({ allowed: true, transition: "test-plan → adr", nextStage: "Create adr" });
+				}
+				return respond({
+					allowed: false,
+					transition: "test-plan → adr",
+					missing: [`Test plan status is '${plan.stageStatus}', must be 'accepted'`],
 				});
 			}
 
