@@ -15,7 +15,7 @@ import {
 	deregisterAdminRoute,
 	registerAdminRoute,
 } from "../../lib/admin/proxy-route.js";
-import { readRegistry } from "../../lib/admin/registry.js";
+import { pruneRegistry, readRegistry } from "../../lib/admin/registry.js";
 
 /**
  * Resolve the browser URL path for a fresh `indusk ui` invocation. If the
@@ -250,4 +250,23 @@ function openBrowser(url: string): void {
 	const cmd =
 		process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
 	spawn(cmd, [url], { stdio: "ignore", detached: true }).unref();
+}
+
+/**
+ * `indusk ui prune [--dry-run]` — remove registry entries whose path is gone.
+ * Names every entry it removes (or would remove) with its path, so the
+ * output is the audit trail; the backup path is printed when one is written.
+ */
+export async function uiPrune(opts: { dryRun: boolean }): Promise<void> {
+	const result = pruneRegistry({ dryRun: opts.dryRun });
+	if (result.removed.length === 0) {
+		console.info(`Registry clean: ${result.kept.length} project(s), none with a missing path.`);
+		return;
+	}
+	console.info(
+		`${opts.dryRun ? "Would remove" : "Removed"} ${result.removed.length} entr${result.removed.length === 1 ? "y" : "ies"} whose path no longer exists:`,
+	);
+	for (const entry of result.removed) console.info(`  ${entry.name}  ${entry.path}`);
+	console.info(`Kept ${result.kept.length}.`);
+	if (result.backup) console.info(`Backup written to ${result.backup}`);
 }

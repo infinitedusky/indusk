@@ -409,6 +409,15 @@ uiCmd
 	});
 
 uiCmd
+	.command("prune")
+	.description("Remove registry entries whose project path no longer exists (backs up first)")
+	.option("--dry-run", "List what would be removed and write nothing")
+	.action(async (opts: { dryRun?: boolean }) => {
+		const { uiPrune } = await import("./commands/ui.js");
+		await uiPrune({ dryRun: opts.dryRun === true });
+	});
+
+uiCmd
 	.command("restart")
 	.description(
 		"Stop the admin UI daemon (if running) and start it again — picks up a new bundle from `npm i -g`",
