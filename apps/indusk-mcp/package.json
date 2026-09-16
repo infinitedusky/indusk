@@ -38,6 +38,10 @@
       "types": "./dist/lib/cleanup/gate.d.ts",
       "default": "./dist/lib/cleanup/gate.js"
     },
+    "./worktree/repos": {
+      "types": "./dist/lib/worktree/repos.d.ts",
+      "default": "./dist/lib/worktree/repos.js"
+    },
     "./worktree/validate-config": {
       "types": "./dist/lib/worktree/validate-config.d.ts",
       "default": "./dist/lib/worktree/validate-config.js"
