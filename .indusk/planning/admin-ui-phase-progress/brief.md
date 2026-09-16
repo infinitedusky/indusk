@@ -131,6 +131,21 @@ Test Phase 1: authoring red / done
 Build Phase N: implementing → verifying → context → documenting → closed
 ```
 
+**Positions and activities are different kinds of state (Sandy, 2026-09-16).**
+The plan bar is made of *positions* — nouns, facts about which documents
+exist and what their status says: brief accepted, ADR proposed, impl approved,
+archived. Nothing is happening in a position; it records where the plan
+stands. The phase bar is made of *activities* — verbs, present tense: authoring
+Test Phase 1 red, implementing Build Phase 2, verifying it, documenting it,
+falsifying, cleaning up. Something is happening now, and it happens inside
+exactly one position, *executing*, because that is the only stretch of the
+lifecycle that leaves observable traces on disk every few minutes (checkboxes,
+boundary records). Before the impl the work is conversation and disk records
+only its outcomes; after archive nothing moves. So: the plan bar shows nouns;
+the executing position expands into the phase bar, which names the current
+activity as a verb; the lifecycle definition carries both vocabularies so a
+plan can never render as "archived" and "verifying" at once.
+
 **A caution for the ADR.** A bar implies steps of similar size and they are
 not — research through ADR is conversation, `/work` is most of the calendar
 time. Either weight the impl segment by phase count or state plainly that the
