@@ -37,6 +37,7 @@ Every paper has an outline beside it, the way `thesis-outline.md` sits beside `t
 - Outline before draft. A draft without an outline is a draft nobody can judge against anything.
 - When the draft moves, the outline moves in the same turn, or say plainly that the outline is stale. An outline went stale within two turns of the conversation that produced this skill; this rule is what came of it.
 - The outline is where the arc is tested: does each section earn its verdict, does the close land as a finding, where does the paper depend on a term the reader does not have.
+- **Short pieces get the same discipline one level down.** For anything short that will be sent or submitted in the user's name (an application field, a cover note, a message), the outline is a numbered list of sentence jobs, not paragraphs. Before writing it, state the reader's prompt and its constraints: a direct question wants its answer in sentence one; an open box needs a framing sentence, because the reader does not know what is coming. Then one line per sentence saying what it does for the reader, one candidate sentence under each job drawn from the record or the user's own dictation, and only then does the user write the sentences. The agent repairs and strips tells; it flags a move it would drop rather than dropping it. Lock sentences one at a time, dated, in the working file. A wrong sentence is then caught as "wrong job," which is arguable, instead of "sounds off," which is not. See the lesson `community-plan-content-as-sentence-jobs-before-writing`.
 
 ## Stance
 
