@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { stat } from "node:fs/promises";
 import { join } from "node:path";
 import { changedPathsPartitioned } from "../git.js";
+import { type PhaseAddress, phaseLabel } from "../impl-headings.js";
 import { findPhaseStart, readBoundaries } from "./boundary.js";
 
 /**
@@ -76,12 +77,12 @@ async function untrackedDuringPhase(
 export async function changedFilesForPhase(options: {
 	root: string;
 	plan: string;
-	phase: number;
+	phase: PhaseAddress;
 }): Promise<string[]> {
 	const start = findPhaseStart(await readBoundaries(options.root), options.plan, options.phase);
 	if (start === null) {
 		throw new Error(
-			`No phase-boundary record for ${options.plan} phase ${options.phase} — the phase was never opened, so its changes cannot be scoped. Refusing to review the whole tree.`,
+			`No phase-boundary record for ${options.plan} ${phaseLabel(options.phase)} — the phase was never opened, so its changes cannot be scoped. Refusing to review the whole tree.`,
 		);
 	}
 

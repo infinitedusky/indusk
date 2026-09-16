@@ -34,9 +34,12 @@ export function findHeadingIndex(lines: string[], pattern: RegExp): number {
  * alone while `/planner` started emitting `### Build Phase N`, and Shape
  * silently found no phase at all in every newly-authored impl.
  *
- * Note it deliberately does not match `### Test Phase N`: a test phase writes
- * tests, not the code Shape reviews, and matching it would land a finding in
- * the other sequence's phase N.
+ * It takes a `PhaseAddress`: a `{kind, number}` reference, or a bare number
+ * meaning the build phase (`### Phase N` shorthand). A test phase is addressed
+ * as `{ kind: "test", number }` — it used to be unreachable here on the theory
+ * that a test phase writes no code to review, which left Shape unable to
+ * record anything against a phase that authors ten test files
+ * (`shape-cannot-see-test-phases`; admin-ui-phase-progress A18).
  */
 export const phaseHeading = buildPhaseHeadingFor;
 

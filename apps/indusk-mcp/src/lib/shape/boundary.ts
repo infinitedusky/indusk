@@ -1,5 +1,6 @@
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { type PhaseAddress, type PhaseKind, type PhaseRef, toPhaseRef } from "../impl-headings.js";
 
 /**
  * The phase-boundary record — where a phase began.
@@ -18,6 +19,13 @@ import { dirname, join } from "node:path";
 export interface PhaseBoundaryRecord {
 	plan: string;
 	phase: number;
+	/**
+	 * Which sequence `phase` numbers. **Absent means `build`** — every record
+	 * written before admin-ui-phase-progress was a build phase, because Shape
+	 * could not open a test phase then. A rule the reader states, not a
+	 * migration: no file is rewritten.
+	 */
+	kind?: PhaseKind;
 	/** The commit the phase opened at. */
 	sha: string;
 	timestamp: string;
@@ -93,16 +101,18 @@ function isBoundaryRecord(value: unknown): value is PhaseBoundaryRecord {
  */
 export async function recordPhaseStart(
 	root: string,
-	record: { plan: string; phase: number; sha: string; at: string },
+	record: { plan: string; phase: number; kind?: PhaseKind; sha: string; at: string },
 ): Promise<void> {
+	const ref: PhaseRef = { kind: record.kind ?? "build", number: record.phase };
 	const existing = await readBoundaries(root);
-	if (findPhaseStart(existing, record.plan, record.phase) !== null) return;
+	if (findPhaseStart(existing, record.plan, ref) !== null) return;
 
 	const path = boundaryPath(root);
 	await mkdir(dirname(path), { recursive: true });
 	const line: PhaseBoundaryRecord = {
 		plan: record.plan,
 		phase: record.phase,
+		...(record.kind ? { kind: record.kind } : {}),
 		sha: record.sha,
 		timestamp: record.at,
 	};
@@ -123,10 +133,17 @@ export async function recordPhaseStart(
 export function findPhaseStart(
 	records: PhaseBoundaryRecord[],
 	plan: string,
-	phase: number,
+	phase: PhaseAddress,
 ): PhaseBoundaryRecord | null {
+	const ref = toPhaseRef(phase);
 	for (const record of records) {
-		if (record.plan === plan && record.phase === phase) return record;
+		if (
+			record.plan === plan &&
+			record.phase === ref.number &&
+			(record.kind ?? "build") === ref.kind
+		) {
+			return record;
+		}
 	}
 	return null;
 }

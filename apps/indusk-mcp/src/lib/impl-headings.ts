@@ -49,13 +49,38 @@ export const PHASE_HEADING = new RegExp(`^${BUILD_PHASE}\\s+(\\d+)[:\\s]+(.*)`);
  * `/planner` began emitting `### Build Phase N`, Shape found no phase at all
  * and appended its findings nowhere — silently.
  */
-export function buildPhaseHeadingFor(phase: number): RegExp {
-	return new RegExp(`^${BUILD_PHASE}\\s+${phase}\\b`);
+export function buildPhaseHeadingFor(phase: PhaseAddress): RegExp {
+	const ref = toPhaseRef(phase);
+	if (ref.kind === "test") return new RegExp(`^###\\s+Test\\s+Phase\\s+${ref.number}\\b`);
+	return new RegExp(`^${BUILD_PHASE}\\s+${ref.number}\\b`);
 }
 
-/** `#### Phase N <Gate>` for one specific phase, either build spelling. */
-export function gateHeadingFor(phase: number, gate: string): RegExp {
-	return new RegExp(`^####\\s+(?:Build\\s+)?Phase\\s+${phase}\\s+${gate}\\b`);
+/** `#### Phase N <Gate>` for one specific phase, in that phase's spelling. */
+export function gateHeadingFor(phase: PhaseAddress, gate: string): RegExp {
+	const ref = toPhaseRef(phase);
+	if (ref.kind === "test") {
+		return new RegExp(`^####\\s+Test\\s+Phase\\s+${ref.number}\\s+${gate}\\b`);
+	}
+	return new RegExp(`^####\\s+(?:Build\\s+)?Phase\\s+${ref.number}\\s+${gate}\\b`);
+}
+
+/**
+ * How a caller names one phase: a `{kind, number}` reference, or a bare
+ * number, which means the build phase of that number — the same shorthand
+ * `### Phase N` is for `### Build Phase N`. A bare number can never name a
+ * test phase; that is the ambiguity `PhaseRef` exists to remove
+ * (admin-ui-phase-progress, ADR D2).
+ */
+export type PhaseAddress = PhaseRef | number;
+
+export function toPhaseRef(address: PhaseAddress): PhaseRef {
+	return typeof address === "number" ? { kind: "build", number: address } : address;
+}
+
+/** `Test Phase 1` / `Build Phase 2` — for messages and appended notes. */
+export function phaseLabel(address: PhaseAddress): string {
+	const ref = toPhaseRef(address);
+	return `${ref.kind === "test" ? "Test" : "Build"} Phase ${ref.number}`;
 }
 
 /**
