@@ -29,7 +29,9 @@ Mechanisms used here:
   assertions need a browser on top of it — a new harness, or these two rows
   become manual smokes if it proves too heavy; decided in the ADR).
 - **corpus** — node test that runs the new reader over every impl in
-  `.indusk/planning/` and `.indusk/planning/archive/` (52 plans today).
+  `.indusk/planning/` and `.indusk/planning/archive/` (83 plan folders today,
+  5 active and 78 archived; those without an impl are exercised by the
+  plan-bar rows only).
 
 ## Behavioral Assertions
 
@@ -97,7 +99,7 @@ Mechanisms used here:
   manual smokes with a written procedure, and the ADR says so.
 - A3 and A13 are parity rows over the corpus: they exist so that swapping the
   admin onto the package parser and the package onto the lifecycle definition
-  changes nothing for the 52 plans that exist today.
+  changes nothing for the 83 plan folders that exist today.
 - A6's rule for "active" is deliberately stated in the assertion so the ADR
   cannot leave it implicit — the research found every silent fallback in this
   area over-reports, and the UI must not invent an active phase.
