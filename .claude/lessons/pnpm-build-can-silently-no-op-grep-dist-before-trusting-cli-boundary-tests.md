@@ -1,0 +1,7 @@
+# `pnpm --filter <pkg> build` can return success without rebuilding — before trusting a CLI-boundary test's red or green result, grep the actual file in `dist/` for the change you expect
+
+In a fresh worktree, `pnpm --filter @infinitedusky/indusk-mcp build` returned exit 0 without actually rebuilding — `dist/`'s timestamp and contents were unchanged, and nothing printed an error. CLI-boundary tests that spawn the built `dist/bin/cli.js` (the `SHOULD_SKIP`-gated pattern used throughout `apps/indusk-mcp/src/__tests__/`) then stayed red against stale output for a full test-authoring cycle, because a red result is exactly what "the fix isn't built yet" and "the build silently no-op'd" both look like from the test's perspective.
+
+`pnpm exec tsc` run directly inside the package did rebuild correctly, so the discrepancy is specific to how the `build` script or its caching (likely Turborepo) decided there was nothing to do.
+
+How to apply: whenever a CLI-boundary test's result depends on a just-run build — especially in a fresh worktree, right after `pnpm install`, or after switching branches — grep the actual file inside `dist/` for the specific change you expect to see there before trusting the test's exit code. A build that silently no-ops is indistinguishable from a real build by exit code alone, and the failure mode compounds with `read-verification-output-not-just-exit-code` (an existing lesson): the test's exit code alone can't tell you which of "still buggy" or "build didn't run" is true.

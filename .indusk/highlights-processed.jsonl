@@ -232,3 +232,7 @@
 {"id":"h-20260915-010","processedAt":"2026-09-16T16:13:39.108Z","action":"skipped","detail":"recorded in dawn-workbench-execution/brief.md"}
 {"id":"h-20260915-011","processedAt":"2026-09-16T16:13:39.878Z","action":"skipped","detail":"recorded in dawn-workbench-execution/test-plan.md"}
 {"id":"h-20260915-012","processedAt":"2026-09-16T16:13:40.434Z","action":"skipped","detail":"recorded in dawn-workbench-execution/adr.md"}
+{"id":"h-20260915-009","processedAt":"2026-09-15T23:13:50.047Z","action":"wrote-episode","detail":"pnpm-build-can-silently-no-op-grep-dist-before-trusting-cli-boundary-tests"}
+{"id":"h-20260915-010","processedAt":"2026-09-15T23:13:50.767Z","action":"skipped","detail":"recorded in dawn-workbench-execution/brief.md"}
+{"id":"h-20260915-011","processedAt":"2026-09-15T23:13:51.496Z","action":"skipped","detail":"recorded in dawn-workbench-execution/test-plan.md"}
+{"id":"h-20260915-012","processedAt":"2026-09-15T23:13:52.090Z","action":"skipped","detail":"recorded in dawn-workbench-execution/adr.md"}
