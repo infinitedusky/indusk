@@ -2,7 +2,8 @@
 title: "Admin UI Phase Progress — see the phases and their stages while work runs"
 date: 2026-09-03
 revised: 2026-09-16
-status: draft
+status: accepted
+accepted: 2026-09-16
 ---
 
 # Admin UI Phase Progress — Brief
