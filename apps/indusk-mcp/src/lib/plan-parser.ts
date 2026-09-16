@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "./config.js";
+import { fencedLineMask } from "./impl-headings.js";
 import { DOCUMENT_POSITIONS } from "./lifecycle.js";
 import {
 	leastAdvancedPaperStatus,
@@ -347,13 +348,28 @@ export function parseAllPlans(projectRoot: string): PlanSummary[] {
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** The root master's display title: frontmatter `title`, else its first `# ` heading, else "master". */
+/**
+ * The root master's display title: frontmatter `title`, else the first `# `
+ * heading of the document BODY, else "master".
+ *
+ * The body, not the raw file (A28): the real root master carries `# …` YAML
+ * comment lines inside its frontmatter, and a raw-file match titled the whole
+ * sidebar with the first of them. Fenced code is masked for the same reason —
+ * a shell comment is not a heading.
+ */
 function rootTitle(masterPath: string, data: Record<string, unknown> | null): string {
 	const declared = data?.title;
 	if (typeof declared === "string" && declared.trim() !== "") return declared.trim();
 	try {
-		const heading = readFileSync(masterPath, "utf-8").match(/^#\s+(.+)$/m);
-		if (heading) return heading[1].trim();
+		const raw = readFileSync(masterPath, "utf-8");
+		const body = raw.startsWith("---") ? matter(raw).content : raw;
+		const lines = body.split("\n");
+		const fenced = fencedLineMask(lines);
+		for (const [i, line] of lines.entries()) {
+			if (fenced[i]) continue;
+			const heading = line.match(/^#\s+(.+)$/);
+			if (heading) return heading[1].trim();
+		}
 	} catch {
 		// unreadable — fall through to the folder-ish default
 	}
