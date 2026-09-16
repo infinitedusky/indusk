@@ -160,6 +160,23 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 				});
 			}
 
+			// A plan `completed` for more than seven days with no retrospective is an
+			// ERROR, not a pending item: the makeover sat 53 days in a queue labelled
+			// "any time" with every system working as designed. Health is read at
+			// every catchup — the one place visibility becomes a trigger.
+			const { findStaleCompletedPlans, STALE_COMPLETED_DAYS } = await import(
+				"../lib/stale-completed.js"
+			);
+			for (const stale of findStaleCompletedPlans(projectRoot)) {
+				checks.push({
+					name: `plan/stale-completed-${stale.plan}`,
+					status: "error",
+					detail:
+						`${stale.plan} has been impl-complete for ${stale.daysAgo} days (since ${stale.since}) with no retrospective — ` +
+						`run /falsify, /cleanup and /retrospective ${stale.plan}, or archive it with a closed_reason. (grace: ${STALE_COMPLETED_DAYS} days)`,
+				});
+			}
+
 			const healthy = checks.every((c) => c.status === "ok");
 
 			return {

@@ -1,3 +1,4 @@
+import { phaseExists, phaseSequence } from "../impl-headings.js";
 import type { DeferredRow, Trajectory, TrajectoryRow } from "./parser.js";
 import { parseTrajectory } from "./parser.js";
 
@@ -128,14 +129,55 @@ export function resolveTestIdCommand(trajectory: Trajectory, id: string): TestId
 	return { id, asserts: row.asserts, fileGlob, suggestedCommand };
 }
 
+export interface NonTerminalRowFinding {
+	row: TrajectoryRow;
+	message: string;
+}
+
+/**
+ * The states a row may end a plan in. `check-gates` uses the same three for
+ * Gate B; `TERMINAL_STATES` in the parser is a different set (it includes
+ * `written` — "authored", which is terminal for the test-first duty and not
+ * for a close).
+ */
+const CLOSE_TERMINAL_STATES: ReadonlySet<string> = new Set(["passing", "skipped", "blocked"]);
+
+/**
+ * Close-out audit: rows that are not terminal although the phase they pass at
+ * exists in the document.
+ *
+ * workbench-trust-fixes closed with two rows still `written` after eight phase
+ * closes; `checkRetrospectiveReadiness` walked the ritual phases' checkboxes
+ * and `auditPlanAtClose` reported `blocked` rows only, so a row left `written`
+ * was invisible to both — while the retrospective skill promised "every row
+ * terminal". A row whose `Passes at` names a phase the document does not have
+ * is a forward reference and is not counted, the same rule `check-gates`
+ * applies (carried into dawn-workbench-execution from hook-cwd-independence).
+ */
+export function findNonTerminalRows(trajectory: Trajectory, body: string): NonTerminalRowFinding[] {
+	const sequence = phaseSequence(body);
+	return trajectory.rows
+		.filter(
+			(row) =>
+				phaseExists({ kind: row.passesAtKind, number: row.passesAt }, sequence) &&
+				!CLOSE_TERMINAL_STATES.has(row.state),
+		)
+		.map((row) => ({
+			row,
+			message: `Row ${row.id} is still '${row.state}' although ${row.passesAtKind === "test" ? "Test " : ""}Phase ${row.passesAt} exists — a plan does not close with a row that never reached passing, skipped or blocked`,
+		}));
+}
+
 /** Convenience — parse + audit + resolve in one call for the retrospective skill. */
 export function auditPlanAtClose(body: string): {
 	deferred: MitigationClassification[];
 	blocked: BlockedRowFinding[];
+	nonTerminal: NonTerminalRowFinding[];
 } {
 	const trajectory = parseTrajectory(body);
 	return {
 		deferred: auditDeferredMitigations(trajectory),
 		blocked: findBlockedRows(trajectory),
+		nonTerminal: findNonTerminalRows(trajectory, body),
 	};
 }

@@ -4,6 +4,8 @@ import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { parsePhaseHeading } from "../impl-headings.js";
+import { findNonTerminalRows } from "../trajectory/audit.js";
+import { parseTrajectory } from "../trajectory/parser.js";
 
 export interface SkipCheck {
 	skipped: boolean;
@@ -99,8 +101,12 @@ export function isCleanupComplete(planRoot: string): boolean {
 export interface RetrospectiveReadiness {
 	falsificationOk: boolean;
 	cleanupOk: boolean;
+	/** Every trajectory row whose phase exists is terminal (passing, skipped, blocked). */
+	rowsOk: boolean;
+	/** The rows that are not, by id — what the skill's refusal names. */
+	nonTerminalRows: string[];
 	passes: boolean;
-	/** Names of the rituals not yet satisfied (subset of ["falsification", "cleanup"]). */
+	/** What is not yet satisfied (subset of ["falsification", "cleanup", "rows"]). */
 	missing: string[];
 }
 
@@ -123,8 +129,22 @@ export function checkRetrospectiveReadiness(
 		isFalsificationSkipped(implContent).skipped ||
 		isFalsificationPhaseTerminal(implContent);
 	const cleanupOk = isCleanupComplete(planRoot) || isCleanupSkipped(implContent).skipped;
+	// The check the skill's text always promised and the code never performed:
+	// a row left `written` after its phase closed is invisible to the two
+	// ritual walks above, which see checkboxes and not rows.
+	const body = matter(implContent).content;
+	const nonTerminalRows = findNonTerminalRows(parseTrajectory(body), body).map((f) => f.row.id);
+	const rowsOk = nonTerminalRows.length === 0;
 	const missing: string[] = [];
 	if (!falsificationOk) missing.push("falsification");
 	if (!cleanupOk) missing.push("cleanup");
-	return { falsificationOk, cleanupOk, passes: missing.length === 0, missing };
+	if (!rowsOk) missing.push("rows");
+	return {
+		falsificationOk,
+		cleanupOk,
+		rowsOk,
+		nonTerminalRows,
+		passes: missing.length === 0,
+		missing,
+	};
 }

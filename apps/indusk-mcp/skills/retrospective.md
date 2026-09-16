@@ -32,7 +32,7 @@ Work through these steps in order. Each step is blocking — do not skip ahead.
 
 **This gate blocks everything below. Do not proceed to Step 1 until it passes.**
 
-Before writing a single word of the retrospective, confirm that the plan has completed **both** closing rituals — falsification **and** cleanup. Each is satisfied either via its phase-authoring flow (a Falsification Phase / a `### Phase N: Cleanup` phase, both terminal in impl.md), via a legacy sidecar log (falsification only), or via an explicit skip-reason frontmatter pair. **Both must pass.** The composed check is `checkRetrospectiveReadiness(planRoot, implContent)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`) — it returns `{ passes, missing }`, where `missing` names any unsatisfied ritual.
+Before writing a single word of the retrospective, confirm that the plan has completed **both** closing rituals — falsification **and** cleanup. Each is satisfied either via its phase-authoring flow (a Falsification Phase / a `### Phase N: Cleanup` phase, both terminal in impl.md), via a legacy sidecar log (falsification only), or via an explicit skip-reason frontmatter pair. **Both must pass.** The composed check is `checkRetrospectiveReadiness(planRoot, implContent)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`) — it returns `{ passes, missing, nonTerminalRows }`, where `missing` names any unsatisfied ritual and, since dawn-workbench-execution, `rows` when a trajectory row whose `Passes at` phase exists in the document is not terminal (`passing`, `skipped` or `blocked`); `nonTerminalRows` names them. That row check is the condition the text below always described and the code did not perform until workbench-trust-fixes closed with two rows still `written`.
 
 **Falsification** is satisfied by any of the three conditions below.
 
@@ -121,9 +121,12 @@ import { auditPlanAtClose } from "./audit.js";
 const result = auditPlanAtClose(implBody);
 // result.deferred: MitigationClassification[] — one per Deferred Verification row
 // result.blocked: BlockedRowFinding[] — rows ending in `blocked` state
+// result.nonTerminal: NonTerminalRowFinding[] — rows still planned/written although their phase exists
 ```
 
 For each finding, act on it:
+
+- **Non-terminal rows** — a row still `planned` or `written` in a phase that exists means a phase closed over an open row (the gate that should have refused was off, or the row was never authored). Step 0 already refuses on these; if one reaches this audit, close it honestly: run its test and set `passing`, or `skipped` with the reason, or `blocked` and resolve as below. Never edit the state to make the audit quiet.
 
 - **Blocked rows** — these ended the plan unresolved. For each: either (a) fix the test and update State to `passing` as a retroactive phase-close, (b) move the row's `Passes at` to a later plan with a link, or (c) promote to Deferred Verification with a real mitigation. Do not leave blocked rows unresolved — they're a debt flag.
 - **Deferred rows with vague mitigations** (`warning` non-null) — the mitigation text was too short or unclassifiable. Propose a more concrete commitment: a specific OTel metric name, a named review owner with cadence, a linked plan ID, a documented canary procedure. Update the impl.md's Deferred Verification row before archiving.
