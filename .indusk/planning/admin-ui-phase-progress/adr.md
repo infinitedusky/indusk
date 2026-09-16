@@ -1,7 +1,8 @@
 ---
 title: "Admin UI Phase Progress — one lifecycle definition, rendered as three bars that fill"
 date: 2026-09-16
-status: proposed
+status: accepted
+accepted: 2026-09-16
 ---
 
 # Admin UI Phase Progress — one lifecycle definition, rendered as three bars that fill
