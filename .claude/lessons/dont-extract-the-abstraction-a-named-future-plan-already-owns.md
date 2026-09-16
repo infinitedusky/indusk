@@ -6,4 +6,4 @@ workbench-trust-fixes wrote the same "this is a workbench, its code lives in X" 
 
 **How to apply:** before extracting on the rule of three, check whether a specific, already-scoped plan is the designated owner of that consolidation. If yes: leave the duplication, and record the decision with its reason at the site (or in the plan) so the next reader — including the plan that will do the real extraction — can see it was a deliberate deferral, not an oversight. This is the closing half of `one-resolution-function-per-shared-relationship`: knowing a shared relationship needs one resolver doesn't mean THIS commit is where that resolver gets built, if a better-scoped commit already claims the job.
 
-See `.indusk/planning/workbench-trust-fixes/` and `.indusk/planning/dawn-workbench-execution/` (`resolveExecutionRoots`) for the concrete case.
+See `.indusk/planning/archive/workbench-trust-fixes/` and `.indusk/planning/archive/dawn-workbench-execution/` (`resolveExecutionRoots`) for the concrete case.

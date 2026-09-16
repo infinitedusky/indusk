@@ -80,7 +80,7 @@ authority, this is only the order: **6.5 → (component-4 "thin" ADR, paper) →
 
 | Component | Sub-plan | Stage |
 |-----------|----------|-------|
-| 6.5 workbench execution | [dawn-workbench-execution](dawn-workbench-execution/brief.md) | **impl complete 2026-09-16** — one resolver behind run/verify/cleanup, verify judges the code repo, the loop carries two roots with a cadence per repo, evals name their repo; matrix held inside a workbench (5/5, 0 false positives). Close-out rituals pending. hook-cwd-independence landed first (2026-09-15) |
+| 6.5 workbench execution | [dawn-workbench-execution](archive/dawn-workbench-execution/brief.md) | **closed 2026-09-16** (19 rows green, falsified 3, cleaned, retrospective, archived) — one resolver behind run/verify/cleanup, verify judges the code repo, the loop carries two roots with a cadence per repo, evals name their repo; matrix held inside a workbench (5/5, 0 false positives). hook-cwd-independence landed first (2026-09-15) |
 | 4 harness stays thin | ADR under indusk-v2-dawn | unwritten (paper only) |
 | 7 agent integration | dawn-agents | not created — create with `/planner` when 6.5 closes; closes U1 via a non-Claude model |
 | 8 Linear substrate | dawn-linear | not created |
