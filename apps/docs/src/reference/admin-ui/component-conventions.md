@@ -185,6 +185,26 @@ beforeEach(() => {
 
 See `apps/indusk-admin/src/components/PlanDetail.test.tsx` for a reference implementation.
 
+### Trajectory-row fixtures carry both kind fields
+
+A hand-written `TrajectoryRow` needs `writableAtKind` and `passesAtKind` (`"test"` or `"build"`) beside `writableAt` / `passesAt`. The parser made the kind fields required when impls gained two phase sequences (test-phase-structure, 2026-08-12); the admin's fixtures were never updated, and the admin's `tsc --noEmit` stayed red for a month with nothing noticing.
+
+```ts
+{
+  id: "T1",
+  asserts: "Dropdown renders in header",
+  writableAt: 1,
+  writableAtKind: "build",
+  passesAt: 1,
+  passesAtKind: "build",
+  state: "passing",
+}
+```
+
+### The type-check is a test the suite runs
+
+`src/__tests__/typecheck.test.ts` spawns `pnpm exec tsc --noEmit -p .` and asserts exit 0. It lives in the node project so that `pnpm test` — the command every phase's Verification runs — is what keeps the admin type-clean. A test written against a component that does not exist yet must not break it: widen the not-yet-existing props through `unknown` (`as unknown as Parameters<typeof Component>[0]`) with a comment naming the phase that lands them, so the row is red on its assertion rather than on a compile error. `// @ts-expect-error` is the wrong tool here — spread object literals skip excess-property checks, so the directive reads as unused and fails the type-check itself.
+
 ### Rationale
 
 Without persistence, every navigation reopens the Brief, the ADR, and every phase — each of which is long prose. Users close sections once they've read them; re-opening on every visit is a papercut that compounds. The `localStorage` approach is simple (no server round-trip, no schema), per-user (localStorage is browser-local), and scopable (per-plan keys mean navigation to another plan doesn't clobber state).
