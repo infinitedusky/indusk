@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "./config.js";
+import { DOCUMENT_POSITIONS } from "./lifecycle.js";
 import {
 	leastAdvancedPaperStatus,
 	type PaperSummary,
@@ -29,6 +30,7 @@ export interface PlanFrontmatter {
 export type PlanStage =
 	| "research"
 	| "brief"
+	| "test-plan"
 	| "adr"
 	| "impl"
 	| "retrospective"
@@ -51,13 +53,9 @@ export interface PlanSummary {
 	parseError?: { file: string; message: string };
 }
 
-const STAGE_ORDER: Exclude<PlanStage, "unknown" | "malformed">[] = [
-	"research",
-	"brief",
-	"adr",
-	"impl",
-	"retrospective",
-];
+// The document stages, in order, are the lifecycle's `DOCUMENT_POSITIONS`
+// (`lib/lifecycle.ts`) — one definition, read here and by the admin. It
+// includes `test-plan`, which the private order this replaced walked past.
 
 interface ParseFrontmatterResult {
 	frontmatter: PlanFrontmatter | null;
@@ -135,8 +133,8 @@ function determineStage(
 	parseError?: { file: string; message: string };
 } {
 	// Walk stages in reverse to find the most advanced document
-	for (let i = STAGE_ORDER.length - 1; i >= 0; i--) {
-		const stage = STAGE_ORDER[i];
+	for (let i = DOCUMENT_POSITIONS.length - 1; i >= 0; i--) {
+		const stage = DOCUMENT_POSITIONS[i];
 		const file = `${stage}.md`;
 		if (docs.includes(file)) {
 			const result = parseFrontmatter(join(planDir, file));
@@ -163,10 +161,10 @@ function determineNextStep(
 	}
 	if (stage === "unknown") return "Create a brief";
 
-	const idx = STAGE_ORDER.indexOf(stage as Exclude<PlanStage, "unknown" | "malformed">);
+	const idx = DOCUMENT_POSITIONS.indexOf(stage as (typeof DOCUMENT_POSITIONS)[number]);
 
 	if (stageStatus === "completed" || stageStatus === "accepted") {
-		const next = STAGE_ORDER[idx + 1];
+		const next = DOCUMENT_POSITIONS[idx + 1];
 		if (next) return `Create ${next}`;
 		return "Done";
 	}

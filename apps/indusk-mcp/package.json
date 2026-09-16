@@ -61,6 +61,18 @@
     "./shape/rules": {
       "types": "./dist/lib/shape/rules.d.ts",
       "default": "./dist/lib/shape/rules.js"
+    },
+    "./lifecycle": {
+      "types": "./dist/lib/lifecycle.d.ts",
+      "default": "./dist/lib/lifecycle.js"
+    },
+    "./impl-headings": {
+      "types": "./dist/lib/impl-headings.d.ts",
+      "default": "./dist/lib/impl-headings.js"
+    },
+    "./impl-parser": {
+      "types": "./dist/lib/impl-parser.d.ts",
+      "default": "./dist/lib/impl-parser.js"
     }
   },
   "scripts": {

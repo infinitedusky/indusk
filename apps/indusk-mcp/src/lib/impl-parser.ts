@@ -6,10 +6,11 @@ import {
 	fencedLineMask,
 	gateHeading,
 	type PhaseKind,
+	type PhaseRef,
 	parsePhaseHeading,
 } from "./impl-headings.js";
 
-export type GateType = "implementation" | "verification" | "context" | "document";
+export type GateType = "implementation" | "verification" | "otel" | "context" | "document";
 
 export interface ChecklistItem {
 	checked: boolean;
@@ -47,8 +48,12 @@ export interface ParsedImpl {
 	phases: ImplPhase[];
 }
 
+// One entry per `GateKind` in `impl-headings.ts`. OTel was missing here while
+// the hook-side port (`hooks/_impl-phases.js`) recognised it — the two walks
+// disagreed about a gate kind until admin-ui-phase-progress (A5).
 const GATE_SUFFIXES: Record<string, GateType> = {
 	Verification: "verification",
+	OTel: "otel",
 	Context: "context",
 	Document: "document",
 };
@@ -193,7 +198,12 @@ export function parseImpl(filePath: string): ParsedImpl {
 }
 
 export interface PhaseCompletion {
+	/** The phase's number within its sequence — ambiguous across two sequences; prefer `ref`. */
 	phase: number;
+	/** Which sequence and number: the unambiguous key (admin-ui-phase-progress). */
+	ref: PhaseRef;
+	/** Document position — what orders two sequences. */
+	ordinal: number;
 	name: string;
 	complete: boolean;
 	totalItems: number;
@@ -205,6 +215,7 @@ export function getPhaseCompletion(phase: ImplPhase): PhaseCompletion {
 	const uncheckedByGate: Record<GateType, string[]> = {
 		implementation: [],
 		verification: [],
+		otel: [],
 		context: [],
 		document: [],
 	};
@@ -225,6 +236,8 @@ export function getPhaseCompletion(phase: ImplPhase): PhaseCompletion {
 
 	return {
 		phase: phase.number,
+		ref: { kind: phase.kind, number: phase.number },
+		ordinal: phase.ordinal,
 		name: phase.name,
 		complete: checkedItems === totalItems,
 		totalItems,
@@ -235,4 +248,13 @@ export function getPhaseCompletion(phase: ImplPhase): PhaseCompletion {
 
 export function getAllPhaseCompletions(parsed: ParsedImpl): PhaseCompletion[] {
 	return parsed.phases.map(getPhaseCompletion);
+}
+
+/**
+ * The phase a `{kind, number}` reference names, or undefined. Number alone is
+ * ambiguous once an impl has two sequences (Test Phase 1 / Build Phase 1);
+ * every reader that keys a phase should key it this way.
+ */
+export function findPhase(parsed: ParsedImpl, ref: PhaseRef): ImplPhase | undefined {
+	return parsed.phases.find((p) => p.kind === ref.kind && p.number === ref.number);
 }
