@@ -1,7 +1,7 @@
 ---
 title: "Admin UI Phase Progress — Test Plan"
 date: 2026-09-16
-status: draft
+status: accepted
 ---
 
 # Admin UI Phase Progress — Test Plan
