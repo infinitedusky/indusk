@@ -1,7 +1,7 @@
 ---
 title: "Admin UI Phase Progress — Implementation"
 date: 2026-09-16
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -397,23 +397,23 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 
 **Goal**: the decision is published, the masters and changelog say what shipped, and the convention is where every future plan reads it.
 
-- [ ] `apps/docs/src/decisions/admin-ui-phase-progress.md` (ADR summary; the noun/verb rule; the convention) + sidebar entry beside `dawn-ui-plan-grouping`
-- [ ] `apps/docs/src/changelog.md` Unreleased entry per the ADR's Documentation Plan
-- [ ] Masters: `.indusk/planning/indusk-v4-day/master.md` step 3 and `.indusk/planning/master.md` roadmap row → impl complete, close-out rituals pending
-- [ ] Set impl status `completed`
+- [x] `apps/docs/src/decisions/admin-ui-phase-progress.md` (ADR summary; the noun/verb rule; the convention) + sidebar entry beside `dawn-ui-plan-grouping` — `dawn-ui-plan-grouping` has a lessons page but no decisions page, so the entry sits alphabetically after "Admin UI Hosting"
+- [x] `apps/docs/src/changelog.md` Unreleased entry per the ADR's Documentation Plan
+- [x] Masters: `.indusk/planning/indusk-v4-day/master.md` step 3 and `.indusk/planning/master.md` roadmap row → impl complete, close-out rituals pending
+- [x] Set impl status `completed`
 
 #### Build Phase 7 Verification
 - [ ] (no tests flip at this phase — reason: infra) — this phase writes record only
-- [ ] All 25 rows terminal: `cd apps/indusk-mcp && pnpm exec tsx -e 'import { readFileSync } from "node:fs"; import { auditPlanAtClose } from "./src/lib/trajectory/audit.ts"; const a = auditPlanAtClose(readFileSync("../../.indusk/planning/admin-ui-phase-progress/impl.md","utf-8")); console.log(JSON.stringify(a.nonTerminal))'` — expected `[]`; then `cd` back
-- [ ] Full suites green in both apps: `pnpm turbo test --filter=@infinitedusky/indusk-mcp --filter=indusk-admin` (admin daemon/bundle suites excepted only if red on `main` at the same commit, and said so)
-- [ ] `indusk context check-pointers` — PASS
-- [ ] Shape (Build Phase 7): no code this phase; record "no code files changed"
+- [x] All 25 rows terminal: `cd apps/indusk-mcp && pnpm exec tsx -e 'import { readFileSync } from "node:fs"; import { auditPlanAtClose } from "./src/lib/trajectory/audit.ts"; const a = auditPlanAtClose(readFileSync("../../.indusk/planning/admin-ui-phase-progress/impl.md","utf-8")); console.log(JSON.stringify(a.nonTerminal))'` — expected `[]`; then `cd` back — `nonTerminal []`, `blocked []`, 2 deferred rows classified (27 rows once A26/A27 joined at the U1 review)
+- [x] Full suites green in both apps: `pnpm turbo test --filter=@infinitedusky/indusk-mcp --filter=indusk-admin` (admin daemon/bundle suites excepted only if red on `main` at the same commit, and said so) — admin 43 files / 254 tests green; mcp green after three things the first run surfaced: (1) the daemon and bundle suites (`admin-cli-lifecycle`, `cli-bare-ui-cwd-aware`, `admin-bundle-pack`, 9 tests) were red here and green on `main` at `5c675c58` — the admin bundle is a build artifact this worktree never had; `pnpm --filter indusk-admin build && node scripts/bundle-admin.js` built it (a production `next build` of this plan's admin, clean) and all 9 pass; (2) `lifecycle-parity` (A13) flagged this plan's own folder — its impl went `completed`, so `nextStep` and `readiness.missing` moved; re-baselined by hand, the reader unchanged — the corpus contains the plan in flight, so every status change of this plan re-baselines it (carry to the retrospective); (3) `shape/dogfood` threw "corrupt record, line 53": the Build Phase 7 boundary record I wrote by hand passed `phase: {kind, number}` where `recordPhaseStart` takes `phase: number, kind` — the writer took the object and wrote it, and every reader then refused the whole file (the admin would have shown the error block). Record repaired by hand; **`/falsify` hypothesis: the boundary writer accepts what its readers refuse — it should validate the record it writes through the same rule `readBoundaries` applies**
+- [x] `indusk context check-pointers` — PASS (61 pointers scanned, all resolve; run again after the Current State edit, PASS)
+- [x] Shape (Build Phase 7): no code this phase; record "no code files changed" — no code files changed: docs pages, the VitePress sidebar, the changelog, two masters, CLAUDE.md and this impl only
 
 #### Build Phase 7 Context
-- [ ] Current State: one line for `admin-ui-phase-progress` — the finished picture as of now, live, from one lifecycle definition; the convention that a plan adding a stage renders it
+- [x] Current State: one line for `admin-ui-phase-progress` — the finished picture as of now, live, from one lifecycle definition; the convention that a plan adding a stage renders it — landed at 61,434 of 61,440 bytes after trimming four shipped-plan narratives (indusk-makeover's late-retrospective note, dawn-ui-plan-grouping's fix counts, dawn-verify's "first thing ever", lifecycle-rebalance's slice list, dawn-hook-parity's `ask` clause); the retrospective's compaction step has no headroom left to spend and must sweep before it adds
 
 #### Build Phase 7 Document
-- [ ] `apps/docs/src/guide/plan-lifecycle.md`: the convention paragraph — a plan that adds a position, activity or gate kind adds its rendering in the same plan; what the pin does when it does not
+- [x] `apps/docs/src/guide/plan-lifecycle.md`: the convention paragraph — a plan that adds a position, activity or gate kind adds its rendering in the same plan; what the pin does when it does not
 
 ## Files Affected
 
