@@ -69,7 +69,8 @@ export async function evalSummary(
 			console.info(`  ${id.padEnd(20)} ${bar} ${(rate * 100).toFixed(0)}%`);
 		}
 
-		console.info(`\nGraphiti writes: ${summary.totalGraphitiWrites}`);
+		// `totalGraphitiWrites` is the legacy field name; it counts lessons written.
+		console.info(`\nLessons written: ${summary.totalGraphitiWrites}`);
 
 		if (summary.totalCostUsd > 0) {
 			console.info(`\nCost:`);
