@@ -2,10 +2,10 @@ import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import type { LanguageModel } from "ai";
-import { headShaOrNull } from "../git.js";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
 import type { Trajectory } from "../trajectory/parser.js";
-import { type CommitRecord, createCommitCadence } from "./commit-cadence.js";
+import { createRunCadences } from "./cadences.js";
+import type { CommitRecord } from "./commit-cadence.js";
 import { type RunDriverOptions, type RunGateOptions, runDriver } from "./driver.js";
 import { resolveGateScripts } from "./gate.js";
 import { gateQuestionItems, gateQuestionReason, isGateQuestion } from "./gate-question.js";
@@ -13,7 +13,7 @@ import { checkGoalposts, snapshotTrajectory } from "./goalposts.js";
 import { appendPendingEval } from "./pending-evals.js";
 import { probePhaseClose } from "./probe.js";
 import type { DriverConfig } from "./registry.js";
-import { resolveInRoots, type ToolRoots } from "./worktree-paths.js";
+import type { ToolRoots } from "./worktree-paths.js";
 
 /**
  * Loop control for the external orchestrator — the `/work --autopilot`
@@ -221,27 +221,20 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 	const scripts = options.gate?.scripts ?? resolveGateScripts(planRoot);
 	const phases: PhaseReport[] = [];
 
-	// Loop-owned commit cadence (A2/A5): commits fire when a gated edit checks
-	// off an impl item; the loop, not the model, owns the git bookkeeping.
-	// Every successful CODE commit feeds the pending-eval queue (A3) — the thin
-	// lane's half of the eval rail; a later drain evaluates from any
-	// claude-capable environment (A9: nothing here needs Claude Code).
-	//
-	// Across a split there are two cadences, one per repository, each staging
-	// only its own tree: the code cadence commits the item's code, then the
-	// plan cadence commits the checkoff naming the code HEAD it attests in a
-	// `Code-Commit:` trailer (dawn-workbench-execution A8). The checkoff commit
-	// is not queued — a diff of checkboxes is not work to score.
+	// Loop-owned commit cadences (A2/A5) — one per repository across a split,
+	// built in `cadences.ts`. Every successful CODE commit feeds the pending-eval
+	// queue (A3); the plan-side checkoff commit is not queued.
 	let currentPhase = 0;
 	const planName = basename(dirname(implPath));
-	const resolveEditPath = (p: string) => resolveInRoots(roots, p);
-	const codeCadence = await createCommitCadence({
-		worktreeRoot: root,
+	const cadence = await createRunCadences({
+		root,
+		planRoot,
+		split,
+		roots,
 		implPath,
 		planName,
 		getPhase: () => currentPhase,
-		resolveEditPath,
-		onCommit: async (record) => {
+		onCodeCommit: async (record) => {
 			await appendPendingEval(planRoot, {
 				sha: record.sha,
 				plan: planName,
@@ -254,36 +247,8 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 			});
 		},
 	});
-	if (codeCadence.disabledReason) {
-		console.error(codeCadence.disabledReason);
-	}
-	const planCadence = split
-		? await createCommitCadence({
-				worktreeRoot: planRoot,
-				implPath,
-				planName,
-				getPhase: () => currentPhase,
-				resolveEditPath,
-				pathspec: [roots.planDir],
-				trailer: async () => {
-					const head = await headShaOrNull(root);
-					return head ? `Code-Commit: ${head}` : null;
-				},
-			})
-		: null;
-	if (planCadence?.disabledReason) {
-		console.error(planCadence.disabledReason);
-	}
-	const onGatedApply: RunGateOptions["onGatedApply"] = async (name, input) => {
-		await codeCadence.onGatedApply(name, input);
-		await planCadence?.onGatedApply(name, input);
-	};
-	const gate: RunGateOptions = { ...options.gate, scripts, onGatedApply };
-	const cadence = {
-		commits: () => [...codeCadence.commits, ...(planCadence?.commits ?? [])],
-		failures: () => [...codeCadence.failures, ...(planCadence?.failures ?? [])],
-		queueFailures: () => [...codeCadence.queueFailures, ...(planCadence?.queueFailures ?? [])],
-	};
+	for (const reason of cadence.disabledReasons) console.error(reason);
+	const gate: RunGateOptions = { ...options.gate, scripts, onGatedApply: cadence.onGatedApply };
 
 	const initial = parseImplString(await readFile(implPath, "utf8"));
 	if (initial.phases.length === 0) {
