@@ -97,6 +97,29 @@ Switching projects via the header does not restart the daemon — the registry r
 
 Every segment is one of `done` / `active` / `pending` / `skipped` (a gate can also be `opted-out`): done full, pending empty, skipped drawn empty with a dashed border so a plan's bar keeps its shape, active partially filled by its own n of m. Segments are equal width and the plan bar says so — *steps, not time*. A parent plan shows a **master bar** instead of a plan bar: one segment per declared subplan, closed ones full, in-flight ones partial, declared-but-missing ones empty, labelled `n of m closed, k executing`.
 
+**The page is live.** A small client wrapper, `LiveRefresh`, ticks every `admin.refresh_ms` from the project's `.indusk/config.json` (default 5000 ms, floor 1000; absent means default, and `indusk update` never writes the key). Each tick sends a `HEAD` to the page itself as a reachability probe and then calls Next's `router.refresh()`, which re-runs the server components for the route and streams the new tree in — so a checkbox written to `impl.md` reaches an open page within one interval, and the viewer's open sections and scroll position stay where they were. It says what it is doing (`last updated 14:02:11`), pauses while the tab is hidden, and when a probe fails it stops and says `refresh failed — reload the page to resume` rather than showing a stale page as live. There is no route handler, no fetch of a second data shape and no socket: one render path, whole-route re-render, which is the trade the ADR accepted at the daemon's scale. Only the plan page polls.
+
+```mermaid
+sequenceDiagram
+    participant B as Browser (LiveRefresh)
+    participant S as Next server components
+    participant D as .indusk/ on disk
+    loop every admin.refresh_ms, while the tab is visible
+        B->>S: HEAD /p/{project}/plan/{name}
+        alt reachable
+            S-->>B: 200
+            B->>S: router.refresh()
+            S->>D: read plans, impl, boundary records
+            D-->>S: current state
+            S-->>B: re-rendered route (client state preserved)
+            Note over B: last updated HH:MM:SS
+        else unreachable
+            S-->>B: error / no response
+            Note over B: refresh failed — stop ticking
+        end
+    end
+```
+
 **Which phase is active.** The phase with the most recent boundary record (`.indusk/phase-boundary.jsonl`) among phases that still have unchecked items. A phase with everything checked is closed whatever its record says. With no records at all, the first open phase in document order is shown with the hint *no boundary record*, never as a confident marker. A malformed record file renders an error block and marks nothing active.
 
 Sections render conditionally on which documents are present, all closed by default:
