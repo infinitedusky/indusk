@@ -43,6 +43,82 @@ One new state and one new edge. Everything else is what already happens.
 | **reopen** | A maintenance phase appended to the *existing* plan, not a new plan. |
 | **close → archive** | Unchanged. The resting state. |
 
+## The lifecycle, as defined
+
+*(admin-ui-phase-progress, 2026-09-16)*
+
+The shape above is a direction. The definition the code reads is
+`apps/indusk-mcp/src/lib/lifecycle.ts`, one module, published as the
+`@infinitedusky/indusk-mcp/lifecycle` subpath, and pinned single-definition:
+`parsePlan`, the retrospective readiness gate and the admin UI all read it,
+and a test fails if a second copy of any of its constants appears anywhere.
+
+It keeps two vocabularies apart, deliberately.
+
+**Positions are nouns.** Where a plan stands — facts about which documents
+exist and what their status says. Nothing is happening in a position.
+
+```
+research → brief → test-plan → adr → impl-approved → executing
+        → falsify → cleanup → retrospective → archived   (→ monitor)
+```
+
+`monitor` is listed and never derived: it is Midnight's, and it sits in the
+list so the admin renders the segment the moment Midnight defines it. The
+document positions (`research` … `impl`, `retrospective`) are also the plan
+parser's stage order — `test-plan` joined it here; the old private order
+walked past it as if it were not a stage.
+
+**Activities are verbs.** What is happening now, inside exactly one position,
+`executing` — the only stretch of the lifecycle that leaves observable traces
+on disk every few minutes (checkboxes, boundary records). Before the impl the
+work is conversation and disk records only its outcomes; after archive nothing
+moves.
+
+```
+Test Phase N:   authoring → verifying → capturing-context → documenting → closed
+Build Phase N:  implementing → [instrumenting] → verifying → capturing-context → documenting → closed
+ritual phases:  falsifying / cleaning-up, then the same gates
+```
+
+The gate stages are `GATE_STAGES` — Verification, OTel, Context, Document, in
+the order `/work` completes them — and the rituals are `RITUAL_ORDER`, the
+words a ritual phase's title must start with. A plan can therefore never
+render as "archived" and "verifying" at once: the vocabularies do not overlap.
+
+<FullscreenDiagram>
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    research --> brief
+    brief --> test_plan: test-plan
+    test_plan --> adr
+    adr --> impl_approved: impl-approved
+    impl_approved --> executing
+    executing --> falsify
+    falsify --> cleanup
+    cleanup --> retrospective
+    retrospective --> archived
+    archived --> monitor: (Midnight)
+    state executing {
+        direction LR
+        implementing --> verifying
+        verifying --> capturing_context: capturing-context
+        capturing_context --> documenting
+        documenting --> closed
+    }
+```
+
+</FullscreenDiagram>
+
+**A plan that adds a position, an activity or a gate kind also adds its
+rendering in the admin UI, in the same plan.** The admin's label maps are
+typed against these unions, so a new member fails the type-check, and a
+render-parity test names the member until a renderer exists. That is what
+keeps the UI from drifting behind the system the way its phase parser once
+did.
+
 ## `monitor` is the load-bearing addition
 
 It is the state that says *the work is done and we don't know yet whether it worked.* Today that state exists in practice and has no name, so it collapses into "closed" the moment the checklist is ticked.
