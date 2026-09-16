@@ -2,6 +2,8 @@ import { ProjectCard, type ProjectCardData } from "./ProjectCard";
 
 export interface ProjectGridProps {
   projects: ProjectCardData[];
+  /** Registered names whose path no longer exists — listed in a note, never as cards. */
+  notFound?: string[];
 }
 
 /**
@@ -9,8 +11,8 @@ export interface ProjectGridProps {
  * Empty state when the registry is empty — the user hasn't run `indusk init`
  * on any project yet, and the message has to point them at the right CLI.
  */
-export function ProjectGrid({ projects }: ProjectGridProps) {
-  if (projects.length === 0) {
+export function ProjectGrid({ projects, notFound = [] }: ProjectGridProps) {
+  if (projects.length === 0 && notFound.length === 0) {
     return (
       <div
         className="flex h-full flex-col items-center justify-center text-center text-gray-500"
@@ -54,6 +56,25 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
           <ProjectCard key={p.name} project={p} />
         ))}
       </div>
+      {notFound.length > 0 ? (
+        <details
+          className="mt-4 text-xs text-gray-500"
+          data-testid="project-not-found"
+        >
+          <summary className="cursor-pointer">
+            not found ({notFound.length}) — registered paths that no longer
+            exist; <code className="font-mono">indusk ui prune</code> removes
+            them
+          </summary>
+          <ul className="mt-1 flex flex-col gap-0.5 pl-4">
+            {notFound.map((name) => (
+              <li key={name} className="font-mono">
+                {name}
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </div>
   );
 }
