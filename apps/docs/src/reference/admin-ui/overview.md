@@ -72,7 +72,7 @@ No auto-pruning. If a registered project's path is deleted from disk, `indusk ui
 /p/{project}/research/{slug}         # Per-project standalone research (1.27.2+)
 ```
 
-Everything is project-scoped under `/p/{project}/...`. The top-level home at `/` is the cross-project entry point (project grid); there is no other cross-project view. 1.26.0/1.27.0 had a top-level `/scorecards` that walked every registered project — **removed in 1.27.2** in favor of per-project scorecards at `/p/{project}/scorecards`. The per-project layout at `app/p/[project]/layout.tsx` owns the sidebar, plan list, Scorecards link, Research group, and project switcher; the root layout (`app/layout.tsx`) is global-nav-only.
+Everything is project-scoped under `/p/{project}/...`. The top-level home at `/` is the cross-project entry point (project grid); there is no other cross-project view. The grid shows every registered project whose path exists, each card labelled `workbench` (its config declares repos — the package's `isWorkbench`, never inferred from layout) or `normal-mode`; entries whose path is gone are not projects and are listed in a collapsed "not found (n)" note that points at [`indusk ui prune`](./cli#indusk-ui-prune-dry-run). 1.26.0/1.27.0 had a top-level `/scorecards` that walked every registered project — **removed in 1.27.2** in favor of per-project scorecards at `/p/{project}/scorecards`. The per-project layout at `app/p/[project]/layout.tsx` owns the sidebar, plan list, Scorecards link, Research group, and project switcher; the root layout (`app/layout.tsx`) is global-nav-only.
 
 ## What each page shows
 
@@ -82,7 +82,7 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 
 1. **Header** — project name + `<ProjectSwitcher>` to jump between registered projects.
 2. **Scorecards link** — direct to `/p/{project}/scorecards` (always present).
-3. **Plan list** — active plans in the order declared by `.indusk/planning/master.md` pipeline tables, then "Unordered" group for plans not in master, then `Archived (N)` collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`.
+3. **Plan list** — one root node (the root `master.md`'s title) with the declared parent groups and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): active plans in the order declared by `.indusk/planning/master.md` pipeline tables, then "Unordered" for plans not in master. `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
 4. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
 
 Switching projects via the header does not restart the daemon — the registry resolves on every request.
@@ -143,7 +143,7 @@ Missing optional documents are not errors — sections simply don't render.
 
 **Falsification rendering (1.27.6+)** — when a plan uses the phase-authoring flow from `/falsify` (introduced in 1.27.4), the admin UI automatically detects the falsification phase by scanning for the FIRST phase whose title STARTS with `Falsification` (case-insensitive — the same title-prefix rule the retrospective readiness gate applies, read from the lifecycle's `RITUAL_ORDER`). That phase is hoisted out of the main Phases section and rendered with a dedicated layout: trajectory rows become the Hypotheses table, and checklist items become the Fix items list. Phases authored AFTER the falsification phase — fix-in-scope follow-ups derived from the ritual — render as a distinct "Follow-up Phases" section below. Legacy plans (authored before 1.27.4 with a `falsification.md` log file) continue to render via the log-based path; the two paths are mutually exclusive but both supported, so archives keep rendering correctly.
 
-**`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `.indusk/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Empty state when no scorecards have been recorded yet.
+**`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `.indusk/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Two empty states, told apart by whether `.indusk/eval/` exists: the directory is created by the evaluator's first append, so a project that has never had an evaluated commit has no directory at all and the page says "no evaluations recorded yet — the first evaluated commit creates `.indusk/eval/`"; a project with the directory but no scorecards gets the plain "no scorecards recorded yet" line.
 
 **`/p/{project}/research/{slug}` (per-project, 1.27.2+)** — renders a research markdown file via `<Markdown>`. Resolves `{slug}.md` first, then `{slug}/README.md` for nested-directory research. Path-traversal segments (`..`, `/`, leading `.`) are rejected. Missing slug returns 404.
 
@@ -253,7 +253,7 @@ A subplan the parent names but which has **no folder yet** renders as a greyed, 
 
 Two behaviours worth knowing when reading the sidebar:
 
-- **A plan at the top level means no parent claims it.** That is the fallback, not a bug in the reader.
+- **A plan directly under the root means no parent claims it.** It is the root's leftover bucket, not a bug in the reader. (Before admin-ui-phase-progress there was no root node, so unclaimed plans read as the parents' peers.)
 - **Broken declarations degrade to the flat list.** A missing `master.md`, an absent key, or malformed YAML yields no grouping and no error. Structure can be lost; a plan never is.
 
 Three more, from the falsification pass:
