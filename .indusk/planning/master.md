@@ -113,7 +113,8 @@ lesson title, or a chat log.
   retrospective written 53 days after the impl completed, archived; its two
   deferred rows now say what actually holds them.
 - [admin-ui-phase-progress](admin-ui-phase-progress/brief.md) — Day step 3;
-  absorbed `project-list-workbenches-only` (archived) as one phase.
+  absorbed `project-list-workbenches-only` (archived) as one phase. **Impl
+  complete 2026-09-16** (27 rows green); close-out rituals pending.
 - **Shipped, archived**: `work-autopilot` (the work skill's autopilot mode),
   `compaction-skill` (`/compact-context`), `falsify-phase-authoring` (1.27.4),
   `local-telemetry`, `doppler-extension` — residue named per folder.
