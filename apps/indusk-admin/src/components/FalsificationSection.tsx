@@ -19,7 +19,7 @@ import {
   falsificationLogMarkdown,
   falsificationPhaseMarkdown,
 } from "@/lib/markdown-export";
-import { extractChecklistItems, type Phase } from "@/lib/phases";
+import { type Phase, phaseItems, phaseTitle } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
 /**
@@ -128,7 +128,7 @@ function FalsificationPhaseSection({
   planName: string;
   phase: Phase;
 }) {
-  const checklistItems = extractChecklistItems(phase.content);
+  const checklistItems = phaseItems(phase);
   const allTrajectoryTerminal = phase.trajectoryRows.every(
     (r) => r.state === "passing" || r.state === "skipped",
   );
@@ -146,7 +146,7 @@ function FalsificationPhaseSection({
             Falsification
             {phase.title ? (
               <span className="ml-2 text-xs font-normal text-gray-500">
-                (Phase {phase.number}: {phase.title})
+                ({phaseTitle(phase)}: {phase.title})
               </span>
             ) : null}
           </>

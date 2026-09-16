@@ -2,28 +2,13 @@ import { FalsificationSection } from "@/components/FalsificationSection";
 import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
+import { PhasesSection } from "@/components/PhasesSection";
 import { Badge } from "@/components/ui/Badge";
-import { stateToBadge, statusToBadge } from "@/components/ui/badge-variant";
+import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
-import {
-  phaseMarkdown,
-  planMarkdown,
-  sectionMarkdown,
-} from "@/lib/markdown-export";
-import {
-  extractPhases,
-  type Phase,
-  splitPhasesAroundFalsification,
-} from "@/lib/phases";
+import { planMarkdown, sectionMarkdown } from "@/lib/markdown-export";
+import { extractPhases, splitPhasesAroundFalsification } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanDetailProps {
@@ -238,73 +223,6 @@ function BriefSection({
       >
         <Markdown>{content}</Markdown>
       </CollapsibleSection>
-    </section>
-  );
-}
-
-function PhasesSection({
-  phases,
-  heading,
-  testId,
-  planName,
-}: {
-  phases: Phase[];
-  heading: string;
-  testId: string;
-  planName: string;
-}) {
-  if (phases.length === 0) return null;
-
-  return (
-    <section className="flex flex-col gap-2" data-testid={testId}>
-      <h2 className="text-base font-semibold text-gray-900">{heading}</h2>
-      <div className="flex flex-col gap-2">
-        {phases.map((phase) => (
-          <CollapsibleSection
-            key={phase.number}
-            title={`Phase ${phase.number}${phase.title ? `: ${phase.title}` : ""}`}
-            defaultOpen={false}
-            persistKey={`plan:${planName}:phase:${phase.number}`}
-            copyMarkdown={phaseMarkdown(phase)}
-          >
-            <div className="flex flex-col gap-3">
-              {phase.trajectoryRows.length > 0 && (
-                <div data-testid={`phase-${phase.number}-trajectory`}>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Asserts</TableHead>
-                        <TableHead>Writable at</TableHead>
-                        <TableHead>Passes at</TableHead>
-                        <TableHead>State</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {phase.trajectoryRows.map((row) => (
-                        <TableRow key={row.id}>
-                          <TableCell>
-                            <span className="font-mono text-xs">{row.id}</span>
-                          </TableCell>
-                          <TableCell>{row.asserts}</TableCell>
-                          <TableCell>Phase {row.writableAt}</TableCell>
-                          <TableCell>Phase {row.passesAt}</TableCell>
-                          <TableCell>
-                            <Badge variant={stateToBadge(row.state)}>
-                              {row.state}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-              <Markdown>{phase.content}</Markdown>
-            </div>
-          </CollapsibleSection>
-        ))}
-      </div>
     </section>
   );
 }

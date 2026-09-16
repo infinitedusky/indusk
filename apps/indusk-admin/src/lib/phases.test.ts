@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  extractChecklistItems,
-  extractPhases,
-  splitPhasesAroundFalsification,
-} from "./phases";
+import { extractPhases, splitPhasesAroundFalsification } from "./phases";
 
 /**
  * T26 — `splitPhasesAroundFalsification` detects the falsification phase by
@@ -11,8 +7,6 @@ import {
  *       phase list into pre / falsification / post groups so PlanDetail can
  *       render them in their own sections.
  *
- *       `extractChecklistItems` pulls `- [ ] / - [x]` items from phase
- *       markdown content for the falsification-fix-items rendering.
  */
 
 describe("splitPhasesAroundFalsification — T26", () => {
@@ -101,37 +95,5 @@ content
     expect(split.falsification?.number).toBe(2);
     // Phases 3 and 4 go to post
     expect(split.post.map((p) => p.number)).toEqual([3, 4]);
-  });
-});
-
-describe("extractChecklistItems — T26", () => {
-  it("parses unchecked and checked items with their text", () => {
-    const md = `Some preamble.
-
-- [ ] first item
-- [x] second item completed
-- [ ] third item
-
-Trailing prose.`;
-    const items = extractChecklistItems(md);
-    expect(items).toEqual([
-      { text: "first item", checked: false },
-      { text: "second item completed", checked: true },
-      { text: "third item", checked: false },
-    ]);
-  });
-
-  it("returns an empty array when there are no checklist items", () => {
-    const md = `Just prose. No items.`;
-    expect(extractChecklistItems(md)).toEqual([]);
-  });
-
-  it("ignores malformed checkbox syntax", () => {
-    const md = `- [X] uppercase is NOT accepted (contract is lowercase x)
-- [] no space between brackets
-- [ no closing bracket
-- [ ] valid item`;
-    const items = extractChecklistItems(md);
-    expect(items).toEqual([{ text: "valid item", checked: false }]);
   });
 });

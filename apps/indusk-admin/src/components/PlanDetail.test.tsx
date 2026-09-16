@@ -288,7 +288,7 @@ describe("PlanDetail — trajectory table inside expanded phase (T8)", () => {
     await new Promise((r) => setTimeout(r, 50));
 
     const trajectory = container.querySelector(
-      '[data-testid="phase-1-trajectory"]',
+      '[data-testid="phase-build-1-trajectory"]',
     );
     expect(trajectory).not.toBeNull();
 
@@ -324,7 +324,7 @@ describe("PlanDetail — trajectory table inside expanded phase (T8)", () => {
     await new Promise((r) => setTimeout(r, 50));
 
     const trajectory = container.querySelector(
-      '[data-testid="phase-1-trajectory"]',
+      '[data-testid="phase-build-1-trajectory"]',
     );
     // Phase 1 has only T1 (Passes at: Phase 1). T2 (Passes at: Phase 2) should NOT appear.
     expect(trajectory?.textContent).toContain("T1");

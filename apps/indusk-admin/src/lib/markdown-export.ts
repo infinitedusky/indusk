@@ -5,9 +5,10 @@ import type {
 import type { TrajectoryRow } from "@infinitedusky/indusk-mcp/trajectory/parser";
 import {
   type ChecklistItem,
-  extractChecklistItems,
   extractPhases,
   type Phase,
+  phaseItems,
+  phaseTitle,
   splitPhasesAroundFalsification,
 } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
@@ -45,7 +46,7 @@ export function checklistMarkdown(items: ChecklistItem[]): string {
 }
 
 export function phaseMarkdown(phase: Phase): string {
-  const heading = `Phase ${phase.number}${phase.title ? `: ${phase.title}` : ""}`;
+  const heading = `${phaseTitle(phase)}${phase.title ? `: ${phase.title}` : ""}`;
   const table = trajectoryTableMarkdown(phase.trajectoryRows);
   const body = [table, phase.content].filter(Boolean).join("\n\n");
   return sectionMarkdown(heading, body);
@@ -84,8 +85,8 @@ export function falsificationLogMarkdown(
 
 /** Falsification rendering for the phase-authoring flow (1.27.4+). */
 export function falsificationPhaseMarkdown(phase: Phase): string {
-  const heading = `Falsification${phase.title ? ` (Phase ${phase.number}: ${phase.title})` : ""}`;
-  const checklistItems = extractChecklistItems(phase.content);
+  const heading = `Falsification${phase.title ? ` (${phaseTitle(phase)}: ${phase.title})` : ""}`;
+  const checklistItems = phaseItems(phase);
   const table = trajectoryTableMarkdown(phase.trajectoryRows);
   const checklist = checklistMarkdown(checklistItems);
   const parts = [
