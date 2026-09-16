@@ -125,11 +125,18 @@ describe("T10 — a parent plan renders subplan cards, not an empty page", () =>
 
     const text = container.textContent ?? "";
     expect(text).toContain("This file is the sequence.");
-    // Prose comes before the first card in document order.
-    const proseIdx = text.indexOf("This file is the sequence.");
-    const cardIdx = text.indexOf("dawn-ui-plan-grouping");
-    expect(cardIdx, "expected a subplan card to render").toBeGreaterThan(-1);
-    expect(proseIdx).toBeLessThan(cardIdx);
+    // Prose comes before the cards SECTION in document order. Located by the
+    // section's test id, not by the first subplan name in the text: the
+    // master bar above the prose labels every subplan by name
+    // (admin-ui-phase-progress), so the name's first occurrence is the bar.
+    const html = container.innerHTML;
+    const proseIdx = html.indexOf('data-testid="parent-master-prose"');
+    const cardsIdx = html.indexOf('data-testid="subplan-cards"');
+    expect(cardsIdx, "expected the subplan cards to render").toBeGreaterThan(
+      -1,
+    );
+    expect(proseIdx).toBeGreaterThan(-1);
+    expect(proseIdx).toBeLessThan(cardsIdx);
   });
 
   it("T12 — renders a parent's own documents alongside the cards, never suppressed", async () => {
