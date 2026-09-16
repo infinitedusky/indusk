@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { basename, dirname, resolve } from "node:path";
 import { promisify } from "node:util";
+import { headSha } from "../git.js";
 import type { EditToolInput, GatedToolName, WriteToolInput } from "./gate.js";
 import { resolveInWorktree } from "./worktree-paths.js";
 
@@ -210,8 +211,7 @@ export async function createCommitCadence(options: CommitCadenceOptions): Promis
 				.catch(() => true);
 			if (!staged) return;
 			await execFileAsync("git", ["commit", "-m", message], { cwd: root });
-			const { stdout } = await execFileAsync("git", ["rev-parse", "HEAD"], { cwd: root });
-			sha = stdout.trim();
+			sha = await headSha(root);
 		} catch (error) {
 			const err = error as { stderr?: string; message?: string };
 			failures.push({

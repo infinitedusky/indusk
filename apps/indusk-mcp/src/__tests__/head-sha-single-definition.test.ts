@@ -39,7 +39,9 @@ describe("A19 — one HEAD-sha primitive under src/lib", () => {
 		const files = libFiles();
 		const definers = (name: string) =>
 			files.filter((f) =>
-				new RegExp(`export async function ${name}\\b`).test(readFileSync(join(SRC_LIB, f), "utf-8")),
+				new RegExp(`export async function ${name}\\b`).test(
+					readFileSync(join(SRC_LIB, f), "utf-8"),
+				),
 			);
 		expect(definers("headSha")).toEqual(["git.ts"]);
 		expect(definers("headShaOrNull")).toEqual(["git.ts"]);

@@ -22,6 +22,30 @@ export async function git(root: string, ...args: string[]): Promise<string> {
 	return stdout.trim();
 }
 
+/**
+ * HEAD of `root`. Throws when there is none — not a repository, or an unborn
+ * branch. The one spelling of "which commit is this tree at" (A19): verify's
+ * ledger, the commit cadence's record and the run loop's trailer each wrote
+ * their own before it lived here.
+ */
+export async function headSha(root: string): Promise<string> {
+	return git(root, "rev-parse", "--verify", "HEAD");
+}
+
+/**
+ * HEAD of `root`, or null when there is nothing to name — an unborn branch
+ * (a greenfield repo before its first commit) or no repository at all.
+ * Nothing to attest is a fact to record as absence, not an exception to
+ * throw through a tool call after the edit already applied (A17).
+ */
+export async function headShaOrNull(root: string): Promise<string | null> {
+	try {
+		return (await headSha(root)) || null;
+	} catch {
+		return null;
+	}
+}
+
 export interface ChangedPaths {
 	/** Committed since `sha`, plus anything modified in the working tree. */
 	tracked: string[];

@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { changedPathsPartitioned, git } from "../git.js";
+import { changedPathsPartitioned, git, headSha } from "../git.js";
 
 /**
  * The git surface `atdawn verify` reads through.
@@ -18,7 +18,7 @@ import { changedPathsPartitioned, git } from "../git.js";
 
 const execFileAsync = promisify(execFile);
 
-export { git };
+export { git, headSha };
 
 /**
  * Assert the root is inside a git work tree, failing LOUD when it is not.
@@ -43,10 +43,6 @@ export async function assertGitRepo(root: string): Promise<void> {
 			`${root} is not a git repository — verify reconstructs the phase boundary from committed history and cannot run without one. (Refusing rather than reporting a clean phase.)`,
 		);
 	}
-}
-
-export async function headSha(root: string): Promise<string> {
-	return git(root, "rev-parse", "HEAD");
 }
 
 /** Candidate trunk refs, in the order `cleanup/oversized.ts` proved necessary. */

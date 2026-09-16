@@ -1,9 +1,8 @@
-import { execFile } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
-import { promisify } from "node:util";
 import type { LanguageModel } from "ai";
+import { headShaOrNull } from "../git.js";
 import { type ImplPhase, parseImplString } from "../impl-parser.js";
 import type { Trajectory } from "../trajectory/parser.js";
 import { type CommitRecord, createCommitCadence } from "./commit-cadence.js";
@@ -110,23 +109,6 @@ export type RunLoopResult =
 // pending) where 2.5-flash finished in 18. 48 bounds the attempt without
 // starving cautious models; tune per-run via --max-steps.
 const DEFAULT_PHASE_STEPS = 48;
-
-const execFileAsync = promisify(execFile);
-
-/**
- * HEAD of a repository — the code commit a plan-side checkoff attests — or
- * null when there is none yet (an unborn branch: a greenfield repo before its
- * first commit). Nothing to attest is a fact to record as absence, not an
- * exception to throw through a tool call (A17).
- */
-async function headOf(repo: string): Promise<string | null> {
-	try {
-		const { stdout } = await execFileAsync("git", ["rev-parse", "--verify", "HEAD"], { cwd: repo });
-		return stdout.trim() || null;
-	} catch {
-		return null;
-	}
-}
 
 /**
  * Derive whether a phase is a human gate — no new marker required. Returns
@@ -284,7 +266,7 @@ export async function runLoop(options: RunLoopOptions): Promise<RunLoopResult> {
 				resolveEditPath,
 				pathspec: [roots.planDir],
 				trailer: async () => {
-					const head = await headOf(root);
+					const head = await headShaOrNull(root);
 					return head ? `Code-Commit: ${head}` : null;
 				},
 			})
