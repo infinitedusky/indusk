@@ -95,6 +95,25 @@ follow-on, not assumed.
   with the parents and the unclaimed plans under it. `PlanList.buildGroups`
   plus a header row; the reader already returns the root declaration. Dawn
   sub-plans stay declared under both parents (two links, not a drift).
+- Carried (2026-09-16, Sandy): **the progress model is three layers, each a
+  bar that fills.** (1) *Phase* — the stages inside the active phase
+  (implementation items → Verification → Context → Document) completing in
+  order; this is the stage breakdown above. (2) *Plan* — one bar per plan
+  from research (or brief) through test plan, ADR, impl, falsify, cleanup,
+  retrospective, archived, with the current step marked; the plan-level state
+  line above, rendered as a bar rather than a label. (3) *Master* — a parent
+  whose bar is the sum of its declared subplans, growing as plans are
+  declared and filling as they close; the sidebar root node carried in on
+  2026-09-15 is the structural half of this, the progress half is new here.
+  **The plan bar doubles as the definition of what a plan requires**: every
+  plan shows the same steps whether or not it has reached them, so the
+  lifecycle is legible on every plan at once, not only in the skill docs.
+  That means the bars derive from the lifecycle definition (`STAGE_ORDER` and
+  the ritual sequence), never from which documents happen to exist. One
+  caution for the ADR: a bar implies steps of similar size and they are not —
+  research through ADR is conversation, `/work` is most of the calendar time.
+  Either weight the impl segment by phase count or state plainly that the bar
+  is a checklist, not a time estimate; the first version must not mislead.
 - Considered, not committed (2026-09-14): provenance links between plan
   documents, so a claim in a brief can point at the research line it came
   from and the phase that acted on it (proposed 2026-09-10). Revisit if the
