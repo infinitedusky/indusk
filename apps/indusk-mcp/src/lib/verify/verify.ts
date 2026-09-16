@@ -3,6 +3,7 @@ import { relative, resolve, sep } from "node:path";
 import matter from "gray-matter";
 import { resolveImplPath } from "../impl-parser.js";
 import { parseTrajectory } from "../trajectory/parser.js";
+import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 import {
 	detectGoalpostDrift,
 	detectMalformedRows,
@@ -13,7 +14,6 @@ import { assertGitRepo, headSha, resolveBootstrapBaseline } from "./git.js";
 import { appendVerifyRecord, findBaselineRecord, hashTrajectory, readLedger } from "./ledger.js";
 import { detectPhantomWork } from "./phantom.js";
 import { detectRedTests } from "./red-tests.js";
-import { isRefusal, resolveVerifyRoots } from "./roots.js";
 
 /**
  * `atdawn verify <plan> --phase N` — phase-boundary verification for work Dawn
@@ -92,8 +92,19 @@ export async function runVerify(options: RunVerifyOptions): Promise<VerifyReport
 	// Where the plan lives is not always where its code lives. In a workbench
 	// they are different repositories, and judging a phase against the plan
 	// repo's diff would report every honest checkoff as phantom.
-	const roots = resolveVerifyRoots(root);
-	if (isRefusal(roots)) throw new Error(roots.error);
+	const roots = resolveExecutionRoots(root);
+	if (isRootsRefusal(roots)) throw new Error(roots.error);
+	// Build Phase 2 (dawn-workbench-execution) teaches the detections the split;
+	// until then a one-repo workbench is refused HERE, with the same words the
+	// resolver used to say, so nothing half-works in between.
+	if (roots.split) {
+		throw new Error(
+			`${root} is a workbench: its plan documents and its code (${roots.codeRoot}) live in different repositories, ` +
+				"and the verify ledger records a baseline from the plan repo that has no meaning in the code repo. " +
+				"Refusing rather than judging code against a diff that cannot contain it. " +
+				`Run verify inside ${roots.codeRoot} instead; cross-repo verification lands in dawn-workbench-execution Build Phase 2.`,
+		);
+	}
 	const codeRoot = roots.codeRoot;
 	if (roots.split) await assertGitRepo(codeRoot);
 

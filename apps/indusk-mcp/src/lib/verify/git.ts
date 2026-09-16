@@ -30,10 +30,10 @@ export { git };
  * NOTE (versioned-workbench): this guard used to be free. A workbench root was
  * deliberately not a git repo, so it refused there by a property nobody
  * maintained. Making the root a git repo removes that accident, and the
- * refusal is now MAINTAINED — by `resolveVerifyRoots`, which separates the
- * repo holding `impl.md` from the repo holding the code and refuses when they
- * differ. Changing this function is no longer the whole story; see
- * `verify/roots.ts`.
+ * refusal is now MAINTAINED — by `resolveExecutionRoots` (`worktree/roots.ts`),
+ * which separates the repo holding `impl.md` from the repo holding the code,
+ * and by what each consumer does with a split. Changing this function is no
+ * longer the whole story.
  */
 export async function assertGitRepo(root: string): Promise<void> {
 	try {

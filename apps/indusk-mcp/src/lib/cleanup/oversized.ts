@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getCleanupConfig, resolveCapForPath } from "../config.js";
-import { isWorkbench, readWorkbenchRepos, repoDir } from "../worktree/repos.js";
+import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 
 /** A changed file whose line count exceeds its resolved cleanup cap. */
 export interface OversizedFile {
@@ -115,13 +115,15 @@ export function listOversizedChangedFiles(
 	// A versioned workbench root IS a git repo, so the guard above passes and
 	// the diff it would examine is the plan documents — the code lives in repos
 	// the workbench's git ignores. Returning [] there is "checked and clean" for
-	// code that was never seen. `verify` had the identical gap and refuses by
-	// declaration (`resolveVerifyRoots`); this is cleanup's maintained refusal
+	// code that was never seen. Where the code is comes from the one shared
+	// resolver (dawn-workbench-execution); the cleanup scan across the split is
+	// a named follow-on, so a split still refuses here, naming the code root
 	// (workbench-trust-fixes, F3).
-	if (isWorkbench(projectRoot)) {
-		const dirs = readWorkbenchRepos(projectRoot).map(repoDir);
+	const roots = resolveExecutionRoots(projectRoot);
+	if (isRootsRefusal(roots)) throw new Error(`listOversizedChangedFiles: ${roots.error}`);
+	if (roots.split) {
 		throw new Error(
-			`listOversizedChangedFiles: ${projectRoot} is a workbench — its code lives in ${dirs.join(", ") || "repos it does not declare"}, ` +
+			`listOversizedChangedFiles: ${projectRoot} is a workbench — its code lives in ${roots.codeRoot}, ` +
 				"not in this repository, so a diff here cannot contain it. Refusing rather than reporting nothing to clean. " +
 				"Run the cleanup scan inside the repository the plan's code lives in.",
 		);
