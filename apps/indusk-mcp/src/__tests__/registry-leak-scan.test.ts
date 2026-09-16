@@ -7,7 +7,8 @@ import { REPO_ROOT } from "./helpers/cli.js";
 /**
  * admin-ui-phase-progress — A22.
  *
- * `init`, `update` and `ui` write `${INDUSK_HOME ?? ~/.indusk}/projects.json`.
+ * `init`, `update`, `setup` (which delegates to `init`) and `ui` write
+ * `${INDUSK_HOME ?? ~/.indusk}/projects.json`.
  * A test that spawns one of them without setting `INDUSK_HOME` registers its
  * temp directory in the developer's real registry — which is how it reached
  * 1,588 entries, 1,577 of them dead. A one-time prune (`indusk ui prune`)
@@ -21,10 +22,10 @@ import { REPO_ROOT } from "./helpers/cli.js";
  */
 
 const SPAWN_SHAPES: RegExp[] = [
-	/runCli\(\s*[^,]+,\s*\[\s*"(init|update|ui)"/,
-	/\[\s*CLI_BIN\s*,\s*"(init|update|ui)"/,
-	/cli\.js"?\s*,\s*"(init|update|ui)"/,
-	/CLI_BIN\s*,\s*"(init|update|ui)"/,
+	/runCli\(\s*[^,]+,\s*\[\s*"(init|update|ui|setup)"/,
+	/\[\s*CLI_BIN\s*,\s*"(init|update|ui|setup)"/,
+	/cli\.js"?\s*,\s*"(init|update|ui|setup)"/,
+	/CLI_BIN\s*,\s*"(init|update|ui|setup)"/,
 ];
 
 function testFiles(): string[] {

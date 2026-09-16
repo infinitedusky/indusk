@@ -14,8 +14,9 @@ import { CLI_BIN, REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { git, makeVersionedWorkbench } from "./helpers/versioned-workbench.js";
 
 // Every CLI spawn below registers its temp project; keep that out of the
-// developer's real ~/.indusk/projects.json (admin-ui-phase-progress A22).
-process.env.INDUSK_HOME ??= mkdtempSync(join(tmpdir(), "indusk-home-"));
+// developer's registry (admin-ui-phase-progress A22) — unconditionally, because
+// `??=` yielded to a shell that exports INDUSK_HOME (A31).
+process.env.INDUSK_HOME = mkdtempSync(join(tmpdir(), "indusk-home-"));
 
 /**
  * worktree-config-schema-pointer — A1–A4.
