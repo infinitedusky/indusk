@@ -60,7 +60,7 @@ export async function readBoundaries(root: string): Promise<PhaseBoundaryRecord[
 		}
 		if (!isBoundaryRecord(parsed)) {
 			throw new Error(
-				`Corrupt phase-boundary record: ${BOUNDARY_REL_PATH} line ${i + 1} is missing required fields (plan, phase, sha).`,
+				`Corrupt phase-boundary record: ${BOUNDARY_REL_PATH} line ${i + 1}: ${boundaryRecordProblem(parsed)}.`,
 			);
 		}
 		records.push(parsed);
@@ -68,16 +68,28 @@ export async function readBoundaries(root: string): Promise<PhaseBoundaryRecord[
 	return records;
 }
 
-function isBoundaryRecord(value: unknown): value is PhaseBoundaryRecord {
-	if (typeof value !== "object" || value === null) return false;
+/**
+ * Why `value` is not a boundary record, naming the field — or null when it is
+ * one. The ONE predicate for both directions (A30): `readBoundaries` refuses a
+ * file carrying a line that fails it, and `recordPhaseStart` refuses to write
+ * such a line, because one bad append blinds every reader of the whole file.
+ */
+export function boundaryRecordProblem(value: unknown): string | null {
+	if (typeof value !== "object" || value === null) return "record must be an object";
 	const r = value as Record<string, unknown>;
-	return (
-		typeof r.plan === "string" &&
-		typeof r.phase === "number" &&
-		Number.isFinite(r.phase) &&
-		typeof r.sha === "string" &&
-		r.sha.length > 0
-	);
+	if (typeof r.plan !== "string" || r.plan.length === 0) return "plan must be a non-empty string";
+	if (typeof r.phase !== "number" || !Number.isFinite(r.phase)) {
+		return `phase must be a finite number; got ${r.phase === null ? "null" : typeof r.phase}`;
+	}
+	if (r.kind !== undefined && r.kind !== "test" && r.kind !== "build") {
+		return `kind must be "test" or "build" when present; got ${JSON.stringify(r.kind)}`;
+	}
+	if (typeof r.sha !== "string" || r.sha.length === 0) return "sha must be a non-empty string";
+	return null;
+}
+
+export function isBoundaryRecord(value: unknown): value is PhaseBoundaryRecord {
+	return boundaryRecordProblem(value) === null;
 }
 
 /**
@@ -92,6 +104,12 @@ export async function recordPhaseStart(
 	root: string,
 	record: { plan: string; phase: number; kind?: PhaseKind; sha: string; at: string },
 ): Promise<void> {
+	const problem = boundaryRecordProblem(record);
+	if (problem !== null) {
+		throw new Error(
+			`Refusing to write a phase-boundary record its readers would refuse: ${problem}. Nothing was written to ${BOUNDARY_REL_PATH}.`,
+		);
+	}
 	const ref: PhaseRef = { kind: record.kind ?? "build", number: record.phase };
 	const existing = await readBoundaries(root);
 	if (findPhaseStart(existing, record.plan, ref) !== null) return;
