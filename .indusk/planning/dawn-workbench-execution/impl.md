@@ -66,7 +66,7 @@ Test paths are repo-root-relative.
 | A12 | Every eval the loop queues carries `repo`, the code repo's absolute path; draining passes that path to the evaluator, which a stub observes as its git root; a record without `repo` drains as before | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/lib/run/pending-repo-attribution.test.ts |
 | A13 | A1, A7 and A8 hold on all four one-repo layouts: flat legacy, nested, sibling, declared `path` | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/lib/verify/workbench-split.test.ts, apps/indusk-mcp/src/lib/run/workbench-split.test.ts |
 | A14 | Exactly one definition of `resolveExecutionRoots` exists under `src/lib`, `verify/roots.ts` is gone, and `run.ts`, `oversized.ts` and `verify.ts` each import it | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/execution-roots-single-definition.test.ts |
-| A15 | Inside a workbench, the dawn-verify matrix holds: an uncontrolled headless agent's honest phase verifies clean, and each of the five planted classes is caught | Build Phase 5 | Build Phase 5 | planned | manual: .indusk/planning/dawn-workbench-execution/matrix.md |
+| A15 | Inside a workbench, the dawn-verify matrix holds: an uncontrolled headless agent's honest phase verifies clean, and each of the five planted classes is caught | Build Phase 5 | Build Phase 5 | passing | manual: .indusk/planning/dawn-workbench-execution/matrix.md |
 
 ## Checklist
 
@@ -232,17 +232,17 @@ Test paths are repo-root-relative.
 - [ ] Carried (brief): `check_health` reports a plan whose impl has been `completed` for more than seven days with no `retrospective.md` as an error naming the plan — the impl's `updated:` (else `date:`) frontmatter is the clock; `lib/health.ts` + `system-tools.ts`; fixture at six and eight days
 
 #### Build Phase 5 Verification
-- [ ] A15: `matrix.md` records cell 0 clean with exit 0 and cells A–E each rejected with the expected finding kind and exit 1 — the same shape as the archive's table
-- [ ] The two carried items have tests green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/cleanup/gate-row-terminality.test.ts src/__tests__/health-stale-completed.test.ts` (both new in this phase, beside `oversized-workbench-refusal.test.ts` and `health-check-roots.test.ts`) — expected: pass; then `cd` back
-- [ ] The whole package: `cd apps/indusk-mcp && pnpm exec vitest run` — expected: green except the admin daemon suites known red without an admin build
-- [ ] Row A15 set to `passing`
-- [ ] Shape (Build Phase 5): review the phase's files; record findings or "nothing to change"
+- [x] A15: `matrix.md` records cell 0 clean with exit 0 and cells A–E each rejected with the expected finding kind and exit 1 — the same shape as the archive's table — 2026-09-16: recorded; one honest difference from the archive noted in the file (cell D's rows read unverified, not red, because the test file is gone from the code repo)
+- [x] The two carried items have tests green: `cd apps/indusk-mcp && pnpm exec vitest run src/lib/cleanup/gate-row-terminality.test.ts src/__tests__/health-stale-completed.test.ts` (both new in this phase, beside `oversized-workbench-refusal.test.ts` and `health-check-roots.test.ts`) — expected: pass; then `cd` back — 2026-09-16: passed, together with the whole cleanup and trajectory directories (8 files, 90 tests)
+- [x] The whole package: `cd apps/indusk-mcp && pnpm exec vitest run` — expected: green except the admin daemon suites known red without an admin build — 2026-09-16: 214 files passed, 1 skipped, 3 failed — the admin daemon and bundle suites, which need the admin app built (known red here, CLAUDE.md)
+- [x] Row A15 set to `passing`
+- [x] Shape (Build Phase 5): review the phase's files; record findings or "nothing to change" — recorded by hand (gate-position skip). `stale-completed.ts` is one exported function with two small named date helpers and its rule in the docblock; `audit.ts` gained one finding type and one function beside the two it already had, with the terminal set named and its difference from the parser's explained; `gate.ts` gained three fields and one call; `system-tools.ts` one block in `check_health` with its reason. Left as is: `system-tools.ts` line 1 carries an unused-import lint that predates this branch (Biome flags it on `main`'s copy too) — not this phase's. Nothing to change
 
 #### Build Phase 5 Context
-- [ ] Current State: the 6.5 line — shipped, matrix held (N/5, false positives), the carried close-out checks live; Key Decisions already carries the ADR line
+- [x] Current State: the 6.5 line — shipped, matrix held (N/5, false positives), the carried close-out checks live; Key Decisions already carries the ADR line
 
 #### Build Phase 5 Document
-- [ ] `apps/docs/src/decisions/dawn-workbench-execution.md` (this ADR, published) and the sidebar entry; `.indusk/planning/indusk-v2-dawn/master.md` component 6.5 → done with the acceptance result, the "universal floor" line rewritten; `.indusk/planning/master.md` Stream 3 row; `.indusk/planning/indusk-v4-day/master.md` component 2 → closed
+- [x] (the two links left pending in Build Phases 1 and 2 — `run.md` and the dawn-verify superseded note — now point at the page) `apps/docs/src/decisions/dawn-workbench-execution.md` (this ADR, published) and the sidebar entry; `.indusk/planning/indusk-v2-dawn/master.md` component 6.5 → done with the acceptance result, the "universal floor" line rewritten; `.indusk/planning/master.md` Stream 3 row; `.indusk/planning/indusk-v4-day/master.md` component 2 → closed
 
 ## Files Affected
 

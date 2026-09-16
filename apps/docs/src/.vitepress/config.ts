@@ -197,6 +197,7 @@ const config = defineConfig({
 						{ text: "Dawn External Orchestrator — model-agnostic gated execution", link: "/decisions/dawn-external-orchestrator" },
 						{ text: "Dawn Hook Parity — invariants and the eval rail in the thin lane", link: "/decisions/dawn-hook-parity" },
 						{ text: "Dawn Verify — phase-boundary verification for work Dawn didn't execute", link: "/decisions/dawn-verify" },
+						{ text: "Dawn Workbench Execution — two roots, one resolver", link: "/decisions/dawn-workbench-execution" },
 						{ text: "Excalidraw Extension", link: "/decisions/excalidraw-extension" },
 						{ text: "Falsification Ritual — Decision Summary", link: "/decisions/falsification-ritual" },
 						{ text: "Git-Only Substrate", link: "/decisions/git-only-substrate" },
