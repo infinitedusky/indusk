@@ -1,7 +1,7 @@
 ---
 title: "Trunk guard — Implementation"
 date: 2026-09-17
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -56,7 +56,7 @@ Test paths are repo-root-relative.
 | A8 | On `main` with a source file staged, a commit spelled with git options before the verb — `git -C <repo> commit -m …`, `git -c user.name=x commit -m …`, `git --no-pager commit -m …` — is refused like the plain form; and `cd <repo> && git commit -m …` run from an unrelated cwd is judged against `<repo>`, not the cwd | Build Phase 3 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/trunk-guard-falsification.test.ts |
 | A9 | On `main` with a source file staged, a commit wrapped in a quoted or substituted command — `bash -c "git commit -m …"`, `sh -c 'git commit …'`, `$(git commit …)`, a backtick form — is refused; `echo "git commit"` and `git commitment` stay allowed | Build Phase 3 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/trunk-guard-falsification.test.ts |
 | A10 | On `main` with nothing staged and a tracked source file modified, `git commit -am …` (the combined short flag) and `git commit -m … <path>` (an explicit pathspec) are refused naming the file, because both commit it without staging; `git commit -m …` with nothing staged stays allowed | Build Phase 3 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/trunk-guard-falsification.test.ts |
-| A11 | One `ensureHookRegistered(settings, event, matcher, hookFile)` puts a hook's command into the group with that matcher — adding to the group when it exists, creating the group when it does not, returning false and changing nothing when a command naming that hook file is already there — and it is the only way `init` and `update` register a hook: the five hand-rolled sites (eval-trigger, workbench-sync, claude-md-budget and trunk-guard in `update.ts`; the merge loop in `init.ts`) are gone, and A5 plus `hook-cwd-independence` still pass through it | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/hook-registration.test.ts |
+| A11 | One `ensureHookRegistered(settings, event, matcher, hookFile)` puts a hook's command into the group with that matcher — adding to the group when it exists, creating the group when it does not, returning false and changing nothing when a command naming that hook file is already there — and it is the only way `init` and `update` register a hook: the five hand-rolled sites (eval-trigger, workbench-sync, claude-md-budget and trunk-guard in `update.ts`; the merge loop in `init.ts`) are gone, and A5 plus `hook-cwd-independence` still pass through it | Build Phase 4 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/hook-registration.test.ts |
 
 ### Deferred Verification
 
@@ -176,25 +176,26 @@ before any assertion of ours runs), not a load error inside the test file.
 
 **Goal**: decompose what this plan grew per the rule of three. Registering a hook in `.claude/settings.json` — "is a command naming this file in the group with this matcher; if not, add it to the group, or create the group" — is now written five times: four targeted-ensure blocks in `update.ts` (eval-trigger, workbench-sync, claude-md-budget, trunk-guard) and the merge loop in `init.ts`. Build Phase 2 found the fifth copy's bug (a duplicate group) in the fourth's shadow; the next hook would write a sixth. Everything else the plan touched is a record (changelog, workbench reference) or a cohesive unit under its cap.
 
-- [ ] Extract `ensureHookRegistered(settings, event, matcher, hookFile): boolean` into `lib/hook-command.ts` beside `hookCommand` (the module that already owns "the one definition of a hook's registered command"; registration is its sibling fact). Presence is "a command in that group names the hook file" — the tolerance the existing blocks have for a customised command — and the group is matched by exact matcher string
-- [ ] `update.ts`: the four ensure blocks call it and keep their own log lines; the `hasBashEvalHook` / `hasSyncHook` / budget / trunk-guard predicates and their push-or-create bodies go. The workbench-sync block's presence check today scans every PostToolUse group, not just Edit/Write — the helper checks the named group, which is the stricter and correct reading (a sync hook registered under Bash alone would never fire on an edit)
-- [ ] `init.ts`: the non-force path of the settings merge calls it per hook; the force path (drop the group, append ours) stays as written, it is a different operation
-- [ ] (reviewed `apps/indusk-mcp/hooks/trunk-guard.js` — left as-is: 381 lines under the 400 cap, one hook with one rule; Shape already named its helpers (`commitAnchor`, `commitCloser`, `commitArgs`, `commitIntent`) and each has one job)
-- [ ] (reviewed `apps/docs/src/changelog.md` 669 and `apps/docs/src/reference/cli/workbench.md` 431 — left as-is: the changelog is an append-only record by design; the workbench reference gained one 20-line section on the guard, and splitting a reference page by size would scatter one command's documentation)
-- [ ] (reviewed `init.ts` 1331 and `update.ts` 1042 — the extraction above is what this plan owes them; the rest of their size predates it and is not this plan's to decompose)
+- [x] Extract `ensureHookRegistered(settings, event, matcher, hookFile): boolean` into `lib/hook-command.ts` beside `hookCommand` (the module that already owns "the one definition of a hook's registered command"; registration is its sibling fact). Presence is "a command in that group names the hook file" — the tolerance the existing blocks have for a customised command — and the group is matched by exact matcher string — plus `hookRegistered` (the predicate alone) and `hookFileOf(command)` (the file a registered command runs), which init needs because its `hookConfig` carries full commands
+- [x] `update.ts`: the four ensure blocks call it and keep their own log lines; the `hasBashEvalHook` / `hasSyncHook` / budget / trunk-guard predicates and their push-or-create bodies go. The workbench-sync block's presence check today scans every PostToolUse group, not just Edit/Write — the helper checks the named group, which is the stricter and correct reading (a sync hook registered under Bash alone would never fire on an edit) — 81 lines become 14; `hookCommand` is no longer imported there at all
+- [x] `init.ts`: the non-force path of the settings merge calls it per hook; the force path (drop the group, append ours) stays as written, it is a different operation — the dead `existingEntries` binding went with it. One pre-existing lint (`noIndex` destructured and unused at `init.ts:446`) predates this plan and is left for its owner
+- [x] (reviewed `apps/indusk-mcp/hooks/trunk-guard.js` — left as-is: 381 lines under the 400 cap, one hook with one rule; Shape already named its helpers (`commitAnchor`, `commitCloser`, `commitArgs`, `commitIntent`) and each has one job)
+- [x] (reviewed `apps/docs/src/changelog.md` 669 and `apps/docs/src/reference/cli/workbench.md` 431 — left as-is: the changelog is an append-only record by design; the workbench reference gained one 20-line section on the guard, and splitting a reference page by size would scatter one command's documentation)
+- [x] (reviewed `init.ts` 1331 and `update.ts` 1042 — the extraction above is what this plan owes them; the rest of their size predates it and is not this plan's to decompose)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 4 Verification
-- [ ] A11 authored red (the import fails to load — a boundary red is not available for a library unit, so the file is written in this phase and goes green in it, the register entry says so), then green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-registration.test.ts`; then `cd` back
-- [ ] Behaviour parity: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard-registration.test.ts src/__tests__/hook-cwd-independence.test.ts src/__tests__/init-workbench.test.ts` green, and every test that exercises `update`'s eval-trigger, workbench-sync or budget registration still passes in the full suite: `pnpm exec vitest run`; then `cd` back
-- [ ] `grep -n "hooks.push\|\.push({ matcher" src/bin/commands/update.ts src/bin/commands/init.ts` shows no hand-rolled registration left outside the helper
-- [ ] Row A11 set to `passing`
-- [ ] Shape (Build Phase 4): review the helper; record findings or "nothing to change"
+- [x] A11 authored red (the import fails to load — a boundary red is not available for a library unit, so the file is written in this phase and goes green in it, the register entry says so), then green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/hook-registration.test.ts`; then `cd` back — honest record: the helper and the test were written in the same step and the first run was green (7 cases: six shapes + `hookFileOf`); the red state was never observed. For a unit whose only red is "cannot import", observing it would have proven nothing about the assertions, which is the register entry's argument — but it is a rubber stamp by the trajectory's definition, and it is written here as one
+- [x] Behaviour parity: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard-registration.test.ts src/__tests__/hook-cwd-independence.test.ts src/__tests__/init-workbench.test.ts` green, and every test that exercises `update`'s eval-trigger, workbench-sync or budget registration still passes in the full suite: `pnpm exec vitest run`; then `cd` back — targeted: 7 files / 38 tests (those three plus `init-globsync-hooks`, `eval-trigger-git-mode`, `multi-agent-skills`, `hook-registration`); full suite: 234 files / 1430 tests passed, 1 file skipped
+- [x] `grep -n "hooks.push\|\.push({ matcher" src/bin/commands/update.ts src/bin/commands/init.ts` shows no hand-rolled registration left outside the helper — grep exit 1, no matches (init's force path replaces a whole group by array spread, which is not a registration)
+- [x] Row A11 set to `passing`
+- [x] Shape (Build Phase 4): review the helper; record findings or "nothing to change" — performed; the record is the Shape item appended to this phase's implementation list
 
 #### Build Phase 4 Context
-- [ ] Known Gotchas, the hooks-discovery entry: "a targeted settings-ensure block in `update.ts`" becomes "an `ensureHookRegistered` call (`lib/hook-command.ts`) from `update.ts`" — the pointer names the one definition; trimmed elsewhere in the entry to stay under budget (61,429 of 61,440 bytes today)
+- [x] Known Gotchas, the hooks-discovery entry: "a targeted settings-ensure block in `update.ts`" becomes "an `ensureHookRegistered` call (`lib/hook-command.ts`) from `update.ts`" — the pointer names the one definition; trimmed elsewhere in the entry to stay under budget (61,429 of 61,440 bytes today) — done (`ba150a22`); the clause about init's per-hook merge went, since the helper is now the fact; 61,416 bytes
 
 #### Build Phase 4 Document
-- [ ] `apps/docs/src/changelog.md` Unreleased, a `### Changed` line: `init` and `update` register hooks through one helper; a new hook adds one call, not a block
+- [x] `apps/docs/src/changelog.md` Unreleased, a `### Changed` line: `init` and `update` register hooks through one helper; a new hook adds one call, not a block — done (`2cdbccb0`)
 
 ## Files Affected
 
