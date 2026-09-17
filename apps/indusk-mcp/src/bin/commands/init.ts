@@ -6,7 +6,12 @@ import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
 import { detectTooling } from "../../lib/detect-tooling.js";
-import { absolutizeHookCommands, hookCommand } from "../../lib/hook-command.js";
+import {
+	absolutizeHookCommands,
+	ensureHookRegistered,
+	hookCommand,
+	hookFileOf,
+} from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { linkTrunk } from "../../lib/worktree/layout.js";
 
@@ -1074,7 +1079,6 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 
 		let hooksUpdated = false;
 		for (const [event, entries] of Object.entries(hookConfig)) {
-			const existingEntries = existing.hooks[event] || [];
 			// Check if our hook is already present
 			// Check each hook entry individually so new hooks get added even if old ones exist
 			for (const entry of entries as Array<{
@@ -1089,24 +1093,14 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 					hooksUpdated = true;
 					continue;
 				}
-				// Merge per HOOK into the group with this matcher, never per group:
-				// appending a whole group whenever one command was missing registered
-				// the group twice — every hook in it running twice — the moment a new
-				// hook joined an existing matcher (trunk-guard, 2026-09-17).
-				const group = existingEntries.find(
-					(e: { matcher?: string }) => e.matcher === entry.matcher,
-				) as { matcher?: string; hooks?: Array<{ command?: string; type?: string }> } | undefined;
-				if (!group) {
-					existing.hooks[event] = [...(existing.hooks[event] || []), entry];
-					hooksUpdated = true;
-					continue;
-				}
-				group.hooks = group.hooks || [];
+				// Merge per HOOK into the group with this matcher through the one
+				// registration helper — never per group: appending a whole group
+				// whenever one command was missing registered the group twice
+				// (trunk-guard, 2026-09-17).
 				for (const newHook of entry.hooks) {
-					if (!group.hooks.some((h) => h.command === newHook.command)) {
-						group.hooks.push(newHook);
+					const file = hookFileOf(newHook.command);
+					if (file && ensureHookRegistered(existing, event, entry.matcher, file))
 						hooksUpdated = true;
-					}
 				}
 			}
 		}
