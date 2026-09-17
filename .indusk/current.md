@@ -291,3 +291,24 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 (empty)
 
 ---
+
+## Session e44e786a — eval agent: scoring commit b32c5222 (trunk-guard A1-A7 RED)
+
+**Session ID**: e44e786a-5646-4094-946f-8ec9647782ad
+**Last updated**: 2026-09-17T21:14:46.320Z
+**Branch**: plan/trunk-guard
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/trunk-guard
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

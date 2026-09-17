@@ -2,6 +2,20 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+- **No code on trunk.** A new PreToolUse hook, `trunk-guard.js`, refuses an Edit or Write to code, and a `git commit` whose staged paths include code, while the repository is on `main` or `master` — naming `indusk worktree create <plan>` as the way through. Plan documents, lessons, settings, `CLAUDE.md` and `AGENTS.md` stay editable on trunk; a `chore(release):` commit is exempt; `worktree.trunk_guard.enabled: false` (project) and `INDUSK_TRUNK_GUARD=off` (one call) are the deliberate off switches. In a versioned workbench the declared code repository's branch is judged. Registered under both matchers by `init`, added to existing projects by `update`. Motivated by an afternoon in which four unplanned changes landed on trunk with no test phase behind any of them.
+- **`check_health` reports the three-way version state** — installed, published (from the registry), what `indusk update` last applied to the project, and on the monorepo the release commit with the packaged commits since. `indusk update` now records the version it applied in `.indusk/config.json`; `pnpm release` records the publish in `current.md`'s shared region. Added after an agent reported 1.50.0 unpublished an hour after it shipped.
+
+### Fixed
+- **The release guard refuses uncommitted changes on packaged paths only**; dirt elsewhere in the tree is reported, never blocking.
+- **The trunk guard's commit gate reads the spellings agents actually use.** Falsification found three it did not: `git -C <repo> commit` (and `git -c …`, `--no-pager`) with the judged repository moved by `-C` or by an earlier `cd` in the same command; `bash -c "git commit …"`, `sh -c '…'` and backticks; and `git commit -am …` or `git commit -m … <path>`, which commit unstaged files. A small argument tokenizer now tells a flag, its value and a pathspec apart.
+- **`indusk init` merges a hook into an existing matcher group** instead of appending a second copy of the group; the first new hook to join the Edit/Write matcher would otherwise have registered every hook in it twice.
+
+### Changed
+- **`init` and `update` register hooks through one helper**, `ensureHookRegistered` in the hook-command module. Five hand-rolled "is it in that matcher's group; if not, add it" blocks are gone; a new hook is one call, and the duplicate-group bug above cannot be written again.
+
 ## [1.50.0] — 2026-09-17
 
 ### Added

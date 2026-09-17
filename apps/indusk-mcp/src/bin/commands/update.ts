@@ -1,13 +1,13 @@
 import { execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, join, resolve as resolvePath } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
 import { detectTooling } from "../../lib/detect-tooling.js";
 import { loadExtensionTolerant, localOverrideErrors } from "../../lib/extension-loader.js";
-import { absolutizeHookCommands, hookCommand } from "../../lib/hook-command.js";
+import { absolutizeHookCommands, ensureHookRegistered } from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { checkLatestVersion, hasNewerVersion } from "../../lib/version-check.js";
 import { readWorkbenchRepos, repoDir, resolveReposRoot } from "../../lib/worktree/repos.js";
@@ -263,40 +263,15 @@ export async function update(projectRoot: string): Promise<void> {
 		if (existsSync(settingsPath)) {
 			try {
 				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-				const postHooks = settings.hooks?.PostToolUse ?? [];
-				const hasBashEvalHook = postHooks.some(
-					(entry: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
-						entry.matcher === "Bash" &&
-						entry.hooks?.some((h: { command?: string }) => h.command?.includes("eval-trigger")),
-				);
-				if (!hasBashEvalHook) {
-					if (!settings.hooks) settings.hooks = {};
-					if (!settings.hooks.PostToolUse) settings.hooks.PostToolUse = [];
-					settings.hooks.PostToolUse.push({
-						matcher: "Bash",
-						hooks: [{ type: "command", command: hookCommand("eval-trigger.js") }],
-					});
+				// A hook copied by globSync but never registered in settings is a file
+				// that exists and never runs — the eval-trigger lesson. One helper
+				// registers every hook (`ensureHookRegistered`); a new hook is one call.
+				if (ensureHookRegistered(settings, "PostToolUse", "Bash", "eval-trigger.js")) {
 					const { writeFileSync } = await import("node:fs");
 					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
 					console.info("  registered eval-trigger hook in settings.json");
 				}
-				// Same targeted-ensure shape as the eval-trigger block above.
-				// A hook copied by globSync but never registered in settings is
-				// a file that exists and never runs — the eval-trigger lesson.
-				const editHooks = settings.hooks?.PostToolUse ?? [];
-				const hasSyncHook = editHooks.some(
-					(entry: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
-						entry.hooks?.some((h: { command?: string }) => h.command?.includes("workbench-sync")),
-				);
-				if (!hasSyncHook) {
-					if (!settings.hooks) settings.hooks = {};
-					if (!settings.hooks.PostToolUse) settings.hooks.PostToolUse = [];
-					const editEntry = (
-						settings.hooks.PostToolUse as Array<{ matcher?: string; hooks?: unknown[] }>
-					).find((e) => e.matcher === "Edit|Write");
-					const hookDef = { type: "command", command: hookCommand("workbench-sync.js") };
-					if (editEntry?.hooks) editEntry.hooks.push(hookDef);
-					else settings.hooks.PostToolUse.push({ matcher: "Edit|Write", hooks: [hookDef] });
+				if (ensureHookRegistered(settings, "PostToolUse", "Edit|Write", "workbench-sync.js")) {
 					const { writeFileSync: wf } = await import("node:fs");
 					wf(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
 					console.info("  registered workbench-sync hook in settings.json");
@@ -345,34 +320,34 @@ export async function update(projectRoot: string): Promise<void> {
 			// settings.json registration on pre-existing projects.
 			try {
 				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
-				const preHooks = settings.hooks?.PreToolUse ?? [];
-				const editEntry = preHooks.find(
-					(entry: { matcher?: string }) => entry.matcher === "Edit|Write",
-				);
-				const hasBudgetHook = editEntry?.hooks?.some((h: { command?: string }) =>
-					h.command?.includes("claude-md-budget"),
-				);
-				if (!hasBudgetHook) {
-					if (!settings.hooks) settings.hooks = {};
-					if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
-					if (editEntry) {
-						editEntry.hooks = editEntry.hooks || [];
-						editEntry.hooks.push({
-							type: "command",
-							command: hookCommand("claude-md-budget.js"),
-						});
-					} else {
-						settings.hooks.PreToolUse.push({
-							matcher: "Edit|Write",
-							hooks: [{ type: "command", command: hookCommand("claude-md-budget.js") }],
-						});
-					}
+				if (ensureHookRegistered(settings, "PreToolUse", "Edit|Write", "claude-md-budget.js")) {
 					const { writeFileSync } = await import("node:fs");
 					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
 					console.info("  registered claude-md-budget hook in settings.json");
 				}
 			} catch {
 				console.info("  could not register claude-md-budget hook in settings.json");
+			}
+
+			// Ensure the trunk guard is registered under BOTH matchers (trunk-guard
+			// plan). Same targeted-ensure shape: update syncs the hook FILE via
+			// globSync, but a pre-existing project's settings still need the two
+			// registrations. A hook registered under only one matcher is half a
+			// gate — the commit gate is what catches edits the Edit gate never sees.
+			try {
+				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+				let changed = false;
+				for (const matcher of ["Edit|Write", "Bash"]) {
+					if (ensureHookRegistered(settings, "PreToolUse", matcher, "trunk-guard.js"))
+						changed = true;
+				}
+				if (changed) {
+					const { writeFileSync } = await import("node:fs");
+					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+					console.info("  registered trunk-guard hook in settings.json (Edit|Write + Bash)");
+				}
+			} catch {
+				console.info("  could not register trunk-guard hook in settings.json");
 			}
 		}
 	}

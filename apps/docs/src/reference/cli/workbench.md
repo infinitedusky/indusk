@@ -397,6 +397,26 @@ A directory that resolves to no declared repo is left alone and reported, never
 guessed at. Wrapped repos are never committed to — this moves worktrees, not
 product code. Re-running once everything is declared is a no-op.
 
+## The trunk guard in a workbench
+
+`trunk-guard.js` (see [the hooks section of the guide](/guide/#3-hooks-enforce-what-discipline-won-t))
+refuses code edited or committed on `main`. In a workbench there are two
+repositories, and the rule reads them differently on purpose:
+
+- **The declared code repository** is the one whose branch is judged. An Edit
+  to a file inside it while it is on `main` is refused; a `git commit` there
+  with code staged is refused. Work in a worktree of that repository, as the
+  worktree extension already arranges.
+- **The workbench repository** holds plan documents, and everything under its
+  `.indusk/` is allow-listed before any git call is made — so a brief, a
+  checkoff, `current.md` and `config.json` commit to the workbench's `main`
+  as they always have. That is the workbench sync loop's normal operation and
+  the guard never interferes with it.
+
+The resolution is the hooks' shared `resolveStateAndGitPaths`: the same
+"which repository received this" logic the eval hook uses, so the two hooks
+cannot disagree about where the code is.
+
 ## Why not `init` or `update`?
 
 `indusk init` is written to *refuse* an already-initialized workbench; a cloned

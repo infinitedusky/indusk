@@ -6,7 +6,12 @@ import { fileURLToPath } from "node:url";
 import { globSync } from "glob";
 import { ensureAgentsMdSections } from "../../lib/agents-md-sections.js";
 import { detectTooling } from "../../lib/detect-tooling.js";
-import { absolutizeHookCommands, hookCommand } from "../../lib/hook-command.js";
+import {
+	absolutizeHookCommands,
+	ensureHookRegistered,
+	hookCommand,
+	hookFileOf,
+} from "../../lib/hook-command.js";
 import { ensureHooksModuleType } from "../../lib/hooks-module-type.js";
 import { linkTrunk } from "../../lib/worktree/layout.js";
 
@@ -1019,7 +1024,15 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 					{ type: "command", command: hookCommand("check-gates.js") },
 					{ type: "command", command: hookCommand("validate-impl-structure.js") },
 					{ type: "command", command: hookCommand("claude-md-budget.js") },
+					// No code on trunk (trunk-guard): the edit gate. Its twin below,
+					// on Bash, judges `git commit` by what is staged — an edit made
+					// through sed or a heredoc never passes through Edit or Write.
+					{ type: "command", command: hookCommand("trunk-guard.js") },
 				],
+			},
+			{
+				matcher: "Bash",
+				hooks: [{ type: "command", command: hookCommand("trunk-guard.js") }],
 			},
 		],
 		PostToolUse: [
@@ -1066,26 +1079,28 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 
 		let hooksUpdated = false;
 		for (const [event, entries] of Object.entries(hookConfig)) {
-			const existingEntries = existing.hooks[event] || [];
 			// Check if our hook is already present
 			// Check each hook entry individually so new hooks get added even if old ones exist
 			for (const entry of entries as Array<{
 				matcher: string;
 				hooks: Array<{ command: string; type: string }>;
 			}>) {
-				const alreadyPresent = existingEntries.some(
-					(e: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
-						e.matcher === entry.matcher &&
-						entry.hooks.every((newHook) => e.hooks?.some((h) => h.command === newHook.command)),
-				);
-				if (!alreadyPresent || force) {
-					if (force) {
-						existing.hooks[event] = (existing.hooks[event] || []).filter(
-							(e: { matcher?: string }) => e.matcher !== entry.matcher,
-						);
-					}
-					existing.hooks[event] = [...(existing.hooks[event] || []), entry];
+				if (force) {
+					existing.hooks[event] = (existing.hooks[event] || []).filter(
+						(e: { matcher?: string }) => e.matcher !== entry.matcher,
+					);
+					existing.hooks[event] = [...existing.hooks[event], entry];
 					hooksUpdated = true;
+					continue;
+				}
+				// Merge per HOOK into the group with this matcher through the one
+				// registration helper — never per group: appending a whole group
+				// whenever one command was missing registered the group twice
+				// (trunk-guard, 2026-09-17).
+				for (const newHook of entry.hooks) {
+					const file = hookFileOf(newHook.command);
+					if (file && ensureHookRegistered(existing, event, entry.matcher, file))
+						hooksUpdated = true;
 				}
 			}
 		}

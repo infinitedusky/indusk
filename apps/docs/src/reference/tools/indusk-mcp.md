@@ -140,14 +140,9 @@ The tool holds an `O_EXCL`-based file lock on `<projectRoot>/.indusk/current.md.
 
 ## Hooks
 
-Two Claude Code hooks enforce the gate system during [work](/reference/skills/work) execution:
+`init` installs every hook in the package's `hooks/` directory to `.claude/hooks/` and registers each in `.claude/settings.json`; `update` re-syncs the files and adds any registration a pre-existing project lacks. The full table — seven hooks, what each catches, and the event it runs on — is in the [guide](/guide/#3-hooks-enforce-what-discipline-won-t).
 
-| Hook | Event | Purpose |
-|------|-------|---------|
-| `check-gates.js` | PreToolUse | Blocks marking Phase N+1 implementation items until Phase N gates (verification, context, document) are complete. Exits with code 2 to block the action. |
-| `gate-reminder.js` | PostToolUse | Reminds the agent to call `advance_plan` when all items in a phase are checked. Advisory only, does not block. |
-
-Hooks are installed to `.claude/hooks/` during `init` and updated via `update`.
+One registration detail is worth knowing when reading `settings.json`: `trunk-guard.js` is registered under **two** `PreToolUse` matchers, `Edit|Write` and `Bash`. The first refuses code edits on a protected branch; the second refuses `git commit` there. A project with only one of the two has half a gate, which is why `update` ensures both.
 
 ## Lessons Registry
 

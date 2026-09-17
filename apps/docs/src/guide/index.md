@@ -58,20 +58,39 @@ by discipline.
 
 ## 3. Hooks enforce what discipline won't
 
-Six hooks ship. Three are PreToolUse gates that run on every file write and
-refuse; three are PostToolUse and act after the fact:
+Seven hooks ship. Four are PreToolUse gates that run before a write or a
+commit and refuse; three are PostToolUse and act after the fact:
 
 | Hook | Refuses |
 |---|---|
 | `validate-impl-structure` | an implementation missing required sections |
 | `check-gates` | closing a phase whose gates or trajectory rows are open |
 | `claude-md-budget` | a CLAUDE.md write past the 60 KB ceiling |
+| `trunk-guard` | code edited or committed on `main` — an Edit/Write, or a `git commit` whose paths (staged, `-a`/`-am`, or named as pathspecs), fall outside `.indusk/`, `.claude/lessons/`, settings, `CLAUDE.md` and `AGENTS.md` while the repository is on a protected branch. The commit gate reads `git -C … commit`, a preceding `cd`, `bash -c "…"`, `$(…)` and backticks; a script that commits inside itself is out of its sight |
 | `eval-trigger` | *(PostToolUse)* — nothing; on every `git commit` it spawns the evaluator that scores the diff, and in a multi-repo workbench it refuses to guess which repo the commit belongs to |
 | `workbench-sync` | *(PostToolUse)* — nothing; commits workbench context after edits |
 | `gate-reminder` | *(PostToolUse, advisory)* — nothing; when an edit closes a phase it puts the next phase's tests-to-author in front of the agent as additional context |
 
 These are not linting. They block the edit. An agent that wants to mark a phase
 done with a red test simply cannot.
+
+**The trunk guard** (2026-09-17) closes the last gap in "one plan, one branch,
+one landing": nothing had stopped an agent from editing code straight on
+`main` when the change felt small, and one afternoon saw a skill step, a guard
+fix, a feature and another session's WIP land on trunk with no plan behind any
+of them. The hook refuses the packaged edit at the source. It has two matchers
+because the edit gate alone is not enough — an edit made through `sed`, a
+heredoc or a script never passes through Edit or Write, so the `git commit`
+gate judges what is actually staged. What stays editable on trunk is exactly
+what a plan writes before it has a worktree (its brief) or after it landed (the
+compaction, the landing note), plus what the eval agent writes: plan documents,
+lessons, settings, `CLAUDE.md`, `AGENTS.md`. A `chore(release):` commit is the
+one packaged edit that belongs on trunk and is exempt. Two off switches, both
+deliberate and visible: `worktree.trunk_guard.enabled: false` in
+`.indusk/config.json` for a project that wants trunk work, and
+`INDUSK_TRUNK_GUARD=off` in the environment for one call. In a versioned
+workbench the branch judged is the declared code repository's; the workbench
+repository holds plan documents and is allow-listed by path.
 
 Where they run from matters. Claude Code runs a hook command in the session's
 *current* directory, which moves with every Bash call that ends in a `cd`, and
