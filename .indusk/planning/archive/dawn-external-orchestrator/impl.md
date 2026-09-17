@@ -132,7 +132,7 @@ Builds the decision in [adr.md](adr.md) against the [brief](brief.md), under [Da
 - [x] Record the results table for review. (matrix.md: cells table + findings F1–F5 + provisioning method record; A8 read pending — the human gate.)
 
 #### Phase 5 Verification
-- [ ] **Deferred Verification** (A8):
+- [x] **Deferred Verification** (A8): — signed off by Sandy 2026-08-03 on the mutation-testing quality read (`/lessons/dawn-orchestrator-acceptance-matrix`, "The quality read"; the archive commit 998e8246 says "A8 signed"). The item stayed unchecked through the plan's close because the gate hooks were cwd-relative and silently off in that era; recorded here 2026-09-17 when the admin's phase view showed the open gate.
   - reason: outcome-quality comparison across models is human judgment, not a machine assertion.
   - would require: running N models × M environments end-to-end (real token spend) plus a human read of the resulting code quality.
   - mitigation: cap to Claude + one non-Claude × local + one remote; record raw gate-hold + cost-to-done data so the comparison is evidence-backed rather than impression.
