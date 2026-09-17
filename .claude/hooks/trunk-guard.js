@@ -114,27 +114,35 @@ function classify() {
 		if (typeof command !== "string") return null;
 		const m = COMMIT_RE.exec(command);
 		if (!m) return null;
-		let anchor = eventCwd;
-		// A `cd` in an earlier segment of the same command moves the repository. The
-		// match begins AT the separator, so the slice ends with one `&` of `&&` —
-		// split on runs of separator characters, not on operators.
-		for (const segment of command.slice(0, m.index).split(/[&|;\n]+/)) {
-			const cd = /^\s*cd\s+(?:"([^"]+)"|'([^']+)'|(\S+))\s*$/.exec(segment);
-			if (cd) anchor = resolve(anchor, cd[1] ?? cd[2] ?? cd[3]);
-		}
-		// So does git's own `-C <path>`, possibly more than once.
-		for (const c of m[1].matchAll(/-C\s+(\S+)/g)) anchor = resolve(anchor, unquote(c[1]));
-		const closer = /-c\s+"$/.test(m[0])
-			? '"'
-			: /-c\s+'$/.test(m[0])
-				? "'"
-				: m[0].includes("\x60")
-					? "\x60"
-					: null;
-		const args = commitArgs(command.slice(m.index + m[0].length), closer);
+		const anchor = commitAnchor(command, m, eventCwd);
+		const args = commitArgs(command.slice(m.index + m[0].length), commitCloser(m));
 		return { kind: "commit", command, anchor, args };
 	}
 	return null;
+}
+
+/**
+ * Which repository the commit lands in: the event cwd, moved by every `cd` in
+ * an earlier segment of the same command (in order), then by every `-C <path>`
+ * among git's own options. The match begins AT the separator, so the text
+ * before it ends with one `&` of `&&` — split on runs of separator characters,
+ * not on operators.
+ */
+function commitAnchor(command, match, cwd) {
+	let anchor = cwd;
+	for (const segment of command.slice(0, match.index).split(/[&|;\n]+/)) {
+		const cd = /^\s*cd\s+(?:"([^"]+)"|'([^']+)'|(\S+))\s*$/.exec(segment);
+		if (cd) anchor = resolve(anchor, cd[1] ?? cd[2] ?? cd[3]);
+	}
+	for (const c of match[1].matchAll(/-C\s+(\S+)/g)) anchor = resolve(anchor, unquote(c[1]));
+	return anchor;
+}
+
+/** The character that ends the commit's argument text when it sits inside a `-c` string or backticks; null when it runs to the segment's end. */
+function commitCloser(match) {
+	if (/-c\s+"$/.test(match[0])) return '"';
+	if (/-c\s+'$/.test(match[0])) return "'";
+	return match[0].includes("\x60") ? "\x60" : null;
 }
 
 function unquote(token) {
