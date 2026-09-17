@@ -11,6 +11,10 @@ import { REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
  * guard under BOTH PreToolUse matchers (the edit gate and the commit gate),
  * `update` adds them to a project that lacks them and is idempotent, and this
  * repository has them.
+ *
+ * Every spawn goes through `runCli`, which pins `INDUSK_HOME` to a temp dir
+ * (helpers/cli.ts) — so `init`/`update` here never write the developer's real
+ * registry. `registry-leak-scan` reads this file for that name.
  */
 
 const HOOK = "trunk-guard.js";
