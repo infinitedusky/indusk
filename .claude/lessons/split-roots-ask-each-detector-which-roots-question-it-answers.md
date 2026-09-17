@@ -1,0 +1,7 @@
+# When state splits across two roots, every detector needs an explicit answer to "which root's question am I asking?"
+
+**Pattern:** a system that used to operate over one root (one directory, one repo) gets extended to operate over two (a plan root and a code root in a workbench). Every existing detector/check that walked "the" root silently has an implicit, previously-unstated answer to "which root." Splitting the roots makes every one of those implicit answers into a possible bug, because now there are two roots to be wrong about.
+
+**Where it bit (dawn-workbench-execution, 2026-09-16):** goalpost drift and "which items became checked" are plan-repo questions (that's where impl.md lives); red tests and "what else changed" are code-repo questions (that's where the source lives); phantom work reads both; the test command is *configured* where the plan lives but *runs* where the code lives (`configRoot` vs `root` — two different fields, not one). Every fix made during this plan was a detector that had been asked the wrong root's question.
+
+**How to apply:** when splitting a system across two roots, for every existing check/detector, explicitly write down which root answers its question before touching the code — don't assume the existing single-root behavior generalizes by picking either root arbitrarily. A detector that reads both roots (like phantom work) needs to say so explicitly too, not fall out of accident.

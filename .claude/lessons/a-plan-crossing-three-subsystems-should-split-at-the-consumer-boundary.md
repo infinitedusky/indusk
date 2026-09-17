@@ -1,0 +1,9 @@
+# "Definition + first consumer land together" is a reasonable single-plan argument, but a plan touching parser + gate + Shape + UI still pays for it in parity rows and re-baselines — split at "define it" vs "render it" when a plan crosses three or more subsystems
+
+admin-ui-phase-progress ran 9 phases, 37 trajectory rows, and 106 commits across the plan parser, the retrospective gate, the Shape library and the admin UI. The single-plan reasoning — the lifecycle definition and its first real consumer should land in the same plan so the definition is proven against a real reader, not just a type — held up and wasn't wrong. But the cost was concrete: two corpus-parity rows (A3, A13) and six hand-re-baselines of a snapshot test during the plan's own close-out (see [[corpus-parity-snapshot-excludes-the-plan-in-flight]]), because the plan's own state changes were themselves changes to the corpus the parity test watched.
+
+Rule: when a plan's boundary map shows it producing artifacts consumed by three or more independently-owned subsystems (here: package parser, retrospective gate, Shape, admin UI), treat "define the vocabulary" and "render/consume it" as two candidate plans before writing the ADR, even if the final call is to keep them together. The parity-row and re-baseline cost is a real, nameable line item in that decision, not a hypothetical.
+
+Two smaller findings from the same close-out worth carrying: (1) a UI plan's `tsc --noEmit` should become a gated test on day one, not discovered red a month in — the admin's type-check had been silently red since 2026-08-12; (2) any call that appends to shared state (a boundary record, a ledger) should go through the documented CLI/skill snippet, never a hand-typed call in a one-off script — see [[writer-validates-with-the-readers-predicate]] for the concrete failure this caused.
+
+See `.indusk/planning/admin-ui-phase-progress/` retrospective (hindsight section).

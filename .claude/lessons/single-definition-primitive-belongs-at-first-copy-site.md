@@ -1,0 +1,9 @@
+# A correct primitive filed under a domain folder is already the duplication — the "belongs in lib/" rule is about where the FIRST copy sits
+
+**Pattern:** a small, correct utility (e.g. `headSha`) gets added inside a domain folder (`verify/git.ts`) because that's the first place it's needed and it works fine there. The mistake isn't visible yet — it becomes visible the moment a *second* domain (the run loop) needs the same primitive and, instead of importing the first copy, respells it inline (`git rev-parse HEAD`) because domain folders don't import from each other.
+
+**Where it bit (dawn-workbench-execution, 2026-09-16):** `verify/git.ts` had a correct, small `headSha`. Because it lived in `verify/`, the run lane spelled `rev-parse HEAD` itself twice more — once inline in the commit cadence, once as a nullable `headOf` in the loop. Three copies, one of them silently different (nullable vs throwing).
+
+**The rule:** "a git primitive belongs in `lib/git.ts`, not a domain folder" is not about where the *second* copy should go — by the time there's a second copy, the damage (divergent behavior) has already happened. It's about where the *first* copy should have been written. If a utility operates on a generic resource (git, the filesystem, a shell) rather than domain state, put it in the shared lib the first time it's written, even if only one domain needs it today.
+
+**How to apply:** before adding a small utility inside a `domain/` folder, ask "does this operate on something generic (git, fs, http) or something domain-specific (this plan's impl.md, this verify ledger)?" Generic → shared lib immediately, not after a second caller shows up. See `lib/git.ts`'s `headSha`/`headShaOrNull`, pinned by `head-sha-single-definition.test.ts` (the sixth instance of this pattern in dusk — see `/lessons/dawn-verify` for the first five).
