@@ -784,11 +784,6 @@
     "stageStatus": "draft",
     "nextStep": "Review paper: obsolescence.md"
   },
-  "midnight": {
-    "stage": "brief",
-    "stageStatus": "draft",
-    "nextStep": "Review brief (status: draft)"
-  },
   "archive/admin-ui-phase-progress": {
     "stage": "retrospective",
     "stageStatus": "complete",
@@ -797,5 +792,10 @@
       "passes": true,
       "missing": []
     }
+  },
+  "day-promises": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
   }
 }

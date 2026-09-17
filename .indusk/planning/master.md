@@ -14,7 +14,8 @@ roadmap:
   - hook-cwd-independence
   - indusk-v2-dawn
   - indusk-v4-day
-  - midnight
+  - day-promises
+  - day-monitor
   - admin-ui-phase-progress
   - indusk-makeover
   - dusk-v2
@@ -51,14 +52,23 @@ This bound is deliberate: the prerequisite treadmill is itself a failure mode,
 and an unbounded "fix everything first" is how the substrate plan eats the
 plan it was supposed to protect.
 
-## Stream 2 — Midnight (next)
+## Stream 2 — Promise clauses and their monitor, Day steps 4a and 4b (next)
 
-[midnight/brief.md](midnight/brief.md) — rewritten 2026-08-28: one shared
-**promise** name threads a test, a code site, and a span; telemetry grades the
-tests; `enforced / known-violated / retired` states; plans become reopenable
-with a `monitor` state instead of a new subsystem primitive. Proving ground:
-looper (steps 2 and 4 already built there). Eight incremental steps, each
-independently useful, ~2 weeks distributed.
+Day's core primitive is the contract: change clauses (true once, retire with
+the plan) and promise clauses (kept for the life of the system, breakable by
+any later change). Two sub-plans, split 2026-09-17:
+
+- [day-promises/brief.md](day-promises/brief.md) — **4a, the primitive**: a
+  promise's name threads a code site and a test; `enforced / known-violated /
+  retired` states; promotion of a plan's claims at close; a plan closes
+  *holding N promises* and can be woken; a promise changes only by a change
+  that names it. Looper has this half built; numero has the typed contract
+  and no promises; ~1 week.
+- [day-monitor/brief.md](day-monitor/brief.md) — **4b, the telemetry half
+  (was Midnight)**: the span link, violations per promise as a number from
+  Jaeger and Dash0, `monitor` as the quiet window, alert → incident with root
+  cause → reopen the owner. Exists nowhere yet; numero is the only proving
+  ground with production; ~1 week after 4a.
 
 Why before Dawn 7: Dawn's remaining components scale up *unattended
 throughput*; Midnight is the only plan that adds a feedback loop fed from
