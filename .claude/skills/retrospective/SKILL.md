@@ -287,6 +287,22 @@ The docs site now holds the published knowledge. The archive holds the process h
 
 Update CLAUDE.md Current State to remove the plan from the active plans table.
 
+### Step 10: Land — the branch reaches main, and is gone
+
+Archival is the branch's last write. Worktree-per-plan opened a branch at Phase 1, and **a plan is not closed until that branch is on `main` and deleted**. Nothing before this step puts the archive, the docs pages or the code on trunk; the retrospective's own commits sit on the branch until someone merges. The cost of leaving this to memory is on the record: three plans shipped in July on branches nobody merged and their code was later dropped as superseded (root `master.md`, sequence reconciliation); `workbench-trust-fixes` closed and sat "awaits merge" in its master; a publish went out 56 seconds before a twelve-commit plan branch merged, which is why `pnpm release` now refuses unmerged packaged branches.
+
+Do it in this order, all from the plan's worktree until the merge itself:
+
+1. **Confirm the branch is clean and closed** — `git status --short` empty; Steps 0–9 done (the archive folder is committed on the branch).
+2. **Rebase on trunk** — `git fetch origin && git rebase origin/main` (or `main` when there is no remote). If the rebase touched code, re-run the suites the plan's last Verification named before going on; a green branch before the rebase says nothing about the branch after it.
+3. **Check trunk's working tree on every path the branch touches** — `git -C <trunk> status --short`. A merge is refused when trunk has uncommitted changes on a file the branch also changed (`.indusk/planning/master.md` and `.indusk/current.md` are the usual ones — every plan writes both). Those changes belong to whoever made them: if `indusk agent list` shows another live session on trunk, **ask** — never commit, stash or discard another session's work to clear your own path. A bare `git stash` on a shared stack is off the table regardless (see the git skill).
+4. **Merge** — solo: `git -C <trunk> merge --no-ff plan/{plan-name}` with a message naming the plan and what shipped; with reviewers: push and open the PR, merge it, pull trunk. `--no-ff` keeps the plan as one landing in the history the eval agent and `git bisect` read.
+5. **Delete the branch and the worktree** — `git worktree remove <worktree-path>`, `git branch -d plan/{plan-name}`, and `git push origin --delete plan/{plan-name}` when it was pushed. A worktree left behind is a stale `.next/` lock, a stale `dist/`, and a `⚠ collision` in the next `indusk agent list`.
+6. **Verify on trunk** — `git for-each-ref refs/heads/plan/* --no-merged HEAD` no longer lists the plan; `.indusk/planning/archive/{plan-name}/` exists on trunk; `indusk context check-pointers` passes there too (CLAUDE.md pointers were written on the branch and are only now on trunk); the full suites green once on trunk if the rebase in step 2 was not a fast-forward.
+7. **Record the landing** — append one line to the archived `retrospective.md` on trunk: `Landed on main at <sha>, <date>.` Commit it on trunk. That line is what distinguishes a closed plan from a merged one when the two are read months later.
+
+**Release is a separate decision, made on trunk, after this step.** `pnpm release` refuses a dirty tree, a HEAD that is not the release commit, and any unmerged `plan/*` branch touching packaged paths — so it can only be run here, never from the branch. Whether to bump now or wait for the next plan is the operator's call; this step ends when the branch is gone, not when a version ships.
+
 ## Important
 
 - Work through the steps in order. Each builds on the previous.
