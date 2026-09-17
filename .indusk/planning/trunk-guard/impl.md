@@ -46,13 +46,13 @@ Test paths are repo-root-relative.
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | On `main`, an Edit/Write to a source file is refused naming `indusk worktree create` and the branch; the same edit on `plan/x` is allowed silently | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A2 | On `main`, edits to `.indusk/**`, `.claude/lessons/**`, `.claude/settings.json`, `CLAUDE.md`, `AGENTS.md` are allowed | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A3 | On `main`, `git commit` with a staged source file is refused naming the file; allow-listed-only staging is allowed; a `chore(release):` commit is allowed; a non-commit Bash command is ignored | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A4 | In a one-repo versioned workbench, an edit in the code repo on its `main` is refused and an edit to the workbench's `.indusk/planning/**` is allowed, over every layout | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A5 | `indusk init` registers the hook under the Edit/Write matcher and the Bash matcher; `indusk update` adds both to a project lacking them; a second `update` is byte-identical | Test Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
-| A6 | `worktree.trunk_guard.enabled: false` or `INDUSK_TRUNK_GUARD=off` allows A1's edit and the hook writes nothing | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A7 | This repository's `.claude/settings.json` registers the hook under both matchers in the `hookCommand` form | Test Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
+| A1 | On `main`, an Edit/Write to a source file is refused naming `indusk worktree create` and the branch; the same edit on `plan/x` is allowed silently | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A2 | On `main`, edits to `.indusk/**`, `.claude/lessons/**`, `.claude/settings.json`, `CLAUDE.md`, `AGENTS.md` are allowed | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A3 | On `main`, `git commit` with a staged source file is refused naming the file; allow-listed-only staging is allowed; a `chore(release):` commit is allowed; a non-commit Bash command is ignored | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A4 | In a one-repo versioned workbench, an edit in the code repo on its `main` is refused and an edit to the workbench's `.indusk/planning/**` is allowed, over every layout | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A5 | `indusk init` registers the hook under the Edit/Write matcher and the Bash matcher; `indusk update` adds both to a project lacking them; a second `update` is byte-identical | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
+| A6 | `worktree.trunk_guard.enabled: false` or `INDUSK_TRUNK_GUARD=off` allows A1's edit and the hook writes nothing | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A7 | This repository's `.claude/settings.json` registers the hook under both matchers in the `hookCommand` form | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
 
 ### Deferred Verification
 
@@ -67,11 +67,11 @@ hook exists. A1–A4 and A6 spawn a hook file that does not exist yet — a
 spawned process on a missing path is a boundary red (node exits non-zero
 before any assertion of ours runs), not a load error inside the test file.
 
-- [ ] Create/confirm this plan's worktree (`git worktree add ../dusk-worktrees/trunk-guard -b plan/trunk-guard` — dusk is normal-mode, so `indusk worktree create` does not apply) — worktree-per-plan default; this plan is the one that makes trunk edits refuse, so it runs on a branch from the first commit
-- [ ] `src/__tests__/trunk-guard.test.ts`: A1, A2, A3, A6 against a temp git repo (`helpers/test-git.ts`) on `main` and on `plan/x`; A4 over `LAYOUTS` from `helpers/versioned-workbench.ts`
-- [ ] `src/__tests__/trunk-guard-registration.test.ts`: A5 via `runCli(dir, ["init", "--local", "--no-index"])` then a seeded settings file through `update` twice; A7 reads this repository's settings
-- [ ] `helpers/hook-runner.ts` `HookName` gains `"trunk-guard.js"` (a type, so the test files compile; the hook file itself does not exist yet)
-- [ ] Run both files; record each red's message; set A1–A7 to `written`
+- [x] Create/confirm this plan's worktree (`git worktree add ../dusk-worktrees/trunk-guard -b plan/trunk-guard` — dusk is normal-mode, so `indusk worktree create` does not apply) — worktree-per-plan default; this plan is the one that makes trunk edits refuse, so it runs on a branch from the first commit — `/Users/the_dusky/code/sandbox/dusk-worktrees/trunk-guard` on `plan/trunk-guard` from `086c9da7`
+- [x] `src/__tests__/trunk-guard.test.ts`: A1, A2, A3, A6 against a temp git repo (`helpers/test-git.ts`) on `main` and on `plan/x`; A4 over `LAYOUTS` from `helpers/versioned-workbench.ts`
+- [x] `src/__tests__/trunk-guard-registration.test.ts`: A5 via `runCli(dir, ["init", "--local", "--no-index"])` then a seeded settings file through `update` twice; A7 reads this repository's settings
+- [x] `helpers/hook-runner.ts` `HookName` gains `"trunk-guard.js"` (a type, so the test files compile; the hook file itself does not exist yet)
+- [x] Run both files; record each red's message; set A1–A7 to `written` — 23 cases red: every hook case `Cannot find module …/hooks/trunk-guard.js` → exit 1 where 2 (refusals) or 0 (allowances) was asserted; A5 `expected { edit: false, bash: false } to deeply equal { edit: true, bash: true }` after `init` and after `update`; A7 the same against this repository's settings
 
 #### Deferred to Build Phase 1
 (none — every row is authored here)
@@ -80,14 +80,14 @@ before any assertion of ours runs), not a load error inside the test file.
 (none)
 
 #### Test Phase 1 Verification
-- [ ] `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard.test.ts src/__tests__/trunk-guard-registration.test.ts` — every case red on its own claim (the hook cases red as a non-zero exit from a missing script, the registration cases red on the settings assertion); then `cd` back
-- [ ] Rows A1–A7 set to `written`
+- [x] `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard.test.ts src/__tests__/trunk-guard-registration.test.ts` — every case red on its own claim (the hook cases red as a non-zero exit from a missing script, the registration cases red on the settings assertion); then `cd` back — 2 files, 23 tests, 23 failed as recorded above
+- [x] Rows A1–A7 set to `written`
 
 #### Test Phase 1 Context
-- [ ] (none needed — the tests add no rule until the hook exists; the Build Phase 1 Context item carries the rule)
+- [x] (none needed — asked: "Test Phase 1 of trunk-guard has a Context gate and a Document gate with nothing real to do: the tests add no rule until the hook exists, and nothing user-facing exists yet. Build Phase 1 and 2 carry the real CLAUDE.md and docs items. The gate policy is ask, so I need your word to skip these two." — user: "Yes, skip both")
 
 #### Test Phase 1 Document
-- [ ] (none needed — nothing user-facing exists yet; Build Phase 2 documents the hook)
+- [x] (none needed — asked: "Test Phase 1 of trunk-guard has a Context gate and a Document gate with nothing real to do: the tests add no rule until the hook exists, and nothing user-facing exists yet. Build Phase 1 and 2 carry the real CLAUDE.md and docs items. The gate policy is ask, so I need your word to skip these two." — user: "Yes, skip both")
 
 ### Build Phase 1: The hook
 
