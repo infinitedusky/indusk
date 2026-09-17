@@ -70,6 +70,10 @@
       "types": "./dist/lib/shape/boundary-record.d.ts",
       "default": "./dist/lib/shape/boundary-record.js"
     },
+    "./config": {
+      "types": "./dist/lib/config.d.ts",
+      "default": "./dist/lib/config.js"
+    },
     "./lifecycle": {
       "types": "./dist/lib/lifecycle.d.ts",
       "default": "./dist/lib/lifecycle.js"
