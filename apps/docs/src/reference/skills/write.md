@@ -22,12 +22,10 @@ It is prose only. No hooks, no gates, nothing blocks a write.
    one-line thesis, a close that is a verdict, a "What this paper is not"
    ending, no hand-off questions between standalone pieces.
 3. **Outline.** Outline before draft; the outline moves in the same turn the
-   draft moves, or is declared stale. A new project first **gets off the
-   ground**: the seed in the user's words, ten books and what each gives,
-   the purpose separate from the product's success, an adversarial round
-   with every objection labelled open or answered, and a threshold: conform
-   on every axis but one, the one named. Its output is the piece line. Then
-   the outline is built by **outline drilldown**: the piece in one line, then the arc, then the parts (chapters,
+   draft moves, or is declared stale. A new piece first gets off the ground
+   in its genre's brainstorm skill ([brainstorm-fiction](/reference/skills/brainstorm-fiction)
+   today), whose output is the piece line. Then the outline is built by
+   **outline drilldown**: the piece in one line, then the arc, then the parts (chapters,
    sections, or paragraphs), then what happens in each part, then one purpose
    per sentence numbered by paragraph and position (`3.2`). Every entry is a
    purpose, never prose; prose is written last, into the slots. Short pieces
