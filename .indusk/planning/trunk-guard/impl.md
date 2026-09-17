@@ -46,12 +46,12 @@ Test paths are repo-root-relative.
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | On `main`, an Edit/Write to a source file is refused naming `indusk worktree create` and the branch; the same edit on `plan/x` is allowed silently | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A2 | On `main`, edits to `.indusk/**`, `.claude/lessons/**`, `.claude/settings.json`, `CLAUDE.md`, `AGENTS.md` are allowed | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A3 | On `main`, `git commit` with a staged source file is refused naming the file; allow-listed-only staging is allowed; a `chore(release):` commit is allowed; a non-commit Bash command is ignored | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A4 | In a one-repo versioned workbench, an edit in the code repo on its `main` is refused and an edit to the workbench's `.indusk/planning/**` is allowed, over every layout | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A1 | On `main`, an Edit/Write to a source file is refused naming `indusk worktree create` and the branch; the same edit on `plan/x` is allowed silently | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A2 | On `main`, edits to `.indusk/**`, `.claude/lessons/**`, `.claude/settings.json`, `CLAUDE.md`, `AGENTS.md` are allowed | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A3 | On `main`, `git commit` with a staged source file is refused naming the file; allow-listed-only staging is allowed; a `chore(release):` commit is allowed; a non-commit Bash command is ignored | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A4 | In a one-repo versioned workbench, an edit in the code repo on its `main` is refused and an edit to the workbench's `.indusk/planning/**` is allowed, over every layout | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
 | A5 | `indusk init` registers the hook under the Edit/Write matcher and the Bash matcher; `indusk update` adds both to a project lacking them; a second `update` is byte-identical | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
-| A6 | `worktree.trunk_guard.enabled: false` or `INDUSK_TRUNK_GUARD=off` allows A1's edit and the hook writes nothing | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
+| A6 | `worktree.trunk_guard.enabled: false` or `INDUSK_TRUNK_GUARD=off` allows A1's edit and the hook writes nothing | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
 | A7 | This repository's `.claude/settings.json` registers the hook under both matchers in the `hookCommand` form | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
 
 ### Deferred Verification
@@ -93,23 +93,23 @@ before any assertion of ours runs), not a load error inside the test file.
 
 **Goal**: `hooks/trunk-guard.js` refuses what the brief says and allows the rest.
 
-- [ ] `hooks/trunk-guard.js`: read the event; for `Edit`/`Write`/`MultiEdit` take `tool_input.file_path`, for `Bash` match `/\bgit commit(?=$|\s|;|&|\|)/` on `tool_input.command` and collect staged paths (`git diff --cached --name-only`, plus tracked modifications when `-a`/`--all` is present); anything else exits 0
-- [ ] Allow-list check first, no git needed: a path under `.indusk/`, `.claude/lessons/`, matching `.claude/settings*.json`, or named `CLAUDE.md` / `AGENTS.md` (relative to the state root or the git root that contains it) is allowed
-- [ ] Branch check: resolve `{statePath, gitPath}` with `resolveStateAndGitPaths` from the file's directory (Edit/Write) or the event cwd (Bash); `git symbolic-ref --short HEAD` on `gitPath`; not a protected branch (`worktree.trunk_guard.branches`, default `["main", "master"]`) or detached ⇒ allow
-- [ ] Exemptions: `worktree.trunk_guard.enabled === false` in the state root's config, or `INDUSK_TRUNK_GUARD=off`, ⇒ allow silently; a `git commit` whose `-m` message begins `chore(release):` ⇒ allow
-- [ ] Refusal (exit 2, stderr): names the path(s), the branch, `indusk worktree create <plan>` and "land by merge (retrospective Step 10)", the allow-listed kinds, and both off switches — one message shape for both matchers
+- [x] `hooks/trunk-guard.js`: read the event; for `Edit`/`Write`/`MultiEdit` take `tool_input.file_path`, for `Bash` match `/\bgit commit(?=$|\s|;|&|\|)/` on `tool_input.command` and collect staged paths (`git diff --cached --name-only`, plus tracked modifications when `-a`/`--all` is present); anything else exits 0 — the commit regex requires `git commit` in command position (start or after `;`, `&`, `|`, `(`, newline): `echo git commit` is not a commit, and the first draft's `\b`-only form refused it
+- [x] Allow-list check first, no git needed: a path under `.indusk/`, `.claude/lessons/`, matching `.claude/settings*.json`, or named `CLAUDE.md` / `AGENTS.md` (relative to the state root or the git root that contains it) is allowed — both sides realpath'd: macOS temp dirs are `/var/…` while the roots come back `/private/var/…`, and the first draft judged every file to be outside the project
+- [x] Branch check: resolve `{statePath, gitPath}` with `resolveStateAndGitPaths` from the file's directory (Edit/Write) or the event cwd (Bash); `git symbolic-ref --short HEAD` on `gitPath`; not a protected branch (`worktree.trunk_guard.branches`, default `["main", "master"]`) or detached ⇒ allow
+- [x] Exemptions: `worktree.trunk_guard.enabled === false` in the state root's config, or `INDUSK_TRUNK_GUARD=off`, ⇒ allow silently; a `git commit` whose `-m` message begins `chore(release):` ⇒ allow
+- [x] Refusal (exit 2, stderr): names the path(s), the branch, `indusk worktree create <plan>` and "land by merge (retrospective Step 10)", the allow-listed kinds, and both off switches — one message shape for both matchers
 
 #### Build Phase 1 Verification
-- [ ] A1, A2, A3, A4, A6 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard.test.ts`; then `cd` back
-- [ ] Every existing hook test still green: `pnpm exec vitest run src/__tests__/hook-shared-modules.test.ts src/__tests__/hooks-record-parity.test.ts src/__tests__/hooks-load-in-cjs-consumer.test.ts src/__tests__/hook-paths.test.ts` — a new hook file must satisfy whatever those pin about `hooks/` (a `_`-module import stays inside the directory; the record lists it if the record is by count)
-- [ ] Rows A1–A4, A6 set to `passing`
-- [ ] Shape (Build Phase 1): review the hook; record findings or "nothing to change"
+- [x] A1, A2, A3, A4, A6 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard.test.ts`; then `cd` back — 20 tests green (the first run of the hook failed 7: temp paths under `/var` against roots under `/private/var`, and `echo git commit` matching the eval hook's `\b`-anchored regex — both fixed in the hook, both recorded on the items above)
+- [x] Every existing hook test still green: `pnpm exec vitest run src/__tests__/hook-shared-modules.test.ts src/__tests__/hooks-record-parity.test.ts src/__tests__/hooks-load-in-cjs-consumer.test.ts src/__tests__/hook-paths.test.ts` — a new hook file must satisfy whatever those pin about `hooks/` (a `_`-module import stays inside the directory; the record lists it if the record is by count) — `hooks-record-parity` was red twice as designed: the guide's hook table must list every hook on disk with a matching stated count, and the Dawn master's keep/shed record must classify every hook; both updated (seven hooks, four PreToolUse; `trunk-guard` kept as the trunk gate); 5 files / 37 tests green
+- [x] Rows A1–A4, A6 set to `passing`
+- [x] Shape (Build Phase 1): review the hook; record findings or "nothing to change" — reviewed `hooks/trunk-guard.js`: one file, one decision path (classify → locate → config → branch → allow-list → refuse), helpers named for what they answer (`real`, `currentBranch`, `stagedPaths`, `isAllowed`). Nothing to change. Left as is, with reasoning: the allow-list is three constants in the hook rather than config — the brief makes it a fixed rule (the writes a plan makes before and after its branch), and a configurable allow-list is how a guard grows a bypass; the off switch is the configurable part
 
 #### Build Phase 1 Context
-- [ ] Conventions, the worktree-per-plan entry: no code is edited or committed on `main` — `trunk-guard.js` refuses an Edit/Write/`git commit` outside `.indusk/`, `.claude/lessons/`, settings, `CLAUDE.md`, `AGENTS.md` on a protected branch; `chore(release):` exempt; off switches `worktree.trunk_guard.enabled: false` / `INDUSK_TRUNK_GUARD=off`
+- [x] Conventions, the worktree-per-plan entry: no code is edited or committed on `main` — `trunk-guard.js` refuses an Edit/Write/`git commit` outside `.indusk/`, `.claude/lessons/`, settings, `CLAUDE.md`, `AGENTS.md` on a protected branch; `chore(release):` exempt; off switches `worktree.trunk_guard.enabled: false` / `INDUSK_TRUNK_GUARD=off`
 
 #### Build Phase 1 Document
-- [ ] `apps/docs/src/guide/index.md` (or the hooks guide section "hooks enforce what discipline won't"): the trunk guard — what it refuses, what it allows, the two off switches, why the commit gate exists beside the edit gate
+- [x] `apps/docs/src/guide/index.md` (or the hooks guide section "hooks enforce what discipline won't"): the trunk guard — what it refuses, what it allows, the two off switches, why the commit gate exists beside the edit gate — the hook table gains its row and the count reads seven / four PreToolUse (the record-parity pin reads both)
 
 ### Build Phase 2: Registration and record
 
