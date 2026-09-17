@@ -65,10 +65,16 @@ entries written by its Document gates.
    `## Landed` line, in one commit. A plan's record then reads landed →
    released, sha and version.
 5. **`check_health` reports the three-way state** — installed, published
-   (`lib/version-check.ts` already fetches and caches it), and "N plans landed
-   and unreleased; packaged paths changed: yes/no" — so every catchup says
-   what is waiting, without anyone asking. This absorbs the root master's
-   "Small, not a step" note of 2026-09-15.
+   (from the registry), what `indusk update` last applied to the project, and
+   on the monorepo the release commit with the packaged commits since — so
+   every catchup says what is waiting without anyone asking. This absorbs the
+   root master's "Small, not a step" note of 2026-09-15. **Landed early,
+   2026-09-17**, after 1.50.0 was reported unpublished an hour after it
+   shipped: `lib/version-state.ts`, the `indusk/version` health line,
+   `indusk update` recording `indusk.version` in config,
+   `scripts/record-release.js` noting a publish in `current.md`. What remains
+   here is naming the landed-and-unreleased *plans* in that line, which needs
+   item 1.
 6. **Step 10 of the retrospective ends with a sentence**: "landed;
    `indusk release` when you want it out." The procedure it currently
    describes for release becomes a pointer.
