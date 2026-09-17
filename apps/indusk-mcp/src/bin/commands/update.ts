@@ -814,6 +814,22 @@ export async function update(projectRoot: string): Promise<void> {
 		console.info(`  ok: agents.stale_ttl_minutes: ${_maHasAgents} (already set)`);
 	}
 
+	// The mark this run leaves: which version applied skills, hooks and
+	// extensions here, and when. `check_health` reads it so no agent has to
+	// guess whether the project is current (2026-09-17: three commands ran and
+	// none left a trace an agent reads).
+	{
+		const cfg = readConfig(projectRoot);
+		if (cfg) {
+			const version = getLocalVersion();
+			writeConfig(projectRoot, {
+				...cfg,
+				indusk: { version, updated_at: new Date().toISOString() },
+			});
+			console.info(`  mark: indusk.version ${version} in .indusk/config.json`);
+		}
+	}
+
 	// [Cleanup ritual] scaffold the cleanup config block idempotently — the
 	// /cleanup skill reads it to decide which changed files to scrutinize.
 	reportEnsured(

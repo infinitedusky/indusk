@@ -175,6 +175,15 @@ export interface InduskConfig {
 	 * hand-rolled a private copy of it before this existed.
 	 */
 	worktree?: WorktreeConfig;
+	/**
+	 * The mark `indusk update` leaves: which package version last applied
+	 * skills, hooks and extensions here, and when. Read by `check_health` so an
+	 * agent never has to guess whether a project is current (2026-09-17).
+	 */
+	indusk?: {
+		version?: string;
+		updated_at?: string;
+	};
 	/** Admin UI settings (admin-ui-phase-progress). */
 	admin?: {
 		/** Plan-page live refresh interval in ms; default 5000, minimum 1000. Absent = default, never written by `update`. */

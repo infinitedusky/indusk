@@ -177,6 +177,25 @@ export function registerSystemTools(server: McpServer, projectRoot: string): voi
 				});
 			}
 
+			// The three-way version state, read fresh — installed, published,
+			// what `indusk update` last applied here, and (on the monorepo) the
+			// release commit and packaged commits since. Every catchup states it
+			// so no agent asserts a publish or upgrade from memory (2026-09-17).
+			const { formatVersionState, readVersionState, versionStateProblem } = await import(
+				"../lib/version-state.js"
+			);
+			const versionState = await readVersionState(projectRoot).catch(() => null);
+			if (versionState) {
+				const problem = versionStateProblem(versionState);
+				checks.push({
+					name: "indusk/version",
+					status: problem ? "error" : "ok",
+					detail: problem
+						? `${problem} — ${formatVersionState(versionState)}`
+						: formatVersionState(versionState),
+				});
+			}
+
 			const healthy = checks.every((c) => c.status === "ok");
 
 			return {

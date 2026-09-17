@@ -93,7 +93,7 @@
     "start": "node dist/server/index.js",
     "test": "vitest run",
     "prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js",
-    "release": "bash scripts/release-guard.sh && npm whoami && pnpm publish --no-git-checks"
+    "release": "bash scripts/release-guard.sh && npm whoami && pnpm publish --no-git-checks && node scripts/record-release.js"
   },
   "publishConfig": {
     "access": "public"
