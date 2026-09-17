@@ -1,13 +1,4 @@
 {
-  "admin-ui-phase-progress": {
-    "stage": "impl",
-    "stageStatus": "completed",
-    "nextStep": "Create retrospective",
-    "readiness": {
-      "passes": true,
-      "missing": []
-    }
-  },
   "archive/admin-ui-hosting": {
     "stage": "retrospective",
     "stageStatus": "accepted",
@@ -797,5 +788,14 @@
     "stage": "brief",
     "stageStatus": "draft",
     "nextStep": "Review brief (status: draft)"
+  },
+  "archive/admin-ui-phase-progress": {
+    "stage": "retrospective",
+    "stageStatus": "complete",
+    "nextStep": "Review retrospective (status: complete)",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
   }
 }
