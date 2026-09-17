@@ -1,7 +1,9 @@
-import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
-import { PhaseBar } from "@/components/bars/PhaseBar";
-import { PhasesBar } from "@/components/bars/PhasesBar";
 import { PlanBar } from "@/components/bars/PlanBar";
+import {
+  activePhaseLabel,
+  activePhaseOf,
+  ProgressLines,
+} from "@/components/bars/ProgressLines";
 import { CleanupSection } from "@/components/CleanupSection";
 import { FalsificationSection } from "@/components/FalsificationSection";
 import { Markdown } from "@/components/Markdown";
@@ -12,13 +14,8 @@ import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { deriveActivePhase } from "@/lib/active-phase";
 import { planMarkdown, sectionMarkdown } from "@/lib/markdown-export";
-import {
-  extractPhases,
-  phaseTitle,
-  splitPhasesAroundFalsification,
-} from "@/lib/phases";
+import { extractPhases, splitPhasesAroundFalsification } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanDetailProps {
@@ -81,7 +78,7 @@ export function PlanDetail({
         <PlanBar position={plan.position} activity={activePhaseLabel(plan)} />
       )}
 
-      {!plan.boundaryError && <ActivePhaseBar plan={plan} />}
+      {!plan.boundaryError && <ProgressLines plan={plan} />}
 
       {plan.malformed && <MalformedBanner />}
 
@@ -159,75 +156,6 @@ export function PlanDetail({
  * When no impl is present, the PlanDetail top-level still shows a
  * FalsificationSection directly (legacy-log-only path).
  */
-/**
- * The active phase, by ADR D4: most recent boundary record among open phases,
- * else the first open phase with a hint. Null when the record file is
- * malformed — the page shows the error instead of guessing.
- */
-function activePhaseOf(plan: Plan) {
-  if (!plan.impl || plan.boundaryError) return null;
-  return deriveActivePhase(
-    parseImplString(plan.impl.content).phases,
-    plan.boundaries ?? [],
-  );
-}
-
-/**
- * "Phase 4" — the plan bar's label while executing. Each line names the
- * level below it: this one the phase, the phase line the stage, the stage bar
- * the item being worked (Sandy, U1 review).
- */
-function activePhaseLabel(plan: Plan): string | null {
-  if (!plan.impl) return null;
-  const active = activePhaseOf(plan);
-  if (!active?.ref) return null;
-  const phase = extractPhases(plan.impl.content, plan.impl.trajectory).find(
-    (p) => p.kind === active.ref?.kind && p.number === active.ref?.number,
-  );
-  if (!phase) return null;
-  return phaseTitle(phase);
-}
-
-/**
- * The active phase at the top of the page, under the plan bar — what is
- * happening now, readable before any section is opened. The hint marks a
- * guess (no boundary record) as a guess, never as a confident marker.
- */
-function ActivePhaseBar({ plan }: { plan: Plan }) {
-  if (!plan.impl) return null;
-  const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
-  if (phases.length === 0) return null;
-  const active = activePhaseOf(plan);
-  const activePhase = active?.ref
-    ? phases.find(
-        (p) => p.kind === active.ref?.kind && p.number === active.ref?.number,
-      )
-    : undefined;
-  const activeKey = activePhase
-    ? `${activePhase.kind}-${activePhase.number}`
-    : null;
-  return (
-    <div className="flex flex-col gap-3" data-testid="impl-progress">
-      <PhasesBar phases={phases} activeKey={activeKey} />
-      {activePhase && (
-        <section
-          className="flex flex-col gap-1"
-          data-testid="phase-bar-active"
-          data-phase={activeKey}
-        >
-          <PhaseBar phase={activePhase} />
-          {active?.hint ? (
-            <p className="text-xs text-amber-700">
-              {active.hint} — the active phase is the first open one in document
-              order
-            </p>
-          ) : null}
-        </section>
-      )}
-    </div>
-  );
-}
-
 function ImplSections({ plan }: { plan: Plan }) {
   if (!plan.impl) return null;
   const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
