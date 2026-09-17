@@ -245,3 +245,23 @@
 {"id":"h-20260916-007","processedAt":"2026-09-16T21:31:02.884Z","action":"skipped","detail":"reinforces existing lesson the-fixture-for-the-shape-a-feature-exists-for-is-the-one-most-likely-missing; not a new rule"}
 {"id":"h-20260916-008","processedAt":"2026-09-16T21:31:03.797Z","action":"skipped","detail":"same incident/rule as h-20260916-002, already captured by fixture-hand-config-hides-detection-never-running.md"}
 {"id":"h-20260916-009","processedAt":"2026-09-16T21:31:04.784Z","action":"skipped","detail":"specific instance of existing lesson gate-covers-tool-surfaces-not-intentions.md (sed/Python heredoc bypassing PreToolUse gate is the same tool-surface-coverage gap)"}
+{"id":"h-20260916-001","processedAt":"2026-09-16T17:41:45.008Z","action":"skipped","detail":"retro-audit is fully recorded in dawn-workbench-execution's own retrospective.md; routine clean audit, not a durable rule"}
+{"id":"h-20260916-002","processedAt":"2026-09-16T17:41:45.888Z","action":"skipped","detail":"already materialized as fixture-hand-config-hides-detection-never-running.md in this same commit (66bace11)"}
+{"id":"h-20260916-003","processedAt":"2026-09-16T17:41:46.707Z","action":"wrote-episode","detail":"a-focused-unit-for-a-moved-primitive-catches-tree-drift-second"}
+{"id":"h-20260916-004","processedAt":"2026-09-16T17:41:47.653Z","action":"wrote-episode","detail":"absence-of-a-migration-field-is-a-rule-not-a-migration"}
+{"id":"h-20260916-005","processedAt":"2026-09-16T17:41:48.438Z","action":"wrote-episode","detail":"a-value-that-cannot-be-computed-after-a-side-effect-landed-must-be-recorded-absent-never-thrown"}
+{"id":"h-20260916-006","processedAt":"2026-09-16T17:41:49.259Z","action":"wrote-episode","detail":"two-roots-means-every-detector-must-be-asked-which-roots-question-it-answers"}
+{"id":"h-20260916-007","processedAt":"2026-09-16T17:41:50.354Z","action":"skipped","detail":"narrow process hindsight specific to this plan's fixture-authoring order; not a generalizable rule distinct from existing falsification-fixture lessons"}
+{"id":"h-20260916-008","processedAt":"2026-09-16T17:41:51.301Z","action":"skipped","detail":"covered by fixture-hand-config-hides-detection-never-running.md's second bullet (make clean-by-silence a Test Phase 1 assertion)"}
+{"id":"h-20260916-009","processedAt":"2026-09-16T17:41:51.945Z","action":"wrote-episode","detail":"edit-plan-documents-only-through-the-edit-tool-not-sed-or-heredoc"}
+{"id":"h-20260916-010","processedAt":"2026-09-16T18:22:00.845Z","action":"wrote-episode","detail":"eval-hook-resolves-state-from-cwd-not-claude-project-dir-drift-leaks-into-foreign-repos"}
+{"id":"h-20260916-011","processedAt":"2026-09-16T18:48:36.066Z","action":"skipped","detail":"recorded in admin-ui-phase-progress/brief.md"}
+{"id":"h-20260916-012","processedAt":"2026-09-16T19:30:59.168Z","action":"skipped","detail":"recorded in admin-ui-phase-progress/test-plan.md verbatim; acceptance is a status-flip commit with no new content to extract as a durable rule"}
+{"id":"h-20260916-013","processedAt":"2026-09-16T19:36:34.323Z","action":"skipped","detail":"recorded in CLAUDE.md Key Decisions (this commit) and admin-ui-phase-progress/adr.md — duplicating into a lesson would triplicate the same content"}
+{"id":"h-20260917-002","processedAt":"2026-09-17T16:12:33.180Z","action":"skipped","detail":"already materialized as writer-validates-with-the-readers-predicate.md"}
+{"id":"h-20260917-003","processedAt":"2026-09-17T16:12:34.012Z","action":"skipped","detail":"already materialized as corpus-parity-snapshot-excludes-the-plan-in-flight.md"}
+{"id":"h-20260917-004","processedAt":"2026-09-17T16:12:34.889Z","action":"skipped","detail":"already materialized as pin-env-at-the-shared-spawn-helper-not-per-file.md"}
+{"id":"h-20260917-005","processedAt":"2026-09-17T16:12:35.580Z","action":"skipped","detail":"already materialized as define-the-vocabulary-once-before-rendering-it.md"}
+{"id":"h-20260917-001","processedAt":"2026-09-17T16:12:36.450Z","action":"skipped","detail":"retrospective audit outcome (U1/U2 review verdicts) belongs in the plan's own retrospective.md, not a durable cross-session lesson"}
+{"id":"h-20260917-006","processedAt":"2026-09-17T16:12:56.372Z","action":"wrote-episode","detail":"active-segment-must-never-claim-a-fact-the-reader-does-not-hold"}
+{"id":"h-20260917-007","processedAt":"2026-09-17T16:12:57.009Z","action":"wrote-episode","detail":"a-plan-crossing-three-subsystems-should-split-at-the-consumer-boundary"}

@@ -18,6 +18,7 @@ roadmap:
   - admin-ui-phase-progress
   - indusk-makeover
   - dusk-v2
+  - user-zero
 ---
 
 # Master Plan
@@ -94,6 +95,19 @@ not require reading code. Trust-fixes, Dawn 6.5, Midnight, and the phase-progres
 UI are each a Day component; the five `day-*` sub-plans close the rows the shape
 says are missing (observed red, binding, uncovered surface, probe, the bundle).
 The shape is on paper first and is accepted before any `day-*` plan is created.
+
+## Past Day — parked research
+
+- [user-zero](user-zero/research.md) — **standalone research, not a step** (opened
+  2026-09-16). The post-Day destination: a build that never closes, steered by use
+  rather than direction, with the contract as the constitution the emergent
+  behaviour must stay inside. Depends on Midnight (telemetry → contract violations),
+  Dawn's unattended loop, and Day's PR shape, so nothing in it is buildable yet; the
+  folder collects evidence while the sequence ships. First case study is
+  `aeonfun/aeon`, the closest live "never stops" loop and the null hypothesis (loop
+  without contract). Findings that land on a sequence step are written into that
+  step's brief, per the standing rule — the first two: a machine-readable review
+  receipt for `pr-shape.md`, and an OS sandbox for the read-only lanes (Dawn 6).
 
 ## Close-outs and the small queue
 
