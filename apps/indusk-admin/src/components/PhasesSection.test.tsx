@@ -199,6 +199,21 @@ describe("A2 — rows attach to the phase they pass at, by kind", () => {
   });
 });
 
+describe("A36 — one phase spelling in the rows' cells (cleanup)", () => {
+  it("Writable at / Passes at read `Test Phase 1` / `Phase 2` like every heading, never `Build Phase`", async () => {
+    const { container } = await render(<PlanDetail plan={plan()} />);
+    await openImplPlan(container);
+    await openAllPhases(container);
+    const build2 = phases(container)[2];
+    const cells = Array.from(build2.querySelectorAll("td")).map(
+      (td) => td.textContent ?? "",
+    );
+    expect(cells).toContain("Test Phase 1");
+    expect(cells).toContain("Phase 2");
+    expect(cells.filter((c) => c.startsWith("Build Phase"))).toEqual([]);
+  });
+});
+
 describe("A4 — each phase shows its stages with a state", () => {
   it("build-1: implementation 2 of 3, Verification done, Context pending, Document opted-out with proof", async () => {
     const { container } = await render(<PlanDetail plan={plan()} />);
