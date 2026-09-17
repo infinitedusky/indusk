@@ -103,7 +103,7 @@ The 6 canonical sections: What This Is, Architecture, Conventions, Key Decisions
 |------|-------|-------------|
 | `get_system_version` | — | Package name and version |
 | `get_skill_versions` | — | Compares installed skills to package skills: current, outdated, or missing |
-| `check_health` | — | Runs every enabled extension's health checks and the stray-state audit |
+| `check_health` | — | Runs every enabled extension's health checks, the stray-state audit, the pending-eval and stale-completed checks, and reports the `indusk/version` line — installed, published (from the registry), what `indusk update` last applied to this project, and on the monorepo the release commit with packaged commits since. Never state a publish, upgrade or update fact without reading it |
 | `list_domain_skills` | — | Lists available domain skills and their installation status |
 
 ### Lesson Tools
