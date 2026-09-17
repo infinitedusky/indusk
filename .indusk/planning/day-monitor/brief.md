@@ -83,6 +83,26 @@ the tests; it grades them.
    run at all. They are different evidence and a reader six months on must
    not weight them equally; a `desk` entry does not close the loop.
 
+## Built on OpenTelemetry, never on a backend
+
+A design constraint (Sandy, 2026-09-17: "is this building our entire system
+on top of an OpenTelemetry reporting platform, as opposed to on OpenTelemetry?").
+
+- The promise mark and the violation are **span data** — an attribute, and an
+  attribute or event on the same span — in OpenTelemetry's own model, carried
+  by OTLP export. The code that enforces a promise never knows where the span
+  goes. "Which promise broke" is answerable from the raw trace.
+- "Violations of promise X in the last N days" is a question asked of a
+  **backend**, and backends are **adapters**: local Jaeger is the reference
+  (already an OpenTelemetry Collector distribution, installed with its MCP
+  query surface by the `local-telemetry` extension); Dash0 is the adapter for
+  deployed systems, owned by the `dash0` extension, as extensions own every
+  tool fact in this project. Core never speaks a backend's query language.
+- **Alerting is the one thing a backend adds that local lacks.** Locally,
+  `indusk promises status` polling is the alert; deployed, Dash0's alert rules
+  call the same match-or-open-incident path. Both arrive at the same record.
+- Losing Dash0 loses the `deployed` source, not the loop.
+
 ## What exists today, verified 2026-09-17
 
 None of it. Looper's incident file has nine entries, found by smoke runs and
@@ -144,6 +164,11 @@ is the moment the loop closes; looper can produce it locally.
 ## Open for the ADR
 
 - The span attribute name, and whether a span may carry several promises.
+- Whether a violation is an attribute on the span, a span event, or the span's
+  error status — the raw trace must answer "which promise broke" without a
+  backend, so the choice is about what every backend can filter on cheaply.
+- The adapter interface a backend extension implements: at minimum
+  "violations of promise X since T", returning a count and the trace ids.
 - Whether the quiet window is per plan or per promise, and its default.
 - Whether an incident is opened automatically from an alert or proposed for a
   human to confirm — the root cause is a human's sentence either way.
