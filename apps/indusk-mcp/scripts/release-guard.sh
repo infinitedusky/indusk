@@ -19,7 +19,12 @@
 #
 # Three refusals, one fact — the tree being published must be the finished work:
 #
-#   1. The working tree is dirty, so the tarball matches no commit.
+#   1. A PACKAGED path is dirty, so the tarball matches no commit. Uncommitted
+#      plan documents, docs pages or another session's in-flight folders
+#      cannot reach the tarball and are ignored — a guard that refuses on
+#      unrelated dirt is one people override, which is how 2026-09-17's
+#      release was nearly published with SKIP_RELEASE_GUARD=1 over two
+#      planning folders that belonged to a different live session.
 #   2. HEAD is not the release commit, so the number does not describe the tree.
 #   3. An unmerged `plan/*` branch carries commits touching PACKAGED paths, so
 #      finished work may be missing from the tarball. Branches that only touch
@@ -54,9 +59,9 @@ if [[ "${SKIP_RELEASE_GUARD:-}" == "1" ]]; then
 fi
 
 # What actually reaches the tarball, from package.json `files` (dist is built
-# from src). Shared by checks 2 and 3: both ask the same question — could this
-# change what ships? Note `scripts/` is absent except the bundler, so this
-# guard's own source cannot alter a release.
+# from src). Shared by checks 1, 2 and 3: all three ask the same question —
+# could this change what ships? Note `scripts/` is absent except the bundler,
+# so this guard's own source cannot alter a release.
 PACKAGED_PATHS=(
 	"apps/indusk-mcp/src"
 	"apps/indusk-mcp/skills"
@@ -68,12 +73,20 @@ PACKAGED_PATHS=(
 	"apps/indusk-admin"
 )
 
-# 1. A dirty tree publishes something no commit describes.
-if [[ -n "$(git -C "$REPO_ROOT" status --porcelain)" ]]; then
-	fail "The working tree has uncommitted changes, so the tarball would not" \
-		"match any commit. Commit or stash them first:" \
+# 1. A dirty packaged path publishes something no commit describes.
+#
+# Scoped to PACKAGED_PATHS, like checks 2 and 3: the material being released
+# must be committed; everything else in the tree is someone else's business.
+DIRTY_PACKAGED="$(git -C "$REPO_ROOT" status --porcelain -- "${PACKAGED_PATHS[@]}")"
+if [[ -n "$DIRTY_PACKAGED" ]]; then
+	fail "Packaged files have uncommitted changes, so the tarball would not" \
+		"match any commit. Commit them first:" \
 		"" \
-		"$(git -C "$REPO_ROOT" status --short | head -10)"
+		"$(printf '%s\n' "$DIRTY_PACKAGED" | head -10)"
+fi
+DIRTY_ELSEWHERE="$(git -C "$REPO_ROOT" status --porcelain | grep -vc '^$' || true)"
+if [[ "$DIRTY_ELSEWHERE" != "0" ]]; then
+	echo "release-guard: ${DIRTY_ELSEWHERE} uncommitted path(s) outside the package — cannot reach the tarball, not blocking"
 fi
 
 # 2. HEAD must be the release commit for this exact version.
@@ -175,4 +188,4 @@ elif node -e "process.exit(JSON.parse(process.argv[1]).includes(process.argv[2])
 		"then publish that commit."
 fi
 
-echo "release-guard: HEAD is the release commit for ${VERSION}, tree clean, no unmerged packaged work, ${VERSION} not yet published — ok"
+echo "release-guard: HEAD is the release commit for ${VERSION}, packaged paths clean, no unmerged packaged work, ${VERSION} not yet published — ok"
