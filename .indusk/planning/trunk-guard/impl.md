@@ -1,7 +1,7 @@
 ---
 title: "Trunk guard — Implementation"
 date: 2026-09-17
-status: approved
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -50,9 +50,9 @@ Test paths are repo-root-relative.
 | A2 | On `main`, edits to `.indusk/**`, `.claude/lessons/**`, `.claude/settings.json`, `CLAUDE.md`, `AGENTS.md` are allowed | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
 | A3 | On `main`, `git commit` with a staged source file is refused naming the file; allow-listed-only staging is allowed; a `chore(release):` commit is allowed; a non-commit Bash command is ignored | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
 | A4 | In a one-repo versioned workbench, an edit in the code repo on its `main` is refused and an edit to the workbench's `.indusk/planning/**` is allowed, over every layout | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A5 | `indusk init` registers the hook under the Edit/Write matcher and the Bash matcher; `indusk update` adds both to a project lacking them; a second `update` is byte-identical | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
+| A5 | `indusk init` registers the hook under the Edit/Write matcher and the Bash matcher; `indusk update` adds both to a project lacking them; a second `update` is byte-identical | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
 | A6 | `worktree.trunk_guard.enabled: false` or `INDUSK_TRUNK_GUARD=off` allows A1's edit and the hook writes nothing | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
-| A7 | This repository's `.claude/settings.json` registers the hook under both matchers in the `hookCommand` form | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
+| A7 | This repository's `.claude/settings.json` registers the hook under both matchers in the `hookCommand` form | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
 
 ### Deferred Verification
 
@@ -115,24 +115,26 @@ before any assertion of ours runs), not a load error inside the test file.
 
 **Goal**: every project `init` or `update` touches gets the hook; this repository has it; the record says so.
 
-- [ ] `init.ts` `hookConfig.PreToolUse`: add `trunk-guard.js` to the Edit/Write entry and a new Bash-matcher entry carrying it
-- [ ] `update.ts`: a targeted ensure block in the budget hook's shape for both matchers (idempotent — a second run writes nothing)
-- [ ] This repository's `.claude/settings.json`: both registrations in the `hookCommand` form
-- [ ] `apps/docs/src/reference/cli/workbench.md` or the worktree reference: the guard applies to the declared code repository's branch in a workbench; the workbench repository is allow-listed by path
-- [ ] `apps/docs/src/changelog.md` Unreleased: the trunk guard
+- [x] `init.ts` `hookConfig.PreToolUse`: add `trunk-guard.js` to the Edit/Write entry and a new Bash-matcher entry carrying it — and init's settings merge now merges per hook into the group with that matcher: appending the whole group whenever one command was missing registered the Edit/Write group twice (11 registrations instead of 8) the moment a new hook joined an existing matcher; `hook-cwd-independence` A3/A4/A7 caught it and now expect eight, each once
+- [x] `update.ts`: a targeted ensure block in the budget hook's shape for both matchers (idempotent — a second run writes nothing)
+- [x] This repository's `.claude/settings.json`: both registrations in the `hookCommand` form; the installed copy `.claude/hooks/trunk-guard.js` synced by hand (dusk has no global `indusk update`)
+- [x] `apps/docs/src/reference/cli/workbench.md` or the worktree reference: the guard applies to the declared code repository's branch in a workbench; the workbench repository is allow-listed by path
+- [x] `apps/docs/src/changelog.md` Unreleased: the trunk guard — a new Unreleased section above 1.50.0, also carrying the version-state health line and the guard's packaged-paths fix that landed on trunk before this plan
+- [x] Shape (`apps/indusk-mcp/src/bin/commands/update.ts`) — reviewed, left as-is: the ensure block is the third targeted-ensure of the same shape (eval-trigger, claude-md-budget, now trunk-guard) and init's merge loop is a fourth "put this hook in that matcher group" — a shared `ensureHookRegistered(settings, matcher, command)` is the right extraction, but it is inter-file (four sites, two commands) and belongs to `/cleanup`, not to this phase's intra-unit review
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 2 Verification
-- [ ] A5, A7 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard-registration.test.ts`; then `cd` back
-- [ ] Full mcp suite green: `cd apps/indusk-mcp && pnpm exec vitest run`; `skill-sync-parity` and the settings-writing tests (`hook-cwd-independence.test.ts`) still pass; then `cd` back
-- [ ] The hook fires in this repository: from the plan worktree on its branch, an Edit to a source file is allowed; on `main` (the main checkout), `INDUSK_TRUNK_GUARD` unset, the hook run by hand with an Edit event for `apps/indusk-mcp/src/lib/config.ts` exits 2 — recorded here
-- [ ] Rows A5, A7 set to `passing`
-- [ ] Shape (Build Phase 2): review `init.ts`/`update.ts` changes; record findings or "nothing to change"
+- [x] A5, A7 green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard-registration.test.ts`; then `cd` back — 3 tests passed (two A5, one A7); `registry-leak-scan.test.ts` (its no-real-registry assertion) then flagged the file for not naming `INDUSK_HOME` (the scan is textual; `runCli` pins it) — the header now names the pin, 2 files / 5 tests green together
+- [x] Full mcp suite green: `cd apps/indusk-mcp && pnpm exec vitest run`; `skill-sync-parity` and the settings-writing tests (`hook-cwd-independence.test.ts`) still pass; then `cd` back — 231 files / 1403 tests passed, 1 file skipped; the one red was `impl-corpus` refusing THIS impl because a verification note named another plan's row id (`A` + digits reads as a cross-reference) — reworded, corpus green alone. Two environmental reds fixed first: the worktree had no admin build, so the nine `indusk ui` daemon tests and the tarball test failed until `pnpm --filter indusk-admin build && node scripts/bundle-admin.js` ran here
+- [x] The hook fires in this repository: from the plan worktree on its branch, an Edit to a source file is allowed; on `main` (the main checkout), `INDUSK_TRUNK_GUARD` unset, the hook run by hand with an Edit event for `apps/indusk-mcp/src/lib/config.ts` exits 2 — recorded here: 2026-09-17, `env -u INDUSK_TRUNK_GUARD node hooks/trunk-guard.js` with `cwd` = the main checkout → stderr "trunk-guard: refusing to edit code on `main`." naming the path, `indusk worktree create <plan>`, the allow-list and both off switches, exit 2; same event with `cwd` = this worktree on `plan/trunk-guard` → silent, exit 0
+- [x] Rows A5, A7 set to `passing`
+- [x] Shape (Build Phase 2): review `init.ts`/`update.ts` changes; record findings or "nothing to change" — performed; the record is the Shape items appended to this phase's implementation list
 
 #### Build Phase 2 Context
-- [ ] Known Gotchas, the hooks-discovery entry: `trunk-guard.js` needs settings registration under TWO matchers (Edit/Write and Bash); `update`'s ensure block adds both, and a hook registered under only one is half a gate
+- [x] Known Gotchas, the hooks-discovery entry: `trunk-guard.js` needs settings registration under TWO matchers (Edit/Write and Bash); `update`'s ensure block adds both, and a hook registered under only one is half a gate — rewritten in place (also records init's per-hook merge); CLAUDE.md 61,399 of 61,440 bytes, so the retrospective's compaction step has 41 bytes of headroom to work with
 
 #### Build Phase 2 Document
-- [ ] `apps/docs/src/reference/cli/init.md` (or wherever init's hook list is documented): the hook list gains `trunk-guard.js` with its two matchers
+- [x] `apps/docs/src/reference/cli/init.md` (or wherever init's hook list is documented): the hook list gains `trunk-guard.js` with its two matchers — there is no init reference page; init's hook list lived in `apps/docs/src/reference/tools/indusk-mcp.md` `## Hooks`, which still said "two hooks". It now points at the guide's seven-hook table and keeps the one registration fact a `settings.json` reader needs: `trunk-guard.js` under two matchers
 
 ## Files Affected
 
