@@ -1,0 +1,5 @@
+# Inside an impl's Verification block, `A22` IS a row of this plan — name another plan's assertion by its file and its words, never by its id
+
+The impl structure validator's cross-reference rule treats any `T`/`A` + digits inside a Verification block as a reference to this plan's Test Trajectory, whatever the surrounding prose says. A verification note in trunk-guard (2026-09-17) said "`registry-leak-scan` A22 flagged the file", meaning another plan's row, and `impl-corpus` refused the whole impl: "Phase 2 Verification references test ID `A22` but no such row exists". The Edit-time hook had let it through because the edit's snippet contained no phase heading, so the refusal surfaced only in the full suite.
+
+**What to do**: when a note in an impl needs to cite a test from elsewhere, name the test file and what it asserts in words ("`registry-leak-scan.test.ts`, its no-real-registry assertion"). The id vocabulary belongs to the plan the document is in. The same rule follows from AGENTS.md's "cite plan artifacts with provenance" — the reader does not speak `A22` either.
