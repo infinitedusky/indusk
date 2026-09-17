@@ -1,7 +1,7 @@
 ---
 title: "Trunk guard — Implementation"
 date: 2026-09-17
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -53,6 +53,9 @@ Test paths are repo-root-relative.
 | A5 | `indusk init` registers the hook under the Edit/Write matcher and the Bash matcher; `indusk update` adds both to a project lacking them; a second `update` is byte-identical | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
 | A6 | `worktree.trunk_guard.enabled: false` or `INDUSK_TRUNK_GUARD=off` allows A1's edit and the hook writes nothing | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/trunk-guard.test.ts |
 | A7 | This repository's `.claude/settings.json` registers the hook under both matchers in the `hookCommand` form | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/trunk-guard-registration.test.ts |
+| A8 | On `main` with a source file staged, a commit spelled with git options before the verb — `git -C <repo> commit -m …`, `git -c user.name=x commit -m …`, `git --no-pager commit -m …` — is refused like the plain form; and `cd <repo> && git commit -m …` run from an unrelated cwd is judged against `<repo>`, not the cwd | Build Phase 3 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/trunk-guard-falsification.test.ts |
+| A9 | On `main` with a source file staged, a commit wrapped in a quoted or substituted command — `bash -c "git commit -m …"`, `sh -c 'git commit …'`, `$(git commit …)`, a backtick form — is refused; `echo "git commit"` and `git commitment` stay allowed | Build Phase 3 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/trunk-guard-falsification.test.ts |
+| A10 | On `main` with nothing staged and a tracked source file modified, `git commit -am …` (the combined short flag) and `git commit -m … <path>` (an explicit pathspec) are refused naming the file, because both commit it without staging; `git commit -m …` with nothing staged stays allowed | Build Phase 3 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/trunk-guard-falsification.test.ts |
 
 ### Deferred Verification
 
@@ -75,6 +78,10 @@ before any assertion of ours runs), not a load error inside the test file.
 
 #### Deferred to Build Phase 1
 (none — every row is authored here)
+
+#### Deferred to Build Phase 3
+
+- **A8–A10** — falsification hypotheses (`/falsify`, 2026-09-17), formed by reading the shipped hook after Build Phase 2 closed; each targets a line of `hooks/trunk-guard.js` that did not exist when Test Phase 1 was authored. Authored red in the phase that fixes them, the ritual's shape. A8 against `COMMIT_RE`'s requirement that `git` and `commit` be adjacent and against `anchor: eventCwd` ignoring a `cd` in the same command; A9 against the separator class `[;&|(]` that omits quotes and backticks; A10 against `stagedPaths`' `-a|--all` regex missing the combined `-am` and its ignorance of pathspec arguments.
 
 #### Regression Guards
 (none)
@@ -135,6 +142,29 @@ before any assertion of ours runs), not a load error inside the test file.
 
 #### Build Phase 2 Document
 - [x] `apps/docs/src/reference/cli/init.md` (or wherever init's hook list is documented): the hook list gains `trunk-guard.js` with its two matchers — there is no init reference page; init's hook list lived in `apps/docs/src/reference/tools/indusk-mcp.md` `## Hooks`, which still said "two hooks". It now points at the guide's seven-hook table and keeps the one registration fact a `settings.json` reader needs: `trunk-guard.js` under two matchers
+
+### Build Phase 3: Falsification — the commit gate's parser reads shell, and shell has more than one spelling
+
+**Goal**: verify whether the attested state holds against three spellings of "commit this" that `COMMIT_RE` and `stagedPaths` do not read: options between `git` and `commit` (and a `cd` that moves the repository out from under `anchor`), a commit wrapped in quotes or a substitution, and `-am` / an explicit pathspec committing an unstaged file. Each trajectory row below is one hypothesis; each checklist item is the fix the hook needs when it confirms. The edit gate is not under suspicion here — the Bash lane is the second line and this is its first look.
+
+- [ ] `COMMIT_RE`: allow git's own options between `git` and `commit` — `-C <path>`, `-c <k=v>`, `--git-dir=…`, `--work-tree=…`, `--no-pager`, `--no-optional-locks` and their spaced forms — so `git -C repo commit` is a commit; keep the right-edge lookahead so `git commitment` is not
+- [ ] `classify()` for a commit: when the same command segment carries `git -C <path>`, or an earlier segment is `cd <path>`, resolve `anchor` to that path (relative to the event cwd), so the branch and index judged are the repository the commit lands in
+- [ ] `COMMIT_RE`: the command-position class gains `"`, `'` and `` ` `` beside `;&|(`, so `bash -c "git commit …"`, `sh -c '…'`, `$(git commit …)` and a backtick form are commits; `echo "git commit"` stays a false positive only if it is one — write the A9 case for it and leave the regex honest about what it cannot tell apart (a quoted commit inside `echo` is refused only when the index holds code on trunk, which is the state the guard exists for)
+- [ ] `stagedPaths`: `-a` is recognised inside a combined short-flag cluster (`-am`, `-qa`, `-anm`) as well as alone or as `--all`; any non-option argument after `commit` (and everything after `--`) that resolves to a tracked path under the repository is added to the judged set, because `git commit <path>` commits that path unstaged
+- [ ] Hook header comment and the guide's `trunk-guard` row: name the spellings the commit gate reads, in one line each, so the next reader knows what it does not read (a commit made by a script the agent invokes by name is still out of scope — the brief's "arbitrary Bash" line)
+
+#### Build Phase 3 Verification
+- [ ] A8, A9, A10 authored red against the shipped hook (each case fails on its own claim: the hook exits 0 where the row says 2), then green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard-falsification.test.ts`; then `cd` back
+- [ ] A1–A7 still green: `cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/trunk-guard.test.ts src/__tests__/trunk-guard-registration.test.ts`; then `cd` back
+- [ ] Installed copy resynced: `cp apps/indusk-mcp/hooks/trunk-guard.js .claude/hooks/trunk-guard.js` and `git diff --stat` shows both files changed together
+- [ ] Rows A8–A10 set to `passing`
+- [ ] Shape (Build Phase 3): review the parser changes in `trunk-guard.js`; record findings or "nothing to change"
+
+#### Build Phase 3 Context
+- [ ] Known Gotchas, one line appended to the hooks-discovery entry or a new entry if budget allows: the commit gate reads `git [opts] commit`, quoted and substituted forms, `cd … &&`, `-a` in a flag cluster and pathspecs — a spelling outside that list is a documented gap, not a guarantee (compaction is required first: the file is at 61,399 of 61,440 bytes)
+
+#### Build Phase 3 Document
+- [ ] `apps/docs/src/guide/index.md` hooks table, the `trunk-guard` row: the commit-gate spellings in one clause; `apps/docs/src/changelog.md` Unreleased: the three falsification fixes under Fixed
 
 ## Files Affected
 
