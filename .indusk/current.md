@@ -144,10 +144,73 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 5292bc04 — starting catchup
+## Session 5292bc04 — Dawn/Midnight/Day sequence — pick up the next build step
 
 **Session ID**: 5292bc04-3949-4669-b4d2-4dedbebfa11b
-**Last updated**: 2026-09-15T18:18:49.891Z
+**Last updated**: 2026-09-15T19:42:22.131Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 780da059 — user-zero side research: Aeon case study + master.md fate line
+
+**Session ID**: 780da059-f69c-43fc-9940-32075e05833a
+**Last updated**: 2026-09-16T18:27:26.766Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 5d66ec7c — eval: scoring commit e63bd7fc (admin-ui-phase-progress test plan acceptance)
+
+**Session ID**: 5d66ec7c-4e53-49c2-ac94-1d5c602cfc29
+**Last updated**: 2026-09-16T19:30:26.756Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 6b521fcd — generation-ship-story: writing — outline drilldown, a short story
+
+**Session ID**: 6b521fcd-36de-4dc1-a62d-3064563b9edc
+**Last updated**: 2026-09-17T15:21:06.840Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 

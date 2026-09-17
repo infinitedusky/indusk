@@ -37,44 +37,77 @@ Every paper has an outline beside it, the way `thesis-outline.md` sits beside `t
 - Outline before draft. A draft without an outline is a draft nobody can judge against anything.
 - When the draft moves, the outline moves in the same turn, or say plainly that the outline is stale. An outline went stale within two turns of the conversation that produced this skill; this rule is what came of it.
 - The outline is where the arc is tested: does each section earn its verdict, does the close land as a finding, where does the paper depend on a term the reader does not have.
-- **Short pieces get the same discipline one level down.** For anything short that will be sent or submitted in the user's name (an application field, a cover note, a message), the outline is a numbered list of sentence jobs, not paragraphs. Before writing it, state the reader's prompt and its constraints: a direct question wants its answer in sentence one; an open box needs a framing sentence, because the reader does not know what is coming. Then one line per sentence saying what it does for the reader, one candidate sentence under each job drawn from the record or the user's own dictation, and only then does the user write the sentences. The agent repairs and strips tells; it flags a move it would drop rather than dropping it. Lock sentences one at a time, dated, in the working file. A wrong sentence is then caught as "wrong job," which is arguable, instead of "sounds off," which is not. See the lesson `community-plan-content-as-sentence-jobs-before-writing`.
+- **Short pieces get the same discipline one level down.** For anything short that will be sent or submitted in the user's name (an application field, a cover note, a message), the drilldown below goes all the way to sentence jobs; it does not stop at paragraphs. Before writing it, state the reader's prompt and its constraints: a direct question wants its answer in sentence one; an open box needs a framing sentence, because the reader does not know what is coming. Then one line per sentence saying what it does for the reader, one candidate sentence under each job drawn from the record or the user's own dictation, and only then does the user write the sentences. The agent repairs and strips tells; it flags a move it would drop rather than dropping it. Lock sentences one at a time, dated, in the working file. A wrong sentence is then caught as "wrong job," which is arguable, instead of "sounds off," which is not. See the lesson `community-plan-content-as-sentence-jobs-before-writing`.
 
-### Worked example: piece to paragraphs to sentences, every level a goal
+### Get off the ground
 
-The piece: an optional free-text box on a job application for a forward-deployed engineer seat. At every level below, the entry is a purpose, never prose. Prose is written last, by the user, into the slots.
+Before the drilldown, when the project is new. It produces the piece line; the drilldown starts from that. The seed does not have to be a story.
 
-**The piece.** Reader: a recruiter skimming, then a hiring manager. Prompt: "share anything else you want us to know, such as your motivation." No question is asked, so the piece needs a frame. Goal: give two reasons for applying and prove the second one with evidence the reader cannot get from the resume. Two paragraphs.
+1. **The seed.** What the user actually wants to do, in their words, before anything is judged. Enough to choose books against: a subject, the question the subject raises, and the form. "A book that examines primordial black holes being dark matter, what knowing that as a fact would lead to, and a story inside that world at an inflection point" is a seed.
+2. **Ten books.** Ten that are near it or point at it. The list is the context, cheaper than any description.
+3. **What each gives.** For each book, the one thing it does that this piece wants, or the one axis it proves can be broken. A book that gives nothing comes off the list. Every thing a book gives becomes a question in step 5; that is what keeps the list from being a mood board.
+4. **Purpose.** Why the project exists, separate from whether the product succeeds. One line for the purpose, one line for what success would look like; they may differ. "A regular thing with a friend who is a chef" is a purpose. It still needs the success line, because a project nobody believes could work is not fun for long.
+5. **Analysis.** The adversarial round, armed by step 3. Each question comes from a book: "The Martian makes the arithmetic the suspense; how does this do that?" Each answer changes the piece or names the deviation. Label every objection **open** (the user decides) or **answered** (say where in the outline the answer lives). An objection stated without its label reads as a verdict, which it is not.
+6. **Threshold.** The piece conforms to the pattern on every axis but one, and the one is named. The axes, at the altitude where the canon agrees: one want the reader can say in a sentence; a cost the reader can count, in a unit the piece sets early; a turn where the cost changes and the want does not; an earned verdict, one the reader could not have written from page one; a form the reader can hold, chosen once and kept. Objections against a conforming axis get fixed in the piece. Objections against the named deviation are the piece's question, and the round ends. A strange choice is allowed because it is declared, which is also what lets a reader forgive it. "No objection left" is the wrong threshold: a premise nobody can object to is one nobody wants to read.
 
-**The paragraphs.**
+Record the seed, the list, the purpose, and the round in the outline file above the piece. They are the grounding every later level is judged against.
 
-- Paragraph one. Goal: frame the box, state both reasons, and spend the evidence on reason two in two halves, what the work did for the customer and what the writer fixed for every other engineer in the seat.
-- Paragraph two. Goal: tie that evidence to the posting's own success measure, state the next step, and close on the writer's energy rather than a summary.
+### Outline drilldown
 
-**The sentences, as an arc.** One line each: the job the sentence does for the reader.
+The technique for building the outline, at any length. It starts from the piece line that getting off the ground produced. Descend one level at a time, and at every level the entry is a purpose, never prose. Prose is written last, into the slots. The arc is complete at every level: the list of parts tells the whole story on its own, and so does the list of sentences, which is what the numbering is for.
 
-Paragraph one.
-1. Frame. Tell the reader what the open box is for.
-2. Reason one, flat. The cutting edge, no elaboration yet.
-3. Reason two, both halves named. Points forward to the evidence.
-4. The seat. Credibility and chronology.
-5. The stack. Earns the right to an observation about the model.
-6. Half one, the customer outcome. Numbers.
-7. The verdict. The honest critique, no swipe at the reader's product.
-8. The gate. The biggest instance of the verdict.
-9. The action. Short on purpose.
-10. The primitives. Concrete nouns so "primitives" lands.
-11. The reward. Why half two mattered to the writer.
+1. **The piece.** What it is about, who reads it, and the prompt or occasion it answers. One line.
+2. **The arc.** The story from open to close: what the reader holds at the start and what they hold at the end.
+3. **The parts.** Chapters for a book, sections for a paper, paragraphs for a short piece. One line each: what this part does for the arc and why it sits where it does.
+4. **Each part, roughly.** Under each part, what is going to happen in it: the moves, in order.
+5. **The sentences.** For each paragraph, one line per sentence: the job it does for the reader. Number by paragraph and position (`3.2`), so a sentence can be cited, moved, or split without renumbering the rest, and a later job can say which earlier one it pays off.
 
-Paragraph two.
-12. Their measure. The posting's own words back to them.
-13. Position. Where the writer stood relative to that loop.
-14. Next step. Reason one made specific, so sentence 2 pays off.
-15. Personal proof. What the writer builds on their own time, and why it is the same focus.
-16. Close. The writer's own phrase, not a summary.
+From there the writing and the planning run together. As ideas arrive for a paragraph or a section, record them where they belong in the outline and put them in order; the outline is the document you keep going back to. At the end there are two artifacts: the piece, and a sentence-by-sentence outline that says what every sentence is for.
 
-**One slot filled, to show the grain.** Job 2. The writer wants to say "I want to learn how it is done" without the word learn, because learn reads as junior. Name the room, not the benefit: "The first is that I want to work at the cutting edge, and at the pace this company has set for it, with the people who set it."
+### Worked example: outline drilldown on a short piece
 
-**What the plan caught.** The writer's own draft opened "I will share a few of my motivations." An earlier critique called that throat-clearing, applying a rule from a direct-question form. Checked against the actual prompt, an open box, job 1 is a frame and the sentence was doing it; only the wording was repaired. A wrong sentence is now an argument about which job it does, and that argument can be settled.
+At every level below, the entry is a purpose, never prose. The company and its model are unnamed here; the user's working file names them.
+
+**Piece.** Answer an open box, "anything you want to include," with a two-part reason for wanting the job. Reader: a recruiter skimming, then a hiring manager. No question is asked, so the piece needs a frame.
+
+**Paragraphs.**
+
+1. Say what the answer is going to be: the reason I want the job.
+2. Reason 1.
+3. Reason 2, part 1: helping the customer.
+4. Reason 2, part 2: improving the system.
+
+**Sentences.**
+
+Paragraph 1
+
+- 1.1 Frame the answer. This space is for the reason I want the job, and it has two parts.
+
+Paragraph 2
+
+- 2.1 Reason one, flat. The cutting edge, the pace they set, the people who set it.
+- 2.2 Why that is mine to say and not every applicant's. I have been building on what comes out of this company: the seat, and the stack with their model underneath for the conversation and the post-call analysis.
+
+Paragraph 3
+
+- 3.1 Name reason two and its first half. The recent work was rewarding, first for what it did for the businesses.
+- 3.2 The outcome, with numbers. One pilot store to twenty-five, the blueprint every account is configured from.
+- 3.3 Succession. Trained the replacement, past a hundred locations without me. This is what makes it "transformed" rather than "touched."
+
+Paragraph 4
+
+- 4.1 The second half, named. Once I had seen what was in the way, I had the agency to fix it for every other engineer in the seat.
+- 4.2 The verdict. The limitations were never the model; they were in how we used it.
+- 4.3 The gate. Nobody could tell whether a prompt change helped until a customer found out.
+- 4.4 The action. Made testing my job.
+- 4.5 The primitives, concrete nouns, and the two companies in a room.
+- 4.6 Their measure. The posting says success is eval-driven feedback that changes product and model roadmaps, so that half is the job, not a hope.
+- 4.7 Next step. One level lower, where the feedback reaches the model. This pays off 2.1.
+- 4.8 Close. Golf on nights and weekends as proof the focus is the same off the clock, and the line about the people who make the thing.
+
+**One slot filled, to show the grain.** Job 2.1. The writer wants to say "I want to learn how it is done" without the word learn, because learn reads as junior. Name the room, not the benefit: "The first is that I want to work at the cutting edge, and at the pace this company has set for it, with the people who set it."
+
+**What the plan caught.** The writer's own draft opened "I will share a few of my motivations." An earlier critique called that throat-clearing, applying a rule from a direct-question form. Checked against the actual prompt, an open box, job 1.1 is a frame and the sentence was doing it; only the wording was repaired. A wrong sentence is now an argument about which job it does, and that argument can be settled.
 
 ## Stance
 
