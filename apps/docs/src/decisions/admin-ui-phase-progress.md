@@ -1,7 +1,7 @@
 # Admin UI Phase Progress — one lifecycle, three bars
 
 **Status:** accepted (2026-09-16) · Day step 3, "Execution visible live"
-**Full ADR:** `.indusk/planning/admin-ui-phase-progress/adr.md` (archived with the plan at close)
+**Full ADR:** `.indusk/planning/archive/admin-ui-phase-progress/adr.md` · **Lessons:** [Admin UI Phase Progress — Lessons](../lessons/admin-ui-phase-progress.md)
 
 ## What was decided
 
