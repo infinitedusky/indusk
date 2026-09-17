@@ -229,6 +229,16 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (CLI boundary)", () => {
 			}
 		}
 		expect(rewritten).toBe(6);
+		// trunk-guard (2026-09-17): update also ensures the trunk guard under
+		// both PreToolUse matchers — the one addition a modern update makes to a
+		// legacy settings file beyond the rewrite.
+		const guard = {
+			type: "command",
+			command: 'node "${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/trunk-guard.js',
+		};
+		const pre = expected.hooks?.PreToolUse ?? [];
+		pre.find((e) => e.matcher === "Edit|Write")?.hooks?.push(guard);
+		pre.push({ matcher: "Bash", hooks: [guard] });
 		expect(after).toEqual(expected);
 	});
 
@@ -243,7 +253,8 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (CLI boundary)", () => {
 		const afterFirst = readFileSync(settingsPath, "utf-8");
 		const commands = hookCommands(JSON.parse(afterFirst) as Settings);
 		expect(commands).toContain(custom.command);
-		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(6);
+		// six rewritten + the trunk guard's two registrations
+		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(8);
 		expect(commands.filter((c) => RELATIVE_COMMAND.test(c))).toHaveLength(0);
 
 		expect(runCli(dir, ["update"], ENV()).code).toBe(0);
@@ -306,7 +317,7 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (falsification)", () => {
 		expect(r.stderr).toMatch(/Trajectory blocks phase advance/);
 	});
 
-	it("A7: init re-run over a project carrying the relative form leaves six absolute registrations, no duplicates", {
+	it("A7: init re-run over a project carrying the relative form leaves every registration absolute, once — no duplicates", {
 		timeout: 90_000,
 	}, () => {
 		// init merges by command string; six absolute commands look new next
@@ -318,7 +329,9 @@ describe.skipIf(SHOULD_SKIP)("hook-cwd-independence (falsification)", () => {
 
 		const commands = hookCommands(readSettings(dir));
 		expect(commands.filter((c) => RELATIVE_COMMAND.test(c))).toEqual([]);
-		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(6);
-		expect(commands).toHaveLength(6);
+		// six legacy hooks rewritten + trunk-guard under two matchers = eight, each once
+		expect(commands.filter((c) => ABSOLUTE_COMMAND.test(c))).toHaveLength(8);
+		expect(commands).toHaveLength(8);
+		expect(new Set(commands.map((c) => c)).size, "a command registered twice").toBe(7);
 	});
 });

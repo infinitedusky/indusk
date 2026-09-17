@@ -1019,7 +1019,15 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 					{ type: "command", command: hookCommand("check-gates.js") },
 					{ type: "command", command: hookCommand("validate-impl-structure.js") },
 					{ type: "command", command: hookCommand("claude-md-budget.js") },
+					// No code on trunk (trunk-guard): the edit gate. Its twin below,
+					// on Bash, judges `git commit` by what is staged — an edit made
+					// through sed or a heredoc never passes through Edit or Write.
+					{ type: "command", command: hookCommand("trunk-guard.js") },
 				],
+			},
+			{
+				matcher: "Bash",
+				hooks: [{ type: "command", command: hookCommand("trunk-guard.js") }],
 			},
 		],
 		PostToolUse: [
@@ -1073,19 +1081,32 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 				matcher: string;
 				hooks: Array<{ command: string; type: string }>;
 			}>) {
-				const alreadyPresent = existingEntries.some(
-					(e: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
-						e.matcher === entry.matcher &&
-						entry.hooks.every((newHook) => e.hooks?.some((h) => h.command === newHook.command)),
-				);
-				if (!alreadyPresent || force) {
-					if (force) {
-						existing.hooks[event] = (existing.hooks[event] || []).filter(
-							(e: { matcher?: string }) => e.matcher !== entry.matcher,
-						);
-					}
+				if (force) {
+					existing.hooks[event] = (existing.hooks[event] || []).filter(
+						(e: { matcher?: string }) => e.matcher !== entry.matcher,
+					);
+					existing.hooks[event] = [...existing.hooks[event], entry];
+					hooksUpdated = true;
+					continue;
+				}
+				// Merge per HOOK into the group with this matcher, never per group:
+				// appending a whole group whenever one command was missing registered
+				// the group twice — every hook in it running twice — the moment a new
+				// hook joined an existing matcher (trunk-guard, 2026-09-17).
+				const group = existingEntries.find(
+					(e: { matcher?: string }) => e.matcher === entry.matcher,
+				) as { matcher?: string; hooks?: Array<{ command?: string; type?: string }> } | undefined;
+				if (!group) {
 					existing.hooks[event] = [...(existing.hooks[event] || []), entry];
 					hooksUpdated = true;
+					continue;
+				}
+				group.hooks = group.hooks || [];
+				for (const newHook of entry.hooks) {
+					if (!group.hooks.some((h) => h.command === newHook.command)) {
+						group.hooks.push(newHook);
+						hooksUpdated = true;
+					}
 				}
 			}
 		}

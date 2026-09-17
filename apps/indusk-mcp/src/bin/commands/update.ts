@@ -374,6 +374,42 @@ export async function update(projectRoot: string): Promise<void> {
 			} catch {
 				console.info("  could not register claude-md-budget hook in settings.json");
 			}
+
+			// Ensure the trunk guard is registered under BOTH matchers (trunk-guard
+			// plan). Same targeted-ensure shape: update syncs the hook FILE via
+			// globSync, but a pre-existing project's settings still need the two
+			// registrations. A hook registered under only one matcher is half a
+			// gate — the commit gate is what catches edits the Edit gate never sees.
+			try {
+				const settings = JSON.parse(readFileSync(settingsPath, "utf-8"));
+				if (!settings.hooks) settings.hooks = {};
+				if (!settings.hooks.PreToolUse) settings.hooks.PreToolUse = [];
+				const pre: { matcher?: string; hooks?: { type: string; command?: string }[] }[] =
+					settings.hooks.PreToolUse;
+				let changed = false;
+				for (const matcher of ["Edit|Write", "Bash"]) {
+					const entry = pre.find((e) => e.matcher === matcher);
+					const has = entry?.hooks?.some((h) => h.command?.includes("trunk-guard"));
+					if (has) continue;
+					if (entry) {
+						entry.hooks = entry.hooks || [];
+						entry.hooks.push({ type: "command", command: hookCommand("trunk-guard.js") });
+					} else {
+						pre.push({
+							matcher,
+							hooks: [{ type: "command", command: hookCommand("trunk-guard.js") }],
+						});
+					}
+					changed = true;
+				}
+				if (changed) {
+					const { writeFileSync } = await import("node:fs");
+					writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+					console.info("  registered trunk-guard hook in settings.json (Edit|Write + Bash)");
+				}
+			} catch {
+				console.info("  could not register trunk-guard hook in settings.json");
+			}
 		}
 	}
 

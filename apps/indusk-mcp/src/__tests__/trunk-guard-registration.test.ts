@@ -75,7 +75,15 @@ describe("A7 — this repository registers the hook itself", () => {
 	it("both matchers, in the hookCommand form", () => {
 		const settingsPath = join(REPO_ROOT, ".claude/settings.json");
 		expect(registrations(settingsPath)).toEqual({ edit: true, bash: true });
-		const raw = readFileSync(settingsPath, "utf-8");
-		expect(raw).toContain(`node "\${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/${HOOK}`);
+		// The parsed command, not the raw JSON — the file escapes the inner quotes.
+		const s = JSON.parse(readFileSync(settingsPath, "utf-8")) as Settings;
+		const commands = (s.hooks?.PreToolUse ?? [])
+			.flatMap((e) => e.hooks ?? [])
+			.map((h) => h.command)
+			.filter((c) => c?.includes(HOOK));
+		expect(commands).toEqual([
+			`node "\${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/${HOOK}`,
+			`node "\${CLAUDE_PROJECT_DIR:-.}"/.claude/hooks/${HOOK}`,
+		]);
 	});
 });
