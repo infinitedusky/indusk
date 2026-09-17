@@ -198,3 +198,7 @@ under its cap). Not a second consecutive plan with a wrong finding.
 | Cleanup | 1 extraction (`ensureHookRegistered`), 5 sites removed |
 | Full suite at close | 234 files / 1430 tests passed, 1 file skipped |
 | CLAUDE.md | 61,416 bytes before the close-out compaction (budget 61,440) |
+
+## Landed
+
+Landed on main at `c8344f32` (2026-09-17), `--no-ff` merge of `plan/trunk-guard` after trunk was merged into the branch (`81037316`); worktree and branch removed. Trunk's uncommitted work at landing (another session's write-skill and brainstorm-fiction files) touched none of this plan's paths and was left alone. Release is a separate decision on trunk: the Unreleased changelog carries this plan, the version-state health line and the release guard's packaged-paths scope.
