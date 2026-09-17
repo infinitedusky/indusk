@@ -22,8 +22,12 @@ root cause, and wakes the plan that owns it.**
 A promise (defined in `day-promises`) is a commitment the system keeps for as
 long as it runs. The test suite can only say a promise held on the inputs
 someone thought of. This step gives every promise a third link, a mark on the
-telemetry span the running system emits, so that the system in use reports
-which promises it upheld and which it broke. A violation names the promise;
+telemetry span the running system emits, so that the system *while running*
+reports which promises it upheld and which it broke. Running means executing
+with real inputs — locally under Jaeger, in a smoke run, or deployed — as
+opposed to the test suite, which only exercises the inputs someone chose. The
+word is not "production": a local run is a running system, and the loop
+closes there first. A violation names the promise;
 an incident is opened or matched, with the symptom, the root cause and where
 it was observed; the promise names its owning plan; that plan reopens with a
 maintenance phase. The plan sits in `monitor` until its promises have been
@@ -44,7 +48,7 @@ while the system broke**. Every other signal says the code failed; this one
 says the assertion was insufficient, and names it. Telemetry does not replace
 the tests; it grades them.
 
-| Production violates a promise, and… | What it means |
+| The running system violates a promise, and… | What it means |
 |---|---|
 | a test claimed the promise and passed | the test was insufficient — widen it |
 | no test claims the promise | the promise is unguarded — write one |
@@ -72,27 +76,33 @@ the tests; it grades them.
    revision of the promise. Repeated violations of related promises are the
    collapse signal that says refactor.
 5. **Root cause is recorded, not inferred.** The incident record is the
-   artifact; the alert only opens it. The record's `source` field
-   distinguishes production from a smoke run or a desk probe, because they
-   are different evidence and a reader six months on must not weight them
-   equally.
+   artifact; the alert only opens it. The record's `source` field says where
+   the system was running when the promise broke — `local` (a run under
+   Jaeger on a developer's machine), `smoke` (a scripted run), `deployed`
+   (a live environment) — or `desk` for a finding by reading, which is not a
+   run at all. They are different evidence and a reader six months on must
+   not weight them equally; a `desk` entry does not close the loop.
 
 ## What exists today, verified 2026-09-17
 
-None of it. Looper's incident file has nine entries, every one from a smoke
-run or a desk probe, and says in its own words: "the first `source:
-production` entry is the moment the loop actually closes." Numero has
-production and real failures and no promises. Dusk lists `monitor` in the
-lifecycle and draws it as pending; nothing derives it. Dash0, the production
-telemetry, rejected its token on 2026-09-17 and must be working before step
-2 above can be tested.
+None of it. Looper's incident file has nine entries, found by smoke runs and
+desk probes and recorded by hand; none was *detected* by telemetry naming the
+promise, which is what this step adds. Numero has deployed environments and
+real failures and no promises. Dusk lists `monitor` in the lifecycle and
+draws it as pending; nothing derives it. Local Jaeger is enough to build and
+prove every step below; Dash0 (which rejected its token on 2026-09-17) is
+needed only for the `deployed` source, and is not a dependency of the loop
+closing.
 
 ## Proving ground
 
-**numero.** It is the only candidate with production. The acceptance below is
-one real incident there. Looper cannot prove this half without production;
-dusk's own promises (gates fired, record never corrupt, registry never leaked)
-are observable in local telemetry and give the local-Jaeger path a subject.
+Any project that runs. **looper** runs locally under Jaeger on every smoke
+round and already has promises, so it is where the loop closes first, with a
+`local` or `smoke` incident detected by telemetry rather than by a person.
+**dusk** runs its own gates on every checkoff and its own promises (gates
+fired, record never corrupt, registry never leaked) are observable in local
+telemetry. **numero** adds the `deployed` source once it has promises, and is
+where Dash0 earns its place.
 
 ## Steps
 
@@ -107,18 +117,20 @@ About a week, distributed, after `day-promises` lands.
 
 ## Acceptance
 
-Day row 9's test: **a production alert names the promise that broke; the
-owning plan reopens.** Concretely, on numero: one promise with a real
-incident whose `source` is production, the alert naming it, the plan
-reopening, and the incident's root cause recorded. That entry is the moment
-the loop closes.
+Day row 9's test: **an alert from the running system names the promise that
+broke; the owning plan reopens.** Concretely: one promise, one violation
+*detected by telemetry* during a run (local, smoke or deployed — not found by
+reading), the alert naming the promise, an incident opened with its root
+cause and its source, and the owning plan reopened. The first such incident
+is the moment the loop closes; looper can produce it locally.
 
 ## Depends on
 
 - [`day-promises`](../day-promises/brief.md): the registry, the states, the
   owner, the first two links.
 - admin-ui-phase-progress (closed 2026-09-17): `monitor` listed and drawn.
-- Dash0 connected.
+- Local Jaeger (the local-telemetry daemon) — already installed. Dash0 only
+  for the `deployed` source.
 
 ## Resolved since the June brief
 

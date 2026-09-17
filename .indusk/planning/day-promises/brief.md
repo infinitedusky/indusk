@@ -52,9 +52,10 @@ state rather than a verdict, and a link into the running system's telemetry
   and a permanently red check stops being read (this project has switched two
   off that way).
 - **Incident.** What happened when a promise was broken: symptom, root cause,
-  which promise, where observed (production, a smoke run, a desk probe — the
-  source is recorded because they are different evidence), status, fix. This
-  step defines the record; `day-monitor` is what fills it from production.
+  which promise, where the system was running when it broke (`local`,
+  `smoke`, `deployed`, or `desk` for a finding by reading — the source is
+  recorded because they are different evidence), status, fix. This step
+  defines the record; `day-monitor` is what fills it from the running system.
 - **Owner.** The plan that first stated the promise. Ownership moves only when
   another plan supersedes the promise.
 - **The two links this step makes.** A comment at the enforcing code site
@@ -99,7 +100,7 @@ than sequential ids. The ADR settles the spelling and whether looper renames.
 
 | Piece | looper | numero | dusk |
 |---|---|---|---|
-| Registry with states; incidents with sources | **built** (11 promises, 9 incidents, none from production) | none | none |
+| Registry with states; incidents with sources | **built** (11 promises, 9 incidents, all recorded by hand) | none | none |
 | Validator in the build, both directions | **built** | none | none |
 | Trace-shape test helper naming the promise | **built** (pytest) | none | none |
 | Typed telemetry contract (every span declared and emitted) | not possible in Python | **built**, 12 services, in CI | none |
@@ -112,8 +113,8 @@ typechecker.
 ## Proving ground
 
 **looper** is the reference implementation and adopts the InDusk copy of its
-own validator. **numero** proves adoption: it has the production failures and
-the archive sediment (four plans for one concern) and no promises. **dusk**
+own validator. **numero** proves adoption: it has real failures from deployed
+environments and the archive sediment (four plans for one concern) and no promises. **dusk**
 self-hosts a few promises so the convention is shown not to depend on a
 service: the gates ran at every checkoff, the boundary record is never
 corrupt, no test writes the real registry — each already has a recorded

@@ -67,8 +67,9 @@ any later change). Two sub-plans, split 2026-09-17:
 - [day-monitor/brief.md](day-monitor/brief.md) — **4b, the telemetry half
   (was Midnight)**: the span link, violations per promise as a number from
   Jaeger and Dash0, `monitor` as the quiet window, alert → incident with root
-  cause → reopen the owner. Exists nowhere yet; numero is the only proving
-  ground with production; ~1 week after 4a.
+  cause → reopen the owner. "Running" means executing with real inputs,
+  locally under Jaeger as much as deployed; exists nowhere yet; looper can
+  close the loop locally first; ~1 week after 4a.
 
 Why before Dawn 7: Dawn's remaining components scale up *unattended
 throughput*; Midnight is the only plan that adds a feedback loop fed from
