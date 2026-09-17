@@ -18,15 +18,13 @@ import {
   parsePlan,
   readPlanDeclarations,
 } from "@infinitedusky/indusk-mcp/planning/plan-parser";
-import {
-  type PhaseBoundaryRecord,
-  readBoundaries,
-} from "@infinitedusky/indusk-mcp/shape/boundary";
+import type { PhaseBoundaryRecord } from "@infinitedusky/indusk-mcp/shape/boundary";
 import {
   parseTrajectory,
   type Trajectory,
 } from "@infinitedusky/indusk-mcp/trajectory/parser";
 import matter from "gray-matter";
+import { type BoundaryRead, readProjectBoundaries } from "./project-reader";
 
 /**
  * The data layer for the admin UI. Reads `.indusk/planning/` and `.indusk/eval/`
@@ -224,19 +222,6 @@ function isMalformed(
     | null,
 ): doc is { malformed: true; raw: string } {
   return doc !== null && "malformed" in doc;
-}
-
-/** The project's boundary records, read once per listing: the file is one per project. */
-type BoundaryRead = { records: PhaseBoundaryRecord[] } | { error: string };
-
-async function readProjectBoundaries(
-  projectRoot: string,
-): Promise<BoundaryRead> {
-  try {
-    return { records: await readBoundaries(projectRoot) };
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : String(err) };
-  }
 }
 
 async function readPlanFolder(
@@ -478,40 +463,3 @@ export async function readEvalScorecards(
 // The research-directory reader (.indusk/research/) lives in
 // research-reader.ts — extracted in the dawn-ui-plan-grouping cleanup; it
 // shares nothing with plan parsing.
-
-/** `admin.refresh_ms` from the project's `.indusk/config.json`. */
-export const DEFAULT_REFRESH_MS = 5000;
-export const MIN_REFRESH_MS = 1000;
-
-/**
- * The plan page's live-refresh interval (admin-ui-phase-progress, Build Phase
- * 5). Absent, unreadable or out-of-range values fall back rather than throw —
- * a config typo must not take the page down — and the floor keeps a stray
- * `0` from hammering the daemon.
- */
-export function readAdminRefreshMs(projectRoot: string): number {
-  try {
-    const raw = readFileSync(
-      join(projectRoot, ".indusk", "config.json"),
-      "utf-8",
-    );
-    const value = (JSON.parse(raw) as { admin?: { refresh_ms?: unknown } })
-      .admin?.refresh_ms;
-    if (typeof value !== "number" || !Number.isFinite(value)) {
-      return DEFAULT_REFRESH_MS;
-    }
-    return Math.max(MIN_REFRESH_MS, Math.round(value));
-  } catch {
-    return DEFAULT_REFRESH_MS;
-  }
-}
-
-/**
- * Whether the evaluator has ever written for this project: `.indusk/eval/` is
- * created by the first append (`EvalLogWriter.ensureDirectory`), so its
- * absence means "no evaluated commit yet", which the scorecards page says
- * instead of showing an empty list (admin-ui-phase-progress A24).
- */
-export function hasEvalDirectory(projectRoot: string): boolean {
-  return existsSync(join(projectRoot, ".indusk", "eval"));
-}

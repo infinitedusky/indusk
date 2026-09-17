@@ -4,11 +4,11 @@ import type { SubplanEntry } from "@/components/ParentPlanView";
 import { PlanDetail } from "@/components/PlanDetail";
 import {
   readActivePlans,
-  readAdminRefreshMs,
   readArchivedPlans,
   readPlanHierarchy,
   readPlanMasterContent,
 } from "@/lib/planning-reader";
+import { readAdminRefreshMs } from "@/lib/project-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
 interface PlanPageProps {

@@ -55,7 +55,9 @@ describe("cleanup pins — one definition each", () => {
     ]);
   });
 
-  it("A37: config.json is never parsed by hand in the admin's lib", () => {
-    expect(filesContaining(join(SRC, "lib"), "config.json")).toEqual([]);
+  it("A37: config.json is never read by hand in the admin's lib", () => {
+    // The quoted literal is what a hand `join(root, ".indusk", "config.json")`
+    // needs; prose in a docblock names the file in backticks.
+    expect(filesContaining(join(SRC, "lib"), '"config.json"')).toEqual([]);
   });
 });

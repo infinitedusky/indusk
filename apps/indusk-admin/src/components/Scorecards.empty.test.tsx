@@ -27,6 +27,10 @@ vi.mock("next/link", () => {
 vi.mock("@/lib/planning-reader", () => ({
   __esModule: true,
   readEvalScorecards: async () => [],
+}));
+
+vi.mock("@/lib/project-reader", () => ({
+  __esModule: true,
   hasEvalDirectory: () => false,
 }));
 

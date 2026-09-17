@@ -1,6 +1,7 @@
 import { ScorecardsList } from "@/components/Scorecards";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
-import { hasEvalDirectory, readEvalScorecards } from "@/lib/planning-reader";
+import { readEvalScorecards } from "@/lib/planning-reader";
+import { hasEvalDirectory } from "@/lib/project-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 import { getCommitMessages } from "@/lib/vcs";
 

@@ -47,14 +47,18 @@ vi.mock("@/lib/planning-reader", () => ({
   readArchivedPlans: async () => [
     { name: "twin", status: "completed", archived: true },
   ],
-  // The plan page reads the live-refresh interval (admin-ui-phase-progress).
-  readAdminRefreshMs: () => 5000,
   readPlanHierarchy: () => ({
     parents: ["parent"],
     roadmap: [],
     subplans: { parent: ["twin"] },
   }),
   readPlanMasterContent: async () => null,
+}));
+
+// The plan page reads the live-refresh interval from the project reader.
+vi.mock("@/lib/project-reader", () => ({
+  __esModule: true,
+  readAdminRefreshMs: () => 5000,
 }));
 
 vi.mock("@/lib/registry-client", () => ({
