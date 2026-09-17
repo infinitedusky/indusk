@@ -81,6 +81,22 @@ Pre-shipped UI utilities (shadcn-ui, Radix, etc.) solve component-reuse by givin
 
 The cleanup-debt cost of duplicated components compounds: every duplicate is a divergence point, every divergence is a maintenance hazard, and the cost of removing them later scales with how long they've been duplicated. The discipline is to never let them accumulate in the first place.
 
+## Where the plan page's pieces live (after the admin-ui-phase-progress cleanup)
+
+The plan page grew fast during admin-ui-phase-progress and its cleanup phase settled the boundaries. One home per piece:
+
+| Piece | Home | Rule |
+|---|---|---|
+| The rows table (ID / Asserts / State, plus Writable at / Passes at for the Implementation Plan) | `components/phases/TrajectoryRowsTable.tsx` | one table, an optional pair of phase columns; it was written three times before it had a name |
+| A ritual phase's section (Falsification, Cleanup) | `components/phases/RitualPhaseSection.tsx` | one component, two configurations; `CleanupSection` and the phase branch of `FalsificationSection` are one-liners over it; its headings come from `RITUAL_COPY` and so does the copied markdown (`ritualPhaseMarkdown`), so the page and the copy button agree |
+| The progress lines and the active-phase derivation | `components/bars/ProgressLines.tsx` | `PlanDetail` composes sections and holds no derivation; `activePhaseOf` / `activePhaseLabel` live with the lines they feed |
+| Display vocabulary — position, activity and stage labels, `phaseTitle`, `RITUAL_COPY` | `components/bars/labels.ts` | `satisfies Record<…>` over the lifecycle's unions |
+| Project-level reads — `.indusk/config.json`, `.indusk/eval/`, the phase-boundary record | `lib/project-reader.ts` | project facts, not plan-folder facts; config is read through the package's `./config` subpath, never parsed by hand |
+| Plan-folder reads | `lib/planning-reader.ts` | documents, trajectory, papers, position |
+| Opening a closed section in a browser test | `src/__tests__/helpers/sections.ts` | `openSection`, `openImplPlan`, `openAllPhases` |
+
+**One phase spelling.** The page says `Phase 4` and `Test Phase 1` — the impl's own headings — everywhere, through `phaseTitle` in the display vocabulary. The package's `phaseLabel` says `Build Phase 4` and is for logs and the headings parser; a component never calls it. `cleanup-pins.test.ts` counts each of these definitions, the way the package pins its single-definition primitives: a second rows table, a second exporter, a `phaseLabel(` in a component or a quoted `"config.json"` under `lib/` fails it.
+
 ## Data layer — reuse, don't duplicate
 
 The admin UI's data layer follows the same single-source discipline as the components, but applied to *parsing*: it reads `.indusk/planning/` and `.indusk/eval/` directly from disk and **reuses indusk-mcp's parsers** rather than reimplementing them. It is split by concern: `apps/indusk-admin/src/lib/planning-reader.ts` owns plans, scorecards, and hierarchy declarations; `apps/indusk-admin/src/lib/research-reader.ts` owns the `.indusk/research/` directory (split out in the dawn-ui-plan-grouping cleanup — research reads share nothing with plan parsing). A browser test that mocks one of these modules must mock whichever module the component under test actually imports from.
