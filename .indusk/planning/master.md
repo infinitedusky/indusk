@@ -141,6 +141,22 @@ lesson title, or a chat log.
   step 3; absorbed `project-list-workbenches-only` (archived) as one phase.
   **Closed 2026-09-17** (37 rows green, falsified 6, cleaned, retrospective,
   archived).
+- [trunk-guard](archive/trunk-guard/brief.md) — bugfix, not a step (Sandy,
+  2026-09-17: "maybe indusk and workbenches don't allow work on main").
+  **Closed 2026-09-17** (11 rows green, falsified 3, cleaned, retrospective,
+  archived): `trunk-guard.js` refuses code edited or committed on `main`;
+  `ensureHookRegistered` is the one way init and update register a hook.
+  Two smalls it surfaced, not steps: (a) the impl template's "Shape (Phase N)"
+  *Verification* item and `prepareShapeReview`'s "verification must be green"
+  check are circular — move the item to the implementation list or have the
+  library ignore it (owner: whoever next touches `lib/shape/` or the planner
+  template); (b) a fresh plan worktree has no admin bundle, so nine `indusk
+  ui` daemon tests and the tarball test fail until `pnpm --filter
+  indusk-admin build && node scripts/bundle-admin.js` — the worktree kickoff
+  should build it, or those tests should skip with a named reason. A
+  `/lessons/trunk-guard` docs page is owed by the next docs-touching plan
+  (trunk's VitePress config was in another session's hands at landing, and
+  under the guard the sidebar cannot be edited on `main`).
 - **Shipped, archived**: `work-autopilot` (the work skill's autopilot mode),
   `compaction-skill` (`/compact-context`), `falsify-phase-authoring` (1.27.4),
   `local-telemetry`, `doppler-extension` — residue named per folder.
