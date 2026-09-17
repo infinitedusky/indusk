@@ -236,3 +236,7 @@ to raise a finding in this repository.
 | Corpus parity | 83 folders; reader unchanged; 6 hand re-baselines of this plan's own folder |
 | Live rows | 2 Playwright rows over `next dev`, ~7 s |
 | CLAUDE.md at close | 61,418 of 61,440 bytes; 9 anecdotes trimmed to pay for this plan's entries |
+
+## Landed
+
+Landed on main at e58de457, 2026-09-17 (`git merge --no-ff`, 114 commits; trunk integrated by merge first — one ledger conflict, `highlights-processed.jsonl`, resolved as a union and given `merge=union`). Branch and worktree deleted.
