@@ -103,6 +103,7 @@ const config = defineConfig({
 						{ text: "Onboard", link: "/reference/skills/onboard" },
 						{ text: "Catchup", link: "/reference/skills/catchup" },
 						{ text: "Write", link: "/reference/skills/write" },
+						{ text: "Brainstorm: fiction", link: "/reference/skills/brainstorm-fiction" },
 						{ text: "Handoff (deprecated)", link: "/reference/skills/handoff" },
 						{ text: "Extension Spec", link: "/reference/extension-spec" },
 						{ text: "Extensions Index", link: "/reference/extensions/" },
