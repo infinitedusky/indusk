@@ -1,6 +1,8 @@
+import type { PhaseKind } from "@infinitedusky/indusk-mcp/impl-headings";
 import type {
   PhaseActivity,
   PlanPosition,
+  RitualWord,
   SegmentState,
   StageKind,
 } from "@infinitedusky/indusk-mcp/lifecycle";
@@ -67,3 +69,32 @@ export const CHIP_CLASS = {
   skipped: "border-gray-200 bg-gray-50 text-gray-400 line-through",
   "opted-out": "border-amber-200 bg-amber-50 text-amber-800",
 } satisfies Record<BarState, string>;
+
+/**
+ * `Test Phase 1` / `Phase 2` — the spelling the impl itself uses for a phase,
+ * and the one the whole page speaks (Sandy's label direction at the U1
+ * review: "Executing: Phase 4"). The package's `phaseLabel` says
+ * `Build Phase 2`; that is the canonical name for logs and the headings
+ * parser, not for the page (cleanup, A36). One spelling per audience, each
+ * defined once.
+ */
+export function phaseTitle(phase: { kind: PhaseKind; number: number }): string {
+  return `${phase.kind === "test" ? "Test Phase" : "Phase"} ${phase.number}`;
+}
+
+/** What each ritual's section calls itself, its rows and its items — the page and the copied markdown agree. */
+export const RITUAL_COPY = {
+  falsification: {
+    title: "Falsification",
+    rowsHeading: "Hypotheses",
+    itemsHeading: "Fix items",
+  },
+  cleanup: {
+    title: "Cleanup",
+    rowsHeading: "New units under test",
+    itemsHeading: "Decomposition",
+  },
+} satisfies Record<
+  RitualWord,
+  { title: string; rowsHeading: string; itemsHeading: string }
+>;

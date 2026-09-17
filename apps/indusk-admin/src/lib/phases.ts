@@ -66,11 +66,6 @@ export interface Phase {
   trajectoryRows: TrajectoryRow[];
 }
 
-/** `Test Phase 1` / `Phase 2` — the spelling the impl itself uses for the phase. */
-export function phaseTitle(phase: Pick<Phase, "kind" | "number">): string {
-  return `${phase.kind === "test" ? "Test Phase" : "Phase"} ${phase.number}`;
-}
-
 const GATE_TYPE_TO_STAGE: Record<string, StageKind> = {
   implementation: "implementation",
   verification: "Verification",

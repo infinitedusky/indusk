@@ -1,4 +1,5 @@
-import { type Phase, phaseTitle } from "@/lib/phases";
+import { phaseTitle } from "@/components/bars/labels";
+import type { Phase } from "@/lib/phases";
 import { Bar, type BarSegment } from "./Bar";
 import { STAGE_LABELS } from "./labels";
 
