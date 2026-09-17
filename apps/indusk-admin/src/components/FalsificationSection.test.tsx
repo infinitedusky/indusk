@@ -24,6 +24,7 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
+import { openSection } from "@/__tests__/helpers/sections";
 import { PlanDetail } from "./PlanDetail";
 
 // CollapsibleSection persists state to localStorage (1.27.7+). Clear between
@@ -106,15 +107,6 @@ function mockPlan(overrides: Partial<Plan> = {}): Plan {
     },
     ...overrides,
   };
-}
-
-/** Every section is closed by default (admin-ui-phase-progress); open one before reading its body. */
-async function openSection(container: Element, testId: string) {
-  const button = container.querySelector(
-    `[data-testid="${testId}"] [aria-expanded="false"]`,
-  ) as HTMLElement | null;
-  button?.click();
-  await new Promise((r) => setTimeout(r, 50));
 }
 
 describe("PlanDetail — falsification section (T10)", () => {

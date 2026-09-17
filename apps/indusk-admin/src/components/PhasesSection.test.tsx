@@ -23,6 +23,7 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
+import { openAllPhases, openImplPlan } from "@/__tests__/helpers/sections";
 import { PlanDetail } from "./PlanDetail";
 
 beforeEach(() => {
@@ -136,25 +137,6 @@ function plan(): Plan {
       trajectory: trajectory(),
     },
   };
-}
-
-/** The Implementation Plan section is closed by default; open it so the phases render. */
-async function openImplPlan(container: Element) {
-  const button = container.querySelector(
-    '[data-testid="phases-section"] [aria-expanded="false"]',
-  ) as HTMLElement | null;
-  button?.click();
-  await new Promise((r) => setTimeout(r, 50));
-}
-
-/** Every phase is a collapsible; open them all so content assertions see the body. */
-async function openAllPhases(container: Element) {
-  for (const button of container.querySelectorAll(
-    '[data-testid="phases-section"] button[aria-expanded="false"]',
-  )) {
-    (button as HTMLButtonElement).click();
-  }
-  await new Promise((r) => setTimeout(r, 50));
 }
 
 function phases(container: Element): HTMLElement[] {

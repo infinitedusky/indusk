@@ -24,25 +24,8 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
+import { openImplPlan, openSection } from "@/__tests__/helpers/sections";
 import { PlanDetail } from "./PlanDetail";
-
-/** Every section is closed by default (admin-ui-phase-progress); open the Implementation Plan before reading phases. */
-async function openImplPlan(container: Element) {
-  const button = container.querySelector(
-    '[data-testid="phases-section"] [aria-expanded="false"]',
-  ) as HTMLElement | null;
-  button?.click();
-  await new Promise((r) => setTimeout(r, 50));
-}
-
-/** Every section is closed by default (admin-ui-phase-progress); open one before reading its body. */
-async function openSection(container: Element, testId: string) {
-  const button = container.querySelector(
-    `[data-testid="${testId}"] [aria-expanded="false"]`,
-  ) as HTMLElement | null;
-  button?.click();
-  await new Promise((r) => setTimeout(r, 50));
-}
 
 function stubClipboard() {
   const writeText = vi.fn().mockResolvedValue(undefined);
