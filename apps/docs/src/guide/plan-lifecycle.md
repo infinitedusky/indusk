@@ -104,6 +104,8 @@ stateDiagram-v2
     state executing {
         direction LR
         implementing --> verifying
+        implementing --> instrumenting: OTel projects
+        instrumenting --> verifying
         verifying --> capturing_context: capturing-context
         capturing_context --> documenting
         documenting --> closed
