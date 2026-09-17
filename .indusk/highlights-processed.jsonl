@@ -265,3 +265,7 @@
 {"id":"h-20260917-001","processedAt":"2026-09-17T16:12:36.450Z","action":"skipped","detail":"retrospective audit outcome (U1/U2 review verdicts) belongs in the plan's own retrospective.md, not a durable cross-session lesson"}
 {"id":"h-20260917-006","processedAt":"2026-09-17T16:12:56.372Z","action":"wrote-episode","detail":"active-segment-must-never-claim-a-fact-the-reader-does-not-hold"}
 {"id":"h-20260917-007","processedAt":"2026-09-17T16:12:57.009Z","action":"wrote-episode","detail":"a-plan-crossing-three-subsystems-should-split-at-the-consumer-boundary"}
+{"id":"h-20260917-008","processedAt":"2026-09-17T22:26:17.652Z","action":"skipped","detail":"already materialized as falsify-shell-reading-hooks-against-the-spellings-agents-use.md"}
+{"id":"h-20260917-011","processedAt":"2026-09-17T22:26:18.732Z","action":"skipped","detail":"note-level audit outcome (11 rows passing, A11 rubber-stamp), no durable rule with teeth beyond what the trajectory audit itself records"}
+{"id":"h-20260917-009","processedAt":"2026-09-17T22:26:39.674Z","action":"wrote-episode","detail":"a-fifth-copy-of-a-pattern-can-carry-a-bug-the-first-four-lack"}
+{"id":"h-20260917-010","processedAt":"2026-09-17T22:26:40.079Z","action":"wrote-episode","detail":"read-recent-git-log-p-before-writing-a-shell-command-regex"}
