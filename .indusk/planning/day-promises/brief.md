@@ -83,11 +83,14 @@ than sequential ids. The ADR settles the spelling and whether looper renames.
    the promise's name. Language-specific, so the testing extension owns it:
    looper's `assert_trace_shape` for pytest is the reference; the vitest one
    is written here.
-4. **Promotion at plan close.** `/retrospective` asks which of the plan's
-   claims are about the system rather than the change; those are written to
-   the registry with the plan as owner. This is where a change clause becomes
-   a promise clause, and it is cheap because the claim is already a
-   behavioural sentence.
+4. **Promotion at plan close, decided in planning.** The test plan is where a
+   claim is marked as a promise clause and given its domain — the planner
+   asks, when the claims are written, which of them the system must keep
+   after the plan closes, and against which declared domain. `/retrospective`
+   then promotes those claims to the registry with the plan as owner; it does
+   not decide, it executes what planning decided. This is where a change
+   clause becomes a promise clause, and it is cheap because the claim is
+   already a behavioural sentence and already carries its domain.
 5. **A plan closes holding N promises.** Closed stays the resting state; the
    archived plan is the owner of record and can be woken. When every promise
    it held is superseded or retired it holds none and is truly finished. The
@@ -160,7 +163,7 @@ incident.
 | # | Effort | What |
 |---|---|---|
 | 1 | ~1d | Registry format and `indusk promises check`, extracted from looper's validator; looper adopts it |
-| 2 | ~½d | Promotion at plan close in `/retrospective`; the owner field |
+| 2 | ~1d | Declared domains per project; the test plan marks a claim as a promise clause with its domain (planner skill + validator); `/retrospective` promotes what was marked, with the plan as owner |
 | 3 | ~1d | The vitest trace-shape helper in the testing extension; looper's pytest one becomes its Python half |
 | 4 | ~½d | "Holding N promises" derived and drawn on the archived segment |
 | 5 | ~½d | The change rule: a plan that touches a promise's site names what it does to the promise; the "touched, unacknowledged" verdict defined for step 10 |
@@ -188,9 +191,16 @@ the "touched, unacknowledged" data the review step will render.
 - Whether a contract is only "a plan's clauses" or gets a name of its own
   (so the Promises page can group by contract independently of plan) — the
   answer decides whether the registry carries a `contract` field.
-- Whether `domain` is a free tag or a declared list per project.
-- Whether promotion at close is a question the retrospective asks or a
-  property the test plan marks on the claim when it is written.
+- ~~Whether `domain` is a free tag or a declared list per project.~~ Decided
+  (Sandy, 2026-09-17): **domain is decided in planning.** A project declares
+  its domains (a list in `.indusk/config.json` or the registry's head), and a
+  claim that will become a promise names its domain when it is written in the
+  test plan — so promotion at close carries the domain with it and nothing is
+  tagged after the fact. An unknown domain fails `indusk promises check`.
+- ~~Whether promotion at close is a question the retrospective asks or a
+  property the test plan marks on the claim when it is written.~~ Decided
+  with the domain question: the test plan marks it; the retrospective
+  executes it.
 - Looper's rename from E-N/F-N to readable names: now, or when it next opens.
 
 ## Cross-references
