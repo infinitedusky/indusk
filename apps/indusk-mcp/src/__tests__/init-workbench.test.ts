@@ -14,6 +14,11 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+// Every CLI spawn below registers its temp project; keep that out of the
+// developer's registry (admin-ui-phase-progress A22) — unconditionally, because
+// `??=` yielded to a shell that exports INDUSK_HOME (A31).
+process.env.INDUSK_HOME = mkdtempSync(join(tmpdir(), "indusk-home-"));
+
 /**
  * T16 — `indusk init --workbench --wrapped-repo X --sibling-parent Y`
  * scaffolds a flat single-repo workbench end-to-end:

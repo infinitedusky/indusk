@@ -428,3 +428,26 @@ Resume by running `/work --autopilot dawn-external-orchestrator` FROM the worktr
 
 ---
 
+## Swept 2026-09-16T21:31:48.300Z (ttl 10080m)
+
+## Session f9c6df62 — eval agent scoring commit 171d14df
+
+**Session ID**: f9c6df62-8ee7-4317-b88c-c7a17cfa0848
+**Last updated**: 2026-09-08T19:06:54.253Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+

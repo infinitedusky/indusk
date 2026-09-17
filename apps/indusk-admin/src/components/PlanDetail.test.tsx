@@ -24,6 +24,7 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
+import { openImplPlan, openSection } from "@/__tests__/helpers/sections";
 import { PlanDetail } from "./PlanDetail";
 
 function stubClipboard() {
@@ -64,6 +65,8 @@ function mockTrajectory(): Trajectory {
         asserts: "Dropdown renders in header",
         writableAt: 1,
         passesAt: 1,
+        writableAtKind: "build",
+        passesAtKind: "build",
         state: "passing",
       },
       {
@@ -71,6 +74,8 @@ function mockTrajectory(): Trajectory {
         asserts: "Selecting an option re-orders the rows",
         writableAt: 1,
         passesAt: 2,
+        writableAtKind: "build",
+        passesAtKind: "build",
         state: "written",
       },
     ],
@@ -177,6 +182,7 @@ describe("PlanDetail — main pane renders plan content (T5)", () => {
 describe("PlanDetail — brief section (T6)", () => {
   it("T6 — main pane renders the brief content with Problem and Proposed Direction headings visible", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    await openSection(container, "brief-section");
     const brief = container.querySelector('[data-testid="brief-section"]');
     expect(brief).not.toBeNull();
     // Markdown-rendered headings
@@ -196,7 +202,7 @@ describe("PlanDetail — brief section (T6)", () => {
 });
 
 describe("PlanDetail — brief section is collapsible (T21, Phase 6)", () => {
-  it("T21 — Brief section is rendered inside a CollapsibleSection with aria-expanded control, defaulting to open", async () => {
+  it("T21 — Brief section is rendered inside a CollapsibleSection with aria-expanded control, defaulting to closed", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
     const brief = container.querySelector('[data-testid="brief-section"]');
     expect(brief).not.toBeNull();
@@ -208,23 +214,26 @@ describe("PlanDetail — brief section is collapsible (T21, Phase 6)", () => {
       toggle,
       "Brief section must contain an aria-expanded toggle (CollapsibleSection) — currently rendered inline without collapse control",
     ).not.toBeNull();
-    // Default state is expanded (defaultOpen={true}).
-    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
-    // Clicking collapses the section.
+    // Default state is collapsed — every section is, so the page opens as the
+    // overview (bars) and the details are a click away (admin-ui-phase-progress).
+    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    // Clicking expands the section.
     (toggle as HTMLElement | null)?.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(toggle?.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle?.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("T21 — collapsing the Brief section hides its content", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
     const brief = container.querySelector('[data-testid="brief-section"]');
-    expect(brief?.textContent).toContain("Customers can't sort");
-
     const toggle = brief?.querySelector(
       "[aria-expanded]",
     ) as HTMLElement | null;
     expect(toggle).not.toBeNull();
+    // Closed by default: open it, the brief renders; collapse it, it is gone.
+    toggle?.click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(brief?.textContent).toContain("Customers can't sort");
     toggle?.click();
     await new Promise((r) => setTimeout(r, 50));
 
@@ -236,12 +245,13 @@ describe("PlanDetail — brief section is collapsible (T21, Phase 6)", () => {
 describe("PlanDetail — impl phases as collapsible sections (T7)", () => {
   it("T7 — main pane lists each phase as a collapsible section, defaulted to closed", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    await openImplPlan(container);
     const phases = container.querySelector('[data-testid="phases-section"]');
     expect(phases).not.toBeNull();
 
     // Two phase headers — both collapsible (have aria-expanded), both closed
     const collapsibles = Array.from(
-      phases?.querySelectorAll("[aria-expanded]") ?? [],
+      phases?.querySelectorAll('[data-testid="phase"] [aria-expanded]') ?? [],
     );
     expect(collapsibles.length).toBeGreaterThanOrEqual(2);
     for (const c of collapsibles) {
@@ -266,6 +276,7 @@ describe("PlanDetail — impl phases as collapsible sections (T7)", () => {
 describe("PlanDetail — trajectory table inside expanded phase (T8)", () => {
   it("T8 — when a phase is expanded, its trajectory rows render in a table with ID, Asserts, Writable at, Passes at, State columns", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    await openImplPlan(container);
     const phasesSection = container.querySelector(
       '[data-testid="phases-section"]',
     );
@@ -284,7 +295,7 @@ describe("PlanDetail — trajectory table inside expanded phase (T8)", () => {
     await new Promise((r) => setTimeout(r, 50));
 
     const trajectory = container.querySelector(
-      '[data-testid="phase-1-trajectory"]',
+      '[data-testid="phase-build-1-trajectory"]',
     );
     expect(trajectory).not.toBeNull();
 
@@ -308,6 +319,7 @@ describe("PlanDetail — trajectory table inside expanded phase (T8)", () => {
 
   it("only includes trajectory rows whose Passes at matches the phase number", async () => {
     const { container } = await render(<PlanDetail plan={mockPlan()} />);
+    await openImplPlan(container);
     const phasesSection = container.querySelector(
       '[data-testid="phases-section"]',
     );
@@ -320,7 +332,7 @@ describe("PlanDetail — trajectory table inside expanded phase (T8)", () => {
     await new Promise((r) => setTimeout(r, 50));
 
     const trajectory = container.querySelector(
-      '[data-testid="phase-1-trajectory"]',
+      '[data-testid="phase-build-1-trajectory"]',
     );
     // Phase 1 has only T1 (Passes at: Phase 1). T2 (Passes at: Phase 2) should NOT appear.
     expect(trajectory?.textContent).toContain("T1");
@@ -546,6 +558,8 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
               asserts: "Regular Phase 1 assertion",
               writableAt: 0,
               passesAt: 1,
+              writableAtKind: "build",
+              passesAtKind: "build",
               state: "passing",
             },
             {
@@ -553,6 +567,8 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
               asserts: "Falsification hypothesis A",
               writableAt: 0,
               passesAt: 2,
+              writableAtKind: "build",
+              passesAtKind: "build",
               state: "passing",
             },
             {
@@ -560,6 +576,8 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
               asserts: "Follow-up Phase 3 assertion",
               writableAt: 0,
               passesAt: 3,
+              writableAtKind: "build",
+              passesAtKind: "build",
               state: "passing",
             },
           ],
@@ -572,6 +590,7 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
     const { container } = await render(
       <PlanDetail plan={mockMixedPhasePlan()} />,
     );
+    await openImplPlan(container);
 
     // Main Phases section contains Phase 1 only (Phase 2 hoisted out)
     const phasesSection = container.querySelector(
@@ -587,6 +606,7 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
     const { container } = await render(
       <PlanDetail plan={mockMixedPhasePlan()} />,
     );
+    await openSection(container, "falsification-section");
 
     const falsification = container.querySelector(
       '[data-testid="falsification-section"]',
@@ -614,6 +634,7 @@ describe("PlanDetail — falsification phase-authoring rendering (T27, Phase 8)"
     const { container } = await render(
       <PlanDetail plan={mockMixedPhasePlan()} />,
     );
+    await openSection(container, "followup-phases-section");
 
     const followup = container.querySelector(
       '[data-testid="followup-phases-section"]',
@@ -658,7 +679,7 @@ describe("PlanDetail — collapsible section state persists (T30, Phase 9)", () 
     expect(briefButton?.getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("T30 — absent localStorage value falls back to defaultOpen (Brief open on first-ever visit)", async () => {
+  it("T30 — absent localStorage value falls back to defaultOpen (Brief closed on first-ever visit — every section is)", async () => {
     // No prior storage — fresh user
     expect(localStorage.getItem("plan:alpha-feature:section:brief")).toBeNull();
 
@@ -667,7 +688,7 @@ describe("PlanDetail — collapsible section state persists (T30, Phase 9)", () 
     const briefButton = container.querySelector(
       '[data-testid="brief-section"] button',
     );
-    expect(briefButton?.getAttribute("aria-expanded")).toBe("true");
+    expect(briefButton?.getAttribute("aria-expanded")).toBe("false");
   });
 });
 
@@ -706,6 +727,7 @@ describe("PlanDetail — legacy falsification.md rendering still works (T28, Pha
       },
     };
     const { container } = await render(<PlanDetail plan={legacyPlan} />);
+    await openSection(container, "falsification-section");
 
     // Falsification section renders — not the empty state, not the phase path
     expect(
@@ -726,6 +748,24 @@ describe("PlanDetail — legacy falsification.md rendering still works (T28, Pha
     // Phase-based fix-items marker is absent (we're on the log path)
     expect(
       container.querySelector('[data-testid="falsification-fix-items"]'),
+    ).toBeNull();
+  });
+});
+
+describe("A7 — a malformed boundary record is an error, not a guess (admin-ui-phase-progress)", () => {
+  it("renders the boundary-error block and marks no phase active", async () => {
+    const plan = mockPlan({
+      boundaryError: "phase-boundary.jsonl line 3 is not valid JSON",
+    });
+    const { container } = await render(<PlanDetail plan={plan} />);
+    const error = container.querySelector('[data-testid="boundary-error"]');
+    expect(error).not.toBeNull();
+    expect(error?.textContent).toContain("line 3 is not valid JSON");
+    expect(
+      container.querySelector('[data-testid="phase-bar-active"]'),
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-testid="phase"][data-active="true"]'),
     ).toBeNull();
   });
 });

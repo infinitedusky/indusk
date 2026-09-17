@@ -4,6 +4,7 @@ import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { parsePhaseHeading } from "../impl-headings.js";
+import { RITUAL_ORDER } from "../lifecycle.js";
 import { findNonTerminalRows } from "../trajectory/audit.js";
 import { parseTrajectory } from "../trajectory/parser.js";
 
@@ -79,13 +80,13 @@ function isRitualPhaseTerminal(implContent: string, ritualWord: string): boolean
 
 /** True iff a terminal `### Phase N: Cleanup …` phase exists in the impl body. */
 export function isCleanupPhaseTerminal(implContent: string): boolean {
-	return isRitualPhaseTerminal(implContent, "cleanup");
+	return isRitualPhaseTerminal(implContent, RITUAL_ORDER[1]);
 }
 
 /** True iff a terminal `### Phase N: Falsification …` phase exists — the default
  * phase-authoring falsify flow leaves one (no legacy log, not skipped). */
 export function isFalsificationPhaseTerminal(implContent: string): boolean {
-	return isRitualPhaseTerminal(implContent, "falsification");
+	return isRitualPhaseTerminal(implContent, RITUAL_ORDER[0]);
 }
 
 /**

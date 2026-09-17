@@ -1,29 +1,21 @@
+import { PlanBar } from "@/components/bars/PlanBar";
+import {
+  activePhaseLabel,
+  activePhaseOf,
+  ProgressLines,
+} from "@/components/bars/ProgressLines";
+import { CleanupSection } from "@/components/CleanupSection";
 import { FalsificationSection } from "@/components/FalsificationSection";
 import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
+import { PhasesSection } from "@/components/PhasesSection";
 import { Badge } from "@/components/ui/Badge";
-import { stateToBadge, statusToBadge } from "@/components/ui/badge-variant";
+import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
-import {
-  phaseMarkdown,
-  planMarkdown,
-  sectionMarkdown,
-} from "@/lib/markdown-export";
-import {
-  extractPhases,
-  type Phase,
-  splitPhasesAroundFalsification,
-} from "@/lib/phases";
+import { planMarkdown, sectionMarkdown } from "@/lib/markdown-export";
+import { extractPhases, splitPhasesAroundFalsification } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanDetailProps {
@@ -82,6 +74,12 @@ export function PlanDetail({
     >
       <PlanHeader plan={plan} />
 
+      {plan.position && !isParent && (
+        <PlanBar position={plan.position} activity={activePhaseLabel(plan)} />
+      )}
+
+      {!plan.boundaryError && <ProgressLines plan={plan} />}
+
       {plan.malformed && <MalformedBanner />}
 
       {plan.malformed && plan.rawDocuments && (
@@ -99,7 +97,7 @@ export function PlanDetail({
       {plan.research && (
         <CollapsibleSection
           title="Research"
-          defaultOpen={!plan.brief}
+          defaultOpen={false}
           persistKey={`plan:${plan.name}:section:research`}
           copyMarkdown={sectionMarkdown("Research", plan.research.content)}
         >
@@ -162,23 +160,42 @@ function ImplSections({ plan }: { plan: Plan }) {
   if (!plan.impl) return null;
   const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
   const split = splitPhasesAroundFalsification(phases);
+  const active = activePhaseOf(plan);
+  const activeKey = active?.ref
+    ? `${active.ref.kind}-${active.ref.number}`
+    : null;
   return (
     <>
+      {plan.boundaryError && (
+        <div
+          role="alert"
+          data-testid="boundary-error"
+          className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800"
+        >
+          The phase-boundary record could not be read, so no phase is marked
+          active: {plan.boundaryError}
+        </div>
+      )}
       {split.pre.length > 0 && (
         <PhasesSection
           phases={split.pre}
-          heading="Phases"
+          heading="Implementation Plan"
           testId="phases-section"
           planName={plan.name}
+          activeKey={activeKey}
         />
       )}
       <FalsificationSection plan={plan} phase={split.falsification} />
+      {split.cleanup && (
+        <CleanupSection planName={plan.name} phase={split.cleanup} />
+      )}
       {split.post.length > 0 && (
         <PhasesSection
           phases={split.post}
           heading="Follow-up Phases"
           testId="followup-phases-section"
           planName={plan.name}
+          activeKey={activeKey}
         />
       )}
     </>
@@ -232,79 +249,12 @@ function BriefSection({
     <section className="flex flex-col gap-2" data-testid="brief-section">
       <CollapsibleSection
         title="Brief"
-        defaultOpen={true}
+        defaultOpen={false}
         persistKey={`plan:${planName}:section:brief`}
         copyMarkdown={sectionMarkdown("Brief", content)}
       >
         <Markdown>{content}</Markdown>
       </CollapsibleSection>
-    </section>
-  );
-}
-
-function PhasesSection({
-  phases,
-  heading,
-  testId,
-  planName,
-}: {
-  phases: Phase[];
-  heading: string;
-  testId: string;
-  planName: string;
-}) {
-  if (phases.length === 0) return null;
-
-  return (
-    <section className="flex flex-col gap-2" data-testid={testId}>
-      <h2 className="text-base font-semibold text-gray-900">{heading}</h2>
-      <div className="flex flex-col gap-2">
-        {phases.map((phase) => (
-          <CollapsibleSection
-            key={phase.number}
-            title={`Phase ${phase.number}${phase.title ? `: ${phase.title}` : ""}`}
-            defaultOpen={false}
-            persistKey={`plan:${planName}:phase:${phase.number}`}
-            copyMarkdown={phaseMarkdown(phase)}
-          >
-            <div className="flex flex-col gap-3">
-              {phase.trajectoryRows.length > 0 && (
-                <div data-testid={`phase-${phase.number}-trajectory`}>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>ID</TableHead>
-                        <TableHead>Asserts</TableHead>
-                        <TableHead>Writable at</TableHead>
-                        <TableHead>Passes at</TableHead>
-                        <TableHead>State</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {phase.trajectoryRows.map((row) => (
-                        <TableRow key={row.id}>
-                          <TableCell>
-                            <span className="font-mono text-xs">{row.id}</span>
-                          </TableCell>
-                          <TableCell>{row.asserts}</TableCell>
-                          <TableCell>Phase {row.writableAt}</TableCell>
-                          <TableCell>Phase {row.passesAt}</TableCell>
-                          <TableCell>
-                            <Badge variant={stateToBadge(row.state)}>
-                              {row.state}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-              <Markdown>{phase.content}</Markdown>
-            </div>
-          </CollapsibleSection>
-        ))}
-      </div>
     </section>
   );
 }

@@ -1,4 +1,9 @@
 import { appendFile, mkdir, readFile } from "node:fs/promises";
+import type { PhaseKind, PhaseRef } from "../impl-headings.js";
+import { findPhaseStart, type PhaseBoundaryRecord } from "./boundary-record.js";
+
+export * from "./boundary-record.js";
+
 import { dirname, join } from "node:path";
 
 /**
@@ -14,14 +19,6 @@ import { dirname, join } from "node:path";
  * Created on demand — an absent file means no phase has been opened, not that
  * anything is broken.
  */
-
-export interface PhaseBoundaryRecord {
-	plan: string;
-	phase: number;
-	/** The commit the phase opened at. */
-	sha: string;
-	timestamp: string;
-}
 
 export const BOUNDARY_REL_PATH = join(".indusk", "phase-boundary.jsonl");
 
@@ -63,7 +60,7 @@ export async function readBoundaries(root: string): Promise<PhaseBoundaryRecord[
 		}
 		if (!isBoundaryRecord(parsed)) {
 			throw new Error(
-				`Corrupt phase-boundary record: ${BOUNDARY_REL_PATH} line ${i + 1} is missing required fields (plan, phase, sha).`,
+				`Corrupt phase-boundary record: ${BOUNDARY_REL_PATH} line ${i + 1}: ${boundaryRecordProblem(parsed)}.`,
 			);
 		}
 		records.push(parsed);
@@ -71,16 +68,28 @@ export async function readBoundaries(root: string): Promise<PhaseBoundaryRecord[
 	return records;
 }
 
-function isBoundaryRecord(value: unknown): value is PhaseBoundaryRecord {
-	if (typeof value !== "object" || value === null) return false;
+/**
+ * Why `value` is not a boundary record, naming the field — or null when it is
+ * one. The ONE predicate for both directions (A30): `readBoundaries` refuses a
+ * file carrying a line that fails it, and `recordPhaseStart` refuses to write
+ * such a line, because one bad append blinds every reader of the whole file.
+ */
+export function boundaryRecordProblem(value: unknown): string | null {
+	if (typeof value !== "object" || value === null) return "record must be an object";
 	const r = value as Record<string, unknown>;
-	return (
-		typeof r.plan === "string" &&
-		typeof r.phase === "number" &&
-		Number.isFinite(r.phase) &&
-		typeof r.sha === "string" &&
-		r.sha.length > 0
-	);
+	if (typeof r.plan !== "string" || r.plan.length === 0) return "plan must be a non-empty string";
+	if (typeof r.phase !== "number" || !Number.isFinite(r.phase)) {
+		return `phase must be a finite number; got ${r.phase === null ? "null" : typeof r.phase}`;
+	}
+	if (r.kind !== undefined && r.kind !== "test" && r.kind !== "build") {
+		return `kind must be "test" or "build" when present; got ${JSON.stringify(r.kind)}`;
+	}
+	if (typeof r.sha !== "string" || r.sha.length === 0) return "sha must be a non-empty string";
+	return null;
+}
+
+export function isBoundaryRecord(value: unknown): value is PhaseBoundaryRecord {
+	return boundaryRecordProblem(value) === null;
 }
 
 /**
@@ -93,40 +102,26 @@ function isBoundaryRecord(value: unknown): value is PhaseBoundaryRecord {
  */
 export async function recordPhaseStart(
 	root: string,
-	record: { plan: string; phase: number; sha: string; at: string },
+	record: { plan: string; phase: number; kind?: PhaseKind; sha: string; at: string },
 ): Promise<void> {
+	const problem = boundaryRecordProblem(record);
+	if (problem !== null) {
+		throw new Error(
+			`Refusing to write a phase-boundary record its readers would refuse: ${problem}. Nothing was written to ${BOUNDARY_REL_PATH}.`,
+		);
+	}
+	const ref: PhaseRef = { kind: record.kind ?? "build", number: record.phase };
 	const existing = await readBoundaries(root);
-	if (findPhaseStart(existing, record.plan, record.phase) !== null) return;
+	if (findPhaseStart(existing, record.plan, ref) !== null) return;
 
 	const path = boundaryPath(root);
 	await mkdir(dirname(path), { recursive: true });
 	const line: PhaseBoundaryRecord = {
 		plan: record.plan,
 		phase: record.phase,
+		...(record.kind ? { kind: record.kind } : {}),
 		sha: record.sha,
 		timestamp: record.at,
 	};
 	await appendFile(path, `${JSON.stringify(line)}\n`, "utf8");
-}
-
-/**
- * Where phase N of this plan began. Null when the phase was never opened —
- * callers must treat that as "cannot scope the review", never as "review
- * everything".
- *
- * The **earliest** record wins when a file already carries duplicates (written
- * before `recordPhaseStart` became idempotent, or merged from two branches). A
- * phase begins once; a resume is not a new beginning. Erring earlier makes the
- * review scope too wide, which costs a re-read — erring later makes it too
- * narrow, which loses work silently. Only one of those is recoverable.
- */
-export function findPhaseStart(
-	records: PhaseBoundaryRecord[],
-	plan: string,
-	phase: number,
-): PhaseBoundaryRecord | null {
-	for (const record of records) {
-		if (record.plan === plan && record.phase === phase) return record;
-	}
-	return null;
 }

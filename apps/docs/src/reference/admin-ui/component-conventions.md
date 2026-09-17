@@ -81,6 +81,22 @@ Pre-shipped UI utilities (shadcn-ui, Radix, etc.) solve component-reuse by givin
 
 The cleanup-debt cost of duplicated components compounds: every duplicate is a divergence point, every divergence is a maintenance hazard, and the cost of removing them later scales with how long they've been duplicated. The discipline is to never let them accumulate in the first place.
 
+## Where the plan page's pieces live (after the admin-ui-phase-progress cleanup)
+
+The plan page grew fast during admin-ui-phase-progress and its cleanup phase settled the boundaries. One home per piece:
+
+| Piece | Home | Rule |
+|---|---|---|
+| The rows table (ID / Asserts / State, plus Writable at / Passes at for the Implementation Plan) | `components/phases/TrajectoryRowsTable.tsx` | one table, an optional pair of phase columns; it was written three times before it had a name |
+| A ritual phase's section (Falsification, Cleanup) | `components/phases/RitualPhaseSection.tsx` | one component, two configurations; `CleanupSection` and the phase branch of `FalsificationSection` are one-liners over it; its headings come from `RITUAL_COPY` and so does the copied markdown (`ritualPhaseMarkdown`), so the page and the copy button agree |
+| The progress lines and the active-phase derivation | `components/bars/ProgressLines.tsx` | `PlanDetail` composes sections and holds no derivation; `activePhaseOf` / `activePhaseLabel` live with the lines they feed |
+| Display vocabulary — position, activity and stage labels, `phaseTitle`, `RITUAL_COPY` | `components/bars/labels.ts` | `satisfies Record<…>` over the lifecycle's unions |
+| Project-level reads — `.indusk/config.json`, `.indusk/eval/`, the phase-boundary record | `lib/project-reader.ts` | project facts, not plan-folder facts; config is read through the package's `./config` subpath, never parsed by hand |
+| Plan-folder reads | `lib/planning-reader.ts` | documents, trajectory, papers, position |
+| Opening a closed section in a browser test | `src/__tests__/helpers/sections.ts` | `openSection`, `openImplPlan`, `openAllPhases` |
+
+**One phase spelling.** The page says `Phase 4` and `Test Phase 1` — the impl's own headings — everywhere, through `phaseTitle` in the display vocabulary. The package's `phaseLabel` says `Build Phase 4` and is for logs and the headings parser; a component never calls it. `cleanup-pins.test.ts` counts each of these definitions, the way the package pins its single-definition primitives: a second rows table, a second exporter, a `phaseLabel(` in a component or a quoted `"config.json"` under `lib/` fails it.
+
 ## Data layer — reuse, don't duplicate
 
 The admin UI's data layer follows the same single-source discipline as the components, but applied to *parsing*: it reads `.indusk/planning/` and `.indusk/eval/` directly from disk and **reuses indusk-mcp's parsers** rather than reimplementing them. It is split by concern: `apps/indusk-admin/src/lib/planning-reader.ts` owns plans, scorecards, and hierarchy declarations; `apps/indusk-admin/src/lib/research-reader.ts` owns the `.indusk/research/` directory (split out in the dawn-ui-plan-grouping cleanup — research reads share nothing with plan parsing). A browser test that mocks one of these modules must mock whichever module the component under test actually imports from.
@@ -184,6 +200,37 @@ beforeEach(() => {
 ```
 
 See `apps/indusk-admin/src/components/PlanDetail.test.tsx` for a reference implementation.
+
+### Trajectory-row fixtures carry both kind fields
+
+A hand-written `TrajectoryRow` needs `writableAtKind` and `passesAtKind` (`"test"` or `"build"`) beside `writableAt` / `passesAt`. The parser made the kind fields required when impls gained two phase sequences (test-phase-structure, 2026-08-12); the admin's fixtures were never updated, and the admin's `tsc --noEmit` stayed red for a month with nothing noticing.
+
+```ts
+{
+  id: "T1",
+  asserts: "Dropdown renders in header",
+  writableAt: 1,
+  writableAtKind: "build",
+  passesAt: 1,
+  passesAtKind: "build",
+  state: "passing",
+}
+```
+
+### The type-check is a test the suite runs
+
+`src/__tests__/typecheck.test.ts` spawns `pnpm exec tsc --noEmit -p .` and asserts exit 0. It lives in the node project so that `pnpm test` — the command every phase's Verification runs — is what keeps the admin type-clean. A test written against a component that does not exist yet must not break it: widen the not-yet-existing props through `unknown` (`as unknown as Parameters<typeof Component>[0]`) with a comment naming the phase that lands them, so the row is red on its assertion rather than on a compile error. `// @ts-expect-error` is the wrong tool here — spread object literals skip excess-property checks, so the directive reads as unused and fails the type-check itself.
+
+### Tests that register projects never touch the real registry
+
+The daemon's data source is `${INDUSK_HOME ?? ~/.indusk}/projects.json`, and every `init`, `update`, `setup` and `ui` spawn writes it. Two lines keep tests out of it. The package's CLI test helper (`apps/indusk-mcp/src/__tests__/helpers/cli.ts`, `runCli`) pins `INDUSK_HOME` to one temp directory per test process unless the caller passes an explicit `env.INDUSK_HOME` — the helper is the one place every CLI-spawning suite goes through, and a per-file `??=` pin had yielded to a shell that exports `INDUSK_HOME` (falsification A31). `registry-leak-scan.test.ts` is the second line: every test file that spawns one of those commands must mention `INDUSK_HOME`. Before both existed the developer's registry had reached 2,307 entries, 11 alive; `indusk ui prune` clears such a backlog, the two lines stop it forming. The admin's own HTTP tests use `makeHome(projects)` below for the same reason.
+
+### HTTP-level tests boot one dev server, through one helper
+
+`src/__tests__/helpers/next-dev.ts` is the only place `next dev` is spawned in a test: `makeHome(projects)` writes a temp registry, `startNextDev({ home })` boots the server on a free port, waits for `✓ Ready`, and returns `{ url, port, stop }`. The four HTTP smokes and the live-refresh rows all use it. Two facts shape it:
+
+- **Only one `next dev` can run against this app directory** — Next holds a lock on `.next/`. The node project runs test files serially (`fileParallelism: false`) for that reason, and a dev server left running by hand fails every smoke until it is stopped.
+- **An e2e row is a node-project test that drives the dev server with Playwright** (`chromium.launch()` from the `playwright` package; only that package is installed, so use locator waits — `locator.waitFor`, `filter({ hasText })` — not `@playwright/test`'s `expect`). The fixture is a temp project registered by name; assertions read `data-testid`s the page renders. See `src/__tests__/live-refresh.e2e.test.ts` for the reference shape. The whole file boots and runs in about eleven seconds; a row that needs more than that, or flakes, is a candidate for a `manual:` procedure instead.
 
 ### Rationale
 

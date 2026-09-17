@@ -56,8 +56,12 @@ function buildGroups(
   active: Plan[],
   archived: Plan[],
   grouping: PlanDeclarations | undefined,
-): { groups: PlanGroup[]; rest: Plan[] } {
-  if (!grouping) return { groups: [], rest: active };
+): {
+  root: { name: string; title: string } | null;
+  groups: PlanGroup[];
+  rest: Plan[];
+} {
+  if (!grouping) return { root: null, groups: [], rest: active };
 
   const byName = new Map(
     [...archived, ...active].map((p) => [p.name, p] as const),
@@ -99,7 +103,11 @@ function buildGroups(
       (roadmapIndex.get(b.parent.name) ?? Number.MAX_SAFE_INTEGER),
   );
 
-  return { groups, rest: active.filter((p) => !claimed.has(p.name)) };
+  return {
+    root: grouping.root ?? null,
+    groups,
+    rest: active.filter((p) => !claimed.has(p.name)),
+  };
 }
 
 /**
@@ -125,12 +133,15 @@ export function PlanList({
     return <EmptyPlansSidebarSlot />;
   }
 
-  const { groups, rest } = buildGroups(active, archived, grouping);
+  const { root, groups, rest } = buildGroups(active, archived, grouping);
   const orderedActive = orderByMaster(rest, masterOrder);
   const unordered = rest.filter((p) => !masterOrder.includes(p.name));
 
-  return (
-    <div className="flex flex-col gap-4">
+  // The root master is one node with the parents and the unclaimed plans
+  // beneath it (admin-ui-phase-progress A20): unclaimed plans are the root's
+  // leftover bucket, not the parents' peers. Archived stays outside.
+  const tree = (
+    <>
       {groups.map((group) => (
         <PlanGroupSection
           key={group.parent.name}
@@ -163,6 +174,26 @@ export function PlanList({
             ))}
           </ul>
         </div>
+      )}
+    </>
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      {root ? (
+        <div className="flex flex-col gap-2" data-testid="plan-tree-root">
+          <span
+            className="px-2 text-xs font-semibold uppercase tracking-wide text-gray-600"
+            title="The root master — .indusk/planning/master.md"
+          >
+            {root.title}
+          </span>
+          <div className="ml-3 flex flex-col gap-4 border-l border-gray-200 pl-2">
+            {tree}
+          </div>
+        </div>
+      ) : (
+        tree
       )}
 
       {archived.length > 0 && (
@@ -199,6 +230,7 @@ function PlanGroupSection({
     <div
       className="flex flex-col gap-1"
       data-testid={`plan-group-${group.parent.name}`}
+      data-parent={group.parent.name}
     >
       <ul className="flex flex-col gap-1">
         <PlanItem plan={group.parent} prefix={prefix} />

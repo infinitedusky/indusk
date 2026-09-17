@@ -8,6 +8,7 @@
  * found when `bash` was rewriting checkboxes the `edit` gate would have refused.
  */
 
+import { type PhaseAddress, phaseLabel } from "../impl-headings.js";
 import { blockEnd, findHeadingIndex, phaseHeading } from "./impl-blocks.js";
 
 export interface ShapeFinding {
@@ -50,10 +51,10 @@ function hasLineSeparator(value: string): boolean {
  * inside a gate block and gets classified as a verification/context/document
  * item instead of implementation work.
  */
-export function appendItemToPhase(implBody: string, phase: number, item: string): string {
+export function appendItemToPhase(implBody: string, phase: PhaseAddress, item: string): string {
 	if (hasLineSeparator(item)) {
 		throw new Error(
-			`Cannot append a multi-line checklist item to Phase ${phase} — a checklist item is one line, so this would split the plan's structure.`,
+			`Cannot append a multi-line checklist item to ${phaseLabel(phase)} — a checklist item is one line, so this would split the plan's structure.`,
 		);
 	}
 
@@ -61,7 +62,7 @@ export function appendItemToPhase(implBody: string, phase: number, item: string)
 	const headingAt = findHeadingIndex(lines, phaseHeading(phase));
 	if (headingAt === -1) {
 		throw new Error(
-			`Cannot append to Phase ${phase} — this impl has no such phase. Refusing to guess which phase the item belongs to.`,
+			`Cannot append to ${phaseLabel(phase)} — this impl has no such phase. Refusing to guess which phase the item belongs to.`,
 		);
 	}
 
@@ -84,7 +85,7 @@ export function appendItemToPhase(implBody: string, phase: number, item: string)
  */
 export function appendFindingToPhase(
 	implBody: string,
-	phase: number,
+	phase: PhaseAddress,
 	finding: ShapeFinding,
 ): string {
 	for (const [field, value] of Object.entries(finding)) {

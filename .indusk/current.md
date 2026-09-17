@@ -14,6 +14,7 @@ Two regions:
 _Any agent can edit this section. Cross-cutting state that's true for the whole project right now._
 
 - 2026-09-15: composable.env removed from dusk (ce.json, env/, scripts, dev dep); Doppler is the env layer. indusk-mcp reads its secrets from `~/.indusk/config.env`, not Doppler — do not map it. **Direction**: indusk-admin will be hosted on a server eventually; keep its Doppler mapping, and create the missing `admin` config in the Doppler `indusk` project when that plan starts (it needs a data source before it needs secrets).
+- 2026-09-16: the admin plan page polls itself every `admin.refresh_ms` (default 5000, floor 1000; `.indusk/config.json`, never written by `update`). **Revisit the default on 2026-09-30** after two weeks of use — too slow to feel live, or loading the daemon? (admin-ui-phase-progress U2.)
 - 2026-08-30: the 2026-08-16 publish blockers are all resolved — `LEGACY_HOOKS` removal shipped (`lib/hook-migration.ts`; `check-plan-order.js` gone from disk and settings), the changelog was split per release in 1.36.2, and the batch published through 1.40.x. CLAUDE.md no longer carries version/plan-table copies; operational blockers belong here.
 
 ---
@@ -64,27 +65,6 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 **Session ID**: 2dfae2ea-94f9-46f5-a54c-cf61eb7548f3
 **Last updated**: 2026-09-10T00:24:06.349Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session f9c6df62 — eval agent scoring commit 171d14df
-
-**Session ID**: f9c6df62-8ee7-4317-b88c-c7a17cfa0848
-**Last updated**: 2026-09-08T19:06:54.253Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
@@ -213,6 +193,90 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-17T15:21:06.840Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 4b63ba20 — eval: reviewing commit 16e01f51 (A21/A22 RED tests)
+
+**Session ID**: 4b63ba20-9d33-457a-9842-60828f78e863
+**Last updated**: 2026-09-16T21:29:50.535Z
+**Branch**: plan/admin-ui-phase-progress
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-ui-phase-progress
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 6d2745f7 — eval: score commit 9cc32112 (Test Phase 1 rows for admin-ui-phase-progress)
+
+**Session ID**: 6d2745f7-dbd2-4af8-8eb8-76f53b9fc38d
+**Last updated**: 2026-09-16T21:30:11.594Z
+**Branch**: plan/admin-ui-phase-progress
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-ui-phase-progress
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 90c83200 — eval: reviewing commit dbd87861 (admin-ui-phase-progress plan doc)
+
+**Session ID**: 90c83200-0bbc-4614-922b-d859496f36b9
+**Last updated**: 2026-09-16T21:31:39.320Z
+**Branch**: plan/admin-ui-phase-progress
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-ui-phase-progress
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 94a3bdd1 — eval: score commit 74a3faca
+
+**Session ID**: 94a3bdd1-4997-44c9-8daf-079d1c1275bb
+**Last updated**: 2026-09-16T22:54:28.818Z
+**Branch**: plan/admin-ui-phase-progress
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/admin-ui-phase-progress
 
 ### In Flight
 

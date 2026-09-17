@@ -6,6 +6,11 @@ import { afterEach, describe, expect, it } from "vitest";
 import { resolveReposRoot } from "../lib/worktree/repos.js";
 import { CLI_BIN, git, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 
+// Every CLI spawn below registers its temp project; keep that out of the
+// developer's registry (admin-ui-phase-progress A22) — unconditionally, because
+// `??=` yielded to a shell that exports INDUSK_HOME (A31).
+process.env.INDUSK_HOME = mkdtempSync(join(tmpdir(), "indusk-home-"));
+
 /**
  * Resolving `repos_root` has ONE definition.
  *

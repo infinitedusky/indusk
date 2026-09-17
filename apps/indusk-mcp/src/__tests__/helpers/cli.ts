@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 /**
@@ -51,6 +52,22 @@ export interface RunResult {
 }
 
 /**
+ * One temp `INDUSK_HOME` per test process, created on first use.
+ *
+ * `init`, `update`, `setup` and `ui` write `${INDUSK_HOME ?? ~/.indusk}/projects.json`.
+ * The helper used to spread `process.env` and nothing else, so every suite
+ * had to remember the pin, and a `??=` pin yields to a developer who exports
+ * `INDUSK_HOME` in their shell (A31). The helper is the one place every
+ * CLI-spawning suite goes through, so it pins here; an explicit
+ * `env.INDUSK_HOME` from the caller still wins.
+ */
+let testHome: string | null = null;
+function defaultTestHome(): string {
+	testHome ??= mkdtempSync(join(tmpdir(), "indusk-test-home-"));
+	return testHome;
+}
+
+/**
  * Run the built CLI in `cwd`. `env` overlays the inherited environment — for
  * a test that needs git to see a fixed date or no identity at all.
  */
@@ -58,7 +75,12 @@ export function runCli(cwd: string, args: string[], env: NodeJS.ProcessEnv = {})
 	const r = spawnSync("node", [CLI_BIN, ...args], {
 		cwd,
 		encoding: "utf-8",
-		env: { ...process.env, INDUSK_SKIP_UPDATE_CHECK: "1", ...env },
+		env: {
+			...process.env,
+			INDUSK_SKIP_UPDATE_CHECK: "1",
+			INDUSK_HOME: defaultTestHome(),
+			...env,
+		},
 	});
 	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
 }

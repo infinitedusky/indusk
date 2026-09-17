@@ -1,22 +1,30 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { checkRetrospectiveReadiness } from "@infinitedusky/indusk-mcp/cleanup/gate";
 import {
   isFalsificationComplete,
   type LogEntry,
   readFalsificationLog,
 } from "@infinitedusky/indusk-mcp/falsification/log";
+import { parseImplString } from "@infinitedusky/indusk-mcp/impl-parser";
+import {
+  derivePlanPosition,
+  type PlanPositionState,
+} from "@infinitedusky/indusk-mcp/lifecycle";
 import {
   type PaperSummary,
   type PlanDeclarations,
   parsePlan,
   readPlanDeclarations,
 } from "@infinitedusky/indusk-mcp/planning/plan-parser";
+import type { PhaseBoundaryRecord } from "@infinitedusky/indusk-mcp/shape/boundary";
 import {
   parseTrajectory,
   type Trajectory,
 } from "@infinitedusky/indusk-mcp/trajectory/parser";
 import matter from "gray-matter";
+import { type BoundaryRead, readProjectBoundaries } from "./project-reader";
 
 /**
  * The data layer for the admin UI. Reads `.indusk/planning/` and `.indusk/eval/`
@@ -98,6 +106,19 @@ export interface Plan {
   retrospective?: RetroData;
   /** Every `kind: paper` document, in filename order, with its body. Absent when there are none. */
   papers?: PaperEntry[];
+  /**
+   * Where the plan stands in the lifecycle, derived from its documents, its
+   * impl and the retrospective readiness gate (admin-ui-phase-progress).
+   */
+  position?: PlanPositionState;
+  /** This plan's phase-boundary records, when the project's record file read cleanly. */
+  boundaries?: PhaseBoundaryRecord[];
+  /**
+   * Set when `.indusk/phase-boundary.jsonl` has a malformed line. The reader
+   * throws rather than skipping it, and the page shows the error rather than
+   * guessing an active phase from a partial record.
+   */
+  boundaryError?: string;
   /** True when ANY document in the plan failed to parse (malformed YAML frontmatter). */
   malformed?: boolean;
   /**
@@ -207,6 +228,7 @@ async function readPlanFolder(
   planDir: string,
   name: string,
   archived: boolean,
+  boundaries: BoundaryRead = { records: [] },
 ): Promise<Plan> {
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
   const [research, brief, testPlan, adr, impl, _falsification, retrospective] =
@@ -248,6 +270,26 @@ async function readPlanFolder(
     ? await readPapers(planDir, parsed.papers)
     : undefined;
 
+  // The plan bar's position: the same facts `list_plans` and the retrospective
+  // gate read, composed by the lifecycle module rather than here.
+  const readiness =
+    impl !== null && !isMalformed(impl)
+      ? checkRetrospectiveReadiness(
+          planDir,
+          readFileSync(join(planDir, "impl.md"), "utf-8"),
+        )
+      : null;
+  const position = derivePlanPosition({
+    summary: parsed,
+    impl: implData ? parseImplString(implData.content) : null,
+    readiness,
+    archived,
+  });
+  const boundaryFields =
+    "error" in boundaries
+      ? { boundaryError: boundaries.error }
+      : { boundaries: boundaries.records.filter((r) => r.plan === name) };
+
   const status =
     (implData?.frontmatter.status as string | undefined) ??
     (brief !== null && !isMalformed(brief)
@@ -260,6 +302,8 @@ async function readPlanFolder(
   return {
     name,
     status,
+    position,
+    ...boundaryFields,
     ...(papers ? { papers } : {}),
     archived,
     research:
@@ -309,8 +353,11 @@ async function listPlanFolders(dir: string): Promise<string[]> {
 export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
   const planningDir = join(projectRoot, PLANNING_DIR);
   const folders = await listPlanFolders(planningDir);
+  const boundaries = await readProjectBoundaries(projectRoot);
   return Promise.all(
-    folders.map((name) => readPlanFolder(join(planningDir, name), name, false)),
+    folders.map((name) =>
+      readPlanFolder(join(planningDir, name), name, false, boundaries),
+    ),
   );
 }
 
@@ -326,8 +373,11 @@ export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
     .filter((e) => e.isDirectory())
     .map((e) => e.name)
     .sort();
+  const boundaries = await readProjectBoundaries(projectRoot);
   return Promise.all(
-    folders.map((name) => readPlanFolder(join(archiveDir, name), name, true)),
+    folders.map((name) =>
+      readPlanFolder(join(archiveDir, name), name, true, boundaries),
+    ),
   );
 }
 

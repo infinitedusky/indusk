@@ -38,6 +38,10 @@
       "types": "./dist/lib/cleanup/gate.d.ts",
       "default": "./dist/lib/cleanup/gate.js"
     },
+    "./worktree/repos": {
+      "types": "./dist/lib/worktree/repos.d.ts",
+      "default": "./dist/lib/worktree/repos.js"
+    },
     "./worktree/validate-config": {
       "types": "./dist/lib/worktree/validate-config.d.ts",
       "default": "./dist/lib/worktree/validate-config.js"
@@ -61,6 +65,26 @@
     "./shape/rules": {
       "types": "./dist/lib/shape/rules.d.ts",
       "default": "./dist/lib/shape/rules.js"
+    },
+    "./shape/boundary-record": {
+      "types": "./dist/lib/shape/boundary-record.d.ts",
+      "default": "./dist/lib/shape/boundary-record.js"
+    },
+    "./config": {
+      "types": "./dist/lib/config.d.ts",
+      "default": "./dist/lib/config.js"
+    },
+    "./lifecycle": {
+      "types": "./dist/lib/lifecycle.d.ts",
+      "default": "./dist/lib/lifecycle.js"
+    },
+    "./impl-headings": {
+      "types": "./dist/lib/impl-headings.d.ts",
+      "default": "./dist/lib/impl-headings.js"
+    },
+    "./impl-parser": {
+      "types": "./dist/lib/impl-parser-core.d.ts",
+      "default": "./dist/lib/impl-parser-core.js"
     }
   },
   "scripts": {

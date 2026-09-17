@@ -1,156 +1,206 @@
+import {
+  fencedLineMask,
+  type PhaseKind,
+  parsePhaseHeading,
+} from "@infinitedusky/indusk-mcp/impl-headings";
+import {
+  findPhase,
+  parseImplString,
+} from "@infinitedusky/indusk-mcp/impl-parser";
+import {
+  derivePhaseActivity,
+  type PhaseActivity,
+  RITUAL_ORDER,
+  type StageKind,
+  type StageState,
+} from "@infinitedusky/indusk-mcp/lifecycle";
 import type {
   Trajectory,
   TrajectoryRow,
 } from "@infinitedusky/indusk-mcp/trajectory/parser";
 
 /**
- * Parsed phase from an impl.md `## Checklist` section.
+ * The admin's view of an impl's phases — an adapter over the package parser.
  *
- * The phase parser walks the markdown body, splits on `### Phase N: Title`
- * headings (level-3 H3), and groups every line up to the next `### Phase`
- * heading (or end of document) as that phase's content. It does NOT separate
- * verification / context / document gates — those are still raw markdown
- * inside `content`. The PhasesSection component renders the content as
- * markdown wrapped in a CollapsibleSection.
- *
- * Trajectory rows belonging to a phase are matched via the trajectory's
- * `Passes at` column (rows that pass at this phase number). This pairing
- * makes T8 satisfiable — every phase shows the rows that should flip in it.
+ * Until admin-ui-phase-progress this file carried its own `### Phase N` regex.
+ * It could not see `### Test Phase N` or `### Build Phase N`, so every impl
+ * authored since test-phase-structure (2026-08-12) rendered as one long
+ * Phase 1; gate headings were raw markdown; rows attached by bare number, so
+ * a Test Phase 1 row landed on Build Phase 1. The package's `parseImplString`
+ * is the one parser (pinned by `lifecycle-single-definition.test.ts`, which
+ * refuses a heading regex here); this module only reshapes its output for
+ * rendering and slices each phase's raw markdown for the `<Markdown>` body.
  */
-export interface Phase {
-  number: number;
-  title: string;
-  /** Raw markdown content (everything between this phase's heading and the next). */
-  content: string;
-  /** Trajectory rows whose `Passes at` is this phase's number. */
-  trajectoryRows: TrajectoryRow[];
-}
 
-const PHASE_HEADING_RE = /^###\s+Phase\s+(\d+)(?::\s*(.*))?$/m;
-
-/**
- * Extract phases from an impl.md body. Returns phases in the order they appear
- * in the markdown. Returns `[]` if no `### Phase N` headings are present.
- *
- * Stops scanning at any level-2 heading after the first phase (so the trailing
- * `## Files Affected`, `## Dependencies`, `## Notes` sections don't bleed into
- * the last phase).
- */
-export function extractPhases(
-  implContent: string,
-  trajectory?: Trajectory,
-): Phase[] {
-  const lines = implContent.split("\n");
-  const phases: Phase[] = [];
-  let current: { number: number; title: string; lines: string[] } | null = null;
-  let stoppedAtL2 = false;
-
-  for (const line of lines) {
-    if (stoppedAtL2) break;
-
-    const phaseMatch = line.match(PHASE_HEADING_RE);
-    if (phaseMatch) {
-      if (current) {
-        phases.push(buildPhase(current, trajectory));
-      }
-      current = {
-        number: Number.parseInt(phaseMatch[1], 10),
-        title: (phaseMatch[2] ?? "").trim(),
-        lines: [],
-      };
-      continue;
-    }
-
-    // Stop on any level-2 heading we encounter AFTER the first phase
-    if (current && /^##\s+\S/.test(line) && !/^###/.test(line)) {
-      stoppedAtL2 = true;
-      break;
-    }
-
-    if (current) current.lines.push(line);
-  }
-
-  if (current) phases.push(buildPhase(current, trajectory));
-  return phases;
-}
-
-function buildPhase(
-  raw: { number: number; title: string; lines: string[] },
-  trajectory: Trajectory | undefined,
-): Phase {
-  const trajectoryRows = trajectory
-    ? trajectory.rows.filter((r) => r.passesAt === raw.number)
-    : [];
-  return {
-    number: raw.number,
-    title: raw.title,
-    content: raw.lines.join("\n").trim(),
-    trajectoryRows,
-  };
-}
-
-/**
- * Split a phase list into three groups around the falsification phase:
- *   - `pre`:           phases BEFORE the falsification phase
- *   - `falsification`: the phase whose title contains "Falsification" (case-insensitive);
- *                      `null` when no such phase exists
- *   - `post`:          phases AFTER the falsification phase (fix-in-scope follow-ups
- *                      derived from the ritual)
- *
- * If multiple phases have "Falsification" in the title, the FIRST match wins —
- * later ones fall into `post`. In practice plans author exactly one falsification
- * phase; the first-match rule is a defensive choice for the edge case.
- *
- * Matching is a case-insensitive substring, not a regex — the /falsify skill's
- * recommended convention is `### Phase N: Falsification — {summary}` but the
- * title field is free-form, so we match the word loosely.
- */
-export interface PhaseSplit {
-  pre: Phase[];
-  falsification: Phase | null;
-  post: Phase[];
-}
-
-export function splitPhasesAroundFalsification(phases: Phase[]): PhaseSplit {
-  const idx = phases.findIndex((p) =>
-    p.title.toLowerCase().includes("falsification"),
-  );
-  if (idx === -1) {
-    return { pre: phases, falsification: null, post: [] };
-  }
-  return {
-    pre: phases.slice(0, idx),
-    falsification: phases[idx],
-    post: phases.slice(idx + 1),
-  };
-}
-
-/**
- * Extract `- [ ]` / `- [x]` checklist items from markdown content. Used by
- * the falsification-phase rendering to surface fix items as a discrete list.
- *
- * Intentionally narrow — not a general markdown AST parser. Matches only the
- * standard GFM task-list shape at line start with mandatory space between
- * brackets. Uppercase `X` is rejected (contract is lowercase `x`) so we don't
- * silently accept non-standard syntax.
- */
 export interface ChecklistItem {
   text: string;
   checked: boolean;
 }
 
-const CHECKLIST_ITEM_RE = /^- \[( |x)\] (.+)$/;
+/** One stage of a phase: its implementation items, then each gate it carries. */
+export interface Stage {
+  kind: StageKind;
+  /** `done | active | pending | skipped | opted-out` — the lifecycle's segment vocabulary. */
+  state: StageState["state"];
+  checked: number;
+  total: number;
+  /** The conversation proof of an opted-out gate. */
+  proof?: string;
+  items: ChecklistItem[];
+}
 
-export function extractChecklistItems(markdown: string): ChecklistItem[] {
-  const items: ChecklistItem[] = [];
-  for (const line of markdown.split("\n")) {
-    const match = line.match(CHECKLIST_ITEM_RE);
-    if (match) {
-      items.push({
-        checked: match[1] === "x",
-        text: match[2].trim(),
-      });
+export interface Phase {
+  kind: PhaseKind;
+  number: number;
+  /** Document position — what orders two sequences. */
+  ordinal: number;
+  title: string;
+  stages: Stage[];
+  /** What is happening in this phase now — the lifecycle's verb (`closed` when every stage is done). */
+  activity: PhaseActivity;
+  /** Every checklist item across the phase's stages. */
+  itemCount: number;
+  /** Raw markdown content (everything between this phase's heading and the next). */
+  content: string;
+  /** Trajectory rows whose `Passes at` is this phase, by kind and number. */
+  trajectoryRows: TrajectoryRow[];
+}
+
+const GATE_TYPE_TO_STAGE: Record<string, StageKind> = {
+  implementation: "implementation",
+  verification: "Verification",
+  otel: "OTel",
+  context: "Context",
+  document: "Document",
+};
+
+/**
+ * Extract phases from an impl.md body, in document order. Returns `[]` when
+ * the body has no phase headings.
+ *
+ * Content ends at the next phase heading of either kind, or at a level-2
+ * heading (so `## Files Affected`, `## Dependencies`, `## Notes` do not bleed
+ * into a phase); phases appended after those sections are still found. Fenced
+ * lines are masked, so a deferral body carrying a heading-shaped line does
+ * not split a phase.
+ */
+export function extractPhases(
+  implContent: string,
+  trajectory?: Trajectory,
+): Phase[] {
+  const parsed = parseImplString(implContent);
+  const lines = implContent.split("\n");
+  const fenced = fencedLineMask(lines);
+
+  const blocks: Array<{
+    kind: PhaseKind;
+    number: number;
+    title: string;
+    lines: string[];
+  }> = [];
+  let current: (typeof blocks)[number] | null = null;
+  for (const [index, line] of lines.entries()) {
+    if (fenced[index]) {
+      if (current) current.lines.push(line);
+      continue;
     }
+    const heading = parsePhaseHeading(line);
+    if (heading) {
+      current = {
+        kind: heading.kind,
+        number: heading.number,
+        title: heading.name,
+        lines: [],
+      };
+      blocks.push(current);
+      continue;
+    }
+    // A level-2 heading closes the current phase's content but does not end
+    // the scan: the close-out rituals append their phases AFTER `## Notes`,
+    // and the package parser sees those — so must this (A3 parity).
+    if (current && line.startsWith("## ")) {
+      current = null;
+      continue;
+    }
+    if (current) current.lines.push(line);
   }
-  return items;
+
+  return blocks.map((block) => {
+    const ref = { kind: block.kind, number: block.number };
+    const implPhase = findPhase(parsed, ref);
+    const itemsByStage = new Map<StageKind, ChecklistItem[]>();
+    for (const gate of implPhase?.gates ?? []) {
+      const stage = GATE_TYPE_TO_STAGE[gate.type];
+      if (!stage) continue;
+      itemsByStage.set(stage, [
+        ...(itemsByStage.get(stage) ?? []),
+        ...gate.items.map((i) => ({ text: i.text, checked: i.checked })),
+      ]);
+    }
+    const derived = implPhase ? derivePhaseActivity(implPhase, null) : null;
+    const states = derived?.stages ?? [];
+    const stages: Stage[] = states.map((s) => ({
+      kind: s.kind,
+      state: s.state,
+      checked: s.checked,
+      total: s.total,
+      ...(s.proof ? { proof: s.proof } : {}),
+      items: itemsByStage.get(s.kind) ?? [],
+    }));
+    return {
+      kind: block.kind,
+      number: block.number,
+      ordinal: implPhase?.ordinal ?? 0,
+      title: block.title,
+      stages,
+      activity: derived?.activity ?? "closed",
+      itemCount: stages.reduce((n, s) => n + s.items.length, 0),
+      content: block.lines.join("\n").trim(),
+      trajectoryRows: trajectory
+        ? trajectory.rows.filter(
+            (r) => r.passesAtKind === block.kind && r.passesAt === block.number,
+          )
+        : [],
+    };
+  });
+}
+
+/**
+ * Split a phase list into three groups around the falsification phase:
+ *   - `pre`:           phases BEFORE the falsification phase
+ *   - `falsification`: the first phase whose title STARTS with the ritual word
+ *                      (`RITUAL_ORDER[0]`, case-insensitive) — the same rule the
+ *                      retrospective readiness gate applies; `null` when absent
+ *   - `post`:          phases AFTER it (fix-in-scope follow-ups)
+ */
+export interface PhaseSplit {
+  pre: Phase[];
+  falsification: Phase | null;
+  /** Follow-up phases after falsification, the cleanup phase excluded. */
+  post: Phase[];
+  /** The first phase whose title starts with the cleanup ritual word, or null. */
+  cleanup: Phase | null;
+}
+
+export function splitPhasesAroundFalsification(phases: Phase[]): PhaseSplit {
+  const [falsifyWord, cleanupWord] = RITUAL_ORDER;
+  const isRitual = (p: Phase, word: string) =>
+    p.title.toLowerCase().startsWith(word);
+  const cleanup = phases.find((p) => isRitual(p, cleanupWord)) ?? null;
+  const rest = cleanup ? phases.filter((p) => p !== cleanup) : phases;
+  const idx = rest.findIndex((p) => isRitual(p, falsifyWord));
+  if (idx === -1) {
+    return { pre: rest, falsification: null, post: [], cleanup };
+  }
+  return {
+    pre: rest.slice(0, idx),
+    falsification: rest[idx],
+    post: rest.slice(idx + 1),
+    cleanup,
+  };
+}
+
+/** Every checklist item of a phase, in stage order. */
+export function phaseItems(phase: Phase): ChecklistItem[] {
+  return phase.stages.flatMap((s) => s.items);
 }

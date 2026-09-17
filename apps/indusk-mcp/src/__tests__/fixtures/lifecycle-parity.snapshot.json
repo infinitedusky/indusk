@@ -1,0 +1,801 @@
+{
+  "archive/admin-ui-hosting": {
+    "stage": "retrospective",
+    "stageStatus": "accepted",
+    "nextStep": "Done",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/admin-ui-local-domain": {
+    "stage": "brief",
+    "stageStatus": "accepted",
+    "nextStep": "Create test-plan"
+  },
+  "archive/agent-roles": {
+    "stage": "retrospective",
+    "stageStatus": "closed",
+    "nextStep": "Review retrospective (status: closed)",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/agent-skills-format": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/bug-fix-eval-agent": {
+    "stage": "retrospective",
+    "stageStatus": "closed",
+    "nextStep": "Review retrospective (status: closed)",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/cgc-graphiti-bridge": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/cgc-graphiti-bridge_v1": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/cleanup-ritual": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/code-quality-system": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/code-reviewer-agent": {
+    "stage": "impl",
+    "stageStatus": "parked",
+    "nextStep": "Review impl (status: parked)",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup",
+        "rows"
+      ]
+    }
+  },
+  "archive/codegraph-context": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/compaction-skill": {
+    "stage": "brief",
+    "stageStatus": "accepted",
+    "nextStep": "Create test-plan"
+  },
+  "archive/complementary-personas": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/context-beam": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/context-budget": {
+    "stage": "impl",
+    "stageStatus": "in-progress",
+    "nextStep": "Continue impl",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/context-graph": {
+    "stage": "brief",
+    "stageStatus": "accepted",
+    "nextStep": "Create test-plan"
+  },
+  "archive/context-migration": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/context-skill": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/cursor-support": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/dawn-external-orchestrator": {
+    "stage": "retrospective",
+    "stageStatus": "completed",
+    "nextStep": "Done",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "rows"
+      ]
+    }
+  },
+  "archive/dawn-hook-parity": {
+    "stage": "retrospective",
+    "stageStatus": "completed",
+    "nextStep": "Done",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/dawn-ui-plan-grouping": {
+    "stage": "retrospective",
+    "stageStatus": "completed",
+    "nextStep": "Done",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/dawn-verify": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/dawn-workbench-execution": {
+    "stage": "retrospective",
+    "stageStatus": "complete",
+    "nextStep": "Review retrospective (status: complete)",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/document-skill": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/documentation-phase-gate": {
+    "stage": "adr",
+    "stageStatus": "proposed",
+    "nextStep": "Review adr (status: proposed)"
+  },
+  "archive/doppler-extension": {
+    "stage": "impl",
+    "stageStatus": "in-progress",
+    "nextStep": "Continue impl",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup",
+        "rows"
+      ]
+    }
+  },
+  "archive/enforce-impl-structure": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/enforce-plan-gates": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/eval-agent-mcp-access": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup",
+        "rows"
+      ]
+    }
+  },
+  "archive/eval-scorecard-format-fix": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/evaluator-structured-scorecard-output": {
+    "stage": "brief",
+    "stageStatus": "accepted",
+    "nextStep": "Create test-plan"
+  },
+  "archive/excalidraw-extension": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/extension-system": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/falsification-ritual": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/falsify-phase-authoring": {
+    "stage": "impl",
+    "stageStatus": "in-progress",
+    "nextStep": "Continue impl",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup",
+        "rows"
+      ]
+    }
+  },
+  "archive/gate-policy-enforcement": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/git-only-substrate": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/git-or-jj-substrate": {
+    "stage": "retrospective",
+    "stageStatus": "superseded by git-only-substrate (2026-06-27 \u2192 1.31.0)",
+    "nextStep": "Review retrospective (status: superseded by git-only-substrate (2026-06-27 \u2192 1.31.0))",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/graph-knowledge-architecture": {
+    "stage": "impl",
+    "stageStatus": "draft",
+    "nextStep": "Review impl (status: draft)",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/graphiti-infrastructure": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/gsd-inspired-improvements": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/handoff-multi-agent": {
+    "stage": "impl",
+    "stageStatus": "completed",
+    "nextStep": "Create retrospective",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/handoff-multi-agent-section-shape": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/hermes-inspired-improvements": {
+    "stage": "brief",
+    "stageStatus": "accepted",
+    "nextStep": "Create test-plan"
+  },
+  "archive/improvement-eval-agent-open-telemetry": {
+    "stage": "retrospective",
+    "stageStatus": "closed",
+    "nextStep": "Review retrospective (status: closed)",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/indusk-admin-ui": {
+    "stage": "retrospective",
+    "stageStatus": "accepted",
+    "nextStep": "Done",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/indusk-makeover": {
+    "stage": "retrospective",
+    "stageStatus": "complete",
+    "nextStep": "Review retrospective (status: complete)",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/indusk-worktree-extension": {
+    "stage": "impl",
+    "stageStatus": "in-progress",
+    "nextStep": "Continue impl",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/jj-residue-rip-out": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/lifecycle-rebalance": {
+    "stage": "retrospective",
+    "stageStatus": "completed",
+    "nextStep": "Done",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/local-init-mode": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/local-telemetry": {
+    "stage": "impl",
+    "stageStatus": "in-progress",
+    "nextStep": "Continue impl",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup",
+        "rows"
+      ]
+    }
+  },
+  "archive/lsp-structural-indexing": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/mcp-dev-system": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/mcp-orchestration-layer": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/otel-core-skill": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/planner-hotfix-mode": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/project-list-workbenches-only": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/rationale-baseline-frontmatter": {
+    "stage": "retrospective",
+    "stageStatus": "final",
+    "nextStep": "Review retrospective (status: final)",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/react-native-support": {
+    "stage": "impl",
+    "stageStatus": "approved",
+    "nextStep": "Review impl (status: approved)",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/rename-to-dusk": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/semantic-graph-eval": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/stale-indusk-docs-path": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/test-phase-structure": {
+    "stage": "retrospective",
+    "stageStatus": "complete",
+    "nextStep": "Review retrospective (status: complete)",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/tests-first-planning": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/type-edges": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/verify-skill": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/versioned-workbench": {
+    "stage": "retrospective",
+    "stageStatus": "complete",
+    "nextStep": "Review retrospective (status: complete)",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/vitepress-extension": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/work-autopilot": {
+    "stage": "brief",
+    "stageStatus": "accepted",
+    "nextStep": "Create test-plan"
+  },
+  "archive/workbench-code-roots": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/workbench-mode-rail-integrity": {
+    "stage": "impl",
+    "stageStatus": "abandoned",
+    "nextStep": "Review impl (status: abandoned)",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "falsification",
+        "cleanup"
+      ]
+    }
+  },
+  "archive/workbench-setup-command": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/workbench-trust-fixes": {
+    "stage": "retrospective",
+    "stageStatus": "complete",
+    "nextStep": "Review retrospective (status: complete)",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/worktree-config-schema-pointer": {
+    "stage": "retrospective",
+    "stageStatus": "complete",
+    "nextStep": "Review retrospective (status: complete)",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "archive/worktree-visibility": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": false,
+      "missing": [
+        "cleanup"
+      ]
+    }
+  },
+  "archive/writing-skill": {
+    "stage": "retrospective",
+    "stageStatus": "",
+    "nextStep": "Review retrospective (status: )",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "hook-cwd-independence": {
+    "stage": "impl",
+    "stageStatus": "completed",
+    "nextStep": "Create retrospective",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  },
+  "indusk-v2-dawn": {
+    "stage": "unknown",
+    "stageStatus": "unknown",
+    "nextStep": "Create a brief"
+  },
+  "indusk-v4-day": {
+    "stage": "paper",
+    "stageStatus": "draft",
+    "nextStep": "Review paper: obsolescence.md"
+  },
+  "midnight": {
+    "stage": "brief",
+    "stageStatus": "draft",
+    "nextStep": "Review brief (status: draft)"
+  },
+  "archive/admin-ui-phase-progress": {
+    "stage": "retrospective",
+    "stageStatus": "complete",
+    "nextStep": "Review retrospective (status: complete)",
+    "readiness": {
+      "passes": true,
+      "missing": []
+    }
+  }
+}

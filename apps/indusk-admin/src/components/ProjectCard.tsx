@@ -7,6 +7,8 @@ export interface ProjectCardData {
   lastSeenAt: string;
   activePlanCount: number;
   hasInProgress: boolean;
+  /** `workbench` (declares repos) or `normal-mode`; absent for callers that do not know. */
+  shape?: "workbench" | "normal-mode";
 }
 
 /**
@@ -33,11 +35,18 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
           </h2>
           <p className="mt-1 truncate text-xs text-gray-500">{project.path}</p>
         </div>
-        {project.hasInProgress ? (
-          <Badge variant="written" data-testid="in-progress-badge">
-            in progress
-          </Badge>
-        ) : null}
+        <span className="flex items-center gap-1">
+          {project.shape ? (
+            <Badge variant="neutral" data-testid="project-shape">
+              {project.shape}
+            </Badge>
+          ) : null}
+          {project.hasInProgress ? (
+            <Badge variant="written" data-testid="in-progress-badge">
+              in progress
+            </Badge>
+          ) : null}
+        </span>
       </div>
       <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
         <span>

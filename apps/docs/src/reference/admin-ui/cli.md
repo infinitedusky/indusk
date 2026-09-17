@@ -185,7 +185,31 @@ Registry mutations are handled by existing commands, not `ui` subcommands:
 | `indusk init` | Appends the initializing project to `projects.json` via `addProject(projectRoot)`. If a name collision exists, registers under a numeric-suffixed name and prints a warning. |
 | `indusk update` | Validates the entry exists and the path matches (`validateProject(name)`), then touches `lastSeenAt` (`touchProject(name)`). If the entry is missing or the path has diverged, calls `addProject` to recover. |
 
-There is no `indusk ui add`, `indusk ui remove`, or equivalent — registry mutations happen at `init`/`update` time, not through the admin-ui command surface. To deregister a project, edit `~/.indusk/projects.json` by hand.
+There is no `indusk ui add`, `indusk ui remove`, or equivalent — registry mutations happen at `init`/`update` time, not through the admin-ui command surface. To deregister a live project, edit `~/.indusk/projects.json` by hand; entries whose path no longer exists are removed by `indusk ui prune`.
+
+### `indusk ui prune [--dry-run]`
+
+Removes every registry entry whose `path` no longer exists on disk (admin-ui-phase-progress, 2026-09-16). "Exists" is the same check `validateProject` makes, so nothing a live project depends on can be touched.
+
+```
+$ indusk ui prune --dry-run
+Would remove 2296 entries whose path no longer exists:
+  dusk-1a2b3c  /var/folders/…/indusk-test-1a2b3c
+  …
+Kept 11.
+
+$ indusk ui prune
+Removed 2296 entries whose path no longer exists:
+  …
+Kept 11.
+Backup written to ~/.indusk/projects.json.bak.2026-09-16T22-47-29-060Z
+```
+
+- `--dry-run` names what would go and writes nothing.
+- A real run writes `projects.json.bak.<ISO>` beside the registry **before** rewriting it, through the same temp-file-and-rename path every other registry write uses. Restore by copying the backup back.
+- A clean registry prints `Registry clean: N project(s), none with a missing path.` and writes nothing, not even a backup.
+
+Why it exists: the registry was never pruned, and seven test suites that spawned `init` without `INDUSK_HOME` registered a fresh temp directory on every run — 2,307 entries, 11 of them alive, on the day it was measured. The leak is closed by `registry-leak-scan.test.ts` (every test that spawns `init`, `update` or `ui` must set `INDUSK_HOME`); `prune` clears the backlog such a leak leaves behind. The home page lists dead entries in a collapsed "not found" note that points here rather than showing them as projects.
 
 ## See also
 

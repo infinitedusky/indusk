@@ -43,3 +43,13 @@
 {"plan":"dawn-workbench-execution","phase":5,"sha":"72ce6310734ae1ac9380fd31a62b90fd3a4ef208","timestamp":"2026-09-16T16:34:42.035Z"}
 {"plan":"dawn-workbench-execution","phase":6,"sha":"aeaddf34f041508f527a0c7195e7960d7e769d46","timestamp":"2026-09-16T16:57:59.367Z"}
 {"plan":"dawn-workbench-execution","phase":7,"sha":"e5ffe200fc88d2ab778ef3925f76e7afb03dff33","timestamp":"2026-09-16T17:14:23.410Z"}
+{"plan":"admin-ui-phase-progress","phase":1,"sha":"5c675c581fd7c38f1d750bd2c47e58239b2000e7","timestamp":"2026-09-16T21:22:02.101Z"}
+{"plan":"admin-ui-phase-progress","phase":2,"kind":"build","sha":"356471a9b10a5b84516d28bf7b8659b07ec917f2","timestamp":"2026-09-16T21:40:42.390Z"}
+{"plan":"admin-ui-phase-progress","phase":3,"kind":"build","sha":"c794e297","timestamp":"2026-09-16T21:45:00.000Z"}
+{"plan":"admin-ui-phase-progress","phase":4,"kind":"build","sha":"19a5a2ba","timestamp":"2026-09-16T22:05:00.000Z"}
+{"plan":"admin-ui-phase-progress","phase":2,"kind":"test","sha":"159627f0","timestamp":"2026-09-16T22:36:26.204Z"}
+{"plan":"admin-ui-phase-progress","phase":5,"kind":"build","sha":"de005866a329d955753922c08f618e1eadbdad65","timestamp":"2026-09-16T22:40:20.250Z"}
+{"plan":"admin-ui-phase-progress","phase":6,"kind":"build","sha":"7603897c960d9cb0952e0453810759417a6872cb","timestamp":"2026-09-16T22:43:51.148Z"}
+{"plan":"admin-ui-phase-progress","phase":7,"kind":"build","sha":"3a51722134f0eec4e05be60ad509e5a63b1f9104","timestamp":"2026-09-16T22:51:50.251Z"}
+{"plan":"admin-ui-phase-progress","phase":8,"kind":"build","sha":"b8634a7cd9038b9024c6dae377f156170b598d43","timestamp":"2026-09-16T23:33:30.224Z"}
+{"plan":"admin-ui-phase-progress","phase":9,"kind":"build","sha":"4f6e392ec701a711c1297eefbe2dd200f0bc7523","timestamp":"2026-09-17T15:14:23.289Z"}

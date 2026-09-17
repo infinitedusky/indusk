@@ -22,6 +22,8 @@ vi.mock("next/link", () => {
 });
 
 vi.mock("next/navigation", () => ({
+  // LiveRefresh (the plan page's live wrapper) reads the router.
+  useRouter: () => ({ refresh: () => {} }),
   __esModule: true,
   notFound: () => {
     throw new Error("not found");
@@ -51,6 +53,12 @@ vi.mock("@/lib/planning-reader", () => ({
     subplans: { parent: ["twin"] },
   }),
   readPlanMasterContent: async () => null,
+}));
+
+// The plan page reads the live-refresh interval from the project reader.
+vi.mock("@/lib/project-reader", () => ({
+  __esModule: true,
+  readAdminRefreshMs: () => 5000,
 }));
 
 vi.mock("@/lib/registry-client", () => ({

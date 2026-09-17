@@ -1,9 +1,8 @@
-import { type ChildProcess, spawn } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { startNextDev } from "./helpers/next-dev";
 
 /**
  * HTTP-level smoke test for the served admin UI.
@@ -32,7 +31,7 @@ const ADMIN_ROOT = path.resolve(__dirname, "../..");
 const REPO_ROOT = path.resolve(ADMIN_ROOT, "../..");
 const PROJECT_NAME = "dusk";
 
-let server: ChildProcess | null = null;
+let stop: (() => Promise<void>) | null = null;
 let port = 0;
 let testHome = "";
 
@@ -54,39 +53,13 @@ beforeAll(async () => {
     }),
   );
 
-  port = await findFreePort();
-  server = spawn("pnpm", ["exec", "next", "dev", "--port", String(port)], {
-    cwd: ADMIN_ROOT,
-    env: {
-      ...process.env,
-      INDUSK_HOME: testHome,
-    },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  // Wait for "Ready" in stdout (timeout 30s)
-  await new Promise<void>((resolveReady, rejectReady) => {
-    const timeout = setTimeout(
-      () => rejectReady(new Error("next dev did not become ready in 30s")),
-      30_000,
-    );
-    server?.stdout?.on("data", (chunk) => {
-      if (/✓ Ready in/.test(chunk.toString())) {
-        clearTimeout(timeout);
-        resolveReady();
-      }
-    });
-    server?.on("error", rejectReady);
-  });
-  // Small additional buffer so first request doesn't race the listener bind
-  await sleep(500);
+  const dev = await startNextDev({ home: testHome });
+  port = dev.port;
+  stop = dev.stop;
 }, 60_000);
 
 afterAll(async () => {
-  if (server && !server.killed) {
-    server.kill("SIGTERM");
-    await sleep(200);
-    if (!server.killed) server.kill("SIGKILL");
-  }
+  await stop?.();
   if (testHome) rmSync(testHome, { recursive: true, force: true });
 });
 
@@ -109,7 +82,19 @@ describe("HTTP smoke — served admin UI is reachable and returns expected conte
     expect(html, "sidebar should not be in empty-state").not.toContain(
       'data-testid="sidebar-empty-state"',
     );
-    expect(html).toContain('data-testid="active-plans"');
+    // The sidebar reads the LIVE repository. A plan claimed by a parent's
+    // `subplans:` renders inside its group, not in the "Active plans" list —
+    // and when every active plan is claimed (as in a worktree with no stray
+    // folder) that list is legitimately absent. Either shape is a populated
+    // sidebar; only the empty state is a regression (admin-ui-phase-progress,
+    // Build Phase 3, where this first flipped on a clean tree).
+    const populated =
+      html.includes('data-testid="active-plans"') ||
+      html.includes('data-testid="plan-group-');
+    expect(
+      populated,
+      "sidebar rendered neither an active-plans list nor a plan group",
+    ).toBe(true);
   });
 
   it(`GET /p/${PROJECT_NAME}/plan/indusk-admin-ui returns 200 with detail sections`, async () => {
@@ -132,23 +117,3 @@ describe("HTTP smoke — served admin UI is reachable and returns expected conte
     expect(res.status).toBe(404);
   });
 });
-
-function findFreePort(): Promise<number> {
-  return new Promise((resolveProm, rejectProm) => {
-    const srv = createServer();
-    srv.once("error", rejectProm);
-    srv.listen(0, () => {
-      const addr = srv.address();
-      if (typeof addr === "object" && addr !== null) {
-        const p = addr.port;
-        srv.close(() => resolveProm(p));
-      } else {
-        rejectProm(new Error("Could not determine free port"));
-      }
-    });
-  });
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}

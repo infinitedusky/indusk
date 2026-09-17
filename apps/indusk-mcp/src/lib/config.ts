@@ -175,6 +175,11 @@ export interface InduskConfig {
 	 * hand-rolled a private copy of it before this existed.
 	 */
 	worktree?: WorktreeConfig;
+	/** Admin UI settings (admin-ui-phase-progress). */
+	admin?: {
+		/** Plan-page live refresh interval in ms; default 5000, minimum 1000. Absent = default, never written by `update`. */
+		refresh_ms?: number;
+	};
 }
 
 /** One repo a workbench wraps. */

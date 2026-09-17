@@ -9,3 +9,9 @@
 # worktree-per-plan is the default — two plans opening phases on two branches is
 # the expected case. Losing either append loses a phase's scope.
 .indusk/phase-boundary.jsonl merge=union
+
+# InDusk: the highlights queue and its processed ledger are append-only too —
+# the eval agent writes both on every branch it scores, and landing a plan
+# branch conflicted on exactly this file (admin-ui-phase-progress, Step 10).
+.indusk/highlights.jsonl merge=union
+.indusk/highlights-processed.jsonl merge=union

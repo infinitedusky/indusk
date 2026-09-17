@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MasterBar } from "@/components/bars/MasterBar";
 import { Markdown } from "@/components/Markdown";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
@@ -29,6 +30,14 @@ export function ParentPlanView({
 }) {
   return (
     <>
+      <section data-testid="master-progress">
+        <MasterBar
+          subplans={subplans.map((entry) => ({
+            name: entry.name,
+            position: entry.plan?.position,
+          }))}
+        />
+      </section>
       {masterContent && (
         <section data-testid="parent-master-prose">
           <Markdown>{masterContent}</Markdown>

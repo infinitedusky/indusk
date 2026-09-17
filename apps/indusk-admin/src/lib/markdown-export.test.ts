@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   checklistMarkdown,
   falsificationLogMarkdown,
-  falsificationPhaseMarkdown,
   phaseMarkdown,
   planMarkdown,
+  ritualPhaseMarkdown,
   sectionMarkdown,
   trajectoryTableMarkdown,
 } from "./markdown-export";
@@ -40,6 +40,8 @@ describe("trajectoryTableMarkdown", () => {
         asserts: "does the thing",
         writableAt: 1,
         passesAt: 2,
+        writableAtKind: "build",
+        passesAtKind: "build",
         state: "passing",
       },
     ]);
@@ -73,6 +75,8 @@ describe("phaseMarkdown", () => {
           asserts: "asserts thing",
           writableAt: 1,
           passesAt: 1,
+          writableAtKind: "build",
+          passesAtKind: "build",
           state: "passing",
         },
       ]),
@@ -123,7 +127,7 @@ describe("falsificationLogMarkdown", () => {
   });
 });
 
-describe("falsificationPhaseMarkdown", () => {
+describe("ritualPhaseMarkdown", () => {
   it("renders hypotheses table and fix items from a falsification phase", () => {
     const [phase] = extractPhases(
       "### Phase 3: Falsification — hunt\n- [x] fixed one\n- [ ] fix two",
@@ -133,11 +137,13 @@ describe("falsificationPhaseMarkdown", () => {
           asserts: "hypothesis one",
           writableAt: 3,
           passesAt: 3,
+          writableAtKind: "build",
+          passesAtKind: "build",
           state: "passing",
         },
       ]),
     );
-    const md = falsificationPhaseMarkdown(phase);
+    const md = ritualPhaseMarkdown("falsification", phase);
     expect(
       md.startsWith("## Falsification (Phase 3: Falsification — hunt)"),
     ).toBe(true);

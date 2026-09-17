@@ -72,7 +72,7 @@ No auto-pruning. If a registered project's path is deleted from disk, `indusk ui
 /p/{project}/research/{slug}         # Per-project standalone research (1.27.2+)
 ```
 
-Everything is project-scoped under `/p/{project}/...`. The top-level home at `/` is the cross-project entry point (project grid); there is no other cross-project view. 1.26.0/1.27.0 had a top-level `/scorecards` that walked every registered project — **removed in 1.27.2** in favor of per-project scorecards at `/p/{project}/scorecards`. The per-project layout at `app/p/[project]/layout.tsx` owns the sidebar, plan list, Scorecards link, Research group, and project switcher; the root layout (`app/layout.tsx`) is global-nav-only.
+Everything is project-scoped under `/p/{project}/...`. The top-level home at `/` is the cross-project entry point (project grid); there is no other cross-project view. The grid shows every registered project whose path exists, each card labelled `workbench` (its config declares repos — the package's `isWorkbench`, never inferred from layout) or `normal-mode`; entries whose path is gone are not projects and are listed in a collapsed "not found (n)" note that points at [`indusk ui prune`](./cli#indusk-ui-prune-dry-run). 1.26.0/1.27.0 had a top-level `/scorecards` that walked every registered project — **removed in 1.27.2** in favor of per-project scorecards at `/p/{project}/scorecards`. The per-project layout at `app/p/[project]/layout.tsx` owns the sidebar, plan list, Scorecards link, Research group, and project switcher; the root layout (`app/layout.tsx`) is global-nav-only.
 
 ## What each page shows
 
@@ -82,12 +82,49 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 
 1. **Header** — project name + `<ProjectSwitcher>` to jump between registered projects.
 2. **Scorecards link** — direct to `/p/{project}/scorecards` (always present).
-3. **Plan list** — active plans in the order declared by `.indusk/planning/master.md` pipeline tables, then "Unordered" group for plans not in master, then `Archived (N)` collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`.
+3. **Plan list** — one root node (the root `master.md`'s title) with the declared parent groups and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): active plans in the order declared by `.indusk/planning/master.md` pipeline tables, then "Unordered" for plans not in master. `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
 4. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
 
 Switching projects via the header does not restart the daemon — the registry resolves on every request.
 
-**`/p/{project}/plan/{name}` (plan detail)** — sections render conditionally on which documents are present:
+**`/p/{project}/plan/{name}` (plan detail)** — opens as the overview: three progress lines under the header, then every document section collapsed (admin-ui-phase-progress, 2026-09-16). The lines are a zoom, and each one's label names the level below it:
+
+| Line | Segments | Active label |
+|---|---|---|
+| **Plan bar** | every lifecycle position, research → archived (→ monitor), from the package's `PLAN_POSITIONS` | what the position awaits — `brief draft, awaiting acceptance` — or, while executing, the phase: `executing: Phase 4` |
+| **Phase line** | every phase of the impl in document order | the phase and its active stage: `Phase 4: Verification` |
+| **Stage bar** | the active phase's stages — implementation items, then each gate it carries | the verb and the item being worked: `verifying: A6 green… (6 of 7)` |
+
+The active segment always carries a message, and the message never claims a fact the reader does not hold (falsification A29, A33). Three plan-bar messages exist for the cases where the obvious one would have lied: a completed impl whose rituals are terminal but whose trajectory still has a non-terminal row reads `rows not terminal — retrospective blocked (A7)` rather than "cleaned, awaiting /retrospective", because the retrospective gate would refuse; a completed impl whose `impl.md` could not be read reads `impl complete — readiness unknown (impl unreadable)` and sits at `falsify`, the earliest position a completed impl can hold; an `in-progress` impl with every item checked has no active phase to speak for it and reads `every item checked — impl status is still in-progress`. A stage with nothing in it is not drawn (A32): the parser always emits an implementation gate, and a phase with only gate items — a falsification phase whose hypotheses all held — closes when its gates do rather than reading "implementing 0 of 0" forever.
+
+Every segment is one of `done` / `active` / `pending` / `skipped` (a gate can also be `opted-out`): done full, pending empty, skipped drawn empty with a dashed border so a plan's bar keeps its shape, active partially filled by its own n of m. Segments are equal width and the plan bar says so — *steps, not time*. A parent plan shows a **master bar** instead of a plan bar: one segment per declared subplan, closed ones full, in-flight ones partial, declared-but-missing ones empty, labelled `n of m closed, k executing`.
+
+**The page is live.** A small client wrapper, `LiveRefresh`, ticks every `admin.refresh_ms` from the project's `.indusk/config.json` (default 5000 ms, floor 1000; absent means default, and `indusk update` never writes the key). Each tick sends a `HEAD` to the page itself as a reachability probe and then calls Next's `router.refresh()`, which re-runs the server components for the route and streams the new tree in — so a checkbox written to `impl.md` reaches an open page within one interval, and the viewer's open sections and scroll position stay where they were. It says what it is doing (`last updated 14:02:11`), pauses while the tab is hidden, and when a probe fails it stops and says `refresh failed — reload the page to resume` rather than showing a stale page as live. There is no route handler, no fetch of a second data shape and no socket: one render path, whole-route re-render, which is the trade the ADR accepted at the daemon's scale. Only the plan page polls.
+
+```mermaid
+sequenceDiagram
+    participant B as Browser (LiveRefresh)
+    participant S as Next server components
+    participant D as .indusk/ on disk
+    loop every admin.refresh_ms, while the tab is visible
+        B->>S: HEAD /p/{project}/plan/{name}
+        alt reachable
+            S-->>B: 200
+            B->>S: router.refresh()
+            S->>D: read plans, impl, boundary records
+            D-->>S: current state
+            S-->>B: re-rendered route (client state preserved)
+            Note over B: last updated HH:MM:SS
+        else unreachable
+            S-->>B: error / no response
+            Note over B: refresh failed — stop ticking
+        end
+    end
+```
+
+**Which phase is active.** The phase with the most recent boundary record (`.indusk/phase-boundary.jsonl`) among phases that still have unchecked items. A phase with everything checked is closed whatever its record says. With no records at all, the first open phase in document order is shown with the hint *no boundary record*, never as a confident marker. A malformed record file renders an error block and marks nothing active.
+
+Sections render conditionally on which documents are present, all closed by default:
 
 | Section | Source | Behavior |
 |---------|--------|----------|
@@ -98,17 +135,17 @@ Switching projects via the header does not restart the daemon — the registry r
 | Test Plan | `test-plan.md` | Collapsible Markdown render |
 | ADR | `adr.md` | Collapsible Markdown render |
 | Papers | any document declaring `kind: paper` | One CollapsibleSection per paper, its status badge beside the title. Status comes from the shared parser (`draft` / `accepted` / `published` / `malformed`); the `published (stale)` label is derived on every read from the content hash the publish recorded, never stored, so a paper edited after publishing shows stale with no write anywhere. A papers-only plan (no lifecycle document) renders this section, takes the parser's paper-stage status as its header status, and renders no Falsification section. Publishing is `indusk papers publish` — see [`indusk papers`](/reference/cli/papers) |
-| Phases | `impl.md` | One CollapsibleSection per `### Phase N:` heading, EXCLUDING the falsification phase (see next row). Each phase contains a trajectory `<Table>` (filtered to rows whose `Passes at` matches the phase number) followed by the phase's full markdown |
-| Falsification (1.27.6+ phase path) | `impl.md` phase with `"Falsification"` in the title | Hypotheses table from the phase's trajectory rows (ID / Asserts / State) plus a Fix items list from the phase's `- [ ]` / `- [x]` checklist. Status badge reads `complete` when all rows are `passing`/`skipped` AND no unchecked items remain |
+| Phases | `impl.md` | One CollapsibleSection per phase heading — `### Test Phase N`, `### Build Phase N` and the legacy `### Phase N` — in document order, EXCLUDING the falsification phase (see next row). Parsed by the package's own `parseImplString` (the `impl-parser` subpath), never a local regex, so the admin sees exactly the phases the hooks and `verify` see. The header carries a **stage strip**: the implementation items as `n of m`, then each gate the phase has (Verification, OTel where the project emits it, Context, Document), each `done` / `active` / `pending` / `opted-out` — an opted-out gate shows its conversation proof. The body holds the trajectory `<Table>` (rows whose `Passes at` names this phase by kind AND number, cells spelled `Test Phase 1` / `Build Phase 2`) followed by the phase's full markdown |
+| Falsification (1.27.6+ phase path) | `impl.md` phase whose title starts with `Falsification` | Hypotheses table from the phase's trajectory rows (ID / Asserts / State) plus a Fix items list from the phase's `- [ ]` / `- [x]` checklist. Status badge reads `complete` when all rows are `passing`/`skipped` AND no unchecked items remain |
 | Falsification (legacy) | `falsification.md` | Used only when impl.md has no falsification phase. One entry per hypothesis, outcome-color-coded (`fix-in-scope` → green, `spawn-plan` → blue, `accept-finding` → gray) |
 | Follow-up Phases (1.27.6+) | `impl.md` phases AFTER the falsification phase | Same CollapsibleSection shape as regular Phases but in its own section below `Falsification`. Hidden when no post-falsification phases exist |
 | Scorecards | `.indusk/eval/results.log` | Table of scorecards whose timestamp falls in the plan's date range (`brief.date` → `retrospective.date`/now). Most-recent first |
 
 Missing optional documents are not errors — sections simply don't render.
 
-**Falsification rendering (1.27.6+)** — when a plan uses the phase-authoring flow from `/falsify` (introduced in 1.27.4), the admin UI automatically detects the falsification phase by scanning for the FIRST phase whose title contains `"Falsification"` (case-insensitive). That phase is hoisted out of the main Phases section and rendered with a dedicated layout: trajectory rows become the Hypotheses table, and checklist items become the Fix items list. Phases authored AFTER the falsification phase — fix-in-scope follow-ups derived from the ritual — render as a distinct "Follow-up Phases" section below. Legacy plans (authored before 1.27.4 with a `falsification.md` log file) continue to render via the log-based path; the two paths are mutually exclusive but both supported, so archives keep rendering correctly.
+**Falsification rendering (1.27.6+)** — when a plan uses the phase-authoring flow from `/falsify` (introduced in 1.27.4), the admin UI automatically detects the falsification phase by scanning for the FIRST phase whose title STARTS with `Falsification` (case-insensitive — the same title-prefix rule the retrospective readiness gate applies, read from the lifecycle's `RITUAL_ORDER`). That phase is hoisted out of the main Phases section and rendered with a dedicated layout: trajectory rows become the Hypotheses table, and checklist items become the Fix items list. Phases authored AFTER the falsification phase — fix-in-scope follow-ups derived from the ritual — render as a distinct "Follow-up Phases" section below. Legacy plans (authored before 1.27.4 with a `falsification.md` log file) continue to render via the log-based path; the two paths are mutually exclusive but both supported, so archives keep rendering correctly.
 
-**`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `.indusk/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Empty state when no scorecards have been recorded yet.
+**`/p/{project}/scorecards` (per-project, 1.27.2+)** — flat table of `{project}`'s scorecards from its `.indusk/eval/results.log`, sorted most-recent-first. No project-name column (redundant inside the project namespace). Two empty states, told apart by whether `.indusk/eval/` exists: the directory is created by the evaluator's first append, so a project that has never had an evaluated commit has no directory at all and the page says "no evaluations recorded yet — the first evaluated commit creates `.indusk/eval/`"; a project with the directory but no scorecards gets the plain "no scorecards recorded yet" line.
 
 **`/p/{project}/research/{slug}` (per-project, 1.27.2+)** — renders a research markdown file via `<Markdown>`. Resolves `{slug}.md` first, then `{slug}/README.md` for nested-directory research. Path-traversal segments (`..`, `/`, leading `.`) are rejected. Missing slug returns 404.
 
@@ -218,7 +255,7 @@ A subplan the parent names but which has **no folder yet** renders as a greyed, 
 
 Two behaviours worth knowing when reading the sidebar:
 
-- **A plan at the top level means no parent claims it.** That is the fallback, not a bug in the reader.
+- **A plan directly under the root means no parent claims it.** It is the root's leftover bucket, not a bug in the reader. (Before admin-ui-phase-progress there was no root node, so unclaimed plans read as the parents' peers.)
 - **Broken declarations degrade to the flat list.** A missing `master.md`, an absent key, or malformed YAML yields no grouping and no error. Structure can be lost; a plan never is.
 
 Three more, from the falsification pass:

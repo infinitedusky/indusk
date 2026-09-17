@@ -15,6 +15,21 @@ The hooks are plain JavaScript and cannot import a `.ts` module, so every piece 
 
 `_`-prefixed modules are **imported by hooks, never registered as hooks**: they need no `settings.json` entry, but they must exist in `.claude/hooks/` or the importing hook dies at load. `globSync("*.js")` copies them on init and update.
 
+### Subpath exports (admin-ui-phase-progress)
+
+Three of these modules are published for consumers — the admin UI first among them — so that a reader outside the package imports the parser rather than copying it:
+
+| Subpath | Module | What it is for |
+|---|---|---|
+| `@infinitedusky/indusk-mcp/impl-headings` | `lib/impl-headings.ts` | The phase and gate heading vocabulary: `parsePhaseHeading`, `PhaseRef {kind, number}`, `parsePhaseRef`, `fencedLineMask`, `phaseSequence` |
+| `@infinitedusky/indusk-mcp/impl-parser` | `lib/impl-parser-core.ts` | `parseImplString` → `ImplPhase {kind, number, ordinal, name, gates}`, `getPhaseCompletion` (its record carries `ref` and `ordinal`), `findPhase(parsed, ref)`. The core has no `node:fs` (the admin's browser components import it); `lib/impl-parser.ts` re-exports it and adds `resolveImplPath` / `parseImpl`, the two that touch disk |
+| `@infinitedusky/indusk-mcp/shape/boundary-record` | `lib/shape/boundary-record.ts` | `PhaseBoundaryRecord`, `findPhaseStart`, `boundaryMatches` — the record type and the two pure questions asked of it, with no `node:fs`, so the admin's browser components can apply the absent-kind rule. `shape/boundary` re-exports it and adds the read and write |
+| `@infinitedusky/indusk-mcp/worktree/repos` | `lib/worktree/repos.ts` | `isWorkbench` and the declared-repos readers; the admin's project list labels `workbench` / `normal-mode` through it rather than inferring shape from layout |
+| `@infinitedusky/indusk-mcp/config` | `lib/config.ts` | `readConfig(projectRoot)` and the `InduskConfig` type — the one parser of `.indusk/config.json`. Added so the admin's `readAdminRefreshMs` reads through it rather than parsing the file a second time (admin-ui-phase-progress cleanup, A37) |
+| `@infinitedusky/indusk-mcp/lifecycle` | `lib/lifecycle.ts` | The one lifecycle definition — `PLAN_POSITIONS`, `DOCUMENT_POSITIONS`, `RITUAL_ORDER`, `PHASE_ACTIVITIES`, `GATE_STAGES` — and the two derivations that read it. See the [plan lifecycle guide](/guide/plan-lifecycle#the-lifecycle-as-defined) |
+
+The admin's old `lib/phases.ts` carried a private `### Phase N` regex that could not see `Test Phase N` for a month. A single-definition test (`lifecycle-single-definition.test.ts`) asserts no phase-heading regex exists outside `impl-headings.ts` and no second `PLAN_POSITIONS` or `GATE_STAGES` exists anywhere.
+
 ::: warning Why the parser is shared rather than copied
 `check-gates.js` and `validate-impl-structure.js` each carried their own trajectory-row parser until they were unified, and the copies had already diverged in two ways at once. One kept a local `Phase N` regex, so when `Test Phase N` became a legal cell it read every row as `NaN` and Gate A matched nothing — silently. The other never produced a `state` field at all, which surfaced the moment the two were merged. A duplicated parser does not announce itself when it falls behind; it just stops enforcing. A structural test now asserts there is exactly **one** definition under `hooks/`, because no behavioural test can catch a divergence that has not happened yet.
 :::

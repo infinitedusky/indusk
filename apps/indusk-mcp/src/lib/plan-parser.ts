@@ -2,6 +2,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "./config.js";
+import { fencedLineMask } from "./impl-headings.js";
+import { DOCUMENT_POSITIONS } from "./lifecycle.js";
 import {
 	leastAdvancedPaperStatus,
 	type PaperSummary,
@@ -29,6 +31,7 @@ export interface PlanFrontmatter {
 export type PlanStage =
 	| "research"
 	| "brief"
+	| "test-plan"
 	| "adr"
 	| "impl"
 	| "retrospective"
@@ -51,13 +54,9 @@ export interface PlanSummary {
 	parseError?: { file: string; message: string };
 }
 
-const STAGE_ORDER: Exclude<PlanStage, "unknown" | "malformed">[] = [
-	"research",
-	"brief",
-	"adr",
-	"impl",
-	"retrospective",
-];
+// The document stages, in order, are the lifecycle's `DOCUMENT_POSITIONS`
+// (`lib/lifecycle.ts`) — one definition, read here and by the admin. It
+// includes `test-plan`, which the private order this replaced walked past.
 
 interface ParseFrontmatterResult {
 	frontmatter: PlanFrontmatter | null;
@@ -135,8 +134,8 @@ function determineStage(
 	parseError?: { file: string; message: string };
 } {
 	// Walk stages in reverse to find the most advanced document
-	for (let i = STAGE_ORDER.length - 1; i >= 0; i--) {
-		const stage = STAGE_ORDER[i];
+	for (let i = DOCUMENT_POSITIONS.length - 1; i >= 0; i--) {
+		const stage = DOCUMENT_POSITIONS[i];
 		const file = `${stage}.md`;
 		if (docs.includes(file)) {
 			const result = parseFrontmatter(join(planDir, file));
@@ -163,10 +162,10 @@ function determineNextStep(
 	}
 	if (stage === "unknown") return "Create a brief";
 
-	const idx = STAGE_ORDER.indexOf(stage as Exclude<PlanStage, "unknown" | "malformed">);
+	const idx = DOCUMENT_POSITIONS.indexOf(stage as (typeof DOCUMENT_POSITIONS)[number]);
 
 	if (stageStatus === "completed" || stageStatus === "accepted") {
-		const next = STAGE_ORDER[idx + 1];
+		const next = DOCUMENT_POSITIONS[idx + 1];
 		if (next) return `Create ${next}`;
 		return "Done";
 	}
@@ -217,6 +216,13 @@ export function parsePlan(planDir: string): PlanSummary {
  * can never subtract one.
  */
 export interface PlanDeclarations {
+	/**
+	 * The root master itself, when `.indusk/planning/master.md` exists: its
+	 * title (frontmatter `title`, else the first `# ` heading, else "master").
+	 * The sidebar draws one node for it with the parents and the unclaimed
+	 * plans beneath (admin-ui-phase-progress).
+	 */
+	root?: { name: string; title: string };
 	/** Folder names declared as parent plans in the root master. */
 	parents: string[];
 	/** Top-level display order from the root master. Unlisted plans follow. */
@@ -278,9 +284,13 @@ export function readPlanDeclarations(planningDir: string): PlanDeclarations {
 	const empty: PlanDeclarations = { parents: [], roadmap: [], subplans: {} };
 	if (!existsSync(planningDir)) return empty;
 
-	const rootData = readMasterFrontmatter(join(planningDir, "master.md"));
+	const rootPath = join(planningDir, "master.md");
+	const rootData = readMasterFrontmatter(rootPath);
 	const parents = rootData ? stringArray(rootData, "parents") : [];
 	const roadmap = rootData ? stringArray(rootData, "roadmap") : [];
+	const root = existsSync(rootPath)
+		? { name: "master", title: rootTitle(rootPath, rootData) }
+		: undefined;
 
 	// A folder's own master.md is what makes it a parent in practice, so read
 	// every candidate — those named in `parents:` plus any plan carrying a
@@ -304,7 +314,7 @@ export function readPlanDeclarations(planningDir: string): PlanDeclarations {
 		subplans[parent] = stringArray(data, "subplans");
 	}
 
-	return { parents, roadmap, subplans };
+	return { ...(root ? { root } : {}), parents, roadmap, subplans };
 }
 
 export function parseAllPlans(projectRoot: string): PlanSummary[] {
@@ -336,4 +346,32 @@ export function parseAllPlans(projectRoot: string): PlanSummary[] {
 			}
 		})
 		.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * The root master's display title: frontmatter `title`, else the first `# `
+ * heading of the document BODY, else "master".
+ *
+ * The body, not the raw file (A28): the real root master carries `# …` YAML
+ * comment lines inside its frontmatter, and a raw-file match titled the whole
+ * sidebar with the first of them. Fenced code is masked for the same reason —
+ * a shell comment is not a heading.
+ */
+function rootTitle(masterPath: string, data: Record<string, unknown> | null): string {
+	const declared = data?.title;
+	if (typeof declared === "string" && declared.trim() !== "") return declared.trim();
+	try {
+		const raw = readFileSync(masterPath, "utf-8");
+		const body = raw.startsWith("---") ? matter(raw).content : raw;
+		const lines = body.split("\n");
+		const fenced = fencedLineMask(lines);
+		for (const [i, line] of lines.entries()) {
+			if (fenced[i]) continue;
+			const heading = line.match(/^#\s+(.+)$/);
+			if (heading) return heading[1].trim();
+		}
+	} catch {
+		// unreadable — fall through to the folder-ish default
+	}
+	return "master";
 }

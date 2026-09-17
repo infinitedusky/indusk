@@ -1,0 +1,7 @@
+# A corpus-parity snapshot must exclude the plan being executed — otherwise every status change of that plan re-baselines a test meant to pin the reader
+
+`lifecycle-parity.test.ts` (admin-ui-phase-progress, A13) snapshots `parsePlan` + `checkRetrospectiveReadiness` output over every plan folder on disk to prove a reader refactor behaviour-preserving. It worked for the refactor: the one expected change (`test-plan` joining the stage order) showed up as six archived plans moving, named by hand.
+
+But the corpus contains the plan that is executing the refactor. So the snapshot moved every time that plan's own state moved — impl `completed`, back to `in-progress` when falsification was authored, rows going `passing`, `completed` again, `in-progress` for cleanup, `completed` once more: six hand re-baselines in one close-out, none of them about the reader. Each re-baseline is a moment where a real reader regression could be waved through as "the plan moved again".
+
+Rule: a snapshot test over a corpus must exclude whatever the current work mutates — snapshot the archive only, or skip the folder whose impl is not terminal, or key the corpus to a fixed commit. Decide this when the row is authored, because the churn is predictable from the design and becomes visible only at the first status flip. The same applies to any "over every X on disk" assertion where the test's own plan is one of the X.

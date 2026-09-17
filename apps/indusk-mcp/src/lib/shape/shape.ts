@@ -1,3 +1,4 @@
+import { type PhaseAddress, phaseLabel, toPhaseRef } from "../impl-headings.js";
 import { parseImplString } from "../impl-parser.js";
 import { changedFilesForPhase } from "./changed.js";
 import { appendItemToPhase } from "./findings.js";
@@ -26,7 +27,7 @@ const UNCHECKED_AT_ANY_DEPTH = /^\s*-\s+\[ \]/;
 const CHECKBOX_AT_ANY_DEPTH = /^\s*-\s+\[[ x]\]/;
 
 /** The lines of phase N's Verification gate, or null when it has none. */
-function verificationGateLines(implBody: string, phase: number): string[] | null {
+function verificationGateLines(implBody: string, phase: PhaseAddress): string[] | null {
 	const lines = implBody.split("\n");
 	const start = findHeadingIndex(lines, gateHeading(phase, "Verification"));
 	if (start === -1) return null;
@@ -52,11 +53,15 @@ function verificationGateLines(implBody: string, phase: number): string[] | null
  * already treats nested unchecked items as blocking, so this also stops the two
  * rituals disagreeing about what "done" means.
  */
-function verificationIsGreen(implBody: string, phase: number): boolean {
+function verificationIsGreen(implBody: string, phase: PhaseAddress): boolean {
 	const parsed = parseImplString(implBody);
-	if (!parsed.phases.some((p) => p.number === phase)) {
+	const ref = toPhaseRef(phase);
+	// Kind AND number: a bare-number guard let a test-phase-only impl pass here
+	// and then fail the gate lookup below, reading as "not green" instead of
+	// "no such phase".
+	if (!parsed.phases.some((p) => p.kind === ref.kind && p.number === ref.number)) {
 		throw new Error(
-			`Cannot prepare a Shape review for Phase ${phase} — this impl has no such phase.`,
+			`Cannot prepare a Shape review for ${phaseLabel(ref)} — this impl has no such phase.`,
 		);
 	}
 
@@ -77,13 +82,13 @@ function verificationIsGreen(implBody: string, phase: number): boolean {
 export async function prepareShapeReview(options: {
 	root: string;
 	plan: string;
-	phase: number;
+	phase: PhaseAddress;
 	implBody: string;
 }): Promise<ShapeOutcome> {
 	if (!verificationIsGreen(options.implBody, options.phase)) {
 		return {
 			kind: "skipped",
-			reason: `Phase ${options.phase}'s verification is not green. Shape does not review code whose correctness is unproven — finish the Verification gate first.`,
+			reason: `${phaseLabel(options.phase)}'s verification is not green. Shape does not review code whose correctness is unproven — finish the Verification gate first.`,
 		};
 	}
 
@@ -96,7 +101,7 @@ export async function prepareShapeReview(options: {
 	if (files.length === 0) {
 		return {
 			kind: "skipped",
-			reason: `Phase ${options.phase} changed no code files — no code surface to review. (InDusk machine state and plan documents are excluded by design, so a docs-only or planning-only phase lands here.)`,
+			reason: `${phaseLabel(options.phase)} changed no code files — no code surface to review. (InDusk machine state and plan documents are excluded by design, so a docs-only or planning-only phase lands here.)`,
 		};
 	}
 
@@ -111,7 +116,7 @@ export async function prepareShapeReview(options: {
  * must never be is *absent* — silence cannot be told apart from never having
  * run, which is the failure this whole outcome vocabulary exists to prevent.
  */
-export function recordReviewedNothingFound(implBody: string, phase: number): string {
+export function recordReviewedNothingFound(implBody: string, phase: PhaseAddress): string {
 	return appendItemToPhase(
 		implBody,
 		phase,
@@ -131,7 +136,7 @@ export function recordReviewedNothingFound(implBody: string, phase: number): str
  * about this phase. The reason carries whether it was unproven correctness or an
  * absent code surface.
  */
-export function recordSkipped(implBody: string, phase: number, reason: string): string {
+export function recordSkipped(implBody: string, phase: PhaseAddress, reason: string): string {
 	return appendItemToPhase(implBody, phase, `- [x] Shape — skipped: ${reason}`);
 }
 
@@ -144,7 +149,7 @@ export function recordSkipped(implBody: string, phase: number, reason: string): 
  */
 export function recordLeftAsIs(
 	implBody: string,
-	phase: number,
+	phase: PhaseAddress,
 	file: string,
 	reason: string,
 ): string {

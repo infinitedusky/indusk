@@ -24,6 +24,7 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
+import { openSection } from "@/__tests__/helpers/sections";
 import { PlanDetail } from "./PlanDetail";
 
 // CollapsibleSection persists state to localStorage (1.27.7+). Clear between
@@ -47,6 +48,8 @@ function mockTrajectory(): Trajectory {
         asserts: "Dropdown renders in header",
         writableAt: 1,
         passesAt: 1,
+        writableAtKind: "build",
+        passesAtKind: "build",
         state: "passing",
       },
       {
@@ -54,6 +57,8 @@ function mockTrajectory(): Trajectory {
         asserts: "Selecting an option re-orders the rows",
         writableAt: 1,
         passesAt: 2,
+        writableAtKind: "build",
+        passesAtKind: "build",
         state: "written",
       },
     ],
@@ -140,6 +145,7 @@ describe("PlanDetail — falsification section (T10)", () => {
       },
     });
     const { container } = await render(<PlanDetail plan={plan} />);
+    await openSection(container, "falsification-section");
     const section = container.querySelector(
       '[data-testid="falsification-section"]',
     );
@@ -173,6 +179,7 @@ describe("PlanDetail — falsification section (T10)", () => {
   it("T10 — renders 'no falsification ritual run' when the log is missing", async () => {
     const plan = mockPlan({ falsification: undefined });
     const { container } = await render(<PlanDetail plan={plan} />);
+    await openSection(container, "falsification-section");
     const empty = container.querySelector(
       '[data-testid="falsification-empty"]',
     );

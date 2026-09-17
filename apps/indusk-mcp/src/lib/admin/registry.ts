@@ -164,3 +164,33 @@ export function touchProject(name: string): void {
 	entry.lastSeenAt = new Date().toISOString();
 	writeRegistry(reg);
 }
+
+export interface PruneResult {
+	removed: ProjectEntry[];
+	kept: ProjectEntry[];
+	/** The backup written before the rewrite; absent on a dry run or when nothing was removed. */
+	backup?: string;
+}
+
+/**
+ * Drop every entry whose path no longer exists (admin-ui-phase-progress).
+ *
+ * The registry was never pruned, and four tests that spawned `init` without
+ * `INDUSK_HOME` registered a temp dir each run — 1,577 dead entries out of
+ * 1,588. A dry run only reports. A real run writes `projects.json.bak.<ISO>`
+ * beside the registry first, the way the corrupt-file quarantine does, then
+ * rewrites through the same temp-file-and-rename path. Nothing live is
+ * touched: liveness is `existsSync(path)`, the same check `validateProject`
+ * makes.
+ */
+export function pruneRegistry(options: { dryRun?: boolean } = {}): PruneResult {
+	const reg = readRegistry();
+	const removed = reg.projects.filter((p) => !existsSync(p.path));
+	const kept = reg.projects.filter((p) => existsSync(p.path));
+	if (options.dryRun || removed.length === 0) return { removed, kept };
+	const path = registryPath();
+	const backup = `${path}.bak.${new Date().toISOString().replace(/[:.]/g, "-")}`;
+	writeFileSync(backup, readFileSync(path, "utf-8"));
+	writeRegistry({ ...reg, projects: kept });
+	return { removed, kept, backup };
+}
