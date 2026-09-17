@@ -20,6 +20,7 @@ subplans:
   - dawn-agents
   - day-probe
   - day-pr-review
+  - indusk-release
 ---
 
 # Day — Master Plan
@@ -59,6 +60,12 @@ Open this file to answer "where are we." The shape itself lives in
 | 8 | **Any executor** | 10 | not started; absorbs `cursor-support` (archived 2026-09-14): Cursor as an executor | Dawn 7's own: a phase dispatched to a non-Claude agent is verified and its verdict recorded | [dawn-agents](../indusk-v2-dawn/master.md), Dawn 7 |
 | 9 | **Probe** | 8 | not started | A reviewer's question becomes an executed scenario with a verdict; green accretes as a new row | `day-probe` |
 | 10 | **The bundle and the reviewer** | 1–10 | not started; carries `documentation-phase-gate`'s question (archived 2026-09-14): where docs land is decided by the bundle, not per phase. **Carries the gate ledger** (2026-09-15, from `hook-cwd-independence`'s cut): every hook invocation appends one line to `.indusk/gates.jsonl` (hook, file judged, verdict, exit code, time) through one `_gate-ledger.js` hook module with a `lib/gates/ledger.ts` twin, registered with every "what changed" detector and given `merge=union` in the commit that first writes it; the Process record (artifact 10 of the shape) is its reader, so it is built when the reader is | The shape's own acceptance test: one plant per row class, all caught, approval reached from the bundle alone | `day-pr-review` |
+
+**Small steps** — not in the sequence, runnable whenever a gap opens:
+
+| # | Item | Status | Acceptance test | Sub-plan |
+|---|------|--------|-----------------|----------|
+| S1 | **A release names its plans** | brief draft 2026-09-17 (from the 1.50.0 release, which took four attempts) | `indusk release minor` on a trunk with landed plans writes one release commit naming them and a dated changelog heading with nothing edited by hand; each named plan's retrospective gains "Released in"; `check_health` names landed-and-unreleased plans | [indusk-release](../indusk-release/brief.md) |
 
 ## Order
 

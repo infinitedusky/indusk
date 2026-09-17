@@ -154,7 +154,7 @@ lesson title, or a chat log.
   in flight, so every status change of that plan re-baselines a test meant to
   pin the reader — six hand re-baselines in one close-out. Snapshot the
   archive only, or skip the folder whose impl is not terminal.
-- **Small, not a step** (2026-09-15): `check_health` should report the three-way version state — installed, published (`lib/version-check.ts` already fetches and caches it), and the working tree — plus `git rev-list <release-commit>..HEAD` so every catchup states what is unpublished. The rule and the refusal already exist (CLAUDE.md; `scripts/release-guard.sh`); this makes the fact visible without anyone having to ask for it.
+- **Small, not a step** (2026-09-15): `check_health` should report the three-way version state — installed, published (`lib/version-check.ts` already fetches and caches it), and the working tree — plus `git rev-list <release-commit>..HEAD` so every catchup states what is unpublished. **Folded 2026-09-17 into [indusk-release](indusk-release/brief.md)** (Day small step S1): a release names the plans it carries, computed from the `Merge plan/*` commits since the last `chore(release)`; the three-way state becomes "N plans landed and unreleased".
 - Writing-skill's plain-language invocation check (skill discovery is per
   project, so it runs on the trunk): once, in a fresh session, five minutes.
   Not a step.
