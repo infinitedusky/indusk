@@ -1,0 +1,11 @@
+# Never state a publish, upgrade, update or other external-system fact from memory — read it in the same turn, and make the commands that change it leave a mark an agent reads
+
+Twice in three days an agent asserted the release state of `@infinitedusky/indusk-mcp` and was wrong in opposite directions: on 2026-09-15 it called a minutes-old publish stale (inferring from a version number instead of reading `git rev-list <release-commit>..HEAD`), and on 2026-09-17 it told the operator that 1.50.0 "still needs your one-time password to publish" an hour after the operator had run `pnpm release`, `indusk upgrade` and `indusk update`. The second time the agent's last observation was a failed publish attempt, and it carried that observation forward as the current state for an hour of conversation.
+
+Two failures stacked, and both need fixing:
+
+1. **Agent side.** A fact about an external system (a registry, an installed binary, a deployed service, another session's tree) is only as current as the last read. Before stating it, read it in the same turn — `npm view <pkg> version`, `indusk --version`, `git status`, the health line — never from an earlier turn's result, and never from a failed attempt of your own. A prose rule for one direction ("don't call a publish stale") did not transfer to the other ("don't call it unpublished"); the rule has to be about *reading*, not about the answer.
+
+2. **System side.** Commands a human runs must leave a mark where agents look. `pnpm release`, `indusk upgrade` and `indusk update` left nothing: no file an agent reads at catchup changed. The fix was `lib/version-state.ts` + a `check_health` line (installed · published · what `update` last applied · release commit and packaged commits since), `indusk update` recording `indusk.version` in `.indusk/config.json`, and the release script appending the publish to `.indusk/current.md`'s shared region. A recorded need ("check_health should report the three-way state", written twice) is not a check; it stayed unbuilt for two days while the failure repeated.
+
+Corollary: don't start a command you cannot finish (an OTP prompt) and then treat its failure as the state of the world. Run what you can verify, hand off the rest, and re-read before speaking.

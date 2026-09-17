@@ -65,5 +65,9 @@
 				"index": "writing/index.md"
 			}
 		]
+	},
+	"indusk": {
+		"version": "1.50.0",
+		"updated_at": "2026-09-17T18:59:56.597Z"
 	}
 }
