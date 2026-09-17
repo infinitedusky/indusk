@@ -66,7 +66,7 @@ commit and refuse; three are PostToolUse and act after the fact:
 | `validate-impl-structure` | an implementation missing required sections |
 | `check-gates` | closing a phase whose gates or trajectory rows are open |
 | `claude-md-budget` | a CLAUDE.md write past the 60 KB ceiling |
-| `trunk-guard` | code edited or committed on `main` — an Edit/Write, or a `git commit` whose staged paths, fall outside `.indusk/`, `.claude/lessons/`, settings, `CLAUDE.md` and `AGENTS.md` while the repository is on a protected branch |
+| `trunk-guard` | code edited or committed on `main` — an Edit/Write, or a `git commit` whose paths (staged, `-a`/`-am`, or named as pathspecs), fall outside `.indusk/`, `.claude/lessons/`, settings, `CLAUDE.md` and `AGENTS.md` while the repository is on a protected branch. The commit gate reads `git -C … commit`, a preceding `cd`, `bash -c "…"`, `$(…)` and backticks; a script that commits inside itself is out of its sight |
 | `eval-trigger` | *(PostToolUse)* — nothing; on every `git commit` it spawns the evaluator that scores the diff, and in a multi-repo workbench it refuses to guess which repo the commit belongs to |
 | `workbench-sync` | *(PostToolUse)* — nothing; commits workbench context after edits |
 | `gate-reminder` | *(PostToolUse, advisory)* — nothing; when an edit closes a phase it puts the next phase's tests-to-author in front of the agent as additional context |
