@@ -112,9 +112,10 @@ lesson title, or a chat log.
 - [indusk-makeover](archive/indusk-makeover/brief.md) — closed 2026-09-14:
   retrospective written 53 days after the impl completed, archived; its two
   deferred rows now say what actually holds them.
-- [admin-ui-phase-progress](admin-ui-phase-progress/brief.md) — Day step 3;
-  absorbed `project-list-workbenches-only` (archived) as one phase. **Impl
-  complete 2026-09-16** (27 rows green); close-out rituals pending.
+- [admin-ui-phase-progress](archive/admin-ui-phase-progress/brief.md) — Day
+  step 3; absorbed `project-list-workbenches-only` (archived) as one phase.
+  **Closed 2026-09-17** (37 rows green, falsified 6, cleaned, retrospective,
+  archived).
 - **Shipped, archived**: `work-autopilot` (the work skill's autopilot mode),
   `compaction-skill` (`/compact-context`), `falsify-phase-authoring` (1.27.4),
   `local-telemetry`, `doppler-extension` — residue named per folder.
@@ -130,7 +131,15 @@ lesson title, or a chat log.
   as of 2026-09-14, the code deltas dropped as superseded (tips kept as
   `salvage/*` tags).
 - The admin-UI scorecard-loads-only-after-a-prompt issue (Sandy, 2026-08-31)
-  is carried by admin-ui-phase-progress as of 2026-09-14.
+  was carried by admin-ui-phase-progress: the scorecards page now says why it
+  is empty (no `.indusk/eval/` yet — the first evaluated commit creates it,
+  A24) rather than showing nothing. If the symptom recurs with the directory
+  present, it is a new issue.
+- **Small, not a step** (2026-09-17, from admin-ui-phase-progress's close):
+  `lifecycle-parity.test.ts` snapshots every plan folder, including the plan
+  in flight, so every status change of that plan re-baselines a test meant to
+  pin the reader — six hand re-baselines in one close-out. Snapshot the
+  archive only, or skip the folder whose impl is not terminal.
 - **Small, not a step** (2026-09-15): `check_health` should report the three-way version state — installed, published (`lib/version-check.ts` already fetches and caches it), and the working tree — plus `git rev-list <release-commit>..HEAD` so every catchup states what is unpublished. The rule and the refusal already exist (CLAUDE.md; `scripts/release-guard.sh`); this makes the fact visible without anyone having to ask for it.
 - Writing-skill's plain-language invocation check (skill discovery is per
   project, so it runs on the trunk): once, in a fresh session, five minutes.

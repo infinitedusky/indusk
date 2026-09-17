@@ -99,7 +99,7 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 - **U2 — the polling interval feels live without loading the daemon**
   - reason: depends on machine and habit
   - would require: two weeks of use
-  - mitigation: `admin.refresh_ms` config with documented default 5000 and minimum 1000; a dated note in `.indusk/current.md` Project (shared) to revisit on 2026-09-30
+  - mitigation: scheduled review — Sandy reviews on 2026-09-30, after two weeks of use, whether the 5000 ms default feels live or loads the daemon (the dated note in `.indusk/current.md` Project (shared) is the reminder); `admin.refresh_ms` (documented default 5000, minimum 1000) is the knob the review turns
 
 ## Checklist
 
