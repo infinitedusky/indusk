@@ -115,6 +115,8 @@ These are rules learned from past mistakes — not suggestions. Internalize the 
 
 Call `check_health`. It runs every enabled extension's health checks. If unhealthy, tell the user what's down and how to fix it.
 
+Its `indusk/version` line is the three-way version state — installed, published, what `indusk update` last applied here, and on the monorepo the release commit with the packaged commits since. **Repeat it in the summary verbatim, and never state a publish, upgrade or update fact from memory** — read this line, or run `npm view @infinitedusky/indusk-mcp version`, in the same turn as the statement. On 2026-09-17 an agent reported a version unpublished an hour after the operator had published, upgraded and updated, because it repeated an earlier observation instead of reading.
+
 ### 7. Project Context — already loaded, do NOT re-fetch
 
 CLAUDE.md is auto-injected into every session by Claude Code. **Do NOT call `get_context` and do NOT `Read` CLAUDE.md during catchup** — that duplicates content already in your context window (the single biggest line item in the pre-makeover ~55k catchup). You already have Architecture, Conventions, Key Decisions, Known Gotchas, and Current State. If (and only if) your context was compacted and the injected copy is genuinely absent, read it then.
@@ -153,6 +155,7 @@ After completing all steps, present a brief summary to the user:
 - Lessons: N titles skimmed
 - Sweep: [N sections sweepable (dry-run) / clean]
 - Infrastructure: [healthy / issues]
+- Version: [the `indusk/version` line from `check_health`, verbatim]
 - Skills: N installed [list names]
 - Extensions: N enabled [list names]
 - Active plans: [list with current phase] (M inactive omitted)
