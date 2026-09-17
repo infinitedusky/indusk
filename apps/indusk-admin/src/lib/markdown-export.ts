@@ -2,13 +2,14 @@ import type {
   HypothesisEntry,
   TerminatorEntry,
 } from "@infinitedusky/indusk-mcp/falsification/log";
+import type { RitualWord } from "@infinitedusky/indusk-mcp/lifecycle";
 import type { TrajectoryRow } from "@infinitedusky/indusk-mcp/trajectory/parser";
+import { phaseTitle, RITUAL_COPY } from "@/components/bars/labels";
 import {
   type ChecklistItem,
   extractPhases,
   type Phase,
   phaseItems,
-  phaseTitle,
   splitPhasesAroundFalsification,
 } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
@@ -34,7 +35,7 @@ export function trajectoryTableMarkdown(rows: TrajectoryRow[]): string {
   const divider = "| --- | --- | --- | --- | --- |";
   const body = rows.map(
     (row) =>
-      `| ${row.id} | ${row.asserts} | Phase ${row.writableAt} | Phase ${row.passesAt} | ${row.state} |`,
+      `| ${row.id} | ${row.asserts} | ${phaseTitle({ kind: row.writableAtKind, number: row.writableAt })} | ${phaseTitle({ kind: row.passesAtKind, number: row.passesAt })} | ${row.state} |`,
   );
   return [header, divider, ...body].join("\n");
 }
@@ -83,15 +84,19 @@ export function falsificationLogMarkdown(
   );
 }
 
-/** Falsification rendering for the phase-authoring flow (1.27.4+). */
-export function falsificationPhaseMarkdown(phase: Phase): string {
-  const heading = `Falsification${phase.title ? ` (${phaseTitle(phase)}: ${phase.title})` : ""}`;
-  const checklistItems = phaseItems(phase);
+/**
+ * A ritual phase (Falsification or Cleanup) under the phase-authoring flow —
+ * the same shape `RitualPhaseSection` renders, with the same headings from
+ * `RITUAL_COPY`, so the copy button and the page agree (cleanup, A35).
+ */
+export function ritualPhaseMarkdown(ritual: RitualWord, phase: Phase): string {
+  const copy = RITUAL_COPY[ritual];
+  const heading = `${copy.title}${phase.title ? ` (${phaseTitle(phase)}: ${phase.title})` : ""}`;
   const table = trajectoryTableMarkdown(phase.trajectoryRows);
-  const checklist = checklistMarkdown(checklistItems);
+  const checklist = checklistMarkdown(phaseItems(phase));
   const parts = [
-    table && `### Hypotheses\n\n${table}`,
-    checklist && `### Fix items\n\n${checklist}`,
+    table && `### ${copy.rowsHeading}\n\n${table}`,
+    checklist && `### ${copy.itemsHeading}\n\n${checklist}`,
   ].filter(Boolean);
   return sectionMarkdown(heading, parts.join("\n\n"));
 }
@@ -119,10 +124,11 @@ export function planMarkdown(plan: Plan): string {
     for (const phase of split.pre) sections.push(phaseMarkdown(phase));
     sections.push(
       split.falsification
-        ? falsificationPhaseMarkdown(split.falsification)
+        ? ritualPhaseMarkdown("falsification", split.falsification)
         : falsificationLogMarkdown(plan.falsification),
     );
-    if (split.cleanup) sections.push(phaseMarkdown(split.cleanup));
+    if (split.cleanup)
+      sections.push(ritualPhaseMarkdown("cleanup", split.cleanup));
     for (const phase of split.post) sections.push(phaseMarkdown(phase));
   } else {
     sections.push(falsificationLogMarkdown(plan.falsification));

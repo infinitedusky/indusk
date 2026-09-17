@@ -1,3 +1,4 @@
+import type { Trajectory } from "@infinitedusky/indusk-mcp/trajectory/parser";
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { openSection } from "@/__tests__/helpers/sections";
@@ -13,17 +14,22 @@ import { RitualPhaseSection } from "./RitualPhaseSection";
  */
 
 function phaseFrom(markdown: string) {
-  const [phase] = extractPhases(markdown, [
-    {
-      id: "A9",
-      asserts: "a claim under test",
-      writableAt: 3,
-      passesAt: 3,
-      writableAtKind: "build",
-      passesAtKind: "build",
-      state: "passing",
-    },
-  ]);
+  const trajectory: Trajectory = {
+    rows: [
+      {
+        id: "A9",
+        asserts: "a claim under test",
+        writableAt: 3,
+        passesAt: 3,
+        writableAtKind: "build",
+        passesAtKind: "build",
+        state: "passing",
+      },
+    ],
+    deferred: [],
+    present: true,
+  };
+  const [phase] = extractPhases(markdown, trajectory);
   return phase;
 }
 

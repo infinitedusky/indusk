@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   checklistMarkdown,
   falsificationLogMarkdown,
-  falsificationPhaseMarkdown,
   phaseMarkdown,
   planMarkdown,
+  ritualPhaseMarkdown,
   sectionMarkdown,
   trajectoryTableMarkdown,
 } from "./markdown-export";
@@ -127,7 +127,7 @@ describe("falsificationLogMarkdown", () => {
   });
 });
 
-describe("falsificationPhaseMarkdown", () => {
+describe("ritualPhaseMarkdown", () => {
   it("renders hypotheses table and fix items from a falsification phase", () => {
     const [phase] = extractPhases(
       "### Phase 3: Falsification — hunt\n- [x] fixed one\n- [ ] fix two",
@@ -143,7 +143,7 @@ describe("falsificationPhaseMarkdown", () => {
         },
       ]),
     );
-    const md = falsificationPhaseMarkdown(phase);
+    const md = ritualPhaseMarkdown("falsification", phase);
     expect(
       md.startsWith("## Falsification (Phase 3: Falsification — hunt)"),
     ).toBe(true);
