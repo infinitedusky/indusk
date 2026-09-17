@@ -1,7 +1,7 @@
 ---
 title: "Admin UI Phase Progress — Implementation"
 date: 2026-09-16
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -85,6 +85,10 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 | A31 | A CLI spawned through the shared test helper with no explicit `INDUSK_HOME` writes no registry outside a temp directory even when the developer's shell exports `INDUSK_HOME`; the leak scan counts `setup` (which delegates to `init`) among the registering commands | Build Phase 8 | Build Phase 8 | passing | apps/indusk-mcp/src/__tests__/helpers/cli.test.ts, apps/indusk-mcp/src/__tests__/registry-leak-scan.test.ts |
 | A32 | A phase with no implementation items whose gates are all checked reports `closed`; one with no implementation items and an unchecked gate reports that gate's verb — never "implementing 0 of 0" | Build Phase 8 | Build Phase 8 | passing | apps/indusk-mcp/src/lib/lifecycle-derive.test.ts |
 | A33 | An `in-progress` impl with every item checked renders its active plan-bar segment with a message ("every item checked — impl status is still in-progress"), not an unlabelled active segment | Build Phase 8 | Build Phase 8 | passing | apps/indusk-mcp/src/lib/lifecycle-derive.test.ts |
+| A34 | One `TrajectoryRowsTable` renders a phase's rows in both forms — three columns for a ritual section, five (with Writable at / Passes at) for the Implementation Plan — and the Falsification, Cleanup and Phases sections all render their rows through it | Build Phase 9 | Build Phase 9 | planned | apps/indusk-admin/src/components/phases/TrajectoryRowsTable.test.tsx |
+| A35 | The Falsification and Cleanup sections are two configurations of one `RitualPhaseSection` — same test ids, headings, complete badge and copied markdown as before — and one `ritualPhaseMarkdown` replaces the two exporters | Build Phase 9 | Build Phase 9 | planned | apps/indusk-admin/src/components/phases/RitualPhaseSection.test.tsx |
+| A36 | The admin has one phase spelling: the Implementation Plan's Writable at / Passes at cells read `Phase 4` / `Test Phase 1` like every heading, never `Build Phase 4` | Build Phase 9 | Build Phase 9 | planned | apps/indusk-admin/src/components/PhasesSection.test.tsx |
+| A37 | `readAdminRefreshMs` reads `.indusk/config.json` through the package's `readConfig` (a `./config` subpath), so a malformed file yields the default and no second JSON parse of the config exists in the admin | Build Phase 9 | Build Phase 9 | planned | apps/indusk-admin/src/lib/project-reader.test.ts |
 
 ### Deferred Verification
 
@@ -205,6 +209,10 @@ stage renders it, pinned by a test. Per `adr.md` (accepted 2026-09-16), D1–D10
 #### Deferred to Build Phase 8
 
 - **A28–A33** — falsification hypotheses (`/falsify`, 2026-09-16), formed by reading the attested code after Build Phase 7 closed; each targets a specific line and could not have been written before the code existed. Authored red in the phase that fixes them, which is the ritual's shape: A28 against `rootTitle`'s raw-file heading match (`plan-parser.ts`), A29/A32/A33 against `resolvePosition` and `derivePhaseActivity` (`lifecycle.ts`), A30 against `recordPhaseStart`'s unvalidated append (`shape/boundary.ts`), A31 against `helpers/cli.ts`'s `runCli` spreading `process.env` and the scan's `init|update|ui` list.
+
+#### Deferred to Build Phase 9
+
+- **A34–A37** — cleanup rows (`/cleanup`, 2026-09-16): each tests a unit the Cleanup Phase creates (`TrajectoryRowsTable`, `RitualPhaseSection`, `lib/project-reader.ts`) or a spelling it unifies, so none can compile before that phase. A34/A35 are behaviour-parity rows — the existing Falsification, Cleanup and Phases section tests keep passing through the extracted units — plus one focused render each; A36 asserts the cell text the Phases section test already reads; A37 asserts the `./config` subpath resolves from the admin and a malformed config still yields the default.
 
 #### Regression Guards
 
