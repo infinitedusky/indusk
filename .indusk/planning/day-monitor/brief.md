@@ -103,6 +103,37 @@ on top of an OpenTelemetry reporting platform, as opposed to on OpenTelemetry?")
   call the same match-or-open-incident path. Both arrive at the same record.
 - Losing Dash0 loses the `deployed` source, not the loop.
 
+## How health appears in the admin
+
+4a draws the declared state and leaves every enforced chip hollow. This step
+fills the second axis, **observed health**, from the backend adapter:
+
+| Declared | Observed in the window | Chip | Meaning |
+|---|---|---|---|
+| enforced | upheld, seen | **green** | the system kept its word and we saw it |
+| enforced | violated | **red** | the signal; an incident is opened or matched |
+| enforced | not seen | hollow | no run exercised it in the window; unverified, never green |
+| known-violated | anything | amber | expected red, incident attached; not a surprise |
+| retired | ignored | grey | history |
+
+- **The Promises page** gains sorting by health, so red floats up, and
+  "violations in window" and "last seen 3m ago" per row.
+- **The bars roll up.** A plan's archived segment takes the worst health of
+  the promises it holds, so one red promise makes its owning plan visibly red
+  in the sidebar without opening it. The `monitor` segment is the one segment
+  where fill *is* time: it fills over the quiet window and the plan closes
+  when full; a violation resets it. The bar says so on that segment, as it
+  says "steps, not time" elsewhere.
+- **One object gets its own mark.** A red promise whose test is green at
+  head is the highest-information thing the page can show — the test was
+  insufficient — and gets a distinct badge ("test passed, system broke")
+  rather than being inferred from two colours side by side.
+- **Dynamic, honestly.** The plan page already polls through `LiveRefresh`.
+  Health is read server-side from the adapter, cached with a timestamp, never
+  blocking the render. If the backend is unreachable the chips go hollow with
+  "health unknown since 10:42" — never green, never stale-green. A page that
+  cannot see says so.
+
 ## What exists today, verified 2026-09-17
 
 None of it. Looper's incident file has nine entries, found by smoke runs and

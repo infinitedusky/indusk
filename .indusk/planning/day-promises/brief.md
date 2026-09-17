@@ -42,7 +42,9 @@ state rather than a verdict, and a link into the running system's telemetry
 - **Promise.** A sentence about behaviour the system must always uphold,
   written the way the test plan already requires claims to be written —
   observable, never implementation. It has a readable name, an owning plan,
-  one or more code sites, one or more tests.
+  a **domain** (a tag naming the part of the system it is about — seating,
+  archive, auth, gates — so the registry can be read by area and not only by
+  plan), one or more code sites, one or more tests.
 - **Promise state.** `enforced`: the system upholds it and a violation is a
   bug. `known-violated`: declared, and the current implementation provably
   cannot uphold it yet; this state carries the incident that proves it, so it
@@ -95,6 +97,39 @@ than sequential ids. The ADR settles the spelling and whether looper renames.
    change that names it. A change that touches a promise's code site without
    naming it gets the review verdict "touched, unacknowledged". That verdict is
    Day artifact 9; this step defines the rule and the data, step 10 renders it.
+
+## How promises appear in the admin
+
+**A project-wide Promises page** (Sandy, 2026-09-17: "project wide and
+sortable, by plan, by contract, by domain"), beside Scorecards in the
+sidebar: the registry as a table, one row per promise — chip, name,
+statement, domain, owner plan, code sites, tests, incidents — sortable and
+groupable by owner plan, by domain, by state, and (once 4b lands) by health.
+"By contract" and "by plan" are the same grouping today, because a contract
+is a plan's clauses; whether a contract ever gets a name of its own is an ADR
+question below.
+
+**A chip carries two axes, never one colour.** The *declared state* is what
+this step renders: `enforced` (filled), `known-violated` (amber, with its
+incident), `retired` (grey). The *observed health* — whether the running
+system upheld or broke the promise in the window — is 4b's axis, and until
+4b lands every enforced chip is drawn **hollow**: declared, not yet observed.
+Green must mean "seen upheld"; a chip that has seen nothing must not look
+green, or the page lies the way a test suite does. This is the same rule as
+Day's verdicts: unverified is a verdict, not a pass.
+
+**Per plan, a Promises section** beside Falsification and Cleanup, closed by
+default like every section: the promises this plan *holds* (as owner), and,
+for a plan in flight, the promises its change *touches* with what it does to
+each (keeps, revises, supersedes, retires) — Day artifact 9 as data; step 10
+renders the verdict. **On the bars**, the archived segment carries
+"holding N".
+
+**The pin.** Declared state (and 4b's health) are unions beside
+`PlanPosition` in the lifecycle module; the chip's label and colour maps are
+`satisfies Record<…>` over them, and the render-parity test names any member
+without a chip. Adding a state without drawing it fails the build, as adding
+a lifecycle stage does today.
 
 ## What exists today, verified 2026-09-17
 
@@ -150,6 +185,10 @@ the "touched, unacknowledged" data the review step will render.
 ## Open for the ADR
 
 - Where the registry lives (`.indusk/promises/` vs the docs tree looper used).
+- Whether a contract is only "a plan's clauses" or gets a name of its own
+  (so the Promises page can group by contract independently of plan) — the
+  answer decides whether the registry carries a `contract` field.
+- Whether `domain` is a free tag or a declared list per project.
 - Whether promotion at close is a question the retrospective asks or a
   property the test plan marks on the claim when it is written.
 - Looper's rename from E-N/F-N to readable names: now, or when it next opens.
