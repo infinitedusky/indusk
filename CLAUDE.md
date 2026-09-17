@@ -184,8 +184,8 @@ dusk/
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `.indusk/planning/master.md`); operational blockers live in `.indusk/current.md` → `## Project (shared)`. Standing direction notes that stage/next-step cannot derive:
 
-- **day-promises (was midnight)** — **active direction, referenced going forward**: a contract has change clauses and promise clauses; promises thread code, test and span by one name; a plan closes *holding N promises* and can be woken (`monitor` is the quiet window); no `subsystem` primitive. See `/guide/plan-lifecycle`
-- **indusk-v2-dawn** — parent plan (living master), re-founded 2026-07-26; component status in `.indusk/planning/indusk-v2-dawn/master.md`
+- **day-promises / day-monitor (was midnight)** — **active direction**: Day's primitive is the contract (change + promise clauses); 4a makes promises a primitive, 4b the telemetry half (span link, violation counts, `monitor`, alert → incident → reopen); a plan closes *holding N promises*; no `subsystem`. See `/guide/plan-lifecycle`
+- **indusk-v2-dawn** — parent plan (living master); component status in `.indusk/planning/indusk-v2-dawn/master.md`
 - **Sequence reconciliation (2026-09-14)**: every folder outside the V4 sequence got one fate — archived with a `closed_reason` or folded into a Day step; the fate table is in `.indusk/planning/master.md`.
 
 **Test bed**: `~/code/sandbox/chitin-sportsbook` exercises the dev system end-to-end.
