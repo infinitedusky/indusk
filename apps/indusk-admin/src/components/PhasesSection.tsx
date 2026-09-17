@@ -1,18 +1,9 @@
-import { phaseLabel } from "@infinitedusky/indusk-mcp/impl-headings";
+import { phaseTitle } from "@/components/bars/labels";
 import { Markdown } from "@/components/Markdown";
-import { Badge } from "@/components/ui/Badge";
-import { stateToBadge } from "@/components/ui/badge-variant";
+import { TrajectoryRowsTable } from "@/components/phases/TrajectoryRowsTable";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
 import { phaseMarkdown } from "@/lib/markdown-export";
-import { type Phase, phaseTitle, type Stage } from "@/lib/phases";
+import type { Phase, Stage } from "@/lib/phases";
 
 /**
  * The implementation plan: an impl's phases, each a collapsible keyed by kind and number, with its
@@ -111,46 +102,10 @@ export function PhasesSection({
                   <div className="flex flex-col gap-3">
                     {phase.trajectoryRows.length > 0 && (
                       <div data-testid={`phase-${key}-trajectory`}>
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>ID</TableHead>
-                              <TableHead>Asserts</TableHead>
-                              <TableHead>Writable at</TableHead>
-                              <TableHead>Passes at</TableHead>
-                              <TableHead>State</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {phase.trajectoryRows.map((row) => (
-                              <TableRow key={row.id}>
-                                <TableCell>
-                                  <span className="font-mono text-xs">
-                                    {row.id}
-                                  </span>
-                                </TableCell>
-                                <TableCell>{row.asserts}</TableCell>
-                                <TableCell>
-                                  {phaseLabel({
-                                    kind: row.writableAtKind,
-                                    number: row.writableAt,
-                                  })}
-                                </TableCell>
-                                <TableCell>
-                                  {phaseLabel({
-                                    kind: row.passesAtKind,
-                                    number: row.passesAt,
-                                  })}
-                                </TableCell>
-                                <TableCell>
-                                  <Badge variant={stateToBadge(row.state)}>
-                                    {row.state}
-                                  </Badge>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                        <TrajectoryRowsTable
+                          rows={phase.trajectoryRows}
+                          phaseColumns
+                        />
                       </div>
                     )}
                     <Markdown>{phase.content}</Markdown>
