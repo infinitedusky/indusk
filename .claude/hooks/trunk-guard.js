@@ -14,9 +14,22 @@
  *   - Edit / Write / MultiEdit: the file's repository is on a protected
  *     branch and the file is not allow-listed → BLOCK (exit 2).
  *   - Bash `git commit`: the repository is on a protected branch and any
- *     staged path is not allow-listed → BLOCK. This is what catches an edit
- *     made through `sed`, `python` or a heredoc, which the Edit gate never
- *     sees.
+ *     path the commit would take is not allow-listed → BLOCK. This is what
+ *     catches an edit made through `sed`, `python` or a heredoc, which the
+ *     Edit gate never sees.
+ *
+ * What the commit gate reads (falsification, 2026-09-17 — each was a hole):
+ *   - `git [-C <path>] [-c k=v] [--no-pager …] commit …` — git's own options
+ *     between `git` and the verb; `-C` moves the judged repository.
+ *   - `cd <path> && git commit …` — a `cd` earlier in the same command moves
+ *     the judged repository; the event's cwd alone was the wrong answer.
+ *   - `bash -c "git commit …"`, `sh -c '…'`, `$(git commit …)`, `` `…` `` —
+ *     a commit inside a substitution or a `-c` string is a commit.
+ *   - `-a` inside a flag cluster (`-am`) and explicit pathspecs
+ *     (`git commit -m x src/a.ts`, `… -- src/a.ts`) — both commit files that
+ *     were never staged, so they join the judged set.
+ * Not read, by the brief: a script the agent invokes by name that commits
+ * inside itself. The run loop's escape scan stays best-effort.
  *
  * Allowed on trunk — the writes a plan makes before it has a worktree (its
  * brief) or after it landed (compaction, the landing note), and what the eval
@@ -44,10 +57,33 @@ const DEFAULT_BRANCHES = ["main", "master"];
 const ALLOWED_PREFIXES = [".indusk/", ".claude/lessons/"];
 const ALLOWED_FILES = new Set(["CLAUDE.md", "AGENTS.md"]);
 const ALLOWED_PATTERNS = [/^\.claude\/settings[^/]*\.json$/];
-// `git commit` in command position — start of the command or after a separator —
-// with the eval hook's right-edge lookahead. `echo git commit` and `git commitment`
-// are not commits. Never String.includes.
-const COMMIT_RE = /(?:^|[;&|(]|\n)\s*git commit(?=$|\s|;|&|\|)/;
+// `git [options] commit` in command position: the start of the command, after a
+// separator, inside `$(…)`/backticks, or as the string handed to `-c` (bash, sh,
+// zsh). Git's own pre-verb options are captured so `-C <path>` can move the
+// judged repository. Right-edge lookahead: `git commitment` is not a commit.
+// `echo "git commit"` and `--grep 'git commit'` are not in command position and
+// stay unmatched. Never String.includes.
+const GIT_OPTIONS =
+	"(?:\\s+(?:-C\\s+\\S+|-c\\s+\\S+|--git-dir(?:=\\S+|\\s+\\S+)|--work-tree(?:=\\S+|\\s+\\S+)|--no-pager|--no-optional-locks|--paginate|-[pP]))*";
+const COMMIT_RE = new RegExp(
+	`(?:^|[;&|(\\n]|\\x60|(?:^|\\s)-c\\s+["'])\\s*git(${GIT_OPTIONS})\\s+commit(?=$|\\s|[;&|)"'\\x60])`,
+);
+// Options that take a value, so the value is never read as a pathspec.
+const SHORT_WITH_VALUE = new Set(["m", "F", "C", "c", "t"]);
+const LONG_WITH_VALUE = new Set([
+	"--message",
+	"--file",
+	"--author",
+	"--date",
+	"--template",
+	"--cleanup",
+	"--reuse-message",
+	"--reedit-message",
+	"--fixup",
+	"--squash",
+	"--trailer",
+	"--pathspec-from-file",
+]);
 const RELEASE_MESSAGE_RE = /(?:^|\s)(?:-m|--message(?:=|\s))\s*["']?chore\(release\):/;
 
 if (process.env.INDUSK_TRUNK_GUARD === "off") process.exit(0);
@@ -75,10 +111,78 @@ function classify() {
 	}
 	if (toolName === "Bash") {
 		const command = toolInput.command;
-		if (typeof command !== "string" || !COMMIT_RE.test(command)) return null;
-		return { kind: "commit", command, anchor: eventCwd };
+		if (typeof command !== "string") return null;
+		const m = COMMIT_RE.exec(command);
+		if (!m) return null;
+		let anchor = eventCwd;
+		// A `cd` in an earlier segment of the same command moves the repository. The
+		// match begins AT the separator, so the slice ends with one `&` of `&&` —
+		// split on runs of separator characters, not on operators.
+		for (const segment of command.slice(0, m.index).split(/[&|;\n]+/)) {
+			const cd = /^\s*cd\s+(?:"([^"]+)"|'([^']+)'|(\S+))\s*$/.exec(segment);
+			if (cd) anchor = resolve(anchor, cd[1] ?? cd[2] ?? cd[3]);
+		}
+		// So does git's own `-C <path>`, possibly more than once.
+		for (const c of m[1].matchAll(/-C\s+(\S+)/g)) anchor = resolve(anchor, unquote(c[1]));
+		const closer = /-c\s+"$/.test(m[0])
+			? '"'
+			: /-c\s+'$/.test(m[0])
+				? "'"
+				: m[0].includes("\x60")
+					? "\x60"
+					: null;
+		const args = commitArgs(command.slice(m.index + m[0].length), closer);
+		return { kind: "commit", command, anchor, args };
 	}
 	return null;
+}
+
+function unquote(token) {
+	return /^(["']).*\1$/.test(token) ? token.slice(1, -1) : token;
+}
+
+/**
+ * The tokens after `commit` up to the end of its command segment — an unescaped
+ * `; & | newline ) `` ` ``, or the quote that opened a `-c` string. Quotes group,
+ * backslash escapes. Deliberately not a shell; enough to tell a flag, a flag's
+ * value and a pathspec apart.
+ */
+function commitArgs(text, closer) {
+	const tokens = [];
+	let current = "";
+	let has = false;
+	let quote = null;
+	for (let i = 0; i < text.length; i++) {
+		const ch = text[i];
+		if (quote) {
+			if (ch === quote) quote = null;
+			else if (ch === "\\" && quote === '"' && i + 1 < text.length) current += text[++i];
+			else current += ch;
+			continue;
+		}
+		if (ch === "\\" && i + 1 < text.length) {
+			current += text[++i];
+			has = true;
+			continue;
+		}
+		if (ch === closer) break;
+		if (ch === '"' || ch === "'") {
+			quote = ch;
+			has = true;
+			continue;
+		}
+		if (/[;&|\n)\x60]/.test(ch)) break;
+		if (/\s/.test(ch)) {
+			if (has) tokens.push(current);
+			current = "";
+			has = false;
+			continue;
+		}
+		current += ch;
+		has = true;
+	}
+	if (has) tokens.push(current);
+	return tokens;
 }
 
 const subject = classify();
@@ -103,7 +207,11 @@ if (branch === null || !config.branches.includes(branch)) process.exit(0);
 
 if (subject.kind === "commit") {
 	if (RELEASE_MESSAGE_RE.test(subject.command)) process.exit(0);
-	subject.paths = stagedPaths(gitPath, subject.command).map((p) => real(resolve(gitPath, p)));
+	const intent = commitIntent(subject.args);
+	subject.paths = [
+		...stagedPaths(gitPath, intent.all).map((p) => real(resolve(gitPath, p))),
+		...intent.paths.map((p) => real(resolve(subject.anchor, p))),
+	];
 }
 
 const offending = subject.paths.filter((p) => !isAllowed(p));
@@ -180,13 +288,53 @@ function currentBranch(repo) {
 	}
 }
 
-/** What `git commit` would commit: the index, plus tracked modifications under `-a`/`--all`. */
-function stagedPaths(repo, command) {
+/** What `git commit` would commit from the index, plus every tracked modification under `-a`/`--all`. */
+function stagedPaths(repo, all) {
 	const paths = new Set(gitLines(repo, ["diff", "--cached", "--name-only"]));
-	if (/(?:^|\s)(?:-a|--all)(?=\s|$)/.test(command)) {
-		for (const p of gitLines(repo, ["diff", "--name-only"])) paths.add(p);
-	}
+	if (all) for (const p of gitLines(repo, ["diff", "--name-only"])) paths.add(p);
 	return [...paths];
+}
+
+/**
+ * Read the commit's own arguments: is `-a` present (alone, `--all`, or inside a
+ * cluster such as `-am`), and which bare tokens are pathspecs — everything after
+ * `--`, and any token that is neither an option, an option's value, nor a
+ * redirection. `git commit -m x src/a.ts` commits `src/a.ts` without staging it.
+ */
+function commitIntent(args) {
+	let all = false;
+	const paths = [];
+	let rest = false;
+	for (let i = 0; i < args.length; i++) {
+		const token = args[i];
+		if (rest) {
+			paths.push(token);
+			continue;
+		}
+		if (token === "--") {
+			rest = true;
+			continue;
+		}
+		if (token.startsWith("--")) {
+			if (token === "--all") all = true;
+			else if (LONG_WITH_VALUE.has(token)) i++;
+			continue;
+		}
+		if (token.startsWith("-") && token.length > 1) {
+			for (let j = 1; j < token.length; j++) {
+				const flag = token[j];
+				if (flag === "a") all = true;
+				if (SHORT_WITH_VALUE.has(flag)) {
+					if (j === token.length - 1) i++; // `-m x`: the value is the next token
+					break; // `-mx`: the value is the rest of the cluster
+				}
+			}
+			continue;
+		}
+		if (/^\d*[<>]|^&>/.test(token)) continue; // a redirection, not a path
+		paths.push(token);
+	}
+	return { all, paths };
 }
 
 function gitLines(repo, args) {
