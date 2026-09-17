@@ -269,3 +269,5 @@
 {"id":"h-20260917-011","processedAt":"2026-09-17T22:26:18.732Z","action":"skipped","detail":"note-level audit outcome (11 rows passing, A11 rubber-stamp), no durable rule with teeth beyond what the trajectory audit itself records"}
 {"id":"h-20260917-009","processedAt":"2026-09-17T22:26:39.674Z","action":"wrote-episode","detail":"a-fifth-copy-of-a-pattern-can-carry-a-bug-the-first-four-lack"}
 {"id":"h-20260917-010","processedAt":"2026-09-17T22:26:40.079Z","action":"wrote-episode","detail":"read-recent-git-log-p-before-writing-a-shell-command-regex"}
+{"id":"h-20260917-012","processedAt":"2026-09-17T22:29:23.305Z","action":"wrote-episode","detail":"a-host-variable-fallback-must-degrade-to-old-behavior-not-an-unreachable-path"}
+{"id":"h-20260917-013","processedAt":"2026-09-17T22:29:23.815Z","action":"wrote-episode","detail":"write-the-retrospective-same-day-every-ritual-is-satisfied"}
