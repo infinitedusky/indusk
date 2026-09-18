@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor — Test Plan"
 date: 2026-09-18
-status: draft
+status: accepted
 ---
 
 # Day step 4b — Monitor — Test Plan
