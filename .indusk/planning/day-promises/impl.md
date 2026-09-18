@@ -1,7 +1,7 @@
 ---
 title: "Day step 4a — Promises — Implementation"
 date: 2026-09-18
-status: approved
+status: in-progress
 approved: 2026-09-18
 trajectory: required
 test_phases: required
