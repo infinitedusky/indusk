@@ -62,6 +62,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Plan Lifecycle", link: "/guide/plan-lifecycle" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
+						{ text: "Promises", link: "/guide/promises" },
 						{ text: "The Shape Check", link: "/guide/shape" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Cleanup Ritual", link: "/guide/cleanup-ritual" },
