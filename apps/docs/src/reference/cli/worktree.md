@@ -125,4 +125,9 @@ reads the folder it was asked about, as it did before.
 
 The MCP plan tools and the admin read the same way, through one resolver in
 `lib/worktree/plan-worktrees.ts` (the `@infinitedusky/indusk-mcp/worktree/plan-worktrees`
-subpath).
+subpath). It returns each plan's copy with its checked folder, and
+`copySource` turns a copy into the fields both readers report (`worktree`,
+`archivedInWorktree`, `copyProblem`), so the tools and the admin cannot
+describe the same plan two ways. The record's format, lock and file live in
+`plan-worktree-record.ts`, and the three commands and their refusals in
+`plan-worktree-commands.ts`; nothing else touches the file.
