@@ -63,10 +63,10 @@ guessed.
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | An item checked off in the assigned worktree shows as done on the admin plan page on the next refresh | Test Phase 1 | Build Phase 3 | written |
-| A2 | The plan page names the worktree it reads from | Test Phase 1 | Build Phase 3 | written |
-| A3 | The sidebar row for an assigned plan names its worktree | Test Phase 1 | Build Phase 3 | written |
-| A4 | The active phase shown for an assigned plan is the one opened in the worktree | Test Phase 1 | Build Phase 3 | written |
+| A1 | An item checked off in the assigned worktree shows as done on the admin plan page on the next refresh | Test Phase 1 | Build Phase 3 | passing |
+| A2 | The plan page names the worktree it reads from | Test Phase 1 | Build Phase 3 | passing |
+| A3 | The sidebar row for an assigned plan names its worktree | Test Phase 1 | Build Phase 3 | passing |
+| A4 | The active phase shown for an assigned plan is the one opened in the worktree | Test Phase 1 | Build Phase 3 | passing |
 | A5 | Asked at trunk, `list_plans`, `get_plan_status` and `advance_plan` report the worktree's state | Test Phase 1 | Build Phase 2 | passing |
 | A6 | Asked from inside a worktree, the plan list and states match those asked at trunk | Test Phase 1 | Build Phase 2 | passing |
 | A7 | A plan with no assignment reads exactly as today, in the tools and the admin | Test Phase 1 | Test Phase 1 | passing |
@@ -76,9 +76,9 @@ guessed.
 | A11 | Assigning a path that is not a worktree of this repo, or a plan with no folder, is refused by name | Test Phase 1 | Build Phase 1 | passing |
 | A12 | `indusk worktree release <plan>` ends the assignment and the plan reads from trunk | Test Phase 1 | Build Phase 2 | passing |
 | A13 | Create, assign, read and release leave `git status` clean in every checkout | Test Phase 1 | Build Phase 1 | passing |
-| A14 | An assigned worktree removed without release is reported as gone, and the trunk copy is shown, in the admin and `get_plan_status` | Test Phase 1 | Build Phase 3 | written |
-| A15 | A worktree with no assignment is listed in the admin as unassigned | Test Phase 1 | Build Phase 3 | written |
-| A16 | A malformed record is an error naming the file, in the admin and from the tools; no plan is read from a guessed copy | Test Phase 1 | Build Phase 3 | written |
+| A14 | An assigned worktree removed without release is reported as gone, and the trunk copy is shown, in the admin and `get_plan_status` | Test Phase 1 | Build Phase 3 | passing |
+| A15 | A worktree with no assignment is listed in the admin as unassigned | Test Phase 1 | Build Phase 3 | passing |
+| A16 | A malformed record is an error naming the file, in the admin and from the tools; no plan is read from a guessed copy | Test Phase 1 | Build Phase 3 | passing |
 | A17 | Two live assignments for one plan in a hand-edited record show an error naming both, never a pick | Test Phase 1 | Build Phase 2 | passing |
 | A18 | The work skill's kickoff runs `indusk worktree create <plan>` and the retrospective's landing step runs `indusk worktree release <plan>` between the merge and the removal | Test Phase 1 | Build Phase 4 | written |
 | A19 | This plan's own progress shows, with its worktree named, in the worktree's admin build run against the dusk registry while Build Phase 4 is worked | Build Phase 4 | Build Phase 4 | planned |
@@ -190,24 +190,26 @@ on its own assertion today.
 
 ### Build Phase 3: The admin reads the live copy and names it
 
-- [ ] `apps/indusk-admin/src/lib/planning-reader.ts`: `readActivePlans` reads each plan folder and its phase-boundary record from its live root (through the subpath); `Plan` gains `worktree?` and `copyProblem?`; the record read is exposed for the layout
-- [ ] Worktree chip in `PlanDetail`'s header and in the `PlanList` row (`data-testid="plan-worktree"`), naming the worktree folder and branch; `copyProblem` rendered as a warning line ("assigned worktree `x` no longer exists — showing the trunk copy"; "two live worktrees assigned: `a`, `b`")
-- [ ] Unassigned worktrees listed under the sidebar ("Unassigned worktrees"), each with its branch
-- [ ] A malformed record renders an error block in the project layout naming the file; no plan list renders beneath as if it were right
-- [ ] Browser tests that render these components mock `@/lib/planning-reader` exports they import (the gotcha from day-promises)
+- [x] `apps/indusk-admin/src/lib/planning-reader.ts`: `readActivePlans` reads each plan folder and its phase-boundary record from its live root (through the subpath); `Plan` gains `worktree?` and `copyProblem?`; the record read is exposed for the layout
+- [x] Worktree chip in `PlanDetail`'s header and in the `PlanList` row (`data-testid="plan-worktree"`), naming the worktree folder and branch; `copyProblem` rendered as a warning line ("assigned worktree `x` no longer exists — showing the trunk copy"; "two live worktrees assigned: `a`, `b`")
+- [x] Unassigned worktrees listed under the sidebar ("Unassigned worktrees"), each with its branch
+- [x] A malformed record renders an error block in the project layout naming the file; no plan list renders beneath as if it were right — *as built: the plans stay listed by name (names come from the trunk's folders, not from any copy) and each carries the error with no documents or progress, so nothing drawn is from a guessed copy*
+- [x] Browser tests that render these components mock `@/lib/planning-reader` exports they import (the gotcha from day-promises) — `app/p/[project]/page.test.tsx` gains `readProjectWorktrees`; the plan page and Scorecards tests do not render the layout
+- [x] The resolver applies only when the project folder is the top of its checkout (found in this phase: the admin's `test-fixtures/sample-project` sits inside this repository, and the resolver climbed to dusk's trunk and listed dusk's plans as the fixture's). A project nested inside a larger repository keeps reading the folder it was asked about.
+- [x] Shape (`apps/indusk-admin/src/app/p/[project]/layout.tsx`) — extract the unassigned-worktrees list and the record-error block into named components beside `WorktreeChip` and `PlanCopyNotice`, and name the module for its subject (`components/Worktrees.tsx`). Rule: one reason to change — the layout frames a project; which checkout each plan is read from is its own concern, and the four pieces that render it belong together
 
 #### Build Phase 3 Verification
 
-- [ ] A1, A2, A3, A4, A14, A15, A16 pass; A7 still passes (`pnpm --filter indusk-admin exec vitest run src/__tests__/http-plan-worktrees.test.ts`)
-- [ ] Full admin suite green, including `typecheck.test.ts` (`pnpm turbo test --filter=indusk-admin`)
+- [x] A1, A2, A3, A4, A14, A15, A16 pass; A7 still passes (`pnpm --filter indusk-admin exec vitest run src/__tests__/http-plan-worktrees.test.ts`) — 8 passed
+- [x] Full admin suite green, including `typecheck.test.ts` (`pnpm turbo test --filter=indusk-admin`) — *as run: the node project alone is 170 of 170, twice. With the node and browser projects together, two HTTP files fail per run and which two varies (research, scorecards, smoke, or this plan's): a load flake while `next dev` compiles beside the browser runner. The trunk shows the same (research and smoke failed there on the same machine, without this plan). Recorded in Notes.*
 
 #### Build Phase 3 Context
 
-- [ ] Update the admin Known Gotchas entry: plan folders and boundary records are read from each plan's live root through `worktree/plan-worktrees`; the header and sidebar name the worktree
+- [x] Update the admin Known Gotchas entry: plan folders and boundary records are read from each plan's live root through `worktree/plan-worktrees`; the header and sidebar name the worktree
 
 #### Build Phase 3 Document
 
-- [ ] Update `apps/docs/src/reference/admin-ui/overview.md`: the worktree chip, the gone/doubled warnings, the unassigned list, the record error block
+- [x] Update `apps/docs/src/reference/admin-ui/overview.md`: the worktree chip, the gone/doubled warnings, the unassigned list, the record error block
 
 ### Build Phase 4: The lifecycle uses it
 
@@ -252,6 +254,8 @@ on its own assertion today.
 ## Notes
 
 - **Repo-wide `pnpm check` is red on trunk** (found 2026-09-18 in Build Phase 1) on files this plan does not touch: `biome.json` schema deprecations, `apps/indusk-admin/public/*.svg`, `.claude/hooks/eval-trigger.js`, `hook-cwd-independence.test.ts`, `apps/docs/src/.vitepress/config.ts`. This plan's own files are checked by name.
+- **The admin's HTTP tests flake under a full run** (found 2026-09-18 in Build Phase 3): with the node and browser vitest projects running together, two `next dev`-backed files fail per run, a different two each time, with timeouts or 404s while routes compile. The node project alone passes every time, and the trunk flakes the same way without this plan. Follow-on: run the HTTP files in their own vitest invocation, or give `next-dev.ts` a readiness probe per route.
+- **Stray Next servers on this machine** (2026-09-18): two orphaned admin daemons with their working directory in the removed `dusk-worktrees/day-promises` (started by the lifecycle tests, never stopped), and the registered daemon still running from the npm folder the 1.52.0 upgrade replaced — it serves 1.51.0 code until `indusk ui restart`.
 
 - The record lives outside the working tree on purpose: the paths in it are
   true on one machine only.
