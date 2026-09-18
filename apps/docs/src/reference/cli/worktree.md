@@ -19,14 +19,20 @@ indusk worktree create admin-plan-worktrees
 
 1. Refuses unless `.indusk/planning/<plan>/` exists on the trunk. A plan is
    planned on the trunk first; its worktree opens at the first phase.
-2. Runs `git worktree add <parent>/<project>-worktrees/<plan> -b plan/<plan>`
-   off the trunk's current branch. For a project at `~/code/dusk` that is
+2. Refuses unless the trunk is on a trunk branch — `worktree.trunk_guard.branches`
+   in `.indusk/config.json`, default `main` and `master`, the same list the
+   trunk guard reads. A plan branch forks from the trunk; a trunk left on
+   another branch would fork the new plan from that branch's unmerged work.
+3. Runs `git worktree add <parent>/<project>-worktrees/<plan> -b plan/<plan>`
+   off that branch. For a project at `~/code/dusk` that is
    `~/code/dusk-worktrees/<plan>`.
-3. Records the assignment, then prints the path. Install the project's
+4. Records the assignment, then prints the path. Install the project's
    dependencies there before working in it.
 
-It refuses when the target folder already exists, naming it and the `assign`
-command that would adopt it.
+It refuses when the target folder already exists, naming it. If the folder
+is a worktree of this repository it names the `assign` command that adopts
+it; otherwise — usually the ignored files a `git worktree remove --force`
+leaves behind — it says the folder is not a worktree and to remove it.
 
 In a workbench, `create [repo] <slug> [base-branch]` is unchanged: it runs the
 worktree extension's setup script (see the
@@ -54,6 +60,10 @@ with nothing written:
 | A plan already assigned to another live worktree | Names both; release the first |
 | A worktree already assigned to another plan | Names that plan |
 | A record that cannot be read | Names the file; fix or remove it first |
+
+`assign` and `release` hold `<record>.lock` beside the record from the moment
+they read it until they write it, so two sessions assigning at once both land
+(without it, twelve concurrent assigns kept six).
 
 ## `indusk worktree release <plan>`
 
@@ -104,6 +114,8 @@ Every read checks the record against `git worktree list`. Nothing is guessed:
 | One live assignment | The worktree | The worktree's name and branch |
 | Assigned worktree removed without release | The trunk | "assigned worktree `<path>` no longer exists" |
 | Two live assignments (a hand-edited record) | The trunk | Both worktrees, by path |
+| Plan archived on its branch, before the release | The worktree's `archive/<plan>` | "archived in its worktree, awaiting landing" |
+| Plan folder gone from its worktree | The trunk | "plan folder missing in worktree `<path>`" |
 | A worktree nobody assigned | — | Listed as unassigned |
 | A record that cannot be read | Nothing | An error naming the file |
 

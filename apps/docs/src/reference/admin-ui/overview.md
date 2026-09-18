@@ -95,6 +95,8 @@ Switching projects via the header does not restart the daemon — the registry r
 | Read from its worktree | a `⎇ <worktree>` chip | "Read from the worktree … on `<branch>`" |
 | Assigned worktree removed without release | no chip; trunk copy shown | "The assigned worktree `<path>` no longer exists — showing the trunk copy" |
 | Two live worktrees assigned (a hand-edited record) | no chip; trunk copy shown | both worktrees by path |
+| Archived on its branch, before the release (retrospective Step 9 → Step 10) | the chip; the worktree's archived copy shown | "archived in its worktree …, awaiting landing" |
+| Plan folder gone from its worktree | no chip; trunk copy shown | "The plan folder missing in worktree `<path>` … — showing the trunk copy" |
 | Not assigned | as before | none |
 | Assignment record unreadable | name and `unknown` only | an error naming the record's file; no progress is drawn, because which copy is live is unknown. The sidebar carries the same error above the plan list. |
 
