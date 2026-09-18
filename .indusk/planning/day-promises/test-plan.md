@@ -1,7 +1,8 @@
 ---
 title: "Day step 4a — Promises — Test Plan"
 date: 2026-09-18
-status: draft
+status: accepted
+accepted: 2026-09-18
 ---
 
 # Day step 4a — Promises — Test Plan
