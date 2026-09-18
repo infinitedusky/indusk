@@ -101,38 +101,40 @@ the tests; it grades them.
    run at all. They are different evidence and a reader six months on must
    not weight them equally; a `desk` entry does not close the loop.
 
-## Built on OpenTelemetry, never on a backend
+## Built on OpenTelemetry, self-contained, never on a third party
 
 A design constraint (Sandy, 2026-09-17: "is this building our entire system
-on top of an OpenTelemetry reporting platform, as opposed to on OpenTelemetry?").
+on top of an OpenTelemetry reporting platform, as opposed to on OpenTelemetry?";
+2026-09-18: "the system is supposed to pick up that something went wrong on
+its own, and for that we don't want to depend on a third party").
 
 - The promise mark and the violation are **span data** — an attribute, and an
   attribute or event on the same span — in OpenTelemetry's own model, carried
   by OTLP export. The code that enforces a promise never knows where the span
   goes. "Which promise broke" is answerable from the raw trace.
-- "Violations of promise X in the last N days" is a question asked of a
-  **backend**, and backends are **adapters**: local Jaeger is the reference
-  (already an OpenTelemetry Collector distribution, installed with its MCP
-  query surface by the `local-telemetry` extension); Dash0 is the adapter for
-  deployed systems, owned by the `dash0` extension, as extensions own every
-  tool fact in this project. Core never speaks a backend's query language.
-- **Alerting is the one thing a backend adds that local lacks.** Locally,
-  `indusk promises status` polling is the alert; deployed, Dash0's alert rules
-  call the same match-or-open-incident path. Both arrive at the same record.
-- Losing Dash0 loses the `deployed` source, not the loop.
-- **Jaeger is sufficient, deployed as well as local** (Sandy, 2026-09-18:
-  "remove the need for something like Dash0 — a cool addition, not a heavy
-  requirement"). Dash0 and Jaeger are the same layer, a backend on top of
-  OpenTelemetry; the loop must close with only the open-source one. Jaeger has
-  no alert rules, so the deployed path fills that gap the way local already
-  does: `indusk promises status` on a schedule, polling the same Jaeger
-  adapter and calling the same open-incident path. The always-on tier is
-  therefore the local model on a machine that does not turn off — Jaeger with
-  persistent storage (it defaults to memory), the scheduled status run, and
-  the receiver that writes the incident to the repo and reopens the plan.
-  Where that receiver runs when no developer machine is on is the open
-  question for the ADR. Dash0 stays an adapter for a project that already
-  pays for it; nothing in core requires it.
+- **The loop has one backend, and InDusk ships it.** Detection, the incident,
+  the reopened plan — every step closes against Jaeger, the OpenTelemetry
+  Collector distribution the `local-telemetry` extension already installs with
+  its query surface. Jaeger has no alert rules, so the alert is a poll:
+  `indusk promises status` on a schedule, locally and deployed alike, calling
+  the same open-incident path. The always-on tier is the local model on a
+  machine that does not turn off — Jaeger with persistent storage (it defaults
+  to memory), the scheduled status run, and the receiver that writes the
+  incident to the repo and reopens the plan. Where that receiver runs when no
+  developer machine is on is the open question for the ADR.
+- **There is no adapter seam for third-party backends in the loop.** Adopting
+  Dash0's alert rules as a source would mean adopting Datadog's next, and
+  every notification system after that — importing everyone's alerting into
+  core. The loop is self-contained instead: a project that uses no hosted
+  backend closes it in full.
+- **The `dash0` extension (and any `datadog`, later) keeps the job it had
+  before this step**: a query surface the agent uses when a person asks
+  "something went wrong, find out what" — for everything InDusk does not do
+  and the added visibility a hosted platform brings. It does not feed the
+  loop and the loop does not need it. A cool addition, never a requirement.
+- The `deployed` incident source means "the system was running in a live
+  environment when the promise broke", and Jaeger receiving that environment's
+  OTLP export is enough to record it.
 
 ## How health appears in the admin
 
