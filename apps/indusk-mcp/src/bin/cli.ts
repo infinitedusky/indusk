@@ -819,4 +819,18 @@ papersCmd
 		await papersPublish(rootOrExit(), target, opts);
 	});
 
+const promisesCmd = program
+	.command("promises")
+	.description("The promise registry (.indusk/promises/): what the system commits to, checked");
+
+promisesCmd
+	.command("check")
+	.description(
+		"Refuse the registry by name when it lies: a name cited in code or a test with no entry, an enforced promise without the links its kind requires, a known-violated promise without an open incident, an undeclared domain, an owner that is not a plan. Exit 2 on refusal; exit 0 with a summary.",
+	)
+	.action(async () => {
+		const { promisesCheck } = await import("./commands/promises.js");
+		await promisesCheck(rootOrExit());
+	});
+
 program.parse();
