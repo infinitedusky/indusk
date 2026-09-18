@@ -183,7 +183,7 @@ elif node -e "process.exit(JSON.parse(process.argv[1]).includes(process.argv[2])
 	' "$VERSION")"
 	fail "${VERSION} is already on the registry — npm would reject this with a 403." \
 		"" \
-		"`pnpm release` publishes whatever version package.json holds; it never bumps." \
+		"'pnpm release' publishes whatever version package.json holds; it never bumps." \
 		"If there is new work to ship, bump to ${NEXT} as the last commit on main," \
 		"then publish that commit."
 fi

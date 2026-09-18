@@ -2,6 +2,11 @@
 
 All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Fixed
+- **The release guard's "already on the registry" refusal returns instead of hanging.** Its message quoted `pnpm release` in backticks inside a double-quoted string, so bash ran it as a command substitution and the guard re-entered `pnpm release` forever. The path had never executed until 1.51.0 was published twice.
+
 ## [1.51.0] — 2026-09-17
 
 ### Added
