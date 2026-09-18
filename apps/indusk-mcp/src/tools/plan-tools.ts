@@ -30,14 +30,18 @@ function recordError(file: string, problem: string) {
 /** What a plan tool adds about where it read the plan: the worktree, or why the trunk copy stands in. */
 function copyFields(copy: PlanCopy | undefined): object {
 	if (!copy) return {};
-	if (copy.source === "worktree") return { worktree: copy.worktree };
+	if (copy.source === "worktree") {
+		return copy.archivedInWorktree
+			? { worktree: copy.worktree, archivedInWorktree: true }
+			: { worktree: copy.worktree };
+	}
 	if ("problem" in copy) return { copyProblem: { kind: copy.problem, detail: copy.detail } };
 	return {};
 }
 
-/** The plan folder a copy names. */
+/** The plan folder a copy names — the resolver's, checked on disk; never joined here. */
 function planDirOf(copy: PlanCopy): string {
-	return join(getPlanningDir(copy.root), copy.plan);
+	return copy.dir;
 }
 
 export function registerPlanTools(server: McpServer, projectRoot: string): void {
