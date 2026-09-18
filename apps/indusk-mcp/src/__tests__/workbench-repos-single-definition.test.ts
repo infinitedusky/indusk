@@ -1,3 +1,4 @@
+// promise: one-definition-per-shared-rule
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";

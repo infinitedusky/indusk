@@ -1,3 +1,4 @@
+// promise: phase-boundary-record-never-malformed
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import type { PhaseKind, PhaseRef } from "../impl-headings.js";
 import { findPhaseStart, type PhaseBoundaryRecord } from "./boundary-record.js";
