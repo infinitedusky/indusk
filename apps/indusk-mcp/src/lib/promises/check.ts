@@ -1,9 +1,9 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { readConfig } from "../config.js";
-import { git } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
+import { citedNames } from "./citations.js";
 import {
 	type IncidentEntry,
 	type PromiseEntry,
@@ -12,7 +12,6 @@ import {
 	readPromises,
 } from "./registry.js";
 import {
-	anyPromiseTokenPattern,
 	PROMISE_KINDS,
 	PROMISE_STATES,
 	PROMISES_REL_DIR,
@@ -54,9 +53,6 @@ export type CheckResult =
 	| { ok: false; refusals: CheckRefusal[] };
 
 const CONFIG_KEY = "promises.domains";
-
-/** Files the reverse scan never reads: prose mentions names; code sites and tests are not prose. */
-const PROSE_EXTENSIONS = new Set([".md", ".mdx", ".txt", ".rst"]);
 
 export function summarize(registry: Registry): CheckSummary {
 	const byState = Object.fromEntries(PROMISE_STATES.map((s) => [s, 0])) as Record<
@@ -135,49 +131,6 @@ function fileNames(
 	if (!existsSync(abs) || !statSync(abs).isFile()) return "missing";
 	const text = readFileSync(abs, "utf-8");
 	return names.some((n) => promiseTokenPattern(n).test(text)) ? "named" : "unnamed";
-}
-
-function looksBinary(buf: Buffer): boolean {
-	const head = buf.subarray(0, 8192);
-	return head.includes(0);
-}
-
-/** Every tracked or untracked-but-not-ignored file under the code root. */
-async function scannableFiles(codeRoot: string): Promise<string[]> {
-	const out = await git(codeRoot, "ls-files", "--cached", "--others", "--exclude-standard", "-z");
-	return out
-		.split("\0")
-		.map((f) => f.trim())
-		.filter((f) => f !== "")
-		.filter((f) => !PROSE_EXTENSIONS.has(extensionOf(f)))
-		.filter((f) => !f.startsWith(`${PROMISES_REL_DIR}/`) && !f.startsWith(".indusk/"))
-		.sort();
-}
-
-function extensionOf(file: string): string {
-	const base = file.slice(file.lastIndexOf("/") + 1);
-	const dot = base.lastIndexOf(".");
-	return dot < 0 ? "" : base.slice(dot);
-}
-
-/** name → files that carry its token, across the code root. */
-async function citedNames(codeRoot: string): Promise<Map<string, string[]>> {
-	const cited = new Map<string, string[]>();
-	for (const rel of await scannableFiles(codeRoot)) {
-		const abs = join(codeRoot, rel);
-		if (!existsSync(abs) || !statSync(abs).isFile()) continue;
-		const buf = readFileSync(abs);
-		if (looksBinary(buf)) continue;
-		const text = buf.toString("utf-8");
-		const pattern = anyPromiseTokenPattern();
-		for (let m = pattern.exec(text); m !== null; m = pattern.exec(text)) {
-			const name = m[1];
-			const files = cited.get(name) ?? [];
-			if (!files.includes(rel)) files.push(rel);
-			cited.set(name, files);
-		}
-	}
-	return cited;
 }
 
 function linkRefusals(
