@@ -15,6 +15,7 @@ subplans:
   - admin-ui-phase-progress
   - day-promises
   - day-monitor
+  - day-contract
   - day-claim-evidence
   - day-claim-binding
   - day-uncovered-surface
@@ -32,17 +33,23 @@ reading code. Dawn is *who executes*, Day is *what the human does at the
 boundary*. Together they are InDusk V4, shipped as one thing; Day is the
 destination the streams in the root master lead to.
 
-**The frame (2026-09-17).** Day's core primitive is the **contract**: what a
-human approves before code exists, and what the artifacts then prove was met
-honestly. A contract has two kinds of clause. *Change clauses* are true once
-the change lands and retire with the plan; *promise clauses* are commitments
-the system keeps for as long as it runs and any later change can break. Steps
-5–7 and 9 make change clauses honest at review time. Step 4a builds promise
-clauses as a primitive (registry, states, links, promotion at close, the
-change rule). Step 4b — what was called Midnight — is the telemetry half of
-the promise system: it detects a promise violation in the running system,
-records the root cause as an incident, and wakes the owning plan. Step 10 is
-where a reviewer reads both kinds of clause without opening the diff.
+**The frame (2026-09-17, settled 2026-09-18).** Day's core primitive is the
+**contract**: what a human approves before code exists, and what the
+artifacts then prove was met honestly. A plan **establishes** promises,
+**preserves** the promises already in force that its change could break, and
+is **free in how**. The contract is the first two; the process record is how
+the proof was made honestly. A promise carries a *kind* — behaviour, state or
+structure — which decides what checks it: the suite and the build-time
+checks for state and structure, the running system for behaviour. (The
+earlier "change clauses vs promise clauses" split was tracking lifetime,
+which is a property of a promise, not a second kind of clause.) Step 4a
+builds the promise as a primitive: registry, kinds, states, links, the check.
+Step 4b — what was called Midnight — watches behaviour promises in the
+running system, records the root cause as an incident, and wakes the owning
+plan. Step 4c puts promises into planning: declared before code, named by
+every trajectory row, confirmed at close, and the change rule. Steps 5–7 and
+9 make the proof honest at review time. Step 10 is where a reviewer reads
+the contract without opening the diff.
 
 Open this file to answer "where are we." The shape itself lives in
 [pr-shape.md](pr-shape.md) and is the authority on *what* is being built;
@@ -65,8 +72,9 @@ Open this file to answer "where are we." The shape itself lives in
 | 1 | **Trust the substrate** | 10 | **closed 2026-09-10** (24 rows green, falsified, cleaned, retrospective, archived); `plan/workbench-trust-fixes` awaits merge. Retrospective found the gates themselves cwd-relative and silently off from a subdirectory → [hook-cwd-independence](../hook-cwd-independence/brief.md), brief draft, recommended before component 2 | Zero silent wrong answers from run / cleanup / eval in every workbench shape (its brief) | [workbench-trust-fixes](../archive/workbench-trust-fixes/brief.md), Phase A |
 | 2 | **The floor runs in workbenches** | 5 | **closed 2026-09-16** (19 rows green, falsified 3, cleaned, retrospective, archived) — `run` and `verify` execute across the plan-root/code-root split for one declared repo, evals name their repo; matrix held 5/5, 0 false positives (`archive/dawn-workbench-execution/matrix.md`) | dawn-verify's 6-cell matrix re-run inside a workbench, 5/5 caught, 0 false positives | [dawn-workbench-execution](../archive/dawn-workbench-execution/brief.md), Dawn 6.5 |
 | 3 | **Execution visible live** | 10 | **closed 2026-09-17** (37 rows green, falsified 6, cleaned, retrospective, archived) — one `lifecycle.ts` read by `list_plans`, the retrospective gate and the admin; three live bars; phases keyed `{kind, number}` through Shape and the boundary record; `ui prune` cleared 2,296 dead entries. Follow-on: the parity corpus must exclude the plan in flight (root master, "Small, not a step") | Active phase and per-stage gate states update without reload; Test/Build sequences render | [admin-ui-phase-progress](../archive/admin-ui-phase-progress/brief.md) |
-| 4a | **Promise clauses — the contract's second kind of clause, as a primitive** | 9 | brief 2026-09-17 (the writing half exists in looper; numero has the typed contract and no promises) | Numero and dusk each hold enforced promises with code sites and tests, `indusk promises check` in CI; a closing plan promotes a claim; a change touching a promise's site without naming it is recorded as such | [day-promises](../day-promises/brief.md) |
-| 4b | **Monitor — promise violation detection and root cause, from the running system's telemetry** | 9 | brief rewritten 2026-09-17 (was `midnight`; exists nowhere — looper's nine incidents were all recorded by hand, none detected) | An alert from the running system (local under Jaeger counts) names the promise that broke; the incident records the root cause and where it ran; the owning plan reopens | [day-monitor](../day-monitor/brief.md) |
+| 4a | **Promises — the contract's primitive: registry, kinds, states, links, the check** | 9 | brief rewritten 2026-09-18 on the settled frame (looper has the registry and validator, 11 promises; numero has the typed contract and no promises; dusk has dozens of unregistered structure promises) | Looper's eleven pass `indusk promises check` unchanged; numero and dusk each hold enforced promises with the links their kind requires, the check in CI; the Promises page lists them with every enforced chip hollow | [day-promises](../day-promises/brief.md) |
+| 4b | **Monitor — behaviour-promise violation detection and root cause, from the running system's telemetry** | 9 | brief rewritten 2026-09-17, narrowed to behaviour promises 2026-09-18 (was `midnight`; exists nowhere — looper's nine incidents were all recorded by hand, none detected) | An alert from the running system (local under Jaeger counts) names the promise that broke; the incident records the root cause and where it ran; the owning plan reopens | [day-monitor](../day-monitor/brief.md) |
+| 4c | **The contract in planning — promises declared before code, named by every row, confirmed at close; the change rule** | 2, 9 | proposed 2026-09-18 as 4a's cut (the planning half crossed planner, test plan, trajectory, retrospective, validator and admin); create when 4a closes | A closing plan confirms a declared promise to `enforced`; a row naming no promise is refused; a change touching a promise's code site without naming it is recorded "touched, unacknowledged" | `day-contract` |
 | 5 | **Claims proved honestly — red observed, amendments recorded** | 3, 4 | not started; also takes the per-invocation gate ledger (`.indusk/gates.jsonl`) that `hook-cwd-independence` cut and no step picked up | A born-green row and a silently amended claim are both reported; an honest plan is clean | `day-claim-evidence` |
 | 6 | **Binding — the test dies when the behaviour it claims is broken** | 6 | not started; needs 4a (a promise's code site is one candidate for "the claim's code") and 5; carries the amendment-log rule (2026-09-14): no decision crosses a phase boundary until it is written into the plan, and `/work` checks the Amendment log is current at every fresh-phase hand-off — a decision that lives only in the conversation is testimony | A test asserting the wrong property under the right name reports *unbound*; a real test reports *bound* | `day-claim-binding` |
 | 7 | **Uncovered surface — changed code no claim exercises, acknowledged** | 7 | not started | A changed file no row exercises is listed; acknowledgement is recorded and survives re-verification | `day-uncovered-surface` |
@@ -82,9 +90,8 @@ Open this file to answer "where are we." The shape itself lives in
 
 ## Order
 
-**0 → 1 → {2, 3} → {4a, 5, 7} → {4b, 6} → 8 → 9 → 10**, with S1 and the
-`hook-cwd-independence` close-out any time. Re-ordered 2026-09-17 with 0–3
-closed.
+**0 → 1 → {2, 3} → {4a, 5, 7} → {4b, 4c, 6} → 8 → 9 → 10**, with S1 any
+time. Re-ordered 2026-09-17 with 0–3 closed; 4c added 2026-09-18.
 
 - **0 first, on paper.** Nothing else is scoped until the shape is accepted;
   every component below names the row it closes.
@@ -97,8 +104,11 @@ closed.
   ledger; 7 is a coverage report the testing extension owns. Any two can run
   at once in separate worktrees.
 - **4b needs 4a** and local Jaeger, which is installed: the telemetry half
-  watches promises the primitive defines, in any running system — a local
-  run is one. Dash0 is only for the `deployed` source.
+  watches behaviour promises the primitive defines, in any running system — a
+  local run is one. Dash0 is only for the `deployed` source.
+- **4c needs 4a** and nothing else: it puts the registry's vocabulary into the
+  planner, the test plan, the trajectory and the retrospective. 4b and 4c
+  share no code and can run at once.
 - **6 needs 4a and 5.** Binding mutates "the claim's code", and a promise's
   code site is one of the two candidates for what that code is (the other is
   a `Code` column); its verdict shape follows 5's. 4b and 6 can run at once.
@@ -135,8 +145,9 @@ assume before it exists.
 
 | Plan | Component | Stage |
 |------|-----------|-------|
-| `day-promises` | 4a — promise clauses as a primitive: registry, states, links, promotion, the change rule | brief 2026-09-17 |
-| `day-monitor` | 4b — the telemetry half: span link, violation counts, `monitor`, alert → incident → root cause → reopen (was `midnight`) | brief rewritten 2026-09-17 |
+| `day-promises` | 4a — the promise as a primitive: registry, kinds, lifetimes, states, links, `indusk promises check`, adoption in three projects, the Promises page | brief rewritten 2026-09-18 |
+| `day-monitor` | 4b — the telemetry half, behaviour promises only: span link, violation counts, `monitor`, alert → incident → root cause → reopen (was `midnight`) | brief rewritten 2026-09-17, narrowed 2026-09-18 |
+| `day-contract` | 4c — the contract in planning: promises declared before code, trajectory rows establish or preserve one, confirmation at close, the change rule ("touched, unacknowledged") | proposed 2026-09-18, not created |
 | `day-claim-evidence` | 5 — observed red, amendment log, gate ledger | not created |
 | `day-claim-binding` | 6 — mutation per row | not created |
 | `day-uncovered-surface` | 7 — coverage per row, acknowledgement | not created |

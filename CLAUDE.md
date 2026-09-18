@@ -183,7 +183,7 @@ dusk/
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `.indusk/planning/master.md`); operational blockers live in `.indusk/current.md` → `## Project (shared)`. Standing direction notes that stage/next-step cannot derive:
 
-- **day-promises / day-monitor (was midnight)** — **active direction**: Day's primitive is the contract (change + promise clauses); 4a makes promises a primitive, 4b the telemetry half (span link, violation counts, `monitor`, alert → incident → reopen); a plan closes *holding N promises*; no `subsystem`. See `/guide/plan-lifecycle`
+- **day-promises / day-monitor (was midnight)** — **active direction**: a plan *establishes* promises and *preserves* those in force; kind (behaviour / state / structure) picks the check; 4a = registry + check, 4b = behaviour promises watched in runs, 4c = promises in planning; closes *holding N promises*; no `subsystem`. See `/guide/plan-lifecycle`
 - **indusk-v2-dawn** — parent plan (living master); component status in `.indusk/planning/indusk-v2-dawn/master.md`
 - **Sequence reconciliation (2026-09-14)**: every folder outside the V4 sequence got one fate; the table is in `.indusk/planning/master.md`.
 

@@ -52,24 +52,33 @@ This bound is deliberate: the prerequisite treadmill is itself a failure mode,
 and an unbounded "fix everything first" is how the substrate plan eats the
 plan it was supposed to protect.
 
-## Stream 2 — Promise clauses and their monitor, Day steps 4a and 4b (next)
+## Stream 2 — Promises and their monitor, Day steps 4a, 4b and 4c (next)
 
-Day's core primitive is the contract: change clauses (true once, retire with
-the plan) and promise clauses (kept for the life of the system, breakable by
-any later change). Two sub-plans, split 2026-09-17:
+Day's core primitive is the contract: a plan **establishes** promises,
+**preserves** the promises already in force that its change could break, and
+is free in how. A promise carries a kind — behaviour, state or structure —
+which decides what checks it. (Settled 2026-09-18; the earlier "change
+clauses vs promise clauses" split was tracking lifetime, a property of a
+promise.) Three sub-plans:
 
-- [day-promises/brief.md](day-promises/brief.md) — **4a, the primitive**: a
-  promise's name threads a code site and a test; `enforced / known-violated /
-  retired` states; promotion of a plan's claims at close; a plan closes
-  *holding N promises* and can be woken; a promise changes only by a change
-  that names it. Looper has this half built; numero has the typed contract
-  and no promises; ~1 week.
+- [day-promises/brief.md](day-promises/brief.md) — **4a, the primitive**:
+  registry with kinds, lifetimes, `declared / enforced / known-violated /
+  retired` states, domains, owners and per-kind links; `indusk promises
+  check`; adoption in looper (its eleven, unchanged in meaning), numero and
+  dusk (one per kind); the Promises page with every enforced chip hollow; a
+  plan closes *holding N promises* and can be woken. ~3.5 days.
 - [day-monitor/brief.md](day-monitor/brief.md) — **4b, the telemetry half
-  (was Midnight)**: the span link, violations per promise as a number from
-  Jaeger and Dash0, `monitor` as the quiet window, alert → incident with root
-  cause → reopen the owner. "Running" means executing with real inputs,
-  locally under Jaeger as much as deployed; exists nowhere yet; looper can
-  close the loop locally first; ~1 week after 4a.
+  (was Midnight), behaviour promises only**: the span link and its test-side
+  trace-shape helper, violations per promise as a number from Jaeger and
+  Dash0, `monitor` as the quiet window, alert → incident with root cause →
+  reopen the owner. "Running" means executing with real inputs, locally under
+  Jaeger as much as deployed; exists nowhere yet; looper can close the loop
+  locally first; ~1 week after 4a.
+- `day-contract` — **4c, the contract in planning** (proposed 2026-09-18 as
+  4a's cut; created when 4a closes): promises declared before code, every
+  trajectory row names what it establishes or preserves, the retrospective
+  confirms at close, and a change that touches a promise's code site without
+  naming it is "touched, unacknowledged".
 
 Why before Dawn 7: Dawn's remaining components scale up *unattended
 throughput*; Midnight is the only plan that adds a feedback loop fed from

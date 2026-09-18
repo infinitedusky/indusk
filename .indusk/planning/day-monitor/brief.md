@@ -1,9 +1,10 @@
 ---
-title: "Day step 4b — Monitor: promise violation detection and root cause, from telemetry"
+title: "Day step 4b — Monitor: behaviour-promise violation detection and root cause, from telemetry"
 date: 2026-06-14
 status: draft
 amended: 2026-08-11
 rewritten: 2026-09-17
+narrowed: 2026-09-18
 codename: midnight
 ---
 
@@ -17,13 +18,24 @@ contract. This brief is the half Midnight was always about: **the telemetry
 that watches promises in the running system, detects a violation, records its
 root cause, and wakes the plan that owns it.**
 
+## Scope: behaviour promises only
+
+`day-promises` gives a promise a **kind**. `state` and `structure` promises
+are watched by the test suite and the build-time checks — a green-to-red flip
+is caught the next time they run, and whether they *ran* is the process
+record's question. `behaviour` promises — something happens, how does the
+system respond — are the one kind the suite cannot cover, because the inputs
+that break them are the ones nobody chose. This step is about that kind and
+no other. It does not monitor the registry; it watches reactions in a run.
+
 ## What this is, in one paragraph
 
-A promise (defined in `day-promises`) is a commitment the system keeps for as
-long as it runs. The test suite can only say a promise held on the inputs
-someone thought of. This step gives every promise a third link, a mark on the
-telemetry span the running system emits, so that the system *while running*
-reports which promises it upheld and which it broke. Running means executing
+A behaviour promise (defined in `day-promises`) is a commitment the system
+keeps for as long as it runs. The test suite can only say it held on the
+inputs someone thought of. This step gives every behaviour promise a third
+link, a mark on the telemetry span the running system emits, so that the
+system *while running* reports which promises it upheld and which it broke.
+Running means executing
 with real inputs — locally under Jaeger, in a smoke run, or deployed — as
 opposed to the test suite, which only exercises the inputs someone chose. The
 word is not "production": a local run is a running system, and the loop
@@ -59,7 +71,12 @@ the tests; it grades them.
 1. **The span link.** A span attribute carrying the promise's name
    (`indusk.promise`, the ADR confirms), emitted at the code site that
    enforces it. Most spans never carry one; a span opts in by naming a
-   promise, so the coupling is on promises, not on telemetry.
+   promise, so the coupling is on promises, not on telemetry. With it, the
+   test side of the same mark: a trace-shape helper that asserts on the spans
+   a call produced and names the promise it validates — looper's
+   `assert_trace_shape` for pytest is the reference, the vitest one is
+   written here (moved from `day-promises` on 2026-09-18, because it asserts
+   on the convention this step defines).
 2. **A number.** `indusk promises status`: for each promise, violations in
    the window, from local Jaeger and from Dash0. "Has this promise been
    violated this week?" answers with a count that means something.
@@ -106,7 +123,9 @@ on top of an OpenTelemetry reporting platform, as opposed to on OpenTelemetry?")
 ## How health appears in the admin
 
 4a draws the declared state and leaves every enforced chip hollow. This step
-fills the second axis, **observed health**, from the backend adapter:
+fills the second axis, **observed health**, for behaviour promises, from the
+backend adapter (state and structure health come from the suite at head,
+through the verify ledger, in `day-contract`):
 
 | Declared | Observed in the window | Chip | Meaning |
 |---|---|---|---|
@@ -159,7 +178,7 @@ where Dash0 earns its place.
 
 | # | Effort | What |
 |---|---|---|
-| 1 | ~½d | The span attribute convention; the code-site helper that sets it |
+| 1 | ~1d | The span attribute convention; the code-site helper that sets it; the vitest trace-shape helper in the testing extension |
 | 2 | ~2d | `indusk promises status` — violations per promise from local Jaeger and Dash0 |
 | 3 | ~1d | `monitor` derived and drawn; the quiet window; reopen with a maintenance phase |
 | 4 | ~2d | Alert → match or open an incident with root cause and source → reopen the owner |
@@ -177,8 +196,8 @@ is the moment the loop closes; looper can produce it locally.
 
 ## Depends on
 
-- [`day-promises`](../day-promises/brief.md): the registry, the states, the
-  owner, the first two links.
+- [`day-promises`](../day-promises/brief.md): the registry, the kinds, the
+  states, the owner, the first two links.
 - admin-ui-phase-progress (closed 2026-09-17): `monitor` listed and drawn.
 - Local Jaeger (the local-telemetry daemon) — already installed. Dash0 only
   for the `deployed` source.
