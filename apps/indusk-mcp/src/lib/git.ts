@@ -144,13 +144,30 @@ export interface GitWorktree {
  * repository; callers decide what that means.
  */
 export async function listWorktrees(root: string): Promise<GitWorktree[]> {
-	const out = await git(root, "worktree", "list", "--porcelain");
+	return parseWorktreeList(await git(root, "worktree", "list", "--porcelain"));
+}
+
+/**
+ * The one parse of `git worktree list --porcelain` output: blank-line-separated
+ * blocks, each opening with `worktree <path>`; the first block is the main
+ * working tree. Pure, so a caller with its own runner (`decision.ts` injects
+ * one for tests) parses the same way `listWorktrees` does.
+ */
+/** The value of the first `<prefix><value>` line in a porcelain block, trimmed. */
+function field(lines: string[], prefix: string): string | undefined {
+	return lines
+		.find((l) => l.startsWith(prefix))
+		?.slice(prefix.length)
+		.trim();
+}
+
+export function parseWorktreeList(porcelain: string): GitWorktree[] {
 	const entries: GitWorktree[] = [];
-	for (const block of out.split(/\n\s*\n/)) {
+	for (const block of porcelain.split(/\n\s*\n/)) {
 		const lines = block.split("\n");
-		const path = lines.find((l) => l.startsWith("worktree "))?.slice("worktree ".length);
+		const path = field(lines, "worktree ");
 		if (!path) continue;
-		const ref = lines.find((l) => l.startsWith("branch "))?.slice("branch ".length);
+		const ref = field(lines, "branch ");
 		entries.push({
 			path,
 			branch: ref ? ref.replace(/^refs\/heads\//, "") : null,

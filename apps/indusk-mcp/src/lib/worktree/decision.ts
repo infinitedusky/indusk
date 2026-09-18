@@ -15,6 +15,7 @@
 
 import { spawnSync } from "node:child_process";
 import matter from "gray-matter";
+import { parseWorktreeList } from "../git.js";
 
 export type WorktreeDecision = "create" | "skip";
 
@@ -65,15 +66,6 @@ const defaultGitRunner: GitRunner = (args, cwd) => {
 	return res.stdout ?? null;
 };
 
-/** First `worktree <path>` line of `git worktree list --porcelain` = the main tree. */
-function parseMainWorktree(porcelain: string): string {
-	for (const line of porcelain.split("\n")) {
-		const m = line.match(/^worktree\s+(.+)$/);
-		if (m) return m[1].trim();
-	}
-	return "";
-}
-
 /**
  * Classify a cwd as trunk vs. linked worktree. Not in a git repo → trunk with
  * empty toplevel (the safe default that would trigger the kickoff nudge).
@@ -84,7 +76,8 @@ export function detectTreeContext(cwd: string, run: GitRunner = defaultGitRunner
 	const toplevel = toplevelRaw.trim();
 
 	const listRaw = run(["worktree", "list", "--porcelain"], cwd);
-	const mainTree = listRaw ? parseMainWorktree(listRaw) : "";
+	// The main tree is the first entry — parsed by the one porcelain parser.
+	const mainTree = listRaw ? (parseWorktreeList(listRaw).find((w) => w.main)?.path ?? "") : "";
 	// If we can't determine the main tree, fall back to trunk (don't false-flag a nudge).
 	const kind: TreeKind = !mainTree || mainTree === toplevel ? "trunk" : "worktree";
 	return { kind, toplevel };
