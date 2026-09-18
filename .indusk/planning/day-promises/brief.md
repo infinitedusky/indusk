@@ -2,7 +2,8 @@
 title: "Day step 4a — Promises: the contract's primitive"
 date: 2026-09-17
 rewritten: 2026-09-18
-status: draft
+status: accepted
+accepted: 2026-09-18
 workflow: feature
 ---
 
