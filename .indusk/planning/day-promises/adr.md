@@ -1,7 +1,8 @@
 ---
 title: "Day step 4a — Promises: registry, check, self-hosting, page"
 date: 2026-09-18
-status: proposed
+status: accepted
+accepted: 2026-09-18
 ---
 
 # Day step 4a — Promises: registry, check, self-hosting, page
