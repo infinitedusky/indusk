@@ -1,7 +1,7 @@
 ---
 title: "Plans in worktrees show their progress"
 date: 2026-09-18
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -83,6 +83,11 @@ guessed.
 | A18 | The work skill's kickoff runs `indusk worktree create <plan>` and the retrospective's landing step runs `indusk worktree release <plan>` between the merge and the removal | Test Phase 1 | Build Phase 4 | passing |
 | A19 | This plan's own progress shows, with its worktree named, in the worktree's admin build run against the dusk registry while Build Phase 4 is worked | Build Phase 4 | Build Phase 4 | passing |
 | A20 | A project nested inside a larger repository reads its own plans, not the enclosing repository's | Build Phase 4 | Build Phase 4 | passing |
+| A21 | With the plan archived on its branch (retrospective Step 9 moved its folder to `archive/` in the assigned worktree, before the Step 10 release), `list_plans` and `get_plan_status` asked at the trunk answer — the plan reported as archived in its worktree — instead of throwing, and the admin's project and plan pages return 200 showing it archived in the worktree | Build Phase 5 | Build Phase 5 | planned |
+| A22 | With the plan's folder gone from the assigned worktree (neither active nor archived there), the tools and the admin report "plan folder missing in worktree `<path>`" and show the trunk copy, and nothing throws | Build Phase 5 | Build Phase 5 | planned |
+| A23 | Twelve `indusk worktree assign` runs started at once, for twelve plans and twelve worktrees, leave all twelve assignments in the record | Build Phase 5 | Build Phase 5 | planned |
+| A24 | `indusk worktree create <plan>` where `<project>-worktrees/<plan>` exists as a plain folder (what a removed worktree leaves behind) refuses naming it as not a worktree and saying to remove it, and never advises `indusk worktree assign`, which would refuse it | Build Phase 5 | Build Phase 5 | planned |
+| A25 | `indusk worktree create <plan>` run while the trunk is checked out on a branch outside `worktree.trunk_guard.branches` (default `main`, `master`) refuses naming that branch, instead of forking `plan/<plan>` from it | Build Phase 5 | Build Phase 5 | planned |
 
 **Moved during Build Phase 1 (2026-09-18):** A8, A9 and A12 pass at Build Phase 2, not 1. Each asserts that "the plan reads from" a copy, and it asks the MCP plan tool, which learns to read the assignment in Build Phase 2; the impl sequenced them one phase early. A12 was also strengthened: it now checks the worktree is read *while assigned* before checking the trunk is read after release, because "trunk after release" alone is what a reader that ignores assignments shows, and it had passed that way. The commands' own refusals and the clean-tree row (A10, A11, A13) pass at Build Phase 1 as planned.
 
@@ -108,6 +113,14 @@ on its own assertion today.
 
 - **A19** — a manual smoke with no code to author: it needs the Build Phase 3 admin running against the dusk registry while this plan is assigned, which exists only once Build Phases 1–3 have landed in the worktree. Procedure: from the worktree, `pnpm --filter indusk-admin dev` with the default `INDUSK_HOME`, open `/p/dusk/plan/admin-plan-worktrees`, confirm the worktree is named and the Build Phase 4 checkoffs appear on refresh; screenshot recorded in the retrospective. The landing half — the plan reads from trunk once released — is the retrospective's own check.
 - **A20** — added during Build Phase 4, not deferred from Test Phase 1: the failure it guards was unknown until Build Phase 3 hit it by accident (the admin's `test-fixtures/sample-project` sits inside this repository, and the resolver listed dusk's plans as the fixture's). The fix landed in Build Phase 3; the test was shown red by running it against the resolver from before that fix (`git show dded1d97~1:…` — it listed the enclosing repository's `demo`), then green on the current code.
+
+#### Deferred to Build Phase 5
+
+- **A21–A25** — falsification hypotheses (`/falsify`, 2026-09-18), formed by reading the code Build Phases 1–4 shipped; each names a line that did not exist when Test Phase 1 was authored. All five reach their subject over a boundary (a tool call, HTTP, the built CLI), so each can go red at Build Phase 5's start against today's code.
+  - **A21, A22** — `parsePlan` begins with `readdirSync(planDir)`, and the admin's `readPlanFolder` calls `parsePlan` too. Both are handed `<worktree>/.indusk/planning/<plan>` for an assigned plan without checking the folder is there. Retrospective Step 9 moves that folder to `archive/` on the branch and Step 10 releases only after the merge, so every plan passes through the window: `list_plans` throws for the whole project, and `readActivePlans` rejects, erroring every page of the project in the admin. This plan's own retrospective is the first to cross it.
+  - **A23** — `assignPlan` reads the record, validates, and writes it back with nothing held between the read and the write. Two sessions creating or assigning worktrees at the same time each write their own list, and the later write drops the earlier assignment: that plan silently reads the trunk again, which is the bug this plan exists to fix. `lib/agents/lock.ts` (`withLock`) is the project's lock for exactly this between processes on one machine. If twelve concurrent runs cannot be made to lose an update against today's code, `/work` records that the red could not be demonstrated and keeps the row as a regression guard, rather than calling it green.
+  - **A24** — `createPlanWorktree` refuses an existing target folder with "assign it with `indusk worktree assign <plan> <path>`, or remove it"; `assignPlan` refuses any path that is not a linked worktree. So for the most common existing folder — the ignored files a `git worktree remove --force` leaves behind, three of which sit in `dusk-worktrees/` today — the advice names a command that refuses too.
+  - **A25** — `createPlanWorktree` bases `plan/<plan>` on the trunk's *current* branch. A trunk left on any other branch forks the new plan from that branch's unmerged work, with nothing said. The trunk guard already defines which branches are trunk (`worktree.trunk_guard.branches`, default `main`/`master`).
 
 #### Regression Guards
 
@@ -237,6 +250,30 @@ on its own assertion today.
 #### Build Phase 4 Document
 
 - [x] Update `apps/docs/src/guide/worktree-setup.md` and `apps/docs/src/guide/plan-lifecycle.md`: a plan's worktree is assigned at the kickoff and released at landing; the admin reads the live copy
+
+### Build Phase 5: Falsification — the live copy's folder, and the record between two writers
+
+**Goal**: verify whether the attested state holds when the live copy's plan folder moves or vanishes inside its worktree, when two processes write the record at once, and when `create` meets a leftover folder or a trunk on the wrong branch. Each trajectory row captures one hypothesis about what is broken; each item below is the fix the code needs if it confirms.
+
+- [ ] The resolver returns each copy's plan **folder**, not only its root: for an assigned plan, `<worktree>/.indusk/planning/<plan>` when it exists; else `<worktree>/.indusk/planning/archive/<plan>` with `archivedInWorktree: true`; else the trunk folder with problem `missing` naming the worktree. No reader joins a plan folder path by hand again.
+- [ ] `list_plans`, `get_plan_status`, `advance_plan` and the admin's `readActivePlans` read the folder the resolver returns; an archived-in-worktree plan is reported as such (`archivedInWorktree` in the tools; in the admin a notice "archived in its worktree `<name>`, awaiting landing"); `missing` renders like `gone`, naming the path
+- [ ] `assignPlan` and `releasePlan` hold a lock beside the record (`withLock` from `lib/agents/lock.ts`, on `<record>.lock`) from the record's read to its write; the git calls stay outside the lock
+- [ ] `createPlanWorktree`'s existing-folder refusal distinguishes a linked worktree of this repository (advise `assign`) from anything else (say it is not a worktree and to remove it, naming the path)
+- [ ] `createPlanWorktree` refuses unless the trunk's current branch is in `worktree.trunk_guard.branches` (default `main`, `master` — the trunk guard's list, read once in TypeScript beside the resolver, with the hook as its port), naming the branch it found
+
+#### Build Phase 5 Verification
+
+- [ ] A21, A22: the tools rows in `plan-worktrees-tools.test.ts` and the admin rows in `http-plan-worktrees.test.ts` go red on today's code (a thrown `ENOENT` and a non-200 page), then green (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-tools.test.ts` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-plan-worktrees.test.ts`)
+- [ ] A23, A24, A25: the CLI rows in `plan-worktrees-cli.test.ts` go red on today's code, then green (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts`); for A23, if no lost update can be shown against today's code, record that and keep the row as a regression guard
+- [ ] A1–A20 still pass (the same three files), and the mcp and admin node suites show no new failure (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`, `pnpm --filter indusk-admin exec vitest run --project node`)
+
+#### Build Phase 5 Context
+
+- [ ] Update the plan live-copy Conventions entry: the resolver returns each plan's folder (active, archived-in-worktree, or the trunk's with `missing`), writes to the record take `<record>.lock`, and `create` refuses a leftover folder or a trunk on a non-trunk branch
+
+#### Build Phase 5 Document
+
+- [ ] Update `apps/docs/src/reference/cli/worktree.md` (the new refusals, the lock, the archived-in-worktree and missing rows of "What a reader sees") and the matching table in `apps/docs/src/reference/admin-ui/overview.md`
 
 ## Files Affected
 
