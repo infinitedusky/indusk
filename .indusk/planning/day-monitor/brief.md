@@ -120,6 +120,19 @@ on top of an OpenTelemetry reporting platform, as opposed to on OpenTelemetry?")
   `indusk promises status` polling is the alert; deployed, Dash0's alert rules
   call the same match-or-open-incident path. Both arrive at the same record.
 - Losing Dash0 loses the `deployed` source, not the loop.
+- **Jaeger is sufficient, deployed as well as local** (Sandy, 2026-09-18:
+  "remove the need for something like Dash0 — a cool addition, not a heavy
+  requirement"). Dash0 and Jaeger are the same layer, a backend on top of
+  OpenTelemetry; the loop must close with only the open-source one. Jaeger has
+  no alert rules, so the deployed path fills that gap the way local already
+  does: `indusk promises status` on a schedule, polling the same Jaeger
+  adapter and calling the same open-incident path. The always-on tier is
+  therefore the local model on a machine that does not turn off — Jaeger with
+  persistent storage (it defaults to memory), the scheduled status run, and
+  the receiver that writes the incident to the repo and reopens the plan.
+  Where that receiver runs when no developer machine is on is the open
+  question for the ADR. Dash0 stays an adapter for a project that already
+  pays for it; nothing in core requires it.
 
 ## How health appears in the admin
 
