@@ -139,8 +139,8 @@ its own, and for that we don't want to depend on a third party").
 ## How health appears in the admin
 
 4a draws the declared state and leaves every enforced chip hollow. This step
-fills the second axis, **observed health**, for behaviour promises, from the
-backend adapter (state and structure health come from the suite at head,
+fills the second axis, **observed health**, for behaviour promises, from
+Jaeger (state and structure health come from the suite at head,
 through the verify ledger, in `day-contract`):
 
 | Declared | Observed in the window | Chip | Meaning |
@@ -164,7 +164,7 @@ through the verify ledger, in `day-contract`):
   insufficient — and gets a distinct badge ("test passed, system broke")
   rather than being inferred from two colours side by side.
 - **Dynamic, honestly.** The plan page already polls through `LiveRefresh`.
-  Health is read server-side from the adapter, cached with a timestamp, never
+  Health is read server-side from Jaeger, cached with a timestamp, never
   blocking the render. If the backend is unreachable the chips go hollow with
   "health unknown since 10:42" — never green, never stale-green. A page that
   cannot see says so.
@@ -249,15 +249,16 @@ is the moment the loop closes, and a local run can produce it.
 - Whether a violation is an attribute on the span, a span event, or the span's
   error status — the raw trace must answer "which promise broke" without a
   backend, so the choice is about what every backend can filter on cheaply.
-- The adapter interface a backend extension implements: at minimum
-  "violations of promise X since T", returning a count and the trace ids.
+- The one query the loop asks Jaeger: "violations of promise X since T",
+  returning a count and the trace ids — through the local-telemetry
+  extension's query surface, never a backend-neutral adapter seam.
 - Whether the quiet window is per plan or per promise, and its default.
 - Whether an incident is opened automatically from an alert or proposed for a
   human to confirm — the root cause is a human's sentence either way.
 
 ## Cross-references
 
-- [`day-promises`](../day-promises/brief.md) — the primitive
+- [`day-promises`](../archive/day-promises/brief.md) — the primitive
 - [`/guide/plan-lifecycle`](../../../apps/docs/src/guide/plan-lifecycle.md) —
   `monitor` is the load-bearing addition; what reopens a plan
 - [`pr-shape.md`](../indusk-v4-day/pr-shape.md) — artifact 9
