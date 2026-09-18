@@ -21,9 +21,14 @@ import { findPhaseStart, readBoundaries } from "./boundary.js";
  * and a docs-only phase would look like it had a code surface. That is the same
  * self-satisfying-artifact trap the verify ledger sprang on phantom detection —
  * a tool's own output becoming an input to its own next decision.
+ *
+ * `.indusk/promises/` (day-promises, ADR D9) is inside this rule on purpose:
+ * a promise file is a plan document people write, never a code surface for
+ * Shape to review. Registered here by name so a narrowing of the blanket
+ * rule keeps it out — `promises-detectors.test.ts` pins that.
  */
 function isNotCode(repoRelPath: string): boolean {
-	return repoRelPath.startsWith(".indusk/");
+	return repoRelPath.startsWith(".indusk/") || repoRelPath.startsWith(".indusk/promises/");
 }
 
 /**

@@ -81,7 +81,9 @@ function isGeneratedOrVendored(rel: string): boolean {
 	if (base.endsWith(".lock") || base.endsWith(".log")) return true;
 	if (parts.some((p) => EXCLUDE_DIRS.has(p))) return true;
 	// .indusk/ holds planning docs, logs, and state — records, not decomposition
-	// targets. impl.md files legitimately grow past 400 lines on long plans.
+	// targets. impl.md files legitimately grow past 400 lines on long plans, and
+	// so does a promise file's history under .indusk/promises/ (day-promises,
+	// ADR D9 — pinned by promises-detectors.test.ts).
 	if (rel.startsWith(".indusk/")) return true;
 	return false;
 }

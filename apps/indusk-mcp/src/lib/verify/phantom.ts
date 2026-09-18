@@ -88,12 +88,19 @@ export async function detectPhantomWork(options: {
  * is precisely the file it needs to see. Same shape of question, genuinely
  * different answers — one definition here would be a merge of two rules, not a
  * de-duplication of one.
+ *
+ * `.indusk/promises/` (day-promises, ADR D9) is deliberately NOT in this list:
+ * a promise file is written by a person, so a phase that wrote one did real
+ * work, and phantom must see it as such. `promises-detectors.test.ts` pins
+ * that a checkoff beside a new promise file is not phantom.
  */
+const MACHINE_STATE_PREFIXES = [".indusk/verify/", ".indusk/eval/"] as const;
+const MACHINE_STATE_FILES = [".indusk/phase-boundary.jsonl"] as const;
+
 function isMachineState(repoRelPath: string): boolean {
 	return (
-		repoRelPath.startsWith(".indusk/verify/") ||
-		repoRelPath.startsWith(".indusk/eval/") ||
-		repoRelPath === ".indusk/phase-boundary.jsonl"
+		MACHINE_STATE_PREFIXES.some((prefix) => repoRelPath.startsWith(prefix)) ||
+		(MACHINE_STATE_FILES as readonly string[]).includes(repoRelPath)
 	);
 }
 
