@@ -167,7 +167,11 @@ A code root that is not a git repository is a refusal, not an empty scan.
 
 The library behind the command is exported as
 `@infinitedusky/indusk-mcp/promises/registry`: `readPromises(planRoot)`
-returns the registry, `{ missing }` or `{ problems }`, and the vocabulary
-tuples (`PROMISE_KINDS`, `PROMISE_STATES`, `PROMISE_LIFETIMES`,
+returns the registry, `{ missing }` or `{ problems, partial }` (a malformed
+entry is named and its well-formed neighbours still come back), and the
+vocabulary tuples (`PROMISE_KINDS`, `PROMISE_STATES`, `PROMISE_LIFETIMES`,
 `INCIDENT_SOURCES`). The admin's Promises page and the `list_promises` MCP
-tool read through it; nothing parses the directory itself.
+tool read through it; nothing parses the directory itself. Inside the
+package the module has three homes: `registry.ts` reads, `citations.ts`
+scans the code root for tokens (`citedNames`), `check.ts` judges the two
+against each other.
