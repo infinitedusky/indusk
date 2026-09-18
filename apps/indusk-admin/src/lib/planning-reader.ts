@@ -130,7 +130,12 @@ export interface Plan {
    * Why the trunk copy is shown although the plan is assigned: its worktree
    * is gone, or two live worktrees claim it. `detail` names every path.
    */
-  copyProblem?: { kind: "gone" | "doubled"; detail: string };
+  copyProblem?: { kind: "gone" | "doubled" | "missing"; detail: string };
+  /**
+   * The plan folder has moved into `archive/` in its worktree: archived on the
+   * branch by the retrospective, awaiting the landing's release.
+   */
+  archivedInWorktree?: boolean;
   /**
    * Set when the assignment record cannot be read. The plan then carries its
    * name and nothing read from any copy: which copy is live is unknown, and
@@ -397,16 +402,20 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
       const copy: PlanCopy = resolved.copies.get(name) ?? {
         plan: name,
         root,
+        dir: join(root, PLANNING_DIR, name),
         source: "trunk",
       };
       const plan = await readPlanFolder(
-        join(copy.root, PLANNING_DIR, name),
+        copy.dir,
         name,
         false,
         await boundariesOf(copy.root),
       );
-      if (copy.source === "worktree")
-        return { ...plan, worktree: copy.worktree };
+      if (copy.source === "worktree") {
+        return copy.archivedInWorktree
+          ? { ...plan, worktree: copy.worktree, archivedInWorktree: true }
+          : { ...plan, worktree: copy.worktree };
+      }
       if ("problem" in copy) {
         return {
           ...plan,

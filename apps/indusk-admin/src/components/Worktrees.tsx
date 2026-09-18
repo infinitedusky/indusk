@@ -45,6 +45,19 @@ export function PlanCopyNotice({ plan }: { plan: Plan }) {
       </div>
     );
   }
+  if (plan.worktree && plan.archivedInWorktree) {
+    return (
+      <output
+        data-testid="plan-copy-archived"
+        className="block rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+      >
+        This plan is archived in its worktree {plan.worktree.name}, awaiting
+        landing: the retrospective moved it on{" "}
+        <code>{plan.worktree.branch}</code>, and it reads from the trunk once
+        the branch merges and the assignment is released.
+      </output>
+    );
+  }
   if (plan.copyProblem) {
     return (
       <output
@@ -53,7 +66,9 @@ export function PlanCopyNotice({ plan }: { plan: Plan }) {
       >
         {plan.copyProblem.kind === "gone"
           ? `The ${plan.copyProblem.detail} — showing the trunk copy. Release it with indusk worktree release ${plan.name}, or assign the plan again.`
-          : `${plan.copyProblem.detail} — showing the trunk copy until one is released.`}
+          : plan.copyProblem.kind === "missing"
+            ? `The ${plan.copyProblem.detail} — showing the trunk copy.`
+            : `${plan.copyProblem.detail} — showing the trunk copy until one is released.`}
       </output>
     );
   }
