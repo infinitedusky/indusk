@@ -41,6 +41,8 @@ vi.mock("@/lib/planning-reader", () => ({
     { name: "beta", status: "in-progress", archived: false },
   ],
   readArchivedPlans: async () => [],
+  // admin-plan-worktrees: the layout lists unassigned worktrees; none here.
+  readProjectWorktrees: async () => ({ ok: true, unassigned: [] }),
   readMasterPlanOrder: () => ["alpha", "beta"],
   // dawn-ui-plan-grouping: the layout reads the hierarchy for sidebar grouping.
   // No parents here — this fixture asserts the flat-list shape, which is also
