@@ -107,6 +107,10 @@ Every read checks the record against `git worktree list`. Nothing is guessed:
 | A worktree nobody assigned | — | Listed as unassigned |
 | A record that cannot be read | Nothing | An error naming the file |
 
+Assignments apply when the project is the repository — its folder is the top
+of a git checkout, as dusk's is. A project nested inside a larger repository
+reads the folder it was asked about, as it did before.
+
 The MCP plan tools and the admin read the same way, through one resolver in
 `lib/worktree/plan-worktrees.ts` (the `@infinitedusky/indusk-mcp/worktree/plan-worktrees`
 subpath).
