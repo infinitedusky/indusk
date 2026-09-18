@@ -1,7 +1,8 @@
 ---
 title: "Day step 4a — Promises — Implementation"
 date: 2026-09-18
-status: draft
+status: approved
+approved: 2026-09-18
 trajectory: required
 test_phases: required
 rationale: required
