@@ -74,6 +74,25 @@ Not every check is a promise, and the registry must not become a second copy of 
 | every phase closed in order; red seen before green | — | — | **no** — process record, not a promise about the system |
 | "the migration preserves every key", as a trajectory row | — | — | **no** — a row that preserves a registered promise cites it; it does not create an entry |
 
+## Three worked examples, one per kind
+
+This repository holds three promises of its own, chosen so the convention is
+shown not to depend on a service or on telemetry. Each is a file under
+`.indusk/promises/`; `indusk promises check` runs over them in `pnpm test`.
+
+| Promise | Kind | Where it is enforced | What checks it |
+|---|---|---|---|
+| `one-definition-per-shared-rule` — every rule two lanes must agree on has exactly one definition under `src/lib` | `structure` | nowhere in particular: it is a fact about the tree, so it lists no site | the eight `*-single-definition` pin tests, each carrying the token |
+| `phase-boundary-record-never-malformed` — the writer refuses an append with the reader's own predicate | `state` | `lib/shape/boundary.ts` | the boundary tests |
+| `gates-ran-at-every-checkoff` — a phase-transition edit is judged by the gate chain from any working directory | `behaviour` | `hooks/check-gates.js` | the hook-runner test that drives the chain from a subdirectory — and, when Day step 5's gate ledger exists, the running system |
+
+The third is the interesting one. It is `enforced`, it has a site and a test,
+and it carries a `fixed` incident from 2026-09-15 (the hooks were registered
+relative to the session's cwd and silently stopped loading). Yet its chip on
+the Promises page is **hollow**, because nothing yet observes a checkoff at
+run time; the suite proves the behaviour on inputs someone chose. That hollow
+chip is the honest reading, and it is what the monitor step will fill.
+
 ## Who owns a promise
 
 The plan that established it. Ownership moves only when another plan supersedes the promise. A plan closes *holding* its promises — closed is the resting state, and the archived plan is the owner of record that a violation wakes. Only a plan holding none is truly finished.
