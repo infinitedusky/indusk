@@ -1,52 +1,11 @@
-import {
-	existsSync,
-	readdirSync,
-	readFileSync,
-	realpathSync,
-	renameSync,
-	writeFileSync,
-} from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
-import { withLock } from "../agents/lock.js";
-import { getPlanningDir, getTrunkBranches } from "../config.js";
+import { existsSync, readdirSync, realpathSync } from "node:fs";
+import { basename, join, resolve } from "node:path";
+import { getPlanningDir } from "../config.js";
 import { git, listWorktrees } from "../git.js";
-import { isUsableSegment } from "../path-segment.js";
-import { gitCommonDirOf } from "./layout.js";
+import { type Assignment, readRecord } from "./plan-worktree-record.js";
 import { isWorkbench } from "./repos.js";
 
-/**
- * Which copy of a plan is the live one.
- *
- * Every checkout of a project holds a copy of every plan — the trunk's and
- * one per worktree — and under worktree-per-plan the one being worked is in
- * its worktree, not on the trunk. This module answers "where is plan X's live
- * copy" for every reader (the MCP plan tools, the admin), from any checkout.
- *
- * The answer comes from a record, never from matching names: the InDusk
- * worktree command writes an assignment when it creates or assigns a
- * worktree, and ends it at release. The record lives in the repository's
- * shared git directory — common to the trunk and every worktree of this
- * clone, per-machine like the worktrees it names, never part of any working
- * tree. Each read checks the record against git's own worktree list, and
- * every mismatch is reported as what it is: a worktree that is gone, a plan
- * with two live worktrees, a record that cannot be read. None is guessed.
- *
- * Inert in a workbench: plan documents there live at the workbench root and
- * never in a code worktree, so every plan reads from the plan root.
- */
-
-export const RECORD_FILE = "indusk-plan-worktrees.json";
-const RECORD_VERSION = 1;
-const PLANNING_REL = join(".indusk", "planning");
-
-export interface Assignment {
-	plan: string;
-	/** Absolute, realpath-normalized when written. */
-	path: string;
-	branch: string;
-	/** ISO timestamp of the assignment. */
-	at: string;
-}
+export { RECORD_FILE } from "./plan-worktree-record.js";
 
 export interface WorktreeRef {
 	/** The worktree's folder name — what a person recognizes. */
@@ -126,118 +85,14 @@ export type PlanCopies =
 	  }
 	| { ok: false; projectRoot: string; file: string; problem: string };
 
-/** A refusal from `assignPlan`, `releasePlan` or `createPlanWorktree`: the message names what was refused. */
-export class PlanWorktreeRefusal extends Error {
-	override name = "PlanWorktreeRefusal";
-}
-
-type RecordRead =
-	| { ok: true; file: string; assignments: Assignment[] }
-	| { ok: false; file: string; problem: string };
-
 /** Normalize a path for comparison: realpath when it exists (macOS `/var` ↔ `/private/var`), else resolved. */
-function canonical(path: string): string {
+/** @internal — shared with the commands module. */
+export function canonical(path: string): string {
 	try {
 		return realpathSync(path);
 	} catch {
 		return resolve(path);
 	}
-}
-
-/** Why one assignment is unusable, or null. The reader and the writer share it. */
-function assignmentProblem(value: unknown, index: number): string | null {
-	if (typeof value !== "object" || value === null) return `assignment ${index} is not an object`;
-	const a = value as Record<string, unknown>;
-	for (const key of ["plan", "path", "branch", "at"] as const) {
-		if (typeof a[key] !== "string" || (a[key] as string).trim() === "") {
-			return `assignment ${index} has no ${key}`;
-		}
-	}
-	if (!isUsableSegment(a.plan as string))
-		return `assignment ${index} names an unusable plan "${a.plan}"`;
-	if (!(a.path as string).startsWith("/"))
-		return `assignment ${index} has a relative path "${a.path}"`;
-	return null;
-}
-
-function parseRecord(text: string, file: string): RecordRead {
-	let data: unknown;
-	try {
-		data = JSON.parse(text);
-	} catch (err) {
-		return { ok: false, file, problem: `not valid JSON (${(err as Error).message})` };
-	}
-	if (typeof data !== "object" || data === null)
-		return { ok: false, file, problem: "not an object" };
-	const body = data as { version?: unknown; assignments?: unknown };
-	if (body.version !== RECORD_VERSION) {
-		return {
-			ok: false,
-			file,
-			problem: `version is ${JSON.stringify(body.version)}, expected ${RECORD_VERSION}`,
-		};
-	}
-	if (!Array.isArray(body.assignments))
-		return { ok: false, file, problem: "assignments is not a list" };
-	for (let i = 0; i < body.assignments.length; i++) {
-		const problem = assignmentProblem(body.assignments[i], i);
-		if (problem) return { ok: false, file, problem };
-	}
-	return { ok: true, file, assignments: body.assignments as Assignment[] };
-}
-
-function recordPath(anyCheckout: string): string {
-	const common = gitCommonDirOf(anyCheckout);
-	if (!common) throw new PlanWorktreeRefusal(`${anyCheckout} is not inside a git repository`);
-	return join(canonical(common), RECORD_FILE);
-}
-
-function readRecordFile(file: string): RecordRead {
-	if (!existsSync(file)) return { ok: true, file, assignments: [] };
-	let text: string;
-	try {
-		text = readFileSync(file, "utf-8");
-	} catch (err) {
-		return { ok: false, file, problem: `unreadable (${(err as Error).message})` };
-	}
-	return parseRecord(text, file);
-}
-
-async function readRecord(anyCheckout: string): Promise<RecordRead> {
-	return readRecordFile(recordPath(anyCheckout));
-}
-
-/**
- * Read the record, decide, and write it back, holding `<record>.lock` across
- * all three. Two sessions assigning at once would otherwise each write the
- * list they read and the later write would drop the earlier assignment — that
- * plan silently reading the trunk again. The lock is the project's lock for
- * processes on one machine (`lib/agents/lock.ts`); `change` returns the new
- * list, or null to write nothing.
- */
-function updateRecord<T>(
-	anyCheckout: string,
-	change: (assignments: Assignment[]) => { next: Assignment[] | null; result: T },
-): T {
-	const file = recordPath(anyCheckout);
-	return withLock(`${file}.lock`, () => {
-		const record = readRecordFile(file);
-		if (!record.ok) {
-			throw new PlanWorktreeRefusal(
-				`the assignment record ${record.file} cannot be read: ${record.problem} — fix or remove it first`,
-			);
-		}
-		const { next, result } = change(record.assignments);
-		if (next) writeRecord(file, next);
-		return result;
-	});
-}
-
-/** Write the record atomically: a reader never sees half a file. */
-function writeRecord(file: string, assignments: Assignment[]): void {
-	const temp = `${file}.${process.pid}.tmp`;
-	writeFileSync(temp, `${JSON.stringify({ version: RECORD_VERSION, assignments }, null, 2)}\n`);
-	renameSync(temp, file);
 }
 
 /** Plan folders on the trunk, archive excluded — the inventory every copy is resolved for. */
@@ -258,7 +113,8 @@ function trunkPlans(projectRoot: string): string[] {
 		.sort();
 }
 
-interface Repository {
+/** @internal — shared with the commands module. */
+export interface Repository {
 	projectRoot: string;
 	/** Linked worktrees that exist on disk, keyed by canonical path. */
 	linked: Map<string, { path: string; branch: string | null }>;
@@ -274,7 +130,7 @@ interface Repository {
  * reading the folder it was asked about. Climbing to the enclosing repository
  * instead would list that repository's plans as this project's.
  */
-async function repositoryOf(anyCheckout: string): Promise<Repository | null> {
+export async function repositoryOf(anyCheckout: string): Promise<Repository | null> {
 	let list: Awaited<ReturnType<typeof listWorktrees>>;
 	try {
 		const top = await git(anyCheckout, "rev-parse", "--show-toplevel");
@@ -415,147 +271,4 @@ export async function livePlanCopy(
 		ok: true,
 		copy: all.copies.get(plan) ?? trunkCopy(all.projectRoot, plan),
 	};
-}
-
-/** The repository for a write, refusing where assignments do not apply. */
-async function writableRepository(anyCheckout: string): Promise<Repository> {
-	const asked = canonical(anyCheckout);
-	if (isWorkbench(asked)) {
-		throw new PlanWorktreeRefusal(
-			"plan worktree assignments are for normal-mode projects: in a workbench, plan documents live at the workbench root, never in a code worktree",
-		);
-	}
-	const repo = await repositoryOf(asked);
-	if (!repo) throw new PlanWorktreeRefusal(`${asked} is not inside a git repository`);
-	return repo;
-}
-
-function requirePlan(repo: Repository, plan: string): void {
-	if (!isUsableSegment(plan) || !existsSync(join(repo.projectRoot, PLANNING_REL, plan))) {
-		throw new PlanWorktreeRefusal(
-			`no plan named "${plan}" in ${join(repo.projectRoot, PLANNING_REL)} — a plan is assigned after its folder exists on the trunk`,
-		);
-	}
-}
-
-async function readRecordOrRefuse(
-	anyCheckout: string,
-): Promise<{ file: string; assignments: Assignment[] }> {
-	const record = await readRecord(anyCheckout);
-	if (!record.ok) {
-		throw new PlanWorktreeRefusal(
-			`the assignment record ${record.file} cannot be read: ${record.problem} — fix or remove it first`,
-		);
-	}
-	return record;
-}
-
-/**
- * Assign `plan` to the worktree at `worktreePath`. Idempotent for the same
- * worktree. Refuses a path that is not a linked worktree of this repository,
- * a plan with no folder on the trunk, a plan that already has another live
- * worktree, and a worktree already assigned to another plan — each by name,
- * with nothing written. Assignments whose worktrees are gone are replaced.
- */
-export async function assignPlan(
-	anyCheckout: string,
-	plan: string,
-	worktreePath: string,
-): Promise<Assignment> {
-	const repo = await writableRepository(anyCheckout);
-	requirePlan(repo, plan);
-	const path = canonical(worktreePath);
-	const target = repo.linked.get(path);
-	if (!target) {
-		throw new PlanWorktreeRefusal(
-			`${worktreePath} is not a worktree of this repository (git worktree list, from ${repo.projectRoot})`,
-		);
-	}
-	const live = (a: Assignment) => repo.linked.has(canonical(a.path));
-	return updateRecord(anyCheckout, (assignments) => {
-		const existing = assignments.find((a) => a.plan === plan && live(a));
-		if (existing && canonical(existing.path) === path) return { next: null, result: existing };
-		if (existing) {
-			throw new PlanWorktreeRefusal(
-				`${plan} is already assigned to ${existing.path}; refusing to also assign ${path} — release it first (indusk worktree release ${plan})`,
-			);
-		}
-		const holder = assignments.find(
-			(a) => a.plan !== plan && live(a) && canonical(a.path) === path,
-		);
-		if (holder) {
-			throw new PlanWorktreeRefusal(`${path} is already assigned to plan ${holder.plan}`);
-		}
-		const assignment: Assignment = {
-			plan,
-			path,
-			branch: target.branch ?? "(detached)",
-			at: new Date().toISOString(),
-		};
-		return {
-			next: [...assignments.filter((a) => a.plan !== plan), assignment],
-			result: assignment,
-		};
-	});
-}
-
-/** End `plan`'s assignment. Refuses when there is none, so a skipped step is loud. */
-export async function releasePlan(anyCheckout: string, plan: string): Promise<Assignment[]> {
-	await writableRepository(anyCheckout);
-	return updateRecord(anyCheckout, (assignments) => {
-		const released = assignments.filter((a) => a.plan === plan);
-		if (released.length === 0) {
-			throw new PlanWorktreeRefusal(`${plan} has no worktree assignment to release`);
-		}
-		return { next: assignments.filter((a) => a.plan !== plan), result: released };
-	});
-}
-
-/**
- * Create `plan`'s worktree in a normal-mode project and assign it:
- * `git worktree add <parent>/<project>-worktrees/<plan> -b plan/<plan> <trunk branch>`.
- * The folder and branch names are for people; nothing reads them to decide
- * anything — the assignment is what binds the plan.
- */
-export async function createPlanWorktree(
-	anyCheckout: string,
-	plan: string,
-): Promise<{ assignment: Assignment; created: string }> {
-	const repo = await writableRepository(anyCheckout);
-	requirePlan(repo, plan);
-	await readRecordOrRefuse(anyCheckout);
-	const created = join(dirname(repo.projectRoot), `${basename(repo.projectRoot)}-worktrees`, plan);
-	if (existsSync(created)) {
-		// Advise `assign` only for something `assign` would take: a linked
-		// worktree of this repository. Anything else is usually what a removed
-		// worktree left behind (ignored files `git worktree remove --force` keeps).
-		throw new PlanWorktreeRefusal(
-			repo.linked.has(canonical(created))
-				? `${created} is already a worktree of this repository — assign it with indusk worktree assign ${plan} ${created}`
-				: `${created} already exists and is not a worktree of this repository (often what a removed worktree leaves behind) — remove it, then run create again`,
-		);
-	}
-	const trunkBranch = await git(repo.projectRoot, "branch", "--show-current");
-	const allowed = getTrunkBranches(repo.projectRoot);
-	if (!allowed.includes(trunkBranch)) {
-		throw new PlanWorktreeRefusal(
-			`the trunk at ${repo.projectRoot} is on ${trunkBranch ? `branch ${trunkBranch}` : "no branch"}, not a trunk branch (${allowed.join(", ")}) — a plan branch forks from the trunk; check out the trunk branch first, or list this one in worktree.trunk_guard.branches`,
-		);
-	}
-	try {
-		await git(
-			repo.projectRoot,
-			"worktree",
-			"add",
-			"-q",
-			created,
-			"-b",
-			`plan/${plan}`,
-			trunkBranch,
-		);
-	} catch (err) {
-		throw new PlanWorktreeRefusal(`git worktree add failed: ${(err as Error).message.trim()}`);
-	}
-	const assignment = await assignPlan(repo.projectRoot, plan, created);
-	return { assignment, created: canonical(created) };
 }

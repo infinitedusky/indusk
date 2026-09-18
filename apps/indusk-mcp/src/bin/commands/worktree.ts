@@ -8,7 +8,7 @@ import {
 	createPlanWorktree,
 	PlanWorktreeRefusal,
 	releasePlan,
-} from "../../lib/worktree/plan-worktrees.js";
+} from "../../lib/worktree/plan-worktree-commands.js";
 import {
 	isWorkbench,
 	NOT_A_WORKBENCH,
