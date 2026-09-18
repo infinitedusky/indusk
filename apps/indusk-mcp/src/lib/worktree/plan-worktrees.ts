@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { withLock } from "../agents/lock.js";
-import { getPlanningDir } from "../config.js";
+import { getPlanningDir, getTrunkBranches } from "../config.js";
 import { git, listWorktrees } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
 import { gitCommonDirOf } from "./layout.js";
@@ -511,34 +511,6 @@ export async function releasePlan(anyCheckout: string, plan: string): Promise<As
 	});
 }
 
-const DEFAULT_TRUNK_BRANCHES = ["main", "master"];
-
-/**
- * The branches that count as the trunk: `worktree.trunk_guard.branches` in
- * `.indusk/config.json`, default `main` and `master`. The trunk guard hook
- * (`hooks/trunk-guard.js`, `readTrunkGuardConfig`) reads the same key and is
- * the port of this function — change both together. A malformed config falls
- * back to the default rather than admitting every branch.
- */
-export function trunkBranches(projectRoot: string): string[] {
-	try {
-		const raw = JSON.parse(readFileSync(join(projectRoot, ".indusk", "config.json"), "utf-8")) as {
-			worktree?: { trunk_guard?: { branches?: unknown } };
-		};
-		const branches = raw?.worktree?.trunk_guard?.branches;
-		if (
-			Array.isArray(branches) &&
-			branches.length > 0 &&
-			branches.every((b) => typeof b === "string")
-		) {
-			return branches as string[];
-		}
-	} catch {
-		// Missing or malformed config: the default below.
-	}
-	return DEFAULT_TRUNK_BRANCHES;
-}
-
 /**
  * Create `plan`'s worktree in a normal-mode project and assign it:
  * `git worktree add <parent>/<project>-worktrees/<plan> -b plan/<plan> <trunk branch>`.
@@ -564,7 +536,7 @@ export async function createPlanWorktree(
 		);
 	}
 	const trunkBranch = await git(repo.projectRoot, "branch", "--show-current");
-	const allowed = trunkBranches(repo.projectRoot);
+	const allowed = getTrunkBranches(repo.projectRoot);
 	if (!allowed.includes(trunkBranch)) {
 		throw new PlanWorktreeRefusal(
 			`the trunk at ${repo.projectRoot} is on ${trunkBranch ? `branch ${trunkBranch}` : "no branch"}, not a trunk branch (${allowed.join(", ")}) — a plan branch forks from the trunk; check out the trunk branch first, or list this one in worktree.trunk_guard.branches`,
