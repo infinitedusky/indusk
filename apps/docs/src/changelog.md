@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+- **A plan worked in its worktree shows its progress.** The admin and the MCP plan tools read plans only from the project's trunk checkout, so the plan being worked — on its own branch, in its own worktree — was the one plan whose checkoffs, trajectory and active phase never showed until it merged. *(In progress: filled in as the plan's phases land.)*
+
 ## [1.52.0] — 2026-09-18
 
 ### Added
