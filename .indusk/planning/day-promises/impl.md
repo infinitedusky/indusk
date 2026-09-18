@@ -1,10 +1,11 @@
 ---
 title: "Day step 4a — Promises — Implementation"
 date: 2026-09-18
-status: completed
+status: in-progress
 approved: 2026-09-18
 completed: 2026-09-18
 falsified: 2026-09-18
+cleanup_authored: 2026-09-18
 trajectory: required
 test_phases: required
 rationale: required
@@ -88,6 +89,9 @@ A26 are structural pins the ADR adds (D6, D9).
 | A29 | After a rename with `aliases: [old-name]`, a listed site or test still carrying `promise: old-name` counts as naming the promise (the link check resolves aliases the way the reverse scan does); an alias equal to a live promise's name, or shared by two promises, fails naming both | Build Phase 5 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
 | A30 | An `enforced` promise listing an incident whose `status` is `open` fails: an open incident says the promise is broken now, so the state is `known-violated` or the incident is `fixed` | Build Phase 5 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
 | A31 | A `sites:` or `tests:` entry that is absolute or contains `..` fails naming the entry; the check never reads a file outside the code root | Build Phase 5 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A32 | Exactly one presence-keyed config-block ensure exists under `src/lib` (`ensureConfigBlock` in `lib/config.ts`), and the cleanup, papers and promises ensures each call it; `indusk update` on a bare project still adds all three blocks once and leaves a declared block alone | Build Phase 6 | Build Phase 6 | planned | apps/indusk-mcp/src/__tests__/promises-cleanup.test.ts |
+| A33 | The reverse scan lives in `lib/promises/citations.ts` (`citedNames`), `check.ts` imports it and defines no scan of its own; the citation rows (A2, A9, A27) and the repository's own check are unchanged | Build Phase 6 | Build Phase 6 | planned | apps/indusk-mcp/src/__tests__/promises-cleanup.test.ts |
+| A34 | `HoldingBadge` lives in its own server-renderable file (`components/HoldingBadge.tsx`, no `"use client"`), imported by the sidebar, the plan header and the Promises page; the holding rows (A22) are unchanged | Build Phase 6 | Build Phase 6 | planned | apps/indusk-admin/src/components/Promises.test.tsx |
 
 ### Deferred Verification
 
@@ -157,6 +161,10 @@ bodies reviewed.
 #### Deferred to Build Phase 5
 
 - **A27–A31** — falsification hypotheses (`/falsify`, 2026-09-18), formed by reading the shipped check after Build Phase 4 closed; each targets a line of `lib/promises/check.ts` or `vocabulary.ts` that did not exist when Test Phase 1 was authored. Authored red in the phase that fixes them, the ritual's shape. A27 against `TOKEN_OPENER`'s requirement that the token be the first thing after the opener; A28 against `ownerStatus`'s `existsSync` (a file or the `archive` folder passes as a plan); A29 against `fileNames` matching the name only while `citationRefusals` resolves aliases; A30 against `stateRefusals` never reading an incident's `status` for an `enforced` promise; A31 against `join(codeRoot, rel)` with an unguarded `rel`.
+
+#### Deferred to Build Phase 6
+
+- **A32–A34** — cleanup rows (`/cleanup`, 2026-09-18): each pins a unit the Cleanup Phase extracts, so its file cannot load before that phase. A32 is a single-definition count over `src/lib` plus a behaviour-parity run of `update` (the existing A14 and the cleanup-ritual ensure test keep passing through the shared helper); A33 is a count (one `citedNames`, in `citations.ts`) plus the existing citation rows; A34 is a file-location pin plus the existing holding rows.
 
 #### Regression Guards
 
@@ -301,6 +309,30 @@ bodies reviewed.
 
 #### Build Phase 5 Document
 - [x] `apps/docs/src/reference/cli/promises.md` updated as the item above says; `apps/docs/src/changelog.md` Unreleased notes the falsification's four refusals — both done with the implementation item; the changelog sentence names the four refusals and the alias fix
+
+### Build Phase 6: Cleanup — one ensure, one scan, one badge
+
+**Goal**: decompose what this plan grew per the repository's own rules — one definition per shared shape (the rule of three is now met for the presence-keyed config ensure), a settled module boundary between reading, scanning and judging in `lib/promises/`, and one home per admin piece with the client boundary pushed as deep as it goes. Each item is a concrete extraction or a reasoned leave-as-is; each new unit has a trajectory row.
+
+- [ ] Extract `ensureConfigBlock(projectRoot, key, defaults)` into `lib/config.ts` — "read the config; `no-config` when absent; `already-set` when the block is present as an object; else write `{ ...config, [key]: defaults }` and `added`" — and make `ensureCleanupConfig`, `ensurePapersConfig` (`lib/papers/config.ts`) and `ensurePromisesConfig` (`lib/promises/config.ts`) one-line calls to it, keeping their names so `update.ts` and the cleanup-ritual test do not change; `ensureDecayConfig` stays as it is (two keys inside two blocks — a different shape, not a fourth copy). Basis: the rule of three, met by this plan's third copy, and the standing rule that a shared shape has one definition under `src/lib` (A32)
+- [ ] Extract the reverse scan from `lib/promises/check.ts` into `lib/promises/citations.ts`: `PROSE_EXTENSIONS`, `looksBinary`, `scannableFiles`, `extensionOf` and `citedNames`, exported as `citedNames(codeRoot)`; `check.ts` imports it and keeps judging (`citationRefusals`). Basis: three concerns, three modules — `registry.ts` reads, `citations.ts` scans the code root, `check.ts` judges — and the module was 23 lines over its cap for exactly this reason (A33)
+- [ ] Move `HoldingBadge` out of `components/Promises.tsx` into `components/HoldingBadge.tsx` with no `"use client"` directive; `PlanList`, `PlanDetail` and `Promises.tsx` import it from there. Basis: one home per piece (the admin's cleanup-pins convention) and the smallest client boundary — a badge two server components render should not enter the client bundle through a page module that only needs the boundary for its grouping state (A34)
+- [ ] (reviewed `components/Promises.tsx` after the move — left as-is: `PromisesTable`, `PromiseGroup`, `IncidentsTable`, `PromiseChip`, `PromisesProblems` and `PromisesEmpty` are one page's pieces with one reason to change together; `PromisesProblems` and `PlanDetail`'s boundary-error panel share the red `role="alert"` markup at two sites, one short of the rule of three — the next red panel extracts the three)
+- [ ] (reviewed `lib/promises/registry.ts` — left as-is: 374 lines, one concern; its two read loops were considered by Shape in Build Phase 1 and the alias check was named in Build Phase 5; no cross-file duplication)
+- [ ] (reviewed the four promise test files — left as-is: `promises-check.test.ts` and `promises-falsification.test.ts` each define a two-line `check` and `withClean` helper, two copies, one short of the rule of three; the fixture builder they share already lives in `helpers/promises-fixture.ts`)
+- [ ] (reviewed `bin/cli.ts`, `bin/commands/update.ts` and `lib/config.ts` — left as-is: each is over its cap before this plan touched it with one block; decomposing `update.ts`'s targeted-ensure sequence is the plan that owns `update`'s to do, as dawn-workbench-execution's cleanup already recorded, and this phase's first item removes one of its copies rather than adding to them)
+- [ ] (reviewed `apps/docs/src/changelog.md` and the lifecycle-parity snapshot — left as-is: a record and a fixture, not decomposition targets)
+
+#### Build Phase 6 Verification
+- [ ] A32–A34 green: `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-cleanup.test.ts src/__tests__/promises-cli.test.ts src/__tests__/cleanup-ritual.test.ts src/__tests__/promises-check.test.ts src/__tests__/promises-falsification.test.ts`; then `cd apps/indusk-admin && pnpm exec vitest run src/components/Promises.test.tsx src/__tests__/component-reuse-audit.test.ts src/__tests__/cleanup-pins.test.ts src/lib/typecheck.test.ts`; then `cd` back
+- [ ] The repository's own check unchanged: `pnpm promises:check` at the root prints the same three-promise summary
+- [ ] Rows A32–A34 set to `passing`
+
+#### Build Phase 6 Context
+- [ ] Known Gotchas, the single-definition entry: a seventh pinned shared shape — `ensureConfigBlock` (`lib/config.ts`), the presence-keyed config ensure that cleanup, papers and promises each spelled; and the promises module map — `registry.ts` reads, `citations.ts` scans, `check.ts` judges
+
+#### Build Phase 6 Document
+- [ ] `apps/docs/src/reference/cli/promises.md`'s "reading the registry from code" paragraph names `citations.ts` beside the registry; `apps/docs/src/reference/admin-ui/overview.md` names `HoldingBadge`'s home in the "holding N" sentence
 
 ## Files Affected
 
