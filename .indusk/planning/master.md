@@ -70,8 +70,9 @@ promise.) Three sub-plans:
   and `/lessons/day-promises`.
 - [day-monitor/brief.md](day-monitor/brief.md) — **4b, the telemetry half
   (was Midnight), behaviour promises only**: the span link and its test-side
-  trace-shape helper, violations per promise as a number from Jaeger and
-  Dash0, `monitor` as the quiet window, alert → incident with root cause →
+  trace-shape helper, violations per promise as a number from Jaeger (the
+  loop's only backend, local and deployed — settled 2026-09-18), `monitor` as
+  the quiet window, alert → incident with root cause →
   reopen the owner. "Running" means executing with real inputs, locally under
   Jaeger as much as deployed; exists nowhere yet; a local run closes the
   loop first; ~1 week after 4a.
@@ -144,6 +145,13 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **Bugfix, not a step** (Sandy, 2026-09-18, while settling that the loop is
+  self-contained): `indusk init` scaffolds `@dash0/sdk-web` into a React
+  SPA's `src/instrumentation.ts` — a vendor SDK written into a user's
+  application code. Browser instrumentation should be the OpenTelemetry web
+  SDK with an OTLP exporter, endpoint anyone's. Also drop `dash0` from the
+  trajectory audit's telemetry keywords (`lib/trajectory/audit.ts`). The
+  `dash0` extension itself stays shipped, optional, disabled here.
 - **Small, not a step** (2026-09-18, from day-promises' close):
   `apps/indusk-mcp/src/lib/admin/__tests__/daemon-identity.test.ts` assumes
   port 65001 is unbound; the local-telemetry `otelcol` restarted onto it

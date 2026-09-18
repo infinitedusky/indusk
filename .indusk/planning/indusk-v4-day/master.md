@@ -27,6 +27,11 @@ subplans:
 
 # Day — Master Plan
 
+**Day is InDusk as an active software development system — an active SDLC**
+(Sandy, 2026-09-18): with 4b the system stops being only about how the code
+was built and starts observing the code running, on its own, correlating the
+test suite with monitoring so that what went wrong is found and fixed fast.
+
 **Day is the review layer**: it packages what the loop produced into the
 [PR shape](pr-shape.md) and gives the reviewer a job that does not require
 reading code. Dawn is *who executes*, Day is *what the human does at the
@@ -105,7 +110,8 @@ time. Re-ordered 2026-09-17 with 0–3 closed; 4c added 2026-09-18.
   at once in separate worktrees.
 - **4b needs 4a** and local Jaeger, which is installed: the telemetry half
   watches behaviour promises the primitive defines, in any running system — a
-  local run is one. Dash0 is only for the `deployed` source.
+  local run is one. The loop is self-contained on Jaeger, deployed as well;
+  no third-party backend feeds it (settled 2026-09-18).
 - **4c needs 4a** and nothing else: it puts the registry's vocabulary into the
   planner, the test plan, the trajectory and the retrospective. 4b and 4c
   share no code and can run at once.

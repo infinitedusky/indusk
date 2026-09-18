@@ -1,12 +1,5 @@
 {
   "mcpServers": {
-    "dash0": {
-      "type": "http",
-      "url": "https://api.europe-west4.gcp.dash0.com/mcp",
-      "headers": {
-        "Authorization": "Bearer ${DASH0_AUTH_TOKEN}"
-      }
-    },
     "indusk": {
       "type": "stdio",
       "command": "indusk",

@@ -79,7 +79,7 @@ the tests; it grades them.
    testing extension; moved from `day-promises` on 2026-09-18 because it
    asserts on the convention this step defines.
 2. **A number.** `indusk promises status`: for each promise, violations in
-   the window, from local Jaeger and from Dash0. "Has this promise been
+   the window, from Jaeger — local or the always-on one. "Has this promise been
    violated this week?" answers with a count that means something.
 3. **`monitor`, defined.** A plan whose work is done and whose promises have
    not yet been quiet for the window sits in `monitor`. The lifecycle module
@@ -175,9 +175,10 @@ None of it. No incident anywhere has been *detected* by telemetry naming the
 promise it broke, which is what this step adds; every incident on record was
 found by a smoke run or a desk probe and written by hand. This repo lists
 `monitor` in the lifecycle and draws it as pending; nothing derives it.
-Local Jaeger is enough to build and prove every step below; Dash0 (which
-rejected its token on 2026-09-17) is needed only for the `deployed` source,
-and is not a dependency of the loop closing.
+Local Jaeger is enough to build and prove every step below, and Jaeger is
+the loop's only backend deployed as well (the `dash0` extension was disabled
+in this repo on 2026-09-18 so that it cannot drift into the loop; it stays
+shipped as the agent's optional query surface).
 
 ## Proving ground
 
@@ -185,14 +186,14 @@ Any project that runs under the local telemetry daemon. This repo runs its
 own gates on every checkoff, and its own behaviour promise (the gates ran)
 is the first candidate for a `local` incident detected by telemetry rather
 than by a person. The `deployed` source is proven wherever a project with
-promises first runs deployed, and is where Dash0 earns its place.
+promises first runs deployed and exports to an always-on Jaeger.
 
 ## Steps
 
 | # | Effort | What |
 |---|---|---|
 | 1 | ~1d | The span attribute convention; the code-site helper that sets it; the vitest trace-shape helper in the testing extension |
-| 2 | ~2d | `indusk promises status` — violations per promise from local Jaeger and Dash0 |
+| 2 | ~2d | `indusk promises status` — violations per promise from Jaeger, local or always-on |
 | 3 | ~1d | `monitor` derived and drawn; the quiet window; reopen with a maintenance phase |
 | 4 | ~2d | Alert → match or open an incident with root cause and source → reopen the owner |
 
@@ -217,7 +218,9 @@ is the moment the loop closes, and a local run can produce it.
   touch application code, and the attribute is plain OpenTelemetry), *on the
   machine* (the CLI and MCP server inside an agent session, the admin daemon
   and its registry, the local Jaeger/otelcol daemon, the hub, eval sessions),
-  *hosted* (a telemetry backend such as Dash0, as an adapter). The sentence
+  *always-on* (the same Jaeger with persistent storage, the scheduled status
+  run and the receiver, on a machine that does not turn off; a hosted
+  platform such as Dash0 is an optional query surface beside it). The sentence
   the section exists to say: **the running application depends on none of
   it** — InDusk is not Rails; it is beside the code at development time, and
   the monitor watches from outside, reading what the app already emits. Written
@@ -228,8 +231,8 @@ is the moment the loop closes, and a local run can produce it.
 - [`day-promises`](../archive/day-promises/brief.md): the registry, the kinds, the
   states, the owner, the first two links.
 - admin-ui-phase-progress (closed 2026-09-17): `monitor` listed and drawn.
-- Local Jaeger (the local-telemetry daemon) — already installed. Dash0 only
-  for the `deployed` source.
+- Jaeger (the local-telemetry daemon) — already installed; the loop's only
+  backend, local and deployed.
 
 ## Resolved since the June brief
 
