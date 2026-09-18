@@ -10,6 +10,7 @@ import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { PhasesSection } from "@/components/PhasesSection";
+import { HoldingBadge } from "@/components/Promises";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -33,6 +34,8 @@ interface PlanDetailProps {
   masterContent?: string;
   /** Route prefix for subplan card links — same convention as PlanList. */
   planHrefPrefix?: string;
+  /** How many promises this plan holds (owns, not retired) — "holding N" in the header. */
+  holding?: number;
 }
 
 /**
@@ -53,6 +56,7 @@ export function PlanDetail({
   subplans,
   masterContent,
   planHrefPrefix = "/plan/",
+  holding = 0,
 }: PlanDetailProps) {
   const isParent = subplans !== undefined && subplans.length > 0;
   // A plan with no documents at all (a parent whose declarations are missing
@@ -72,7 +76,7 @@ export function PlanDetail({
       data-testid="plan-detail"
       data-plan-name={plan.name}
     >
-      <PlanHeader plan={plan} />
+      <PlanHeader plan={plan} holding={holding} />
 
       {plan.position && !isParent && (
         <PlanBar position={plan.position} activity={activePhaseLabel(plan)} />
@@ -202,7 +206,7 @@ function ImplSections({ plan }: { plan: Plan }) {
   );
 }
 
-function PlanHeader({ plan }: { plan: Plan }) {
+function PlanHeader({ plan, holding = 0 }: { plan: Plan; holding?: number }) {
   return (
     <header
       className="flex items-center justify-between border-b border-gray-200 pb-3"
@@ -210,8 +214,9 @@ function PlanHeader({ plan }: { plan: Plan }) {
     >
       <div className="flex flex-col">
         <h1 className="text-xl font-semibold text-gray-900">{plan.name}</h1>
-        <span className="text-xs text-gray-500">
+        <span className="flex items-center gap-2 text-xs text-gray-500">
           {plan.archived ? "archived" : "active"}
+          <HoldingBadge count={holding} plan={plan.name} />
         </span>
       </div>
       <div className="flex items-center gap-3">
