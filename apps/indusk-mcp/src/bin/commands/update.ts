@@ -822,6 +822,15 @@ export async function update(projectRoot: string): Promise<void> {
 		"papers.destinations (already set)",
 	);
 
+	// [Promises — day-promises] scaffold the promises block idempotently so the
+	// key is always present; domains are decided in planning and declared here.
+	const { ensurePromisesConfig } = await import("../../lib/promises/config.js");
+	reportEnsured(
+		ensurePromisesConfig(projectRoot),
+		"promises.domains: [] to .indusk/config.json",
+		"promises.domains (already set)",
+	);
+
 	// [Decay — indusk-makeover] scaffold sweep + dead-draft keys idempotently.
 	// Presence-keyed; user-customized values never clobbered. Readers default
 	// regardless, so absence is never "disabled".
