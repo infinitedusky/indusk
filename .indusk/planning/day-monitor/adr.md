@@ -187,8 +187,11 @@ hollow with "health unknown since <last successful read>" — never green.
 
 This repository registers `every-commit-evaluated` (behaviour, domain
 `gates`): every commit the evaluator is asked to score is scored. Its site is
-the evaluator run, instrumented through the existing `lib/eval/otel.ts` with
-its endpoint set to the local collector: `upheld` when a scorecard is written,
+the evaluator run (`hooks/eval-trigger.js`). Verified 2026-09-18: nothing on
+that path emits a span today — `lib/eval/otel.ts` exists but no caller uses
+it — and a hook cannot rely on the OpenTelemetry SDK being resolvable in a
+consumer's project, so the hook posts its one span directly to the local
+collector's OTLP/HTTP endpoint: `upheld` when a scorecard is written,
 `violated` with the failure as symptom when the evaluator exits non-zero. Its
 owner is the archived plan that made commits evaluated (confirmed in the
 impl). A24 runs it as an **end-to-end test**:
@@ -197,8 +200,11 @@ project, run with `pnpm e2e` and never part of `pnpm test`. It sets up a
 scratch project whose suite is green, points `eval.model` at a model that
 does not exist, makes a commit and runs the evaluator for it, runs
 `indusk promises watch`, and asserts the incident opened with source `local`
-and the owner reopened with a Maintenance phase. It needs the `claude` CLI and
-the local telemetry daemon, so it runs on a developer machine; its trajectory
+and the owner reopened with a Maintenance phase. The break is real and fast: `claude -p --model <nonexistent>` exits 1
+immediately with "There's an issue with the selected model" (verified
+2026-09-18). The package's vitest `include` is `**/*.test.ts`, so the `e2e`
+folder is excluded from it and run by its own config. It needs the `claude`
+CLI and the local telemetry daemon, so it runs on a developer machine; its trajectory
 row's Test column reads `manual: pnpm e2e`.
 
 ## Alternatives Considered
