@@ -65,6 +65,23 @@ For projects using the published package:
 | `order_plans` | — | Topological sort of plans based on dependency graph |
 | `list_promises` | — | The promise registry (`.indusk/promises/`): every promise with its kind, lifetime, state, domain, owner, statement and links, plus every incident — or the problem naming the file and field when the registry is missing or malformed. See [`indusk promises`](/reference/cli/promises) |
 
+#### Which copy of a plan the tools read
+
+`list_plans`, `get_plan_status` and `advance_plan` read each plan's **live
+copy**: from its assigned worktree when it has one, from the trunk otherwise
+(see [`indusk worktree`](/reference/cli/worktree)). They give the same answer
+from the trunk and from any worktree of the project. Each plan's result says
+where it was read from:
+
+| Field | When | Shape |
+|---|---|---|
+| `worktree` | Read from the plan's assigned worktree | `{ name, path, branch }` |
+| `copyProblem` | Read from the trunk because the assignment is broken | `{ kind: "gone" \| "doubled", detail }` — `detail` names every worktree involved |
+
+When the assignment record cannot be read, all three return an error result
+(`isError: true`) carrying `{ error, file }` instead of a plan read from a
+copy they had to guess.
+
 #### Phase Enforcement (`advance_plan`)
 
 | Transition | Requirement |
