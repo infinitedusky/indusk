@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -59,5 +59,39 @@ describe("cleanup pins — one definition each", () => {
     // The quoted literal is what a hand `join(root, ".indusk", "config.json")`
     // needs; prose in a docblock names the file in backticks.
     expect(filesContaining(join(SRC, "lib"), '"config.json"')).toEqual([]);
+  });
+});
+
+/**
+ * day-promises — A34 (cleanup). `HoldingBadge` is rendered by two server
+ * components (the sidebar's plan items, the plan header) and by the Promises
+ * page; it lives in its own file with no client boundary, so the sidebar and
+ * the header do not pull a page module into the client bundle for a span.
+ */
+describe("A34 — HoldingBadge has one server-renderable home", () => {
+  it("components/HoldingBadge.tsx exists, exports the badge and carries no client directive", () => {
+    const path = join(SRC, "components", "HoldingBadge.tsx");
+    expect(existsSync(path), "components/HoldingBadge.tsx is missing").toBe(
+      true,
+    );
+    const source = readFileSync(path, "utf-8");
+    expect(source).toMatch(/export function HoldingBadge\b/);
+    expect(source).not.toMatch(/"use client"/);
+  });
+
+  it("the sidebar and the plan header import it from there, and nothing else exports it", () => {
+    expect(
+      filesContaining(
+        join(SRC, "components"),
+        /export function HoldingBadge\b/,
+      ),
+    ).toEqual(["components/HoldingBadge.tsx"]);
+    for (const rel of ["PlanList.tsx", "PlanDetail.tsx"]) {
+      const source = readFileSync(join(SRC, "components", rel), "utf-8");
+      expect(
+        source,
+        `${rel} does not import HoldingBadge from its home`,
+      ).toMatch(/from "@\/components\/HoldingBadge"/);
+    }
   });
 });
