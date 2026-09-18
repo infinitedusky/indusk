@@ -522,15 +522,35 @@ function globToRegExp(glob: string): RegExp {
  * User content is preserved (spread over the existing config).
  */
 export function ensureCleanupConfig(projectRoot: string): "added" | "already-set" | "no-config" {
-	const config = readConfig(projectRoot);
-	if (!config) return "no-config";
 	// Key on block PRESENCE, not `max_file_loc` — a user block with `scopes` but
 	// no top-level cap is valid and must never be clobbered (cleanup-ritual H8).
-	const existing = (config as { cleanup?: unknown }).cleanup;
+	return ensureConfigBlock(projectRoot, "cleanup", {
+		max_file_loc: DEFAULT_MAX_FILE_LOC,
+		scopes: [],
+	});
+}
+
+export type EnsureResult = "added" | "already-set" | "no-config";
+
+/**
+ * The one presence-keyed config-block ensure (day-promises cleanup, A32).
+ *
+ * `cleanup`, `papers` and `promises` each spelled this: read the config;
+ * `no-config` when the project has none; `already-set` when the block is
+ * present as an object, whatever it holds — a declared block is never
+ * clobbered; otherwise write the block with its defaults and say `added`.
+ * The rule of three was met by the third copy, so the shape lives here and
+ * the named ensures are one-line calls that keep their names for `update`.
+ */
+export function ensureConfigBlock(
+	projectRoot: string,
+	key: keyof InduskConfig & string,
+	defaults: Record<string, unknown>,
+): EnsureResult {
+	const config = readConfig(projectRoot);
+	if (!config) return "no-config";
+	const existing = (config as unknown as Record<string, unknown>)[key];
 	if (existing !== null && typeof existing === "object") return "already-set";
-	writeConfig(projectRoot, {
-		...config,
-		cleanup: { max_file_loc: DEFAULT_MAX_FILE_LOC, scopes: [] },
-	} as InduskConfig);
+	writeConfig(projectRoot, { ...config, [key]: defaults } as InduskConfig);
 	return "added";
 }
