@@ -102,7 +102,7 @@ dusk/
 - Admin UI: standalone Next.js read-only viewer — see `/decisions/indusk-admin-ui`; hosted as machine-global daemon + registry — see `/decisions/admin-ui-hosting`
 - Local telemetry: native-binary Jaeger + otelcol daemon, `indusk telemetry *` CLI, jaeger_mcp wired into project `.mcp.json` — see `.indusk/planning/archive/local-telemetry/adr.md`
 - `rationale_baseline` frontmatter for refactor-baseline plans — see `/lessons/rationale-baseline-frontmatter`
-- Doppler extension as the default env layer (replacing composable.env); worktree env auto-provisioning from one service token — see `.indusk/planning/archive/doppler-extension/adr.md`
+- Doppler extension as the env layer — see `.indusk/planning/archive/doppler-extension/adr.md`
 - Multi-agent coordination: per-agent sections in one current.md + `update_current_section` MCP write surface + worktrees per agent — see `/decisions/multi-agent-coordination`
 - Git-only substrate (1.31.0; residue swept 2026-08-14): jj ripped out, parity via deletion; `scm-rip-out-grep.test.ts` scans code and prose with different pattern sets and exempts the record — an audit that fires on the archive gets switched off — see `/decisions/git-only-substrate`
 - Worktree visibility: worktree-per-plan default + live worktree/branch columns + collision flag; kickoff is a nudge, not a gate — see `/decisions/worktree-visibility`
@@ -117,6 +117,7 @@ dusk/
 - Admin UI phase progress: one `lifecycle` module (positions as nouns, activities as verbs, gate stages) read by `parsePlan`, the retrospective gate and the admin; phases keyed `{kind, number}` through progress, Shape and the boundary record (absent kind = build); three tri-state bars live via `router.refresh()`; a plan that adds a stage renders it, pinned — see `/decisions/admin-ui-phase-progress`
 - Writing skill: papers are plan documents (`kind: paper`, never inferred); `/write` prose-only; publish commits in the destination, never pushes — see `.indusk/planning/archive/writing-skill/adr.md`
 - Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `/decisions/day-promises`
+- Monitor (Day 4b): plain-OTel promise mark, no InDusk runtime code; `promises status`/`watch` over local Jaeger; reopen by Maintenance phase; `monitor` from files — see `.indusk/planning/day-monitor/adr.md`
 
 ## Known Gotchas
 
