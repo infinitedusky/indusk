@@ -85,6 +85,10 @@
     "./impl-parser": {
       "types": "./dist/lib/impl-parser-core.d.ts",
       "default": "./dist/lib/impl-parser-core.js"
+    },
+    "./promises/registry": {
+      "types": "./dist/lib/promises/registry.d.ts",
+      "default": "./dist/lib/promises/registry.js"
     }
   },
   "scripts": {

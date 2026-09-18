@@ -130,6 +130,16 @@ export interface InduskConfig {
 		destinations: PaperDestination[];
 	};
 	/**
+	 * The promise registry's declared domains — the parts of the system a
+	 * promise can be about (seating, archive, gates). Decided in planning: a
+	 * promise naming a domain outside this list fails `indusk promises check`.
+	 * Ensured as an empty list on update; never clobbered.
+	 * See `.indusk/planning/day-promises/adr.md` (D5).
+	 */
+	promises?: {
+		domains: string[];
+	};
+	/**
 	 * Multi-agent bulletin configuration (`.indusk/current.md`).
 	 *
 	 * `stale_ttl_minutes` is the DISPLAY TTL — sections older than this are

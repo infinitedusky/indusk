@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getPlanningDir } from "../lib/config.js";
 import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { parseAllPlans, parsePlan } from "../lib/plan-parser.js";
+import { readPromises } from "../lib/promises/registry.js";
 
 export function registerPlanTools(server: McpServer, projectRoot: string): void {
 	server.registerTool(
@@ -44,6 +45,30 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 					},
 				],
 			};
+		},
+	);
+
+	server.registerTool(
+		"list_promises",
+		{
+			description:
+				"The promise registry (.indusk/promises/): every promise with its kind, lifetime, state, domain, owner, statement and links, plus every incident — or, when the registry is missing or an entry is malformed, the problem naming the file and the field. No filtering; read it the way /catchup reads plans.",
+			inputSchema: {},
+		},
+		async () => {
+			const read = readPromises(projectRoot);
+			const text = read.ok
+				? JSON.stringify(
+						{
+							dir: read.registry.dir,
+							promises: read.registry.promises,
+							incidents: read.registry.incidents,
+						},
+						null,
+						2,
+					)
+				: JSON.stringify(read, null, 2);
+			return { content: [{ type: "text" as const, text }] };
 		},
 	);
 
