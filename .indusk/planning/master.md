@@ -182,7 +182,7 @@ lesson title, or a chat log.
   mid-session and the file went red for every branch on the machine. Bind
   and release to find a free port instead of assuming one. Owner: whoever
   next touches `lib/admin/daemon.ts`.
-- **Bugfix, not a step — do it the moment `day-promises` lands** (Sandy,
+- **Bugfix, not a step — do it the moment `day-promises` lands** — **now [admin-plan-worktrees](admin-plan-worktrees/brief.md)** (brief and test plan accepted, impl drafted 2026-09-18; the assignment is a record the worktree command writes, not a name match) (Sandy,
   2026-09-18: "we do not develop on main; we always create worktrees"): the
   admin UI and the MCP plan tools read a plan from the registered project's
   working tree, which is the trunk on `main`. Under worktree-per-plan every
