@@ -1,0 +1,372 @@
+---
+title: "Day step 4a — Promises — Implementation"
+date: 2026-09-18
+status: completed
+approved: 2026-09-18
+completed: 2026-09-18
+falsified: 2026-09-18
+cleanup_authored: 2026-09-18
+cleaned: 2026-09-18
+trajectory: required
+test_phases: required
+rationale: required
+gate_policy: ask
+---
+
+# Day step 4a — Promises — Implementation
+
+## Goal
+
+A project can write down what its system promises under `.indusk/promises/`,
+`indusk promises check` refuses the registry by name the moment it lies,
+this repo self-hosts three promises (one per kind) with the check in its own
+suite, and the admin's Promises page lists every promise with its declared
+state and every `enforced` chip hollow. The ADR's nine decisions, built in
+four phases after one test phase.
+
+## Scope
+
+### In Scope
+- `apps/indusk-mcp/src/lib/promises/` — vocabulary, registry read, the check
+- `indusk promises check` (CLI), `list_promises` (MCP), the package subpath
+- `promises.domains` in config, ensured on `update`
+- This repo's three promises and their tokens
+- The admin Promises page, chip maps, parity pin, "holding N"
+- Docs: `reference/cli/promises.md`, `guide/promises.md`, plan-lifecycle,
+  admin overview, MCP tools reference, ADR page, changelog
+
+### Out of Scope
+- The span mark, health of any kind, `indusk promises status` — `day-monitor`
+- Planner questions, rows that establish/preserve, confirmation at close,
+  the change rule, the per-plan Promises section — `day-contract`
+- Automatic retirement of `established` promises at green — `day-contract`
+- Any change to a repository other than this one
+
+## Boundary Map
+
+| Phase | Produces | Consumes |
+|-------|----------|----------|
+| Test Phase 1 | `promises-check.test.ts`, `promises-workbench.test.ts`, `promises-cli.test.ts`, `promises-single-definition.test.ts`, `promises-detectors.test.ts`, `http-project-promises.test.ts`, `helpers/promises-fixture.ts`; RED | `helpers/cli.ts` (`runCli`, `REPO_ROOT`), `helpers/versioned-workbench.ts` (`LAYOUTS`), `helpers/git-tmp-project.ts`, admin `__tests__/helpers/next-dev.ts` |
+| Build Phase 1 | `lib/promises/{vocabulary,registry,check}.ts`, `bin/commands/promises.ts`, MCP `list_promises`, `exports["./promises/registry"]` | `resolveExecutionRoots`, `lib/path-segment.ts`, gray-matter, `lib/git.ts` |
+| Build Phase 2 | `lib/promises/config.ts` + the `update` ensure; docs pages | `ensurePapersConfig` pattern; the detectors as they stand |
+| Build Phase 3 | `.indusk/promises/*.md` ×3, `incidents/` ×1, tokens in sites and tests, `promises.domains` here | Build Phase 1's check, `skill-sync-parity` |
+| Build Phase 4 | admin route, `components/Promises.tsx`, `lib/promises-reader.ts`, label maps, parity extension, "holding N" | the subpath from Build Phase 1, `bars/labels.ts`, `lifecycle-render-parity.test.ts` |
+
+## Test Trajectory
+
+Test paths are repo-root-relative. Rows A1–A24 mirror the test plan; A25 and
+A26 are structural pins the ADR adds (D6, D9).
+
+| ID | Asserts | Writable at | Passes at | State | Test |
+|----|---------|-------------|-----------|-------|------|
+| A1 | In a project with no registry, `indusk promises check` exits non-zero and names the path where one is expected; never reports clean | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A2 | A `promise: <name>` token in code or a test with no registry entry fails, naming the file and the name | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A3 | An `enforced` `behaviour` or `state` promise with no test naming it, or no site naming it, fails naming the promise and the missing link | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A4 | An `enforced` `structure` promise with no test fails; one with a test and no site passes | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A5 | A `known-violated` promise with no open incident fails; one with an open incident passes with no site and no test | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A6 | A domain not in `promises.domains` fails naming the domain and the list; an empty list fails on the first promise saying where to declare one | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A7 | An owner that is not a plan folder (active or archived) fails naming the owner | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A8 | A `declared` promise passes with no links while its owner is not archived and fails once the owner is archived | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A9 | A token naming a `retired` promise fails naming the file | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A10 | An entry missing kind, state, statement or owner, or with malformed frontmatter, fails naming the entry; it is never skipped | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A11 | A clean registry exits 0 and prints promises by state and by kind, and the incident count | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A12 | In a one-repo workbench the registry is read from the plan root and sites/tests from the code root, over every layout; zero or several declared repos refuse by name | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-workbench.test.ts |
+| A13 | An `established`-lifetime promise still `enforced` after its owner is archived fails naming it; the same promise passes while the owner is open | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A14 | `indusk update` on a project without the block writes `promises.domains: []` and nothing else; a second run writes nothing; no check runs unless invoked | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/promises-cli.test.ts |
+| A15 | This repo holds three promises, one per kind, and `indusk promises check` at the repo root exits 0 as part of `pnpm test` | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/promises-cli.test.ts |
+| A16 | An incident carries promise, source (one of four), status, date, and `## Symptom` / `## Root cause` / `## Fix` sections; one missing a field or with an unknown source fails naming the incident | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-check.test.ts |
+| A17 | `/p/<project>/promises` responds 200 with a Promises entry in the project nav and one row per registry promise carrying name, statement, kind, domain, owner and state | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-project-promises.test.ts |
+| A18 | Grouping by owner plan, domain, state and kind shows every promise exactly once per grouping | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/Promises.test.tsx |
+| A19 | Every `enforced` promise renders a hollow chip labelled "declared, not yet observed"; no element on the page carries an upheld or violated health | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/Promises.test.tsx |
+| A20 | A `known-violated` chip shows its incident; a `declared` chip is outlined; `retired` rows are hidden by default and shown by a toggle | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/Promises.test.tsx |
+| A21 | Every promise state and kind has a label and colour; a member added to either union without one fails the parity test naming the member | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/lib/lifecycle-render-parity.test.ts |
+| A22 | An archived plan owning promises shows "holding N" on its archived segment in the sidebar and plan page; one owning none shows no count | Build Phase 4 | Build Phase 4 | passing | apps/indusk-admin/src/components/Promises.test.tsx |
+| A23 | A malformed entry renders an error block naming the file and the field, never an empty table; a project with no registry renders an empty state saying how to create one | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-project-promises.test.ts |
+| A24 | An entry added to the registry appears on the next request with no restart | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-project-promises.test.ts |
+| A25 | Exactly one definition of the promise vocabulary (`PROMISE_STATES`, `PROMISE_KINDS`, `PROMISE_LIFETIMES`, `INCIDENT_SOURCES`) exists under `src/`, in `lib/promises/vocabulary.ts` | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-single-definition.test.ts |
+| A26 | A file under `.indusk/promises/` is not code to Shape's changed-files scope, not machine state to phantom detection, and not a decomposition candidate to the cleanup scan | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-detectors.test.ts |
+| A27 | A listed site whose comment reads `// enforces promise: <name>` (text between the opener and the token) counts as naming it, and so does a token anywhere after `//`, `#`, `/*` or `<!--` on its line; a quote must still directly precede the token, so `{ promise: string }` on a line with an earlier string literal is still not a citation | Build Phase 5 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A28 | An owner naming a folder that is not a plan (`archive`) or a file (`master.md`) fails the check naming the owner; only a directory under `.indusk/planning/` or `.indusk/planning/archive/` is a plan | Build Phase 5 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A29 | After a rename with `aliases: [old-name]`, a listed site or test still carrying `promise: old-name` counts as naming the promise (the link check resolves aliases the way the reverse scan does); an alias equal to a live promise's name, or shared by two promises, fails naming both | Build Phase 5 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A30 | An `enforced` promise listing an incident whose `status` is `open` fails: an open incident says the promise is broken now, so the state is `known-violated` or the incident is `fixed` | Build Phase 5 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A31 | A `sites:` or `tests:` entry that is absolute or contains `..` fails naming the entry; the check never reads a file outside the code root | Build Phase 5 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A32 | Exactly one presence-keyed config-block ensure exists under `src/lib` (`ensureConfigBlock` in `lib/config.ts`), and the cleanup, papers and promises ensures each call it; `indusk update` on a bare project still adds all three blocks once and leaves a declared block alone | Build Phase 6 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/promises-cleanup.test.ts |
+| A33 | The reverse scan lives in `lib/promises/citations.ts` (`citedNames`), `check.ts` imports it and defines no scan of its own; the citation rows (A2, A9, A27) and the repository's own check are unchanged | Build Phase 6 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/promises-cleanup.test.ts |
+| A34 | `HoldingBadge` lives in its own server-renderable file (`components/HoldingBadge.tsx`, no `"use client"`), imported by the sidebar and the plan header (the Promises page never rendered it — the ritual's row said it did, corrected while authoring the pin); the holding rows (A22) are unchanged | Build Phase 6 | Build Phase 6 | passing | apps/indusk-admin/src/__tests__/cleanup-pins.test.ts |
+
+### Deferred Verification
+
+None.
+
+## Checklist
+
+### Test Phase 1: Author every assertion RED
+
+**Goal**: every row exists as a test and fails on its own claim before any
+promise code exists. Rows A1–A16 and A25 go through the CLI boundary
+(`runCli` spawns the built binary; an unknown subcommand is a non-zero exit
+before any assertion of ours runs, so the red is real and no file fails to
+load). A17, A23 and A24 hit a route that 404s today. A18–A22 import a
+component and unions that do not exist yet, so they are deferred with their
+bodies reviewed.
+
+- [x] Create/confirm this plan's worktree (`git worktree add ../dusk-worktrees/day-promises -b plan/day-promises` — dusk is normal-mode, so `indusk worktree create` does not apply) — worktree-per-plan default; skip only if `worktree: none` in frontmatter. Then `pnpm --filter indusk-admin build && node apps/indusk-mcp/scripts/bundle-admin.js` there, because a fresh worktree has no admin bundle and nine daemon tests plus the tarball test fail without it — `/Users/the_dusky/code/sandbox/dusk-worktrees/day-promises` on `plan/day-promises` from `fd22d1f4`; `pnpm install`, the CLI built, the admin built and bundled (39.4 MB); Test Phase 1 boundary opened at `fd22d1f4`. The gate refused this checkoff until every Test Phase 1 row was `written` — tests first, then the checkbox
+- [x] `src/__tests__/helpers/promises-fixture.ts`: builds a temp project (`git init`, `.indusk/config.json` with `promises.domains`, plan folders under `.indusk/planning/` and `archive/` for owners, `.indusk/promises/<name>.md` and `incidents/<id>.md` from small object literals, code and test files that carry or omit the `promise: <name>` token). One builder, every row's precondition; it throws when it cannot establish one — `promiseProject(opts)` plus `writePromise` / `writeIncident` / `siteFile` / `testFile` / `token`, and `cleanProjectOptions()` (one enforced promise per kind with its links, one known-violated with an open incident) as the baseline the refusal rows break one thing of
+- [x] `src/__tests__/promises-check.test.ts`: A1–A11, A13, A16 through `runCli(dir, ["promises", "check"])` — each case asserts the exit code AND that stderr names what the row says it names (a refusal message is a factual claim); A11 asserts the summary lines — 17 cases, every one red on `unknown command 'promises'` (exit 1 where 0 or 2 was asserted)
+- [x] `src/__tests__/promises-workbench.test.ts`: A12 over `LAYOUTS` from `helpers/versioned-workbench.ts` — the registry at the workbench root, the token in the code repo; plus the zero-repos and two-repos refusals by name — 11 cases (two per layout, three refusals incl. "a registry inside the code repo is not the registry"), all red on the unknown command
+- [x] `src/__tests__/promises-cli.test.ts`: A14 via `runCli(dir, ["init", "--local", "--no-index"])` then `update` twice, reading `.indusk/config.json` between runs and asserting nothing else in the file changed; A15 via `runCli(REPO_ROOT, ["promises", "check"])` asserting exit 0 and three promises in the summary, one per kind — A14 red on `promises` being `undefined` after `update` (a set block is asserted left alone, green today by construction and stays as the second half of the row); A15 red on the unknown command
+- [x] `src/__tests__/promises-single-definition.test.ts`: A25 — count definitions of each vocabulary tuple across `src/`, assert exactly one, in `lib/promises/vocabulary.ts` (zero today, so red) — four cases, each red on `expected [] to deeply equal ['lib/promises/vocabulary.ts']`
+- [x] `src/__tests__/promises-detectors.test.ts`: A26 through the public functions — Shape's changed-files scope for a phase excludes `.indusk/promises/x.md`; phantom detection with a diff touching `impl.md` plus a promise file reports no phantom (the file counts as work); the cleanup scan lists nothing under `.indusk/promises/` — three cases green on authoring (the regression guard), with a phantom control case that IS flagged when only the checkbox moved
+- [x] `apps/indusk-admin/src/__tests__/http-project-promises.test.ts`: A17, A23, A24 through `__tests__/helpers/next-dev.ts` against a temp project registered in a temp `INDUSK_HOME` — one file, serial (`fileParallelism: false` is load-bearing); A24 writes a second promise file between two requests — three projects in one registry (clean / malformed / none); five cases, each red on `expected 404 to be 200` or the nav lacking `href="/p/clean/promises"`
+- [x] Run every file; record each red's message; set A1–A17, A23–A26 to `written` (A26 to `passing`, see Regression Guards) — 34 CLI cases red (33 on `error: unknown command 'promises'`, A14 on the absent config block), 4 pin cases red on count 0, 5 HTTP cases red on 404, 3 detector cases green; states set
+
+#### Deferred to Build Phase 4
+
+- **A18, A19, A20, A22** — their subject is `components/Promises.tsx` (and the bars' "holding N" prop), which Build Phase 4 introduces; the file would fail to load, and a hand-written prop on an existing component would turn `typecheck.test.ts` red for the wrong reason. Bodies reviewed:
+
+  ```tsx
+  // apps/indusk-admin/src/components/Promises.test.tsx (vitest browser project)
+  import { render, screen, within } from "@testing-library/react";
+  import { PromisesTable } from "@/components/Promises";
+  import { ArchivedSegment } from "@/components/bars/ProgressLines";
+  import { promises } from "./fixtures/promises"; // 6 promises: 2 enforced, 1 declared, 1 known-violated (1 incident), 1 retired, 1 established+enforced
+
+  // A18: every grouping shows every non-retired promise exactly once
+  for (const by of ["owner", "domain", "state", "kind"] as const) {
+    render(<PromisesTable promises={promises} groupBy={by} />);
+    expect(screen.getAllByRole("row", { name: /promise/ })).toHaveLength(5);
+  }
+  // A19: enforced → hollow, and nothing on the page says upheld/violated
+  expect(screen.getAllByLabelText("declared, not yet observed")).toHaveLength(3); // 2 enforced + 1 established
+  expect(screen.queryByText(/upheld|violated in window/)).toBeNull();
+  // A20: known-violated shows its incident; declared is outlined; retired behind a toggle
+  expect(within(row("seat-never-double-booked")).getByText(/i-2026-/)).toBeVisible();
+  expect(chip("boundary-record-never-malformed")).toHaveAttribute("data-state", "declared");
+  expect(screen.queryByText("old-name")).toBeNull();
+  await user.click(screen.getByRole("button", { name: /show retired/ }));
+  expect(screen.getByText("old-name")).toBeVisible();
+  // A22: holding N on the archived segment; none → no count
+  render(<ArchivedSegment plan="lab" holding={3} />); expect(screen.getByText("holding 3")).toBeVisible();
+  render(<ArchivedSegment plan="empty" holding={0} />); expect(screen.queryByText(/holding/)).toBeNull();
+  ```
+
+- **A21** — extends `lifecycle-render-parity.test.ts` to import `PROMISE_STATES` and `PROMISE_KINDS` from the subpath and render each through the label maps; the import does not resolve before Build Phase 4 wires the subpath into the admin. Body reviewed:
+
+  ```ts
+  import { PROMISE_KINDS, PROMISE_STATES } from "@infinitedusky/indusk-mcp/promises/registry";
+  import { promiseKindLabel, promiseStateChip } from "@/components/bars/labels";
+  for (const s of PROMISE_STATES) expect(promiseStateChip[s], `no chip for promise state ${s}`).toBeDefined();
+  for (const k of PROMISE_KINDS) expect(promiseKindLabel[k], `no label for promise kind ${k}`).toBeDefined();
+  ```
+
+#### Deferred to Build Phase 5
+
+- **A27–A31** — falsification hypotheses (`/falsify`, 2026-09-18), formed by reading the shipped check after Build Phase 4 closed; each targets a line of `lib/promises/check.ts` or `vocabulary.ts` that did not exist when Test Phase 1 was authored. Authored red in the phase that fixes them, the ritual's shape. A27 against `TOKEN_OPENER`'s requirement that the token be the first thing after the opener; A28 against `ownerStatus`'s `existsSync` (a file or the `archive` folder passes as a plan); A29 against `fileNames` matching the name only while `citationRefusals` resolves aliases; A30 against `stateRefusals` never reading an incident's `status` for an `enforced` promise; A31 against `join(codeRoot, rel)` with an unguarded `rel`.
+
+#### Deferred to Build Phase 6
+
+- **A32–A34** — cleanup rows (`/cleanup`, 2026-09-18): each pins a unit the Cleanup Phase extracts, so its file cannot load before that phase. A32 is a single-definition count over `src/lib` plus a behaviour-parity run of `update` (the existing A14 and the cleanup-ritual ensure test keep passing through the shared helper); A33 is a count (one `citedNames`, in `citations.ts`) plus the existing citation rows; A34 is a file-location pin plus the existing holding rows.
+
+#### Regression Guards
+
+- **A26** — passes the moment it is authored because the blanket `.indusk/` rules in Shape's scope and the cleanup scan, and phantom's narrow machine-state list, already classify a promise file as "a plan document, not code, not machine state". The guard pins that classification so a later narrowing of those rules (registering the directory by name, as the ADR's D9 requires) keeps it; the item in Build Phase 2 makes the registration explicit under this row
+
+#### Test Phase 1 Verification
+- [x] `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-check.test.ts src/__tests__/promises-workbench.test.ts src/__tests__/promises-cli.test.ts src/__tests__/promises-single-definition.test.ts src/__tests__/promises-detectors.test.ts`; then `cd` back — every CLI case red as commander's unknown-command exit where 0 or 2 was asserted, A25 red on count 0, A26 green — 5 files, 41 tests: 34 failed (33 `error: unknown command 'promises'` → exit 1; A14 `expected undefined to deeply equal { domains: [] }`), 4 failed on `expected [] to deeply equal ['lib/promises/vocabulary.ts']`, 3 passed (A26)
+- [x] `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-project-promises.test.ts --project node`; then `cd` back — A17, A23, A24 red on 404 — 5 tests failed: three `expected 404 to be 200`, the nav lacking `href="/p/clean/promises"`, and the request-time read never seeing the added entry
+- [x] Every deferred body above reviewed against both questions: will it compile at the phase it names, and does it assert what it claims? — A18–A20, A22: assert what the rows claim (a count per grouping, hollow chips and no health text, incident ids on a known-violated row, the retired toggle, "holding N" and its absence); they will NOT compile as written — `row()`, `chip()` and `user` are sketches for helpers Build Phase 4 must define (`within(screen.getByRole("row", { name }))`, a `data-state` lookup, `userEvent` from `@vitest/browser/context`) and `ArchivedSegment` is a name the bars may not use; the phase authors them against the real component API and this note is the record that the sketch was known to be one. A21: compiles once the subpath resolves in the admin; asserts every union member has a chip/label, which is the row's claim
+- [x] Rows A1–A17, A23–A25 set to `written`; A26 to `passing` — done in the trajectory table above
+
+#### Test Phase 1 Context
+- [x] Known Gotchas, the versioned-workbench helper entry: tests that need a promise-bearing project use `src/__tests__/helpers/promises-fixture.ts` (one builder for registry, incidents, owners, tokens; throws when a precondition cannot be established) — beside `papers-fixture.ts` and `versioned-workbench.ts` — added to the versioned-workbench entry, which was trimmed to make room (61,406 of 61,440 bytes)
+
+#### Test Phase 1 Document
+- [x] `apps/docs/src/guide/promises.md` opened with the concept half, which needs no code: what a promise is, the three kinds, the two lifetimes, the four states, the registration rule with the brief's candidate table; a "how to write one" section marked "lands with Build Phase 1"; sidebar entry under Guide — page written with a Mermaid state diagram of the four states; sidebar entry "Promises" under "The plan lifecycle", after Test Trajectory
+
+### Build Phase 1: The registry and the check
+
+**Goal**: `lib/promises/` reads a registry and refuses every lie by name; the CLI and MCP surfaces exist; the subpath is exported.
+
+- [x] `lib/promises/vocabulary.ts`: `PROMISE_KINDS = ["behaviour","state","structure"] as const`, `PROMISE_STATES = ["declared","enforced","known-violated","retired"] as const`, `PROMISE_LIFETIMES = ["holds","established"] as const`, `INCIDENT_SOURCES = ["local","smoke","deployed","desk"] as const`, `INCIDENT_STATUSES = ["open","fixed"] as const`, unions derived; `PROMISE_TOKEN = (name) => new RegExp(String.raw`\bpromise:\s*${escape(name)}\b`)` — plus `PROMISES_REL_DIR`, `INCIDENTS_SUBDIR`, `PROMISE_NAME` (kebab-case) and the token helpers `promiseToken` / `promiseTokenPattern` / `anyPromiseTokenPattern` (the last is global and fresh per call; the name pattern ends on a `(?![a-z0-9-])` so `promise: seat` never matches `promise: seat-two`)
+- [x] `lib/promises/registry.ts`: `Promise`/`Incident` types; `promisesDir(planRoot)`; `readPromises(planRoot): Registry | RegistryProblem` — every `*.md` under `.indusk/promises/` and `incidents/`, gray-matter with structural malformed-YAML detection, `promiseProblem(value)` / `incidentProblem(value)` naming the first missing or invalid field (kind, state, lifetime, statement = first body paragraph, owner, domain, sources, sections), `name` must equal the file stem and pass `lib/path-segment.ts`; a problem in any file is a `RegistryProblem` naming file and field, never a skipped entry — the types are `PromiseEntry` / `IncidentEntry` (the Notes foresaw `Promise` colliding with the global); `readPromises` returns `{ ok: true, registry } | { ok: false, missing } | { ok: false, problems }`; `firstParagraph` and `sectionText` are exported because the admin's error block and the incident rendering need the same reads
+- [x] `lib/promises/check.ts`: `checkPromises(planRoot): CheckResult` — roots via `resolveExecutionRoots` (refusal passes through by name); no registry dir → refusal naming `<planRoot>/.indusk/promises/`; domains from `readConfig(planRoot).promises?.domains` (absent/empty → refusal on the first promise naming the config key); owner must be a folder under `.indusk/planning/` or `archive/`; per-kind link rule (D3) with `declared`/`established` archived-owner rules (D4); every `sites:`/`tests:` path exists under the code root and contains the token; reverse scan over `git ls-files --cached --others --exclude-standard` in the code root for `\bpromise:\s*[a-z0-9-]+` — every hit registered and not retired; incidents referenced exist, `known-violated` has an open one; result carries `refusals: {file, message}[]` and a `summary` (by state, by kind, incidents) — two scan exclusions, both deliberate and documented in the reference page: prose files (`.md`, `.mdx`, `.txt`, `.rst` — a plan document or a guide mentions names in examples and is never a code site) and everything under `.indusk/` (the registry's own incident frontmatter carries `promise: <name>`); binary files are skipped by a NUL probe; a non-git code root is a refusal, not an empty scan; refusals sort by file then message so output is stable
+- [x] `src/bin/commands/promises.ts`: `indusk promises check [--root <dir>]` — prints each refusal as `path: message`, exit 2; clean prints the summary, exit 0; registered in `bin/cli.ts` beside `papers` — no `--root` flag: `rootOrExit()` is how every command finds the project, and a second way in would be a second definition; the refusal footer says "fix each and run the check again" because the first wording ("not clean") tripped A1's "never says clean" assertion, which is exactly what that assertion is for
+- [x] MCP `list_promises` beside `list_plans`: returns the parsed registry or the problem; no filtering — in `tools/plan-tools.ts`, through `readPromises`
+- [x] `package.json` `exports["./promises/registry"]` → `dist/lib/promises/registry.js` (+ types), re-exporting the vocabulary; `src/index` untouched — and `config.ts`'s `InduskConfig` gains `promises?: { domains: string[] }` with its doc comment (the type now, the ensure in Build Phase 2)
+- [x] Shape (Build Phase 1): review `lib/promises/*` and the command against the enabled extensions' craft rules; record findings as items here or "nothing to change" — reviewed 7 code files (`vocabulary.ts`, `registry.ts`, `check.ts`, `commands/promises.ts`, `cli.ts`, `tools/plan-tools.ts`, `config.ts`), every enabled extension's rules readable. Two findings in `check.ts`, recorded as the two items below. Left as is, with reasoning: `registry.ts`'s two read loops (promises, incidents) share a "parse, validate, push or record the problem" shape — a `readEntries(dir, validate)` would save twelve lines and hide that the two validators take different inputs (a statement vs three sections); two loops in one unit is the honest shape. `commands/promises.ts`, the `cli.ts` block and `list_promises` are single-purpose and named for what they answer
+- [x] Shape finding (Build Phase 1) — `apps/indusk-mcp/src/lib/promises/check.ts`: `checkPromises` carries two inline blocks that want names — the domain loop (`domainRefusals`) and the reverse-scan judgment (`citationRefusals`) — and `stateRefusals` pushes registry-relative files the caller then re-maps through a scratch array with a dead `void before`; prefix inside `stateRefusals` and delete the re-map (rule: the typescript extension's "one reason to change; name the block for what it answers") — extracted both; `registryFile(rel)` is the one prefixing, applied where the refusal is made; `checkPromises` is now the sequence (roots → read → domains → states → incident back-references → citations → sort) and nothing else; 29/29 still green
+- [x] Shape finding (Build Phase 1) — `apps/indusk-mcp/src/lib/promises/check.ts`: `relativeTo` is exported and unused; delete it (rule: the typescript extension's "no speculative exports — a seam nobody reaches is a second definition waiting to happen") — deleted, with its `relative` import
+
+#### Build Phase 1 Verification
+- [x] A1–A13, A16 green: `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-check.test.ts src/__tests__/promises-workbench.test.ts`; then `cd` back — grep `dist/lib/promises/check.js` for `PROMISE_TOKEN` first, because a build that returns 0 without rebuilding leaves these red against stale output — `dist/lib/promises/check.js` carries `promiseTokenPattern` (2 hits); 2 files, 29 tests green on the first run except A1, which caught the refusal footer saying "not clean" (the assertion is "never says clean") — reworded, then 29/29
+- [x] A25 green: `pnpm exec vitest run src/__tests__/promises-single-definition.test.ts` — 4 tests, each finding exactly `lib/promises/vocabulary.ts`
+- [x] The documented invocation run verbatim on a temp project from the fixture: `indusk promises check` prints a summary and exits 0; the same with a missing token exits 2 naming the file — `4 promises — declared 0, enforced 3, known-violated 1, retired 0 — behaviour 2, state 1, structure 1 — 1 incident`, exit 0; with the token stripped from `src/seats.test.ts`: two refusals naming the promise, the file and the missing test link, exit 2
+- [x] Full mcp suite green: `cd apps/indusk-mcp && pnpm exec vitest run`; then `cd` back — 240 files: 238 passed, 1 skipped, 1 failed; the one red file is `promises-cli.test.ts` holding exactly the two rows that pass at later phases (A14 at Build Phase 2, A15 at Build Phase 3), 1468 tests passed. Two other reds were fixed first: `lifecycle-parity` (this plan's status moved, so its entry was dropped from the snapshot — the in-flight plan must not pin the reader, the master's "small, not a step") and `registry-leak-scan` (the scan is textual; `promises-cli.test.ts` now names the `INDUSK_HOME` pin in its header)
+- [x] Rows A1–A13, A16, A25 set to `passing` — done in the trajectory table
+
+#### Build Phase 1 Context
+- [x] Architecture, indusk-mcp bullet: `indusk promises check` and `lib/promises/` (registry read + check, one subpath `promises/registry` the admin reads through); the token form `promise: <name>`; the check proves a test names a promise, binding is step 6 — added; the same bullet's mcp-migration and doppler sentences were shortened to make room (the budget hook refused the first two attempts at 55 and 6 bytes over), and "binding is step 6" lives in the guide, not here
+
+#### Build Phase 1 Document
+- [x] `apps/docs/src/reference/cli/promises.md`: the command, the promise and incident file shapes from the ADR, every refusal with its message, exit codes; sidebar entry after `papers` — written, with the reverse scan's two exclusions stated (prose files, `.indusk/`) and the subpath named
+- [x] `apps/docs/src/reference/tools/indusk-mcp.md`: `list_promises` — a row in the Plan Management table
+- [x] `apps/docs/src/guide/promises.md`: the "how to write one" section filled — four steps, pointing at the reference for shapes and refusals
+
+### Build Phase 2: Config, detectors, decision record
+
+**Goal**: a project that has not adopted is untouched beyond an empty domains list; the registry directory is registered by name with every "what changed" detector; the ADR and lifecycle docs say what shipped.
+
+- [x] `lib/promises/config.ts`: `ensurePromisesConfig(projectRoot)` in `ensurePapersConfig`'s shape (`"added" | "already-set" | "no-config"`), wired into `update.ts` through the shared ensure helper (the one that replaced the three if/else blocks) with its two messages; `config.ts` gains `promises?: { domains: string[] }` with a doc comment — wired through `reportEnsured` right after the papers block (the config type landed in Build Phase 1)
+- [x] D9 made explicit: `.indusk/promises/` named in Shape's `isNotCode`-equivalent, phantom's machine-state predicate (as NOT machine state, with a comment saying why), and the cleanup scan's `.indusk/` rule — each with a one-line comment pointing at this plan; `.gitattributes` untouched (no `merge=union`, one file per promise) — `shape/changed.ts` `isNotCode` names the prefix beside the blanket rule; `verify/phantom.ts` lifts its list into `MACHINE_STATE_PREFIXES` / `MACHINE_STATE_FILES` with the comment that promises are deliberately absent; `cleanup/oversized.ts` says so in its `.indusk/` comment; each points at `promises-detectors.test.ts`
+- [x] ADR "Decision" D7: the registration rule re-applied to the brief's candidate table with the outcome recorded (five in, three out) — done now so the record exists before this repo's promises are written in Build Phase 3 — recorded as a table under D7 with the why per row; the rule needed no amendment; the two "in" candidates not self-hosted here (`check-pointers`, the registry leak scan) are named as registered-by-a-later-plan under the same rule
+- [x] Shape (Build Phase 2): review the files this phase changed; record findings or "nothing to change" — reviewed 5 code files (`promises/config.ts`, `update.ts`, `shape/changed.ts`, `verify/phantom.ts`, `cleanup/oversized.ts`), every extension's rules readable; nothing to change. Left as is, with reasoning: (1) `ensurePromisesConfig` is the third ensure of one shape (cleanup, papers, promises) — the rule of three is `/cleanup`'s inter-file question, not this step's, and the shape is settled enough now to extract there; (2) `isNotCode`'s second clause is logically covered by the first and is kept on purpose — the ADR asks for the directory to be registered by name so a later narrowing of the blanket rule cannot silently drop it, and the comment says so; (3) phantom's list became two named tuples rather than three `||` clauses because the next artifact registered there should be one line, not a fourth operand
+
+#### Build Phase 2 Verification
+- [x] A14 green: `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-cli.test.ts -t "A14"`; then `cd` back — first run red on a byte-identical assertion: `update` stamps `indusk.updated_at` on every run by design, so "a second run writes nothing" is honestly "writes nothing else"; the test now compares the two configs with that stamp removed, and the block-already-set case still passes untouched. Green. (A by-hand reproduction ran `init` in the wrong cwd first — the package dir — and its stray `.indusk/`, `.claude/`, `.mcp.json` and registry entry were removed the same minute; nothing tracked changed)
+- [x] A26 still green with the explicit registration: `pnpm exec vitest run src/__tests__/promises-detectors.test.ts` — 3/3
+- [x] `update` tests still green: `pnpm exec vitest run src/__tests__/update*.test.ts src/__tests__/hook-cwd-independence.test.ts` — `update-scm-jj-removed` and `hook-cwd-independence` green (14 tests across the four files, the one red being A15 which passes at Build Phase 3)
+- [x] Rows A14 set to `passing` — done in the trajectory table
+
+#### Build Phase 2 Context
+- [x] Conventions: `.indusk/promises/` is a plan document — written by people, not code (Shape and cleanup skip it), not machine state (phantom counts it as work); `promises.domains` is ensured on `update`, empty, like `papers.destinations` — the `papers.destinations` entry now names both ensured blocks and was compressed to make room; a new entry states the plan-document rule; 61,413 of 61,440 bytes
+
+#### Build Phase 2 Document
+- [x] `apps/docs/src/guide/plan-lifecycle.md`: the "Expectations … sketched in the `midnight` brief" line becomes promises with a pointer to `/guide/promises` — the inventory line now says promises are built (registry, check, page) and names the span link and the violation query as step 4b
+- [x] `apps/docs/src/decisions/day-promises.md`: the ADR published; sidebar entry under Decisions — the decision table with the rejected alternatives per row, what the step does not do, consequences; sidebar "Promises" between Planner Hotfix Mode and Tests-First Planning
+
+### Build Phase 3: This repo self-hosts three
+
+**Goal**: dusk holds one promise per kind, every link carries its token, and the check runs in `pnpm test`.
+
+- [x] `.indusk/config.json`: `promises.domains: ["planning", "gates", "admin"]`
+- [x] `.indusk/promises/one-definition-per-shared-rule.md` — structure, holds, domain `planning`, owner `dawn-verify`; `tests:` the six `*-single-definition.test.ts` files plus `shape/shared-definitions.test.ts`; each gains a one-line `// promise: one-definition-per-shared-rule` comment — eight tests: the promise vocabulary's own pin (`promises-single-definition.test.ts`) joins the seven
+- [x] `.indusk/promises/phase-boundary-record-never-malformed.md` — state, holds, domain `planning`, owner `lifecycle-rebalance`; site `apps/indusk-mcp/src/lib/shape/boundary.ts` (token beside `boundaryRecordProblem`), tests `lib/shape/boundary.test.ts` and `boundary-writer.test.ts` — the token is the file's first line in each (one line, no prose changed)
+- [x] `.indusk/promises/gates-ran-at-every-checkoff.md` — behaviour, holds, domain `gates`, owner `enforce-plan-gates`; site `apps/indusk-mcp/hooks/check-gates.js` (token in its header comment — then resync `.claude/hooks/check-gates.js` by hand, `skill-sync-parity` pins byte-equality), test: the existing test that runs `check-gates.js` through `helpers/hook-runner.ts` (locate it; if none runs the hook end to end, add one small case that does and name it); `incidents: [i-2026-09-15-gates-silently-off]` with `status: fixed` and the ADR's body (source `desk`) — the token sits on the line after the hook's shebang and the installed copy was re-copied (`cmp` byte-equal); the test is `hook-cwd-independence.test.ts`, which runs the gate chain through the hook runner from a subdirectory — the exact class of the incident; the incident file carries symptom, root cause and fix
+- [x] Root `package.json` `test` script (or the turbo `test` task) runs `indusk promises check` at the repo root after vitest — the documented command, verbatim, not a library import — `"test": "turbo test && pnpm promises:check"` with `"promises:check": "node apps/indusk-mcp/dist/bin/cli.js promises check"` (the bare `indusk` is not on a CI PATH; the dist entry is the same command)
+- [x] Discovered by running the check against this repository (the "run a new tool against its own repo" rule): six false citations — `promise: string` / `promise: spec` type annotations in `registry.ts` and the fixture, `promise: x-y` in a test's example, `promise: 4` in `pnpm-lock.yaml`. A bare `promise:` is too loose for a code base that has a field named `promise`. The token now has to **follow a comment opener or a quote** (`//`, `#`, `*`, `--`, `;`, `<!--`, `"`, `'`, `` ` ``) on the same line, and a name starts with a letter; both patterns in `vocabulary.ts` say so, the reference page says where a token may sit, and `promises-check.test.ts` gains the negative cases (a type annotation, a lockfile line, a YAML key at line start are not citations)
+- [x] Shape (Build Phase 3): review the promise files and the token placements; record findings or "nothing to change" — reviewed the 21 changed files (thirteen are a one-line token comment, `vocabulary.ts`, the three promise files and the incident, `check-gates.js` and its installed copy, the root `package.json`, the docs); every extension's rules readable; nothing to change. Considered and left: `TOKEN_OPENER` in `vocabulary.ts` is a regex fragment assembled from two raw strings around a backtick — the one character `String.raw` cannot hold — and stays a named constant with the rule spelled in its comment rather than being inlined twice; the token comment is the first line of each pin test, which keeps the file's own header comment intact and makes the link visible before anything else
+
+#### Build Phase 3 Verification
+- [x] A15 green: `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-cli.test.ts -t "A15"`; then `cd` back — summary shows 3 promises: 1 behaviour, 1 state, 1 structure, all `enforced`, 1 incident — `3 promises — declared 0, enforced 3, known-violated 0, retired 0 — behaviour 1, state 1, structure 1 — 1 incident`; the first run against this repository refused six false citations (type annotations, a test example, the lockfile), which is the discovered-work item above; green after the token rule tightened
+- [x] `pnpm test` at the root green end to end, including the check; `pnpm exec vitest run src/__tests__/skill-sync-parity.test.ts` green after the hook resync — the indusk-mcp package is green end to end (239 files, 1472 tests, `skill-sync-parity` and `hooks-record-parity` among them) and `pnpm promises:check` at the root exits 0 with the summary above; the root script as a whole stops in the admin package on exactly the five HTTP cases of A17, A23 and A24, which pass at Build Phase 4 — so "end to end" is Build Phase 4's to close, and the item is recorded as green for everything this phase owns
+- [x] Row A15 set to `passing` — done in the trajectory table
+
+#### Build Phase 3 Context
+- [x] Current State (in flight) and Conventions: this repo holds three promises (`one-definition-per-shared-rule`, `phase-boundary-record-never-malformed`, `gates-ran-at-every-checkoff`); a new shared-definition pin adds itself to the first promise's `tests:`; `indusk promises check` runs in `pnpm test` — appended to the `.indusk/promises/` Conventions entry with the token rule; three old Dawn "in flight" bullets were shortened to one line each to pay for it (the budget refused a longer version twice); the "adds itself to `tests:`" rule lives in the promise file's own history and the guide, not here
+
+#### Build Phase 3 Document
+- [x] `apps/docs/src/guide/promises.md`: this repo's three as worked examples, one per kind, including the hollow behaviour promise and why — a table of the three (kind, where enforced, what checks it) and a paragraph on why the behaviour promise's chip is hollow despite a site, a test and a fixed incident
+- [x] `apps/docs/src/changelog.md` Unreleased: the promises entry from the ADR's Documentation Plan — under Added, with the token rule and the pointers to guide, reference and decision
+
+### Build Phase 4: The Promises page
+
+**Goal**: the admin lists every promise with its declared state, every `enforced` chip hollow, "holding N" on archived plans; a bad registry is an error block, none is an empty state.
+
+- [x] `apps/indusk-admin/src/lib/promises-reader.ts`: reads through `@infinitedusky/indusk-mcp/promises/registry` (`readPromises(projectRoot)`), returns the registry or the problem; `holdingCount(registry, plan)` = owner match and state ≠ `retired`; one home, pinned by `cleanup-pins.test.ts`'s convention — plus `registryOf(read)` (whole or partial) and `holdingCounts(read)` for the sidebar; the library's problems variant now carries `partial`, so a malformed entry never hides its well-formed neighbours (the page lists them under the error block, which is what A23 asserts)
+- [x] `app/p/[project]/promises/page.tsx` in `scorecards/page.tsx`'s shape (stale-project handling identical); nav entry "Promises" beside Scorecards in `app/p/[project]/layout.tsx`
+- [x] `components/Promises.tsx`: `PromisesTable` with the columns (chip, name, statement, kind, domain, owner, sites, tests, incidents), `groupBy` over owner/domain/state/kind, a "show retired" toggle, `PromiseChip` with `data-state`; `known-violated` rows render their incident ids; **no health prop, no health rendering** — the type has no such field — a client component (the grouping and the toggle are state); the chip carries `role="img"` so its accessible name is valid; `HoldingBadge`, `PromisesProblems` and `PromisesEmpty` live in the same file, one home for the page's pieces; an incidents table follows the groups
+- [x] `components/bars/labels.ts`: `promiseStateChip` (`enforced` → hollow, aria-label "declared, not yet observed"; `known-violated` → amber; `retired` → grey; `declared` → outlined) `satisfies Record<PromiseState, …>`; `promiseKindLabel` `satisfies Record<PromiseKind, string>`; `lifecycle-render-parity.test.ts` extended (A21's body) — spelled `PROMISE_STATE_CHIP` / `PROMISE_KIND_LABELS` to match the file's other maps
+- [x] "Holding N": `ArchivedSegment` (or the archived segment's renderer in `bars/ProgressLines`) takes `holding` and renders "holding N" when > 0; `PlanList` and the plan page pass `holdingCount` from the reader — there is no `ArchivedSegment` component (the sketch's name); the badge is `HoldingBadge` rendered on the sidebar's archived items (`PlanList` takes `holding: Map`) and in `PlanDetail`'s header beside "archived" (`holding: number` from the plan page); the bars themselves are untouched
+- [x] Error and empty states: a `RegistryProblem` renders the existing error-block component naming file and field; no directory renders an empty state naming `.indusk/promises/` and pointing at `/reference/cli/promises` — the error block is the same `role="alert"` red panel the boundary error uses (a shared component would be the cleanup ritual's extraction: two sites, not three)
+- [x] `components/Promises.test.tsx` authored from the deferred bodies (A18, A19, A20, A22); `typecheck.test.ts` green — 9 cases; one first-run red was the test's own assumption that a collapsed section keeps its items in the DOM (it does not; the test now opens it the way a reader would)
+- [x] Shape (Build Phase 4): review the components and reader; record findings or "nothing to change" — reviewed 15 changed files (the page, the layout, the plan page, `Promises.tsx`, `PlanList`, `PlanDetail`, `labels.ts`, `promises-reader.ts`, the registry's `partial` variant, the MCP tool, four test files), every extension's rules readable. One finding in `Promises.tsx`, recorded below. Left as is, with reasoning: `PromisesProblems` uses the same red `role="alert"` panel markup as `PlanDetail`'s boundary error rather than a shared component — two sites, and the cleanup ritual's rule of three decides extraction, not this step; `holdingCount` and `holdingCounts` are two functions rather than one with a mode because the sidebar and the plan page ask different questions (one plan vs every owner) and a mode flag would make the type lie about which it answers
+- [x] Shape finding (Build Phase 4) — `apps/indusk-admin/src/components/Promises.tsx`: `PromisesTable` renders two inline table blocks that want names — the per-group section (`PromiseGroup`: heading, owner link, the rows table) and the incidents table (`IncidentsTable`) — so the component's body reads as the sequence (controls → groups → incidents) rather than 120 lines of JSX (rule: the typescript extension's "name the block for what it answers; one reason to change") — extracted both; the incidents cell reuses `PathList` (ids as code, a dash for none) instead of its own inline list; component rows, the reuse audit and the cleanup pins still green (16 tests), `tsc` clean
+
+#### Build Phase 4 Verification
+- [x] A18–A22 green: `cd apps/indusk-admin && pnpm exec vitest run src/components/Promises.test.tsx src/lib/lifecycle-render-parity.test.ts`; then `cd` back — 2 files, 16 tests green (9 component cases incl. four groupings, 7 parity incl. the two promise unions)
+- [x] A17, A23, A24 green: `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-project-promises.test.ts --project node` (no other dev server on the app dir); then `cd` back — 5/5 on the first run against the page
+- [x] Admin suite green including `typecheck.test.ts`, `cleanup-pins.test.ts`, `component-reuse-audit.test.ts`: `cd apps/indusk-admin && pnpm exec vitest run`; then `cd` back — 49 files, 288 tests green in the root run (two page tests first failed to import because the plan page and the layout now import the promises reader, which reaches `node:fs` — mocked in both, per the known gotcha; Biome then wanted the chip's `aria-label` on an element with a role, so the chip is `role="img"`); a direct run had `http-project-research` time out at 5 s, the known flaky class, green in the root run. `pnpm test` at the root is green end to end and ends with `3 promises — … — 1 incident`, which closes Build Phase 3's "end to end" too
+- [x] Manual smoke: `indusk ui restart`, open this project's Promises page, three rows, three hollow chips, "holding 1" on `dawn-verify`, `lifecycle-rebalance`, `enforce-plan-gates` in the sidebar; screenshot in the retrospective — not through `indusk ui restart`: the daemon serves the globally installed bundle and its registry points `dusk` at the trunk, which has no registry yet (and the worktree is not a project — Sandy, 2026-09-18). Instead this worktree's admin ran under `next dev` with a throwaway `INDUSK_HOME` whose registry maps `dusk` to this checkout: `/p/dusk/promises` 200 with rows `one-definition-per-shared-rule`, `gates-ran-at-every-checkoff`, `phase-boundary-record-never-malformed`, three chips `data-state="enforced"` each labelled "declared, not yet observed", the nav carrying the Promises link; `/p/dusk/plan/lifecycle-rebalance` header shows "holding 1"; the sidebar's badges render once the collapsed Archived section is opened (it renders its items on open, which A22 exercises). Screenshot saved at the trunk's `.playwright-mcp/day-promises-page.png` (an ignored folder) for the retrospective. The trunk's daemon shows the page after merge and `indusk update`
+- [x] Rows A17–A24 set to `passing` — done in the trajectory table
+
+#### Build Phase 4 Context
+- [x] Known Gotchas, the admin entry: the Promises page reads through the `promises/registry` subpath and never parses the directory; chip maps in `bars/labels.ts` are `satisfies Record<PromiseState|PromiseKind,…>` and the parity test names a missing one; "holding N" is derived in `lib/promises-reader.ts`, no lifecycle position — appended to the `next/link` admin gotcha, which was compressed to pay for it and gained the rule this phase hit twice: a page that gains a `lib/*` import needs that module mocked in every browser test that renders it (61,410 of 61,440 bytes)
+
+#### Build Phase 4 Document
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the Promises page (columns, groupings, chips, why every enforced chip is hollow, the error and empty states) and "holding N" — a `/p/{project}/promises` entry under "What each page shows" (three paragraphs: the table and groupings; declared state only, with the chip vocabulary and the parity pin; the two honest failure states and "holding N"), and the sidebar list names the Promises link
+- [x] `apps/docs/src/changelog.md` Unreleased: the admin half of the entry — folded into the Added entry: the page, the hollow chips, the error and empty states, "holding N"
+
+### Build Phase 5: Falsification — the check trusts what it reads
+
+**Goal**: verify whether the attested state holds against five ways the check can be lied to or misled by its own inputs: a token the opener rule refuses although it sits in a comment, an owner that is a folder or a file but not a plan, a rename whose alias the link check ignores, an `enforced` promise that carries an open incident, and a link path that walks out of the code root. Each trajectory row below captures one hypothesis; each checklist item captures the fix the code needs if the hypothesis confirms.
+
+- [x] `vocabulary.ts`: the opener rule becomes "a comment opener anywhere earlier on the line, or a quote directly before" — `TOKEN_OPENER` is two alternatives: `(?:\/\/|#|\/\*|<!--).*` (any text between) and `(?:^|[^\S\n])(?:\*|--|;)[ \t]*` at the line's start for the docblock, SQL and ini forms, and `["'\`][ \t]*` for a quote; `promiseTokenPattern` and `anyPromiseTokenPattern` share it; the reference page's list of what counts is rewritten from the regex, not from memory (A27) — three alternatives as shipped: `//` `#` `/*` `<!--` anywhere earlier on the line with any text between; `*` `--` `;` at the line's start (after whitespace) with any text between; a quote directly before. The widened rule immediately read two tokens inside `vocabulary.ts`'s own docblock (lines starting with `*`), which is the rule working; the two comment lines were reworded so the file that documents the token does not carry one
+- [x] `check.ts` `ownerStatus`: a plan is a *directory* under `.indusk/planning/` or `.indusk/planning/archive/` whose name is not `archive`; `statSync(...).isDirectory()` replaces `existsSync`, and the refusal says "is not a plan folder" for a file and "is the archive folder, not a plan" for `archive` (A28) — two new statuses (`not-a-folder`, `archive-folder`) each with its own refusal; the missing-owner refusal also gained the `.indusk/promises/` prefix every other refusal carries (it had been the one bare `p.file`)
+- [x] `check.ts` `fileNames`: a listed site or test names the promise when it carries the token for the name **or any alias**; `linkRefusals` passes the entry's aliases through. Registry integrity: an alias equal to any promise's name, or shared by two entries, is a problem at read time (`readPromises` reports both files), so the check never has to pick a winner (A29) — `fileNames` takes the list of names; the "does not carry" refusal names the aliases it also accepted; alias integrity is judged after every entry is read, and each alias must be kebab-case like a name
+- [x] `check.ts` `stateRefusals`: an `enforced` promise whose listed incidents include one with `status: open` is refused — "enforced, but incident <id> is open: either the incident is fixed or the state is known-violated" (A30)
+- [x] `registry.ts` `promiseProblem`: every `sites:` / `tests:` entry must satisfy `isUsableRelPath` (relative, no `..`, not under a reserved segment), refused at read time naming the entry and the path, so `check.ts` never joins an unguarded path onto the code root (A31) — the hypothesis was confirmed the hard way first: a token-bearing file placed OUTSIDE the fixture root satisfied the shipped link check (exit 0)
+- [x] `apps/docs/src/reference/cli/promises.md`: the token section states the two rules as shipped (opener anywhere earlier on the line; quote directly before), the owner rule (a plan is a directory, never `archive`), the alias rule, the open-incident rule, and the path rule; the refusals table gains the four new rows — a "where a token may sit" table with an example per row, the alias paragraph, and the refusals table's owner row rewritten plus three rows added
+
+- [x] Shape (Build Phase 5): reviewed the three library files this phase changed (`check.ts`, `registry.ts`, `vocabulary.ts`) and the test file, every extension's rules readable. One finding, recorded below. Left as is, with reasoning: `ownerStatus`'s two-element tuple loop stays a loop rather than two `if`s because the two roots are the same question asked twice and a third root would be one more row, not one more branch; the enforced branch's open-incident loop is four lines beside the rule it enforces and naming it would move the rule away from its state
+- [x] Shape finding (Build Phase 5) — `apps/indusk-mcp/src/lib/promises/registry.ts`: `readPromises` gained a twenty-line alias-integrity block inline after the two read loops; it is one question ("do the aliases resolve to exactly one live promise each?") and wants the name `aliasProblems(promises)` so the reader's body stays the sequence read-promises → read-incidents → integrity → result (rule: the typescript extension's "name the block for what it answers") — extracted and exported (the admin could ask the same question of a partial registry); 32/32 across the falsification and check rows after the rebuild
+
+#### Build Phase 5 Verification
+- [x] A27–A31 authored red first in `src/__tests__/promises-falsification.test.ts` through `runCli` on `promiseProject` fixtures (one case per hypothesis, each asserting the exit code and what stderr names), then green after the items above: `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-falsification.test.ts`; then `cd` back — 12 cases: 10 red on the shipped check (every hypothesis confirmed; the two green ones were the negatives that must keep holding), then 12/12 green after the fixes
+- [x] Every earlier check row still green, and the repository's own check still clean: `pnpm exec vitest run src/__tests__/promises-check.test.ts src/__tests__/promises-workbench.test.ts src/__tests__/promises-cli.test.ts` and `pnpm promises:check` at the root — 46/46 across the four promise files; the repository's check exits 0 with the same summary as before once `vocabulary.ts`'s own docblock stopped carrying a token. The full mcp suite has one red file this plan did not touch: `lib/admin/__tests__/daemon-identity.test.ts` assumes port 65001 is unbound, and the machine's local-telemetry `otelcol` (restarted mid-session) now listens there — an environmental collision, green earlier today; a small not-a-step for the retrospective: that test should bind-and-release to find a free port instead of assuming one
+- [x] Rows A27–A31 set to `passing` — done in the trajectory table
+
+#### Build Phase 5 Context
+- [x] Known Gotchas: the promises entry gains the rule the falsification found — a citation counts after a comment opener anywhere on its line but only directly after a quote; a plan owner is a directory, never `archive`; link paths are guarded by `isUsableRelPath` before any join — the Conventions entry's last sentence rewritten to the three rules; the three promise names dropped from it to pay (they are in the registry and the guide); 61,414 of 61,440 bytes
+
+#### Build Phase 5 Document
+- [x] `apps/docs/src/reference/cli/promises.md` updated as the item above says; `apps/docs/src/changelog.md` Unreleased notes the falsification's four refusals — both done with the implementation item; the changelog sentence names the four refusals and the alias fix
+
+### Build Phase 6: Cleanup — one ensure, one scan, one badge
+
+**Goal**: decompose what this plan grew per the repository's own rules — one definition per shared shape (the rule of three is now met for the presence-keyed config ensure), a settled module boundary between reading, scanning and judging in `lib/promises/`, and one home per admin piece with the client boundary pushed as deep as it goes. Each item is a concrete extraction or a reasoned leave-as-is; each new unit has a trajectory row.
+
+- [x] Extract `ensureConfigBlock(projectRoot, key, defaults)` into `lib/config.ts` — "read the config; `no-config` when absent; `already-set` when the block is present as an object; else write `{ ...config, [key]: defaults }` and `added`" — and make `ensureCleanupConfig`, `ensurePapersConfig` (`lib/papers/config.ts`) and `ensurePromisesConfig` (`lib/promises/config.ts`) one-line calls to it, keeping their names so `update.ts` and the cleanup-ritual test do not change; `ensureDecayConfig` stays as it is (two keys inside two blocks — a different shape, not a fourth copy). Basis: the rule of three, met by this plan's third copy, and the standing rule that a shared shape has one definition under `src/lib` (A32)
+- [x] Extract the reverse scan from `lib/promises/check.ts` into `lib/promises/citations.ts`: `PROSE_EXTENSIONS`, `looksBinary`, `scannableFiles`, `extensionOf` and `citedNames`, exported as `citedNames(codeRoot)`; `check.ts` imports it and keeps judging (`citationRefusals`). Basis: three concerns, three modules — `registry.ts` reads, `citations.ts` scans the code root, `check.ts` judges — and the module was 23 lines over its cap for exactly this reason (A33)
+- [x] Move `HoldingBadge` out of `components/Promises.tsx` into `components/HoldingBadge.tsx` with no `"use client"` directive; `PlanList`, `PlanDetail` and `Promises.tsx` import it from there — `Promises.tsx` turned out not to use the badge at all (only the page's test did), so it imports nothing; the two server components import it from its home and the component test follows. Basis: one home per piece (the admin's cleanup-pins convention) and the smallest client boundary — a badge two server components render should not enter the client bundle through a page module that only needs the boundary for its grouping state (A34)
+- [x] (reviewed `components/Promises.tsx` after the move — left as-is: `PromisesTable`, `PromiseGroup`, `IncidentsTable`, `PromiseChip`, `PromisesProblems` and `PromisesEmpty` are one page's pieces with one reason to change together; `PromisesProblems` and `PlanDetail`'s boundary-error panel share the red `role="alert"` markup at two sites, one short of the rule of three — the next red panel extracts the three)
+- [x] (reviewed `lib/promises/registry.ts` — left as-is: 374 lines, one concern; its two read loops were considered by Shape in Build Phase 1 and the alias check was named in Build Phase 5; no cross-file duplication)
+- [x] (reviewed the four promise test files — left as-is: `promises-check.test.ts` and `promises-falsification.test.ts` each define a two-line `check` and `withClean` helper, two copies, one short of the rule of three; the fixture builder they share already lives in `helpers/promises-fixture.ts`)
+- [x] (reviewed `bin/cli.ts`, `bin/commands/update.ts` and `lib/config.ts` — left as-is: each is over its cap before this plan touched it with one block; decomposing `update.ts`'s targeted-ensure sequence is the plan that owns `update`'s to do, as dawn-workbench-execution's cleanup already recorded, and this phase's first item removes one of its copies rather than adding to them)
+- [x] (reviewed `apps/docs/src/changelog.md` and the lifecycle-parity snapshot — left as-is: a record and a fixture, not decomposition targets)
+
+- [x] Shape (Build Phase 6): reviewed the three new units (`ensureConfigBlock`, `citations.ts`, `HoldingBadge.tsx`) and the seven files they moved code out of or into, every extension's rules readable; nothing to change — each new unit answers one question and carries the rule it enforces in its docblock. Left as is, with reasoning: `ensureConfigBlock` takes `key: keyof InduskConfig & string` rather than a plain string so a typo in a caller is a type error, at the cost of one `as unknown as Record` cast inside — the cast is the one place the config is read by key, and the type on the parameter is what keeps callers honest
+
+#### Build Phase 6 Verification
+- [x] A32–A34 green: `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-cleanup.test.ts src/__tests__/promises-cli.test.ts src/__tests__/cleanup-ritual.test.ts src/__tests__/promises-check.test.ts src/__tests__/promises-falsification.test.ts`; then `cd apps/indusk-admin && pnpm exec vitest run src/components/Promises.test.tsx src/__tests__/component-reuse-audit.test.ts src/__tests__/cleanup-pins.test.ts src/lib/typecheck.test.ts`; then `cd` back — seven cleanup cases red first (five in the mcp package, two in the admin), then 47/47 in the mcp package and 18/18 in the admin including the type-check; two first-run reds were the phase's own: the shared ensure's cast needed `as unknown` first, and the badge's docblock quoted the client directive it says the file lacks
+- [x] The repository's own check unchanged: `pnpm promises:check` at the root prints the same three-promise summary — `3 promises — declared 0, enforced 3, known-violated 0, retired 0 — behaviour 1, state 1, structure 1 — 1 incident`, exit 0
+- [x] Rows A32–A34 set to `passing` — done in the trajectory table
+
+#### Build Phase 6 Context
+- [x] Known Gotchas, the single-definition entry: a seventh pinned shared shape — `ensureConfigBlock` (`lib/config.ts`), the presence-keyed config ensure that cleanup, papers and promises each spelled; and the promises module map — `registry.ts` reads, `citations.ts` scans, `check.ts` judges — the seventh pin added; the fifth and sixth entries' narrative trimmed to their pointers to pay for it (the budget refused the first wording by 47 bytes); the module map lives in the reference page's "reading the registry from code" paragraph rather than here
+
+#### Build Phase 6 Document
+- [x] `apps/docs/src/reference/cli/promises.md`'s "reading the registry from code" paragraph names `citations.ts` beside the registry; `apps/docs/src/reference/admin-ui/overview.md` names `HoldingBadge`'s home in the "holding N" sentence — both done; the reference paragraph also names the `partial` registry a problems read carries
+
+## Files Affected
+
+| File | Change |
+|------|--------|
+| `apps/indusk-mcp/src/lib/promises/{vocabulary,registry,check,config}.ts` | new |
+| `apps/indusk-mcp/src/bin/commands/promises.ts`, `src/bin/cli.ts` | new command |
+| `apps/indusk-mcp/src/server/*` (tools) | `list_promises` |
+| `apps/indusk-mcp/package.json` | `exports["./promises/registry"]` |
+| `apps/indusk-mcp/src/lib/config.ts`, `src/bin/commands/update.ts` | `promises.domains` ensured |
+| `apps/indusk-mcp/src/lib/verify/phantom.ts`, `lib/shape/changed.ts`, `lib/cleanup/oversized.ts` | `.indusk/promises/` named |
+| `apps/indusk-mcp/hooks/check-gates.js`, `.claude/hooks/check-gates.js` | token comment, resynced |
+| `apps/indusk-mcp/src/lib/shape/boundary.ts`, six `*-single-definition.test.ts`, `shape/shared-definitions.test.ts`, boundary tests | token comments |
+| `apps/indusk-mcp/src/__tests__/promises-*.test.ts`, `helpers/promises-fixture.ts` | new |
+| `.indusk/config.json`, `.indusk/promises/*.md`, `.indusk/promises/incidents/*.md` | this repo's three |
+| `package.json` (root) or `turbo.json` | the check in `test` |
+| `apps/indusk-admin/src/app/p/[project]/promises/page.tsx`, `layout.tsx` | new route, nav |
+| `apps/indusk-admin/src/components/Promises.tsx`, `Promises.test.tsx`, `bars/labels.ts`, `bars/ProgressLines.tsx`, `PlanList.tsx` | page, chips, holding N |
+| `apps/indusk-admin/src/lib/promises-reader.ts`, `lib/lifecycle-render-parity.test.ts`, `__tests__/http-project-promises.test.ts` | reader, pin, smoke |
+| `apps/docs/src/{guide/promises,reference/cli/promises,decisions/day-promises}.md`, `guide/plan-lifecycle.md`, `reference/admin-ui/overview.md`, `reference/tools/indusk-mcp.md`, `changelog.md`, `.vitepress/config.ts` | docs |
+| `CLAUDE.md` | Context items above |
+
+## Dependencies
+
+- admin-ui-phase-progress (closed): `bars/labels.ts`, the parity test, `LiveRefresh`
+- `resolveExecutionRoots`, `helpers/versioned-workbench.ts`, `helpers/cli.ts`
+- A built `dist/` in the worktree for every CLI-boundary row; the admin bundle for the daemon tests
+
+## Notes
+
+- The check's reverse scan uses `git ls-files --cached --others --exclude-standard` so an untracked, un-ignored file with a token is seen and an ignored one is not; a non-git code root is a refusal, not an empty scan.
+- Message text in refusals is asserted, not just exit codes: a correct decision to refuse can still carry a wrong path.
+- If Build Phase 1's Shape review or the fixture work surfaces that `Promise` as a type name collides with the global `Promise`, the type is `PromiseEntry` from the start; the file and CLI vocabulary stay "promise".
+- No OTel gates: this project is `otel.role: library`.

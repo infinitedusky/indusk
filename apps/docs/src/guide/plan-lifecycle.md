@@ -200,7 +200,7 @@ It was rejected because **closed remains the resting state.** A plan reopens on 
 
 Honest inventory, so nobody reads this page as a description of working software:
 
-- **Expectations** — named invariants with IDs, owning plans, code sites, and trace patterns. Sketched in the `midnight` brief; unbuilt.
+- **Promises** — what this page calls expectations: named commitments with owning plans, code sites and tests. **Built** as Day step 4a — the registry, `indusk promises check` and the admin's Promises page; see [Promises](./promises). The span link and the violation query below are Day step 4b.
 - **Span ↔ expectation linkage** — `expectations.enforced` / `expectations.violated` attributes. Unbuilt.
 - **A violation query** — "has E-9 been violated in the last N days?" against Dash0 and local telemetry. This is what gives `monitor` its exit condition. Unbuilt.
 - **Reopen as a lifecycle operation** — `/retrospective` archives today and has no inverse.

@@ -9,6 +9,11 @@ import {
   readPlanMasterContent,
 } from "@/lib/planning-reader";
 import { readAdminRefreshMs } from "@/lib/project-reader";
+import {
+  holdingCount,
+  readProjectPromises,
+  registryOf,
+} from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
 interface PlanPageProps {
@@ -64,6 +69,13 @@ export default async function PlanPage({ params }: PlanPageProps) {
 
   // Only the plan page is live: it re-renders itself on an interval so a
   // checkoff on disk reaches an open page without a reload (Build Phase 5).
+  // "holding N" (day-promises): the promises this plan owns that are not
+  // retired, read from the registry on every request like everything else.
+  const holding = holdingCount(
+    registryOf(readProjectPromises(projectPath)),
+    name,
+  );
+
   return (
     <>
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
@@ -72,6 +84,7 @@ export default async function PlanPage({ params }: PlanPageProps) {
         subplans={subplans}
         masterContent={masterContent}
         planHrefPrefix={`/p/${project}/plan/`}
+        holding={holding}
       />
     </>
   );

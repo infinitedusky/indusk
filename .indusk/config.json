@@ -56,6 +56,9 @@
 	"planning": {
 		"dead_draft_days": 30
 	},
+	"promises": {
+		"domains": ["planning", "gates", "admin"]
+	},
 	"papers": {
 		"destinations": [
 			{

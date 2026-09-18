@@ -6,6 +6,50 @@ import type {
   SegmentState,
   StageKind,
 } from "@infinitedusky/indusk-mcp/lifecycle";
+import type {
+  PromiseKind,
+  PromiseState,
+} from "@infinitedusky/indusk-mcp/promises/registry";
+
+/**
+ * A promise's chip: its declared state, and nothing else (day-promises, ADR
+ * D8). There is no health axis in this step — not a hidden one, none — so an
+ * `enforced` promise is drawn HOLLOW (border, white fill) and says so in its
+ * accessible name: declared, not yet observed. Green must mean "seen upheld",
+ * and nothing here has seen anything. `satisfies Record<PromiseState, …>` and
+ * `lifecycle-render-parity.test.ts` name a state added without a chip.
+ */
+export const PROMISE_STATE_CHIP = {
+  declared: {
+    label: "declared",
+    aria: "declared — stated in planning, not yet established",
+    className: "border border-dashed border-gray-400 bg-white text-gray-600",
+  },
+  enforced: {
+    label: "enforced",
+    aria: "declared, not yet observed",
+    className: "border border-green-600 bg-white text-green-700",
+  },
+  "known-violated": {
+    label: "known-violated",
+    aria: "known-violated — an incident says why",
+    className: "border border-amber-300 bg-amber-50 text-amber-800",
+  },
+  retired: {
+    label: "retired",
+    aria: "retired — kept for history",
+    className: "border border-gray-200 bg-gray-50 text-gray-400",
+  },
+} satisfies Record<
+  PromiseState,
+  { label: string; aria: string; className: string }
+>;
+
+export const PROMISE_KIND_LABELS = {
+  behaviour: "behaviour",
+  state: "state",
+  structure: "structure",
+} satisfies Record<PromiseKind, string>;
 
 /**
  * Every label the bars render, typed against the lifecycle's own unions.

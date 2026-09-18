@@ -62,6 +62,7 @@ const config = defineConfig({
 					items: [
 						{ text: "Plan Lifecycle", link: "/guide/plan-lifecycle" },
 						{ text: "Test Trajectory", link: "/guide/test-trajectory" },
+						{ text: "Promises", link: "/guide/promises" },
 						{ text: "The Shape Check", link: "/guide/shape" },
 						{ text: "Falsification Ritual", link: "/guide/falsification-ritual" },
 						{ text: "Cleanup Ritual", link: "/guide/cleanup-ritual" },
@@ -119,6 +120,7 @@ const config = defineConfig({
 						{ text: "agent", link: "/reference/cli/agent" },
 						{ text: "plans", link: "/reference/cli/plans" },
 						{ text: "papers", link: "/reference/cli/papers" },
+						{ text: "promises", link: "/reference/cli/promises" },
 						{ text: "sync", link: "/reference/cli/sync" },
 					],
 				},
@@ -216,6 +218,7 @@ const config = defineConfig({
 						{ text: "Test phases as structure", link: "/decisions/test-phase-structure" },
 						{ text: "Tests-First Planning — Decision Summary", link: "/decisions/tests-first-planning" },
 						{ text: "Planner Hotfix Mode (salvaged, never merged)", link: "/decisions/planner-hotfix-mode" },
+						{ text: "Promises", link: "/decisions/day-promises" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
 						{ text: "Worktree Visibility", link: "/decisions/worktree-visibility" },
@@ -252,6 +255,7 @@ const config = defineConfig({
 						{ text: "Tests first within each phase", link: "/lessons/tests-first-within-each-phase" },
 						{ text: "Versioned Workbench — Lessons", link: "/lessons/versioned-workbench" },
 						{ text: "Workbench Setup Command — Lessons", link: "/lessons/workbench-setup-command" },
+						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
 						{ text: "Workbench Trust Fixes — Lessons", link: "/lessons/workbench-trust-fixes" },
 						{
 							text: "Worktree Config Schema Pointer — Lessons",

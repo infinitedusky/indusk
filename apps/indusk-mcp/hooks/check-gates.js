@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// promise: gates-ran-at-every-checkoff
 /**
  * PreToolUse hook: blocks phase transitions in impl.md when gates are incomplete.
  *

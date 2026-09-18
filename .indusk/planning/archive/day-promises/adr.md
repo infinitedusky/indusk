@@ -262,9 +262,27 @@ run.
   test the hook-runner tests; owner `enforce-plan-gates`; hollow until Day
   step 5's gate ledger observes it.
 
-Domains: `planning`, `gates`, `admin`. The registration rule is re-applied
-to the brief's candidate table in Build Phase 1 and the result recorded
-here before the check enforces it.
+Domains: `planning`, `gates`, `admin`.
+
+**The registration rule, re-applied (Build Phase 2, 2026-09-18)** — "a
+promise is registered when its breakage would need a plan to reopen", over
+the brief's candidate table, before the check enforces anything:
+
+| Candidate | Registers? | Why |
+|---|---|---|
+| every shared rule has exactly one definition (the pins) | **yes** | a second `resolveImplPath` would reopen the plan that pinned it; structure, holds |
+| every pointer in CLAUDE.md resolves (`check-pointers`) | **yes** | a dead pointer reopens the plan whose page moved; structure, holds — not self-hosted in this plan (three is the acceptance; it is the fourth candidate) |
+| the phase-boundary record is never malformed | **yes** | one bad line blinds every reader; state, holds |
+| no test writes the machine-global registry | **yes** | a leak reopens the plan that isolated it; state, holds — the fifth candidate, likewise not self-hosted here |
+| every checkoff ran its gates | **yes** | the class hook-cwd-independence reopened for; behaviour, holds; hollow until the gate ledger |
+| the jj residue sweep ran | **no** | done once; what holds is the structure promise "no jj residue", already pinned by `scm-rip-out-grep.test.ts` — an `established` lifetime that would retire on its own green |
+| every phase closed in order; red seen before green | **no** | process record — a fact about how the work was done, not about the system |
+| "the migration preserves every key", as a trajectory row | **no** | a row that preserves a registered promise cites it; it does not create an entry |
+
+Five in, three out; the rule needed no amendment. The three self-hosted are
+one per kind so the convention is shown not to depend on a service or on
+telemetry; the fourth and fifth candidates are registered when a later plan
+touches them, by the same rule.
 
 ### D8. The Promises page and "holding N"
 

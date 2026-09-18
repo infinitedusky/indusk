@@ -792,10 +792,5 @@
       "passes": true,
       "missing": []
     }
-  },
-  "day-promises": {
-    "stage": "brief",
-    "stageStatus": "draft",
-    "nextStep": "Review brief (status: draft)"
   }
 }

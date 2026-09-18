@@ -3,7 +3,8 @@
 	"private": true,
 	"packageManager": "pnpm@10.33.0",
 	"scripts": {
-		"test": "turbo test",
+		"test": "turbo test && pnpm promises:check",
+		"promises:check": "node apps/indusk-mcp/dist/bin/cli.js promises check",
 		"check": "biome check",
 		"check:fix": "biome check --write",
 		"format": "biome format --write",

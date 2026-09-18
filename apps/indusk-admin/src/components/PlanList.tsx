@@ -1,6 +1,7 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import Link from "next/link";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
+import { HoldingBadge } from "@/components/HoldingBadge";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -27,6 +28,12 @@ interface PlanListProps {
    * which is also the fallback whenever a declaration is missing or unreadable.
    */
   grouping?: PlanDeclarations;
+  /**
+   * "holding N" per plan name (day-promises): how many promises a plan owns
+   * that are not retired. Rendered on archived plans only — closed is the
+   * resting state, and the count is what keeps a closed plan on the hook.
+   */
+  holding?: Map<string, number>;
 }
 
 /** A parent plan plus its children, resolved against what exists on disk. */
@@ -128,6 +135,7 @@ export function PlanList({
   masterOrder,
   planHrefPrefix = "/plan/",
   grouping,
+  holding,
 }: PlanListProps) {
   if (active.length === 0 && archived.length === 0) {
     return <EmptyPlansSidebarSlot />;
@@ -203,7 +211,12 @@ export function PlanList({
         >
           <ul className="flex flex-col gap-1" data-testid="archived-plans">
             {archived.map((plan) => (
-              <PlanItem key={plan.name} plan={plan} prefix={planHrefPrefix} />
+              <PlanItem
+                key={plan.name}
+                plan={plan}
+                prefix={planHrefPrefix}
+                holding={holding?.get(plan.name) ?? 0}
+              />
             ))}
           </ul>
         </CollapsibleSection>
@@ -255,7 +268,15 @@ function PlanGroupSection({
   );
 }
 
-function PlanItem({ plan, prefix }: { plan: Plan; prefix: string }) {
+function PlanItem({
+  plan,
+  prefix,
+  holding = 0,
+}: {
+  plan: Plan;
+  prefix: string;
+  holding?: number;
+}) {
   return (
     <li>
       <Link
@@ -270,6 +291,7 @@ function PlanItem({ plan, prefix }: { plan: Plan; prefix: string }) {
               malformed
             </Badge>
           )}
+          <HoldingBadge count={holding} plan={plan.name} />
         </span>
         <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
       </Link>
