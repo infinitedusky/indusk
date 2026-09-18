@@ -401,11 +401,18 @@ Before writing any code for a plan (i.e. at the start of Phase 1, at the researc
 
 1. **Read the impl frontmatter.** If it contains `worktree: none`, skip this section — the author has explicitly opted this plan into running in the current tree.
 2. **Otherwise, check where you are.** Compare `git rev-parse --show-toplevel` against `git worktree list` — are you in the shared trunk or already in a dedicated worktree? If you're already in a worktree for this plan, you're set.
-3. **If you're in the trunk, nudge before editing code:**
-   > "This plan defaults to running in its own worktree, and you're in the shared trunk. Want me to `indusk worktree create {plan-slug}` first? (Or set `worktree: none` in the impl frontmatter to run here deliberately.)"
+3. **If you're in the trunk, create the plan's worktree before editing code** — with the command, never with a bare `git worktree add`:
+   ```bash
+   indusk worktree create <plan>
+   ```
+   It creates `<project>-worktrees/<plan>` on `plan/<plan>` and **records that the plan lives there**, so the admin's live bars and the plan tools (`get_plan_status`, `advance_plan`) read the plan from its worktree while it is worked, from any checkout. A worktree made any other way is invisible to them until it is assigned:
+   ```bash
+   indusk worktree assign <plan> <path>
+   ```
+   Then install the project's dependencies in the new worktree and work there. (Or set `worktree: none` in the impl frontmatter to run in the trunk deliberately.)
 4. **This is a nudge, not a gate.** If the user proceeds in the trunk anyway, continue — but note that `indusk agent list` / `/catchup` will flag a same-trunk collision if another session is also there.
 
-The deterministic logic behind this — `resolveWorktreeDecision(implContent)` (frontmatter → `create`/`skip`) and `detectTreeContext(cwd)` (trunk vs worktree) — lives in `apps/indusk-mcp/src/lib/worktree/decision.ts`. The worktree, once created, is bound to the plan for the life of its impl; `indusk worktree create` also auto-provisions the worktree's env.
+The deterministic logic behind this — `resolveWorktreeDecision(implContent)` (frontmatter → `create`/`skip`) and `detectTreeContext(cwd)` (trunk vs worktree) — lives in `apps/indusk-mcp/src/lib/worktree/decision.ts`. The assignment lasts until the retrospective's landing step releases it (`indusk worktree release <plan>`, after the merge). In a workbench, plan documents live at the workbench root, so `indusk worktree create [repo] <slug>` runs the extension's setup script instead and nothing is assigned. See `/reference/cli/worktree`.
 
 ## Commits
 
