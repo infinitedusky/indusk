@@ -192,9 +192,25 @@ reading), the alert naming the promise, an incident opened with its root
 cause and its source, and the owning plan reopened. The first such incident
 is the moment the loop closes, and a local run can produce it.
 
+## Documents
+
+- **`/guide/index` gains a section, "What runs where"** (Sandy, 2026-09-18:
+  "what of this exists directly in the repo for an application, and what is
+  outside of that in InDusk MCP?"). Three columns — *in the repo* (plans,
+  promises, incidents, lessons, hooks, skills, `CLAUDE.md`; the token comments
+  and the `indusk.promise` span attribute, which are the only two things that
+  touch application code, and the attribute is plain OpenTelemetry), *on the
+  machine* (the CLI and MCP server inside an agent session, the admin daemon
+  and its registry, the local Jaeger/otelcol daemon, the hub, eval sessions),
+  *hosted* (a telemetry backend such as Dash0, as an adapter). The sentence
+  the section exists to say: **the running application depends on none of
+  it** — InDusk is not Rails; it is beside the code at development time, and
+  the monitor watches from outside, reading what the app already emits. Written
+  in this step because 4b is what makes the runtime half real.
+
 ## Depends on
 
-- [`day-promises`](../day-promises/brief.md): the registry, the kinds, the
+- [`day-promises`](../archive/day-promises/brief.md): the registry, the kinds, the
   states, the owner, the first two links.
 - admin-ui-phase-progress (closed 2026-09-17): `monitor` listed and drawn.
 - Local Jaeger (the local-telemetry daemon) — already installed. Dash0 only
