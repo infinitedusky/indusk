@@ -70,18 +70,20 @@ guessed.
 | A5 | Asked at trunk, `list_plans`, `get_plan_status` and `advance_plan` report the worktree's state | Test Phase 1 | Build Phase 2 | written |
 | A6 | Asked from inside a worktree, the plan list and states match those asked at trunk | Test Phase 1 | Build Phase 2 | written |
 | A7 | A plan with no assignment reads exactly as today, in the tools and the admin | Test Phase 1 | Test Phase 1 | passing |
-| A8 | `indusk worktree create <plan>` in a normal repo creates `plan/<plan>` and the plan reads from it | Test Phase 1 | Build Phase 1 | written |
-| A9 | `indusk worktree assign <plan> <path>` assigns a hand-made worktree and the plan reads from it | Test Phase 1 | Build Phase 1 | written |
-| A10 | A second live assignment for the same plan is refused naming both, and nothing changes | Test Phase 1 | Build Phase 1 | written |
-| A11 | Assigning a path that is not a worktree of this repo, or a plan with no folder, is refused by name | Test Phase 1 | Build Phase 1 | written |
-| A12 | `indusk worktree release <plan>` ends the assignment and the plan reads from trunk | Test Phase 1 | Build Phase 1 | written |
-| A13 | Create, assign, read and release leave `git status` clean in every checkout | Test Phase 1 | Build Phase 1 | written |
+| A8 | `indusk worktree create <plan>` in a normal repo creates `plan/<plan>` and the plan reads from it | Test Phase 1 | Build Phase 2 | written |
+| A9 | `indusk worktree assign <plan> <path>` assigns a hand-made worktree and the plan reads from it | Test Phase 1 | Build Phase 2 | written |
+| A10 | A second live assignment for the same plan is refused naming both, and nothing changes | Test Phase 1 | Build Phase 1 | passing |
+| A11 | Assigning a path that is not a worktree of this repo, or a plan with no folder, is refused by name | Test Phase 1 | Build Phase 1 | passing |
+| A12 | `indusk worktree release <plan>` ends the assignment and the plan reads from trunk | Test Phase 1 | Build Phase 2 | written |
+| A13 | Create, assign, read and release leave `git status` clean in every checkout | Test Phase 1 | Build Phase 1 | passing |
 | A14 | An assigned worktree removed without release is reported as gone, and the trunk copy is shown, in the admin and `get_plan_status` | Test Phase 1 | Build Phase 3 | written |
 | A15 | A worktree with no assignment is listed in the admin as unassigned | Test Phase 1 | Build Phase 3 | written |
 | A16 | A malformed record is an error naming the file, in the admin and from the tools; no plan is read from a guessed copy | Test Phase 1 | Build Phase 3 | written |
 | A17 | Two live assignments for one plan in a hand-edited record show an error naming both, never a pick | Test Phase 1 | Build Phase 2 | written |
 | A18 | The work skill's kickoff runs `indusk worktree create <plan>` and the retrospective's landing step runs `indusk worktree release <plan>` between the merge and the removal | Test Phase 1 | Build Phase 4 | written |
 | A19 | This plan's own progress shows, with its worktree named, in the worktree's admin build run against the dusk registry while Build Phase 4 is worked | Build Phase 4 | Build Phase 4 | planned |
+
+**Moved during Build Phase 1 (2026-09-18):** A8, A9 and A12 pass at Build Phase 2, not 1. Each asserts that "the plan reads from" a copy, and it asks the MCP plan tool, which learns to read the assignment in Build Phase 2; the impl sequenced them one phase early. A12 was also strengthened: it now checks the worktree is read *while assigned* before checking the trunk is read after release, because "trunk after release" alone is what a reader that ignores assignments shows, and it had passed that way. The commands' own refusals and the clean-tree row (A10, A11, A13) pass at Build Phase 1 as planned.
 
 ## Checklist
 
@@ -124,7 +126,7 @@ on its own assertion today.
 
 ### Build Phase 1: The record, the resolver, the commands
 
-- [ ] `apps/indusk-mcp/src/lib/worktree/plan-worktrees.ts`:
+- [x] `apps/indusk-mcp/src/lib/worktree/plan-worktrees.ts`:
   ```typescript
   // <git-common-dir>/indusk-plan-worktrees.json
   interface Assignment { plan: string; path: string; branch: string; at: string }
@@ -147,23 +149,24 @@ on its own assertion today.
   function livePlanRoot(anyCheckout: string, plan: string): PlanCopy;
   ```
   Paths realpath-normalized; plan names segment-guarded (`lib/path-segment.ts`); git calls through `lib/git.ts`; the record written atomically (temp file + rename); in a workbench (`isWorkbench`) every plan resolves to the plan root with no worktree.
-- [ ] `indusk worktree assign <plan> <path>` and `indusk worktree release <plan>` in `src/bin/commands/worktree.ts`, wired in `src/bin/cli.ts`; refusals exit non-zero naming the plan, the path or both existing worktrees
-- [ ] Normal-mode `indusk worktree create <plan>`: when the project is not a workbench, refuse unless `.indusk/planning/<plan>/` exists on trunk, then `git worktree add <dir>/<plan> -b plan/<plan> main`, record the assignment, and print the path and "run `pnpm install` there"; workbench `create` unchanged
-- [ ] Export `./worktree/plan-worktrees` in `apps/indusk-mcp/package.json`
-- [ ] Assign this plan's own worktree with the built CLI, verbatim: `node apps/indusk-mcp/dist/bin/cli.js worktree assign admin-plan-worktrees ../dusk-worktrees/admin-plan-worktrees`
+- [x] `indusk worktree assign <plan> <path>` and `indusk worktree release <plan>` in `src/bin/commands/worktree.ts`, wired in `src/bin/cli.ts`; refusals exit non-zero naming the plan, the path or both existing worktrees
+- [x] Normal-mode `indusk worktree create <plan>`: when the project is not a workbench, refuse unless `.indusk/planning/<plan>/` exists on trunk, then `git worktree add <dir>/<plan> -b plan/<plan> main`, record the assignment, and print the path and "run `pnpm install` there"; workbench `create` unchanged. *As built: the base is the trunk's current branch rather than a literal `main`, and the message says "install the project's dependencies there" — naming `pnpm` would be tool knowledge in core, which extensions own.*
+- [x] Export `./worktree/plan-worktrees` in `apps/indusk-mcp/package.json`
+- [x] Assign this plan's own worktree with the built CLI, verbatim: `node apps/indusk-mcp/dist/bin/cli.js worktree assign admin-plan-worktrees ../dusk-worktrees/admin-plan-worktrees` — *run from the worktree, so the path was `.` (the written path is relative to the trunk); exit 0, record written in the shared git directory, both trees' `git status` unchanged by it*
+- [x] Shape (`apps/indusk-mcp/src/lib/worktree/plan-worktrees.ts`) — extract the per-plan classification in resolvePlanCopies (no assignment / one live / several live / all gone) into a named copyFor(plan, assignments, repo). Rule: one reason to change — an inline block with three outcomes wants a name and a seam
 
 #### Build Phase 1 Verification
 
-- [ ] A8, A9, A10, A11, A12, A13 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts`)
-- [ ] Typecheck and lint clean (`pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit`, `pnpm check`)
+- [x] A10, A11, A13 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts`) — 3 passed; A8, A9, A12 red only on the plan tool's read, which is Build Phase 2's (see the note under the trajectory)
+- [x] Typecheck and lint clean (`pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit`, `pnpm check`) — *as run: `tsc --noEmit` clean; `biome check` on the eleven files this plan touched clean. Repo-wide `pnpm check` exits 1 on the trunk too, on files this plan never touched (biome.json deprecations, admin SVGs, `eval-trigger.js`, `hook-cwd-independence.test.ts`, the docs config) — pre-existing, recorded in Notes*
 
 #### Build Phase 1 Context
 
-- [ ] Add to Conventions: a plan's live copy is resolved by `lib/worktree/plan-worktrees.ts` from a record in the shared git directory, written only by `indusk worktree create/assign/release`, checked against `git worktree list` on every read; never by matching names; inert in a workbench
+- [x] Add to Conventions: a plan's live copy is resolved by `lib/worktree/plan-worktrees.ts` from a record in the shared git directory, written only by `indusk worktree create/assign/release`, checked against `git worktree list` on every read; never by matching names; inert in a workbench
 
 #### Build Phase 1 Document
 
-- [ ] New `apps/docs/src/reference/cli/worktree.md`: `create` (normal and workbench), `assign`, `release`, the record's location and every refusal; sidebar entry
+- [x] New `apps/docs/src/reference/cli/worktree.md`: `create` (normal and workbench), `assign`, `release`, the record's location and every refusal; sidebar entry
 
 ### Build Phase 2: The MCP tools read the live copy
 
@@ -173,6 +176,7 @@ on its own assertion today.
 #### Build Phase 2 Verification
 
 - [ ] A5, A6, A17 pass; A7 still passes; the tools halves of A14 and A16 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-tools.test.ts`)
+- [ ] A8, A9, A12 pass — the CLI rows whose "reads from" half is the plan tool's (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts`)
 - [ ] Full mcp suite green (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
 
 #### Build Phase 2 Context
@@ -245,6 +249,8 @@ on its own assertion today.
 - None. day-promises is closed and landed on main.
 
 ## Notes
+
+- **Repo-wide `pnpm check` is red on trunk** (found 2026-09-18 in Build Phase 1) on files this plan does not touch: `biome.json` schema deprecations, `apps/indusk-admin/public/*.svg`, `.claude/hooks/eval-trigger.js`, `hook-cwd-independence.test.ts`, `apps/docs/src/.vitepress/config.ts`. This plan's own files are checked by name.
 
 - The record lives outside the working tree on purpose: the paths in it are
   true on one machine only.
