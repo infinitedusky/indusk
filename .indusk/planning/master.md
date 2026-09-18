@@ -182,22 +182,31 @@ lesson title, or a chat log.
   mid-session and the file went red for every branch on the machine. Bind
   and release to find a free port instead of assuming one. Owner: whoever
   next touches `lib/admin/daemon.ts`.
-- **Bugfix, not a step — do it the moment `day-promises` lands** — **now [admin-plan-worktrees](admin-plan-worktrees/brief.md)** (brief and test plan accepted, impl drafted 2026-09-18; the assignment is a record the worktree command writes, not a name match) (Sandy,
-  2026-09-18: "we do not develop on main; we always create worktrees"): the
-  admin UI and the MCP plan tools read a plan from the registered project's
-  working tree, which is the trunk on `main`. Under worktree-per-plan every
-  plan in flight lives on `plan/<name>` in its own worktree, so the live bars
-  admin-ui-phase-progress built never move for the plan being worked, and
-  `advance_plan` reports the trunk copy's unchecked items. Observed on
-  day-promises: `/p/dusk/plan/day-promises` said "impl approved, awaiting
-  /work" while Build Phase 1 was executing. Registering the worktree as a
-  second project was tried and rejected — the worktree is not the project,
-  dusk is. The fix belongs in the one plan inventory (`parseAllPlans` and the
-  per-plan reads behind it): resolve a plan's documents, boundary record and
-  ledger from the worktree whose branch is `plan/<name>` when one exists
-  (`git worktree list --porcelain` on the project path), and say so on the
-  page ("in worktree …"). One resolver, read by the admin and the MCP tools.
-  `/planner bugfix admin-plan-worktrees` when picked up.
+- ~~**Bugfix, not a step — do it the moment `day-promises` lands**~~ —
+  **closed 2026-09-18 as [admin-plan-worktrees](archive/admin-plan-worktrees/brief.md)**
+  (29 rows green, falsified 5, cleaned, retrospective, archived): a plan's
+  worktree is assigned by a record the worktree command writes
+  (`indusk worktree create/assign/release`), never by matching names; the
+  admin and the MCP plan tools read each plan's live copy from any checkout
+  and name the worktree. See `/lessons/admin-plan-worktrees`.
+- **Small, not a step** (2026-09-18, from admin-plan-worktrees' close):
+  - **Name a workbench plan's code worktree in the admin.** The resolver is
+    inert in a workbench because plan documents live at the workbench root;
+    showing which code worktree a plan is being built in is the follow-on.
+  - **The admin's HTTP tests flake under a full run**: with the node and
+    browser vitest projects together, two `next dev`-backed files fail per
+    run, a different two each time; the node project alone passes every time,
+    and the trunk flakes the same way. Run the HTTP files in their own vitest
+    invocation, or give `next-dev.ts` a per-route readiness probe.
+  - **Repo-wide `pnpm check` is red on the trunk** for files no recent plan
+    touched: `biome.json` schema deprecations, `apps/indusk-admin/public/*.svg`,
+    `.claude/hooks/eval-trigger.js`, `hook-cwd-independence.test.ts`,
+    `apps/docs/src/.vitepress/config.ts`. Plans check their own files by name
+    until it is green.
+  - **Leftover folders in `dusk-worktrees/`** (`day-promises`,
+    `hook-cwd-independence`, `writing-skill`): what `git worktree remove
+    --force` left behind. `indusk worktree create` now refuses such a folder
+    and says to remove it; removing these three is a manual step.
 - [indusk-makeover](archive/indusk-makeover/brief.md) — closed 2026-09-14:
   retrospective written 53 days after the impl completed, archived; its two
   deferred rows now say what actually holds them.

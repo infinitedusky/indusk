@@ -76,7 +76,10 @@ where it was read from:
 | Field | When | Shape |
 |---|---|---|
 | `worktree` | Read from the plan's assigned worktree | `{ name, path, branch }` |
-| `copyProblem` | Read from the trunk because the assignment is broken | `{ kind: "gone" \| "doubled", detail }` — `detail` names every worktree involved |
+| `archivedInWorktree` | The plan is archived on its branch (retrospective Step 9) and not yet released — read from the worktree's `archive/<plan>` | `true` |
+| `copyProblem` | Read from the trunk because the assignment is broken | `{ kind: "gone" \| "doubled" \| "missing", detail }` — `detail` names every worktree involved; `missing` means the plan folder is gone from its worktree |
+
+These fields come from one function, `copySource`, which the admin uses too.
 
 When the assignment record cannot be read, all three return an error result
 (`isError: true`) carrying `{ error, file }` instead of a plan read from a

@@ -165,11 +165,11 @@ dusk/
 
 **In flight:**
 
-- **indusk-makeover (2026-07-23, closed 2026-09-14)** — the 60 KB budget, the decay layer, Graphiti removed. See [archive](.indusk/planning/archive/indusk-makeover/) and `/decisions/indusk-makeover`.
-- **versioned-workbench (1.37.0–1.38.3)** — shareable workbenches: declared multi-repo sets, `restore/sync/status/migrate-layout`, nested layouts via `repos_root`. See [archive](.indusk/planning/archive/versioned-workbench/) and `/lessons/versioned-workbench`.
+- **indusk-makeover (closed 2026-09-14)** — the 60 KB budget and decay layer. See [archive](.indusk/planning/archive/indusk-makeover/) and `/decisions/indusk-makeover`.
+- **versioned-workbench (1.37.0–1.38.3)** — shareable workbenches. See [archive](.indusk/planning/archive/versioned-workbench/) and `/lessons/versioned-workbench`.
 - **workbench-trust-fixes (2026-09-10)** — five silent workbench failures now refuse or resolve by declaration. See [archive](.indusk/planning/archive/workbench-trust-fixes/) and `/lessons/workbench-trust-fixes`.
 - **worktree-config-schema-pointer (1.44.1)** — the starter config's `$schema` resolves; `update` reaches enabled extensions via `on_update`. See [archive](.indusk/planning/archive/worktree-config-schema-pointer/) and `/lessons/worktree-config-schema-pointer`.
-- **worktree-visibility** — worktree-per-plan default + observable bulletin; T7–T9 manual smokes unrun. See [archive](.indusk/planning/archive/worktree-visibility/).
+- **worktree-visibility** — worktree-per-plan default; T7–T9 smokes unrun. See [archive](.indusk/planning/archive/worktree-visibility/).
 - **dawn-external-orchestrator (2026-08-03)** — `indusk run`: the gated execution loop. See [archive](.indusk/planning/archive/dawn-external-orchestrator/).
 - **dawn-ui-plan-grouping (2026-08-03)** — plan hierarchy in the admin UI. See [archive](.indusk/planning/archive/dawn-ui-plan-grouping/).
 - **dawn-hook-parity (2026-08-03)** — the thin lane enforces every hook and feeds the eval rail. See [archive](.indusk/planning/archive/dawn-hook-parity/).
@@ -182,8 +182,9 @@ dusk/
 - **admin-ui-phase-progress (2026-09-17, Day step 3)** — the lifecycle written once and drawn live as three bars. See [archive](.indusk/planning/archive/admin-ui-phase-progress/) and `/lessons/admin-ui-phase-progress`.
 - **hook-cwd-independence (2026-09-15)** — hooks registered by the project root. See [archive](.indusk/planning/archive/hook-cwd-independence/).
 - **trunk-guard (2026-09-17)** — no code edited or committed on `main`. See [archive](.indusk/planning/archive/trunk-guard/).
-- **writing-skill (1.44.0)** — papers as plan documents, `/write`, `indusk papers publish`. **Open**: re-run the plain-language invocation check in a fresh trunk session (skill discovery is per project). See [archive](.indusk/planning/archive/writing-skill/) for full detail.
+- **writing-skill (1.44.0)** — papers as plan documents, `/write`, `indusk papers publish`. **Open**: re-run the plain-language invocation check in a fresh trunk session. See [archive](.indusk/planning/archive/writing-skill/).
 - **day-promises (2026-09-18, Day 4a)** — the promise registry and `indusk promises check`. See [archive](.indusk/planning/archive/day-promises/) and `/lessons/day-promises`.
+- **admin-plan-worktrees (2026-09-18)** — plans read from their assigned worktree; `indusk worktree create/assign/release`. See [archive](.indusk/planning/archive/admin-plan-worktrees/) and `/lessons/admin-plan-worktrees`.
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `.indusk/planning/master.md`); operational blockers live in `.indusk/current.md` → `## Project (shared)`. Standing direction notes that stage/next-step cannot derive:
 
