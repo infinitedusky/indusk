@@ -19,9 +19,16 @@ function section(file: string, start: RegExp, end: RegExp): string {
 	const text = readFileSync(join(SKILLS, file), "utf-8");
 	const from = text.search(start);
 	if (from < 0) throw new Error(`${file}: no section matching ${start}`);
-	const rest = text.slice(from + 1);
-	const to = rest.search(end);
-	return to < 0 ? text.slice(from) : text.slice(from, from + 1 + to);
+	// Search for the next heading from the line after this one: starting one
+	// character in, `## Step 10` would match `^## ` against its own heading.
+	const bodyAt = text.indexOf("\n", from) + 1;
+	const to = text.slice(bodyAt).search(end);
+	const section = to < 0 ? text.slice(from) : text.slice(from, bodyAt + to);
+	if (section.length < 200)
+		throw new Error(
+			`${file}: section at ${start} is ${section.length} characters — the cut is wrong`,
+		);
+	return section;
 }
 
 describe("A18 — the kickoff creates the assignment and the landing releases it", () => {
