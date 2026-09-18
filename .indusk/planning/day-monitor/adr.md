@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor"
 date: 2026-09-18
-status: proposed
+status: accepted
 ---
 
 # Day step 4b — Monitor
@@ -88,12 +88,14 @@ snippet. Deleting InDusk leaves the application running and its spans intact.
 ### D3. The test side is a dev-time subpath
 
 `@infinitedusky/indusk-mcp/testing/trace-shape` exports an in-memory span
-capture and `expectPromiseUpheld(spans, "<name>", { parent? })` /
-`expectPromiseViolated(spans, "<name>")`, matching by containment — extra
-attributes and extra child spans never fail it (A5). A test calls it with the
-promise's name in quotes, which the check's existing token rule ("directly
-inside a quote") already counts, so a test using the helper is the promise's
-test link with nothing new in the checker (A6). The testing extension's skill
+capture and `expectPromiseUpheld(spans, "promise: <name>", { parent? })` /
+`expectPromiseViolated(spans, "promise: <name>")`, matching by containment —
+extra attributes and extra child spans never fail it (A5). The helper takes
+the promise as its token, `"promise: <name>"`, which the check's existing
+rule (the token directly inside a quote) already counts, so a test using the
+helper is the promise's test link with nothing new in the checker (A6).
+*(Corrected at acceptance, 2026-09-18: the first draft passed the bare name,
+which the token rule does not match.)* The testing extension's skill
 carries the usage.
 
 ### D4. One library asks Jaeger
