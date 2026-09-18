@@ -114,7 +114,7 @@ dusk/
 - Dawn workbench execution (6.5): one `resolveExecutionRoots` behind run/verify/cleanup; two roots and a commit cadence per repo in the loop; `codeSha` on the ledger and `repo` on queued evals, absence a rule not a migration; multi-repo still refuses — see `/decisions/dawn-workbench-execution`
 - Admin UI phase progress: one `lifecycle` module (positions as nouns, activities as verbs, gate stages) read by `parsePlan`, the retrospective gate and the admin; phases keyed `{kind, number}` through progress, Shape and the boundary record (absent kind = build); three tri-state bars live via `router.refresh()`; a plan that adds a stage renders it, pinned. Rejected composing the lifecycle in the admin, `ordinal` keys, a polling route, websockets — see `/decisions/admin-ui-phase-progress`
 - Writing skill: papers are plan documents (`kind: paper`, never inferred); `/write` prose-only; publish commits in the destination, never pushes — see `.indusk/planning/archive/writing-skill/adr.md`
-- Promises (Day 4a): `.indusk/promises/` one markdown file per promise, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `.indusk/planning/day-promises/adr.md`
+- Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `.indusk/planning/day-promises/adr.md`
 
 ## Known Gotchas
 
