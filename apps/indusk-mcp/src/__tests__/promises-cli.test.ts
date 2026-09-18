@@ -9,6 +9,9 @@ import { REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
  * fixtures: a project that has not adopted is untouched by `update` beyond an
  * empty domains list, and this repository holds three promises with the
  * documented command run verbatim against its root.
+ *
+ * `init` and `update` write the admin registry; `runCli` pins `INDUSK_HOME`
+ * to a temp dir so nothing here touches the developer's `~/.indusk/`.
  */
 
 describe.skipIf(SHOULD_SKIP)("A14 — update ensures promises.domains and nothing else", () => {
