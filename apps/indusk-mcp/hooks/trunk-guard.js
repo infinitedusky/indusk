@@ -263,6 +263,8 @@ function real(p) {
 	}
 }
 
+// `getTrunkBranches` in src/lib/config.ts reads the same `branches` key for
+// `indusk worktree create` — this is its port; change both together.
 function readTrunkGuardConfig(root) {
 	const defaults = { enabled: true, branches: DEFAULT_BRANCHES };
 	if (!root) return defaults;

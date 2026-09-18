@@ -64,3 +64,10 @@
 {"plan":"day-promises","phase":4,"kind":"build","sha":"bc91e5fa863718694760ef211df65544b23e0366","timestamp":"2026-09-18T06:27:33.375Z"}
 {"plan":"day-promises","phase":5,"kind":"build","sha":"e88253b41c026866af6a77c23c0acd2e62af7629","timestamp":"2026-09-18T13:42:16.535Z"}
 {"plan":"day-promises","phase":6,"kind":"build","sha":"3625f68e6ebb9e785dddf3fb0a6c0e5ceef3ce82","timestamp":"2026-09-18T15:08:54.265Z"}
+{"plan":"admin-plan-worktrees","phase":1,"kind":"test","sha":"915ba6997145dd9284a6950f6bf34b5d48f2aab3","timestamp":"2026-09-18T18:24:38.278Z"}
+{"plan":"admin-plan-worktrees","phase":1,"kind":"build","sha":"055538f7bb9bc1e598bd7c76a0e92fc4243b4404","timestamp":"2026-09-18T18:31:14.827Z"}
+{"plan":"admin-plan-worktrees","phase":2,"kind":"build","sha":"5f2b5db485d5c0ad96426be6c0357d1efebd8fcb","timestamp":"2026-09-18T18:37:48.169Z"}
+{"plan":"admin-plan-worktrees","phase":3,"kind":"build","sha":"bd34b8ba25a965eba68df6e59630c07babfb117b","timestamp":"2026-09-18T18:56:42.741Z"}
+{"plan":"admin-plan-worktrees","phase":4,"kind":"build","sha":"446f30f370e8afb4cee44f555f4bdcba1af9284b","timestamp":"2026-09-18T19:10:01.627Z"}
+{"plan":"admin-plan-worktrees","phase":5,"kind":"build","sha":"cf26d056f3db1579145f505377e311885a7d4a16","timestamp":"2026-09-18T20:03:44.678Z"}
+{"plan":"admin-plan-worktrees","phase":6,"kind":"build","sha":"3a1685fb3147e6a2d455536400744f49ab055981","timestamp":"2026-09-18T20:25:09.152Z"}

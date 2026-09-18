@@ -5,6 +5,7 @@ import { HoldingBadge } from "@/components/HoldingBadge";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
+import { WorktreeChip } from "@/components/Worktrees";
 import type { Plan } from "@/lib/planning-reader";
 
 interface PlanListProps {
@@ -291,6 +292,7 @@ function PlanItem({
               malformed
             </Badge>
           )}
+          <WorktreeChip plan={plan} />
           <HoldingBadge count={holding} plan={plan.name} />
         </span>
         <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>

@@ -1,5 +1,12 @@
 # Worktree extension — setup workflows
 
+**This guide is for workbenches.** In a normal-mode project — the repository
+holds its own `.indusk/`, as dusk does — a plan's worktree needs no setup:
+`indusk worktree create <plan>` makes `<project>-worktrees/<plan>` on
+`plan/<plan>` and records that the plan lives there, so the admin and the plan
+tools read the plan from it; the retrospective's landing step releases it.
+See [`indusk worktree`](/reference/cli/worktree).
+
 Two ways to land in a working workbench:
 
 - **[Flow A — Fresh setup](#flow-a-fresh-setup-on-a-new-machine)** — new machine, new dev, or a project that's never had InDusk before. The standard path; everything you do every day.

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { PlanCopyNotice, WorktreeChip } from "@/components/Worktrees";
 import { planMarkdown, sectionMarkdown } from "@/lib/markdown-export";
 import { extractPhases, splitPhasesAroundFalsification } from "@/lib/phases";
 import type { Plan } from "@/lib/planning-reader";
@@ -77,6 +78,8 @@ export function PlanDetail({
       data-plan-name={plan.name}
     >
       <PlanHeader plan={plan} holding={holding} />
+
+      <PlanCopyNotice plan={plan} />
 
       {plan.position && !isParent && (
         <PlanBar position={plan.position} activity={activePhaseLabel(plan)} />
@@ -216,6 +219,7 @@ function PlanHeader({ plan, holding = 0 }: { plan: Plan; holding?: number }) {
         <h1 className="text-xl font-semibold text-gray-900">{plan.name}</h1>
         <span className="flex items-center gap-2 text-xs text-gray-500">
           {plan.archived ? "archived" : "active"}
+          <WorktreeChip plan={plan} />
           <HoldingBadge count={holding} plan={plan.name} />
         </span>
       </div>

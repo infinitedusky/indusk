@@ -130,6 +130,22 @@ derives it. That is what keeps the UI from drifting behind the system the
 way its phase parser once did — for a month, silently, while every impl
 written since August rendered wrong.
 
+## Where a plan lives while it executes
+
+*(admin-plan-worktrees, 2026-09-18)*
+
+A plan is planned on the trunk: research through impl are plan documents,
+allowed there. Its first phase opens its own worktree with
+`indusk worktree create <plan>`, and from then until it lands, the plan's
+live copy is in that worktree. The command records the assignment, so the
+admin's live bars and the plan tools read the plan from its worktree, from
+any checkout of the project, while the trunk's copy stays at "impl approved".
+The retrospective's landing step merges the branch, then
+`indusk worktree release <plan>`, then removes the worktree; from there the
+plan reads from the trunk, which now holds the merged work. The record is
+never inferred from a folder or branch name — see
+[`indusk worktree`](/reference/cli/worktree).
+
 ## `monitor` is the load-bearing addition
 
 It is the state that says *the work is done and we don't know yet whether it worked.* Today that state exists in practice and has no name, so it collapses into "closed" the moment the checklist is ticked.

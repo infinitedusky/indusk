@@ -247,6 +247,11 @@ export interface WorktreeConfig {
 	sibling_parent?: string;
 	/** Where the repos live. Relative resolves against the workbench; supersedes `sibling_parent`. */
 	repos_root?: string;
+	/**
+	 * The trunk guard (`hooks/trunk-guard.js`): off switch and the branches
+	 * that count as trunk. `indusk worktree create` reads `branches` too.
+	 */
+	trunk_guard?: { enabled?: boolean; branches?: string[] };
 }
 
 /** Default sweep TTL: 7 days. Distinct from the 60-minute display TTL. */
@@ -263,6 +268,26 @@ export function getSweepTtlMinutes(projectRoot: string): number {
 }
 
 /** Read `planning.dead_draft_days` with the 30-day default. Defaults live here, in the reader. */
+/** Default trunk branches — the trunk guard's own default. */
+export const DEFAULT_TRUNK_BRANCHES = ["main", "master"];
+
+/**
+ * `worktree.trunk_guard.branches`, the branches that count as the trunk, with
+ * the `main`/`master` default in the reader. `indusk worktree create` forks a
+ * plan branch only from one of these. The trunk guard hook reads the same key
+ * (`readTrunkGuardConfig` in `hooks/trunk-guard.js`) and is this function's
+ * port — change both together. An empty or malformed list reads as the
+ * default rather than admitting every branch.
+ */
+export function getTrunkBranches(projectRoot: string): string[] {
+	const branches = readConfig(projectRoot)?.worktree?.trunk_guard?.branches;
+	return Array.isArray(branches) &&
+		branches.length > 0 &&
+		branches.every((b) => typeof b === "string")
+		? branches
+		: DEFAULT_TRUNK_BRANCHES;
+}
+
 export function getDeadDraftDays(projectRoot: string): number {
 	const config = readConfig(projectRoot);
 	const v = config?.planning?.dead_draft_days;

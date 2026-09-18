@@ -4,9 +4,14 @@ import { ProjectSwitcher } from "@/components/ProjectSwitcher";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { Sidebar } from "@/components/ui/Sidebar";
 import {
+  UnassignedWorktrees,
+  WorktreeRecordError,
+} from "@/components/Worktrees";
+import {
   readActivePlans,
   readArchivedPlans,
   readPlanHierarchy,
+  readProjectWorktrees,
 } from "@/lib/planning-reader";
 import { holdingCounts, readProjectPromises } from "@/lib/promises-reader";
 import {
@@ -53,10 +58,11 @@ export default async function PerProjectLayout({
     );
   }
 
-  const [active, archived, research] = await Promise.all([
+  const [active, archived, research, worktrees] = await Promise.all([
     readActivePlans(projectPath),
     readArchivedPlans(projectPath),
     readProjectResearch(projectPath),
+    readProjectWorktrees(projectPath),
   ]);
   const hierarchy = readPlanHierarchy(projectPath);
   const masterOrder = hierarchy.roadmap;
@@ -94,6 +100,12 @@ export default async function PerProjectLayout({
             Promises
           </Link>
         </nav>
+        {!worktrees.ok && (
+          <WorktreeRecordError
+            file={worktrees.file}
+            problem={worktrees.problem}
+          />
+        )}
         <PlanList
           active={active}
           archived={archived}
@@ -102,6 +114,9 @@ export default async function PerProjectLayout({
           holding={holding}
           planHrefPrefix={`/p/${project}/plan/`}
         />
+        {worktrees.ok && (
+          <UnassignedWorktrees worktrees={worktrees.unassigned} />
+        )}
         {research.length > 0 && (
           <nav
             className="flex flex-col gap-1 pt-3 border-t border-gray-200 mt-3"

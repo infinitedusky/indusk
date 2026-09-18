@@ -83,9 +83,24 @@ Everything is project-scoped under `/p/{project}/...`. The top-level home at `/`
 1. **Header** — project name + `<ProjectSwitcher>` to jump between registered projects.
 2. **Scorecards and Promises links** — direct to `/p/{project}/scorecards` and `/p/{project}/promises` (always present).
 3. **Plan list** — one root node (the root `master.md`'s title) with the declared parent groups and every unclaimed plan beneath it (admin-ui-phase-progress, 2026-09-16): active plans in the order declared by `.indusk/planning/master.md` pipeline tables, then "Unordered" for plans not in master. `Archived (N)` stays outside the root, collapsible at the bottom. Each plan link routes to `/p/{project}/plan/{name}`. No root master → no root node, the tree renders flat.
-4. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
+4. **Unassigned worktrees** — every worktree of the project's repository that holds no plan assignment, with its branch (admin-plan-worktrees, 2026-09-18). Omitted when there are none.
+5. **Research group** — listed slugs from `.indusk/research/` when the directory exists and contains at least one entry; omitted entirely when empty.
 
 Switching projects via the header does not restart the daemon — the registry resolves on every request.
+
+**Which copy of a plan is shown.** Every plan is worked in its own worktree, so a project holds several copies of it. The admin reads each active plan from its **live copy**: from the worktree it is assigned to (by [`indusk worktree create` or `assign`](/reference/cli/worktree)), from the registered trunk otherwise. The documents, the progress lines and the active phase all come from that copy, including the phase-boundary record the worktree wrote. What the page says about it:
+
+| Case | Plan row and header | Notice under the header |
+|---|---|---|
+| Read from its worktree | a `⎇ <worktree>` chip | "Read from the worktree … on `<branch>`" |
+| Assigned worktree removed without release | no chip; trunk copy shown | "The assigned worktree `<path>` no longer exists — showing the trunk copy" |
+| Two live worktrees assigned (a hand-edited record) | no chip; trunk copy shown | both worktrees by path |
+| Archived on its branch, before the release (retrospective Step 9 → Step 10) | the chip; the worktree's archived copy shown | "archived in its worktree …, awaiting landing" |
+| Plan folder gone from its worktree | no chip; trunk copy shown | "The plan folder missing in worktree `<path>` … — showing the trunk copy" |
+| Not assigned | as before | none |
+| Assignment record unreadable | name and `unknown` only | an error naming the record's file; no progress is drawn, because which copy is live is unknown. The sidebar carries the same error above the plan list. |
+
+The resolver applies when the registered path is the top of a git checkout — the project is the repository. A project nested inside a larger repository reads the folder it was registered at, as before.
 
 **`/p/{project}/plan/{name}` (plan detail)** — opens as the overview: three progress lines under the header, then every document section collapsed (admin-ui-phase-progress, 2026-09-16). The lines are a zoom, and each one's label names the level below it:
 

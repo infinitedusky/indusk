@@ -4,6 +4,12 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { listWorkbenchSubdirs, worktreeOwner } from "../../lib/worktree/layout.js";
 import {
+	assignPlan,
+	createPlanWorktree,
+	PlanWorktreeRefusal,
+	releasePlan,
+} from "../../lib/worktree/plan-worktree-commands.js";
+import {
 	isWorkbench,
 	NOT_A_WORKBENCH,
 	readReposRoot,
@@ -17,7 +23,10 @@ import { provisionWorktreeEnv } from "./doppler.js";
  * `indusk worktree` subcommands.
  *
  *   _on-enable  internal — invoked by the extension's on_enable hook
- *   create      create a worktree (wraps setup-worktree.sh)
+ *   create      create a worktree (wraps setup-worktree.sh in a workbench;
+ *               in a normal-mode project, creates and assigns a plan's worktree)
+ *   assign      assign a plan to an existing worktree of this repository
+ *   release     end a plan's worktree assignment (at the retrospective's landing)
  *   refresh     re-apply config to an existing worktree
  *   list        show wrapped repo + worktrees + config status
  *   preflight   run scoped pre-push checks against a worktree's diff
@@ -415,4 +424,62 @@ export function worktreeList(projectRoot: string): void {
 			}
 		}
 	}
+}
+
+/**
+ * Run one plan-worktree operation, turning a refusal into its message on
+ * stderr and exit 1. Anything else is a bug and keeps its stack.
+ */
+async function planWorktreeCommand(run: () => Promise<string>): Promise<void> {
+	try {
+		console.info(await run());
+	} catch (err) {
+		if (err instanceof PlanWorktreeRefusal) {
+			console.error(`Refused: ${err.message}`);
+			process.exit(1);
+		}
+		throw err;
+	}
+}
+
+/**
+ * `indusk worktree create <plan>` in a normal-mode project: create the plan's
+ * worktree beside the project and record the assignment, so every reader
+ * shows the plan's live copy. A workbench keeps the scripted create.
+ */
+export async function worktreeCreateForPlan(projectRoot: string, args: string[]): Promise<void> {
+	if (args.length !== 1) {
+		console.error(
+			`Refused: in a normal-mode project, \`indusk worktree create\` takes one argument, the plan name (got ${args.length}).`,
+		);
+		process.exit(1);
+	}
+	const [plan] = args;
+	await planWorktreeCommand(async () => {
+		const { created, assignment } = await createPlanWorktree(projectRoot, plan);
+		return [
+			`Created ${created} on ${assignment.branch}; plan ${plan} now reads from it.`,
+			"Install the project's dependencies there before working in it.",
+		].join("\n");
+	});
+}
+
+/** `indusk worktree assign <plan> <path>` — assign a worktree made any other way. */
+export async function worktreeAssign(
+	projectRoot: string,
+	plan: string,
+	path: string,
+): Promise<void> {
+	await planWorktreeCommand(async () => {
+		const a = await assignPlan(projectRoot, plan, resolve(process.cwd(), path));
+		return `Assigned plan ${plan} to ${a.path} (${a.branch}).`;
+	});
+}
+
+/** `indusk worktree release <plan>` — end the assignment; the plan reads from the trunk again. */
+export async function worktreeRelease(projectRoot: string, plan: string): Promise<void> {
+	await planWorktreeCommand(async () => {
+		const released = await releasePlan(projectRoot, plan);
+		return `Released plan ${plan} from ${released.map((a) => a.path).join(", ")}; it reads from the trunk again.`;
+	});
 }

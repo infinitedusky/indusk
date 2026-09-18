@@ -115,6 +115,7 @@ const config = defineConfig({
 					items: [
 						{ text: "setup", link: "/reference/cli/setup" },
 						{ text: "workbench", link: "/reference/cli/workbench" },
+						{ text: "worktree", link: "/reference/cli/worktree" },
 						{ text: "run", link: "/reference/cli/run" },
 						{ text: "verify", link: "/reference/cli/verify" },
 						{ text: "agent", link: "/reference/cli/agent" },
@@ -255,6 +256,7 @@ const config = defineConfig({
 						{ text: "Tests first within each phase", link: "/lessons/tests-first-within-each-phase" },
 						{ text: "Versioned Workbench — Lessons", link: "/lessons/versioned-workbench" },
 						{ text: "Workbench Setup Command — Lessons", link: "/lessons/workbench-setup-command" },
+						{ text: "Plans in Worktrees — Lessons", link: "/lessons/admin-plan-worktrees" },
 						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
 						{ text: "Workbench Trust Fixes — Lessons", link: "/lessons/workbench-trust-fixes" },
 						{

@@ -124,3 +124,56 @@ export async function restorePaths(root: string, taken: PathSnapshot): Promise<v
 		}
 	}
 }
+
+/** One entry of `git worktree list --porcelain`. */
+export interface GitWorktree {
+	/** As git prints it: the absolute path the worktree was added at. */
+	path: string;
+	/** The checked-out branch without `refs/heads/`, or null when detached or bare. */
+	branch: string | null;
+	/** The first entry git lists: the repository's main working tree. */
+	main: boolean;
+	/** Git's own mark that the directory is gone but the entry was never pruned. */
+	prunable: boolean;
+}
+
+/**
+ * Every working tree of the repository `root` belongs to, main first — the
+ * same answer from the trunk and from any linked worktree, because git keeps
+ * the list in the shared git directory. Throws when `root` is not in a
+ * repository; callers decide what that means.
+ */
+export async function listWorktrees(root: string): Promise<GitWorktree[]> {
+	return parseWorktreeList(await git(root, "worktree", "list", "--porcelain"));
+}
+
+/**
+ * The one parse of `git worktree list --porcelain` output: blank-line-separated
+ * blocks, each opening with `worktree <path>`; the first block is the main
+ * working tree. Pure, so a caller with its own runner (`decision.ts` injects
+ * one for tests) parses the same way `listWorktrees` does.
+ */
+/** The value of the first `<prefix><value>` line in a porcelain block, trimmed. */
+function field(lines: string[], prefix: string): string | undefined {
+	return lines
+		.find((l) => l.startsWith(prefix))
+		?.slice(prefix.length)
+		.trim();
+}
+
+export function parseWorktreeList(porcelain: string): GitWorktree[] {
+	const entries: GitWorktree[] = [];
+	for (const block of porcelain.split(/\n\s*\n/)) {
+		const lines = block.split("\n");
+		const path = field(lines, "worktree ");
+		if (!path) continue;
+		const ref = field(lines, "branch ");
+		entries.push({
+			path,
+			branch: ref ? ref.replace(/^refs\/heads\//, "") : null,
+			main: entries.length === 0,
+			prunable: lines.some((l) => l === "prunable" || l.startsWith("prunable ")),
+		});
+	}
+	return entries;
+}
