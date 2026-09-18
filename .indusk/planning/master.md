@@ -145,6 +145,20 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **Bugfix, not a step** (Sandy, 2026-09-18: "it's not telling me that's
+  happening — nothing indicates something failed"): **the trunk guard's
+  override is silent and its refusal reaches only the model.**
+  `INDUSK_TRUNK_GUARD=off` exits 0 at `trunk-guard.js` line 89 with no
+  output and no record; a refusal is stderr + exit 2, which the person in the
+  editor does not see. An agent overrode it on 8a02755d and the operator
+  learned of it from prose. A guard whose bypass leaves no trace is not
+  auditable. Every refusal and every override must (a) be visible to the
+  person, not only the model, and (b) leave a durable record — a tracked
+  `.indusk/` log line or a `current.md` shared-region note naming the
+  commit, the files and who overrode. Same class: the `dash0` health checks
+  test "registered" and "CLI installed", never the token, so a 401 on every
+  connect since 2026-09-17 reached only Claude Code's own notice. A health
+  check for a remote MCP server must make one authenticated call.
 - **Bugfix, not a step** (Sandy, 2026-09-18, while settling that the loop is
   self-contained): `indusk init` scaffolds `@dash0/sdk-web` into a React
   SPA's `src/instrumentation.ts` — a vendor SDK written into a user's
