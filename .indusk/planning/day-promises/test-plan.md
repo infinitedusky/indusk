@@ -11,9 +11,11 @@ accepted: 2026-09-18
 
 This document lists the behavioral assertions that, taken together, mean the
 promise primitive is working: a registry a project can write by hand, a check
-that refuses a registry that lies, adoption in three projects, and an admin
-page that shows declared state without ever pretending to have observed
-anything. Each assertion names the mechanism by which it will be tested — not
+that refuses a registry that lies, dusk self-hosting it with looper's eleven
+as a fixture, and an admin page that shows declared state without ever
+pretending to have observed anything. Nothing here runs in another
+repository; looper and numero adopt the result later, through `indusk
+update`, in their own plans. Each assertion names the mechanism by which it will be tested — not
 the test code, but the test approach. When all assertions can be made true by
 an architecture, we have a feature; when all are passing in code, it is shipped.
 
@@ -52,12 +54,12 @@ the form the ADR fixes (looper's form is a greppable comment in code and an
 | A11 | A registry where every promise has the links its kind requires exits 0 and prints a summary: promises by state and by kind, and the incidents. | vitest integration (CLI) |
 | A12 | The check reads code sites and tests from the code repo and the registry from the plan root when the project is a one-repo workbench, and refuses by name when zero or several repos are declared. | vitest integration (CLI, over the four workbench layouts) |
 
-### Adoption
+### Self-hosting
 
 | ID | Assertion (user-visible behavior) | Mechanism |
 |----|-----------------------------------|-----------|
-| A13 | Looper's eleven expectations, carried into the InDusk registry form, pass the check in looper's repo with the same states as today: eight `enforced`, three `known-violated`; looper's own validator is retired from its lint step in favour of the InDusk one. | manual smoke (looper) |
-| A14 | Numero holds at least three `enforced` promises, each with a code site and a test, and the check passes in its CI. | manual smoke (numero) |
+| A13 | Looper's eleven expectations and nine incidents, carried into the registry form as a fixture in dusk's suite, pass the check with the same states as today: eight `enforced`, three `known-violated`. | vitest integration (CLI against the fixture) |
+| A14 | A project that has not adopted is untouched: `indusk update` ensures an empty `promises.domains` list in its config and changes nothing else; no check runs unless invoked; the Promises page says there is no registry yet. | vitest integration (CLI on a temp project) |
 | A15 | Dusk holds three promises, one per kind, and the check passes as part of `pnpm test` at the repo root: a structure promise on the shared definitions (the pins), a state promise on the phase-boundary record, and a `behaviour` promise on the gates having run at every checkoff. | vitest integration (CLI against the dusk root) |
 | A16 | An incident record carries symptom, root cause, the promise, its source (`local`, `smoke`, `deployed` or `desk`), status and fix; one missing a field, or with a source outside the four, fails the check naming the incident. | vitest integration (CLI) |
 
@@ -89,9 +91,8 @@ the form the ADR fixes (looper's form is a greppable comment in code and an
 - A12 follows `resolveExecutionRoots`: the registry is plan-root state, the
   links are code-repo facts. The four-layout helper
   (`src/__tests__/helpers/versioned-workbench.ts`) is the fixture.
-- A13 and A14 are manual smokes in other repos and are recorded with their
-  output in the impl's Verification items; the trajectory reports them
-  `unverified` until run, never passed.
+- Looper and numero adopting the registry are their own plans in their own
+  repos, after this package publishes; no row here depends on either.
 - A4's per-kind link rule (a structure promise needs a check, not a code
   site) and A8's treatment of `declared` are the two rows the ADR could
   change; if it does, the rows change with it before the impl is written.

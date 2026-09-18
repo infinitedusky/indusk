@@ -1,10 +1,10 @@
 ---
-title: "Day step 4a — Promises: registry, check, adoption, page"
+title: "Day step 4a — Promises: registry, check, self-hosting, page"
 date: 2026-09-18
 status: proposed
 ---
 
-# Day step 4a — Promises: registry, check, adoption, page
+# Day step 4a — Promises: registry, check, self-hosting, page
 
 ## Goal
 
@@ -16,10 +16,13 @@ Today the only registry of this kind is looper's, in its docs tree, with its
 own validator and sequential ids; numero has real deployed failures and no
 promises; dusk has dozens of structure promises (the single-definition pins,
 `check-pointers`, the cleanup pins) that are enforced and never named. After
-this ADR ships, all three read and check one registry form, the admin lists
-every promise with its declared state, and every `enforced` chip is drawn
-hollow — declared, not yet observed — because nothing in this step observes
-anything.
+this ADR ships, the package carries one registry form and one check, dusk
+self-hosts three promises, looper's eleven pass the check as a fixture, the
+admin lists every promise with its declared state, and every `enforced` chip
+is drawn hollow — declared, not yet observed — because nothing in this step
+observes anything. Looper and numero are downstream: they update to the
+published package and adopt the form in their own plans. This plan does not
+change either repository.
 
 ## Y-Statement
 
@@ -58,17 +61,17 @@ state is not a plan position); and a `contract` field (a contract is a
 plan's promises until something makes them differ).
 
 **To achieve:**
-a registry that three projects of different languages adopt unchanged, a
-check that fails by name for every way the registry can lie, an admin page
-that shows declared state and nothing more, and a foundation 4b and 4c
-extend without reshaping.
+a registry form a project in any language can adopt through `indusk update`
+and its own plan, a check that fails by name for every way the registry can
+lie, an admin page that shows declared state and nothing more, and a
+foundation 4b and 4c extend without reshaping.
 
 **Accepting:**
 that the check proves a test *names* a promise and not that it *validates*
-it (binding is Day step 6); that looper migrates eleven entries and retires
-its validator; that `established`-lifetime promises retire by hand; and that
-dusk's one behaviour promise stays hollow until Day step 5's gate ledger
-exists.
+it (binding is Day step 6); that the only real registry it is tested against
+is a fixture copied from looper rather than looper itself; that
+`established`-lifetime promises retire by hand; and that dusk's one
+behaviour promise stays hollow until Day step 5's gate ledger exists.
 
 **Because:**
 one home per fact is this project's standing rule and every reader of plan
@@ -241,18 +244,20 @@ single-definition by a count test, like the lifecycle's.
 a library the skills call is not shipped until its documented command has
 run.
 
-### D7. Adoption
+### D7. Self-hosting; downstream projects adopt later
 
-- **looper**: the eleven are carried into `.indusk/promises/` with readable
-  names and `aliases: [E-N]`; the nine incidents into `incidents/`; the
-  `expects="E-N"` arguments and code comments are rewritten to the names;
-  `validate_expectations.py` is deleted and `turbo lint` runs
-  `indusk promises check`. States are unchanged: eight `enforced`, three
-  `known-violated`. `expectations.md` and `failures.md` become rendered views
-  of the registry or are retired — looper's call at adoption, recorded in its
-  own plan.
-- **numero**: three `enforced` promises from its deployed failures, each
-  with a site and a test; the check in CI beside `check-telemetry-contract.ts`.
+This plan changes no repository but this one. Looper and numero are
+downstream: they update to the published package and adopt the form in
+their own plans. What this plan does with each:
+
+- **looper's eleven and nine incidents are a fixture** under
+  `src/__tests__/fixtures/promises/looper/`, carried into the form with
+  readable names and `aliases: [E-N]`, sites and tests pointing at a fixture
+  code tree that carries the token. The check runs against it in dusk's
+  suite (A13) with states unchanged: eight `enforced`, three
+  `known-violated`. Looper's validator is the reference the check is
+  extracted from; it is not touched.
+- **numero** gets nothing from this plan except the published package.
 - **dusk**: `one-definition-per-shared-rule` (structure; tests: the
   `*-single-definition.test.ts` files), `phase-boundary-record-never-malformed`
   (state; site: `lib/shape/boundary.ts`, test: its boundary tests), and
@@ -336,8 +341,9 @@ unknown domain fails.
 ## Consequences
 
 ### Positive
-- One registry form across a Python service, a TypeScript monorepo and a
-  tooling repo, checked by one command.
+- One registry form, language-agnostic by construction (paths and a token),
+  checked by one command, adoptable by a Python service or a TypeScript
+  monorepo through `indusk update` and a plan of its own.
 - Every way the registry can lie has a named refusal; a clean registry
   prints what it holds.
 - The admin cannot render an unobserved health; adding a state without a
@@ -346,8 +352,9 @@ unknown domain fails.
   integration, without changing the file shape.
 
 ### Negative
-- Looper migrates eleven entries, nine incidents and every `expects=`
-  argument, and loses its own validator.
+- Until looper adopts, the form has been proven only against a fixture and
+  dusk's own three; the first real adoption is where the twelve-defects-in-an-
+  hour class shows up, and it is a later plan's.
 - The token form is a convention, not a type; a typo in a comment is a
   missing link the check reports as such, which is correct but noisy.
 - "Holding N" counts `declared` promises too, so a plan looks on the hook for
@@ -363,10 +370,12 @@ unknown domain fails.
 - **The admin's read of a large registry on every request.** The page is
   request-time like every admin page; a registry is tens of files, not
   thousands. Revisit if a project passes a few hundred.
-- **Looper's adoption stalls on a Python detail.** The check is
-  language-agnostic by construction (paths and a token); the only Python
-  surface is the `expects=` rewrite, which is a search-and-replace with an
-  asserted match count.
+- **A downstream adoption finds the form does not fit.** The check is
+  language-agnostic by construction (paths and a token), and the fixture is
+  looper's real registry, so the fit is tested on real data before any
+  repository migrates; what the fixture cannot show is a live `expects=`
+  rewrite, which is that plan's search-and-replace with an asserted match
+  count.
 
 ## Documentation Plan
 
@@ -390,8 +399,7 @@ unknown domain fails.
 ### Changelog
 - "Added `.indusk/promises/` and `indusk promises check`: a registry of
   what the system promises, with kinds, states, domains and owners, refused
-  by name when it lies; the admin's Promises page; looper, numero and dusk
-  adopt it."
+  by name when it lies; the admin's Promises page; dusk self-hosts three."
 
 ### ADR in Docs
 - Yes: `decisions/day-promises.md`, and the sidebar entry with it.

@@ -64,9 +64,10 @@ promise.) Three sub-plans:
 - [day-promises/brief.md](day-promises/brief.md) — **4a, the primitive**:
   registry with kinds, lifetimes, `declared / enforced / known-violated /
   retired` states, domains, owners and per-kind links; `indusk promises
-  check`; adoption in looper (its eleven, unchanged in meaning), numero and
-  dusk (one per kind); the Promises page with every enforced chip hollow; a
-  plan closes *holding N promises* and can be woken. ~3.5 days.
+  check`; dusk self-hosts one per kind, looper's eleven are a fixture; the
+  Promises page with every enforced chip hollow; a plan closes *holding N
+  promises* and can be woken. Looper and numero are downstream: they adopt
+  after publish, in their own plans. ~3 days.
 - [day-monitor/brief.md](day-monitor/brief.md) — **4b, the telemetry half
   (was Midnight), behaviour promises only**: the span link and its test-side
   trace-shape helper, violations per promise as a number from Jaeger and

@@ -38,7 +38,12 @@ you hand back the keys. Route, speed, and where you stop for fuel are nobody's
 contract.
 
 This step builds the promise as a primitive: the registry, the check that
-keeps it honest, and adoption in three projects. The telemetry half —
+keeps it honest, and dusk self-hosting it. **Looper and numero are
+downstream of this work.** The goal is not to improve or update either; it
+is to build the system that, once published, they update to and start using.
+Looper's registry is the reference the check is extracted from and its
+eleven are a fixture here; adopting the result is looper's own plan, in its
+own repo, later. The telemetry half —
 watching behaviour promises in the running system — is
 [`day-monitor`](../day-monitor/brief.md). The planning half — promises
 declared before code, trajectory rows that name them, confirmation at close,
@@ -181,10 +186,12 @@ why 4b exists, and why 4b is narrowed to that kind.
    declared and not guarded fails the build. Extracted from looper's
    validator, which already enforces both directions in its lint step and
    marks itself an extract candidate.
-3. **Adoption in three projects.** Looper adopts the InDusk copy of its own
-   validator (its eleven pass unchanged in meaning). Numero registers three
-   from its deployed failures. Dusk registers three of its own, one per kind,
-   so the convention is shown not to depend on a service or on telemetry:
+3. **Dusk self-hosts it, and looper's eleven are a fixture.** Looper's
+   registry, carried into the InDusk form, lives in dusk's test suite as the
+   one real registry the format and the registration rule are tested
+   against (eight `enforced`, three `known-violated`, unchanged in meaning).
+   Dusk registers three promises of its own, one per kind, so the convention
+   is shown not to depend on a service or on telemetry:
    *structure* — every shared rule has one definition (the pins);
    *state* — the phase-boundary record is never malformed (the writer refuses
    with the reader's predicate); *behaviour* — every checkoff ran its gates,
@@ -251,30 +258,32 @@ commitments, not spans.
 
 ## Proving ground
 
-**looper** is the reference implementation and adopts the InDusk copy of its
-own validator. **numero** proves adoption: real failures from deployed
-environments, archive sediment (four plans for one concern), and no promises.
-**dusk** self-hosts one promise per kind.
+**dusk**, self-hosting one promise per kind, with the check in its own suite
+and the page over its own registry. **Looper's eleven** as a fixture: the
+only real registry that exists, so the only real data the format and the
+registration rule are tested against. Nothing in this plan runs in, or
+changes, another repository.
 
 ## Steps
 
 | # | Effort | What |
 |---|---|---|
-| 1 | ~1d | Registry format (kind, lifetime, domain, owner, state, links, incidents) and `indusk promises check`, extracted from looper's validator; looper adopts it |
-| 2 | ~½d | Declared domains per project; the per-kind link rule; the incident record |
-| 3 | ~1d | Dusk's three (one per kind) and numero's three, each with its check in CI |
+| 1 | ~1d | Registry format (kind, lifetime, domain, owner, state, links, incidents) and `indusk promises check`, extracted from looper's validator; looper's eleven as the fixture it runs against |
+| 2 | ~½d | Declared domains per project, ensured on `update`; the per-kind link rule; the incident record |
+| 3 | ~½d | Dusk's three, one per kind, with the check in `pnpm test` |
 | 4 | ~1d | The Promises page, declared state only, every enforced chip hollow; "holding N" on the archived segment |
 
-About three and a half days. The registration rule is re-tested against
-looper's eleven in step 1 before the check enforces it.
+About three days. The registration rule is re-tested against looper's eleven
+in step 1 before the check enforces it.
 
 ## Acceptance
 
-Looper's eleven pass `indusk promises check` unchanged in meaning; numero has
-a registry with at least three enforced promises, each with a code site and a
-test, and the check in its CI; dusk holds three, one per kind, with the check
-in its suite; the Promises page lists all of them, grouped by plan and by
-domain, with every enforced chip hollow. (The "a closing plan promotes a
+`indusk promises check` refuses every way the registry can lie, by name, and
+passes looper's eleven carried into the form with their states unchanged;
+dusk holds three promises, one per kind, with the check in its suite; a
+project that has not adopted is untouched by `indusk update` beyond an empty
+domains list; the Promises page lists dusk's promises grouped by plan and by
+domain with every enforced chip hollow. (The "a closing plan promotes a
 claim" and "touched, unacknowledged" acceptances belong to `day-contract`.)
 
 ## Depends on
@@ -282,6 +291,15 @@ claim" and "touched, unacknowledged" acceptances belong to `day-contract`.)
 - admin-ui-phase-progress (closed 2026-09-17): the lifecycle module and the
   render convention (a member without a chip fails the build).
 - Day's shape document, artifact 9.
+
+## Blocks
+
+- **Looper adopting the registry** — its own plan, in its repo, after this
+  package publishes: carry the eleven and nine incidents across, rewrite its
+  `expects=` citations, retire its validator. Not this plan's work.
+- **Numero registering its first promises** — likewise, from its deployed
+  failures, after publish.
+- [`day-monitor`](../day-monitor/brief.md) and `day-contract`.
 
 ## Open for the ADR
 
@@ -292,8 +310,8 @@ claim" and "touched, unacknowledged" acceptances belong to `day-contract`.)
   answer decides whether the registry carries a `contract` field.
 - Whether `declared` is a fourth state or `known-violated` with a reason;
   and whether `established`-lifetime promises retire automatically at green.
-- Looper's spelling: readable names in place of E-N / F-N, now or when it
-  next opens; and whether `expectation` survives as looper's local word.
+- Whether the form carries an `aliases` field so a downstream registry with
+  sequential ids (looper's E-N / F-N) keeps its history when it adopts.
 - Whether the gate ledger (step 5) is a health adapter for dusk's behaviour
   promise, or dusk's behaviour promises simply wait for spans.
 
