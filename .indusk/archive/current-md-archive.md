@@ -451,3 +451,64 @@ Resume by running `/work --autopilot dawn-external-orchestrator` FROM the worktr
 
 ---
 
+## Swept 2026-09-18T00:13:34.647Z (ttl 10080m)
+
+## Session dd0c95d9 — eval: reviewing writing-skill commit 49042d49
+
+**Session ID**: dd0c95d9-cb48-4fd8-91c4-ec31ad7e2bfd
+**Last updated**: 2026-09-10T00:32:44.427Z
+**Branch**: plan/writing-skill
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/writing-skill
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+## Session 2dfae2ea — indusk-v4-day: writing — read-as-reader + falsify passes on papers 1-3
+
+**Session ID**: 2dfae2ea-94f9-46f5-a54c-cf61eb7548f3
+**Last updated**: 2026-09-10T01:08:38.346Z
+**Branch**: plan/writing-skill
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/writing-skill
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+## Session 2dfae2ea — writing-skill: /work Test Phase 1 (author every assertion RED)
+
+**Session ID**: 2dfae2ea-94f9-46f5-a54c-cf61eb7548f3
+**Last updated**: 2026-09-10T00:24:06.349Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
