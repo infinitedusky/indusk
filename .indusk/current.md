@@ -125,24 +125,37 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 5292bc04 — Dawn/Midnight/Day sequence — pick up the next build step
+## Session 5292bc04 — trunk-guard shipped and landed; hook-cwd-independence closed; 1.51.0 published; guard recursion fixed; next is the day-promises rewrite
 
 **Session ID**: 5292bc04-3949-4669-b4d2-4dedbebfa11b
-**Last updated**: 2026-09-15T19:42:22.131Z
+**Last updated**: 2026-09-18T00:13:24.246Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-(empty)
+Nothing mid-edit. Closed out in order this session:
+
+- **trunk-guard** (bugfix; Sandy: "maybe indusk and workbenches don't allow work on main"): four build phases, falsification found three commit spellings the Bash gate missed (`git -C` / `cd`, `-c "…"` / backticks, `-am` / pathspecs), cleanup made `ensureHookRegistered` (`lib/hook-command.ts`) the one registration path for init and update. Landed `c8344f32`, archived with retrospective, worktree and branch removed. The guard is LIVE in Claude Code sessions: hooks are not snapshotted at session start, it fired mid-session right after landing.
+- **hook-cwd-independence**: every ritual satisfied 2026-09-15, no retrospective existed; written, archived, master row closed.
+- **1.51.0 published** 2026-09-18T00:03:18Z by the SECOND `pnpm release` run (browser 2FA). `indusk upgrade` → 1.51.0 global; `indusk update` recorded it on dusk. Unreleased packaged change on main: only the guard-recursion fix.
+- **Release guard fix** (landed `6708e4d3`): the already-published refusal quoted `pnpm release` in backticks inside double quotes → command substitution → infinite recursion into `pnpm release`. Single quotes now; verified against the published 1.51.0.
+
+Agreed order remaining (Sandy: "stop fixing and planning and start building"): (4) rewrite `day-promises` on the settled model → accept → test plan → ADR → build; (5) `indusk-release` when a gap opens.
 
 ### Open Questions
 
-(empty)
+- **day-promises rewrite waits on Sandy's go.** Settled in conversation, NOT yet in the brief: promises predate tests; promise kinds behaviour / state / structure with per-kind checks and health source; lifetime (holds while running vs retires on establishment); trajectory rows are `establishes` or `preserves` a promise; registration rule "register if breakage would need a plan to reopen"; 4a probably needs a further cut; briefs stay direction, chip/column design moves to an ADR appendix; day-monitor narrows to behaviour promises.
+- **record-release.js trusts pnpm's exit code.** The first 1.51.0 run wrote "published" and nothing reached the registry. It should `npm view <pkg>@<version>` (bounded) before writing. Owner: indusk-release (S1). Recorded in the master's close-outs section, item (d).
+- **The trunk guard's Edit gate refuses the release changelog heading flip** on main while the `chore(release):` commit is exempt; done once through Bash this release, named in the master (c) so it is not the habit. Fix: allow-list `apps/docs/src/changelog.md` or let `pnpm release` write the heading.
+- **Shape's Verification item vs `prepareShapeReview`** are circular (three plans now); master (a).
+- **A fresh plan worktree has no admin bundle**: nine `indusk ui` daemon tests + the tarball test fail until `pnpm --filter indusk-admin build && node scripts/bundle-admin.js` runs there; master (b).
+- No `/lessons/trunk-guard` docs page yet: the sidebar config was in another session's hands at landing; owed by the next docs-touching plan.
+- `check_health` shows no version line until Claude Code restarts (MCP server process predates the code).
 
 ### Cursor
 
-(empty)
+Main at `2e733339`, clean, three planning/record commits past the 1.51.0 release bump plus the guard fix merge. Nothing checked out on a branch. Next concrete step: on Sandy's go, open `.indusk/planning/day-promises/brief.md` and rewrite it on the settled model listed in Open Questions, then `day-monitor/brief.md` (behaviour promises only) and the Day master frame; then `/planner` to accept → test plan → ADR → impl on a `plan/day-promises` worktree.
 
 ---
 
