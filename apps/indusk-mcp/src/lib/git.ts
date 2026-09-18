@@ -124,3 +124,44 @@ export async function restorePaths(root: string, taken: PathSnapshot): Promise<v
 		}
 	}
 }
+
+/** One entry of `git worktree list --porcelain`. */
+export interface GitWorktree {
+	/** As git prints it: the absolute path the worktree was added at. */
+	path: string;
+	/** The checked-out branch without `refs/heads/`, or null when detached or bare. */
+	branch: string | null;
+	/** The first entry git lists: the repository's main working tree. */
+	main: boolean;
+	/** Git's own mark that the directory is gone but the entry was never pruned. */
+	prunable: boolean;
+}
+
+/**
+ * Every working tree of the repository `root` belongs to, main first — the
+ * same answer from the trunk and from any linked worktree, because git keeps
+ * the list in the shared git directory. Throws when `root` is not in a
+ * repository; callers decide what that means.
+ */
+export async function listWorktrees(root: string): Promise<GitWorktree[]> {
+	const out = await git(root, "worktree", "list", "--porcelain");
+	const entries: GitWorktree[] = [];
+	for (const block of out.split(/\n\s*\n/)) {
+		const lines = block.split("\n");
+		const path = lines.find((l) => l.startsWith("worktree "))?.slice("worktree ".length);
+		if (!path) continue;
+		const ref = lines.find((l) => l.startsWith("branch "))?.slice("branch ".length);
+		entries.push({
+			path,
+			branch: ref ? ref.replace(/^refs\/heads\//, "") : null,
+			main: entries.length === 0,
+			prunable: lines.some((l) => l === "prunable" || l.startsWith("prunable ")),
+		});
+	}
+	return entries;
+}
+
+/** The repository's shared git directory, absolute — common to the trunk and every worktree. */
+export async function gitCommonDir(root: string): Promise<string> {
+	return git(root, "rev-parse", "--path-format=absolute", "--git-common-dir");
+}
