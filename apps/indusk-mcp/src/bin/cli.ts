@@ -647,11 +647,37 @@ worktreeCmd
 worktreeCmd
 	.command("create <args...>")
 	.description(
-		"Create a worktree: `create [repo] <slug> [base-branch]`. The repo is optional when the workbench declares exactly one; with several it is required, and omitting it fails naming the candidates.",
+		"Create a worktree. In a normal-mode project: `create <plan>` makes <project>-worktrees/<plan> on plan/<plan> and assigns the plan to it. In a workbench: `create [repo] <slug> [base-branch]`; the repo is optional when the workbench declares exactly one, and with several omitting it fails naming the candidates.",
 	)
 	.action(async (args: string[]) => {
-		const { worktreeCreate } = await import("./commands/worktree.js");
-		worktreeCreate(args, rootOrExit());
+		const root = rootOrExit();
+		const { isWorkbench } = await import("../lib/worktree/repos.js");
+		const { worktreeCreate, worktreeCreateForPlan } = await import("./commands/worktree.js");
+		if (!isWorkbench(root)) {
+			await worktreeCreateForPlan(root, args);
+			return;
+		}
+		worktreeCreate(args, root);
+	});
+
+worktreeCmd
+	.command("assign <plan> <path>")
+	.description(
+		"Assign a plan to an existing worktree of this repository, so the admin and the plan tools read the plan from it. Refuses a path that is not a worktree, a plan with no folder, and a plan already assigned elsewhere.",
+	)
+	.action(async (plan: string, path: string) => {
+		const { worktreeAssign } = await import("./commands/worktree.js");
+		await worktreeAssign(rootOrExit(), plan, path);
+	});
+
+worktreeCmd
+	.command("release <plan>")
+	.description(
+		"End a plan's worktree assignment — at the retrospective's landing, after the merge and before the worktree is removed. The plan reads from the trunk again.",
+	)
+	.action(async (plan: string) => {
+		const { worktreeRelease } = await import("./commands/worktree.js");
+		await worktreeRelease(rootOrExit(), plan);
 	});
 
 worktreeCmd
