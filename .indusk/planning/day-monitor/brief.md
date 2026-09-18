@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor: behaviour-promise violation detection and root cause, from telemetry"
 date: 2026-06-14
-status: draft
+status: accepted
 amended: 2026-08-11
 rewritten: 2026-09-17
 narrowed: 2026-09-18
