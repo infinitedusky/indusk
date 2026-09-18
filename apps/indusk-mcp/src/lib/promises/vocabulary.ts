@@ -69,7 +69,7 @@ export function promiseToken(name: string): string {
 }
 
 /** What may sit before the token on its line: a comment opener or a quote, then horizontal space. */
-const TOKEN_OPENER = String.raw`(?<=(?:\/\/|#|\*|--|;|<!--|["'` + "`" + String.raw`])[ \t]*)`;
+const TOKEN_OPENER = String.raw`(?<=(?:\/\/|#|\*|--|;|<!--|["'${"`"}])[ \t]*)`;
 
 /** Matches the token for one specific name. */
 export function promiseTokenPattern(name: string): RegExp {

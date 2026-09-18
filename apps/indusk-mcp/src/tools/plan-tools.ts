@@ -57,17 +57,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 		},
 		async () => {
 			const read = readPromises(projectRoot);
-			const text = read.ok
-				? JSON.stringify(
-						{
-							dir: read.registry.dir,
-							promises: read.registry.promises,
-							incidents: read.registry.incidents,
-						},
-						null,
-						2,
-					)
-				: JSON.stringify(read, null, 2);
+			const text = JSON.stringify(read, null, 2);
 			return { content: [{ type: "text" as const, text }] };
 		},
 	);

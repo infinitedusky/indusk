@@ -85,7 +85,12 @@ export interface RegistryProblem {
 export type ReadRegistryResult =
 	| { ok: true; registry: Registry }
 	| { ok: false; missing: string }
-	| { ok: false; problems: RegistryProblem[] };
+	/**
+	 * At least one entry is malformed. `partial` holds every well-formed
+	 * entry so a page can list them beside the error block — a malformed
+	 * entry is named, never skipped, and never hides its neighbours either.
+	 */
+	| { ok: false; problems: RegistryProblem[]; partial: Registry };
 
 /** Absolute path of the registry directory for a plan root. */
 export function promisesDir(planRoot: string): string {
@@ -309,6 +314,7 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 		});
 	}
 
-	if (problems.length > 0) return { ok: false, problems };
-	return { ok: true, registry: { dir, promises, incidents } };
+	const registry: Registry = { dir, promises, incidents };
+	if (problems.length > 0) return { ok: false, problems, partial: registry };
+	return { ok: true, registry };
 }
