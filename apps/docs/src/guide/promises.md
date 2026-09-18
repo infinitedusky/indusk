@@ -80,9 +80,20 @@ The plan that established it. Ownership moves only when another plan supersedes 
 
 ## How to write one
 
-::: info Lands with Build Phase 1 of `day-promises`
-The registry format, `indusk promises check`, and the per-kind link rule are documented here once they ship. Until then, see the plan's ADR at `.indusk/planning/day-promises/adr.md`.
-:::
+1. **Declare the domain** it belongs to in `.indusk/config.json` under
+   `promises.domains`, if it is not there yet.
+2. **Write the file** `.indusk/promises/<name>.md` — kebab-case name, the
+   kind, the state, the owner plan, and the statement as the body's first
+   paragraph. One sentence, observable, never implementation.
+3. **Link it.** Put the token `promise: <name>` in a comment at the code
+   site that enforces it and in the test that checks it, and list both paths
+   in the file. A `structure` promise needs only the check; a
+   `known-violated` one needs an incident instead.
+4. **Run `indusk promises check`.** It refuses by name until every link the
+   kind requires is in place, and passes with a summary once it is.
+
+The file shapes, every refusal and the exit codes are in the
+[`indusk promises` reference](/reference/cli/promises).
 
 ## See also
 

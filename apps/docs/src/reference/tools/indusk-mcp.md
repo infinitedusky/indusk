@@ -63,6 +63,7 @@ For projects using the published package:
 | `get_plan_status` | `name` | Detailed status: phase progress, checked/unchecked items per gate |
 | `advance_plan` | `name` | Validates prerequisites for the next transition. Returns `{ allowed, missing }` |
 | `order_plans` | — | Topological sort of plans based on dependency graph |
+| `list_promises` | — | The promise registry (`.indusk/promises/`): every promise with its kind, lifetime, state, domain, owner, statement and links, plus every incident — or the problem naming the file and field when the registry is missing or malformed. See [`indusk promises`](/reference/cli/promises) |
 
 #### Phase Enforcement (`advance_plan`)
 

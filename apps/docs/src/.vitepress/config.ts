@@ -120,6 +120,7 @@ const config = defineConfig({
 						{ text: "agent", link: "/reference/cli/agent" },
 						{ text: "plans", link: "/reference/cli/plans" },
 						{ text: "papers", link: "/reference/cli/papers" },
+						{ text: "promises", link: "/reference/cli/promises" },
 						{ text: "sync", link: "/reference/cli/sync" },
 					],
 				},
