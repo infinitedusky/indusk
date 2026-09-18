@@ -25,12 +25,9 @@ vi.mock("next/link", () => {
   return { default: MockLink, __esModule: true };
 });
 
+import { HoldingBadge } from "@/components/HoldingBadge";
 import { PlanList } from "@/components/PlanList";
-import {
-  HoldingBadge,
-  PromiseChip,
-  PromisesTable,
-} from "@/components/Promises";
+import { PromiseChip, PromisesTable } from "@/components/Promises";
 import type { Plan } from "@/lib/planning-reader";
 
 /**

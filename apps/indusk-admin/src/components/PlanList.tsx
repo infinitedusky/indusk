@@ -1,7 +1,7 @@
 import type { PlanDeclarations } from "@infinitedusky/indusk-mcp/planning/plan-parser";
 import Link from "next/link";
 import { EmptyPlansSidebarSlot } from "@/components/EmptyPlansSidebarSlot";
-import { HoldingBadge } from "@/components/Promises";
+import { HoldingBadge } from "@/components/HoldingBadge";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";

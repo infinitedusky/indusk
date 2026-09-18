@@ -6,11 +6,11 @@ import {
 } from "@/components/bars/ProgressLines";
 import { CleanupSection } from "@/components/CleanupSection";
 import { FalsificationSection } from "@/components/FalsificationSection";
+import { HoldingBadge } from "@/components/HoldingBadge";
 import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { PhasesSection } from "@/components/PhasesSection";
-import { HoldingBadge } from "@/components/Promises";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
