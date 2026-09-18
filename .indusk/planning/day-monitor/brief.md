@@ -73,10 +73,11 @@ the tests; it grades them.
    enforces it. Most spans never carry one; a span opts in by naming a
    promise, so the coupling is on promises, not on telemetry. With it, the
    test side of the same mark: a trace-shape helper that asserts on the spans
-   a call produced and names the promise it validates — looper's
-   `assert_trace_shape` for pytest is the reference, the vitest one is
-   written here (moved from `day-promises` on 2026-09-18, because it asserts
-   on the convention this step defines).
+   a call produced (which appeared, under which parent, with which
+   attributes — `contains`, never `equals`, so a harmless refactor does not
+   break it) and names the promise it validates. Written for vitest in the
+   testing extension; moved from `day-promises` on 2026-09-18 because it
+   asserts on the convention this step defines.
 2. **A number.** `indusk promises status`: for each promise, violations in
    the window, from local Jaeger and from Dash0. "Has this promise been
    violated this week?" answers with a count that means something.
@@ -155,24 +156,21 @@ through the verify ledger, in `day-contract`):
 
 ## What exists today, verified 2026-09-17
 
-None of it. Looper's incident file has nine entries, found by smoke runs and
-desk probes and recorded by hand; none was *detected* by telemetry naming the
-promise, which is what this step adds. Numero has deployed environments and
-real failures and no promises. Dusk lists `monitor` in the lifecycle and
-draws it as pending; nothing derives it. Local Jaeger is enough to build and
-prove every step below; Dash0 (which rejected its token on 2026-09-17) is
-needed only for the `deployed` source, and is not a dependency of the loop
-closing.
+None of it. No incident anywhere has been *detected* by telemetry naming the
+promise it broke, which is what this step adds; every incident on record was
+found by a smoke run or a desk probe and written by hand. This repo lists
+`monitor` in the lifecycle and draws it as pending; nothing derives it.
+Local Jaeger is enough to build and prove every step below; Dash0 (which
+rejected its token on 2026-09-17) is needed only for the `deployed` source,
+and is not a dependency of the loop closing.
 
 ## Proving ground
 
-Any project that runs. **looper** runs locally under Jaeger on every smoke
-round and already has promises, so it is where the loop closes first, with a
-`local` or `smoke` incident detected by telemetry rather than by a person.
-**dusk** runs its own gates on every checkoff and its own promises (gates
-fired, record never corrupt, registry never leaked) are observable in local
-telemetry. **numero** adds the `deployed` source once it has promises, and is
-where Dash0 earns its place.
+Any project that runs under the local telemetry daemon. This repo runs its
+own gates on every checkoff, and its own behaviour promise (the gates ran)
+is the first candidate for a `local` incident detected by telemetry rather
+than by a person. The `deployed` source is proven wherever a project with
+promises first runs deployed, and is where Dash0 earns its place.
 
 ## Steps
 
@@ -192,7 +190,7 @@ broke; the owning plan reopens.** Concretely: one promise, one violation
 *detected by telemetry* during a run (local, smoke or deployed — not found by
 reading), the alert naming the promise, an incident opened with its root
 cause and its source, and the owning plan reopened. The first such incident
-is the moment the loop closes; looper can produce it locally.
+is the moment the loop closes, and a local run can produce it.
 
 ## Depends on
 

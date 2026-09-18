@@ -13,8 +13,7 @@ workflow: feature
 
 Day's primitive is the **contract**: what a human approves before code
 exists, and what the artifacts then prove was met honestly. The frame, in
-its settled form (2026-09-17, after the conversation that produced the first
-version of this brief):
+its settled form (2026-09-17):
 
 > A plan **establishes** promises, **preserves** the promises already in
 > force that its change could break, and is **free in how**. The contract is
@@ -37,14 +36,9 @@ not restate it, you are bound by it, and the agent walks around the car when
 you hand back the keys. Route, speed, and where you stop for fuel are nobody's
 contract.
 
-This step builds the promise as a primitive: the registry, the check that
-keeps it honest, and dusk self-hosting it. **Looper and numero are
-downstream of this work.** The goal is not to improve or update either; it
-is to build the system that, once published, they update to and start using.
-Looper's registry is the reference the check is extracted from and its
-eleven are a fixture here; adopting the result is looper's own plan, in its
-own repo, later. The telemetry half —
-watching behaviour promises in the running system — is
+This step builds the promise as a primitive of InDusk: the registry, the
+check that keeps it honest, and this repo self-hosting it. The telemetry
+half — watching behaviour promises in the running system — is
 [`day-monitor`](../day-monitor/brief.md). The planning half — promises
 declared before code, trajectory rows that name them, confirmation at close,
 the change rule — is proposed below as the next cut, because this brief grew
@@ -60,7 +54,7 @@ broken one.
 Promises have two sources, and the primitive accepts both: **specification**
 — stated in planning, before the code — and **failure** — discovered when a
 run breaks something nobody had named, and stated afterwards. The second
-arrives late by nature; looper's registry is mostly of that kind.
+arrives late by nature.
 
 Every Test Trajectory row therefore names the promise it **establishes** (a
 new promise of this plan) or **preserves** (an existing promise the change
@@ -84,12 +78,12 @@ rows say this is the next cut's work, not this plan's.
   | `structure` | something exists, or exactly one of it does | a later change that removes or duplicates it | a build-time check | the last run of the check at head |
 
   Telemetry watches reactions; tests and checks assert state and structure.
-  Dusk already has dozens of structure promises — the single-definition pins,
-  `check-pointers`, the cleanup pins — named and enforced, just not called
-  that. "The documentation is there" is a promise, and the pointer check
-  going red at the next build is exactly the loop wanted, at the speed the
-  fact changes. Running the system adds nothing to a static fact; what would
-  be a gap is a static promise with no check at all.
+  This repo already has dozens of structure promises — the single-definition
+  pins, `check-pointers`, the cleanup pins — named and enforced, just not
+  called that. "The documentation is there" is a promise, and the pointer
+  check going red at the next build is exactly the loop wanted, at the speed
+  the fact changes. Running the system adds nothing to a static fact; what
+  would be a gap is a static promise with no check at all.
 - **Lifetime.** `holds` — in force for as long as the system runs; any later
   change can break it; the default. `established` — a transition that, once
   done, cannot be undone ("the backfill ran"); its check retires the moment it
@@ -99,10 +93,11 @@ rows say this is the next cut's work, not this plan's.
   is an open plan. `enforced` — the system upholds it and a violation is a
   bug. `known-violated` — declared, and the current implementation provably
   cannot uphold it; carries the incident that proves it, so it is evidence
-  rather than an excuse (looper's E-1). `retired` — no longer a promise, kept
-  for history. The `known-violated` state is what makes declaring honest:
-  without it, a promise you cannot yet keep is either hidden or a permanently
-  red check, and a permanently red check stops being read.
+  rather than an excuse. `retired` — no longer a promise, kept for history.
+  The `known-violated` state is what makes declaring honest: without it, a
+  promise you cannot yet keep is either hidden or a permanently red check,
+  and a permanently red check stops being read (this project has switched
+  two off that way).
 - **Domain.** A tag naming the part of the system the promise is about, from
   a list the project declares. Decided in planning, when the promise is
   written (Sandy, 2026-09-17); an unknown domain fails the check.
@@ -123,35 +118,23 @@ rows say this is the next cut's work, not this plan's.
 
 Not every check is a promise, and the registry must not become a second copy
 of the trajectory. The rule: **a promise is registered when its breakage
-would need a plan to reopen.** That keeps dusk's pins in (a second
-`resolveImplPath` would be a defect for the plan that pinned it) and keeps
-process facts and path out.
+would need a plan to reopen.** Tested against this repo's own candidates
+rather than asserted:
 
-Tested against looper's eleven rather than asserted:
+| Candidate | Kind | Lifetime | Registers? |
+|---|---|---|---|
+| every shared rule has exactly one definition (the pins) | structure | holds | yes — a second copy is a defect for the plan that pinned it |
+| every pointer in CLAUDE.md resolves (`check-pointers`) | structure | holds | yes |
+| the phase-boundary record is never malformed | state | holds | yes — one bad line blinds every reader |
+| no test writes the machine-global registry | state | holds | yes — a leak reopens the plan that isolated it |
+| every checkoff ran its gates | behaviour | holds | yes — the class `hook-cwd-independence` reopened for |
+| the jj residue sweep ran | — | established | **no** — done once; what holds is the structure promise "no jj residue", already pinned |
+| every phase closed in order; red seen before green | — | — | **no** — process record, not a promise about the system |
+| "the migration preserves every key", as a trajectory row | — | — | **no** — a row that preserves a registered promise cites it; it does not create an entry |
 
-| ID | Statement (short) | Kind | State | Registers? |
-|---|---|---|---|---|
-| E-1 | impact events are ball strikes, not speech or handling | behaviour | known-violated | yes — the fix is a plan (the v1 classifier) |
-| E-2 | a transcript fetch for a known round is non-empty | behaviour | enforced | yes |
-| E-3 | loss of ingress surfaces within one capture interval | behaviour | known-violated | yes |
-| E-4 | every failed operation is an errored span, nothing swallowed | behaviour | enforced | yes |
-| E-5 | every received chunk is written, or the failure is visible | behaviour | enforced | yes |
-| E-6 | every span is attributable to the build that produced it | behaviour — a deploy breaks it and only a run shows it | enforced | yes |
-| E-7 | every pipeline stage is observable as a named span | **structure** — a build-time check proves it; numero's contract check is this kind | enforced | yes |
-| E-8 | capture ingress is unambiguous, never two receivers | behaviour | known-violated | yes |
-| E-9 | speech-band energy never transcribes to silence unremarked | behaviour | enforced | yes |
-| E-10 | an archived capture is never modified or deleted | behaviour — a reaction to a write, enforced by storage | enforced | yes |
-| E-11 | every closed capture gets a transcript or a visible failure | behaviour | enforced | yes |
-
-All eleven register, all eleven `hold`; ten are behaviour and one is
-structure, and none is state. That is the registry's history showing: it was
-born from telemetry failures. The state and structure kinds are what dusk
-contributes, and the rule's *negative* side is tested there, not in looper —
-looper never wrote down a one-shot or a process fact, so it cannot show the
-rule excluding one. Dusk's candidates for exclusion: "the jj residue sweep
-ran" (`established`, retires on green), "every phase closed in order"
-(process record, not a promise), and a row that merely cites a promise
-already registered (it *preserves*; it does not create an entry).
+Two structure, two state, one behaviour in; a one-shot, a process fact and a
+preserving row out. The rule is re-applied in Build Phase 1 before the check
+enforces it, and the table is what the ADR records.
 
 ## What the regression suite covers, and what it cannot
 
@@ -183,20 +166,16 @@ why 4b exists, and why 4b is narrowed to that kind.
 2. **`indusk promises check`** — every name cited in code or tests exists in
    the registry; every `enforced` promise has the links its kind requires;
    `known-violated` carries an incident; every domain is declared. A promise
-   declared and not guarded fails the build. Extracted from looper's
-   validator, which already enforces both directions in its lint step and
-   marks itself an extract candidate.
-3. **Dusk self-hosts it, and looper's eleven are a fixture.** Looper's
-   registry, carried into the InDusk form, lives in dusk's test suite as the
-   one real registry the format and the registration rule are tested
-   against (eight `enforced`, three `known-violated`, unchanged in meaning).
-   Dusk registers three promises of its own, one per kind, so the convention
-   is shown not to depend on a service or on telemetry:
-   *structure* — every shared rule has one definition (the pins);
-   *state* — the phase-boundary record is never malformed (the writer refuses
-   with the reader's predicate); *behaviour* — every checkoff ran its gates,
-   whose observer is the gate ledger step 5 builds, so it stays hollow until
-   then, which is the honest reading.
+   declared and not guarded fails the build. Both directions, because each
+   alone rots: without the first, a citation survives a rename and points at
+   nothing; without the second, a promise is declared and never upheld.
+3. **This repo self-hosts it**, one promise per kind, so the convention is
+   shown not to depend on a service or on telemetry: *structure* — every
+   shared rule has one definition (the pins); *state* — the phase-boundary
+   record is never malformed (the writer refuses with the reader's
+   predicate); *behaviour* — every checkoff ran its gates, whose observer is
+   the gate ledger step 5 builds, so it stays hollow until then, which is the
+   honest reading.
 4. **A project-wide Promises page** in the admin, beside Scorecards: the
    registry as a table, sortable and groupable by owner plan, domain, state,
    and (once health exists) health. This plan draws **declared state only**,
@@ -235,56 +214,38 @@ step, created when this one closes:
   Cleanup; state and structure health read from the verify ledger, which
   needs rows that name promises before there is anything to join on.
 
-This plan is useful without it: promises can be written by hand, as
-looper's were, and checked. The vitest trace-shape helper (looper's
-`assert_trace_shape`, the test side of the span mark) moves to 4b's first
-step, where the span convention it asserts on is defined.
+This plan is useful without it: promises can be written by hand and checked.
+The trace-shape test helper (a test that asserts on the spans a call
+produced and names the promise it validates) moves to 4b's first step, where
+the span convention it asserts on is defined.
 
-## What exists today, verified 2026-09-17
+## What exists today, verified 2026-09-18
 
-| Piece | looper | numero | dusk |
-|---|---|---|---|
-| Registry with states; incidents with sources | **built** — 11 promises (10 behaviour, 1 structure), 9 incidents, all recorded by hand | none | none |
-| Validator in the build, both directions | **built** | none | none |
-| Trace-shape test helper naming the promise | **built** (pytest) | none | none |
-| Structure promises with build-time checks | none | none | **dozens**, unregistered — the single-definition pins, `check-pointers`, the cleanup pins |
-| Typed telemetry contract (every span declared and emitted) | not possible in Python | **built**, 12 services, in CI | none |
-
-Looper proved the primitive can be written and enforced. Numero's typed
-contract is a structure check of E-7's kind — which spans exist, not what the
-system promises — and becomes an optional check for projects with a
-typechecker. Dusk's pins are the proof that the primitive is about
-commitments, not spans.
-
-## Proving ground
-
-**dusk**, self-hosting one promise per kind, with the check in its own suite
-and the page over its own registry. **Looper's eleven** as a fixture: the
-only real registry that exists, so the only real data the format and the
-registration rule are tested against. Nothing in this plan runs in, or
-changes, another repository.
+Nothing of the primitive. This repo has dozens of structure promises with
+build-time checks and no registry; the lifecycle lists `monitor` and draws it
+as pending; nothing names a promise, nothing links a test to one, and no
+page shows what the system has committed to.
 
 ## Steps
 
 | # | Effort | What |
 |---|---|---|
-| 1 | ~1d | Registry format (kind, lifetime, domain, owner, state, links, incidents) and `indusk promises check`, extracted from looper's validator; looper's eleven as the fixture it runs against |
+| 1 | ~1d | Registry format (kind, lifetime, domain, owner, state, links, incidents) and `indusk promises check`, both directions, every refusal by name |
 | 2 | ~½d | Declared domains per project, ensured on `update`; the per-kind link rule; the incident record |
-| 3 | ~½d | Dusk's three, one per kind, with the check in `pnpm test` |
+| 3 | ~½d | This repo's three, one per kind, with the check in `pnpm test` |
 | 4 | ~1d | The Promises page, declared state only, every enforced chip hollow; "holding N" on the archived segment |
 
-About three days. The registration rule is re-tested against looper's eleven
-in step 1 before the check enforces it.
+About three days.
 
 ## Acceptance
 
 `indusk promises check` refuses every way the registry can lie, by name, and
-passes looper's eleven carried into the form with their states unchanged;
-dusk holds three promises, one per kind, with the check in its suite; a
-project that has not adopted is untouched by `indusk update` beyond an empty
-domains list; the Promises page lists dusk's promises grouped by plan and by
-domain with every enforced chip hollow. (The "a closing plan promotes a
-claim" and "touched, unacknowledged" acceptances belong to `day-contract`.)
+passes a clean registry with a summary; this repo holds three promises, one
+per kind, with the check in its suite; a project that has not adopted is
+untouched by `indusk update` beyond an empty domains list; the Promises page
+lists this repo's promises grouped by plan and by domain with every enforced
+chip hollow. (The "a closing plan promotes a claim" and "touched,
+unacknowledged" acceptances belong to `day-contract`.)
 
 ## Depends on
 
@@ -294,26 +255,21 @@ claim" and "touched, unacknowledged" acceptances belong to `day-contract`.)
 
 ## Blocks
 
-- **Looper adopting the registry** — its own plan, in its repo, after this
-  package publishes: carry the eleven and nine incidents across, rewrite its
-  `expects=` citations, retire its validator. Not this plan's work.
-- **Numero registering its first promises** — likewise, from its deployed
-  failures, after publish.
-- [`day-monitor`](../day-monitor/brief.md) and `day-contract`.
+- [`day-monitor`](../day-monitor/brief.md) — the span mark and health for
+  behaviour promises.
+- `day-contract` — the planning half, proposed above.
 
 ## Open for the ADR
 
-- Where the registry lives (`.indusk/promises/` vs the docs tree looper
-  used), and its format.
+- Where the registry lives and its format (one file per promise under
+  `.indusk/promises/`, or one document).
 - Whether a contract is only "a plan's promises" or gets a name of its own,
   so the Promises page can group by contract independently of plan — the
   answer decides whether the registry carries a `contract` field.
 - Whether `declared` is a fourth state or `known-violated` with a reason;
   and whether `established`-lifetime promises retire automatically at green.
-- Whether the form carries an `aliases` field so a downstream registry with
-  sequential ids (looper's E-N / F-N) keeps its history when it adopts.
-- Whether the gate ledger (step 5) is a health adapter for dusk's behaviour
-  promise, or dusk's behaviour promises simply wait for spans.
+- Whether the gate ledger (step 5) is a health adapter for this repo's
+  behaviour promise, or behaviour promises simply wait for spans.
 
 ## Appendix — the Promises page, for the ADR
 
@@ -345,6 +301,3 @@ Moved out of the body on 2026-09-18 because it is design, not direction.
   linkage; "the boundary is fixed, the path is free"
 - [`/guide/plan-lifecycle`](../../../apps/docs/src/guide/plan-lifecycle.md) —
   two authorities; why behavioural assertions are the shape of a promise
-- looper: `apps/docs/src/telemetry/expectations.md`,
-  `backend/scripts/validate_expectations.py`, `backend/looper/telemetry/shape.py`
-- numero: `scripts/check-telemetry-contract.ts`

@@ -64,17 +64,16 @@ promise.) Three sub-plans:
 - [day-promises/brief.md](day-promises/brief.md) — **4a, the primitive**:
   registry with kinds, lifetimes, `declared / enforced / known-violated /
   retired` states, domains, owners and per-kind links; `indusk promises
-  check`; dusk self-hosts one per kind, looper's eleven are a fixture; the
-  Promises page with every enforced chip hollow; a plan closes *holding N
-  promises* and can be woken. Looper and numero are downstream: they adopt
-  after publish, in their own plans. ~3 days.
+  check`; this repo self-hosts one per kind; the Promises page with every
+  enforced chip hollow; a plan closes *holding N promises* and can be woken.
+  ~3 days.
 - [day-monitor/brief.md](day-monitor/brief.md) — **4b, the telemetry half
   (was Midnight), behaviour promises only**: the span link and its test-side
   trace-shape helper, violations per promise as a number from Jaeger and
   Dash0, `monitor` as the quiet window, alert → incident with root cause →
   reopen the owner. "Running" means executing with real inputs, locally under
-  Jaeger as much as deployed; exists nowhere yet; looper can close the loop
-  locally first; ~1 week after 4a.
+  Jaeger as much as deployed; exists nowhere yet; a local run closes the
+  loop first; ~1 week after 4a.
 - `day-contract` — **4c, the contract in planning** (proposed 2026-09-18 as
   4a's cut; created when 4a closes): promises declared before code, every
   trajectory row names what it establishes or preserves, the retrospective

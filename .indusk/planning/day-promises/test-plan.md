@@ -11,11 +11,9 @@ accepted: 2026-09-18
 
 This document lists the behavioral assertions that, taken together, mean the
 promise primitive is working: a registry a project can write by hand, a check
-that refuses a registry that lies, dusk self-hosting it with looper's eleven
-as a fixture, and an admin page that shows declared state without ever
-pretending to have observed anything. Nothing here runs in another
-repository; looper and numero adopt the result later, through `indusk
-update`, in their own plans. Each assertion names the mechanism by which it will be tested — not
+that refuses a registry that lies, this repo self-hosting it, and an admin
+page that shows declared state without ever pretending to have observed
+anything. Each assertion names the mechanism by which it will be tested — not
 the test code, but the test approach. When all assertions can be made true by
 an architecture, we have a feature; when all are passing in code, it is shipped.
 
@@ -30,8 +28,7 @@ behaviour the system upholds, with a kind (`behaviour`, `state`,
 domain, an owner plan and links (code sites, tests). The **check** is
 `indusk promises check`. A **chip** is the promise's badge on the admin's
 Promises page. "Names a promise" means a file contains the promise's name in
-the form the ADR fixes (looper's form is a greppable comment in code and an
-`expects=` argument in tests).
+the form the ADR fixes.
 
 ## Behavioral Assertions
 
@@ -58,9 +55,9 @@ the form the ADR fixes (looper's form is a greppable comment in code and an
 
 | ID | Assertion (user-visible behavior) | Mechanism |
 |----|-----------------------------------|-----------|
-| A13 | Looper's eleven expectations and nine incidents, carried into the registry form as a fixture in dusk's suite, pass the check with the same states as today: eight `enforced`, three `known-violated`. | vitest integration (CLI against the fixture) |
+| A13 | An `established`-lifetime promise still `enforced` after its owner plan is archived fails the check naming it, because it should have been retired; the same promise passes while its owner is open. | vitest integration (CLI) |
 | A14 | A project that has not adopted is untouched: `indusk update` ensures an empty `promises.domains` list in its config and changes nothing else; no check runs unless invoked; the Promises page says there is no registry yet. | vitest integration (CLI on a temp project) |
-| A15 | Dusk holds three promises, one per kind, and the check passes as part of `pnpm test` at the repo root: a structure promise on the shared definitions (the pins), a state promise on the phase-boundary record, and a `behaviour` promise on the gates having run at every checkoff. | vitest integration (CLI against the dusk root) |
+| A15 | This repo holds three promises, one per kind, and the check passes as part of `pnpm test` at the repo root: a structure promise on the shared definitions (the pins), a state promise on the phase-boundary record, and a `behaviour` promise on the gates having run at every checkoff. | vitest integration (CLI against the repo root) |
 | A16 | An incident record carries symptom, root cause, the promise, its source (`local`, `smoke`, `deployed` or `desk`), status and fix; one missing a field, or with a source outside the four, fails the check naming the incident. | vitest integration (CLI) |
 
 ### The Promises page
@@ -80,8 +77,8 @@ the form the ADR fixes (looper's form is a greppable comment in code and an
 
 | ID | Assertion | Reason untestable | Compensating control |
 |----|-----------|-------------------|----------------------|
-| U1 | The registration rule ("register it if its breakage would need a plan to reopen") keeps looper's eleven in and keeps one-shots and process facts out. | A judgment about which facts are promises, not a behaviour of the code. | Re-applied to looper's eleven and to dusk's exclusion candidates in Build Phase 1, recorded in the ADR's Decision section; A13 is the executed half. |
-| U2 | Dusk's `behaviour` promise (the gates ran at every checkoff) is observed. | Its observer is the gate ledger Day step 5 builds; nothing records a hook run today. | Its chip is hollow by A19, which is the honest reading; step 5 wires the source. |
+| U1 | The registration rule ("register it if its breakage would need a plan to reopen") keeps this repo's five candidates in and keeps the one-shot, the process fact and the preserving row out. | A judgment about which facts are promises, not a behaviour of the code. | Re-applied to the brief's candidate table in Build Phase 1 and recorded in the ADR's Decision section; A15 is the executed half. |
+| U2 | This repo's `behaviour` promise (the gates ran at every checkoff) is observed. | Its observer is the gate ledger Day step 5 builds; nothing records a hook run today. | Its chip is hollow by A19, which is the honest reading; step 5 wires the source. |
 
 ## Notes
 
@@ -91,8 +88,6 @@ the form the ADR fixes (looper's form is a greppable comment in code and an
 - A12 follows `resolveExecutionRoots`: the registry is plan-root state, the
   links are code-repo facts. The four-layout helper
   (`src/__tests__/helpers/versioned-workbench.ts`) is the fixture.
-- Looper and numero adopting the registry are their own plans in their own
-  repos, after this package publishes; no row here depends on either.
 - A4's per-kind link rule (a structure promise needs a check, not a code
   site) and A8's treatment of `declared` are the two rows the ADR could
   change; if it does, the rows change with it before the impl is written.
