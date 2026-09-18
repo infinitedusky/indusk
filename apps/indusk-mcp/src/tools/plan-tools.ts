@@ -5,7 +5,12 @@ import { getPlanningDir } from "../lib/config.js";
 import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { readPromises } from "../lib/promises/registry.js";
-import { livePlanCopy, type PlanCopy, resolvePlanCopies } from "../lib/worktree/plan-worktrees.js";
+import {
+	copySource,
+	livePlanCopy,
+	type PlanCopy,
+	resolvePlanCopies,
+} from "../lib/worktree/plan-worktrees.js";
 
 /** An unreadable assignment record, as every plan tool reports it: an error naming the file, never a guessed copy. */
 function recordError(file: string, problem: string) {
@@ -25,18 +30,6 @@ function recordError(file: string, problem: string) {
 		],
 		isError: true,
 	};
-}
-
-/** What a plan tool adds about where it read the plan: the worktree, or why the trunk copy stands in. */
-function copyFields(copy: PlanCopy | undefined): object {
-	if (!copy) return {};
-	if (copy.source === "worktree") {
-		return copy.archivedInWorktree
-			? { worktree: copy.worktree, archivedInWorktree: true }
-			: { worktree: copy.worktree };
-	}
-	if ("problem" in copy) return { copyProblem: { kind: copy.problem, detail: copy.detail } };
-	return {};
 }
 
 /** The plan folder a copy names — the resolver's, checked on disk; never joined here. */
@@ -67,7 +60,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			const plans = parseAllPlans(resolved.projectRoot).map((plan) => {
 				const copy = resolved.copies.get(plan.name);
 				const live = copy?.source === "worktree" ? parsePlan(planDirOf(copy)) : plan;
-				return { ...live, ...copyFields(copy) };
+				return { ...live, ...copySource(copy) };
 			});
 			if (!active) {
 				return {
@@ -127,7 +120,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 
 			const result = {
 				...plan,
-				...copyFields(live.copy),
+				...copySource(live.copy),
 				implStatus: impl.status,
 				phases: completions,
 			};
@@ -153,7 +146,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			const implPath = join(planDir, "impl.md");
 			const impl = parseImpl(implPath);
 
-			const where = copyFields(live.copy);
+			const where = copySource(live.copy);
 			const respond = (result: object) => ({
 				content: [
 					{ type: "text" as const, text: JSON.stringify({ ...result, ...where }, null, 2) },

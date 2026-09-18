@@ -90,6 +90,30 @@ export type PlanCopy =
 			detail: string;
 	  };
 
+/**
+ * Where a plan was read from, as every reader reports it: the worktree it was
+ * read from (and whether it is archived there), or why the trunk copy stands
+ * in. The one definition of these fields — the plan tools return them and the
+ * admin's `Plan` carries them, both through `copySource`.
+ */
+export interface CopySource {
+	worktree?: WorktreeRef;
+	archivedInWorktree?: true;
+	copyProblem?: { kind: "gone" | "doubled" | "missing"; detail: string };
+}
+
+/** The report fields for a copy; empty for a plain trunk copy or none. */
+export function copySource(copy: PlanCopy | undefined): CopySource {
+	if (!copy) return {};
+	if (copy.source === "worktree") {
+		return copy.archivedInWorktree
+			? { worktree: copy.worktree, archivedInWorktree: true }
+			: { worktree: copy.worktree };
+	}
+	if ("problem" in copy) return { copyProblem: { kind: copy.problem, detail: copy.detail } };
+	return {};
+}
+
 export type PlanCopies =
 	| {
 			ok: true;

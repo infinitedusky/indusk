@@ -24,9 +24,10 @@ import {
   type Trajectory,
 } from "@infinitedusky/indusk-mcp/trajectory/parser";
 import {
+  type CopySource,
+  copySource,
   type PlanCopy,
   resolvePlanCopies,
-  type WorktreeRef,
 } from "@infinitedusky/indusk-mcp/worktree/plan-worktrees";
 import matter from "gray-matter";
 import { type BoundaryRead, readProjectBoundaries } from "./project-reader";
@@ -125,17 +126,17 @@ export interface Plan {
    */
   boundaryError?: string;
   /** The worktree this plan was read from, when it is assigned to one (admin-plan-worktrees). */
-  worktree?: WorktreeRef;
+  worktree?: CopySource["worktree"];
   /**
    * Why the trunk copy is shown although the plan is assigned: its worktree
    * is gone, or two live worktrees claim it. `detail` names every path.
    */
-  copyProblem?: { kind: "gone" | "doubled" | "missing"; detail: string };
+  copyProblem?: CopySource["copyProblem"];
   /**
    * The plan folder has moved into `archive/` in its worktree: archived on the
    * branch by the retrospective, awaiting the landing's release.
    */
-  archivedInWorktree?: boolean;
+  archivedInWorktree?: CopySource["archivedInWorktree"];
   /**
    * Set when the assignment record cannot be read. The plan then carries its
    * name and nothing read from any copy: which copy is live is unknown, and
@@ -411,18 +412,7 @@ export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
         false,
         await boundariesOf(copy.root),
       );
-      if (copy.source === "worktree") {
-        return copy.archivedInWorktree
-          ? { ...plan, worktree: copy.worktree, archivedInWorktree: true }
-          : { ...plan, worktree: copy.worktree };
-      }
-      if ("problem" in copy) {
-        return {
-          ...plan,
-          copyProblem: { kind: copy.problem, detail: copy.detail },
-        };
-      }
-      return plan;
+      return { ...plan, ...copySource(copy) };
     }),
   );
 }
