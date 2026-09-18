@@ -1,0 +1,5 @@
+# A trajectory row passes at the phase that builds the reader it asks through, not the phase that builds its subject — and a row that passes early may be passing for the wrong reason
+
+In admin-plan-worktrees, A8, A9 and A12 were CLI rows ("`assign` assigns … and the plan reads from it") placed at Build Phase 1, where the commands were built. Each checked "reads from it" by asking the MCP plan tool, which only learned to read the record in Build Phase 2, so two stayed red and had to move. The third, A12 ("after release the plan reads from trunk"), passed in Build Phase 1 — because a reader that ignores assignments always reads the trunk. It was strengthened to assert the worktree is read while assigned.
+
+How to apply: when setting `Passes at`, trace the assertion to the component it observes through, and use the phase that builds that component. When a row passes earlier than expected, ask whether the old behaviour would also pass it; if yes, add the half of the assertion only the new behaviour can satisfy.

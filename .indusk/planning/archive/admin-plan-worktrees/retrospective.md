@@ -159,3 +159,7 @@ return 500.
 - Trajectory rows: 29, all passing (20 planned, 5 from falsification, 4 from cleanup)
 - Falsification: 5 hypotheses, 5 confirmed red, 5 fixed
 - Largest module: 565 lines before cleanup, 274 after (resolver), with 161 (record) and 157 (commands)
+
+---
+
+Landed on main at d28ca5fb, 2026-09-18.

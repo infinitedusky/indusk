@@ -1,0 +1,5 @@
+# Falsify a feature against the lifecycle it runs inside — ask what the plan's own close-out steps do to the thing the plan built
+
+admin-plan-worktrees made readers follow a plan into its worktree. Its worst bug sat between two steps of the retrospective the plan itself would run: Step 9 moves the plan folder to `archive/` on the branch, Step 10 releases the assignment only after the merge. In between, the resolver handed readers a folder that no longer existed; `list_plans` threw and every admin page of the project returned 500. None of the 20 planned rows covered it; falsification found it by asking what the close-out does to the live copy.
+
+How to apply: when a feature tracks or reads a unit of work (a plan, a branch, a deploy), list the lifecycle steps that move, rename, archive or delete that unit — including the ones this plan's own close-out will perform — and write a row for the window between each pair. Those windows are where "the thing I am reading is still there" silently stops being true.
