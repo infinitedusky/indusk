@@ -1,7 +1,7 @@
 ---
 title: "Plans in worktrees show their progress"
 date: 2026-09-18
-status: draft
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -63,24 +63,24 @@ guessed.
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | An item checked off in the assigned worktree shows as done on the admin plan page on the next refresh | Test Phase 1 | Build Phase 3 | planned |
-| A2 | The plan page names the worktree it reads from | Test Phase 1 | Build Phase 3 | planned |
-| A3 | The sidebar row for an assigned plan names its worktree | Test Phase 1 | Build Phase 3 | planned |
-| A4 | The active phase shown for an assigned plan is the one opened in the worktree | Test Phase 1 | Build Phase 3 | planned |
-| A5 | Asked at trunk, `list_plans`, `get_plan_status` and `advance_plan` report the worktree's state | Test Phase 1 | Build Phase 2 | planned |
-| A6 | Asked from inside a worktree, the plan list and states match those asked at trunk | Test Phase 1 | Build Phase 2 | planned |
-| A7 | A plan with no assignment reads exactly as today, in the tools and the admin | Test Phase 1 | Test Phase 1 | planned |
-| A8 | `indusk worktree create <plan>` in a normal repo creates `plan/<plan>` and the plan reads from it | Test Phase 1 | Build Phase 1 | planned |
-| A9 | `indusk worktree assign <plan> <path>` assigns a hand-made worktree and the plan reads from it | Test Phase 1 | Build Phase 1 | planned |
-| A10 | A second live assignment for the same plan is refused naming both, and nothing changes | Test Phase 1 | Build Phase 1 | planned |
-| A11 | Assigning a path that is not a worktree of this repo, or a plan with no folder, is refused by name | Test Phase 1 | Build Phase 1 | planned |
-| A12 | `indusk worktree release <plan>` ends the assignment and the plan reads from trunk | Test Phase 1 | Build Phase 1 | planned |
-| A13 | Create, assign, read and release leave `git status` clean in every checkout | Test Phase 1 | Build Phase 1 | planned |
-| A14 | An assigned worktree removed without release is reported as gone, and the trunk copy is shown, in the admin and `get_plan_status` | Test Phase 1 | Build Phase 3 | planned |
-| A15 | A worktree with no assignment is listed in the admin as unassigned | Test Phase 1 | Build Phase 3 | planned |
-| A16 | A malformed record is an error naming the file, in the admin and from the tools; no plan is read from a guessed copy | Test Phase 1 | Build Phase 3 | planned |
-| A17 | Two live assignments for one plan in a hand-edited record show an error naming both, never a pick | Test Phase 1 | Build Phase 2 | planned |
-| A18 | The work skill's kickoff runs `indusk worktree create <plan>` and the retrospective's landing step runs `indusk worktree release <plan>` between the merge and the removal | Test Phase 1 | Build Phase 4 | planned |
+| A1 | An item checked off in the assigned worktree shows as done on the admin plan page on the next refresh | Test Phase 1 | Build Phase 3 | written |
+| A2 | The plan page names the worktree it reads from | Test Phase 1 | Build Phase 3 | written |
+| A3 | The sidebar row for an assigned plan names its worktree | Test Phase 1 | Build Phase 3 | written |
+| A4 | The active phase shown for an assigned plan is the one opened in the worktree | Test Phase 1 | Build Phase 3 | written |
+| A5 | Asked at trunk, `list_plans`, `get_plan_status` and `advance_plan` report the worktree's state | Test Phase 1 | Build Phase 2 | written |
+| A6 | Asked from inside a worktree, the plan list and states match those asked at trunk | Test Phase 1 | Build Phase 2 | written |
+| A7 | A plan with no assignment reads exactly as today, in the tools and the admin | Test Phase 1 | Test Phase 1 | passing |
+| A8 | `indusk worktree create <plan>` in a normal repo creates `plan/<plan>` and the plan reads from it | Test Phase 1 | Build Phase 1 | written |
+| A9 | `indusk worktree assign <plan> <path>` assigns a hand-made worktree and the plan reads from it | Test Phase 1 | Build Phase 1 | written |
+| A10 | A second live assignment for the same plan is refused naming both, and nothing changes | Test Phase 1 | Build Phase 1 | written |
+| A11 | Assigning a path that is not a worktree of this repo, or a plan with no folder, is refused by name | Test Phase 1 | Build Phase 1 | written |
+| A12 | `indusk worktree release <plan>` ends the assignment and the plan reads from trunk | Test Phase 1 | Build Phase 1 | written |
+| A13 | Create, assign, read and release leave `git status` clean in every checkout | Test Phase 1 | Build Phase 1 | written |
+| A14 | An assigned worktree removed without release is reported as gone, and the trunk copy is shown, in the admin and `get_plan_status` | Test Phase 1 | Build Phase 3 | written |
+| A15 | A worktree with no assignment is listed in the admin as unassigned | Test Phase 1 | Build Phase 3 | written |
+| A16 | A malformed record is an error naming the file, in the admin and from the tools; no plan is read from a guessed copy | Test Phase 1 | Build Phase 3 | written |
+| A17 | Two live assignments for one plan in a hand-edited record show an error naming both, never a pick | Test Phase 1 | Build Phase 2 | written |
+| A18 | The work skill's kickoff runs `indusk worktree create <plan>` and the retrospective's landing step runs `indusk worktree release <plan>` between the merge and the removal | Test Phase 1 | Build Phase 4 | written |
 | A19 | This plan's own progress shows, with its worktree named, in the worktree's admin build run against the dusk registry while Build Phase 4 is worked | Build Phase 4 | Build Phase 4 | planned |
 
 ## Checklist
@@ -91,14 +91,14 @@ guessed.
 `dist/bin/cli.js`), a tool call, or HTTP against `next dev` — so each is red
 on its own assertion today.
 
-- [ ] Create this plan's worktree by hand (`git worktree add ../dusk-worktrees/admin-plan-worktrees -b plan/admin-plan-worktrees main`) — normal-mode `create` does not exist until Build Phase 1; the worktree is assigned with `indusk worktree assign` at the end of that phase
-- [ ] Fixture `apps/indusk-mcp/src/__tests__/helpers/plan-worktree-fixture.ts`: a temp git repo with a plan folder on trunk and a real `git worktree add -b plan/<name>`, a helper to check an item off in the worktree's impl, and a helper to write the record by hand (for A16, A17). Throws when a precondition cannot be established.
-- [ ] Tool-call harness `apps/indusk-mcp/src/__tests__/helpers/tool-call.ts`: a stub server whose `registerTool` captures each handler, so a test calls `list_plans` / `get_plan_status` / `advance_plan` the way a client would
-- [ ] Author A8–A13 in `apps/indusk-mcp/src/__tests__/plan-worktrees-cli.test.ts` via `runCli`
-- [ ] Author A5, A6, A7 (tools half), A14 (tools half), A16 (tools half), A17 in `apps/indusk-mcp/src/__tests__/plan-worktrees-tools.test.ts`
-- [ ] Author A1–A4, A7 (admin half), A14 (admin half), A15, A16 (admin half) in `apps/indusk-admin/src/__tests__/http-plan-worktrees.test.ts`, same shape as `http-project-promises.test.ts`
-- [ ] Author A18 in `apps/indusk-mcp/src/__tests__/plan-worktrees-skills.test.ts`: reads the package-owned `skills/work.md` and `skills/retrospective.md`
-- [ ] Run each file and read each failure: every red row fails on its own assertion, not on a missing import
+- [x] Create this plan's worktree by hand (`git worktree add ../dusk-worktrees/admin-plan-worktrees -b plan/admin-plan-worktrees main`) — normal-mode `create` does not exist until Build Phase 1; the worktree is assigned with `indusk worktree assign` at the end of that phase
+- [x] Fixture `apps/indusk-mcp/src/__tests__/helpers/plan-worktree-fixture.ts`: a temp git repo with a plan folder on trunk and a real `git worktree add -b plan/<name>`, a helper to check an item off in the worktree's impl, and a helper to write the record by hand (for A16, A17). Throws when a precondition cannot be established.
+- [x] Tool-call harness `apps/indusk-mcp/src/__tests__/helpers/tool-call.ts`: a stub server whose `registerTool` captures each handler, so a test calls `list_plans` / `get_plan_status` / `advance_plan` the way a client would
+- [x] Author A8–A13 in `apps/indusk-mcp/src/__tests__/plan-worktrees-cli.test.ts` via `runCli`
+- [x] Author A5, A6, A7 (tools half), A14 (tools half), A16 (tools half), A17 in `apps/indusk-mcp/src/__tests__/plan-worktrees-tools.test.ts`
+- [x] Author A1–A4, A7 (admin half), A14 (admin half), A15, A16 (admin half) in `apps/indusk-admin/src/__tests__/http-plan-worktrees.test.ts`, same shape as `http-project-promises.test.ts`
+- [x] Author A18 in `apps/indusk-mcp/src/__tests__/plan-worktrees-skills.test.ts`: reads the package-owned `skills/work.md` and `skills/retrospective.md`
+- [x] Run each file and read each failure: every red row fails on its own assertion, not on a missing import
 
 #### Deferred to Build Phase 4
 
