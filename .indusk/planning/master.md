@@ -145,6 +145,16 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **Bugfix, not a step** (Sandy, 2026-09-18, after 1.52.0: "it looks
+  published, then upgrade says already at the latest, which is the version
+  before"): **`indusk upgrade` says "already at vX" for two different
+  facts** — the registry has nothing newer, and the registry is mid-publish
+  (the `/latest` endpoint answered 1.51.0 at 16:01:30, the tarball landed
+  16:03:22). The message must say what was read and when ("registry
+  reported latest 1.51.0 at 16:01:30 — if you just published, wait a minute
+  and rerun"), and `pnpm release` must not print anything success-shaped
+  before `npm view` returns the new version. Fold into
+  [indusk-release](indusk-release/brief.md).
 - **Bugfix, not a step** (Sandy, 2026-09-18: "it's not telling me that's
   happening — nothing indicates something failed"): **the trunk guard's
   override is silent and its refusal reaches only the model.**
