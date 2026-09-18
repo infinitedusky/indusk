@@ -178,10 +178,21 @@ interface Repository {
 	linked: Map<string, { path: string; branch: string | null }>;
 }
 
-/** The repository `anyCheckout` belongs to, or null when it is not in one. */
+/**
+ * The repository whose checkout `anyCheckout` is the top of, or null.
+ *
+ * Null when it is not in a repository, and also when it is a folder *inside*
+ * one — an InDusk project nested in a larger repository. Assignments bind a
+ * plan to a whole checkout, and the project's copy in a worktree would be a
+ * subfolder of it; resolving that is not done here, so a nested project keeps
+ * reading the folder it was asked about. Climbing to the enclosing repository
+ * instead would list that repository's plans as this project's.
+ */
 async function repositoryOf(anyCheckout: string): Promise<Repository | null> {
 	let list: Awaited<ReturnType<typeof listWorktrees>>;
 	try {
+		const top = await git(anyCheckout, "rev-parse", "--show-toplevel");
+		if (canonical(top) !== canonical(anyCheckout)) return null;
 		list = await listWorktrees(anyCheckout);
 	} catch {
 		return null;
