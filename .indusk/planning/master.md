@@ -143,6 +143,22 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **Bugfix, not a step — do it the moment `day-promises` lands** (Sandy,
+  2026-09-18: "we do not develop on main; we always create worktrees"): the
+  admin UI and the MCP plan tools read a plan from the registered project's
+  working tree, which is the trunk on `main`. Under worktree-per-plan every
+  plan in flight lives on `plan/<name>` in its own worktree, so the live bars
+  admin-ui-phase-progress built never move for the plan being worked, and
+  `advance_plan` reports the trunk copy's unchecked items. Observed on
+  day-promises: `/p/dusk/plan/day-promises` said "impl approved, awaiting
+  /work" while Build Phase 1 was executing. Registering the worktree as a
+  second project was tried and rejected — the worktree is not the project,
+  dusk is. The fix belongs in the one plan inventory (`parseAllPlans` and the
+  per-plan reads behind it): resolve a plan's documents, boundary record and
+  ledger from the worktree whose branch is `plan/<name>` when one exists
+  (`git worktree list --porcelain` on the project path), and say so on the
+  page ("in worktree …"). One resolver, read by the admin and the MCP tools.
+  `/planner bugfix admin-plan-worktrees` when picked up.
 - [indusk-makeover](archive/indusk-makeover/brief.md) — closed 2026-09-14:
   retrospective written 53 days after the impl completed, archived; its two
   deferred rows now say what actually holds them.
