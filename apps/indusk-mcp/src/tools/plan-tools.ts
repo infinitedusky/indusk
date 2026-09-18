@@ -5,6 +5,40 @@ import { getPlanningDir } from "../lib/config.js";
 import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { readPromises } from "../lib/promises/registry.js";
+import { livePlanCopy, type PlanCopy, resolvePlanCopies } from "../lib/worktree/plan-worktrees.js";
+
+/** An unreadable assignment record, as every plan tool reports it: an error naming the file, never a guessed copy. */
+function recordError(file: string, problem: string) {
+	return {
+		content: [
+			{
+				type: "text" as const,
+				text: JSON.stringify(
+					{
+						error: `the plan-worktree assignment record cannot be read: ${problem} — fix or remove it (indusk worktree assign/release rewrite it)`,
+						file,
+					},
+					null,
+					2,
+				),
+			},
+		],
+		isError: true,
+	};
+}
+
+/** What a plan tool adds about where it read the plan: the worktree, or why the trunk copy stands in. */
+function copyFields(copy: PlanCopy | undefined): object {
+	if (!copy) return {};
+	if (copy.source === "worktree") return { worktree: copy.worktree };
+	if ("problem" in copy) return { copyProblem: { kind: copy.problem, detail: copy.detail } };
+	return {};
+}
+
+/** The plan folder a copy names. */
+function planDirOf(copy: PlanCopy): string {
+	return join(getPlanningDir(copy.root), copy.plan);
+}
 
 export function registerPlanTools(server: McpServer, projectRoot: string): void {
 	server.registerTool(
@@ -22,7 +56,15 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			},
 		},
 		async ({ active }) => {
-			const plans = parseAllPlans(projectRoot);
+			// The inventory is the main working tree's, whichever checkout the
+			// server runs in; an assigned plan is re-read from its worktree.
+			const resolved = await resolvePlanCopies(projectRoot);
+			if (!resolved.ok) return recordError(resolved.file, resolved.problem);
+			const plans = parseAllPlans(resolved.projectRoot).map((plan) => {
+				const copy = resolved.copies.get(plan.name);
+				const live = copy?.source === "worktree" ? parsePlan(planDirOf(copy)) : plan;
+				return { ...live, ...copyFields(copy) };
+			});
 			if (!active) {
 				return {
 					content: [{ type: "text" as const, text: JSON.stringify(plans, null, 2) }],
@@ -70,7 +112,9 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			inputSchema: { name: z.string().describe("Plan directory name (e.g. 'mcp-dev-system')") },
 		},
 		async ({ name }) => {
-			const planDir = join(getPlanningDir(projectRoot), name);
+			const live = await livePlanCopy(projectRoot, name);
+			if (!live.ok) return recordError(live.file, live.problem);
+			const planDir = planDirOf(live.copy);
 			const plan = parsePlan(planDir);
 
 			const implPath = join(planDir, "impl.md");
@@ -79,6 +123,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 
 			const result = {
 				...plan,
+				...copyFields(live.copy),
 				implStatus: impl.status,
 				phases: completions,
 			};
@@ -97,13 +142,18 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			inputSchema: { name: z.string().describe("Plan directory name") },
 		},
 		async ({ name }) => {
-			const planDir = join(getPlanningDir(projectRoot), name);
+			const live = await livePlanCopy(projectRoot, name);
+			if (!live.ok) return recordError(live.file, live.problem);
+			const planDir = planDirOf(live.copy);
 			const plan = parsePlan(planDir);
 			const implPath = join(planDir, "impl.md");
 			const impl = parseImpl(implPath);
 
+			const where = copyFields(live.copy);
 			const respond = (result: object) => ({
-				content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+				content: [
+					{ type: "text" as const, text: JSON.stringify({ ...result, ...where }, null, 2) },
+				],
 			});
 
 			// Brief → test plan: brief status must be "accepted"
