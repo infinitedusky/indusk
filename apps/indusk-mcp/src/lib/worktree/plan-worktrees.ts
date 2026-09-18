@@ -7,8 +7,9 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import { git, gitCommonDir, listWorktrees } from "../git.js";
+import { git, listWorktrees } from "../git.js";
 import { isUsableSegment } from "../path-segment.js";
+import { gitCommonDirOf } from "./layout.js";
 import { isWorkbench } from "./repos.js";
 
 /**
@@ -136,12 +137,14 @@ function parseRecord(text: string, file: string): RecordRead {
 	return { ok: true, file, assignments: body.assignments as Assignment[] };
 }
 
-async function recordPath(anyCheckout: string): Promise<string> {
-	return join(canonical(await gitCommonDir(anyCheckout)), RECORD_FILE);
+function recordPath(anyCheckout: string): string {
+	const common = gitCommonDirOf(anyCheckout);
+	if (!common) throw new PlanWorktreeRefusal(`${anyCheckout} is not inside a git repository`);
+	return join(canonical(common), RECORD_FILE);
 }
 
 async function readRecord(anyCheckout: string): Promise<RecordRead> {
-	const file = await recordPath(anyCheckout);
+	const file = recordPath(anyCheckout);
 	if (!existsSync(file)) return { ok: true, file, assignments: [] };
 	let text: string;
 	try {

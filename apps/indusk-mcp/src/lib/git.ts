@@ -160,8 +160,3 @@ export async function listWorktrees(root: string): Promise<GitWorktree[]> {
 	}
 	return entries;
 }
-
-/** The repository's shared git directory, absolute — common to the trunk and every worktree. */
-export async function gitCommonDir(root: string): Promise<string> {
-	return git(root, "rev-parse", "--path-format=absolute", "--git-common-dir");
-}

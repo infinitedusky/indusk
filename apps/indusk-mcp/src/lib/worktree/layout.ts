@@ -73,6 +73,25 @@ export function listWorkbenchSubdirs(root: string): string[] {
 }
 
 /**
+ * The shared git directory of the repository `path` is in — absolute, the
+ * same from the trunk and from every linked worktree — or null when `path` is
+ * not in a repository. The one place anything asks git for it: attribution
+ * here and the plan-worktree record both depend on the answer, and two copies
+ * of the spawn would be two answers to diverge.
+ */
+export function gitCommonDirOf(path: string): string | null {
+	const r = spawnSync(
+		"git",
+		["-C", path, "rev-parse", "--path-format=absolute", "--git-common-dir"],
+		{
+			encoding: "utf-8",
+		},
+	);
+	if (r.status !== 0 || !r.stdout) return null;
+	return r.stdout.trim();
+}
+
+/**
  * Which declared repo does this worktree belong to?
  *
  * Asked of git rather than inferred from the slug: `--git-common-dir` resolves
@@ -85,13 +104,8 @@ export function listWorkbenchSubdirs(root: string): string[] {
  * quietly assigned to the first repo.
  */
 export function worktreeOwner(worktreePath: string, repoPaths: Map<string, string>): string | null {
-	const r = spawnSync(
-		"git",
-		["-C", worktreePath, "rev-parse", "--path-format=absolute", "--git-common-dir"],
-		{ encoding: "utf-8" },
-	);
-	if (r.status !== 0 || !r.stdout) return null;
-	const commonDir = r.stdout.trim();
+	const commonDir = gitCommonDirOf(worktreePath);
+	if (!commonDir) return null;
 	for (const [name, repoPath] of repoPaths) {
 		try {
 			if (realpathSync(commonDir).startsWith(realpathSync(repoPath))) return name;
