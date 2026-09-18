@@ -1,7 +1,7 @@
 ---
 title: "Plans in worktrees show their progress"
 date: 2026-09-18
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -88,6 +88,10 @@ guessed.
 | A23 | Twelve `indusk worktree assign` runs started at once, for twelve plans and twelve worktrees, leave all twelve assignments in the record | Build Phase 5 | Build Phase 5 | passing |
 | A24 | `indusk worktree create <plan>` where `<project>-worktrees/<plan>` exists as a plain folder (what a removed worktree leaves behind) refuses naming it as not a worktree and saying to remove it, and never advises `indusk worktree assign`, which would refuse it | Build Phase 5 | Build Phase 5 | passing |
 | A25 | `indusk worktree create <plan>` run while the trunk is checked out on a branch outside `worktree.trunk_guard.branches` (default `main`, `master`) refuses naming that branch, instead of forking `plan/<plan>` from it | Build Phase 5 | Build Phase 5 | passing |
+| A26 | `git worktree list --porcelain` has one parser under `src/lib` (`parseWorktreeList` in `lib/git.ts`), read by both the plan resolver and `detectTreeContext`, which still classifies trunk vs worktree as before | Build Phase 6 | Build Phase 6 | planned |
+| A27 | The "where was this plan read from" report — `worktree`, `archivedInWorktree`, `copyProblem` — is derived in one place (`copySource` in `plan-worktrees.ts`) and the plan tools and the admin both use it; neither maps a copy by hand | Build Phase 6 | Build Phase 6 | planned |
+| A28 | The trunk-branch list is read by `lib/config.ts` (`getTrunkBranches`, default in the reader like `getSweepTtlMinutes`); nothing under `src/lib/worktree/` parses `.indusk/config.json` itself, and A25 still holds | Build Phase 6 | Build Phase 6 | planned |
+| A29 | The record — its file, format, parse, lock and write — lives in one module (`plan-worktree-record.ts`) and nothing else under `src/lib` reads or writes `indusk-plan-worktrees.json`; A1–A25 pass unchanged after the split | Build Phase 6 | Build Phase 6 | planned |
 
 **Moved during Build Phase 1 (2026-09-18):** A8, A9 and A12 pass at Build Phase 2, not 1. Each asserts that "the plan reads from" a copy, and it asks the MCP plan tool, which learns to read the assignment in Build Phase 2; the impl sequenced them one phase early. A12 was also strengthened: it now checks the worktree is read *while assigned* before checking the trunk is read after release, because "trunk after release" alone is what a reader that ignores assignments shows, and it had passed that way. The commands' own refusals and the clean-tree row (A10, A11, A13) pass at Build Phase 1 as planned.
 
@@ -121,6 +125,10 @@ on its own assertion today.
   - **A23** — `assignPlan` reads the record, validates, and writes it back with nothing held between the read and the write. Two sessions creating or assigning worktrees at the same time each write their own list, and the later write drops the earlier assignment: that plan silently reads the trunk again, which is the bug this plan exists to fix. `lib/agents/lock.ts` (`withLock`) is the project's lock for exactly this between processes on one machine. If twelve concurrent runs cannot be made to lose an update against today's code, `/work` records that the red could not be demonstrated and keeps the row as a regression guard, rather than calling it green.
   - **A24** — `createPlanWorktree` refuses an existing target folder with "assign it with `indusk worktree assign <plan> <path>`, or remove it"; `assignPlan` refuses any path that is not a linked worktree. So for the most common existing folder — the ignored files a `git worktree remove --force` leaves behind, three of which sit in `dusk-worktrees/` today — the advice names a command that refuses too.
   - **A25** — `createPlanWorktree` bases `plan/<plan>` on the trunk's *current* branch. A trunk left on any other branch forks the new plan from that branch's unmerged work, with nothing said. The trunk guard already defines which branches are trunk (`worktree.trunk_guard.branches`, default `main`/`master`).
+
+#### Deferred to Build Phase 6
+
+- **A26–A29** — cleanup rows (`/cleanup`, 2026-09-18): each pins a unit the Cleanup Phase extracts (`parseWorktreeList`, `copySource`, `getTrunkBranches`, `plan-worktree-record.ts`), so a count or import of it cannot be written before that phase. Each pairs a structural count over `src/lib` (the single-definition pattern of `head-sha-single-definition.test.ts`) with the behaviour rows that already cover the unit (A5, A6, A21 for the report; A10–A13, A23 for the record; A25 for the branch list; the existing `decision.ts` tests for `detectTreeContext`).
 
 #### Regression Guards
 
@@ -275,6 +283,34 @@ on its own assertion today.
 #### Build Phase 5 Document
 
 - [x] Update `apps/docs/src/reference/cli/worktree.md` (the new refusals, the lock, the archived-in-worktree and missing rows of "What a reader sees") and the matching table in `apps/docs/src/reference/admin-ui/overview.md`
+
+### Build Phase 6: Cleanup — one parser, one report, one config reader, the record in its own module
+
+**Goal**: decompose what this plan grew across files, per the codebase's single-definition rule ("a primitive kept in a domain folder gets copied by the next domain") and one reason to change per module. The plan left two parsers of git's worktree list, two hand-written mappings from a plan copy to its report fields (tools and admin), a private reader of `.indusk/config.json` beside the typed one, and a 565-line resolver module carrying three concerns. No domain extension (`nextjs`, `react`) is enabled in this repo, so every move is "extract a function or module".
+
+- [ ] Extract `parseWorktreeList(porcelain): GitWorktree[]` in `lib/git.ts` — the pure parse `listWorktrees` does inline — and have `decision.ts` use it instead of its private `parseMainWorktree` (its runner stays injectable: it parses the string its runner returns). Basis: two parsers of one git output diverge silently; git primitives live in `lib/git.ts`
+- [ ] Add `copySource(copy): { worktree?, archivedInWorktree?, copyProblem? }` to `plan-worktrees.ts`, exported through the subpath, with its return type as the one definition of those fields; replace `copyFields` in `plan-tools.ts` and the mapping in the admin's `readActivePlans`, and type the admin `Plan`'s three fields from it. Basis: rule of two across packages that are required to agree — the admin reuses the package's parsers, never re-derives
+- [ ] Move the trunk-branch list into `lib/config.ts`: `trunk_guard?: { enabled?: boolean; branches?: string[] }` on `WorktreeConfig` and `getTrunkBranches(projectRoot)` with the `main`/`master` default in the reader, as `getSweepTtlMinutes` does; `createPlanWorktree` calls it and `trunkBranches` goes; the hook's comment names the new home. Basis: one reader of the config file, defaults in the reader
+- [ ] Split `plan-worktrees.ts` (565 lines): the record — `RECORD_FILE`, `Assignment`, parse and validate, path, read, `updateRecord` under the lock, write, and the one unreadable-record refusal (today spelled twice, in `updateRecord` and `readRecordOrRefuse`) — to `lib/worktree/plan-worktree-record.ts`; `assignPlan`, `releasePlan`, `createPlanWorktree` and `PlanWorktreeRefusal` to `lib/worktree/plan-worktree-commands.ts`, which the CLI imports; `plan-worktrees.ts` keeps the resolver (`resolvePlanCopies`, `livePlanCopy`, `copySource`, the copy types) and stays the published subpath. Basis: one reason to change per module — the record's format, the resolution rules and the commands' refusals change for different reasons
+- [ ] (reviewed `apps/indusk-mcp/package.json` — left as-is: the 286-line diff is Biome converting two-space indentation to tabs when Build Phase 1 ran `biome check --write` on it; tabs are this repo's `indentStyle` and the root and docs `package.json` already use them, so reverting would restore the one nonconforming layout)
+- [ ] (reviewed `src/bin/cli.ts` (862 lines) and `src/bin/commands/worktree.ts` (485) — left as-is: this plan added two command registrations and three handlers in each file's existing shape; both files are one cohesive command surface, and their size predates the plan)
+- [ ] (reviewed `apps/indusk-mcp/skills/planner.md` and `work.md` — left as-is: prose over the cap before this plan, touched by a sentence and a paragraph)
+- [ ] (reviewed the admin's `http-plan-worktrees.test.ts` inline repository builder — left as-is: it repeats `helpers/plan-worktree-fixture.ts`, but test helpers are package-scoped and the admin cannot import the mcp package's `__tests__` without coupling two packages' test lanes)
+- [ ] (reviewed `apps/indusk-admin/src/components/Worktrees.tsx` — left as-is: four small server components on one subject, each used once, already one module after Build Phase 3's Shape finding)
+
+#### Build Phase 6 Verification
+
+- [ ] A26–A29 authored as counts in `apps/indusk-mcp/src/__tests__/plan-worktrees-single-definition.test.ts` and passing (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-single-definition.test.ts`)
+- [ ] Behaviour parity: A1–A25 and the `decision.ts` tests pass unchanged (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts src/__tests__/plan-worktrees-tools.test.ts src/lib/worktree` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-plan-worktrees.test.ts`)
+- [ ] Typecheck both packages (`pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit`, `pnpm --filter indusk-admin exec tsc --noEmit`)
+
+#### Build Phase 6 Context
+
+- [ ] Add the eighth single definition to the Known Gotchas list: `parseWorktreeList` (`lib/git.ts`) and the plan-worktree record module, pinned by `plan-worktrees-single-definition.test.ts`; update the live-copy convention for the three modules and `getTrunkBranches`
+
+#### Build Phase 6 Document
+
+- [ ] Update `apps/docs/src/reference/cli/worktree.md`'s last paragraph: the resolver, record and commands modules, and `copySource` as the one report shape the tools and admin share
 
 ## Files Affected
 
