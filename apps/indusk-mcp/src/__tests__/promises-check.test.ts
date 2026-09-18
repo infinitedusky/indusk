@@ -334,6 +334,58 @@ describe.skipIf(SHOULD_SKIP)("indusk promises check — refusals by name", () =>
 	});
 
 	it("the token form is the one the fixture writes", () => {
-		expect(token("x-y")).toBe("promise: x-y");
+		// Built by join so this source line is not itself a quoted citation
+		// when the check runs against this repository.
+		expect(token("x-y")).toBe(["promise:", "x-y"].join(" "));
+	});
+
+	it("A2: a bare `promise:` that is a type annotation, a lockfile entry or a YAML key is not a citation", () => {
+		// Found by running the check against this repository: it has a field
+		// named `promise`, and a package called `promise` in its lockfile. The
+		// YAML sample is assembled so that this file's own source does not
+		// carry a quoted token either.
+		const yamlKey = ["promise:", "not-a-citation"].join(" ");
+		const p = promiseProject(
+			withClean((o) => {
+				o.files = {
+					...o.files,
+					"src/types.ts":
+						"export interface Incident {\n\tpromise: string;\n}\nconst x = { promise: spec.promise };\n",
+					"pnpm-lock.yaml": "packages:\n  promise: 4\n    resolution: {}\n",
+					"config.yaml": `${yamlKey}\nother: 1\n`,
+				};
+			}),
+		);
+		const r = check(p.root);
+		expect(r.code, r.stderr).toBe(0);
+	});
+
+	it("A2: the token counts after a comment opener or inside a quote, in any language", () => {
+		const known = token("seat-never-double-booked");
+		const p = promiseProject(
+			withClean((o) => {
+				o.files = {
+					...o.files,
+					"src/a.py": `@traced("x", expects="${known}")\n`,
+					"src/b.rb": `# ${known}\n`,
+					"src/c.sql": `-- ${known}\n`,
+					"src/d.ts": `/**\n * ${known}\n */\n`,
+					"src/e.html": `<!-- ${known} -->\n`,
+				};
+			}),
+		);
+		// Every one of these names a registered promise, so nothing is refused —
+		// the way to see they were READ is the negative: rename one to a
+		// promise that does not exist.
+		expect(check(p.root).code).toBe(0);
+		const stray = promiseProject(
+			withClean((o) => {
+				o.files = { ...o.files, "src/a.py": `@traced("x", expects="${token("nope")}")\n` };
+			}),
+		);
+		const r = check(stray.root);
+		expect(r.code).toBe(2);
+		expect(r.stderr).toContain("src/a.py");
+		expect(r.stderr).toContain("nope");
 	});
 });
