@@ -218,6 +218,7 @@ const config = defineConfig({
 						{ text: "Test phases as structure", link: "/decisions/test-phase-structure" },
 						{ text: "Tests-First Planning — Decision Summary", link: "/decisions/tests-first-planning" },
 						{ text: "Planner Hotfix Mode (salvaged, never merged)", link: "/decisions/planner-hotfix-mode" },
+						{ text: "Promises", link: "/decisions/day-promises" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
 						{ text: "Worktree Visibility", link: "/decisions/worktree-visibility" },
