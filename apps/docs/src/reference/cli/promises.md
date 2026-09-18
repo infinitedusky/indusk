@@ -87,14 +87,20 @@ export function holdSeat(table: Table, seat: number, player: Player) { … }
 ```
 
 That is what makes the check language-agnostic. Two rules keep it from
-reading a type annotation or a lockfile as a citation: the token must
-**follow a comment opener or a quote on the same line** (`//`, `#`, `*`,
-`--`, `;`, `<!--`, `"`, `'`, `` ` ``), and a name starts with a letter. So
-`{ promise: string }` in a type, `promise: 4` in a lockfile and a `promise:`
-key at the start of a YAML line are not citations; `// promise: x`,
-`# promise: x`, `* promise: x` in a docblock and `"promise: x"` in a string
-are. The check proves a test *names* the promise; that it *validates* it is
-Day step 6 (binding).
+reading a type annotation or a lockfile as a citation, and a name starts
+with a letter. **Where a token may sit** on its line:
+
+| Before the token | Counts? | Example |
+|---|---|---|
+| `//`, `#`, `/*` or `<!--` anywhere earlier on the line, any text between | yes | `// enforces promise: seat-never-double-booked` |
+| `*`, `--` or `;` at the start of the line (after indentation), any text between | yes | ` * see promise: x` in a docblock, `-- promise: x` in SQL |
+| a quote (`"`, `'`, `` ` ``) directly before | yes | `expects="promise: x"` |
+| anything else | no | `{ promise: string }` in a type, `promise: 4` in a lockfile, a `promise:` key at the start of a YAML line, `const s = "a"; type T = { promise: string }` |
+
+The check proves a test *names* the promise; that it *validates* it is Day
+step 6 (binding). A promise may carry `aliases:` — earlier spellings — and a
+site or test naming an alias names the promise; an alias may not be a live
+promise's name and may not be shared by two promises.
 
 ### Domains
 
@@ -129,7 +135,10 @@ is never reported as clean.
 | No `.indusk/promises/` directory | the path where one is expected |
 | An entry missing `name`, `kind`, `state`, `domain`, `owner`, or its statement; a name that does not match the file; malformed frontmatter | the file and the field — never skipped |
 | A domain not in `promises.domains`; an empty or missing list | the domain, the declared list, and the config key |
-| An owner that is not a folder under `.indusk/planning/` or `.indusk/planning/archive/` | the owner |
+| An owner that is not a *directory* under `.indusk/planning/` or `.indusk/planning/archive/` — a missing name, a file such as `master.md`, or the `archive` folder itself | the owner, and which of the three it is |
+| An `enforced` promise listing an incident whose `status` is `open` | the promise and the incident — an open incident says it is broken now: mark the incident fixed or the promise `known-violated` |
+| A `sites:` or `tests:` entry that is absolute or contains `..` | the entry and the path — the check never reads outside the code root |
+| An alias that is a live promise's name, or shared by two promises | both files |
 | An `enforced` `behaviour` or `state` promise with no test naming it, or no code site naming it | the promise and the missing link |
 | An `enforced` `structure` promise with no test naming it (sites are optional for structure) | the promise |
 | A listed site or test that does not exist, or does not carry the token | the promise and the file |
