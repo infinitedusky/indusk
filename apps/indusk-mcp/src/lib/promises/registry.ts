@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
-import { isUsableSegment } from "../path-segment.js";
+import { isUsableRelPath, isUsableSegment } from "../path-segment.js";
 import {
 	INCIDENT_SOURCES,
 	INCIDENT_STATUSES,
@@ -169,6 +169,21 @@ export function promiseProblem(value: unknown, stem: string, statement: string):
 		if (v[key] !== undefined && !isStringList(v[key]))
 			return `\`${key}\` must be a list of strings`;
 	}
+	// A31: a link path is joined onto the code root by the check, so it must
+	// be a relative path that cannot leave it — refused here, at read time,
+	// before anything joins it.
+	for (const key of ["sites", "tests"] as const) {
+		for (const rel of (v[key] as string[] | undefined) ?? []) {
+			if (!isUsableRelPath(rel)) {
+				return `\`${key}\` entry "${rel}" must be a relative path inside the code root (no leading \`/\`, no \`..\`)`;
+			}
+		}
+	}
+	for (const alias of (v.aliases as string[] | undefined) ?? []) {
+		if (!PROMISE_NAME.test(alias) || !isUsableSegment(alias)) {
+			return `\`aliases\` entry "${alias}" is not kebab-case (${PROMISE_NAME})`;
+		}
+	}
 	if (v.superseded_by !== undefined && typeof v.superseded_by !== "string") {
 		return "`superseded_by` must be a promise name";
 	}
@@ -314,7 +329,46 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 		});
 	}
 
+	problems.push(...aliasProblems(promises));
+
 	const registry: Registry = { dir, promises, incidents };
 	if (problems.length > 0) return { ok: false, problems, partial: registry };
 	return { ok: true, registry };
+}
+
+/**
+ * Do the aliases resolve to exactly one live promise each? (A29.) A
+ * registry-wide fact, judged after every entry is read: an alias equal to a
+ * live name, or shared by two entries, would make the check pick a winner
+ * silently. Every file involved is named.
+ */
+export function aliasProblems(promises: readonly PromiseEntry[]): RegistryProblem[] {
+	const problems: RegistryProblem[] = [];
+	const byName = new Map(promises.map((p) => [p.name, p]));
+	const aliasOwners = new Map<string, PromiseEntry[]>();
+	for (const p of promises) {
+		for (const alias of p.aliases) {
+			const live = byName.get(alias);
+			if (live) {
+				problems.push({
+					file: p.file,
+					problem: `alias "${alias}" is also a live promise (${live.file}) — an alias must name a retired spelling, never a current promise`,
+				});
+			}
+			aliasOwners.set(alias, [...(aliasOwners.get(alias) ?? []), p]);
+		}
+	}
+	for (const [alias, owners] of aliasOwners) {
+		if (owners.length < 2) continue;
+		for (const p of owners) {
+			problems.push({
+				file: p.file,
+				problem: `alias "${alias}" is shared with ${owners
+					.filter((o) => o !== p)
+					.map((o) => o.file)
+					.join(", ")} — an alias resolves to exactly one promise`,
+			});
+		}
+	}
+	return problems;
 }

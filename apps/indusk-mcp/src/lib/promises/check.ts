@@ -99,20 +99,42 @@ function registryFile(rel: string): string {
 	return `${PROMISES_REL_DIR}/${rel}`;
 }
 
-type OwnerStatus = "active" | "archived" | "missing";
+type OwnerStatus = "active" | "archived" | "missing" | "not-a-folder" | "archive-folder";
 
+/**
+ * A plan is a DIRECTORY under `.indusk/planning/` or its `archive/`, and
+ * `archive` itself is not one (A28: a file such as `master.md` and the
+ * archive folder both satisfied a bare `existsSync`).
+ */
 function ownerStatus(planRoot: string, owner: string): OwnerStatus {
 	if (!isUsableSegment(owner)) return "missing";
-	if (existsSync(join(planRoot, ".indusk", "planning", owner))) return "active";
-	if (existsSync(join(planRoot, ".indusk", "planning", "archive", owner))) return "archived";
+	if (owner === "archive") return "archive-folder";
+	const planning = join(planRoot, ".indusk", "planning");
+	for (const [dir, status] of [
+		[join(planning, owner), "active"],
+		[join(planning, "archive", owner), "archived"],
+	] as const) {
+		if (!existsSync(dir)) continue;
+		return statSync(dir).isDirectory() ? status : "not-a-folder";
+	}
 	return "missing";
 }
 
-/** Whether `rel` under `codeRoot` exists and carries the token for `name`. */
-function fileNames(codeRoot: string, rel: string, name: string): "missing" | "unnamed" | "named" {
+/**
+ * Whether `rel` under `codeRoot` exists and carries the token for `name` or
+ * any of its `aliases` (A29: the reverse scan resolved aliases, the link
+ * check did not). `rel` has already passed `isUsableRelPath` at read time
+ * (A31), so the join cannot leave the code root.
+ */
+function fileNames(
+	codeRoot: string,
+	rel: string,
+	names: readonly string[],
+): "missing" | "unnamed" | "named" {
 	const abs = join(codeRoot, rel);
 	if (!existsSync(abs) || !statSync(abs).isFile()) return "missing";
-	return promiseTokenPattern(name).test(readFileSync(abs, "utf-8")) ? "named" : "unnamed";
+	const text = readFileSync(abs, "utf-8");
+	return names.some((n) => promiseTokenPattern(n).test(text)) ? "named" : "unnamed";
 }
 
 function looksBinary(buf: Buffer): boolean {
@@ -170,7 +192,7 @@ function linkRefusals(
 		["test", p.tests],
 	] as const) {
 		for (const rel of list) {
-			const state = fileNames(codeRoot, rel, p.name);
+			const state = fileNames(codeRoot, rel, [p.name, ...p.aliases]);
 			if (state === "missing") {
 				refusals.push({
 					file: registryFile(p.file),
@@ -179,7 +201,7 @@ function linkRefusals(
 			} else if (state === "unnamed") {
 				refusals.push({
 					file: registryFile(p.file),
-					message: `${p.name}: ${rel} is listed as a ${kind} but does not carry "promise: ${p.name}"`,
+					message: `${p.name}: ${rel} is listed as a ${kind} but does not carry "promise: ${p.name}"${p.aliases.length > 0 ? ` (or an alias: ${p.aliases.join(", ")})` : ""}`,
 				});
 			} else if (kind === "code site") sites += 1;
 			else tests += 1;
@@ -198,8 +220,18 @@ function stateRefusals(
 	const owner = ownerStatus(planRoot, p.owner);
 	if (owner === "missing") {
 		refusals.push({
-			file: p.file,
+			file: registryFile(p.file),
 			message: `${p.name}: owner "${p.owner}" is not a plan folder under .indusk/planning/ or .indusk/planning/archive/`,
+		});
+	} else if (owner === "not-a-folder") {
+		refusals.push({
+			file: registryFile(p.file),
+			message: `${p.name}: owner "${p.owner}" is a file, not a plan folder — a plan is a directory under .indusk/planning/ or .indusk/planning/archive/`,
+		});
+	} else if (owner === "archive-folder") {
+		refusals.push({
+			file: registryFile(p.file),
+			message: `${p.name}: owner "archive" is the archive folder, not a plan — name the archived plan itself`,
 		});
 	}
 
@@ -230,6 +262,14 @@ function stateRefusals(
 		}
 		case "enforced": {
 			const { sites, tests } = linkRefusals(codeRoot, p, refusals);
+			for (const id of p.incidents) {
+				if (incidentsById.get(id)?.status === "open") {
+					refusals.push({
+						file: registryFile(p.file),
+						message: `${p.name}: enforced, but incident "${id}" is open — an open incident says the promise is broken now; mark the incident fixed or the promise known-violated`,
+					});
+				}
+			}
 			if (tests === 0) {
 				refusals.push({
 					file: registryFile(p.file),

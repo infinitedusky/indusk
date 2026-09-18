@@ -56,7 +56,7 @@ export const PROMISE_NAME = /^[a-z][a-z0-9-]*$/;
  *
  * Two rules keep a bare `promise:` from reading as a citation where it is
  * only a word — found by running the check against this repository, which
- * has a field named `promise` (`{ promise: string }`), a test example, and a
+ * has a field named `promise` (a `{ promise: <type> }` annotation), a test example, and a
  * package called `promise` in its lockfile (`promise: 4`):
  *
  *   1. the token must FOLLOW a comment opener or a quote on the same line —
@@ -68,8 +68,15 @@ export function promiseToken(name: string): string {
 	return `promise: ${name}`;
 }
 
-/** What may sit before the token on its line: a comment opener or a quote, then horizontal space. */
-const TOKEN_OPENER = String.raw`(?<=(?:\/\/|#|\*|--|;|<!--|["'${"`"}])[ \t]*)`;
+/**
+ * What may sit before the token on its line (A27, the falsification's
+ * refinement of rule 1): a comment opener anywhere EARLIER on the line
+ * (`//`, `#`, `/*`, `<!--` — so `// enforces` followed by the token counts), a
+ * line-leading docblock, SQL or ini opener (`*`, `--`, `;`) with any text
+ * after it, or a quote DIRECTLY before the token (so a type annotation on a
+ * line with an earlier string literal still does not count).
+ */
+const TOKEN_OPENER = String.raw`(?<=(?:(?:\/\/|#|\/\*|<!--)[^\n]*|(?:^|\n)[ \t]*(?:\*|--|;)[^\n]*|["'${"`"}][ \t]*))`;
 
 /** Matches the token for one specific name. */
 export function promiseTokenPattern(name: string): RegExp {
