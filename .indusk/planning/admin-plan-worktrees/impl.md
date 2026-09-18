@@ -99,6 +99,7 @@ on its own assertion today.
 - [x] Author A1–A4, A7 (admin half), A14 (admin half), A15, A16 (admin half) in `apps/indusk-admin/src/__tests__/http-plan-worktrees.test.ts`, same shape as `http-project-promises.test.ts`
 - [x] Author A18 in `apps/indusk-mcp/src/__tests__/plan-worktrees-skills.test.ts`: reads the package-owned `skills/work.md` and `skills/retrospective.md`
 - [x] Run each file and read each failure: every red row fails on its own assertion, not on a missing import
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Deferred to Build Phase 4
 
@@ -110,16 +111,16 @@ on its own assertion today.
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A18 authored; A7 passes; every other row fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts src/__tests__/plan-worktrees-tools.test.ts src/__tests__/plan-worktrees-skills.test.ts` and `pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-plan-worktrees.test.ts`)
-- [ ] The A19 deferral reviewed: it names a procedure that can run at Build Phase 4 and asserts what the test plan claims
+- [x] A1–A18 authored; A7 passes; every other row fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts src/__tests__/plan-worktrees-tools.test.ts src/__tests__/plan-worktrees-skills.test.ts` and `pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-plan-worktrees.test.ts`)
+- [x] The A19 deferral reviewed: it names a procedure that can run at Build Phase 4 and asserts what the test plan claims
 
 #### Test Phase 1 Context
 
-- [ ] Add to Known Gotchas (tests): tests that need a plan in a worktree use `helpers/plan-worktree-fixture.ts` (a real `git worktree add`; a one-checkout fixture cannot show this bug), and MCP tools are called through `helpers/tool-call.ts`
+- [x] Add to Known Gotchas (tests): tests that need a plan in a worktree use `helpers/plan-worktree-fixture.ts` (a real `git worktree add`; a one-checkout fixture cannot show this bug), and MCP tools are called through `helpers/tool-call.ts`
 
 #### Test Phase 1 Document
 
-- [ ] Changelog Unreleased entry opened in `apps/docs/src/changelog.md` ("Fixed — plans worked in a worktree show their progress"), filled in as phases land
+- [x] Changelog Unreleased entry opened in `apps/docs/src/changelog.md` ("Fixed — plans worked in a worktree show their progress"), filled in as phases land
 
 ### Build Phase 1: The record, the resolver, the commands
 
