@@ -23,6 +23,11 @@ import {
   parseTrajectory,
   type Trajectory,
 } from "@infinitedusky/indusk-mcp/trajectory/parser";
+import {
+  type PlanCopy,
+  resolvePlanCopies,
+  type WorktreeRef,
+} from "@infinitedusky/indusk-mcp/worktree/plan-worktrees";
 import matter from "gray-matter";
 import { type BoundaryRead, readProjectBoundaries } from "./project-reader";
 
@@ -119,6 +124,19 @@ export interface Plan {
    * guessing an active phase from a partial record.
    */
   boundaryError?: string;
+  /** The worktree this plan was read from, when it is assigned to one (admin-plan-worktrees). */
+  worktree?: WorktreeRef;
+  /**
+   * Why the trunk copy is shown although the plan is assigned: its worktree
+   * is gone, or two live worktrees claim it. `detail` names every path.
+   */
+  copyProblem?: { kind: "gone" | "doubled"; detail: string };
+  /**
+   * Set when the assignment record cannot be read. The plan then carries its
+   * name and nothing read from any copy: which copy is live is unknown, and
+   * the page says so rather than drawing one.
+   */
+  copyError?: { file: string; problem: string };
   /** True when ANY document in the plan failed to parse (malformed YAML frontmatter). */
   malformed?: boolean;
   /**
@@ -351,14 +369,71 @@ async function listPlanFolders(dir: string): Promise<string[]> {
  * documents result in `undefined` fields rather than errors.
  */
 export async function readActivePlans(projectRoot: string): Promise<Plan[]> {
-  const planningDir = join(projectRoot, PLANNING_DIR);
-  const folders = await listPlanFolders(planningDir);
-  const boundaries = await readProjectBoundaries(projectRoot);
+  const resolved = await resolvePlanCopies(projectRoot);
+  const root = resolved.projectRoot;
+  const folders = await listPlanFolders(join(root, PLANNING_DIR));
+  if (!resolved.ok) {
+    const copyError = { file: resolved.file, problem: resolved.problem };
+    return folders.map((name) => ({
+      name,
+      status: "unknown",
+      archived: false,
+      copyError,
+    }));
+  }
+  // Boundary records are per checkout: a plan in a worktree opened its
+  // phases there. Read each live root's file once.
+  const boundariesByRoot = new Map<string, Promise<BoundaryRead>>();
+  const boundariesOf = (at: string) => {
+    let read = boundariesByRoot.get(at);
+    if (!read) {
+      read = readProjectBoundaries(at);
+      boundariesByRoot.set(at, read);
+    }
+    return read;
+  };
   return Promise.all(
-    folders.map((name) =>
-      readPlanFolder(join(planningDir, name), name, false, boundaries),
-    ),
+    folders.map(async (name) => {
+      const copy: PlanCopy = resolved.copies.get(name) ?? {
+        plan: name,
+        root,
+        source: "trunk",
+      };
+      const plan = await readPlanFolder(
+        join(copy.root, PLANNING_DIR, name),
+        name,
+        false,
+        await boundariesOf(copy.root),
+      );
+      if (copy.source === "worktree")
+        return { ...plan, worktree: copy.worktree };
+      if ("problem" in copy) {
+        return {
+          ...plan,
+          copyProblem: { kind: copy.problem, detail: copy.detail },
+        };
+      }
+      return plan;
+    }),
   );
+}
+
+/**
+ * The project's worktrees as the sidebar shows them: those holding no plan
+ * assignment, and the record's error when it cannot be read.
+ */
+export async function readProjectWorktrees(projectRoot: string): Promise<
+  | {
+      ok: true;
+      unassigned: { name: string; path: string; branch: string | null }[];
+    }
+  | { ok: false; file: string; problem: string }
+> {
+  const resolved = await resolvePlanCopies(projectRoot);
+  if (!resolved.ok) {
+    return { ok: false, file: resolved.file, problem: resolved.problem };
+  }
+  return { ok: true, unassigned: resolved.unassigned };
 }
 
 /**
