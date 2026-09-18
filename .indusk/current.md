@@ -16,6 +16,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-09-15: composable.env removed from dusk (ce.json, env/, scripts, dev dep); Doppler is the env layer. indusk-mcp reads its secrets from `~/.indusk/config.env`, not Doppler — do not map it. **Direction**: indusk-admin will be hosted on a server eventually; keep its Doppler mapping, and create the missing `admin` config in the Doppler `indusk` project when that plan starts (it needs a data source before it needs secrets).
 - 2026-09-16: the admin plan page polls itself every `admin.refresh_ms` (default 5000, floor 1000; `.indusk/config.json`, never written by `update`). **Revisit the default on 2026-09-30** after two weeks of use — too slow to feel live, or loading the daemon? (admin-ui-phase-progress U2.)
 - 2026-08-30: the 2026-08-16 publish blockers are all resolved — `LEGACY_HOOKS` removal shipped (`lib/hook-migration.ts`; `check-plan-order.js` gone from disk and settings), the changelog was split per release in 1.36.2, and the batch published through 1.40.x. CLAUDE.md no longer carries version/plan-table copies; operational blockers belong here.
+- 2026-09-17: **1.51.0 published** to npm at 2026-09-18T00:03:18Z from release commit 7f4297bc — by the SECOND `pnpm release` run (browser 2FA confirmed). The first run's `record-release.js` mark was written on pnpm's exit code alone and nothing reached the registry; the mark now says only what `npm view` confirms.
 
 ---
 

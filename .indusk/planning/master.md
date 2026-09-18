@@ -167,6 +167,22 @@ lesson title, or a chat log.
   here so it is not the habit. Also: this session's hooks were *not*
   snapshotted at start — the guard fired on the first Edit after landing —
   so the CLAUDE.md gotcha's "hooks snapshot at start" claim needs checking.
+  (d) 1.51.0: `record-release.js` wrote "published" because `pnpm publish`
+  exited 0, and the registry never received the version. The mark must be
+  earned, not inferred from an exit code: `record-release` should `npm view
+  <pkg>@<version>` (bounded, like the guard's lookup) and write "published"
+  only when the registry answers, otherwise write "publish reported success
+  but the registry has no <version>" — the health line's `versionStateProblem`
+  already distinguishes the two states. Owner: `indusk-release` (S1).
+  Outcome: the second `pnpm release` run (browser 2FA confirmed) published
+  1.51.0 at 2026-09-18T00:03:18Z; the first run's mark was false.
+  (e) Found by the third run: the guard's "already on the registry" refusal
+  hung forever — its message quoted `` `pnpm release` `` inside double quotes,
+  so bash ran it as a command substitution and the guard re-entered `pnpm
+  release` recursively. The path had never executed before (no version had
+  been republished). Fixed on `plan/release-guard-backticks` with single
+  quotes and verified against the published 1.51.0: the guard refuses and
+  returns.
 - **Shipped, archived**: `work-autopilot` (the work skill's autopilot mode),
   `compaction-skill` (`/compact-context`), `falsify-phase-authoring` (1.27.4),
   `local-telemetry`, `doppler-extension` — residue named per folder.
