@@ -96,6 +96,10 @@ describe.skipIf(SHOULD_SKIP)("admin-plan-worktrees CLI", () => {
 		const wt = p.addWorktree("to-release", "plan/demo");
 		p.checkOff(wt, "first item");
 		expect(runCli(p.trunk, ["worktree", "assign", PLAN, wt]).code).toBe(0);
+		// Read from the worktree while assigned — without this, "reads from trunk
+		// after release" is also what a reader that ignores assignments shows.
+		const assigned = await statusOf(p.trunk);
+		expect(assigned.worktree).toMatchObject({ path: wt });
 		const r = runCli(p.trunk, ["worktree", "release", PLAN]);
 		expect(r.code, r.stderr).toBe(0);
 		const status = await statusOf(p.trunk);
