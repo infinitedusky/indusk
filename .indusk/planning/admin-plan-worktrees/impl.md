@@ -67,19 +67,19 @@ guessed.
 | A2 | The plan page names the worktree it reads from | Test Phase 1 | Build Phase 3 | written |
 | A3 | The sidebar row for an assigned plan names its worktree | Test Phase 1 | Build Phase 3 | written |
 | A4 | The active phase shown for an assigned plan is the one opened in the worktree | Test Phase 1 | Build Phase 3 | written |
-| A5 | Asked at trunk, `list_plans`, `get_plan_status` and `advance_plan` report the worktree's state | Test Phase 1 | Build Phase 2 | written |
-| A6 | Asked from inside a worktree, the plan list and states match those asked at trunk | Test Phase 1 | Build Phase 2 | written |
+| A5 | Asked at trunk, `list_plans`, `get_plan_status` and `advance_plan` report the worktree's state | Test Phase 1 | Build Phase 2 | passing |
+| A6 | Asked from inside a worktree, the plan list and states match those asked at trunk | Test Phase 1 | Build Phase 2 | passing |
 | A7 | A plan with no assignment reads exactly as today, in the tools and the admin | Test Phase 1 | Test Phase 1 | passing |
-| A8 | `indusk worktree create <plan>` in a normal repo creates `plan/<plan>` and the plan reads from it | Test Phase 1 | Build Phase 2 | written |
-| A9 | `indusk worktree assign <plan> <path>` assigns a hand-made worktree and the plan reads from it | Test Phase 1 | Build Phase 2 | written |
+| A8 | `indusk worktree create <plan>` in a normal repo creates `plan/<plan>` and the plan reads from it | Test Phase 1 | Build Phase 2 | passing |
+| A9 | `indusk worktree assign <plan> <path>` assigns a hand-made worktree and the plan reads from it | Test Phase 1 | Build Phase 2 | passing |
 | A10 | A second live assignment for the same plan is refused naming both, and nothing changes | Test Phase 1 | Build Phase 1 | passing |
 | A11 | Assigning a path that is not a worktree of this repo, or a plan with no folder, is refused by name | Test Phase 1 | Build Phase 1 | passing |
-| A12 | `indusk worktree release <plan>` ends the assignment and the plan reads from trunk | Test Phase 1 | Build Phase 2 | written |
+| A12 | `indusk worktree release <plan>` ends the assignment and the plan reads from trunk | Test Phase 1 | Build Phase 2 | passing |
 | A13 | Create, assign, read and release leave `git status` clean in every checkout | Test Phase 1 | Build Phase 1 | passing |
 | A14 | An assigned worktree removed without release is reported as gone, and the trunk copy is shown, in the admin and `get_plan_status` | Test Phase 1 | Build Phase 3 | written |
 | A15 | A worktree with no assignment is listed in the admin as unassigned | Test Phase 1 | Build Phase 3 | written |
 | A16 | A malformed record is an error naming the file, in the admin and from the tools; no plan is read from a guessed copy | Test Phase 1 | Build Phase 3 | written |
-| A17 | Two live assignments for one plan in a hand-edited record show an error naming both, never a pick | Test Phase 1 | Build Phase 2 | written |
+| A17 | Two live assignments for one plan in a hand-edited record show an error naming both, never a pick | Test Phase 1 | Build Phase 2 | passing |
 | A18 | The work skill's kickoff runs `indusk worktree create <plan>` and the retrospective's landing step runs `indusk worktree release <plan>` between the merge and the removal | Test Phase 1 | Build Phase 4 | written |
 | A19 | This plan's own progress shows, with its worktree named, in the worktree's admin build run against the dusk registry while Build Phase 4 is worked | Build Phase 4 | Build Phase 4 | planned |
 
@@ -105,7 +105,7 @@ on its own assertion today.
 
 #### Deferred to Build Phase 4
 
-- **A19** — a manual smoke with no code to author: it needs the Build Phase 3 admin running against the dusk registry while this plan is assigned, which exists only once Build Phases 1–3 have landed in the worktree. Procedure: from the worktree, `pnpm --filter @infinitedusky/indusk-admin dev` with the default `INDUSK_HOME`, open `/p/dusk/plan/admin-plan-worktrees`, confirm the worktree is named and the Build Phase 4 checkoffs appear on refresh; screenshot recorded in the retrospective. The landing half — the plan reads from trunk once released — is the retrospective's own check.
+- **A19** — a manual smoke with no code to author: it needs the Build Phase 3 admin running against the dusk registry while this plan is assigned, which exists only once Build Phases 1–3 have landed in the worktree. Procedure: from the worktree, `pnpm --filter indusk-admin dev` with the default `INDUSK_HOME`, open `/p/dusk/plan/admin-plan-worktrees`, confirm the worktree is named and the Build Phase 4 checkoffs appear on refresh; screenshot recorded in the retrospective. The landing half — the plan reads from trunk once released — is the retrospective's own check.
 
 #### Regression Guards
 
@@ -113,7 +113,7 @@ on its own assertion today.
 
 #### Test Phase 1 Verification
 
-- [x] A1–A18 authored; A7 passes; every other row fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts src/__tests__/plan-worktrees-tools.test.ts src/__tests__/plan-worktrees-skills.test.ts` and `pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-plan-worktrees.test.ts`)
+- [x] A1–A18 authored; A7 passes; every other row fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts src/__tests__/plan-worktrees-tools.test.ts src/__tests__/plan-worktrees-skills.test.ts` and `pnpm --filter indusk-admin exec vitest run src/__tests__/http-plan-worktrees.test.ts`)
 - [x] The A19 deferral reviewed: it names a procedure that can run at Build Phase 4 and asserts what the test plan claims
 
 #### Test Phase 1 Context
@@ -170,22 +170,23 @@ on its own assertion today.
 
 ### Build Phase 2: The MCP tools read the live copy
 
-- [ ] `list_plans`, `get_plan_status`, `advance_plan` in `src/tools/plan-tools.ts` resolve each plan's folder through `resolvePlanCopies` / `livePlanRoot`, rooted at the main worktree whatever the server's cwd; each result carries `worktree` (name, path, branch) when read from one, and `copyProblem` when the resolver reports `gone` or `doubled`
-- [ ] A malformed record returns an error result naming the file from each of the three tools, rather than a plan list read from trunk
+- [x] `list_plans`, `get_plan_status`, `advance_plan` in `src/tools/plan-tools.ts` resolve each plan's folder through `resolvePlanCopies` / `livePlanRoot`, rooted at the main worktree whatever the server's cwd; each result carries `worktree` (name, path, branch) when read from one, and `copyProblem` when the resolver reports `gone` or `doubled`
+- [x] A malformed record returns an error result naming the file from each of the three tools, rather than a plan list read from trunk
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 2 Verification
 
-- [ ] A5, A6, A17 pass; A7 still passes; the tools halves of A14 and A16 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-tools.test.ts`)
-- [ ] A8, A9, A12 pass — the CLI rows whose "reads from" half is the plan tool's (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts`)
-- [ ] Full mcp suite green (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`)
+- [x] A5, A6, A17 pass; A7 still passes; the tools halves of A14 and A16 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-tools.test.ts`) — 10 passed
+- [x] A8, A9, A12 pass — the CLI rows whose "reads from" half is the plan tool's (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-cli.test.ts`) — 6 passed
+- [x] Full mcp suite green (`pnpm turbo test --filter=@infinitedusky/indusk-mcp`) — *as run: 1503 passed, 4 failed. A18's two are Build Phase 4's rows, red by design. The two in `daemon-identity.test.ts` are the known port collision: `otelcol` (the local telemetry collector) listens on 65001, which the test assumes is free — queued in the root master's small queue on 2026-09-18, reproduces on trunk. The first run also showed a single-definition pin catching a second `--git-common-dir` caller (fixed: `gitCommonDirOf` in `lib/worktree/layout.ts` is the one spawn) and eight admin daemon and tarball tests that needed the admin built and bundled in this fresh worktree (`pnpm --filter indusk-admin build` then `node scripts/bundle-admin.js`), after which they pass.*
 
 #### Build Phase 2 Context
 
-- [ ] Update the Conventions entry from Build Phase 1: the three plan tools read through the resolver and report `worktree` / `copyProblem`
+- [x] Update the Conventions entry from Build Phase 1: the three plan tools read through the resolver and report `worktree` / `copyProblem`
 
 #### Build Phase 2 Document
 
-- [ ] Update `apps/docs/src/reference/tools/indusk-mcp.md`: the three tools' `worktree` and `copyProblem` fields and the malformed-record error
+- [x] Update `apps/docs/src/reference/tools/indusk-mcp.md`: the three tools' `worktree` and `copyProblem` fields and the malformed-record error
 
 ### Build Phase 3: The admin reads the live copy and names it
 
@@ -197,8 +198,8 @@ on its own assertion today.
 
 #### Build Phase 3 Verification
 
-- [ ] A1, A2, A3, A4, A14, A15, A16 pass; A7 still passes (`pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-plan-worktrees.test.ts`)
-- [ ] Full admin suite green, including `typecheck.test.ts` (`pnpm turbo test --filter=@infinitedusky/indusk-admin`)
+- [ ] A1, A2, A3, A4, A14, A15, A16 pass; A7 still passes (`pnpm --filter indusk-admin exec vitest run src/__tests__/http-plan-worktrees.test.ts`)
+- [ ] Full admin suite green, including `typecheck.test.ts` (`pnpm turbo test --filter=indusk-admin`)
 
 #### Build Phase 3 Context
 
