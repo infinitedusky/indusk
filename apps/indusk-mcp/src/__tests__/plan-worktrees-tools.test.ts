@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerPlanTools } from "../tools/plan-tools.js";
 import {
@@ -147,5 +149,24 @@ describe("A17 — two live assignments for one plan are an error naming both", (
 		expect(s.copyProblem?.detail).toContain(b);
 		expect(s.worktree).toBeUndefined();
 		expect(s.phases?.[0].checkedItems).toBe(0);
+	});
+});
+
+describe("A20 — a project nested inside a larger repository reads its own plans", () => {
+	it("list_plans asked at a nested project folder lists that folder's plans, not the enclosing repository's", async () => {
+		// Found by accident in Build Phase 3: the admin's test-fixtures/sample-project
+		// sits inside this repository, and the resolver climbed to the enclosing
+		// repository and listed its plans as the fixture's.
+		const nested = join(p.trunk, "packages", "inner");
+		mkdirSync(join(nested, ".indusk", "planning", "inner-plan"), { recursive: true });
+		writeFileSync(
+			join(nested, ".indusk", "planning", "inner-plan", "brief.md"),
+			"---\ntitle: inner-plan\nstatus: draft\n---\n\n# inner-plan\n",
+		);
+		const { json, isError } = await tools(nested).call("list_plans", {});
+		expect(isError).toBe(false);
+		const names = (json as { name: string }[]).map((x) => x.name);
+		expect(names).toContain("inner-plan");
+		expect(names).not.toContain(PLAN);
 	});
 });
