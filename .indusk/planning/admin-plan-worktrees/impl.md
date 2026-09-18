@@ -1,7 +1,7 @@
 ---
 title: "Plans in worktrees show their progress"
 date: 2026-09-18
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -80,8 +80,9 @@ guessed.
 | A15 | A worktree with no assignment is listed in the admin as unassigned | Test Phase 1 | Build Phase 3 | passing |
 | A16 | A malformed record is an error naming the file, in the admin and from the tools; no plan is read from a guessed copy | Test Phase 1 | Build Phase 3 | passing |
 | A17 | Two live assignments for one plan in a hand-edited record show an error naming both, never a pick | Test Phase 1 | Build Phase 2 | passing |
-| A18 | The work skill's kickoff runs `indusk worktree create <plan>` and the retrospective's landing step runs `indusk worktree release <plan>` between the merge and the removal | Test Phase 1 | Build Phase 4 | written |
-| A19 | This plan's own progress shows, with its worktree named, in the worktree's admin build run against the dusk registry while Build Phase 4 is worked | Build Phase 4 | Build Phase 4 | planned |
+| A18 | The work skill's kickoff runs `indusk worktree create <plan>` and the retrospective's landing step runs `indusk worktree release <plan>` between the merge and the removal | Test Phase 1 | Build Phase 4 | passing |
+| A19 | This plan's own progress shows, with its worktree named, in the worktree's admin build run against the dusk registry while Build Phase 4 is worked | Build Phase 4 | Build Phase 4 | passing |
+| A20 | A project nested inside a larger repository reads its own plans, not the enclosing repository's | Build Phase 4 | Build Phase 4 | passing |
 
 **Moved during Build Phase 1 (2026-09-18):** A8, A9 and A12 pass at Build Phase 2, not 1. Each asserts that "the plan reads from" a copy, and it asks the MCP plan tool, which learns to read the assignment in Build Phase 2; the impl sequenced them one phase early. A12 was also strengthened: it now checks the worktree is read *while assigned* before checking the trunk is read after release, because "trunk after release" alone is what a reader that ignores assignments shows, and it had passed that way. The commands' own refusals and the clean-tree row (A10, A11, A13) pass at Build Phase 1 as planned.
 
@@ -106,6 +107,7 @@ on its own assertion today.
 #### Deferred to Build Phase 4
 
 - **A19** — a manual smoke with no code to author: it needs the Build Phase 3 admin running against the dusk registry while this plan is assigned, which exists only once Build Phases 1–3 have landed in the worktree. Procedure: from the worktree, `pnpm --filter indusk-admin dev` with the default `INDUSK_HOME`, open `/p/dusk/plan/admin-plan-worktrees`, confirm the worktree is named and the Build Phase 4 checkoffs appear on refresh; screenshot recorded in the retrospective. The landing half — the plan reads from trunk once released — is the retrospective's own check.
+- **A20** — added during Build Phase 4, not deferred from Test Phase 1: the failure it guards was unknown until Build Phase 3 hit it by accident (the admin's `test-fixtures/sample-project` sits inside this repository, and the resolver listed dusk's plans as the fixture's). The fix landed in Build Phase 3; the test was shown red by running it against the resolver from before that fix (`git show dded1d97~1:…` — it listed the enclosing repository's `demo`), then green on the current code.
 
 #### Regression Guards
 
@@ -213,25 +215,28 @@ on its own assertion today.
 
 ### Build Phase 4: The lifecycle uses it
 
-- [ ] `apps/indusk-mcp/skills/work.md` Worktree Kickoff: create the plan's worktree with `indusk worktree create <plan>`; for a worktree made another way, `indusk worktree assign <plan> <path>`
-- [ ] `apps/indusk-mcp/skills/retrospective.md` Step 10: after the merge, `indusk worktree release <plan>`, then remove the worktree and delete the branch
-- [ ] `apps/indusk-mcp/skills/planner.md`: the kickoff item's wording names `indusk worktree create <plan>`
-- [ ] Resync the installed copies in `.claude/skills/` (the `skill-sync-parity` test pins byte-equality)
-- [ ] Run the A19 smoke and record the screenshot path
+- [x] `apps/indusk-mcp/skills/work.md` Worktree Kickoff: create the plan's worktree with `indusk worktree create <plan>`; for a worktree made another way, `indusk worktree assign <plan> <path>`
+- [x] `apps/indusk-mcp/skills/retrospective.md` Step 10: after the merge, `indusk worktree release <plan>`, then remove the worktree and delete the branch
+- [x] `apps/indusk-mcp/skills/planner.md`: the kickoff item's wording names `indusk worktree create <plan>`
+- [x] Resync the installed copies in `.claude/skills/` (the `skill-sync-parity` test pins byte-equality)
+- [x] A20 regression test for the nested-project fix in `plan-worktrees-tools.test.ts` (discovered work — the eval agent's lesson `nested-checkout-fixes-need-a-regression-test-not-just-a-doc-comment` named the gap: the Build Phase 3 fix had only an incidental guard)
+- [x] Run the A19 smoke and record the screenshot path — `dusk/.playwright-mcp/admin-plan-worktrees-a19.png` (ignored folder on the trunk): this worktree's admin (`pnpm --filter indusk-admin dev --port 3499`, default `INDUSK_HOME`) on `/p/dusk/plan/admin-plan-worktrees`, dusk registered at its trunk path, shows the `⎇ admin-plan-worktrees` chip, "Read from the worktree admin-plan-worktrees on plan/admin-plan-worktrees", and the stage bar on Phase 4 at "Run the A19 smoke… (4 of 5)"
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 4 Verification
 
-- [ ] A18 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-skills.test.ts src/__tests__/skill-sync-parity.test.ts`)
-- [ ] A19: the smoke run as written in the Test Phase 1 register, screenshot saved
-- [ ] Root suite green (`pnpm test`)
+- [x] A18 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-skills.test.ts src/__tests__/skill-sync-parity.test.ts`) — 25 passed. *The A18 test's section cutter was wrong (it searched for the next heading one character into the current one, so `## Step 10` matched itself and the section was one character long); fixed to search from the line after the heading, with a guard that throws on a section under 200 characters. The fixed test goes red against the pre-plan retrospective text and green against the new one.*
+- [x] A20 passes, and was red against the pre-fix resolver (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/plan-worktrees-tools.test.ts`) — 11 passed
+- [x] A19: the smoke run as written in the Test Phase 1 register, screenshot saved — `dusk/.playwright-mcp/admin-plan-worktrees-a19.png`; checking off the smoke item moved the page from 4 of 5 to 5 of 5 on the next fetch
+- [x] Root suite green (`pnpm test`) — *as run: admin 299 of 299; mcp 1505 passed, 2 failed, both in `daemon-identity.test.ts` (the `otelcol` port-65001 collision, queued in the root master, reproduces on trunk); the root command stops there before `pnpm promises:check`, which run on its own passes (3 promises, all enforced)*
 
 #### Build Phase 4 Context
 
-- [ ] Update the worktree-per-plan Conventions entry: the kickoff creates through `indusk worktree create <plan>`, which records the assignment; the retrospective releases it between the merge and the removal
+- [x] Update the worktree-per-plan Conventions entry: the kickoff creates through `indusk worktree create <plan>`, which records the assignment; the retrospective releases it between the merge and the removal
 
 #### Build Phase 4 Document
 
-- [ ] Update `apps/docs/src/guide/worktree-setup.md` and `apps/docs/src/guide/plan-lifecycle.md`: a plan's worktree is assigned at the kickoff and released at landing; the admin reads the live copy
+- [x] Update `apps/docs/src/guide/worktree-setup.md` and `apps/docs/src/guide/plan-lifecycle.md`: a plan's worktree is assigned at the kickoff and released at landing; the admin reads the live copy
 
 ## Files Affected
 
