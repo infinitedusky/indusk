@@ -3,6 +3,10 @@ import {
   PHASE_ACTIVITIES,
   PLAN_POSITIONS,
 } from "@infinitedusky/indusk-mcp/lifecycle";
+import {
+  PROMISE_KINDS,
+  PROMISE_STATES,
+} from "@infinitedusky/indusk-mcp/promises/registry";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -10,8 +14,45 @@ import { Bar } from "@/components/bars/Bar";
 import {
   ACTIVITY_LABELS,
   POSITION_LABELS,
+  PROMISE_KIND_LABELS,
+  PROMISE_STATE_CHIP,
   STAGE_LABELS,
 } from "@/components/bars/labels";
+
+/**
+ * day-promises — A21: the same pin over the promise unions. A promise state
+ * or kind added to `lib/promises/vocabulary.ts` without a chip or a label is
+ * a type error in `labels.ts` and a NAMED failure here.
+ */
+describe("A21 — every promise state and kind has a chip and a label", () => {
+  it("every promise state has a chip with a label, an accessible name and a class", () => {
+    const missing = PROMISE_STATES.filter((s) => {
+      const chip = (
+        PROMISE_STATE_CHIP as Record<
+          string,
+          { label?: string; aria?: string; className?: string }
+        >
+      )[s];
+      return (
+        !chip?.label?.trim() || !chip.aria?.trim() || !chip.className?.trim()
+      );
+    });
+    expect(
+      missing,
+      `promise states without a chip: ${missing.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("every promise kind has a non-empty label", () => {
+    const missing = PROMISE_KINDS.filter(
+      (k) => !(PROMISE_KIND_LABELS as Record<string, string>)[k]?.trim(),
+    );
+    expect(
+      missing,
+      `promise kinds without a label: ${missing.join(", ")}`,
+    ).toEqual([]);
+  });
+});
 
 /**
  * admin-ui-phase-progress — A17: the convention's pin.

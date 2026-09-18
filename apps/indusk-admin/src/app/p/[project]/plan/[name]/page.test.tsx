@@ -55,6 +55,16 @@ vi.mock("@/lib/planning-reader", () => ({
   readPlanMasterContent: async () => null,
 }));
 
+// The plan page reads "holding N" through the promises reader (day-promises);
+// the registry read hits node:fs, so every export the page imports is mocked.
+vi.mock("@/lib/promises-reader", () => ({
+  __esModule: true,
+  readProjectPromises: () => ({ ok: false, missing: "/mock/.indusk/promises" }),
+  registryOf: () => null,
+  holdingCount: () => 0,
+  holdingCounts: () => new Map(),
+}));
+
 // The plan page reads the live-refresh interval from the project reader.
 vi.mock("@/lib/project-reader", () => ({
   __esModule: true,

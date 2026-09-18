@@ -52,6 +52,16 @@ vi.mock("@/lib/planning-reader", () => ({
   }),
 }));
 
+// The layout reads "holding N" per archived plan through the promises reader
+// (day-promises); same rule — every export the layout imports, mocked.
+vi.mock("@/lib/promises-reader", () => ({
+  __esModule: true,
+  readProjectPromises: () => ({ ok: false, missing: "/mock/.indusk/promises" }),
+  registryOf: () => null,
+  holdingCount: () => 0,
+  holdingCounts: () => new Map(),
+}));
+
 // Research reads split out of planning-reader in the dawn-ui-plan-grouping
 // cleanup — the layout imports them from research-reader, so the mock follows
 // (a mock must cover every export the layout imports, per the known gotcha).
