@@ -115,6 +115,7 @@ const config = defineConfig({
 					items: [
 						{ text: "setup", link: "/reference/cli/setup" },
 						{ text: "workbench", link: "/reference/cli/workbench" },
+						{ text: "worktree", link: "/reference/cli/worktree" },
 						{ text: "run", link: "/reference/cli/run" },
 						{ text: "verify", link: "/reference/cli/verify" },
 						{ text: "agent", link: "/reference/cli/agent" },
