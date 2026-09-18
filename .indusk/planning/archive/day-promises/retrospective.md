@@ -172,3 +172,7 @@ wrong.
 - Falsification: 5 hypotheses, 5 confirmed, 5 fixed
 - Cleanup: 3 extractions, 5 reasoned leave-as-is
 - Shape: 4 findings raised, 0 judged wrong
+
+---
+
+Landed on main at 5c41372d, 2026-09-18.
