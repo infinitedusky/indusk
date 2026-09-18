@@ -115,7 +115,7 @@ dusk/
 - Dawn workbench execution (6.5): one `resolveExecutionRoots` behind run/verify/cleanup; two roots and a commit cadence per repo in the loop; `codeSha` on the ledger and `repo` on queued evals, absence a rule not a migration; multi-repo still refuses — see `/decisions/dawn-workbench-execution`
 - Admin UI phase progress: one `lifecycle` module (positions as nouns, activities as verbs, gate stages) read by `parsePlan`, the retrospective gate and the admin; phases keyed `{kind, number}` through progress, Shape and the boundary record (absent kind = build); three tri-state bars live via `router.refresh()`; a plan that adds a stage renders it, pinned. Rejected composing the lifecycle in the admin, `ordinal` keys, a polling route, websockets — see `/decisions/admin-ui-phase-progress`
 - Writing skill: papers are plan documents (`kind: paper`, never inferred); `/write` prose-only; publish commits in the destination, never pushes — see `.indusk/planning/archive/writing-skill/adr.md`
-- Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `.indusk/planning/day-promises/adr.md`
+- Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `/decisions/day-promises`
 
 ## Known Gotchas
 
@@ -164,7 +164,7 @@ dusk/
 
 **In flight:**
 
-- **indusk-makeover (2026-07-23, closed 2026-09-14)** — 60 KB CLAUDE.md budget hook + compaction, current.md sweep + dead-draft archive, Graphiti/CGC removed with the rail retargeted to lessons, catchup diet, hub push/pull; 19 rows green, falsification found 3, cleanup extracted `lib/mcp-migration.ts`. See [archive](.indusk/planning/archive/indusk-makeover/) and `/decisions/indusk-makeover`.
+- **indusk-makeover (2026-07-23, closed 2026-09-14)** — the 60 KB budget, the decay layer, Graphiti removed. See [archive](.indusk/planning/archive/indusk-makeover/) and `/decisions/indusk-makeover`.
 - **versioned-workbench (1.37.0–1.38.3)** — shareable workbenches: declared multi-repo sets, `restore/sync/status/migrate-layout`, nested layouts via `repos_root`. See [archive](.indusk/planning/archive/versioned-workbench/) and `/lessons/versioned-workbench`.
 - **workbench-trust-fixes (2026-09-10)** — five surfaces that failed silently in a versioned workbench now refuse or resolve by declaration (`run`, cleanup scan, eval attribution, `restore`, bash lane), the gate reminder reaches the model, the record stops asserting the pre-1.37 root shape. See [archive](.indusk/planning/archive/workbench-trust-fixes/) and `/lessons/workbench-trust-fixes`.
 - **worktree-config-schema-pointer (1.44.1)** — the worktree starter config's `$schema` resolves; `indusk update` reaches enabled extensions via a declared `on_update`; the config schema is machine-local and its ignore rule reaches declared layouts too. See [archive](.indusk/planning/archive/worktree-config-schema-pointer/) and `/lessons/worktree-config-schema-pointer`.
@@ -178,14 +178,15 @@ dusk/
 - **test-phase-structure (2026-08-12)** — test authoring became a phase; Gate A enforces the 260 formerly unenforceable `Phase 0` rows. Follow-ons are listed in the archive. See [archive](.indusk/planning/archive/test-phase-structure/) for full detail.
 
 - **dawn-workbench-execution (2026-09-16, Dawn 6.5)** — `run` and `verify` execute across a one-repo workbench's plan-root/code-root split; 19 rows green; the matrix held inside a workbench. See [archive](.indusk/planning/archive/dawn-workbench-execution/) and `/lessons/dawn-workbench-execution`.
-- **admin-ui-phase-progress (2026-09-17, Day step 3)** — the lifecycle written once (`lib/lifecycle.ts`) and drawn live as three bars; phases keyed `{kind, number}`; a plan that adds a stage renders it, pinned; 37 rows green, falsification found 6, cleanup pinned one home per piece. See [archive](.indusk/planning/archive/admin-ui-phase-progress/) and `/lessons/admin-ui-phase-progress`.
+- **admin-ui-phase-progress (2026-09-17, Day step 3)** — the lifecycle written once and drawn live as three bars. See [archive](.indusk/planning/archive/admin-ui-phase-progress/) and `/lessons/admin-ui-phase-progress`.
 - **hook-cwd-independence (2026-09-15)** — every hook registered by the project root (`hookCommand`, `:-.` default) and `update` rewrites the old form; falsification found the unset-variable form and init's duplicate merge; 7 rows green. See [archive](.indusk/planning/archive/hook-cwd-independence/).
 - **trunk-guard (2026-09-17)** — `trunk-guard.js`: no code edited or committed on `main`; falsification found three commit spellings the gate missed, cleanup made `ensureHookRegistered` the one registration path; 11 rows green. See [archive](.indusk/planning/archive/trunk-guard/).
 - **writing-skill (1.44.0)** — papers as plan documents (`kind: paper`, a `paper` stage, derived staleness), the `/write` skill, `indusk papers publish` with provenance. **Open**: re-run the plain-language invocation check in a fresh trunk session (skill discovery is per project). See [archive](.indusk/planning/archive/writing-skill/) for full detail.
+- **day-promises (2026-09-18, Day 4a)** — the promise registry, `indusk promises check`, three self-hosted promises, the admin's Promises page; 34 rows green. See [archive](.indusk/planning/archive/day-promises/) and `/lessons/day-promises`.
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `.indusk/planning/master.md`); operational blockers live in `.indusk/current.md` → `## Project (shared)`. Standing direction notes that stage/next-step cannot derive:
 
-- **day-promises / day-monitor (was midnight)** — **active direction**: a plan *establishes* promises and *preserves* those in force; kind (behaviour / state / structure) picks the check; 4a = registry + check, 4b = behaviour promises watched in runs, 4c = promises in planning; closes *holding N promises*; no `subsystem`. See `/guide/plan-lifecycle`
+- **day-monitor (was midnight) / day-contract** — **active direction** after 4a closed: a plan *establishes* promises and *preserves* those in force; kind (behaviour / state / structure) picks the check; 4b = behaviour promises watched in runs, 4c = promises in planning; closes *holding N promises*; no `subsystem`. See `/guide/promises`
 - **indusk-v2-dawn** — parent plan (living master); component status in `.indusk/planning/indusk-v2-dawn/master.md`
 - **Sequence reconciliation (2026-09-14)**: every folder outside the V4 sequence got one fate; the table is in `.indusk/planning/master.md`.
 

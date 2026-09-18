@@ -1,7 +1,7 @@
 # Promises — registry, check, self-hosting, page
 
 **Status:** accepted (2026-09-18) · Day step 4a, "Promises — the contract's primitive"
-**Full ADR:** `.indusk/planning/day-promises/adr.md` · **Guide:** [Promises](../guide/promises.md) · **Reference:** [`indusk promises`](../reference/cli/promises.md)
+**Full ADR:** `.indusk/planning/archive/day-promises/adr.md` · **Guide:** [Promises](../guide/promises.md) · **Reference:** [`indusk promises`](../reference/cli/promises.md) · **Lessons:** [Promises — Lessons](../lessons/day-promises.md)
 
 ## What was decided
 

@@ -255,6 +255,7 @@ const config = defineConfig({
 						{ text: "Tests first within each phase", link: "/lessons/tests-first-within-each-phase" },
 						{ text: "Versioned Workbench — Lessons", link: "/lessons/versioned-workbench" },
 						{ text: "Workbench Setup Command — Lessons", link: "/lessons/workbench-setup-command" },
+						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
 						{ text: "Workbench Trust Fixes — Lessons", link: "/lessons/workbench-trust-fixes" },
 						{
 							text: "Worktree Config Schema Pointer — Lessons",

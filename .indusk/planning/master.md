@@ -61,12 +61,13 @@ which decides what checks it. (Settled 2026-09-18; the earlier "change
 clauses vs promise clauses" split was tracking lifetime, a property of a
 promise.) Three sub-plans:
 
-- [day-promises/brief.md](day-promises/brief.md) — **4a, the primitive**:
-  registry with kinds, lifetimes, `declared / enforced / known-violated /
-  retired` states, domains, owners and per-kind links; `indusk promises
-  check`; this repo self-hosts one per kind; the Promises page with every
-  enforced chip hollow; a plan closes *holding N promises* and can be woken.
-  ~3 days.
+- [day-promises/brief.md](archive/day-promises/brief.md) — **4a, the
+  primitive** — **closed 2026-09-18** (34 rows green, falsified 5, cleaned,
+  retrospective, archived): registry with kinds, lifetimes, four states,
+  domains, owners and per-kind links; `indusk promises check`; this repo
+  self-hosts one per kind; the Promises page with every enforced chip
+  hollow; a plan closes *holding N promises*. See `/decisions/day-promises`
+  and `/lessons/day-promises`.
 - [day-monitor/brief.md](day-monitor/brief.md) — **4b, the telemetry half
   (was Midnight), behaviour promises only**: the span link and its test-side
   trace-shape helper, violations per promise as a number from Jaeger and
@@ -143,6 +144,12 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **Small, not a step** (2026-09-18, from day-promises' close):
+  `apps/indusk-mcp/src/lib/admin/__tests__/daemon-identity.test.ts` assumes
+  port 65001 is unbound; the local-telemetry `otelcol` restarted onto it
+  mid-session and the file went red for every branch on the machine. Bind
+  and release to find a free port instead of assuming one. Owner: whoever
+  next touches `lib/admin/daemon.ts`.
 - **Bugfix, not a step — do it the moment `day-promises` lands** (Sandy,
   2026-09-18: "we do not develop on main; we always create worktrees"): the
   admin UI and the MCP plan tools read a plan from the registered project's

@@ -4,7 +4,7 @@ The promise registry: what the system commits to, written down under
 `.indusk/promises/`, and a check that refuses the registry by name the moment
 it lies. The concept — kinds, lifetimes, states, the registration rule — is
 the [Promises guide](/guide/promises); the design is
-`.indusk/planning/day-promises/adr.md`.
+`.indusk/planning/archive/day-promises/adr.md`.
 
 ## The registry
 
