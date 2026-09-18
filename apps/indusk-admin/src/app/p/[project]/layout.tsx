@@ -8,6 +8,7 @@ import {
   readArchivedPlans,
   readPlanHierarchy,
 } from "@/lib/planning-reader";
+import { holdingCounts, readProjectPromises } from "@/lib/promises-reader";
 import {
   getProjectPath,
   projectPathExists,
@@ -60,6 +61,9 @@ export default async function PerProjectLayout({
   const hierarchy = readPlanHierarchy(projectPath);
   const masterOrder = hierarchy.roadmap;
   const registered = readRegistryProjects().map((p) => ({ name: p.name }));
+  // "holding N" per archived plan (day-promises, ADR D8): derived from the
+  // registry on every request, no lifecycle position, absent when none.
+  const holding = holdingCounts(readProjectPromises(projectPath));
 
   return (
     <div className="flex h-full w-full">
@@ -83,12 +87,19 @@ export default async function PerProjectLayout({
           >
             Scorecards
           </Link>
+          <Link
+            href={`/p/${project}/promises`}
+            className="rounded px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            Promises
+          </Link>
         </nav>
         <PlanList
           active={active}
           archived={archived}
           masterOrder={masterOrder}
           grouping={hierarchy}
+          holding={holding}
           planHrefPrefix={`/p/${project}/plan/`}
         />
         {research.length > 0 && (
