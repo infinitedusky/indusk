@@ -15,6 +15,7 @@ subplans:
   - admin-ui-phase-progress
   - day-promises
   - day-monitor
+  - day-always-on
   - day-contract
   - day-claim-evidence
   - day-claim-binding
@@ -79,6 +80,7 @@ Open this file to answer "where are we." The shape itself lives in
 | 3 | **Execution visible live** | 10 | **closed 2026-09-17** (37 rows green, falsified 6, cleaned, retrospective, archived) — one `lifecycle.ts` read by `list_plans`, the retrospective gate and the admin; three live bars; phases keyed `{kind, number}` through Shape and the boundary record; `ui prune` cleared 2,296 dead entries. Follow-on: the parity corpus must exclude the plan in flight (root master, "Small, not a step") | Active phase and per-stage gate states update without reload; Test/Build sequences render | [admin-ui-phase-progress](../archive/admin-ui-phase-progress/brief.md) |
 | 4a | **Promises — the contract's primitive: registry, kinds, states, links, the check** | 9 | **closed 2026-09-18** (34 rows green, falsified 5 — all confirmed and fixed, cleaned, retrospective, archived) — `.indusk/promises/` with `indusk promises check`, three self-hosted promises, the admin's Promises page; follow-on: the admin and the MCP plan tools must read a plan in flight from its worktree (root master, "Bugfix, not a step") | The check refuses every way the registry can lie, by name, and passes a clean registry with a summary; this repo holds three, one per kind, with the check in its suite; the Promises page lists them with every enforced chip hollow | [day-promises](../archive/day-promises/brief.md) |
 | 4b | **Monitor — behaviour-promise violation detection and root cause, from the running system's telemetry** | 9 | brief rewritten 2026-09-17, narrowed to behaviour promises 2026-09-18 (was `midnight`; exists nowhere) | An alert from the running system (local under Jaeger counts) names the promise that broke; the incident records the root cause and where it ran; the owning plan reopens | [day-monitor](../day-monitor/brief.md) |
+| 4b′ | **Always-on — the monitor where no developer machine is on: persistent Jaeger, the scheduled run, the receiver** | 9 | split from 4b 2026-09-18; create when 4b closes | A violation in a deployed run opens an incident and reopens its plan while every developer machine is off | `day-always-on` |
 | 4c | **The contract in planning — promises declared before code, named by every row, confirmed at close; the change rule** | 2, 9 | proposed 2026-09-18 as 4a's cut (the planning half crossed planner, test plan, trajectory, retrospective, validator and admin); create when 4a closes | A closing plan confirms a declared promise to `enforced`; a row naming no promise is refused; a change touching a promise's code site without naming it is recorded "touched, unacknowledged" | `day-contract` |
 | 5 | **Claims proved honestly — red observed, amendments recorded** | 3, 4 | not started; also takes the per-invocation gate ledger (`.indusk/gates.jsonl`) that `hook-cwd-independence` cut and no step picked up | A born-green row and a silently amended claim are both reported; an honest plan is clean | `day-claim-evidence` |
 | 6 | **Binding — the test dies when the behaviour it claims is broken** | 6 | not started; needs 4a (a promise's code site is one candidate for "the claim's code") and 5; carries the amendment-log rule (2026-09-14): no decision crosses a phase boundary until it is written into the plan, and `/work` checks the Amendment log is current at every fresh-phase hand-off — a decision that lives only in the conversation is testimony | A test asserting the wrong property under the right name reports *unbound*; a real test reports *bound* | `day-claim-binding` |
@@ -153,6 +155,7 @@ assume before it exists.
 |------|-----------|-------|
 | `day-promises` | 4a — the promise as a primitive: registry, kinds, lifetimes, states, links, `indusk promises check`, self-hosting, the Promises page | **closed 2026-09-18**, archived |
 | `day-monitor` | 4b — the telemetry half, behaviour promises only: span link, violation counts, `monitor`, alert → incident → root cause → reopen (was `midnight`) | brief rewritten 2026-09-17, narrowed 2026-09-18 |
+| `day-always-on` | 4b′ — the always-on tier split from 4b: persistent Jaeger, scheduled status run, the receiver and where it runs | proposed 2026-09-18, not created |
 | `day-contract` | 4c — the contract in planning: promises declared before code, trajectory rows establish or preserve one, confirmation at close, the change rule ("touched, unacknowledged") | proposed 2026-09-18, not created |
 | `day-claim-evidence` | 5 — observed red, amendment log, gate ledger | not created |
 | `day-claim-binding` | 6 — mutation per row | not created |

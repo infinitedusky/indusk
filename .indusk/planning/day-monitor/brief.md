@@ -5,6 +5,7 @@ status: draft
 amended: 2026-08-11
 rewritten: 2026-09-17
 narrowed: 2026-09-18
+split: 2026-09-18
 codename: midnight
 ---
 
@@ -116,12 +117,14 @@ its own, and for that we don't want to depend on a third party").
   the reopened plan — every step closes against Jaeger, the OpenTelemetry
   Collector distribution the `local-telemetry` extension already installs with
   its query surface. Jaeger has no alert rules, so the alert is a poll:
-  `indusk promises status` on a schedule, locally and deployed alike, calling
-  the same open-incident path. The always-on tier is the local model on a
-  machine that does not turn off — Jaeger with persistent storage (it defaults
-  to memory), the scheduled status run, and the receiver that writes the
-  incident to the repo and reopens the plan. Where that receiver runs when no
-  developer machine is on is the open question for the ADR.
+  `indusk promises status` on a schedule, calling the same open-incident
+  path. This step builds and proves that loop locally.
+- **The always-on tier is its own step, `day-always-on`** (split 2026-09-18,
+  Sandy): Jaeger with persistent storage (it defaults to memory), the
+  scheduled status run on a machine that does not turn off, and the receiver
+  that writes the incident to the repo and reopens the plan when no developer
+  machine is on — including where that receiver runs. It reuses this step's
+  query, incident path and reopen unchanged; nothing here waits on it.
 - **There is no adapter seam for third-party backends in the loop.** Adopting
   Dash0's alert rules as a source would mean adopting Datadog's next, and
   every notification system after that — importing everyone's alerting into
@@ -219,12 +222,20 @@ is the moment the loop closes, and a local run can produce it.
   machine* (the CLI and MCP server inside an agent session, the admin daemon
   and its registry, the local Jaeger/otelcol daemon, the hub, eval sessions),
   *always-on* (the same Jaeger with persistent storage, the scheduled status
-  run and the receiver, on a machine that does not turn off; a hosted
-  platform such as Dash0 is an optional query surface beside it). The sentence
+  run and the receiver, on a machine that does not turn off — built in
+  `day-always-on`, described here as planned; a hosted platform such as
+  Dash0 is an optional query surface beside it). The sentence
   the section exists to say: **the running application depends on none of
   it** — InDusk is not Rails; it is beside the code at development time, and
   the monitor watches from outside, reading what the app already emits. Written
   in this step because 4b is what makes the runtime half real.
+
+## Out of scope
+
+- **The always-on tier** — persistent Jaeger, the scheduled run on an
+  always-on machine, the receiver and where it lives: `day-always-on`, the
+  step after this one. This step's acceptance is met by a local run.
+- Third-party backends feeding the loop (none, by design — see above).
 
 ## Depends on
 

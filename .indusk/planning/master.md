@@ -76,6 +76,12 @@ promise.) Three sub-plans:
   reopen the owner. "Running" means executing with real inputs, locally under
   Jaeger as much as deployed; exists nowhere yet; a local run closes the
   loop first; ~1 week after 4a.
+- `day-always-on` — **4b′, the monitor on a machine that does not turn off**
+  (split from 4b 2026-09-18; created when 4b closes): Jaeger with persistent
+  storage, the scheduled `indusk promises status` run, and the receiver that
+  opens the incident and reopens the plan when no developer machine is on —
+  where it runs is this step's decision. Reuses 4b's query and incident path
+  unchanged; the `deployed` incident source is proven here.
 - `day-contract` — **4c, the contract in planning** (proposed 2026-09-18 as
   4a's cut; created when 4a closes): promises declared before code, every
   trajectory row names what it establishes or preserves, the retrospective
