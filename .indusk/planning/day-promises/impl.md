@@ -1,9 +1,10 @@
 ---
 title: "Day step 4a — Promises — Implementation"
 date: 2026-09-18
-status: completed
+status: in-progress
 approved: 2026-09-18
 completed: 2026-09-18
+falsified: 2026-09-18
 trajectory: required
 test_phases: required
 rationale: required
@@ -82,6 +83,11 @@ A26 are structural pins the ADR adds (D6, D9).
 | A24 | An entry added to the registry appears on the next request with no restart | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-project-promises.test.ts |
 | A25 | Exactly one definition of the promise vocabulary (`PROMISE_STATES`, `PROMISE_KINDS`, `PROMISE_LIFETIMES`, `INCIDENT_SOURCES`) exists under `src/`, in `lib/promises/vocabulary.ts` | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-single-definition.test.ts |
 | A26 | A file under `.indusk/promises/` is not code to Shape's changed-files scope, not machine state to phantom detection, and not a decomposition candidate to the cleanup scan | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/promises-detectors.test.ts |
+| A27 | A listed site whose comment reads `// enforces promise: <name>` (text between the opener and the token) counts as naming it, and so does a token anywhere after `//`, `#`, `/*` or `<!--` on its line; a quote must still directly precede the token, so `{ promise: string }` on a line with an earlier string literal is still not a citation | Build Phase 5 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A28 | An owner naming a folder that is not a plan (`archive`) or a file (`master.md`) fails the check naming the owner; only a directory under `.indusk/planning/` or `.indusk/planning/archive/` is a plan | Build Phase 5 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A29 | After a rename with `aliases: [old-name]`, a listed site or test still carrying `promise: old-name` counts as naming the promise (the link check resolves aliases the way the reverse scan does); an alias equal to a live promise's name, or shared by two promises, fails naming both | Build Phase 5 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A30 | An `enforced` promise listing an incident whose `status` is `open` fails: an open incident says the promise is broken now, so the state is `known-violated` or the incident is `fixed` | Build Phase 5 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
+| A31 | A `sites:` or `tests:` entry that is absolute or contains `..` fails naming the entry; the check never reads a file outside the code root | Build Phase 5 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/promises-falsification.test.ts |
 
 ### Deferred Verification
 
@@ -147,6 +153,10 @@ bodies reviewed.
   for (const s of PROMISE_STATES) expect(promiseStateChip[s], `no chip for promise state ${s}`).toBeDefined();
   for (const k of PROMISE_KINDS) expect(promiseKindLabel[k], `no label for promise kind ${k}`).toBeDefined();
   ```
+
+#### Deferred to Build Phase 5
+
+- **A27–A31** — falsification hypotheses (`/falsify`, 2026-09-18), formed by reading the shipped check after Build Phase 4 closed; each targets a line of `lib/promises/check.ts` or `vocabulary.ts` that did not exist when Test Phase 1 was authored. Authored red in the phase that fixes them, the ritual's shape. A27 against `TOKEN_OPENER`'s requirement that the token be the first thing after the opener; A28 against `ownerStatus`'s `existsSync` (a file or the `archive` folder passes as a plan); A29 against `fileNames` matching the name only while `citationRefusals` resolves aliases; A30 against `stateRefusals` never reading an incident's `status` for an `enforced` promise; A31 against `join(codeRoot, rel)` with an unguarded `rel`.
 
 #### Regression Guards
 
@@ -266,6 +276,28 @@ bodies reviewed.
 #### Build Phase 4 Document
 - [x] `apps/docs/src/reference/admin-ui/overview.md`: the Promises page (columns, groupings, chips, why every enforced chip is hollow, the error and empty states) and "holding N" — a `/p/{project}/promises` entry under "What each page shows" (three paragraphs: the table and groupings; declared state only, with the chip vocabulary and the parity pin; the two honest failure states and "holding N"), and the sidebar list names the Promises link
 - [x] `apps/docs/src/changelog.md` Unreleased: the admin half of the entry — folded into the Added entry: the page, the hollow chips, the error and empty states, "holding N"
+
+### Build Phase 5: Falsification — the check trusts what it reads
+
+**Goal**: verify whether the attested state holds against five ways the check can be lied to or misled by its own inputs: a token the opener rule refuses although it sits in a comment, an owner that is a folder or a file but not a plan, a rename whose alias the link check ignores, an `enforced` promise that carries an open incident, and a link path that walks out of the code root. Each trajectory row below captures one hypothesis; each checklist item captures the fix the code needs if the hypothesis confirms.
+
+- [ ] `vocabulary.ts`: the opener rule becomes "a comment opener anywhere earlier on the line, or a quote directly before" — `TOKEN_OPENER` is two alternatives: `(?:\/\/|#|\/\*|<!--).*` (any text between) and `(?:^|[^\S\n])(?:\*|--|;)[ \t]*` at the line's start for the docblock, SQL and ini forms, and `["'\`][ \t]*` for a quote; `promiseTokenPattern` and `anyPromiseTokenPattern` share it; the reference page's list of what counts is rewritten from the regex, not from memory (A27)
+- [ ] `check.ts` `ownerStatus`: a plan is a *directory* under `.indusk/planning/` or `.indusk/planning/archive/` whose name is not `archive`; `statSync(...).isDirectory()` replaces `existsSync`, and the refusal says "is not a plan folder" for a file and "is the archive folder, not a plan" for `archive` (A28)
+- [ ] `check.ts` `fileNames`: a listed site or test names the promise when it carries the token for the name **or any alias**; `linkRefusals` passes the entry's aliases through. Registry integrity: an alias equal to any promise's name, or shared by two entries, is a problem at read time (`readPromises` reports both files), so the check never has to pick a winner (A29)
+- [ ] `check.ts` `stateRefusals`: an `enforced` promise whose listed incidents include one with `status: open` is refused — "enforced, but incident <id> is open: either the incident is fixed or the state is known-violated" (A30)
+- [ ] `registry.ts` `promiseProblem`: every `sites:` / `tests:` entry must satisfy `isUsableRelPath` (relative, no `..`, not under a reserved segment), refused at read time naming the entry and the path, so `check.ts` never joins an unguarded path onto the code root (A31)
+- [ ] `apps/docs/src/reference/cli/promises.md`: the token section states the two rules as shipped (opener anywhere earlier on the line; quote directly before), the owner rule (a plan is a directory, never `archive`), the alias rule, the open-incident rule, and the path rule; the refusals table gains the four new rows
+
+#### Build Phase 5 Verification
+- [ ] A27–A31 authored red first in `src/__tests__/promises-falsification.test.ts` through `runCli` on `promiseProject` fixtures (one case per hypothesis, each asserting the exit code and what stderr names), then green after the items above: `cd apps/indusk-mcp && pnpm build && pnpm exec vitest run src/__tests__/promises-falsification.test.ts`; then `cd` back
+- [ ] Every earlier check row still green, and the repository's own check still clean: `pnpm exec vitest run src/__tests__/promises-check.test.ts src/__tests__/promises-workbench.test.ts src/__tests__/promises-cli.test.ts` and `pnpm promises:check` at the root
+- [ ] Rows A27–A31 set to `passing`
+
+#### Build Phase 5 Context
+- [ ] Known Gotchas: the promises entry gains the rule the falsification found — a citation counts after a comment opener anywhere on its line but only directly after a quote; a plan owner is a directory, never `archive`; link paths are guarded by `isUsableRelPath` before any join
+
+#### Build Phase 5 Document
+- [ ] `apps/docs/src/reference/cli/promises.md` updated as the item above says; `apps/docs/src/changelog.md` Unreleased notes the falsification's four refusals
 
 ## Files Affected
 
