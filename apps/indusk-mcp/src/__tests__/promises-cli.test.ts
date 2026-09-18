@@ -14,6 +14,16 @@ import { REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
  * to a temp dir so nothing here touches the developer's `~/.indusk/`.
  */
 
+function withoutUpdateStamp(configJson: string): Record<string, unknown> {
+	const config = JSON.parse(configJson) as Record<string, unknown>;
+	const indusk = config.indusk;
+	if (indusk && typeof indusk === "object") {
+		const { updated_at: _stamp, ...rest } = indusk as Record<string, unknown>;
+		config.indusk = rest;
+	}
+	return config;
+}
+
 describe.skipIf(SHOULD_SKIP)("A14 — update ensures promises.domains and nothing else", () => {
 	it("writes promises.domains: [] once, idempotently, and runs no check", () => {
 		const dir = mkdtempSync(join(tmpdir(), "promises-update-"));
@@ -29,7 +39,11 @@ describe.skipIf(SHOULD_SKIP)("A14 — update ensures promises.domains and nothin
 
 		const second = runCli(dir, ["update"]);
 		expect(second.code, second.stderr).toBe(0);
-		expect(readFileSync(configPath, "utf-8")).toBe(afterFirst);
+		// `update` stamps `indusk.updated_at` on every run by design; nothing
+		// else may move between the first run and the second.
+		expect(withoutUpdateStamp(readFileSync(configPath, "utf-8"))).toEqual(
+			withoutUpdateStamp(afterFirst),
+		);
 	});
 
 	it("a project with a block already set is left alone", () => {
