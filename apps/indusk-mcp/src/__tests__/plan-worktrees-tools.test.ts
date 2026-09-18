@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerPlanTools } from "../tools/plan-tools.js";
@@ -168,5 +168,44 @@ describe("A20 — a project nested inside a larger repository reads its own plan
 		const names = (json as { name: string }[]).map((x) => x.name);
 		expect(names).toContain("inner-plan");
 		expect(names).not.toContain(PLAN);
+	});
+});
+
+describe("A21 — a plan archived on its branch, before the release, is answered as archived in its worktree", () => {
+	it("list_plans and get_plan_status asked at the trunk report it archived instead of throwing", async () => {
+		const wt = assignedWorktree();
+		// Retrospective Step 9, on the branch: the folder moves into archive/.
+		mkdirSync(join(wt, ".indusk", "planning", "archive"), { recursive: true });
+		renameSync(
+			join(wt, ".indusk", "planning", PLAN),
+			join(wt, ".indusk", "planning", "archive", PLAN),
+		);
+
+		const list = await tools(p.trunk).call("list_plans", {});
+		expect(list.isError).toBe(false);
+		const entry = (list.json as { name: string; archivedInWorktree?: boolean }[]).find(
+			(x) => x.name === PLAN,
+		);
+		expect(entry?.archivedInWorktree).toBe(true);
+
+		const s = (await status(p.trunk)) as Status & { archivedInWorktree?: boolean };
+		expect(s.archivedInWorktree).toBe(true);
+		expect(s.worktree).toMatchObject({ path: wt });
+		expect(s.phases?.[0].checkedItems).toBe(1);
+	});
+});
+
+describe("A22 — a plan whose folder is gone from its assigned worktree reads the trunk and says so", () => {
+	it("list_plans and get_plan_status report the missing folder by worktree path and nothing throws", async () => {
+		const wt = assignedWorktree();
+		rmSync(join(wt, ".indusk", "planning", PLAN), { recursive: true, force: true });
+
+		const list = await tools(p.trunk).call("list_plans", {});
+		expect(list.isError).toBe(false);
+		const s = await status(p.trunk);
+		expect(s.copyProblem?.kind).toBe("missing");
+		expect(s.copyProblem?.detail).toContain(wt);
+		expect(s.copyProblem?.detail).toMatch(/plan folder missing in worktree/);
+		expect(s.phases?.[0].checkedItems).toBe(0);
 	});
 });

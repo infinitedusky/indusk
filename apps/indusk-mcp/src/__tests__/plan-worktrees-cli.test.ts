@@ -1,8 +1,10 @@
-import { existsSync, mkdirSync, realpathSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerPlanTools } from "../tools/plan-tools.js";
-import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { CLI_BIN, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	PLAN,
 	type PlanWorktreeProject,
@@ -120,5 +122,71 @@ describe.skipIf(SHOULD_SKIP)("admin-plan-worktrees CLI", () => {
 		expect(runCli(p.trunk, ["worktree", "assign", PLAN, wt]).code).toBe(0);
 		clean(p.trunk);
 		clean(wt);
+	});
+});
+
+/** Run the built CLI without waiting, so several can race. INDUSK_HOME pinned to a temp dir, as `runCli` does. */
+function spawnCli(cwd: string, args: string[], home: string): Promise<number> {
+	return new Promise((resolveExit) => {
+		const child = spawn("node", [CLI_BIN, ...args], {
+			cwd,
+			env: { ...process.env, INDUSK_HOME: home },
+			stdio: "ignore",
+		});
+		child.on("close", (code) => resolveExit(code ?? 1));
+	});
+}
+
+describe.skipIf(SHOULD_SKIP)("admin-plan-worktrees CLI — falsification", () => {
+	it("A23 — twelve assigns started at once leave all twelve assignments in the record", async () => {
+		const plans = Array.from({ length: 12 }, (_, i) => `race-${i}`);
+		for (const plan of plans) {
+			mkdirSync(join(p.trunk, ".indusk", "planning", plan), { recursive: true });
+			writeFileSync(
+				join(p.trunk, ".indusk", "planning", plan, "brief.md"),
+				`---\ntitle: ${plan}\nstatus: draft\n---\n\n# ${plan}\n`,
+			);
+		}
+		git(p.trunk, ["add", "-A"]);
+		git(p.trunk, ["commit", "-q", "-m", "twelve plans"]);
+		const worktrees = plans.map((plan) => p.addWorktree(`wt-${plan}`, `plan/${plan}`));
+		const home = mkdtempSync(join(tmpdir(), "apw-race-home-"));
+		try {
+			const codes = await Promise.all(
+				plans.map((plan, i) => spawnCli(p.trunk, ["worktree", "assign", plan, worktrees[i]], home)),
+			);
+			expect(
+				codes.every((c) => c === 0),
+				`exit codes ${codes.join(",")}`,
+			).toBe(true);
+			const record = JSON.parse(p.readRecord() ?? "{}") as { assignments?: { plan: string }[] };
+			const recorded = new Set((record.assignments ?? []).map((a) => a.plan));
+			expect(
+				[...plans].filter((plan) => !recorded.has(plan)),
+				"assignments lost",
+			).toEqual([]);
+		} finally {
+			rmSync(home, { recursive: true, force: true });
+		}
+	}, 60_000);
+
+	it("A24 — create refuses a leftover plain folder as not a worktree, and never advises assign", () => {
+		const leftover = join(p.base, "proj-worktrees", PLAN);
+		mkdirSync(join(leftover, "node_modules"), { recursive: true });
+		writeFileSync(join(leftover, "node_modules", ".keep"), "");
+		const r = runCli(p.trunk, ["worktree", "create", PLAN]);
+		expect(r.code).not.toBe(0);
+		const out = `${r.stdout}\n${r.stderr}`;
+		expect(out).toContain(leftover);
+		expect(out).toMatch(/not a worktree/i);
+		expect(out).not.toContain("worktree assign");
+	});
+
+	it("A25 — create refuses when the trunk is on a branch that is not a trunk branch", () => {
+		git(p.trunk, ["checkout", "-q", "-b", "feature/unmerged"]);
+		const r = runCli(p.trunk, ["worktree", "create", PLAN]);
+		expect(r.code).not.toBe(0);
+		expect(`${r.stdout}\n${r.stderr}`).toContain("feature/unmerged");
+		expect(git(p.trunk, ["branch", "--list", `plan/${PLAN}`])).toBe("");
 	});
 });

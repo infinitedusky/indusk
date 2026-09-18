@@ -4,6 +4,7 @@ import {
   mkdtempSync,
   readFileSync,
   realpathSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -173,6 +174,10 @@ let loose = "";
 let gone: Repo;
 let goneWt = "";
 let malformed: Repo;
+let archivedRepo: Repo;
+let archivedWt = "";
+let missingRepo: Repo;
+let missingWt = "";
 
 beforeAll(async () => {
   assigned = repo("assigned");
@@ -194,12 +199,36 @@ beforeAll(async () => {
   malformed.addWorktree("wt-m", "plan/demo");
   malformed.writeRecordRaw("{ this is not json");
 
-  repos.push(assigned, plain, gone, malformed);
+  // A21: retrospective Step 9 on the branch — the plan folder moved to archive/
+  // in the assigned worktree, before the Step 10 release.
+  archivedRepo = repo("archived");
+  archivedWt = archivedRepo.addWorktree("wt-arch", "plan/demo");
+  archivedRepo.writeRecord([{ path: archivedWt, branch: "plan/demo" }]);
+  mkdirSync(path.join(archivedWt, ".indusk", "planning", "archive"), {
+    recursive: true,
+  });
+  renameSync(
+    path.join(archivedWt, ".indusk", "planning", PLAN),
+    path.join(archivedWt, ".indusk", "planning", "archive", PLAN),
+  );
+
+  // A22: the plan folder gone from the assigned worktree altogether.
+  missingRepo = repo("missing");
+  missingWt = missingRepo.addWorktree("wt-miss", "plan/demo");
+  missingRepo.writeRecord([{ path: missingWt, branch: "plan/demo" }]);
+  rmSync(path.join(missingWt, ".indusk", "planning", PLAN), {
+    recursive: true,
+    force: true,
+  });
+
+  repos.push(assigned, plain, gone, malformed, archivedRepo, missingRepo);
   home = makeHome([
     { name: "assigned", path: assigned.trunk },
     { name: "plain", path: plain.trunk },
     { name: "gone", path: gone.trunk },
     { name: "malformed", path: malformed.trunk },
+    { name: "archived", path: archivedRepo.trunk },
+    { name: "missing", path: missingRepo.trunk },
   ]);
   const dev = await startNextDev({ home });
   url = dev.url;
@@ -277,5 +306,21 @@ describe("admin-plan-worktrees over HTTP", () => {
     const plan = await page(`/p/malformed/plan/${PLAN}`);
     expect(plan).toContain(file);
     expect(activeBar(plan)).toBeNull();
+  });
+
+  it("A21 — a plan archived on its branch before the release shows as archived in its worktree", async () => {
+    const project = await page("/p/archived");
+    expect(project).toContain("demo");
+    const plan = await page(`/p/archived/plan/${PLAN}`);
+    expect(plan).toContain("archived in its worktree");
+    expect(plan).toContain("wt-arch");
+  });
+
+  it("A22 — a plan whose folder is gone from its worktree reads the trunk and names the path", async () => {
+    await page("/p/missing");
+    const plan = await page(`/p/missing/plan/${PLAN}`);
+    expect(plan).toContain("plan folder missing in worktree");
+    expect(plan).toContain(missingWt);
+    expect(activeBar(plan)).toEqual({ phase: "build-1", items: "0 of 2" });
   });
 });
