@@ -191,9 +191,15 @@ the evaluator run, instrumented through the existing `lib/eval/otel.ts` with
 its endpoint set to the local collector: `upheld` when a scorecard is written,
 `violated` with the failure as symptom when the evaluator exits non-zero. Its
 owner is the archived plan that made commits evaluated (confirmed in the
-impl). A24 runs it: point `eval.model` at a model that does not exist, commit,
-run `indusk promises watch`, and see the incident open with source `local` and
-the owner reopen.
+impl). A24 runs it as an **end-to-end test**:
+`apps/indusk-mcp/e2e/day-monitor.e2e.test.ts`, in its own `e2e` vitest
+project, run with `pnpm e2e` and never part of `pnpm test`. It sets up a
+scratch project whose suite is green, points `eval.model` at a model that
+does not exist, makes a commit and runs the evaluator for it, runs
+`indusk promises watch`, and asserts the incident opened with source `local`
+and the owner reopened with a Maintenance phase. It needs the `claude` CLI and
+the local telemetry daemon, so it runs on a developer machine; its trajectory
+row's Test column reads `manual: pnpm e2e`.
 
 ## Alternatives Considered
 

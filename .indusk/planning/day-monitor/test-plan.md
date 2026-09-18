@@ -77,7 +77,7 @@ about what a person sees, it goes through the CLI or the admin over HTTP.
 
 | ID | Assertion | Mechanism |
 |----|-----------|-----------|
-| A24 | In a local run of this repository under the telemetry daemon, a deliberate violation of one of its behaviour promises is detected from telemetry, opens an incident with source `local`, and reopens the owning plan — the Day row 9 acceptance, with no person finding it by reading | manual smoke (scripted where it can be), recorded in the retrospective |
+| A24 | In a local run of this repository under the telemetry daemon, a deliberate violation of one of its behaviour promises is detected from telemetry, opens an incident with source `local`, and reopens the owning plan — the Day row 9 acceptance, with no person finding it by reading | end-to-end test (`pnpm e2e`, its own vitest project, outside `pnpm test`; needs the `claude` CLI and the telemetry daemon), run and recorded in the retrospective |
 
 ## Untestable Assertions
 
