@@ -2,6 +2,7 @@ import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { shouldEmitOtelGate } from "../config.js";
 import { parseImplString } from "../impl-parser-core.js";
+import { appendLateRow } from "../trajectory/append-row.js";
 
 /**
  * Reopening a plan is an appended phase, in place (day-monitor, ADR D7).
@@ -105,117 +106,15 @@ export function reopenOwner(
 	}
 	const next =
 		Math.max(0, ...parsed.phases.filter((p) => p.kind === "build").map((p) => p.number)) + 1;
-	const withRow = addTrajectoryRow(text, next, incidentId, promise);
+	const withRow = appendLateRow(text, next, {
+		asserts: `${promise} holds again after ${incidentId}: the test that reproduces it, named by its root cause, passes`,
+		why: `the test that reproduces ${incidentId} is decided by its root cause, which this Maintenance phase writes first`,
+	});
 	writeFileSync(
 		implPath,
 		`${withRow.text.replace(/\n*$/, "\n")}\n${maintenancePhase(next, incidentId, otelGate, withRow.id)}`,
 	);
 	return { reopened: true, impl: implPath, phase: next };
-}
-
-const TRAJECTORY_HEADING = /^## Test Trajectory\s*$/m;
-
-function cells(row: string): string[] {
-	return row
-		.trim()
-		.replace(/^\||\|$/g, "")
-		.split("|")
-		.map((c) => c.trim());
-}
-
-/**
- * An impl with a Test Trajectory commits every phase to a named test, and a
- * Maintenance phase is no exception: its test is the one that reproduces the
- * incident, written once the root cause says what it is. Append that row —
- * writable and passing in the Maintenance phase, so the phase cannot close
- * until it passes — and its justification (`justifyLateRow`). An impl with no
- * trajectory is returned as is.
- */
-function addTrajectoryRow(
-	text: string,
-	phase: number,
-	incidentId: string,
-	promise: string,
-): { text: string; id: string | null } {
-	const heading = TRAJECTORY_HEADING.exec(text);
-	if (!heading) return { text, id: null };
-	const lines = text.split("\n");
-	const headingLine = text.slice(0, heading.index).split("\n").length - 1;
-	let first = headingLine + 1;
-	while (first < lines.length && !lines[first].trimStart().startsWith("|")) first++;
-	let last = first;
-	while (last + 1 < lines.length && lines[last + 1].trimStart().startsWith("|")) last++;
-	if (first >= lines.length) return { text, id: null };
-
-	const header = cells(lines[first]).map((c) => c.toLowerCase());
-	// Continue the table's own prefix (`A` or `T`) and number.
-	const existing = lines
-		.slice(first + 2, last + 1)
-		.map((l) => /^([TA])(\d+)$/.exec(cells(l)[0] ?? ""))
-		.filter((m): m is RegExpExecArray => m !== null);
-	const prefix = existing.at(-1)?.[1] ?? "T";
-	const id = `${prefix}${Math.max(0, ...existing.filter((m) => m[1] === prefix).map((m) => Number(m[2]))) + 1}`;
-	const testPhases = /^### Test Phase \d+/m.test(text);
-	const phaseRef = testPhases ? `Build Phase ${phase}` : `Phase ${phase}`;
-	const value: Record<string, string> = {
-		id,
-		asserts: `${promise} holds again after ${incidentId}: the test that reproduces it, named by its root cause, passes`,
-		"writable at": phaseRef,
-		"passes at": phaseRef,
-		state: "planned",
-	};
-	lines.splice(last + 1, 0, `| ${header.map((h) => value[h] ?? "").join(" | ")} |`);
-
-	justifyLateRow(lines, id, phase, incidentId, testPhases);
-	return { text: lines.join("\n"), id };
-}
-
-/**
- * The justification an impl requires for a row authored after its first
- * phase, in the shape that impl uses: an entry in Test Phase 1's register, or
- * in `### Trajectory Rationale` for an impl written before test phases.
- * Edits `lines` in place.
- */
-function justifyLateRow(
-	lines: string[],
-	id: string,
-	phase: number,
-	incidentId: string,
-	testPhases: boolean,
-): void {
-	const why = `the test that reproduces ${incidentId} is decided by its root cause, which this Maintenance phase writes first`;
-	if (testPhases) {
-		const verification = lines.findIndex((l) => /^#### Test Phase 1 Verification\s*$/.test(l));
-		if (verification !== -1) {
-			lines.splice(
-				verification,
-				0,
-				`#### Deferred to Build Phase ${phase}`,
-				"",
-				`- **${id}** — ${why}.`,
-				"",
-			);
-		}
-		return;
-	}
-	const entry = `- **${id}** \`Writable at: Phase ${phase}\` — ${why}.`;
-	const rationale = lines.findIndex((l) => /^### Trajectory Rationale\s*$/.test(l));
-	if (rationale !== -1) {
-		let end = rationale + 1;
-		while (end < lines.length && !/^#{2,3} /.test(lines[end])) end++;
-		while (end > rationale + 1 && lines[end - 1].trim() === "") end--;
-		lines.splice(end, 0, entry);
-		return;
-	}
-	const checklist = lines.findIndex((l) => /^## Checklist\s*$/.test(l));
-	lines.splice(
-		checklist === -1 ? lines.length : checklist,
-		0,
-		"### Trajectory Rationale",
-		"",
-		entry,
-		"",
-	);
 }
 
 /** An impl with an unchecked item under a Maintenance phase — the plan is reopened. */
