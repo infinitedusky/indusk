@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor"
 date: 2026-09-18
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -86,7 +86,7 @@ backend and no InDusk code inside the application (ADR D1–D10).
 **Goal**: author every row that can be written against today's code through
 the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
-- [ ] Create this plan's worktree with the published command: `indusk worktree create day-monitor` (records the assignment; the admin and plan tools follow the plan into it)
+- [x] Create this plan's worktree with the published command: `indusk worktree create day-monitor` (records the assignment; the admin and plan tools follow the plan into it)
 - [ ] Helper `apps/indusk-mcp/src/__tests__/helpers/local-jaeger.ts`: starts the extension's Jaeger binary (`resolveBinary("jaeger")`) with in-memory storage on free ports, loads spans over OTLP/HTTP, stops it; throws when it cannot start. Used by the admin tests through a copy only if the admin cannot import it — decide in this item and record which
 - [ ] Helper `apps/indusk-mcp/src/__tests__/helpers/otlp-capture.ts`: a local HTTP server accepting `POST /v1/traces` (OTLP/JSON and protobuf decoded by the collector-free path the evaluator's exporter uses) and exposing what it received, and a fake `claude` on `PATH` that exits 1 with the bad-model message or writes a scorecard
 - [ ] Fixture extension of `helpers/promises-fixture.ts`: a behaviour promise owned by an archived plan with a retrospective carrying a "Landed on main at <sha>, <date>" line at a chosen date
