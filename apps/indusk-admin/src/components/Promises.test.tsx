@@ -223,3 +223,21 @@ describe("A22 — an archived plan shows holding N; one owning none shows no cou
     ).toBeNull();
   });
 });
+
+describe("day-monitor A20 — a retired promise's health chip is grey", () => {
+  it("behind the retired toggle, the retired row's health chip reads grey", async () => {
+    const screen = await render(
+      <PromisesTable promises={PROMISES} incidents={INCIDENTS} />,
+    );
+    await screen.getByRole("button", { name: /show retired \(1\)/i }).click();
+    const row = screen.container.querySelector(
+      '[data-promise="old-seat-rule"]',
+    );
+    expect(row).not.toBeNull();
+    expect(
+      row
+        ?.querySelector('[data-testid="promise-health"]')
+        ?.getAttribute("data-health"),
+    ).toBe("grey");
+  });
+});

@@ -66,7 +66,8 @@ function attr(key: string, value: string | number | boolean) {
 }
 
 function nanos(d: Date): string {
-	return `${BigInt(d.getTime()) * 1_000_000n}`;
+	// BigInt() rather than a literal: the admin imports this file and compiles at ES2017.
+	return (BigInt(d.getTime()) * BigInt(1_000_000)).toString();
 }
 
 /** The OTLP/JSON body for `spans`, grouped by service. Exported for the capture tests. */

@@ -54,29 +54,29 @@ backend and no InDusk code inside the application (ADR D1–D10).
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | A span marked with a promise and exported to a real local Jaeger is found by `indusk promises status` under that promise's name | Test Phase 1 | Build Phase 2 | planned |
-| A2 | A failing evaluator run exports a span whose raw attributes and event say `every-commit-evaluated` was violated and why, readable with no InDusk code | Test Phase 1 | Build Phase 1 | planned |
-| A3 | An evaluator run exports only its one marked span; nothing is added to spans that do not name a promise | Test Phase 1 | Build Phase 1 | planned |
+| A1 | A span marked with a promise and exported to a real local Jaeger is found by `indusk promises status` under that promise's name | Test Phase 1 | Build Phase 2 | written |
+| A2 | A failing evaluator run exports a span whose raw attributes and event say `every-commit-evaluated` was violated and why, readable with no InDusk code | Test Phase 1 | Build Phase 1 | written |
+| A3 | An evaluator run exports only its one marked span; nothing is added to spans that do not name a promise | Test Phase 1 | Build Phase 1 | written |
 | A4 | The trace-shape helper passes a test asserting a call upheld a promise under its expected parent | Build Phase 1 | Build Phase 1 | planned |
 | A5 | The helper still passes after an added attribute or extra child span, and fails when the marked span is gone | Build Phase 1 | Build Phase 1 | planned |
-| A6 | A test that asserts a promise through the helper, with the promise as its `"promise: <name>"` argument, satisfies `indusk promises check`'s test link with no other citation | Test Phase 1 | Test Phase 1 | planned |
-| A7 | `indusk promises status` lists each behaviour promise with violations in the window, their trace ids, and last seen upheld | Test Phase 1 | Build Phase 2 | planned |
-| A8 | A behaviour promise with no marked span in the window reads "not seen" — never "upheld", never zero violations | Test Phase 1 | Build Phase 2 | planned |
-| A9 | State and structure promises are listed as watched by the suite, with no violation count | Test Phase 1 | Build Phase 2 | planned |
-| A10 | With Jaeger unreachable, `status` names where it looked and exits 2; it never prints zero violations | Test Phase 1 | Build Phase 2 | planned |
-| A11 | After a violation with no open incident, `watch` leaves one incident naming the promise, its traces, source `local` and the symptom, with the root cause unwritten, and `promises check` passes | Test Phase 1 | Build Phase 3 | planned |
-| A12 | A later violation of a promise with an open incident adds its traces to that incident and opens no other | Test Phase 1 | Build Phase 3 | planned |
-| A13 | A second `watch` over the same violations changes no file | Test Phase 1 | Build Phase 3 | planned |
-| A14 | The owning plan reopens: `list_plans` lists it active with a Maintenance phase naming the incident, the appended phase passes the impl validator, and the admin shows it executing that phase | Test Phase 1 | Build Phase 5 | planned |
-| A15 | `promises check` refuses an incident marked fixed whose root cause is still unwritten, naming the file | Test Phase 1 | Build Phase 3 | planned |
-| A16 | A plan closed fewer than the window's days ago that holds a behaviour promise reads `monitor` in `list_plans` and on its admin plan bar, with the window's elapsed share | Test Phase 1 | Build Phase 5 | planned |
-| A17 | The same plan closed more than the window ago, with no violation since, reads archived | Test Phase 1 | Build Phase 4 | planned |
-| A18 | A violation recorded during the window keeps the plan in `monitor` from the violation's time, and the page says the window restarted | Test Phase 1 | Build Phase 5 | planned |
-| A19 | A plan holding no behaviour promise never reads `monitor` | Test Phase 1 | Test Phase 1 | planned |
-| A20 | The Promises page shows each behaviour promise's observed health: red when violated in the window, green when seen upheld, hollow "unverified" when not seen, amber when known-violated, grey when retired | Test Phase 1 | Build Phase 5 | planned |
-| A21 | The page sorts red first and shows violations in the window and last seen for each behaviour promise | Test Phase 1 | Build Phase 5 | planned |
-| A22 | With Jaeger unreachable every behaviour chip is hollow with "health unknown since …" and none is green | Test Phase 1 | Build Phase 5 | planned |
-| A23 | A plan holding a red promise shows red in the sidebar | Test Phase 1 | Build Phase 5 | planned |
+| A6 | A test that asserts a promise through the helper, with the promise as its `"promise: <name>"` argument, satisfies `indusk promises check`'s test link with no other citation | Test Phase 1 | Test Phase 1 | passing |
+| A7 | `indusk promises status` lists each behaviour promise with violations in the window, their trace ids, and last seen upheld | Test Phase 1 | Build Phase 2 | written |
+| A8 | A behaviour promise with no marked span in the window reads "not seen" — never "upheld", never zero violations | Test Phase 1 | Build Phase 2 | written |
+| A9 | State and structure promises are listed as watched by the suite, with no violation count | Test Phase 1 | Build Phase 2 | written |
+| A10 | With Jaeger unreachable, `status` names where it looked and exits 2; it never prints zero violations | Test Phase 1 | Build Phase 2 | written |
+| A11 | After a violation with no open incident, `watch` leaves one incident naming the promise, its traces, source `local` and the symptom, with the root cause unwritten, and `promises check` passes | Test Phase 1 | Build Phase 3 | written |
+| A12 | A later violation of a promise with an open incident adds its traces to that incident and opens no other | Test Phase 1 | Build Phase 3 | written |
+| A13 | A second `watch` over the same violations changes no file | Test Phase 1 | Build Phase 3 | written |
+| A14 | The owning plan reopens: `list_plans` lists it active with a Maintenance phase naming the incident, the appended phase passes the impl validator, and the admin shows it executing that phase | Test Phase 1 | Build Phase 5 | written |
+| A15 | `promises check` refuses an incident marked fixed whose root cause is still unwritten, naming the file | Test Phase 1 | Build Phase 3 | written |
+| A16 | A plan closed fewer than the window's days ago that holds a behaviour promise reads `monitor` in `list_plans` and on its admin plan bar, with the window's elapsed share | Test Phase 1 | Build Phase 5 | written |
+| A17 | The same plan closed more than the window ago, with no violation since, reads archived | Test Phase 1 | Build Phase 4 | written |
+| A18 | A violation recorded during the window keeps the plan in `monitor` from the violation's time, and the page says the window restarted | Test Phase 1 | Build Phase 5 | written |
+| A19 | A plan holding no behaviour promise never reads `monitor` | Test Phase 1 | Test Phase 1 | passing |
+| A20 | The Promises page shows each behaviour promise's observed health: red when violated in the window, green when seen upheld, hollow "unverified" when not seen, amber when known-violated, grey when retired | Test Phase 1 | Build Phase 5 | written |
+| A21 | The page sorts red first and shows violations in the window and last seen for each behaviour promise | Test Phase 1 | Build Phase 5 | written |
+| A22 | With Jaeger unreachable every behaviour chip is hollow with "health unknown since …" and none is green | Test Phase 1 | Build Phase 5 | written |
+| A23 | A plan holding a red promise shows red in the sidebar | Test Phase 1 | Build Phase 5 | written |
 | A24 | End to end, on a scratch project with a green suite: a commit evaluated with a model that does not exist marks `every-commit-evaluated` violated in local Jaeger, `indusk promises watch` opens an incident with source `local`, and the owning plan reopens with a Maintenance phase | Build Phase 6 | Build Phase 6 | planned |
 
 ## Checklist
@@ -95,8 +95,8 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 - [x] Author A1, A7–A10 in `apps/indusk-mcp/src/__tests__/monitor-status.test.ts` via `runCli` against the local Jaeger helper
 - [x] Author A11–A13, A15 in `apps/indusk-mcp/src/__tests__/monitor-watch.test.ts` via `runCli`
 - [x] Author A14 (tools half), A16–A19 (tools half) in `apps/indusk-mcp/src/__tests__/monitor-plans.test.ts` through `helpers/tool-call.ts`
-- [ ] Author A14, A16, A18 (admin halves) and A20–A23 in `apps/indusk-admin/src/__tests__/http-promise-health.test.ts` over `next dev`, with a local Jaeger
-- [ ] Run each file and read each failure: every red row fails on its own assertion, not on a missing import
+- [x] Author A14, A16, A18 (admin halves) and A20–A23 in `apps/indusk-admin/src/__tests__/http-promise-health.test.ts` over `next dev`, with a local Jaeger. The retired-is-grey half of A20 is in `components/Promises.test.tsx` (retired rows sit behind a client toggle, absent from server HTML). The Jaeger helper is imported by path
+- [x] Run each file and read each failure: every red row fails on its own assertion, not on a missing import. Read: every authored row fails on its own assertion (`unknown command 'status'/'watch'`, no marked span, no archived plan in `list_plans`, no health chip, no active `monitor` segment); A6 and A19 pass. A17's positive half asks `get_plan_status` for the archived plan and expects `archived` (today the tool throws on a plan outside `planning/`, caught and asserted on), so `list_plans` need not list every archived plan
 
 #### Deferred to Build Phase 1
 
@@ -141,7 +141,7 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 ### Build Phase 1: The mark
 
 - [ ] `apps/indusk-mcp/src/lib/testing/trace-shape.ts`, exported as `./testing/trace-shape`: `captureSpans(fn)` with an in-memory exporter, `expectPromiseUpheld(spans, token, { parent? })`, `expectPromiseViolated(spans, token)`; containment matching; the token parsed from `"promise: <name>"`, refusing any other shape by name
-- [ ] Mark the evaluator run: `runPersistentEval` and `runEvaluatorSync` (the modules the hook spawns, which resolve the package's own dependencies) wrap each evaluation in a span through `lib/eval/otel.ts` carrying `indusk.promise=every-commit-evaluated` and `indusk.promise.outcome`; on failure the `indusk.promise.violated` event with the failure line as `indusk.promise.symptom`. *Refines ADR D10: the spawned evaluator runs inside the package, so it uses the existing OpenTelemetry setup instead of a direct OTLP post from the hook.*
+- [ ] Mark the evaluator run: `runPersistentEval` and `runEvaluatorSync` (the modules the hook spawns, which resolve the package's own dependencies) wrap each evaluation in a span through `lib/eval/otel.ts` carrying `indusk.promise=every-commit-evaluated` and `indusk.promise.outcome`; on failure the `indusk.promise.violated` event with the failure line as `indusk.promise.symptom`. *Refines ADR D10: the spawned evaluator runs inside the package, so it uses the existing OpenTelemetry setup instead of a direct OTLP post from the hook.* Two facts from Test Phase 1: the evaluator already exports `eval.*` spans when `INDUSK_EVAL_OTEL=1` and an endpoint are set (A2/A3's preconditions pass today), so the mark goes on the `eval.run` root span; and the real `claude` prints the bad-model message on **stdout** with stderr empty, so the symptom takes stdout's first line when stderr is empty. Decide here whether the mark needs `eval.otel` enabled or turns on when the local daemon is running, and record why
 - [ ] Register `.indusk/promises/every-commit-evaluated.md` (behaviour, domain `gates`, state `enforced`, sites: the evaluator module, tests: `monitor-mark.test.ts`); confirm the owner by reading the archived plan that made commits evaluated (`agent-roles` is the candidate) and record why
 - [ ] The testing extension's skill (`apps/indusk-mcp/extensions/testing/skill.md`): a section on asserting a promise through the trace-shape helper
 
@@ -177,9 +177,9 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 3: The loop
 
-- [ ] `indusk promises watch [--source local|smoke|deployed]`: status, then open or extend incidents (ADR D6 fields, `## Root cause` written as `_Unwritten — a person writes this._`), traces deduplicated, `last_seen` only forward; writes plan documents, commits nothing
+- [ ] `indusk promises watch [--source local|smoke|deployed]`: status, then open or extend incidents (ADR D6 fields, `## Root cause` written as `_Unwritten — a person writes this._`), traces deduplicated, `last_seen` only forward; writes plan documents, commits nothing. Found in Test Phase 1 by reading `check.ts`/`registry.ts`: the incident must also carry `date` (the registry refuses one without it), and opening one must move an `enforced` promise to `known-violated` and add the id to its `incidents:` — `check` refuses an enforced promise with an open incident, and A11 asserts `check` still passes
 - [ ] Reopen (ADR D7): append `### Build Phase N: Maintenance — <incident>` with its four gates to the owner's impl, in place, archived or active; numbering from the owner's own phases; a plan with no impl gets one containing only that phase
-- [ ] `list_plans` lists an archived plan with an unchecked Maintenance phase as active, reading it from the archive
+- [ ] `list_plans` lists an archived plan with an unchecked Maintenance phase as active, reading it from the archive; `get_plan_status` resolves an archived plan by name (A17's positive half asks it)
 - [ ] `promises check`: refuse an incident with `status: fixed` whose root cause is the unwritten line, naming the file
 - [ ] A test runs `validate-impl-structure.js` over an owner's impl after `watch` appended to it, for a legacy impl (no test phases) and a test-phase impl
 
@@ -216,14 +216,14 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 5: The admin
 
-- [ ] Health on the Promises page (ADR D9): `markedSpans` read server-side with a two-second timeout, cached for the refresh interval; red, green, hollow "unverified", amber, grey chips under the render-parity pin; red sorts first; violations and last seen per behaviour row; "health unknown since <last successful read>" when unreachable
+- [ ] Health on the Promises page (ADR D9): `markedSpans` read server-side with a two-second timeout, cached for the refresh interval; red, green, hollow "unverified", amber, grey chips under the render-parity pin; red sorts first; violations and last seen per behaviour row; "health unknown since <last successful read>" when unreachable. `components/Promises.test.tsx` carries day-promises' "no health is rendered" test, which D9 supersedes: revise it in this item to say what is now true, never delete it silently
 - [ ] Sidebar roll-up: a plan holding a red promise shows red
 - [ ] The plan bar's `monitor` segment fills with the elapsed share and says it is time, not steps; "window restarted" after a violation; a reopened plan shows its Maintenance phase as active
 
 #### Build Phase 5 Verification
 
 - [ ] A14, A16, A18, A20, A21, A22, A23 pass (`pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts`)
-- [ ] Admin node project green (`pnpm --filter indusk-admin exec vitest run --project node`)
+- [ ] Admin node project green (`pnpm --filter indusk-admin exec vitest run --project node`); A20's grey half and the revised Promises tests pass (`pnpm --filter indusk-admin exec vitest run --project browser src/components/Promises.test.tsx`)
 
 #### Build Phase 5 Context
 
