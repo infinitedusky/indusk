@@ -163,6 +163,50 @@ the code root, except:
 
 A code root that is not a git repository is a refusal, not an empty scan.
 
+## `promises status`
+
+```
+indusk promises status [--since <duration>]
+```
+
+Read-only. Reports each promise as the local telemetry daemon's Jaeger saw
+it over a window — by default the quiet window (`promises.quiet_window_days`,
+7 days), or `--since 90m` / `24h` / `7d`. One block per promise, opening on a
+line that starts with its name:
+
+```
+Promises observed in the last 7 days, from Jaeger at http://localhost:16686
+
+every-commit-evaluated (behaviour, gates, enforced)
+  1 violation in the last 7 days
+    4bf92f3577b34da6a3ce929d0e0e4736  2026-09-19T10:14:40Z  indusk-eval-agent  claude exited with code 1: There's an issue with the selected model …
+  last seen upheld 2026-09-19T02:30:20Z (3147fdaa7db94980735c887ff6ce47f0)
+
+gates-ran-at-every-checkoff (behaviour, gates, enforced)
+  not seen in the last 7 days — no run exercised it
+
+phase-boundary-record-never-malformed (state, planning, enforced)
+  watched by the suite at head, not by telemetry
+```
+
+- A **behaviour** promise lists its violations in the window with each
+  trace id, when, the service and the symptom from the violation event, then
+  when it was last seen upheld.
+- **Not seen** means no run marked it in the window. It is never reported as
+  upheld or as zero violations.
+- **State** and **structure** promises are listed as watched by the suite:
+  their health is the last run of their test or check at head, not telemetry.
+- A **retired** promise is listed and not watched.
+
+Exit **0** when Jaeger answered. Exit **2** when it could not — no daemon
+running (it names `$INDUSK_HOME/telemetry.json`) or the query URL did not
+answer (it names the URL) — with no count for any promise.
+
+The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry`
+(`markedSpans({ promises, since })`, which throws `JaegerUnreachable` rather
+than returning an empty result). How an application marks a promise is in the
+[promises guide](/guide/promises#marking-a-behaviour-promise).
+
 ## Reading the registry from code
 
 The library behind the command is exported as

@@ -39,6 +39,11 @@ function pidFilePath(): string {
 	return join(induskHome(), "telemetry.pid");
 }
 
+/** Where the daemon's ports are recorded — the file a reader names when no daemon answers. */
+export function daemonMetaPath(): string {
+	return metaFilePath();
+}
+
 function metaFilePath(): string {
 	return join(induskHome(), "telemetry.json");
 }

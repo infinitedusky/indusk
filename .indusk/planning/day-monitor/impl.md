@@ -54,16 +54,16 @@ backend and no InDusk code inside the application (ADR D1–D10).
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | A span marked with a promise and exported to a real local Jaeger is found by `indusk promises status` under that promise's name | Test Phase 1 | Build Phase 2 | written |
+| A1 | A span marked with a promise and exported to a real local Jaeger is found by `indusk promises status` under that promise's name | Test Phase 1 | Build Phase 2 | passing |
 | A2 | A failing evaluator run exports a span whose raw attributes and event say `every-commit-evaluated` was violated and why, readable with no InDusk code | Test Phase 1 | Build Phase 1 | passing |
 | A3 | An evaluator run exports only its one marked span; nothing is added to spans that do not name a promise | Test Phase 1 | Build Phase 1 | passing |
 | A4 | The trace-shape helper passes a test asserting a call upheld a promise under its expected parent | Build Phase 1 | Build Phase 1 | passing |
 | A5 | The helper still passes after an added attribute or extra child span, and fails when the marked span is gone | Build Phase 1 | Build Phase 1 | passing |
 | A6 | A test that asserts a promise through the helper, with the promise as its `"promise: <name>"` argument, satisfies `indusk promises check`'s test link with no other citation | Test Phase 1 | Test Phase 1 | passing |
-| A7 | `indusk promises status` lists each behaviour promise with violations in the window, their trace ids, and last seen upheld | Test Phase 1 | Build Phase 2 | written |
-| A8 | A behaviour promise with no marked span in the window reads "not seen" — never "upheld", never zero violations | Test Phase 1 | Build Phase 2 | written |
-| A9 | State and structure promises are listed as watched by the suite, with no violation count | Test Phase 1 | Build Phase 2 | written |
-| A10 | With Jaeger unreachable, `status` names where it looked and exits 2; it never prints zero violations | Test Phase 1 | Build Phase 2 | written |
+| A7 | `indusk promises status` lists each behaviour promise with violations in the window, their trace ids, and last seen upheld | Test Phase 1 | Build Phase 2 | passing |
+| A8 | A behaviour promise with no marked span in the window reads "not seen" — never "upheld", never zero violations | Test Phase 1 | Build Phase 2 | passing |
+| A9 | State and structure promises are listed as watched by the suite, with no violation count | Test Phase 1 | Build Phase 2 | passing |
+| A10 | With Jaeger unreachable, `status` names where it looked and exits 2; it never prints zero violations | Test Phase 1 | Build Phase 2 | passing |
 | A11 | After a violation with no open incident, `watch` leaves one incident naming the promise, its traces, source `local` and the symptom, with the root cause unwritten, and `promises check` passes | Test Phase 1 | Build Phase 3 | written |
 | A12 | A later violation of a promise with an open incident adds its traces to that incident and opens no other | Test Phase 1 | Build Phase 3 | written |
 | A13 | A second `watch` over the same violations changes no file | Test Phase 1 | Build Phase 3 | written |
@@ -162,20 +162,21 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 2: Reading Jaeger
 
-- [ ] `apps/indusk-mcp/src/lib/promises/telemetry.ts`: `markedSpans(projectRoot, since)` — the query port from `daemonStatus()`, `GET /api/services`, then `GET /api/traces?service=…&tags={"indusk.promise":…}` per service; per-promise upheld and violated spans with trace ids and times; `JaegerUnreachable` naming the URL when it cannot connect. Exported through the `promises/registry` neighbour subpath the admin already reads, or its own, decided here
-- [ ] `indusk promises status [--since <duration>]` in `src/bin/commands/promises.ts` and `cli.ts`: behaviour promises with violations, traces, last seen upheld or "not seen"; state and structure listed as watched by the suite; exit 0 / 2
+- [x] `apps/indusk-mcp/src/lib/promises/telemetry.ts`: `markedSpans(projectRoot, since)` — the query port from `daemonStatus()`, `GET /api/services`, then `GET /api/traces?service=…&tags={"indusk.promise":…}` per service; per-promise upheld and violated spans with trace ids and times; `JaegerUnreachable` naming the URL when it cannot connect. Exported through the `promises/registry` neighbour subpath the admin already reads, or its own, decided here. **Decided:** its own subpath, `./promises/telemetry` — the registry subpath is filesystem-only and the admin imports it into pages that must not pull a network client by accident; the documented import was run (`node -e 'import("@infinitedusky/indusk-mcp/promises/telemetry")'` → `JaegerUnreachable`, `markedSpans`). The signature takes the promise names and `since` rather than `projectRoot` — the daemon is machine-global and the caller already holds the registry. `getQuietWindowDays` moved here from Build Phase 4, because `status` defaults to the quiet window
+- [x] `indusk promises status [--since <duration>]` in `src/bin/commands/promises.ts` and `cli.ts`: behaviour promises with violations, traces, last seen upheld or "not seen"; state and structure listed as watched by the suite; exit 0 / 2. Run against this repository: `every-commit-evaluated` already reads upheld, from the evaluator scoring this plan's own Build Phase 1 commit
+- [x] Shape (Build Phase 2): nothing found. `telemetry.ts` has one job, the query; `status.ts` pairs `formatStatus` with `parseDuration`, both serving only `status`, and splitting a 10-line parser out would add a file with one caller; the command is a thin read → query → print
 
 #### Build Phase 2 Verification
 
-- [ ] A1, A7, A8, A9, A10 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-status.test.ts`)
+- [x] A1, A7, A8, A9, A10 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-status.test.ts`) — ran 2026-09-18: 6 passed
 
 #### Build Phase 2 Context
 
-- [ ] Architecture (indusk-mcp bullet): `indusk promises status` reads marked spans from the local Jaeger through `lib/promises/telemetry.ts`, the one query; unreachable is exit 2, never zero
+- [x] Architecture (indusk-mcp bullet): `indusk promises status` reads marked spans from the local Jaeger through `lib/promises/telemetry.ts`, the one query; unreachable is exit 2, never zero
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: `status`
+- [x] `apps/docs/src/reference/cli/promises.md`: `status`
 
 ### Build Phase 3: The loop
 
