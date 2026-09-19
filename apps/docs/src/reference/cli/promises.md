@@ -146,6 +146,7 @@ is never reported as clean.
 | An `established`-lifetime promise still `enforced` after its owner archived | the promise — it should be retired |
 | A `known-violated` promise with no open incident | the promise — the state is evidence, not an excuse |
 | An incident missing `promise`, `source`, `status`, `date` or a `## Symptom` / `## Root cause` / `## Fix` section; an unknown source | the incident and the field |
+| An incident marked `fixed` whose `## Root cause` is still `_Unwritten — a person writes this._` (day-monitor) | the incident file — a root cause is a person's finding, written before the incident closes |
 | A token anywhere under the code root naming a promise not in the registry | the file and the name |
 | A token naming a `retired` promise | the file — a retired promise must not keep reporting |
 | A workbench declaring zero or several repos | the declaration, through the shared resolver |
