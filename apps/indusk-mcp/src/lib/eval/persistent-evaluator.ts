@@ -133,11 +133,27 @@ async function spawnClaude(
 			env: { ...process.env },
 		});
 
+		let stdout = "";
+		let stderr = "";
+		let settled = false;
+		const settle = (code: number | null) => {
+			if (settled) return;
+			settled = true;
+			resolve({ stdout, stderr, code });
+		};
+		// A binary that cannot start (not installed, not executable) raises
+		// `error` and never `close`; unheard, it kills the evaluator before it
+		// can mark the run (day-monitor A25). It is a failed run like any other.
+		child.on("error", (err) => {
+			stderr += `claude could not be started: ${err.message}`;
+			settle(-1);
+		});
+		child.stdin?.on("error", () => {
+			// the child is gone; its exit or spawn error already says why
+		});
 		child.stdin?.write(prompt);
 		child.stdin?.end();
 
-		let stdout = "";
-		let stderr = "";
 		child.stdout?.on("data", (chunk: Buffer) => {
 			stdout += chunk.toString();
 		});
@@ -145,9 +161,7 @@ async function spawnClaude(
 			stderr += chunk.toString();
 		});
 
-		child.on("close", (code) => {
-			resolve({ stdout, stderr, code });
-		});
+		child.on("close", (code) => settle(code));
 	});
 }
 

@@ -262,11 +262,20 @@ async function runEvaluatorSyncInner(
 			env: { ...process.env },
 		});
 
-		child.stdin?.write(prompt);
-		child.stdin?.end();
-
 		let stdout = "";
 		let stderr = "";
+		let settled = false;
+		// A binary that cannot start raises `error` and never `close`; unheard,
+		// it kills the evaluator before the run is marked (day-monitor A25).
+		child.on("error", (err) => {
+			stderr += `claude could not be started: ${err.message}`;
+			void finish(-1);
+		});
+		child.stdin?.on("error", () => {
+			// the child is gone; its exit or spawn error already says why
+		});
+		child.stdin?.write(prompt);
+		child.stdin?.end();
 
 		child.stdout?.on("data", (chunk: Buffer) => {
 			stdout += chunk.toString();
@@ -276,7 +285,11 @@ async function runEvaluatorSyncInner(
 			stderr += chunk.toString();
 		});
 
-		child.on("close", async (code) => {
+		child.on("close", (code) => void finish(code));
+
+		async function finish(code: number | null): Promise<void> {
+			if (settled) return;
+			settled = true;
 			const logWriter = new EvalLogWriter(getEvalLogPath(opts.projectRoot));
 
 			try {
@@ -339,6 +352,6 @@ async function runEvaluatorSyncInner(
 				await logWriter.append(errorEntry);
 				resolve(errorEntry);
 			}
-		});
+		}
 	});
 }
