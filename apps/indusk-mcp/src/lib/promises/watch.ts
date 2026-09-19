@@ -1,5 +1,4 @@
-import { getProjectGroupId } from "../config.js";
-import { getQuietWindowDays } from "./config.js";
+import { getQuietWindowDays, markProjectId } from "./config.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
 import { readPromises } from "./registry.js";
 import { type ReopenResult, reopenOwner } from "./reopen.js";
@@ -37,7 +36,7 @@ export async function watchPromises(
 	const marks = await markedSpans({
 		promises: behaviour.map((p) => p.name),
 		since: new Date(now.getTime() - getQuietWindowDays(planRoot) * 86_400_000),
-		project: getProjectGroupId(planRoot),
+		project: markProjectId(planRoot),
 		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
 	});
 	const changes: WatchResult["changes"] = [];

@@ -1,4 +1,6 @@
-import { type EnsureResult, ensureConfigBlock, readConfig } from "../config.js";
+import { basename, dirname } from "node:path";
+import { type EnsureResult, ensureConfigBlock, readConfig, sanitizeGroupId } from "../config.js";
+import { gitCommonDirOf } from "../worktree/layout.js";
 
 /**
  * Ensure the `promises` block exists, keyed on block PRESENCE, never on its
@@ -29,4 +31,25 @@ export function getQuietWindowDays(projectRoot: string): number {
 		return DEFAULT_QUIET_WINDOW_DAYS;
 	}
 	return typeof v === "number" && v > 0 ? v : DEFAULT_QUIET_WINDOW_DAYS;
+}
+
+/**
+ * The project a promise mark belongs to (`indusk.project`): the configured
+ * group id when there is one, else the name of the **main checkout** — the
+ * folder holding the repository's shared git directory — so the trunk and
+ * every plan worktree agree (day-monitor A28). A worktree's own folder is
+ * named after its plan; tagging marks with it made the trunk drop every
+ * evaluation of plan work. One function: the evaluator writes it, `status`,
+ * `watch` and the admin read with it.
+ */
+export function markProjectId(root: string): string {
+	let configured: unknown;
+	try {
+		configured = readConfig(root)?.graphiti?.groupId;
+	} catch {
+		configured = undefined;
+	}
+	if (typeof configured === "string" && configured !== "") return configured;
+	const common = gitCommonDirOf(root);
+	return sanitizeGroupId(basename(common ? dirname(common) : root));
 }

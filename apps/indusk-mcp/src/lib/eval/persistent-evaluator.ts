@@ -10,9 +10,9 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
+import { markProjectId } from "../promises/config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
@@ -417,7 +417,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					});
 				});
 
-				markEvaluation(rootSpan, scorecard, projectGroup);
+				markEvaluation(rootSpan, scorecard, markProjectId(opts.projectRoot));
 				return scorecard;
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
@@ -437,7 +437,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					message: enrichedMessage,
 				};
 				await logWriter.append(errorEntry);
-				markEvaluation(rootSpan, errorEntry, projectGroup);
+				markEvaluation(rootSpan, errorEntry, markProjectId(opts.projectRoot));
 				return errorEntry;
 			}
 		},

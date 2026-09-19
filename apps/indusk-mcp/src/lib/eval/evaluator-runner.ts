@@ -8,8 +8,8 @@
 
 import { spawn } from "node:child_process";
 import { join } from "node:path";
-
 import { getEvalModel, getProjectGroupId } from "../config.js";
+import { markProjectId } from "../promises/config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import { initEvalOtel, markEvaluation, shutdownEvalOtel, withSpan } from "./otel.js";
@@ -216,7 +216,7 @@ export async function runEvaluatorSync(
 		},
 		async (span) => {
 			const outcome = await runEvaluatorSyncInner(opts, projectGroup);
-			markEvaluation(span, outcome, projectGroup);
+			markEvaluation(span, outcome, markProjectId(opts.projectRoot));
 			return outcome;
 		},
 	);

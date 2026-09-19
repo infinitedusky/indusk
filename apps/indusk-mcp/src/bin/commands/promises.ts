@@ -1,6 +1,5 @@
-import { getProjectGroupId } from "../../lib/config.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
-import { getQuietWindowDays } from "../../lib/promises/config.js";
+import { getQuietWindowDays, markProjectId } from "../../lib/promises/config.js";
 import { readPromises } from "../../lib/promises/registry.js";
 import { formatStatus, parseDuration } from "../../lib/promises/status.js";
 import { JaegerUnreachable, markedSpans } from "../../lib/promises/telemetry.js";
@@ -67,7 +66,7 @@ export async function promisesStatus(
 		const marks = await markedSpans({
 			promises: promises.filter((p) => p.kind === "behaviour").map((p) => p.name),
 			since: new Date(Date.now() - sinceMs),
-			project: getProjectGroupId(projectRoot),
+			project: markProjectId(projectRoot),
 			aliases: Object.fromEntries(promises.map((p) => [p.name, p.aliases])),
 		});
 		console.info(formatStatus(promises, marks, window));

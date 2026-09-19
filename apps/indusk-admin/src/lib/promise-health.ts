@@ -1,5 +1,7 @@
-import { getProjectGroupId } from "@infinitedusky/indusk-mcp/config";
-import { getQuietWindowDays } from "@infinitedusky/indusk-mcp/promises/config";
+import {
+  getQuietWindowDays,
+  markProjectId,
+} from "@infinitedusky/indusk-mcp/promises/config";
 import type {
   PromiseEntry,
   Registry,
@@ -68,7 +70,7 @@ export async function readHealth(
         Date.now() - getQuietWindowDays(projectRoot) * 86_400_000,
       ),
       timeoutMs: TIMEOUT_MS,
-      project: getProjectGroupId(projectRoot),
+      project: markProjectId(projectRoot),
       aliases: Object.fromEntries(
         registry.promises.map((p) => [p.name, p.aliases]),
       ),
