@@ -191,3 +191,47 @@ export async function startLocalJaeger(opts: { home?: string } = {}): Promise<Lo
 
 	return { home, otlpPort: meta.otlpPort, uiPort: meta.uiPort, queryUrl, load, stop };
 }
+
+export interface FakeQueryPort {
+	port: number;
+	close: () => Promise<void>;
+}
+
+/**
+ * Something that is not Jaeger, answering on the port the daemon record in
+ * `home` names (day-monitor A26). The record's identity check passes — both
+ * recorded PIDs are this process's, and the stub listens on every recorded
+ * port — so a reader gets as far as the query and meets `body` with a 200.
+ *
+ * The stub answers from the calling process: a CLI run against it must be
+ * spawned asynchronously, since `spawnSync` would block the answer.
+ */
+export async function startFakeQueryPort(
+	home: string,
+	body = "<html>not jaeger</html>",
+): Promise<FakeQueryPort> {
+	const { createServer } = await import("node:http");
+	const { writeFileSync } = await import("node:fs");
+	const server = createServer((_req, res) => {
+		res.writeHead(200, { "content-type": "text/html" });
+		res.end(body);
+	});
+	await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+	const port = (server.address() as import("node:net").AddressInfo).port;
+	writeFileSync(join(home, "telemetry.pid"), String(process.pid));
+	writeFileSync(
+		join(home, "telemetry.json"),
+		JSON.stringify({
+			jaegerPid: process.pid,
+			otelcolPid: process.pid,
+			otlpPort: port,
+			uiPort: port,
+			mcpPort: port,
+			jaegerHealthPort: port,
+			otelcolHealthPort: port,
+			logsOtlpPort: port,
+			startedAt: new Date().toISOString(),
+		}),
+	);
+	return { port, close: () => new Promise<void>((r) => server.close(() => r())) };
+}

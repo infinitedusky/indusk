@@ -3,7 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CLI_BIN, runCli, SHOULD_SKIP } from "./helpers/cli.js";
-import { type LocalJaeger, newTraceId, startLocalJaeger } from "./helpers/local-jaeger.js";
+import {
+	type FakeQueryPort,
+	type LocalJaeger,
+	newTraceId,
+	startFakeQueryPort,
+	startLocalJaeger,
+} from "./helpers/local-jaeger.js";
 import {
 	type PromiseProject,
 	promiseProject,
@@ -312,41 +318,18 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — status falsification (Build Phase 
 describe.skipIf(SHOULD_SKIP)("day-monitor — A26: a query port that is not Jaeger", () => {
 	let fixture: PromiseProject;
 	let home: string;
-	let server: import("node:http").Server;
+	let fake: FakeQueryPort;
 	let port = 0;
 
 	beforeAll(async () => {
 		fixture = project();
 		home = mkdtempSync(join(tmpdir(), "indusk-bad-jaeger-home-"));
-		const { createServer } = await import("node:http");
-		server = createServer((_req, res) => {
-			res.writeHead(200, { "content-type": "text/html" });
-			res.end("<html>not jaeger</html>");
-		});
-		await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
-		port = (server.address() as import("node:net").AddressInfo).port;
-		// A daemon record whose identity check passes: this process's PID is
-		// alive and the stub listens on both recorded ports.
-		const { writeFileSync } = await import("node:fs");
-		writeFileSync(join(home, "telemetry.pid"), String(process.pid));
-		writeFileSync(
-			join(home, "telemetry.json"),
-			JSON.stringify({
-				jaegerPid: process.pid,
-				otelcolPid: process.pid,
-				otlpPort: port,
-				uiPort: port,
-				mcpPort: port,
-				jaegerHealthPort: port,
-				otelcolHealthPort: port,
-				logsOtlpPort: port,
-				startedAt: new Date().toISOString(),
-			}),
-		);
+		fake = await startFakeQueryPort(home);
+		port = fake.port;
 	});
 
 	afterAll(async () => {
-		await new Promise<void>((r) => server.close(() => r()));
+		await fake?.close();
 		if (fixture) rmSync(fixture.root, { recursive: true, force: true });
 		if (home) rmSync(home, { recursive: true, force: true });
 	});
