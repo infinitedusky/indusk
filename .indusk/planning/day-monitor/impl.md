@@ -266,7 +266,7 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 #### Build Phase 6 Verification
 
 - [x] A24 passes: `pnpm e2e` on this machine, output recorded; `pnpm test` does not run it (checked by its test count) — ran 2026-09-19: `pnpm e2e` → 1 file, 1 test passed in 6.9s (real `claude` 2.1.197, test-owned daemon); `vitest list` under the default config lists nothing from `e2e/` (its two `e2e` matches are the existing `multi-agent-e2e.test.ts`)
-- [x] Root suite and the promises check (`pnpm test`) — ran 2026-09-19. Admin 310 passed. Package 1546 passed, 11 failed: 9 because a fresh worktree has no bundled admin (`apps/indusk-mcp/admin/`, an ignored artifact of `scripts/bundle-admin.js`, present on trunk) — after bundling, those files pass; the remaining 2 are `daemon-identity.test.ts` T22/T23, which fail identically on trunk at `918db13d` (the queued daemon-identity port bug), not this plan's. `pnpm promises:check`: 4 promises, all enforced. The first full run also caught a real miss, fixed: the layout's browser test did not mock the new `@/lib/promise-health`
+- [x] Root suite and the promises check (`pnpm test`) — ran 2026-09-19. Admin 310 passed. Package 1546 passed, 11 failed: 9 because a fresh worktree has no bundled admin (`apps/indusk-mcp/admin/`, an ignored artifact of `scripts/bundle-admin.js`, present on trunk) — after bundling, those files pass; the remaining 2 are `daemon-identity.test.ts`'s two PID-reuse cases, which fail identically on trunk at `918db13d` (the queued daemon-identity port bug), not this plan's. `pnpm promises:check`: 4 promises, all enforced. The first full run also caught a real miss, fixed: the layout's browser test did not mock the new `@/lib/promise-health`
 
 #### Build Phase 6 Context
 
@@ -275,6 +275,33 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 #### Build Phase 6 Document
 
 - [x] Changelog entry completed; `apps/docs/src/guide/promises.md` gains the loop diagram (run → span → Jaeger → `watch` → incident → Maintenance phase → quiet window → closed)
+
+### Build Phase 7: Falsification — the failures the loop cannot see
+
+**Goal**: verify whether the attested state — "a behaviour promise broken in a run is found by telemetry and sends its owner back to work" — holds against the failures that break the loop itself: an evaluator that dies before marking, a Jaeger that answers badly, a mark under a promise's old name, a worktree's project id, an owner in a worktree, and a truncated count. Each row is one hypothesis; each item the fix if it confirms.
+
+- [ ] Author A25–A30 red at phase start: A25 in `monitor-mark.test.ts` (PATH without `claude`), A26 in `monitor-status.test.ts` and `apps/indusk-admin/src/__tests__/http-promise-health.test.ts` (stub query server), A27 and A30 in `monitor-status.test.ts`, A28 in `monitor-mark.test.ts` (a config without a group id, the hook run from a `git worktree add` checkout), A29 in `monitor-plans.test.ts` through `helpers/plan-worktree-fixture.ts`
+- [ ] A25: both evaluator spawns listen for `error`, and a spawn failure resolves as a failed run (`claude could not be started: <message>`) that is logged and marked violated like any other
+- [ ] A26: `getJson` reads and parses the body inside its try, turning a parse failure, an aborted read or an unexpected shape (`data` not an array) into `JaegerUnreachable` naming the URL; the admin's health read treats any failure as unreachable, so a health read can never take down a page
+- [ ] A27: `markedSpans` asks for a promise's aliases too and counts their marks under the promise's name
+- [ ] A28: the mark's project id comes from the main checkout — `graphiti.groupId` when set, else the folder of the repository's shared git directory — through one function the evaluator, `status`, `watch` and the admin all call
+- [ ] A29: `reopenOwner` resolves an active owner's live copy through `lib/worktree/plan-worktrees.ts` (the assigned worktree when there is one), an archived owner as today
+- [ ] A30: a query that returns the limit marks the promise's result truncated, and `status` and the admin say "at least N"
+
+#### Build Phase 7 Verification
+
+- [ ] A25, A27, A28, A30 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-mark.test.ts src/__tests__/monitor-status.test.ts`)
+- [ ] A26 passes in both halves (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-status.test.ts -t A26` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts`)
+- [ ] A29 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-plans.test.ts -t A29`)
+- [ ] Every earlier monitor row still passes, and `pnpm e2e` still passes
+
+#### Build Phase 7 Context
+
+- [ ] Known Gotchas (the promises entry): a mark's project id is the main checkout's, never a worktree folder's; every failure of a health read is "unreachable", never an exception
+
+#### Build Phase 7 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`: aliases counted, "at least N", and the project id the evaluator's mark carries
 
 ## Files Affected
 
