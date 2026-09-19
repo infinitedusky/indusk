@@ -112,3 +112,7 @@ things rather than reading them:
   the shared fixture; Build Phase 1: the claude exit reason out of `otel.ts`;
   Build Phase 3: `justifyLateRow` extracted; Build Phase 7: an unbraced nested
   loop), 0 judged wrong by a person. Six phases raised nothing.
+
+## Landing
+
+Landed on main at 8f099889, 2026-09-19 (`git merge --no-ff` of `plan/day-monitor` after trunk was merged into the branch: trunk's pending work — the jev-decision-model research, a devDependency bump, the InDusk ledgers and this retrospective's lessons — committed first in its own commits, with the user's go). Branch and worktree removed; assignment released.
