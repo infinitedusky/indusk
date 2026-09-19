@@ -24,8 +24,14 @@ off and a developer machine that reads from it.
    local-telemetry extension's Jaeger, in a server configuration: badger
    storage on a persistent disk, basic auth on OTLP ingestion and on the query
    API, TLS in front. Packaged as a container image that runs on any of the
-   three hosting shapes the research lays out, with one documented reference
-   deployment.
+   three hosting shapes the research lays out. **The reference deployment is
+   Fly.io** (chosen 2026-09-19): a persistent volume for the storage,
+   provider TLS on `*.fly.dev` — which basic auth requires — and no box to
+   patch. Two constraints it brings: the machine must **not** auto-stop (spans
+   pushed to a stopped machine are lost, and the interval pass does not run
+   while it sleeps), and it wants 512 MB–1 GB rather than the smallest tier.
+   A small VPS is the named alternative, cheaper on RAM and disk but ours to
+   patch, supervise and terminate TLS on.
 2. **Detection and notification on the server.** A pass on an interval,
    inside the same long-running process, finds violations newer than the last
    pass from the marks alone and posts one Slack message per new violation
@@ -61,8 +67,9 @@ off and a developer machine that reads from it.
 
 ### In Scope
 
-- The server configuration and container image; one reference deployment
-  documented and run.
+- The server configuration and container image; the Fly.io reference
+  deployment documented and run — always-on machine, persistent volume,
+  provider TLS.
 - The interval pass, its "already announced" record on disk, the Slack
   webhook.
 - A per-project remote Jaeger source for `status`, `watch` and the admin,
