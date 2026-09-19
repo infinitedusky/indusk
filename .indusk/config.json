@@ -57,7 +57,11 @@
 		"dead_draft_days": 30
 	},
 	"promises": {
-		"domains": ["planning", "gates", "admin"]
+		"domains": [
+			"planning",
+			"gates",
+			"admin"
+		]
 	},
 	"papers": {
 		"destinations": [
@@ -70,7 +74,7 @@
 		]
 	},
 	"indusk": {
-		"version": "1.51.0",
-		"updated_at": "2026-09-18T00:11:49.594Z"
+		"version": "1.53.0",
+		"updated_at": "2026-09-19T02:07:12.766Z"
 	}
 }

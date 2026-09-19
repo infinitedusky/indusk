@@ -18,8 +18,8 @@
 		"release": "pnpm --filter @infinitedusky/indusk-mcp release"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.1",
-		"turbo": "^2.10.0",
-		"vitest": "^4.1.9"
+		"@biomejs/biome": "^2.5.14",
+		"turbo": "^2.11.2",
+		"vitest": "^4.1.11"
 	}
 }

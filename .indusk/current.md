@@ -17,6 +17,8 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-09-16: the admin plan page polls itself every `admin.refresh_ms` (default 5000, floor 1000; `.indusk/config.json`, never written by `update`). **Revisit the default on 2026-09-30** after two weeks of use — too slow to feel live, or loading the daemon? (admin-ui-phase-progress U2.)
 - 2026-08-30: the 2026-08-16 publish blockers are all resolved — `LEGACY_HOOKS` removal shipped (`lib/hook-migration.ts`; `check-plan-order.js` gone from disk and settings), the changelog was split per release in 1.36.2, and the batch published through 1.40.x. CLAUDE.md no longer carries version/plan-table copies; operational blockers belong here.
 - 2026-09-17: **1.51.0 published** to npm at 2026-09-18T00:03:18Z from release commit 7f4297bc — by the SECOND `pnpm release` run (browser 2FA confirmed). The first run's `record-release.js` mark was written on pnpm's exit code alone and nothing reached the registry; the mark now says only what `npm view` confirms.
+- 2026-09-18: **1.52.0 published** to npm from release commit 52749a95 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-09-18: **1.53.0 published** to npm from release commit e0caf32f (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
@@ -236,6 +238,33 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-19T20:41:17.768Z
 **Branch**: plan/day-monitor
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-monitor
+## Session 25c802bd — day-promises: /work Test Phase 1
+
+**Session ID**: 25c802bd-7505-46cc-a1a7-72186418629a
+**Last updated**: 2026-09-18T05:35:29.818Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session d0f10e5e — eval agent: scoring commit 106cf6de (day-monitor impl draft)
+
+**Session ID**: d0f10e5e-9a6f-499d-8732-7f0376e2ae58
+**Last updated**: 2026-09-18T23:34:23.352Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 

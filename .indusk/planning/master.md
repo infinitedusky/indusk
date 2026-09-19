@@ -20,6 +20,7 @@ roadmap:
   - indusk-makeover
   - dusk-v2
   - user-zero
+  - jev-decision-model
 ---
 
 # Master Plan
@@ -151,6 +152,17 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **Standalone research, not a step** (2026-09-18):
+  [jev-decision-model](jev-decision-model/research.md) — TypeSafe AI's Jev, a
+  typed-decision ("System One") model launched 2026-09-15. Verdict: watch, do not
+  build. Nothing InDusk does today is decision-shaped at volume, and gates stay
+  deterministic by design (a probability can route to a human, never be the
+  gate). The one real slot is user-zero's comment/behaviour → promise routing,
+  post-Day; the cheap experiment is replaying the 692 archived scorecards'
+  rubric questions — runnable now against Claude through TypeSafe's open-source
+  adapter, then against Jev once a key exists. Vendor's own evals: 62–76 %
+  agreement with a frontier-model consensus, not ground truth. Revisit on: user-zero layer 2, an
+  independent calibration eval, or a consumer whose eval volume makes cost bite.
 - **Bugfix, not a step** (Sandy, 2026-09-18, after 1.52.0: "it looks
   published, then upgrade says already at the latest, which is the version
   before"): **`indusk upgrade` says "already at vX" for two different
