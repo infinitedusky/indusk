@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor"
 date: 2026-09-18
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -78,6 +78,12 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A22 | With Jaeger unreachable every behaviour chip is hollow with "health unknown since …" and none is green | Test Phase 1 | Build Phase 5 | passing |
 | A23 | A plan holding a red promise shows red in the sidebar | Test Phase 1 | Build Phase 5 | passing |
 | A24 | End to end, on a scratch project with a green suite: a commit evaluated with a model that does not exist marks `every-commit-evaluated` violated in local Jaeger, `indusk promises watch` opens an incident with source `local`, and the owning plan reopens with a Maintenance phase | Build Phase 6 | Build Phase 6 | passing |
+| A25 | With `claude` missing from `PATH`, an evaluator run exports `every-commit-evaluated` violated with a symptom naming the missing CLI, and writes an error result — it does not die on an uncaught spawn error with nothing marked | Build Phase 7 | Build Phase 7 | planned |
+| A26 | When the daemon's recorded query port answers with a body that is not JSON, `promises status` exits 2 naming the URL (no stack trace) and every admin project page still renders 200, with behaviour chips hollow and "health unknown" | Build Phase 7 | Build Phase 7 | planned |
+| A27 | A span marked with one of a promise's `aliases` is counted under the promise by `status` and `watch` | Build Phase 7 | Build Phase 7 | planned |
+| A28 | In a project with no configured group id, an evaluation of a commit made in a plan worktree is marked with the same project id `promises status` uses at the trunk, so the trunk counts it | Build Phase 7 | Build Phase 7 | planned |
+| A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | planned |
+| A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | planned |
 
 ## Checklist
 
@@ -120,6 +126,16 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 #### Deferred to Build Phase 6
 
 - **A24** — an end-to-end run that needs the real `claude` CLI, the telemetry daemon and the `e2e` vitest project Build Phase 6 creates; it runs on a developer machine, outside `pnpm test`, and is recorded in the retrospective. Procedure: scratch project with a green suite and `every-commit-evaluated` registered; `eval.model` set to a model that does not exist; commit; run the evaluator for it; `indusk promises watch`; assert the incident (source `local`) and the Maintenance phase on the owner.
+
+#### Deferred to Build Phase 7
+
+- **A25–A30** — falsification hypotheses (`/falsify`, 2026-09-19), formed by reading the code Build Phases 1–6 shipped; each names a line that did not exist when Test Phase 1 was authored. Each reaches its subject over a boundary (the eval hook's CLI mode, the built CLI, a tool call, HTTP), so each can go red at Build Phase 7's start against today's code.
+  - **A25** — `spawnClaude` (persistent evaluator) and the `spawn("claude")` in `runEvaluatorSync` register `close` but no `error` listener. A missing binary raises `ENOENT` as an uncaught `error` event (probed 2026-09-19: `close` never fires first), so the eval hook's inline handler exits and `markEvaluation` never runs. The promise's own statement names "a CLI that is not installed" as a failure it makes visible.
+  - **A26** — `getJson` wraps only `fetch` in its try; `res.json()` sits outside it, so a 200 with a non-JSON body (or a body that stalls past the timeout, which aborts the read) throws a `SyntaxError` / `AbortError`, not `JaegerUnreachable`. The CLI then dies with a stack trace instead of exit 2, and the admin's `readHealth` rethrows anything that is not `JaegerUnreachable` — from the project layout, so every page of the project 500s. Test: a stub HTTP server on the port a hand-written `telemetry.json` records (this process's PID for both daemon PIDs, so the identity check passes).
+  - **A27** — `markedSpans` queries by `p.name` only; `aliases` ("earlier names that still resolve", day-promises) are never asked for, so an application still marking a renamed promise's old name reads "not seen" while it violates it.
+  - **A28** — marks carry `indusk.project = getProjectGroupId(root)`, which without `graphiti.groupId` is the folder name. Plans run in `<project>-worktrees/<plan>`, so the evaluator in a worktree marks `<plan>` and trunk's `status` (project `<project>`) drops every such mark. dusk sets `graphiti.groupId: dusk` and so hid it; a consumer project does not.
+  - **A29** — `reopenOwner` resolves the owner with `ownerDir(planRoot, …)`, the trunk's `planning/`, never the plan-worktree record admin-plan-worktrees made authoritative. An active owner assigned to a worktree gets its Maintenance phase in the trunk's stale copy: `list_plans` reads the worktree and never shows it, and the landing merge conflicts with it.
+  - **A30** — each Jaeger query sends `limit=1500`; a result of exactly the limit is silently truncated, and `status` prints its count as exact.
 
 #### Regression Guards
 
