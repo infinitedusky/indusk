@@ -1,7 +1,3 @@
-import {
-  getQuietWindowDays,
-  markProjectId,
-} from "@infinitedusky/indusk-mcp/promises/config";
 import type {
   PromiseEntry,
   Registry,
@@ -9,7 +5,7 @@ import type {
 import {
   JaegerUnreachable,
   type MarkedSpansResult,
-  markedSpans,
+  readPromiseMarks,
 } from "@infinitedusky/indusk-mcp/promises/telemetry";
 import { readAdminRefreshMs } from "./project-reader";
 
@@ -59,21 +55,10 @@ export async function readHealth(
 ): Promise<HealthRead> {
   const hit = cache.get(projectRoot);
   if (hit && hit.expires > Date.now()) return hit.read;
-  const behaviour = registry.promises
-    .filter((p) => p.kind === "behaviour" && p.state !== "retired")
-    .map((p) => p.name);
   let read: HealthRead;
   try {
-    const marks = await markedSpans({
-      promises: behaviour,
-      since: new Date(
-        Date.now() - getQuietWindowDays(projectRoot) * 86_400_000,
-      ),
+    const marks = await readPromiseMarks(projectRoot, registry, {
       timeoutMs: TIMEOUT_MS,
-      project: markProjectId(projectRoot),
-      aliases: Object.fromEntries(
-        registry.promises.map((p) => [p.name, p.aliases]),
-      ),
     });
     const at = new Date().toISOString();
     lastOk.set(projectRoot, at);

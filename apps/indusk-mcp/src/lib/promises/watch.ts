@@ -1,10 +1,9 @@
 import { existsSync } from "node:fs";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
-import { getQuietWindowDays, markProjectId } from "./config.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
 import { readPromises } from "./registry.js";
 import { type ReopenResult, reopenOwner } from "./reopen.js";
-import { markedSpans } from "./telemetry.js";
+import { readPromiseMarks } from "./telemetry.js";
 import type { IncidentSource } from "./vocabulary.js";
 
 /**
@@ -56,12 +55,7 @@ export async function watchPromises(
 	const behaviour = read.registry.promises.filter(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
-	const marks = await markedSpans({
-		promises: behaviour.map((p) => p.name),
-		since: new Date(now.getTime() - getQuietWindowDays(planRoot) * 86_400_000),
-		project: markProjectId(planRoot),
-		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
-	});
+	const marks = await readPromiseMarks(planRoot, read.registry, { now });
 	const changes: WatchResult["changes"] = [];
 	for (const promise of behaviour) {
 		const violations = marks.byPromise.get(promise.name)?.violations ?? [];

@@ -1,8 +1,8 @@
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
-import { getQuietWindowDays, markProjectId } from "../../lib/promises/config.js";
+import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { readPromises } from "../../lib/promises/registry.js";
 import { formatStatus, parseDuration } from "../../lib/promises/status.js";
-import { JaegerUnreachable, markedSpans } from "../../lib/promises/telemetry.js";
+import { JaegerUnreachable, readPromiseMarks } from "../../lib/promises/telemetry.js";
 import { watchPromises } from "../../lib/promises/watch.js";
 
 /**
@@ -46,7 +46,7 @@ export async function promisesStatus(
 		process.exitCode = 2;
 		return;
 	}
-	let sinceMs: number;
+	let sinceMs: number | undefined;
 	let window: number | string;
 	if (opts.since !== undefined) {
 		const ms = parseDuration(opts.since);
@@ -59,16 +59,10 @@ export async function promisesStatus(
 		window = opts.since;
 	} else {
 		window = getQuietWindowDays(projectRoot);
-		sinceMs = window * 86_400_000;
 	}
 	const promises = read.registry.promises;
 	try {
-		const marks = await markedSpans({
-			promises: promises.filter((p) => p.kind === "behaviour").map((p) => p.name),
-			since: new Date(Date.now() - sinceMs),
-			project: markProjectId(projectRoot),
-			aliases: Object.fromEntries(promises.map((p) => [p.name, p.aliases])),
-		});
+		const marks = await readPromiseMarks(projectRoot, read.registry, { sinceMs });
 		console.info(formatStatus(promises, marks, window));
 	} catch (err) {
 		if (!(err instanceof JaegerUnreachable)) throw err;

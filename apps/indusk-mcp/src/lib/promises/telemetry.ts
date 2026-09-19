@@ -1,4 +1,6 @@
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
+import { getQuietWindowDays, markProjectId } from "./config.js";
+import type { Registry } from "./registry.js";
 import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
 
 /**
@@ -205,4 +207,29 @@ export async function markedSpans(opts: {
 		});
 	}
 	return { queryUrl, since: opts.since, byPromise };
+}
+
+/**
+ * This project's marks, as every reader asks for them: the registry's
+ * behaviour promises that are not retired, with their aliases, filtered to
+ * this project's id, over the quiet window unless `sinceMs` says otherwise.
+ * The one call `status`, `watch` and the admin make — each once assembled the
+ * four by hand, and A27/A28 had to change all three.
+ */
+export function readPromiseMarks(
+	root: string,
+	registry: Registry,
+	opts: { sinceMs?: number; timeoutMs?: number; now?: Date } = {},
+): Promise<MarkedSpansResult> {
+	const now = opts.now ?? new Date();
+	const behaviour = registry.promises.filter(
+		(p) => p.kind === "behaviour" && p.state !== "retired",
+	);
+	return markedSpans({
+		promises: behaviour.map((p) => p.name),
+		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
+		since: new Date(now.getTime() - (opts.sinceMs ?? getQuietWindowDays(root) * 86_400_000)),
+		project: markProjectId(root),
+		...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
+	});
 }
