@@ -42,6 +42,11 @@ export interface MarkedSpan {
 export interface PromiseMarks {
 	/** Newest first. */
 	violations: MarkedSpan[];
+	/**
+	 * A query for this promise returned as many traces as the limit, so there
+	 * may be more: the violation count is a lower bound (day-monitor A30).
+	 */
+	truncated: boolean;
 	/** The newest upheld span in the window, or null. */
 	lastUpheld: MarkedSpan | null;
 }
@@ -140,6 +145,12 @@ export async function markedSpans(opts: {
 	timeoutMs?: number;
 	/** This project's id (`getProjectGroupId`); a mark naming another project is dropped. */
 	project?: string;
+	/**
+	 * Earlier names per promise (the registry's `aliases`): marks under them
+	 * count as the promise's (day-monitor A27) — an application may still set
+	 * the old name after a rename.
+	 */
+	aliases?: Record<string, string[]>;
 }): Promise<MarkedSpansResult> {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	const status = await daemonStatus();
@@ -154,34 +165,40 @@ export async function markedSpans(opts: {
 	const end = Date.now() * 1000;
 	for (const promise of opts.promises) {
 		const seen = new Map<string, MarkedSpan>();
-		for (const service of services) {
-			const params = new URLSearchParams({
-				service,
-				tags: JSON.stringify({ [PROMISE_MARK.promise]: promise }),
-				start: String(start),
-				end: String(end),
-				limit: String(TRACE_LIMIT),
-			});
-			const traces = await getData<JaegerTrace>(
-				`${queryUrl}/api/traces?${params}`,
-				timeoutMs,
-				queryUrl,
-			);
-			for (const t of traces) {
-				for (const span of t.spans) {
-					const marked = toMarked(span, t.processes[span.processID]?.serviceName ?? service);
-					if (marked?.promise !== promise) continue;
-					if (marked.at < opts.since) continue;
-					const owner = tag(span.tags, PROMISE_MARK.project);
-					if (opts.project !== undefined && typeof owner === "string" && owner !== opts.project) {
-						continue;
+		const names = [promise, ...(opts.aliases?.[promise] ?? [])];
+		let truncated = false;
+		for (const service of services)
+			for (const name of names) {
+				const params = new URLSearchParams({
+					service,
+					tags: JSON.stringify({ [PROMISE_MARK.promise]: name }),
+					start: String(start),
+					end: String(end),
+					limit: String(TRACE_LIMIT),
+				});
+				const traces = await getData<JaegerTrace>(
+					`${queryUrl}/api/traces?${params}`,
+					timeoutMs,
+					queryUrl,
+				);
+				if (traces.length >= TRACE_LIMIT) truncated = true;
+				for (const t of traces) {
+					for (const span of t.spans) {
+						const marked = toMarked(span, t.processes[span.processID]?.serviceName ?? service);
+						if (!marked || marked.promise !== name) continue;
+						marked.promise = promise;
+						if (marked.at < opts.since) continue;
+						const owner = tag(span.tags, PROMISE_MARK.project);
+						if (opts.project !== undefined && typeof owner === "string" && owner !== opts.project) {
+							continue;
+						}
+						seen.set(marked.spanId, marked);
 					}
-					seen.set(marked.spanId, marked);
 				}
 			}
-		}
 		const all = [...seen.values()].sort((a, b) => b.at.getTime() - a.at.getTime());
 		byPromise.set(promise, {
+			truncated,
 			violations: all.filter((s) => s.outcome === "violated"),
 			lastUpheld: all.find((s) => s.outcome === "upheld") ?? null,
 		});

@@ -37,6 +37,8 @@ export interface HealthRow {
   health: PromiseHealth;
   /** Violations in the window; null when telemetry says nothing about this promise. */
   violations: number | null;
+  /** The query hit its limit: `violations` is a lower bound (day-monitor A30). */
+  atLeast?: boolean;
   /** ISO time of the newest mark, upheld or violated. */
   lastSeen: string | null;
 }
@@ -67,6 +69,9 @@ export async function readHealth(
       ),
       timeoutMs: TIMEOUT_MS,
       project: getProjectGroupId(projectRoot),
+      aliases: Object.fromEntries(
+        registry.promises.map((p) => [p.name, p.aliases]),
+      ),
     });
     const at = new Date().toISOString();
     lastOk.set(projectRoot, at);
@@ -108,7 +113,12 @@ export function healthOf(
     .sort((a, b) => b.getTime() - a.getTime())[0];
   const lastSeen = newest ? newest.toISOString() : null;
   if (p.kind === "behaviour" && violations !== null && violations > 0) {
-    return { health: "red", violations, lastSeen };
+    return {
+      health: "red",
+      violations,
+      lastSeen,
+      ...(marks?.truncated ? { atLeast: true } : {}),
+    };
   }
   if (p.state === "known-violated")
     return { health: "amber", violations, lastSeen };

@@ -38,6 +38,7 @@ export async function watchPromises(
 		promises: behaviour.map((p) => p.name),
 		since: new Date(now.getTime() - getQuietWindowDays(planRoot) * 86_400_000),
 		project: getProjectGroupId(planRoot),
+		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
 	});
 	const changes: WatchResult["changes"] = [];
 	for (const promise of behaviour) {

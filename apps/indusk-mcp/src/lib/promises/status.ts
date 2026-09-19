@@ -50,7 +50,7 @@ export function formatStatus(
 		lines.push(
 			n === 0
 				? `  no violations in ${phrase}`
-				: `  ${n} violation${n === 1 ? "" : "s"} in ${phrase}`,
+				: `  ${m.truncated ? "at least " : ""}${n} violation${n === 1 ? "" : "s"} in ${phrase}`,
 		);
 		for (const v of m.violations) {
 			lines.push(

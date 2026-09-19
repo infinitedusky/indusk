@@ -68,6 +68,7 @@ export async function promisesStatus(
 			promises: promises.filter((p) => p.kind === "behaviour").map((p) => p.name),
 			since: new Date(Date.now() - sinceMs),
 			project: getProjectGroupId(projectRoot),
+			aliases: Object.fromEntries(promises.map((p) => [p.name, p.aliases])),
 		});
 		console.info(formatStatus(promises, marks, window));
 	} catch (err) {

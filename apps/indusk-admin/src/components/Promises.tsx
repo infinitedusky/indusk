@@ -92,7 +92,9 @@ function HealthDetail({
   if (row.health === "grey") return null;
   const parts: string[] = [];
   if (row.violations !== null && row.violations > 0) {
-    parts.push(`${row.violations} violation${row.violations === 1 ? "" : "s"}`);
+    parts.push(
+      `${row.atLeast ? "at least " : ""}${row.violations} violation${row.violations === 1 ? "" : "s"}`,
+    );
   }
   if (row.lastSeen) parts.push(`last seen ${day(row.lastSeen)}`);
   else if (unknownSince === undefined && row.health === "unverified")
