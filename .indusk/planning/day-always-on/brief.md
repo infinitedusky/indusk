@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b′ — Always-on"
 date: 2026-09-19
-status: draft
+status: accepted
 ---
 
 # Day step 4b′ — Always-on — Brief
