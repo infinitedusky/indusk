@@ -121,3 +121,14 @@ export function parsePromiseToken(token: string): string | null {
 	const m = /^promise:[ \t]*([a-z][a-z0-9-]*)$/.exec(token.trim());
 	return m ? m[1] : null;
 }
+
+/**
+ * An incident's root cause until a person writes one (day-monitor, ADR D6).
+ * The span carries a symptom; a root cause is a finding, so `watch` never
+ * writes one — and `promises check` refuses an incident marked fixed while
+ * its root cause is still this line.
+ */
+export const UNWRITTEN_ROOT_CAUSE = "_Unwritten — a person writes this._";
+
+/** An incident's Fix section until it is fixed. Never empty: the registry refuses an empty section. */
+export const NOT_YET_FIXED = "_Not yet fixed._";

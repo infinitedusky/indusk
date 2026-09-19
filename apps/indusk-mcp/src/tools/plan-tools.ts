@@ -1,9 +1,11 @@
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getPlanningDir } from "../lib/config.js";
 import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
-import { parseAllPlans, parsePlan } from "../lib/plan-parser.js";
+import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
+import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
 import { readPromises } from "../lib/promises/registry.js";
 import {
 	copySource,
@@ -33,6 +35,19 @@ function recordError(file: string, problem: string) {
 }
 
 /** The plan folder a copy names — the resolver's, checked on disk; never joined here. */
+/** `parsePlan`, or an `unknown` summary when the folder does not exist (it throws). */
+function parsePlanIfPresent(dir: string): PlanSummary {
+	if (existsSync(dir)) return parsePlan(dir);
+	return {
+		name: dir.split("/").pop() ?? "",
+		stage: "unknown",
+		stageStatus: "missing",
+		nextStep: `No plan folder at ${dir}`,
+		dependencies: [],
+		documents: [],
+	};
+}
+
 function planDirOf(copy: PlanCopy): string {
 	return copy.dir;
 }
@@ -57,17 +72,24 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			// server runs in; an assigned plan is re-read from its worktree.
 			const resolved = await resolvePlanCopies(projectRoot);
 			if (!resolved.ok) return recordError(resolved.file, resolved.problem);
-			const plans = parseAllPlans(resolved.projectRoot).map((plan) => {
+			const plans: PlanSummary[] = parseAllPlans(resolved.projectRoot).map((plan) => {
 				const copy = resolved.copies.get(plan.name);
 				const live = copy?.source === "worktree" ? parsePlan(planDirOf(copy)) : plan;
 				return { ...live, ...copySource(copy) };
 			});
+			// Archived plans back in motion (day-monitor): reopened by an
+			// incident. The archive folder itself is not a plan.
+			const listed = new Set(plans.map((p) => p.name));
+			for (const p of archivedInMotion(resolved.projectRoot)) {
+				if (!listed.has(p.name)) plans.push(p);
+			}
+			const inventory = plans.filter((p) => p.name !== ARCHIVE_DIR);
 			if (!active) {
 				return {
-					content: [{ type: "text" as const, text: JSON.stringify(plans, null, 2) }],
+					content: [{ type: "text" as const, text: JSON.stringify(inventory, null, 2) }],
 				};
 			}
-			const filtered = plans.filter((p) => isActivePlan(p));
+			const filtered = inventory.filter((p) => isActivePlan(p));
 			return {
 				content: [
 					{
@@ -75,7 +97,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 						text: JSON.stringify(
 							{
 								active: filtered,
-								omitted: plans.length - filtered.length,
+								omitted: inventory.length - filtered.length,
 								note: "omitted = dead drafts and finished spikes; call without `active` for the full list",
 							},
 							null,
@@ -111,8 +133,16 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 		async ({ name }) => {
 			const live = await livePlanCopy(projectRoot, name);
 			if (!live.ok) return recordError(live.file, live.problem);
-			const planDir = planDirOf(live.copy);
-			const plan = parsePlan(planDir);
+			let planDir = planDirOf(live.copy);
+			let plan: PlanSummary = parsePlanIfPresent(planDir);
+			// Not in planning/: an archived plan, judged as one (day-monitor).
+			if (plan.stage === "unknown" && !existsSync(planDir)) {
+				const archived = archivedPlan(live.copy.root, name);
+				if (archived) {
+					plan = archived;
+					planDir = join(getPlanningDir(live.copy.root), ARCHIVE_DIR, name);
+				}
+			}
 
 			const implPath = join(planDir, "impl.md");
 			const impl = parseImpl(implPath);

@@ -871,4 +871,16 @@ promisesCmd
 		await promisesStatus(rootOrExit(), opts);
 	});
 
+promisesCmd
+	.command("watch")
+	.description(
+		"One monitor pass: open or extend an incident for each behaviour promise with new violations in the local Jaeger, and append a Maintenance phase to its owning plan. Writes plan documents; commits nothing. Exit 2 when Jaeger cannot be reached.",
+	)
+	.option("--source <source>", "where the violations came from: local | smoke | deployed", "local")
+	.action(async function (this: Command) {
+		const opts = this.opts() as { source?: string };
+		const { promisesWatch } = await import("./commands/promises.js");
+		await promisesWatch(rootOrExit(), opts);
+	});
+
 program.parse();

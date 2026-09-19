@@ -17,6 +17,7 @@ import {
 	PROMISES_REL_DIR,
 	type PromiseKind,
 	type PromiseState,
+	UNWRITTEN_ROOT_CAUSE,
 } from "./vocabulary.js";
 
 /**
@@ -294,6 +295,14 @@ export async function checkPromises(planRootIn: string): Promise<CheckResult> {
 
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
 	for (const i of registry.incidents) {
+		// day-monitor, ADR D6: the monitor writes a symptom, never a root cause;
+		// an incident cannot close on a finding nobody made.
+		if (i.status === "fixed" && i.rootCause.trim() === UNWRITTEN_ROOT_CAUSE) {
+			refusals.push({
+				file: registryFile(i.file),
+				message: `${i.id}: marked fixed, but its root cause is still "${UNWRITTEN_ROOT_CAUSE}" — write the root cause before closing the incident`,
+			});
+		}
 		if (!byName.has(i.promise)) {
 			refusals.push({
 				file: registryFile(i.file),
