@@ -287,3 +287,8 @@
 {"id":"h-20260918-014","processedAt":"2026-09-18T22:26:01.131Z","action":"skipped","detail":"recorded in day-monitor/brief.md; design fully documented there including the day-always-on split from the prior commit"}
 {"id":"h-20260918-015","processedAt":"2026-09-18T23:22:37.835Z","action":"skipped","detail":"routine test-plan acceptance, no new content beyond test-plan.md itself (already reviewed in f4e43ff3)"}
 {"id":"h-20260918-016","processedAt":"2026-09-18T23:32:53.584Z","action":"skipped","detail":"recorded in day-monitor/adr.md; content already independently verified against the codebase in this eval pass"}
+{"id":"h-20260919-001","processedAt":"2026-09-19T20:52:54.589Z","action":"wrote-episode","detail":"promise-mark-project-id-from-git-common-dir-not-cwd-basename"}
+{"id":"h-20260919-002","processedAt":"2026-09-19T20:52:55.405Z","action":"wrote-episode","detail":"otel-export-needs-a-default-endpoint-not-just-an-emitted-span"}
+{"id":"h-20260919-003","processedAt":"2026-09-19T20:52:56.178Z","action":"wrote-episode","detail":"scope-biome-write-to-changed-files-not-whole-directories"}
+{"id":"h-20260919-004","processedAt":"2026-09-19T20:52:57.000Z","action":"wrote-episode","detail":"fresh-worktree-missing-bundled-admin-breaks-pnpm-test"}
+{"id":"h-20260919-005","processedAt":"2026-09-19T20:52:57.586Z","action":"skipped","detail":"audit summary stat, no durable rule stated"}
