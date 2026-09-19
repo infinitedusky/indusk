@@ -67,6 +67,15 @@ export interface PromiseProjectOptions {
 	activePlans?: string[];
 	/** Plan folders under `.indusk/planning/archive/`. */
 	archivedPlans?: string[];
+	/**
+	 * Archived plans that landed, and when (`YYYY-MM-DD`): each gets a
+	 * retrospective carrying the "Landed on main at <sha>, <date>." line the
+	 * quiet window reads (day-monitor, ADR D8). The plan need not also be in
+	 * `archivedPlans`.
+	 */
+	landed?: Record<string, string>;
+	/** Extra files under a plan folder, keyed `<plan-dir-relative-to-planning>/<file>`. */
+	planFiles?: Record<string, string>;
 	promises?: PromiseSpec[];
 	incidents?: IncidentSpec[];
 	/** Code and test files, relative to the root, with their content. */
@@ -161,6 +170,16 @@ export function writeIncident(dir: string, spec: IncidentSpec): string {
 	return path;
 }
 
+/** A closed plan's retrospective, landed on `date` (`YYYY-MM-DD`). */
+export function retrospectiveFile(plan: string, date: string): string {
+	return `---\ntitle: "${plan} — Retrospective"\ndate: ${date}\nstatus: accepted\n---\n\n# ${plan} — Retrospective\n\n## Landing\n\nLanded on main at 0123abcd, ${date}.\n`;
+}
+
+/** `YYYY-MM-DD` for `days` days before now (negative = after). */
+export function daysAgo(days: number): string {
+	return new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+}
+
 /**
  * A git-initialized project with domains declared, owners on disk, a registry
  * and the files the tests point at. Everything committed on `main` unless
@@ -198,6 +217,21 @@ export function promiseProject(opts: PromiseProjectOptions = {}): PromiseProject
 			join(dir, "brief.md"),
 			`---\ntitle: "${plan}"\nstatus: accepted\n---\n\n# ${plan}\n`,
 		);
+	}
+
+	for (const [plan, date] of Object.entries(opts.landed ?? {})) {
+		const dir = join(planRoot, ".indusk", "planning", "archive", plan);
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(
+			join(dir, "brief.md"),
+			`---\ntitle: "${plan}"\nstatus: accepted\n---\n\n# ${plan}\n`,
+		);
+		writeFileSync(join(dir, "retrospective.md"), retrospectiveFile(plan, date));
+	}
+	for (const [rel, content] of Object.entries(opts.planFiles ?? {})) {
+		const path = join(planRoot, ".indusk", "planning", rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
 	}
 
 	if (opts.registry !== false) {
