@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor"
 date: 2026-09-18
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
@@ -303,6 +303,33 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 #### Build Phase 7 Document
 
 - [x] `apps/docs/src/reference/cli/promises.md`: aliases counted, "at least N", and the project id the evaluator's mark carries
+
+### Build Phase 8: Cleanup — one query setup, one stub, trajectory editing in its module
+
+**Goal**: decompose what the monitor grew across files, per the rule of three and one home per fact (and react's one-component-per-file in the admin). Build Phase 7 had to touch the same three call sites for A27 and A28 — the clearest sign a setup wants one home. Each item is a behaviour-preserving move under the green coverage falsification hardened; the leave-as-is items say why.
+
+- [ ] One call for "this project's marks": `readPromiseMarks(root, registry, { since? })` in `lib/promises/telemetry.ts` picks the behaviour promises that are not retired, their aliases, `markProjectId(root)` and the quiet window, and calls `markedSpans`. `status` (`bin/commands/promises.ts`), `watch` (`lib/promises/watch.ts`) and the admin's `readHealth` each assemble those four by hand today — rule of three; A27 and A28 each had to change all three
+- [ ] Move `addTrajectoryRow` and `justifyLateRow` from `lib/promises/reopen.ts` to `lib/trajectory/append-row.ts` (exported `appendLateRow`), beside `state-ops.ts`'s `updateRowState` — editing a trajectory table and its register is the trajectory module's job; `reopen.ts` keeps writing the Maintenance phase and calls it
+- [ ] `openMaintenancePhasesIn(dir)` in `reopen.ts` — the exists → read → parse of a plan folder's impl that `after-close.ts` and `tools/plan-tools.ts` each spell
+- [ ] Extract `HealthChip`, `HealthDetail` and `PromiseStateCell` from `apps/indusk-admin/src/components/Promises.tsx` (486 lines, +148 in this plan) into `components/PromiseHealth.tsx` — react's one component per file for the observed-health axis; `Promises.tsx` keeps the table, groups and incidents
+- [ ] Move the not-Jaeger stub and its hand-written daemon record, copied in `monitor-status.test.ts` and `http-promise-health.test.ts`, into `helpers/local-jaeger.ts` as `startFakeQueryPort(home, body)` — one home for how a test stands in for the daemon
+- [ ] Restore `apps/indusk-mcp/src/__tests__/fixtures/lifecycle-parity.snapshot.json` to main's bytes — Build Phase 6's formatter run reflowed it (1,456 lines, whitespace only), which is noise in this plan's diff
+- [ ] (reviewed `lib/telemetry/daemon.ts` — left as-is: 604 lines, already shrunk by Build Phase 5's `status.ts` split; what remains is start/stop/restart of one daemon, one reason to change)
+- [ ] (reviewed `lib/config.ts`, `lib/lifecycle.ts`, `lib/eval/otel.ts`, `lib/eval/persistent-evaluator.ts`, `lib/eval/evaluator-spans.test.ts` — left as-is: over the cap before this plan, and its touches are small and in place — a config field, the after-close input, the mark beside the span code, a spawn error handler, a one-line mock)
+- [ ] (reviewed the `iso()` formatter in `status.ts` and `incidents.ts`, and `daysAgo` in the admin test — left as-is: two one-line copies in unrelated modules, not yet a rule of three; the admin test imports only node-built-in helpers by path, and the promises fixture would pull in `gray-matter` and `cli.ts`)
+
+#### Build Phase 8 Verification
+
+- [ ] Behaviour holds: A1, A7–A13, A26, A27, A28, A30 (`status`/`watch` through the one call), A14 and the reopen validator test (the moved row writer), A16–A18 (after-close), A20–A23 (the extracted health components) all still pass — `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor- src/lib/trajectory` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts` and `--project browser src/components`
+- [ ] `pnpm e2e` still passes, and both apps type-check
+
+#### Build Phase 8 Context
+
+- [ ] CLAUDE.md, the `promises status` line: `readPromiseMarks` is the one call status, watch and the admin make
+
+#### Build Phase 8 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`: the library paragraph names `readPromiseMarks` beside `markedSpans`
 
 ## Files Affected
 
