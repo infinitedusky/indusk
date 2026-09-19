@@ -16,7 +16,6 @@ import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
-	claudeExitReason,
 	initEvalOtel,
 	initEvalOtelLogs,
 	logEvalContent,
@@ -27,6 +26,7 @@ import {
 import { buildEvaluatorPrompt, buildHighlightsInstructions } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import {
+	claudeExitReason,
 	extractScorecardJson,
 	formatParseError,
 	getScorecardQuestions,

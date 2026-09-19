@@ -12,16 +12,10 @@ import { join } from "node:path";
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
-import {
-	claudeExitReason,
-	initEvalOtel,
-	markEvaluation,
-	shutdownEvalOtel,
-	withSpan,
-} from "./otel.js";
+import { initEvalOtel, markEvaluation, shutdownEvalOtel, withSpan } from "./otel.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
-import { extractScorecardJson, formatParseError } from "./scorecard-extractor.js";
+import { claudeExitReason, extractScorecardJson, formatParseError } from "./scorecard-extractor.js";
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
 
 export interface EvaluatorRunOptions {

@@ -267,15 +267,6 @@ export function markEvaluation(span: Span, result: EvalScorecard | EvalErrorEntr
 }
 
 /**
- * The reason a `claude` run failed, for the error line. The CLI prints some
- * failures on stdout with stderr empty — a model that does not exist is one
- * (verified 2026-09-18) — so stderr alone left the line saying nothing.
- */
-export function claudeExitReason(code: number | null, stderr: string, stdout: string): string {
-	return `claude exited with code ${code}: ${(stderr.trim() || stdout.trim()).slice(0, 500)}`;
-}
-
-/**
  * Initialize the OTel logs pipeline alongside traces. Returns a Logger —
  * real when enabled + endpoint set, no-op otherwise. Shares the same
  * config gating + Dash0 dataset routing as `initEvalOtel`. Safe to call

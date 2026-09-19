@@ -55,10 +55,10 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
 | A1 | A span marked with a promise and exported to a real local Jaeger is found by `indusk promises status` under that promise's name | Test Phase 1 | Build Phase 2 | written |
-| A2 | A failing evaluator run exports a span whose raw attributes and event say `every-commit-evaluated` was violated and why, readable with no InDusk code | Test Phase 1 | Build Phase 1 | written |
-| A3 | An evaluator run exports only its one marked span; nothing is added to spans that do not name a promise | Test Phase 1 | Build Phase 1 | written |
-| A4 | The trace-shape helper passes a test asserting a call upheld a promise under its expected parent | Build Phase 1 | Build Phase 1 | planned |
-| A5 | The helper still passes after an added attribute or extra child span, and fails when the marked span is gone | Build Phase 1 | Build Phase 1 | planned |
+| A2 | A failing evaluator run exports a span whose raw attributes and event say `every-commit-evaluated` was violated and why, readable with no InDusk code | Test Phase 1 | Build Phase 1 | passing |
+| A3 | An evaluator run exports only its one marked span; nothing is added to spans that do not name a promise | Test Phase 1 | Build Phase 1 | passing |
+| A4 | The trace-shape helper passes a test asserting a call upheld a promise under its expected parent | Build Phase 1 | Build Phase 1 | passing |
+| A5 | The helper still passes after an added attribute or extra child span, and fails when the marked span is gone | Build Phase 1 | Build Phase 1 | passing |
 | A6 | A test that asserts a promise through the helper, with the promise as its `"promise: <name>"` argument, satisfies `indusk promises check`'s test link with no other citation | Test Phase 1 | Test Phase 1 | passing |
 | A7 | `indusk promises status` lists each behaviour promise with violations in the window, their trace ids, and last seen upheld | Test Phase 1 | Build Phase 2 | written |
 | A8 | A behaviour promise with no marked span in the window reads "not seen" — never "upheld", never zero violations | Test Phase 1 | Build Phase 2 | written |
@@ -141,23 +141,24 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 1: The mark
 
-- [ ] `apps/indusk-mcp/src/lib/testing/trace-shape.ts`, exported as `./testing/trace-shape`: `captureSpans(fn)` with an in-memory exporter, `expectPromiseUpheld(spans, token, { parent? })`, `expectPromiseViolated(spans, token)`; containment matching; the token parsed from `"promise: <name>"`, refusing any other shape by name
-- [ ] Mark the evaluator run: `runPersistentEval` and `runEvaluatorSync` (the modules the hook spawns, which resolve the package's own dependencies) wrap each evaluation in a span through `lib/eval/otel.ts` carrying `indusk.promise=every-commit-evaluated` and `indusk.promise.outcome`; on failure the `indusk.promise.violated` event with the failure line as `indusk.promise.symptom`. *Refines ADR D10: the spawned evaluator runs inside the package, so it uses the existing OpenTelemetry setup instead of a direct OTLP post from the hook.* Two facts from Test Phase 1: the evaluator already exports `eval.*` spans when `INDUSK_EVAL_OTEL=1` and an endpoint are set (A2/A3's preconditions pass today), so the mark goes on the `eval.run` root span; and the real `claude` prints the bad-model message on **stdout** with stderr empty, so the symptom takes stdout's first line when stderr is empty. Decide here whether the mark needs `eval.otel` enabled or turns on when the local daemon is running, and record why
-- [ ] Register `.indusk/promises/every-commit-evaluated.md` (behaviour, domain `gates`, state `enforced`, sites: the evaluator module, tests: `monitor-mark.test.ts`); confirm the owner by reading the archived plan that made commits evaluated (`agent-roles` is the candidate) and record why
-- [ ] The testing extension's skill (`apps/indusk-mcp/extensions/testing/skill.md`): a section on asserting a promise through the trace-shape helper
+- [x] `apps/indusk-mcp/src/lib/testing/trace-shape.ts`, exported as `./testing/trace-shape`: `captureSpans(fn)` with an in-memory exporter, `expectPromiseUpheld(spans, token, { parent? })`, `expectPromiseViolated(spans, token)`; containment matching; the token parsed from `"promise: <name>"`, refusing any other shape by name. The mark's four names live once, as `PROMISE_MARK` in `lib/promises/vocabulary.ts` (with `parsePromiseToken`); `captureSpans` refuses when a tracer provider or context manager is already global
+- [x] Mark the evaluator run: `runPersistentEval` and `runEvaluatorSync` (the modules the hook spawns, which resolve the package's own dependencies) wrap each evaluation in a span through `lib/eval/otel.ts` carrying `indusk.promise=every-commit-evaluated` and `indusk.promise.outcome`; on failure the `indusk.promise.violated` event with the failure line as `indusk.promise.symptom`. *Refines ADR D10: the spawned evaluator runs inside the package, so it uses the existing OpenTelemetry setup instead of a direct OTLP post from the hook.* Two facts from Test Phase 1: the evaluator already exports `eval.*` spans when `INDUSK_EVAL_OTEL=1` and an endpoint are set (A2/A3's preconditions pass today), so the mark goes on the `eval.run` root span; and the real `claude` prints the bad-model message on **stdout** with stderr empty, so the symptom takes stdout's first line when stderr is empty. Decide here whether the mark needs `eval.otel` enabled or turns on when the local daemon is running, and record why. **Decided:** the evaluator exports to the local daemon by default whenever it runs (`liveOtlpEndpointSync` in `lib/telemetry/daemon.ts`: meta file + Jaeger PID, no socket), `OTEL_EXPORTER_OTLP_ENDPOINT` still wins, and `eval.otel.enabled: false` is the off switch — because a mark that needs a hand-set exporter is never seen by the monitor, which is D10's point. `markEvaluation` marks the root span once, at the point the evaluation ends, so a stale-session retry marks only the retry; `claudeExitReason` puts stdout in the error when stderr is empty, which also fixes results.log's reasonless line. `otel.test.ts` now pins `INDUSK_HOME` so a developer's running daemon cannot flip its default-off tests
+- [x] Register `.indusk/promises/every-commit-evaluated.md` (behaviour, domain `gates`, state `enforced`, sites: the evaluator module, tests: `monitor-mark.test.ts`); confirm the owner by reading the archived plan that made commits evaluated (`agent-roles` is the candidate) and record why. **Owner: `semantic-graph-eval`**, not the `agent-roles` candidate — its ADR (2026-04-09) added the commit-triggered evaluator that "scores every commit"; `agent-roles` later described the role
+- [x] The testing extension's skill (`apps/indusk-mcp/extensions/testing/skill.md`): a section on asserting a promise through the trace-shape helper
+- [x] Shape (Build Phase 1): `claudeExitReason` formatted the claude CLI's failure text inside `lib/eval/otel.ts`, giving that module a second reason to change — moved beside `formatParseError` in `scorecard-extractor.ts`, the home of claude-output error text (rule: one reason to change). Considered and left: `markEvaluation` in `otel.ts` (it sets span attributes, which is the module's job); `liveOtlpEndpointSync` in `telemetry/daemon.ts` (a daemon fact, beside `daemonStatus`). A day-promises test pinned "3 promises, one per kind"; rewritten to what it protects — every kind held, every promise enforced — and CLAUDE.md's "three promises" likewise
 
 #### Build Phase 1 Verification
 
-- [ ] A2, A3, A4, A5 pass; A6 still passes (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-mark.test.ts src/__tests__/monitor-trace-shape.test.ts src/__tests__/monitor-check.test.ts`)
-- [ ] `pnpm promises:check` passes with the new promise
+- [x] A2, A3, A4, A5 pass; A6 still passes (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-mark.test.ts src/__tests__/monitor-trace-shape.test.ts src/__tests__/monitor-check.test.ts`) — ran 2026-09-18: 8 passed; check: 4 promises, all enforced
+- [x] `pnpm promises:check` passes with the new promise
 
 #### Build Phase 1 Context
 
-- [ ] Conventions: the promise mark (`indusk.promise`, `indusk.promise.outcome`, the `indusk.promise.violated` event) is plain OpenTelemetry set by the application; InDusk ships no runtime helper; tests assert it through `testing/trace-shape` with the promise token as the argument
+- [x] Conventions: the promise mark (`indusk.promise`, `indusk.promise.outcome`, the `indusk.promise.violated` event) is plain OpenTelemetry set by the application; InDusk ships no runtime helper; tests assert it through `testing/trace-shape` with the promise token as the argument
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/promises.md`: marking a behaviour promise — the attributes, the event, the two-line snippet, and the test helper
+- [x] `apps/docs/src/guide/promises.md`: marking a behaviour promise — the attributes, the event, the two-line snippet, and the test helper
 
 ### Build Phase 2: Reading Jaeger
 

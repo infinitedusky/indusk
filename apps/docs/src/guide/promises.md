@@ -114,6 +114,59 @@ The plan that established it. Ownership moves only when another plan supersedes 
 The file shapes, every refusal and the exit codes are in the
 [`indusk promises` reference](/reference/cli/promises).
 
+## Marking a behaviour promise
+
+A `behaviour` promise is broken by inputs nobody chose, so the running system
+has to say when it upholds or breaks one. It says so with plain
+OpenTelemetry, on the span that does the work:
+
+```ts
+span.setAttribute("indusk.promise", "seat-never-double-booked");
+span.setAttribute("indusk.promise.outcome", "upheld");
+```
+
+and, when the promise breaks:
+
+```ts
+span.setAttribute("indusk.promise.outcome", "violated");
+span.addEvent("indusk.promise.violated", {
+  "indusk.promise.symptom": "seat 4 held by two players",
+});
+```
+
+That is the whole convention: two attributes, and an event carrying what was
+observed. The application imports nothing from InDusk and runs the same with
+InDusk deleted. Anyone holding the raw trace — in Jaeger, in any
+OpenTelemetry tool, or as exported JSON — can read which promise broke and
+why. A violation is its own attribute, never the span's error status: an error
+can happen while every promise holds, and a promise can break with no error at
+all.
+
+A test asserts the mark with the helper InDusk ships for tests only:
+
+```ts
+import {
+  captureSpans,
+  expectPromiseUpheld,
+} from "@infinitedusky/indusk-mcp/testing/trace-shape";
+
+const spans = await captureSpans(() => holdSeat(4));
+expectPromiseUpheld(spans, "promise: seat-never-double-booked", {
+  parent: "handle-request",
+});
+```
+
+The helper takes the promise as its token, so the assertion is also the
+promise's test link — `indusk promises check` counts it with no other comment.
+It checks containment, not a snapshot: added attributes and extra child spans
+never fail it; the marked span going missing does. `expectPromiseViolated`
+asserts a violation and returns its symptom.
+
+This repository's own example is `every-commit-evaluated`: every evaluator run
+marks its root span, `upheld` when a scorecard is written and `violated` with
+the reason when it is not. While the local telemetry daemon runs, that mark
+lands in its Jaeger with nothing configured.
+
 ## See also
 
 - [Plan Lifecycle](./plan-lifecycle) — the two authorities a test can have, and why behavioural assertions are the shape of a promise
