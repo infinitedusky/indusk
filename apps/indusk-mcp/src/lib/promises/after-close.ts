@@ -7,7 +7,7 @@ import { type PlanSummary, parsePlan } from "../plan-parser.js";
 import { getQuietWindowDays } from "./config.js";
 import { recorded } from "./incidents.js";
 import { type Registry, readPromises } from "./registry.js";
-import { openMaintenancePhases } from "./reopen.js";
+import { openMaintenancePhasesIn } from "./reopen.js";
 
 /**
  * What a closed plan is doing after it closed (day-monitor, ADR D7, D8).
@@ -112,10 +112,7 @@ export function afterClose(
 	registry: Registry | null = registryOf(projectRoot),
 	now: Date = new Date(),
 ): { reopened: string[]; monitor: MonitorWindow | null } {
-	const implPath = join(planDir, "impl.md");
-	const reopened = existsSync(implPath)
-		? openMaintenancePhases(readFileSync(implPath, "utf-8"))
-		: [];
+	const reopened = openMaintenancePhasesIn(planDir);
 	return {
 		reopened,
 		monitor: reopened.length > 0 ? null : monitorWindow(projectRoot, name, planDir, registry, now),

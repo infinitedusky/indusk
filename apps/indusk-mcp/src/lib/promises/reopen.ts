@@ -127,3 +127,9 @@ export function openMaintenancePhases(implText: string): string[] {
 		)
 		.map((p) => p.name);
 }
+
+/** `openMaintenancePhases` of the impl in plan folder `dir`; none when there is no impl. */
+export function openMaintenancePhasesIn(dir: string): string[] {
+	const implPath = join(dir, "impl.md");
+	return existsSync(implPath) ? openMaintenancePhases(readFileSync(implPath, "utf-8")) : [];
+}

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -7,7 +7,7 @@ import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
 import { readPromises } from "../lib/promises/registry.js";
-import { openMaintenancePhases } from "../lib/promises/reopen.js";
+import { openMaintenancePhasesIn } from "../lib/promises/reopen.js";
 import {
 	copySource,
 	livePlanCopy,
@@ -79,10 +79,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 				// An incident's open Maintenance phase, read from the live copy
 				// (day-monitor A29) — archived plans report theirs the same way.
 				const dir = copy ? planDirOf(copy) : join(getPlanningDir(resolved.projectRoot), plan.name);
-				const implPath = join(dir, "impl.md");
-				const reopened = existsSync(implPath)
-					? openMaintenancePhases(readFileSync(implPath, "utf-8"))
-					: [];
+				const reopened = openMaintenancePhasesIn(dir);
 				return { ...live, ...copySource(copy), ...(reopened.length > 0 ? { reopened } : {}) };
 			});
 			// Archived plans back in motion (day-monitor): reopened by an
