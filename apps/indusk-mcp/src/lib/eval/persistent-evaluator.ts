@@ -403,7 +403,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					});
 				});
 
-				markEvaluation(rootSpan, scorecard);
+				markEvaluation(rootSpan, scorecard, projectGroup);
 				return scorecard;
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
@@ -423,7 +423,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					message: enrichedMessage,
 				};
 				await logWriter.append(errorEntry);
-				markEvaluation(rootSpan, errorEntry);
+				markEvaluation(rootSpan, errorEntry, projectGroup);
 				return errorEntry;
 			}
 		},

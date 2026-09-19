@@ -255,8 +255,16 @@ export const EVALUATION_PROMISE = "every-commit-evaluated";
  *
  * promise: every-commit-evaluated
  */
-export function markEvaluation(span: Span, result: EvalScorecard | EvalErrorEntry): void {
+export function markEvaluation(
+	span: Span,
+	result: EvalScorecard | EvalErrorEntry,
+	project: string,
+): void {
 	span.setAttribute(PROMISE_MARK.promise, EVALUATION_PROMISE);
+	// Every project's evaluator marks this promise under one service name, so
+	// the mark names its project (`getProjectGroupId`) or one project's failed
+	// evaluation would read as another's violation.
+	span.setAttribute(PROMISE_MARK.project, project);
 	if (!("error" in result && result.error)) {
 		span.setAttribute(PROMISE_MARK.outcome, "upheld");
 		return;

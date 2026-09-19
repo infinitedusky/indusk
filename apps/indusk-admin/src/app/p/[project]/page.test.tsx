@@ -64,6 +64,15 @@ vi.mock("@/lib/promises-reader", () => ({
   holdingCounts: () => new Map(),
 }));
 
+// Observed health (day-monitor): the layout imports these for the sidebar's
+// red roll-up; the real module reaches Jaeger and the filesystem.
+vi.mock("@/lib/promise-health", () => ({
+  __esModule: true,
+  readHealth: async () => ({ ok: false, unknownSince: null, where: "mock" }),
+  healthRows: () => ({}),
+  redPlans: () => new Set<string>(),
+}));
+
 // Research reads split out of planning-reader in the dawn-ui-plan-grouping
 // cleanup — the layout imports them from research-reader, so the mock follows
 // (a mock must cover every export the layout imports, per the known gotcha).

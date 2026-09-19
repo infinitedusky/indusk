@@ -125,6 +125,8 @@ export async function markedSpans(opts: {
 	promises: string[];
 	since: Date;
 	timeoutMs?: number;
+	/** This project's id (`getProjectGroupId`); a mark naming another project is dropped. */
+	project?: string;
 }): Promise<MarkedSpansResult> {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 	const status = await daemonStatus();
@@ -162,6 +164,10 @@ export async function markedSpans(opts: {
 					const marked = toMarked(span, t.processes[span.processID]?.serviceName ?? service);
 					if (marked?.promise !== promise) continue;
 					if (marked.at < opts.since) continue;
+					const owner = tag(span.tags, PROMISE_MARK.project);
+					if (opts.project !== undefined && typeof owner === "string" && owner !== opts.project) {
+						continue;
+					}
 					seen.set(marked.spanId, marked);
 				}
 			}

@@ -100,6 +100,7 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — promises status", () => {
 	const violated = [newTraceId(), newTraceId()];
 	const upheldDouble = newTraceId();
 	const upheldRelease = newTraceId();
+	const otherProject = newTraceId();
 
 	beforeAll(async () => {
 		fixture = project();
@@ -142,6 +143,17 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — promises status", () => {
 			},
 			// An unmarked span: must not register as any promise.
 			{ service: "fixture-app", name: "render-lobby" },
+			// Another project's mark of the same promise name (one evaluator
+			// service marks for every project on a machine): not this project's.
+			{
+				service: "fixture-app",
+				name: "hold-seat",
+				promise: DOUBLE,
+				outcome: "violated",
+				symptom: "another project's seat",
+				traceId: otherProject,
+				attributes: { "indusk.project": "some-other-project" },
+			},
 		]);
 		const r = runCli(fixture.root, ["promises", "status"], { INDUSK_HOME: jaeger.home });
 		out = r.stdout + r.stderr;
@@ -169,6 +181,7 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — promises status", () => {
 		const b = block(out, DOUBLE);
 		expect(b).toMatch(/\b2 violations\b/);
 		for (const id of violated) expect(b).toContain(id);
+		expect(b, "another project's mark is not counted").not.toContain(otherProject);
 		expect(b).toMatch(/last seen upheld/i);
 		expect(b).toContain(upheldDouble);
 	});

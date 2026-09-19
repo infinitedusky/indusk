@@ -1,3 +1,4 @@
+import { getProjectGroupId } from "../../lib/config.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { readPromises } from "../../lib/promises/registry.js";
@@ -66,6 +67,7 @@ export async function promisesStatus(
 		const marks = await markedSpans({
 			promises: promises.filter((p) => p.kind === "behaviour").map((p) => p.name),
 			since: new Date(Date.now() - sinceMs),
+			project: getProjectGroupId(projectRoot),
 		});
 		console.info(formatStatus(promises, marks, window));
 	} catch (err) {

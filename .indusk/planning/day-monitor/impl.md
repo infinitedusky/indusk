@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor"
 date: 2026-09-18
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -77,7 +77,7 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A21 | The page sorts red first and shows violations in the window and last seen for each behaviour promise | Test Phase 1 | Build Phase 5 | passing |
 | A22 | With Jaeger unreachable every behaviour chip is hollow with "health unknown since …" and none is green | Test Phase 1 | Build Phase 5 | passing |
 | A23 | A plan holding a red promise shows red in the sidebar | Test Phase 1 | Build Phase 5 | passing |
-| A24 | End to end, on a scratch project with a green suite: a commit evaluated with a model that does not exist marks `every-commit-evaluated` violated in local Jaeger, `indusk promises watch` opens an incident with source `local`, and the owning plan reopens with a Maintenance phase | Build Phase 6 | Build Phase 6 | planned |
+| A24 | End to end, on a scratch project with a green suite: a commit evaluated with a model that does not exist marks `every-commit-evaluated` violated in local Jaeger, `indusk promises watch` opens an incident with source `local`, and the owning plan reopens with a Maintenance phase | Build Phase 6 | Build Phase 6 | passing |
 
 ## Checklist
 
@@ -241,22 +241,24 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 6: End to end, and what runs where
 
-- [ ] An `e2e` vitest project for `apps/indusk-mcp` (`vitest.e2e.config.ts`, `include: ["e2e/**/*.e2e.test.ts"]`), and the default config excludes `e2e/`; root script `pnpm e2e`
-- [ ] Author and run `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts` per the A24 procedure, against the running telemetry daemon and the real `claude` CLI
-- [ ] `apps/docs/src/guide/index.md`: "What runs where" — in the repo, on the machine, always-on (planned in `day-always-on`); the application depends on none of it
+- [x] An `e2e` vitest project for `apps/indusk-mcp` (`vitest.e2e.config.ts`, `include: ["e2e/**/*.e2e.test.ts"]`), and the default config excludes `e2e/`; root script `pnpm e2e`. The root `pnpm e2e` builds the package first, since the test runs the built CLI and hook
+- [x] Author and run `apps/indusk-mcp/e2e/day-monitor.e2e.test.ts` per the A24 procedure, against the running telemetry daemon and the real `claude` CLI. The daemon is the extension's own, started by `helpers/local-jaeger.ts` in a home the test owns — not the developer's — so a deliberate violation never lands in a Jaeger someone reads; the evaluator reaches it with no exporter configured, which is the default path Build Phase 1 made. The first run broke on something else: the evaluator passes `--mcp-config .mcp.json` and the scratch project had none — the loop would have caught that too, but the scratch now carries an empty one so the test breaks where it means to
+- [x] Marks are scoped to their project (found writing A24): the Jaeger query matched a promise by name only, and every project's evaluator marks `every-commit-evaluated` under one service, so on one machine another project's failed evaluation — or this test's — would have read as this repository's violation. `PROMISE_MARK.project` (`indusk.project`) is set by `markEvaluation` from `getProjectGroupId`, and `markedSpans({ project })` drops a mark naming another project; an application's own spans carry none and are unaffected. Pinned in `monitor-status.test.ts`. Caveat recorded: the id is the config group id or the folder name, so a plan worktree's folder reads as a different project from its trunk
+- [x] Shape (Build Phase 6): nothing found. The end-to-end test is one `it` on purpose — it is one story, and splitting it would hide which step broke behind a skipped remainder; the configs and the scoping filter are single-purpose
+- [x] `apps/docs/src/guide/index.md`: "What runs where" — in the repo, on the machine, always-on (planned in `day-always-on`); the application depends on none of it
 
 #### Build Phase 6 Verification
 
-- [ ] A24 passes: `pnpm e2e` on this machine, output recorded; `pnpm test` does not run it (checked by its test count)
-- [ ] Root suite and the promises check (`pnpm test`)
+- [x] A24 passes: `pnpm e2e` on this machine, output recorded; `pnpm test` does not run it (checked by its test count) — ran 2026-09-19: `pnpm e2e` → 1 file, 1 test passed in 6.9s (real `claude` 2.1.197, test-owned daemon); `vitest list` under the default config lists nothing from `e2e/` (its two `e2e` matches are the existing `multi-agent-e2e.test.ts`)
+- [x] Root suite and the promises check (`pnpm test`) — ran 2026-09-19. Admin 310 passed. Package 1546 passed, 11 failed: 9 because a fresh worktree has no bundled admin (`apps/indusk-mcp/admin/`, an ignored artifact of `scripts/bundle-admin.js`, present on trunk) — after bundling, those files pass; the remaining 2 are `daemon-identity.test.ts` T22/T23, which fail identically on trunk at `918db13d` (the queued daemon-identity port bug), not this plan's. `pnpm promises:check`: 4 promises, all enforced. The first full run also caught a real miss, fixed: the layout's browser test did not mock the new `@/lib/promise-health`
 
 #### Build Phase 6 Context
 
-- [ ] Conventions: end-to-end tests live in `apps/indusk-mcp/e2e/`, run with `pnpm e2e`, need the `claude` CLI and the telemetry daemon, and are outside `pnpm test`
+- [x] Conventions: end-to-end tests live in `apps/indusk-mcp/e2e/`, run with `pnpm e2e`, need the `claude` CLI and the telemetry daemon, and are outside `pnpm test`
 
 #### Build Phase 6 Document
 
-- [ ] Changelog entry completed; `apps/docs/src/guide/promises.md` gains the loop diagram (run → span → Jaeger → `watch` → incident → Maintenance phase → quiet window → closed)
+- [x] Changelog entry completed; `apps/docs/src/guide/promises.md` gains the loop diagram (run → span → Jaeger → `watch` → incident → Maintenance phase → quiet window → closed)
 
 ## Files Affected
 

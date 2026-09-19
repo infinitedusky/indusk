@@ -107,6 +107,14 @@ export const PROMISE_MARK = {
 	violatedEvent: "indusk.promise.violated",
 	/** Attribute on the violated event: what was observed, one line. */
 	symptom: "indusk.promise.symptom",
+	/**
+	 * Optional span attribute: the project the mark belongs to. Needed when
+	 * one service marks promises for many projects — InDusk's own evaluator
+	 * marks `every-commit-evaluated` in every project on the machine — and
+	 * absent from an application's own spans, whose service is its project.
+	 * The reader drops a mark that names a different project.
+	 */
+	project: "indusk.project",
 } as const;
 
 export const PROMISE_OUTCOMES = ["upheld", "violated"] as const;

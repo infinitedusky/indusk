@@ -59,9 +59,7 @@ describe("day-monitor — the trace-shape helper", () => {
 		const spans = await captureSpans(() => fixtureCallWithExtraChild());
 		expectPromiseUpheld(spans, TOKEN);
 		const unmarked = await captureSpans(() => fixtureCallWithoutMark());
-		expect(() => expectPromiseUpheld(unmarked, TOKEN)).toThrow(
-			/fixture-promise/,
-		);
+		expect(() => expectPromiseUpheld(unmarked, TOKEN)).toThrow(/fixture-promise/);
 	});
 
 	it("refuses a bare name, so the call stays a token the check counts", async () => {
@@ -80,8 +78,6 @@ describe("day-monitor — the trace-shape helper", () => {
 				span.end();
 			}),
 		);
-		expect(expectPromiseViolated(spans, TOKEN).symptom).toBe(
-			"seat 4 held twice",
-		);
+		expect(expectPromiseViolated(spans, TOKEN).symptom).toBe("seat 4 held twice");
 	});
 });

@@ -216,7 +216,7 @@ export async function runEvaluatorSync(
 		},
 		async (span) => {
 			const outcome = await runEvaluatorSyncInner(opts, projectGroup);
-			markEvaluation(span, outcome);
+			markEvaluation(span, outcome, projectGroup);
 			return outcome;
 		},
 	);

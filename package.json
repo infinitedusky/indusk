@@ -4,6 +4,7 @@
 	"packageManager": "pnpm@10.33.0",
 	"scripts": {
 		"test": "turbo test && pnpm promises:check",
+		"e2e": "pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp e2e",
 		"promises:check": "node apps/indusk-mcp/dist/bin/cli.js promises check",
 		"check": "biome check",
 		"check:fix": "biome check --write",

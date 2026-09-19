@@ -1,3 +1,4 @@
+import { getProjectGroupId } from "../config.js";
 import { getQuietWindowDays } from "./config.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
 import { readPromises } from "./registry.js";
@@ -36,6 +37,7 @@ export async function watchPromises(
 	const marks = await markedSpans({
 		promises: behaviour.map((p) => p.name),
 		since: new Date(now.getTime() - getQuietWindowDays(planRoot) * 86_400_000),
+		project: getProjectGroupId(planRoot),
 	});
 	const changes: WatchResult["changes"] = [];
 	for (const promise of behaviour) {

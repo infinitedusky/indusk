@@ -44,7 +44,7 @@ dusk/
 
 - pnpm workspaces + Turborepo; **Node 22 required** (Tailwind 4 native bindings).
 - **Biome, not ESLint** — `pnpm check` / `pnpm check:fix` / `pnpm format`. Biome config is a knowledge artifact (`biome-rationale.md`); the ratchet only tightens. After each retrospective ask if a mistake could become a Biome rule.
-- `pnpm test` runs all; `pnpm turbo test --filter={app}` scopes. Vitest `passWithNoTests: true` must be set per-app (root `extends: true` doesn't inherit it).
+- `pnpm test` runs all; `pnpm turbo test --filter={app}` scopes. **End-to-end tests**: `apps/indusk-mcp/e2e/`, `pnpm e2e` (outside `pnpm test`; needs `claude` + a telemetry daemon). Vitest `passWithNoTests: true` must be set per-app (root `extends: true` doesn't inherit it).
 - **CLAUDE.md has a hard 60 KB budget enforced at write time** — `claude-md-budget.js` PreToolUse hook blocks past `context.claude_md_budget_bytes` (61440 default; warns at 90%). Entries are 1–3-line rules + pointer. Compact, don't grow; raise the budget only as a deliberate config edit. `indusk context check-pointers` verifies pointers resolve and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
 - **Decay layer**: `indusk agent sweep` archives current.md sections older than `agents.sweep_ttl_minutes` (7d default; ≫ the 60-min display TTL) to `.indusk/archive/current-md-archive.md`; `indusk plans archive-dead` moves all-draft stale plans (`planning.dead_draft_days`, 30d) to `planning/archive/`. Archive, never delete; malformed input blocks/keeps; master.md non-draft rows protect plans. — see `/reference/cli/plans`
 - **Hub push/pull**: `indusk sync promote <lesson>` → machine-global hub (`$INDUSK_HOME/hub/lessons/`, provenance-stamped, manifest-versioned); `indusk sync pull` (run by catchup) merges hub + bundled community channel — additive-only, idempotent, local wins. — see `/reference/cli/sync`
@@ -173,12 +173,11 @@ dusk/
 - **Mid-September** — `run`/`verify` across a workbench split ([dawn-workbench-execution](.indusk/planning/archive/dawn-workbench-execution/), `/lessons/dawn-workbench-execution`); the lifecycle drawn live as three bars ([admin-ui-phase-progress](.indusk/planning/archive/admin-ui-phase-progress/), `/lessons/admin-ui-phase-progress`).
 - **Hooks (2026-09-15, 09-17)** — registered by the project root ([hook-cwd-independence](.indusk/planning/archive/hook-cwd-independence/)); no code edited or committed on `main` ([trunk-guard](.indusk/planning/archive/trunk-guard/)).
 - **writing-skill (1.44.0)** — papers as plan documents, `/write`, `indusk papers publish`. **Open**: re-run the plain-language invocation check in a fresh trunk session. See [archive](.indusk/planning/archive/writing-skill/).
-- **day-promises (2026-09-18, Day 4a)** — the promise registry and `indusk promises check`. See [archive](.indusk/planning/archive/day-promises/) and `/lessons/day-promises`.
-- **admin-plan-worktrees (2026-09-18)** — plans read from their assigned worktree; `indusk worktree create/assign/release`. See [archive](.indusk/planning/archive/admin-plan-worktrees/) and `/lessons/admin-plan-worktrees`.
+- **2026-09-18** — the promise registry, Day 4a ([day-promises](.indusk/planning/archive/day-promises/), `/lessons/day-promises`); plans read from their assigned worktree ([admin-plan-worktrees](.indusk/planning/archive/admin-plan-worktrees/), `/lessons/admin-plan-worktrees`).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `.indusk/planning/master.md`); operational blockers live in `.indusk/current.md` → `## Project (shared)`. Standing direction notes that stage/next-step cannot derive:
 
-- **day-monitor (was midnight) / day-contract** — **active direction** after 4a closed: a plan *establishes* promises and *preserves* those in force; kind (behaviour / state / structure) picks the check; 4b = behaviour promises watched in runs, 4c = promises in planning; closes *holding N promises*; no `subsystem`. See `/guide/promises`
+- **day-monitor / day-contract** — **active direction** after 4a closed: a plan *establishes* promises and *preserves* those in force; kind (behaviour / state / structure) picks the check; 4b = behaviour promises watched in runs, 4c = promises in planning; closes *holding N promises*; no `subsystem`. See `/guide/promises`
 - **indusk-v2-dawn** — parent plan (living master); component status in `.indusk/planning/indusk-v2-dawn/master.md`
 - **Sequence reconciliation (2026-09-14)**: every folder outside the V4 sequence got one fate; the table is in `.indusk/planning/master.md`.
 
