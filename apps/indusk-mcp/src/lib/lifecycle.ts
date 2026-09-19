@@ -144,6 +144,8 @@ export interface PlanPositionState {
 	segments: Record<PlanPosition, SegmentState>;
 	/** What the active position waits on, e.g. "brief drafted, awaiting acceptance". Null when nothing is active. */
 	awaiting: string | null;
+	/** The quiet window, when the position is `monitor` — the one segment that measures time. */
+	monitor?: MonitorWindow;
 }
 
 export interface StageState {
@@ -314,7 +316,13 @@ export function derivePlanPosition(input: DerivePlanPositionInput): PlanPosition
 		const doc = documentFor(candidate);
 		segments[candidate] = doc !== null && !docs.has(`${doc}.md`) ? "skipped" : "done";
 	}
-	return { position, segments, awaiting: position === "archived" ? null : awaiting };
+	const monitor = position === "monitor" ? input.afterClose?.monitor : null;
+	return {
+		position,
+		segments,
+		awaiting: position === "archived" ? null : awaiting,
+		...(monitor ? { monitor } : {}),
+	};
 }
 
 function documentFor(position: PlanPosition): DocumentPosition | null {

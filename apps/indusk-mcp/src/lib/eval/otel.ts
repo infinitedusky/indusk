@@ -27,7 +27,7 @@ import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { PROMISE_MARK } from "../promises/vocabulary.js";
-import { liveOtlpEndpointSync } from "../telemetry/daemon.js";
+import { liveOtlpEndpointSync } from "../telemetry/status.js";
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
 
 const TRACER_NAME = "@infinitedusky/indusk-mcp/eval";

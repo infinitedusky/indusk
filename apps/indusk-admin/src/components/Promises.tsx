@@ -9,6 +9,7 @@ import type {
 import Link from "next/link";
 import { useState } from "react";
 import {
+  PROMISE_HEALTH_CHIP,
   PROMISE_KIND_LABELS,
   PROMISE_STATE_CHIP,
 } from "@/components/bars/labels";
@@ -21,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import type { HealthRow } from "@/lib/promise-health";
 
 /**
  * The Promises page's pieces (day-promises, ADR D8): the registry as a table
@@ -29,9 +31,10 @@ import {
  * header carry; the error block for a malformed entry; the empty state for a
  * project with no registry.
  *
- * Nothing here renders a health. There is no such prop and no such field —
- * an `enforced` chip is hollow by construction, which is what A19 asserts.
- * The monitor step adds the second axis.
+ * The declared-state chip never carries health: an `enforced` chip is hollow
+ * by construction. Observed health is a second chip beside it (day-monitor,
+ * ADR D9), drawn only from what the page read from telemetry — `observed` —
+ * except `retired`, which is grey whatever anyone saw.
  */
 
 export type PromiseGrouping = "owner" | "domain" | "state" | "kind";
@@ -45,6 +48,64 @@ export const PROMISE_GROUPINGS: ReadonlyArray<{
   { key: "state", label: "by state" },
   { key: "kind", label: "by kind" },
 ];
+
+/** Observed health as a chip, beside the declared state (day-monitor, ADR D9). */
+export function HealthChip({
+  row,
+  unknownSince,
+}: {
+  row: HealthRow;
+  /** Set when Jaeger could not be read: when it last could, or null for never. */
+  unknownSince?: string | null;
+}) {
+  const chip = PROMISE_HEALTH_CHIP[row.health];
+  const aria =
+    unknownSince !== undefined && row.health === "unverified"
+      ? `health unknown since ${unknownSince ?? "this server started"}`
+      : chip.aria;
+  return (
+    <span
+      role="img"
+      data-testid="promise-health"
+      data-health={row.health}
+      aria-label={aria}
+      title={aria}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${chip.className}`}
+    >
+      {chip.label}
+    </span>
+  );
+}
+
+function day(iso: string): string {
+  return iso.slice(0, 16).replace("T", " ");
+}
+
+/** The line under a behaviour promise's chips: violations in the window and last seen. */
+function HealthDetail({
+  row,
+  unknownSince,
+}: {
+  row: HealthRow;
+  unknownSince?: string | null;
+}) {
+  if (row.health === "grey") return null;
+  const parts: string[] = [];
+  if (row.violations !== null && row.violations > 0) {
+    parts.push(`${row.violations} violation${row.violations === 1 ? "" : "s"}`);
+  }
+  if (row.lastSeen) parts.push(`last seen ${day(row.lastSeen)}`);
+  else if (unknownSince === undefined && row.health === "unverified")
+    parts.push("not seen");
+  if (parts.length === 0) return null;
+  return (
+    <span className="text-xs text-gray-500" data-testid="promise-health-detail">
+      {parts.join(" · ")}
+    </span>
+  );
+}
+
+const GREY: HealthRow = { health: "grey", violations: null, lastSeen: null };
 
 /** A promise's declared state as a chip. Hollow when enforced: declared, not yet observed. */
 export function PromiseChip({ state }: { state: PromiseState }) {
@@ -79,6 +140,7 @@ function groupKey(p: PromiseEntry, by: PromiseGrouping): string {
 function groupBy(
   promises: PromiseEntry[],
   by: PromiseGrouping,
+  isRed: (p: PromiseEntry) => boolean = () => false,
 ): Array<[key: string, rows: PromiseEntry[]]> {
   const groups = new Map<string, PromiseEntry[]>();
   for (const p of promises) {
@@ -87,12 +149,16 @@ function groupBy(
     rows.push(p);
     groups.set(key, rows);
   }
+  // Red sorts first (day-monitor, A21): within a group, and a group holding
+  // a red promise before one that holds none.
+  const redFirst = (a: PromiseEntry, b: PromiseEntry) =>
+    Number(isRed(b)) - Number(isRed(a)) || a.name.localeCompare(b.name);
   return [...groups.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, rows]) => [
-      key,
-      [...rows].sort((a, b) => a.name.localeCompare(b.name)),
-    ]);
+    .sort(
+      ([ka, ra], [kb, rb]) =>
+        Number(rb.some(isRed)) - Number(ra.some(isRed)) || ka.localeCompare(kb),
+    )
+    .map(([key, rows]) => [key, [...rows].sort(redFirst)]);
 }
 
 export interface PromisesTableProps {
@@ -101,6 +167,12 @@ export interface PromisesTableProps {
   /** Route prefix for an owner plan's link, e.g. `/p/dusk/plan/`. */
   planHrefPrefix?: string;
   initialGroupBy?: PromiseGrouping;
+  /**
+   * What the page read from telemetry (day-monitor, ADR D9): a health row per
+   * promise, and — only when Jaeger could not be read — when it last could.
+   * Absent: no read was made, and no observed health is drawn.
+   */
+  observed?: { rows: Record<string, HealthRow>; unknownSince?: string | null };
 }
 
 export function PromisesTable({
@@ -108,6 +180,7 @@ export function PromisesTable({
   incidents,
   planHrefPrefix = "/plan/",
   initialGroupBy = "owner",
+  observed,
 }: PromisesTableProps) {
   const [by, setBy] = useState<PromiseGrouping>(initialGroupBy);
   const [showRetired, setShowRetired] = useState(false);
@@ -115,16 +188,21 @@ export function PromisesTable({
   const visible = showRetired
     ? promises
     : promises.filter((p) => p.state !== "retired");
-  const groups = groupBy(visible, by);
+  const rowOf = (p: PromiseEntry): HealthRow | null =>
+    p.state === "retired" ? GREY : (observed?.rows[p.name] ?? null);
+  const groups = groupBy(visible, by, (p) => rowOf(p)?.health === "red");
 
   return (
     <section className="flex flex-col gap-4" data-testid="promises">
       <header className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold text-gray-900">Promises</h1>
         <p className="text-sm text-gray-600">
-          What the system commits to, from <code>.indusk/promises/</code>. Each
-          chip is a <em>declared</em> state; nothing here has observed the
-          running system, so an enforced promise is drawn hollow.
+          What the system commits to, from <code>.indusk/promises/</code>. The
+          first chip is a <em>declared</em> state, so an enforced promise is
+          drawn hollow.
+          {observed
+            ? " Beside it, a behaviour promise shows what the local Jaeger saw over the quiet window: violated, upheld, or unverified when no run marked it."
+            : " Nothing here has observed the running system."}
         </p>
       </header>
 
@@ -156,6 +234,17 @@ export function PromisesTable({
         )}
       </div>
 
+      {observed && observed.unknownSince !== undefined && (
+        <p
+          className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+          data-testid="health-unknown"
+        >
+          The local Jaeger could not be read — health unknown since{" "}
+          {observed.unknownSince ?? "this server started"}. No promise is shown
+          upheld.
+        </p>
+      )}
+
       {groups.map(([key, rows]) => (
         <PromiseGroup
           key={key}
@@ -163,6 +252,8 @@ export function PromisesTable({
           rows={rows}
           linkGroup={by === "owner"}
           planHrefPrefix={planHrefPrefix}
+          rowOf={rowOf}
+          unknownSince={observed?.unknownSince}
         />
       ))}
 
@@ -177,11 +268,15 @@ function PromiseGroup({
   rows,
   linkGroup,
   planHrefPrefix,
+  rowOf,
+  unknownSince,
 }: {
   groupKey: string;
   rows: PromiseEntry[];
   linkGroup: boolean;
   planHrefPrefix: string;
+  rowOf: (p: PromiseEntry) => HealthRow | null;
+  unknownSince?: string | null;
 }) {
   return (
     <section
@@ -224,7 +319,11 @@ function PromiseGroup({
               data-promise={p.name}
             >
               <TableCell>
-                <PromiseChip state={p.state} />
+                <PromiseStateCell
+                  promise={p}
+                  row={rowOf(p)}
+                  unknownSince={unknownSince}
+                />
               </TableCell>
               <TableCell>
                 <code className="text-xs">{p.name}</code>
@@ -254,6 +353,27 @@ function PromiseGroup({
         </TableBody>
       </Table>
     </section>
+  );
+}
+
+/** The state cell: declared state, observed health beside it, and the detail line. */
+function PromiseStateCell({
+  promise,
+  row,
+  unknownSince,
+}: {
+  promise: PromiseEntry;
+  row: HealthRow | null;
+  unknownSince?: string | null;
+}) {
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <span className="flex items-center gap-1">
+        <PromiseChip state={promise.state} />
+        {row && <HealthChip row={row} unknownSince={unknownSince} />}
+      </span>
+      {row && <HealthDetail row={row} unknownSince={unknownSince} />}
+    </div>
   );
 }
 

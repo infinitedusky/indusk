@@ -100,6 +100,28 @@ export function archivedPlanDir(projectRoot: string, name: string): string | nul
 	return existsSync(join(dir)) && name !== "" && !name.includes("/") ? dir : null;
 }
 
+/**
+ * What an archived plan is doing, as facts: its open Maintenance phases and
+ * its quiet window. The admin passes this to `derivePlanPosition` as
+ * `afterClose`; `archivedPlan` builds the tools' summary from it.
+ */
+export function afterClose(
+	projectRoot: string,
+	name: string,
+	planDir: string,
+	registry: Registry | null = registryOf(projectRoot),
+	now: Date = new Date(),
+): { reopened: string[]; monitor: MonitorWindow | null } {
+	const implPath = join(planDir, "impl.md");
+	const reopened = existsSync(implPath)
+		? openMaintenancePhases(readFileSync(implPath, "utf-8"))
+		: [];
+	return {
+		reopened,
+		monitor: reopened.length > 0 ? null : monitorWindow(projectRoot, name, planDir, registry, now),
+	};
+}
+
 /** One archived plan as the plan tools report it. */
 export function archivedPlan(
 	projectRoot: string,
@@ -110,10 +132,7 @@ export function archivedPlan(
 	const dir = archivedPlanDir(projectRoot, name);
 	if (!dir) return null;
 	const summary = parsePlan(dir);
-	const implPath = join(dir, "impl.md");
-	const reopened = existsSync(implPath)
-		? openMaintenancePhases(readFileSync(implPath, "utf-8"))
-		: [];
+	const { reopened, monitor } = afterClose(projectRoot, name, dir, registry, now);
 	if (reopened.length > 0) {
 		return {
 			...summary,
@@ -125,7 +144,6 @@ export function archivedPlan(
 			monitor: null,
 		};
 	}
-	const monitor = monitorWindow(projectRoot, name, dir, registry, now);
 	if (monitor) {
 		return {
 			...summary,

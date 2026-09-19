@@ -101,32 +101,33 @@ const rows = (container: Element) =>
   container.querySelectorAll('[data-testid="promise-row"]');
 
 describe("A18 — every grouping shows every non-retired promise exactly once", () => {
-  it.each([
-    "owner",
-    "domain",
-    "state",
-    "kind",
-  ] as const)("grouped by %s: five rows, each promise once", async (by) => {
-    const { container } = await render(
-      <PromisesTable
-        promises={PROMISES}
-        incidents={INCIDENTS}
-        initialGroupBy={by}
-      />,
-    );
-    const names = [...rows(container)].map((r) =>
-      r.getAttribute("data-promise"),
-    );
-    expect(names).toHaveLength(5);
-    expect(new Set(names).size).toBe(5);
-    expect(names).not.toContain("old-seat-rule");
-    expect(
-      container.querySelectorAll('[data-testid="promise-group"]').length,
-    ).toBeGreaterThan(1);
-  });
+  it.each(["owner", "domain", "state", "kind"] as const)(
+    "grouped by %s: five rows, each promise once",
+    async (by) => {
+      const { container } = await render(
+        <PromisesTable
+          promises={PROMISES}
+          incidents={INCIDENTS}
+          initialGroupBy={by}
+        />,
+      );
+      const names = [...rows(container)].map((r) =>
+        r.getAttribute("data-promise"),
+      );
+      expect(names).toHaveLength(5);
+      expect(new Set(names).size).toBe(5);
+      expect(names).not.toContain("old-seat-rule");
+      expect(
+        container.querySelectorAll('[data-testid="promise-group"]').length,
+      ).toBeGreaterThan(1);
+    },
+  );
 });
 
-describe("A19 — every enforced chip is hollow, and no health is rendered", () => {
+// day-promises A19, revised by day-monitor: observed health now exists (ADR
+// D9), but only as a second chip drawn from a telemetry read the page passes
+// as `observed`. Without one, the table still renders declared state only.
+describe("A19 — without an observed read, every enforced chip is hollow and no health is rendered", () => {
   it('renders each enforced promise as "declared, not yet observed" and nothing upheld or violated in a window', async () => {
     const { container } = await render(
       <PromisesTable promises={PROMISES} incidents={INCIDENTS} />,

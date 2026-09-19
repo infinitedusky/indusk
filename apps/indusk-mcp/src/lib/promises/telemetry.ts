@@ -1,4 +1,4 @@
-import { daemonMetaPath, daemonStatus } from "../telemetry/daemon.js";
+import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
 
 /**

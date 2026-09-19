@@ -94,6 +94,14 @@
 			"types": "./dist/lib/promises/registry.d.ts",
 			"default": "./dist/lib/promises/registry.js"
 		},
+		"./promises/config": {
+			"types": "./dist/lib/promises/config.d.ts",
+			"default": "./dist/lib/promises/config.js"
+		},
+		"./promises/after-close": {
+			"types": "./dist/lib/promises/after-close.d.ts",
+			"default": "./dist/lib/promises/after-close.js"
+		},
 		"./promises/telemetry": {
 			"types": "./dist/lib/promises/telemetry.d.ts",
 			"default": "./dist/lib/promises/telemetry.js"

@@ -35,6 +35,8 @@ interface PlanListProps {
    * resting state, and the count is what keeps a closed plan on the hook.
    */
   holding?: Map<string, number>;
+  /** Plans holding a violated promise (day-monitor): drawn red without being opened. */
+  red?: Set<string>;
 }
 
 /** A parent plan plus its children, resolved against what exists on disk. */
@@ -137,6 +139,7 @@ export function PlanList({
   planHrefPrefix = "/plan/",
   grouping,
   holding,
+  red,
 }: PlanListProps) {
   if (active.length === 0 && archived.length === 0) {
     return <EmptyPlansSidebarSlot />;
@@ -156,6 +159,7 @@ export function PlanList({
           key={group.parent.name}
           group={group}
           prefix={planHrefPrefix}
+          red={red}
         />
       ))}
 
@@ -166,7 +170,12 @@ export function PlanList({
           </span>
           <ul className="flex flex-col gap-1" data-testid="active-plans">
             {orderedActive.map((plan) => (
-              <PlanItem key={plan.name} plan={plan} prefix={planHrefPrefix} />
+              <PlanItem
+                key={plan.name}
+                plan={plan}
+                prefix={planHrefPrefix}
+                red={red?.has(plan.name)}
+              />
             ))}
           </ul>
         </div>
@@ -179,7 +188,12 @@ export function PlanList({
           </span>
           <ul className="flex flex-col gap-1" data-testid="unordered-plans">
             {unordered.map((plan) => (
-              <PlanItem key={plan.name} plan={plan} prefix={planHrefPrefix} />
+              <PlanItem
+                key={plan.name}
+                plan={plan}
+                prefix={planHrefPrefix}
+                red={red?.has(plan.name)}
+              />
             ))}
           </ul>
         </div>
@@ -217,6 +231,7 @@ export function PlanList({
                 plan={plan}
                 prefix={planHrefPrefix}
                 holding={holding?.get(plan.name) ?? 0}
+                red={red?.has(plan.name)}
               />
             ))}
           </ul>
@@ -236,9 +251,11 @@ export function PlanList({
 function PlanGroupSection({
   group,
   prefix,
+  red,
 }: {
   group: PlanGroup;
   prefix: string;
+  red?: Set<string>;
 }) {
   return (
     <div
@@ -247,11 +264,20 @@ function PlanGroupSection({
       data-parent={group.parent.name}
     >
       <ul className="flex flex-col gap-1">
-        <PlanItem plan={group.parent} prefix={prefix} />
+        <PlanItem
+          plan={group.parent}
+          prefix={prefix}
+          red={red?.has(group.parent.name)}
+        />
       </ul>
       <ul className="ml-3 flex flex-col gap-1 border-l border-gray-200 pl-2">
         {group.children.map((plan) => (
-          <PlanItem key={plan.name} plan={plan} prefix={prefix} />
+          <PlanItem
+            key={plan.name}
+            plan={plan}
+            prefix={prefix}
+            red={red?.has(plan.name)}
+          />
         ))}
         {group.placeholders.map((name) => (
           <li key={name} data-testid={`plan-placeholder-${name}`}>
@@ -273,10 +299,12 @@ function PlanItem({
   plan,
   prefix,
   holding = 0,
+  red = false,
 }: {
   plan: Plan;
   prefix: string;
   holding?: number;
+  red?: boolean;
 }) {
   return (
     <li>
@@ -294,6 +322,17 @@ function PlanItem({
           )}
           <WorktreeChip plan={plan} />
           <HoldingBadge count={holding} plan={plan.name} />
+          {red && (
+            <span
+              role="img"
+              data-testid="plan-health"
+              data-plan={plan.name}
+              data-health="red"
+              aria-label="holds a promise violated in the window"
+              title="holds a promise violated in the window"
+              className="h-2 w-2 shrink-0 rounded-full bg-red-600"
+            />
+          )}
         </span>
         <Badge variant={statusToBadge(plan.status)}>{plan.status}</Badge>
       </Link>

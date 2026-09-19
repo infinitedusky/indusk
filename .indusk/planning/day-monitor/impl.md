@@ -67,16 +67,16 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A11 | After a violation with no open incident, `watch` leaves one incident naming the promise, its traces, source `local` and the symptom, with the root cause unwritten, and `promises check` passes | Test Phase 1 | Build Phase 3 | passing |
 | A12 | A later violation of a promise with an open incident adds its traces to that incident and opens no other | Test Phase 1 | Build Phase 3 | passing |
 | A13 | A second `watch` over the same violations changes no file | Test Phase 1 | Build Phase 3 | passing |
-| A14 | The owning plan reopens: `list_plans` lists it active with a Maintenance phase naming the incident, the appended phase passes the impl validator, and the admin shows it executing that phase | Test Phase 1 | Build Phase 5 | written |
+| A14 | The owning plan reopens: `list_plans` lists it active with a Maintenance phase naming the incident, the appended phase passes the impl validator, and the admin shows it executing that phase | Test Phase 1 | Build Phase 5 | passing |
 | A15 | `promises check` refuses an incident marked fixed whose root cause is still unwritten, naming the file | Test Phase 1 | Build Phase 3 | passing |
-| A16 | A plan closed fewer than the window's days ago that holds a behaviour promise reads `monitor` in `list_plans` and on its admin plan bar, with the window's elapsed share | Test Phase 1 | Build Phase 5 | written |
+| A16 | A plan closed fewer than the window's days ago that holds a behaviour promise reads `monitor` in `list_plans` and on its admin plan bar, with the window's elapsed share | Test Phase 1 | Build Phase 5 | passing |
 | A17 | The same plan closed more than the window ago, with no violation since, reads archived | Test Phase 1 | Build Phase 4 | passing |
-| A18 | A violation recorded during the window keeps the plan in `monitor` from the violation's time, and the page says the window restarted | Test Phase 1 | Build Phase 5 | written |
+| A18 | A violation recorded during the window keeps the plan in `monitor` from the violation's time, and the page says the window restarted | Test Phase 1 | Build Phase 5 | passing |
 | A19 | A plan holding no behaviour promise never reads `monitor` | Test Phase 1 | Test Phase 1 | passing |
-| A20 | The Promises page shows each behaviour promise's observed health: red when violated in the window, green when seen upheld, hollow "unverified" when not seen, amber when known-violated, grey when retired | Test Phase 1 | Build Phase 5 | written |
-| A21 | The page sorts red first and shows violations in the window and last seen for each behaviour promise | Test Phase 1 | Build Phase 5 | written |
-| A22 | With Jaeger unreachable every behaviour chip is hollow with "health unknown since …" and none is green | Test Phase 1 | Build Phase 5 | written |
-| A23 | A plan holding a red promise shows red in the sidebar | Test Phase 1 | Build Phase 5 | written |
+| A20 | The Promises page shows each behaviour promise's observed health: red when violated in the window, green when seen upheld, hollow "unverified" when not seen, amber when known-violated, grey when retired | Test Phase 1 | Build Phase 5 | passing |
+| A21 | The page sorts red first and shows violations in the window and last seen for each behaviour promise | Test Phase 1 | Build Phase 5 | passing |
+| A22 | With Jaeger unreachable every behaviour chip is hollow with "health unknown since …" and none is green | Test Phase 1 | Build Phase 5 | passing |
+| A23 | A plan holding a red promise shows red in the sidebar | Test Phase 1 | Build Phase 5 | passing |
 | A24 | End to end, on a scratch project with a green suite: a commit evaluated with a model that does not exist marks `every-commit-evaluated` violated in local Jaeger, `indusk promises watch` opens an incident with source `local`, and the owning plan reopens with a Maintenance phase | Build Phase 6 | Build Phase 6 | planned |
 
 ## Checklist
@@ -221,22 +221,23 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 5: The admin
 
-- [ ] Health on the Promises page (ADR D9): `markedSpans` read server-side with a two-second timeout, cached for the refresh interval; red, green, hollow "unverified", amber, grey chips under the render-parity pin; red sorts first; violations and last seen per behaviour row; "health unknown since <last successful read>" when unreachable. `components/Promises.test.tsx` carries day-promises' "no health is rendered" test, which D9 supersedes: revise it in this item to say what is now true, never delete it silently
-- [ ] Sidebar roll-up: a plan holding a red promise shows red
-- [ ] The plan bar's `monitor` segment fills with the elapsed share and says it is time, not steps; "window restarted" after a violation; a reopened plan shows its Maintenance phase as active
+- [x] Health on the Promises page (ADR D9): `markedSpans` read server-side with a two-second timeout, cached for the refresh interval; red, green, hollow "unverified", amber, grey chips under the render-parity pin; red sorts first; violations and last seen per behaviour row; "health unknown since <last successful read>" when unreachable. `components/Promises.test.tsx` carries day-promises' "no health is rendered" test, which D9 supersedes: revise it in this item to say what is now true, never delete it silently. The day-promises test is retitled, not deleted: its claim still holds without an observed read. **Found by running it:** the admin's Turbopack followed `promises/telemetry` → `telemetry/daemon.ts` → `createRequire(...).resolve('…/bin/jaeger')` and tried to parse the Jaeger binary as source (every project page 500'd); the daemon's read side moved to `lib/telemetry/status.ts`, which resolves no binary, and `daemon.ts` re-exports it so its importers are unchanged
+- [x] Sidebar roll-up: a plan holding a red promise shows red
+- [x] The plan bar's `monitor` segment fills with the elapsed share and says it is time, not steps; "window restarted" after a violation; a reopened plan shows its Maintenance phase as active. `afterClose` reaches the admin through a new `promises/after-close` subpath, the same function `list_plans` reads; `PlanPositionState` carries the window when the position is `monitor`
+- [x] Shape (Build Phase 5): nothing found. `promise-health.ts` is one topic (read, cache, derive); the table's new pieces are small named components (`HealthChip`, `HealthDetail`, `PromiseStateCell`); the sidebar's red dot is a single element beside `HoldingBadge`. Considered and left: the health cache is keyed by project only, so a promise added mid-interval shows unverified for up to `refresh_ms` — a second or five, and never green
 
 #### Build Phase 5 Verification
 
-- [ ] A14, A16, A18, A20, A21, A22, A23 pass (`pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts`)
-- [ ] Admin node project green (`pnpm --filter indusk-admin exec vitest run --project node`); A20's grey half and the revised Promises tests pass (`pnpm --filter indusk-admin exec vitest run --project browser src/components/Promises.test.tsx`)
+- [x] A14, A16, A18, A20, A21, A22, A23 pass (`pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts`) — ran 2026-09-19: 7 passed
+- [x] Admin node project green (`pnpm --filter indusk-admin exec vitest run --project node`); A20's grey half and the revised Promises tests pass (`pnpm --filter indusk-admin exec vitest run --project browser src/components/Promises.test.tsx`) — ran 2026-09-19: node 180 passed; browser components 128 passed
 
 #### Build Phase 5 Context
 
-- [ ] Known Gotchas (admin entry): observed health reads Jaeger server-side with a timeout and never shows green it did not see; the `monitor` segment is the one time-filled segment
+- [x] Known Gotchas (admin entry): observed health reads Jaeger server-side with a timeout and never shows green it did not see; the `monitor` segment is the one time-filled segment
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: health chips, the sidebar roll-up, the `monitor` segment, reopened plans
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: health chips, the sidebar roll-up, the `monitor` segment, reopened plans
 
 ### Build Phase 6: End to end, and what runs where
 
