@@ -37,7 +37,14 @@ export type PlanStage =
 	| "retrospective"
 	| "paper"
 	| "unknown"
-	| "malformed";
+	| "malformed"
+	/**
+	 * After close (day-monitor): an archived plan at rest, or waiting out its
+	 * quiet window. Set only by `lib/promises/after-close.ts`, never by
+	 * `parsePlan`, which reads one folder and cannot know it was archived.
+	 */
+	| "archived"
+	| "monitor";
 
 export interface PlanSummary {
 	name: string;

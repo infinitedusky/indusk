@@ -93,6 +93,22 @@
 		"./promises/registry": {
 			"types": "./dist/lib/promises/registry.d.ts",
 			"default": "./dist/lib/promises/registry.js"
+		},
+		"./promises/config": {
+			"types": "./dist/lib/promises/config.d.ts",
+			"default": "./dist/lib/promises/config.js"
+		},
+		"./promises/after-close": {
+			"types": "./dist/lib/promises/after-close.d.ts",
+			"default": "./dist/lib/promises/after-close.js"
+		},
+		"./promises/telemetry": {
+			"types": "./dist/lib/promises/telemetry.d.ts",
+			"default": "./dist/lib/promises/telemetry.js"
+		},
+		"./testing/trace-shape": {
+			"types": "./dist/lib/testing/trace-shape.d.ts",
+			"default": "./dist/lib/testing/trace-shape.js"
 		}
 	},
 	"scripts": {
@@ -100,6 +116,7 @@
 		"build": "tsc",
 		"start": "node dist/server/index.js",
 		"test": "vitest run",
+		"e2e": "vitest run --config vitest.e2e.config.ts",
 		"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js",
 		"release": "bash scripts/release-guard.sh && npm whoami && pnpm publish --no-git-checks && node scripts/record-release.js"
 	},
@@ -112,6 +129,7 @@
 		"@modelcontextprotocol/sdk": "^1.12.1",
 		"@opentelemetry/api": "^1.9.0",
 		"@opentelemetry/api-logs": "^0.214.0",
+		"@opentelemetry/context-async-hooks": "^2.6.0",
 		"@opentelemetry/exporter-logs-otlp-http": "^0.214.0",
 		"@opentelemetry/exporter-trace-otlp-http": "^0.214.0",
 		"@opentelemetry/resources": "^2.6.0",

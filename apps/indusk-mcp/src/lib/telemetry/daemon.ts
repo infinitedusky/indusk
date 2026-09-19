@@ -1,8 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { createConnection, createServer } from "node:net";
-import { homedir } from "node:os";
+import { createServer } from "node:net";
 import { join } from "node:path";
 
 /**
@@ -31,17 +30,27 @@ import { join } from "node:path";
  * "running" (admin-UI Phase 7 lesson — applied here).
  */
 
-function induskHome(): string {
-	return process.env.INDUSK_HOME ?? join(homedir(), ".indusk");
-}
+import {
+	cleanupFiles,
+	type DaemonMeta,
+	type DaemonStatusResult,
+	daemonStatus,
+	induskHome,
+	isAlive,
+	isPortListening,
+	metaFilePath,
+	pidFilePath,
+	verifyIdentity,
+} from "./status.js";
 
-function pidFilePath(): string {
-	return join(induskHome(), "telemetry.pid");
-}
-
-function metaFilePath(): string {
-	return join(induskHome(), "telemetry.json");
-}
+export {
+	type DaemonMeta,
+	type DaemonStatusResult,
+	daemonMetaPath,
+	daemonStatus,
+	isPortListening,
+	liveOtlpEndpointSync,
+} from "./status.js";
 
 function logFilePath(): string {
 	return join(induskHome(), "telemetry.log");
@@ -50,22 +59,6 @@ function logFilePath(): string {
 function ensureHome(): void {
 	const h = induskHome();
 	if (!existsSync(h)) mkdirSync(h, { recursive: true });
-}
-
-export interface DaemonMeta {
-	jaegerPid: number;
-	otelcolPid: number;
-	otlpPort: number;
-	uiPort: number;
-	mcpPort: number;
-	jaegerHealthPort: number;
-	otelcolHealthPort: number;
-	logsOtlpPort: number;
-	startedAt: string;
-	jaegerBinary: string;
-	otelcolBinary: string;
-	platform: string;
-	logsPath: string;
 }
 
 export interface DaemonStartOptions {
@@ -77,18 +70,6 @@ export interface DaemonStartOptions {
 	 */
 	allowPortBump?: boolean;
 }
-
-export type DaemonStatusResult =
-	| {
-			running: true;
-			jaegerPid: number;
-			otelcolPid: number;
-			otlpPort: number;
-			uiPort: number;
-			mcpPort: number;
-			startedAt: string;
-	  }
-	| { running: false };
 
 export interface DaemonStopResult {
 	stopped: boolean;
@@ -130,19 +111,6 @@ export function resolveBinary(name: "jaeger" | "otelcol"): string {
 
 // ---- port helpers ----------------------------------------------------------
 
-export function isPortListening(port: number): Promise<boolean> {
-	return new Promise((resolve) => {
-		const socket = createConnection({ port, host: "127.0.0.1" });
-		const done = (result: boolean): void => {
-			socket.destroy();
-			resolve(result);
-		};
-		socket.once("connect", () => done(true));
-		socket.once("error", () => done(false));
-		socket.setTimeout(500, () => done(false));
-	});
-}
-
 export async function findFreePort(requested: number): Promise<number> {
 	if (requested === 0) return pickAnyFreePort();
 	if (await isPortFree(requested)) return requested;
@@ -179,26 +147,6 @@ function isPortFree(port: number): Promise<boolean> {
 }
 
 // ---- identity + lifecycle --------------------------------------------------
-
-function isAlive(pid: number): boolean {
-	try {
-		process.kill(pid, 0);
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-async function verifyIdentity(pid: number, port: number): Promise<boolean> {
-	if (!isAlive(pid)) return false;
-	return isPortListening(port);
-}
-
-function cleanupFiles(): void {
-	for (const p of [pidFilePath(), metaFilePath()]) {
-		if (existsSync(p)) rmSync(p, { force: true });
-	}
-}
 
 function sleep(ms: number): Promise<void> {
 	return new Promise((r) => setTimeout(r, ms));
@@ -551,37 +499,6 @@ export async function daemonStart(opts: DaemonStartOptions = {}): Promise<Daemon
 	writeFileSync(metaFilePath(), JSON.stringify(meta, null, 2));
 
 	return meta;
-}
-
-export async function daemonStatus(): Promise<DaemonStatusResult> {
-	const pidFile = pidFilePath();
-	const metaFile = metaFilePath();
-	if (!existsSync(pidFile) || !existsSync(metaFile)) return { running: false };
-
-	let meta: DaemonMeta;
-	try {
-		meta = JSON.parse(readFileSync(metaFile, "utf-8")) as DaemonMeta;
-	} catch {
-		return { running: false };
-	}
-
-	// Identity gate: BOTH processes alive AND both listening on their ports
-	const jaegerOk = await verifyIdentity(meta.jaegerPid, meta.uiPort);
-	const otelcolOk = await verifyIdentity(meta.otelcolPid, meta.otelcolHealthPort);
-	if (!jaegerOk || !otelcolOk) {
-		cleanupFiles();
-		return { running: false };
-	}
-
-	return {
-		running: true,
-		jaegerPid: meta.jaegerPid,
-		otelcolPid: meta.otelcolPid,
-		otlpPort: meta.otlpPort,
-		uiPort: meta.uiPort,
-		mcpPort: meta.mcpPort,
-		startedAt: meta.startedAt,
-	};
 }
 
 export async function daemonStop(): Promise<DaemonStopResult> {

@@ -138,6 +138,8 @@ export interface InduskConfig {
 	 */
 	promises?: {
 		domains: string[];
+		/** Days a closed plan's behaviour promises must stay quiet before it leaves `monitor` (day-monitor, ADR D8). Default 7. */
+		quiet_window_days?: number;
 	};
 	/**
 	 * Multi-agent bulletin configuration (`.indusk/current.md`).

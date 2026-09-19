@@ -62,13 +62,17 @@ describe.skipIf(SHOULD_SKIP)("A14 — update ensures promises.domains and nothin
 });
 
 describe.skipIf(SHOULD_SKIP)("A15 — this repository holds three promises, one per kind", () => {
-	it("indusk promises check at the repo root exits 0 with one promise of each kind", () => {
+	it("indusk promises check at the repo root exits 0 with every kind held and every promise enforced", () => {
+		// Three at day-promises' close, one per kind; day-monitor added a
+		// second behaviour promise (every-commit-evaluated). The row is about
+		// coverage of the kinds and the state they are held in, not a count.
 		const r = runCli(REPO_ROOT, ["promises", "check"]);
 		expect(r.code, r.stderr).toBe(0);
-		expect(r.stdout).toMatch(/3 promises/);
-		expect(r.stdout).toMatch(/behaviour 1/);
-		expect(r.stdout).toMatch(/state 1/);
-		expect(r.stdout).toMatch(/structure 1/);
-		expect(r.stdout).toMatch(/enforced 3/);
+		const total = Number(/(\d+) promises/.exec(r.stdout)?.[1]);
+		expect(total).toBeGreaterThanOrEqual(3);
+		for (const kind of ["behaviour", "state", "structure"]) {
+			expect(r.stdout).toMatch(new RegExp(`${kind} [1-9]`));
+		}
+		expect(r.stdout).toMatch(new RegExp(`enforced ${total}\\b`));
 	});
 });

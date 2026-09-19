@@ -1,4 +1,9 @@
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
+import { getQuietWindowDays } from "../../lib/promises/config.js";
+import { readPromises } from "../../lib/promises/registry.js";
+import { formatStatus, parseDuration } from "../../lib/promises/status.js";
+import { JaegerUnreachable, readPromiseMarks } from "../../lib/promises/telemetry.js";
+import { watchPromises } from "../../lib/promises/watch.js";
 
 /**
  * `indusk promises check`.
@@ -20,4 +25,103 @@ export async function promisesCheck(projectRoot: string): Promise<void> {
 		return;
 	}
 	console.info(formatSummary(result.summary));
+}
+
+/**
+ * `indusk promises status [--since <duration>]` (day-monitor, ADR D5).
+ *
+ * Read-only. Exit 0 with one block per promise when Jaeger answered; exit 2
+ * naming where it looked when it could not, and never a count — "0
+ * violations" from a backend nobody reached is the one wrong answer. The
+ * window defaults to the quiet window (`promises.quiet_window_days`).
+ */
+export async function promisesStatus(
+	projectRoot: string,
+	opts: { since?: string } = {},
+): Promise<void> {
+	const read = readPromises(projectRoot);
+	if (!read.ok) {
+		if ("missing" in read) console.error(`${read.missing}: no promise registry`);
+		else for (const p of read.problems) console.error(`${p.file}: ${p.problem}`);
+		process.exitCode = 2;
+		return;
+	}
+	let sinceMs: number | undefined;
+	let window: number | string;
+	if (opts.since !== undefined) {
+		const ms = parseDuration(opts.since);
+		if (ms === null) {
+			console.error(`--since "${opts.since}": expected a duration like 90m, 24h or 7d`);
+			process.exitCode = 2;
+			return;
+		}
+		sinceMs = ms;
+		window = opts.since;
+	} else {
+		window = getQuietWindowDays(projectRoot);
+	}
+	const promises = read.registry.promises;
+	try {
+		const marks = await readPromiseMarks(projectRoot, read.registry, { sinceMs });
+		console.info(formatStatus(promises, marks, window));
+	} catch (err) {
+		if (!(err instanceof JaegerUnreachable)) throw err;
+		console.error(
+			`${err.message}\nNo count is reported for any behaviour promise. Start the daemon with \`indusk telemetry start\`.`,
+		);
+		process.exitCode = 2;
+	}
+}
+
+const WATCH_SOURCES = ["local", "smoke", "deployed"] as const;
+
+/**
+ * `indusk promises watch [--source local|smoke|deployed]` (day-monitor, ADR
+ * D5–D7). One pass: open or extend an incident per behaviour promise with new
+ * violations, and append a Maintenance phase to its owner. Writes plan
+ * documents, commits nothing. Exit 0 whether or not anything changed; exit 2
+ * when Jaeger or the registry cannot be read.
+ */
+export async function promisesWatch(
+	projectRoot: string,
+	opts: { source?: string } = {},
+): Promise<void> {
+	const source = opts.source ?? "local";
+	if (!(WATCH_SOURCES as readonly string[]).includes(source)) {
+		console.error(`--source "${source}": expected one of ${WATCH_SOURCES.join(" | ")}`);
+		process.exitCode = 2;
+		return;
+	}
+	let result: Awaited<ReturnType<typeof watchPromises>>;
+	try {
+		result = await watchPromises(projectRoot, {
+			source: source as (typeof WATCH_SOURCES)[number],
+		});
+	} catch (err) {
+		console.error(
+			err instanceof JaegerUnreachable
+				? `${err.message}\nNothing was recorded. Start the daemon with \`indusk telemetry start\`.`
+				: (err as Error).message,
+		);
+		process.exitCode = 2;
+		return;
+	}
+	if (result.changes.length === 0) {
+		console.info("No new violations — nothing recorded.");
+		return;
+	}
+	for (const c of result.changes) {
+		const n = c.traces.length;
+		console.info(`${c.kind} ${c.id} (${c.promise}, ${n} new trace${n === 1 ? "" : "s"})`);
+		if (c.reopen.reopened) {
+			console.info(`  reopened ${c.owner}: Build Phase ${c.reopen.phase}: Maintenance — ${c.id}`);
+		} else if (c.reopen.reason === "copy-problem") {
+			console.error(
+				`  ${c.owner} was not reopened — its worktree assignment could not be read: ${c.reopen.detail}`,
+			);
+		} else if (c.reopen.reason === "no-owner") {
+			console.error(`  owner "${c.owner}" is not a plan folder — nothing was reopened`);
+		}
+	}
+	console.info("\nWritten, not committed: review the incidents and commit them.");
 }

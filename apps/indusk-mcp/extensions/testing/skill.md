@@ -30,6 +30,29 @@ You are working in a project with tests. Follow these patterns.
 - Use real implementations when possible — especially for integration tests
 - Reset mocks between tests: `vi.restoreAllMocks()` in `afterEach`
 
+## Asserting a Behaviour Promise
+
+A behaviour promise (`.indusk/promises/`) is marked by the running code with plain OpenTelemetry — the application imports nothing from InDusk:
+
+```ts
+span.setAttribute("indusk.promise", "seat-never-double-booked");
+span.setAttribute("indusk.promise.outcome", "upheld"); // or "violated", plus:
+// span.addEvent("indusk.promise.violated", { "indusk.promise.symptom": "seat 4 held twice" });
+```
+
+Test the mark with the trace-shape helper, passing the promise as its token — the call is then the promise's test link, with no other citation:
+
+```ts
+import { captureSpans, expectPromiseUpheld } from "@infinitedusky/indusk-mcp/testing/trace-shape";
+
+const spans = await captureSpans(() => holdSeat(4));
+expectPromiseUpheld(spans, "promise: seat-never-double-booked", { parent: "handle-request" });
+```
+
+- Assert containment, not a snapshot: extra attributes and child spans never fail it; the marked span being gone does
+- `captureSpans` owns the global tracer for the call — it refuses when one is already registered
+- `expectPromiseViolated(spans, token)` asserts a violation and returns its symptom
+
 ## Common Gotchas
 
 - Flaky tests are worse than no tests — fix or delete them

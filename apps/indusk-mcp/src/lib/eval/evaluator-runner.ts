@@ -8,14 +8,14 @@
 
 import { spawn } from "node:child_process";
 import { join } from "node:path";
-
 import { getEvalModel, getProjectGroupId } from "../config.js";
+import { markProjectId } from "../promises/config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
-import { initEvalOtel, shutdownEvalOtel, withSpan } from "./otel.js";
+import { initEvalOtel, markEvaluation, shutdownEvalOtel, withSpan } from "./otel.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
-import { extractScorecardJson, formatParseError } from "./scorecard-extractor.js";
+import { claudeExitReason, extractScorecardJson, formatParseError } from "./scorecard-extractor.js";
 import type { EvalErrorEntry, EvalScorecard } from "./types.js";
 
 export interface EvaluatorRunOptions {
@@ -131,7 +131,7 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 
 		try {
 			if (code !== 0) {
-				throw new Error(`claude exited with code ${code}: ${stderr.slice(0, 500)}`);
+				throw new Error(claudeExitReason(code, stderr, stdout));
 			}
 
 			// --output-format json wraps the result; extract the text content and usage
@@ -214,7 +214,11 @@ export async function runEvaluatorSync(
 			projectGroup,
 			entrypoint: "runEvaluatorSync",
 		},
-		() => runEvaluatorSyncInner(opts, projectGroup),
+		async (span) => {
+			const outcome = await runEvaluatorSyncInner(opts, projectGroup);
+			markEvaluation(span, outcome, markProjectId(opts.projectRoot));
+			return outcome;
+		},
 	);
 
 	await shutdownEvalOtel();
@@ -258,11 +262,20 @@ async function runEvaluatorSyncInner(
 			env: { ...process.env },
 		});
 
-		child.stdin?.write(prompt);
-		child.stdin?.end();
-
 		let stdout = "";
 		let stderr = "";
+		let settled = false;
+		// A binary that cannot start raises `error` and never `close`; unheard,
+		// it kills the evaluator before the run is marked (day-monitor A25).
+		child.on("error", (err) => {
+			stderr += `claude could not be started: ${err.message}`;
+			void finish(-1);
+		});
+		child.stdin?.on("error", () => {
+			// the child is gone; its exit or spawn error already says why
+		});
+		child.stdin?.write(prompt);
+		child.stdin?.end();
 
 		child.stdout?.on("data", (chunk: Buffer) => {
 			stdout += chunk.toString();
@@ -272,12 +285,16 @@ async function runEvaluatorSyncInner(
 			stderr += chunk.toString();
 		});
 
-		child.on("close", async (code) => {
+		child.on("close", (code) => void finish(code));
+
+		async function finish(code: number | null): Promise<void> {
+			if (settled) return;
+			settled = true;
 			const logWriter = new EvalLogWriter(getEvalLogPath(opts.projectRoot));
 
 			try {
 				if (code !== 0) {
-					throw new Error(`claude exited with code ${code}: ${stderr.slice(0, 500)}`);
+					throw new Error(claudeExitReason(code, stderr, stdout));
 				}
 
 				let scorecardText = stdout;
@@ -335,6 +352,6 @@ async function runEvaluatorSyncInner(
 				await logWriter.append(errorEntry);
 				resolve(errorEntry);
 			}
-		});
+		}
 	});
 }

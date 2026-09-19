@@ -88,3 +88,55 @@ export function promiseTokenPattern(name: string): RegExp {
 export function anyPromiseTokenPattern(): RegExp {
 	return new RegExp(`${TOKEN_OPENER}promise:[ \\t]*([a-z][a-z0-9-]*)(?![a-z0-9-])`, "g");
 }
+
+/**
+ * The mark a running system leaves when it upholds or breaks a behaviour
+ * promise (day-monitor, ADR D1): plain OpenTelemetry names the application
+ * sets itself, so it runs with InDusk deleted and anyone with the raw trace
+ * can read which promise broke. Violation is its own attribute and event,
+ * never the span's error status — "an error happened" and "a promise broke"
+ * differ in both directions. One home: the evaluator's mark, the test helper
+ * and the Jaeger reader all spell these from here.
+ */
+export const PROMISE_MARK = {
+	/** Span attribute: the promise's registry name. */
+	promise: "indusk.promise",
+	/** Span attribute: `upheld` or `violated`. */
+	outcome: "indusk.promise.outcome",
+	/** Span event, present on a violation. */
+	violatedEvent: "indusk.promise.violated",
+	/** Attribute on the violated event: what was observed, one line. */
+	symptom: "indusk.promise.symptom",
+	/**
+	 * Optional span attribute: the project the mark belongs to. Needed when
+	 * one service marks promises for many projects — InDusk's own evaluator
+	 * marks `every-commit-evaluated` in every project on the machine — and
+	 * absent from an application's own spans, whose service is its project.
+	 * The reader drops a mark that names a different project.
+	 */
+	project: "indusk.project",
+} as const;
+
+export const PROMISE_OUTCOMES = ["upheld", "violated"] as const;
+export type PromiseOutcome = (typeof PROMISE_OUTCOMES)[number];
+
+/**
+ * The name inside a token argument (`"promise: <name>"`), or null when the
+ * string is not exactly one token. The trace-shape helper takes the token,
+ * not the bare name, so the call itself is the promise's test link.
+ */
+export function parsePromiseToken(token: string): string | null {
+	const m = /^promise:[ \t]*([a-z][a-z0-9-]*)$/.exec(token.trim());
+	return m ? m[1] : null;
+}
+
+/**
+ * An incident's root cause until a person writes one (day-monitor, ADR D6).
+ * The span carries a symptom; a root cause is a finding, so `watch` never
+ * writes one — and `promises check` refuses an incident marked fixed while
+ * its root cause is still this line.
+ */
+export const UNWRITTEN_ROOT_CAUSE = "_Unwritten — a person writes this._";
+
+/** An incident's Fix section until it is fixed. Never empty: the registry refuses an empty section. */
+export const NOT_YET_FIXED = "_Not yet fixed._";

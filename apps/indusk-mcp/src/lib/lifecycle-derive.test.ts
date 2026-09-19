@@ -172,3 +172,56 @@ describe("A33 — an executing plan with nothing open still carries a message", 
 		expect(state.awaiting).toBeNull();
 	});
 });
+
+describe("day-monitor — after close: monitor and reopened", () => {
+	const closed = summary({ stage: "retrospective", stageStatus: "accepted" });
+
+	it("an archived plan inside its quiet window is in monitor, active, with archived done behind it", () => {
+		const p = derivePlanPosition({
+			summary: closed,
+			impl: null,
+			readiness: null,
+			archived: true,
+			afterClose: {
+				reopened: [],
+				monitor: { windowDays: 7, elapsedDays: 2.4, restartedAt: null },
+			},
+		});
+		expect(p.position).toBe("monitor");
+		expect(p.segments.monitor).toBe("active");
+		expect(p.segments.archived).toBe("done");
+		expect(p.awaiting).toBe("2 of 7 days quiet");
+	});
+
+	it("a restarted window says so", () => {
+		const p = derivePlanPosition({
+			summary: closed,
+			impl: null,
+			readiness: null,
+			archived: true,
+			afterClose: {
+				reopened: [],
+				monitor: { windowDays: 7, elapsedDays: 0.5, restartedAt: "2026-09-18T12:00:00.000Z" },
+			},
+		});
+		expect(p.awaiting).toBe("window restarted 2026-09-18 — 0 of 7 days quiet");
+	});
+
+	it("a reopened archived plan is executing its Maintenance phase", () => {
+		const p = derivePlanPosition({
+			summary: closed,
+			impl: null,
+			readiness: null,
+			archived: true,
+			afterClose: { reopened: ["Maintenance — i-2026-09-19-x"], monitor: null },
+		});
+		expect(p.position).toBe("executing");
+		expect(p.awaiting).toBe("executing Maintenance — i-2026-09-19-x");
+	});
+
+	it("with nothing after close, an archived plan is archived and monitor stays pending", () => {
+		const p = derivePlanPosition({ summary: closed, impl: null, readiness: null, archived: true });
+		expect(p.position).toBe("archived");
+		expect(p.segments.monitor).toBe("pending");
+	});
+});

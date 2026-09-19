@@ -18,6 +18,7 @@ import {
   parsePlan,
   readPlanDeclarations,
 } from "@infinitedusky/indusk-mcp/planning/plan-parser";
+import { afterClose } from "@infinitedusky/indusk-mcp/promises/after-close";
 import type { PhaseBoundaryRecord } from "@infinitedusky/indusk-mcp/shape/boundary";
 import {
   parseTrajectory,
@@ -253,6 +254,8 @@ async function readPlanFolder(
   name: string,
   archived: boolean,
   boundaries: BoundaryRead = { records: [] },
+  /** The project root, for an archived plan's after-close facts (day-monitor). */
+  projectRoot?: string,
 ): Promise<Plan> {
   const docs = await Promise.all(DOC_FILES.map((f) => readDoc(planDir, f)));
   const [research, brief, testPlan, adr, impl, _falsification, retrospective] =
@@ -303,11 +306,18 @@ async function readPlanFolder(
           readFileSync(join(planDir, "impl.md"), "utf-8"),
         )
       : null;
+  // A closed plan may be back in motion — reopened by an incident, or in
+  // `monitor` — derived from files by the same function `list_plans` reads.
+  const after =
+    archived && projectRoot
+      ? afterClose(projectRoot, name, planDir)
+      : undefined;
   const position = derivePlanPosition({
     summary: parsed,
     impl: implData ? parseImplString(implData.content) : null,
     readiness,
     archived,
+    ...(after ? { afterClose: after } : {}),
   });
   const boundaryFields =
     "error" in boundaries
@@ -450,7 +460,13 @@ export async function readArchivedPlans(projectRoot: string): Promise<Plan[]> {
   const boundaries = await readProjectBoundaries(projectRoot);
   return Promise.all(
     folders.map((name) =>
-      readPlanFolder(join(archiveDir, name), name, true, boundaries),
+      readPlanFolder(
+        join(archiveDir, name),
+        name,
+        true,
+        boundaries,
+        projectRoot,
+      ),
     ),
   );
 }

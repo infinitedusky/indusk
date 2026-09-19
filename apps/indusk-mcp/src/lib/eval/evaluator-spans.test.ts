@@ -30,7 +30,7 @@ vi.mock("node:child_process", async () => {
 			data_stderr: [],
 		};
 		const fake = {
-			stdin: { write: vi.fn(), end: vi.fn() },
+			stdin: { write: vi.fn(), end: vi.fn(), on: vi.fn() },
 			stdout: {
 				on: (event: string, cb: (b: Buffer) => void) => {
 					if (event === "data") handlers.data_stdout.push(cb);

@@ -101,32 +101,33 @@ const rows = (container: Element) =>
   container.querySelectorAll('[data-testid="promise-row"]');
 
 describe("A18 — every grouping shows every non-retired promise exactly once", () => {
-  it.each([
-    "owner",
-    "domain",
-    "state",
-    "kind",
-  ] as const)("grouped by %s: five rows, each promise once", async (by) => {
-    const { container } = await render(
-      <PromisesTable
-        promises={PROMISES}
-        incidents={INCIDENTS}
-        initialGroupBy={by}
-      />,
-    );
-    const names = [...rows(container)].map((r) =>
-      r.getAttribute("data-promise"),
-    );
-    expect(names).toHaveLength(5);
-    expect(new Set(names).size).toBe(5);
-    expect(names).not.toContain("old-seat-rule");
-    expect(
-      container.querySelectorAll('[data-testid="promise-group"]').length,
-    ).toBeGreaterThan(1);
-  });
+  it.each(["owner", "domain", "state", "kind"] as const)(
+    "grouped by %s: five rows, each promise once",
+    async (by) => {
+      const { container } = await render(
+        <PromisesTable
+          promises={PROMISES}
+          incidents={INCIDENTS}
+          initialGroupBy={by}
+        />,
+      );
+      const names = [...rows(container)].map((r) =>
+        r.getAttribute("data-promise"),
+      );
+      expect(names).toHaveLength(5);
+      expect(new Set(names).size).toBe(5);
+      expect(names).not.toContain("old-seat-rule");
+      expect(
+        container.querySelectorAll('[data-testid="promise-group"]').length,
+      ).toBeGreaterThan(1);
+    },
+  );
 });
 
-describe("A19 — every enforced chip is hollow, and no health is rendered", () => {
+// day-promises A19, revised by day-monitor: observed health now exists (ADR
+// D9), but only as a second chip drawn from a telemetry read the page passes
+// as `observed`. Without one, the table still renders declared state only.
+describe("A19 — without an observed read, every enforced chip is hollow and no health is rendered", () => {
   it('renders each enforced promise as "declared, not yet observed" and nothing upheld or violated in a window', async () => {
     const { container } = await render(
       <PromisesTable promises={PROMISES} incidents={INCIDENTS} />,
@@ -221,5 +222,23 @@ describe("A22 — an archived plan shows holding N; one owning none shows no cou
     expect(
       container.querySelector('[data-testid="holding-empty-plan"]'),
     ).toBeNull();
+  });
+});
+
+describe("day-monitor A20 — a retired promise's health chip is grey", () => {
+  it("behind the retired toggle, the retired row's health chip reads grey", async () => {
+    const screen = await render(
+      <PromisesTable promises={PROMISES} incidents={INCIDENTS} />,
+    );
+    await screen.getByRole("button", { name: /show retired \(1\)/i }).click();
+    const row = screen.container.querySelector(
+      '[data-promise="old-seat-rule"]',
+    );
+    expect(row).not.toBeNull();
+    expect(
+      row
+        ?.querySelector('[data-testid="promise-health"]')
+        ?.getAttribute("data-health"),
+    ).toBe("grey");
   });
 });

@@ -93,6 +93,10 @@ the Promises page is **hollow**, because nothing yet observes a checkoff at
 run time; the suite proves the behaviour on inputs someone chose. That hollow
 chip is the honest reading, and it is what the monitor step will fill.
 
+A fourth arrived with the monitor: `every-commit-evaluated` (`behaviour`),
+marked by every evaluator run — the first promise here whose health the
+running system reports. See [The loop](#the-loop).
+
 ## Who owns a promise
 
 The plan that established it. Ownership moves only when another plan supersedes the promise. A plan closes *holding* its promises — closed is the resting state, and the archived plan is the owner of record that a violation wakes. Only a plan holding none is truly finished.
@@ -112,6 +116,92 @@ The plan that established it. Ownership moves only when another plan supersedes 
    kind requires is in place, and passes with a summary once it is.
 
 The file shapes, every refusal and the exit codes are in the
+[`indusk promises` reference](/reference/cli/promises).
+
+## Marking a behaviour promise
+
+A `behaviour` promise is broken by inputs nobody chose, so the running system
+has to say when it upholds or breaks one. It says so with plain
+OpenTelemetry, on the span that does the work:
+
+```ts
+span.setAttribute("indusk.promise", "seat-never-double-booked");
+span.setAttribute("indusk.promise.outcome", "upheld");
+```
+
+and, when the promise breaks:
+
+```ts
+span.setAttribute("indusk.promise.outcome", "violated");
+span.addEvent("indusk.promise.violated", {
+  "indusk.promise.symptom": "seat 4 held by two players",
+});
+```
+
+That is the whole convention: two attributes, and an event carrying what was
+observed. The application imports nothing from InDusk and runs the same with
+InDusk deleted. Anyone holding the raw trace — in Jaeger, in any
+OpenTelemetry tool, or as exported JSON — can read which promise broke and
+why. A violation is its own attribute, never the span's error status: an error
+can happen while every promise holds, and a promise can break with no error at
+all.
+
+A test asserts the mark with the helper InDusk ships for tests only:
+
+```ts
+import {
+  captureSpans,
+  expectPromiseUpheld,
+} from "@infinitedusky/indusk-mcp/testing/trace-shape";
+
+const spans = await captureSpans(() => holdSeat(4));
+expectPromiseUpheld(spans, "promise: seat-never-double-booked", {
+  parent: "handle-request",
+});
+```
+
+The helper takes the promise as its token, so the assertion is also the
+promise's test link — `indusk promises check` counts it with no other comment.
+It checks containment, not a snapshot: added attributes and extra child spans
+never fail it; the marked span going missing does. `expectPromiseViolated`
+asserts a violation and returns its symptom.
+
+This repository's own example is `every-commit-evaluated`: every evaluator run
+marks its root span, `upheld` when a scorecard is written and `violated` with
+the reason when it is not. While the local telemetry daemon runs, that mark
+lands in its Jaeger with nothing configured.
+
+## The loop
+
+A behaviour promise broken in a run finds its way back to the plan that owns
+it without a person reading anything (Day step 4b):
+
+```mermaid
+flowchart LR
+    Run["a run breaks the promise"] --> Span["span: indusk.promise<br/>outcome = violated"]
+    Span --> Jaeger["local Jaeger<br/>(the telemetry daemon)"]
+    Jaeger --> Watch["indusk promises watch"]
+    Watch --> Incident["incident<br/>source: local<br/>root cause: unwritten"]
+    Incident --> Phase["owner reopened:<br/>Build Phase N: Maintenance"]
+    Phase --> Window["monitor:<br/>quiet window"]
+    Window -->|quiet for the window| Closed["archived"]
+    Window -->|violated again| Incident
+```
+
+- **status** reads the marks: `indusk promises status` shows each behaviour
+  promise's violations and when it was last seen upheld, or *not seen*.
+- **watch** records them: one incident per promise, extended rather than
+  duplicated, and a Maintenance phase on the owner that cannot close until a
+  test reproducing the incident passes.
+- **A person** writes the root cause; `promises check` refuses to let the
+  incident close without one.
+- **monitor** waits: once the Maintenance phase is done, the plan stays in
+  `monitor` until its promises have been quiet for `promises.quiet_window_days`
+  (default 7), then rests as archived.
+
+This repository runs the loop on itself: `every-commit-evaluated` is marked by
+every evaluator run, and `pnpm e2e` breaks it on purpose (a model that does
+not exist) to prove the whole path. The commands are in the
 [`indusk promises` reference](/reference/cli/promises).
 
 ## See also

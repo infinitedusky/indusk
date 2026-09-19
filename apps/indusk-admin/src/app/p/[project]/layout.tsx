@@ -13,7 +13,12 @@ import {
   readPlanHierarchy,
   readProjectWorktrees,
 } from "@/lib/planning-reader";
-import { holdingCounts, readProjectPromises } from "@/lib/promises-reader";
+import { healthRows, readHealth, redPlans } from "@/lib/promise-health";
+import {
+  holdingCounts,
+  readProjectPromises,
+  registryOf,
+} from "@/lib/promises-reader";
 import {
   getProjectPath,
   projectPathExists,
@@ -69,7 +74,17 @@ export default async function PerProjectLayout({
   const registered = readRegistryProjects().map((p) => ({ name: p.name }));
   // "holding N" per archived plan (day-promises, ADR D8): derived from the
   // registry on every request, no lifecycle position, absent when none.
-  const holding = holdingCounts(readProjectPromises(projectPath));
+  const promisesRead = readProjectPromises(projectPath);
+  const holding = holdingCounts(promisesRead);
+  // A plan holding a violated promise shows red without being opened
+  // (day-monitor, A23) — the same cached read the Promises page makes.
+  const registry = registryOf(promisesRead);
+  const red = registry
+    ? redPlans(
+        registry,
+        healthRows(registry, await readHealth(projectPath, registry)),
+      )
+    : new Set<string>();
 
   return (
     <div className="flex h-full w-full">
@@ -112,6 +127,7 @@ export default async function PerProjectLayout({
           masterOrder={masterOrder}
           grouping={hierarchy}
           holding={holding}
+          red={red}
           planHrefPrefix={`/p/${project}/plan/`}
         />
         {worktrees.ok && (

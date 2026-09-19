@@ -6,7 +6,12 @@ import { __resetEvalOtelForTests, initEvalOtel, isEvalOtelEnabled } from "./otel
 
 let projectRoot: string;
 
-const ENV_KEYS = ["INDUSK_EVAL_OTEL", "OTEL_EXPORTER_OTLP_ENDPOINT", "INDUSK_EVAL_OTEL_DATASET"];
+const ENV_KEYS = [
+	"INDUSK_EVAL_OTEL",
+	"OTEL_EXPORTER_OTLP_ENDPOINT",
+	"INDUSK_EVAL_OTEL_DATASET",
+	"INDUSK_HOME",
+];
 let savedEnv: Record<string, string | undefined>;
 
 beforeEach(() => {
@@ -19,6 +24,9 @@ beforeEach(() => {
 		savedEnv[k] = process.env[k];
 		delete process.env[k];
 	}
+	// A home with no daemon: the developer's own running daemon would
+	// otherwise turn the mark on for every test here.
+	process.env.INDUSK_HOME = join(projectRoot, "home");
 
 	__resetEvalOtelForTests();
 });
@@ -188,5 +196,48 @@ describe("eval.otel dataset resolution (Dash0-Dataset header)", () => {
 		const logPath = join(projectRoot, ".indusk", "eval", "system.log");
 		const log = readFileSync(logPath, "utf-8");
 		expect(log).toContain("dataset: agent-custom");
+	});
+});
+
+describe("the local telemetry daemon (day-monitor)", () => {
+	function liveDaemon(otlpPort: number): void {
+		const home = process.env.INDUSK_HOME as string;
+		mkdirSync(home, { recursive: true });
+		// This process's own PID stands in for a live Jaeger.
+		writeFileSync(
+			join(home, "telemetry.json"),
+			JSON.stringify({ jaegerPid: process.pid, otlpPort }),
+		);
+	}
+
+	it("while it runs, the evaluator exports to it with nothing configured", () => {
+		liveDaemon(4999);
+		const state = isEvalOtelEnabled(projectRoot);
+		expect(state.enabled).toBe(true);
+		expect(state.endpoint).toBe("http://localhost:4999");
+	});
+
+	it("an explicit endpoint wins over the daemon's", () => {
+		liveDaemon(4999);
+		process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://collector:4318";
+		expect(isEvalOtelEnabled(projectRoot).endpoint).toBe("http://collector:4318");
+	});
+
+	it("eval.otel.enabled: false keeps it off even while the daemon runs", () => {
+		liveDaemon(4999);
+		writeConfig({ eval: { otel: { enabled: false } } });
+		expect(isEvalOtelEnabled(projectRoot).enabled).toBe(false);
+	});
+
+	it("a daemon whose Jaeger PID is dead is not running", () => {
+		const home = process.env.INDUSK_HOME as string;
+		mkdirSync(home, { recursive: true });
+		writeFileSync(
+			join(home, "telemetry.json"),
+			JSON.stringify({ jaegerPid: 2 ** 22 + 7, otlpPort: 4999 }),
+		);
+		const state = isEvalOtelEnabled(projectRoot);
+		expect(state.enabled).toBe(false);
+		expect(state.endpoint).toBeNull();
 	});
 });

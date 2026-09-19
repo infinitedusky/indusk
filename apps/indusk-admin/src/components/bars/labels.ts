@@ -10,6 +10,7 @@ import type {
   PromiseKind,
   PromiseState,
 } from "@infinitedusky/indusk-mcp/promises/registry";
+import type { PromiseHealth } from "@/lib/promise-health";
 
 /**
  * A promise's chip: its declared state, and nothing else (day-promises, ADR
@@ -42,6 +43,43 @@ export const PROMISE_STATE_CHIP = {
   },
 } satisfies Record<
   PromiseState,
+  { label: string; aria: string; className: string }
+>;
+
+/**
+ * A promise's observed health (day-monitor, ADR D9) — the second axis,
+ * beside the declared-state chip. Green only ever means seen upheld; not seen,
+ * and Jaeger unreachable, are hollow "unverified". Under the same
+ * `satisfies Record` pin as every other chip map.
+ */
+export const PROMISE_HEALTH_CHIP = {
+  red: {
+    label: "violated",
+    aria: "violated in the window",
+    className: "border border-red-700 bg-red-600 text-white",
+  },
+  green: {
+    label: "upheld",
+    aria: "seen upheld in the window",
+    className: "border border-green-700 bg-green-600 text-white",
+  },
+  unverified: {
+    label: "unverified",
+    aria: "not seen in the window",
+    className: "border border-gray-400 bg-white text-gray-600",
+  },
+  amber: {
+    label: "known-violated",
+    aria: "declared known-violated",
+    className: "border border-amber-400 bg-amber-100 text-amber-900",
+  },
+  grey: {
+    label: "retired",
+    aria: "retired — not watched",
+    className: "border border-gray-200 bg-gray-100 text-gray-400",
+  },
+} satisfies Record<
+  PromiseHealth,
   { label: string; aria: string; className: string }
 >;
 

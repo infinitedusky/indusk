@@ -157,3 +157,12 @@ export function formatParseError(err: unknown, rawStdout: string): string {
 	const snippet = rawStdout.slice(0, 500);
 	return `${errMsg}\n\nstdout snippet (first 500 chars):\n${snippet}`;
 }
+
+/**
+ * The reason a `claude` run failed, for the error line. The CLI prints some
+ * failures on stdout with stderr empty — a model that does not exist is one
+ * (verified 2026-09-18) — so stderr alone left the line saying nothing.
+ */
+export function claudeExitReason(code: number | null, stderr: string, stdout: string): string {
+	return `claude exited with code ${code}: ${(stderr.trim() || stdout.trim()).slice(0, 500)}`;
+}

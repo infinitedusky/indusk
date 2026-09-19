@@ -10,21 +10,23 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { readUnprocessedHighlights } from "../highlights/highlights.js";
+import { markProjectId } from "../promises/config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
 	initEvalOtel,
 	initEvalOtelLogs,
 	logEvalContent,
+	markEvaluation,
 	shutdownEvalOtel,
 	withSpan,
 } from "./otel.js";
 import { buildEvaluatorPrompt, buildHighlightsInstructions } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import {
+	claudeExitReason,
 	extractScorecardJson,
 	formatParseError,
 	getScorecardQuestions,
@@ -131,11 +133,27 @@ async function spawnClaude(
 			env: { ...process.env },
 		});
 
+		let stdout = "";
+		let stderr = "";
+		let settled = false;
+		const settle = (code: number | null) => {
+			if (settled) return;
+			settled = true;
+			resolve({ stdout, stderr, code });
+		};
+		// A binary that cannot start (not installed, not executable) raises
+		// `error` and never `close`; unheard, it kills the evaluator before it
+		// can mark the run (day-monitor A25). It is a failed run like any other.
+		child.on("error", (err) => {
+			stderr += `claude could not be started: ${err.message}`;
+			settle(-1);
+		});
+		child.stdin?.on("error", () => {
+			// the child is gone; its exit or spawn error already says why
+		});
 		child.stdin?.write(prompt);
 		child.stdin?.end();
 
-		let stdout = "";
-		let stderr = "";
 		child.stdout?.on("data", (chunk: Buffer) => {
 			stdout += chunk.toString();
 		});
@@ -143,9 +161,7 @@ async function spawnClaude(
 			stderr += chunk.toString();
 		});
 
-		child.on("close", (code) => {
-			resolve({ stdout, stderr, code });
-		});
+		child.on("close", (code) => settle(code));
 	});
 }
 
@@ -334,7 +350,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 						return runPersistentEval(opts);
 					}
 					throw new Error(
-						`claude exited with code ${claudeResult.code}: ${claudeResult.stderr.slice(0, 500)}`,
+						claudeExitReason(claudeResult.code, claudeResult.stderr, claudeResult.stdout),
 					);
 				}
 
@@ -401,6 +417,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					});
 				});
 
+				markEvaluation(rootSpan, scorecard, markProjectId(opts.projectRoot));
 				return scorecard;
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
@@ -420,6 +437,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					message: enrichedMessage,
 				};
 				await logWriter.append(errorEntry);
+				markEvaluation(rootSpan, errorEntry, markProjectId(opts.projectRoot));
 				return errorEntry;
 			}
 		},

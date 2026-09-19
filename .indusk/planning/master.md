@@ -69,16 +69,16 @@ promise.) Three sub-plans:
   self-hosts one per kind; the Promises page with every enforced chip
   hollow; a plan closes *holding N promises*. See `/decisions/day-promises`
   and `/lessons/day-promises`.
-- [day-monitor/brief.md](day-monitor/brief.md) — **4b, the telemetry half
-  (was Midnight), behaviour promises only**: the span link and its test-side
-  trace-shape helper, violations per promise as a number from Jaeger (the
-  loop's only backend, local and deployed — settled 2026-09-18), `monitor` as
-  the quiet window, alert → incident with root cause →
-  reopen the owner. "Running" means executing with real inputs, locally under
-  Jaeger as much as deployed; exists nowhere yet; a local run closes the
-  loop first; ~1 week after 4a.
+- [day-monitor/brief.md](archive/day-monitor/brief.md) — **4b, the
+  telemetry half** — **closed 2026-09-19** (30 rows green, falsified 6 — all
+  confirmed and fixed, cleaned, retrospective, archived): the plain-OTel
+  promise mark and `testing/trace-shape`; `indusk promises status` / `watch`
+  over the local Jaeger; incidents; reopening by an appended Maintenance
+  phase; `monitor` as the quiet window; observed health in the admin;
+  `every-commit-evaluated` self-hosted and broken on purpose by `pnpm e2e`.
+  See `/decisions/day-monitor` and `/lessons/day-monitor`.
 - `day-always-on` — **4b′, the monitor on a machine that does not turn off**
-  (split from 4b 2026-09-18; created when 4b closes): Jaeger with persistent
+  (split from 4b 2026-09-18; 4b closed 2026-09-19 — next to create): Jaeger with persistent
   storage, the scheduled `indusk promises status` run, and the receiver that
   opens the incident and reopens the plan when no developer machine is on —
   where it runs is this step's decision. Reuses 4b's query and incident path
@@ -225,6 +225,16 @@ lesson title, or a chat log.
     `hook-cwd-independence`, `writing-skill`): what `git worktree remove
     --force` left behind. `indusk worktree create` now refuses such a folder
     and says to remove it; removing these three is a manual step.
+- **Small, not a step** (2026-09-19, from day-monitor's close):
+  - **A fresh plan worktree cannot pass `pnpm test`.** The bundled admin
+    (`apps/indusk-mcp/admin/`) is an ignored artifact of
+    `scripts/bundle-admin.js`; a new worktree lacks it, and nine `indusk ui` /
+    tarball tests fail with no hint why. Build and bundle in worktree setup,
+    or have those tests refuse naming the missing bundle and the command.
+  - **~470 orphaned telemetry daemons** from deleted temp homes
+    (`indusk-home-`, `indusk-test-home-`, `runner-detect-home-`), back to
+    2026-09-16 — none from day-monitor, whose helpers stop what they start.
+    `indusk telemetry reap` clears them; which suites leak is the question.
 - [indusk-makeover](archive/indusk-makeover/brief.md) — closed 2026-09-14:
   retrospective written 53 days after the impl completed, archived; its two
   deferred rows now say what actually holds them.

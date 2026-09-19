@@ -23,11 +23,18 @@ export function PlanBar({
   /** The active phase's verb and name, when the plan is executing. */
   activity?: string | null;
 }) {
+  // Every segment is a step, drawn half-filled when active — except
+  // `monitor`, which is time: it fills with the share of the quiet window
+  // that has passed (day-monitor, ADR D8).
+  const monitor = position.monitor;
   const segments: BarSegment[] = PLAN_POSITIONS.map((key) => ({
     key,
     state: position.segments[key],
     label: POSITION_LABELS[key],
-    fill: 0.5,
+    fill:
+      key === "monitor" && monitor
+        ? Math.min(1, monitor.elapsedDays / monitor.windowDays)
+        : 0.5,
   }));
   const activeLabel =
     position.position === "executing" && activity
@@ -37,7 +44,11 @@ export function PlanBar({
     <Bar
       segments={segments}
       activeLabel={activeLabel}
-      caption="steps, not time"
+      caption={
+        monitor
+          ? "steps, then time: monitor fills as the quiet window passes"
+          : "steps, not time"
+      }
       testId="plan-bar"
       labels
     />

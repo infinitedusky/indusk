@@ -859,4 +859,28 @@ promisesCmd
 		await promisesCheck(rootOrExit());
 	});
 
+promisesCmd
+	.command("status")
+	.description(
+		"Each behaviour promise as the local Jaeger saw it: violations in the window with their traces, last seen upheld, or not seen. State and structure promises are listed as watched by the suite. Exit 2, naming where it looked, when Jaeger cannot be reached — never a count.",
+	)
+	.option("--since <duration>", "window to report, e.g. 90m, 24h, 7d (default: the quiet window)")
+	.action(async function (this: Command) {
+		const opts = this.opts() as { since?: string };
+		const { promisesStatus } = await import("./commands/promises.js");
+		await promisesStatus(rootOrExit(), opts);
+	});
+
+promisesCmd
+	.command("watch")
+	.description(
+		"One monitor pass: open or extend an incident for each behaviour promise with new violations in the local Jaeger, and append a Maintenance phase to its owning plan. Writes plan documents; commits nothing. Exit 2 when Jaeger cannot be reached.",
+	)
+	.option("--source <source>", "where the violations came from: local | smoke | deployed", "local")
+	.action(async function (this: Command) {
+		const opts = this.opts() as { source?: string };
+		const { promisesWatch } = await import("./commands/promises.js");
+		await promisesWatch(rootOrExit(), opts);
+	});
+
 program.parse();
