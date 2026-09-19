@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor"
 date: 2026-09-18
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -317,19 +317,20 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 - [x] (reviewed `lib/telemetry/daemon.ts` — left as-is: 604 lines, already shrunk by Build Phase 5's `status.ts` split; what remains is start/stop/restart of one daemon, one reason to change)
 - [x] (reviewed `lib/config.ts`, `lib/lifecycle.ts`, `lib/eval/otel.ts`, `lib/eval/persistent-evaluator.ts`, `lib/eval/evaluator-spans.test.ts` — left as-is: over the cap before this plan, and its touches are small and in place — a config field, the after-close input, the mark beside the span code, a spawn error handler, a one-line mock)
 - [x] (reviewed the `iso()` formatter in `status.ts` and `incidents.ts`, and `daysAgo` in the admin test — left as-is: two one-line copies in unrelated modules, not yet a rule of three; the admin test imports only node-built-in helpers by path, and the promises fixture would pull in `gray-matter` and `cli.ts`)
+- [x] Shape (Build Phase 8): nothing found — the new units (`readPromiseMarks`, `appendLateRow`, `openMaintenancePhasesIn`, `PromiseHealth.tsx`, `startFakeQueryPort`) each have one job, and this phase's changes were the extraction itself
 
 #### Build Phase 8 Verification
 
-- [ ] Behaviour holds: A1, A7–A13, A26, A27, A28, A30 (`status`/`watch` through the one call), A14 and the reopen validator test (the moved row writer), A16–A18 (after-close), A20–A23 (the extracted health components) all still pass — `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor- src/lib/trajectory` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts` and `--project browser src/components`
-- [ ] `pnpm e2e` still passes, and both apps type-check
+- [x] Behaviour holds: A1, A7–A13, A26, A27, A28, A30 (`status`/`watch` through the one call), A14 and the reopen validator test (the moved row writer), A16–A18 (after-close), A20–A23 (the extracted health components) all still pass — `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor- src/lib/trajectory` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts` and `--project browser src/components` — ran 2026-09-19: mcp monitor/trajectory/eval/promises 189 passed; admin HTTP 8, components 128
+- [x] `pnpm e2e` still passes, and both apps type-check — e2e 1 passed; both `tsc --noEmit` clean
 
 #### Build Phase 8 Context
 
-- [ ] CLAUDE.md, the `promises status` line: `readPromiseMarks` is the one call status, watch and the admin make
+- [x] CLAUDE.md, the `promises status` line: `readPromiseMarks` is the one call status, watch and the admin make
 
 #### Build Phase 8 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: the library paragraph names `readPromiseMarks` beside `markedSpans`
+- [x] `apps/docs/src/reference/cli/promises.md`: the library paragraph names `readPromiseMarks` beside `markedSpans`
 
 ## Files Affected
 

@@ -214,9 +214,12 @@ running (it names `$INDUSK_HOME/telemetry.json`), or the query URL did not
 answer, timed out, or answered with something that is not Jaeger's JSON (it
 names the URL) — with no count for any promise.
 
-The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry`
-(`markedSpans({ promises, since })`, which throws `JaegerUnreachable` rather
-than returning an empty result). How an application marks a promise is in the
+The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry`.
+`readPromiseMarks(root, registry, { sinceMs? })` is the call `status`, `watch`
+and the admin make: it takes the registry's behaviour promises that are not
+retired, their aliases, the project id and the quiet window, and asks
+`markedSpans` — which throws `JaegerUnreachable` rather than returning an empty
+result. How an application marks a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 
 ## `promises watch`
