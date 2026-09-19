@@ -46,9 +46,9 @@ export type PlanPosition =
 	| "monitor";
 
 /**
- * Every position, in order. `monitor` is reserved for Midnight (a reopened
- * plan watching its promises in production) and is never derived here — it is
- * listed so the admin renders the segment the moment Midnight defines it.
+ * Every position, in order. `monitor` follows `archived` (day-monitor, ADR
+ * D8): a closed plan holding a behaviour promise waits there until its
+ * promises have been quiet for the window.
  */
 export const PLAN_POSITIONS: readonly PlanPosition[] = [
 	"research",
@@ -173,6 +173,31 @@ export interface DerivePlanPositionInput {
 	/** Retrospective readiness, when the plan has an impl. */
 	readiness: RetrospectiveReadiness | null;
 	archived: boolean;
+	/**
+	 * What an archived plan is doing after it closed (day-monitor), from
+	 * `lib/promises/after-close.ts`. Absent reads as at rest.
+	 */
+	afterClose?: {
+		/** Open Maintenance phases' names: the plan is reopened and executing. */
+		reopened: string[];
+		/** Set while the plan's behaviour promises are inside the quiet window. */
+		monitor: MonitorWindow | null;
+	};
+}
+
+/** A plan in `monitor`: how much of its quiet window has passed. */
+export interface MonitorWindow {
+	windowDays: number;
+	/** Days since the plan closed, or since the violation that restarted the window. */
+	elapsedDays: number;
+	/** ISO time of the violation that restarted the window; null when it runs from the close. */
+	restartedAt: string | null;
+}
+
+/** "3 of 7 days quiet", "window restarted 2026-09-18 — 0 of 7 days quiet". */
+export function monitorAwaiting(m: MonitorWindow): string {
+	const quiet = `${Math.floor(m.elapsedDays)} of ${m.windowDays} days quiet`;
+	return m.restartedAt ? `window restarted ${m.restartedAt.slice(0, 10)} — ${quiet}` : quiet;
 }
 
 const DOC_POSITION_TO_PLAN: Record<DocumentPosition, PlanPosition> = {
@@ -189,8 +214,16 @@ function resolvePosition(input: DerivePlanPositionInput): {
 	position: PlanPosition;
 	awaiting: string | null;
 } {
-	const { summary, impl, readiness, archived } = input;
-	if (archived) return { position: "archived", awaiting: null };
+	const { summary, impl, readiness, archived, afterClose } = input;
+	if (archived) {
+		if (afterClose && afterClose.reopened.length > 0) {
+			return { position: "executing", awaiting: `executing ${afterClose.reopened[0]}` };
+		}
+		if (afterClose?.monitor) {
+			return { position: "monitor", awaiting: monitorAwaiting(afterClose.monitor) };
+		}
+		return { position: "archived", awaiting: null };
+	}
 
 	const stage = summary.stage;
 	const status = summary.stageStatus;
@@ -261,7 +294,8 @@ function resolvePosition(input: DerivePlanPositionInput): {
  * they are a document position whose file is absent while a later one exists
  * (a bugfix skips research; a refactor skips the ADR). The current position is
  * active; later ones pending. Archived has no active segment: nothing is
- * happening. `monitor` is pending until Midnight defines it.
+ * happening. `monitor` is pending unless a closed plan is inside its quiet
+ * window, when it is active and `archived` behind it is done.
  */
 export function derivePlanPosition(input: DerivePlanPositionInput): PlanPositionState {
 	const { position, awaiting } = resolvePosition(input);

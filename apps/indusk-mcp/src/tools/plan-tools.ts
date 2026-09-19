@@ -362,6 +362,8 @@ export function isActivePlanStatus(status: string): boolean {
  * document-status rule above.
  */
 export function isActivePlan(plan: { stage: string; stageStatus?: string }): boolean {
+	// A closed plan waiting out its quiet window is still in motion (day-monitor).
+	if (plan.stage === "monitor") return true;
 	if (plan.stage === "paper") {
 		return plan.stageStatus === "draft" || plan.stageStatus === "accepted";
 	}

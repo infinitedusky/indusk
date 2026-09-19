@@ -1,7 +1,7 @@
 # The plan lifecycle
 
-::: warning PROPOSED — not yet implemented
-This page makes the case for a lifecycle change. Today plans close once and archive; there is no `monitor` state and nothing reopens a plan. Decided 2026-08-11; no code implements it yet. Read it as an argument, not a description.
+::: tip Argued 2026-08-11, built in Day step 4b
+This page began as the case for a lifecycle change, and most of it now describes working software: a closed plan holding a behaviour promise waits in `monitor`, and a violation seen in telemetry reopens it with a Maintenance phase. [`monitor`, as built](#monitor-as-built) says exactly what exists; the argument above it is kept as the reasoning.
 :::
 
 ## Plans close. Systems don't.
@@ -63,8 +63,10 @@ research → brief → test-plan → adr → impl-approved → executing
         → falsify → cleanup → retrospective → archived   (→ monitor)
 ```
 
-`monitor` is listed and never derived: it is Midnight's, and it sits in the
-list so the admin renders the segment the moment Midnight defines it. The
+`monitor` follows `archived`: a closed plan holding a behaviour promise sits
+there until its promises have been quiet for a window (see
+[`monitor`, as built](#monitor-as-built)). It is derived from files, never
+from telemetry. The
 document positions (`research` … `impl`, `retrospective`) are also the plan
 parser's stage order — `test-plan` joined it here; the old private order
 walked past it as if it were not a stage.
@@ -100,7 +102,8 @@ stateDiagram-v2
     falsify --> cleanup
     cleanup --> retrospective
     retrospective --> archived
-    archived --> monitor: (Midnight)
+    archived --> monitor: holds a behaviour promise, inside the quiet window
+    monitor --> executing: a violation reopens it (Maintenance phase)
     state executing {
         direction LR
         implementing --> verifying
@@ -124,9 +127,9 @@ so a union with a new member no longer type-checks, and the admin's
 type-check is itself a test (`typecheck.test.ts`); on top of that,
 `lifecycle-render-parity.test.ts` renders every member of every union and
 fails naming the one with no label. The failure therefore says *which*
-stage is unrendered, not merely that something is. Midnight's `monitor` is
-the first case: listed, labelled, and drawn as pending until Midnight
-derives it. That is what keeps the UI from drifting behind the system the
+stage is unrendered, not merely that something is. `monitor` was the first
+case: listed, labelled and drawn as pending for a month before Day step 4b
+derived it. That is what keeps the UI from drifting behind the system the
 way its phase parser once did — for a month, silently, while every impl
 written since August rendered wrong.
 
@@ -217,12 +220,46 @@ It was rejected because **closed remains the resting state.** A plan reopens on 
 Honest inventory, so nobody reads this page as a description of working software:
 
 - **Promises** — what this page calls expectations: named commitments with owning plans, code sites and tests. **Built** as Day step 4a — the registry, `indusk promises check` and the admin's Promises page; see [Promises](./promises). The span link and the violation query below are Day step 4b.
-- **Span ↔ expectation linkage** — `expectations.enforced` / `expectations.violated` attributes. Unbuilt.
-- **A violation query** — "has E-9 been violated in the last N days?" against Dash0 and local telemetry. This is what gives `monitor` its exit condition. Unbuilt.
-- **Reopen as a lifecycle operation** — `/retrospective` archives today and has no inverse.
-- **A monitor window policy** — how quiet, for how long, before a plan may close.
+- **Span ↔ promise linkage** — **built** (Day step 4b) as two attributes and an event, `indusk.promise`, `indusk.promise.outcome` and `indusk.promise.violated`; see [Marking a behaviour promise](./promises#marking-a-behaviour-promise).
+- **A violation query** — **built**: `indusk promises status` asks the local telemetry daemon's Jaeger. No hosted backend is involved; Dash0 is an optional place to look, never a source for the loop.
+- **Reopen as a lifecycle operation** — **built**: `indusk promises watch` opens an incident and appends a Maintenance phase to the owner, in place.
+- **A monitor window policy** — **built**: `promises.quiet_window_days`, default 7.
+- **Watching without a person** — `watch` is one pass someone runs. Running it on a schedule, and reading deployed systems, is `day-always-on`.
 
-Until the violation query exists, `monitor` is a state with no exit condition, which is worse than no state at all. **Telemetry is the prerequisite, not an enhancement.**
+**Telemetry is the prerequisite, not an enhancement** — which is why the loop runs on the local daemon InDusk ships, not on a subscription.
+
+## `monitor`, as built
+
+*(day-monitor, 2026-09-19)*
+
+An archived plan that holds at least one behaviour promise is in `monitor`
+while
+
+```
+now − max(closed, lastViolation) < window
+```
+
+- **closed** is the date on its retrospective's "Landed on main at …" line,
+  else the retrospective's `date`. A plan with no retrospective never enters
+  `monitor`.
+- **lastViolation** is the latest `last_seen` among its promises' incidents,
+  open or fixed. A violation inside the window **restarts** it, and the plan
+  bar says so: "window restarted 2026-09-18 — 0 of 7 days quiet".
+- **window** is `promises.quiet_window_days` in `.indusk/config.json`,
+  default 7.
+
+It is derived from files on every read — `lib/promises/after-close.ts` for
+the plan tools, the same function for the admin — and never opens a socket.
+`monitor` therefore lags telemetry until `indusk promises watch` records a
+violation as an incident; the Promises page's health chips carry the live
+view. A plan holding no behaviour promise closes exactly as before.
+
+`list_plans` lists a `monitor` plan as active, with
+`monitor: { windowDays, elapsedDays, restartedAt }`. When an incident
+appends a Maintenance phase to an archived plan and the phase has an
+unchecked item, the plan is **reopened** instead: listed active, and
+`executing` that phase. Ticking the phase off returns it to `monitor` — the
+incident's `last_seen` restarted the window — and then to `archived`.
 
 ## See also
 

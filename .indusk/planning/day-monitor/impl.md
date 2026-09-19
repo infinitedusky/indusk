@@ -70,7 +70,7 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A14 | The owning plan reopens: `list_plans` lists it active with a Maintenance phase naming the incident, the appended phase passes the impl validator, and the admin shows it executing that phase | Test Phase 1 | Build Phase 5 | written |
 | A15 | `promises check` refuses an incident marked fixed whose root cause is still unwritten, naming the file | Test Phase 1 | Build Phase 3 | passing |
 | A16 | A plan closed fewer than the window's days ago that holds a behaviour promise reads `monitor` in `list_plans` and on its admin plan bar, with the window's elapsed share | Test Phase 1 | Build Phase 5 | written |
-| A17 | The same plan closed more than the window ago, with no violation since, reads archived | Test Phase 1 | Build Phase 4 | written |
+| A17 | The same plan closed more than the window ago, with no violation since, reads archived | Test Phase 1 | Build Phase 4 | passing |
 | A18 | A violation recorded during the window keeps the plan in `monitor` from the violation's time, and the page says the window restarted | Test Phase 1 | Build Phase 5 | written |
 | A19 | A plan holding no behaviour promise never reads `monitor` | Test Phase 1 | Test Phase 1 | passing |
 | A20 | The Promises page shows each behaviour promise's observed health: red when violated in the window, green when seen upheld, hollow "unverified" when not seen, amber when known-violated, grey when retired | Test Phase 1 | Build Phase 5 | written |
@@ -202,21 +202,22 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 4: `monitor`
 
-- [ ] `getQuietWindowDays(projectRoot)` in `lib/config.ts` — `promises.quiet_window_days`, default 7 in the reader. *Refines ADR D8's "ensured on update": the `promises` block already exists in every project, and `ensureConfigBlock` is keyed on the block's presence, so the default lives in the reader, as `getSweepTtlMinutes` does.*
-- [ ] `lib/lifecycle.ts` derives `monitor` for an archived plan holding a behaviour promise while `now − max(closed, lastViolation) < window` (closed from the retrospective's landing line, else its `date`; lastViolation from its promises' incidents' `last_seen`), with the elapsed share; files only, no network
-- [ ] `lifecycle-single-definition.test.ts` and `lifecycle-render-parity.test.ts` updated for the derived position
+- [x] `getQuietWindowDays(projectRoot)` in `lib/config.ts` — `promises.quiet_window_days`, default 7 in the reader. *Refines ADR D8's "ensured on update": the `promises` block already exists in every project, and `ensureConfigBlock` is keyed on the block's presence, so the default lives in the reader, as `getSweepTtlMinutes` does.* **Done in Build Phase 2**, in `lib/promises/config.ts` beside the other promises config, because `status` defaults to the window
+- [x] `lib/lifecycle.ts` derives `monitor` for an archived plan holding a behaviour promise while `now − max(closed, lastViolation) < window` (closed from the retrospective's landing line, else its `date`; lastViolation from its promises' incidents' `last_seen`), with the elapsed share; files only, no network. Split by what each knows: `lib/promises/after-close.ts` computes the window from files (`closedAt`, `monitorWindow`; the registry read once per listing) and `lib/lifecycle.ts` takes it as an optional `afterClose` input — `monitor` active with `archived` done behind it, or a reopened plan `executing` its Maintenance phase — so the admin derives the same bar from the same facts. `list_plans` lists `monitor` plans active. Run on this repository it put `enforce-plan-gates` in monitor: its incident `i-2026-09-15-gates-silently-off` restarted the window 4.2 of 7 days ago
+- [x] `lifecycle-single-definition.test.ts` and `lifecycle-render-parity.test.ts` updated for the derived position: no change needed — `monitor` was already one of `PLAN_POSITIONS` with an admin label, and the render-parity pin is the `satisfies Record` in `labels.ts` (there is no file by that name); derivation tests added to `lib/lifecycle-derive.test.ts` instead (4)
+- [x] Shape (Build Phase 4): nothing found. `after-close.ts` answers one question (what a closed plan is doing) with small named parts; `monitorAwaiting` names the bar's sentence in `lifecycle.ts`
 
 #### Build Phase 4 Verification
 
-- [ ] A17 passes; the tools halves of A16 and A18 pass; A19 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-plans.test.ts`)
+- [x] A17 passes; the tools halves of A16 and A18 pass; A19 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-plans.test.ts`) — ran 2026-09-19: 5 passed
 
 #### Build Phase 4 Context
 
-- [ ] Conventions (the lifecycle entry): `monitor` is derived from the landing date and incidents, never from telemetry; `promises.quiet_window_days` defaults to 7 in the reader
+- [x] Conventions (the lifecycle entry): `monitor` is derived from the landing date and incidents, never from telemetry; `promises.quiet_window_days` defaults to 7 in the reader
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/guide/plan-lifecycle.md`: `monitor` defined
+- [x] `apps/docs/src/guide/plan-lifecycle.md`: `monitor` defined
 
 ### Build Phase 5: The admin
 

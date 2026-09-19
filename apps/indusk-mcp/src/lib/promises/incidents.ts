@@ -42,7 +42,7 @@ function stringList(v: unknown): string[] {
 }
 
 /** Trace ids and `last_seen` an incident file already records. */
-function recorded(path: string): { traces: string[]; lastSeen: string | null } {
+export function recorded(path: string): { traces: string[]; lastSeen: string | null } {
 	const data = matter(readFileSync(path, "utf-8")).data as Record<string, unknown>;
 	const last = data.last_seen;
 	return {
