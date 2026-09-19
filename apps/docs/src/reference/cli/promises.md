@@ -197,10 +197,21 @@ phase-boundary-record-never-malformed (state, planning, enforced)
 - **State** and **structure** promises are listed as watched by the suite:
   their health is the last run of their test or check at head, not telemetry.
 - A **retired** promise is listed and not watched.
+- Marks under any of a promise's **`aliases`** count as the promise's — an
+  application may still set the old name after a rename.
+- Each query asks Jaeger for at most 1,500 traces. When a query fills that,
+  the count is a lower bound and says so: **at least 1500 violations**.
+- A mark that carries **`indusk.project`** naming another project is not
+  counted. InDusk's own evaluator sets it — one service marks
+  `every-commit-evaluated` for every project on a machine — to the project's
+  configured `graphiti.groupId`, else the name of the **main checkout** (the
+  folder holding the repository's shared git directory), so the trunk and every
+  plan worktree agree. An application's own spans need not carry it.
 
 Exit **0** when Jaeger answered. Exit **2** when it could not — no daemon
-running (it names `$INDUSK_HOME/telemetry.json`) or the query URL did not
-answer (it names the URL) — with no count for any promise.
+running (it names `$INDUSK_HOME/telemetry.json`), or the query URL did not
+answer, timed out, or answered with something that is not Jaeger's JSON (it
+names the URL) — with no count for any promise.
 
 The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry`
 (`markedSpans({ promises, since })`, which throws `JaegerUnreachable` rather

@@ -167,7 +167,7 @@ export async function markedSpans(opts: {
 		const seen = new Map<string, MarkedSpan>();
 		const names = [promise, ...(opts.aliases?.[promise] ?? [])];
 		let truncated = false;
-		for (const service of services)
+		for (const service of services) {
 			for (const name of names) {
 				const params = new URLSearchParams({
 					service,
@@ -196,6 +196,7 @@ export async function markedSpans(opts: {
 					}
 				}
 			}
+		}
 		const all = [...seen.values()].sort((a, b) => b.at.getTime() - a.at.getTime());
 		byPromise.set(promise, {
 			truncated,

@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor"
 date: 2026-09-18
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 rationale: required
@@ -78,12 +78,12 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A22 | With Jaeger unreachable every behaviour chip is hollow with "health unknown since …" and none is green | Test Phase 1 | Build Phase 5 | passing |
 | A23 | A plan holding a red promise shows red in the sidebar | Test Phase 1 | Build Phase 5 | passing |
 | A24 | End to end, on a scratch project with a green suite: a commit evaluated with a model that does not exist marks `every-commit-evaluated` violated in local Jaeger, `indusk promises watch` opens an incident with source `local`, and the owning plan reopens with a Maintenance phase | Build Phase 6 | Build Phase 6 | passing |
-| A25 | With `claude` missing from `PATH`, an evaluator run exports `every-commit-evaluated` violated with a symptom naming the missing CLI, and writes an error result — it does not die on an uncaught spawn error with nothing marked | Build Phase 7 | Build Phase 7 | written |
-| A26 | When the daemon's recorded query port answers with a body that is not JSON, `promises status` exits 2 naming the URL (no stack trace) and every admin project page still renders 200, with behaviour chips hollow and "health unknown" | Build Phase 7 | Build Phase 7 | written |
-| A27 | A span marked with one of a promise's `aliases` is counted under the promise by `status` and `watch` | Build Phase 7 | Build Phase 7 | written |
-| A28 | In a project with no configured group id, an evaluation of a commit made in a plan worktree is marked with the same project id `promises status` uses at the trunk, so the trunk counts it | Build Phase 7 | Build Phase 7 | written |
-| A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | written |
-| A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | written |
+| A25 | With `claude` missing from `PATH`, an evaluator run exports `every-commit-evaluated` violated with a symptom naming the missing CLI, and writes an error result — it does not die on an uncaught spawn error with nothing marked | Build Phase 7 | Build Phase 7 | passing |
+| A26 | When the daemon's recorded query port answers with a body that is not JSON, `promises status` exits 2 naming the URL (no stack trace) and every admin project page still renders 200, with behaviour chips hollow and "health unknown" | Build Phase 7 | Build Phase 7 | passing |
+| A27 | A span marked with one of a promise's `aliases` is counted under the promise by `status` and `watch` | Build Phase 7 | Build Phase 7 | passing |
+| A28 | In a project with no configured group id, an evaluation of a commit made in a plan worktree is marked with the same project id `promises status` uses at the trunk, so the trunk counts it | Build Phase 7 | Build Phase 7 | passing |
+| A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | passing |
+| A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | passing |
 
 ## Checklist
 
@@ -287,21 +287,22 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 - [x] A28: the mark's project id comes from the main checkout — `graphiti.groupId` when set, else the folder of the repository's shared git directory — through one function the evaluator, `status`, `watch` and the admin all call: `markProjectId` in `lib/promises/config.ts` (the `promises/config` subpath), via the existing `gitCommonDirOf`. The evaluator's `projectGroup` span attribute and scorecards keep `getProjectGroupId` — only the mark changed. (A27 and A30 were checked before this item: all three sit in the one query, and A28 touched the evaluator too)
 - [x] A29: `reopenOwner` resolves an active owner's live copy through `lib/worktree/plan-worktrees.ts` (the assigned worktree when there is one), an archived owner as today. `watch` resolves through `livePlanCopy` and passes the live folder to `reopenOwner`; an unreadable record reopens nothing and says so (`copy-problem`), never a guessed copy. `list_plans` now reports `reopened` for any plan with an open Maintenance phase, read from its live copy — an active plan's summary named no phases, so the row's "list_plans shows it" needed it
 - [x] A30: a query that returns the limit marks the promise's result truncated, and `status` and the admin say "at least N". `PromiseMarks.truncated`; the admin's detail line says "at least N violations" too
+- [x] Shape (Build Phase 7): `markedSpans`'s service-and-alias loop had an unbraced outer `for`, hiding that the query runs once per service per name — braced (rule: the shape of the code says what it does). Considered and left: `getData` (one job: one query's every failure is `JaegerUnreachable`); `reopenLive` in `watch.ts` (the one place a live copy is resolved for a write)
 
 #### Build Phase 7 Verification
 
-- [ ] A25, A27, A28, A30 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-mark.test.ts src/__tests__/monitor-status.test.ts`)
-- [ ] A26 passes in both halves (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-status.test.ts -t A26` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts`)
-- [ ] A29 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-plans.test.ts -t A29`)
-- [ ] Every earlier monitor row still passes, and `pnpm e2e` still passes
+- [x] A25, A27, A28, A30 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-mark.test.ts src/__tests__/monitor-status.test.ts`) — ran 2026-09-19
+- [x] A26 passes in both halves (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-status.test.ts -t A26` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts`) — CLI 1 passed; admin 8 passed
+- [x] A29 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-plans.test.ts -t A29`) — the plan-tool rows and `plan-worktrees` suites, 38 passed
+- [x] Every earlier monitor row still passes, and `pnpm e2e` still passes — monitor, evaluator, promises and telemetry suites 211 passed; admin node 181, browser 130; `pnpm e2e` 1 passed
 
 #### Build Phase 7 Context
 
-- [ ] Known Gotchas (the promises entry): a mark's project id is the main checkout's, never a worktree folder's; every failure of a health read is "unreachable", never an exception
+- [x] Known Gotchas (the promises entry): a mark's project id is the main checkout's, never a worktree folder's; every failure of a health read is "unreachable", never an exception
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: aliases counted, "at least N", and the project id the evaluator's mark carries
+- [x] `apps/docs/src/reference/cli/promises.md`: aliases counted, "at least N", and the project id the evaluator's mark carries
 
 ## Files Affected
 
