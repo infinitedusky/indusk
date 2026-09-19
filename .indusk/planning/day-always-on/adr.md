@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b′ — Always-on"
 date: 2026-09-19
-status: proposed
+status: accepted
 ---
 
 # Day step 4b′ — Always-on
@@ -13,8 +13,8 @@ every developer machine is off.**
 
 Today the loop only runs where a developer is sitting: the marks land in a
 local daemon's in-memory Jaeger, and a promise can only be caught breaking in
-a run on that machine. A promise numero breaks in production at 03:00 leaves
-no trace anywhere, and nobody learns of it. After this step the mark reaches a
+a run on that machine. A promise a deployed application breaks in production
+at 03:00 leaves no trace anywhere, and nobody learns of it. After this step the mark reaches a
 server that never sleeps and keeps it on disk, Slack says which promise broke
 in which environment within one pass, and the next `watch` on a developer's
 machine records the incident and reopens the plan that owns it.
