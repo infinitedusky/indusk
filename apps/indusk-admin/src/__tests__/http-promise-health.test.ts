@@ -440,3 +440,47 @@ describe("A22 — Jaeger unreachable (runs last: stops Jaeger)", () => {
     },
   );
 });
+
+describe("A26 — a query port that answers with something that is not Jaeger (runs after A22)", () => {
+  it(
+    "the Promises page and the project page still render 200, health unknown, nothing green",
+    { timeout: 30_000 },
+    async () => {
+      const { createServer } = await import("node:http");
+      const stub = createServer((_req, res) => {
+        res.writeHead(200, { "content-type": "text/html" });
+        res.end("<html>not jaeger</html>");
+      });
+      await new Promise<void>((r) => stub.listen(0, "127.0.0.1", r));
+      const port = (stub.address() as import("node:net").AddressInfo).port;
+      try {
+        // A daemon record whose identity check passes against the stub.
+        writeFileSync(path.join(home, "telemetry.pid"), String(process.pid));
+        writeFileSync(
+          path.join(home, "telemetry.json"),
+          JSON.stringify({
+            jaegerPid: process.pid,
+            otelcolPid: process.pid,
+            otlpPort: port,
+            uiPort: port,
+            mcpPort: port,
+            jaegerHealthPort: port,
+            otelcolHealthPort: port,
+            logsOtlpPort: port,
+            startedAt: new Date().toISOString(),
+          }),
+        );
+        await sleep(2_500); // past the project's 1s refresh interval
+        const promises = await fetch(`${url}/p/health/promises`);
+        expect(promises.status).toBe(200);
+        const html = await promises.text();
+        expect(html).not.toContain('data-health="green"');
+        expect(html).toMatch(/health unknown since/i);
+        const project = await fetch(`${url}/p/health/`);
+        expect(project.status).toBe(200);
+      } finally {
+        await new Promise<void>((r) => stub.close(() => r()));
+      }
+    },
+  );
+});

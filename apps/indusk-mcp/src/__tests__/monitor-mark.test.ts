@@ -1,5 +1,6 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { REPO_ROOT, SHOULD_SKIP } from "./helpers/cli.js";
@@ -119,4 +120,101 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — the evaluator's mark", () => {
 		expect(upheld.attributes["indusk.promise.outcome"]).toBe("upheld");
 		expect(upheld.events.some((e) => e.name === "indusk.promise.violated")).toBe(false);
 	});
+});
+
+/**
+ * Run one evaluation through the hook in `cwd` with `path` as PATH, and
+ * return the marked span it exported (or none).
+ */
+async function markedRun(
+	cwd: string,
+	path: string,
+): Promise<{ marked: CapturedSpan[]; results: string }> {
+	const capture = await startOtlpCapture();
+	try {
+		const env: NodeJS.ProcessEnv = {
+			...process.env,
+			PATH: path,
+			INDUSK_EVAL_OTEL: "1",
+			OTEL_EXPORTER_OTLP_ENDPOINT: capture.endpoint,
+			INDUSK_SKIP_UPDATE_CHECK: "1",
+		};
+		delete env.OTEL_EXPORTER_OTLP_HEADERS;
+		delete env.DASH0_API_TOKEN;
+		const hook = spawnSync(
+			process.execPath,
+			[HOOK, "--source", "test", "--change-id", headOf(cwd)],
+			{
+				cwd,
+				env,
+				encoding: "utf-8",
+			},
+		);
+		if (hook.status !== 0) throw new Error(`eval hook exited ${hook.status}: ${hook.stderr}`);
+		const resultsPath = join(cwd, ".indusk", "eval", "results.log");
+		const deadline = Date.now() + 60_000;
+		while (!existsSync(resultsPath) || readFileSync(resultsPath, "utf-8").trim() === "") {
+			if (Date.now() > deadline) break;
+			await new Promise((r) => setTimeout(r, 250));
+		}
+		// Whatever was exported has had its chance: the evaluator exits after its flush.
+		await new Promise((r) => setTimeout(r, 2_000));
+		return {
+			marked: capture.spans().filter(isMarked),
+			results: existsSync(resultsPath) ? readFileSync(resultsPath, "utf-8") : "",
+		};
+	} finally {
+		await capture.close();
+	}
+}
+
+/** A PATH with `node` and `git` and nothing else — no `claude`. */
+function pathWithoutClaude(): string {
+	const dir = mkdtempSync(join(tmpdir(), "no-claude-bin-"));
+	symlinkSync(process.execPath, join(dir, "node"));
+	const gitPath = execFileSync("which", ["git"], { encoding: "utf-8" }).trim();
+	symlinkSync(gitPath, join(dir, "git"));
+	return dir;
+}
+
+describe.skipIf(SHOULD_SKIP)("day-monitor — evaluator falsification (Build Phase 7)", () => {
+	it("A25 — with no `claude` on PATH, the run is marked violated, naming the missing CLI", async () => {
+		const project = promiseProject({ domains: ["gates"] });
+		const bin = pathWithoutClaude();
+		try {
+			const { marked, results } = await markedRun(project.root, bin);
+			expect(results, "an error result is written").toContain('"error":true');
+			expect(marked, "one marked span").toHaveLength(1);
+			expect(marked[0].attributes["indusk.promise.outcome"]).toBe("violated");
+			const event = marked[0].events.find((e) => e.name === "indusk.promise.violated");
+			expect(String(event?.attributes["indusk.promise.symptom"])).toMatch(/claude/i);
+		} finally {
+			rmSync(project.root, { recursive: true, force: true });
+			rmSync(bin, { recursive: true, force: true });
+		}
+	}, 120_000);
+
+	it("A28 — an evaluation in a plan worktree carries the trunk's project id", async () => {
+		const project = promiseProject({ domains: ["gates"] });
+		const fake = fakeClaudeDir("scorecard");
+		const worktree = join(`${project.root}-worktrees`, "some-plan");
+		try {
+			execFileSync("git", ["worktree", "add", "-q", worktree, "-b", "plan/some-plan"], {
+				cwd: project.root,
+			});
+			const path = `${fake}:${process.env.PATH}`;
+			const atTrunk = await markedRun(project.root, path);
+			const inWorktree = await markedRun(worktree, path);
+			expect(atTrunk.marked).toHaveLength(1);
+			expect(inWorktree.marked).toHaveLength(1);
+			expect(inWorktree.marked[0].attributes["indusk.project"]).toBe(
+				atTrunk.marked[0].attributes["indusk.project"],
+			);
+		} finally {
+			rmSync(worktree, { recursive: true, force: true });
+			rmSync(`${project.root}-worktrees`, { recursive: true, force: true });
+			rmSync(project.root, { recursive: true, force: true });
+			rmSync(fake, { recursive: true, force: true });
+		}
+	}, 180_000);
 });

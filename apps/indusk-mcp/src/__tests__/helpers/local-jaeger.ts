@@ -47,8 +47,12 @@ export interface LocalJaeger {
 	uiPort: number;
 	/** `http://localhost:<uiPort>` — where the query API answers. */
 	queryUrl: string;
-	/** Export spans over OTLP/HTTP JSON; resolves with their trace ids once Jaeger returns them. */
-	load: (spans: FixtureSpan[]) => Promise<string[]>;
+	/**
+	 * Export spans over OTLP/HTTP JSON; resolves with their trace ids once Jaeger
+	 * returns them. `waitFor: "last"` waits on the last trace only — for a bulk
+	 * load, where polling each of thousands of traces is the slow part.
+	 */
+	load: (spans: FixtureSpan[], opts?: { waitFor?: "all" | "last" }) => Promise<string[]>;
 	/** Stop the daemon. Safe to call twice. */
 	stop: () => void;
 }
@@ -151,7 +155,10 @@ export async function startLocalJaeger(opts: { home?: string } = {}): Promise<Lo
 		spawnSync("node", [CLI_BIN, "telemetry", "stop"], { env, encoding: "utf-8" });
 	};
 
-	const load = async (spans: FixtureSpan[]): Promise<string[]> => {
+	const load = async (
+		spans: FixtureSpan[],
+		opts: { waitFor?: "all" | "last" } = {},
+	): Promise<string[]> => {
 		const { body, traceIds } = otlpBody(spans);
 		const res = await fetch(`http://localhost:${meta.otlpPort}/v1/traces`, {
 			method: "POST",
@@ -165,7 +172,8 @@ export async function startLocalJaeger(opts: { home?: string } = {}): Promise<Lo
 		}
 		// Jaeger batches before storing; wait until every trace is queryable.
 		const deadline = Date.now() + 15_000;
-		for (const id of new Set(traceIds)) {
+		const waitOn = opts.waitFor === "last" ? traceIds.slice(-1) : [...new Set(traceIds)];
+		for (const id of waitOn) {
 			for (;;) {
 				const r = await fetch(`${queryUrl}/api/traces/${id}`).catch(() => null);
 				if (r?.ok) {

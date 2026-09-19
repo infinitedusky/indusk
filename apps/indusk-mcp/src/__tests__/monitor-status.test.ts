@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { CLI_BIN, runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { type LocalJaeger, newTraceId, startLocalJaeger } from "./helpers/local-jaeger.js";
 import {
 	type PromiseProject,
@@ -226,5 +226,154 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — promises status without Jaeger", (
 		expect(text).toContain(join(home, "telemetry.json"));
 		expect(text).not.toMatch(/\b0 violations\b/);
 		expect(text).not.toMatch(/upheld/i);
+	});
+});
+
+/**
+ * Build Phase 7 — falsification. A27: a mark under a promise's alias. A30: a
+ * query that fills the trace limit. A26 (CLI half): a query port that answers
+ * with something that is not Jaeger's JSON.
+ */
+describe.skipIf(SHOULD_SKIP)("day-monitor — status falsification (Build Phase 7)", () => {
+	const RENAMED = "seat-hold-released";
+	const OLD_NAME = "seat-hold-freed";
+	const FLOOD = "seat-flood";
+	let jaeger: LocalJaeger;
+	let fixture: PromiseProject;
+	let out = "";
+	const aliased = newTraceId();
+
+	beforeAll(async () => {
+		const behaviour = (name: string, aliases?: string[]) => ({
+			name,
+			kind: "behaviour" as const,
+			state: "enforced" as const,
+			domain: "seating",
+			owner: "lab-v0",
+			sites: [`src/${name}.ts`],
+			tests: [`src/${name}.test.ts`],
+			...(aliases ? { aliases } : {}),
+		});
+		fixture = promiseProject({
+			domains: ["seating"],
+			archivedPlans: ["lab-v0"],
+			promises: [behaviour(RENAMED, [OLD_NAME]), behaviour(FLOOD)],
+			files: Object.fromEntries(
+				[RENAMED, FLOOD].flatMap((n) => [
+					[`src/${n}.ts`, siteFile(n)],
+					[`src/${n}.test.ts`, testFile(n)],
+				]),
+			),
+		});
+		jaeger = await startLocalJaeger();
+		await jaeger.load([
+			{
+				service: "fixture-app",
+				name: "release-hold",
+				promise: OLD_NAME,
+				outcome: "violated",
+				symptom: "hold never released",
+				traceId: aliased,
+			},
+		]);
+		// The query limit is 1500 traces per service and promise.
+		await jaeger.load(
+			Array.from({ length: 1500 }, () => ({
+				service: "fixture-flood",
+				name: "hold-seat",
+				promise: FLOOD,
+				outcome: "violated" as const,
+				symptom: "flooded",
+			})),
+			{ waitFor: "last" },
+		);
+		const r = runCli(fixture.root, ["promises", "status"], { INDUSK_HOME: jaeger.home });
+		out = r.stdout + r.stderr;
+	}, 180_000);
+
+	afterAll(() => {
+		jaeger?.stop();
+		if (jaeger) rmSync(jaeger.home, { recursive: true, force: true });
+		if (fixture) rmSync(fixture.root, { recursive: true, force: true });
+	});
+
+	it("A27 — a span marked with a promise's alias is counted under the promise", () => {
+		const b = block(out, RENAMED);
+		expect(b).toMatch(/\b1 violation\b/);
+		expect(b).toContain(aliased);
+	});
+
+	it("A30 — a query that fills the limit is reported as a lower bound", () => {
+		const b = block(out, FLOOD);
+		expect(b).toMatch(/at least 1500 violations/);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("day-monitor — A26: a query port that is not Jaeger", () => {
+	let fixture: PromiseProject;
+	let home: string;
+	let server: import("node:http").Server;
+	let port = 0;
+
+	beforeAll(async () => {
+		fixture = project();
+		home = mkdtempSync(join(tmpdir(), "indusk-bad-jaeger-home-"));
+		const { createServer } = await import("node:http");
+		server = createServer((_req, res) => {
+			res.writeHead(200, { "content-type": "text/html" });
+			res.end("<html>not jaeger</html>");
+		});
+		await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+		port = (server.address() as import("node:net").AddressInfo).port;
+		// A daemon record whose identity check passes: this process's PID is
+		// alive and the stub listens on both recorded ports.
+		const { writeFileSync } = await import("node:fs");
+		writeFileSync(join(home, "telemetry.pid"), String(process.pid));
+		writeFileSync(
+			join(home, "telemetry.json"),
+			JSON.stringify({
+				jaegerPid: process.pid,
+				otelcolPid: process.pid,
+				otlpPort: port,
+				uiPort: port,
+				mcpPort: port,
+				jaegerHealthPort: port,
+				otelcolHealthPort: port,
+				logsOtlpPort: port,
+				startedAt: new Date().toISOString(),
+			}),
+		);
+	});
+
+	afterAll(async () => {
+		await new Promise<void>((r) => server.close(() => r()));
+		if (fixture) rmSync(fixture.root, { recursive: true, force: true });
+		if (home) rmSync(home, { recursive: true, force: true });
+	});
+
+	it("A26 — status exits 2 naming the URL, with no stack trace", async () => {
+		// Async: the stub answers from this process, which spawnSync would block.
+		const { execFile } = await import("node:child_process");
+		const r = await new Promise<{ code: number; stdout: string; stderr: string }>((resolve) => {
+			execFile(
+				process.execPath,
+				[CLI_BIN, "promises", "status"],
+				{
+					cwd: fixture.root,
+					env: { ...process.env, INDUSK_HOME: home, INDUSK_SKIP_UPDATE_CHECK: "1" },
+				},
+				(err, stdout, stderr) =>
+					resolve({
+						code: err ? ((err as { code?: number }).code ?? 1) : 0,
+						stdout,
+						stderr,
+					}),
+			);
+		});
+		const text = r.stdout + r.stderr;
+		expect(r.code, text).toBe(2);
+		expect(text).toContain(`http://localhost:${port}`);
+		expect(text).not.toMatch(/^\s+at /m);
+		expect(text).not.toMatch(/\b0 violations\b/);
 	});
 });

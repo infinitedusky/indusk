@@ -1,9 +1,14 @@
-import { readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerPlanTools } from "../tools/plan-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { type LocalJaeger, newTraceId, startLocalJaeger } from "./helpers/local-jaeger.js";
+import {
+	type PlanWorktreeProject,
+	planWorktreeProject,
+	PLAN as WT_PLAN,
+} from "./helpers/plan-worktree-fixture.js";
 import {
 	daysAgo,
 	type PromiseProject,
@@ -11,7 +16,9 @@ import {
 	promiseProject,
 	siteFile,
 	testFile,
+	writePromise,
 } from "./helpers/promises-fixture.js";
+import { git } from "./helpers/test-git.js";
 import { toolCaller } from "./helpers/tool-call.js";
 
 /**
@@ -233,3 +240,61 @@ describe.skipIf(SHOULD_SKIP)("A14 — a violation reopens the archived owner (to
 		expect(JSON.stringify(plan)).toContain(`Maintenance — ${incidentId}`);
 	});
 });
+
+describe.skipIf(SHOULD_SKIP)(
+	"A29 — an owner assigned to a worktree is reopened in its worktree",
+	() => {
+		let jaeger: LocalJaeger;
+		let wt: PlanWorktreeProject;
+		let worktree = "";
+
+		beforeAll(async () => {
+			wt = planWorktreeProject("monitor-a29");
+			// A registry on the trunk: one behaviour promise owned by the active plan.
+			const reg = join(wt.trunk, ".indusk", "promises");
+			mkdirSync(reg, { recursive: true });
+			writeFileSync(
+				join(wt.trunk, ".indusk", "config.json"),
+				`${JSON.stringify({ mode: "full", otel: { role: "library" }, promises: { domains: ["seating"] } }, null, 2)}\n`,
+			);
+			writePromise(reg, {
+				name: PROMISE,
+				kind: "behaviour",
+				state: "enforced",
+				domain: "seating",
+				owner: WT_PLAN,
+			});
+			git(wt.trunk, ["add", "-A"]);
+			git(wt.trunk, ["commit", "-q", "-m", "registry"]);
+			worktree = wt.addWorktree("wt-demo", `plan/${WT_PLAN}`);
+			wt.writeRecord([{ plan: WT_PLAN, path: worktree, branch: `plan/${WT_PLAN}` }]);
+
+			jaeger = await startLocalJaeger();
+			await jaeger.load([
+				{
+					service: "fixture-app",
+					name: "hold-seat",
+					promise: PROMISE,
+					outcome: "violated",
+					symptom: "seat 4 held by two players",
+				},
+			]);
+			runCli(wt.trunk, ["promises", "watch"], { INDUSK_HOME: jaeger.home });
+		}, 90_000);
+
+		afterAll(() => {
+			jaeger?.stop();
+			if (jaeger) rmSync(jaeger.home, { recursive: true, force: true });
+			wt?.cleanup();
+		});
+
+		it("the worktree's impl gains the Maintenance phase, the trunk's does not, and list_plans shows it", async () => {
+			const implOf = (checkout: string) =>
+				readFileSync(join(checkout, ".indusk", "planning", WT_PLAN, "impl.md"), "utf-8");
+			expect(implOf(worktree)).toMatch(/^### Build Phase \d+: Maintenance — i-/m);
+			expect(implOf(wt.trunk)).not.toMatch(/Maintenance — i-/);
+			const plan = (await listPlans(wt.trunk, false)).find((x) => x.name === WT_PLAN);
+			expect(JSON.stringify(plan)).toMatch(/Maintenance — i-/);
+		});
+	},
+);
