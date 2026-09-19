@@ -16,9 +16,11 @@ import { readUnprocessedHighlights } from "../highlights/highlights.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
 import {
+	claudeExitReason,
 	initEvalOtel,
 	initEvalOtelLogs,
 	logEvalContent,
+	markEvaluation,
 	shutdownEvalOtel,
 	withSpan,
 } from "./otel.js";
@@ -334,7 +336,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 						return runPersistentEval(opts);
 					}
 					throw new Error(
-						`claude exited with code ${claudeResult.code}: ${claudeResult.stderr.slice(0, 500)}`,
+						claudeExitReason(claudeResult.code, claudeResult.stderr, claudeResult.stdout),
 					);
 				}
 
@@ -401,6 +403,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					});
 				});
 
+				markEvaluation(rootSpan, scorecard);
 				return scorecard;
 			} catch (err) {
 				const msg = err instanceof Error ? err.message : String(err);
@@ -420,6 +423,7 @@ Output ONLY the JSON scorecard — no commentary.`;
 					message: enrichedMessage,
 				};
 				await logWriter.append(errorEntry);
+				markEvaluation(rootSpan, errorEntry);
 				return errorEntry;
 			}
 		},

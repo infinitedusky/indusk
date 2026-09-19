@@ -1,11 +1,13 @@
 /**
  * OpenTelemetry tracing for the eval agent (evaluator).
  *
- * Opt-in via `eval.otel.enabled: true` in `.indusk/config.json` OR
- * `INDUSK_EVAL_OTEL=1` env var. Exports to `OTEL_EXPORTER_OTLP_ENDPOINT`
- * (Dash0 or any OTLP HTTP receiver).
+ * On via `eval.otel.enabled: true` in `.indusk/config.json`, the
+ * `INDUSK_EVAL_OTEL=1` env var, or — by default — while the local telemetry
+ * daemon runs (day-monitor: the evaluator's promise mark goes to the Jaeger
+ * the monitor reads). Exports to `OTEL_EXPORTER_OTLP_ENDPOINT`, else the
+ * daemon's OTLP endpoint. `eval.otel.enabled: false` keeps it off.
  *
- * Default OFF — zero cost in normal operation (no SDK init, no network).
+ * Off when none of those hold — no SDK init, no network.
  *
  * Graceful degradation: when enabled but endpoint missing, log a warning
  * to `.indusk/eval/system.log` and return a no-op tracer. When SDK init
@@ -24,6 +26,9 @@ import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
+import { PROMISE_MARK } from "../promises/vocabulary.js";
+import { liveOtlpEndpointSync } from "../telemetry/daemon.js";
+import type { EvalErrorEntry, EvalScorecard } from "./types.js";
 
 const TRACER_NAME = "@infinitedusky/indusk-mcp/eval";
 const SERVICE_NAME = "indusk-eval-agent";
@@ -52,8 +57,11 @@ const DEFAULT_DATASET = "agent";
  * `OTEL_EXPORTER_OTLP_ENDPOINT` env vars. Does not init anything or touch the network.
  *
  * Resolution:
- * - `enabled`: `INDUSK_EVAL_OTEL=1` (truthy) wins, else config `eval.otel.enabled`, else false.
- * - `endpoint`: `OTEL_EXPORTER_OTLP_ENDPOINT` (null if unset).
+ * - `enabled`: `INDUSK_EVAL_OTEL=1` (truthy) wins, else config `eval.otel.enabled`,
+ *   else true while the local telemetry daemon runs — unless the config says
+ *   `eval.otel.enabled: false`, the one way to keep the mark off it.
+ * - `endpoint`: `OTEL_EXPORTER_OTLP_ENDPOINT`, else the running daemon's OTLP
+ *   endpoint, else null.
  * - `dataset` (priority, highest → lowest):
  *   1. `INDUSK_EVAL_OTEL_DATASET` env var (explicit per-invocation override)
  *   2. `EVAL_AGENT_DATASET` env var (composable.env convention — see env/components/dash0.env)
@@ -66,10 +74,15 @@ const DEFAULT_DATASET = "agent";
  */
 export function isEvalOtelEnabled(projectRoot: string): EvalOtelConfig {
 	const envFlag = process.env.INDUSK_EVAL_OTEL;
-	const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? null;
+	// The local telemetry daemon, when it runs, is where the evaluator's
+	// promise mark goes by default (day-monitor, ADR D10): the monitor reads
+	// that Jaeger, and a mark nobody configured an exporter for is never seen.
+	const localEndpoint = liveOtlpEndpointSync();
+	const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? localEndpoint;
 	const explicitDataset = process.env.INDUSK_EVAL_OTEL_DATASET;
 	const composableDataset = process.env.EVAL_AGENT_DATASET;
 	let configEnabled = false;
+	let configDisabled = false;
 	let configDataset: string | undefined;
 
 	const configPath = join(projectRoot, ".indusk", "config.json");
@@ -77,6 +90,7 @@ export function isEvalOtelEnabled(projectRoot: string): EvalOtelConfig {
 		try {
 			const config = JSON.parse(readFileSync(configPath, "utf-8"));
 			configEnabled = config?.eval?.otel?.enabled === true;
+			configDisabled = config?.eval?.otel?.enabled === false;
 			if (typeof config?.eval?.otel?.dataset === "string") {
 				configDataset = config.eval.otel.dataset;
 			}
@@ -95,7 +109,7 @@ export function isEvalOtelEnabled(projectRoot: string): EvalOtelConfig {
 		DEFAULT_DATASET;
 
 	return {
-		enabled: envForcesEnabled || configEnabled,
+		enabled: envForcesEnabled || configEnabled || (localEndpoint !== null && !configDisabled),
 		endpoint,
 		dataset,
 	};
@@ -225,6 +239,40 @@ export async function withSpan<T>(
 			span.end();
 		}
 	});
+}
+
+/**
+ * The promise every evaluator run marks (day-monitor, ADR D10): every commit
+ * the evaluator is asked to score is scored.
+ */
+export const EVALUATION_PROMISE = "every-commit-evaluated";
+
+/**
+ * Mark an evaluation's root span with its outcome — the ADR D1 mark, so
+ * `indusk promises status` reads a failed evaluation from Jaeger like any
+ * application's broken promise. Called once per evaluation, at the point it
+ * ends: a run that retries through a fresh session marks only the retry.
+ *
+ * promise: every-commit-evaluated
+ */
+export function markEvaluation(span: Span, result: EvalScorecard | EvalErrorEntry): void {
+	span.setAttribute(PROMISE_MARK.promise, EVALUATION_PROMISE);
+	if (!("error" in result && result.error)) {
+		span.setAttribute(PROMISE_MARK.outcome, "upheld");
+		return;
+	}
+	span.setAttribute(PROMISE_MARK.outcome, "violated");
+	const symptom = result.message.split("\n").find((l) => l.trim() !== "") ?? "evaluation failed";
+	span.addEvent(PROMISE_MARK.violatedEvent, { [PROMISE_MARK.symptom]: symptom.slice(0, 500) });
+}
+
+/**
+ * The reason a `claude` run failed, for the error line. The CLI prints some
+ * failures on stdout with stderr empty — a model that does not exist is one
+ * (verified 2026-09-18) — so stderr alone left the line saying nothing.
+ */
+export function claudeExitReason(code: number | null, stderr: string, stdout: string): string {
+	return `claude exited with code ${code}: ${(stderr.trim() || stdout.trim()).slice(0, 500)}`;
 }
 
 /**

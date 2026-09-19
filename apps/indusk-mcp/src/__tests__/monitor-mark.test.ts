@@ -22,8 +22,7 @@ import { headOf } from "./helpers/test-git.js";
  * here a capture server. The assertions read the exported OTLP payload only:
  * "which promise broke" must be readable from the raw trace, without InDusk.
  *
- * Red today on its own assertion: the evaluator exports its `eval.*` spans,
- * but none carries `indusk.promise`. Green after Build Phase 1.
+ * promise: every-commit-evaluated
  */
 
 const HOOK = join(REPO_ROOT, "apps/indusk-mcp/hooks/eval-trigger.js");

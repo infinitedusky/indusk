@@ -12,7 +12,13 @@ import { join } from "node:path";
 import { getEvalModel, getProjectGroupId } from "../config.js";
 import { ingestScorecard } from "./findings.js";
 import { EvalLogWriter } from "./log-writer.js";
-import { initEvalOtel, shutdownEvalOtel, withSpan } from "./otel.js";
+import {
+	claudeExitReason,
+	initEvalOtel,
+	markEvaluation,
+	shutdownEvalOtel,
+	withSpan,
+} from "./otel.js";
 import { buildEvaluatorPrompt } from "./prompt-builder.js";
 import { V1_RUBRIC } from "./rubric.js";
 import { extractScorecardJson, formatParseError } from "./scorecard-extractor.js";
@@ -131,7 +137,7 @@ export function runEvaluatorBackground(opts: EvaluatorRunOptions): void {
 
 		try {
 			if (code !== 0) {
-				throw new Error(`claude exited with code ${code}: ${stderr.slice(0, 500)}`);
+				throw new Error(claudeExitReason(code, stderr, stdout));
 			}
 
 			// --output-format json wraps the result; extract the text content and usage
@@ -214,7 +220,11 @@ export async function runEvaluatorSync(
 			projectGroup,
 			entrypoint: "runEvaluatorSync",
 		},
-		() => runEvaluatorSyncInner(opts, projectGroup),
+		async (span) => {
+			const outcome = await runEvaluatorSyncInner(opts, projectGroup);
+			markEvaluation(span, outcome);
+			return outcome;
+		},
 	);
 
 	await shutdownEvalOtel();
@@ -277,7 +287,7 @@ async function runEvaluatorSyncInner(
 
 			try {
 				if (code !== 0) {
-					throw new Error(`claude exited with code ${code}: ${stderr.slice(0, 500)}`);
+					throw new Error(claudeExitReason(code, stderr, stdout));
 				}
 
 				let scorecardText = stdout;

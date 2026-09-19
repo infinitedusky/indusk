@@ -553,6 +553,24 @@ export async function daemonStart(opts: DaemonStartOptions = {}): Promise<Daemon
 	return meta;
 }
 
+/**
+ * The running daemon's OTLP/HTTP endpoint, or null when none is running.
+ *
+ * Synchronous on purpose — the evaluator decides its exporter at init, which
+ * is sync — so it reads the meta file and checks the Jaeger PID is alive, and
+ * opens no socket. A reused PID yields an endpoint nothing answers; the
+ * exporter's failure is silent and the evaluation is unaffected.
+ */
+export function liveOtlpEndpointSync(): string | null {
+	try {
+		const meta = JSON.parse(readFileSync(metaFilePath(), "utf-8")) as DaemonMeta;
+		process.kill(meta.jaegerPid, 0);
+		return `http://localhost:${meta.otlpPort}`;
+	} catch {
+		return null;
+	}
+}
+
 export async function daemonStatus(): Promise<DaemonStatusResult> {
 	const pidFile = pidFilePath();
 	const metaFile = metaFilePath();
