@@ -72,7 +72,9 @@ function maintenancePhase(
 
 export type ReopenResult =
 	| { reopened: true; impl: string; phase: number }
-	| { reopened: false; reason: "already" | "no-owner" };
+	| { reopened: false; reason: "already" | "no-owner" }
+	/** The plan-worktree record could not say where the owner lives; nothing was written. */
+	| { reopened: false; reason: "copy-problem"; detail: string };
 
 /** Append the incident's Maintenance phase to `owner`'s impl. */
 export function reopenOwner(
@@ -80,8 +82,10 @@ export function reopenOwner(
 	owner: string,
 	incidentId: string,
 	promise: string,
+	/** The owner's live folder when it is assigned to a worktree (day-monitor A29); else found here. */
+	liveDir?: string,
 ): ReopenResult {
-	const dir = ownerDir(planRoot, owner);
+	const dir = liveDir ?? ownerDir(planRoot, owner);
 	if (!dir) return { reopened: false, reason: "no-owner" };
 	const implPath = join(dir, "impl.md");
 	// The phase carries every gate the validator will ask this project for.

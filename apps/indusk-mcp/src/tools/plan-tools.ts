@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
 import { readPromises } from "../lib/promises/registry.js";
+import { openMaintenancePhases } from "../lib/promises/reopen.js";
 import {
 	copySource,
 	livePlanCopy,
@@ -34,7 +35,6 @@ function recordError(file: string, problem: string) {
 	};
 }
 
-/** The plan folder a copy names — the resolver's, checked on disk; never joined here. */
 /** `parsePlan`, or an `unknown` summary when the folder does not exist (it throws). */
 function parsePlanIfPresent(dir: string): PlanSummary {
 	if (existsSync(dir)) return parsePlan(dir);
@@ -48,6 +48,7 @@ function parsePlanIfPresent(dir: string): PlanSummary {
 	};
 }
 
+/** The plan folder a copy names — the resolver's, checked on disk; never joined here. */
 function planDirOf(copy: PlanCopy): string {
 	return copy.dir;
 }
@@ -75,7 +76,14 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			const plans: PlanSummary[] = parseAllPlans(resolved.projectRoot).map((plan) => {
 				const copy = resolved.copies.get(plan.name);
 				const live = copy?.source === "worktree" ? parsePlan(planDirOf(copy)) : plan;
-				return { ...live, ...copySource(copy) };
+				// An incident's open Maintenance phase, read from the live copy
+				// (day-monitor A29) — archived plans report theirs the same way.
+				const dir = copy ? planDirOf(copy) : join(getPlanningDir(resolved.projectRoot), plan.name);
+				const implPath = join(dir, "impl.md");
+				const reopened = existsSync(implPath)
+					? openMaintenancePhases(readFileSync(implPath, "utf-8"))
+					: [];
+				return { ...live, ...copySource(copy), ...(reopened.length > 0 ? { reopened } : {}) };
 			});
 			// Archived plans back in motion (day-monitor): reopened by an
 			// incident. The archive folder itself is not a plan.

@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
 import { readPromises } from "./registry.js";
@@ -15,6 +17,27 @@ import type { IncidentSource } from "./vocabulary.js";
 
 export interface WatchResult {
 	changes: (IncidentChange & { promise: string; owner: string; reopen: ReopenResult })[];
+}
+
+/**
+ * Reopen the owner where it is being worked: an active plan assigned to a
+ * worktree gains its Maintenance phase in that worktree's copy, which is the
+ * one `list_plans` and the admin read — not in the trunk's stale copy, where
+ * nobody would see it and the landing merge would conflict (day-monitor A29).
+ */
+async function reopenLive(
+	planRoot: string,
+	owner: string,
+	incidentId: string,
+	promise: string,
+): Promise<ReopenResult> {
+	const live = await livePlanCopy(planRoot, owner);
+	if (!live.ok) {
+		return { reopened: false, reason: "copy-problem", detail: `${live.file}: ${live.problem}` };
+	}
+	const dir =
+		live.copy.source === "worktree" && existsSync(live.copy.dir) ? live.copy.dir : undefined;
+	return reopenOwner(planRoot, owner, incidentId, promise, dir);
 }
 
 export async function watchPromises(
@@ -45,7 +68,7 @@ export async function watchPromises(
 		if (violations.length === 0) continue;
 		const change = recordViolations(read.registry, promise, violations, opts.source, now);
 		if (!change) continue;
-		const reopen = reopenOwner(planRoot, promise.owner, change.id, promise.name);
+		const reopen = await reopenLive(planRoot, promise.owner, change.id, promise.name);
 		changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
 	}
 	return { changes };

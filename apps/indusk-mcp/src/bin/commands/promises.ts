@@ -121,6 +121,10 @@ export async function promisesWatch(
 		console.info(`${c.kind} ${c.id} (${c.promise}, ${n} new trace${n === 1 ? "" : "s"})`);
 		if (c.reopen.reopened) {
 			console.info(`  reopened ${c.owner}: Build Phase ${c.reopen.phase}: Maintenance — ${c.id}`);
+		} else if (c.reopen.reason === "copy-problem") {
+			console.error(
+				`  ${c.owner} was not reopened — its worktree assignment could not be read: ${c.reopen.detail}`,
+			);
 		} else if (c.reopen.reason === "no-owner") {
 			console.error(`  owner "${c.owner}" is not a plan folder — nothing was reopened`);
 		}
