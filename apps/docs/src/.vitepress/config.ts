@@ -220,6 +220,7 @@ const config = defineConfig({
 						{ text: "Tests-First Planning — Decision Summary", link: "/decisions/tests-first-planning" },
 						{ text: "Planner Hotfix Mode (salvaged, never merged)", link: "/decisions/planner-hotfix-mode" },
 						{ text: "Promises", link: "/decisions/day-promises" },
+						{ text: "Monitor", link: "/decisions/day-monitor" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
 						{ text: "Worktree Visibility", link: "/decisions/worktree-visibility" },
@@ -258,6 +259,7 @@ const config = defineConfig({
 						{ text: "Workbench Setup Command — Lessons", link: "/lessons/workbench-setup-command" },
 						{ text: "Plans in Worktrees — Lessons", link: "/lessons/admin-plan-worktrees" },
 						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
+						{ text: "Monitor — Lessons", link: "/lessons/day-monitor" },
 						{ text: "Workbench Trust Fixes — Lessons", link: "/lessons/workbench-trust-fixes" },
 						{
 							text: "Worktree Config Schema Pointer — Lessons",
