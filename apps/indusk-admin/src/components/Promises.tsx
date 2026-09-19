@@ -9,10 +9,10 @@ import type {
 import Link from "next/link";
 import { useState } from "react";
 import {
-  PROMISE_HEALTH_CHIP,
   PROMISE_KIND_LABELS,
   PROMISE_STATE_CHIP,
 } from "@/components/bars/labels";
+import { GREY, HealthChip, HealthDetail } from "@/components/PromiseHealth";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -48,66 +48,6 @@ export const PROMISE_GROUPINGS: ReadonlyArray<{
   { key: "state", label: "by state" },
   { key: "kind", label: "by kind" },
 ];
-
-/** Observed health as a chip, beside the declared state (day-monitor, ADR D9). */
-export function HealthChip({
-  row,
-  unknownSince,
-}: {
-  row: HealthRow;
-  /** Set when Jaeger could not be read: when it last could, or null for never. */
-  unknownSince?: string | null;
-}) {
-  const chip = PROMISE_HEALTH_CHIP[row.health];
-  const aria =
-    unknownSince !== undefined && row.health === "unverified"
-      ? `health unknown since ${unknownSince ?? "this server started"}`
-      : chip.aria;
-  return (
-    <span
-      role="img"
-      data-testid="promise-health"
-      data-health={row.health}
-      aria-label={aria}
-      title={aria}
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${chip.className}`}
-    >
-      {chip.label}
-    </span>
-  );
-}
-
-function day(iso: string): string {
-  return iso.slice(0, 16).replace("T", " ");
-}
-
-/** The line under a behaviour promise's chips: violations in the window and last seen. */
-function HealthDetail({
-  row,
-  unknownSince,
-}: {
-  row: HealthRow;
-  unknownSince?: string | null;
-}) {
-  if (row.health === "grey") return null;
-  const parts: string[] = [];
-  if (row.violations !== null && row.violations > 0) {
-    parts.push(
-      `${row.atLeast ? "at least " : ""}${row.violations} violation${row.violations === 1 ? "" : "s"}`,
-    );
-  }
-  if (row.lastSeen) parts.push(`last seen ${day(row.lastSeen)}`);
-  else if (unknownSince === undefined && row.health === "unverified")
-    parts.push("not seen");
-  if (parts.length === 0) return null;
-  return (
-    <span className="text-xs text-gray-500" data-testid="promise-health-detail">
-      {parts.join(" · ")}
-    </span>
-  );
-}
-
-const GREY: HealthRow = { health: "grey", violations: null, lastSeen: null };
 
 /** A promise's declared state as a chip. Hollow when enforced: declared, not yet observed. */
 export function PromiseChip({ state }: { state: PromiseState }) {
