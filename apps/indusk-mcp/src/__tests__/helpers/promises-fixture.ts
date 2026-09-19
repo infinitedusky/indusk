@@ -51,6 +51,10 @@ export interface IncidentSpec {
 	symptom?: string;
 	rootCause?: string;
 	fix?: string;
+	/** ADR D6 (day-monitor): when it opened and was last seen (ISO), and its trace ids. */
+	opened?: string;
+	lastSeen?: string;
+	traces?: string[];
 	/** Frontmatter keys to leave out. */
 	omit?: string[];
 	/** Body sections to leave out (`symptom` | `root-cause` | `fix`). */
@@ -157,6 +161,9 @@ export function writeIncident(dir: string, spec: IncidentSpec): string {
 		status: spec.status ?? "open",
 		date: spec.date ?? "2026-09-18",
 	};
+	if (spec.opened !== undefined) frontmatter.opened = spec.opened;
+	if (spec.lastSeen !== undefined) frontmatter.last_seen = spec.lastSeen;
+	if (spec.traces !== undefined) frontmatter.traces = spec.traces;
 	for (const key of spec.omit ?? []) delete frontmatter[key];
 	const omit = new Set(spec.omitSections ?? []);
 	const sections: string[] = [];

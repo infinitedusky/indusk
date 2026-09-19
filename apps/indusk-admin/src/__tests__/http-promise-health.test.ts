@@ -97,6 +97,7 @@ function incidentFile(o: {
     UNWRITTEN,
     "",
     "## Fix",
+    "_Not yet fixed._",
     "",
   ].join("\n");
 }

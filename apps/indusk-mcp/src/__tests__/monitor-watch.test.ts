@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -108,26 +108,24 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — promises watch", () => {
 					incidents: [`i-2026-09-17-${RELEASE}`],
 				}),
 			],
+			// The pre-existing open incident, in ADR D6's shape.
+			incidents: [
+				{
+					id: `i-2026-09-17-${RELEASE}`,
+					promise: RELEASE,
+					source: "local",
+					status: "open",
+					date: "2026-09-17",
+					symptom: "A held seat stayed held.",
+					rootCause: UNWRITTEN,
+					fix: "_Not yet fixed._",
+					opened: "2026-09-17T10:00:00Z",
+					lastSeen: "2026-09-17T10:00:00Z",
+					traces: [oldTrace],
+				},
+			],
 			files: codeFiles(RELEASE),
 		});
-		// The pre-existing open incident, in ADR D6's shape.
-		const incident = matter.stringify(
-			`## Symptom\nA held seat stayed held.\n\n## Root cause\n${UNWRITTEN}\n\n## Fix\n\n`,
-			{
-				id: `i-2026-09-17-${RELEASE}`,
-				promise: RELEASE,
-				source: "local",
-				status: "open",
-				date: "2026-09-17",
-				opened: "2026-09-17T10:00:00Z",
-				last_seen: "2026-09-17T10:00:00Z",
-				traces: [oldTrace],
-			},
-		);
-		const dir = join(extended.root, ".indusk", "promises", "incidents");
-		mkdirSync(dir, { recursive: true });
-		writeFileSync(join(dir, `i-2026-09-17-${RELEASE}.md`), incident);
-
 		await jaeger.load([
 			{
 				service: "fixture-app",

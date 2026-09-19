@@ -96,6 +96,7 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 - [x] Author A11–A13, A15 in `apps/indusk-mcp/src/__tests__/monitor-watch.test.ts` via `runCli`
 - [x] Author A14 (tools half), A16–A19 (tools half) in `apps/indusk-mcp/src/__tests__/monitor-plans.test.ts` through `helpers/tool-call.ts`
 - [x] Author A14, A16, A18 (admin halves) and A20–A23 in `apps/indusk-admin/src/__tests__/http-promise-health.test.ts` over `next dev`, with a local Jaeger. The retired-is-grey half of A20 is in `components/Promises.test.tsx` (retired rows sit behind a client toggle, absent from server HTML). The Jaeger helper is imported by path
+- [x] Shape (Test Phase 1): `monitor-plans.test.ts` patched `last_seen` into incident files by regex and `monitor-watch.test.ts` hand-built one with gray-matter, because the fixture's incident writer could not carry ADR D6's fields — `IncidentSpec` gains `opened`, `lastSeen`, `traces` and both tests use it (rule: one builder for a promise-bearing project). Writing it surfaced that the registry refuses an empty `## Fix`, recorded on Build Phase 3's `watch` item. Considered and left: `monitor-mark`'s `evaluate()` sets up, spawns and waits in one function — it is the one harness for one boundary, and splitting it would scatter a sequence that only reads in order
 - [x] Run each file and read each failure: every red row fails on its own assertion, not on a missing import. Read: every authored row fails on its own assertion (`unknown command 'status'/'watch'`, no marked span, no archived plan in `list_plans`, no health chip, no active `monitor` segment); A6 and A19 pass. A17's positive half asks `get_plan_status` for the archived plan and expects `archived` (today the tool throws on a plan outside `planning/`, caught and asserted on), so `list_plans` need not list every archived plan
 
 #### Deferred to Build Phase 1
@@ -127,16 +128,16 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A3, A6–A23 authored; A6 and A19 pass; every other row fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-*.test.ts` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts`)
-- [ ] The two deferral bodies reviewed: each compiles at the phase it names and asserts what the row claims
+- [x] A1–A3, A6–A23 authored; A6 and A19 pass; every other row fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-` — a path filter, not a glob: zsh expands an unquoted `monitor-*.test.ts` from the repo root and refuses it — and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-health.test.ts`). Ran 2026-09-18: mcp 17 failed / 3 passed (A6, A19, the evaluator-mark preconditions); admin 7 failed; the A20 grey half fails in the browser project
+- [x] The two deferral bodies reviewed: each compiles at the phase it names and asserts what the row claims. A4/A5: the package self-reference resolves inside its own tests (probed with the existing `promises/registry` subpath), so the import compiles once Build Phase 1 exports `./testing/trace-shape`; the body names three fixture calls (`fixtureCallThatUpholds`, `fixtureCallWithExtraChild`, `fixtureCallWithoutMark`) that Build Phase 1 writes with `@opentelemetry/api` in the same file; A4 asserts upheld-under-parent and A5 both tolerance and the named failure, as the rows claim. A24: its procedure matches ADR D10 and needs Build Phase 6's `e2e` project, so it cannot compile earlier
 
 #### Test Phase 1 Context
 
-- [ ] Known Gotchas (tests): tests that read Jaeger start the real binary through `helpers/local-jaeger.ts`, never a stub; the evaluator is exercised through a fake `claude` and `helpers/otlp-capture.ts`
+- [x] Known Gotchas (tests): tests that read Jaeger start the real binary through `helpers/local-jaeger.ts`, never a stub; the evaluator is exercised through a fake `claude` and `helpers/otlp-capture.ts`
 
 #### Test Phase 1 Document
 
-- [ ] Changelog Unreleased entry opened in `apps/docs/src/changelog.md` for the monitor, filled in as phases land
+- [x] Changelog Unreleased entry opened in `apps/docs/src/changelog.md` for the monitor, filled in as phases land
 
 ### Build Phase 1: The mark
 
@@ -177,7 +178,7 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 3: The loop
 
-- [ ] `indusk promises watch [--source local|smoke|deployed]`: status, then open or extend incidents (ADR D6 fields, `## Root cause` written as `_Unwritten — a person writes this._`), traces deduplicated, `last_seen` only forward; writes plan documents, commits nothing. Found in Test Phase 1 by reading `check.ts`/`registry.ts`: the incident must also carry `date` (the registry refuses one without it), and opening one must move an `enforced` promise to `known-violated` and add the id to its `incidents:` — `check` refuses an enforced promise with an open incident, and A11 asserts `check` still passes
+- [ ] `indusk promises watch [--source local|smoke|deployed]`: status, then open or extend incidents (ADR D6 fields, `## Root cause` written as `_Unwritten — a person writes this._`), traces deduplicated, `last_seen` only forward; writes plan documents, commits nothing. Found in Test Phase 1 by reading `check.ts`/`registry.ts`: the incident must also carry `date` (the registry refuses one without it), and opening one must move an `enforced` promise to `known-violated` and add the id to its `incidents:` — `check` refuses an enforced promise with an open incident, and A11 asserts `check` still passes; and `## Fix` cannot be empty (the registry refuses an empty section), so it is written as `_Not yet fixed._` — ADR D6 showed it empty
 - [ ] Reopen (ADR D7): append `### Build Phase N: Maintenance — <incident>` with its four gates to the owner's impl, in place, archived or active; numbering from the owner's own phases; a plan with no impl gets one containing only that phase
 - [ ] `list_plans` lists an archived plan with an unchecked Maintenance phase as active, reading it from the archive; `get_plan_status` resolves an archived plan by name (A17's positive half asks it)
 - [ ] `promises check`: refuse an incident with `status: fixed` whose root cause is the unwritten line, naming the file

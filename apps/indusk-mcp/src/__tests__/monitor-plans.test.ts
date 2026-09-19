@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerPlanTools } from "../tools/plan-tools.js";
@@ -117,20 +117,12 @@ function project(
 						status: "open",
 						date: daysAgo(opts.lastSeenDaysAgo ?? 0),
 						rootCause: "_Unwritten — a person writes this._",
+						lastSeen: `${daysAgo(opts.lastSeenDaysAgo ?? 0)}T12:00:00Z`,
 					},
 				]
 			: [],
 		files: FILES,
 	});
-	if (withIncident) {
-		// ADR D6's `last_seen`, which the fixture's incident writer does not carry.
-		const path = join(p.planRoot, ".indusk", "promises", "incidents", `${id}.md`);
-		const text = readFileSync(path, "utf-8").replace(
-			/^status: open$/m,
-			`status: open\nlast_seen: '${daysAgo(opts.lastSeenDaysAgo ?? 0)}T12:00:00Z'`,
-		);
-		writeFileSync(path, text);
-	}
 	projects.push(p);
 	return p;
 }

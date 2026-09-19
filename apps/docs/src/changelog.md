@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **The monitor: a behaviour promise broken in a local run is found by telemetry and sends its plan back to work** (Day step 4b, in progress). The tests are written first and fail today: a span marked with a promise and exported to the local Jaeger is read back by `indusk promises status`; `indusk promises watch` opens an incident and appends a Maintenance phase to the owning plan; a closed plan holding a behaviour promise stays in `monitor` for a quiet window; the admin's Promises page shows each behaviour promise's observed health. They run against the local-telemetry extension's real Jaeger, never a stub. This entry is filled in as each phase lands.
+
 ## [1.53.0] — 2026-09-18
 
 ### Fixed
