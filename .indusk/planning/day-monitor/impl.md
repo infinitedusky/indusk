@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b — Monitor"
 date: 2026-09-18
-status: draft
+status: approved
 trajectory: required
 test_phases: required
 rationale: required
