@@ -158,7 +158,9 @@ export async function startLocalJaeger(opts: { home?: string } = {}): Promise<Lo
 			body: JSON.stringify(body),
 		});
 		if (!res.ok) {
-			throw new Error(`startLocalJaeger.load: OTLP export refused (${res.status}): ${await res.text()}`);
+			throw new Error(
+				`startLocalJaeger.load: OTLP export refused (${res.status}): ${await res.text()}`,
+			);
 		}
 		// Jaeger batches before storing; wait until every trace is queryable.
 		const deadline = Date.now() + 15_000;

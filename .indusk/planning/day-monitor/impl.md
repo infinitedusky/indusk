@@ -90,11 +90,11 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 - [x] Helper `apps/indusk-mcp/src/__tests__/helpers/local-jaeger.ts`: starts the extension's Jaeger binary (`resolveBinary("jaeger")`) with in-memory storage on free ports, loads spans over OTLP/HTTP, stops it; throws when it cannot start. Used by the admin tests through a copy only if the admin cannot import it — decide in this item and record which. **Decided:** it starts the extension's daemon through the built CLI (`telemetry start --otlp-port 0 --ui-port 0`) in a caller-owned `INDUSK_HOME`, so `status` finds it through `telemetry.json` exactly as on a developer's machine; node built-ins only, and the admin imports it by path — no copy
 - [x] Helper `apps/indusk-mcp/src/__tests__/helpers/otlp-capture.ts`: a local HTTP server accepting `POST /v1/traces` (OTLP/JSON and protobuf decoded by the collector-free path the evaluator's exporter uses) and exposing what it received, and a fake `claude` on `PATH` that exits 1 with the bad-model message or writes a scorecard. **Found while writing it:** the real CLI prints the bad-model message on **stdout** with stderr empty (checked 2026-09-18), so today's evaluator error (`claude exited with code 1: ` + stderr) carries no reason; Build Phase 1's symptom must fall back to stdout
 - [x] Fixture extension of `helpers/promises-fixture.ts`: a behaviour promise owned by an archived plan with a retrospective carrying a "Landed on main at <sha>, <date>" line at a chosen date
-- [ ] Author A2, A3 in `apps/indusk-mcp/src/__tests__/monitor-mark.test.ts` (spawn the evaluator through the hook's CLI mode with the fake `claude` and `OTEL_EXPORTER_OTLP_ENDPOINT` at the capture server)
-- [ ] Author A6 in `apps/indusk-mcp/src/__tests__/monitor-check.test.ts` (a fixture test file whose text calls the helper with `"promise: <name>"`; the check reads text, so the helper need not exist)
-- [ ] Author A1, A7–A10 in `apps/indusk-mcp/src/__tests__/monitor-status.test.ts` via `runCli` against the local Jaeger helper
-- [ ] Author A11–A13, A15 in `apps/indusk-mcp/src/__tests__/monitor-watch.test.ts` via `runCli`
-- [ ] Author A14 (tools half), A16–A19 (tools half) in `apps/indusk-mcp/src/__tests__/monitor-plans.test.ts` through `helpers/tool-call.ts`
+- [x] Author A2, A3 in `apps/indusk-mcp/src/__tests__/monitor-mark.test.ts` (spawn the evaluator through the hook's CLI mode with the fake `claude` and `OTEL_EXPORTER_OTLP_ENDPOINT` at the capture server)
+- [x] Author A6 in `apps/indusk-mcp/src/__tests__/monitor-check.test.ts` (a fixture test file whose text calls the helper with `"promise: <name>"`; the check reads text, so the helper need not exist)
+- [x] Author A1, A7–A10 in `apps/indusk-mcp/src/__tests__/monitor-status.test.ts` via `runCli` against the local Jaeger helper
+- [x] Author A11–A13, A15 in `apps/indusk-mcp/src/__tests__/monitor-watch.test.ts` via `runCli`
+- [x] Author A14 (tools half), A16–A19 (tools half) in `apps/indusk-mcp/src/__tests__/monitor-plans.test.ts` through `helpers/tool-call.ts`
 - [ ] Author A14, A16, A18 (admin halves) and A20–A23 in `apps/indusk-admin/src/__tests__/http-promise-health.test.ts` over `next dev`, with a local Jaeger
 - [ ] Run each file and read each failure: every red row fails on its own assertion, not on a missing import
 
