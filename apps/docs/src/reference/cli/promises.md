@@ -207,6 +207,105 @@ The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry
 than returning an empty result). How an application marks a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 
+## `promises watch`
+
+```
+indusk promises watch [--source local|smoke|deployed]
+```
+
+One monitor pass over the quiet window: for each behaviour promise with a
+violation not yet recorded in any of its incidents, open or extend an
+incident and send the promise's owner back to work. It **writes plan
+documents and commits nothing** — review what it wrote and commit it. Exit 0
+whether or not anything changed; exit 2 when Jaeger or the registry cannot be
+read, with nothing written.
+
+```
+opened i-2026-09-19-every-commit-evaluated (every-commit-evaluated, 1 new trace)
+  reopened semantic-graph-eval: Build Phase 9: Maintenance — i-2026-09-19-every-commit-evaluated
+
+Written, not committed: review the incidents and commit them.
+```
+
+### The incident
+
+An open incident of the promise is **extended**: its new trace ids are
+appended and `last_seen` moves forward, never back. Otherwise one is
+**opened** as `incidents/i-<date>-<promise>.md` (with `-2`, `-3`… on
+collision):
+
+```md
+---
+id: i-2026-09-19-every-commit-evaluated
+promise: every-commit-evaluated
+source: local
+status: open
+date: '2026-09-19'
+opened: '2026-09-19T10:02:11Z'
+last_seen: '2026-09-19T10:14:40Z'
+traces:
+  - '4bf92f3577b34da6a3ce929d0e0e4736'
+---
+
+## Symptom
+
+claude exited with code 1: There's an issue with the selected model …
+
+## Root cause
+
+_Unwritten — a person writes this._
+
+## Fix
+
+_Not yet fixed._
+```
+
+The symptom comes from the newest violation's `indusk.promise.violated`
+event. The root cause is never written by the monitor: it is a person's
+finding, and `promises check` **refuses an incident marked `fixed` whose root
+cause is still the unwritten line**, naming the file. Opening an incident
+also moves an `enforced` promise to `known-violated` and lists the incident
+on it, so the registry still passes the check. A trace already recorded in
+any incident of the promise, open or fixed, is never counted again — a
+second pass over the same window writes nothing, and a fixed incident is not
+reopened by the violations that caused it. Files are edited as text, key by
+key, so nothing else in a hand-written file changes.
+
+### Reopening the owner
+
+The promise's owning plan — active or archived — gains a phase at the end of
+its impl, in place (an archived folder never moves; dozens of pointers cite
+archive paths):
+
+```md
+### Build Phase 9: Maintenance — i-2026-09-19-every-commit-evaluated
+
+- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-09-19-every-commit-evaluated.md`)
+- [ ] Fix: a code site, a widened test, or a revised promise
+
+#### Build Phase 9 Verification
+
+- [ ] T12: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+
+#### Build Phase 9 Context
+…
+#### Build Phase 9 Document
+…
+```
+
+- It is numbered after the owner's own build phases, and carries an **OTel**
+  gate when the project's `otel.role` asks for one.
+- When the impl has a Test Trajectory, a row is appended for the test that
+  reproduces the incident — writable and passing in the Maintenance phase,
+  continuing the table's `A`/`T` numbering — with the justification the
+  impl's shape requires: a `#### Deferred to Build Phase N` entry in Test
+  Phase 1's register, or a `### Trajectory Rationale` entry. The phase cannot
+  close until that test passes.
+- An owner with no impl gets one holding only this phase.
+- An archived plan with an unchecked Maintenance phase is **reopened**:
+  `list_plans` lists it active and `get_plan_status` reads it by name from the
+  archive.
+
 ## Reading the registry from code
 
 The library behind the command is exported as

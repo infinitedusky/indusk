@@ -43,7 +43,7 @@ export async function watchPromises(
 		if (violations.length === 0) continue;
 		const change = recordViolations(read.registry, promise, violations, opts.source, now);
 		if (!change) continue;
-		const reopen = reopenOwner(planRoot, promise.owner, change.id);
+		const reopen = reopenOwner(planRoot, promise.owner, change.id, promise.name);
 		changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
 	}
 	return { changes };

@@ -15,6 +15,7 @@ import { runHook } from "./helpers/hook-runner.js";
 
 const OWNERS = [
 	{ plan: "semantic-graph-eval", shape: "legacy (### Phase N)" },
+	{ plan: "admin-ui-hosting", shape: "a trajectory, before test phases" },
 	{ plan: "admin-plan-worktrees", shape: "test phases" },
 ];
 
@@ -56,7 +57,12 @@ describe.each(OWNERS)("a Maintenance phase appended to $plan ($shape)", ({ plan 
 		const before = await validate(root, implPath);
 		expect(before.exitCode, `the archived impl validates as it stands:\n${before.stderr}`).toBe(0);
 
-		const result = reopenOwner(root, plan, "i-2026-09-19-every-commit-evaluated");
+		const result = reopenOwner(
+			root,
+			plan,
+			"i-2026-09-19-every-commit-evaluated",
+			"every-commit-evaluated",
+		);
 		expect(result.reopened).toBe(true);
 		const text = readFileSync(implPath, "utf-8");
 		expect(text).toContain("Maintenance — i-2026-09-19-every-commit-evaluated");
@@ -65,7 +71,9 @@ describe.each(OWNERS)("a Maintenance phase appended to $plan ($shape)", ({ plan 
 		expect(after.exitCode, after.stderr).toBe(0);
 
 		// A second pass appends nothing.
-		expect(reopenOwner(root, plan, "i-2026-09-19-every-commit-evaluated")).toEqual({
+		expect(
+			reopenOwner(root, plan, "i-2026-09-19-every-commit-evaluated", "every-commit-evaluated"),
+		).toEqual({
 			reopened: false,
 			reason: "already",
 		});
@@ -112,7 +120,7 @@ describe("a Maintenance phase in a project whose otel.role asks for the OTel gat
 		const implPath = join(dir, "impl.md");
 		writeFileSync(implPath, SERVICE_IMPL);
 		expect((await validate(root, implPath)).exitCode).toBe(0);
-		reopenOwner(root, "seats", "i-2026-09-19-seat-never-double-booked");
+		reopenOwner(root, "seats", "i-2026-09-19-seat-never-double-booked", "seat-never-double-booked");
 		expect(readFileSync(implPath, "utf-8")).toContain("#### Build Phase 2 OTel");
 		const after = await validate(root, implPath);
 		expect(after.exitCode, after.stderr).toBe(0);

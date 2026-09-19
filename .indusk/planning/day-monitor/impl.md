@@ -64,11 +64,11 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A8 | A behaviour promise with no marked span in the window reads "not seen" — never "upheld", never zero violations | Test Phase 1 | Build Phase 2 | passing |
 | A9 | State and structure promises are listed as watched by the suite, with no violation count | Test Phase 1 | Build Phase 2 | passing |
 | A10 | With Jaeger unreachable, `status` names where it looked and exits 2; it never prints zero violations | Test Phase 1 | Build Phase 2 | passing |
-| A11 | After a violation with no open incident, `watch` leaves one incident naming the promise, its traces, source `local` and the symptom, with the root cause unwritten, and `promises check` passes | Test Phase 1 | Build Phase 3 | written |
-| A12 | A later violation of a promise with an open incident adds its traces to that incident and opens no other | Test Phase 1 | Build Phase 3 | written |
-| A13 | A second `watch` over the same violations changes no file | Test Phase 1 | Build Phase 3 | written |
+| A11 | After a violation with no open incident, `watch` leaves one incident naming the promise, its traces, source `local` and the symptom, with the root cause unwritten, and `promises check` passes | Test Phase 1 | Build Phase 3 | passing |
+| A12 | A later violation of a promise with an open incident adds its traces to that incident and opens no other | Test Phase 1 | Build Phase 3 | passing |
+| A13 | A second `watch` over the same violations changes no file | Test Phase 1 | Build Phase 3 | passing |
 | A14 | The owning plan reopens: `list_plans` lists it active with a Maintenance phase naming the incident, the appended phase passes the impl validator, and the admin shows it executing that phase | Test Phase 1 | Build Phase 5 | written |
-| A15 | `promises check` refuses an incident marked fixed whose root cause is still unwritten, naming the file | Test Phase 1 | Build Phase 3 | written |
+| A15 | `promises check` refuses an incident marked fixed whose root cause is still unwritten, naming the file | Test Phase 1 | Build Phase 3 | passing |
 | A16 | A plan closed fewer than the window's days ago that holds a behaviour promise reads `monitor` in `list_plans` and on its admin plan bar, with the window's elapsed share | Test Phase 1 | Build Phase 5 | written |
 | A17 | The same plan closed more than the window ago, with no violation since, reads archived | Test Phase 1 | Build Phase 4 | written |
 | A18 | A violation recorded during the window keeps the plan in `monitor` from the violation's time, and the page says the window restarted | Test Phase 1 | Build Phase 5 | written |
@@ -180,24 +180,25 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 3: The loop
 
-- [ ] `indusk promises watch [--source local|smoke|deployed]`: status, then open or extend incidents (ADR D6 fields, `## Root cause` written as `_Unwritten — a person writes this._`), traces deduplicated, `last_seen` only forward; writes plan documents, commits nothing. Found in Test Phase 1 by reading `check.ts`/`registry.ts`: the incident must also carry `date` (the registry refuses one without it), and opening one must move an `enforced` promise to `known-violated` and add the id to its `incidents:` — `check` refuses an enforced promise with an open incident, and A11 asserts `check` still passes; and `## Fix` cannot be empty (the registry refuses an empty section), so it is written as `_Not yet fixed._` — ADR D6 showed it empty
-- [ ] Reopen (ADR D7): append `### Build Phase N: Maintenance — <incident>` with its four gates to the owner's impl, in place, archived or active; numbering from the owner's own phases; a plan with no impl gets one containing only that phase
-- [ ] `list_plans` lists an archived plan with an unchecked Maintenance phase as active, reading it from the archive; `get_plan_status` resolves an archived plan by name (A17's positive half asks it)
-- [ ] `promises check`: refuse an incident with `status: fixed` whose root cause is the unwritten line, naming the file
-- [ ] A test runs `validate-impl-structure.js` over an owner's impl after `watch` appended to it, for a legacy impl (no test phases) and a test-phase impl
+- [x] `indusk promises watch [--source local|smoke|deployed]`: status, then open or extend incidents (ADR D6 fields, `## Root cause` written as `_Unwritten — a person writes this._`), traces deduplicated, `last_seen` only forward; writes plan documents, commits nothing. Found in Test Phase 1 by reading `check.ts`/`registry.ts`: the incident must also carry `date` (the registry refuses one without it), and opening one must move an `enforced` promise to `known-violated` and add the id to its `incidents:` — `check` refuses an enforced promise with an open incident, and A11 asserts `check` still passes; and `## Fix` cannot be empty (the registry refuses an empty section), so it is written as `_Not yet fixed._` — ADR D6 showed it empty. Frontmatter is edited as text (`lib/promises/frontmatter-edit.ts`), never a gray-matter round trip, so a second pass can prove it changed nothing; a trace recorded in any incident of the promise, open or fixed, is never counted again, so a fixed incident is not reopened by the violations that caused it
+- [x] Reopen (ADR D7): append `### Build Phase N: Maintenance — <incident>` with its four gates to the owner's impl, in place, archived or active; numbering from the owner's own phases; a plan with no impl gets one containing only that phase. Two additions the validator forced, found by running it on real archived impls: the phase carries an **OTel gate** when the project's `otel.role` asks for one; and in an impl with a Test Trajectory the Maintenance phase **appends a row** (the test that reproduces the incident, writable and passing in that phase, continuing the table's `A`/`T` prefix) with its justification — a Test Phase 1 register entry, or a `### Trajectory Rationale` entry for an impl written before test phases. Asked 2026-09-19 — "Append a test row" over a new `maintenance` no-tests reason, which would have been a new way to close a phase without a test
+- [x] `list_plans` lists an archived plan with an unchecked Maintenance phase as active, reading it from the archive; `get_plan_status` resolves an archived plan by name (A17's positive half asks it). `lib/promises/after-close.ts` is the one reader of what a closed plan is doing (`archived` / reopened; `monitor` joins in Build Phase 4); `archived` and `monitor` join `PlanStage` as after-close stages only it sets. The `archive` folder itself no longer appears in `list_plans` as a plan
+- [x] `promises check`: refuse an incident with `status: fixed` whose root cause is the unwritten line, naming the file
+- [x] A test runs `validate-impl-structure.js` over an owner's impl after `watch` appended to it, for a legacy impl (no test phases) and a test-phase impl: `monitor-reopen-validator.test.ts` — four shapes, three of them real archived impls from this repository (no trajectory; a trajectory before test phases; test phases) and a `service`-role project; 4 passed
+- [x] Shape (Build Phase 3): `addTrajectoryRow` both added the row and wrote its justification in two shapes — the justification extracted as `justifyLateRow` (rule: one reason to change). Considered and left: `incidents.ts` (open vs extend share the dedupe and the promise update, and read as one sequence); `after-close.ts` (one question, what a closed plan is doing)
 
 #### Build Phase 3 Verification
 
-- [ ] A11, A12, A13, A15 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-watch.test.ts`)
-- [ ] The tools half of A14 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-plans.test.ts -t A14`)
+- [x] A11, A12, A13, A15 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-watch.test.ts`) — ran 2026-09-19: all pass; the full monitor + promises + plan-tool run is 144 passed, the 2 red being A16/A18 (Build Phases 4–5)
+- [x] The tools half of A14 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/monitor-plans.test.ts -t A14`)
 
 #### Build Phase 3 Context
 
-- [ ] Conventions: `watch` opens or extends incidents and reopens the owner by an appended Maintenance phase in place; an incident cannot be fixed with its root cause unwritten
+- [x] Conventions: `watch` opens or extends incidents and reopens the owner by an appended Maintenance phase in place; an incident cannot be fixed with its root cause unwritten
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: `watch`, the incident fields, reopening
+- [x] `apps/docs/src/reference/cli/promises.md`: `watch`, the incident fields, reopening
 
 ### Build Phase 4: `monitor`
 
