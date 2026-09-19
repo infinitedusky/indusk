@@ -78,15 +78,28 @@ const DEFAULT_TIMEOUT_MS = 5_000;
 /** Jaeger's own default is 20 traces per query, which would silently truncate a busy window. */
 const TRACE_LIMIT = 1500;
 
-async function getJson<T>(url: string, timeoutMs: number, queryUrl: string): Promise<T> {
-	let res: Response;
+/**
+ * One Jaeger query, whose every failure is `JaegerUnreachable` naming the URL:
+ * no connection, a timeout (which also aborts a body still being read), a
+ * status other than 2xx, a body that is not JSON, or one whose `data` is not
+ * the array Jaeger returns. Something else answering on the recorded port is
+ * as unreachable as nothing answering (day-monitor A26).
+ */
+async function getData<T>(url: string, timeoutMs: number, queryUrl: string): Promise<T[]> {
+	let body: unknown;
 	try {
-		res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+		const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+		if (!res.ok) throw new Error(`${url} answered ${res.status}`);
+		body = await res.json();
 	} catch (err) {
 		throw new JaegerUnreachable(queryUrl, (err as Error).message);
 	}
-	if (!res.ok) throw new JaegerUnreachable(queryUrl, `${url} answered ${res.status}`);
-	return (await res.json()) as T;
+	const data = (body as { data?: unknown } | null)?.data;
+	if (data === null || data === undefined) return [];
+	if (!Array.isArray(data)) {
+		throw new JaegerUnreachable(queryUrl, `${url} did not answer with Jaeger's { data: [...] }`);
+	}
+	return data as T[];
 }
 
 function tag(tags: JaegerTag[] | undefined, key: string): unknown {
@@ -134,9 +147,7 @@ export async function markedSpans(opts: {
 		throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 	}
 	const queryUrl = `http://localhost:${status.uiPort}`;
-	const services =
-		(await getJson<{ data: string[] | null }>(`${queryUrl}/api/services`, timeoutMs, queryUrl))
-			.data ?? [];
+	const services = await getData<string>(`${queryUrl}/api/services`, timeoutMs, queryUrl);
 
 	const byPromise = new Map<string, PromiseMarks>();
 	const start = opts.since.getTime() * 1000;
@@ -151,14 +162,11 @@ export async function markedSpans(opts: {
 				end: String(end),
 				limit: String(TRACE_LIMIT),
 			});
-			const traces =
-				(
-					await getJson<{ data: JaegerTrace[] | null }>(
-						`${queryUrl}/api/traces?${params}`,
-						timeoutMs,
-						queryUrl,
-					)
-				).data ?? [];
+			const traces = await getData<JaegerTrace>(
+				`${queryUrl}/api/traces?${params}`,
+				timeoutMs,
+				queryUrl,
+			);
 			for (const t of traces) {
 				for (const span of t.spans) {
 					const marked = toMarked(span, t.processes[span.processID]?.serviceName ?? service);
