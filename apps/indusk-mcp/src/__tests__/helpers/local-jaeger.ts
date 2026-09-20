@@ -39,6 +39,13 @@ export interface FixtureSpan {
 	/** Reuse a trace id (several spans in one trace). Default: a fresh one. */
 	traceId?: string;
 	attributes?: Record<string, string | number | boolean>;
+	/**
+	 * Attributes on the **resource** rather than the span — where
+	 * `deployment.environment` actually lives for a conventionally
+	 * instrumented application, and where A21 found the reader was not
+	 * looking. Spans sharing a service must agree; the first wins.
+	 */
+	resourceAttributes?: Record<string, string | number | boolean>;
 }
 
 export interface LocalJaeger {
@@ -113,7 +120,14 @@ export function otlpBody(spans: FixtureSpan[]): { body: unknown; traceIds: strin
 	}
 	const body = {
 		resourceSpans: [...byService.entries()].map(([service, list]) => ({
-			resource: { attributes: [attr("service.name", service)] },
+			resource: {
+				attributes: [
+					attr("service.name", service),
+					...Object.entries(spans.find((s) => s.service === service)?.resourceAttributes ?? {}).map(
+						([k, v]) => attr(k, v),
+					),
+				],
+			},
 			scopeSpans: [{ scope: { name: "day-monitor-fixture" }, spans: list }],
 		})),
 	};

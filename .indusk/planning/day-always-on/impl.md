@@ -234,24 +234,30 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 
 ### Build Phase 6: The image, the deployment, end to end
 
-- [ ] A container image: the platform's Linux `jaeger` binary plus the built CLI, entrypoint `indusk telemetry serve`, published from `docker/` with the volume mount documented
-- [ ] The Fly.io reference deployment: `fly.toml` with an always-on machine (auto-stop off, and a comment saying why), a volume, and the secrets it needs; the deploy-and-break procedure written
+- [x] A container image: the platform's Linux `jaeger` binary plus the built CLI, entrypoint `indusk telemetry serve`, published from `docker/` with the volume mount documented
+  - `docker/Dockerfile.always-on`, installing the **published** package rather than this working tree: a server watching promises with code nobody else has is not the reference deployment. **Written, not built** — this machine has no docker daemon, and there is an ordering constraint the build would hit anyway: the published package predates `telemetry serve`, so the image can only be built after the release that carries it. Both belong to the deploy half, with U1/U2.
+- [x] The Fly.io reference deployment: `fly.toml` with an always-on machine (auto-stop off, and a comment saying why), a volume, and the secrets it needs; the deploy-and-break procedure written
 - [ ] Run the procedure by hand once (U1, U2): deploy, send a span from outside, break a promise, confirm the Slack message and that a trace sent after an idle period arrives; paste the output into the retrospective
-- [ ] Author and run `apps/indusk-mcp/e2e/day-always-on.e2e.test.ts` per the A21 procedure
-- [ ] `apps/docs/src/guide/always-on.md`: what runs where when the loop leaves the laptop, and how an application adopts it; `guide/index.md`'s "What runs where" row and `guide/promises.md`'s loop diagram gain the deployed path
+- [x] Author and run `apps/indusk-mcp/e2e/day-always-on.e2e.test.ts` per the A21 procedure
+  - Passes. It found a real bug the unit rows could not: `deployment.environment` is a **resource** attribute, so a conventionally instrumented application has it land on Jaeger's *process* tags, not the span's — and `parseMarkedSpan` read only the span. Every unit row passed because the OTLP fixture put it on the span. Fixed to read span first, then resource; `local-jaeger.ts` gained `resourceAttributes` and A12 now asserts through that path, so the guard lives in `pnpm test` rather than only in `pnpm e2e`.
+- [x] `apps/docs/src/guide/always-on.md`: what runs where when the loop leaves the laptop, and how an application adopts it; `guide/index.md`'s "What runs where" row and `guide/promises.md`'s loop diagram gain the deployed path
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 6 Verification
 
-- [ ] A21 passes: `pnpm e2e` on this machine, output recorded; `pnpm test` does not run it
-- [ ] Root suite and the promises check (`pnpm test`)
+- [x] A21 passes: `pnpm e2e` on this machine, output recorded; `pnpm test` does not run it
+  - `pnpm e2e`: 2 files, 5 tests, all passing — day-monitor's loop and this plan's. The root suite's 257 indusk-mcp files do not include either, so the exclusion holds.
+- [x] Root suite and the promises check (`pnpm test`)
+  - `pnpm test`: admin 52/52; indusk-mcp 252 passed, 1 skipped, **4 files failed** — all of them the missing gitignored `apps/indusk-mcp/admin/` bundle in a fresh worktree, fixed by `pnpm --filter indusk-admin build && node apps/indusk-mcp/scripts/bundle-admin.js` (the bundle script needs the Next build first; on its own it aborts naming the absent `BUILD_ID`). After that, **2 remaining failures**, both in `daemon-identity.test.ts` — run on `main` in the trunk checkout, they fail identically, and this branch never touched `src/lib/admin`. Pre-existing, not this plan's.
+  - `pnpm promises:check`: 4 promises — 4 enforced, 2 behaviour, 1 state, 1 structure, 1 incident. Clean.
 
 #### Build Phase 6 Context
 
-- [ ] Conventions: the always-on image is built from `docker/`, entrypoint `indusk telemetry serve`; the Fly reference deployment's machine never auto-stops
+- [x] Conventions: the always-on image is built from `docker/`, entrypoint `indusk telemetry serve`; the Fly reference deployment's machine never auto-stops
 
 #### Build Phase 6 Document
 
-- [ ] Changelog entry completed; `guide/always-on.md` published and linked from the sidebar
+- [x] Changelog entry completed; `guide/always-on.md` published and linked from the sidebar
 
 ## Files Affected
 

@@ -1,0 +1,46 @@
+# The always-on server (day-always-on).
+#
+# The Jaeger InDusk already ships, run as a long-lived process: badger on a
+# mounted volume, basic auth on the OTLP receiver and the query API, and an
+# in-process pass that announces each violation to Slack once.
+#
+# The image installs the published package rather than building from this
+# repo, so what runs in a deployment is what a consumer would get — a server
+# built from an unreleased working tree would be watching promises with code
+# nobody else has. Pin a version with --build-arg VERSION=1.x.y.
+#
+#   docker build -f docker/Dockerfile.always-on -t indusk-always-on .
+#   docker run -p 4318:4318 -p 16686:16686 \
+#     -v indusk-telemetry:/data \
+#     -e INDUSK_SERVER_VOLUME=/data \
+#     -e INDUSK_SERVER_OTLP_PORT=4318 \
+#     -e INDUSK_SERVER_QUERY_PORT=16686 \
+#     -e INDUSK_SERVER_USER=indusk \
+#     -e INDUSK_SERVER_PASSWORD="$(openssl rand -hex 24)" \
+#     -e INDUSK_SERVER_SLACK_WEBHOOK="https://hooks.slack.com/services/..." \
+#     indusk-always-on
+#
+# The volume is the whole point: badger keeps its files under
+# <INDUSK_SERVER_VOLUME>/badger, and a container without one forgets every
+# violation it was told about the moment it restarts.
+#
+# Every setting comes from the environment and a missing one refuses by name —
+# see /reference/cli/telemetry-server. Nothing is baked in, and no credential
+# belongs in this file.
+
+FROM node:22-slim
+
+ARG VERSION=latest
+
+# The telemetry binaries ship as platform-split optionalDependencies; on this
+# base image npm resolves the linux-x64 or linux-arm64 package, so no separate
+# download step exists to get wrong.
+RUN npm install -g "@infinitedusky/indusk-mcp@${VERSION}"
+
+# Jaeger tries to export its own traces to localhost:4317 and logs a
+# connection warning when nothing listens. Noise, not an error.
+ENV INDUSK_SKIP_UPDATE_CHECK=1
+
+# Foreground, as process 1: the supervisor that started this container is what
+# restarts it. Nothing here daemonizes or writes a PID file.
+ENTRYPOINT ["indusk", "telemetry", "serve"]

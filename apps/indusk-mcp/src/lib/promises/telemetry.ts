@@ -104,7 +104,7 @@ export interface JaegerSpan {
 export interface JaegerTrace {
 	traceID: string;
 	spans: JaegerSpan[];
-	processes: Record<string, { serviceName: string }>;
+	processes: Record<string, { serviceName: string; tags?: JaegerTag[] }>;
 }
 
 /**
@@ -156,12 +156,25 @@ function tag(tags: JaegerTag[] | undefined, key: string): unknown {
 	return tags?.find((t) => t.key === key)?.value;
 }
 
-export function parseMarkedSpan(span: JaegerSpan, service: string): MarkedSpan | null {
+export function parseMarkedSpan(
+	span: JaegerSpan,
+	service: string,
+	/**
+	 * The span's process tags. `deployment.environment` is a **resource**
+	 * attribute, so an application that sets it the conventional way — on the
+	 * resource, once, not on every span — has it land here rather than on the
+	 * span. Reading only the span found nothing for every real exporter, which
+	 * is what A21 caught and no unit test could: the OTLP fixture put it on
+	 * the span, and both layers are legitimate.
+	 */
+	processTags?: JaegerTag[],
+): MarkedSpan | null {
 	const promise = tag(span.tags, PROMISE_MARK.promise);
 	const outcome = tag(span.tags, PROMISE_MARK.outcome);
 	if (typeof promise !== "string") return null;
 	if (outcome !== "upheld" && outcome !== "violated") return null;
-	const environment = tag(span.tags, ENVIRONMENT_ATTRIBUTE);
+	const environment =
+		tag(span.tags, ENVIRONMENT_ATTRIBUTE) ?? tag(processTags, ENVIRONMENT_ATTRIBUTE);
 	let symptom: string | null = null;
 	for (const log of span.logs ?? []) {
 		if (tag(log.fields, "event") !== PROMISE_MARK.violatedEvent) continue;
@@ -236,10 +249,8 @@ export async function markedSpans(opts: {
 				if (traces.length >= TRACE_LIMIT) truncated = true;
 				for (const t of traces) {
 					for (const span of t.spans) {
-						const marked = parseMarkedSpan(
-							span,
-							t.processes[span.processID]?.serviceName ?? service,
-						);
+						const process = t.processes[span.processID];
+						const marked = parseMarkedSpan(span, process?.serviceName ?? service, process?.tags);
 						if (!marked || marked.promise !== name) continue;
 						marked.promise = promise;
 						if (marked.at < opts.since) continue;

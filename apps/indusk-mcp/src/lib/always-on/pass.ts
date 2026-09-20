@@ -98,10 +98,8 @@ export async function violationsSince(
 		const traces = await jaegerGet<JaegerTrace>(endpoint, `/api/traces?${params}`, timeoutMs);
 		for (const trace of traces) {
 			for (const span of trace.spans) {
-				const marked = parseMarkedSpan(
-					span,
-					trace.processes[span.processID]?.serviceName ?? service,
-				);
+				const process = trace.processes[span.processID];
+				const marked = parseMarkedSpan(span, process?.serviceName ?? service, process?.tags);
 				if (marked?.outcome !== "violated") continue;
 				if (marked.at < since) continue;
 				seen.set(marked.spanId, marked);
