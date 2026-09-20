@@ -22,6 +22,7 @@ roadmap:
   - user-zero
   - jev-decision-model
   - context-tiers
+  - day-always-on-deploy
 ---
 
 # Master Plan

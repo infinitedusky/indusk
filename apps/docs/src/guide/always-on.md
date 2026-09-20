@@ -69,6 +69,16 @@ needs TLS in front of it.
 
 ### The image
 
+::: warning Not yet run anywhere
+The image and the Fly configuration below are **written but unverified**. The
+image installs the published package, which cannot carry
+`indusk telemetry serve` until the release that adds it; the Fly settings are
+a careful guess that nobody has watched hold. Everything else on this page is
+tested against the real binary, including the end-to-end run. Verifying these
+two is [its own plan](https://github.com/infinitedusky/dusk) — until it
+closes, treat this section as a starting point rather than a recipe.
+:::
+
 ```bash
 docker build -f docker/Dockerfile.always-on -t indusk-always-on .
 ```
@@ -150,7 +160,9 @@ with a Maintenance phase. That is the moment the violation becomes work.
 ## Smoke-testing a deployment
 
 Run this once against a new server, before trusting it. It takes about half an
-hour, most of which is waiting on purpose.
+hour, most of which is waiting on purpose. **Nobody has run it yet** — it is
+the procedure the deploy plan will follow, written while the behaviour it
+checks was fresh.
 
 **1. Deploy and check both doors refuse.** Every step below sends credentials;
 these two must not work without them.

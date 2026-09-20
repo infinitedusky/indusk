@@ -80,17 +80,20 @@ session reading that server (ADR D1–D10).
     workspace; no test in this repository can stand in for the provider.
   - would require: a disposable Fly organisation and a throwaway Slack
     workspace in CI, with credentials this repository does not hold.
-  - mitigation: a written deploy-and-break procedure in
-    `reference/cli/telemetry-server.md`, run once by hand at Build Phase 6
-    and its output pasted into the retrospective; every behaviour it exercises
-    is covered against the local server by A1–A9.
+  - mitigation: `day-always-on-deploy` owns the run — a written
+    deploy-and-break procedure in `/guide/always-on`, executed once by hand
+    with its output recorded there. Until it closes, the guide marks the image
+    and the Fly configuration **unrun**, so nothing here reads as verified
+    that is not. Every behaviour the procedure exercises is already covered
+    against the local server by A1–A9.
 - **Auto-stop does not lose spans (U2)**
   - reason: a provider's scheduling behaviour, not this repository's code.
   - would require: driving Fly's machine lifecycle from a test.
-  - mitigation: the deployment sets an always-on machine explicitly, the
-    procedure in U1 sends a span after an idle period and confirms it
-    arrives, and the reference `fly.toml` carries a comment saying why
-    auto-stop is off.
+  - mitigation: `day-always-on-deploy` owns the run, in the same procedure
+    as U1 — a violation sent after a genuine idle hour, confirmed announced.
+    The reference `fly.toml` sets an always-on machine explicitly and carries
+    a comment saying why; until that plan closes, the guide marks the file
+    unrun.
 
 ## Checklist
 
@@ -237,7 +240,7 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 - [x] A container image: the platform's Linux `jaeger` binary plus the built CLI, entrypoint `indusk telemetry serve`, published from `docker/` with the volume mount documented
   - `docker/Dockerfile.always-on`, installing the **published** package rather than this working tree: a server watching promises with code nobody else has is not the reference deployment. **Written, not built** — this machine has no docker daemon, and there is an ordering constraint the build would hit anyway: the published package predates `telemetry serve`, so the image can only be built after the release that carries it. Both belong to the deploy half, with U1/U2.
 - [x] The Fly.io reference deployment: `fly.toml` with an always-on machine (auto-stop off, and a comment saying why), a volume, and the secrets it needs; the deploy-and-break procedure written
-- [ ] Run the procedure by hand once (U1, U2): deploy, send a span from outside, break a promise, confirm the Slack message and that a trace sent after an idle period arrives; paste the output into the retrospective
+- [x] Run the procedure by hand once (U1, U2) — **moved to `day-always-on-deploy`**, with the deploy itself. It needs a Fly account, a domain, a Slack workspace, and the release that carries `telemetry serve` (the image installs the published package by design). Holding 4b′ for those would keep a finished, tested server off `main` while its problems go unfound against real projects. The procedure is written in `/guide/always-on`; the guide now marks the image and the Fly configuration as unrun, and that marking comes off in that plan, not this one.
 - [x] Author and run `apps/indusk-mcp/e2e/day-always-on.e2e.test.ts` per the A21 procedure
   - Passes. It found a real bug the unit rows could not: `deployment.environment` is a **resource** attribute, so a conventionally instrumented application has it land on Jaeger's *process* tags, not the span's — and `parseMarkedSpan` read only the span. Every unit row passed because the OTLP fixture put it on the span. Fixed to read span first, then resource; `local-jaeger.ts` gained `resourceAttributes` and A12 now asserts through that path, so the guard lives in `pnpm test` rather than only in `pnpm e2e`.
 - [x] `apps/docs/src/guide/always-on.md`: what runs where when the loop leaves the laptop, and how an application adopts it; `guide/index.md`'s "What runs where" row and `guide/promises.md`'s loop diagram gain the deployed path
