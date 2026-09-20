@@ -56,7 +56,8 @@ export function writeRegistry(home: string, projects: RegistryProject[]): void {
 /** Boot `next dev` on a free port with `INDUSK_HOME` pointed at `home`. */
 export async function startNextDev(options: {
   home: string;
-  env?: NodeJS.ProcessEnv;
+  /** String overlay on the inherited environment — not a full ProcessEnv. */
+  env?: Record<string, string>;
 }): Promise<DevServer> {
   const port = await findFreePort();
   const server: ChildProcess = spawn(

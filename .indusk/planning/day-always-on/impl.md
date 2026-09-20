@@ -65,9 +65,9 @@ session reading that server (ADR D1–D10).
 | A12 | `indusk promises watch --source deployed` records an incident with source `deployed` and the environment, and reopens the owning plan | Test Phase 1 | Build Phase 3 | passing |
 | A13 | A violation already recorded is not recorded a second time by a later `watch` | Test Phase 1 | Build Phase 3 | passing |
 | A14 | A project with no remote configured still reads its local daemon, exactly as before | Test Phase 1 | Test Phase 1 | passing |
-| A15 | The Promises page of a project configured to read the server shows a violated promise red, naming its environment | Test Phase 1 | Build Phase 4 | written |
-| A16 | A violation arriving while the page is open turns the promise red without a reload | Test Phase 1 | Build Phase 4 | written |
-| A17 | With the server unreachable, every behaviour chip is hollow with "health unknown since …", and none is green | Test Phase 1 | Build Phase 4 | written |
+| A15 | The Promises page of a project configured to read the server shows a violated promise red, naming its environment | Test Phase 1 | Build Phase 4 | passing |
+| A16 | A violation arriving while the page is open turns the promise red without a reload | Test Phase 1 | Build Phase 4 | passing |
+| A17 | With the server unreachable, every behaviour chip is hollow with "health unknown since …", and none is green | Test Phase 1 | Build Phase 4 | passing |
 | A18 | Asked for promise health, an agent gets each behaviour promise's violations in the window, its open incidents, and violations not yet recorded as incidents | Test Phase 1 | Build Phase 5 | written |
 | A19 | The health tool reports the same counts the CLI prints for the same project and window | Test Phase 1 | Build Phase 5 | written |
 | A20 | `/catchup`'s steps name promise health, and the "what's next" answer reports open violations before the roadmap | Test Phase 1 | Build Phase 5 | written |
@@ -198,20 +198,21 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 
 ### Build Phase 4: The admin shows it
 
-- [ ] The Promises page wraps `LiveRefresh` at the project's `admin.refresh_ms` (D8)
-- [ ] A violated row names its environment, and the health read carries it through `lib/promise-health.ts`
+- [x] The Promises page wraps `LiveRefresh` at the project's `admin.refresh_ms` (D8)
+- [x] A violated row names its environment, and the health read carries it through `lib/promise-health.ts`
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 4 Verification
 
-- [ ] A15, A16, A17 pass (`pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-remote.test.ts` and `--project browser` for the live row)
+- [x] A15, A16, A17 pass (`pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-remote.test.ts` and `--project browser` for the live row)
 
 #### Build Phase 4 Context
 
-- [ ] Known Gotchas (the admin entry): the Promises page is live like the plan page, and a violated row names the environment the span carried
+- [x] Known Gotchas (the admin entry): the Promises page is live like the plan page, and a violated row names the environment the span carried
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the live Promises page and the environment on a violated row
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the live Promises page and the environment on a violated row
 
 ### Build Phase 5: A session is told
 

@@ -39,6 +39,12 @@ export interface HealthRow {
   atLeast?: boolean;
   /** ISO time of the newest mark, upheld or violated. */
   lastSeen: string | null;
+  /**
+   * Where the newest violation happened, as its span said (day-always-on D6),
+   * or null when it said nothing. One server holds staging and production, so
+   * a red row that cannot say which is a red row nobody can act on.
+   */
+  environment?: string | null;
 }
 
 export type HealthRead =
@@ -104,6 +110,7 @@ export function healthOf(
       health: "red",
       violations,
       lastSeen,
+      environment: marks?.violations[0]?.environment ?? null,
       ...(marks?.truncated ? { atLeast: true } : {}),
     };
   }

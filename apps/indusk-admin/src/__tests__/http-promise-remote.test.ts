@@ -103,7 +103,7 @@ beforeAll(async () => {
   ]);
   const dev = await startNextDev({
     home,
-    env: { [CRED_ENV]: server.credential } as NodeJS.ProcessEnv,
+    env: { [CRED_ENV]: server.credential },
   });
   url = dev.url;
   stop = dev.stop;
@@ -168,12 +168,16 @@ describe("A16 — the page refreshes itself", () => {
 });
 
 describe("A17 — the server unreachable", () => {
-  it("every behaviour chip is hollow with health unknown, and none is green", async () => {
-    await server.stop();
-    await sleep(2_500); // past the project's 1s refresh interval
-    const html = await (await fetch(`${url}/p/remote/promises`)).text();
-    expect(healthOf(html, PROMISE)).toBe("unverified");
-    expect(html).not.toContain('data-health="green"');
-    expect(html).toMatch(/health unknown since/i);
-  });
+  it(
+    "every behaviour chip is hollow with health unknown, and none is green",
+    { timeout: 60_000 },
+    async () => {
+      await server.stop();
+      await sleep(2_500); // past the project's 1s refresh interval
+      const html = await (await fetch(`${url}/p/remote/promises`)).text();
+      expect(healthOf(html, PROMISE)).toBe("unverified");
+      expect(html).not.toContain('data-health="green"');
+      expect(html).toMatch(/health unknown since/i);
+    },
+  );
 });

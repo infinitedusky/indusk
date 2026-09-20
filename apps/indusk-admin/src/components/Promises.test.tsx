@@ -88,6 +88,7 @@ const INCIDENTS: IncidentEntry[] = [
     id: "i-2026-08-26-detector-overtriggers",
     promise: "impact-events-are-strikes",
     source: "smoke",
+    environment: null,
     status: "open",
     date: "2026-08-26",
     symptom: "395 candidates in 156 minutes.",
