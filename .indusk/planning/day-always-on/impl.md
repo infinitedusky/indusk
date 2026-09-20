@@ -68,9 +68,9 @@ session reading that server (ADR D1–D10).
 | A15 | The Promises page of a project configured to read the server shows a violated promise red, naming its environment | Test Phase 1 | Build Phase 4 | passing |
 | A16 | A violation arriving while the page is open turns the promise red without a reload | Test Phase 1 | Build Phase 4 | passing |
 | A17 | With the server unreachable, every behaviour chip is hollow with "health unknown since …", and none is green | Test Phase 1 | Build Phase 4 | passing |
-| A18 | Asked for promise health, an agent gets each behaviour promise's violations in the window, its open incidents, and violations not yet recorded as incidents | Test Phase 1 | Build Phase 5 | written |
-| A19 | The health tool reports the same counts the CLI prints for the same project and window | Test Phase 1 | Build Phase 5 | written |
-| A20 | `/catchup`'s steps name promise health, and the "what's next" answer reports open violations before the roadmap | Test Phase 1 | Build Phase 5 | written |
+| A18 | Asked for promise health, an agent gets each behaviour promise's violations in the window, its open incidents, and violations not yet recorded as incidents | Test Phase 1 | Build Phase 5 | passing |
+| A19 | The health tool reports the same counts the CLI prints for the same project and window | Test Phase 1 | Build Phase 5 | passing |
+| A20 | `/catchup`'s steps name promise health, and the "what's next" answer reports open violations before the roadmap | Test Phase 1 | Build Phase 5 | passing |
 | A21 | End to end with no developer machine involved: an app marks a promise violated, the server announces it to Slack, a later `watch --source deployed` records the incident with its environment and reopens the owner, and the health tool names it | Build Phase 6 | Build Phase 6 | planned |
 
 ### Deferred Verification
@@ -216,20 +216,21 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 
 ### Build Phase 5: A session is told
 
-- [ ] `promise_health` MCP tool in `src/tools/`: violations per behaviour promise in the window, open incidents, and violations not yet recorded as incidents — through `readPromiseMarks` and the registry, so it cannot disagree with the CLI (D9)
-- [ ] `/catchup` (package-owned skill) gains a promise-health step, and the "what's next" instruction reports open violations before the roadmap; resync the installed copy (`skill-sync-parity`)
+- [x] `promise_health` MCP tool in `src/tools/`: violations per behaviour promise in the window, open incidents, and violations not yet recorded as incidents — through `readPromiseMarks` and the registry, so it cannot disagree with the CLI (D9)
+- [x] `/catchup` (package-owned skill) gains a promise-health step, and the "what's next" instruction reports open violations before the roadmap; resync the installed copy (`skill-sync-parity`)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 5 Verification
 
-- [ ] A18, A19, A20 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-health-tool.test.ts`)
+- [x] A18, A19, A20 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-health-tool.test.ts`)
 
 #### Build Phase 5 Context
 
-- [ ] Conventions (the catchup entry): `/catchup` reads promise health, and an open violation outranks the roadmap when answering "what's next"
+- [x] Conventions (the catchup entry): `/catchup` reads promise health, and an open violation outranks the roadmap when answering "what's next"
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/skills/catchup.md` and `reference/tools/indusk-mcp.md`: the health step and the tool
+- [x] `apps/docs/src/reference/skills/catchup.md` and `reference/tools/indusk-mcp.md`: the health step and the tool
 
 ### Build Phase 6: The image, the deployment, end to end
 

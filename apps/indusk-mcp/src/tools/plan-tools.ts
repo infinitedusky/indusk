@@ -6,6 +6,7 @@ import { getPlanningDir } from "../lib/config.js";
 import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
+import { promiseHealth } from "../lib/promises/health.js";
 import { readPromises } from "../lib/promises/registry.js";
 import { openMaintenancePhasesIn } from "../lib/promises/reopen.js";
 import {
@@ -125,6 +126,41 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			const read = readPromises(projectRoot);
 			const text = JSON.stringify(read, null, 2);
 			return { content: [{ type: "text" as const, text }] };
+		},
+	);
+
+	server.registerTool(
+		"promise_health",
+		{
+			description:
+				"What the promises are doing right now: per behaviour promise, violations in the window, open incidents, and — the number that matters — violations no incident records yet. Ask this when answering what to work on next; unrecorded violations outrank the roadmap. Reads the Jaeger the project names (its local daemon, or a deployed always-on server) through the same query the CLI uses, so the two cannot disagree.",
+			inputSchema: {
+				since_ms: z
+					.number()
+					.optional()
+					.describe("Window in milliseconds; defaults to the project's quiet window."),
+			},
+		},
+		async ({ since_ms }) => {
+			try {
+				const report = await promiseHealth(projectRoot, {
+					...(since_ms !== undefined ? { sinceMs: since_ms } : {}),
+				});
+				return { content: [{ type: "text" as const, text: JSON.stringify(report, null, 2) }] };
+			} catch (err) {
+				// Unreachable telemetry is reported, never rendered as zero
+				// violations: "nothing is broken" and "nobody could look" are
+				// different answers and only one of them is reassuring.
+				return {
+					isError: true,
+					content: [
+						{
+							type: "text" as const,
+							text: JSON.stringify({ error: (err as Error).message, promises: null }, null, 2),
+						},
+					],
+				};
+			}
 		},
 	);
 

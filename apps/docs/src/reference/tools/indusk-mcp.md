@@ -63,6 +63,7 @@ For projects using the published package:
 | `get_plan_status` | `name` | Detailed status: phase progress, checked/unchecked items per gate |
 | `advance_plan` | `name` | Validates prerequisites for the next transition. Returns `{ allowed, missing }` |
 | `order_plans` | — | Topological sort of plans based on dependency graph |
+| `promise_health` | `since_ms?` | What the promises are doing now: per behaviour promise, violations in the window, open incidents, and **violations no incident records yet** — plus `needsAttention`, the promises with unrecorded violations. Reads the Jaeger the project names through the same query the CLI uses, so the two cannot disagree; unreachable telemetry is an error, never a zero. Ask it when answering "what's next". See [`indusk promises`](/reference/cli/promises) |
 | `list_promises` | — | The promise registry (`.indusk/promises/`): every promise with its kind, lifetime, state, domain, owner, statement and links, plus every incident — or the problem naming the file and field when the registry is missing or malformed. See [`indusk promises`](/reference/cli/promises) |
 
 #### Which copy of a plan the tools read
