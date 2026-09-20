@@ -1,7 +1,7 @@
 ---
 title: "Day step 4b′ — Always-on"
 date: 2026-09-19
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
