@@ -51,26 +51,26 @@ session reading that server (ADR D1–D10).
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | A marked span sent to the server over OTLP with valid credentials is queryable afterwards | Test Phase 1 | Build Phase 1 | planned |
-| A2 | The same span is still there after the server restarts | Test Phase 1 | Build Phase 1 | planned |
-| A3 | OTLP sent without credentials is refused, and nothing is stored | Test Phase 1 | Build Phase 1 | planned |
-| A4 | A query made without credentials is refused | Test Phase 1 | Build Phase 1 | planned |
-| A5 | A violation in a deployed run produces one Slack message naming the promise, the symptom, the environment and a link to its trace | Test Phase 1 | Build Phase 2 | planned |
-| A6 | The same violation seen by a later pass produces no second message | Test Phase 1 | Build Phase 2 | planned |
-| A7 | A promise seen upheld produces no message | Test Phase 1 | Build Phase 2 | planned |
-| A8 | A violation whose span carries no environment reads "environment unknown" rather than a guess | Test Phase 1 | Build Phase 2 | planned |
-| A9 | With Slack unreachable the violation stays unannounced and the server says so; the next pass announces it | Test Phase 1 | Build Phase 2 | planned |
-| A10 | In a project configured to read the server, `indusk promises status` reports the deployed run's violations, not the local daemon's | Test Phase 1 | Build Phase 3 | planned |
-| A11 | With the server unreachable or the credential wrong, `status` names where it looked and exits non-zero; it never reports zero violations | Test Phase 1 | Build Phase 3 | planned |
-| A12 | `indusk promises watch --source deployed` records an incident with source `deployed` and the environment, and reopens the owning plan | Test Phase 1 | Build Phase 3 | planned |
-| A13 | A violation already recorded is not recorded a second time by a later `watch` | Test Phase 1 | Build Phase 3 | planned |
-| A14 | A project with no remote configured still reads its local daemon, exactly as before | Test Phase 1 | Test Phase 1 | planned |
-| A15 | The Promises page of a project configured to read the server shows a violated promise red, naming its environment | Test Phase 1 | Build Phase 4 | planned |
-| A16 | A violation arriving while the page is open turns the promise red without a reload | Test Phase 1 | Build Phase 4 | planned |
-| A17 | With the server unreachable, every behaviour chip is hollow with "health unknown since …", and none is green | Test Phase 1 | Build Phase 4 | planned |
-| A18 | Asked for promise health, an agent gets each behaviour promise's violations in the window, its open incidents, and violations not yet recorded as incidents | Test Phase 1 | Build Phase 5 | planned |
-| A19 | The health tool reports the same counts the CLI prints for the same project and window | Test Phase 1 | Build Phase 5 | planned |
-| A20 | `/catchup`'s steps name promise health, and the "what's next" answer reports open violations before the roadmap | Test Phase 1 | Build Phase 5 | planned |
+| A1 | A marked span sent to the server over OTLP with valid credentials is queryable afterwards | Test Phase 1 | Build Phase 1 | written |
+| A2 | The same span is still there after the server restarts | Test Phase 1 | Build Phase 1 | written |
+| A3 | OTLP sent without credentials is refused, and nothing is stored | Test Phase 1 | Build Phase 1 | written |
+| A4 | A query made without credentials is refused | Test Phase 1 | Build Phase 1 | written |
+| A5 | A violation in a deployed run produces one Slack message naming the promise, the symptom, the environment and a link to its trace | Test Phase 1 | Build Phase 2 | written |
+| A6 | The same violation seen by a later pass produces no second message | Test Phase 1 | Build Phase 2 | written |
+| A7 | A promise seen upheld produces no message | Test Phase 1 | Build Phase 2 | written |
+| A8 | A violation whose span carries no environment reads "environment unknown" rather than a guess | Test Phase 1 | Build Phase 2 | written |
+| A9 | With Slack unreachable the violation stays unannounced and the server says so; the next pass announces it | Test Phase 1 | Build Phase 2 | written |
+| A10 | In a project configured to read the server, `indusk promises status` reports the deployed run's violations, not the local daemon's | Test Phase 1 | Build Phase 3 | written |
+| A11 | With the server unreachable or the credential wrong, `status` names where it looked and exits non-zero; it never reports zero violations | Test Phase 1 | Build Phase 3 | written |
+| A12 | `indusk promises watch --source deployed` records an incident with source `deployed` and the environment, and reopens the owning plan | Test Phase 1 | Build Phase 3 | written |
+| A13 | A violation already recorded is not recorded a second time by a later `watch` | Test Phase 1 | Build Phase 3 | written |
+| A14 | A project with no remote configured still reads its local daemon, exactly as before | Test Phase 1 | Test Phase 1 | passing |
+| A15 | The Promises page of a project configured to read the server shows a violated promise red, naming its environment | Test Phase 1 | Build Phase 4 | written |
+| A16 | A violation arriving while the page is open turns the promise red without a reload | Test Phase 1 | Build Phase 4 | written |
+| A17 | With the server unreachable, every behaviour chip is hollow with "health unknown since …", and none is green | Test Phase 1 | Build Phase 4 | written |
+| A18 | Asked for promise health, an agent gets each behaviour promise's violations in the window, its open incidents, and violations not yet recorded as incidents | Test Phase 1 | Build Phase 5 | written |
+| A19 | The health tool reports the same counts the CLI prints for the same project and window | Test Phase 1 | Build Phase 5 | written |
+| A20 | `/catchup`'s steps name promise health, and the "what's next" answer reports open violations before the roadmap | Test Phase 1 | Build Phase 5 | written |
 | A21 | End to end with no developer machine involved: an app marks a promise violated, the server announces it to Slack, a later `watch --source deployed` records the incident with its environment and reopens the owner, and the health tool names it | Build Phase 6 | Build Phase 6 | planned |
 
 ### Deferred Verification
@@ -102,12 +102,17 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 - [x] Create this plan's worktree with the published command: `indusk worktree create day-always-on` (records the assignment; the admin and plan tools follow the plan into it)
 - [x] Helper `apps/indusk-mcp/src/__tests__/helpers/always-on-server.ts`: starts `indusk telemetry serve` on free ports with a temp volume and known credentials, exposes its OTLP and query URLs, stops it and can restart it in place (A2); throws when it cannot start
 - [x] Helper extension: a Slack webhook capture server (accepts `POST`, exposes what it received, and a mode that refuses connections for A9) — beside `helpers/otlp-capture.ts`, which it mirrors: `helpers/slack-capture.ts`, with `refusingSlackUrl()` for A9
-- [ ] Author A1–A4 in `apps/indusk-mcp/src/__tests__/always-on-server.test.ts` (OTLP and query over HTTP, with and without credentials; restart between load and query)
-- [ ] Author A5–A9 in `apps/indusk-mcp/src/__tests__/always-on-pass.test.ts` (violations loaded into the server, the pass driven once and twice, the webhook capture read)
-- [ ] Author A10–A14 in `apps/indusk-mcp/src/__tests__/always-on-source.test.ts` via `runCli` against a project whose config names the server
-- [ ] Author A15–A17 in `apps/indusk-admin/src/__tests__/http-promise-remote.test.ts` over `next dev`, with A16 driven by Playwright as the live plan rows are
-- [ ] Author A18, A19 in `apps/indusk-mcp/src/__tests__/always-on-health-tool.test.ts` through `helpers/tool-call.ts`, and A20 in the same file reading the installed skill text
-- [ ] Run each file and read each failure: every red row fails on its own assertion, not on a missing import
+- [x] Author A1–A4 in `apps/indusk-mcp/src/__tests__/always-on-server.test.ts` (OTLP and query over HTTP, with and without credentials; restart between load and query)
+- [x] Author A5–A9 in `apps/indusk-mcp/src/__tests__/always-on-pass.test.ts` (violations loaded into the server, the pass driven once and twice, the webhook capture read)
+- [x] Author A10–A14 in `apps/indusk-mcp/src/__tests__/always-on-source.test.ts` via `runCli` against a project whose config names the server
+- [x] Author A15–A17 in `apps/indusk-admin/src/__tests__/http-promise-remote.test.ts` over `next dev`, with A16 driven by Playwright as the live plan rows are
+- [x] Author A18, A19 in `apps/indusk-mcp/src/__tests__/always-on-health-tool.test.ts` through `helpers/tool-call.ts`, and A20 in the same file reading the installed skill text
+- [x] Run each file and read each failure: every red row fails on its own assertion, not on a missing import
+  - Observed, and it is not uniform. A18–A20 fail one by one: A18 and A19 on `tool-call: no tool registered as "promise_health"` (the tool boundary refusing by name), A20 on its own `expect(...).toMatch(/promise_health/)` against the installed `/catchup` text. A14, the regression guard, passes.
+  - A1–A17 fail **one boundary earlier**, in the helper's `beforeAll`: `startAlwaysOnServer` throws `the server did not answer (exit 1)` because `indusk telemetry serve` is not a command yet, and vitest then reports the rows in that file as skipped. That is a real red at a real boundary — the CLI refusing the command, not a module failing to resolve — but it is one failure for the file rather than one per row, so the rows' own assertions are unproven until Build Phase 1 starts the server. Each of those assertions is then read for the first time at its `Passes at` phase.
+  - Refinement the tests drove: the pass needs an entry point a test can enter once rather than waiting on the server's interval, so Build Phase 2 gains `indusk telemetry announce --once` (A5–A9 drive it; the served loop calls the same function).
+- [x] Shape (`apps/indusk-mcp/src/__tests__/helpers/always-on-server.ts`) — reviewed, left as-is: process lifecycle and the HTTP client in one factory is two jobs, but it deliberately mirrors helpers/local-jaeger.ts, which every reader of these suites already knows; splitting one of a matched pair costs more than it buys
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Deferred to Build Phase 6
 
@@ -119,16 +124,16 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A20 authored; A14 passes; every other row fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-remote.test.ts`)
-- [ ] The A21 deferral body reviewed: it compiles at Build Phase 6 and asserts what the row claims
+- [x] A1–A20 authored; A14 passes; A18–A20 and A14 read one by one, A1–A17 red at the shared server boundary — the exact shape recorded under the run item above (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-` and `pnpm --filter indusk-admin exec vitest run --project node src/__tests__/http-promise-remote.test.ts`)
+- [x] The A21 deferral body reviewed: it is a written procedure rather than a fenced body, so "compiles" is not literally checkable; every step it names is reachable at Build Phase 6 (the server helper, the pass entry point, `watch --source deployed`, the incident fields, the health tool) and together they assert exactly what the row claims — an end-to-end run with no developer machine in it
 
 #### Test Phase 1 Context
 
-- [ ] Known Gotchas (tests): the always-on server is started by `helpers/always-on-server.ts` (the real binary in its server config, credentials and a temp volume), and Slack is a capture server — never a stub of either
+- [x] Known Gotchas (tests): the always-on server is started by `helpers/always-on-server.ts` (the real binary in its server config, credentials and a temp volume), and Slack is a capture server — never a stub of either
 
 #### Test Phase 1 Document
 
-- [ ] Changelog Unreleased entry opened in `apps/docs/src/changelog.md` for the always-on step, filled in as phases land
+- [x] Changelog Unreleased entry opened in `apps/docs/src/changelog.md` for the always-on step, filled in as phases land
 
 ### Build Phase 1: The server
 
