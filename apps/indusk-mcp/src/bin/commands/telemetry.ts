@@ -539,3 +539,26 @@ export async function telemetryDeregister(projectPath: string): Promise<void> {
 		await daemonStop();
 	}
 }
+
+/**
+ * Run the always-on server in the foreground (day-always-on).
+ *
+ * This is not the daemon: no registry, no PID file, no port picking. A
+ * supervisor starts it, it reads its settings from the environment, and it
+ * exits with Jaeger's exit code. A missing setting is a refusal naming the
+ * variable, never a server that starts without its credentials.
+ */
+export async function telemetryServe(): Promise<void> {
+	const { serve, MissingServerSetting } = await import("../../lib/telemetry/server.js");
+	try {
+		const code = await serve();
+		process.exitCode = code;
+	} catch (err) {
+		if (err instanceof MissingServerSetting) {
+			console.error(`indusk telemetry serve: ${err.message}`);
+			process.exitCode = 1;
+			return;
+		}
+		throw err;
+	}
+}

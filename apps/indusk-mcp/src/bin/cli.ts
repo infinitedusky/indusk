@@ -459,6 +459,16 @@ telemetryCmd
 	});
 
 telemetryCmd
+	.command("serve")
+	.description(
+		"Run the always-on server in the foreground (badger on a volume, basic auth on both endpoints); every setting comes from the environment",
+	)
+	.action(async () => {
+		const { telemetryServe } = await import("./commands/telemetry.js");
+		await telemetryServe();
+	});
+
+telemetryCmd
 	.command("stop")
 	.description("Stop the telemetry daemon (SIGTERM both processes, SIGKILL fallback after 3s)")
 	.action(async () => {

@@ -122,6 +122,7 @@ const config = defineConfig({
 						{ text: "plans", link: "/reference/cli/plans" },
 						{ text: "papers", link: "/reference/cli/papers" },
 						{ text: "promises", link: "/reference/cli/promises" },
+						{ text: "telemetry serve", link: "/reference/cli/telemetry-server" },
 						{ text: "sync", link: "/reference/cli/sync" },
 					],
 				},

@@ -51,10 +51,10 @@ session reading that server (ADR D1–D10).
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | A marked span sent to the server over OTLP with valid credentials is queryable afterwards | Test Phase 1 | Build Phase 1 | written |
-| A2 | The same span is still there after the server restarts | Test Phase 1 | Build Phase 1 | written |
-| A3 | OTLP sent without credentials is refused, and nothing is stored | Test Phase 1 | Build Phase 1 | written |
-| A4 | A query made without credentials is refused | Test Phase 1 | Build Phase 1 | written |
+| A1 | A marked span sent to the server over OTLP with valid credentials is queryable afterwards | Test Phase 1 | Build Phase 1 | passing |
+| A2 | The same span is still there after the server restarts | Test Phase 1 | Build Phase 1 | passing |
+| A3 | OTLP sent without credentials is refused, and nothing is stored | Test Phase 1 | Build Phase 1 | passing |
+| A4 | A query made without credentials is refused | Test Phase 1 | Build Phase 1 | passing |
 | A5 | A violation in a deployed run produces one Slack message naming the promise, the symptom, the environment and a link to its trace | Test Phase 1 | Build Phase 2 | written |
 | A6 | The same violation seen by a later pass produces no second message | Test Phase 1 | Build Phase 2 | written |
 | A7 | A promise seen upheld produces no message | Test Phase 1 | Build Phase 2 | written |
@@ -137,21 +137,23 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 
 ### Build Phase 1: The server
 
-- [ ] `renderServerConfig` beside `renderJaegerConfig` in `lib/telemetry/`: badger storage at a given directory (`ephemeral: false`), `basicauth` on the OTLP HTTP receiver and on `jaeger_query`'s HTTP endpoint, self-metrics off — the shape verified in the research
-- [ ] `indusk telemetry serve` in `src/bin/commands/telemetry.ts` and `cli.ts`: reads credentials, ports, the volume path and the retention from the environment (with the config keys documented), writes the rendered config, runs Jaeger in the foreground (a container's process 1), and refuses with a named error when a required value is missing
-- [ ] Decide and record the badger retention setting (the research's open question): a span TTL from the environment, defaulting to a multiple of the quiet window
+- [x] `renderServerConfig` beside `renderJaegerConfig` in `lib/telemetry/`: badger storage at a given directory (`ephemeral: false`), `basicauth` on the OTLP HTTP receiver and on `jaeger_query`'s HTTP endpoint, self-metrics off — the shape verified in the research
+- [x] `indusk telemetry serve` in `src/bin/commands/telemetry.ts` and `cli.ts`: reads credentials, ports, the volume path and the retention from the environment (with the config keys documented), writes the rendered config, runs Jaeger in the foreground (a container's process 1), and refuses with a named error when a required value is missing
+- [x] Decide and record the badger retention setting (the research's open question): a span TTL from the environment, defaulting to a multiple of the quiet window
+  - Decided: `INDUSK_SERVER_RETENTION_HOURS`, defaulting to **four quiet windows — 28 days** (`DEFAULT_RETENTION_HOURS`, with the reasoning in the constant's comment). The quiet window is what `monitor` waits out; a violation has to still be readable when a person comes to look, and they may be a week late, so one window would be exactly too short.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 1 Verification
 
-- [ ] A1, A2, A3, A4 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-server.test.ts`)
+- [x] A1, A2, A3, A4 pass (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-server.test.ts`)
 
 #### Build Phase 1 Context
 
-- [ ] Architecture (indusk-mcp bullet): `indusk telemetry serve` runs the shipped Jaeger as an always-on server — badger on a volume, basic auth on both endpoints; the local daemon is unchanged
+- [x] Architecture (indusk-mcp bullet): `indusk telemetry serve` runs the shipped Jaeger as an always-on server — badger on a volume, basic auth on both endpoints; the local daemon is unchanged
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/telemetry-server.md`: the command, every environment variable, and what it refuses
+- [x] `apps/docs/src/reference/cli/telemetry-server.md`: the command, every environment variable, and what it refuses
 
 ### Build Phase 2: The pass and Slack
 

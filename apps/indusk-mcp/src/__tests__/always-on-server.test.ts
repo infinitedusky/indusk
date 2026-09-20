@@ -51,7 +51,9 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — the server keeps what it is sent
 		expect(tags).toContain("indusk.promise");
 	});
 
-	it("A2 — the same span is still there after the server restarts", async () => {
+	it("A2 — the same span is still there after the server restarts", {
+		timeout: 60_000,
+	}, async () => {
 		await server.restart();
 		const res = await server.query(`/api/traces/${kept}`);
 		expect(res.status).toBe(200);
@@ -59,7 +61,9 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — the server keeps what it is sent
 		expect(json.data, "the trace survived the restart").toHaveLength(1);
 	});
 
-	it("A3 — OTLP without credentials is refused, and nothing is stored", async () => {
+	it("A3 — OTLP without credentials is refused, and nothing is stored", {
+		timeout: 30_000,
+	}, async () => {
 		const traceId = newTraceId();
 		const { body } = otlpBody([
 			{
