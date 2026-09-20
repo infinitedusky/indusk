@@ -39,6 +39,31 @@ export interface MarkedSpan {
 	at: Date;
 	/** The violated event's symptom, when there is one. */
 	symptom: string | null;
+	/**
+	 * `deployment.environment` as the marking system set it, or null when it
+	 * set none (day-always-on D6). Read from the span rather than configured
+	 * anywhere: one server holds staging and production, and only the span
+	 * knows which one it came from.
+	 */
+	environment: string | null;
+}
+
+/**
+ * A Jaeger query API and what it takes to be let in.
+ *
+ * The local daemon needs no credentials; the always-on server needs basic
+ * auth on every request. One shape for both, so a reader never grows a second
+ * way to reach Jaeger.
+ */
+export interface JaegerEndpoint {
+	/** e.g. `http://localhost:16686` — no trailing slash. */
+	queryUrl: string;
+	headers?: Record<string, string>;
+}
+
+/** `user:password` as the credential environment variables hold it. */
+export function basicAuthHeaders(credential: string): Record<string, string> {
+	return { authorization: `Basic ${Buffer.from(credential).toString("base64")}` };
 }
 
 export interface PromiseMarks {
@@ -61,11 +86,11 @@ export interface MarkedSpansResult {
 	byPromise: Map<string, PromiseMarks>;
 }
 
-interface JaegerTag {
+export interface JaegerTag {
 	key: string;
 	value: unknown;
 }
-interface JaegerSpan {
+export interface JaegerSpan {
 	traceID: string;
 	spanID: string;
 	operationName: string;
@@ -75,13 +100,21 @@ interface JaegerSpan {
 	tags?: JaegerTag[];
 	logs?: { timestamp: number; fields?: JaegerTag[] }[];
 }
-interface JaegerTrace {
+export interface JaegerTrace {
 	traceID: string;
 	spans: JaegerSpan[];
 	processes: Record<string, { serviceName: string }>;
 }
 
-const DEFAULT_TIMEOUT_MS = 5_000;
+/**
+ * OpenTelemetry's own resource attribute for the deployment environment. We
+ * read the conventional name rather than invent an `indusk.` one: a system
+ * that is already instrumented has set this, and asking it to set a second
+ * attribute for us is asking it to carry InDusk in its code (ADR D6).
+ */
+export const ENVIRONMENT_ATTRIBUTE = "deployment.environment";
+
+export const DEFAULT_TIMEOUT_MS = 5_000;
 /** Jaeger's own default is 20 traces per query, which would silently truncate a busy window. */
 const TRACE_LIMIT = 1500;
 
@@ -92,10 +125,19 @@ const TRACE_LIMIT = 1500;
  * the array Jaeger returns. Something else answering on the recorded port is
  * as unreachable as nothing answering (day-monitor A26).
  */
-async function getData<T>(url: string, timeoutMs: number, queryUrl: string): Promise<T[]> {
+export async function jaegerGet<T>(
+	endpoint: JaegerEndpoint,
+	path: string,
+	timeoutMs: number,
+): Promise<T[]> {
+	const url = `${endpoint.queryUrl}${path}`;
+	const queryUrl = endpoint.queryUrl;
 	let body: unknown;
 	try {
-		const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+		const res = await fetch(url, {
+			signal: AbortSignal.timeout(timeoutMs),
+			...(endpoint.headers ? { headers: endpoint.headers } : {}),
+		});
 		if (!res.ok) throw new Error(`${url} answered ${res.status}`);
 		body = await res.json();
 	} catch (err) {
@@ -113,11 +155,12 @@ function tag(tags: JaegerTag[] | undefined, key: string): unknown {
 	return tags?.find((t) => t.key === key)?.value;
 }
 
-function toMarked(span: JaegerSpan, service: string): MarkedSpan | null {
+export function parseMarkedSpan(span: JaegerSpan, service: string): MarkedSpan | null {
 	const promise = tag(span.tags, PROMISE_MARK.promise);
 	const outcome = tag(span.tags, PROMISE_MARK.outcome);
 	if (typeof promise !== "string") return null;
 	if (outcome !== "upheld" && outcome !== "violated") return null;
+	const environment = tag(span.tags, ENVIRONMENT_ATTRIBUTE);
 	let symptom: string | null = null;
 	for (const log of span.logs ?? []) {
 		if (tag(log.fields, "event") !== PROMISE_MARK.violatedEvent) continue;
@@ -133,6 +176,7 @@ function toMarked(span: JaegerSpan, service: string): MarkedSpan | null {
 		operation: span.operationName,
 		at: new Date(Math.floor((span.startTime + span.duration) / 1000)),
 		symptom,
+		environment: typeof environment === "string" ? environment : null,
 	};
 }
 
@@ -159,8 +203,9 @@ export async function markedSpans(opts: {
 	if (!status.running) {
 		throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 	}
-	const queryUrl = `http://localhost:${status.uiPort}`;
-	const services = await getData<string>(`${queryUrl}/api/services`, timeoutMs, queryUrl);
+	const endpoint: JaegerEndpoint = { queryUrl: `http://localhost:${status.uiPort}` };
+	const queryUrl = endpoint.queryUrl;
+	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);
 
 	const byPromise = new Map<string, PromiseMarks>();
 	const start = opts.since.getTime() * 1000;
@@ -178,15 +223,14 @@ export async function markedSpans(opts: {
 					end: String(end),
 					limit: String(TRACE_LIMIT),
 				});
-				const traces = await getData<JaegerTrace>(
-					`${queryUrl}/api/traces?${params}`,
-					timeoutMs,
-					queryUrl,
-				);
+				const traces = await jaegerGet<JaegerTrace>(endpoint, `/api/traces?${params}`, timeoutMs);
 				if (traces.length >= TRACE_LIMIT) truncated = true;
 				for (const t of traces) {
 					for (const span of t.spans) {
-						const marked = toMarked(span, t.processes[span.processID]?.serviceName ?? service);
+						const marked = parseMarkedSpan(
+							span,
+							t.processes[span.processID]?.serviceName ?? service,
+						);
 						if (!marked || marked.promise !== name) continue;
 						marked.promise = promise;
 						if (marked.at < opts.since) continue;

@@ -55,11 +55,11 @@ session reading that server (ADR D1–D10).
 | A2 | The same span is still there after the server restarts | Test Phase 1 | Build Phase 1 | passing |
 | A3 | OTLP sent without credentials is refused, and nothing is stored | Test Phase 1 | Build Phase 1 | passing |
 | A4 | A query made without credentials is refused | Test Phase 1 | Build Phase 1 | passing |
-| A5 | A violation in a deployed run produces one Slack message naming the promise, the symptom, the environment and a link to its trace | Test Phase 1 | Build Phase 2 | written |
-| A6 | The same violation seen by a later pass produces no second message | Test Phase 1 | Build Phase 2 | written |
-| A7 | A promise seen upheld produces no message | Test Phase 1 | Build Phase 2 | written |
-| A8 | A violation whose span carries no environment reads "environment unknown" rather than a guess | Test Phase 1 | Build Phase 2 | written |
-| A9 | With Slack unreachable the violation stays unannounced and the server says so; the next pass announces it | Test Phase 1 | Build Phase 2 | written |
+| A5 | A violation in a deployed run produces one Slack message naming the promise, the symptom, the environment and a link to its trace | Test Phase 1 | Build Phase 2 | passing |
+| A6 | The same violation seen by a later pass produces no second message | Test Phase 1 | Build Phase 2 | passing |
+| A7 | A promise seen upheld produces no message | Test Phase 1 | Build Phase 2 | passing |
+| A8 | A violation whose span carries no environment reads "environment unknown" rather than a guess | Test Phase 1 | Build Phase 2 | passing |
+| A9 | With Slack unreachable the violation stays unannounced and the server says so; the next pass announces it | Test Phase 1 | Build Phase 2 | passing |
 | A10 | In a project configured to read the server, `indusk promises status` reports the deployed run's violations, not the local daemon's | Test Phase 1 | Build Phase 3 | written |
 | A11 | With the server unreachable or the credential wrong, `status` names where it looked and exits non-zero; it never reports zero violations | Test Phase 1 | Build Phase 3 | written |
 | A12 | `indusk promises watch --source deployed` records an incident with source `deployed` and the environment, and reopens the owning plan | Test Phase 1 | Build Phase 3 | written |
@@ -157,21 +157,23 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 
 ### Build Phase 2: The pass and Slack
 
-- [ ] The interval pass in `lib/always-on/`: query the server's own Jaeger for spans marked violated since the last pass, group by promise, and post one Slack message per violation — promise, symptom, environment (D6), service, and a trace link into the server's Jaeger UI
-- [ ] The announced record on the volume: trace ids already announced plus the newest violation time, pruned by the window; written **after** Slack accepts (D3), and a failure logged as unannounced
-- [ ] `indusk telemetry serve` runs the pass on its interval in the same process (D2); the interval and the webhook URL come from the environment, and an absent webhook is a named refusal at startup, not a silent no-op
+- [x] The interval pass in `lib/always-on/`: query the server's own Jaeger for spans marked violated since the last pass, group by promise, and post one Slack message per violation — promise, symptom, environment (D6), service, and a trace link into the server's Jaeger UI
+- [x] The announced record on the volume: trace ids already announced plus the newest violation time, pruned by the window; written **after** Slack accepts (D3), and a failure logged as unannounced
+- [x] `indusk telemetry serve` runs the pass on its interval in the same process (D2); the interval and the webhook URL come from the environment, and an absent webhook is a named refusal at startup, not a silent no-op
+- [x] Shape (`apps/indusk-mcp/src/lib/promises/telemetry.ts`) — reviewed, left as-is: its private Jaeger helpers became exported ones (jaegerGet, parseMarkedSpan, JaegerEndpoint) so the pass reads Jaeger through the same definition rather than growing a second one; the module is longer but there is still one reader of Jaeger in the codebase
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 2 Verification
 
-- [ ] A5, A6, A7, A8, A9 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-pass.test.ts`)
+- [x] A5, A6, A7, A8, A9 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-pass.test.ts`)
 
 #### Build Phase 2 Context
 
-- [ ] Conventions (the promises entry): the always-on pass announces a violation once and only after Slack accepts it — a failed post leaves it unannounced for the next pass
+- [x] Conventions (the promises entry): the always-on pass announces a violation once and only after Slack accepts it — a failed post leaves it unannounced for the next pass
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/telemetry-server.md`: the pass, the Slack message's shape, and the announced record
+- [x] `apps/docs/src/reference/cli/telemetry-server.md`: the pass, the Slack message's shape, and the announced record
 
 ### Build Phase 3: A project names its Jaeger
 

@@ -1,6 +1,8 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { runPass } from "../always-on/pass.js";
+import { basicAuthHeaders } from "../promises/telemetry.js";
 import { resolveBinary } from "./daemon.js";
 
 /**
@@ -25,6 +27,13 @@ export const QUERY_PORT_ENV = "INDUSK_SERVER_QUERY_PORT";
 export const USER_ENV = "INDUSK_SERVER_USER";
 export const PASSWORD_ENV = "INDUSK_SERVER_PASSWORD";
 export const RETENTION_ENV = "INDUSK_SERVER_RETENTION_HOURS";
+export const SLACK_WEBHOOK_ENV = "INDUSK_SERVER_SLACK_WEBHOOK";
+export const PASS_INTERVAL_ENV = "INDUSK_SERVER_PASS_INTERVAL_MS";
+export const PASS_WINDOW_ENV = "INDUSK_SERVER_PASS_WINDOW_HOURS";
+/** Where the pass reads Jaeger, when it is not the server reading its own. */
+export const QUERY_URL_ENV = "INDUSK_SERVER_QUERY_URL";
+/** `user:password`, as a reader off the server holds it. */
+export const CREDENTIAL_ENV = "INDUSK_SERVER_CREDENTIAL";
 
 /**
  * How long a span stays readable, in hours.
@@ -38,6 +47,17 @@ export const RETENTION_ENV = "INDUSK_SERVER_RETENTION_HOURS";
  */
 export const DEFAULT_RETENTION_HOURS = 24 * 7 * 4;
 
+/** A minute between passes: a violation is worth hearing about promptly, and one query is cheap. */
+export const DEFAULT_PASS_INTERVAL_MS = 60_000;
+
+/**
+ * How far back each pass looks. A day rather than the retention: the
+ * announced record makes a re-read harmless, so the window only has to be
+ * wide enough to survive an outage of the pass itself, and scanning
+ * twenty-eight days every minute would be work for nothing.
+ */
+export const DEFAULT_PASS_WINDOW_HOURS = 24;
+
 export interface ServerSettings {
 	volume: string;
 	otlpPort: number;
@@ -45,6 +65,10 @@ export interface ServerSettings {
 	user: string;
 	password: string;
 	retentionHours: number;
+	/** Where violations are announced. Required: a server that cannot say anything is not watching. */
+	slackWebhook: string;
+	passIntervalMs: number;
+	passWindowMs: number;
 }
 
 export class MissingServerSetting extends Error {
@@ -65,6 +89,19 @@ function required(env: NodeJS.ProcessEnv, name: string): string {
 	return value;
 }
 
+function positive(env: NodeJS.ProcessEnv, name: string, fallback: number, unit: string): number {
+	const raw = env[name]?.trim();
+	if (!raw) return fallback;
+	const value = Number(raw);
+	if (!Number.isFinite(value) || value <= 0) {
+		throw new MissingServerSetting(
+			name,
+			`not a positive number of ${unit} (got ${JSON.stringify(raw)})`,
+		);
+	}
+	return value;
+}
+
 function port(env: NodeJS.ProcessEnv, name: string): number {
 	const raw = required(env, name);
 	const value = Number(raw);
@@ -75,25 +112,39 @@ function port(env: NodeJS.ProcessEnv, name: string): number {
 }
 
 export function readServerSettings(env: NodeJS.ProcessEnv = process.env): ServerSettings {
-	const rawRetention = env[RETENTION_ENV]?.trim();
-	let retentionHours = DEFAULT_RETENTION_HOURS;
-	if (rawRetention) {
-		const value = Number(rawRetention);
-		if (!Number.isFinite(value) || value <= 0) {
-			throw new MissingServerSetting(
-				RETENTION_ENV,
-				`not a positive number of hours (got ${JSON.stringify(rawRetention)})`,
-			);
-		}
-		retentionHours = value;
-	}
 	return {
 		volume: required(env, VOLUME_ENV),
 		otlpPort: port(env, OTLP_PORT_ENV),
 		queryPort: port(env, QUERY_PORT_ENV),
 		user: required(env, USER_ENV),
 		password: required(env, PASSWORD_ENV),
-		retentionHours,
+		retentionHours: positive(env, RETENTION_ENV, DEFAULT_RETENTION_HOURS, "hours"),
+		slackWebhook: required(env, SLACK_WEBHOOK_ENV),
+		passIntervalMs: positive(env, PASS_INTERVAL_ENV, DEFAULT_PASS_INTERVAL_MS, "milliseconds"),
+		passWindowMs: positive(env, PASS_WINDOW_ENV, DEFAULT_PASS_WINDOW_HOURS, "hours") * 3_600_000,
+	};
+}
+
+/**
+ * What one pass needs, for a pass entered from outside the server —
+ * `indusk telemetry announce --once`, which a test (and a person checking a
+ * deployment) can run against a server it did not start.
+ */
+export interface PassSettings {
+	volume: string;
+	queryUrl: string;
+	credential: string;
+	slackWebhook: string;
+	windowMs: number;
+}
+
+export function readPassSettings(env: NodeJS.ProcessEnv = process.env): PassSettings {
+	return {
+		volume: required(env, VOLUME_ENV),
+		queryUrl: required(env, QUERY_URL_ENV).replace(/\/+$/, ""),
+		credential: required(env, CREDENTIAL_ENV),
+		slackWebhook: required(env, SLACK_WEBHOOK_ENV),
+		windowMs: positive(env, PASS_WINDOW_ENV, DEFAULT_PASS_WINDOW_HOURS, "hours") * 3_600_000,
 	};
 }
 
@@ -178,11 +229,60 @@ export async function serve(env: NodeJS.ProcessEnv = process.env): Promise<numbe
 	const binary = resolveBinary("jaeger");
 	const child = spawn(binary, [`--config=file:${configPath}`], { stdio: "inherit" });
 
+	const timer = startPass(settings);
+
 	return new Promise<number>((resolve, reject) => {
-		child.once("error", reject);
+		child.once("error", (err) => {
+			clearInterval(timer);
+			reject(err);
+		});
 		for (const signal of ["SIGTERM", "SIGINT"] as const) {
 			process.on(signal, () => child.kill(signal));
 		}
-		child.once("close", (code) => resolve(code ?? 0));
+		child.once("close", (code) => {
+			clearInterval(timer);
+			resolve(code ?? 0);
+		});
 	});
+}
+
+/**
+ * Run the pass on the server's own interval, in the server's own process
+ * (ADR D2). No scheduler, no second container, no cron entry to get wrong:
+ * the thing that is always on is already always on.
+ *
+ * A pass that throws is logged and the interval continues. The server's job
+ * is to keep receiving spans; a Jaeger that is briefly unqueryable — it has
+ * just started, it is compacting — must not take the process down with it.
+ */
+export function startPass(settings: ServerSettings): NodeJS.Timeout {
+	const endpoint = {
+		queryUrl: `http://127.0.0.1:${settings.queryPort}`,
+		headers: basicAuthHeaders(`${settings.user}:${settings.password}`),
+	};
+	const tick = async (): Promise<void> => {
+		try {
+			const result = await runPass({
+				volume: settings.volume,
+				endpoint,
+				webhook: settings.slackWebhook,
+				windowMs: settings.passWindowMs,
+			});
+			for (const { span, reason } of result.unannounced) {
+				console.error(
+					`could not announce ${span.promise} (${span.traceId}): ${reason} — it stays unannounced for the next pass`,
+				);
+			}
+			if (result.announced.length > 0) {
+				console.info(`announced ${result.announced.length} violation(s)`);
+			}
+		} catch (err) {
+			console.error(`always-on pass failed: ${(err as Error).message}`);
+		}
+	};
+	const timer = setInterval(() => {
+		void tick();
+	}, settings.passIntervalMs);
+	timer.unref?.();
+	return timer;
 }

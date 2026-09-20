@@ -1,7 +1,7 @@
 import { rmSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type AlwaysOnServer, startAlwaysOnServer } from "./helpers/always-on-server.js";
-import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { runCliAsync, SHOULD_SKIP } from "./helpers/cli.js";
 import { newTraceId } from "./helpers/local-jaeger.js";
 import { refusingSlackUrl, type SlackCapture, startSlackCapture } from "./helpers/slack-capture.js";
 
@@ -21,7 +21,9 @@ const PROMISE = "seat-never-double-booked";
 const OTHER = "seat-release-on-timeout";
 
 function announce(server: AlwaysOnServer, webhook: string) {
-	return runCli(server.volume, ["telemetry", "announce", "--once"], {
+	// Async on purpose: the Slack capture lives in this process, and a
+	// synchronous spawn would block the event loop it answers on.
+	return runCliAsync(server.volume, ["telemetry", "announce", "--once"], {
 		INDUSK_SERVER_VOLUME: server.volume,
 		INDUSK_SERVER_QUERY_URL: server.queryUrl,
 		INDUSK_SERVER_CREDENTIAL: server.credential,
@@ -65,9 +67,9 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — the pass announces", () => {
 	});
 
 	it("A5 — one message naming the promise, the symptom, the environment and the trace", async () => {
-		const r = announce(server, slack.url);
+		const r = await announce(server, slack.url);
 		expect(r.stdout + r.stderr, "the pass ran").not.toMatch(/unknown command/);
-		expect(r.code).toBe(0);
+		expect(r.code, r.stdout + r.stderr).toBe(0);
 		const posts = await slack.waitForPosts(1, 10_000);
 		expect(posts).toHaveLength(1);
 		const text = slack.texts()[0];
@@ -77,9 +79,9 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — the pass announces", () => {
 		expect(text).toContain(violated);
 	});
 
-	it("A6 — a second pass over the same violation says nothing more", () => {
+	it("A6 — a second pass over the same violation says nothing more", async () => {
 		const before = slack.posts().length;
-		const r = announce(server, slack.url);
+		const r = await announce(server, slack.url);
 		expect(r.code).toBe(0);
 		expect(slack.posts()).toHaveLength(before);
 	});
@@ -115,7 +117,7 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — an environment nobody set", () =
 	});
 
 	it("A8 — reads 'environment unknown' rather than a guess", async () => {
-		const r = announce(server, slack.url);
+		const r = await announce(server, slack.url);
 		expect(r.code).toBe(0);
 		await slack.waitForPosts(1, 10_000);
 		const text = slack.texts()[0];
@@ -153,11 +155,11 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — Slack unreachable", () => {
 	});
 
 	it("A9 — the violation stays unannounced and is said so; the next pass announces it", async () => {
-		const failed = announce(server, gone);
+		const failed = await announce(server, gone);
 		const said = failed.stdout + failed.stderr;
 		expect(said, "the pass says it could not announce").toMatch(/could not announce|unannounced/i);
 
-		const recovered = announce(server, slack.url);
+		const recovered = await announce(server, slack.url);
 		expect(recovered.code).toBe(0);
 		const posts = await slack.waitForPosts(1, 10_000);
 		expect(posts, "the violation Slack never received is announced by the next pass").toHaveLength(

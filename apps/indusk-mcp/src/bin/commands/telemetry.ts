@@ -562,3 +562,57 @@ export async function telemetryServe(): Promise<void> {
 		throw err;
 	}
 }
+
+/**
+ * Run one always-on pass and exit (day-always-on).
+ *
+ * The same pass the server runs on its interval, entered once from outside
+ * it — so a test can say when a pass happened rather than wait on a clock,
+ * and a person can check a deployment without restarting anything. Reads the
+ * server's query URL and credential from the environment, because the server
+ * it asks may not be the machine it runs on.
+ */
+export async function telemetryAnnounce(opts: { once?: boolean }): Promise<void> {
+	if (!opts.once) {
+		console.error(
+			"indusk telemetry announce: --once is required. The scheduled pass belongs to `indusk telemetry serve`, which runs it in the server's own process.",
+		);
+		process.exitCode = 2;
+		return;
+	}
+	const { readPassSettings, MissingServerSetting } = await import("../../lib/telemetry/server.js");
+	const { runPass } = await import("../../lib/always-on/pass.js");
+	const { basicAuthHeaders } = await import("../../lib/promises/telemetry.js");
+
+	let settings: Awaited<ReturnType<typeof readPassSettings>>;
+	try {
+		settings = readPassSettings();
+	} catch (err) {
+		if (err instanceof MissingServerSetting) {
+			console.error(`indusk telemetry announce: ${err.message}`);
+			process.exitCode = 1;
+			return;
+		}
+		throw err;
+	}
+
+	const result = await runPass({
+		volume: settings.volume,
+		endpoint: {
+			queryUrl: settings.queryUrl,
+			headers: basicAuthHeaders(settings.credential),
+		},
+		webhook: settings.slackWebhook,
+		windowMs: settings.windowMs,
+	});
+
+	for (const { span, reason } of result.unannounced) {
+		console.error(
+			`could not announce ${span.promise} (${span.traceId}): ${reason} — it stays unannounced for the next pass`,
+		);
+	}
+	console.info(
+		`announced ${result.announced.length}, unannounced ${result.unannounced.length}, already announced ${result.alreadyAnnounced}`,
+	);
+	if (result.unannounced.length > 0) process.exitCode = 1;
+}

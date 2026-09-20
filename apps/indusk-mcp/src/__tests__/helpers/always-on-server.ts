@@ -99,6 +99,14 @@ export async function startAlwaysOnServer(opts: StartOptions = {}): Promise<Alwa
 				INDUSK_SERVER_QUERY_PORT: String(queryPort),
 				INDUSK_SERVER_USER: SERVER_USER,
 				INDUSK_SERVER_PASSWORD: SERVER_PASSWORD,
+				// The server refuses to start without a webhook — a server that
+				// cannot say anything is not watching — so every start has one.
+				// The interval is pushed past any test's life on purpose: the
+				// rows that count Slack messages drive the pass themselves, and
+				// a second pass firing on a timer would make them flaky rather
+				// than wrong, which is worse.
+				INDUSK_SERVER_SLACK_WEBHOOK: "http://127.0.0.1:1/never",
+				INDUSK_SERVER_PASS_INTERVAL_MS: String(60 * 60 * 1000),
 				INDUSK_SKIP_UPDATE_CHECK: "1",
 				...opts.env,
 			},
