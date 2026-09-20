@@ -99,7 +99,7 @@ session reading that server (ADR D1–D10).
 **Goal**: author every row that can be written against today's code through
 the CLI, HTTP, a tool call or the server's own endpoints.
 
-- [ ] Create this plan's worktree with the published command: `indusk worktree create day-always-on` (records the assignment; the admin and plan tools follow the plan into it)
+- [x] Create this plan's worktree with the published command: `indusk worktree create day-always-on` (records the assignment; the admin and plan tools follow the plan into it)
 - [ ] Helper `apps/indusk-mcp/src/__tests__/helpers/always-on-server.ts`: starts `indusk telemetry serve` on free ports with a temp volume and known credentials, exposes its OTLP and query URLs, stops it and can restart it in place (A2); throws when it cannot start
 - [ ] Helper extension: a Slack webhook capture server (accepts `POST`, exposes what it received, and a mode that refuses connections for A9) — beside `helpers/otlp-capture.ts`, which it mirrors
 - [ ] Author A1–A4 in `apps/indusk-mcp/src/__tests__/always-on-server.test.ts` (OTLP and query over HTTP, with and without credentials; restart between load and query)
