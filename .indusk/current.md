@@ -238,6 +238,21 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-19T20:41:17.768Z
 **Branch**: plan/day-monitor
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-monitor
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
 ## Session 25c802bd — day-promises: /work Test Phase 1
 
 **Session ID**: 25c802bd-7505-46cc-a1a7-72186418629a
@@ -265,6 +280,27 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-18T23:34:23.352Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 0ae5d939 — eval agent: scoring commit 82538e15
+
+**Session ID**: 0ae5d939-fa22-4e79-b022-a1eefff361e9
+**Last updated**: 2026-09-20T04:09:33.802Z
+**Branch**: plan/day-always-on
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-always-on
 
 ### In Flight
 

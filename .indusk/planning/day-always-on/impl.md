@@ -100,8 +100,8 @@ session reading that server (ADR D1–D10).
 the CLI, HTTP, a tool call or the server's own endpoints.
 
 - [x] Create this plan's worktree with the published command: `indusk worktree create day-always-on` (records the assignment; the admin and plan tools follow the plan into it)
-- [ ] Helper `apps/indusk-mcp/src/__tests__/helpers/always-on-server.ts`: starts `indusk telemetry serve` on free ports with a temp volume and known credentials, exposes its OTLP and query URLs, stops it and can restart it in place (A2); throws when it cannot start
-- [ ] Helper extension: a Slack webhook capture server (accepts `POST`, exposes what it received, and a mode that refuses connections for A9) — beside `helpers/otlp-capture.ts`, which it mirrors
+- [x] Helper `apps/indusk-mcp/src/__tests__/helpers/always-on-server.ts`: starts `indusk telemetry serve` on free ports with a temp volume and known credentials, exposes its OTLP and query URLs, stops it and can restart it in place (A2); throws when it cannot start
+- [x] Helper extension: a Slack webhook capture server (accepts `POST`, exposes what it received, and a mode that refuses connections for A9) — beside `helpers/otlp-capture.ts`, which it mirrors: `helpers/slack-capture.ts`, with `refusingSlackUrl()` for A9
 - [ ] Author A1–A4 in `apps/indusk-mcp/src/__tests__/always-on-server.test.ts` (OTLP and query over HTTP, with and without credentials; restart between load and query)
 - [ ] Author A5–A9 in `apps/indusk-mcp/src/__tests__/always-on-pass.test.ts` (violations loaded into the server, the pass driven once and twice, the webhook capture read)
 - [ ] Author A10–A14 in `apps/indusk-mcp/src/__tests__/always-on-source.test.ts` via `runCli` against a project whose config names the server
