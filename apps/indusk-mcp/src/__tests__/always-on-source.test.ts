@@ -68,7 +68,7 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — a project that names its Jaeger"
 
 	beforeAll(async () => {
 		server = await startAlwaysOnServer();
-		fixture = project({ url: server.queryUrl, credential_env: CRED_ENV });
+		fixture = project({ jaeger: { url: server.queryUrl, credential_env: CRED_ENV } });
 		violated = newTraceId();
 		await server.load([
 			{

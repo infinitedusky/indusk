@@ -60,10 +60,10 @@ session reading that server (ADR D1–D10).
 | A7 | A promise seen upheld produces no message | Test Phase 1 | Build Phase 2 | passing |
 | A8 | A violation whose span carries no environment reads "environment unknown" rather than a guess | Test Phase 1 | Build Phase 2 | passing |
 | A9 | With Slack unreachable the violation stays unannounced and the server says so; the next pass announces it | Test Phase 1 | Build Phase 2 | passing |
-| A10 | In a project configured to read the server, `indusk promises status` reports the deployed run's violations, not the local daemon's | Test Phase 1 | Build Phase 3 | written |
-| A11 | With the server unreachable or the credential wrong, `status` names where it looked and exits non-zero; it never reports zero violations | Test Phase 1 | Build Phase 3 | written |
-| A12 | `indusk promises watch --source deployed` records an incident with source `deployed` and the environment, and reopens the owning plan | Test Phase 1 | Build Phase 3 | written |
-| A13 | A violation already recorded is not recorded a second time by a later `watch` | Test Phase 1 | Build Phase 3 | written |
+| A10 | In a project configured to read the server, `indusk promises status` reports the deployed run's violations, not the local daemon's | Test Phase 1 | Build Phase 3 | passing |
+| A11 | With the server unreachable or the credential wrong, `status` names where it looked and exits non-zero; it never reports zero violations | Test Phase 1 | Build Phase 3 | passing |
+| A12 | `indusk promises watch --source deployed` records an incident with source `deployed` and the environment, and reopens the owning plan | Test Phase 1 | Build Phase 3 | passing |
+| A13 | A violation already recorded is not recorded a second time by a later `watch` | Test Phase 1 | Build Phase 3 | passing |
 | A14 | A project with no remote configured still reads its local daemon, exactly as before | Test Phase 1 | Test Phase 1 | passing |
 | A15 | The Promises page of a project configured to read the server shows a violated promise red, naming its environment | Test Phase 1 | Build Phase 4 | written |
 | A16 | A violation arriving while the page is open turns the promise red without a reload | Test Phase 1 | Build Phase 4 | written |
@@ -177,22 +177,24 @@ the CLI, HTTP, a tool call or the server's own endpoints.
 
 ### Build Phase 3: A project names its Jaeger
 
-- [ ] `promises.jaeger: { url, credential_env }` in the config type and its schema; one resolver deciding local daemon versus named remote, read by `readPromiseMarks` (D5) — absence behaves exactly as today
-- [ ] `markedSpans` sends the credential from the named environment variable, and reports an unreachable or refusing remote as `JaegerUnreachable` naming the URL (never a zero)
-- [ ] The environment travels: `MarkedSpan` carries it from the span's `deployment.environment` resource attribute, or null; `watch` writes it on the incident, and `--source deployed` is accepted
-- [ ] `indusk promises status` and `watch` name the source they read (local daemon or the configured URL) in their output, so a reader never has to guess which Jaeger answered
+- [x] `promises.jaeger: { url, credential_env }` in the config type and its schema; one resolver deciding local daemon versus named remote, read by `readPromiseMarks` (D5) — absence behaves exactly as today
+- [x] `markedSpans` sends the credential from the named environment variable, and reports an unreachable or refusing remote as `JaegerUnreachable` naming the URL (never a zero)
+- [x] The environment travels: `MarkedSpan` carries it from the span's `deployment.environment` resource attribute, or null; `watch` writes it on the incident, and `--source deployed` is accepted
+- [x] `indusk promises status` and `watch` name the source they read (local daemon or the configured URL) in their output, so a reader never has to guess which Jaeger answered
+- [x] Shape (`apps/indusk-mcp/src/lib/promises/telemetry.ts`) — reviewed, left as-is: resolveMarkSource was drafted as its own module and folded back in: source.ts had to import JaegerEndpoint, basicAuthHeaders and JaegerUnreachable from telemetry.ts while telemetry.ts imported the resolver, a cycle. Which Jaeger to read is part of reading Jaeger, and one file with no cycle beats two with one
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 3 Verification
 
-- [ ] A10, A11, A12, A13 pass and A14 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-source.test.ts`)
+- [x] A10, A11, A12, A13 pass and A14 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-source.test.ts`)
 
 #### Build Phase 3 Context
 
-- [ ] Conventions (the promises entry): a project names its Jaeger in `promises.jaeger` (URL + the *name* of the env var holding the credential); absence means the local daemon
+- [x] Conventions (the promises entry): a project names its Jaeger in `promises.jaeger` (URL + the *name* of the env var holding the credential); absence means the local daemon
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: the remote source, `--source deployed`, and the environment on an incident
+- [x] `apps/docs/src/reference/cli/promises.md`: the remote source, `--source deployed`, and the environment on an incident
 
 ### Build Phase 4: The admin shows it
 

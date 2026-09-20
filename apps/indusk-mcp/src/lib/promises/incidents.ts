@@ -67,11 +67,14 @@ function incidentText(o: {
 	lastSeen: string;
 	traces: string[];
 	symptom: string;
+	/** From the span, when it carried one (day-always-on D6); omitted entirely when it did not. */
+	environment: string | null;
 }): string {
 	const frontmatter = [
 		`id: ${o.id}`,
 		`promise: ${o.promise}`,
 		`source: ${o.source}`,
+		...(o.environment ? [`environment: ${o.environment}`] : []),
 		"status: open",
 		`date: '${o.opened.slice(0, 10)}'`,
 		`opened: '${o.opened}'`,
@@ -128,6 +131,10 @@ export function recordViolations(
 			lastSeen: iso(newest.at),
 			traces: freshIds,
 			symptom: newest.symptom ?? "The span marked the promise violated and carried no symptom.",
+			// The newest violation's environment, and no guess when it has
+			// none: one server holds staging and production, and an incident
+			// that names the wrong one sends a person to the wrong logs.
+			environment: newest.environment,
 		}),
 	);
 	ensurePromiseCarries(registry, promise, id);

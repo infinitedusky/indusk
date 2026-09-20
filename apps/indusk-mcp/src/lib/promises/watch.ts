@@ -15,6 +15,7 @@ import type { IncidentSource } from "./vocabulary.js";
  */
 
 export interface WatchResult {
+	source: string;
 	changes: (IncidentChange & { promise: string; owner: string; reopen: ReopenResult })[];
 }
 
@@ -56,6 +57,10 @@ export async function watchPromises(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
 	const marks = await readPromiseMarks(planRoot, read.registry, { now });
+	// Which Jaeger answered travels with the result: with a remote source a
+	// reader must never have to guess whether they are looking at production
+	// or at the laptop they are sitting in front of.
+	const source = marks.queryUrl;
 	const changes: WatchResult["changes"] = [];
 	for (const promise of behaviour) {
 		const violations = marks.byPromise.get(promise.name)?.violations ?? [];
@@ -65,5 +70,5 @@ export async function watchPromises(
 		const reopen = await reopenLive(planRoot, promise.owner, change.id, promise.name);
 		changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
 	}
-	return { changes };
+	return { changes, source };
 }

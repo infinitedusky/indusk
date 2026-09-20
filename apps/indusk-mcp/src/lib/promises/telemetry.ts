@@ -1,3 +1,4 @@
+import { readConfig } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import type { Registry } from "./registry.js";
@@ -197,13 +198,21 @@ export async function markedSpans(opts: {
 	 * the old name after a rename.
 	 */
 	aliases?: Record<string, string[]>;
+	/**
+	 * Where to read (day-always-on D5). Absent means the local daemon, which
+	 * is what every caller predating the always-on server passes.
+	 */
+	endpoint?: JaegerEndpoint;
 }): Promise<MarkedSpansResult> {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-	const status = await daemonStatus();
-	if (!status.running) {
-		throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
+	let endpoint = opts.endpoint;
+	if (!endpoint) {
+		const status = await daemonStatus();
+		if (!status.running) {
+			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
+		}
+		endpoint = { queryUrl: `http://localhost:${status.uiPort}` };
 	}
-	const endpoint: JaegerEndpoint = { queryUrl: `http://localhost:${status.uiPort}` };
 	const queryUrl = endpoint.queryUrl;
 	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);
 
@@ -254,13 +263,63 @@ export async function markedSpans(opts: {
 }
 
 /**
+ * Where this project's marks are read from (day-always-on, ADR D5).
+ *
+ * One decision, made once: a project that names `promises.jaeger` reads the
+ * always-on server it names; a project that names none reads its local
+ * telemetry daemon, exactly as before. Absence is the rule rather than a
+ * migration — every project that existed before this change names nothing and
+ * behaves identically, which is what A14 guards.
+ *
+ * The credential lives in the environment variable the config *names*, never
+ * in the config: `.indusk/config.json` is committed.
+ */
+export interface MarkSource {
+	endpoint: JaegerEndpoint;
+	/** Where it read, named as a person should see it. */
+	label: string;
+	/** True when the project named a server rather than falling to its daemon. */
+	remote: boolean;
+}
+
+export async function resolveMarkSource(root: string): Promise<MarkSource> {
+	const named = readConfig(root)?.promises?.jaeger;
+	if (!named) {
+		const status = await daemonStatus();
+		if (!status.running) {
+			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
+		}
+		const queryUrl = `http://localhost:${status.uiPort}`;
+		return { endpoint: { queryUrl }, label: queryUrl, remote: false };
+	}
+
+	const queryUrl = named.url.replace(/\/+$/, "");
+	const credential = process.env[named.credential_env]?.trim();
+	if (!credential) {
+		// Named but unreadable: refuse against the URL the reader is asking
+		// about, naming the variable they have to set. Falling back to the
+		// local daemon here would answer a question about production with a
+		// laptop's traces.
+		throw new JaegerUnreachable(
+			queryUrl,
+			`promises.jaeger names ${named.credential_env} for its credential and that variable is not set`,
+		);
+	}
+	return {
+		endpoint: { queryUrl, headers: basicAuthHeaders(credential) },
+		label: queryUrl,
+		remote: true,
+	};
+}
+
+/**
  * This project's marks, as every reader asks for them: the registry's
  * behaviour promises that are not retired, with their aliases, filtered to
  * this project's id, over the quiet window unless `sinceMs` says otherwise.
  * The one call `status`, `watch` and the admin make — each once assembled the
  * four by hand, and A27/A28 had to change all three.
  */
-export function readPromiseMarks(
+export async function readPromiseMarks(
 	root: string,
 	registry: Registry,
 	opts: { sinceMs?: number; timeoutMs?: number; now?: Date } = {},
@@ -269,7 +328,9 @@ export function readPromiseMarks(
 	const behaviour = registry.promises.filter(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
+	const source = await resolveMarkSource(root);
 	return markedSpans({
+		endpoint: source.endpoint,
 		promises: behaviour.map((p) => p.name),
 		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
 		since: new Date(now.getTime() - (opts.sinceMs ?? getQuietWindowDays(root) * 86_400_000)),
