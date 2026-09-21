@@ -72,13 +72,13 @@ session reading that server (ADR D1–D10).
 | A19 | The health tool reports the same counts the CLI prints for the same project and window | Test Phase 1 | Build Phase 5 | passing |
 | A20 | `/catchup`'s steps name promise health, and the "what's next" answer reports open violations before the roadmap | Test Phase 1 | Build Phase 5 | passing |
 | A21 | End to end with no developer machine involved: an app marks a promise violated, the server announces it to Slack, a later `watch --source deployed` records the incident with its environment and reopens the owner, and the health tool names it | Build Phase 6 | Build Phase 6 | planned |
-| A22 | A server credential or volume path containing a newline is refused by name, and can never add a key to the rendered Jaeger config | Phase 0 | Build Phase 7 | planned |
-| A23 | Two passes overlapping — one slower than the interval — announce each violation once between them, not twice | Phase 0 | Build Phase 7 | planned |
-| A24 | A half-written `announced.json` (the process died mid-write) never causes the window to be re-announced | Phase 0 | Build Phase 7 | planned |
-| A25 | When the announced record cannot be persisted, the pass says so and stops announcing rather than repeating the same violation every interval forever | Phase 0 | Build Phase 7 | planned |
-| A26 | A window holding far more violations than one message-per-violation allows announces at most a bounded number and says how many it held back | Phase 0 | Build Phase 7 | planned |
-| A27 | A `promises.jaeger.url` that is empty or unparseable is refused naming the config key, not reported as an unreachable nameless URL | Phase 0 | Build Phase 7 | planned |
-| A28 | A span whose `deployment.environment` or symptom carries YAML or heading syntax cannot alter an incident's frontmatter keys or its `## Root cause` section | Phase 0 | Build Phase 7 | planned |
+| A22 | A server credential or volume path containing a newline is refused by name, and can never add a key to the rendered Jaeger config | Phase 0 | Build Phase 7 | written |
+| A23 | Two passes overlapping — one slower than the interval — announce each violation once between them, not twice | Phase 0 | Build Phase 7 | written |
+| A24 | A half-written `announced.json` (the process died mid-write) never causes the window to be re-announced | Phase 0 | Build Phase 7 | written |
+| A25 | When the announced record cannot be persisted, the pass says so and stops announcing rather than repeating the same violation every interval forever | Phase 0 | Build Phase 7 | written |
+| A26 | A window holding far more violations than one message-per-violation allows announces at most a bounded number and says how many it held back | Phase 0 | Build Phase 7 | written |
+| A27 | A `promises.jaeger.url` that is empty or unparseable is refused naming the config key, not reported as an unreachable nameless URL | Phase 0 | Build Phase 7 | written |
+| A28 | A span whose `deployment.environment` or symptom carries YAML or heading syntax cannot alter an incident's frontmatter keys or its `## Root cause` section | Phase 0 | Build Phase 7 | written |
 
 ### Deferred Verification
 
