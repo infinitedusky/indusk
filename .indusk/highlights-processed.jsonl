@@ -292,3 +292,6 @@
 {"id":"h-20260919-003","processedAt":"2026-09-19T20:52:56.178Z","action":"wrote-episode","detail":"scope-biome-write-to-changed-files-not-whole-directories"}
 {"id":"h-20260919-004","processedAt":"2026-09-19T20:52:57.000Z","action":"wrote-episode","detail":"fresh-worktree-missing-bundled-admin-breaks-pnpm-test"}
 {"id":"h-20260919-005","processedAt":"2026-09-19T20:52:57.586Z","action":"skipped","detail":"audit summary stat, no durable rule stated"}
+{"id":"h-20260919-006","processedAt":"2026-09-19T21:56:12.971Z","action":"skipped","detail":"recorded in day-always-on/brief.md; full content already reviewed in this eval pass (e258b9ca, 2041f5b6)"}
+{"id":"h-20260919-007","processedAt":"2026-09-19T22:26:36.096Z","action":"skipped","detail":"recorded in day-always-on/test-plan.md; full content already reviewed in this eval pass (a8673b97)"}
+{"id":"h-20260919-008","processedAt":"2026-09-19T23:57:00.470Z","action":"skipped","detail":"recorded in day-always-on/adr.md; full content already reviewed and verified in this eval pass (9855264d)"}

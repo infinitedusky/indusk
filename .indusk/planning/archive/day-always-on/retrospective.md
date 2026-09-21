@@ -186,3 +186,5 @@ Both rows (U1, U2) classify as `downstream-plan` with no warning, mitigated by
 `day-always-on-deploy` (brief accepted 2026-09-21). The image and the Fly
 configuration are written and unrun, and the guide says so in a warning
 callout until that plan closes.
+
+Landed on main at e1e7efe0, 2026-09-21.

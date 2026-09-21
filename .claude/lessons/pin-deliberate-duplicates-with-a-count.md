@@ -16,3 +16,7 @@ Neither was found by a behavioural test. The first was found because a gate myst
 **A shared module's shape must be the union of what all its callers need.** When merging duplicates, enumerate every field/behaviour each caller reads. Merging copies that differ in *fields* fails exactly as silently as merging copies that differ in *logic* — the missing field arrives as `undefined`, which usually means "falsy", which usually means "not done".
 
 **Also:** when a port is unavoidable, give it a **one-to-one file correspondence** — one mirror module per source module, named for it. "Change the source and every port together" is a rule you can follow by reading two filenames; it is not a rule you can follow by hunting inside a thousand-line file for the parts that happen to be mirrored.
+
+**And the pin's scan must cover everywhere the duplicate could live.** A count is only as good as the directory it walks. A single-definition pin written to scan `src/lib` went green while the second copy of both the thing it named sat one directory away, in `src/bin` — a command module, which is exactly where a second caller shows up first. The pin reported the shape of the check without performing it, which is worse than no pin at all, because the next reader sees a green guard and stops looking.
+
+Before trusting a count, run it against the known-duplicated state and watch it fail. A pin authored after the duplication already exists must be red when written; if it is green, its scope is wrong, not the codebase.
