@@ -59,6 +59,23 @@ function newIncidentId(dir: string, promise: string, day: string): string {
 	}
 }
 
+/**
+ * A string that arrived on a span is untrusted input to a plan document.
+ *
+ * `environment` and `symptom` come from a deployed system, and they are
+ * written into committed YAML and markdown. A newline in `environment` adds
+ * frontmatter keys — a duplicate key makes js-yaml throw, which takes the
+ * whole registry down; a newline in `symptom` forges the `## Root cause`
+ * section the registry insists a person writes (A28).
+ *
+ * Collapsed, not escaped, and not refused: a violation is still real when the
+ * system reporting it sends something odd, and losing it would be the worse
+ * failure. The oddness is kept visible rather than silently dropped.
+ */
+export function oneLine(value: string): string {
+	return value.replace(/[\r\n\u2028\u2029]+/g, " ").trim();
+}
+
 function incidentText(o: {
 	id: string;
 	promise: string;
@@ -74,7 +91,7 @@ function incidentText(o: {
 		`id: ${o.id}`,
 		`promise: ${o.promise}`,
 		`source: ${o.source}`,
-		...(o.environment ? [`environment: ${o.environment}`] : []),
+		...(o.environment ? [`environment: ${JSON.stringify(oneLine(o.environment))}`] : []),
 		"status: open",
 		`date: '${o.opened.slice(0, 10)}'`,
 		`opened: '${o.opened}'`,
@@ -82,7 +99,7 @@ function incidentText(o: {
 		"traces:",
 		...o.traces.map((t) => `  - '${t}'`),
 	];
-	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${o.symptom}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
+	return `---\n${frontmatter.join("\n")}\n---\n\n## Symptom\n\n${oneLine(o.symptom)}\n\n## Root cause\n\n${UNWRITTEN_ROOT_CAUSE}\n\n## Fix\n\n${NOT_YET_FIXED}\n`;
 }
 
 /**

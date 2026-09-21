@@ -606,13 +606,18 @@ export async function telemetryAnnounce(opts: { once?: boolean }): Promise<void>
 		windowMs: settings.windowMs,
 	});
 
+	if (result.recordProblem) {
+		console.error(`announced nothing — ${result.recordProblem}`);
+		process.exitCode = 1;
+		return;
+	}
 	for (const { span, reason } of result.unannounced) {
 		console.error(
 			`could not announce ${span.promise} (${span.traceId}): ${reason} — it stays unannounced for the next pass`,
 		);
 	}
 	console.info(
-		`announced ${result.announced.length}, unannounced ${result.unannounced.length}, already announced ${result.alreadyAnnounced}`,
+		`announced ${result.announced.length}, held ${result.held.length}, unannounced ${result.unannounced.length}, already announced ${result.alreadyAnnounced}`,
 	);
 	if (result.unannounced.length > 0) process.exitCode = 1;
 }

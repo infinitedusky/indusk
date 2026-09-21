@@ -72,13 +72,13 @@ session reading that server (ADR D1–D10).
 | A19 | The health tool reports the same counts the CLI prints for the same project and window | Test Phase 1 | Build Phase 5 | passing |
 | A20 | `/catchup`'s steps name promise health, and the "what's next" answer reports open violations before the roadmap | Test Phase 1 | Build Phase 5 | passing |
 | A21 | End to end with no developer machine involved: an app marks a promise violated, the server announces it to Slack, a later `watch --source deployed` records the incident with its environment and reopens the owner, and the health tool names it | Build Phase 6 | Build Phase 6 | planned |
-| A22 | A server credential or volume path containing a newline is refused by name, and can never add a key to the rendered Jaeger config | Phase 0 | Build Phase 7 | written |
-| A23 | Two passes overlapping — one slower than the interval — announce each violation once between them, not twice | Phase 0 | Build Phase 7 | written |
-| A24 | A half-written `announced.json` (the process died mid-write) never causes the window to be re-announced | Phase 0 | Build Phase 7 | written |
-| A25 | When the announced record cannot be persisted, the pass says so and stops announcing rather than repeating the same violation every interval forever | Phase 0 | Build Phase 7 | written |
-| A26 | A window holding far more violations than one message-per-violation allows announces at most a bounded number and says how many it held back | Phase 0 | Build Phase 7 | written |
-| A27 | A `promises.jaeger.url` that is empty or unparseable is refused naming the config key, not reported as an unreachable nameless URL | Phase 0 | Build Phase 7 | written |
-| A28 | A span whose `deployment.environment` or symptom carries YAML or heading syntax cannot alter an incident's frontmatter keys or its `## Root cause` section | Phase 0 | Build Phase 7 | written |
+| A22 | A server credential or volume path containing a newline is refused by name, and can never add a key to the rendered Jaeger config | Phase 0 | Build Phase 7 | passing |
+| A23 | Two passes overlapping — one slower than the interval — announce each violation once between them, not twice | Phase 0 | Build Phase 7 | passing |
+| A24 | A half-written `announced.json` (the process died mid-write) never causes the window to be re-announced | Phase 0 | Build Phase 7 | passing |
+| A25 | When the announced record cannot be persisted, the pass says so and stops announcing rather than repeating the same violation every interval forever | Phase 0 | Build Phase 7 | passing |
+| A26 | A window holding far more violations than one message-per-violation allows announces at most a bounded number and says how many it held back | Phase 0 | Build Phase 7 | passing |
+| A27 | A `promises.jaeger.url` that is empty or unparseable is refused naming the config key, not reported as an unreachable nameless URL | Phase 0 | Build Phase 7 | passing |
+| A28 | A span whose `deployment.environment` or symptom carries YAML or heading syntax cannot alter an incident's frontmatter keys or its `## Root cause` section | Phase 0 | Build Phase 7 | passing |
 
 ### Deferred Verification
 
@@ -277,31 +277,33 @@ non-atomic file read at the top of a pass, and the second carries a string a
 deployed system controls straight into a plan document. Each row below names a
 specific input that breaks one of them.
 
-- [ ] `readServerSettings` refuses a user, password or volume path containing a line separator, naming the variable — the credential goes into `htpasswd.inline` and the path into `directories.keys`, both unquoted, so a newline does not corrupt the config, it *extends* it. Refuse rather than escape: a credential with a newline in it is a mistake, not a use case.
-- [ ] `runPass` refuses to run while a pass is already running (a module-level guard keyed on the volume), and says it skipped. `setInterval` + `void tick()` starts a second pass on schedule regardless of whether the first finished, and both read `announced.json` before either writes it — so a pass slower than the interval announces everything twice, which is precisely the claim.
-- [ ] `writeAnnounced` writes to a sibling temp file and renames it — `writeFileSync` to the live path leaves a truncated file if the machine is replaced mid-write, and a truncated file reads as empty, which re-announces the entire window.
-- [ ] `readAnnounced` distinguishes *absent* from *unreadable*, and `runPass` treats unreadable as fatal for that pass: log it and announce nothing. The comment above it claims an unreadable record "costs a repeated message"; the code costs a repeated message **every interval, forever**, silently. That is the comment-not-enforced-by-the-code class this repository has a rule about.
-- [ ] `runPass` announces at most `MAX_ANNOUNCEMENTS_PER_PASS` violations and reports how many it held for the next pass. A bad deploy produces hundreds of violations in one window; today that is hundreds of POSTs in a tight loop, Slack answers 429, every one of them counts as unannounced, and the next pass tries them all again — a flood that never converges. The cap must not mark held-back violations as announced.
-- [ ] `resolveMarkSource` validates `promises.jaeger.url` with `new URL()` and refuses naming `promises.jaeger.url` when it is empty or unparseable. Today an empty string produces `Jaeger could not be reached (): Failed to parse URL from /api/services` — a refusal that names nothing the reader can fix.
-- [ ] Span-derived strings are sanitized at the boundary before they enter a plan document: `recordViolations` rejects line separators in `environment` (falling back to none, as an absent environment already does) and strips them from `symptom`. `environment` is interpolated raw into frontmatter *above* `status: open`, so a deployed system can inject keys or make the file invalid YAML and take the whole registry unparseable; `symptom` is interpolated into the body, so it can forge the `## Root cause` section the registry requires a person to write.
+- [x] `readServerSettings` refuses a user, password or volume path containing a line separator, naming the variable — the credential goes into `htpasswd.inline` and the path into `directories.keys`, both unquoted, so a newline does not corrupt the config, it *extends* it. Refuse rather than escape: a credential with a newline in it is a mistake, not a use case.
+- [x] `runPass` refuses to run while a pass is already running (a module-level guard keyed on the volume), and says it skipped. `setInterval` + `void tick()` starts a second pass on schedule regardless of whether the first finished, and both read `announced.json` before either writes it — so a pass slower than the interval announces everything twice, which is precisely the claim.
+- [x] `writeAnnounced` writes to a sibling temp file and renames it — `writeFileSync` to the live path leaves a truncated file if the machine is replaced mid-write, and a truncated file reads as empty, which re-announces the entire window.
+- [x] `readAnnounced` distinguishes *absent* from *unreadable*, and `runPass` treats unreadable as fatal for that pass: log it and announce nothing. The comment above it claims an unreadable record "costs a repeated message"; the code costs a repeated message **every interval, forever**, silently. That is the comment-not-enforced-by-the-code class this repository has a rule about.
+- [x] `runPass` announces at most `MAX_ANNOUNCEMENTS_PER_PASS` violations and reports how many it held for the next pass. A bad deploy produces hundreds of violations in one window; today that is hundreds of POSTs in a tight loop, Slack answers 429, every one of them counts as unannounced, and the next pass tries them all again — a flood that never converges. The cap must not mark held-back violations as announced.
+- [x] `resolveMarkSource` validates `promises.jaeger.url` with `new URL()` and refuses naming `promises.jaeger.url` when it is empty or unparseable. Today an empty string produces `Jaeger could not be reached (): Failed to parse URL from /api/services` — a refusal that names nothing the reader can fix.
+- [x] Span-derived strings are sanitized at the boundary before they enter a plan document: `recordViolations` rejects line separators in `environment` (falling back to none, as an absent environment already does) and strips them from `symptom`. `environment` is interpolated raw into frontmatter *above* `status: open`, so a deployed system can inject keys or make the file invalid YAML and take the whole registry unparseable; `symptom` is interpolated into the body, so it can forge the `## Root cause` section the registry requires a person to write.
+- [x] Shape (`apps/indusk-mcp/src/lib/always-on/pass.ts`) — the probe that proves the record is writable before anything is announced is an eight-line try/catch explained by a comment — give it a name (proveRecordWritable) so the signature says what the comment says. Rule: an inline block that needs a comment to say what it is wanted a name instead (intra-unit craft)
+- [x] Shape (`apps/indusk-mcp/src/lib/always-on/pass.ts`) — reviewed, left as-is: runPass now has two reasons to change — announcement policy and record durability — which argues for an AnnouncedLedger object. Left as is: the loop is linear, every branch is named and pinned by A23-A26, and a ledger whose only consumer is this one loop is the wrong-abstraction risk cleanup warns about. Revisit if a second caller appears
 
 #### Build Phase 7 Verification
 
-- [ ] A22: a newline in `INDUSK_SERVER_PASSWORD` is refused by name, and `renderServerConfig` never emits a config with an extra top-level key
-- [ ] A23: two `runPass` calls driven concurrently against a deliberately slow Slack capture produce one message per violation
-- [ ] A24: an `announced.json` truncated mid-object does not re-announce the window
-- [ ] A25: an unwritable record makes the pass say so and announce nothing, twice running
-- [ ] A26: a window of many violations announces at most the cap and names the number held
-- [ ] A27: `promises.jaeger.url: ""` refuses naming the config key
-- [ ] A28: a hostile `deployment.environment` and a hostile symptom leave the incident's frontmatter keys and its `## Root cause` section intact, and the registry still parses
+- [x] A22: a newline in `INDUSK_SERVER_PASSWORD` is refused by name, and `renderServerConfig` never emits a config with an extra top-level key
+- [x] A23: two `runPass` calls driven concurrently against a deliberately slow Slack capture produce one message per violation
+- [x] A24: an `announced.json` truncated mid-object does not re-announce the window
+- [x] A25: an unwritable record makes the pass say so and announce nothing, twice running
+- [x] A26: a window of many violations announces at most the cap and names the number held
+- [x] A27: `promises.jaeger.url: ""` refuses naming the config key
+- [x] A28: a hostile `deployment.environment` and a hostile symptom leave the incident's frontmatter keys and its `## Root cause` section intact, and the registry still parses
 
 #### Build Phase 7 Context
 
-- [ ] Known Gotchas: a string that arrives from a marked span is **untrusted input to a plan document** — `environment` and `symptom` cross from a deployed system into committed YAML and markdown, so they are sanitized at `recordViolations`, not at the reader
+- [x] Known Gotchas: a string that arrives from a marked span is **untrusted input to a plan document** — `environment` and `symptom` cross from a deployed system into committed YAML and markdown, so they are sanitized at `recordViolations`, not at the reader
 
 #### Build Phase 7 Document
 
-- [ ] `/guide/always-on`: the credential may not contain a line separator; a pass announces at most a bounded number of violations and says how many it held; an unreadable record stops announcements rather than repeating them
+- [x] `/guide/always-on`: the credential may not contain a line separator; a pass announces at most a bounded number of violations and says how many it held; an unreadable record stops announcements rather than repeating them
 
 
 ## Files Affected

@@ -179,7 +179,21 @@ describe("A28 — a deployed system cannot write into a plan document", () => {
 			const data = matter(readFileSync(file, "utf-8")).data as Record<string, unknown>;
 			expect(data.status, "the incident is open, not whatever the span said").toBe("open");
 			expect(data.promise, "the promise is the registry's, not the span's").toBe(PROMISE);
-			expect(String(data.environment ?? "")).not.toContain("status");
+			// The row is about KEYS, not about the word "status" appearing in a
+			// value: a quoted one-line string is data, however odd it reads.
+			expect(Object.keys(data).sort(), "no key the span invented").toEqual(
+				[
+					"date",
+					"environment",
+					"id",
+					"last_seen",
+					"opened",
+					"promise",
+					"source",
+					"status",
+					"traces",
+				].sort(),
+			);
 		} finally {
 			rmSync(fixture.root, { recursive: true, force: true });
 		}

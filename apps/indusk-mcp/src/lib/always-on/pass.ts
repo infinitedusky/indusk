@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
 	DEFAULT_TIMEOUT_MS,
@@ -29,6 +29,29 @@ import { PROMISE_MARK } from "../promises/vocabulary.js";
 /** Jaeger's own default is 20 traces per query, which would silently truncate a busy window. */
 const TRACE_LIMIT = 1500;
 
+/**
+ * The most violations one pass will announce.
+ *
+ * A bad deploy is not one violation, it is hundreds, and one message each is a
+ * tight loop of POSTs that Slack answers 429 — after which every one of them
+ * counts as unannounced and the next pass tries them all again, a flood that
+ * never converges (A26). The rest are **held**, not dropped: they stay out of
+ * the record, so the next pass announces them.
+ */
+export const MAX_ANNOUNCEMENTS_PER_PASS = 10;
+
+/**
+ * One pass at a time per volume.
+ *
+ * `setInterval` starts the next tick whether or not the last one finished, and
+ * two passes both read the record before either writes it — so a pass slower
+ * than its interval announces everything twice, which is precisely the claim
+ * this module exists to keep (A23). An in-process guard is enough because the
+ * server runs the pass in its own process; a second *process* against one
+ * volume is not a supported deployment (badger is single-writer anyway).
+ */
+const running = new Set<string>();
+
 export interface AnnouncedRecord {
 	/** Span id → when it was announced, ISO. */
 	spans: Record<string, string>;
@@ -45,15 +68,34 @@ export function announcedPath(volume: string): string {
  * costs a repeated Slack message, while refusing to run costs every violation
  * from now on. The safe direction is to say it again.
  */
-export function readAnnounced(volume: string): AnnouncedRecord {
+export type AnnouncedRead = { ok: true; record: AnnouncedRecord } | { ok: false; problem: string };
+
+/**
+ * Read the record, distinguishing **absent** from **unreadable**.
+ *
+ * Absent is the ordinary first run and means nothing has been announced.
+ * Unreadable — truncated by a machine replaced mid-write, a directory where
+ * the file belongs, permissions — is not the same fact, and treating it as
+ * empty re-announces the whole window (A24) and keeps doing so every interval
+ * forever (A25). The caller stops instead, and says which.
+ */
+export function readAnnounced(volume: string): AnnouncedRead {
 	const path = announcedPath(volume);
-	if (!existsSync(path)) return { spans: {} };
+	if (!existsSync(path)) return { ok: true, record: { spans: {} } };
+	let raw: string;
 	try {
-		const parsed = JSON.parse(readFileSync(path, "utf-8")) as AnnouncedRecord;
-		if (!parsed || typeof parsed.spans !== "object" || parsed.spans === null) return { spans: {} };
-		return { spans: parsed.spans };
-	} catch {
-		return { spans: {} };
+		raw = readFileSync(path, "utf-8");
+	} catch (err) {
+		return { ok: false, problem: `${path} could not be read: ${(err as Error).message}` };
+	}
+	try {
+		const parsed = JSON.parse(raw) as AnnouncedRecord;
+		if (!parsed || typeof parsed.spans !== "object" || parsed.spans === null) {
+			return { ok: false, problem: `${path} is not an announced record` };
+		}
+		return { ok: true, record: { spans: parsed.spans } };
+	} catch (err) {
+		return { ok: false, problem: `${path} is not valid JSON: ${(err as Error).message}` };
 	}
 }
 
@@ -71,7 +113,12 @@ export function writeAnnounced(
 	}
 	const path = announcedPath(volume);
 	mkdirSync(dirname(path), { recursive: true });
-	writeFileSync(path, JSON.stringify({ spans }, null, 1));
+	// Write and rename: `writeFileSync` to the live path leaves a truncated
+	// file when the machine is replaced mid-write, and a truncated file is one
+	// a reader has to refuse (A24). Rename is atomic on the same filesystem.
+	const temp = `${path}.${process.pid}.tmp`;
+	writeFileSync(temp, JSON.stringify({ spans }, null, 1));
+	renameSync(temp, path);
 }
 
 /**
@@ -141,6 +188,12 @@ export interface PassResult {
 	unannounced: { span: MarkedSpan; reason: string }[];
 	/** Violations skipped because an earlier pass announced them. */
 	alreadyAnnounced: number;
+	/** Over the cap for this pass, deliberately left for the next one (A26). */
+	held: MarkedSpan[];
+	/** Set when the announced record could not be read or written — nothing was announced (A24, A25). */
+	recordProblem: string | null;
+	/** Set when another pass was already running against this volume (A23). */
+	skipped?: true;
 }
 
 export interface PassOptions {
@@ -160,29 +213,97 @@ export interface PassOptions {
  * a batch at the end — a crash halfway through a noisy window would otherwise
  * repeat everything it had already said.
  */
-export async function runPass(opts: PassOptions): Promise<PassResult> {
-	const now = opts.now ?? new Date();
-	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-	const since = new Date(now.getTime() - opts.windowMs);
-	const violations = await violationsSince(opts.endpoint, since, timeoutMs);
-
-	const record = readAnnounced(opts.volume);
-	const result: PassResult = { announced: [], unannounced: [], alreadyAnnounced: 0 };
-
-	for (const span of violations) {
-		if (record.spans[span.spanId]) {
-			result.alreadyAnnounced += 1;
-			continue;
-		}
-		try {
-			await postToSlack(opts.webhook, slackText(span, opts.endpoint.queryUrl), timeoutMs);
-		} catch (err) {
-			result.unannounced.push({ span, reason: (err as Error).message });
-			continue;
-		}
-		record.spans[span.spanId] = now.toISOString();
-		writeAnnounced(opts.volume, record, { windowMs: opts.windowMs, now });
-		result.announced.push(span);
+/**
+ * Prove the record can be written *before* anything is announced, and say why
+ * if it cannot.
+ *
+ * Announcing first and failing to record is the same violation again every
+ * interval, forever — the flood the record exists to prevent (A25). The check
+ * is a real write of the current record rather than a permissions probe,
+ * because the only question that matters is whether this write will work.
+ */
+function proveRecordWritable(
+	volume: string,
+	record: AnnouncedRecord,
+	opts: { windowMs: number; now: Date },
+): string | null {
+	try {
+		writeAnnounced(volume, record, opts);
+		return null;
+	} catch (err) {
+		return `${announcedPath(volume)} could not be written: ${(err as Error).message}`;
 	}
-	return result;
+}
+
+export async function runPass(opts: PassOptions): Promise<PassResult> {
+	const empty: PassResult = {
+		announced: [],
+		unannounced: [],
+		alreadyAnnounced: 0,
+		held: [],
+		recordProblem: null,
+	};
+
+	// A23: one pass at a time per volume, or both read the record before
+	// either writes it and every violation is announced twice.
+	if (running.has(opts.volume)) return { ...empty, skipped: true };
+	running.add(opts.volume);
+	try {
+		const now = opts.now ?? new Date();
+		const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+		const read = readAnnounced(opts.volume);
+		if (!read.ok) return { ...empty, recordProblem: read.problem };
+		const record = read.record;
+
+		const unwritable = proveRecordWritable(opts.volume, record, {
+			windowMs: opts.windowMs,
+			now,
+		});
+		if (unwritable) return { ...empty, recordProblem: unwritable };
+
+		const since = new Date(now.getTime() - opts.windowMs);
+		const violations = await violationsSince(opts.endpoint, since, timeoutMs);
+
+		const result: PassResult = {
+			announced: [],
+			unannounced: [],
+			alreadyAnnounced: 0,
+			held: [],
+			recordProblem: null,
+		};
+
+		for (const span of violations) {
+			if (record.spans[span.spanId]) {
+				result.alreadyAnnounced += 1;
+				continue;
+			}
+			// A26: hold the rest rather than announce them. They stay out of the
+			// record, so the next pass says them.
+			if (result.announced.length >= MAX_ANNOUNCEMENTS_PER_PASS) {
+				result.held.push(span);
+				continue;
+			}
+			try {
+				await postToSlack(opts.webhook, slackText(span, opts.endpoint.queryUrl), timeoutMs);
+			} catch (err) {
+				result.unannounced.push({ span, reason: (err as Error).message });
+				continue;
+			}
+			record.spans[span.spanId] = now.toISOString();
+			try {
+				writeAnnounced(opts.volume, record, { windowMs: opts.windowMs, now });
+			} catch (err) {
+				// It was said and cannot be recorded. Stop: every remaining
+				// violation would be re-said next pass anyway.
+				result.recordProblem = `${announcedPath(opts.volume)} could not be written after announcing ${span.promise}: ${(err as Error).message}`;
+				result.held.push(...violations.slice(violations.indexOf(span) + 1));
+				break;
+			}
+			result.announced.push(span);
+		}
+		return result;
+	} finally {
+		running.delete(opts.volume);
+	}
 }

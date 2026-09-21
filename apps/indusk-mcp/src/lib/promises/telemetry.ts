@@ -304,7 +304,17 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 		return { endpoint: { queryUrl }, label: queryUrl, remote: false };
 	}
 
-	const queryUrl = named.url.replace(/\/+$/, "");
+	const queryUrl = named.url.trim().replace(/\/+$/, "");
+	// Refuse against the config key, not against the empty string it holds. An
+	// unusable URL used to build an endpoint anyway and fail later as
+	// "Jaeger could not be reached ()" — a refusal naming nothing the reader
+	// could fix (A27).
+	if (!queryUrl || !URL.canParse(queryUrl)) {
+		throw new JaegerUnreachable(
+			`promises.jaeger.url in ${root}`,
+			`promises.jaeger.url is ${queryUrl ? `not a URL (${JSON.stringify(named.url)})` : "empty"}`,
+		);
+	}
 	const credential = process.env[named.credential_env]?.trim();
 	if (!credential) {
 		// Named but unreadable: refuse against the URL the reader is asking

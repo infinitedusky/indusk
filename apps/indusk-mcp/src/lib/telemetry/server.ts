@@ -83,9 +83,24 @@ export class MissingServerSetting extends Error {
 	}
 }
 
+/**
+ * A line separator in any of these is refused rather than escaped.
+ *
+ * The credential goes into `htpasswd.inline` and the volume path into
+ * `directories.keys`, both unquoted, so a newline does not corrupt the
+ * rendered config — it **extends** it, with whatever the rest of the value
+ * says. Escaping would make that safe and also make a typo silently work;
+ * refusing says which variable is wrong. A credential with a newline in it is
+ * a mistake, not a use case (A22).
+ */
+const LINE_SEPARATOR = /[\r\n\u2028\u2029]/;
+
 function required(env: NodeJS.ProcessEnv, name: string): string {
 	const value = env[name]?.trim();
 	if (!value) throw new MissingServerSetting(name, "not set");
+	if (LINE_SEPARATOR.test(value)) {
+		throw new MissingServerSetting(name, "a line separator, which would extend the server config");
+	}
 	return value;
 }
 
@@ -268,6 +283,18 @@ export function startPass(settings: ServerSettings): NodeJS.Timeout {
 				webhook: settings.slackWebhook,
 				windowMs: settings.passWindowMs,
 			});
+			if (result.skipped) {
+				console.error(
+					"a pass was still running when the next was due — skipped it; consider a longer INDUSK_SERVER_PASS_INTERVAL_MS",
+				);
+				return;
+			}
+			if (result.recordProblem) {
+				// Loud, and announcing nothing: the alternative is this same
+				// violation every interval for as long as the volume is broken.
+				console.error(`announced nothing — ${result.recordProblem}`);
+				return;
+			}
 			for (const { span, reason } of result.unannounced) {
 				console.error(
 					`could not announce ${span.promise} (${span.traceId}): ${reason} — it stays unannounced for the next pass`,
@@ -275,6 +302,9 @@ export function startPass(settings: ServerSettings): NodeJS.Timeout {
 			}
 			if (result.announced.length > 0) {
 				console.info(`announced ${result.announced.length} violation(s)`);
+			}
+			if (result.held.length > 0) {
+				console.info(`held ${result.held.length} more for the next pass`);
 			}
 		} catch (err) {
 			console.error(`always-on pass failed: ${(err as Error).message}`);
