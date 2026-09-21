@@ -128,6 +128,27 @@ Call `list_plans` with `{ active: true }` — this returns only genuinely in-mot
 - The current phase of each active plan — this is where `/work` will pick up
 - Dependencies between plans — don't start a blocked plan
 
+### 8a. Check Promise Health
+
+Call `promise_health`. It reports, per behaviour promise, the violations in the
+window, the open incidents, and — the number that matters — **violations no
+incident records yet**. It reads whichever Jaeger the project names: its local
+daemon, or a deployed always-on server.
+
+**Open violations outrank the roadmap.** When the user asks what is next, say
+the unrecorded violations first, by name, before any plan or roadmap item. A
+promise is a commitment the system made and is now breaking; the next feature
+can wait a sentence. Run `indusk promises watch` to record them as incidents,
+which also reopens each owning plan with a Maintenance phase.
+
+If the tool reports an error, say so — "health unknown, Jaeger at X could not
+be reached" — and never report zero violations instead. "Nothing is broken"
+and "nobody could look" are different answers, and only one of them is
+reassuring.
+
+Skip silently if `promise_health` is unavailable (an older InDusk, or a
+project with no registry).
+
 ### 9. Review Skills and Extensions
 
 Call `extensions_status` to see what extensions are enabled and their capabilities.
@@ -159,6 +180,7 @@ After completing all steps, present a brief summary to the user:
 - Skills: N installed [list names]
 - Extensions: N enabled [list names]
 - Active plans: [list with current phase] (M inactive omitted)
+- Promises: [N with unrecorded violations, named — or "all quiet" / "health unknown since …"]
 
 Ready to pick up. What would you like to do?
 ```

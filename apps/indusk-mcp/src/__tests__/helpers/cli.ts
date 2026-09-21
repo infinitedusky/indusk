@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -83,6 +83,44 @@ export function runCli(cwd: string, args: string[], env: NodeJS.ProcessEnv = {})
 		},
 	});
 	return { code: r.status ?? -1, stdout: r.stdout, stderr: r.stderr };
+}
+
+/**
+ * Run the built CLI without blocking this process.
+ *
+ * `runCli` is synchronous, so while it waits nothing in the test's own event
+ * loop runs — including a capture server the CLI is trying to reach. Any row
+ * whose subject talks back to the test process (Slack capture, OTLP capture,
+ * a stub of anything) must use this one; the day-monitor A26 row lost an
+ * afternoon to the synchronous version before the cause was named.
+ */
+export function runCliAsync(
+	cwd: string,
+	args: string[],
+	env: NodeJS.ProcessEnv = {},
+): Promise<RunResult> {
+	return new Promise((resolve, reject) => {
+		const child = spawn("node", [CLI_BIN, ...args], {
+			cwd,
+			env: {
+				...process.env,
+				INDUSK_SKIP_UPDATE_CHECK: "1",
+				INDUSK_HOME: defaultTestHome(),
+				...env,
+			},
+			stdio: ["ignore", "pipe", "pipe"],
+		});
+		let stdout = "";
+		let stderr = "";
+		child.stdout?.on("data", (c: Buffer) => {
+			stdout += c.toString();
+		});
+		child.stderr?.on("data", (c: Buffer) => {
+			stderr += c.toString();
+		});
+		child.once("error", reject);
+		child.once("close", (code) => resolve({ code: code ?? -1, stdout, stderr }));
+	});
 }
 
 /**

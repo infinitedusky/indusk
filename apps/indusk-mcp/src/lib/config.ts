@@ -140,6 +140,20 @@ export interface InduskConfig {
 		domains: string[];
 		/** Days a closed plan's behaviour promises must stay quiet before it leaves `monitor` (day-monitor, ADR D8). Default 7. */
 		quiet_window_days?: number;
+		/**
+		 * Where this project's marks are read from (day-always-on, ADR D5).
+		 *
+		 * Absent means the local telemetry daemon, exactly as before — a
+		 * developer machine with no deployment names nothing and nothing
+		 * changes for it. Present means an always-on server: `url` is its
+		 * query API, and `credential_env` is the **name of the environment
+		 * variable** holding `user:password`, never the credential itself. A
+		 * config file is committed; a credential in it would be too.
+		 */
+		jaeger?: {
+			url: string;
+			credential_env: string;
+		};
 	};
 	/**
 	 * Multi-agent bulletin configuration (`.indusk/current.md`).

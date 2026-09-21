@@ -1,0 +1,76 @@
+# The always-on server on Fly.io — the reference deployment (day-always-on).
+#
+# Fly is a reference, not a requirement. Anything that runs a container with a
+# persistent disk and gives it TLS will do: a VPS with systemd, a small
+# Kubernetes deployment, the provider your application already uses. What the
+# server needs is a volume, two ports and its secrets.
+#
+#   fly launch --no-deploy --copy-config --config docker/fly.always-on.toml
+#   fly volumes create indusk_telemetry --size 3
+#   fly secrets set \
+#     INDUSK_SERVER_PASSWORD="$(openssl rand -hex 24)" \
+#     INDUSK_SERVER_SLACK_WEBHOOK="https://hooks.slack.com/services/..."
+#   fly deploy --dockerfile docker/Dockerfile.always-on
+#
+# Neither secret belongs in this file, and neither belongs in
+# `.indusk/config.json`. The project names the *variable*; the value lives
+# here, in the developer's shell, or in whatever secret store you already run.
+
+app = "indusk-always-on"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.always-on"
+
+[env]
+  INDUSK_SERVER_VOLUME = "/data"
+  INDUSK_SERVER_OTLP_PORT = "4318"
+  INDUSK_SERVER_QUERY_PORT = "16686"
+  INDUSK_SERVER_USER = "indusk"
+
+# Badger's files live here. Without it the server forgets every violation it
+# was told about the moment a machine is replaced — which Fly does routinely.
+[mounts]
+  source = "indusk_telemetry"
+  destination = "/data"
+
+# The OTLP receiver: where deployed systems send marks.
+[[services]]
+  internal_port = 4318
+  protocol = "tcp"
+
+  # THE POINT OF THE WHOLE PLAN. Fly's default is to stop a machine when it
+  # goes idle and start it again on the next request — sensible for a web app,
+  # fatal here. A stopped machine runs no pass, so a violation that arrives
+  # during a quiet hour is stored and never announced; worse, the machine that
+  # would have announced it is started *by the request that delivers it*,
+  # after the pass would have run. `min_machines_running = 1` and no auto-stop
+  # is not a performance tuning. It is the difference between a server that
+  # watches and a server that is asleep.
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+# The query API and the Jaeger UI: where developer machines read.
+[[services]]
+  internal_port = 16686
+  protocol = "tcp"
+  auto_stop_machines = false
+  auto_start_machines = false
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 16687
+    handlers = ["tls", "http"]
+
+# One machine, deliberately. Badger is a single-writer embedded store, so two
+# machines sharing one volume is not a configuration this supports — and two
+# machines with two volumes would each hold half the violations and each
+# announce what the other could not see.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

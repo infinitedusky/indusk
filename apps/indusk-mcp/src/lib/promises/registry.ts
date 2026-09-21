@@ -62,6 +62,11 @@ export interface IncidentEntry {
 	source: IncidentSource;
 	status: IncidentStatus;
 	date: string;
+	/**
+	 * Where the violation happened, as the span said (day-always-on D6), or
+	 * null when it said nothing. One server holds staging and production.
+	 */
+	environment: string | null;
 	symptom: string;
 	rootCause: string;
 	fix: string;
@@ -317,6 +322,7 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			promise: string;
 			source: IncidentSource;
 			status: IncidentStatus;
+			environment?: unknown;
 		};
 		incidents.push({
 			id: d.id,
@@ -324,6 +330,7 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			source: d.source,
 			status: d.status,
 			date: String(d.date),
+			environment: typeof d.environment === "string" && d.environment ? d.environment : null,
 			...sections,
 			file: rel,
 		});

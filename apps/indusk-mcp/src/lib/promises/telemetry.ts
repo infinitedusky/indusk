@@ -1,3 +1,4 @@
+import { readConfig } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import type { Registry } from "./registry.js";
@@ -39,6 +40,47 @@ export interface MarkedSpan {
 	at: Date;
 	/** The violated event's symptom, when there is one. */
 	symptom: string | null;
+	/**
+	 * `deployment.environment` as the marking system set it, or null when it
+	 * set none (day-always-on D6). Read from the span rather than configured
+	 * anywhere: one server holds staging and production, and only the span
+	 * knows which one it came from.
+	 */
+	environment: string | null;
+}
+
+/**
+ * A Jaeger query API and what it takes to be let in.
+ *
+ * The local daemon needs no credentials; the always-on server needs basic
+ * auth on every request. One shape for both, so a reader never grows a second
+ * way to reach Jaeger.
+ */
+export interface JaegerEndpoint {
+	/** e.g. `http://localhost:16686` — no trailing slash. */
+	queryUrl: string;
+	headers?: Record<string, string>;
+}
+
+/** `user:password` as the credential environment variables hold it. */
+export function basicAuthHeaders(credential: string): Record<string, string> {
+	return { authorization: `Basic ${Buffer.from(credential).toString("base64")}` };
+}
+
+/**
+ * The one way to build a Jaeger endpoint (A29).
+ *
+ * Normalizing a query URL is a rule — drop surrounding whitespace, drop
+ * trailing slashes — and it was restated at every site that built one: the
+ * local daemon's, the server's own, `announce --once`'s and a project's named
+ * remote. The copies agreed, which is precisely what makes the next one easy
+ * to write differently.
+ */
+export function jaegerEndpoint(queryUrl: string, credential?: string): JaegerEndpoint {
+	const normalized = queryUrl.trim().replace(/\/+$/, "");
+	return credential
+		? { queryUrl: normalized, headers: basicAuthHeaders(credential) }
+		: { queryUrl: normalized };
 }
 
 export interface PromiseMarks {
@@ -61,11 +103,11 @@ export interface MarkedSpansResult {
 	byPromise: Map<string, PromiseMarks>;
 }
 
-interface JaegerTag {
+export interface JaegerTag {
 	key: string;
 	value: unknown;
 }
-interface JaegerSpan {
+export interface JaegerSpan {
 	traceID: string;
 	spanID: string;
 	operationName: string;
@@ -75,13 +117,21 @@ interface JaegerSpan {
 	tags?: JaegerTag[];
 	logs?: { timestamp: number; fields?: JaegerTag[] }[];
 }
-interface JaegerTrace {
+export interface JaegerTrace {
 	traceID: string;
 	spans: JaegerSpan[];
-	processes: Record<string, { serviceName: string }>;
+	processes: Record<string, { serviceName: string; tags?: JaegerTag[] }>;
 }
 
-const DEFAULT_TIMEOUT_MS = 5_000;
+/**
+ * OpenTelemetry's own resource attribute for the deployment environment. We
+ * read the conventional name rather than invent an `indusk.` one: a system
+ * that is already instrumented has set this, and asking it to set a second
+ * attribute for us is asking it to carry InDusk in its code (ADR D6).
+ */
+export const ENVIRONMENT_ATTRIBUTE = "deployment.environment";
+
+export const DEFAULT_TIMEOUT_MS = 5_000;
 /** Jaeger's own default is 20 traces per query, which would silently truncate a busy window. */
 const TRACE_LIMIT = 1500;
 
@@ -92,10 +142,19 @@ const TRACE_LIMIT = 1500;
  * the array Jaeger returns. Something else answering on the recorded port is
  * as unreachable as nothing answering (day-monitor A26).
  */
-async function getData<T>(url: string, timeoutMs: number, queryUrl: string): Promise<T[]> {
+export async function jaegerGet<T>(
+	endpoint: JaegerEndpoint,
+	path: string,
+	timeoutMs: number,
+): Promise<T[]> {
+	const url = `${endpoint.queryUrl}${path}`;
+	const queryUrl = endpoint.queryUrl;
 	let body: unknown;
 	try {
-		const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+		const res = await fetch(url, {
+			signal: AbortSignal.timeout(timeoutMs),
+			...(endpoint.headers ? { headers: endpoint.headers } : {}),
+		});
 		if (!res.ok) throw new Error(`${url} answered ${res.status}`);
 		body = await res.json();
 	} catch (err) {
@@ -113,11 +172,25 @@ function tag(tags: JaegerTag[] | undefined, key: string): unknown {
 	return tags?.find((t) => t.key === key)?.value;
 }
 
-function toMarked(span: JaegerSpan, service: string): MarkedSpan | null {
+export function parseMarkedSpan(
+	span: JaegerSpan,
+	service: string,
+	/**
+	 * The span's process tags. `deployment.environment` is a **resource**
+	 * attribute, so an application that sets it the conventional way — on the
+	 * resource, once, not on every span — has it land here rather than on the
+	 * span. Reading only the span found nothing for every real exporter, which
+	 * is what A21 caught and no unit test could: the OTLP fixture put it on
+	 * the span, and both layers are legitimate.
+	 */
+	processTags?: JaegerTag[],
+): MarkedSpan | null {
 	const promise = tag(span.tags, PROMISE_MARK.promise);
 	const outcome = tag(span.tags, PROMISE_MARK.outcome);
 	if (typeof promise !== "string") return null;
 	if (outcome !== "upheld" && outcome !== "violated") return null;
+	const environment =
+		tag(span.tags, ENVIRONMENT_ATTRIBUTE) ?? tag(processTags, ENVIRONMENT_ATTRIBUTE);
 	let symptom: string | null = null;
 	for (const log of span.logs ?? []) {
 		if (tag(log.fields, "event") !== PROMISE_MARK.violatedEvent) continue;
@@ -133,6 +206,7 @@ function toMarked(span: JaegerSpan, service: string): MarkedSpan | null {
 		operation: span.operationName,
 		at: new Date(Math.floor((span.startTime + span.duration) / 1000)),
 		symptom,
+		environment: typeof environment === "string" ? environment : null,
 	};
 }
 
@@ -153,14 +227,23 @@ export async function markedSpans(opts: {
 	 * the old name after a rename.
 	 */
 	aliases?: Record<string, string[]>;
+	/**
+	 * Where to read (day-always-on D5). Absent means the local daemon, which
+	 * is what every caller predating the always-on server passes.
+	 */
+	endpoint?: JaegerEndpoint;
 }): Promise<MarkedSpansResult> {
 	const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-	const status = await daemonStatus();
-	if (!status.running) {
-		throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
+	let endpoint = opts.endpoint;
+	if (!endpoint) {
+		const status = await daemonStatus();
+		if (!status.running) {
+			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
+		}
+		endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
 	}
-	const queryUrl = `http://localhost:${status.uiPort}`;
-	const services = await getData<string>(`${queryUrl}/api/services`, timeoutMs, queryUrl);
+	const queryUrl = endpoint.queryUrl;
+	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);
 
 	const byPromise = new Map<string, PromiseMarks>();
 	const start = opts.since.getTime() * 1000;
@@ -178,15 +261,12 @@ export async function markedSpans(opts: {
 					end: String(end),
 					limit: String(TRACE_LIMIT),
 				});
-				const traces = await getData<JaegerTrace>(
-					`${queryUrl}/api/traces?${params}`,
-					timeoutMs,
-					queryUrl,
-				);
+				const traces = await jaegerGet<JaegerTrace>(endpoint, `/api/traces?${params}`, timeoutMs);
 				if (traces.length >= TRACE_LIMIT) truncated = true;
 				for (const t of traces) {
 					for (const span of t.spans) {
-						const marked = toMarked(span, t.processes[span.processID]?.serviceName ?? service);
+						const process = t.processes[span.processID];
+						const marked = parseMarkedSpan(span, process?.serviceName ?? service, process?.tags);
 						if (!marked || marked.promise !== name) continue;
 						marked.promise = promise;
 						if (marked.at < opts.since) continue;
@@ -210,13 +290,69 @@ export async function markedSpans(opts: {
 }
 
 /**
+ * Where this project's marks are read from (day-always-on, ADR D5).
+ *
+ * One decision, made once: a project that names `promises.jaeger` reads the
+ * always-on server it names; a project that names none reads its local
+ * telemetry daemon, exactly as before. Absence is the rule rather than a
+ * migration — every project that existed before this change names nothing and
+ * behaves identically, which is what A14 guards.
+ *
+ * The credential lives in the environment variable the config *names*, never
+ * in the config: `.indusk/config.json` is committed.
+ */
+export interface MarkSource {
+	endpoint: JaegerEndpoint;
+	/** Where it read, named as a person should see it. */
+	label: string;
+	/** True when the project named a server rather than falling to its daemon. */
+	remote: boolean;
+}
+
+export async function resolveMarkSource(root: string): Promise<MarkSource> {
+	const named = readConfig(root)?.promises?.jaeger;
+	if (!named) {
+		const status = await daemonStatus();
+		if (!status.running) {
+			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
+		}
+		const endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+		return { endpoint, label: endpoint.queryUrl, remote: false };
+	}
+
+	const queryUrl = jaegerEndpoint(named.url).queryUrl;
+	// Refuse against the config key, not against the empty string it holds. An
+	// unusable URL used to build an endpoint anyway and fail later as
+	// "Jaeger could not be reached ()" — a refusal naming nothing the reader
+	// could fix (A27).
+	if (!queryUrl || !URL.canParse(queryUrl)) {
+		throw new JaegerUnreachable(
+			`promises.jaeger.url in ${root}`,
+			`promises.jaeger.url is ${queryUrl ? `not a URL (${JSON.stringify(named.url)})` : "empty"}`,
+		);
+	}
+	const credential = process.env[named.credential_env]?.trim();
+	if (!credential) {
+		// Named but unreadable: refuse against the URL the reader is asking
+		// about, naming the variable they have to set. Falling back to the
+		// local daemon here would answer a question about production with a
+		// laptop's traces.
+		throw new JaegerUnreachable(
+			queryUrl,
+			`promises.jaeger names ${named.credential_env} for its credential and that variable is not set`,
+		);
+	}
+	return { endpoint: jaegerEndpoint(queryUrl, credential), label: queryUrl, remote: true };
+}
+
+/**
  * This project's marks, as every reader asks for them: the registry's
  * behaviour promises that are not retired, with their aliases, filtered to
  * this project's id, over the quiet window unless `sinceMs` says otherwise.
  * The one call `status`, `watch` and the admin make — each once assembled the
  * four by hand, and A27/A28 had to change all three.
  */
-export function readPromiseMarks(
+export async function readPromiseMarks(
 	root: string,
 	registry: Registry,
 	opts: { sinceMs?: number; timeoutMs?: number; now?: Date } = {},
@@ -225,7 +361,9 @@ export function readPromiseMarks(
 	const behaviour = registry.promises.filter(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
+	const source = await resolveMarkSource(root);
 	return markedSpans({
+		endpoint: source.endpoint,
 		promises: behaviour.map((p) => p.name),
 		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
 		since: new Date(now.getTime() - (opts.sinceMs ?? getQuietWindowDays(root) * 86_400_000)),

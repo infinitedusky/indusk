@@ -1,3 +1,4 @@
+import { readConfig } from "../../lib/config.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { readPromises } from "../../lib/promises/registry.js";
@@ -98,14 +99,20 @@ export async function promisesWatch(
 			source: source as (typeof WATCH_SOURCES)[number],
 		});
 	} catch (err) {
+		// The advice has to match the source: telling someone to start a local
+		// daemon when their project reads a deployed server sends them to the
+		// wrong machine.
+		const named = readConfig(projectRoot)?.promises?.jaeger;
+		const hint = named
+			? `Nothing was recorded. The project reads ${named.url}; check it is up and that ${named.credential_env} holds its credential.`
+			: "Nothing was recorded. Start the daemon with `indusk telemetry start`.";
 		console.error(
-			err instanceof JaegerUnreachable
-				? `${err.message}\nNothing was recorded. Start the daemon with \`indusk telemetry start\`.`
-				: (err as Error).message,
+			err instanceof JaegerUnreachable ? `${err.message}\n${hint}` : (err as Error).message,
 		);
 		process.exitCode = 2;
 		return;
 	}
+	console.info(`Read from Jaeger at ${result.source}.`);
 	if (result.changes.length === 0) {
 		console.info("No new violations — nothing recorded.");
 		return;

@@ -54,6 +54,10 @@ export function HealthDetail({
     parts.push(
       `${row.atLeast ? "at least " : ""}${row.violations} violation${row.violations === 1 ? "" : "s"}`,
     );
+    // Where, when the span said: one server holds staging and production, and
+    // a red row that cannot say which is a red row nobody can act on. A span
+    // that carried none says so rather than letting the reader assume.
+    parts.push(row.environment ?? "environment unknown");
   }
   if (row.lastSeen) parts.push(`last seen ${day(row.lastSeen)}`);
   else if (unknownSince === undefined && row.health === "unverified")

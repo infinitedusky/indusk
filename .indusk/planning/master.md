@@ -21,6 +21,8 @@ roadmap:
   - dusk-v2
   - user-zero
   - jev-decision-model
+  - context-tiers
+  - day-always-on-deploy
 ---
 
 # Master Plan

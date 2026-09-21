@@ -459,6 +459,26 @@ telemetryCmd
 	});
 
 telemetryCmd
+	.command("serve")
+	.description(
+		"Run the always-on server in the foreground (badger on a volume, basic auth on both endpoints); every setting comes from the environment",
+	)
+	.action(async () => {
+		const { telemetryServe } = await import("./commands/telemetry-server.js");
+		await telemetryServe();
+	});
+
+telemetryCmd
+	.command("announce")
+	.description("Run one always-on pass: announce every violation the server has not announced yet")
+	.option("--once", "Run a single pass and exit (required)")
+	.action(async function (this: Command) {
+		const opts = this.opts() as { once?: boolean };
+		const { telemetryAnnounce } = await import("./commands/telemetry-server.js");
+		await telemetryAnnounce({ once: opts.once });
+	});
+
+telemetryCmd
 	.command("stop")
 	.description("Stop the telemetry daemon (SIGTERM both processes, SIGKILL fallback after 3s)")
 	.action(async () => {

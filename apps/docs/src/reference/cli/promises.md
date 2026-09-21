@@ -164,13 +164,49 @@ the code root, except:
 
 A code root that is not a git repository is a refusal, not an empty scan.
 
+## Which Jaeger answers
+
+By default, the local telemetry daemon's — a developer machine watching its
+own runs. A project that also runs somewhere names that server instead:
+
+```json
+{
+  "promises": {
+    "domains": ["seating"],
+    "jaeger": {
+      "url": "https://your-server",
+      "credential_env": "SEATS_JAEGER_CREDENTIAL"
+    }
+  }
+}
+```
+
+`credential_env` is the **name of an environment variable** holding
+`user:password`, never the credential itself — `.indusk/config.json` is
+committed. Set the variable where the developer's shell will find it
+(`~/.indusk/config.env`, the `doppler` extension, the shell profile).
+
+Absence is the rule, not a migration: a project that names nothing reads its
+local daemon and behaves exactly as it did before this existed.
+
+Both `status` and `watch` print the Jaeger they read, so nobody has to guess
+whether they are looking at production or at the laptop in front of them. A
+server that cannot be reached — down, wrong URL, refused credentials, or a
+`credential_env` variable that is not set — **exits 2 naming the URL**, and
+never reports zero violations. A missing credential is refused against the URL
+rather than quietly falling back to the local daemon: answering a question
+about production with a laptop's traces is the worst available outcome.
+
+See [`indusk telemetry serve`](/reference/cli/telemetry-server) for running
+the server itself.
+
 ## `promises status`
 
 ```
 indusk promises status [--since <duration>]
 ```
 
-Read-only. Reports each promise as the local telemetry daemon's Jaeger saw
+Read-only. Reports each promise as the configured Jaeger saw
 it over a window — by default the quiet window (`promises.quiet_window_days`,
 7 days), or `--since 90m` / `24h` / `7d`. One block per promise, opening on a
 line that starts with its name:
@@ -223,6 +259,14 @@ result. How an application marks a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 
 ## `promises watch`
+
+`--source` says where the run happened, and is recorded on the incident:
+`local` (the default), `smoke`, or **`deployed`** for a run on a deployed
+system. An incident also records **`environment`** when the span carried
+`deployment.environment` — one server holds staging and production, and an
+incident that names the wrong one sends a person to the wrong logs. A span
+that carried none records no environment rather than a guess.
+
 
 ```
 indusk promises watch [--source local|smoke|deployed]

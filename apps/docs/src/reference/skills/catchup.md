@@ -17,8 +17,18 @@ Given a fresh session, catchup:
 7. **Checks infrastructure** via `check_health`.
 8. **Does NOT re-read CLAUDE.md.** It's auto-injected into every session; re-fetching it was the single biggest line item of the pre-makeover catchup (~30k tokens of pure duplication).
 9. **Lists active plans** via `list_plans { active: true }` — in-motion plans only, plus a count of what was omitted.
-10. **Reviews installed skills and enabled extensions**.
-11. **Summarizes** to the user with the active plan list, other agents present, project (shared) state, and the sweep count.
+10. **Checks promise health** via `promise_health` — per behaviour promise, violations in the window, open incidents, and violations no incident records yet, from whichever Jaeger the project names.
+11. **Reviews installed skills and enabled extensions**.
+12. **Summarizes** to the user with the active plan list, other agents present, project (shared) state, the sweep count, and any promise needing attention.
+
+**Open violations outrank the roadmap.** When you ask what is next, catchup
+names the unrecorded violations first — a promise is a commitment the system
+made and is now breaking, and the next feature can wait a sentence.
+`indusk promises watch` records them as incidents and reopens each owning
+plan with a Maintenance phase. If telemetry cannot be reached, catchup says
+*health unknown* and names where it looked; it never reports zero violations
+instead, because "nothing is broken" and "nobody could look" are different
+answers and only one of them is reassuring.
 
 The dieted read-set (indusk-makeover) measures ~8k tokens of tool results per catchup, down from ~55k.
 
