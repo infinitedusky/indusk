@@ -71,7 +71,7 @@ session reading that server (ADR D1–D10).
 | A18 | Asked for promise health, an agent gets each behaviour promise's violations in the window, its open incidents, and violations not yet recorded as incidents | Test Phase 1 | Build Phase 5 | passing |
 | A19 | The health tool reports the same counts the CLI prints for the same project and window | Test Phase 1 | Build Phase 5 | passing |
 | A20 | `/catchup`'s steps name promise health, and the "what's next" answer reports open violations before the roadmap | Test Phase 1 | Build Phase 5 | passing |
-| A21 | End to end with no developer machine involved: an app marks a promise violated, the server announces it to Slack, a later `watch --source deployed` records the incident with its environment and reopens the owner, and the health tool names it | Build Phase 6 | Build Phase 6 | planned |
+| A21 | End to end with no developer machine involved: an app marks a promise violated, the server announces it to Slack, a later `watch --source deployed` records the incident with its environment and reopens the owner, and the health tool names it | Build Phase 6 | Build Phase 6 | passing |
 | A22 | A server credential or volume path containing a newline is refused by name, and can never add a key to the rendered Jaeger config | Phase 0 | Build Phase 7 | passing |
 | A23 | Two passes overlapping — one slower than the interval — announce each violation once between them, not twice | Phase 0 | Build Phase 7 | passing |
 | A24 | A half-written `announced.json` (the process died mid-write) never causes the window to be re-announced | Phase 0 | Build Phase 7 | passing |

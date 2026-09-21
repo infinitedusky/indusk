@@ -157,6 +157,41 @@ breaking; the next feature can wait a sentence.
 incident carrying the environment and the traces, and reopens the owning plan
 with a Maintenance phase. That is the moment the violation becomes work.
 
+## What it refuses to guess
+
+Three behaviours exist because the falsification ritual broke the earlier
+versions of them, and each is a refusal rather than a best effort.
+
+**A credential may not contain a line separator.** `INDUSK_SERVER_USER`,
+`INDUSK_SERVER_PASSWORD` and `INDUSK_SERVER_VOLUME` are interpolated into the
+rendered Jaeger config unquoted, so a newline in any of them does not corrupt
+that config — it *extends* it. The server refuses such a value by name rather
+than escaping it: a credential with a newline in it is a mistake, not a use
+case, and escaping would make the mistake silently work.
+
+**A pass announces at most ten violations.** A bad deploy is not one
+violation, it is hundreds; one message each is a tight loop of posts that
+Slack answers with a rate limit, after which every one counts as unannounced
+and the next pass tries them all again. The rest are *held* — the pass says
+how many — and stay out of the record, so the next pass announces them. One
+pass also runs at a time: a pass that arrives while one is still running is
+skipped and says so, which means the interval is shorter than a pass takes.
+
+**A record that cannot be read or written stops announcements.** Missing and
+unreadable are different facts. Missing is the ordinary first run. Unreadable
+— truncated, a permissions problem, a full disk — makes the pass announce
+nothing and say why, because treating it as empty would re-announce the whole
+window and keep doing so every interval for as long as the volume stayed
+broken. The record is written through a temporary file and renamed, so an
+interrupted write leaves the last good copy rather than half of a new one.
+
+**Nothing a deployed system sends can write into your plan documents.** The
+environment and the symptom arrive from outside the repository and end up in
+committed YAML and markdown, so they are collapsed to a single line where they
+are written. A newline in `deployment.environment` could otherwise inject
+frontmatter keys — and a duplicate key makes the parser throw, which takes the
+whole promise registry down.
+
 ## Smoke-testing a deployment
 
 Run this once against a new server, before trusting it. It takes about half an

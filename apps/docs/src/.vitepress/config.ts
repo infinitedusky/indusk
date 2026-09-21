@@ -223,6 +223,8 @@ const config = defineConfig({
 						{ text: "Planner Hotfix Mode (salvaged, never merged)", link: "/decisions/planner-hotfix-mode" },
 						{ text: "Promises", link: "/decisions/day-promises" },
 						{ text: "Monitor", link: "/decisions/day-monitor" },
+						{ text: "Always On", link: "/decisions/day-always-on" },
+						{ text: "Always On", link: "/decisions/day-always-on" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
 						{ text: "Worktree Visibility", link: "/decisions/worktree-visibility" },
@@ -262,6 +264,7 @@ const config = defineConfig({
 						{ text: "Plans in Worktrees — Lessons", link: "/lessons/admin-plan-worktrees" },
 						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
 						{ text: "Monitor — Lessons", link: "/lessons/day-monitor" },
+						{ text: "Always On — Lessons", link: "/lessons/day-always-on" },
 						{ text: "Workbench Trust Fixes — Lessons", link: "/lessons/workbench-trust-fixes" },
 						{
 							text: "Worktree Config Schema Pointer — Lessons",

@@ -1,6 +1,6 @@
 ---
 title: "Always-on deploy — run the server somewhere real"
-status: draft
+status: accepted
 date: 2026-09-20
 ---
 
