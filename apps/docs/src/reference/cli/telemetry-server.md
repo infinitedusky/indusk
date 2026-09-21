@@ -114,7 +114,14 @@ did not start. `--once` is required: the scheduled pass belongs to
 
 `indusk telemetry announce --once` reads `INDUSK_SERVER_QUERY_URL` and
 `INDUSK_SERVER_CREDENTIAL` (`user:password`) in place of the ports, user and
-password, because the server it asks may not be the machine it runs on.
+password, because the server it asks may not be the machine it runs on. It
+prints the same report the served pass prints, from the same code — the two
+cannot describe a pass differently.
+
+A Jaeger URL may be written with or without a trailing slash, and with
+surrounding whitespace, wherever one is read — `INDUSK_SERVER_QUERY_URL` here
+and `promises.jaeger.url` in a project's config. They are normalized the same
+way because they are normalized in one place.
 
 ## What it refuses
 

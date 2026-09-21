@@ -307,3 +307,35 @@ export async function runPass(opts: PassOptions): Promise<PassResult> {
 		running.delete(opts.volume);
 	}
 }
+
+/**
+ * What to say about a pass, in one place (A30).
+ *
+ * The module that owns the result shape owns how it reads. Both callers — the
+ * server's scheduled pass and `indusk telemetry announce --once` — described
+ * the same event in different words, and the `could not announce …` line was
+ * written out verbatim in each. They had drifted inside a single commit.
+ */
+export function describePassResult(result: PassResult): { info: string[]; errors: string[] } {
+	if (result.skipped) {
+		return {
+			info: [],
+			errors: [
+				"a pass was still running when the next was due — skipped it; consider a longer interval",
+			],
+		};
+	}
+	if (result.recordProblem) {
+		// Announcing nothing is the point: the alternative is this same
+		// violation every interval for as long as the volume stays broken.
+		return { info: [], errors: [`announced nothing — ${result.recordProblem}`] };
+	}
+	const info = [
+		`announced ${result.announced.length}, held ${result.held.length}, unannounced ${result.unannounced.length}, already announced ${result.alreadyAnnounced}`,
+	];
+	const errors = result.unannounced.map(
+		({ span, reason }) =>
+			`could not announce ${span.promise} (${span.traceId}): ${reason} — it stays unannounced for the next pass`,
+	);
+	return { info, errors };
+}

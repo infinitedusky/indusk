@@ -79,8 +79,8 @@ session reading that server (ADR D1–D10).
 | A26 | A window holding far more violations than one message-per-violation allows announces at most a bounded number and says how many it held back | Phase 0 | Build Phase 7 | passing |
 | A27 | A `promises.jaeger.url` that is empty or unparseable is refused naming the config key, not reported as an unreachable nameless URL | Phase 0 | Build Phase 7 | passing |
 | A28 | A span whose `deployment.environment` or symptom carries YAML or heading syntax cannot alter an incident's frontmatter keys or its `## Root cause` section | Phase 0 | Build Phase 7 | passing |
-| A29 | An endpoint built for the server's own pass, for `announce --once`, and for a project's named remote normalizes the same URL identically — trailing slash, surrounding whitespace — and that normalization is written once | Phase 0 | Build Phase 8 | written |
-| A30 | The served pass and `announce --once` report the same pass in the same words, from one module | Phase 0 | Build Phase 8 | written |
+| A29 | An endpoint built for the server's own pass, for `announce --once`, and for a project's named remote normalizes the same URL identically — trailing slash, surrounding whitespace — and that normalization is written once | Phase 0 | Build Phase 8 | passing |
+| A30 | The served pass and `announce --once` report the same pass in the same words, from one module | Phase 0 | Build Phase 8 | passing |
 
 ### Deferred Verification
 
@@ -316,28 +316,29 @@ Jaeger endpoint, one way to say what a pass did, and the pass's scheduler
 moved next to the pass. Leave-as-is decisions are recorded with their
 reasoning rather than skipped.
 
-- [ ] Extract `jaegerEndpoint(queryUrl, credential?)` into `lib/promises/telemetry.ts` and build every endpoint through it — `resolveMarkSource` trims and strips trailing slashes, `readPassSettings` only strips them, and `startPass` does neither because it builds from a port. Three sites, three normalizations, one shape; the rule of three is met and the copies have already diverged.
-- [ ] Extract `describePassResult(result)` into `lib/always-on/pass.ts` and report through it from both callers — the module that owns the result shape owns how it reads. `startPass` says `announced N violation(s)` / `held N more for the next pass`; `telemetryAnnounce` says `announced N, held N, unannounced N, already announced N`; the `could not announce …` line is written out verbatim in both. Same event, two vocabularies, already drifted in one commit.
-- [ ] Move `startPass` from `lib/telemetry/server.ts` to `lib/always-on/schedule.ts` — a scheduler belongs with the thing it schedules. It lives in the telemetry module only because `serve()` calls it, and it already reaches across to import `runPass`; moving it leaves `server.ts` about the server (settings, config, process) and puts the pass's cadence beside the pass.
-- [ ] Split `bin/commands/telemetry.ts` (623 lines) into it and `bin/commands/telemetry-server.ts`, holding `telemetryServe` + `telemetryAnnounce` — one file now serves two products that share a CLI noun: a developer machine's daemon lifecycle and a deployed always-on server. They import disjoint libraries and change for unrelated reasons. (Counter-argument, recorded because it is real: one command module mirrors one CLI namespace. The deciding fact is that `cli.ts` imports each command lazily, so the namespace is unaffected.)
-- [ ] (reviewed `lib/promises/telemetry.ts` — left as-is: Build Phase 3's Shape step already considered splitting `resolveMarkSource` into its own module and recorded why not — `source.ts` would import `JaegerEndpoint`, `basicAuthHeaders` and `JaegerUnreachable` back from it, a cycle. That reasoning still holds at 361 lines, and cleanup does not re-litigate a recorded decision without new evidence.)
-- [ ] (reviewed `server.ts`'s `LINE_SEPARATOR` against `incidents.ts`'s `oneLine` — left as-is: both encode "a line separator is dangerous here" and they are deliberately **not** shared. One refuses a credential, the other collapses a deployed system's string; different data, different owners, opposite correct answers. This project already has the rule that such predicates stay separate.)
-- [ ] (reviewed `helpers/always-on-server.ts` against `helpers/local-jaeger.ts` — left as-is: a matched pair on purpose, and the piece that would actually drift is already single-definition — `always-on-server.ts` imports `otlpBody` rather than restating the OTLP wire format. What differs between them is the Jaeger configuration each starts, which is the thing they exist to differ about.)
+- [x] Extract `jaegerEndpoint(queryUrl, credential?)` into `lib/promises/telemetry.ts` and build every endpoint through it — `resolveMarkSource` trims and strips trailing slashes, `readPassSettings` only strips them, and `startPass` does neither because it builds from a port. Three sites, three normalizations, one shape; the rule of three is met and the copies have already diverged.
+- [x] Extract `describePassResult(result)` into `lib/always-on/pass.ts` and report through it from both callers — the module that owns the result shape owns how it reads. `startPass` says `announced N violation(s)` / `held N more for the next pass`; `telemetryAnnounce` says `announced N, held N, unannounced N, already announced N`; the `could not announce …` line is written out verbatim in both. Same event, two vocabularies, already drifted in one commit.
+- [x] Move `startPass` from `lib/telemetry/server.ts` to `lib/always-on/schedule.ts` — a scheduler belongs with the thing it schedules. It lives in the telemetry module only because `serve()` calls it, and it already reaches across to import `runPass`; moving it leaves `server.ts` about the server (settings, config, process) and puts the pass's cadence beside the pass.
+- [x] Split `bin/commands/telemetry.ts` (623 lines) into it and `bin/commands/telemetry-server.ts`, holding `telemetryServe` + `telemetryAnnounce` — one file now serves two products that share a CLI noun: a developer machine's daemon lifecycle and a deployed always-on server. They import disjoint libraries and change for unrelated reasons. (Counter-argument, recorded because it is real: one command module mirrors one CLI namespace. The deciding fact is that `cli.ts` imports each command lazily, so the namespace is unaffected.)
+- [x] (reviewed `lib/promises/telemetry.ts` — left as-is: Build Phase 3's Shape step already considered splitting `resolveMarkSource` into its own module and recorded why not — `source.ts` would import `JaegerEndpoint`, `basicAuthHeaders` and `JaegerUnreachable` back from it, a cycle. That reasoning still holds at 361 lines, and cleanup does not re-litigate a recorded decision without new evidence.)
+- [x] (reviewed `server.ts`'s `LINE_SEPARATOR` against `incidents.ts`'s `oneLine` — left as-is: both encode "a line separator is dangerous here" and they are deliberately **not** shared. One refuses a credential, the other collapses a deployed system's string; different data, different owners, opposite correct answers. This project already has the rule that such predicates stay separate.)
+- [x] (reviewed `helpers/always-on-server.ts` against `helpers/local-jaeger.ts` — left as-is: a matched pair on purpose, and the piece that would actually drift is already single-definition — `always-on-server.ts` imports `otlpBody` rather than restating the OTLP wire format. What differs between them is the Jaeger configuration each starts, which is the thing they exist to differ about.)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Build Phase 8 Verification
 
-- [ ] A29's behavioural half is a **regression guard** — it passes the moment it is written, because the two normalizations agree today. Recorded rather than dressed up as red: what is red is the single-definition half, which is the reason the phase exists. Its red also exposed a scanning gap in the pin itself — scanning only `src/lib` would have gone green with the second copy one directory away, in `src/bin`.
-- [ ] A29: endpoints built for the served pass, for `announce --once` and for a named remote normalize `https://host/` and `  https://host  ` to the same `queryUrl`
-- [ ] A30: the served pass and `announce --once` describe one pass identically
-- [ ] A1–A28 still pass, and `pnpm e2e` still passes — the moves are behaviour-preserving apart from the two rows above
+- [x] A29's behavioural half is a **regression guard** — it passes the moment it is written, because the two normalizations agree today. Recorded rather than dressed up as red: what is red is the single-definition half, which is the reason the phase exists. Its red also exposed a scanning gap in the pin itself — scanning only `src/lib` would have gone green with the second copy one directory away, in `src/bin`.
+- [x] A29: endpoints built for the served pass, for `announce --once` and for a named remote normalize `https://host/` and `  https://host  ` to the same `queryUrl`
+- [x] A30: the served pass and `announce --once` describe one pass identically
+- [x] A1–A28 still pass, and `pnpm e2e` still passes — the moves are behaviour-preserving apart from the two rows above
 
 #### Build Phase 8 Context
 
-- [ ] Conventions (the promises entry): **one `jaegerEndpoint` builds every Jaeger endpoint** — the local daemon's, the server's own, and a project's named remote — because three sites had three different URL normalizations before anyone noticed
+- [x] Conventions (the promises entry): **one `jaegerEndpoint` builds every Jaeger endpoint** — the local daemon's, the server's own, and a project's named remote — because three sites had three different URL normalizations before anyone noticed
 
 #### Build Phase 8 Document
 
-- [ ] `/reference/cli/telemetry-server.md`: `INDUSK_SERVER_QUERY_URL` and `promises.jaeger.url` accept a trailing slash and surrounding whitespace anywhere they are read, and the served pass and `announce --once` print the same report
+- [x] `/reference/cli/telemetry-server.md`: `INDUSK_SERVER_QUERY_URL` and `promises.jaeger.url` accept a trailing slash and surrounding whitespace anywhere they are read, and the served pass and `announce --once` print the same report
 
 
 ## Files Affected

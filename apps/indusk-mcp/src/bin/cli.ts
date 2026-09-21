@@ -464,7 +464,7 @@ telemetryCmd
 		"Run the always-on server in the foreground (badger on a volume, basic auth on both endpoints); every setting comes from the environment",
 	)
 	.action(async () => {
-		const { telemetryServe } = await import("./commands/telemetry.js");
+		const { telemetryServe } = await import("./commands/telemetry-server.js");
 		await telemetryServe();
 	});
 
@@ -474,7 +474,7 @@ telemetryCmd
 	.option("--once", "Run a single pass and exit (required)")
 	.action(async function (this: Command) {
 		const opts = this.opts() as { once?: boolean };
-		const { telemetryAnnounce } = await import("./commands/telemetry.js");
+		const { telemetryAnnounce } = await import("./commands/telemetry-server.js");
 		await telemetryAnnounce({ once: opts.once });
 	});
 

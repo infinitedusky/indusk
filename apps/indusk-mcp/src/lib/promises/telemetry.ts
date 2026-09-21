@@ -67,6 +67,22 @@ export function basicAuthHeaders(credential: string): Record<string, string> {
 	return { authorization: `Basic ${Buffer.from(credential).toString("base64")}` };
 }
 
+/**
+ * The one way to build a Jaeger endpoint (A29).
+ *
+ * Normalizing a query URL is a rule — drop surrounding whitespace, drop
+ * trailing slashes — and it was restated at every site that built one: the
+ * local daemon's, the server's own, `announce --once`'s and a project's named
+ * remote. The copies agreed, which is precisely what makes the next one easy
+ * to write differently.
+ */
+export function jaegerEndpoint(queryUrl: string, credential?: string): JaegerEndpoint {
+	const normalized = queryUrl.trim().replace(/\/+$/, "");
+	return credential
+		? { queryUrl: normalized, headers: basicAuthHeaders(credential) }
+		: { queryUrl: normalized };
+}
+
 export interface PromiseMarks {
 	/** Newest first. */
 	violations: MarkedSpan[];
@@ -224,7 +240,7 @@ export async function markedSpans(opts: {
 		if (!status.running) {
 			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 		}
-		endpoint = { queryUrl: `http://localhost:${status.uiPort}` };
+		endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
 	}
 	const queryUrl = endpoint.queryUrl;
 	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);
@@ -300,11 +316,11 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 		if (!status.running) {
 			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 		}
-		const queryUrl = `http://localhost:${status.uiPort}`;
-		return { endpoint: { queryUrl }, label: queryUrl, remote: false };
+		const endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
+		return { endpoint, label: endpoint.queryUrl, remote: false };
 	}
 
-	const queryUrl = named.url.trim().replace(/\/+$/, "");
+	const queryUrl = jaegerEndpoint(named.url).queryUrl;
 	// Refuse against the config key, not against the empty string it holds. An
 	// unusable URL used to build an endpoint anyway and fail later as
 	// "Jaeger could not be reached ()" — a refusal naming nothing the reader
@@ -326,11 +342,7 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 			`promises.jaeger names ${named.credential_env} for its credential and that variable is not set`,
 		);
 	}
-	return {
-		endpoint: { queryUrl, headers: basicAuthHeaders(credential) },
-		label: queryUrl,
-		remote: true,
-	};
+	return { endpoint: jaegerEndpoint(queryUrl, credential), label: queryUrl, remote: true };
 }
 
 /**

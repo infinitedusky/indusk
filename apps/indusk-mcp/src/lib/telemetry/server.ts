@@ -1,8 +1,8 @@
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { runPass } from "../always-on/pass.js";
-import { basicAuthHeaders } from "../promises/telemetry.js";
+import { startPass } from "../always-on/schedule.js";
+import { jaegerEndpoint } from "../promises/telemetry.js";
 import { resolveBinary } from "./daemon.js";
 
 /**
@@ -156,7 +156,7 @@ export interface PassSettings {
 export function readPassSettings(env: NodeJS.ProcessEnv = process.env): PassSettings {
 	return {
 		volume: required(env, VOLUME_ENV),
-		queryUrl: required(env, QUERY_URL_ENV).replace(/\/+$/, ""),
+		queryUrl: jaegerEndpoint(required(env, QUERY_URL_ENV)).queryUrl,
 		credential: required(env, CREDENTIAL_ENV),
 		slackWebhook: required(env, SLACK_WEBHOOK_ENV),
 		windowMs: positive(env, PASS_WINDOW_ENV, DEFAULT_PASS_WINDOW_HOURS, "hours") * 3_600_000,
@@ -259,60 +259,4 @@ export async function serve(env: NodeJS.ProcessEnv = process.env): Promise<numbe
 			resolve(code ?? 0);
 		});
 	});
-}
-
-/**
- * Run the pass on the server's own interval, in the server's own process
- * (ADR D2). No scheduler, no second container, no cron entry to get wrong:
- * the thing that is always on is already always on.
- *
- * A pass that throws is logged and the interval continues. The server's job
- * is to keep receiving spans; a Jaeger that is briefly unqueryable — it has
- * just started, it is compacting — must not take the process down with it.
- */
-export function startPass(settings: ServerSettings): NodeJS.Timeout {
-	const endpoint = {
-		queryUrl: `http://127.0.0.1:${settings.queryPort}`,
-		headers: basicAuthHeaders(`${settings.user}:${settings.password}`),
-	};
-	const tick = async (): Promise<void> => {
-		try {
-			const result = await runPass({
-				volume: settings.volume,
-				endpoint,
-				webhook: settings.slackWebhook,
-				windowMs: settings.passWindowMs,
-			});
-			if (result.skipped) {
-				console.error(
-					"a pass was still running when the next was due — skipped it; consider a longer INDUSK_SERVER_PASS_INTERVAL_MS",
-				);
-				return;
-			}
-			if (result.recordProblem) {
-				// Loud, and announcing nothing: the alternative is this same
-				// violation every interval for as long as the volume is broken.
-				console.error(`announced nothing — ${result.recordProblem}`);
-				return;
-			}
-			for (const { span, reason } of result.unannounced) {
-				console.error(
-					`could not announce ${span.promise} (${span.traceId}): ${reason} — it stays unannounced for the next pass`,
-				);
-			}
-			if (result.announced.length > 0) {
-				console.info(`announced ${result.announced.length} violation(s)`);
-			}
-			if (result.held.length > 0) {
-				console.info(`held ${result.held.length} more for the next pass`);
-			}
-		} catch (err) {
-			console.error(`always-on pass failed: ${(err as Error).message}`);
-		}
-	};
-	const timer = setInterval(() => {
-		void tick();
-	}, settings.passIntervalMs);
-	timer.unref?.();
-	return timer;
 }
