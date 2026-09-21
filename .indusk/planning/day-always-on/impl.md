@@ -79,8 +79,8 @@ session reading that server (ADR D1–D10).
 | A26 | A window holding far more violations than one message-per-violation allows announces at most a bounded number and says how many it held back | Phase 0 | Build Phase 7 | passing |
 | A27 | A `promises.jaeger.url` that is empty or unparseable is refused naming the config key, not reported as an unreachable nameless URL | Phase 0 | Build Phase 7 | passing |
 | A28 | A span whose `deployment.environment` or symptom carries YAML or heading syntax cannot alter an incident's frontmatter keys or its `## Root cause` section | Phase 0 | Build Phase 7 | passing |
-| A29 | An endpoint built for the server's own pass, for `announce --once`, and for a project's named remote normalizes the same URL identically — trailing slash, surrounding whitespace | Phase 0 | Build Phase 8 | planned |
-| A30 | The served pass and `announce --once` report the same pass in the same words | Phase 0 | Build Phase 8 | planned |
+| A29 | An endpoint built for the server's own pass, for `announce --once`, and for a project's named remote normalizes the same URL identically — trailing slash, surrounding whitespace — and that normalization is written once | Phase 0 | Build Phase 8 | written |
+| A30 | The served pass and `announce --once` report the same pass in the same words, from one module | Phase 0 | Build Phase 8 | written |
 
 ### Deferred Verification
 
@@ -326,6 +326,7 @@ reasoning rather than skipped.
 
 #### Build Phase 8 Verification
 
+- [ ] A29's behavioural half is a **regression guard** — it passes the moment it is written, because the two normalizations agree today. Recorded rather than dressed up as red: what is red is the single-definition half, which is the reason the phase exists. Its red also exposed a scanning gap in the pin itself — scanning only `src/lib` would have gone green with the second copy one directory away, in `src/bin`.
 - [ ] A29: endpoints built for the served pass, for `announce --once` and for a named remote normalize `https://host/` and `  https://host  ` to the same `queryUrl`
 - [ ] A30: the served pass and `announce --once` describe one pass identically
 - [ ] A1–A28 still pass, and `pnpm e2e` still passes — the moves are behaviour-preserving apart from the two rows above
