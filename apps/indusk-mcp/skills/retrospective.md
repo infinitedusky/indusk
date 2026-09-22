@@ -301,7 +301,89 @@ Do it in this order, all from the plan's worktree until the merge itself:
 6. **Verify on trunk** — `git for-each-ref refs/heads/plan/* --no-merged HEAD` no longer lists the plan; `.indusk/planning/archive/{plan-name}/` exists on trunk; `indusk context check-pointers` passes there too (CLAUDE.md pointers were written on the branch and are only now on trunk); the full suites green once on trunk if the rebase in step 2 was not a fast-forward.
 7. **Record the landing** — append one line to the archived `retrospective.md` on trunk: `Landed on main at <sha>, <date>.` Commit it on trunk. That line is what distinguishes a closed plan from a merged one when the two are read months later.
 
-**Release is a separate decision, made on trunk, after this step.** `pnpm release` refuses a dirty tree, a HEAD that is not the release commit, and any unmerged `plan/*` branch touching packaged paths — so it can only be run here, never from the branch. Whether to bump now or wait for the next plan is the operator's call; this step ends when the branch is gone, not when a version ships.
+**The bump is Step 11, not a thing to remember.** It happens on trunk, immediately after this step, because that is where the guard's own rule points. Publishing itself stays the operator's call.
+
+### Step 11: Bump — the version that describes this tree
+
+The release guard's rule is *bump on main, after the branch is merged*. Step 10
+just merged and is standing on main. This is that moment, and it is the only
+one that knows what shipped — so the bump belongs here, not to whoever next
+tries to publish and has to reconstruct it.
+
+Before this step existed, "bump" meant three manual acts every time — edit
+`package.json`, roll the changelog heading, write a commit message in the exact
+format the guard greps for — each silently wrong-able, with no command behind
+them. Publishing 1.54.0 took five attempts and none of them failed for the
+reason its error message gave.
+
+**First, does this plan release anything?** Ask git what the landed merge
+changed against the packaged paths — the same paths `release-guard.sh` uses
+(`PACKAGED_PATHS` in that script is the list):
+
+```bash
+git -C <trunk> diff --name-only HEAD~1..HEAD -- apps/indusk-mcp apps/indusk-admin packages
+```
+
+If it names nothing, **say so and stop**: *"No packaged paths changed — nothing
+to release; the version stays at X.Y.Z."* Record that in the retrospective. A
+plan that touched only plan documents, docs pages or this repository's own
+skills changes no tarball, and bumping for it ships a version number that
+describes nothing. **Skipping is a finding, not an absence** — write it down,
+or the next reader cannot tell it from the step never having run.
+
+**If it did change packaged paths, choose the increment.** You have just
+written the retrospective, so you know which this is:
+
+- **minor** — the plan added a capability someone can now use: a command, a
+  tool, a config key, a behaviour that did not exist.
+- **patch** — the plan fixed, hardened or refactored something already shipped.
+
+When a plan genuinely did both, it is a minor. When you cannot tell, it is a
+minor — under-describing a release is the cheaper error, because a consumer who
+expected a fix and got a feature loses nothing.
+
+**Then, three writes and one commit:**
+
+1. **The changelog.** `apps/docs/src/changelog.md` opens with `## [Unreleased]`
+   holding the entries this plan (and any plan that landed since the last
+   release) already wrote. Roll it: leave `## [Unreleased]` empty at the top
+   and insert `## [X.Y.Z] — <today>` beneath it, so the entries now sit under
+   the version that carries them.
+2. **The version.** `apps/indusk-mcp/package.json`'s `version`, and nothing
+   else — the platform-split telemetry packages carry their own.
+3. **The commit**, on trunk, whose *first line* must begin exactly
+   `chore(release): X.Y.Z` — `release-guard.sh` finds the release commit by
+   grepping for it, and `trunk-guard.js` exempts it from the no-code-on-trunk
+   rule by reading it.
+
+   Pass the message as a **literal `-m`**, or with `-F <file>`. Both are read.
+   A message built by a heredoc or `$(…)` is *not* read — the hook says so and
+   refuses rather than guessing, because it does not run a shell.
+
+```bash
+git -C <trunk> add apps/indusk-mcp/package.json apps/docs/src/changelog.md
+git -C <trunk> commit -m "chore(release): X.Y.Z — <what shipped, in the plan's own words>" \
+  -m "<the why, as many -m paragraphs as it deserves>"
+```
+
+**Then stop.** Running `pnpm release` is the operator's decision and needs a
+one-time password an agent cannot enter. Say that the bump is committed and the
+tree is ready, and let them choose whether to publish now or let the next plan
+accumulate into the same version.
+
+**Verify before you hand over**, so the guard's refusals are not the first
+thing they see:
+
+```bash
+bash apps/indusk-mcp/scripts/release-guard.sh
+```
+
+It should print that HEAD is the release commit, packaged paths are clean, no
+unmerged packaged work remains, and every declared dependency is installed. If
+it refuses, fix what it names — a refusal here is cheap; the same refusal after
+`npm login` is not.
+
+
 
 ## Important
 
