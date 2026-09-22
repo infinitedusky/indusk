@@ -299,3 +299,7 @@
 {"id":"h-20260921-002","processedAt":"2026-09-22T00:40:47.546Z","action":"skipped","detail":"fully captured by existing lesson exactly-once-is-a-durability-claim.md (same five failure sites, same incident)"}
 {"id":"h-20260921-003","processedAt":"2026-09-22T00:40:48.540Z","action":"skipped","detail":"general principle already captured by test-red-at-earliest-writable-phase.md; this instance (A21, e2e deferred to last phase) is a specific case of that rule, not a new one"}
 {"id":"h-20260921-004","processedAt":"2026-09-22T00:40:59.578Z","action":"wrote-episode","detail":"deferred-verification-mitigation-must-stay-visibly-unrun"}
+{"id":"h-20260921-001","processedAt":"2026-09-21T23:40:16.132Z","action":"skipped","detail":"already materialized as test-fixtures-can-agree-with-the-bug.md in this same commit (c033db56)"}
+{"id":"h-20260921-002","processedAt":"2026-09-21T23:40:17.002Z","action":"skipped","detail":"already materialized as exactly-once-is-a-durability-claim.md in this same commit (c033db56)"}
+{"id":"h-20260921-003","processedAt":"2026-09-21T23:40:17.720Z","action":"wrote-episode","detail":"defer-only-the-parts-of-e2e-that-truly-need-everything"}
+{"id":"h-20260921-004","processedAt":"2026-09-21T23:40:18.404Z","action":"wrote-episode","detail":"deferred-verification-mitigated-by-a-downstream-plan-needs-a-visible-unrun-marker"}
