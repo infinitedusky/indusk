@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.54.0] — 2026-09-21
+
 ### Added
 - **Always on: the promise loop keeps running when no developer machine is** (Day step 4b′). Your laptop is not on at three in the morning; a promise broken then is broken whether or not anyone is watching. This moves the watching part somewhere that stays on.
   - **`indusk telemetry serve`** — the Jaeger InDusk already ships, run as a long-lived server. Two differences from the local daemon and only two: badger on a volume, so a restart does not forget, and basic auth on **both** doors, so an unauthenticated POST is refused and nothing is stored. Every setting comes from the environment and a missing one refuses by name; a server that starts without its credentials is an open ingestion endpoint. Spans stay readable for four quiet windows (28 days) by default.
