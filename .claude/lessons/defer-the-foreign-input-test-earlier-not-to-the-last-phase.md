@@ -1,7 +1,0 @@
-# A test that exercises a real foreign boundary (real SDK, real protocol client) should be authored as early as it's writable — deferring it to the last phase leaves that boundary unverified for the whole plan
-
-day-always-on: the one falsification-defeating test (A21, using the real OpenTelemetry SDK against the server rather than a hand-built OTLP fixture) was deferred to the last build phase as "needs everything at once." The bug it caught — a reader looking for `deployment.environment` on the wrong tag layer (span vs. resource attributes) — existed from Build Phase 3 and shipped through three phases of green unit tests, because every one of those unit tests built its input the same way the implementation read it, so a fixture-matches-implementation bug was invisible to all of them.
-
-A thinner version of that same test (one real-SDK process against the server, asserting nothing more than "the value lands where the reader looks") was writable as early as Build Phase 1. Rule: when a Test Trajectory row is the only one that constructs input via a real client library rather than a hand-built fixture, treat its "writable at" phase as its true earliest phase, not the phase where the full assertion becomes possible — a thin version that only proves the boundary is bridged correctly can be written far earlier than the version that proves the whole feature.
-
-See `.indusk/planning/archive/day-always-on/` and its retrospective.

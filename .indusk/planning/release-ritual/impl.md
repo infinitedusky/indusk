@@ -18,8 +18,8 @@ gate_policy: ask
 | T3 | A `-m` message produced by a command substitution does not have its words read as paths — a commit staging only allowlisted paths is allowed, not refused with the message text listed as files | Test Phase 1 | Build Phase 1 | passing |
 | T4 | When the message cannot be read and the staged set is not allowlisted, the refusal says the message was unreadable and names `-m`/`-F`, instead of only claiming code is being committed | Test Phase 1 | Build Phase 1 | passing |
 | T5 | A non-release commit supplied with `-F` is still refused when it stages packaged paths — the file is read, not trusted | Test Phase 1 | Build Phase 1 | passing |
-| T6 | `release-guard.sh` refuses, naming `pnpm install`, when a declared dependency is not linked into the package — before any npm call | Test Phase 1 | Build Phase 2 | planned |
-| T7 | `release-guard.sh` still passes on a tree whose install is current | Test Phase 1 | Build Phase 2 | planned |
+| T6 | `release-guard.sh` refuses, naming `pnpm install`, when a declared dependency is not linked into the package — before any npm call | Test Phase 1 | Build Phase 2 | passing |
+| T7 | `release-guard.sh` still passes on a tree whose install is current | Test Phase 1 | Build Phase 2 | passing |
 | T8 | The retrospective skill's Step 11 exists, names the changelog roll and the `chore(release):` commit, and says a plan touching no packaged paths skips it | Test Phase 1 | Build Phase 3 | planned |
 | T9 | The installed copy of the retrospective skill is byte-identical to the package-owned one | Test Phase 1 | Build Phase 3 | planned |
 
@@ -35,7 +35,7 @@ fixture repository), and the skill is a file on disk.
 
 - [ ] Create this plan's worktree with `indusk worktree create release-ritual` (done — the plan reads from it)
 - [x] Author T1–T5 in `apps/indusk-mcp/src/__tests__/trunk-guard-release-message.test.ts`, driving the hook the way Claude Code does: a fixture repo on `main`, a staged set, and a `{tool_name: "Bash", tool_input: {command}}` envelope on stdin. Reuse the existing `trunk-guard.test.ts` harness rather than restating it
-- [ ] Author T6, T7 in `apps/indusk-mcp/src/__tests__/release-guard-install.test.ts` — run `scripts/release-guard.sh` against a fixture and read its exit code and stderr, never its internals
+- [x] Author T6, T7 in `apps/indusk-mcp/src/__tests__/release-guard-install.test.ts` — run `scripts/release-guard.sh` against a fixture and read its exit code and stderr, never its internals
 - [ ] Author T8, T9 in `apps/indusk-mcp/src/__tests__/release-ritual-skill.test.ts` — read the skill text; T9 is the byte-equality check the existing parity test already makes for every skill, asserted here for the one this plan edits
 - [ ] Run each file and read each failure: every row fails on its own assertion
 
@@ -76,12 +76,12 @@ fixture repository), and the skill is a file on disk.
 
 ### Build Phase 2: the release guard proves the tree builds
 
-- [ ] `release-guard.sh` runs `pnpm install --frozen-lockfile` (or verifies the install matches the lockfile) before returning ok, and refuses naming the command to run when it does not. This is the failure that costs the most: today it surfaces *after* npm authentication, halfway through `prepublishOnly`
-- [ ] The refusal explains the ordinary cause — a dependency added on a plan branch, merged, and never installed on trunk
+- [x] `release-guard.sh` runs `pnpm install --frozen-lockfile` (or verifies the install matches the lockfile) before returning ok, and refuses naming the command to run when it does not. Implemented as the second option and as **its own script** (`scripts/check-install.js`): the guard's last check asks the npm registry, so the guard as a whole cannot be run hermetically, while this one is pure filesystem and is tested directly. It runs before the network. This is the failure that costs the most: today it surfaces *after* npm authentication, halfway through `prepublishOnly`
+- [x] The refusal explains the ordinary cause — a dependency added on a plan branch, merged, and never installed on trunk
 
 #### Build Phase 2 Verification
 
-- [ ] T6 passes and T7 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/release-guard-install`)
+- [x] T6 passes and T7 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/release-guard-install`)
 
 #### Build Phase 2 Context
 
