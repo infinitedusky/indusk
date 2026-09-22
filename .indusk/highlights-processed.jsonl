@@ -295,3 +295,7 @@
 {"id":"h-20260919-006","processedAt":"2026-09-19T21:56:12.971Z","action":"skipped","detail":"recorded in day-always-on/brief.md; full content already reviewed in this eval pass (e258b9ca, 2041f5b6)"}
 {"id":"h-20260919-007","processedAt":"2026-09-19T22:26:36.096Z","action":"skipped","detail":"recorded in day-always-on/test-plan.md; full content already reviewed in this eval pass (a8673b97)"}
 {"id":"h-20260919-008","processedAt":"2026-09-19T23:57:00.470Z","action":"skipped","detail":"recorded in day-always-on/adr.md; full content already reviewed and verified in this eval pass (9855264d)"}
+{"id":"h-20260921-001","processedAt":"2026-09-21T23:40:16.132Z","action":"skipped","detail":"already materialized as test-fixtures-can-agree-with-the-bug.md in this same commit (c033db56)"}
+{"id":"h-20260921-002","processedAt":"2026-09-21T23:40:17.002Z","action":"skipped","detail":"already materialized as exactly-once-is-a-durability-claim.md in this same commit (c033db56)"}
+{"id":"h-20260921-003","processedAt":"2026-09-21T23:40:17.720Z","action":"wrote-episode","detail":"defer-only-the-parts-of-e2e-that-truly-need-everything"}
+{"id":"h-20260921-004","processedAt":"2026-09-21T23:40:18.404Z","action":"wrote-episode","detail":"deferred-verification-mitigated-by-a-downstream-plan-needs-a-visible-unrun-marker"}

@@ -19,6 +19,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-09-17: **1.51.0 published** to npm at 2026-09-18T00:03:18Z from release commit 7f4297bc — by the SECOND `pnpm release` run (browser 2FA confirmed). The first run's `record-release.js` mark was written on pnpm's exit code alone and nothing reached the registry; the mark now says only what `npm view` confirms.
 - 2026-09-18: **1.52.0 published** to npm from release commit 52749a95 (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-09-18: **1.53.0 published** to npm from release commit e0caf32f (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-09-22: **1.54.0 published** to npm from release commit d7e0061a (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
