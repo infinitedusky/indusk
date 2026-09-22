@@ -97,6 +97,8 @@ fixture repository), and the skill is a file on disk.
 - [ ] A plan that changed no packaged paths records that it skipped the bump and why — the step must distinguish "nothing to release" from "did not run"
 - [ ] Resync the installed copy to `.claude/skills/retrospective/SKILL.md`
 
+- [ ] **Discovered 2026-09-22**: trunk-guard's allowlist omits `.claude/skills/` and `.claude/hooks/`, which `indusk update` writes — and `update` is meant to be run on trunk. Landing 1.54.0's update left `.claude/skills/testing/SKILL.md` uncommittable without `INDUSK_TRUNK_GUARD=off`. These are installed copies the conventions already forbid editing by hand (edit `apps/indusk-mcp/skills/`, never `.claude/skills/`), so allowing them admits an update's output, not hand-written code. Same family as the rest of this plan: the ritual refusing what it itself produces
+
 #### Build Phase 3 Verification
 
 - [ ] T8, T9 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/release-ritual-skill src/__tests__/skill-sync-parity`)
