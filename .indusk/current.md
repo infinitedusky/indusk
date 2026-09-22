@@ -315,3 +315,45 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 (empty)
 
 ---
+
+## Session c2c15cf7 — eval: release-ritual plan/brief/impl commit d7e0061a
+
+**Session ID**: c2c15cf7-3b2a-40b0-83b6-b4d1aa711c22
+**Last updated**: 2026-09-22T00:39:06.437Z
+**Branch**: plan/release-ritual
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session fe83e89a — eval agent: scoring commit d7e0061a (plan/release-ritual brief+impl)
+
+**Session ID**: fe83e89a-2500-4ca1-b93d-afba563532c9
+**Last updated**: 2026-09-22T00:39:24.066Z
+**Branch**: plan/release-ritual
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---

@@ -13,11 +13,11 @@ gate_policy: ask
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| T1 | A `chore(release):` commit on trunk whose message is supplied with `-F <file>` is allowed | Test Phase 1 | Build Phase 1 | planned |
-| T2 | The same with `--file=<file>` is allowed | Test Phase 1 | Build Phase 1 | planned |
-| T3 | A `-m` message produced by a command substitution does not have its words read as paths — a commit staging only allowlisted paths is allowed, not refused with the message text listed as files | Test Phase 1 | Build Phase 1 | planned |
-| T4 | When the message cannot be read and the staged set is not allowlisted, the refusal says the message was unreadable and names `-m`/`-F`, instead of only claiming code is being committed | Test Phase 1 | Build Phase 1 | planned |
-| T5 | A non-release commit supplied with `-F` is still refused when it stages packaged paths — the file is read, not trusted | Test Phase 1 | Build Phase 1 | planned |
+| T1 | A `chore(release):` commit on trunk whose message is supplied with `-F <file>` is allowed | Test Phase 1 | Build Phase 1 | passing |
+| T2 | The same with `--file=<file>` is allowed | Test Phase 1 | Build Phase 1 | passing |
+| T3 | A `-m` message produced by a command substitution does not have its words read as paths — a commit staging only allowlisted paths is allowed, not refused with the message text listed as files | Test Phase 1 | Build Phase 1 | passing |
+| T4 | When the message cannot be read and the staged set is not allowlisted, the refusal says the message was unreadable and names `-m`/`-F`, instead of only claiming code is being committed | Test Phase 1 | Build Phase 1 | passing |
+| T5 | A non-release commit supplied with `-F` is still refused when it stages packaged paths — the file is read, not trusted | Test Phase 1 | Build Phase 1 | passing |
 | T6 | `release-guard.sh` refuses, naming `pnpm install`, when a declared dependency is not linked into the package — before any npm call | Test Phase 1 | Build Phase 2 | planned |
 | T7 | `release-guard.sh` still passes on a tree whose install is current | Test Phase 1 | Build Phase 2 | planned |
 | T8 | The retrospective skill's Step 11 exists, names the changelog roll and the `chore(release):` commit, and says a plan touching no packaged paths skips it | Test Phase 1 | Build Phase 3 | planned |
@@ -34,7 +34,7 @@ fixture repository), and the skill is a file on disk.
 ### Test Phase 1: Author every row against today's behaviour, RED
 
 - [ ] Create this plan's worktree with `indusk worktree create release-ritual` (done — the plan reads from it)
-- [ ] Author T1–T5 in `apps/indusk-mcp/src/__tests__/trunk-guard-release-message.test.ts`, driving the hook the way Claude Code does: a fixture repo on `main`, a staged set, and a `{tool_name: "Bash", tool_input: {command}}` envelope on stdin. Reuse the existing `trunk-guard.test.ts` harness rather than restating it
+- [x] Author T1–T5 in `apps/indusk-mcp/src/__tests__/trunk-guard-release-message.test.ts`, driving the hook the way Claude Code does: a fixture repo on `main`, a staged set, and a `{tool_name: "Bash", tool_input: {command}}` envelope on stdin. Reuse the existing `trunk-guard.test.ts` harness rather than restating it
 - [ ] Author T6, T7 in `apps/indusk-mcp/src/__tests__/release-guard-install.test.ts` — run `scripts/release-guard.sh` against a fixture and read its exit code and stderr, never its internals
 - [ ] Author T8, T9 in `apps/indusk-mcp/src/__tests__/release-ritual-skill.test.ts` — read the skill text; T9 is the byte-equality check the existing parity test already makes for every skill, asserted here for the one this plan edits
 - [ ] Run each file and read each failure: every row fails on its own assertion
@@ -49,22 +49,22 @@ fixture repository), and the skill is a file on disk.
 
 #### Test Phase 1 Context
 
-- [ ] (none — the tests record the behaviour; the rules land with the phases that implement them. asked: "Test Phase 1 only authors tests against existing behaviour; the conventions it will change are recorded in Build Phases 1–3. Can I skip the context gate here?" — user: pending)
+- [x] (none needed — asked: "Test Phase 1 only authors tests against today's behaviour; the conventions it establishes are recorded by Build Phases 1–3, which is where they belong. Skip the Context gate?" — user: "Skip both")
 
 #### Test Phase 1 Document
 
-- [ ] (none — no user-facing surface changes in a test-authoring phase. asked: "Test Phase 1 writes tests only. Can I skip the document gate here?" — user: pending)
+- [x] (none needed — asked: "Test Phase 1 writes tests only; there is no user-facing surface until the fixes land. Skip the Document gate?" — user: "Skip both")
 
 ### Build Phase 1: trunk-guard reads the message it is given
 
-- [ ] `-F <file>` and `--file=<file>`: read the file, apply the `chore(release):` exemption on its first line. The file is read, never trusted by its presence
-- [ ] A `-m` value containing a command substitution (`$(…)`, backticks) or a heredoc is **unreadable, not a path list** — today its words are tokenized as filenames, which is why a heredoc release commit is refused with the commit message printed under "refusing to commit code"
-- [ ] When the message is unreadable and the staged set is not allowlisted, the refusal names that: the message could not be read, so the `chore(release):` exemption could not be checked — pass it with `-m "…"` or `-F <file>`
-- [ ] Update the hook's header comment to describe what the exemption reads
+- [x] `-F <file>` and `--file=<file>`: read the file, apply the `chore(release):` exemption on its first line. The file is read, never trusted by its presence
+- [x] A `-m` value containing a command substitution (`$(…)`, backticks) or a heredoc is **unreadable, not a path list** — today its words are tokenized as filenames, which is why a heredoc release commit is refused with the commit message printed under "refusing to commit code"
+- [x] When the message is unreadable and the staged set is not allowlisted, the refusal names that: the message could not be read, so the `chore(release):` exemption could not be checked — pass it with `-m "…"` or `-F <file>`
+- [x] Update the hook's header comment to describe what the exemption reads
 
 #### Build Phase 1 Verification
 
-- [ ] T1, T2, T3, T4 pass and T5 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard`)
+- [x] T1, T2, T3, T4 pass and T5 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard`)
 
 #### Build Phase 1 Context
 

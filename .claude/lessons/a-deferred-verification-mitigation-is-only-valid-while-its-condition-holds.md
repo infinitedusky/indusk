@@ -1,0 +1,7 @@
+# A Deferred Verification row's mitigation is a claim about another plan's future state — it stays valid only as long as that plan is tracked as unrun, not silently assumed done
+
+day-always-on: two Deferred Verification rows (U1, U2 — the Fly deploy smoke) were mitigated by pointing at day-always-on-deploy, a downstream plan whose brief the user had accepted the same day specifically to make that mitigation valid. That's a legitimate mitigation, but it has a built-in expiry condition: the docs/guide must keep marking the image and the fly.toml as UNRUN — a config nobody has executed — in a visible warning callout until the downstream plan actually closes.
+
+The failure mode this guards against: shipping the reference config under the word "reference" reads as neutral, but combined with a Deferred Verification row that says "the next plan covers it," an unflagged doc silently asserts a pass that was never observed. When auditing a Deferred Verification row that points at another plan for its mitigation, check two things, not one: (1) does the pointed-to plan exist and is it live, and (2) does every doc surface touching the deferred behavior still say "unrun" rather than presenting it as working. The second one rots silently — nobody edits a guide page to remove a warning on purpose, but nobody adds one either once the feature reads as shipped.
+
+See `/decisions/day-always-on` and `.indusk/planning/archive/day-always-on/retrospective.md`.
