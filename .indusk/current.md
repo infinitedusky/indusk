@@ -254,24 +254,35 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 25c802bd — day-promises: /work Test Phase 1
+## Session 25c802bd — day-always-on landed + published 1.54.0; release-ritual in flight
 
 **Session ID**: 25c802bd-7505-46cc-a1a7-72186418629a
-**Last updated**: 2026-09-18T05:35:29.818Z
+**Last updated**: 2026-09-22T06:30:09.288Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-(empty)
+**release-ritual** — all three fixes implemented and green, on `plan/release-ritual` (pushed):
+
+1. trunk-guard reads `-F`/`--file` messages, and treats a `-m` from a heredoc/substitution as *unreadable* rather than tokenizing the message into paths. The real bug was sharper than expected: a literal `"` inside a heredoc body closes the tokenizer's quote, so the rest of that line became pathspecs — a message containing the phrase `"exactly once"` was refused with a fragment of itself printed as a filename.
+2. `scripts/check-install.js` verifies every declared dependency resolves before npm is touched. Publishing 1.54.0 failed *after* `npm whoami` because a dependency merged from a plan branch was never installed on trunk.
+3. `/retrospective` gained **Step 11: Bump** — the landed merge decides whether packaged paths changed, the plan decides minor vs patch, the changelog rolls, the `chore(release):` commit is written. Skipping is recorded, not silent.
+
+T1–T9 pass. **Remaining**: Build Phase 3's Context + Document gates, then `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Its own close runs Step 11 for real — that is the deferred verification.
 
 ### Open Questions
 
-(empty)
+- Should `indusk plans` **refuse an unrecognised document status** instead of treating it as inactive? `context-tiers` carried `status: complete` (vocabulary is `completed`) and vanished from every active listing — one letter, silently. `jev-decision-model/research.md` still has it and is not mine to change.
+- Build Phase 3 carries a discovered item: trunk-guard's allowlist omits `.claude/skills/` and `.claude/hooks/`, which `indusk update` writes — and update is meant to run on trunk. Landing 1.54.0's update needed `INDUSK_TRUNK_GUARD=off` to commit the testing extension's refreshed skill.
 
 ### Cursor
 
-(empty)
+Worktree `/Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual` (exists on THIS Mac only; on another machine `git worktree add ../dusk-worktrees/release-ritual plan/release-ritual` then `indusk worktree assign`).
+
+Next concrete step: the two unchecked gates under `#### Build Phase 3 Context` / `Document` in `.indusk/planning/release-ritual/impl.md`, plus the discovered allowlist item above it.
+
+Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh checkout fails 7 tests until `pnpm --filter indusk-admin build && node apps/indusk-mcp/scripts/bundle-admin.js`; `daemon-identity`'s two PID-reuse tests fail identically on `main`; `http-promise-health` A16 times out at 5s under full-suite load and passes alone.
 
 ---
 
