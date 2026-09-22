@@ -23,48 +23,6 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session da8327e4 — eval: reviewing commit 3dbe9a1a (master.md queue entry)
-
-**Session ID**: da8327e4-4ba2-4939-a094-9055c134a4a6
-**Last updated**: 2026-09-14T14:42:01.483Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 30e64e93 — eval: reviewing commit 00bf46bd (worktree-config-schema-pointer Phase 2 red tests)
-
-**Session ID**: 30e64e93-bd7f-4969-a4c4-2a24454f7335
-**Last updated**: 2026-09-14T15:37:41.098Z
-**Branch**: plan/worktree-config-schema-pointer-phase-2
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/worktree-config-schema-pointer
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
 ## Session 780da059 — user-zero side research: Aeon case study + master.md fate line
 
 **Session ID**: 780da059-f69c-43fc-9940-32075e05833a
