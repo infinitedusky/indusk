@@ -16,6 +16,7 @@ subplans:
   - day-promises
   - day-monitor
   - day-always-on
+  - day-always-on-deploy
   - day-contract
   - day-claim-evidence
   - day-claim-binding

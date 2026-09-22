@@ -1,6 +1,6 @@
 ---
 title: "Context tiers — where a rule lives, and how it reaches you"
-status: complete
+status: completed
 date: 2026-09-20
 ---
 
