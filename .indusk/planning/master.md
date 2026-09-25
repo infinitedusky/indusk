@@ -1,7 +1,7 @@
 ---
 title: "Master Plan — Execution Order"
 date: 2026-04-19
-updated: 2026-09-04
+updated: 2026-09-25
 # Machine-readable plan hierarchy (dawn-ui-plan-grouping). Prose below is for
 # humans; these keys are what the parser and admin sidebar read. Children of a
 # parent (e.g. dawn-*) are declared in the PARENT's master.md, never here —
@@ -16,12 +16,13 @@ roadmap:
   - indusk-v4-day
   - day-promises
   - day-monitor
+  - day-always-on
   - admin-ui-phase-progress
   - indusk-makeover
-  - dusk-v2
   - user-zero
   - jev-decision-model
   - context-tiers
+  - release-ritual
   - day-always-on-deploy
 ---
 
@@ -79,12 +80,21 @@ promise.) Three sub-plans:
   phase; `monitor` as the quiet window; observed health in the admin;
   `every-commit-evaluated` self-hosted and broken on purpose by `pnpm e2e`.
   See `/decisions/day-monitor` and `/lessons/day-monitor`.
-- `day-always-on` — **4b′, the monitor on a machine that does not turn off**
-  (split from 4b 2026-09-18; 4b closed 2026-09-19 — next to create): Jaeger with persistent
-  storage, the scheduled `indusk promises status` run, and the receiver that
-  opens the incident and reopens the plan when no developer machine is on —
-  where it runs is this step's decision. Reuses 4b's query and incident path
-  unchanged; the `deployed` incident source is proven here.
+- [day-always-on/brief.md](archive/day-always-on/brief.md) — **4b′, the monitor
+  on a machine that does not turn off** — **closed 2026-09-21** (retrospective
+  written, archived): the shipped Jaeger as an always-on server (badger on a
+  volume, basic auth on both doors, `indusk telemetry serve` as process 1), an
+  in-process pass that announces each violation once to Slack and only after
+  Slack accepts, a project naming its Jaeger in `promises.jaeger`, and
+  `promise_health` telling a session. Detect-and-notify only. See
+  `/decisions/day-always-on` and `/lessons/day-always-on`. **The deployment is
+  its own step** — `day-always-on-deploy`, below.
+- [day-always-on-deploy/brief.md](day-always-on-deploy/brief.md) — **4b′
+  deployed** — brief accepted; next is the test-plan. **Deliberately held**
+  (Sandy, 2026-09-25): the deploy waits until the whole loop is proven working
+  locally end-to-end. Needs a Fly account and a Slack webhook; **not** blocked
+  on a publish — 1.54.0 (release commit b185e375) already carries the always-on
+  code, with zero packaged commits since.
 - `day-contract` — **4c, the contract in planning** (proposed 2026-09-18 as
   4a's cut; created when 4a closes): promises declared before code, every
   trajectory row names what it establishes or preserves, the retrospective
@@ -98,9 +108,22 @@ of real use, after 32 green rows) is the standing evidence that inside-the-repo
 loops cannot see what only running the thing reveals. Growing throughput before
 growing trust repeats that at scale.
 
-**Next actions:** accept the brief → write the ADR. **The ADR must settle the
-Dawn relationship** (does the collapse signal feed `indusk run`, or are they
-orthogonal?) — both documents name this as their shared open question.
+**Next actions (2026-09-25).** The sequence's live order, and why it is not
+simply the next `day-*` folder:
+
+1. **[release-ritual](release-ritual/brief.md) — in flight.** Impl approved
+   2026-09-21, nine rows, four phases, nothing executed yet. It is here and
+   not filed as a bugfix because publishing has cost four or five attempts for
+   three consecutive versions, and the deploy step below installs the
+   *published* package — so an unreliable release is a prerequisite failure,
+   not a side quest.
+2. **The loop proven locally, end to end.** Sandy's gate on the deploy
+   (2026-09-25): watch a real violation travel from the running system through
+   Jaeger to an incident and a reopened plan, on this machine, before paying
+   for a box to do it. Not a plan folder — a smoke.
+3. **[day-always-on-deploy](day-always-on-deploy/brief.md) — test-plan next**,
+   once 1 and 2 hold.
+4. **`day-contract` — 4c**, created after the deploy lands.
 
 ## Stream 3 — Finish Dawn
 
@@ -154,6 +177,27 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **Two release plans, one boundary** (written 2026-09-25 — they had overlapped
+  unreconciled since 2026-09-21, and `release-ritual` was declared nowhere).
+  Both stay; the split is by question, not by folder age:
+  - **[release-ritual](release-ritual/brief.md) — the procedure works.** Brief
+    accepted + impl approved 2026-09-21, the live step. Owns: the bump as
+    retrospective Step 11, trunk-guard reading a `chore(release):` message
+    however it is supplied (`-F`, `--file=`, heredoc, command substitution),
+    and the guard proving the tree builds (`pnpm install --frozen-lockfile`)
+    before npm is authenticated. **It supersedes `indusk release <major|minor|patch>`
+    as a command shape** — the bump is a step in a ritual that already knows
+    what shipped, not a new verb.
+  - **[indusk-release](indusk-release/brief.md) — a release names what it
+    carries.** Brief draft, Day small step S1, narrowed 2026-09-25 to the half
+    release-ritual does not cover: computing the *set* of plans a version
+    shipped from the `Merge plan/*` commits since the last `chore(release)`
+    (1.50.0 carried three; Step 11 only knows the one plan it just closed),
+    "Released in" written back to each retrospective, and `check_health`
+    naming landed-and-unreleased plans. Its `check_health` three-way-state
+    clause **already shipped** (the version line reports installed, published,
+    project-updated and packaged commits since the release commit); what
+    remains is naming the plans rather than counting commits.
 - **Standalone research, not a step** (2026-09-18):
   [jev-decision-model](jev-decision-model/research.md) — TypeSafe AI's Jev, a
   typed-decision ("System One") model launched 2026-09-15. Verdict: watch, do not
@@ -276,9 +320,21 @@ lesson title, or a chat log.
   <pkg>@<version>` (bounded, like the guard's lookup) and write "published"
   only when the registry answers, otherwise write "publish reported success
   but the registry has no <version>" — the health line's `versionStateProblem`
-  already distinguishes the two states. Owner: `indusk-release` (S1).
+  already distinguishes the two states. **Owner re-routed 2026-09-25 to
+  [release-ritual](release-ritual/brief.md)** — it is the plan touching the
+  release path now, and S1 is about naming plans, not about earning the mark.
   Outcome: the second `pnpm release` run (browser 2FA confirmed) published
   1.51.0 at 2026-09-18T00:03:18Z; the first run's mark was false.
+  (f) Found 2026-09-25, same file, second wrong fact: `record-release.js`
+  records `git rev-parse --short HEAD` and labels it **"release commit"**. The
+  1.54.0 publish took five attempts, so by the time the recording run reached
+  that line HEAD had moved — the shared region of `.indusk/current.md` claims
+  1.54.0 was published "from release commit d7e0061a", which is
+  `plan(release-ritual): brief and impl`. The real release commit is b185e375.
+  It must resolve the last commit matching `^chore(release): <version>`, the
+  same way the health line's version state already does, and the note it writes
+  is read by every session at catchup. Owner: `release-ritual` — **not covered
+  by T1–T9**, so it needs a row before Test Phase 1 is authored.
   (e) Found by the third run: the guard's "already on the registry" refusal
   hung forever — its message quoted `` `pnpm release` `` inside double quotes,
   so bash ran it as a command substitution and the guard re-entered `pnpm
@@ -327,7 +383,30 @@ lesson title, or a chat log.
 
 ## Parked / needs re-scope
 
-- [dusk-v2](dusk-v2/) — research parked.
+- **`dusk-v2` — overtaken, folder already gone** (fate written 2026-09-25; it
+  had been a dangling `roadmap:` entry and a dead link here, so the sidebar
+  rendered it as a queued placeholder step). It was April 2026 research,
+  *"Dusk v2 — Greenfield Rewrite of indusk-mcp"*: republish the package as
+  `@infinitedusky/dusk` in a sibling `apps/dusk/`, clean break, no backwards
+  compat. Its five goals — unified extension model, config as source of truth,
+  scaffold/init separation, smaller surface, OTel-as-extension — all shipped
+  incrementally *inside v1* instead (the extension system, `.indusk/config.json`,
+  the `otel` extension), so the rewrite premise dissolved rather than being
+  rejected. The folder was deleted in `7afa9d2e`; the research is recoverable at
+  `7afa9d2e^:.indusk/planning/dusk-v2/research.md`. **Not to be confused with
+  `indusk-v2-dawn`** (Dawn), which is live and is a Day component — the names
+  differ by one prefix and have been read as the same plan more than once.
+- **Recursive plan grouping — wanted, not critical** (Sandy, 2026-09-25). Dawn
+  and Day are declared as sibling `parents:`, so the sidebar shows two
+  top-level trees, and Day's `subplans:` double-declares only two of Dawn's
+  eight children. Making Day one cohesive tree is **not** a declaration edit:
+  [`buildGroups`](../../apps/indusk-admin/src/components/PlanList.tsx) walks a
+  flat parent→children map and creates one group per key of `subplans`
+  independently of what has been claimed, so listing `indusk-v2-dawn` under Day
+  would render Dawn twice — once as a leaf, once as its own group with its
+  children. Real fix: nested groups in the parser's declarations and the
+  sidebar. An admin plan when it is worth one; until then the prose in both
+  masters carries the relationship.
 
 ## Change propagation
 
