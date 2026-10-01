@@ -1,0 +1,7 @@
+# A rule stated in a skill's table, a template, and a reference page needs all three pinned to one definition, or templates silently drift from the table
+
+admin-plan-type found that three of four workflow templates, plus the planner reference page, omitted the test plan that the planner skill's own Workflow Types table required for their type. A bugfix plan written from the bugfix template therefore closed without a test plan — not because anyone disagreed with the rule, but because the rule existed in four separate places (skill table, four workflow templates, reference page) and only one of them was kept current when the rule was set.
+
+**Rule:** when a fact is stated in more than one human-readable document (a skill's table, a set of templates, a reference/doc page), each restatement is a separate copy that can drift independently, exactly like duplicated code. Register a test that reads all of them and asserts they agree — the project's existing "one home per fact" convention for code applies equally to prose documents that state the same rule in different words for different audiences (the agent invoking a skill vs. a template being copied vs. a human reading docs).
+
+**How to apply:** when introducing or changing a rule that will be restated in more than one document, write the parity test in the same change that states the rule, not after a defect surfaces. The test should name every file it expects to agree, so adding a fifth restatement without updating the test is itself a visible gap.

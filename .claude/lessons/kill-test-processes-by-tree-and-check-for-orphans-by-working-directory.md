@@ -1,0 +1,7 @@
+# Kill a test run by its process tree, not just its parent PID — an orphaned child server holds a working directory and fails every HTTP smoke indistinguishably from a real regression
+
+During admin-plan-type, a `kill -9` of a test run's parent process left a spawned Next.js dev server (started by the suite to boot a real server for HTTP smoke tests) running as an orphan. The orphaned server held the admin app's working directory (`.next/` lock, per the project's own `fileParallelism: false` constraint — Next locks `.next/` and only one dev server can safely run against a directory at a time). The next suite run's 43 HTTP smoke tests then failed — indistinguishable from real regressions — because they were colliding with the orphan rather than exercising fresh code. This cost a full suite run twice before the orphan was found and killed.
+
+**Rule:** when killing a test run that may have spawned child servers (`next dev`, any `http-suite`/server-boot test), kill the whole process tree (`pkill -P <pid>` or equivalent), not just the top-level PID. After killing, check for leftover processes bound to the working directory before trusting the next run's failures as real (`lsof` on the port, or `ps` filtered by the app's directory path).
+
+**Why it's dangerous:** the failure signature (HTTP smoke tests failing) looks exactly like a real break in the code under test, so the natural response is to debug the diff — not the process table. The cost compounds: a second full suite run is spent before anyone suspects the environment rather than the change.

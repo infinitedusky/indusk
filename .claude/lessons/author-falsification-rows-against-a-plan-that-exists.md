@@ -1,0 +1,7 @@
+# Author each falsification hypothesis as a test case against a real, existing plan — not an imagined one — or the row can pass by accident instead of by design
+
+In admin-plan-type's retrospective hindsight, two falsification rows would have been stronger if authored against real data from the start: A23 would have been red immediately if tested against `jev-decision-model` (a real research-only plan in this repository) instead of a constructed case, and A25 — the `status: completed` vs `complete` defect — was found by accident (printing real plan data after a fix) rather than by a hypothesis the falsification phase had deliberately targeted.
+
+**Rule:** when authoring a falsification hypothesis about how the system should behave for some category of real-world input (a plan's frontmatter, a status word, a document shape), pick one concrete, already-existing instance of that category from the repository itself as the test case, rather than constructing a representative-looking fixture. A constructed fixture encodes what the author imagines the input looks like; a real instance exposes whatever the author didn't imagine.
+
+**How to apply:** before writing a falsification row, grep the repository for actual instances of the thing the hypothesis is about (plans, configs, frontmatter fields) and name one in the row itself. If no real instance exists yet, that absence is itself worth noting — the hypothesis may be untestable until the shape it's worried about actually occurs.

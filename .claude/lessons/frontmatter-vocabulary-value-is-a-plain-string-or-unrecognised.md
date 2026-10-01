@@ -1,0 +1,7 @@
+# A vocabulary value read from frontmatter must be validated as a plain string, not coerced with String() — a YAML list stringifies into a false match
+
+In admin-plan-type, the fix for reading a `workflow:` frontmatter value was first suspected to be a YAML boolean-coercion bug (`workflow: no` parsing to `false`). It wasn't: this project's YAML engine reads bare `no`/`off` as the literal string, not a boolean. The real defect was `String(value) === "bugfix"` style comparison — when `workflow:` was accidentally written as a YAML list (`workflow: [bugfix]`), `String(["bugfix"])` evaluates to `"bugfix"`, so the comparison silently passed and a list was accepted as a recognised type.
+
+**Rule:** when reading a vocabulary field (a fixed set of recognised string values) out of frontmatter, validate that the raw value is already a string (`typeof value === "string"`) before comparing it to the known set. Never normalize with `String(value)` first — that function is designed to make *everything* printable, including arrays and objects, which defeats the type check it's being used to perform. A value that isn't a plain string should render as a distinct "unrecognised" state, not fall through `String()` into an accidental match.
+
+**Corollary:** don't assume a coercion bug matches the first plausible YAML-quirk pattern that comes to mind (see [[yaml-frontmatter-boolean-coercion-inverts-string-opt-out]] for the boolean-specific version) — confirm the actual parsed shape of the failing input before writing the fix.
