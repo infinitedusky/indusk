@@ -170,3 +170,33 @@ describe("the installed copies `indusk update` writes are allowed on trunk", () 
 		expect(r.stderr).toContain(".claude/agents/x.md");
 	});
 });
+
+describe("T12 — only this commit's own subject line can exempt it", () => {
+	it("refuses a code commit whose later -m paragraph begins chore(release):", async () => {
+		const root = project();
+		stage(root, "src/a.ts", "export const a = 4;\n");
+		const command = `git commit -q -m "feat: code" -m "chore(release): mentioned in the body"`;
+		const r = await runHook("trunk-guard.js", bash(root, command));
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toContain("src/a.ts");
+	});
+
+	it("refuses a code commit preceded by a command that mentions chore(release):", async () => {
+		const root = project();
+		stage(root, "src/a.ts", "export const a = 5;\n");
+		const command = `echo -m "chore(release): not this commit"; git commit -q -m "feat: code"`;
+		const r = await runHook("trunk-guard.js", bash(root, command));
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toContain("src/a.ts");
+	});
+
+	it("refuses a code commit preceded by a command that names a release message file", async () => {
+		const root = project();
+		stage(root, "src/a.ts", "export const a = 6;\n");
+		const file = messageFile(root, "chore(release): 1.1.0\n");
+		const command = `grep -F ${file} /dev/null; git commit -q -m "feat: code"`;
+		const r = await runHook("trunk-guard.js", bash(root, command));
+		expect(r.exitCode, r.stderr).toBe(2);
+		expect(r.stderr).toContain("src/a.ts");
+	});
+});

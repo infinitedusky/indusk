@@ -50,3 +50,21 @@ describe("T9 — the installed copy matches the package-owned one", () => {
 		expect(readFileSync(INSTALLED_SKILL, "utf-8")).toBe(readFileSync(PACKAGE_SKILL, "utf-8"));
 	});
 });
+
+describe("T13 — Step 11 asks what changed since the release, not what the last commit changed", () => {
+	const step11 = () => {
+		const text = readFileSync(PACKAGE_SKILL, "utf-8");
+		const from = text.indexOf("### Step 11");
+		const to = text.indexOf("\n## ", from);
+		return text.slice(from, to === -1 ? undefined : to);
+	};
+
+	it("never diffs HEAD~1..HEAD — Step 10's landing note is always the last commit", () => {
+		expect(step11()).not.toMatch(/HEAD~1/);
+	});
+
+	it("measures from the release commit", () => {
+		expect(step11()).toMatch(/release commit/i);
+		expect(step11()).toMatch(/packaged commit\(s\) since|<release-commit>\.\.HEAD/);
+	});
+});

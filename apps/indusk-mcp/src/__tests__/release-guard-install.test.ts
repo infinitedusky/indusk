@@ -86,3 +86,48 @@ describe("T7 — a tree whose install is current", () => {
 		expect(run(root).code).toBe(0);
 	});
 });
+
+/** A workspace root holding a lockfile and pnpm's record of the lockfile it installed, with one fully linked package beneath it. */
+function workspace(lockfile: string, installed: string | null): string {
+	const root = mkdtempSync(join(tmpdir(), "check-install-ws-"));
+	roots.push(root);
+	writeFileSync(join(root, "pnpm-lock.yaml"), lockfile);
+	if (installed !== null) {
+		mkdirSync(join(root, "node_modules", ".pnpm"), { recursive: true });
+		writeFileSync(join(root, "node_modules", ".pnpm", "lock.yaml"), installed);
+	}
+	const pkgDir = join(root, "apps", "p");
+	mkdirSync(join(pkgDir, "node_modules", "gray-matter"), { recursive: true });
+	writeFileSync(
+		join(pkgDir, "package.json"),
+		JSON.stringify({ name: "p", version: "1.0.0", dependencies: { "gray-matter": "^1.0.0" } }),
+	);
+	writeFileSync(
+		join(pkgDir, "node_modules", "gray-matter", "package.json"),
+		JSON.stringify({ name: "gray-matter", version: "1.0.0" }),
+	);
+	return pkgDir;
+}
+
+const LOCK_BEFORE =
+	"lockfileVersion: '9.0'\nimporters:\n  apps/p:\n    dependencies:\n      gray-matter: 1.0.0\n";
+const LOCK_AFTER = `${LOCK_BEFORE}    devDependencies:\n      typescript: 5.9.0\n`;
+
+describe("T14 — the install is judged against the lockfile, not only against dependencies", () => {
+	it("refuses when the lockfile changed since the last install (a devDependency merged, never installed)", () => {
+		const r = run(workspace(LOCK_AFTER, LOCK_BEFORE));
+		expect(r.code, r.out).not.toBe(0);
+		expect(r.out).toContain("pnpm install");
+	});
+
+	it("refuses when a lockfile exists but nothing records an install of it", () => {
+		const r = run(workspace(LOCK_BEFORE, null));
+		expect(r.code, r.out).not.toBe(0);
+		expect(r.out).toContain("pnpm install");
+	});
+
+	it("passes when the installed record matches the lockfile", () => {
+		const r = run(workspace(LOCK_AFTER, LOCK_AFTER));
+		expect(r.code, r.out).toBe(0);
+	});
+});
