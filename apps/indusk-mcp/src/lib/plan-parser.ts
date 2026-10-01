@@ -3,7 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "./config.js";
 import { fencedLineMask } from "./impl-headings.js";
-import { DOCUMENT_POSITIONS, isFinishedDocumentStatus } from "./lifecycle.js";
+import { DOCUMENT_POSITIONS, isFinishedDocumentStatus, nextRequiredDocument } from "./lifecycle.js";
 import {
 	leastAdvancedPaperStatus,
 	type PaperSummary,
@@ -11,7 +11,7 @@ import {
 	readPaper,
 } from "./papers/summary.js";
 import { isCleanSegment } from "./path-segment.js";
-import { readWorkflow, WORKFLOW_DEFINITIONS, type WorkflowType } from "./workflow-types.js";
+import { readWorkflow, type WorkflowType } from "./workflow-types.js";
 
 // Re-exported so the `planning/plan-parser` subpath and existing imports keep
 // working; the definitions live in papers/summary.ts.
@@ -170,22 +170,6 @@ function determineStage(
 	return { stage: "unknown", stageStatus: "unknown" };
 }
 
-/**
- * The next document a plan's declared type requires after position `idx`, or
- * undefined when there is none. With no declared type every document is next
- * in turn, as before the type existed.
- *
- * This named `DOCUMENT_POSITIONS[idx + 1]` whatever the plan was, so a bugfix
- * with an accepted test plan was told to create the ADR its type skips — and
- * the plan list contradicted the admin about the same plan (admin-plan-type,
- * A23).
- */
-function nextRequiredDocument(idx: number, type: WorkflowType | null) {
-	return DOCUMENT_POSITIONS.slice(idx + 1).find(
-		(doc) => type === null || WORKFLOW_DEFINITIONS[type].requires.includes(doc),
-	);
-}
-
 function determineNextStep(
 	stage: PlanStage,
 	stageStatus: string,
@@ -197,10 +181,8 @@ function determineNextStep(
 	}
 	if (stage === "unknown") return "Create a brief";
 
-	const idx = DOCUMENT_POSITIONS.indexOf(stage as (typeof DOCUMENT_POSITIONS)[number]);
-
 	if (isFinishedDocumentStatus(stageStatus)) {
-		const next = nextRequiredDocument(idx, type);
+		const next = nextRequiredDocument(stage, type);
 		if (next) return `Create ${next}`;
 		return "Done";
 	}

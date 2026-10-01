@@ -321,7 +321,7 @@ function resolvePosition(input: DerivePlanPositionInput): {
 			// A22: the active label never claims a fact the reader does not
 			// hold. A spike's finished research awaits nothing.
 			const type = summary.workflow ?? null;
-			if (type !== null && !requiresDocumentAfter(stage, type)) {
+			if (type !== null && nextRequiredDocument(stage, type) === undefined) {
 				return { position: stage, awaiting: `${noun} finished — a ${type} ends here` };
 			}
 			return { position: stage, awaiting: `${noun} accepted, awaiting the next document` };
@@ -390,10 +390,24 @@ function restingState(
 	return passed ? "done" : "pending";
 }
 
-/** Whether the type requires any document later in the lifecycle than `stage`. */
-function requiresDocumentAfter(stage: DocumentPosition, type: WorkflowType): boolean {
-	const later = DOCUMENT_POSITIONS.slice(DOCUMENT_POSITIONS.indexOf(stage) + 1);
-	return later.some((doc) => WORKFLOW_DEFINITIONS[type].requires.includes(doc));
+/**
+ * The next document a plan's declared type requires after `stage`, or
+ * undefined when there is none. With no declared type every document is next
+ * in turn, as before the type existed.
+ *
+ * One definition, read by the active label, the plan list's next step and
+ * `advance_plan`. Each once answered "what comes next" by lifecycle order
+ * alone, so a bugfix with an accepted test plan was told to create the ADR
+ * its type skips (admin-plan-type, A23 and A25).
+ */
+export function nextRequiredDocument(
+	stage: string,
+	type: WorkflowType | null,
+): DocumentPosition | undefined {
+	const index = (DOCUMENT_POSITIONS as readonly string[]).indexOf(stage);
+	return DOCUMENT_POSITIONS.slice(index + 1).find(
+		(doc) => type === null || WORKFLOW_DEFINITIONS[type].requires.includes(doc),
+	);
 }
 
 /**
