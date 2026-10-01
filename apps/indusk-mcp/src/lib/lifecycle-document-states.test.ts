@@ -131,3 +131,107 @@ describe("A9 — a feature plan with every document present reads as it did", ()
 		expect(typed.retrospective).toBe("pending");
 	});
 });
+
+/**
+ * A21, A22 (falsification). The type judged an absent *document* and nothing
+ * else. Printed for this repository's own spikes: brief through retrospective
+ * read skipped while executing, falsify and cleanup read pending — steps that
+ * exist only because of an impl the type says there will never be — and a
+ * spike whose research was finished was said to be awaiting the next document.
+ */
+function state(summary: PlanSummary, archived = false) {
+	return derivePlanPosition({ summary, impl: null, readiness: null, archived });
+}
+
+describe("A21 — a type with no impl skips the positions that follow one", () => {
+	const IMPL_DEPENDENT = ["executing", "falsify", "cleanup"];
+
+	it("a spike in progress reads executing, falsify and cleanup as skipped, not pending", () => {
+		const s = segments(
+			plan({
+				workflow: "spike",
+				stage: "research",
+				stageStatus: "in-progress",
+				documents: ["research.md"],
+			}),
+		);
+		for (const position of IMPL_DEPENDENT) expect(s[position]).toBe("skipped");
+		expect(s["impl-approved"]).toBe("skipped");
+	});
+
+	it("an archived spike reads them as skipped, never done", () => {
+		const s = segments(
+			plan({
+				workflow: "spike",
+				stage: "research",
+				stageStatus: "complete",
+				documents: ["research.md"],
+			}),
+			true,
+		);
+		for (const position of IMPL_DEPENDENT) expect(s[position]).toBe("skipped");
+		expect(s.research).toBe("done");
+	});
+
+	it("a type that has an impl is unchanged: pending ahead, done behind", () => {
+		const ahead = segments(
+			plan({
+				workflow: "bugfix",
+				stage: "brief",
+				stageStatus: "accepted",
+				documents: ["brief.md"],
+			}),
+		);
+		for (const position of IMPL_DEPENDENT) expect(ahead[position]).toBe("pending");
+		const behind = segments(
+			plan({
+				workflow: "bugfix",
+				stageStatus: "completed",
+				documents: ["brief.md", "test-plan.md", "impl.md", "retrospective.md"],
+			}),
+			true,
+		);
+		for (const position of IMPL_DEPENDENT) expect(behind[position]).toBe("done");
+	});
+
+	it("a plan with no declared type is unchanged", () => {
+		const s = segments(
+			plan({ stage: "research", stageStatus: "in-progress", documents: ["research.md"] }),
+		);
+		for (const position of IMPL_DEPENDENT) expect(s[position]).toBe("pending");
+	});
+});
+
+describe("A22 — a finished document with nothing required after it does not await one", () => {
+	it("a spike whose research is complete says the plan ends there", () => {
+		const s = state(
+			plan({
+				workflow: "spike",
+				stage: "research",
+				stageStatus: "complete",
+				documents: ["research.md"],
+			}),
+		);
+		expect(s.awaiting ?? "").not.toMatch(/next document/);
+		expect(s.awaiting ?? "").toMatch(/spike/);
+	});
+
+	it("a bugfix with an accepted brief still awaits the next document", () => {
+		const s = state(
+			plan({
+				workflow: "bugfix",
+				stage: "brief",
+				stageStatus: "accepted",
+				documents: ["brief.md"],
+			}),
+		);
+		expect(s.awaiting ?? "").toMatch(/awaiting the next document/);
+	});
+
+	it("an untyped plan's finished research reads as it does today", () => {
+		const s = state(
+			plan({ stage: "research", stageStatus: "complete", documents: ["research.md"] }),
+		);
+		expect(s.awaiting ?? "").toMatch(/awaiting the next document/);
+	});
+});

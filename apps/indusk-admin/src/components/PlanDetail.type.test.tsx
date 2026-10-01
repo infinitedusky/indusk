@@ -272,3 +272,62 @@ describe("A10 — the page says in words what is missing or cannot be judged", (
     ).toBeNull();
   });
 });
+
+/**
+ * A20, A24 (falsification).
+ *
+ * A20: a plan that declared a word which is not a type got a chip saying so
+ * and, under the bar, a sentence saying it declares no type. A24: the chip was
+ * drawn only for a plan with a brief or a research document, so a plan with an
+ * impl and neither got the "declares no type" sentence and no chip.
+ */
+describe("A20 — an unrecognised declaration is named in the sentence beside the bar", () => {
+  it("says the word is not a recognised type, and does not say the plan declares none", async () => {
+    const { container } = await render(
+      <PlanDetail
+        plan={plan(
+          { workflow: null, workflowDeclared: "hotfix" },
+          position("executing", { research: "unknown" }),
+        )}
+      />,
+    );
+    const notes = text(
+      container.querySelector('[data-testid="plan-bar-document-notes"]'),
+    ).toLowerCase();
+    expect(notes).toContain("research");
+    expect(notes).toContain("hotfix");
+    expect(notes).toContain("not a recognised type");
+    expect(notes).not.toContain("declares no type");
+  });
+});
+
+describe("A24 — a page that says a plan declares no type always carries the chip", () => {
+  it("a plan with an impl and neither a brief nor research still shows 'type not declared'", async () => {
+    const implOnly = {
+      name: "impl-only",
+      status: "completed",
+      archived: true,
+      impl: {
+        frontmatter: { title: "Impl only", status: "completed" },
+        content:
+          "## Checklist\n\n### Phase 1: The work\n\n- [x] Done\n\n#### Phase 1 Verification\n- [x] Checked\n",
+        trajectory: { rows: [], deferred: [], present: false },
+      },
+      position: position("archived", {
+        research: "unknown",
+        brief: "unknown",
+      }),
+    } as unknown as Plan;
+    const { container } = await render(<PlanDetail plan={implOnly} />);
+    expect(
+      text(container.querySelector('[data-testid="plan-bar-document-notes"]')),
+      "the fixture must put the 'declares no type' sentence on the page",
+    ).toContain("declares no type");
+    const chip = container.querySelector('[data-testid="plan-type-chip"]');
+    expect(
+      chip,
+      "no type chip on a page that says the plan declares no type",
+    ).not.toBeNull();
+    expect(text(chip)).toContain("type not declared");
+  });
+});
