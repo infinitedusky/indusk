@@ -121,11 +121,11 @@ them so once Step 11 edits one of them.
 
 ### Build Phase 3: the bump belongs to the retrospective
 
-- [ ] `apps/indusk-mcp/skills/retrospective.md` gains **Step 11: Bump** after the landing step — derive whether the landed plan touched packaged paths; if it did, choose the increment from what the plan did (a feature is minor, a fix is patch) and the summary from the retrospective just written; roll the changelog's `[Unreleased]` to `[X.Y.Z] — <date>` leaving a fresh empty `[Unreleased]`; commit as `chore(release): X.Y.Z — <summary>` with a literal `-m`; then say that `pnpm release` is the operator's call
-- [ ] A plan that changed no packaged paths records that it skipped the bump and why — the step must distinguish "nothing to release" from "did not run"
+- [x] `apps/indusk-mcp/skills/retrospective.md` gains **Step 11: Bump** after the landing step — derive whether the landed plan touched packaged paths; if it did, choose the increment from what the plan did (a feature is minor, a fix is patch) and the summary from the retrospective just written; roll the changelog's `[Unreleased]` to `[X.Y.Z] — <date>` leaving a fresh empty `[Unreleased]`; commit as `chore(release): X.Y.Z — <summary>` with a literal `-m`; then say that `pnpm release` is the operator's call
+- [x] A plan that changed no packaged paths records that it skipped the bump and why — the step must distinguish "nothing to release" from "did not run"
 - [ ] `apps/indusk-mcp/scripts/record-release.js` resolves the release commit by its message (`^chore(release): <version>`), not `git rev-parse HEAD` (T11). Reuse the lookup the health line's version state already does rather than restating it — two readers of "which commit is this release" disagreeing is the defect, not the lookup
 - [ ] Correct the standing 1.54.0 note in `.indusk/current.md`'s shared region: it credits `d7e0061a`, a plan commit, instead of `b185e375`. The note is what every session reads at catchup, so a wrong sha there is read as fact for as long as it stands
-- [ ] Resync the installed copy to `.claude/skills/retrospective/SKILL.md`
+- [x] Resync the installed copy to `.claude/skills/retrospective/SKILL.md`
 
 - [ ] **Discovered 2026-09-22**: trunk-guard's allowlist omits `.claude/skills/` and `.claude/hooks/`, which `indusk update` writes — and `update` is meant to be run on trunk. Landing 1.54.0's update left `.claude/skills/testing/SKILL.md` uncommittable without `INDUSK_TRUNK_GUARD=off`. These are installed copies the conventions already forbid editing by hand (edit `apps/indusk-mcp/skills/`, never `.claude/skills/`), so allowing them admits an update's output, not hand-written code. Same family as the rest of this plan: the ritual refusing what it itself produces
 
