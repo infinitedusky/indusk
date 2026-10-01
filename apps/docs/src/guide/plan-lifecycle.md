@@ -183,6 +183,15 @@ Which status words mean a document is finished is one definition too,
 `isFinishedDocumentStatus`: `accepted`, `complete`, `completed`. Research
 documents say `complete`, and the plan list once did not know the word.
 
+What keeps each of these one definition is not discipline. A source-tree
+scan (`lifecycle-single-definition.test.ts`) asserts that exactly one file
+defines `nextRequiredDocument`, `isFinishedDocumentStatus` and the document
+labels (`DOCUMENT_LABELS`), and that no other file spells the finished words,
+indexes the next document position by hand, or writes a document's label
+inline. It reads the package's `src/tools` as well as `src/lib`: two of the
+three copies this plan's falsification found were in the tools directory,
+which the scan had never read.
+
 A `workflow:` value that is not a plain word is never read as a type.
 `workflow: [bugfix]` is a YAML list, not a bugfix; it is reported as an
 unrecognised declaration, shown as it was written on the line, and the
