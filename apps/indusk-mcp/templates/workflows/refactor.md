@@ -1,9 +1,10 @@
 # Refactor Workflow
 
-Refactors restructure existing code without changing behavior. They skip research and ADR but require a boundary map.
+Refactors restructure existing code without changing behavior. They skip research and ADR but require a boundary map, and they keep the test plan — it is what proves the behavior held.
 
 ## Documents Created
 - `brief.md` — what's being restructured and why
+- `test-plan.md` — the behavior that must be unchanged afterwards (template in the planner skill)
 - `impl.md` — the refactoring checklist with boundary map
 
 ## Brief Template
@@ -13,6 +14,7 @@ Refactors restructure existing code without changing behavior. They skip researc
 title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft
+workflow: refactor
 ---
 
 # {Title} — Brief
