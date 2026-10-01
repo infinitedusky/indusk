@@ -146,3 +146,27 @@ describe("T10 — a backslash-continued commit is read the same as the one-line 
 		expect(multi.exitCode, `a continuation is not a pathspec: ${multi.stderr}`).toBe(0);
 	});
 });
+
+describe("the installed copies `indusk update` writes are allowed on trunk", () => {
+	it("allows a commit staging .claude/skills/ and .claude/hooks/", async () => {
+		const root = project();
+		mkdirSync(join(root, ".claude", "skills", "testing"), { recursive: true });
+		mkdirSync(join(root, ".claude", "hooks"), { recursive: true });
+		stage(root, ".claude/skills/testing/SKILL.md", "# testing\n");
+		stage(root, ".claude/hooks/check-gates.js", "// installed copy\n");
+		const r = await runHook(
+			"trunk-guard.js",
+			bash(root, `git commit -q -m "chore: indusk update"`),
+		);
+		expect(r.exitCode, r.stderr).toBe(0);
+	});
+
+	it("still refuses other .claude/ paths — the allowance is the two installed directories, not .claude/", async () => {
+		const root = project();
+		mkdirSync(join(root, ".claude", "agents"), { recursive: true });
+		stage(root, ".claude/agents/x.md", "# agent\n");
+		const r = await runHook("trunk-guard.js", bash(root, `git commit -q -m "chore: an agent"`));
+		expect(r.exitCode).toBe(2);
+		expect(r.stderr).toContain(".claude/agents/x.md");
+	});
+});

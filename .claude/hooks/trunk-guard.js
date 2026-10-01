@@ -34,7 +34,8 @@
  * Allowed on trunk — the writes a plan makes before it has a worktree (its
  * brief) or after it landed (compaction, the landing note), and what the eval
  * agent writes: `.indusk/**`, `.claude/lessons/**`, `.claude/settings*.json`,
- * `CLAUDE.md`, `AGENTS.md`.
+ * `CLAUDE.md`, `AGENTS.md` — plus what `indusk update` installs on trunk,
+ * `.claude/skills/**` and `.claude/hooks/**`.
  *
  * Exempt: a commit whose message begins `chore(release):` — the one packaged
  * edit that belongs on trunk. Off switches, both deliberate and visible:
@@ -54,7 +55,11 @@ import { basename, dirname, isAbsolute, join, relative, resolve } from "node:pat
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
 
 const DEFAULT_BRANCHES = ["main", "master"];
-const ALLOWED_PREFIXES = [".indusk/", ".claude/lessons/"];
+// `.claude/skills/` and `.claude/hooks/` are installed copies `indusk update`
+// writes, and update runs on trunk; nobody edits them by hand (the sources are
+// under `apps/indusk-mcp/`), and settings — which register the hooks — were
+// already allowed, so admitting them admits update's output and nothing more.
+const ALLOWED_PREFIXES = [".indusk/", ".claude/lessons/", ".claude/skills/", ".claude/hooks/"];
 const ALLOWED_FILES = new Set(["CLAUDE.md", "AGENTS.md"]);
 const ALLOWED_PATTERNS = [/^\.claude\/settings[^/]*\.json$/];
 // `git [options] commit` in command position: the start of the command, after a
@@ -280,7 +285,7 @@ process.stderr.write(
 		"Work happens on a plan branch and lands by merge (retrospective Step 10):",
 		"  indusk worktree create <plan>   (or: git worktree add ../<repo>-worktrees/<plan> -b plan/<plan>)",
 		"",
-		"Allowed on trunk: .indusk/**, .claude/lessons/**, .claude/settings*.json, CLAUDE.md, AGENTS.md,",
+		"Allowed on trunk: .indusk/**, .claude/{lessons,skills,hooks}/**, .claude/settings*.json, CLAUDE.md, AGENTS.md,",
 		"and a commit whose message begins `chore(release):`.",
 		unreadableMessage
 			? '\nThis commit\'s message could not be read: it is built by a command substitution or a\nheredoc, which this hook does not run, so the `chore(release):` exemption could not be\nchecked. If this IS a release commit, pass the message as a literal `-m "chore(release):\n…"` or with `-F <file>` — both of which can be read.'
