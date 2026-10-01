@@ -1,9 +1,14 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHook } from "./helpers/hook-runner.js";
-import { git, initRepoWithCommit } from "./helpers/test-git.js";
+import {
+	bash,
+	trunkProject as project,
+	removeTrunkProjects,
+	stage,
+} from "./helpers/trunk-guard-fixture.js";
 
 /**
  * trunk-guard falsification — A8, A9, A10.
@@ -15,42 +20,20 @@ import { git, initRepoWithCommit } from "./helpers/test-git.js";
  * a lone flag. Each case here is a spelling an agent uses every day.
  */
 
+/** Directories a test makes outside the project, removed with it. */
 const roots: string[] = [];
 afterEach(() => {
 	for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true });
+	removeTrunkProjects();
 });
 
-/** A normal-mode project on `main` with one committed source file. */
-function project(): string {
-	const root = mkdtempSync(join(tmpdir(), "trunk-guard-f-"));
-	roots.push(root);
-	initRepoWithCommit(root);
-	mkdirSync(join(root, ".indusk"), { recursive: true });
-	mkdirSync(join(root, "src"), { recursive: true });
-	writeFileSync(
-		join(root, ".indusk", "config.json"),
-		JSON.stringify({ mode: "local", verify: {} }),
-	);
-	writeFileSync(join(root, "src", "a.ts"), "export const a = 1;\n");
-	git(root, ["add", "-A"]);
-	git(root, ["commit", "-q", "-m", "seed"]);
-	return root;
-}
-
 function stageSource(root: string): void {
-	writeFileSync(join(root, "src", "a.ts"), "export const a = 2;\n");
-	git(root, ["add", "src/a.ts"]);
+	stage(root, "src/a.ts", "export const a = 2;\n");
 }
 
 function modifySourceUnstaged(root: string): void {
 	writeFileSync(join(root, "src", "a.ts"), "export const a = 3;\n");
 }
-
-const bash = (cwd: string, command: string) => ({
-	tool_name: "Bash",
-	tool_input: { command },
-	cwd,
-});
 
 describe("A8 — git options before the verb, and a cd in the same command", () => {
 	it.each([
@@ -99,15 +82,15 @@ describe("A9 — a commit wrapped in quotes or a substitution is still a commit"
 		expect(r.exitCode).toBe(2);
 	});
 
-	it.each([
-		"git commitment -m x",
-		"git log --grep 'git commit'",
-	])("leaves `%s` alone — not a commit", async (spelling) => {
-		const root = project();
-		stageSource(root);
-		const r = await runHook("trunk-guard.js", bash(root, spelling));
-		expect(r.exitCode).toBe(0);
-	});
+	it.each(["git commitment -m x", "git log --grep 'git commit'"])(
+		"leaves `%s` alone — not a commit",
+		async (spelling) => {
+			const root = project();
+			stageSource(root);
+			const r = await runHook("trunk-guard.js", bash(root, spelling));
+			expect(r.exitCode).toBe(0);
+		},
+	);
 });
 
 describe("A10 — -a in a flag cluster and an explicit pathspec commit unstaged files", () => {

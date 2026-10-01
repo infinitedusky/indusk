@@ -1,9 +1,13 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHook } from "./helpers/hook-runner.js";
-import { git, initRepoWithCommit } from "./helpers/test-git.js";
+import {
+	bash,
+	trunkProject as project,
+	removeTrunkProjects,
+	stage,
+} from "./helpers/trunk-guard-fixture.js";
 
 /**
  * release-ritual — T1–T5: trunk-guard reads the message it is given.
@@ -21,37 +25,7 @@ import { git, initRepoWithCommit } from "./helpers/test-git.js";
  * Both fail toward refusal, which is the safe direction. Neither says so.
  */
 
-const roots: string[] = [];
-afterEach(() => {
-	for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true });
-});
-
-/** A project on `main` with one allowlisted file and one packaged file, both staged-able. */
-function project(): string {
-	const root = mkdtempSync(join(tmpdir(), "release-msg-"));
-	roots.push(root);
-	initRepoWithCommit(root);
-	mkdirSync(join(root, ".indusk"), { recursive: true });
-	mkdirSync(join(root, "src"), { recursive: true });
-	writeFileSync(join(root, ".indusk", "config.json"), JSON.stringify({ mode: "local" }));
-	writeFileSync(join(root, ".indusk", "notes.md"), "# notes\n");
-	writeFileSync(join(root, "src", "a.ts"), "export const a = 1;\n");
-	writeFileSync(join(root, "package.json"), '{"name":"p","version":"1.0.0"}\n');
-	git(root, ["add", "-A"]);
-	git(root, ["commit", "-q", "-m", "seed"]);
-	return root;
-}
-
-function stage(root: string, rel: string, body: string): void {
-	writeFileSync(join(root, rel), body);
-	git(root, ["add", rel]);
-}
-
-const bash = (root: string, command: string) => ({
-	tool_name: "Bash",
-	tool_input: { command },
-	cwd: root,
-});
+afterEach(removeTrunkProjects);
 
 /** A message file, as `git commit -F` takes one. */
 function messageFile(root: string, body: string): string {
