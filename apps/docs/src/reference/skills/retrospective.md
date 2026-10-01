@@ -209,7 +209,7 @@ publisher would have to reconstruct: what shipped. So the bump happens here.
 1. **Whether there is anything to release.** It reads the packaged changes
    since the last release commit, from the `indusk/version` line of
    `check_health` ("N packaged commit(s) since") or from a diff over
-   `release-guard.sh`'s own packaged paths. It does not look at the last commit
+   `PACKAGED_PATHS` in `release-guard.sh`, read there rather than copied. It does not look at the last commit
    alone: Step 10 ends by committing the landing note, so the last commit never
    touches packaged files.
 2. **The increment, from what the plan did.** A new capability is a **minor**.
