@@ -30,12 +30,15 @@ export function PlanBar({
   position,
   activity,
   workflow = null,
+  declared = null,
 }: {
   position: PlanPositionState;
   /** The active phase's verb and name, when the plan is executing. */
   activity?: string | null;
   /** The plan's declared type, which is what makes a document missing rather than skipped. */
   workflow?: WorkflowType | null;
+  /** The word the plan declared, when it is not one of the types — so the sentence can say so. */
+  declared?: string | null;
 }) {
   // Every segment is a step, drawn half-filled when active — except
   // `monitor`, which is time: it fills with the share of the quiet window
@@ -54,7 +57,7 @@ export function PlanBar({
     position.position === "executing" && activity
       ? `executing: ${activity}`
       : position.awaiting;
-  const notes = documentNotes(position, workflow);
+  const notes = documentNotes(position, workflow, declared);
   return (
     <div className="flex flex-col gap-1">
       <Bar
@@ -105,6 +108,7 @@ interface DocumentNote {
 function documentNotes(
   position: PlanPositionState,
   workflow: WorkflowType | null,
+  declared: string | null,
 ): DocumentNote[] {
   const notes: DocumentNote[] = [];
   for (const key of PLAN_POSITIONS) {
@@ -115,7 +119,7 @@ function documentNotes(
     notes.push({
       document,
       state,
-      text: absentDocumentNote(document, state, workflow),
+      text: absentDocumentNote(document, state, workflow, declared),
     });
   }
   return notes;

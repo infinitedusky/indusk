@@ -87,6 +87,7 @@ export function PlanDetail({
           position={plan.position}
           activity={activePhaseLabel(plan)}
           workflow={plan.workflow ?? null}
+          declared={plan.workflowDeclared ?? null}
         />
       )}
 

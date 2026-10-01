@@ -107,17 +107,24 @@ export function readWorkflow(value: unknown): DeclaredWorkflow {
 
 /**
  * One sentence for an absent document the bar cannot leave to colour alone.
- * `missing`: the type requires it and the plan moved past it. `unknown`: no
- * type is declared, so the absence cannot be judged.
+ * `missing`: the type requires it and the plan moved past it. `unknown`: the
+ * absence cannot be judged — because no type is declared, or because the word
+ * that was declared is not one. Those are different facts, and the sentence
+ * says which: a plan that declared `hotfix` did not declare nothing.
  */
 export function absentDocumentNote(
 	document: DocumentPosition,
 	state: "missing" | "unknown",
 	type: WorkflowType | null,
+	/** The word that was declared, when it is not one of the types. */
+	declared: string | null = null,
 ): string {
 	const label = DOCUMENT_LABELS[document];
 	if (state === "missing" && type !== null) {
 		return `The ${label} is missing — a ${type} requires it.`;
+	}
+	if (declared !== null) {
+		return `The ${label} is absent, and this plan declares "${declared}", which is not a recognised type, so whether that matters cannot be judged.`;
 	}
 	return `The ${label} is absent, and this plan declares no type, so whether that matters cannot be judged.`;
 }
