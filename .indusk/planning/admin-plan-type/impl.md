@@ -21,17 +21,17 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | A plan whose brief declares a type shows that type as a chip in the plan header | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A2 | A plan that declares no type shows "type not declared" in the header, never a guess from which documents exist | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A3 | A plan that declares a word outside the four types shows that word and says it is not a recognised type — not treated as known, not folded into "not declared" | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A4 | Clicking the type chip opens an explanation — what the type is for, which documents it requires, which it skips, and why — and it closes with Escape or its close button | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A1 | A plan whose brief declares a type shows that type as a chip in the plan header | Test Phase 1 | Build Phase 2 | passing | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A2 | A plan that declares no type shows "type not declared" in the header, never a guess from which documents exist | Test Phase 1 | Build Phase 2 | passing | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A3 | A plan that declares a word outside the four types shows that word and says it is not a recognised type — not treated as known, not folded into "not declared" | Test Phase 1 | Build Phase 2 | passing | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A4 | Clicking the type chip opens an explanation — what the type is for, which documents it requires, which it skips, and why — and it closes with Escape or its close button | Test Phase 1 | Build Phase 2 | passing | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
 | A5 | On a bugfix plan the absent research and the absent ADR read skipped, both behind the plan's position and ahead of it | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
 | A6 | On a bugfix plan that has an impl and no test plan, the test plan reads missing | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
 | A7 | On a bugfix plan whose brief exists and whose test plan is not written yet, the test plan reads pending, not missing | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
 | A8 | On a plan that declares no type, an absent earlier document reads unknown, never skipped; documents not yet reached still read pending | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
 | A9 | A feature plan with every document present reads exactly as it does today | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
-| A10 | When a document is missing or unknown the page says so in words beside the bar — which document and why — not by colour or hover alone | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A11 | Every state a bar segment can be in has its own drawing and its own label in the admin; a state added to the lifecycle without one fails by name | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/lib/segment-state-render-parity.test.ts |
+| A10 | When a document is missing or unknown the page says so in words beside the bar — which document and why — not by colour or hover alone | Test Phase 1 | Build Phase 2 | passing | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A11 | Every state a bar segment can be in has its own drawing and its own label in the admin; a state added to the lifecycle without one fails by name | Test Phase 1 | Build Phase 2 | passing | apps/indusk-admin/src/lib/segment-state-render-parity.test.ts |
 | A12 | What the admin says a type requires and skips equals the planner skill's workflow table and each workflow template's list of documents — one set of facts, three statements | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
 | A13 | The bugfix workflow template lists the test plan among the documents it creates | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
 | A14 | Every brief template the planner uses — in the skill and in each workflow template — carries a `workflow:` line | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
@@ -100,28 +100,29 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 
 ### Build Phase 2: the admin shows it
 
-- [ ] `components/bars/labels.ts`: a class and a word for `missing` and `unknown` in the segment and chip maps, typed against the lifecycle's list so a new state is a type error
-- [ ] `components/bars/Bar.tsx`: `missing` and `unknown` are each drawn differently from `skipped` and from each other, in the segment and in its label; the segment's title says its state in words
-- [ ] `components/bars/PlanBar.tsx`: a sentence under the bar for each missing or unknown document — which one, and why. Update the component's docblock, which says skipped positions are drawn as skipped
-- [ ] `lib/planning-reader.ts`: the plan the page receives carries the type from the shared parser. No second read of the frontmatter in the admin
-- [ ] `components/PlanTypeChip.tsx`: the chip and its explanation in a native `<dialog>` — no dialog library. Three readings: a known type, "type not declared", and an unrecognised word shown as written. Every sentence of the explanation comes from the package's workflow-types module; the component states no document list of its own
-- [ ] Wire the chip into the plan header in `components/PlanDetail.tsx`
-- [ ] Check the admin's audit tests still describe the tree (`component-reuse-audit`, `cleanup-pins`), and that no existing browser test needs a new mock for the added import
+- [x] `components/bars/labels.ts`: a class and a word for `missing` and `unknown` in the segment and chip maps, typed against the lifecycle's list so a new state is a type error
+- [x] `components/bars/Bar.tsx`: `missing` and `unknown` are each drawn differently from `skipped` and from each other, in the segment and in its label; the segment's title says its state in words
+- [x] `components/bars/PlanBar.tsx`: a sentence under the bar for each missing or unknown document — which one, and why. Update the component's docblock, which says skipped positions are drawn as skipped
+- [x] `lib/planning-reader.ts`: the plan the page receives carries the type from the shared parser. No second read of the frontmatter in the admin
+- [x] `components/PlanTypeChip.tsx`: the chip and its explanation in a native `<dialog>` — no dialog library. Three readings: a known type, "type not declared", and an unrecognised word shown as written. Every sentence of the explanation comes from the package's workflow-types module; the component states no document list of its own
+- [x] Wire the chip into the plan header in `components/PlanDetail.tsx` (shown for a plan with a brief or a research document; a parent holding only a master has nowhere to declare a type)
+- [x] Check the admin's audit tests still describe the tree (`component-reuse-audit`, `cleanup-pins`), and that no existing browser test needs a new mock for the added import (both pass; the whole admin suite ran with 337 of 338 passing and no new mock — the one failure is A15, a Build Phase 3 row. `PhasesSection` carried a private copy of the chip-class map, identical to `labels.ts`'s; it now imports the one map)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. The per-state styling that was nested ternaries in `Bar.tsx` is three named maps, the bar's sentence is one named function, and the chip's two explanations are two named components.
 
 #### Build Phase 2 Verification
 
-- [ ] A1, A2, A3, A4, A10 and A11 pass (`pnpm --filter indusk-admin exec vitest run src/components/PlanDetail.type src/lib/segment-state-render-parity src/lib/lifecycle-render-parity src/components/bars`)
-- [ ] The admin type-checks and its audits hold (`pnpm --filter indusk-admin exec vitest run src/__tests__/typecheck src/__tests__/component-reuse-audit src/__tests__/cleanup-pins`)
-- [ ] By eye, in the running admin on this repository: this plan's page shows a `bugfix` chip, the chip opens and closes, and the research and ADR segments read skipped
+- [x] A1, A2, A3, A4, A10 and A11 pass — 33 passed across seven files (`pnpm --filter indusk-admin exec vitest run src/components/PlanDetail.type src/lib/segment-state-render-parity src/lib/lifecycle-render-parity src/components/bars`)
+- [x] The admin type-checks and its audits hold — 9 passed across three files (`pnpm --filter indusk-admin exec vitest run src/__tests__/typecheck src/__tests__/component-reuse-audit src/__tests__/cleanup-pins`)
+- [x] By eye, in the running admin on this repository: this plan's page shows a `bugfix` chip, the chip opens and closes, and the research and ADR segments read skipped (a dev server from this worktree against a temporary registry, driven with Playwright and read from a screenshot: the header shows `bugfix`; the explanation lists "brief, test plan, impl, retrospective" under Requires and "research, ADR" under Skips, and closes; research and ADR are dashed and titled "skipped". An untyped plan, `day-always-on-deploy`, reads "type not declared", its research `unknown`, with the sentence under the bar)
 
 #### Build Phase 2 Context
 
-- [ ] Known Gotchas, the admin entry that names the bars' label maps: add that a plan's type and its explanation come only from the package's `workflow-types` subpath and that a component never restates a document list. An edit in place that shortens the same entry by at least as much as it adds
+- [x] Known Gotchas, the admin entry that names the bars' label maps: add that a plan's type and its explanation come only from the package's `workflow-types` subpath and that a component never restates a document list. An edit in place that shortens the same entry by at least as much as it adds (done: the file went from 61,398 to 61,383 bytes. The long parenthetical about `phaseTitle` and the Playwright note left the entry — the first is enforced by `cleanup-pins`, the second is in the component-conventions page)
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the type chip and the four readings of an absent document
-- [ ] `apps/docs/src/reference/admin-ui/component-conventions.md`: the first dialog in the admin is a native `<dialog>`, and why no library
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the type chip and the four readings of an absent document
+- [x] `apps/docs/src/reference/admin-ui/component-conventions.md`: the first dialog in the admin is a native `<dialog>`, and why no library
 
 ### Build Phase 3: the planner declares it, and this repository does
 
