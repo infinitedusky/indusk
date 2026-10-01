@@ -32,6 +32,13 @@ import {
 	type GlobalInstallManager,
 	installCommandFor,
 } from "../../lib/global-install-manager.js";
+import {
+	clearPendingRelease,
+	describeWaitingRelease,
+	isNewerVersion,
+	readPendingRelease,
+	registryHasVersion,
+} from "../../lib/pending-release.js";
 import { checkLatestVersion } from "../../lib/version-check.js";
 
 function whichIndusk(): string | null {
@@ -113,7 +120,27 @@ export async function upgrade(opts: UpgradeOptions = {}): Promise<void> {
 		process.exit(1);
 	}
 
-	const check = await checkLatestVersion({ bypassCache: true });
+	// A release this machine just uploaded is what the operator is waiting
+	// for: report on it, not on npm's `latest`, which still names the old
+	// version while npm's publish-time scan runs.
+	let pendingTarget: string | null = null;
+	const pending = readPendingRelease();
+	if (pending && !opts.force) {
+		if (!isNewerVersion(pending.version, currentVersion)) {
+			clearPendingRelease(); // already installed, or superseded
+		} else {
+			const answer = registryHasVersion(pending.name, pending.version);
+			if (answer.state !== "live") {
+				console.info(describeWaitingRelease(pending, answer));
+				return;
+			}
+			pendingTarget = pending.version;
+		}
+	}
+
+	const check = pendingTarget
+		? { latestVersion: pendingTarget }
+		: await checkLatestVersion({ bypassCache: true });
 	const targetVersion = opts.force ? "latest" : check.latestVersion;
 
 	if (!opts.force) {
@@ -181,6 +208,7 @@ export async function upgrade(opts: UpgradeOptions = {}): Promise<void> {
 		process.exit(1);
 	}
 
+	if (pending && afterVersion === pending.version) clearPendingRelease();
 	console.info(`\nindusk-mcp upgraded: v${currentVersion} → v${afterVersion}.`);
 	console.info("Restart Claude Code to pick up the new MCP server.");
 

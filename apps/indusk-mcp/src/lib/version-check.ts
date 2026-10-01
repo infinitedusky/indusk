@@ -50,7 +50,7 @@ interface CacheShape {
 	latestVersion: string;
 }
 
-function induskHome(): string {
+export function induskHome(): string {
 	return process.env.INDUSK_HOME ?? join(homedir(), ".indusk");
 }
 
