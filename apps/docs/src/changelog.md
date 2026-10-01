@@ -4,6 +4,17 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **The admin says what kind of plan it is.** The plan header carries a type chip — `bugfix`, `feature`, `refactor`, `spike` — read from `workflow:` in the plan's brief (its research document, for a research-only plan). Clicking it explains the type: what it is for, which documents it requires, which it skips and why. A plan with no such line reads *type not declared*; a word that is not a type is shown as written. The type is never guessed from which documents exist.
+- **An absent planning document reads four ways instead of one.** The plan bar used to draw every absent earlier document as *skipped*, so a bugfix that never needed research and a bugfix that closed without its test plan looked identical. Now: **skipped** when the plan's type does not require it, **missing** when the type requires it and the plan moved past it (drawn in red, and said in a sentence under the bar), **pending** when the plan has not reached it, **unknown** when the plan declares no type. A missing document stays missing after the plan is archived.
+- **`@infinitedusky/indusk-mcp/workflow-types`** — the one definition of what each plan type requires, with `SEGMENT_STATES` and `documentFor` added to the `lifecycle` subpath. A plan summary (`list_plans`, `parsePlan`) carries `workflow` when one is declared.
+
+### Changed
+- **The planner writes `workflow:` on every brief**, defaulting to `feature`; a spike declares it in its research document. Projects with existing plans see *type not declared* until they add the line — nothing is refused.
+
+### Fixed
+- **The bugfix, refactor and feature workflow templates list the test plan.** Three of the four templates omitted it, contradicting the planner skill's own table, which is how a bugfix written from the template could close without one. The skill's table, the templates and the planner reference page are now pinned equal to the `workflow-types` module by test.
+
 ## [1.55.2] — 2026-10-01
 
 ### Fixed
