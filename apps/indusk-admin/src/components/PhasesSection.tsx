@@ -1,4 +1,4 @@
-import { phaseTitle } from "@/components/bars/labels";
+import { CHIP_CLASS, phaseTitle } from "@/components/bars/labels";
 import { Markdown } from "@/components/Markdown";
 import { TrajectoryRowsTable } from "@/components/phases/TrajectoryRowsTable";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -30,14 +30,6 @@ const STAGE_LABEL: Record<Stage["kind"], string> = {
   Document: "Document",
 };
 
-const STATE_CLASS: Record<Stage["state"], string> = {
-  done: "border-green-200 bg-green-50 text-green-800",
-  active: "border-blue-200 bg-blue-50 text-blue-800",
-  pending: "border-gray-200 bg-white text-gray-500",
-  skipped: "border-gray-200 bg-gray-50 text-gray-400 line-through",
-  "opted-out": "border-amber-200 bg-amber-50 text-amber-800",
-};
-
 export function StageList({ stages }: { stages: Stage[] }) {
   if (stages.length === 0) return null;
   return (
@@ -48,7 +40,7 @@ export function StageList({ stages }: { stages: Stage[] }) {
           data-stage={stage.kind}
           data-state={stage.state}
           title={stage.proof ?? `${stage.checked} of ${stage.total}`}
-          className={`rounded border px-1.5 py-0.5 text-[10px] leading-4 ${STATE_CLASS[stage.state]}`}
+          className={`rounded border px-1.5 py-0.5 text-[10px] leading-4 ${CHIP_CLASS[stage.state]}`}
         >
           <span className="font-medium">{STAGE_LABEL[stage.kind]}</span>{" "}
           <span>
