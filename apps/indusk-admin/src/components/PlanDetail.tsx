@@ -72,6 +72,11 @@ export function PlanDetail({
     plan.impl !== undefined ||
     plan.falsification !== undefined ||
     plan.retrospective !== undefined;
+  // The plan bar is drawn for a plan that has a position and is not a parent
+  // (a parent has a master bar). The type chip is drawn exactly when the bar
+  // is, so the condition is stated once: the bar can say "this plan declares
+  // no type", and the page must then carry the chip that explains it (A24).
+  const position = isParent ? undefined : plan.position;
   return (
     <article
       className="flex flex-col gap-6"
@@ -81,14 +86,14 @@ export function PlanDetail({
       <PlanHeader
         plan={plan}
         holding={holding}
-        showType={plan.position !== undefined && !isParent}
+        showType={position !== undefined}
       />
 
       <PlanCopyNotice plan={plan} />
 
-      {plan.position && !isParent && (
+      {position && (
         <PlanBar
-          position={plan.position}
+          position={position}
           activity={activePhaseLabel(plan)}
           workflow={plan.workflow ?? null}
           declared={plan.workflowDeclared ?? null}
