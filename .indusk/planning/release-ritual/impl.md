@@ -113,7 +113,7 @@ them so once Step 11 edits one of them.
 
 #### Build Phase 2 Context
 
-- [ ] Known Gotchas (the publish entry): merging a branch brings a dependency's manifest change, not its install — `release-guard.sh` checks the install before npm is touched
+- [x] Known Gotchas (the publish entry): merging a branch brings a dependency's manifest change, not its install — `release-guard.sh` checks the install before npm is touched
 
 #### Build Phase 2 Document
 
