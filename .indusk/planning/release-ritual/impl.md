@@ -131,12 +131,12 @@ them so once Step 11 edits one of them.
 
 #### Build Phase 3 Verification
 
-- [ ] T8, T9 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/release-ritual-skill src/__tests__/skill-sync-parity`)
-- [ ] The whole suite is green (`pnpm test`), the two pre-existing `daemon-identity` failures excepted
+- [x] T8, T9 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/release-ritual-skill src/__tests__/skill-sync-parity`)
+- [x] The whole suite is green (`pnpm test`), the two pre-existing `daemon-identity` failures excepted — 2026-10-01: indusk-admin 316/316; indusk-mcp 1602 passed, 9 failed, all nine the known fresh-worktree admin-bundle group (`admin-bundle-pack`, `admin-cli-lifecycle`, `cli-bare-ui-cwd-aware`), which pass 12/12 after `pnpm --filter indusk-admin build && node scripts/bundle-admin.js`; `daemon-identity` did not fail; `pnpm promises:check` exit 0
 
 #### Build Phase 3 Context
 
-- [ ] Conventions (the publish entry): **the bump is the retrospective's Step 11**, not a thing to remember — the closing plan knows what shipped and is already on trunk, which is where the guard's own rule points
+- [x] Conventions (the publish entry): **the bump is the retrospective's Step 11**, not a thing to remember — the closing plan knows what shipped and is already on trunk, which is where the guard's own rule points
 
 #### Build Phase 3 Document
 
