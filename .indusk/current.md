@@ -306,3 +306,43 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 (empty)
 
 ---
+
+## Session 1a22716c — V4 sequence reconciled; release-ritual opened with T10/T11
+
+**Session ID**: 1a22716c-eea2-4bd6-9e35-378d2d00a596
+**Last updated**: 2026-10-01T14:44:50.903Z
+**Branch**: main
+**Worktree**: /Users/sandycorsillo/code/indusk
+
+### In Flight
+
+**release-ritual is the live step** (Day small-step S2), worktree `../indusk-worktrees/release-ritual` on `plan/release-ritual`, deps installed. Impl approved 2026-09-21; **T10 and T11 added 2026-09-25 after approval**, with authoring items in Test Phase 1 and fix items in Build Phases 1 and 3. Nothing executed yet — Test Phase 1 authoring is next.
+
+**T10 was found by hitting it, not by reading.** `T10` is a trajectory row asserting that a `git commit` written across backslash-continued lines, staging only allowlisted paths, is allowed. It is not: `commitArgs`'s backslash branch in `trunk-guard.js` carries the escaped newline into the current token and sets `has = true`, so every continuation emits a whitespace-only token that `commitIntent` classifies as a pathspec. The refusal prints one empty bullet per continued line and claims code is being committed on trunk. Isolated empirically — identical flags and identical staged set, exit 0 on one line, exit 2 across several. `T3` (a `-m` value from a command substitution is not read as paths) is adjacent but its fix leaves this spelling live, because the phantom token is not the message at all. **Practical consequence until Build Phase 1 lands: write every `git commit` on trunk as a single line.**
+
+**Known-wrong standing fact, deliberately not patched here.** The 1.54.0 note in the shared region above credits release commit `d7e0061a`, which is `plan(release-ritual): brief and impl`. The real release commit is `b185e375`. Cause is `record-release.js` labelling `git rev-parse --short HEAD` the release commit (five publish attempts moved HEAD first) — that is `T11`, and correcting the note is a Build Phase 3 item, so the fix and the record land together rather than being patched twice.
+
+### Open Questions
+
+- **Two gate items in release-ritual's Test Phase 1 read `user: pending`** — the Context and Document skip requests. `gate_policy: ask`, so they need real answers from Sandy at phase close; not filled in, because the hook checks the format and not the fact. Ask when Phase 1 closes.
+- **Recursive plan grouping** — wanted, not critical (Sandy, 2026-09-25). Dawn and Day are sibling `parents:`, so the sidebar shows two trees; Day's `subplans:` double-declares only 2 of Dawn's 8 children. Not a declaration edit: `buildGroups` creates one group per `subplans` key regardless of claiming, so listing `indusk-v2-dawn` under Day renders Dawn twice. Needs nested groups in the parser and the sidebar — an admin plan when it is worth one. Reason recorded in the root master's Parked section.
+- **`day-always-on-deploy` is held by choice**, not blocked by the roadmap: Sandy wants the whole promise loop proven locally end to end before paying for a box. Not blocked on a publish — 1.54.0 carries the always-on code with zero packaged commits since.
+
+### Cursor
+
+**Next concrete step:** author T1–T11 red in the worktree, per release-ritual's Test Phase 1. Four files:
+
+- `apps/indusk-mcp/src/__tests__/trunk-guard-release-message.test.ts` — T1–T5 **and T10**, driving the hook the way Claude Code does (fixture repo on `main`, a staged set, a `{tool_name, tool_input, cwd}` envelope on stdin). Reuse the existing `trunk-guard.test.ts` harness rather than restating it.
+- `apps/indusk-mcp/src/__tests__/release-guard-install.test.ts` — T6, T7 against `scripts/release-guard.sh`, reading exit code and stderr only.
+- `apps/indusk-mcp/src/__tests__/release-ritual-skill.test.ts` — T8, T9.
+- `apps/indusk-mcp/src/__tests__/record-release-commit.test.ts` — T11. The fixture needs a `chore(release): <v)` commit **and at least one commit after it**; a fixture where the two coincide cannot fail.
+
+T5 and T7 are declared Regression Guards — they pass on authoring, by design. Every other row must fail on its own assertion.
+
+**Gate check command:** `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard-release-message src/__tests__/release-guard-install src/__tests__/release-ritual-skill src/__tests__/record-release-commit`
+
+**Landed this session, both pushed:** `51a47d4c` on `main` (the two masters reconciled — day-always-on closed and split into 4b-prime / 4b-prime-D, release-ritual declared and promoted to S2, the indusk-release boundary written, dusk-v2 given its fate as overtaken April-2026 rewrite research and named explicitly as NOT indusk-v2-dawn) and `3b54742b` on `plan/release-ritual` (T10, T11).
+
+**Watch out:** a fresh plan worktree has no admin bundle, so nine `indusk ui` tests and the tarball test fail there until `pnpm --filter indusk-admin build && node scripts/bundle-admin.js`. Known-red, not a regression from this branch.
+
+---
