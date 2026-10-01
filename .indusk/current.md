@@ -23,10 +23,10 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 780da059 — user-zero side research: Aeon case study + master.md fate line
+## Session 780da059 — context-tiers brief accepted; conduct examples landed; reviewing plan-premises direction
 
 **Session ID**: 780da059-f69c-43fc-9940-32075e05833a
-**Last updated**: 2026-09-16T18:27:26.766Z
+**Last updated**: 2026-10-01T16:53:48.421Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
@@ -352,6 +352,27 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 **Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
 **Last updated**: 2026-10-01T15:03:31.125Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 89a3ef1c — starting catchup
+
+**Session ID**: 89a3ef1c-a487-4fc9-a57f-c5f2df0f29f0
+**Last updated**: 2026-10-01T16:09:00.403Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
