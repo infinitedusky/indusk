@@ -120,9 +120,11 @@ live order, and why it is not simply the next `day-*` folder:
    three consecutive versions, and the deploy step below installs the
    *published* package — so an unreliable release is a prerequisite failure,
    not a side quest.
-2. **[admin-plan-type](admin-plan-type/brief.md) — brief draft.** A bugfix: the
-   admin shows a plan's workflow type (bugfix, feature, …) and tells a document
-   the type does not require from one that is missing. Ordered after
+2. **[admin-plan-type](archive/admin-plan-type/brief.md) — closed 2026-10-01**
+   (archived; 26 rows, falsified and cleaned). A bugfix: the admin shows a
+   plan's workflow type (bugfix, feature, …) and tells a document the type does
+   not require from one that is missing. Its falsification widened it: the plan
+   list's next step and `advance_plan` now follow the type too. Ordered after
    `release-ritual`, which exposed it.
 3. **[context-tiers](context-tiers/brief.md) — brief accepted, test plan
    next.** The root `CLAUDE.md` stops being the one channel for every rule:
