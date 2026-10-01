@@ -208,10 +208,31 @@ function readDeclaredWorkflow(planDir: string, documents: string[]) {
 			: null;
 	if (source === null) return readWorkflow(undefined);
 	try {
-		return readWorkflow(matter(readFileSync(join(planDir, source), "utf-8")).data.workflow);
+		const raw = readFileSync(join(planDir, source), "utf-8");
+		const value: unknown = matter(raw).data.workflow;
+		const declared = readWorkflow(value);
+		// A value that is not a plain word is shown as it was written, not as
+		// a rendering of what YAML made of it (A19).
+		if (declared.declared !== null && typeof value !== "string") {
+			return { ...declared, declared: rawFrontmatterValue(raw, "workflow") ?? declared.declared };
+		}
+		return declared;
 	} catch {
 		return readWorkflow(undefined);
 	}
+}
+
+/**
+ * The text written after `key:` on its own line of a document's frontmatter,
+ * or null when that line is empty or absent (a value written on the lines
+ * below it, like a block list, has no text there). Line-anchored, so a longer
+ * key that ends in this one is not it.
+ */
+function rawFrontmatterValue(raw: string, key: string): string | null {
+	const block = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw)?.[1];
+	if (block === undefined) return null;
+	const text = new RegExp(`^${key}:[ \\t]*(.*)$`, "m").exec(block)?.[1]?.trim();
+	return text ? text : null;
 }
 
 export function parsePlan(planDir: string): PlanSummary {

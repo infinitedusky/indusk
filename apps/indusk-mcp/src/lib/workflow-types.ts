@@ -93,7 +93,11 @@ export interface DeclaredWorkflow {
  */
 export function readWorkflow(value: unknown): DeclaredWorkflow {
 	if (value === undefined || value === null) return { type: null, declared: null };
-	const declared = String(value).trim();
+	// Only a plain string can be a type. A list, a mapping, a number or a
+	// boolean is a declaration that is not one: `String()` of a one-element
+	// list is its element's text, which read `[bugfix]` as a bugfix.
+	if (typeof value !== "string") return { type: null, declared: JSON.stringify(value) };
+	const declared = value.trim();
 	if (declared === "") return { type: null, declared: null };
 	const type = (WORKFLOW_TYPES as readonly string[]).includes(declared)
 		? (declared as WorkflowType)
