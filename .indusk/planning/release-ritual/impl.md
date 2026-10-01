@@ -117,7 +117,7 @@ them so once Step 11 edits one of them.
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/changelog.md`: an Unreleased entry for the release ritual
+- [x] `apps/docs/src/changelog.md`: an Unreleased entry for the release ritual
 
 ### Build Phase 3: the bump belongs to the retrospective
 
