@@ -92,6 +92,17 @@ deliberate and visible: `worktree.trunk_guard.enabled: false` in
 workbench the branch judged is the declared code repository's; the workbench
 repository holds plan documents and is allow-listed by path.
 
+**How a release commit is recognised.** The exemption reads the commit's first
+message line, wherever the message comes from: `-m "chore(release): …"`, or a
+file passed as `-F <file>` or `--file=<file>`, which the guard opens and reads —
+a `-F` commit whose file does not start `chore(release):` is judged like any
+other. A message built by the shell at run time — `-m "$(cat <<EOF …)"`, a
+backtick substitution — cannot be read before the shell runs it. When such a
+commit stages packaged paths, the refusal says *that*: the message could not be
+read, so the exemption could not be checked; pass it with a literal `-m` or
+with `-F`. The message's words are never mistaken for file paths, and a command
+split across lines with `\` reads the same as the one-line form.
+
 Where they run from matters. Claude Code runs a hook command in the session's
 *current* directory, which moves with every Bash call that ends in a `cd`, and
 a hook that fails to load exits 1 — which the host treats as non-blocking, so
