@@ -262,6 +262,7 @@ const config = defineConfig({
 						{ text: "Versioned Workbench — Lessons", link: "/lessons/versioned-workbench" },
 						{ text: "Workbench Setup Command — Lessons", link: "/lessons/workbench-setup-command" },
 						{ text: "Plans in Worktrees — Lessons", link: "/lessons/admin-plan-worktrees" },
+						{ text: "The Plan's Type — Lessons", link: "/lessons/admin-plan-type" },
 						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
 						{ text: "Monitor — Lessons", link: "/lessons/day-monitor" },
 						{ text: "Always On — Lessons", link: "/lessons/day-always-on" },
