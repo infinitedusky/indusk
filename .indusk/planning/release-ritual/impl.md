@@ -1,6 +1,6 @@
 ---
 title: "The release ritual finishes itself"
-status: approved
+status: completed
 date: 2026-09-21
 trajectory: required
 test_phases: required
@@ -140,7 +140,7 @@ them so once Step 11 edits one of them.
 
 #### Build Phase 3 Document
 
-- [ ] `/reference/skills/retrospective`: Step 11, what it derives and when it skips
+- [x] `/reference/skills/retrospective`: Step 11, what it derives and when it skips
 
 ## Deferred Verification
 
