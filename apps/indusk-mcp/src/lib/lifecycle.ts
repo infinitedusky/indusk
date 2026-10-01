@@ -3,7 +3,7 @@ import type { GateKind } from "./impl-headings.js";
 import type { ImplPhase, ParsedImpl } from "./impl-parser.js";
 import type { PlanSummary } from "./plan-parser.js";
 import type { PhaseBoundaryRecord } from "./shape/boundary.js";
-import { WORKFLOW_DEFINITIONS } from "./workflow-types.js";
+import { WORKFLOW_DEFINITIONS, type WorkflowType } from "./workflow-types.js";
 
 /**
  * The one definition of a plan's lifecycle (admin-ui-phase-progress, ADR D1).
@@ -307,6 +307,12 @@ function resolvePosition(input: DerivePlanPositionInput): {
 	if (stage === "research" || stage === "brief" || stage === "test-plan" || stage === "adr") {
 		const noun = stage === "test-plan" ? "test plan" : stage === "adr" ? "ADR" : stage;
 		if (status === "accepted" || status === "complete" || status === "completed") {
+			// A22: the active label never claims a fact the reader does not
+			// hold. A spike's finished research awaits nothing.
+			const type = summary.workflow ?? null;
+			if (type !== null && !requiresDocumentAfter(stage, type)) {
+				return { position: stage, awaiting: `${noun} finished — a ${type} ends here` };
+			}
 			return { position: stage, awaiting: `${noun} accepted, awaiting the next document` };
 		}
 		if (status === "proposed" || status === "draft" || status === "in-progress") {
@@ -371,6 +377,12 @@ function restingState(
 	const doc = documentFor(position);
 	if (doc !== null && !docs.has(`${doc}.md`)) return absentDocumentState(doc, required, passed);
 	return passed ? "done" : "pending";
+}
+
+/** Whether the type requires any document later in the lifecycle than `stage`. */
+function requiresDocumentAfter(stage: DocumentPosition, type: WorkflowType): boolean {
+	const later = DOCUMENT_POSITIONS.slice(DOCUMENT_POSITIONS.indexOf(stage) + 1);
+	return later.some((doc) => WORKFLOW_DEFINITIONS[type].requires.includes(doc));
 }
 
 /**
