@@ -19,7 +19,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-09-17: **1.51.0 published** to npm at 2026-09-18T00:03:18Z from release commit 7f4297bc — by the SECOND `pnpm release` run (browser 2FA confirmed). The first run's `record-release.js` mark was written on pnpm's exit code alone and nothing reached the registry; the mark now says only what `npm view` confirms.
 - 2026-09-18: **1.52.0 published** to npm from release commit 52749a95 (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-09-18: **1.53.0 published** to npm from release commit e0caf32f (`pnpm release`, recorded by `scripts/record-release.js`).
-- 2026-09-22: **1.54.0 published** to npm from release commit d7e0061a (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-09-22: **1.54.0 published** to npm from release commit b185e375 (`pnpm release`, recorded by `scripts/record-release.js`; corrected 2026-10-01 — the script had recorded HEAD, `d7e0061a`, a plan commit; fixed by release-ritual T11).
 
 ---
 
@@ -345,5 +345,26 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Gate command:** `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard-release-message src/__tests__/release-guard-install src/__tests__/release-ritual-skill src/__tests__/record-release-commit`
 
 **Two standing gotchas:** write every `git commit` on trunk as a single line until T10's fix lands. And a fresh plan worktree has no admin bundle, so nine `indusk ui` tests plus the tarball test fail there until `pnpm --filter indusk-admin build && node scripts/bundle-admin.js` — known-red, not a regression.
+
+---
+
+## Session 4551e898 — starting catchup
+
+**Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
+**Last updated**: 2026-10-01T15:03:31.125Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
 
 ---
