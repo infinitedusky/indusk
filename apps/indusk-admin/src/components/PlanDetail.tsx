@@ -11,6 +11,7 @@ import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { PhasesSection } from "@/components/PhasesSection";
+import { PlanTypeChip } from "@/components/PlanTypeChip";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -82,7 +83,11 @@ export function PlanDetail({
       <PlanCopyNotice plan={plan} />
 
       {plan.position && !isParent && (
-        <PlanBar position={plan.position} activity={activePhaseLabel(plan)} />
+        <PlanBar
+          position={plan.position}
+          activity={activePhaseLabel(plan)}
+          workflow={plan.workflow ?? null}
+        />
       )}
 
       {!plan.boundaryError && <ProgressLines plan={plan} />}
@@ -219,6 +224,14 @@ function PlanHeader({ plan, holding = 0 }: { plan: Plan; holding?: number }) {
         <h1 className="text-xl font-semibold text-gray-900">{plan.name}</h1>
         <span className="flex items-center gap-2 text-xs text-gray-500">
           {plan.archived ? "archived" : "active"}
+          {/* A parent that holds only a master has no document to declare a
+              type in; the chip is for plans that could. */}
+          {(plan.brief !== undefined || plan.research !== undefined) && (
+            <PlanTypeChip
+              workflow={plan.workflow ?? null}
+              declared={plan.workflowDeclared ?? null}
+            />
+          )}
           <WorktreeChip plan={plan} />
           <HoldingBadge count={holding} plan={plan.name} />
         </span>
