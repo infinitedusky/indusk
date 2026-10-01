@@ -17,6 +17,7 @@ subplans:
   - day-monitor
   - day-always-on
   - release-ritual
+  - admin-plan-type
   - day-always-on-deploy
   - day-contract
   - day-claim-evidence
