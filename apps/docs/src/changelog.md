@@ -11,6 +11,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - **A release commit is accepted on trunk however its message is supplied.** trunk-guard's `chore(release):` exemption read only `-m`; it now also reads the file given to `-F <file>` or `--file=<file>`, and a `-F` file that is not a release message gets no exemption. A message built by the shell at run time (`$(cat <<EOF …)`, backticks) cannot be read beforehand; when it stages packaged paths, the refusal now says the message was unreadable and how to pass it, instead of printing the message's words as files being committed.
 - **A commit split across lines with `\` reads the same as the one-line form.** Each continuation used to become an empty "pathspec", so a commit staging only plan documents was refused on trunk with one blank bullet per line.
 - **`pnpm release` checks the install before npm is touched.** A dependency added on a plan branch arrives on trunk as a manifest change, not an install; the build then failed halfway through `prepublishOnly`, after authentication. `scripts/check-install.js` now refuses first, naming `pnpm install`.
+- **Landing `indusk update` on trunk no longer needs the guard switched off.** `update` runs on trunk and writes the installed copies under `.claude/skills/` and `.claude/hooks/`, which trunk-guard refused. Both directories are now allowed; other `.claude/` paths are still refused.
+- **The release note in `.indusk/current.md` names the release commit.** `scripts/record-release.js` recorded whatever HEAD was when it ran, which after a multi-attempt publish is not the release. It now records the `chore(release): <version>` commit, found the same way the version line in `check_health` finds it.
 
 ## [1.54.0] — 2026-09-21
 
