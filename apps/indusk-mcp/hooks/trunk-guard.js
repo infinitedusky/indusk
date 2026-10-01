@@ -34,7 +34,8 @@
  * Allowed on trunk — the writes a plan makes before it has a worktree (its
  * brief) or after it landed (compaction, the landing note), and what the eval
  * agent writes: `.indusk/**`, `.claude/lessons/**`, `.claude/settings*.json`,
- * `CLAUDE.md`, `AGENTS.md`.
+ * `CLAUDE.md`, `AGENTS.md` — plus what `indusk update` installs on trunk,
+ * `.claude/skills/**` and `.claude/hooks/**`.
  *
  * Exempt: a commit whose message begins `chore(release):` — the one packaged
  * edit that belongs on trunk. Off switches, both deliberate and visible:
@@ -54,7 +55,11 @@ import { basename, dirname, isAbsolute, join, relative, resolve } from "node:pat
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
 
 const DEFAULT_BRANCHES = ["main", "master"];
-const ALLOWED_PREFIXES = [".indusk/", ".claude/lessons/"];
+// `.claude/skills/` and `.claude/hooks/` are installed copies `indusk update`
+// writes, and update runs on trunk; nobody edits them by hand (the sources are
+// under `apps/indusk-mcp/`), and settings — which register the hooks — were
+// already allowed, so admitting them admits update's output and nothing more.
+const ALLOWED_PREFIXES = [".indusk/", ".claude/lessons/", ".claude/skills/", ".claude/hooks/"];
 const ALLOWED_FILES = new Set(["CLAUDE.md", "AGENTS.md"]);
 const ALLOWED_PATTERNS = [/^\.claude\/settings[^/]*\.json$/];
 // `git [options] commit` in command position: the start of the command, after a
@@ -84,7 +89,19 @@ const LONG_WITH_VALUE = new Set([
 	"--trailer",
 	"--pathspec-from-file",
 ]);
-const RELEASE_MESSAGE_RE = /(?:^|\s)(?:-m|--message(?:=|\s))\s*["']?chore\(release\):/;
+/**
+ * A message the hook cannot read: its value is produced by a command
+ * substitution or a heredoc, both of which run in a shell this hook is not.
+ *
+ * This matters twice. The exemption cannot be checked — and, worse, the
+ * tokenizer's quote handling ends at the first `"` *inside* the substituted
+ * text, so the rest of that line becomes tokens and is read as **pathspecs**.
+ * Landing day-always-on, a message containing the phrase `"exactly once"` was
+ * refused with `once is a durability claim, with five failure sites` printed
+ * as though it were a file. Recognising the shape is what stops that.
+ */
+const UNREADABLE_MESSAGE_RE =
+	/(?:^|\s)(?:-m|--message(?:=|\s))\s*["']?\$\(|(?:^|\s)-m\s*["']?`|<<-?\s*['"]?\w/;
 
 if (process.env.INDUSK_TRUNK_GUARD === "off") process.exit(0);
 
@@ -150,6 +167,55 @@ function unquote(token) {
 }
 
 /**
+ * This commit's own first message, from its parsed arguments: the first
+ * `-m`/`--message` value (`{ text }`) or the first `-F`/`--file` path
+ * (`{ file }`), whichever comes first; null when it has neither. Read from the
+ * commit's tokens, never from the command text — a later `-m` paragraph, or a
+ * command before `git commit`, is not this commit's subject line.
+ */
+function firstMessage(args) {
+	for (let i = 0; i < args.length; i++) {
+		const token = args[i];
+		if (token === "--") return null;
+		const long = /^--(message|file)(?:=(.*))?$/s.exec(token);
+		if (long) {
+			const value = long[2] ?? args[i + 1] ?? "";
+			return long[1] === "message" ? { text: value } : { file: value };
+		}
+		if (token.startsWith("-") && !token.startsWith("--")) {
+			for (let j = 1; j < token.length; j++) {
+				const flag = token[j];
+				if (flag !== "m" && flag !== "F") {
+					if (SHORT_WITH_VALUE.has(flag)) break; // another option's value, not a message
+					continue;
+				}
+				const value = j < token.length - 1 ? token.slice(j + 1) : (args[i + 1] ?? "");
+				return flag === "m" ? { text: value } : { file: value };
+			}
+		}
+	}
+	return null;
+}
+
+/**
+ * True when this commit's first message begins `chore(release):` — given
+ * inline, or in the file `-F` names. The file is **read**, never trusted by
+ * its presence — a `-F` carrying any other subject gets no exemption.
+ */
+function isReleaseCommit(args, anchor) {
+	const first = firstMessage(args);
+	if (!first) return false;
+	if ("text" in first) return first.text.startsWith("chore(release):");
+	const path = first.file;
+	try {
+		const first = readFileSync(resolve(anchor, path), "utf-8").split("\n", 1)[0];
+		return first.startsWith("chore(release):");
+	} catch {
+		return false; // unreadable file — no exemption, and the refusal says why
+	}
+}
+
+/**
  * The tokens after `commit` up to the end of its command segment — an unescaped
  * `; & | newline ) `` ` ``, or the quote that opened a `-c` string. Quotes group,
  * backslash escapes. Deliberately not a shell; enough to tell a flag, a flag's
@@ -162,6 +228,12 @@ function commitArgs(text, closer) {
 	let quote = null;
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i];
+		// `\`+newline is a line continuation: the shell removes both characters,
+		// inside double quotes too. It is not an escaped character and not a token.
+		if (ch === "\\" && text[i + 1] === "\n" && quote !== "'") {
+			i++;
+			continue;
+		}
 		if (quote) {
 			if (ch === quote) quote = null;
 			else if (ch === "\\" && quote === '"' && i + 1 < text.length) current += text[++i];
@@ -213,12 +285,17 @@ if (!gitPath) process.exit(0); // no repository — nothing has a branch
 const branch = currentBranch(gitPath);
 if (branch === null || !config.branches.includes(branch)) process.exit(0);
 
+let unreadableMessage = false;
 if (subject.kind === "commit") {
-	if (RELEASE_MESSAGE_RE.test(subject.command)) process.exit(0);
+	if (isReleaseCommit(subject.args, subject.anchor)) process.exit(0);
+	unreadableMessage = UNREADABLE_MESSAGE_RE.test(subject.command);
 	const intent = commitIntent(subject.args);
 	subject.paths = [
 		...stagedPaths(gitPath, intent.all).map((p) => real(resolve(gitPath, p))),
-		...intent.paths.map((p) => real(resolve(subject.anchor, p))),
+		// A message the hook cannot read is a message, not a pathspec list.
+		// Reading it as paths is how a commit message ends up printed as
+		// filenames under "refusing to commit code".
+		...(unreadableMessage ? [] : intent.paths.map((p) => real(resolve(subject.anchor, p)))),
 	];
 }
 
@@ -236,8 +313,11 @@ process.stderr.write(
 		"Work happens on a plan branch and lands by merge (retrospective Step 10):",
 		"  indusk worktree create <plan>   (or: git worktree add ../<repo>-worktrees/<plan> -b plan/<plan>)",
 		"",
-		"Allowed on trunk: .indusk/**, .claude/lessons/**, .claude/settings*.json, CLAUDE.md, AGENTS.md,",
+		"Allowed on trunk: .indusk/**, .claude/{lessons,skills,hooks}/**, .claude/settings*.json, CLAUDE.md, AGENTS.md,",
 		"and a commit whose message begins `chore(release):`.",
+		unreadableMessage
+			? '\nThis commit\'s message could not be read: it is built by a command substitution or a\nheredoc, which this hook does not run, so the `chore(release):` exemption could not be\nchecked. If this IS a release commit, pass the message as a literal `-m "chore(release):\n…"` or with `-F <file>` — both of which can be read.'
+			: null,
 		"Deliberate overrides: INDUSK_TRUNK_GUARD=off for one call; worktree.trunk_guard.enabled: false in .indusk/config.json for the project.",
 		"",
 	]
@@ -317,6 +397,7 @@ function commitIntent(args) {
 	let rest = false;
 	for (let i = 0; i < args.length; i++) {
 		const token = args[i];
+		if (!token.trim()) continue; // whitespace is never a pathspec
 		if (rest) {
 			paths.push(token);
 			continue;

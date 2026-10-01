@@ -4,6 +4,16 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **The bump is the retrospective's Step 11.** Closing a plan on trunk now produces its release commit: the step checks whether the landed merge touched packaged paths, takes the increment from what the plan did (a feature is minor, a fix is patch), rolls the changelog's `[Unreleased]` heading, and commits `chore(release): X.Y.Z — <summary>` with a literal `-m`. Whether there is anything to release is read from the packaged changes since the last release commit, not from the last commit. A tree with nothing packaged since then says so and skips, so "nothing to release" reads differently from "did not run". Publishing stays the operator's call, since npm's one-time password is not something an agent can enter.
+
+### Fixed
+- **A release commit is accepted on trunk however its message is supplied.** trunk-guard's `chore(release):` exemption read only `-m`; it now also reads the file given to `-F <file>` or `--file=<file>`, and a `-F` file that is not a release message gets no exemption. Only the commit's own first message counts: a later `-m` paragraph, or another command earlier in the same line, can no longer exempt a code commit. A message built by the shell at run time (`$(cat <<EOF …)`, backticks) cannot be read beforehand; when it stages packaged paths, the refusal now says the message was unreadable and how to pass it, instead of printing the message's words as files being committed.
+- **A commit split across lines with `\` reads the same as the one-line form.** Each continuation used to become an empty "pathspec", so a commit staging only plan documents was refused on trunk with one blank bullet per line.
+- **`pnpm release` checks the install before npm is touched.** A dependency added on a plan branch arrives on trunk as a manifest change, not an install; the build then failed halfway through `prepublishOnly`, after authentication. `scripts/check-install.js` now refuses first, naming `pnpm install`. It compares the lockfile with the one pnpm recorded at install time, so a missing devDependency, a missing `indusk-admin` dependency, or a version changed and never installed is caught too.
+- **Landing `indusk update` on trunk no longer needs the guard switched off.** `update` runs on trunk and writes the installed copies under `.claude/skills/` and `.claude/hooks/`, which trunk-guard refused. Both directories are now allowed; other `.claude/` paths are still refused.
+- **The release note in `.indusk/current.md` names the release commit.** `scripts/record-release.js` recorded whatever HEAD was when it ran, which after a multi-attempt publish is not the release. It now records the `chore(release): <version>` commit, found the same way the version line in `check_health` finds it. And it says "published" only when `npm view` confirms the version: a publish that exits 0 without reaching the registry (1.51.0's first attempt) is noted as unconfirmed, and the release prints that on screen.
+
 ## [1.54.0] — 2026-09-21
 
 ### Added

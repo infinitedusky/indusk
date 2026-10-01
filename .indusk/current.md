@@ -286,6 +286,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
+## Session c2c15cf7 — eval: release-ritual plan/brief/impl commit d7e0061a
+
+**Session ID**: c2c15cf7-3b2a-40b0-83b6-b4d1aa711c22
+**Last updated**: 2026-09-22T00:39:06.437Z
+**Branch**: plan/release-ritual
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual
 ## Session 47cf1bc5 — starting catchup
 
 **Session ID**: 47cf1bc5-8dfe-4f22-bf7c-c9ee97905a2b
@@ -307,6 +313,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
+## Session fe83e89a — eval agent: scoring commit d7e0061a (plan/release-ritual brief+impl)
+
+**Session ID**: fe83e89a-2500-4ca1-b93d-afba563532c9
+**Last updated**: 2026-09-22T00:39:24.066Z
+**Branch**: plan/release-ritual
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual
 ## Session 1a22716c — V4 sequence reconciled; release-ritual is further along than trunk shows
 
 **Session ID**: 1a22716c-eea2-4bd6-9e35-378d2d00a596

@@ -127,6 +127,14 @@ if [[ "$RELEASE_COMMIT" != "$HEAD_COMMIT" ]]; then
 	echo "release-guard: ${AHEAD} commit(s) since the bump, none touching packaged files — ok"
 fi
 
+# 2b. The declared dependencies are actually installed.
+#
+# Publishing 1.54.0 failed after `npm whoami`, halfway through
+# `prepublishOnly`: a dependency added on a plan branch was merged and never
+# installed, so `tsc` could not resolve it. Merging brings the manifest
+# change, not the install. Pure filesystem, so it runs before the network.
+node "$PKG_DIR/scripts/check-install.js" "$PKG_DIR" || exit 1
+
 # 3. Unmerged plan branches that could change the tarball.
 #
 # Uses the same PACKAGED_PATHS as check 2. A branch touching only

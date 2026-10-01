@@ -66,7 +66,7 @@ commit and refuse; three are PostToolUse and act after the fact:
 | `validate-impl-structure` | an implementation missing required sections |
 | `check-gates` | closing a phase whose gates or trajectory rows are open |
 | `claude-md-budget` | a CLAUDE.md write past the 60 KB ceiling |
-| `trunk-guard` | code edited or committed on `main` — an Edit/Write, or a `git commit` whose paths (staged, `-a`/`-am`, or named as pathspecs), fall outside `.indusk/`, `.claude/lessons/`, settings, `CLAUDE.md` and `AGENTS.md` while the repository is on a protected branch. The commit gate reads `git -C … commit`, a preceding `cd`, `bash -c "…"`, `$(…)` and backticks; a script that commits inside itself is out of its sight |
+| `trunk-guard` | code edited or committed on `main` — an Edit/Write, or a `git commit` whose paths (staged, `-a`/`-am`, or named as pathspecs), fall outside `.indusk/`, `.claude/lessons/`, the installed `.claude/skills/` and `.claude/hooks/`, settings, `CLAUDE.md` and `AGENTS.md` while the repository is on a protected branch. The commit gate reads `git -C … commit`, a preceding `cd`, `bash -c "…"`, `$(…)` and backticks; a script that commits inside itself is out of its sight |
 | `eval-trigger` | *(PostToolUse)* — nothing; on every `git commit` it spawns the evaluator that scores the diff, and in a multi-repo workbench it refuses to guess which repo the commit belongs to |
 | `workbench-sync` | *(PostToolUse)* — nothing; commits workbench context after edits |
 | `gate-reminder` | *(PostToolUse, advisory)* — nothing; when an edit closes a phase it puts the next phase's tests-to-author in front of the agent as additional context |
@@ -84,13 +84,24 @@ heredoc or a script never passes through Edit or Write, so the `git commit`
 gate judges what is actually staged. What stays editable on trunk is exactly
 what a plan writes before it has a worktree (its brief) or after it landed (the
 compaction, the landing note), plus what the eval agent writes: plan documents,
-lessons, settings, `CLAUDE.md`, `AGENTS.md`. A `chore(release):` commit is the
+lessons, settings, `CLAUDE.md`, `AGENTS.md` — plus the skill and hook copies `indusk update` installs, since update runs on trunk. A `chore(release):` commit is the
 one packaged edit that belongs on trunk and is exempt. Two off switches, both
 deliberate and visible: `worktree.trunk_guard.enabled: false` in
 `.indusk/config.json` for a project that wants trunk work, and
 `INDUSK_TRUNK_GUARD=off` in the environment for one call. In a versioned
 workbench the branch judged is the declared code repository's; the workbench
 repository holds plan documents and is allow-listed by path.
+
+**How a release commit is recognised.** The exemption reads the commit's first
+message line, wherever the message comes from: `-m "chore(release): …"`, or a
+file passed as `-F <file>` or `--file=<file>`, which the guard opens and reads —
+a `-F` commit whose file does not start `chore(release):` is judged like any
+other. A message built by the shell at run time — `-m "$(cat <<EOF …)"`, a
+backtick substitution — cannot be read before the shell runs it. When such a
+commit stages packaged paths, the refusal says *that*: the message could not be
+read, so the exemption could not be checked; pass it with a literal `-m` or
+with `-F`. The message's words are never mistaken for file paths, and a command
+split across lines with `\` reads the same as the one-line form.
 
 Where they run from matters. Claude Code runs a hook command in the session's
 *current* directory, which moves with every Bash call that ends in a `cd`, and
