@@ -78,7 +78,11 @@ export function PlanDetail({
       data-testid="plan-detail"
       data-plan-name={plan.name}
     >
-      <PlanHeader plan={plan} holding={holding} />
+      <PlanHeader
+        plan={plan}
+        holding={holding}
+        showType={plan.position !== undefined && !isParent}
+      />
 
       <PlanCopyNotice plan={plan} />
 
@@ -215,7 +219,21 @@ function ImplSections({ plan }: { plan: Plan }) {
   );
 }
 
-function PlanHeader({ plan, holding = 0 }: { plan: Plan; holding?: number }) {
+function PlanHeader({
+  plan,
+  holding = 0,
+  showType = false,
+}: {
+  plan: Plan;
+  holding?: number;
+  /**
+   * Whether the type chip is drawn — true whenever the plan bar is. The bar
+   * can say "this plan declares no type" under itself, and a page that says
+   * so must carry the chip that says it and explains it (A24). A parent has
+   * a master bar, no plan bar, and no document to declare a type in.
+   */
+  showType?: boolean;
+}) {
   return (
     <header
       className="flex items-center justify-between border-b border-gray-200 pb-3"
@@ -225,9 +243,7 @@ function PlanHeader({ plan, holding = 0 }: { plan: Plan; holding?: number }) {
         <h1 className="text-xl font-semibold text-gray-900">{plan.name}</h1>
         <span className="flex items-center gap-2 text-xs text-gray-500">
           {plan.archived ? "archived" : "active"}
-          {/* A parent that holds only a master has no document to declare a
-              type in; the chip is for plans that could. */}
-          {(plan.brief !== undefined || plan.research !== undefined) && (
+          {showType && (
             <PlanTypeChip
               workflow={plan.workflow ?? null}
               declared={plan.workflowDeclared ?? null}
