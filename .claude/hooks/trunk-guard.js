@@ -89,9 +89,6 @@ const LONG_WITH_VALUE = new Set([
 	"--trailer",
 	"--pathspec-from-file",
 ]);
-const RELEASE_MESSAGE_RE = /(?:^|\s)(?:-m|--message(?:=|\s))\s*["']?chore\(release\):/;
-/** `-F <file>` / `--file=<file>` — the message lives in a file, so read it. */
-const MESSAGE_FILE_RE = /(?:^|\s)(?:-F\s+|--file(?:=|\s+))(?:"([^"]+)"|'([^']+)'|(\S+))/;
 /**
  * A message the hook cannot read: its value is produced by a command
  * substitution or a heredoc, both of which run in a shell this hook is not.
@@ -170,14 +167,46 @@ function unquote(token) {
 }
 
 /**
- * True when the commit's message comes from a file whose first line begins
- * `chore(release):`. The file is **read**, never trusted by its presence — a
- * `-F` carrying any other subject gets no exemption.
+ * This commit's own first message, from its parsed arguments: the first
+ * `-m`/`--message` value (`{ text }`) or the first `-F`/`--file` path
+ * (`{ file }`), whichever comes first; null when it has neither. Read from the
+ * commit's tokens, never from the command text — a later `-m` paragraph, or a
+ * command before `git commit`, is not this commit's subject line.
  */
-function releaseMessageInFile(command, anchor) {
-	const match = MESSAGE_FILE_RE.exec(command);
-	if (!match) return false;
-	const path = match[1] ?? match[2] ?? match[3];
+function firstMessage(args) {
+	for (let i = 0; i < args.length; i++) {
+		const token = args[i];
+		if (token === "--") return null;
+		const long = /^--(message|file)(?:=(.*))?$/s.exec(token);
+		if (long) {
+			const value = long[2] ?? args[i + 1] ?? "";
+			return long[1] === "message" ? { text: value } : { file: value };
+		}
+		if (token.startsWith("-") && !token.startsWith("--")) {
+			for (let j = 1; j < token.length; j++) {
+				const flag = token[j];
+				if (flag !== "m" && flag !== "F") {
+					if (SHORT_WITH_VALUE.has(flag)) break; // another option's value, not a message
+					continue;
+				}
+				const value = j < token.length - 1 ? token.slice(j + 1) : (args[i + 1] ?? "");
+				return flag === "m" ? { text: value } : { file: value };
+			}
+		}
+	}
+	return null;
+}
+
+/**
+ * True when this commit's first message begins `chore(release):` — given
+ * inline, or in the file `-F` names. The file is **read**, never trusted by
+ * its presence — a `-F` carrying any other subject gets no exemption.
+ */
+function isReleaseCommit(args, anchor) {
+	const first = firstMessage(args);
+	if (!first) return false;
+	if ("text" in first) return first.text.startsWith("chore(release):");
+	const path = first.file;
 	try {
 		const first = readFileSync(resolve(anchor, path), "utf-8").split("\n", 1)[0];
 		return first.startsWith("chore(release):");
@@ -258,8 +287,7 @@ if (branch === null || !config.branches.includes(branch)) process.exit(0);
 
 let unreadableMessage = false;
 if (subject.kind === "commit") {
-	if (RELEASE_MESSAGE_RE.test(subject.command)) process.exit(0);
-	if (releaseMessageInFile(subject.command, subject.anchor)) process.exit(0);
+	if (isReleaseCommit(subject.args, subject.anchor)) process.exit(0);
 	unreadableMessage = UNREADABLE_MESSAGE_RE.test(subject.command);
 	const intent = commitIntent(subject.args);
 	subject.paths = [
