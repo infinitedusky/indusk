@@ -130,6 +130,21 @@ describe("A23 — the next step is the next document the plan's type requires", 
 		expect(s.nextStep).not.toMatch(/^Create /);
 	});
 
+	// `complete` is the word research documents use — 33 of the 36 in this
+	// repository. The lifecycle reads it as finished; the next step did not, so
+	// a spike the bar called finished was told to review its research.
+	it("a spike whose research says complete has nothing left to do", () => {
+		const s = parsePlan(
+			planWith("c-spike", { "research.md": ["status: complete", "workflow: spike"] }),
+		);
+		expect(s.nextStep).toBe("Done");
+	});
+
+	it("an untyped plan whose research says complete is told to create the brief", () => {
+		const s = parsePlan(planWith("c-untyped", { "research.md": ["status: complete"] }));
+		expect(s.nextStep).toBe("Create brief");
+	});
+
 	it("a feature with an accepted test plan is told to create the ADR", () => {
 		const s = parsePlan(
 			planWith("a-feature", {
