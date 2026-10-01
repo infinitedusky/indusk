@@ -133,6 +133,40 @@ derived it. That is what keeps the UI from drifting behind the system the
 way its phase parser once did — for a month, silently, while every impl
 written since August rendered wrong.
 
+### What an absent document reads as
+
+*(admin-plan-type, 2026-10-01)*
+
+Not every plan has every document. A bugfix has no research and no ADR; a
+spike has only research. Until this plan the lifecycle called *any* document
+position whose file was absent, once the plan had moved past it, `skipped` —
+so a bugfix that never needed research and a bugfix that closed without its
+test plan drew the same dashed segment. The bar asserted a judgment nothing
+had made.
+
+The judgment is now the plan's **type**: `workflow:` in its brief (or in its
+research document, for a plan that is research only), one of `feature`,
+`bugfix`, `refactor`, `spike`. What each type requires is defined once, in
+`apps/indusk-mcp/src/lib/workflow-types.ts` (the
+`@infinitedusky/indusk-mcp/workflow-types` subpath), and the planner skill's
+table and the workflow templates are pinned equal to it.
+
+| The document is absent and… | It reads |
+|---|---|
+| the plan's type does not require it | **skipped** — by design, behind the plan's position or ahead of it |
+| the type requires it and the plan has moved past it | **missing** — a gap, and it stays one after the plan closes |
+| the type requires it and the plan has not reached it | **pending** — an ordinary step ahead |
+| the plan declares no type and has moved past it | **unknown** — whether the absence matters cannot be judged |
+
+A plan with no declared type therefore never reads *skipped*: that word is a
+claim about intent, and only a declared type can make it. The type is never
+inferred from which documents happen to exist — that would be the bar
+grading the plan against the plan.
+
+The segment states are `SEGMENT_STATES` in the lifecycle module, a runtime
+list like the positions and activities, so the same render-parity pin walks
+them: a state without a drawing and a word in the admin fails by name.
+
 ## Where a plan lives while it executes
 
 *(admin-plan-worktrees, 2026-09-18)*
