@@ -52,3 +52,51 @@ describe("A16 — one lifecycle definition, one phase-heading parser", () => {
 		expect(definers(/export const PHASE_HEADING\b/)).toEqual(["impl-headings.ts"]);
 	});
 });
+
+/**
+ * admin-plan-type — A26 (cleanup).
+ *
+ * The plan's falsification found two questions each answered in three files:
+ * which status words mean a document is finished, and which document comes
+ * next. Two of the three copies of each were in `tools/plan-tools.ts`, which
+ * the scan above never read. A third thing was spelled three times and found
+ * by nobody: the human word for a document. This reads `src/lib` AND
+ * `src/tools`, and names the file that spells any of the three again.
+ */
+
+const SRC = join(REPO_ROOT, "apps/indusk-mcp/src");
+
+/** Files under `src/lib` and `src/tools` whose source matches, as `lib/…` or `tools/…`. */
+function spellers(pattern: RegExp): string[] {
+	return globSync(["lib/**/*.ts", "tools/**/*.ts"], { cwd: SRC, ignore: IGNORE })
+		.sort()
+		.filter((f) => pattern.test(readFileSync(join(SRC, f), "utf-8")));
+}
+
+describe("A26 — a document's label, the finished words and the next document are each defined once", () => {
+	it("(a) one DOCUMENT_LABELS, and no other file spells a document's label", () => {
+		expect(spellers(/export const DOCUMENT_LABELS\b/)).toEqual(["lib/workflow-types.ts"]);
+		const inline = spellers(/["'`](?:[Tt]est plan|ADR)["'`]/).filter(
+			(f) => f !== "lib/workflow-types.ts",
+		);
+		expect(inline, "a document's label is spelled inline; read DOCUMENT_LABELS").toEqual([]);
+	});
+
+	it("(b) one isFinishedDocumentStatus, and no other file compares a status to the finished words", () => {
+		expect(spellers(/export function isFinishedDocumentStatus\b/)).toEqual(["lib/lifecycle.ts"]);
+		const chain =
+			/===\s*"accepted"\s*\|\|[^;{}]*?===\s*"completed?"|===\s*"completed?"\s*\|\|[^;{}]*?===\s*"accepted"/;
+		expect(
+			spellers(chain).filter((f) => f !== "lib/lifecycle.ts"),
+			"a second list of the words that mean finished; call isFinishedDocumentStatus",
+		).toEqual([]);
+	});
+
+	it("(c) one nextRequiredDocument, and nothing indexes the next document position by hand", () => {
+		expect(spellers(/export function nextRequiredDocument\b/)).toEqual(["lib/lifecycle.ts"]);
+		expect(
+			spellers(/DOCUMENT_POSITIONS\[[^\]]*\+\s*1\s*\]/),
+			"the next document in lifecycle order, whatever the type; call nextRequiredDocument",
+		).toEqual([]);
+	});
+});
