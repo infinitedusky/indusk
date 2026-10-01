@@ -52,6 +52,7 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 - [x] Author A11 in a new file, `apps/indusk-admin/src/lib/segment-state-render-parity.test.ts`, importing the lifecycle as a namespace. A named import of a list that does not exist yet is a link error that would take the existing parity file down with it
 - [x] Author A15 and A18 in `apps/indusk-admin/src/lib/planning-reader.workflow.test.ts`: A15 reads `.indusk/planning/archive/release-ritual` from this repository through the reader; A18 imports the package subpath dynamically
 - [x] Run every file and read every failure: each row fails on its own assertion, and no file fails to load (package: 13 failing, 6 passing across three files; admin: 19 failing, 2 passing across three files; every failure is an assertion, none a load error)
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 
 #### Regression Guards
 
@@ -65,11 +66,11 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 
 #### Test Phase 1 Context
 
-- [ ] None expected — this phase only authors tests against today's behaviour. Ask Sandy before skipping the gate, and record the exchange as the skip's proof
+- [x] (none needed — asked: "Test Phase 1 only wrote test files, so it established no project convention and has nothing user-facing to document. Can I skip its Context gate and its Document gate?" — user: "Skip both")
 
 #### Test Phase 1 Document
 
-- [ ] None expected — there is nothing user-facing until Build Phase 2. Ask Sandy before skipping the gate, and record the exchange as the skip's proof
+- [x] (none needed — asked: "Test Phase 1 only wrote test files, so it established no project convention and has nothing user-facing to document. Can I skip its Context gate and its Document gate?" — user: "Skip both")
 
 ### Build Phase 1: the type decides what an absent document means
 
