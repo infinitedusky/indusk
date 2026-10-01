@@ -1,6 +1,6 @@
 ---
 title: "The admin says what kind of plan it is"
-status: completed
+status: in-progress
 approved: 2026-10-01
 date: 2026-10-01
 trajectory: required
@@ -39,6 +39,12 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A16 | In this repository every active plan declares a type — in its brief, or in its research document when the plan is research only | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/active-plans-declare-workflow.test.ts |
 | A17 | The installed copy of the planner skill is byte-identical to the package's | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
 | A18 | The workflow-type definitions are reachable by their documented package subpath from outside the package | Test Phase 1 | Build Phase 1 | passing | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
+| A19 | A `workflow:` value that is not a plain word is never read as a type, and an unrecognised declaration is shown as it was written: a list holding `bugfix` is not a bugfix, and `workflow: no` shows `no`, not `false` | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/lib/workflow-declaration.test.ts |
+| A20 | When a plan declares a word that is not a type, the sentence beside the bar says that word is not a recognised type; it does not say the plan declares no type | Build Phase 4 | Build Phase 4 | planned | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A21 | A plan whose type has no impl — a spike — reads executing, falsify and cleanup as skipped, while it is in progress and after it is archived; never pending, never done | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A22 | A finished document that its type requires nothing after does not say it is awaiting the next document: a spike whose research is complete says the plan ends there | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A23 | The next step the plan list names is the next document the plan's type requires: a bugfix with an accepted test plan is told to create the impl, never the ADR, and a spike with finished research is not told to create a brief; a plan with no type reads as it does today | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/lib/workflow-declaration.test.ts |
+| A24 | A plan that has an impl but neither a brief nor a research document still shows the "type not declared" chip whenever its bar reads a document as unknown | Build Phase 4 | Build Phase 4 | planned | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
 
 ## Checklist
 
@@ -148,3 +154,41 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 
 - [x] `apps/docs/src/reference/skills/plan.md`: every brief declares its type; what each type requires
 - [x] `apps/docs/src/changelog.md`, under the unreleased heading: the admin shows a plan's type; an absent document reads skipped, missing, pending or unknown; the bugfix template now includes the test plan
+
+### Build Phase 4: Falsification — the type is read loosely, and ignored by everything that says what comes next
+
+**Goal**: verify whether the attested state holds against two kinds of failure. The plan made the type the judge of an absent *document*, and stopped there: the declaration itself is read with a coercion that accepts things that are not a word, and three other readings of "what comes next" — the positions that follow the impl, the active label, and the plan list's next step — still ignore the type the plan now declares. Each row below is one hypothesis, confirmed by reading the code or by printing what the parser returns for this repository's own plans; each item is the fix.
+
+What the investigation found, row by row:
+
+- **A19** — `readWorkflow` takes `String(value)` of whatever YAML produced. `workflow: [bugfix]` parses to a list, `String(["bugfix"])` is `"bugfix"`, and the plan reads as a bugfix. `workflow: no` parses to `false` and is shown as `"false" — not a recognised type`, which is not what was written. A mapping is shown as `[object Object]`. A3 asserts an unrecognised word is "shown as written"; it is shown as coerced.
+- **A20** — `absentDocumentNote` has two sentences and picks the "declares no type" one whenever the type is null. A plan that declared `hotfix` gets a chip saying `"hotfix" — not a recognised type` and, under the bar, a sentence saying it declares no type. The page contradicts itself.
+- **A21** — printed for this repository: `user-zero` and `jev-decision-model`, both spikes, read brief, test plan, ADR, impl and retrospective as skipped — and executing, falsify and cleanup as **pending**. Those three positions exist only because of the impl. The bar tells a research-only plan that it is waiting to execute; archived, the same spike would read them as **done**, because the loop marks every non-document position behind the current one done.
+- **A22** — `resolvePosition` answers an accepted or complete document with "awaiting the next document". For a spike whose research is finished there is no next document. The active label is the one message the bar always carries, and the admin-ui-phase-progress falsification established that it never claims a fact the reader does not hold.
+- **A23** — `determineNextStep` names `DOCUMENT_POSITIONS[idx + 1]`, the next document in lifecycle order, whatever the type. A bugfix with an accepted test plan is told "Create adr" — this plan was, between its test plan and its impl — and a spike with completed research is told "Create brief". The plan list and the admin now disagree about the same plan: one says the ADR is skipped, the other says to write it.
+- **A24** — the chip is rendered only when the plan has a brief or a research document. Two archived plans here have an impl and neither (`code-reviewer-agent`, `stale-indusk-docs-path`): their bars read documents as unknown, the sentence under the bar says the plan declares no type, and there is no chip to say so or explain it. A2 asserts the page says "type not declared"; for these it says it only in the small print.
+
+- [ ] Author A19–A24 red before any fix. A19 and A23 in a new `apps/indusk-mcp/src/lib/workflow-declaration.test.ts`, calling `parsePlan` on plan folders written to a temporary directory — the filesystem is the boundary, so the declarations are real frontmatter and not values handed to a function. A21 and A22 beside the existing rows in `lifecycle-document-states.test.ts`. A20 and A24 beside the existing rows in `PlanDetail.type.test.tsx`. Run each and read each failure
+- [ ] `lib/workflow-types.ts` and `lib/plan-parser.ts`: only a plain string is a candidate for a type. Anything else YAML produced — a list, a mapping, a boolean, a number — is an unrecognised declaration, carried as the text on the frontmatter's `workflow:` line, read from the raw document with a line-anchored match and never from `String()` of the parsed value
+- [ ] `absentDocumentNote` and `components/bars/PlanBar.tsx`: a third sentence for an unrecognised declaration, naming the word and saying it is not a recognised type. The bar is passed the declared word alongside the type
+- [ ] `lib/lifecycle.ts`: the positions that exist only because of the impl — executing, falsify, cleanup — read skipped when the plan's type does not require an impl, behind the plan's position or ahead of it. The list of impl-dependent positions is stated once, beside the document positions
+- [ ] `lib/lifecycle.ts`: when a document is finished and the plan's type requires no later document, the active label says the plan ends there instead of "awaiting the next document"
+- [ ] `lib/plan-parser.ts`: `determineNextStep` names the next document the declared type requires, skipping the ones it does not; with nothing left it does not name one. A plan with no declared type keeps today's answer
+- [ ] `components/PlanDetail.tsx`: the chip is shown whenever the plan bar is, so a page that says a plan declares no type always carries the chip that says it and explains it
+- [ ] `src/__tests__/active-plans-declare-workflow.test.ts`: read each plan's type through `parsePlan` instead of parsing the frontmatter itself. Once the parser stops accepting a list, a private read that still coerces one would let the standing check pass a plan the page reads as undeclared
+
+#### Build Phase 4 Verification
+
+- [ ] A19, A21, A22 and A23 pass and A5–A9, A12–A17 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/workflow-declaration src/lib/lifecycle-document-states src/lib/lifecycle-derive src/__tests__/workflow-types-parity src/__tests__/active-plans-declare-workflow`)
+- [ ] A20 and A24 pass and A1–A4, A10, A11, A15, A18 still pass (`pnpm --filter @infinitedusky/indusk-mcp build` then `pnpm --filter indusk-admin exec vitest run src/components/PlanDetail.type src/lib/segment-state-render-parity src/lib/planning-reader.workflow src/__tests__/typecheck`)
+- [ ] Both apps' whole suites pass, with the admin built and bundled first (`pnpm --filter indusk-admin build && node apps/indusk-mcp/scripts/bundle-admin.js`) and no dev server running against the admin directory
+- [ ] Printed for this repository after the fix: `user-zero` and `jev-decision-model` read executing, falsify and cleanup as skipped, and `day-always-on-deploy`'s next step after its test plan would be the impl
+
+#### Build Phase 4 Context
+
+- [ ] Known Gotchas, the entry on frontmatter regexes for value-bearing keys: a frontmatter value that is shown to a person or matched against a vocabulary is read from the raw line, never from `String()` of the parsed YAML — a one-element list coerces to its element and `no` becomes `false`. An edit in place within the byte budget
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/guide/plan-lifecycle.md`, the section on what an absent document reads as: the positions that follow the impl are skipped for a type that has none, and the next step named for a plan is the next document its type requires
+- [ ] `apps/docs/src/changelog.md`, under the unreleased heading: the same two facts, and that a `workflow:` value that is not a plain word is reported as unrecognised
