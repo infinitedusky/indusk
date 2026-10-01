@@ -206,9 +206,12 @@ publisher would have to reconstruct: what shipped. So the bump happens here.
 
 **What it derives.**
 
-1. **Whether there is anything to release.** It diffs the landed merge
-   (`HEAD~1..HEAD`) against the packaged paths (`apps/indusk-mcp`,
-   `apps/indusk-admin`, `packages`), which are the ones `release-guard.sh` checks.
+1. **Whether there is anything to release.** It reads the packaged changes
+   since the last release commit, from the `indusk/version` line of
+   `check_health` ("N packaged commit(s) since") or from a diff over
+   `release-guard.sh`'s own packaged paths. It does not look at the last commit
+   alone: Step 10 ends by committing the landing note, so the last commit never
+   touches packaged files.
 2. **The increment, from what the plan did.** A new capability is a **minor**.
    A fix, hardening or refactor of something already shipped is a **patch**.
    When a plan did both, or the answer is unclear, it is a minor.
@@ -227,7 +230,7 @@ publisher would have to reconstruct: what shipped. So the bump happens here.
 It then runs `release-guard.sh` and stops. `pnpm release` is the operator's
 call, because npm's one-time password is not something an agent can enter.
 
-**When it skips.** If the landed merge changed no packaged paths, the step says
+**When it skips.** If nothing packaged changed since the release commit, the step says
 *"No packaged paths changed — nothing to release; the version stays at X.Y.Z"*
 and records that in the retrospective. A plan that touched only plan documents,
 docs or this repository's own skills changes no tarball. Writing the skip down
