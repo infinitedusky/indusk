@@ -23,6 +23,7 @@ roadmap:
   - user-zero
   - jev-decision-model
   - release-ritual
+  - release-availability
   - admin-plan-type
   - plan-premises
   - day-always-on-deploy
