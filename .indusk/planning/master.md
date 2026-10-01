@@ -24,6 +24,7 @@ roadmap:
   - jev-decision-model
   - release-ritual
   - admin-plan-type
+  - plan-premises
   - day-always-on-deploy
 ---
 
@@ -200,6 +201,18 @@ lesson title, or a chat log.
     clause **already shipped** (the version line reports installed, published,
     project-updated and packaged commits since the release commit); what
     remains is naming the plans rather than counting commits.
+- **Standalone, brief draft** (2026-10-01, rewritten the same day):
+  [plan-premises](plan-premises/brief.md) — a place to put the *why*. A project
+  states its aim and the metrics it judges it by, in the user's own words;
+  outside material and doubts are read against it by an assigned advocate and an
+  assigned critic (an agent's stance is compliance with its role, so only the
+  arguments and sources count); **the human scores**, dated, with a reason; the
+  reading is prominent in the admin and one line at catchup. **It gates
+  nothing** — gates are for biases with a known right answer, and where time
+  goes has none. Covers both "is this still worth building" and "am I pointed
+  right". Its first two real intakes are a colleagues' thread of AI development
+  processes and an article on graph-shaped agentic workflows. Follows
+  `context-tiers`, the accepted plan that decides where rules and context live.
 - **Done, not a step** (2026-10-01, merged as `140a705a`): **the citing rule in
   the agent-conduct file gains an example for every label kind.** The rule
   shipped with one example (a trajectory row) and did not list component
