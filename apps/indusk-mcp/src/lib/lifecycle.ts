@@ -3,7 +3,7 @@ import type { GateKind } from "./impl-headings.js";
 import type { ImplPhase, ParsedImpl } from "./impl-parser.js";
 import type { PlanSummary } from "./plan-parser.js";
 import type { PhaseBoundaryRecord } from "./shape/boundary.js";
-import { WORKFLOW_DEFINITIONS, type WorkflowType } from "./workflow-types.js";
+import { DOCUMENT_LABELS, WORKFLOW_DEFINITIONS, type WorkflowType } from "./workflow-types.js";
 
 /**
  * The one definition of a plan's lifecycle (admin-ui-phase-progress, ADR D1).
@@ -316,7 +316,7 @@ function resolvePosition(input: DerivePlanPositionInput): {
 		return { position: "impl-approved", awaiting: `impl ${status}, awaiting approval` };
 	}
 	if (stage === "research" || stage === "brief" || stage === "test-plan" || stage === "adr") {
-		const noun = stage === "test-plan" ? "test plan" : stage === "adr" ? "ADR" : stage;
+		const noun = DOCUMENT_LABELS[stage];
 		if (isFinishedDocumentStatus(status)) {
 			// A22: the active label never claims a fact the reader does not
 			// hold. A spike's finished research awaits nothing.
