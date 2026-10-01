@@ -91,6 +91,34 @@ function templateDocs(type: string): string[] {
 	return PLANNING_DOCS.filter((doc) => named.includes(doc));
 }
 
+const REFERENCE_PAGE = join(REPO_ROOT, "apps/docs/src/reference/skills/plan.md");
+const ALL_DOCS = [...PLANNING_DOCS, "retrospective"] as const;
+
+/**
+ * `type → documents`, read from the planner reference page's Workflow Types
+ * table. This page lists the retrospective, so it is compared in full.
+ *
+ * Found while documenting this plan: the page was a fourth statement of the
+ * same facts, and it said a bugfix was "brief, impl" too.
+ */
+function referencePageTable(): Record<string, string[]> {
+	const page = readFileSync(REFERENCE_PAGE, "utf-8");
+	const section = page.slice(page.indexOf("## Workflow Types"));
+	const out: Record<string, string[]> = {};
+	for (const line of section.split("\n")) {
+		const cells = line.split("|").map((c) => c.trim());
+		// | **bugfix** | brief, test-plan, impl, retrospective | Known problem … |
+		const type = /^\*\*([a-z]+)\*\*$/.exec(cells[1] ?? "")?.[1];
+		if (type === undefined || !(TYPES as readonly string[]).includes(type)) continue;
+		if (out[type] !== undefined) continue;
+		const lower = cells[2].toLowerCase();
+		out[type] = lower.includes("research only")
+			? ["research"]
+			: ALL_DOCS.filter((doc) => (doc === "impl" ? /\bimpl\b/.test(lower) : lower.includes(doc)));
+	}
+	return out;
+}
+
 /** The first fenced markdown template in a document, or null. */
 function firstTemplateBlock(text: string): string | null {
 	const match = /```markdown\n([\s\S]*?)\n```/.exec(text);
@@ -131,6 +159,22 @@ describe("A12 — the admin's facts, the planner's table and the templates agree
 		expect(disagreements, `module and template disagree on: ${disagreements.join("; ")}`).toEqual(
 			[],
 		);
+	});
+
+	it("the planner reference page's table equals the same facts, retrospective included", async () => {
+		const definitions = (await loadDefinitions()) ?? {};
+		const table = referencePageTable();
+		expect(Object.keys(table).sort(), "the reference page does not list all four types").toEqual(
+			[...TYPES].sort(),
+		);
+		const disagreements = TYPES.filter((type) => {
+			const required = ALL_DOCS.filter((d) => definitions[type]?.requires.includes(d));
+			return JSON.stringify(required) !== JSON.stringify(table[type]);
+		}).map((type) => `${type} (page lists: ${table[type]?.join(", ")})`);
+		expect(
+			disagreements,
+			`module and reference page disagree on: ${disagreements.join("; ")}`,
+		).toEqual([]);
 	});
 
 	it("each type's requires and skips partition the document positions, with a purpose and a why", async () => {
