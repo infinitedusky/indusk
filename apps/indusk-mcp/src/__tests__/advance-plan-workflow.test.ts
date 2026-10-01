@@ -1,7 +1,7 @@
-import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerPlanTools } from "../tools/plan-tools.js";
+import { writePlanFolder } from "./helpers/plan-folder.js";
 import { type PlanWorktreeProject, planWorktreeProject } from "./helpers/plan-worktree-fixture.js";
 import { toolCaller } from "./helpers/tool-call.js";
 
@@ -25,14 +25,7 @@ beforeEach(() => {
 afterEach(() => p.cleanup());
 
 function planWith(name: string, documents: Record<string, string[]>): void {
-	const dir = join(p.trunk, ".indusk", "planning", name);
-	mkdirSync(dir, { recursive: true });
-	for (const [file, frontmatter] of Object.entries(documents)) {
-		writeFileSync(
-			join(dir, file),
-			["---", `title: "${name}"`, ...frontmatter, "---", "", `# ${name}`, ""].join("\n"),
-		);
-	}
+	writePlanFolder(join(p.trunk, ".indusk", "planning"), name, documents);
 }
 
 interface Advance {

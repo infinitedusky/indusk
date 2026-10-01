@@ -1,7 +1,8 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { writePlanFolder } from "../__tests__/helpers/plan-folder.js";
 import { parsePlan } from "./plan-parser.js";
 
 /**
@@ -32,17 +33,9 @@ afterEach(() => {
 	rmSync(planning, { recursive: true, force: true });
 });
 
-/** Write a plan folder; each document is `[frontmatter lines, status]`. */
+/** A plan folder in this test's planning directory; each document is its frontmatter lines. */
 function planWith(name: string, documents: Record<string, string[]>): string {
-	const dir = join(planning, name);
-	mkdirSync(dir, { recursive: true });
-	for (const [file, frontmatter] of Object.entries(documents)) {
-		writeFileSync(
-			join(dir, file),
-			["---", `title: "${name}"`, ...frontmatter, "---", "", `# ${name}`, ""].join("\n"),
-		);
-	}
-	return dir;
+	return writePlanFolder(planning, name, documents);
 }
 
 describe("A19 — only a plain word is a type, and anything else is shown as written", () => {
