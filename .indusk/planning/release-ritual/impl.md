@@ -1,6 +1,6 @@
 ---
 title: "The release ritual finishes itself"
-status: completed
+status: in-progress
 date: 2026-09-21
 trajectory: required
 test_phases: required
@@ -163,6 +163,25 @@ them so once Step 11 edits one of them.
 
 #### Build Phase 4 Document
 - [x] `apps/docs/src/changelog.md` Unreleased and `/reference/skills/retrospective` Step 11: the release question is "packaged changes since the release commit", and the install check compares against the lockfile
+
+### Build Phase 5: Cleanup — one trunk-guard fixture, one packaged-paths list
+
+**Goal**: remove the two restatements this plan added across files: a third private copy of the trunk-guard test harness (Test Phase 1's own item said to reuse the existing one), and a third copy of the packaged-paths list, in Step 11's prose, outside the pin that keeps the other two in step. Basis: the rule of three, and this codebase's "one home per fact" — a list restated in prose drifts silently, the failure `version-state.test.ts` exists to prevent for the bash/TS pair.
+
+- [ ] Extract the trunk-guard fixture into `apps/indusk-mcp/src/__tests__/helpers/trunk-guard-fixture.ts`: a `trunkProject()` (git repo on `main`, `.indusk/config.json`, `src/a.ts`, seed commit, with the allow-listed files `trunk-guard.test.ts` seeds), `stage(root, rel, body)`, and the `bash` / `edit` event builders. `trunk-guard.test.ts`, `trunk-guard-falsification.test.ts` and `trunk-guard-release-message.test.ts` each define their own `project()` and `bash` today — three copies with drifted contents; all three import the helper instead, beside `test-git.ts` and `hook-runner.ts`
+- [ ] Step 11 (`apps/indusk-mcp/skills/retrospective.md`) stops restating the packaged paths: it names `PACKAGED_PATHS` in `apps/indusk-mcp/scripts/release-guard.sh` as the list for the `git diff` fallback, and keeps the `indusk/version` line as the primary answer. Resync the installed copy
+- [ ] (reviewed `hooks/trunk-guard.js` at 464 lines, over the 400 focus cap — left as-is: one hook, one decision; the commit-argument reading (`commitArgs`, `firstMessage`, `commitIntent`) has no second consumer, and a `_`-prefixed hook module by convention mirrors exactly one `src/lib` module, which this would not)
+- [ ] (reviewed `skills/retrospective.md`, its installed copy, `reference/skills/retrospective.md` and `changelog.md`, all over the cap — left as-is: prose documents whose length is their content; Step 11 is one step in a ritual that reads in order)
+- [ ] (reviewed `scripts/check-install.js` and `scripts/record-release.js` — left as-is: `record-release.js` already reuses `readRepoVersionState` rather than restating it; `check-install.js`'s two walk-ups answer different questions, a package's `node_modules` and the workspace's lockfile)
+
+#### Build Phase 5 Verification
+- [ ] (no tests flip at this phase — reason: refactor) The three trunk-guard files and the release-ritual rows stay green through the extraction: `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard src/__tests__/release-ritual-skill src/__tests__/skill-sync-parity src/__tests__/version-state` — the same test count as before the extraction, and `grep -c "^function project" src/__tests__/trunk-guard*.test.ts` reports 0 for every file
+
+#### Build Phase 5 Context
+- [ ] Known Gotchas (the test-helpers entry): a trunk-guard test builds its project through `helpers/trunk-guard-fixture.ts`
+
+#### Build Phase 5 Document
+- [ ] `/reference/skills/retrospective` Step 11 names `release-guard.sh`'s `PACKAGED_PATHS` as the list and restates no paths of its own — confirm or edit
 
 ## Deferred Verification
 
