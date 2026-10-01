@@ -1,6 +1,6 @@
 ---
 title: "The admin says what kind of plan it is"
-status: in-progress
+status: completed
 approved: 2026-10-01
 date: 2026-10-01
 trajectory: required
@@ -32,11 +32,11 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A9 | A feature plan with every document present reads exactly as it does today | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
 | A10 | When a document is missing or unknown the page says so in words beside the bar — which document and why — not by colour or hover alone | Test Phase 1 | Build Phase 2 | passing | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
 | A11 | Every state a bar segment can be in has its own drawing and its own label in the admin; a state added to the lifecycle without one fails by name | Test Phase 1 | Build Phase 2 | passing | apps/indusk-admin/src/lib/segment-state-render-parity.test.ts |
-| A12 | What the admin says a type requires and skips equals the planner skill's workflow table and each workflow template's list of documents — one set of facts, three statements | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
-| A13 | The bugfix workflow template lists the test plan among the documents it creates | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
-| A14 | Every brief template the planner uses — in the skill and in each workflow template — carries a `workflow:` line | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
-| A15 | The archived release-ritual plan, read through the admin's reader from this repository, is a bugfix with research and ADR skipped and the test plan missing | Test Phase 1 | Build Phase 3 | written | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
-| A16 | In this repository every active plan declares a type — in its brief, or in its research document when the plan is research only | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/active-plans-declare-workflow.test.ts |
+| A12 | What the admin says a type requires and skips equals the planner skill's workflow table and each workflow template's list of documents — one set of facts, three statements | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
+| A13 | The bugfix workflow template lists the test plan among the documents it creates | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
+| A14 | Every brief template the planner uses — in the skill and in each workflow template — carries a `workflow:` line | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
+| A15 | The archived release-ritual plan, read through the admin's reader from this repository, is a bugfix with research and ADR skipped and the test plan missing | Test Phase 1 | Build Phase 3 | passing | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
+| A16 | In this repository every active plan declares a type — in its brief, or in its research document when the plan is research only | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/active-plans-declare-workflow.test.ts |
 | A17 | The installed copy of the planner skill is byte-identical to the package's | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
 | A18 | The workflow-type definitions are reachable by their documented package subpath from outside the package | Test Phase 1 | Build Phase 1 | passing | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
 
@@ -126,23 +126,25 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 
 ### Build Phase 3: the planner declares it, and this repository does
 
-- [ ] `apps/indusk-mcp/skills/planner.md`: the brief template carries `workflow:`, and the Workflow Types section says every brief declares it, defaulting to `feature`. Resync the installed copy under `.claude/skills/planner/`
-- [ ] `apps/indusk-mcp/templates/workflows/`: each template's brief (or, for the spike, research) template carries `workflow:`; the bugfix template's list of documents gains the test plan, and its opening sentence stops saying a bugfix is only a brief and an impl. **Found authoring A12:** the feature and refactor templates omit the test plan too — three of the four templates contradict the skill's table — so all three gain it
-- [ ] Declare the type on every active plan here that lacks one: `plan-premises`, `day-always-on-deploy` and `indusk-release` in their briefs; `user-zero` and `jev-decision-model`, which are research only, in their research documents
-- [ ] Declare `workflow: bugfix` on the archived `release-ritual` brief — the one archived plan that gets it, per the brief
+- [x] `apps/indusk-mcp/skills/planner.md`: the brief template carries `workflow:`, and the Workflow Types section says every brief declares it, defaulting to `feature`. Resync the installed copy under `.claude/skills/planner/`
+- [x] `apps/indusk-mcp/templates/workflows/`: each template's brief (or, for the spike, research) template carries `workflow:`; the bugfix template's list of documents gains the test plan, and its opening sentence stops saying a bugfix is only a brief and an impl. **Found authoring A12:** the feature and refactor templates omit the test plan too — three of the four templates contradict the skill's table — so all three gain it
+- [x] Declare the type on every active plan here that lacks one: `plan-premises`, `day-always-on-deploy` and `indusk-release` in their briefs; `user-zero` and `jev-decision-model`, which are research only, in their research documents (which type each brief is was Sandy's call, asked for each: `plan-premises` is a feature, `day-always-on-deploy` a bugfix — its document set is brief, test plan, impl, and no type means "small step". `indusk-release` already declared feature. The two research-only plans are spikes)
+- [x] Declare `workflow: bugfix` on the archived `release-ritual` brief — the one archived plan that gets it, per the brief
+- [x] **Found writing the Document gate:** the planner reference page (`apps/docs/src/reference/skills/plan.md`) was a fourth statement of what each type requires, and said a bugfix was "brief, impl" like the templates did. Corrected, and `workflow-types-parity.test.ts` gains a case for it under A12 — run against the page as it was, it fails naming feature, bugfix and refactor; against the corrected page it passes
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. The phase changed prose, frontmatter and one test file, whose new reader is a named function beside the two it parallels.
 
 #### Build Phase 3 Verification
 
-- [ ] A12, A13, A14 and A16 pass and A17 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/workflow-types-parity src/__tests__/active-plans-declare-workflow src/__tests__/skill-sync-parity`)
-- [ ] A15 passes (`pnpm --filter indusk-admin exec vitest run src/lib/planning-reader.workflow`)
-- [ ] Both apps' suites pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp --filter=indusk-admin`)
-- [ ] By eye, in the running admin: the archived release-ritual page shows `bugfix`, research and ADR skipped, the test plan missing, and a sentence beside the bar saying a bugfix requires a test plan
+- [x] A12, A13, A14 and A16 pass and A17 still passes — 33 passed across three files (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/workflow-types-parity src/__tests__/active-plans-declare-workflow src/__tests__/skill-sync-parity`)
+- [x] A15 passes (`pnpm --filter indusk-admin exec vitest run src/lib/planning-reader.workflow`)
+- [x] Both apps' suites pass (`pnpm turbo test --filter=@infinitedusky/indusk-mcp --filter=indusk-admin`) — run per app: the package 1,652 passed across 266 files, the admin 338 passed across 55. Two things the first attempts showed, neither a defect in this plan: nine package tests about the admin daemon and the tarball need the admin built and bundled (`pnpm --filter indusk-admin build`, then `node scripts/bundle-admin.js`), which a fresh worktree does not have — they passed once it was; and the admin's HTTP smokes all fail while any dev server holds the app directory, which the by-eye check's server did until it was killed
+- [x] By eye, in the running admin: the archived release-ritual page shows `bugfix`, research and ADR skipped, the test plan missing, and a sentence beside the bar saying a bugfix requires a test plan (read from a screenshot: the `bugfix` chip beside "archived"; research and ADR dashed; the test plan segment outlined in red with its label in red; and under the bar, in red, "The test plan is missing — a bugfix requires it.")
 
 #### Build Phase 3 Context
 
-- [ ] Conventions, the entry that begins "Plans live in": a brief declares `workflow:`, and `active-plans-declare-workflow.test.ts` fails this repository's suite when an active plan lacks one. An edit in place that shortens the same entry by at least as much as it adds
+- [x] Conventions, the entry that begins "Plans live in": a brief declares `workflow:`, and `active-plans-declare-workflow.test.ts` fails this repository's suite when an active plan lacks one. An edit in place that shortens the same entry by at least as much as it adds (done, with one honest miss: this entry grew by 6 bytes, 254 to 260 — there was not that much to cut from it without losing the cross-reference rule. Across the plan's three context edits the root file went from 61,409 bytes to 61,389, so it is 20 bytes smaller than when the plan began)
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/skills/plan.md`: every brief declares its type; what each type requires
-- [ ] `apps/docs/src/changelog.md`, under the unreleased heading: the admin shows a plan's type; an absent document reads skipped, missing, pending or unknown; the bugfix template now includes the test plan
+- [x] `apps/docs/src/reference/skills/plan.md`: every brief declares its type; what each type requires
+- [x] `apps/docs/src/changelog.md`, under the unreleased heading: the admin shows a plan's type; an absent document reads skipped, missing, pending or unknown; the bugfix template now includes the test plan
