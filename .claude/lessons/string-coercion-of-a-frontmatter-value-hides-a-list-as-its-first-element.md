@@ -1,0 +1,7 @@
+# String(value) on a frontmatter field silently accepts a YAML list, stringifying it to its first element
+
+In admin-plan-type, the working hypothesis was that `workflow: no` parses to the YAML boolean `false` and `String(false)` → `"false"` was the whole defect reading a declared type wrong. That hypothesis was wrong: this project's YAML parser reads bare `no` as the literal string `"no"`, not a boolean, so that specific coercion never fired. The real defect was `String(["bugfix"])`, which JavaScript stringifies to `"bugfix"` — a frontmatter author who wrote `workflow: [bugfix]` (a YAML list, maybe from copy-pasting a multi-value field elsewhere) got a value that silently read as the valid type `bugfix`, not as a malformed field.
+
+**Rule:** a vocabulary value read from frontmatter must be validated as a plain string, not run through `String(value)` or any other coercion that accepts arrays, objects, or booleans and produces a plausible-looking result. Check `typeof value === "string"` before matching it against the known vocabulary; anything else is unrecognised, shown from the raw line rather than coerced into looking valid.
+
+**Corollary:** don't trust your own hypothesis about which coercion is broken until you've confirmed what the parser actually does with the suspect input in this codebase — the same input (`no`) coerces differently across YAML parsers and versions, and the actual defect was a different coercion than the one first suspected.

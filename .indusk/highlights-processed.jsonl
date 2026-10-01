@@ -309,3 +309,11 @@
 {"id":"h-20261001-004","processedAt":"2026-10-01T17:36:18.490Z","action":"wrote-episode","detail":"check-a-ritual-step-against-what-the-steps-around-it-actually-do"}
 {"id":"h-20261001-005","processedAt":"2026-10-01T17:36:19.020Z","action":"wrote-episode","detail":"tick-checkboxes-and-trajectory-state-in-the-same-commit-as-the-code"}
 {"id":"h-20261001-006","processedAt":"2026-10-01T18:53:39.726Z","action":"skipped","detail":"recorded in admin-plan-type/brief.md — Proposed Direction + Ground-truth check sections carry the full rationale"}
+{"id":"h-20261001-007","processedAt":"2026-10-01T21:52:30.060Z","action":"wrote-episode","detail":"fixture-from-real-data-and-print-after-the-fix"}
+{"id":"h-20261001-008","processedAt":"2026-10-01T21:52:30.610Z","action":"wrote-episode","detail":"find-every-reader-of-the-question-not-the-data"}
+{"id":"h-20261001-009","processedAt":"2026-10-01T21:52:41.623Z","action":"skipped","detail":"already captured as the Corollary paragraph in find-every-reader-of-the-question-not-the-data.md"}
+{"id":"h-20261001-010","processedAt":"2026-10-01T21:53:19.187Z","action":"wrote-episode","detail":"string-coercion-of-a-frontmatter-value-hides-a-list-as-its-first-element"}
+{"id":"h-20261001-011","processedAt":"2026-10-01T21:53:19.957Z","action":"wrote-episode","detail":"every-restatement-of-a-rule-needs-its-own-pin"}
+{"id":"h-20261001-012","processedAt":"2026-10-01T21:53:20.773Z","action":"wrote-episode","detail":"author-falsification-rows-against-a-plan-that-exists"}
+{"id":"h-20261001-013","processedAt":"2026-10-01T21:53:21.648Z","action":"wrote-episode","detail":"kill-a-test-server-by-process-tree-and-check-leftover-listeners"}
+{"id":"h-20261001-014","processedAt":"2026-10-01T21:53:22.274Z","action":"wrote-episode","detail":"run-a-formatter-from-the-directory-of-the-file-it-formats"}
