@@ -317,3 +317,4 @@
 {"id":"h-20261001-012","processedAt":"2026-10-01T21:53:20.773Z","action":"wrote-episode","detail":"author-falsification-rows-against-a-plan-that-exists"}
 {"id":"h-20261001-013","processedAt":"2026-10-01T21:53:21.648Z","action":"wrote-episode","detail":"kill-a-test-server-by-process-tree-and-check-leftover-listeners"}
 {"id":"h-20261001-014","processedAt":"2026-10-01T21:53:22.274Z","action":"wrote-episode","detail":"run-a-formatter-from-the-directory-of-the-file-it-formats"}
+{"id":"h-20261001-015","processedAt":"2026-10-01T22:07:46.330Z","action":"wrote-episode","detail":"per-checkout-state-needs-a-resolved-single-copy-across-worktrees"}

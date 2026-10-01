@@ -22,6 +22,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-09-22: **1.54.0 published** to npm from release commit b185e375 (`pnpm release`, recorded by `scripts/record-release.js`; corrected 2026-10-01 — the script had recorded HEAD, `d7e0061a`, a plan commit; fixed by release-ritual T11).
 - 2026-10-01: **1.55.0 published** to npm from release commit b5735c8 (`pnpm release`; live at 17:57:49Z after ~6 min in npm's publish-time malware scan — the script's "did not confirm" gave up after 15 s; it now waits, fixed in 3bd6cbe8).
 - 2026-10-01: **1.55.2 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit d9f83e3 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-01: **1.56.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 1f59ecf (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
