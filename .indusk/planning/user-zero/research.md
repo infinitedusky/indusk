@@ -2,6 +2,7 @@
 title: "User Zero — continuous build steered by use"
 date: 2026-09-16
 status: in-progress
+workflow: spike
 ---
 
 # User Zero — Research

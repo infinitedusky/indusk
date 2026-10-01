@@ -3,6 +3,7 @@ title: "Premises — why we are building this, scored over time, and never a gat
 date: 2026-10-01
 status: draft
 rewritten: 2026-10-01
+workflow: feature
 ---
 
 # Premises — Brief

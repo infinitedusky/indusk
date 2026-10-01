@@ -2,6 +2,7 @@
 title: "Jev (TypeSafe AI) — a typed-decision model, and whether InDusk has a slot for it"
 date: 2026-09-18
 status: complete
+workflow: spike
 ---
 
 # Jev — Research
