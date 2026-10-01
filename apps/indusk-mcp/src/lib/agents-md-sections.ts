@@ -20,8 +20,20 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-/** Template sections every project AGENTS.md must carry. Extend on new rules. */
-export const ENSURED_AGENTS_MD_SECTIONS: readonly string[] = ["## Citing plan artifacts"];
+/**
+ * Template sections every project AGENTS.md must carry. Extend on new rules.
+ *
+ * A present section is never rewritten, so a rule that needs *more* text does
+ * not get it by editing its section in the template — that reaches only
+ * projects that do not have the file yet. It gets a new heading here instead,
+ * which is appended everywhere. The examples section is that case: the citing
+ * rule shipped with one example of one label kind, and was broken on a kind it
+ * did not show.
+ */
+export const ENSURED_AGENTS_MD_SECTIONS: readonly string[] = [
+	"## Citing plan artifacts",
+	"## Citing plan artifacts — the three parts, with examples",
+];
 
 export interface EnsureAgentsMdSectionsResult {
 	/** Headings appended to the project file. */
