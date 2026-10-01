@@ -13,6 +13,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - **The planner writes `workflow:` on every brief**, defaulting to `feature`; a spike declares it in its research document. Projects with existing plans see *type not declared* until they add the line — nothing is refused.
 
 ### Fixed
+- **What comes next follows the plan's type.** The plan list's next step, `advance_plan` and the plan bar's label each named the next document in lifecycle order whatever the type, so a bugfix with an accepted test plan was told to create the ADR its type skips. All three now read one definition, `nextRequiredDocument` in the `lifecycle` subpath. For a spike, the positions that follow the impl — executing, falsify, cleanup — read *skipped* instead of pending forever, and finished research reads *research finished — a spike ends here*.
+- **`complete` counts as a finished document everywhere.** Research documents say `status: complete`; the plan list and `advance_plan` recognised only `accepted` and `completed`, so finished research read *Review research* and was refused by `advance_plan`. A closed plan whose retrospective says `complete` now reads *Done* in `list_plans` rather than *Review retrospective*.
+- **A `workflow:` value that is not a plain word is reported as unrecognised.** `workflow: [bugfix]` was read as a bugfix. A list or a mapping is now shown as it was written, the sentence under the plan bar names an unrecognised word instead of saying the plan declares no type, and the type chip appears on every page that draws the plan bar.
 - **The bugfix, refactor and feature workflow templates list the test plan.** Three of the four templates omitted it, contradicting the planner skill's own table, which is how a bugfix written from the template could close without one. The skill's table, the templates and the planner reference page are now pinned equal to the `workflow-types` module by test.
 
 ## [1.55.2] — 2026-10-01

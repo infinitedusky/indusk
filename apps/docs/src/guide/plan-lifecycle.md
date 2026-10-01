@@ -163,6 +163,32 @@ claim about intent, and only a declared type can make it. The type is never
 inferred from which documents happen to exist — that would be the bar
 grading the plan against the plan.
 
+The type speaks for more than documents. Three positions exist only because
+a plan has an impl — executing, falsify, cleanup — so for a type that has
+none, a spike, they read **skipped** as well, while the plan is in progress
+and after it closes. Before the falsification of this plan they read pending
+forever: the bar told a research-only plan it was waiting to execute.
+
+And everything that says *what comes next* asks the type. The bar's label,
+the plan list's next step and `advance_plan` each used to name the next
+document in lifecycle order, whatever the plan was — a bugfix with an
+accepted test plan was told to create the ADR its own type skips, by a tool
+standing next to a bar that drew the ADR as skipped. All three now read one
+function, `nextRequiredDocument` in the lifecycle module. A bugfix with an
+accepted test plan is told to create the impl. A spike whose research is
+finished is told nothing further: its label reads *research finished — a
+spike ends here* and its next step is *Done*.
+
+Which status words mean a document is finished is one definition too,
+`isFinishedDocumentStatus`: `accepted`, `complete`, `completed`. Research
+documents say `complete`, and the plan list once did not know the word.
+
+A `workflow:` value that is not a plain word is never read as a type.
+`workflow: [bugfix]` is a YAML list, not a bugfix; it is reported as an
+unrecognised declaration, shown as it was written on the line, and the
+sentence under the bar names it rather than saying the plan declares no
+type.
+
 The segment states are `SEGMENT_STATES` in the lifecycle module, a runtime
 list like the positions and activities, so the same render-parity pin walks
 them: a state without a drawing and a word in the admin fails by name.

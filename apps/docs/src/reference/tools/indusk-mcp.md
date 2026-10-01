@@ -90,10 +90,16 @@ copy they had to guess.
 
 | Transition | Requirement |
 |------------|-------------|
-| brief → adr | Brief status = `accepted` |
-| adr → impl | ADR status = `accepted` |
+| brief → the next document | Brief status = `accepted` |
+| test plan → the next document | Test plan status = `accepted` |
+| research or ADR → the next document | Status = `accepted`, `complete` or `completed` |
 | phase N → phase N+1 | All implementation, verification, context, and document items checked |
 | impl → retrospective | All phases complete, impl status = `completed` |
+
+*The next document* is the next one the plan's declared type requires
+(`workflow:` — see [what an absent document reads as](/guide/plan-lifecycle#what-an-absent-document-reads-as)):
+a bugfix with an accepted test plan advances to the impl, not the ADR. A
+plan with no declared type advances through every document in order.
 
 ### Context Management
 
