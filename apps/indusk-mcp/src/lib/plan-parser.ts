@@ -11,7 +11,7 @@ import {
 	readPaper,
 } from "./papers/summary.js";
 import { isCleanSegment } from "./path-segment.js";
-import { readWorkflow, type WorkflowType } from "./workflow-types.js";
+import { readWorkflow, WORKFLOW_DEFINITIONS, type WorkflowType } from "./workflow-types.js";
 
 // Re-exported so the `planning/plan-parser` subpath and existing imports keep
 // working; the definitions live in papers/summary.ts.
@@ -111,6 +111,7 @@ function parseFrontmatter(filePath: string): ParseFrontmatterResult {
 function resolvePlanStage(
 	walked: ReturnType<typeof determineStage>,
 	papers: PaperSummary[],
+	type: WorkflowType | null,
 ): { stage: PlanStage; stageStatus: string; nextStep: string } {
 	if (walked.stage === "unknown" && papers.length > 0) {
 		return {
@@ -122,7 +123,7 @@ function resolvePlanStage(
 	return {
 		stage: walked.stage,
 		stageStatus: walked.stageStatus,
-		nextStep: determineNextStep(walked.stage, walked.stageStatus, walked.parseError),
+		nextStep: determineNextStep(walked.stage, walked.stageStatus, type, walked.parseError),
 	};
 }
 
@@ -169,9 +170,26 @@ function determineStage(
 	return { stage: "unknown", stageStatus: "unknown" };
 }
 
+/**
+ * The next document a plan's declared type requires after position `idx`, or
+ * undefined when there is none. With no declared type every document is next
+ * in turn, as before the type existed.
+ *
+ * This named `DOCUMENT_POSITIONS[idx + 1]` whatever the plan was, so a bugfix
+ * with an accepted test plan was told to create the ADR its type skips — and
+ * the plan list contradicted the admin about the same plan (admin-plan-type,
+ * A23).
+ */
+function nextRequiredDocument(idx: number, type: WorkflowType | null) {
+	return DOCUMENT_POSITIONS.slice(idx + 1).find(
+		(doc) => type === null || WORKFLOW_DEFINITIONS[type].requires.includes(doc),
+	);
+}
+
 function determineNextStep(
 	stage: PlanStage,
 	stageStatus: string,
+	type: WorkflowType | null,
 	parseError?: { file: string; message: string },
 ): string {
 	if (stage === "malformed" && parseError) {
@@ -182,7 +200,7 @@ function determineNextStep(
 	const idx = DOCUMENT_POSITIONS.indexOf(stage as (typeof DOCUMENT_POSITIONS)[number]);
 
 	if (stageStatus === "completed" || stageStatus === "accepted") {
-		const next = DOCUMENT_POSITIONS[idx + 1];
+		const next = nextRequiredDocument(idx, type);
 		if (next) return `Create ${next}`;
 		return "Done";
 	}
@@ -245,8 +263,8 @@ export function parsePlan(planDir: string): PlanSummary {
 		.map((file) => readPaper(planDir, file))
 		.filter((p): p is PaperSummary => p !== null);
 
-	const { stage, stageStatus, nextStep } = resolvePlanStage(walked, papers);
 	const declared = readDeclaredWorkflow(planDir, entries);
+	const { stage, stageStatus, nextStep } = resolvePlanStage(walked, papers, declared.type);
 
 	return {
 		name,
