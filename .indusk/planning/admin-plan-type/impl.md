@@ -25,10 +25,10 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A2 | A plan that declares no type shows "type not declared" in the header, never a guess from which documents exist | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
 | A3 | A plan that declares a word outside the four types shows that word and says it is not a recognised type — not treated as known, not folded into "not declared" | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
 | A4 | Clicking the type chip opens an explanation — what the type is for, which documents it requires, which it skips, and why — and it closes with Escape or its close button | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A5 | On a bugfix plan the absent research and the absent ADR read skipped, both behind the plan's position and ahead of it | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
-| A6 | On a bugfix plan that has an impl and no test plan, the test plan reads missing | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A5 | On a bugfix plan the absent research and the absent ADR read skipped, both behind the plan's position and ahead of it | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A6 | On a bugfix plan that has an impl and no test plan, the test plan reads missing | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
 | A7 | On a bugfix plan whose brief exists and whose test plan is not written yet, the test plan reads pending, not missing | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
-| A8 | On a plan that declares no type, an absent earlier document reads unknown, never skipped; documents not yet reached still read pending | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A8 | On a plan that declares no type, an absent earlier document reads unknown, never skipped; documents not yet reached still read pending | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
 | A9 | A feature plan with every document present reads exactly as it does today | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
 | A10 | When a document is missing or unknown the page says so in words beside the bar — which document and why — not by colour or hover alone | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
 | A11 | Every state a bar segment can be in has its own drawing and its own label in the admin; a state added to the lifecycle without one fails by name | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/lib/segment-state-render-parity.test.ts |
@@ -38,7 +38,7 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 | A15 | The archived release-ritual plan, read through the admin's reader from this repository, is a bugfix with research and ADR skipped and the test plan missing | Test Phase 1 | Build Phase 3 | written | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
 | A16 | In this repository every active plan declares a type — in its brief, or in its research document when the plan is research only | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/active-plans-declare-workflow.test.ts |
 | A17 | The installed copy of the planner skill is byte-identical to the package's | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
-| A18 | The workflow-type definitions are reachable by their documented package subpath from outside the package | Test Phase 1 | Build Phase 1 | written | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
+| A18 | The workflow-type definitions are reachable by their documented package subpath from outside the package | Test Phase 1 | Build Phase 1 | passing | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
 
 ## Checklist
 
@@ -74,27 +74,29 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 
 ### Build Phase 1: the type decides what an absent document means
 
-- [ ] Add `apps/indusk-mcp/src/lib/workflow-types.ts`: the four types, and for each its purpose, the documents it requires, the documents it skips, and why. The retrospective is required for every type that ships an impl; a spike requires only its research. One function reads a frontmatter value into a known type, an unrecognised word, or nothing. The module touches no filesystem, so a browser component can import it
-- [ ] Export it as `./workflow-types` in `apps/indusk-mcp/package.json`
-- [ ] The plan summary carries the declared type and, separately, an unrecognised word when one was declared. `parsePlan` reads it from the brief's frontmatter, from the research document when the plan has no brief, and never from the impl
-- [ ] `lib/lifecycle.ts` gains a runtime list of segment states that includes `missing` and `unknown`, with the type derived from the list
-- [ ] `derivePlanPosition` judges an absent document by the plan's type: required and already passed is missing; not required is skipped, behind or ahead; no type and already passed is unknown; everything else as today. The requirement lists are imported from the workflow-types module — no second copy in the lifecycle
-- [ ] Correct the docblock on `derivePlanPosition`, which today says skipped is decided by the file's absence
-- [ ] Build the package so the admin reads the new module (`pnpm --filter @infinitedusky/indusk-mcp build`)
+- [x] Add `apps/indusk-mcp/src/lib/workflow-types.ts`: the four types, and for each its purpose, the documents it requires, the documents it skips, and why. The retrospective is required for every type that ships an impl; a spike requires only its research. One function reads a frontmatter value into a known type, an unrecognised word, or nothing. The module touches no filesystem, so a browser component can import it
+- [x] Export it as `./workflow-types` in `apps/indusk-mcp/package.json`
+- [x] The plan summary carries the declared type and, separately, an unrecognised word when one was declared. `parsePlan` reads it from the brief's frontmatter, from the research document when the plan has no brief, and never from the impl
+- [x] `lib/lifecycle.ts` gains a runtime list of segment states that includes `missing` and `unknown`, with the type derived from the list
+- [x] `derivePlanPosition` judges an absent document by the plan's type: required and already passed is missing; not required is skipped, behind or ahead; no type and already passed is unknown; everything else as today. The requirement lists are imported from the workflow-types module — no second copy in the lifecycle
+- [x] Correct the docblock on `derivePlanPosition`, which today says skipped is decided by the file's absence
+- [x] Build the package so the admin reads the new module (`pnpm --filter @infinitedusky/indusk-mcp build`)
+- [x] Shape (`apps/indusk-mcp/src/lib/workflow-types.ts`) — reviewed, left as-is: `absentDocumentNote` is a sentence for a person, sitting in a module of facts, which is two reasons to change. It stays because the sentence is built only from those facts (the document's label, the type's name) and has one caller so far; splitting it now would create a module with a single six-line function. If Build Phase 2 grows a second kind of sentence, that is the moment to move both.
+- [x] Shape (`apps/indusk-mcp/src/lib/lifecycle.ts`, `apps/indusk-mcp/src/lib/plan-parser.ts`) — reviewed; nothing to change. The judgment is one named function with its five cases stated above it, and the declaration read is one named function with its source rule stated above it.
 
 #### Build Phase 1 Verification
 
-- [ ] A5, A6, A7, A8 pass and A9 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/lifecycle-document-states src/lib/lifecycle-derive src/__tests__/lifecycle-single-definition src/__tests__/lifecycle-parity`)
-- [ ] A18 passes against the built package (`pnpm --filter indusk-admin exec vitest run src/lib/planning-reader.workflow -t A18`)
-- [ ] The package type-checks (`pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit -p .`, exit 0)
+- [x] A5, A6, A7, A8 pass and A9 still passes — 26 passed across the four files (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/lifecycle-document-states src/lib/lifecycle-derive src/__tests__/lifecycle-single-definition src/__tests__/lifecycle-parity`)
+- [x] A18 passes against the built package (`pnpm --filter indusk-admin exec vitest run src/lib/planning-reader.workflow -t A18`)
+- [x] The package type-checks (`pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit -p .`, exit 0). The whole package suite was also run: 1,637 pass; the 14 failures are this plan's Build Phase 3 rows (A12's template half, A13, A14, A16) and nine daemon and bundle tests that need the admin's production build, which a fresh worktree does not have (`apps/indusk-admin/.next/BUILD_ID` is absent here and present on trunk). The admin's own type-check is red until Build Phase 2 adds the two new states to its label maps
 
 #### Build Phase 1 Context
 
-- [ ] Conventions, the entry that begins "The lifecycle is one definition": name the segment-state list and say an absent document is judged by the plan's declared type, from `lib/workflow-types.ts`. The root file has 42 bytes of headroom, so this is an edit in place that shortens the same entry's wording by at least as much as it adds
+- [x] Conventions, the entry that begins "The lifecycle is one definition": name the segment-state list and say an absent document is judged by the plan's declared type, from `lib/workflow-types.ts`. The root file has 42 bytes of headroom, so this is an edit in place that shortens the same entry's wording by at least as much as it adds (done: 364 bytes to 353. The `monitor` derivation note and the single-definition test's name left the entry — the first is in Key Decisions, the second is enforced by the test itself)
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/plan-lifecycle.md`: a short section on what an absent document reads as — skipped, missing, pending, unknown — and that the plan's type decides
+- [x] `apps/docs/src/guide/plan-lifecycle.md`: a short section on what an absent document reads as — skipped, missing, pending, unknown — and that the plan's type decides
 
 ### Build Phase 2: the admin shows it
 
