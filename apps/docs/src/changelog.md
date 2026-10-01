@@ -4,7 +4,10 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.55.0] — 2026-10-01
+
 ### Added
+- **The citing rule in AGENTS.md gains an example for every kind of label.** The rule said to say what a cited row, phase, component, decision or gate is before drawing a conclusion from it, and showed one example; agents kept citing bare labels. A new section, "Citing plan artifacts — the three parts, with examples", pairs a bare and a correct citation for each kind. `indusk update` appends it to existing projects.
 - **The bump is the retrospective's Step 11.** Closing a plan on trunk now produces its release commit: the step checks whether the landed merge touched packaged paths, takes the increment from what the plan did (a feature is minor, a fix is patch), rolls the changelog's `[Unreleased]` heading, and commits `chore(release): X.Y.Z — <summary>` with a literal `-m`. Whether there is anything to release is read from the packaged changes since the last release commit, not from the last commit. A tree with nothing packaged since then says so and skips, so "nothing to release" reads differently from "did not run". Publishing stays the operator's call, since npm's one-time password is not something an agent can enter.
 
 ### Fixed
