@@ -189,7 +189,7 @@ them so once Step 11 edits one of them.
 **Goal**: close root `master.md` item (d), re-routed to this plan on 2026-09-25 and never added to it — found at the retrospective. 1.51.0's note said "published" because `pnpm publish` exited 0; the registry never received it. The mark must come from the registry, not from an exit code.
 
 - [x] Author T15 red in `record-release-commit.test.ts`: the fixture's `PATH` carries a stub `npm` that either prints the version or prints nothing, and the note is read back
-- [ ] `record-release.js` asks `npm view <name>@<version> version --fetch-timeout=10000` — the guard's lookup, bounded the same way — a few times a few seconds apart (a fresh publish can lag), and writes "published" only when it returns the version; otherwise "publish reported success, but the registry did not confirm <version>" naming what `npm view` said (T15)
+- [x] `record-release.js` asks `npm view <name>@<version> version --fetch-timeout=10000` — the guard's lookup, bounded the same way — a few times a few seconds apart (a fresh publish can lag), and writes "published" only when it returns the version; otherwise "publish reported success, but the registry did not confirm <version>" naming what `npm view` said (T15)
 - [ ] Correct the 2026-09-17 note in trunk's `.indusk/current.md`, which claims the mark "now says only what `npm view` confirms" — false until this phase lands; done at the landing, on trunk
 
 #### Build Phase 6 Verification
