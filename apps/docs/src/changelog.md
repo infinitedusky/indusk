@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+- **`indusk upgrade` reports on the version you just released while npm scans it.** Since npm's publish-time malware scanning, a new version is not installable for about five minutes after `npm publish` returns (fifteen or more at peak), and npm answers 404 for it meanwhile. `pnpm release` now records what it uploaded, and `indusk upgrade` on that machine says `v1.55.0 was uploaded 4 min ago and is still in npm's publish-time malware scan`, instead of "already at" the old version; once npm finishes, the same command installs it. `pnpm release` itself waits out the scan (up to 20 minutes, with progress) and its note says "published" only when npm serves the version, naming how long the scan took.
+
 ## [1.55.0] — 2026-10-01
 
 ### Added
