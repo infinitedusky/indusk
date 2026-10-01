@@ -22,7 +22,7 @@ gate_policy: ask
 | T7 | `release-guard.sh` still passes on a tree whose install is current | Test Phase 1 | Build Phase 2 | passing |
 | T8 | The retrospective skill's Step 11 exists, names the changelog roll and the `chore(release):` commit, and says a plan touching no packaged paths skips it | Test Phase 1 | Build Phase 3 | passing |
 | T9 | The installed copy of the retrospective skill is byte-identical to the package-owned one | Test Phase 1 | Build Phase 3 | passing |
-| T10 | A `git commit` written across several lines with `\`-newline continuations, staging only allowlisted paths, is allowed — a continuation is not a pathspec. Today each one becomes a whitespace-only token that `commitIntent` classifies as a path, so the refusal lists one empty bullet per continued line | Test Phase 1 | Build Phase 1 | written |
+| T10 | A `git commit` written across several lines with `\`-newline continuations, staging only allowlisted paths, is allowed — a continuation is not a pathspec. Today each one becomes a whitespace-only token that `commitIntent` classifies as a path, so the refusal lists one empty bullet per continued line | Test Phase 1 | Build Phase 1 | passing |
 | T11 | `record-release.js` writes the commit matching `^chore(release): <version>` as the release commit, not whatever HEAD happens to be when it runs | Test Phase 1 | Build Phase 3 | written |
 
 ### Trajectory Rationale
@@ -88,7 +88,7 @@ them so once Step 11 edits one of them.
 - [x] A `-m` value containing a command substitution (`$(…)`, backticks) or a heredoc is **unreadable, not a path list** — today its words are tokenized as filenames, which is why a heredoc release commit is refused with the commit message printed under "refusing to commit code"
 - [x] When the message is unreadable and the staged set is not allowlisted, the refusal names that: the message could not be read, so the `chore(release):` exemption could not be checked — pass it with `-m "…"` or `-F <file>`
 - [x] Update the hook's header comment to describe what the exemption reads
-- [ ] A `\`-newline continuation is whitespace, not a token: `commitArgs`'s backslash branch must not carry an escaped newline into the current token, and `commitIntent` must reject a whitespace-only token as a pathspec. Both halves — one fix leaves the other spelling live (T10)
+- [x] A `\`-newline continuation is whitespace, not a token: `commitArgs`'s backslash branch must not carry an escaped newline into the current token, and `commitIntent` must reject a whitespace-only token as a pathspec. Both halves — one fix leaves the other spelling live (T10)
 
 #### Build Phase 1 Verification
 

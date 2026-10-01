@@ -194,6 +194,12 @@ function commitArgs(text, closer) {
 	let quote = null;
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i];
+		// `\`+newline is a line continuation: the shell removes both characters,
+		// inside double quotes too. It is not an escaped character and not a token.
+		if (ch === "\\" && text[i + 1] === "\n" && quote !== "'") {
+			i++;
+			continue;
+		}
 		if (quote) {
 			if (ch === quote) quote = null;
 			else if (ch === "\\" && quote === '"' && i + 1 < text.length) current += text[++i];
@@ -358,6 +364,7 @@ function commitIntent(args) {
 	let rest = false;
 	for (let i = 0; i < args.length; i++) {
 		const token = args[i];
+		if (!token.trim()) continue; // whitespace is never a pathspec
 		if (rest) {
 			paths.push(token);
 			continue;
