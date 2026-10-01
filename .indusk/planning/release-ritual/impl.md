@@ -23,7 +23,7 @@ gate_policy: ask
 | T8 | The retrospective skill's Step 11 exists, names the changelog roll and the `chore(release):` commit, and says a plan touching no packaged paths skips it | Test Phase 1 | Build Phase 3 | passing |
 | T9 | The installed copy of the retrospective skill is byte-identical to the package-owned one | Test Phase 1 | Build Phase 3 | passing |
 | T10 | A `git commit` written across several lines with `\`-newline continuations, staging only allowlisted paths, is allowed — a continuation is not a pathspec. Today each one becomes a whitespace-only token that `commitIntent` classifies as a path, so the refusal lists one empty bullet per continued line | Test Phase 1 | Build Phase 1 | passing |
-| T11 | `record-release.js` writes the commit matching `^chore(release): <version>` as the release commit, not whatever HEAD happens to be when it runs | Test Phase 1 | Build Phase 3 | written |
+| T11 | `record-release.js` writes the commit matching `^chore(release): <version>` as the release commit, not whatever HEAD happens to be when it runs | Test Phase 1 | Build Phase 3 | passing |
 
 ### Trajectory Rationale
 
@@ -123,7 +123,7 @@ them so once Step 11 edits one of them.
 
 - [x] `apps/indusk-mcp/skills/retrospective.md` gains **Step 11: Bump** after the landing step — derive whether the landed plan touched packaged paths; if it did, choose the increment from what the plan did (a feature is minor, a fix is patch) and the summary from the retrospective just written; roll the changelog's `[Unreleased]` to `[X.Y.Z] — <date>` leaving a fresh empty `[Unreleased]`; commit as `chore(release): X.Y.Z — <summary>` with a literal `-m`; then say that `pnpm release` is the operator's call
 - [x] A plan that changed no packaged paths records that it skipped the bump and why — the step must distinguish "nothing to release" from "did not run"
-- [ ] `apps/indusk-mcp/scripts/record-release.js` resolves the release commit by its message (`^chore(release): <version>`), not `git rev-parse HEAD` (T11). Reuse the lookup the health line's version state already does rather than restating it — two readers of "which commit is this release" disagreeing is the defect, not the lookup
+- [x] `apps/indusk-mcp/scripts/record-release.js` resolves the release commit by its message (`^chore(release): <version>`), not `git rev-parse HEAD` (T11). Reuse the lookup the health line's version state already does rather than restating it — two readers of "which commit is this release" disagreeing is the defect, not the lookup
 - [ ] Correct the standing 1.54.0 note in `.indusk/current.md`'s shared region: it credits `d7e0061a`, a plan commit, instead of `b185e375`. The note is what every session reads at catchup, so a wrong sha there is read as fact for as long as it stands
 - [x] Resync the installed copy to `.claude/skills/retrospective/SKILL.md`
 

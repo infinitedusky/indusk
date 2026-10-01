@@ -24,18 +24,22 @@ const repoRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], {
 	encoding: "utf-8",
 }).trim();
 const version = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf-8")).version;
-const head = execFileSync("git", ["rev-parse", "--short", "HEAD"], {
-	cwd: repoRoot,
-	encoding: "utf-8",
-}).trim();
 
 const { parseCurrentMd, serializeCurrentMd } = await import(
 	join(pkgDir, "dist/lib/agents/current-md.js")
 );
 const { withLock } = await import(join(pkgDir, "dist/lib/agents/lock.js"));
+// The release commit is the one whose message names this version — the same
+// lookup the health line's version state does. HEAD is not it: a publish that
+// took several attempts has usually moved HEAD by the time this runs.
+const { readRepoVersionState } = await import(join(pkgDir, "dist/lib/version-state.js"));
+const releaseCommit = readRepoVersionState(repoRoot)?.releaseCommit?.slice(0, 7) ?? null;
 
 const currentMd = join(repoRoot, ".indusk", "current.md");
-const line = `- ${new Date().toISOString().slice(0, 10)}: **${version} published** to npm from release commit ${head} (\`pnpm release\`, recorded by \`scripts/record-release.js\`).`;
+const from = releaseCommit
+	? `from release commit ${releaseCommit}`
+	: `with no \`chore(release): ${version}\` commit found`;
+const line = `- ${new Date().toISOString().slice(0, 10)}: **${version} published** to npm ${from} (\`pnpm release\`, recorded by \`scripts/record-release.js\`).`;
 
 withLock(`${currentMd}.lock`, () => {
 	const doc = parseCurrentMd(readFileSync(currentMd, "utf-8"));
