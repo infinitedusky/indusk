@@ -114,8 +114,8 @@ growing trust repeats that at scale.
 **Next actions (2026-09-25).** The sequence's live order, and why it is not
 simply the next `day-*` folder:
 
-1. **[release-ritual](release-ritual/brief.md) — in flight.** Impl approved
-   2026-09-21, nine rows, four phases, nothing executed yet. It is here and
+1. **[release-ritual](archive/release-ritual/brief.md) — closed 2026-10-01**
+   (merged `283f6723`, archived; 15 rows, falsified and cleaned). It was here and
    not filed as a bugfix because publishing has cost four or five attempts for
    three consecutive versions, and the deploy step below installs the
    *published* package — so an unreliable release is a prerequisite failure,
@@ -183,8 +183,8 @@ lesson title, or a chat log.
 - **Two release plans, one boundary** (written 2026-09-25 — they had overlapped
   unreconciled since 2026-09-21, and `release-ritual` was declared nowhere).
   Both stay; the split is by question, not by folder age:
-  - **[release-ritual](release-ritual/brief.md) — the procedure works.** Brief
-    accepted + impl approved 2026-09-21, the live step. Owns: the bump as
+  - **[release-ritual](archive/release-ritual/brief.md) — the procedure works.**
+    Closed 2026-10-01. Owns: the bump as
     retrospective Step 11, trunk-guard reading a `chore(release):` message
     however it is supplied (`-F`, `--file=`, heredoc, command substitution),
     and the guard proving the tree builds (`pnpm install --frozen-lockfile`)
@@ -358,7 +358,7 @@ lesson title, or a chat log.
   only when the registry answers, otherwise write "publish reported success
   but the registry has no <version>" — the health line's `versionStateProblem`
   already distinguishes the two states. **Owner re-routed 2026-09-25 to
-  [release-ritual](release-ritual/brief.md)** — it is the plan touching the
+  [release-ritual](archive/release-ritual/brief.md)** — it is the plan touching the
   release path now, and S1 is about naming plans, not about earning the mark.
   Outcome: the second `pnpm release` run (browser 2FA confirmed) published
   1.51.0 at 2026-09-18T00:03:18Z; the first run's mark was false.
@@ -370,7 +370,7 @@ lesson title, or a chat log.
   `plan(release-ritual): brief and impl`. The real release commit is b185e375.
   It must resolve the last commit matching `^chore(release): <version>`, the
   same way the health line's version state already does, and the note it writes
-  is read by every session at catchup. Owner: `release-ritual` — **not covered
+  is read by every session at catchup. **Done 2026-10-01** (T11; (d) as T15). Owner: `release-ritual` — **not covered
   by T1–T9**, so it needs a row before Test Phase 1 is authored.
   (e) Found by the third run: the guard's "already on the registry" refusal
   hung forever — its message quoted `` `pnpm release` `` inside double quotes,

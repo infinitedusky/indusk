@@ -123,3 +123,5 @@ a unit; the cross-file findings were Cleanup's.
 - Files touched: 25 (+1311 / −138)
 - Trajectory: 15 rows, all passing; 6 of them (T10–T15) added after approval
 - Deferred Verification U1 (a real publish) — this close is its first run
+
+Landed on main at 283f6723, 2026-10-01.

@@ -81,7 +81,7 @@ reads the field (`planning-reader.ts`) without rendering it.
 - A brief created by `/planner` carries `workflow:`
 
 ## Depends On
-- `.indusk/planning/release-ritual/` — lands first (ordering, not code)
+- `.indusk/planning/archive/release-ritual/` — landed 2026-10-01
 
 ## Blocks
 - Nothing
