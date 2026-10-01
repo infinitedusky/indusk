@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import {
+	chmodSync,
 	copyFileSync,
 	mkdirSync,
 	mkdtempSync,
@@ -58,6 +59,51 @@ function fixture(): { root: string; fixturePkg: string } {
 	return { root, fixturePkg };
 }
 
+/**
+ * Run the script with a stub `npm` first on PATH. `registryHas` is what
+ * `npm view <pkg>@<version> version` prints — the version when the registry has
+ * it, nothing when it does not — so no test reaches the real registry.
+ */
+function recordRelease(root: string, fixturePkg: string, registryHas: string) {
+	const bin = join(root, "stub-bin");
+	mkdirSync(bin, { recursive: true });
+	const npm = join(bin, "npm");
+	writeFileSync(npm, `#!/bin/sh\nprintf '%s' '${registryHas}'\n`);
+	chmodSync(npm, 0o755);
+	return spawnSync("node", [join("scripts", "record-release.js")], {
+		cwd: fixturePkg,
+		encoding: "utf-8",
+		env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, RECORD_RELEASE_RETRY_MS: "0" },
+	});
+}
+
+const notes = (root: string) =>
+	readFileSync(join(root, ".indusk", "current.md"), "utf-8")
+		.split("\n")
+		.filter((l) => l.includes("9.9.9"));
+
+describe("T15 — the note says published only on the registry's word", () => {
+	it("writes published when the registry confirms the version", () => {
+		const { root, fixturePkg } = fixture();
+		const r = recordRelease(root, fixturePkg, "9.9.9");
+		expect(r.status, r.stderr).toBe(0);
+		expect(notes(root).join("\n")).toContain("**9.9.9 published**");
+	});
+
+	it("does not write published when the registry has no such version", () => {
+		const { root, fixturePkg } = fixture();
+		const r = recordRelease(root, fixturePkg, "");
+		const written = notes(root).join("\n");
+		expect(
+			written,
+			"the script must still leave a note — silence would be read as nothing happened",
+		).not.toBe("");
+		expect(written).not.toContain("**9.9.9 published**");
+		expect(written).toMatch(/did not confirm/);
+		expect(r.status, "an unconfirmed publish is not a failed command").toBe(0);
+	});
+});
+
 describe("T11 — the release note names the release commit, not HEAD", () => {
 	it("credits the chore(release) commit when HEAD has moved past it", () => {
 		const { root, fixturePkg } = fixture();
@@ -68,10 +114,7 @@ describe("T11 — the release note names the release commit, not HEAD", () => {
 		const head = headOf(root).slice(0, 7);
 		expect(head, "the fixture must separate HEAD from the release commit").not.toBe(release);
 
-		const r = spawnSync("node", [join("scripts", "record-release.js")], {
-			cwd: fixturePkg,
-			encoding: "utf-8",
-		});
+		const r = recordRelease(root, fixturePkg, "9.9.9");
 		expect(r.status, r.stderr).toBe(0);
 
 		const note = readFileSync(join(root, ".indusk", "current.md"), "utf-8")
