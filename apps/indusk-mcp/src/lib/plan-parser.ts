@@ -209,14 +209,7 @@ function readDeclaredWorkflow(planDir: string, documents: string[]) {
 	if (source === null) return readWorkflow(undefined);
 	try {
 		const raw = readFileSync(join(planDir, source), "utf-8");
-		const value: unknown = matter(raw).data.workflow;
-		const declared = readWorkflow(value);
-		// A value that is not a plain word is shown as it was written, not as
-		// a rendering of what YAML made of it (A19).
-		if (declared.declared !== null && typeof value !== "string") {
-			return { ...declared, declared: rawFrontmatterValue(raw, "workflow") ?? declared.declared };
-		}
-		return declared;
+		return readWorkflow(matter(raw).data.workflow, rawFrontmatterValue(raw, "workflow"));
 	} catch {
 		return readWorkflow(undefined);
 	}

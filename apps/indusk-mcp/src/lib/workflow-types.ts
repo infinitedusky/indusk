@@ -88,15 +88,21 @@ export interface DeclaredWorkflow {
  * a known type; a word that is not a type (`declared` set, `type` null — shown
  * as written, never guessed at); and nothing declared.
  *
- * A non-string is still a declaration: YAML reads `workflow: no` as `false`,
- * and treating that as "not declared" would hide the typo.
+ * A non-string is still a declaration — a list, a mapping, a number — and
+ * treating it as "not declared" would hide the mistake. `written` is the text
+ * on the document's `workflow:` line, when the caller has the document: it is
+ * what such a declaration is shown as.
  */
-export function readWorkflow(value: unknown): DeclaredWorkflow {
+export function readWorkflow(value: unknown, written: string | null = null): DeclaredWorkflow {
 	if (value === undefined || value === null) return { type: null, declared: null };
 	// Only a plain string can be a type. A list, a mapping, a number or a
 	// boolean is a declaration that is not one: `String()` of a one-element
-	// list is its element's text, which read `[bugfix]` as a bugfix.
-	if (typeof value !== "string") return { type: null, declared: JSON.stringify(value) };
+	// list is its element's text, which read `[bugfix]` as a bugfix. It is
+	// shown as it was written on the line; a value written on the lines below
+	// (a block list) has no text there, and is shown as YAML read it.
+	if (typeof value !== "string") {
+		return { type: null, declared: written ?? JSON.stringify(value) };
+	}
 	const declared = value.trim();
 	if (declared === "") return { type: null, declared: null };
 	const type = (WORKFLOW_TYPES as readonly string[]).includes(declared)
