@@ -58,6 +58,19 @@ This applies even when the inline version "works fine" — the cost paid by the 
 6. If the primitive has variants, follow the `Record<Variant, string>` pattern from `Badge.tsx` and `Button.tsx` — a single object maps each variant to its class string
 7. Add a colocated `{Name}.test.tsx` file that asserts the variant rendering contract
 
+## Dialogs are the native `<dialog>`
+
+The admin's first dialog is the plan-type explanation (`components/PlanTypeChip.tsx`, admin-plan-type). It is a native `<dialog>` opened with `showModal()`, and that is the convention for any that follow — no dialog library, in keeping with the no-Radix decision.
+
+What the element gives for free, and a library would have to be trusted for: focus is trapped inside while it is open, Escape closes it, focus returns to the control that opened it, and the page behind is inert under a `::backdrop`. The component adds a visible close button and nothing else.
+
+Two rules that come with it:
+
+- **The trigger is the `Button` primitive**, like any other button — the audit applies. Style the chip through `className`.
+- **A dialog that explains something states no facts of its own.** The plan-type dialog renders the package's `workflow-types` definitions; it holds no list of documents. An explanation with its own copy of the facts is the copy that drifts.
+
+Testing one: click the trigger, then assert on the `<dialog>`'s `open` property and on the text inside it. Escape is a real key press (`userEvent.keyboard("{Escape}")` from `vitest/browser`), because a synthetic `KeyboardEvent` does not close a native dialog.
+
 ## How to refactor inline duplication into a primitive
 
 When you find yourself writing the same JSX/className combination twice anywhere in the app, that's the signal:
