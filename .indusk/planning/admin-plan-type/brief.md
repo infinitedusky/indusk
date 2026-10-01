@@ -32,11 +32,17 @@ reads the field (`planning-reader.ts`) without rendering it.
    documents it requires, which it skips, and why. The text comes from **one
    definition** of the workflow types, shared with the planner skill's table,
    so the page and the planner cannot drift.
-3. **Three segment states, not two.** An absent document the plan's type does
-   not require reads *not required for this type* (quiet, no strike-through).
-   An absent document the type *does* require reads *missing* — visibly a gap.
-   With no declared type, absent documents keep today's rendering, plus the
-   "type not declared" chip saying why the bar cannot judge.
+3. **"Skipped" is decided by the type, never by an absent file.** Today the
+   bar calls every absent document `skipped`, which asserts a judgment it never
+   made. An absent document gets one of four readings:
+   - **skipped** — the plan's type does not require it. By design; quiet.
+   - **missing** — the type requires it and a later document already exists,
+     so the plan moved past it. An error; visibly a gap.
+   - **pending** — the type requires it and the plan has not reached it yet.
+     Not an error; drawn as an ordinary empty step.
+   - **unknown** — the plan declares no type, so whether the absence matters
+     cannot be judged. Said as such, beside the "type not declared" chip —
+     never drawn as skipped.
 4. **The planner always declares it.** Creating a brief writes `workflow:`,
    defaulting to `feature` exactly as the command already does.
 5. **Declare it on the active plans**, starting with release-ritual
@@ -51,8 +57,9 @@ reads the field (`planning-reader.ts`) without rendering it.
   per type), read by the admin; the planner skill's table states the same facts
   and a parity test pins them
 - Type chip + explanatory modal in the plan header
-- Stage-bar segment state for "not required for this type", distinct from
-  "missing", registered in the bar's label maps under the render-parity pin
+- Stage-bar document states `skipped` (type-decided), `missing`, `pending`
+  and `unknown`, registered in the bar's label maps under the render-parity pin;
+  the bar no longer calls an absent document skipped on its own
 - Planner writes `workflow:` on every new brief
 - `workflow:` added to active plans' briefs
 
@@ -64,11 +71,13 @@ reads the field (`planning-reader.ts`) without rendering it.
   Radix (`CLAUDE.md`, indusk-admin); a native `<dialog>` is enough
 
 ## Success Criteria
-- Opening release-ritual shows `bugfix`; research and ADR read *not required
-  for this type*; the absent test plan reads *missing*
+- Opening release-ritual shows `bugfix`; research and ADR read *skipped*; the
+  absent test plan reads *missing*
+- A bugfix whose brief exists and whose test plan is not written yet reads the
+  test plan as *pending*, not missing
 - Clicking the chip explains the type in plain language
-- A plan with no `workflow:` says "type not declared" and draws absent
-  documents as today
+- A plan with no `workflow:` says "type not declared" and reads its absent
+  documents as *unknown*, never skipped
 - A brief created by `/planner` carries `workflow:`
 
 ## Depends On
