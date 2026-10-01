@@ -96,11 +96,11 @@ them so once Step 11 edits one of them.
 
 #### Build Phase 1 Context
 
-- [ ] Known Gotchas (the hooks entry): trunk-guard's `chore(release):` exemption reads `-m`, `-F` and `--file`; a message from a substitution is unreadable and refused **by that name**, never tokenized into paths
+- [x] Known Gotchas (the hooks entry): trunk-guard's `chore(release):` exemption reads `-m`, `-F` and `--file`; a message from a substitution is unreadable and refused **by that name**, never tokenized into paths
 
 #### Build Phase 1 Document
 
-- [ ] `/guide/#3-hooks-enforce-what-discipline-won-t`: how the release exemption is recognised, and what to do when a message cannot be read
+- [x] `/guide/#3-hooks-enforce-what-discipline-won-t`: how the release exemption is recognised, and what to do when a message cannot be read
 
 ### Build Phase 2: the release guard proves the tree builds
 
