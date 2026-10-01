@@ -316,13 +316,25 @@ format the guard greps for — each silently wrong-able, with no command behind
 them. Publishing 1.54.0 took five attempts and none of them failed for the
 reason its error message gave.
 
-**First, does this plan release anything?** Ask git what the landed merge
-changed against the packaged paths — the same paths `release-guard.sh` uses
-(`PACKAGED_PATHS` in that script is the list):
+**First, is there anything to release?** The question is what packaged files
+changed **since the release commit** — not what the last commit changed. Step
+10 ends by committing the landing note on trunk, so the last commit is always
+that note, and asking it would read "nothing to release" for every plan.
+
+Read the `indusk/version` line of `check_health`, which answers exactly this:
+`release commit <sha> for X.Y.Z, N packaged commit(s) since`. Or ask git
+directly, over `release-guard.sh`'s `PACKAGED_PATHS` (the list the guard
+refuses on, so the two cannot disagree):
 
 ```bash
-git -C <trunk> diff --name-only HEAD~1..HEAD -- apps/indusk-mcp apps/indusk-admin packages
+git -C <trunk> diff --name-only <release-commit>..HEAD -- \
+  apps/indusk-mcp/src apps/indusk-mcp/skills apps/indusk-mcp/templates \
+  apps/indusk-mcp/hooks apps/indusk-mcp/lessons apps/indusk-mcp/extensions \
+  apps/indusk-mcp/package.json apps/indusk-admin
 ```
+
+This counts every plan that landed since the last release, not only this one —
+which is right: the bump describes the tree.
 
 If it names nothing, **say so and stop**: *"No packaged paths changed — nothing
 to release; the version stays at X.Y.Z."* Record that in the retrospective. A
