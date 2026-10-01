@@ -1,7 +1,8 @@
 ---
 title: "The admin says what kind of plan it is"
 date: 2026-10-01
-status: draft
+status: accepted
+accepted: 2026-10-01
 workflow: bugfix
 ---
 
