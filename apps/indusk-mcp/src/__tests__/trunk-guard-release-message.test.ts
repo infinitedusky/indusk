@@ -129,3 +129,20 @@ describe("T5 — the file is read, not trusted", () => {
 		expect(r.stderr).toContain("src/a.ts");
 	});
 });
+
+describe("T10 — a backslash-continued commit is read the same as the one-line form", () => {
+	it("allows a multi-line commit staging only allowlisted paths, as it allows the one-line form", async () => {
+		const root = project();
+		stage(root, ".indusk/notes.md", "# continued notes\n");
+		const oneLine = `git commit -q -m "plan(x): a subject" -m "a body paragraph"`;
+		const continued = [
+			`git commit -q \\`,
+			`  -m "plan(x): a subject" \\`,
+			`  -m "a body paragraph"`,
+		].join("\n");
+		const single = await runHook("trunk-guard.js", bash(root, oneLine));
+		expect(single.exitCode, `the one-line form is the baseline: ${single.stderr}`).toBe(0);
+		const multi = await runHook("trunk-guard.js", bash(root, continued));
+		expect(multi.exitCode, `a continuation is not a pathspec: ${multi.stderr}`).toBe(0);
+	});
+});
