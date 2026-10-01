@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.56.0] — 2026-10-01
+
 ### Added
 - **The admin says what kind of plan it is.** The plan header carries a type chip — `bugfix`, `feature`, `refactor`, `spike` — read from `workflow:` in the plan's brief (its research document, for a research-only plan). Clicking it explains the type: what it is for, which documents it requires, which it skips and why. A plan with no such line reads *type not declared*; a word that is not a type is shown as written. The type is never guessed from which documents exist.
 - **An absent planning document reads four ways instead of one.** The plan bar used to draw every absent earlier document as *skipped*, so a bugfix that never needed research and a bugfix that closed without its test plan looked identical. Now: **skipped** when the plan's type does not require it, **missing** when the type requires it and the plan moved past it (drawn in red, and said in a sentence under the bar), **pending** when the plan has not reached it, **unknown** when the plan declares no type. A missing document stays missing after the plan is archived.
