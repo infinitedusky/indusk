@@ -1,6 +1,6 @@
 ---
 title: "The admin says what kind of plan it is"
-status: approved
+status: in-progress
 approved: 2026-10-01
 date: 2026-10-01
 trajectory: required
