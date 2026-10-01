@@ -91,3 +91,9 @@
 {"plan":"day-always-on","phase":8,"kind":"build","sha":"fc579557a334613048b940708eda363fe8ec5274","timestamp":"2026-09-21T13:43:43.825Z"}
 {"plan":"release-ritual","phase":1,"kind":"test","sha":"d7e0061abcb9f4437c34097a8a30f710750b081f","timestamp":"2026-09-22T00:33:01.581Z"}
 {"plan":"release-ritual","phase":1,"kind":"build","sha":"d7e0061abcb9f4437c34097a8a30f710750b081f","timestamp":"2026-09-22T00:39:47.302Z"}
+{"plan":"admin-plan-type","phase":1,"kind":"test","sha":"b0c7d4c60a5608c1cb02a062c3278075876dcf9a","timestamp":"2026-10-01T18:59:43.892Z"}
+{"plan":"admin-plan-type","phase":1,"kind":"build","sha":"270170d412ac6e475b1fa262617de02959c8ec86","timestamp":"2026-10-01T19:05:46.217Z"}
+{"plan":"admin-plan-type","phase":2,"kind":"build","sha":"ea30de2c2bea07da0afd46ee7d039305a9d93c65","timestamp":"2026-10-01T19:18:03.265Z"}
+{"plan":"admin-plan-type","phase":3,"kind":"build","sha":"cc8fe6e26614e90bc391f004839d17af390e2784","timestamp":"2026-10-01T19:24:51.963Z"}
+{"plan":"admin-plan-type","phase":4,"kind":"build","sha":"08d88eb807c55ef3b0d6d1c4ed7d31e2111251d6","timestamp":"2026-10-01T20:53:06.745Z"}
+{"plan":"admin-plan-type","phase":5,"kind":"build","sha":"d4e269cea331102448e018f8c9a826c7f05ceb26","timestamp":"2026-10-01T21:22:54.303Z"}

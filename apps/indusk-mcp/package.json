@@ -82,6 +82,10 @@
 			"types": "./dist/lib/lifecycle.d.ts",
 			"default": "./dist/lib/lifecycle.js"
 		},
+		"./workflow-types": {
+			"types": "./dist/lib/workflow-types.d.ts",
+			"default": "./dist/lib/workflow-types.js"
+		},
 		"./impl-headings": {
 			"types": "./dist/lib/impl-headings.d.ts",
 			"default": "./dist/lib/impl-headings.js"

@@ -2,6 +2,7 @@
 title: "Always-on deploy — run the server somewhere real"
 status: accepted
 date: 2026-09-20
+workflow: bugfix
 ---
 
 # Brief

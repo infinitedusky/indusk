@@ -4,7 +4,8 @@ Features use the full planning lifecycle. This is the default when no workflow t
 
 ## Documents Created
 - `research.md` — explore the problem space
-- `brief.md` — propose a direction
+- `brief.md` — propose a direction (frontmatter carries `workflow: feature`)
+- `test-plan.md` — the behavior that must be true, before the decision is made
 - `adr.md` — formalize the decision
 - `impl.md` — phased implementation checklist
 - `retrospective.md` — closing audit (via /retrospective)

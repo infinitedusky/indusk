@@ -62,12 +62,31 @@ Four workflow types control the document set for each plan:
 
 | Workflow | Documents Created | When to Use |
 |----------|-------------------|-------------|
-| **feature** | research, brief, ADR, impl, retrospective | New capabilities, large system changes, anything with design decisions |
-| **bugfix** | brief, impl | Known problem with a straightforward fix |
-| **refactor** | brief, impl (with boundary map) | Restructuring code without changing behavior |
+| **feature** | research, brief, test-plan, ADR, impl, retrospective | New capabilities, large system changes, anything with design decisions |
+| **bugfix** | brief, test-plan, impl, retrospective | Known problem with a straightforward fix |
+| **refactor** | brief, test-plan, impl (with boundary map), retrospective | Restructuring code without changing behavior |
 | **spike** | research only | Pure exploration — no commitment to build anything |
 
 The feature workflow is the default. If you run `/planner payment-flow` without specifying a type, it uses feature.
+
+**The test plan is required by every type that ships an impl.** For a bugfix its first assertion is the failing test that proves the bug. Only a spike skips it, because a spike has no impl. Until admin-plan-type (2026-10-01) this table and three of the four workflow templates said a bugfix was "brief, impl", contradicting the planner skill's own table, and a bugfix written from the template closed without a test plan.
+
+### Every plan declares its type
+
+The planner writes `workflow: <type>` into the brief's frontmatter when it creates the plan — `workflow: feature` when no type was given — and, for a spike, into the research document's, since a spike has no brief.
+
+```yaml
+---
+title: "Auth token expiry"
+date: 2026-10-01
+status: draft
+workflow: bugfix
+---
+```
+
+The declaration is what the admin reads to say what kind of plan it is, and to tell a document the plan was never going to have from one it should have had: a bugfix's absent research reads *skipped*, its absent test plan reads *missing*. A plan with no declared type reads *type not declared*, and its absent documents read *unknown* rather than skipped — the type is never guessed from which documents exist. See [what an absent document reads as](/guide/plan-lifecycle#what-an-absent-document-reads-as).
+
+What each type requires is defined once, in the package's `workflow-types` module (`@infinitedusky/indusk-mcp/workflow-types`). The planner skill's table, the workflow templates and the table above are each pinned equal to it by `workflow-types-parity.test.ts`; a change to one that is not made to the others fails by name. In the InDusk repository itself, a second test fails the suite when an active plan lacks a type.
 
 <FullscreenDiagram>
 
@@ -76,9 +95,9 @@ flowchart TD
     Start["What kind of work is this?"] --> Q1{"Is this pure exploration?"}
     Q1 -->|Yes| Spike["spike — research.md only"]
     Q1 -->|No| Q2{"Is something broken?"}
-    Q2 -->|Yes| Bugfix["bugfix — brief + impl"]
+    Q2 -->|Yes| Bugfix["bugfix — brief + test-plan + impl"]
     Q2 -->|No| Q3{"Changing behavior or adding capabilities?"}
-    Q3 -->|No, restructuring| Refactor["refactor — brief + impl + boundary map"]
+    Q3 -->|No, restructuring| Refactor["refactor — brief + test-plan + impl + boundary map"]
     Q3 -->|Yes| Feature["feature — full lifecycle"]
 ```
 
@@ -99,10 +118,10 @@ The first word is optionally a workflow type (`feature`, `bugfix`, `refactor`, `
 /planner payment-flow
 /planner feature payment-flow
 
-# Bug fix — brief + impl only
+# Bug fix — brief + test-plan + impl
 /planner bugfix auth-token-expiry
 
-# Refactor — brief + impl with boundary map
+# Refactor — brief + test-plan + impl with boundary map
 /planner refactor extract-auth-middleware
 
 # Spike — research only, no commitment

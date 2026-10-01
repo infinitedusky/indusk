@@ -12,6 +12,7 @@ Spikes are pure exploration — no commitment to build anything.
 title: "{Title}"
 date: {YYYY-MM-DD}
 status: in-progress
+workflow: spike
 ---
 
 # {Title} — Research

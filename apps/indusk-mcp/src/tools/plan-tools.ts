@@ -4,11 +4,13 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getPlanningDir } from "../lib/config.js";
 import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
+import { isFinishedDocumentStatus, nextRequiredDocument } from "../lib/lifecycle.js";
 import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
 import { promiseHealth } from "../lib/promises/health.js";
 import { readPromises } from "../lib/promises/registry.js";
 import { openMaintenancePhasesIn } from "../lib/promises/reopen.js";
+import { DOCUMENT_LABELS } from "../lib/workflow-types.js";
 import {
 	copySource,
 	livePlanCopy,
@@ -224,32 +226,22 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 				],
 			});
 
-			// Brief → test plan: brief status must be "accepted"
-			if (plan.stage === "brief") {
+			// Brief or test plan → the next document: the status must be
+			// "accepted". Which document is next is the plan's own next step,
+			// which knows the declared type — this named the ADR for every plan,
+			// including the bugfix whose type skips it (admin-plan-type, A25).
+			if (plan.stage === "brief" || plan.stage === "test-plan") {
+				const next = nextRequiredDocument(plan.stage, plan.workflow ?? null);
+				const transition = `${plan.stage} → ${next ?? "done"}`;
 				if (plan.stageStatus === "accepted") {
-					return respond({
-						allowed: true,
-						transition: "brief → test-plan",
-						nextStage: "Create test-plan",
-					});
+					return respond({ allowed: true, transition, nextStage: plan.nextStep });
 				}
+				const label = DOCUMENT_LABELS[plan.stage];
+				const noun = label.charAt(0).toUpperCase() + label.slice(1);
 				return respond({
 					allowed: false,
-					transition: "brief → test-plan",
-					missing: [`Brief status is '${plan.stageStatus}', must be 'accepted'`],
-				});
-			}
-
-			// Test plan → ADR: test plan status must be "accepted" (the stage the
-			// lifecycle's DOCUMENT_POSITIONS added — admin-ui-phase-progress)
-			if (plan.stage === "test-plan") {
-				if (plan.stageStatus === "accepted") {
-					return respond({ allowed: true, transition: "test-plan → adr", nextStage: "Create adr" });
-				}
-				return respond({
-					allowed: false,
-					transition: "test-plan → adr",
-					missing: [`Test plan status is '${plan.stageStatus}', must be 'accepted'`],
+					transition,
+					missing: [`${noun} status is '${plan.stageStatus}', must be 'accepted'`],
 				});
 			}
 
@@ -310,13 +302,15 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			}
 
 			// Research or other stages
-			if (plan.stageStatus === "accepted" || plan.stageStatus === "completed") {
+			if (isFinishedDocumentStatus(plan.stageStatus)) {
 				return respond({ allowed: true, nextStage: plan.nextStep });
 			}
 
 			return respond({
 				allowed: false,
-				missing: [`${plan.stage} status is '${plan.stageStatus}', needs 'accepted' or 'completed'`],
+				missing: [
+					`${plan.stage} status is '${plan.stageStatus}', needs 'accepted', 'complete' or 'completed'`,
+				],
 			});
 		},
 	);

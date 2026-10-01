@@ -133,15 +133,56 @@ export const STAGE_LABELS = {
   Document: "Document",
 } satisfies Record<StageKind, string>;
 
-/** A bar segment's state — the lifecycle's four, plus a gate's opt-out. */
+/** A bar segment's state — the lifecycle's, plus a gate's opt-out. */
 export type BarState = SegmentState | "opted-out";
 
+/**
+ * The fill of a segment. `skipped`, `missing` and `unknown` are all empty —
+ * they are told apart by the segment's frame (`SEGMENT_FRAME_CLASS`), because
+ * each says something different about an absent document (admin-plan-type):
+ * by design, a gap, and cannot be judged.
+ */
 export const SEGMENT_CLASS = {
   done: "bg-green-500",
   active: "bg-blue-500",
   pending: "bg-gray-200",
   skipped: "bg-gray-100",
+  missing: "bg-red-100",
+  unknown: "bg-white",
   "opted-out": "bg-amber-400",
+} satisfies Record<BarState, string>;
+
+/** The segment's own box: what makes an empty segment read as one state and not another. */
+export const SEGMENT_FRAME_CLASS = {
+  done: "bg-gray-200",
+  active: "bg-gray-200",
+  pending: "bg-gray-200",
+  skipped: "border border-dashed border-gray-300 bg-white",
+  missing: "border border-red-500 bg-red-50",
+  unknown: "border border-dotted border-gray-500 bg-white",
+  "opted-out": "bg-gray-200",
+} satisfies Record<BarState, string>;
+
+/** The word under a segment, styled by state, when a bar shows its labels. */
+export const SEGMENT_LABEL_CLASS = {
+  done: "text-gray-600",
+  active: "font-semibold text-blue-700",
+  pending: "text-gray-400",
+  skipped: "text-gray-300 line-through",
+  missing: "font-semibold text-red-700",
+  unknown: "italic text-gray-500",
+  "opted-out": "text-gray-600",
+} satisfies Record<BarState, string>;
+
+/** What a state is called when it is said in words — a segment's title, a legend. */
+export const SEGMENT_STATE_LABELS = {
+  done: "done",
+  active: "active",
+  pending: "pending",
+  skipped: "skipped",
+  missing: "missing",
+  unknown: "unknown",
+  "opted-out": "opted out",
 } satisfies Record<BarState, string>;
 
 export const CHIP_CLASS = {
@@ -149,6 +190,8 @@ export const CHIP_CLASS = {
   active: "border-blue-200 bg-blue-50 text-blue-800",
   pending: "border-gray-200 bg-white text-gray-500",
   skipped: "border-gray-200 bg-gray-50 text-gray-400 line-through",
+  missing: "border-red-300 bg-red-50 text-red-800",
+  unknown: "border-dotted border-gray-400 bg-white text-gray-500 italic",
   "opted-out": "border-amber-200 bg-amber-50 text-amber-800",
 } satisfies Record<BarState, string>;
 

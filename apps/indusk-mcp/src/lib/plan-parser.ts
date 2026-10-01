@@ -3,7 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "./config.js";
 import { fencedLineMask } from "./impl-headings.js";
-import { DOCUMENT_POSITIONS } from "./lifecycle.js";
+import { DOCUMENT_POSITIONS, isFinishedDocumentStatus, nextRequiredDocument } from "./lifecycle.js";
 import {
 	leastAdvancedPaperStatus,
 	type PaperSummary,
@@ -11,6 +11,7 @@ import {
 	readPaper,
 } from "./papers/summary.js";
 import { isCleanSegment } from "./path-segment.js";
+import { readWorkflow, type WorkflowType } from "./workflow-types.js";
 
 // Re-exported so the `planning/plan-parser` subpath and existing imports keep
 // working; the definitions live in papers/summary.ts.
@@ -53,6 +54,15 @@ export interface PlanSummary {
 	nextStep: string;
 	dependencies: string[];
 	documents: string[];
+	/**
+	 * The plan's declared type: `workflow:` in its brief, or in its research
+	 * document when the plan has no brief. Absent when none is declared or the
+	 * declared word is not a type. Never read from the impl, and never inferred
+	 * from which documents exist (admin-plan-type).
+	 */
+	workflow?: WorkflowType;
+	/** The word that was declared, when it is not one of the types. */
+	workflowDeclared?: string;
 	/** Every document declaring `kind: paper`, in filename order. Absent when there are none. */
 	papers?: PaperSummary[];
 	/** Set when frontmatter in one of the plan's docs failed to parse. Contains
@@ -101,6 +111,7 @@ function parseFrontmatter(filePath: string): ParseFrontmatterResult {
 function resolvePlanStage(
 	walked: ReturnType<typeof determineStage>,
 	papers: PaperSummary[],
+	type: WorkflowType | null,
 ): { stage: PlanStage; stageStatus: string; nextStep: string } {
 	if (walked.stage === "unknown" && papers.length > 0) {
 		return {
@@ -112,7 +123,7 @@ function resolvePlanStage(
 	return {
 		stage: walked.stage,
 		stageStatus: walked.stageStatus,
-		nextStep: determineNextStep(walked.stage, walked.stageStatus, walked.parseError),
+		nextStep: determineNextStep(walked.stage, walked.stageStatus, type, walked.parseError),
 	};
 }
 
@@ -162,6 +173,7 @@ function determineStage(
 function determineNextStep(
 	stage: PlanStage,
 	stageStatus: string,
+	type: WorkflowType | null,
 	parseError?: { file: string; message: string },
 ): string {
 	if (stage === "malformed" && parseError) {
@@ -169,10 +181,8 @@ function determineNextStep(
 	}
 	if (stage === "unknown") return "Create a brief";
 
-	const idx = DOCUMENT_POSITIONS.indexOf(stage as (typeof DOCUMENT_POSITIONS)[number]);
-
-	if (stageStatus === "completed" || stageStatus === "accepted") {
-		const next = DOCUMENT_POSITIONS[idx + 1];
+	if (isFinishedDocumentStatus(stageStatus)) {
+		const next = nextRequiredDocument(stage, type);
 		if (next) return `Create ${next}`;
 		return "Done";
 	}
@@ -182,6 +192,40 @@ function determineNextStep(
 	}
 
 	return `Review ${stage} (status: ${stageStatus})`;
+}
+
+/**
+ * The plan's `workflow:` declaration. It lives in the brief; a research-only
+ * plan has no brief, so its research document is read instead. Unreadable
+ * frontmatter reads as nothing declared — the parse error is reported by the
+ * stage walk, and a second report here would name the same file twice.
+ */
+function readDeclaredWorkflow(planDir: string, documents: string[]) {
+	const source = documents.includes("brief.md")
+		? "brief.md"
+		: documents.includes("research.md")
+			? "research.md"
+			: null;
+	if (source === null) return readWorkflow(undefined);
+	try {
+		const raw = readFileSync(join(planDir, source), "utf-8");
+		return readWorkflow(matter(raw).data.workflow, rawFrontmatterValue(raw, "workflow"));
+	} catch {
+		return readWorkflow(undefined);
+	}
+}
+
+/**
+ * The text written after `key:` on its own line of a document's frontmatter,
+ * or null when that line is empty or absent (a value written on the lines
+ * below it, like a block list, has no text there). Line-anchored, so a longer
+ * key that ends in this one is not it.
+ */
+function rawFrontmatterValue(raw: string, key: string): string | null {
+	const block = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw)?.[1];
+	if (block === undefined) return null;
+	const text = new RegExp(`^${key}:[ \\t]*(.*)$`, "m").exec(block)?.[1]?.trim();
+	return text ? text : null;
 }
 
 export function parsePlan(planDir: string): PlanSummary {
@@ -194,7 +238,8 @@ export function parsePlan(planDir: string): PlanSummary {
 		.map((file) => readPaper(planDir, file))
 		.filter((p): p is PaperSummary => p !== null);
 
-	const { stage, stageStatus, nextStep } = resolvePlanStage(walked, papers);
+	const declared = readDeclaredWorkflow(planDir, entries);
+	const { stage, stageStatus, nextStep } = resolvePlanStage(walked, papers, declared.type);
 
 	return {
 		name,
@@ -203,6 +248,9 @@ export function parsePlan(planDir: string): PlanSummary {
 		nextStep,
 		dependencies,
 		documents: entries,
+		...(declared.type !== null && { workflow: declared.type }),
+		...(declared.type === null &&
+			declared.declared !== null && { workflowDeclared: declared.declared }),
 		...(papers.length > 0 && { papers }),
 		...(walked.parseError && { parseError: walked.parseError }),
 	};

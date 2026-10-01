@@ -2,6 +2,7 @@
 title: "The release ritual finishes itself"
 status: accepted
 date: 2026-09-21
+workflow: bugfix
 ---
 
 # Brief

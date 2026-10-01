@@ -133,6 +133,75 @@ derived it. That is what keeps the UI from drifting behind the system the
 way its phase parser once did — for a month, silently, while every impl
 written since August rendered wrong.
 
+### What an absent document reads as
+
+*(admin-plan-type, 2026-10-01)*
+
+Not every plan has every document. A bugfix has no research and no ADR; a
+spike has only research. Until this plan the lifecycle called *any* document
+position whose file was absent, once the plan had moved past it, `skipped` —
+so a bugfix that never needed research and a bugfix that closed without its
+test plan drew the same dashed segment. The bar asserted a judgment nothing
+had made.
+
+The judgment is now the plan's **type**: `workflow:` in its brief (or in its
+research document, for a plan that is research only), one of `feature`,
+`bugfix`, `refactor`, `spike`. What each type requires is defined once, in
+`apps/indusk-mcp/src/lib/workflow-types.ts` (the
+`@infinitedusky/indusk-mcp/workflow-types` subpath), and the planner skill's
+table and the workflow templates are pinned equal to it.
+
+| The document is absent and… | It reads |
+|---|---|
+| the plan's type does not require it | **skipped** — by design, behind the plan's position or ahead of it |
+| the type requires it and the plan has moved past it | **missing** — a gap, and it stays one after the plan closes |
+| the type requires it and the plan has not reached it | **pending** — an ordinary step ahead |
+| the plan declares no type and has moved past it | **unknown** — whether the absence matters cannot be judged |
+
+A plan with no declared type therefore never reads *skipped*: that word is a
+claim about intent, and only a declared type can make it. The type is never
+inferred from which documents happen to exist — that would be the bar
+grading the plan against the plan.
+
+The type speaks for more than documents. Three positions exist only because
+a plan has an impl — executing, falsify, cleanup — so for a type that has
+none, a spike, they read **skipped** as well, while the plan is in progress
+and after it closes. Before the falsification of this plan they read pending
+forever: the bar told a research-only plan it was waiting to execute.
+
+And everything that says *what comes next* asks the type. The bar's label,
+the plan list's next step and `advance_plan` each used to name the next
+document in lifecycle order, whatever the plan was — a bugfix with an
+accepted test plan was told to create the ADR its own type skips, by a tool
+standing next to a bar that drew the ADR as skipped. All three now read one
+function, `nextRequiredDocument` in the lifecycle module. A bugfix with an
+accepted test plan is told to create the impl. A spike whose research is
+finished is told nothing further: its label reads *research finished — a
+spike ends here* and its next step is *Done*.
+
+Which status words mean a document is finished is one definition too,
+`isFinishedDocumentStatus`: `accepted`, `complete`, `completed`. Research
+documents say `complete`, and the plan list once did not know the word.
+
+What keeps each of these one definition is not discipline. A source-tree
+scan (`lifecycle-single-definition.test.ts`) asserts that exactly one file
+defines `nextRequiredDocument`, `isFinishedDocumentStatus` and the document
+labels (`DOCUMENT_LABELS`), and that no other file spells the finished words,
+indexes the next document position by hand, or writes a document's label
+inline. It reads the package's `src/tools` as well as `src/lib`: two of the
+three copies this plan's falsification found were in the tools directory,
+which the scan had never read.
+
+A `workflow:` value that is not a plain word is never read as a type.
+`workflow: [bugfix]` is a YAML list, not a bugfix; it is reported as an
+unrecognised declaration, shown as it was written on the line, and the
+sentence under the bar names it rather than saying the plan declares no
+type.
+
+The segment states are `SEGMENT_STATES` in the lifecycle module, a runtime
+list like the positions and activities, so the same render-parity pin walks
+them: a state without a drawing and a word in the admin fails by name.
+
 ## Where a plan lives while it executes
 
 *(admin-plan-worktrees, 2026-09-18)*

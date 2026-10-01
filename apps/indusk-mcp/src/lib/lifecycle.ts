@@ -3,6 +3,7 @@ import type { GateKind } from "./impl-headings.js";
 import type { ImplPhase, ParsedImpl } from "./impl-parser.js";
 import type { PlanSummary } from "./plan-parser.js";
 import type { PhaseBoundaryRecord } from "./shape/boundary.js";
+import { DOCUMENT_LABELS, WORKFLOW_DEFINITIONS, type WorkflowType } from "./workflow-types.js";
 
 /**
  * The one definition of a plan's lifecycle (admin-ui-phase-progress, ADR D1).
@@ -80,6 +81,29 @@ export const DOCUMENT_POSITIONS = [
 export type DocumentPosition = (typeof DOCUMENT_POSITIONS)[number];
 
 /**
+ * Whether a document's status says it is finished. Research documents say
+ * `complete`, impls and retrospectives `completed`, the rest `accepted`. One
+ * definition, because the plan bar and the plan list's next step both ask
+ * it, and a copy that knew one word fewer told a finished spike to review
+ * its research (admin-plan-type, A23).
+ */
+export function isFinishedDocumentStatus(status: string): boolean {
+	return status === "accepted" || status === "complete" || status === "completed";
+}
+
+/**
+ * The positions that exist only because a plan has an impl: it is executed,
+ * then falsified, then cleaned up. A type with no impl — a spike — never
+ * reaches them, so they read skipped for it rather than pending forever
+ * (admin-plan-type, A21).
+ */
+export const IMPL_DEPENDENT_POSITIONS: readonly PlanPosition[] = [
+	"executing",
+	"falsify",
+	"cleanup",
+];
+
+/**
  * The close-out rituals, in order, as the word a ritual phase's title must
  * START with (`### Phase N: Falsification — …`). The retrospective readiness
  * gate matches these; the skill prose used to be the only place the order was
@@ -135,8 +159,22 @@ export type StageKind = "implementation" | GateKind;
  * filled-or-empty cannot show the middle, and the middle is the whole point
  * of watching. Skipped is drawn, never omitted, so every plan's bar has the
  * same shape.
+ *
+ * `missing` and `unknown` are an absent document's other two readings
+ * (admin-plan-type): `skipped` says the plan's type does not require it,
+ * `missing` that the type requires it and the plan moved past it, `unknown`
+ * that no type is declared so the absence cannot be judged. A runtime list, so
+ * the admin's render-parity pin can walk it like the positions and activities.
  */
-export type SegmentState = "done" | "active" | "pending" | "skipped";
+export const SEGMENT_STATES = [
+	"done",
+	"active",
+	"pending",
+	"skipped",
+	"missing",
+	"unknown",
+] as const;
+export type SegmentState = (typeof SEGMENT_STATES)[number];
 
 export interface PlanPositionState {
 	position: PlanPosition;
@@ -278,8 +316,14 @@ function resolvePosition(input: DerivePlanPositionInput): {
 		return { position: "impl-approved", awaiting: `impl ${status}, awaiting approval` };
 	}
 	if (stage === "research" || stage === "brief" || stage === "test-plan" || stage === "adr") {
-		const noun = stage === "test-plan" ? "test plan" : stage === "adr" ? "ADR" : stage;
-		if (status === "accepted" || status === "complete" || status === "completed") {
+		const noun = DOCUMENT_LABELS[stage];
+		if (isFinishedDocumentStatus(status)) {
+			// A22: the active label never claims a fact the reader does not
+			// hold. A spike's finished research awaits nothing.
+			const type = summary.workflow ?? null;
+			if (type !== null && nextRequiredDocument(stage, type) === undefined) {
+				return { position: stage, awaiting: `${noun} finished — a ${type} ends here` };
+			}
 			return { position: stage, awaiting: `${noun} accepted, awaiting the next document` };
 		}
 		if (status === "proposed" || status === "draft" || status === "in-progress") {
@@ -292,29 +336,30 @@ function resolvePosition(input: DerivePlanPositionInput): {
 }
 
 /**
- * The plan bar. Positions before the current one are done — or skipped, when
- * they are a document position whose file is absent while a later one exists
- * (a bugfix skips research; a refactor skips the ADR). The current position is
- * active; later ones pending. Archived has no active segment: nothing is
+ * The plan bar. Positions before the current one are done, the current one is
+ * active, later ones pending. Archived has no active segment: nothing is
  * happening. `monitor` is pending unless a closed plan is inside its quiet
  * window, when it is active and `archived` behind it is done.
+ *
+ * A document position whose file is absent is judged by the plan's declared
+ * type, never by the absence alone (admin-plan-type). This function used to
+ * call every absent earlier document `skipped`, so a bugfix that never needed
+ * research and a bugfix that closed without its test plan drew the same
+ * segment — a judgment asserted that nothing had made.
  */
 export function derivePlanPosition(input: DerivePlanPositionInput): PlanPositionState {
 	const { position, awaiting } = resolvePosition(input);
 	const currentIndex = PLAN_POSITIONS.indexOf(position);
 	const docs = new Set(input.summary.documents);
+	const type = input.summary.workflow ?? null;
+	const required = type === null ? null : new Set(WORKFLOW_DEFINITIONS[type].requires);
 	const segments = {} as Record<PlanPosition, SegmentState>;
 	for (const [index, candidate] of PLAN_POSITIONS.entries()) {
-		if (index > currentIndex) {
-			segments[candidate] = "pending";
-			continue;
-		}
 		if (index === currentIndex) {
 			segments[candidate] = position === "archived" ? "done" : "active";
 			continue;
 		}
-		const doc = documentFor(candidate);
-		segments[candidate] = doc !== null && !docs.has(`${doc}.md`) ? "skipped" : "done";
+		segments[candidate] = restingState(candidate, index < currentIndex, docs, required);
 	}
 	const monitor = position === "monitor" ? input.afterClose?.monitor : null;
 	return {
@@ -325,7 +370,69 @@ export function derivePlanPosition(input: DerivePlanPositionInput): PlanPosition
 	};
 }
 
-function documentFor(position: PlanPosition): DocumentPosition | null {
+/**
+ * The state of a position the plan is not at — one it has passed, or one
+ * ahead of it. The type speaks first: a position that exists only because of
+ * an impl is skipped for a type that has none. Then the document, if the
+ * position is one. Then where the plan stands.
+ */
+function restingState(
+	position: PlanPosition,
+	passed: boolean,
+	docs: ReadonlySet<string>,
+	required: ReadonlySet<DocumentPosition> | null,
+): SegmentState {
+	if (required !== null && !required.has("impl") && IMPL_DEPENDENT_POSITIONS.includes(position)) {
+		return "skipped";
+	}
+	const doc = documentFor(position);
+	if (doc !== null && !docs.has(`${doc}.md`)) return absentDocumentState(doc, required, passed);
+	return passed ? "done" : "pending";
+}
+
+/**
+ * The next document a plan's declared type requires after `stage`, or
+ * undefined when there is none. With no declared type every document is next
+ * in turn, as before the type existed.
+ *
+ * One definition, read by the active label, the plan list's next step and
+ * `advance_plan`. Each once answered "what comes next" by lifecycle order
+ * alone, so a bugfix with an accepted test plan was told to create the ADR
+ * its type skips (admin-plan-type, A23 and A25).
+ */
+export function nextRequiredDocument(
+	stage: string,
+	type: WorkflowType | null,
+): DocumentPosition | undefined {
+	const index = (DOCUMENT_POSITIONS as readonly string[]).indexOf(stage);
+	return DOCUMENT_POSITIONS.slice(index + 1).find(
+		(doc) => type === null || WORKFLOW_DEFINITIONS[type].requires.includes(doc),
+	);
+}
+
+/**
+ * What an absent document reads as. `required` is the declared type's document
+ * list, or null when the plan declares no type.
+ *
+ * - Not required by the type: `skipped`, whether the plan has passed it or not
+ *   — the bar says up front what this kind of plan will never have.
+ * - Required and passed: `missing`.
+ * - Required and not reached: `pending`, like any step ahead.
+ * - No type, and passed: `unknown` — where this used to say skipped.
+ * - No type, and not reached: `pending`. Nothing is in question yet.
+ */
+function absentDocumentState(
+	doc: DocumentPosition,
+	required: ReadonlySet<DocumentPosition> | null,
+	passed: boolean,
+): SegmentState {
+	if (required === null) return passed ? "unknown" : "pending";
+	if (!required.has(doc)) return "skipped";
+	return passed ? "missing" : "pending";
+}
+
+/** The document a position stands for, or null for a position that is not a document (`executing`, `archived`, …). */
+export function documentFor(position: PlanPosition): DocumentPosition | null {
 	for (const doc of DOCUMENT_POSITIONS) {
 		if (DOC_POSITION_TO_PLAN[doc] === position) return doc;
 	}

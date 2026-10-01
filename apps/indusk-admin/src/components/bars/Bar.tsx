@@ -1,4 +1,10 @@
-import { type BarState, SEGMENT_CLASS } from "./labels";
+import {
+  type BarState,
+  SEGMENT_CLASS,
+  SEGMENT_FRAME_CLASS,
+  SEGMENT_LABEL_CLASS,
+  SEGMENT_STATE_LABELS,
+} from "./labels";
 
 /**
  * The one bar primitive the three progress bars are built on.
@@ -9,7 +15,25 @@ import { type BarState, SEGMENT_CLASS } from "./labels";
  * filled and carries the message. Fill says how far; the label says what is
  * happening. Segments are equal width: this is a checklist, not a time
  * estimate, and the caption slot is where a bar says so.
+ *
+ * An absent document has three readings, each with its own frame
+ * (admin-plan-type): skipped is dashed, missing is a solid red outline,
+ * unknown is dotted. Those three also say their state in the segment's title,
+ * because an empty box says nothing on its own.
  */
+
+/** The states whose meaning an empty segment cannot carry by itself. */
+const SAID_IN_WORDS: ReadonlySet<BarState> = new Set([
+  "skipped",
+  "missing",
+  "unknown",
+]);
+
+function segmentTitle(segment: BarSegment): string {
+  return SAID_IN_WORDS.has(segment.state)
+    ? `${segment.label} — ${SEGMENT_STATE_LABELS[segment.state]}`
+    : segment.label;
+}
 
 export interface BarSegment {
   key: string;
@@ -59,12 +83,8 @@ export function Bar({
             key={segment.key}
             data-segment={segment.key}
             data-state={segment.state}
-            title={segment.label}
-            className={`h-2 flex-1 overflow-hidden rounded-sm ${
-              segment.state === "skipped"
-                ? "border border-dashed border-gray-300 bg-white"
-                : "bg-gray-200"
-            }`}
+            title={segmentTitle(segment)}
+            className={`h-2 flex-1 overflow-hidden rounded-sm ${SEGMENT_FRAME_CLASS[segment.state]}`}
           >
             <span
               className={`block h-full ${SEGMENT_CLASS[segment.state]}`}
@@ -78,15 +98,7 @@ export function Bar({
           {segments.map((segment) => (
             <li
               key={segment.key}
-              className={`min-w-0 flex-1 truncate text-center text-[9px] leading-3 ${
-                segment.state === "active"
-                  ? "font-semibold text-blue-700"
-                  : segment.state === "pending"
-                    ? "text-gray-400"
-                    : segment.state === "skipped"
-                      ? "text-gray-300 line-through"
-                      : "text-gray-600"
-              }`}
+              className={`min-w-0 flex-1 truncate text-center text-[9px] leading-3 ${SEGMENT_LABEL_CLASS[segment.state]}`}
             >
               {segment.short ?? segment.label}
             </li>

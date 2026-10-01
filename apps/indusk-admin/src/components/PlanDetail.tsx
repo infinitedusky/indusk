@@ -11,6 +11,7 @@ import { Markdown } from "@/components/Markdown";
 import { PapersSection } from "@/components/PapersSection";
 import { ParentPlanView, type SubplanEntry } from "@/components/ParentPlanView";
 import { PhasesSection } from "@/components/PhasesSection";
+import { PlanTypeChip } from "@/components/PlanTypeChip";
 import { Badge } from "@/components/ui/Badge";
 import { statusToBadge } from "@/components/ui/badge-variant";
 import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
@@ -71,18 +72,32 @@ export function PlanDetail({
     plan.impl !== undefined ||
     plan.falsification !== undefined ||
     plan.retrospective !== undefined;
+  // The plan bar is drawn for a plan that has a position and is not a parent
+  // (a parent has a master bar). The type chip is drawn exactly when the bar
+  // is, so the condition is stated once: the bar can say "this plan declares
+  // no type", and the page must then carry the chip that explains it (A24).
+  const position = isParent ? undefined : plan.position;
   return (
     <article
       className="flex flex-col gap-6"
       data-testid="plan-detail"
       data-plan-name={plan.name}
     >
-      <PlanHeader plan={plan} holding={holding} />
+      <PlanHeader
+        plan={plan}
+        holding={holding}
+        showType={position !== undefined}
+      />
 
       <PlanCopyNotice plan={plan} />
 
-      {plan.position && !isParent && (
-        <PlanBar position={plan.position} activity={activePhaseLabel(plan)} />
+      {position && (
+        <PlanBar
+          position={position}
+          activity={activePhaseLabel(plan)}
+          workflow={plan.workflow ?? null}
+          declared={plan.workflowDeclared ?? null}
+        />
       )}
 
       {!plan.boundaryError && <ProgressLines plan={plan} />}
@@ -209,7 +224,21 @@ function ImplSections({ plan }: { plan: Plan }) {
   );
 }
 
-function PlanHeader({ plan, holding = 0 }: { plan: Plan; holding?: number }) {
+function PlanHeader({
+  plan,
+  holding = 0,
+  showType = false,
+}: {
+  plan: Plan;
+  holding?: number;
+  /**
+   * Whether the type chip is drawn — true whenever the plan bar is. The bar
+   * can say "this plan declares no type" under itself, and a page that says
+   * so must carry the chip that says it and explains it (A24). A parent has
+   * a master bar, no plan bar, and no document to declare a type in.
+   */
+  showType?: boolean;
+}) {
   return (
     <header
       className="flex items-center justify-between border-b border-gray-200 pb-3"
@@ -219,6 +248,12 @@ function PlanHeader({ plan, holding = 0 }: { plan: Plan; holding?: number }) {
         <h1 className="text-xl font-semibold text-gray-900">{plan.name}</h1>
         <span className="flex items-center gap-2 text-xs text-gray-500">
           {plan.archived ? "archived" : "active"}
+          {showType && (
+            <PlanTypeChip
+              workflow={plan.workflow ?? null}
+              declared={plan.workflowDeclared ?? null}
+            />
+          )}
           <WorktreeChip plan={plan} />
           <HoldingBadge count={holding} plan={plan.name} />
         </span>

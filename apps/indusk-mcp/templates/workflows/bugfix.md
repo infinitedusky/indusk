@@ -1,9 +1,10 @@
 # Bugfix Workflow
 
-Bugfixes skip research and ADR — the problem is known and the fix is straightforward.
+Bugfixes skip research and ADR — the problem is known and the fix is straightforward. They do not skip the test plan: its first assertion is the failing test that proves the bug.
 
 ## Documents Created
 - `brief.md` — what's broken and how to fix it
+- `test-plan.md` — what must be true once it is fixed, starting with the failing test (template in the planner skill)
 - `impl.md` — the fix checklist
 
 ## Brief Template
@@ -13,6 +14,7 @@ Bugfixes skip research and ADR — the problem is known and the fix is straightf
 title: "{Title}"
 date: {YYYY-MM-DD}
 status: draft
+workflow: bugfix
 ---
 
 # {Title} — Brief

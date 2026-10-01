@@ -24,6 +24,7 @@ import {
   parseTrajectory,
   type Trajectory,
 } from "@infinitedusky/indusk-mcp/trajectory/parser";
+import type { WorkflowType } from "@infinitedusky/indusk-mcp/workflow-types";
 import {
   type CopySource,
   copySource,
@@ -113,6 +114,14 @@ export interface Plan {
   retrospective?: RetroData;
   /** Every `kind: paper` document, in filename order, with its body. Absent when there are none. */
   papers?: PaperEntry[];
+  /**
+   * The plan's declared type, from the shared parser — `workflow:` in its
+   * brief, or its research document when it has no brief. Null when nothing
+   * is declared, or when the declared word is not a type (admin-plan-type).
+   */
+  workflow?: WorkflowType | null;
+  /** The word that was declared, when it is not one of the types. */
+  workflowDeclared?: string;
   /**
    * Where the plan stands in the lifecycle, derived from its documents, its
    * impl and the retrospective readiness gate (admin-ui-phase-progress).
@@ -337,6 +346,10 @@ async function readPlanFolder(
     name,
     status,
     position,
+    workflow: parsed.workflow ?? null,
+    ...(parsed.workflowDeclared
+      ? { workflowDeclared: parsed.workflowDeclared }
+      : {}),
     ...boundaryFields,
     ...(papers ? { papers } : {}),
     archived,
