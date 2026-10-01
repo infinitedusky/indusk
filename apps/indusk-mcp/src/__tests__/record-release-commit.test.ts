@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import {
 	chmodSync,
 	copyFileSync,
+	existsSync,
 	mkdirSync,
 	mkdtempSync,
 	readFileSync,
@@ -73,7 +74,13 @@ function recordRelease(root: string, fixturePkg: string, registryHas: string) {
 	return spawnSync("node", [join("scripts", "record-release.js")], {
 		cwd: fixturePkg,
 		encoding: "utf-8",
-		env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, RECORD_RELEASE_RETRY_MS: "0" },
+		env: {
+			...process.env,
+			PATH: `${bin}:${process.env.PATH}`,
+			INDUSK_HOME: join(root, "indusk-home"),
+			RECORD_RELEASE_RETRY_MS: "0",
+			RECORD_RELEASE_TIMEOUT_MS: "0",
+		},
 	});
 }
 
@@ -88,6 +95,10 @@ describe("T15 — the note says published only on the registry's word", () => {
 		const r = recordRelease(root, fixturePkg, "9.9.9");
 		expect(r.status, r.stderr).toBe(0);
 		expect(notes(root).join("\n")).toContain("**9.9.9 published**");
+		expect(
+			existsSync(join(root, "indusk-home", "pending-release.json")),
+			"a live release leaves nothing pending",
+		).toBe(false);
 	});
 
 	it("does not write published when the registry has no such version", () => {
@@ -99,7 +110,11 @@ describe("T15 — the note says published only on the registry's word", () => {
 			"the script must still leave a note — silence would be read as nothing happened",
 		).not.toBe("");
 		expect(written).not.toContain("**9.9.9 published**");
-		expect(written).toMatch(/did not confirm/);
+		expect(written).toMatch(/still in npm's publish-time scan/);
+		expect(
+			existsSync(join(root, "indusk-home", "pending-release.json")),
+			"the upload is recorded so `indusk upgrade` can report on it",
+		).toBe(true);
 		expect(r.status, "an unconfirmed publish is not a failed command").toBe(0);
 	});
 });

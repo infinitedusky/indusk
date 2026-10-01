@@ -25,38 +25,6 @@ const repoRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], {
 }).trim();
 const { name, version } = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf-8"));
 
-/**
- * What the registry says about this version: the version itself when it has
- * it, otherwise why not. `pnpm publish` exiting 0 is not that answer — 1.51.0
- * exited 0 and never reached the registry, and the note this writes said
- * "published". The lookup is the release guard's (`npm view`, bounded by
- * `--fetch-timeout`), tried a few times because a fresh publish can lag.
- */
-function registryAnswer() {
-	const attempts = 3;
-	const waitMs = Number(process.env.RECORD_RELEASE_RETRY_MS ?? 5000);
-	let last = "";
-	for (let i = 0; i < attempts; i++) {
-		if (i > 0) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, waitMs);
-		try {
-			const out = execFileSync(
-				"npm",
-				["view", `${name}@${version}`, "version", "--fetch-timeout=10000"],
-				{ encoding: "utf-8", stdio: ["ignore", "pipe", "pipe"] },
-			).trim();
-			if (out === version) return { confirmed: true };
-			last = out ? `npm view returned ${out}` : "npm view returned nothing";
-		} catch (err) {
-			last = `npm view failed: ${
-				String(err.stderr ?? err.message)
-					.trim()
-					.split("\n")[0]
-			}`;
-		}
-	}
-	return { confirmed: false, reason: last };
-}
-
 const { parseCurrentMd, serializeCurrentMd } = await import(
 	join(pkgDir, "dist/lib/agents/current-md.js")
 );
@@ -65,16 +33,42 @@ const { withLock } = await import(join(pkgDir, "dist/lib/agents/lock.js"));
 // lookup the health line's version state does. HEAD is not it: a publish that
 // took several attempts has usually moved HEAD by the time this runs.
 const { readRepoVersionState } = await import(join(pkgDir, "dist/lib/version-state.js"));
+const { recordPendingRelease, clearPendingRelease, registryHasVersion, minutesSince } =
+	await import(join(pkgDir, "dist/lib/pending-release.js"));
+
+// `pnpm publish` exiting 0 means npm accepted the upload, not that anyone can
+// install it: npm's publish-time malware scan holds a new version for about
+// five minutes, fifteen or more at peak, and answers 404 meanwhile. Record
+// what was uploaded first, so `indusk upgrade` can report on this version
+// while it waits; then wait it out here, so the note says what npm says.
+const uploadedAt = new Date().toISOString();
+recordPendingRelease({ name, version, uploadedAt });
+
+const intervalMs = Number(process.env.RECORD_RELEASE_RETRY_MS ?? 15_000);
+const timeoutMs = Number(process.env.RECORD_RELEASE_TIMEOUT_MS ?? 20 * 60_000);
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+let answer = registryHasVersion(name, version);
+while (answer.state !== "live" && Date.now() - Date.parse(uploadedAt) < timeoutMs) {
+	console.info(
+		`record-release: ${version} is in npm's publish-time scan (${minutesSince(uploadedAt)} min) — waiting…`,
+	);
+	sleep(intervalMs);
+	answer = registryHasVersion(name, version);
+}
+if (answer.state === "live") clearPendingRelease();
+const waited = minutesSince(uploadedAt);
 const releaseCommit = readRepoVersionState(repoRoot)?.releaseCommit?.slice(0, 7) ?? null;
 
 const currentMd = join(repoRoot, ".indusk", "current.md");
 const from = releaseCommit
 	? `from release commit ${releaseCommit}`
 	: `with no \`chore(release): ${version}\` commit found`;
-const answer = registryAnswer();
-const what = answer.confirmed
-	? `**${version} published** to npm`
-	: `**${version}: publish reported success, but the registry did not confirm ${version}** (${answer.reason})`;
+const what =
+	answer.state === "live"
+		? `**${version} published** to npm (live after ${waited} min in npm's publish-time scan)`
+		: answer.state === "absent"
+			? `**${version} uploaded, still in npm's publish-time scan after ${waited} min** — not confirmed installable`
+			: `**${version} uploaded; npm could not be asked whether it is live** (${answer.reason})`;
 const line = `- ${new Date().toISOString().slice(0, 10)}: ${what} ${from} (\`pnpm release\`, recorded by \`scripts/record-release.js\`).`;
 
 withLock(`${currentMd}.lock`, () => {
@@ -85,8 +79,8 @@ withLock(`${currentMd}.lock`, () => {
 console.info(
 	`record-release: noted ${version} in .indusk/current.md (Project (shared)) — commit it with the release.`,
 );
-if (!answer.confirmed) {
-	console.info(
-		`record-release: the registry did not confirm ${version} (${answer.reason}) — check \`npm view ${name} versions\` before calling it published.`,
-	);
-}
+console.info(
+	answer.state === "live"
+		? `record-release: ${version} is live — run \`indusk upgrade\`.`
+		: `record-release: ${version} is not live yet — \`indusk upgrade\` will say where it stands.`,
+);
