@@ -176,3 +176,18 @@ reviewed either, so 0 judged wrong and 0 judged right. Four phases recorded
 | Admin suite | 340 passed, at `801db2b8` |
 | Docs site | builds, no dead links |
 | CLAUDE.md | 61,438 of 61,440 bytes after the close-out compaction |
+
+## Landing
+
+Main was merged into the branch twice before the landing, with no conflicts;
+trunk had gained plan documents, lessons and config, no code. The package
+suite ran again on the merged branch: 1,681 passed, 5 skipped.
+
+The eval agent processed this plan's eight retrospective highlights twice,
+once on trunk and once in the worktree, each against its own copy of the
+processed ledger. Trunk's eight lessons were committed as written; the
+worktree's three, duplicates in subject, were not landed. The ledger's
+duplicate check cannot see another checkout's marks, which is a defect in the
+eval rail for worktree-per-plan and is nobody's plan yet.
+
+Landed on main at 62849fa3, 2026-10-01.
