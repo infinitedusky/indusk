@@ -12,7 +12,6 @@ parents:
 roadmap:
   - workbench-trust-fixes
   - hook-cwd-independence
-  - context-tiers
   - indusk-v2-dawn
   - indusk-v4-day
   - day-promises
@@ -24,6 +23,7 @@ roadmap:
   - jev-decision-model
   - release-ritual
   - admin-plan-type
+  - context-tiers
   - plan-premises
   - day-always-on-deploy
 ---
@@ -50,7 +50,7 @@ the streams are ordered by trust, not by feature value.
 | [workbench-trust-fixes](archive/workbench-trust-fixes/brief.md) | **closed 2026-09-10, merged 2026-09-11** — nine phases, 24 rows green, falsified, cleaned, retrospective written, archived. **Stream 1's gate is met**: zero silent wrong answers from run / cleanup / eval / restore in a versioned workbench | **Phase A (blocking, small)**: make the gate-reminder advisor actually speak (F9 — first, because it makes every later plan cheaper to execute correctly), then the four tourniquets — `indusk run` entry refusal, cleanup re-guard, eval-attribution guard, restore's destructive clone. **Phase B (trails, non-blocking)**: bash lane parity, record de-contradiction, close/re-scope of workbench-mode-rail-integrity. |
 | [hook-cwd-independence](archive/hook-cwd-independence/brief.md) | **closed 2026-09-15 on `main`, archived 2026-09-17** — 7 rows green, falsified 2 (the unset-variable form; init's duplicate merge) plus one pre-existing overlay bug, cleanup skipped with reason, retrospective written at trunk-guard's close. Was: brief draft (2026-09-10, from trust-fixes' retrospective), recommended before 6.5 | Every hook is registered `node .claude/hooks/<name>.js` and Claude Code runs hooks in the session's drifting cwd; from `apps/indusk-mcp` every gate fails to load with a non-blocking exit 1 and is silently off (observed: eight checkoffs passed Gate B with two rows non-terminal). Absolute hook commands in `init`/`update`/this repo's settings, plus a row-terminality check in the close-out gate. |
 | [workbench-code-roots](archive/workbench-code-roots/brief.md) | **folded into Dawn 6.5, archived 2026-09-14** | One `codeRoots` answer to "where is code *inside* the repo" — now `dawn-workbench-execution`'s to deliver. |
-| [context-tiers](context-tiers/brief.md) | research complete 2026-09-20; **brief accepted 2026-10-01, test plan next — runs next, after `release-ritual` lands** (decided 2026-10-01: both edit the retrospective skill, so this waits for that merge), ahead of further Day work so later plans build on the smaller root. **Recommended before `day-contract`** (Day component 4c in [indusk-v4-day/master.md](indusk-v4-day/master.md): promises declared in planning before code, named by every row; not yet created — it will author new planner rules, and this plan decides where they land) | The root `CLAUDE.md` is pinned at its 60 KB ceiling and half its gotchas restate an enforcer. Three tiers: a rule's enforcer names its lesson when it fires (`lesson: <name>`, the promise-token shape, separate registry); directory-scoped context files placed by where the work is written (planning — package-owned and shipped; admin; mcp — nested loading **measured** 2026-10-01: on read, ancestor walk, no depth limit, guarded by an e2e probe); the root keeps only design intent, under a lowered budget. The work is a classification register of every root entry so no rule is lost. |
+| [context-tiers](context-tiers/brief.md) | research complete 2026-09-20; **brief accepted 2026-10-01, test plan next — runs after `admin-plan-type`** (Sandy, 2026-10-01; step 3 in the Next actions list below). It first waited on `release-ritual`, which landed the same day; `admin-plan-type` — the bugfix that makes the admin show a plan's workflow type — goes ahead of it because both touch the planner skill and the admin. It still runs ahead of further Day work so later plans build on the smaller root. **Recommended before `day-contract`** (Day component 4c in [indusk-v4-day/master.md](indusk-v4-day/master.md): promises declared in planning before code, named by every row; not yet created — it will author new planner rules, and this plan decides where they land) | The root `CLAUDE.md` is pinned at its 60 KB ceiling and half its gotchas restate an enforcer. Three tiers: a rule's enforcer names its lesson when it fires (`lesson: <name>`, the promise-token shape, separate registry); directory-scoped context files placed by where the work is written (planning — package-owned and shipped; admin; mcp — nested loading **measured** 2026-10-01: on read, ancestor walk, no depth limit, guarded by an e2e probe); the root keeps only design intent, under a lowered budget. The work is a classification register of every root entry so no rule is lost. |
 
 **Gate out of Stream 1:** only **Phase A** of workbench-trust-fixes gates
 Stream 2 — zero silent wrong answers from the surfaces Midnight and Dawn
@@ -111,8 +111,8 @@ of real use, after 32 green rows) is the standing evidence that inside-the-repo
 loops cannot see what only running the thing reveals. Growing throughput before
 growing trust repeats that at scale.
 
-**Next actions (2026-09-25).** The sequence's live order, and why it is not
-simply the next `day-*` folder:
+**Next actions (2026-09-25; steps 2 and 3 added 2026-10-01).** The sequence's
+live order, and why it is not simply the next `day-*` folder:
 
 1. **[release-ritual](archive/release-ritual/brief.md) — closed 2026-10-01**
    (merged `283f6723`, archived; 15 rows, falsified and cleaned). It was here and
@@ -120,13 +120,24 @@ simply the next `day-*` folder:
    three consecutive versions, and the deploy step below installs the
    *published* package — so an unreliable release is a prerequisite failure,
    not a side quest.
-2. **The loop proven locally, end to end.** Sandy's gate on the deploy
+2. **[admin-plan-type](admin-plan-type/brief.md) — brief draft.** A bugfix: the
+   admin shows a plan's workflow type (bugfix, feature, …) and tells a document
+   the type does not require from one that is missing. Ordered after
+   `release-ritual`, which exposed it.
+3. **[context-tiers](context-tiers/brief.md) — brief accepted, test plan
+   next.** The root `CLAUDE.md` stops being the one channel for every rule:
+   enforcers name their lesson, context files sit in the directory where the
+   work is written, the root keeps only design intent under a lower budget.
+   After step 2 because both touch the planner skill and the admin; before the
+   Day steps below so they are built on the smaller root and pay no
+   Context-gate eviction tax. Estimated two to three working days.
+4. **The loop proven locally, end to end.** Sandy's gate on the deploy
    (2026-09-25): watch a real violation travel from the running system through
    Jaeger to an incident and a reopened plan, on this machine, before paying
    for a box to do it. Not a plan folder — a smoke.
-3. **[day-always-on-deploy](day-always-on-deploy/brief.md) — test-plan next**,
-   once 1 and 2 hold.
-4. **`day-contract` — 4c**, created after the deploy lands.
+5. **[day-always-on-deploy](day-always-on-deploy/brief.md) — test-plan next**,
+   once 1 and 4 hold.
+6. **`day-contract` — 4c**, created after the deploy lands.
 
 ## Stream 3 — Finish Dawn
 

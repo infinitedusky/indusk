@@ -3,6 +3,7 @@ title: "Context tiers — a rule reaches you where and when it applies"
 date: 2026-10-01
 status: accepted
 accepted: 2026-10-01
+workflow: feature
 ---
 
 # Context tiers — Brief
@@ -213,14 +214,17 @@ recorded here so it is a decision in the plan and not a line in a chat.
   ([indusk-v4-day/master.md](../indusk-v4-day/master.md)), the proposed step
   that declares promises in planning before code. It may start before this
   closes, writing its Context gate items against the tier table from day one.
-- **Sequencing — next, after `release-ritual` lands** (decided 2026-10-01).
-  `release-ritual` is the plan in flight that makes the version bump a step in
-  the retrospective; it adds 84 lines to the retrospective skill, which this
-  plan also edits, so this one waits for that merge rather than colliding with
-  it. As of the decision it had 32 of 33 checklist items done, with its
-  close-out rituals still to run. Then this plan runs and builds, ahead of
-  further Day work, so every later plan is built on the smaller root and pays
-  no Context-gate eviction tax.
+- **Sequencing — after `admin-plan-type`** (decided 2026-10-01, twice the same
+  day). First: wait for `release-ritual`, the plan that made the version bump a
+  step in the retrospective, because it added 84 lines to the retrospective
+  skill, which this plan also edits. That plan closed and merged later on
+  2026-10-01. Then: `admin-plan-type` — the bugfix in
+  [admin-plan-type/brief.md](../admin-plan-type/brief.md) that makes the admin
+  show a plan's workflow type and tell a not-required document from a missing
+  one — goes ahead of this plan, since both touch the planner skill and the
+  admin. After it, this plan runs and builds, ahead of further Day work, so
+  every later plan is built on the smaller root and pays no Context-gate
+  eviction tax. It is step 3 in the master plan's Next actions list.
 
 ## Open questions for the test plan and ADR
 
