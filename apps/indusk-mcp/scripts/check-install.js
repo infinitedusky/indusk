@@ -43,6 +43,56 @@ function installed(name) {
 
 const missing = declared.filter((name) => !installed(name));
 
+/** The nearest directory at or above the package holding `pnpm-lock.yaml` — the workspace root — or null. */
+function workspaceRoot() {
+	let dir = pkgDir;
+	for (;;) {
+		if (existsSync(join(dir, "pnpm-lock.yaml"))) return dir;
+		const up = dirname(dir);
+		if (up === dir) return null;
+		dir = up;
+	}
+}
+
+/**
+ * The install judged against the lockfile, which covers what the dependency
+ * check above cannot: devDependencies (the build needs `typescript`), the other
+ * workspace packages (`prepublishOnly` also builds `indusk-admin`), and a
+ * version changed on a branch. pnpm records the lockfile it installed at
+ * `node_modules/.pnpm/lock.yaml`; a merge that changed `pnpm-lock.yaml` without
+ * an install leaves the two different. Null when they agree or there is no
+ * lockfile; otherwise the reason.
+ */
+function lockfileDrift() {
+	const root = workspaceRoot();
+	if (!root) return null;
+	const record = join(root, "node_modules", ".pnpm", "lock.yaml");
+	if (!existsSync(record)) return "nothing records an install of pnpm-lock.yaml";
+	const lock = readFileSync(join(root, "pnpm-lock.yaml"), "utf-8");
+	return readFileSync(record, "utf-8") === lock
+		? null
+		: "pnpm-lock.yaml has changed since the last install";
+}
+
+const drift = lockfileDrift();
+if (missing.length === 0 && drift) {
+	process.stderr.write(
+		[
+			"",
+			`Refusing to publish ${manifest.version}: ${drift}, so the build would run`,
+			"against an install that does not match the lockfile — and fail, if at all,",
+			"after npm has already authenticated.",
+			"",
+			"The ordinary cause: a dependency (or devDependency, or a version) changed on a",
+			"plan branch and the branch was merged. Merging brings the lockfile, not the install.",
+			"",
+			"  pnpm install",
+			"",
+		].join("\n"),
+	);
+	process.exit(1);
+}
+
 if (missing.length > 0) {
 	process.stderr.write(
 		[
@@ -64,6 +114,6 @@ if (missing.length > 0) {
 	process.exit(1);
 }
 
-console.log(
-	`release-guard: ${declared.length} declared dependenc${declared.length === 1 ? "y" : "ies"} installed — ok`,
+console.info(
+	`release-guard: ${declared.length} declared dependenc${declared.length === 1 ? "y" : "ies"} installed${workspaceRoot() ? ", install matches pnpm-lock.yaml" : ""} — ok`,
 );
