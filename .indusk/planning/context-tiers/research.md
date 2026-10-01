@@ -1,6 +1,6 @@
 ---
 title: "Context tiers — where a rule lives, and how it reaches you"
-status: complete
+status: completed
 date: 2026-09-20
 ---
 
@@ -160,10 +160,38 @@ read by the same kind of token scan.
 alongside product behaviour, and that number is the entire point of Day 4a. Two
 registries, one shape.
 
+## Finding 4 — nested loading exists, walks up, and has no visible depth limit (2026-10-01)
+
+Measured, not read from docs. The official docs say only that subdirectory
+`CLAUDE.md` files are "included when Claude reads files in those subdirectories";
+they do not say whether that means the file's own directory or every ancestor.
+Probe: a throwaway repo with codewords in a root `CLAUDE.md`, in
+`planning/CLAUDE.md`, in `planning/other-plan/CLAUDE.md` and in
+`planning/deep-plan/CLAUDE.md`; headless `claude -p` sessions with cwd at the
+root, allowed only the Read tool, asked to read one file and list the codewords
+in context. Replicated on two models.
+
+| Probe | File read | Context files that loaded |
+|---|---|---|
+| T0 | none | root only |
+| T1 | `planning/my-plan/notes.md` — no context file in `my-plan/` | root + `planning/` |
+| T2 | `planning/other-plan/notes.md` — context file in `other-plan/` | root + `planning/` + `other-plan/` |
+| T3 | `planning/deep-plan/phases/notes/log.md` — two empty directories between the file and `deep-plan/` | root + `planning/` + `deep-plan/` |
+
+So: loading is on read (not at launch, not from cwd), **every ancestor between
+the touched file and the cwd is loaded**, gaps are skipped, siblings are never
+loaded, files concatenate without de-duplication. Tier 3 therefore works
+natively for the planning case — a rule in `.indusk/planning/CLAUDE.md` reaches
+an edit to `.indusk/planning/<plan>/impl.md`. The PreToolUse injection hook is a
+**backstop against this behaviour changing**, not the mechanism, and the right
+form of backstop is a test that runs the documented path (an e2e probe like the
+one above), not an injector.
+
 ## Open questions for the brief
 
-- Does nested-CLAUDE.md loading already happen, and on which trigger? (Decides
-  hook-as-mechanism vs hook-as-backstop.)
+- ~~Does nested-CLAUDE.md loading already happen, and on which trigger?~~
+  **Answered above**: on read, with an ancestor walk. Confidence high for current
+  Claude Code; observed, not documented, so it needs a standing probe.
 - Hand-check the 54%/35%: for each entry, does the named machinery enforce the
   *whole* claim, or only part of it?
 - How does a test surface its lesson body — runner-agnostic, since the project

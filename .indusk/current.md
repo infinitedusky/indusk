@@ -19,49 +19,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-09-17: **1.51.0 published** to npm at 2026-09-18T00:03:18Z from release commit 7f4297bc — by the SECOND `pnpm release` run (browser 2FA confirmed). The first run's `record-release.js` mark was written on pnpm's exit code alone and nothing reached the registry; the mark now says only what `npm view` confirms.
 - 2026-09-18: **1.52.0 published** to npm from release commit 52749a95 (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-09-18: **1.53.0 published** to npm from release commit e0caf32f (`pnpm release`, recorded by `scripts/record-release.js`).
-- 2026-09-22: **1.54.0 published** to npm from release commit d7e0061a (`pnpm release`, recorded by `scripts/record-release.js`).
-
----
-
-## Session da8327e4 — eval: reviewing commit 3dbe9a1a (master.md queue entry)
-
-**Session ID**: da8327e4-4ba2-4939-a094-9055c134a4a6
-**Last updated**: 2026-09-14T14:42:01.483Z
-**Branch**: main
-**Worktree**: /Users/the_dusky/code/sandbox/dusk
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
-
----
-
-## Session 30e64e93 — eval: reviewing commit 00bf46bd (worktree-config-schema-pointer Phase 2 red tests)
-
-**Session ID**: 30e64e93-bd7f-4969-a4c4-2a24454f7335
-**Last updated**: 2026-09-14T15:37:41.098Z
-**Branch**: plan/worktree-config-schema-pointer-phase-2
-**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/worktree-config-schema-pointer
-
-### In Flight
-
-(empty)
-
-### Open Questions
-
-(empty)
-
-### Cursor
-
-(empty)
+- 2026-09-22: **1.54.0 published** to npm from release commit b185e375 (`pnpm release`, recorded by `scripts/record-release.js`; corrected 2026-10-01 — the script had recorded HEAD, `d7e0061a`, a plan commit; fixed by release-ritual T11).
 
 ---
 
@@ -254,24 +212,35 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 
 ---
 
-## Session 25c802bd — day-promises: /work Test Phase 1
+## Session 25c802bd — day-always-on landed + published 1.54.0; release-ritual in flight
 
 **Session ID**: 25c802bd-7505-46cc-a1a7-72186418629a
-**Last updated**: 2026-09-18T05:35:29.818Z
+**Last updated**: 2026-09-22T06:30:09.288Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 
-(empty)
+**release-ritual** — all three fixes implemented and green, on `plan/release-ritual` (pushed):
+
+1. trunk-guard reads `-F`/`--file` messages, and treats a `-m` from a heredoc/substitution as *unreadable* rather than tokenizing the message into paths. The real bug was sharper than expected: a literal `"` inside a heredoc body closes the tokenizer's quote, so the rest of that line became pathspecs — a message containing the phrase `"exactly once"` was refused with a fragment of itself printed as a filename.
+2. `scripts/check-install.js` verifies every declared dependency resolves before npm is touched. Publishing 1.54.0 failed *after* `npm whoami` because a dependency merged from a plan branch was never installed on trunk.
+3. `/retrospective` gained **Step 11: Bump** — the landed merge decides whether packaged paths changed, the plan decides minor vs patch, the changelog rolls, the `chore(release):` commit is written. Skipping is recorded, not silent.
+
+T1–T9 pass. **Remaining**: Build Phase 3's Context + Document gates, then `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Its own close runs Step 11 for real — that is the deferred verification.
 
 ### Open Questions
 
-(empty)
+- Should `indusk plans` **refuse an unrecognised document status** instead of treating it as inactive? `context-tiers` carried `status: complete` (vocabulary is `completed`) and vanished from every active listing — one letter, silently. `jev-decision-model/research.md` still has it and is not mine to change.
+- Build Phase 3 carries a discovered item: trunk-guard's allowlist omits `.claude/skills/` and `.claude/hooks/`, which `indusk update` writes — and update is meant to run on trunk. Landing 1.54.0's update needed `INDUSK_TRUNK_GUARD=off` to commit the testing extension's refreshed skill.
 
 ### Cursor
 
-(empty)
+Worktree `/Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual` (exists on THIS Mac only; on another machine `git worktree add ../dusk-worktrees/release-ritual plan/release-ritual` then `indusk worktree assign`).
+
+Next concrete step: the two unchecked gates under `#### Build Phase 3 Context` / `Document` in `.indusk/planning/release-ritual/impl.md`, plus the discovered allowlist item above it.
+
+Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh checkout fails 7 tests until `pnpm --filter indusk-admin build && node apps/indusk-mcp/scripts/bundle-admin.js`; `daemon-identity`'s two PID-reuse tests fail identically on `main`; `http-promise-health` A16 times out at 5s under full-suite load and passes alone.
 
 ---
 
@@ -323,6 +292,12 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-22T00:39:06.437Z
 **Branch**: plan/release-ritual
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual
+## Session 47cf1bc5 — starting catchup
+
+**Session ID**: 47cf1bc5-8dfe-4f22-bf7c-c9ee97905a2b
+**Last updated**: 2026-09-22T06:15:10.560Z
+**Branch**: main
+**Worktree**: /Users/sandycorsillo/code/indusk
 
 ### In Flight
 
@@ -344,6 +319,53 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 **Last updated**: 2026-09-22T00:39:24.066Z
 **Branch**: plan/release-ritual
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/release-ritual
+## Session 1a22716c — V4 sequence reconciled; release-ritual is further along than trunk shows
+
+**Session ID**: 1a22716c-eea2-4bd6-9e35-378d2d00a596
+**Last updated**: 2026-10-01T14:59:09.312Z
+**Branch**: main
+**Worktree**: /Users/sandycorsillo/code/indusk
+
+### In Flight
+
+**Correcting this section's earlier contents — it was wrong.** It said release-ritual had nothing executed and two gate items pending. Both false, and the cause is worth knowing: the trunk copy of `release-ritual/impl.md` has all 27 items unchecked, but the plan's real state lives on the remote branch `plan/release-ritual`, which already carries Build Phases 1–3. `indusk worktree create release-ritual` cut a fresh branch from `main` rather than checking out the existing remote branch of that name, so the tooling hid the work instead of revealing it. The push was the first thing that touched the remote and the first thing that told the truth (rejected non-fast-forward).
+
+**release-ritual's actual state** (remote `plan/release-ritual`, tip `bcae83b8`): T1–T7 `passing`, T8/T9 `planned`, 12 items checked and 16 not. Landed commits: `e66c8461` trunk-guard reads the message it is given (Build Phase 1), `85963447` the release proves its install before npm sees it (Build Phase 2), `e880f999` the bump becomes the retrospective's Step 11 (Build Phase 3), `bcae83b8` record the allowlist gap update exposed. **Test Phase 1's Context and Document gate items are answered on the branch — user: "Skip both".** Build Phase 3 is the one still open.
+
+**A pre-existing test-first violation sits on that branch**, found by `check-gates` refusing an unrelated edit: `T8` and `T9` are trajectory rows writable at Test Phase 1 and still `planned`, while Build Phase 1–3 items are checked. The gate blocks any further edit in that region until they are authored. Not introduced by this session — it predates it.
+
+### Open Questions
+
+- **Was Build Phase 3 left mid-flight deliberately, or just interrupted?** If another machine or session is still working that branch, stay out of it; if not, the next step is clear (below). This is the one thing to confirm before editing the branch.
+- **T10 and T11 are real but unlanded.** `T10` is a trajectory row asserting that a `git commit` written across backslash-continued lines, staging only allowlisted paths, is allowed. It is not: `commitArgs`'s backslash branch in `trunk-guard.js` carries the escaped newline into the current token and sets `has = true`, so each continuation emits a whitespace-only token that `commitIntent` classifies as a pathspec — the refusal prints one empty bullet per continued line. Verified empirically (identical flags and staged set: exit 0 on one line, exit 2 across several) **and** confirmed to survive Build Phase 1's fix, because the branch's `commitArgs` is byte-identical on that branch. `T3` is adjacent but its fix leaves this spelling live — the phantom token is not the message. `T11`: `record-release.js` labels `git rev-parse --short HEAD` the release commit, so the 1.54.0 note in the shared region credits `d7e0061a` (a plan commit) instead of `b185e375`. Rows and items are preserved on branch `salvage/t10-t11-rows`, pushed, **not** merged — the gate correctly refuses `planned` rows beside completed work.
+- **Recursive plan grouping** — wanted, not critical. Not a declaration edit: `buildGroups` creates one group per `subplans` key regardless of claiming, so nesting Dawn under Day renders Dawn twice. Reason recorded in the root master's Parked section.
+
+### Cursor
+
+**Picking up on another machine — read this first.**
+
+**Pushing from this laptop needed the SSH URL.** `origin` is HTTPS and the osxkeychain credential resolves to GitHub account `lazer-sandyc`, which gets 403 on `infinitedusky/indusk`; the SSH key authenticates as `infinitedusky`. Pushes here were made with an explicit `git@github.com:infinitedusky/indusk.git` and the `origin/*` tracking refs were never updated, so local `main` reads "ahead 3" while GitHub already has it. Verify with `git ls-remote`, not with the ahead/behind count. On the new machine, check which account git and gh authenticate as before concluding anything is unpushed.
+
+**Everything is on GitHub.** `main` at `5b7d5f5b` (sequence reconciliation plus this note). `plan/release-ritual` at `bcae83b8`, untouched by this session. `salvage/t10-t11-rows` carries the T10/T11 rows and items.
+
+**Next concrete step, once the question above is answered:** in a checkout of `plan/release-ritual`, author the four remaining rows red in one pass — T8 and T9 (clearing the pre-existing violation) together with T10 and T11 (clearing the new ones), then land the `salvage/t10-t11-rows` content on top. Files:
+
+- `apps/indusk-mcp/src/__tests__/release-ritual-skill.test.ts` — T8, T9.
+- `apps/indusk-mcp/src/__tests__/trunk-guard-release-message.test.ts` — T10, beside the existing T1–T5.
+- `apps/indusk-mcp/src/__tests__/record-release-commit.test.ts` — T11. Its fixture needs a `chore(release): <v)` commit **and at least one commit after it**; a fixture where the two coincide cannot fail.
+
+**Gate command:** `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard-release-message src/__tests__/release-guard-install src/__tests__/release-ritual-skill src/__tests__/record-release-commit`
+
+**Two standing gotchas:** write every `git commit` on trunk as a single line until T10's fix lands. And a fresh plan worktree has no admin bundle, so nine `indusk ui` tests plus the tarball test fail there until `pnpm --filter indusk-admin build && node scripts/bundle-admin.js` — known-red, not a regression.
+
+---
+
+## Session 4551e898 — starting catchup
+
+**Session ID**: 4551e898-ab24-4e67-912d-93a16d14c984
+**Last updated**: 2026-10-01T15:03:31.125Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
 
 ### In Flight
 

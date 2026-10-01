@@ -1,7 +1,7 @@
 ---
 title: "Master Plan — Execution Order"
 date: 2026-04-19
-updated: 2026-09-04
+updated: 2026-09-25
 # Machine-readable plan hierarchy (dawn-ui-plan-grouping). Prose below is for
 # humans; these keys are what the parser and admin sidebar read. Children of a
 # parent (e.g. dawn-*) are declared in the PARENT's master.md, never here —
@@ -12,16 +12,18 @@ parents:
 roadmap:
   - workbench-trust-fixes
   - hook-cwd-independence
+  - context-tiers
   - indusk-v2-dawn
   - indusk-v4-day
   - day-promises
   - day-monitor
+  - day-always-on
   - admin-ui-phase-progress
   - indusk-makeover
-  - dusk-v2
   - user-zero
   - jev-decision-model
-  - context-tiers
+  - release-ritual
+  - admin-plan-type
   - day-always-on-deploy
 ---
 
@@ -47,6 +49,7 @@ the streams are ordered by trust, not by feature value.
 | [workbench-trust-fixes](archive/workbench-trust-fixes/brief.md) | **closed 2026-09-10, merged 2026-09-11** — nine phases, 24 rows green, falsified, cleaned, retrospective written, archived. **Stream 1's gate is met**: zero silent wrong answers from run / cleanup / eval / restore in a versioned workbench | **Phase A (blocking, small)**: make the gate-reminder advisor actually speak (F9 — first, because it makes every later plan cheaper to execute correctly), then the four tourniquets — `indusk run` entry refusal, cleanup re-guard, eval-attribution guard, restore's destructive clone. **Phase B (trails, non-blocking)**: bash lane parity, record de-contradiction, close/re-scope of workbench-mode-rail-integrity. |
 | [hook-cwd-independence](archive/hook-cwd-independence/brief.md) | **closed 2026-09-15 on `main`, archived 2026-09-17** — 7 rows green, falsified 2 (the unset-variable form; init's duplicate merge) plus one pre-existing overlay bug, cleanup skipped with reason, retrospective written at trunk-guard's close. Was: brief draft (2026-09-10, from trust-fixes' retrospective), recommended before 6.5 | Every hook is registered `node .claude/hooks/<name>.js` and Claude Code runs hooks in the session's drifting cwd; from `apps/indusk-mcp` every gate fails to load with a non-blocking exit 1 and is silently off (observed: eight checkoffs passed Gate B with two rows non-terminal). Absolute hook commands in `init`/`update`/this repo's settings, plus a row-terminality check in the close-out gate. |
 | [workbench-code-roots](archive/workbench-code-roots/brief.md) | **folded into Dawn 6.5, archived 2026-09-14** | One `codeRoots` answer to "where is code *inside* the repo" — now `dawn-workbench-execution`'s to deliver. |
+| [context-tiers](context-tiers/brief.md) | research complete 2026-09-20; **brief accepted 2026-10-01, test plan next — runs next, after `release-ritual` lands** (decided 2026-10-01: both edit the retrospective skill, so this waits for that merge), ahead of further Day work so later plans build on the smaller root. **Recommended before `day-contract`** (Day component 4c in [indusk-v4-day/master.md](indusk-v4-day/master.md): promises declared in planning before code, named by every row; not yet created — it will author new planner rules, and this plan decides where they land) | The root `CLAUDE.md` is pinned at its 60 KB ceiling and half its gotchas restate an enforcer. Three tiers: a rule's enforcer names its lesson when it fires (`lesson: <name>`, the promise-token shape, separate registry); directory-scoped context files placed by where the work is written (planning — package-owned and shipped; admin; mcp — nested loading **measured** 2026-10-01: on read, ancestor walk, no depth limit, guarded by an e2e probe); the root keeps only design intent, under a lowered budget. The work is a classification register of every root entry so no rule is lost. |
 
 **Gate out of Stream 1:** only **Phase A** of workbench-trust-fixes gates
 Stream 2 — zero silent wrong answers from the surfaces Midnight and Dawn
@@ -79,12 +82,21 @@ promise.) Three sub-plans:
   phase; `monitor` as the quiet window; observed health in the admin;
   `every-commit-evaluated` self-hosted and broken on purpose by `pnpm e2e`.
   See `/decisions/day-monitor` and `/lessons/day-monitor`.
-- `day-always-on` — **4b′, the monitor on a machine that does not turn off**
-  (split from 4b 2026-09-18; 4b closed 2026-09-19 — next to create): Jaeger with persistent
-  storage, the scheduled `indusk promises status` run, and the receiver that
-  opens the incident and reopens the plan when no developer machine is on —
-  where it runs is this step's decision. Reuses 4b's query and incident path
-  unchanged; the `deployed` incident source is proven here.
+- [day-always-on/brief.md](archive/day-always-on/brief.md) — **4b′, the monitor
+  on a machine that does not turn off** — **closed 2026-09-21** (retrospective
+  written, archived): the shipped Jaeger as an always-on server (badger on a
+  volume, basic auth on both doors, `indusk telemetry serve` as process 1), an
+  in-process pass that announces each violation once to Slack and only after
+  Slack accepts, a project naming its Jaeger in `promises.jaeger`, and
+  `promise_health` telling a session. Detect-and-notify only. See
+  `/decisions/day-always-on` and `/lessons/day-always-on`. **The deployment is
+  its own step** — `day-always-on-deploy`, below.
+- [day-always-on-deploy/brief.md](day-always-on-deploy/brief.md) — **4b′
+  deployed** — brief accepted; next is the test-plan. **Deliberately held**
+  (Sandy, 2026-09-25): the deploy waits until the whole loop is proven working
+  locally end-to-end. Needs a Fly account and a Slack webhook; **not** blocked
+  on a publish — 1.54.0 (release commit b185e375) already carries the always-on
+  code, with zero packaged commits since.
 - `day-contract` — **4c, the contract in planning** (proposed 2026-09-18 as
   4a's cut; created when 4a closes): promises declared before code, every
   trajectory row names what it establishes or preserves, the retrospective
@@ -98,9 +110,22 @@ of real use, after 32 green rows) is the standing evidence that inside-the-repo
 loops cannot see what only running the thing reveals. Growing throughput before
 growing trust repeats that at scale.
 
-**Next actions:** accept the brief → write the ADR. **The ADR must settle the
-Dawn relationship** (does the collapse signal feed `indusk run`, or are they
-orthogonal?) — both documents name this as their shared open question.
+**Next actions (2026-09-25).** The sequence's live order, and why it is not
+simply the next `day-*` folder:
+
+1. **[release-ritual](release-ritual/brief.md) — in flight.** Impl approved
+   2026-09-21, nine rows, four phases, nothing executed yet. It is here and
+   not filed as a bugfix because publishing has cost four or five attempts for
+   three consecutive versions, and the deploy step below installs the
+   *published* package — so an unreliable release is a prerequisite failure,
+   not a side quest.
+2. **The loop proven locally, end to end.** Sandy's gate on the deploy
+   (2026-09-25): watch a real violation travel from the running system through
+   Jaeger to an incident and a reopened plan, on this machine, before paying
+   for a box to do it. Not a plan folder — a smoke.
+3. **[day-always-on-deploy](day-always-on-deploy/brief.md) — test-plan next**,
+   once 1 and 2 hold.
+4. **`day-contract` — 4c**, created after the deploy lands.
 
 ## Stream 3 — Finish Dawn
 
@@ -154,6 +179,49 @@ weeks (indusk-makeover: 53 days). Follow-ons found mid-plan are written into
 the brief of the step that owns them, never left in a retrospective, a
 lesson title, or a chat log.
 
+- **Two release plans, one boundary** (written 2026-09-25 — they had overlapped
+  unreconciled since 2026-09-21, and `release-ritual` was declared nowhere).
+  Both stay; the split is by question, not by folder age:
+  - **[release-ritual](release-ritual/brief.md) — the procedure works.** Brief
+    accepted + impl approved 2026-09-21, the live step. Owns: the bump as
+    retrospective Step 11, trunk-guard reading a `chore(release):` message
+    however it is supplied (`-F`, `--file=`, heredoc, command substitution),
+    and the guard proving the tree builds (`pnpm install --frozen-lockfile`)
+    before npm is authenticated. **It supersedes `indusk release <major|minor|patch>`
+    as a command shape** — the bump is a step in a ritual that already knows
+    what shipped, not a new verb.
+  - **[indusk-release](indusk-release/brief.md) — a release names what it
+    carries.** Brief draft, Day small step S1, narrowed 2026-09-25 to the half
+    release-ritual does not cover: computing the *set* of plans a version
+    shipped from the `Merge plan/*` commits since the last `chore(release)`
+    (1.50.0 carried three; Step 11 only knows the one plan it just closed),
+    "Released in" written back to each retrospective, and `check_health`
+    naming landed-and-unreleased plans. Its `check_health` three-way-state
+    clause **already shipped** (the version line reports installed, published,
+    project-updated and packaged commits since the release commit); what
+    remains is naming the plans rather than counting commits.
+- **Done, not a step** (2026-10-01, merged as `140a705a`): **the citing rule in
+  the agent-conduct file gains an example for every label kind.** The rule
+  shipped with one example (a trajectory row) and did not list component
+  numbers; it was broken on exactly that kind ("recommended before 4c", bare,
+  by an agent with the rule in context twice). New section "Citing plan
+  artifacts — the three parts, with examples" — the reference, where it comes
+  from, a one-line summary — with a bare/correct pair for a row, a component, a
+  phase, a decision and a gate. A new heading rather than an edit, because the
+  ensure never rewrites a present section; it joins `ENSURED_AGENTS_MD_SECTIONS`
+  so `indusk update` appends it to every existing project. Reaches consumers on
+  the next release. **Open**: examples raise the rate, they do not enforce it —
+  a Stop-hook check on bare labels is the enforcer, and is a candidate row in
+  [context-tiers](context-tiers/brief.md)' register.
+- **Small, not a step** (2026-10-01, found while landing the above):
+  **`pnpm check` is red on `main`** — 33 errors on an unmodified tree. Both
+  `biome.json` files declare schema 2.4.8 while the locked CLI is 2.5.14
+  (`biome migrate` is the stated fix); the rest are format errors in five
+  `apps/indusk-admin/public/*.svg` files, one in `.claude/hooks/eval-trigger.js`
+  (an installed copy — check the package source and the parity pin), and unused
+  imports in `apps/indusk-mcp/src/tools/system-tools.ts`. "Always run checks
+  before committing" cannot be followed while the baseline is red: a new error
+  hides among 33.
 - **Standalone research, not a step** (2026-09-18):
   [jev-decision-model](jev-decision-model/research.md) — TypeSafe AI's Jev, a
   typed-decision ("System One") model launched 2026-09-15. Verdict: watch, do not
@@ -276,9 +344,21 @@ lesson title, or a chat log.
   <pkg>@<version>` (bounded, like the guard's lookup) and write "published"
   only when the registry answers, otherwise write "publish reported success
   but the registry has no <version>" — the health line's `versionStateProblem`
-  already distinguishes the two states. Owner: `indusk-release` (S1).
+  already distinguishes the two states. **Owner re-routed 2026-09-25 to
+  [release-ritual](release-ritual/brief.md)** — it is the plan touching the
+  release path now, and S1 is about naming plans, not about earning the mark.
   Outcome: the second `pnpm release` run (browser 2FA confirmed) published
   1.51.0 at 2026-09-18T00:03:18Z; the first run's mark was false.
+  (f) Found 2026-09-25, same file, second wrong fact: `record-release.js`
+  records `git rev-parse --short HEAD` and labels it **"release commit"**. The
+  1.54.0 publish took five attempts, so by the time the recording run reached
+  that line HEAD had moved — the shared region of `.indusk/current.md` claims
+  1.54.0 was published "from release commit d7e0061a", which is
+  `plan(release-ritual): brief and impl`. The real release commit is b185e375.
+  It must resolve the last commit matching `^chore(release): <version>`, the
+  same way the health line's version state already does, and the note it writes
+  is read by every session at catchup. Owner: `release-ritual` — **not covered
+  by T1–T9**, so it needs a row before Test Phase 1 is authored.
   (e) Found by the third run: the guard's "already on the registry" refusal
   hung forever — its message quoted `` `pnpm release` `` inside double quotes,
   so bash ran it as a command substitution and the guard re-entered `pnpm
@@ -327,7 +407,30 @@ lesson title, or a chat log.
 
 ## Parked / needs re-scope
 
-- [dusk-v2](dusk-v2/) — research parked.
+- **`dusk-v2` — overtaken, folder already gone** (fate written 2026-09-25; it
+  had been a dangling `roadmap:` entry and a dead link here, so the sidebar
+  rendered it as a queued placeholder step). It was April 2026 research,
+  *"Dusk v2 — Greenfield Rewrite of indusk-mcp"*: republish the package as
+  `@infinitedusky/dusk` in a sibling `apps/dusk/`, clean break, no backwards
+  compat. Its five goals — unified extension model, config as source of truth,
+  scaffold/init separation, smaller surface, OTel-as-extension — all shipped
+  incrementally *inside v1* instead (the extension system, `.indusk/config.json`,
+  the `otel` extension), so the rewrite premise dissolved rather than being
+  rejected. The folder was deleted in `7afa9d2e`; the research is recoverable at
+  `7afa9d2e^:.indusk/planning/dusk-v2/research.md`. **Not to be confused with
+  `indusk-v2-dawn`** (Dawn), which is live and is a Day component — the names
+  differ by one prefix and have been read as the same plan more than once.
+- **Recursive plan grouping — wanted, not critical** (Sandy, 2026-09-25). Dawn
+  and Day are declared as sibling `parents:`, so the sidebar shows two
+  top-level trees, and Day's `subplans:` double-declares only two of Dawn's
+  eight children. Making Day one cohesive tree is **not** a declaration edit:
+  [`buildGroups`](../../apps/indusk-admin/src/components/PlanList.tsx) walks a
+  flat parent→children map and creates one group per key of `subplans`
+  independently of what has been claimed, so listing `indusk-v2-dawn` under Day
+  would render Dawn twice — once as a leaf, once as its own group with its
+  children. Real fix: nested groups in the parser's declarations and the
+  sidebar. An admin plan when it is worth one; until then the prose in both
+  masters carries the relationship.
 
 ## Change propagation
 
