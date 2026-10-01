@@ -1,6 +1,6 @@
 ---
 title: "The release ritual finishes itself"
-status: completed
+status: in-progress
 date: 2026-09-21
 trajectory: required
 test_phases: required
@@ -24,6 +24,9 @@ gate_policy: ask
 | T9 | The installed copy of the retrospective skill is byte-identical to the package-owned one | Test Phase 1 | Build Phase 3 | passing |
 | T10 | A `git commit` written across several lines with `\`-newline continuations, staging only allowlisted paths, is allowed — a continuation is not a pathspec. Today each one becomes a whitespace-only token that `commitIntent` classifies as a path, so the refusal lists one empty bullet per continued line | Test Phase 1 | Build Phase 1 | passing |
 | T11 | `record-release.js` writes the commit matching `^chore(release): <version>` as the release commit, not whatever HEAD happens to be when it runs | Test Phase 1 | Build Phase 3 | passing |
+| T12 | A commit whose subject line is not `chore(release):` is not exempt because the same command text says `chore(release):` elsewhere — in a later `-m` body paragraph, or in an earlier command before the `git commit` — when it stages packaged paths | Build Phase 4 | Build Phase 4 | planned |
+| T13 | Step 11 decides whether there is anything to release from the packaged changes since the release commit, the question `release-guard.sh` and the version line ask, never from `HEAD~1..HEAD` — after Step 10's own landing-note commit on trunk, `HEAD~1..HEAD` is that note and always reads "nothing to release" | Build Phase 4 | Build Phase 4 | planned |
+| T14 | The install check refuses an install that does not match the lockfile — a devDependency, an `indusk-admin` dependency, or a version change merged from a branch and never installed — not only a missing `dependencies` entry of `indusk-mcp` | Build Phase 4 | Build Phase 4 | planned |
 
 ### Trajectory Rationale
 
@@ -141,6 +144,25 @@ them so once Step 11 edits one of them.
 #### Build Phase 3 Document
 
 - [x] `/reference/skills/retrospective`: Step 11, what it derives and when it skips
+
+### Build Phase 4: Falsification — each check answers a narrower question than the one it claims
+
+**Goal**: verify whether the attested state holds against three checks that read less than the question they stand for: the release exemption reads the whole command rather than the commit's own subject line; Step 11 asks what the *last commit* changed rather than what changed since the release; the install check asks whether `indusk-mcp`'s `dependencies` exist rather than whether the install matches the lockfile. Each trajectory row captures one hypothesis; each item captures the fix if it confirms.
+
+- [ ] Author T12, T13, T14 red before any fix: T12 in `trunk-guard-release-message.test.ts` (a `-m "feat: x" -m "chore(release): y"` commit and an `echo -m "chore(release): y"; git commit -am "feat: x"` command, each staging `src/a.ts`, each expected to refuse); T13 in `release-ritual-skill.test.ts` (Step 11's text names the release commit as its range and does not use `HEAD~1`); T14 in `release-guard-install.test.ts` (a fixture whose lockfile differs from what was installed — a devDependency added to the manifest and lockfile but not installed — expected to refuse naming `pnpm install`)
+- [ ] `trunk-guard.js`: the release exemption reads **this commit's own first message** — the first `-m`/`--message` value, or the `-F`/`--file` file — from `commitArgs`'s tokens, not a regex over the whole command text. A body paragraph or text outside the commit never exempts (T12)
+- [ ] `retrospective.md` Step 11: "is there anything to release" reads the packaged commits since the release commit — the `indusk/version` line of `check_health` reports exactly this ("N packaged commit(s) since"), or `git diff --name-only <release-commit>..HEAD` over `release-guard.sh`'s `PACKAGED_PATHS`. Drop the `HEAD~1..HEAD` command and the path list that differs from the guard's while claiming to be the same; resync `.claude/skills/retrospective/SKILL.md` (T13)
+- [ ] `check-install.js`: judge the install against the lockfile, which covers every workspace package, devDependencies and version changes in one comparison — pnpm records the lockfile it installed at `node_modules/.pnpm/lock.yaml`; a mismatch with `pnpm-lock.yaml` (or a missing record) refuses naming `pnpm install`. Keep the missing-dependency message as the explanation of the ordinary cause (T14)
+
+#### Build Phase 4 Verification
+- [ ] T12, T13, T14 pass, and T1–T11 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard-release-message src/__tests__/release-guard-install src/__tests__/release-ritual-skill src/__tests__/record-release-commit src/__tests__/skill-sync-parity`)
+- [ ] `bash apps/indusk-mcp/scripts/release-guard.sh` in this worktree reaches the install check and reports it ok (the install is current here), so the new comparison does not refuse a healthy tree
+
+#### Build Phase 4 Context
+- [ ] Known Gotchas (the hooks entry): the release exemption reads the commit's own first message, never the surrounding command text
+
+#### Build Phase 4 Document
+- [ ] `apps/docs/src/changelog.md` Unreleased and `/reference/skills/retrospective` Step 11: the release question is "packaged changes since the release commit", and the install check compares against the lockfile
 
 ## Deferred Verification
 
