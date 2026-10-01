@@ -21,46 +21,47 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | A plan whose brief declares a type shows that type as a chip in the plan header | Test Phase 1 | Build Phase 2 | planned | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A2 | A plan that declares no type shows "type not declared" in the header, never a guess from which documents exist | Test Phase 1 | Build Phase 2 | planned | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A3 | A plan that declares a word outside the four types shows that word and says it is not a recognised type — not treated as known, not folded into "not declared" | Test Phase 1 | Build Phase 2 | planned | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A4 | Clicking the type chip opens an explanation — what the type is for, which documents it requires, which it skips, and why — and it closes with Escape or its close button | Test Phase 1 | Build Phase 2 | planned | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A5 | On a bugfix plan the absent research and the absent ADR read skipped, both behind the plan's position and ahead of it | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
-| A6 | On a bugfix plan that has an impl and no test plan, the test plan reads missing | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
-| A7 | On a bugfix plan whose brief exists and whose test plan is not written yet, the test plan reads pending, not missing | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
-| A8 | On a plan that declares no type, an absent earlier document reads unknown, never skipped; documents not yet reached still read pending | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
-| A9 | A feature plan with every document present reads exactly as it does today | Test Phase 1 | Test Phase 1 | planned | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
-| A10 | When a document is missing or unknown the page says so in words beside the bar — which document and why — not by colour or hover alone | Test Phase 1 | Build Phase 2 | planned | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
-| A11 | Every state a bar segment can be in has its own drawing and its own label in the admin; a state added to the lifecycle without one fails by name | Test Phase 1 | Build Phase 2 | planned | apps/indusk-admin/src/lib/segment-state-render-parity.test.ts |
-| A12 | What the admin says a type requires and skips equals the planner skill's workflow table and each workflow template's list of documents — one set of facts, three statements | Test Phase 1 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
-| A13 | The bugfix workflow template lists the test plan among the documents it creates | Test Phase 1 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
-| A14 | Every brief template the planner uses — in the skill and in each workflow template — carries a `workflow:` line | Test Phase 1 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
-| A15 | The archived release-ritual plan, read through the admin's reader from this repository, is a bugfix with research and ADR skipped and the test plan missing | Test Phase 1 | Build Phase 3 | planned | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
-| A16 | In this repository every active plan declares a type — in its brief, or in its research document when the plan is research only | Test Phase 1 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/active-plans-declare-workflow.test.ts |
-| A17 | The installed copy of the planner skill is byte-identical to the package's | Test Phase 1 | Test Phase 1 | planned | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
-| A18 | The workflow-type definitions are reachable by their documented package subpath from outside the package | Test Phase 1 | Build Phase 1 | planned | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
+| A1 | A plan whose brief declares a type shows that type as a chip in the plan header | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A2 | A plan that declares no type shows "type not declared" in the header, never a guess from which documents exist | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A3 | A plan that declares a word outside the four types shows that word and says it is not a recognised type — not treated as known, not folded into "not declared" | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A4 | Clicking the type chip opens an explanation — what the type is for, which documents it requires, which it skips, and why — and it closes with Escape or its close button | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A5 | On a bugfix plan the absent research and the absent ADR read skipped, both behind the plan's position and ahead of it | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A6 | On a bugfix plan that has an impl and no test plan, the test plan reads missing | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A7 | On a bugfix plan whose brief exists and whose test plan is not written yet, the test plan reads pending, not missing | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A8 | On a plan that declares no type, an absent earlier document reads unknown, never skipped; documents not yet reached still read pending | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A9 | A feature plan with every document present reads exactly as it does today | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts |
+| A10 | When a document is missing or unknown the page says so in words beside the bar — which document and why — not by colour or hover alone | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/components/PlanDetail.type.test.tsx |
+| A11 | Every state a bar segment can be in has its own drawing and its own label in the admin; a state added to the lifecycle without one fails by name | Test Phase 1 | Build Phase 2 | written | apps/indusk-admin/src/lib/segment-state-render-parity.test.ts |
+| A12 | What the admin says a type requires and skips equals the planner skill's workflow table and each workflow template's list of documents — one set of facts, three statements | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
+| A13 | The bugfix workflow template lists the test plan among the documents it creates | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
+| A14 | Every brief template the planner uses — in the skill and in each workflow template — carries a `workflow:` line | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
+| A15 | The archived release-ritual plan, read through the admin's reader from this repository, is a bugfix with research and ADR skipped and the test plan missing | Test Phase 1 | Build Phase 3 | written | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
+| A16 | In this repository every active plan declares a type — in its brief, or in its research document when the plan is research only | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/active-plans-declare-workflow.test.ts |
+| A17 | The installed copy of the planner skill is byte-identical to the package's | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts |
+| A18 | The workflow-type definitions are reachable by their documented package subpath from outside the package | Test Phase 1 | Build Phase 1 | written | apps/indusk-admin/src/lib/planning-reader.workflow.test.ts |
 
 ## Checklist
 
 ### Test Phase 1: Author every row against today's behaviour, RED
 
-- [ ] Create this plan's worktree with `indusk worktree create admin-plan-type`
-- [ ] Author A5–A9 in `apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts`, calling `derivePlanPosition` the way `lifecycle-derive.test.ts` does, with the type carried on the plan summary. Compare states as strings, so a state word the union does not hold yet is a failed assertion and not a type error
-- [ ] Author A12–A14 and A17 in `apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts`. The definitions module does not exist yet: load it with a dynamic `import()` inside the test, so its absence fails A12 by name instead of failing the file to load. A13 and A14 read the template and skill text
-- [ ] Author A16 in `apps/indusk-mcp/src/__tests__/active-plans-declare-workflow.test.ts`, over `.indusk/planning/`: an active plan is a folder outside `archive/` holding a brief or a research document; a parent that holds only `master.md` is not one. The failure names every plan without a type
-- [ ] Author A1–A4 and A10 in `apps/indusk-admin/src/components/PlanDetail.type.test.tsx`, rendering the existing plan page. Assert on what is read — the chip's text, the explanation's text, the sentence beside the bar — never on `data-state`, which the bar already copies from its input and would pass for the wrong reason
-- [ ] Author A11 in a new file, `apps/indusk-admin/src/lib/segment-state-render-parity.test.ts`, importing the lifecycle as a namespace. A named import of a list that does not exist yet is a link error that would take the existing parity file down with it
-- [ ] Author A15 and A18 in `apps/indusk-admin/src/lib/planning-reader.workflow.test.ts`: A15 reads `.indusk/planning/archive/release-ritual` from this repository through the reader; A18 imports the package subpath dynamically
-- [ ] Run every file and read every failure: each row fails on its own assertion, and no file fails to load
+- [x] Create this plan's worktree with `indusk worktree create admin-plan-type`
+- [x] Author A5–A9 in `apps/indusk-mcp/src/lib/lifecycle-document-states.test.ts`, calling `derivePlanPosition` the way `lifecycle-derive.test.ts` does, with the type carried on the plan summary. Compare states as strings, so a state word the union does not hold yet is a failed assertion and not a type error
+- [x] Author A12–A14 and A17 in `apps/indusk-mcp/src/__tests__/workflow-types-parity.test.ts`. The definitions module does not exist yet: load it with a dynamic `import()` inside the test, so its absence fails A12 by name instead of failing the file to load. A13 and A14 read the template and skill text
+- [x] Author A16 in `apps/indusk-mcp/src/__tests__/active-plans-declare-workflow.test.ts`, over `.indusk/planning/`: an active plan is a folder outside `archive/` holding a brief or a research document; a parent that holds only `master.md` is not one. The failure names every plan without a type
+- [x] Author A1–A4 and A10 in `apps/indusk-admin/src/components/PlanDetail.type.test.tsx`, rendering the existing plan page. Assert on what is read — the chip's text, the explanation's text, the sentence beside the bar — never on `data-state`, which the bar already copies from its input and would pass for the wrong reason
+- [x] Author A11 in a new file, `apps/indusk-admin/src/lib/segment-state-render-parity.test.ts`, importing the lifecycle as a namespace. A named import of a list that does not exist yet is a link error that would take the existing parity file down with it
+- [x] Author A15 and A18 in `apps/indusk-admin/src/lib/planning-reader.workflow.test.ts`: A15 reads `.indusk/planning/archive/release-ritual` from this repository through the reader; A18 imports the package subpath dynamically
+- [x] Run every file and read every failure: each row fails on its own assertion, and no file fails to load (package: 13 failing, 6 passing across three files; admin: 19 failing, 2 passing across three files; every failure is an assertion, none a load error)
 
 #### Regression Guards
 
+- **A7** — passes the moment it is written, which was found by writing it, not planned: a document ahead of the plan's position already reads pending today, so "pending, not missing" has no red phase. It was approved as passing at Build Phase 1; it is moved to this phase and declared here because it guards the new `missing` judgment against firing on a document the plan has simply not reached yet.
 - **A9** — passes the moment it is written: a feature plan with every document present has no absent document to judge. It guards the new judgment against changing a plan it has no business touching.
 - **A17** — passes the moment it is written: the planner skill's two copies are byte-identical today. Build Phase 3 edits one of them, and this keeps the other in step.
 
 #### Test Phase 1 Verification
 
-- [ ] A1–A18 authored; A9 and A17 pass; every other row fails on its own assertion and no file fails to load (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/lifecycle-document-states src/__tests__/workflow-types-parity src/__tests__/active-plans-declare-workflow` and `pnpm --filter indusk-admin exec vitest run src/components/PlanDetail.type src/lib/segment-state-render-parity src/lib/planning-reader.workflow`)
+- [x] A1–A18 authored; A7, A9 and A17 pass; every other row fails on its own assertion and no file fails to load (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/lifecycle-document-states src/__tests__/workflow-types-parity src/__tests__/active-plans-declare-workflow` and `pnpm --filter indusk-admin exec vitest run src/components/PlanDetail.type src/lib/segment-state-render-parity src/lib/planning-reader.workflow`)
 
 #### Test Phase 1 Context
 
@@ -122,7 +123,7 @@ Test paths are repo-root-relative (the verify runner's cwd is the repo root).
 ### Build Phase 3: the planner declares it, and this repository does
 
 - [ ] `apps/indusk-mcp/skills/planner.md`: the brief template carries `workflow:`, and the Workflow Types section says every brief declares it, defaulting to `feature`. Resync the installed copy under `.claude/skills/planner/`
-- [ ] `apps/indusk-mcp/templates/workflows/`: each template's brief (or, for the spike, research) template carries `workflow:`; the bugfix template's list of documents gains the test plan, and its opening sentence stops saying a bugfix is only a brief and an impl; the refactor template is checked for the same omission
+- [ ] `apps/indusk-mcp/templates/workflows/`: each template's brief (or, for the spike, research) template carries `workflow:`; the bugfix template's list of documents gains the test plan, and its opening sentence stops saying a bugfix is only a brief and an impl. **Found authoring A12:** the feature and refactor templates omit the test plan too — three of the four templates contradict the skill's table — so all three gain it
 - [ ] Declare the type on every active plan here that lacks one: `plan-premises`, `day-always-on-deploy` and `indusk-release` in their briefs; `user-zero` and `jev-decision-model`, which are research only, in their research documents
 - [ ] Declare `workflow: bugfix` on the archived `release-ritual` brief — the one archived plan that gets it, per the brief
 
