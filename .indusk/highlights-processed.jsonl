@@ -308,3 +308,4 @@
 {"id":"h-20261001-003","processedAt":"2026-10-01T17:36:17.548Z","action":"wrote-episode","detail":"falsify-a-check-by-naming-the-question-it-answers"}
 {"id":"h-20261001-004","processedAt":"2026-10-01T17:36:18.490Z","action":"wrote-episode","detail":"check-a-ritual-step-against-what-the-steps-around-it-actually-do"}
 {"id":"h-20261001-005","processedAt":"2026-10-01T17:36:19.020Z","action":"wrote-episode","detail":"tick-checkboxes-and-trajectory-state-in-the-same-commit-as-the-code"}
+{"id":"h-20261001-006","processedAt":"2026-10-01T18:53:39.726Z","action":"skipped","detail":"recorded in admin-plan-type/brief.md — Proposed Direction + Ground-truth check sections carry the full rationale"}
