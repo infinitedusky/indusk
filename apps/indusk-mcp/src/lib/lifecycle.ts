@@ -81,6 +81,18 @@ export const DOCUMENT_POSITIONS = [
 export type DocumentPosition = (typeof DOCUMENT_POSITIONS)[number];
 
 /**
+ * The positions that exist only because a plan has an impl: it is executed,
+ * then falsified, then cleaned up. A type with no impl — a spike — never
+ * reaches them, so they read skipped for it rather than pending forever
+ * (admin-plan-type, A21).
+ */
+export const IMPL_DEPENDENT_POSITIONS: readonly PlanPosition[] = [
+	"executing",
+	"falsify",
+	"cleanup",
+];
+
+/**
  * The close-out rituals, in order, as the word a ritual phase's title must
  * START with (`### Phase N: Falsification — …`). The retrospective readiness
  * gate matches these; the skill prose used to be the only place the order was
@@ -330,13 +342,7 @@ export function derivePlanPosition(input: DerivePlanPositionInput): PlanPosition
 			segments[candidate] = position === "archived" ? "done" : "active";
 			continue;
 		}
-		const doc = documentFor(candidate);
-		const absent = doc !== null && !docs.has(`${doc}.md`);
-		segments[candidate] = absent
-			? absentDocumentState(doc, required, index < currentIndex)
-			: index < currentIndex
-				? "done"
-				: "pending";
+		segments[candidate] = restingState(candidate, index < currentIndex, docs, required);
 	}
 	const monitor = position === "monitor" ? input.afterClose?.monitor : null;
 	return {
@@ -345,6 +351,26 @@ export function derivePlanPosition(input: DerivePlanPositionInput): PlanPosition
 		awaiting: position === "archived" ? null : awaiting,
 		...(monitor ? { monitor } : {}),
 	};
+}
+
+/**
+ * The state of a position the plan is not at — one it has passed, or one
+ * ahead of it. The type speaks first: a position that exists only because of
+ * an impl is skipped for a type that has none. Then the document, if the
+ * position is one. Then where the plan stands.
+ */
+function restingState(
+	position: PlanPosition,
+	passed: boolean,
+	docs: ReadonlySet<string>,
+	required: ReadonlySet<DocumentPosition> | null,
+): SegmentState {
+	if (required !== null && !required.has("impl") && IMPL_DEPENDENT_POSITIONS.includes(position)) {
+		return "skipped";
+	}
+	const doc = documentFor(position);
+	if (doc !== null && !docs.has(`${doc}.md`)) return absentDocumentState(doc, required, passed);
+	return passed ? "done" : "pending";
 }
 
 /**
