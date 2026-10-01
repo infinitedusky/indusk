@@ -3,7 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { getPlanningDir } from "./config.js";
 import { fencedLineMask } from "./impl-headings.js";
-import { DOCUMENT_POSITIONS } from "./lifecycle.js";
+import { DOCUMENT_POSITIONS, isFinishedDocumentStatus } from "./lifecycle.js";
 import {
 	leastAdvancedPaperStatus,
 	type PaperSummary,
@@ -199,7 +199,7 @@ function determineNextStep(
 
 	const idx = DOCUMENT_POSITIONS.indexOf(stage as (typeof DOCUMENT_POSITIONS)[number]);
 
-	if (stageStatus === "completed" || stageStatus === "accepted") {
+	if (isFinishedDocumentStatus(stageStatus)) {
 		const next = nextRequiredDocument(idx, type);
 		if (next) return `Create ${next}`;
 		return "Done";

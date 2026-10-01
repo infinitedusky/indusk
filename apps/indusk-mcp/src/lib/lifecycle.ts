@@ -81,6 +81,17 @@ export const DOCUMENT_POSITIONS = [
 export type DocumentPosition = (typeof DOCUMENT_POSITIONS)[number];
 
 /**
+ * Whether a document's status says it is finished. Research documents say
+ * `complete`, impls and retrospectives `completed`, the rest `accepted`. One
+ * definition, because the plan bar and the plan list's next step both ask
+ * it, and a copy that knew one word fewer told a finished spike to review
+ * its research (admin-plan-type, A23).
+ */
+export function isFinishedDocumentStatus(status: string): boolean {
+	return status === "accepted" || status === "complete" || status === "completed";
+}
+
+/**
  * The positions that exist only because a plan has an impl: it is executed,
  * then falsified, then cleaned up. A type with no impl — a spike — never
  * reaches them, so they read skipped for it rather than pending forever
@@ -306,7 +317,7 @@ function resolvePosition(input: DerivePlanPositionInput): {
 	}
 	if (stage === "research" || stage === "brief" || stage === "test-plan" || stage === "adr") {
 		const noun = stage === "test-plan" ? "test plan" : stage === "adr" ? "ADR" : stage;
-		if (status === "accepted" || status === "complete" || status === "completed") {
+		if (isFinishedDocumentStatus(status)) {
 			// A22: the active label never claims a fact the reader does not
 			// hold. A spike's finished research awaits nothing.
 			const type = summary.workflow ?? null;
