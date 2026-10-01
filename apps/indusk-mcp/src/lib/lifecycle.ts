@@ -368,7 +368,8 @@ function absentDocumentState(
 	return passed ? "missing" : "pending";
 }
 
-function documentFor(position: PlanPosition): DocumentPosition | null {
+/** The document a position stands for, or null for a position that is not a document (`executing`, `archived`, …). */
+export function documentFor(position: PlanPosition): DocumentPosition | null {
 	for (const doc of DOCUMENT_POSITIONS) {
 		if (DOC_POSITION_TO_PLAN[doc] === position) return doc;
 	}
