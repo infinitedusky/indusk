@@ -1,6 +1,6 @@
 ---
 title: "The release ritual finishes itself"
-status: in-progress
+status: completed
 date: 2026-09-21
 trajectory: required
 test_phases: required
