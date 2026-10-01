@@ -33,30 +33,23 @@ const { withLock } = await import(join(pkgDir, "dist/lib/agents/lock.js"));
 // lookup the health line's version state does. HEAD is not it: a publish that
 // took several attempts has usually moved HEAD by the time this runs.
 const { readRepoVersionState } = await import(join(pkgDir, "dist/lib/version-state.js"));
-const { recordPendingRelease, clearPendingRelease, registryHasVersion, minutesSince } =
-	await import(join(pkgDir, "dist/lib/pending-release.js"));
+const { recordPendingRelease, clearPendingRelease, registryHasVersion } = await import(
+	join(pkgDir, "dist/lib/pending-release.js")
+);
 
 // `pnpm publish` exiting 0 means npm accepted the upload, not that anyone can
 // install it: npm's publish-time malware scan holds a new version for about
 // five minutes, fifteen or more at peak, and answers 404 meanwhile. Record
-// what was uploaded first, so `indusk upgrade` can report on this version
-// while it waits; then wait it out here, so the note says what npm says.
+// what was uploaded, so `indusk upgrade` can report on this version while npm
+// scans it, and write the note now, saying which of the two it is.
 const uploadedAt = new Date().toISOString();
 recordPendingRelease({ name, version, uploadedAt });
 
-const intervalMs = Number(process.env.RECORD_RELEASE_RETRY_MS ?? 15_000);
-const timeoutMs = Number(process.env.RECORD_RELEASE_TIMEOUT_MS ?? 20 * 60_000);
-const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-let answer = registryHasVersion(name, version);
-while (answer.state !== "live" && Date.now() - Date.parse(uploadedAt) < timeoutMs) {
-	console.info(
-		`record-release: ${version} is in npm's publish-time scan (${minutesSince(uploadedAt)} min) — waiting…`,
-	);
-	sleep(intervalMs);
-	answer = registryHasVersion(name, version);
-}
+// One look, never a wait: the release must not block on npm's scan. The
+// pending record above is how `indusk upgrade` reports on this version
+// until npm serves it.
+const answer = registryHasVersion(name, version);
 if (answer.state === "live") clearPendingRelease();
-const waited = minutesSince(uploadedAt);
 const releaseCommit = readRepoVersionState(repoRoot)?.releaseCommit?.slice(0, 7) ?? null;
 
 const currentMd = join(repoRoot, ".indusk", "current.md");
@@ -65,9 +58,9 @@ const from = releaseCommit
 	: `with no \`chore(release): ${version}\` commit found`;
 const what =
 	answer.state === "live"
-		? `**${version} published** to npm (live after ${waited} min in npm's publish-time scan)`
+		? `**${version} published** to npm`
 		: answer.state === "absent"
-			? `**${version} uploaded, still in npm's publish-time scan after ${waited} min** — not confirmed installable`
+			? `**${version} uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); \`indusk upgrade\` reports on it until it is live`
 			: `**${version} uploaded; npm could not be asked whether it is live** (${answer.reason})`;
 const line = `- ${new Date().toISOString().slice(0, 10)}: ${what} ${from} (\`pnpm release\`, recorded by \`scripts/record-release.js\`).`;
 
@@ -82,5 +75,5 @@ console.info(
 console.info(
 	answer.state === "live"
 		? `record-release: ${version} is live — run \`indusk upgrade\`.`
-		: `record-release: ${version} is not live yet — \`indusk upgrade\` will say where it stands.`,
+		: `record-release: ${version} is in npm's publish-time scan (usually ~5 min) — \`indusk upgrade\` will say when it is live. Nothing to wait for here.`,
 );
