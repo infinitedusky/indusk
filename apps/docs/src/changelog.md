@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.55.2] — 2026-10-01
+
+### Fixed
+- **`pnpm release` no longer waits for npm's publish-time scan.** 1.55.1 made it poll for up to 20 minutes after uploading, which held the terminal for the whole scan. It now looks once, writes the pending record and the note ("uploaded, still in npm's publish-time scan"), and exits; `indusk upgrade` reports on the version until npm serves it.
+
 ## [1.55.1] — 2026-10-01
 
 ### Fixed
