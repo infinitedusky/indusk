@@ -28,7 +28,7 @@ All three paths lead to the same nine-step audit sequence.
 
 ## The Audit
 
-The retrospective walks through nine steps in strict order. Each step is blocking — do not skip ahead.
+The retrospective walks through its steps in strict order, from the falsification and cleanup gates (Step 0) to the bump (Step 11). Each step is blocking — do not skip ahead.
 
 <FullscreenDiagram>
 
@@ -43,7 +43,9 @@ flowchart TD
     S6 --> S7["Step 7: Context audit"]
     S7 --> S8["Step 8: Knowledge handoff"]
     S8 --> S9["Step 9: Archival"]
-    S9 --> Done["Plan closed"]
+    S9 --> S10["Step 10: Land on trunk"]
+    S10 --> S11["Step 11: Bump"]
+    S11 --> Done["Plan closed"]
 
     S1 -.- D1["planning/{name}/retrospective.md"]
     S2 -.- D2["find_dead_code, find_most_complex_functions,\nquery_dependencies"]
@@ -54,6 +56,7 @@ flowchart TD
     S7 -.- D7["get_context → update_context"]
     S8 -.- D8["decisions/ page, lessons/ page,\nsidebar update"]
     S9 -.- D9["mv planning/{name}\nplanning/archive/{name}"]
+    S11 -.- D11["changelog roll + package.json +\nchore(release): X.Y.Z commit"]
 
 ```
 
@@ -188,6 +191,48 @@ mv planning/{plan-name} planning/archive/{plan-name}
 The docs site now holds the published knowledge. The archive holds the process history. Both are preserved, but the docs are the primary reference going forward.
 
 Update CLAUDE.md's Current State section to remove the plan from the active plans table.
+
+### Step 10: Land on Trunk
+
+Merge the plan branch into `main`, release the worktree assignment
+(`indusk worktree release {plan}`), delete the worktree and branch, verify on
+trunk, and record the landing sha in the archived retrospective.
+
+### Step 11: Bump
+
+The release guard's rule is *bump on main, after the branch is merged*. Step 10
+leaves the agent standing on main, holding the one piece of knowledge a later
+publisher would have to reconstruct: what shipped. So the bump happens here.
+
+**What it derives.**
+
+1. **Whether there is anything to release.** It diffs the landed merge
+   (`HEAD~1..HEAD`) against the packaged paths (`apps/indusk-mcp`,
+   `apps/indusk-admin`, `packages`), which are the ones `release-guard.sh` checks.
+2. **The increment, from what the plan did.** A new capability is a **minor**.
+   A fix, hardening or refactor of something already shipped is a **patch**.
+   When a plan did both, or the answer is unclear, it is a minor.
+3. **The summary, from the retrospective it just wrote.**
+
+**What it writes**, then commits on trunk:
+
+- the changelog: `## [Unreleased]` stays at the top, now empty, and
+  `## [X.Y.Z] — <date>` goes beneath it, holding the entries;
+- `apps/indusk-mcp/package.json`'s `version`;
+- a commit whose first line starts `chore(release): X.Y.Z`, passed as a literal
+  `-m` or with `-F <file>`. trunk-guard reads either form to apply its release
+  exemption. A message built by `$(…)` or a heredoc cannot be read, so the
+  commit is refused as unreadable.
+
+It then runs `release-guard.sh` and stops. `pnpm release` is the operator's
+call, because npm's one-time password is not something an agent can enter.
+
+**When it skips.** If the landed merge changed no packaged paths, the step says
+*"No packaged paths changed — nothing to release; the version stays at X.Y.Z"*
+and records that in the retrospective. A plan that touched only plan documents,
+docs or this repository's own skills changes no tarball. Writing the skip down
+is what tells a reader that the step ran and found nothing, rather than never
+running.
 
 ## The Quality Ratchet
 
