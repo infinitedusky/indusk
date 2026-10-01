@@ -19,6 +19,18 @@ Plan documents identify things by short labels: trajectory rows (`T3`, `A2`), ph
 - Never "A2 makes it clear we should X." Instead: "A2 is a trajectory test row asserting that a malformed ledger line throws; it goes red under X, so we should Y."
 - Do this on first mention in every message, not once per session. Messages are read out of order and out of context.
 
+## Citing plan artifacts — the three parts, with examples
+
+The labels include component numbers inside a master plan (`Day 4c`, `Dawn 6.5`), not only rows and phases. Every citation carries three parts in the same sentence: **the reference**, **where it comes from**, and **a one-line summary of what it says** — before any conclusion is drawn from it. In chat and in documents alike. One example per kind of label, bare form then the form to use:
+
+- **Row** — never "A2 makes it clear we should X." Instead: "A2, a trajectory row in this plan's impl asserting that a malformed ledger line throws, goes red under X, so we should Y."
+- **Component** — never "recommended before 4c." Instead: "recommended before `day-contract`, component 4c in the Day master plan, the step that declares promises in planning before code."
+- **Phase** — never "Phase 3 covers that." Instead: "Build Phase 3 of the always-on impl, the phase that wires the Slack announcement, covers that."
+- **Decision** — never "the ADR rejected it." Instead: "the makeover ADR, the decision that set the 60 KB context budget, rejected load-time truncation because it treats the symptom per session."
+- **Gate** — never "it fails Gate A." Instead: "it fails Gate A, the check-gates rule that every row writable at this phase must be written before the phase closes."
+
+A reader who does not know the plan should be able to follow the sentence without opening anything. If the label is the only way you can name the thing, you have not understood it well enough to cite it.
+
 ## Brevity
 
 Default to the shortest answer that does the job. The user reads every line; length is a cost you impose on them.
