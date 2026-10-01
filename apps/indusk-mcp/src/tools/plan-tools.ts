@@ -10,6 +10,7 @@ import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/aft
 import { promiseHealth } from "../lib/promises/health.js";
 import { readPromises } from "../lib/promises/registry.js";
 import { openMaintenancePhasesIn } from "../lib/promises/reopen.js";
+import { DOCUMENT_LABELS } from "../lib/workflow-types.js";
 import {
 	copySource,
 	livePlanCopy,
@@ -235,7 +236,8 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 				if (plan.stageStatus === "accepted") {
 					return respond({ allowed: true, transition, nextStage: plan.nextStep });
 				}
-				const noun = plan.stage === "brief" ? "Brief" : "Test plan";
+				const label = DOCUMENT_LABELS[plan.stage];
+				const noun = label.charAt(0).toUpperCase() + label.slice(1);
 				return respond({
 					allowed: false,
 					transition,
