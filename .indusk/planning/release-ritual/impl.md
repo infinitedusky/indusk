@@ -26,7 +26,7 @@ gate_policy: ask
 | T11 | `record-release.js` writes the commit matching `^chore(release): <version>` as the release commit, not whatever HEAD happens to be when it runs | Test Phase 1 | Build Phase 3 | passing |
 | T12 | A commit whose subject line is not `chore(release):` is not exempt because the same command text says `chore(release):` elsewhere — in a later `-m` body paragraph, or in an earlier command before the `git commit` — when it stages packaged paths | Build Phase 4 | Build Phase 4 | passing |
 | T13 | Step 11 decides whether there is anything to release from the packaged changes since the release commit, the question `release-guard.sh` and the version line ask, never from `HEAD~1..HEAD` — after Step 10's own landing-note commit on trunk, `HEAD~1..HEAD` is that note and always reads "nothing to release" | Build Phase 4 | Build Phase 4 | passing |
-| T15 | `record-release.js` writes "published" only when the registry confirms the version; when `pnpm publish` exited 0 but `npm view` does not return the version, the note says the publish reported success and the registry did not confirm it — never "published" | Build Phase 6 | Build Phase 6 | written |
+| T15 | `record-release.js` writes "published" only when the registry confirms the version; when `pnpm publish` exited 0 but `npm view` does not return the version, the note says the publish reported success and the registry did not confirm it — never "published" | Build Phase 6 | Build Phase 6 | passing |
 | T14 | The install check refuses an install that does not match the lockfile — a devDependency, an `indusk-admin` dependency, or a version change merged from a branch and never installed — not only a missing `dependencies` entry of `indusk-mcp` | Build Phase 4 | Build Phase 4 | passing |
 
 ### Trajectory Rationale
@@ -193,13 +193,13 @@ them so once Step 11 edits one of them.
 - [ ] Correct the 2026-09-17 note in trunk's `.indusk/current.md`, which claims the mark "now says only what `npm view` confirms" — false until this phase lands; done at the landing, on trunk
 
 #### Build Phase 6 Verification
-- [ ] T15 passes and T11 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/record-release-commit`)
+- [x] T15 passes and T11 still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/record-release-commit`) — 3/3
 
 #### Build Phase 6 Context
-- [ ] Known Gotchas (the publish entry): `record-release.js` writes "published" only on the registry's word
+- [x] Known Gotchas (the publish entry): `record-release.js` writes "published" only on the registry's word
 
 #### Build Phase 6 Document
-- [ ] `apps/docs/src/changelog.md` Unreleased: the release note is confirmed against the registry
+- [x] `apps/docs/src/changelog.md` Unreleased: the release note is confirmed against the registry
 
 ## Deferred Verification
 

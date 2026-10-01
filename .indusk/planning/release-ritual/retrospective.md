@@ -17,8 +17,8 @@ the install before npm is touched.
 
 All three shipped, plus five things the brief did not name. 34 commits over
 2026-09-21/22 and 2026-10-01; 25 files, +1311/−138, of which `apps/indusk-mcp`
-is 12 files, +872/−87. Five phases: Test Phase 1, three build phases, then a
-falsification phase and a cleanup phase.
+is 12 files, +872/−87. Seven phases: Test Phase 1, three build phases, a falsification phase, a
+cleanup phase, and Build Phase 6 for a defect found at the retrospective.
 
 Added after approval: T10 (a `\`-continued commit was refused with one empty
 bullet per line — found by hitting it while landing this plan's own sequence
@@ -40,6 +40,13 @@ assertion before the fix:
   `dependencies` existed. A devDependency, an `indusk-admin` dependency or a
   version bump — the same merged-not-installed failure — passed it. It now
   compares `pnpm-lock.yaml` with pnpm's install record.
+
+The retrospective itself found one more. Root `master.md` item (d) had been
+re-routed to this plan on 2026-09-25 — `record-release.js` writes "published"
+because `pnpm publish` exited 0, which is how 1.51.0's note claimed a publish
+the registry never received — and it was never added to the impl, while the
+2026-09-17 note in `current.md` claimed it already fixed. Build Phase 6 took it
+(T15): the note now says "published" only when `npm view` confirms the version.
 
 Cleanup removed a third private copy of the trunk-guard test harness (Test
 Phase 1's own item had said to reuse the existing one, and was checked off
@@ -86,6 +93,9 @@ The `daemon-identity` failures the impl anticipated did not occur.
 
 - Tick the impl in the same commit as the code. A commit message saying "T8,
   T9 pass" with the table still saying `planned` cost a session.
+- Read the master's owner lines when opening a plan. Item (d) named this plan
+  as its owner for six days and nothing pulled it in; only the retrospective's
+  sequence check read it.
 - Write the test plan. The workflow requires one for any plan that ships an
   impl; this plan went brief → impl, and the admin shows the gap. It is the
   case `admin-plan-type` was opened for.
@@ -111,5 +121,5 @@ a unit; the cross-file findings were Cleanup's.
 - Sessions: 3 (2026-09-21/22 authoring and Build Phases 1–3; 2026-09-25
   salvage of T10/T11; 2026-10-01 bookkeeping, T10/T11, falsification, cleanup)
 - Files touched: 25 (+1311 / −138)
-- Trajectory: 14 rows, all passing; 5 of them (T10–T14) added after approval
+- Trajectory: 15 rows, all passing; 6 of them (T10–T15) added after approval
 - Deferred Verification U1 (a real publish) — this close is its first run
