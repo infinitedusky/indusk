@@ -307,42 +307,43 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
-## Session 1a22716c — V4 sequence reconciled; release-ritual opened with T10/T11
+## Session 1a22716c — V4 sequence reconciled; release-ritual is further along than trunk shows
 
 **Session ID**: 1a22716c-eea2-4bd6-9e35-378d2d00a596
-**Last updated**: 2026-10-01T14:44:50.903Z
+**Last updated**: 2026-10-01T14:59:09.312Z
 **Branch**: main
 **Worktree**: /Users/sandycorsillo/code/indusk
 
 ### In Flight
 
-**release-ritual is the live step** (Day small-step S2), worktree `../indusk-worktrees/release-ritual` on `plan/release-ritual`, deps installed. Impl approved 2026-09-21; **T10 and T11 added 2026-09-25 after approval**, with authoring items in Test Phase 1 and fix items in Build Phases 1 and 3. Nothing executed yet — Test Phase 1 authoring is next.
+**Correcting this section's earlier contents — it was wrong.** It said release-ritual had nothing executed and two gate items pending. Both false, and the cause is worth knowing: the trunk copy of `release-ritual/impl.md` has all 27 items unchecked, but the plan's real state lives on the remote branch `plan/release-ritual`, which already carries Build Phases 1–3. `indusk worktree create release-ritual` cut a fresh branch from `main` rather than checking out the existing remote branch of that name, so the tooling hid the work instead of revealing it. The push was the first thing that touched the remote and the first thing that told the truth (rejected non-fast-forward).
 
-**T10 was found by hitting it, not by reading.** `T10` is a trajectory row asserting that a `git commit` written across backslash-continued lines, staging only allowlisted paths, is allowed. It is not: `commitArgs`'s backslash branch in `trunk-guard.js` carries the escaped newline into the current token and sets `has = true`, so every continuation emits a whitespace-only token that `commitIntent` classifies as a pathspec. The refusal prints one empty bullet per continued line and claims code is being committed on trunk. Isolated empirically — identical flags and identical staged set, exit 0 on one line, exit 2 across several. `T3` (a `-m` value from a command substitution is not read as paths) is adjacent but its fix leaves this spelling live, because the phantom token is not the message at all. **Practical consequence until Build Phase 1 lands: write every `git commit` on trunk as a single line.**
+**release-ritual's actual state** (remote `plan/release-ritual`, tip `bcae83b8`): T1–T7 `passing`, T8/T9 `planned`, 12 items checked and 16 not. Landed commits: `e66c8461` trunk-guard reads the message it is given (Build Phase 1), `85963447` the release proves its install before npm sees it (Build Phase 2), `e880f999` the bump becomes the retrospective's Step 11 (Build Phase 3), `bcae83b8` record the allowlist gap update exposed. **Test Phase 1's Context and Document gate items are answered on the branch — user: "Skip both".** Build Phase 3 is the one still open.
 
-**Known-wrong standing fact, deliberately not patched here.** The 1.54.0 note in the shared region above credits release commit `d7e0061a`, which is `plan(release-ritual): brief and impl`. The real release commit is `b185e375`. Cause is `record-release.js` labelling `git rev-parse --short HEAD` the release commit (five publish attempts moved HEAD first) — that is `T11`, and correcting the note is a Build Phase 3 item, so the fix and the record land together rather than being patched twice.
+**A pre-existing test-first violation sits on that branch**, found by `check-gates` refusing an unrelated edit: `T8` and `T9` are trajectory rows writable at Test Phase 1 and still `planned`, while Build Phase 1–3 items are checked. The gate blocks any further edit in that region until they are authored. Not introduced by this session — it predates it.
 
 ### Open Questions
 
-- **Two gate items in release-ritual's Test Phase 1 read `user: pending`** — the Context and Document skip requests. `gate_policy: ask`, so they need real answers from Sandy at phase close; not filled in, because the hook checks the format and not the fact. Ask when Phase 1 closes.
-- **Recursive plan grouping** — wanted, not critical (Sandy, 2026-09-25). Dawn and Day are sibling `parents:`, so the sidebar shows two trees; Day's `subplans:` double-declares only 2 of Dawn's 8 children. Not a declaration edit: `buildGroups` creates one group per `subplans` key regardless of claiming, so listing `indusk-v2-dawn` under Day renders Dawn twice. Needs nested groups in the parser and the sidebar — an admin plan when it is worth one. Reason recorded in the root master's Parked section.
-- **`day-always-on-deploy` is held by choice**, not blocked by the roadmap: Sandy wants the whole promise loop proven locally end to end before paying for a box. Not blocked on a publish — 1.54.0 carries the always-on code with zero packaged commits since.
+- **Was Build Phase 3 left mid-flight deliberately, or just interrupted?** If another machine or session is still working that branch, stay out of it; if not, the next step is clear (below). This is the one thing to confirm before editing the branch.
+- **T10 and T11 are real but unlanded.** `T10` is a trajectory row asserting that a `git commit` written across backslash-continued lines, staging only allowlisted paths, is allowed. It is not: `commitArgs`'s backslash branch in `trunk-guard.js` carries the escaped newline into the current token and sets `has = true`, so each continuation emits a whitespace-only token that `commitIntent` classifies as a pathspec — the refusal prints one empty bullet per continued line. Verified empirically (identical flags and staged set: exit 0 on one line, exit 2 across several) **and** confirmed to survive Build Phase 1's fix, because the branch's `commitArgs` is byte-identical on that branch. `T3` is adjacent but its fix leaves this spelling live — the phantom token is not the message. `T11`: `record-release.js` labels `git rev-parse --short HEAD` the release commit, so the 1.54.0 note in the shared region credits `d7e0061a` (a plan commit) instead of `b185e375`. Rows and items are preserved on branch `salvage/t10-t11-rows`, pushed, **not** merged — the gate correctly refuses `planned` rows beside completed work.
+- **Recursive plan grouping** — wanted, not critical. Not a declaration edit: `buildGroups` creates one group per `subplans` key regardless of claiming, so nesting Dawn under Day renders Dawn twice. Reason recorded in the root master's Parked section.
 
 ### Cursor
 
-**Next concrete step:** author T1–T11 red in the worktree, per release-ritual's Test Phase 1. Four files:
+**Picking up on another machine — read this first.**
 
-- `apps/indusk-mcp/src/__tests__/trunk-guard-release-message.test.ts` — T1–T5 **and T10**, driving the hook the way Claude Code does (fixture repo on `main`, a staged set, a `{tool_name, tool_input, cwd}` envelope on stdin). Reuse the existing `trunk-guard.test.ts` harness rather than restating it.
-- `apps/indusk-mcp/src/__tests__/release-guard-install.test.ts` — T6, T7 against `scripts/release-guard.sh`, reading exit code and stderr only.
+**Pushing from this laptop needed the SSH URL.** `origin` is HTTPS and the osxkeychain credential resolves to GitHub account `lazer-sandyc`, which gets 403 on `infinitedusky/indusk`; the SSH key authenticates as `infinitedusky`. Pushes here were made with an explicit `git@github.com:infinitedusky/indusk.git` and the `origin/*` tracking refs were never updated, so local `main` reads "ahead 3" while GitHub already has it. Verify with `git ls-remote`, not with the ahead/behind count. On the new machine, check which account git and gh authenticate as before concluding anything is unpushed.
+
+**Everything is on GitHub.** `main` at `5b7d5f5b` (sequence reconciliation plus this note). `plan/release-ritual` at `bcae83b8`, untouched by this session. `salvage/t10-t11-rows` carries the T10/T11 rows and items.
+
+**Next concrete step, once the question above is answered:** in a checkout of `plan/release-ritual`, author the four remaining rows red in one pass — T8 and T9 (clearing the pre-existing violation) together with T10 and T11 (clearing the new ones), then land the `salvage/t10-t11-rows` content on top. Files:
+
 - `apps/indusk-mcp/src/__tests__/release-ritual-skill.test.ts` — T8, T9.
-- `apps/indusk-mcp/src/__tests__/record-release-commit.test.ts` — T11. The fixture needs a `chore(release): <v)` commit **and at least one commit after it**; a fixture where the two coincide cannot fail.
+- `apps/indusk-mcp/src/__tests__/trunk-guard-release-message.test.ts` — T10, beside the existing T1–T5.
+- `apps/indusk-mcp/src/__tests__/record-release-commit.test.ts` — T11. Its fixture needs a `chore(release): <v)` commit **and at least one commit after it**; a fixture where the two coincide cannot fail.
 
-T5 and T7 are declared Regression Guards — they pass on authoring, by design. Every other row must fail on its own assertion.
+**Gate command:** `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard-release-message src/__tests__/release-guard-install src/__tests__/release-ritual-skill src/__tests__/record-release-commit`
 
-**Gate check command:** `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/trunk-guard-release-message src/__tests__/release-guard-install src/__tests__/release-ritual-skill src/__tests__/record-release-commit`
-
-**Landed this session, both pushed:** `51a47d4c` on `main` (the two masters reconciled — day-always-on closed and split into 4b-prime / 4b-prime-D, release-ritual declared and promoted to S2, the indusk-release boundary written, dusk-v2 given its fate as overtaken April-2026 rewrite research and named explicitly as NOT indusk-v2-dawn) and `3b54742b` on `plan/release-ritual` (T10, T11).
-
-**Watch out:** a fresh plan worktree has no admin bundle, so nine `indusk ui` tests and the tarball test fail there until `pnpm --filter indusk-admin build && node scripts/bundle-admin.js`. Known-red, not a regression from this branch.
+**Two standing gotchas:** write every `git commit` on trunk as a single line until T10's fix lands. And a fresh plan worktree has no admin bundle, so nine `indusk ui` tests plus the tarball test fail there until `pnpm --filter indusk-admin build && node scripts/bundle-admin.js` — known-red, not a regression.
 
 ---
