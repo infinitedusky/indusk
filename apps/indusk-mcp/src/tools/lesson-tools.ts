@@ -2,12 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import {
-	LESSONS_REL_DIR,
-	type LessonState,
-	lessonStates,
-	listLessonFiles,
-} from "../lib/lessons/state.js";
+import { LESSONS_REL_DIR, lessonListing } from "../lib/lessons/state.js";
 
 export function registerLessonTools(server: McpServer, projectRoot: string): void {
 	const lessonsDir = join(projectRoot, LESSONS_REL_DIR);
@@ -34,19 +29,7 @@ export function registerLessonTools(server: McpServer, projectRoot: string): voi
 				};
 			}
 
-			let lessons: (LessonState | ReturnType<typeof listLessonFiles>[number])[];
-			let scan: string | undefined;
-			try {
-				lessons = await lessonStates(projectRoot);
-			} catch (err) {
-				// Not scannable (no git repository): say so. Every lesson listed
-				// without a state is a listing, never a verdict that nothing guards it.
-				lessons = listLessonFiles(projectRoot);
-				scan = `guarded/advisory could not be derived: ${(err as Error).message}`;
-			}
-			const states = lessons as Partial<LessonState>[];
-			const guarded = states.filter((l) => l.state === "guarded").length;
-			const advisory = states.filter((l) => l.state === "advisory").length;
+			const { lessons, guarded, advisory, scan } = await lessonListing(projectRoot);
 
 			return {
 				content: [

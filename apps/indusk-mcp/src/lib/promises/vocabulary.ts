@@ -7,6 +7,8 @@
  * `promises-single-definition.test.ts` pins that no second copy exists.
  */
 
+import { anyTokenPattern, token, tokenPattern } from "../tokens.js";
+
 /**
  * What can break a promise after it was proved, and therefore what checks it:
  * `behaviour` breaks on inputs nobody chose (a run); `state` on a later change
@@ -67,8 +69,6 @@ export const PROMISE_NAME = /^[a-z][a-z0-9-]*$/;
 export function promiseToken(name: string): string {
 	return token("promise", name);
 }
-
-import { anyTokenPattern, token, tokenPattern } from "../tokens.js";
 
 /**
  * The grammar — the opener rule and the two patterns — lives in `lib/tokens.ts`

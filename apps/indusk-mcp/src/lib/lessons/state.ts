@@ -76,6 +76,38 @@ export function listLessonFiles(projectRoot: string): LessonFile[] {
 		});
 }
 
+export interface LessonListing {
+	lessons: (LessonState | LessonFile)[];
+	guarded: number;
+	advisory: number;
+	/** Why no state was derived, when the project could not be scanned. */
+	scan?: string;
+}
+
+/**
+ * The listing `list_lessons` returns: every lesson with its state and both
+ * counts — or, when the project cannot be scanned (no git repository), the
+ * bare listing with `scan` saying why. A lesson listed without a state is a
+ * listing, never a verdict that nothing guards it.
+ */
+export async function lessonListing(projectRoot: string): Promise<LessonListing> {
+	try {
+		const lessons = await lessonStates(projectRoot);
+		return {
+			lessons,
+			guarded: lessons.filter((l) => l.state === "guarded").length,
+			advisory: lessons.filter((l) => l.state === "advisory").length,
+		};
+	} catch (err) {
+		return {
+			lessons: listLessonFiles(projectRoot),
+			guarded: 0,
+			advisory: 0,
+			scan: `guarded/advisory could not be derived: ${(err as Error).message}`,
+		};
+	}
+}
+
 /**
  * Every lesson with its derived state. Throws when the project cannot be
  * scanned (not a git repository): the caller says so rather than reporting
