@@ -35,6 +35,16 @@ describe("A9 — catchup skims advisory lessons and states both counts", () => {
 	});
 });
 
+describe("A17 — /planner reads the master before it writes a plan's first file", () => {
+	it.each(copies("planner"))("%s", (_label, text) => {
+		const steps = text.slice(text.indexOf("## What to Do When Asked to Plan"));
+		const first = steps.slice(0, steps.indexOf("1. **Determine the workflow type**"));
+		expect(first, "a step before the first, reading the master").toMatch(
+			/Read `\.indusk\/planning\/master\.md` first/,
+		);
+	});
+});
+
 describe("A15 — a Context gate item names its tier and destination", () => {
 	it.each([...copies("planner"), ...copies("claude-md")])("%s", (_label, text) => {
 		expect(text, "the tier vocabulary is present").toMatch(/\btier\b/i);

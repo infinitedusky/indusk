@@ -14,9 +14,11 @@ import { REPO_ROOT } from "../src/__tests__/helpers/cli.js";
  * cwd, at read time. The behaviour is observed, not documented, so this probe
  * is the standing guard that it has not changed — a headless `claude -p` is
  * asked to touch one file and report the codewords in its context. A1 and A2
- * are green on arrival by design (regression guards); A17 asks the one thing
- * Finding 4 did not — whether a Write to an unread directory loads it — and
- * A3 runs the probe against this repository's real planning file.
+ * are green on arrival by design (regression guards). A17 first asked the one
+ * thing Finding 4 did not — whether a Write to an unread directory loads it —
+ * and the answer was no (Test Phase 1, 2026-10-02); it now asserts the fix,
+ * `/planner` reading the master before its first write. A3 runs the probe
+ * against this repository's real planning file.
  *
  * Needs the `claude` CLI on PATH; run with `pnpm e2e`.
  */
@@ -33,10 +35,10 @@ function claudeOnPath(): boolean {
 const CODEWORD_PROMPT =
 	"After doing exactly what the first sentence asks, answer with one line per codeword you can see anywhere in your instructions or context, in the form `CODEWORD: <word>`, and nothing else. A codeword is a token of the form WORD-xxx in all capitals.";
 
-function probe(cwd: string, prompt: string, tool: "Read" | "Write"): string {
+function probe(cwd: string, prompt: string, tools: string): string {
 	const r = spawnSync(
 		"claude",
-		["-p", prompt, "--allowedTools", tool, "--output-format", "text", "--max-turns", "4"],
+		["-p", prompt, "--allowedTools", tools, "--output-format", "text", "--max-turns", "6"],
 		{ cwd, encoding: "utf-8", timeout: 170_000 },
 	);
 	if (r.status !== 0) throw new Error(`claude -p failed: ${r.stderr}`);
@@ -59,6 +61,7 @@ function fixtureRoot(): string {
 		`# Planning rules\n\nCodeword: ${PLAN_WORD}\n`,
 	);
 	writeFileSync(join(root, ".indusk/planning/p/impl.md"), "# p\n\n- [ ] an item\n");
+	writeFileSync(join(root, ".indusk/planning/master.md"), "# Master\n\nThe sequence.\n");
 	writeFileSync(join(root, "apps/admin/CLAUDE.md"), `# Admin rules\n\nCodeword: ${ADMIN_WORD}\n`);
 	writeFileSync(join(root, "apps/admin/Thing.tsx"), "export const Thing = () => null;\n");
 	writeFileSync(join(root, "src/other.ts"), "export const other = 1;\n");
@@ -90,18 +93,20 @@ describe.skipIf(!claudeOnPath())("nested context files reach the session that to
 		expect(withAdmin).toContain(ADMIN_WORD);
 	});
 
-	it("A17 — writing a new plan's first file, with nothing there read, loads the planning file", () => {
+	it("A17 — following /planner's first step (read the master, then write) loads the planning file for the write", () => {
 		const root = fixtureRoot();
 		const target = ".indusk/planning/newplan/brief.md";
 		probe(
 			root,
-			`Using only the Write tool, and without reading any file first, create the file ${target}. Its content is one line per codeword you can see anywhere in your instructions or context, in the form \`CODEWORD: <word>\` (a codeword is a token of the form WORD-xxx in all capitals). Write nothing else to the file and say nothing afterwards.`,
-			"Write",
+			`First read the file .indusk/planning/master.md, as /planner's first step says. Then use the Write tool to create the file ${target}. Its content is one line per codeword you can see anywhere in your instructions or context, in the form \`CODEWORD: <word>\` (a codeword is a token of the form WORD-xxx in all capitals). Write nothing else to the file and say nothing afterwards.`,
+			"Read,Write",
 		);
 		expect(existsSync(join(root, target)), "the probe wrote the file").toBe(true);
 		const got = words(readFileSync(join(root, target), "utf-8"));
 		expect(got).toContain(ROOT_WORD);
-		expect(got, "the planning file loaded for a Write beneath it").toContain(PLAN_WORD);
+		expect(got, "reading the master first loads the planning file before the write").toContain(
+			PLAN_WORD,
+		);
 	});
 
 	it("A3 — this repository's planning file reaches a session that reads an impl", () => {

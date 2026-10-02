@@ -55,14 +55,14 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 | A4 | `indusk update` on a consumer writes `.indusk/planning/CLAUDE.md` byte-identical to the package's, and a second `update` changes nothing | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/context-tiers-ship.test.ts |
 | A1 | A session at a fixture's root that reads a plan's `impl.md` has the planning context file's codeword, which the fixture's root does not carry | Test Phase 1 | Test Phase 1 | passing | manual: pnpm e2e -- context-tiers |
 | A2 | A session that reads no admin file lacks the admin codeword; one that reads an admin component has it | Test Phase 1 | Test Phase 1 | passing | manual: pnpm e2e -- context-tiers |
-| A17 | A session that **writes** a new file under `.indusk/planning/<new>/` with nothing under `.indusk/planning/` read first has the planning rules — the moment `/planner` authors a plan's first document | Test Phase 1 | Build Phase 5 | written | manual: pnpm e2e -- context-tiers |
+| A17 | `/planner`'s first step reads `.indusk/planning/master.md`, and a session that follows it — reading the master, then writing a new plan's first file — has the planning rules when it writes (restated 2026-10-02: see the note under Build Phase 5) | Test Phase 1 | Build Phase 5 | passing | manual: pnpm e2e -- context-tiers |
 | A3 | This repository's own `.indusk/planning/CLAUDE.md` reaches a session that reads an impl — a rule sentence the real file carries after the register moves it there, not a codeword | Test Phase 1 | Build Phase 4 | passing | manual: pnpm e2e -- context-tiers |
 | A5 | Each of the eight single-definition pins named in the root today (`shared-resolution`, `shape/shared-definitions`, `workbench-repos-single-definition`, `execution-roots-single-definition`, `head-sha-single-definition`, `promises-cleanup`, `plan-worktrees-single-definition`, `impl-headings`) has a failure message beginning `lesson: <name>`, and the name is a lesson file; the register names at least these eight as enforcer rows | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
 | A6 | A hook refusal names its lesson in the same form — trunk-guard's edit-on-main refusal names `trunk-guard-edit-refusal-is-not-a-bash-workaround`; check-gates' test-first refusal names `test-red-at-earliest-writable-phase` | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/context-tiers-hook-lesson.test.ts |
 | A10 | Every entry the root held at the baseline commit has a register row with a destination; the check names any that has none | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
 | A12 | The root has no Current State section; its content is in `current.md`'s shared region; nothing reads the old heading | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
-| A9 | The catchup skill skims only advisory lesson titles and states the guarded and advisory counts | Test Phase 1 | Build Phase 5 | written | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
-| A15 | A Context gate item names its tier and destination, and one aimed at the root says why it must be always-on — in `/planner` and `/claude-md`, package and installed copies | Test Phase 1 | Build Phase 5 | written | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
+| A9 | The catchup skill skims only advisory lesson titles and states the guarded and advisory counts | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
+| A15 | A Context gate item names its tier and destination, and one aimed at the root says why it must be always-on — in `/planner` and `/claude-md`, package and installed copies | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
 | A13 | The root is at least 20 % under its configured budget, and the budget's reason is in `.indusk/config.json` | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
 
 ### Deferred Verification
@@ -89,7 +89,7 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 **Goal**: author all seventeen rows against today's behaviour, each red one
 failing on its own assertion and each guard declared as one.
 
-- [ ] Create this plan's worktree with `indusk worktree create context-tiers`, and record the baseline commit (the HEAD it branched from) at the top of `register.md`, which A10 reads
+- [x] Create this plan's worktree with `indusk worktree create context-tiers`, and record the baseline commit (the HEAD it branched from) at the top of `register.md`, which A10 reads
 - [x] A16, A14 in `context-tiers-budget.test.ts` through `runHook("claude-md-budget.js", …)`: an over-budget fixture `CLAUDE.md` with one shrinking and one growing Edit; a nested `sub/CLAUDE.md` under `context.nested_claude_md_budget_bytes`; and, over `helpers/versioned-workbench.ts`'s `LAYOUTS`, the wrapped repo's own root `CLAUDE.md` judged by the root budget (it sits below the state root, so a depth rule alone would call it nested)
 - [x] A7, A8, A5 in `context-tiers-lessons.test.ts`: A7/A8 call `list_lessons` through `helpers/tool-call.ts` on a fixture whose lesson name appears in a `.test.ts` string for A7 and only in `.md` files for A8; A5 names the eight pin test files explicitly (so it cannot pass over an empty register) and asserts each one's first `expect` message starts `lesson: ` naming an existing lesson, and that `register.md` lists at least those eight as enforcer rows
 - [x] A6 in `context-tiers-hook-lesson.test.ts`: trunk-guard's edit-on-main refusal (through `helpers/trunk-guard-fixture.ts`) and check-gates' test-first refusal (an impl with a `planned` row writable at the phase being closed), each stderr carrying the `lesson: <name>` the row names
@@ -204,15 +204,16 @@ failing on its own assertion and each guard declared as one.
 
 ### Build Phase 5: the skills route by tier
 
-- [ ] `/claude-md`: the routing table becomes the tier table
-- [ ] `/planner`: a Context gate item names its tier and destination; one aimed at the root says why it must be always-on. If A17 was red, `/planner`'s first step reads `.indusk/planning/master.md` before writing any plan document, so the planning rules are loaded when a plan's first file is authored
-- [ ] `/retrospective`: the compaction step becomes classification-at-close — every entry the plan authored is placed in a tier; the periodic pass moves one root entry to a token or a nested file
-- [ ] `/catchup`: skim only advisory lesson titles; state both counts
-- [ ] Resync every installed copy under `.claude/skills/`
+- [x] `/claude-md`: the routing table becomes the tier table
+- [x] `/planner`: a Context gate item names its tier and destination; one aimed at the root says why it must be always-on. If A17 was red, `/planner`'s first step reads `.indusk/planning/master.md` before writing any plan document, so the planning rules are loaded when a plan's first file is authored
+- [x] `/retrospective`: the compaction step becomes classification-at-close — every entry the plan authored is placed in a tier; the periodic pass moves one root entry to a token or a nested file
+- [x] `/catchup`: skim only advisory lesson titles; state both counts
+- [x] **A17 restated (goalpost change, recorded):** as written, A17 asserted that a bare Write to an unread planning directory loads the planning rules. Test Phase 1 measured that Claude Code does not — it loads nested files on Read only — and no change in this repository can alter that, so the row could never pass. What this plan can make true is the mechanism the fix relies on: `/planner` reads `master.md` first, and after that read a written plan file has the rules. The probe now follows that step (Read then Write) and a skill-text check pins the step; the original measurement stays recorded in Test Phase 1's checklist. The Asserts text above was changed to match, and this note is the record of why
+- [x] Resync every installed copy under `.claude/skills/`
 
 #### Build Phase 5 Verification
 
-- [ ] A9, A15 pass (`… vitest run src/__tests__/context-tiers-skills src/__tests__/skill-sync-parity`); A17 passes (`pnpm e2e -- context-tiers`)
+- [x] A9, A15 pass (`… vitest run src/__tests__/context-tiers-skills src/__tests__/skill-sync-parity`); A17 passes (`pnpm e2e -- context-tiers`) — 32/32 across the two files (A17's skill-text check included); the e2e probe 4/4 on the real `claude`: after reading the master, the written brief carried both the root and the planning codewords
 
 #### Build Phase 5 Context
 
