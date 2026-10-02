@@ -98,9 +98,11 @@ Additive-only merge of the machine-global hub (`$INDUSK_HOME/hub/lessons/`) + th
 
 ### 5. Skim Lessons (Lazy-Load)
 
-Call `list_lessons`. As of 1.31.5, the tool returns `title` + `path` per lesson — **not** the full content. Titles ARE the actionable rules in most cases.
+Call `list_lessons`. It returns `title`, `path` and a derived **state** per lesson — **not** the full content — plus a `guarded` count and an `advisory` count. Titles ARE the actionable rules in most cases.
 
-**Skim every title.** Most lesson titles are written as the rule itself ("Never use String.includes for shell-command trigger detection — use anchored regex" / "Ground-truth-verify every 'X already works' claim in a brief before acceptance"). Internalize the titles. That's enough to act on for most work.
+A **guarded** lesson has an enforcer — a test or hook whose failure message names it (`lesson: <name>`) — so it reaches you at the moment its rule breaks; you do not need it in mind beforehand. An **advisory** lesson has none, and the skim is the only way it reaches you. So **skim only the advisory titles**, and state both counts in the summary.
+
+**Skim every advisory title.** Most lesson titles are written as the rule itself ("Never use String.includes for shell-command trigger detection — use anchored regex" / "Ground-truth-verify every 'X already works' claim in a brief before acceptance"). Internalize the titles. That's enough to act on for most work.
 
 **Read the full body** (via the `Read` tool against the `path` field — not via a new MCP call) only when:
 - The lesson's title bears on what the user is about to ask you to do (e.g., starting a brief → read `community-brief-author-bias-ground-truth-verification` in full; touching shell-triggered code → read `community-anchor-shell-trigger-patterns-no-substring` in full)
@@ -173,7 +175,7 @@ After completing all steps, present a brief summary to the user:
 - Other agents currently working: [list from `indusk agent list`, with each agent's task, worktree, and branch — or "none"]
 - Worktree collision: [if `indusk agent list` prints a `⚠ collision` warning — two or more live sessions sharing one worktree (typically the shared trunk) — surface it prominently; this is the exact class worktree-per-plan prevents]
 - Notable in-flight from other agents: [if anyone's section is on something that might affect this session, surface it]
-- Lessons: N titles skimmed
+- Lessons: N guarded, M advisory — the M advisory titles skimmed
 - Sweep: [N sections sweepable (dry-run) / clean]
 - Infrastructure: [healthy / issues]
 - Version: [the `indusk/version` line from `check_health`, verbatim]

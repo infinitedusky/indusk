@@ -243,13 +243,14 @@ The counter-example is **token bloat on every catchup**, paid by every Claude Co
 
 Existing multi-paragraph entries (pre-1.31.11) can be collapsed via `indusk prune --dry-run` (which surfaces them) plus manual operator cleanup — they are not auto-migrated.
 
-#### Compaction step (indusk-makeover — the decay half of the budget)
+#### Classification at close (context-tiers — where every rule this plan wrote belongs)
 
-Adding one-line entries stops NEW growth; this step produces shrinkage. As part of every plan close:
+Adding one-line entries stops NEW growth; this step decides where each rule lives. As part of every plan close:
 
-1. **Demote this plan's own narratives.** The plan accumulated Current State prose while in flight (per-phase context updates, in-flight markers). Replace all of it with the single one-line entry above. Any multi-paragraph Conventions/Gotchas entries this plan authored get compressed to 1–3 lines: the operative rule sentence(s) + a pointer to the decisions/lessons page or archived plan doc. **The rule stays; the narrative moves behind the pointer.**
-2. **Sweep one stale narrative while you're here** (the periodic pass): pick the oldest multi-paragraph Current State entry for an already-shipped plan and collapse it to the one-line shape. One per retrospective keeps the backlog draining without a dedicated session.
-3. **Verify pointers**: run `indusk context check-pointers` — every pointer you just wrote must resolve. A dead pointer under this regime is a lost rule body.
+1. **Classify every context entry this plan authored** by the tier table in `/claude-md`: an enforcer that names its lesson, the area's `CLAUDE.md`, `.indusk/current.md`, or the root with the reason it must be always-on. Move each to its tier and compress it to rule + pointer; the plan's operational narrative goes to `current.md` as the one closed line above. **The rule stays; the narrative moves behind the pointer.**
+2. **The periodic pass — move one root entry down a tier.** Pick one root entry that an enforcer now catches or that applies to one area, and move it: to a `lesson:` token in its enforcer, or into the area's file. Shortening it in place does not count. One per retrospective keeps the root shrinking without a dedicated session.
+3. **Verify pointers**: run `indusk context check-pointers` — it walks every context file, and every pointer and lesson token you just wrote must resolve. A dead pointer under this regime is a lost rule body.
+4. **If the plan touched any `CLAUDE.md`**, run the nested-context probe: `pnpm e2e -- context-tiers`. The loading it guards is observed behaviour, not documented; a red probe blocks the release.
 
 The `claude-md-budget.js` hook enforces the 60 KB ceiling at write time (`context.claude_md_budget_bytes`); if your retrospective edit trips it, do more of step 1/2 rather than fighting the hook. If the file is *already* multiples over budget (the hook was installed after it grew, or incremental compaction never ran), this per-close step can't catch up on its own — run `/compact-context` (the bulk-remediation companion) for a full editorial pass. See [the context-budget guide](../../docs/src/guide/context-budget.md).
 

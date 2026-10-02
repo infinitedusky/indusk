@@ -66,14 +66,27 @@ If a section has no content yet, use a placeholder:
 (None yet — will be populated as the agent makes mistakes)
 ```
 
+## Where a rule goes — the tiers
+
+The root `CLAUDE.md` is the last destination, not the first. Every rule is routed by tier, in this order, and the choice names its destination:
+
+| Tier | When | Destination |
+|------|------|-------------|
+| **enforcer** | a test or hook can catch the rule being broken | the enforcer, whose failure message opens with `lesson: <name>`; the lesson file holds the why; nothing in any `CLAUDE.md` |
+| **directory** | the rule applies only when working in one area | that area's `CLAUDE.md` — `.indusk/planning/` (via the package template `templates/planning/CLAUDE.md`), or an app's or package's own |
+| **operational** | it is in flight, blocked, or next | `.indusk/current.md`, Project (shared) |
+| **root** | design intent or a cross-cutting convention with no enforcer and no home directory | the root `CLAUDE.md`, as rule + pointer, **with the reason it must be always-on** |
+
+When an enforcer holds only part of a rule, the unenforced remainder goes to the next tier down — never to the root by default. A root entry that a later plan makes enforceable moves out: that is the periodic pass at every plan close. — see `/guide/context-tiers`
+
 ## The Three Triggers
 
 ### 1. Post-Retrospective
 
-After writing a retrospective, read the "Insights Worth Carrying Forward" and "What We'd Do Differently" sections. For each item:
+After writing a retrospective, read the "Insights Worth Carrying Forward" and "What We'd Do Differently" sections. Route each item by the tier table above; within the root, sections still apply:
 
-- If it's a pattern to follow or avoid → add to **Conventions**
-- If it's a mistake that was made → add to **Known Gotchas**
+- If it's a pattern to follow or avoid → an enforcer if one can catch it, else the area's file, else **Conventions**
+- If it's a mistake that was made → the same order, ending at **Known Gotchas**
 - If it changes the project's architecture or structure → update **Architecture**
 - Update `.indusk/current.md`'s Project (shared) region to reflect the plan's completion
 - If the retrospective's "Quality Ratchet" section adds a new Biome rule, also add the enforced pattern to **Conventions**
@@ -110,12 +123,15 @@ When invoked as `/claude-md learn "lesson"`, or when you detect you've been corr
 
 ## Shaping Impl Documents
 
-Every impl phase includes a `#### Phase N Context` gate with concrete CLAUDE.md edits. Context items must be specific:
+Every impl phase includes a `#### Phase N Context` gate. Each item names its **tier and destination**, so the routing is reviewable at the gate rather than decided at close:
 
-- `Add to Architecture: new-package exists at packages/new-package, provides X`
-- `Add to Conventions: always use Y pattern when doing Z`
-- `Update .indusk/current.md (shared): Phase N of {plan} complete`
-- `Add to Known Gotchas: X doesn't work because of Y, use Z instead`
+- `guard: src/__tests__/x.test.ts carries lesson: one-x-definition — the pin that refuses a second X`
+- `planning: a deferral carries its test body as a fenced block`
+- `mcp: lib/tokens.ts is the one token grammar`
+- `current.md: Phase N of {plan} complete`
+- `root (Architecture): new-package exists at packages/new-package, provides X — always-on because every session must know the package exists`
+
+An item aimed at the root states **why it must be always-on**. An item that cannot say why belongs at a lower tier.
 
 Ask: **"What does this phase change about how the project works?"** If nothing — no context items needed. But the question must be asked.
 
