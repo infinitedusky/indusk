@@ -1,7 +1,7 @@
 ---
 title: "Context tiers — Test Plan"
 date: 2026-10-01
-status: draft
+status: accepted
 ---
 
 # Context tiers — Test Plan
