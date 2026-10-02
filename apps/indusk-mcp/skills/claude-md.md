@@ -17,7 +17,7 @@ Context ensures that project knowledge compounds across sessions. It does this i
 
 ## CLAUDE.md Structure
 
-CLAUDE.md has exactly six sections. This structure is fixed — never add, remove, or rename sections. Every section is always present, even if empty.
+CLAUDE.md has exactly five sections. This structure is fixed — never add, remove, or rename sections. Every section is always present, even if empty. Operational state — what is in flight, blocked, or next — is never a root section: it lives in `.indusk/current.md`'s Project (shared) region.
 
 ```markdown
 # {Project Name} — Project Context
@@ -36,9 +36,6 @@ CLAUDE.md has exactly six sections. This structure is fixed — never add, remov
 
 ## Known Gotchas
 {Things that went wrong before. Mistakes the agent made and was corrected on. Each entry is a concise one-liner explaining what NOT to do and why.}
-
-## Current State
-{What's in progress, recently completed, blocked. Active plans and their stages.}
 ```
 
 ### What goes in each section
@@ -48,7 +45,7 @@ CLAUDE.md has exactly six sections. This structure is fixed — never add, remov
 - **Conventions** — Patterns to follow ("use Biome not ESLint"), anti-patterns to avoid ("never hardcode values in contract vars"). Sourced from corrections, retrospectives, and ADRs. Keep entries as concise one-liners.
 - **Key Decisions** — Only added via the post-ADR trigger. Always links to the source ADR. Never duplicate the full rationale — that's what the ADR is for.
 - **Known Gotchas** — Mistakes and surprises. "Tailwind 4 requires Node 22", "always run pnpm env:build before docker compose". Sourced from corrections and retrospectives.
-- **Current State** — The most volatile section. Updated when plans change stage, work begins or completes, or blockers appear.
+- There is no Current State section. What is in progress, recently completed or blocked is operational state and goes to `.indusk/current.md`'s Project (shared) region, written through `mcp__indusk__update_current_section` or edited there directly — never into the root file.
 
 ### What stays OUT of CLAUDE.md
 
@@ -78,7 +75,7 @@ After writing a retrospective, read the "Insights Worth Carrying Forward" and "W
 - If it's a pattern to follow or avoid → add to **Conventions**
 - If it's a mistake that was made → add to **Known Gotchas**
 - If it changes the project's architecture or structure → update **Architecture**
-- Update **Current State** to reflect the plan's completion
+- Update `.indusk/current.md`'s Project (shared) region to reflect the plan's completion
 - If the retrospective's "Quality Ratchet" section adds a new Biome rule, also add the enforced pattern to **Conventions**
 - **Grep the affected modules** to verify Architecture still reflects reality after the plan's changes.
 
@@ -104,7 +101,7 @@ When invoked as `/claude-md learn "lesson"`, or when you detect you've been corr
 2. If ambiguous, default to **Known Gotchas** — better to over-capture than miss a lesson
 3. Append a concise one-liner to the appropriate section
 4. Never add to Key Decisions via `claude-md learn` — that's only via the post-ADR trigger
-5. Never add to Current State via `claude-md learn` — that's updated by triggers or manually
+5. Never write operational state via `claude-md learn` — it belongs in `.indusk/current.md`, not the root file
 
 **When you detect you've been corrected** — the user says "no, not that way" or "don't do X, do Y" — suggest running `claude-md learn`. Don't wait to be told. Example:
 
@@ -117,7 +114,7 @@ Every impl phase includes a `#### Phase N Context` gate with concrete CLAUDE.md 
 
 - `Add to Architecture: new-package exists at packages/new-package, provides X`
 - `Add to Conventions: always use Y pattern when doing Z`
-- `Update Current State: Phase N of {plan} complete`
+- `Update .indusk/current.md (shared): Phase N of {plan} complete`
 - `Add to Known Gotchas: X doesn't work because of Y, use Z instead`
 
 Ask: **"What does this phase change about how the project works?"** If nothing — no context items needed. But the question must be asked.
@@ -145,7 +142,7 @@ Context items block phase advancement. See work skill "Per-phase completion orde
 
 - CLAUDE.md is an index, not an encyclopedia. Keep entries concise.
 - Link, don't duplicate. If the full explanation lives in an ADR or research doc, link to it.
-- The six-section structure is fixed. Never add new `##` sections.
+- The five-section structure is fixed. Never add new `##` sections.
 - Trigger discipline matters. If you skip a post-retro or post-ADR update, knowledge is lost.
 - When in doubt about where something goes, Known Gotchas is the safest default.
 - **Use `git diff --stat` against the plan branch to enrich retrospectives.** Compare what was actually touched vs what was planned. Structural data makes retrospectives factual, not anecdotal.

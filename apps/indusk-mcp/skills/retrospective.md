@@ -208,7 +208,7 @@ Re-read CLAUDE.md in full. After the entire impl is done, verify:
 - **Conventions** — are all conventions that emerged during this plan captured?
 - **Key Decisions** — was the ADR decision added (post-ADR trigger)?
 - **Known Gotchas** — were all surprises and corrections captured?
-- **Current State** — does it reflect what's actually in progress?
+- **`.indusk/current.md`'s Project (shared) region** — does it reflect what's actually in progress? Operational state lives there; the root has no Current State section.
 - **Sequence** — does every active plan folder have exactly one fate: a step declared in the root `master.md` sequence, archived with a `closed_reason`, or standalone with a reason written in the master? A folder with none is how a close-out goes unwritten for weeks (indusk-makeover sat `completed` for 53 days in a queue labelled "any time"). Fix it here — declare it, archive it, or write the reason — and write any follow-on this plan surfaced into the brief of the step that owns it, not into this retrospective alone.
 
 Fix any inaccuracies. The impl may have changed things that weren't anticipated in the per-phase context updates.
@@ -285,7 +285,7 @@ mv .indusk/planning/{plan-name} .indusk/planning/archive/{plan-name}
 
 The docs site now holds the published knowledge. The archive holds the process history. Both are preserved, but the docs are the primary reference going forward.
 
-Update CLAUDE.md Current State to remove the plan from the active plans table.
+Update `.indusk/current.md`'s Project (shared) region: the plan leaves the in-flight list and gets its one closed line there.
 
 ### Step 10: Land — the branch reaches main, and is gone
 

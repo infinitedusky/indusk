@@ -119,7 +119,7 @@ Its `indusk/version` line is the three-way version state — installed, publishe
 
 ### 7. Project Context — already loaded, do NOT re-fetch
 
-CLAUDE.md is auto-injected into every session by Claude Code. **Do NOT call `get_context` and do NOT `Read` CLAUDE.md during catchup** — that duplicates content already in your context window (the single biggest line item in the pre-makeover ~55k catchup). You already have Architecture, Conventions, Key Decisions, Known Gotchas, and Current State. If (and only if) your context was compacted and the injected copy is genuinely absent, read it then.
+CLAUDE.md is auto-injected into every session by Claude Code. **Do NOT call `get_context` and do NOT `Read` CLAUDE.md during catchup** — that duplicates content already in your context window (the single biggest line item in the pre-makeover ~55k catchup). You already have Architecture, Conventions, Key Decisions and Known Gotchas; operational state is `.indusk/current.md`'s shared region, read in Step 3. If (and only if) your context was compacted and the injected copy is genuinely absent, read it then.
 
 ### 8. Check Active Plans
 
