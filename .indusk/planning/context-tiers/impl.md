@@ -1,7 +1,7 @@
 ---
 title: "Context tiers — a rule reaches you where and when it applies"
 date: 2026-10-02
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -227,18 +227,19 @@ failing on its own assertion and each guard declared as one.
 ### Build Phase 6: the lowered budget
 
 - [x] Set `context.claude_md_budget_bytes` to the root's size plus at least 25 % and `context.claude_md_budget_reason` beside it (`.indusk/config.json`), and lower the template default for new projects only if the guide argues for it
+- [x] Shape (Build Phase 6): no code was written this phase — one config block, one root convention line, a guide section and a changelog entry — so there is no unit to judge for craft
 
 #### Build Phase 6 Verification
 
-- [ ] A13 passes (`… vitest run src/__tests__/context-tiers-register`); the full suite is green (`pnpm test`); A1–A3 pass (`pnpm e2e -- context-tiers`)
+- [x] A13 passes (`… vitest run src/__tests__/context-tiers-register`); the full suite is green (`pnpm test`); A1–A3 pass (`pnpm e2e -- context-tiers`) — A13 5/5 against the final root (14,678 of 18,432 bytes, 79.6 %); `pnpm test` green: mcp 1,719 passed / 5 skipped, admin 341, `promises:check` clean (with the admin bundle built in this worktree); e2e 4/4 (A1, A2, A3, A17); `check-pointers` PASS
 
 #### Build Phase 6 Context
 
-- [ ] Root: the budget convention states the new value and points to its reason in config
+- [x] Root: the budget convention states the new value and points to its reason in config
 
 #### Build Phase 6 Document
 
-- [ ] `guide/context-budget.md` and `apps/docs/src/changelog.md` Unreleased: the lowered budget, `lesson:` tokens, the shipped planning file
+- [x] `guide/context-budget.md` and `apps/docs/src/changelog.md` Unreleased: the lowered budget, `lesson:` tokens, the shipped planning file — the guide also says why a new project's default stays 61,440
 
 ## Files Affected
 
