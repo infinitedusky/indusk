@@ -12,20 +12,22 @@ Discipline was tried first. The `context-budget` plan shipped a skill-level conv
 
 `claude-md-budget.js` is a PreToolUse hook (installed by `indusk init` / `indusk update` alongside the gate-enforcement hooks) that intercepts every Edit/Write targeting a file named `CLAUDE.md`:
 
-- **Over budget** → the edit is **blocked**, with a message naming the compaction ritual as the way to make room.
-- **Over 90% of budget** → the edit lands, with a **warning** to compact soon.
+- **The edit does not grow the file** → it lands, at any size. A file already over budget must be able to get smaller, or the work that shrinks it cannot run — the hook once refused exactly that edit (found 2026-10-02), and the plan that moves rules out of the root is nothing but shrinking edits.
+- **Growth past the budget** → the edit is **blocked**, with a message naming the compaction ritual as the way to make room.
+- **Growth past 90% of the budget** → the edit lands, with a **warning** to compact soon.
 
-The budget lives in `.indusk/config.json`:
+Two budgets live in `.indusk/config.json`:
 
 ```json
 {
   "context": {
-    "claude_md_budget_bytes": 61440
+    "claude_md_budget_bytes": 61440,
+    "nested_claude_md_budget_bytes": 16384
   }
 }
 ```
 
-Default is 60 KB. Raising it is legitimate — but it's a recorded config edit, not a silent accretion.
+The first governs a **root** context file — the project root's `CLAUDE.md`, or, in a workbench, a declared repo's own root `CLAUDE.md`, which sits below the workbench root but is that repository's always-loaded file (the hook judges by directory, never by depth). The second governs every other file named `CLAUDE.md`: an area's rules, loaded only when a file in that area is read, so they cost nothing to sessions that never go there. Defaults are 60 KB and 16 KB. Raising either is legitimate — but it's a recorded config edit, not a silent accretion, and `context.claude_md_budget_reason` is where the reason goes.
 
 ## The entry shape: rule + pointer
 

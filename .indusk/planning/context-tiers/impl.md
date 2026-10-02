@@ -123,6 +123,8 @@ failing on its own assertion and each guard declared as one.
 - [x] `claude-md-budget.js` (and `.claude/hooks/` copy): compute pre- and post-edit size; allow any edit that does not grow the file; refuse growth past the budget; the refusal says shrinking edits are always allowed
 - [x] A file named `CLAUDE.md` below the project root is governed by `context.nested_claude_md_budget_bytes` (default 16384); the root keeps `context.claude_md_budget_bytes`. A **root** is the state root or, in a workbench, any declared repo's dir — read through `_hook-paths.js`'s `declaredReposAt(statePath)`, never a depth rule, or a wrapped repo's own `CLAUDE.md` gets the nested budget (A14)
 - [x] Add `context.nested_claude_md_budget_bytes` to the config schema and to `update`'s ensured keys (presence-keyed, through `ensureConfigBlock`) — `ensureContextConfig` in `lib/config.ts`, called from `update`; presence-keyed on the `context` block, so a project that already declares one keeps it and the hook's defaults govern any unset key (dusk declares none today, so its next `update` writes both defaults)
+- [x] Shape finding (Build Phase 1) — `apps/indusk-mcp/hooks/_hook-paths.js`: `declaredRepoDirsAt` is the third function to inline "read `.indusk/config.json` at the state root, or nothing" (after `declaredReposAt` and `findGitPathFromWorkbenchConfig`); the block answers one question and wants the name `readWorkbenchConfig(statePath)`, and `sameDirectory` is a wrapper that only renames `samePath` — export the one that exists (rule: the typescript extension's "name the block for what it answers"; a name that says how, not what, is a smell)
+- [x] Shape (Build Phase 1): reviewed the six changed files, every extension's rules readable. One finding, above. Left as is, with reasoning: `claude-md-budget.js`'s refusal text carries its root/nested advice as an inline branch inside the one message — the refusal is one unit the agent reads whole, and a named builder would move the text away from the exit it explains; the decision sequence (`resolveStatePath` → `readBudgets` → `isRootContextFile` → compare) is already four named steps. `config.ts` and `update.ts` mirror the three ensures beside them
 
 #### Build Phase 1 Verification
 
@@ -130,11 +132,11 @@ failing on its own assertion and each guard declared as one.
 
 #### Build Phase 1 Context
 
-- [ ] Root, replacing the budget convention's "blocks past" clause with "refuses growth past the budget; a shrinking edit is always allowed; nested files have their own budget" — root because it governs every context file. The root has 2 bytes of headroom, so this is a replacement that must not grow the entry; pay for any extra words inside the same entry
+- [x] Root, replacing the budget convention's "blocks past" clause with "refuses growth past the budget; a shrinking edit is always allowed; nested files have their own budget" — root because it governs every context file. The root has 2 bytes of headroom, so this is a replacement that must not grow the entry; pay for any extra words inside the same entry
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/context-budget.md`: growth-not-size and the nested budget
+- [x] `apps/docs/src/guide/context-budget.md`: growth-not-size and the nested budget
 
 ### Build Phase 2: one token grammar, derived lesson state, pointers everywhere
 
