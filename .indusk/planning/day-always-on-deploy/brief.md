@@ -91,6 +91,69 @@ The heartbeat applies to the local daemon as much as the server, so it can be
 built and proven before the deploy and is part of proving the loop locally, the
 gate the master plan puts ahead of the deploy.
 
+## Added 2026-10-02: recording and handling never wait for a person to think of it
+
+Found during the local smoke on numero-workbench (Sandy, 2026-10-02).
+`indusk promises watch` is one pass, not a watcher: an incident file exists
+only because someone ran it. Between runs a violation sits in Jaeger as
+*unrecorded* — visible to `status`, `promise_health` and Slack, but owning no
+incident and reopening no plan. On a laptop that is a habit; for a deployed
+system broken at three in the morning it means the loop stops at the Slack
+message. The server still never writes to the repository; the gap is that
+nothing else does either unless a person remembers to.
+
+10. **Recording runs on a schedule on the always-on instance, through one
+    reviewable writer** (Sandy, 2026-10-02: the schedule runs on the Fly
+    instance). Beside the announce pass, the instance runs
+    `indusk promises watch --source deployed` against its own Jaeger on a
+    timer and lands what it wrote — incidents, the promise's incident list,
+    the owner's Maintenance phase — as a **pull request** to the plan
+    repository. This amends the guide's "the server never writes back": it
+    still never writes to a branch anyone works on and never commits behind a
+    person's back; its only write is a reviewable PR. `watch` is already safe
+    to repeat (a recorded trace is never counted twice; an open incident is
+    extended, not duplicated), so the schedule can be tight — but the PR must
+    be too: one open recording PR per workbench, updated in place, never one
+    per pass.
+11. **Locally, catchup records instead of suggesting.** When `promise_health`
+    reports unrecorded violations, `/catchup` runs `watch` itself and reports
+    what it opened, rather than telling the user to run it.
+12. **An open incident stays loud until it is handled.** Recording is
+    mechanical; fixing is judgement, and stays agent work through the
+    Maintenance phase. What must not happen is an incident that is recorded
+    and then forgotten: catchup, `promise_health` and the admin show each open
+    incident with its age and its owner's Maintenance phase; open incidents
+    rank above the roadmap as unrecorded violations already do; and one open
+    past a threshold is announced again. A session-start hook may guarantee
+    the reading happens; it never does the fixing.
+
+13. **Every workbench gets its own always-on instance, provisioned when the
+    workbench is created** (Sandy, 2026-10-02). `indusk init --workbench`
+    (and its equivalents) stands up the instance — volume, secrets, the
+    announce + recording schedule — and writes `promises.jaeger` (URL +
+    `credential_env` name, never the credential) into the new workbench's
+    config, so a workbench is watched from its first commit rather than from
+    whenever someone remembers to deploy. One instance per workbench keeps
+    each one's traces, announcements and recording PRs scoped to one plan
+    repository.
+14. **The instance reaches the plan repository through a GitHub connection
+    made at workbench creation** (Sandy, 2026-10-02: "connect to GitHub").
+    Creation includes a connect-to-GitHub step that grants the instance access
+    to that workbench's plan repository and nothing else; the instance opens
+    its recording PR through that connection, never through a person's token.
+    The permissions are the minimum a PR needs — push its own recording
+    branch, open/update a pull request, read metadata — and because a GitHub
+    write permission cannot be narrowed to one branch, the plan repository's
+    protected branches must refuse a direct push from the connection, so the
+    PR stays its only path in.
+
+Open for the test plan: the connection's shape (a GitHub App installation,
+whose short-lived tokens and per-repo install fit "this repo only", vs. a
+fine-grained token), the re-announce threshold, how
+creation behaves without a Fly account or Slack workspace (refuse by name vs.
+create the workbench unwatched and say so), and the cost of one instance per
+workbench.
+
 ## What this plan is not
 
 Not a hosting decision, and not a commitment to Fly. Fly is the reference
@@ -121,3 +184,13 @@ fix belongs here; if it finds a bug in the loop, that is a promise
 - The deployed server alerts when its own heartbeat goes stale.
 - A promise that opts into "expect at least every X" needs attention after a
   quiet window; one that does not, does not.
+- A violation on the deployed system becomes an incident and a Maintenance
+  phase in a pull request, opened by the always-on instance's own schedule,
+  without anyone running `watch` by hand.
+- Creating a workbench provisions its always-on instance and points the new
+  workbench's `promises.jaeger` at it.
+- The instance's GitHub connection can open and update its recording PR on
+  its own workbench's plan repository, and a direct push to a protected branch
+  through that connection is refused.
+- An incident left open past the threshold is announced again, and every
+  reader shows its age.
