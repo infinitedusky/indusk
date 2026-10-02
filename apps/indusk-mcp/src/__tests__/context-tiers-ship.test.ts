@@ -21,6 +21,9 @@ import {
 
 const TEMPLATE = join(REPO_ROOT, "apps/indusk-mcp/templates/planning/CLAUDE.md");
 
+/** Pinned explicitly, not only inside the helper: init and update write the machine-global registry. */
+const home = (project: GitTmpProject) => ({ INDUSK_HOME: project.testHome });
+
 let p: GitTmpProject | null = null;
 afterEach(() => {
 	if (p) cleanupGitTmpProject(p);
@@ -30,8 +33,8 @@ afterEach(() => {
 describe.skipIf(SHOULD_SKIP)("A4 — update ships the planning context file", () => {
 	it("writes it byte-identical to the package copy, and a second update changes nothing", () => {
 		p = setupGitTmpProject("context-tiers-ship");
-		expect(runCli(p, ["init", "--local", "--no-index"]).code).toBe(0);
-		expect(runCli(p, ["update"]).code).toBe(0);
+		expect(runCli(p, ["init", "--local", "--no-index"], home(p)).code).toBe(0);
+		expect(runCli(p, ["update"], home(p)).code).toBe(0);
 
 		const shipped = join(p.projectDir, ".indusk/planning/CLAUDE.md");
 		expect(existsSync(shipped), "update writes .indusk/planning/CLAUDE.md").toBe(true);
@@ -39,7 +42,7 @@ describe.skipIf(SHOULD_SKIP)("A4 — update ships the planning context file", ()
 		const first = readFileSync(shipped, "utf-8");
 		expect(first).toBe(readFileSync(TEMPLATE, "utf-8"));
 
-		expect(runCli(p, ["update"]).code).toBe(0);
+		expect(runCli(p, ["update"], home(p)).code).toBe(0);
 		expect(readFileSync(shipped, "utf-8"), "a second update is a no-op on the bytes").toBe(first);
 	});
 });
