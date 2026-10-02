@@ -103,7 +103,11 @@ judgement into a test.
    otherwise *advisory*. Lesson files, guides and changelogs are prose and never
    count. `list_lessons` returns the state per lesson; the catchup skill skims
    only advisory titles and states both counts (A9). No registry is shared
-   with promises.
+   with promises. Guarded is **relative to the project scanned** (added
+   2026-10-02): a community lesson guarded only by a dusk unit test reads
+   advisory in a consumer, whose tree has no such test, so only a hook-carried
+   token is guarded everywhere; `guardedBy` records whether the enforcer is a
+   hook, a test or a code site.
 
 4. **Three nested context files, placed by where the work is written.**
    - `.indusk/planning/CLAUDE.md` — trajectory rules, gate vocabulary,
