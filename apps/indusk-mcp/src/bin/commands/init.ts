@@ -602,10 +602,15 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		const { PLANNING_CONTEXT_REL, syncPlanningContext } = await import(
 			"../../lib/planning-context.js"
 		);
+		const verb = {
+			created: "create",
+			updated: "overwrite",
+			current: "current",
+			skipped: "skip",
+		} as const;
 		const result = syncPlanningContext(packageRoot, projectRoot, { overwrite: force });
-		console.info(
-			`  ${result === "skipped" ? "skip" : result === "current" ? "current" : result === "created" ? "create" : "overwrite"}: ${PLANNING_CONTEXT_REL}${result === "skipped" ? " (already exists)" : ""}`,
-		);
+		const suffix = result === "skipped" ? " (already exists)" : "";
+		console.info(`  ${verb[result]}: ${PLANNING_CONTEXT_REL}${suffix}`);
 	}
 
 	// 3.5. Create .indusk/current.md (operational state layer)
