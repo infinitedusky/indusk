@@ -34,7 +34,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { declaredRepoDirsAt, resolveStateAndGitPaths, sameDirectory } from "./_hook-paths.js";
+import { declaredRepoDirsAt, resolveStateAndGitPaths, samePath } from "./_hook-paths.js";
 
 const DEFAULT_ROOT_BUDGET_BYTES = 61440; // 60 KB
 const DEFAULT_NESTED_BUDGET_BYTES = 16384; // 16 KB
@@ -104,8 +104,8 @@ function readBudgets(statePath) {
 function isRootContextFile(editedFilePath, statePath) {
 	if (!statePath) return true; // no project to be nested in — the root budget is the safer reading
 	const dir = dirname(editedFilePath);
-	if (sameDirectory(dir, statePath)) return true;
-	return declaredRepoDirsAt(statePath).some((repoDir) => sameDirectory(dir, repoDir));
+	if (samePath(dir, statePath)) return true;
+	return declaredRepoDirsAt(statePath).some((repoDir) => samePath(dir, repoDir));
 }
 
 /** Compute the post-edit content of the file, or null when it can't be predicted. */
