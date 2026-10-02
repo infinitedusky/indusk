@@ -49,6 +49,7 @@ constrained by "what makes all of these true?"
 |----|-----------|-----------|
 | A13 | The root file is at least 20 % under its new, lower budget at close, and the budget value lives in `.indusk/config.json` with its reason written beside it | vitest: file size against the configured value; the reason key present |
 | A14 | A write that would push the root past the new budget is refused, and so is one that would push a **nested** context file past its own | vitest over `claude-md-budget.js` (`runHook`) with both paths |
+| A16 | An edit that makes an over-budget context file smaller is allowed; one that leaves it over budget and larger is refused | vitest over `claude-md-budget.js` (`runHook`): a file already past its budget, one shrinking edit, one growing edit |
 | A15 | A Context gate item written by `/planner` names its tier and destination, and an item that targets the root says why it must be always-on | vitest over the planner and `/claude-md` skill texts and their installed copies (skill-sync parity) |
 
 ## Untestable Assertions

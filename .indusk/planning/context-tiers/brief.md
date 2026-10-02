@@ -136,6 +136,11 @@ registry with promises.
 
 ### In Scope
 
+- **First: the budget hook lets a shrinking edit through** (added 2026-10-02,
+  found by the numero promise smoke). `claude-md-budget.js` refuses edits to a
+  `CLAUDE.md` that is already over budget even when the edit makes it smaller,
+  and this plan is mostly such edits. A write that reduces the file's size is
+  allowed at any size; one that grows it past the budget is still refused.
 - **The classification register.** Every entry in the root file (77 today) gets
   a row: tier, destination, and for tier 2 the enforcer that carries the pointer.
   This is the hand-check the research demands — the keyword census is a
@@ -225,6 +230,9 @@ recorded here so it is a decision in the plan and not a line in a chat.
   admin. After it, this plan runs and builds, ahead of further Day work, so
   every later plan is built on the smaller root and pays no Context-gate
   eviction tax. It is step 3 in the master plan's Next actions list.
+  **Moved ahead of the loop fixes on 2026-10-02 (Sandy):** nothing runs in
+  production yet, and this plan speeds up every plan after it, so it goes
+  before `watch-reopen-collision`, `watcher-heartbeat` and the deploy.
 
 ## Open questions for the test plan and ADR
 
