@@ -66,6 +66,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
 - **Worktree-per-plan is the default**: Phase 1 opens with `indusk worktree
   create <plan>` (records the assignment; the landing releases it); opt out
   with `worktree: none` in impl frontmatter. — see `/reference/cli/worktree`
+- **A Context gate item names its tier and destination** — `guard: <test>
+  carries lesson: <name>`, `planning: …` (this file, via its template), an
+  area's own `CLAUDE.md`, `current.md: …`, or `root (<section>): … —
+  always-on because …`. An item aimed at the root says why it must be
+  always-on; one that cannot belongs at a lower tier. — see
+  `/guide/context-tiers`
 
 ## Executing
 
