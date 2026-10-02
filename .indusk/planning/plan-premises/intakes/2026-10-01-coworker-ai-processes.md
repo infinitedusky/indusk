@@ -415,3 +415,39 @@ _Not yet — no metrics are declared. The developer scores._
 ## What this changes
 
 _Developer's choice: nothing / a plan revised / research opened / a direction dropped._
+
+## Correction (2026-10-01, raised by the developer)
+
+The working session's note above said the plan closed that day "took a working
+day" and rated "high" its confidence that InDusk is slower per change by a wide
+margin. Neither holds.
+
+**The figure was not measured.** Measured afterwards from git and the
+phase-boundary record, for that plan:
+
+| Span | Time |
+|---|---|
+| First plan commit to checklist approved (planning, including waits for the developer) | 2 h 37 min |
+| Approval to all six phases closed, falsification and cleanup included | 2 h 27 min |
+| Approval to merged on main (adds the retrospective and the landing) | 3 h 08 min |
+
+P18's figure for the comparable span, approval to green CI, is 27 minutes to
+about 2 hours. The build side is in the same range. The planning side is not:
+2 h 37 min against his 12 minutes.
+
+**The sample was the wrong one.** The developer's point: building InDusk with
+InDusk is the slowest work he does, because the system is being designed as it
+is used. Project work built *with* it, where the feature is obvious, is much
+faster. No timing exists for that work; the project that would show it predates
+the phase-boundary record.
+
+**A phase, not a plan, is the unit closest to one of P18's tickets.** Across the
+fifteen plans in this repository that have boundary records, 84 intervals from
+one phase opening to the next: median 16 minutes, three quarters under 77
+minutes, 55 of 84 under half an hour. A plan has a median of seven phases.
+
+Restated: confidence is **unknown** on whether InDusk is slower per change. It
+is **moderate** that planning, not building, is where its time goes, on the
+evidence of one plan. The developer's position is that the system is being built
+for quality first and will be reworked for speed. Recording cycle time per plan
+and per phase is what would turn any of this into a finding.
