@@ -23,8 +23,12 @@ roadmap:
   - jev-decision-model
   - release-ritual
   - admin-plan-type
-  - day-always-on-deploy
   - context-tiers
+  - watch-reopen-collision
+  - watcher-heartbeat
+  - day-always-on-deploy
+  - incident-recording
+  - workbench-watch-provisioning
   - plan-premises
 ---
 
@@ -113,6 +117,16 @@ growing trust repeats that at scale.
 
 **Next actions (2026-09-25; steps 2 and 5 added 2026-10-01, and reordered that day).** The sequence's
 live order, and why it is not simply the next `day-*` folder:
+
+**Reordered 2026-10-02 (Sandy): `context-tiers` goes next**, ahead of the loop
+fixes, because nothing runs in production yet and context-tiers speeds up every
+plan after it; a false all-clear from the promise loop costs little before
+anything is deployed. Its first item is the budget-hook defect the numero smoke
+found (the hook refuses edits that shrink `CLAUDE.md`), since the plan is mostly
+such edits. After it, in order: `watch-reopen-collision`, `watcher-heartbeat`,
+`day-always-on-deploy` (back to its original five items),
+`incident-recording`, `workbench-watch-provisioning` — the last three split out
+of the deploy brief on 2026-10-02.
 
 1. **[release-ritual](archive/release-ritual/brief.md) — closed 2026-10-01**
    (merged `283f6723`, archived; 15 rows, falsified and cleaned). It was here and

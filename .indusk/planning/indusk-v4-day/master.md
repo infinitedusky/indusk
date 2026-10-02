@@ -18,7 +18,11 @@ subplans:
   - day-always-on
   - release-ritual
   - admin-plan-type
+  - watch-reopen-collision
+  - watcher-heartbeat
   - day-always-on-deploy
+  - incident-recording
+  - workbench-watch-provisioning
   - day-contract
   - day-claim-evidence
   - day-claim-binding
