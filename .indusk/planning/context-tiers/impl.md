@@ -63,7 +63,7 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 | A12 | The root has no Current State section; its content is in `current.md`'s shared region; nothing reads the old heading | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
 | A9 | The catchup skill skims only advisory lesson titles and states the guarded and advisory counts | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
 | A15 | A Context gate item names its tier and destination, and one aimed at the root says why it must be always-on — in `/planner` and `/claude-md`, package and installed copies | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
-| A13 | The root is at least 20 % under its configured budget, and the budget's reason is in `.indusk/config.json` | Test Phase 1 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
+| A13 | The root is at least 20 % under its configured budget, and the budget's reason is in `.indusk/config.json` | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
 
 ### Deferred Verification
 
@@ -226,7 +226,7 @@ failing on its own assertion and each guard declared as one.
 
 ### Build Phase 6: the lowered budget
 
-- [ ] Set `context.claude_md_budget_bytes` to the root's size plus at least 25 % and `context.claude_md_budget_reason` beside it (`.indusk/config.json`), and lower the template default for new projects only if the guide argues for it
+- [x] Set `context.claude_md_budget_bytes` to the root's size plus at least 25 % and `context.claude_md_budget_reason` beside it (`.indusk/config.json`), and lower the template default for new projects only if the guide argues for it
 
 #### Build Phase 6 Verification
 
