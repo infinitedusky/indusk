@@ -52,7 +52,7 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 | A7 | `list_lessons` reports each lesson guarded or advisory; adding the token to a test makes it guarded on the next call, removing it makes it advisory, nothing else written | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
 | A8 | A lesson named only in prose — a guide, the lesson file, a changelog — stays advisory | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
 | A11 | `context check-pointers` resolves every pointer in every context file, including `lesson:` tokens, and fails naming the file and pointer that does not resolve | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/context-tiers-pointers.test.ts |
-| A4 | `indusk update` on a consumer writes `.indusk/planning/CLAUDE.md` byte-identical to the package's, and a second `update` changes nothing | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/context-tiers-ship.test.ts |
+| A4 | `indusk update` on a consumer writes `.indusk/planning/CLAUDE.md` byte-identical to the package's, and a second `update` changes nothing | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/context-tiers-ship.test.ts |
 | A1 | A session at a fixture's root that reads a plan's `impl.md` has the planning context file's codeword, which the fixture's root does not carry | Test Phase 1 | Test Phase 1 | passing | manual: pnpm e2e -- context-tiers |
 | A2 | A session that reads no admin file lacks the admin codeword; one that reads an admin component has it | Test Phase 1 | Test Phase 1 | passing | manual: pnpm e2e -- context-tiers |
 | A17 | A session that **writes** a new file under `.indusk/planning/<new>/` with nothing under `.indusk/planning/` read first has the planning rules — the moment `/planner` authors a plan's first document | Test Phase 1 | Build Phase 5 | written | manual: pnpm e2e -- context-tiers |
@@ -161,22 +161,24 @@ failing on its own assertion and each guard declared as one.
 
 ### Build Phase 3: the nested files exist, and the planning one ships
 
-- [ ] `apps/indusk-mcp/templates/planning/CLAUDE.md` (initially only its purpose line — no codeword in a file consumers receive; A3 asserts a real rule sentence that Build Phase 4 moves there); `init` writes and `update` overwrites `.indusk/planning/CLAUDE.md` from it, through the same path skills take
-- [ ] Parity: add the planning file to `skill-sync-parity`'s byte-equality set
-- [ ] **Replace** `apps/indusk-admin/CLAUDE.md` and `apps/indusk-mcp/CLAUDE.md` — both already exist: the admin one is the single line `@AGENTS.md`, the mcp one is a 485-byte unfilled copy of `templates/CLAUDE.md` (`# {Project Name} — Project Context`) that every session touching an mcp file has been loading. Each becomes its purpose line; both get register rows (deleted content, with the reason)
-- [ ] Land the pending rows from Test Phase 1 and Build Phase 2 Context in the planning **template** (so `.indusk/planning/CLAUDE.md` follows by parity) and the mcp file
+- [x] `apps/indusk-mcp/templates/planning/CLAUDE.md` (initially only its purpose line — no codeword in a file consumers receive; A3 asserts a real rule sentence that Build Phase 4 moves there); `init` writes and `update` overwrites `.indusk/planning/CLAUDE.md` from it, through the same path skills take
+- [x] Parity: add the planning file to `skill-sync-parity`'s byte-equality set
+- [x] **Replace** `apps/indusk-admin/CLAUDE.md` and `apps/indusk-mcp/CLAUDE.md` — both already exist: the admin one is the single line `@AGENTS.md`, the mcp one is a 485-byte unfilled copy of `templates/CLAUDE.md` (`# {Project Name} — Project Context`) that every session touching an mcp file has been loading. Each becomes its purpose line; both get register rows (deleted content, with the reason) — the admin's `@AGENTS.md` turned out to import a real file (`apps/indusk-admin/AGENTS.md`: the conduct rules plus the Next.js rules block the framework injects), so it is kept above the purpose line; the register says so
+- [x] Land the pending rows from Test Phase 1 and Build Phase 2 Context in the planning **template** (so `.indusk/planning/CLAUDE.md` follows by parity) and the mcp file
+- [x] Shape finding (Build Phase 3) — `src/bin/commands/init.ts`: the planning-context line maps the sync result to its printed verb with a four-way nested ternary inside the `console.info` call; a result→verb table beside it says the same thing readably (rule: the typescript extension's "a nested conditional expression wants a name or a table")
+- [x] Shape (Build Phase 3): reviewed the ten changed files, every extension's rules readable. One finding, above. `planning-context.ts` is one function with one job and a seam A4 reaches through the CLI; `update.ts` prints the result word as is; the parity pin mirrors the skill pin beside it; the rest is prose
 
 #### Build Phase 3 Verification
 
-- [ ] A4 passes (`… vitest run src/__tests__/context-tiers-ship src/__tests__/skill-sync-parity`); A1, A2 still pass (`pnpm e2e -- context-tiers`)
+- [x] A4 passes (`… vitest run src/__tests__/context-tiers-ship src/__tests__/skill-sync-parity`); A1, A2 still pass (`pnpm e2e -- context-tiers`) — 36/36 across the ship, parity, init and update suites; A1 and A2 green on the real `claude`, A17 still red (Build Phase 5)
 
 #### Build Phase 3 Context
 
-- [ ] Root, Architecture: the tree diagram's `.claude/skills/` line gains the planning context file beside it, and the `CLAUDE.md` line says "root — design intent only; nested files per area" — a rewrite of two existing lines, not an addition, because the root has no headroom until Build Phase 4
+- [x] Root, Architecture: the tree diagram's `.claude/skills/` line gains the planning context file beside it, and the `CLAUDE.md` line says "root — design intent only; nested files per area" — a rewrite of two existing lines, not an addition, because the root has no headroom until Build Phase 4 — done on the `.indusk/` line ("planning/ (+ shipped CLAUDE.md)") and the `CLAUDE.md` line, +7 bytes; the root sits at 61,435
 
 #### Build Phase 3 Document
 
-- [ ] New `apps/docs/src/guide/context-tiers.md` (stub: the four kinds and the three files), added to the sidebar in `apps/docs/src/.vitepress/config.ts`
+- [x] New `apps/docs/src/guide/context-tiers.md` (stub: the four kinds and the three files), added to the sidebar in `apps/docs/src/.vitepress/config.ts` — the stub also carries the lesson token and the per-project reading of guarded; the decision diagram waits for Build Phase 4
 
 ### Build Phase 4: the register and the root rewrite
 

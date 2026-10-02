@@ -85,6 +85,7 @@ const config = defineConfig({
 						{ text: "Agent Roles", link: "/guide/agent-roles" },
 						{ text: "Evaluation", link: "/guide/eval" },
 						{ text: "Context Budget", link: "/guide/context-budget" },
+						{ text: "Context Tiers", link: "/guide/context-tiers" },
 						{ text: "Version Control", link: "/guide/scm" },
 						{ text: "Local Mode", link: "/guide/local-mode" },
 						{ text: "Rail Check", link: "/guide/rail-check" },
