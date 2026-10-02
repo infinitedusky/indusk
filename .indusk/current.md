@@ -455,3 +455,24 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 (empty)
 
 ---
+
+## Session b37c263f — promise-loop smoke: toy promise-smoke plan, violate a tested behaviour promise, watch→incident
+
+**Session ID**: b37c263f-c2bc-4c86-8f4f-b608906e6e7e
+**Last updated**: 2026-10-02T01:27:38.115Z
+**Branch**: main
+**Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
