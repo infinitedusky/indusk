@@ -49,9 +49,9 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 |----|---------|-------------|-----------|-------|------|
 | A16 | An edit that makes an over-budget context file smaller is allowed; one that leaves it over budget and larger is refused | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
 | A14 | A write past the root budget is refused, and so is one past a nested context file's own budget; in a workbench, a declared repo's own root `CLAUDE.md` is judged by the root budget, never as nested | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
-| A7 | `list_lessons` reports each lesson guarded or advisory; adding the token to a test makes it guarded on the next call, removing it makes it advisory, nothing else written | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
-| A8 | A lesson named only in prose — a guide, the lesson file, a changelog — stays advisory | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
-| A11 | `context check-pointers` resolves every pointer in every context file, including `lesson:` tokens, and fails naming the file and pointer that does not resolve | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/context-tiers-pointers.test.ts |
+| A7 | `list_lessons` reports each lesson guarded or advisory; adding the token to a test makes it guarded on the next call, removing it makes it advisory, nothing else written | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
+| A8 | A lesson named only in prose — a guide, the lesson file, a changelog — stays advisory | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
+| A11 | `context check-pointers` resolves every pointer in every context file, including `lesson:` tokens, and fails naming the file and pointer that does not resolve | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/context-tiers-pointers.test.ts |
 | A4 | `indusk update` on a consumer writes `.indusk/planning/CLAUDE.md` byte-identical to the package's, and a second `update` changes nothing | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/context-tiers-ship.test.ts |
 | A1 | A session at a fixture's root that reads a plan's `impl.md` has the planning context file's codeword, which the fixture's root does not carry | Test Phase 1 | Test Phase 1 | passing | manual: pnpm e2e -- context-tiers |
 | A2 | A session that reads no admin file lacks the admin codeword; one that reads an admin component has it | Test Phase 1 | Test Phase 1 | passing | manual: pnpm e2e -- context-tiers |
@@ -140,22 +140,24 @@ failing on its own assertion and each guard declared as one.
 
 ### Build Phase 2: one token grammar, derived lesson state, pointers everywhere
 
-- [ ] Move the opener rule and the token pattern out of `lib/promises/vocabulary.ts` into `lib/tokens.ts` (`tokenPattern(kind, name)`, `anyTokenPattern(kind)`, kinds `promise` and `lesson`); promises import it; update the day-promises single-definition pin in the same commit
-- [ ] `lib/lessons/state.ts`: `lessonStates(root)` scans `scannableFiles(root)` for `lesson:` tokens and returns `{ name, state: "guarded" | "advisory", guardedBy: { file, kind: "hook" | "test" | "code" }[] }` per file in `.claude/lessons/` — derived on every call, never written. Guarded is **relative to the project scanned**: a community lesson guarded only by a dusk unit test reads advisory in a consumer, whose tree has no such test; only a hook-carried token is guarded everywhere. The ADR and the guide say so
-- [ ] `list_lessons` returns `state` and `guardedBy` per lesson; the tool description says so
-- [ ] `lib/context-pointers.ts`: walk every `CLAUDE.md` git knows about (`ls-files`), not only the root; a `lesson: <name>` token is a pointer that resolves to `.claude/lessons/<name>.md`; failures name the file and the pointer
+- [x] Move the opener rule and the token pattern out of `lib/promises/vocabulary.ts` into `lib/tokens.ts` (`tokenPattern(kind, name)`, `anyTokenPattern(kind)`, kinds `promise` and `lesson`); promises import it; update the day-promises single-definition pin in the same commit
+- [x] `lib/lessons/state.ts`: `lessonStates(root)` scans `scannableFiles(root)` for `lesson:` tokens and returns `{ name, state: "guarded" | "advisory", guardedBy: { file, kind: "hook" | "test" | "code" }[] }` per file in `.claude/lessons/` — derived on every call, never written. Guarded is **relative to the project scanned**: a community lesson guarded only by a dusk unit test reads advisory in a consumer, whose tree has no such test; only a hook-carried token is guarded everywhere. The ADR and the guide say so
+- [x] `list_lessons` returns `state` and `guardedBy` per lesson; the tool description says so — plus `guarded` and `advisory` counts; a project that cannot be scanned (no git repository) gets its listing with a `scan` line saying why no state was derived, never every lesson marked advisory
+- [x] `lib/context-pointers.ts`: walk every `CLAUDE.md` git knows about (`ls-files`), not only the root; a `lesson: <name>` token is a pointer that resolves to `.claude/lessons/<name>.md`; failures name the file and the pointer
+- [x] Shape finding (Build Phase 2) — `src/tools/lesson-tools.ts`: the `list_lessons` handler derives the states with a not-scannable fallback *and* shapes the response, two jobs behind one MCP wrapper no unit test reaches; the derivation-with-fallback wants the name `lessonListing(projectRoot)` in `lib/lessons/state.ts`, leaving the tool to serialise. Also `lib/promises/vocabulary.ts` carries the new `tokens.js` import mid-file (rule: the typescript extension's "one reason to change per unit; a seam a test can reach")
+- [x] Shape (Build Phase 2): reviewed the eight changed files, every extension's rules readable. One finding, above. Left as is, with reasoning: `checkPointers`' lesson-token block sits inline beside the path-pointer block it mirrors — eight lines, the same shape, in the one function that is "what does this content point at"; naming one and not the other would make the two kinds read as different questions. `tokens.ts`, `citations.ts`'s `citedTokens`, `contextFiles`, `checkAllContextPointers` and the CLI are each one named step
 
 #### Build Phase 2 Verification
 
-- [ ] A7, A8, A11 pass (`… vitest run src/__tests__/context-tiers-lessons src/__tests__/context-tiers-pointers`), the promises suite still passes (`… vitest run src/__tests__/promises`) and `pnpm promises:check` exits 0
+- [x] A7, A8, A11 pass (`… vitest run src/__tests__/context-tiers-lessons src/__tests__/context-tiers-pointers`), the promises suite still passes (`… vitest run src/__tests__/promises`) and `pnpm promises:check` exits 0 — 62 passed across the row files and every promise suite; the only reds are A5's nine cases, which share `context-tiers-lessons.test.ts` and pass at Build Phase 4. `promises:check` first refused `lib/tokens.ts` itself: its docblock spelled a token-shaped example, and the scanner read it as a citation of a promise that does not exist — the day-promises lesson, met on day one; the example is now described, not spelled
 
 #### Build Phase 2 Context
 
-- [ ] mcp context (pending row until Build Phase 3): "`lib/tokens.ts` is the one token grammar for `promise:` and `lesson:`; a new token kind is added there, never as a second pattern"
+- [x] mcp context (pending row until Build Phase 3): "`lib/tokens.ts` is the one token grammar for `promise:` and `lesson:`; a new token kind is added there, never as a second pattern"
 
 #### Build Phase 2 Document
 
-- [ ] `reference/tools/indusk-mcp.md`: `list_lessons` state; `reference/cli/`: `context check-pointers` over every context file
+- [x] `reference/tools/indusk-mcp.md`: `list_lessons` state; `reference/cli/`: `context check-pointers` over every context file — the command had no reference page; `reference/cli/context.md` is new and in the sidebar
 
 ### Build Phase 3: the nested files exist, and the planning one ships
 

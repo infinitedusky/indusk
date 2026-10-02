@@ -31,6 +31,7 @@ nested files. Each moves into its file in Build Phase 3 and is struck here.
 | Rule | Destination | From |
 |------|-------------|------|
 | A trajectory row's `Test` column may name a `manual:` command; `verify` reports it unverified, never passed | `.indusk/planning/CLAUDE.md` (template) | Test Phase 1 Context |
+| `lib/tokens.ts` is the one token grammar for `promise:` and `lesson:`; a new token kind is added there, never as a second pattern; the file that documents a marker must not spell one | `apps/indusk-mcp/CLAUDE.md` | Build Phase 2 Context |
 
 ## Register
 
