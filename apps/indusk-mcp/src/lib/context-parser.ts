@@ -6,7 +6,6 @@ export const SECTION_NAMES = [
 	"Conventions",
 	"Key Decisions",
 	"Known Gotchas",
-	"Current State",
 ] as const;
 
 export type SectionName = (typeof SECTION_NAMES)[number];

@@ -22,6 +22,3 @@
 
 (None yet — will be populated as the agent makes mistakes)
 
-## Current State
-
-Project initialized with InDusk dev system.

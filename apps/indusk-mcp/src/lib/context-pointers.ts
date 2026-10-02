@@ -156,8 +156,38 @@ export function contextFiles(projectRoot: string): string[] {
 export function checkAllContextPointers(projectRoot: string): ContextFileReport[] | null {
 	const files = contextFiles(projectRoot);
 	if (files.length === 0) return null;
-	return files.map((file) => ({
+	const reports = files.map((file) => ({
 		file,
 		...checkPointers(readFileSync(join(projectRoot, file), "utf-8"), projectRoot),
 	}));
+	const current = currentMdVersionClaims(projectRoot);
+	if (current) reports.push(current);
+	return reports;
+}
+
+/**
+ * The version-claim rule followed the operational section out of the root
+ * (context-tiers): `.indusk/current.md`'s shared region is where "what is
+ * published" is written now, and a literal version there is the same copy
+ * nothing updates. Only the shared region, only version claims — the session
+ * sections are operational notes whose paths may rightly be stale.
+ */
+function currentMdVersionClaims(projectRoot: string): ContextFileReport | null {
+	const file = ".indusk/current.md";
+	const path = join(projectRoot, file);
+	if (!existsSync(path)) return null;
+	const text = readFileSync(path, "utf-8");
+	const start = text.indexOf("## Project (shared)");
+	if (start < 0) return null;
+	const end = text.indexOf("\n---", start);
+	const shared = text.slice(start, end < 0 ? undefined : end);
+	const { versionClaims } = checkPointers(shared, projectRoot);
+	// Line numbers are relative to the file, not the slice.
+	const offset = text.slice(0, start).split("\n").length - 1;
+	return {
+		file,
+		scanned: [],
+		dead: [],
+		versionClaims: versionClaims.map((v) => ({ ...v, line: v.line + offset })),
+	};
 }
