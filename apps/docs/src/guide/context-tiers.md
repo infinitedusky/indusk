@@ -56,5 +56,34 @@ kind, a colon, the name, after a comment opener or directly inside a quote.
 `indusk context check-pointers` treats a lesson token in any context file as a
 pointer and fails when the lesson file does not exist.
 
-*Where a new rule goes — the decision, with its diagram — is written when the
-register is complete.*
+## Where a new rule goes
+
+Three questions, asked in order. The root is the last answer, not the first.
+
+```mermaid
+flowchart TD
+    R["A rule worth keeping"] --> Q1{"Can a test or hook<br/>catch its violation?"}
+    Q1 -- yes --> E["Write the enforcer.<br/>Its failure message opens with<br/><code>lesson: name</code>; the lesson<br/>holds the why. The root holds nothing."]
+    Q1 -- no --> Q2{"Does it apply only when<br/>working in one directory?"}
+    Q2 -- yes --> D["That directory's <code>CLAUDE.md</code><br/>(planning: the shipped template;<br/>admin; mcp; mcp/hooks)"]
+    Q2 -- no --> Q3{"Is it operational —<br/>in flight, blocked, next?"}
+    Q3 -- yes --> C["<code>.indusk/current.md</code>,<br/>Project (shared)"]
+    Q3 -- no --> O["The root <code>CLAUDE.md</code>,<br/>as rule + pointer, with the<br/>reason it must be always-on"]
+```
+
+An impl's `#### Phase N Context` item names the tier and the destination it
+chose (`guard: <test> carries lesson: x` / `planning: …` / `mcp: …` /
+`root: … — always-on because …`), so the choice is reviewable at the gate
+rather than remembered at close. When an enforcer holds only part of a rule,
+the remainder stays as prose at the next tier down, never in the root by
+default.
+
+## The register
+
+Moving a rule out of the root is only safe if nothing is lost on the way.
+`.indusk/planning/archive/context-tiers/register.md` holds one row per entry
+the root carried when the plan began — the entry, its tier, its destination,
+and for an enforced rule the test or hook and the lesson it names. A test
+parses the root as it stood at that commit, read from git, and fails naming
+any entry without a row. The root went from 61,438 to 14,667 bytes, with the
+decision index intact; the rest is where it applies.
