@@ -133,6 +133,40 @@ live order, and why it is not simply the next `day-*` folder:
    Named for numero on 2026-10-01, after 1.56.0 was published: upgrade the
    machine, update the workbench, and move its 44 flat worktrees under a
    declared location (`indusk workbench migrate-layout`) with nothing running.
+   **Held 2026-10-02** (numero-workbench plan `promise-smoke`, bugfix, run
+   through `/work` with boundary records): the behaviour promise
+   `table-chat-keeps-line-breaks`, bound by the test plan to A1/T1 — a
+   two-paragraph message with one blank line, which passes — was broken by a
+   person typing a 3- and a 4-newline run in numero's table chat. The marks
+   reached local Jaeger (upheld `9bab1b7b…`; violated `0aba5608…`,
+   `33694471…`), `promises status` read them, `promises watch --source smoke`
+   opened `i-2026-10-02-table-chat-keeps-line-breaks` (environment
+   `development` from the span's resource) and appended Build Phase 3:
+   Maintenance + a T2 row to the owner; a later violation (`b5e1bdc1…`)
+   **extended** the open incident, no second incident or phase; T1 stayed
+   green throughout. Findings for the deploy and `day-contract`:
+   - nothing the tooling writes points the incident back at T1 — the
+     promise → A1/T1 binding is hand-written prose; `day-contract`'s rows
+     must name promises so `watch` can write "proven by T1 (passing at head)";
+   - a `declared` promise shows no state change when violated (only
+     `enforced` → `known-violated` moves);
+   - in a workbench, `sites:`/`tests:` resolve against the trunk, so a plan
+     in flight cannot link its own worktree code;
+   - `prepareShapeReview` throws in a workbench (`git diff` runs in the
+     workbench repo against a code-repo sha) instead of returning `skipped`;
+   - `watch` opened an incident and **silently did not reopen its owner**
+     after an earlier same-day incident file was deleted (id reused, stale
+     Maintenance heading matched, CLI prints nothing for `already`) — see
+     [watch-reopen-collision](watch-reopen-collision/brief.md);
+   - the dash0/posthog health checks read `.mcp.json` by relative path from
+     the wrong cwd (ENOENT on a valid project);
+   - the plan page shows "holding 1" but not the open incident — only the
+     project Promises page lists it;
+   - the telemetry registry holds ~2,661 dead `ma-init-*` /
+     `demo-workbench-N` temp projects — dusk's own "no test writes the
+     machine-global registry" promise looks broken;
+   - `watch` is one pass, not a watcher — recording waits for a person,
+     which became `day-always-on-deploy` items 10–14.
 4. **[day-always-on-deploy](day-always-on-deploy/brief.md) — test-plan next**,
    once 1 and 3 hold.
 5. **[context-tiers](context-tiers/brief.md) — brief accepted, test plan
