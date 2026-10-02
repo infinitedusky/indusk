@@ -126,6 +126,16 @@ time. Re-ordered 2026-09-17 with 0–3 closed; 4c added 2026-09-18.
 - **4c needs 4a** and nothing else: it puts the registry's vocabulary into the
   planner, the test plan, the trajectory and the retrospective. 4b and 4c
   share no code and can run at once.
+- **4c's intended shape, every test says what it is for** (Sandy,
+  2026-10-02). A trajectory row names **the promise it proves**, **or the
+  lesson it guards** (the `lesson: <name>` token `context-tiers` introduces),
+  **or says why it needs neither** — softened from "a row naming no promise is
+  refused", which would push authors into filler promises. Behaviour tests
+  point at promises, so an incident arrives knowing which tests vouched for the
+  behaviour; rule tests point at lessons, so a failing test explains itself
+  instead of inviting its own deletion; a test that can state neither has to
+  justify existing, which is where a test that cannot fail gets noticed. Builds
+  on `context-tiers`, which supplies the lesson token.
 - **6 needs 4a and 5.** Binding mutates "the claim's code", and a promise's
   code site is one of the two candidates for what that code is (the other is
   a `Code` column); its verdict shape follows 5's. 4b and 6 can run at once.
