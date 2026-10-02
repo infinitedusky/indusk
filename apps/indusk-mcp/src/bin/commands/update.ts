@@ -121,6 +121,15 @@ export async function update(projectRoot: string): Promise<void> {
 
 	console.info(`\n  ${added} added, ${updated} updated, ${current} current.`);
 
+	// 2b. The planning context file — package-owned like a skill, loaded when
+	// a plan document is read (context-tiers).
+	const { PLANNING_CONTEXT_REL, syncPlanningContext } = await import(
+		"../../lib/planning-context.js"
+	);
+	console.info(
+		`  ${syncPlanningContext(packageRoot, projectRoot, { overwrite: true })}: ${PLANNING_CONTEXT_REL}`,
+	);
+
 	// 3. Sync community lessons
 	console.info("\n[Lessons]\n");
 	const lessonsSource = join(packageRoot, "lessons/community");

@@ -25,13 +25,23 @@ One row per root entry. Tier is one of:
 
 ## Pending rows (destinations not yet created)
 
-Rules this plan's own Context gates produce before Build Phase 3 creates the
-nested files. Each moves into its file in Build Phase 3 and is struck here.
+Rules this plan's own Context gates produced before Build Phase 3 created the
+nested files. Both landed in Build Phase 3.
 
-| Rule | Destination | From |
-|------|-------------|------|
-| A trajectory row's `Test` column may name a `manual:` command; `verify` reports it unverified, never passed | `.indusk/planning/CLAUDE.md` (template) | Test Phase 1 Context |
-| `lib/tokens.ts` is the one token grammar for `promise:` and `lesson:`; a new token kind is added there, never as a second pattern; the file that documents a marker must not spell one | `apps/indusk-mcp/CLAUDE.md` | Build Phase 2 Context |
+| Rule | Destination | From | Landed |
+|------|-------------|------|--------|
+| A trajectory row's `Test` column may name a `manual:` command; `verify` reports it unverified, never passed | `.indusk/planning/CLAUDE.md` (template) | Test Phase 1 Context | Build Phase 3 |
+| `lib/tokens.ts` is the one token grammar for `promise:` and `lesson:`; a new token kind is added there, never as a second pattern; the file that documents a marker must not spell one | `apps/indusk-mcp/CLAUDE.md` | Build Phase 2 Context | Build Phase 3 |
+
+## Replaced nested files (Build Phase 3)
+
+Not root entries, so not in the register table A10 reads; recorded here so
+their removal has a reason.
+
+| File | Held at baseline | Tier | Reason |
+|------|------------------|------|--------|
+| `apps/indusk-mcp/CLAUDE.md` | a 485-byte unfilled copy of `templates/CLAUDE.md` (`# {Project Name} — Project Context`, six empty section placeholders) | deleted | a placeholder loaded into every session that read an mcp file; nothing in it was a rule |
+| `apps/indusk-admin/CLAUDE.md` | the single line `@AGENTS.md` | root (kept) | the import is real — `apps/indusk-admin/AGENTS.md` holds the conduct rules plus the Next.js rules block the framework injects — so it stays at the top of the replaced file, above the purpose line |
 
 ## Register
 
