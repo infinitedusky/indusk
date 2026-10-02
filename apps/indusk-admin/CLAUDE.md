@@ -4,3 +4,66 @@
 
 Loaded by Claude Code when a file under `apps/indusk-admin/` is read. Rules that
 apply only here; cross-cutting design intent stays in the root `CLAUDE.md`.
+Each entry is a rule and a pointer; the pointer holds the story.
+
+- Next.js App Router, read-only viewer over `.indusk/planning/` + `.indusk/eval/`,
+  hosted as one machine-global daemon (`indusk ui start/stop/restart/status`,
+  registry `~/.indusk/projects.json`, routes `/p/[project]/...`). Custom
+  Tailwind primitives — no shadcn, no Radix. Reuse indusk-mcp's parsers through
+  workspace subpath exports; never duplicate parsing. Bundled pre-built into
+  the tarball by `prepublishOnly`. — see `/decisions/admin-ui-hosting`
+- Tailwind 4 needs Node 22 ("Cannot find native binding" on 18).
+- **The plan page is live**: `LiveRefresh` probes the page and
+  `router.refresh()`es every `admin.refresh_ms` (default 5000), pauses when
+  hidden, stops visibly on failure; the Promises page is live the same way (also
+  its health cache); no other page polls. — see `/reference/admin-ui/overview`
+- **The sidebar tree is derived entirely from declarations** — one root node
+  (`readPlanDeclarations().root`) with parents and unclaimed plans beneath it;
+  directly under the root means unclaimed. Grouping lives in
+  `PlanList.buildGroups`; subplan children resolve against active + archived
+  with active winning, identically in sidebar and detail; parents render
+  additively via `ParentPlanView`, doc-less plans header-only.
+- **Phases render through `parseImplString`** (the `impl-parser` subpath) —
+  never a local heading regex; rows attach by `(passesAtKind, passesAt)`. The
+  active phase is the most recent boundary record among open phases;
+  first-open-phase with a visible hint when there are none; a malformed record
+  file is an error block, never a guess.
+- **One home per piece**: rows table + ritual section in `components/phases/`,
+  progress lines in `bars/ProgressLines`, display vocabulary (incl. `phaseTitle`
+  — the page says `Phase 4`; the package's `phaseLabel` is for logs, never a
+  component) and every chip/label map in `bars/labels.ts`, badge maps in
+  `ui/badge-variant.ts`, research reads in `lib/research-reader.ts`, project
+  reads in `lib/project-reader.ts` (config via the `./config` subpath, never
+  parsed by hand). Pinned by `cleanup-pins.test.ts`.
+- The label maps are `satisfies Record<…>` over the lifecycle's unions and
+  `lifecycle-render-parity.test.ts` names any member without a renderer. A
+  plan's type and what it requires come only from the `workflow-types` subpath;
+  a component never restates a document list.
+- **Papers** render from the shared parser's `papers` field; `published
+  (stale)` is derived from the content hash on every read; a papers-only plan
+  takes the paper-stage status as its header status.
+- **The Promises page** reads only through the `promises/registry` subpath
+  (`lib/promises-reader.ts`, which also derives "holding N"); observed health in
+  `lib/promise-health.ts` (one cached 2 s read; unreachable = hollow, never
+  green); `monitor` is the one time-filled bar segment; a violated row names the
+  span's environment or says unknown. Readers import `telemetry/status.ts`,
+  never `daemon.ts` (Turbopack parses its binary).
+- **Active plans and their boundary records are read from each plan's live
+  root** (`worktree/plan-worktrees`); `components/Worktrees.tsx` renders the
+  worktree chip, a broken assignment, unassigned worktrees and the record error.
+- Tests: `next/link` needs a `vi.mock` stub in vitest browser tests
+  (synchronous factory); a page that gains a `lib/*` import needs that module
+  mocked in every browser test that renders it (`node:fs` is externalized);
+  browser tests mock every export a component imports, from the module it
+  imports from. HTTP-level tests boot `next dev` through
+  `__tests__/helpers/next-dev.ts`, one at a time — Next locks `.next/`, so
+  `fileParallelism: false` is load-bearing and a stray dev server on the app
+  dir fails every smoke; the live rows drive it with Playwright from the node
+  project. `typecheck.test.ts` makes `tsc` a test. — see
+  `/reference/admin-ui/component-conventions`
+- `dynamic = "force-dynamic"` in the root layout is load-bearing; markdown
+  renders only through `<Markdown>`; the registry is never auto-pruned
+  (`indusk ui prune [--dry-run]` backs up first); `runCli` pins `INDUSK_HOME`
+  to a temp dir; malformed files quarantine to `.corrupt.{ISO}.bak`; daemon
+  identity = PID liveness AND port-listening; the scorecard-to-plan join is
+  date-range approximate.
