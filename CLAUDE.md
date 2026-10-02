@@ -20,8 +20,8 @@ dusk/
 ├── docker/                # Dockerfiles (Dockerfile.infra retired by indusk-makeover)
 ├── biome.json             # Quality ratchet — see biome-rationale.md for per-rule why
 ├── vitest.config.ts       # Workspace projects; apps inherit via extends
-├── .indusk/               # InDusk home — planning/, extensions/, config.json, current.md
-└── CLAUDE.md              # This file — living project memory (60 KB budget, hook-enforced)
+├── .indusk/               # InDusk home — planning/ (+ shipped CLAUDE.md), extensions/, config.json
+└── CLAUDE.md              # Root: design intent only; area rules in nested CLAUDE.md files
 ```
 
 **Apps:**
