@@ -27,4 +27,18 @@ describe("A25 — one promise vocabulary under src/", () => {
 		);
 		expect(definers).toEqual(["lib/promises/vocabulary.ts"]);
 	});
+
+	// context-tiers moved the token grammar out so the lesson token could share
+	// it; the opener rule is the part two readers must agree on, so it is pinned
+	// to its new home the same way.
+	it("exactly one `export const TOKEN_OPENER` exists, in lib/tokens.ts", () => {
+		const files = globSync("**/*.ts", { cwd: SRC, ignore: IGNORE }).sort();
+		const definers = files.filter((f) =>
+			/const TOKEN_OPENER\b/.test(readFileSync(join(SRC, f), "utf-8")),
+		);
+		expect(
+			definers,
+			"lesson: structural-single-definition-test-for-must-agree-invariants — two readers of one grammar drift silently",
+		).toEqual(["lib/tokens.ts"]);
+	});
 });

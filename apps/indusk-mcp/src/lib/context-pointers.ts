@@ -19,8 +19,11 @@
  * fails outright. The safe resting state is a pointer, not a number.
  */
 
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
+import { LESSONS_REL_DIR } from "./lessons/state.js";
+import { anyTokenPattern } from "./tokens.js";
 
 /** Directory prefixes that count as pointers when they appear in CLAUDE.md. */
 const POINTER_PREFIXES = ["\\.indusk", "apps", "docker", "packages", "\\.claude"];
@@ -78,6 +81,16 @@ export function checkPointers(content: string, projectRoot: string): PointerRepo
 		if (p.includes("*") || p.includes("{")) continue; // glob/placeholder — documentation, not a pointer
 		if (!existsSync(join(projectRoot, p))) dead.push(p);
 	}
+	// A `lesson: <name>` token is a pointer too (context-tiers): under the tiers
+	// a rule's body lives behind it, in `.claude/lessons/<name>.md`.
+	const lessonRe = anyTokenPattern("lesson");
+	for (let m = lessonRe.exec(content); m !== null; m = lessonRe.exec(content)) {
+		const pointer = `lesson: ${m[1]}`;
+		if (scanned.includes(pointer)) continue;
+		scanned.push(pointer);
+		if (!existsSync(join(projectRoot, LESSONS_REL_DIR, `${m[1]}.md`))) dead.push(pointer);
+	}
+	scanned.sort();
 
 	const versionClaims: VersionClaim[] = [];
 	const actual = packageVersion(projectRoot);
@@ -102,4 +115,49 @@ export function checkClaudeMdPointers(projectRoot: string): PointerReport | null
 	const claudeMdPath = join(projectRoot, "CLAUDE.md");
 	if (!existsSync(claudeMdPath)) return null;
 	return checkPointers(readFileSync(claudeMdPath, "utf-8"), projectRoot);
+}
+
+export interface ContextFileReport extends PointerReport {
+	/** Repo-root-relative path of the context file. */
+	file: string;
+}
+
+/**
+ * Every context file git knows about, root first: the root `CLAUDE.md` and
+ * each nested one (context-tiers). Outside a git repository, the root alone.
+ */
+export function contextFiles(projectRoot: string): string[] {
+	let tracked: string[] = [];
+	try {
+		tracked = execFileSync(
+			"git",
+			["ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+			{
+				cwd: projectRoot,
+				encoding: "utf-8",
+				stdio: ["ignore", "pipe", "ignore"],
+			},
+		)
+			.split("\0")
+			.filter((f) => f !== "" && basename(f) === "CLAUDE.md");
+	} catch {
+		tracked = existsSync(join(projectRoot, "CLAUDE.md")) ? ["CLAUDE.md"] : [];
+	}
+	return tracked.sort((a, b) =>
+		a === "CLAUDE.md" ? -1 : b === "CLAUDE.md" ? 1 : a.localeCompare(b),
+	);
+}
+
+/**
+ * Walk every context file. Pointers in a nested file resolve against the
+ * project root, as they do in the root file: a rule names `apps/x/y.ts`
+ * wherever it lives. Null when there is no context file at all.
+ */
+export function checkAllContextPointers(projectRoot: string): ContextFileReport[] | null {
+	const files = contextFiles(projectRoot);
+	if (files.length === 0) return null;
+	return files.map((file) => ({
+		file,
+		...checkPointers(readFileSync(join(projectRoot, file), "utf-8"), projectRoot),
+	}));
 }
