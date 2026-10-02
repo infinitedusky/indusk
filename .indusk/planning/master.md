@@ -34,6 +34,10 @@ roadmap:
 
 # Master Plan
 
+**What this is all for** is seven sentences in
+[plan-premises/aim.md](plan-premises/aim.md) (first written 2026-10-02, a
+draft kept under revision). Everything below is sequence; that is purpose.
+
 **Rewritten 2026-09-03.** The previous version (Arcs 0–3, written pre-makeover)
 described a Graphiti-centric pipeline the makeover rejected, a Midnight that has
 since been rewritten, and no Dawn at all. It lives in git history
