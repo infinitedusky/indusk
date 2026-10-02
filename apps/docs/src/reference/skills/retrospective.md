@@ -165,9 +165,11 @@ Re-read CLAUDE.md in full via `get_context`. After the entire impl is done, veri
 - **Conventions** — captures all conventions that emerged during this plan
 - **Key Decisions** — includes the ADR decision (post-ADR trigger)
 - **Known Gotchas** — captures all surprises and corrections
-- **Current State** — reflects what is actually in progress
+- **`.indusk/current.md`'s Project (shared) region** — reflects what is actually in progress (the root has no Current State section since context-tiers)
 
 Fix inaccuracies via `update_context`. The impl may have changed things that were not anticipated in the per-phase [Context](/reference/skills/claude-md) updates.
+
+**Classification at close.** Every context entry the plan authored is placed in a tier — an enforcer that names its lesson, the area's `CLAUDE.md`, `current.md`, or the root with a reason — and compressed to rule + pointer. The periodic pass moves one existing root entry down a tier (to a lesson token in its enforcer, or into its area's file); shortening it in place does not count. `indusk context check-pointers` then walks every context file, and a plan that touched any `CLAUDE.md` runs the nested-context probe, `pnpm e2e -- context-tiers`.
 
 ### Step 8: Knowledge Handoff
 
@@ -190,7 +192,7 @@ mv planning/{plan-name} planning/archive/{plan-name}
 
 The docs site now holds the published knowledge. The archive holds the process history. Both are preserved, but the docs are the primary reference going forward.
 
-Update CLAUDE.md's Current State section to remove the plan from the active plans table.
+Update `.indusk/current.md`'s Project (shared) region: the plan leaves the in-flight list and gets one closed line.
 
 ### Step 10: Land on Trunk
 

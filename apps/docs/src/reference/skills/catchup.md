@@ -13,7 +13,7 @@ Given a fresh session, catchup:
 3. **Reads the bulletin** via `indusk agent list`. Surfaces other agents currently working on the project. Self-heartbeats the caller's own section.
 4. **Reads operational state — targeted, never the whole file.** From `.indusk/current.md`: the `## Project (shared)` anchor region (top of file to the first `---`) plus only the live sessions' `## Session` blocks keyed off `agent list`'s fresh partition. Stale sections are never read or surfaced.
 5. **Sweep check** via `indusk agent sweep --dry-run` — surfaces how many decayed sections are archivable. (`/handoff` runs the real sweep.)
-6. **Skims lesson titles** via `list_lessons` — titles are the rules; bodies load on demand.
+6. **Skims the advisory lesson titles** via `list_lessons`, and states how many lessons are guarded and how many advisory. A guarded lesson has an enforcer that names it when its rule breaks, so it does not need to be in mind beforehand; the skim is for the ones nothing enforces. Bodies load on demand.
 7. **Checks infrastructure** via `check_health`.
 8. **Does NOT re-read CLAUDE.md.** It's auto-injected into every session; re-fetching it was the single biggest line item of the pre-makeover catchup (~30k tokens of pure duplication).
 9. **Lists active plans** via `list_plans { active: true }` — in-motion plans only, plus a count of what was omitted.

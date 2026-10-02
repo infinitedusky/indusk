@@ -210,6 +210,7 @@ failing on its own assertion and each guard declared as one.
 - [x] `/catchup`: skim only advisory lesson titles; state both counts
 - [x] **A17 restated (goalpost change, recorded):** as written, A17 asserted that a bare Write to an unread planning directory loads the planning rules. Test Phase 1 measured that Claude Code does not — it loads nested files on Read only — and no change in this repository can alter that, so the row could never pass. What this plan can make true is the mechanism the fix relies on: `/planner` reads `master.md` first, and after that read a written plan file has the rules. The probe now follows that step (Read then Write) and a skill-text check pins the step; the original measurement stays recorded in Test Phase 1's checklist. The Asserts text above was changed to match, and this note is the record of why
 - [x] Resync every installed copy under `.claude/skills/`
+- [x] Shape (Build Phase 5): `prepareShapeReview` would list only skills (prose) and two test files; no code was written this phase, so there is no unit to judge for craft. The skill edits were reviewed as prose against the tier table they now carry
 
 #### Build Phase 5 Verification
 
@@ -217,11 +218,11 @@ failing on its own assertion and each guard declared as one.
 
 #### Build Phase 5 Context
 
-- [ ] Planning context: the Context gate item shape (tier + destination; root needs a reason)
+- [x] Planning context: the Context gate item shape (tier + destination; root needs a reason)
 
 #### Build Phase 5 Document
 
-- [ ] `reference/skills/` pages for `/claude-md`, `/planner`, `/retrospective`, `/catchup`
+- [x] `reference/skills/` pages for `/claude-md`, `/planner`, `/retrospective`, `/catchup` — the planner's page is `plan.md`; `claude-md.md` is five sections plus the tier table, with the Current State example removed
 
 ### Build Phase 6: the lowered budget
 
