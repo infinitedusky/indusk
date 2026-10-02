@@ -236,6 +236,14 @@ recorded here so it is a decision in the plan and not a line in a chat.
 
 ## Open questions for the test plan and ADR
 
+- **An advisory lesson has no route to an incident** (Sandy, 2026-10-02). A
+  guarded lesson reaches a Maintenance phase through the promise's tests
+  (`promise:` → test → `lesson:`), and the owner plan's own reasoning arrives
+  with its folder, but a lesson nothing enforces — an architecture preference —
+  arrives only if the work happens to touch its directory. Should a lesson be
+  able to name the code or directory it applies to, as a promise names its
+  sites, so an incident on that code pulls it in?
+
 - The token's exact form in a vitest assertion message versus a hook's
   stderr refusal — one grammar for both, so one scanner reads both.
 - How the e2e probe gets a `claude` binary in CI, or whether it stays a local
