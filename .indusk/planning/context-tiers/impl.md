@@ -108,15 +108,15 @@ failing on its own assertion and each guard declared as one.
 
 #### Test Phase 1 Verification
 
-- [ ] All seventeen authored; every row but A14's first case and the guards A1, A2 (and A17 if it proves green) fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/context-tiers-` and `pnpm e2e -- context-tiers`)
+- [x] All seventeen authored; every row but A14's first case and the guards A1, A2 (and A17 if it proves green) fails on its own assertion (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/context-tiers-` and `pnpm e2e -- context-tiers`)
 
 #### Test Phase 1 Context
 
-- [ ] Planning context (Build Phase 3 creates the file; held until then in `register.md` as a pending row): "a trajectory row's `Test` column may name a `manual:` command; `verify` reports it unverified, never passed"
+- [x] Planning context (Build Phase 3 creates the file; held until then in `register.md` as a pending row): "a trajectory row's `Test` column may name a `manual:` command; `verify` reports it unverified, never passed"
 
 #### Test Phase 1 Document
 
-- [ ] Where `pnpm e2e` is documented, list the context-tiers probe and when it must run: at the close of any plan that touches a context file, and before each release
+- [x] Where `pnpm e2e` is documented, list the context-tiers probe and when it must run: at the close of any plan that touches a context file, and before each release — no page owned `pnpm e2e`; it now has a paragraph in `guide/test-trajectory.md`'s Deferred Verification section, listing all three probes
 
 ### Build Phase 1: the budget hook judges growth, not size
 
