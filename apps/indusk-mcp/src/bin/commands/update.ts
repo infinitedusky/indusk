@@ -813,6 +813,15 @@ export async function update(projectRoot: string): Promise<void> {
 		`cleanup.max_file_loc: ${getCleanupConfig(projectRoot).max_file_loc} (already set)`,
 	);
 
+	// [Context tiers] scaffold the context block idempotently — both budgets the
+	// claude-md-budget hook reads; a declared block is never clobbered.
+	const { ensureContextConfig } = await import("../../lib/config.js");
+	reportEnsured(
+		ensureContextConfig(projectRoot),
+		"context.claude_md_budget_bytes: 61440, context.nested_claude_md_budget_bytes: 16384 to .indusk/config.json",
+		"context (already set)",
+	);
+
 	// [Papers — writing-skill] scaffold the papers block idempotently so the
 	// key is always present; the first publish writes the first destination.
 	const { ensurePapersConfig } = await import("../../lib/papers/config.js");

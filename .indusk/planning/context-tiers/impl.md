@@ -47,8 +47,8 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A16 | An edit that makes an over-budget context file smaller is allowed; one that leaves it over budget and larger is refused | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
-| A14 | A write past the root budget is refused, and so is one past a nested context file's own budget; in a workbench, a declared repo's own root `CLAUDE.md` is judged by the root budget, never as nested | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
+| A16 | An edit that makes an over-budget context file smaller is allowed; one that leaves it over budget and larger is refused | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
+| A14 | A write past the root budget is refused, and so is one past a nested context file's own budget; in a workbench, a declared repo's own root `CLAUDE.md` is judged by the root budget, never as nested | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
 | A7 | `list_lessons` reports each lesson guarded or advisory; adding the token to a test makes it guarded on the next call, removing it makes it advisory, nothing else written | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
 | A8 | A lesson named only in prose — a guide, the lesson file, a changelog — stays advisory | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
 | A11 | `context check-pointers` resolves every pointer in every context file, including `lesson:` tokens, and fails naming the file and pointer that does not resolve | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/context-tiers-pointers.test.ts |
@@ -120,13 +120,13 @@ failing on its own assertion and each guard declared as one.
 
 ### Build Phase 1: the budget hook judges growth, not size
 
-- [ ] `claude-md-budget.js` (and `.claude/hooks/` copy): compute pre- and post-edit size; allow any edit that does not grow the file; refuse growth past the budget; the refusal says shrinking edits are always allowed
-- [ ] A file named `CLAUDE.md` below the project root is governed by `context.nested_claude_md_budget_bytes` (default 16384); the root keeps `context.claude_md_budget_bytes`. A **root** is the state root or, in a workbench, any declared repo's dir — read through `_hook-paths.js`'s `declaredReposAt(statePath)`, never a depth rule, or a wrapped repo's own `CLAUDE.md` gets the nested budget (A14)
-- [ ] Add `context.nested_claude_md_budget_bytes` to the config schema and to `update`'s ensured keys (presence-keyed, through `ensureConfigBlock`)
+- [x] `claude-md-budget.js` (and `.claude/hooks/` copy): compute pre- and post-edit size; allow any edit that does not grow the file; refuse growth past the budget; the refusal says shrinking edits are always allowed
+- [x] A file named `CLAUDE.md` below the project root is governed by `context.nested_claude_md_budget_bytes` (default 16384); the root keeps `context.claude_md_budget_bytes`. A **root** is the state root or, in a workbench, any declared repo's dir — read through `_hook-paths.js`'s `declaredReposAt(statePath)`, never a depth rule, or a wrapped repo's own `CLAUDE.md` gets the nested budget (A14)
+- [x] Add `context.nested_claude_md_budget_bytes` to the config schema and to `update`'s ensured keys (presence-keyed, through `ensureConfigBlock`) — `ensureContextConfig` in `lib/config.ts`, called from `update`; presence-keyed on the `context` block, so a project that already declares one keeps it and the hook's defaults govern any unset key (dusk declares none today, so its next `update` writes both defaults)
 
 #### Build Phase 1 Verification
 
-- [ ] A16, A14 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/context-tiers-budget`), and the existing budget tests still pass (`… vitest run src/__tests__/claude-md-budget`)
+- [x] A16, A14 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/context-tiers-budget`), and the existing budget tests still pass (`… vitest run src/__tests__/claude-md-budget`) — 19/19 across both files; `tsc --noEmit` and biome clean
 
 #### Build Phase 1 Context
 
