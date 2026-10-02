@@ -44,7 +44,10 @@ describe("A19 — one HEAD-sha primitive under src/lib", () => {
 					readFileSync(join(SRC_LIB, f), "utf-8"),
 				),
 			);
-		expect(definers("headSha")).toEqual(["git.ts"]);
+		expect(
+			definers("headSha"),
+			"lesson: structural-single-definition-test-for-must-agree-invariants — a git primitive belongs in lib/git.ts, never in a domain folder",
+		).toEqual(["git.ts"]);
 		expect(definers("headShaOrNull")).toEqual(["git.ts"]);
 	});
 

@@ -293,7 +293,7 @@ if (hasTrajectorySection) {
 			const msg = testFirstBlockers
 				.map(
 					(b) =>
-						`${phaseLabel(b.advancing.phaseKind, b.advancing.phase)} test-first violation: row ${b.row.id} is Writable at: ${rowLabel(b.row)} but still ${b.row.state}. Author it as RED before marking work at or after that phase done.`,
+						`${phaseLabel(b.advancing.phaseKind, b.advancing.phase)} test-first violation: row ${b.row.id} is Writable at: ${rowLabel(b.row)} but still ${b.row.state}. Author it as RED before marking work at or after that phase done.\nlesson: test-red-at-earliest-writable-phase`,
 				)
 				.join("\n");
 			process.stderr.write(`${msg}\n`);

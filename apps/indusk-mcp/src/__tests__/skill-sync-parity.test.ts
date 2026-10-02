@@ -46,7 +46,10 @@ describe("cleanup-ritual T25: installed skills match package sources", () => {
 				);
 			}
 		}
-		expect(problems).toEqual([]);
+		expect(
+			problems,
+			"lesson: mirrored-artifacts-need-structural-parity-tests — edit apps/indusk-mcp/skills/, never .claude/skills/, and resync",
+		).toEqual([]);
 	});
 });
 

@@ -306,6 +306,7 @@ const shown = offending.map((p) => displayPath(p)).slice(0, 10);
 process.stderr.write(
 	[
 		`trunk-guard: refusing to ${subject.kind === "commit" ? "commit" : "edit"} code on \`${branch}\`.`,
+		"lesson: trunk-guard-edit-refusal-is-not-a-bash-workaround",
 		"",
 		...shown.map((p) => `  ${p}`),
 		offending.length > shown.length ? `  … and ${offending.length - shown.length} more` : "",

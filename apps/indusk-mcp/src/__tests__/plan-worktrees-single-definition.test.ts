@@ -45,7 +45,10 @@ function hits(pattern: RegExp): string[] {
 describe("A26 — one parser of `git worktree list --porcelain`", () => {
 	it("reads the `worktree <path>` lines in exactly one place, lib/git.ts, exported as parseWorktreeList", () => {
 		const parsers = hits(/"worktree "|\^worktree\\s/);
-		expect(parsers, parsers.join("\n")).toHaveLength(1);
+		expect(
+			parsers,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — one worktree-list parser, in lib/git.ts; found:\n${parsers.join("\n")}`,
+		).toHaveLength(1);
 		expect(parsers[0]).toMatch(/^git\.ts:/);
 		expect(read("apps/indusk-mcp/src/lib/git.ts")).toMatch(/export function parseWorktreeList\(/);
 	});

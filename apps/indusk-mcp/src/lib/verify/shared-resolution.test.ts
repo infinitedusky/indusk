@@ -27,7 +27,10 @@ describe("A24 — one implementation of plan → impl.md resolution", () => {
 		const definitions = await filesMatching(srcDir, /function\s+resolveImplPath\s*\(/);
 
 		// Two copies existed: bin/commands/run.ts and lib/verify/verify.ts.
-		expect(definitions).toHaveLength(1);
+		expect(
+			definitions,
+			"lesson: structural-single-definition-test-for-must-agree-invariants — a second definition is a silent divergence, not a duplicated line",
+		).toHaveLength(1);
 	});
 });
 
@@ -42,6 +45,9 @@ describe("A25 — one definition of the terminal-state set", () => {
 		// Two copies existed: run/probe.ts and verify/detect.ts. The JS hook
 		// mirror in hooks/ is excluded on purpose — the port convention keeps it
 		// a deliberate duplicate, and this scan covers src/ only.
-		expect(definitions).toHaveLength(1);
+		expect(
+			definitions,
+			"lesson: structural-single-definition-test-for-must-agree-invariants — a second definition is a silent divergence, not a duplicated line",
+		).toHaveLength(1);
 	});
 });

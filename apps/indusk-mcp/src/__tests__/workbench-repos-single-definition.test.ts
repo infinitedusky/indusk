@@ -53,7 +53,10 @@ function grepCode(pattern: string, dir: string): string[] {
 describe("readWorkbenchRepos is single-definition", () => {
 	it("has exactly one definition under src/", () => {
 		const hits = grepCode("export function readWorkbenchRepos", SRC);
-		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — expected one definition, found:\n${hits.join("\n")}`,
+		).toHaveLength(1);
 		expect(hits[0]).toContain("lib/worktree/repos.ts");
 	});
 
@@ -93,7 +96,10 @@ describe("the bash lane resolves the repo set once", () => {
 				return [];
 			}
 		})();
-		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — expected one definition, found:\n${hits.join("\n")}`,
+		).toHaveLength(1);
 		expect(hits[0]).toContain("scripts/lib/workbench-helpers.sh");
 	});
 
@@ -221,7 +227,10 @@ describe("A31 — the reserved root-directory set is single-definition", () => {
 		const hits = grepCode("RESERVED_ROOT_DIRS", SRC).filter((l) =>
 			/const RESERVED_ROOT_DIRS/.test(l),
 		);
-		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — expected one definition, found:\n${hits.join("\n")}`,
+		).toHaveLength(1);
 	});
 
 	it("leaves no command hand-rolling its own reserved set", () => {
@@ -249,7 +258,10 @@ describe("A31 — the reserved root-directory set is single-definition", () => {
 describe("A32 — worktree-to-repo attribution is single-definition", () => {
 	it("has exactly one definition under src/", () => {
 		const hits = grepCode("function worktreeOwner", SRC);
-		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — expected one definition, found:\n${hits.join("\n")}`,
+		).toHaveLength(1);
 	});
 
 	it("leaves no second caller asking git for the common dir directly", () => {
