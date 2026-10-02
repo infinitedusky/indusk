@@ -82,6 +82,20 @@ Everything decays by **archiving, never deleting** — recovery is always a file
 
 A 15-entry random sample of pre-compression entries verified every operative rule survived compression (one drop was caught and restored by the sample gate itself).
 
+## The lowered budget (dusk, 2026-10-02)
+
+Compaction stopped working as the root kept filling: it sat at 61,438 of
+61,440 bytes for weeks, and each plan close evicted an entry under gate
+pressure. [Context tiers](./context-tiers) changed what has to fit rather than
+how hard to squeeze: rules an enforcer holds travel with the enforcer's
+`lesson:` token, area rules moved to nested `CLAUDE.md` files, operational state
+to `.indusk/current.md`. The root went from 61,438 to 14,678 bytes, and its
+budget was lowered to 18,432 — the surviving size plus 25 % — with the reason
+written beside it as `context.claude_md_budget_reason`. Growth past the new
+budget is the signal that a rule belongs at a lower tier, not that the budget
+is wrong. A new project's default stays 61,440: a consumer's root has not been
+classified, and lowering its ceiling before the move would block it.
+
 ## Running compaction on an over-budget file
 
 The budget hook blocks growth but cannot retroactively shrink a file that was already over budget when the hook was installed (the common case on projects that adopted the makeover late, or on a CLAUDE.md copied from an older workbench). For that, run **`/compact-context`** — the on-demand bulk companion to the retrospective's incremental step. It reports first (what it would demote, where each pointer targets), and on `--apply` lands the file under budget in one pass with every pointer resolving. The retrospective step keeps the file from re-accruing; `/compact-context` pays down debt that already exists.
