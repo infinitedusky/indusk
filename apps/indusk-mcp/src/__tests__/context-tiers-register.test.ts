@@ -19,7 +19,7 @@ import { registerRows } from "./helpers/register.js";
 const ROOT_MD = join(REPO_ROOT, "CLAUDE.md");
 const CONFIG = join(REPO_ROOT, ".indusk/config.json");
 const CURRENT_MD = join(REPO_ROOT, ".indusk/current.md");
-const REGISTER = join(REPO_ROOT, ".indusk/planning/context-tiers/register.md");
+const REGISTER = join(REPO_ROOT, ".indusk/planning/archive/context-tiers/register.md");
 const PKG_SRC = join(REPO_ROOT, "apps/indusk-mcp/src");
 
 export interface RootEntry {

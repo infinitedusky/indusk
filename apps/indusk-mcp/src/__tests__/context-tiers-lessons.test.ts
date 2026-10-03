@@ -138,7 +138,7 @@ const PINS = [
 ];
 
 const PKG = join(REPO_ROOT, "apps/indusk-mcp");
-const REGISTER = join(REPO_ROOT, ".indusk/planning/context-tiers/register.md");
+const REGISTER = join(REPO_ROOT, ".indusk/planning/archive/context-tiers/register.md");
 
 /** The lesson named by the first `expect(…, "lesson: <name> …")` in a test file, or null. */
 function lessonNamedBy(source: string): string | null {

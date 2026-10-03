@@ -119,7 +119,7 @@ describe.skipIf(!claudeOnPath())("nested context files reach the session that to
 		expect(readFileSync(planning, "utf-8")).toContain(REAL_RULE);
 		const out = probe(
 			REPO_ROOT,
-			`Read the file .indusk/planning/context-tiers/impl.md. Then answer with exactly one word, PRESENT or ABSENT: whether the identifier ${REAL_RULE} appears in the instructions or context files loaded for this session (not counting the file you just read).`,
+			`Read the file .indusk/planning/archive/context-tiers/impl.md. Then answer with exactly one word, PRESENT or ABSENT: whether the identifier ${REAL_RULE} appears in the instructions or context files loaded for this session (not counting the file you just read).`,
 			"Read",
 		);
 		expect(out.trim()).toMatch(/PRESENT/);
