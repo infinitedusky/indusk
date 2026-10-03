@@ -149,3 +149,36 @@ describe("A13 — the root is held by a lower budget, with its reason beside it"
 		expect(reason.length).toBeGreaterThan(20);
 	});
 });
+
+describe("A19 — every enforcer row names an enforcer the lesson scan reads", () => {
+	it("each named enforcer file guards the row's lesson", async () => {
+		const { lessonStates } = await import("../lib/lessons/state.js");
+		const states = await lessonStates(REPO_ROOT);
+		const lines = readFileSync(REGISTER, "utf-8")
+			.split("\n")
+			.filter((l) => /^\|\s*\d+\s*\|/.test(l))
+			.map((l) => l.split("|").map((c) => c.trim()))
+			.filter((c) => c[4] === "enforcer");
+		expect(lines.length, "enforcer rows in register.md").toBeGreaterThan(0);
+		const unguarded: string[] = [];
+		for (const c of lines) {
+			const row = c[1];
+			const lesson = /lesson: ([a-z][a-z0-9-]*)/.exec(c[6])?.[1];
+			if (!lesson) {
+				unguarded.push(`row ${row}: names no lesson`);
+				continue;
+			}
+			const guards = states.find((s) => s.name === lesson)?.guardedBy.map((g) => g.file) ?? [];
+			// The destination names enforcers by path; a bare file name stands for a
+			// file under the package (the eight pins are listed that way).
+			const named = [...c[5].matchAll(/`([^`]+\.[cm]?[jt]sx?)`/g)].map((m) => m[1]);
+			expect(named.length, `row ${row} names no enforcer file`).toBeGreaterThan(0);
+			for (const file of named) {
+				if (!guards.some((g) => g === file || g.endsWith(`/${file}`))) {
+					unguarded.push(`row ${row}: ${file} does not carry lesson: ${lesson}`);
+				}
+			}
+		}
+		expect(unguarded, "register enforcer rows whose named file is not a guard").toEqual([]);
+	});
+});

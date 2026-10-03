@@ -14,6 +14,7 @@ import { registerLessonTools } from "../tools/lesson-tools.js";
 import { REPO_ROOT } from "./helpers/cli.js";
 import { git, initRepoWithCommit } from "./helpers/test-git.js";
 import { toolCaller } from "./helpers/tool-call.js";
+import { LAYOUTS } from "./helpers/versioned-workbench.js";
 
 /**
  * context-tiers — A7, A8, A5: a lesson is guarded when an enforcer's message
@@ -27,8 +28,10 @@ import { toolCaller } from "./helpers/tool-call.js";
  */
 
 const roots: string[] = [];
+const cleanups: (() => void)[] = [];
 afterEach(() => {
 	for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true });
+	for (const c of cleanups.splice(0)) c();
 });
 
 const LESSON = "foo-rule";
@@ -162,3 +165,55 @@ describe("A5 — each single-definition pin names its lesson when it fails", () 
 		expect(rows.length, "enforcer rows in register.md").toBeGreaterThanOrEqual(PINS.length);
 	});
 });
+
+describe("A18 — a hook's token opening a line of its refusal guards the lesson", () => {
+	it("reads a token directly after a \\n escape inside one string, as kind hook", async () => {
+		const root = project();
+		mkdirSync(join(root, "hooks"), { recursive: true });
+		writeFileSync(
+			join(root, "hooks/guard.js"),
+			"console.error(`refused: the rule was broken.\\nlesson: foo-rule`);\n",
+		);
+		const l = find(await listed(root));
+		expect(l?.state, "the refusal's second line names the lesson").toBe("guarded");
+		expect(l?.guardedBy).toEqual([{ file: "hooks/guard.js", kind: "hook" }]);
+	});
+
+	it("this repository's check-gates.js guards test-red-at-earliest-writable-phase", async () => {
+		const { lessonStates } = await import("../lib/lessons/state.js");
+		const l = (await lessonStates(REPO_ROOT)).find(
+			(x) => x.name === "test-red-at-earliest-writable-phase",
+		);
+		expect(
+			l?.guardedBy.map((g) => `${g.file}:${g.kind}`),
+			"check-gates' test-first refusal carries the token",
+		).toContain("apps/indusk-mcp/hooks/check-gates.js:hook");
+	});
+});
+
+describe.each(LAYOUTS)(
+	"A21 — in a %s workbench, a declared repo's test guards",
+	(_label, build) => {
+		it("reads the lesson guarded by a test inside the declared repo", async () => {
+			const wb = build();
+			cleanups.push(() => wb.cleanup());
+			mkdirSync(join(wb.root, ".claude/lessons"), { recursive: true });
+			writeFileSync(join(wb.root, ".claude/lessons", `${LESSON}.md`), "# Foo has one definition\n");
+			const repo = wb.repos[0];
+			mkdirSync(join(repo.dir, "src"), { recursive: true });
+			writeFileSync(
+				join(repo.dir, "src/foo.test.ts"),
+				`expect(definers("foo"), "lesson: ${LESSON} — one definition").toEqual(["a"]);\n`,
+			);
+			git(repo.dir, ["add", "-A"]);
+			git(repo.dir, ["commit", "-q", "-m", "a guarding test"]);
+			const l = find(await listed(wb.root));
+			expect(l?.state, "the code repo's test is an enforcer the wrapper's git cannot see").toBe(
+				"guarded",
+			);
+			expect(
+				l?.guardedBy?.some((g) => g.file.endsWith("src/foo.test.ts") && g.kind === "test"),
+			).toBe(true);
+		});
+	},
+);

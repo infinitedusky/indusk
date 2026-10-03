@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { runHook } from "./helpers/hook-runner.js";
-import { LAYOUTS } from "./helpers/versioned-workbench.js";
+import { git, LAYOUTS } from "./helpers/versioned-workbench.js";
 
 /**
  * context-tiers — A16, A14: the budget hook judges growth, not size, and each
@@ -117,5 +117,33 @@ describe("A14 — the budget that governs a context file", () => {
 				`${repo.rel}/CLAUDE.md is a repo root, judged by the root budget — ${r.stderr}`,
 			).toBe(0);
 		});
+	});
+});
+
+describe.each(LAYOUTS)("A20 — in a %s workbench, a plan worktree's root file", (_label, build) => {
+	it("is judged by the root budget, though no declaration names the worktree", async () => {
+		const wb = build();
+		cleanups.push(() => wb.cleanup());
+		const configPath = join(wb.root, ".indusk/config.json");
+		const config = JSON.parse(readFileSync(configPath, "utf-8"));
+		config.context = { claude_md_budget_bytes: 1000, nested_claude_md_budget_bytes: 300 };
+		writeFileSync(configPath, JSON.stringify(config));
+		const repo = wb.repos[0];
+		const worktree = join(wb.root, "worktrees", "feat");
+		git(repo.dir, ["worktree", "add", "-q", worktree, "-b", "plan/feat"]);
+		const file = join(worktree, "CLAUDE.md");
+		writeFileSync(file, "# repo\n");
+		const r = await budget(
+			{
+				tool_name: "Write",
+				tool_input: { file_path: file, content: "r".repeat(500) },
+				cwd: worktree,
+			},
+			worktree,
+		);
+		expect(
+			r.exitCode,
+			`the worktree's CLAUDE.md is the repo's root file in a plan checkout — ${r.stderr}`,
+		).toBe(0);
 	});
 });

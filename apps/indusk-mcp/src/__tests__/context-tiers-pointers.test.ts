@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { CLI_BIN, runCli } from "./helpers/cli.js";
 import { git, initRepoWithCommit } from "./helpers/test-git.js";
+import { LAYOUTS } from "./helpers/versioned-workbench.js";
 
 /**
  * context-tiers — A11: `indusk context check-pointers` walks every context
@@ -17,8 +18,10 @@ import { git, initRepoWithCommit } from "./helpers/test-git.js";
  */
 
 const roots: string[] = [];
+const cleanups: (() => void)[] = [];
 afterEach(() => {
 	for (const r of roots.splice(0)) rmSync(r, { recursive: true, force: true });
+	for (const c of cleanups.splice(0)) c();
 });
 
 function project(): string {
@@ -62,3 +65,33 @@ describe("A11 — check-pointers reads every context file", () => {
 		expect(out, "the live pointers in the root are not reported").not.toContain("real-lesson");
 	});
 });
+
+describe.each(LAYOUTS)(
+	"A22 — in a %s workbench, check-pointers walks the declared repo",
+	(_label, build) => {
+		it("reads the repo's context files, resolving pointers against the repo, and names it", () => {
+			const wb = build();
+			cleanups.push(() => wb.cleanup());
+			writeFileSync(join(wb.root, "CLAUDE.md"), "# workbench\n\n- plans live in `.indusk/`\n");
+			git(wb.root, ["add", "CLAUDE.md"]);
+			git(wb.root, ["commit", "-q", "-m", "workbench context"]);
+			const repo = wb.repos[0];
+			mkdirSync(join(repo.dir, "src"), { recursive: true });
+			writeFileSync(join(repo.dir, "src/real.ts"), "export const r = 1;\n");
+			writeFileSync(
+				join(repo.dir, "CLAUDE.md"),
+				"# alpha\n\n- the rule is in `src/real.ts`; its sibling `src/missing.ts` is gone\n",
+			);
+			git(repo.dir, ["add", "-A"]);
+			git(repo.dir, ["commit", "-q", "-m", "repo context"]);
+			const r = runCli(wb.root, ["context", "check-pointers"]);
+			const out = `${r.stdout}\n${r.stderr}`;
+			expect(r.code, `the repo's root file holds one dead pointer — ${out}`).toBe(1);
+			expect(out, "the repo is named beside its file").toContain(repo.name);
+			expect(out).toContain("src/missing.ts");
+			expect(out, "a pointer the repo holds resolves against the repo").not.toMatch(
+				/dead[^\n]*src\/real\.ts|src\/real\.ts[^\n]*dead/i,
+			);
+		});
+	},
+);
