@@ -147,11 +147,14 @@ pointer; the pointer holds the story.
   `promises.jaeger` (`url` + `credential_env`, the variable's *name*); absence
   means the local daemon; `resolveMarkSource` decides. — see
   `/decisions/day-monitor`
-- A token counts after a comment opener earlier on its line or directly inside
-  a quote; an owner is a plan *directory*, never `archive`; link paths pass
-  `isUsableRelPath` before any join; a mark's project is `markProjectId`
-  (the shared git directory, never `basename(cwd)`); a health read never
-  throws.
+- Where a token may sit is `lib/tokens.ts`; an owner is a plan *directory*,
+  never `archive`; link paths pass `isUsableRelPath` before any join; a mark's
+  project is `markProjectId` (the shared git directory, never
+  `basename(cwd)`); a health read never throws.
+- **An opened incident never takes an id its owner's Maintenance phases name**
+  (`maintenanceIncidentIds`), and `watch` exits 1 for any opened incident it
+  did not reopen — a skipped reopen never reads as success. — see
+  `/reference/cli/promises`
 - **The always-on pass announces once, and only after Slack accepts**
   (`lib/always-on/pass.ts`). **A string from a marked span is untrusted input
   to a plan document** — `incidents.ts`'s `oneLine` collapses `environment`
