@@ -46,10 +46,10 @@ error line and a non-zero exit. See [brief.md](brief.md) and
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | After an incident file is deleted while its Maintenance phase stays in the owner's impl, the next violation of that promise the same day opens an incident with a new id (`…-2`), and the owner gains a new Maintenance phase for it | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
+| A1 | After an incident file is deleted while its Maintenance phase stays in the owner's impl, the next violation of that promise the same day opens an incident with a new id (`…-2`), and the owner gains a new Maintenance phase for it | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
 | A2 | A violation while an incident is open extends it: no second Maintenance phase, no error line, exit 0 | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
-| A3 | A new incident whose Maintenance heading already exists in the owner's impl is refused by the reopen as a collision with the impl untouched, and the report of that watch run prints an error naming the owner and the heading and exits non-zero | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/lib/promises/reopen-collision.test.ts |
-| A4 | A watch run in which a newly opened incident did not reopen its owner — here, an owner that is not a plan folder — exits non-zero | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
+| A3 | A new incident whose Maintenance heading already exists in the owner's impl is refused by the reopen as a collision with the impl untouched, and the report of that watch run prints an error naming the owner and the heading and exits non-zero | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/lib/promises/reopen-collision.test.ts |
+| A4 | A watch run in which a newly opened incident did not reopen its owner — here, an owner that is not a plan folder — exits non-zero | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
 
 ## Checklist
 
@@ -73,16 +73,18 @@ deferred — and read each failure.
 
 ### Build Phase 1: the allocator, the reopen, the report
 
-- [ ] `lib/promises/reopen.ts`: `maintenanceIncidentIds(implText): Set<string>` — the incident ids named by Build-phase Maintenance headings, the inverse of `maintenanceHeadingName`, beside it
-- [ ] `lib/promises/incidents.ts`: `recordViolations` and `newIncidentId` take `avoid: ReadonlySet<string>`; an id is free only when neither `incidents/<id>.md` exists nor `avoid` holds it
-- [ ] `lib/promises/watch.ts`: before recording, resolve the owner's live copy once (the copy `reopenLive` already resolves) and pass its `maintenanceIncidentIds` as `avoid`; an owner with no impl, or no folder, avoids nothing
-- [ ] `lib/promises/reopen.ts`: `reopenOwner(planRoot, owner, incidentId, promise, liveDir, kind: "opened" | "extended")`; an existing heading is `already` for `extended` and `{ reopened: false, reason: "collision", heading }` for `opened`, with nothing written
-- [ ] `lib/promises/watch.ts`: `watchReport(result): { out: string[]; err: string[]; exitCode: 0 | 1 }` — every line `promises watch` prints today, plus an error line for a collision naming the owner and the heading; exit 1 whenever an *opened* change was not reopened. `bin/commands/promises.ts` prints it and sets `process.exitCode`
+- [x] `lib/promises/reopen.ts`: `maintenanceIncidentIds(implText): Set<string>` — the incident ids named by Build-phase Maintenance headings, the inverse of `maintenanceHeadingName`, beside it
+- [x] `lib/promises/incidents.ts`: `recordViolations` and `newIncidentId` take `avoid: ReadonlySet<string>`; an id is free only when neither `incidents/<id>.md` exists nor `avoid` holds it
+- [x] `lib/promises/watch.ts`: before recording, resolve the owner's live copy once (the copy `reopenLive` already resolves) and pass its `maintenanceIncidentIds` as `avoid`; an owner with no impl, or no folder, avoids nothing
+- [x] `lib/promises/reopen.ts`: `reopenOwner(planRoot, owner, incidentId, promise, liveDir, kind: "opened" | "extended")` — `kind` defaults to `"extended"`, today's behaviour, for the other caller (`monitor-reopen-validator.test.ts`); `watch` passes the change's kind; an existing heading is `already` for `extended` and `{ reopened: false, reason: "collision", heading }` for `opened`, with nothing written
+- [x] `lib/promises/watch.ts`: `watchReport(result): { out: string[]; err: string[]; exitCode: 0 | 1 }` — every line `promises watch` prints today, plus an error line for a collision naming the owner and the heading; exit 1 whenever an *opened* change was not reopened. `bin/commands/promises.ts` prints it and sets `process.exitCode`
+- [x] Discovered: root `pnpm test` runs `turbo test --concurrency=1`. Since the two test tiers merged (2026-10-02) the mcp suite runs its files in parallel on every core, and turbo ran the admin suite beside it: the admin's real-Jaeger HTTP tests (`http-promise-health`) timed out, 3 failed, and passed 8/8 alone. Serialized, both pass in 77 s
+- [x] Shape (Build Phase 1): reviewed `reopen.ts`, `incidents.ts`, `watch.ts` and `bin/commands/promises.ts`. Nothing found: `maintenanceIncidentIds` is the stated inverse beside the function it inverts; `ownerCopy` and `idsTakenByOwner` each answer one question, and resolving the copy once is what keeps the avoided ids and the reopened copy the same file; `watchReport` is a pure seam A3 reaches. Left as is: `watchReport` returns stdout and stderr lines separately, so the error lines now print after the run's other output rather than under the incident they belong to — each names its owner and incident, and a failure block at the end of a run reads as one; interleaving would need a tagged-line shape for one caller
 
 #### Build Phase 1 Verification
 
-- [ ] A1, A3 and A4 pass and A2 still passes (the two commands in Test Phase 1's Verification); `monitor-watch.test.ts` still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/monitor-watch`)
-- [ ] The everyday suite and the system tier are green (`pnpm test`, `pnpm test:system`)
+- [x] A1, A3 and A4 pass and A2 still passes (the two commands in Test Phase 1's Verification); `monitor-watch.test.ts` still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/monitor-watch`) — system tier 8/8 (A1, A2, A4 and monitor-watch's five), unit 6/6 (A3's two and `monitor-reopen-validator`)
+- [x] The everyday suite and the system tier are green (`pnpm test`, `pnpm test:system`) — mcp 1,668 passed / 5 skipped, admin 342, `promises check` clean (77 s, packages serialized); system tier 22 files, 81 tests
 
 #### Build Phase 1 Context
 
