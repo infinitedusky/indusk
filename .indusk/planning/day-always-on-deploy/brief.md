@@ -98,6 +98,18 @@ real projects, and have its problems found before anything is deployed.
    open"), until the incident is fixed — read from the incident's state, not
    from the marks inside the window, so no window length can hide it.
 
+   **The health chip follows the same rule** (Sandy, 2026-10-03). Today
+   `healthOf` (`apps/indusk-admin/src/lib/promise-health.ts`) colours a
+   behaviour promise red whenever any violation sits in the seven-day window,
+   whether or not its incident is fixed — so `every-commit-evaluated` read
+   *violated* after `i-2026-10-03-every-commit-evaluated` was fixed and newer
+   runs were upheld, and will until its last violation ages out
+   (2026-10-10). A violation whose trace belongs to a fixed incident stops
+   counting toward red: the chip is red only for an unrecorded violation or
+   one whose incident is open, and a promise whose recent violations are all
+   fixed shows the fixed colour, not *violated*. The chip and the timeline
+   read one definition of a violation's state, never two.
+
    First real data to show: `every-commit-evaluated` — red through the
    evening of 2026-10-02 (`i-2026-10-03-every-commit-evaluated`), green from
    05:40 on 2026-10-03.
