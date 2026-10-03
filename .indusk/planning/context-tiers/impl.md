@@ -1,7 +1,7 @@
 ---
 title: "Context tiers — a rule reaches you where and when it applies"
 date: 2026-10-02
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
