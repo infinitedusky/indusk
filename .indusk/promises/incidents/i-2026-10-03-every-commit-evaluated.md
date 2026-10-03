@@ -34,4 +34,6 @@ Two causes behind the eleven traces; the symptom above is only the newest.
 
 ## Fix
 
-_Not yet fixed._
+- **The extractor** (`day-monitor` Build Phase 9): `extractScorecardJson`'s brace scan tries each `{` in turn and returns the first balanced object that parses, instead of giving up on the first. A31 (`lib/eval/__tests__/scorecard-extractor.test.ts`) reproduces the lost scorecard — prose with its own braces, then a fenced scorecard quoting a fence — red before, green after. Ships in 1.57.2; the evaluator runs from the installed package, so it holds once that version is installed.
+- **The workspace** (2026-10-03, the operator's machine): `hasTrustDialogAccepted: true` for `/Users/the_dusky/code/sandbox/dusk` in `~/.claude.json`. Seen upheld at 2026-10-03T05:40:57Z, the first evaluation after the change.
+- **Found alongside**: the promise's owner was recorded as `semantic-graph-eval` and corrected to `day-monitor` (see the promise's History); and `promises-cli` A15, which demanded every promise in the repository be `enforced`, now holds a promise `known-violated` with its incident recorded, so recording this incident no longer turned the trunk red.

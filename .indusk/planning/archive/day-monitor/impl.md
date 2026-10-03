@@ -376,8 +376,8 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 #### Build Phase 9 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention — it does not: the extractor's tolerance is documented in its own module, and owner correction and A15 are recorded in the promise's History and the incident's Fix
 
 #### Build Phase 9 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section — written: the extractor, the workspace trust, and what was found alongside
