@@ -84,6 +84,7 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A28 | In a project with no configured group id, an evaluation of a commit made in a plan worktree is marked with the same project id `promises status` uses at the trunk, so the trunk counts it | Build Phase 7 | Build Phase 7 | passing |
 | A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | passing |
 | A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | passing |
+| A31 | every-commit-evaluated holds again after i-2026-10-03-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | planned |
 
 ## Checklist
 
@@ -141,6 +142,10 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 - **A6** — the check already counts a token directly inside a quote; the row pins that the helper's calling convention stays inside that rule, so it passes when written.
 - **A19** — plans without behaviour promises must keep closing exactly as they do today; it passes when written and guards every later phase.
+
+#### Deferred to Build Phase 9
+
+- **A31** — the test that reproduces i-2026-10-03-every-commit-evaluated is decided by its root cause, which this Maintenance phase writes first.
 
 #### Test Phase 1 Verification
 
@@ -358,3 +363,20 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 - Two refinements of the accepted ADR are recorded where they apply: the
   evaluator marks through `lib/eval/otel.ts` (Build Phase 1), and the quiet
   window's default lives in the reader (Build Phase 4).
+
+### Build Phase 9: Maintenance — i-2026-10-03-every-commit-evaluated
+
+- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-03-every-commit-evaluated.md`)
+- [ ] Fix: a code site, a widened test, or a revised promise
+
+#### Build Phase 9 Verification
+
+- [ ] A31: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+
+#### Build Phase 9 Context
+
+- [ ] CLAUDE.md, if the fix changes a convention
+
+#### Build Phase 9 Document
+
+- [ ] The incident's Fix section
