@@ -1,8 +1,9 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
 import { readPromises } from "./registry.js";
-import { type ReopenResult, reopenOwner } from "./reopen.js";
+import { maintenanceIncidentIds, ownerDir, type ReopenResult, reopenOwner } from "./reopen.js";
 import { readPromiseMarks } from "./telemetry.js";
 import type { IncidentSource } from "./vocabulary.js";
 
@@ -19,25 +20,30 @@ export interface WatchResult {
 	changes: (IncidentChange & { promise: string; owner: string; reopen: ReopenResult })[];
 }
 
+type OwnerCopy = { ok: true; liveDir?: string } | { ok: false; detail: string };
+
 /**
- * Reopen the owner where it is being worked: an active plan assigned to a
- * worktree gains its Maintenance phase in that worktree's copy, which is the
- * one `list_plans` and the admin read — not in the trunk's stale copy, where
- * nobody would see it and the landing merge would conflict (day-monitor A29).
+ * Where the owner is being worked: an active plan assigned to a worktree is
+ * reopened in that worktree's copy, which is the one `list_plans` and the
+ * admin read — not in the trunk's stale copy, where nobody would see it and
+ * the landing merge would conflict (day-monitor A29). Resolved once per
+ * promise, so the ids the allocator avoids come from the copy the reopen
+ * writes to.
  */
-async function reopenLive(
-	planRoot: string,
-	owner: string,
-	incidentId: string,
-	promise: string,
-): Promise<ReopenResult> {
+async function ownerCopy(planRoot: string, owner: string): Promise<OwnerCopy> {
 	const live = await livePlanCopy(planRoot, owner);
-	if (!live.ok) {
-		return { reopened: false, reason: "copy-problem", detail: `${live.file}: ${live.problem}` };
-	}
-	const dir =
+	if (!live.ok) return { ok: false, detail: `${live.file}: ${live.problem}` };
+	const liveDir =
 		live.copy.source === "worktree" && existsSync(live.copy.dir) ? live.copy.dir : undefined;
-	return reopenOwner(planRoot, owner, incidentId, promise, dir);
+	return { ok: true, liveDir };
+}
+
+/** The incident ids the owner's Maintenance phases already name; none without an owner or an impl. */
+function idsTakenByOwner(planRoot: string, owner: string, copy: OwnerCopy): Set<string> {
+	if (!copy.ok) return new Set();
+	const dir = copy.liveDir ?? ownerDir(planRoot, owner);
+	const impl = dir ? join(dir, "impl.md") : null;
+	return impl && existsSync(impl) ? maintenanceIncidentIds(readFileSync(impl, "utf-8")) : new Set();
 }
 
 export async function watchPromises(
@@ -65,9 +71,13 @@ export async function watchPromises(
 	for (const promise of behaviour) {
 		const violations = marks.byPromise.get(promise.name)?.violations ?? [];
 		if (violations.length === 0) continue;
-		const change = recordViolations(read.registry, promise, violations, opts.source, now);
+		const copy = await ownerCopy(planRoot, promise.owner);
+		const avoid = idsTakenByOwner(planRoot, promise.owner, copy);
+		const change = recordViolations(read.registry, promise, violations, opts.source, now, avoid);
 		if (!change) continue;
-		const reopen = await reopenLive(planRoot, promise.owner, change.id, promise.name);
+		const reopen: ReopenResult = copy.ok
+			? reopenOwner(planRoot, promise.owner, change.id, promise.name, copy.liveDir)
+			: { reopened: false, reason: "copy-problem", detail: copy.detail };
 		changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
 	}
 	return { changes, source };
