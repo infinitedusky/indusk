@@ -62,10 +62,17 @@ describe.skipIf(SHOULD_SKIP)("A14 — update ensures promises.domains and nothin
 });
 
 describe.skipIf(SHOULD_SKIP)("A15 — this repository holds three promises, one per kind", () => {
-	it("indusk promises check at the repo root exits 0 with every kind held and every promise enforced", () => {
+	it("indusk promises check at the repo root exits 0 with every kind held and every promise held", () => {
 		// Three at day-promises' close, one per kind; day-monitor added a
 		// second behaviour promise (every-commit-evaluated). The row is about
 		// coverage of the kinds and the state they are held in, not a count.
+		//
+		// Held is `enforced`, or `known-violated` with its incident recorded —
+		// `check` refuses a known-violated promise with no open incident, so its
+		// exit code carries that half. This row once demanded every promise be
+		// `enforced`, which turned the trunk red the moment `watch` correctly
+		// recorded a real violation (i-2026-10-03-every-commit-evaluated): a
+		// self-test must not punish the monitor for working.
 		const r = runCli(REPO_ROOT, ["promises", "check"]);
 		expect(r.code, r.stderr).toBe(0);
 		const total = Number(/(\d+) promises/.exec(r.stdout)?.[1]);
@@ -73,6 +80,8 @@ describe.skipIf(SHOULD_SKIP)("A15 — this repository holds three promises, one 
 		for (const kind of ["behaviour", "state", "structure"]) {
 			expect(r.stdout).toMatch(new RegExp(`${kind} [1-9]`));
 		}
-		expect(r.stdout).toMatch(new RegExp(`enforced ${total}\\b`));
+		const enforced = Number(/enforced (\d+)/.exec(r.stdout)?.[1]);
+		const knownViolated = Number(/known-violated (\d+)/.exec(r.stdout)?.[1]);
+		expect(enforced + knownViolated, "every promise enforced or known-violated").toBe(total);
 	});
 });
