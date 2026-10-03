@@ -73,6 +73,14 @@ real projects, and have its problems found before anything is deployed.
    hours since the last restart. Only a promise whose code emits marks has a
    line; a hollow promise says so rather than drawing an empty row as health.
 
+   **Grouped and collapsible** (Sandy, 2026-10-03). The rows group two ways,
+   chosen on the page: **by plan** — every promise a plan owns under that
+   plan — or **by domain**. A group collapses to one summary row, its runs
+   combined so a red anywhere in the group shows red at that time, and opens
+   to its promises; a promise opens to its own timeline and incidents. A
+   viewer starts at "is anything broken, and where" and drills down to which
+   promise and when.
+
    First real data to show: `every-commit-evaluated` — red through the
    evening of 2026-10-02 (`i-2026-10-03-every-commit-evaluated`), green from
    05:40 on 2026-10-03.
