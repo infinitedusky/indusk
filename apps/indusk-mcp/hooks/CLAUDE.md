@@ -32,6 +32,9 @@ are about keeping the two lanes in step.
 - **Never predict Edit results with `String.replace`** — its `$`-substitution
   diverges from the Edit tool's literal semantics; use an index-splice and
   guard an empty `old_string`.
-- The budget hook judges growth, not size; a root is the state root or a
-  declared repo's dir (`declaredRepoDirsAt`), never a depth. Every hook that
-  refuses names its lesson on its own line (`lesson: <name>`).
+- The budget hook judges growth, not size; a root is the state root, a
+  declared repo's dir (`declaredRepoDirsAt`), or any checkout's top (`.git`
+  present — plan worktrees), never a depth. Every hook that refuses names its
+  lesson on its own line (`lesson: <name>`): its own string, or directly after
+  a `\n` — the scan reads nothing else, and `context-tiers-register.test.ts`
+  fails any register enforcer row whose file it cannot read.

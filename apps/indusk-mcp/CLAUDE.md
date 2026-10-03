@@ -72,7 +72,9 @@ pointer; the pointer holds the story.
   `/decisions/versioned-workbench`
 - **Tooling detection runs over the declared repos, never the wrapper**
   (`detectTooling` over `resolveCheckRoots`); `update` writes
-  `verify.testRunner` for a workbench that predates this.
+  `verify.testRunner` for a workbench that predates this. So do the lesson
+  scan and `check-pointers`: anything reading "what the code says" in a
+  workbench reads the declared repos — the wrapper's git ignores them.
 - **`indusk verify` judges the code repo**: `resolveExecutionRoots` gives a
   plan root and a code root; red tests run in the code repo, phantom asks "what
   changed" of the code and "what got checked" of the plan; a ledger record
