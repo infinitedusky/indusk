@@ -2,6 +2,19 @@ import path from "node:path";
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
+// Tests never auto-start a telemetry daemon (test-daemons-never-leak): any
+// test that runs `init` or `update` against a temporary home made `telemetry
+// register` start a detached Jaeger + otelcol pair nothing stopped — 860 found
+// running on 2026-10-03. Set on process.env as the config loads, so every
+// worker and every child process a test spawns inherits it. The system tier
+// (vitest.system.config.ts) does not load this file: its tests start real
+// daemons on purpose, and `telemetry-init-fresh` asserts that init does.
+process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART = "1";
+// Extension hooks run `indusk …`; without this they run whatever version is
+// installed globally, not the code under test — which is also why the switch
+// above did nothing until it was here (test-daemons-never-leak).
+process.env.INDUSK_BIN ??= `node ${path.resolve(__dirname, "../indusk-mcp/dist/bin/cli.js")}`;
+
 /**
  * Two test environments:
  *   - **node**: server-side `src/lib/*` tests (filesystem, parsers, planning-reader).
