@@ -56,7 +56,8 @@ pointer; the pointer holds the story.
 - **Topology is DECLARED, never inferred** — `worktree.repos[]` with optional
   `path` / `worktrees`; the legacy `wrapped_repo` reduces to a one-element
   list; absence means flat. One reader (`readWorkbenchRepos` + `repoDir` /
-  `worktreesDir`); `hooks/_hook-paths.js` and `workbench-helpers.sh` carry
+  `worktreesDir`), and one home for where a checkout is (`declaredRepoDirs`;
+  absent `repos_root` = the parent); `hooks/_hook-paths.js` and `workbench-helpers.sh` carry
   deliberate ports — change all three together. `isWorkbench` is true for any
   config that declares repos. Names and paths are segment-guarded via
   `lib/path-segment.ts`. — see `/reference/cli/workbench`
