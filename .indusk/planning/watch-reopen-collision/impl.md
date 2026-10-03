@@ -1,7 +1,7 @@
 ---
 title: "watch opens an incident and silently does not reopen its owner"
 date: 2026-10-02
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -50,6 +50,8 @@ error line and a non-zero exit. See [brief.md](brief.md) and
 | A2 | A violation while an incident is open extends it: no second Maintenance phase, no error line, exit 0 | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
 | A3 | A new incident whose Maintenance heading already exists in the owner's impl is refused by the reopen as a collision with the impl untouched, and the report of that watch run prints an error naming the owner and the heading and exits non-zero | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/lib/promises/reopen-collision.test.ts |
 | A4 | A watch run in which a newly opened incident did not reopen its owner — here, an owner that is not a plan folder — exits non-zero | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
+| A5 | A violation that *extends* an open incident whose owner is not a plan folder still makes `watch` exit non-zero — an extended incident is as unowned as an opened one | Build Phase 2 | Build Phase 2 | planned | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
+| A6 | An open incident whose owner carries no Maintenance phase for it is reopened on the next `watch` run even when no new violation arrived; if the owner still cannot be reopened, that run says so and exits non-zero rather than "No new violations" | Build Phase 2 | Build Phase 2 | planned | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
 
 ## Checklist
 
@@ -93,6 +95,31 @@ deferred — and read each failure.
 #### Build Phase 1 Document
 
 - [x] `apps/docs/src/reference/cli/promises.md`, the `watch` section: the exit codes (0, 1 for an opened incident not reopened — collision, no owner, unreadable worktree record — 2 when Jaeger is unreachable) and the collision line; `apps/docs/src/changelog.md` Unreleased, Fixed
+
+### Build Phase 2: Falsification — a missed reopen is loud once, then quiet forever
+
+**Goal**: verify whether the attested state — *a broken promise always reaches a plan that owns it, or `watch` says loudly that it did not* — holds past the first run. Build Phase 1 made the run that **opens** an unowned incident fail. Two paths still leave an incident owned by no plan behind a run that exits 0:
+
+- **A5** — `watchReport` sets the failure only for `kind === "opened"`. A promise whose owner is not a plan folder fails on its first violation; on the second, the incident is *extended*, the error line prints, and the run exits 0. The incident is exactly as unowned as before.
+- **A6** — `watchPromises` skips a promise with no fresh traces (`recordViolations` returns null, the loop `continue`s). So after a run that recorded an incident and could not reopen its owner, every later run reads "No new violations — nothing recorded." and exits 0, while the open incident has no Maintenance phase anywhere. A person who missed the one failing run — a cron job, a scrolled terminal — is never told again, and fixing the owner does not repair it: nothing ever retries the reopen.
+
+- [ ] Author A5 and A6 red in `src/__tests__/watch-reopen-collision.test.ts` (system tier): A5 — an open incident for a promise whose owner is not a plan folder, plus a new violation; A6 — an open incident whose trace is already recorded and whose owner exists with no Maintenance phase for it, then the same with an owner that is not a plan folder. Run each and read each failure
+- [ ] `lib/promises/watch.ts`, `watchReport`: the run fails for any change whose reopen did not happen except `already` (the owner carries the phase) — opened or extended alike
+- [ ] `lib/promises/watch.ts`, `watchPromises`: for every behaviour promise, after recording, each **open** incident with no change this run is checked against its owner's live copy: when the owner names no Maintenance phase for it, the reopen is attempted (`kind: "extended"` — the incident is not new) and the result reported as a change of kind `unowned`, so a quiet window can still repair, or report, an incident left unowned
+- [ ] `watchReport` prints an `unowned` change that reopened as `reopened <owner>: …` under a line naming the open incident, and one that did not as the same error lines as any other missed reopen
+
+#### Build Phase 2 Verification
+
+- [ ] A5 and A6 pass, and A1–A4 and `monitor-watch.test.ts` still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watch-reopen-collision src/__tests__/monitor-watch`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/reopen-collision`)
+- [ ] The everyday suite and the system tier are green (`pnpm test`, `pnpm test:system`)
+
+#### Build Phase 2 Context
+
+- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`), the entry Build Phase 1 added: `watch` fails any run that leaves an incident without its owner's phase — opened, extended, or open from an earlier run — and retries that reopen on every run until it lands
+
+#### Build Phase 2 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`, the `watch` exit table and "Reopening the owner": exit 1 covers extended and earlier-run incidents too, and an unowned open incident is retried every run; `apps/docs/src/changelog.md` Unreleased, the same Fixed entry
 
 ## Files Affected
 
