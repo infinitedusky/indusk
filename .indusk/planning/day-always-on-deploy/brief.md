@@ -57,6 +57,25 @@ real projects, and have its problems found before anything is deployed.
    as a guess that survived.
 5. **Correct the artifacts and the docs** — the guide currently marks both
    files as unrun, and that marking comes off only when they have been run.
+6. **Show the promise's history as a timeline** (Sandy, 2026-10-03: the
+   deploy has to demonstrate its value visually). On the admin's Promises
+   page, one row per promise: time left to right, a green mark for every
+   upheld run and a red one for every violation, each incident a band from
+   the time it opened to the time it was fixed — the uptime chart a status
+   page shows. The data already exists: every evaluation marks its span
+   upheld or violated in Jaeger, and `promises status` reads both; what is
+   missing is a reader that returns every mark with its time (today
+   `readPromiseMarks` keeps every violation but only the newest upheld) and
+   the chart. It belongs to this plan rather than beside it because the
+   deployed server is where the history lasts: the local daemon keeps traces
+   in memory and loses them on restart, while the server keeps them on its
+   volume — a timeline read from the deployed Jaeger shows weeks, not the
+   hours since the last restart. Only a promise whose code emits marks has a
+   line; a hollow promise says so rather than drawing an empty row as health.
+
+   First real data to show: `every-commit-evaluated` — red through the
+   evening of 2026-10-02 (`i-2026-10-03-every-commit-evaluated`), green from
+   05:40 on 2026-10-03.
 
 ## Split out on 2026-10-02
 
@@ -92,3 +111,7 @@ fix belongs here; if it finds a bug in the loop, that is a promise
 - U2 satisfied: a violation sent after a genuine idle period is announced.
 - The guide no longer marks the image or the Fly configuration as unrun,
   because both have been.
+- The admin's Promises page shows each marked promise's upheld and violated
+  runs over time, read from the deployed Jaeger, with incidents as bands —
+  and after the procedure's break-and-recover step, the chart shows the red
+  and the return to green.
