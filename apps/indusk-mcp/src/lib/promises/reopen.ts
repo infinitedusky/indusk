@@ -126,7 +126,9 @@ export function reopenOwner(
 	const text = readFileSync(implPath, "utf-8");
 	const parsed = parseImplString(text);
 	const name = maintenanceHeadingName(incidentId);
-	if (parsed.phases.some((p) => p.kind === "build" && p.name === name)) {
+	// The same question `watch`'s unowned retry asks: the reopen's dedup and
+	// the retry must agree about whether the owner carries this incident.
+	if (maintenanceIncidentIds(text).has(incidentId)) {
 		return kind === "opened"
 			? { reopened: false, reason: "collision", heading: name }
 			: { reopened: false, reason: "already" };
