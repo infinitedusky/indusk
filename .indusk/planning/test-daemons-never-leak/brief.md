@@ -1,7 +1,7 @@
 ---
 title: "A test run never leaves a telemetry daemon behind"
 date: 2026-10-03
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
