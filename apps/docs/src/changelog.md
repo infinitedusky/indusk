@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.57.0] — 2026-10-02
+
 ### Added
 - **Context tiers: a rule reaches you where and when it applies.** The root `CLAUDE.md` stops being the one channel for every kind of knowledge.
   - **`lesson: <name>` tokens.** A test or hook that enforces a rule names the lesson behind it at the start of its failure message, so the agent gets the explanation the moment the rule breaks, at no standing cost. The token shares the promise token's grammar (`lib/tokens.ts`). `list_lessons` now reports each lesson **guarded** (some enforcer names it) or **advisory**, derived on every read and never stored, with counts; `/catchup` skims only the advisory titles. Guarded is relative to the project scanned: a hook's token guards every project, a test's only the one it lives in.
@@ -13,7 +15,12 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ### Changed
 - **CLAUDE.md has five sections, not six.** Current State was operational state in an always-loaded file; it moves to `.indusk/current.md`'s Project (shared) region. `update_context` and the consumer template follow.
-- **The budget hook judges growth, not size.** An edit that does not grow a `CLAUDE.md` is allowed at any size — the hook used to refuse even a shrinking edit to an over-budget file. A nested `CLAUDE.md` has its own budget (`context.nested_claude_md_budget_bytes`, 16 KB); a workbench repo's own root file is judged as a root, by directory, never by depth. `update` ensures the `context` block.
+- **The budget hook judges growth, not size.** An edit that does not grow a `CLAUDE.md` is allowed at any size — the hook used to refuse even a shrinking edit to an over-budget file. A nested `CLAUDE.md` has its own budget (`context.nested_claude_md_budget_bytes`, 16 KB); a workbench repo's own root file is judged as a root, by directory, never by depth — so is the `CLAUDE.md` at the top of any checkout, a plan worktree included. `update` ensures the `context` block.
+- **In a workbench, the lesson scan and `check-pointers` read the declared repos**, not only the workbench root, whose git ignores the code: a test in the code repo guards its lesson, and the code repo's context files are walked, each resolved against its own repo and named in the report. Where a declared repo's checkout lives now has one definition, `declaredRepoDirs`, which every reader asks.
+
+### Fixed
+- **A lesson token may open a line of a refusal** (directly after a `\n` inside one string), which is where check-gates put its token — the scan had read that lesson as unguarded. `validate-impl-structure`'s rationale refusals now name their lesson too.
+- **The budget hook looked for a workbench's repos in the wrong place when no `repos_root` was declared** — the workbench itself instead of its parent, where `resolveReposRoot` looks — and judged such a repo's root `CLAUDE.md` as nested.
 
 ## [1.56.0] — 2026-10-01
 
