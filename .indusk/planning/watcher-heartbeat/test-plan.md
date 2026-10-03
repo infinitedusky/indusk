@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching — Test Plan"
 date: 2026-10-03
-status: draft
+status: accepted
 ---
 
 # The watcher proves it is watching — Test Plan
