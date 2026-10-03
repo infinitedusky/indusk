@@ -1,0 +1,9 @@
+# When a fix makes a tested failure unreachable through its original public surface, move the test inward to where the failure still occurs — and write down that you moved it
+
+watch-reopen-collision's A3 (a reopen collision) was originally planned as an end-to-end CLI reproduction. While writing the impl, the allocator fix for a *different* row (A1: avoid ids the owner's Maintenance phases already name) made A3's original repro path unreachable — once ids are never reused, `watch` can no longer *produce* a collision through the public CLI surface at all. Rather than drop A3 or leave a stale test plan, A3 was moved to the two internal points where a collision is still decided and reported (`reopenOwner` directly, and `watchReport`'s formatting), with the original assertion preserved. The test-plan document was edited in place with a dated note explaining the mechanism change.
+
+This is the inverse of "the test still passes so nothing changed": here an earlier fix (A1) quietly invalidated a *later* test's reachability, and the right response was to recognize it, relocate the test to where the behavior still lives, and record why — not to let the plan silently drift from what it claims to cover.
+
+**How to apply:** whenever one fix in a multi-row test plan closes off the reachability of another row's originally-planned repro path, check every other row's assumptions before treating the plan as stable. If a row's failure can no longer be produced through its original surface, move the test to the innermost point where the behavior is still real, keep the assertion's intent unchanged, and write the move into the test plan with a reason — a silently-dropped row is indistinguishable from "we forgot," and a silently-kept-but-untestable row is worse.
+
+See `.indusk/planning/archive/watch-reopen-collision/test-plan.md` ("A3's mechanism, corrected while writing the impl") and `retrospective.md` ("What We Learned").
