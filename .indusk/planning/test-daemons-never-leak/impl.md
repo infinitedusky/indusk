@@ -1,7 +1,7 @@
 ---
 title: "A test run never leaves a telemetry daemon behind"
 date: 2026-10-03
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -43,9 +43,9 @@ any telemetry process running from a temporary home. See
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | Running `indusk init` on a fixture from inside the everyday suite starts no Jaeger or otelcol process — through the CLI helper, and through a child started with its own environment built on the test process's | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/test-daemons-never-leak.test.ts |
+| A1 | Running `indusk init` on a fixture from inside the everyday suite starts no Jaeger or otelcol process — through the CLI helper, and through a child started with its own environment built on the test process's | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-never-leak.test.ts |
 | A2 | Outside the tests, `indusk telemetry register` with the switch unset still starts the daemon for a home that has none | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
-| A3 | The guard exits non-zero naming the process and home of a daemon left running from a temporary home, and stops naming it once that daemon is stopped | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
+| A3 | The guard exits non-zero naming the process and home of a daemon left running from a temporary home, and stops naming it once that daemon is stopped | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
 
 ## Checklist
 
@@ -69,22 +69,25 @@ any telemetry process running from a temporary home. See
 
 ### Build Phase 1: the switch, the configs, the guard
 
-- [ ] `bin/commands/telemetry.ts`, `register`: when `process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART === "1"`, register the project and skip the start, printing that the start was skipped and why — the opportunistic start is the only thing the switch changes
-- [ ] `apps/indusk-mcp/vitest.config.ts` and `apps/indusk-admin/vitest.config.ts`: `test.env: { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" }`, with a comment naming why the system config does not carry it
-- [ ] `apps/indusk-mcp/scripts/check-test-daemons.js`: list running telemetry binaries (`ps -ax -o pid=,command=`), keep those whose config path is under a temporary directory (`os.tmpdir()`, `/tmp`), print each with its PID and home, exit 1 if any; exit 0 with a one-line all-clear otherwise. Root `package.json` `test`: `turbo test --concurrency=1 && pnpm promises:check && node apps/indusk-mcp/scripts/check-test-daemons.js`
+- [x] `bin/commands/telemetry.ts`, `register`: when `process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART === "1"`, register the project and skip the start, printing that the start was skipped and why — the opportunistic start is the only thing the switch changes
+- [x] `apps/indusk-mcp/vitest.config.ts` and `apps/indusk-admin/vitest.config.ts`: `test.env: { INDUSK_SKIP_TELEMETRY_AUTOSTART: "1" }`, with a comment naming why the system config does not carry it — set on `process.env` as each config loads rather than as `test.env`: the admin's inline projects do not inherit top-level test options, and a process variable reaches every worker and child either way
+- [x] Discovered: the switch alone left A1 red. `init`'s extension hook runs `indusk telemetry register`, and bare `indusk` is the globally installed CLI (1.57.2 here), not the code under test — so the everyday suite's hooks have always run whatever version the developer has installed. Both configs now set `INDUSK_BIN` (the hook runner's existing override) to the package's built CLI, unless a test sets its own
+- [x] `apps/indusk-mcp/scripts/check-test-daemons.js`: list running telemetry binaries (`ps -ax -o pid=,command=`), keep those whose config path is under a temporary directory (`os.tmpdir()`, `/tmp`), print each with its PID and home, exit 1 if any; exit 0 with a one-line all-clear otherwise. Root `package.json` `test`: `turbo test --concurrency=1 && pnpm promises:check && node apps/indusk-mcp/scripts/check-test-daemons.js`
+
+- [x] Shape (Build Phase 1): reviewed `bin/commands/telemetry.ts`, both Vitest configs, `scripts/check-test-daemons.js` and `helpers/telemetry-reap.ts`. Nothing found: the switch is one early return with its reason beside it, before the start it skips; each config carries the two variables with the why; the guard is one read and one report. Two readers of the process list (the guard, a shipped script; `telemetryProcessesFor`, a test helper) is a cross-file question — `/cleanup`'s
 
 #### Build Phase 1 Verification
 
-- [ ] A1 and A3 pass and A2 still passes (the two commands in Test Phase 1's Verification); `telemetry-init-fresh.test.ts` still passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-init-fresh`)
-- [ ] `pnpm test` is green and its last line is the guard's all-clear; the process count from temp homes is the same before and after the run
+- [x] A1 and A3 pass and A2 still passes (the two commands in Test Phase 1's Verification); `telemetry-init-fresh.test.ts` still passes — 2/2 everyday, 3/3 system (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/telemetry-init-fresh`)
+- [x] `pnpm test` is green and its last line is the guard's all-clear; the process count from temp homes is the same before and after the run — mcp 1,671 / 5 skipped, admin 343, `promises check` clean, guard all-clear; 0 temp-home daemons before and after. Two earlier full runs showed 38–39 admin HTTP failures: the evaluator, grading this branch's commits, was running the admin's HTTP tests in this same worktree at the same time (its `next dev` held the app's `.next/` lock); alone, the admin suite was 343/343
 
 #### Build Phase 1 Context
 
-- [ ] root (Conventions), the test-commands line: tests never auto-start a telemetry daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`, set in the everyday configs) and `pnpm test` ends by failing on any daemon left from a temp home — always-on because any test in either package that runs `init` or `update` meets it, and the 2026-08 convention ("reap in every suite") failed by being remembered
+- [x] root (Conventions), the test-commands line: tests never auto-start a telemetry daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`, set in the everyday configs) and `pnpm test` ends by failing on any daemon left from a temp home — always-on because any test in either package that runs `init` or `update` meets it, and the 2026-08 convention ("reap in every suite") failed by being remembered
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/telemetry/cli.md`, `register`: the switch and what it skips; `apps/docs/src/changelog.md` Unreleased, Fixed
+- [x] `apps/docs/src/reference/telemetry/cli.md`, `register`: the switch and what it skips; `apps/docs/src/changelog.md` Unreleased, Fixed — the page has no `register` section (it is internal), so the switch is under its Environment variables, with a warning not to set it in a working shell
 
 ## Files Affected
 
