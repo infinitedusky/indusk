@@ -332,3 +332,4 @@
 {"id":"h-20261003-010","processedAt":"2026-10-03T05:16:33.951Z","action":"skipped","detail":"recorded in watch-reopen-collision/test-plan.md's dated correction note and retrospective.md's What We Learned; plan-specific test-authoring reasoning, already evaluated in commit de2cd3b2"}
 {"id":"h-20261003-011","processedAt":"2026-10-03T05:16:51.010Z","action":"wrote-episode","detail":"parallelizing-one-packages-tests-changes-sibling-packages-load-under-turbo"}
 {"id":"h-20261003-012","processedAt":"2026-10-03T05:16:51.954Z","action":"skipped","detail":"hindsight restates h-009 and h-011's root causes as process fixes already captured in their corresponding new lessons; no additional rule"}
+{"id":"h-20261003-013","processedAt":"2026-10-03T15:26:27.642Z","action":"wrote-episode","detail":"a-per-call-cleanup-convention-is-not-a-fix-for-a-background-process-a-test-triggers"}
