@@ -64,11 +64,11 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 | A9 | The catchup skill skims only advisory lesson titles and states the guarded and advisory counts | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
 | A15 | A Context gate item names its tier and destination, and one aimed at the root says why it must be always-on — in `/planner` and `/claude-md`, package and installed copies | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
 | A13 | The root is at least 20 % under its configured budget, and the budget's reason is in `.indusk/config.json` | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
-| A18 | The lesson scan reads a hook's `lesson:` token where the refusal opens a new line inside one string (directly after a `\n` escape): `check-gates.js` guards `test-red-at-earliest-writable-phase`, with kind `hook` | Build Phase 7 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
-| A19 | Every `enforcer` row in the register names files the lesson scan reads as guarding that row's lesson; a row whose named enforcer carries no readable token fails, naming the row | Build Phase 7 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
-| A20 | The budget hook judges a `CLAUDE.md` at the top level of any git checkout by the root budget — in a workbench, a declared repo's plan worktree, which no declaration names; never as a nested file | Build Phase 7 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
-| A21 | In a workbench, `list_lessons` reads a lesson as guarded when a test inside a declared repo carries its token; the scan covers the declared repos as well as the workbench root | Build Phase 7 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
-| A22 | In a workbench, `context check-pointers` walks each declared repo's context files as well as the workbench root's, resolving each file's pointers against the repo that holds it, and names the repo in its report | Build Phase 7 | Build Phase 7 | written | apps/indusk-mcp/src/__tests__/context-tiers-pointers.test.ts |
+| A18 | The lesson scan reads a hook's `lesson:` token where the refusal opens a new line inside one string (directly after a `\n` escape): `check-gates.js` guards `test-red-at-earliest-writable-phase`, with kind `hook` | Build Phase 7 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
+| A19 | Every `enforcer` row in the register names files the lesson scan reads as guarding that row's lesson; a row whose named enforcer carries no readable token fails, naming the row | Build Phase 7 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
+| A20 | The budget hook judges a `CLAUDE.md` at the top level of any git checkout by the root budget — in a workbench, a declared repo's plan worktree, which no declaration names; never as a nested file | Build Phase 7 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
+| A21 | In a workbench, `list_lessons` reads a lesson as guarded when a test inside a declared repo carries its token; the scan covers the declared repos as well as the workbench root | Build Phase 7 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
+| A22 | In a workbench, `context check-pointers` walks each declared repo's context files as well as the workbench root's, resolving each file's pointers against the repo that holds it, and names the repo in its report | Build Phase 7 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/context-tiers-pointers.test.ts |
 
 ### Deferred Verification
 
@@ -268,9 +268,9 @@ What the investigation found, row by row:
 
 #### Build Phase 7 Verification
 
-- [ ] A18–A22 pass and A5–A8, A10, A11, A14, A16 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/context-tiers-`); `pnpm promises:check` clean
-- [ ] `lessonStates` printed for this repository reads `test-red-at-earliest-writable-phase` guarded, by `check-gates.js` as kind `hook`
-- [ ] The full suite is green (`pnpm test`); A1–A3 and A17 pass (`pnpm e2e -- context-tiers`)
+- [x] A18–A22 pass and A5–A8, A10, A11, A14, A16 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/context-tiers-`); `pnpm promises:check` clean — 51/51 across the context-tiers files; `promises check` exits 0
+- [x] `lessonStates` printed for this repository reads `test-red-at-earliest-writable-phase` guarded, by `check-gates.js` as kind `hook` — guarded by `check-gates.js` and `validate-impl-structure.js` (package and installed copies, kind `hook`) and `lib/trajectory/validator.ts` (kind `code`)
+- [x] The full suite is green (`pnpm test`); A1–A3 and A17 pass (`pnpm e2e -- context-tiers`) — mcp 275 files passed / 1 skipped, admin 55 files passed, `promises check` clean; e2e 9/9 (the context-tiers file's four with the rest the filter matched). `pnpm check` fails on files this phase did not touch (`.indusk/config.json` and the vitepress config fail on main too; `.claude/hooks/eval-trigger.js` is untouched); this phase's 13 code files pass Biome
 
 #### Build Phase 7 Context
 
