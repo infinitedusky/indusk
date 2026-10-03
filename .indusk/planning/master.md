@@ -291,7 +291,7 @@ lesson title, or a chat log.
   so `indusk update` appends it to every existing project. Reaches consumers on
   the next release. **Open**: examples raise the rate, they do not enforce it —
   a Stop-hook check on bare labels is the enforcer, and is a candidate row in
-  [context-tiers](context-tiers/brief.md)' register.
+  [context-tiers](archive/context-tiers/brief.md)' register.
 - **Small, not a step** (2026-10-01, found while landing the above):
   **`pnpm check` is red on `main`** — 33 errors on an unmodified tree. Both
   `biome.json` files declare schema 2.4.8 while the locked CLI is 2.5.14
