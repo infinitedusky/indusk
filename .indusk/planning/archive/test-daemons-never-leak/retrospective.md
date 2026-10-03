@@ -111,3 +111,7 @@ code, scripts and tests are 7 files, +329 / −3.
 | `pnpm test:system` | 88 passed, guard all-clear |
 
 ## Landing
+
+Landed on main at ddb58332, 2026-10-03.
+
+Released as 1.57.3 (patch: the plan fixed test hygiene and the `register` path; nothing new for a CLI user beyond an opt-out switch).
