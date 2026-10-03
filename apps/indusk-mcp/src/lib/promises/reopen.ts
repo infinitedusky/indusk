@@ -22,6 +22,22 @@ export function maintenanceHeadingName(incidentId: string): string {
 	return `${MAINTENANCE_TITLE} — ${incidentId}`;
 }
 
+/**
+ * The incident ids an impl's Build-phase Maintenance headings already name —
+ * the inverse of `maintenanceHeadingName`. The id allocator avoids them
+ * (watch-reopen-collision): a phase outlives its incident file, so a deleted
+ * file must not free its id for the next incident to collide with.
+ */
+export function maintenanceIncidentIds(implText: string): Set<string> {
+	const prefix = maintenanceHeadingName("");
+	return new Set(
+		parseImplString(implText)
+			.phases.filter((p) => p.kind === "build" && p.name.startsWith(prefix))
+			.map((p) => p.name.slice(prefix.length).trim())
+			.filter((id) => id !== ""),
+	);
+}
+
 /** The owner's folder: active wins over archived, as everywhere else. */
 export function ownerDir(planRoot: string, owner: string): string | null {
 	for (const dir of [
@@ -74,6 +90,13 @@ function maintenancePhase(
 export type ReopenResult =
 	| { reopened: true; impl: string; phase: number }
 	| { reopened: false; reason: "already" | "no-owner" }
+	/**
+	 * An opened incident whose Maintenance heading the owner already carries.
+	 * Never a quiet "already": a new incident cannot have a phase yet, so a
+	 * matching heading belongs to something else, and nothing was written
+	 * (watch-reopen-collision).
+	 */
+	| { reopened: false; reason: "collision"; heading: string }
 	/** The plan-worktree record could not say where the owner lives; nothing was written. */
 	| { reopened: false; reason: "copy-problem"; detail: string };
 
@@ -85,6 +108,8 @@ export function reopenOwner(
 	promise: string,
 	/** The owner's live folder when it is assigned to a worktree (day-monitor A29); else found here. */
 	liveDir?: string,
+	/** Whether the incident was just opened or extended; an existing heading means different things. */
+	kind: "opened" | "extended" = "extended",
 ): ReopenResult {
 	const dir = liveDir ?? ownerDir(planRoot, owner);
 	if (!dir) return { reopened: false, reason: "no-owner" };
@@ -101,8 +126,12 @@ export function reopenOwner(
 	const text = readFileSync(implPath, "utf-8");
 	const parsed = parseImplString(text);
 	const name = maintenanceHeadingName(incidentId);
-	if (parsed.phases.some((p) => p.kind === "build" && p.name === name)) {
-		return { reopened: false, reason: "already" };
+	// The same question `watch`'s unowned retry asks: the reopen's dedup and
+	// the retry must agree about whether the owner carries this incident.
+	if (maintenanceIncidentIds(text).has(incidentId)) {
+		return kind === "opened"
+			? { reopened: false, reason: "collision", heading: name }
+			: { reopened: false, reason: "already" };
 	}
 	const next =
 		Math.max(0, ...parsed.phases.filter((p) => p.kind === "build").map((p) => p.number)) + 1;

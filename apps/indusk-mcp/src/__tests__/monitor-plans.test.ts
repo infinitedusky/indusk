@@ -10,12 +10,12 @@ import {
 	PLAN as WT_PLAN,
 } from "./helpers/plan-worktree-fixture.js";
 import {
+	behaviourPromise,
+	codeFilesFor,
 	daysAgo,
 	type PromiseProject,
 	type PromiseSpec,
 	promiseProject,
-	siteFile,
-	testFile,
 	writePromise,
 } from "./helpers/promises-fixture.js";
 import { git } from "./helpers/test-git.js";
@@ -76,22 +76,10 @@ status: completed
 `;
 
 function behaviour(extra: Partial<PromiseSpec> = {}): PromiseSpec {
-	return {
-		name: PROMISE,
-		kind: "behaviour",
-		state: "enforced",
-		domain: "seating",
-		owner: OWNER,
-		sites: [`src/${PROMISE}.ts`],
-		tests: [`src/${PROMISE}.test.ts`],
-		...extra,
-	};
+	return behaviourPromise(PROMISE, { owner: OWNER, domain: "seating", ...extra });
 }
 
-const FILES = {
-	[`src/${PROMISE}.ts`]: siteFile(PROMISE),
-	[`src/${PROMISE}.test.ts`]: testFile(PROMISE),
-};
+const FILES = codeFilesFor(PROMISE);
 
 async function listPlans(root: string, active: boolean): Promise<Plan[]> {
 	const { json } = await toolCaller((server) => registerPlanTools(server, root)).call(

@@ -275,9 +275,22 @@ indusk promises watch [--source local|smoke|deployed]
 One monitor pass over the quiet window: for each behaviour promise with a
 violation not yet recorded in any of its incidents, open or extend an
 incident and send the promise's owner back to work. It **writes plan
-documents and commits nothing** — review what it wrote and commit it. Exit 0
-whether or not anything changed; exit 2 when Jaeger or the registry cannot be
-read, with nothing written.
+documents and commits nothing** — review what it wrote and commit it.
+
+| Exit | Meaning |
+|------|---------|
+| 0 | the pass ran, and every open incident it touched is carried by its owner's Maintenance phase (or nothing changed) |
+| 1 | an incident is left **without** its owner's phase — a new one, one this run extended, or one an earlier run could not reopen — because of a collision, an owner that is not a plan folder, or a worktree record that could not be read. Incidents are still written; the error line says which owner and why |
+| 2 | Jaeger or the registry could not be read; nothing was written |
+
+A violation that no plan owns is the outcome the monitor exists to prevent,
+so a run that leaves one behind never exits 0 — including a quiet run with no
+new violation, when an earlier run's reopen failed:
+
+```
+unowned i-2026-10-02-pot-splits-evenly (pot-splits-evenly: open, and no-such-plan has no Maintenance phase for it)
+  owner "no-such-plan" is not a plan folder — nothing was reopened
+```
 
 ```
 opened i-2026-09-19-every-commit-evaluated (every-commit-evaluated, 1 new trace)
@@ -290,8 +303,10 @@ Written, not committed: review the incidents and commit them.
 
 An open incident of the promise is **extended**: its new trace ids are
 appended and `last_seen` moves forward, never back. Otherwise one is
-**opened** as `incidents/i-<date>-<promise>.md` (with `-2`, `-3`… on
-collision):
+**opened** as `incidents/i-<date>-<promise>.md`, with `-2`, `-3`… when that
+id is taken. An id is taken when its incident file exists **or** when the
+owner's impl already has a Maintenance phase naming it — a phase outlives its
+incident file, so deleting the file does not free the id:
 
 ```md
 ---
@@ -361,6 +376,21 @@ archive paths):
   Phase 1's register, or a `### Trajectory Rationale` entry. The phase cannot
   close until that test passes.
 - An owner with no impl gets one holding only this phase.
+- An **extended** incident whose phase exists is the normal second pass and
+  writes nothing.
+- An **open incident whose owner carries no phase for it** — an earlier run
+  recorded it and could not reopen — is retried on **every** run, with or
+  without a new violation, and printed as `unowned`. Once the owner can be
+  reopened (its folder exists, its worktree record reads), the next run
+  appends the phase and the incident stops being reported. An **opened** incident whose heading already exists — a
+  phase written by hand, or one that arrived any other way — is a
+  **collision**: nothing is appended, and `watch` prints
+
+  ```
+    smoke-owner was not reopened — its impl already has "Maintenance — i-2026-10-02-chat-keeps-line-breaks", which this new incident did not write; nothing was appended
+  ```
+
+  and exits 1.
 - An archived plan with an unchecked Maintenance phase is **reopened**:
   `list_plans` lists it active and `get_plan_status` reads it by name from the
   archive.

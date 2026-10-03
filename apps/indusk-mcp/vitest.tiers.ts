@@ -35,6 +35,7 @@ export const SYSTEM = [
 	"src/__tests__/telemetry-restart-port-pin.test.ts",
 	"src/__tests__/telemetry-ui-reachable.test.ts",
 	"src/__tests__/update-scm-jj-removed.test.ts",
+	"src/__tests__/watch-reopen-collision.test.ts",
 ];
 
 /**

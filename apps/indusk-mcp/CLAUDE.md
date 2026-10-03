@@ -147,11 +147,14 @@ pointer; the pointer holds the story.
   `promises.jaeger` (`url` + `credential_env`, the variable's *name*); absence
   means the local daemon; `resolveMarkSource` decides. — see
   `/decisions/day-monitor`
-- A token counts after a comment opener earlier on its line or directly inside
-  a quote; an owner is a plan *directory*, never `archive`; link paths pass
-  `isUsableRelPath` before any join; a mark's project is `markProjectId`
-  (the shared git directory, never `basename(cwd)`); a health read never
-  throws.
+- Where a token may sit is `lib/tokens.ts`; an owner is a plan *directory*,
+  never `archive`; link paths pass `isUsableRelPath` before any join; a mark's
+  project is `markProjectId` (the shared git directory, never
+  `basename(cwd)`); a health read never throws.
+- **An opened incident never takes an id its owner's Maintenance phases name**
+  (`maintenanceIncidentIds`); `watch` exits 1 for any incident left without
+  its owner's phase — opened, extended, or open from an earlier run — and
+  retries that reopen every run. — see `/reference/cli/promises`
 - **The always-on pass announces once, and only after Slack accepts**
   (`lib/always-on/pass.ts`). **A string from a marked span is untrusted input
   to a plan document** — `incidents.ts`'s `oneLine` collapses `environment`
@@ -227,7 +230,8 @@ pointer; the pointer holds the story.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —
-  `helpers/promises-fixture.ts`; a plan in a worktree —
+  `helpers/promises-fixture.ts` (also a watched behaviour promise, its code
+  files, an open incident); a plan in a worktree —
   `helpers/plan-worktree-fixture.ts`; trunk-guard —
   `helpers/trunk-guard-fixture.ts`; the throwing git runner —
   `helpers/test-git.ts`; MCP tools — `helpers/tool-call.ts`; the built CLI —

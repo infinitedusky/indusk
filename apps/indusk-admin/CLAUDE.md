@@ -11,7 +11,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   registry `~/.indusk/projects.json`, routes `/p/[project]/...`). Custom
   Tailwind primitives — no shadcn, no Radix. Reuse indusk-mcp's parsers through
   workspace subpath exports; never duplicate parsing. Bundled pre-built into
-  the tarball by `prepublishOnly`. — see `/decisions/admin-ui-hosting`
+  the tarball by `prepublishOnly`. Why a standalone read-only viewer — see
+  `/decisions/indusk-admin-ui`; why one daemon and a registry — see
+  `/decisions/admin-ui-hosting`
 - Tailwind 4 needs Node 22 ("Cannot find native binding" on 18).
 - **The plan page is live**: `LiveRefresh` probes the page and
   `router.refresh()`es every `admin.refresh_ms` (default 5000), pauses when
