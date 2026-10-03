@@ -25,6 +25,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **day-always-on (2026-09-21, Day 4b′)** — the promise loop as an always-on server; deployment is its own plan ([archive](planning/archive/day-always-on/)). The image and the Fly reference are unrun until `day-always-on-deploy` closes, and the guide says so.
 - **release-ritual (2026-10-01)** — the bump is retrospective Step 11; trunk-guard reads the release message; the install is checked against the lockfile before npm ([archive](planning/archive/release-ritual/)).
 - **admin-plan-type (2026-10-01)** — a plan declares its type; absent documents and what comes next are judged by it ([archive](planning/archive/admin-plan-type/)).
+- **context-tiers (2026-10-02)** — a rule reaches the agent where it applies: enforcers name their lesson, area rules sit in nested `CLAUDE.md` files, the root holds design intent under an 18 KB budget ([archive](planning/archive/context-tiers/)).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
@@ -483,6 +484,27 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-02T01:27:38.115Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f7378711 — eval agent: scoring commit 9a216c2c
+
+**Session ID**: f7378711-aeef-4789-8700-990004adeddf
+**Last updated**: 2026-10-03T01:22:52.734Z
+**Branch**: plan/context-tiers
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/context-tiers
 
 ### In Flight
 

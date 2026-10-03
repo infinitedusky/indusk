@@ -79,15 +79,11 @@ smaller root with a lowered budget. See [adr.md](adr.md).
     future release.
   - would require: a documented guarantee from Claude Code, or the probe in CI
     with a `claude` binary.
-  - mitigation: A1–A3 stay in `pnpm e2e` and run at the close of any plan that
-    touches a context file and before each release; the retrospective's Step 11
-    lists the run; a red probe blocks the release.
+  - mitigation: procedure — `pnpm e2e -- context-tiers` (A1–A3, A17) runs at the close of every plan that edits a context file, and its retrospective records the result (this plan: 9/9 at Build Phase 7). Not wired into `pnpm release`; whether to wire it is an open operator decision, recorded in the retrospective.
 - **Agents act on a delivered rule (U2)**
   - reason: model behaviour, not system behaviour.
   - would require: a measured corpus of sessions with and without delivery.
-  - mitigation: the retrospective reports any rule broken in this plan's own
-    sessions while it was delivered; the eval agent's scorecards are the running
-    signal.
+  - mitigation: review — each plan's retrospective reports, under "Deferred Verification Audit", every delivered rule its own sessions broke (this plan: two), and the eval agent's per-commit scorecards are the running signal.
 
 ## Checklist
 
