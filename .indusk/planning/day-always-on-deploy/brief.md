@@ -81,16 +81,21 @@ real projects, and have its problems found before anything is deployed.
    viewer starts at "is anything broken, and where" and drills down to which
    promise and when.
 
-   **A red stays visible until it is fixed, whatever the window** (Sandy,
-   2026-10-03). A busy display may show only the last twelve hours, and a
-   violation older than that would scroll off and leave the row looking
-   green. So the window decides what is drawn, never what is reported:
-   a promise with an **unfixed** violation — an open incident, or a violation
-   not yet recorded as one — carries an unfixed marker on its row and on
+   **Fixed or unfixed is a state of the violation, drawn as its colour**
+   (Sandy, 2026-10-03). Three colours: **green** an upheld run, **red** a
+   violation whose incident is unfixed — open, or not yet recorded — and
+   **purple** a violation whose incident has been fixed. The colour follows
+   the incident's state, so the moment an incident is marked fixed its past
+   reds turn purple: history keeps every break, and only an unfixed one reads
+   as a live problem.
+
+   **The window decides what is drawn, never what is reported.** A busy
+   display may show only the last twelve hours; an unfixed violation older
+   than that would scroll off and leave the row looking green. So a promise
+   with any unfixed violation carries a red unfixed marker on its row and on
    every group above it, naming how long ago it broke ("violated 2 d ago —
-   open"), until the incident is fixed. The marker comes from the incident's
-   state, not from the marks inside the window, so no window length can hide
-   it.
+   open"), until the incident is fixed — read from the incident's state, not
+   from the marks inside the window, so no window length can hide it.
 
    First real data to show: `every-commit-evaluated` — red through the
    evening of 2026-10-02 (`i-2026-10-03-every-commit-evaluated`), green from
