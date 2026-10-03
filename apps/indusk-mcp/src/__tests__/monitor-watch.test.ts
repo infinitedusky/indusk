@@ -5,12 +5,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { type LocalJaeger, newTraceId, startLocalJaeger } from "./helpers/local-jaeger.js";
 import {
+	behaviourPromise,
+	codeFilesFor,
 	daysAgo,
 	type PromiseProject,
 	type PromiseSpec,
 	promiseProject,
-	siteFile,
-	testFile,
 } from "./helpers/promises-fixture.js";
 
 /**
@@ -27,25 +27,7 @@ const RELEASE = "seat-release-on-timeout";
 const UNWRITTEN = "_Unwritten — a person writes this._";
 
 function behaviour(name: string, extra: Partial<PromiseSpec> = {}): PromiseSpec {
-	return {
-		name,
-		kind: "behaviour",
-		state: "enforced",
-		domain: "seating",
-		owner: "lab-v0",
-		sites: [`src/${name}.ts`],
-		tests: [`src/${name}.test.ts`],
-		...extra,
-	};
-}
-
-function codeFiles(...names: string[]): Record<string, string> {
-	return Object.fromEntries(
-		names.flatMap((n) => [
-			[`src/${n}.ts`, siteFile(n)],
-			[`src/${n}.test.ts`, testFile(n)],
-		]),
-	);
+	return behaviourPromise(name, { owner: "lab-v0", domain: "seating", ...extra });
 }
 
 function incidentsFor(
@@ -97,7 +79,7 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — promises watch", () => {
 			domains: ["seating"],
 			landed: { "lab-v0": daysAgo(3) },
 			promises: [behaviour(DOUBLE)],
-			files: codeFiles(DOUBLE),
+			files: codeFilesFor(DOUBLE),
 		});
 		extended = promiseProject({
 			domains: ["seating"],
@@ -124,7 +106,7 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — promises watch", () => {
 					traces: [oldTrace],
 				},
 			],
-			files: codeFiles(RELEASE),
+			files: codeFilesFor(RELEASE),
 		});
 		await jaeger.load([
 			{
@@ -213,7 +195,7 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — an unwritten root cause cannot be 
 					rootCause: UNWRITTEN,
 				},
 			],
-			files: codeFiles(DOUBLE),
+			files: codeFilesFor(DOUBLE),
 		});
 	});
 

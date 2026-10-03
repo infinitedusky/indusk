@@ -4,10 +4,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { type LocalJaeger, newTraceId, startLocalJaeger } from "./helpers/local-jaeger.js";
 import {
+	behaviourPromise,
+	codeFilesFor,
+	openIncidentSpec,
 	type PromiseProject,
 	promiseProject,
-	siteFile,
-	testFile,
 } from "./helpers/promises-fixture.js";
 
 /**
@@ -58,23 +59,6 @@ trajectory: required
 ${phases}`;
 }
 
-function behaviour(name: string, owner: string, extra: Record<string, unknown> = {}) {
-	return {
-		name,
-		kind: "behaviour" as const,
-		state: "enforced" as const,
-		domain: "chat",
-		owner,
-		sites: [`src/${name}.ts`],
-		tests: [`src/${name}.test.ts`],
-		...extra,
-	};
-}
-
-function codeFor(name: string): Record<string, string> {
-	return { [`src/${name}.ts`]: siteFile(name), [`src/${name}.test.ts`]: testFile(name) };
-}
-
 function incidentFiles(root: string): string[] {
 	try {
 		return readdirSync(join(root, ".indusk", "promises", "incidents")).filter((n) =>
@@ -83,23 +67,6 @@ function incidentFiles(root: string): string[] {
 	} catch {
 		return [];
 	}
-}
-
-/** An open incident from an earlier run, in ADR D6's shape. */
-function openIncident(id: string, promise: string) {
-	return {
-		id,
-		promise,
-		source: "local" as const,
-		status: "open" as const,
-		date: "2026-09-17",
-		symptom: "Seen on an earlier run.",
-		rootCause: "_Unwritten — a person writes this._",
-		fix: "_Not yet fixed._",
-		opened: "2026-09-17T10:00:00Z",
-		lastSeen: "2026-09-17T10:00:00Z",
-		traces: ["0af7651916cd43dd8448eb211c80319c"],
-	};
 }
 
 const ownerText = (p: PromiseProject) =>
@@ -166,8 +133,8 @@ describe.skipIf(SHOULD_SKIP)("watch-reopen-collision — promises watch", () => 
 			activePlans: [OWNER],
 			// The deleted incident's Maintenance phase stays; its file is gone.
 			planFiles: { [`${OWNER}/impl.md`]: ownerImpl([stale]) },
-			promises: [behaviour(REUSED, OWNER)],
-			files: codeFor(REUSED),
+			promises: [behaviourPromise(REUSED, { owner: OWNER, domain: "chat" })],
+			files: codeFilesFor(REUSED),
 		});
 		projects.push(p);
 		const r = watch(p);
@@ -186,23 +153,16 @@ describe.skipIf(SHOULD_SKIP)("watch-reopen-collision — promises watch", () => 
 			domains: ["chat"],
 			activePlans: [OWNER],
 			planFiles: { [`${OWNER}/impl.md`]: ownerImpl([open]) },
-			promises: [behaviour(EXTENDED, OWNER, { state: "known-violated", incidents: [open] })],
-			incidents: [
-				{
-					id: open,
-					promise: EXTENDED,
-					source: "local",
-					status: "open",
-					date: "2026-09-17",
-					symptom: "A held seat stayed held.",
-					rootCause: "_Unwritten — a person writes this._",
-					fix: "_Not yet fixed._",
-					opened: "2026-09-17T10:00:00Z",
-					lastSeen: "2026-09-17T10:00:00Z",
-					traces: ["0af7651916cd43dd8448eb211c80319c"],
-				},
+			promises: [
+				behaviourPromise(EXTENDED, {
+					owner: OWNER,
+					domain: "chat",
+					state: "known-violated",
+					incidents: [open],
+				}),
 			],
-			files: codeFor(EXTENDED),
+			incidents: [openIncidentSpec(open, EXTENDED)],
+			files: codeFilesFor(EXTENDED),
 		});
 		projects.push(p);
 		const r = watch(p);
@@ -215,8 +175,8 @@ describe.skipIf(SHOULD_SKIP)("watch-reopen-collision — promises watch", () => 
 	it("A4 — an opened incident whose owner is not a plan folder makes watch exit non-zero", () => {
 		const p = promiseProject({
 			domains: ["chat"],
-			promises: [behaviour(ORPHAN, "no-such-plan")],
-			files: codeFor(ORPHAN),
+			promises: [behaviourPromise(ORPHAN, { owner: "no-such-plan", domain: "chat" })],
+			files: codeFilesFor(ORPHAN),
 		});
 		projects.push(p);
 		const r = watch(p);
@@ -229,10 +189,15 @@ describe.skipIf(SHOULD_SKIP)("watch-reopen-collision — promises watch", () => 
 		const p = promiseProject({
 			domains: ["chat"],
 			promises: [
-				behaviour(EXTENDED_ORPHAN, "no-such-plan", { state: "known-violated", incidents: [open] }),
+				behaviourPromise(EXTENDED_ORPHAN, {
+					owner: "no-such-plan",
+					domain: "chat",
+					state: "known-violated",
+					incidents: [open],
+				}),
 			],
-			incidents: [openIncident(open, EXTENDED_ORPHAN)],
-			files: codeFor(EXTENDED_ORPHAN),
+			incidents: [openIncidentSpec(open, EXTENDED_ORPHAN)],
+			files: codeFilesFor(EXTENDED_ORPHAN),
 		});
 		projects.push(p);
 		const r = watch(p);
@@ -250,9 +215,16 @@ describe.skipIf(SHOULD_SKIP)("watch-reopen-collision — promises watch", () => 
 			activePlans: [OWNER],
 			// An earlier run recorded the incident and could not reopen; the owner carries no phase for it.
 			planFiles: { [`${OWNER}/impl.md`]: ownerImpl([]) },
-			promises: [behaviour(LEFT_OPEN, OWNER, { state: "known-violated", incidents: [open] })],
-			incidents: [openIncident(open, LEFT_OPEN)],
-			files: codeFor(LEFT_OPEN),
+			promises: [
+				behaviourPromise(LEFT_OPEN, {
+					owner: OWNER,
+					domain: "chat",
+					state: "known-violated",
+					incidents: [open],
+				}),
+			],
+			incidents: [openIncidentSpec(open, LEFT_OPEN)],
+			files: codeFilesFor(LEFT_OPEN),
 		});
 		projects.push(p);
 		const r = watch(p);
@@ -267,10 +239,15 @@ describe.skipIf(SHOULD_SKIP)("watch-reopen-collision — promises watch", () => 
 		const p = promiseProject({
 			domains: ["chat"],
 			promises: [
-				behaviour(LEFT_ORPHAN, "no-such-plan", { state: "known-violated", incidents: [open] }),
+				behaviourPromise(LEFT_ORPHAN, {
+					owner: "no-such-plan",
+					domain: "chat",
+					state: "known-violated",
+					incidents: [open],
+				}),
 			],
-			incidents: [openIncident(open, LEFT_ORPHAN)],
-			files: codeFor(LEFT_ORPHAN),
+			incidents: [openIncidentSpec(open, LEFT_ORPHAN)],
+			files: codeFilesFor(LEFT_ORPHAN),
 		});
 		projects.push(p);
 		const r = watch(p);

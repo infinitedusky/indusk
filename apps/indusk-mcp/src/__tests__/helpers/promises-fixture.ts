@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import matter from "gray-matter";
+import { NOT_YET_FIXED, UNWRITTEN_ROOT_CAUSE } from "../../lib/promises/vocabulary.js";
 import { git } from "./cli.js";
 
 /**
@@ -115,6 +116,58 @@ export function siteFile(name: string): string {
 /** A test file whose only content is the token, in a line comment. */
 export function testFile(name: string): string {
 	return `// ${token(name)}\nimport { it } from "vitest";\nit("names it", () => {});\n`;
+}
+
+/**
+ * A behaviour promise a `watch` test drives: enforced, its site and test at
+ * `src/<name>.ts` and `src/<name>.test.ts` (write them with `codeFilesFor`).
+ * Three watch tests spelled this before it lived here (watch-reopen-collision
+ * cleanup).
+ */
+export function behaviourPromise(
+	name: string,
+	opts: { owner: string; domain: string } & Partial<PromiseSpec>,
+): PromiseSpec {
+	return {
+		name,
+		kind: "behaviour",
+		state: "enforced",
+		sites: [`src/${name}.ts`],
+		tests: [`src/${name}.test.ts`],
+		...opts,
+	};
+}
+
+/** The site and test files `behaviourPromise` names, for each promise, for `promiseProject({ files })`. */
+export function codeFilesFor(...names: string[]): Record<string, string> {
+	return Object.fromEntries(
+		names.flatMap((n) => [
+			[`src/${n}.ts`, siteFile(n)],
+			[`src/${n}.test.ts`, testFile(n)],
+		]),
+	);
+}
+
+/** An open incident an earlier run recorded, in ADR D6's shape: root cause unwritten, one trace. */
+export function openIncidentSpec(
+	id: string,
+	promise: string,
+	extra: Partial<IncidentSpec> = {},
+): IncidentSpec {
+	return {
+		id,
+		promise,
+		source: "local",
+		status: "open",
+		date: "2026-09-17",
+		symptom: "Seen on an earlier run.",
+		rootCause: UNWRITTEN_ROOT_CAUSE,
+		fix: NOT_YET_FIXED,
+		opened: "2026-09-17T10:00:00Z",
+		lastSeen: "2026-09-17T10:00:00Z",
+		traces: ["0af7651916cd43dd8448eb211c80319c"],
+		...extra,
+	};
 }
 
 const DEFAULT_STATEMENT = "A seat is never held by two players at once.";
