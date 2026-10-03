@@ -1,0 +1,9 @@
+# Any new reader of "what does the code say" must be exercised against all four workbench LAYOUTS when written — the wrapper-vs-declared-repo mistake recurs across unrelated subsystems
+
+context-tiers' falsification phase found that three new readers written in this plan — the lesson scan (`lessonStates`), `check-pointers`, and the budget hook's workbench case — all made the same mistake in a versioned workbench: they read only the workbench wrapper (the state root) and missed the declared repo's own checkout, where the actual `CLAUDE.md` / lesson tokens / code lives. This is the same mistake `detectTooling` and the cleanup lib had already made and been fixed for, months earlier, in unrelated subsystems — the rule ("a workbench has declared repos; read through them, not the wrapper") existed in context, scoped to the readers that had already been bitten, but a brand-new reader doesn't inherit that scoping just because the rule is written down somewhere.
+
+All three defects in this plan were caught only by falsification (deliberately running the new readers over fixtures shaped like real workbenches), not by the readers' own unit tests, which were written against non-workbench fixtures.
+
+**How to apply:** any time you write a new function that answers "what does this project's code/config/context say" (a scanner, a linter, a context walker, a budget check), run it — at authoring time, not just at falsification — against all four workbench `LAYOUTS` fixtures (`helpers/versioned-workbench.ts`), not only a plain single-repo fixture. A reader that only ever sees a plain-repo fixture in its own tests will look correct and still misjudge a workbench on first contact.
+
+See `.indusk/planning/archive/context-tiers/retrospective.md` ("What We Learned", "What We'd Do Differently") and `helpers/versioned-workbench.ts`.
