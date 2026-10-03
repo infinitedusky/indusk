@@ -15,9 +15,23 @@ import type { IncidentSource } from "./vocabulary.js";
  * `JaegerUnreachable` rather than reporting a quiet window it never read.
  */
 
+/**
+ * One thing a run did to an incident. `unowned` is an open incident from an
+ * earlier run whose owner carries no Maintenance phase for it — a reopen that
+ * failed then, retried now (watch-reopen-collision A6) — and has no new traces.
+ */
+export interface WatchChange {
+	id: string;
+	kind: IncidentChange["kind"] | "unowned";
+	traces: string[];
+	promise: string;
+	owner: string;
+	reopen: ReopenResult;
+}
+
 export interface WatchResult {
 	source: string;
-	changes: (IncidentChange & { promise: string; owner: string; reopen: ReopenResult })[];
+	changes: WatchChange[];
 }
 
 type OwnerCopy = { ok: true; liveDir?: string } | { ok: false; detail: string };
@@ -70,15 +84,41 @@ export async function watchPromises(
 	const changes: WatchResult["changes"] = [];
 	for (const promise of behaviour) {
 		const violations = marks.byPromise.get(promise.name)?.violations ?? [];
-		if (violations.length === 0) continue;
+		const open = read.registry.incidents.filter(
+			(i) => i.promise === promise.name && i.status === "open",
+		);
+		if (violations.length === 0 && open.length === 0) continue;
 		const copy = await ownerCopy(planRoot, promise.owner);
+		const reopenFor = (id: string, kind: "opened" | "extended"): ReopenResult =>
+			copy.ok
+				? reopenOwner(planRoot, promise.owner, id, promise.name, copy.liveDir, kind)
+				: { reopened: false, reason: "copy-problem", detail: copy.detail };
+
 		const avoid = idsTakenByOwner(planRoot, promise.owner, copy);
-		const change = recordViolations(read.registry, promise, violations, opts.source, now, avoid);
-		if (!change) continue;
-		const reopen: ReopenResult = copy.ok
-			? reopenOwner(planRoot, promise.owner, change.id, promise.name, copy.liveDir, change.kind)
-			: { reopened: false, reason: "copy-problem", detail: copy.detail };
-		changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
+		const change =
+			violations.length > 0
+				? recordViolations(read.registry, promise, violations, opts.source, now, avoid)
+				: null;
+		if (change) {
+			const reopen = reopenFor(change.id, change.kind);
+			changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
+		}
+
+		// An open incident from an earlier run whose owner carries no phase for
+		// it was left unowned by a reopen that failed then. Retry it every run:
+		// a quiet window must still repair it, or say it cannot (A6).
+		const owned = idsTakenByOwner(planRoot, promise.owner, copy);
+		for (const incident of open) {
+			if (incident.id === change?.id || owned.has(incident.id)) continue;
+			changes.push({
+				id: incident.id,
+				kind: "unowned",
+				traces: [],
+				promise: promise.name,
+				owner: promise.owner,
+				reopen: reopenFor(incident.id, "extended"),
+			});
+		}
 	}
 	return { changes, source };
 }
@@ -109,7 +149,11 @@ export function watchReport(result: WatchResult): WatchReport {
 	let missed = false;
 	for (const c of result.changes) {
 		const n = c.traces.length;
-		out.push(`${c.kind} ${c.id} (${c.promise}, ${n} new trace${n === 1 ? "" : "s"})`);
+		out.push(
+			c.kind === "unowned"
+				? `unowned ${c.id} (${c.promise}: open, and ${c.owner} has no Maintenance phase for it)`
+				: `${c.kind} ${c.id} (${c.promise}, ${n} new trace${n === 1 ? "" : "s"})`,
+		);
 		const r = c.reopen;
 		if (r.reopened) {
 			out.push(`  reopened ${c.owner}: Build Phase ${r.phase}: Maintenance — ${c.id}`);
