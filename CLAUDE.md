@@ -87,6 +87,7 @@ dusk/
 - Promises (Day 4a): one markdown file per promise at the plan root, links as declared paths verified by a `promise: <name>` token, per-kind link rule, four states, domains in config, one `lib/promises/` behind CLI/MCP/admin — see `/decisions/day-promises`
 - Monitor (Day 4b): plain-OTel promise mark, no InDusk runtime code; `promises status`/`watch` over local Jaeger; reopen by Maintenance phase; `monitor` from files — see `/decisions/day-monitor`
 - Always-on (Day 4b′): the shipped Jaeger as a server (badger + basic auth, Fly reference); an in-process pass announces each violation once to Slack, failure-safe; detect-and-notify only; a project names its Jaeger, absence = local — see `/decisions/day-always-on`
+- Watcher heartbeat: every promise read first probes its Jaeger (a span sent and read back) and says *watcher blind*, never zero; the server beats each pass and tells Slack once each way — see `.indusk/planning/watcher-heartbeat/adr.md`
 
 ## Known Gotchas
 

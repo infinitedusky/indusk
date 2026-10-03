@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching"
 date: 2026-10-03
-status: proposed
+status: accepted
 ---
 
 # The watcher proves it is watching
