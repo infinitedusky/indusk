@@ -76,7 +76,8 @@ real projects, and have its problems found before anything is deployed.
    **Grouped and collapsible** (Sandy, 2026-10-03). The rows group two ways,
    chosen on the page: **by plan** — every promise a plan owns under that
    plan — or **by domain**. A group collapses to one summary row, its runs
-   combined so a red anywhere in the group shows red at that time, and opens
+   combined so each moment shows the worst state in the group — red over
+   purple over green — and opens
    to its promises; a promise opens to its own timeline and incidents. A
    viewer starts at "is anything broken, and where" and drills down to which
    promise and when.
