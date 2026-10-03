@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.57.2] — 2026-10-03
+
+### Fixed
+- **The evaluator no longer loses a scorecard that follows prose with braces in it.** When the model answered with a sentence and then a fenced scorecard whose evidence quoted a code fence, the extractor's fence match ended inside the JSON, and its fallback gave up on the first `{` — which was prose ("rows keyed {kind, number}"). It now tries each `{` in turn. Five commit evaluations were lost this way on 2026-10-02 (incident `i-2026-10-03-every-commit-evaluated`).
+
 ## [1.57.1] — 2026-10-03
 
 ### Fixed
