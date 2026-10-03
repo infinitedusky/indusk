@@ -147,3 +147,29 @@ describe.each(LAYOUTS)("A20 — in a %s workbench, a plan worktree's root file",
 		).toBe(0);
 	});
 });
+
+describe("A14 — a workbench that declares no repos_root", () => {
+	it("finds the repo where resolveReposRoot does — the workbench's parent — and judges it a root", async () => {
+		const parent = mkdtempSync(join(tmpdir(), "context-tiers-noroot-"));
+		roots.push(parent);
+		const wb = join(parent, "workbench");
+		mkdirSync(join(wb, ".indusk"), { recursive: true });
+		writeFileSync(
+			join(wb, ".indusk/config.json"),
+			JSON.stringify({
+				worktree: { shape: "workbench", repos: [{ name: "alpha" }] },
+				context: { claude_md_budget_bytes: 1000, nested_claude_md_budget_bytes: 300 },
+			}),
+		);
+		// A sibling of the workbench, as `resolveReposRoot` reads an absent
+		// `repos_root`; no `.git`, so only the declaration can make it a root.
+		mkdirSync(join(parent, "alpha"), { recursive: true });
+		const file = join(parent, "alpha", "CLAUDE.md");
+		writeFileSync(file, "# repo\n");
+		const r = await budget(
+			{ tool_name: "Write", tool_input: { file_path: file, content: "r".repeat(500) }, cwd: wb },
+			wb,
+		);
+		expect(r.exitCode, `alpha/CLAUDE.md is the declared repo's root file — ${r.stderr}`).toBe(0);
+	});
+});
