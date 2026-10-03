@@ -230,7 +230,8 @@ pointer; the pointer holds the story.
 - Fixtures with one home: a versioned workbench —
   `helpers/versioned-workbench.ts` (`LAYOUTS` for `describe.each`; a test about
   where code lives runs over all four); a promise-bearing project —
-  `helpers/promises-fixture.ts`; a plan in a worktree —
+  `helpers/promises-fixture.ts` (also a watched behaviour promise, its code
+  files, an open incident); a plan in a worktree —
   `helpers/plan-worktree-fixture.ts`; trunk-guard —
   `helpers/trunk-guard-fixture.ts`; the throwing git runner —
   `helpers/test-git.ts`; MCP tools — `helpers/tool-call.ts`; the built CLI —
