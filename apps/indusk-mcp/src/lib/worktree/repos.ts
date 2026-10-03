@@ -176,3 +176,21 @@ export const NOT_A_WORKBENCH =
 export function repoDir(repo: WorkbenchRepo): string {
 	return repo.path ?? repo.name;
 }
+
+/**
+ * Every declared repo with the directory its checkout lives in — the join of
+ * `resolveReposRoot` (where repos live) and `repoDir` (each one's directory
+ * name). Empty for a flat project.
+ *
+ * The one place that join is spelled (context-tiers cleanup, A24). It was
+ * written at four sites — the health roots, the execution roots, the papers
+ * destination and `check-pointers` — and each is the same fact, the kind
+ * whose copies the layout lessons say drift silently. The hook lane's port is
+ * `declaredRepoDirsAt` in `hooks/_hook-paths.js`.
+ */
+export function declaredRepoDirs(projectRoot: string): { name: string; dir: string }[] {
+	const repos = readWorkbenchRepos(projectRoot);
+	if (repos.length === 0) return [];
+	const reposRoot = resolveReposRoot(projectRoot);
+	return repos.map((r) => ({ name: r.name, dir: join(reposRoot, repoDir(r)) }));
+}
