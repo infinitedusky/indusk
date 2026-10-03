@@ -3,6 +3,7 @@ import { readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { REPO_ROOT } from "./helpers/cli.js";
+import { registerRows } from "./helpers/register.js";
 
 /**
  * context-tiers — A10, A12, A13: no rule is lost, the root carries no
@@ -50,24 +51,6 @@ export function rootEntries(md: string): RootEntry[] {
 		if (/^- /.test(raw) || /^\*\*/.test(raw)) out.push({ section, text: raw.replace(/^- /, "") });
 	}
 	return out;
-}
-
-export interface RegisterRow {
-	section: string;
-	entry: string;
-	tier: string;
-	destination: string;
-}
-
-const TIERS = new Set(["enforcer", "directory", "root", "current.md", "deleted"]);
-
-export function registerRows(md: string): RegisterRow[] {
-	return md
-		.split("\n")
-		.filter((l) => /^\|\s*\d+\s*\|/.test(l))
-		.map((l) => l.split("|").map((c) => c.trim()))
-		.filter((c) => TIERS.has(c[4]))
-		.map((c) => ({ section: c[2], entry: c[3], tier: c[4], destination: c[5] }));
 }
 
 const norm = (s: string) =>
@@ -154,28 +137,23 @@ describe("A19 — every enforcer row names an enforcer the lesson scan reads", (
 	it("each named enforcer file guards the row's lesson", async () => {
 		const { lessonStates } = await import("../lib/lessons/state.js");
 		const states = await lessonStates(REPO_ROOT);
-		const lines = readFileSync(REGISTER, "utf-8")
-			.split("\n")
-			.filter((l) => /^\|\s*\d+\s*\|/.test(l))
-			.map((l) => l.split("|").map((c) => c.trim()))
-			.filter((c) => c[4] === "enforcer");
-		expect(lines.length, "enforcer rows in register.md").toBeGreaterThan(0);
+		const rows = registerRows(readFileSync(REGISTER, "utf-8")).filter((r) => r.tier === "enforcer");
+		expect(rows.length, "enforcer rows in register.md").toBeGreaterThan(0);
 		const unguarded: string[] = [];
-		for (const c of lines) {
-			const row = c[1];
-			const lesson = /lesson: ([a-z][a-z0-9-]*)/.exec(c[6])?.[1];
+		for (const r of rows) {
+			const lesson = /lesson: ([a-z][a-z0-9-]*)/.exec(r.enforcer)?.[1];
 			if (!lesson) {
-				unguarded.push(`row ${row}: names no lesson`);
+				unguarded.push(`row ${r.row}: names no lesson`);
 				continue;
 			}
 			const guards = states.find((s) => s.name === lesson)?.guardedBy.map((g) => g.file) ?? [];
 			// The destination names enforcers by path; a bare file name stands for a
 			// file under the package (the eight pins are listed that way).
-			const named = [...c[5].matchAll(/`([^`]+\.[cm]?[jt]sx?)`/g)].map((m) => m[1]);
-			expect(named.length, `row ${row} names no enforcer file`).toBeGreaterThan(0);
+			const named = [...r.destination.matchAll(/`([^`]+\.[cm]?[jt]sx?)`/g)].map((m) => m[1]);
+			expect(named.length, `row ${r.row} names no enforcer file`).toBeGreaterThan(0);
 			for (const file of named) {
 				if (!guards.some((g) => g === file || g.endsWith(`/${file}`))) {
-					unguarded.push(`row ${row}: ${file} does not carry lesson: ${lesson}`);
+					unguarded.push(`row ${r.row}: ${file} does not carry lesson: ${lesson}`);
 				}
 			}
 		}

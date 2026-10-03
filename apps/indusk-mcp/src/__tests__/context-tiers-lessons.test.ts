@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { registerLessonTools } from "../tools/lesson-tools.js";
 import { REPO_ROOT } from "./helpers/cli.js";
+import { registerRows } from "./helpers/register.js";
 import { git, initRepoWithCommit } from "./helpers/test-git.js";
 import { toolCaller } from "./helpers/tool-call.js";
 import { LAYOUTS } from "./helpers/versioned-workbench.js";
@@ -157,11 +158,7 @@ describe("A5 — each single-definition pin names its lesson when it fails", () 
 	});
 
 	it("the register lists at least those eight as enforcer rows", () => {
-		const rows = readFileSync(REGISTER, "utf-8")
-			.split("\n")
-			.filter((l) => /^\|\s*\d+\s*\|/.test(l))
-			.map((l) => l.split("|").map((c) => c.trim()))
-			.filter((cells) => cells[4] === "enforcer");
+		const rows = registerRows(readFileSync(REGISTER, "utf-8")).filter((r) => r.tier === "enforcer");
 		expect(rows.length, "enforcer rows in register.md").toBeGreaterThanOrEqual(PINS.length);
 	});
 });
