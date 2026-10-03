@@ -137,6 +137,21 @@ time. Re-ordered 2026-09-17 with 0–3 closed; 4c added 2026-09-18.
   instead of inviting its own deletion; a test that can state neither has to
   justify existing, which is where a test that cannot fail gets noticed. Builds
   on `context-tiers`, which supplies the lesson token.
+- **4c's change rule: a plan that changes a promise retires it and declares
+  the replacement** (Sandy, 2026-10-03). A promise is born in the plan that
+  declares it, and a violation reopens that plan — but a later plan that
+  changes the promised code must not leave the promise pointing at the plan
+  that no longer describes it. It retires the old promise and declares a new
+  one as its own, carrying **`supersedes: <old>`**. The link is written once,
+  on the new side, by the plan doing the change — a plan is aware of what it
+  does, never of what something external later does to it; "superseded by" is
+  derived by reading, and `promises check` refuses a `supersedes` naming a
+  promise that does not exist or is not retired. The registry's existing
+  `superseded_by` field becomes derived history. Found when
+  `every-commit-evaluated`'s first incident reopened `semantic-graph-eval`, an
+  April plan named for the retired semantic graph: that promise was a
+  September backfill with a mis-recorded owner (corrected to `day-monitor`,
+  which wrote what it states) — the case this rule keeps from recurring.
 - **6 needs 4a and 5.** Binding mutates "the claim's code", and a promise's
   code site is one of the two candidates for what that code is (the other is
   a `Code` column); its verdict shape follows 5's. 4b and 6 can run at once.
