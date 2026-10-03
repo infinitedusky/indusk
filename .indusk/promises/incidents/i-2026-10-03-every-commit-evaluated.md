@@ -2,7 +2,7 @@
 id: i-2026-10-03-every-commit-evaluated
 promise: every-commit-evaluated
 source: local
-status: open
+status: fixed
 date: '2026-10-02'
 opened: '2026-10-02T20:22:50Z'
 last_seen: '2026-10-03T01:21:43Z'

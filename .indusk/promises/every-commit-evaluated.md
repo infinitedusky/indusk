@@ -2,7 +2,7 @@
 name: every-commit-evaluated
 kind: behaviour
 lifetime: holds
-state: known-violated
+state: enforced
 domain: gates
 owner: day-monitor
 sites:
@@ -18,3 +18,4 @@ Every commit the evaluator is asked to score is scored: the run ends with a scor
 ## History
 - 2026-09-18 — registered (day-monitor, Build Phase 1). Owner: `semantic-graph-eval`, whose ADR added the commit-triggered evaluator that "scores every commit" (2026-04-09); `agent-roles` later described the evaluator's role but did not make commits evaluated.
 - 2026-10-03 — owner corrected to `day-monitor`. The promise was born in `day-monitor`, which registered it and wrote the marking its statement describes (`lib/eval/otel.ts`); `semantic-graph-eval` was only where scoring every commit was first decided, under a name for the retired semantic graph. Its first incident, `i-2026-10-03-every-commit-evaluated`, reopened that plan; the appended phase was undone and the incident reopens `day-monitor`. A correction of the record, not a supersession: nothing promised changed.
+- 2026-10-03 — `i-2026-10-03-every-commit-evaluated` fixed (the scorecard extractor in 1.57.2, and the workspace trusted); seen upheld at 2026-10-03T05:56:48Z on the installed 1.57.2. Back to `enforced`.

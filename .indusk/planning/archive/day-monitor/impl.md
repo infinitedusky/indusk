@@ -372,7 +372,7 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 #### Build Phase 9 Verification
 
-- [ ] A31: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A31: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`) — A31 passes (`scorecard-extractor.test.ts`); seen upheld at 2026-10-03T05:56:48Z, the evaluation of `a9fb32cd` run from the installed 1.57.2, with no violation since the fix
 
 #### Build Phase 9 Context
 
