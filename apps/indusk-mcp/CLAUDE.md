@@ -161,7 +161,9 @@ pointer; the pointer holds the story.
   and `symptom`; a credential with a line separator is refused by name. The
   image is built from `docker/`, installing the *published* package; the Fly
   reference never auto-stops. — see `/decisions/day-always-on`
-- Jaeger v2 is an OTel Collector distribution; self-metrics off via
+- The local daemon is native Jaeger + otelcol (`indusk telemetry *`; jaeger_mcp
+  in each project's `.mcp.json`) — see `.indusk/planning/archive/local-telemetry/adr.md`.
+  Jaeger v2 is an OTel Collector distribution; self-metrics off via
   `service.telemetry.metrics.level: none`; binaries are platform-split
   optionalDependencies (bump via `packages/telemetry-binaries-shared/UPSTREAM.json`);
   the telemetry registry stores realpath-normalized paths. OTel
