@@ -1,7 +1,7 @@
 ---
 title: "watch opens an incident and silently does not reopen its owner"
 date: 2026-10-02
-status: draft
+status: accepted
 workflow: bugfix
 ---
 
@@ -32,10 +32,10 @@ stayed in the owner's impl, as phases do.
    only asks whether `incidents/<id>.md` exists. With the file gone, the next
    incident of that promise on that day got the bare id again.
 2. **The reopen saw a stale heading and said "already".** `reopenOwner`
-   (`lib/promises/reopen.ts:103`) dedups by heading name. That is right for an
+   (`lib/promises/reopen.ts:105`) dedups by heading name. That is right for an
    *extended* incident — its phase exists — and wrong for a newly *opened*
    one, where a matching heading can only be a collision.
-3. **The CLI swallowed it.** `promises watch` (`bin/commands/promises.ts:123`)
+3. **The CLI swallowed it.** `promises watch` (`bin/commands/promises.ts:124`)
    prints `copy-problem` and `no-owner` but nothing for `already`, so the
    skipped reopen was invisible.
 
@@ -45,17 +45,22 @@ carrying the same incident name does.
 
 ## Proposed direction
 
-- **An opened incident never matches an existing heading.** Either the id
-  allocator also skips ids that already name a Maintenance heading in the
-  owner's impl, or `reopenOwner` distinguishes the cases and returns a
-  `collision` reason when called for an *opened* incident whose heading
-  already exists. The allocator is the stronger fix (no collision is
-  representable); the reason is the honest fallback.
-- **The CLI says every reopen it did not do.** `already` stays quiet only for
-  an *extended* incident; for an opened one it is an error line naming the
-  owner and the heading, and `watch` exits non-zero.
-- **The MCP / admin readers agree.** Whatever reports watch results reports
-  the same non-reopen.
+Both halves, decided at acceptance (Sandy, 2026-10-02):
+
+- **An opened incident never matches an existing heading.** The id allocator
+  also skips any id that already names a Maintenance heading in the owner's
+  impl, so the numero case cannot recur — no collision is representable from
+  a deleted incident file.
+- **A collision that happens anyway is said.** `reopenOwner` is told whether
+  the incident was opened or extended. An *extended* incident whose phase
+  exists stays quiet, as today. An *opened* one whose heading already exists
+  (a hand-written phase, anything else that carries the name) returns
+  `collision`; `watch` prints an error naming the owner and the heading and
+  exits non-zero. A reopen that did not happen never reads as success.
+
+`watch` has one caller, the CLI: the always-on pass detects and notifies and
+never reopens, and no MCP tool or admin page reports watch results, so there
+is no second reader to bring into agreement.
 
 ## Test cases (for the test plan)
 
@@ -71,7 +76,7 @@ carrying the same incident name does.
 Renamed the new incident to `-2` by hand and called the shipped
 `reopenOwner` directly; it appended Build Phase 5 correctly.
 
-## Related, smaller
+## Related, out of scope
 
 - `watch` and `reopenOwner` write `impl.md` with `writeFileSync`, so the
   project's impl validator never sees what they append — a generated phase is
