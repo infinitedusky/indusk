@@ -1,7 +1,7 @@
 ---
 title: "watch opens an incident and silently does not reopen its owner"
 date: 2026-10-02
-status: draft
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -46,10 +46,10 @@ error line and a non-zero exit. See [brief.md](brief.md) and
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | After an incident file is deleted while its Maintenance phase stays in the owner's impl, the next violation of that promise the same day opens an incident with a new id (`…-2`), and the owner gains a new Maintenance phase for it | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
-| A2 | A violation while an incident is open extends it: no second Maintenance phase, no error line, exit 0 | Test Phase 1 | Test Phase 1 | planned | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
-| A3 | A new incident whose Maintenance heading already exists in the owner's impl is refused by the reopen as a collision with the impl untouched, and the report of that watch run prints an error naming the owner and the heading and exits non-zero | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/lib/promises/reopen-collision.test.ts |
-| A4 | A watch run in which a newly opened incident did not reopen its owner — here, an owner that is not a plan folder — exits non-zero | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
+| A1 | After an incident file is deleted while its Maintenance phase stays in the owner's impl, the next violation of that promise the same day opens an incident with a new id (`…-2`), and the owner gains a new Maintenance phase for it | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
+| A2 | A violation while an incident is open extends it: no second Maintenance phase, no error line, exit 0 | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
+| A3 | A new incident whose Maintenance heading already exists in the owner's impl is refused by the reopen as a collision with the impl untouched, and the report of that watch run prints an error naming the owner and the heading and exits non-zero | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/lib/promises/reopen-collision.test.ts |
+| A4 | A watch run in which a newly opened incident did not reopen its owner — here, an owner that is not a plan folder — exits non-zero | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/watch-reopen-collision.test.ts |
 
 ## Checklist
 
@@ -58,10 +58,10 @@ error line and a non-zero exit. See [brief.md](brief.md) and
 **Goal**: author all four rows now — every subject exists today, so nothing is
 deferred — and read each failure.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create watch-reopen-collision`, which records the assignment so the admin and plan tools read the plan from it) — worktree-per-plan default
-- [ ] Author A1, A2 and A4 in `src/__tests__/watch-reopen-collision.test.ts`: one real local Jaeger (`helpers/local-jaeger.ts`), one promise project per case (`helpers/promises-fixture.ts`) with an active owner plan whose `impl.md` is written by the fixture, violations loaded as spans, `indusk promises watch` run through the CLI. A1's owner carries `### Build Phase 3: Maintenance — i-<today>-<promise>` and no incident file; A2's carries the open incident and its phase; A4's promise names an owner with no plan folder. Add the file to `SYSTEM` in `vitest.tiers.ts` in the same commit
-- [ ] Author A3 in `src/lib/promises/reopen-collision.test.ts`: `reopenOwner` called with a sixth argument `"opened"` on an impl that already has the heading expects `{ reopened: false, reason: "collision" }` and the impl byte-for-byte unchanged; `watchReport` loaded by dynamic import (it does not exist yet — a static import would fail the file at load, not on an assertion) and asserted to exist, then given a result carrying that collision, expected to name owner and heading in an error line and return exit code 1
-- [ ] Run each and read each failure: A1 opens the bare id and reopens nothing; A3 gets `already`, and `watchReport` is not a function; A4 exits 0; A2 passes
+- [x] Create/confirm this plan's worktree (`indusk worktree create watch-reopen-collision`, which records the assignment so the admin and plan tools read the plan from it) — worktree-per-plan default
+- [x] Author A1, A2 and A4 in `src/__tests__/watch-reopen-collision.test.ts`: one real local Jaeger (`helpers/local-jaeger.ts`), one promise project per case (`helpers/promises-fixture.ts`) with an active owner plan whose `impl.md` is written by the fixture, violations loaded as spans, `indusk promises watch` run through the CLI. A1's owner carries `### Build Phase 3: Maintenance — i-<today>-<promise>` and no incident file; A2's carries the open incident and its phase; A4's promise names an owner with no plan folder. Add the file to `SYSTEM` in `vitest.tiers.ts` in the same commit
+- [x] Author A3 in `src/lib/promises/reopen-collision.test.ts`: `reopenOwner` called with a sixth argument `"opened"` on an impl that already has the heading expects `{ reopened: false, reason: "collision" }` and the impl byte-for-byte unchanged; `watchReport` loaded by dynamic import (it does not exist yet — a static import would fail the file at load, not on an assertion) and asserted to exist, then given a result carrying that collision, expected to name owner and heading in an error line and return exit code 1
+- [x] Run each and read each failure: A1 opens the bare id and reopens nothing; A3 gets `already`, and `watchReport` is not a function; A4 exits 0; A2 passes — read 2026-10-02, each exactly as predicted
 
 #### Regression Guards
 
@@ -69,7 +69,7 @@ deferred — and read each failure.
 
 #### Test Phase 1 Verification
 
-- [ ] A1, A3 and A4 fail on their own assertions and A2 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watch-reopen-collision` and `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/reopen-collision`)
+- [x] A1, A3 and A4 fail on their own assertions and A2 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watch-reopen-collision` and `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/reopen-collision`)
 
 ### Build Phase 1: the allocator, the reopen, the report
 

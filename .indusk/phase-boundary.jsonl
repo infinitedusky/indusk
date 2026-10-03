@@ -106,3 +106,4 @@
 {"plan":"context-tiers","phase":6,"kind":"build","sha":"e1d2c33e18f039f9542f6845fdb7805c27498590","timestamp":"2026-10-02T23:13:00.698Z"}
 {"plan":"context-tiers","phase":7,"kind":"build","sha":"bfc2df982ed303ef92ee0c21ea0f9daf4b2d2bf8","timestamp":"2026-10-03T01:15:42.215Z"}
 {"plan":"context-tiers","phase":8,"kind":"build","sha":"854b51080c87c1ffb5ff28c267b1788b0a76158d","timestamp":"2026-10-03T01:56:36.350Z"}
+{"plan":"watch-reopen-collision","phase":1,"kind":"test","sha":"499ac673d739c44cfd34aee2f7f24426198bc608","timestamp":"2026-10-03T02:33:52.443Z"}
