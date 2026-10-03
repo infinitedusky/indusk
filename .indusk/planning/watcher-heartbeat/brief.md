@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching"
 date: 2026-10-02
-status: draft
+status: accepted
 workflow: feature
 ---
 
@@ -50,6 +50,15 @@ deployed server with the same blind spot would fail the same way, silently.
    most promises ("an empty form is never submitted"). Only a promise about
    something known to happen regularly (`every-commit-evaluated`) opts in, and
    only then does a quiet window need attention.
+
+**What each signal is about** (Sandy asked, 2026-10-03). The probe and the
+beat are about a **backend** — "is the watcher listening". The local daemon is
+machine-global, so the projects that read it share its answer; a probe is
+tagged with its project's id, the way promise marks are, and tests the Jaeger
+*that* project reads (`promises.jaeger` may name another). A server's beat is
+per server — per workbench once each has its own instance. Item 4 is about a
+**promise** — "is this code still talking" — and is the only per-promise
+signal.
 
 The local probe needs nothing deployed, so it can be built and proven first;
 the server's beat rides on the same span shape and the pass it already runs.
