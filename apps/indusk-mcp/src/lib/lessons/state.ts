@@ -1,8 +1,8 @@
-import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
-import { resolveCheckRoots } from "../health.js";
 import { citedTokens } from "../promises/citations.js";
 import { anyTokenPattern } from "../tokens.js";
+import { declaredRepoDirs } from "../worktree/repos.js";
 
 /**
  * A lesson's state, derived on every read and never stored (context-tiers,
@@ -21,7 +21,7 @@ import { anyTokenPattern } from "../tokens.js";
  *
  * In a workbench the code is in the declared repos, which the workbench's own
  * git ignores, so the scan reads the project root AND each declared repo
- * (`resolveCheckRoots`, the roots the health checks use) — scanning the
+ * (`declaredRepoDirs`, the one home of where a checkout lives) — scanning the
  * wrapper alone read every code-repo guard as advisory (context-tiers A21).
  */
 
@@ -135,13 +135,8 @@ export async function lessonStates(projectRoot: string): Promise<LessonState[]> 
  * scanned throws, as the single-root scan does.
  */
 async function citedLessons(projectRoot: string): Promise<Map<string, string[]>> {
-	const seen = new Set<string>();
-	const roots = [projectRoot, ...resolveCheckRoots(projectRoot)].filter((root) => {
-		const key = existsSync(root) ? realpathSync(root) : root;
-		if (seen.has(key)) return false;
-		seen.add(key);
-		return true;
-	});
+	// A flat project declares no repos, so the project root is never listed twice.
+	const roots = [projectRoot, ...declaredRepoDirs(projectRoot).map((r) => r.dir)];
 	const cited = new Map<string, string[]>();
 	for (const root of roots) {
 		for (const [name, files] of await citedTokens(root, () => anyTokenPattern("lesson"))) {

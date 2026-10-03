@@ -1,5 +1,4 @@
-import { join } from "node:path";
-import { isWorkbench, readWorkbenchRepos, repoDir, resolveReposRoot } from "./repos.js";
+import { declaredRepoDirs, isWorkbench, readWorkbenchRepos } from "./repos.js";
 
 /**
  * Where the plan lives, and where its code lives — the one answer for run,
@@ -69,7 +68,7 @@ export function resolveExecutionRoots(planRoot: string): ExecutionRoots | Execut
 	// (workbench-trust-fixes, A13).
 	return {
 		planRoot,
-		codeRoot: join(resolveReposRoot(planRoot), repoDir(repos[0])),
+		codeRoot: declaredRepoDirs(planRoot)[0].dir,
 		split: true,
 	};
 }

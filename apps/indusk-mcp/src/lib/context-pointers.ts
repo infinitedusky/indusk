@@ -24,7 +24,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { LESSONS_REL_DIR } from "./lessons/state.js";
 import { anyTokenPattern } from "./tokens.js";
-import { readWorkbenchRepos, repoDir, resolveReposRoot } from "./worktree/repos.js";
+import { declaredRepoDirs } from "./worktree/repos.js";
 
 /** Directory prefixes that count as pointers when they appear in CLAUDE.md. */
 const POINTER_PREFIXES = ["\\.indusk", "apps", "docker", "packages", "\\.claude"];
@@ -161,13 +161,9 @@ export function contextFiles(projectRoot: string): string[] {
  * context file at all.
  */
 export function checkAllContextPointers(projectRoot: string): ContextFileReport[] | null {
-	const reposRoot = resolveReposRoot(projectRoot);
 	const roots: { dir: string; repo?: string }[] = [
 		{ dir: projectRoot },
-		...readWorkbenchRepos(projectRoot).map((r) => ({
-			dir: join(reposRoot, repoDir(r)),
-			repo: r.name,
-		})),
+		...declaredRepoDirs(projectRoot).map((r) => ({ dir: r.dir, repo: r.name })),
 	];
 	const reports: ContextFileReport[] = roots.flatMap(({ dir, repo }) =>
 		contextFiles(dir).map((file) => ({

@@ -206,14 +206,15 @@ describe("dawn-workbench-execution — verify across the split", () => {
 	});
 });
 
-describe.each(
-	LAYOUTS,
-)("A13 (verify) — an honest phase verifies clean on the %s layout", (_label, build) => {
-	it("verifies clean from the workbench root", async () => {
-		wb = build();
-		honestPhase(wb);
-		const report = await verifyAt(wb.root, 1);
-		expect(report.findings, JSON.stringify(report.findings, null, 2)).toEqual([]);
-		expect(report.verdict).toBe("clean");
-	}, 60_000);
-});
+describe.each(LAYOUTS)(
+	"A13 (verify) — an honest phase verifies clean on the %s layout",
+	(_label, build) => {
+		it("verifies clean from the workbench root", async () => {
+			wb = build();
+			honestPhase(wb);
+			const report = await verifyAt(wb.root, 1);
+			expect(report.findings, JSON.stringify(report.findings, null, 2)).toEqual([]);
+			expect(report.verdict).toBe("clean");
+		}, 60_000);
+	},
+);

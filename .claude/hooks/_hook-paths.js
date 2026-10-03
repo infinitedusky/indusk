@@ -253,9 +253,11 @@ export function declaredReposAt(statePath) {
  * "a declared repo's own root `CLAUDE.md` is a root, never a nested file".
  *
  * The base the checkouts live under is the declared `repos_root`, else the
- * legacy `sibling_parent`, else the workbench root itself — a deliberate port
- * of `reposDir` in `src/lib/worktree/repos.ts`, beside the `readWorkbenchRepos`
- * + `repoDir` port above. Change them together.
+ * legacy `sibling_parent`, else the workbench's PARENT — as `resolveReposRoot`
+ * reads an absent value (this port once said the workbench root, and judged
+ * such a repo's root `CLAUDE.md` as nested) — a deliberate port
+ * of `declaredRepoDirs` in `src/lib/worktree/repos.ts`, beside the
+ * `readWorkbenchRepos` + `repoDir` port above. Change them together.
  *
  * @param {string | null} statePath
  * @returns {string[]}
@@ -267,7 +269,7 @@ export function declaredRepoDirsAt(statePath) {
 	const declaredBase = [worktree?.repos_root, worktree?.sibling_parent].find(
 		(v) => typeof v === "string" && v.trim() !== "",
 	);
-	const base = resolve(statePath, declaredBase ?? ".");
+	const base = resolve(statePath, declaredBase ?? "..");
 	return declaredRepos(config).map((r) => {
 		const dir = resolve(base, r.dir);
 		try {
