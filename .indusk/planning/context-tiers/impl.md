@@ -264,7 +264,7 @@ What the investigation found, row by row:
 - [x] `context-tiers-register.test.ts`: A19's check reads each `enforcer` row's destination files and lesson through `lessonStates`, so the register and the derivation cannot disagree again — authored that way as the red test: no second parser of tokens, the row's named files matched against `guardedBy`
 - [x] `hooks/claude-md-budget.js`: a `CLAUDE.md` whose directory is the top of a git checkout (`.git` present — a directory in a clone, a file in a worktree) is a root file, beside the state-root and declared-repo rules. A flat project's sibling worktree whose `.indusk/` is untracked reads root by the same rule
 - [x] `lib/lessons/state.ts`: `lessonStates` scans the project root and each of `resolveCheckRoots`' roots, paths reported relative to the project root, so a token in a declared repo's test guards
-- [ ] `lib/context-pointers.ts`: `checkAllContextPointers` walks the workbench root and each declared repo, each file's pointers resolved against its own repo; `src/bin/commands/context.ts` names the repo beside the file
+- [x] `lib/context-pointers.ts`: `checkAllContextPointers` walks the workbench root and each declared repo, each file's pointers resolved against its own repo; `src/bin/commands/context.ts` names the repo beside the file — the repos come from `readWorkbenchRepos` + `repoDir` (the one reader). A22's fixture first named `src/…` paths, which the pointer grammar (`.indusk`, `apps`, `docker`, `packages`, `.claude`) does not read, so it would have stayed red after the fix for the wrong reason; corrected to `apps/…` paths, assertion unchanged
 
 #### Build Phase 7 Verification
 

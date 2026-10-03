@@ -24,6 +24,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { LESSONS_REL_DIR } from "./lessons/state.js";
 import { anyTokenPattern } from "./tokens.js";
+import { readWorkbenchRepos, repoDir, resolveReposRoot } from "./worktree/repos.js";
 
 /** Directory prefixes that count as pointers when they appear in CLAUDE.md. */
 const POINTER_PREFIXES = ["\\.indusk", "apps", "docker", "packages", "\\.claude"];
@@ -118,8 +119,10 @@ export function checkClaudeMdPointers(projectRoot: string): PointerReport | null
 }
 
 export interface ContextFileReport extends PointerReport {
-	/** Repo-root-relative path of the context file. */
+	/** Path of the context file, relative to the repository that holds it. */
 	file: string;
+	/** The declared repo holding the file, in a workbench; absent for the project root. */
+	repo?: string;
 }
 
 /**
@@ -150,16 +153,30 @@ export function contextFiles(projectRoot: string): string[] {
 
 /**
  * Walk every context file. Pointers in a nested file resolve against the
- * project root, as they do in the root file: a rule names `apps/x/y.ts`
- * wherever it lives. Null when there is no context file at all.
+ * root of the repository holding it, as they do in that repository's root
+ * file: a rule names `apps/x/y.ts` wherever it lives. In a workbench that is
+ * the workbench root and each declared repo — the code repo's files are
+ * ignored by the workbench's git, so walking the wrapper alone printed PASS
+ * over files it never opened (context-tiers A22). Null when there is no
+ * context file at all.
  */
 export function checkAllContextPointers(projectRoot: string): ContextFileReport[] | null {
-	const files = contextFiles(projectRoot);
-	if (files.length === 0) return null;
-	const reports = files.map((file) => ({
-		file,
-		...checkPointers(readFileSync(join(projectRoot, file), "utf-8"), projectRoot),
-	}));
+	const reposRoot = resolveReposRoot(projectRoot);
+	const roots: { dir: string; repo?: string }[] = [
+		{ dir: projectRoot },
+		...readWorkbenchRepos(projectRoot).map((r) => ({
+			dir: join(reposRoot, repoDir(r)),
+			repo: r.name,
+		})),
+	];
+	const reports: ContextFileReport[] = roots.flatMap(({ dir, repo }) =>
+		contextFiles(dir).map((file) => ({
+			file,
+			...(repo ? { repo } : {}),
+			...checkPointers(readFileSync(join(dir, file), "utf-8"), dir),
+		})),
+	);
+	if (reports.length === 0) return null;
 	const current = currentMdVersionClaims(projectRoot);
 	if (current) reports.push(current);
 	return reports;

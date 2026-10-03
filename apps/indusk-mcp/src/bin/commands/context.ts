@@ -1,4 +1,9 @@
-import { checkAllContextPointers } from "../../lib/context-pointers.js";
+import { type ContextFileReport, checkAllContextPointers } from "../../lib/context-pointers.js";
+
+/** A context file as the report names it: in a workbench, its repo first. */
+function where(r: ContextFileReport): string {
+	return r.repo ? `${r.repo}: ${r.file}` : r.file;
+}
 
 /**
  * `indusk context check-pointers` — verify every path-shaped reference and
@@ -19,7 +24,7 @@ export function contextCheckPointers(projectRoot: string): void {
 	}
 	const scanned = reports.reduce((n, r) => n + r.scanned.length, 0);
 	console.info(
-		`${scanned} pointer(s) scanned across ${reports.length} context file(s): ${reports.map((r) => r.file).join(", ")}`,
+		`${scanned} pointer(s) scanned across ${reports.length} context file(s): ${reports.map(where).join(", ")}`,
 	);
 	const failures = reports.reduce((n, r) => n + r.dead.length + r.versionClaims.length, 0);
 	if (failures === 0) {
@@ -28,13 +33,15 @@ export function contextCheckPointers(projectRoot: string): void {
 	}
 	for (const r of reports) {
 		if (r.dead.length > 0) {
-			console.error(`FAIL — ${r.dead.length} dead pointer(s) in ${r.file}:`);
+			console.error(`FAIL — ${r.dead.length} dead pointer(s) in ${where(r)}:`);
 			for (const p of r.dead) {
 				console.error(`  - ${p}`);
 			}
 		}
 		if (r.versionClaims.length > 0) {
-			console.error(`FAIL — ${r.versionClaims.length} hand-copied version claim(s) in ${r.file}:`);
+			console.error(
+				`FAIL — ${r.versionClaims.length} hand-copied version claim(s) in ${where(r)}:`,
+			);
 			for (const v of r.versionClaims) {
 				console.error(
 					v.problem === "mismatch"

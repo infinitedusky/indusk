@@ -76,11 +76,11 @@ describe.each(LAYOUTS)(
 			git(wb.root, ["add", "CLAUDE.md"]);
 			git(wb.root, ["commit", "-q", "-m", "workbench context"]);
 			const repo = wb.repos[0];
-			mkdirSync(join(repo.dir, "src"), { recursive: true });
-			writeFileSync(join(repo.dir, "src/real.ts"), "export const r = 1;\n");
+			mkdirSync(join(repo.dir, "apps/real"), { recursive: true });
+			writeFileSync(join(repo.dir, "apps/real/thing.ts"), "export const r = 1;\n");
 			writeFileSync(
 				join(repo.dir, "CLAUDE.md"),
-				"# alpha\n\n- the rule is in `src/real.ts`; its sibling `src/missing.ts` is gone\n",
+				"# alpha\n\n- the rule is in `apps/real/thing.ts`; its sibling `apps/gone/thing.ts` is gone\n",
 			);
 			git(repo.dir, ["add", "-A"]);
 			git(repo.dir, ["commit", "-q", "-m", "repo context"]);
@@ -88,9 +88,9 @@ describe.each(LAYOUTS)(
 			const out = `${r.stdout}\n${r.stderr}`;
 			expect(r.code, `the repo's root file holds one dead pointer — ${out}`).toBe(1);
 			expect(out, "the repo is named beside its file").toContain(repo.name);
-			expect(out).toContain("src/missing.ts");
+			expect(out).toContain("apps/gone/thing.ts");
 			expect(out, "a pointer the repo holds resolves against the repo").not.toMatch(
-				/dead[^\n]*src\/real\.ts|src\/real\.ts[^\n]*dead/i,
+				/- apps\/real\/thing\.ts/,
 			);
 		});
 	},
