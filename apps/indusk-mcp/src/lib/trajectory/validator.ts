@@ -440,7 +440,7 @@ export function validateRationaleCompleteness(
 	if (rowsNeedingRationale.length > 0 && !hasSubsection) {
 		errors.push({
 			rule: "rationale-completeness",
-			message: `\`rationale: required\` is set and ${rowsNeedingRationale.length} trajectory row(s) have \`Writable at\` later than Phase ${baseline}, but the impl is missing the \`### Trajectory Rationale\` subsection. Rows at or below the baseline don't need rationale; rows where authoring waits on later plan code do — add an entry for ${rowsNeedingRationale.map((r) => r.id).join(", ")}.`,
+			message: `\`rationale: required\` is set and ${rowsNeedingRationale.length} trajectory row(s) have \`Writable at\` later than Phase ${baseline}, but the impl is missing the \`### Trajectory Rationale\` subsection. Rows at or below the baseline don't need rationale; rows where authoring waits on later plan code do — add an entry for ${rowsNeedingRationale.map((r) => r.id).join(", ")}.\nlesson: test-red-at-earliest-writable-phase`,
 		});
 		// Even without the subsection, fall through to also check for stale entries
 		// (there are none in this case, but the structure is symmetric).
@@ -454,7 +454,7 @@ export function validateRationaleCompleteness(
 	if (missing.length > 0 && hasSubsection) {
 		errors.push({
 			rule: "rationale-completeness",
-			message: `Trajectory rows with \`Writable at\` later than Phase ${baseline} missing from \`### Trajectory Rationale\`: ${missing.join(", ")}. Every row whose authoring waits on later plan code needs a \`- **TN** \`Writable at: Phase N\` — {reason}\` entry. Rows at or below the baseline (Phase ${baseline}) do not need rationale.`,
+			message: `Trajectory rows with \`Writable at\` later than Phase ${baseline} missing from \`### Trajectory Rationale\`: ${missing.join(", ")}. Every row whose authoring waits on later plan code needs a \`- **TN** \`Writable at: Phase N\` — {reason}\` entry. Rows at or below the baseline (Phase ${baseline}) do not need rationale.\nlesson: test-red-at-earliest-writable-phase`,
 		});
 	}
 
