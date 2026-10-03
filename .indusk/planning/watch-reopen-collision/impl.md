@@ -1,7 +1,7 @@
 ---
 title: "watch opens an incident and silently does not reopen its owner"
 date: 2026-10-02
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -88,11 +88,11 @@ deferred — and read each failure.
 
 #### Build Phase 1 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`), the promises entry: an opened incident never shares an id with a Maintenance heading in its owner (the allocator avoids them), and `watch` exits 1 for any opened incident it did not reopen — a skipped reopen never reads as success
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`), the promises entry: an opened incident never shares an id with a Maintenance heading in its owner (the allocator avoids them), and `watch` exits 1 for any opened incident it did not reopen — a skipped reopen never reads as success
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`, the `watch` section: the exit codes (0, 1 for an opened incident not reopened — collision, no owner, unreadable worktree record — 2 when Jaeger is unreachable) and the collision line; `apps/docs/src/changelog.md` Unreleased, Fixed
+- [x] `apps/docs/src/reference/cli/promises.md`, the `watch` section: the exit codes (0, 1 for an opened incident not reopened — collision, no owner, unreadable worktree record — 2 when Jaeger is unreachable) and the collision line; `apps/docs/src/changelog.md` Unreleased, Fixed
 
 ## Files Affected
 
