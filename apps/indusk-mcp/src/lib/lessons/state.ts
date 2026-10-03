@@ -1,5 +1,6 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
+import { join, relative } from "node:path";
+import { resolveCheckRoots } from "../health.js";
 import { citedTokens } from "../promises/citations.js";
 import { anyTokenPattern } from "../tokens.js";
 
@@ -17,6 +18,11 @@ import { anyTokenPattern } from "../tokens.js";
  * by a unit test in this repository reads advisory in a consumer, whose tree
  * has no such test; a hook-carried token travels with the hook and is guarded
  * everywhere. `guardedBy` says which kind each enforcer is.
+ *
+ * In a workbench the code is in the declared repos, which the workbench's own
+ * git ignores, so the scan reads the project root AND each declared repo
+ * (`resolveCheckRoots`, the roots the health checks use) — scanning the
+ * wrapper alone read every code-repo guard as advisory (context-tiers A21).
  */
 
 export const LESSONS_REL_DIR = ".claude/lessons";
@@ -114,11 +120,38 @@ export async function lessonListing(projectRoot: string): Promise<LessonListing>
  * every lesson advisory, which would be a verdict nobody reached.
  */
 export async function lessonStates(projectRoot: string): Promise<LessonState[]> {
-	const cited = await citedTokens(projectRoot, () => anyTokenPattern("lesson"));
+	const cited = await citedLessons(projectRoot);
 	return listLessonFiles(projectRoot).map((lesson) => {
 		const guardedBy = (cited.get(lesson.name) ?? [])
 			.map((file) => ({ file, kind: guardKind(file) }))
 			.sort((a, b) => a.file.localeCompare(b.file));
 		return { ...lesson, state: guardedBy.length > 0 ? "guarded" : "advisory", guardedBy };
 	});
+}
+
+/**
+ * name → files carrying its lesson token, across the project root and each
+ * declared repo, paths relative to the project root. A root that cannot be
+ * scanned throws, as the single-root scan does.
+ */
+async function citedLessons(projectRoot: string): Promise<Map<string, string[]>> {
+	const seen = new Set<string>();
+	const roots = [projectRoot, ...resolveCheckRoots(projectRoot)].filter((root) => {
+		const key = existsSync(root) ? realpathSync(root) : root;
+		if (seen.has(key)) return false;
+		seen.add(key);
+		return true;
+	});
+	const cited = new Map<string, string[]>();
+	for (const root of roots) {
+		for (const [name, files] of await citedTokens(root, () => anyTokenPattern("lesson"))) {
+			const all = cited.get(name) ?? [];
+			for (const file of files) {
+				const rel = relative(projectRoot, join(root, file));
+				if (!all.includes(rel)) all.push(rel);
+			}
+			cited.set(name, all);
+		}
+	}
+	return cited;
 }
