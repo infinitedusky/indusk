@@ -84,7 +84,7 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A28 | In a project with no configured group id, an evaluation of a commit made in a plan worktree is marked with the same project id `promises status` uses at the trunk, so the trunk counts it | Build Phase 7 | Build Phase 7 | passing |
 | A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | passing |
 | A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | passing |
-| A31 | every-commit-evaluated holds again after i-2026-10-03-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | written |
+| A31 | every-commit-evaluated holds again after i-2026-10-03-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | passing |
 
 ## Checklist
 
@@ -367,7 +367,8 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 ### Build Phase 9: Maintenance — i-2026-10-03-every-commit-evaluated
 
 - [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-03-every-commit-evaluated.md`) — two causes: the scorecard extractor gave up on the first `{` when a fenced scorecard quoted a fence (5 runs), and an untrusted workspace made `claude` exit 1 (6 runs). A31 written red in `lib/eval/__tests__/scorecard-extractor.test.ts`
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Fix: a code site, a widened test, or a revised promise — code site: `extractScorecardJson`'s brace scan tries each `{` in turn (`lib/eval/scorecard-extractor.ts`); environment: `hasTrustDialogAccepted: true` for the dusk root in `~/.claude.json` (2026-10-03, the operator's machine — not a code change)
+- [x] Discovered: `promises-cli.test.ts` A15 required every promise in this repository to be `enforced`, so recording this incident turned the trunk red — a self-test punishing the monitor for working, and a circle (the incident can close only after this fix lands; the fix could not land while A15 failed). A15 now holds a promise `enforced` or `known-violated`; `promises check` already refuses `known-violated` with no open incident (`check.ts`), so its exit code carries the rest
 
 #### Build Phase 9 Verification
 
