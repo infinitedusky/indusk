@@ -1,7 +1,7 @@
 ---
 title: "A test run never leaves a telemetry daemon behind"
 date: 2026-10-03
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -46,8 +46,8 @@ any telemetry process running from a temporary home. See
 | A1 | Running `indusk init` on a fixture from inside the everyday suite starts no Jaeger or otelcol process — through the CLI helper, and through a child started with its own environment built on the test process's | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-never-leak.test.ts |
 | A2 | Outside the tests, `indusk telemetry register` with the switch unset still starts the daemon for a home that has none | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
 | A3 | The guard exits non-zero naming the process and home of a daemon left running from a temporary home, and stops naming it once that daemon is stopped | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
-| A4 | A test run that fails still runs the leaked-daemon guard and reports what it finds: with a daemon left in a temp home and the tests failing, the run exits non-zero and names that home | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
-| A5 | Every test entry point ends with the guard — the root `pnpm test` and `pnpm test:system`, the tier whose tests start real daemons on purpose | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
+| A4 | A test run that fails still runs the leaked-daemon guard and reports what it finds: with a daemon left in a temp home and the tests failing, the run exits non-zero and names that home | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
+| A5 | Every test entry point ends with the guard — the root `pnpm test` and `pnpm test:system`, the tier whose tests start real daemons on purpose | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
 
 ## Checklist
 
@@ -99,21 +99,23 @@ any telemetry process running from a temporary home. See
 - **A5** — `pnpm test:system` has no guard at all. It is the tier whose tests start real daemons on purpose, the only tier still able to leak one after this plan, and `pnpm release` runs it before every publish.
 
 - [x] Author A4 and A5 red in `src/__tests__/test-daemons-guard.test.ts` (system tier): A4 starts a daemon in a temp home and runs the guarded test entry with a command that fails, expecting a non-zero exit whose output names the home; A5 reads the root and package `package.json` scripts and expects both `test` and `test:system` to end in the guard. Run each and read each failure
-- [ ] `apps/indusk-mcp/scripts/with-daemon-guard.js`: runs the command it is given, then **always** runs the guard, prints both, and exits non-zero if either failed — the test command's own exit code first, so a failing suite still reads as a failing suite
-- [ ] Root `package.json` `test` and `test:system`, and the package's `test:system`: wrapped in `with-daemon-guard.js` — the root `test` no longer chains the guard with `&&`
+- [x] `apps/indusk-mcp/scripts/with-daemon-guard.js`: runs the command it is given, then **always** runs the guard, prints both, and exits non-zero if either failed — the test command's own exit code first, so a failing suite still reads as a failing suite
+- [x] Root `package.json` `test` and `test:system`, and the package's `test:system`: wrapped in `with-daemon-guard.js` (the root `test:system` delegates to the package's, so the package script carries the wrapper)
+- [x] Discovered: the system tier's first run through the guard failed naming one process that was gone a second later — a daemon a test had just stopped, still exiting. The guard now re-checks for up to 5 s and names only what is still running; A3 and A4, which leave a daemon on purpose, wait out that grace (30 s limit). An alarm that fires on a process already on its way out is the one people switch off — the root `test` no longer chains the guard with `&&`
 
 #### Build Phase 2 Verification
 
-- [ ] A4 and A5 pass and A1–A3 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/test-daemons-never-leak`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/test-daemons-guard`)
-- [ ] `pnpm test` and `pnpm test:system` are green and each ends with the guard's all-clear; 0 temp-home daemons after both
+- [x] A4 and A5 pass and A1–A3 still pass — system tier 4/4, everyday 2/2 (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/test-daemons-never-leak`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/test-daemons-guard`)
+- [x] `pnpm test` and `pnpm test:system` are green and each ends with the guard's all-clear; 0 temp-home daemons after both — `pnpm test`: mcp 1,671 / 5 skipped, admin 343, promises check clean, all-clear; `pnpm test:system`: 88 passed, all-clear (after the grace fix — its first run named a daemon still exiting); 0 before and after each
+- [x] Shape (Build Phase 2): reviewed `with-daemon-guard.js` and `check-test-daemons.js`. Nothing found: the wrapper does one thing and its exit rule is stated beside it; the guard's grace loop has its reason in its docblock. `Atomics.wait` for a synchronous sleep is deliberate — the guard is a plain script with no event loop to yield to
 
 #### Build Phase 2 Context
 
-- [ ] root (Conventions), the test-commands line: every test entry point ends with the guard, failing runs included — in the same bytes
+- [x] root (Conventions), the test-commands line: every test entry point ends with the guard, failing runs included — in the same bytes — not quite: +29 bytes (14,586), still under context-tiers' A13 ceiling of 80 % of the 18,432 budget
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/telemetry/cli.md`, the `INDUSK_SKIP_TELEMETRY_AUTOSTART` entry: the guard runs after `pnpm test` and `pnpm test:system`, pass or fail; the changelog's Fixed entry says the same
+- [x] `apps/docs/src/reference/telemetry/cli.md`, the `INDUSK_SKIP_TELEMETRY_AUTOSTART` entry: the guard runs after `pnpm test` and `pnpm test:system`, pass or fail; the changelog's Fixed entry says the same
 
 ## Files Affected
 
