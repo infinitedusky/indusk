@@ -1,16 +1,17 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { LESSONS_REL_DIR, lessonListing } from "../lib/lessons/state.js";
 
 export function registerLessonTools(server: McpServer, projectRoot: string): void {
-	const lessonsDir = join(projectRoot, ".claude/lessons");
+	const lessonsDir = join(projectRoot, LESSONS_REL_DIR);
 
 	server.registerTool(
 		"list_lessons",
 		{
 			description:
-				"List all lessons (community + personal) from .claude/lessons/ — returns title + file path per lesson, NOT full content. Titles ARE the rules in most cases; read full content via the Read tool against `path` only when a lesson is relevant to the work the user is asking for.",
+				"List all lessons (community + personal) from .claude/lessons/ — returns title, file path and state per lesson, NOT full content. State is derived on every call, never stored: `guarded` when a test or hook names the lesson in its failure message (`lesson: <name>`, so it reaches you the moment the rule breaks — `guardedBy` lists each enforcer and whether it is a hook, test or code site), `advisory` when nothing does. Skim the advisory titles; the guarded ones find you. Read full content via the Read tool against `path` only when a lesson is relevant to the work the user is asking for.",
 		},
 		async () => {
 			if (!existsSync(lessonsDir)) {
@@ -28,19 +29,7 @@ export function registerLessonTools(server: McpServer, projectRoot: string): voi
 				};
 			}
 
-			const files = readdirSync(lessonsDir).filter((f) => f.endsWith(".md"));
-			const lessons = files.map((file) => {
-				const filePath = join(lessonsDir, file);
-				// Read only enough bytes to find the H1 — avoids loading full content for the listing.
-				const content = readFileSync(filePath, "utf-8");
-				const firstLine = content.split("\n").find((l) => l.startsWith("# "));
-				return {
-					file,
-					path: filePath,
-					type: file.startsWith("community-") ? "community" : "personal",
-					title: firstLine?.replace("# ", "") ?? file,
-				};
-			});
+			const { lessons, guarded, advisory, scan } = await lessonListing(projectRoot);
 
 			return {
 				content: [
@@ -51,7 +40,10 @@ export function registerLessonTools(server: McpServer, projectRoot: string): voi
 								count: lessons.length,
 								community: lessons.filter((l) => l.type === "community").length,
 								personal: lessons.filter((l) => l.type === "personal").length,
-								note: "Titles are the actionable rules. Read full content via the Read tool on `path` only when a lesson's title matches the work you're about to do.",
+								guarded,
+								advisory,
+								...(scan ? { scan } : {}),
+								note: "Titles are the actionable rules. A guarded lesson reaches you from its enforcer when the rule breaks; skim the advisory titles. Read full content via the Read tool on `path` only when a lesson's title matches the work you're about to do.",
 								lessons,
 							},
 							null,

@@ -595,6 +595,24 @@ export async function init(projectRoot: string, options: InitOptions = {}): Prom
 		console.info("  create: .indusk/planning/");
 	}
 
+	// 3.1. The planning context file — package-owned like a skill, loaded by
+	// Claude Code when a plan document is read (context-tiers). Kept when it
+	// exists unless --force, the way skills are.
+	if (existsSync(planningDir)) {
+		const { PLANNING_CONTEXT_REL, syncPlanningContext } = await import(
+			"../../lib/planning-context.js"
+		);
+		const verb = {
+			created: "create",
+			updated: "overwrite",
+			current: "current",
+			skipped: "skip",
+		} as const;
+		const result = syncPlanningContext(packageRoot, projectRoot, { overwrite: force });
+		const suffix = result === "skipped" ? " (already exists)" : "";
+		console.info(`  ${verb[result]}: ${PLANNING_CONTEXT_REL}${suffix}`);
+	}
+
 	// 3.5. Create .indusk/current.md (operational state layer)
 	const currentMdPath = join(projectRoot, ".indusk/current.md");
 	if (existsSync(currentMdPath)) {

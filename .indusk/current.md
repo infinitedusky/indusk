@@ -13,6 +13,28 @@ Two regions:
 
 _Any agent can edit this section. Cross-cutting state that's true for the whole project right now._
 
+**Version**: never hand-copied — read `apps/indusk-mcp/package.json` (published: `npm view @infinitedusky/indusk-mcp version`); history in `apps/docs/src/changelog.md`. `indusk context check-pointers` refuses a literal version claim on this line.
+
+**In flight** (moved here from the root `CLAUDE.md`'s Current State on 2026-10-02 by context-tiers — operational state lives in this file):
+
+- **Budget, workbenches, worktrees** — the 60 KB budget ([indusk-makeover](planning/archive/indusk-makeover/)); shareable workbenches ([versioned-workbench](planning/archive/versioned-workbench/)); silent workbench failures refuse ([workbench-trust-fixes](planning/archive/workbench-trust-fixes/)); schema pointer + `on_update` ([worktree-config-schema-pointer](planning/archive/worktree-config-schema-pointer/)); worktree-per-plan ([worktree-visibility](planning/archive/worktree-visibility/), T7–T9 smokes unrun).
+- **August** — [run](planning/archive/dawn-external-orchestrator/), [grouping](planning/archive/dawn-ui-plan-grouping/), [hook parity](planning/archive/dawn-hook-parity/), [verify](planning/archive/dawn-verify/); Shape ([lifecycle-rebalance](planning/archive/lifecycle-rebalance/)), the jj removal ([jj-residue-rip-out](planning/archive/jj-residue-rip-out/)), test phases ([test-phase-structure](planning/archive/test-phase-structure/)).
+- **Mid-September** — `run`/`verify` across a workbench split ([dawn-workbench-execution](planning/archive/dawn-workbench-execution/)); three live bars ([admin-ui-phase-progress](planning/archive/admin-ui-phase-progress/)); hooks registered by the project root ([hook-cwd-independence](planning/archive/hook-cwd-independence/)); no code on `main` ([trunk-guard](planning/archive/trunk-guard/)).
+- **writing-skill (1.44.0)** — papers as plan documents, `/write`, `papers publish`; **open**: re-run the plain-language invocation check. See [archive](planning/archive/writing-skill/).
+- **2026-09-18/19** — the promise registry, Day 4a ([day-promises](planning/archive/day-promises/)); plans read from their worktree ([admin-plan-worktrees](planning/archive/admin-plan-worktrees/)); the promise loop on a laptop, Day 4b ([day-monitor](planning/archive/day-monitor/)).
+- **day-always-on (2026-09-21, Day 4b′)** — the promise loop as an always-on server; deployment is its own plan ([archive](planning/archive/day-always-on/)). The image and the Fly reference are unrun until `day-always-on-deploy` closes, and the guide says so.
+- **release-ritual (2026-10-01)** — the bump is retrospective Step 11; trunk-guard reads the release message; the install is checked against the lockfile before npm ([archive](planning/archive/release-ritual/)).
+- **admin-plan-type (2026-10-01)** — a plan declares its type; absent documents and what comes next are judged by it ([archive](planning/archive/admin-plan-type/)).
+- **context-tiers (2026-10-02)** — a rule reaches the agent where it applies: enforcers name their lesson, area rules sit in nested `CLAUDE.md` files, the root holds design intent under an 18 KB budget ([archive](planning/archive/context-tiers/)).
+
+**Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
+
+- **day-always-on-deploy / day-contract** — **next**: the deploy smoke (needs the publish, then a Fly account + a Slack webhook), then 4c = promises declared in planning, named by every row, confirmed at close. See `/guide/promises`
+- **indusk-v2-dawn** — parent plan (living master); component status in `planning/indusk-v2-dawn/master.md`
+- **Sequence reconciliation (2026-09-14)**: every folder outside the V4 sequence got one fate; the table is in `planning/master.md`.
+
+**Test bed**: `~/code/sandbox/chitin-sportsbook` exercises the dev system end-to-end.
+
 - 2026-09-15: composable.env removed from dusk (ce.json, env/, scripts, dev dep); Doppler is the env layer. indusk-mcp reads its secrets from `~/.indusk/config.env`, not Doppler — do not map it. **Direction**: indusk-admin will be hosted on a server eventually; keep its Doppler mapping, and create the missing `admin` config in the Doppler `indusk` project when that plan starts (it needs a data source before it needs secrets).
 - 2026-09-16: the admin plan page polls itself every `admin.refresh_ms` (default 5000, floor 1000; `.indusk/config.json`, never written by `update`). **Revisit the default on 2026-09-30** after two weeks of use — too slow to feel live, or loading the daemon? (admin-ui-phase-progress U2.)
 - 2026-08-30: the 2026-08-16 publish blockers are all resolved — `LEGACY_HOOKS` removal shipped (`lib/hook-migration.ts`; `check-plan-order.js` gone from disk and settings), the changelog was split per release in 1.36.2, and the batch published through 1.40.x. CLAUDE.md no longer carries version/plan-table copies; operational blockers belong here.
@@ -462,6 +484,27 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-02T01:27:38.115Z
 **Branch**: main
 **Worktree**: /Users/the_dusky/code/sandbox/dusk
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session f7378711 — eval agent: scoring commit 9a216c2c
+
+**Session ID**: f7378711-aeef-4789-8700-990004adeddf
+**Last updated**: 2026-10-03T01:22:52.734Z
+**Branch**: plan/context-tiers
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/context-tiers
 
 ### In Flight
 

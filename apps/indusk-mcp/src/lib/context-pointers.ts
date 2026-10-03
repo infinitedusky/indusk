@@ -19,8 +19,12 @@
  * fails outright. The safe resting state is a pointer, not a number.
  */
 
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
+import { LESSONS_REL_DIR } from "./lessons/state.js";
+import { anyTokenPattern } from "./tokens.js";
+import { declaredRepoDirs } from "./worktree/repos.js";
 
 /** Directory prefixes that count as pointers when they appear in CLAUDE.md. */
 const POINTER_PREFIXES = ["\\.indusk", "apps", "docker", "packages", "\\.claude"];
@@ -78,6 +82,16 @@ export function checkPointers(content: string, projectRoot: string): PointerRepo
 		if (p.includes("*") || p.includes("{")) continue; // glob/placeholder — documentation, not a pointer
 		if (!existsSync(join(projectRoot, p))) dead.push(p);
 	}
+	// A `lesson: <name>` token is a pointer too (context-tiers): under the tiers
+	// a rule's body lives behind it, in `.claude/lessons/<name>.md`.
+	const lessonRe = anyTokenPattern("lesson");
+	for (let m = lessonRe.exec(content); m !== null; m = lessonRe.exec(content)) {
+		const pointer = `lesson: ${m[1]}`;
+		if (scanned.includes(pointer)) continue;
+		scanned.push(pointer);
+		if (!existsSync(join(projectRoot, LESSONS_REL_DIR, `${m[1]}.md`))) dead.push(pointer);
+	}
+	scanned.sort();
 
 	const versionClaims: VersionClaim[] = [];
 	const actual = packageVersion(projectRoot);
@@ -102,4 +116,91 @@ export function checkClaudeMdPointers(projectRoot: string): PointerReport | null
 	const claudeMdPath = join(projectRoot, "CLAUDE.md");
 	if (!existsSync(claudeMdPath)) return null;
 	return checkPointers(readFileSync(claudeMdPath, "utf-8"), projectRoot);
+}
+
+export interface ContextFileReport extends PointerReport {
+	/** Path of the context file, relative to the repository that holds it. */
+	file: string;
+	/** The declared repo holding the file, in a workbench; absent for the project root. */
+	repo?: string;
+}
+
+/**
+ * Every context file git knows about, root first: the root `CLAUDE.md` and
+ * each nested one (context-tiers). Outside a git repository, the root alone.
+ */
+export function contextFiles(projectRoot: string): string[] {
+	let tracked: string[] = [];
+	try {
+		tracked = execFileSync(
+			"git",
+			["ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+			{
+				cwd: projectRoot,
+				encoding: "utf-8",
+				stdio: ["ignore", "pipe", "ignore"],
+			},
+		)
+			.split("\0")
+			.filter((f) => f !== "" && basename(f) === "CLAUDE.md");
+	} catch {
+		tracked = existsSync(join(projectRoot, "CLAUDE.md")) ? ["CLAUDE.md"] : [];
+	}
+	return tracked.sort((a, b) =>
+		a === "CLAUDE.md" ? -1 : b === "CLAUDE.md" ? 1 : a.localeCompare(b),
+	);
+}
+
+/**
+ * Walk every context file. Pointers in a nested file resolve against the
+ * root of the repository holding it, as they do in that repository's root
+ * file: a rule names `apps/x/y.ts` wherever it lives. In a workbench that is
+ * the workbench root and each declared repo — the code repo's files are
+ * ignored by the workbench's git, so walking the wrapper alone printed PASS
+ * over files it never opened (context-tiers A22). Null when there is no
+ * context file at all.
+ */
+export function checkAllContextPointers(projectRoot: string): ContextFileReport[] | null {
+	const roots: { dir: string; repo?: string }[] = [
+		{ dir: projectRoot },
+		...declaredRepoDirs(projectRoot).map((r) => ({ dir: r.dir, repo: r.name })),
+	];
+	const reports: ContextFileReport[] = roots.flatMap(({ dir, repo }) =>
+		contextFiles(dir).map((file) => ({
+			file,
+			...(repo ? { repo } : {}),
+			...checkPointers(readFileSync(join(dir, file), "utf-8"), dir),
+		})),
+	);
+	if (reports.length === 0) return null;
+	const current = currentMdVersionClaims(projectRoot);
+	if (current) reports.push(current);
+	return reports;
+}
+
+/**
+ * The version-claim rule followed the operational section out of the root
+ * (context-tiers): `.indusk/current.md`'s shared region is where "what is
+ * published" is written now, and a literal version there is the same copy
+ * nothing updates. Only the shared region, only version claims — the session
+ * sections are operational notes whose paths may rightly be stale.
+ */
+function currentMdVersionClaims(projectRoot: string): ContextFileReport | null {
+	const file = ".indusk/current.md";
+	const path = join(projectRoot, file);
+	if (!existsSync(path)) return null;
+	const text = readFileSync(path, "utf-8");
+	const start = text.indexOf("## Project (shared)");
+	if (start < 0) return null;
+	const end = text.indexOf("\n---", start);
+	const shared = text.slice(start, end < 0 ? undefined : end);
+	const { versionClaims } = checkPointers(shared, projectRoot);
+	// Line numbers are relative to the file, not the slice.
+	const offset = text.slice(0, start).split("\n").length - 1;
+	return {
+		file,
+		scanned: [],
+		dead: [],
+		versionClaims: versionClaims.map((v) => ({ ...v, line: v.line + offset })),
+	};
 }

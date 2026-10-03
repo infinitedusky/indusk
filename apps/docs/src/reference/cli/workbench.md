@@ -4,6 +4,17 @@ Workbench topology. A workbench wraps **N ≥ 1 repos**: it holds the shared
 `.indusk/` context, and the repos it wraps live beside it as siblings, reached
 through trunk symlinks.
 
+## Where a declared repo's checkout lives
+
+One rule, asked of one function (`declaredRepoDirs` in
+`src/lib/worktree/repos.ts`): the **repos root** — the declared `repos_root`,
+else the legacy `sibling_parent`, else the workbench's **parent** — joined with
+the repo's declared `path`, or its name when it declares none. A relative
+`repos_root` resolves against the workbench, which is what lets a nested layout
+reproduce on a clone. Health checks, `run` / `verify`, papers destinations, the
+lesson scan and `context check-pointers` all ask that function; the budget hook
+carries a deliberate JavaScript port of it.
+
 ## `indusk workbench restore`
 
 Materialize a workbench that has only been cloned.

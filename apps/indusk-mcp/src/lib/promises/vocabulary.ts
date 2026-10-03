@@ -7,6 +7,8 @@
  * `promises-single-definition.test.ts` pins that no second copy exists.
  */
 
+import { anyTokenPattern, token, tokenPattern } from "../tokens.js";
+
 /**
  * What can break a promise after it was proved, and therefore what checks it:
  * `behaviour` breaks on inputs nobody chose (a run); `state` on a later change
@@ -65,28 +67,23 @@ export const PROMISE_NAME = /^[a-z][a-z0-9-]*$/;
  *   2. a name starts with a letter.
  */
 export function promiseToken(name: string): string {
-	return `promise: ${name}`;
+	return token("promise", name);
 }
 
 /**
- * What may sit before the token on its line (A27, the falsification's
- * refinement of rule 1): a comment opener anywhere EARLIER on the line
- * (`//`, `#`, `/*`, `<!--` — so `// enforces` followed by the token counts), a
- * line-leading docblock, SQL or ini opener (`*`, `--`, `;`) with any text
- * after it, or a quote DIRECTLY before the token (so a type annotation on a
- * line with an earlier string literal still does not count).
+ * The grammar — the opener rule and the two patterns — lives in `lib/tokens.ts`
+ * since context-tiers, where the lesson token shares it. These three keep
+ * their names for the readers that spell them.
  */
-const TOKEN_OPENER = String.raw`(?<=(?:(?:\/\/|#|\/\*|<!--)[^\n]*|(?:^|\n)[ \t]*(?:\*|--|;)[^\n]*|["'${"`"}][ \t]*))`;
 
 /** Matches the token for one specific name. */
 export function promiseTokenPattern(name: string): RegExp {
-	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	return new RegExp(`${TOKEN_OPENER}promise:[ \\t]*${escaped}(?![a-z0-9-])`);
+	return tokenPattern("promise", name);
 }
 
 /** Matches every token in a file; group 1 is the name. Fresh per call (it is global). */
 export function anyPromiseTokenPattern(): RegExp {
-	return new RegExp(`${TOKEN_OPENER}promise:[ \\t]*([a-z][a-z0-9-]*)(?![a-z0-9-])`, "g");
+	return anyTokenPattern("promise");
 }
 
 /**

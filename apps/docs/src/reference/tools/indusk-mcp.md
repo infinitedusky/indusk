@@ -138,7 +138,7 @@ The 6 canonical sections: What This Is, Architecture, Conventions, Key Decisions
 
 | Tool | Input | Description |
 |------|-------|-------------|
-| `list_lessons` | — | Lists all lessons (community + personal) from `.claude/lessons/`. Read at session start. |
+| `list_lessons` | — | Lists all lessons (community + personal) from `.claude/lessons/` — title, path and **state** per lesson, plus `guarded` and `advisory` counts. The state is derived on every call, never stored: `guarded` when a test or hook in the project names the lesson in its failure message (`lesson: <name>`), with `guardedBy` naming each enforcer and whether it is a hook, test or code site; `advisory` when nothing does. A project that cannot be scanned (no git repository) gets its listing with a `scan` line saying why no state was derived. Read at session start; skim the advisory titles — the guarded ones find you when their rule breaks. |
 | `add_lesson` | `name`, `title`, `content` | Creates a new personal lesson file. Use after [retrospectives](/reference/skills/retrospective) or when discovering a non-obvious pattern. |
 
 ### Graph Tools

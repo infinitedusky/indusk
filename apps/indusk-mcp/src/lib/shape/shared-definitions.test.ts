@@ -56,7 +56,10 @@ describe("A27 — one definition of the source scanner the structural tests use"
 			if (/async function sourceFiles\s*\(/.test(await readFile(file, "utf8"))) hits.push(file);
 		}
 
-		expect(hits).toHaveLength(1);
+		expect(
+			hits,
+			"lesson: structural-single-definition-test-for-must-agree-invariants — a git primitive kept in a domain folder gets copied by the next domain",
+		).toHaveLength(1);
 	});
 });
 

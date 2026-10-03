@@ -12,20 +12,22 @@ Discipline was tried first. The `context-budget` plan shipped a skill-level conv
 
 `claude-md-budget.js` is a PreToolUse hook (installed by `indusk init` / `indusk update` alongside the gate-enforcement hooks) that intercepts every Edit/Write targeting a file named `CLAUDE.md`:
 
-- **Over budget** → the edit is **blocked**, with a message naming the compaction ritual as the way to make room.
-- **Over 90% of budget** → the edit lands, with a **warning** to compact soon.
+- **The edit does not grow the file** → it lands, at any size. A file already over budget must be able to get smaller, or the work that shrinks it cannot run — the hook once refused exactly that edit (found 2026-10-02), and the plan that moves rules out of the root is nothing but shrinking edits.
+- **Growth past the budget** → the edit is **blocked**, with a message naming the compaction ritual as the way to make room.
+- **Growth past 90% of the budget** → the edit lands, with a **warning** to compact soon.
 
-The budget lives in `.indusk/config.json`:
+Two budgets live in `.indusk/config.json`:
 
 ```json
 {
   "context": {
-    "claude_md_budget_bytes": 61440
+    "claude_md_budget_bytes": 61440,
+    "nested_claude_md_budget_bytes": 16384
   }
 }
 ```
 
-Default is 60 KB. Raising it is legitimate — but it's a recorded config edit, not a silent accretion.
+The first governs a **root** context file — the project root's `CLAUDE.md`, a declared repo's own root `CLAUDE.md` in a workbench, or the `CLAUDE.md` at the top of any git checkout (a plan worktree included, though no declaration names it). Each sits wherever it sits, but is that repository's always-loaded file, so the hook judges by directory — `.git` present marks a checkout's top — never by depth. The second governs every other file named `CLAUDE.md`: an area's rules, loaded only when a file in that area is read, so they cost nothing to sessions that never go there. Defaults are 60 KB and 16 KB. Raising either is legitimate — but it's a recorded config edit, not a silent accretion, and `context.claude_md_budget_reason` is where the reason goes.
 
 ## The entry shape: rule + pointer
 
@@ -41,7 +43,7 @@ The rule sentence is what a working session needs in context; the narrative (how
 A dead pointer under this regime is a **lost rule body** — so pointer integrity is a first-class check:
 
 ```bash
-indusk context check-pointers   # exit 1 + dead pointers and hand-copied version claims
+indusk context check-pointers   # every context file: exit 1 + dead paths, dead lesson tokens, hand-copied version claims
 ```
 
 The same check refuses a `**Version**:` line carrying a literal semver that does not match `package.json` — or that cannot be checked because the root `package.json` has no version field. A hand-copied version drifts by default: nothing in the release flow touches CLAUDE.md, and dusk's said 1.36 for twelve days while npm served 1.40. State the version as a pointer to `package.json` and the changelog instead.
@@ -79,6 +81,20 @@ Everything decays by **archiving, never deleting** — recovery is always a file
 | Dead-draft plans outside archive | 7 | 0 |
 
 A 15-entry random sample of pre-compression entries verified every operative rule survived compression (one drop was caught and restored by the sample gate itself).
+
+## The lowered budget (dusk, 2026-10-02)
+
+Compaction stopped working as the root kept filling: it sat at 61,438 of
+61,440 bytes for weeks, and each plan close evicted an entry under gate
+pressure. [Context tiers](./context-tiers) changed what has to fit rather than
+how hard to squeeze: rules an enforcer holds travel with the enforcer's
+`lesson:` token, area rules moved to nested `CLAUDE.md` files, operational state
+to `.indusk/current.md`. The root went from 61,438 to 14,678 bytes, and its
+budget was lowered to 18,432 — the surviving size plus 25 % — with the reason
+written beside it as `context.claude_md_budget_reason`. Growth past the new
+budget is the signal that a rule belongs at a lower tier, not that the budget
+is wrong. A new project's default stays 61,440: a consumer's root has not been
+classified, and lowering its ceiling before the move would block it.
 
 ## Running compaction on an over-budget file
 

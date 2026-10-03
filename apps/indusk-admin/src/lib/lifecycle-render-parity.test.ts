@@ -70,9 +70,10 @@ describe("A17 — every lifecycle member has a label and a renderer", () => {
     const missing = PLAN_POSITIONS.filter(
       (p) => !(POSITION_LABELS as Record<string, string>)[p]?.trim(),
     );
-    expect(missing, `positions without a label: ${missing.join(", ")}`).toEqual(
-      [],
-    );
+    expect(
+      missing,
+      `lesson: define-the-vocabulary-once-before-rendering-it — positions without a label: ${missing.join(", ")}`,
+    ).toEqual([]);
   });
 
   it("every phase activity has a non-empty label", () => {

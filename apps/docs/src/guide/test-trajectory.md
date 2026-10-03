@@ -107,6 +107,16 @@ Every impl document that opts in (via `trajectory: required` in the frontmatter)
   - mitigation: staging smoke run before each release; recorded fixtures replayed daily in CI
 ```
 
+A row whose mitigation is a smoke run names it in the `Test` column as a
+`manual:` command, and `verify` reports it unverified rather than passed. This
+repository keeps such runs under `pnpm e2e` (`apps/indusk-mcp/e2e/`, outside
+`pnpm test`; needs the `claude` CLI): the promise loop end to end
+(`day-monitor`), the always-on server (`day-always-on`), and the nested
+context-file probe (`context-tiers`, `pnpm e2e -- context-tiers`), which runs at
+the close of any plan that touches a `CLAUDE.md`, its result recorded in that
+plan's retrospective — the loading it guards is observed behaviour, not
+documented. `pnpm release` does not run it yet.
+
 ### Required columns
 
 | Column | Purpose |

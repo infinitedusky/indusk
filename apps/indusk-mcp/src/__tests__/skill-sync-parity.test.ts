@@ -46,7 +46,31 @@ describe("cleanup-ritual T25: installed skills match package sources", () => {
 				);
 			}
 		}
-		expect(problems).toEqual([]);
+		expect(
+			problems,
+			"lesson: mirrored-artifacts-need-structural-parity-tests — edit apps/indusk-mcp/skills/, never .claude/skills/, and resync",
+		).toEqual([]);
+	});
+});
+
+/**
+ * context-tiers A4 — the planning context file is package-owned the same way.
+ *
+ * `.indusk/planning/CLAUDE.md` is written by `init` and overwritten by
+ * `update` from `templates/planning/CLAUDE.md`; this repository has no global
+ * `indusk update` from source, so a template edit leaves the installed copy
+ * stale exactly as a skill edit does. Same pin, same remedy.
+ */
+describe("context-tiers A4: the installed planning context file matches the package template", () => {
+	it("is byte-identical", () => {
+		const template = join(REPO_ROOT, "apps/indusk-mcp/templates/planning/CLAUDE.md");
+		const installed = join(REPO_ROOT, ".indusk/planning/CLAUDE.md");
+		expect(existsSync(template), "the package carries templates/planning/CLAUDE.md").toBe(true);
+		expect(existsSync(installed), ".indusk/planning/CLAUDE.md is installed here").toBe(true);
+		expect(
+			readFileSync(installed, "utf-8"),
+			"STALE — resync with: cp apps/indusk-mcp/templates/planning/CLAUDE.md .indusk/planning/CLAUDE.md",
+		).toBe(readFileSync(template, "utf-8"));
 	});
 });
 

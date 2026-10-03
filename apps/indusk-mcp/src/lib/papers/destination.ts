@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { type PaperDestination, readConfig } from "../config.js";
-import { isWorkbench, readWorkbenchRepos, repoDir, resolveReposRoot } from "../worktree/repos.js";
+import { declaredRepoDirs, isWorkbench } from "../worktree/repos.js";
 
 /** A refusal the publish step prints and exits on. Never partially applied. */
 export class DestinationError extends Error {}
@@ -61,14 +61,14 @@ function destinationRoot(projectRoot: string, dest: PaperDestination): string {
 				`Destination "${dest.name}" names a repo ("${dest.repo}"), but this project is not a workbench — only paths are accepted here.`,
 			);
 		}
-		const repos = readWorkbenchRepos(projectRoot);
+		const repos = declaredRepoDirs(projectRoot);
 		const repo = repos.find((r) => r.name === dest.repo);
 		if (!repo) {
 			throw new DestinationError(
 				`Destination "${dest.name}" names repo "${dest.repo}", which worktree.repos[] does not declare (declared: ${repos.map((r) => r.name).join(", ") || "none"}).`,
 			);
 		}
-		return resolve(resolveReposRoot(projectRoot), repoDir(repo));
+		return repo.dir;
 	}
 	if (dest.path === undefined || dest.path === "") {
 		throw new DestinationError(`Destination "${dest.name}" has neither path nor repo.`);

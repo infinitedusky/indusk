@@ -37,7 +37,10 @@ describe("A13 — one definition of the phase heading", () => {
 		const templated = await filesMatching(srcDir, /###\\\\s\+\(\?:Build|###\\\\s\+Phase/);
 		const definitions = [...new Set([...literal, ...templated])];
 
-		expect(definitions).toHaveLength(1);
+		expect(
+			definitions,
+			"lesson: structural-single-definition-test-for-must-agree-invariants — two heading parsers diverge silently; one could not read `Test Phase N`",
+		).toHaveLength(1);
 	});
 
 	// Authored in Build Phase 1 rather than with the rest of the trajectory,
