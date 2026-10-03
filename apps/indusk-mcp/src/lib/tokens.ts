@@ -35,6 +35,22 @@ export type TokenKind = (typeof TOKEN_KINDS)[number];
  */
 export const TOKEN_OPENER = String.raw`(?<=(?:(?:\/\/|#|\/\*|<!--)[^\n]*|(?:^|\n)[ \t]*(?:\*|--|;)[^\n]*|["'${"`"}][ \t]*))`;
 
+/**
+ * A lesson token may also open a new line of a message inside one string —
+ * directly after a `\n` escape (context-tiers A18). That is where a hook's
+ * refusal puts its lesson, and check-gates' token sat there unread for the
+ * plan that introduced it. Lessons only: a promise's site is beside code, and
+ * a test fixture that spells incident frontmatter inside a string is not a
+ * citation — widening both kinds made the always-on falsification's injected
+ * frontmatter read as one.
+ */
+const LESSON_LINE_OPENER = String.raw`(?<=\\n[ \t]*)`;
+
+/** The opener a kind's token may follow. */
+function openerFor(kind: TokenKind): string {
+	return kind === "lesson" ? `(?:${TOKEN_OPENER}|${LESSON_LINE_OPENER})` : TOKEN_OPENER;
+}
+
 /** The token as it is written. */
 export function token(kind: TokenKind, name: string): string {
 	return `${kind}: ${name}`;
@@ -43,10 +59,10 @@ export function token(kind: TokenKind, name: string): string {
 /** Matches the token for one specific name. */
 export function tokenPattern(kind: TokenKind, name: string): RegExp {
 	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	return new RegExp(`${TOKEN_OPENER}${kind}:[ \\t]*${escaped}(?![a-z0-9-])`);
+	return new RegExp(`${openerFor(kind)}${kind}:[ \\t]*${escaped}(?![a-z0-9-])`);
 }
 
 /** Matches every token of a kind in a text; group 1 is the name. Fresh per call (it is global). */
 export function anyTokenPattern(kind: TokenKind): RegExp {
-	return new RegExp(`${TOKEN_OPENER}${kind}:[ \\t]*([a-z][a-z0-9-]*)(?![a-z0-9-])`, "g");
+	return new RegExp(`${openerFor(kind)}${kind}:[ \\t]*([a-z][a-z0-9-]*)(?![a-z0-9-])`, "g");
 }
