@@ -24,7 +24,7 @@ tests do — a stubbed source would test the stub.
 |----|-----------------------------------|-----------|
 | A1 | After an incident file is deleted while its Maintenance phase stays in the owner's impl, the next violation of that promise on the same day opens an incident with a new id (`…-2`), and the owner gains a new Maintenance phase for it — the numero case | vitest integration: CLI against a promise fixture and a real local Jaeger (system tier) |
 | A2 | A violation while an incident is already open extends that incident: no second Maintenance phase, no error line, exit 0 — today's behaviour, kept | vitest integration, same fixture (system tier) |
-| A3 | When a new incident's Maintenance heading already exists in the owner's impl (written by hand, or carried over any other way), `watch` still records the incident, prints an error naming the owner and the heading, and exits non-zero | vitest integration, same fixture (system tier) |
+| A3 | When a new incident's Maintenance heading already exists in the owner's impl (written by hand, or carried over any other way), `watch` still records the incident, prints an error naming the owner and the heading, and exits non-zero | vitest unit at the reopen and at the report of a watch run (everyday suite) — see Notes |
 | A4 | Any run in which a newly opened incident did not reopen its owner — a collision, an owner that is not a plan folder, or an unreadable worktree record — exits non-zero, so a script or a person checking the exit code cannot read it as success | vitest integration, same fixture (system tier) |
 
 ## Notes
