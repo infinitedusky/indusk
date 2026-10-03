@@ -49,10 +49,23 @@ relevant — at no standing cost. `list_lessons` reports each lesson as
 derived on every read and never stored; `/catchup` skims only the advisory
 titles. Guarded is relative to the project scanned: a hook's token travels
 with the hook and guards every project, a test's guards the one the test lives
-in.
+in. In a workbench the scan reads the workbench root and each declared repo,
+because the workbench's own git ignores the code — a test in the code repo
+guards.
+
+A hook's refusal usually spans several lines of one string, so the token may
+also open a line inside it, directly after a `\n`:
+
+```js
+console.error(`… still written. Author it as RED first.\nlesson: test-red-at-earliest-writable-phase`);
+```
+
+That position is the lesson kind's only. A promise token sits beside code, and
+a test fixture that spells frontmatter inside a string is not a citation.
 
 The token shares its grammar with the promise token (`lib/tokens.ts`): the
-kind, a colon, the name, after a comment opener or directly inside a quote.
+kind, a colon, the name, after a comment opener or directly inside a quote
+(a lesson token also after a `\n`, above).
 `indusk context check-pointers` treats a lesson token in any context file as a
 pointer and fails when the lesson file does not exist.
 

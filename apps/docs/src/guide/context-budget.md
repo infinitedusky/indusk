@@ -27,7 +27,7 @@ Two budgets live in `.indusk/config.json`:
 }
 ```
 
-The first governs a **root** context file — the project root's `CLAUDE.md`, or, in a workbench, a declared repo's own root `CLAUDE.md`, which sits below the workbench root but is that repository's always-loaded file (the hook judges by directory, never by depth). The second governs every other file named `CLAUDE.md`: an area's rules, loaded only when a file in that area is read, so they cost nothing to sessions that never go there. Defaults are 60 KB and 16 KB. Raising either is legitimate — but it's a recorded config edit, not a silent accretion, and `context.claude_md_budget_reason` is where the reason goes.
+The first governs a **root** context file — the project root's `CLAUDE.md`, a declared repo's own root `CLAUDE.md` in a workbench, or the `CLAUDE.md` at the top of any git checkout (a plan worktree included, though no declaration names it). Each sits wherever it sits, but is that repository's always-loaded file, so the hook judges by directory — `.git` present marks a checkout's top — never by depth. The second governs every other file named `CLAUDE.md`: an area's rules, loaded only when a file in that area is read, so they cost nothing to sessions that never go there. Defaults are 60 KB and 16 KB. Raising either is legitimate — but it's a recorded config edit, not a silent accretion, and `context.claude_md_budget_reason` is where the reason goes.
 
 ## The entry shape: rule + pointer
 

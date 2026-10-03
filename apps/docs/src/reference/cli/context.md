@@ -37,6 +37,16 @@ FAIL — 2 dead pointer(s) in apps/indusk-admin/CLAUDE.md:
   - lesson: no-such-lesson
 ```
 
+In a workbench the walk covers the workbench root **and each declared repo**:
+the workbench's own git ignores the code repos, so their context files are
+listed from each repo's git, and their pointers resolve against that repo. The
+report names the repo before the file:
+
+```
+FAIL — 1 dead pointer(s) in alpha: CLAUDE.md:
+  - apps/gone/thing.ts
+```
+
 Outside a git repository only the root file is walked. The retrospective runs
 this at every plan close, after the merge, because pointers written on a plan
 branch are only now on trunk.
