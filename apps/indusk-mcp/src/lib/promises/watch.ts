@@ -82,3 +82,52 @@ export async function watchPromises(
 	}
 	return { changes, source };
 }
+
+export interface WatchReport {
+	out: string[];
+	err: string[];
+	/** 1 when an opened incident did not reopen its owner; the person reading the exit code is told. */
+	exitCode: 0 | 1;
+}
+
+/**
+ * What `promises watch` says about a run, and how it exits. One rule for every
+ * reopen that did not happen (watch-reopen-collision): an opened incident that
+ * did not reach its owner — a collision, an owner that is not a plan folder, a
+ * worktree record that could not be read — prints an error and fails the run,
+ * because a violation no plan owns, reported as success, is the one outcome
+ * the monitor exists to prevent. An extended incident whose phase exists is
+ * the normal second pass, and stays quiet.
+ */
+export function watchReport(result: WatchResult): WatchReport {
+	const out = [`Read from Jaeger at ${result.source}.`];
+	const err: string[] = [];
+	if (result.changes.length === 0) {
+		out.push("No new violations — nothing recorded.");
+		return { out, err, exitCode: 0 };
+	}
+	let missed = false;
+	for (const c of result.changes) {
+		const n = c.traces.length;
+		out.push(`${c.kind} ${c.id} (${c.promise}, ${n} new trace${n === 1 ? "" : "s"})`);
+		const r = c.reopen;
+		if (r.reopened) {
+			out.push(`  reopened ${c.owner}: Build Phase ${r.phase}: Maintenance — ${c.id}`);
+			continue;
+		}
+		if (r.reason === "copy-problem") {
+			err.push(
+				`  ${c.owner} was not reopened — its worktree assignment could not be read: ${r.detail}`,
+			);
+		} else if (r.reason === "no-owner") {
+			err.push(`  owner "${c.owner}" is not a plan folder — nothing was reopened`);
+		} else if (r.reason === "collision") {
+			err.push(
+				`  ${c.owner} was not reopened — its impl already has "${r.heading}", which this new incident did not write; nothing was appended`,
+			);
+		}
+		if (c.kind === "opened") missed = true;
+	}
+	out.push("\nWritten, not committed: review the incidents and commit them.");
+	return { out, err, exitCode: missed ? 1 : 0 };
+}

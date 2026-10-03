@@ -4,7 +4,7 @@ import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { readPromises } from "../../lib/promises/registry.js";
 import { formatStatus, parseDuration } from "../../lib/promises/status.js";
 import { JaegerUnreachable, readPromiseMarks } from "../../lib/promises/telemetry.js";
-import { watchPromises } from "../../lib/promises/watch.js";
+import { watchPromises, watchReport } from "../../lib/promises/watch.js";
 
 /**
  * `indusk promises check`.
@@ -112,23 +112,8 @@ export async function promisesWatch(
 		process.exitCode = 2;
 		return;
 	}
-	console.info(`Read from Jaeger at ${result.source}.`);
-	if (result.changes.length === 0) {
-		console.info("No new violations — nothing recorded.");
-		return;
-	}
-	for (const c of result.changes) {
-		const n = c.traces.length;
-		console.info(`${c.kind} ${c.id} (${c.promise}, ${n} new trace${n === 1 ? "" : "s"})`);
-		if (c.reopen.reopened) {
-			console.info(`  reopened ${c.owner}: Build Phase ${c.reopen.phase}: Maintenance — ${c.id}`);
-		} else if (c.reopen.reason === "copy-problem") {
-			console.error(
-				`  ${c.owner} was not reopened — its worktree assignment could not be read: ${c.reopen.detail}`,
-			);
-		} else if (c.reopen.reason === "no-owner") {
-			console.error(`  owner "${c.owner}" is not a plan folder — nothing was reopened`);
-		}
-	}
-	console.info("\nWritten, not committed: review the incidents and commit them.");
+	const report = watchReport(result);
+	for (const line of report.out) console.info(line);
+	for (const line of report.err) console.error(line);
+	if (report.exitCode !== 0) process.exitCode = report.exitCode;
 }
