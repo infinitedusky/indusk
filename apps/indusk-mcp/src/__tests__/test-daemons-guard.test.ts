@@ -80,7 +80,7 @@ describe.skipIf(SHOULD_SKIP)("A3 — the guard names a daemon left from a tempor
 		expect(`${clear.stdout}${clear.stderr}`, "a stopped daemon is no longer named").not.toContain(
 			home,
 		);
-	});
+	}, 30_000); // the guard waits out its grace period before naming a leak
 });
 
 const WRAPPER = resolve(__dirname, "..", "..", "scripts", "with-daemon-guard.js");
@@ -104,7 +104,7 @@ describe.skipIf(SHOULD_SKIP)("A4 — a failing run still runs the guard", () => 
 		expect(`${run.stdout}${run.stderr}`, "and the guard still ran, naming the leak").toContain(
 			home,
 		);
-	});
+	}, 30_000); // the guard waits out its grace period before naming a leak
 });
 
 describe("A5 — every test entry point ends with the guard", () => {

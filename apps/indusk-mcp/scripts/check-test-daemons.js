@@ -38,16 +38,34 @@ function configDir(command) {
 	return m[1].slice(0, m[1].lastIndexOf("/"));
 }
 
-const leaked = execFileSync("ps", ["-ax", "-o", "pid=,command="], { encoding: "utf-8" })
-	.split("\n")
-	.map((l) => l.trim())
-	.filter((l) => l.includes("telemetry-binari"))
-	.map((l) => {
-		const pid = l.slice(0, l.indexOf(" "));
-		const binary = /\/bin\/(jaeger|otelcol)\b/.exec(l)?.[1] ?? "telemetry";
-		return { pid, binary, home: configDir(l) };
-	})
-	.filter((p) => p.home && tempRoots.some((root) => p.home.startsWith(`${root}/`)));
+/** Telemetry processes running from a temporary home right now. */
+function tempHomeDaemons() {
+	return execFileSync("ps", ["-ax", "-o", "pid=,command="], { encoding: "utf-8" })
+		.split("\n")
+		.map((l) => l.trim())
+		.filter((l) => l.includes("telemetry-binari"))
+		.map((l) => {
+			const pid = l.slice(0, l.indexOf(" "));
+			const binary = /\/bin\/(jaeger|otelcol)\b/.exec(l)?.[1] ?? "telemetry";
+			return { pid, binary, home: configDir(l) };
+		})
+		.filter((p) => p.home && tempRoots.some((root) => p.home.startsWith(`${root}/`)));
+}
+
+/**
+ * A daemon a test has just stopped can still be exiting when this runs — the
+ * first run of the system tier through this guard named one that was gone a
+ * second later. Report only what is still running after a grace period, so the
+ * alarm does not fire on a process already on its way out (an alarm that
+ * cries wolf is the one people switch off).
+ */
+const GRACE_MS = 5000;
+let leaked = tempHomeDaemons();
+for (const deadline = Date.now() + GRACE_MS; leaked.length > 0 && Date.now() < deadline; ) {
+	Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
+	const still = new Set(tempHomeDaemons().map((p) => p.pid));
+	leaked = leaked.filter((p) => still.has(p.pid));
+}
 
 if (leaked.length === 0) {
 	console.info("check-test-daemons: no telemetry daemon left running from a temporary home.");
