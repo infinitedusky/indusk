@@ -96,15 +96,19 @@ function readBudgets(statePath) {
 }
 
 /**
- * A root context file lives in the state root's directory or in a declared
- * repo's checkout directory. Judged by directory identity, never by depth: in a
- * workbench the wrapped repo's root `CLAUDE.md` is below the state root and is
- * still that repository's root file.
+ * A root context file lives in the state root's directory, in a declared
+ * repo's checkout directory, or at the top of any git checkout. Judged by
+ * directory identity, never by depth: in a workbench the wrapped repo's root
+ * `CLAUDE.md` is below the state root and is still that repository's root
+ * file — and so is the same file in a plan worktree of that repo, which no
+ * declaration names (context-tiers A20). `.git` marks a checkout's top: a
+ * directory in a clone, a file in a worktree.
  */
 function isRootContextFile(editedFilePath, statePath) {
 	if (!statePath) return true; // no project to be nested in — the root budget is the safer reading
 	const dir = dirname(editedFilePath);
 	if (samePath(dir, statePath)) return true;
+	if (existsSync(join(dir, ".git"))) return true;
 	return declaredRepoDirsAt(statePath).some((repoDir) => samePath(dir, repoDir));
 }
 
