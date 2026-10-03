@@ -152,9 +152,9 @@ pointer; the pointer holds the story.
   project is `markProjectId` (the shared git directory, never
   `basename(cwd)`); a health read never throws.
 - **An opened incident never takes an id its owner's Maintenance phases name**
-  (`maintenanceIncidentIds`), and `watch` exits 1 for any opened incident it
-  did not reopen — a skipped reopen never reads as success. — see
-  `/reference/cli/promises`
+  (`maintenanceIncidentIds`); `watch` exits 1 for any incident left without
+  its owner's phase — opened, extended, or open from an earlier run — and
+  retries that reopen every run. — see `/reference/cli/promises`
 - **The always-on pass announces once, and only after Slack accepts**
   (`lib/always-on/pass.ts`). **A string from a marked span is untrusted input
   to a plan document** — `incidents.ts`'s `oneLine` collapses `environment`
