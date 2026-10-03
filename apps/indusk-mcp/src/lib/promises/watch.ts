@@ -76,7 +76,7 @@ export async function watchPromises(
 		const change = recordViolations(read.registry, promise, violations, opts.source, now, avoid);
 		if (!change) continue;
 		const reopen: ReopenResult = copy.ok
-			? reopenOwner(planRoot, promise.owner, change.id, promise.name, copy.liveDir)
+			? reopenOwner(planRoot, promise.owner, change.id, promise.name, copy.liveDir, change.kind)
 			: { reopened: false, reason: "copy-problem", detail: copy.detail };
 		changes.push({ ...change, promise: promise.name, owner: promise.owner, reopen });
 	}

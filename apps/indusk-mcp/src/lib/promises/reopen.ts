@@ -90,6 +90,13 @@ function maintenancePhase(
 export type ReopenResult =
 	| { reopened: true; impl: string; phase: number }
 	| { reopened: false; reason: "already" | "no-owner" }
+	/**
+	 * An opened incident whose Maintenance heading the owner already carries.
+	 * Never a quiet "already": a new incident cannot have a phase yet, so a
+	 * matching heading belongs to something else, and nothing was written
+	 * (watch-reopen-collision).
+	 */
+	| { reopened: false; reason: "collision"; heading: string }
 	/** The plan-worktree record could not say where the owner lives; nothing was written. */
 	| { reopened: false; reason: "copy-problem"; detail: string };
 
@@ -101,6 +108,8 @@ export function reopenOwner(
 	promise: string,
 	/** The owner's live folder when it is assigned to a worktree (day-monitor A29); else found here. */
 	liveDir?: string,
+	/** Whether the incident was just opened or extended; an existing heading means different things. */
+	kind: "opened" | "extended" = "extended",
 ): ReopenResult {
 	const dir = liveDir ?? ownerDir(planRoot, owner);
 	if (!dir) return { reopened: false, reason: "no-owner" };
@@ -118,7 +127,9 @@ export function reopenOwner(
 	const parsed = parseImplString(text);
 	const name = maintenanceHeadingName(incidentId);
 	if (parsed.phases.some((p) => p.kind === "build" && p.name === name)) {
-		return { reopened: false, reason: "already" };
+		return kind === "opened"
+			? { reopened: false, reason: "collision", heading: name }
+			: { reopened: false, reason: "already" };
 	}
 	const next =
 		Math.max(0, ...parsed.phases.filter((p) => p.kind === "build").map((p) => p.number)) + 1;
