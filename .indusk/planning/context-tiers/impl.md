@@ -265,6 +265,7 @@ What the investigation found, row by row:
 - [x] `hooks/claude-md-budget.js`: a `CLAUDE.md` whose directory is the top of a git checkout (`.git` present — a directory in a clone, a file in a worktree) is a root file, beside the state-root and declared-repo rules. A flat project's sibling worktree whose `.indusk/` is untracked reads root by the same rule
 - [x] `lib/lessons/state.ts`: `lessonStates` scans the project root and each of `resolveCheckRoots`' roots, paths reported relative to the project root, so a token in a declared repo's test guards
 - [x] `lib/context-pointers.ts`: `checkAllContextPointers` walks the workbench root and each declared repo, each file's pointers resolved against its own repo; `src/bin/commands/context.ts` names the repo beside the file — the repos come from `readWorkbenchRepos` + `repoDir` (the one reader). A22's fixture first named `src/…` paths, which the pointer grammar (`.indusk`, `apps`, `docker`, `packages`, `.claude`) does not read, so it would have stayed red after the fix for the wrong reason; corrected to `apps/…` paths, assertion unchanged
+- [x] Shape (Build Phase 7): reviewed the nine code files this phase changed, every extension's rules readable. Nothing found. `openerFor` names the one per-kind difference in the grammar beside the shared opener; `citedLessons` is one job (which roots, then one scan each); `checkAllContextPointers` lists its roots then maps them; the CLI's `where` names how a report is labelled; the budget hook gained one line under the docblock that says why. Left as is: `citedLessons` dedupes roots by realpath inline — four lines, used once
 
 #### Build Phase 7 Verification
 
@@ -274,8 +275,8 @@ What the investigation found, row by row:
 
 #### Build Phase 7 Context
 
-- [ ] directory (`apps/indusk-mcp/CLAUDE.md`), the entry on tooling detection over declared repos: the lesson scan and the pointer walk join it — anything that reads "what the code says" in a workbench reads the declared repos, never the wrapper alone
-- [ ] directory (`apps/indusk-mcp/hooks/CLAUDE.md`): a hook's lesson token opens a line of its refusal — its own string, or directly after a `\n` — and the register's enforcer rows are pinned against the scan
+- [x] directory (`apps/indusk-mcp/CLAUDE.md`), the entry on tooling detection over declared repos: the lesson scan and the pointer walk join it — anything that reads "what the code says" in a workbench reads the declared repos, never the wrapper alone
+- [x] directory (`apps/indusk-mcp/hooks/CLAUDE.md`): a hook's lesson token opens a line of its refusal — its own string, or directly after a `\n` — and the register's enforcer rows are pinned against the scan
 
 #### Build Phase 7 Document
 
