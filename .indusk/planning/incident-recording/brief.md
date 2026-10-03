@@ -45,6 +45,15 @@ nothing else does either unless a person remembers to.
     past a threshold is announced again. A session-start hook may guarantee
     the reading happens; it never does the fixing.
 
+4. **A reopened plan can be worked like any other.** Found 2026-10-03 on the
+    first real incident (`i-2026-10-03-every-commit-evaluated`, reopening the
+    archived `day-monitor`): `indusk worktree create day-monitor` and
+    `indusk worktree assign day-monitor <path>` both refuse — "no plan named
+    day-monitor" — because they look only under `.indusk/planning/`, while
+    `watch` reopens owners in the archive and `list_plans` already counts such
+    a plan as active. The Maintenance phase was worked in a hand-made
+    worktree the admin and plan tools could not see.
+
 Open for the test plan: the re-announce threshold.
 
 The local half (items 2 and 3) needs nothing deployed and can start first; the
