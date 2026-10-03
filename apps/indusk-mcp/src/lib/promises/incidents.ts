@@ -51,11 +51,24 @@ export function recorded(path: string): { traces: string[]; lastSeen: string | n
 	};
 }
 
-function newIncidentId(dir: string, promise: string, day: string): string {
+/**
+ * The next free incident id for a promise on a day. An id is taken when its
+ * file exists OR when `avoid` names it — the ids the owner's Maintenance
+ * phases already carry. A phase outlives its incident file, and a deleted
+ * file once freed its id for the next incident to collide with
+ * (watch-reopen-collision).
+ */
+function newIncidentId(
+	dir: string,
+	promise: string,
+	day: string,
+	avoid: ReadonlySet<string>,
+): string {
+	const free = (id: string) => !avoid.has(id) && !existsSync(join(dir, `${id}.md`));
 	const base = `i-${day}-${promise}`;
-	if (!existsSync(join(dir, `${base}.md`))) return base;
+	if (free(base)) return base;
 	for (let n = 2; ; n++) {
-		if (!existsSync(join(dir, `${base}-${n}.md`))) return `${base}-${n}`;
+		if (free(`${base}-${n}`)) return `${base}-${n}`;
 	}
 }
 
@@ -112,6 +125,8 @@ export function recordViolations(
 	violations: MarkedSpan[],
 	source: IncidentSource,
 	now: Date,
+	/** Ids an opened incident must not take: those the owner's Maintenance phases name. */
+	avoid: ReadonlySet<string> = new Set(),
 ): IncidentChange | null {
 	const dir = join(registry.dir, INCIDENTS_SUBDIR);
 	const mine = registry.incidents.filter((i) => i.promise === promise.name);
@@ -137,7 +152,7 @@ export function recordViolations(
 
 	mkdirSync(dir, { recursive: true });
 	const oldest = fresh.reduce((a, b) => (b.at < a.at ? b : a));
-	const id = newIncidentId(dir, promise.name, iso(now).slice(0, 10));
+	const id = newIncidentId(dir, promise.name, iso(now).slice(0, 10), avoid);
 	writeFileSync(
 		join(dir, `${id}.md`),
 		incidentText({
