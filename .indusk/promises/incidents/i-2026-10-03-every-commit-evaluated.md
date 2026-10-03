@@ -26,7 +26,11 @@ claude exited with code 1: Ignoring 234 permissions.allow entries from .claude/s
 
 ## Root cause
 
-_Unwritten — a person writes this._
+Two causes behind the eleven traces; the symptom above is only the newest.
+
+**Five runs (2026-10-02 20:22–21:31): a scorecard the extractor could not find.** The model answered with a sentence of prose and then the scorecard in a ```` ```json ```` fence — a shape `extractScorecardJson` (`lib/eval/scorecard-extractor.ts`) exists to handle. Two things together defeated it. The fence match is non-greedy, so when the scorecard's own evidence strings quote a code fence (common for this repository's commits) the match ends inside the JSON and the fenced text does not parse. The fallback then scans from the *first* `{` in the reply — and this repository's prose is full of braces (`{kind, number}`, `{plan, phase}`); the first balanced object it found was prose, did not parse, and the extractor returned nothing rather than trying the next `{`. Either condition alone is survived; together they lose the scorecard. Reproduced against the shipped function before the fix.
+
+**Six runs (2026-10-02 21:34 – 2026-10-03 01:21): a workspace Claude Code had not trusted.** The evaluator runs `claude` from the project root; `~/.claude.json` had `hasTrustDialogAccepted: false` for `/Users/the_dusky/code/sandbox/dusk`, so the CLI ignored the project's permissions and exited 1. An environment setting on one machine, not a code defect — but a real violation all the same: the commit went unscored.
 
 ## Fix
 
