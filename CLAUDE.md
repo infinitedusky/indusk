@@ -69,7 +69,6 @@ dusk/
 - Falsification ritual between work and retrospective (goal-flipped bounty hunt; phase-authoring as of 1.27.4) — see `/decisions/falsification-ritual`
 - Cleanup ritual as falsify's twin (no fifth gate, no LOC ratchet — threshold is attention-focus) — see `/decisions/cleanup-ritual`
 - Three-tier agent roles + highlights queue — see `.indusk/planning/archive/agent-roles/adr.md`
-- Admin UI: standalone Next.js read-only viewer — see `/decisions/indusk-admin-ui`; hosted as machine-global daemon + registry — see `/decisions/admin-ui-hosting`
 - Local telemetry: native-binary Jaeger + otelcol daemon, `indusk telemetry *` CLI, jaeger_mcp wired into project `.mcp.json` — see `.indusk/planning/archive/local-telemetry/adr.md`
 - `rationale_baseline` frontmatter for refactor-baseline plans — see `/lessons/rationale-baseline-frontmatter`
 - Doppler extension as the env layer — see `.indusk/planning/archive/doppler-extension/adr.md`
