@@ -1,7 +1,7 @@
 ---
 title: "watch opens an incident and silently does not reopen its owner — Test Plan"
 date: 2026-10-02
-status: draft
+status: accepted
 ---
 
 # watch reopen collision — Test Plan
@@ -34,7 +34,15 @@ tests do — a stubbed source would test the stub.
   `copy-problem`) also print an error and then exit 0. Same failure, same
   fix — one exit-code rule for every reopen that did not happen. Drop A4 if
   the exit code should stay as it is for those two.
-- All four rows need the telemetry daemon, so they run in `pnpm test:system`,
+- **A3's mechanism, corrected while writing the impl (2026-10-02).** Once the
+  allocator skips every id the owner's impl already names, `watch` can no
+  longer produce a collision — the numero case becomes A1. So A3 is tested
+  where a collision is decided and where it is reported: the reopen, handed an
+  opened incident whose heading exists, refuses with a collision and writes
+  nothing; and the report of a watch result carrying one prints the error
+  naming owner and heading and gives a non-zero exit. vitest unit, everyday
+  suite. The assertion itself is unchanged.
+- A1, A2 and A4 need the telemetry daemon, so they run in `pnpm test:system`,
   beside `monitor-watch.test.ts`, not in the everyday suite.
 - A1 and A3 are reproducible against today's code, so both are written red in
   Test Phase 1; A2 is a regression guard that passes the moment it is written.
