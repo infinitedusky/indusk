@@ -159,3 +159,5 @@ and hooks account for 44 files, +1,786 / −159, most of it tests.
 | Register rows | — | 138, every one with a destination |
 
 ## Landing
+
+Landed on main at 5ab6c408, 2026-10-02.
