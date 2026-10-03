@@ -46,8 +46,8 @@ any telemetry process running from a temporary home. See
 | A1 | Running `indusk init` on a fixture from inside the everyday suite starts no Jaeger or otelcol process — through the CLI helper, and through a child started with its own environment built on the test process's | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-never-leak.test.ts |
 | A2 | Outside the tests, `indusk telemetry register` with the switch unset still starts the daemon for a home that has none | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
 | A3 | The guard exits non-zero naming the process and home of a daemon left running from a temporary home, and stops naming it once that daemon is stopped | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
-| A4 | A test run that fails still runs the leaked-daemon guard and reports what it finds: with a daemon left in a temp home and the tests failing, the run exits non-zero and names that home | Build Phase 2 | Build Phase 2 | planned | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
-| A5 | Every test entry point ends with the guard — the root `pnpm test` and `pnpm test:system`, the tier whose tests start real daemons on purpose | Build Phase 2 | Build Phase 2 | planned | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
+| A4 | A test run that fails still runs the leaked-daemon guard and reports what it finds: with a daemon left in a temp home and the tests failing, the run exits non-zero and names that home | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
+| A5 | Every test entry point ends with the guard — the root `pnpm test` and `pnpm test:system`, the tier whose tests start real daemons on purpose | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
 
 ## Checklist
 
@@ -98,7 +98,7 @@ any telemetry process running from a temporary home. See
 - **A4** — the root `test` script chains the guard with `&&`: `turbo test … && pnpm promises:check && node …/check-test-daemons.js`. When any test fails, the guard never runs. A failing run — a crash, a timeout, a test that died before its `afterEach` — is exactly the run most likely to leave a daemon behind, and it is the one run that reports nothing.
 - **A5** — `pnpm test:system` has no guard at all. It is the tier whose tests start real daemons on purpose, the only tier still able to leak one after this plan, and `pnpm release` runs it before every publish.
 
-- [ ] Author A4 and A5 red in `src/__tests__/test-daemons-guard.test.ts` (system tier): A4 starts a daemon in a temp home and runs the guarded test entry with a command that fails, expecting a non-zero exit whose output names the home; A5 reads the root and package `package.json` scripts and expects both `test` and `test:system` to end in the guard. Run each and read each failure
+- [x] Author A4 and A5 red in `src/__tests__/test-daemons-guard.test.ts` (system tier): A4 starts a daemon in a temp home and runs the guarded test entry with a command that fails, expecting a non-zero exit whose output names the home; A5 reads the root and package `package.json` scripts and expects both `test` and `test:system` to end in the guard. Run each and read each failure
 - [ ] `apps/indusk-mcp/scripts/with-daemon-guard.js`: runs the command it is given, then **always** runs the guard, prints both, and exits non-zero if either failed — the test command's own exit code first, so a failing suite still reads as a failing suite
 - [ ] Root `package.json` `test` and `test:system`, and the package's `test:system`: wrapped in `with-daemon-guard.js` — the root `test` no longer chains the guard with `&&`
 

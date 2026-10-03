@@ -112,3 +112,4 @@
 {"plan":"watch-reopen-collision","phase":3,"kind":"build","sha":"f2cfcd14e70bea71cacdc7ee029650f0eeadc10b","timestamp":"2026-10-03T05:04:27.537Z"}
 {"plan":"test-daemons-never-leak","phase":1,"kind":"test","sha":"d9e02becc9b778cc0a5197e34aff28e3e8b33f37","timestamp":"2026-10-03T20:48:56.621Z"}
 {"plan":"test-daemons-never-leak","phase":1,"kind":"build","sha":"29ee553cdfd259863c159e3a8ad93ee889926e26","timestamp":"2026-10-03T20:50:29.690Z"}
+{"plan":"test-daemons-never-leak","phase":2,"kind":"build","sha":"a5360b88555d010e60e44c4a6eae6ec9f4438de9","timestamp":"2026-10-03T21:11:28.693Z"}

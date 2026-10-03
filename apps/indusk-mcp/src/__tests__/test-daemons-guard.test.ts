@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -79,6 +79,43 @@ describe.skipIf(SHOULD_SKIP)("A3 — the guard names a daemon left from a tempor
 		const clear = spawnSync("node", [GUARD], { encoding: "utf-8" });
 		expect(`${clear.stdout}${clear.stderr}`, "a stopped daemon is no longer named").not.toContain(
 			home,
+		);
+	});
+});
+
+const WRAPPER = resolve(__dirname, "..", "..", "scripts", "with-daemon-guard.js");
+
+describe.skipIf(SHOULD_SKIP)("A4 — a failing run still runs the guard", () => {
+	it("exits non-zero and names a daemon left in a temp home, though the tests failed", () => {
+		const home = tempDir("guard-home-");
+		const project = tempDir("guard-proj-");
+		execFileSync("git", ["init", "-q", "-b", "main"], { cwd: project });
+		const start = spawnSync("node", [CLI_BIN, "telemetry", "register", project], {
+			encoding: "utf-8",
+			env: personEnv(home),
+		});
+		expect(start.status, start.stderr).toBe(0);
+
+		// The "test command" fails, as a crashed or timed-out run does.
+		const run = spawnSync("node", [WRAPPER, "node", "-e", "process.exit(3)"], {
+			encoding: "utf-8",
+		});
+		expect(run.status, "a failing run fails").not.toBe(0);
+		expect(`${run.stdout}${run.stderr}`, "and the guard still ran, naming the leak").toContain(
+			home,
+		);
+	});
+});
+
+describe("A5 — every test entry point ends with the guard", () => {
+	it("the root `test` and the package's `test:system` run through the guard wrapper", () => {
+		const read = (p: string) =>
+			JSON.parse(readFileSync(p, "utf-8")).scripts as Record<string, string>;
+		const root = read(resolve(__dirname, "..", "..", "..", "..", "package.json"));
+		const pkg = read(resolve(__dirname, "..", "..", "package.json"));
+		expect(root.test, "root pnpm test").toMatch(/with-daemon-guard\.js/);
+		expect(pkg["test:system"], "pnpm test:system — the tier that starts daemons").toMatch(
+			/with-daemon-guard\.js/,
 		);
 	});
 });
