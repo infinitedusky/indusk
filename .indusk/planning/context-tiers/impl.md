@@ -1,7 +1,7 @@
 ---
 title: "Context tiers — a rule reaches you where and when it applies"
 date: 2026-10-02
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -64,6 +64,11 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 | A9 | The catchup skill skims only advisory lesson titles and states the guarded and advisory counts | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
 | A15 | A Context gate item names its tier and destination, and one aimed at the root says why it must be always-on — in `/planner` and `/claude-md`, package and installed copies | Test Phase 1 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/context-tiers-skills.test.ts |
 | A13 | The root is at least 20 % under its configured budget, and the budget's reason is in `.indusk/config.json` | Test Phase 1 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
+| A18 | The lesson scan reads a hook's `lesson:` token where the refusal opens a new line inside one string (directly after a `\n` escape): `check-gates.js` guards `test-red-at-earliest-writable-phase`, with kind `hook` | Build Phase 7 | Build Phase 7 | planned | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
+| A19 | Every `enforcer` row in the register names files the lesson scan reads as guarding that row's lesson; a row whose named enforcer carries no readable token fails, naming the row | Build Phase 7 | Build Phase 7 | planned | apps/indusk-mcp/src/__tests__/context-tiers-register.test.ts |
+| A20 | The budget hook judges a `CLAUDE.md` at the top level of any git checkout by the root budget — in a workbench, a declared repo's plan worktree, which no declaration names; never as a nested file | Build Phase 7 | Build Phase 7 | planned | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
+| A21 | In a workbench, `list_lessons` reads a lesson as guarded when a test inside a declared repo carries its token; the scan covers the declared repos as well as the workbench root | Build Phase 7 | Build Phase 7 | planned | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
+| A22 | In a workbench, `context check-pointers` walks each declared repo's context files as well as the workbench root's, resolving each file's pointers against the repo that holds it, and names the repo in its report | Build Phase 7 | Build Phase 7 | planned | apps/indusk-mcp/src/__tests__/context-tiers-pointers.test.ts |
 
 ### Deferred Verification
 
@@ -240,6 +245,41 @@ failing on its own assertion and each guard declared as one.
 #### Build Phase 6 Document
 
 - [x] `guide/context-budget.md` and `apps/docs/src/changelog.md` Unreleased: the lowered budget, `lesson:` tokens, the shipped planning file — the guide also says why a new project's default stays 61,440
+
+### Build Phase 7: Falsification — a guard nobody can see, and a workbench read as a flat project
+
+**Goal**: verify whether the attested state holds against two kinds of failure. The plan's central claim is that a rule an enforcer holds is *guarded*, and `list_lessons` says so — but the scan that decides it was never run against the register's own enforcer rows, and one of them does not read. And three of the plan's readers (the budget hook, the lesson scan, the pointer walk) locate files the way a flat project does; in a workbench, where the code sits in a declared repo the workbench's git ignores, each one reads less than it reports. Each row below is one hypothesis; each item is the fix.
+
+What the investigation found, row by row:
+
+- **A18** — confirmed by running the scan over this repository: `lessonStates` reads `test-red-at-earliest-writable-phase` as **advisory**, guarded by nothing. `check-gates.js` carries the token as `…done.\nlesson: test-red-at-earliest-writable-phase` inside one template string, and the token grammar's opener (`lib/tokens.ts`) accepts a comment opener earlier on the line or a quote *directly* before — a `\n` escape is neither. trunk-guard's token, a string of its own, reads. The ADR says a hook-carried token travels with the hook and is guarded everywhere; for this hook it is guarded nowhere, and A6 (the hook prints the line) passes because it reads the hook's output, not the scan.
+- **A19** — A10 checks that every baseline entry has a register row with a non-empty destination; nothing checks that an `enforcer` row's named enforcer carries its token. Row 39 names `apps/indusk-mcp/hooks/validate-impl-structure.js` as the enforcer for `lesson: test-red-at-earliest-writable-phase`; that file contains no `lesson:` at all. Row 37 names `check-gates.js`, which A18 shows the scan cannot read. Two of the register's ten enforcer rows claim a guard the plan's own state derivation denies.
+- **A20** — `isRootContextFile` in `claude-md-budget.js` says root when the file's directory is the state root or a declared repo's checkout. In a workbench, a plan worktree of the code repo sits under the workbench root (no `.indusk/` of its own, so the walk-up lands on the workbench) and is named by no declaration — so the repo's root `CLAUDE.md` in that worktree is judged by the 16 KB nested budget. Worktree-per-plan is the default and a plan's Context gate edits the worktree's copy, so a consumer root between 16 KB and its root budget has every growing Context edit refused, with a message calling it a nested file. A14 covered the trunk checkout and not its worktrees.
+- **A21** — `list_lessons` scans the MCP's `projectRoot`. In a workbench that is the workbench root, whose `.gitignore` names the trunk and the worktrees directory, so `git ls-files --others --exclude-standard` never lists a file in the code repo. A consumer test carrying a token reads advisory — the "verdict nobody reached" `lessonListing`'s own docblock says it refuses to give, arriving through an empty scan rather than a throw. `resolveCheckRoots` (`lib/health.ts`) is the existing answer to "which roots hold the code".
+- **A22** — `contextFiles` is the same `ls-files` from the same root. In a workbench it lists the workbench's own `CLAUDE.md` and none of the code repo's — the repo's root file and every nested one. `check-pointers` prints PASS over files it never opened.
+
+- [ ] Author A18–A22 red before any fix: A18 and A21 in `context-tiers-lessons.test.ts`, A19 in `context-tiers-register.test.ts`, A20 in `context-tiers-budget.test.ts` (the hook spawned over a workbench fixture with a real `git worktree add` of the declared repo — `helpers/versioned-workbench.ts`), A22 in `context-tiers-pointers.test.ts`. Run each and read each failure
+- [ ] `lib/tokens.ts`: `TOKEN_OPENER` also accepts a `\n` escape directly before the token — the start of a message line inside a string, which is where the ADR puts a lesson token. Re-run `pnpm promises:check` against this repository to confirm the wider opener cites no promise that does not exist
+- [ ] `hooks/validate-impl-structure.js`: the trajectory refusal (Writable-at ≤ Passes-at, the earliest-authorable rule) names `lesson: test-red-at-earliest-writable-phase` in the same form — or, if no refusal there enforces that lesson's rule, register row 39 is reclassified with its remainder moved to the planning file. Resync `.claude/hooks/`
+- [ ] `context-tiers-register.test.ts`: A19's check reads each `enforcer` row's destination files and lesson through `lessonStates`, so the register and the derivation cannot disagree again
+- [ ] `hooks/claude-md-budget.js`: a `CLAUDE.md` whose directory is the top of a git checkout (`.git` present — a directory in a clone, a file in a worktree) is a root file, beside the state-root and declared-repo rules. A flat project's sibling worktree whose `.indusk/` is untracked reads root by the same rule
+- [ ] `lib/lessons/state.ts`: `lessonStates` scans the project root and each of `resolveCheckRoots`' roots, paths reported relative to the project root, so a token in a declared repo's test guards
+- [ ] `lib/context-pointers.ts`: `checkAllContextPointers` walks the workbench root and each declared repo, each file's pointers resolved against its own repo; `src/bin/commands/context.ts` names the repo beside the file
+
+#### Build Phase 7 Verification
+
+- [ ] A18–A22 pass and A5–A8, A10, A11, A14, A16 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/context-tiers-`); `pnpm promises:check` clean
+- [ ] `lessonStates` printed for this repository reads `test-red-at-earliest-writable-phase` guarded, by `check-gates.js` as kind `hook`
+- [ ] The full suite is green (`pnpm test`); A1–A3 and A17 pass (`pnpm e2e -- context-tiers`)
+
+#### Build Phase 7 Context
+
+- [ ] directory (`apps/indusk-mcp/CLAUDE.md`), the entry on tooling detection over declared repos: the lesson scan and the pointer walk join it — anything that reads "what the code says" in a workbench reads the declared repos, never the wrapper alone
+- [ ] directory (`apps/indusk-mcp/hooks/CLAUDE.md`): a hook's lesson token opens a line of its refusal — its own string, or directly after a `\n` — and the register's enforcer rows are pinned against the scan
+
+#### Build Phase 7 Document
+
+- [ ] `guide/context-tiers.md`: where a token may sit in a refusal message, and that guarded is read across a workbench's declared repos; `reference/cli/context.md`: the workbench walk; `guide/context-budget.md`: a root context file is one at the top of any checkout
 
 ## Files Affected
 
