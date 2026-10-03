@@ -19,9 +19,10 @@
  * Strategy order:
  *   1. If the text trims to a string starting with `{`, try parsing as-is.
  *   2. If a markdown code fence wraps the JSON, extract from inside the fence.
- *   3. Otherwise scan for the first `{` and find its matching `}` by
- *      tracking nesting depth and string-literal state (so braces inside
- *      string values don't fool the depth counter).
+ *   3. Otherwise scan from each `{` in turn for its matching `}`, tracking
+ *      nesting depth and string-literal state (so braces inside string
+ *      values don't fool the depth counter), and return the first balanced
+ *      object that parses — prose before the scorecard often has braces too.
  *
  * The caller is responsible for `JSON.parse`-ing the returned substring.
  * This function only locates the JSON; it doesn't validate it.
@@ -52,14 +53,18 @@ export function extractScorecardJson(text: string): string | null {
 		}
 	}
 
-	// Strategy 3: balanced-brace scan
-	const balanced = findFirstBalancedJsonObject(text);
-	if (balanced) {
+	// Strategy 3: balanced-brace scan, from each `{` in turn. The first `{` is
+	// often prose — "rows keyed {kind, number}" — and giving up there lost
+	// five scorecards whose fenced JSON quoted a fence of its own
+	// (i-2026-10-03-every-commit-evaluated).
+	for (let start = text.indexOf("{"); start !== -1; start = text.indexOf("{", start + 1)) {
+		const balanced = balancedJsonObjectAt(text, start);
+		if (!balanced) continue;
 		try {
 			JSON.parse(balanced);
 			return balanced;
 		} catch {
-			return null;
+			// Prose that happens to balance — try the next `{`.
 		}
 	}
 
@@ -67,17 +72,14 @@ export function extractScorecardJson(text: string): string | null {
 }
 
 /**
- * Walk the text looking for the first `{` and find its matching `}`,
- * tracking string-literal state and escape characters so braces inside
- * string values don't confuse the depth counter.
+ * From the `{` at `start`, find its matching `}`, tracking string-literal
+ * state and escape characters so braces inside string values don't confuse
+ * the depth counter.
  *
- * Returns the substring including both braces, or null if no balanced
- * object exists in the text.
+ * Returns the substring including both braces, or null if the brace at
+ * `start` never closes.
  */
-function findFirstBalancedJsonObject(text: string): string | null {
-	const start = text.indexOf("{");
-	if (start === -1) return null;
-
+function balancedJsonObjectAt(text: string, start: number): string | null {
 	let depth = 0;
 	let inString = false;
 	let escaped = false;
