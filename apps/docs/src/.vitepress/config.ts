@@ -268,6 +268,7 @@ const config = defineConfig({
 						{ text: "The Plan's Type — Lessons", link: "/lessons/admin-plan-type" },
 						{ text: "Context Tiers — Lessons", link: "/lessons/context-tiers" },
 						{ text: "Watch Reopen Collision — Lessons", link: "/lessons/watch-reopen-collision" },
+						{ text: "Test Daemons Never Leak — Lessons", link: "/lessons/test-daemons-never-leak" },
 						{ text: "Promises — Lessons", link: "/lessons/day-promises" },
 						{ text: "Monitor — Lessons", link: "/lessons/day-monitor" },
 						{ text: "Always On — Lessons", link: "/lessons/day-always-on" },
