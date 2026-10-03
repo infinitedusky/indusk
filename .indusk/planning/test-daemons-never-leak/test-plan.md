@@ -1,7 +1,7 @@
 ---
 title: "A test run never leaves a telemetry daemon behind — Test Plan"
 date: 2026-10-03
-status: draft
+status: accepted
 ---
 
 # A test run never leaves a telemetry daemon behind — Test Plan
