@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+- **A test run no longer leaves telemetry daemons behind.** Every test that ran `init` against a temporary home started a detached Jaeger + otelcol pair through `telemetry register`, and nothing stopped it — 860 processes were found running on 2026-10-03 (2,058 on 2026-08-13, after which the fix was a convention every suite had to remember). `register` now skips its automatic start when `INDUSK_SKIP_TELEMETRY_AUTOSTART=1`, which this repository's everyday test configs set, and `pnpm test` ends with a guard that fails naming any daemon left running from a temporary home. The everyday configs also point extension hooks at the CLI under test (`INDUSK_BIN`) — they had been running the globally installed `indusk`.
+
 ## [1.57.2] — 2026-10-03
 
 ### Fixed

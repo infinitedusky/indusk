@@ -203,6 +203,7 @@ Daemon restarted with fresh buffers.
 ## Environment variables
 
 - `INDUSK_HOME` — overrides the default `~/.indusk/` root. Used primarily by tests to isolate daemon files from a developer's real setup. If you set it, all the above paths root under it.
+- `INDUSK_SKIP_TELEMETRY_AUTOSTART=1` — `indusk telemetry register` (run by the extension's `on_enable`, so by every `init` and `update`) still registers the project but does not start the daemon when none is running; it says so. Set by this repository's everyday test configs: every test that ran `init` against a temporary `INDUSK_HOME` used to leave a detached Jaeger + otelcol pair running — 860 of them on 2026-10-03. `pnpm test` ends with `apps/indusk-mcp/scripts/check-test-daemons.js`, which fails naming any telemetry process left running from a temporary home. Never set it in a shell you use the CLI from: a project registered without a running daemon has nowhere to send its traces.
 
 ## See also
 
