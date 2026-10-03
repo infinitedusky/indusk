@@ -114,3 +114,7 @@ package code and tests are 9 files, +585 / −89, most of it tests.
 | `pnpm test:system` | 22 files, 84 tests |
 
 ## Landing
+
+Landed on main at 7c7297b6, 2026-10-03.
+
+Released as 1.57.1 (patch: the plan fixed `watch`; the test tiers and the serialized root `pnpm test` ride along).
