@@ -44,8 +44,20 @@ export async function scannableFiles(codeRoot: string): Promise<string[]> {
 		.sort();
 }
 
-/** name → files that carry its token, across the code root. */
+/** name → files that carry its promise token, across the code root. */
 export async function citedNames(codeRoot: string): Promise<Map<string, string[]>> {
+	return await citedTokens(codeRoot, anyPromiseTokenPattern);
+}
+
+/**
+ * name → files that carry a token the pattern matches, across the code root.
+ * The one scan loop: promises read it with their pattern, lessons with theirs
+ * (`lib/lessons/state.ts`), so the file set and the binary rule cannot drift.
+ */
+export async function citedTokens(
+	codeRoot: string,
+	pattern: () => RegExp,
+): Promise<Map<string, string[]>> {
 	const cited = new Map<string, string[]>();
 	for (const rel of await scannableFiles(codeRoot)) {
 		const abs = join(codeRoot, rel);
@@ -53,8 +65,8 @@ export async function citedNames(codeRoot: string): Promise<Map<string, string[]
 		const buf = readFileSync(abs);
 		if (looksBinary(buf)) continue;
 		const text = buf.toString("utf-8");
-		const pattern = anyPromiseTokenPattern();
-		for (let m = pattern.exec(text); m !== null; m = pattern.exec(text)) {
+		const re = pattern();
+		for (let m = re.exec(text); m !== null; m = re.exec(text)) {
 			const name = m[1];
 			const files = cited.get(name) ?? [];
 			if (!files.includes(rel)) files.push(rel);

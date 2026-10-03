@@ -121,6 +121,15 @@ export async function update(projectRoot: string): Promise<void> {
 
 	console.info(`\n  ${added} added, ${updated} updated, ${current} current.`);
 
+	// 2b. The planning context file — package-owned like a skill, loaded when
+	// a plan document is read (context-tiers).
+	const { PLANNING_CONTEXT_REL, syncPlanningContext } = await import(
+		"../../lib/planning-context.js"
+	);
+	console.info(
+		`  ${syncPlanningContext(packageRoot, projectRoot, { overwrite: true })}: ${PLANNING_CONTEXT_REL}`,
+	);
+
 	// 3. Sync community lessons
 	console.info("\n[Lessons]\n");
 	const lessonsSource = join(packageRoot, "lessons/community");
@@ -811,6 +820,15 @@ export async function update(projectRoot: string): Promise<void> {
 		ensureCleanupConfig(projectRoot),
 		"cleanup.max_file_loc: 400 to .indusk/config.json",
 		`cleanup.max_file_loc: ${getCleanupConfig(projectRoot).max_file_loc} (already set)`,
+	);
+
+	// [Context tiers] scaffold the context block idempotently — both budgets the
+	// claude-md-budget hook reads; a declared block is never clobbered.
+	const { ensureContextConfig } = await import("../../lib/config.js");
+	reportEnsured(
+		ensureContextConfig(projectRoot),
+		"context.claude_md_budget_bytes: 61440, context.nested_claude_md_budget_bytes: 16384 to .indusk/config.json",
+		"context (already set)",
 	);
 
 	// [Papers — writing-skill] scaffold the papers block idempotently so the

@@ -4,6 +4,17 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **Context tiers: a rule reaches you where and when it applies.** The root `CLAUDE.md` stops being the one channel for every kind of knowledge.
+  - **`lesson: <name>` tokens.** A test or hook that enforces a rule names the lesson behind it at the start of its failure message, so the agent gets the explanation the moment the rule breaks, at no standing cost. The token shares the promise token's grammar (`lib/tokens.ts`). `list_lessons` now reports each lesson **guarded** (some enforcer names it) or **advisory**, derived on every read and never stored, with counts; `/catchup` skims only the advisory titles. Guarded is relative to the project scanned: a hook's token guards every project, a test's only the one it lives in.
+  - **The planning context file ships.** `.indusk/planning/CLAUDE.md` carries the rules of plan documents (trajectory, gates, test phases, fences, rituals) and is package-owned like a skill: `init` writes it and `update` overwrites it from `templates/planning/CLAUDE.md`. Claude Code loads it whenever a file under `.indusk/planning/` is read, so consumers get the planning rules where plans are written without carrying them in their own root. `/planner` reads `master.md` before writing a plan's first document, because a Write to a directory nothing has been read from loads no nested file.
+  - **`indusk context check-pointers` walks every context file**, treats a lesson token as a pointer to `.claude/lessons/<name>.md`, and checks version claims in `.indusk/current.md`'s shared region. It also has a reference page now.
+  - **The skills route by tier.** `/claude-md`'s routing table is the tier table (enforcer, directory, operational, root); a Context gate item names its tier and destination, and one aimed at the root says why it must be always-on; the retrospective classifies every entry at close and moves one root entry down a tier per plan.
+
+### Changed
+- **CLAUDE.md has five sections, not six.** Current State was operational state in an always-loaded file; it moves to `.indusk/current.md`'s Project (shared) region. `update_context` and the consumer template follow.
+- **The budget hook judges growth, not size.** An edit that does not grow a `CLAUDE.md` is allowed at any size — the hook used to refuse even a shrinking edit to an over-budget file. A nested `CLAUDE.md` has its own budget (`context.nested_claude_md_budget_bytes`, 16 KB); a workbench repo's own root file is judged as a root, by directory, never by depth. `update` ensures the `context` block.
+
 ## [1.56.0] — 2026-10-01
 
 ### Added

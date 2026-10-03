@@ -18,6 +18,7 @@ subplans:
   - day-always-on
   - release-ritual
   - admin-plan-type
+  - context-tiers
   - watch-reopen-collision
   - watcher-heartbeat
   - day-always-on-deploy

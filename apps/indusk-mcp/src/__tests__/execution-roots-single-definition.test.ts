@@ -29,7 +29,10 @@ describe("A14 — one resolver for the plan root and the code root", () => {
 		const definitions = files.filter((f) =>
 			/export function resolveExecutionRoots\b/.test(readFileSync(join(SRC_LIB, f), "utf-8")),
 		);
-		expect(definitions).toEqual(["worktree/roots.ts"]);
+		expect(
+			definitions,
+			"lesson: structural-single-definition-test-for-must-agree-invariants — run, verify and the cleanup scan must agree on where the plan and the code live",
+		).toEqual(["worktree/roots.ts"]);
 	});
 
 	it("the verify-only resolver is gone", () => {

@@ -97,3 +97,12 @@
 {"plan":"admin-plan-type","phase":3,"kind":"build","sha":"cc8fe6e26614e90bc391f004839d17af390e2784","timestamp":"2026-10-01T19:24:51.963Z"}
 {"plan":"admin-plan-type","phase":4,"kind":"build","sha":"08d88eb807c55ef3b0d6d1c4ed7d31e2111251d6","timestamp":"2026-10-01T20:53:06.745Z"}
 {"plan":"admin-plan-type","phase":5,"kind":"build","sha":"d4e269cea331102448e018f8c9a826c7f05ceb26","timestamp":"2026-10-01T21:22:54.303Z"}
+{"plan":"context-tiers","phase":1,"kind":"test","sha":"9f108ede969bae4927b3be715fdeaf687fdc9d80","timestamp":"2026-10-02T22:15:09.701Z"}
+{"plan":"context-tiers","phase":1,"kind":"build","sha":"eac35b6038e9f7255f3bffdf7527ec96d5452971","timestamp":"2026-10-02T22:25:51.209Z"}
+{"plan":"context-tiers","phase":2,"kind":"build","sha":"d6bf06014ede2e9dabc18c12bc09981990a328aa","timestamp":"2026-10-02T22:35:02.871Z"}
+{"plan":"context-tiers","phase":3,"kind":"build","sha":"f26dad09b68dd44d96223ee46c78225f8b1df080","timestamp":"2026-10-02T22:41:53.676Z"}
+{"plan":"context-tiers","phase":4,"kind":"build","sha":"998a27f1ac03691dbbdb2861bce3c56321ac1e1a","timestamp":"2026-10-02T22:46:51.203Z"}
+{"plan":"context-tiers","phase":5,"kind":"build","sha":"cf02fb6fb779d932c5667b04feb15c5756da8b7f","timestamp":"2026-10-02T23:09:53.536Z"}
+{"plan":"context-tiers","phase":6,"kind":"build","sha":"e1d2c33e18f039f9542f6845fdb7805c27498590","timestamp":"2026-10-02T23:13:00.698Z"}
+{"plan":"context-tiers","phase":7,"kind":"build","sha":"bfc2df982ed303ef92ee0c21ea0f9daf4b2d2bf8","timestamp":"2026-10-03T01:15:42.215Z"}
+{"plan":"context-tiers","phase":8,"kind":"build","sha":"854b51080c87c1ffb5ff28c267b1788b0a76158d","timestamp":"2026-10-03T01:56:36.350Z"}

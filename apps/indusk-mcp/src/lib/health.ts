@@ -16,8 +16,7 @@
  */
 
 import { execSync } from "node:child_process";
-import { join } from "node:path";
-import { readWorkbenchRepos, repoDir, resolveReposRoot } from "./worktree/repos.js";
+import { declaredRepoDirs } from "./worktree/repos.js";
 
 export interface HealthCheckSpec {
 	name: string;
@@ -42,12 +41,10 @@ export interface HealthCheckResult {
  * behavior every non-workbench project already had.
  */
 export function resolveCheckRoots(projectRoot: string): string[] {
-	const repos = readWorkbenchRepos(projectRoot);
-	if (repos.length === 0) return [projectRoot];
-
-	// `repos_root` decides where repos live; `repoDir` decides each one's
-	// directory name. Both already have single definitions — this is a caller.
-	return repos.map((r) => join(resolveReposRoot(projectRoot), repoDir(r)));
+	// Where each declared repo's checkout lives has one definition,
+	// `declaredRepoDirs`; this is a caller.
+	const repos = declaredRepoDirs(projectRoot);
+	return repos.length === 0 ? [projectRoot] : repos.map((r) => r.dir);
 }
 
 /**

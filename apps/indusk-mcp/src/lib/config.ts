@@ -169,13 +169,20 @@ export interface InduskConfig {
 		sweep_ttl_minutes?: number;
 	};
 	/**
-	 * Context-budget configuration (indusk-makeover). `claude_md_budget_bytes`
-	 * is the hard size budget the `claude-md-budget.js` PreToolUse hook
-	 * enforces on files named CLAUDE.md (default 61440 = 60 KB; warn at 90%).
-	 * Raising it is a deliberate, recorded act.
+	 * Context-budget configuration (indusk-makeover; context-tiers).
+	 * `claude_md_budget_bytes` is the hard size budget the `claude-md-budget.js`
+	 * PreToolUse hook enforces on a ROOT context file — the project root's
+	 * `CLAUDE.md`, or a declared repo's own in a workbench (default 61440 =
+	 * 60 KB; warn at 90%). `nested_claude_md_budget_bytes` governs every other
+	 * file named CLAUDE.md, an area's rules loaded only when that area is read
+	 * (default 16384). The hook refuses growth past the budget and always allows
+	 * a shrinking edit. Raising either is a deliberate, recorded act, and
+	 * `claude_md_budget_reason` is where the reason is written beside it.
 	 */
 	context?: {
 		claude_md_budget_bytes?: number;
+		nested_claude_md_budget_bytes?: number;
+		claude_md_budget_reason?: string;
 	};
 	/**
 	 * Planning-lifecycle housekeeping. `dead_draft_days` is the age threshold
@@ -568,6 +575,23 @@ export function ensureCleanupConfig(projectRoot: string): "added" | "already-set
 	return ensureConfigBlock(projectRoot, "cleanup", {
 		max_file_loc: DEFAULT_MAX_FILE_LOC,
 		scopes: [],
+	});
+}
+
+export const DEFAULT_CLAUDE_MD_BUDGET_BYTES = 61440;
+export const DEFAULT_NESTED_CLAUDE_MD_BUDGET_BYTES = 16384;
+
+/**
+ * Idempotently scaffold the `context` block (context-tiers Build Phase 1).
+ * Presence-keyed like every other ensure: a project that already declares a
+ * `context` block keeps it as it is, and the budget hook's own defaults govern
+ * any key it leaves unset — the hook reads defaults, so nothing depends on the
+ * key being written.
+ */
+export function ensureContextConfig(projectRoot: string): EnsureResult {
+	return ensureConfigBlock(projectRoot, "context", {
+		claude_md_budget_bytes: DEFAULT_CLAUDE_MD_BUDGET_BYTES,
+		nested_claude_md_budget_bytes: DEFAULT_NESTED_CLAUDE_MD_BUDGET_BYTES,
 	});
 }
 

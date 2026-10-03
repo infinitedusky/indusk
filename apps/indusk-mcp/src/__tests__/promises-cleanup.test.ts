@@ -33,7 +33,10 @@ function definers(pattern: RegExp): string[] {
 
 describe("A32 — one presence-keyed config-block ensure under src/lib", () => {
 	it("exactly one `export function ensureConfigBlock` exists, in lib/config.ts", () => {
-		expect(definers(/export function ensureConfigBlock\b/)).toEqual(["config.ts"]);
+		expect(
+			definers(/export function ensureConfigBlock\b/),
+			"lesson: structural-single-definition-test-for-must-agree-invariants — the presence-keyed config ensure has one home; the rule of three was met by the third copy",
+		).toEqual(["config.ts"]);
 	});
 
 	it("the cleanup, papers and promises ensures each call it", () => {

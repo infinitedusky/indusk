@@ -49,6 +49,8 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 ## What to Do When Asked to Plan
 
+0. **Read `.indusk/planning/master.md` first**, before writing any plan document. The planning rules live in `.indusk/planning/CLAUDE.md`, and Claude Code loads a nested context file when a file beneath it is *read* — a Write to a directory nothing has been read from loads nothing (measured, context-tiers A17). Reading the master puts the planning rules in context before the plan's first file is authored, and tells you where the plan sits in the sequence.
+
 1. **Determine the workflow type** from the input (see above). This controls which documents you create.
 
 2. **Figure out where things stand.** If a plan folder already exists, read what's there. Check frontmatter statuses. The next document to write is the first one that's missing or incomplete.
@@ -521,7 +523,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 {- [ ] (no tests flip at this phase — reason: {schema-only | delete | refactor | infra})}
 
 #### Build Phase 1 Context
-- [ ] {Concrete CLAUDE.md edit this phase produces — e.g., "Add to Architecture: ...", "Add to Conventions: ...", "Update Current State: ...". Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
+- [ ] {A rule this phase produces, naming its tier and destination — e.g., "guard: `<test>` carries `lesson: <name>`", "planning: …", "mcp: …", "current.md: …", "root (Conventions): … — always-on because …". An item aimed at the root must say why it must be always-on; one that cannot belongs at a lower tier (see the `/claude-md` tier table). Ask: "what does this phase change about how the project works?" If nothing, omit this section.}
 
 #### Build Phase 1 Document
 - [ ] {Docs page to write or update — e.g., "Write reference page at apps/indusk-docs/src/reference/tools/tool-name.md", "Update architecture diagram in docs". Ask: "what does a user or developer need to know about what this phase built?" If nothing user-facing, omit this section. See the document skill for guidance on what to document and how.}

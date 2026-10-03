@@ -35,7 +35,10 @@ function definers(pattern: RegExp): string[] {
 describe("A16 — one lifecycle definition, one phase-heading parser", () => {
 	it("(a) the admin's phases.ts carries no phase-heading regex of its own", () => {
 		const source = readFileSync(ADMIN_PHASES, "utf-8");
-		expect(source, "phases.ts still spells a `Phase\\s` regex").not.toMatch(/Phase\\s/);
+		expect(
+			source,
+			"lesson: structural-single-definition-test-for-must-agree-invariants — phases.ts still spells a `Phase\\s` regex; the lifecycle is one definition in lib/lifecycle.ts",
+		).not.toMatch(/Phase\\s/);
 		expect(source, "phases.ts still walks lines for `### `").not.toMatch(/\^#{3}/);
 	});
 

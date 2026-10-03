@@ -116,6 +116,15 @@ A command to re-scan the codebase and update CLAUDE.md. Rejected because if the 
 - **Trigger skipping** — Mitigate by having the work skill reference the context skill when completing retros and ADRs
 - **Stale state** — If Current State drifts, a human or agent can update it directly. If this becomes a recurring problem, revisit the `context refresh` idea
 
+## Amended 2026-10-02 (context-tiers)
+
+The fixed structure is **five** sections, not six. Current State was
+operational state in an always-loaded file; context-tiers moved it to
+`.indusk/current.md`'s shared region, where operational state already lived,
+and `SECTION_NAMES` in `lib/context-parser.ts` now lists five. The root also
+stopped being the one channel for every kind of rule — see
+`.indusk/planning/archive/context-tiers/adr.md`.
+
 ## References
 - `planning/context-skill/brief.md`
 - `.claude/skills/plan/skill.md` (plan lifecycle that context integrates with)

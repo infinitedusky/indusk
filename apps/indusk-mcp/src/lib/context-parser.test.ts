@@ -11,10 +11,10 @@ import {
 const projectRoot = join(import.meta.dirname, "../../../..");
 
 describe("parseContext", () => {
-	it("parses the repo CLAUDE.md with all 6 sections", () => {
+	it("parses the repo CLAUDE.md with all 5 sections", () => {
 		const parsed = parseContext(join(projectRoot, "CLAUDE.md"));
 		expect(parsed.title).toContain("dusk");
-		expect(parsed.sections).toHaveLength(6);
+		expect(parsed.sections).toHaveLength(5);
 
 		const names = parsed.sections.map((s) => s.name);
 		for (const expected of SECTION_NAMES) {
@@ -52,14 +52,12 @@ Monorepo with apps.
 ## Known Gotchas
 
 - Node 22 required
-
-## Current State
-
-In progress.
 `;
 		const parsed = parseContextString(md);
 		expect(parsed.title).toBe("My Project");
-		expect(parsed.sections).toHaveLength(6);
+		// Five since context-tiers: Current State is operational and lives in
+		// .indusk/current.md's shared region, never in the root file.
+		expect(parsed.sections).toHaveLength(5);
 		expect(parsed.sections[0].content).toBe("A test project.");
 		expect(parsed.sections[1].content).toBe("Monorepo with apps.");
 	});
@@ -79,7 +77,10 @@ describe("validateContext", () => {
 		const result = validateContext(parsed);
 		expect(result.valid).toBe(false);
 		expect(result.missing).toContain("Architecture");
-		expect(result.missing).toContain("Current State");
+		expect(result.missing).toContain("Known Gotchas");
+		expect(result.missing, "Current State is not a root section any more").not.toContain(
+			"Current State",
+		);
 	});
 });
 

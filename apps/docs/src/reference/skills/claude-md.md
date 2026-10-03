@@ -15,9 +15,9 @@ It operates in two modes:
 
 The skill does not generate CLAUDE.md from scratch. It maintains one that already exists, keeping it in sync with reality as the project evolves.
 
-## The Six Sections
+## The Five Sections
 
-CLAUDE.md has exactly six sections. This structure is fixed — never add, remove, or rename sections. Every section is always present, even if empty.
+CLAUDE.md has exactly five sections. This structure is fixed — never add, remove, or rename sections. Every section is always present, even if empty.
 
 | Section | What Goes In | What Stays Out |
 |---------|-------------|----------------|
@@ -26,7 +26,27 @@ CLAUDE.md has exactly six sections. This structure is fixed — never add, remov
 | **Conventions** | Patterns to follow, anti-patterns to avoid. Concise one-liners accumulated from corrections, retrospectives, and decisions. | Long explanations — link to the source document instead |
 | **Key Decisions** | One-liner per decision with a link to the ADR. Only added via the post-ADR trigger. | Full rationale — that lives in the ADR itself |
 | **Known Gotchas** | Mistakes and surprises. Things that went wrong before and should not go wrong again. | Debugging solutions — the fix is in the code, the commit message has the context |
-| **Current State** | What is in progress, recently completed, or blocked. Active plans and their stages. | Ephemeral task state — use todos for the current conversation |
+
+Operational state — what is in progress, recently completed or blocked — is
+not a section. It lives in `.indusk/current.md`'s Project (shared) region
+(six sections until context-tiers moved it there, 2026-10-02).
+
+## Where a rule goes — the tiers
+
+The root file is the last destination, not the first. Every rule is routed
+in this order, and the choice names its destination:
+
+| Tier | When | Destination |
+|------|------|-------------|
+| **enforcer** | a test or hook can catch the rule being broken | the enforcer, whose failure message opens with `lesson: <name>` |
+| **directory** | the rule applies only in one area | that area's `CLAUDE.md` (the planning one via the package template) |
+| **operational** | in flight, blocked, or next | `.indusk/current.md`, Project (shared) |
+| **root** | design intent with no enforcer and no home directory | the root `CLAUDE.md`, with the reason it must be always-on |
+
+A `#### Phase N Context` item names its tier and destination
+(`guard: <test> carries lesson: x`, `planning: …`, `root (Conventions): … —
+always-on because …`), so the routing is reviewable at the gate. See the
+[context-tiers guide](/guide/context-tiers).
 
 ### Realistic Content Examples
 
@@ -92,21 +112,6 @@ dusk/
 - Always use `pnpm ce`, not `npx ce` — the skill doc specifies pnpm
 - Biome 2.x API differs from docs/examples: `noVar` doesn't exist, overrides use `includes` not `include`
 - Skills in `.claude/skills/` are package-owned — edit in `apps/indusk-mcp/skills/`, then run `update`
-```
-
-**Current State:**
-
-```markdown
-## Current State
-
-Repo scaffolded and building. InDusk Portfolio runs in Docker via composable.env.
-
-**Active plans:**
-
-| Plan | Stage | Next Step |
-|------|-------|-----------|
-| context-skill | impl (completed) | Ready for retrospective |
-| verify-skill | impl (completed) | Ready for retrospective |
 ```
 
 ### Empty Section Convention

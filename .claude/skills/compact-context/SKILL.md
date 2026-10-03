@@ -26,10 +26,10 @@ Running `/compact-context` with no argument is **report mode** — it produces a
 
 ### Step 2 — Classify every entry
 
-Walk the file section by section (Architecture, Conventions, Key Decisions, Known Gotchas, Current State). Tag each bullet/entry as one of:
+Walk the file section by section (Architecture, Conventions, Key Decisions, Known Gotchas — there is no Current State section since context-tiers; any operational prose you find anywhere in the file is an entry to move). Tag each bullet/entry as one of:
 
 - **Load-bearing convention** — a rule an agent must follow to not break the project (commit style, "never String.includes for shell triggers", a chokepoint). **Keep the rule sentence.** If it carries a multi-paragraph justification, that justification is a narrative — demote the justification, keep the sentence.
-- **Shipped-plan narrative** — the multi-paragraph "what this plan did / what shipped in each phase / what broke in falsification" prose that Current State and post-retro entries accrete. **This is where the bytes are.** Its body already lives in the archived plan + the docs decisions/lessons pages. Demote to: `- **{plan} ({version})** — one-sentence what-shipped. See [archive](.indusk/planning/archive/{plan}/) or /decisions/{plan}.`
+- **Shipped-plan narrative** — the multi-paragraph "what this plan did / what shipped in each phase / what broke in falsification" prose that post-retro entries accrete. **This is where the bytes are.** Its body already lives in the archived plan + the docs decisions/lessons pages. Demote to: `- **{plan} ({version})** — one-sentence what-shipped. See [archive](.indusk/planning/archive/{plan}/) or /decisions/{plan}.`
 - **Operational state** — in-flight work, open questions, cursor position, "currently mid-migration." This does not belong in CLAUDE.md at all (that's the architectural layer). **Move it to `.indusk/current.md`** (the operational layer) via `mcp__indusk__update_current_section` or the Project (shared) section, and remove it from CLAUDE.md.
 - **Dead** — an entry describing something retired (a removed subsystem, a superseded decision) that no longer needs even a pointer. Rare. Drop only when you can name why it's dead; when in doubt, demote rather than delete.
 

@@ -1,9 +1,11 @@
 // promise: one-definition-per-shared-rule
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readWorkbenchRepos } from "../lib/worktree/repos.js";
+import { LAYOUTS } from "./helpers/versioned-workbench.js";
 
 /**
  * The repo set has ONE resolver in TypeScript, and its reduction is ported
@@ -53,7 +55,10 @@ function grepCode(pattern: string, dir: string): string[] {
 describe("readWorkbenchRepos is single-definition", () => {
 	it("has exactly one definition under src/", () => {
 		const hits = grepCode("export function readWorkbenchRepos", SRC);
-		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — expected one definition, found:\n${hits.join("\n")}`,
+		).toHaveLength(1);
 		expect(hits[0]).toContain("lib/worktree/repos.ts");
 	});
 
@@ -93,7 +98,10 @@ describe("the bash lane resolves the repo set once", () => {
 				return [];
 			}
 		})();
-		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — expected one definition, found:\n${hits.join("\n")}`,
+		).toHaveLength(1);
 		expect(hits[0]).toContain("scripts/lib/workbench-helpers.sh");
 	});
 
@@ -221,7 +229,10 @@ describe("A31 — the reserved root-directory set is single-definition", () => {
 		const hits = grepCode("RESERVED_ROOT_DIRS", SRC).filter((l) =>
 			/const RESERVED_ROOT_DIRS/.test(l),
 		);
-		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — expected one definition, found:\n${hits.join("\n")}`,
+		).toHaveLength(1);
 	});
 
 	it("leaves no command hand-rolling its own reserved set", () => {
@@ -249,7 +260,10 @@ describe("A31 — the reserved root-directory set is single-definition", () => {
 describe("A32 — worktree-to-repo attribution is single-definition", () => {
 	it("has exactly one definition under src/", () => {
 		const hits = grepCode("function worktreeOwner", SRC);
-		expect(hits, `expected one definition, found:\n${hits.join("\n")}`).toHaveLength(1);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — expected one definition, found:\n${hits.join("\n")}`,
+		).toHaveLength(1);
 	});
 
 	it("leaves no second caller asking git for the common dir directly", () => {
@@ -273,5 +287,60 @@ describe("A32 — worktree-to-repo attribution is single-definition", () => {
 			.replace(/\n\s*\*\s?/g, " ")
 			.replace(/\s+/g, " ");
 		expect(source).toMatch(/wrong attribution reads exactly like a right one/);
+	});
+});
+
+/**
+ * context-tiers cleanup — A23, A24: "where a declared repo's checkout is" has
+ * one home. The join of `resolveReposRoot` and `repoDir` was spelled at four
+ * sites under `src/lib` (the health roots, the execution roots, the papers
+ * destination, and `check-pointers`, which context-tiers added); each is the
+ * same fact, and the layout lessons say its copies drift silently.
+ */
+describe("A23 — declaredRepoDirs names each declared repo's checkout", () => {
+	it.each(LAYOUTS)("in a %s workbench", async (_label, build) => {
+		const mod = (await import("../lib/worktree/repos.js")) as Record<string, unknown>;
+		expect(typeof mod.declaredRepoDirs, "repos.ts exports declaredRepoDirs").toBe("function");
+		const declaredRepoDirs = mod.declaredRepoDirs as (
+			root: string,
+		) => { name: string; dir: string }[];
+		const wb = build();
+		try {
+			const dirs = declaredRepoDirs(wb.root);
+			expect(dirs.map((d) => d.name)).toEqual(wb.repos.map((r) => r.name));
+			expect(dirs.map((d) => realpathSync(d.dir))).toEqual(
+				wb.repos.map((r) => realpathSync(r.dir)),
+			);
+		} finally {
+			wb.cleanup();
+		}
+	});
+
+	it("is empty for a flat project", async () => {
+		const mod = (await import("../lib/worktree/repos.js")) as Record<string, unknown>;
+		expect(typeof mod.declaredRepoDirs, "repos.ts exports declaredRepoDirs").toBe("function");
+		const root = mkdtempSync(join(tmpdir(), "flat-"));
+		mkdirSync(join(root, ".indusk"), { recursive: true });
+		writeFileSync(join(root, ".indusk", "config.json"), JSON.stringify({ mode: "full" }));
+		expect((mod.declaredRepoDirs as (r: string) => unknown[])(root)).toEqual([]);
+	});
+
+	it.each([["lib/health.ts"], ["lib/context-pointers.ts"], ["lib/lessons/state.ts"]])(
+		"%s reads its roots from it",
+		(file) => {
+			expect(readFileSync(join(SRC, file), "utf-8")).toMatch(/declaredRepoDirs\(/);
+		},
+	);
+});
+
+describe("A24 — the checkout join is spelled once", () => {
+	it("joins resolveReposRoot and repoDir only in worktree/repos.ts", () => {
+		const hits = grepCode("resolveReposRoot\\(.*repoDir\\(", join(SRC, "lib")).filter(
+			(l) => !l.includes("lib/worktree/repos.ts"),
+		);
+		expect(
+			hits,
+			`lesson: structural-single-definition-test-for-must-agree-invariants — a declared repo's checkout dir is re-derived outside repos.ts:\n${hits.join("\n")}`,
+		).toEqual([]);
 	});
 });

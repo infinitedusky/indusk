@@ -56,6 +56,19 @@ stateDiagram-v2
 
 Not every plan uses all five stages. The workflow type determines which documents are created — see the next section.
 
+## Before the first document
+
+The planner reads `.indusk/planning/master.md` before it writes any plan
+document. The planning rules live in `.indusk/planning/CLAUDE.md`, and Claude
+Code loads a nested context file when a file beneath it is **read** — a Write
+to a directory nothing has been read from loads nothing (measured by
+context-tiers' A17 probe, 2026-10-02). Reading the master puts the rules in
+context before the plan's first file exists.
+
+Every impl phase's Context gate item names its **tier and destination** —
+an enforcer's lesson token, an area's `CLAUDE.md`, `.indusk/current.md`, or the
+root with the reason it must be always-on. See [/claude-md](/reference/skills/claude-md).
+
 ## Workflow Types
 
 Four workflow types control the document set for each plan:

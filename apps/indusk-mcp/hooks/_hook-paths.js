@@ -135,16 +135,28 @@ function findGitPathFromCwd(cwd) {
  * @param {string | null} statePath
  * @returns {string | null}
  */
-function findGitPathFromWorkbenchConfig(statePath) {
+/**
+ * The parsed `.indusk/config.json` at a state root, or null when there is no
+ * root, no file, or no JSON — the one prologue every reader of the workbench
+ * declaration shares.
+ *
+ * @param {string | null} statePath
+ * @returns {unknown}
+ */
+function readWorkbenchConfig(statePath) {
 	if (!statePath) return null;
 	const configPath = resolve(statePath, ".indusk/config.json");
 	if (!existsSync(configPath)) return null;
-	let config;
 	try {
-		config = JSON.parse(readFileSync(configPath, "utf-8"));
+		return JSON.parse(readFileSync(configPath, "utf-8"));
 	} catch {
 		return null;
 	}
+}
+
+function findGitPathFromWorkbenchConfig(statePath) {
+	const config = readWorkbenchConfig(statePath);
+	if (!config) return null;
 	const declared = declaredRepos(config);
 	// Ambiguous: more than one repo could hold this commit. Refuse rather than
 	// attribute it to whichever happens to be declared first.
@@ -214,7 +226,8 @@ function usableRelPath(value) {
 	return v;
 }
 
-function samePath(a, b) {
+/** True when two paths name the same directory, through symlinks. Exported for the budget hook. */
+export function samePath(a, b) {
 	try {
 		return realpathSync(a) === realpathSync(b);
 	} catch {
@@ -230,14 +243,41 @@ function samePath(a, b) {
  * @returns {string[]}
  */
 export function declaredReposAt(statePath) {
-	if (!statePath) return [];
-	const configPath = resolve(statePath, ".indusk/config.json");
-	if (!existsSync(configPath)) return [];
-	try {
-		return declaredRepoNames(JSON.parse(readFileSync(configPath, "utf-8")));
-	} catch {
-		return [];
-	}
+	const config = readWorkbenchConfig(statePath);
+	return config ? declaredRepoNames(config) : [];
+}
+
+/**
+ * Every declared repo's checkout directory at a workbench root, absolute and
+ * realpath'd where it exists; empty for a flat project. The budget hook's
+ * "a declared repo's own root `CLAUDE.md` is a root, never a nested file".
+ *
+ * The base the checkouts live under is the declared `repos_root`, else the
+ * legacy `sibling_parent`, else the workbench's PARENT — as `resolveReposRoot`
+ * reads an absent value (this port once said the workbench root, and judged
+ * such a repo's root `CLAUDE.md` as nested) — a deliberate port
+ * of `declaredRepoDirs` in `src/lib/worktree/repos.ts`, beside the
+ * `readWorkbenchRepos` + `repoDir` port above. Change them together.
+ *
+ * @param {string | null} statePath
+ * @returns {string[]}
+ */
+export function declaredRepoDirsAt(statePath) {
+	const config = readWorkbenchConfig(statePath);
+	if (!config) return [];
+	const worktree = typeof config === "object" ? config.worktree : null;
+	const declaredBase = [worktree?.repos_root, worktree?.sibling_parent].find(
+		(v) => typeof v === "string" && v.trim() !== "",
+	);
+	const base = resolve(statePath, declaredBase ?? "..");
+	return declaredRepos(config).map((r) => {
+		const dir = resolve(base, r.dir);
+		try {
+			return realpathSync(dir);
+		} catch {
+			return dir;
+		}
+	});
 }
 
 /**
