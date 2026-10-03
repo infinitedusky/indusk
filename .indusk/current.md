@@ -27,6 +27,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **admin-plan-type (2026-10-01)** — a plan declares its type; absent documents and what comes next are judged by it ([archive](planning/archive/admin-plan-type/)).
 - **context-tiers (2026-10-02)** — a rule reaches the agent where it applies: enforcers name their lesson, area rules sit in nested `CLAUDE.md` files, the root holds design intent under an 18 KB budget ([archive](planning/archive/context-tiers/)).
 - **watch-reopen-collision (2026-10-03)** — `watch` exits 0 only when every open incident it touched is carried by its owner's Maintenance phase; a missed reopen is retried every run ([archive](planning/archive/watch-reopen-collision/)).
+- **test-daemons-never-leak (2026-10-03)** — tests never auto-start a telemetry daemon, and `pnpm test` / `test:system` end failing on any left in a temp home, pass or fail ([archive](planning/archive/test-daemons-never-leak/)).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
@@ -551,6 +552,90 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-03T02:36:54.451Z
 **Branch**: plan/watch-reopen-collision
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watch-reopen-collision
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 0e5d5f05 — eval: review plan/test-daemons-never-leak Test Phase 1 close (29ee553c)
+
+**Session ID**: 0e5d5f05-edd7-4770-a76d-f776720f34bc
+**Last updated**: 2026-10-03T20:50:37.759Z
+**Branch**: plan/test-daemons-never-leak
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-daemons-never-leak
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 7c0054e2 — eval: test-daemons-never-leak 2bebfae3
+
+**Session ID**: 7c0054e2-45b4-4abc-84d9-1c807207a510
+**Last updated**: 2026-10-03T21:00:37.791Z
+**Branch**: plan/test-daemons-never-leak
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-daemons-never-leak
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 771bbdeb — eval agent: scoring commit a478243d
+
+**Session ID**: 771bbdeb-8db1-4c1d-a2ad-a879f872aa32
+**Last updated**: 2026-10-03T20:51:41.807Z
+**Branch**: plan/test-daemons-never-leak
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-daemons-never-leak
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session c6ef73c8 — eval: scoring commit 336f7325 (leaked-daemon guard)
+
+**Session ID**: c6ef73c8-360e-4acd-8028-7d2d264a016d
+**Last updated**: 2026-10-03T20:52:09.345Z
+**Branch**: plan/test-daemons-never-leak
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/test-daemons-never-leak
 
 ### In Flight
 
