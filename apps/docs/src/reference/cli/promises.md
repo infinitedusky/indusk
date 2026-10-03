@@ -279,12 +279,18 @@ documents and commits nothing** — review what it wrote and commit it.
 
 | Exit | Meaning |
 |------|---------|
-| 0 | the pass ran; every opened incident reopened its owner (or nothing changed) |
-| 1 | an opened incident did **not** reopen its owner — a collision, an owner that is not a plan folder, or a worktree record that could not be read. The incident is written; the error line says which owner and why |
+| 0 | the pass ran, and every open incident it touched is carried by its owner's Maintenance phase (or nothing changed) |
+| 1 | an incident is left **without** its owner's phase — a new one, one this run extended, or one an earlier run could not reopen — because of a collision, an owner that is not a plan folder, or a worktree record that could not be read. Incidents are still written; the error line says which owner and why |
 | 2 | Jaeger or the registry could not be read; nothing was written |
 
 A violation that no plan owns is the outcome the monitor exists to prevent,
-so a run that leaves one behind never exits 0.
+so a run that leaves one behind never exits 0 — including a quiet run with no
+new violation, when an earlier run's reopen failed:
+
+```
+unowned i-2026-10-02-pot-splits-evenly (pot-splits-evenly: open, and no-such-plan has no Maintenance phase for it)
+  owner "no-such-plan" is not a plan folder — nothing was reopened
+```
 
 ```
 opened i-2026-09-19-every-commit-evaluated (every-commit-evaluated, 1 new trace)
@@ -371,7 +377,12 @@ archive paths):
   close until that test passes.
 - An owner with no impl gets one holding only this phase.
 - An **extended** incident whose phase exists is the normal second pass and
-  writes nothing. An **opened** incident whose heading already exists — a
+  writes nothing.
+- An **open incident whose owner carries no phase for it** — an earlier run
+  recorded it and could not reopen — is retried on **every** run, with or
+  without a new violation, and printed as `unowned`. Once the owner can be
+  reopened (its folder exists, its worktree record reads), the next run
+  appends the phase and the incident stops being reported. An **opened** incident whose heading already exists — a
   phase written by hand, or one that arrived any other way — is a
   **collision**: nothing is appended, and `watch` prints
 
