@@ -26,6 +26,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **release-ritual (2026-10-01)** — the bump is retrospective Step 11; trunk-guard reads the release message; the install is checked against the lockfile before npm ([archive](planning/archive/release-ritual/)).
 - **admin-plan-type (2026-10-01)** — a plan declares its type; absent documents and what comes next are judged by it ([archive](planning/archive/admin-plan-type/)).
 - **context-tiers (2026-10-02)** — a rule reaches the agent where it applies: enforcers name their lesson, area rules sit in nested `CLAUDE.md` files, the root holds design intent under an 18 KB budget ([archive](planning/archive/context-tiers/)).
+- **watch-reopen-collision (2026-10-03)** — `watch` exits 0 only when every open incident it touched is carried by its owner's Maintenance phase; a missed reopen is retried every run ([archive](planning/archive/watch-reopen-collision/)).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
@@ -505,6 +506,48 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-03T01:22:52.734Z
 **Branch**: plan/context-tiers
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/context-tiers
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session e1cd4062 — eval: watch-reopen-collision commit 94470906
+
+**Session ID**: e1cd4062-24ce-4736-b72d-bf7bad55d96a
+**Last updated**: 2026-10-03T02:36:35.828Z
+**Branch**: plan/watch-reopen-collision
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watch-reopen-collision
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 08a01d1d — eval agent: scoring commit c10ee849 (watch-reopen-collision)
+
+**Session ID**: 08a01d1d-90c9-4e78-ba95-c58f337e2f0b
+**Last updated**: 2026-10-03T02:36:54.451Z
+**Branch**: plan/watch-reopen-collision
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watch-reopen-collision
 
 ### In Flight
 

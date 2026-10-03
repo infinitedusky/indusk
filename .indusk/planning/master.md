@@ -175,7 +175,7 @@ of the deploy brief on 2026-10-02.
    - `watch` opened an incident and **silently did not reopen its owner**
      after an earlier same-day incident file was deleted (id reused, stale
      Maintenance heading matched, CLI prints nothing for `already`) — see
-     [watch-reopen-collision](watch-reopen-collision/brief.md);
+     [watch-reopen-collision](archive/watch-reopen-collision/brief.md) — **closed 2026-10-03**;
    - the dash0/posthog health checks read `.mcp.json` by relative path from
      the wrong cwd (ENOENT on a valid project);
    - the plan page shows "holding 1" but not the open incident — only the
