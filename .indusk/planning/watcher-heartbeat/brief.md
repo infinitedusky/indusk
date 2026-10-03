@@ -55,8 +55,13 @@ deployed server with the same blind spot would fail the same way, silently.
 beat are about a **backend** — "is the watcher listening". The local daemon is
 machine-global, so the projects that read it share its answer; a probe is
 tagged with its project's id, the way promise marks are, and tests the Jaeger
-*that* project reads (`promises.jaeger` may name another). A server's beat is
-per server — per workbench once each has its own instance. Item 4 is about a
+*that* project reads (`promises.jaeger` may name another). **Deployed, each
+workbench has its own telemetry and its own heartbeat** (Sandy, 2026-10-03):
+one always-on instance per workbench
+([workbench-watch-provisioning](../workbench-watch-provisioning/brief.md)),
+each beating into its own Jaeger and alerting on its own staleness — so one
+workbench's deaf server never reads as another's. Locally the daemon stays
+machine-global. Item 4 is about a
 **promise** — "is this code still talking" — and is the only per-promise
 signal.
 
