@@ -5,6 +5,7 @@
 	"scripts": {
 		"test": "turbo test && pnpm promises:check",
 		"e2e": "pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp e2e",
+		"test:system": "pnpm --filter @infinitedusky/indusk-mcp test:system",
 		"promises:check": "node apps/indusk-mcp/dist/bin/cli.js promises check",
 		"check": "biome check",
 		"check:fix": "biome check --write",
