@@ -198,3 +198,27 @@ describe("end-to-end: extracted JSON parses cleanly to a scorecard shape", () =>
 		expect(parsed.graphitiWrites).toBe(3);
 	});
 });
+
+describe("A31 (day-monitor): a brace in the prose and a fence inside the scorecard", () => {
+	// i-2026-10-03-every-commit-evaluated: five scorecards lost. The reply was a
+	// sentence of prose and a fenced scorecard. The fence match stopped at a
+	// fence quoted inside the evidence, and the brace scan gave up on the first
+	// `{` — which was prose — instead of trying the next one.
+	it("finds the scorecard after prose that carries its own braces", () => {
+		const scorecard = JSON.stringify({
+			version: 1,
+			mode: "eval",
+			questions: [
+				{
+					id: "conventions",
+					answer: "yes",
+					evidence: "the impl keeps a ```ts fence beside the row",
+				},
+			],
+		});
+		const text = `Confirmed — the rows are keyed {kind, number}, as the ADR says.\n\n\`\`\`json\n${scorecard}\n\`\`\``;
+		const extracted = extractScorecardJson(text);
+		expect(extracted, "the scorecard is in the reply; the extractor must find it").not.toBeNull();
+		expect(JSON.parse(extracted as string).questions[0].answer).toBe("yes");
+	});
+});
