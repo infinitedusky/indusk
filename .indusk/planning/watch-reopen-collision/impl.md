@@ -1,7 +1,7 @@
 ---
 title: "watch opens an incident and silently does not reopen its owner"
 date: 2026-10-02
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -126,23 +126,24 @@ deferred — and read each failure.
 
 **Goal**: decompose what this plan copied across files, per the rule of three and the project's single-definition pattern for must-agree facts. The plan's code files are all under the cleanup threshold (only `changelog.md` and the promises reference page are flagged — prose), so the work is two repeats Shape could not see from inside one phase.
 
-- [ ] Extract the watched-promise fixtures into `src/__tests__/helpers/promises-fixture.ts` — `behaviourPromise(name, { owner, domain, ... })` (a behaviour promise whose sites and tests are `src/<name>.ts` and its test), `codeFilesFor(...names)` (those two files with the site and test bodies) and `openIncidentSpec(id, promise)` (an open incident from an earlier run, root cause unwritten) — spelled three times: `monitor-watch.test.ts`, `monitor-plans.test.ts`, `watch-reopen-collision.test.ts`. Basis: the rule of three; the project's "one builder" rule for promise-bearing fixtures (`helpers/promises-fixture.ts`)
-- [ ] `lib/promises/reopen.ts`: `reopenOwner` decides "the owner already carries this incident's phase" with `maintenanceIncidentIds(text).has(incidentId)`, the same question `watch`'s retry asks — today it is an exact-name match on the parsed phases, a second spelling of a fact the reopen's dedup and the unowned retry must agree on. Basis: single definition for a must-agree invariant
-- [ ] (reviewed `lib/promises/watch.ts` — left as-is: one pass and its report; `watchReport` stays in the module beside the result type it reads, the seam A3 reaches, rather than moving to the CLI where no test could)
-- [ ] (reviewed `lib/promises/incidents.ts` and `bin/commands/promises.ts` — left as-is: one parameter threaded through the allocator, and the CLI now only prints the report)
-- [ ] (reviewed `apps/docs/src/changelog.md` and `reference/cli/promises.md`, flagged by size — left as-is: prose, outside code decomposition)
+- [x] Extract the watched-promise fixtures into `src/__tests__/helpers/promises-fixture.ts` — `behaviourPromise(name, { owner, domain, ... })` (a behaviour promise whose sites and tests are `src/<name>.ts` and its test), `codeFilesFor(...names)` (those two files with the site and test bodies) and `openIncidentSpec(id, promise)` (an open incident from an earlier run, root cause unwritten) — spelled three times: `monitor-watch.test.ts`, `monitor-plans.test.ts`, `watch-reopen-collision.test.ts`. Basis: the rule of three; the project's "one builder" rule for promise-bearing fixtures (`helpers/promises-fixture.ts`)
+- [x] `lib/promises/reopen.ts`: `reopenOwner` decides "the owner already carries this incident's phase" with `maintenanceIncidentIds(text).has(incidentId)`, the same question `watch`'s retry asks — today it is an exact-name match on the parsed phases, a second spelling of a fact the reopen's dedup and the unowned retry must agree on. Basis: single definition for a must-agree invariant
+- [x] (reviewed `lib/promises/watch.ts` — left as-is: one pass and its report; `watchReport` stays in the module beside the result type it reads, the seam A3 reaches, rather than moving to the CLI where no test could)
+- [x] (reviewed `lib/promises/incidents.ts` and `bin/commands/promises.ts` — left as-is: one parameter threaded through the allocator, and the CLI now only prints the report)
+- [x] Shape (Build Phase 3): reviewed `helpers/promises-fixture.ts` and `lib/promises/reopen.ts`. Nothing found: the three builders each make one thing and take overrides last, as `promiseProject`'s options do; the fixture now reads the root-cause and fix placeholders from `lib/promises/vocabulary.ts` instead of restating them (a fourth copy was about to be written); the reopen's check is one call with its reason beside it
+- [x] (reviewed `apps/docs/src/changelog.md` and `reference/cli/promises.md`, flagged by size — left as-is: prose, outside code decomposition)
 
 #### Build Phase 3 Verification
 
-- [ ] (no tests flip at this phase — reason: refactor) A1–A6, `monitor-watch.test.ts`, `monitor-plans.test.ts`, `monitor-reopen-validator.test.ts` and `reopen-collision.test.ts` still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watch-reopen-collision src/__tests__/monitor-watch src/__tests__/monitor-plans`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/reopen-collision src/__tests__/monitor-reopen-validator`); `pnpm test` green
+- [x] (no tests flip at this phase — reason: refactor) — system tier 17/17 (A1, A2, A4–A6, monitor-watch, monitor-plans), unit 6/6, `pnpm test` green (mcp 1,668 / 5 skipped, admin 342, promises check clean). A1–A6, `monitor-watch.test.ts`, `monitor-plans.test.ts`, `monitor-reopen-validator.test.ts` and `reopen-collision.test.ts` still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watch-reopen-collision src/__tests__/monitor-watch src/__tests__/monitor-plans`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/lib/promises/reopen-collision src/__tests__/monitor-reopen-validator`); `pnpm test` green
 
 #### Build Phase 3 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`), the test-fixture entry naming `helpers/promises-fixture.ts`: it also builds a watched behaviour promise, its code files and an open incident — a test about `watch` composes those rather than spelling them
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`), the test-fixture entry naming `helpers/promises-fixture.ts`: it also builds a watched behaviour promise, its code files and an open incident — a test about `watch` composes those rather than spelling them
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: nothing user-visible changes — confirm the Fixed entry still describes the behaviour after the refactor, and note no new entry is needed
+- [x] `apps/docs/src/changelog.md` Unreleased: nothing user-visible changes — confirm the Fixed entry still describes the behaviour after the refactor, and note no new entry is needed — confirmed: the refactor moved test fixtures and replaced one check with an equivalent call; every behaviour the entry names is what A1–A6 still assert
 
 ## Files Affected
 
