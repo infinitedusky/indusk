@@ -280,7 +280,7 @@ What the investigation found, row by row:
 
 #### Build Phase 7 Document
 
-- [ ] `guide/context-tiers.md`: where a token may sit in a refusal message, and that guarded is read across a workbench's declared repos; `reference/cli/context.md`: the workbench walk; `guide/context-budget.md`: a root context file is one at the top of any checkout
+- [x] `guide/context-tiers.md`: where a token may sit in a refusal message, and that guarded is read across a workbench's declared repos; `reference/cli/context.md`: the workbench walk; `guide/context-budget.md`: a root context file is one at the top of any checkout
 
 ## Files Affected
 
