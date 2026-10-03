@@ -1,7 +1,7 @@
 ---
 title: "A test run never leaves a telemetry daemon behind"
 date: 2026-10-03
-status: draft
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -43,9 +43,9 @@ any telemetry process running from a temporary home. See
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | Running `indusk init` on a fixture from inside the everyday suite starts no Jaeger or otelcol process — through the CLI helper, and through a child started with its own environment built on the test process's | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/test-daemons-never-leak.test.ts |
-| A2 | Outside the tests, `indusk telemetry register` with the switch unset still starts the daemon for a home that has none | Test Phase 1 | Test Phase 1 | planned | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
-| A3 | The guard exits non-zero naming the process and home of a daemon left running from a temporary home, and stops naming it once that daemon is stopped | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
+| A1 | Running `indusk init` on a fixture from inside the everyday suite starts no Jaeger or otelcol process — through the CLI helper, and through a child started with its own environment built on the test process's | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/test-daemons-never-leak.test.ts |
+| A2 | Outside the tests, `indusk telemetry register` with the switch unset still starts the daemon for a home that has none | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
+| A3 | The guard exits non-zero naming the process and home of a daemon left running from a temporary home, and stops naming it once that daemon is stopped | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/test-daemons-guard.test.ts |
 
 ## Checklist
 
@@ -54,10 +54,10 @@ any telemetry process running from a temporary home. See
 **Goal**: author all three now — every subject is reachable over a boundary
 (the CLI, the process list, a script run by path), so nothing is deferred.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create test-daemons-never-leak`, which records the assignment) — worktree-per-plan default
-- [ ] Author A1 in `src/__tests__/test-daemons-never-leak.test.ts` (everyday suite): a fixture project and a temp home; run `init` through `runCli`, then through `spawnSync` with `{ ...process.env, INDUSK_HOME }`; after each, list processes whose command line names that home (`ps -ax -o pid=,command=`) and expect none. `afterEach` stops any daemon found (`stopTelemetryForHome`), so the red run leaks nothing
-- [ ] Author A2 and A3 in `src/__tests__/test-daemons-guard.test.ts`, added to `SYSTEM` in `vitest.tiers.ts`: A2 runs `telemetry register` with `INDUSK_SKIP_TELEMETRY_AUTOSTART` deleted from the environment and expects a pair naming the home, then stops it; A3 starts a daemon in a temp home, runs `node scripts/check-test-daemons.js` by path and expects exit 1 with the home in its output, stops the daemon, and expects the output no longer to name it
-- [ ] Run each and read each failure: A1 finds a pair (init starts one today); A3 fails because the script does not exist yet (the exit is non-zero for the wrong reason, so the assertion on the named home is what goes red); A2 passes
+- [x] Create/confirm this plan's worktree (`indusk worktree create test-daemons-never-leak`, which records the assignment) — worktree-per-plan default
+- [x] Author A1 in `src/__tests__/test-daemons-never-leak.test.ts` (everyday suite): a fixture project and a temp home; run `init` through `runCli`, then through `spawnSync` with `{ ...process.env, INDUSK_HOME }`; after each, list processes whose command line names that home (`ps -ax -o pid=,command=`) and expect none. `afterEach` stops any daemon found (`stopTelemetryForHome`), so the red run leaks nothing
+- [x] Author A2 and A3 in `src/__tests__/test-daemons-guard.test.ts`, added to `SYSTEM` in `vitest.tiers.ts`: A2 runs `telemetry register` with `INDUSK_SKIP_TELEMETRY_AUTOSTART` deleted from the environment and expects a pair naming the home, then stops it; A3 starts a daemon in a temp home, runs `node scripts/check-test-daemons.js` by path and expects exit 1 with the home in its output, stops the daemon, and expects the output no longer to name it
+- [x] Run each and read each failure: A1 finds a pair (init starts one today); A3 fails because the script does not exist yet (the exit is non-zero for the wrong reason, so the assertion on the named home is what goes red); A2 passes — read 2026-10-03: A1 two processes in both cases; A3 red on "the guard names its home" (module not found); A2 green. A3's first draft started its daemon with `telemetry start`, which refused the default ports the real daemon holds — a red before its assertion; it now starts the daemon through `register`, on free ports, as the leaked ones were. The shared process lookup moved into `helpers/telemetry-reap.ts` (`telemetryProcessesFor`)
 
 #### Regression Guards
 
@@ -65,7 +65,7 @@ any telemetry process running from a temporary home. See
 
 #### Test Phase 1 Verification
 
-- [ ] A1 and A3 fail on their own assertions and A2 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/test-daemons-never-leak`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/test-daemons-guard`), and no daemon is left from a temp home afterwards (`ps -ax -o command= | grep telemetry-binari | grep -v /.indusk`)
+- [x] A1 and A3 fail on their own assertions and A2 passes — and 0 temp-home daemons afterwards (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/test-daemons-never-leak`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/test-daemons-guard`), and no daemon is left from a temp home afterwards (`ps -ax -o command= | grep telemetry-binari | grep -v /.indusk`)
 
 ### Build Phase 1: the switch, the configs, the guard
 
