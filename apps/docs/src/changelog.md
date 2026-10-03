@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.57.1] — 2026-10-03
+
 ### Fixed
 - **`promises watch` no longer opens an incident that silently reaches no plan.** Found in a promise smoke: an incident file was deleted while its Maintenance phase stayed in the owner, the next violation the same day reused the deleted id, the reopen saw the old phase and wrote nothing, and `watch` exited 0. An opened incident now never takes an id its owner's Maintenance phases already name; an opened incident whose heading exists anyway is a **collision**, reported by name; and `watch` exits **1** for any incident it leaves without its owner's phase — a collision, an owner that is not a plan folder, or an unreadable worktree record — whether the incident was opened this run, extended, or left by an earlier run. An open incident its owner has no phase for is retried on every run, so a missed reopen is repaired once the owner can take it, and is never reported as "No new violations" in the meantime.
 - **Root `pnpm test` runs the packages one at a time**, so the parallel package suite no longer starves the admin's real-Jaeger HTTP tests.
