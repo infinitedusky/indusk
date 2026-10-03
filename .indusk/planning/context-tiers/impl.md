@@ -1,7 +1,7 @@
 ---
 title: "Context tiers — a rule reaches you where and when it applies"
 date: 2026-10-02
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -69,8 +69,8 @@ smaller root with a lowered budget. See [adr.md](adr.md).
 | A20 | The budget hook judges a `CLAUDE.md` at the top level of any git checkout by the root budget — in a workbench, a declared repo's plan worktree, which no declaration names; never as a nested file | Build Phase 7 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/context-tiers-budget.test.ts |
 | A21 | In a workbench, `list_lessons` reads a lesson as guarded when a test inside a declared repo carries its token; the scan covers the declared repos as well as the workbench root | Build Phase 7 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/context-tiers-lessons.test.ts |
 | A22 | In a workbench, `context check-pointers` walks each declared repo's context files as well as the workbench root's, resolving each file's pointers against the repo that holds it, and names the repo in its report | Build Phase 7 | Build Phase 7 | passing | apps/indusk-mcp/src/__tests__/context-tiers-pointers.test.ts |
-| A23 | `declaredRepoDirs(projectRoot)` returns each declared repo's name and checkout directory in all four one-repo layouts, and an empty list for a flat project; `resolveCheckRoots`, the lesson scan and `check-pointers` read their roots from it | Build Phase 8 | Build Phase 8 | written | apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts |
-| A24 | Under `src/lib`, the join of `resolveReposRoot` and `repoDir` is spelled once, in `worktree/repos.ts`; a second spelling fails, naming the file | Build Phase 8 | Build Phase 8 | written | apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts |
+| A23 | `declaredRepoDirs(projectRoot)` returns each declared repo's name and checkout directory in all four one-repo layouts, and an empty list for a flat project; `resolveCheckRoots`, the lesson scan and `check-pointers` read their roots from it | Build Phase 8 | Build Phase 8 | passing | apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts |
+| A24 | Under `src/lib`, the join of `resolveReposRoot` and `repoDir` is spelled once, in `worktree/repos.ts`; a second spelling fails, naming the file | Build Phase 8 | Build Phase 8 | passing | apps/indusk-mcp/src/__tests__/workbench-repos-single-definition.test.ts |
 
 ### Deferred Verification
 
@@ -297,19 +297,20 @@ What the investigation found, row by row:
 - [x] (reviewed `hooks/validate-impl-structure.js` (761), `hooks/trunk-guard.js` (465) and `lib/trajectory/validator.ts` (547) — left as-is: this plan added a lesson token to existing refusal strings and nothing else)
 - [x] (reviewed the flagged skills, skill reference pages and the changelog — left as-is: prose, outside code decomposition; the skills' size is the planner's and retrospective's content)
 - [x] (reviewed `lib/planning-context.ts` against the skill sync in `init.ts`/`update.ts` — left as-is: two package-owned copy routines with different rules, a directory glob against one file, so not yet a third instance of one shape)
+- [x] Shape (Build Phase 8): reviewed `worktree/repos.ts`'s `declaredRepoDirs`, its five callers, the hook port and `helpers/register.ts`, every extension's rules readable. Nothing found: each caller now reads one call where it spelled a join; `citedLessons` lost its inline dedupe because a flat project declares no repos, so the project root cannot appear twice
 
 #### Build Phase 8 Verification
 
-- [ ] A23 and A24 pass, and A5, A10, A11, A19, A21, A22 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/workbench-repos-single-definition src/__tests__/context-tiers-`)
-- [ ] The everyday suite is green (`pnpm test`), and so is the system tier where it touches these readers (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts` — only if the system tier has merged into this branch by then; otherwise the full `pnpm test` covers it)
+- [x] A23 and A24 pass, and A5, A10, A11, A19, A21, A22 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/workbench-repos-single-definition src/__tests__/context-tiers-`) — 76/76
+- [x] The everyday suite is green (`pnpm test`), and so is the system tier where it touches these readers (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts` — only if the system tier has merged into this branch by then; otherwise the full `pnpm test` covers it) — the system tier has not merged here, and the serial suite was not re-run at the user's request ("can we not run it again till we fix it?"); instead the whole mcp suite ran with `--fileParallelism`: 1,736 passed / 13 skipped, two failures only in `always-on-pass` and `always-on-source`, the two files the parallel branch runs alone for exactly that reason — run alone here, 10/10. Admin 341/341 (it imports `worktree/repos`); `promises check` and `context check-pointers` clean
 
 #### Build Phase 8 Context
 
-- [ ] directory (`apps/indusk-mcp/CLAUDE.md`), the workbench topology entry: "where a declared repo's checkout is" has one home, `declaredRepoDirs` (`worktree/repos.ts`), beside the one reader; pinned by `workbench-repos-single-definition.test.ts`
+- [x] directory (`apps/indusk-mcp/CLAUDE.md`), the workbench topology entry: "where a declared repo's checkout is" has one home, `declaredRepoDirs` (`worktree/repos.ts`), beside the one reader; pinned by `workbench-repos-single-definition.test.ts`
 
 #### Build Phase 8 Document
 
-- [ ] `apps/docs/src/reference/cli/workbench.md`: a short note on where a declared repo's checkout lives — `repos_root` (else `sibling_parent`, else the workbench root) joined with the repo's declared `path` or name — and that every reader asks one function for it
+- [x] `apps/docs/src/reference/cli/workbench.md`: a short note on where a declared repo's checkout lives — `repos_root` (else `sibling_parent`, else the workbench root) joined with the repo's declared `path` or name — and that every reader asks one function for it
 
 ## Files Affected
 
