@@ -25,6 +25,7 @@ roadmap:
   - admin-plan-type
   - context-tiers
   - watch-reopen-collision
+  - test-daemons-never-leak
   - watcher-heartbeat
   - day-always-on-deploy
   - incident-recording
