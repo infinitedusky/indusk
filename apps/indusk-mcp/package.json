@@ -121,7 +121,7 @@
 		"start": "node dist/server/index.js",
 		"test": "vitest run",
 		"e2e": "vitest run --config vitest.e2e.config.ts",
-		"test:system": "pnpm run prepublishOnly && vitest run --config vitest.system.config.ts",
+		"test:system": "pnpm run prepublishOnly && node scripts/with-daemon-guard.js vitest run --config vitest.system.config.ts",
 		"prepublishOnly": "pnpm build && pnpm --filter indusk-admin build && node scripts/bundle-admin.js",
 		"release": "bash scripts/release-guard.sh && pnpm test:system && npm whoami && pnpm publish --no-git-checks && node scripts/record-release.js"
 	},

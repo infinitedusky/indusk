@@ -42,7 +42,7 @@ dusk/
 
 - pnpm workspaces + Turborepo; **Node 22 required** (Tailwind 4 native bindings).
 - **Biome, not ESLint** — `pnpm check` / `pnpm check:fix` / `pnpm format`. Biome config is a knowledge artifact (`biome-rationale.md`); the ratchet only tightens. After each retrospective ask if a mistake could become a Biome rule.
-- `pnpm test`: the everyday suite, in parallel; `pnpm test:system`: files that start a real daemon or server (`apps/indusk-mcp/vitest.tiers.ts`), run by `pnpm release`. **End-to-end tests**: `apps/indusk-mcp/e2e/`, `pnpm e2e` (needs `claude` + a telemetry daemon) — the promise loop, the always-on server, and the nested-context probe, run at the close of any plan touching a `CLAUDE.md`.
+- `pnpm test`: parallel, never auto-starts a daemon (`INDUSK_SKIP_TELEMETRY_AUTOSTART`); it and `test:system` end failing on one left in a temp home, pass or fail. `test:system`: real-daemon files (`apps/indusk-mcp/vitest.tiers.ts`), run by `pnpm release`. **E2e**: `pnpm e2e` (needs `claude` + a daemon) — promise loop, always-on server, nested-context probe; run at the close of a plan touching a `CLAUDE.md`.
 - **Every `CLAUDE.md` has a hard write-time budget** — `claude-md-budget.js` refuses growth past `context.claude_md_budget_bytes` (18432 here; reason in `.indusk/config.json`); shrinking is always allowed; nested files: `nested_claude_md_budget_bytes` (16384). Entries are rule + pointer; growth past it means a rule belongs at a lower tier. `indusk context check-pointers` verifies every pointer and lesson token in every context file and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
 - **An unrecorded promise violation outranks the roadmap** when answering "what's next"; unreachable telemetry is said, never reported as a zero. — see `/reference/skills/catchup`
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
@@ -69,7 +69,6 @@ dusk/
 - Falsification ritual between work and retrospective (goal-flipped bounty hunt; phase-authoring as of 1.27.4) — see `/decisions/falsification-ritual`
 - Cleanup ritual as falsify's twin (no fifth gate, no LOC ratchet — threshold is attention-focus) — see `/decisions/cleanup-ritual`
 - Three-tier agent roles + highlights queue — see `.indusk/planning/archive/agent-roles/adr.md`
-- Local telemetry: native-binary Jaeger + otelcol daemon, `indusk telemetry *` CLI, jaeger_mcp wired into project `.mcp.json` — see `.indusk/planning/archive/local-telemetry/adr.md`
 - `rationale_baseline` frontmatter for refactor-baseline plans — see `/lessons/rationale-baseline-frontmatter`
 - Doppler extension as the env layer — see `.indusk/planning/archive/doppler-extension/adr.md`
 - Multi-agent coordination: per-agent sections in one current.md + `update_current_section` MCP write surface + worktrees per agent — see `/decisions/multi-agent-coordination`

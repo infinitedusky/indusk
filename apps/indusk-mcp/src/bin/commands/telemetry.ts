@@ -294,6 +294,14 @@ export async function telemetryRegister(projectPath: string): Promise<void> {
 	const entry = registerProject(projectPath);
 	console.info(`Registered project: ${entry.name} (${entry.path})`);
 	let status = await daemonStatus();
+	if (!status.running && process.env.INDUSK_SKIP_TELEMETRY_AUTOSTART === "1") {
+		// The test suites set this (test-daemons-never-leak): every test that ran
+		// `init` against a temporary home started a detached pair here and nothing
+		// stopped it — 860 found running on 2026-10-03. Registration still
+		// happens; only the opportunistic start is skipped.
+		console.info("Daemon not running — not starting it (INDUSK_SKIP_TELEMETRY_AUTOSTART=1).");
+		return;
+	}
 	if (!status.running) {
 		console.info("Daemon not running — starting it now...");
 		try {
