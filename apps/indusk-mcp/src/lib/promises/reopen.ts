@@ -22,6 +22,22 @@ export function maintenanceHeadingName(incidentId: string): string {
 	return `${MAINTENANCE_TITLE} — ${incidentId}`;
 }
 
+/**
+ * The incident ids an impl's Build-phase Maintenance headings already name —
+ * the inverse of `maintenanceHeadingName`. The id allocator avoids them
+ * (watch-reopen-collision): a phase outlives its incident file, so a deleted
+ * file must not free its id for the next incident to collide with.
+ */
+export function maintenanceIncidentIds(implText: string): Set<string> {
+	const prefix = maintenanceHeadingName("");
+	return new Set(
+		parseImplString(implText)
+			.phases.filter((p) => p.kind === "build" && p.name.startsWith(prefix))
+			.map((p) => p.name.slice(prefix.length).trim())
+			.filter((id) => id !== ""),
+	);
+}
+
 /** The owner's folder: active wins over archived, as everywhere else. */
 export function ownerDir(planRoot: string, owner: string): string | null {
 	for (const dir of [
