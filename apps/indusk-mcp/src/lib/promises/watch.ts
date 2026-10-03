@@ -86,18 +86,18 @@ export async function watchPromises(
 export interface WatchReport {
 	out: string[];
 	err: string[];
-	/** 1 when an opened incident did not reopen its owner; the person reading the exit code is told. */
+	/** 1 when an incident did not reach its owner; the person reading the exit code is told. */
 	exitCode: 0 | 1;
 }
 
 /**
  * What `promises watch` says about a run, and how it exits. One rule for every
- * reopen that did not happen (watch-reopen-collision): an opened incident that
- * did not reach its owner — a collision, an owner that is not a plan folder, a
- * worktree record that could not be read — prints an error and fails the run,
- * because a violation no plan owns, reported as success, is the one outcome
- * the monitor exists to prevent. An extended incident whose phase exists is
- * the normal second pass, and stays quiet.
+ * reopen that did not happen (watch-reopen-collision): an incident — opened
+ * or extended — that did not reach its owner (a collision, an owner that is
+ * not a plan folder, a worktree record that could not be read) prints an
+ * error and fails the run, because a violation no plan owns, reported as
+ * success, is the one outcome the monitor exists to prevent. `already` — the
+ * owner carries the phase — is the normal second pass, and stays quiet.
  */
 export function watchReport(result: WatchResult): WatchReport {
 	const out = [`Read from Jaeger at ${result.source}.`];
@@ -126,7 +126,8 @@ export function watchReport(result: WatchResult): WatchReport {
 				`  ${c.owner} was not reopened — its impl already has "${r.heading}", which this new incident did not write; nothing was appended`,
 			);
 		}
-		if (c.kind === "opened") missed = true;
+		// `already` is the one non-reopen that is not a miss: the owner carries the phase.
+		if (r.reason !== "already") missed = true;
 	}
 	out.push("\nWritten, not committed: review the incidents and commit them.");
 	return { out, err, exitCode: missed ? 1 : 0 };
