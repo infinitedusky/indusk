@@ -25,6 +25,9 @@ const OWNER = "smoke-owner";
 const REUSED = "chat-keeps-line-breaks"; // A1
 const EXTENDED = "seat-release-on-timeout"; // A2
 const ORPHAN = "seat-never-double-booked"; // A4
+const EXTENDED_ORPHAN = "table-closes-on-empty"; // A5
+const LEFT_OPEN = "bet-settles-once"; // A6, owner exists
+const LEFT_ORPHAN = "pot-splits-evenly"; // A6, owner is not a plan folder
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** An owner's impl: one landed build phase and, optionally, Maintenance phases for the ids given. */
@@ -82,6 +85,23 @@ function incidentFiles(root: string): string[] {
 	}
 }
 
+/** An open incident from an earlier run, in ADR D6's shape. */
+function openIncident(id: string, promise: string) {
+	return {
+		id,
+		promise,
+		source: "local" as const,
+		status: "open" as const,
+		date: "2026-09-17",
+		symptom: "Seen on an earlier run.",
+		rootCause: "_Unwritten — a person writes this._",
+		fix: "_Not yet fixed._",
+		opened: "2026-09-17T10:00:00Z",
+		lastSeen: "2026-09-17T10:00:00Z",
+		traces: ["0af7651916cd43dd8448eb211c80319c"],
+	};
+}
+
 const ownerText = (p: PromiseProject) =>
 	readFileSync(join(p.planRoot, ".indusk", "planning", OWNER, "impl.md"), "utf-8");
 
@@ -106,6 +126,14 @@ describe.skipIf(SHOULD_SKIP)("watch-reopen-collision — promises watch", () => 
 				promise: EXTENDED,
 				outcome: "violated",
 				symptom: "seat 9 never released",
+				traceId: newTraceId(),
+			},
+			{
+				service: "fixture-app",
+				name: "close-table",
+				promise: EXTENDED_ORPHAN,
+				outcome: "violated",
+				symptom: "an empty table stayed open",
 				traceId: newTraceId(),
 			},
 			{
@@ -194,5 +222,59 @@ describe.skipIf(SHOULD_SKIP)("watch-reopen-collision — promises watch", () => 
 		const r = watch(p);
 		expect(r.err, "the reopen that did not happen is said").toMatch(/no-such-plan/);
 		expect(r.code, "and a run that did not reopen an opened incident is not a success").not.toBe(0);
+	});
+
+	it("A5 — extending an open incident whose owner is not a plan folder still fails the run", () => {
+		const open = `i-2026-09-17-${EXTENDED_ORPHAN}`;
+		const p = promiseProject({
+			domains: ["chat"],
+			promises: [
+				behaviour(EXTENDED_ORPHAN, "no-such-plan", { state: "known-violated", incidents: [open] }),
+			],
+			incidents: [openIncident(open, EXTENDED_ORPHAN)],
+			files: codeFor(EXTENDED_ORPHAN),
+		});
+		projects.push(p);
+		const r = watch(p);
+		expect(r.out, "the new violation extended the incident").toMatch(
+			new RegExp(`extended ${open}`),
+		);
+		expect(r.err).toMatch(/no-such-plan/);
+		expect(r.code, "an extended incident with no owner is as unowned as an opened one").not.toBe(0);
+	});
+
+	it("A6 — an open incident left without its owner's phase is reopened on a run with no new violation", () => {
+		const open = `i-2026-09-17-${LEFT_OPEN}`;
+		const p = promiseProject({
+			domains: ["chat"],
+			activePlans: [OWNER],
+			// An earlier run recorded the incident and could not reopen; the owner carries no phase for it.
+			planFiles: { [`${OWNER}/impl.md`]: ownerImpl([]) },
+			promises: [behaviour(LEFT_OPEN, OWNER, { state: "known-violated", incidents: [open] })],
+			incidents: [openIncident(open, LEFT_OPEN)],
+			files: codeFor(LEFT_OPEN),
+		});
+		projects.push(p);
+		const r = watch(p);
+		expect(r.code, `${r.out}\n${r.err}`).toBe(0);
+		expect(ownerText(p), "the owner gains the incident's Maintenance phase").toContain(
+			`Maintenance — ${open}`,
+		);
+	});
+
+	it("A6 — and when the owner still cannot be reopened, that quiet run says so and fails", () => {
+		const open = `i-2026-09-17-${LEFT_ORPHAN}`;
+		const p = promiseProject({
+			domains: ["chat"],
+			promises: [
+				behaviour(LEFT_ORPHAN, "no-such-plan", { state: "known-violated", incidents: [open] }),
+			],
+			incidents: [openIncident(open, LEFT_ORPHAN)],
+			files: codeFor(LEFT_ORPHAN),
+		});
+		projects.push(p);
+		const r = watch(p);
+		expect(r.err, "the unowned incident is named again").toMatch(/no-such-plan/);
+		expect(r.code, 'not "No new violations" and exit 0').not.toBe(0);
 	});
 });
