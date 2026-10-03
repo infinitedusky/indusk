@@ -5,6 +5,8 @@ status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
+cleanup: skipped
+cleanup_reason: "reviewed all 13 changed files. Flagged by size: changelog.md (prose) and bin/commands/telemetry.ts (549 lines, pre-existing; this plan added one 8-line early return). Cross-file candidates considered and left: two readers of the process list (scripts/check-test-daemons.js, a shipped plain-JS script filtering by temp root; helpers/telemetry-reap.ts telemetryProcessesFor, a TS test helper filtering by one home) — two copies in different languages and packages with different filters, short of the rule of three, and sharing would make a shipped script import a test helper or the reverse; the switch + INDUSK_BIN block in two vitest configs — each package config must set it, and the admin one resolves a different path; a temp-dir/git-init fixture in two test files — five lines each. Nothing warrants extraction."
 ---
 
 # A test run never leaves a telemetry daemon behind — Implementation
