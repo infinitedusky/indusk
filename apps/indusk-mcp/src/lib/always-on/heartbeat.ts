@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { sendWatcherSpan, WATCHER_SERVICE, watcherSpanBody } from "../promises/probe.js";
 import {
 	DEFAULT_TIMEOUT_MS,
@@ -7,6 +7,7 @@ import {
 	type JaegerTrace,
 	jaegerGet,
 } from "../promises/telemetry.js";
+import { writeFileDurably } from "./durable-write.js";
 import { postToSlack } from "./pass.js";
 
 /**
@@ -70,13 +71,9 @@ export function readWatcherState(volume: string): WatcherState | null {
 	}
 }
 
-/** Write and rename, as the announced record does — a truncated file is a lost state. */
+/** Written durably, as the announced record is — a file emptied by a stopped machine is a lost state. */
 export function writeWatcherState(volume: string, state: WatcherState): void {
-	const path = watcherStatePath(volume);
-	mkdirSync(dirname(path), { recursive: true });
-	const temp = `${path}.${process.pid}.tmp`;
-	writeFileSync(temp, JSON.stringify(state, null, 1));
-	renameSync(temp, path);
+	writeFileDurably(watcherStatePath(volume), JSON.stringify(state, null, 1));
 }
 
 /** Write the state, or say why it could not be written — never throw past the pass. */
