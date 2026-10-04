@@ -82,6 +82,9 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   executing agent reviews the code the phase wrote against the enabled
   extensions' prose rules, and findings land as unchecked items in the current
   phase. — see `/guide/shape`
+- **Commit cadence**: one commit per checklist item on the plan's
+  `plan/{name}` branch, intent-named; in a monorepo, one commit per app or
+  context; merge and delete fast. — see `/reference/skills/work`
 - **Close-out rituals**: `/work` → `/falsify` (authors a Falsification Phase)
   → `/work` → `/cleanup` (authors a Cleanup Phase; its threshold is
   attention-focus, not a cap) → `/work` → `/retrospective`, whose Step 0 blocks
