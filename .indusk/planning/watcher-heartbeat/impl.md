@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching"
 date: 2026-10-03
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -231,11 +231,11 @@ writes a key nothing reads, both genuine reds.
 
 #### Build Phase 5 Context
 
-- [ ] guard: `watcher-cleanup.test.ts` carries `lesson: structural-single-definition-test-for-must-agree-invariants` — the newest-mark rule joins the single-definition pins, delivered by its enforcer, not the nearly full mcp `CLAUDE.md`
+- [x] guard: `watcher-cleanup.test.ts` carries `lesson: structural-single-definition-test-for-must-agree-invariants` — the newest-mark rule joins the single-definition pins, delivered by its enforcer, not the nearly full mcp `CLAUDE.md` — `lessonStates` reads the lesson as guarded, with `watcher-cleanup.test.ts` among its enforcers
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`, the library paragraph: `newestMark` and `silencePastExpectation`, exported from `promises/telemetry`, are the one rule for "last seen" and "silent past its expectation"
+- [x] `apps/docs/src/reference/cli/promises.md`, the library paragraph: `newestMark` and `silencePastExpectation`, exported from `promises/telemetry`, are the one rule for "last seen" and "silent past its expectation" — `vitepress build` clean
 
 ## Files Affected
 
