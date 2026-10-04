@@ -144,6 +144,13 @@ server records what it has announced on its volume, *after* Slack accepts it,
 so a failed post leaves the violation unannounced for the next pass rather
 than swallowing it.
 
+**In Slack, when the server stops hearing.** Every pass also sends a
+heartbeat into the server's own Jaeger and reads the last one back. When the
+heartbeats stop landing, Slack gets one *Watcher blind since …* message, and
+then nothing more while the state holds. When they land again, it gets one
+*Watcher recovered*. The record of what was said is `watcher-state.json` on
+the volume. See [the heartbeat](/reference/cli/telemetry-server#the-heartbeat).
+
 **In the admin, live.** The Promises page refreshes itself, so a violation
 arriving while the page is open turns its chip red without a reload. A red row
 names the environment it came from.
