@@ -28,6 +28,10 @@ primary_region = "iad"
   INDUSK_SERVER_OTLP_PORT = "4318"
   INDUSK_SERVER_QUERY_PORT = "16686"
   INDUSK_SERVER_USER = "indusk"
+  # The query API as people reach it, for the trace links posted to Slack.
+  # The server's own address for its Jaeger is loopback, which opens nothing
+  # from anyone's Slack client. Change it with the app name.
+  INDUSK_SERVER_PUBLIC_QUERY_URL = "https://indusk-always-on.fly.dev:16687"
 
 # Badger's files live here. Without it the server forgets every violation it
 # was told about the moment a machine is replaced — which Fly does routinely.
