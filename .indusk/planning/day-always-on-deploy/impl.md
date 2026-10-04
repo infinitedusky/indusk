@@ -57,14 +57,14 @@ observed instead of "unrun". See [brief.md](brief.md) and
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | The image builds from the published package, and a container started without one of its settings exits naming the missing variable | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
+| A1 | The image builds from the published package, and a container started without one of its settings exits naming the missing variable | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
 | A2 | On the deployed server, both doors refuse a request without credentials (401) and accept one with them | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A3 | A promise broken from a machine that is not the server reaches Slack within one pass interval, naming the promise, the symptom, the environment, the service and a trace link | Build Phase 2 | Build Phase 2 | planned | manual: read the Slack channel after the smoke's send |
 | A4 | A trace sent before a machine restart is still there after it | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A5 | A violation sent after the server has sat idle for an hour is announced — the machine never went to sleep | Build Phase 3 | Build Phase 3 | planned | manual: send after an idle hour, read the Slack channel |
 | A6 | A developer machine whose project names the deployed server reads it: `promises status` reports the smoke's violations and names the server, and the read is not *watcher blind* | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A7 | The deployed server is listening by its own account: its Jaeger holds a heartbeat less than two pass intervals old, and Slack has had no "watcher blind" message since the deploy | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
-| A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
+| A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
 | A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
 
 ## Checklist
@@ -108,12 +108,13 @@ reading Slack, so they are registered below, not authored.
 
 #### Build Phase 1 Verification
 
-- [ ] A1 and A8 pass, and the always-on suites still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-image src/__tests__/always-on-two-servers src/__tests__/always-on-server src/__tests__/always-on-falsification src/__tests__/always-on-pass src/__tests__/always-on-source src/__tests__/watcher-heartbeat-server`)
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` clean; Biome clean on the changed files
+- [x] A1 and A8 pass, and the always-on suites still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-image src/__tests__/always-on-two-servers src/__tests__/always-on-server src/__tests__/always-on-falsification src/__tests__/always-on-pass src/__tests__/always-on-source src/__tests__/watcher-heartbeat-server`) — 7 files, 34 tests; leak guard clear
+- [x] `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` clean; Biome clean on the changed files
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (The gRPC setting follows the other ports' `port()` reader with a default; its docblock carries the why.)
 
 #### Build Phase 1 Context
 
-- [ ] guard: `always-on-two-servers.test.ts` carries `lesson: a-port-left-to-its-default-is-a-port-two-instances-share` — a server whose ports are not all set from its settings cannot run twice on one host
+- [x] guard: `always-on-two-servers.test.ts` carries `lesson: a-port-left-to-its-default-is-a-port-two-instances-share` — a server whose ports are not all set from its settings cannot run twice on one host
 
 #### Build Phase 1 Document
 
