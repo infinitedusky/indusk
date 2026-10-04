@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.58.1] — 2026-10-04
+
 ### Fixed
 - **Two always-on servers can run on one host, and the server no longer exposes an unauthenticated query API.** The server left Jaeger's gRPC query port unset, so Jaeger bound `0.0.0.0:16685`. A second server on the same host could not start, and that listener had none of the basic auth the two declared doors carry. It is now `INDUSK_SERVER_GRPC_PORT` (default 16685), bound to `127.0.0.1`.
 
