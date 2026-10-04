@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching"
 date: 2026-10-03
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -67,6 +67,7 @@ A promise may declare `expect_every`. See [brief.md](brief.md),
 | A12 | After more heartbeats than one query returns (over 50 passes), the server still reads its newest beat and stays listening | Phase 0 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
 | A13 | With a blind watcher, the admin's Promises page renders within its 2-second health budget plus margin (under 4 s), not after the probe's 5-second wait on every refresh | Phase 0 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-watcher-blind.test.ts |
 | A14 | `promises check` refuses `expect_every` on a state or structure promise, naming it — a key nothing would ever act on is refused, not silently ignored | Phase 0 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A15 | A promise's newest mark — upheld or violated — is computed in one place, so `promise_health`, the admin and the `expect_every` judgment cannot disagree about when a promise was last seen | Build Phase 5 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/watcher-cleanup.test.ts |
 
 ## Checklist
 
@@ -210,6 +211,30 @@ writes a key nothing reads, both genuine reds.
 #### Build Phase 4 Document
 
 - [x] `apps/docs/src/reference/cli/telemetry-server.md` "The heartbeat": a restart while blind stays blind until a real beat lands; an unwritable state tells nothing and says why. `apps/docs/src/reference/cli/promises.md`: `--since` is the window counted, and `expect_every` is behaviour-only — also the narrow read window for the newest beat; `vitepress build` clean
+
+### Build Phase 5: Cleanup — one newest-mark rule, one status-block reader
+
+**Goal**: remove the two cross-file duplications this plan completed to three copies, per the rule of three. This is a library/CLI plus a Next.js admin; the move is to extract a function, and no server/client boundary is involved. The rest of the oversized changed files are left as they are, with reasons.
+
+- [ ] Extract `newestMark(marks: PromiseMarks | undefined): Date | null` into `promises/telemetry.ts` (exported through the existing subpath). Use it in `silencePastExpectation`, `health.ts`'s `lastSeen` and the admin's `healthOf`, which each restate `[violations[0]?.at, lastUpheld?.at].filter(...).sort(...)[0]`. Those three must agree on when a promise was last seen, and the third copy was added by this plan
+- [ ] Extract the test helper `block(out, name)` (one `promises status` block, from the line naming a promise to the next blank line) into `src/__tests__/helpers/status-output.ts`. Use it in `monitor-status`, `watcher-expect-every` and `watcher-falsification`, the three byte-identical copies
+- [ ] (reviewed the `probe.ts` ↔ `telemetry.ts` import cycle — left as-is: it is function-level only, since each module uses the other's exports inside function bodies. Breaking it means moving `jaegerGet`, `JaegerEndpoint` and `JaegerTrace` to a lower module whose importers span `always-on/pass.ts`, `heartbeat.ts` and the admin's subpath, out of proportion to a cycle that cannot misload)
+- [ ] (reviewed `apps/indusk-admin/src/components/Promises.tsx`, 442 lines — left as-is: this plan added a 10-line banner beside the existing unknown-health banner, which Build Phase 1's Shape step already judged. The file's size predates this plan)
+- [ ] (reviewed `lib/config.ts` 627, `tools/plan-tools.ts` 425, `promises/registry.ts` 402 — left as-is: this plan touched each in under 25 lines, each change inside the unit that owns it: one config key, one error field, one frontmatter rule)
+- [ ] (reviewed `promises/telemetry.ts`, 461 lines — left as-is apart from the extraction above. Its growth is the intake, the normalization and the silence judgment, each in a reader all three surfaces import through one subpath; a new module would need a new package export)
+
+#### Build Phase 5 Verification
+
+- [ ] A15: `watcher-cleanup.test.ts` counts the newest-mark expression `lastUpheld?.at]` in `apps/indusk-mcp/src` and `apps/indusk-admin/src` (tests excluded) and finds it only in `newestMark`; it carries `lesson: structural-single-definition-test-for-must-agree-invariants` (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/watcher-cleanup`)
+- [ ] Behaviour parity: `always-on-health-tool`, `watcher-expect-every`, `monitor-status`, `watcher-falsification` and the admin's `http-promise-health` still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-health-tool src/__tests__/watcher-expect-every src/__tests__/monitor-status src/__tests__/watcher-falsification`; `pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-promise-health`)
+
+#### Build Phase 5 Context
+
+- [ ] guard: `watcher-cleanup.test.ts` carries `lesson: structural-single-definition-test-for-must-agree-invariants` — the newest-mark rule joins the single-definition pins, delivered by its enforcer, not the nearly full mcp `CLAUDE.md`
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`, the library paragraph: `newestMark` and `silencePastExpectation`, exported from `promises/telemetry`, are the one rule for "last seen" and "silent past its expectation"
 
 ## Files Affected
 
