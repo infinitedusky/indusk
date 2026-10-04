@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { startPass } from "../always-on/schedule.js";
 import { jaegerEndpoint } from "../promises/telemetry.js";
 import { resolveBinary } from "./daemon.js";
+import { freeLoopbackPort, startQueryDoor } from "./query-door.js";
 
 /**
  * The always-on server: the Jaeger InDusk already ships, run as a long-lived
@@ -201,7 +202,11 @@ export function readPassSettings(env: NodeJS.ProcessEnv = process.env): PassSett
  * unauthenticated door on a public host, nothing in the loop reads either
  * remotely, and a supervisor can check the query port instead.
  */
-export function renderServerConfig(settings: ServerSettings): string {
+export function renderServerConfig(
+	settings: ServerSettings,
+	/** Where Jaeger's query API listens, on loopback, behind the query door (A12). */
+	jaegerQueryPort: number = settings.queryPort,
+): string {
 	const storage = join(settings.volume, "badger");
 	return `service:
   extensions: [basicauth, jaeger_storage, jaeger_query]
@@ -235,7 +240,7 @@ extensions:
     storage:
       traces: server_storage
     http:
-      endpoint: 0.0.0.0:${settings.queryPort}
+      endpoint: 127.0.0.1:${jaegerQueryPort}
       auth:
         authenticator: basicauth
     grpc:
@@ -270,10 +275,17 @@ export async function serve(env: NodeJS.ProcessEnv = process.env): Promise<numbe
 	const settings = readServerSettings(env);
 	mkdirSync(settings.volume, { recursive: true });
 	const configPath = join(settings.volume, "jaeger-server.yaml");
-	writeFileSync(configPath, renderServerConfig(settings));
+	// Jaeger's query API listens on loopback; the public query port is the
+	// door, which adds the login challenge Jaeger's basic auth never sends.
+	const jaegerQueryPort = await freeLoopbackPort();
+	writeFileSync(configPath, renderServerConfig(settings, jaegerQueryPort));
 
 	const binary = resolveBinary("jaeger");
 	const child = spawn(binary, [`--config=file:${configPath}`], { stdio: "inherit" });
+	const door = await startQueryDoor({
+		publicPort: settings.queryPort,
+		jaegerPort: jaegerQueryPort,
+	});
 
 	const timer = startPass(settings);
 
@@ -287,6 +299,7 @@ export async function serve(env: NodeJS.ProcessEnv = process.env): Promise<numbe
 		}
 		child.once("close", (code) => {
 			clearInterval(timer);
+			door.close();
 			resolve(code ?? 0);
 		});
 	});
