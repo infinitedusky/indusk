@@ -45,7 +45,7 @@ function promiseFile(name: string, owner: string): string {
   ].join("\n");
 }
 
-function project(queryUrl: string): string {
+function project(queryUrl: string, otlpUrl: string): string {
   const root = mkdtempSync(path.join(tmpdir(), "remote-promises-"));
   mkdirSync(path.join(root, ".indusk", "planning", OWNER), { recursive: true });
   writeFileSync(
@@ -55,7 +55,9 @@ function project(queryUrl: string): string {
       admin: { refresh_ms: 1000 },
       promises: {
         domains: ["seating"],
-        jaeger: { url: queryUrl, credential_env: CRED_ENV },
+        // `otlp_url`: every read probes the server through its intake
+        // (watcher-heartbeat).
+        jaeger: { url: queryUrl, credential_env: CRED_ENV, otlp_url: otlpUrl },
       },
     }),
   );
@@ -88,7 +90,7 @@ let server: AlwaysOnServer;
 
 beforeAll(async () => {
   server = await startAlwaysOnServer();
-  root = project(server.queryUrl);
+  root = project(server.queryUrl, server.otlpUrl);
   home = makeHome([{ name: "remote", path: root }]);
   await server.load([
     {

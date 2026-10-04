@@ -32,7 +32,9 @@ const PROMISE = "seat-never-double-booked";
 const OWNER = "seats-v2";
 const CRED_ENV = "INDUSK_TEST_SERVER_CREDENTIAL";
 
-function project(opts: { jaeger?: { url: string; credential_env: string } } = {}): PromiseProject {
+function project(
+	opts: { jaeger?: { url: string; credential_env: string; otlp_url?: string } } = {},
+): PromiseProject {
 	return promiseProject({
 		domains: ["seating"],
 		landed: { [OWNER]: daysAgo(30) },
@@ -68,7 +70,10 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — a project that names its Jaeger"
 
 	beforeAll(async () => {
 		server = await startAlwaysOnServer();
-		fixture = project({ jaeger: { url: server.queryUrl, credential_env: CRED_ENV } });
+		// `otlp_url`: every read probes the server through its intake (watcher-heartbeat).
+		fixture = project({
+			jaeger: { url: server.queryUrl, credential_env: CRED_ENV, otlp_url: server.otlpUrl },
+		});
 		violated = newTraceId();
 		await server.load([
 			{
