@@ -74,6 +74,15 @@ export function basicAuthHeaders(credential: string): Record<string, string> {
 }
 
 /**
+ * Surrounding whitespace and trailing slashes off a Jaeger URL — the query
+ * API's or the intake's (A29). One definition: the rule was restated at four
+ * sites before, and watcher-heartbeat's intake would have made two more.
+ */
+export function normalizeJaegerUrl(url: string): string {
+	return url.trim().replace(/\/+$/, "");
+}
+
+/**
  * The one way to build a Jaeger endpoint (A29).
  *
  * Normalizing a query URL is a rule — drop surrounding whitespace, drop
@@ -83,7 +92,7 @@ export function basicAuthHeaders(credential: string): Record<string, string> {
  * to write differently.
  */
 export function jaegerEndpoint(queryUrl: string, credential?: string): JaegerEndpoint {
-	const normalized = queryUrl.trim().replace(/\/+$/, "");
+	const normalized = normalizeJaegerUrl(queryUrl);
 	return credential
 		? { queryUrl: normalized, headers: basicAuthHeaders(credential) }
 		: { queryUrl: normalized };
@@ -362,7 +371,7 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 			`promises.jaeger names ${named.credential_env} for its credential and that variable is not set`,
 		);
 	}
-	const intake = named.otlp_url?.trim().replace(/\/+$/, "");
+	const intake = named.otlp_url ? normalizeJaegerUrl(named.otlp_url) : "";
 	return {
 		endpoint: jaegerEndpoint(queryUrl, credential),
 		label: queryUrl,

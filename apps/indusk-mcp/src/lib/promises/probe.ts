@@ -4,6 +4,7 @@ import {
 	type JaegerEndpoint,
 	type JaegerTrace,
 	jaegerGet,
+	normalizeJaegerUrl,
 } from "./telemetry.js";
 import { PROMISE_MARK } from "./vocabulary.js";
 
@@ -128,7 +129,7 @@ export async function sendWatcherSpan(
 	headers: Record<string, string> = {},
 	timeoutMs = DEFAULT_TIMEOUT_MS,
 ): Promise<void> {
-	const url = `${intakeUrl.replace(/\/+$/, "")}/v1/traces`;
+	const url = `${normalizeJaegerUrl(intakeUrl)}/v1/traces`;
 	let res: Response;
 	try {
 		res = await fetch(url, {
