@@ -66,6 +66,7 @@ observed instead of "unrun". See [brief.md](brief.md) and
 | A7 | The deployed server is listening by its own account: its Jaeger holds a heartbeat less than two pass intervals old, and Slack has had no "watcher blind" message since the deploy | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
 | A10 | The server's records survive a machine restart: after it, the announced record and the watcher state both still parse, so the server keeps announcing | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A11 | The trace link in a Slack announcement opens the trace from wherever the reader is: it uses the public query address when one is set, and never the server's own loopback address | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/always-on-public-link.test.ts |
 | A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
 
 ## Checklist
@@ -153,6 +154,11 @@ reading Slack, so they are registered below, not authored.
 - [x] Release **1.58.2** with the durable writes (Sandy runs `pnpm release`; npm needs a valid login first), then redeploy with `VERSION=1.58.2` — released from a `release/1.58.2` branch off main with only the fix (main `e01fa38f`, merged back as `20c0dc3f`). Redeployed; `indusk --version` on the machine reads 1.58.2
 - [x] Repair the deployed record: remove the empty `/data/announced.json` over `fly ssh`. Absent reads as an empty record, so the next pass re-announces the 24 h window, which holds only the smoke's own violations. The repair is the documented answer to `announced nothing — … not valid JSON`, written into the reference — the file was still 0 bytes on 1.58.2 (the fix prevents the damage, it does not undo it). Removed at 22:43:59; the next pass logged `announced 1, held 0, unannounced 0, already announced 0`. The reference text is the Document item below
 - [x] Re-run the smoke on 1.58.2 (A2, A4, A6, A7, A10): A10 must pass after A4's restart — **5/5** at 22:45 UTC. The first pass after the restart logged `announced 1, … already announced 1`: the record survived the restart, so it posted only the smoke's new violation
+- [x] Discovered — **the trace link in Slack was unusable.** Sandy pasted both messages (6:44 and 6:46 PM). Promise, symptom, `smoke` and service were all right, but the link read `http://127.0.0.1:16686/trace/3444d16745367297cd645729b2a741d0`. That is the address the server's own pass uses for its own Jaeger, and it opens nothing from anyone's Slack. No test asserted the link.
+  - The fix: `INDUSK_SERVER_PUBLIC_QUERY_URL` (optional) supplies the link. Without it, the message names the trace and asks for the setting, instead of offering a loopback link. The heartbeat's blind message names the same public address. `announce --once` links to the address it was given.
+  - `fly.always-on.toml` sets `https://indusk-always-on.fly.dev:16687`.
+  - Guarded by new row A11, red then green locally, 33/33 with the announcement suites. It needs a release (**1.58.3**) and a redeploy
+- [ ] Release **1.58.3** with the public link (Sandy runs `SKIP_RELEASE_GUARD=1 pnpm release`), redeploy with `VERSION=1.58.3`, and re-run the smoke so a fresh violation is announced
 - [ ] A3: after the smoke's A6 send, confirm the Slack message names the promise, the symptom, `smoke`, the service and a trace link; quote it here
 
 #### Build Phase 2 Verification
