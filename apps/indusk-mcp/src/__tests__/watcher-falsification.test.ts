@@ -169,7 +169,10 @@ describe.skipIf(SHOULD_SKIP)("A10, A11 — the heartbeat's state", () => {
 			.texts()
 			.slice(before)
 			.filter((t) => /blind/i.test(t));
-		expect(blind.length, blind.join("\n")).toBeLessThanOrEqual(1);
+		expect(
+			blind.length,
+			`lesson: an-alarm-must-not-travel-the-path-it-reports — prove the state writable before telling\n${blind.join("\n")}`,
+		).toBeLessThanOrEqual(1);
 	}, 30_000);
 });
 
