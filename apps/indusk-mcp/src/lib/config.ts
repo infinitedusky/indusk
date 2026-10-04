@@ -149,10 +149,16 @@ export interface InduskConfig {
 		 * query API, and `credential_env` is the **name of the environment
 		 * variable** holding `user:password`, never the credential itself. A
 		 * config file is committed; a credential in it would be too.
+		 *
+		 * `otlp_url` is the server's OTLP/HTTP intake — a different door from
+		 * the query API. Every read sends a probe through it and reads it back
+		 * (watcher-heartbeat); a server named without one reads *watcher
+		 * blind*, never an unprobed count.
 		 */
 		jaeger?: {
 			url: string;
 			credential_env: string;
+			otlp_url?: string;
 		};
 	};
 	/**

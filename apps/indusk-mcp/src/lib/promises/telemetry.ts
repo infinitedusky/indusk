@@ -307,7 +307,16 @@ export interface MarkSource {
 	label: string;
 	/** True when the project named a server rather than falling to its daemon. */
 	remote: boolean;
+	/**
+	 * The OTLP/HTTP intake feeding `endpoint`, where the watcher probe is sent
+	 * (watcher-heartbeat): the daemon's `otlpPort`, or `promises.jaeger.otlp_url`.
+	 * Null when a named server has none — the probe then reads blind.
+	 */
+	intakeUrl: string | null;
 }
+
+/** The config key a named server's intake comes from, as a reader is told to set it. */
+export const INTAKE_CONFIG_KEY = "promises.jaeger.otlp_url";
 
 export async function resolveMarkSource(root: string): Promise<MarkSource> {
 	const named = readConfig(root)?.promises?.jaeger;
@@ -317,7 +326,12 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 		}
 		const endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
-		return { endpoint, label: endpoint.queryUrl, remote: false };
+		return {
+			endpoint,
+			label: endpoint.queryUrl,
+			remote: false,
+			intakeUrl: `http://localhost:${status.otlpPort}`,
+		};
 	}
 
 	const queryUrl = jaegerEndpoint(named.url).queryUrl;
@@ -342,7 +356,13 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 			`promises.jaeger names ${named.credential_env} for its credential and that variable is not set`,
 		);
 	}
-	return { endpoint: jaegerEndpoint(queryUrl, credential), label: queryUrl, remote: true };
+	const intake = named.otlp_url?.trim().replace(/\/+$/, "");
+	return {
+		endpoint: jaegerEndpoint(queryUrl, credential),
+		label: queryUrl,
+		remote: true,
+		intakeUrl: intake || null,
+	};
 }
 
 /**
