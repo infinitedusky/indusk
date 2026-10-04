@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.58.3] — 2026-10-04
+
+### Fixed
+- **The always-on server's Slack trace links open.** The first real deploy announced `http://127.0.0.1:16686/trace/…`, the address the server uses for its own Jaeger, which opens nothing from anyone's Slack client. A new optional setting, `INDUSK_SERVER_PUBLIC_QUERY_URL`, is the query API as people reach it (for example `https://<app>.fly.dev:16687`), and the links use it. Without it, a message names the trace and asks for the setting rather than offering a link that goes nowhere. The heartbeat's "watcher blind" message names the same address, and `telemetry announce --once` links to the address it was given.
+
 ## [1.58.2] — 2026-10-04
 
 ### Fixed
