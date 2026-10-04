@@ -23,6 +23,7 @@ subplans:
   - test-daemons-never-leak
   - watcher-heartbeat
   - day-always-on-deploy
+  - promise-timeline
   - incident-recording
   - workbench-watch-provisioning
   - day-contract
