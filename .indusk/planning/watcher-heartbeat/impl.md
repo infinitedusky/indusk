@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching"
 date: 2026-10-03
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -209,7 +209,7 @@ writes a key nothing reads, both genuine reds.
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/cli/telemetry-server.md` "The heartbeat": a restart while blind stays blind until a real beat lands; an unwritable state tells nothing and says why. `apps/docs/src/reference/cli/promises.md`: `--since` is the window counted, and `expect_every` is behaviour-only
+- [x] `apps/docs/src/reference/cli/telemetry-server.md` "The heartbeat": a restart while blind stays blind until a real beat lands; an unwritable state tells nothing and says why. `apps/docs/src/reference/cli/promises.md`: `--since` is the window counted, and `expect_every` is behaviour-only — also the narrow read window for the newest beat; `vitepress build` clean
 
 ## Files Affected
 
