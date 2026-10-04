@@ -137,6 +137,7 @@ did not start. `--once` is required: the scheduled pass belongs to
 | `INDUSK_SERVER_VOLUME` | yes | The directory badger's files and the rendered config live in. Created if absent. |
 | `INDUSK_SERVER_OTLP_PORT` | yes | The port the OTLP HTTP receiver binds. |
 | `INDUSK_SERVER_QUERY_PORT` | yes | The port the query API and the Jaeger UI bind. |
+| `INDUSK_SERVER_GRPC_PORT` | no | Jaeger's gRPC query port, bound to `127.0.0.1` only: it has no basic auth and nothing outside the container needs it. Defaults to 16685; give a second server on the same host its own. |
 | `INDUSK_SERVER_USER` | yes | The basic-auth user, for both doors. |
 | `INDUSK_SERVER_PASSWORD` | yes | Its password. Never commit it; give it to the host as a secret. |
 | `INDUSK_SERVER_RETENTION_HOURS` | no | How long a span stays readable. Defaults to 672 (28 days). |
