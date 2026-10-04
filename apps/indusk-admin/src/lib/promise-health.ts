@@ -6,6 +6,7 @@ import {
   JaegerUnreachable,
   type MarkedSpansResult,
   readPromiseMarks,
+  WatcherBlind,
 } from "@infinitedusky/indusk-mcp/promises/telemetry";
 import { readAdminRefreshMs } from "./project-reader";
 
@@ -49,7 +50,17 @@ export interface HealthRow {
 
 export type HealthRead =
   | { ok: true; at: string; marks: MarkedSpansResult }
-  | { ok: false; unknownSince: string | null; where: string };
+  | {
+      ok: false;
+      unknownSince: string | null;
+      where: string;
+      /**
+       * The watcher answered and did not hear (watcher-heartbeat): a probe sent
+       * to `intake` never came back from `where`. Absent when it could not be
+       * reached at all.
+       */
+      blind?: { intake: string };
+    };
 
 const TIMEOUT_MS = 2_000;
 const cache = new Map<string, { expires: number; read: HealthRead }>();
@@ -76,7 +87,10 @@ export async function readHealth(
       ok: false,
       unknownSince: lastOk.get(projectRoot) ?? null,
       where:
-        err instanceof JaegerUnreachable ? err.where : (err as Error).message,
+        err instanceof JaegerUnreachable || err instanceof WatcherBlind
+          ? err.where
+          : (err as Error).message,
+      ...(err instanceof WatcherBlind ? { blind: { intake: err.intake } } : {}),
     };
   }
   cache.set(projectRoot, {
