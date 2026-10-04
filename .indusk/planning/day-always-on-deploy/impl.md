@@ -118,7 +118,7 @@ reading Slack, so they are registered below, not authored.
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/telemetry-server.md`, the environment table: `INDUSK_SERVER_GRPC_PORT`; `apps/docs/src/changelog.md` Unreleased, Fixed: two servers on one host
+- [x] `apps/docs/src/reference/cli/telemetry-server.md`, the environment table: `INDUSK_SERVER_GRPC_PORT`; `apps/docs/src/changelog.md` Unreleased, Fixed: two servers on one host — the changelog entry also names the unauthenticated listener the default left open; `vitepress build` clean
 
 ### Build Phase 2: deploy, and run the smoke
 
