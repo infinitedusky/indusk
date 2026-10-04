@@ -196,6 +196,7 @@ writes a key nothing reads, both genuine reds.
 - [x] A12: narrow `readNewestHeartbeat`'s window to `2 × staleMs` back from now, so the beats it can return fit within the limit
 - [x] A13: `probeWatcher` takes the caller's `timeoutMs` as its wait when one is given (`readPromiseMarks` passes it through) — the cost: the admin now waits 2 s for its probe, so a Jaeger slower than that to index reads *blind* there. That is the ADR's accepted risk, a loud and recoverable false blind; the CLI and `promise_health` keep 5 s
 - [x] A14: `promiseProblem` refuses `expect_every` on any kind but behaviour, naming the kind
+- [x] Shape (`apps/indusk-mcp/src/lib/always-on/heartbeat.ts`) — `heartbeatPass` wraps two state writes in the same try/catch, building the same "could not be written" message. Name it once: `tryWriteState(volume, state): string | null`. Rule: one fact, one name; one block, one job — done; A6, A7, A10, A11 4/4 after it
 
 #### Build Phase 4 Verification
 

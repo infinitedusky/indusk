@@ -79,6 +79,16 @@ export function writeWatcherState(volume: string, state: WatcherState): void {
 	renameSync(temp, path);
 }
 
+/** Write the state, or say why it could not be written — never throw past the pass. */
+function tryWriteState(volume: string, state: WatcherState): string | null {
+	try {
+		writeWatcherState(volume, state);
+		return null;
+	} catch (err) {
+		return `${watcherStatePath(volume)} could not be written: ${(err as Error).message}`;
+	}
+}
+
 /** The newest heartbeat's time, or null when the server has none. Throws when Jaeger cannot be read. */
 export async function readNewestHeartbeat(
 	endpoint: JaegerEndpoint,
@@ -253,14 +263,10 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 			// that cannot be recorded is repeated every pass (A11). A real write
 			// of the state as it stands — a clean start's is "listening", so a
 			// failed post below is tried again next pass.
-			try {
-				writeWatcherState(
-					opts.volume,
-					previous ?? { state: "listening", since: now.toISOString() },
-				);
-			} catch (err) {
-				stateProblem = `${watcherStatePath(opts.volume)} could not be written: ${(err as Error).message}`;
-			}
+			stateProblem = tryWriteState(
+				opts.volume,
+				previous ?? { state: "listening", since: now.toISOString() },
+			);
 		}
 		if (message && !stateProblem) {
 			try {
@@ -271,13 +277,7 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 				next = null;
 			}
 		}
-		if (next && !stateProblem) {
-			try {
-				writeWatcherState(opts.volume, next);
-			} catch (err) {
-				stateProblem = `${watcherStatePath(opts.volume)} could not be written: ${(err as Error).message}`;
-			}
-		}
+		if (next && !stateProblem) stateProblem = tryWriteState(opts.volume, next);
 
 		return { state, newestBeat, reason, told, untold, sendProblem, stateProblem };
 	} finally {
