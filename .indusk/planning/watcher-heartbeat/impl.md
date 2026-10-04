@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching"
 date: 2026-10-03
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -159,11 +159,11 @@ writes a key nothing reads, both genuine reds.
 
 #### Build Phase 3 Context
 
-- [ ] planning: `apps/indusk-mcp/templates/planning/CLAUDE.md` (and its installed copy) — a promise about something known to happen regularly declares `expect_every`; silence without it is the good outcome
+- [x] planning: `apps/indusk-mcp/templates/planning/CLAUDE.md` (and its installed copy) — a promise about something known to happen regularly declares `expect_every`; silence without it is the good outcome — folded into the `.indusk/promises/` entry (+126 bytes; 5,946 of 16,384); template and installed copy byte-identical
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: `expect_every` in the promise file and what "needs attention" means for it; the changelog: `expect_every`
+- [x] `apps/docs/src/reference/cli/promises.md`: `expect_every` in the promise file and what "needs attention" means for it; the changelog: `expect_every` — the key in the promise-file example, a `status` bullet covering the line, `promise_health`'s `silence`, the admin's detail line and the widened window; `vitepress build` clean; `check-pointers` PASS; the context-tiers ship and budget pins 14/14
 
 ## Files Affected
 
