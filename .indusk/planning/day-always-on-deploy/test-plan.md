@@ -1,7 +1,7 @@
 ---
 title: "Always-on deploy — Test Plan"
 date: 2026-10-04
-status: draft
+status: accepted
 ---
 
 # Always-on deploy — Test Plan
