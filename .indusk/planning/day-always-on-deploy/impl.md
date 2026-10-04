@@ -134,7 +134,11 @@ reading Slack, so they are registered below, not authored.
   - `fly config validate` passes.
 - [x] Generate the password (`openssl rand -hex 24`), `fly secrets set INDUSK_SERVER_PASSWORD=…`, and write `INDUSK_DEPLOYED_CREDENTIAL=indusk:<password>` to `~/.indusk/config.env`; the value never enters the repository or the conversation — staged with `--stage` (no machine exists yet; the deploy applies it); `config.env` is mode 600; the value was never printed
 - [x] Sandy sets `INDUSK_SERVER_SLACK_WEBHOOK` as a Fly secret (`fly secrets set … --config docker/fly.always-on.toml`)
-- [ ] `fly deploy --config docker/fly.always-on.toml` (Fly's remote builder; the image installs 1.58.0); record the URLs, the machine id and anything the configuration got wrong
+- [x] `fly deploy --config docker/fly.always-on.toml` (Fly's remote builder; the image installs 1.58.0); record the URLs, the machine id and anything the configuration got wrong — `fly deploy -c docker/fly.always-on.toml --build-arg VERSION=1.58.1 --ha=false --remote-only`. The image is 487 MB and machine `815601f9d4ee58` started cleanly. Intake: `https://indusk-always-on.fly.dev` (443). Query API: `https://indusk-always-on.fly.dev:16687`. **Observed, and missing from the written procedure:**
+  - Fly allocates **no public IP** on a first deploy, so the server was unreachable. IPv6 is free (`2a09:8280:1::1a7:2681:0`), but this laptop's network has none.
+  - Fly's shared IPv4 routes only 80/443, so the query port 16687 needs a **dedicated IPv4**. `188.93.145.200` was allocated at $2/month, on Sandy's call.
+  - Both doors then answered 401 without credentials.
+  - `--ha=false` keeps it to one machine. Fly's default is two, which the config's single-writer badger volume forbids.
 - [ ] Run the scripted smoke against the deployment (A2, A4, A6, A7) and record its output here
 - [ ] A3: after the smoke's A6 send, confirm the Slack message names the promise, the symptom, `smoke`, the service and a trace link; quote it here
 
