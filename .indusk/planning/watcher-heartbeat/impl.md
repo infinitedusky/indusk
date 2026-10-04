@@ -61,12 +61,12 @@ A promise may declare `expect_every`. See [brief.md](brief.md),
 | A6 | The always-on server records a heartbeat on every pass: its own Jaeger holds a heartbeat span no older than one pass interval | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
 | A7 | When the server's heartbeat goes stale, Slack gets one "watcher blind since <time>" message, not one per pass; when heartbeats resume, one "watcher recovered" message | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
 | A8 | A promise declaring `expect_every` needs attention when no mark of it has arrived for longer than that while the watcher is listening; a promise without it, silent as long, does not | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/watcher-expect-every.test.ts |
-| A9 | `promises status --since 90m` counts only violations from the last 90 minutes, even when a promise declares `expect_every: 1d` — the window a person asked for is the window they are shown | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
-| A10 | A server restarted while its watcher is blind, with no heartbeat landing, does not tell Slack "watcher recovered" | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
-| A11 | When the watcher state cannot be written (the volume refuses it), a blind watcher tells Slack once at most, not once per pass | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
-| A12 | After more heartbeats than one query returns (over 50 passes), the server still reads its newest beat and stays listening | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
-| A13 | With a blind watcher, the admin's Promises page renders within its 2-second health budget plus margin (under 4 s), not after the probe's 5-second wait on every refresh | Phase 0 | Build Phase 4 | planned | apps/indusk-admin/src/__tests__/http-watcher-blind.test.ts |
-| A14 | `promises check` refuses `expect_every` on a state or structure promise, naming it — a key nothing would ever act on is refused, not silently ignored | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A9 | `promises status --since 90m` counts only violations from the last 90 minutes, even when a promise declares `expect_every: 1d` — the window a person asked for is the window they are shown | Phase 0 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A10 | A server restarted while its watcher is blind, with no heartbeat landing, does not tell Slack "watcher recovered" | Phase 0 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A11 | When the watcher state cannot be written (the volume refuses it), a blind watcher tells Slack once at most, not once per pass | Phase 0 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A12 | After more heartbeats than one query returns (over 50 passes), the server still reads its newest beat and stays listening | Phase 0 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A13 | With a blind watcher, the admin's Promises page renders within its 2-second health budget plus margin (under 4 s), not after the probe's 5-second wait on every refresh | Phase 0 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-watcher-blind.test.ts |
+| A14 | `promises check` refuses `expect_every` on a state or structure promise, naming it — a key nothing would ever act on is refused, not silently ignored | Phase 0 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
 
 ## Checklist
 
@@ -182,7 +182,14 @@ writes a key nothing reads, both genuine reds.
 - **A13**: the probe ignores the caller's timeout. The admin reads health with a 2-second budget, but a blind read polls for 5 seconds, on every refresh.
 - **A14**: `promiseProblem` accepts `expect_every` on any kind, but only behaviour promises are ever judged. On a state promise it is a key that silently does nothing.
 
-- [ ] Author A9–A12 and A14 red in `apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts` (added to `SYSTEM`; the server rows in `RUN_ALONE`), and A13 red in `http-watcher-blind.test.ts`. Run each and read each failure
+- [x] Author A9–A12 and A14 red in `apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts` (added to `SYSTEM`; the server rows in `RUN_ALONE`), and A13 red in `http-watcher-blind.test.ts`. Run each and read each failure — read 2026-10-03:
+  - A9 counted "1 violation" from 20 h ago under `--since 90m`.
+  - A10 posted "Watcher recovered" to Slack with no beat landing.
+  - A11 posted "blind" on every pass.
+  - A13 rendered in 5,177 ms.
+  - A14: `promises check` exited 0.
+  - **A12 passed when written.** After 60+ beats, Jaeger (badger) still returned the newest. The hypothesis is not confirmed; the narrowing below stays as a cheap removal of the dependence on result order.
+  - The whole file is in `RUN_ALONE`, since A12 starts a server.
 - [ ] A9: widen the read only for the silence judgment. An explicit `sinceMs` is the window counted and shown. When it is shorter than a promise's `expect_every`, the silence is judged as "silent for more than <window>" only if nothing was seen, and otherwise from the newest mark in it
 - [ ] A10: a server's start counts as heard only when no blind state is recorded. Recovery needs a real beat newer than the recorded `since`
 - [ ] A11: prove `watcher-state.json` writable before telling Slack (a real write of the current state, as `proveRecordWritable` does). When it is not writable, tell nothing and log why

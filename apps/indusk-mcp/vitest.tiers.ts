@@ -38,6 +38,7 @@ export const SYSTEM = [
 	"src/__tests__/update-scm-jj-removed.test.ts",
 	"src/__tests__/watch-reopen-collision.test.ts",
 	"src/__tests__/watcher-expect-every.test.ts",
+	"src/__tests__/watcher-falsification.test.ts",
 	"src/__tests__/watcher-heartbeat-server.test.ts",
 	"src/__tests__/watcher-probe.test.ts",
 ];
@@ -60,5 +61,6 @@ export const RUN_ALONE = [
 	"src/__tests__/always-on-pass.test.ts",
 	"src/__tests__/always-on-server.test.ts",
 	"src/__tests__/always-on-source.test.ts",
+	"src/__tests__/watcher-falsification.test.ts",
 	"src/__tests__/watcher-heartbeat-server.test.ts",
 ];

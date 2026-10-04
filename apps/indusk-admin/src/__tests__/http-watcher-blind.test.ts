@@ -85,11 +85,20 @@ describe("watcher-heartbeat — A2 (admin): a Jaeger that answers and hears noth
   });
 
   it("the Promises page says watcher blind and shows no observed health", async () => {
+    // A13 (falsification): a blind read must fit the admin's 2 s health
+    // budget, not the probe's 5 s wait. A warm-up request pays for `next dev`
+    // compiling the page; the timed one comes after the health cache expires,
+    // so it pays for a whole blind read and nothing else.
+    await fetch(`${dev.url}/p/blind/promises`);
+    await new Promise((r) => setTimeout(r, 5_500)); // past the health cache
+    const started = Date.now();
     const res = await fetch(`${dev.url}/p/blind/promises`);
+    const elapsed = Date.now() - started;
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toMatch(/watcher blind/i);
     expect(html).not.toContain('data-health="green"');
     expect(html).not.toMatch(/not seen/i);
-  }, 30_000);
+    expect(elapsed, "A13 — rendered within the 2 s health budget plus margin").toBeLessThan(4_000);
+  }, 40_000);
 });
