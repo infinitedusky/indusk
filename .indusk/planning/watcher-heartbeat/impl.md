@@ -141,7 +141,7 @@ writes a key nothing reads, both genuine reds.
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/telemetry-server.md` and `apps/docs/src/guide/always-on.md`: the heartbeat, `watcher-state.json`, the two Slack messages, the staleness rule; the changelog: the server heartbeat
+- [x] `apps/docs/src/reference/cli/telemetry-server.md` and `apps/docs/src/guide/always-on.md`: the heartbeat, `watcher-state.json`, the two Slack messages, the staleness rule; the changelog: the server heartbeat — a "The heartbeat" section under the pass, `INDUSK_SERVER_WATCHER_STALE_MS` in the environment table, a "when the server stops hearing" paragraph in the guide's "What you see"; `vitepress build` clean
 
 ### Build Phase 3: `expect_every`
 
