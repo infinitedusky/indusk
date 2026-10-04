@@ -58,16 +58,16 @@ observed instead of "unrun". See [brief.md](brief.md) and
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
 | A1 | The image builds from the published package, and a container started without one of its settings exits naming the missing variable | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
-| A2 | On the deployed server, both doors refuse a request without credentials (401) and accept one with them | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
-| A3 | A promise broken from a machine that is not the server reaches Slack within one pass interval, naming the promise, the symptom, the environment, the service and a trace link | Build Phase 2 | Build Phase 2 | written | manual: read the Slack channel after the smoke's send |
-| A4 | A trace sent before a machine restart is still there after it | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A2 | On the deployed server, both doors refuse a request without credentials (401) and accept one with them | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A3 | A promise broken from a machine that is not the server reaches Slack within one pass interval, naming the promise, the symptom, the environment, the service and a trace link | Build Phase 2 | Build Phase 2 | passing | manual: read the Slack channel after the smoke's send |
+| A4 | A trace sent before a machine restart is still there after it | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A5 | A violation sent after the server has sat idle for an hour is announced — the machine never went to sleep | Build Phase 3 | Build Phase 3 | planned | manual: send after an idle hour, read the Slack channel |
-| A6 | A developer machine whose project names the deployed server reads it: `promises status` reports the smoke's violations and names the server, and the read is not *watcher blind* | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
-| A7 | The deployed server is listening by its own account: its Jaeger holds a heartbeat less than two pass intervals old, and Slack has had no "watcher blind" message since the deploy | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A6 | A developer machine whose project names the deployed server reads it: `promises status` reports the smoke's violations and names the server, and the read is not *watcher blind* | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A7 | The deployed server is listening by its own account: its Jaeger holds a heartbeat less than two pass intervals old, and Slack has had no "watcher blind" message since the deploy | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
-| A10 | The server's records survive a machine restart: after it, the announced record and the watcher state both still parse, so the server keeps announcing | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
-| A11 | The trace link in a Slack announcement opens the trace from wherever the reader is: it uses the public query address when one is set, and never the server's own loopback address | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/always-on-public-link.test.ts |
-| A12 | A person opening a trace link in a browser is asked to log in (401 with a Basic challenge) and, logged in, sees the trace | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/always-on-browser-login.test.ts |
+| A10 | The server's records survive a machine restart: after it, the announced record and the watcher state both still parse, so the server keeps announcing | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A11 | The trace link in a Slack announcement opens the trace from wherever the reader is: it uses the public query address when one is set, and never the server's own loopback address | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/always-on-public-link.test.ts |
+| A12 | A person opening a trace link in a browser is asked to log in (401 with a Basic challenge) and, logged in, sees the trace | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/always-on-browser-login.test.ts |
 | A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
 
 ## Checklist
@@ -164,17 +164,29 @@ reading Slack, so they are registered below, not authored.
   - On Sandy's call, a front door: `telemetry serve` answers the public query port itself (`lib/telemetry/query-door.ts`) and passes every request to Jaeger, now on a free loopback port. When Jaeger answers 401, the door adds `WWW-Authenticate: Basic`.
   - Jaeger stays the only thing that checks a password.
   - Guarded by new row A12, red then green. The server suites pass, 32/32
-- [ ] Release **1.58.4** with the query door (Sandy runs `SKIP_RELEASE_GUARD=1 pnpm release`), redeploy with `VERSION=1.58.4`, re-run the smoke
-- [ ] A3: after the smoke's A6 send, confirm the Slack message names the promise, the symptom, `smoke`, the service and a trace link; quote it here
+- [x] Release **1.58.4** with the query door (Sandy runs `SKIP_RELEASE_GUARD=1 pnpm release`), redeploy with `VERSION=1.58.4`, re-run the smoke — released (main `f008e852`, merged back), deployed. `curl -D -` against the live query port shows `401` with `www-authenticate: Basic realm="indusk always-on", charset="UTF-8"`. The smoke passed 5/5, and the server announced at 23:40:45 UTC (`already announced 3`)
+- [x] A3: after the smoke's A6 send, confirm the Slack message names the promise, the symptom, `smoke`, the service and a trace link; quote it here — as Sandy pasted it from the channel (the 6:46 PM message, on 1.58.2):
+  ```
+  Promise violated: smoke-promise-reaches-the-server
+  sent by the deploy smoke
+  smoke · smoke-app · smoke-check
+  http://127.0.0.1:16686/trace/717860a7731fff5272ca576f36a8226e
+  ```
+  - The content was right from the first deploy. The link was not, and it took two fixes: a public address (1.58.3, A11) and a login challenge (1.58.4, A12).
+  - On 1.58.3 Sandy confirmed the link reads `https://indusk-always-on.fly.dev:16687/trace/66be9891a23e56f85cf62d8701fd26fa`.
+  - On 1.58.4 Sandy clicked the 7:40 PM message's link, logged in when asked, and the trace opened in the Jaeger UI: "that worked".
 
 #### Build Phase 2 Verification
 
-- [ ] A2, A4, A6, A7 pass (`set -a; . ~/.indusk/config.env; set +a; INDUSK_DEPLOYED_QUERY_URL=… INDUSK_DEPLOYED_OTLP_URL=… INDUSK_DEPLOYED_FLY_APP=… pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.e2e.config.ts e2e/deployed-smoke`), and A3 is quoted above
-- [ ] `fly status --config docker/fly.always-on.toml` shows one machine, started, with auto-stop off
+- [x] A2, A4, A6, A7 pass (`set -a; . ~/.indusk/config.env; set +a; INDUSK_DEPLOYED_QUERY_URL=… INDUSK_DEPLOYED_OTLP_URL=… INDUSK_DEPLOYED_FLY_APP=… pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.e2e.config.ts e2e/deployed-smoke`), and A3 is quoted above
+  - The smoke passed 5/5 on 1.58.4 (A2, A4, A6, A7, A10). A11 and A12 are green locally, and A12 was confirmed live by `curl` and by Sandy's login.
+  - A7's Slack half: `/data/watcher-state.json` reads `listening since 17:42:10`. That is the first pass after the first deploy, and it never changed through four deploys and three restarts, so the server never told Slack it was blind.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (`durable-write.ts` and `query-door.ts` are one job each with their why in the docblock; the pass, heartbeat, schedule and `serve` changes thread one value each — the public URL, the loopback port.)
+- [x] `fly status --config docker/fly.always-on.toml` shows one machine, started, with auto-stop off — one machine, `815601f9d4ee58`, `started`; `fly machine list --json` shows `autostop: false` on both services
 
 #### Build Phase 2 Context
 
-- [ ] current.md: the deployed server's URLs, its app name and the credential variable's name, in the shared region, so the next session knows it exists
+- [x] current.md: the deployed server's URLs, its app name and the credential variable's name, in the shared region, so the next session knows it exists — with how to re-run the smoke and what it costs while it runs
 
 #### Build Phase 2 Document
 
