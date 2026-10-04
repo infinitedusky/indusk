@@ -143,8 +143,26 @@ describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — a listening daemon", () => {
 		expect(row?.violations).toBe(0);
 		expect(JSON.stringify(json)).not.toMatch(/watcher blind/i);
 	}, 60_000);
+});
 
-	it("A4 — five reads within half a minute send one probe, not five", async () => {
+describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — A4: the cost of probing", () => {
+	// Its own daemon: the probe cache is per process and per query URL, so a
+	// daemon another test in this file already read would start A4 cached.
+	let jaeger: LocalJaeger;
+	let fixture: PromiseProject;
+
+	beforeAll(async () => {
+		fixture = project();
+		jaeger = await startLocalJaeger();
+	}, 120_000);
+
+	afterAll(() => {
+		jaeger?.stop();
+		if (jaeger) rmSync(jaeger.home, { recursive: true, force: true });
+		if (fixture) rmSync(fixture.root, { recursive: true, force: true });
+	});
+
+	it("five reads within half a minute send one probe, not five", async () => {
 		const before = await probeSpans(jaeger.queryUrl);
 		for (let i = 0; i < 5; i++) await health(fixture.root, jaeger.home);
 		// The probe is read back before the read continues, so it is already
@@ -155,40 +173,43 @@ describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — a listening daemon", () => {
 	}, 60_000);
 });
 
-describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — A2: a Jaeger that answers and hears nothing", () => {
-	let fixture: PromiseProject;
-	let home: string;
-	let fake: FakeQueryPort;
+describe.skipIf(SHOULD_SKIP)(
+	"watcher-heartbeat — A2: a Jaeger that answers and hears nothing",
+	() => {
+		let fixture: PromiseProject;
+		let home: string;
+		let fake: FakeQueryPort;
 
-	beforeAll(async () => {
-		fixture = project();
-		home = mkdtempSync(join(tmpdir(), "indusk-deaf-jaeger-home-"));
-		fake = await startFakeQueryPort(home, EMPTY_JAEGER);
-	});
+		beforeAll(async () => {
+			fixture = project();
+			home = mkdtempSync(join(tmpdir(), "indusk-deaf-jaeger-home-"));
+			fake = await startFakeQueryPort(home, EMPTY_JAEGER);
+		});
 
-	afterAll(async () => {
-		await fake?.close();
-		if (fixture) rmSync(fixture.root, { recursive: true, force: true });
-		if (home) rmSync(home, { recursive: true, force: true });
-	});
+		afterAll(async () => {
+			await fake?.close();
+			if (fixture) rmSync(fixture.root, { recursive: true, force: true });
+			if (home) rmSync(home, { recursive: true, force: true });
+		});
 
-	it("status says watcher blind, names where it looked, exits 2, and gives no count", async () => {
-		const cli = await status(fixture.root, home);
-		expect(cli.text).toMatch(/watcher blind/i);
-		expect(cli.text).toContain(`http://localhost:${fake.port}`);
-		expect(cli.code, cli.text).toBe(2);
-		expect(cli.text).not.toMatch(/\b\d+ violations?\b/);
-		expect(cli.text).not.toMatch(/not seen|upheld/i);
-	}, 30_000);
+		it("status says watcher blind, names where it looked, exits 2, and gives no count", async () => {
+			const cli = await status(fixture.root, home);
+			expect(cli.text).toMatch(/watcher blind/i);
+			expect(cli.text).toContain(`http://localhost:${fake.port}`);
+			expect(cli.code, cli.text).toBe(2);
+			expect(cli.text).not.toMatch(/\b\d+ violations?\b/);
+			expect(cli.text).not.toMatch(/not seen|upheld/i);
+		}, 30_000);
 
-	it("promise_health is an error saying watcher blind, with no promise rows", async () => {
-		const { json, isError } = await health(fixture.root, home);
-		const text = JSON.stringify(json);
-		expect(text).toMatch(/watcher blind/i);
-		expect(isError, text).toBe(true);
-		expect((json as { promises?: unknown[] }).promises ?? [], "no promise rows").toHaveLength(0);
-	}, 30_000);
-});
+		it("promise_health is an error saying watcher blind, with no promise rows", async () => {
+			const { json, isError } = await health(fixture.root, home);
+			const text = JSON.stringify(json);
+			expect(text).toMatch(/watcher blind/i);
+			expect(isError, text).toBe(true);
+			expect((json as { promises?: unknown[] }).promises ?? [], "no promise rows").toHaveLength(0);
+		}, 30_000);
+	},
+);
 
 describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — A3: no daemon at all", () => {
 	let fixture: PromiseProject;
