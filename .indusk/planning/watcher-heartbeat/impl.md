@@ -116,12 +116,12 @@ writes a key nothing reads, both genuine reds.
 #### Build Phase 1 Context
 
 - [x] guard: `watcher-probe.test.ts` A2 carries `lesson: reachable-is-not-listening` — the lesson file says a backend that answers is not one that hears; read health only after a probe comes back — both A2 assertions carry it; `lessonStates` reads the lesson as **guarded** by that file; `indusk context check-pointers` PASS
-- [x] `apps/indusk-admin/CLAUDE.md`: *watcher blind* is a hollow chip like unreachable, never green or "unverified" — the admin reads `WatcherBlind` through the same subpath as `JaegerUnreachable` — written as built: blind is a state of the read with its own banner, never a chip colour (folded into the existing Promises-page entry, +151 bytes; 4,916 of 16,384)
+- [x] `apps/indusk-admin/CLAUDE.md`: *watcher blind* is a hollow chip like unreachable, never green or "unverified" — the admin reads `WatcherBlind` through the same subpath as `JaegerUnreachable` — written as built: blind is a state of the read with its own banner, never a chip colour (folded into the existing Promises-page entry, +167 bytes; 4,932 of 16,384)
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/guide/promises.md`: *watcher blind* and how it differs from unreachable, with the Mermaid diagram (reader → probe → returned → marks | not returned → watcher blind)
-- [ ] `apps/docs/src/reference/cli/promises.md`: `status` and `watch` exit 2 when blind; `promises.jaeger.otlp_url`; `apps/docs/src/reference/skills/catchup.md`: the blind line; `apps/docs/src/changelog.md` Unreleased, Added: the watcher probe
+- [x] `apps/docs/src/guide/promises.md`: *watcher blind* and how it differs from unreachable, with the Mermaid diagram (reader → probe → returned → marks | not returned → watcher blind) — a new "Watcher blind" section after "The loop"; `vitepress build` clean
+- [x] `apps/docs/src/reference/cli/promises.md`: `status` and `watch` exit 2 when blind; `promises.jaeger.otlp_url`; `apps/docs/src/reference/skills/catchup.md`: the blind line; `apps/docs/src/changelog.md` Unreleased, Added: the watcher probe — also: `watch`'s exit table names blind under 2; the library paragraph names `probeWatcher`, `WatcherBlind` and the 30 s trust
 
 ### Build Phase 2: the server's heartbeat
 
