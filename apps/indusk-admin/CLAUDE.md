@@ -47,7 +47,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **The Promises page** reads only through the `promises/registry` subpath
   (`lib/promises-reader.ts`, which also derives "holding N"); observed health in
   `lib/promise-health.ts` (one cached 2 s read; unreachable = hollow, never
-  green); `monitor` is the one time-filled bar segment; a violated row names the
+  green; *watcher blind* — `WatcherBlind`, read from `promises/telemetry`
+  beside `JaegerUnreachable` — is a state of the read with its own banner,
+  never a chip colour); `monitor` is the one time-filled bar segment; a violated row names the
   span's environment or says unknown. Readers import `telemetry/status.ts`,
   never `daemon.ts` (Turbopack parses its binary).
 - **Active plans and their boundary records are read from each plan's live
