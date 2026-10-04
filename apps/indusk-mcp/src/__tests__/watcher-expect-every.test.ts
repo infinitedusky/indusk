@@ -67,7 +67,13 @@ describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — A8: expect_every", () => {
 		jaeger = await startLocalJaeger();
 		const threeHoursAgo = new Date(Date.now() - 3 * 3_600_000);
 		await jaeger.load([
-			{ service: "app", name: "evaluate", promise: EXPECTING, outcome: "upheld", at: threeHoursAgo },
+			{
+				service: "app",
+				name: "evaluate",
+				promise: EXPECTING,
+				outcome: "upheld",
+				at: threeHoursAgo,
+			},
 			{ service: "app", name: "submit", promise: QUIET, outcome: "upheld", at: threeHoursAgo },
 		]);
 		previousHome = process.env.INDUSK_HOME;

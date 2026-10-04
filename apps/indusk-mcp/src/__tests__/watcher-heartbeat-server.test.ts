@@ -2,8 +2,8 @@ import { spawnSync } from "node:child_process";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
-import { SHOULD_SKIP } from "./helpers/cli.js";
 import { type AlwaysOnServer, startAlwaysOnServer } from "./helpers/always-on-server.js";
+import { SHOULD_SKIP } from "./helpers/cli.js";
 import { type SlackCapture, startSlackCapture } from "./helpers/slack-capture.js";
 
 /**
