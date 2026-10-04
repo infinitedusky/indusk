@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching"
 date: 2026-10-03
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -53,14 +53,14 @@ A promise may declare `expect_every`. See [brief.md](brief.md),
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | With the local daemon running and listening, `promises status` and `promise_health` read promises exactly as today — a probe that comes back changes nothing a person sees | Test Phase 1 | Test Phase 1 | planned | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts |
-| A2 | When the Jaeger a project reads answers its queries but never returns what is sent to it, `promises status`, `promise_health` and the admin's Promises page say **watcher blind**, naming where they looked, with no promise counts | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts, apps/indusk-admin/src/__tests__/http-watcher-blind.test.ts |
-| A3 | With the daemon stopped, every reader says the watcher cannot be reached — as today — and never a count | Test Phase 1 | Test Phase 1 | planned | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts |
-| A4 | Reading promise health repeatedly within 30 s sends one probe, not one per read | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts |
-| A5 | `/catchup` reports "watcher blind" on its own line, ahead of the roadmap, when `promise_health` says so — and never promise counts in that state (package and installed copies) | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/watcher-catchup-skill.test.ts |
-| A6 | The always-on server records a heartbeat on every pass: its own Jaeger holds a heartbeat span no older than one pass interval | Test Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
-| A7 | When the server's heartbeat goes stale, Slack gets one "watcher blind since <time>" message, not one per pass; when heartbeats resume, one "watcher recovered" message | Test Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
-| A8 | A promise declaring `expect_every` needs attention when no mark of it has arrived for longer than that while the watcher is listening; a promise without it, silent as long, does not | Test Phase 1 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/watcher-expect-every.test.ts |
+| A1 | With the local daemon running and listening, `promises status` and `promise_health` read promises exactly as today — a probe that comes back changes nothing a person sees | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts |
+| A2 | When the Jaeger a project reads answers its queries but never returns what is sent to it, `promises status`, `promise_health` and the admin's Promises page say **watcher blind**, naming where they looked, with no promise counts | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts, apps/indusk-admin/src/__tests__/http-watcher-blind.test.ts |
+| A3 | With the daemon stopped, every reader says the watcher cannot be reached — as today — and never a count | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts |
+| A4 | Reading promise health repeatedly within 30 s sends one probe, not one per read | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts |
+| A5 | `/catchup` reports "watcher blind" on its own line, ahead of the roadmap, when `promise_health` says so — and never promise counts in that state (package and installed copies) | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/watcher-catchup-skill.test.ts |
+| A6 | The always-on server records a heartbeat on every pass: its own Jaeger holds a heartbeat span no older than one pass interval | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
+| A7 | When the server's heartbeat goes stale, Slack gets one "watcher blind since <time>" message, not one per pass; when heartbeats resume, one "watcher recovered" message | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
+| A8 | A promise declaring `expect_every` needs attention when no mark of it has arrived for longer than that while the watcher is listening; a promise without it, silent as long, does not | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/watcher-expect-every.test.ts |
 
 ## Checklist
 
@@ -73,7 +73,7 @@ The `indusk-watcher` service and the `expect_every` key do not exist yet; a
 test that queries for the first finds nothing and one that writes the second
 writes a key nothing reads, both genuine reds.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create watcher-heartbeat`, which records the assignment so the admin and plan tools read the plan from it) — worktree-per-plan default
+- [x] Create/confirm this plan's worktree (`indusk worktree create watcher-heartbeat`, which records the assignment so the admin and plan tools read the plan from it) — worktree-per-plan default
 - [ ] Author A1–A4 in `apps/indusk-mcp/src/__tests__/watcher-probe.test.ts`, added to `SYSTEM` in `vitest.tiers.ts`. A1: `startLocalJaeger` in a temp home, a project from `promises-fixture.ts` with one behaviour promise and one upheld mark loaded; `promises status` (CLI, `INDUSK_HOME` set) and `promise_health` (tool call) report the promise upheld, exit 0. A2: `startFakeQueryPort(home, '{"data":[]}')` — answers every request like an empty Jaeger, stores nothing; `promises status` exits 2 with "watcher blind" and the URL in its output and no "0 violations"; `promise_health` is an error carrying "watcher blind". A3: no daemon in the home; both readers say unreachable, exit 2 / error, no count. A4: against the real daemon, five `promise_health` calls in one process within a second, then a query of `/api/traces?service=indusk-watcher` returns exactly one `watcher.probe` span. Every test stops its daemon (`stopTelemetryForHome`)
 - [ ] Author A2's admin half in `apps/indusk-admin/src/__tests__/http-watcher-blind.test.ts`, beside `http-promise-health.test.ts` and on its pattern: a registered project whose home's daemon record points at `startFakeQueryPort(home, '{"data":[]}')`; `GET /p/<project>/promises` contains "watcher blind" and no "upheld" or violation count
 - [ ] Author A5 in `apps/indusk-mcp/src/__tests__/watcher-catchup-skill.test.ts` (everyday tier), on the `release-ritual-skill.test.ts` pattern: `apps/indusk-mcp/skills/catchup.md` and `.claude/skills/catchup/SKILL.md` each say that a `promise_health` result naming *watcher blind* is reported on its own line ahead of the roadmap and that no promise counts are reported with it
