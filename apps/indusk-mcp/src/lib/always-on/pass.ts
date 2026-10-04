@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
 	DEFAULT_TIMEOUT_MS,
 	type JaegerEndpoint,
@@ -9,6 +9,7 @@ import {
 	parseMarkedSpan,
 } from "../promises/telemetry.js";
 import { PROMISE_MARK } from "../promises/vocabulary.js";
+import { writeFileDurably } from "./durable-write.js";
 
 /**
  * The always-on pass: what the server does with what it has been sent
@@ -111,14 +112,10 @@ export function writeAnnounced(
 		const time = Date.parse(at);
 		if (Number.isNaN(time) || time >= cutoff) spans[spanId] = at;
 	}
-	const path = announcedPath(volume);
-	mkdirSync(dirname(path), { recursive: true });
-	// Write and rename: `writeFileSync` to the live path leaves a truncated
-	// file when the machine is replaced mid-write, and a truncated file is one
-	// a reader has to refuse (A24). Rename is atomic on the same filesystem.
-	const temp = `${path}.${process.pid}.tmp`;
-	writeFileSync(temp, JSON.stringify({ spans }, null, 1));
-	renameSync(temp, path);
+	// A truncated record is one a reader has to refuse (A24), and refusing
+	// silences every announcement after it. Rename alone is not enough on a
+	// machine that can be stopped: the data must reach the disk first.
+	writeFileDurably(announcedPath(volume), JSON.stringify({ spans }, null, 1));
 }
 
 /**
