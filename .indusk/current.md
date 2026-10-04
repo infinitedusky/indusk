@@ -28,10 +28,12 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **context-tiers (2026-10-02)** — a rule reaches the agent where it applies: enforcers name their lesson, area rules sit in nested `CLAUDE.md` files, the root holds design intent under an 18 KB budget ([archive](planning/archive/context-tiers/)).
 - **watch-reopen-collision (2026-10-03)** — `watch` exits 0 only when every open incident it touched is carried by its owner's Maintenance phase; a missed reopen is retried every run ([archive](planning/archive/watch-reopen-collision/)).
 - **test-daemons-never-leak (2026-10-03)** — tests never auto-start a telemetry daemon, and `pnpm test` / `test:system` end failing on any left in a temp home, pass or fail ([archive](planning/archive/test-daemons-never-leak/)).
+- **watcher-heartbeat (2026-10-03)** — every promise read probes its Jaeger and says *watcher blind* instead of a count; the always-on server beats each pass and tells Slack once each way; promises may declare `expect_every` ([archive](planning/archive/watcher-heartbeat/)).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
 - **day-always-on-deploy / day-contract** — **next**: the deploy smoke (needs the publish, then a Fly account + a Slack webhook), then 4c = promises declared in planning, named by every row, confirmed at close. See `/guide/promises`
+- **The evaluator runs inside the worktree it grades** — it has collided with a person's test runs (ports, `.next/`) in three plans running, and in watcher-heartbeat ran `git stash` on uncommitted work. Unfiled; it needs its own plan (a snapshot worktree, no mutating git). Until then, check `ps` for a vitest in the worktree before a system-tier run, and commit before stepping away.
 - **indusk-v2-dawn** — parent plan (living master); component status in `planning/indusk-v2-dawn/master.md`
 - **Sequence reconciliation (2026-09-14)**: every folder outside the V4 sequence got one fate; the table is in `planning/master.md`.
 
