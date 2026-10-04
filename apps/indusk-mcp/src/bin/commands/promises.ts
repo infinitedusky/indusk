@@ -3,6 +3,7 @@ import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { readPromises } from "../../lib/promises/registry.js";
 import { formatStatus, parseDuration } from "../../lib/promises/status.js";
+import { WatcherBlind } from "../../lib/promises/probe.js";
 import { JaegerUnreachable, readPromiseMarks } from "../../lib/promises/telemetry.js";
 import { watchPromises, watchReport } from "../../lib/promises/watch.js";
 
@@ -66,6 +67,15 @@ export async function promisesStatus(
 		const marks = await readPromiseMarks(projectRoot, read.registry, { sinceMs });
 		console.info(formatStatus(promises, marks, window));
 	} catch (err) {
+		if (err instanceof WatcherBlind) {
+			// Answered and did not hear: the 2026-10-01 case. Starting the daemon
+			// is the wrong advice — something is already answering.
+			console.error(
+				`${err.message}\nNo count is reported for any behaviour promise. Whatever answers at ${err.where} is not receiving what is sent to ${err.intake}.`,
+			);
+			process.exitCode = 2;
+			return;
+		}
 		if (!(err instanceof JaegerUnreachable)) throw err;
 		console.error(
 			`${err.message}\nNo count is reported for any behaviour promise. Start the daemon with \`indusk telemetry start\`.`,
@@ -107,7 +117,11 @@ export async function promisesWatch(
 			? `Nothing was recorded. The project reads ${named.url}; check it is up and that ${named.credential_env} holds its credential.`
 			: "Nothing was recorded. Start the daemon with `indusk telemetry start`.";
 		console.error(
-			err instanceof JaegerUnreachable ? `${err.message}\n${hint}` : (err as Error).message,
+			err instanceof WatcherBlind
+				? `${err.message}\nNothing was recorded: a watcher that cannot hear has nothing to record.`
+				: err instanceof JaegerUnreachable
+					? `${err.message}\n${hint}`
+					: (err as Error).message,
 		);
 		process.exitCode = 2;
 		return;
