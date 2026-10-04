@@ -24,6 +24,8 @@ import { type SlackCapture, startSlackCapture } from "./helpers/slack-capture.js
  * hearing.
  */
 
+const LESSON =
+	"lesson: an-alarm-must-not-travel-the-path-it-reports — Slack over HTTPS, never Jaeger; once on each change of state";
 const INTERVAL_MS = 1_000;
 const STALE_MS = 3_000;
 
@@ -131,9 +133,9 @@ describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — the server's heartbeat", () 
 		frozen = jaegerPid(server.volume);
 		process.kill(frozen, "SIGSTOP");
 		await waitFor(() => count(s, blind) > 0, 30_000);
-		expect(count(s, blind), "Slack heard that the watcher went blind").toBe(1);
+		expect(count(s, blind), `Slack heard that the watcher went blind — ${LESSON}`).toBe(1);
 		await sleep(5 * INTERVAL_MS);
-		expect(count(s, blind), "and heard it once, not once per pass").toBe(1);
+		expect(count(s, blind), `and heard it once, not once per pass — ${LESSON}`).toBe(1);
 
 		process.kill(frozen, "SIGCONT");
 		frozen = undefined;
