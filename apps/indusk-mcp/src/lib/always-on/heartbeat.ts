@@ -136,6 +136,43 @@ export interface HeartbeatResult {
 	skipped?: true;
 }
 
+/** What this pass judged: the state, why, and when the watcher last heard anything. */
+export interface Judged {
+	state: "listening" | "blind";
+	reason: string | null;
+	heardAt: Date;
+}
+
+/**
+ * What to tell Slack and what to record, given the last state Slack was told
+ * and what this pass judged. A message only on a change of state — once on
+ * going blind, once on recovering — and a first record when there is none.
+ */
+export function watcherTransition(
+	previous: WatcherState | null,
+	judged: Judged,
+	now: Date,
+	queryUrl: string,
+): { message: string | null; next: WatcherState | null } {
+	if (judged.state === "blind" && previous?.state !== "blind") {
+		const since = judged.heardAt.toISOString();
+		return {
+			message: `Watcher blind since ${since} — ${judged.reason}. Promise violations on ${queryUrl} are not being heard.`,
+			next: { state: "blind", since },
+		};
+	}
+	if (judged.state === "listening" && previous?.state === "blind") {
+		return {
+			message: `Watcher recovered — blind from ${previous.since} to ${now.toISOString()}. Violations marked in that time may not have been announced.`,
+			next: { state: "listening", since: now.toISOString() },
+		};
+	}
+	return {
+		message: null,
+		next: previous ? null : { state: judged.state, since: now.toISOString() },
+	};
+}
+
 /**
  * One heartbeat pass per volume at a time: two overlapping passes would both
  * read "listening" before either wrote "blind", and Slack would hear it twice.
@@ -181,19 +218,14 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 			sendProblem = (err as Error).message;
 		}
 
-		const previous = readWatcherState(opts.volume);
-		let message: string | null = null;
-		let next: WatcherState | null = null;
-		if (state === "blind" && previous?.state !== "blind") {
-			const since = new Date(heardAt).toISOString();
-			message = `Watcher blind since ${since} — ${reason}. Promise violations on ${opts.endpoint.queryUrl} are not being heard.`;
-			next = { state: "blind", since };
-		} else if (state === "listening" && previous?.state === "blind") {
-			message = `Watcher recovered — blind from ${previous.since} to ${now.toISOString()}. Violations marked in that time may not have been announced.`;
-			next = { state: "listening", since: now.toISOString() };
-		} else if (!previous) {
-			next = { state, since: now.toISOString() };
-		}
+		const transition = watcherTransition(
+			readWatcherState(opts.volume),
+			{ state, reason, heardAt: new Date(heardAt) },
+			now,
+			opts.endpoint.queryUrl,
+		);
+		const message = transition.message;
+		let next = transition.next;
 
 		let told: string | null = null;
 		let untold: string | null = null;
