@@ -67,6 +67,7 @@ observed instead of "unrun". See [brief.md](brief.md) and
 | A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
 | A10 | The server's records survive a machine restart: after it, the announced record and the watcher state both still parse, so the server keeps announcing | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A11 | The trace link in a Slack announcement opens the trace from wherever the reader is: it uses the public query address when one is set, and never the server's own loopback address | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/always-on-public-link.test.ts |
+| A12 | A person opening a trace link in a browser is asked to log in (401 with a Basic challenge) and, logged in, sees the trace | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/always-on-browser-login.test.ts |
 | A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
 
 ## Checklist
@@ -158,7 +159,12 @@ reading Slack, so they are registered below, not authored.
   - The fix: `INDUSK_SERVER_PUBLIC_QUERY_URL` (optional) supplies the link. Without it, the message names the trace and asks for the setting, instead of offering a loopback link. The heartbeat's blind message names the same public address. `announce --once` links to the address it was given.
   - `fly.always-on.toml` sets `https://indusk-always-on.fly.dev:16687`.
   - Guarded by new row A11, red then green locally, 33/33 with the announcement suites. It needs a release (**1.58.3**) and a redeploy
-- [ ] Release **1.58.3** with the public link (Sandy runs `SKIP_RELEASE_GUARD=1 pnpm release`), redeploy with `VERSION=1.58.3`, and re-run the smoke so a fresh violation is announced
+- [x] Release **1.58.3** with the public link (Sandy runs `SKIP_RELEASE_GUARD=1 pnpm release`), redeploy with `VERSION=1.58.3`, and re-run the smoke so a fresh violation is announced — 1.58.3 deployed. The smoke passed 5/5 and the server announced at 23:13:14 (`already announced 2`, so the record also survived the redeploy). Sandy confirmed the link reads `https://indusk-always-on.fly.dev:16687/trace/66be9891a23e56f85cf62d8701fd26fa`
+- [x] Discovered — **the link opened to "no basic auth provided" with no login box.** Jaeger's basic auth (the collector's `basicauth` extension) refuses with a bare 401 and no `WWW-Authenticate` challenge, confirmed with `curl -D -` against the deployment. Programs never notice; a browser is never asked to log in.
+  - On Sandy's call, a front door: `telemetry serve` answers the public query port itself (`lib/telemetry/query-door.ts`) and passes every request to Jaeger, now on a free loopback port. When Jaeger answers 401, the door adds `WWW-Authenticate: Basic`.
+  - Jaeger stays the only thing that checks a password.
+  - Guarded by new row A12, red then green. The server suites pass, 32/32
+- [ ] Release **1.58.4** with the query door (Sandy runs `SKIP_RELEASE_GUARD=1 pnpm release`), redeploy with `VERSION=1.58.4`, re-run the smoke
 - [ ] A3: after the smoke's A6 send, confirm the Slack message names the promise, the symptom, `smoke`, the service and a trace link; quote it here
 
 #### Build Phase 2 Verification
