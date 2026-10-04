@@ -1,7 +1,7 @@
 ---
 title: "Always-on deploy — run the server somewhere real"
 date: 2026-10-04
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -57,15 +57,15 @@ observed instead of "unrun". See [brief.md](brief.md) and
 
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
-| A1 | The image builds from the published package, and a container started without one of its settings exits naming the missing variable | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
-| A2 | On the deployed server, both doors refuse a request without credentials (401) and accept one with them | Test Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A1 | The image builds from the published package, and a container started without one of its settings exits naming the missing variable | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
+| A2 | On the deployed server, both doors refuse a request without credentials (401) and accept one with them | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A3 | A promise broken from a machine that is not the server reaches Slack within one pass interval, naming the promise, the symptom, the environment, the service and a trace link | Build Phase 2 | Build Phase 2 | planned | manual: read the Slack channel after the smoke's send |
-| A4 | A trace sent before a machine restart is still there after it | Test Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A4 | A trace sent before a machine restart is still there after it | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A5 | A violation sent after the server has sat idle for an hour is announced — the machine never went to sleep | Build Phase 3 | Build Phase 3 | planned | manual: send after an idle hour, read the Slack channel |
-| A6 | A developer machine whose project names the deployed server reads it: `promises status` reports the smoke's violations and names the server, and the read is not *watcher blind* | Test Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
-| A7 | The deployed server is listening by its own account: its Jaeger holds a heartbeat less than two pass intervals old, and Slack has had no "watcher blind" message since the deploy | Test Phase 1 | Build Phase 2 | planned | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
-| A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | planned | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
-| A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | planned | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
+| A6 | A developer machine whose project names the deployed server reads it: `promises status` reports the smoke's violations and names the server, and the read is not *watcher blind* | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A7 | The deployed server is listening by its own account: its Jaeger holds a heartbeat less than two pass intervals old, and Slack has had no "watcher blind" message since the deploy | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
+| A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | written | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
+| A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
 
 ## Checklist
 
@@ -76,12 +76,17 @@ subject over a boundary: the docker daemon, a spawned server, HTTP to a
 deployment that does not exist yet, the docs files. A3 and A5 are a person
 reading Slack, so they are registered below, not authored.
 
-- [ ] Create/confirm this plan's worktree (`indusk worktree create day-always-on-deploy`, which records the assignment) — worktree-per-plan default
-- [ ] Author A1 in `apps/indusk-mcp/src/__tests__/always-on-image.test.ts`, added to `SYSTEM` and `RUN_ALONE` in `vitest.tiers.ts`. Build `docker/Dockerfile.always-on` with `--build-arg VERSION=1.58.0` once (skipped with a reason when `docker info` fails), then for each required setting (`INDUSK_SERVER_VOLUME`, `…_OTLP_PORT`, `…_QUERY_PORT`, `…_USER`, `…_PASSWORD`, `…_SLACK_WEBHOOK`) run the image with every other one set and expect a non-zero exit whose output names the missing variable
-- [ ] Author A8 in `apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts`, added to `SYSTEM` and `RUN_ALONE`: start two servers with `startAlwaysOnServer` at the same time; both answer an authenticated `/api/services`
-- [ ] Author A9 in `apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts` (everyday tier): `guide/always-on.md` and `reference/cli/telemetry-server.md` contain no "unrun" or "nobody has run it", and the guide's smoke section carries an "Observed" record with a date
-- [ ] Author A2, A4, A6 and A7 in `apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts`, reading `INDUSK_DEPLOYED_OTLP_URL`, `INDUSK_DEPLOYED_QUERY_URL`, `INDUSK_DEPLOYED_CREDENTIAL` (and `INDUSK_DEPLOYED_FLY_APP` for A4's restart), skipped by name when they are unset. A2: both doors 401 without credentials, 2xx with them. A4: send a marked span, `fly machine restart` the app's one machine, wait for it to answer, find the trace. A6: a throwaway project naming the server in `promises.jaeger` (`url`, `otlp_url`, `credential_env`) with one behaviour promise; send a violation marked `deployment.environment=smoke`; `promises status` exits 0, names the query URL, counts the violation, and does not say *watcher blind*. A7: the newest `watcher.heartbeat` span is younger than two minutes
-- [ ] Run each and read each failure: A1 (passes today, or not: record which), A8 red on the second server's start, A9 red on "unrun", and the smoke red against the planned hostname, which resolves to nothing yet. A red that is a load error is not authored
+- [x] Create/confirm this plan's worktree (`indusk worktree create day-always-on-deploy`, which records the assignment) — worktree-per-plan default
+- [x] Author A1 in `apps/indusk-mcp/src/__tests__/always-on-image.test.ts`, added to `SYSTEM` and `RUN_ALONE` in `vitest.tiers.ts`. Build `docker/Dockerfile.always-on` with `--build-arg VERSION=1.58.0` once (skipped with a reason when `docker info` fails), then for each required setting (`INDUSK_SERVER_VOLUME`, `…_OTLP_PORT`, `…_QUERY_PORT`, `…_USER`, `…_PASSWORD`, `…_SLACK_WEBHOOK`) run the image with every other one set and expect a non-zero exit whose output names the missing variable
+- [x] Author A8 in `apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts`, added to `SYSTEM` and `RUN_ALONE`: start two servers with `startAlwaysOnServer` at the same time; both answer an authenticated `/api/services`
+- [x] Author A9 in `apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts` (everyday tier): `guide/always-on.md` and `reference/cli/telemetry-server.md` contain no "unrun" or "nobody has run it", and the guide's smoke section carries an "Observed" record with a date
+- [x] Author A2, A4, A6 and A7 in `apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts`, reading `INDUSK_DEPLOYED_OTLP_URL`, `INDUSK_DEPLOYED_QUERY_URL`, `INDUSK_DEPLOYED_CREDENTIAL` (and `INDUSK_DEPLOYED_FLY_APP` for A4's restart), skipped by name when they are unset. A2: both doors 401 without credentials, 2xx with them. A4: send a marked span, `fly machine restart` the app's one machine, wait for it to answer, find the trace. A6: a throwaway project naming the server in `promises.jaeger` (`url`, `otlp_url`, `credential_env`) with one behaviour promise; send a violation marked `deployment.environment=smoke`; `promises status` exits 0, names the query URL, counts the violation, and does not say *watcher blind*. A7: the newest `watcher.heartbeat` span is younger than two minutes
+- [x] Run each and read each failure: A1 (passes today, or not: record which), A8 red on the second server's start, A9 red on "unrun", and the smoke red against the planned hostname, which resolves to nothing yet. A red that is a load error is not authored — read 2026-10-04:
+  - **A1 passed when written**, 7/7. The image builds from 1.58.0 on this machine's docker daemon, and each of the six required settings, left out, stops the container with its name in the output. This is the first time the image has been built anywhere.
+  - A8 is red on its own assertion: the second server "did not answer … (exit 1)".
+  - A9 is red on the guide's "unrun" and on the missing "Observed" record. The reference has no such marking today.
+  - A2, A4, A6 and A7 are red on `ENOTFOUND indusk-always-on.fly.dev`, the deployment that does not exist yet: a real red at the boundary.
+  - Leak guard clear.
 
 #### Deferred to Build Phase 2
 
@@ -93,7 +98,7 @@ reading Slack, so they are registered below, not authored.
 
 #### Test Phase 1 Verification
 
-- [ ] A8, A9 and the smoke fail on their own assertions and A1's result is recorded (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-image src/__tests__/always-on-two-servers`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-docs-observed`; `INDUSK_DEPLOYED_QUERY_URL=https://indusk-always-on.fly.dev:16687 INDUSK_DEPLOYED_OTLP_URL=https://indusk-always-on.fly.dev INDUSK_DEPLOYED_CREDENTIAL=indusk:x pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.e2e.config.ts e2e/deployed-smoke`); the leak guard is clear afterwards (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
+- [x] A8, A9 and the smoke fail on their own assertions and A1's result is recorded (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-image src/__tests__/always-on-two-servers`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-docs-observed`; `INDUSK_DEPLOYED_QUERY_URL=https://indusk-always-on.fly.dev:16687 INDUSK_DEPLOYED_OTLP_URL=https://indusk-always-on.fly.dev INDUSK_DEPLOYED_CREDENTIAL=indusk:x pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.e2e.config.ts e2e/deployed-smoke`); the leak guard is clear afterwards (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
 
 ### Build Phase 1: the gRPC port, and the image
 
