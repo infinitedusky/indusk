@@ -175,6 +175,7 @@ own runs. A project that also runs somewhere names that server instead:
     "domains": ["seating"],
     "jaeger": {
       "url": "https://your-server",
+      "otlp_url": "https://your-server-intake",
       "credential_env": "SEATS_JAEGER_CREDENTIAL"
     }
   }
@@ -185,6 +186,12 @@ own runs. A project that also runs somewhere names that server instead:
 `user:password`, never the credential itself — `.indusk/config.json` is
 committed. Set the variable where the developer's shell will find it
 (`~/.indusk/config.env`, the `doppler` extension, the shell profile).
+
+`otlp_url` is the server's OTLP/HTTP intake, which is a different address from
+the query API in `url`. Every read sends a probe through it first (see
+[watcher blind](/guide/promises#watcher-blind)). A server named without
+`otlp_url` reads as **watcher blind**, naming the missing key: a read that
+cannot be probed is not reported.
 
 Absence is the rule, not a migration: a project that names nothing reads its
 local daemon and behaves exactly as it did before this existed.
@@ -245,17 +252,22 @@ phase-boundary-record-never-malformed (state, planning, enforced)
   folder holding the repository's shared git directory), so the trunk and every
   plan worktree agree. An application's own spans need not carry it.
 
-Exit **0** when Jaeger answered. Exit **2** when it could not — no daemon
-running (it names `$INDUSK_HOME/telemetry.json`), or the query URL did not
-answer, timed out, or answered with something that is not Jaeger's JSON (it
-names the URL) — with no count for any promise.
+Exit **0** when Jaeger answered and heard. Exit **2** when it could not be
+reached — no daemon running (it names `$INDUSK_HOME/telemetry.json`), or the
+query URL did not answer, timed out, or answered with something that is not
+Jaeger's JSON (it names the URL) — and exit **2** when the watcher is
+**blind**: a probe span sent to the intake did not come back from the query
+API within 5 seconds (it names both). Either way, no count is printed for any
+promise.
 
 The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry`.
 `readPromiseMarks(root, registry, { sinceMs? })` is the call `status`, `watch`
 and the admin make: it takes the registry's behaviour promises that are not
 retired, their aliases, the project id and the quiet window, and asks
 `markedSpans` — which throws `JaegerUnreachable` rather than returning an empty
-result. How an application marks a promise is in the
+result. Before it reads, it calls `probeWatcher`, which throws `WatcherBlind`
+(exported from the same subpath) when the probe does not come back. A probe
+that came back is trusted for 30 seconds per query URL, within one process. How an application marks a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 
 ## `promises watch`
@@ -281,7 +293,7 @@ documents and commits nothing** — review what it wrote and commit it.
 |------|---------|
 | 0 | the pass ran, and every open incident it touched is carried by its owner's Maintenance phase (or nothing changed) |
 | 1 | an incident is left **without** its owner's phase — a new one, one this run extended, or one an earlier run could not reopen — because of a collision, an owner that is not a plan folder, or a worktree record that could not be read. Incidents are still written; the error line says which owner and why |
-| 2 | Jaeger or the registry could not be read; nothing was written |
+| 2 | Jaeger or the registry could not be read, or the watcher is **blind** (a probe sent to the intake never came back); nothing was written |
 
 A violation that no plan owns is the outcome the monitor exists to prevent,
 so a run that leaves one behind never exits 0 — including a quiet run with no

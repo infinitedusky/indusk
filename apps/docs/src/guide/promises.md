@@ -204,6 +204,40 @@ every evaluator run, and `pnpm e2e` breaks it on purpose (a model that does
 not exist) to prove the whole path. The commands are in the
 [`indusk promises` reference](/reference/cli/promises).
 
+## Watcher blind
+
+Every reader — `promises status`, `promises watch`, `promise_health`, the
+admin's Promises page, and `/catchup` through `promise_health` — proves the
+watcher can hear before it reports anything. It sends one span through the
+Jaeger's intake and reads it back from the query API:
+
+```mermaid
+flowchart LR
+    Reader["a reader asks for promise health"] --> Probe["send watcher.probe<br/>to the intake"]
+    Probe --> Back{"comes back from<br/>the query API<br/>within 5 s?"}
+    Back -->|yes| Marks["read the marks<br/>as usual"]
+    Back -->|no| Blind["watcher blind:<br/>no counts at all"]
+    Probe -.->|nothing answers| Unreachable["cannot be reached:<br/>no counts at all"]
+```
+
+**Watcher blind** and **cannot be reached** are different answers:
+
+- **Cannot be reached** means nothing answered — no daemon, a wrong URL, a
+  refused credential. Start the daemon, or fix the address.
+- **Watcher blind** means something answered and did not hear. That could be a
+  process on the port that is not this project's Jaeger, an intake that drops
+  what it is sent, or a broken pipeline between the two. Starting the daemon is
+  the wrong advice; something is already there.
+
+Neither one reports a count. On 2026-10-01 a test's leftover Jaeger answered on
+the default ports, and every reader reported this repository's promises
+healthy after seven silent days. A reader that only checks for an answer cannot
+tell a quiet week from a deaf watcher.
+
+The probe goes out once per source every 30 seconds at most, so the admin's
+five-second refresh does not fill Jaeger with probes. The spans appear in
+Jaeger under the service `indusk-watcher`.
+
 ## See also
 
 - [Plan Lifecycle](./plan-lifecycle) — the two authorities a test can have, and why behavioural assertions are the shape of a promise

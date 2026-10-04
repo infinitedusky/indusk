@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **Every promise read proves the watcher can hear before it reports anything.** `readPromiseMarks`, the one read behind `promises status`, `promises watch`, `promise_health` and the admin's Promises page, now sends one probe span through the Jaeger's intake and reads it back. When the probe does not come back, every reader says **watcher blind**, naming the intake and the query, and reports no counts. `status` and `watch` exit 2, `promise_health` returns an error with `blind: true`, the admin shows a banner with every chip hollow, and `/catchup` says it ahead of the roadmap. This is the 2026-10-01 case: a leftover test Jaeger answered on the default ports, and every reader called the promises healthy after seven silent days. A successful probe is trusted for 30 seconds per source. A project that names a deployed server now also names its intake, `promises.jaeger.otlp_url`; without it, reads go blind.
+
 ## [1.57.3] — 2026-10-03
 
 ### Fixed
