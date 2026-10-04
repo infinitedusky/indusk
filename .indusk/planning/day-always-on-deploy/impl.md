@@ -190,7 +190,7 @@ reading Slack, so they are registered below, not authored.
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/guide/always-on.md`: anything the deploy found that the written procedure or `fly.always-on.toml` got wrong, corrected where it is written
+- [x] `apps/docs/src/guide/always-on.md`: anything the deploy found that the written procedure or `fly.always-on.toml` got wrong, corrected where it is written — a new "On Fly" section with the steps as run: `fly apps create` (not `launch`), `--ha=false`, the IP allocation including the dedicated IPv4, the public query URL, and the login the trace link asks for. The reference gains `INDUSK_SERVER_PUBLIC_QUERY_URL`, "The query door", and "When it announces nothing" (the repair). `vitepress build` clean. The guide's "not yet run" warning comes off in Build Phase 3 with the observed record
 
 ### Build Phase 3: an idle hour, and the docs as observed
 
