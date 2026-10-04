@@ -128,7 +128,10 @@ reading Slack, so they are registered below, not authored.
   - watcher-falsification's A12 beats every 250 ms for 16 s instead of every second for 70 s, and now also asserts that more than 50 beats landed.
   
   The tier now takes 132 s for 29 files and 110 tests (`pnpm test:system`, wall 146 s including the admin build).
-- [ ] `fly launch --no-deploy --copy-config --config docker/fly.always-on.toml --org personal` (app name `indusk-always-on`, or the nearest free one, recorded here); `fly volumes create indusk_telemetry --size 3`
+- [x] `fly launch --no-deploy --copy-config --config docker/fly.always-on.toml --org personal` (app name `indusk-always-on`, or the nearest free one, recorded here); `fly volumes create indusk_telemetry --size 3` — app **`indusk-always-on`** in the personal org (`alexander-corsillo`), `indusk-always-on.fly.dev`; volume `indusk_telemetry`, 3 GB, encrypted, `iad`. **Observed, and wrong in the written config:**
+  - `fly launch --copy-config` rewrote `docker/fly.always-on.toml` and deleted every comment, including the one explaining why the machine must never auto-stop. The file is restored, and its header now says `fly apps create`.
+  - Fly's current schema spells auto-stop `auto_stop_machines = "off"`, not `false`. The launch rewrote it that way, and the restored file now uses `"off"` in both services.
+  - `fly config validate` passes.
 - [ ] Generate the password (`openssl rand -hex 24`), `fly secrets set INDUSK_SERVER_PASSWORD=…`, and write `INDUSK_DEPLOYED_CREDENTIAL=indusk:<password>` to `~/.indusk/config.env`; the value never enters the repository or the conversation
 - [ ] Sandy sets `INDUSK_SERVER_SLACK_WEBHOOK` as a Fly secret (`fly secrets set … --config docker/fly.always-on.toml`)
 - [ ] `fly deploy --config docker/fly.always-on.toml` (Fly's remote builder; the image installs 1.58.0); record the URLs, the machine id and anything the configuration got wrong
