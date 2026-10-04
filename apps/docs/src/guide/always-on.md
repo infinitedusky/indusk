@@ -89,6 +89,38 @@ entrypoint is `indusk telemetry serve` in the foreground, as process 1. Mount
 a volume at whatever `INDUSK_SERVER_VOLUME` names; without one the server
 forgets every violation it was told about the moment it restarts.
 
+### On Fly
+
+`docker/fly.always-on.toml` is the reference. These are the steps the first
+deployment actually took (2026-10-04), including what the written version got
+wrong:
+
+```bash
+fly apps create indusk-always-on --org personal
+fly volumes create indusk_telemetry --size 3 --region iad -c docker/fly.always-on.toml
+fly secrets set INDUSK_SERVER_PASSWORD="$(openssl rand -hex 24)" --stage -c docker/fly.always-on.toml
+fly secrets set INDUSK_SERVER_SLACK_WEBHOOK="https://hooks.slack.com/services/..." --stage -c docker/fly.always-on.toml
+fly deploy -c docker/fly.always-on.toml --build-arg VERSION=<release> --ha=false --remote-only
+fly ips allocate-v6 -c docker/fly.always-on.toml
+fly ips allocate-v4 --yes -c docker/fly.always-on.toml   # dedicated, $2/month
+```
+
+- **Use `fly apps create`, not `fly launch`.** `fly launch --copy-config`
+  rewrites the config file and drops every comment in it, including the one
+  explaining why the machine must never sleep.
+- **`--ha=false`.** Fly's default is two machines. Badger is a single-writer
+  store on one volume, so the server must run as one machine.
+- **Allocate addresses.** A first deploy gets no public IP and is unreachable.
+  The query port, 16687, is not 80 or 443, so Fly's shared IPv4 does not route
+  it: reading the server over IPv4 needs a dedicated IPv4. IPv6 is free, but
+  many home networks have none.
+- **Name the public query address** in `INDUSK_SERVER_PUBLIC_QUERY_URL`, as
+  the reference config does (`https://<app>.fly.dev:16687`). Without it, Slack
+  messages name the trace but cannot link to it, because the server's own
+  address for its Jaeger is loopback.
+- **The trace link asks for a login.** It opens the Jaeger UI behind basic
+  auth: user `INDUSK_SERVER_USER`, the password you set.
+
 ## Adopting it in an application
 
 **1. Mark the promise.** Wherever the behaviour happens, on the span that does
