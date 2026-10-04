@@ -133,7 +133,7 @@ reading Slack, so they are registered below, not authored.
   - Fly's current schema spells auto-stop `auto_stop_machines = "off"`, not `false`. The launch rewrote it that way, and the restored file now uses `"off"` in both services.
   - `fly config validate` passes.
 - [x] Generate the password (`openssl rand -hex 24`), `fly secrets set INDUSK_SERVER_PASSWORD=…`, and write `INDUSK_DEPLOYED_CREDENTIAL=indusk:<password>` to `~/.indusk/config.env`; the value never enters the repository or the conversation — staged with `--stage` (no machine exists yet; the deploy applies it); `config.env` is mode 600; the value was never printed
-- [ ] Sandy sets `INDUSK_SERVER_SLACK_WEBHOOK` as a Fly secret (`fly secrets set … --config docker/fly.always-on.toml`)
+- [x] Sandy sets `INDUSK_SERVER_SLACK_WEBHOOK` as a Fly secret (`fly secrets set … --config docker/fly.always-on.toml`)
 - [ ] `fly deploy --config docker/fly.always-on.toml` (Fly's remote builder; the image installs 1.58.0); record the URLs, the machine id and anything the configuration got wrong
 - [ ] Run the scripted smoke against the deployment (A2, A4, A6, A7) and record its output here
 - [ ] A3: after the smoke's A6 send, confirm the Slack message names the promise, the symptom, `smoke`, the service and a trace link; quote it here
