@@ -65,6 +65,7 @@ observed instead of "unrun". See [brief.md](brief.md) and
 | A6 | A developer machine whose project names the deployed server reads it: `promises status` reports the smoke's violations and names the server, and the read is not *watcher blind* | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A7 | The deployed server is listening by its own account: its Jaeger holds a heartbeat less than two pass intervals old, and Slack has had no "watcher blind" message since the deploy | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
+| A10 | The server's records survive a machine restart: after it, the announced record and the watcher state both still parse, so the server keeps announcing | Build Phase 2 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
 
 ## Checklist
@@ -139,7 +140,19 @@ reading Slack, so they are registered below, not authored.
   - Fly's shared IPv4 routes only 80/443, so the query port 16687 needs a **dedicated IPv4**. `188.93.145.200` was allocated at $2/month, on Sandy's call.
   - Both doors then answered 401 without credentials.
   - `--ha=false` keeps it to one machine. Fly's default is two, which the config's single-writer badger volume forbids.
-- [ ] Run the scripted smoke against the deployment (A2, A4, A6, A7) and record its output here
+- [x] Run the scripted smoke against the deployment (A2, A4, A6, A7) and record its output here — 4/4 on 2026-10-04 17:41 UTC:
+  - A2: both doors 401 without credentials, accepted with them.
+  - A4: the trace was found again after `fly machine restart`.
+  - A6: `promises status` from a scratch project named the server, counted the violation, and did not read blind.
+  - A7: a heartbeat under two minutes old.
+- [x] Discovered — **the deploy found a server bug.** After A4's restart, every pass logged `announced nothing — /data/announced.json is not valid JSON: Unexpected end of JSON input`. Over `fly ssh`, the file was 0 bytes, last written at 17:40:37.98 by the first pass, and the machine restarted at 17:41:09 on an ext4 volume.
+  - The cause: write-then-rename without `fsync`. The rename reached the disk and the data did not. The code's comment called the rename safe, which holds for a dying process, not a stopped machine.
+  - The effect: the server refused, as designed, and stayed silent from then on, while its heartbeat said listening. A3's violation was never announced.
+  - The fix: `writeFileDurably` (`lib/always-on/durable-write.ts`) writes the temp file, `fsync`s it, renames, then `fsync`s the directory. Both `announced.json` and `watcher-state.json` now use it. The always-on suites pass, 31/31.
+  - The guard: new row **A10** in the smoke reads both records over `fly ssh` after the restart, and it is red against today's deployment.
+- [ ] Release **1.58.2** with the durable writes (Sandy runs `pnpm release`; npm needs a valid login first), then redeploy with `VERSION=1.58.2`
+- [ ] Repair the deployed record: remove the empty `/data/announced.json` over `fly ssh`. Absent reads as an empty record, so the next pass re-announces the 24 h window, which holds only the smoke's own violations. The repair is the documented answer to `announced nothing — … not valid JSON`, written into the reference
+- [ ] Re-run the smoke on 1.58.2 (A2, A4, A6, A7, A10): A10 must pass after A4's restart
 - [ ] A3: after the smoke's A6 send, confirm the Slack message names the promise, the symptom, `smoke`, the service and a trace link; quote it here
 
 #### Build Phase 2 Verification
