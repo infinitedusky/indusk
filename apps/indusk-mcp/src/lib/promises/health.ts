@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { recorded } from "./incidents.js";
 import { readPromises } from "./registry.js";
-import { readPromiseMarks, silencePastExpectation } from "./telemetry.js";
+import { newestMark, readPromiseMarks, silencePastExpectation } from "./telemetry.js";
 
 /**
  * What a session should be told about the promises (day-always-on, ADR D9).
@@ -97,11 +97,7 @@ export async function promiseHealth(
 			incidents: mine.filter((i) => i.status === "open").length,
 			unrecorded: unrecordedTraces.length,
 			unrecordedTraces,
-			lastSeen:
-				[violations[0]?.at, seen?.lastUpheld?.at]
-					.filter((d): d is Date => d !== undefined)
-					.sort((a, b) => b.getTime() - a.getTime())[0]
-					?.toISOString() ?? null,
+			lastSeen: newestMark(seen)?.toISOString() ?? null,
 		});
 	}
 

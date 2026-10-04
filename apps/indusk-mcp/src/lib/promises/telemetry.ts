@@ -428,6 +428,19 @@ export async function readPromiseMarks(
 	});
 }
 
+/**
+ * When a promise was last seen: its newest mark, upheld or violated, or null
+ * when none is in the window. The one rule `promise_health`'s `lastSeen`, the
+ * admin's chip and the `expect_every` judgment share — three readers that
+ * must agree, so one definition (watcher-heartbeat A15).
+ */
+export function newestMark(marks: PromiseMarks | undefined): Date | null {
+	const candidates = [marks?.violations[0]?.at, marks?.lastUpheld?.at].filter(
+		(d): d is Date => d !== undefined,
+	);
+	return candidates.sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+}
+
 /** `90m`, `3h`, `2d` — the largest whole unit, for a person reading a silence. */
 function roughly(ms: number): string {
 	if (ms >= 86_400_000) return `${Math.floor(ms / 86_400_000)}d`;
@@ -450,10 +463,7 @@ export function silencePastExpectation(
 	now: Date = new Date(),
 ): string | null {
 	if (!promise.expectEvery) return null;
-	const seen = marks.byPromise.get(promise.name);
-	const newest = [seen?.violations[0]?.at, seen?.lastUpheld?.at]
-		.filter((d): d is Date => d !== undefined)
-		.sort((a, b) => b.getTime() - a.getTime())[0];
+	const newest = newestMark(marks.byPromise.get(promise.name));
 	const quietSince = newest ?? marks.since;
 	const silentMs = now.getTime() - quietSince.getTime();
 	if (silentMs <= promise.expectEvery.ms) return null;
