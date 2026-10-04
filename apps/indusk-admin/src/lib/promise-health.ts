@@ -6,6 +6,7 @@ import {
   JaegerUnreachable,
   type MarkedSpansResult,
   readPromiseMarks,
+  silencePastExpectation,
   WatcherBlind,
 } from "@infinitedusky/indusk-mcp/promises/telemetry";
 import { readAdminRefreshMs } from "./project-reader";
@@ -46,6 +47,11 @@ export interface HealthRow {
    * a red row that cannot say which is a red row nobody can act on.
    */
   environment?: string | null;
+  /**
+   * Set when the promise declares `expect_every` and has been silent longer
+   * (watcher-heartbeat, ADR D3) — the shared judgment, never restated here.
+   */
+  silence?: string;
 }
 
 export type HealthRead =
@@ -131,8 +137,11 @@ export function healthOf(
   if (p.state === "known-violated")
     return { health: "amber", violations, lastSeen };
   if (p.kind !== "behaviour") return null;
-  if (marks?.lastUpheld) return { health: "green", violations, lastSeen };
-  return { health: "unverified", violations, lastSeen };
+  const silence = read?.ok ? silencePastExpectation(p, read.marks) : null;
+  const quiet = silence ? { silence } : {};
+  if (marks?.lastUpheld)
+    return { health: "green", violations, lastSeen, ...quiet };
+  return { health: "unverified", violations, lastSeen, ...quiet };
 }
 
 /** Every promise's row, by name, for the page and the sidebar. */

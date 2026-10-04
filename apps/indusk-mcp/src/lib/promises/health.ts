@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { recorded } from "./incidents.js";
 import { readPromises } from "./registry.js";
-import { readPromiseMarks } from "./telemetry.js";
+import { readPromiseMarks, silencePastExpectation } from "./telemetry.js";
 
 /**
  * What a session should be told about the promises (day-always-on, ADR D9).
@@ -38,6 +38,11 @@ export interface PromiseHealthRow {
 	unrecordedTraces: string[];
 	/** ISO time of the newest mark, or null when nothing was seen. */
 	lastSeen: string | null;
+	/**
+	 * Set when the promise declares `expect_every` and has been silent longer
+	 * — "silent for 3h, expected every 1h" (watcher-heartbeat, ADR D3).
+	 */
+	silence?: string;
 }
 
 export interface PromiseHealthReport {
@@ -46,7 +51,10 @@ export interface PromiseHealthReport {
 	/** The window these numbers cover. */
 	since: string;
 	promises: PromiseHealthRow[];
-	/** Promises with unrecorded violations, newest-first — the "what's next" answer. */
+	/**
+	 * Promises with unrecorded violations, or silent past their `expect_every`
+	 * — the "what's next" answer.
+	 */
 	needsAttention: string[];
 }
 
@@ -77,7 +85,9 @@ export async function promiseHealth(
 			...new Set(violations.filter((v) => !known.has(v.traceId)).map((v) => v.traceId)),
 		];
 
+		const silence = silencePastExpectation(promise, marks, opts.now);
 		rows.push({
+			...(silence ? { silence } : {}),
 			name: promise.name,
 			kind: promise.kind,
 			state: promise.state,
@@ -99,6 +109,6 @@ export async function promiseHealth(
 		source: marks.queryUrl,
 		since: marks.since.toISOString(),
 		promises: rows,
-		needsAttention: rows.filter((r) => r.unrecorded > 0).map((r) => r.name),
+		needsAttention: rows.filter((r) => r.unrecorded > 0 || r.silence).map((r) => r.name),
 	};
 }

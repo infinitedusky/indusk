@@ -7,7 +7,7 @@ import { probeWatcher } from "./probe.js";
 // `instanceof` sees the same classes the read path throws.
 export { WatcherBlind } from "./probe.js";
 
-import type { Registry } from "./registry.js";
+import type { PromiseEntry, Registry } from "./registry.js";
 import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
 
 /**
@@ -387,6 +387,12 @@ export async function readPromiseMarks(
 	const behaviour = registry.promises.filter(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
+	// A promise that expects a mark every N must be read over at least N, or
+	// a longer expectation could never be judged (watcher-heartbeat, ADR D3).
+	const windowMs = Math.max(
+		opts.sinceMs ?? getQuietWindowDays(root) * 86_400_000,
+		...behaviour.map((p) => p.expectEvery?.ms ?? 0),
+	);
 	const source = await resolveMarkSource(root);
 	// Prove the watcher hears before reporting anything it heard: a Jaeger
 	// that answers and receives nothing reads exactly like a quiet week
@@ -400,8 +406,40 @@ export async function readPromiseMarks(
 		endpoint: source.endpoint,
 		promises: behaviour.map((p) => p.name),
 		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
-		since: new Date(now.getTime() - (opts.sinceMs ?? getQuietWindowDays(root) * 86_400_000)),
+		since: new Date(now.getTime() - windowMs),
 		project,
 		...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
 	});
+}
+
+/** `90m`, `3h`, `2d` — the largest whole unit, for a person reading a silence. */
+function roughly(ms: number): string {
+	if (ms >= 86_400_000) return `${Math.floor(ms / 86_400_000)}d`;
+	if (ms >= 3_600_000) return `${Math.floor(ms / 3_600_000)}h`;
+	return `${Math.max(1, Math.floor(ms / 60_000))}m`;
+}
+
+/**
+ * Whether a promise that expects a mark every N has been silent longer than
+ * that (watcher-heartbeat, ADR D3) — "silent for 3h, expected every 1h" — or
+ * null when it has not, or expects nothing.
+ *
+ * Only meaningful from a read that succeeded: `readPromiseMarks` has already
+ * probed the watcher, so this silence is the promise's, not the watcher's.
+ * The one judgment `promise_health`, `promises status` and the admin share.
+ */
+export function silencePastExpectation(
+	promise: PromiseEntry,
+	marks: MarkedSpansResult,
+	now: Date = new Date(),
+): string | null {
+	if (!promise.expectEvery) return null;
+	const seen = marks.byPromise.get(promise.name);
+	const newest = [seen?.violations[0]?.at, seen?.lastUpheld?.at]
+		.filter((d): d is Date => d !== undefined)
+		.sort((a, b) => b.getTime() - a.getTime())[0];
+	const quietSince = newest ?? marks.since;
+	const silentMs = now.getTime() - quietSince.getTime();
+	if (silentMs <= promise.expectEvery.ms) return null;
+	return `silent for ${newest ? "" : "more than "}${roughly(silentMs)}, expected every ${promise.expectEvery.text}`;
 }
