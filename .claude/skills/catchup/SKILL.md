@@ -148,6 +148,13 @@ be reached" — and never report zero violations instead. "Nothing is broken"
 and "nobody could look" are different answers, and only one of them is
 reassuring.
 
+If the error says **watcher blind** (`blind: true`), a Jaeger answered and did
+not return the probe sent to it — something is on the port and is not
+receiving this project's telemetry. Say "watcher blind" on its own line,
+ahead of the roadmap, naming where it looked, and report no counts for any
+promise: no violations, no zero, nothing upheld. A blind watcher's silence is not a
+quiet week.
+
 Skip silently if `promise_health` is unavailable (an older InDusk, or a
 project with no registry).
 
