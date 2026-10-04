@@ -95,7 +95,10 @@ the watcher is **blind**. Violations reported now would come from something
 that cannot hear them.
 
 A server with no beat yet counts from its own start, so a clean start says
-nothing. Slack hears on a change of state only:
+nothing. A server restarted while the state says blind does not: it stays
+blind until a real beat lands, so a restart cannot announce a recovery that
+never happened. The newest beat is read from the last two staleness windows
+only, so it is found whatever order Jaeger returns beats in. Slack hears on a change of state only:
 
 - going blind: *Watcher blind since \<newest beat\> — \<why\>*;
 - coming back: *Watcher recovered — blind from \<then\> to \<now\>*, with a
@@ -104,7 +107,9 @@ nothing. Slack hears on a change of state only:
 `<volume>/watcher-state.json` holds the last state Slack was told, written
 only after Slack accepts. A message that fails is sent again on the next pass;
 an unreadable file reads as no state, which costs at most one repeated
-message. Slack is reached over HTTPS, not through Jaeger, so the message
+message. A state file that cannot be **written** stops the message
+altogether: the pass logs `told Slack nothing — … could not be written`
+rather than repeating the same alarm every pass. Slack is reached over HTTPS, not through Jaeger, so the message
 arrives even when Jaeger is the thing that broke.
 
 A server whose pass stops altogether (the process wedged) sends no heartbeat

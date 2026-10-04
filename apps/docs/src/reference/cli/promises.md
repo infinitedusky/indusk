@@ -248,9 +248,12 @@ phase-boundary-record-never-malformed (state, planning, enforced)
   in `promise_health` (`silence`, and the promise joins `needsAttention`) and
   under the admin's chip. Without it, silence from a listening watcher is the
   good outcome — "an empty form is never submitted" should be quiet. Declare
-  it only for something known to happen regularly. The read window widens to
-  the longest `expect_every` when that is longer than the quiet window.
-  `promises check` refuses a value that is not a duration, by name.
+  it only for something known to happen regularly. The default read window
+  widens to the longest `expect_every` when that is longer than the quiet
+  window; an explicit `--since` is never widened — it is the window counted
+  and shown, and a silence longer than it is not judged. `promises check`
+  refuses a value that is not a duration, and `expect_every` on a state or
+  structure promise, by name.
 - Marks under any of a promise's **`aliases`** count as the promise's — an
   application may still set the old name after a rename.
 - Each query asks Jaeger for at most 1,500 traces. When a query fills that,
