@@ -150,9 +150,9 @@ reading Slack, so they are registered below, not authored.
   - The effect: the server refused, as designed, and stayed silent from then on, while its heartbeat said listening. A3's violation was never announced.
   - The fix: `writeFileDurably` (`lib/always-on/durable-write.ts`) writes the temp file, `fsync`s it, renames, then `fsync`s the directory. Both `announced.json` and `watcher-state.json` now use it. The always-on suites pass, 31/31.
   - The guard: new row **A10** in the smoke reads both records over `fly ssh` after the restart, and it is red against today's deployment.
-- [ ] Release **1.58.2** with the durable writes (Sandy runs `pnpm release`; npm needs a valid login first), then redeploy with `VERSION=1.58.2`
-- [ ] Repair the deployed record: remove the empty `/data/announced.json` over `fly ssh`. Absent reads as an empty record, so the next pass re-announces the 24 h window, which holds only the smoke's own violations. The repair is the documented answer to `announced nothing — … not valid JSON`, written into the reference
-- [ ] Re-run the smoke on 1.58.2 (A2, A4, A6, A7, A10): A10 must pass after A4's restart
+- [x] Release **1.58.2** with the durable writes (Sandy runs `pnpm release`; npm needs a valid login first), then redeploy with `VERSION=1.58.2` — released from a `release/1.58.2` branch off main with only the fix (main `e01fa38f`, merged back as `20c0dc3f`). Redeployed; `indusk --version` on the machine reads 1.58.2
+- [x] Repair the deployed record: remove the empty `/data/announced.json` over `fly ssh`. Absent reads as an empty record, so the next pass re-announces the 24 h window, which holds only the smoke's own violations. The repair is the documented answer to `announced nothing — … not valid JSON`, written into the reference — the file was still 0 bytes on 1.58.2 (the fix prevents the damage, it does not undo it). Removed at 22:43:59; the next pass logged `announced 1, held 0, unannounced 0, already announced 0`. The reference text is the Document item below
+- [x] Re-run the smoke on 1.58.2 (A2, A4, A6, A7, A10): A10 must pass after A4's restart — **5/5** at 22:45 UTC. The first pass after the restart logged `announced 1, … already announced 1`: the record survived the restart, so it posted only the smoke's new violation
 - [ ] A3: after the smoke's A6 send, confirm the Slack message names the promise, the symptom, `smoke`, the service and a trace link; quote it here
 
 #### Build Phase 2 Verification
