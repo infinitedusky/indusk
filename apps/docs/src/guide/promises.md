@@ -214,7 +214,7 @@ Jaeger's intake and reads it back from the query API:
 ```mermaid
 flowchart LR
     Reader["a reader asks for promise health"] --> Probe["send watcher.probe<br/>to the intake"]
-    Probe --> Back{"comes back from<br/>the query API<br/>within 5 s?"}
+    Probe --> Back{"comes back from<br/>the query API<br/>in time?"}
     Back -->|yes| Marks["read the marks<br/>as usual"]
     Back -->|no| Blind["watcher blind:<br/>no counts at all"]
     Probe -.->|nothing answers| Unreachable["cannot be reached:<br/>no counts at all"]
@@ -234,8 +234,10 @@ the default ports, and every reader reported this repository's promises
 healthy after seven silent days. A reader that only checks for an answer cannot
 tell a quiet week from a deaf watcher.
 
-The probe goes out once per source every 30 seconds at most, so the admin's
-five-second refresh does not fill Jaeger with probes. The spans appear in
+"In time" is 5 seconds for the CLI and `promise_health`, and 2 seconds in the
+admin, whose page must render within its health budget. A probe that came back
+is trusted for 30 seconds per source, so the admin's five-second refresh does
+not fill Jaeger with probes. The spans appear in
 Jaeger under the service `indusk-watcher`.
 
 ## See also
