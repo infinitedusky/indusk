@@ -145,7 +145,7 @@ writes a key nothing reads, both genuine reds.
 
 ### Build Phase 3: `expect_every`
 
-- [ ] `lib/promises/registry.ts`: `expect_every` read into `PromiseEntry.expectEveryMs`; `promiseProblem` refuses a value `parseDuration` (`lib/promises/status.ts`) cannot read, naming it — so `promises check` refuses it
+- [x] `lib/promises/registry.ts`: `expect_every` read into `PromiseEntry.expectEveryMs`; `promiseProblem` refuses a value `parseDuration` (`lib/promises/status.ts`) cannot read, naming it — so `promises check` refuses it — as `PromiseEntry.expectEvery: { text, ms }`. The text is kept because every reader prints it as written ("expected every 1d")
 - [ ] `readPromiseMarks` widens its window to the longest `expect_every` when that exceeds the quiet window; `health.ts` marks a promise **needs attention** — "silent for <age>, expected every <duration>" — when the watcher is listening and its newest mark (upheld or violated) is older; `promises status` prints it; the admin's chip shows it under the same label map
 - [ ] `.indusk/promises/every-commit-evaluated.md`: `expect_every: 1d`
 
