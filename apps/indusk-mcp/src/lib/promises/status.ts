@@ -42,13 +42,14 @@ export function formatStatus(
 		}
 		const m = marks.byPromise.get(p.name);
 		const silence = silencePastExpectation(p, marks);
-		const attention = silence ? `\n  needs attention — ${silence}` : "";
+		const attentionLine = silence ? `  needs attention — ${silence}` : null;
 		if (!m || (m.violations.length === 0 && m.lastUpheld === null)) {
-			blocks.push(`${head}\n  not seen in ${phrase} — no run exercised it${attention}`);
+			const notSeen = `  not seen in ${phrase} — no run exercised it`;
+			blocks.push([head, notSeen, ...(attentionLine ? [attentionLine] : [])].join("\n"));
 			continue;
 		}
 		const lines = [head];
-		if (silence) lines.push(`  needs attention — ${silence}`);
+		if (attentionLine) lines.push(attentionLine);
 		const n = m.violations.length;
 		lines.push(
 			n === 0

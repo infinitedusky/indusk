@@ -60,7 +60,7 @@ A promise may declare `expect_every`. See [brief.md](brief.md),
 | A5 | `/catchup` reports "watcher blind" on its own line, ahead of the roadmap, when `promise_health` says so — and never promise counts in that state (package and installed copies) | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/watcher-catchup-skill.test.ts |
 | A6 | The always-on server records a heartbeat on every pass: its own Jaeger holds a heartbeat span no older than one pass interval | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
 | A7 | When the server's heartbeat goes stale, Slack gets one "watcher blind since <time>" message, not one per pass; when heartbeats resume, one "watcher recovered" message | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
-| A8 | A promise declaring `expect_every` needs attention when no mark of it has arrived for longer than that while the watcher is listening; a promise without it, silent as long, does not | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/watcher-expect-every.test.ts |
+| A8 | A promise declaring `expect_every` needs attention when no mark of it has arrived for longer than that while the watcher is listening; a promise without it, silent as long, does not | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/watcher-expect-every.test.ts |
 
 ## Checklist
 
@@ -149,11 +149,13 @@ writes a key nothing reads, both genuine reds.
 - [ ] `readPromiseMarks` widens its window to the longest `expect_every` when that exceeds the quiet window; `health.ts` marks a promise **needs attention** — "silent for <age>, expected every <duration>" — when the watcher is listening and its newest mark (upheld or violated) is older; `promises status` prints it; the admin's chip shows it under the same label map — one judgment, `silencePastExpectation(promise, marks, now)` in `promises/telemetry.ts` (the subpath all three readers already import), so none restates the rule. `promise_health` rows carry `silence` and join `needsAttention`. `status` prints "needs attention — silent for …". The admin shows it on the detail line under the chip; as with *watcher blind*, no chip colour was added, because the chip still describes what was observed
 - [x] `.indusk/promises/every-commit-evaluated.md`: `expect_every: 1d` — with a History line that says what declaring it costs: a day with no commits also reads as needs attention. `promises check` clean with the key. `promiseProblem` refuses `"soon"`, `5` and `"0h"` by name and accepts `"1d"` (checked by hand)
 - [x] Discovered: `pnpm test` failed day-always-on's A29 pin, `always-on-cleanup`'s check that the Jaeger-URL normalization is written once. This plan had restated it twice, for the intake in `probe.ts` and for `otlp_url` in `resolveMarkSource`. It is now `normalizeJaegerUrl` in `promises/telemetry.ts`, called by `jaegerEndpoint` and both new sites; the pin passes 4/4
+- [x] Shape (`apps/indusk-mcp/src/lib/promises/status.ts`) — `formatStatus` spells the "needs attention — …" line twice, once per branch. Name it once (`attentionLine`) and use it in both. Rule: one fact, one name — done; A8 and `monitor-status` 11/11 after it
+- [x] Shape (`apps/indusk-mcp/src/lib/promises/telemetry.ts`) — reviewed, left as-is: `silencePastExpectation` finds the newest mark the same way `health.ts` and the admin's `healthOf` compute `lastSeen`. That is a cross-file question, `/cleanup`'s to judge with all three in view
 
 #### Build Phase 3 Verification
 
-- [ ] A8 passes and A1–A7 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watcher-expect-every src/__tests__/watcher-probe src/__tests__/watcher-heartbeat-server`; the A5 and admin commands); `pnpm promises:check` clean with the new key
-- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
+- [x] A8 passes and A1–A7 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watcher-expect-every src/__tests__/watcher-probe src/__tests__/watcher-heartbeat-server`; the A5 and admin commands); `pnpm promises:check` clean with the new key — every `watcher-*` file and the admin's `http-watcher-blind` ran in the two full runs below, all green; `promises check` clean (4 promises, 2 incidents)
+- [x] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear — `pnpm test`: mcp 1,675 / 5 skipped, admin 345, `promises check` clean, guard all-clear. The first run failed only day-always-on's URL-normalization pin (fixed above). `pnpm test:system`: 26 files, 97 tests, guard all-clear. Both run with no other vitest in the worktree
 
 #### Build Phase 3 Context
 
