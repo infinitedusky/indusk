@@ -148,7 +148,9 @@ describe("day-always-on — the loop with no developer machine in it", () => {
 			extraConfig: {
 				promises: {
 					domains: ["seating"],
-					jaeger: { url: server.queryUrl, credential_env: CRED_ENV },
+					// `otlp_url`: every read probes the server through its intake
+					// (watcher-heartbeat).
+					jaeger: { url: server.queryUrl, credential_env: CRED_ENV, otlp_url: server.otlpUrl },
 				},
 			},
 		});
