@@ -5,8 +5,9 @@
 # Kubernetes deployment, the provider your application already uses. What the
 # server needs is a volume, two ports and its secrets.
 #
-#   fly launch --no-deploy --copy-config --config docker/fly.always-on.toml
-#   fly volumes create indusk_telemetry --size 3
+#   fly apps create <app> --org <org>          # not `fly launch`: it rewrites
+#                                              # this file and drops every comment
+#   fly volumes create indusk_telemetry --size 3 --config docker/fly.always-on.toml
 #   fly secrets set \
 #     INDUSK_SERVER_PASSWORD="$(openssl rand -hex 24)" \
 #     INDUSK_SERVER_SLACK_WEBHOOK="https://hooks.slack.com/services/..."
@@ -47,7 +48,7 @@ primary_region = "iad"
   # after the pass would have run. `min_machines_running = 1` and no auto-stop
   # is not a performance tuning. It is the difference between a server that
   # watches and a server that is asleep.
-  auto_stop_machines = false
+  auto_stop_machines = "off"
   auto_start_machines = false
   min_machines_running = 1
 
@@ -59,7 +60,7 @@ primary_region = "iad"
 [[services]]
   internal_port = 16686
   protocol = "tcp"
-  auto_stop_machines = false
+  auto_stop_machines = "off"
   auto_start_machines = false
   min_machines_running = 1
 
