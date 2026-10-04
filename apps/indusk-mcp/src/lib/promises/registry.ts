@@ -205,6 +205,11 @@ export function promiseProblem(value: unknown, stem: string, statement: string):
 	) {
 		return `\`expect_every\` ${JSON.stringify(v.expect_every)} is not a duration (expected e.g. 30m, 6h, 1d)`;
 	}
+	// Only a behaviour promise's silence is ever judged: on any other kind the
+	// key would be accepted and never acted on (A14).
+	if (v.expect_every !== undefined && v.kind !== "behaviour") {
+		return `\`expect_every\` is only for behaviour promises (this one is ${v.kind}): its health is the suite's, not telemetry's`;
+	}
 	if (statement === "") return "no statement (the body's first paragraph is empty)";
 	return null;
 }

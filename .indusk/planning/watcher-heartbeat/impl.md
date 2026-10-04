@@ -195,7 +195,7 @@ writes a key nothing reads, both genuine reds.
 - [x] A11: prove `watcher-state.json` writable before telling Slack (a real write of the current state, as `proveRecordWritable` does). When it is not writable, tell nothing and log why — `stateProblem` on the result, logged as "told Slack nothing — …"
 - [x] A12: narrow `readNewestHeartbeat`'s window to `2 × staleMs` back from now, so the beats it can return fit within the limit
 - [x] A13: `probeWatcher` takes the caller's `timeoutMs` as its wait when one is given (`readPromiseMarks` passes it through) — the cost: the admin now waits 2 s for its probe, so a Jaeger slower than that to index reads *blind* there. That is the ADR's accepted risk, a loud and recoverable false blind; the CLI and `promise_health` keep 5 s
-- [ ] A14: `promiseProblem` refuses `expect_every` on any kind but behaviour, naming the kind
+- [x] A14: `promiseProblem` refuses `expect_every` on any kind but behaviour, naming the kind
 
 #### Build Phase 4 Verification
 
