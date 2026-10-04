@@ -205,7 +205,7 @@ writes a key nothing reads, both genuine reds.
 
 #### Build Phase 4 Context
 
-- [ ] guard: A11's test carries `lesson: an-alarm-must-not-travel-the-path-it-reports`. Extend that lesson: prove the state writable before telling, or the alarm repeats every pass
+- [x] guard: A11's test carries `lesson: an-alarm-must-not-travel-the-path-it-reports`. Extend that lesson: prove the state writable before telling, or the alarm repeats every pass — the lesson also names A10's case, where a restart must not stand in for a beat. `lessonStates` lists both test files as its guards
 
 #### Build Phase 4 Document
 
