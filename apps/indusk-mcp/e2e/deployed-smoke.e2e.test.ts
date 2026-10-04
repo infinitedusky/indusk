@@ -202,4 +202,36 @@ describe.skipIf(!NAMED)("day-always-on-deploy — the deployed server", () => {
 		},
 		360_000,
 	);
+
+	it.skipIf(!FLY_APP)(
+		"A10 — the server's records survive a restart: both still parse, so it keeps announcing",
+		async () => {
+			// A pass writes both records every interval; a restart soon after
+			// one left announced.json empty on the first deploy, and every pass
+			// after refused to announce. Read them as the server will.
+			const read = spawnSync(
+				"fly",
+				[
+					"ssh",
+					"console",
+					"-a",
+					FLY_APP ?? "",
+					"-C",
+					"sh -c 'cat /data/announced.json; echo; echo ---; cat /data/watcher-state.json'",
+				],
+				{ encoding: "utf-8", timeout: 90_000 },
+			);
+			expect(read.status, read.stderr).toBe(0);
+			const [announced, state] = read.stdout.split("\n---\n").map((t) => t.trim());
+			expect(
+				() => JSON.parse(announced ?? ""),
+				`lesson: a-rename-is-not-a-write-until-the-data-is-flushed — announced.json: ${JSON.stringify(announced)}`,
+			).not.toThrow();
+			expect(
+				() => JSON.parse(state ?? ""),
+				`watcher-state.json: ${JSON.stringify(state)}`,
+			).not.toThrow();
+		},
+		120_000,
+	);
 });
