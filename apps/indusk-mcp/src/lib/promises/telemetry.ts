@@ -2,6 +2,11 @@ import { readConfig } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import { probeWatcher } from "./probe.js";
+
+// The admin reads both read failures through this one subpath, so its
+// `instanceof` sees the same classes the read path throws.
+export { WatcherBlind } from "./probe.js";
+
 import type { Registry } from "./registry.js";
 import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
 
