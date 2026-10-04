@@ -191,9 +191,9 @@ writes a key nothing reads, both genuine reds.
   - **A12 passed when written.** After 60+ beats, Jaeger (badger) still returned the newest. The hypothesis is not confirmed; the narrowing below stays as a cheap removal of the dependence on result order.
   - The whole file is in `RUN_ALONE`, since A12 starts a server.
 - [x] A9: widen the read only for the silence judgment. An explicit `sinceMs` is the window counted and shown. When it is shorter than a promise's `expect_every`, the silence is judged as "silent for more than <window>" only if nothing was seen, and otherwise from the newest mark in it
-- [ ] A10: a server's start counts as heard only when no blind state is recorded. Recovery needs a real beat newer than the recorded `since`
-- [ ] A11: prove `watcher-state.json` writable before telling Slack (a real write of the current state, as `proveRecordWritable` does). When it is not writable, tell nothing and log why
-- [ ] A12: narrow `readNewestHeartbeat`'s window to `2 × staleMs` back from now, so the beats it can return fit within the limit
+- [x] A10: a server's start counts as heard only when no blind state is recorded. Recovery needs a real beat newer than the recorded `since`
+- [x] A11: prove `watcher-state.json` writable before telling Slack (a real write of the current state, as `proveRecordWritable` does). When it is not writable, tell nothing and log why — `stateProblem` on the result, logged as "told Slack nothing — …"
+- [x] A12: narrow `readNewestHeartbeat`'s window to `2 × staleMs` back from now, so the beats it can return fit within the limit
 - [ ] A13: `probeWatcher` takes the caller's `timeoutMs` as its wait when one is given (`readPromiseMarks` passes it through)
 - [ ] A14: `promiseProblem` refuses `expect_every` on any kind but behaviour, naming the kind
 

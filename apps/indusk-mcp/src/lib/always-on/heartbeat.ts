@@ -84,11 +84,17 @@ export async function readNewestHeartbeat(
 	endpoint: JaegerEndpoint,
 	now: Date,
 	timeoutMs = DEFAULT_TIMEOUT_MS,
+	/**
+	 * How far back to look. Narrow on purpose (the caller passes twice the
+	 * staleness window): every beat in it fits under the query's limit, so the
+	 * newest is read whatever order Jaeger returns them in (A12).
+	 */
+	lookbackMs = 24 * 3_600_000,
 ): Promise<Date | null> {
 	const params = new URLSearchParams({
 		service: WATCHER_SERVICE,
 		operation: HEARTBEAT_SPAN,
-		start: String((now.getTime() - 24 * 3_600_000) * 1000),
+		start: String((now.getTime() - lookbackMs) * 1000),
 		end: String((now.getTime() + 60_000) * 1000),
 		limit: "50",
 	});
@@ -132,6 +138,8 @@ export interface HeartbeatResult {
 	untold: string | null;
 	/** Set when this pass's beat could not be sent. */
 	sendProblem: string | null;
+	/** Set when `watcher-state.json` could not be written; nothing was told (A11). */
+	stateProblem?: string | null;
 	/** Set when another heartbeat pass was already running against this volume. */
 	skipped?: true;
 }
@@ -198,15 +206,25 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 		let newestBeat: Date | null = null;
 		let readProblem: string | null = null;
 		try {
-			newestBeat = await readNewestHeartbeat(opts.endpoint, now, timeoutMs);
+			newestBeat = await readNewestHeartbeat(opts.endpoint, now, timeoutMs, 2 * opts.staleMs);
 		} catch (err) {
 			readProblem = (err as Error).message;
 		}
-		const heardAt = Math.max(newestBeat?.getTime() ?? 0, opts.startedAt.getTime());
+		const previous = readWatcherState(opts.volume);
+		// The server's own start stands in for a beat only on a clean start. A
+		// server restarted while blind has heard nothing new: it stays blind
+		// until a real beat lands, or Slack hears a false "recovered" (A10).
+		const startCounts = previous?.state !== "blind";
+		const heardAt = Math.max(
+			newestBeat?.getTime() ?? 0,
+			startCounts ? opts.startedAt.getTime() : 0,
+		);
 		const reason =
 			readProblem ??
 			(now.getTime() - heardAt > opts.staleMs
-				? `no heartbeat since ${new Date(heardAt).toISOString()}`
+				? heardAt > 0
+					? `no heartbeat since ${new Date(heardAt).toISOString()}`
+					: "no heartbeat since the server started"
 				: null);
 		const state = reason ? "blind" : "listening";
 
@@ -219,7 +237,7 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 		}
 
 		const transition = watcherTransition(
-			readWatcherState(opts.volume),
+			previous,
 			{ state, reason, heardAt: new Date(heardAt) },
 			now,
 			opts.endpoint.queryUrl,
@@ -229,7 +247,22 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 
 		let told: string | null = null;
 		let untold: string | null = null;
+		let stateProblem: string | null = null;
 		if (message) {
+			// Prove the state can be recorded before telling anyone: a message
+			// that cannot be recorded is repeated every pass (A11). A real write
+			// of the state as it stands — a clean start's is "listening", so a
+			// failed post below is tried again next pass.
+			try {
+				writeWatcherState(
+					opts.volume,
+					previous ?? { state: "listening", since: now.toISOString() },
+				);
+			} catch (err) {
+				stateProblem = `${watcherStatePath(opts.volume)} could not be written: ${(err as Error).message}`;
+			}
+		}
+		if (message && !stateProblem) {
 			try {
 				await postToSlack(opts.webhook, message, timeoutMs);
 				told = message;
@@ -238,9 +271,15 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 				next = null;
 			}
 		}
-		if (next) writeWatcherState(opts.volume, next);
+		if (next && !stateProblem) {
+			try {
+				writeWatcherState(opts.volume, next);
+			} catch (err) {
+				stateProblem = `${watcherStatePath(opts.volume)} could not be written: ${(err as Error).message}`;
+			}
+		}
 
-		return { state, newestBeat, reason, told, untold, sendProblem };
+		return { state, newestBeat, reason, told, untold, sendProblem, stateProblem };
 	} finally {
 		running.delete(opts.volume);
 	}
@@ -259,5 +298,6 @@ export function describeHeartbeat(result: HeartbeatResult): { info: string[]; er
 	if (result.told) info.push(`told Slack: ${result.told}`);
 	if (result.untold) errors.push(`could not tell Slack, will try again: ${result.untold}`);
 	if (result.sendProblem) errors.push(`heartbeat not sent: ${result.sendProblem}`);
+	if (result.stateProblem) errors.push(`told Slack nothing — ${result.stateProblem}`);
 	return { info, errors };
 }
