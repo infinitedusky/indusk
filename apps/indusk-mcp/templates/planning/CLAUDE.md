@@ -24,7 +24,9 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   document is a `paper`-stage plan. — see `/reference/cli/plans`
 - **`.indusk/promises/` is a plan document**: one markdown file per promise at
   the plan root, not code and not machine state. Every kind has a promise;
-  `pnpm test` ends with `pnpm promises:check`. — see `/decisions/day-promises`
+  `pnpm test` ends with `pnpm promises:check`. Only a promise about something
+  known to happen regularly declares `expect_every`; silence without it is the
+  good outcome. — see `/decisions/day-promises`
 
 ## The impl
 
