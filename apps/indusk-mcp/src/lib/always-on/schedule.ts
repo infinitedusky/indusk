@@ -1,5 +1,6 @@
 import { jaegerEndpoint } from "../promises/telemetry.js";
 import type { ServerSettings } from "../telemetry/server.js";
+import { describeHeartbeat, heartbeatPass, staleAfterMs } from "./heartbeat.js";
 import { describePassResult, runPass } from "./pass.js";
 
 /**
@@ -25,7 +26,27 @@ export function startPass(settings: ServerSettings): NodeJS.Timeout {
 		`http://127.0.0.1:${settings.queryPort}`,
 		`${settings.user}:${settings.password}`,
 	);
+	const startedAt = new Date();
+	const staleMs = staleAfterMs(settings.passIntervalMs, settings.watcherStaleMs);
 	const tick = async (): Promise<void> => {
+		// The heartbeat first (watcher-heartbeat, ADR D2): a pass that reports
+		// violations from a watcher that cannot hear them should say so before
+		// it says anything else.
+		try {
+			const beat = await heartbeatPass({
+				volume: settings.volume,
+				endpoint,
+				intakeUrl: `http://127.0.0.1:${settings.otlpPort}`,
+				webhook: settings.slackWebhook,
+				staleMs,
+				startedAt,
+			});
+			const said = describeHeartbeat(beat);
+			for (const line of said.errors) console.error(line);
+			for (const line of said.info) console.info(line);
+		} catch (err) {
+			console.error(`watcher heartbeat failed: ${(err as Error).message}`);
+		}
 		try {
 			const result = await runPass({
 				volume: settings.volume,
