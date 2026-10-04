@@ -5,6 +5,7 @@ import type {
 import {
   JaegerUnreachable,
   type MarkedSpansResult,
+  newestMark,
   readPromiseMarks,
   silencePastExpectation,
   WatcherBlind,
@@ -121,10 +122,7 @@ export function healthOf(
     return { health: "grey", violations: null, lastSeen: null };
   const marks = read?.ok ? read.marks.byPromise.get(p.name) : undefined;
   const violations = marks ? marks.violations.length : null;
-  const newest = [marks?.violations[0]?.at, marks?.lastUpheld?.at]
-    .filter((d): d is Date => d !== undefined)
-    .sort((a, b) => b.getTime() - a.getTime())[0];
-  const lastSeen = newest ? newest.toISOString() : null;
+  const lastSeen = newestMark(marks)?.toISOString() ?? null;
   if (p.kind === "behaviour" && violations !== null && violations > 0) {
     return {
       health: "red",
