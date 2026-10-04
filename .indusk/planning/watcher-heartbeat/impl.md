@@ -67,7 +67,7 @@ A promise may declare `expect_every`. See [brief.md](brief.md),
 | A12 | After more heartbeats than one query returns (over 50 passes), the server still reads its newest beat and stays listening | Phase 0 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
 | A13 | With a blind watcher, the admin's Promises page renders within its 2-second health budget plus margin (under 4 s), not after the probe's 5-second wait on every refresh | Phase 0 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-watcher-blind.test.ts |
 | A14 | `promises check` refuses `expect_every` on a state or structure promise, naming it — a key nothing would ever act on is refused, not silently ignored | Phase 0 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
-| A15 | A promise's newest mark — upheld or violated — is computed in one place, so `promise_health`, the admin and the `expect_every` judgment cannot disagree about when a promise was last seen | Build Phase 5 | Build Phase 5 | planned | apps/indusk-mcp/src/__tests__/watcher-cleanup.test.ts |
+| A15 | A promise's newest mark — upheld or violated — is computed in one place, so `promise_health`, the admin and the `expect_every` judgment cannot disagree about when a promise was last seen | Build Phase 5 | Build Phase 5 | written | apps/indusk-mcp/src/__tests__/watcher-cleanup.test.ts |
 
 ## Checklist
 
