@@ -59,7 +59,7 @@ observed instead of "unrun". See [brief.md](brief.md) and
 |----|---------|-------------|-----------|-------|------|
 | A1 | The image builds from the published package, and a container started without one of its settings exits naming the missing variable | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-image.test.ts |
 | A2 | On the deployed server, both doors refuse a request without credentials (401) and accept one with them | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
-| A3 | A promise broken from a machine that is not the server reaches Slack within one pass interval, naming the promise, the symptom, the environment, the service and a trace link | Build Phase 2 | Build Phase 2 | planned | manual: read the Slack channel after the smoke's send |
+| A3 | A promise broken from a machine that is not the server reaches Slack within one pass interval, naming the promise, the symptom, the environment, the service and a trace link | Build Phase 2 | Build Phase 2 | written | manual: read the Slack channel after the smoke's send |
 | A4 | A trace sent before a machine restart is still there after it | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A5 | A violation sent after the server has sat idle for an hour is announced — the machine never went to sleep | Build Phase 3 | Build Phase 3 | planned | manual: send after an idle hour, read the Slack channel |
 | A6 | A developer machine whose project names the deployed server reads it: `promises status` reports the smoke's violations and names the server, and the read is not *watcher blind* | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
@@ -122,6 +122,12 @@ reading Slack, so they are registered below, not authored.
 
 ### Build Phase 2: deploy, and run the smoke
 
+- [x] Discovered: the gRPC fix shipped first, as **1.58.1** (released 2026-10-04 on Sandy's call), so the deployed server never runs a version whose unauthenticated gRPC query API listens on every interface. The personal org's other apps share Fly's private network. It was released from a `release/1.58.1` branch with `SKIP_RELEASE_GUARD=1`; the guard objected only to this branch's new test files, and main was merged back in (`2340de6d`)
+- [x] Discovered: `pnpm release`'s system tier had doubled to 231 s (Sandy noticed), mostly from these two plans' timed files run one at a time. Two fixes:
+  - `always-on-server`, `always-on-falsification`, `always-on-two-servers` and `watcher-falsification` rejoin the parallel group, since they were alone only because of the 16685 clash A8 fixed.
+  - watcher-falsification's A12 beats every 250 ms for 16 s instead of every second for 70 s, and now also asserts that more than 50 beats landed.
+  
+  The tier now takes 132 s for 29 files and 110 tests (`pnpm test:system`, wall 146 s including the admin build).
 - [ ] `fly launch --no-deploy --copy-config --config docker/fly.always-on.toml --org personal` (app name `indusk-always-on`, or the nearest free one, recorded here); `fly volumes create indusk_telemetry --size 3`
 - [ ] Generate the password (`openssl rand -hex 24`), `fly secrets set INDUSK_SERVER_PASSWORD=…`, and write `INDUSK_DEPLOYED_CREDENTIAL=indusk:<password>` to `~/.indusk/config.env`; the value never enters the repository or the conversation
 - [ ] Sandy sets `INDUSK_SERVER_SLACK_WEBHOOK` as a Fly secret (`fly secrets set … --config docker/fly.always-on.toml`)
