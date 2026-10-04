@@ -1,7 +1,7 @@
 ---
 title: "The watcher proves it is watching"
 date: 2026-10-03
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -61,6 +61,12 @@ A promise may declare `expect_every`. See [brief.md](brief.md),
 | A6 | The always-on server records a heartbeat on every pass: its own Jaeger holds a heartbeat span no older than one pass interval | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
 | A7 | When the server's heartbeat goes stale, Slack gets one "watcher blind since <time>" message, not one per pass; when heartbeats resume, one "watcher recovered" message | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
 | A8 | A promise declaring `expect_every` needs attention when no mark of it has arrived for longer than that while the watcher is listening; a promise without it, silent as long, does not | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/watcher-expect-every.test.ts |
+| A9 | `promises status --since 90m` counts only violations from the last 90 minutes, even when a promise declares `expect_every: 1d` — the window a person asked for is the window they are shown | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A10 | A server restarted while its watcher is blind, with no heartbeat landing, does not tell Slack "watcher recovered" | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A11 | When the watcher state cannot be written (the volume refuses it), a blind watcher tells Slack once at most, not once per pass | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A12 | After more heartbeats than one query returns (over 50 passes), the server still reads its newest beat and stays listening | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
+| A13 | With a blind watcher, the admin's Promises page renders within its 2-second health budget plus margin (under 4 s), not after the probe's 5-second wait on every refresh | Phase 0 | Build Phase 4 | planned | apps/indusk-admin/src/__tests__/http-watcher-blind.test.ts |
+| A14 | `promises check` refuses `expect_every` on a state or structure promise, naming it — a key nothing would ever act on is refused, not silently ignored | Phase 0 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts |
 
 ## Checklist
 
@@ -164,6 +170,38 @@ writes a key nothing reads, both genuine reds.
 #### Build Phase 3 Document
 
 - [x] `apps/docs/src/reference/cli/promises.md`: `expect_every` in the promise file and what "needs attention" means for it; the changelog: `expect_every` — the key in the promise-file example, a `status` bullet covering the line, `promise_health`'s `silence`, the admin's detail line and the widened window; `vitepress build` clean; `check-pointers` PASS; the context-tiers ship and budget pins 14/14
+
+### Build Phase 4: Falsification — windows, restarts and the paths the heartbeat cannot see
+
+**Goal**: verify whether the attested state holds against six failures found by reading the built code. Each row is one hypothesis that is red today; each item below is the fix it needs.
+
+- **A9**: `readPromiseMarks` widens the read window to the longest `expect_every`, even when `--since` was given explicitly. `promises status --since 90m` then prints "in the last 90m" while counting a day of violations.
+- **A10**: the heartbeat counts a server with no beat as listening until `staleMs` after its own start. A server restarted while its watcher is blind has no new beat, reads as listening, and finds `watcher-state.json` saying blind. It then tells Slack "watcher recovered" falsely, and "blind" again one window later.
+- **A11**: `heartbeatPass` posts to Slack and only then writes `watcher-state.json`. When that write throws, the state stays "listening" and every pass posts "blind" again. This is the flood the announced record's `proveRecordWritable` exists to prevent.
+- **A12**: `readNewestHeartbeat` asks for 50 traces over 24 hours. At one beat a minute there are 1,440. Nothing guarantees Jaeger returns the newest 50, so a server can read its newest beat as old and call itself blind.
+- **A13**: the probe ignores the caller's timeout. The admin reads health with a 2-second budget, but a blind read polls for 5 seconds, on every refresh.
+- **A14**: `promiseProblem` accepts `expect_every` on any kind, but only behaviour promises are ever judged. On a state promise it is a key that silently does nothing.
+
+- [ ] Author A9–A12 and A14 red in `apps/indusk-mcp/src/__tests__/watcher-falsification.test.ts` (added to `SYSTEM`; the server rows in `RUN_ALONE`), and A13 red in `http-watcher-blind.test.ts`. Run each and read each failure
+- [ ] A9: widen the read only for the silence judgment. An explicit `sinceMs` is the window counted and shown. When it is shorter than a promise's `expect_every`, the silence is judged as "silent for more than <window>" only if nothing was seen, and otherwise from the newest mark in it
+- [ ] A10: a server's start counts as heard only when no blind state is recorded. Recovery needs a real beat newer than the recorded `since`
+- [ ] A11: prove `watcher-state.json` writable before telling Slack (a real write of the current state, as `proveRecordWritable` does). When it is not writable, tell nothing and log why
+- [ ] A12: narrow `readNewestHeartbeat`'s window to `2 × staleMs` back from now, so the beats it can return fit within the limit
+- [ ] A13: `probeWatcher` takes the caller's `timeoutMs` as its wait when one is given (`readPromiseMarks` passes it through)
+- [ ] A14: `promiseProblem` refuses `expect_every` on any kind but behaviour, naming the kind
+
+#### Build Phase 4 Verification
+
+- [ ] A9, A10, A11, A12, A14 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watcher-falsification`) and A13 passes (`pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-watcher-blind`); A1–A8 still pass (`… src/__tests__/watcher-probe src/__tests__/watcher-heartbeat-server src/__tests__/watcher-expect-every`, `… src/__tests__/watcher-catchup-skill`)
+- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear, run with no other vitest in the worktree
+
+#### Build Phase 4 Context
+
+- [ ] guard: A11's test carries `lesson: an-alarm-must-not-travel-the-path-it-reports`. Extend that lesson: prove the state writable before telling, or the alarm repeats every pass
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/reference/cli/telemetry-server.md` "The heartbeat": a restart while blind stays blind until a real beat lands; an unwritable state tells nothing and says why. `apps/docs/src/reference/cli/promises.md`: `--since` is the window counted, and `expect_every` is behaviour-only
 
 ## Files Affected
 
