@@ -83,6 +83,9 @@ export async function startAlwaysOnServer(opts: StartOptions = {}): Promise<Alwa
 	const volume = opts.volume ?? mkdtempSync(join(tmpdir(), "always-on-volume-"));
 	const otlpPort = await freePort();
 	const queryPort = await freePort();
+	// Every port the server binds comes from its settings, so two servers can
+	// run at once (day-always-on-deploy A8).
+	const grpcPort = await freePort();
 	const otlpUrl = `http://127.0.0.1:${otlpPort}`;
 	const queryUrl = `http://127.0.0.1:${queryPort}`;
 
@@ -97,6 +100,7 @@ export async function startAlwaysOnServer(opts: StartOptions = {}): Promise<Alwa
 				INDUSK_SERVER_VOLUME: volume,
 				INDUSK_SERVER_OTLP_PORT: String(otlpPort),
 				INDUSK_SERVER_QUERY_PORT: String(queryPort),
+				INDUSK_SERVER_GRPC_PORT: String(grpcPort),
 				INDUSK_SERVER_USER: SERVER_USER,
 				INDUSK_SERVER_PASSWORD: SERVER_PASSWORD,
 				// The server refuses to start without a webhook — a server that

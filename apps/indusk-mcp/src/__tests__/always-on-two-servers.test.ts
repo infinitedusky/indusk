@@ -17,11 +17,9 @@ describe.skipIf(SHOULD_SKIP)("A8 — two servers on one host", () => {
 	const servers: AlwaysOnServer[] = [];
 
 	afterAll(async () => {
-		for (const s of servers) {
-			await s.stop();
-			rmSync(s.volume, { recursive: true, force: true });
-		}
-	});
+		await Promise.all(servers.map((s) => s.stop()));
+		for (const s of servers) rmSync(s.volume, { recursive: true, force: true });
+	}, 30_000);
 
 	it("both start and both answer", async () => {
 		const started = await Promise.allSettled([startAlwaysOnServer(), startAlwaysOnServer()]);

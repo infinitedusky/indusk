@@ -103,8 +103,8 @@ reading Slack, so they are registered below, not authored.
 
 ### Build Phase 1: the gRPC port, and the image
 
-- [ ] `lib/telemetry/server.ts`: `INDUSK_SERVER_GRPC_PORT` in `ServerSettings` (default 16685, so a deployed server is unchanged), rendered as `jaeger_query.grpc.endpoint`; `startAlwaysOnServer` gives each server a free one
-- [ ] If A1 was red, fix what it named in `docker/Dockerfile.always-on`, and record it here
+- [x] `lib/telemetry/server.ts`: `INDUSK_SERVER_GRPC_PORT` in `ServerSettings` (default 16685, so a deployed server is unchanged), rendered as `jaeger_query.grpc.endpoint`; `startAlwaysOnServer` gives each server a free one — bound to **127.0.0.1**, not 0.0.0.0. Found while doing this: left unset, Jaeger served its gRPC query API on every interface **without basic auth**. Fly exposes only the two declared services, so the reference deployment never leaked through it, but a server on a VPS with an open 16685 would have handed its traces to anyone. Loopback closes that, and nothing outside the container needs gRPC. A8's cleanup stops both servers in parallel (30 s), since sequential stops overran the 10 s hook default
+- [x] If A1 was red, fix what it named in `docker/Dockerfile.always-on`, and record it here — A1 was never red (7/7 on first build), so the Dockerfile is unchanged
 
 #### Build Phase 1 Verification
 
