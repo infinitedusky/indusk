@@ -69,6 +69,9 @@ export async function telemetryAnnounce(opts: { once?: boolean }): Promise<void>
 		volume: settings.volume,
 		endpoint: jaegerEndpoint(settings.queryUrl, settings.credential),
 		webhook: settings.slackWebhook,
+		// Entered from outside the server, against the address it was given:
+		// that address is the one a reader can open.
+		publicQueryUrl: jaegerEndpoint(settings.queryUrl).queryUrl,
 		windowMs: settings.windowMs,
 	});
 

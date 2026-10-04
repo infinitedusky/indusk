@@ -41,6 +41,12 @@ export const PASS_WINDOW_ENV = "INDUSK_SERVER_PASS_WINDOW_HOURS";
 /** Overrides the heartbeat's staleness, `max(3 × interval, 3 min)` by default — for tests. */
 export const WATCHER_STALE_ENV = "INDUSK_SERVER_WATCHER_STALE_MS";
 /** Where the pass reads Jaeger, when it is not the server reading its own. */
+/**
+ * The query API as people reach it (e.g. https://<app>.fly.dev:16687), for the
+ * trace links the server posts to Slack. Optional: without it the server's
+ * messages name the trace and ask for this setting (day-always-on-deploy A11).
+ */
+export const PUBLIC_QUERY_URL_ENV = "INDUSK_SERVER_PUBLIC_QUERY_URL";
 export const QUERY_URL_ENV = "INDUSK_SERVER_QUERY_URL";
 /** `user:password`, as a reader off the server holds it. */
 export const CREDENTIAL_ENV = "INDUSK_SERVER_CREDENTIAL";
@@ -83,6 +89,8 @@ export interface ServerSettings {
 	passWindowMs: number;
 	/** A heartbeat older than this means the watcher is blind; absent = `max(3 × interval, 3 min)`. */
 	watcherStaleMs?: number;
+	/** The query API as people reach it, for trace links; null when not set. */
+	publicQueryUrl: string | null;
 }
 
 export class MissingServerSetting extends Error {
@@ -152,6 +160,9 @@ export function readServerSettings(env: NodeJS.ProcessEnv = process.env): Server
 		slackWebhook: required(env, SLACK_WEBHOOK_ENV),
 		passIntervalMs: positive(env, PASS_INTERVAL_ENV, DEFAULT_PASS_INTERVAL_MS, "milliseconds"),
 		passWindowMs: positive(env, PASS_WINDOW_ENV, DEFAULT_PASS_WINDOW_HOURS, "hours") * 3_600_000,
+		publicQueryUrl: env[PUBLIC_QUERY_URL_ENV]?.trim()
+			? jaegerEndpoint(required(env, PUBLIC_QUERY_URL_ENV)).queryUrl
+			: null,
 		...(env[WATCHER_STALE_ENV]?.trim()
 			? { watcherStaleMs: positive(env, WATCHER_STALE_ENV, 0, "milliseconds") }
 			: {}),

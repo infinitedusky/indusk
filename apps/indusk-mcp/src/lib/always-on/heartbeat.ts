@@ -123,6 +123,8 @@ export interface HeartbeatOptions {
 	/** The server's own OTLP/HTTP intake. */
 	intakeUrl: string;
 	webhook: string;
+	/** The query API as people reach it, named in the blind message; null when not set. */
+	publicQueryUrl?: string | null;
 	staleMs: number;
 	/**
 	 * When this server started. A server with no beat yet is listening until
@@ -247,7 +249,7 @@ export async function heartbeatPass(opts: HeartbeatOptions): Promise<HeartbeatRe
 			previous,
 			{ state, reason, heardAt: new Date(heardAt) },
 			now,
-			opts.endpoint.queryUrl,
+			opts.publicQueryUrl ?? "this server",
 		);
 		const message = transition.message;
 		let next = transition.next;

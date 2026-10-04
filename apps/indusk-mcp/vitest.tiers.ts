@@ -19,6 +19,7 @@ export const SYSTEM = [
 	"src/__tests__/always-on-falsification.test.ts",
 	"src/__tests__/always-on-health-tool.test.ts",
 	"src/__tests__/always-on-pass.test.ts",
+	"src/__tests__/always-on-public-link.test.ts",
 	"src/__tests__/always-on-server.test.ts",
 	"src/__tests__/always-on-source.test.ts",
 	"src/__tests__/always-on-two-servers.test.ts",
