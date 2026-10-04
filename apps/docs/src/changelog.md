@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.58.2] — 2026-10-04
+
+### Fixed
+- **The always-on server's records survive a machine restart.** The first real deploy left `announced.json` empty after `fly machine restart`: the record was written by rename, and the rename reached the disk before the data. From then on every pass refused to announce anything, by design, while the heartbeat still said the watcher was listening. Both `announced.json` and `watcher-state.json` are now flushed to disk before and after the rename. A server already showing `announced nothing — /data/announced.json is not valid JSON` is repaired by removing that file; the next pass re-announces the last 24 hours.
+
 ## [1.58.1] — 2026-10-04
 
 ### Fixed
