@@ -87,6 +87,7 @@ reading Slack, so they are registered below, not authored.
   - A9 is red on the guide's "unrun" and on the missing "Observed" record. The reference has no such marking today.
   - A2, A4, A6 and A7 are red on `ENOTFOUND indusk-always-on.fly.dev`, the deployment that does not exist yet: a real red at the boundary.
   - Leak guard clear.
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change. (Four test files. The smoke's helpers — `auth`, `send`, `traceFound`, `eventually` — each do one thing over the boundary, and the target comes from four named environment variables documented in its header.)
 
 #### Deferred to Build Phase 2
 
