@@ -10,6 +10,7 @@ import {
 	siteFile,
 	testFile,
 } from "./helpers/promises-fixture.js";
+import { block } from "./helpers/status-output.js";
 import { toolCaller } from "./helpers/tool-call.js";
 
 /**
@@ -29,14 +30,6 @@ import { toolCaller } from "./helpers/tool-call.js";
 const EXPECTING = "every-commit-evaluated";
 const QUIET = "empty-form-never-submitted";
 const OWNER = "seats-v2";
-
-function block(out: string, name: string): string {
-	const lines = out.split("\n");
-	const start = lines.findIndex((l) => l.trimStart().startsWith(name));
-	if (start === -1) return "";
-	const end = lines.findIndex((l, i) => i > start && l.trim() === "");
-	return lines.slice(start, end === -1 ? undefined : end).join("\n");
-}
 
 describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — A8: expect_every", () => {
 	let jaeger: LocalJaeger;

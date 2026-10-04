@@ -20,6 +20,7 @@ import {
 	testFile,
 } from "./helpers/promises-fixture.js";
 import { type SlackCapture, startSlackCapture } from "./helpers/slack-capture.js";
+import { block } from "./helpers/status-output.js";
 
 /**
  * watcher-heartbeat — Build Phase 4, falsification. Six hypotheses found by
@@ -46,14 +47,6 @@ function behaviour(name: string, extra: Record<string, unknown> = {}) {
 		tests: [`src/${name}.test.ts`],
 		...extra,
 	};
-}
-
-function block(out: string, name: string): string {
-	const lines = out.split("\n");
-	const start = lines.findIndex((l) => l.trimStart().startsWith(name));
-	if (start === -1) return "";
-	const end = lines.findIndex((l, i) => i > start && l.trim() === "");
-	return lines.slice(start, end === -1 ? undefined : end).join("\n");
 }
 
 describe.skipIf(SHOULD_SKIP)("A9 — --since is the window counted", () => {

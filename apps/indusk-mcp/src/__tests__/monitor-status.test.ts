@@ -16,6 +16,7 @@ import {
 	siteFile,
 	testFile,
 } from "./helpers/promises-fixture.js";
+import { block } from "./helpers/status-output.js";
 
 /**
  * day-monitor — A1, A7–A10: `indusk promises status` over a real local Jaeger.
@@ -37,15 +38,6 @@ const RELEASE = "seat-release-on-timeout";
 const UNSEEN = "seat-hold-expires";
 const STATE = "seat-count-matches-table";
 const STRUCTURE = "one-archive-writer";
-
-/** The block for `name`: from the line that starts with it to the next blank line. */
-function block(out: string, name: string): string {
-	const lines = out.split("\n");
-	const start = lines.findIndex((l) => l.trimStart().startsWith(name));
-	if (start === -1) return "";
-	const end = lines.findIndex((l, i) => i > start && l.trim() === "");
-	return lines.slice(start, end === -1 ? undefined : end).join("\n");
-}
 
 function project(): PromiseProject {
 	const behaviour = (name: string) => ({
