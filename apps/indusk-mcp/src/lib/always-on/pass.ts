@@ -171,7 +171,8 @@ export function slackText(span: MarkedSpan, queryUrl: string): string {
 	].join("\n");
 }
 
-async function postToSlack(webhook: string, text: string, timeoutMs: number): Promise<void> {
+/** One Slack message; throws when Slack does not accept it. Shared with the heartbeat's two messages. */
+export async function postToSlack(webhook: string, text: string, timeoutMs: number): Promise<void> {
 	const res = await fetch(webhook, {
 		method: "POST",
 		headers: { "content-type": "application/json" },
