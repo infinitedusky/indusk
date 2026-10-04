@@ -24,6 +24,14 @@ import { resolveBinary } from "./daemon.js";
 export const VOLUME_ENV = "INDUSK_SERVER_VOLUME";
 export const OTLP_PORT_ENV = "INDUSK_SERVER_OTLP_PORT";
 export const QUERY_PORT_ENV = "INDUSK_SERVER_QUERY_PORT";
+/**
+ * Jaeger's gRPC query API. Bound to loopback: nothing outside the container
+ * needs it, and it has no basic auth of its own. Left unset, Jaeger bound
+ * 0.0.0.0:16685 — unauthenticated, and the same port for every server on a
+ * host, so a second one could not start (day-always-on-deploy A8).
+ */
+export const GRPC_PORT_ENV = "INDUSK_SERVER_GRPC_PORT";
+export const DEFAULT_GRPC_PORT = 16685;
 export const USER_ENV = "INDUSK_SERVER_USER";
 export const PASSWORD_ENV = "INDUSK_SERVER_PASSWORD";
 export const RETENTION_ENV = "INDUSK_SERVER_RETENTION_HOURS";
@@ -64,6 +72,8 @@ export interface ServerSettings {
 	volume: string;
 	otlpPort: number;
 	queryPort: number;
+	/** Jaeger's gRPC query port, on loopback only. */
+	grpcPort: number;
 	user: string;
 	password: string;
 	retentionHours: number;
@@ -135,6 +145,7 @@ export function readServerSettings(env: NodeJS.ProcessEnv = process.env): Server
 		volume: required(env, VOLUME_ENV),
 		otlpPort: port(env, OTLP_PORT_ENV),
 		queryPort: port(env, QUERY_PORT_ENV),
+		grpcPort: env[GRPC_PORT_ENV]?.trim() ? port(env, GRPC_PORT_ENV) : DEFAULT_GRPC_PORT,
 		user: required(env, USER_ENV),
 		password: required(env, PASSWORD_ENV),
 		retentionHours: positive(env, RETENTION_ENV, DEFAULT_RETENTION_HOURS, "hours"),
@@ -216,6 +227,8 @@ extensions:
       endpoint: 0.0.0.0:${settings.queryPort}
       auth:
         authenticator: basicauth
+    grpc:
+      endpoint: 127.0.0.1:${settings.grpcPort}
 
 receivers:
   otlp:

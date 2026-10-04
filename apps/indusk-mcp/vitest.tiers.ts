@@ -21,6 +21,7 @@ export const SYSTEM = [
 	"src/__tests__/always-on-pass.test.ts",
 	"src/__tests__/always-on-server.test.ts",
 	"src/__tests__/always-on-source.test.ts",
+	"src/__tests__/always-on-two-servers.test.ts",
 	"src/__tests__/cli-bare-ui-cwd-aware.test.ts",
 	"src/__tests__/monitor-plans.test.ts",
 	"src/__tests__/monitor-status.test.ts",
@@ -61,6 +62,7 @@ export const RUN_ALONE = [
 	"src/__tests__/always-on-pass.test.ts",
 	"src/__tests__/always-on-server.test.ts",
 	"src/__tests__/always-on-source.test.ts",
+	"src/__tests__/always-on-two-servers.test.ts",
 	"src/__tests__/watcher-falsification.test.ts",
 	"src/__tests__/watcher-heartbeat-server.test.ts",
 ];
