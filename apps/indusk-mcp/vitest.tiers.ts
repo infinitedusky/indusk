@@ -52,19 +52,17 @@ export const SYSTEM = [
  * always-on files time the real server and a Slack capture end to end; under
  * a full parallel run they failed in two of five runs, and never alone.
  * `watcher-heartbeat-server` times the same server against a frozen Jaeger.
- * Every file that starts the always-on server is here: the server's Jaeger
- * binds the gRPC query port 16685, which its config does not set, so two
- * servers at once fail to start (`always-on-server` and
- * `always-on-falsification` collided on main, 2026-10-03).
+ * `always-on-image` builds a docker image, which would starve the timed files
+ * beside it.
+ *
+ * Other files that start the always-on server run in parallel: every port a
+ * server binds now comes from its settings (day-always-on-deploy A8), so the
+ * gRPC clash on 16685 that sent them here is gone.
  */
 export const RUN_ALONE = [
 	"src/__tests__/admin-bundle-pack.test.ts",
-	"src/__tests__/always-on-falsification.test.ts",
 	"src/__tests__/always-on-image.test.ts",
 	"src/__tests__/always-on-pass.test.ts",
-	"src/__tests__/always-on-server.test.ts",
 	"src/__tests__/always-on-source.test.ts",
-	"src/__tests__/always-on-two-servers.test.ts",
-	"src/__tests__/watcher-falsification.test.ts",
 	"src/__tests__/watcher-heartbeat-server.test.ts",
 ];
