@@ -140,3 +140,7 @@ code, skills and tests are 29 files, +1,756 / −44.
 | Commits | 58 on the plan branch |
 | `pnpm test` | mcp 1,675 / 5 skipped, admin 345, `promises check` clean, guard all-clear |
 | `pnpm test:system` | 27 files, 102 tests, guard all-clear |
+
+## Landing
+
+Landed on main at 3461f7e4, 2026-10-03.
