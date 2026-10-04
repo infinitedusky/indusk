@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.58.4] — 2026-10-04
+
+### Fixed
+- **A trace link from Slack opens in a browser with a login box.** Jaeger's basic auth refuses with a bare 401 and no `WWW-Authenticate` challenge, so a browser never offered to log in and a clicked link showed "no basic auth provided". The always-on server now answers its public query port itself, passes every request to Jaeger (moved to a loopback-only port), and adds the Basic challenge to Jaeger's refusals. Jaeger is still the only thing that checks a password.
+
 ## [1.58.3] — 2026-10-04
 
 ### Fixed
