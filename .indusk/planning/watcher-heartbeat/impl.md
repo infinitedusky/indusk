@@ -58,8 +58,8 @@ A promise may declare `expect_every`. See [brief.md](brief.md),
 | A3 | With the daemon stopped, every reader says the watcher cannot be reached — as today — and never a count | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts |
 | A4 | Reading promise health repeatedly within 30 s sends one probe, not one per read | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/watcher-probe.test.ts |
 | A5 | `/catchup` reports "watcher blind" on its own line, ahead of the roadmap, when `promise_health` says so — and never promise counts in that state (package and installed copies) | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/watcher-catchup-skill.test.ts |
-| A6 | The always-on server records a heartbeat on every pass: its own Jaeger holds a heartbeat span no older than one pass interval | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
-| A7 | When the server's heartbeat goes stale, Slack gets one "watcher blind since <time>" message, not one per pass; when heartbeats resume, one "watcher recovered" message | Test Phase 1 | Build Phase 2 | written | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
+| A6 | The always-on server records a heartbeat on every pass: its own Jaeger holds a heartbeat span no older than one pass interval | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
+| A7 | When the server's heartbeat goes stale, Slack gets one "watcher blind since <time>" message, not one per pass; when heartbeats resume, one "watcher recovered" message | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/watcher-heartbeat-server.test.ts |
 | A8 | A promise declaring `expect_every` needs attention when no mark of it has arrived for longer than that while the watcher is listening; a promise without it, silent as long, does not | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/watcher-expect-every.test.ts |
 
 ## Checklist
@@ -131,8 +131,8 @@ writes a key nothing reads, both genuine reds.
 
 #### Build Phase 2 Verification
 
-- [ ] A6 and A7 pass and A1–A5 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watcher-heartbeat-server src/__tests__/watcher-probe`); the always-on suites still pass (`… src/__tests__/always-on-pass src/__tests__/always-on-server src/__tests__/always-on-falsification`)
-- [ ] `pnpm check` clean; `tsc --noEmit` clean
+- [x] A6 and A7 pass and A1–A5 still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/watcher-heartbeat-server src/__tests__/watcher-probe`); the always-on suites still pass (`… src/__tests__/always-on-pass src/__tests__/always-on-server src/__tests__/always-on-falsification`) — 26/26 in one run, plus A5 4/4; no server Jaeger left; leak guard clear. Two runs along the way were not clean. (1) The evaluator, grading a commit, ran `watcher-heartbeat-server` in this worktree at the same time, and the two servers collided. Waited for it to end. (2) `always-on-server` and `always-on-falsification` collide on Jaeger's gRPC query port 16685 when run in parallel, and do so **on main too** (reproduced there). Both now run in `RUN_ALONE` with the other server files. The server's unset gRPC port is a follow-up, not this plan's
+- [x] `pnpm check` clean; `tsc --noEmit` clean — `tsc` clean. Biome is clean over this plan's changed mcp files (16). `pnpm check` is red on main for files outside this plan, as recorded in Build Phase 1
 
 #### Build Phase 2 Context
 
