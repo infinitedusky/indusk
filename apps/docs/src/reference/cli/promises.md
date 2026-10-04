@@ -38,6 +38,7 @@ tests:                           # code-root-relative; each carries the token
 incidents: []                    # incident ids; required non-empty when known-violated
 aliases: []                      # optional: earlier names that still resolve
 superseded_by:                   # optional: the successor, when retired
+expect_every:                    # optional: e.g. 1d — silence past this needs attention
 ---
 
 A seat is never held by two players at once.
@@ -241,6 +242,15 @@ phase-boundary-record-never-malformed (state, planning, enforced)
 - **State** and **structure** promises are listed as watched by the suite:
   their health is the last run of their test or check at head, not telemetry.
 - A **retired** promise is listed and not watched.
+- A behaviour promise that declares **`expect_every`** (`30m`, `6h`, `1d`)
+  **needs attention** when its newest mark, upheld or violated, is older than
+  that: `needs attention — silent for 3h, expected every 1h`. The same line is
+  in `promise_health` (`silence`, and the promise joins `needsAttention`) and
+  under the admin's chip. Without it, silence from a listening watcher is the
+  good outcome — "an empty form is never submitted" should be quiet. Declare
+  it only for something known to happen regularly. The read window widens to
+  the longest `expect_every` when that is longer than the quiet window.
+  `promises check` refuses a value that is not a duration, by name.
 - Marks under any of a promise's **`aliases`** count as the promise's — an
   application may still set the old name after a rename.
 - Each query asks Jaeger for at most 1,500 traces. When a query fills that,
