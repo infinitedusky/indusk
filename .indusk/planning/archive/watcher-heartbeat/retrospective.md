@@ -75,6 +75,12 @@ code, skills and tests are 29 files, +1,756 / −44.
 - **A test cache hid the behaviour under test.** A4, which counts probes, read
   zero, because an earlier test in the same process had already cached the
   probe. A4 got its own daemon.
+- **The end-to-end suite caught a fixture the build missed.** The retrospective
+  ran `pnpm e2e` for the context-tiers check, which this plan's `CLAUDE.md`
+  edits require. That check passed, but `day-always-on.e2e` named a server
+  without `otlp_url` and read *watcher blind*, as designed. Build Phase 1 had
+  swept named-server fixtures in `src/` and the admin, not `e2e/`. Fixed; all 9
+  e2e tests pass.
 - **The validator read another plan's row label.** "A29" in a Verification note
   was taken as a reference to a row in this plan's table, and the edit was
   refused until it was reworded.
