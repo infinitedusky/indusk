@@ -113,3 +113,9 @@
 {"plan":"test-daemons-never-leak","phase":1,"kind":"test","sha":"d9e02becc9b778cc0a5197e34aff28e3e8b33f37","timestamp":"2026-10-03T20:48:56.621Z"}
 {"plan":"test-daemons-never-leak","phase":1,"kind":"build","sha":"29ee553cdfd259863c159e3a8ad93ee889926e26","timestamp":"2026-10-03T20:50:29.690Z"}
 {"plan":"test-daemons-never-leak","phase":2,"kind":"build","sha":"a5360b88555d010e60e44c4a6eae6ec9f4438de9","timestamp":"2026-10-03T21:11:28.693Z"}
+{"plan":"watcher-heartbeat","phase":1,"kind":"test","sha":"905ddd3510db93c0bc2625cf8b0040c7001d0936","timestamp":"2026-10-04T00:09:20.753Z"}
+{"plan":"watcher-heartbeat","phase":1,"kind":"build","sha":"5a6433939a76759ea3e7a41e30aef77eb7a05758","timestamp":"2026-10-04T00:16:46.289Z"}
+{"plan":"watcher-heartbeat","phase":2,"kind":"build","sha":"6ff2cc5803e9ccebb46918eae0729e24ced84287","timestamp":"2026-10-04T00:28:22.067Z"}
+{"plan":"watcher-heartbeat","phase":3,"kind":"build","sha":"aa636b4c1f82e387adc242373068a51956dbca6f","timestamp":"2026-10-04T00:47:49.495Z"}
+{"plan":"watcher-heartbeat","phase":4,"kind":"build","sha":"c02b565e29caaf97fb42418564a3a55676f5287a","timestamp":"2026-10-04T02:05:35.239Z"}
+{"plan":"watcher-heartbeat","phase":5,"kind":"build","sha":"257ffafb9000873d9331b07e0fb21806c33ccd45","timestamp":"2026-10-04T02:34:27.121Z"}

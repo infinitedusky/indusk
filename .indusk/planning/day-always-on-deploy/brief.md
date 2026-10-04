@@ -124,6 +124,20 @@ handling never wait for a person) and
 [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md) (an
 instance per workbench, a GitHub connection at creation).
 
+**Carried in from [watcher-heartbeat](../archive/watcher-heartbeat/retrospective.md),
+closed 2026-10-03.** Two facts the deploy smoke must meet:
+
+- **A project that names the deployed server also names its intake**,
+  `promises.jaeger.otlp_url`, beside `url`. Every promise read now probes
+  first, and a named server without an intake reads *watcher blind*.
+- **The server's Jaeger always binds the gRPC query port 16685**, which its
+  rendered config does not set. Two servers on one host cannot both start.
+  That is harmless on Fly, with one machine per server, but it is why every
+  always-on test file runs alone, and it matters to
+  [workbench-watch-provisioning](../workbench-watch-provisioning/brief.md) if
+  two workbenches' servers ever share a host. Setting the port is a small
+  config change, best made here or there.
+
 ## What this plan is not
 
 Not a hosting decision, and not a commitment to Fly. Fly is the reference

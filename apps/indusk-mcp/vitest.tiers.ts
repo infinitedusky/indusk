@@ -37,6 +37,10 @@ export const SYSTEM = [
 	"src/__tests__/test-daemons-guard.test.ts",
 	"src/__tests__/update-scm-jj-removed.test.ts",
 	"src/__tests__/watch-reopen-collision.test.ts",
+	"src/__tests__/watcher-expect-every.test.ts",
+	"src/__tests__/watcher-falsification.test.ts",
+	"src/__tests__/watcher-heartbeat-server.test.ts",
+	"src/__tests__/watcher-probe.test.ts",
 ];
 
 /**
@@ -45,9 +49,18 @@ export const SYSTEM = [
  * `dist/` in place under every test spawning the CLI from it. The two
  * always-on files time the real server and a Slack capture end to end; under
  * a full parallel run they failed in two of five runs, and never alone.
+ * `watcher-heartbeat-server` times the same server against a frozen Jaeger.
+ * Every file that starts the always-on server is here: the server's Jaeger
+ * binds the gRPC query port 16685, which its config does not set, so two
+ * servers at once fail to start (`always-on-server` and
+ * `always-on-falsification` collided on main, 2026-10-03).
  */
 export const RUN_ALONE = [
 	"src/__tests__/admin-bundle-pack.test.ts",
+	"src/__tests__/always-on-falsification.test.ts",
 	"src/__tests__/always-on-pass.test.ts",
+	"src/__tests__/always-on-server.test.ts",
 	"src/__tests__/always-on-source.test.ts",
+	"src/__tests__/watcher-falsification.test.ts",
+	"src/__tests__/watcher-heartbeat-server.test.ts",
 ];

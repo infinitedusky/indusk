@@ -17,7 +17,7 @@ Given a fresh session, catchup:
 7. **Checks infrastructure** via `check_health`.
 8. **Does NOT re-read CLAUDE.md.** It's auto-injected into every session; re-fetching it was the single biggest line item of the pre-makeover catchup (~30k tokens of pure duplication).
 9. **Lists active plans** via `list_plans { active: true }` — in-motion plans only, plus a count of what was omitted.
-10. **Checks promise health** via `promise_health` — per behaviour promise, violations in the window, open incidents, and violations no incident records yet, from whichever Jaeger the project names.
+10. **Checks promise health** via `promise_health` — per behaviour promise, violations in the window, open incidents, and violations no incident records yet, from whichever Jaeger the project names. When it reports **watcher blind** (a Jaeger answered and did not return the probe sent to it), catchup says so on its own line ahead of the roadmap and reports no counts.
 11. **Reviews installed skills and enabled extensions**.
 12. **Summarizes** to the user with the active plan list, other agents present, project (shared) state, the sweep count, and any promise needing attention.
 

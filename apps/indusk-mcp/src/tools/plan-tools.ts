@@ -8,6 +8,7 @@ import { isFinishedDocumentStatus, nextRequiredDocument } from "../lib/lifecycle
 import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
 import { promiseHealth } from "../lib/promises/health.js";
+import { WatcherBlind } from "../lib/promises/probe.js";
 import { readPromises } from "../lib/promises/registry.js";
 import { openMaintenancePhasesIn } from "../lib/promises/reopen.js";
 import { DOCUMENT_LABELS } from "../lib/workflow-types.js";
@@ -158,7 +159,17 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 					content: [
 						{
 							type: "text" as const,
-							text: JSON.stringify({ error: (err as Error).message, promises: null }, null, 2),
+							text: JSON.stringify(
+								{
+									error: (err as Error).message,
+									// A watcher that answered and did not hear is its own
+									// state, so a session can say so rather than "unreachable".
+									...(err instanceof WatcherBlind ? { blind: true } : {}),
+									promises: null,
+								},
+								null,
+								2,
+							),
 						},
 					],
 				};

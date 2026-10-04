@@ -58,7 +58,19 @@ export default async function PerProjectPromisesPage({
     registry && health
       ? {
           rows: healthRows(registry, health),
-          ...(health.ok ? {} : { unknownSince: health.unknownSince }),
+          ...(health.ok
+            ? {}
+            : {
+                unknownSince: health.unknownSince,
+                ...(health.blind
+                  ? {
+                      blind: {
+                        where: health.where,
+                        intake: health.blind.intake,
+                      },
+                    }
+                  : {}),
+              }),
         }
       : undefined;
   return (

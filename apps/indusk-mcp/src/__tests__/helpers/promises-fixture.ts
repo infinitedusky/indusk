@@ -37,6 +37,8 @@ export interface PromiseSpec {
 	incidents?: string[];
 	aliases?: string[];
 	superseded_by?: string;
+	/** `expect_every` (watcher-heartbeat): how silent is too silent, e.g. `1h`. */
+	expect_every?: string;
 	/** Frontmatter keys to leave out, for the malformed-entry rows. */
 	omit?: string[];
 	/** Replace the whole file with this text (e.g. broken YAML). */
@@ -193,6 +195,7 @@ export function writePromise(dir: string, spec: PromiseSpec): string {
 	};
 	if (spec.aliases) frontmatter.aliases = spec.aliases;
 	if (spec.superseded_by) frontmatter.superseded_by = spec.superseded_by;
+	if (spec.expect_every) frontmatter.expect_every = spec.expect_every;
 	for (const key of spec.omit ?? []) delete frontmatter[key];
 	const statement = "statement" in spec ? spec.statement : DEFAULT_STATEMENT;
 	const body =

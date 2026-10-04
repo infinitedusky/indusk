@@ -5,7 +5,10 @@ import type {
 import {
   JaegerUnreachable,
   type MarkedSpansResult,
+  newestMark,
   readPromiseMarks,
+  silencePastExpectation,
+  WatcherBlind,
 } from "@infinitedusky/indusk-mcp/promises/telemetry";
 import { readAdminRefreshMs } from "./project-reader";
 
@@ -45,11 +48,26 @@ export interface HealthRow {
    * a red row that cannot say which is a red row nobody can act on.
    */
   environment?: string | null;
+  /**
+   * Set when the promise declares `expect_every` and has been silent longer
+   * (watcher-heartbeat, ADR D3) — the shared judgment, never restated here.
+   */
+  silence?: string;
 }
 
 export type HealthRead =
   | { ok: true; at: string; marks: MarkedSpansResult }
-  | { ok: false; unknownSince: string | null; where: string };
+  | {
+      ok: false;
+      unknownSince: string | null;
+      where: string;
+      /**
+       * The watcher answered and did not hear (watcher-heartbeat): a probe sent
+       * to `intake` never came back from `where`. Absent when it could not be
+       * reached at all.
+       */
+      blind?: { intake: string };
+    };
 
 const TIMEOUT_MS = 2_000;
 const cache = new Map<string, { expires: number; read: HealthRead }>();
@@ -76,7 +94,10 @@ export async function readHealth(
       ok: false,
       unknownSince: lastOk.get(projectRoot) ?? null,
       where:
-        err instanceof JaegerUnreachable ? err.where : (err as Error).message,
+        err instanceof JaegerUnreachable || err instanceof WatcherBlind
+          ? err.where
+          : (err as Error).message,
+      ...(err instanceof WatcherBlind ? { blind: { intake: err.intake } } : {}),
     };
   }
   cache.set(projectRoot, {
@@ -101,10 +122,7 @@ export function healthOf(
     return { health: "grey", violations: null, lastSeen: null };
   const marks = read?.ok ? read.marks.byPromise.get(p.name) : undefined;
   const violations = marks ? marks.violations.length : null;
-  const newest = [marks?.violations[0]?.at, marks?.lastUpheld?.at]
-    .filter((d): d is Date => d !== undefined)
-    .sort((a, b) => b.getTime() - a.getTime())[0];
-  const lastSeen = newest ? newest.toISOString() : null;
+  const lastSeen = newestMark(marks)?.toISOString() ?? null;
   if (p.kind === "behaviour" && violations !== null && violations > 0) {
     return {
       health: "red",
@@ -117,8 +135,11 @@ export function healthOf(
   if (p.state === "known-violated")
     return { health: "amber", violations, lastSeen };
   if (p.kind !== "behaviour") return null;
-  if (marks?.lastUpheld) return { health: "green", violations, lastSeen };
-  return { health: "unverified", violations, lastSeen };
+  const silence = read?.ok ? silencePastExpectation(p, read.marks) : null;
+  const quiet = silence ? { silence } : {};
+  if (marks?.lastUpheld)
+    return { health: "green", violations, lastSeen, ...quiet };
+  return { health: "unverified", violations, lastSeen, ...quiet };
 }
 
 /** Every promise's row, by name, for the page and the sidebar. */

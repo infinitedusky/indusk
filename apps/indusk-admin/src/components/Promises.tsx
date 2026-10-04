@@ -114,7 +114,12 @@ export interface PromisesTableProps {
    * promise, and — only when Jaeger could not be read — when it last could.
    * Absent: no read was made, and no observed health is drawn.
    */
-  observed?: { rows: Record<string, HealthRow>; unknownSince?: string | null };
+  observed?: {
+    rows: Record<string, HealthRow>;
+    unknownSince?: string | null;
+    /** The watcher answered and did not hear (watcher-heartbeat). */
+    blind?: { where: string; intake: string };
+  };
 }
 
 export function PromisesTable({
@@ -176,7 +181,18 @@ export function PromisesTable({
         )}
       </div>
 
-      {observed && observed.unknownSince !== undefined && (
+      {observed?.blind && (
+        <p
+          className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+          data-testid="watcher-blind"
+        >
+          Watcher blind — a probe sent to {observed.blind.intake} was not
+          returned by {observed.blind.where}. Something answers there and is not
+          receiving this project&apos;s telemetry; no promise is shown upheld.
+        </p>
+      )}
+
+      {observed && !observed.blind && observed.unknownSince !== undefined && (
         <p
           className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
           data-testid="health-unknown"

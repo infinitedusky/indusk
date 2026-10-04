@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import matter from "gray-matter";
 import { isUsableRelPath, isUsableSegment } from "../path-segment.js";
+import { parseDuration } from "./status.js";
 import {
 	INCIDENT_SOURCES,
 	INCIDENT_STATUSES,
@@ -52,6 +53,12 @@ export interface PromiseEntry {
 	/** Earlier names that still resolve. */
 	aliases: string[];
 	supersededBy?: string;
+	/**
+	 * `expect_every` (watcher-heartbeat, ADR D3): the longest silence that is
+	 * still fine, as written (`1d`) and in milliseconds. Absent for most
+	 * promises — silence from a listening watcher is the good outcome.
+	 */
+	expectEvery?: { text: string; ms: number };
 	/** Registry-relative file path, e.g. `seat-never-double-booked.md`. */
 	file: string;
 }
@@ -192,6 +199,17 @@ export function promiseProblem(value: unknown, stem: string, statement: string):
 	if (v.superseded_by !== undefined && typeof v.superseded_by !== "string") {
 		return "`superseded_by` must be a promise name";
 	}
+	if (
+		v.expect_every !== undefined &&
+		(typeof v.expect_every !== "string" || parseDuration(v.expect_every) === null)
+	) {
+		return `\`expect_every\` ${JSON.stringify(v.expect_every)} is not a duration (expected e.g. 30m, 6h, 1d)`;
+	}
+	// Only a behaviour promise's silence is ever judged: on any other kind the
+	// key would be accepted and never acted on (A14).
+	if (v.expect_every !== undefined && v.kind !== "behaviour") {
+		return `\`expect_every\` is only for behaviour promises (this one is ${v.kind}): its health is the suite's, not telemetry's`;
+	}
 	if (statement === "") return "no statement (the body's first paragraph is empty)";
 	return null;
 }
@@ -293,6 +311,9 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			incidents: (d.incidents as string[] | undefined) ?? [],
 			aliases: (d.aliases as string[] | undefined) ?? [],
 			supersededBy: d.superseded_by as string | undefined,
+			...(typeof d.expect_every === "string"
+				? { expectEvery: { text: d.expect_every, ms: parseDuration(d.expect_every) as number } }
+				: {}),
 			file,
 		});
 	}

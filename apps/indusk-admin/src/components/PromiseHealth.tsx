@@ -60,6 +60,8 @@ export function HealthDetail({
     parts.push(row.environment ?? "environment unknown");
   }
   if (row.lastSeen) parts.push(`last seen ${day(row.lastSeen)}`);
+  // expect_every (watcher-heartbeat): a silence the promise said was too long.
+  if (row.silence) parts.push(`needs attention — ${row.silence}`);
   else if (unknownSince === undefined && row.health === "unverified")
     parts.push("not seen");
   if (parts.length === 0) return null;

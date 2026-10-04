@@ -1,7 +1,13 @@
 import { readConfig } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
-import type { Registry } from "./registry.js";
+import { probeWatcher } from "./probe.js";
+
+// The admin reads both read failures through this one subpath, so its
+// `instanceof` sees the same classes the read path throws.
+export { WatcherBlind } from "./probe.js";
+
+import type { PromiseEntry, Registry } from "./registry.js";
 import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
 
 /**
@@ -68,6 +74,15 @@ export function basicAuthHeaders(credential: string): Record<string, string> {
 }
 
 /**
+ * Surrounding whitespace and trailing slashes off a Jaeger URL — the query
+ * API's or the intake's (A29). One definition: the rule was restated at four
+ * sites before, and watcher-heartbeat's intake would have made two more.
+ */
+export function normalizeJaegerUrl(url: string): string {
+	return url.trim().replace(/\/+$/, "");
+}
+
+/**
  * The one way to build a Jaeger endpoint (A29).
  *
  * Normalizing a query URL is a rule — drop surrounding whitespace, drop
@@ -77,7 +92,7 @@ export function basicAuthHeaders(credential: string): Record<string, string> {
  * to write differently.
  */
 export function jaegerEndpoint(queryUrl: string, credential?: string): JaegerEndpoint {
-	const normalized = queryUrl.trim().replace(/\/+$/, "");
+	const normalized = normalizeJaegerUrl(queryUrl);
 	return credential
 		? { queryUrl: normalized, headers: basicAuthHeaders(credential) }
 		: { queryUrl: normalized };
@@ -307,7 +322,16 @@ export interface MarkSource {
 	label: string;
 	/** True when the project named a server rather than falling to its daemon. */
 	remote: boolean;
+	/**
+	 * The OTLP/HTTP intake feeding `endpoint`, where the watcher probe is sent
+	 * (watcher-heartbeat): the daemon's `otlpPort`, or `promises.jaeger.otlp_url`.
+	 * Null when a named server has none — the probe then reads blind.
+	 */
+	intakeUrl: string | null;
 }
+
+/** The config key a named server's intake comes from, as a reader is told to set it. */
+export const INTAKE_CONFIG_KEY = "promises.jaeger.otlp_url";
 
 export async function resolveMarkSource(root: string): Promise<MarkSource> {
 	const named = readConfig(root)?.promises?.jaeger;
@@ -317,7 +341,12 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 			throw new JaegerUnreachable(daemonMetaPath(), "no telemetry daemon is running");
 		}
 		const endpoint = jaegerEndpoint(`http://localhost:${status.uiPort}`);
-		return { endpoint, label: endpoint.queryUrl, remote: false };
+		return {
+			endpoint,
+			label: endpoint.queryUrl,
+			remote: false,
+			intakeUrl: `http://localhost:${status.otlpPort}`,
+		};
 	}
 
 	const queryUrl = jaegerEndpoint(named.url).queryUrl;
@@ -342,7 +371,13 @@ export async function resolveMarkSource(root: string): Promise<MarkSource> {
 			`promises.jaeger names ${named.credential_env} for its credential and that variable is not set`,
 		);
 	}
-	return { endpoint: jaegerEndpoint(queryUrl, credential), label: queryUrl, remote: true };
+	const intake = named.otlp_url ? normalizeJaegerUrl(named.otlp_url) : "";
+	return {
+		endpoint: jaegerEndpoint(queryUrl, credential),
+		label: queryUrl,
+		remote: true,
+		intakeUrl: intake || null,
+	};
 }
 
 /**
@@ -361,13 +396,76 @@ export async function readPromiseMarks(
 	const behaviour = registry.promises.filter(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
+	// The default window widens to the longest `expect_every`, so a longer
+	// expectation can still be judged (watcher-heartbeat, ADR D3). An explicit
+	// `sinceMs` is the window a person asked for and is shown: it is never
+	// widened, or `--since 90m` would count a day under "the last 90m" (A9).
+	// Inside a shorter window, a silence longer than it is simply not judged.
+	const windowMs =
+		opts.sinceMs ??
+		Math.max(
+			getQuietWindowDays(root) * 86_400_000,
+			...behaviour.map((p) => p.expectEvery?.ms ?? 0),
+		);
 	const source = await resolveMarkSource(root);
+	// Prove the watcher hears before reporting anything it heard: a Jaeger
+	// that answers and receives nothing reads exactly like a quiet week
+	// (watcher-heartbeat). `JaegerUnreachable` from the source still wins.
+	const project = markProjectId(root);
+	await probeWatcher(
+		{ endpoint: source.endpoint, intakeUrl: source.intakeUrl, missingIntake: INTAKE_CONFIG_KEY },
+		// The caller's timeout bounds the probe's wait too: a blind read must fit
+		// the admin's 2 s budget, not the probe's own 5 s (A13).
+		{ project, ...(opts.timeoutMs !== undefined ? { waitMs: opts.timeoutMs } : {}) },
+	);
 	return markedSpans({
 		endpoint: source.endpoint,
 		promises: behaviour.map((p) => p.name),
 		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
-		since: new Date(now.getTime() - (opts.sinceMs ?? getQuietWindowDays(root) * 86_400_000)),
-		project: markProjectId(root),
+		since: new Date(now.getTime() - windowMs),
+		project,
 		...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
 	});
+}
+
+/**
+ * When a promise was last seen: its newest mark, upheld or violated, or null
+ * when none is in the window. The one rule `promise_health`'s `lastSeen`, the
+ * admin's chip and the `expect_every` judgment share — three readers that
+ * must agree, so one definition (watcher-heartbeat A15).
+ */
+export function newestMark(marks: PromiseMarks | undefined): Date | null {
+	const candidates = [marks?.violations[0]?.at, marks?.lastUpheld?.at].filter(
+		(d): d is Date => d !== undefined,
+	);
+	return candidates.sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+}
+
+/** `90m`, `3h`, `2d` — the largest whole unit, for a person reading a silence. */
+function roughly(ms: number): string {
+	if (ms >= 86_400_000) return `${Math.floor(ms / 86_400_000)}d`;
+	if (ms >= 3_600_000) return `${Math.floor(ms / 3_600_000)}h`;
+	return `${Math.max(1, Math.floor(ms / 60_000))}m`;
+}
+
+/**
+ * Whether a promise that expects a mark every N has been silent longer than
+ * that (watcher-heartbeat, ADR D3) — "silent for 3h, expected every 1h" — or
+ * null when it has not, or expects nothing.
+ *
+ * Only meaningful from a read that succeeded: `readPromiseMarks` has already
+ * probed the watcher, so this silence is the promise's, not the watcher's.
+ * The one judgment `promise_health`, `promises status` and the admin share.
+ */
+export function silencePastExpectation(
+	promise: PromiseEntry,
+	marks: MarkedSpansResult,
+	now: Date = new Date(),
+): string | null {
+	if (!promise.expectEvery) return null;
+	const newest = newestMark(marks.byPromise.get(promise.name));
+	const quietSince = newest ?? marks.since;
+	const silentMs = now.getTime() - quietSince.getTime();
+	if (silentMs <= promise.expectEvery.ms) return null;
+	return `silent for ${newest ? "" : "more than "}${roughly(silentMs)}, expected every ${promise.expectEvery.text}`;
 }

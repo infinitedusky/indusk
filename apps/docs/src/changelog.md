@@ -4,6 +4,11 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **Every promise read proves the watcher can hear before it reports anything.** `readPromiseMarks`, the one read behind `promises status`, `promises watch`, `promise_health` and the admin's Promises page, now sends one probe span through the Jaeger's intake and reads it back. When the probe does not come back, every reader says **watcher blind**, naming the intake and the query, and reports no counts. `status` and `watch` exit 2, `promise_health` returns an error with `blind: true`, the admin shows a banner with every chip hollow, and `/catchup` says it ahead of the roadmap. This is the 2026-10-01 case: a leftover test Jaeger answered on the default ports, and every reader called the promises healthy after seven silent days. A successful probe is trusted for 30 seconds per source. A project that names a deployed server now also names its intake, `promises.jaeger.otlp_url`; without it, reads go blind.
+- **The always-on server beats on its own clock.** Every pass sends a `watcher.heartbeat` span into the server's own intake and reads the newest one back. When it is older than `max(3 × interval, 3 min)`, or cannot be read, Slack gets one *Watcher blind since …* message, and later one *Watcher recovered*, never one per pass. The record is `<volume>/watcher-state.json`, written after Slack accepts. `INDUSK_SERVER_WATCHER_STALE_MS` overrides the window.
+- **`expect_every` on a promise.** A behaviour promise about something known to happen regularly can say how silent is too silent: `expect_every: 1d`. Past that, with the watcher listening, it **needs attention** in `promise_health`, `promises status` and the admin. `every-commit-evaluated` declares `1d`.
+
 ## [1.57.3] — 2026-10-03
 
 ### Fixed

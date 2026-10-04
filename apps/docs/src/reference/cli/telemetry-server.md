@@ -84,6 +84,38 @@ The record itself is read forgivingly: a corrupt or missing file reads as
 empty, which costs a repeated message. The alternative — refusing to run —
 would cost every violation from then on.
 
+### The heartbeat
+
+Every pass begins with a heartbeat. It reads the newest `watcher.heartbeat`
+span (service `indusk-watcher`) from the server's own Jaeger. Then it sends
+this pass's beat into the server's own OTLP intake, with the server's
+credential: the same door an application's marks come through. When the
+newest beat is older than `max(3 × interval, 3 minutes)`, or the read fails,
+the watcher is **blind**. Violations reported now would come from something
+that cannot hear them.
+
+A server with no beat yet counts from its own start, so a clean start says
+nothing. A server restarted while the state says blind does not: it stays
+blind until a real beat lands, so a restart cannot announce a recovery that
+never happened. The newest beat is read from the last two staleness windows
+only, so it is found whatever order Jaeger returns beats in. Slack hears on a change of state only:
+
+- going blind: *Watcher blind since \<newest beat\> — \<why\>*;
+- coming back: *Watcher recovered — blind from \<then\> to \<now\>*, with a
+  warning that violations marked in that time may not have been announced.
+
+`<volume>/watcher-state.json` holds the last state Slack was told, written
+only after Slack accepts. A message that fails is sent again on the next pass;
+an unreadable file reads as no state, which costs at most one repeated
+message. A state file that cannot be **written** stops the message
+altogether: the pass logs `told Slack nothing — … could not be written`
+rather than repeating the same alarm every pass. Slack is reached over HTTPS, not through Jaeger, so the message
+arrives even when Jaeger is the thing that broke.
+
+A server whose pass stops altogether (the process wedged) sends no heartbeat
+and has nothing left to notice that. The host's restart policy covers that
+case.
+
 ### Running a pass by hand
 
 ```bash
@@ -111,6 +143,7 @@ did not start. `--once` is required: the scheduled pass belongs to
 | `INDUSK_SERVER_SLACK_WEBHOOK` | yes | The incoming-webhook URL violations are announced to. A server that cannot say anything is not watching, so this is required. |
 | `INDUSK_SERVER_PASS_INTERVAL_MS` | no | How often the pass runs. Defaults to 60000. |
 | `INDUSK_SERVER_PASS_WINDOW_HOURS` | no | How far back each pass looks, and how long the announced record keeps a span. Defaults to 24. |
+| `INDUSK_SERVER_WATCHER_STALE_MS` | no | How old the newest heartbeat may be before the watcher is blind. Defaults to `max(3 × interval, 180000)`; set lower only in tests. |
 
 `indusk telemetry announce --once` reads `INDUSK_SERVER_QUERY_URL` and
 `INDUSK_SERVER_CREDENTIAL` (`user:password`) in place of the ports, user and

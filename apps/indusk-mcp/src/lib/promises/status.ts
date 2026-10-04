@@ -1,5 +1,5 @@
 import type { PromiseEntry } from "./registry.js";
-import type { MarkedSpansResult } from "./telemetry.js";
+import { type MarkedSpansResult, silencePastExpectation } from "./telemetry.js";
 
 /**
  * `indusk promises status`'s text (day-monitor, ADR D5).
@@ -41,11 +41,15 @@ export function formatStatus(
 			continue;
 		}
 		const m = marks.byPromise.get(p.name);
+		const silence = silencePastExpectation(p, marks);
+		const attentionLine = silence ? `  needs attention — ${silence}` : null;
 		if (!m || (m.violations.length === 0 && m.lastUpheld === null)) {
-			blocks.push(`${head}\n  not seen in ${phrase} — no run exercised it`);
+			const notSeen = `  not seen in ${phrase} — no run exercised it`;
+			blocks.push([head, notSeen, ...(attentionLine ? [attentionLine] : [])].join("\n"));
 			continue;
 		}
 		const lines = [head];
+		if (attentionLine) lines.push(attentionLine);
 		const n = m.violations.length;
 		lines.push(
 			n === 0
