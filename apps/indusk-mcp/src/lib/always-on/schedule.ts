@@ -38,6 +38,7 @@ export function startPass(settings: ServerSettings): NodeJS.Timeout {
 				endpoint,
 				intakeUrl: `http://127.0.0.1:${settings.otlpPort}`,
 				webhook: settings.slackWebhook,
+				publicQueryUrl: settings.publicQueryUrl,
 				staleMs,
 				startedAt,
 			});
@@ -52,6 +53,7 @@ export function startPass(settings: ServerSettings): NodeJS.Timeout {
 				volume: settings.volume,
 				endpoint,
 				webhook: settings.slackWebhook,
+				publicQueryUrl: settings.publicQueryUrl,
 				windowMs: settings.passWindowMs,
 			});
 			const said = describePassResult(result);

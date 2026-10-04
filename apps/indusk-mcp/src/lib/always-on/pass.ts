@@ -159,12 +159,17 @@ export async function violationsSince(
  * guess, because a message that says "production" about staging is worse than
  * one that admits it does not know.
  */
-export function slackText(span: MarkedSpan, queryUrl: string): string {
+export function slackText(span: MarkedSpan, publicQueryUrl: string | null): string {
 	return [
 		`Promise violated: ${span.promise}`,
 		span.symptom ?? "_no symptom recorded_",
 		`${span.environment ?? "environment unknown"} · ${span.service} · ${span.operation}`,
-		`${queryUrl}/trace/${span.traceId}`,
+		// The link must open from wherever the reader is. The server's own
+		// query address is loopback, so without the public one the message
+		// names the trace instead of offering a link that goes nowhere (A11).
+		publicQueryUrl
+			? `${publicQueryUrl}/trace/${span.traceId}`
+			: `trace ${span.traceId} (set INDUSK_SERVER_PUBLIC_QUERY_URL for a link)`,
 	].join("\n");
 }
 
@@ -198,6 +203,11 @@ export interface PassOptions {
 	volume: string;
 	endpoint: JaegerEndpoint;
 	webhook: string;
+	/**
+	 * The query API as the people reading Slack reach it, for trace links;
+	 * null when nobody named one (the server's own endpoint is loopback).
+	 */
+	publicQueryUrl: string | null;
 	/** How far back to look, and how long the announced record keeps a span. */
 	windowMs: number;
 	timeoutMs?: number;
@@ -283,7 +293,7 @@ export async function runPass(opts: PassOptions): Promise<PassResult> {
 				continue;
 			}
 			try {
-				await postToSlack(opts.webhook, slackText(span, opts.endpoint.queryUrl), timeoutMs);
+				await postToSlack(opts.webhook, slackText(span, opts.publicQueryUrl), timeoutMs);
 			} catch (err) {
 				result.unannounced.push({ span, reason: (err as Error).message });
 				continue;
