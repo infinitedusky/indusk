@@ -414,7 +414,9 @@ export async function readPromiseMarks(
 	const project = markProjectId(root);
 	await probeWatcher(
 		{ endpoint: source.endpoint, intakeUrl: source.intakeUrl, missingIntake: INTAKE_CONFIG_KEY },
-		{ project },
+		// The caller's timeout bounds the probe's wait too: a blind read must fit
+		// the admin's 2 s budget, not the probe's own 5 s (A13).
+		{ project, ...(opts.timeoutMs !== undefined ? { waitMs: opts.timeoutMs } : {}) },
 	);
 	return markedSpans({
 		endpoint: source.endpoint,
