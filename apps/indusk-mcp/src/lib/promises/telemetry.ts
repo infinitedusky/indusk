@@ -396,12 +396,17 @@ export async function readPromiseMarks(
 	const behaviour = registry.promises.filter(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
-	// A promise that expects a mark every N must be read over at least N, or
-	// a longer expectation could never be judged (watcher-heartbeat, ADR D3).
-	const windowMs = Math.max(
-		opts.sinceMs ?? getQuietWindowDays(root) * 86_400_000,
-		...behaviour.map((p) => p.expectEvery?.ms ?? 0),
-	);
+	// The default window widens to the longest `expect_every`, so a longer
+	// expectation can still be judged (watcher-heartbeat, ADR D3). An explicit
+	// `sinceMs` is the window a person asked for and is shown: it is never
+	// widened, or `--since 90m` would count a day under "the last 90m" (A9).
+	// Inside a shorter window, a silence longer than it is simply not judged.
+	const windowMs =
+		opts.sinceMs ??
+		Math.max(
+			getQuietWindowDays(root) * 86_400_000,
+			...behaviour.map((p) => p.expectEvery?.ms ?? 0),
+		);
 	const source = await resolveMarkSource(root);
 	// Prove the watcher hears before reporting anything it heard: a Jaeger
 	// that answers and receives nothing reads exactly like a quiet week
