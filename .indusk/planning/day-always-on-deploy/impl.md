@@ -132,7 +132,7 @@ reading Slack, so they are registered below, not authored.
   - `fly launch --copy-config` rewrote `docker/fly.always-on.toml` and deleted every comment, including the one explaining why the machine must never auto-stop. The file is restored, and its header now says `fly apps create`.
   - Fly's current schema spells auto-stop `auto_stop_machines = "off"`, not `false`. The launch rewrote it that way, and the restored file now uses `"off"` in both services.
   - `fly config validate` passes.
-- [ ] Generate the password (`openssl rand -hex 24`), `fly secrets set INDUSK_SERVER_PASSWORD=…`, and write `INDUSK_DEPLOYED_CREDENTIAL=indusk:<password>` to `~/.indusk/config.env`; the value never enters the repository or the conversation
+- [x] Generate the password (`openssl rand -hex 24`), `fly secrets set INDUSK_SERVER_PASSWORD=…`, and write `INDUSK_DEPLOYED_CREDENTIAL=indusk:<password>` to `~/.indusk/config.env`; the value never enters the repository or the conversation — staged with `--stage` (no machine exists yet; the deploy applies it); `config.env` is mode 600; the value was never printed
 - [ ] Sandy sets `INDUSK_SERVER_SLACK_WEBHOOK` as a Fly secret (`fly secrets set … --config docker/fly.always-on.toml`)
 - [ ] `fly deploy --config docker/fly.always-on.toml` (Fly's remote builder; the image installs 1.58.0); record the URLs, the machine id and anything the configuration got wrong
 - [ ] Run the scripted smoke against the deployment (A2, A4, A6, A7) and record its output here
