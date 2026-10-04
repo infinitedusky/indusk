@@ -40,6 +40,8 @@ import { toolCaller } from "./helpers/tool-call.js";
 const PROMISE = "seat-never-double-booked";
 const OWNER = "seats-v2";
 const EMPTY_JAEGER = '{"data":[]}';
+const LESSON =
+	"lesson: reachable-is-not-listening — a Jaeger that answers is not one that hears; probe before reporting";
 
 function project(): PromiseProject {
 	return promiseProject({
@@ -194,7 +196,7 @@ describe.skipIf(SHOULD_SKIP)(
 
 		it("status says watcher blind, names where it looked, exits 2, and gives no count", async () => {
 			const cli = await status(fixture.root, home);
-			expect(cli.text).toMatch(/watcher blind/i);
+			expect(cli.text, LESSON).toMatch(/watcher blind/i);
 			expect(cli.text).toContain(`http://localhost:${fake.port}`);
 			expect(cli.code, cli.text).toBe(2);
 			expect(cli.text).not.toMatch(/\b\d+ violations?\b/);
@@ -204,7 +206,7 @@ describe.skipIf(SHOULD_SKIP)(
 		it("promise_health is an error saying watcher blind, with no promise rows", async () => {
 			const { json, isError } = await health(fixture.root, home);
 			const text = JSON.stringify(json);
-			expect(text).toMatch(/watcher blind/i);
+			expect(text, LESSON).toMatch(/watcher blind/i);
 			expect(isError, text).toBe(true);
 			expect((json as { promises?: unknown[] }).promises ?? [], "no promise rows").toHaveLength(0);
 		}, 30_000);

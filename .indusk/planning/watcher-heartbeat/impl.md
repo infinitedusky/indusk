@@ -115,8 +115,8 @@ writes a key nothing reads, both genuine reds.
 
 #### Build Phase 1 Context
 
-- [ ] guard: `watcher-probe.test.ts` A2 carries `lesson: reachable-is-not-listening` — the lesson file says a backend that answers is not one that hears; read health only after a probe comes back
-- [ ] `apps/indusk-admin/CLAUDE.md`: *watcher blind* is a hollow chip like unreachable, never green or "unverified" — the admin reads `WatcherBlind` through the same subpath as `JaegerUnreachable`
+- [x] guard: `watcher-probe.test.ts` A2 carries `lesson: reachable-is-not-listening` — the lesson file says a backend that answers is not one that hears; read health only after a probe comes back — both A2 assertions carry it; `lessonStates` reads the lesson as **guarded** by that file; `indusk context check-pointers` PASS
+- [x] `apps/indusk-admin/CLAUDE.md`: *watcher blind* is a hollow chip like unreachable, never green or "unverified" — the admin reads `WatcherBlind` through the same subpath as `JaegerUnreachable` — written as built: blind is a state of the read with its own banner, never a chip colour (folded into the existing Promises-page entry, +151 bytes; 4,916 of 16,384)
 
 #### Build Phase 1 Document
 
