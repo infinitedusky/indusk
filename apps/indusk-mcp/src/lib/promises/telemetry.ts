@@ -1,6 +1,7 @@
 import { readConfig } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
+import { probeWatcher } from "./probe.js";
 import type { Registry } from "./registry.js";
 import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
 
@@ -382,12 +383,20 @@ export async function readPromiseMarks(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
 	const source = await resolveMarkSource(root);
+	// Prove the watcher hears before reporting anything it heard: a Jaeger
+	// that answers and receives nothing reads exactly like a quiet week
+	// (watcher-heartbeat). `JaegerUnreachable` from the source still wins.
+	const project = markProjectId(root);
+	await probeWatcher(
+		{ endpoint: source.endpoint, intakeUrl: source.intakeUrl, missingIntake: INTAKE_CONFIG_KEY },
+		{ project },
+	);
 	return markedSpans({
 		endpoint: source.endpoint,
 		promises: behaviour.map((p) => p.name),
 		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
 		since: new Date(now.getTime() - (opts.sinceMs ?? getQuietWindowDays(root) * 86_400_000)),
-		project: markProjectId(root),
+		project,
 		...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
 	});
 }
