@@ -195,7 +195,8 @@ export async function probeWatcher(
 		start: String((sentAt - 60_000) * 1000),
 		limit: "1",
 	});
-	const deadline = Date.now() + (opts.waitMs ?? PROBE_WAIT_MS);
+	const waitMs = opts.waitMs ?? PROBE_WAIT_MS;
+	const deadline = Date.now() + waitMs;
 	for (;;) {
 		params.set("end", String((Date.now() + 60_000) * 1000));
 		const traces = await jaegerGet<JaegerTrace>(
@@ -211,7 +212,7 @@ export async function probeWatcher(
 			throw new WatcherBlind(
 				where,
 				target.intakeUrl,
-				`the probe was accepted and never appeared in ${Math.round((opts.waitMs ?? PROBE_WAIT_MS) / 1000)} s`,
+				`the probe was accepted and never appeared in ${Math.round(waitMs / 1000)} s`,
 			);
 		}
 		await new Promise((r) => setTimeout(r, PROBE_POLL_MS));
