@@ -1,7 +1,7 @@
 ---
 title: "Promise sources — local and production, side by side"
 date: 2026-10-04
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -53,6 +53,7 @@ there is one. See [brief.md](brief.md), [test-plan.md](test-plan.md) and
 | A7 | A project that names no production server behaves exactly as today: one source, local, with every reader's output unchanged | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A8 | A `promises.jaeger` that is not an object, or names no `url` or no `credential_env`, is production's own refusal naming the missing key: `status` still prints local's section and exits 2, `promise_health` reports local's rows with production `ok: false`, and the admin still draws local's chips | Phase 0 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A9 | A production whose intake and query port accept connections and never answer does not hold the other source past the reader's budget: with a 2 s `timeoutMs`, `readSources` returns within 3 s, local `ok: true`, production `ok: false` | Phase 0 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
+| A10 | Advice for a failed source comes from the failure, not from re-reading the config: with `"jaeger": "https://…"`, neither `promises status` nor `promises watch --source deployed` prints `undefined`, and both name `promises.jaeger` | Build Phase 6 | Build Phase 6 | planned | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 
 ## Checklist
 
@@ -198,6 +199,34 @@ exists today and answers wrongly.
 #### Build Phase 5 Document
 
 - [x] `apps/docs/src/reference/cli/promises.md`: a malformed `promises.jaeger` is refused for production by key while local is still read; the probe's send is bounded by the reader's timeout
+
+### Build Phase 6: Cleanup — sources get their own module; one piece of advice; the health axis in one file
+
+**Goal**: decompose what this plan grew into the boundaries it settled. Source resolution and the per-source reads are a second job inside the Jaeger query module, and they form an import cycle with the probe. The "what to do about this failure" advice is written twice and is wrong twice. The admin's per-source banner is a health-axis component in the table's file. Each item is one extraction; the advice extraction also fixes a defect the duplication was hiding (A10).
+
+- [ ] Extract source resolution and the per-source reads from `lib/promises/telemetry.ts` (640 lines) into `lib/promises/sources.ts`. The moved units: `SourceName`, `MarkSource`, `ResolvedSource`, `sourceNames`, `alarmSource`, `resolveMarkSources`, `resolveLocal`, `namedServer`, `resolveProduction`, `INTAKE_CONFIG_KEY`, `ReadMarksOptions`, `readPromiseMarks`, `SourceRead`, `readSources`, `failedRead`, `readSource`. `telemetry.ts` keeps the Jaeger query layer: endpoints, `jaegerGet`, span parsing, `markedSpans`, `newestMark`, `silencePastExpectation`. Basis: one reason to change per module. Which Jaeger to ask, and reading each, changes for different reasons than how to ask one. It also ends today's `telemetry.ts` ⇄ `probe.ts` circular import: `sources` imports both, and neither imports `sources`
+- [ ] Add the `./promises/sources` subpath to `apps/indusk-mcp/package.json` `exports` beside `./promises/telemetry`, and move the importers to it: `bin/commands/promises.ts`, `lib/promises/{health,watch}.ts`, the admin's `lib/promise-health.ts`, and the tests (`promise-sources`, `always-on-cleanup`, `always-on-falsification`). Do not re-export from `telemetry` — that would rebuild the cycle the move removes
+- [ ] Extract `sourceAdvice(read)` into `lib/promises/sources.ts`, built from the failure (its `name`, `kind` and `where`), never from re-reading the config. `status`'s `failureText` and `watch`'s hint in `bin/commands/promises.ts` each re-read `promises.jaeger` and print `named.url` and `named.credential_env`. Both print `undefined` for the config A8 now refuses. One definition, two callers; a refusal whose `where` names `promises.jaeger` gets no "check it is up" advice, because the fix is in the file
+- [ ] Move `SourceBanner` and the `SourceObserved` / `SourceChip` types from `apps/indusk-admin/src/components/Promises.tsx` (505 lines) into `components/PromiseHealth.tsx`, the observed-health axis file earlier cleanup split out. Basis: react's one-component-per-file for non-trivial components. The banner is that axis's, not the table's
+- [ ] Move the crossed marks — `seat-held` broken locally and upheld in production, `seat-released` the reverse — from `promise-sources.test.ts`'s `marks()` into `helpers/two-sources.ts` as an exported `crossedMarks()`. Use it in the admin's `http-promise-sources.test.ts`, whose A3/A4 setup restates the same eight lines. Basis: the fixture states the contrast both suites assert against; two copies drift
+- [ ] Extract `withEnv(vars, fn)` into `apps/indusk-mcp/src/__tests__/helpers/` for the save/set/restore of `INDUSK_HOME` and the credential. It is written out three times in `promise-sources.test.ts` (`health()`, A8's third test, A9). Rule of three
+- [ ] (reviewed `apps/indusk-mcp/src/tools/plan-tools.ts` — left as-is: over its cap before this plan, which changed one description string)
+- [ ] (reviewed `apps/indusk-admin/src/lib/promise-health.ts` beside `lib/promises/health.ts` — left as-is: both turn marks into per-promise rows, but for different readers. The admin's `healthOf` judges a chip colour, including amber and grey from declared state; the tool's `healthRows` counts unrecorded traces against incidents. Merging them would couple a UI judgment to the tool's report shape)
+- [ ] (reviewed `apps/docs/src/changelog.md` and `apps/docs/src/reference/cli/promises.md` — left as-is: docs, over the cap by accretion; the reference's sections are per command and each is cohesive)
+
+#### Build Phase 6 Verification
+
+- [ ] A10: with `"jaeger": "https://…"`, `promises status` and `promises watch --source deployed` print no `undefined` and name `promises.jaeger`
+- [ ] Behaviour parity: A1–A9 and the existing promise suites still pass after the move (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources src/__tests__/monitor-status src/__tests__/monitor-watch src/__tests__/watcher-probe src/__tests__/always-on-source src/__tests__/always-on-health-tool src/__tests__/always-on-falsification src/__tests__/always-on-cleanup`; admin: `vitest run src/__tests__/http-promise-sources src/__tests__/http-promise-health src/__tests__/http-promise-remote src/__tests__/http-watcher-blind` and the component tests); `tsc` clean in both packages; the leak guard clear
+- [ ] No import cycle between `telemetry.ts` and `probe.ts`: `grep` finds no `./telemetry` import of `probe` (`telemetry.ts` imports nothing from `probe.ts`)
+
+#### Build Phase 6 Context
+
+- [ ] The two lessons that point at `lib/promises/telemetry.ts` for `readSources` / `alarmSource` (`one-dead-source-never-hides-another`, `the-alarm-comes-from-production-when-there-is-one`) point at `lib/promises/sources.ts`; `apps/indusk-admin/CLAUDE.md`'s Promises entry names the `promises/sources` subpath; `indusk context check-pointers` passes
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`, the library paragraph: sources and reads come from `@infinitedusky/indusk-mcp/promises/sources`, the query layer from `promises/telemetry`
 
 ## Files Affected
 
