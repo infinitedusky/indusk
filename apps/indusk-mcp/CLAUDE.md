@@ -141,7 +141,7 @@ pointer; the pointer holds the story.
 ## Promises and telemetry
 
 - The registry is read through one subpath (`promises/registry`) by CLI, MCP
-  and admin; marks are read through one call, `readPromiseMarks`, against one
+  (`tools/promise-tools.ts`; writes only via `lib/promises/write.ts`) and admin; marks are read through one call, `readPromiseMarks`, against one
   endpoint builder, `jaegerEndpoint` (`lib/promises/telemetry.ts`);
   unreachable = exit 2, never zero. A project names its Jaeger in
   `promises.jaeger` (`url` + `credential_env`, the variable's *name*); absence

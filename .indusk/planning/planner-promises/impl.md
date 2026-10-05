@@ -431,7 +431,7 @@ promises proven; and an incident starts from the tests that were vouching
 
 #### Build Phase 10 Context
 
-- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`): the promise tools live in `tools/promise-tools.ts`, beside the plan tools, and read and write only through `lib/promises/`
+- [x] mcp (`apps/indusk-mcp/CLAUDE.md`): the promise tools live in `tools/promise-tools.ts`, beside the plan tools, and read and write only through `lib/promises/` — folded into the existing registry entry rather than a new one: the file is at 16,362 of its 16,384-byte budget
 
 #### Build Phase 10 Document
 
