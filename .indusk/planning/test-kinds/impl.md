@@ -1,7 +1,7 @@
 ---
 title: "Test kinds"
 date: 2026-10-05
-status: in-progress
+status: completed
 trajectory: required
 test_kinds: required
 test_phases: required
@@ -49,7 +49,7 @@ checked is still checked, and InDusk holds two promises about its own suite
 |----|---------|-------------|-----------|-------|------|
 | A1 | The root `pnpm test` finishes in about a minute with both packages running at once (live check, recorded) | Build Phase 3 | Build Phase 3 | passing | live check |
 | A2 | The admin suite alone finishes in under 60 s (live check, recorded) | Build Phase 3 | Build Phase 3 | passing | live check |
-| A3 | Each build phase of this plan verifies in seconds to tens of seconds (live check, recorded per phase) | Build Phase 1 | Build Phase 5 | written | live check |
+| A3 | Each build phase of this plan verifies in seconds to tens of seconds (live check, recorded per phase) | Build Phase 1 | Build Phase 5 | passing | live check |
 | A4 | A production break reads red while its incident is open and purple once fixed | Build Phase 1 | Build Phase 1 | passing | unit |
 | A5 | Local's chip goes green once a newer local run holds, with no incident | Build Phase 1 | Build Phase 1 | passing | unit |
 | A6 | A violation reaching Jaeger minutes late still turns its chip and cell red | Build Phase 1 | Build Phase 1 | passing | unit |
@@ -62,8 +62,8 @@ checked is still checked, and InDusk holds two promises about its own suite
 | A13 | The Promises page rendered against a real Jaeger shows a run's chips and strip (system tier) | Build Phase 2 | Build Phase 2 | passing | contract |
 | A14 | An everyday-tier test in either package that starts a server or waits on the wall clock fails the guard, naming file, line and call | Test Phase 1 | Build Phase 2 | passing | unit |
 | A15 | A short-lived process that runs and exits (`git`, the CLI) does not trip the guard | Test Phase 1 | Test Phase 1 | passing | unit |
-| A16 | Every everyday run is marked held or broken with its duration; a slow run fails nothing; an overlapping run is not judged | Build Phase 5 | Build Phase 5 | planned | unit |
-| A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | planned | unit |
+| A16 | Every everyday run is marked held or broken with its duration; a slow run fails nothing; an overlapping run is not judged | Build Phase 5 | Build Phase 5 | passing | unit |
+| A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | passing | unit |
 | A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | passing | unit |
 | A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | passing | unit |
 
@@ -228,25 +228,26 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 ### Build Phase 5: The suite's own promises
 
-- [ ] `.indusk/promises/everyday-tests-never-wait.md`: `kind: structure`, owner `test-kinds`, test `apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts`, its statement in plain words
-- [ ] `apps/indusk-mcp/scripts/suite-speed.js`: `suiteSpeedMark({ durationMs, overlapped })` → `{ outcome: "upheld" | "violated", durationMs } | { skip: reason }` at `THRESHOLD_MS = 120_000`; `overlapped` from another `vitest` process alive at start or end
-- [ ] `with-daemon-guard.js`: time the run; when invoked as the everyday suite (`--mark everyday-suite-stays-fast`, set in the root `test` script only), send one mark to the local daemon through the watcher probe's span sender (`sendWatcherSpan` shape: `indusk.promise`, `indusk.promise.outcome`, `indusk.suite.duration_ms`, `indusk.project`); no daemon or overlap → mark nothing, say why on stderr; never change the exit code
-- [ ] `.indusk/promises/everyday-suite-stays-fast.md`: `kind: behaviour`, owner `test-kinds`, site `apps/indusk-mcp/scripts/with-daemon-guard.js`, test `apps/indusk-mcp/src/__tests__/suite-speed.test.ts`
-- [ ] A16, A17: `apps/indusk-mcp/src/__tests__/suite-speed.test.ts` — under, at and over the threshold; overlapped → skip; no daemon → skip with reason
-- [ ] Live check: one real `pnpm test` with the daemon running marks `everyday-suite-stays-fast` upheld; the Promises page shows it green; recorded here
+- [x] `.indusk/promises/everyday-tests-never-wait.md`: `kind: structure`, owner `test-kinds`, test `apps/indusk-mcp/src/__tests__/everyday-tests-never-wait.test.ts`, its statement in plain words
+- [x] `apps/indusk-mcp/scripts/suite-speed.js`: `suiteSpeedMark({ durationMs, overlapped })` → `{ outcome: "upheld" | "violated", durationMs } | { skip: reason }` at `THRESHOLD_MS = 120_000`; `overlapped` from another `vitest` process alive at start or end
+- [x] `with-daemon-guard.js`: time the run; when invoked as the everyday suite (`--mark everyday-suite-stays-fast`, set in the root `test` script only), send one mark to the local daemon through the watcher probe's span sender (`sendWatcherSpan` shape: `indusk.promise`, `indusk.promise.outcome`, `indusk.suite.duration_ms`, `indusk.project`); no daemon or overlap → mark nothing, say why on stderr; never change the exit code
+- [x] `.indusk/promises/everyday-suite-stays-fast.md`: `kind: behaviour`, owner `test-kinds`, site `apps/indusk-mcp/scripts/with-daemon-guard.js`, test `apps/indusk-mcp/src/__tests__/suite-speed.test.ts`
+- [x] A16, A17: `apps/indusk-mcp/src/__tests__/suite-speed.test.ts` — under, at and over the threshold; overlapped → skip; no daemon → skip with reason
+- [x] Live check: one real `pnpm test` with the daemon running marks `everyday-suite-stays-fast` upheld; the Promises page shows it green; recorded here — marked upheld (52 s); `promises status` reads it last seen upheld; the running admin draws its chip green. The first attempt marked nothing: `pgrep -f vitest` matched the calling shell's own command line, so every run looked overlapped — the check now looks for a vitest binary or worker outside the run's own ancestry (`ac29a477`), with a test for that case
 
 #### Build Phase 5 Verification
 
-- [ ] A16, A17 pass; `pnpm promises:check` passes with both promises; the live check recorded
-- [ ] A3 recorded across all five build phases; `pnpm test` and `pnpm test:system` green
+- [x] A16, A17 pass; `pnpm promises:check` passes with both promises; the live check recorded — 5 tests; 6 promises, structure 2, behaviour 3
+- [x] A3 recorded across all five build phases; `pnpm test` and `pnpm test:system` green — per phase: Build 1 3.5 s, Build 2 about 2 s, Build 3 the timing runs, Build 4 about 2 s, Build 5 under 1 s for its own tests (`suite-speed`, the guard); `pnpm test` 53 s green, `test:system` both tiers green (mcp 37 files, admin 13), each ending with the leak guard's all-clear
+- [x] Shape — `suite-speed.js` keeps the decision (`suiteSpeedMark`, `otherTestRuns`) pure and takes its daemon and sender as inputs; the wrapper only times and calls it; nothing to change
 
 #### Build Phase 5 Context
 
-- [ ] current.md: the two promises named in the Project region's test line; guard: `suite-speed.test.ts` carries `lesson: a-suites-speed-is-a-promise-not-a-gate`
+- [x] current.md: the two promises named in the Project region's test line; guard: `suite-speed.test.ts` carries `lesson: a-suites-speed-is-a-promise-not-a-gate`
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/guide/test-kinds.md`: the two promises; `apps/docs/src/changelog.md` Unreleased: the kinds, the admin system tier, the two promises
+- [x] `apps/docs/src/guide/test-kinds.md`: the two promises; `apps/docs/src/changelog.md` Unreleased: the kinds, the admin system tier, the two promises
 
 ## Files Affected
 
