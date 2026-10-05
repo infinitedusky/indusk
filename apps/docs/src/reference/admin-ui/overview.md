@@ -244,6 +244,7 @@ New projects use `indusk init` as before — registry write happens automaticall
 - Scorecards joined by date-range overlap (approximate — see [known gotchas in CLAUDE.md](https://github.com/infinite-dusky/dusk/blob/main/CLAUDE.md))
 - Component-reuse audit (`pnpm vitest run src/__tests__/component-reuse-audit.test.ts`) catches inline JSX where a primitive exists
 - Stale-entry failure page for `/p/{deleted}/` with recovery hint
+- Two test tiers (test-kinds): `pnpm test` is rules only — unit and component tests, no server, about five seconds; every test that starts `next dev` or a real Jaeger is listed in `vitest.tiers.ts` and runs in `pnpm test:system`, one file at a time, at landing and on release
 
 **Deliberately deferred to v2 (Arc 2 / Arc 3):**
 - Knowledge-graph viewer (waits for `graph-knowledge-architecture` to settle the schema)

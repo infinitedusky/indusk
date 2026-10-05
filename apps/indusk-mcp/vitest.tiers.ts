@@ -12,6 +12,8 @@
  *
  * A file that starts such a system belongs in SYSTEM, or the everyday suite
  * is slow again and a port collision under parallel load reads as a flake.
+ * `everyday-tests-never-wait.test.ts` enforces it over this package and the
+ * admin (test-kinds), naming the file, line and call.
  */
 export const SYSTEM = [
 	"src/__tests__/admin-bundle-pack.test.ts",

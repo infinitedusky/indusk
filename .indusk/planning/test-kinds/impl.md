@@ -58,8 +58,8 @@ checked is still checked, and InDusk holds two promises about its own suite
 | A10 | An unreadable source's chips are hollow, say *health unknown since*, never green; the other source still drawn | Build Phase 1 | Build Phase 1 | passing |
 | A11 | A blind watcher's source says *watcher blind* | Build Phase 1 | Build Phase 1 | passing |
 | A12 | A violated promise names its newest violation's environment | Build Phase 1 | Build Phase 1 | passing |
-| A13 | The Promises page rendered against a real Jaeger shows a run's chips and strip (system tier) | Build Phase 2 | Build Phase 2 | planned |
-| A14 | An everyday-tier test in either package that starts a server or waits on the wall clock fails the guard, naming file, line and call | Test Phase 1 | Build Phase 2 | written |
+| A13 | The Promises page rendered against a real Jaeger shows a run's chips and strip (system tier) | Build Phase 2 | Build Phase 2 | passing |
+| A14 | An everyday-tier test in either package that starts a server or waits on the wall clock fails the guard, naming file, line and call | Test Phase 1 | Build Phase 2 | passing |
 | A15 | A short-lived process that runs and exits (`git`, the CLI) does not trip the guard | Test Phase 1 | Test Phase 1 | passing |
 | A16 | Every everyday run is marked held or broken with its duration; a slow run fails nothing; an overlapping run is not judged | Build Phase 5 | Build Phase 5 | planned |
 | A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | planned |
@@ -168,17 +168,18 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 #### Build Phase 2 Verification
 
-- [ ] A14 passes; A13 passes (`cd apps/indusk-admin && pnpm test:system`); A15 still passes
-- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
-- [ ] A3 recorded
+- [x] A14 passes; A13 passes (`cd apps/indusk-admin && pnpm test:system`); A15 still passes — the admin system tier 13 files, 56 tests, 183 s
+- [x] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear — `test:system` green over both packages (mcp 37 files 147 s, admin 13 files 183 s); `pnpm test` green but for A18 and A19, written red at Test Phase 1 and passing at Build Phase 4; the admin's everyday suite alone 49 files in 5 s (from 255 s). Two reds this phase's run surfaced and fixed: the root `CLAUDE.md`'s 20 % budget margin (this plan's Key Decisions line, also on trunk — trimmed on both), and this impl's own note naming an old file's row label the validator read as a missing row
+- [x] A3 recorded — the phase's own tests (guard, LiveRefresh, the A5 wrapper check) ran in about 2 s; its full-suite runs were the landing-sized check this phase needed, since it moved files between tiers
+- [x] Shape — `vitest.tiers.ts` and `vitest.system.config.ts` mirror mcp's; the guard's patterns are a data table; nothing to change
 
 #### Build Phase 2 Context
 
-- [ ] guard: A14 carries `lesson: everyday-tests-never-wait`; `apps/indusk-admin/CLAUDE.md` gains "a test that starts `next dev` or a server belongs in `vitest.tiers.ts` `SYSTEM`"; mcp's `vitest.tiers.ts` header names the guard that now enforces its rule
+- [x] guard: A14 carries `lesson: everyday-tests-never-wait`; `apps/indusk-admin/CLAUDE.md` gains "a test that starts `next dev` or a server belongs in `vitest.tiers.ts` `SYSTEM`"; mcp's `vitest.tiers.ts` header names the guard that now enforces its rule
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md` (testing note) and the root `CLAUDE.md` Conventions `pnpm test` line: `test:system` covers both packages and runs at landing and release — root, because it is the one command line every session reads before running tests
+- [x] `apps/docs/src/reference/admin-ui/overview.md` (testing note) and the root `CLAUDE.md` Conventions `pnpm test` line: `test:system` covers both packages and runs at landing and release — root, because it is the one command line every session reads before running tests
 
 ### Build Phase 3: The root suite in parallel
 
