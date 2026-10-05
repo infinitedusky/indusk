@@ -6,7 +6,8 @@ import type {
 } from "@infinitedusky/indusk-mcp/promises/registry";
 import {
   alarmSource,
-  readSources,
+  healthWindowMs,
+  probeSources,
   type SourceName,
   type SourceRead,
   sourceNames,
@@ -18,6 +19,7 @@ import {
   silencePastExpectation,
 } from "@infinitedusky/indusk-mcp/promises/telemetry";
 import { readAdminRefreshMs } from "./project-reader";
+import { asMarkedSpans, readWindow } from "./promise-timeline";
 
 /**
  * Observed health on the Promises page and in the sidebar (day-monitor, ADR
@@ -98,10 +100,38 @@ export async function readHealth(
   if (hit && hit.expires > Date.now()) return hit.reads;
   let reads: SourceHealthRead[];
   try {
-    const sources = await readSources(projectRoot, registry, {
-      timeoutMs: TIMEOUT_MS,
-    });
-    reads = sources.map((r) => fromSource(projectRoot, r));
+    // The watcher is probed every time; the marks come from the store, which
+    // reads only what it has not read (promise-timeline A12). A refresh with
+    // nothing new no longer moves the whole window.
+    const probed = await probeSources(projectRoot, { timeoutMs: TIMEOUT_MS });
+    const since = new Date(Date.now() - healthWindowMs(projectRoot, registry));
+    reads = await Promise.all(
+      probed.map(async (p): Promise<SourceHealthRead> => {
+        if (!p.ok) return fromSource(projectRoot, p);
+        const w = await readWindow(
+          projectRoot,
+          registry,
+          p.name,
+          since.getTime(),
+          TIMEOUT_MS,
+        );
+        if (!w.ok) {
+          return {
+            name: w.name,
+            label: w.label,
+            ok: false,
+            unknownSince: lastOk.get(`${projectRoot}\0${w.name}`) ?? null,
+            where: w.where,
+          };
+        }
+        return fromSource(projectRoot, {
+          name: p.name,
+          label: p.label,
+          ok: true,
+          marks: asMarkedSpans(w, since),
+        });
+      }),
+    );
   } catch (err) {
     // A health read never takes a page down (day-monitor A26): whatever went
     // wrong, every source's answer is "unknown since the last good read".

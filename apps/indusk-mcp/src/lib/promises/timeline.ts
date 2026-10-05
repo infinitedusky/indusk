@@ -33,6 +33,8 @@ export interface TimelineMark {
 	at: string;
 	outcome: PromiseOutcome;
 	traceId: string;
+	/** `deployment.environment`, as the span said, or null — a red row names it. */
+	environment: string | null;
 }
 
 /** A range whose query was still full at the smallest slice: there may be more runs in it. */
@@ -151,7 +153,12 @@ async function readSourceWindow(
 		byPromise.set(promise.name, {
 			marks: [...seen.values()]
 				.sort((a, b) => a.at.getTime() - b.at.getTime())
-				.map((m) => ({ at: m.at.toISOString(), outcome: m.outcome, traceId: m.traceId })),
+				.map((m) => ({
+					at: m.at.toISOString(),
+					outcome: m.outcome,
+					traceId: m.traceId,
+					environment: m.environment,
+				})),
 			atLeast,
 		});
 	}
