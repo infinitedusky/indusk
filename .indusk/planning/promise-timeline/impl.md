@@ -1,7 +1,7 @@
 ---
 title: "Promise timeline — Implementation"
 date: 2026-10-05
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -274,24 +274,24 @@ table would be rebuilt there.*
 
 **Goal**: decompose what this plan grew in `Promises.tsx` (570 lines, the plan added ~180) per react's one-component-per-file and cohesion: the timeline's controls are timeline UI sitting in the promises table's file. Everything else this plan changed is left as-is, with the reason recorded.
 
-- [ ] Move `TimelineControls` and `WINDOW_LABELS` from `apps/indusk-admin/src/components/Promises.tsx` into `PromiseTimeline.tsx`, beside the strip they switch — the timeline's three pieces (controls, strip, empty state) in one file; `Promises.tsx` keeps the table
-- [ ] In the moved controls, the window links and the source links are the same link drawn twice (current-or-not styling, `aria-current`): one `SwitchLink` used by both
-- [ ] (reviewed `lib/promise-timeline.ts` and `lib/promise-health.ts` — left as-is: `test-kinds` gives the store and the health read their clock and reader as inputs and splits them along those seams; splitting now would be redone)
-- [ ] (reviewed `lib/timeline-strip.ts`, `lib/promises/timeline.ts`, `lib/promises/incidents.ts`, `lib/promises/sources.ts`, `lib/promises/telemetry.ts` — left as-is: each has one job and no copy of another's logic; the one shared rule, `violationState`, has one definition the chip and the strip both call)
-- [ ] (reviewed `bin/cli.ts` (916 lines), `lib/promises/registry.ts` (420) — left as-is: this plan added 10 and 18 lines, a command registration and an incident field; their size predates it)
-- [ ] (reviewed the rest of `Promises.tsx` — left as-is: `contract-ui` replaces its grouping and table with the hierarchy view; decomposing what that plan rewrites is waste)
+- [x] Move `TimelineControls` and `WINDOW_LABELS` from `apps/indusk-admin/src/components/Promises.tsx` into `PromiseTimeline.tsx`, beside the strip they switch — the timeline's three pieces (controls, strip, empty state) in one file; `Promises.tsx` keeps the table
+- [x] In the moved controls, the window links and the source links are the same link drawn twice (current-or-not styling, `aria-current`): one `SwitchLink` used by both
+- [x] (reviewed `lib/promise-timeline.ts` and `lib/promise-health.ts` — left as-is: `test-kinds` gives the store and the health read their clock and reader as inputs and splits them along those seams; splitting now would be redone)
+- [x] (reviewed `lib/timeline-strip.ts`, `lib/promises/timeline.ts`, `lib/promises/incidents.ts`, `lib/promises/sources.ts`, `lib/promises/telemetry.ts` — left as-is: each has one job and no copy of another's logic; the one shared rule, `violationState`, has one definition the chip and the strip both call)
+- [x] (reviewed `bin/cli.ts` (916 lines), `lib/promises/registry.ts` (420) — left as-is: this plan added 10 and 18 lines, a command registration and an incident field; their size predates it)
+- [x] (reviewed the rest of `Promises.tsx` — left as-is: `contract-ui` replaces its grouping and table with the hierarchy view; decomposing what that plan rewrites is waste)
 
 #### Build Phase 7 Verification
 
-- [ ] (no tests flip at this phase — reason: refactor) behaviour parity: `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline src/components` green, and `pnpm exec tsc --noEmit` clean
+- [x] (no tests flip at this phase — reason: refactor) behaviour parity: `cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline src/components` green, and `pnpm exec tsc --noEmit` clean — 34 files, 157 tests; tsc clean
 
 #### Build Phase 7 Context
 
-- [ ] `apps/indusk-admin/CLAUDE.md`: confirm the Promises page rule names no component file this phase moves (it names `lib/` files); edit it if it does
+- [x] `apps/indusk-admin/CLAUDE.md`: confirm the Promises page rule names no component file this phase moves (it names `lib/` files); edit it if it does — confirmed: it names neither `Promises.tsx` nor `PromiseTimeline.tsx`; no edit
 
 #### Build Phase 7 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: no entry for an internal move — confirm the admin reference (`reference/admin-ui/overview.md`) names no component file this phase moved; edit it if it does
+- [x] `apps/docs/src/changelog.md` Unreleased: no entry for an internal move — confirm the admin reference (`reference/admin-ui/overview.md`) names no component file this phase moved; edit it if it does — confirmed: no component file named; no edit
 
 ## Files Affected
 

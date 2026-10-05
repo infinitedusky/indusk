@@ -1,4 +1,10 @@
-import type { CellState, Strip } from "@/lib/timeline-strip";
+import Link from "next/link";
+import type {
+  CellState,
+  Strip,
+  TimelineView,
+  WindowKey,
+} from "@/lib/timeline-strip";
 
 /**
  * A promise's history as a strip of cells (promise-timeline, ADR D6): time
@@ -85,5 +91,98 @@ export function TimelineEmpty() {
     <span className="text-xs text-gray-500" data-testid="timeline-empty">
       no runs mark this promise
     </span>
+  );
+}
+
+const WINDOW_LABELS: Record<WindowKey, string> = {
+  "24h": "24 hours",
+  "7d": "7 days",
+  "30d": "30 days",
+};
+
+/** One choice in a switch: a link, or plain bold text when it is the current one. */
+function SwitchLink({
+  href,
+  current,
+  children,
+}: {
+  href: string;
+  current: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-current={current ? "true" : undefined}
+      className={
+        current
+          ? "font-semibold text-gray-900"
+          : "text-blue-700 hover:underline"
+      }
+    >
+      {children}
+    </Link>
+  );
+}
+
+/**
+ * The timeline's window and source switches, how far back the read reaches,
+ * and a failed source said in place of its strips (promise-timeline, ADR D6).
+ * Links, not state: the choice lives in the URL, so the page's refresh keeps it.
+ */
+export function TimelineControls({
+  timelines,
+  path,
+}: {
+  timelines: TimelineView;
+  path: string;
+}) {
+  const href = (change: { window?: string; source?: string }) =>
+    `${path}?${new URLSearchParams({
+      window: change.window ?? timelines.window,
+      source: change.source ?? timelines.source,
+    })}`;
+  return (
+    <div className="flex flex-col gap-1" data-testid="timeline-controls">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-gray-600">History:</span>
+        {(Object.keys(WINDOW_LABELS) as WindowKey[]).map((w) => (
+          <SwitchLink
+            key={w}
+            href={href({ window: w })}
+            current={timelines.window === w}
+          >
+            {WINDOW_LABELS[w]}
+          </SwitchLink>
+        ))}
+        {timelines.sources.length > 1 && (
+          <>
+            <span className="ml-4 text-gray-600">Source:</span>
+            {timelines.sources.map((s) => (
+              <SwitchLink
+                key={s}
+                href={href({ source: s })}
+                current={timelines.source === s}
+              >
+                {s}
+              </SwitchLink>
+            ))}
+          </>
+        )}
+      </div>
+      {timelines.reach && (
+        <p className="text-xs text-gray-500" data-testid="timeline-reach">
+          {timelines.reach}
+        </p>
+      )}
+      {timelines.failure && (
+        <p
+          className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+          data-testid="timeline-failure"
+        >
+          {timelines.failure}
+        </p>
+      )}
+    </div>
   );
 }

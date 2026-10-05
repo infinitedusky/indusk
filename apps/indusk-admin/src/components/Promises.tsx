@@ -20,7 +20,11 @@ import {
   type SourceChip,
   type SourceObserved,
 } from "@/components/PromiseHealth";
-import { PromiseTimeline, TimelineEmpty } from "@/components/PromiseTimeline";
+import {
+  PromiseTimeline,
+  TimelineControls,
+  TimelineEmpty,
+} from "@/components/PromiseTimeline";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -30,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
-import type { Strip, TimelineView, WindowKey } from "@/lib/timeline-strip";
+import type { Strip, TimelineView } from "@/lib/timeline-strip";
 
 /**
  * The Promises page's pieces (day-promises, ADR D8): the registry as a table
@@ -488,83 +492,5 @@ export function PromisesEmpty({ dir }: { dir: string }) {
         refusal are in the reference page <code>/reference/cli/promises</code>.
       </p>
     </section>
-  );
-}
-
-const WINDOW_LABELS: Record<WindowKey, string> = {
-  "24h": "24 hours",
-  "7d": "7 days",
-  "30d": "30 days",
-};
-
-/**
- * The timeline's window and source switches, local's reach, and a failed
- * source said in place of its strips (promise-timeline, ADR D6). Links, not
- * state: the choice lives in the URL, so the page's refresh keeps it.
- */
-function TimelineControls({
-  timelines,
-  path,
-}: {
-  timelines: TimelineView;
-  path: string;
-}) {
-  const href = (change: { window?: string; source?: string }) =>
-    `${path}?${new URLSearchParams({
-      window: change.window ?? timelines.window,
-      source: change.source ?? timelines.source,
-    })}`;
-  return (
-    <div className="flex flex-col gap-1" data-testid="timeline-controls">
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-gray-600">History:</span>
-        {(Object.keys(WINDOW_LABELS) as WindowKey[]).map((w) => (
-          <Link
-            key={w}
-            href={href({ window: w })}
-            aria-current={timelines.window === w ? "true" : undefined}
-            className={
-              timelines.window === w
-                ? "font-semibold text-gray-900"
-                : "text-blue-700 hover:underline"
-            }
-          >
-            {WINDOW_LABELS[w]}
-          </Link>
-        ))}
-        {timelines.sources.length > 1 && (
-          <>
-            <span className="ml-4 text-gray-600">Source:</span>
-            {timelines.sources.map((s) => (
-              <Link
-                key={s}
-                href={href({ source: s })}
-                aria-current={timelines.source === s ? "true" : undefined}
-                className={
-                  timelines.source === s
-                    ? "font-semibold text-gray-900"
-                    : "text-blue-700 hover:underline"
-                }
-              >
-                {s}
-              </Link>
-            ))}
-          </>
-        )}
-      </div>
-      {timelines.reach && (
-        <p className="text-xs text-gray-500" data-testid="timeline-reach">
-          {timelines.reach}
-        </p>
-      )}
-      {timelines.failure && (
-        <p
-          className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-          data-testid="timeline-failure"
-        >
-          {timelines.failure}
-        </p>
-      )}
-    </div>
   );
 }
