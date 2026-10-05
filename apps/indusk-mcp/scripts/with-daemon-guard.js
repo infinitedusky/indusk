@@ -44,6 +44,7 @@ if (markPromise) {
 	const mark = suiteSpeedMark({
 		durationMs: Date.now() - started,
 		overlapped: overlappedAtStart || (await otherTestRunAlive(3_000)),
+		exitCode: runCode,
 	});
 	const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 	console.error(`${SUITE_PROMISE}: ${await sendSuiteMark(root, mark)}`);

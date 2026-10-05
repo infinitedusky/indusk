@@ -20,16 +20,27 @@ export const SUITE_PROMISE = "everyday-suite-stays-fast";
 export const THRESHOLD_MS = 120_000;
 
 /**
- * @param {{ durationMs: number, overlapped: boolean }} run
+ * A run that failed under the threshold is not judged: a crash at startup —
+ * a build error, a missing dependency — exits in seconds and would read as a
+ * fast suite that never ran (test-kinds A23). A failed run over the threshold
+ * is still broken: it was slow, whatever else it was.
+ *
+ * @param {{ durationMs: number, overlapped: boolean, exitCode?: number }} run
  * @returns {{ outcome: "upheld" | "violated", durationMs: number } | { skip: string }}
  */
-export function suiteSpeedMark({ durationMs, overlapped }) {
+export function suiteSpeedMark({ durationMs, overlapped, exitCode = 0 }) {
 	if (overlapped) {
 		return {
 			skip: "another test run overlapped this one; its duration says nothing about the suite",
 		};
 	}
-	return { outcome: durationMs >= THRESHOLD_MS ? "violated" : "upheld", durationMs };
+	if (durationMs >= THRESHOLD_MS) return { outcome: "violated", durationMs };
+	if (exitCode !== 0) {
+		return {
+			skip: `the run failed (exit ${exitCode}) in ${Math.round(durationMs / 1000)} s; a failed run says nothing about how fast the suite is`,
+		};
+	}
+	return { outcome: "upheld", durationMs };
 }
 
 /** The mark's span attributes, in the promise vocabulary every reader uses. */

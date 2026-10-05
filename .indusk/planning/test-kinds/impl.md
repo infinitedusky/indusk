@@ -265,7 +265,7 @@ checked is still checked, and InDusk holds two promises about its own suite
 - [x] `turbo.json`: the `test` task is `"cache": false` — a test run is a question asked now, never a replayed answer (A20)
 - [x] The guard's waits: a literal ≥ 100 ms as the *first* argument of `setTimeout` (the promise form) and `scheduler.wait(` join the pattern table (A21)
 - [x] The guard imports the admin's `vitest.tiers.ts` `SYSTEM` instead of reading its text (A22)
-- [ ] `suiteSpeedMark` takes the run's exit code: a failed run under the threshold is skipped with its reason; a failed run over it is still violated (A23); `with-daemon-guard.js` passes it
+- [x] `suiteSpeedMark` takes the run's exit code: a failed run under the threshold is skipped with its reason; a failed run over it is still violated (A23); `with-daemon-guard.js` passes it
 
 #### Build Phase 6 Verification
 
