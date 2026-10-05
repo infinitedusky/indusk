@@ -12,6 +12,98 @@ What exists today between a plan, its tests and the promise registry, and what
 would have to change for promises to come out of planning, for every test row
 to say what it is for, and for a closing plan to confirm what it promised?
 
+## Background
+
+Why this, now:
+
+- **The demo.** Its first plan must make promises, and they should come out of
+  planning, on camera.
+- **The smoke on numero** (2026-10-02). A promise broke in a running system
+  and the incident could not say which test had vouched for the behaviour. The
+  link from the promise to its test row was prose a person had typed.
+- **Two masters described the same work.** `planner-promises` (demo step 6)
+  and `day-contract` (component 4c in the Day master plan) were reconciled on
+  2026-10-05: this plan takes declaring, naming and confirming; `day-contract`
+  keeps the change rule.
+- **It edits the files test-kinds just changed**: the planner skill's
+  templates, the trajectory parser and validator, and the impl hook.
+
+## Decided in conversation, 2026-10-05 (Sandy)
+
+### What each document holds
+
+| Document | Holds | Whose |
+|---|---|---|
+| Research | Everything that is not an expectation or a promise: why now, what exists today, what was found, what was decided on the way | the agents' |
+| Brief | What the conversation produced: the expectations, and the promises (the ones this plan makes, the existing ones it must not break, and what was chosen not to promise) | the person's |
+| Test plan | How each promise is proven: its tests and their level | the agents' |
+| ADR | The design that makes those tests pass, and what was rejected | the agents' |
+
+- **The conversation is the core input.** The person and the agent talk
+  through what is wanted. The agent writes the promises from that, reads them
+  back, and the person corrects them.
+- Where today's brief sections go: Problem and Context to research; Proposed
+  Direction to the ADR; Scope and Success Criteria become the promises; Depends
+  On and Blocks stay, because `/work` reads them there.
+- The tests stay ahead of the design. A document that picked both its design
+  and its proof could pick tests it already passes.
+- **Open for the ADR**: bugfix and refactor plans have no research document
+  today. If the why leaves the brief, they need somewhere to put it.
+
+### Expectations
+
+- **A promise is what the system does, which we control. An expectation is
+  what we think will follow from it, which we do not.** "`pnpm test` finishes
+  within two minutes" is a promise. "Plans close faster, because nobody walks
+  away during a phase" is an expectation.
+- An expectation that does not happen is information, not a defect, as the
+  [promise-core](../promise-core/master.md) master already says. It never
+  blocks a close and never reopens a plan. Anything else pushes people into
+  writing safe expectations.
+- **The point of an expectation is to decide what telemetry gets created.**
+  The question comes first and the telemetry is built to answer it. This is
+  the reverse of a product-analytics platform, which captures everything and
+  leaves the person to go looking. Exploring still has a place: a finding
+  counts once it is written as an expectation someone can check.
+- **Owned, not rented.** The platforms give telemetry for no work, and in
+  return the reporting lives with them and deciding from it is hard. Here the
+  work is done while the thing is built, by the agents, and the project owns
+  the result. Expectation telemetry goes through the project's own
+  OpenTelemetry to its own server, as the Day master settled for promises on
+  2026-09-18.
+- **This plan writes expectations into the brief.** Building their telemetry,
+  keeping it and reading it back is a later plan. Scoring them is
+  [plan-premises](../plan-premises/brief.md)'.
+
+### Measuring expectations: notes for the later plan
+
+- **Most expectations are measured in production only** (Sandy). A store for
+  them is needed on the always-on server, not in the laptop's daemon.
+- OpenTelemetry carries traces, metrics and logs. InDusk keeps only traces
+  (Jaeger 2.17.0). The shipped collector accepts logs and writes them to a
+  rotating file that nothing reads. Metrics are not collected.
+- Two kinds of question. "How many, how fast" fits a metrics store such as
+  Prometheus. "Who did what" needs one record per event with the user
+  attached and a way to count over them; user ids in a metrics store are its
+  best-known failure. Most expectations about use are the second kind.
+- **Lean: events and SQL, not a metrics store first.** Worth a spike: Jaeger
+  can store spans in ClickHouse from v2.18 (alpha), so an expectation event
+  could be a span with a user id, kept where promises already are and counted
+  with SQL. InDusk ships 2.17.0, so the spike starts with an upgrade.
+- **Server-side events first.** Most expectations show up on the server. A
+  browser script is added only when an expectation needs something the server
+  never sees. A browser cannot hold the server's password, so it would send
+  through the app's own backend.
+
+### Also built in this plan, for the ADR
+
+- The planner's brief template takes the shape above.
+- The trajectory's test `Kind` column becomes `Level` (finding 7).
+- The row `promises watch` appends carries its level and its promise
+  (finding 4).
+- The admin's plan page shows what each row is for.
+- A new project's first promise declares its domain with it (finding 1).
+
 ## Findings
 
 ### 1. The registry already has the lifecycle. Nothing writes it.
@@ -194,3 +286,8 @@ person selects.
 - The numero smoke's findings: root `master.md`, "Next actions", item 3
 - [Day master](../indusk-v4-day/master.md), component 4c;
   [promise-core](../promise-core/master.md)
+- `packages/telemetry-binaries-shared/UPSTREAM.json` (Jaeger 2.17.0);
+  `apps/indusk-mcp/src/lib/telemetry/daemon.ts` (the collector's pipelines)
+- [Jaeger: ClickHouse storage](https://www.jaegertracing.io/docs/2.19/storage/clickhouse/);
+  [Prometheus and OpenTelemetry](https://opentelemetry.io/blog/2024/prom-and-otel/);
+  [high cardinality in Prometheus](https://last9.io/blog/how-to-manage-high-cardinality-metrics-in-prometheus)
