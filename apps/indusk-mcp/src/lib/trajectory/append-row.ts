@@ -17,6 +17,11 @@ function cells(row: string): string[] {
  * and numbering; the phase is spelled the way the impl spells phases. An impl
  * with no trajectory is returned unchanged, with a null id.
  *
+ * `row.cells` fills the table's other columns, by lower-cased header: a
+ * writer fills every column its table has. The row was once written with
+ * five cells whatever the table held, and an impl that requires each row to
+ * name its level then refused its own next edit (planner-promises A13).
+ *
  * Moved here from `lib/promises/reopen.ts` (day-monitor cleanup): editing a
  * trajectory table and its register is this module's job; the promise loop's
  * Maintenance phase is one caller.
@@ -24,7 +29,7 @@ function cells(row: string): string[] {
 export function appendLateRow(
 	text: string,
 	phase: number,
-	row: { asserts: string; why: string },
+	row: { asserts: string; why: string; cells?: Readonly<Record<string, string>> },
 ): { text: string; id: string | null } {
 	const heading = TRAJECTORY_HEADING.exec(text);
 	if (!heading) return { text, id: null };
@@ -47,6 +52,7 @@ export function appendLateRow(
 	const testPhases = /^### Test Phase \d+/m.test(text);
 	const phaseRef = testPhases ? `Build Phase ${phase}` : `Phase ${phase}`;
 	const value: Record<string, string> = {
+		...row.cells,
 		id,
 		asserts: row.asserts,
 		"writable at": phaseRef,
