@@ -4,6 +4,7 @@ import { isUsableRelPath } from "../path-segment.js";
 import { parseBriefContract } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
+import { readImpl } from "./contract.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import { planFolderPath, planFolderStatus } from "./plan-folder.js";
 import { type PromiseEntry, promiseTokenPattern, type Registry, readPromises } from "./registry.js";
@@ -221,6 +222,15 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 
 	const implPath = join(planFolderPath(planRoot, plan), "impl.md");
 	const implText = existsSync(implPath) ? readFileSync(implPath, "utf-8") : null;
+	const implRead = implText === null ? null : readImpl(implText);
+	if (implRead && !implRead.ok) {
+		return refuse([
+			{
+				file: `.indusk/planning/${plan}/impl.md`,
+				message: `${plan}'s impl cannot be read, so the rows that prove its promises cannot be: ${implRead.error}`,
+			},
+		]);
+	}
 	const proofs = rowProofs(registry, plan, implText);
 	const refusals: CheckRefusal[] = unmadeChanges(planRoot, plan, registry);
 	if (proofs.length === 0) {

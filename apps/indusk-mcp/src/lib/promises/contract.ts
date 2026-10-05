@@ -277,11 +277,12 @@ export function checkPlanContract(
 }
 
 /** The impl as the contract reads it: its frontmatter and its trajectory, or why it cannot be read. */
-type ImplRead =
+export type ImplRead =
 	| { ok: true; frontmatter: Record<string, unknown>; trajectory: Trajectory }
 	| { ok: false; error: string };
 
-function readImpl(text: string): ImplRead {
+/** Read an impl's frontmatter and trajectory, or say why it cannot be read — never throw (A35). */
+export function readImpl(text: string): ImplRead {
 	let parsed: { data: Record<string, unknown>; content: string };
 	try {
 		const r = matter(text);
