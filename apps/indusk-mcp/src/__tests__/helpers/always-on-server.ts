@@ -1,8 +1,8 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { existsSync, mkdtempSync } from "node:fs";
-import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { freeLoopbackPort } from "../../lib/telemetry/query-door.js";
 import type { FixtureSpan } from "./local-jaeger.js";
 import { otlpBody } from "./local-jaeger.js";
 
@@ -53,18 +53,6 @@ function authHeader(): string {
 	return `Basic ${Buffer.from(`${SERVER_USER}:${SERVER_PASSWORD}`).toString("base64")}`;
 }
 
-function freePort(): Promise<number> {
-	return new Promise((res, rej) => {
-		const srv = createServer();
-		srv.once("error", rej);
-		srv.listen(0, "127.0.0.1", () => {
-			const addr = srv.address();
-			if (typeof addr === "object" && addr !== null) srv.close(() => res(addr.port));
-			else rej(new Error("no port"));
-		});
-	});
-}
-
 function sleep(ms: number): Promise<void> {
 	return new Promise((r) => setTimeout(r, ms));
 }
@@ -81,11 +69,11 @@ export async function startAlwaysOnServer(opts: StartOptions = {}): Promise<Alwa
 		throw new Error(`startAlwaysOnServer: the CLI is not built at ${CLI_BIN}`);
 	}
 	const volume = opts.volume ?? mkdtempSync(join(tmpdir(), "always-on-volume-"));
-	const otlpPort = await freePort();
-	const queryPort = await freePort();
+	const otlpPort = await freeLoopbackPort();
+	const queryPort = await freeLoopbackPort();
 	// Every port the server binds comes from its settings, so two servers can
 	// run at once (day-always-on-deploy A8).
-	const grpcPort = await freePort();
+	const grpcPort = await freeLoopbackPort();
 	const otlpUrl = `http://127.0.0.1:${otlpPort}`;
 	const queryUrl = `http://127.0.0.1:${queryPort}`;
 

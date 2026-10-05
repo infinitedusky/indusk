@@ -4,6 +4,7 @@ import { createServer, type Server } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { freeLoopbackPort } from "../lib/telemetry/query-door.js";
 import { CLI_BIN, SHOULD_SKIP } from "./helpers/cli.js";
 
 /**
@@ -16,18 +17,6 @@ import { CLI_BIN, SHOULD_SKIP } from "./helpers/cli.js";
  * A supervisor that does not kill the process group then restarts into a held
  * port and a locked volume, every time.
  */
-
-function freePort(): Promise<number> {
-	return new Promise((res, rej) => {
-		const srv = createServer();
-		srv.once("error", rej);
-		srv.listen(0, "127.0.0.1", () => {
-			const addr = srv.address();
-			if (typeof addr === "object" && addr !== null) srv.close(() => res(addr.port));
-			else rej(new Error("no port"));
-		});
-	});
-}
 
 function canBind(port: number): Promise<boolean> {
 	return new Promise((res) => {
@@ -53,9 +42,9 @@ afterEach(async () => {
 describe.skipIf(SHOULD_SKIP)("A13 — a taken public query port starts nothing", () => {
 	it("exits naming the port, and no Jaeger is left holding the intake", async () => {
 		volume = mkdtempSync(join(tmpdir(), "always-on-door-startup-"));
-		const queryPort = await freePort();
-		const otlpPort = await freePort();
-		const grpcPort = await freePort();
+		const queryPort = await freeLoopbackPort();
+		const otlpPort = await freeLoopbackPort();
+		const grpcPort = await freeLoopbackPort();
 		holder = createServer();
 		await new Promise<void>((r) => holder?.listen(queryPort, "0.0.0.0", () => r()));
 
