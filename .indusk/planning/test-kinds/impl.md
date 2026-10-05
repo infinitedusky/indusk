@@ -66,10 +66,10 @@ checked is still checked, and InDusk holds two promises about its own suite
 | A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | passing | unit |
 | A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | passing | unit |
 | A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | passing | unit |
-| A20 | After a change that only adds an admin test which starts `next dev`, the root `pnpm test` fails: no package's test run is replayed from turbo's cache, so the guard in mcp sees the admin's files every time | Phase 0 | Build Phase 6 | planned | unit |
-| A21 | The guard catches a wait written with `node:timers/promises` — `await setTimeout(5_000)`, `scheduler.wait(5_000)` — as it catches `setTimeout(r, 5_000)` | Phase 0 | Build Phase 6 | planned | unit |
-| A22 | A file commented out of the admin's `SYSTEM` list, which vitest then runs as everyday, is scanned as everyday by the guard | Phase 0 | Build Phase 6 | planned | unit |
-| A23 | A run that fails within seconds is not marked `everyday-suite-stays-fast` upheld — a crash measures nothing; a slow failing run is still marked broken | Phase 0 | Build Phase 6 | planned | unit |
+| A20 | After a change that only adds an admin test which starts `next dev`, the root `pnpm test` fails: no package's test run is replayed from turbo's cache, so the guard in mcp sees the admin's files every time | Phase 0 | Build Phase 6 | written | unit |
+| A21 | The guard catches a wait written with `node:timers/promises` — `await setTimeout(5_000)`, `scheduler.wait(5_000)` — as it catches `setTimeout(r, 5_000)` | Phase 0 | Build Phase 6 | written | unit |
+| A22 | A file commented out of the admin's `SYSTEM` list, which vitest then runs as everyday, is scanned as everyday by the guard | Phase 0 | Build Phase 6 | written | unit |
+| A23 | A run that fails within seconds is not marked `everyday-suite-stays-fast` upheld — a crash measures nothing; a slow failing run is still marked broken | Phase 0 | Build Phase 6 | written | unit |
 
 ### Deferred Verification
 

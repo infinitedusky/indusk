@@ -82,6 +82,18 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 		expect(refused).toMatch(/^not marked: .*refused the span/);
 	});
 
+	it("A23: a run that failed fast is not marked held — a crash measures nothing; a slow failing run is still broken", () => {
+		expect(suiteSpeedMark({ durationMs: 3_000, overlapped: false, exitCode: 1 })).toEqual({
+			skip: expect.stringMatching(/failed/),
+		});
+		expect(suiteSpeedMark({ durationMs: 200_000, overlapped: false, exitCode: 1 }).outcome).toBe(
+			"violated",
+		);
+		expect(suiteSpeedMark({ durationMs: 50_000, overlapped: false, exitCode: 0 }).outcome).toBe(
+			"upheld",
+		);
+	});
+
 	it("the attributes are the promise vocabulary every reader uses", () => {
 		expect(Object.keys(suiteSpanAttributes({ outcome: "upheld", durationMs: 1 }, "p"))).toEqual([
 			"indusk.promise",

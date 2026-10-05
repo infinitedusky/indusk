@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { glob } from "glob";
@@ -39,15 +40,19 @@ const PATTERNS: Array<{ name: string; re: RegExp; unlessFakeTimers?: boolean }> 
 	},
 ];
 
-const PACKAGES = [
-	{ dir: "apps/indusk-mcp", system: MCP_SYSTEM },
-	{ dir: "apps/indusk-admin", system: adminSystem() },
-];
+const ADMIN_TIERS = join(REPO, "apps/indusk-admin/vitest.tiers.ts");
 
-function adminSystem(): string[] {
-	const tiers = join(REPO, "apps/indusk-admin/vitest.tiers.ts");
+/** The admin's SYSTEM list, from its tiers file. */
+export async function adminSystem(tiers: string = ADMIN_TIERS): Promise<string[]> {
 	if (!existsSync(tiers)) return [];
 	return [...readFileSync(tiers, "utf-8").matchAll(/"(src\/[^"]+\.test\.tsx?)"/g)].map((m) => m[1]);
+}
+
+async function packages() {
+	return [
+		{ dir: "apps/indusk-mcp", system: MCP_SYSTEM },
+		{ dir: "apps/indusk-admin", system: await adminSystem() },
+	];
 }
 
 export interface Finding {
@@ -85,7 +90,7 @@ async function everydayFiles(pkg: { dir: string; system: string[] }): Promise<st
 describe("everyday-tests-never-wait", () => {
 	it("no everyday test in either package starts a server or waits on the clock (A14)", async () => {
 		const findings: Finding[] = [];
-		for (const pkg of PACKAGES) {
+		for (const pkg of await packages()) {
 			for (const f of await everydayFiles(pkg)) {
 				// This file names the patterns it looks for.
 				if (f.endsWith("everyday-tests-never-wait.test.ts")) continue;
@@ -116,6 +121,33 @@ describe("everyday-tests-never-wait", () => {
 	it("fake timers make a timer a fake wait, not a real one", () => {
 		const source = `vi.useFakeTimers();\nsetTimeout(done, 6_000);\nawait sleep(6_000);`;
 		expect(scan("fixture.test.ts", source)).toEqual([]);
+	});
+
+	it("a wait in the promise form of timers is caught too (A21)", () => {
+		const source = [
+			`import { setTimeout } from "node:timers/promises";`,
+			"await setTimeout(5_000);",
+			"await scheduler.wait(5_000);",
+		].join("\n");
+		expect(scan("fixture.test.ts", source).map((f) => f.line)).toEqual([2, 3]);
+	});
+
+	it("the admin's tier list is read as vitest reads it — a line commented out of SYSTEM is everyday (A22)", async () => {
+		const real = await adminSystem();
+		const dir = mkdtempSync(join(tmpdir(), "never-wait-tiers-"));
+		try {
+			const copy = join(dir, "vitest.tiers.ts");
+			writeFileSync(
+				copy,
+				readFileSync(ADMIN_TIERS, "utf-8").replace(`"${real[0]}",`, `// "${real[0]}",`),
+			);
+			expect(
+				await adminSystem(copy),
+				"vitest runs the commented-out file as everyday",
+			).not.toContain(real[0]);
+		} finally {
+			rmSync(dir, { recursive: true, force: true });
+		}
 	});
 
 	it("each pattern catches what it names", () => {
