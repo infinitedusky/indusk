@@ -55,7 +55,8 @@ export type ConfirmResult =
 	| { ok: true; confirmed: Confirmed[] }
 	| {
 			ok: false;
-			refusals: CheckRefusal[] /** True when the registry was written before the refusal. */;
+			refusals: CheckRefusal[];
+			/** True when the registry was written before the refusal. */
 			written: boolean;
 	  };
 
@@ -97,6 +98,97 @@ function unmadeChanges(planRoot: string, plan: string, registry: Registry): Chec
 	return out;
 }
 
+/** What a proven promise's confirmation will write. */
+interface Ready {
+	proof: RowProof;
+	/** The files, other than its tests, that carry its token. */
+	sites: string[];
+	/** The promise it replaces, when that one is still in force. */
+	retires: PromiseEntry | null;
+}
+
+/**
+ * The half of "is it proven" that needs the code: why `proof` cannot be
+ * confirmed against `codeRoot`, or what to write when it can. `cited` is the
+ * code root's token scan, read once for every promise.
+ */
+function judge(
+	proof: RowProof,
+	codeRoot: string,
+	cited: Map<string, string[]>,
+	byName: Map<string, PromiseEntry>,
+): Ready | { refusals: string[] } {
+	const { promise } = proof;
+	if (proof.refusal !== null) return { refusals: [proof.refusal] };
+	const refusals: string[] = [];
+	for (const rel of proof.tests) {
+		const state = carriesToken(codeRoot, rel, promise);
+		if (state === "missing") {
+			refusals.push(
+				`${promise.name}: its row names the test ${rel}, which does not exist under ${codeRoot} — in a workbench, pass the plan's own worktree with --code-root`,
+			);
+		} else if (state === "unnamed") {
+			refusals.push(
+				`${promise.name}: its row names the test ${rel}, which does not carry "promise: ${promise.name}" — a test that proves a promise names it`,
+			);
+		}
+	}
+	const citing = (p: PromiseEntry) => [
+		...new Set([p.name, ...p.aliases].flatMap((n) => cited.get(n) ?? [])),
+	];
+	const sites = citing(promise)
+		.filter((f) => !proof.tests.includes(f))
+		.sort();
+	if (promise.kind !== "structure" && sites.length === 0) {
+		refusals.push(
+			`${promise.name}: no code under ${codeRoot} carries its token — a ${promise.kind} promise names the code that keeps it (a comment saying "promise: ${promise.name}" at the site)`,
+		);
+	}
+	const replaced = promise.supersedes ? (byName.get(promise.supersedes) ?? null) : null;
+	const retires = replaced && replaced.state !== "retired" ? replaced : null;
+	if (retires) {
+		const still = citing(retires);
+		if (still.length > 0) {
+			refusals.push(
+				`${promise.name}: it replaces ${retires.name}, which ${still.join(", ")} still ${still.length === 1 ? "names" : "name"} — a retired promise must not keep reporting; point each at ${promise.name}`,
+			);
+		}
+	}
+	return refusals.length > 0 ? { refusals } : { proof, sites, retires };
+}
+
+/** Write one confirmation: the promise enforced with its links, and what it replaces retired. */
+function enforce(registry: Registry, plan: string, ready: Ready, day: string): Confirmed {
+	const { proof, sites, retires } = ready;
+	const { promise } = proof;
+	const path = join(registry.dir, promise.file);
+	let text = readFileSync(path, "utf-8");
+	text = setList(text, "tests", proof.tests);
+	text = setList(text, "sites", sites);
+	text = setScalar(text, "state", "enforced");
+	text = appendHistory(
+		text,
+		`- ${day} — enforced when ${plan} closed: proven by ${proof.rows.map((r) => `row ${r.id}`).join(", ")}.`,
+	);
+	writeFileSync(path, text);
+	if (retires) {
+		const oldPath = join(registry.dir, retires.file);
+		writeFileSync(
+			oldPath,
+			appendHistory(
+				setScalar(readFileSync(oldPath, "utf-8"), "state", "retired"),
+				`- ${day} — retired when ${plan} closed: replaced by \`${promise.name}\`.`,
+			),
+		);
+	}
+	return {
+		name: promise.name,
+		tests: proof.tests,
+		sites,
+		...(retires ? { retired: retires.name } : {}),
+	};
+}
+
 /** Confirm every promise `plan` declared, or refuse naming each that is not proven. */
 export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 	const { planRoot, codeRoot, plan } = input;
@@ -127,8 +219,9 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 	const implText = existsSync(implPath) ? readFileSync(implPath, "utf-8") : null;
 	const proofs = rowProofs(registry, plan, implText);
 	const refusals: CheckRefusal[] = unmadeChanges(planRoot, plan, registry);
-	if (proofs.length === 0)
+	if (proofs.length === 0) {
 		return refusals.length > 0 ? refuse(refusals) : { ok: true, confirmed: [] };
+	}
 
 	let cited: Map<string, string[]>;
 	try {
@@ -142,85 +235,21 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 		]);
 	}
 
+	// Decide everything, then write: a refused confirm leaves the registry as it was.
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
-	const plans: Array<{ proof: RowProof; sites: string[]; retires: PromiseEntry | null }> = [];
+	const ready: Ready[] = [];
 	for (const proof of proofs) {
-		const { promise } = proof;
-		if (proof.refusal !== null) {
-			refusals.push({ file: registryFile(promise), message: proof.refusal });
-			continue;
-		}
-		let proven = true;
-		for (const rel of proof.tests) {
-			const state = carriesToken(codeRoot, rel, promise);
-			if (state === "ok") continue;
-			proven = false;
-			refusals.push({
-				file: registryFile(promise),
-				message:
-					state === "missing"
-						? `${promise.name}: its row names the test ${rel}, which does not exist under ${codeRoot} — in a workbench, pass the plan's own worktree with --code-root`
-						: `${promise.name}: its row names the test ${rel}, which does not carry "promise: ${promise.name}" — a test that proves a promise names it`,
-			});
-		}
-		const sites = [promise.name, ...promise.aliases]
-			.flatMap((n) => cited.get(n) ?? [])
-			.filter((f, i, all) => all.indexOf(f) === i && !proof.tests.includes(f))
-			.sort();
-		if (promise.kind !== "structure" && sites.length === 0) {
-			proven = false;
-			refusals.push({
-				file: registryFile(promise),
-				message: `${promise.name}: no code under ${codeRoot} carries its token — a ${promise.kind} promise names the code that keeps it (a comment saying "promise: ${promise.name}" at the site)`,
-			});
-		}
-		const retires = promise.supersedes ? (byName.get(promise.supersedes) ?? null) : null;
-		if (retires && retires.state !== "retired") {
-			const still = [retires.name, ...retires.aliases].flatMap((n) => cited.get(n) ?? []);
-			if (still.length > 0) {
-				proven = false;
-				refusals.push({
-					file: registryFile(promise),
-					message: `${promise.name}: it replaces ${retires.name}, which ${[...new Set(still)].join(", ")} still ${still.length === 1 ? "names" : "name"} — a retired promise must not keep reporting; point each at ${promise.name}`,
-				});
+		const verdict = judge(proof, codeRoot, cited, byName);
+		if ("refusals" in verdict) {
+			for (const message of verdict.refusals) {
+				refusals.push({ file: registryFile(proof.promise), message });
 			}
-		}
-		if (proven)
-			plans.push({ proof, sites, retires: retires?.state === "retired" ? null : retires });
+		} else ready.push(verdict);
 	}
 	if (refusals.length > 0) return refuse(refusals);
 
 	const day = (input.now ?? new Date()).toISOString().slice(0, 10);
-	const confirmed: Confirmed[] = [];
-	for (const { proof, sites, retires } of plans) {
-		const { promise } = proof;
-		const path = join(registry.dir, promise.file);
-		let text = readFileSync(path, "utf-8");
-		text = setList(text, "tests", proof.tests);
-		text = setList(text, "sites", sites);
-		text = setScalar(text, "state", "enforced");
-		text = appendHistory(
-			text,
-			`- ${day} — enforced when ${plan} closed: proven by ${proof.rows.map((r) => `row ${r.id}`).join(", ")}.`,
-		);
-		writeFileSync(path, text);
-		if (retires) {
-			const oldPath = join(registry.dir, retires.file);
-			writeFileSync(
-				oldPath,
-				appendHistory(
-					setScalar(readFileSync(oldPath, "utf-8"), "state", "retired"),
-					`- ${day} — retired when ${plan} closed: replaced by \`${promise.name}\`.`,
-				),
-			);
-		}
-		confirmed.push({
-			name: promise.name,
-			tests: proof.tests,
-			sites,
-			...(retires ? { retired: retires.name } : {}),
-		});
-	}
+	const confirmed = ready.map((r) => enforce(registry, plan, r, day));
 
 	// ADR D5: the registry these writes leave has to pass its own check.
 	const check = await checkPromises(planRoot, { codeRoot });
