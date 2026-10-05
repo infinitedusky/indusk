@@ -79,18 +79,26 @@ lists (Sandy, 2026-10-05):
 - **Replaces**: its name no longer describes it. It is retired and a new one
   is declared.
 
-**Must not break**, for this plan:
+For this plan:
+
+**Must not break**
 
 - **`one-definition-per-shared-rule`**. The row parser has a copy for the
   hooks. The new column and the rename land in both, pinned equal.
 - **`gates-ran-at-every-checkoff`**. The hook that validates an impl changes.
-- **`everyday-tests-never-wait`** and **`everyday-suite-stays-fast`**. Every
-  test this plan adds is a unit test, and `pnpm test` stays about a minute.
+- **`everyday-tests-never-wait`**. Every test this plan adds is a unit test.
+- **`everyday-suite-stays-fast`**. `pnpm test` stays about a minute.
 
 And one guard that is not yet a promise: every impl written before this plan
 validates exactly as it did.
 
-**Changes**: none. **Replaces**: none.
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
 
 ### Not promised
 
