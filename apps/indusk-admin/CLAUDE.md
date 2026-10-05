@@ -49,7 +49,7 @@ Each entry is a rule and a pointer; the pointer holds the story.
   `lib/promise-health.ts` (one cached 2 s read per source; a behaviour
   promise has a chip per source, the alarm source's first, and the sidebar's
   red follows the alarm source only; unreachable = hollow, never
-  green; *watcher blind* — `WatcherBlind`, read from `promises/telemetry`
+  green; reads from `promises/sources`; *watcher blind* — `WatcherBlind`, from `promises/sources`
   beside `JaegerUnreachable` — is a state of the read with its own banner,
   never a chip colour); `monitor` is the one time-filled bar segment; a violated row names the
   span's environment or says unknown. Readers import `telemetry/status.ts`,

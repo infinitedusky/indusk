@@ -222,7 +222,8 @@ exists today and answers wrongly.
 
 #### Build Phase 6 Context
 
-- [ ] The two lessons that point at `lib/promises/telemetry.ts` for `readSources` / `alarmSource` (`one-dead-source-never-hides-another`, `the-alarm-comes-from-production-when-there-is-one`) point at `lib/promises/sources.ts`; `apps/indusk-admin/CLAUDE.md`'s Promises entry names the `promises/sources` subpath; `indusk context check-pointers` passes
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] The two lessons that point at `lib/promises/telemetry.ts` for `readSources` / `alarmSource` (`one-dead-source-never-hides-another`, `the-alarm-comes-from-production-when-there-is-one`) point at `lib/promises/sources.ts`; `apps/indusk-admin/CLAUDE.md`'s Promises entry names the `promises/sources` subpath; `indusk context check-pointers` passes
 
 #### Build Phase 6 Document
 
