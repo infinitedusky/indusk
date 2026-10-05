@@ -133,7 +133,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: `promises fix`, the `fixed` field, `check`'s refusal; `apps/docs/src/guide/promises.md`, "The loop": it ends with `promises fix`
+- [x] `apps/docs/src/reference/cli/promises.md`: `promises fix`, the `fixed` field, `check`'s refusal; `apps/docs/src/guide/promises.md`, "The loop": it ends with `promises fix`
 
 ### Build Phase 2: one reader for a window
 

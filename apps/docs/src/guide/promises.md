@@ -195,6 +195,8 @@ flowchart LR
   test reproducing the incident passes.
 - **A person** writes the root cause; `promises check` refuses to let the
   incident close without one.
+- **`indusk promises fix <id>`** closes it once the fix holds: the incident
+  records when it was fixed, and the promise returns to `enforced`.
 - **monitor** waits: once the Maintenance phase is done, the plan stays in
   `monitor` until its promises have been quiet for `promises.quiet_window_days`
   (default 7), then rests as archived.

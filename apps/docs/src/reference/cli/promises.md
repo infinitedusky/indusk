@@ -56,6 +56,7 @@ promise: impact-events-are-strikes
 source: smoke                            # local | smoke | deployed | desk
 status: open                             # open | fixed
 date: 2026-08-26
+fixed: '2026-08-28T14:02:00Z'            # when it was fixed; required once status is fixed
 ---
 
 ## Symptom
@@ -148,6 +149,7 @@ is never reported as clean.
 | A `known-violated` promise with no open incident | the promise — the state is evidence, not an excuse |
 | An incident missing `promise`, `source`, `status`, `date` or a `## Symptom` / `## Root cause` / `## Fix` section; an unknown source | the incident and the field |
 | An incident marked `fixed` whose `## Root cause` is still `_Unwritten — a person writes this._` (day-monitor) | the incident file — a root cause is a person's finding, written before the incident closes |
+| An incident marked `fixed` that does not say when (`fixed:`) | the incident file — a timeline band from opened to fixed has no end without it; `indusk promises fix` writes both |
 | A token anywhere under the code root naming a promise not in the registry | the file and the name |
 | A token naming a `retired` promise | the file — a retired promise must not keep reporting |
 | A workbench declaring zero or several repos | the declaration, through the shared resolver |
@@ -416,6 +418,21 @@ any incident of the promise, open or fixed, is never counted again — a
 second pass over the same window writes nothing, and a fixed incident is not
 reopened by the violations that caused it. Files are edited as text, key by
 key, so nothing else in a hand-written file changes.
+
+### Closing an incident
+
+```
+indusk promises fix <incident-id>
+```
+
+Marks the incident `status: fixed` and records `fixed: <now>`, and returns its
+promise from `known-violated` to `enforced` when no other incident of it is
+still open; the promise keeps the incident in its `incidents` list, as its
+history. It writes plan documents and commits nothing. Exit **2** naming the
+id when it is unknown or already fixed. Write the root cause first: `promises
+check` still refuses a fixed incident whose root cause is unwritten. Before
+this command existed, closing an incident was three hand edits, and the time
+it was fixed was recorded nowhere.
 
 ### Reopening the owner
 
