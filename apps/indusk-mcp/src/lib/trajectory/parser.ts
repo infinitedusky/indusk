@@ -67,6 +67,12 @@ export interface RowPurpose {
 	promises: string[];
 	lessons: string[];
 	reason: string | null;
+	/**
+	 * Why the cell is neither tokens nor a reason (planner-promises A30), when
+	 * it is not: it tries to name a promise or a lesson and does not, or it is
+	 * only a mark. Read as a reason, such a cell made the row name nothing.
+	 */
+	malformed?: string;
 }
 
 /** Read a `For` cell. Null when it is empty. The hooks carry a copy. */
@@ -77,10 +83,31 @@ export function parsePurpose(cell: string): RowPurpose | null {
 	const lessons: string[] = [];
 	for (const part of text.split(",")) {
 		const m = /^(promise|lesson):\s*([a-z][a-z0-9-]*)$/.exec(part.trim());
-		if (!m) return { promises: [], lessons: [], reason: text };
+		if (!m) return reasonOrMalformed(text);
 		(m[1] === "promise" ? promises : lessons).push(m[2]);
 	}
 	return { promises, lessons, reason: null };
+}
+
+function reasonOrMalformed(text: string): RowPurpose {
+	if (/\b(?:promise|lesson):/i.test(text)) {
+		return {
+			promises: [],
+			lessons: [],
+			reason: null,
+			malformed:
+				"names a promise or a lesson, but not as `promise: <name>` or `lesson: <name>` (the bare name, no backticks, nothing after it; several separated by commas)",
+		};
+	}
+	if (text.split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length < 2) {
+		return {
+			promises: [],
+			lessons: [],
+			reason: null,
+			malformed: "is a mark, not a reason: say why the row needs no promise or lesson",
+		};
+	}
+	return { promises: [], lessons: [], reason: text };
 }
 
 export interface DeferredRow {

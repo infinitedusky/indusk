@@ -75,7 +75,11 @@ export function TrajectoryRowsTable({
             {hasLevel && <TableCell>{row.levelText ?? ""}</TableCell>}
             {hasPurpose && (
               <TableCell>
-                <RowPurpose purpose={row.purpose} promisesHref={promisesHref} />
+                <RowPurpose
+                  purpose={row.purpose}
+                  text={row.purposeText}
+                  promisesHref={promisesHref}
+                />
               </TableCell>
             )}
             <TableCell>
@@ -91,13 +95,17 @@ export function TrajectoryRowsTable({
 /** What a row is for: the promises it proves, the lessons it guards, or its reason. */
 function RowPurpose({
   purpose,
+  text,
   promisesHref,
 }: {
   purpose: TrajectoryRow["purpose"];
+  text: TrajectoryRow["purposeText"];
   promisesHref?: string;
 }) {
   if (!purpose) return null;
   if (purpose.reason !== null) return <>{purpose.reason}</>;
+  // A cell the validator refuses still shows what was written.
+  if (purpose.malformed) return <>{text}</>;
   return (
     <ul className="flex flex-col gap-0.5">
       {purpose.promises.map((name) => (

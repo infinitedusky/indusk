@@ -519,12 +519,23 @@ function validateRowPurpose(implBody, required) {
 			},
 		];
 	}
-	return rows
-		.filter((r) => !r.purpose)
-		.map((r) => ({
-			rule: "test-purpose",
-			message: `Row ${r.id} does not say what it is for. Its For cell names ${PURPOSE_FORMS}.`,
-		}));
+	return rows.flatMap((r) =>
+		!r.purpose
+			? [
+					{
+						rule: "test-purpose",
+						message: `Row ${r.id} does not say what it is for. Its For cell names ${PURPOSE_FORMS}.`,
+					},
+				]
+			: r.purpose.malformed
+				? [
+						{
+							rule: "test-purpose",
+							message: `Row ${r.id}'s For cell "${r.purposeText}" ${r.purpose.malformed}. It names ${PURPOSE_FORMS}.`,
+						},
+					]
+				: [],
+	);
 }
 
 function validateTrajectory(
