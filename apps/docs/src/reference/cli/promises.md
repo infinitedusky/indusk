@@ -319,7 +319,15 @@ missing `url` or `credential_env` — is production's failure, refused by
 key, and local is still read. A source that accepts connections and never
 answers fails within the reader's timeout: the probe's send and its
 follow-up check share one budget, so a silent production cannot stall
-local. `sourceAdvice(name, error)` says what to do about a failed source,
+local. `@infinitedusky/indusk-mcp/promises/timeline` reads a window for the
+timeline: `readTimeline(root, registry, { from, to, source? })` returns, per
+source, every behaviour promise's runs in the range as `{ at, outcome, traceId }`
+— no spans, since Jaeger returns whole traces and a week of one promise can be
+megabytes. A query that returns as many traces as it asked for is split at its
+midpoint and both halves read again, down to one minute; a minute still full is
+listed in `atLeast`, its runs a lower bound. Each source fails on its own, and
+the watcher probe is not repeated. Both readers build their query through one
+function, `marksBetween`, so they agree on which marks count. `sourceAdvice(name, error)` says what to do about a failed source,
 from the failure itself — `status` and `watch` both print it. `readPromiseMarks(root, registry, { sinceMs?, source? })` reads
 one source, the alarm source by default: it takes the registry's behaviour
 promises that are not retired, their aliases, the project id and the quiet

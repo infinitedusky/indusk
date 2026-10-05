@@ -156,7 +156,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`, the library paragraph: `promises/timeline`, slicing and `atLeast`
+- [x] `apps/docs/src/reference/cli/promises.md`, the library paragraph: `promises/timeline`, slicing and `atLeast`
 
 ### Build Phase 3: the chips
 
