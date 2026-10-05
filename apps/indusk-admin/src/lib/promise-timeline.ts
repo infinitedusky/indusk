@@ -1,6 +1,7 @@
 import type { Registry } from "@infinitedusky/indusk-mcp/promises/registry";
 import {
   healthWindowMs,
+  resolveMarkSources,
   type SourceName,
 } from "@infinitedusky/indusk-mcp/promises/sources";
 import type {
@@ -31,6 +32,10 @@ import {
  * request reads only what is not covered: the whole range the first time,
  * then from the newest covered moment (less a minute, for spans indexed late)
  * to now. A refresh with nothing new moves almost nothing (A12).
+ *
+ * Held marks are keyed by the server they came from, not only the source's
+ * name: a project repointed at another server starts over rather than drawing
+ * the old server's runs as the new one's (A16).
  *
  * Marks older than the longest window offered are dropped. An admin restart
  * starts empty. A registry that gains a promise starts its source over, since
@@ -97,7 +102,23 @@ export async function readWindow(
   fromMs: number,
   timeoutMs: number,
 ): Promise<WindowRead> {
-  const key = `${projectRoot}\0${source}`;
+  const resolved = (await resolveMarkSources(projectRoot)).find(
+    (r) => r.name === source,
+  );
+  if (!resolved?.ok) {
+    return {
+      ok: false,
+      name: source,
+      label: source,
+      kind: "unreachable",
+      where: resolved ? resolved.error.where : source,
+      reason: resolved ? resolved.error.message : `no ${source} source`,
+    };
+  }
+  const prefix = `${projectRoot}\0${source}\0`;
+  const key = `${prefix}${resolved.source.label}`;
+  for (const k of held.keys())
+    if (k.startsWith(prefix) && k !== key) held.delete(k);
   const now = Date.now();
   const promises = behaviourNames(registry);
   let h = held.get(key);
