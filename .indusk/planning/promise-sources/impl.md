@@ -1,7 +1,7 @@
 ---
 title: "Promise sources — local and production, side by side"
 date: 2026-10-04
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -197,7 +197,7 @@ exists today and answers wrongly.
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: a malformed `promises.jaeger` is refused for production by key while local is still read; the probe's send is bounded by the reader's timeout
+- [x] `apps/docs/src/reference/cli/promises.md`: a malformed `promises.jaeger` is refused for production by key while local is still read; the probe's send is bounded by the reader's timeout
 
 ## Files Affected
 

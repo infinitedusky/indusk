@@ -309,7 +309,12 @@ local break during development is work in progress, not an alarm.
 `readSources(root, registry, opts)` reads every source and returns one entry
 each: its marks, or its failure (`unreachable` or `blind`, where it looked,
 and why). It never throws for one source's failure, so one dead source never
-hides another. `readPromiseMarks(root, registry, { sinceMs?, source? })` reads
+hides another. A malformed `promises.jaeger` — a string where the object belongs, or a
+missing `url` or `credential_env` — is production's failure, refused by
+key, and local is still read. A source that accepts connections and never
+answers fails within the reader's timeout: the probe's send and its
+follow-up check share one budget, so a silent production cannot stall
+local. `readPromiseMarks(root, registry, { sinceMs?, source? })` reads
 one source, the alarm source by default: it takes the registry's behaviour
 promises that are not retired, their aliases, the project id and the quiet
 window, and asks `markedSpans` — which throws `JaegerUnreachable` rather than
