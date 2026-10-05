@@ -296,7 +296,11 @@ export function withdrawPromise(planRoot: string, input: WithdrawInput): string 
 	if (!registry || !promise) {
 		return refuse(`${name}: the registry does not hold this promise — nothing to withdraw`);
 	}
-	requireOpenPlan(planRoot, plan);
+	// An archived plan may still hold a promise it never confirmed (A43).
+	const status = planFolderStatus(planRoot, plan);
+	if (status !== "active" && status !== "archived") {
+		refuse(`"${plan}" is not a plan folder under .indusk/planning/ or .indusk/planning/archive/`);
+	}
 	if (promise.owner !== plan) {
 		refuse(
 			`${name}: ${promise.owner} declared this promise, not ${plan} — a promise is withdrawn by the plan that made it`,

@@ -192,7 +192,7 @@ function stateRefusals(
 			if (owner === "archived") {
 				refusals.push({
 					file: registryFile(p.file),
-					message: `${p.name}: declared, but its owner "${p.owner}" is archived — the plan closed without establishing it; mark it enforced with its links, or known-violated with the incident that says why`,
+					message: `${p.name}: declared, but its owner "${p.owner}" is archived — the plan closed without confirming it. Confirm it from that plan's rows with \`indusk promises confirm ${p.owner}\`, or, if it was never kept, take it back with \`indusk promises withdraw ${p.name} --plan ${p.owner}\``,
 				});
 			}
 			break;

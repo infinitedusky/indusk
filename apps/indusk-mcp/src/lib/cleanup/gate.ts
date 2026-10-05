@@ -142,7 +142,9 @@ function unprovenPromisesOf(planDirIn: string, implContent: string): string[] {
 	// A registry that cannot be read is `promises check`'s refusal to make.
 	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
 	if (registry === null) return [];
-	return rowProofs(registry, basename(planDir), implContent)
+	const plan = basename(planDir);
+	const declared = registry.promises.filter((p) => p.owner === plan && p.state === "declared");
+	return rowProofs(declared, plan, implContent)
 		.filter((p) => p.refusal !== null)
 		.map((p) => p.promise.name);
 }

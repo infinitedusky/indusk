@@ -284,12 +284,14 @@ export async function promisesConfirm(
 		return;
 	}
 	if (result.confirmed.length === 0) {
-		console.info(`${plan}: no promise to confirm — it holds none that is still declared.`);
+		console.info(
+			`${plan}: no promise to confirm — it holds none that is still declared, and the links of those in force are current.`,
+		);
 		return;
 	}
 	for (const c of result.confirmed) {
 		console.info(
-			`${c.name}: enforced — ${c.tests.length} test file${c.tests.length === 1 ? "" : "s"}, ${c.sites.length} code site${c.sites.length === 1 ? "" : "s"}${c.retired ? `; ${c.retired} retired` : ""}`,
+			`${c.name}: ${c.inForce ? "links updated" : "enforced"} — ${c.tests.length} test file${c.tests.length === 1 ? "" : "s"}, ${c.sites.length} code site${c.sites.length === 1 ? "" : "s"}${c.retired ? `; ${c.retired} retired` : ""}`,
 		);
 	}
 	console.info(

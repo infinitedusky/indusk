@@ -3,7 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { parseTrajectory } from "../trajectory/parser.js";
 import { planFolders } from "./plan-folder.js";
-import type { PromiseEntry, Registry } from "./registry.js";
+import type { PromiseEntry } from "./registry.js";
 
 /**
  * The test rows that name a promise (planner-promises ADR D3, D5, D6).
@@ -81,21 +81,23 @@ export interface RowProof {
  * "is it proven" that needs only the impl. `confirmPlan` adds the half that
  * needs the code (the test files exist and carry the token).
  */
-export function rowProofs(registry: Registry, plan: string, implText: string | null): RowProof[] {
-	return registry.promises
-		.filter((p) => p.owner === plan && p.state === "declared")
-		.map((promise): RowProof => {
-			const rows = implText === null ? [] : rowsNamingIn(implText, promise);
-			const tests = [...new Set(rows.flatMap((r) => r.tests))];
-			const open = rows.filter((r) => r.state !== "passing");
-			let refusal: string | null = null;
-			if (rows.length === 0) {
-				refusal = `${promise.name}: no test row of ${plan} names it — a promise is proven by a row whose For cell names it`;
-			} else if (open.length > 0) {
-				refusal = `${promise.name}: ${open.map((r) => `row ${r.id} is ${r.state}`).join(", ")} — every row that names a promise passes before the plan closes`;
-			} else if (tests.length === 0) {
-				refusal = `${promise.name}: ${rows.map((r) => `row ${r.id}`).join(", ")} ${rows.length === 1 ? "names" : "name"} it but no test file — a row's Test cell says which files prove it`;
-			}
-			return { promise, rows, tests, refusal };
-		});
+export function rowProofs(
+	promises: readonly PromiseEntry[],
+	plan: string,
+	implText: string | null,
+): RowProof[] {
+	return promises.map((promise): RowProof => {
+		const rows = implText === null ? [] : rowsNamingIn(implText, promise);
+		const tests = [...new Set(rows.flatMap((r) => r.tests))];
+		const open = rows.filter((r) => r.state !== "passing");
+		let refusal: string | null = null;
+		if (rows.length === 0) {
+			refusal = `${promise.name}: no test row of ${plan} names it — a promise is proven by a row whose For cell names it`;
+		} else if (open.length > 0) {
+			refusal = `${promise.name}: ${open.map((r) => `row ${r.id} is ${r.state}`).join(", ")} — every row that names a promise passes before the plan closes`;
+		} else if (tests.length === 0) {
+			refusal = `${promise.name}: ${rows.map((r) => `row ${r.id}`).join(", ")} ${rows.length === 1 ? "names" : "name"} it but no test file — a row's Test cell says which files prove it`;
+		}
+		return { promise, rows, tests, refusal };
+	});
 }
