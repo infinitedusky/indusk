@@ -1,7 +1,7 @@
 import { existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { registerPlanTools } from "../tools/plan-tools.js";
+import { registerPromiseTools } from "../tools/promise-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	type PromiseProject,
@@ -178,7 +178,7 @@ describe.skipIf(SHOULD_SKIP)("A28 — a declared promise can be withdrawn", () =
 			declared(),
 			declared({ name: "seat-count-matches-table", owner: OTHER_PLAN }),
 		]);
-		const tools = toolCaller((server) => registerPlanTools(server, p.planRoot));
+		const tools = toolCaller((server) => registerPromiseTools(server, p.planRoot));
 
 		const refused = await tools.call("withdraw_promise", {
 			name: "seat-count-matches-table",

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
 import { checkRetrospectiveReadiness } from "../lib/cleanup/gate.js";
-import { registerPlanTools } from "../tools/plan-tools.js";
+import { registerPromiseTools } from "../tools/promise-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { briefText, type ImplSpec, implText } from "./helpers/plan-fixture.js";
 import {
@@ -121,7 +121,7 @@ describe.skipIf(SHOULD_SKIP)(
 		it("confirm_promises writes the same registry, and a refusal is an error that names the promise", async () => {
 			const unproven = project({ rows: [proving("written")] });
 			const refused = await toolCaller((server) =>
-				registerPlanTools(server, unproven.planRoot),
+				registerPromiseTools(server, unproven.planRoot),
 			).call("confirm_promises", { plan: PLAN });
 			expect(refused.isError).toBe(true);
 			expect(JSON.stringify(refused.json)).toContain(NAME);
@@ -129,7 +129,7 @@ describe.skipIf(SHOULD_SKIP)(
 			rmSync(unproven.root, { recursive: true, force: true });
 
 			const p = project({});
-			const done = await toolCaller((server) => registerPlanTools(server, p.planRoot)).call(
+			const done = await toolCaller((server) => registerPromiseTools(server, p.planRoot)).call(
 				"confirm_promises",
 				{ plan: PLAN },
 			);

@@ -20,6 +20,7 @@ import { registerDocumentTools } from "../tools/document-tools.js";
 import { registerHighlightTools } from "../tools/highlight-tools.js";
 import { registerLessonTools } from "../tools/lesson-tools.js";
 import { registerPlanTools } from "../tools/plan-tools.js";
+import { registerPromiseTools } from "../tools/promise-tools.js";
 import { registerQualityTools } from "../tools/quality-tools.js";
 import { registerSystemTools } from "../tools/system-tools.js";
 import { registerTelemetryTools } from "../tools/telemetry-tools.js";
@@ -63,6 +64,7 @@ export async function startServer(): Promise<void> {
 
 		console.error("[indusk] registering tools...");
 		registerPlanTools(server, projectRoot);
+		registerPromiseTools(server, projectRoot);
 		registerContextTools(server, projectRoot);
 		registerQualityTools(server, projectRoot);
 		registerDocumentTools(server, projectRoot);

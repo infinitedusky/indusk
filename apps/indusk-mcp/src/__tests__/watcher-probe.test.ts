@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { registerPlanTools } from "../tools/plan-tools.js";
+import { registerPromiseTools } from "../tools/promise-tools.js";
 import { CLI_BIN, SHOULD_SKIP } from "./helpers/cli.js";
 import {
 	type FakeQueryPort,
@@ -86,7 +86,7 @@ async function health(root: string, home: string): Promise<{ json: unknown; isEr
 	const previous = process.env.INDUSK_HOME;
 	process.env.INDUSK_HOME = home;
 	try {
-		const tools = toolCaller((server) => registerPlanTools(server, root));
+		const tools = toolCaller((server) => registerPromiseTools(server, root));
 		return await tools.call("promise_health", {});
 	} finally {
 		if (previous === undefined) delete process.env.INDUSK_HOME;

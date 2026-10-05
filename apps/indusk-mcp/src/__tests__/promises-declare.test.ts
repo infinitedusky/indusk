@@ -2,7 +2,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
-import { registerPlanTools } from "../tools/plan-tools.js";
+import { registerPromiseTools } from "../tools/promise-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { type PromiseProject, promiseProject } from "./helpers/promises-fixture.js";
 import { toolCaller } from "./helpers/tool-call.js";
@@ -132,7 +132,7 @@ describe.skipIf(SHOULD_SKIP)(
 	() => {
 		it("declare_promise writes the same file, and a refusal is an error that names the promise", async () => {
 			const p = project(["seating"]);
-			const tools = toolCaller((server) => registerPlanTools(server, p.planRoot));
+			const tools = toolCaller((server) => registerPromiseTools(server, p.planRoot));
 			const args = {
 				name: NAME,
 				plan: PLAN,
