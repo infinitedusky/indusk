@@ -253,7 +253,7 @@ Found while investigating (2026-10-04), before any row was written:
 - [x] `serve()` binds the query door before spawning Jaeger, so a taken public port refuses before anything is started; and any exit path closes the door with `closeAllConnections()`
 - [x] `startQueryDoor`: an upstream response that errors or aborts destroys the client's response; a client response closed early destroys the upstream request
 - [x] `readServerSettings`: the public query URL must parse as an absolute `http:`/`https:` URL with no user, password, query or fragment, or it is refused as a `MissingServerSetting` naming the variable (a path is kept, for a Jaeger under a prefix)
-- [ ] `writeFileDurably`: write until every byte is written (a zero-byte write is a failure), and on any failure before the rename remove the temp file and rethrow, leaving the old record in place
+- [x] `writeFileDurably`: write until every byte is written (a zero-byte write is a failure), and on any failure before the rename remove the temp file and rethrow, leaving the old record in place
 
 #### Build Phase 4 Verification
 
