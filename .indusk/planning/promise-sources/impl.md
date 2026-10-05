@@ -192,7 +192,8 @@ exists today and answers wrongly.
 
 #### Build Phase 5 Context
 
-- [ ] guard: A8 carries `lesson: one-dead-source-never-hides-another` — the lesson gains the case: a source's *configuration* failing is that source's failure too, not the read's
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+- [x] guard: A8 carries `lesson: one-dead-source-never-hides-another` — the lesson gains the case: a source's *configuration* failing is that source's failure too, not the read's
 
 #### Build Phase 5 Document
 
