@@ -129,7 +129,7 @@ exists today and answers wrongly.
 
 #### Build Phase 2 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: status per source and its exit codes; `watch --source` and what each value reads
+- [x] `apps/docs/src/reference/cli/promises.md`: status per source and its exit codes; `watch --source` and what each value reads
 
 ### Build Phase 3: promise_health per source, and catchup
 

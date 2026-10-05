@@ -273,6 +273,32 @@ Jaeger's JSON (it names the URL) — and exit **2** when the watcher is
 API within 5 seconds (it names both). Either way, no count is printed for any
 promise.
 
+### Local and production
+
+A project that names a server in `promises.jaeger` has two sources: `local`,
+the laptop's telemetry daemon, and `production`, the server. Status prints a
+section for each, opening on a line with the source's name and URL, with the
+blocks above inside it:
+
+```
+local — http://localhost:16686
+Promises observed in the last 7 days, from Jaeger at http://localhost:16686
+…
+
+production — https://indusk-always-on.fly.dev:16687
+Promises observed in the last 7 days, from Jaeger at https://indusk-always-on.fly.dev:16687
+…
+```
+
+The same promise can be red in one and green in the other: a break on the
+laptop is work in progress, and a break in production is the alarm. A source
+that could not be read says so in its own section, naming where it looked,
+and the other source is still printed. The exit code follows the **alarm
+source** — production when there is one: exit **2** when production could
+not be read, exit **0** when only `local` failed (a laptop with no daemon
+running, beside a production server that answered). A project that names no
+server prints exactly as above, with no section headers.
+
 The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry`.
 A project has one or two **sources**: `local`, its telemetry daemon, always;
 and `production`, the server `promises.jaeger` names, when it names one.
@@ -296,9 +322,10 @@ that came back is trusted for 30 seconds per query URL, within one process. The 
 
 ## `promises watch`
 
-`--source` says where the run happened, and is recorded on the incident:
-`local` (the default), `smoke`, or **`deployed`** for a run on a deployed
-system. An incident also records **`environment`** when the span carried
+`--source` says where the run happened, chooses what is read, and is
+recorded on the incident: `local` (the default) and `smoke` read the laptop's
+daemon; **`deployed`** reads the production server `promises.jaeger` names,
+and is refused, naming `promises.jaeger`, when the project names none. An incident also records **`environment`** when the span carried
 `deployment.environment` — one server holds staging and production, and an
 incident that names the wrong one sends a person to the wrong logs. A span
 that carried none records no environment rather than a guess.
