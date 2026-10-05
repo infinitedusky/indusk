@@ -90,7 +90,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    **When the person accepts the brief, save its promises with the tools. Never type a file under `.indusk/promises/`:**
 
    - `declare_promise` for each promise under **This plan makes**;
-   - `replace_promise` for each entry under **Replaces** (it declares the new promise recording which it replaces; the old one stays in force until this plan closes);
+   - `replace_promise` for each entry under **Replaces** (it declares the new promise recording which it replaces; the old one stays in force until this plan closes). A promise that is some entry's replacement is saved this way only, not also with `declare_promise`; if it was, `replace_promise` records the link on it;
    - nothing yet for **Changes**: `change_promise` rewrites a promise's sentence, and the registry must not say what the code does not yet do, so it is run in the build phase that makes the new sentence true. Give the impl a checklist item for it.
 
    Then run `indusk promises contract {plan-name}`. It refuses, naming the promise or the expectation, until the brief and the registry agree. When it passes, set `status: accepted`. From then on `indusk promises check` holds the plan to it, and with it every `pnpm test`.
