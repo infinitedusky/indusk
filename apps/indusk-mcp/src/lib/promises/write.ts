@@ -10,6 +10,7 @@ import {
 	type PromiseEntry,
 	promiseProblem,
 	promisesDir,
+	type Registry,
 	readPromises,
 } from "./registry.js";
 import { PROMISE_KINDS, PROMISE_NAME, type PromiseKind } from "./vocabulary.js";
@@ -239,8 +240,40 @@ export function replacePromise(planRoot: string, input: ReplaceInput): string {
 		return refuse(`${input.old}: the registry does not hold this promise — nothing to replace`);
 	}
 	if (old.state === "retired") refuse(`${input.old}: this promise is already retired`);
+	if (input.name === input.old) refuse(`${input.old}: a promise does not replace itself`);
+	const already = registry?.promises.find((p) => p.name === input.name);
+	if (registry && already) return recordReplacement(registry, already, input);
 	const { old: supersedes, ...declare } = input;
 	return declarePromise(planRoot, { ...declare, supersedes });
+}
+
+/**
+ * The replacement is already declared, plainly (planner-promises A38): the
+ * planner saved it with `declare`, and closing refused because nothing said
+ * what it replaces. The link is recorded on it; its sentence is the one it
+ * was declared with. Only a promise this plan declared, still `declared`, that
+ * replaces nothing else.
+ */
+function recordReplacement(registry: Registry, promise: PromiseEntry, input: ReplaceInput): string {
+	const { name, plan, old } = input;
+	if (promise.owner !== plan || promise.state !== "declared") {
+		refuse(
+			`${name}: the registry already holds this promise, ${promise.state} and owned by ${promise.owner} — a replacement is a promise ${plan} declares`,
+		);
+	}
+	if (promise.supersedes && promise.supersedes !== old) {
+		refuse(`${name}: it already replaces ${promise.supersedes}; a promise replaces one other`);
+	}
+	const path = join(registry.dir, promise.file);
+	if (promise.supersedes === old) return path;
+	let text = setScalar(readFileSync(path, "utf-8"), "supersedes", old);
+	text = appendHistory(
+		text,
+		`- ${today(input.now ?? new Date())} — recorded as replacing \`${old}\`, which is retired when ${plan} closes.`,
+	);
+	requireReadable(name, text);
+	writeFileSync(path, text);
+	return path;
 }
 
 export interface WithdrawInput {
