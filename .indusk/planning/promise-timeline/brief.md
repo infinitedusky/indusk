@@ -120,6 +120,30 @@ This plan is what lets both break steps of the
 the local break goes green by the newest-run rule, and the production break
 goes to the fixed colour by the fixed-incident rule.
 
+## From the research (2026-10-05)
+
+[research.md](research.md) measured what the direction rests on. Three
+things follow.
+
+**An incident records when it was fixed.** Today marking an incident fixed
+changes `status` and nothing else, so a band "from opened to fixed" has no
+end. Marking an incident fixed also writes `fixed: <time>`, and `promises
+check` refuses `status: fixed` without it. The two incidents already fixed get
+their time from the commit that fixed them, once, by hand.
+
+**The timeline reads what is new, not the whole window again.** A week of
+one promise's marks is 368 traces and 10.9 MB, because Jaeger returns whole
+traces. Re-read every five seconds from the Fly server, that is megabytes a
+second. The admin keeps what it has read per source and promise and, on each
+refresh, asks only for marks since the newest one it holds. The window is
+read in full once per admin start.
+
+**The window is drawn in a fixed number of buckets.** One query returns at
+most 1,500 traces and Jaeger cannot count for us, so a busy window is read in
+time slices that split when one fills, and drawn as a fixed number of cells:
+**24 hours, 7 days or 30 days**, chosen on the page, each drawn as about 100
+cells. A cell takes the worst colour among its runs.
+
 ## Test assertions carried over
 
 Drafted in day-always-on-deploy's test plan on 2026-10-04 and moved with the
@@ -152,6 +176,14 @@ Added 2026-10-05, from "After promise-sources":
 - A promise with more marks in the window than one query returns is still
   drawn across the whole window, in buckets, and a bucket that hit the limit
   says "at least".
+
+Added 2026-10-05, from "From the research":
+
+- Marking an incident fixed records when; an incident marked fixed without a
+  time is refused by `promises check`. The band ends at that time.
+- A refresh of the Promises page moves only the marks that are new since the
+  last refresh, not the whole window again.
+- The page offers 24 hours, 7 days and 30 days.
 
 ## Part of
 
