@@ -108,13 +108,17 @@ describe.skipIf(SHOULD_SKIP)("A4 — a failing run still runs the guard", () => 
 });
 
 describe("A5 — every test entry point ends with the guard", () => {
-	it("the root `test` and the package's `test:system` run through the guard wrapper", () => {
+	it("the root `test` and each package's `test:system` run through the guard wrapper", () => {
 		const read = (p: string) =>
 			JSON.parse(readFileSync(p, "utf-8")).scripts as Record<string, string>;
 		const root = read(resolve(__dirname, "..", "..", "..", "..", "package.json"));
 		const pkg = read(resolve(__dirname, "..", "..", "package.json"));
 		expect(root.test, "root pnpm test").toMatch(/with-daemon-guard\.js/);
 		expect(pkg["test:system"], "pnpm test:system — the tier that starts daemons").toMatch(
+			/with-daemon-guard\.js/,
+		);
+		const admin = read(resolve(__dirname, "..", "..", "..", "indusk-admin", "package.json"));
+		expect(admin["test:system"], "the admin's system tier (test-kinds)").toMatch(
 			/with-daemon-guard\.js/,
 		);
 	});
