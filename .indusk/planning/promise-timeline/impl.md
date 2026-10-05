@@ -168,9 +168,11 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 - [x] A9 and A10 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline-sources -t "A9|A10"`); the existing admin promise suites unchanged (`http-promise-health`, `http-promise-sources`, `http-promise-remote`, `http-watcher-blind`); admin `tsc` clean — A9, A10 pass; the four suites and the component tests: 34 files, 159 passed; admin `tsc` clean against the fresh build; leak guard clear
 
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
+
 #### Build Phase 3 Context
 
-- [ ] guard: A9 carries `lesson: a-fixed-break-is-history-not-health` — a chip that counts fixed violations as live calls a mended promise broken for a week
+- [x] guard: A9 carries `lesson: a-fixed-break-is-history-not-health` — a chip that counts fixed violations as live calls a mended promise broken for a week
 
 #### Build Phase 3 Document
 
