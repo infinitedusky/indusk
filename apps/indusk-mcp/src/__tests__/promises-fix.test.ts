@@ -2,6 +2,7 @@ import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
+import { UNWRITTEN_ROOT_CAUSE } from "../lib/promises/vocabulary.js";
 import { runCli } from "./helpers/cli.js";
 import {
 	daysAgo,
@@ -27,7 +28,11 @@ const PROMISE = "seat-held";
 const OWNER = "seats-v2";
 const INCIDENT = "i-2026-10-01-seat-held";
 
-function project(incident: { status: "open" | "fixed"; fixed?: string }): PromiseProject {
+function project(incident: {
+	status: "open" | "fixed";
+	fixed?: string;
+	rootCause?: string;
+}): PromiseProject {
 	return promiseProject({
 		domains: ["seating"],
 		landed: { [OWNER]: daysAgo(30) },
@@ -53,6 +58,7 @@ function project(incident: { status: "open" | "fixed"; fixed?: string }): Promis
 				lastSeen: "2026-10-01T11:00:00Z",
 				traces: ["0123456789abcdef0123456789abcdef"],
 				...(incident.fixed ? { fixed: incident.fixed } : {}),
+				...(incident.rootCause ? { rootCause: incident.rootCause } : {}),
 			},
 		],
 		files: {
@@ -113,5 +119,16 @@ describe("A5 — an incident records when it was fixed", () => {
 		fixture = project({ status: "fixed", fixed: "2026-10-01T12:00:00Z" });
 		const r = runCli(fixture.root, ["promises", "check"]);
 		expect(r.code, r.stderr).toBe(0);
+	});
+
+	it("A18 — `promises fix` refuses an incident whose root cause is unwritten, and changes nothing", () => {
+		fixture = project({ status: "open", rootCause: UNWRITTEN_ROOT_CAUSE });
+		const path = join(fixture.planRoot, ".indusk", "promises", "incidents", `${INCIDENT}.md`);
+		const before = readFileSync(path, "utf-8");
+		const r = runCli(fixture.root, ["promises", "fix", INCIDENT]);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(INCIDENT);
+		expect(r.stderr).toMatch(/root cause/i);
+		expect(readFileSync(path, "utf-8"), "the incident is untouched").toBe(before);
 	});
 });

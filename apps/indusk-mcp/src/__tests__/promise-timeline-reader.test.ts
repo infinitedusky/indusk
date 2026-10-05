@@ -1,4 +1,5 @@
 import { rmSync } from "node:fs";
+import { basename } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readPromises } from "../lib/promises/registry.js";
 import { readTimeline } from "../lib/promises/timeline.js";
@@ -29,6 +30,7 @@ import { withEnv } from "./helpers/with-env.js";
 const OWNER = "seats-v2";
 const DENSE = "seat-dense";
 const SPREAD = "seat-spread";
+const TAGGED = "seat-tagged";
 const CRED_ENV = "INDUSK_TEST_TIMELINE_CREDENTIAL";
 const MINUTE = 60_000;
 const now = Date.now();
@@ -73,9 +75,9 @@ beforeAll(async () => {
 	fixture = promiseProject({
 		domains: ["seating"],
 		landed: { [OWNER]: daysAgo(30) },
-		promises: [behaviour(DENSE), behaviour(SPREAD)],
+		promises: [behaviour(DENSE), behaviour(SPREAD), behaviour(TAGGED)],
 		files: Object.fromEntries(
-			[DENSE, SPREAD].flatMap((n) => [
+			[DENSE, SPREAD, TAGGED].flatMap((n) => [
 				[`src/${n}.ts`, siteFile(n)],
 				[`src/${n}.test.ts`, testFile(n)],
 			]),
@@ -101,6 +103,12 @@ beforeAll(async () => {
 	await local.load([
 		...Array.from({ length: 12 }, (_, i) => mark(DENSE, now - 30 * MINUTE + i * 3_000)),
 		...Array.from({ length: 12 }, (_, i) => mark(SPREAD, now - 90 * MINUTE + i * 5 * MINUTE)),
+		// A15: tagged with this project's folder name as an application would
+		// write it — hyphens and all — not the normalised id InDusk derives.
+		...Array.from({ length: 3 }, (_, i) => ({
+			...mark(TAGGED, now - 20 * MINUTE + i * MINUTE),
+			attributes: { "indusk.project": basename(fixture.root) },
+		})),
 	]);
 }, 180_000);
 
@@ -134,6 +142,16 @@ describe.skipIf(SHOULD_SKIP)("promise-timeline — the window reader", () => {
 		const times = (spread?.marks ?? []).map((m) => Date.parse(m.at));
 		expect(times).toEqual([...times].sort((a, b) => a - b));
 		expect(spread?.marks.every((m) => m.outcome === "upheld" && m.traceId.length > 0)).toBe(true);
+	}, 60_000);
+
+	it("A15 — runs tagged with this project's id in other separators count as this project's", async () => {
+		expect(basename(fixture.root), "the fixture's folder name carries separators").toMatch(/[-.]/);
+		const [r] = await read("local");
+		if (!r.ok) throw new Error(JSON.stringify(r));
+		expect(
+			r.byPromise.get(TAGGED)?.marks,
+			"lesson: a-filter-that-drops-must-normalise-both-sides",
+		).toHaveLength(3);
 	}, 60_000);
 
 	it("a stopped source is that source's failure, and local is still read", async () => {
