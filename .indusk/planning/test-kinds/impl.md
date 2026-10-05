@@ -64,8 +64,8 @@ checked is still checked, and InDusk holds two promises about its own suite
 | A15 | A short-lived process that runs and exits (`git`, the CLI) does not trip the guard | Test Phase 1 | Test Phase 1 | passing | unit |
 | A16 | Every everyday run is marked held or broken with its duration; a slow run fails nothing; an overlapping run is not judged | Build Phase 5 | Build Phase 5 | planned | unit |
 | A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | planned | unit |
-| A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | written | unit |
-| A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | written | unit |
+| A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | passing | unit |
+| A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | passing | unit |
 
 ### Deferred Verification
 
@@ -213,17 +213,18 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 #### Build Phase 4 Verification
 
-- [ ] A18 and A19 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/test-kinds-validation src/__tests__/planner-verification-template`); the trajectory validator's existing tests still pass, including the six legacy impls with style `Kind` values
-- [ ] Installed skills synced (`indusk update` in this repo) and `pnpm test` green
-- [ ] A3 recorded
+- [x] A18 and A19 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/test-kinds-validation src/__tests__/planner-verification-template`); the trajectory validator's existing tests still pass, including the six legacy impls with style `Kind` values — 87 tests across trajectory, kinds, A18, A19 and the corpus check
+- [x] Installed skills synced (`indusk update` in this repo) and `pnpm test` green — green in 53 s: 268 mcp files, the admin, `promises:check`, no leftover daemon
+- [x] A3 recorded — this phase's own tests (kinds, parity, trajectory, skill sync) in about 2 s; the one full run was the green this phase's Verification names
+- [x] Shape — `test-kinds.ts` is one definition with its copy pinned; the kind rule is one function in each of the hook and the library, mirrored as the parser already is; nothing to change
 
 #### Build Phase 4 Context
 
-- [ ] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): "a test plan's Kind is one of five — unit / contract / live check / smoke / promise — the smallest that proves it; `test_kinds: required` validates it" — see `/guide/test-kinds`
+- [x] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): "a test plan's Kind is one of five — unit / contract / live check / smoke / promise — the smallest that proves it; `test_kinds: required` validates it" — see `/guide/test-kinds`
 
 #### Build Phase 4 Document
 
-- [ ] New `apps/docs/src/guide/test-kinds.md` (kinds and their moments, a Mermaid kind → trigger diagram, the smallest-kind default, clock and reads, the two tiers); `guide/test-trajectory.md` (`Kind`, `test_kinds: required`); sidebar entry
+- [x] New `apps/docs/src/guide/test-kinds.md` (kinds and their moments, a Mermaid kind → trigger diagram, the smallest-kind default, clock and reads, the two tiers); `guide/test-trajectory.md` (`Kind`, `test_kinds: required`); sidebar entry
 
 ### Build Phase 5: The suite's own promises
 
