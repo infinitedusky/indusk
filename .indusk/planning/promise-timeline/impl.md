@@ -144,8 +144,8 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 #### Build Phase 2 Verification
 
-- [ ] (no tests flip at this phase — reason: infra) — the reader is drawn by Build Phase 4, where A1 and A11 pass. Its own unit test, `src/lib/promises/timeline.test.ts` against a real local Jaeger, passes here: 12 marks in one minute with the limit at 5 come back as one `atLeast` slice; 12 spread over an hour come back complete; a stopped source is that source's failure
-- [ ] The existing promise suites unchanged (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources src/__tests__/monitor-status`); `tsc --noEmit` clean
+- [x] (no tests flip at this phase — reason: infra) — the reader is drawn by Build Phase 4, where A1 and A11 pass. Its own test (written at `src/__tests__/promise-timeline-reader.test.ts`, in the system tier, where real-daemon tests are listed — not beside the module) passes here, 3/3, against a real local daemon and a real always-on server: 12 marks in one minute with the limit at 5 come back as one `atLeast` slice; 12 spread over an hour come back complete; a stopped source is that source's failure
+- [x] The existing promise suites unchanged (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources src/__tests__/monitor-status`); `tsc --noEmit` clean — with `always-on-source` and `monitor-watch` too, since `markedSpans` now reads through `marksBetween`: 5 files, 36 passed, leak guard clear
 
 #### Build Phase 2 Context
 
