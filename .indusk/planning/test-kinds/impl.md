@@ -1,7 +1,7 @@
 ---
 title: "Test kinds"
 date: 2026-10-05
-status: completed
+status: in-progress
 trajectory: required
 test_kinds: required
 test_phases: required
@@ -66,6 +66,10 @@ checked is still checked, and InDusk holds two promises about its own suite
 | A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | passing | unit |
 | A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | passing | unit |
 | A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | passing | unit |
+| A20 | After a change that only adds an admin test which starts `next dev`, the root `pnpm test` fails: no package's test run is replayed from turbo's cache, so the guard in mcp sees the admin's files every time | Phase 0 | Build Phase 6 | planned | unit |
+| A21 | The guard catches a wait written with `node:timers/promises` — `await setTimeout(5_000)`, `scheduler.wait(5_000)` — as it catches `setTimeout(r, 5_000)` | Phase 0 | Build Phase 6 | planned | unit |
+| A22 | A file commented out of the admin's `SYSTEM` list, which vitest then runs as everyday, is scanned as everyday by the guard | Phase 0 | Build Phase 6 | planned | unit |
+| A23 | A run that fails within seconds is not marked `everyday-suite-stays-fast` upheld — a crash measures nothing; a slow failing run is still marked broken | Phase 0 | Build Phase 6 | planned | unit |
 
 ### Deferred Verification
 
@@ -248,6 +252,33 @@ checked is still checked, and InDusk holds two promises about its own suite
 #### Build Phase 5 Document
 
 - [x] `apps/docs/src/guide/test-kinds.md`: the two promises; `apps/docs/src/changelog.md` Unreleased: the kinds, the admin system tier, the two promises
+
+### Build Phase 6: Falsification — a cached guard, waits it cannot read, a list it misreads, a crash marked fast
+
+**Goal**: verify whether the attested state holds against four failures found by reading the built code and turbo's dry run. Each row is one hypothesis, red today; each item is the fix it needs.
+
+- **A20**: `turbo.json`'s `test` task is cached, keyed on each package's own files (`turbo run test --dry=json`: `indusk-mcp#test` HIT). The guard lives in mcp and reads the admin's tests, so a change touching only an admin test leaves mcp's cache valid, turbo replays mcp's last green, and the guard never runs. The same replay makes a cached root run take seconds and mark `everyday-suite-stays-fast` upheld while the real suite may be slow.
+- **A21**: the guard's timer pattern matches the callback idiom `setTimeout(r, N)` only. `import { setTimeout } from "node:timers/promises"; await setTimeout(5_000)` and `scheduler.wait(5_000)` wait just as long and pass.
+- **A22**: the guard reads the admin's `SYSTEM` by regex over the file's text, so a line commented out of the array still counts as system; vitest imports the array, runs that file as everyday, and the guard never scans it.
+- **A23**: the speed mark judges duration alone: a run that crashes at startup (a build error, a missing dependency) exits in seconds and is marked upheld — green evidence of a suite that never ran.
+
+- [ ] `turbo.json`: the `test` task is `"cache": false` — a test run is a question asked now, never a replayed answer (A20)
+- [ ] The guard's waits: a literal ≥ 100 ms as the *first* argument of `setTimeout` (the promise form) and `scheduler.wait(` join the pattern table (A21)
+- [ ] The guard imports the admin's `vitest.tiers.ts` `SYSTEM` instead of reading its text (A22)
+- [ ] `suiteSpeedMark` takes the run's exit code: a failed run under the threshold is skipped with its reason; a failed run over it is still violated (A23); `with-daemon-guard.js` passes it
+
+#### Build Phase 6 Verification
+
+- [ ] A20–A23 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/everyday-tests-never-wait src/__tests__/suite-speed src/__tests__/turbo-test-not-cached`); A1–A19 still pass
+- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear; A1 re-measured with the cache off
+
+#### Build Phase 6 Context
+
+- [ ] guard: the turbo test carries `lesson: a-test-run-is-never-replayed-from-a-cache`; the root `CLAUDE.md` `pnpm test` line says no test run is cached — only if it fits the root budget, otherwise the lesson alone
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/guide/test-kinds.md`: no run is replayed from turbo's cache, and why; the speed mark skips a run that failed fast. `apps/docs/src/changelog.md` Unreleased: the same two lines
 
 ## Files Affected
 
