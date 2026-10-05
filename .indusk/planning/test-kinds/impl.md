@@ -48,16 +48,16 @@ checked is still checked, and InDusk holds two promises about its own suite
 |----|---------|-------------|-----------|-------|
 | A1 | The root `pnpm test` finishes in about a minute with both packages running at once (live check, recorded) | Build Phase 3 | Build Phase 3 | planned |
 | A2 | The admin suite alone finishes in under 60 s (live check, recorded) | Build Phase 3 | Build Phase 3 | planned |
-| A3 | Each build phase of this plan verifies in seconds to tens of seconds (live check, recorded per phase) | Build Phase 1 | Build Phase 5 | planned |
-| A4 | A production break reads red while its incident is open and purple once fixed | Build Phase 1 | Build Phase 1 | planned |
-| A5 | Local's chip goes green once a newer local run holds, with no incident | Build Phase 1 | Build Phase 1 | planned |
-| A6 | A violation reaching Jaeger minutes late still turns its chip and cell red | Build Phase 1 | Build Phase 1 | planned |
-| A7 | After repointing the server, nothing from the old server is drawn | Build Phase 1 | Build Phase 1 | planned |
-| A8 | A window too slow for one refresh is drawn within a few, saying how far back it has read | Build Phase 1 | Build Phase 1 | planned |
-| A9 | A refresh with nothing new asks only for the recent past | Build Phase 1 | Build Phase 1 | planned |
-| A10 | An unreadable source's chips are hollow, say *health unknown since*, never green; the other source still drawn | Build Phase 1 | Build Phase 1 | planned |
-| A11 | A blind watcher's source says *watcher blind* | Build Phase 1 | Build Phase 1 | planned |
-| A12 | A violated promise names its newest violation's environment | Build Phase 1 | Build Phase 1 | planned |
+| A3 | Each build phase of this plan verifies in seconds to tens of seconds (live check, recorded per phase) | Build Phase 1 | Build Phase 5 | written |
+| A4 | A production break reads red while its incident is open and purple once fixed | Build Phase 1 | Build Phase 1 | passing |
+| A5 | Local's chip goes green once a newer local run holds, with no incident | Build Phase 1 | Build Phase 1 | passing |
+| A6 | A violation reaching Jaeger minutes late still turns its chip and cell red | Build Phase 1 | Build Phase 1 | passing |
+| A7 | After repointing the server, nothing from the old server is drawn | Build Phase 1 | Build Phase 1 | passing |
+| A8 | A window too slow for one refresh is drawn within a few, saying how far back it has read | Build Phase 1 | Build Phase 1 | passing |
+| A9 | A refresh with nothing new asks only for the recent past | Build Phase 1 | Build Phase 1 | passing |
+| A10 | An unreadable source's chips are hollow, say *health unknown since*, never green; the other source still drawn | Build Phase 1 | Build Phase 1 | passing |
+| A11 | A blind watcher's source says *watcher blind* | Build Phase 1 | Build Phase 1 | passing |
+| A12 | A violated promise names its newest violation's environment | Build Phase 1 | Build Phase 1 | passing |
 | A13 | The Promises page rendered against a real Jaeger shows a run's chips and strip (system tier) | Build Phase 2 | Build Phase 2 | planned |
 | A14 | An everyday-tier test in either package that starts a server or waits on the wall clock fails the guard, naming file, line and call | Test Phase 1 | Build Phase 2 | written |
 | A15 | A short-lived process that runs and exits (`git`, the CLI) does not trip the guard | Test Phase 1 | Test Phase 1 | passing |
@@ -142,17 +142,18 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 #### Build Phase 1 Verification
 
-- [ ] A4–A12 pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/__tests__/promise-store src/lib/__tests__/promise-health`), in seconds
-- [ ] The admin type-check passes (`pnpm exec tsc --noEmit`), and the eight HTTP files still pass (nothing they assert changed)
-- [ ] A3 recorded: this phase's verification time
+- [x] A4–A12 pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/__tests__/promise-store src/lib/__tests__/promise-health`), in seconds — 9 tests, 0.4 s of test time
+- [x] The admin type-check passes (`pnpm exec tsc --noEmit`), and the eight HTTP files still pass (nothing they assert changed) — tsc clean; the eight: 27 of 28 in one run (223 s), the one, `http-promise-health` A20, a 5 s test timeout under load, 8 of 8 alone — the flake these files are being retired for
+- [x] A3 recorded: this phase's verification time — 3.5 s wall (both unit files and the type-check), against 223 s for the files they replace
+- [x] Shape — `promise-timeline.ts` / `promise-health.ts` gained one optional argument each and the tail/older budget rule; `fake-source.ts` is one job (answer like Jaeger from lists); nothing to change. `readWindow` stays as recorded at promise-timeline's close
 
 #### Build Phase 1 Context
 
-- [ ] guard: A4–A12 carry `lesson: code-that-decides-takes-its-clock-and-its-reads`; `apps/indusk-admin/CLAUDE.md`'s Promises-page rule gains "the store and the health read take `Deps` (clock, resolve, read, probe); tests feed them with `fakeSource`"
+- [x] guard: A4–A12 carry `lesson: code-that-decides-takes-its-clock-and-its-reads`; `apps/indusk-admin/CLAUDE.md`'s Promises-page rule gains "the store and the health read take `Deps` (clock, resolve, read, probe); tests feed them with `fakeSource`"
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: one sentence — the store's and health read's rules are tested with injected time and sources (where the store paragraph ends)
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: one sentence — the store's and health read's rules are tested with injected time and sources (where the store paragraph ends)
 
 ### Build Phase 2: Servers only in the system tier
 
