@@ -67,14 +67,50 @@ describe("planner-promises A19 — a new impl names each test's level", () => {
 		expect(r.exitCode, "test_levels: required with no Level column").not.toBe(0);
 		expect(r.stderr).toMatch(LEVELS);
 	});
+});
 
-	it("the archived test-kinds impl, which says Kind and test_kinds, still validates", async () => {
-		const archived = readFileSync(
+/**
+ * The first spelling (test-kinds, 1.61.0): `Kind` and `test_kinds: required`.
+ * One archived impl is written with it, and it means what it meant.
+ */
+describe("planner-promises A19 — the first spelling keeps working", () => {
+	const archived = () =>
+		readFileSync(
 			join(REPO_ROOT, ".indusk", "planning", "archive", "test-kinds", "impl.md"),
 			"utf-8",
 		);
-		expect(archived).toMatch(/^test_kinds: required$/m);
-		const r = await validate(archived);
+	/** The archived impl with every row's `Kind` cell set to `kind`, or the column removed. */
+	function archivedWith(kind: string | null): string {
+		const dropLast = (line: string) => line.replace(/[^|]*\|$/, "");
+		return archived()
+			.split("\n")
+			.map((line) => {
+				const isTrajectory =
+					/^\| ID \| Asserts \|/.test(line) ||
+					line.startsWith("|----|") ||
+					/^\| A\d+ \|/.test(line);
+				if (!isTrajectory) return line;
+				if (kind === null) return dropLast(line);
+				return /^\| A\d+ \|/.test(line) ? `${dropLast(line)} ${kind} |` : line;
+			})
+			.join("\n");
+	}
+
+	it("the archived test-kinds impl, which says Kind and test_kinds, still validates", async () => {
+		expect(archived()).toMatch(/^test_kinds: required$/m);
+		const r = await validate(archived());
 		expect(r.exitCode, r.stderr).toBe(0);
+	});
+
+	it("under the old key a word that is not a level is still refused, naming the five", async () => {
+		const r = await validate(archivedWith("example"));
+		expect(r.exitCode, "a style word is not a level").not.toBe(0);
+		expect(r.stderr).toMatch(LEVELS);
+	});
+
+	it("under the old key an impl with no Kind or Level column is still refused", async () => {
+		const r = await validate(archivedWith(null));
+		expect(r.exitCode, "test_kinds: required with no levels").not.toBe(0);
+		expect(r.stderr).toMatch(LEVELS);
 	});
 });

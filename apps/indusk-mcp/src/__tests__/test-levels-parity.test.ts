@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { TEST_LEVELS as HOOK_LEVELS } from "../../hooks/_test-levels.js";
 import { parseTrajectoryFromBody } from "../../hooks/_trajectory-parser.js";
+import { TEST_KINDS } from "../lib/test-kinds.js";
+import { TEST_LEVELS } from "../lib/test-levels.js";
 import { parseTrajectory } from "../lib/trajectory/parser.js";
+import { validateRowPurpose, validateTestLevels } from "../lib/trajectory/validator.js";
 
 /**
  * promise: one-definition-per-shared-rule — planner-promises A16.
@@ -77,5 +81,55 @@ describe("planner-promises A16 — the two row parsers agree", () => {
 		const hook = parseTrajectoryFromBody(old).rows as unknown as Loose[];
 		expect(ts.map((r) => r.levelText ?? null)).toEqual(EXPECTED.map((e) => e.level));
 		expect(hook.map((r) => r.level ?? null)).toEqual(EXPECTED.map((e) => e.level));
+	});
+});
+
+describe("planner-promises A16 — the five levels, one list", () => {
+	it("the hooks' copy equals the package's definition", () => {
+		expect([...HOOK_LEVELS]).toEqual([...TEST_LEVELS]);
+	});
+
+	it("the name 1.61.0 published still resolves to the same list", () => {
+		expect([...TEST_KINDS]).toEqual([...TEST_LEVELS]);
+	});
+});
+
+/**
+ * The package's validator refuses what the hook refuses (A5 and A19 drive the
+ * hook): the rule lives in both, and they are compared here on one table.
+ */
+describe("planner-promises A16 — the package's validator matches the hook's", () => {
+	const rules = (errors: Array<{ rule: string }>) => errors.map((e) => e.rule);
+	const parsed = parseTrajectory(TABLE);
+	const bare = parseTrajectory(
+		[
+			"## Test Trajectory",
+			"",
+			"| ID | Asserts | Writable at | Passes at | State |",
+			"|----|----|----|----|----|",
+			"| T1 | a rule holds | Phase 1 | Phase 1 | planned |",
+		].join("\n"),
+	);
+
+	it("levels: accepts the five, refuses another word and a missing column, checks nothing unless required", () => {
+		expect(rules(validateTestLevels(parsed, true))).toEqual([]);
+		expect(
+			rules(
+				validateTestLevels(
+					parseTrajectory(TABLE.replace("| unit | promise", "| example | promise")),
+					true,
+				),
+			),
+		).toEqual(["test-levels"]);
+		expect(rules(validateTestLevels(bare, true))).toEqual(["test-levels"]);
+		expect(rules(validateTestLevels(bare, false))).toEqual([]);
+	});
+
+	it("purpose: refuses the row that says nothing and a missing column, checks nothing unless required", () => {
+		const errors = validateRowPurpose(parsed, true);
+		expect(rules(errors)).toEqual(["test-purpose"]);
+		expect(errors[0].message).toMatch(/\bT5\b/);
+		expect(rules(validateRowPurpose(bare, true))).toEqual(["test-purpose"]);
+		expect(rules(validateRowPurpose(bare, false))).toEqual([]);
 	});
 });

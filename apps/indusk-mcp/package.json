@@ -122,6 +122,10 @@
 			"types": "./dist/lib/promises/incidents.d.ts",
 			"default": "./dist/lib/promises/incidents.js"
 		},
+		"./test-levels": {
+			"types": "./dist/lib/test-levels.d.ts",
+			"default": "./dist/lib/test-levels.js"
+		},
 		"./test-kinds": {
 			"types": "./dist/lib/test-kinds.d.ts",
 			"default": "./dist/lib/test-kinds.js"

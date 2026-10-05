@@ -32,12 +32,17 @@ export interface TrajectoryRow {
 	state: TrajectoryState;
 	kind?: TrajectoryKind;
 	/**
-	 * The `Kind` cell as written, or null when the table has no Kind column —
-	 * what `test_kinds: required` checks against the five test kinds
-	 * (`lib/test-kinds.ts`). `kind` above is the older, optional style
+	 * The row's test level as written: its `Level` cell, or its `Kind` cell in
+	 * an impl written when the level was called a kind; null when the table
+	 * has neither column. What `test_levels: required` checks against the five
+	 * levels (`lib/test-levels.ts`). `kind` above is the older, optional style
 	 * vocabulary, kept so impls written with it still parse.
 	 */
-	kindText?: string | null;
+	levelText?: string | null;
+	/** The `For` cell as written, or null when the table has no For column. */
+	purposeText?: string | null;
+	/** What the row is for (planner-promises ADR D3); null when it does not say. */
+	purpose?: RowPurpose | null;
 	scope?: TrajectoryScope;
 	/**
 	 * Optional `Test` column — the test FILES backing this row, comma-separated.
@@ -50,6 +55,32 @@ export interface TrajectoryRow {
 	 * — reported as unverified, never counted as passed.
 	 */
 	test?: string[];
+}
+
+/**
+ * What a test row is for: the promises it proves and the lessons it guards,
+ * or the reason it needs neither. A cell of tokens only (`promise: <name>`,
+ * `lesson: <name>`, comma-separated) names things; any other text is the
+ * reason.
+ */
+export interface RowPurpose {
+	promises: string[];
+	lessons: string[];
+	reason: string | null;
+}
+
+/** Read a `For` cell. Null when it is empty. The hooks carry a copy. */
+export function parsePurpose(cell: string): RowPurpose | null {
+	const text = cell.trim();
+	if (!text) return null;
+	const promises: string[] = [];
+	const lessons: string[] = [];
+	for (const part of text.split(",")) {
+		const m = /^(promise|lesson):\s*([a-z][a-z0-9-]*)$/.exec(part.trim());
+		if (!m) return { promises: [], lessons: [], reason: text };
+		(m[1] === "promise" ? promises : lessons).push(m[2]);
+	}
+	return { promises, lessons, reason: null };
 }
 
 export interface DeferredRow {
@@ -136,6 +167,8 @@ function normalizeHeader(header: string): string {
 		"passes at": "passesAt",
 		state: "state",
 		kind: "kind",
+		level: "level",
+		for: "for",
 		scope: "scope",
 	};
 	return aliases[normalized] ?? normalized;
@@ -349,7 +382,9 @@ function parseTrajectoryTable(lines: string[]): TrajectoryRow[] {
 			passesAtKind: parsePhaseReferenceKind(record.passesAt ?? ""),
 			state: parseState(record.state ?? ""),
 			kind: parseOptionalKind(record.kind ?? ""),
-			kindText: record.kind === undefined ? null : record.kind.trim(),
+			levelText: (record.level ?? record.kind)?.trim() ?? null,
+			purposeText: record.for === undefined ? null : record.for.trim(),
+			purpose: record.for === undefined ? null : parsePurpose(record.for),
 			scope: parseOptionalScope(record.scope ?? ""),
 			test: parseOptionalTestRefs(record.test ?? ""),
 		});

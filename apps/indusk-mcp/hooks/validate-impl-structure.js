@@ -31,7 +31,7 @@ import {
 	unterminatedFenceLine,
 } from "./_impl-headings.js";
 import { parseRegister } from "./_register.js";
-import { isTestKind, TEST_KINDS } from "./_test-kinds.js";
+import { isTestLevel, TEST_LEVELS } from "./_test-levels.js";
 import { parseTrajectoryFromBody } from "./_trajectory-parser.js";
 
 // Read hook input from stdin
@@ -349,9 +349,12 @@ const rationaleRequiredFrontmatter = /rationale:\s*required/.test(frontmatter);
 // `rationale_baseline` lesson was a title's substring silently setting a
 // baseline, and the same shape of bug is available to any unanchored match.
 const testPhasesRequiredFrontmatter = /^test_phases:\s*required/m.test(frontmatter);
-// test-kinds: every row names one of the five kinds, so the plan says when
-// each test runs. Line-anchored like the keys around it.
-const testKindsRequiredFrontmatter = /^test_kinds:\s*required/m.test(frontmatter);
+// Every row names one of the five test levels, so the plan says when each
+// test runs (test-kinds; `test_kinds` was the key's first spelling). And every
+// row says what it is for (planner-promises). Line-anchored like the keys
+// around them.
+const testLevelsRequiredFrontmatter = /^test_(?:levels|kinds):\s*required/m.test(frontmatter);
+const testPurposeRequiredFrontmatter = /^test_purpose:\s*required/m.test(frontmatter);
 const rationaleBaselineMatch = frontmatter.match(/^rationale_baseline:\s*(\d+)/m);
 const rationaleBaseline = rationaleBaselineMatch
 	? Number.parseInt(rationaleBaselineMatch[1], 10)
@@ -364,7 +367,8 @@ if (trajectoryValidationEnabled) {
 		rationaleBaseline,
 		testPhasesRequiredFrontmatter,
 	);
-	trajectoryErrors.push(...validateTestKinds(body, testKindsRequiredFrontmatter));
+	trajectoryErrors.push(...validateTestLevels(body, testLevelsRequiredFrontmatter));
+	trajectoryErrors.push(...validateRowPurpose(body, testPurposeRequiredFrontmatter));
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
 			`Test Trajectory validation failed (policy: ${gatePolicy}):\n${trajectoryErrors.map((e) => `  [${e.rule}] ${e.message}`).join("\n")}\n\nSee .indusk/planning/tests-first-planning/adr.md Sections 3-6 for the Test Trajectory shape and validator rules.\n`,
@@ -398,28 +402,58 @@ process.exit(0);
 // ------------------------------------------------------------------
 
 /**
- * test-kinds (ADR D1): with `test_kinds: required`, every trajectory row's
- * `Kind` is one of the five. Without the key nothing is checked, so impls
- * written before it — some with the old style words in `Kind` — validate as
- * they did.
+ * With `test_levels: required` (or `test_kinds: required`, its first
+ * spelling), every trajectory row's level is one of the five. Without the key
+ * nothing is checked, so impls written before it — some with the old style
+ * words in `Kind` — validate as they did. Mirrors `validateTestLevels` in
+ * `src/lib/trajectory/validator.ts`.
  */
-function validateTestKinds(implBody, required) {
+function validateTestLevels(implBody, required) {
 	if (!required) return [];
-	const kinds = TEST_KINDS.join(", ");
+	const levels = TEST_LEVELS.join(", ");
 	const { rows } = parseTrajectoryFromBody(implBody);
-	if (rows.length > 0 && rows.every((r) => r.kind === null)) {
+	if (rows.length > 0 && rows.every((r) => r.level === null)) {
 		return [
 			{
-				rule: "test-kinds",
-				message: `\`test_kinds: required\` is set but the Test Trajectory has no Kind column. Add one, naming each row's kind: ${kinds} — the smallest that can prove the assertion; the kind says when the test runs.`,
+				rule: "test-levels",
+				message: `\`test_levels: required\` is set but the Test Trajectory has no Level column. Add one, naming each row's level: ${levels} — the smallest that can prove the assertion; the level says when the test runs.`,
 			},
 		];
 	}
 	return rows
-		.filter((r) => !r.kind || !isTestKind(r.kind))
+		.filter((r) => !r.level || !isTestLevel(r.level))
 		.map((r) => ({
-			rule: "test-kinds",
-			message: `Row ${r.id} names ${r.kind ? `the kind \`${r.kind}\`` : "no kind"}; a kind is one of: ${kinds}.`,
+			rule: "test-levels",
+			message: `Row ${r.id} names ${r.level ? `the level \`${r.level}\`` : "no level"}; a level is one of: ${levels}.`,
+		}));
+}
+
+/**
+ * With `test_purpose: required`, every row says what it is for
+ * (planner-promises ADR D3). Whether a named promise or lesson exists needs
+ * the registry, which this hook asks the CLI for. Mirrors `validateRowPurpose`
+ * in `src/lib/trajectory/validator.ts`.
+ */
+function validateRowPurpose(implBody, required) {
+	if (!required) return [];
+	// Declared here, not at module level: this file runs top to bottom, and
+	// the call above executes before a later `const` would exist.
+	const PURPOSE_FORMS =
+		"the promise it proves (`promise: <name>`), the lesson it guards (`lesson: <name>`), or the reason it needs neither";
+	const { rows } = parseTrajectoryFromBody(implBody);
+	if (rows.length > 0 && rows.every((r) => r.purposeText === null)) {
+		return [
+			{
+				rule: "test-purpose",
+				message: `\`test_purpose: required\` is set but the Test Trajectory has no For column. Add one: each row names ${PURPOSE_FORMS}.`,
+			},
+		];
+	}
+	return rows
+		.filter((r) => !r.purpose)
+		.map((r) => ({
+			rule: "test-purpose",
+			message: `Row ${r.id} does not say what it is for. Its For cell names ${PURPOSE_FORMS}.`,
 		}));
 }
 
