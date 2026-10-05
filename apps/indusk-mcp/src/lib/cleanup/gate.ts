@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { basename, join, sep } from "node:path";
+import { basename, join, resolve, sep } from "node:path";
 import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
@@ -129,7 +129,10 @@ export interface RetrospectiveReadiness {
  *
  * promise: a-closed-plan-kept-its-promises
  */
-function unprovenPromisesOf(planDir: string, implContent: string): string[] {
+function unprovenPromisesOf(planDirIn: string, implContent: string): string[] {
+	// Resolved first: `.indusk/planning/<plan>`, relative to a project root,
+	// has no separator before `.indusk` and found no planning root (A36).
+	const planDir = resolve(planDirIn);
 	const marker = `${sep}.indusk${sep}planning${sep}`;
 	const at = planDir.lastIndexOf(marker);
 	const briefPath = join(planDir, "brief.md");
