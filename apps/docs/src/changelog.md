@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.61.0] — 2026-10-05
+
 ### Added
 - **Test kinds.** A test plan names each assertion's kind — `unit`, `contract`, `live check`, `smoke` or `promise` — the smallest that can prove it, and the kind says when its test runs. An impl with `test_kinds: required` has every trajectory row's kind checked when written. A phase now runs only its own rows' tests and the tests related to the files it changed; both tiers run at landing.
 - **The admin's system tier** (`pnpm test:system` in `apps/indusk-admin`): every test that starts `next dev` or a real Jaeger. The root `test:system` runs both packages'.
