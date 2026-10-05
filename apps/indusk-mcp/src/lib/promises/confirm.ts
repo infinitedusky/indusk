@@ -170,7 +170,7 @@ function enforce(registry: Registry, plan: string, ready: Ready, day: string): C
 	text = setScalar(text, "state", "enforced");
 	text = appendHistory(
 		text,
-		`- ${day} — enforced when ${plan} closed: proven by ${proof.rows.map((r) => `row ${r.id}`).join(", ")}.`,
+		`- ${day} — enforced, confirmed for ${plan}: proven by ${proof.rows.map((r) => `row ${r.id}`).join(", ")}.`,
 	);
 	writeFileSync(path, text);
 	if (retires) {
@@ -179,7 +179,7 @@ function enforce(registry: Registry, plan: string, ready: Ready, day: string): C
 			oldPath,
 			appendHistory(
 				setScalar(readFileSync(oldPath, "utf-8"), "state", "retired"),
-				`- ${day} — retired when ${plan} closed: replaced by \`${promise.name}\`.`,
+				`- ${day} — retired, confirmed for ${plan}: replaced by \`${promise.name}\`.`,
 			),
 		);
 	}
