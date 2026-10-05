@@ -197,3 +197,5 @@ four merges of main back in after each mid-plan release). 32 files, +1,505 /
 The four falsification fixes change packaged paths since 1.58.4. A patch,
 **1.58.5**, is bumped on main after landing (Step 11). It is not published:
 that is Sandy's call, followed by a redeploy with `VERSION=1.58.5`.
+
+Landed on main at 6c77f0a6, 2026-10-05.
