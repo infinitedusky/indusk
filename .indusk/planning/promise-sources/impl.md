@@ -45,7 +45,7 @@ there is one. See [brief.md](brief.md), [test-plan.md](test-plan.md) and
 | ID | Asserts | Writable at | Passes at | State | Test |
 |----|---------|-------------|-----------|-------|------|
 | A1 | `promises status` for a project naming a production server shows two sections, local and production, each with that source's own violations and upheld marks | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
-| A2 | `promise_health` reports both sources, each with its own rows, and says which source each violation came from | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
+| A2 | `promise_health` reports both sources, each with its own rows, and says which source each violation came from | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A3 | The admin's Promises page shows a chip per source for each behaviour promise, so one promise reads green in production and red locally on the same page | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
 | A4 | When one source is unreachable or watcher blind, every reader says so for that source and still shows the other source's health | Test Phase 1 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/promise-sources.test.ts, apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
 | A5 | `promises watch --source deployed` records incidents from the production server and `--source local` from the laptop: a violation only in production is recorded by the first and not the second | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
@@ -139,8 +139,8 @@ exists today and answers wrongly.
 
 #### Build Phase 3 Verification
 
-- [ ] A2 passes, and the tool halves of A4 and A6 pass (`… src/__tests__/promise-sources -t "A2|A4|A6"`); `always-on-health-tool`, `watcher-probe` and `watcher-expect-every` unchanged; `skill-sync-parity` passes
-- [ ] `tsc --noEmit` clean; Biome clean on the changed files
+- [x] A2 passes, and the tool halves of A4 and A6 pass (`… src/__tests__/promise-sources -t "A2|A4|A6"`); `always-on-health-tool`, `watcher-probe` and `watcher-expect-every` unchanged; `skill-sync-parity` passes
+- [x] `tsc --noEmit` clean; Biome clean on the changed files
 
 #### Build Phase 3 Context
 
