@@ -4,11 +4,10 @@ import { isUsableRelPath } from "../path-segment.js";
 import { parseBriefContract } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
-import { readImpl } from "./contract.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
 import { planFolderPath, planFolderStatus } from "./plan-folder.js";
 import { type PromiseEntry, promiseTokenPattern, type Registry, readPromises } from "./registry.js";
-import { type RowProof, rowProofs, rowsNamingIn } from "./rows.js";
+import { type RowProof, readImpl, rowProofs, rowsNamingIn } from "./rows.js";
 import { appendHistory } from "./write.js";
 
 /**

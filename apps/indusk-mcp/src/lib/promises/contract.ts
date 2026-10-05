@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { LESSONS_REL_DIR } from "../lessons/state.js";
-import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
+import type { Trajectory } from "../trajectory/parser.js";
 import {
 	validateRowPurpose,
 	validateRowShape,
@@ -9,7 +9,8 @@ import {
 } from "../trajectory/validator.js";
 import { type BriefContract, parseBriefContract } from "./brief-contract.js";
 import { type PlanFolder, planFolderPath, planFolderStatus, planFolders } from "./plan-folder.js";
-import { type PromiseEntry, parseFrontmatter, type Registry, readPromises } from "./registry.js";
+import { type PromiseEntry, type Registry, readPromises } from "./registry.js";
+import { type ImplRead, readImpl } from "./rows.js";
 import { PROMISES_REL_DIR } from "./vocabulary.js";
 
 /**
@@ -273,22 +274,6 @@ export function checkPlanContract(
 		return { ok: false, refusals: [{ file: ".indusk/planning", message: folder }] };
 	}
 	return checkFolder(planRoot, folder, opts);
-}
-
-/** The impl as the contract reads it: its frontmatter and its trajectory, or why it cannot be read. */
-export type ImplRead =
-	| { ok: true; frontmatter: Record<string, unknown>; trajectory: Trajectory }
-	| { ok: false; error: string };
-
-/** Read an impl's frontmatter and trajectory, or say why it cannot be read — never throw (A35). */
-export function readImpl(text: string): ImplRead {
-	// An impl may have no frontmatter at all; one that opens a block must parse.
-	if (!text.trimStart().startsWith("---")) {
-		return { ok: true, frontmatter: {}, trajectory: parseTrajectory(text) };
-	}
-	const parsed = parseFrontmatter(text);
-	if ("error" in parsed) return { ok: false, error: parsed.error.split("\n")[0] };
-	return { ok: true, frontmatter: parsed.data, trajectory: parseTrajectory(parsed.content) };
 }
 
 /**

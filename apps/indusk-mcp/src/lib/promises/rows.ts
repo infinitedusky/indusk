@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
-import { parseTrajectory } from "../trajectory/parser.js";
+import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
 import { planFolders } from "./plan-folder.js";
-import type { PromiseEntry } from "./registry.js";
+import { type PromiseEntry, parseFrontmatter } from "./registry.js";
 
 /**
  * The test rows that name a promise (planner-promises ADR D3, D5, D6).
@@ -100,4 +100,20 @@ export function rowProofs(
 		}
 		return { promise, rows, tests, refusal };
 	});
+}
+
+/** An impl as the promise modules read it: its frontmatter and its trajectory, or why it cannot be read. */
+export type ImplRead =
+	| { ok: true; frontmatter: Record<string, unknown>; trajectory: Trajectory }
+	| { ok: false; error: string };
+
+/** Read an impl's frontmatter and trajectory, or say why it cannot be read — never throw (A35). */
+export function readImpl(text: string): ImplRead {
+	// An impl may have no frontmatter at all; one that opens a block must parse.
+	if (!text.trimStart().startsWith("---")) {
+		return { ok: true, frontmatter: {}, trajectory: parseTrajectory(text) };
+	}
+	const parsed = parseFrontmatter(text);
+	if ("error" in parsed) return { ok: false, error: parsed.error.split("\n")[0] };
+	return { ok: true, frontmatter: parsed.data, trajectory: parseTrajectory(parsed.content) };
 }
