@@ -149,6 +149,11 @@ Three things run it:
 3. [`indusk promises check`](/reference/cli/promises#promises-check), for every
    open plan, so the everyday test run includes it.
 
+The last two leave a brief still marked `draft` alone until its plan is
+building: a draft is the conversation read back, and its promises are saved
+when you accept it. Once the impl is past `draft`, the brief's own status no
+longer exempts it.
+
 ## What a test row says
 
 Each row of the impl's [Test Trajectory](/guide/test-trajectory) has a `For`
