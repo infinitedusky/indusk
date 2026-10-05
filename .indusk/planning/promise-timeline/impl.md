@@ -176,7 +176,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: the `fixed` chip; production's and local's rules
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: the `fixed` chip; production's and local's rules
 
 ### Build Phase 4: the strips
 
