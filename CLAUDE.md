@@ -46,7 +46,7 @@ dusk/
 - **Every `CLAUDE.md` has a hard write-time budget** — `claude-md-budget.js` refuses growth past `context.claude_md_budget_bytes` (18432 here; reason in `.indusk/config.json`); shrinking is always allowed; nested files: `nested_claude_md_budget_bytes` (16384). Entries are rule + pointer; growth past it means a rule belongs at a lower tier. `indusk context check-pointers` verifies every pointer and lesson token in every context file and refuses hand-copied `**Version**:` claims. — see `/guide/context-budget`
 - **An unrecorded promise violation outranks the roadmap** when answering "what's next"; unreachable telemetry is said, never reported as a zero. — see `/reference/skills/catchup`
 - **`.indusk/current.md` is the operational layer**: a `## Project (shared)` region any agent may edit (what is in flight, blockers, what is next) plus per-agent `## Session <short> — <task>` sections, each written only by its own session via `mcp__indusk__update_current_section` (typically at `/handoff`); commit like any file. `merge=union` merges concurrent appends; every mutation goes through the `current.md.lock` file lock. — see `/decisions/multi-agent-coordination`
-- Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents. Cross-reference related plans by path; update both when work overlaps.
+- Plans live in `.indusk/planning/{kebab-case}/`; use `/planner` before implementing — don't jump to code. The planning rules load with the plan documents.
 - **Releases: bump on main, after the branch is merged — it is the retrospective's Step 11**, not a thing to remember. `pnpm publish` packs the working tree, so a publish from clean main is blind to every `plan/*` worktree; `pnpm release` enforces the guard. **Before saying whether a publish is current**, read `git rev-list <release-commit>..HEAD` and `git for-each-ref refs/heads/plan/* --no-merged HEAD`, never a version number. — see `/reference/skills/retrospective`
 - Extensions own tool knowledge (health checks, setup, verification) — never hardcode tool facts in core. — see `.indusk/planning/archive/extension-system/adr.md`
 - Before touching shared code, grep for importers and callers to understand blast radius.
@@ -87,7 +87,7 @@ dusk/
 - Monitor (Day 4b): plain-OTel promise mark, no InDusk runtime code; `promises status`/`watch` over local Jaeger; reopen by Maintenance phase; `monitor` from files — see `/decisions/day-monitor`
 - Always-on (Day 4b′): the shipped Jaeger as a server (badger + basic auth, Fly reference); an in-process pass announces each violation once to Slack, failure-safe; detect-and-notify only; a project names its Jaeger, absence = local — see `/decisions/day-always-on`
 - Watcher heartbeat: every promise read first probes its Jaeger (a span sent and read back) and says *watcher blind*, never zero; the server beats each pass and tells Slack once each way — see `/decisions/watcher-heartbeat`
-- Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `.indusk/planning/promise-sources/adr.md`
+- Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 
 ## Known Gotchas
 

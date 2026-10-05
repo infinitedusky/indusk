@@ -13,6 +13,8 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   (`feature`, `bugfix`, `refactor`, `spike`), declared in the brief's
   frontmatter — never inferred from which files exist. — see
   `/reference/skills/planner`
+- **Cross-reference related plans by path, and update both** when work in one
+  changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
   names `parents:` + the `roadmap:` order; each parent's own `master.md` names
   its ordered `subplans:`. Children declare nothing — one source of truth per
