@@ -1,7 +1,7 @@
 ---
 title: "Promise timeline — a promise's history, drawn"
 date: 2026-10-04
-status: draft
+status: accepted
 workflow: feature
 ---
 
