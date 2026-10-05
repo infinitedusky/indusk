@@ -138,3 +138,5 @@ Two decisions changed during the work, both recorded where they were made:
 Packaged paths changed (`apps/indusk-mcp/src`, `skills/`, `package.json`
 exports). This plan adds a capability — local and production read side by side
 — so the bump is **minor**: 1.59.0, on main after landing.
+
+Landed on main at 29b22ee4, 2026-10-05.
