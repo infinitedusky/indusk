@@ -29,9 +29,11 @@ import { PROMISE_KINDS, PROMISE_NAME, type PromiseKind } from "./vocabulary.js";
  */
 export class PromiseWriteRefused extends Error {}
 
-const refuse = (message: string): never => {
+// Declared, not inferred: TypeScript treats a call as ending the path only
+// when the function's `never` is on its declaration.
+function refuse(message: string): never {
 	throw new PromiseWriteRefused(message);
-};
+}
 
 const today = (now: Date) => now.toISOString().slice(0, 10);
 
@@ -157,7 +159,7 @@ export function declarePromise(planRoot: string, input: DeclareInput): string {
 function requireReadable(name: string, text: string): void {
 	const parsed = parseFrontmatter(text);
 	if ("error" in parsed) {
-		return refuse(
+		refuse(
 			`${name}: written as given, this promise could not be read back (${parsed.error.split("\n")[0]}) — a domain is one word such as \`seating\`, with no colon; nothing was written`,
 		);
 	}
