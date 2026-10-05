@@ -24,6 +24,10 @@ are about keeping the two lanes in step.
 - **PostToolUse: stderr at exit 0 goes to the debug log only.** A message for
   the model is a stdout JSON envelope carrying
   `hookSpecificOutput.additionalContext`, emitted via `console.info`.
+- **Where a commit lands is read once**: `_commit-anchor.js` (`COMMIT_RE`,
+  `commitAnchor`), imported by trunk-guard and eval-trigger — a hook that
+  takes the repo from the event's `cwd` misreads `cd <worktree> && git
+  commit` (day-monitor A32).
 - **trunk-guard's commit gate** reads `git [-C x] commit`, a preceding `cd`,
   `-c "…"`, `$(…)`/backticks, `\`-continuations, `-am` and pathspecs (other
   spellings are gaps); the `chore(release):` exemption reads this commit's own

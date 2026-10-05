@@ -400,9 +400,11 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 - [x] A32: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`) — A32 passes (`eval-trigger-commit-anchor.test.ts`, 3/3); `pnpm test` green (1699 passed / 5 skipped, admin 350) with the leak guard clear. Upheld since the last violation (newest upheld 2026-10-05T04:23:02Z), but from the installed 1.59.0, which does not carry this fix: the fixed evaluator runs live only after the next release and `indusk update`, and the incident's quiet window is what watches that
 - [x] A33: a rate-limited fresh start is retried and the commit graded (`src/__tests__/monitor-mark.test.ts -t A33`) — passes; the six `monitor-mark` tests pass
 
+- [x] Shape (Build Phase 10): nothing found — `_commit-anchor.js` is an extraction; the trigger's landed-repo block, `isRateLimited` and `rateLimitDelayMs` each have one job
+
 #### Build Phase 10 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention — it does: `apps/indusk-mcp/hooks/CLAUDE.md` gains "where a commit lands is read once" (`_commit-anchor.js`, shared by trunk-guard and eval-trigger); the retry is guarded by A33's `lesson: a-rate-limited-start-is-retried-not-marked-violated`
 
 #### Build Phase 10 Document
 
