@@ -66,7 +66,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 | A10 | Local's chip is red while the newest local run is a violation and green once a newer run holds, with no incident | Test Phase 1 | Build Phase 3 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
 | A11 | A window with more runs than one query returns is drawn end to end, and a cell that may be missing runs says "at least" | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A12 | After the first read of a window, a refresh with nothing new transfers only marks newer than those held, measured on the wire | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-transfer.test.ts |
-| A13 | Pointed at the deployed server after a break and its fix, the page shows red, then purple, then green | Build Phase 5 | Build Phase 5 | planned | manual: `pnpm --filter @infinitedusky/indusk-mcp e2e deployed-smoke`, then the admin against `promises.jaeger` |
+| A13 | Pointed at the deployed server after a break and its fix, the page shows red, then purple, then green | Build Phase 5 | Build Phase 5 | passing | manual: `pnpm --filter @infinitedusky/indusk-mcp e2e deployed-smoke`, then the admin against `promises.jaeger` |
 
 ### Deferred Verification
 
@@ -213,12 +213,14 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 premises, promises and phases — groups built here on today's plan-and-domain
 table would be rebuilt there.*
 
-- [ ] A13: run the deployed smoke's break and recovery (`e2e/deployed-smoke.e2e.test.ts` against the Fly server), record the incident, `promises fix` it, and read the page against `promises.jaeger`
+- [x] A13: run the deployed smoke's break and recovery (`e2e/deployed-smoke.e2e.test.ts` against the Fly server), record the incident, `promises fix` it, and read the page against `promises.jaeger`
+
+  - As built (2026-10-05, 13:41–13:58 UTC): driven by hand, not by the smoke test, which also restarts the Fly machine. A scratch project (`~/code/sandbox/timeline-smoke`) named the Fly server; marks were sent straight to its intake (`checkout-never-charges-twice`, service `checkout-demo`, `deployment.environment: production`); `promises watch --source deployed` opened `i-2026-10-05-checkout-never-charges-twice` and reopened `checkout-v1`; the root cause was written and `promises fix` closed it. Screenshots in `.playwright-mcp/a13-{1-red,2-open,3-fixed,4-green-after}.png` at the repository root. Two findings for falsify: marks carrying `indusk.project: timeline-smoke` were dropped silently, because the project id is normalised to `timeline_smoke`; and cell boundaries are measured back from now, so a run moves to the next cell between refreshes
 
 #### Build Phase 5 Verification
 
-- [ ] A13 observed on the deployed server — red, then purple after `promises fix`, then green runs — with a screenshot in the impl
-- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
+- [x] A13 observed on the deployed server — red, then purple after `promises fix`, then green runs — with a screenshot in the impl — observed: red (unrecorded), red with the band to now (incident open), purple with the band ending at 13:41:49 (fixed), then green runs in the next cell; the production chip `violated`, then `fixed`
+- [x] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear — no code changed after the Build Phase 4 run at `b7f82bf9`, whose result stands: `pnpm test` mcp 1705 / admin 361, `test:system` 133, both all-clear
 
 #### Build Phase 5 Context
 
