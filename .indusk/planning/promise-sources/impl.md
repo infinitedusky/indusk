@@ -153,7 +153,7 @@ exists today and answers wrongly.
 
 ### Build Phase 4: the admin, per source
 
-- [ ] `apps/indusk-admin/src/lib/promise-health.ts`: `readHealth` returns one cached read per source (`readSources`); `healthRows` per source; `redPlans` from the alarm source
+- [x] `apps/indusk-admin/src/lib/promise-health.ts`: `readHealth` returns one cached read per source (`readSources`); `healthRows` per source; `redPlans` from the alarm source
 - [ ] The Promises page: one chip per source per behaviour promise (`data-source`), labelled with the source name, through `HealthChip`. A failed source's banner (unknown health or *watcher blind*) sits in its own section. With one source the page renders as today
 - [ ] The project layout's sidebar: the red mark from the alarm source
 

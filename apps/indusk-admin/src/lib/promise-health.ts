@@ -3,11 +3,14 @@ import type {
   Registry,
 } from "@infinitedusky/indusk-mcp/promises/registry";
 import {
-  JaegerUnreachable,
+  alarmSource,
   type MarkedSpansResult,
   newestMark,
-  readPromiseMarks,
+  readSources,
+  type SourceName,
+  type SourceRead,
   silencePastExpectation,
+  sourceNames,
   WatcherBlind,
 } from "@infinitedusky/indusk-mcp/promises/telemetry";
 import { readAdminRefreshMs } from "./project-reader";
@@ -16,11 +19,13 @@ import { readAdminRefreshMs } from "./project-reader";
  * Observed health on the Promises page and in the sidebar (day-monitor, ADR
  * D9).
  *
- * One read of the local Jaeger per project, through the package's one query
+ * One read per source per project (promise-sources, ADR D7) — `local`, and
+ * `production` when the project names one — through the package's reads
  * (`promises/telemetry`), with a two-second timeout and cached for the
- * project's refresh interval so a page and its sidebar share it. When Jaeger
- * cannot be reached the read says so and remembers when it last succeeded —
- * "health unknown since …" — and no chip is drawn green.
+ * project's refresh interval so a page and its sidebar share it. A source
+ * that cannot be read says so and remembers when it last succeeded — "health
+ * unknown since …" — and no chip is drawn green; the other source is still
+ * shown. The sidebar's red comes from the alarm source alone.
  *
  * Server-side only.
  */
@@ -69,42 +74,72 @@ export type HealthRead =
       blind?: { intake: string };
     };
 
+/** One source's read, named: what the page draws a chip and a banner from. */
+export type SourceHealthRead = HealthRead & {
+  name: SourceName;
+  /** Where it read — its query URL, or what was consulted when it could not. */
+  label: string;
+};
+
 const TIMEOUT_MS = 2_000;
-const cache = new Map<string, { expires: number; read: HealthRead }>();
+const cache = new Map<string, { expires: number; reads: SourceHealthRead[] }>();
 const lastOk = new Map<string, string>();
 
 export async function readHealth(
   projectRoot: string,
   registry: Registry,
-): Promise<HealthRead> {
+): Promise<SourceHealthRead[]> {
   const hit = cache.get(projectRoot);
-  if (hit && hit.expires > Date.now()) return hit.read;
-  let read: HealthRead;
+  if (hit && hit.expires > Date.now()) return hit.reads;
+  let reads: SourceHealthRead[];
   try {
-    const marks = await readPromiseMarks(projectRoot, registry, {
+    const sources = await readSources(projectRoot, registry, {
       timeoutMs: TIMEOUT_MS,
     });
-    const at = new Date().toISOString();
-    lastOk.set(projectRoot, at);
-    read = { ok: true, at, marks };
+    reads = sources.map((r) => fromSource(projectRoot, r));
   } catch (err) {
     // A health read never takes a page down (day-monitor A26): whatever went
-    // wrong, the answer is "unknown since the last good read".
-    read = {
+    // wrong, every source's answer is "unknown since the last good read".
+    reads = sourceNames(projectRoot).map((name) => ({
+      name,
+      label: (err as Error).message,
       ok: false,
-      unknownSince: lastOk.get(projectRoot) ?? null,
-      where:
-        err instanceof JaegerUnreachable || err instanceof WatcherBlind
-          ? err.where
-          : (err as Error).message,
-      ...(err instanceof WatcherBlind ? { blind: { intake: err.intake } } : {}),
-    };
+      unknownSince: lastOk.get(`${projectRoot}\0${name}`) ?? null,
+      where: (err as Error).message,
+    }));
   }
   cache.set(projectRoot, {
     expires: Date.now() + readAdminRefreshMs(projectRoot),
-    read,
+    reads,
   });
-  return read;
+  return reads;
+}
+
+function fromSource(projectRoot: string, r: SourceRead): SourceHealthRead {
+  const key = `${projectRoot}\0${r.name}`;
+  if (r.ok) {
+    const at = new Date().toISOString();
+    lastOk.set(key, at);
+    return { name: r.name, label: r.label, ok: true, at, marks: r.marks };
+  }
+  return {
+    name: r.name,
+    label: r.label,
+    ok: false,
+    unknownSince: lastOk.get(key) ?? null,
+    where: r.where,
+    ...(r.error instanceof WatcherBlind
+      ? { blind: { intake: r.error.intake } }
+      : {}),
+  };
+}
+
+/** The read whose red raises the alarm: production when there is one (ADR D5). */
+export function alarmRead(
+  reads: SourceHealthRead[],
+): SourceHealthRead | undefined {
+  const name = alarmSource(reads.map((r) => r.name));
+  return reads.find((r) => r.name === name);
 }
 
 /**
@@ -155,11 +190,16 @@ export function healthRows(
   return out;
 }
 
-/** Plans holding a red promise — the sidebar's roll-up (A23). */
+/**
+ * Plans holding a red promise in the alarm source — the sidebar's roll-up
+ * (A23). A promise red only locally, beside a production that holds it, is
+ * work in progress and does not mark its plan (promise-sources A6).
+ */
 export function redPlans(
   registry: Registry,
-  rows: Record<string, HealthRow>,
+  reads: SourceHealthRead[],
 ): Set<string> {
+  const rows = healthRows(registry, alarmRead(reads) ?? null);
   return new Set(
     registry.promises
       .filter((p) => rows[p.name]?.health === "red")
