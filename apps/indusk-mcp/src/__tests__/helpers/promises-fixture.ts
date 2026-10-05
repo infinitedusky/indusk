@@ -58,6 +58,8 @@ export interface IncidentSpec {
 	opened?: string;
 	lastSeen?: string;
 	traces?: string[];
+	/** promise-timeline D1: when the incident was fixed (ISO). */
+	fixed?: string;
 	/** Frontmatter keys to leave out. */
 	omit?: string[];
 	/** Body sections to leave out (`symptom` | `root-cause` | `fix`). */
@@ -220,6 +222,7 @@ export function writeIncident(dir: string, spec: IncidentSpec): string {
 	if (spec.opened !== undefined) frontmatter.opened = spec.opened;
 	if (spec.lastSeen !== undefined) frontmatter.last_seen = spec.lastSeen;
 	if (spec.traces !== undefined) frontmatter.traces = spec.traces;
+	if (spec.fixed !== undefined) frontmatter.fixed = spec.fixed;
 	for (const key of spec.omit ?? []) delete frontmatter[key];
 	const omit = new Set(spec.omitSections ?? []);
 	const sections: string[] = [];

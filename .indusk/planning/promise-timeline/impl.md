@@ -1,7 +1,7 @@
 ---
 title: "Promise timeline — Implementation"
 date: 2026-10-05
-status: approved
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
