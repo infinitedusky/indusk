@@ -1,5 +1,12 @@
+import { readFileSync } from "node:fs";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
+import {
+	type ContractRefusal,
+	checkAllContracts,
+	checkPlanContract,
+	formatContract,
+} from "../../lib/promises/contract.js";
 import { fixIncident } from "../../lib/promises/incidents.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
 import { readPromises } from "../../lib/promises/registry.js";
@@ -174,6 +181,63 @@ export async function promisesWatch(
 	for (const line of report.out) console.info(line);
 	for (const line of report.err) console.error(line);
 	if (report.exitCode !== 0) process.exitCode = report.exitCode;
+}
+
+/**
+ * `indusk promises contract <plan> | --all [--impl-stdin]` (planner-promises
+ * ADR D2). Read-only: does the plan's brief, its test rows and the registry
+ * agree? Exit 2 with every refusal on stderr, each naming the promise, the
+ * expectation or the row; exit 0 with one line saying what was checked.
+ *
+ * `--impl-stdin` judges the impl given on stdin in place of the one on disk:
+ * the impl hook asks before a write lands. `--all` checks every plan folder,
+ * active and archived.
+ */
+export function promisesContract(
+	projectRoot: string,
+	plan: string | undefined,
+	opts: { all?: boolean; implStdin?: boolean } = {},
+): void {
+	const refuse = (refusals: ContractRefusal[]) => {
+		for (const r of refusals) console.error(`${r.file}: ${r.message}`);
+		console.error(
+			`\n${refusals.length} refusal${refusals.length === 1 ? "" : "s"} — the brief, the rows and the registry have to agree before the plan builds.`,
+		);
+		process.exitCode = 2;
+	};
+	if (opts.all) {
+		if (plan !== undefined || opts.implStdin) {
+			console.error("--all checks every plan folder: it takes no plan and no --impl-stdin");
+			process.exitCode = 2;
+			return;
+		}
+		const { summaries, refusals } = checkAllContracts(projectRoot);
+		if (refusals.length > 0) {
+			refuse(refusals);
+			return;
+		}
+		const held = summaries.filter((s) => s.shape === "contract");
+		for (const s of held) console.info(formatContract(s));
+		console.info(
+			`${summaries.length} plan folder${summaries.length === 1 ? "" : "s"} — ${held.length} held to the contract, ${summaries.length - held.length} written before it or with no brief.`,
+		);
+		return;
+	}
+	if (plan === undefined) {
+		console.error("name the plan to check (`indusk promises contract <plan>`), or pass --all");
+		process.exitCode = 2;
+		return;
+	}
+	const result = checkPlanContract(
+		projectRoot,
+		plan,
+		opts.implStdin ? { implText: readFileSync(0, "utf-8") } : {},
+	);
+	if (!result.ok) {
+		refuse(result.refusals);
+		return;
+	}
+	console.info(formatContract(result.summary));
 }
 
 /** Run a registry write; a refusal goes to stderr with exit 2, anything else is a bug and throws. */

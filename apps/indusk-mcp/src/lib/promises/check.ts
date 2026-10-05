@@ -1,9 +1,10 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { readConfig } from "../config.js";
-import { isUsableSegment } from "../path-segment.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 import { citedNames } from "./citations.js";
+import { checkAllContracts } from "./contract.js";
+import { planFolderStatus } from "./plan-folder.js";
 import {
 	type IncidentEntry,
 	type PromiseEntry,
@@ -29,6 +30,9 @@ import {
  * point at nothing), and every `enforced` promise must carry the links its
  * kind requires (a promise must not be declared and never upheld). The check
  * proves a test *names* a promise; that it *validates* it is Day step 6.
+ *
+ * It also runs the contract of every open plan (`contract.ts`): a brief, its
+ * test rows and the registry must agree.
  *
  * In a one-repo workbench the registry is plan-root state and sites and tests
  * are code-repo facts; zero or several declared repos refuse by name through
@@ -96,27 +100,6 @@ function registryFile(rel: string): string {
 	return `${PROMISES_REL_DIR}/${rel}`;
 }
 
-type OwnerStatus = "active" | "archived" | "missing" | "not-a-folder" | "archive-folder";
-
-/**
- * A plan is a DIRECTORY under `.indusk/planning/` or its `archive/`, and
- * `archive` itself is not one (A28: a file such as `master.md` and the
- * archive folder both satisfied a bare `existsSync`).
- */
-function ownerStatus(planRoot: string, owner: string): OwnerStatus {
-	if (!isUsableSegment(owner)) return "missing";
-	if (owner === "archive") return "archive-folder";
-	const planning = join(planRoot, ".indusk", "planning");
-	for (const [dir, status] of [
-		[join(planning, owner), "active"],
-		[join(planning, "archive", owner), "archived"],
-	] as const) {
-		if (!existsSync(dir)) continue;
-		return statSync(dir).isDirectory() ? status : "not-a-folder";
-	}
-	return "missing";
-}
-
 /**
  * Whether `rel` under `codeRoot` exists and carries the token for `name` or
  * any of its `aliases` (A29: the reverse scan resolved aliases, the link
@@ -171,7 +154,7 @@ function stateRefusals(
 	incidentsById: Map<string, IncidentEntry>,
 	refusals: CheckRefusal[],
 ): void {
-	const owner = ownerStatus(planRoot, p.owner);
+	const owner = planFolderStatus(planRoot, p.owner);
 	if (owner === "missing") {
 		refusals.push({
 			file: registryFile(p.file),
@@ -294,6 +277,9 @@ export async function checkPromises(planRootIn: string): Promise<CheckResult> {
 	for (const p of registry.promises) stateRefusals(planRoot, codeRoot, p, incidentsById, refusals);
 
 	refusals.push(...supersedesRefusals(registry));
+	// planner-promises ADR D2: every open plan's brief, rows and the registry
+	// agree. Run here so every `pnpm test` runs it.
+	refusals.push(...checkAllContracts(planRoot, { activeOnly: true, registry }).refusals);
 
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
 	for (const i of registry.incidents) {

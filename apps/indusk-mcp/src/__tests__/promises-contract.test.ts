@@ -1,6 +1,8 @@
 import { rmSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { CLI_BIN, REPO_ROOT, runCli, SHOULD_SKIP } from "./helpers/cli.js";
+import { runHook } from "./helpers/hook-runner.js";
 import {
 	type BriefSpec,
 	briefText,
@@ -65,6 +67,8 @@ const kept = (over: Partial<PromiseSpec> = {}): PromiseSpec => ({
 
 function project(opts: {
 	brief?: BriefSpec | "legacy";
+	/** The brief's whole text, for a brief the fixture would never write. */
+	briefRaw?: string;
 	impl?: ImplSpec;
 	promises?: PromiseSpec[];
 }): PromiseProject {
@@ -74,7 +78,8 @@ function project(opts: {
 		landed: { [OLD_PLAN]: daysAgo(30) },
 		promises: opts.promises ?? [made()],
 		planFiles: {
-			[`${PLAN}/brief.md`]: brief === "legacy" ? legacyBriefText(PLAN) : briefText(PLAN, brief),
+			[`${PLAN}/brief.md`]:
+				opts.briefRaw ?? (brief === "legacy" ? legacyBriefText(PLAN) : briefText(PLAN, brief)),
 			...(opts.impl ? { [`${PLAN}/impl.md`]: implText(PLAN, opts.impl) } : {}),
 		},
 		files: {
@@ -118,7 +123,174 @@ describe.skipIf(SHOULD_SKIP)("A3 — the promises a brief makes are in the regis
 		expect(r.stderr).toContain(MADE);
 		expect(r.stderr).toMatch(/sentence/i);
 	});
+
+	it("refuses one whose kind in the registry is not the brief's", () => {
+		const r = contract(project({ promises: [made({ kind: "behaviour" })] }));
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(MADE);
+		expect(r.stderr).toMatch(/kind/i);
+	});
+
+	it("reads a sentence wrapped over several lines as one sentence", () => {
+		const wrapped = briefText(PLAN, { makes: [{ name: MADE, sentence: MADE_SENTENCE }] }).replace(
+			"is released when",
+			"is released\n   when",
+		);
+		const r = contract(project({ briefRaw: wrapped }));
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+	});
 });
+
+describe.skipIf(SHOULD_SKIP)("A3 — the registry check runs every open plan's contract", () => {
+	const check = (p: PromiseProject) => runCli(p.root, ["promises", "check"]);
+
+	it("passes a registry whose open plan's brief agrees with it", () => {
+		const r = check(project({ promises: [made(), kept()] }));
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+	});
+
+	it("refuses an otherwise clean registry while an open plan's brief makes a promise it does not hold", () => {
+		const r = check(project({ promises: [kept()] }));
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(MADE);
+		expect(r.stderr).toContain(`.indusk/planning/${PLAN}/brief.md`);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)("A3 — a brief out of shape is refused, never read as empty", () => {
+	const clean = () =>
+		briefText(PLAN, { makes: [{ name: MADE, sentence: MADE_SENTENCE }], mustNotBreak: [KEPT] });
+	const refused = (briefRaw: string) => {
+		const r = contract(project({ briefRaw, promises: [made(), kept()] }));
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		return r.stderr;
+	};
+
+	it("precondition: the brief these cases break passes as written", () => {
+		const r = contract(project({ briefRaw: clean(), promises: [made(), kept()] }));
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+	});
+
+	it("a list label with words after it, which would hide the promises under it", () => {
+		const stderr = refused(
+			clean().replace("**Must not break**", "**Must not break**, for this plan:"),
+		);
+		expect(stderr).toMatch(/Must not break/);
+		expect(stderr).toMatch(/own line/i);
+	});
+
+	it("a promise named under Existing promises but under none of the three lists", () => {
+		const stderr = refused(clean().replace("**Must not break**\n\n", ""));
+		expect(stderr).toContain(KEPT);
+		expect(stderr).toMatch(/must not break|changes|replaces/i);
+	});
+
+	it("an entry in a list that does not name a promise", () => {
+		const stderr = refused(clean().replace(`- **\`${KEPT}\`**. Still true.`, "- the seat rule"));
+		expect(stderr).toContain("the seat rule");
+	});
+
+	it("a promise this plan makes that is not written with its name", () => {
+		const stderr = refused(clean().replace(`**\`${MADE}\`** (state).`, "Seats are released."));
+		expect(stderr).toContain("Seats are released.");
+	});
+
+	it("a Promises section with no list of what this plan makes", () => {
+		const stderr = refused(clean().replace("### This plan makes", "### What we make"));
+		expect(stderr).toMatch(/This plan makes/);
+	});
+
+	it("ignores what is inside a code fence", () => {
+		const fenced = clean().replace(
+			"### Not promised",
+			"```markdown\n**Must not break**\n- **`seat-map-never-stale`**. An example.\n```\n\n### Not promised",
+		);
+		const r = contract(project({ briefRaw: fenced, promises: [made(), kept()] }));
+		expect(r.code, r.stdout + r.stderr).toBe(0);
+	});
+});
+
+describe.skipIf(SHOULD_SKIP)(
+	"A3 — an impl cannot be saved as building while the contract is broken",
+	() => {
+		const implPath = (p: PromiseProject) =>
+			join(p.planRoot, ".indusk", "planning", PLAN, "impl.md");
+		const DEV_CLI = { INDUSK_BIN: `node ${CLI_BIN}`, INDUSK_SKIP_UPDATE_CHECK: "1" };
+		/** The impl hook, asked about a Write of `impl` to the plan's impl.md. */
+		const write = (p: PromiseProject, impl: ImplSpec, env: Record<string, string> = DEV_CLI) =>
+			runHook(
+				"validate-impl-structure.js",
+				{
+					tool_name: "Write",
+					cwd: p.root,
+					tool_input: { file_path: implPath(p), content: implText(PLAN, impl) },
+				},
+				{ env },
+			);
+
+		it("accepts the write when the brief, the rows and the registry agree", async () => {
+			const r = await write(project({}), rows(token(MADE)));
+			expect(r.exitCode, r.stderr).toBe(0);
+		});
+
+		it("refuses it while the brief makes a promise the registry does not hold, naming the promise", async () => {
+			const r = await write(project({ promises: [] }), rows("a regression guard"));
+			expect(r.exitCode, r.stderr).toBe(2);
+			expect(r.stderr).toContain(MADE);
+		});
+
+		it("judges the rows being written, not the impl on disk", async () => {
+			const r = await write(project({}), rows(token(MADE), token("seat-map-never-stale")));
+			expect(r.exitCode, r.stderr).toBe(2);
+			expect(r.stderr).toMatch(/\bT2\b/);
+			expect(r.stderr).toContain("seat-map-never-stale");
+		});
+
+		it("checks an edit that only changes the status: a draft saved as approved", async () => {
+			const p = project({
+				promises: [],
+				impl: { ...rows("a regression guard"), status: "draft" },
+			});
+			const r = await runHook(
+				"validate-impl-structure.js",
+				{
+					tool_name: "Edit",
+					cwd: p.root,
+					tool_input: {
+						file_path: implPath(p),
+						old_string: "status: draft",
+						new_string: "status: approved",
+					},
+				},
+				{ env: DEV_CLI },
+			);
+			expect(r.exitCode, r.stderr).toBe(2);
+			expect(r.stderr).toContain(MADE);
+		});
+
+		it("does not hold a draft to it: the promises may not be saved yet", async () => {
+			const r = await write(project({ promises: [] }), {
+				...rows("a regression guard"),
+				status: "draft",
+			});
+			expect(r.exitCode, r.stderr).toBe(0);
+		});
+
+		it("does not run for an impl that has not opted in", async () => {
+			const r = await write(project({ promises: [] }), { rows: [{}] });
+			expect(r.exitCode, r.stderr).toBe(0);
+		});
+
+		it("refuses, saying why, when the check cannot be run: a gate that cannot run is never a pass", async () => {
+			const r = await write(project({}), rows(token(MADE)), {
+				INDUSK_BIN: "definitely-not-a-real-indusk-xyz",
+			});
+			expect(r.exitCode, r.stderr).toBe(2);
+			expect(r.stderr).toContain("definitely-not-a-real-indusk-xyz");
+			expect(r.stderr).toMatch(/could not be checked/i);
+		});
+	},
+);
 
 describe.skipIf(SHOULD_SKIP)("A4 — the existing promises a brief names exist", () => {
 	const brief = (extra: BriefSpec): BriefSpec => ({

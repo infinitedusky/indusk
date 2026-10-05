@@ -14,6 +14,7 @@
  * Exit 2 = block the edit (stderr sent to agent as feedback)
  */
 
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
@@ -141,6 +142,63 @@ if (event.tool_name === "Edit" && toolInput.old_string) {
 	newFullContent = toolInput.content ?? "";
 } else {
 	process.exit(0);
+}
+
+/**
+ * The plan's contract (planner-promises ADR D2): the brief, the test rows and
+ * the registry agree before the plan builds. The rule lives in the package
+ * (`lib/promises/contract.ts`) and needs the registry and the brief, so this
+ * hook does not carry a copy — it runs `indusk promises contract`, handing it
+ * the impl AS IT WOULD BE WRITTEN, and passes the refusal on.
+ *
+ * Runs for an impl that sets `test_purpose: required` and is past `draft`,
+ * and on every such write: saving a draft as `approved` touches no phase
+ * structure, and it is the write this exists for.
+ *
+ * A check that cannot be run refuses, and says why. `INDUSK_BIN` names the
+ * CLI (it may be a command line, `node /path/cli.js`, so it goes through the
+ * shell; the plan's name goes in by environment, never by interpolation).
+ *
+ * Returns the refusal text, or null to allow.
+ */
+function planContractRefusal(implPath, content, root) {
+	const fm = content.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? "";
+	if (!/^test_purpose:\s*required/m.test(fm)) return null;
+	const status = fm.match(/^status:\s*["']?([\w-]+)/m)?.[1];
+	if (!status || status === "draft") return null;
+	const plan = implPath.match(
+		/[\\/]\.indusk[\\/]planning[\\/](?:archive[\\/])?([^\\/]+)[\\/]impl\.md$/,
+	)?.[1];
+	if (!plan) return null;
+
+	const bin = process.env.INDUSK_BIN ?? "indusk";
+	const ran = `${bin} promises contract ${plan} --impl-stdin`;
+	const r = spawnSync(`${bin} promises contract "$INDUSK_CONTRACT_PLAN" --impl-stdin`, {
+		shell: true,
+		cwd: root,
+		input: content,
+		encoding: "utf-8",
+		timeout: 30_000,
+		env: { ...process.env, INDUSK_CONTRACT_PLAN: plan, INDUSK_SKIP_UPDATE_CHECK: "1" },
+	});
+	if (r.status === 0) return null;
+	const said = (r.stderr ?? "").trim();
+	if (r.status === 2 && said) {
+		return `The plan's contract is broken, so this impl cannot be saved as ${status} (\`indusk promises contract ${plan}\`):\n\n${said}\n`;
+	}
+	const how = r.error
+		? `could not start: ${r.error.message}`
+		: r.signal
+			? `was stopped by ${r.signal} (30s limit)`
+			: `exited ${r.status}`;
+	const detail = said ? `\n${said.split("\n").slice(0, 6).join("\n")}` : "";
+	return `The plan's contract could not be checked, so this write is refused: a gate that cannot run is never a pass.\n\n  ran: ${ran}\n  in:  ${root}\n  it ${how}${detail}\n\nThe \`indusk\` this hook reaches must have \`promises contract\`: install or upgrade the one on PATH (\`npm i -g @infinitedusky/indusk-mcp@latest\`), or set INDUSK_BIN to a build that has it.\n`;
+}
+
+const contractRefusal = planContractRefusal(filePath, newFullContent, statePath);
+if (contractRefusal) {
+	process.stderr.write(contractRefusal);
+	process.exit(2);
 }
 
 // Only validate if this edit is adding/modifying phase structure

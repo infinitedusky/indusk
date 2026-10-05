@@ -1,8 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readConfig, writeConfig } from "../config.js";
 import { isUsableSegment } from "../path-segment.js";
 import { setScalar } from "./frontmatter-edit.js";
+import { planFolderStatus } from "./plan-folder.js";
 import { type PromiseEntry, promisesDir, readPromises } from "./registry.js";
 import { PROMISE_KINDS, PROMISE_NAME, type PromiseKind } from "./vocabulary.js";
 
@@ -31,13 +32,8 @@ function oneParagraph(text: string): string {
 	return text.replace(/\s+/g, " ").trim();
 }
 
-function activePlanDir(planRoot: string, plan: string): string {
-	return join(planRoot, ".indusk", "planning", plan);
-}
-
 function requireOpenPlan(planRoot: string, plan: string): void {
-	const dir = activePlanDir(planRoot, plan);
-	if (!isUsableSegment(plan) || !existsSync(dir) || !statSync(dir).isDirectory()) {
+	if (planFolderStatus(planRoot, plan) !== "active") {
 		refuse(
 			`"${plan}" is not a plan folder under .indusk/planning/ — a promise is declared, changed or replaced by a plan that is still open`,
 		);

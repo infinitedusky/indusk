@@ -958,4 +958,16 @@ promisesCmd
 		promisesReplace(rootOrExit(), old, this.opts());
 	});
 
+promisesCmd
+	.command("contract [plan]")
+	.description(
+		"Does a plan's brief, its test rows and the registry agree? Refuses, naming the promise, the expectation or the row: a promise the brief makes that the registry does not hold, another plan owns or describes differently; one it keeps, changes or replaces that does not exist or is retired; an expectation with no measure or no time to look; a row naming a promise or lesson that does not exist, or another plan's promise the brief does not list. A brief written before promises were part of one is not held to it. Read-only. Exit 2 on a refusal. The impl hook and `promises check` both run this.",
+	)
+	.option("--all", "every plan folder, active and archived")
+	.option("--impl-stdin", "judge the impl given on stdin in place of the one on disk")
+	.action(async function (this: Command, plan: string | undefined) {
+		const { promisesContract } = await import("./commands/promises.js");
+		promisesContract(rootOrExit(), plan, this.opts());
+	});
+
 program.parse();
