@@ -283,12 +283,14 @@ lesson title, or a chat log.
   primitive. A person can start from a promise alone: the tests are written
   and seen to fail, then the code is built until they pass, with no plan to
   approve. Three layers follow: the core (a promise and its evidence),
-  workflows as extensions with `feature` the default, and this repository's
-  own house rules, which stop shipping. Three plans, none created:
-  `house-rules-out`, `promise-first-build`, `workflow-extensions`. Its table
-  "Plans this changes" names thirteen existing plans it touches, among them
-  the demo's; **none has been edited, and whether it runs before or after the
-  demo is undecided.** Measurements in [research](promise-core/research.md).
+  workflows a person selects from the steps InDusk provides, and this
+  repository's own house rules, which stop shipping. Three plans, none
+  created, in order: `house-rules-out`, `workflow-builder` (a simple admin
+  screen for selecting steps; today's kinds of plan become presets),
+  `promise-first-build` (the short path, last — Sandy, 2026-10-05). Its table
+  "Plans this changes" names thirteen existing plans it touches; **none has
+  been edited, and the demo's script stands.** Measurements in
+  [research](promise-core/research.md).
 - **Standalone, brief draft** (2026-10-01, rewritten the same day):
   [plan-premises](plan-premises/brief.md) — a place to put the *why*. A project
   states its aim and the metrics it judges it by, in the user's own words;
