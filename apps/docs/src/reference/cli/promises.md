@@ -116,12 +116,12 @@ Declared in `.indusk/config.json`, decided in planning, never free:
 `indusk update` ensures the block exists with an empty list on a project
 that has none; it never touches a declared list.
 
-## Writing a promise: `declare`, `change`, `replace`
+## Writing a promise: `declare`, `change`, `replace`, `withdraw`
 
-Nobody writes a registry file by hand. A promise reaches the registry from a
-planning conversation through one of three commands, and the planner calls
-the MCP tools of the same names (`declare_promise`, `change_promise`,
-`replace_promise`). Each writes plan documents and commits nothing, and each
+Nobody writes a registry file by hand, or deletes one. A promise reaches the
+registry from a planning conversation through one of these commands, and the
+planner calls the MCP tools of the same names (`declare_promise`,
+`change_promise`, `replace_promise`, `withdraw_promise`). Each writes plan documents and commits nothing, and each
 refuses with exit **2**, naming what was wrong, with nothing written.
 
 ```
@@ -156,6 +156,21 @@ is retired when the plan closes. The link is written once, on the new
 promise; `check` refuses a `supersedes` that names a promise the registry does
 not hold, and refuses a replacement that is in force while what it replaced
 still is.
+
+```
+indusk promises withdraw <name> --plan <plan>
+```
+
+Takes back a promise that was never in force: one the plan declared and the
+conversation then dropped, or gave a better name. Its file is removed. A rename
+is a withdrawal and a declaration. Take the promise out of the brief too, or
+`promises contract` will say the brief makes a promise the registry does not
+hold.
+
+It refuses, with exit **2** and nothing removed, naming the promise, when it
+is not `declared` (a promise in force has tests and a history, and leaves by
+being replaced), when another plan declared it, when it lists an incident, and
+when another promise records replacing it (withdraw that one first).
 
 ## `promises contract`
 

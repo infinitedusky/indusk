@@ -103,11 +103,12 @@ The plan that established it, until a later plan changes it: a plan that improve
 
 ## A promise's life in plans
 
-A promise comes from a planning conversation, and four commands carry it. Nobody types a registry file. The planner calls the tools of the same names.
+A promise comes from a planning conversation, and five commands carry it. Nobody types a registry file. The planner calls the tools of the same names.
 
 | Moment | Command | What it does |
 |---|---|---|
 | The plan's [brief](/guide/briefs) is agreed | `indusk promises declare` | Writes the promise as `declared`, owned by the plan. |
+| The conversation drops it, or renames it, before it is in force | `indusk promises withdraw` | Removes it. Only a promise that is still `declared`, and only by the plan that declared it; a rename is a withdrawal and a declaration. |
 | The plan closes | `indusk promises confirm <plan>` | Each promise the plan declared becomes `enforced`: its `tests:` are the files the plan's test rows name, its `sites:` the other files that carry its token. Refuses, and writes nothing, while a promise has no passing row that names it. |
 | A later plan partly changes what it commits to | `indusk promises change` | The sentence is replaced and the later plan takes the promise over. Its name, its incidents and the marks in code stay; its History keeps the old sentence, the reason and the plan that owned it before. |
 | Its name no longer describes it | `indusk promises replace` | A new promise is declared recording which it replaces. The old one stays in force while the plan builds and is retired when that plan is confirmed. |

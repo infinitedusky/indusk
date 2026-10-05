@@ -95,8 +95,9 @@ also how a plan decides what telemetry it needs.
 
 Each promise is one plain sentence about what will be true, with a name and a
 kind (`behaviour`, `state` or `structure`). The agent writes each to the
-registry with `indusk promises declare` as it writes the brief; nobody types a
-registry file. A promise starts `declared` and becomes `enforced` when the
+registry with `indusk promises declare` when you accept the brief; nobody
+types a registry file. One you then drop or rename is taken back with
+`indusk promises withdraw`. A promise starts `declared` and becomes `enforced` when the
 plan closes with a passing test that names it.
 
 ### Existing promises
