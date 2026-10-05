@@ -1,9 +1,10 @@
 import { markProjectId } from "./config.js";
 import { WatcherBlind } from "./probe.js";
-import type { Registry } from "./registry.js";
+import type { PromiseEntry, Registry } from "./registry.js";
 import { resolveMarkSources, type SourceName } from "./sources.js";
 import {
 	DEFAULT_TIMEOUT_MS,
+	type JaegerEndpoint,
 	JaegerUnreachable,
 	jaegerGet,
 	type MarkedSpan,
@@ -97,38 +98,12 @@ export async function readTimeline(
 		resolved.map(async (r): Promise<TimelineRead> => {
 			if (!r.ok) return failed(r.name, r.error.where, r.error);
 			try {
-				const services = await jaegerGet<string>(r.source.endpoint, "/api/services", timeoutMs);
-				const byPromise = new Map<string, PromiseTimeline>();
-				for (const promise of behaviour) {
-					const seen = new Map<string, MarkedSpan>();
-					const atLeast: FullSlice[] = [];
-					for (const service of services) {
-						for (const name of [promise.name, ...promise.aliases]) {
-							await readSliced(
-								(from, to) =>
-									marksBetween(r.source.endpoint, {
-										service,
-										name,
-										promise: promise.name,
-										from,
-										to,
-										project,
-										timeoutMs,
-									}),
-								opts.from,
-								opts.to,
-								seen,
-								atLeast,
-							);
-						}
-					}
-					byPromise.set(promise.name, {
-						marks: [...seen.values()]
-							.sort((a, b) => a.at.getTime() - b.at.getTime())
-							.map((m) => ({ at: m.at.toISOString(), outcome: m.outcome, traceId: m.traceId })),
-						atLeast,
-					});
-				}
+				const byPromise = await readSourceWindow(r.source.endpoint, behaviour, {
+					from: opts.from,
+					to: opts.to,
+					project,
+					timeoutMs,
+				});
 				return {
 					name: r.name,
 					label: r.source.label,
@@ -145,6 +120,42 @@ export async function readTimeline(
 			}
 		}),
 	);
+}
+
+/** One source's window: every behaviour promise's marks across every service and alias. */
+async function readSourceWindow(
+	endpoint: JaegerEndpoint,
+	promises: PromiseEntry[],
+	w: { from: Date; to: Date; project: string; timeoutMs: number },
+): Promise<Map<string, PromiseTimeline>> {
+	const services = await jaegerGet<string>(endpoint, "/api/services", w.timeoutMs);
+	const byPromise = new Map<string, PromiseTimeline>();
+	for (const promise of promises) {
+		const seen = new Map<string, MarkedSpan>();
+		const atLeast: FullSlice[] = [];
+		for (const service of services) {
+			for (const name of [promise.name, ...promise.aliases]) {
+				const query = (from: Date, to: Date) =>
+					marksBetween(endpoint, {
+						service,
+						name,
+						promise: promise.name,
+						from,
+						to,
+						project: w.project,
+						timeoutMs: w.timeoutMs,
+					});
+				await readSliced(query, w.from, w.to, seen, atLeast);
+			}
+		}
+		byPromise.set(promise.name, {
+			marks: [...seen.values()]
+				.sort((a, b) => a.at.getTime() - b.at.getTime())
+				.map((m) => ({ at: m.at.toISOString(), outcome: m.outcome, traceId: m.traceId })),
+			atLeast,
+		});
+	}
+	return byPromise;
 }
 
 /** Read [from, to]; when the query fills, read each half instead, down to the smallest slice. */
