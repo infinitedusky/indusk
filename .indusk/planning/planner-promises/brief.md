@@ -30,10 +30,14 @@ files by hand, and nothing connects a promise to the tests that prove it:
 
 ## Proposed Direction
 
-1. **The planner asks.** At brief and test-plan time the planner asks what
-   this plan promises will stay true. It writes each answer as a promise in
-   `.indusk/promises/`, owned by this plan, `state: declared`, before any code
-   exists.
+1. **The planner proposes, the person decides.** At brief time the planner
+   proposes what this plan promises will stay true, each as one plain
+   sentence. The person accepts, rewords or declines each. An accepted one is
+   written as a promise in `.indusk/promises/`, owned by this plan,
+   `state: declared`, before any code exists. The agent assigns its kind from
+   the sentence and the person can correct it. A declined proposal is recorded
+   in the brief and not raised again. A plan may make no promise; the brief
+   then says so, with the reason.
 2. **Every test says what it is for** (Sandy, 2026-10-02). A trajectory row
    names the promise it proves, or the lesson it guards (the `lesson: <name>`
    token), or says why it needs neither. A row that states none of the three is
@@ -44,7 +48,11 @@ files by hand, and nothing connects a promise to the tests that prove it:
    no passing row names.
 4. **An incident arrives knowing its tests.** Because rows name promises,
    `promises watch` can write which rows prove the broken promise and whether
-   they pass at head.
+   they pass at head. The row it appends to the reopened plan names the
+   promise that broke and carries its level. Today that row is appended with
+   an empty level, which an impl that requires levels then refuses
+   ([research](research.md), finding 4): a defect in 1.61.0 that nothing has
+   triggered yet.
 5. **Tests have a level, promises have a kind** (Sandy, 2026-10-05). The
    trajectory's `Kind` column, added by
    [test-kinds](../archive/test-kinds/brief.md), is renamed `Level`, and
@@ -70,6 +78,10 @@ files by hand, and nothing connects a promise to the tests that prove it:
 - It edits the files test-kinds just changed: the planner skill's test-plan
   section and templates, the trajectory parser and validator, and the impl
   hook.
+- The registry already has the `declared` state and the check already
+  refuses a promise still `declared` after its owner is archived. What is
+  missing is anything that writes a promise or confirms one
+  ([research](research.md), finding 1).
 - "Seen failing, recorded by the system" is not here. It is
   `day-claim-evidence`'s, component 5 in the Day master plan.
 
@@ -82,7 +94,9 @@ files by hand, and nothing connects a promise to the tests that prove it:
   or a reason; the names resolve against the registry and the lessons folder
 - The retrospective's close: `declared` to `enforced`; the refusal when a
   held promise has no passing row
-- `promises watch`: the rows that prove a broken promise, in the incident
+- `promises watch`: the rows that prove a broken promise, in the incident;
+  the row it appends carries its level and its promise
+- A new project's first promise: its domain is declared with it
 - The `Kind` to `Level` rename, with the old spellings accepted
 - The admin: a plan's page shows each row's promise
 
@@ -101,6 +115,7 @@ files by hand, and nothing connects a promise to the tests that prove it:
   system opens an incident that names the rows that prove it.
 - A new impl's trajectory says `Level`, and the test-kinds impl in the archive
   still validates.
+- A plan that requires levels, reopened by a broken promise, still validates.
 
 ## Depends On
 
