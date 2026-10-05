@@ -76,7 +76,13 @@ export async function watchPromises(
 	const behaviour = read.registry.promises.filter(
 		(p) => p.kind === "behaviour" && p.state !== "retired",
 	);
-	const marks = await readPromiseMarks(planRoot, read.registry, { now });
+	// `--source` chooses what is read, not only what is written on the incident
+	// (promise-sources, ADR D6): `deployed` reads production, and is refused
+	// when the project names none; `local`, `smoke` and `desk` read the laptop.
+	const marks = await readPromiseMarks(planRoot, read.registry, {
+		now,
+		source: opts.source === "deployed" ? "production" : "local",
+	});
 	// Which Jaeger answered travels with the result: with a remote source a
 	// reader must never have to guess whether they are looking at production
 	// or at the laptop they are sitting in front of.

@@ -115,7 +115,7 @@ exists today and answers wrongly.
 
 - [x] `bin/commands/promises.ts` `status`: one section per source (header: name and URL), today's block layout inside each. Exit 0 when every source answered and heard, 2 when any did not (after printing the rest)
   - As built (refines ADR D3): exit 2 when the **alarm source** could not be read; a failed `local` beside an answering `production` is printed in its section and exits 0. Under "any source", `always-on-source.test.ts` A10 — status on a production-naming project with no local daemon, asserting exit 0 — goes red, and every laptop without a running daemon would fail every status run. A4 (production down → exit 2) holds either way
-- [ ] `watch --source`: `deployed` reads `production`, refused naming `promises.jaeger` when none is set; `local`, `smoke` and `desk` read `local` (`lib/promises/watch.ts` takes the source name)
+- [x] `watch --source`: `deployed` reads `production`, refused naming `promises.jaeger` when none is set; `local`, `smoke` and `desk` read `local` (`lib/promises/watch.ts` takes the source name)
 
 #### Build Phase 2 Verification
 
