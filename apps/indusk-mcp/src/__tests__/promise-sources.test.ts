@@ -16,6 +16,7 @@ import {
 	startTwoSources,
 	type TwoSources,
 } from "./helpers/two-sources.js";
+import { withEnv } from "./helpers/with-env.js";
 
 /**
  * promise-sources — A1, A2, A4–A7: a developer reads local and production side
@@ -47,19 +48,11 @@ function section(out: string, name: "local" | "production"): string {
 }
 
 async function health(t: TwoSources): Promise<{ json: Record<string, unknown>; isError: boolean }> {
-	const saved = { home: process.env.INDUSK_HOME, cred: process.env[CRED_ENV] };
-	process.env.INDUSK_HOME = t.local.home;
-	process.env[CRED_ENV] = t.production.credential;
-	try {
+	return withEnv(t.env, async () => {
 		const tools = toolCaller((server) => registerPlanTools(server, t.project.planRoot));
 		const r = await tools.call("promise_health", {});
 		return { json: r.json as Record<string, unknown>, isError: r.isError };
-	} finally {
-		if (saved.home === undefined) delete process.env.INDUSK_HOME;
-		else process.env.INDUSK_HOME = saved.home;
-		if (saved.cred === undefined) delete process.env[CRED_ENV];
-		else process.env[CRED_ENV] = saved.cred;
-	}
+	});
 }
 
 type SourceEntry = {
@@ -263,21 +256,16 @@ describe.skipIf(SHOULD_SKIP)(
 			setJaeger(t, { url: t.production.queryUrl, otlp_url: t.production.otlpUrl });
 			const read = readPromises(t.project.planRoot);
 			if (!read.ok) throw new Error("fixture registry did not read");
-			const saved = process.env.INDUSK_HOME;
-			process.env.INDUSK_HOME = t.local.home;
-			try {
-				const reads = await readSources(t.project.planRoot, read.registry, { timeoutMs: 2_000 });
-				const local = reads.find((r) => r.name === "local");
-				const production = reads.find((r) => r.name === "production");
-				expect(local?.ok).toBe(true);
-				expect(production?.ok).toBe(false);
-				expect(production?.ok === false && production.reason).toContain(
-					"promises.jaeger.credential_env",
-				);
-			} finally {
-				if (saved === undefined) delete process.env.INDUSK_HOME;
-				else process.env.INDUSK_HOME = saved;
-			}
+			const reads = await withEnv({ INDUSK_HOME: t.local.home }, () =>
+				readSources(t.project.planRoot, read.registry, { timeoutMs: 2_000 }),
+			);
+			const local = reads.find((r) => r.name === "local");
+			const production = reads.find((r) => r.name === "production");
+			expect(local?.ok).toBe(true);
+			expect(production?.ok).toBe(false);
+			expect(production?.ok === false && production.reason).toContain(
+				"promises.jaeger.credential_env",
+			);
 		}, 60_000);
 	},
 );
@@ -308,22 +296,14 @@ describe.skipIf(SHOULD_SKIP)(
 		it("readSources with a 2 s budget returns within 3 s, local read, production failed", async () => {
 			const read = readPromises(t.project.planRoot);
 			if (!read.ok) throw new Error("fixture registry did not read");
-			const saved = { home: process.env.INDUSK_HOME, cred: process.env[CRED_ENV] };
-			process.env.INDUSK_HOME = t.local.home;
-			process.env[CRED_ENV] = t.production.credential;
-			try {
-				const started = Date.now();
-				const reads = await readSources(t.project.planRoot, read.registry, { timeoutMs: 2_000 });
-				const took = Date.now() - started;
-				expect(reads.find((r) => r.name === "local")?.ok).toBe(true);
-				expect(reads.find((r) => r.name === "production")?.ok).toBe(false);
-				expect(took, `took ${took} ms`).toBeLessThan(3_000);
-			} finally {
-				if (saved.home === undefined) delete process.env.INDUSK_HOME;
-				else process.env.INDUSK_HOME = saved.home;
-				if (saved.cred === undefined) delete process.env[CRED_ENV];
-				else process.env[CRED_ENV] = saved.cred;
-			}
+			const started = Date.now();
+			const reads = await withEnv(t.env, () =>
+				readSources(t.project.planRoot, read.registry, { timeoutMs: 2_000 }),
+			);
+			const took = Date.now() - started;
+			expect(reads.find((r) => r.name === "local")?.ok).toBe(true);
+			expect(reads.find((r) => r.name === "production")?.ok).toBe(false);
+			expect(took, `took ${took} ms`).toBeLessThan(3_000);
 		}, 60_000);
 	},
 );
