@@ -294,7 +294,11 @@ function PromiseGroup({
         <TableBody>
           {rows.map((p) => (
             <Fragment key={p.name}>
-              <TableRow data-testid="promise-row" data-promise={p.name}>
+              <TableRow
+                data-testid="promise-row"
+                data-promise={p.name}
+                id={`promise-${p.name}`}
+              >
                 <TableCell>
                   <PromiseStateCell
                     promise={p}

@@ -32,10 +32,13 @@ export function RitualPhaseSection({
   ritual,
   planName,
   phase,
+  promisesHref,
 }: {
   ritual: RitualWord;
   planName: string;
   phase: Phase;
+  /** The project's Promises page, for the rows that name a promise. */
+  promisesHref?: string;
 }) {
   const copy = RITUAL_COPY[ritual];
   const ids = TEST_IDS[ritual];
@@ -75,7 +78,10 @@ export function RitualPhaseSection({
               <h3 className="mt-1 text-sm font-semibold text-gray-800">
                 {copy.rowsHeading}
               </h3>
-              <TrajectoryRowsTable rows={phase.trajectoryRows} />
+              <TrajectoryRowsTable
+                rows={phase.trajectoryRows}
+                promisesHref={promisesHref}
+              />
             </div>
           )}
           {items.length > 0 && (

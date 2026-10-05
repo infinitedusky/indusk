@@ -160,12 +160,25 @@ export function PlanDetail({
         <PapersSection planName={plan.name} papers={plan.papers} />
       )}
 
-      {plan.impl && <ImplSections plan={plan} />}
+      {plan.impl && (
+        <ImplSections
+          plan={plan}
+          promisesHref={promisesHrefFrom(planHrefPrefix)}
+        />
+      )}
       {!plan.impl && hasAnyDocument && (
         <FalsificationSection plan={plan} phase={null} />
       )}
     </article>
   );
+}
+
+/**
+ * The project's Promises page, beside its plan pages: a plan is at
+ * `<base>/plan/<name>`, the registry at `<base>/promises`.
+ */
+function promisesHrefFrom(planHrefPrefix: string): string {
+  return planHrefPrefix.replace(/plan\/$/, "promises");
 }
 
 /**
@@ -178,7 +191,13 @@ export function PlanDetail({
  * When no impl is present, the PlanDetail top-level still shows a
  * FalsificationSection directly (legacy-log-only path).
  */
-function ImplSections({ plan }: { plan: Plan }) {
+function ImplSections({
+  plan,
+  promisesHref,
+}: {
+  plan: Plan;
+  promisesHref: string;
+}) {
   if (!plan.impl) return null;
   const phases = extractPhases(plan.impl.content, plan.impl.trajectory);
   const split = splitPhasesAroundFalsification(phases);
@@ -205,11 +224,20 @@ function ImplSections({ plan }: { plan: Plan }) {
           testId="phases-section"
           planName={plan.name}
           activeKey={activeKey}
+          promisesHref={promisesHref}
         />
       )}
-      <FalsificationSection plan={plan} phase={split.falsification} />
+      <FalsificationSection
+        plan={plan}
+        phase={split.falsification}
+        promisesHref={promisesHref}
+      />
       {split.cleanup && (
-        <CleanupSection planName={plan.name} phase={split.cleanup} />
+        <CleanupSection
+          planName={plan.name}
+          phase={split.cleanup}
+          promisesHref={promisesHref}
+        />
       )}
       {split.post.length > 0 && (
         <PhasesSection
@@ -218,6 +246,7 @@ function ImplSections({ plan }: { plan: Plan }) {
           testId="followup-phases-section"
           planName={plan.name}
           activeKey={activeKey}
+          promisesHref={promisesHref}
         />
       )}
     </>

@@ -20,6 +20,8 @@ interface PhasesSectionProps {
   planName: string;
   /** `kind-number` of the active phase, marked `data-active="true"`. */
   activeKey?: string | null;
+  /** The project's Promises page, for the rows that name a promise. */
+  promisesHref?: string;
 }
 
 const STAGE_LABEL: Record<Stage["kind"], string> = {
@@ -63,6 +65,7 @@ export function PhasesSection({
   testId,
   planName,
   activeKey = null,
+  promisesHref,
 }: PhasesSectionProps) {
   if (phases.length === 0) return null;
 
@@ -97,6 +100,7 @@ export function PhasesSection({
                         <TrajectoryRowsTable
                           rows={phase.trajectoryRows}
                           phaseColumns
+                          promisesHref={promisesHref}
                         />
                       </div>
                     )}
