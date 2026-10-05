@@ -71,7 +71,9 @@ one is refused by name. The alternative is a list read as empty and a check
 that passes having checked nothing.
 
 A brief written before this shape existed has no `## Promises` heading, and
-none of this applies to it.
+none of the lists apply to it. A brief written in the new parts without that
+heading is out of shape, not exempt. A measure or a time to look left as the
+template's `{placeholder}` is refused, like one that is missing.
 
 ## Expectations
 

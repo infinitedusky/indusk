@@ -113,6 +113,10 @@ A promise comes from a planning conversation, and five commands carry it. Nobody
 | A later plan partly changes what it commits to | `indusk promises change` | The sentence is replaced and the later plan takes the promise over. Its name, its incidents and the marks in code stay; its History keeps the old sentence, the reason and the plan that owned it before. |
 | Its name no longer describes it | `indusk promises replace` | A new promise is declared recording which it replaces. The old one stays in force while the plan builds and is retired when that plan is confirmed. |
 
+A plan confirms its promises before it is archived, whether or not it has a
+retrospective. One archived without it still can: `confirm` and `withdraw`
+work on an archived plan, and `promises check` names both.
+
 A promise is proven by a row, not by a claim. Each row of a plan's [Test Trajectory](/guide/test-trajectory) says what it is for, and confirming reads those rows: every row that names the promise is `passing`, and the test files they name exist and carry `promise: <name>`. A `behaviour` or `state` promise also needs code that carries the token, because a promise about what the system does names the code that keeps it.
 
 Prefer changing to replacing. A promise a new plan partly invalidates is usually the same commitment said better, and changing it keeps one name, one file and one history. If it breaks later, the plan that changed it is the one reopened.

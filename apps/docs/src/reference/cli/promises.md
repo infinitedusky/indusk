@@ -155,7 +155,8 @@ with `supersedes: <old>`. The old one stays in force while the plan builds and
 is retired when the plan closes. The link is written once, on the new
 promise; `check` refuses a `supersedes` that names a promise the registry does
 not hold, and refuses a replacement that is in force while what it replaced
-still is.
+still is. If the plan already declared the new promise with `declare`, `replace`
+records the link on it instead, keeping the sentence it was declared with.
 
 ```
 indusk promises withdraw <name> --plan <plan>
@@ -170,7 +171,8 @@ hold.
 It refuses, with exit **2** and nothing removed, naming the promise, when it
 is not `declared` (a promise in force has tests and a history, and leaves by
 being replaced), when another plan declared it, when it lists an incident, and
-when another promise records replacing it (withdraw that one first).
+when another promise records replacing it (withdraw that one first). A plan
+that was archived with a promise still declared can withdraw it from there.
 
 ## `promises contract`
 
@@ -194,14 +196,19 @@ seats-v2: its brief, its rows and the registry agree — 1 made, 1 kept, 0 chang
 | One whose sentence or kind in the registry is not the brief's | the promise, and both readings |
 | A promise under **Must not break**, **Changes** or **Replaces** that does not exist, or is already retired | the promise and the list |
 | A **Replaces** entry whose replacement is not among the promises the plan makes | both promises |
-| An expectation with no `Measure` or no `Look`; a brief with no expectations that does not say `None — {reason}` | the expectation |
+| An expectation with no `Measure` or no `Look`, or one still the template's `{placeholder}`; a brief with no expectations that does not say `None — {reason}` | the expectation |
 | A test row whose `For` names a promise the registry does not hold, a retired promise, or a lesson with no file under `.claude/lessons/` | the row and the name |
+| A test row with no `For`, a `For` that tries to name a promise or lesson and does not (the name in backticks, words after it), one that is only a mark (`-`, `n/a`, `TBD`), a `Level` that is not one of the five, or a cell missing or too many — in an impl past `draft` that sets `test_purpose` or `test_levels` | the row |
+| An impl whose frontmatter cannot be read | the file |
 | A test row naming a promise another plan owns that the brief lists under none of the three | the row, the promise and its owner |
-| A line in the brief that looks like part of the contract and cannot be read: a label with words after it, a promise named under none of the three lists, an entry that names no promise, no `### This plan makes` | the line |
+| A line in the brief that looks like part of the contract and cannot be read: a label with words after it or outside `### Existing promises`, a promise's name no list read, an entry that names no promise, no `### This plan makes`, the new parts with no `## Promises` heading | the line |
 | A name that is not a plan folder | the name — never passed |
 
-A brief with no `## Promises` heading was written before promises were part of
-one, and is not held to any of this. An archived plan is held only to what its
+A brief with no `## Promises` heading, and none of the parts beneath it, was
+written before promises were part of one: it is held to no list, but its plan's
+rows still are, so a row cannot name a promise that does not exist. A brief
+still marked `draft` is left out of `--all` and `promises check` until its plan
+is building; asked about by name, it is checked. An archived plan is held only to what its
 own brief says (its shape and its expectations): the registry is what later
 plans have made of its promises since.
 
@@ -211,7 +218,8 @@ because it asks before a write lands.
 
 **Who runs it.** The impl hook (`validate-impl-structure.js`) runs it on every
 write to an impl that sets `test_purpose: required` and is past `draft`, and
-refuses the write on a refusal. It reaches the CLI as `indusk` on `PATH`, or as
+refuses the write on a refusal. Because the row rules are the contract's, they
+hold for an impl any tool wrote, not only for edits the hook sees. It reaches the CLI as `indusk` on `PATH`, or as
 `INDUSK_BIN` when that is set. If the command cannot be run (no `indusk`, or
 one too old to have `contract`), the write is refused with the command it ran
 and how it failed. `promises check` runs it for every open plan.
@@ -224,9 +232,12 @@ indusk promises confirm <plan> [--code-root <path>]
 
 Closes a plan's promises. For each promise the plan owns that is still
 `declared`, it sets `tests:` to the test files the plan's rows name, `sites:`
-to the other files under the code root that carry the promise's token, and
-`state: enforced`, with a History line naming the rows; a promise it
-`supersedes` is retired. Then it runs `promises check`. It writes plan
+to the files under the code root that carry the promise's token and that no
+row of the plan names as a test, and `state: enforced`, with a History line
+naming the rows; a promise it `supersedes` is retired first. A promise the plan
+owns that is already in force and that its rows name has its links brought up
+to date: a test that moved is listed where it is now, one that is gone is
+dropped. Then it runs `promises check`. It writes plan
 documents and commits nothing.
 
 ```
@@ -247,10 +258,12 @@ with nothing written, naming:
 | It replaces a promise that code still names | the promise, the one it replaces, and each file |
 | The brief lists a promise under **Changes** that the plan never changed | the promise, and the `change` command |
 | The brief lists a replacement that was declared without recording what it replaces | both promises, and the `replace` command |
-| A name that is not an open plan folder | the name |
+| A name that is not a plan folder | the name |
 
-A plan that holds no `declared` promise has nothing to confirm; the command
-says so and exits **0**, so running it twice is safe.
+A plan with nothing to change says so and exits **0**, so running it twice is
+safe; a run that stopped partway is finished by the next. A plan archived
+without confirming (a bugfix that skipped its retrospective) is confirmed from
+its archived folder with the same command; `promises check` names it.
 
 `--code-root` names where the plan's code and tests are. It defaults to the
 project's code root. In a workbench a plan's tests exist only in its own code
