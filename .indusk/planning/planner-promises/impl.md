@@ -1,7 +1,7 @@
 ---
 title: "The planner asks for promises"
 date: 2026-10-05
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -48,6 +48,7 @@ promises proven; and an incident starts from the tests that were vouching
 | Build Phase 5 | `confirmPlan`; `promises confirm`; the retrospective gate's `promises` | Build Phase 4's contract |
 | Build Phase 6 | `rowsNaming`; the incident's `Proven by` | Build Phase 2's rows |
 | Build Phase 7 | the planner and retrospective skills and templates; the admin's row columns; this plan's promises confirmed | everything above |
+| Build Phase 8 | `withdrawPromise`; `promises withdraw`; the `withdraw_promise` tool | Build Phase 3's writer |
 
 ## Test Trajectory
 
@@ -80,6 +81,7 @@ promises proven; and an incident starts from the tests that were vouching
 | A25 | When a plan that changes a promise closes, the promise has its new sentence and is owned by that plan, and its History shows the old sentence, the reason and the previous owner; its incidents and the marks that name it still resolve | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 | A26 | When a plan that replaces a promise closes, the old one is retired, the new one records which it replaced, and the check passes; a replacement naming a promise that does not exist is refused | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 | A27 | A changed promise that breaks later reopens the plan that changed it, and its incident lists the rows that name it in both plans | Test Phase 1 | Build Phase 6 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
+| A28 | A promise a plan declared and then dropped, before it was ever in force, leaves the registry by a command; one that is in force, or another plan's, is refused, naming it, and nothing is removed | Build Phase 8 | Build Phase 8 | written | unit | lets the planner drop or rename a promise without anyone deleting a registry file by hand (Sandy, 2026-10-05) | apps/indusk-mcp/src/__tests__/promises-withdraw.test.ts |
 
 ### Deferred Verification
 
@@ -125,6 +127,10 @@ promises proven; and an incident starts from the tests that were vouching
   ```
 - **A22** — a live check of this plan's own promises being confirmed; there is nothing to confirm until its rows pass.
 - **A23** — a live check in a scratch project, run once the planner skill and the commands exist.
+
+#### Deferred to Build Phase 8
+
+- **A28** — not deferred from this phase but added after it: withdrawal was asked for on 2026-10-05, once the seven build phases had closed (Sandy: "Add withdrawal"). The gap was found writing the planner's steps: a promise declared and then dropped or renamed could only leave the registry by deleting its file by hand. Its test reaches the command over the CLI, so it is written before the command and is red on an unknown command.
 
 #### Regression Guards
 
@@ -304,6 +310,28 @@ promises proven; and an incident starts from the tests that were vouching
 #### Build Phase 7 Document
 
 - [x] `apps/docs/src/reference/skills/plan.md` and `reference/admin-ui/overview.md`; `apps/docs/src/changelog.md` Unreleased: Added (the brief's expectations and promises, `test_purpose` and `For`, the five commands, `Proven by`), Changed (`Kind` is `Level`) — the reference page gained the conversation with a Mermaid diagram and its walkthrough's brief is in the new shape; the changelog also says the hook now needs an `indusk` on PATH that has `promises contract`, and lists the two fixes found on the way; the docs site builds
+
+### Build Phase 8: A declared promise can be withdrawn
+
+**Goal**: a promise a plan declared and then drops or renames, before it is in force, leaves the registry by a command, so the planner never deletes a registry file by hand. Added 2026-10-05 at Sandy's request, after the seven phases above closed.
+
+- [x] A28 written first: `promises-withdraw.test.ts`, through the CLI and the tool. RED: `promises withdraw` is not a command — eight cases, all red: seven on "unknown command 'withdraw'" (exit 1 where 0 or 2 is asserted), the tool's on no tool of that name
+- [ ] `lib/promises/write.ts`: `withdrawPromise(planRoot, { name, plan })` — removes the file of a promise that is `declared` and owned by that open plan; refuses, naming the promise, one the registry does not hold, one in any other state, one another plan owns, and one that lists an incident
+- [ ] `promises withdraw <name> --plan <plan>` and the `withdraw_promise` tool
+- [ ] `skills/planner.md`: a promise dropped or renamed after acceptance is withdrawn with the tool (a rename is a withdrawal and a declaration), and the brief is edited with it
+- [ ] ADR D4 gains the command, dated
+
+#### Build Phase 8 Verification
+
+- [ ] A28 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises-withdraw src/__tests__/promises-declare src/__tests__/promises-check src/__tests__/planner-brief-template src/__tests__/skill-sync-parity`)
+
+#### Build Phase 8 Context
+
+- [ ] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): the `.indusk/promises/` entry names `withdraw` beside `declare | change | replace`
+
+#### Build Phase 8 Document
+
+- [ ] `apps/docs/src/reference/cli/promises.md`: `withdraw`; `guide/promises.md`: the row in "A promise's life in plans"; `changelog.md`: the commands entry names it
 
 ## Files Affected
 
