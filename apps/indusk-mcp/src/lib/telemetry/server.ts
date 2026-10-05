@@ -280,18 +280,25 @@ export async function serve(env: NodeJS.ProcessEnv = process.env): Promise<numbe
 	const jaegerQueryPort = await freeLoopbackPort();
 	writeFileSync(configPath, renderServerConfig(settings, jaegerQueryPort));
 
+	// The door binds before Jaeger starts. Bound after, a taken public port
+	// failed the start with Jaeger already running — an orphan holding the
+	// intake and badger's lock, so every restart failed too (A13). Until
+	// Jaeger answers, the door answers 502.
+	const door = await openDoor(settings.queryPort, jaegerQueryPort);
+	const shutDoor = (): void => {
+		door.closeAllConnections();
+		door.close();
+	};
+
 	const binary = resolveBinary("jaeger");
 	const child = spawn(binary, [`--config=file:${configPath}`], { stdio: "inherit" });
-	const door = await startQueryDoor({
-		publicPort: settings.queryPort,
-		jaegerPort: jaegerQueryPort,
-	});
 
 	const timer = startPass(settings);
 
 	return new Promise<number>((resolve, reject) => {
 		child.once("error", (err) => {
 			clearInterval(timer);
+			shutDoor();
 			reject(err);
 		});
 		for (const signal of ["SIGTERM", "SIGINT"] as const) {
@@ -299,8 +306,25 @@ export async function serve(env: NodeJS.ProcessEnv = process.env): Promise<numbe
 		}
 		child.once("close", (code) => {
 			clearInterval(timer);
-			door.close();
+			// Every connection, not only idle ones: a browser holding a
+			// response must not keep a server whose Jaeger is gone alive (A14).
+			shutDoor();
 			resolve(code ?? 0);
 		});
 	});
+}
+
+/** The query door, or a refusal naming the setting when its port is taken. */
+async function openDoor(publicPort: number, jaegerPort: number): ReturnType<typeof startQueryDoor> {
+	try {
+		return await startQueryDoor({ publicPort, jaegerPort });
+	} catch (err) {
+		if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") {
+			throw new MissingServerSetting(
+				QUERY_PORT_ENV,
+				`port ${publicPort}, which another process is already listening on`,
+			);
+		}
+		throw err;
+	}
 }

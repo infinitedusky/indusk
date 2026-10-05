@@ -250,7 +250,7 @@ Found while investigating (2026-10-04), before any row was written:
   to announce), from a full disk instead of a restart. A write that throws
   leaves its temp file.
 
-- [ ] `serve()` binds the query door before spawning Jaeger, so a taken public port refuses before anything is started; and any exit path closes the door with `closeAllConnections()`
+- [x] `serve()` binds the query door before spawning Jaeger, so a taken public port refuses before anything is started; and any exit path closes the door with `closeAllConnections()`
 - [ ] `startQueryDoor`: an upstream response that errors or aborts destroys the client's response; a client response closed early destroys the upstream request
 - [ ] `readServerSettings`: the public query URL must parse as an absolute `http:`/`https:` URL with no user, password, query or fragment, or it is refused as a `MissingServerSetting` naming the variable (a path is kept, for a Jaeger under a prefix)
 - [ ] `writeFileDurably`: write until every byte is written (a zero-byte write is a failure), and on any failure before the rename remove the temp file and rethrow, leaving the old record in place
