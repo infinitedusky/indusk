@@ -145,3 +145,4 @@
 {"plan":"test-kinds","phase":4,"kind":"build","sha":"2ee5c7a9c1b653b54972eb3b73b1ef567ac007bc","timestamp":"2026-10-05T17:37:41.839Z"}
 {"plan":"test-kinds","phase":5,"kind":"build","sha":"aeb6ffceea77ba2da14118f03e46e50df178032e","timestamp":"2026-10-05T17:42:45.148Z"}
 {"plan":"test-kinds","phase":6,"kind":"build","sha":"d36c5b187c0b3757302108a2e7e4b7f8e9805625","timestamp":"2026-10-05T18:08:55.197Z"}
+{"plan":"planner-promises","phase":1,"kind":"test","sha":"6e1a176bfec13d9bd4006a85d4308ec0222ed473","timestamp":"2026-10-05T20:20:29.157Z"}
