@@ -4,13 +4,12 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.59.0] — 2026-10-05
+
+1.58.5 was bumped and never published; its fixes ship here.
+
 ### Added
 - **Local and production, side by side.** A project that names an always-on server in `promises.jaeger` now reads both it and the laptop's telemetry daemon. `promises status` prints a section per source; `promise_health` adds `sources`, each with its own rows or its own failure; the admin draws a health chip per source on every behaviour promise. Only production raises the alarm — the top-level `needsAttention`, the sidebar's red, `status`'s exit code and catchup's "raise first" — so a break on the laptop is shown as work in progress, not raised. One source that cannot be read never hides the other. `watch --source deployed` now reads production and `--source local` the laptop, instead of only labelling the incident. A project that names no server behaves exactly as before.
-
-### Fixed
-- **A server that is down reads as unreachable, not *watcher blind*.** When the probe's send failed, every reader called the watcher blind, which advises looking for a stranger on the port. If the query API does not answer either, nobody is there, and readers now say so.
-
-## [1.58.5] — 2026-10-05
 
 ### Changed
 - **The always-on image and Fly reference are verified against a real deployment.** The guide's smoke procedure ran end to end on Fly (2026-10-04), including an idle hour with a heartbeat every 60 s and no gap. It found three server bugs, fixed in 1.58.2–1.58.4. The reference Fly config spells auto-stop `"off"` and names its public query address. The guide now shows the steps as run (`fly apps create`, `--ha=false`, a dedicated IPv4 for the query port) and the observed record. The scripted half of the smoke is `e2e/deployed-smoke.e2e.test.ts`, re-runnable against any deployment.
@@ -18,6 +17,7 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - The always-on tests pick their ports with the server's own `freeLoopbackPort` rather than two private copies of it (internal).
 
 ### Fixed
+- **A server that is down reads as unreachable, not *watcher blind*.** When the probe's send failed, every reader called the watcher blind, which advises looking for a stranger on the port. If the query API does not answer either, nobody is there, and readers now say so.
 - **An always-on server whose query port is taken starts nothing.** The server started Jaeger and then bound its query door; with the port already held, it exited and left Jaeger running, holding the intake port and the volume's lock, so every restart failed too. The door now binds first, and the refusal names `INDUSK_SERVER_QUERY_PORT`.
 - **The query door no longer leaves a connection hanging.** When Jaeger dropped a response half-way, the browser's response was never ended, and could keep a server whose Jaeger had died from exiting. A browser leaving half-way now also closes the request to Jaeger.
 - **`INDUSK_SERVER_PUBLIC_QUERY_URL` is checked at start.** A URL carrying a user or password would have posted the credential in every Slack message, and one without a scheme posted a link that does not open. Both, and a URL with a query or fragment, are refused by name, without repeating the value.
