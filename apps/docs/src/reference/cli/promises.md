@@ -157,6 +157,50 @@ promise; `check` refuses a `supersedes` that names a promise the registry does
 not hold, and refuses a replacement that is in force while what it replaced
 still is.
 
+## `promises contract`
+
+```
+indusk promises contract <plan>
+indusk promises contract --all
+```
+
+Does a plan's [brief](/guide/briefs), its test rows and the registry agree?
+Read-only. Exit **0** with one line saying what was checked; exit **2** with
+every refusal on stderr, one `path: message` line each.
+
+```
+seats-v2: its brief, its rows and the registry agree — 1 made, 1 kept, 0 changed, 0 replaced; 1 expectation
+```
+
+| Situation | Refusal names |
+|---|---|
+| A promise under **This plan makes** that the registry does not hold | the promise, and the `declare` command that writes it |
+| One the registry says another plan owns | the promise and that plan |
+| One whose sentence or kind in the registry is not the brief's | the promise, and both readings |
+| A promise under **Must not break**, **Changes** or **Replaces** that does not exist, or is already retired | the promise and the list |
+| A **Replaces** entry whose replacement is not among the promises the plan makes | both promises |
+| An expectation with no `Measure` or no `Look`; a brief with no expectations that does not say `None — {reason}` | the expectation |
+| A test row whose `For` names a promise the registry does not hold, a retired promise, or a lesson with no file under `.claude/lessons/` | the row and the name |
+| A test row naming a promise another plan owns that the brief lists under none of the three | the row, the promise and its owner |
+| A line in the brief that looks like part of the contract and cannot be read: a label with words after it, a promise named under none of the three lists, an entry that names no promise, no `### This plan makes` | the line |
+| A name that is not a plan folder | the name — never passed |
+
+A brief with no `## Promises` heading was written before promises were part of
+one, and is not held to any of this. An archived plan is held only to what its
+own brief says (its shape and its expectations): the registry is what later
+plans have made of its promises since.
+
+`--all` checks every plan folder, active and archived. `--impl-stdin` judges
+the impl given on stdin in place of the one on disk; the impl hook uses it,
+because it asks before a write lands.
+
+**Who runs it.** The impl hook (`validate-impl-structure.js`) runs it on every
+write to an impl that sets `test_purpose: required` and is past `draft`, and
+refuses the write on a refusal. It reaches the CLI as `indusk` on `PATH`, or as
+`INDUSK_BIN` when that is set. If the command cannot be run (no `indusk`, or
+one too old to have `contract`), the write is refused with the command it ran
+and how it failed. `promises check` runs it for every open plan.
+
 ## `promises check`
 
 ```
@@ -187,6 +231,7 @@ is never reported as clean.
 | An `enforced` `structure` promise with no test naming it (sites are optional for structure) | the promise |
 | A listed site or test that does not exist, or does not carry the token | the promise and the file |
 | A `declared` promise whose owner is archived | the promise — the plan closed without establishing it |
+| An open plan whose brief, test rows and the registry disagree | the plan's brief or impl, and the promise, expectation or row — everything [`promises contract`](#promises-contract) refuses |
 | An `established`-lifetime promise still `enforced` after its owner archived | the promise — it should be retired |
 | A `known-violated` promise with no open incident | the promise — the state is evidence, not an excuse |
 | An incident missing `promise`, `source`, `status`, `date` or a `## Symptom` / `## Root cause` / `## Fix` section; an unknown source | the incident and the field |
