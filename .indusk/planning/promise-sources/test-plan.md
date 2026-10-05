@@ -1,7 +1,7 @@
 ---
 title: "Promise sources — Test Plan"
 date: 2026-10-04
-status: draft
+status: accepted
 ---
 
 # Promise sources — Test Plan
