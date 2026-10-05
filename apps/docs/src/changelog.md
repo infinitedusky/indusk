@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.60.0] — 2026-10-05
+
 ### Added
 - **The promise timeline.** The admin's Promises page draws each behaviour promise's history for one source over 24 hours, 7 days or 30 days: a strip of cells, each in the worst state among its runs — red for a break that is unrecorded or whose incident is open, purple for one whose incident is fixed, green for a run that held — with each incident as a band from when it opened to when it was fixed. Production first; local on request, saying how far back its history reaches. A promise no run marks says so; a break older than the window still says "violated N ago — open"; a window whose read hit the query limit says "at least". The admin keeps what it has read and asks Jaeger only for what is new, so a refresh no longer re-reads the window.
 - **`indusk promises fix <incident>`.** Closes an incident: marks it fixed, records when, and returns its promise to `enforced` when no other incident of it is open. `promises check` now refuses an incident marked fixed that does not say when.
