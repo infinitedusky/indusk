@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Changed
+- **`pnpm test` takes about a minute, from about five.** Every test that starts `next dev` or a real Jaeger moved to the admin's new system tier (`pnpm test:system`, run at landing and on release); the store's and the chips' rules are unit tests with fake sources and a test clock. With no server left in either everyday tier, the two packages run in parallel again.
+
 ## [1.60.0] — 2026-10-05
 
 ### Added

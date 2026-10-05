@@ -46,8 +46,8 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 | ID | Asserts | Writable at | Passes at | State |
 |----|---------|-------------|-----------|-------|
-| A1 | The root `pnpm test` finishes in about a minute with both packages running at once (live check, recorded) | Build Phase 3 | Build Phase 3 | planned |
-| A2 | The admin suite alone finishes in under 60 s (live check, recorded) | Build Phase 3 | Build Phase 3 | planned |
+| A1 | The root `pnpm test` finishes in about a minute with both packages running at once (live check, recorded) | Build Phase 3 | Build Phase 3 | passing |
+| A2 | The admin suite alone finishes in under 60 s (live check, recorded) | Build Phase 3 | Build Phase 3 | passing |
 | A3 | Each build phase of this plan verifies in seconds to tens of seconds (live check, recorded per phase) | Build Phase 1 | Build Phase 5 | written |
 | A4 | A production break reads red while its incident is open and purple once fixed | Build Phase 1 | Build Phase 1 | passing |
 | A5 | Local's chip goes green once a newer local run holds, with no incident | Build Phase 1 | Build Phase 1 | passing |
@@ -183,21 +183,22 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 ### Build Phase 3: The root suite in parallel
 
-- [ ] Root `package.json` `test`: drop `--concurrency=1`; the commit message names `6ffccf28`, whose reason is gone
-- [ ] A1, A2 measured: three runs each, idle machine (no other `vitest`), times recorded in this item; A1 ≤ ~75 s, A2 < 60 s
+- [x] Root `package.json` `test`: drop `--concurrency=1`; the commit message names `6ffccf28`, whose reason is gone
+- [x] A1, A2 measured: three runs each, idle machine (no other `vitest`), times recorded in this item; A1 ≤ ~75 s, A2 < 60 s — A1 54 s, 55 s, 53 s; A2 10 s, 5 s, 5 s (`TURBO_FORCE=true`, no other `vitest` running)
 
 #### Build Phase 3 Verification
 
-- [ ] A1 and A2 recorded and within target; `pnpm test` green three times in a row in parallel (no starvation flake)
-- [ ] A3 recorded
+- [x] A1 and A2 recorded and within target; `pnpm test` green three times in a row in parallel (no starvation flake) — three runs, each with only A18 and A19 red (written at Test Phase 1, passing at Build Phase 4); the admin's 316 and mcp's other 1,696 tests green every time
+- [x] A3 recorded — the phase changed one script line; its verification was the timing runs themselves
+- [x] Shape — skipped: the phase changed no code file (a `package.json` script)
 
 #### Build Phase 3 Context
 
-- [ ] root (Conventions): the `pnpm test` line says the packages run in parallel and nothing in it starts a server — always-on because every session runs it
+- [x] root (Conventions): the `pnpm test` line says the packages run in parallel and nothing in it starts a server — always-on because every session runs it
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: `pnpm test` runs both packages in parallel, about a minute
+- [x] `apps/docs/src/changelog.md` Unreleased: `pnpm test` runs both packages in parallel, about a minute
 
 ### Build Phase 4: The five kinds
 
