@@ -74,7 +74,7 @@ exists today and answers wrongly.
   - A5: `watch --source deployed` opens an incident for `seat-released` only; `--source local` opens one for `seat-held` only.
   - A6: the tool's top-level `needsAttention` holds `seat-released` and not `seat-held`.
   - A7: a project with no `promises.jaeger` reads as today: one block per promise and the same tool shape.
-- [ ] Author A3, A4 (admin half) and A6 (admin half) in `apps/indusk-admin/src/__tests__/http-promise-sources.test.ts`, on the `http-promise-remote` pattern. The marks are the same, read from the Promises page and the project page:
+- [x] Author A3, A4 (admin half) and A6 (admin half) in `apps/indusk-admin/src/__tests__/http-promise-sources.test.ts`, on the `http-promise-remote` pattern. The marks are the same, read from the Promises page and the project page:
   - A3: each behaviour promise row carries a `data-source="local"` and a `data-source="production"` chip with different `data-health`.
   - A4: with the server stopped, production's section says unknown and local's chips still show.
   - A6: the sidebar's red mark follows production, not local.
