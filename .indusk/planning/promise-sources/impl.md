@@ -46,10 +46,10 @@ there is one. See [brief.md](brief.md), [test-plan.md](test-plan.md) and
 |----|---------|-------------|-----------|-------|------|
 | A1 | `promises status` for a project naming a production server shows two sections, local and production, each with that source's own violations and upheld marks | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A2 | `promise_health` reports both sources, each with its own rows, and says which source each violation came from | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
-| A3 | The admin's Promises page shows a chip per source for each behaviour promise, so one promise reads green in production and red locally on the same page | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
-| A4 | When one source is unreachable or watcher blind, every reader says so for that source and still shows the other source's health | Test Phase 1 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/promise-sources.test.ts, apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
+| A3 | The admin's Promises page shows a chip per source for each behaviour promise, so one promise reads green in production and red locally on the same page | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
+| A4 | When one source is unreachable or watcher blind, every reader says so for that source and still shows the other source's health | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts, apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
 | A5 | `promises watch --source deployed` records incidents from the production server and `--source local` from the laptop: a violation only in production is recorded by the first and not the second | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
-| A6 | A violation only in local is shown, but does not raise the alarm when a production source exists: no red sidebar mark in the admin, and `needsAttention` names only production's | Test Phase 1 | Build Phase 4 | written | apps/indusk-mcp/src/__tests__/promise-sources.test.ts, apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
+| A6 | A violation only in local is shown, but does not raise the alarm when a production source exists: no red sidebar mark in the admin, and `needsAttention` names only production's | Test Phase 1 | Build Phase 4 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts, apps/indusk-admin/src/__tests__/http-promise-sources.test.ts |
 | A7 | A project that names no production server behaves exactly as today: one source, local, with every reader's output unchanged | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 
 ## Checklist
@@ -160,7 +160,7 @@ exists today and answers wrongly.
 
 #### Build Phase 4 Verification
 
-- [ ] A3, A4 and A6 pass, and the admin's existing promise tests are unchanged (`pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-promise-sources src/__tests__/http-promise-health src/__tests__/http-promise-remote src/__tests__/http-watcher-blind`); admin `tsc` clean
+- [x] A3, A4 and A6 pass, and the admin's existing promise tests are unchanged (`pnpm --filter @infinitedusky/indusk-admin exec vitest run src/__tests__/http-promise-sources src/__tests__/http-promise-health src/__tests__/http-promise-remote src/__tests__/http-watcher-blind`); admin `tsc` clean
 - [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
 
 #### Build Phase 4 Context
