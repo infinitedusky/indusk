@@ -110,16 +110,29 @@ export interface PromisesTableProps {
   planHrefPrefix?: string;
   initialGroupBy?: PromiseGrouping;
   /**
-   * What the page read from telemetry (day-monitor, ADR D9): a health row per
-   * promise, and — only when Jaeger could not be read — when it last could.
-   * Absent: no read was made, and no observed health is drawn.
+   * What the page read from telemetry (day-monitor, ADR D9), one entry per
+   * source (promise-sources, ADR D7): a health row per promise, and — only
+   * when that source could not be read — when it last could. Absent: no read
+   * was made, and no observed health is drawn.
    */
-  observed?: {
-    rows: Record<string, HealthRow>;
-    unknownSince?: string | null;
-    /** The watcher answered and did not hear (watcher-heartbeat). */
-    blind?: { where: string; intake: string };
-  };
+  observed?: SourceObserved[];
+}
+
+/** One source's observed health, as the page read it. */
+export interface SourceObserved {
+  /** `local` or `production`. */
+  name: string;
+  rows: Record<string, HealthRow>;
+  unknownSince?: string | null;
+  /** The watcher answered and did not hear (watcher-heartbeat). */
+  blind?: { where: string; intake: string };
+}
+
+/** One chip in a promise's state cell: a source, its row, and whether it could be read. */
+export interface SourceChip {
+  source: string;
+  row: HealthRow;
+  unknownSince?: string | null;
 }
 
 export function PromisesTable({
@@ -135,9 +148,23 @@ export function PromisesTable({
   const visible = showRetired
     ? promises
     : promises.filter((p) => p.state !== "retired");
-  const rowOf = (p: PromiseEntry): HealthRow | null =>
-    p.state === "retired" ? GREY : (observed?.rows[p.name] ?? null);
-  const groups = groupBy(visible, by, (p) => rowOf(p)?.health === "red");
+  const sources = observed ?? [];
+  // Retired is grey whatever any source says: one chip, no source.
+  const chipsOf = (p: PromiseEntry): SourceChip[] =>
+    p.state === "retired"
+      ? [{ source: sources[0]?.name ?? "local", row: GREY }]
+      : sources.flatMap((o) => {
+          const row = o.rows[p.name];
+          return row
+            ? [{ source: o.name, row, unknownSince: o.unknownSince }]
+            : [];
+        });
+  // Red in any source sorts first: a local break is shown, though only the
+  // alarm source marks the sidebar.
+  const groups = groupBy(visible, by, (p) =>
+    chipsOf(p).some((c) => c.row.health === "red"),
+  );
+  const labelled = sources.length > 1;
 
   return (
     <section className="flex flex-col gap-4" data-testid="promises">
@@ -147,9 +174,11 @@ export function PromisesTable({
           What the system commits to, from <code>.indusk/promises/</code>. The
           first chip is a <em>declared</em> state, so an enforced promise is
           drawn hollow.
-          {observed
-            ? " Beside it, a behaviour promise shows what the local Jaeger saw over the quiet window: violated, upheld, or unverified when no run marked it."
-            : " Nothing here has observed the running system."}
+          {!observed
+            ? " Nothing here has observed the running system."
+            : labelled
+              ? ` Beside it, a behaviour promise shows what each source saw over the quiet window — ${sources.map((o) => o.name).join(" and ")}: violated, upheld, or unverified when no run marked it.`
+              : " Beside it, a behaviour promise shows what the local Jaeger saw over the quiet window: violated, upheld, or unverified when no run marked it."}
         </p>
       </header>
 
@@ -181,27 +210,9 @@ export function PromisesTable({
         )}
       </div>
 
-      {observed?.blind && (
-        <p
-          className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-          data-testid="watcher-blind"
-        >
-          Watcher blind — a probe sent to {observed.blind.intake} was not
-          returned by {observed.blind.where}. Something answers there and is not
-          receiving this project&apos;s telemetry; no promise is shown upheld.
-        </p>
-      )}
-
-      {observed && !observed.blind && observed.unknownSince !== undefined && (
-        <p
-          className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-          data-testid="health-unknown"
-        >
-          The local Jaeger could not be read — health unknown since{" "}
-          {observed.unknownSince ?? "this server started"}. No promise is shown
-          upheld.
-        </p>
-      )}
+      {sources.map((o) => (
+        <SourceBanner key={o.name} observed={o} />
+      ))}
 
       {groups.map(([key, rows]) => (
         <PromiseGroup
@@ -210,13 +221,46 @@ export function PromisesTable({
           rows={rows}
           linkGroup={by === "owner"}
           planHrefPrefix={planHrefPrefix}
-          rowOf={rowOf}
-          unknownSince={observed?.unknownSince}
+          chipsOf={chipsOf}
+          labelled={labelled}
         />
       ))}
 
       {incidents.length > 0 && <IncidentsTable incidents={incidents} />}
     </section>
+  );
+}
+
+/**
+ * A source that could not be read, said in its own banner (promise-sources,
+ * ADR D7): blind, or unknown since its last good read. Nothing for a source
+ * that answered.
+ */
+function SourceBanner({ observed }: { observed: SourceObserved }) {
+  if (observed.blind) {
+    return (
+      <p
+        className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+        data-testid="watcher-blind"
+        data-source={observed.name}
+      >
+        Watcher blind — a probe sent to {observed.blind.intake} was not returned
+        by {observed.blind.where}. Something answers there and is not receiving
+        this project&apos;s telemetry; no promise is shown upheld.
+      </p>
+    );
+  }
+  if (observed.unknownSince === undefined) return null;
+  return (
+    <p
+      className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+      data-testid="health-unknown"
+      data-source={observed.name}
+    >
+      The {observed.name} Jaeger could not be read — health unknown since{" "}
+      {observed.unknownSince ?? "this server started"}. No promise is shown
+      upheld.
+    </p>
   );
 }
 
@@ -226,15 +270,15 @@ function PromiseGroup({
   rows,
   linkGroup,
   planHrefPrefix,
-  rowOf,
-  unknownSince,
+  chipsOf,
+  labelled,
 }: {
   groupKey: string;
   rows: PromiseEntry[];
   linkGroup: boolean;
   planHrefPrefix: string;
-  rowOf: (p: PromiseEntry) => HealthRow | null;
-  unknownSince?: string | null;
+  chipsOf: (p: PromiseEntry) => SourceChip[];
+  labelled: boolean;
 }) {
   return (
     <section
@@ -279,8 +323,8 @@ function PromiseGroup({
               <TableCell>
                 <PromiseStateCell
                   promise={p}
-                  row={rowOf(p)}
-                  unknownSince={unknownSince}
+                  chips={chipsOf(p)}
+                  labelled={labelled}
                 />
               </TableCell>
               <TableCell>
@@ -314,23 +358,42 @@ function PromiseGroup({
   );
 }
 
-/** The state cell: declared state, observed health beside it, and the detail line. */
+/**
+ * The state cell: declared state, observed health beside it — one chip per
+ * source, labelled when there is more than one — and a detail line each.
+ */
 function PromiseStateCell({
   promise,
-  row,
-  unknownSince,
+  chips,
+  labelled,
 }: {
   promise: PromiseEntry;
-  row: HealthRow | null;
-  unknownSince?: string | null;
+  chips: SourceChip[];
+  labelled: boolean;
 }) {
+  const named = labelled && promise.state !== "retired";
   return (
     <div className="flex flex-col items-start gap-1">
       <span className="flex items-center gap-1">
         <PromiseChip state={promise.state} />
-        {row && <HealthChip row={row} unknownSince={unknownSince} />}
+        {chips.map((c) => (
+          <HealthChip
+            key={c.source}
+            row={c.row}
+            unknownSince={c.unknownSince}
+            source={c.source}
+            labelled={named}
+          />
+        ))}
       </span>
-      {row && <HealthDetail row={row} unknownSince={unknownSince} />}
+      {chips.map((c) => (
+        <HealthDetail
+          key={c.source}
+          row={c.row}
+          unknownSince={c.unknownSince}
+          {...(named ? { source: c.source } : {})}
+        />
+      ))}
     </div>
   );
 }
