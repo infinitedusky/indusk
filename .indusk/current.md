@@ -675,3 +675,108 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 (empty)
 
 ---
+
+## Session 6f840312 — eval agent: scoring commit 1b922cf3 (promise-sources impl approved)
+
+**Session ID**: 6f840312-1cbf-49b4-b13a-683ea9cece84
+**Last updated**: 2026-10-05T02:26:07.063Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session d946813e — eval: promise-sources impl approved
+
+**Session ID**: d946813e-1025-47c2-8134-8c8ecdfc7818
+**Last updated**: 2026-10-05T02:27:40.162Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 942ed151 — eval: promise-sources impl commit 1b922cf3
+
+**Session ID**: 942ed151-e9f8-4178-9418-3b9981d25673
+**Last updated**: 2026-10-05T02:27:59.636Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session 1a7869e0 — eval: reviewing promise-sources impl commit 1b922cf3
+
+**Session ID**: 1a7869e0-da30-4780-9bef-7422744368fe
+**Last updated**: 2026-10-05T02:28:43.594Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
+
+## Session d1a9188e — eval agent: scoring commit b9f32bb0 (falsification A8/A9)
+
+**Session ID**: d1a9188e-130f-4c7e-b9db-4ea6e6d18f61
+**Last updated**: 2026-10-05T03:16:28.188Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+
+### In Flight
+
+(empty)
+
+### Open Questions
+
+(empty)
+
+### Cursor
+
+(empty)
+
+---
