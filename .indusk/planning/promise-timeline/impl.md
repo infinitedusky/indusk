@@ -62,8 +62,8 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 | A6 | An unfixed violation older than the window still shows "violated N ago — open" on its row and every group above it | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A7 | Rows group by plan or domain; a collapsed group shows the worst state per cell (red over purple over green) and opens to its promises | Build Phase 5 | Build Phase 5 | planned | apps/indusk-admin/src/components/PromiseGroups.test.tsx |
 | A8 | With a production server the page opens on production's strip; local's is selectable and says how far back it reaches; a source that cannot be read says so and the other is still drawn | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
-| A9 | Production's chip is red for an unrecorded or open violation, and `fixed` once every recent violation's incident is fixed | Test Phase 1 | Build Phase 3 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
-| A10 | Local's chip is red while the newest local run is a violation and green once a newer run holds, with no incident | Test Phase 1 | Build Phase 3 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
+| A9 | Production's chip is red for an unrecorded or open violation, and `fixed` once every recent violation's incident is fixed | Test Phase 1 | Build Phase 3 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
+| A10 | Local's chip is red while the newest local run is a violation and green once a newer run holds, with no incident | Test Phase 1 | Build Phase 3 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-sources.test.ts |
 | A11 | A window with more runs than one query returns is drawn end to end, and a cell that may be missing runs says "at least" | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A12 | After the first read of a window, a refresh with nothing new transfers only marks newer than those held, measured on the wire | Test Phase 1 | Build Phase 4 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-transfer.test.ts |
 | A13 | Pointed at the deployed server after a break and its fix, the page shows red, then purple, then green | Build Phase 5 | Build Phase 5 | planned | manual: `pnpm --filter @infinitedusky/indusk-mcp e2e deployed-smoke`, then the admin against `promises.jaeger` |
@@ -166,7 +166,7 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 #### Build Phase 3 Verification
 
-- [ ] A9 and A10 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline-sources -t "A9|A10"`); the existing admin promise suites unchanged (`http-promise-health`, `http-promise-sources`, `http-promise-remote`, `http-watcher-blind`); admin `tsc` clean
+- [x] A9 and A10 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline-sources -t "A9|A10"`); the existing admin promise suites unchanged (`http-promise-health`, `http-promise-sources`, `http-promise-remote`, `http-watcher-blind`); admin `tsc` clean — A9, A10 pass; the four suites and the component tests: 34 files, 159 passed; admin `tsc` clean against the fresh build; leak guard clear
 
 #### Build Phase 3 Context
 
