@@ -97,7 +97,7 @@ Made after reviewing the script against what is built (Sandy chose each).
 | 3 | [admin-plan-authoring](../admin-plan-authoring/brief.md) | "New plan" and "Build" in the UI, through the CLI |
 | 4 | [demo-app-template](../demo-app-template/brief.md) | a working app to promise about, deploy and break |
 | 5 | [server-provisioning](../server-provisioning/brief.md) | one command gives a project its server |
-| 6 | [planner-promises](../planner-promises/brief.md) | the planner asks for promises |
+| 6 | [planner-promises](../archive/planner-promises/brief.md) | the planner asks for promises — closed 2026-10-05 |
 | 7 | demo-rehearsal | record a dry run of the script end to end, fix what it trips on |
 
 **Built out of this order** (Sandy, 2026-10-05): `planner-promises` goes

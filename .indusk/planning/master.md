@@ -118,8 +118,9 @@ promise.) Three sub-plans:
   archived): `indusk-always-on` on Fly passed the smoke and an idle hour; the
   smoke found three server bugs (1.58.2–1.58.4) and falsification four more
   (bumped as 1.58.5, unpublished). See `/decisions/day-always-on-deploy`.
-- [planner-promises](planner-promises/brief.md) — **4c, the contract in
-  planning — next** (brief and test plan accepted 2026-10-05): the brief is
+- [planner-promises](archive/planner-promises/brief.md) — **4c, the contract
+  in planning — closed 2026-10-05** (falsified 15, cleaned, retrospective,
+  archived): the brief is
   what the planning conversation produced, expectations and promises; every
   trajectory row says what it is for (a promise, a lesson, or why neither);
   the close confirms a declared promise to `enforced`; an existing promise a
@@ -214,8 +215,8 @@ of the deploy brief on 2026-10-02.
    5, cleaned, retrospective, archived). The root went from 61,438 to 14,678
    bytes under an 18,432 budget; area rules load from four nested context
    files; enforcers name their lesson. A Day subplan.
-6. **[planner-promises](planner-promises/brief.md) — 4c, next**
-   (2026-10-05). `day-contract`, now 4c′ and only the check at change time,
+6. **[planner-promises](archive/planner-promises/brief.md) — 4c, closed
+   2026-10-05.** See `/decisions/planner-promises`. `day-contract`, now 4c′ and only the check at change time,
    follows the demo.
 
 ## Stream 3 — Finish Dawn
@@ -297,6 +298,11 @@ lesson title, or a chat log.
   test, each with its moment; the smallest kind by default; code that decides
   takes its clock and reads as inputs; the root suite parallel again. Its own
   promises, over both suites: the everyday suite never waits, and stays fast.
+- **Closed** (2026-10-05): [planner-promises](archive/planner-promises/brief.md)
+  — the planning conversation is the input: a brief holds expectations and
+  promises, commands write the registry, every test row says what it is for,
+  a plan cannot build while its brief, rows and registry disagree, and closes
+  with its promises confirmed. See `/decisions/planner-promises`.
 - **Parent, living master** (2026-10-05):
   [promise-core](promise-core/master.md) — the promise is the first
   primitive. A person can start from a promise alone: the tests are written
