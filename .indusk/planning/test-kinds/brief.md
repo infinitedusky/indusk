@@ -58,6 +58,24 @@ runs at landing; `test:system` at release. The work skill, the verify skill
 and the planner template say so, and the real-red rule narrows: a seam gives
 an honest red without a boundary.
 
+**5. The plan's own promises.** InDusk keeps this plan's purpose the way it
+keeps any other: as promises, so drift is seen and reopens the plan, rather
+than being felt weeks later.
+
+- **`everyday-tests-never-wait`** (structure, checked by a test): the
+  everyday suite never starts a server (`next dev`, a Jaeger or always-on
+  server, a daemon) and never sleeps on the wall clock. A guard test reads
+  every everyday-tier test file and fails naming the file and the call; such
+  a test belongs in the system tier. This catches the cause the day the slow
+  test is written.
+- **`everyday-suite-stays-fast`** (behaviour, watched, never a gate): the
+  everyday suite finishes within about 90 seconds. The wrapper `pnpm test`
+  already runs through marks each run, held or broken, with its duration,
+  into the local daemon. A slow run fails nothing; it reads red on the
+  Promises page and becomes an incident that reopens this plan. Duration is
+  noisy (an evaluator's concurrent run can double it), so the threshold starts
+  generous, and how many slow runs count as a break is settled in the ADR.
+
 ## Context
 
 - The conversation that named it (2026-10-05), Sandy: *"regression is about
@@ -98,9 +116,10 @@ an honest red without a boundary.
   takes the remaining wait off the person.
 - **Splitting the watcher into its own package**: a later plan; moving code
   does not change how fast its tests are.
-- **A promise InDusk holds about itself** ("a violation reaches the admin
-  within N minutes"): a follow-up. It is product work, and the watcher
-  heartbeat already covers whether the watcher can hear.
+- **The watcher's own latency promise** ("a violation reaches the admin
+  within N minutes"): a follow-up for the watcher's plans. This plan's
+  promises are about the tests (5 above); the watcher heartbeat already
+  covers whether the watcher can hear.
 - **The mcp suite's slow files** (`workbench-split` 44 s, `monitor-mark`
   14 s…): audited against the kinds in a follow-up, using the rules this plan
   writes. At 49 s in parallel, mcp is not the bottleneck.
@@ -117,6 +136,10 @@ an honest red without a boundary.
 - A typical phase's verification finishes in **seconds to tens of seconds**,
   because it runs the phase's rows and related tests, not the suite.
 - A new test plan cannot name a mechanism outside the five kinds.
+- `everyday-tests-never-wait` holds. The guard is green, and fails when a
+  test that boots `next dev` is added to the everyday tier.
+- `everyday-suite-stays-fast` is marked by every `pnpm test` run and reads
+  green on the Promises page at the plan's close.
 - The next plan that adds a store or reader gives it clock and reader inputs
   from its first phase. The rule reaches it from the planner and the lesson,
   not from memory.
