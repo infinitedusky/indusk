@@ -63,7 +63,7 @@ exists today and answers wrongly.
 
 - [x] Create/confirm this plan's worktree (`indusk worktree create promise-sources`, which records the assignment) — worktree-per-plan default
 - [x] `apps/indusk-mcp/src/__tests__/helpers/two-sources.ts`: start a local daemon (`startLocalJaeger`) and an always-on server (`startAlwaysOnServer`), load marks into each, and build a promise project naming the server in `promises.jaeger` (`url`, `otlp_url`, `credential_env`). It returns both, the project, and a `stop` that stops both; it throws when either cannot start
-- [ ] Author A1, A2, A4 (CLI and tool halves), A5, A6 (tool half) and A7 in `apps/indusk-mcp/src/__tests__/promise-sources.test.ts`, added to `SYSTEM`. Marks:
+- [x] Author A1, A2, A4 (CLI and tool halves), A5, A6 (tool half) and A7 in `apps/indusk-mcp/src/__tests__/promise-sources.test.ts`, added to `SYSTEM`. Marks:
   - `seat-held` is violated locally and upheld in production;
   - `seat-released` is upheld locally and violated in production.
   
