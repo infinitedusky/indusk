@@ -99,8 +99,8 @@ exists today and answers wrongly.
 
 #### Build Phase 1 Verification
 
-- [ ] A7 still passes, and the existing promise suites are unchanged (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources src/__tests__/monitor-status src/__tests__/monitor-watch src/__tests__/watcher-probe src/__tests__/always-on-source src/__tests__/always-on-health-tool src/__tests__/watcher-expect-every`)
-- [ ] `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` clean; Biome clean on the changed files
+- [x] A7 still passes, and the existing promise suites are unchanged (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/promise-sources src/__tests__/monitor-status src/__tests__/monitor-watch src/__tests__/watcher-probe src/__tests__/always-on-source src/__tests__/always-on-health-tool src/__tests__/watcher-expect-every`)
+- [x] `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` clean; Biome clean on the changed files
 
 #### Build Phase 1 Context
 
