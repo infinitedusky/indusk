@@ -66,6 +66,8 @@ const registryFile = (p: PromiseEntry) => `.indusk/promises/${p.file}`;
  * What the brief said this plan would do to existing promises, and has not:
  * a change that was never made, a replacement declared as a plain new promise.
  * Until this, a brief's Changes and Replaces lists were only sentences.
+ *
+ * promise: a-changed-promise-keeps-its-history
  */
 function unmadeChanges(planRoot: string, plan: string, registry: Registry): CheckRefusal[] {
 	const briefPath = join(planFolderPath(planRoot, plan), "brief.md");
@@ -189,7 +191,9 @@ function enforce(registry: Registry, plan: string, ready: Ready, day: string): C
 	};
 }
 
-/** Confirm every promise `plan` declared, or refuse naming each that is not proven. */
+/** Confirm every promise `plan` declared, or refuse naming each that is not proven. *
+ * promise: a-closed-plan-kept-its-promises
+ */
 export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 	const { planRoot, codeRoot, plan } = input;
 	const refuse = (refusals: CheckRefusal[]): ConfirmResult => ({

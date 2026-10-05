@@ -91,6 +91,7 @@ function registryFor(planRoot: string, given?: Registry): Registry | ContractRef
 	}));
 }
 
+// promise: an-expectation-says-how-it-is-measured
 function expectationRefusals(brief: BriefContract): string[] {
 	const out: string[] = [];
 	if (brief.expectations.length === 0) {
@@ -119,6 +120,7 @@ function expectationRefusals(brief: BriefContract): string[] {
 	return out;
 }
 
+// promise: a-briefs-promises-are-in-the-registry
 function madeRefusals(
 	brief: BriefContract,
 	plan: string,
@@ -193,6 +195,7 @@ function existingRefusals(brief: BriefContract, byName: Map<string, PromiseEntry
 	return out;
 }
 
+// promise: every-test-says-what-it-is-for
 function rowRefusals(
 	planRoot: string,
 	plan: string,

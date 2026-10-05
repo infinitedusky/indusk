@@ -501,6 +501,8 @@ function validateTestLevels(implBody, required) {
  * (planner-promises ADR D3). Whether a named promise or lesson exists needs
  * the registry, which this hook asks the CLI for. Mirrors `validateRowPurpose`
  * in `src/lib/trajectory/validator.ts`.
+ *
+ * promise: every-test-says-what-it-is-for
  */
 function validateRowPurpose(implBody, required) {
 	if (!required) return [];

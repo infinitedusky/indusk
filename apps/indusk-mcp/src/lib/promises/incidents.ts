@@ -98,6 +98,8 @@ export function oneLine(value: string): string {
  *
  * Written once, when the incident opens. It is a record of what was vouching
  * at the time, not a live view; the rows themselves move on.
+ *
+ * promise: an-incident-names-its-tests
  */
 export function provenBy(planRoot: string, promise: PromiseEntry): string {
 	const { rows, unreadable } = rowsNaming(planRoot, promise);

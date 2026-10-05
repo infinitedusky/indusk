@@ -142,6 +142,7 @@ export function reopenOwner(
 		// Whichever of these columns the owner's table has. The level is the
 		// smallest, which the phase's author may raise once the root cause
 		// says what the test is; the row is for the promise that broke.
+		// promise: an-incident-names-its-tests
 		cells: { kind: "unit", level: "unit", for: promiseToken(promise) },
 	});
 	writeFileSync(

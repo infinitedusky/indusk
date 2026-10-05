@@ -595,7 +595,8 @@ const PURPOSE_FORMS =
  * With `test_purpose: required`, every row says what it is for
  * (planner-promises ADR D3). Whether a named promise or lesson exists is the
  * contract check's; this is the row's own shape. Mirrors the hook's
- * `validateRowPurpose`.
+ * `validateRowPurpose`. *
+ * promise: every-test-says-what-it-is-for
  */
 export function validateRowPurpose(trajectory: Trajectory, required: boolean): ValidationError[] {
 	if (!required) return [];

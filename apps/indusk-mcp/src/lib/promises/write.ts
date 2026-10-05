@@ -89,7 +89,9 @@ export interface DeclareInput {
 	now?: Date;
 }
 
-/** Write a new promise, `declared`, owned by `plan`. Returns its file path. */
+/** Write a new promise, `declared`, owned by `plan`. Returns its file path. *
+ * promise: a-briefs-promises-are-in-the-registry
+ */
 export function declarePromise(planRoot: string, input: DeclareInput): string {
 	const { name, plan, domain } = input;
 	const statement = oneParagraph(input.statement);
@@ -152,6 +154,8 @@ export interface ChangeInput {
  * plan takes it over, and its History keeps the old sentence, the reason and
  * the plan that owned it before. Name, state, incidents and aliases are
  * untouched, so the marks that name it and its incidents stay attached.
+ *
+ * promise: a-changed-promise-keeps-its-history
  */
 export function changePromise(planRoot: string, input: ChangeInput): PromiseEntry {
 	const { name, plan } = input;
@@ -194,6 +198,8 @@ export interface ReplaceInput extends Omit<DeclareInput, "supersedes"> {
  * Replace a promise whose name no longer describes it (ADR D4): the new one
  * is declared carrying `supersedes: <old>`. The old one is untouched — it is
  * in force until the replacing plan closes, when `confirm` retires it.
+ *
+ * promise: a-changed-promise-keeps-its-history
  */
 export function replacePromise(planRoot: string, input: ReplaceInput): string {
 	const registry = registryOrRefuse(planRoot);

@@ -126,6 +126,8 @@ export interface RetrospectiveReadiness {
  * for every plan on a page and cannot know where a workbench plan's code is,
  * so it answers the half the impl settles. A plan whose brief has no Promises
  * section made none through planning and is left as it was.
+ *
+ * promise: a-closed-plan-kept-its-promises
  */
 function unprovenPromisesOf(planDir: string, implContent: string): string[] {
 	const marker = `${sep}.indusk${sep}planning${sep}`;
