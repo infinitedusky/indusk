@@ -135,6 +135,7 @@ exists today and answers wrongly.
 
 - [x] `lib/promises/health.ts` + `tools/plan-tools.ts`: `promise_health` adds `sources: [{ name, source, ok, promises, needsAttention } | { name, source, ok: false, kind, reason }]`. Top-level `source`, `promises` and `needsAttention` keep the alarm source's, so existing consumers are unchanged. The tool errors only when no source can be read
   - As built: when the alarm source fails beside one that answered, the top level carries its failure in the shape a session already reads as "nobody could look" — `promises: null`, `needsAttention: null`, `error`, and `blind: true` when blind — with the other source's rows under `sources`. When every source fails the tool errors with the alarm source's error, so a one-source project fails exactly as before
+- [x] Shape — reviewed the files this phase changed against the enabled extensions' craft rules; nothing to change.
 - [x] `apps/indusk-mcp/skills/catchup.md` (and the installed copy): name the source of each raised violation; a failed source is said on its own line
 
 #### Build Phase 3 Verification
@@ -144,7 +145,7 @@ exists today and answers wrongly.
 
 #### Build Phase 3 Context
 
-- [ ] guard: `promise-sources.test.ts` A6 carries `lesson: the-alarm-comes-from-production-when-there-is-one` — a local break during development is work in progress, not an alarm
+- [x] guard: `promise-sources.test.ts` A6 carries `lesson: the-alarm-comes-from-production-when-there-is-one` — a local break during development is work in progress, not an alarm
 
 #### Build Phase 3 Document
 
