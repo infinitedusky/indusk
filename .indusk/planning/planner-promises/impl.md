@@ -64,7 +64,7 @@ promises proven; and an incident starts from the tests that were vouching
 | A9 | Closing a plan whose promises are each named by a passing row moves them to `enforced`, and the registry check then passes | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 | A10 | A plan that made no promise closes as it did before | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 | A11 | In a workbench, where a plan's tests exist only in a repository's worktree until it lands, the plan still closes with its promises confirmed | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
-| A12 | When a promise breaks, its incident names every test row that proves it: the plan, the row, and whether the row is passing | Test Phase 1 | Build Phase 6 | written | unit | promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
+| A12 | When a promise breaks, its incident names every test row that proves it: the plan, the row, and whether the row is passing | Test Phase 1 | Build Phase 6 | passing | unit | promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
 | A13 | The row added to a plan that an incident reopens names the promise that broke and has a level, and the plan's impl still validates | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/reopen-row-complete.test.ts |
 | A14 | A plan cannot start building while an expectation in its brief has no measure or no time to look; the refusal names the expectation | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-expectation-says-how-it-is-measured | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A15 | A brief that says it has no expectations, with the reason, is accepted | Test Phase 1 | Build Phase 4 | passing | unit | promise: an-expectation-says-how-it-is-measured | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
@@ -79,7 +79,7 @@ promises proven; and an incident starts from the tests that were vouching
 | A24 | A test row that names a promise another plan owns is refused unless the brief lists that promise under must not break, changes or replaces | Test Phase 1 | Build Phase 4 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A25 | When a plan that changes a promise closes, the promise has its new sentence and is owned by that plan, and its History shows the old sentence, the reason and the previous owner; its incidents and the marks that name it still resolve | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 | A26 | When a plan that replaces a promise closes, the old one is retired, the new one records which it replaced, and the check passes; a replacement naming a promise that does not exist is refused | Test Phase 1 | Build Phase 5 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
-| A27 | A changed promise that breaks later reopens the plan that changed it, and its incident lists the rows that name it in both plans | Test Phase 1 | Build Phase 6 | written | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
+| A27 | A changed promise that breaks later reopens the plan that changed it, and its incident lists the rows that name it in both plans | Test Phase 1 | Build Phase 6 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
 
 ### Deferred Verification
 
@@ -251,20 +251,22 @@ promises proven; and an incident starts from the tests that were vouching
 
 ### Build Phase 6: An incident names its tests
 
-- [ ] `lib/promises/rows.ts`: `rowsNaming(planRoot, promise)` — every impl, active and archived, and the rows whose `For` names the promise: plan, row, state
-- [ ] `lib/promises/incidents.ts`: a recorded incident gains `## Proven by`, listing those rows or saying that no row names the promise; `registry.ts` reads an incident with that section
+- [x] `lib/promises/rows.ts`: `rowsNaming(planRoot, promise)` — every impl, active and archived, and the rows whose `For` names the promise: plan, row, state — and its test files; an impl that cannot be read is returned by name, so a broken file never reads as "no row names it"
+- [x] `lib/promises/incidents.ts`: a recorded incident gains `## Proven by`, listing those rows or saying that no row names the promise; `registry.ts` reads an incident with that section — written once, when the incident opens, between Symptom and Root cause. `registry.ts` needed no change: it reads sections by heading, and the third A12 case holds it to that
+- [x] (discovered) Every promise registered before this plan is named by no row, and "nothing was proving it" would have been false of them: their registry entries list tests. The no-row sentence now says no plan's row names it and gives the test files the registry lists. Seen by running the section over this repository's own registry: `every-commit-evaluated` has no row and one listed test
 
 #### Build Phase 6 Verification
 
-- [ ] A12 and A27 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/incident-proven-by src/__tests__/promises-check src/__tests__/promises-fix`)
+- [x] A12 and A27 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/incident-proven-by src/__tests__/promises-check src/__tests__/promises-fix`) — with every promise and watch file: 16 files, 141 tests; `vitest related` over the changed modules: 86 pass
+- [x] Shape — `rowsNaming` is the walk over plan folders around the reader Build Phase 5 already had; `provenBy` turns its answer into the section's text and is exported, so the text can be read for any promise without recording a violation. The incident writer gained one field. Nothing to change
 
 #### Build Phase 6 Context
 
-- [ ] guard: `incident-proven-by.test.ts` carries `lesson: an-incident-starts-from-the-tests-that-vouched`; the lesson file is written with it
+- [x] guard: `incident-proven-by.test.ts` carries `lesson: an-incident-starts-from-the-tests-that-vouched`; the lesson file is written with it
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/guide/promises.md` and `reference/cli/promises.md`: what an incident records, with `Proven by`
+- [x] `apps/docs/src/guide/promises.md` and `reference/cli/promises.md`: what an incident records, with `Proven by` — the reference's example is the section as it reads for this repository's own `every-commit-evaluated`; the docs site builds
 
 ### Build Phase 7: The planner, the admin, and this plan's own promises
 
