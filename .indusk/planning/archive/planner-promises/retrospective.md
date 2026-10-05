@@ -58,8 +58,32 @@ Both live checks ran. In a scratch project a four-turn headless conversation end
 - **The violation is not recorded as an incident.** That is the operator's call (`indusk promises watch`).
 - **Deferred rows.** U1 and U2 are mitigated in part by steps their masters declare but nobody has created yet (`demo-rehearsal`, `day-contract`). In force today are the A23 live check, which ran, and each promise's own tests.
 
+## What the evaluator said
+
+The evaluator made 57 scored runs over this plan's 83 commits; one more run errored and was retried, and some commits were not scored. Its session notes in `current.md` were lost at archival (see Getting to Done). This section rebuilds them from what it kept in `.indusk/eval/results.log` and `findings.json`.
+
+Across five questions per commit, 258 answers were `info`, 20 `warning` and 7 `critical`. Each finding below was checked against the code and the history.
+
+**Correct, and acted on**
+- **The Verification notes' test counts did not reproduce.** Four times, starting in Test Phase 1, the pass/fail verdict held but the number I wrote did not. The evaluator wrote a lesson for it: `impl-verification-test-counts-must-be-copy-pasted-not-recalled`.
+- **The "Dawn's T5" note made this plan's own impl fail the impl validator.** The corpus guard caught it at the commit that closed Build Phase 9; it was reworded during the cleanup ritual.
+- **`write.ts` failed Biome** (Build Phase 9, the read-back fix). Fixed at the retrospective, above.
+- **The Quality section's claim about `noUnusedImports` was wrong.** Corrected, above. The evaluator wrote a lesson for it: `retrospective-config-state-claim-needs-a-grep-not-a-memory`.
+- **The archival script destroyed its notes.** That is the critical finding at archival. The evaluator wrote a lesson for it: `never-open-a-shared-coordination-file-for-writing-before-reading-it-back`.
+
+**Correct, left for later**
+- **Nothing blocks a commit that changes a source hook without its installed copy.** The parity test catches the drift only when the suite runs. That is a guard for a later plan.
+- **The package's context file is at 99.9% of its budget**, with no warning before the next edit trips the hook.
+- **One line in that file is not re-wrapped**, the line Build Phase 10 added to.
+
+**Disputed**
+- **"Impl completed before the rituals ran"** (critical, at the end of Build Phase 7). The work skill says to set `completed` when every phase is checked and then run `/falsify`; the retrospective gate is what blocks the close, and it did. The status went back to `in-progress` as each ritual added its phase. The rule was followed, though the back-and-forth is awkward.
+- **"A29 and A39 were green before their tests"** (critical). The history says otherwise: the tests were committed at 18:19:26 and the fix at 18:20:44, one commit later. The evaluator grades inside the same worktree I edit, and it most likely ran while the fix was still unsaved on disk. This is the known collision of the evaluator running in the worktree it grades, which `current.md` lists as needing its own plan.
+- **"The docs site build fails"** (warning, Build Phase 9). `pnpm build` in `apps/docs` exits 0 here, before and after this plan's changes. The dead links it names are in pages this plan never touched. I could not reproduce the failure.
+
 ## Quality
 
-- **Recurring lint or type errors:** none that a rule would catch. Twice the admin was type-checked before the package rebuilt, which reads as an error and is not. One unused import (`gray-matter`) went unflagged; the Biome config does not enable `noUnusedImports`, and enabling it is a repository-wide change, not this plan's.
+- **Recurring lint or type errors.** One reached a commit: `write.ts` returned a value from a function declared `void` (Biome's `noVoidTypeReturn`), from Build Phase 9 until the retrospective. I ran Biome after every change but read only the last line of its output, which never shows the error count. Fixed at the retrospective. Twice the admin was type-checked before the package rebuilt, which reads as an error and is not.
+- **An earlier claim here was wrong.** This section first said the Biome config does not enable `noUnusedImports`. It does, at `error`, and has since March. The import in question had been removed before any check ran on it. The evaluator caught this.
 - **Shape:** one finding across ten phases (Build Phase 5: `confirmPlan` doing two jobs at 129 lines, split into `judge` and `enforce`), zero judged wrong by a human. One Shape note I wrote in Build Phase 9 claimed a finding that had not happened; it was corrected the next commit. No streak to report.
 - **A test at its limit, not this plan's:** the Dawn loop's full-run test takes 3.4–4.0 s on trunk and here against vitest's 5 s default, and timed out once under parallel load.
