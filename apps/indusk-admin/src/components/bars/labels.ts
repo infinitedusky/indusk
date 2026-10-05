@@ -58,6 +58,11 @@ export const PROMISE_HEALTH_CHIP = {
     aria: "violated in the window",
     className: "border border-red-700 bg-red-600 text-white",
   },
+  fixed: {
+    label: "fixed",
+    aria: "violated in the window, every incident fixed",
+    className: "border border-purple-700 bg-purple-600 text-white",
+  },
   green: {
     label: "upheld",
     aria: "seen upheld in the window",
