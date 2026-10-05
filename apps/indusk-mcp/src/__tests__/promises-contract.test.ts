@@ -288,6 +288,29 @@ describe.skipIf(SHOULD_SKIP)(
 			expect(r.exitCode, r.stderr).toBe(2);
 			expect(r.stderr).toContain("definitely-not-a-real-indusk-xyz");
 			expect(r.stderr).toMatch(/could not be checked/i);
+			expect(r.stderr, "the refusal names its lesson on its own line").toMatch(
+				/^lesson: detectors-must-distinguish-could-not-check-from-checked-and-failed$/m,
+			);
+		});
+
+		it("judges an edit that replaces every occurrence as the file it would leave", async () => {
+			const unwritten = `lesson: ${NO_SUCH_LESSON}`;
+			const p = project({ impl: rows(unwritten, unwritten) });
+			const r = await runHook(
+				"validate-impl-structure.js",
+				{
+					tool_name: "Edit",
+					cwd: p.root,
+					tool_input: {
+						file_path: implPath(p),
+						old_string: unwritten,
+						new_string: "a regression guard",
+						replace_all: true,
+					},
+				},
+				{ env: DEV_CLI },
+			);
+			expect(r.exitCode, r.stderr).toBe(0);
 		});
 	},
 );
