@@ -1,4 +1,3 @@
-import { readConfig } from "../../lib/config.js";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
@@ -8,6 +7,7 @@ import {
 	JaegerUnreachable,
 	readSources,
 	type SourceRead,
+	sourceAdvice,
 } from "../../lib/promises/sources.js";
 import { formatStatus, parseDuration } from "../../lib/promises/status.js";
 import { watchPromises, watchReport } from "../../lib/promises/watch.js";
@@ -78,7 +78,7 @@ export async function promisesStatus(
 		const [only] = reads;
 		if (only.ok) console.info(formatStatus(promises, only.marks, window));
 		else {
-			console.error(failureText(projectRoot, only));
+			console.error(failureText(only));
 			process.exitCode = 2;
 		}
 		return;
@@ -89,25 +89,15 @@ export async function promisesStatus(
 	const sections = reads.map((r) =>
 		r.ok
 			? `${r.name} — ${r.label}\n${formatStatus(promises, r.marks, window)}`
-			: `${r.name} — ${r.label}\n${failureText(projectRoot, r)}`,
+			: `${r.name} — ${r.label}\n${failureText(r)}`,
 	);
 	console.info(sections.join("\n\n"));
 	if (reads.some((r) => r.name === alarm && !r.ok)) process.exitCode = 2;
 }
 
-/** What a failed source says in place of counts, with advice for that source. */
-function failureText(projectRoot: string, read: Extract<SourceRead, { ok: false }>): string {
-	if (read.error instanceof WatcherBlind) {
-		// Answered and did not hear: the 2026-10-01 case. Starting the daemon
-		// is the wrong advice — something is already answering.
-		return `${read.error.message}\nNo count is reported for any behaviour promise. Whatever answers at ${read.error.where} is not receiving what is sent to ${read.error.intake}.`;
-	}
-	const named = readConfig(projectRoot)?.promises?.jaeger;
-	const hint =
-		read.name === "production" && named
-			? `Check ${named.url} is up and that ${named.credential_env} holds its credential.`
-			: "Start the daemon with `indusk telemetry start`.";
-	return `${read.error.message}\nNo count is reported for any behaviour promise. ${hint}`;
+/** What a failed source says in place of counts: its error, then what to do. */
+function failureText(read: Extract<SourceRead, { ok: false }>): string {
+	return `${read.error.message}\nNo count is reported for any behaviour promise. ${sourceAdvice(read.name, read.error)}`;
 }
 
 const WATCH_SOURCES = ["local", "smoke", "deployed"] as const;
@@ -136,19 +126,13 @@ export async function promisesWatch(
 		});
 	} catch (err) {
 		// The advice has to match the source: telling someone to start a local
-		// daemon when their project reads a deployed server sends them to the
-		// wrong machine.
-		const named = readConfig(projectRoot)?.promises?.jaeger;
-		const hint =
-			named && source === "deployed"
-				? `Nothing was recorded. The project reads ${named.url}; check it is up and that ${named.credential_env} holds its credential.`
-				: "Nothing was recorded. Start the daemon with `indusk telemetry start`.";
+		// daemon when the watch read a deployed server sends them to the wrong
+		// machine. It comes from the failure, never from re-reading the config.
+		const name = source === "deployed" ? "production" : "local";
 		console.error(
-			err instanceof WatcherBlind
-				? `${err.message}\nNothing was recorded: a watcher that cannot hear has nothing to record.`
-				: err instanceof JaegerUnreachable
-					? `${err.message}\n${hint}`
-					: (err as Error).message,
+			err instanceof WatcherBlind || err instanceof JaegerUnreachable
+				? `${err.message}\nNothing was recorded. ${sourceAdvice(name, err)}`
+				: (err as Error).message,
 		);
 		process.exitCode = 2;
 		return;

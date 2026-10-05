@@ -319,3 +319,23 @@ async function readSource(
 		...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
 	});
 }
+
+/**
+ * What to do about a source that could not be read, said from the failure
+ * itself — never by re-reading the config, which is the thing that may be
+ * malformed (promise-sources A10). `status` and `watch` both print it.
+ */
+export function sourceAdvice(name: SourceName, error: JaegerUnreachable | WatcherBlind): string {
+	if (error instanceof WatcherBlind) {
+		// Answered and did not hear: the 2026-10-01 case. Starting the daemon
+		// is the wrong advice — something is already answering.
+		return `Whatever answers at ${error.where} is not receiving what is sent to ${error.intake}.`;
+	}
+	// A refusal of the config itself names its key; the fix is in the file.
+	if (error.where.startsWith("promises.jaeger")) {
+		return "Fix promises.jaeger in .indusk/config.json.";
+	}
+	return name === "production"
+		? `Check ${error.where} is up, and that the variable promises.jaeger.credential_env names holds its credential.`
+		: "Start the daemon with `indusk telemetry start`.";
+}
