@@ -22,7 +22,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **Mid-September** — `run`/`verify` across a workbench split ([dawn-workbench-execution](planning/archive/dawn-workbench-execution/)); three live bars ([admin-ui-phase-progress](planning/archive/admin-ui-phase-progress/)); hooks registered by the project root ([hook-cwd-independence](planning/archive/hook-cwd-independence/)); no code on `main` ([trunk-guard](planning/archive/trunk-guard/)).
 - **writing-skill (1.44.0)** — papers as plan documents, `/write`, `papers publish`; **open**: re-run the plain-language invocation check. See [archive](planning/archive/writing-skill/).
 - **2026-09-18/19** — the promise registry, Day 4a ([day-promises](planning/archive/day-promises/)); plans read from their worktree ([admin-plan-worktrees](planning/archive/admin-plan-worktrees/)); the promise loop on a laptop, Day 4b ([day-monitor](planning/archive/day-monitor/)).
-- **day-always-on (2026-09-21, Day 4b′)** — the promise loop as an always-on server; deployment is its own plan ([archive](planning/archive/day-always-on/)). The image and the Fly reference are unrun until `day-always-on-deploy` closes, and the guide says so.
+- **day-always-on (2026-09-21, Day 4b′)** — the promise loop as an always-on server; deployment is its own plan ([archive](planning/archive/day-always-on/)). The image and the Fly reference were verified on a real deployment on 2026-10-04 (`day-always-on-deploy`).
 - **release-ritual (2026-10-01)** — the bump is retrospective Step 11; trunk-guard reads the release message; the install is checked against the lockfile before npm ([archive](planning/archive/release-ritual/)).
 - **admin-plan-type (2026-10-01)** — a plan declares its type; absent documents and what comes next are judged by it ([archive](planning/archive/admin-plan-type/)).
 - **context-tiers (2026-10-02)** — a rule reaches the agent where it applies: enforcers name their lesson, area rules sit in nested `CLAUDE.md` files, the root holds design intent under an 18 KB budget ([archive](planning/archive/context-tiers/)).
@@ -30,11 +30,13 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **test-daemons-never-leak (2026-10-03)** — tests never auto-start a telemetry daemon, and `pnpm test` / `test:system` end failing on any left in a temp home, pass or fail ([archive](planning/archive/test-daemons-never-leak/)).
 - **watcher-heartbeat (2026-10-03)** — every promise read probes its Jaeger and says *watcher blind* instead of a count; the always-on server beats each pass and tells Slack once each way; promises may declare `expect_every` ([archive](planning/archive/watcher-heartbeat/)).
 - **promise-sources (2026-10-05)** — every reader shows `local` and `production` side by side, each source's failure its own; production raises the alarm ([archive](planning/archive/promise-sources/)).
+- **day-always-on-deploy (2026-10-04)** — the always-on server deployed on Fly (`indusk-always-on`) and smoked, idle hour passed; three server bugs found and fixed on the way (1.58.2–1.58.4), four more from falsification bumped as 1.58.5 ([archive](planning/archive/day-always-on-deploy/)).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
 
-- **day-always-on-deploy / day-contract** — **next**: the deploy smoke (needs the publish, then a Fly account + a Slack webhook), then 4c = promises declared in planning, named by every row, confirmed at close. See `/guide/promises`
+- **day-contract** — **next**: 4c = promises declared in planning, named by every row, confirmed at close. See `/guide/promises`
 - **The evaluator runs inside the worktree it grades** — it has collided with a person's test runs (ports, `.next/`) in three plans running, and in watcher-heartbeat ran `git stash` on uncommitted work. Unfiled; it needs its own plan (a snapshot worktree, no mutating git). Until then, check `ps` for a vitest in the worktree before a system-tier run, and commit before stepping away.
+- **The deployed always-on server** (day-always-on-deploy, 2026-10-04): Fly app `indusk-always-on`, personal org. Intake: `https://indusk-always-on.fly.dev`. Query and Jaeger UI: `https://indusk-always-on.fly.dev:16687`, user `indusk`. Credential: `INDUSK_DEPLOYED_CREDENTIAL` in `~/.indusk/config.env`. Re-run the smoke with `INDUSK_DEPLOYED_QUERY_URL` / `_OTLP_URL` / `_FLY_APP` set (`e2e/deployed-smoke.e2e.test.ts`). It costs money while it runs: one always-on machine, a 3 GB volume, and a dedicated IPv4 at $2/month. It runs 1.58.4. Four falsification fixes (A13–A16: a taken query port refused before Jaeger starts, the door's connections tied together, the public URL checked, record writes that finish or leave the old record) landed on main and are bumped as 1.58.5, **unpublished** — publish, then redeploy with `VERSION=1.58.5`; none needs a redeploy to keep the Fly server safe — one machine, a fixed port, a URL without a credential, a volume far from full.
 - **indusk-v2-dawn** — parent plan (living master); component status in `planning/indusk-v2-dawn/master.md`
 - **Sequence reconciliation (2026-09-14)**: every folder outside the V4 sequence got one fate; the table is in `planning/master.md`.
 
@@ -54,6 +56,11 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - 2026-10-03: **1.57.1 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit d0bcbba (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-03: **1.57.2 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit c1888ef (`pnpm release`, recorded by `scripts/record-release.js`).
 - 2026-10-03: **1.57.3 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 9d47236 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.0 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 8be732f (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.1 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 84ccd43 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.2 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit e01fa38 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.3 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit 3fbc990 (`pnpm release`, recorded by `scripts/record-release.js`).
+- 2026-10-04: **1.58.4 uploaded, still in npm's publish-time scan** — not installable for ~5 min (15+ at peak); `indusk upgrade` reports on it until it is live from release commit f008e85 (`pnpm release`, recorded by `scripts/record-release.js`).
 
 ---
 
@@ -682,6 +689,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T02:26:07.063Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+## Session bcc4908a — eval: watcher-heartbeat A2 commit cb89b25d
+
+**Session ID**: bcc4908a-7aac-482b-aeef-1c7a06bee8c3
+**Last updated**: 2026-10-04T00:15:55.728Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
 
 ### In Flight
 
@@ -703,6 +716,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T02:27:40.162Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+## Session 70f6b76c — eval: watcher-heartbeat A5 commit f6167429
+
+**Session ID**: 70f6b76c-9710-47b9-bc13-6365a15be905
+**Last updated**: 2026-10-04T00:16:01.831Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
 
 ### In Flight
 
@@ -724,6 +743,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T02:27:59.636Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+## Session eed155da — eval agent: scoring watcher-heartbeat A8 commit
+
+**Session ID**: eed155da-7cf3-4eb3-b066-8ecf9cbbd1ce
+**Last updated**: 2026-10-04T00:16:13.928Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
 
 ### In Flight
 
@@ -745,6 +770,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T02:28:43.594Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+## Session 9996749e — eval: watcher-heartbeat Test Phase 1 commit 5a643393
+
+**Session ID**: 9996749e-65ba-44f1-bcbe-9fec9fc29fa4
+**Last updated**: 2026-10-04T00:16:49.146Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
 
 ### In Flight
 
@@ -766,6 +797,18 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 **Last updated**: 2026-10-05T03:16:28.188Z
 **Branch**: plan/promise-sources
 **Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
+## Session 05bed386 — eval: scoring commit 257ffafb (cleanup phase close)
+
+**Session ID**: 05bed386-d2a7-4f57-b79c-88cf071ed5e1
+**Last updated**: 2026-10-04T02:21:11.902Z
+**Branch**: plan/watcher-heartbeat
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/watcher-heartbeat
+## Session d7a6c241 — eval: scoring commit 31950412 (day-always-on-deploy)
+
+**Session ID**: d7a6c241-c25c-453a-886c-5ba7c6f9523d
+**Last updated**: 2026-10-04T16:00:16.841Z
+**Branch**: plan/day-always-on-deploy
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/day-always-on-deploy
 
 ### In Flight
 

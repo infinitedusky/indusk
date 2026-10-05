@@ -45,12 +45,25 @@ export function startQueryDoor(opts: { publicPort: number; jaegerPort: number })
 				const headers = { ...answer.headers };
 				if (answer.statusCode === 401) headers["www-authenticate"] = LOGIN_CHALLENGE;
 				res.writeHead(answer.statusCode ?? 502, headers);
+				// `pipe` forwards data, not failure. Jaeger dropping mid-answer
+				// must end the client's response as broken, not leave it open
+				// forever (A14).
+				answer.once("error", () => res.destroy());
 				answer.pipe(res);
 			},
 		);
 		upstream.on("error", () => {
-			if (!res.headersSent) res.writeHead(502, { "content-type": "text/plain" });
+			if (res.headersSent) {
+				res.destroy();
+				return;
+			}
+			res.writeHead(502, { "content-type": "text/plain" });
 			res.end("the query API is not answering yet");
+		});
+		// And the other way: a client that leaves before the answer is done
+		// closes the request to Jaeger rather than leaving it parked (A14).
+		res.once("close", () => {
+			if (!res.writableFinished) upstream.destroy();
 		});
 		req.pipe(upstream);
 	});
