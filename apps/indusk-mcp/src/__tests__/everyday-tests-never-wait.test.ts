@@ -57,7 +57,12 @@ export interface Finding {
 }
 
 /** Every server start or wall-clock wait in `source`. */
-export function scan(file: string, source: string): Finding[] {
+export function scan(file: string, raw: string): Finding[] {
+	// Comment lines are prose, not calls: blank them, keeping line numbers.
+	const source = raw
+		.split("\n")
+		.map((l) => (/^\s*(?:\/\/|\*|\/\*)/.test(l) ? "" : l))
+		.join("\n");
 	const fake = /\bvi\.useFakeTimers\(/.test(source);
 	const found: Finding[] = [];
 	for (const p of PATTERNS) {
@@ -72,7 +77,7 @@ export function scan(file: string, source: string): Finding[] {
 
 async function everydayFiles(pkg: { dir: string; system: string[] }): Promise<string[]> {
 	const root = join(REPO, pkg.dir);
-	const files = await glob("src/**/*.test.{ts,tsx}", { cwd: root });
+	const files = await glob("src/**/*.test.{ts,tsx}", { cwd: root, nodir: true });
 	const system = new Set(pkg.system);
 	return files.filter((f) => !system.has(f) && !f.includes("/helpers/")).sort();
 }
@@ -102,6 +107,8 @@ describe("everyday-tests-never-wait", () => {
 			`setTimeout(resolve, 50);`,
 			`setTimeout(() => r("still open after 3 s"), 3_000);`,
 			`const child = "setTimeout(() => {}, 60_000)";`,
+			`//     await sleep(500); // let Jaeger index`,
+			` * the evaluator is detached: startNextDev( is not called here`,
 		].join("\n");
 		expect(scan("fixture.test.ts", source)).toEqual([]);
 	});
