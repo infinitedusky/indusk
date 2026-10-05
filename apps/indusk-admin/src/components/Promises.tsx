@@ -7,7 +7,7 @@ import type {
   RegistryProblem,
 } from "@infinitedusky/indusk-mcp/promises/registry";
 import Link from "next/link";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   PROMISE_KIND_LABELS,
   PROMISE_STATE_CHIP,
@@ -20,6 +20,7 @@ import {
   type SourceChip,
   type SourceObserved,
 } from "@/components/PromiseHealth";
+import { PromiseTimeline, TimelineEmpty } from "@/components/PromiseTimeline";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -29,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import type { Strip, TimelineView, WindowKey } from "@/lib/timeline-strip";
 
 /**
  * The Promises page's pieces (day-promises, ADR D8): the registry as a table
@@ -122,6 +124,13 @@ export interface PromisesTableProps {
    * was made, and no observed health is drawn.
    */
   observed?: SourceObserved[];
+  /**
+   * Each behaviour promise's history for one source and window
+   * (promise-timeline, ADR D6), drawn under its row. Absent: no timeline.
+   */
+  timelines?: TimelineView;
+  /** The page's own path, e.g. `/p/dusk/promises`, for the window and source switches. */
+  timelinePath?: string;
 }
 
 export function PromisesTable({
@@ -130,6 +139,8 @@ export function PromisesTable({
   planHrefPrefix = "/plan/",
   initialGroupBy = "owner",
   observed,
+  timelines,
+  timelinePath,
 }: PromisesTableProps) {
   const [by, setBy] = useState<PromiseGrouping>(initialGroupBy);
   const [showRetired, setShowRetired] = useState(false);
@@ -203,6 +214,10 @@ export function PromisesTable({
         <SourceBanner key={o.name} observed={o} />
       ))}
 
+      {timelines && timelinePath && (
+        <TimelineControls timelines={timelines} path={timelinePath} />
+      )}
+
       {groups.map(([key, rows]) => (
         <PromiseGroup
           key={key}
@@ -212,6 +227,7 @@ export function PromisesTable({
           planHrefPrefix={planHrefPrefix}
           chipsOf={chipsOf}
           labelled={labelled}
+          timelines={timelines}
         />
       ))}
 
@@ -228,6 +244,7 @@ function PromiseGroup({
   planHrefPrefix,
   chipsOf,
   labelled,
+  timelines,
 }: {
   groupKey: string;
   rows: PromiseEntry[];
@@ -235,6 +252,7 @@ function PromiseGroup({
   planHrefPrefix: string;
   chipsOf: (p: PromiseEntry) => SourceChip[];
   labelled: boolean;
+  timelines?: TimelineView;
 }) {
   return (
     <section
@@ -271,42 +289,55 @@ function PromiseGroup({
         </TableHeader>
         <TableBody>
           {rows.map((p) => (
-            <TableRow
-              key={p.name}
-              data-testid="promise-row"
-              data-promise={p.name}
-            >
-              <TableCell>
-                <PromiseStateCell
-                  promise={p}
-                  chips={chipsOf(p)}
-                  labelled={labelled}
-                />
-              </TableCell>
-              <TableCell>
-                <code className="text-xs">{p.name}</code>
-              </TableCell>
-              <TableCell className="max-w-md">{p.statement}</TableCell>
-              <TableCell>{PROMISE_KIND_LABELS[p.kind]}</TableCell>
-              <TableCell>{p.domain}</TableCell>
-              <TableCell>
-                <Link
-                  href={`${planHrefPrefix}${p.owner}`}
-                  className="hover:underline"
-                >
-                  {p.owner}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <PathList paths={p.sites} />
-              </TableCell>
-              <TableCell>
-                <PathList paths={p.tests} />
-              </TableCell>
-              <TableCell data-testid="promise-incidents">
-                <PathList paths={p.incidents} />
-              </TableCell>
-            </TableRow>
+            <Fragment key={p.name}>
+              <TableRow data-testid="promise-row" data-promise={p.name}>
+                <TableCell>
+                  <PromiseStateCell
+                    promise={p}
+                    chips={chipsOf(p)}
+                    labelled={labelled}
+                  />
+                </TableCell>
+                <TableCell>
+                  <code className="text-xs">{p.name}</code>
+                </TableCell>
+                <TableCell className="max-w-md">{p.statement}</TableCell>
+                <TableCell>{PROMISE_KIND_LABELS[p.kind]}</TableCell>
+                <TableCell>{p.domain}</TableCell>
+                <TableCell>
+                  <Link
+                    href={`${planHrefPrefix}${p.owner}`}
+                    className="hover:underline"
+                  >
+                    {p.owner}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <PathList paths={p.sites} />
+                </TableCell>
+                <TableCell>
+                  <PathList paths={p.tests} />
+                </TableCell>
+                <TableCell data-testid="promise-incidents">
+                  <PathList paths={p.incidents} />
+                </TableCell>
+              </TableRow>
+              {timelines && !timelines.failure && timelines.strips[p.name] && (
+                <TableRow data-testid="promise-timeline-row">
+                  <TableCell colSpan={9}>
+                    {timelines.strips[p.name] === "empty" ? (
+                      <TimelineEmpty />
+                    ) : (
+                      <PromiseTimeline
+                        promise={p.name}
+                        source={timelines.source}
+                        strip={timelines.strips[p.name] as Strip}
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              )}
+            </Fragment>
           ))}
         </TableBody>
       </Table>
@@ -457,5 +488,83 @@ export function PromisesEmpty({ dir }: { dir: string }) {
         refusal are in the reference page <code>/reference/cli/promises</code>.
       </p>
     </section>
+  );
+}
+
+const WINDOW_LABELS: Record<WindowKey, string> = {
+  "24h": "24 hours",
+  "7d": "7 days",
+  "30d": "30 days",
+};
+
+/**
+ * The timeline's window and source switches, local's reach, and a failed
+ * source said in place of its strips (promise-timeline, ADR D6). Links, not
+ * state: the choice lives in the URL, so the page's refresh keeps it.
+ */
+function TimelineControls({
+  timelines,
+  path,
+}: {
+  timelines: TimelineView;
+  path: string;
+}) {
+  const href = (change: { window?: string; source?: string }) =>
+    `${path}?${new URLSearchParams({
+      window: change.window ?? timelines.window,
+      source: change.source ?? timelines.source,
+    })}`;
+  return (
+    <div className="flex flex-col gap-1" data-testid="timeline-controls">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-gray-600">History:</span>
+        {(Object.keys(WINDOW_LABELS) as WindowKey[]).map((w) => (
+          <Link
+            key={w}
+            href={href({ window: w })}
+            aria-current={timelines.window === w ? "true" : undefined}
+            className={
+              timelines.window === w
+                ? "font-semibold text-gray-900"
+                : "text-blue-700 hover:underline"
+            }
+          >
+            {WINDOW_LABELS[w]}
+          </Link>
+        ))}
+        {timelines.sources.length > 1 && (
+          <>
+            <span className="ml-4 text-gray-600">Source:</span>
+            {timelines.sources.map((s) => (
+              <Link
+                key={s}
+                href={href({ source: s })}
+                aria-current={timelines.source === s ? "true" : undefined}
+                className={
+                  timelines.source === s
+                    ? "font-semibold text-gray-900"
+                    : "text-blue-700 hover:underline"
+                }
+              >
+                {s}
+              </Link>
+            ))}
+          </>
+        )}
+      </div>
+      {timelines.reach && (
+        <p className="text-xs text-gray-500" data-testid="timeline-reach">
+          {timelines.reach}
+        </p>
+      )}
+      {timelines.failure && (
+        <p
+          className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+          data-testid="timeline-failure"
+        >
+          {timelines.failure}
+        </p>
+      )}
+    </div>
   );
 }

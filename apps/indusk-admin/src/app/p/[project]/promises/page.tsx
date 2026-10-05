@@ -1,3 +1,7 @@
+import {
+  alarmSource,
+  type SourceName,
+} from "@infinitedusky/indusk-mcp/promises/sources";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import {
   PromisesEmpty,
@@ -12,11 +16,18 @@ import {
   readHealth,
   ruleFor,
 } from "@/lib/promise-health";
+import { readTimelineView } from "@/lib/promise-timeline";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
+import { parseWindow } from "@/lib/timeline-strip";
+
+/** The timeline's read budget: the health read's two seconds, again. */
+const TIMELINE_TIMEOUT_MS = 2_000;
 
 interface PromisesRouteProps {
   params: Promise<{ project: string }>;
+  /** `?window=24h|7d|30d` and `?source=local|production` (promise-timeline). */
+  searchParams?: Promise<{ window?: string; source?: string }>;
 }
 
 /**
@@ -38,6 +49,7 @@ interface PromisesRouteProps {
  */
 export default async function PerProjectPromisesPage({
   params,
+  searchParams,
 }: PromisesRouteProps) {
   const { project } = await params;
   const projectPath = getProjectPath(project);
@@ -79,6 +91,24 @@ export default async function PerProjectPromisesPage({
               }),
         }))
       : undefined;
+  // The timeline (promise-timeline, ADR D6): one source and window, from the
+  // URL; the alarm source by default — production when there is one.
+  const query = (await searchParams) ?? {};
+  const window = parseWindow(query.window);
+  const names = (reads ?? []).map((r) => r.name);
+  const source: SourceName =
+    query.source === "local" || query.source === "production"
+      ? query.source
+      : alarmSource(names.length ? names : ["local"]);
+  const timelines =
+    registry && names.includes(source)
+      ? await readTimelineView(projectPath, registry, {
+          window,
+          source,
+          sources: names,
+          timeoutMs: TIMELINE_TIMEOUT_MS,
+        })
+      : undefined;
   return (
     <div className="flex flex-col gap-4">
       <LiveRefresh intervalMs={readAdminRefreshMs(projectPath)} />
@@ -91,6 +121,8 @@ export default async function PerProjectPromisesPage({
           incidents={registry.incidents}
           planHrefPrefix={`/p/${project}/plan/`}
           observed={observed}
+          timelines={timelines}
+          timelinePath={`/p/${project}/promises`}
         />
       )}
     </div>

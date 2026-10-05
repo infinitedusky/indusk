@@ -184,7 +184,9 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
   - As built: `readHealth` probes each source (`probeSources`, new in `sources.ts`) and takes its marks from the store over `healthWindowMs` (the health window rule, now one definition in `sources.ts`); `asMarkedSpans` turns held marks into what the chips read. A12 passes with this item alone; the chip suites (`http-promise-health`, `-sources`, `-remote`, `http-watcher-blind`, A9, A10) still pass through it
 - [x] `components/PromiseTimeline.tsx`: the strip (96 / 84 / 90 cells; worst state per cell by `violationState`), bands from `opened` to `fixed` or now, the no-marks row, `data-at-least` cells, the old-break marker (D6, D7)
   - As built: the cell logic is pure and separate (`lib/timeline-strip.ts`: `buildStrip`, `WINDOWS`, `parseWindow`); the component only renders it. A promise with no runs held at all is `TimelineEmpty`; one whose runs are all older than the window draws empty cells and, when a break among them is unfixed, the old-break marker
-- [ ] The Promises page: `?window` (`24h | 7d | 30d`, default `7d`) and `?source` (default the alarm source), each strip under its promise's row; local's view says how far back its marks reach; a failed source says so in place of its strip
+- [x] The Promises page: `?window` (`24h | 7d | 30d`, default `7d`) and `?source` (default the alarm source), each strip under its promise's row; local's view says how far back its marks reach; a failed source says so in place of its strip
+
+- [x] (discovered) The timeline tests' `row()` helper ended a promise's slice at the next `data-promise` attribute — and the markup contract puts one on the strip too, so a row's slice stopped just before its own strip and no cell could ever be seen. The helper now ends at the next *other* promise; no assertion changed
 
 #### Build Phase 4 Verification
 
