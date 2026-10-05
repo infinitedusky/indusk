@@ -55,6 +55,10 @@ export const LONGEST_WINDOW_MS = 30 * 86_400_000;
 const LATE_MS = 10 * 60_000;
 /** How often the whole window is read again, for runs later than the tail. */
 const FULL_REREAD_MS = 10 * 60_000;
+/** A window is read in slices no longer than this, newest first. */
+const SLICE_MS = 12 * 3_600_000;
+/** A refresh starts no new slice once it has spent this many query timeouts. */
+const READ_BUDGET_TIMEOUTS = 2;
 
 interface Held {
   coveredFrom: number;
@@ -79,6 +83,8 @@ export type WindowRead =
       atLeast: Map<string, FullSlice[]>;
       /** The oldest mark held for this source, across promises, or null. */
       oldest: string | null;
+      /** How far back this source has been read; later than `from` while a read is under way. */
+      coveredFrom: string;
     }
   | {
       ok: false;
@@ -138,11 +144,18 @@ export async function readWindow(
     h = { ...h, coveredFrom: now, coveredTo: now, fullAt: null };
   }
 
-  const ranges: Array<[number, number]> = [];
-  if (!h || h.coveredFrom >= h.coveredTo) ranges.push([fromMs, now]);
-  else {
-    if (fromMs < h.coveredFrom) ranges.push([fromMs, h.coveredFrom]);
-    ranges.push([Math.max(h.coveredFrom, h.coveredTo - LATE_MS), now]);
+  // Newest first, in slices: the late tail, then back from the oldest covered
+  // moment. Each slice is kept as it lands and coverage grows by it, so a
+  // refresh that runs out of budget leaves the next one less to read, and a
+  // window too slow to read at once is drawn over a few refreshes (A19).
+  const slices: Array<[number, number]> = [];
+  let back = now;
+  if (h && h.coveredFrom < h.coveredTo) {
+    slices.push([Math.max(h.coveredFrom, h.coveredTo - LATE_MS), now]);
+    back = h.coveredFrom;
+  }
+  for (let to = back; to > fromMs; to -= SLICE_MS) {
+    slices.push([Math.max(fromMs, to - SLICE_MS), to]);
   }
 
   const next: Held = h ?? {
@@ -153,26 +166,34 @@ export async function readWindow(
     marks: new Map(),
     atLeast: new Map(),
   };
-  let label = "";
-  for (const [from, to] of ranges) {
+  const label = resolved.source.label;
+  const started = Date.now();
+  let landed = 0;
+  let failure: Extract<WindowRead, { ok: false }> | null = null;
+  for (const [from, to] of slices) {
+    if (
+      landed > 0 &&
+      Date.now() - started >= timeoutMs * READ_BUDGET_TIMEOUTS
+    ) {
+      break;
+    }
     const [read] = await readTimeline(projectRoot, registry, {
       from: new Date(from),
       to: new Date(to),
       source,
       timeoutMs,
     });
-    if (!read) {
-      return {
+    if (!read?.ok) {
+      failure = read ?? {
         ok: false,
         name: source,
-        label: source,
+        label,
         kind: "unreachable",
         where: source,
         reason: `no ${source} source`,
       };
+      break;
     }
-    if (!read.ok) return read;
-    label = read.label;
     for (const [promise, t] of read.byPromise) {
       const marks = next.marks.get(promise) ?? new Map<string, TimelineMark>();
       for (const m of t.marks) marks.set(markKey(m), m);
@@ -184,6 +205,7 @@ export async function readWindow(
     }
     next.coveredFrom = Math.min(next.coveredFrom, from);
     next.coveredTo = Math.max(next.coveredTo, to);
+    landed++;
   }
 
   if (next.coveredFrom <= fromMs && next.fullAt === null) next.fullAt = now;
@@ -199,6 +221,9 @@ export async function readWindow(
     }
   }
   held.set(key, next);
+  // Nothing read this time: the source's failure is the answer. Something read
+  // and then a failure: what landed is kept and drawn, the rest is unread.
+  if (failure && landed === 0) return failure;
 
   const out = new Map<string, TimelineMark[]>();
   for (const [promise, marks] of next.marks) {
@@ -209,20 +234,33 @@ export async function readWindow(
         .sort((a, b) => a.at.localeCompare(b.at)),
     );
   }
+  // A range not yet read may hold runs: every count over it is "at least".
+  const unread: FullSlice[] =
+    next.coveredFrom > fromMs
+      ? [
+          {
+            from: new Date(fromMs).toISOString(),
+            to: new Date(next.coveredFrom).toISOString(),
+          },
+        ]
+      : [];
   const atLeast = new Map<string, FullSlice[]>();
-  for (const [promise, slices] of next.atLeast) {
-    atLeast.set(
-      promise,
-      slices.filter((s) => Date.parse(s.to) >= fromMs),
-    );
+  for (const promise of promises.split(",").filter(Boolean)) {
+    atLeast.set(promise, [
+      ...unread,
+      ...(next.atLeast.get(promise) ?? []).filter(
+        (s) => Date.parse(s.to) >= fromMs,
+      ),
+    ]);
   }
   return {
     ok: true,
     name: source,
-    label: label || source,
+    label,
     marks: out,
     atLeast,
     oldest,
+    coveredFrom: new Date(next.coveredFrom).toISOString(),
   };
 }
 
@@ -316,15 +354,14 @@ export async function readTimelineView(
       now,
     });
   }
-  return {
-    ...base,
-    strips,
-    reach:
-      opts.source === "local"
-        ? w.oldest
-          ? `Local history since ${w.oldest.slice(0, 16).replace("T", " ")} — the daemon keeps runs only since it last started.`
-          : "No local runs held — the daemon keeps runs only since it last started."
-        : null,
-    failure: null,
-  };
+  const stamp = (iso: string) => iso.slice(0, 16).replace("T", " ");
+  let reach: string | null = null;
+  if (Date.parse(w.coveredFrom) > start) {
+    reach = `Read back to ${stamp(w.coveredFrom)} so far — older runs are still being read, and each refresh reads further.`;
+  } else if (opts.source === "local") {
+    reach = w.oldest
+      ? `Local history since ${stamp(w.oldest)} — the daemon keeps runs only since it last started.`
+      : "No local runs held — the daemon keeps runs only since it last started.";
+  }
+  return { ...base, strips, reach, failure: null };
 }
