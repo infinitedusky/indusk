@@ -183,7 +183,7 @@ exists today and answers wrongly.
 - **A9**: `probeWatcher` sends with `sendWatcherSpan`'s default 5 s timeout whatever `waitMs` the caller passed, then (since Build Phase 1) asks the query API with up to `waitMs` more. A production host that accepts connections and never answers holds a 2 s admin read for about 7 s, and `readSources` waits for every source, so local's chips and the sidebar wait with it on every refresh.
 
 - [x] `lib/promises/telemetry.ts` `resolveProduction`: check the shape of `promises.jaeger` before using it. Not an object, a `url` that is not a non-empty string, or a `credential_env` that is not a non-empty string is a `JaegerUnreachable` naming the key (`promises.jaeger`, `promises.jaeger.url`, `promises.jaeger.credential_env`), so it is production's failure and local is still read
-- [ ] `lib/promises/probe.ts`: the probe's send is bounded by the caller's `waitMs` (the `timeoutMs` argument `sendWatcherSpan` already takes), so the whole probe of an unanswering source fits the reader's budget
+- [x] `lib/promises/probe.ts`: the probe's send is bounded by the caller's `waitMs` (the `timeoutMs` argument `sendWatcherSpan` already takes), so the whole probe of an unanswering source fits the reader's budget
 
 #### Build Phase 5 Verification
 
