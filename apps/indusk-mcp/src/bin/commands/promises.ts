@@ -12,6 +12,12 @@ import {
 } from "../../lib/promises/sources.js";
 import { formatStatus, parseDuration } from "../../lib/promises/status.js";
 import { watchPromises, watchReport } from "../../lib/promises/watch.js";
+import {
+	changePromise,
+	declarePromise,
+	PromiseWriteRefused,
+	replacePromise,
+} from "../../lib/promises/write.js";
 
 /**
  * `indusk promises check`.
@@ -168,4 +174,66 @@ export async function promisesWatch(
 	for (const line of report.out) console.info(line);
 	for (const line of report.err) console.error(line);
 	if (report.exitCode !== 0) process.exitCode = report.exitCode;
+}
+
+/** Run a registry write; a refusal goes to stderr with exit 2, anything else is a bug and throws. */
+function writing(run: () => string): void {
+	try {
+		console.info(run());
+	} catch (err) {
+		if (!(err instanceof PromiseWriteRefused)) throw err;
+		console.error(err.message);
+		process.exitCode = 2;
+	}
+}
+
+const AFTER_WRITE = "Run `indusk promises check` before committing.";
+
+/**
+ * `indusk promises declare <name> --plan --kind --domain --statement`
+ * (planner-promises ADR D4). Writes the promise as `declared`, owned by the
+ * plan; commits nothing. Exit 2 naming what was wrong, with nothing written.
+ */
+export function promisesDeclare(
+	projectRoot: string,
+	name: string,
+	opts: { plan: string; kind: string; domain: string; statement: string },
+): void {
+	writing(() => {
+		declarePromise(projectRoot, { name, ...opts });
+		return `${name} declared by ${opts.plan}. ${AFTER_WRITE}`;
+	});
+}
+
+/**
+ * `indusk promises change <name> --plan --statement --reason`. The promise
+ * keeps its name; the plan takes it over; its History keeps what it read and
+ * whose it was.
+ */
+export function promisesChange(
+	projectRoot: string,
+	name: string,
+	opts: { plan: string; statement: string; reason: string },
+): void {
+	writing(() => {
+		changePromise(projectRoot, { name, ...opts });
+		return `${name} changed by ${opts.plan}; its History keeps the sentence it replaced. ${AFTER_WRITE}`;
+	});
+}
+
+/**
+ * `indusk promises replace <old> --by <new> --plan --kind --domain
+ * --statement`. Declares the new promise recording which it replaces; the old
+ * one stays in force until the plan closes.
+ */
+export function promisesReplace(
+	projectRoot: string,
+	old: string,
+	opts: { by: string; plan: string; kind: string; domain: string; statement: string },
+): void {
+	writing(() => {
+		const { by, ...rest } = opts;
+		replacePromise(projectRoot, { old, name: by, ...rest });
+		return `${by} declared by ${opts.plan}, replacing ${old}, which stays in force until ${opts.plan} closes. ${AFTER_WRITE}`;
+	});
 }

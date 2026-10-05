@@ -11,6 +11,12 @@ import { promiseHealth } from "../lib/promises/health.js";
 import { WatcherBlind } from "../lib/promises/probe.js";
 import { readPromises } from "../lib/promises/registry.js";
 import { openMaintenancePhasesIn } from "../lib/promises/reopen.js";
+import {
+	changePromise,
+	declarePromise,
+	PromiseWriteRefused,
+	replacePromise,
+} from "../lib/promises/write.js";
 import { DOCUMENT_LABELS } from "../lib/workflow-types.js";
 import {
 	copySource,
@@ -130,6 +136,85 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			const text = JSON.stringify(read, null, 2);
 			return { content: [{ type: "text" as const, text }] };
 		},
+	);
+
+	/** A registry write as a tool result: what was written, or the refusal as an error. JSON, as every tool here returns. */
+	const written = (run: () => Record<string, unknown>) => {
+		const text = (value: unknown) => [
+			{ type: "text" as const, text: JSON.stringify(value, null, 2) },
+		];
+		try {
+			return { content: text(run()) };
+		} catch (err) {
+			if (!(err instanceof PromiseWriteRefused)) throw err;
+			return { isError: true, content: text({ error: err.message }) };
+		}
+	};
+	const promiseFields = {
+		plan: z.string().describe("The plan making the promise: a folder under .indusk/planning/."),
+		kind: z
+			.string()
+			.describe(
+				"behaviour (breaks on inputs nobody chose; watched in the running system), state (breaks on a later change; a test), or structure (breaks when something is removed or duplicated; a build-time check). Assign it from the sentence; the person can correct it.",
+			),
+		domain: z.string().describe("One of the project's declared domains (promises.domains)."),
+		statement: z.string().describe("The promise in one plain sentence, as the person approved it."),
+	};
+
+	server.registerTool(
+		"declare_promise",
+		{
+			description:
+				"Write a promise from a planning conversation into the registry: `declared`, owned by the plan, with the sentence the person approved. Call it once the person has confirmed the sentence — never write a registry file by hand. A project that declares no domains gets this promise's domain declared. Refuses, with nothing written, a name the registry already holds (use change_promise), a plan that is not an open plan folder, or a domain the project does not declare.",
+			inputSchema: {
+				name: z.string().describe("kebab-case, starting with a letter; it becomes the file name."),
+				...promiseFields,
+			},
+		},
+		async ({ name, plan, kind, domain, statement }) =>
+			written(() => {
+				declarePromise(projectRoot, { name, plan, kind, domain, statement });
+				return { declared: name, owner: plan, state: "declared" };
+			}),
+	);
+
+	server.registerTool(
+		"change_promise",
+		{
+			description:
+				"Improve an existing promise in place when a plan partly changes what it commits to: its sentence is replaced, the plan takes it over, and its History keeps the old sentence, the reason and the plan that owned it before. Its name, state, incidents and the marks that name it are untouched. Use replace_promise instead when the name no longer describes it.",
+			inputSchema: {
+				name: z.string().describe("The promise to change."),
+				plan: z.string().describe("The plan changing it."),
+				statement: z.string().describe("The promise as it now reads, in one plain sentence."),
+				reason: z.string().describe("Why it changed, in a sentence."),
+			},
+		},
+		async ({ name, plan, statement, reason }) =>
+			written(() => {
+				const before = readPromises(projectRoot);
+				const was = before.ok ? before.registry.promises.find((p) => p.name === name) : undefined;
+				changePromise(projectRoot, { name, plan, statement, reason });
+				return { changed: name, owner: plan, previousOwner: was?.owner ?? null };
+			}),
+	);
+
+	server.registerTool(
+		"replace_promise",
+		{
+			description:
+				"Replace a promise whose name no longer describes it: declares the new promise recording which it replaces. The old one stays in force until the plan closes, when it is retired.",
+			inputSchema: {
+				old: z.string().describe("The promise being replaced."),
+				name: z.string().describe("The new promise's name."),
+				...promiseFields,
+			},
+		},
+		async ({ old, name, plan, kind, domain, statement }) =>
+			written(() => {
+				replacePromise(projectRoot, { old, name, plan, kind, domain, statement });
+				return { declared: name, owner: plan, supersedes: old, retiredAt: "the plan's close" };
+			}),
 	);
 
 	server.registerTool(

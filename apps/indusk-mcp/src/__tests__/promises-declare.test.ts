@@ -2,8 +2,10 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
+import { registerPlanTools } from "../tools/plan-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { type PromiseProject, promiseProject } from "./helpers/promises-fixture.js";
+import { toolCaller } from "./helpers/tool-call.js";
 
 /**
  * promise: a-briefs-promises-are-in-the-registry — planner-promises A1, A2.
@@ -121,6 +123,36 @@ describe.skipIf(SHOULD_SKIP)(
 			expect(r.stderr).toContain("seating");
 			expect(r.stderr).toContain("checkout");
 			expect(existsSync(promiseFile(p))).toBe(false);
+		});
+	},
+);
+
+describe.skipIf(SHOULD_SKIP)(
+	"planner-promises A1 — the planner's tool writes what the command writes",
+	() => {
+		it("declare_promise writes the same file, and a refusal is an error that names the promise", async () => {
+			const p = project(["seating"]);
+			const tools = toolCaller((server) => registerPlanTools(server, p.planRoot));
+			const args = {
+				name: NAME,
+				plan: PLAN,
+				kind: "state",
+				domain: "seating",
+				statement: SENTENCE,
+			};
+
+			const first = await tools.call("declare_promise", args);
+			expect(first.isError, JSON.stringify(first.json)).toBe(false);
+			expect(matter(readFileSync(promiseFile(p), "utf-8")).data).toMatchObject({
+				name: NAME,
+				state: "declared",
+				owner: PLAN,
+			});
+			expect(runCli(p.root, ["promises", "check"]).code).toBe(0);
+
+			const again = await tools.call("declare_promise", args);
+			expect(again.isError).toBe(true);
+			expect(JSON.stringify(again.json)).toContain(NAME);
 		});
 	},
 );

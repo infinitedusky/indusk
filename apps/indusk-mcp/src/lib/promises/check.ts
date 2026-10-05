@@ -293,6 +293,8 @@ export async function checkPromises(planRootIn: string): Promise<CheckResult> {
 	const incidentsById = new Map(registry.incidents.map((i) => [i.id, i]));
 	for (const p of registry.promises) stateRefusals(planRoot, codeRoot, p, incidentsById, refusals);
 
+	refusals.push(...supersedesRefusals(registry));
+
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
 	for (const i of registry.incidents) {
 		// day-monitor, ADR D6: the monitor writes a symptom, never a root cause;
@@ -365,6 +367,39 @@ function domainRefusals(planRoot: string, registry: Registry): CheckRefusal[] {
 	return refusals;
 }
 
+/**
+ * A replacement names what it replaced (planner-promises ADR D4): the name
+ * must be in the registry, and once the new promise is in force the old one
+ * must be retired — two promises in force about one commitment is the state
+ * `replace` exists to end. While the new one is only `declared`, its plan is
+ * still building and the old one rightly stays in force.
+ */
+function supersedesRefusals(registry: Registry): CheckRefusal[] {
+	const byName = new Map(registry.promises.map((p) => [p.name, p]));
+	const refusals: CheckRefusal[] = [];
+	for (const p of registry.promises) {
+		if (!p.supersedes) continue;
+		const old = byName.get(p.supersedes);
+		if (!old) {
+			refusals.push({
+				file: registryFile(p.file),
+				message: `${p.name}: supersedes "${p.supersedes}", which is not in the registry`,
+			});
+		} else if (p.state !== "declared" && p.state !== "retired" && old.state !== "retired") {
+			refusals.push({
+				file: registryFile(p.file),
+				message: `${p.name}: supersedes "${old.name}", which is still ${old.state} — the promise it replaced is retired when the replacing plan closes (\`indusk promises confirm\`)`,
+			});
+		}
+	}
+	return refusals;
+}
+
+/** What replaced `entry`: the promise that names it under `supersedes`, else its own `superseded_by`. */
+function supersededBy(entry: PromiseEntry, registry: Registry): string | undefined {
+	return registry.promises.find((p) => p.supersedes === entry.name)?.name ?? entry.supersededBy;
+}
+
 /** Every token under the code root names a registered, unretired promise (aliases resolve). */
 function citationRefusals(cited: Map<string, string[]>, registry: Registry): CheckRefusal[] {
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
@@ -383,7 +418,7 @@ function citationRefusals(cited: Map<string, string[]>, registry: Registry): Che
 			} else if (entry.state === "retired") {
 				refusals.push({
 					file: rel,
-					message: `names "promise: ${name}", which is retired${entry.supersededBy ? ` (superseded by ${entry.supersededBy})` : ""} — a retired promise must not keep reporting; remove the mark or point it at the successor`,
+					message: `names "promise: ${name}", which is retired${supersededBy(entry, registry) ? ` (superseded by ${supersededBy(entry, registry)})` : ""} — a retired promise must not keep reporting; remove the mark or point it at the successor`,
 				});
 			}
 		}
