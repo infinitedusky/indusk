@@ -85,8 +85,8 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | passing |
 | A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | passing |
 | A31 | every-commit-evaluated holds again after i-2026-10-03-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | passing |
-| A32 | every-commit-evaluated holds again after i-2026-10-05-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 10 | Build Phase 10 | written |
-| A33 | A fresh evaluator start the API rate limits (`api_error_status: 429`) is retried, and the commit is graded and marked upheld — not marked violated (i-2026-10-05, cause 2) | Build Phase 10 | Build Phase 10 | written |
+| A32 | every-commit-evaluated holds again after i-2026-10-05-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 10 | Build Phase 10 | passing |
+| A33 | A fresh evaluator start the API rate limits (`api_error_status: 429`) is retried, and the commit is graded and marked upheld — not marked violated (i-2026-10-05, cause 2) | Build Phase 10 | Build Phase 10 | passing |
 
 ## Checklist
 
@@ -397,8 +397,8 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 #### Build Phase 10 Verification
 
-- [ ] A32: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
-- [ ] A33: a rate-limited fresh start is retried and the commit graded (`src/__tests__/monitor-mark.test.ts -t A33`)
+- [x] A32: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`) — A32 passes (`eval-trigger-commit-anchor.test.ts`, 3/3); `pnpm test` green (1699 passed / 5 skipped, admin 350) with the leak guard clear. Upheld since the last violation (newest upheld 2026-10-05T04:23:02Z), but from the installed 1.59.0, which does not carry this fix: the fixed evaluator runs live only after the next release and `indusk update`, and the incident's quiet window is what watches that
+- [x] A33: a rate-limited fresh start is retried and the commit graded (`src/__tests__/monitor-mark.test.ts -t A33`) — passes; the six `monitor-mark` tests pass
 
 #### Build Phase 10 Context
 
