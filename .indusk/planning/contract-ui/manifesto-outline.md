@@ -60,8 +60,10 @@ promises and judging premises.
    dashboard, a test language, the end of planning. The dashboard line was
    first "there are no graphs to watch", which the author judged too strong
    (2026-10-05): graphs let a person understand and check the system. It now
-   states the real difference, that the path from a problem to its fix is
-   defined in advance and a person sees only what it could not close.
+   states the real difference in the author's own terms: in a telemetry tool
+   telemetry is the output, and here it is an input, the nervous system that
+   carries signals back to the agents that build the software. A person sees
+   only what they could not close.
 
 ## The two triads
 
