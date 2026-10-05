@@ -4,14 +4,16 @@ import type {
 } from "@infinitedusky/indusk-mcp/promises/registry";
 import {
   alarmSource,
-  type MarkedSpansResult,
-  newestMark,
   readSources,
   type SourceName,
   type SourceRead,
-  silencePastExpectation,
   sourceNames,
   WatcherBlind,
+} from "@infinitedusky/indusk-mcp/promises/sources";
+import {
+  type MarkedSpansResult,
+  newestMark,
+  silencePastExpectation,
 } from "@infinitedusky/indusk-mcp/promises/telemetry";
 import { readAdminRefreshMs } from "./project-reader";
 
@@ -21,7 +23,7 @@ import { readAdminRefreshMs } from "./project-reader";
  *
  * One read per source per project (promise-sources, ADR D7) — `local`, and
  * `production` when the project names one — through the package's reads
- * (`promises/telemetry`), with a two-second timeout and cached for the
+ * (`promises/sources`), with a two-second timeout and cached for the
  * project's refresh interval so a page and its sidebar share it. A source
  * that cannot be read says so and remembers when it last succeeded — "health
  * unknown since …" — and no chip is drawn green; the other source is still

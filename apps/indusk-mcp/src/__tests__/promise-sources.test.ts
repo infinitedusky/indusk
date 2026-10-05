@@ -3,7 +3,7 @@ import { createServer, type Server } from "node:net";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readPromises } from "../lib/promises/registry.js";
-import { readSources } from "../lib/promises/telemetry.js";
+import { readSources } from "../lib/promises/sources.js";
 import { registerPlanTools } from "../tools/plan-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { newTraceId } from "./helpers/local-jaeger.js";

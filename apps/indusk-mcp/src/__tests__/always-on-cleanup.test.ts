@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveMarkSources } from "../lib/promises/telemetry.js";
+import { resolveMarkSources } from "../lib/promises/sources.js";
 import { readPassSettings } from "../lib/telemetry/server.js";
 import { promiseProject, siteFile, testFile } from "./helpers/promises-fixture.js";
 

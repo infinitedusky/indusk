@@ -4,7 +4,7 @@ import { livePlanCopy } from "../worktree/plan-worktrees.js";
 import { type IncidentChange, recordViolations } from "./incidents.js";
 import { readPromises } from "./registry.js";
 import { maintenanceIncidentIds, ownerDir, type ReopenResult, reopenOwner } from "./reopen.js";
-import { readPromiseMarks } from "./telemetry.js";
+import { readPromiseMarks } from "./sources.js";
 import type { IncidentSource } from "./vocabulary.js";
 
 /**

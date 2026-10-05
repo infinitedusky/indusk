@@ -3,13 +3,13 @@ import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
 import { WatcherBlind } from "../../lib/promises/probe.js";
 import { readPromises } from "../../lib/promises/registry.js";
-import { formatStatus, parseDuration } from "../../lib/promises/status.js";
 import {
 	alarmSource,
 	JaegerUnreachable,
 	readSources,
 	type SourceRead,
-} from "../../lib/promises/telemetry.js";
+} from "../../lib/promises/sources.js";
+import { formatStatus, parseDuration } from "../../lib/promises/status.js";
 import { watchPromises, watchReport } from "../../lib/promises/watch.js";
 
 /**

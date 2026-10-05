@@ -110,6 +110,10 @@
 			"types": "./dist/lib/promises/telemetry.d.ts",
 			"default": "./dist/lib/promises/telemetry.js"
 		},
+		"./promises/sources": {
+			"types": "./dist/lib/promises/sources.d.ts",
+			"default": "./dist/lib/promises/sources.js"
+		},
 		"./testing/trace-shape": {
 			"types": "./dist/lib/testing/trace-shape.d.ts",
 			"default": "./dist/lib/testing/trace-shape.js"

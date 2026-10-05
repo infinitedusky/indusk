@@ -1,14 +1,8 @@
 import { join } from "node:path";
 import { recorded } from "./incidents.js";
 import { type Registry, readPromises } from "./registry.js";
-import {
-	alarmSource,
-	type MarkedSpansResult,
-	newestMark,
-	readSources,
-	type SourceName,
-	silencePastExpectation,
-} from "./telemetry.js";
+import { alarmSource, readSources, type SourceName } from "./sources.js";
+import { type MarkedSpansResult, newestMark, silencePastExpectation } from "./telemetry.js";
 
 /**
  * What a session should be told about the promises (day-always-on, ADR D9).
