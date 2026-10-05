@@ -387,10 +387,51 @@ async function resolveLocal(): Promise<MarkSource> {
 	};
 }
 
-function resolveProduction(root: string): MarkSource {
-	const named = readConfig(root)?.promises?.jaeger;
-	if (!named) throw new Error("resolveProduction called for a project naming no promises.jaeger");
+/**
+ * `promises.jaeger` as the config file holds it — any JSON at all. Its shape is
+ * production's to fail on: a string where the object belongs, or a key left
+ * out, is refused naming the key, never thrown as a `TypeError` that takes
+ * local's read down with it (promise-sources A8).
+ */
+function namedServer(root: string): {
+	url: string;
+	credential_env: string;
+	otlp_url?: string;
+} {
+	const named: unknown = readConfig(root)?.promises?.jaeger;
+	const where = `promises.jaeger in ${root}`;
+	if (typeof named !== "object" || named === null || Array.isArray(named)) {
+		throw new JaegerUnreachable(
+			where,
+			`promises.jaeger must be an object with url and credential_env, not ${JSON.stringify(named)}`,
+		);
+	}
+	const { url, credential_env, otlp_url } = named as Record<string, unknown>;
+	for (const [key, value, optional] of [
+		["url", url, false],
+		["credential_env", credential_env, false],
+		["otlp_url", otlp_url, true],
+	] as const) {
+		if (optional && value === undefined) continue;
+		if (typeof value !== "string") {
+			throw new JaegerUnreachable(
+				where,
+				`promises.jaeger.${key} is ${value === undefined ? "not set" : `not a string (${JSON.stringify(value)})`}`,
+			);
+		}
+	}
+	if (!(credential_env as string).trim()) {
+		throw new JaegerUnreachable(where, "promises.jaeger.credential_env is empty");
+	}
+	return {
+		url: url as string,
+		credential_env: credential_env as string,
+		...(otlp_url === undefined ? {} : { otlp_url: otlp_url as string }),
+	};
+}
 
+function resolveProduction(root: string): MarkSource {
+	const named = namedServer(root);
 	const queryUrl = jaegerEndpoint(named.url).queryUrl;
 	// Refuse against the config key, not against the empty string it holds. An
 	// unusable URL used to build an endpoint anyway and fail later as
