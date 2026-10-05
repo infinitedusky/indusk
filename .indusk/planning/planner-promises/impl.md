@@ -104,7 +104,7 @@ promises proven; and an incident starts from the tests that were vouching
 - [x] A16: `test-levels-parity.test.ts` — the package's parser and the hooks' copy return the same purpose and level for the same table. RED: neither returns a purpose
 - [x] A1, A2: `promises-declare.test.ts`, through the CLI in a fixture project. RED: `promises declare` is not a command
 - [x] A3, A4, A6, A14, A15, A18, A24: `promises-contract.test.ts`, through the CLI in fixture projects, and over every plan folder in this repository for A18. RED: `promises contract` is not a command
-- [ ] A8, A9, A10, A11: `promises-confirm.test.ts`, through the CLI; A11 with the fixture's plan root and code root apart. RED: `promises confirm` is not a command
+- [x] A8, A9, A10, A11: `promises-confirm.test.ts`, through the CLI; A11 with the fixture's plan root and code root apart. RED: `promises confirm` is not a command
 - [ ] A25, A26: `promises-change.test.ts`, through the CLI. RED: `promises change` and `promises replace` are not commands
 - [ ] A12, A27: `incident-proven-by.test.ts` — `recordViolations` with given marks in a fixture whose impls name the promise. RED: the incident has no `Proven by` section
 - [ ] A20: `planner-brief-template.test.ts` reads `skills/planner.md`. RED: the template still has Problem, Proposed Direction and Success Criteria
