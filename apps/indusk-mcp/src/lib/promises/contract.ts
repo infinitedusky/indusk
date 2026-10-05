@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import { LESSONS_REL_DIR } from "../lessons/state.js";
-import { parseTrajectory } from "../trajectory/parser.js";
+import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
+import { validateRowPurpose, validateTestLevels } from "../trajectory/validator.js";
 import { type BriefContract, parseBriefContract } from "./brief-contract.js";
 import { type PlanFolder, planFolderPath, planFolderStatus, planFolders } from "./plan-folder.js";
 import { type PromiseEntry, type Registry, readPromises } from "./registry.js";
@@ -209,30 +210,39 @@ function existingRefusals(brief: BriefContract, byName: Map<string, PromiseEntry
 }
 
 // promise: every-test-says-what-it-is-for
+/**
+ * What each row names, against the registry. `brief` is null for a plan
+ * whose brief predates promises, or that has none: such a plan cannot list
+ * another plan's promise, so only the existence rules apply (A33).
+ */
 function rowRefusals(
 	planRoot: string,
 	plan: string,
-	brief: BriefContract,
-	implText: string,
-	byName: Map<string, PromiseEntry>,
+	brief: BriefContract | null,
+	trajectory: Trajectory,
+	byName: () => Map<string, PromiseEntry>,
 ): string[] {
 	const out: string[] = [];
-	const addressed = new Set([
-		...brief.makes.map((m) => m.name),
-		...brief.mustNotBreak,
-		...brief.changes.map((c) => c.name),
-		...brief.replaces.map((r) => r.old),
-	]);
-	for (const row of parseTrajectory(matter(implText).content).rows) {
+	const addressed = new Set(
+		brief === null
+			? []
+			: [
+					...brief.makes.map((m) => m.name),
+					...brief.mustNotBreak,
+					...brief.changes.map((c) => c.name),
+					...brief.replaces.map((r) => r.old),
+				],
+	);
+	for (const row of trajectory.rows) {
 		for (const name of row.purpose?.promises ?? []) {
-			const entry = byName.get(name);
+			const entry = byName().get(name);
 			if (!entry) {
 				out.push(`row ${row.id} names "promise: ${name}", which the registry does not hold`);
 			} else if (entry.state === "retired") {
 				out.push(
 					`row ${row.id} names "promise: ${name}", which is retired — a test cannot vouch for a promise nobody makes`,
 				);
-			} else if (entry.owner !== plan && !addressed.has(name)) {
+			} else if (brief !== null && entry.owner !== plan && !addressed.has(name)) {
 				out.push(
 					`row ${row.id} names "promise: ${name}", which ${entry.owner} owns — a plan that tests another plan's promise says so in its brief: list it under **Must not break**, **Changes** or **Replaces**`,
 				);
@@ -262,6 +272,42 @@ export function checkPlanContract(
 	return checkFolder(planRoot, folder, opts);
 }
 
+/** The impl as the contract reads it: its frontmatter and its trajectory, or why it cannot be read. */
+type ImplRead =
+	| { ok: true; frontmatter: Record<string, unknown>; trajectory: Trajectory }
+	| { ok: false; error: string };
+
+function readImpl(text: string): ImplRead {
+	let parsed: { data: Record<string, unknown>; content: string };
+	try {
+		const r = matter(text);
+		parsed = { data: r.data as Record<string, unknown>, content: r.content };
+	} catch (err) {
+		return { ok: false, error: (err as Error).message.split("\n")[0] };
+	}
+	if (text.trimStart().startsWith("---") && Object.keys(parsed.data).length === 0) {
+		return { ok: false, error: "its frontmatter could not be parsed (no fields read)" };
+	}
+	return { ok: true, frontmatter: parsed.data, trajectory: parseTrajectory(parsed.content) };
+}
+
+/**
+ * The rows' own shape, for an impl past `draft` that opts in (A29). The hook
+ * judges these too, but only on an edit whose text holds a phase heading or
+ * an unchecked item; here they hold for a file any tool wrote. The rules are
+ * the validator's, never a second reading of a cell.
+ */
+function rowRuleRefusals(impl: Extract<ImplRead, { ok: true }>): string[] {
+	const fm = impl.frontmatter;
+	if (fm.status === undefined || fm.status === "draft") return [];
+	const purpose = fm.test_purpose === "required";
+	const levels = fm.test_levels === "required" || fm.test_kinds === "required";
+	return [
+		...validateTestLevels(impl.trajectory, levels),
+		...validateRowPurpose(impl.trajectory, purpose),
+	].map((e) => e.message);
+}
+
 function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions): ContractResult {
 	const { plan } = folder;
 	const summary: ContractSummary = {
@@ -275,44 +321,86 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 		expectations: 0,
 	};
 	const briefPath = join(folder.dir, "brief.md");
-	if (!existsSync(briefPath)) return { ok: true, summary };
-	const briefText = readFileSync(briefPath, "utf-8");
-	const brief = parseBriefContract(briefText);
-	if (brief.shape === "legacy") return { ok: true, summary: { ...summary, shape: "legacy" } };
-	if (opts.skipDraft && /^status:\s*["']?draft\b/m.test(briefText.split("\n---")[0])) {
+	const briefText = existsSync(briefPath) ? readFileSync(briefPath, "utf-8") : null;
+	const parsed = briefText === null ? null : parseBriefContract(briefText);
+	// A brief written before promises, or none, is held to no list; its rows still are.
+	const brief = parsed?.shape === "contract" ? parsed : null;
+	if (parsed?.shape === "legacy") summary.shape = "legacy";
+
+	const implFile = relPlanFile(folder, "impl.md");
+	const implPath = join(folder.dir, "impl.md");
+	const implText =
+		opts.implText ?? (existsSync(implPath) ? readFileSync(implPath, "utf-8") : null);
+	// An archived plan is held only to its own brief; its impl is history.
+	const impl = folder.archived || implText === null ? null : readImpl(implText);
+	const building =
+		impl?.ok === true && impl.frontmatter.status !== undefined && impl.frontmatter.status !== "draft";
+
+	// A draft brief is the conversation read back; the sweep holds it once the
+	// plan is building, whatever the brief's own status says (A39).
+	if (
+		brief !== null &&
+		opts.skipDraft &&
+		!building &&
+		/^status:\s*["']?draft\b/m.test((briefText ?? "").split("\n---")[0])
+	) {
 		return { ok: true, summary: { ...summary, shape: "draft" } };
 	}
 
 	const briefFile = relPlanFile(folder, "brief.md");
-	const refusals: ContractRefusal[] = [...brief.problems, ...expectationRefusals(brief)].map(
-		(message) => ({ file: briefFile, message }),
-	);
+	const refusals: ContractRefusal[] =
+		brief === null
+			? []
+			: [...brief.problems, ...expectationRefusals(brief)].map((message) => ({
+					file: briefFile,
+					message,
+				}));
 
 	if (!folder.archived) {
-		const registry = registryFor(planRoot, opts.registry);
-		if (Array.isArray(registry)) return { ok: false, refusals: [...refusals, ...registry] };
-		// An earlier name still resolves: a brief or a row may use it.
-		const byName = new Map<string, PromiseEntry>();
-		for (const p of registry.promises) for (const alias of p.aliases) byName.set(alias, p);
-		for (const p of registry.promises) byName.set(p.name, p);
+		let registryRead: Registry | ContractRefusal[] | null = null;
+		const registry = () => {
+			registryRead ??= registryFor(planRoot, opts.registry);
+			return registryRead;
+		};
+		let names: Map<string, PromiseEntry> | null = null;
+		const byName = () => {
+			if (names) return names;
+			names = new Map<string, PromiseEntry>();
+			const r = registry();
+			if (Array.isArray(r)) return names;
+			// An earlier name still resolves: a brief or a row may use it.
+			for (const p of r.promises) for (const alias of p.aliases) names.set(alias, p);
+			for (const p of r.promises) names.set(p.name, p);
+			return names;
+		};
 
-		for (const message of [
-			...madeRefusals(brief, plan, byName),
-			...existingRefusals(brief, byName),
-		]) {
-			refusals.push({ file: briefFile, message });
-		}
-		const implPath = join(folder.dir, "impl.md");
-		const implText =
-			opts.implText ?? (existsSync(implPath) ? readFileSync(implPath, "utf-8") : null);
-		if (implText !== null) {
-			for (const message of rowRefusals(planRoot, plan, brief, implText, byName)) {
-				refusals.push({ file: relPlanFile(folder, "impl.md"), message });
+		if (brief !== null) {
+			for (const message of [
+				...madeRefusals(brief, plan, byName()),
+				...existingRefusals(brief, byName()),
+			]) {
+				refusals.push({ file: briefFile, message });
 			}
 		}
+		if (impl && !impl.ok) {
+			refusals.push({
+				file: implFile,
+				message: `${plan}'s impl cannot be read, so its rows cannot be checked: ${impl.error}`,
+			});
+		} else if (impl?.ok) {
+			for (const message of [
+				...rowRuleRefusals(impl),
+				...rowRefusals(planRoot, plan, brief, impl.trajectory, byName),
+			]) {
+				refusals.push({ file: implFile, message });
+			}
+		}
+		const r = registryRead as Registry | ContractRefusal[] | null;
+		if (Array.isArray(r)) refusals.push(...r);
 	}
 
 	if (refusals.length > 0) return { ok: false, refusals };
+	if (brief === null) return { ok: true, summary };
 	return {
 		ok: true,
 		summary: {
@@ -329,12 +417,12 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 
 /** One line saying what was checked, for a contract that holds. */
 export function formatContract(s: ContractSummary): string {
-	if (s.shape === "no-brief") return `${s.plan}: no brief — nothing to check`;
+	if (s.shape === "no-brief") return `${s.plan}: no brief — its rows name nothing that is missing`;
 	if (s.shape === "draft") {
 		return `${s.plan}: its brief is a draft — held to the contract once it is accepted`;
 	}
 	if (s.shape === "legacy") {
-		return `${s.plan}: its brief was written before promises were part of one — nothing to check`;
+		return `${s.plan}: its brief was written before promises were part of one — its rows name nothing that is missing`;
 	}
 	const n = (count: number, noun: string) => `${count} ${noun}`;
 	const held = s.archived
