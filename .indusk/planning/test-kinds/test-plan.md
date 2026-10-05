@@ -1,7 +1,7 @@
 ---
 title: "Test kinds — Test Plan"
 date: 2026-10-05
-status: draft
+status: accepted
 ---
 
 # Test kinds — Test Plan
