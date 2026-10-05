@@ -1,7 +1,7 @@
 ---
 title: "Always-on deploy — run the server somewhere real"
 date: 2026-10-04
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -69,6 +69,10 @@ observed instead of "unrun". See [brief.md](brief.md) and
 | A11 | The trace link in a Slack announcement opens the trace from wherever the reader is: it uses the public query address when one is set, and never the server's own loopback address | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/always-on-public-link.test.ts |
 | A12 | A person opening a trace link in a browser is asked to log in (401 with a Basic challenge) and, logged in, sees the trace | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/always-on-browser-login.test.ts |
 | A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
+| A13 | A server whose public query port is already taken exits non-zero naming the port, and leaves no Jaeger running behind it (its intake port is free again) | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/always-on-door-startup.test.ts |
+| A14 | The query door ties its two connections together: Jaeger dropping mid-response ends the client's response with an error instead of leaving it open, and a client leaving mid-response closes the request to Jaeger | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/query-door.test.ts |
+| A15 | A public query URL that is not an absolute http(s) URL, or that carries a user or password, is refused by name at start — never posted to Slack as a link or as a credential | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/always-on-public-url.test.ts |
+| A16 | A record write the disk cuts short never replaces the record with a truncated one, and a failed write leaves no temp file behind | Build Phase 4 | Build Phase 4 | planned | apps/indusk-mcp/src/__tests__/durable-write.test.ts |
 
 ## Checklist
 
@@ -214,6 +218,56 @@ reading Slack, so they are registered below, not authored.
 #### Build Phase 3 Document
 
 - [x] `apps/docs/src/changelog.md` Unreleased: the always-on image and Fly reference verified against a real deployment, with what changed — under Changed, beside the system tier's recovered time
+
+### Build Phase 4: Falsification — the server's start, its query door, its public link and its records
+
+**Goal**: verify whether the attested state holds against four failure modes
+in the code this plan added to the server: the door's start order, the door's
+connection handling, an unchecked public URL, and a short write. Each
+trajectory row captures one hypothesis, each named with the input that should
+break it; each checklist item is the fix if it confirms.
+
+Found while investigating (2026-10-04), before any row was written:
+
+- **A13** — reproduced by hand. `telemetry serve` with its query port held by
+  another process exited 1 on `EADDRINUSE`, and its Jaeger kept running,
+  holding the OTLP port and badger's lock. `serve()` spawns Jaeger before the
+  door binds, and nothing kills the child when the bind fails. A supervisor
+  that does not kill the process group (a plain restart loop, pm2) then
+  restarts into a held port and a locked volume, forever.
+- **A14** — reproduced against a stub upstream. Jaeger dropping its socket
+  mid-response left the client waiting past 5 s with the response never ended;
+  `answer` has no error handler and `pipe` does not forward one. A browser
+  holding that response also keeps the door's `close()` from finishing, so a
+  dead Jaeger need not end the process.
+- **A15** — by reading: `INDUSK_SERVER_PUBLIC_QUERY_URL` is only trimmed of
+  slashes. `https://indusk:<pw>@<app>.fly.dev:16687` posts the password into
+  every Slack message; `<app>.fly.dev:16687` posts a link Slack cannot open.
+- **A16** — by reading: `writeFileDurably` calls `writeSync` once and ignores
+  its count. On a nearly full volume `write(2)` returns short, and the
+  truncated temp file is fsynced and renamed over the good record: the
+  original 1.58.2 failure (a record that does not parse, so every pass refuses
+  to announce), from a full disk instead of a restart. A write that throws
+  leaves its temp file.
+
+- [ ] `serve()` binds the query door before spawning Jaeger, so a taken public port refuses before anything is started; and any exit path closes the door with `closeAllConnections()`
+- [ ] `startQueryDoor`: an upstream response that errors or aborts destroys the client's response; a client response closed early destroys the upstream request
+- [ ] `readServerSettings`: the public query URL must parse as an absolute `http:`/`https:` URL with no user, password, query or fragment, or it is refused as a `MissingServerSetting` naming the variable (a path is kept, for a Jaeger under a prefix)
+- [ ] `writeFileDurably`: write until every byte is written (a zero-byte write is a failure), and on any failure before the rename remove the temp file and rethrow, leaving the old record in place
+
+#### Build Phase 4 Verification
+
+- [ ] A13 passes (`pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-door-startup`), with the file in `SYSTEM`; leak guard clear (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
+- [ ] A14, A15 and A16 pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/query-door src/__tests__/always-on-public-url src/__tests__/durable-write`)
+- [ ] The always-on suites still pass (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-browser-login src/__tests__/always-on-public-link src/__tests__/always-on-server src/__tests__/always-on-two-servers src/__tests__/always-on-falsification src/__tests__/always-on-pass src/__tests__/watcher-heartbeat-server`); `tsc --noEmit` and Biome clean on the changed files
+
+#### Build Phase 4 Context
+
+- [ ] current.md, the shared region's day-always-on line: the four falsification fixes are on the branch and unreleased — the deployed 1.58.4 still has them, and none needs a redeploy to stay safe on Fly (one machine, a fixed public port, a URL without a credential, a 3 GB volume far from full)
+
+#### Build Phase 4 Document
+
+- [ ] `apps/docs/src/reference/cli/telemetry-server.md`: `INDUSK_SERVER_PUBLIC_QUERY_URL`'s refusal (an absolute http(s) URL, no credential); "The query door" says a taken port refuses before Jaeger starts; `apps/docs/src/changelog.md` Unreleased, Fixed: the four; `vitepress build` clean
 
 ## Files Affected
 
