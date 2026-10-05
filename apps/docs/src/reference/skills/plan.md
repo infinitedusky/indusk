@@ -28,9 +28,9 @@ stateDiagram-v2
     }
 
     state Brief {
-        b1: Propose direction
-        b2: Define scope
-        b3: Present for review
+        b1: Expectations, each measured
+        b2: Promises, read back
+        b3: Accepted, then saved by the tools
     }
 
     state ADR {
@@ -68,6 +68,43 @@ context before the plan's first file exists.
 Every impl phase's Context gate item names its **tier and destination** —
 an enforcer's lesson token, an area's `CLAUDE.md`, `.indusk/current.md`, or the
 root with the reason it must be always-on. See [/claude-md](/reference/skills/claude-md).
+
+## The conversation
+
+A plan starts with a conversation, and the conversation is its input. Before it
+researches or writes, the planner:
+
+1. **Asks what you want**, in your words: what should be true when this is
+   done, and what you expect to follow from it.
+2. **Reads what already holds.** It calls `list_promises`, goes through the
+   promises this work comes near, and settles with you which of three things
+   is true of each: this plan must not break it, this plan improves its
+   sentence (a change), or its name no longer describes it (a replacement).
+3. **Says it back** as promises, one plain sentence each, and as expectations,
+   each with how you would know and when to look, and takes corrections.
+
+What comes out is the [brief](/guide/briefs): expectations and promises, and
+nothing else. The problem, the context and the decisions made on the way go in
+research; the approach is the ADR's.
+
+The brief is written as a draft, which is the conversation read back on paper.
+When you accept it, the planner saves its promises with the tools
+(`declare_promise`, `replace_promise`), never by typing a registry file, runs
+`indusk promises contract <plan>`, and sets the brief `accepted` once that
+passes. A promise the plan **changes** is rewritten later, by
+`change_promise` in the build phase that makes its new sentence true, so the
+registry never says what the code does not yet do.
+
+```mermaid
+flowchart LR
+  W[What you want] --> S[Said back as promises and expectations]
+  H[Promises already in force] --> S
+  S -->|corrections| S
+  S --> D[Draft brief]
+  D -->|you accept| T[declare_promise / replace_promise]
+  T --> C[indusk promises contract]
+  C -->|passes| A[Brief accepted]
+```
 
 ## Workflow Types
 
@@ -204,46 +241,55 @@ approach needs to fill.
 
 ### 3. Brief (`brief.md`)
 
-The brief proposes a direction informed by the research:
+The brief holds what the conversation produced: what you expect to follow, and
+what will be true.
 
 ```markdown
 ---
 title: "Payment Flow"
 date: 2026-03-21
 status: accepted
+workflow: feature
 ---
 
 # Payment Flow — Brief
 
-## Problem
-The platform only supports one-time charges. Users need recurring
-subscriptions for the pro tier, and we have no webhook infrastructure
-to handle subscription lifecycle events from Stripe.
+## Expectations
 
-## Proposed Direction
-Extend the existing billing module with subscription support using
-Stripe's Subscription Billing API. Add a webhook endpoint for
-lifecycle events (created, updated, cancelled, payment_failed).
+1. **Pro-tier customers stay on monthly billing instead of buying once.**
+   - Measure: subscriptions active after their second renewal, from the
+     billing tables, against one-time pro purchases in the same month.
+   - Look: ten weeks after release.
 
-## Context
-Research confirmed the existing Stripe SDK supports subscriptions
-natively. The billing module has 8 dependents — changes need to be
-additive, not breaking. See `planning/payment-flow/research.md`.
+## Promises
 
-## Scope
-### In Scope
-- Subscription create/cancel/update
-- Webhook endpoint for Stripe events
-- Proration on plan changes
-### Out of Scope
-- Annual billing (follow-up plan)
-- Invoice PDF generation
-- Multiple payment methods per user
+### This plan makes
 
-## Success Criteria
-- Users can subscribe, upgrade, downgrade, and cancel
-- Webhook processes events within 5 seconds
-- All existing billing tests still pass
+1. **`subscription-state-matches-stripe`** (state). A customer's plan in our
+   database is the plan Stripe is charging them for.
+2. **`webhook-events-applied-once`** (behaviour). A subscription event from
+   Stripe changes a customer's plan exactly once, however many times it is
+   delivered.
+
+### Existing promises
+
+**Must not break**
+
+- **`one-time-charges-still-settle`**. The billing module both flows share is
+  extended.
+
+**Changes**
+
+None.
+
+**Replaces**
+
+None.
+
+### Not promised
+
+- Annual billing. A follow-up plan.
+- Invoice PDFs, and more than one payment method per customer.
 
 ## Depends On
 - (none)
@@ -251,6 +297,11 @@ additive, not breaking. See `planning/payment-flow/research.md`.
 ## Blocks
 - `planning/annual-billing/`
 ```
+
+When this brief was accepted, the planner called `declare_promise` twice and
+`indusk promises contract payment-flow` passed. What exists today and why
+additive changes are needed (the billing module has eight dependents) is in
+`research.md`, not here.
 
 ### 4. ADR (`adr.md`)
 
@@ -512,7 +563,15 @@ The Test Trajectory table is a cross-phase inventory of the tests the plan commi
 | `Passes at` | Phase number at which the test flips to passing |
 | `State` | `planned`, `writable`, `written`, `passing`, `blocked`, `skipped` |
 
-Optional columns `Kind` (`example` \| `property` \| `contract` \| `approval` \| `formal`) and `Scope` (`unit` \| `integration` \| `e2e`) can be added when the plan benefits from them.
+A new impl adds three more, and its frontmatter makes the first two required (`test_levels: required`, `test_purpose: required`):
+
+| Column | Purpose |
+|--------|---------|
+| `Level` | The [level](/guide/test-levels) the test runs at: `unit`, `contract`, `live check`, `smoke` or `promise` |
+| `For` | What the row is for: `promise: <name>`, `lesson: <name>`, or the reason it needs neither |
+| `Test` | The row's test files. A row that names a promise names them by the time it passes |
+
+Closing the plan reads `For` and `Test` to confirm each promise, and an incident lists the rows that named the promise that broke. An impl written with `Kind` and `test_kinds: required` (1.61) still validates.
 
 **Rule:** `Writable at ≤ Passes at` (by phase number). Violating this fails the validator — it catches reorder bugs at write time instead of letting them pass silently.
 
