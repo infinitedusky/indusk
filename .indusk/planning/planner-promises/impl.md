@@ -1,7 +1,7 @@
 ---
 title: "The planner asks for promises"
 date: 2026-10-05
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 test_levels: required
@@ -97,7 +97,7 @@ promises proven; and an incident starts from the tests that were vouching
 | A41 | A promise about state or behaviour whose name appears only in test files is not confirmed, and a file any row names as a test is never recorded as the code that keeps a promise | Build Phase 9 | Build Phase 9 | passing | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 | A42 | A confirm that stopped after enforcing a replacement and before retiring what it replaced is finished by running it again | Build Phase 9 | Build Phase 9 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 | A43 | A plan archived while a promise it declared is still declared is not a dead end: the same commands confirm the promise from the archived plan's rows, or withdraw it, and the registry check's refusal names them | Build Phase 9 | Build Phase 9 | passing | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
-
+| A44 | The MCP server offers exactly the tools it offered before the promise tools moved to their own module, and each promise tool still answers as it did | Build Phase 10 | Build Phase 10 | planned | unit | a refactor guard: the move changes where the tools live, not what the server offers | apps/indusk-mcp/src/__tests__/promise-tools.test.ts |
 ### Deferred Verification
 
 - **The planner holds the conversation well (U1)**
@@ -150,6 +150,10 @@ promises proven; and an incident starts from the tests that were vouching
 #### Deferred to Build Phase 9
 
 - **A29–A43** — the falsification's hypotheses, formed on 2026-10-05 by reading the finished code against what the rows above claim. None could have been written in this phase: each names a way a check passes without checking, and those ways were only visible once the checks existed. Each is written before its fix and must fail on its own assertion first.
+
+#### Deferred to Build Phase 10
+
+- **A44** — written by the cleanup ritual on 2026-10-05, after Build Phase 9 closed: it guards a move that did not exist to guard before. Its subject, the promise tools' own module, does not exist until that phase makes it, so the test loads it by a computed specifier and is red on its absence, not on a load error.
 
 #### Regression Guards
 
@@ -391,7 +395,7 @@ promises proven; and an incident starts from the tests that were vouching
 - [x] A41: a state promise named by its row's test and by one other test file, and by no code, is refused; with a code site added, the second test is not listed as a site when a row names it
 - [x] A42: a replacement already `enforced` beside an old promise still in force, owned by the plan: confirm retires the old one
 - [x] A43: a promise still `declared` in an archived plan is confirmed from the archived rows; another is withdrawn; `promises check`'s refusal names both commands
-- [x] Every earlier row still passes, and every plan folder in this repository still passes `promises contract --all` (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises- src/__tests__/row-purpose src/__tests__/test-levels src/__tests__/incident-proven-by src/__tests__/planner-brief-template src/lib/trajectory src/lib/cleanup src/__tests__/impl-corpus`, then `vitest related` over the files changed) — 26 files, 289 tests; `vitest related` over the eleven changed modules: 353 tests, one red, Dawn's T5 (`lib/run/loop.test.ts`, a scripted run of a plan through the real hooks), which timed out at 5.1 s under the load of 44 files run together and passes alone. Not this phase: it takes 3.4–4.0 s on trunk and 3.4–3.9 s on this branch, against vitest's 5 s default. Recorded, not changed here. The admin's 321 pass; `promises contract --all` passes over 110 folders; `promises check` passes
+- [x] Every earlier row still passes, and every plan folder in this repository still passes `promises contract --all` (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises- src/__tests__/row-purpose src/__tests__/test-levels src/__tests__/incident-proven-by src/__tests__/planner-brief-template src/lib/trajectory src/lib/cleanup src/__tests__/impl-corpus`, then `vitest related` over the files changed) — 26 files, 289 tests; `vitest related` over the eleven changed modules: 353 tests, one red, the Dawn loop's full-run test (`lib/run/loop.test.ts`, a scripted run of a plan through the real hooks), which timed out at 5.1 s under the load of 44 files run together and passes alone. Not this phase: it takes 3.4–4.0 s on trunk and 3.4–3.9 s on this branch, against vitest's 5 s default. Recorded, not changed here. The admin's 321 pass; `promises contract --all` passes over 110 folders; `promises check` passes
 - [x] Shape — nothing to change. Confirm's rework for A40–A43 kept deciding in `judge` (now handed every file the plan's rows name as tests) and writing in `enforce` (now retiring first, and writing nothing when nothing changed), with `confirmPlan` ordering them. Reviewed and left: `checkFolder` in `contract.ts` is long because it holds the order of the contract's checks, and each check is a named function beside it; `unreadLines`, `requireReadable` and `recordReplacement` are new single-purpose functions
 
 #### Build Phase 9 Context
@@ -403,6 +407,34 @@ promises proven; and an incident starts from the tests that were vouching
 #### Build Phase 9 Document
 
 - [x] `apps/docs/src/reference/cli/promises.md`: the contract's new refusals (a row out of shape, a purpose that is neither token nor reason, a brief entry no list read, a placeholder measure, an impl that cannot be read), `replace` on an already-declared replacement, `confirm` and `withdraw` on an archived plan, and that confirm refreshes an in-force promise's links; `guide/briefs.md` and `guide/promises.md` where they describe the same; `changelog.md` Unreleased — the docs site builds
+
+### Build Phase 10: Cleanup — one home for each thing the promise modules repeat
+
+**Goal**: decompose what this plan grew across files, per the rule of three and settled module boundaries (no domain extension applies: `indusk-mcp` is a library and CLI, so the move is extract a function or module). The promise modules each grew their own copy of three small things, and the promise tools grew inside the plan tools. Each item below is an extraction, or a file reviewed and left with its reason.
+
+- [ ] A44 written first, red: the promise tools' module does not exist
+- [ ] One frontmatter reader: export `parseFrontmatter` from `lib/promises/registry.ts` (it already holds the guard against gray-matter returning no fields inside vitest) and use it in `readImpl` and in `write.ts`'s `requireReadable`, which each re-implemented the try/catch, and the second without the guard
+- [ ] `readImpl` moves from `lib/promises/contract.ts` to `lib/promises/rows.ts`, the module that reads an impl's rows; `confirm.ts` stops importing an impl reader from the contract
+- [ ] One sentence comparison: `sameSentence(a, b)` exported from `lib/promises/brief-contract.ts`, replacing the three whitespace-collapsing helpers (`oneLine` in `brief-contract.ts` and `contract.ts`, `one` in `confirm.ts`) that compare a brief's sentence with the registry's. (`incidents.ts`'s `oneLine` stays: it collapses line breaks in text from a span, a different job)
+- [ ] One plan-relative path: `planFileRel(folder, file)` in `lib/promises/plan-folder.ts`, replacing `contract.ts`'s `relPlanFile` and `confirm.ts`'s two `slice(lastIndexOf(".indusk"))` spellings; confirm works from a `PlanFolder`
+- [ ] Extract the seven promise tools (`list_promises`, `declare_promise`, `change_promise`, `replace_promise`, `withdraw_promise`, `confirm_promises`, `promise_health`) from `src/tools/plan-tools.ts` into `src/tools/promise-tools.ts` (`registerPromiseTools`), the tools' one-file-per-domain convention (`lesson-tools`, `highlight-tools`); `server/index.ts` registers both; the seven tests that reach a promise tool call the new function
+- [ ] (reviewed `src/bin/cli.ts`, 998 lines — left as-is: every command group is registered in this one file; moving the promises group alone would give the CLI two ways of registering a command)
+- [ ] (reviewed `hooks/validate-impl-structure.js`, 917 lines — left as-is: its `_`-prefixed modules each mirror exactly one `src/lib` module, pinned by count; the contract call mirrors none, and it is one function)
+- [ ] (reviewed `src/__tests__/promises-contract.test.ts`, 669 lines — left as-is: one subject, the contract, through its three callers; split, the hook cases and the command cases would each lose the fixture they share)
+- [ ] (reviewed `lib/trajectory/validator.ts` 647, `parser.ts` 467, `lib/lifecycle.ts` 530, `lib/promises/check.ts` 423, `registry.ts` 434, `__tests__/promises-check.test.ts` 424, `indusk-admin/.../Promises.tsx` 500 — left as-is: each over the cap before this plan; it added one rule, field or case beside its siblings)
+- [ ] (reviewed the skills, the docs pages and the changelog over the cap — left as-is: prose, outside the code cap's intent)
+
+#### Build Phase 10 Verification
+
+- [ ] A44 passes, and every promise, tool and row test still does (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promise-tools src/__tests__/promises- src/__tests__/watcher- src/__tests__/always-on-health-tool src/__tests__/promise-sources src/__tests__/monitor-plans src/__tests__/plan-worktrees src/__tests__/advance-plan-workflow src/__tests__/incident-proven-by src/lib/promises`, then `vitest related` over the files changed)
+
+#### Build Phase 10 Context
+
+- [ ] mcp (`apps/indusk-mcp/CLAUDE.md`): the promise tools live in `tools/promise-tools.ts`, beside the plan tools, and read and write only through `lib/promises/`
+
+#### Build Phase 10 Document
+
+- [ ] `apps/docs/src/reference/tools/indusk-mcp.md`: rows for `declare_promise`, `change_promise`, `replace_promise`, `withdraw_promise` and `confirm_promises`, beside `list_promises` and `promise_health` — the page lists every tool and was never given the five this plan added (found by this ritual)
 
 ## Files Affected
 
