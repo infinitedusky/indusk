@@ -11,6 +11,11 @@ workflow: feature
 [day-always-on-deploy's brief](../archive/day-always-on-deploy/brief.md), where it was
 written on 2026-10-03, so the smoke test does not wait on a UI build.*
 
+*Revised 2026-10-05, after [promise-sources](../archive/promise-sources/brief.md)
+closed and the demo script was reviewed: two stale sentences corrected in
+place, and the section "After promise-sources" added. Sandy's dated direction
+is unchanged.*
+
 ## Problem and direction
 
 **Show the promise's history as a timeline** (Sandy, 2026-10-03: the
@@ -21,8 +26,8 @@ the time it opened to the time it was fixed — the uptime chart a status
 page shows. The data already exists: every evaluation marks its span
 upheld or violated in Jaeger, and `promises status` reads both; what is
 missing is a reader that returns every mark with its time (today
-`readPromiseMarks` keeps every violation but only the newest upheld) and
-the chart. It belongs to this plan rather than beside it because the
+`markedSpans`, in `apps/indusk-mcp/src/lib/promises/telemetry.ts`, keeps
+every violation but only the newest upheld) and the chart. The
 deployed server is where the history lasts: the local daemon keeps traces
 in memory and loses them on restart, while the server keeps them on its
 volume — a timeline read from the deployed Jaeger shows weeks, not the
@@ -70,6 +75,51 @@ First real data to show: `every-commit-evaluated` — red through the
 evening of 2026-10-02 (`i-2026-10-03-every-commit-evaluated`), green from
 05:40 on 2026-10-03.
 
+## After promise-sources (2026-10-05)
+
+A project now has up to two sources, `local` (the laptop's daemon) and
+`production` (the server `promises.jaeger` names), and the Promises page
+draws a chip for each. Three things follow for this plan.
+
+**The timeline draws one source at a time, production first.** Production
+is where the history lasts and it is the source that raises the alarm, so a
+project that names a server opens on production's timeline. Local's is one
+click away and says how far back it reaches, since the daemon forgets on
+restart. A project with one source draws that one. The reader that returns
+every mark is per source, beside `readSources`
+(`apps/indusk-mcp/src/lib/promises/sources.ts`), and a source that cannot be
+read says so in place of its timeline, as its chip does.
+
+**The two chips follow different rules, because they answer different
+questions** (Sandy, 2026-10-05, deciding how the demo shows a local break).
+
+- **Production's chip** follows the fixed-incident rule above: red for a
+  violation that is unrecorded or whose incident is open, the fixed colour
+  once every recent violation's incident is fixed.
+- **Local's chip follows the newest run**: red when the newest local mark is
+  a violation, green once a newer run upholds. A local break during
+  development is work in progress. Nobody records an incident for it, so the
+  fixed-incident rule would leave it red for the whole seven-day window after
+  the fix. Recording one to clear it would reopen the plan that owns the
+  promise, for a break another plan's unfinished work caused.
+
+Both rules live in one place, the function that already decides a chip's
+colour (`healthOf`, `apps/indusk-admin/src/lib/promise-health.ts`), which is
+already called once per source.
+
+**The marks are drawn in buckets.** One query returns at most 1,500 traces
+per promise and service (`TRACE_LIMIT`). An application that marks a promise
+on every request passes that in days, so "a mark for every run" cannot be
+read back for weeks of history. The reader asks per time bucket and returns,
+for each, how many runs were upheld and how many violated; the row draws a
+bucket in its worst colour. A bucket whose query hit the limit says "at
+least", as `promises status` already does.
+
+This plan is what lets both break steps of the
+[demo script](../indusk-demo/master.md) end on something other than red:
+the local break goes green by the newest-run rule, and the production break
+goes to the fixed colour by the fixed-incident rule.
+
 ## Test assertions carried over
 
 Drafted in day-always-on-deploy's test plan on 2026-10-04 and moved with the
@@ -91,9 +141,23 @@ item; they become this plan's test plan once the brief is accepted.
 - Pointed at the deployed server after the deploy smoke's break-and-recover,
   the page shows the red and the return to green.
 
+Added 2026-10-05, from "After promise-sources":
+
+- A project with two sources opens on production's timeline, and local's is
+  selectable; a source that cannot be read says so in place of its timeline.
+- Production's chip is red for an unrecorded violation or an open incident's,
+  and the fixed colour once every recent violation's incident is fixed.
+- Local's chip is red when the newest local mark is a violation and green
+  once a newer run upholds, with no incident recorded.
+- A promise with more marks in the window than one query returns is still
+  drawn across the whole window, in buckets, and a bucket that hit the limit
+  says "at least".
+
 ## Part of
 
-[indusk-demo](../indusk-demo/master.md), step 2: the visual of promises holding in production while you build.
+[indusk-demo](../indusk-demo/master.md), step 2 in its build order: the
+visual of promises holding in production while you build, and the chip rules
+both of the script's break steps end on.
 
 ## Depends on
 
