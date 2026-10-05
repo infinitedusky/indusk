@@ -1,7 +1,7 @@
 ---
 title: "Promise timeline — Implementation"
 date: 2026-10-05
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -67,6 +67,12 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 | A11 | A window with more runs than one query returns is drawn end to end, and a cell that may be missing runs says "at least" | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A12 | After the first read of a window, a refresh with nothing new transfers only marks newer than those held, measured on the wire | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-transfer.test.ts |
 | A13 | Pointed at the deployed server after a break and its fix, the page shows red, then purple, then green | Build Phase 5 | Build Phase 5 | passing | manual: `pnpm --filter @infinitedusky/indusk-mcp e2e deployed-smoke`, then the admin against `promises.jaeger` |
+| A14 | Two strips built a minute apart place the same run in a cell with the same `data-from`: cell boundaries are fixed to the clock, not measured back from now | Phase 0 | Build Phase 6 | planned | apps/indusk-admin/src/lib/timeline-strip.test.ts |
+| A15 | A run whose `indusk.project` names this project with different separators (`timeline-smoke` for `timeline_smoke`) counts as this project's — never dropped silently | Phase 0 | Build Phase 6 | planned | apps/indusk-mcp/src/__tests__/promise-timeline-reader.test.ts |
+| A16 | After `promises.jaeger.url` is repointed to another server, the page draws only the new server's runs — none held from the old one | Phase 0 | Build Phase 6 | planned | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
+| A17 | A violation whose span ended five minutes before it reached Jaeger turns the chip red and its cell red within one refresh after it arrives | Phase 0 | Build Phase 6 | planned | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
+| A18 | `promises fix` refuses an incident whose root cause is unwritten, naming it, and changes nothing | Phase 0 | Build Phase 6 | planned | apps/indusk-mcp/src/__tests__/promises-fix.test.ts |
+| A19 | A production window that one refresh cannot read within its budget is drawn after a few refreshes: each refresh keeps what it read and continues from there | Phase 0 | Build Phase 6 | planned | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
 
 ### Deferred Verification
 
@@ -231,6 +237,37 @@ table would be rebuilt there.*
 #### Build Phase 5 Document
 
 - [x] `apps/docs/src/changelog.md` Unreleased — Added: the promise timeline, `indusk promises fix`; Fixed: a fixed incident's promise no longer reads *violated*
+
+### Build Phase 6: Falsification — late runs, moving cells, a repointed server, a window too big to read
+
+**Goal**: verify whether the attested state holds against six failures found by reading the built code and by A13 against the real server. Each row is one hypothesis, red today; each item is the fix it needs.
+
+- **A14**: `buildStrip` sets `start = now − window`, so cell boundaries move with every request; a run changes cell between refreshes (A13: the 13:41 break moved from the last cell to the one before).
+- **A15**: `marksBetween` drops a run whose `indusk.project` differs from `markProjectId` by exact comparison; the id is normalised (`timeline-smoke` → `timeline_smoke`), the tag an application writes is not, and nothing says a run was dropped (A13's first marks).
+- **A16**: the store is keyed `project + source name`; a changed `promises.jaeger.url` keeps the old server's marks and covered range, so the new server's view starts from the old one's history.
+- **A17**: each refresh re-reads only the last minute (`OVERLAP_MS`). A run that reaches Jaeger later than that — a buffered exporter, an app reconnecting — lands in a range already covered and is never read; the chips read the same store, so a late violation never turns a chip red until the admin restarts. A regression: before this plan the health read re-read its whole window on every cache expiry.
+- **A18**: `fixIncident` does not check the root cause; `promises fix` exits 0 on an incident whose root cause is still the unwritten line, and the next `promises check` refuses the registry.
+- **A19**: a window read is all or nothing. When the first read of a busy production window exceeds the 2 s budget, nothing read is kept and the covered range does not move, so every refresh starts over and fails the same way; the strip — and, through the store, the chip — never appear.
+
+- [ ] `lib/timeline-strip.ts`: cells aligned to the clock — the last cell ends at the next multiple of the cell width, `start = end − window` (A14)
+- [ ] `lib/promises/telemetry.ts` `marksBetween`: compare a run's `indusk.project` after the same normalisation `markProjectId` applies (A15)
+- [ ] `apps/indusk-admin/src/lib/promise-timeline.ts`: key the store by the source's query URL as well as its name, so a repointed server starts empty (A16)
+- [ ] The store re-reads a tail long enough for late runs — the last `LATE_MS` (10 minutes) on every refresh, not one — and the whole health window once every `FULL_REREAD_MS` (10 minutes), so a run later than the tail is still read within a bounded time (A17)
+- [ ] `fixIncident`: refuse an incident whose root cause is the unwritten line, naming it (A18)
+- [ ] The store reads a window newest first, in slices, and keeps each slice as it lands: a refresh that runs out of budget keeps what it read, extends the covered range by it, and the next refresh continues from there; the strip draws what is covered and says how far back that reaches (A19)
+
+#### Build Phase 6 Verification
+
+- [ ] A14–A19 pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/timeline-strip src/__tests__/http-promise-timeline-falsify`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-fix`; `… --config vitest.system.config.ts src/__tests__/promise-timeline-reader`); A1–A13 still pass
+- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
+
+#### Build Phase 6 Context
+
+- [ ] guard: A17 carries `lesson: a-store-that-reads-only-what-is-new-must-still-read-what-arrives-late`; `apps/indusk-admin/CLAUDE.md`'s store rule gains "and re-reads a late tail"
+
+#### Build Phase 6 Document
+
+- [ ] `apps/docs/src/reference/admin-ui/overview.md`: cells fixed to the clock; late runs; a busy window drawn progressively. `apps/docs/src/reference/cli/promises.md`: `promises fix` refuses an unwritten root cause; the project id compared normalised
 
 ## Files Affected
 
