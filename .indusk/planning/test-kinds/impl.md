@@ -129,13 +129,16 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 ### Build Phase 1: The store and the health read take their clock and their reads
 
-- [ ] `apps/indusk-admin/src/lib/promise-timeline.ts`: `readWindow(projectRoot, registry, source, fromMs, timeoutMs, deps: Deps = {})`, `Deps = { now?, resolve?, read? }`; every `Date.now()` in it reads `now()`; `readTimelineView` passes `deps` through
-- [ ] `apps/indusk-admin/src/lib/promise-health.ts`: `readHealth(projectRoot, registry, deps: Deps & { probe? } = {})`; the cache's expiry and `unknownSince` read `now()`; the store is called with the same `deps`
-- [ ] `apps/indusk-admin/src/__tests__/helpers/fake-source.ts`: `fakeSource(runsBySource)` returning `{ deps, add(source, run), ranges, slow(ms), fail(source), blind(source) }` — answers `resolve`/`read`/`probe` from the lists, records each range asked for
-- [ ] `apps/indusk-admin/src/lib/__tests__/promise-store.test.ts`: A6, A7, A8, A9 against `readWindow`
-- [ ] `apps/indusk-admin/src/lib/__tests__/promise-health.test.ts`: A4, A5, A10, A11, A12 against `readHealth`
-- [ ] Each of A4–A12 shown red on its broken rule: break the rule once in the source (e.g. `LATE_MS = 0` for A6, key without the URL for A7, `violationState` returning `open` for fixed for A4), run, see the named test red, revert; record the break and the red line per row in this item's note
-- [ ] `.claude/lessons/code-that-decides-takes-its-clock-and-its-reads.md`
+- [x] `apps/indusk-admin/src/lib/promise-timeline.ts`: `readWindow(projectRoot, registry, source, fromMs, timeoutMs, deps: Deps = {})`, `Deps = { now?, resolve?, read? }`; every `Date.now()` in it reads `now()`; `readTimelineView` passes `deps` through
+- [x] `apps/indusk-admin/src/lib/promise-health.ts`: `readHealth(projectRoot, registry, deps: Deps & { probe? } = {})`; the cache's expiry and `unknownSince` read `now()`; the store is called with the same `deps`
+- [x] `apps/indusk-admin/src/__tests__/helpers/fake-source.ts`: `fakeSource(runsBySource)` returning `{ deps, add(source, run), ranges, slow(ms), fail(source), blind(source) }` — answers `resolve`/`read`/`probe` from the lists, records each range asked for
+- [x] `apps/indusk-admin/src/lib/__tests__/promise-store.test.ts`: A6, A7, A8, A9 against `readWindow`
+- [x] `apps/indusk-admin/src/lib/__tests__/promise-health.test.ts`: A4, A5, A10, A11, A12 against `readHealth`
+- [x] Each of A4–A12 shown red on its broken rule: break the rule once in the source (e.g. `LATE_MS = 0` for A6, key without the URL for A7, `violationState` returning `open` for fixed for A4), run, see the named test red, revert; record the break and the red line per row in this item's note
+  - Recorded (each break applied alone, the named test run, then reverted; all nine green again after): A4 `!== "fixed"` → `!== "never"` (fixed reads live) RED · A5 `ruleFor` never `newest` RED · A6 `LATE_MS = 0` RED · A7 store key without the server URL RED (a first break, dropping a separator, left the URL in the key and stayed green — the break, not the test, was wrong) · A8 budget counts the tail RED · A9 `LATE_MS` = 30 days RED · A10 an unreadable read drawn green RED · A11 `blind` dropped RED · A12 the oldest violation's environment RED
+- [x] `.claude/lessons/code-that-decides-takes-its-clock-and-its-reads.md`
+- [x] (discovered) The store read the late tail and then stopped when the tail alone spent the refresh's budget, so a slow window was never read further — found by A8 in under a second; the old HTTP test's slow proxy never slowed the tail. Every refresh now reads the tail and at least one older slice (`82a0055c`)
+- [x] (discovered) `apps/indusk-admin/src/__tests__/helpers/promise-registry.ts`: one behaviour promise and its incidents, read back as the admin reads them, for the unit tests
 
 #### Build Phase 1 Verification
 
