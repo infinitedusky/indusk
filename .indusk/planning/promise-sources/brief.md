@@ -1,7 +1,7 @@
 ---
 title: "Promise sources — local and production, side by side"
 date: 2026-10-04
-status: draft
+status: accepted
 workflow: feature
 ---
 
