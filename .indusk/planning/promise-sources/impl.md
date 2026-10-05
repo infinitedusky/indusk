@@ -210,9 +210,9 @@ exists today and answers wrongly.
 - [x] Move `SourceBanner` and the `SourceObserved` / `SourceChip` types from `apps/indusk-admin/src/components/Promises.tsx` (505 lines) into `components/PromiseHealth.tsx`, the observed-health axis file earlier cleanup split out. Basis: react's one-component-per-file for non-trivial components. The banner is that axis's, not the table's
 - [x] Move the crossed marks — `seat-held` broken locally and upheld in production, `seat-released` the reverse — from `promise-sources.test.ts`'s `marks()` into `helpers/two-sources.ts` as an exported `crossedMarks()`. Use it in the admin's `http-promise-sources.test.ts`, whose A3/A4 setup restates the same eight lines. Basis: the fixture states the contrast both suites assert against; two copies drift
 - [x] Extract `withEnv(vars, fn)` into `apps/indusk-mcp/src/__tests__/helpers/` for the save/set/restore of `INDUSK_HOME` and the credential. It is written out three times in `promise-sources.test.ts` (`health()`, A8's third test, A9). Rule of three
-- [ ] (reviewed `apps/indusk-mcp/src/tools/plan-tools.ts` — left as-is: over its cap before this plan, which changed one description string)
-- [ ] (reviewed `apps/indusk-admin/src/lib/promise-health.ts` beside `lib/promises/health.ts` — left as-is: both turn marks into per-promise rows, but for different readers. The admin's `healthOf` judges a chip colour, including amber and grey from declared state; the tool's `healthRows` counts unrecorded traces against incidents. Merging them would couple a UI judgment to the tool's report shape)
-- [ ] (reviewed `apps/docs/src/changelog.md` and `apps/docs/src/reference/cli/promises.md` — left as-is: docs, over the cap by accretion; the reference's sections are per command and each is cohesive)
+- [x] (reviewed `apps/indusk-mcp/src/tools/plan-tools.ts` — left as-is: over its cap before this plan, which changed one description string)
+- [x] (reviewed `apps/indusk-admin/src/lib/promise-health.ts` beside `lib/promises/health.ts` — left as-is: both turn marks into per-promise rows, but for different readers. The admin's `healthOf` judges a chip colour, including amber and grey from declared state; the tool's `healthRows` counts unrecorded traces against incidents. Merging them would couple a UI judgment to the tool's report shape)
+- [x] (reviewed `apps/docs/src/changelog.md` and `apps/docs/src/reference/cli/promises.md` — left as-is: docs, over the cap by accretion; the reference's sections are per command and each is cohesive)
 
 #### Build Phase 6 Verification
 
