@@ -6,7 +6,7 @@ import {
 } from "@/components/Promises";
 import { StaleProjectFailurePage } from "@/components/StaleProjectFailurePage";
 import { readAdminRefreshMs } from "@/lib/project-reader";
-import { healthRows, readHealth } from "@/lib/promise-health";
+import { alarmRead, healthRows, readHealth } from "@/lib/promise-health";
 import { readProjectPromises, registryOf } from "@/lib/promises-reader";
 import { getProjectPath, projectPathExists } from "@/lib/registry-client";
 
@@ -51,27 +51,28 @@ export default async function PerProjectPromisesPage({
     return <PromisesEmpty dir={read.missing} />;
   }
   const registry = registryOf(read);
-  // Observed health (day-monitor, ADR D9): one cached read of the local
-  // Jaeger; unreachable is said, never drawn green.
-  const health = registry ? await readHealth(projectPath, registry) : null;
+  // Observed health (day-monitor, ADR D9), per source (promise-sources, ADR
+  // D7): one cached read each; unreachable is said, never drawn green.
+  // The alarm source's chip leads: it is the one that raises (ADR D5).
+  const reads = registry ? await readHealth(projectPath, registry) : null;
+  const alarm = reads ? alarmRead(reads) : undefined;
+  const health = reads
+    ? [...reads].sort((a, b) => Number(b === alarm) - Number(a === alarm))
+    : null;
   const observed =
     registry && health
-      ? {
-          rows: healthRows(registry, health),
-          ...(health.ok
+      ? health.map((read) => ({
+          name: read.name,
+          rows: healthRows(registry, read),
+          ...(read.ok
             ? {}
             : {
-                unknownSince: health.unknownSince,
-                ...(health.blind
-                  ? {
-                      blind: {
-                        where: health.where,
-                        intake: health.blind.intake,
-                      },
-                    }
+                unknownSince: read.unknownSince,
+                ...(read.blind
+                  ? { blind: { where: read.where, intake: read.blind.intake } }
                   : {}),
               }),
-        }
+        }))
       : undefined;
   return (
     <div className="flex flex-col gap-4">

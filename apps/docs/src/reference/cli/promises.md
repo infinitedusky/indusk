@@ -273,21 +273,68 @@ Jaeger's JSON (it names the URL) — and exit **2** when the watcher is
 API within 5 seconds (it names both). Either way, no count is printed for any
 promise.
 
-The marks are read by one library, `@infinitedusky/indusk-mcp/promises/telemetry`.
-`readPromiseMarks(root, registry, { sinceMs? })` is the call `status`, `watch`
-and the admin make: it takes the registry's behaviour promises that are not
-retired, their aliases, the project id and the quiet window, and asks
-`markedSpans` — which throws `JaegerUnreachable` rather than returning an empty
-result. Before it reads, it calls `probeWatcher`, which throws `WatcherBlind`
-(exported from the same subpath) when the probe does not come back. A probe
+### Local and production
+
+A project that names a server in `promises.jaeger` has two sources: `local`,
+the laptop's telemetry daemon, and `production`, the server. Status prints a
+section for each, opening on a line with the source's name and URL, with the
+blocks above inside it:
+
+```
+local — http://localhost:16686
+Promises observed in the last 7 days, from Jaeger at http://localhost:16686
+…
+
+production — https://indusk-always-on.fly.dev:16687
+Promises observed in the last 7 days, from Jaeger at https://indusk-always-on.fly.dev:16687
+…
+```
+
+The same promise can be red in one and green in the other: a break on the
+laptop is work in progress, and a break in production is the alarm. A source
+that could not be read says so in its own section, naming where it looked,
+and the other source is still printed. The exit code follows the **alarm
+source** — production when there is one: exit **2** when production could
+not be read, exit **0** when only `local` failed (a laptop with no daemon
+running, beside a production server that answered). A project that names no
+server prints exactly as above, with no section headers.
+
+The marks are read by one library in two subpaths. `@infinitedusky/indusk-mcp/promises/sources`
+is which Jaeger to ask and reading each; `@infinitedusky/indusk-mcp/promises/telemetry`
+is how to ask one — endpoints, the query, `markedSpans`, `newestMark` and
+`silencePastExpectation`.
+A project has one or two **sources**: `local`, its telemetry daemon, always;
+and `production`, the server `promises.jaeger` names, when it names one.
+`resolveMarkSources(root)` returns each, or why it could not be resolved (no
+daemon running, a missing credential). The **alarm source** —
+`alarmSource(names)` — is production when there is one, otherwise local: a
+local break during development is work in progress, not an alarm.
+`readSources(root, registry, opts)` reads every source and returns one entry
+each: its marks, or its failure (`unreachable` or `blind`, where it looked,
+and why). It never throws for one source's failure, so one dead source never
+hides another. A malformed `promises.jaeger` — a string where the object belongs, or a
+missing `url` or `credential_env` — is production's failure, refused by
+key, and local is still read. A source that accepts connections and never
+answers fails within the reader's timeout: the probe's send and its
+follow-up check share one budget, so a silent production cannot stall
+local. `sourceAdvice(name, error)` says what to do about a failed source,
+from the failure itself — `status` and `watch` both print it. `readPromiseMarks(root, registry, { sinceMs?, source? })` reads
+one source, the alarm source by default: it takes the registry's behaviour
+promises that are not retired, their aliases, the project id and the quiet
+window, and asks `markedSpans` — which throws `JaegerUnreachable` rather than
+returning an empty result. Before it reads, it calls `probeWatcher`, which throws `WatcherBlind`
+(exported from `promises/sources`, beside `JaegerUnreachable`) when the probe does not come back. When the
+intake refuses the probe and the query API does not answer either, nobody is
+there, and it throws `JaegerUnreachable` instead. A probe
 that came back is trusted for 30 seconds per query URL, within one process. The same subpath exports `newestMark(marks)` (when a promise was last seen: its newest mark, upheld or violated) and `silencePastExpectation(promise, marks)` (the `expect_every` judgment). `promise_health`, `promises status` and the admin read both, so no surface restates either rule. How an application marks a promise is in the
 [promises guide](/guide/promises#marking-a-behaviour-promise).
 
 ## `promises watch`
 
-`--source` says where the run happened, and is recorded on the incident:
-`local` (the default), `smoke`, or **`deployed`** for a run on a deployed
-system. An incident also records **`environment`** when the span carried
+`--source` says where the run happened, chooses what is read, and is
+recorded on the incident: `local` (the default) and `smoke` read the laptop's
+daemon; **`deployed`** reads the production server `promises.jaeger` names,
+and is refused, naming `promises.jaeger`, when the project names none. An incident also records **`environment`** when the span carried
 `deployment.environment` — one server holds staging and production, and an
 incident that names the wrong one sends a person to the wrong logs. A span
 that carried none records no environment rather than a guess.

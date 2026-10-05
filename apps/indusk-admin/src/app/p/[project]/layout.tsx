@@ -13,7 +13,7 @@ import {
   readPlanHierarchy,
   readProjectWorktrees,
 } from "@/lib/planning-reader";
-import { healthRows, readHealth, redPlans } from "@/lib/promise-health";
+import { readHealth, redPlans } from "@/lib/promise-health";
 import {
   holdingCounts,
   readProjectPromises,
@@ -77,13 +77,11 @@ export default async function PerProjectLayout({
   const promisesRead = readProjectPromises(projectPath);
   const holding = holdingCounts(promisesRead);
   // A plan holding a violated promise shows red without being opened
-  // (day-monitor, A23) — the same cached read the Promises page makes.
+  // (day-monitor, A23) — the same cached read the Promises page makes, red
+  // from the alarm source alone (promise-sources, ADR D5).
   const registry = registryOf(promisesRead);
   const red = registry
-    ? redPlans(
-        registry,
-        healthRows(registry, await readHealth(projectPath, registry)),
-      )
+    ? redPlans(registry, await readHealth(projectPath, registry))
     : new Set<string>();
 
   return (

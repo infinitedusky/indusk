@@ -136,7 +136,7 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 		"promise_health",
 		{
 			description:
-				"What the promises are doing right now: per behaviour promise, violations in the window, open incidents, and — the number that matters — violations no incident records yet. Ask this when answering what to work on next; unrecorded violations outrank the roadmap. Reads the Jaeger the project names (its local daemon, or a deployed always-on server) through the same query the CLI uses, so the two cannot disagree.",
+				"What the promises are doing right now: per behaviour promise, violations in the window, open incidents, and — the number that matters — violations no incident records yet. Ask this when answering what to work on next; unrecorded violations outrank the roadmap. Reads every source — `local` (the daemon) and, when the project names one, `production` (its always-on server) — through the same reads the CLI uses, so the two cannot disagree. `sources` holds each source's rows or its failure; the top-level fields are the alarm source's (production when there is one), so a local break during development is shown under `sources` without being raised. Errors only when no source can be read.",
 			inputSchema: {
 				since_ms: z
 					.number()

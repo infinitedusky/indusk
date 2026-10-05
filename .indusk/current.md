@@ -29,6 +29,7 @@ _Any agent can edit this section. Cross-cutting state that's true for the whole 
 - **watch-reopen-collision (2026-10-03)** — `watch` exits 0 only when every open incident it touched is carried by its owner's Maintenance phase; a missed reopen is retried every run ([archive](planning/archive/watch-reopen-collision/)).
 - **test-daemons-never-leak (2026-10-03)** — tests never auto-start a telemetry daemon, and `pnpm test` / `test:system` end failing on any left in a temp home, pass or fail ([archive](planning/archive/test-daemons-never-leak/)).
 - **watcher-heartbeat (2026-10-03)** — every promise read probes its Jaeger and says *watcher blind* instead of a count; the always-on server beats each pass and tells Slack once each way; promises may declare `expect_every` ([archive](planning/archive/watcher-heartbeat/)).
+- **promise-sources (2026-10-05)** — every reader shows `local` and `production` side by side, each source's failure its own; production raises the alarm ([archive](planning/archive/promise-sources/)).
 - **day-always-on-deploy (2026-10-04)** — the always-on server deployed on Fly (`indusk-always-on`) and smoked, idle hour passed; three server bugs found and fixed on the way (1.58.2–1.58.4), four more from falsification bumped as 1.58.5 ([archive](planning/archive/day-always-on-deploy/)).
 
 **Active plans**: never copied here — live from `mcp__indusk__list_plans { active: true }` (sidebar order canonical from `planning/master.md`). Standing direction notes that stage/next-step cannot derive:
@@ -682,6 +683,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
+## Session 6f840312 — eval agent: scoring commit 1b922cf3 (promise-sources impl approved)
+
+**Session ID**: 6f840312-1cbf-49b4-b13a-683ea9cece84
+**Last updated**: 2026-10-05T02:26:07.063Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
 ## Session bcc4908a — eval: watcher-heartbeat A2 commit cb89b25d
 
 **Session ID**: bcc4908a-7aac-482b-aeef-1c7a06bee8c3
@@ -703,6 +710,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
+## Session d946813e — eval: promise-sources impl approved
+
+**Session ID**: d946813e-1025-47c2-8134-8c8ecdfc7818
+**Last updated**: 2026-10-05T02:27:40.162Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
 ## Session 70f6b76c — eval: watcher-heartbeat A5 commit f6167429
 
 **Session ID**: 70f6b76c-9710-47b9-bc13-6365a15be905
@@ -724,6 +737,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
+## Session 942ed151 — eval: promise-sources impl commit 1b922cf3
+
+**Session ID**: 942ed151-e9f8-4178-9418-3b9981d25673
+**Last updated**: 2026-10-05T02:27:59.636Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
 ## Session eed155da — eval agent: scoring watcher-heartbeat A8 commit
 
 **Session ID**: eed155da-7cf3-4eb3-b066-8ecf9cbbd1ce
@@ -745,6 +764,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
+## Session 1a7869e0 — eval: reviewing promise-sources impl commit 1b922cf3
+
+**Session ID**: 1a7869e0-da30-4780-9bef-7422744368fe
+**Last updated**: 2026-10-05T02:28:43.594Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
 ## Session 9996749e — eval: watcher-heartbeat Test Phase 1 commit 5a643393
 
 **Session ID**: 9996749e-65ba-44f1-bcbe-9fec9fc29fa4
@@ -766,6 +791,12 @@ Suite notes, none caused by this plan: the admin bundle is gitignored so a fresh
 
 ---
 
+## Session d1a9188e — eval agent: scoring commit b9f32bb0 (falsification A8/A9)
+
+**Session ID**: d1a9188e-130f-4c7e-b9db-4ea6e6d18f61
+**Last updated**: 2026-10-05T03:16:28.188Z
+**Branch**: plan/promise-sources
+**Worktree**: /Users/the_dusky/code/sandbox/dusk-worktrees/promise-sources
 ## Session 05bed386 — eval: scoring commit 257ffafb (cleanup phase close)
 
 **Session ID**: 05bed386-d2a7-4f57-b79c-88cf071ed5e1

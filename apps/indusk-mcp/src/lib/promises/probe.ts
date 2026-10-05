@@ -32,6 +32,12 @@ export const PROBE_CACHE_MS = 30_000;
 /** How long to wait for Jaeger to index the probe before calling the watcher blind. */
 export const PROBE_WAIT_MS = 5_000;
 const PROBE_POLL_MS = 200;
+/**
+ * The least time the query API is given after a failed send that used the
+ * whole budget: enough for a host that answers to say so, short enough that a
+ * silent one is reported as unreachable without doubling the wait.
+ */
+const CHECK_FLOOR_MS = 250;
 
 /**
  * The watcher answered, but did not hear: a span sent to its intake never
@@ -183,9 +189,20 @@ export async function probeWatcher(
 		[PROMISE_MARK.project]: opts.project,
 		[PROBE_ID_ATTRIBUTE]: probeId,
 	});
+	// One budget for the send and, when it fails, the check that follows: a
+	// host that accepts connections and never answers must not hold a reader
+	// past its own timeout (promise-sources A9) — `readSources` waits for every
+	// source, so one silent source would stall the other with it.
+	const budgetMs = opts.waitMs ?? DEFAULT_TIMEOUT_MS;
+	const sendDeadline = Date.now() + budgetMs;
 	try {
-		await sendWatcherSpan(target.intakeUrl, body, target.endpoint.headers);
+		await sendWatcherSpan(target.intakeUrl, body, target.endpoint.headers, budgetMs);
 	} catch (err) {
+		// A refused intake beside a query API that answers is blind; when the
+		// query API does not answer either, nobody is there, and that is its own
+		// answer (promise-sources A4). This throws `JaegerUnreachable` if so.
+		const leftMs = Math.max(sendDeadline - Date.now(), CHECK_FLOOR_MS);
+		await jaegerGet(target.endpoint, "/api/services", leftMs);
 		throw new WatcherBlind(where, target.intakeUrl, (err as Error).message);
 	}
 
