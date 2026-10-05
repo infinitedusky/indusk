@@ -72,7 +72,7 @@ known is whether three things work through that stream from our own process:
    cleanly from the panel?
 
 **Spike first, one day**, before the test plan is written and before
-[promise-timeline](../promise-timeline/brief.md) is built: a throwaway script
+[promise-timeline](../archive/promise-timeline/brief.md) is built: a throwaway script
 that starts `claude -p` in a scratch project, sends the planner request,
 answers one question, and lets one file edit through. If any of the three
 cannot be made to work, the demo's script changes, and it is cheaper to learn

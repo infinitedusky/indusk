@@ -12,6 +12,12 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 ### Fixed
 - **A fixed incident's promise no longer reads *violated*.** Production's chip, or a lone source's, is red only while a violation in the window is unrecorded or its incident open, and shows `fixed` (purple) once every one is fixed. Local's chip beside production follows the newest run.
 - **A busy admin no longer deletes the telemetry daemon's record.** The liveness check timed a connection on the admin's own event loop; while it rendered a page, a live daemon read as dead and its record was removed, so every later read said "no telemetry daemon is running". A timed-out connection is now tried once more before it is believed.
+- **A violation that reaches Jaeger late still turns its chip red.** The admin re-reads the last ten minutes on every refresh and the whole window every ten minutes.
+- **A busy production window is drawn.** A window too slow for one refresh is read newest first in slices, kept as each lands; the page says how far back it has read.
+- **A run tagged with the project id in other separators is counted** (`timeline-smoke` for `timeline_smoke`).
+- **Repointing `promises.jaeger.url` no longer draws the old server's runs.**
+- **Timeline cells are fixed to the clock**, so a run keeps its cell from one refresh to the next.
+- **`promises fix` refuses an incident whose root cause is unwritten**, instead of writing a file `promises check` then refuses.
 
 ## [1.59.1] — 2026-10-05
 

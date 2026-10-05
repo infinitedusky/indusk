@@ -87,9 +87,8 @@ dusk/
 - Always-on (Day 4b′): the shipped Jaeger as a server (badger + basic auth, Fly reference); an in-process pass announces each violation once to Slack, failure-safe; detect-and-notify only; a project names its Jaeger, absence = local — see `/decisions/day-always-on`; deployed and smoked on Fly — `/decisions/day-always-on-deploy`
 - Watcher heartbeat: every promise read first probes its Jaeger (a span sent and read back) and says *watcher blind*, never zero; the server beats each pass and tells Slack once each way — see `/decisions/watcher-heartbeat`
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
-- Promise timeline: compact sliced reads and an admin store that reads only what is new; one `violationState` (unrecorded / open / fixed) for chip and timeline; incidents record `fixed` via `promises fix` — see `.indusk/planning/promise-timeline/adr.md`
+- Promise timeline: compact sliced reads; an admin store that reads only what is new plus a late tail; one `violationState` (unrecorded / open / fixed) for chip and timeline; incidents record `fixed` via `promises fix` — see `/decisions/promise-timeline`
 
 ## Known Gotchas
 
-- Biome 2.x API differs from docs: no `noVar`, overrides use `includes`. Match schema to installed version.
 - **A safety argument written in a comment is not enforced by the code around it** — grep for comments asserting an invariant and check the control flow delivers it; two workbench-sync paths each reported the worst case as the most reassuring one. — see `/reference/cli/workbench`
