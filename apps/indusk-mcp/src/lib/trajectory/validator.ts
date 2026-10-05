@@ -10,6 +10,7 @@ import {
 	phaseSequence,
 	unterminatedFenceLine,
 } from "../impl-headings.js";
+import { isTestKind, kindsList } from "../test-kinds.js";
 import { parseTrajectory, type Trajectory } from "./parser.js";
 import { parseRegister } from "./register.js";
 
@@ -24,13 +25,19 @@ export interface ValidationError {
 		| "test-phase-justification"
 		| "test-phase-gate"
 		| "regression-guard-declaration"
-		| "unterminated-fence";
+		| "unterminated-fence"
+		| "test-kinds";
 	message: string;
 	/** The rough line number in the impl body, if known. */
 	line?: number;
 }
 
 export interface ValidateTrajectoryOptions {
+	/**
+	 * `test_kinds: required`: every row names one of the five test kinds
+	 * (test-kinds, ADR D1). Mirrors the hook's `validateTestKinds`.
+	 */
+	testKindsRequired?: boolean;
 	/**
 	 * When true, also enforce `### Trajectory Rationale` completeness — every
 	 * trajectory T-ID must appear as a `- **TN**` entry in the subsection,
@@ -543,5 +550,30 @@ export function validateTrajectory(
 			}),
 		);
 	}
+	errors.push(...validateTestKinds(trajectory, options.testKindsRequired ?? false));
 	return errors;
+}
+
+/**
+ * test-kinds (ADR D1): with `test_kinds: required`, every row's `Kind` is one
+ * of the five test kinds. Without it nothing is checked. Mirrors the hook's
+ * `validateTestKinds` in `hooks/validate-impl-structure.js`.
+ */
+export function validateTestKinds(trajectory: Trajectory, required: boolean): ValidationError[] {
+	if (!required) return [];
+	const rows = trajectory.rows;
+	if (rows.length > 0 && rows.every((r) => r.kindText === null || r.kindText === undefined)) {
+		return [
+			{
+				rule: "test-kinds",
+				message: `\`test_kinds: required\` is set but the Test Trajectory has no Kind column. Add one, naming each row's kind: ${kindsList()} — the smallest that can prove the assertion; the kind says when the test runs.`,
+			},
+		];
+	}
+	return rows
+		.filter((r) => !r.kindText || !isTestKind(r.kindText))
+		.map((r) => ({
+			rule: "test-kinds",
+			message: `Row ${r.id} names ${r.kindText ? `the kind \`${r.kindText}\`` : "no kind"}; a kind is one of: ${kindsList()}.`,
+		}));
 }

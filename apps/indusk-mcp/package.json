@@ -122,6 +122,10 @@
 			"types": "./dist/lib/promises/incidents.d.ts",
 			"default": "./dist/lib/promises/incidents.js"
 		},
+		"./test-kinds": {
+			"types": "./dist/lib/test-kinds.d.ts",
+			"default": "./dist/lib/test-kinds.js"
+		},
 		"./testing/trace-shape": {
 			"types": "./dist/lib/testing/trace-shape.d.ts",
 			"default": "./dist/lib/testing/trace-shape.js"

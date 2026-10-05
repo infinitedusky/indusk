@@ -28,6 +28,7 @@ describe("parseTrajectory — T1: extracts the Test Trajectory table into typed 
 				passesAtKind: "build",
 				state: "planned",
 				kind: undefined,
+				kindText: null,
 				scope: undefined,
 				test: undefined,
 			},
