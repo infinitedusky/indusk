@@ -61,7 +61,7 @@ observed instead of "unrun". See [brief.md](brief.md) and
 | A2 | On the deployed server, both doors refuse a request without credentials (401) and accept one with them | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A3 | A promise broken from a machine that is not the server reaches Slack within one pass interval, naming the promise, the symptom, the environment, the service and a trace link | Build Phase 2 | Build Phase 2 | passing | manual: read the Slack channel after the smoke's send |
 | A4 | A trace sent before a machine restart is still there after it | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
-| A5 | A violation sent after the server has sat idle for an hour is announced — the machine never went to sleep | Build Phase 3 | Build Phase 3 | written | manual: send after an idle hour, read the Slack channel |
+| A5 | A violation sent after the server has sat idle for an hour is announced — the machine never went to sleep | Build Phase 3 | Build Phase 3 | passing | manual: send after an idle hour, read the Slack channel |
 | A6 | A developer machine whose project names the deployed server reads it: `promises status` reports the smoke's violations and names the server, and the read is not *watcher blind* | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A7 | The deployed server is listening by its own account: its Jaeger holds a heartbeat less than two pass intervals old, and Slack has had no "watcher blind" message since the deploy | Test Phase 1 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A8 | Two always-on servers can run on one host at once | Test Phase 1 | Build Phase 1 | passing | apps/indusk-mcp/src/__tests__/always-on-two-servers.test.ts |
@@ -194,8 +194,12 @@ reading Slack, so they are registered below, not authored.
 
 ### Build Phase 3: an idle hour, and the docs as observed
 
-- [ ] A5: leave the server untouched for at least an hour (no sends, no queries); then run the smoke's send once and confirm the Slack message arrives; quote it and the idle window here
-- [ ] Record the smoke as observed in the guide's "Smoke-testing a deployment" (date, provider, what each step showed) and remove every "unrun" / "nobody has run it" marking from the guide and the reference
+- [x] A5: leave the server untouched for at least an hour (no sends, no queries); then run the smoke's send once and confirm the Slack message arrives; quote it and the idle window here
+  - **Idle window:** the last call to the machine was at about 23:42 UTC, and the next was at 00:43:42.
+  - **Heartbeats in it:** 63, from 23:41:45 to 00:43:46, every one exactly 60.0 s apart, with no gap over 150 s. The pass ran every minute with no outside traffic, so the machine never slept.
+  - **The send:** at 00:43:54 (the smoke's A6 step). The server logged `announced 1, … already announced 4` at 00:44:47.
+  - **Slack:** Sandy confirmed the 8:44 PM message, `Promise violated: smoke-promise-reaches-the-server`, in the channel ("it does have that"). Auto-stop is genuinely off.
+- [x] Record the smoke as observed in the guide's "Smoke-testing a deployment" (date, provider, what each step showed) and remove every "unrun" / "nobody has run it" marking from the guide and the reference — the guide's warning box is now a "Verified on Fly, 2026-10-04" tip. The smoke section names the scripted steps and gains "Observed, 2026-10-04": each step, the three bugs and their releases, the idle hour, and the five things the written configuration got wrong. The reference had no such marking
 
 #### Build Phase 3 Verification
 
