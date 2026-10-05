@@ -183,3 +183,50 @@ function ensurePromiseCarries(registry: Registry, promise: PromiseEntry, id: str
 	if (promise.state === "enforced") text = setScalar(text, "state", "known-violated");
 	if (text !== before) writeFileSync(path, text);
 }
+
+/** What a violation's incidents say about it (promise-timeline D2). */
+export type ViolationState = "unrecorded" | "open" | "fixed";
+
+/**
+ * Whether the violation `traceId` is unrecorded, open or fixed — the one rule
+ * the chip and the timeline share, so they cannot disagree about a break. A
+ * trace recorded by an open incident is open, even if a fixed incident also
+ * names it; recorded only by fixed ones, it is fixed; recorded by none, it is
+ * work nobody has written down.
+ */
+export function violationState(traceId: string, incidents: IncidentEntry[]): ViolationState {
+	const holding = incidents.filter((i) => i.traces.includes(traceId));
+	if (holding.length === 0) return "unrecorded";
+	return holding.some((i) => i.status === "open") ? "open" : "fixed";
+}
+
+/**
+ * Close an incident (promise-timeline D1): `status: fixed` and `fixed: <now>`,
+ * and its promise back to `enforced` when no other incident of it is still
+ * open. The promise keeps the incident in its `incidents` list — its history.
+ * Throws naming the id when it is unknown or already fixed.
+ */
+export function fixIncident(registry: Registry, id: string, now: Date = new Date()): IncidentEntry {
+	const incident = registry.incidents.find((i) => i.id === id);
+	if (!incident) throw new Error(`no incident "${id}" under ${INCIDENTS_SUBDIR}/`);
+	if (incident.status === "fixed") {
+		throw new Error(
+			`incident "${id}" is already fixed${incident.fixed ? ` (${incident.fixed})` : ""}`,
+		);
+	}
+	const path = join(registry.dir, incident.file);
+	let text = readFileSync(path, "utf-8");
+	text = setScalar(text, "status", "fixed");
+	text = setScalar(text, "fixed", iso(now));
+	writeFileSync(path, text);
+
+	const promise = registry.promises.find((p) => p.name === incident.promise);
+	const stillOpen = registry.incidents.some(
+		(i) => i.id !== id && i.promise === incident.promise && i.status === "open",
+	);
+	if (promise && promise.state === "known-violated" && !stillOpen) {
+		const promisePath = join(registry.dir, promise.file);
+		writeFileSync(promisePath, setScalar(readFileSync(promisePath, "utf-8"), "state", "enforced"));
+	}
+	return { ...incident, status: "fixed", fixed: iso(now) };
+}
