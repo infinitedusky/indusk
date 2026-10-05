@@ -3,6 +3,7 @@ title: "Test kinds"
 date: 2026-10-05
 status: in-progress
 trajectory: required
+test_kinds: required
 test_phases: required
 rationale: required
 gate_policy: ask
@@ -44,27 +45,27 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 ## Test Trajectory
 
-| ID | Asserts | Writable at | Passes at | State |
-|----|---------|-------------|-----------|-------|
-| A1 | The root `pnpm test` finishes in about a minute with both packages running at once (live check, recorded) | Build Phase 3 | Build Phase 3 | passing |
-| A2 | The admin suite alone finishes in under 60 s (live check, recorded) | Build Phase 3 | Build Phase 3 | passing |
-| A3 | Each build phase of this plan verifies in seconds to tens of seconds (live check, recorded per phase) | Build Phase 1 | Build Phase 5 | written |
-| A4 | A production break reads red while its incident is open and purple once fixed | Build Phase 1 | Build Phase 1 | passing |
-| A5 | Local's chip goes green once a newer local run holds, with no incident | Build Phase 1 | Build Phase 1 | passing |
-| A6 | A violation reaching Jaeger minutes late still turns its chip and cell red | Build Phase 1 | Build Phase 1 | passing |
-| A7 | After repointing the server, nothing from the old server is drawn | Build Phase 1 | Build Phase 1 | passing |
-| A8 | A window too slow for one refresh is drawn within a few, saying how far back it has read | Build Phase 1 | Build Phase 1 | passing |
-| A9 | A refresh with nothing new asks only for the recent past | Build Phase 1 | Build Phase 1 | passing |
-| A10 | An unreadable source's chips are hollow, say *health unknown since*, never green; the other source still drawn | Build Phase 1 | Build Phase 1 | passing |
-| A11 | A blind watcher's source says *watcher blind* | Build Phase 1 | Build Phase 1 | passing |
-| A12 | A violated promise names its newest violation's environment | Build Phase 1 | Build Phase 1 | passing |
-| A13 | The Promises page rendered against a real Jaeger shows a run's chips and strip (system tier) | Build Phase 2 | Build Phase 2 | passing |
-| A14 | An everyday-tier test in either package that starts a server or waits on the wall clock fails the guard, naming file, line and call | Test Phase 1 | Build Phase 2 | passing |
-| A15 | A short-lived process that runs and exits (`git`, the CLI) does not trip the guard | Test Phase 1 | Test Phase 1 | passing |
-| A16 | Every everyday run is marked held or broken with its duration; a slow run fails nothing; an overlapping run is not judged | Build Phase 5 | Build Phase 5 | planned |
-| A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | planned |
-| A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | written |
-| A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | written |
+| ID | Asserts | Writable at | Passes at | State | Kind |
+|----|---------|-------------|-----------|-------|------|
+| A1 | The root `pnpm test` finishes in about a minute with both packages running at once (live check, recorded) | Build Phase 3 | Build Phase 3 | passing | live check |
+| A2 | The admin suite alone finishes in under 60 s (live check, recorded) | Build Phase 3 | Build Phase 3 | passing | live check |
+| A3 | Each build phase of this plan verifies in seconds to tens of seconds (live check, recorded per phase) | Build Phase 1 | Build Phase 5 | written | live check |
+| A4 | A production break reads red while its incident is open and purple once fixed | Build Phase 1 | Build Phase 1 | passing | unit |
+| A5 | Local's chip goes green once a newer local run holds, with no incident | Build Phase 1 | Build Phase 1 | passing | unit |
+| A6 | A violation reaching Jaeger minutes late still turns its chip and cell red | Build Phase 1 | Build Phase 1 | passing | unit |
+| A7 | After repointing the server, nothing from the old server is drawn | Build Phase 1 | Build Phase 1 | passing | unit |
+| A8 | A window too slow for one refresh is drawn within a few, saying how far back it has read | Build Phase 1 | Build Phase 1 | passing | unit |
+| A9 | A refresh with nothing new asks only for the recent past | Build Phase 1 | Build Phase 1 | passing | unit |
+| A10 | An unreadable source's chips are hollow, say *health unknown since*, never green; the other source still drawn | Build Phase 1 | Build Phase 1 | passing | unit |
+| A11 | A blind watcher's source says *watcher blind* | Build Phase 1 | Build Phase 1 | passing | unit |
+| A12 | A violated promise names its newest violation's environment | Build Phase 1 | Build Phase 1 | passing | unit |
+| A13 | The Promises page rendered against a real Jaeger shows a run's chips and strip (system tier) | Build Phase 2 | Build Phase 2 | passing | contract |
+| A14 | An everyday-tier test in either package that starts a server or waits on the wall clock fails the guard, naming file, line and call | Test Phase 1 | Build Phase 2 | passing | unit |
+| A15 | A short-lived process that runs and exits (`git`, the CLI) does not trip the guard | Test Phase 1 | Test Phase 1 | passing | unit |
+| A16 | Every everyday run is marked held or broken with its duration; a slow run fails nothing; an overlapping run is not judged | Build Phase 5 | Build Phase 5 | planned | unit |
+| A17 | A run at or over 120 s reads violated for `everyday-suite-stays-fast`, owned by test-kinds | Build Phase 5 | Build Phase 5 | planned | unit |
+| A18 | An impl with `test_kinds: required` whose row has no kind, or one outside the five, is refused naming the five | Test Phase 1 | Build Phase 4 | written | unit |
+| A19 | The planner's Verification template no longer offers `pnpm test` as a phase's default | Test Phase 1 | Build Phase 4 | written | unit |
 
 ### Deferred Verification
 
@@ -202,13 +203,13 @@ checked is still checked, and InDusk holds two promises about its own suite
 
 ### Build Phase 4: The five kinds
 
-- [ ] `apps/indusk-mcp/src/lib/test-kinds.ts`: `TEST_KINDS = ["unit", "contract", "live check", "smoke", "promise"] as const` with each kind's moment, and `isTestKind`; exported as subpath `./test-kinds`
-- [ ] `lib/trajectory/parser.ts` + `validator.ts`: with `test_kinds: required`, every row's `Kind` must be one of `TEST_KINDS` (A18); without it, unchanged; `validate-impl-structure.js` calls it
-- [ ] `apps/indusk-mcp/skills/planner.md`: the test-plan section and template — the mechanism column is **Kind**, one of the five, the smallest that proves the assertion, `contract` only for a question about something we do not own; the clock-and-reads rule with its lesson; the impl template sets `test_kinds: required`, has a `Kind` column, and its Verification example names the phase's rows and `vitest related`, not `pnpm test` (A19)
-- [ ] `apps/indusk-mcp/skills/work.md`: phase verification runs the phase's rows and `vitest related` over the files it changed; full `pnpm test` + `pnpm test:system` at landing; the real-red rule narrowed (a seam gives an honest red; the boundary only for a question about the boundary)
-- [ ] `apps/indusk-mcp/skills/verify.md`: the skip table's "Test (all)" row moves to landing
-- [ ] `apps/indusk-mcp/skills/retrospective.md` Step 10: landing runs `pnpm test:system` as well as `pnpm test`
-- [ ] This impl gains `test_kinds: required` and a `Kind` column, every row given its kind — the plan validated by its own rule
+- [x] `apps/indusk-mcp/src/lib/test-kinds.ts`: `TEST_KINDS = ["unit", "contract", "live check", "smoke", "promise"] as const` with each kind's moment, and `isTestKind`; exported as subpath `./test-kinds`
+- [x] `lib/trajectory/parser.ts` + `validator.ts`: with `test_kinds: required`, every row's `Kind` must be one of `TEST_KINDS` (A18); without it, unchanged; `validate-impl-structure.js` calls it
+- [x] `apps/indusk-mcp/skills/planner.md`: the test-plan section and template — the mechanism column is **Kind**, one of the five, the smallest that proves the assertion, `contract` only for a question about something we do not own; the clock-and-reads rule with its lesson; the impl template sets `test_kinds: required`, has a `Kind` column, and its Verification example names the phase's rows and `vitest related`, not `pnpm test` (A19)
+- [x] `apps/indusk-mcp/skills/work.md`: phase verification runs the phase's rows and `vitest related` over the files it changed; full `pnpm test` + `pnpm test:system` at landing; the real-red rule narrowed (a seam gives an honest red; the boundary only for a question about the boundary)
+- [x] `apps/indusk-mcp/skills/verify.md`: the skip table's "Test (all)" row moves to landing
+- [x] `apps/indusk-mcp/skills/retrospective.md` Step 10: landing runs `pnpm test:system` as well as `pnpm test`
+- [x] This impl gains `test_kinds: required` and a `Kind` column, every row given its kind — the plan validated by its own rule — A1–A3 live check, A4–A12 unit, A13 contract, A14–A19 unit
 
 #### Build Phase 4 Verification
 

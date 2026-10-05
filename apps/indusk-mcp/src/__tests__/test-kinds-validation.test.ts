@@ -19,21 +19,25 @@ afterAll(() => {
 	for (const r of roots) rmSync(r, { recursive: true, force: true });
 });
 
-/** This plan's impl, opted in, every trajectory row given `kind` (or no column at all when null). */
+/**
+ * This plan's impl — opted in, with a Kind column — with every row's kind set
+ * to `kind`, or the Kind column removed when null.
+ */
 function implWith(kind: string | null): string {
 	const src = readFileSync(
 		join(REPO_ROOT, ".indusk", "planning", "test-kinds", "impl.md"),
 		"utf-8",
-	).replace(/^trajectory: required$/m, "trajectory: required\ntest_kinds: required");
-	if (kind === null) return src;
+	);
+	expect(src, "the impl opts in").toMatch(/^test_kinds: required$/m);
+	const dropLast = (line: string) => line.replace(/[^|]*\|$/, "");
 	return src
 		.split("\n")
 		.map((line) => {
-			if (/^\| ID \| Asserts \|/.test(line)) return `${line} Kind |`;
-			// The trajectory's separator; the boundary map's starts `|-------|`.
-			if (line.startsWith("|----|")) return `${line}------|`;
-			if (/^\| A\d+ \|/.test(line)) return `${line} ${kind} |`;
-			return line;
+			const isTrajectory =
+				/^\| ID \| Asserts \|/.test(line) || line.startsWith("|----|") || /^\| A\d+ \|/.test(line);
+			if (!isTrajectory) return line;
+			if (kind === null) return dropLast(line);
+			return /^\| A\d+ \|/.test(line) ? `${dropLast(line)} ${kind} |` : line;
 		})
 		.join("\n");
 }
