@@ -1,3 +1,4 @@
+import { sanitizeGroupId } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
 import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
@@ -264,8 +265,18 @@ export async function marksBetween(
 			if (!marked || marked.promise !== q.name) continue;
 			marked.promise = q.promise;
 			if (marked.at < q.from || marked.at > q.to) continue;
+			// A run tagged with this project in other separators is this project's
+			// (A15): the id is normalised (`timeline-smoke` → `timeline_smoke`), so
+			// the tag an application writes is normalised the same way before the
+			// comparison, or its runs are dropped without a word.
 			const owner = tag(span.tags, PROMISE_MARK.project);
-			if (q.project !== undefined && typeof owner === "string" && owner !== q.project) continue;
+			if (
+				q.project !== undefined &&
+				typeof owner === "string" &&
+				sanitizeGroupId(owner) !== sanitizeGroupId(q.project)
+			) {
+				continue;
+			}
 			marks.push(marked);
 		}
 	}
