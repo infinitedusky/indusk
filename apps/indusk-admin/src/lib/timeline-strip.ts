@@ -90,8 +90,12 @@ export function buildStrip(input: {
   now: number;
 }): Strip {
   const { ms, cells: count } = WINDOWS[input.window];
-  const start = input.now - ms;
   const cellMs = ms / count;
+  // Fixed to the clock (A14): the last cell ends at the next multiple of the
+  // cell width, so a run keeps its cell from one refresh to the next instead
+  // of drifting as "now" moves.
+  const end = Math.ceil((input.now + 1) / cellMs) * cellMs;
+  const start = end - ms;
   const cells: StripCell[] = Array.from({ length: count }, (_, i) => ({
     from: new Date(start + i * cellMs).toISOString(),
     state: "empty" as CellState,

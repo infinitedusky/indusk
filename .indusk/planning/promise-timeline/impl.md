@@ -249,7 +249,7 @@ table would be rebuilt there.*
 - **A18**: `fixIncident` does not check the root cause; `promises fix` exits 0 on an incident whose root cause is still the unwritten line, and the next `promises check` refuses the registry.
 - **A19**: a window read is all or nothing. When the first read of a busy production window exceeds the 2 s budget, nothing read is kept and the covered range does not move, so every refresh starts over and fails the same way; the strip — and, through the store, the chip — never appear.
 
-- [ ] `lib/timeline-strip.ts`: cells aligned to the clock — the last cell ends at the next multiple of the cell width, `start = end − window` (A14)
+- [x] `lib/timeline-strip.ts`: cells aligned to the clock — the last cell ends at the next multiple of the cell width, `start = end − window` (A14)
 - [ ] `lib/promises/telemetry.ts` `marksBetween`: compare a run's `indusk.project` after the same normalisation `markProjectId` applies (A15)
 - [ ] `apps/indusk-admin/src/lib/promise-timeline.ts`: key the store by the source's query URL as well as its name, so a repointed server starts empty (A16)
 - [ ] The store re-reads a tail long enough for late runs — the last `LATE_MS` (10 minutes) on every refresh, not one — and the whole health window once every `FULL_REREAD_MS` (10 minutes), so a run later than the tail is still read within a bounded time (A17)
