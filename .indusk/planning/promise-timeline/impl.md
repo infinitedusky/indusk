@@ -1,7 +1,7 @@
 ---
 title: "Promise timeline — Implementation"
 date: 2026-10-05
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -222,13 +222,15 @@ table would be rebuilt there.*
 - [x] A13 observed on the deployed server — red, then purple after `promises fix`, then green runs — with a screenshot in the impl — observed: red (unrecorded), red with the band to now (incident open), purple with the band ending at 13:41:49 (fixed), then green runs in the next cell; the production chip `violated`, then `fixed`
 - [x] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear — no code changed after the Build Phase 4 run at `b7f82bf9`, whose result stands: `pnpm test` mcp 1705 / admin 361, `test:system` 133, both all-clear
 
+- [x] Shape (Build Phase 5): skipped — this phase changed no code; A13 was run against the deployed server and recorded here
+
 #### Build Phase 5 Context
 
-- [ ] `.indusk/current.md`: the Promises page draws each promise's history; `every-commit-evaluated`'s `fixed` incidents read purple
+- [x] `.indusk/current.md`: the Promises page draws each promise's history; `every-commit-evaluated`'s `fixed` incidents read purple
 
 #### Build Phase 5 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased — Added: the promise timeline, `indusk promises fix`; Fixed: a fixed incident's promise no longer reads *violated*
+- [x] `apps/docs/src/changelog.md` Unreleased — Added: the promise timeline, `indusk promises fix`; Fixed: a fixed incident's promise no longer reads *violated*
 
 ## Files Affected
 
