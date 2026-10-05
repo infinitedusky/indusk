@@ -64,7 +64,7 @@ promises proven; and an incident starts from the tests that were vouching
 | A10 | A plan that made no promise closes as it did before | Test Phase 1 | Build Phase 5 | written | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 | A11 | In a workbench, where a plan's tests exist only in a repository's worktree until it lands, the plan still closes with its promises confirmed | Test Phase 1 | Build Phase 5 | written | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 | A12 | When a promise breaks, its incident names every test row that proves it: the plan, the row, and whether the row is passing | Test Phase 1 | Build Phase 6 | written | unit | promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts |
-| A13 | The row added to a plan that an incident reopens names the promise that broke and has a level, and the plan's impl still validates | Test Phase 1 | Build Phase 1 | written | unit | promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/reopen-row-complete.test.ts |
+| A13 | The row added to a plan that an incident reopens names the promise that broke and has a level, and the plan's impl still validates | Test Phase 1 | Build Phase 1 | passing | unit | promise: an-incident-names-its-tests | apps/indusk-mcp/src/__tests__/reopen-row-complete.test.ts |
 | A14 | A plan cannot start building while an expectation in its brief has no measure or no time to look; the refusal names the expectation | Test Phase 1 | Build Phase 4 | written | unit | promise: an-expectation-says-how-it-is-measured | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A15 | A brief that says it has no expectations, with the reason, is accepted | Test Phase 1 | Build Phase 4 | written | unit | promise: an-expectation-says-how-it-is-measured | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A16 | The hooks' copy of the test levels equals the package's list, and the hooks' row parser reads the new column exactly as the package's does | Test Phase 1 | Build Phase 2 | written | unit | promise: one-definition-per-shared-rule | apps/indusk-mcp/src/__tests__/test-levels-parity.test.ts |
@@ -138,20 +138,21 @@ promises proven; and an incident starts from the tests that were vouching
 
 ### Build Phase 1: A reopened plan stays valid
 
-- [ ] `lib/trajectory/append-row.ts`: `appendLateRow(text, phase, row)` — `row` gains `cells?: Record<string, string>`, keyed by lower-cased header; every header the table has and the caller names is filled
-- [ ] `lib/promises/reopen.ts`: the Maintenance row passes `kind` and `level` as `unit`, the smallest, and `for` as `promise: <name>`, so whichever of those columns the owner's table has is filled
+- [x] `lib/trajectory/append-row.ts`: `appendLateRow(text, phase, row)` — `row` gains `cells?: Record<string, string>`, keyed by lower-cased header; every header the table has and the caller names is filled
+- [x] `lib/promises/reopen.ts`: the Maintenance row passes `kind` and `level` as `unit`, the smallest, and `for` as `promise: <name>`, so whichever of those columns the owner's table has is filled
 
 #### Build Phase 1 Verification
 
-- [ ] A13 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/reopen-row-complete src/__tests__/monitor-reopen-validator`), and the three impls the older reopen test covers still validate
+- [x] A13 passes (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/reopen-row-complete src/__tests__/monitor-reopen-validator`), and the three impls the older reopen test covers still validate — with `src/lib/trajectory` and `src/lib/promises`: 88 tests, 1.2 s
+- [x] Shape — `appendLateRow` gained one optional input and spreads it under the cells it owns, so a caller cannot overwrite the id or the phases; `reopenOwner` names both spellings of the level column in one place. Nothing to change
 
 #### Build Phase 1 Context
 
-- [ ] guard: `reopen-row-complete.test.ts` carries `lesson: a-row-writer-fills-every-column-its-table-requires`; the lesson file is written with it
+- [x] guard: `reopen-row-complete.test.ts` carries `lesson: a-row-writer-fills-every-column-its-table-requires`; the lesson file is written with it
 
 #### Build Phase 1 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased, Fixed: a plan reopened by a broken promise no longer gets a row its own validator refuses
+- [x] `apps/docs/src/changelog.md` Unreleased, Fixed: a plan reopened by a broken promise no longer gets a row its own validator refuses
 
 ### Build Phase 2: The row has a level and a purpose
 

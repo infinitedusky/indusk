@@ -4,6 +4,9 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Fixed
+- **A plan reopened by a broken promise can be worked.** The test row appended to its impl was written with five cells whatever the table had, so an impl that requires each row to name its kind (1.61.0) got a row with an empty cell and refused its own next edit. The row now carries its level and the promise that broke.
+
 ## [1.61.0] — 2026-10-05
 
 ### Added
