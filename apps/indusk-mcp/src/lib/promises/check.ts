@@ -243,8 +243,18 @@ function stateRefusals(
 	}
 }
 
-export async function checkPromises(planRootIn: string): Promise<CheckResult> {
-	const roots = resolveExecutionRoots(planRootIn);
+export async function checkPromises(
+	planRootIn: string,
+	/**
+	 * `codeRoot`: where the sites and tests are, in place of the one the
+	 * project declares. Closing a workbench plan passes the plan's own
+	 * worktree, where its tests are until it lands (planner-promises A11).
+	 */
+	opts: { codeRoot?: string } = {},
+): Promise<CheckResult> {
+	const roots = opts.codeRoot
+		? { planRoot: planRootIn, codeRoot: opts.codeRoot, split: opts.codeRoot !== planRootIn }
+		: resolveExecutionRoots(planRootIn);
 	if (isRootsRefusal(roots))
 		return { ok: false, refusals: [{ file: planRootIn, message: roots.error }] };
 	const { planRoot, codeRoot } = roots;

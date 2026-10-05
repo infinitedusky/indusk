@@ -7,6 +7,7 @@ import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { isFinishedDocumentStatus, nextRequiredDocument } from "../lib/lifecycle.js";
 import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
+import { confirmPlan } from "../lib/promises/confirm.js";
 import { promiseHealth } from "../lib/promises/health.js";
 import { WatcherBlind } from "../lib/promises/probe.js";
 import { readPromises } from "../lib/promises/registry.js";
@@ -24,6 +25,7 @@ import {
 	type PlanCopy,
 	resolvePlanCopies,
 } from "../lib/worktree/plan-worktrees.js";
+import { isRootsRefusal, resolveExecutionRoots } from "../lib/worktree/roots.js";
 
 /** An unreadable assignment record, as every plan tool reports it: an error naming the file, never a guessed copy. */
 function recordError(file: string, problem: string) {
@@ -215,6 +217,40 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 				replacePromise(projectRoot, { old, name, plan, kind, domain, statement });
 				return { declared: name, owner: plan, supersedes: old, retiredAt: "the plan's close" };
 			}),
+	);
+
+	server.registerTool(
+		"confirm_promises",
+		{
+			description:
+				"Close a plan's promises, before the retrospective archives it: each promise the plan declared becomes enforced, with the test files its rows name and the code that carries its token, and a promise it replaces is retired. Refuses, naming each promise, when no passing row names it, a test file its row names is missing or does not carry its token, or no code carries it — and then writes nothing.",
+			inputSchema: {
+				plan: z.string().describe("The plan closing: a folder under .indusk/planning/."),
+				code_root: z
+					.string()
+					.optional()
+					.describe(
+						"Where the plan's code and tests are. Defaults to the project's code root; in a workbench before landing, pass the plan's own worktree.",
+					),
+			},
+		},
+		async ({ plan, code_root }) => {
+			const text = (value: unknown, isError = false) => ({
+				...(isError ? { isError: true } : {}),
+				content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }],
+			});
+			let codeRoot = code_root;
+			if (codeRoot === undefined) {
+				const roots = resolveExecutionRoots(projectRoot);
+				if (isRootsRefusal(roots)) return text({ error: roots.error }, true);
+				codeRoot = roots.codeRoot;
+			}
+			const result = await confirmPlan({ planRoot: projectRoot, codeRoot, plan });
+			if (!result.ok) {
+				return text({ refusals: result.refusals, written: result.written }, true);
+			}
+			return text({ plan, confirmed: result.confirmed });
+		},
 	);
 
 	server.registerTool(

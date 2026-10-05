@@ -959,6 +959,20 @@ promisesCmd
 	});
 
 promisesCmd
+	.command("confirm <plan>")
+	.description(
+		"Close a plan's promises: each one it declared becomes enforced, with the test files its rows name and the code that carries its token; a promise it replaces is retired; then the registry check runs. Refuses, naming the promise, when no passing row names it, a test file its row names is missing or does not carry its token, or no code carries it. Writes plan documents, commits nothing. Exit 2 with nothing written on a refusal.",
+	)
+	.option(
+		"--code-root <path>",
+		"where the plan's code and tests are (default: the project's code root; in a workbench before landing, the plan's own worktree)",
+	)
+	.action(async function (this: Command, plan: string) {
+		const { promisesConfirm } = await import("./commands/promises.js");
+		await promisesConfirm(rootOrExit(), plan, this.opts());
+	});
+
+promisesCmd
 	.command("contract [plan]")
 	.description(
 		"Does a plan's brief, its test rows and the registry agree? Refuses, naming the promise, the expectation or the row: a promise the brief makes that the registry does not hold, another plan owns or describes differently; one it keeps, changes or replaces that does not exist or is retired; an expectation with no measure or no time to look; a row naming a promise or lesson that does not exist, or another plan's promise the brief does not list. A brief written before promises were part of one is not held to it. Read-only. Exit 2 on a refusal. The impl hook and `promises check` both run this.",

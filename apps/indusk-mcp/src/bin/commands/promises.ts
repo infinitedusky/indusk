@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { checkPromises, formatSummary } from "../../lib/promises/check.js";
 import { getQuietWindowDays } from "../../lib/promises/config.js";
+import { confirmPlan } from "../../lib/promises/confirm.js";
 import {
 	type ContractRefusal,
 	checkAllContracts,
@@ -25,6 +27,7 @@ import {
 	PromiseWriteRefused,
 	replacePromise,
 } from "../../lib/promises/write.js";
+import { isRootsRefusal, resolveExecutionRoots } from "../../lib/worktree/roots.js";
 
 /**
  * `indusk promises check`.
@@ -238,6 +241,57 @@ export function promisesContract(
 		return;
 	}
 	console.info(formatContract(result.summary));
+}
+
+/**
+ * `indusk promises confirm <plan> [--code-root <path>]` (planner-promises ADR
+ * D5). Closing a plan: each promise it declared becomes `enforced`, with the
+ * test files its rows name and the code that carries its token, and what it
+ * replaces is retired. Writes plan documents, commits nothing. Exit 2 naming
+ * each promise that is not proven, with nothing written.
+ *
+ * The code root defaults to the project's; in a workbench before landing the
+ * plan's tests are only in its own worktree, which `--code-root` names.
+ */
+export async function promisesConfirm(
+	projectRoot: string,
+	plan: string,
+	opts: { codeRoot?: string } = {},
+): Promise<void> {
+	let codeRoot: string;
+	if (opts.codeRoot !== undefined) codeRoot = resolve(opts.codeRoot);
+	else {
+		const roots = resolveExecutionRoots(projectRoot);
+		if (isRootsRefusal(roots)) {
+			console.error(`${roots.error}\nName the plan's code with --code-root <path>.`);
+			process.exitCode = 2;
+			return;
+		}
+		codeRoot = roots.codeRoot;
+	}
+	const result = await confirmPlan({ planRoot: projectRoot, codeRoot, plan });
+	if (!result.ok) {
+		for (const r of result.refusals) console.error(`${r.file}: ${r.message}`);
+		console.error(
+			result.written
+				? `\n${plan}'s promises were written as enforced, and the registry check then refused the above — fix each and run \`indusk promises check\`.`
+				: `\n${plan} cannot close: ${result.refusals.length} refusal${result.refusals.length === 1 ? "" : "s"}, nothing written.`,
+		);
+		process.exitCode = 2;
+		return;
+	}
+	if (result.confirmed.length === 0) {
+		console.info(`${plan}: no promise to confirm — it holds none that is still declared.`);
+		return;
+	}
+	for (const c of result.confirmed) {
+		console.info(
+			`${c.name}: enforced — ${c.tests.length} test file${c.tests.length === 1 ? "" : "s"}, ${c.sites.length} code site${c.sites.length === 1 ? "" : "s"}${c.retired ? `; ${c.retired} retired` : ""}`,
+		);
+	}
+	console.info(
+		`${plan}: ${result.confirmed.length} promise${result.confirmed.length === 1 ? "" : "s"} confirmed; the registry check passes.`,
+	);
 }
 
 /** Run a registry write; a refusal goes to stderr with exit 2, anything else is a bug and throws. */

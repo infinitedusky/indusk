@@ -3,6 +3,7 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { afterEach, describe, expect, it } from "vitest";
 import { checkRetrospectiveReadiness } from "../lib/cleanup/gate.js";
+import { registerPlanTools } from "../tools/plan-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { briefText, type ImplSpec, implText } from "./helpers/plan-fixture.js";
 import {
@@ -12,6 +13,7 @@ import {
 	siteFile,
 	testFile,
 } from "./helpers/promises-fixture.js";
+import { toolCaller } from "./helpers/tool-call.js";
 
 /**
  * promise: a-closed-plan-kept-its-promises — planner-promises A8–A11.
@@ -113,6 +115,33 @@ describe.skipIf(SHOULD_SKIP)("A9 — closing confirms the plan's promises", () =
 	});
 });
 
+describe.skipIf(SHOULD_SKIP)(
+	"A9 — the retrospective's tool confirms what the command confirms",
+	() => {
+		it("confirm_promises writes the same registry, and a refusal is an error that names the promise", async () => {
+			const unproven = project({ rows: [proving("written")] });
+			const refused = await toolCaller((server) =>
+				registerPlanTools(server, unproven.planRoot),
+			).call("confirm_promises", { plan: PLAN });
+			expect(refused.isError).toBe(true);
+			expect(JSON.stringify(refused.json)).toContain(NAME);
+			expect(promise(unproven).data.state).toBe("declared");
+			rmSync(unproven.root, { recursive: true, force: true });
+
+			const p = project({});
+			const done = await toolCaller((server) => registerPlanTools(server, p.planRoot)).call(
+				"confirm_promises",
+				{ plan: PLAN },
+			);
+			expect(done.isError, JSON.stringify(done.json)).toBe(false);
+			expect(done.json).toMatchObject({
+				confirmed: [{ name: NAME, tests: [TEST], sites: [SITE] }],
+			});
+			expect(promise(p).data.state).toBe("enforced");
+		});
+	},
+);
+
 describe.skipIf(SHOULD_SKIP)("A8 — a plan cannot close with a promise unproven", () => {
 	it.each([
 		["no row names it", [{ cells: { For: "a regression guard", Test: TEST } }]],
@@ -134,6 +163,24 @@ describe.skipIf(SHOULD_SKIP)("A8 — a plan cannot close with a promise unproven
 		expect(r.code, r.stdout + r.stderr).toBe(2);
 		expect(r.stderr).toContain(TEST);
 		expect(promise(p).data.state).toBe("declared");
+	});
+
+	it("refuses when the rows that name it name no test file", () => {
+		const p = project({ rows: [{ cells: { For: `promise: ${NAME}`, Test: "" } }] });
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(NAME);
+		expect(r.stderr).toMatch(/no test file/);
+		expect(promise(p).data.state).toBe("declared");
+	});
+
+	it("refuses when no code carries its token: a promise about state names the code that keeps it", () => {
+		const p = project({ files: { [TEST]: testFile(NAME) } });
+		const r = runCli(p.planRoot, ["promises", "confirm", PLAN]);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(NAME);
+		expect(r.stderr).toMatch(/no code/);
+		expect(promise(p).data.state, "nothing written").toBe("declared");
 	});
 
 	it("the retrospective's gate says promises are missing, by name", () => {

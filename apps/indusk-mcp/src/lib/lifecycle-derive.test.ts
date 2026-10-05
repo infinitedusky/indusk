@@ -42,6 +42,8 @@ function readiness(missing: string[]): RetrospectiveReadiness {
 		cleanupOk: !missing.includes("cleanup"),
 		rowsOk: !missing.includes("rows"),
 		nonTerminalRows: missing.includes("rows") ? ["A7"] : [],
+		promisesOk: !missing.includes("promises"),
+		unprovenPromises: missing.includes("promises") ? ["seat-released-on-timeout"] : [],
 		passes: missing.length === 0,
 		missing,
 	};
@@ -72,6 +74,18 @@ describe("A29 — the plan bar names the block, never 'cleaned' over it", () => 
 		});
 		expect(state.position).toBe("retrospective");
 		expect(state.awaiting).toMatch(/rows/);
+		expect(state.awaiting).not.toMatch(/cleaned/);
+	});
+
+	it("a declared promise no passing row names: the message names it, never cleaned", () => {
+		const state = derivePlanPosition({
+			summary: summary({}),
+			impl: null,
+			readiness: readiness(["promises"]),
+			archived: false,
+		});
+		expect(state.position).toBe("retrospective");
+		expect(state.awaiting).toContain("seat-released-on-timeout");
 		expect(state.awaiting).not.toMatch(/cleaned/);
 	});
 

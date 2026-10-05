@@ -133,6 +133,15 @@ describe.skipIf(SHOULD_SKIP)("A25 — a changed promise keeps its name and its h
 		expect(read(p, NAME).data).toMatchObject({ owner: PLAN, state: "enforced", tests: [TEST] });
 	});
 
+	it("the plan cannot close while the change its brief lists was never made, naming the promise", () => {
+		const p = changing();
+		const confirm = runCli(p.root, ["promises", "confirm", PLAN]);
+		expect(confirm.code, confirm.stdout + confirm.stderr).toBe(2);
+		expect(confirm.stderr).toContain(NAME);
+		expect(confirm.stderr).toMatch(/never made/);
+		expect(read(p, NAME).data.owner, "nothing written").toBe(OLD_PLAN);
+	});
+
 	it("refuses a promise the registry does not hold, naming it", () => {
 		const p = changing();
 		const r = change(p, "seat-map-never-stale");
@@ -192,6 +201,46 @@ describe.skipIf(SHOULD_SKIP)("A26 — a replaced promise is retired when the new
 		expect(read(p, NEW_NAME).data).toMatchObject({ state: "enforced", supersedes: NAME });
 		const check = runCli(p.root, ["promises", "check"]);
 		expect(check.code, check.stderr).toBe(0);
+	});
+
+	it("the plan cannot close while code still names the promise being replaced, naming the file", () => {
+		const p = replacing();
+		expect(replace(p).code).toBe(0);
+		// The test moved to the new promise; the code site was forgotten.
+		writeFileSync(join(p.codeRoot, TEST), testFile(NEW_NAME));
+		const confirm = runCli(p.root, ["promises", "confirm", PLAN]);
+		expect(confirm.code, confirm.stdout + confirm.stderr).toBe(2);
+		expect(confirm.stderr).toContain(SITE);
+		expect(confirm.stderr).toContain(NAME);
+		expect(read(p, NAME).data.state, "nothing written: the old one is still in force").toBe(
+			"enforced",
+		);
+		expect(read(p, NEW_NAME).data.state).toBe("declared");
+	});
+
+	it("the plan cannot close while the replacement was declared as a plain new promise", () => {
+		const p = replacing();
+		const declared = runCli(p.root, [
+			"promises",
+			"declare",
+			NEW_NAME,
+			"--plan",
+			PLAN,
+			"--kind",
+			"state",
+			"--domain",
+			"seating",
+			"--statement",
+			NEW_STATEMENT,
+		]);
+		expect(declared.code, declared.stdout + declared.stderr).toBe(0);
+		writeFileSync(join(p.codeRoot, SITE), siteFile(NEW_NAME));
+		writeFileSync(join(p.codeRoot, TEST), testFile(NEW_NAME));
+		const confirm = runCli(p.root, ["promises", "confirm", PLAN]);
+		expect(confirm.code, confirm.stdout + confirm.stderr).toBe(2);
+		expect(confirm.stderr).toContain(NAME);
+		expect(confirm.stderr).toMatch(/promises replace/);
+		expect(read(p, NEW_NAME).data.state, "nothing written").toBe("declared");
 	});
 
 	it("refuses to replace a promise that does not exist, naming it", () => {
