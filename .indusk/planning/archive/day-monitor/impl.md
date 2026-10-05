@@ -85,7 +85,7 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | passing |
 | A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | passing |
 | A31 | every-commit-evaluated holds again after i-2026-10-03-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | passing |
-| A32 | every-commit-evaluated holds again after i-2026-10-05-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 10 | Build Phase 10 | planned |
+| A32 | every-commit-evaluated holds again after i-2026-10-05-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 10 | Build Phase 10 | written |
 
 ## Checklist
 
@@ -389,7 +389,7 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 10: Maintenance — i-2026-10-05-every-commit-evaluated
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-05-every-commit-evaluated.md`)
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-05-every-commit-evaluated.md`) — three causes: a worktree commit evaluated as the trunk's HEAD (the hook read the event's `cwd`, not the commit's `cd`/`-C`; `git -C <dir> commit` was not even recognised as a commit), so duplicate runs in bursts hit the API's rate limit (429) with no retry on a fresh start; and once, a resumed session pinned to a retired model. A32 written red in `src/__tests__/eval-trigger-commit-anchor.test.ts`
 - [ ] Fix: a code site, a widened test, or a revised promise
 
 #### Build Phase 10 Verification
