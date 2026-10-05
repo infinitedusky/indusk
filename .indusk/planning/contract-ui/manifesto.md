@@ -102,9 +102,10 @@ what happened, why, how it was built, and only then the code.
    they exist to make the promises hold and to catch it when they do not. The
    system enforces them and does not ask anyone to perform them. A person sees
    the three truths, not the machinery that produced them.
-4. **Say what you know, never more.** A source that cannot be read is said. A
-   window that may be missing runs says "at least". Silence is never drawn as
-   health.
+4. **Say what you know, never more.** When the tool cannot reach the running
+   system, it says it cannot see. It never shows a zero or a green badge in
+   place of an answer. When a count may be incomplete, it says "at least 12",
+   not "12". No news is shown as no news, never as good news.
 5. **Fast, and made by people who use it.** Linear was right about this, and it
    still decides whether anyone stays.
 
