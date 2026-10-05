@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readConfig, writeConfig } from "../config.js";
 import { isUsableSegment } from "../path-segment.js";
@@ -11,7 +11,7 @@ import { PROMISE_KINDS, PROMISE_NAME, type PromiseKind } from "./vocabulary.js";
  * The one writer of the promise registry (planner-promises ADR D4).
  *
  * A promise reaches the registry from a planning conversation through these
- * functions — the CLI's `promises declare | change | replace` and the MCP
+ * functions — the CLI's `promises declare | change | replace | withdraw` and the MCP
  * tools of the same names — and never by a person typing a file. Until this
  * existed nothing wrote the registry at all: every promise was hand-written,
  * and nothing connected a plan's brief to what the registry held.
@@ -210,6 +210,53 @@ export function replacePromise(planRoot: string, input: ReplaceInput): string {
 	if (old.state === "retired") refuse(`${input.old}: this promise is already retired`);
 	const { old: supersedes, ...declare } = input;
 	return declarePromise(planRoot, { ...declare, supersedes });
+}
+
+export interface WithdrawInput {
+	name: string;
+	plan: string;
+}
+
+/**
+ * Take back a promise that was never in force (planner-promises A28): a
+ * planning conversation dropped it, or gave it a better name. Its file is
+ * removed. Only a `declared` promise, and only by the plan that declared it —
+ * a promise in force has a history and tests vouching for it, and leaves the
+ * registry by being replaced, never by being deleted. Returns the path
+ * removed.
+ */
+export function withdrawPromise(planRoot: string, input: WithdrawInput): string {
+	const { name, plan } = input;
+	const registry = registryOrRefuse(planRoot);
+	const promise = registry?.promises.find((p) => p.name === name);
+	if (!registry || !promise) {
+		return refuse(`${name}: the registry does not hold this promise — nothing to withdraw`);
+	}
+	requireOpenPlan(planRoot, plan);
+	if (promise.owner !== plan) {
+		refuse(
+			`${name}: ${promise.owner} declared this promise, not ${plan} — a promise is withdrawn by the plan that made it`,
+		);
+	}
+	if (promise.state !== "declared") {
+		refuse(
+			`${name}: this promise is ${promise.state}, not declared — only a promise that was never in force is withdrawn; one in force is replaced (\`indusk promises replace\`)`,
+		);
+	}
+	if (promise.incidents.length > 0) {
+		refuse(
+			`${name}: it lists ${promise.incidents.join(", ")} — a promise with an incident has a history, and that is not withdrawn`,
+		);
+	}
+	const replacement = registry.promises.find((p) => p.supersedes === name);
+	if (replacement) {
+		refuse(
+			`${name}: ${replacement.name} records that it replaces this promise — withdraw ${replacement.name} first`,
+		);
+	}
+	const path = join(registry.dir, promise.file);
+	rmSync(path);
+	return path;
 }
 
 /** The body after the frontmatter, split at its first paragraph. */

@@ -26,6 +26,7 @@ import {
 	declarePromise,
 	PromiseWriteRefused,
 	replacePromise,
+	withdrawPromise,
 } from "../../lib/promises/write.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../../lib/worktree/roots.js";
 
@@ -355,5 +356,18 @@ export function promisesReplace(
 		const { by, ...rest } = opts;
 		replacePromise(projectRoot, { old, name: by, ...rest });
 		return `${by} declared by ${opts.plan}, replacing ${old}, which stays in force until ${opts.plan} closes. ${AFTER_WRITE}`;
+	});
+}
+
+/**
+ * `indusk promises withdraw <name> --plan <plan>` (planner-promises A28).
+ * Removes a promise the plan declared and then dropped or renamed, before it
+ * was ever in force. Exit 2, naming the promise, with nothing removed, when
+ * it is in force, another plan's, or carries an incident.
+ */
+export function promisesWithdraw(projectRoot: string, name: string, opts: { plan: string }): void {
+	writing(() => {
+		withdrawPromise(projectRoot, { name, plan: opts.plan });
+		return `${name} withdrawn by ${opts.plan}: it was never in force, and the registry no longer holds it. Take it out of the brief too. ${AFTER_WRITE}`;
 	});
 }

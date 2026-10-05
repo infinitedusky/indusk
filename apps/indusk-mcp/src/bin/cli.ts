@@ -959,6 +959,17 @@ promisesCmd
 	});
 
 promisesCmd
+	.command("withdraw <name>")
+	.description(
+		"Take back a promise a plan declared and then dropped or renamed, before it was ever in force: its file is removed. A rename is a withdrawal and a declaration. Exit 2 naming the promise, with nothing removed, when it is not declared (one in force is replaced, not withdrawn), another plan declared it, or it lists an incident.",
+	)
+	.requiredOption("--plan <plan>", "the plan that declared it")
+	.action(async function (this: Command, name: string) {
+		const { promisesWithdraw } = await import("./commands/promises.js");
+		promisesWithdraw(rootOrExit(), name, this.opts());
+	});
+
+promisesCmd
 	.command("confirm <plan>")
 	.description(
 		"Close a plan's promises: each one it declared becomes enforced, with the test files its rows name and the code that carries its token; a promise it replaces is retired; then the registry check runs. Refuses, naming the promise, when no passing row names it, a test file its row names is missing or does not carry its token, or no code carries it. Writes plan documents, commits nothing. Exit 2 with nothing written on a refusal.",

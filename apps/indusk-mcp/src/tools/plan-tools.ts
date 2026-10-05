@@ -17,6 +17,7 @@ import {
 	declarePromise,
 	PromiseWriteRefused,
 	replacePromise,
+	withdrawPromise,
 } from "../lib/promises/write.js";
 import { DOCUMENT_LABELS } from "../lib/workflow-types.js";
 import {
@@ -216,6 +217,23 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 			written(() => {
 				replacePromise(projectRoot, { old, name, plan, kind, domain, statement });
 				return { declared: name, owner: plan, supersedes: old, retiredAt: "the plan's close" };
+			}),
+	);
+
+	server.registerTool(
+		"withdraw_promise",
+		{
+			description:
+				"Take back a promise this plan declared and the person then dropped or renamed, before it was ever in force: its registry file is removed. A rename is withdraw_promise then declare_promise. Refuses a promise that is not declared (one in force is replaced, never withdrawn), one another plan declared, and one that lists an incident. Edit the brief to match.",
+			inputSchema: {
+				name: z.string().describe("The promise to withdraw."),
+				plan: z.string().describe("The plan that declared it."),
+			},
+		},
+		async ({ name, plan }) =>
+			written(() => {
+				withdrawPromise(projectRoot, { name, plan });
+				return { withdrawn: name, by: plan };
 			}),
 	);
 

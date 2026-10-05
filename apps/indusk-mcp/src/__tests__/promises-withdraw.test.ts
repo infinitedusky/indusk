@@ -131,6 +131,36 @@ describe.skipIf(SHOULD_SKIP)("A28 — a declared promise can be withdrawn", () =
 		expect(held(p)).toBe(true);
 	});
 
+	it("refuses one that another promise records replacing, until that one is withdrawn", () => {
+		const p = project([declared()]);
+		const replacement = "seat-freed-when-hold-expires";
+		const replaced = runCli(p.root, [
+			"promises",
+			"replace",
+			NAME,
+			"--by",
+			replacement,
+			"--plan",
+			PLAN,
+			"--kind",
+			"state",
+			"--domain",
+			"seating",
+			"--statement",
+			"A held seat is free again when its hold expires.",
+		]);
+		expect(replaced.code, replaced.stdout + replaced.stderr).toBe(0);
+
+		const r = withdraw(p);
+		expect(r.code, r.stdout + r.stderr).toBe(2);
+		expect(r.stderr).toContain(replacement);
+		expect(held(p)).toBe(true);
+
+		expect(withdraw(p, replacement).code).toBe(0);
+		expect(withdraw(p).code).toBe(0);
+		expect(held(p)).toBe(false);
+	});
+
 	it("refuses a promise the registry does not hold, and a plan that is not open, by name", () => {
 		const p = project([declared()]);
 		const unknown = withdraw(p, "seat-map-never-stale");
