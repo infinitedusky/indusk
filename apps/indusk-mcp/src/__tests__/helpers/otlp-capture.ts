@@ -148,34 +148,56 @@ export async function startOtlpCapture(): Promise<OtlpCapture> {
 	};
 }
 
-export type FakeClaudeMode = "bad-model" | "scorecard";
+export type FakeClaudeMode = "bad-model" | "scorecard" | "rate-limited-once";
+
+/**
+ * What `claude -p --output-format json` prints when the API rate limits it
+ * before the first turn — the shape of the nine 429 violations in
+ * i-2026-10-05-every-commit-evaluated. It exits 1.
+ */
+export const RATE_LIMITED_OUTPUT = JSON.stringify({
+	type: "result",
+	subtype: "success",
+	is_error: true,
+	api_error_status: 429,
+	duration_ms: 500,
+	num_turns: 1,
+	result:
+		"API Error: Server is temporarily limiting requests (not your usage limit) · Rate limited",
+	session_id: "fixture-rate-limited",
+	total_cost_usd: 0,
+});
 
 /**
  * A directory holding an executable `claude` for `mode`. Prepend it to `PATH`.
  * `scorecard` answers the way `claude -p --output-format json` does, with a
- * minimal valid scorecard as its result.
+ * minimal valid scorecard as its result. `rate-limited-once` answers
+ * `RATE_LIMITED_OUTPUT` on its first call and a scorecard on every later one.
  */
 export function fakeClaudeDir(mode: FakeClaudeMode): string {
 	const dir = mkdtempSync(join(tmpdir(), "fake-claude-"));
 	mkdirSync(dir, { recursive: true });
+	const scorecard = `#!/bin/sh\ncat > /dev/null\ncat <<'JSON'\n${JSON.stringify({
+		result: JSON.stringify({
+			version: 1,
+			timestamp: "2026-09-18T00:00:00.000Z",
+			mode: "eval",
+			changeId: "fixture",
+			projectGroup: "fixture",
+			questions: [],
+			summary: "fixture scorecard",
+		}),
+		session_id: "fixture-session",
+		total_cost_usd: 0,
+		usage: { input_tokens: 1, output_tokens: 1 },
+		duration_ms: 1,
+	})}\nJSON\nexit 0\n`;
 	const script =
 		mode === "bad-model"
 			? `#!/bin/sh\ncat > /dev/null\necho "${BAD_MODEL_MESSAGE}"\nexit 1\n`
-			: `#!/bin/sh\ncat > /dev/null\ncat <<'JSON'\n${JSON.stringify({
-					result: JSON.stringify({
-						version: 1,
-						timestamp: "2026-09-18T00:00:00.000Z",
-						mode: "eval",
-						changeId: "fixture",
-						projectGroup: "fixture",
-						questions: [],
-						summary: "fixture scorecard",
-					}),
-					session_id: "fixture-session",
-					total_cost_usd: 0,
-					usage: { input_tokens: 1, output_tokens: 1 },
-					duration_ms: 1,
-				})}\nJSON\nexit 0\n`;
+			: mode === "rate-limited-once"
+				? `#!/bin/sh\nif [ ! -f "${dir}/limited" ]; then\n  touch "${dir}/limited"\n  cat > /dev/null\n  cat <<'JSON'\n${RATE_LIMITED_OUTPUT}\nJSON\n  exit 1\nfi\n${scorecard.replace("#!/bin/sh\n", "")}`
+				: scorecard;
 	const path = join(dir, "claude");
 	writeFileSync(path, script);
 	chmodSync(path, 0o755);

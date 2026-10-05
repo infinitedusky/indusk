@@ -129,6 +129,7 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — the evaluator's mark", () => {
 async function markedRun(
 	cwd: string,
 	path: string,
+	extraEnv: NodeJS.ProcessEnv = {},
 ): Promise<{ marked: CapturedSpan[]; results: string }> {
 	const capture = await startOtlpCapture();
 	try {
@@ -138,6 +139,7 @@ async function markedRun(
 			INDUSK_EVAL_OTEL: "1",
 			OTEL_EXPORTER_OTLP_ENDPOINT: capture.endpoint,
 			INDUSK_SKIP_UPDATE_CHECK: "1",
+			...extraEnv,
 		};
 		delete env.OTEL_EXPORTER_OTLP_HEADERS;
 		delete env.DASH0_API_TOKEN;
@@ -217,4 +219,25 @@ describe.skipIf(SHOULD_SKIP)("day-monitor — evaluator falsification (Build Pha
 			rmSync(fake, { recursive: true, force: true });
 		}
 	}, 180_000);
+
+	it("A33 — a fresh start the API rate limits (429) is retried, and the commit is graded", async () => {
+		const project = promiseProject({ domains: ["gates"] });
+		const fake = fakeClaudeDir("rate-limited-once");
+		try {
+			const run = await markedRun(project.root, `${fake}:${process.env.PATH}`, {
+				INDUSK_EVAL_RATE_LIMIT_DELAY_MS: "50",
+			});
+			expect(run.results, "the commit was graded, not recorded as an error").toContain(
+				"fixture scorecard",
+			);
+			expect(run.marked).toHaveLength(1);
+			expect(
+				run.marked[0].attributes["indusk.promise.outcome"],
+				"lesson: a-rate-limited-start-is-retried-not-marked-violated",
+			).toBe("upheld");
+		} finally {
+			rmSync(project.root, { recursive: true, force: true });
+			rmSync(fake, { recursive: true, force: true });
+		}
+	}, 120_000);
 });

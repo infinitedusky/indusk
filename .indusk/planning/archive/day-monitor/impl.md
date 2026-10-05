@@ -85,7 +85,8 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | passing |
 | A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | passing |
 | A31 | every-commit-evaluated holds again after i-2026-10-03-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | passing |
-| A32 | every-commit-evaluated holds again after i-2026-10-05-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 10 | Build Phase 10 | planned |
+| A32 | every-commit-evaluated holds again after i-2026-10-05-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 10 | Build Phase 10 | passing |
+| A33 | A fresh evaluator start the API rate limits (`api_error_status: 429`) is retried, and the commit is graded and marked upheld — not marked violated (i-2026-10-05, cause 2) | Build Phase 10 | Build Phase 10 | passing |
 
 ## Checklist
 
@@ -389,17 +390,22 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 ### Build Phase 10: Maintenance — i-2026-10-05-every-commit-evaluated
 
-- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-05-every-commit-evaluated.md`)
-- [ ] Fix: a code site, a widened test, or a revised promise
+- [x] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-05-every-commit-evaluated.md`) — three causes: a worktree commit evaluated as the trunk's HEAD (the hook read the event's `cwd`, not the commit's `cd`/`-C`; `git -C <dir> commit` was not even recognised as a commit), so duplicate runs in bursts hit the API's rate limit (429) with no retry on a fresh start; and once, a resumed session pinned to a retired model. A32 written red in `src/__tests__/eval-trigger-commit-anchor.test.ts`
+- [x] Fix: a code site, a widened test, or a revised promise — code sites, two: where a commit lands is read once for both hooks (`hooks/_commit-anchor.js`, cause 1) and a rate-limited start is retried (`persistent-evaluator.ts`, cause 2). Cause 3, a resumed session pinned to a retired model, gets no change: the clear-and-retry path already handles it, and the fresh retry's own failure left no reason in its trace to fix against
+- [x] (discovered, cause 1) `hooks/_commit-anchor.js`: trunk-guard's reading of where a commit lands (`COMMIT_RE`, `commitAnchor`) moves to a shared module both hooks import. `eval-trigger.js` filters with it (so `git -C <dir> commit` is seen) and evaluates the repository the commit landed in; the event's `cwd` stays the state path. `eval-trigger-filter-falsepositives` now exercises the shared regex; `hook-shared-modules` counts one definition. Installed copies in `.claude/hooks/` synced
+- [x] (discovered, cause 2) `lib/eval/persistent-evaluator.ts`: a fresh start that the API rate limits (`api_error_status: 429`) is retried with backoff, a bounded number of times, before the run is marked violated — today only a resumed session is retried
 
 #### Build Phase 10 Verification
 
-- [ ] A32: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+- [x] A32: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`) — A32 passes (`eval-trigger-commit-anchor.test.ts`, 3/3); `pnpm test` green (1699 passed / 5 skipped, admin 350) with the leak guard clear. Upheld since the last violation (newest upheld 2026-10-05T04:23:02Z), but from the installed 1.59.0, which does not carry this fix: the fixed evaluator runs live only after the next release and `indusk update`, and the incident's quiet window is what watches that
+- [x] A33: a rate-limited fresh start is retried and the commit graded (`src/__tests__/monitor-mark.test.ts -t A33`) — passes; the six `monitor-mark` tests pass
+
+- [x] Shape (Build Phase 10): nothing found — `_commit-anchor.js` is an extraction; the trigger's landed-repo block, `isRateLimited` and `rateLimitDelayMs` each have one job
 
 #### Build Phase 10 Context
 
-- [ ] CLAUDE.md, if the fix changes a convention
+- [x] CLAUDE.md, if the fix changes a convention — it does: `apps/indusk-mcp/hooks/CLAUDE.md` gains "where a commit lands is read once" (`_commit-anchor.js`, shared by trunk-guard and eval-trigger); the retry is guarded by A33's `lesson: a-rate-limited-start-is-retried-not-marked-violated`
 
 #### Build Phase 10 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section — written: the shared commit reading, the rate-limit retry, and why the retired-model resume gets no change
