@@ -97,7 +97,7 @@ promises proven; and an incident starts from the tests that were vouching
 | A41 | A promise about state or behaviour whose name appears only in test files is not confirmed, and a file any row names as a test is never recorded as the code that keeps a promise | Build Phase 9 | Build Phase 9 | passing | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
 | A42 | A confirm that stopped after enforcing a replacement and before retiring what it replaced is finished by running it again | Build Phase 9 | Build Phase 9 | passing | unit | promise: a-changed-promise-keeps-its-history | apps/indusk-mcp/src/__tests__/promises-change.test.ts |
 | A43 | A plan archived while a promise it declared is still declared is not a dead end: the same commands confirm the promise from the archived plan's rows, or withdraw it, and the registry check's refusal names them | Build Phase 9 | Build Phase 9 | passing | unit | promise: a-closed-plan-kept-its-promises | apps/indusk-mcp/src/__tests__/promises-confirm.test.ts |
-| A44 | The MCP server offers exactly the tools it offered before the promise tools moved to their own module, and each promise tool still answers as it did | Build Phase 10 | Build Phase 10 | planned | unit | a refactor guard: the move changes where the tools live, not what the server offers | apps/indusk-mcp/src/__tests__/promise-tools.test.ts |
+| A44 | The MCP server offers exactly the tools it offered before the promise tools moved to their own module, and each promise tool still answers as it did | Build Phase 10 | Build Phase 10 | written | unit | a refactor guard: the move changes where the tools live, not what the server offers | apps/indusk-mcp/src/__tests__/promise-tools.test.ts |
 ### Deferred Verification
 
 - **The planner holds the conversation well (U1)**
@@ -412,7 +412,7 @@ promises proven; and an incident starts from the tests that were vouching
 
 **Goal**: decompose what this plan grew across files, per the rule of three and settled module boundaries (no domain extension applies: `indusk-mcp` is a library and CLI, so the move is extract a function or module). The promise modules each grew their own copy of three small things, and the promise tools grew inside the plan tools. Each item below is an extraction, or a file reviewed and left with its reason.
 
-- [ ] A44 written first, red: the promise tools' module does not exist
+- [x] A44 written first, red: the promise tools' module does not exist — red on its assertion (the plan tools register all eleven), not on a load error; its second case, that the two modules together offer the same eleven, passes before the move and must after
 - [ ] One frontmatter reader: export `parseFrontmatter` from `lib/promises/registry.ts` (it already holds the guard against gray-matter returning no fields inside vitest) and use it in `readImpl` and in `write.ts`'s `requireReadable`, which each re-implemented the try/catch, and the second without the guard
 - [ ] `readImpl` moves from `lib/promises/contract.ts` to `lib/promises/rows.ts`, the module that reads an impl's rows; `confirm.ts` stops importing an impl reader from the contract
 - [ ] One sentence comparison: `sameSentence(a, b)` exported from `lib/promises/brief-contract.ts`, replacing the three whitespace-collapsing helpers (`oneLine` in `brief-contract.ts` and `contract.ts`, `one` in `confirm.ts`) that compare a brief's sentence with the registry's. (`incidents.ts`'s `oneLine` stays: it collapses line breaks in text from a span, a different job)
