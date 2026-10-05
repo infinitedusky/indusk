@@ -53,7 +53,7 @@ there is one. See [brief.md](brief.md), [test-plan.md](test-plan.md) and
 | A7 | A project that names no production server behaves exactly as today: one source, local, with every reader's output unchanged | Test Phase 1 | Test Phase 1 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A8 | A `promises.jaeger` that is not an object, or names no `url` or no `credential_env`, is production's own refusal naming the missing key: `status` still prints local's section and exits 2, `promise_health` reports local's rows with production `ok: false`, and the admin still draws local's chips | Phase 0 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 | A9 | A production whose intake and query port accept connections and never answer does not hold the other source past the reader's budget: with a 2 s `timeoutMs`, `readSources` returns within 3 s, local `ok: true`, production `ok: false` | Phase 0 | Build Phase 5 | passing | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
-| A10 | Advice for a failed source comes from the failure, not from re-reading the config: with `"jaeger": "https://…"`, neither `promises status` nor `promises watch --source deployed` prints `undefined`, and both name `promises.jaeger` | Build Phase 6 | Build Phase 6 | planned | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
+| A10 | Advice for a failed source comes from the failure, not from re-reading the config: with `"jaeger": "https://…"`, neither `promises status` nor `promises watch --source deployed` prints `undefined`, and both name `promises.jaeger` | Build Phase 6 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/promise-sources.test.ts |
 
 ## Checklist
 

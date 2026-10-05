@@ -347,3 +347,34 @@ describe.skipIf(SHOULD_SKIP)(
 		}, 60_000);
 	},
 );
+
+describe.skipIf(SHOULD_SKIP)(
+	"promise-sources — A10: advice comes from the failure, not the raw config",
+	() => {
+		let t: TwoSources;
+
+		beforeAll(async () => {
+			t = await startTwoSources(marks());
+			setJaeger(t, t.production.queryUrl);
+		}, 180_000);
+
+		afterAll(async () => {
+			await t?.stop();
+		});
+
+		it("status names promises.jaeger and prints no undefined", () => {
+			const r = runCli(t.project.root, ["promises", "status"], t.env);
+			const text = r.stdout + r.stderr;
+			expect(text, text).toContain("promises.jaeger");
+			expect(text, text).not.toContain("undefined");
+		}, 60_000);
+
+		it("watch --source deployed names promises.jaeger and prints no undefined", () => {
+			const r = runCli(t.project.root, ["promises", "watch", "--source", "deployed"], t.env);
+			const text = r.stdout + r.stderr;
+			expect(r.code, text).toBe(2);
+			expect(text, text).toContain("promises.jaeger");
+			expect(text, text).not.toContain("undefined");
+		}, 60_000);
+	},
+);
