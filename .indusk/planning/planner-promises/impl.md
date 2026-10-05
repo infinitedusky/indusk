@@ -1,7 +1,7 @@
 ---
 title: "The planner asks for promises"
 date: 2026-10-05
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 test_levels: required
@@ -402,7 +402,7 @@ promises proven; and an incident starts from the tests that were vouching
 
 #### Build Phase 9 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: the contract's new refusals (a row out of shape, a purpose that is neither token nor reason, a brief entry no list read, a placeholder measure, an impl that cannot be read), `replace` on an already-declared replacement, `confirm` and `withdraw` on an archived plan, and that confirm refreshes an in-force promise's links; `guide/briefs.md` and `guide/promises.md` where they describe the same; `changelog.md` Unreleased
+- [x] `apps/docs/src/reference/cli/promises.md`: the contract's new refusals (a row out of shape, a purpose that is neither token nor reason, a brief entry no list read, a placeholder measure, an impl that cannot be read), `replace` on an already-declared replacement, `confirm` and `withdraw` on an archived plan, and that confirm refreshes an in-force promise's links; `guide/briefs.md` and `guide/promises.md` where they describe the same; `changelog.md` Unreleased — the docs site builds
 
 ## Files Affected
 
