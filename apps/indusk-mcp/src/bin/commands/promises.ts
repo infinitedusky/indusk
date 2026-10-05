@@ -221,8 +221,10 @@ export function promisesContract(
 		}
 		const held = summaries.filter((s) => s.shape === "contract");
 		for (const s of held) console.info(formatContract(s));
+		const drafts = summaries.filter((s) => s.shape === "draft");
+		for (const s of drafts) console.info(formatContract(s));
 		console.info(
-			`${summaries.length} plan folder${summaries.length === 1 ? "" : "s"} — ${held.length} held to the contract, ${summaries.length - held.length} written before it or with no brief.`,
+			`${summaries.length} plan folder${summaries.length === 1 ? "" : "s"} — ${held.length} held to the contract, ${drafts.length} still a draft, ${summaries.length - held.length - drafts.length} written before it or with no brief.`,
 		);
 		return;
 	}

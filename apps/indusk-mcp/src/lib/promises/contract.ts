@@ -41,8 +41,12 @@ export interface ContractRefusal {
 
 export interface ContractSummary {
 	plan: string;
-	/** `no-brief`: the folder has no brief (a spike), so there is nothing to hold. */
-	shape: "contract" | "legacy" | "no-brief";
+	/**
+	 * `no-brief`: the folder has no brief (a spike), so there is nothing to
+	 * hold. `draft`: its brief is still a draft, which the sweep over every
+	 * plan does not hold yet.
+	 */
+	shape: "contract" | "legacy" | "no-brief" | "draft";
 	archived: boolean;
 	makes: number;
 	kept: number;
@@ -63,6 +67,15 @@ export interface ContractOptions {
 	implText?: string;
 	/** The registry, when the caller has already read it. */
 	registry?: Registry;
+	/**
+	 * Leave a brief whose status is `draft` unchecked. A draft is the planning
+	 * conversation read back: its promises are saved when the person accepts
+	 * it, so until then the registry rightly does not hold them. The sweep
+	 * over every plan sets this, or one unfinished conversation would turn
+	 * every `pnpm test` red; asking about one plan by name does not, because
+	 * that question is "what does acceptance still need?".
+	 */
+	skipDraft?: boolean;
 }
 
 const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
@@ -263,8 +276,12 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 	};
 	const briefPath = join(folder.dir, "brief.md");
 	if (!existsSync(briefPath)) return { ok: true, summary };
-	const brief = parseBriefContract(readFileSync(briefPath, "utf-8"));
+	const briefText = readFileSync(briefPath, "utf-8");
+	const brief = parseBriefContract(briefText);
 	if (brief.shape === "legacy") return { ok: true, summary: { ...summary, shape: "legacy" } };
+	if (opts.skipDraft && /^status:\s*["']?draft\b/m.test(briefText.split("\n---")[0])) {
+		return { ok: true, summary: { ...summary, shape: "draft" } };
+	}
 
 	const briefFile = relPlanFile(folder, "brief.md");
 	const refusals: ContractRefusal[] = [...brief.problems, ...expectationRefusals(brief)].map(
@@ -313,6 +330,9 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 /** One line saying what was checked, for a contract that holds. */
 export function formatContract(s: ContractSummary): string {
 	if (s.shape === "no-brief") return `${s.plan}: no brief — nothing to check`;
+	if (s.shape === "draft") {
+		return `${s.plan}: its brief is a draft — held to the contract once it is accepted`;
+	}
 	if (s.shape === "legacy") {
 		return `${s.plan}: its brief was written before promises were part of one — nothing to check`;
 	}
@@ -323,7 +343,11 @@ export function formatContract(s: ContractSummary): string {
 	return `${s.plan}: ${held} — ${n(s.makes, "made")}, ${n(s.kept, "kept")}, ${n(s.changes, "changed")}, ${n(s.replaces, "replaced")}; ${n(s.expectations, `expectation${s.expectations === 1 ? "" : "s"}`)}`;
 }
 
-/** The contract of every plan folder, active and archived: the summaries of those that hold, the refusals of those that do not. */
+/**
+ * The contract of every plan folder, active and archived: the summaries of
+ * those that hold, the refusals of those that do not. A draft brief is not
+ * held yet (`skipDraft`).
+ */
 export function checkAllContracts(
 	planRoot: string,
 	opts: { activeOnly?: boolean; registry?: Registry } = {},
@@ -332,7 +356,7 @@ export function checkAllContracts(
 	const refusals: ContractRefusal[] = [];
 	for (const folder of planFolders(planRoot)) {
 		if (opts.activeOnly && folder.archived) continue;
-		const result = checkFolder(planRoot, folder, { registry: opts.registry });
+		const result = checkFolder(planRoot, folder, { registry: opts.registry, skipDraft: true });
 		if (result.ok) summaries.push(result.summary);
 		else refusals.push(...result.refusals);
 	}

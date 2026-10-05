@@ -155,6 +155,23 @@ describe.skipIf(SHOULD_SKIP)("A3 — the registry check runs every open plan's c
 		expect(r.stderr).toContain(MADE);
 		expect(r.stderr).toContain(`.indusk/planning/${PLAN}/brief.md`);
 	});
+
+	it("does not hold a draft brief to it: its promises are saved when the person accepts it", () => {
+		const draft = briefText(PLAN, { makes: [{ name: MADE, sentence: MADE_SENTENCE }] }).replace(
+			"status: accepted",
+			"status: draft",
+		);
+		const p = project({ briefRaw: draft, promises: [kept()] });
+		const checked = check(p);
+		expect(checked.code, checked.stdout + checked.stderr).toBe(0);
+		const all = runCli(p.root, ["promises", "contract", "--all"]);
+		expect(all.code, all.stdout + all.stderr).toBe(0);
+
+		// Asked about that plan by name, it says what acceptance still needs.
+		const asked = contract(p);
+		expect(asked.code, asked.stdout + asked.stderr).toBe(2);
+		expect(asked.stderr).toContain(MADE);
+	});
 });
 
 describe.skipIf(SHOULD_SKIP)("A3 — a brief out of shape is refused, never read as empty", () => {
