@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	otherTestRuns,
 	SUITE_PROMISE,
 	sendSuiteMark,
 	suiteSpanAttributes,
@@ -88,5 +89,34 @@ describe("everyday-suite-stays-fast — test-kinds A16, A17", () => {
 			"indusk.suite.duration_ms",
 			"indusk.project",
 		]);
+	});
+
+	it("an overlapping run is another vitest process — not a shell that names the word, not this run's own", () => {
+		const ps = [
+			{ pid: 1, ppid: 0, command: "/sbin/launchd" },
+			{
+				pid: 10,
+				ppid: 1,
+				command: "zsh -c while pgrep -f vitest >/dev/null; do sleep 3; done; pnpm test",
+			},
+			{
+				pid: 11,
+				ppid: 10,
+				command:
+					"node apps/indusk-mcp/scripts/with-daemon-guard.js --mark everyday-suite-stays-fast",
+			},
+			{ pid: 12, ppid: 11, command: "node /repo/node_modules/vitest/vitest.mjs run" },
+			{
+				pid: 20,
+				ppid: 1,
+				command: "node /wt/node_modules/.pnpm/vitest@4/node_modules/vitest/vitest.mjs run src/x",
+			},
+			{ pid: 21, ppid: 20, command: "node /wt/node_modules/vitest/dist/workers/forks.js" },
+		];
+		expect(
+			otherTestRuns(ps, 11).map((p) => p.pid),
+			"the evaluator's run and its worker",
+		).toEqual([12, 20, 21]);
+		expect(otherTestRuns(ps.slice(0, 4), 12), "this run, seen from inside it").toEqual([]);
 	});
 });

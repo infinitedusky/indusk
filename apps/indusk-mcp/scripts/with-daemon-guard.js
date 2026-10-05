@@ -35,7 +35,7 @@ if (!command || (markPromise !== null && markPromise !== SUITE_PROMISE)) {
 	process.exit(2);
 }
 
-const overlappedAtStart = markPromise ? otherTestRunAlive() : false;
+const overlappedAtStart = markPromise ? await otherTestRunAlive() : false;
 const started = Date.now();
 const run = spawnSync(command, args, { stdio: "inherit" });
 const runCode = run.status ?? 1;
@@ -43,7 +43,7 @@ const runCode = run.status ?? 1;
 if (markPromise) {
 	const mark = suiteSpeedMark({
 		durationMs: Date.now() - started,
-		overlapped: overlappedAtStart || otherTestRunAlive(),
+		overlapped: overlappedAtStart || (await otherTestRunAlive(3_000)),
 	});
 	const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 	console.error(`${SUITE_PROMISE}: ${await sendSuiteMark(root, mark)}`);

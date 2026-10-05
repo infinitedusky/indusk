@@ -42,12 +42,43 @@ export function suiteSpanAttributes(mark, project) {
 	};
 }
 
-/** True when a `vitest` process other than our own descendants is alive now. */
-export function otherTestRunAlive() {
+/**
+ * Test runs among `processes` that are not this run: a vitest binary or
+ * worker (its path, not the word — a shell running `pgrep -f vitest` names
+ * the word), and not one of `self`'s ancestors.
+ *
+ * @param {Array<{ pid: number, ppid: number, command: string }>} processes
+ * @param {number} self
+ */
+export function otherTestRuns(processes, self) {
+	const parent = new Map(processes.map((p) => [p.pid, p.ppid]));
+	const ancestors = new Set();
+	for (let pid = self; pid && !ancestors.has(pid); pid = parent.get(pid)) ancestors.add(pid);
+	return processes.filter((p) => /\/vitest(?:\.mjs\b|\/)/.test(p.command) && !ancestors.has(p.pid));
+}
+
+function processTable() {
 	try {
-		return execFileSync("pgrep", ["-f", "vitest"], { encoding: "utf-8" }).trim().length > 0;
+		return execFileSync("ps", ["-Ao", "pid=,ppid=,command="], { encoding: "utf-8" })
+			.split("\n")
+			.map((line) => /^\s*(\d+)\s+(\d+)\s+(.*)$/.exec(line))
+			.filter(Boolean)
+			.map((m) => ({ pid: Number(m[1]), ppid: Number(m[2]), command: m[3] }));
 	} catch {
-		return false; // pgrep exits 1 when nothing matches
+		return [];
+	}
+}
+
+/**
+ * True when another test run is alive. At the end of a run, its own workers
+ * can take a moment to exit: `settleMs` lets them before deciding.
+ */
+export async function otherTestRunAlive(settleMs = 0) {
+	const deadline = Date.now() + settleMs;
+	for (;;) {
+		if (otherTestRuns(processTable(), process.pid).length === 0) return false;
+		if (Date.now() >= deadline) return true;
+		await new Promise((r) => setTimeout(r, 250));
 	}
 }
 
