@@ -135,3 +135,5 @@ reasoned leave-as-is: `readWindow`, deferred to test-kinds' seams.
   one deferred UX row (U1, reviewed in screenshots and at the demo rehearsal)
 - Suites at close: `pnpm test` 328 files green (admin 255 s, mcp 49 s);
   `test:system` 34 files green (147 s)
+
+Landed on main at 86467220, 2026-10-05.
