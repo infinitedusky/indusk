@@ -47,7 +47,8 @@ Each entry is a rule and a pointer; the pointer holds the story.
 - **The Promises page** reads only through the `promises/registry` subpath
   (`lib/promises-reader.ts`, which also derives "holding N"); marks — the
   chips' and the timeline's — come from the store (`lib/promise-timeline.ts`),
-  which reads only uncovered ranges, never the whole window per request; observed health in
+  which reads only uncovered ranges, never the whole window per request, and re-reads a
+  late tail (`lesson: a-store-that-reads-only-what-is-new-must-still-read-what-arrives-late`); observed health in
   `lib/promise-health.ts` (one cached 2 s read per source; a behaviour
   promise has a chip per source, the alarm source's first, and the sidebar's
   red follows the alarm source only; unreachable = hollow, never

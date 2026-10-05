@@ -67,12 +67,12 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 | A11 | A window with more runs than one query returns is drawn end to end, and a cell that may be missing runs says "at least" | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline.test.ts |
 | A12 | After the first read of a window, a refresh with nothing new transfers only marks newer than those held, measured on the wire | Test Phase 1 | Build Phase 4 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-transfer.test.ts |
 | A13 | Pointed at the deployed server after a break and its fix, the page shows red, then purple, then green | Build Phase 5 | Build Phase 5 | passing | manual: `pnpm --filter @infinitedusky/indusk-mcp e2e deployed-smoke`, then the admin against `promises.jaeger` |
-| A14 | Two strips built a minute apart place the same run in a cell with the same `data-from`: cell boundaries are fixed to the clock, not measured back from now | Phase 0 | Build Phase 6 | written | apps/indusk-admin/src/lib/timeline-strip.test.ts |
-| A15 | A run whose `indusk.project` names this project with different separators (`timeline-smoke` for `timeline_smoke`) counts as this project's — never dropped silently | Phase 0 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/promise-timeline-reader.test.ts |
-| A16 | After `promises.jaeger.url` is repointed to another server, the page draws only the new server's runs — none held from the old one | Phase 0 | Build Phase 6 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
-| A17 | A violation whose span ended five minutes before it reached Jaeger turns the chip red and its cell red within one refresh after it arrives | Phase 0 | Build Phase 6 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
-| A18 | `promises fix` refuses an incident whose root cause is unwritten, naming it, and changes nothing | Phase 0 | Build Phase 6 | written | apps/indusk-mcp/src/__tests__/promises-fix.test.ts |
-| A19 | A production window that one refresh cannot read within its budget is drawn after a few refreshes: each refresh keeps what it read and continues from there | Phase 0 | Build Phase 6 | written | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
+| A14 | Two strips built a minute apart place the same run in a cell with the same `data-from`: cell boundaries are fixed to the clock, not measured back from now | Phase 0 | Build Phase 6 | passing | apps/indusk-admin/src/lib/timeline-strip.test.ts |
+| A15 | A run whose `indusk.project` names this project with different separators (`timeline-smoke` for `timeline_smoke`) counts as this project's — never dropped silently | Phase 0 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/promise-timeline-reader.test.ts |
+| A16 | After `promises.jaeger.url` is repointed to another server, the page draws only the new server's runs — none held from the old one | Phase 0 | Build Phase 6 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
+| A17 | A violation whose span ended five minutes before it reached Jaeger turns the chip red and its cell red within one refresh after it arrives | Phase 0 | Build Phase 6 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
+| A18 | `promises fix` refuses an incident whose root cause is unwritten, naming it, and changes nothing | Phase 0 | Build Phase 6 | passing | apps/indusk-mcp/src/__tests__/promises-fix.test.ts |
+| A19 | A production window that one refresh cannot read within its budget is drawn after a few refreshes: each refresh keeps what it read and continues from there | Phase 0 | Build Phase 6 | passing | apps/indusk-admin/src/__tests__/http-promise-timeline-falsify.test.ts |
 
 ### Deferred Verification
 
@@ -258,16 +258,17 @@ table would be rebuilt there.*
 
 #### Build Phase 6 Verification
 
-- [ ] A14–A19 pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/timeline-strip src/__tests__/http-promise-timeline-falsify`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-fix`; `… --config vitest.system.config.ts src/__tests__/promise-timeline-reader`); A1–A13 still pass
-- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
+- [x] A14–A19 pass (`cd apps/indusk-admin && pnpm exec vitest run src/lib/timeline-strip src/__tests__/http-promise-timeline-falsify`; `pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/promises-fix`; `… --config vitest.system.config.ts src/__tests__/promise-timeline-reader`); A1–A13 still pass
+- [x] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear (328 files and 34 system files; both end "no telemetry daemon left running")
+- [x] Shape — `lib/promise-timeline.ts` `readWindow` (~150 lines: resolve, plan slices, read, trim, shape the answer): left as-is — the `test-kinds` plan gives the store its clock and reader as inputs, and splits it along those seams then; splitting it now would be redone. The other three files changed a few lines each; nothing to change
 
 #### Build Phase 6 Context
 
-- [ ] guard: A17 carries `lesson: a-store-that-reads-only-what-is-new-must-still-read-what-arrives-late`; `apps/indusk-admin/CLAUDE.md`'s store rule gains "and re-reads a late tail"
+- [x] guard: A17 carries `lesson: a-store-that-reads-only-what-is-new-must-still-read-what-arrives-late`; `apps/indusk-admin/CLAUDE.md`'s store rule gains "and re-reads a late tail"
 
 #### Build Phase 6 Document
 
-- [ ] `apps/docs/src/reference/admin-ui/overview.md`: cells fixed to the clock; late runs; a busy window drawn progressively. `apps/docs/src/reference/cli/promises.md`: `promises fix` refuses an unwritten root cause; the project id compared normalised
+- [x] `apps/docs/src/reference/admin-ui/overview.md`: cells fixed to the clock; late runs; a busy window drawn progressively. `apps/docs/src/reference/cli/promises.md`: `promises fix` refuses an unwritten root cause; the project id compared normalised
 
 ## Files Affected
 
