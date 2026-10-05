@@ -4,6 +4,8 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.62.0] — 2026-10-05
+
 ### Added
 - **The planner asks for promises.** A plan starts with a conversation: what you want, which promises already in force it comes near, and the promises said back before anything is saved. The brief holds what came out of it, expectations (each with a measure and a time to look) and promises (the ones the plan makes, and the existing ones it must not break, changes or replaces), and nothing else; the problem, the context and the decisions go in research.
 - **Six commands, and nobody types a registry file.** `indusk promises declare`, `change` and `replace` write the registry from the conversation, and `withdraw` takes back a promise that was dropped or renamed before it was ever in force; `promises contract <plan>` checks that a plan's brief, its test rows and the registry agree; `promises confirm <plan>` closes a plan's promises, making each `enforced` with the tests its rows name and the code that carries its token. The planner and the retrospective call the tools of the same names (`declare_promise`, `change_promise`, `replace_promise`, `withdraw_promise`, `confirm_promises`).
