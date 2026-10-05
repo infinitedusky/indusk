@@ -540,6 +540,10 @@ traces:
 
 claude exited with code 1: There's an issue with the selected model …
 
+## Proven by
+
+No test row names this promise, so no plan says which test proves it. Its registry entry lists as tests: apps/indusk-mcp/src/__tests__/monitor-mark.test.ts.
+
 ## Root cause
 
 _Unwritten — a person writes this._
@@ -550,7 +554,25 @@ _Not yet fixed._
 ```
 
 The symptom comes from the newest violation's `indusk.promise.violated`
-event. The root cause is never written by the monitor: it is a person's
+event. **Proven by** lists every test row, in any plan's impl, active or
+archived, whose `For` cell names the promise: the plan, the row, its state and
+its test files:
+
+```md
+- `seats-v1` row T4 — passing (src/seat.test.ts)
+- `seats-v2` row T1 — written (src/seat-hold.test.ts)
+```
+
+A `passing` row there is a test that did not catch this break, which is where
+the fix starts. When no row names the promise the section says so and falls
+back to the test files its registry entry lists, as above: that promise was
+registered before rows said what they were for. An impl that could not be read
+is named rather than skipped. It is
+written once, when the incident opens: a record of what was vouching then, not
+a live view. A promise a later plan changed is named by rows in both plans, and
+both are listed.
+
+The root cause is never written by the monitor: it is a person's
 finding, and `promises check` **refuses an incident marked `fixed` whose root
 cause is still the unwritten line**, naming the file. Opening an incident
 also moves an `enforced` promise to `known-violated` and lists the incident

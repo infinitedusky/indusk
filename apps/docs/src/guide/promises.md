@@ -221,6 +221,11 @@ flowchart LR
 - **watch** records them: one incident per promise, extended rather than
   duplicated, and a Maintenance phase on the owner that cannot close until a
   test reproducing the incident passes.
+- **The incident names its tests.** When it opens it lists, under
+  `## Proven by`, every test row in any plan that names the broken promise:
+  the plan, the row and whether it passes. A promise that broke beside a
+  passing test tells you the test checks something else, so the fix starts
+  with a test that fails the way the running system did.
 - **A person** writes the root cause; `promises check` refuses to let the
   incident close without one.
 - **`indusk promises fix <id>`** closes it once the fix holds: the incident
