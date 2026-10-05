@@ -102,7 +102,7 @@ promises proven; and an incident starts from the tests that were vouching
 - [x] A13: `reopen-row-complete.test.ts` — `reopenOwner` against a copy of the archived test-kinds impl (requires kinds) and against a fixture impl with a `For` column; the appended row has a level and names the promise, and the real hook accepts the impl. RED: the row's cells are empty and the hook refuses
 - [x] A5, A19: `row-purpose.test.ts` and `test-levels-validation.test.ts`, through the real hook — `test_purpose: required` with an empty `For` cell is refused naming the row; `test_levels: required` with a `Level` column is accepted and a word that is not a level refused; the archived test-kinds impl still validates. RED: both keys are unknown, so nothing is refused
 - [x] A16: `test-levels-parity.test.ts` — the package's parser and the hooks' copy return the same purpose and level for the same table. RED: neither returns a purpose
-- [ ] A1, A2: `promises-declare.test.ts`, through the CLI in a fixture project. RED: `promises declare` is not a command
+- [x] A1, A2: `promises-declare.test.ts`, through the CLI in a fixture project. RED: `promises declare` is not a command
 - [ ] A3, A4, A6, A14, A15, A18, A24: `promises-contract.test.ts`, through the CLI in fixture projects, and over every plan folder in this repository for A18. RED: `promises contract` is not a command
 - [ ] A8, A9, A10, A11: `promises-confirm.test.ts`, through the CLI; A11 with the fixture's plan root and code root apart. RED: `promises confirm` is not a command
 - [ ] A25, A26: `promises-change.test.ts`, through the CLI. RED: `promises change` and `promises replace` are not commands
