@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { isUsableRelPath } from "../path-segment.js";
-import { parseBriefContract } from "./brief-contract.js";
+import { collapseSpace, parseBriefContract, sameSentence } from "./brief-contract.js";
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
@@ -78,15 +78,14 @@ function unmadeChanges(planDir: string, plan: string, registry: Registry): Check
 	if (brief.shape === "legacy") return [];
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
 	const file = `${planDir.slice(planDir.lastIndexOf(".indusk"))}/brief.md`;
-	const one = (s: string) => s.replace(/\s+/g, " ").trim();
 	const out: CheckRefusal[] = [];
 	for (const change of brief.changes) {
 		const entry = byName.get(change.name);
 		if (!entry) continue; // the contract's refusal, not this one's
-		if (entry.owner !== plan || one(entry.statement) !== one(change.sentence)) {
+		if (entry.owner !== plan || !sameSentence(entry.statement, change.sentence)) {
 			out.push({
 				file,
-				message: `${change.name}: the brief lists it under **Changes**, but the change was never made — the registry still says ${entry.owner} owns it${one(entry.statement) === one(change.sentence) ? "" : ` and it reads "${one(entry.statement)}"`}. Run \`indusk promises change ${change.name} --plan ${plan}\``,
+				message: `${change.name}: the brief lists it under **Changes**, but the change was never made — the registry still says ${entry.owner} owns it${sameSentence(entry.statement, change.sentence) ? "" : ` and it reads "${collapseSpace(entry.statement)}"`}. Run \`indusk promises change ${change.name} --plan ${plan}\``,
 			});
 		}
 	}

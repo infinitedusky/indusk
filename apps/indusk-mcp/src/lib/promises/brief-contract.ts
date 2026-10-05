@@ -94,7 +94,18 @@ interface Item {
 	n: number;
 }
 
-const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
+/** A sentence with its wrapping undone: every run of whitespace one space. */
+export const collapseSpace = (s: string) => s.replace(/\s+/g, " ").trim();
+
+/**
+ * Whether a brief's sentence and the registry's are the same sentence. A
+ * brief wraps its lines and the registry holds one paragraph, so they are
+ * compared with their whitespace collapsed; the contract and confirm both ask
+ * here.
+ */
+export function sameSentence(a: string, b: string): boolean {
+	return collapseSpace(a) === collapseSpace(b);
+}
 
 /** The lines under the first heading of `level` whose title is `title`, up to the next heading at that level or above. */
 function section(lines: Line[], level: number, title: string): Line[] | null {
@@ -143,8 +154,8 @@ function items(lines: Line[], marker: RegExp): Item[] {
 		}
 	}
 	for (const item of out) {
-		item.text = oneLine(item.text);
-		item.subs = item.subs.map(oneLine);
+		item.text = collapseSpace(item.text);
+		item.subs = item.subs.map(collapseSpace);
 	}
 	return out;
 }

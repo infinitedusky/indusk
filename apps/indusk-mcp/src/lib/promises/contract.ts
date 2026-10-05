@@ -7,7 +7,12 @@ import {
 	validateRowShape,
 	validateTestLevels,
 } from "../trajectory/validator.js";
-import { type BriefContract, parseBriefContract } from "./brief-contract.js";
+import {
+	type BriefContract,
+	collapseSpace,
+	parseBriefContract,
+	sameSentence,
+} from "./brief-contract.js";
 import { type PlanFolder, planFolderPath, planFolderStatus, planFolders } from "./plan-folder.js";
 import { type PromiseEntry, type Registry, readPromises } from "./registry.js";
 import { type ImplRead, readImpl } from "./rows.js";
@@ -83,8 +88,6 @@ export interface ContractOptions {
 	skipDraft?: boolean;
 }
 
-const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
-
 const relPlanFile = (folder: PlanFolder, file: string) =>
 	`.indusk/planning/${folder.archived ? "archive/" : ""}${folder.plan}/${file}`;
 
@@ -159,9 +162,9 @@ function madeRefusals(
 			);
 			continue;
 		}
-		if (oneLine(made.sentence) !== oneLine(entry.statement)) {
+		if (!sameSentence(made.sentence, entry.statement)) {
 			out.push(
-				`${made.name}: its sentence in the brief is not its sentence in the registry — the brief: "${oneLine(made.sentence)}"; the registry: "${oneLine(entry.statement)}". Make them one (\`indusk promises change ${made.name}\` rewrites the registry's)`,
+				`${made.name}: its sentence in the brief is not its sentence in the registry — the brief: "${collapseSpace(made.sentence)}"; the registry: "${collapseSpace(entry.statement)}". Make them one (\`indusk promises change ${made.name}\` rewrites the registry's)`,
 			);
 		}
 		if (made.kind !== null && made.kind !== entry.kind) {
