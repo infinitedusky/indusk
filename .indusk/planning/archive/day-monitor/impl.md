@@ -85,6 +85,7 @@ backend and no InDusk code inside the application (ADR D1–D10).
 | A29 | When a violated promise's owner is assigned to a worktree, `watch` appends the Maintenance phase to the worktree's copy of the impl, and `list_plans` shows it | Build Phase 7 | Build Phase 7 | passing |
 | A30 | When a Jaeger query returns as many traces as the query limit, `status` reports the count as a lower bound ("at least N violations"), never as exact | Build Phase 7 | Build Phase 7 | passing |
 | A31 | every-commit-evaluated holds again after i-2026-10-03-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 9 | Build Phase 9 | passing |
+| A32 | every-commit-evaluated holds again after i-2026-10-05-every-commit-evaluated: the test that reproduces it, named by its root cause, passes | Build Phase 10 | Build Phase 10 | planned |
 
 ## Checklist
 
@@ -146,6 +147,10 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 #### Deferred to Build Phase 9
 
 - **A31** — the test that reproduces i-2026-10-03-every-commit-evaluated is decided by its root cause, which this Maintenance phase writes first.
+
+#### Deferred to Build Phase 10
+
+- **A32** — the test that reproduces i-2026-10-05-every-commit-evaluated is decided by its root cause, which this Maintenance phase writes first.
 
 #### Test Phase 1 Verification
 
@@ -381,3 +386,20 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 #### Build Phase 9 Document
 
 - [x] The incident's Fix section — written: the extractor, the workspace trust, and what was found alongside
+
+### Build Phase 10: Maintenance — i-2026-10-05-every-commit-evaluated
+
+- [ ] Write the root cause in the incident (`.indusk/promises/incidents/i-2026-10-05-every-commit-evaluated.md`)
+- [ ] Fix: a code site, a widened test, or a revised promise
+
+#### Build Phase 10 Verification
+
+- [ ] A32: the test that reproduces the incident passes, and the promise is seen upheld after the fix (`indusk promises status`)
+
+#### Build Phase 10 Context
+
+- [ ] CLAUDE.md, if the fix changes a convention
+
+#### Build Phase 10 Document
+
+- [ ] The incident's Fix section

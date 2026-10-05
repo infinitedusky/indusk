@@ -2,7 +2,7 @@
 name: every-commit-evaluated
 kind: behaviour
 lifetime: holds
-state: enforced
+state: known-violated
 domain: gates
 owner: day-monitor
 sites:
@@ -11,6 +11,7 @@ tests:
   - apps/indusk-mcp/src/__tests__/monitor-mark.test.ts
 incidents:
   - i-2026-10-03-every-commit-evaluated
+  - i-2026-10-05-every-commit-evaluated
 expect_every: 1d
 ---
 
