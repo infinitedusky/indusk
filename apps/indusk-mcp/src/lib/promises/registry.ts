@@ -77,8 +77,23 @@ export interface IncidentEntry {
 	symptom: string;
 	rootCause: string;
 	fix: string;
+	/** When it opened (ISO), or null when the file does not say — a hand-written incident. */
+	opened: string | null;
+	/**
+	 * When it was fixed (ISO), or null (promise-timeline D1). `promises check`
+	 * refuses `status: fixed` without it: a timeline band has no end otherwise.
+	 */
+	fixed: string | null;
+	/** The violation trace ids it records. */
+	traces: string[];
 	/** Registry-relative file path, e.g. `incidents/i-2026-….md`. */
 	file: string;
+}
+
+/** A frontmatter time as ISO: YAML parses an unquoted timestamp into a Date. */
+function timeOf(v: unknown): string | null {
+	if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : v.toISOString();
+	return typeof v === "string" && v.trim() !== "" ? v.trim() : null;
 }
 
 export interface Registry {
@@ -353,6 +368,9 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			date: String(d.date),
 			environment: typeof d.environment === "string" && d.environment ? d.environment : null,
 			...sections,
+			opened: timeOf(d.opened),
+			fixed: timeOf(d.fixed),
+			traces: Array.isArray(d.traces) ? d.traces.map(String) : [],
 			file: rel,
 		});
 	}

@@ -7,7 +7,7 @@ import type {
   RegistryProblem,
 } from "@infinitedusky/indusk-mcp/promises/registry";
 import Link from "next/link";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   PROMISE_KIND_LABELS,
   PROMISE_STATE_CHIP,
@@ -20,6 +20,11 @@ import {
   type SourceChip,
   type SourceObserved,
 } from "@/components/PromiseHealth";
+import {
+  PromiseTimeline,
+  TimelineControls,
+  TimelineEmpty,
+} from "@/components/PromiseTimeline";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -29,6 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
+import type { Strip, TimelineView } from "@/lib/timeline-strip";
 
 /**
  * The Promises page's pieces (day-promises, ADR D8): the registry as a table
@@ -122,6 +128,13 @@ export interface PromisesTableProps {
    * was made, and no observed health is drawn.
    */
   observed?: SourceObserved[];
+  /**
+   * Each behaviour promise's history for one source and window
+   * (promise-timeline, ADR D6), drawn under its row. Absent: no timeline.
+   */
+  timelines?: TimelineView;
+  /** The page's own path, e.g. `/p/dusk/promises`, for the window and source switches. */
+  timelinePath?: string;
 }
 
 export function PromisesTable({
@@ -130,6 +143,8 @@ export function PromisesTable({
   planHrefPrefix = "/plan/",
   initialGroupBy = "owner",
   observed,
+  timelines,
+  timelinePath,
 }: PromisesTableProps) {
   const [by, setBy] = useState<PromiseGrouping>(initialGroupBy);
   const [showRetired, setShowRetired] = useState(false);
@@ -203,6 +218,10 @@ export function PromisesTable({
         <SourceBanner key={o.name} observed={o} />
       ))}
 
+      {timelines && timelinePath && (
+        <TimelineControls timelines={timelines} path={timelinePath} />
+      )}
+
       {groups.map(([key, rows]) => (
         <PromiseGroup
           key={key}
@@ -212,6 +231,7 @@ export function PromisesTable({
           planHrefPrefix={planHrefPrefix}
           chipsOf={chipsOf}
           labelled={labelled}
+          timelines={timelines}
         />
       ))}
 
@@ -228,6 +248,7 @@ function PromiseGroup({
   planHrefPrefix,
   chipsOf,
   labelled,
+  timelines,
 }: {
   groupKey: string;
   rows: PromiseEntry[];
@@ -235,6 +256,7 @@ function PromiseGroup({
   planHrefPrefix: string;
   chipsOf: (p: PromiseEntry) => SourceChip[];
   labelled: boolean;
+  timelines?: TimelineView;
 }) {
   return (
     <section
@@ -271,42 +293,55 @@ function PromiseGroup({
         </TableHeader>
         <TableBody>
           {rows.map((p) => (
-            <TableRow
-              key={p.name}
-              data-testid="promise-row"
-              data-promise={p.name}
-            >
-              <TableCell>
-                <PromiseStateCell
-                  promise={p}
-                  chips={chipsOf(p)}
-                  labelled={labelled}
-                />
-              </TableCell>
-              <TableCell>
-                <code className="text-xs">{p.name}</code>
-              </TableCell>
-              <TableCell className="max-w-md">{p.statement}</TableCell>
-              <TableCell>{PROMISE_KIND_LABELS[p.kind]}</TableCell>
-              <TableCell>{p.domain}</TableCell>
-              <TableCell>
-                <Link
-                  href={`${planHrefPrefix}${p.owner}`}
-                  className="hover:underline"
-                >
-                  {p.owner}
-                </Link>
-              </TableCell>
-              <TableCell>
-                <PathList paths={p.sites} />
-              </TableCell>
-              <TableCell>
-                <PathList paths={p.tests} />
-              </TableCell>
-              <TableCell data-testid="promise-incidents">
-                <PathList paths={p.incidents} />
-              </TableCell>
-            </TableRow>
+            <Fragment key={p.name}>
+              <TableRow data-testid="promise-row" data-promise={p.name}>
+                <TableCell>
+                  <PromiseStateCell
+                    promise={p}
+                    chips={chipsOf(p)}
+                    labelled={labelled}
+                  />
+                </TableCell>
+                <TableCell>
+                  <code className="text-xs">{p.name}</code>
+                </TableCell>
+                <TableCell className="max-w-md">{p.statement}</TableCell>
+                <TableCell>{PROMISE_KIND_LABELS[p.kind]}</TableCell>
+                <TableCell>{p.domain}</TableCell>
+                <TableCell>
+                  <Link
+                    href={`${planHrefPrefix}${p.owner}`}
+                    className="hover:underline"
+                  >
+                    {p.owner}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <PathList paths={p.sites} />
+                </TableCell>
+                <TableCell>
+                  <PathList paths={p.tests} />
+                </TableCell>
+                <TableCell data-testid="promise-incidents">
+                  <PathList paths={p.incidents} />
+                </TableCell>
+              </TableRow>
+              {timelines && !timelines.failure && timelines.strips[p.name] && (
+                <TableRow data-testid="promise-timeline-row">
+                  <TableCell colSpan={9}>
+                    {timelines.strips[p.name] === "empty" ? (
+                      <TimelineEmpty />
+                    ) : (
+                      <PromiseTimeline
+                        promise={p.name}
+                        source={timelines.source}
+                        strip={timelines.strips[p.name] as Strip}
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              )}
+            </Fragment>
           ))}
         </TableBody>
       </Table>

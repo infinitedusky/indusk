@@ -78,7 +78,7 @@ Made after reviewing the script against what is built (Sandy chose each).
   not the plan whose work broke it. So the local chip follows the newest run:
   red when the newest mark is a violation, green again once a newer run
   upholds. The rule is written in
-  [promise-timeline](../promise-timeline/brief.md), beside the chip's
+  [promise-timeline](../archive/promise-timeline/brief.md), beside the chip's
   fixed-incident rule.
 - **promise-timeline is needed for both break steps, not only for the
   visual.** Its chip rules are what let script steps 5 and 6 end on something
@@ -93,7 +93,7 @@ Made after reviewing the script against what is built (Sandy chose each).
 |---|---|---|
 | 0 | [day-always-on-deploy](../archive/day-always-on-deploy/brief.md) | the server, verified on Fly — closed 2026-10-04 |
 | 1 | [promise-sources](../archive/promise-sources/brief.md) | local and production read side by side — closed 2026-10-05 |
-| 2 | [promise-timeline](../promise-timeline/brief.md) | promises holding over time, and the chip rules both break steps end on |
+| 2 | [promise-timeline](../archive/promise-timeline/brief.md) | promises holding over time, and the chip rules both break steps end on |
 | 3 | [admin-plan-authoring](../admin-plan-authoring/brief.md) | "New plan" and "Build" in the UI, through the CLI |
 | 4 | [demo-app-template](../demo-app-template/brief.md) | a working app to promise about, deploy and break |
 | 5 | [server-provisioning](../server-provisioning/brief.md) | one command gives a project its server |

@@ -2,7 +2,7 @@ import { readConfig } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import { getQuietWindowDays, markProjectId } from "./config.js";
 import { probeWatcher, WatcherBlind } from "./probe.js";
-import type { Registry } from "./registry.js";
+import type { PromiseEntry, Registry } from "./registry.js";
 import {
 	type JaegerEndpoint,
 	JaegerUnreachable,
@@ -273,11 +273,75 @@ function failedRead(
 }
 
 /**
+ * The window a health read covers: the quiet window, widened to the longest
+ * `expect_every` so a longer expectation can still be judged
+ * (watcher-heartbeat, ADR D3). One definition for `readSources` and the
+ * admin's store.
+ */
+export function healthWindowMs(root: string, registry: Registry): number {
+	return Math.max(
+		getQuietWindowDays(root) * 86_400_000,
+		...behaviourOf(registry).map((p) => p.expectEvery?.ms ?? 0),
+	);
+}
+
+function behaviourOf(registry: Registry): PromiseEntry[] {
+	return registry.promises.filter((p) => p.kind === "behaviour" && p.state !== "retired");
+}
+
+/**
+ * Prove a source's watcher hears before anything it heard is reported: a
+ * Jaeger that answers and receives nothing reads exactly like a quiet week
+ * (watcher-heartbeat). Throws `WatcherBlind`, or `JaegerUnreachable` when
+ * nobody answers. The caller's timeout bounds the probe's wait too: a blind
+ * read must fit the admin's 2 s budget, not the probe's own 5 s (A13).
+ */
+async function probe(root: string, source: MarkSource, timeoutMs?: number): Promise<void> {
+	await probeWatcher(
+		{ endpoint: source.endpoint, intakeUrl: source.intakeUrl, missingIntake: INTAKE_CONFIG_KEY },
+		{ project: markProjectId(root), ...(timeoutMs !== undefined ? { waitMs: timeoutMs } : {}) },
+	);
+}
+
+/** A source proved to hear, or why it could not be: the probe alone, no marks read. */
+export type ProbedSource =
+	| { name: SourceName; label: string; ok: true }
+	| Extract<SourceRead, { ok: false }>;
+
+/**
+ * Every source probed, each failing on its own (promise-timeline): for a
+ * reader that takes its marks from elsewhere — the admin's store, which reads
+ * only what is new — but must still say *watcher blind* rather than draw
+ * health from a deaf watcher.
+ */
+export async function probeSources(
+	root: string,
+	opts: { timeoutMs?: number } = {},
+): Promise<ProbedSource[]> {
+	const resolved = await resolveMarkSources(root);
+	return Promise.all(
+		resolved.map(async (r): Promise<ProbedSource> => {
+			if (!r.ok)
+				return failedRead(r.name, r.error.where, r.error) as Extract<SourceRead, { ok: false }>;
+			try {
+				await probe(root, r.source, opts.timeoutMs);
+				return { name: r.name, label: r.source.label, ok: true };
+			} catch (err) {
+				if (err instanceof JaegerUnreachable || err instanceof WatcherBlind) {
+					return failedRead(r.name, r.source.label, err) as Extract<SourceRead, { ok: false }>;
+				}
+				throw err;
+			}
+		}),
+	);
+}
+
+/**
  * One source's marks, as every reader asks for them: the registry's
  * behaviour promises that are not retired, with their aliases, filtered to
- * this project's id, over the quiet window unless `sinceMs` says otherwise.
- * The one assembly `status`, `watch` and the admin share — each once assembled
- * the four by hand, and A27/A28 had to change all three.
+ * this project's id, over the health window unless `sinceMs` says otherwise.
+ * An explicit `sinceMs` is the window a person asked for and is shown: it is
+ * never widened, or `--since 90m` would count a day under "the last 90m" (A9).
  */
 async function readSource(
 	root: string,
@@ -286,36 +350,15 @@ async function readSource(
 	opts: ReadMarksOptions,
 ): Promise<MarkedSpansResult> {
 	const now = opts.now ?? new Date();
-	const behaviour = registry.promises.filter(
-		(p) => p.kind === "behaviour" && p.state !== "retired",
-	);
-	// The default window widens to the longest `expect_every`, so a longer
-	// expectation can still be judged (watcher-heartbeat, ADR D3). An explicit
-	// `sinceMs` is the window a person asked for and is shown: it is never
-	// widened, or `--since 90m` would count a day under "the last 90m" (A9).
-	// Inside a shorter window, a silence longer than it is simply not judged.
-	const windowMs =
-		opts.sinceMs ??
-		Math.max(
-			getQuietWindowDays(root) * 86_400_000,
-			...behaviour.map((p) => p.expectEvery?.ms ?? 0),
-		);
-	// Prove the watcher hears before reporting anything it heard: a Jaeger
-	// that answers and receives nothing reads exactly like a quiet week
-	// (watcher-heartbeat). `JaegerUnreachable` from the source still wins.
-	const project = markProjectId(root);
-	await probeWatcher(
-		{ endpoint: source.endpoint, intakeUrl: source.intakeUrl, missingIntake: INTAKE_CONFIG_KEY },
-		// The caller's timeout bounds the probe's wait too: a blind read must fit
-		// the admin's 2 s budget, not the probe's own 5 s (A13).
-		{ project, ...(opts.timeoutMs !== undefined ? { waitMs: opts.timeoutMs } : {}) },
-	);
+	const behaviour = behaviourOf(registry);
+	const windowMs = opts.sinceMs ?? healthWindowMs(root, registry);
+	await probe(root, source, opts.timeoutMs);
 	return markedSpans({
 		endpoint: source.endpoint,
 		promises: behaviour.map((p) => p.name),
 		aliases: Object.fromEntries(behaviour.map((p) => [p.name, p.aliases])),
 		since: new Date(now.getTime() - windowMs),
-		project,
+		project: markProjectId(root),
 		...(opts.timeoutMs !== undefined ? { timeoutMs: opts.timeoutMs } : {}),
 	});
 }

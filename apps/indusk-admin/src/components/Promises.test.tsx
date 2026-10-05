@@ -94,6 +94,9 @@ const INCIDENTS: IncidentEntry[] = [
     symptom: "395 candidates in 156 minutes.",
     rootCause: "Loud sound in a quiet moment.",
     fix: "v1 classifier.",
+    opened: null,
+    fixed: null,
+    traces: [],
     file: "incidents/i-2026-08-26-detector-overtriggers.md",
   },
 ];

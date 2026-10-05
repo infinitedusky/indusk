@@ -29,7 +29,7 @@ self-reported.
   tests. Plans and their documents are drill-down detail, reached from a phase.
 - **Production first.** The landing screen leads with what the running system
   is doing to its promises — the timeline built by
-  [promise-timeline](../promise-timeline/brief.md) — and what is being built
+  [promise-timeline](../archive/promise-timeline/brief.md) — and what is being built
   toward them.
 - **Groups follow the hierarchy.** Collapsible groups with a summary of their
   worst state, at each level: a premise's promises, a promise's phases. This
@@ -71,7 +71,7 @@ self-reported.
 
 ## Depends On
 
-- [promise-timeline](../promise-timeline/brief.md) — the timeline and the
+- [promise-timeline](../archive/promise-timeline/brief.md) — the timeline and the
   per-source chips.
 - [plan-premises](../plan-premises/brief.md) — for the top level. Without it the
   hierarchy starts at promises.

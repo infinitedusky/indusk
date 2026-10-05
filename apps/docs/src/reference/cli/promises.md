@@ -56,6 +56,7 @@ promise: impact-events-are-strikes
 source: smoke                            # local | smoke | deployed | desk
 status: open                             # open | fixed
 date: 2026-08-26
+fixed: '2026-08-28T14:02:00Z'            # when it was fixed; required once status is fixed
 ---
 
 ## Symptom
@@ -148,6 +149,7 @@ is never reported as clean.
 | A `known-violated` promise with no open incident | the promise — the state is evidence, not an excuse |
 | An incident missing `promise`, `source`, `status`, `date` or a `## Symptom` / `## Root cause` / `## Fix` section; an unknown source | the incident and the field |
 | An incident marked `fixed` whose `## Root cause` is still `_Unwritten — a person writes this._` (day-monitor) | the incident file — a root cause is a person's finding, written before the incident closes |
+| An incident marked `fixed` that does not say when (`fixed:`) | the incident file — a timeline band from opened to fixed has no end without it; `indusk promises fix` writes both |
 | A token anywhere under the code root naming a promise not in the registry | the file and the name |
 | A token naming a `retired` promise | the file — a retired promise must not keep reporting |
 | A workbench declaring zero or several repos | the declaration, through the shared resolver |
@@ -263,7 +265,9 @@ phase-boundary-record-never-malformed (state, planning, enforced)
   `every-commit-evaluated` for every project on a machine — to the project's
   configured `graphiti.groupId`, else the name of the **main checkout** (the
   folder holding the repository's shared git directory), so the trunk and every
-  plan worktree agree. An application's own spans need not carry it.
+  plan worktree agree. An application's own spans need not carry it. The tag
+  is compared after the same normalisation as the id, so a run tagged
+  `timeline-smoke` counts for the project whose id is `timeline_smoke`.
 
 Exit **0** when Jaeger answered and heard. Exit **2** when it could not be
 reached — no daemon running (it names `$INDUSK_HOME/telemetry.json`), or the
@@ -317,7 +321,15 @@ missing `url` or `credential_env` — is production's failure, refused by
 key, and local is still read. A source that accepts connections and never
 answers fails within the reader's timeout: the probe's send and its
 follow-up check share one budget, so a silent production cannot stall
-local. `sourceAdvice(name, error)` says what to do about a failed source,
+local. `@infinitedusky/indusk-mcp/promises/timeline` reads a window for the
+timeline: `readTimeline(root, registry, { from, to, source? })` returns, per
+source, every behaviour promise's runs in the range as `{ at, outcome, traceId }`
+— no spans, since Jaeger returns whole traces and a week of one promise can be
+megabytes. A query that returns as many traces as it asked for is split at its
+midpoint and both halves read again, down to one minute; a minute still full is
+listed in `atLeast`, its runs a lower bound. Each source fails on its own, and
+the watcher probe is not repeated. Both readers build their query through one
+function, `marksBetween`, so they agree on which marks count. `sourceAdvice(name, error)` says what to do about a failed source,
 from the failure itself — `status` and `watch` both print it. `readPromiseMarks(root, registry, { sinceMs?, source? })` reads
 one source, the alarm source by default: it takes the registry's behaviour
 promises that are not retired, their aliases, the project id and the quiet
@@ -416,6 +428,22 @@ any incident of the promise, open or fixed, is never counted again — a
 second pass over the same window writes nothing, and a fixed incident is not
 reopened by the violations that caused it. Files are edited as text, key by
 key, so nothing else in a hand-written file changes.
+
+### Closing an incident
+
+```
+indusk promises fix <incident-id>
+```
+
+Marks the incident `status: fixed` and records `fixed: <now>`, and returns its
+promise from `known-violated` to `enforced` when no other incident of it is
+still open; the promise keeps the incident in its `incidents` list, as its
+history. It writes plan documents and commits nothing. Exit **2** naming the
+id when it is unknown or already fixed, and when its root cause is still the
+line `promises record` wrote — write the root cause first; the file is left
+untouched. Before
+this command existed, closing an incident was three hand edits, and the time
+it was fixed was recorded nowhere.
 
 ### Reopening the owner
 

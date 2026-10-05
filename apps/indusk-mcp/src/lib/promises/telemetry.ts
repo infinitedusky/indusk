@@ -1,3 +1,4 @@
+import { sanitizeGroupId } from "../config.js";
 import { daemonMetaPath, daemonStatus } from "../telemetry/status.js";
 import type { PromiseEntry } from "./registry.js";
 import { PROMISE_MARK, type PromiseOutcome } from "./vocabulary.js";
@@ -143,6 +144,16 @@ export const DEFAULT_TIMEOUT_MS = 5_000;
 const TRACE_LIMIT = 1500;
 
 /**
+ * How many traces one query asks for: `TRACE_LIMIT`, or
+ * `INDUSK_PROMISE_QUERY_LIMIT` — a test setting, so a window that fills a
+ * query can be built from a dozen marks instead of fifteen hundred.
+ */
+export function queryLimit(): number {
+	const n = Number(process.env.INDUSK_PROMISE_QUERY_LIMIT);
+	return Number.isInteger(n) && n > 0 ? n : TRACE_LIMIT;
+}
+
+/**
  * One Jaeger query, whose every failure is `JaegerUnreachable` naming the URL:
  * no connection, a timeout (which also aborts a body still being read), a
  * status other than 2xx, a body that is not JSON, or one whose `data` is not
@@ -218,6 +229,61 @@ export function parseMarkedSpan(
 }
 
 /**
+ * The marks one query returns: spans marked `indusk.promise=<name>` in one
+ * service between `from` and `to`, renamed to `promise` (an alias's marks are
+ * the promise's), with marks naming another project dropped. `full` says the
+ * query returned as many traces as it asked for, so there may be more. The
+ * one query `markedSpans` and the timeline's reader share — the rules about
+ * which marks count are written once.
+ */
+export async function marksBetween(
+	endpoint: JaegerEndpoint,
+	q: {
+		service: string;
+		name: string;
+		promise: string;
+		from: Date;
+		to: Date;
+		project?: string;
+		timeoutMs: number;
+	},
+): Promise<{ marks: MarkedSpan[]; full: boolean }> {
+	const limit = queryLimit();
+	const params = new URLSearchParams({
+		service: q.service,
+		tags: JSON.stringify({ [PROMISE_MARK.promise]: q.name }),
+		start: String(q.from.getTime() * 1000),
+		end: String(q.to.getTime() * 1000),
+		limit: String(limit),
+	});
+	const traces = await jaegerGet<JaegerTrace>(endpoint, `/api/traces?${params}`, q.timeoutMs);
+	const marks: MarkedSpan[] = [];
+	for (const t of traces) {
+		for (const span of t.spans) {
+			const process = t.processes[span.processID];
+			const marked = parseMarkedSpan(span, process?.serviceName ?? q.service, process?.tags);
+			if (!marked || marked.promise !== q.name) continue;
+			marked.promise = q.promise;
+			if (marked.at < q.from || marked.at > q.to) continue;
+			// A run tagged with this project in other separators is this project's
+			// (A15): the id is normalised (`timeline-smoke` → `timeline_smoke`), so
+			// the tag an application writes is normalised the same way before the
+			// comparison, or its runs are dropped without a word.
+			const owner = tag(span.tags, PROMISE_MARK.project);
+			if (
+				q.project !== undefined &&
+				typeof owner === "string" &&
+				sanitizeGroupId(owner) !== sanitizeGroupId(q.project)
+			) {
+				continue;
+			}
+			marks.push(marked);
+		}
+	}
+	return { marks, full: traces.length >= limit };
+}
+
+/**
  * Every span marked with one of `promises` since `since`, from the running
  * daemon's Jaeger. `promises` are registry names; aliases are the caller's
  * to expand.
@@ -253,37 +319,23 @@ export async function markedSpans(opts: {
 	const services = await jaegerGet<string>(endpoint, "/api/services", timeoutMs);
 
 	const byPromise = new Map<string, PromiseMarks>();
-	const start = opts.since.getTime() * 1000;
-	const end = Date.now() * 1000;
 	for (const promise of opts.promises) {
 		const seen = new Map<string, MarkedSpan>();
 		const names = [promise, ...(opts.aliases?.[promise] ?? [])];
 		let truncated = false;
 		for (const service of services) {
 			for (const name of names) {
-				const params = new URLSearchParams({
+				const read = await marksBetween(endpoint, {
 					service,
-					tags: JSON.stringify({ [PROMISE_MARK.promise]: name }),
-					start: String(start),
-					end: String(end),
-					limit: String(TRACE_LIMIT),
+					name,
+					promise,
+					from: opts.since,
+					to: new Date(),
+					project: opts.project,
+					timeoutMs,
 				});
-				const traces = await jaegerGet<JaegerTrace>(endpoint, `/api/traces?${params}`, timeoutMs);
-				if (traces.length >= TRACE_LIMIT) truncated = true;
-				for (const t of traces) {
-					for (const span of t.spans) {
-						const process = t.processes[span.processID];
-						const marked = parseMarkedSpan(span, process?.serviceName ?? service, process?.tags);
-						if (!marked || marked.promise !== name) continue;
-						marked.promise = promise;
-						if (marked.at < opts.since) continue;
-						const owner = tag(span.tags, PROMISE_MARK.project);
-						if (opts.project !== undefined && typeof owner === "string" && owner !== opts.project) {
-							continue;
-						}
-						seen.set(marked.spanId, marked);
-					}
-				}
+				if (read.full) truncated = true;
+				for (const marked of read.marks) seen.set(marked.spanId, marked);
 			}
 		}
 		const all = [...seen.values()].sort((a, b) => b.at.getTime() - a.at.getTime());

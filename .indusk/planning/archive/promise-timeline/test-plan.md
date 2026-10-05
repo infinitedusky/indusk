@@ -29,7 +29,7 @@ times the test chooses — the same fixtures `promise-sources` built
 | A4 | Each incident is drawn as a band from when it opened to when it was fixed; an open incident's band runs to now. | admin over HTTP |
 | A5 | Marking an incident fixed records when it was fixed, and `promises check` refuses an incident marked fixed with no time, naming the file. | vitest over the CLI, temp project |
 | A6 | A promise with an unfixed violation older than the window still carries "violated N ago — open" on its row and on every group above it, until the incident is fixed — whatever window is chosen. | admin over HTTP, a violation 3 days old with the 24-hour window |
-| A7 | Rows group by plan or by domain; a collapsed group shows, at each moment, the worst state among its promises (red over purple over green), and opens to its promises. | vitest browser component test |
+| A7 | *(moved to contract-ui, 2026-10-05)* Rows group by plan or by domain; a collapsed group shows, at each moment, the worst state among its promises (red over purple over green), and opens to its promises. | vitest browser component test |
 | A8 | A project with a production server opens on production's timeline; local's is one click away and says how far back it reaches; a source that cannot be read says so in place of its timeline, and the other is still shown. | admin over HTTP, two real sources, one then stopped |
 | A9 | Production's chip is red for a violation that is unrecorded or whose incident is open, and shows the fixed colour once every recent violation's incident is fixed. | admin over HTTP, two real sources |
 | A10 | Local's chip is red while the newest local run is a violation and green again once a newer run holds, with no incident recorded. | admin over HTTP, two real sources |

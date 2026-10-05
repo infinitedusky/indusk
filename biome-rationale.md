@@ -2,6 +2,8 @@
 
 Each non-default rule explains why it exists and what prompted it. When a retrospective identifies a preventable mistake, add a new rule here and in biome.json.
 
+**Before editing `biome.json`:** Biome 2.x's schema differs from much of its documentation — there is no `noVar`, and overrides use `includes`. Match the schema to the installed version. (Moved here from the root `CLAUDE.md`'s Known Gotchas at promise-timeline's close: it applies only where Biome is configured.)
+
 ## noExplicitAny (error)
 Added: 2026-03-19
 Source: Initial setup — known AI agent pattern

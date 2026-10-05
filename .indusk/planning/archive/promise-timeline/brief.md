@@ -34,7 +34,7 @@ volume — a timeline read from the deployed Jaeger shows weeks, not the
 hours since the last restart. Only a promise whose code emits marks has a
 line; a hollow promise says so rather than drawing an empty row as health.
 
-**Grouped and collapsible** (Sandy, 2026-10-03). The rows group two ways,
+**Grouped and collapsible** (Sandy, 2026-10-03). *Moved 2026-10-05 (Sandy) to [contract-ui](../contract-ui/brief.md), which reorganises the admin around premises, promises and phases; groups follow that hierarchy there.* The rows group two ways,
 chosen on the page: **by plan** — every promise a plan owns under that
 plan — or **by domain**. A group collapses to one summary row, its runs
 combined so each moment shows the worst state in the group — red over

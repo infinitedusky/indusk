@@ -230,6 +230,7 @@ const config = defineConfig({
 						{ text: "Always-on Deploy", link: "/decisions/day-always-on-deploy" },
 						{ text: "Watcher Heartbeat", link: "/decisions/watcher-heartbeat" },
 						{ text: "Promise Sources", link: "/decisions/promise-sources" },
+						{ text: "Promise Timeline", link: "/decisions/promise-timeline" },
 						{ text: "Versioned Workbench", link: "/decisions/versioned-workbench" },
 						{ text: "VitePress Excalidraw Embed", link: "/decisions/vitepress-excalidraw-embed" },
 						{ text: "Worktree Visibility", link: "/decisions/worktree-visibility" },

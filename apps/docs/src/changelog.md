@@ -4,6 +4,21 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **The promise timeline.** The admin's Promises page draws each behaviour promise's history for one source over 24 hours, 7 days or 30 days: a strip of cells, each in the worst state among its runs — red for a break that is unrecorded or whose incident is open, purple for one whose incident is fixed, green for a run that held — with each incident as a band from when it opened to when it was fixed. Production first; local on request, saying how far back its history reaches. A promise no run marks says so; a break older than the window still says "violated N ago — open"; a window whose read hit the query limit says "at least". The admin keeps what it has read and asks Jaeger only for what is new, so a refresh no longer re-reads the window.
+- **`indusk promises fix <incident>`.** Closes an incident: marks it fixed, records when, and returns its promise to `enforced` when no other incident of it is open. `promises check` now refuses an incident marked fixed that does not say when.
+- `@infinitedusky/indusk-mcp/promises/timeline` (`readTimeline`) and `promises/incidents` (`violationState`).
+
+### Fixed
+- **A fixed incident's promise no longer reads *violated*.** Production's chip, or a lone source's, is red only while a violation in the window is unrecorded or its incident open, and shows `fixed` (purple) once every one is fixed. Local's chip beside production follows the newest run.
+- **A busy admin no longer deletes the telemetry daemon's record.** The liveness check timed a connection on the admin's own event loop; while it rendered a page, a live daemon read as dead and its record was removed, so every later read said "no telemetry daemon is running". A timed-out connection is now tried once more before it is believed.
+- **A violation that reaches Jaeger late still turns its chip red.** The admin re-reads the last ten minutes on every refresh and the whole window every ten minutes.
+- **A busy production window is drawn.** A window too slow for one refresh is read newest first in slices, kept as each lands; the page says how far back it has read.
+- **A run tagged with the project id in other separators is counted** (`timeline-smoke` for `timeline_smoke`).
+- **Repointing `promises.jaeger.url` no longer draws the old server's runs.**
+- **Timeline cells are fixed to the clock**, so a run keeps its cell from one refresh to the next.
+- **`promises fix` refuses an incident whose root cause is unwritten**, instead of writing a file `promises check` then refuses.
+
 ## [1.59.1] — 2026-10-05
 
 ### Fixed
