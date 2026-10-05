@@ -1,7 +1,7 @@
 ---
 title: "Test kinds"
 date: 2026-10-05
-status: draft
+status: in-progress
 trajectory: required
 test_phases: required
 rationale: required
