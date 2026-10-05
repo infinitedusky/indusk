@@ -79,9 +79,29 @@ export function normalizeHeader(header) {
 		"passes at": "passesAt",
 		state: "state",
 		kind: "kind",
+		level: "level",
+		for: "for",
 		scope: "scope",
 	};
 	return aliases[normalized] || normalized;
+}
+
+/**
+ * Read a `For` cell: tokens only (`promise: <name>`, `lesson: <name>`,
+ * comma-separated) name things; any other text is the reason. Null when
+ * empty. Port of `parsePurpose` in `src/lib/trajectory/parser.ts`.
+ */
+export function parsePurpose(cell) {
+	const text = cell.trim();
+	if (!text) return null;
+	const promises = [];
+	const lessons = [];
+	for (const part of text.split(",")) {
+		const m = /^(promise|lesson):\s*([a-z][a-z0-9-]*)$/.exec(part.trim());
+		if (!m) return { promises: [], lessons: [], reason: text };
+		(m[1] === "promise" ? promises : lessons).push(m[2]);
+	}
+	return { promises, lessons, reason: null };
 }
 
 export function parsePhaseRefNumber(cell) {
@@ -122,9 +142,14 @@ export function parseTrajectoryTable(lines) {
 			// shared parser, and a divergence in *fields* is exactly as silent
 			// as the divergence in phase-reference parsing that motivated A23.
 			state: (rec.state || "").toLowerCase().trim(),
-			// The row's kind as written, or null when the table has no Kind
-			// column (test-kinds): `test_kinds: required` checks it.
-			kind: rec.kind === undefined ? null : rec.kind.trim(),
+			// The row's level as written — its `Level` cell, or `Kind` in an
+			// impl written when the level was called a kind — or null when the
+			// table has neither: `test_levels: required` checks it.
+			level: (rec.level ?? rec.kind)?.trim() ?? null,
+			// What the row is for (planner-promises): the `For` cell as
+			// written, null when the table has no such column, and its reading.
+			purposeText: rec.for === undefined ? null : rec.for.trim(),
+			purpose: rec.for === undefined ? null : parsePurpose(rec.for),
 		});
 	}
 	return rows;
