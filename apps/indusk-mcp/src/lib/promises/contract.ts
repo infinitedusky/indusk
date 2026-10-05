@@ -3,7 +3,11 @@ import { join } from "node:path";
 import matter from "gray-matter";
 import { LESSONS_REL_DIR } from "../lessons/state.js";
 import { parseTrajectory, type Trajectory } from "../trajectory/parser.js";
-import { validateRowPurpose, validateTestLevels } from "../trajectory/validator.js";
+import {
+	validateRowPurpose,
+	validateRowShape,
+	validateTestLevels,
+} from "../trajectory/validator.js";
 import { type BriefContract, parseBriefContract } from "./brief-contract.js";
 import { type PlanFolder, planFolderPath, planFolderStatus, planFolders } from "./plan-folder.js";
 import { type PromiseEntry, type Registry, readPromises } from "./registry.js";
@@ -303,6 +307,7 @@ function rowRuleRefusals(impl: Extract<ImplRead, { ok: true }>): string[] {
 	const purpose = fm.test_purpose === "required";
 	const levels = fm.test_levels === "required" || fm.test_kinds === "required";
 	return [
+		...validateRowShape(impl.trajectory, purpose),
 		...validateTestLevels(impl.trajectory, levels),
 		...validateRowPurpose(impl.trajectory, purpose),
 	].map((e) => e.message);
@@ -329,12 +334,13 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 
 	const implFile = relPlanFile(folder, "impl.md");
 	const implPath = join(folder.dir, "impl.md");
-	const implText =
-		opts.implText ?? (existsSync(implPath) ? readFileSync(implPath, "utf-8") : null);
+	const implText = opts.implText ?? (existsSync(implPath) ? readFileSync(implPath, "utf-8") : null);
 	// An archived plan is held only to its own brief; its impl is history.
 	const impl = folder.archived || implText === null ? null : readImpl(implText);
 	const building =
-		impl?.ok === true && impl.frontmatter.status !== undefined && impl.frontmatter.status !== "draft";
+		impl?.ok === true &&
+		impl.frontmatter.status !== undefined &&
+		impl.frontmatter.status !== "draft";
 
 	// A draft brief is the conversation read back; the sweep holds it once the
 	// plan is building, whatever the brief's own status says (A39).

@@ -121,6 +121,32 @@ export interface Trajectory {
 	rows: TrajectoryRow[];
 	deferred: DeferredRow[];
 	present: boolean;
+	/**
+	 * Table lines whose cell count is not the header's (planner-promises A31).
+	 * They are not rows — a cell cannot be matched to its column — so they are
+	 * reported here rather than dropped without a word.
+	 */
+	misshapen?: MisshapenRow[];
+}
+
+/** A table line the parser could not read as a row: its first cell, and how many cells it has against the header's. */
+export interface MisshapenRow {
+	id: string;
+	cells: number;
+	expected: number;
+}
+
+/** The table lines whose cell count is not the header's. The hooks carry a copy. */
+export function findMisshapenRows(tableLines: string[]): MisshapenRow[] {
+	const pipeLines = tableLines.filter((line) => line.trim().startsWith("|"));
+	if (pipeLines.length < 2) return [];
+	const expected = parseTableRow(pipeLines[0]).length;
+	return pipeLines.slice(2).flatMap((line) => {
+		const cells = parseTableRow(line);
+		if (cells.length === expected) return [];
+		const first = /^\|\s*([^|]*)/.exec(line.trim())?.[1].trim() ?? "";
+		return [{ id: first || "(a row with no ID)", cells: cells.length, expected }];
+	});
 }
 
 const TRAJECTORY_HEADING = /^##\s+Test Trajectory\b/;
@@ -437,5 +463,5 @@ export function parseTrajectory(body: string): Trajectory {
 	const rows = parseTrajectoryTable(tableLines);
 	const deferred = parseDeferredBlock(deferredLines);
 
-	return { rows, deferred, present: true };
+	return { rows, deferred, present: true, misshapen: findMisshapenRows(tableLines) };
 }

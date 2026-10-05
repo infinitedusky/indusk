@@ -436,6 +436,7 @@ if (trajectoryValidationEnabled) {
 		testPhasesRequiredFrontmatter,
 	);
 	trajectoryErrors.push(...validateTestLevels(body, testLevelsRequiredFrontmatter));
+	trajectoryErrors.push(...validateRowShape(body, testPurposeRequiredFrontmatter));
 	trajectoryErrors.push(...validateRowPurpose(body, testPurposeRequiredFrontmatter));
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
@@ -504,6 +505,15 @@ function validateTestLevels(implBody, required) {
  *
  * promise: every-test-says-what-it-is-for
  */
+/** Port of `validateRowShape` in `src/lib/trajectory/validator.ts` (planner-promises A31). */
+function validateRowShape(implBody, required) {
+	if (!required) return [];
+	return (parseTrajectoryFromBody(implBody).misshapen ?? []).map((m) => ({
+		rule: "row-shape",
+		message: `Row ${m.id} has ${m.cells} cells where the table has ${m.expected}, so it cannot be read and no rule judges it. Give it one cell per column (an empty cell is still a cell: \`|  |\`).`,
+	}));
+}
+
 function validateRowPurpose(implBody, required) {
 	if (!required) return [];
 	// Declared here, not at module level: this file runs top to bottom, and

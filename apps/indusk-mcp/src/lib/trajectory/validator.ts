@@ -27,7 +27,8 @@ export interface ValidationError {
 		| "regression-guard-declaration"
 		| "unterminated-fence"
 		| "test-levels"
-		| "test-purpose";
+		| "test-purpose"
+		| "row-shape";
 	message: string;
 	/** The rough line number in the impl body, if known. */
 	line?: number;
@@ -557,9 +558,25 @@ export function validateTrajectory(
 			}),
 		);
 	}
+	errors.push(...validateRowShape(trajectory, options.testPurposeRequired ?? false));
 	errors.push(...validateTestLevels(trajectory, options.testLevelsRequired ?? false));
 	errors.push(...validateRowPurpose(trajectory, options.testPurposeRequired ?? false));
 	return errors;
+}
+
+/**
+ * With `test_purpose: required`, every table line is a row (planner-promises
+ * A31). A line with a cell missing or a cell too many cannot be read, so no
+ * rule judged it and the promise it named read as named by none. Gated on the
+ * key, so every impl written before it validates as it did. Mirrors the
+ * hook's `validateRowShape`.
+ */
+export function validateRowShape(trajectory: Trajectory, required: boolean): ValidationError[] {
+	if (!required) return [];
+	return (trajectory.misshapen ?? []).map((m) => ({
+		rule: "row-shape",
+		message: `Row ${m.id} has ${m.cells} cells where the table has ${m.expected}, so it cannot be read and no rule judges it. Give it one cell per column (an empty cell is still a cell: \`|  |\`).`,
+	}));
 }
 
 /**
