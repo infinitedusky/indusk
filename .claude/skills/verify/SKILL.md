@@ -147,7 +147,8 @@ Explicit commands in impl verification sections override auto-discovery. If an i
 | Type check | `tsc --noEmit` | Any TypeScript change |
 | Lint | `pnpm check` | Any source file change |
 | Test (scoped) | `pnpm turbo test --filter={app}` | Any logic change |
-| Test (all) | `pnpm test` | Cross-package changes |
+| Test (related) | `pnpm exec vitest related <changed files>` | Any phase: the tests that import what the phase changed |
+| Test (all) | `pnpm test` + `pnpm test:system` | At landing and on release — never as a phase's default (test-kinds) |
 | Build (scoped) | `pnpm turbo build --filter={app}` | Shared package or build config changes |
 | Auto-discover | `quality_check` with mode `discover` | See what checks are available |
 | Run all checks | `quality_check` with no args | Run all discovered checks at once |

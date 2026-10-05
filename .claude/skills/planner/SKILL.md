@@ -90,7 +90,17 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    ```
    The working agent does not materialize highlights directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts context from the transcript, records what's durable (usually the plan docs already carry it), and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/docs/src/reference/tools/highlights.md`](../../docs/src/reference/tools/highlights.md) for the full flow.
 
-5. **If brief is accepted** and the workflow includes a test plan (bugfix, refactor, or feature — anything that ships an impl), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **how it will be tested** — not the test code itself, but the test mechanism (vitest unit, vitest integration, end-to-end script, manual user test, manual smoke against running stack, etc.).
+5. **If brief is accepted** and the workflow includes a test plan (bugfix, refactor, or feature — anything that ships an impl), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **its kind** — which of the five kinds of test proves it, and so when that test runs:
+
+   | Kind | The question it answers | When it runs |
+   |---|---|---|
+   | `unit` | Is this rule right? | in the phase that writes it; part of `pnpm test` |
+   | `contract` | Do we still fit something we do not own (Jaeger's API, npm, a browser, the OS, Claude Code)? | the system tier: at landing and on release |
+   | `live check` | Does the whole story work against the real system? | once, recorded in the plan with its result |
+   | `smoke` | Is the deployed thing alive? | at deploy |
+   | `promise` | Is it still true in production? | continuously, by the watcher |
+
+   **Name the smallest kind that can prove the assertion.** An assertion's *wording* is behavioural; its *kind* is usually `unit`, because the behaviour is decided by a rule, and a rule is tested by feeding it inputs. Reach for `contract` only when the question is about the thing you do not own — a store's late-run rule is a `unit`, "Jaeger still answers our query the way we expect" is a `contract`. Code that decides takes its clock and its reads as inputs so its rules can be `unit` tests (`lesson: code-that-decides-takes-its-clock-and-its-reads`); a test that starts a server or waits on the wall clock belongs in the system tier, and the everyday suite refuses it (`lesson: everyday-tests-never-wait`). The five are defined once, in the package's `test-kinds` module.
 
    The discipline this produces: when you walk into the ADR with a test plan in hand, the architectural decision is constrained by "what makes all these assertions true?" rather than invented from intuition. The ADR's "We decided for" / "And against" clauses gain teeth because alternatives can be rejected against specific assertions. The impl's Test Trajectory rows derive directly from the test plan's assertions — one trajectory row per assertion, with the `Writable at` / `Passes at` columns added during impl authoring.
 
@@ -113,7 +123,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - ❌ "tablesRepository.create() inserts a row" → behavioral: "After creating a table, it appears in the table list"
    - ❌ "The reconstructFromDb() method reads the new column" → behavioral: "Restarting the server preserves in-progress hands"
 
-   The mechanism column is the right place for "vitest unit" or "manual smoke" or "end-to-end script" — the *how to test*. The assertion column stays at the *what should be true* level. If naming a function or type creeps into the assertion, you've leaked the implementation across the boundary the test plan is meant to enforce.
+   The Kind column is the right place for the *how to test* — one of the five. The assertion column stays at the *what should be true* level. If naming a function or type creeps into the assertion, you've leaked the implementation across the boundary the test plan is meant to enforce.
 
    **Present the test plan for review.** Walk the user through the assertions: "Here's everything I think must be true for this to work, and how I'd test each one. Anything missing? Anything we'd test differently?" The user signs off before you proceed to the ADR. If they push back on assertions, that's the plan working — better to discover scope gaps here than at impl time. If you catch yourself writing functional-sounding assertions, stop and re-phrase before presenting.
 
@@ -143,7 +153,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **Open Phase 1 with a worktree kickoff item.** Worktree-per-plan is the default (see the `worktree-visibility` ADR): every impl's first phase begins with a checklist item that creates or confirms the plan's own worktree — e.g. `Create/confirm this plan's worktree (indusk worktree create <plan>, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs indusk worktree assign <plan> <path>) — worktree-per-plan default; skip only if worktree: none in frontmatter`. A plan opts out by setting `worktree: none` in the impl frontmatter (no workflow sets it by default — even hotfix gets a worktree). `/work`'s Worktree Kickoff step reads the frontmatter and nudges before code is written; the kickoff item makes the intent explicit in the checklist.
 
-   **Derive the Test Trajectory from the test plan.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State` (plus optional `Kind`, `Scope`). Test IDs are conventionally `T`-prefixed (`T1`, `T2`, …); `A`-prefixed IDs (`A1`, …) are also accepted — handy when the trajectory mirrors an acceptance-style test plan. For feature plans, walk the test plan's assertion list — each assertion becomes a trajectory row, with the assertion text becoming the `Asserts` column and the test plan's mechanism informing the optional `Kind`/`Scope` columns. Then walk each planned phase and assign `Writable at` / `Passes at`. Every phase's Verification block references test IDs from the trajectory rather than restating the checks. For bugfix/refactor workflows without a test plan, walk the ADR's Decision section (or the brief's Success Criteria) and ask "what test would prove this works?" for each item.
+   **Derive the Test Trajectory from the test plan.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State | Kind`, the Kind one of the five, from the test plan; set `test_kinds: required` in the frontmatter and the hook refuses a row with none or another word (an impl without the key keeps the older optional `Kind`/`Scope` columns). Test IDs are conventionally `T`-prefixed (`T1`, `T2`, …); `A`-prefixed IDs (`A1`, …) are also accepted — handy when the trajectory mirrors an acceptance-style test plan. For feature plans, walk the test plan's assertion list — each assertion becomes a trajectory row, with the assertion text becoming the `Asserts` column and the test plan's kind becoming its `Kind`. Then walk each planned phase and assign `Writable at` / `Passes at`. Every phase's Verification block references test IDs from the trajectory rather than restating the checks. For bugfix/refactor workflows without a test plan, walk the ADR's Decision section (or the brief's Success Criteria) and ask "what test would prove this works?" for each item.
 
    **Writable at is the earliest possible phase, not the fix phase.** The rule: *if it is possible to write a test, write it — then let it pass when it will.* The validator only enforces `Writable at ≤ Passes at` (a floor); the real discipline is `Writable at = earliest feasible phase`. A test authored in the same phase as its fix is a rubber stamp — nothing proves intermediate phases didn't break it or fix it by accident. A test that goes red early and stays red through intermediate phases until its fix lands is a live tripwire: any intermediate phase that turns it green prematurely signals unexpected coupling; any intermediate phase that breaks an unrelated passing test signals regression.
 
@@ -293,7 +303,7 @@ workflow: feature | bugfix | refactor | spike
 
 ### test-plan.md
 
-The test plan is the bridge between the brief and the ADR. It enumerates the **behavioral assertions** that must be true for the feature to be working, plus the **mechanism** by which each assertion will be tested. It does NOT contain test code — only the contract the implementation must satisfy and the kind of test that will verify it.
+The test plan is the bridge between the brief and the ADR. It enumerates the **behavioral assertions** that must be true for the feature to be working, plus the **kind** of test that proves each — one of `unit`, `contract`, `live check`, `smoke`, `promise`, the smallest that can. It does NOT contain test code — only the contract the implementation must satisfy and the kind of test that will verify it.
 
 **Behavioral, not functional.** Every assertion must describe what an outside observer (typically a user) experiences — not what an internal function does. "User can sign in with Google" not "googleAuth() returns a JWT." See step 5 above for the full bad-vs-good list. If an assertion mentions a function name, type name, internal endpoint name, repository method, or other implementation detail, rewrite it at the user-facing level before saving.
 
@@ -308,7 +318,7 @@ status: draft | accepted
 
 ## Purpose
 
-This document lists the behavioral assertions that, taken together, mean the feature is working. Each assertion names the mechanism by which it will be tested — not the test code, but the test approach (vitest unit / vitest integration / end-to-end script / manual user test / manual smoke / etc.). When all assertions can be made true by an architecture, we have a feature; when all assertions are passing in code, the feature is shipped.
+This document lists the behavioral assertions that, taken together, mean the feature is working. Each assertion names its kind — unit / contract / live check / smoke / promise, the smallest that can prove it — and so when its test runs. When all assertions can be made true by an architecture, we have a feature; when all assertions are passing in code, the feature is shipped.
 
 The assertions here become the source rows for the impl's `## Test Trajectory` table. The ADR that follows this document is constrained by "what makes all these assertions true?" rather than invented from intuition.
 
@@ -316,11 +326,11 @@ The assertions here become the source rows for the impl's `## Test Trajectory` t
 
 **Every assertion must be observable from outside the system.** Describe what the user sees, what the API returns to a caller, what an external observer measures — never internal function calls, return types, or method signatures. If a non-engineer stakeholder couldn't read an assertion and understand it, rewrite it.
 
-| ID | Assertion (user-visible behavior) | Mechanism |
-|----|-----------------------------------|-----------|
-| A1 | {Behavioral fact — e.g., "User can sign in with Google."} | {vitest unit / vitest integration / e2e script / manual user test / manual smoke} |
-| A2 | {Behavioral fact — e.g., "Sign-in with invalid password shows the error 'Invalid credentials'."} | vitest integration |
-| A3 | {Behavioral fact — e.g., "Forgotten-password email arrives in inbox within 60 seconds."} | manual smoke (account on staging) |
+| ID | Assertion (user-visible behavior) | Kind |
+|----|-----------------------------------|------|
+| A1 | {Behavioral fact — e.g., "Sign-in with an invalid password shows the error 'Invalid credentials'."} | unit |
+| A2 | {Behavioral fact — e.g., "Sign-in works against the real identity provider."} | contract |
+| A3 | {Behavioral fact — e.g., "Forgotten-password email arrives in the inbox within 60 seconds."} | live check (account on staging) |
 
 ## Untestable Assertions
 
@@ -333,7 +343,7 @@ The assertions here become the source rows for the impl's `## Test Trajectory` t
 ## Notes
 
 - {Open questions about the test approach}
-- {Known mechanism choices that may need revisiting}
+- {Kind choices that may need revisiting}
 ```
 
 ### adr.md
@@ -431,6 +441,7 @@ date: {YYYY-MM-DD}
 status: draft | approved | in-progress | completed | abandoned
 trajectory: required
 test_phases: required
+test_kinds: required
 rationale: required
 gate_policy: ask
 ---
@@ -457,10 +468,10 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 ## Test Trajectory
 
-| ID | Asserts | Writable at | Passes at | State |
-|----|---------|-------------|-----------|-------|
-| T1 | {one-line assertion — what the test claims is true} | Phase 1 | Phase 1 | planned |
-| T2 | {another assertion} | Phase 1 | Phase 2 | planned |
+| ID | Asserts | Writable at | Passes at | State | Kind |
+|----|---------|-------------|-----------|-------|------|
+| T1 | {one-line assertion — what the test claims is true} | Phase 1 | Phase 1 | planned | unit |
+| T2 | {another assertion} | Phase 1 | Phase 2 | planned | contract |
 
 {Optional subsection — include ONLY if this plan has items that are genuinely untestable within its scope. Each row requires all three fields: reason, would require, mitigation.}
 
@@ -516,7 +527,7 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 - [ ] {Instrumentation check — are new code paths observable? See the OTel skill for patterns. Example items: "New endpoints have manual spans with `otel.category` and domain attributes", "Errors recorded with `recordException` + `setStatus(ERROR)` + trace-correlated log". Ask: "did this phase add endpoints, business logic, state transitions, or error paths?" If not, this section can be opted out per gate policy.}
 
 #### Build Phase 1 Verification
-- [ ] T1 passes (`{runnable command, e.g. pnpm test}`)
+- [ ] T1 passes (`{this phase's rows and related tests, e.g. pnpm exec vitest run <the row's test files> && pnpm exec vitest related <files this phase changed>}`) — the whole suite runs at landing, not here
 - [ ] T2 flips to `written` state (skipped until Phase 2)
 
 {If a phase has no tests flipping at it, declare it explicitly — NOT silently:}

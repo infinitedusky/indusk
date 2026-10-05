@@ -74,8 +74,8 @@
 		]
 	},
 	"indusk": {
-		"version": "1.57.2",
-		"updated_at": "2026-10-03T05:55:46.465Z"
+		"version": "1.60.0",
+		"updated_at": "2026-10-05T17:40:07.660Z"
 	},
 	"context": {
 		"claude_md_budget_bytes": 18432,
