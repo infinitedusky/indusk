@@ -156,7 +156,7 @@ exists today and answers wrongly.
 - [x] `apps/indusk-admin/src/lib/promise-health.ts`: `readHealth` returns one cached read per source (`readSources`); `healthRows` per source; `redPlans` from the alarm source
 - [x] The Promises page: one chip per source per behaviour promise (`data-source`), labelled with the source name, through `HealthChip`. A failed source's banner (unknown health or *watcher blind*) sits in its own section. With one source the page renders as today
   - As built: the alarm source's chip leads the row. `http-promise-remote.test.ts` reads a row's *first* chip, and on a production-naming project with no local daemon that is the chip that raises; ordering local first turned it *unverified*. A promise red in any source sorts first; only the alarm source marks the sidebar
-- [ ] The project layout's sidebar: the red mark from the alarm source
+- [x] The project layout's sidebar: the red mark from the alarm source
 
 #### Build Phase 4 Verification
 
