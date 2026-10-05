@@ -188,6 +188,9 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 - [x] (discovered) The timeline tests' `row()` helper ended a promise's slice at the next `data-promise` attribute — and the markup contract puts one on the strip too, so a row's slice stopped just before its own strip and no cell could ever be seen. The helper now ends at the next *other* promise; no assertion changed
 
+- [x] (discovered) A busy event loop read as a closed port: `isPortListening` timed out at 500 ms on the admin's own loop while `next dev` rendered, `daemonStatus` took that as a dead daemon and deleted its record, and the watcher-blind page test (`http-watcher-blind`) began failing once the timeline added a read to the render. A timed-out connect is now tried once more before it is believed; a refusal stays final (`lib/telemetry/status.ts`). Reproduced first in `lib/telemetry/port-listening.test.ts` (the loop held 700 ms), which carries `lesson: a-timeout-measured-on-a-busy-loop-is-not-a-fact-about-the-port`
+- [x] (discovered) Four comments read as promise tokens (`per promise: marks` → a promise named `marks`), so this repository's `promises check` — and `promises-cli.test.ts` A15 — refused them; reworded
+
 #### Build Phase 4 Verification
 
 - [ ] A1–A4, A6, A8, A11 and A12 pass (`cd apps/indusk-admin && pnpm exec vitest run src/__tests__/http-promise-timeline`); `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear

@@ -62,16 +62,33 @@ export type DaemonStatusResult =
 
 // ---- port + identity -------------------------------------------------------
 
-export function isPortListening(port: number): Promise<boolean> {
+/**
+ * Whether something accepts connections on `port`. A refusal is final; a
+ * timeout is tried once more before it is believed, because the 500 ms is
+ * measured on the caller's own event loop: a loop held by other work (the
+ * admin rendering a page) fires the timer before it delivers a connect that
+ * already happened, and a listening port reads as closed. `daemonStatus`
+ * deletes the daemon's record on that answer (promise-timeline, discovered at
+ * Build Phase 4).
+ */
+export async function isPortListening(port: number, attempts = 2): Promise<boolean> {
+	for (let i = 0; i < attempts; i++) {
+		const result = await connectOnce(port);
+		if (result !== "timeout") return result === "connected";
+	}
+	return false;
+}
+
+function connectOnce(port: number): Promise<"connected" | "refused" | "timeout"> {
 	return new Promise((resolve) => {
 		const socket = createConnection({ port, host: "127.0.0.1" });
-		const done = (result: boolean): void => {
+		const done = (result: "connected" | "refused" | "timeout"): void => {
 			socket.destroy();
 			resolve(result);
 		};
-		socket.once("connect", () => done(true));
-		socket.once("error", () => done(false));
-		socket.setTimeout(500, () => done(false));
+		socket.once("connect", () => done("connected"));
+		socket.once("error", () => done("refused"));
+		socket.setTimeout(500, () => done("timeout"));
 	});
 }
 
