@@ -13,7 +13,13 @@ import {
 	parseBriefContract,
 	sameSentence,
 } from "./brief-contract.js";
-import { type PlanFolder, planFolderPath, planFolderStatus, planFolders } from "./plan-folder.js";
+import {
+	type PlanFolder,
+	planFileRel,
+	planFolderPath,
+	planFolderStatus,
+	planFolders,
+} from "./plan-folder.js";
 import { type PromiseEntry, type Registry, readPromises } from "./registry.js";
 import { type ImplRead, readImpl } from "./rows.js";
 import { PROMISES_REL_DIR } from "./vocabulary.js";
@@ -87,9 +93,6 @@ export interface ContractOptions {
 	 */
 	skipDraft?: boolean;
 }
-
-const relPlanFile = (folder: PlanFolder, file: string) =>
-	`.indusk/planning/${folder.archived ? "archive/" : ""}${folder.plan}/${file}`;
 
 function resolveFolder(planRoot: string, plan: string): PlanFolder | string {
 	const status = planFolderStatus(planRoot, plan);
@@ -316,7 +319,7 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 	const brief = parsed?.shape === "contract" ? parsed : null;
 	if (parsed?.shape === "legacy") summary.shape = "legacy";
 
-	const implFile = relPlanFile(folder, "impl.md");
+	const implFile = planFileRel(folder, "impl.md");
 	const implPath = join(folder.dir, "impl.md");
 	const implText = opts.implText ?? (existsSync(implPath) ? readFileSync(implPath, "utf-8") : null);
 	// An archived plan is held only to its own brief; its impl is history.
@@ -337,7 +340,7 @@ function checkFolder(planRoot: string, folder: PlanFolder, opts: ContractOptions
 		return { ok: true, summary: { ...summary, shape: "draft" } };
 	}
 
-	const briefFile = relPlanFile(folder, "brief.md");
+	const briefFile = planFileRel(folder, "brief.md");
 	const refusals: ContractRefusal[] =
 		brief === null
 			? []

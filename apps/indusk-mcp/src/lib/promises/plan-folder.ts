@@ -44,6 +44,11 @@ export interface PlanFolder {
 	dir: string;
 }
 
+/** A file in a plan's folder, as a refusal names it: relative to the plan root. */
+export function planFileRel(folder: Pick<PlanFolder, "plan" | "archived">, file: string): string {
+	return `.indusk/planning/${folder.archived ? "archive/" : ""}${folder.plan}/${file}`;
+}
+
 function folders(dir: string, archived: boolean): PlanFolder[] {
 	if (!existsSync(dir)) return [];
 	return readdirSync(dir, { withFileTypes: true })

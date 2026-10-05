@@ -5,7 +5,7 @@ import { collapseSpace, parseBriefContract, sameSentence } from "./brief-contrac
 import { type CheckRefusal, checkPromises } from "./check.js";
 import { citedNames } from "./citations.js";
 import { setList, setScalar } from "./frontmatter-edit.js";
-import { planFolderPath, planFolderStatus } from "./plan-folder.js";
+import { type PlanFolder, planFileRel, planFolderPath, planFolderStatus } from "./plan-folder.js";
 import { type PromiseEntry, promiseTokenPattern, type Registry, readPromises } from "./registry.js";
 import { type RowProof, readImpl, rowProofs, rowsNamingIn } from "./rows.js";
 import { appendHistory } from "./write.js";
@@ -71,13 +71,14 @@ const registryFile = (p: PromiseEntry) => `.indusk/promises/${p.file}`;
  *
  * promise: a-changed-promise-keeps-its-history
  */
-function unmadeChanges(planDir: string, plan: string, registry: Registry): CheckRefusal[] {
-	const briefPath = join(planDir, "brief.md");
+function unmadeChanges(folder: PlanFolder, registry: Registry): CheckRefusal[] {
+	const { plan } = folder;
+	const briefPath = join(folder.dir, "brief.md");
 	if (!existsSync(briefPath)) return [];
 	const brief = parseBriefContract(readFileSync(briefPath, "utf-8"));
 	if (brief.shape === "legacy") return [];
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
-	const file = `${planDir.slice(planDir.lastIndexOf(".indusk"))}/brief.md`;
+	const file = planFileRel(folder, "brief.md");
 	const out: CheckRefusal[] = [];
 	for (const change of brief.changes) {
 		const entry = byName.get(change.name);
@@ -245,7 +246,8 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 			},
 		]);
 	}
-	const planDir = planFolderPath(planRoot, plan, status === "archived");
+	const archived = status === "archived";
+	const folder: PlanFolder = { plan, archived, dir: planFolderPath(planRoot, plan, archived) };
 	const read = readPromises(planRoot);
 	if (!read.ok && "problems" in read) {
 		return refuse(
@@ -256,13 +258,13 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 		? read.registry
 		: { dir: join(planRoot, ".indusk", "promises"), promises: [], incidents: [] };
 
-	const implPath = join(planDir, "impl.md");
+	const implPath = join(folder.dir, "impl.md");
 	const implText = existsSync(implPath) ? readFileSync(implPath, "utf-8") : null;
 	const implRead = implText === null ? null : readImpl(implText);
 	if (implRead && !implRead.ok) {
 		return refuse([
 			{
-				file: `${planDir.slice(planDir.lastIndexOf(".indusk"))}/impl.md`,
+				file: planFileRel(folder, "impl.md"),
 				message: `${plan}'s impl cannot be read, so the rows that prove its promises cannot be: ${implRead.error}`,
 			},
 		]);
@@ -274,7 +276,7 @@ export async function confirmPlan(input: ConfirmInput): Promise<ConfirmResult> {
 				(p.state === "enforced" && implText !== null && rowsNamingIn(implText, p).length > 0)),
 	);
 	const proofs = rowProofs(candidates, plan, implText);
-	const refusals: CheckRefusal[] = unmadeChanges(planDir, plan, registry);
+	const refusals: CheckRefusal[] = unmadeChanges(folder, registry);
 	if (proofs.length === 0) {
 		return refusals.length > 0 ? refuse(refusals) : { ok: true, confirmed: [] };
 	}
