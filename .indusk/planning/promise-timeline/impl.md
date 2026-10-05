@@ -139,8 +139,8 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 - [x] `lib/promises/timeline.ts`: `readTimeline(root, registry, { source, from, to, timeoutMs })` → per source, per behaviour promise, `{ at, outcome, traceId }[]` plus slices that stayed full (`atLeast`); a full query splits at its midpoint down to a one-minute slice. The query limit reads `INDUSK_PROMISE_QUERY_LIMIT` (test setting; default `TRACE_LIMIT`)
   - As built: the per-query read moved out of `markedSpans` into `marksBetween` (`telemetry.ts`) — the project filter, the alias renaming and the limit, written once — and both readers call it; `queryLimit()` reads the setting for both
-- [ ] Source resolution and failure per source through `sources.ts` (`resolveMarkSources`), the probe not repeated
-- [ ] `package.json` `exports`: `./promises/timeline`
+- [x] Source resolution and failure per source through `sources.ts` (`resolveMarkSources`), the probe not repeated
+- [x] `package.json` `exports`: `./promises/timeline`
 
 #### Build Phase 2 Verification
 
