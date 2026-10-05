@@ -269,7 +269,7 @@ Found while investigating (2026-10-04), before any row was written:
 
 #### Build Phase 4 Document
 
-- [ ] `apps/docs/src/reference/cli/telemetry-server.md`: `INDUSK_SERVER_PUBLIC_QUERY_URL`'s refusal (an absolute http(s) URL, no credential); "The query door" says a taken port refuses before Jaeger starts; `apps/docs/src/changelog.md` Unreleased, Fixed: the four; `vitepress build` clean
+- [x] `apps/docs/src/reference/cli/telemetry-server.md`: `INDUSK_SERVER_PUBLIC_QUERY_URL`'s refusal (an absolute http(s) URL, no credential); "The query door" says a taken port refuses before Jaeger starts; `apps/docs/src/changelog.md` Unreleased, Fixed: the four; `vitepress build` clean — the door paragraph also says what happens to a response either side drops, and "When it announces nothing" says a short write keeps the previous record
 
 ## Files Affected
 

@@ -8,6 +8,12 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 - **The always-on image and Fly reference are verified against a real deployment.** The guide's smoke procedure ran end to end on Fly (2026-10-04), including an idle hour with a heartbeat every 60 s and no gap. It found three server bugs, fixed in 1.58.2–1.58.4. The reference Fly config spells auto-stop `"off"` and names its public query address. The guide now shows the steps as run (`fly apps create`, `--ha=false`, a dedicated IPv4 for the query port) and the observed record. The scripted half of the smoke is `e2e/deployed-smoke.e2e.test.ts`, re-runnable against any deployment.
 - **`pnpm test:system` is back to about two minutes.** Always-on test files run in parallel again now that each server's ports come from its settings.
 
+### Fixed
+- **An always-on server whose query port is taken starts nothing.** The server started Jaeger and then bound its query door; with the port already held, it exited and left Jaeger running, holding the intake port and the volume's lock, so every restart failed too. The door now binds first, and the refusal names `INDUSK_SERVER_QUERY_PORT`.
+- **The query door no longer leaves a connection hanging.** When Jaeger dropped a response half-way, the browser's response was never ended, and could keep a server whose Jaeger had died from exiting. A browser leaving half-way now also closes the request to Jaeger.
+- **`INDUSK_SERVER_PUBLIC_QUERY_URL` is checked at start.** A URL carrying a user or password would have posted the credential in every Slack message, and one without a scheme posted a link that does not open. Both, and a URL with a query or fragment, are refused by name, without repeating the value.
+- **A record write cut short by a full volume keeps the old record.** The always-on server's records were written with one unchecked write; on a nearly full volume the write comes back short, and a truncated record replaced the good one, which stops every announcement. Writes now finish or fail, and a failed write leaves no temp file.
+
 ## [1.58.4] — 2026-10-04
 
 ### Fixed
