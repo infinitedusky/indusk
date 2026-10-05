@@ -10,6 +10,7 @@ parents:
   - indusk-v2-dawn
   - indusk-v4-day
   - indusk-demo
+  - promise-core
 roadmap:
   - workbench-trust-fixes
   - hook-cwd-independence
@@ -40,6 +41,7 @@ roadmap:
   - workbench-watch-provisioning
   - plan-premises
   - contract-ui
+  - promise-core
 ---
 
 # Master Plan
@@ -276,6 +278,17 @@ lesson title, or a chat log.
     clause **already shipped** (the version line reports installed, published,
     project-updated and packaged commits since the release commit); what
     remains is naming the plans rather than counting commits.
+- **Parent, living master** (2026-10-05):
+  [promise-core](promise-core/master.md) — the promise is the first
+  primitive. A person can start from a promise alone: the tests are written
+  and seen to fail, then the code is built until they pass, with no plan to
+  approve. Three layers follow: the core (a promise and its evidence),
+  workflows as extensions with `feature` the default, and this repository's
+  own house rules, which stop shipping. Three plans, none created:
+  `house-rules-out`, `promise-first-build`, `workflow-extensions`. Its table
+  "Plans this changes" names thirteen existing plans it touches, among them
+  the demo's; **none has been edited, and whether it runs before or after the
+  demo is undecided.** Measurements in [research](promise-core/research.md).
 - **Standalone, brief draft** (2026-10-01, rewritten the same day):
   [plan-premises](plan-premises/brief.md) — a place to put the *why*. A project
   states its aim and the metrics it judges it by, in the user's own words;
