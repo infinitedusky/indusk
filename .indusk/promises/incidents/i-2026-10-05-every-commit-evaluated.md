@@ -62,4 +62,26 @@ occurrence is recognised.
 
 ## Fix
 
-_Not yet fixed._
+Day-monitor Build Phase 10, 2026-10-05, on `plan/day-monitor`.
+
+- **Cause 1.** `hooks/_commit-anchor.js` holds trunk-guard's reading of where a
+  commit lands (`COMMIT_RE`, `commitAnchor`), now imported by both hooks.
+  `eval-trigger.js` filters with it, so `git -C <dir> commit` is recognised,
+  and evaluates the repository the commit landed in; the event's `cwd` stays
+  the state path, where results and logs belong. A32
+  (`eval-trigger-commit-anchor.test.ts`) reproduces both paths;
+  `hook-shared-modules.test.ts` counts one definition.
+- **Cause 2.** `persistent-evaluator.ts` retries a run whose JSON says
+  `api_error_status: 429` up to three times, after 15 s, 45 s and 90 s, before
+  marking it violated. A33 (`monitor-mark.test.ts`) runs a `claude` that is
+  rate limited once and requires the commit graded and the promise upheld.
+  With cause 1 fixed, a burst of worktree commits also stops starting
+  duplicate evaluations of one trunk commit.
+- **Cause 3.** No change. The clear-and-retry path already handles a resumed
+  session that fails; the fresh retry's own failure left no reason in its
+  trace to fix against. A second occurrence should be traced from the
+  evaluator's stderr, which the span keeps (`exit.stderr_tail`).
+
+The fixes reach the live evaluator with the next release and `indusk
+update`; until then the installed evaluator still has both defects. The
+quiet window is what confirms them.

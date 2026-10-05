@@ -408,4 +408,4 @@ the CLI, a tool call, HTTP, or a spawned evaluator, and register the rest.
 
 #### Build Phase 10 Document
 
-- [ ] The incident's Fix section
+- [x] The incident's Fix section — written: the shared commit reading, the rate-limit retry, and why the retired-model resume gets no change
