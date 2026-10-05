@@ -1,7 +1,14 @@
 import { join } from "node:path";
 import { recorded } from "./incidents.js";
-import { readPromises } from "./registry.js";
-import { newestMark, readPromiseMarks, silencePastExpectation } from "./telemetry.js";
+import { type Registry, readPromises } from "./registry.js";
+import {
+	alarmSource,
+	type MarkedSpansResult,
+	newestMark,
+	readSources,
+	type SourceName,
+	silencePastExpectation,
+} from "./telemetry.js";
 
 /**
  * What a session should be told about the promises (day-always-on, ADR D9).
@@ -16,9 +23,15 @@ import { newestMark, readPromiseMarks, silencePastExpectation } from "./telemetr
  * open incident are work someone has seen; `unrecorded` is work nobody has,
  * and it is what `indusk promises watch` would record if it ran now.
  *
- * Reads through `readPromiseMarks` — the same call `status`, `watch` and the
+ * Reads through `readSources` — the same reads `status`, `watch` and the
  * admin use — so this cannot disagree with the CLI about what happened. Two
  * surfaces reporting different violation counts is worse than one surface.
+ *
+ * Per source (promise-sources, ADR D4): `sources` holds each source's rows,
+ * or its failure. The top-level fields are the **alarm source's** —
+ * production when the project names one — so a consumer that predates
+ * sources reads what it read before, and a local break during development is
+ * shown under `sources` without being raised.
  */
 
 export interface PromiseHealthRow {
@@ -45,19 +58,51 @@ export interface PromiseHealthRow {
 	silence?: string;
 }
 
+/** One source's health: its rows, or why it has none. */
+export type SourceHealth =
+	| {
+			name: SourceName;
+			/** The query URL that answered. */
+			source: string;
+			ok: true;
+			since: string;
+			promises: PromiseHealthRow[];
+			needsAttention: string[];
+	  }
+	| {
+			name: SourceName;
+			/** Where it looked. */
+			source: string;
+			ok: false;
+			kind: "unreachable" | "blind";
+			reason: string;
+	  };
+
 export interface PromiseHealthReport {
-	/** Which Jaeger answered — the local daemon or the project's named server. */
+	/** Which Jaeger the alarm source is — the local daemon or the project's named server. */
 	source: string;
 	/** The window these numbers cover. */
 	since: string;
-	promises: PromiseHealthRow[];
+	/** The alarm source's rows; null when the alarm source could not be read. */
+	promises: PromiseHealthRow[] | null;
 	/**
-	 * Promises with unrecorded violations, or silent past their `expect_every`
-	 * — the "what's next" answer.
+	 * The alarm source's promises with unrecorded violations, or silent past
+	 * their `expect_every` — the "what's next" answer. Null when the alarm
+	 * source could not be read: nobody looked, which is not "nothing to do".
 	 */
-	needsAttention: string[];
+	needsAttention: string[] | null;
+	/** Set when the alarm source could not be read: what went wrong there. */
+	error?: string;
+	/** The alarm source answered and did not hear. */
+	blind?: true;
+	/** Every source, each with its own rows or its own failure. */
+	sources: SourceHealth[];
 }
 
+/**
+ * Throws only when no source could be read — the alarm source's error, so a
+ * one-source project fails exactly as before.
+ */
 export async function promiseHealth(
 	root: string,
 	opts: { sinceMs?: number; timeoutMs?: number; now?: Date } = {},
@@ -71,9 +116,54 @@ export async function promiseHealth(
 		throw new Error(`no promise registry at ${"missing" in read ? read.missing : root}`);
 	}
 
-	const marks = await readPromiseMarks(root, registry, opts);
-	const rows: PromiseHealthRow[] = [];
+	const reads = await readSources(root, registry, opts);
+	const alarm = reads.find((r) => r.name === alarmSource(reads.map((r) => r.name)));
+	if (!alarm) throw new Error("no promise source resolved");
+	if (!alarm.ok && !reads.some((r) => r.ok)) throw alarm.error;
 
+	const sources: SourceHealth[] = reads.map((r) => {
+		if (!r.ok) return { name: r.name, source: r.where, ok: false, kind: r.kind, reason: r.reason };
+		const promises = healthRows(registry, r.marks, opts.now);
+		return {
+			name: r.name,
+			source: r.marks.queryUrl,
+			ok: true,
+			since: r.marks.since.toISOString(),
+			promises,
+			needsAttention: attention(promises),
+		};
+	});
+	const top = sources.find((s) => s.name === alarm.name);
+	if (top?.ok) {
+		const { source, since, promises, needsAttention } = top;
+		return { source, since, promises, needsAttention, sources };
+	}
+	// The alarm source failed beside one that answered: say production's
+	// failure at the top, in the shape a session already reads as "nobody
+	// could look", and keep the other's rows under `sources`.
+	const answered = sources.find((s) => s.ok);
+	return {
+		source: alarm.label,
+		since: answered?.ok ? answered.since : "",
+		promises: null,
+		needsAttention: null,
+		...(alarm.ok ? {} : { error: alarm.error.message }),
+		...(alarm.ok || alarm.kind !== "blind" ? {} : { blind: true as const }),
+		sources,
+	};
+}
+
+function attention(rows: PromiseHealthRow[]): string[] {
+	return rows.filter((r) => r.unrecorded > 0 || r.silence).map((r) => r.name);
+}
+
+/** One source's rows: per behaviour promise, what it saw and what nobody recorded. */
+function healthRows(
+	registry: Registry,
+	marks: MarkedSpansResult,
+	now: Date | undefined,
+): PromiseHealthRow[] {
+	const rows: PromiseHealthRow[] = [];
 	for (const promise of registry.promises) {
 		if (promise.kind !== "behaviour" || promise.state === "retired") continue;
 		const seen = marks.byPromise.get(promise.name);
@@ -85,7 +175,7 @@ export async function promiseHealth(
 			...new Set(violations.filter((v) => !known.has(v.traceId)).map((v) => v.traceId)),
 		];
 
-		const silence = silencePastExpectation(promise, marks, opts.now);
+		const silence = silencePastExpectation(promise, marks, now);
 		rows.push({
 			...(silence ? { silence } : {}),
 			name: promise.name,
@@ -100,11 +190,5 @@ export async function promiseHealth(
 			lastSeen: newestMark(seen)?.toISOString() ?? null,
 		});
 	}
-
-	return {
-		source: marks.queryUrl,
-		since: marks.since.toISOString(),
-		promises: rows,
-		needsAttention: rows.filter((r) => r.unrecorded > 0 || r.silence).map((r) => r.name),
-	};
+	return rows;
 }

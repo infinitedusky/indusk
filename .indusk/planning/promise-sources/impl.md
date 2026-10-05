@@ -133,7 +133,8 @@ exists today and answers wrongly.
 
 ### Build Phase 3: promise_health per source, and catchup
 
-- [ ] `lib/promises/health.ts` + `tools/plan-tools.ts`: `promise_health` adds `sources: [{ name, source, ok, promises, needsAttention } | { name, source, ok: false, kind, reason }]`. Top-level `source`, `promises` and `needsAttention` keep the alarm source's, so existing consumers are unchanged. The tool errors only when no source can be read
+- [x] `lib/promises/health.ts` + `tools/plan-tools.ts`: `promise_health` adds `sources: [{ name, source, ok, promises, needsAttention } | { name, source, ok: false, kind, reason }]`. Top-level `source`, `promises` and `needsAttention` keep the alarm source's, so existing consumers are unchanged. The tool errors only when no source can be read
+  - As built: when the alarm source fails beside one that answered, the top level carries its failure in the shape a session already reads as "nobody could look" — `promises: null`, `needsAttention: null`, `error`, and `blind: true` when blind — with the other source's rows under `sources`. When every source fails the tool errors with the alarm source's error, so a one-source project fails exactly as before
 - [ ] `apps/indusk-mcp/skills/catchup.md` (and the installed copy): name the source of each raised violation; a failed source is said on its own line
 
 #### Build Phase 3 Verification
