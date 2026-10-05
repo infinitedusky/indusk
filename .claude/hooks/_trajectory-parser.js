@@ -122,6 +122,9 @@ export function parseTrajectoryTable(lines) {
 			// shared parser, and a divergence in *fields* is exactly as silent
 			// as the divergence in phase-reference parsing that motivated A23.
 			state: (rec.state || "").toLowerCase().trim(),
+			// The row's kind as written, or null when the table has no Kind
+			// column (test-kinds): `test_kinds: required` checks it.
+			kind: rec.kind === undefined ? null : rec.kind.trim(),
 		});
 	}
 	return rows;

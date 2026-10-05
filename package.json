@@ -3,9 +3,9 @@
 	"private": true,
 	"packageManager": "pnpm@10.33.0",
 	"scripts": {
-		"test": "node apps/indusk-mcp/scripts/with-daemon-guard.js sh -c 'turbo test --concurrency=1 && pnpm promises:check'",
+		"test": "node apps/indusk-mcp/scripts/with-daemon-guard.js --mark everyday-suite-stays-fast sh -c 'turbo test && pnpm promises:check'",
 		"e2e": "pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp e2e",
-		"test:system": "pnpm --filter @infinitedusky/indusk-mcp test:system",
+		"test:system": "pnpm --filter @infinitedusky/indusk-mcp test:system && pnpm --filter indusk-admin test:system",
 		"promises:check": "node apps/indusk-mcp/dist/bin/cli.js promises check",
 		"check": "biome check",
 		"check:fix": "biome check --write",

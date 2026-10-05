@@ -73,6 +73,19 @@ interface Held {
 
 const held = new Map<string, Held>();
 
+/**
+ * What the store reads with: the clock, and how it resolves and reads a
+ * source. The real ones by default; a test passes its own, so a rule about
+ * late runs or a slow window is checked in milliseconds, without a Jaeger or a
+ * wait (test-kinds, ADR D2 — lesson:
+ * code-that-decides-takes-its-clock-and-its-reads).
+ */
+export interface StoreDeps {
+  now?: () => number;
+  resolve?: typeof resolveMarkSources;
+  read?: typeof readTimeline;
+}
+
 export type WindowRead =
   | {
       ok: true;
@@ -117,10 +130,13 @@ export async function readWindow(
   source: SourceName,
   fromMs: number,
   timeoutMs: number,
+  deps: StoreDeps = {},
 ): Promise<WindowRead> {
-  const resolved = (await resolveMarkSources(projectRoot)).find(
-    (r) => r.name === source,
-  );
+  const clock = deps.now ?? Date.now;
+  const read = deps.read ?? readTimeline;
+  const resolved = (
+    await (deps.resolve ?? resolveMarkSources)(projectRoot)
+  ).find((r) => r.name === source);
   if (!resolved?.ok) {
     return {
       ok: false,
@@ -135,7 +151,7 @@ export async function readWindow(
   const key = `${prefix}${resolved.source.label}`;
   for (const k of held.keys())
     if (k.startsWith(prefix) && k !== key) held.delete(k);
-  const now = Date.now();
+  const now = clock();
   const promises = behaviourNames(registry);
   let h = held.get(key);
   if (h && h.promises !== promises) h = undefined;
@@ -150,6 +166,7 @@ export async function readWindow(
   // window too slow to read at once is drawn over a few refreshes (A19).
   const slices: Array<[number, number]> = [];
   let back = now;
+  const tailed = Boolean(h && h.coveredFrom < h.coveredTo);
   if (h && h.coveredFrom < h.coveredTo) {
     slices.push([Math.max(h.coveredFrom, h.coveredTo - LATE_MS), now]);
     back = h.coveredFrom;
@@ -167,24 +184,30 @@ export async function readWindow(
     atLeast: new Map(),
   };
   const label = resolved.source.label;
-  const started = Date.now();
+  const started = clock();
   let landed = 0;
   let failure: Extract<WindowRead, { ok: false }> | null = null;
-  for (const [from, to] of slices) {
+  // The tail is always read, and then at least one older slice: a tail that
+  // spends the whole budget on its own must not stop the window from ever
+  // being read further (test-kinds, found by the store's unit test A8).
+  let older = 0;
+  for (const [i, [from, to]] of slices.entries()) {
+    const isTail = i === 0 && tailed;
     if (
-      landed > 0 &&
-      Date.now() - started >= timeoutMs * READ_BUDGET_TIMEOUTS
+      !isTail &&
+      older > 0 &&
+      clock() - started >= timeoutMs * READ_BUDGET_TIMEOUTS
     ) {
       break;
     }
-    const [read] = await readTimeline(projectRoot, registry, {
+    const [slice] = await read(projectRoot, registry, {
       from: new Date(from),
       to: new Date(to),
       source,
       timeoutMs,
     });
-    if (!read?.ok) {
-      failure = read ?? {
+    if (!slice?.ok) {
+      failure = slice ?? {
         ok: false,
         name: source,
         label,
@@ -194,7 +217,7 @@ export async function readWindow(
       };
       break;
     }
-    for (const [promise, t] of read.byPromise) {
+    for (const [promise, t] of slice.byPromise) {
       const marks = next.marks.get(promise) ?? new Map<string, TimelineMark>();
       for (const m of t.marks) marks.set(markKey(m), m);
       next.marks.set(promise, marks);
@@ -206,6 +229,7 @@ export async function readWindow(
     next.coveredFrom = Math.min(next.coveredFrom, from);
     next.coveredTo = Math.max(next.coveredTo, to);
     landed++;
+    if (!isTail) older++;
   }
 
   if (next.coveredFrom <= fromMs && next.fullAt === null) next.fullAt = now;
@@ -311,8 +335,9 @@ export async function readTimelineView(
     sources: SourceName[];
     timeoutMs: number;
   },
+  deps: StoreDeps = {},
 ): Promise<TimelineView> {
-  const now = Date.now();
+  const now = (deps.now ?? Date.now)();
   const windowMs = WINDOWS[opts.window].ms;
   const from = now - Math.max(windowMs, healthWindowMs(projectRoot, registry));
   const base = {
@@ -326,6 +351,7 @@ export async function readTimelineView(
     opts.source,
     from,
     opts.timeoutMs,
+    deps,
   );
   if (!w.ok) {
     return {

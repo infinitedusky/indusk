@@ -9,20 +9,46 @@
  * every run, and the exit code is the command's own failure first, then the
  * guard's: a failing suite still reads as a failing suite, and a passing one
  * that leaked a daemon fails.
+ *
+ * `--mark <promise>` (the root `pnpm test` only): time the run and mark
+ * `everyday-suite-stays-fast` held or broken in the local daemon
+ * (`suite-speed.js`, test-kinds). The mark never changes the exit code.
+ *
+ * promise: everyday-suite-stays-fast
  */
 
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const [command, ...args] = process.argv.slice(2);
-if (!command) {
-	console.error("usage: with-daemon-guard.js <command> [args…]");
+import { otherTestRunAlive, SUITE_PROMISE, sendSuiteMark, suiteSpeedMark } from "./suite-speed.js";
+
+let argv = process.argv.slice(2);
+let markPromise = null;
+if (argv[0] === "--mark") {
+	markPromise = argv[1];
+	argv = argv.slice(2);
+}
+const [command, ...args] = argv;
+if (!command || (markPromise !== null && markPromise !== SUITE_PROMISE)) {
+	console.error(`usage: with-daemon-guard.js [--mark ${SUITE_PROMISE}] <command> [args…]`);
 	process.exit(2);
 }
 
+const overlappedAtStart = markPromise ? await otherTestRunAlive() : false;
+const started = Date.now();
 const run = spawnSync(command, args, { stdio: "inherit" });
 const runCode = run.status ?? 1;
+
+if (markPromise) {
+	const mark = suiteSpeedMark({
+		durationMs: Date.now() - started,
+		overlapped: overlappedAtStart || (await otherTestRunAlive(3_000)),
+		exitCode: runCode,
+	});
+	const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+	console.error(`${SUITE_PROMISE}: ${await sendSuiteMark(root, mark)}`);
+}
 
 const guard = spawnSync(
 	process.execPath,

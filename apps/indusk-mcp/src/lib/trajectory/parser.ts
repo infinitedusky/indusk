@@ -31,6 +31,13 @@ export interface TrajectoryRow {
 	passesAtKind: PhaseKind;
 	state: TrajectoryState;
 	kind?: TrajectoryKind;
+	/**
+	 * The `Kind` cell as written, or null when the table has no Kind column —
+	 * what `test_kinds: required` checks against the five test kinds
+	 * (`lib/test-kinds.ts`). `kind` above is the older, optional style
+	 * vocabulary, kept so impls written with it still parse.
+	 */
+	kindText?: string | null;
 	scope?: TrajectoryScope;
 	/**
 	 * Optional `Test` column — the test FILES backing this row, comma-separated.
@@ -342,6 +349,7 @@ function parseTrajectoryTable(lines: string[]): TrajectoryRow[] {
 			passesAtKind: parsePhaseReferenceKind(record.passesAt ?? ""),
 			state: parseState(record.state ?? ""),
 			kind: parseOptionalKind(record.kind ?? ""),
+			kindText: record.kind === undefined ? null : record.kind.trim(),
 			scope: parseOptionalScope(record.scope ?? ""),
 			test: parseOptionalTestRefs(record.test ?? ""),
 		});

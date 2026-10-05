@@ -78,7 +78,7 @@ An impl with `test_phases: required` opens with `### Test Phase 1` before any `#
 3. **Review the register before opening any build phase.** Read each `#### Deferred to …` entry's carried body against two questions: *will this compile at the phase it names*, and *does it assert the behaviour it claims?* This is the compensating control for the fact that a fake red cannot be detected mechanically — and it is a pause point under autopilot, because it is human judgement rather than a check.
 4. The phase's Verification gate cannot be checked while any row it authors is still unwritten. `check-gates` enforces that; the review above is what makes closing it mean something.
 
-**Real red vs fake red — the boundary rule.** A test that reaches its subject *over a boundary* — HTTP, a CLI, a query, the filesystem, a spawned process — gives a genuine red on day one: 404, non-zero exit, missing table, no such file. A test that `import`s its subject cannot, because module resolution precedes test collection. When authoring early, prefer the boundary.
+**Real red vs fake red — the boundary rule.** A test that reaches its subject *over a boundary* — HTTP, a CLI, a query, the filesystem, a spawned process — gives a genuine red on day one: 404, non-zero exit, missing table, no such file. A test that `import`s its subject cannot, because module resolution precedes test collection. **A seam gives the same honest red without the boundary**: when the subject already exists and takes its clock and its reads as inputs, a unit test feeding it fakes fails on its own assertion today and runs in milliseconds. Prefer the boundary only when the question *is* about the boundary — whether we still fit Jaeger, Next, the OS — and then the test is a `contract`, in the system tier, not the everyday suite (`lesson: everyday-tests-never-wait`).
 
 ### At phase start — author writable-at-phase tests
 
@@ -269,6 +269,7 @@ The hook validates that both `asked:` and `user:` are present with non-empty quo
 
 11. **Verification items.** The Verification section requires proof, not assumption. See the verify skill for full guidance.
    - Run checks in order: type check → lint → affected tests → build. Skip checks that don't apply (see verify skill's skip logic table).
+   - **A phase runs what it touched, not the suite**: the test files its own trajectory rows name, plus `pnpm exec vitest related <files this phase changed>` in each package it changed. Seconds, not minutes. The full `pnpm test` and `pnpm test:system` run at **landing** (the retrospective's merge step) and on release — the moment for `contract` tests, which is what the system tier holds.
    - Run commands and capture output — verification items must be specific runnable commands, not "verify it works"
    - If a check fails: read the error, fix it, re-run only the failing check. Max 3 attempts before flagging as a blocker to the user.
    - Check items off only when actually verified, not assumed

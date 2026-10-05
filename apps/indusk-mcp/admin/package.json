@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:system": "node ../indusk-mcp/scripts/with-daemon-guard.js vitest run --config vitest.system.config.ts"
   },
   "dependencies": {
     "@infinitedusky/indusk-mcp": "workspace:*",

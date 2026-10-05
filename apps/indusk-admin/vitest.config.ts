@@ -1,6 +1,7 @@
 import path from "node:path";
 import { playwright } from "@vitest/browser-playwright";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
+import { SYSTEM } from "./vitest.tiers";
 
 // Tests never auto-start a telemetry daemon (test-daemons-never-leak): any
 // test that runs `init` or `update` against a temporary home made `telemetry
@@ -46,15 +47,11 @@ export default defineConfig({
           // Node-only tests: lib parsers + audit scripts that touch the filesystem
           // and don't render React. Audit lives at top-level src/__tests__/.
           include: ["src/lib/**/*.test.ts", "src/__tests__/**/*.test.ts"],
+          // Files that start `next dev` or a Jaeger are the system tier
+          // (vitest.tiers.ts, `pnpm test:system`); with them gone, nothing
+          // here boots a server, so the files run in parallel (test-kinds).
+          exclude: [...configDefaults.exclude, ...SYSTEM],
           environment: "node",
-          // HTTP smoke tests spawn `next dev` per file. Running them in
-          // parallel spikes CPU + memory enough that `next dev` can't reach
-          // the "Ready in" stdout line within 30s — tests fetch before the
-          // server listens and all fail with ECONNREFUSED. Serializing per
-          // file keeps each spawn's boot window uncontested. Non-HTTP node
-          // tests (planning-reader, etc.) pay a small serial overhead but
-          // run in ms each so the cost is negligible.
-          fileParallelism: false,
         },
       },
       {

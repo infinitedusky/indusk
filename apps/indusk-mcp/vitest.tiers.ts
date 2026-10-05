@@ -12,6 +12,8 @@
  *
  * A file that starts such a system belongs in SYSTEM, or the everyday suite
  * is slow again and a port collision under parallel load reads as a flake.
+ * `everyday-tests-never-wait.test.ts` enforces it over this package and the
+ * admin (test-kinds), naming the file, line and call.
  */
 export const SYSTEM = [
 	"src/__tests__/admin-bundle-pack.test.ts",
@@ -27,6 +29,7 @@ export const SYSTEM = [
 	"src/__tests__/always-on-source.test.ts",
 	"src/__tests__/always-on-two-servers.test.ts",
 	"src/__tests__/cli-bare-ui-cwd-aware.test.ts",
+	"src/__tests__/monitor-mark.test.ts",
 	"src/__tests__/monitor-plans.test.ts",
 	"src/__tests__/monitor-status.test.ts",
 	"src/__tests__/monitor-watch.test.ts",
@@ -48,6 +51,10 @@ export const SYSTEM = [
 	"src/__tests__/watcher-falsification.test.ts",
 	"src/__tests__/watcher-heartbeat-server.test.ts",
 	"src/__tests__/watcher-probe.test.ts",
+	// Real processes the OS owns (test-kinds): a PID reused by a stranger, and
+	// orphaned stand-ins found by their argv. The wait is the subject.
+	"src/lib/admin/__tests__/daemon-identity.test.ts",
+	"src/lib/telemetry/orphans.test.ts",
 ];
 
 /**

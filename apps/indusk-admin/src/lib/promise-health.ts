@@ -19,7 +19,7 @@ import {
   silencePastExpectation,
 } from "@infinitedusky/indusk-mcp/promises/telemetry";
 import { readAdminRefreshMs } from "./project-reader";
-import { asMarkedSpans, readWindow } from "./promise-timeline";
+import { asMarkedSpans, readWindow, type StoreDeps } from "./promise-timeline";
 
 /**
  * Observed health on the Promises page and in the sidebar (day-monitor, ADR
@@ -92,28 +92,41 @@ const TIMEOUT_MS = 2_000;
 const cache = new Map<string, { expires: number; reads: SourceHealthRead[] }>();
 const lastOk = new Map<string, string>();
 
+/**
+ * What the health read reads with: the store's clock and reads, and how it
+ * probes each source's watcher. The real ones by default (test-kinds, ADR D2).
+ */
+export interface HealthDeps extends StoreDeps {
+  probe?: typeof probeSources;
+}
+
 export async function readHealth(
   projectRoot: string,
   registry: Registry,
+  deps: HealthDeps = {},
 ): Promise<SourceHealthRead[]> {
+  const now = deps.now ?? Date.now;
   const hit = cache.get(projectRoot);
-  if (hit && hit.expires > Date.now()) return hit.reads;
+  if (hit && hit.expires > now()) return hit.reads;
   let reads: SourceHealthRead[];
   try {
     // The watcher is probed every time; the marks come from the store, which
     // reads only what it has not read (promise-timeline A12). A refresh with
     // nothing new no longer moves the whole window.
-    const probed = await probeSources(projectRoot, { timeoutMs: TIMEOUT_MS });
-    const since = new Date(Date.now() - healthWindowMs(projectRoot, registry));
+    const probed = await (deps.probe ?? probeSources)(projectRoot, {
+      timeoutMs: TIMEOUT_MS,
+    });
+    const since = new Date(now() - healthWindowMs(projectRoot, registry));
     reads = await Promise.all(
       probed.map(async (p): Promise<SourceHealthRead> => {
-        if (!p.ok) return fromSource(projectRoot, p);
+        if (!p.ok) return fromSource(projectRoot, p, now());
         const w = await readWindow(
           projectRoot,
           registry,
           p.name,
           since.getTime(),
           TIMEOUT_MS,
+          deps,
         );
         if (!w.ok) {
           return {
@@ -124,12 +137,16 @@ export async function readHealth(
             where: w.where,
           };
         }
-        return fromSource(projectRoot, {
-          name: p.name,
-          label: p.label,
-          ok: true,
-          marks: asMarkedSpans(w, since),
-        });
+        return fromSource(
+          projectRoot,
+          {
+            name: p.name,
+            label: p.label,
+            ok: true,
+            marks: asMarkedSpans(w, since),
+          },
+          now(),
+        );
       }),
     );
   } catch (err) {
@@ -144,16 +161,20 @@ export async function readHealth(
     }));
   }
   cache.set(projectRoot, {
-    expires: Date.now() + readAdminRefreshMs(projectRoot),
+    expires: now() + readAdminRefreshMs(projectRoot),
     reads,
   });
   return reads;
 }
 
-function fromSource(projectRoot: string, r: SourceRead): SourceHealthRead {
+function fromSource(
+  projectRoot: string,
+  r: SourceRead,
+  nowMs: number,
+): SourceHealthRead {
   const key = `${projectRoot}\0${r.name}`;
   if (r.ok) {
-    const at = new Date().toISOString();
+    const at = new Date(nowMs).toISOString();
     lastOk.set(key, at);
     return { name: r.name, label: r.label, ok: true, at, marks: r.marks };
   }

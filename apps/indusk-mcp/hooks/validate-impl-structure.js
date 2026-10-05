@@ -31,6 +31,7 @@ import {
 	unterminatedFenceLine,
 } from "./_impl-headings.js";
 import { parseRegister } from "./_register.js";
+import { isTestKind, TEST_KINDS } from "./_test-kinds.js";
 import { parseTrajectoryFromBody } from "./_trajectory-parser.js";
 
 // Read hook input from stdin
@@ -348,6 +349,9 @@ const rationaleRequiredFrontmatter = /rationale:\s*required/.test(frontmatter);
 // `rationale_baseline` lesson was a title's substring silently setting a
 // baseline, and the same shape of bug is available to any unanchored match.
 const testPhasesRequiredFrontmatter = /^test_phases:\s*required/m.test(frontmatter);
+// test-kinds: every row names one of the five kinds, so the plan says when
+// each test runs. Line-anchored like the keys around it.
+const testKindsRequiredFrontmatter = /^test_kinds:\s*required/m.test(frontmatter);
 const rationaleBaselineMatch = frontmatter.match(/^rationale_baseline:\s*(\d+)/m);
 const rationaleBaseline = rationaleBaselineMatch
 	? Number.parseInt(rationaleBaselineMatch[1], 10)
@@ -360,6 +364,7 @@ if (trajectoryValidationEnabled) {
 		rationaleBaseline,
 		testPhasesRequiredFrontmatter,
 	);
+	trajectoryErrors.push(...validateTestKinds(body, testKindsRequiredFrontmatter));
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
 			`Test Trajectory validation failed (policy: ${gatePolicy}):\n${trajectoryErrors.map((e) => `  [${e.rule}] ${e.message}`).join("\n")}\n\nSee .indusk/planning/tests-first-planning/adr.md Sections 3-6 for the Test Trajectory shape and validator rules.\n`,
@@ -391,6 +396,32 @@ process.exit(0);
 // Trajectory validation helpers (pure JS, mirrors
 // apps/indusk-mcp/src/lib/trajectory/validator.ts and parser.ts)
 // ------------------------------------------------------------------
+
+/**
+ * test-kinds (ADR D1): with `test_kinds: required`, every trajectory row's
+ * `Kind` is one of the five. Without the key nothing is checked, so impls
+ * written before it — some with the old style words in `Kind` — validate as
+ * they did.
+ */
+function validateTestKinds(implBody, required) {
+	if (!required) return [];
+	const kinds = TEST_KINDS.join(", ");
+	const { rows } = parseTrajectoryFromBody(implBody);
+	if (rows.length > 0 && rows.every((r) => r.kind === null)) {
+		return [
+			{
+				rule: "test-kinds",
+				message: `\`test_kinds: required\` is set but the Test Trajectory has no Kind column. Add one, naming each row's kind: ${kinds} — the smallest that can prove the assertion; the kind says when the test runs.`,
+			},
+		];
+	}
+	return rows
+		.filter((r) => !r.kind || !isTestKind(r.kind))
+		.map((r) => ({
+			rule: "test-kinds",
+			message: `Row ${r.id} names ${r.kind ? `the kind \`${r.kind}\`` : "no kind"}; a kind is one of: ${kinds}.`,
+		}));
+}
 
 function validateTrajectory(
 	implBody,

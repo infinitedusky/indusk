@@ -133,8 +133,10 @@ Add when the plan benefits from the extra dimension; the template does not inclu
 
 | Column | Values | When to add |
 |--------|--------|-------------|
-| `Kind` | `example`, `property`, `contract`, `approval`, `formal` | The plan mixes kinds and the distinction matters |
-| `Scope` | `unit`, `integration`, `e2e` | Phase cost/runtime varies meaningfully by scope |
+| `Kind` | `unit`, `contract`, `live check`, `smoke`, `promise` | Every new impl: set `test_kinds: required` and the hook refuses a row with no kind or another word — see [Test kinds](/guide/test-kinds) |
+| `Scope` | `unit`, `integration`, `e2e` | Older impls only; the kind replaces it |
+
+Impls written before test kinds may carry the older style words in `Kind` (`example`, `property`, `contract`, `approval`, `formal`); without `test_kinds: required` they validate as they always did.
 | `Test` | Test **file** paths, comma-separated | The plan may be verified with [`atdawn verify`](../reference/cli/verify.md) — which is any plan whose phases might be executed outside a lane Dawn controls |
 
 ### The `Test` column and what it unlocks
