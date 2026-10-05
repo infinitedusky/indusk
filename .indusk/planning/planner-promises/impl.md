@@ -53,8 +53,8 @@ promises proven; and an incident starts from the tests that were vouching
 
 | ID | Asserts | Writable at | Passes at | State | Level | For | Test |
 |----|---------|-------------|-----------|-------|------|-----|------|
-| A1 | A promise written from a planning conversation is in the registry as `declared`, owned by its plan, with the sentence the person approved, and the check passes | Test Phase 1 | Build Phase 3 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-declare.test.ts |
-| A2 | In a project that has declared no domains, writing its first promise declares that promise's domain with it, and the check passes | Test Phase 1 | Build Phase 3 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-declare.test.ts |
+| A1 | A promise written from a planning conversation is in the registry as `declared`, owned by its plan, with the sentence the person approved, and the check passes | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-declare.test.ts |
+| A2 | In a project that has declared no domains, writing its first promise declares that promise's domain with it, and the check passes | Test Phase 1 | Build Phase 3 | passing | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-declare.test.ts |
 | A3 | A plan cannot start building while its brief names, among the promises it makes, one the registry does not hold or another plan owns; the refusal names the promise | Test Phase 1 | Build Phase 4 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A4 | A plan cannot start building while its brief lists, among the promises it must not break, changes or replaces, one that does not exist or is already retired; the refusal names it | Test Phase 1 | Build Phase 4 | written | unit | promise: a-briefs-promises-are-in-the-registry | apps/indusk-mcp/src/__tests__/promises-contract.test.ts |
 | A5 | An impl whose every test row names a promise, names a lesson, or gives a reason is accepted; one with a row that does none of these is refused, naming the row | Test Phase 1 | Build Phase 2 | passing | unit | promise: every-test-says-what-it-is-for | apps/indusk-mcp/src/__tests__/row-purpose.test.ts |
@@ -181,21 +181,22 @@ promises proven; and an incident starts from the tests that were vouching
 
 ### Build Phase 3: Commands write the registry
 
-- [ ] `lib/promises/write.ts`: `declarePromise`, `changePromise`, `replacePromise` — the one writer. `declare` adds the domain to `promises.domains` when the project does not declare it; `change` keeps name, state, incidents and aliases, moves the owner, and adds a History line with the old sentence, the reason and the previous owner; `replace` declares the new promise with `supersedes: <old>`
-- [ ] `lib/promises/registry.ts` reads `supersedes`; `check.ts` refuses one that names a promise the registry does not hold
-- [ ] `bin/commands/promises.ts` and `bin/cli.ts`: `promises declare | change | replace`; `tools/plan-tools.ts`: `declare_promise`, `change_promise`, `replace_promise`
+- [x] `lib/promises/write.ts`: `declarePromise`, `changePromise`, `replacePromise` — the one writer. `declare` adds the domain to `promises.domains` when the project does not declare it; `change` keeps name, state, incidents and aliases, moves the owner, and adds a History line with the old sentence, the reason and the previous owner; `replace` declares the new promise with `supersedes: <old>`
+- [x] `lib/promises/registry.ts` reads `supersedes`; `check.ts` refuses one that names a promise the registry does not hold
+- [x] `bin/commands/promises.ts` and `bin/cli.ts`: `promises declare | change | replace`; `tools/plan-tools.ts`: `declare_promise`, `change_promise`, `replace_promise`
 
 #### Build Phase 3 Verification
 
-- [ ] A1 and A2 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises-declare src/__tests__/promises-check src/__tests__/promises-single-definition`)
+- [x] A1 and A2 pass (`cd apps/indusk-mcp && pnpm exec vitest run src/__tests__/promises-declare src/__tests__/promises-check src/__tests__/promises-single-definition`) — 31 tests; `vitest related` over the changed files: 51 pass in 6 s, the only reds the incident rows that Build Phase 6 turns green
+- [x] Shape — `write.ts` is the one writer and each function refuses before it writes; `check.ts` gained one rule function beside its siblings. One thing looked at and kept: `requireDomain` returns the config write to run later, so nothing is written to the config when the promise itself is refused
 
 #### Build Phase 3 Context
 
-- [ ] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): the `.indusk/promises/` entry gains "written by `indusk promises declare | change | replace`, never by hand"
+- [x] planning (`apps/indusk-mcp/templates/planning/CLAUDE.md`): the `.indusk/promises/` entry gains "written by `indusk promises declare | change | replace`, never by hand"
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/reference/cli/promises.md`: `declare`, `change`, `replace`, and the `supersedes` key
+- [x] `apps/docs/src/reference/cli/promises.md`: `declare`, `change`, `replace`, and the `supersedes` key
 
 ### Build Phase 4: The brief and the contract
 

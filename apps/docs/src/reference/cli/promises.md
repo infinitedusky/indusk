@@ -37,7 +37,8 @@ tests:                           # code-root-relative; each carries the token
   - src/seats.test.ts
 incidents: []                    # incident ids; required non-empty when known-violated
 aliases: []                      # optional: earlier names that still resolve
-superseded_by:                   # optional: the successor, when retired
+superseded_by:                   # optional, older files: the successor, when retired
+supersedes:                      # optional: the promise this one replaced (written by `promises replace`)
 expect_every:                    # optional: e.g. 1d — silence past this needs attention
 ---
 
@@ -114,6 +115,47 @@ Declared in `.indusk/config.json`, decided in planning, never free:
 
 `indusk update` ensures the block exists with an empty list on a project
 that has none; it never touches a declared list.
+
+## Writing a promise: `declare`, `change`, `replace`
+
+Nobody writes a registry file by hand. A promise reaches the registry from a
+planning conversation through one of three commands, and the planner calls
+the MCP tools of the same names (`declare_promise`, `change_promise`,
+`replace_promise`). Each writes plan documents and commits nothing, and each
+refuses with exit **2**, naming what was wrong, with nothing written.
+
+```
+indusk promises declare <name> --plan <plan> --kind <kind> --domain <domain> --statement "<sentence>"
+```
+
+Writes `<name>.md` as `declared`, owned by the plan, with the sentence as its
+statement and a History line saying where it came from. In a project that
+declares no domains, the promise's domain is declared with it; in one that
+does, a domain it does not declare is refused, naming the ones it does. It
+refuses a name the registry already holds, a kind that is not a kind, and a
+plan that is not a folder under `.indusk/planning/`.
+
+```
+indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>"
+```
+
+Improves a promise in place, when a later plan partly changes what it commits
+to. The sentence is replaced, the plan takes the promise over, and its History
+gains a line with the old sentence, the reason and the plan that owned it
+before. Its name, state, incidents and aliases are untouched, so the marks
+that name it and its incidents stay attached. If it breaks later, the plan
+that changed it is the one reopened.
+
+```
+indusk promises replace <old> --by <new> --plan <plan> --kind <kind> --domain <domain> --statement "<sentence>"
+```
+
+For a promise whose name no longer describes it. Declares the new promise
+with `supersedes: <old>`. The old one stays in force while the plan builds and
+is retired when the plan closes. The link is written once, on the new
+promise; `check` refuses a `supersedes` that names a promise the registry does
+not hold, and refuses a replacement that is in force while what it replaced
+still is.
 
 ## `promises check`
 
