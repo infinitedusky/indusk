@@ -10,11 +10,18 @@ import type { Phase } from "@/lib/phases";
 export function CleanupSection({
   planName,
   phase,
+  promisesHref,
 }: {
   planName: string;
   phase: Phase;
+  promisesHref?: string;
 }) {
   return (
-    <RitualPhaseSection ritual="cleanup" planName={planName} phase={phase} />
+    <RitualPhaseSection
+      ritual="cleanup"
+      planName={planName}
+      phase={phase}
+      promisesHref={promisesHref}
+    />
   );
 }

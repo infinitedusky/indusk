@@ -98,6 +98,7 @@ Before advancing past Phase N (i.e., before checking the first implementation it
 
 1. Collect every row with `Passes at: Phase N`.
 2. Run the tests. For each row whose test now passes, update its `State` to `passing` in the trajectory table.
+   A row whose `For` names a promise names its test files in its `Test` cell by now, and each of those files carries the promise's token (a comment saying `promise: <name>`). Closing the plan reads both: `indusk promises confirm` refuses a promise whose rows name no test file, or a file without the token.
 3. If a test is explicitly skipped (approval test awaiting first run, platform-specific test), update to `skipped` with an inline comment on the reason.
 4. If a test regressed or its dependencies changed unexpectedly, update to `blocked` — then resolve it (fix the test, or move its `Passes at` to a later phase with a reason).
 5. The `check-gates` hook rejects the phase transition if any `Passes at: Phase N` row is still in `planned`, `writable`, or `written` state. This is structural enforcement of "deferral is impossible."

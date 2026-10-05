@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readPromises } from "../lib/promises/registry.js";
 import { readSources } from "../lib/promises/sources.js";
-import { registerPlanTools } from "../tools/plan-tools.js";
+import { registerPromiseTools } from "../tools/promise-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { newTraceId } from "./helpers/local-jaeger.js";
 import { toolCaller } from "./helpers/tool-call.js";
@@ -49,7 +49,7 @@ function section(out: string, name: "local" | "production"): string {
 
 async function health(t: TwoSources): Promise<{ json: Record<string, unknown>; isError: boolean }> {
 	return withEnv(t.env, async () => {
-		const tools = toolCaller((server) => registerPlanTools(server, t.project.planRoot));
+		const tools = toolCaller((server) => registerPromiseTools(server, t.project.planRoot));
 		const r = await tools.call("promise_health", {});
 		return { json: r.json as Record<string, unknown>, isError: r.isError };
 	});

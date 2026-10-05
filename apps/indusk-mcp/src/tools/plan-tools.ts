@@ -7,9 +7,6 @@ import { getAllPhaseCompletions, parseImpl } from "../lib/impl-parser.js";
 import { isFinishedDocumentStatus, nextRequiredDocument } from "../lib/lifecycle.js";
 import { type PlanSummary, parseAllPlans, parsePlan } from "../lib/plan-parser.js";
 import { ARCHIVE_DIR, archivedInMotion, archivedPlan } from "../lib/promises/after-close.js";
-import { promiseHealth } from "../lib/promises/health.js";
-import { WatcherBlind } from "../lib/promises/probe.js";
-import { readPromises } from "../lib/promises/registry.js";
 import { openMaintenancePhasesIn } from "../lib/promises/reopen.js";
 import { DOCUMENT_LABELS } from "../lib/workflow-types.js";
 import {
@@ -115,65 +112,6 @@ export function registerPlanTools(server: McpServer, projectRoot: string): void 
 					},
 				],
 			};
-		},
-	);
-
-	server.registerTool(
-		"list_promises",
-		{
-			description:
-				"The promise registry (.indusk/promises/): every promise with its kind, lifetime, state, domain, owner, statement and links, plus every incident — or, when the registry is missing or an entry is malformed, the problem naming the file and the field. No filtering; read it the way /catchup reads plans.",
-			inputSchema: {},
-		},
-		async () => {
-			const read = readPromises(projectRoot);
-			const text = JSON.stringify(read, null, 2);
-			return { content: [{ type: "text" as const, text }] };
-		},
-	);
-
-	server.registerTool(
-		"promise_health",
-		{
-			description:
-				"What the promises are doing right now: per behaviour promise, violations in the window, open incidents, and — the number that matters — violations no incident records yet. Ask this when answering what to work on next; unrecorded violations outrank the roadmap. Reads every source — `local` (the daemon) and, when the project names one, `production` (its always-on server) — through the same reads the CLI uses, so the two cannot disagree. `sources` holds each source's rows or its failure; the top-level fields are the alarm source's (production when there is one), so a local break during development is shown under `sources` without being raised. Errors only when no source can be read.",
-			inputSchema: {
-				since_ms: z
-					.number()
-					.optional()
-					.describe("Window in milliseconds; defaults to the project's quiet window."),
-			},
-		},
-		async ({ since_ms }) => {
-			try {
-				const report = await promiseHealth(projectRoot, {
-					...(since_ms !== undefined ? { sinceMs: since_ms } : {}),
-				});
-				return { content: [{ type: "text" as const, text: JSON.stringify(report, null, 2) }] };
-			} catch (err) {
-				// Unreachable telemetry is reported, never rendered as zero
-				// violations: "nothing is broken" and "nobody could look" are
-				// different answers and only one of them is reassuring.
-				return {
-					isError: true,
-					content: [
-						{
-							type: "text" as const,
-							text: JSON.stringify(
-								{
-									error: (err as Error).message,
-									// A watcher that answered and did not hear is its own
-									// state, so a session can say so rather than "unreachable".
-									...(err instanceof WatcherBlind ? { blind: true } : {}),
-									promises: null,
-								},
-								null,
-								2,
-							),
-						},
-					],
-				};
-			}
 		},
 	);
 

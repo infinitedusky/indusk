@@ -1,0 +1,7 @@
+# A reader that drops what it cannot read passes every rule above it — a line it cannot parse is a refusal naming the line, never a skip
+
+planner-promises built a contract out of three readers: a trajectory row parser, a brief parser and a purpose parser. Falsification found the same mistake in all three. The row parser skipped a table line whose cell count did not match the header, so the row vanished and every rule passed. The brief parser read entries only in the exact shape it expected, so an indented or bulleted promise vanished from its list. The purpose parser read `promise: \`name\`` (a name in backticks) as a reason, so the row named no promise. In each case the rules above the reader were correct and judged nothing, because the reader had already decided the thing was not there.
+
+Why it matters: a rule can only refuse what it is handed. A reader that drops a malformed input turns "I could not read this" into "there is nothing here", and nothing downstream can tell the difference. The failure is silent, and it looks exactly like a pass.
+
+What to do: when a reader meets input in the shape of the thing it reads but cannot read it (a table line, an entry that starts with a name, a cell with the token's prefix), it reports it with its location, and the caller refuses it. Parse strictly, and say what you could not parse. Guarded by `apps/indusk-mcp/src/__tests__/row-purpose.test.ts` (planner-promises A30, A31) and `promises-contract.test.ts` (A32).

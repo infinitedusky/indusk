@@ -13,6 +13,12 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   (`feature`, `bugfix`, `refactor`, `spike`), declared in the brief's
   frontmatter — never inferred from which files exist. — see
   `/reference/skills/planner`
+- **A brief holds expectations and promises, and everything else is
+  research.** Its shape is read by `indusk promises contract`, so keep the
+  headings and each label on its own line; a draft is not held to the
+  registry, an accepted brief is, by every `pnpm test`. The problem, the
+  context and the decisions made on the way go in `research.md`. — see
+  `/guide/briefs`
 - **Cross-reference related plans by path, and update both** when work in one
   changes something the other names — a plan never cites stale information.
 - **Plan hierarchy is declared top-down, in frontmatter**: the root `master.md`
@@ -28,9 +34,14 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   the plan root, not code and not machine state. Every kind has a promise;
   `pnpm test` ends with `pnpm promises:check`. Only a promise about something
   known to happen regularly declares `expect_every`; silence without it is the
-  good outcome. An incident is closed with `indusk promises fix <id>`, which
-  records when; `check` refuses a fixed incident that does not say. — see
-  `/decisions/day-promises`
+  good outcome. A promise is written by `indusk promises declare | change |
+  replace`, and one never in force taken back by `withdraw` (the planner's
+  tools of the same names), never by hand. A plan confirms its promises
+  (`indusk promises confirm`) before it archives, retrospective or not; an
+  archived plan's declared promise is confirmed or withdrawn by the same
+  commands, never edited by hand. An incident
+  is closed with `indusk promises fix <id>`, which records when; `check`
+  refuses a fixed incident that does not say. — see `/decisions/day-promises`
 
 ## The impl
 
@@ -52,11 +63,13 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   earliest authorable phase, never the fix phase; `Writable ≤ Passes` is
   enforced at write time. Deferred Verification rows need `reason:` /
   `would require:` / `mitigation:`. — see `/guide/test-trajectory`
-- **A test plan's Kind is one of five** — `unit` / `contract` / `live check` /
-  `smoke` / `promise` — the smallest that proves the assertion; the kind says
-  when the test runs (a phase runs only its rows and related tests; both tiers
-  run at landing). `test_kinds: required` makes the hook refuse a row with no
-  kind or another word. — see `/guide/test-kinds`
+- **A test row has a `Level` and a `For`.** The level is one of five — `unit` /
+  `contract` / `live check` / `smoke` / `promise` — the smallest that proves
+  the assertion, and it says when the test runs (a phase runs only its rows
+  and related tests; both tiers run at landing). `For` says what the test is
+  for: `promise: <name>`, `lesson: <name>`, or the reason it needs neither.
+  `test_levels: required` and `test_purpose: required` make the hook refuse a
+  row without them. — see `/guide/test-levels`
 - Vitest is the committed test runner (adaptive first-connect setup); moved
   here from the root at test-kinds' close. — see
   `.indusk/planning/archive/verify-skill/adr.md`
@@ -101,8 +114,10 @@ this copy. Each entry is a rule and a pointer; the pointer holds the story.
   → `/work` → `/cleanup` (authors a Cleanup Phase; its threshold is
   attention-focus, not a cap) → `/work` → `/retrospective`, whose Step 0 blocks
   unless both rituals are terminal or skipped with a reason. Ritual phases are
-  detected by titles that START with the ritual word. — see
-  `/decisions/falsification-ritual`
+  detected by titles that START with the ritual word. The retrospective
+  confirms the plan's promises (`indusk promises confirm <plan>`) before it
+  archives; a declared promise no passing row names blocks the close. — see
+  `/decisions/falsification-ritual`, `/reference/skills/retrospective`
 - **The retrospective's compaction step**: plan close demotes the plan's
   narrative to one line + archive link, compresses any context entries it
   authored to rule + pointer, and collapses one old root entry per close. — see

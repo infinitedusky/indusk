@@ -1,10 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join, resolve, sep } from "node:path";
 import matter from "gray-matter";
 import { isFalsificationComplete } from "../falsification/log.js";
 import { isFalsificationSkipped } from "../falsification/skip.js";
 import { parsePhaseHeading } from "../impl-headings.js";
 import { RITUAL_ORDER } from "../lifecycle.js";
+import { parseBriefContract } from "../promises/brief-contract.js";
+import { readPromises } from "../promises/registry.js";
+import { rowProofs } from "../promises/rows.js";
 import { findNonTerminalRows } from "../trajectory/audit.js";
 import { parseTrajectory } from "../trajectory/parser.js";
 
@@ -106,15 +109,51 @@ export interface RetrospectiveReadiness {
 	rowsOk: boolean;
 	/** The rows that are not, by id — what the skill's refusal names. */
 	nonTerminalRows: string[];
+	/** Every promise the plan declared is named by passing rows (planner-promises ADR D5). */
+	promisesOk: boolean;
+	/** The promises that are not, by name — what the skill's refusal names. */
+	unprovenPromises: string[];
 	passes: boolean;
-	/** What is not yet satisfied (subset of ["falsification", "cleanup", "rows"]). */
+	/** What is not yet satisfied (subset of ["falsification", "cleanup", "rows", "promises"]). */
 	missing: string[];
+}
+
+/**
+ * The promises `planDir`'s plan declared that its rows do not yet prove.
+ *
+ * Reads the impl's rows only. `indusk promises confirm` also reads the test
+ * files and the code, and is the full answer; this gate is asked by the admin
+ * for every plan on a page and cannot know where a workbench plan's code is,
+ * so it answers the half the impl settles. A plan whose brief has no Promises
+ * section made none through planning and is left as it was.
+ *
+ * promise: a-closed-plan-kept-its-promises
+ */
+function unprovenPromisesOf(planDirIn: string, implContent: string): string[] {
+	// Resolved first: `.indusk/planning/<plan>`, relative to a project root,
+	// has no separator before `.indusk` and found no planning root (A36).
+	const planDir = resolve(planDirIn);
+	const marker = `${sep}.indusk${sep}planning${sep}`;
+	const at = planDir.lastIndexOf(marker);
+	const briefPath = join(planDir, "brief.md");
+	if (at === -1 || !existsSync(briefPath)) return [];
+	if (parseBriefContract(readFileSync(briefPath, "utf-8")).shape === "legacy") return [];
+	const read = readPromises(planDir.slice(0, at));
+	// A registry that cannot be read is `promises check`'s refusal to make.
+	const registry = read.ok ? read.registry : "partial" in read ? read.partial : null;
+	if (registry === null) return [];
+	const plan = basename(planDir);
+	const declared = registry.promises.filter((p) => p.owner === plan && p.state === "declared");
+	return rowProofs(declared, plan, implContent)
+		.filter((p) => p.refusal !== null)
+		.map((p) => p.promise.name);
 }
 
 /**
  * The composed retrospective Step 0 readiness check: a plan is ready to close
  * only when BOTH rituals are satisfied — each either complete or explicitly
- * skipped. This is the single source of truth the retrospective skill's Step 0
+ * skipped — every row is terminal, and every promise it declared is named by
+ * passing rows. This is the single source of truth the retrospective skill's Step 0
  * gate references for the cleanup requirement.
  *
  * Falsification is satisfied by a completed log OR the skip frontmatter; the
@@ -136,15 +175,20 @@ export function checkRetrospectiveReadiness(
 	const body = matter(implContent).content;
 	const nonTerminalRows = findNonTerminalRows(parseTrajectory(body), body).map((f) => f.row.id);
 	const rowsOk = nonTerminalRows.length === 0;
+	const unprovenPromises = unprovenPromisesOf(planRoot, implContent);
+	const promisesOk = unprovenPromises.length === 0;
 	const missing: string[] = [];
 	if (!falsificationOk) missing.push("falsification");
 	if (!cleanupOk) missing.push("cleanup");
 	if (!rowsOk) missing.push("rows");
+	if (!promisesOk) missing.push("promises");
 	return {
 		falsificationOk,
 		cleanupOk,
 		rowsOk,
 		nonTerminalRows,
+		promisesOk,
+		unprovenPromises,
 		passes: missing.length === 0,
 		missing,
 	};

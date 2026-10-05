@@ -49,24 +49,27 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
 ## What to Do When Asked to Plan
 
-0. **Read `.indusk/planning/master.md` first**, before writing any plan document. The planning rules live in `.indusk/planning/CLAUDE.md`, and Claude Code loads a nested context file when a file beneath it is *read* — a Write to a directory nothing has been read from loads nothing (measured, context-tiers A17). Reading the master puts the planning rules in context before the plan's first file is authored, and tells you where the plan sits in the sequence.
+0. **Read `.indusk/planning/master.md` first**, before writing any plan document. The planning rules live in `.indusk/planning/CLAUDE.md`, and Claude Code loads a nested context file when a file beneath it is *read* — a Write to a directory nothing has been read from loads nothing (measured, context-tiers A17). Reading the master puts the planning rules in context before the plan's first file is authored, and tells you where the plan sits in the sequence. A project with no `master.md` yet: read `.indusk/planning/CLAUDE.md` itself.
 
 1. **Determine the workflow type** from the input (see above). This controls which documents you create.
 
 2. **Figure out where things stand.** If a plan folder already exists, read what's there. Check frontmatter statuses. The next document to write is the first one that's missing or incomplete.
 
-3. **If starting fresh**, do a quick scan of the project (read CLAUDE.md, skim the relevant source) to understand the context. Then **ask the user discovery questions before doing any research or writing any documents.** The goal is to understand what they're trying to achieve, not just what they named the plan. Good discovery questions:
-   - "What problem are you trying to solve?" or "What should this feature do for your users?"
-   - "Is there anything specific you've already thought through or have strong opinions about?"
-   - "Are there any constraints I should know about — timeline, technology preferences, things to avoid?"
+3. **If starting fresh, have the conversation first.** The conversation is the plan's input: the person says what they want, and the plan's promises come out of it. Do a quick scan of the project (read CLAUDE.md, skim the relevant source) so your questions are informed, create the plan folder, then talk before you research or write anything.
 
-   For non-developers especially, this conversation is critical. They may not know the right technical terms, but they know what they want. Draw that out before proceeding.
+   - **What they want.** Ask what should be true when this is done, in their words: "What should this do for the people who use it?", "What is wrong today?", "Is there anything you have already decided, or want to avoid?" Ask why as well: what they expect to follow from it. Settle what will be true, not how to build it: an approach offered before the promises exist anchors the conversation on the code, and how is the ADR's question. For a non-developer this is the whole of their input. They may not have the technical terms; they know what they want. Draw that out.
+   - **What already holds.** Call `list_promises` and read every promise in force. Go through the ones this work comes near and settle with the person which of three things is true of each: it is still true as written and this plan must not break it; it is the same commitment and its sentence should now say more, or say it better (a **change**); or its name no longer describes it (a **replacement**). Prefer a change to a replacement: an improved promise keeps its name, its history and its incidents.
+   - **Say it back.** Put what you heard as promises, one plain sentence each about what will be true and never about how, and as expectations, each with how you would know and when to look. Say them back and take corrections until the person agrees. Nothing is saved yet.
 
-   Once you understand the intent, create the plan folder and start with the first document for the workflow type:
+   Everything else the conversation turns up (what exists today, what has been tried, what was decided on the way and why) is research, not brief.
+
+   Then start with the first document for the workflow type:
    - **feature**: start with research
-   - **bugfix**: start with brief (streamlined template)
-   - **refactor**: start with brief (includes boundary map)
+   - **bugfix**: start with brief
+   - **refactor**: start with brief (the impl carries the boundary map)
    - **spike**: start with research (and stop there)
+
+   A bugfix or a refactor has no required research document, and may carry one anyway: it is where the why goes when there is more of it than a brief holds.
 
    **Check for existing research first.** Before writing new research, scan `.indusk/research/` for relevant standalone research docs. If one exists (e.g., `.indusk/research/auth-options.md`), ask the user: "I found existing research at `.indusk/research/auth-options.md`. Want to use this as the starting point?" If yes:
    - Copy it to `.indusk/planning/{plan-name}/research.md`
@@ -76,23 +79,37 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    The `.indusk/research/` directory is for standalone exploration that isn't tied to a plan yet. When it becomes a plan, it moves into the planning folder. The original in `.indusk/research/` can be deleted or kept as a reference — user's choice.
 
    For feature/spike workflows that need new research: Explore the problem space — read code, search the web for library docs. **Grep for the affected symbols' consumers before scoping** — include structural findings in research.md with concrete numbers.
-   Document what you find. The research doc records findings and analysis, but saves the recommendation for the brief.
+   Document what you find. Research holds the background, the findings and the decisions made on the way. It does not hold promises, and the brief does not repeat it.
 
-4. **If research is done**, write the brief. This is where a direction emerges from the research. The brief proposes what we're building and why, informed by what the research uncovered. **Consider creating a visual sketch** of the proposed architecture with Excalidraw (if the extension is enabled) — a hand-drawn diagram makes the proposal concrete and easier to discuss. **Present the brief and have a conversation about it.** Don't just ask "does this look good?" — walk the user through it: "Here's what I'm proposing we build. Does this match what you had in mind? Is there anything missing, or anything here you don't want?" Iterate until the user is genuinely happy with the direction, then mark it as `accepted`.
+4. **If research is done** (or the workflow starts at the brief), write the brief. A brief is what the conversation produced and holds two things: the **expectations** (why we are doing this, each with a measure and a time to look) and the **promises** (what will be true: the ones this plan makes, and the existing ones it must not break, changes or replaces). It holds nothing else. The problem, the context and the findings are research; the approach is the ADR's; what "done" means is said once, as promises, and not again as success criteria. The template is below; the shape is read by a program, so keep it exactly. — see `/guide/briefs`
+
+   - **Expectations decide what gets measured.** An expectation says what we expect to follow and how we would know, so writing one is also deciding what telemetry the work needs. Most can only be measured in production; say so in the measure. An expectation that does not happen is information, not a defect, and blocks nothing. A plan with none writes `None — {reason}`.
+   - **Each promise is one sentence, observable, with a name and a kind.** A kebab-case name; the kind is `behaviour` (breaks on inputs nobody chose; watched in the running system), `state` (breaks on a later change; a test) or `structure` (breaks when something is removed or duplicated; a build-time check). Assign the kind from the sentence; the person can correct it. If a test with inputs you choose can prove it, it is `state`, even when it describes something a user does: `behaviour` is for what only the running system shows, and it asks for marks in that system.
+   - **Write it as `status: draft` and present it.** The draft is the conversation read back on paper. Walk the person through it: "Here is what I understood we are promising, and what we expect to follow. Is anything missing? Is there anything here you do not want to promise?" Iterate until they agree. A draft is not yet held to the registry, so edit it freely.
+
+   **When the person accepts the brief, save its promises with the tools. Never type a file under `.indusk/promises/`:**
+
+   - `declare_promise` for each promise under **This plan makes**;
+   - `replace_promise` for each entry under **Replaces** (it declares the new promise recording which it replaces; the old one stays in force until this plan closes). A promise that is some entry's replacement is saved this way only, not also with `declare_promise`; if it was, `replace_promise` records the link on it;
+   - nothing yet for **Changes**: `change_promise` rewrites a promise's sentence, and the registry must not say what the code does not yet do, so it is run in the build phase that makes the new sentence true. Give the impl a checklist item for it.
+
+   Then run `indusk promises contract {plan-name}`. It refuses, naming the promise or the expectation, until the brief and the registry agree. When it passes, set `status: accepted`. From then on `indusk promises check` holds the plan to it, and so does the project's test run wherever that runs the check.
+
+   **If the person later drops or renames a promise this plan declared**, take it back with `withdraw_promise` and edit the brief to match. A rename is `withdraw_promise`, then `declare_promise` with the new name. A dropped promise that was seriously considered goes under **Not promised**, with where it went. Never delete a file under `.indusk/promises/` by hand. Only a promise that was never in force can be withdrawn: one that is already `enforced` leaves the registry when a later plan replaces it.
 
    **When the brief moves from `draft` to `accepted`**, write a highlight so the eval agent can record it:
    ```
    mcp__indusk__highlight({
      tag: "brief-accepted",
-     note: "{plan-name}: {one-line summary of Proposed Direction}",
+     note: "{plan-name}: promises {the names of the promises it makes}",
      level: "critical"
    })
    ```
    The working agent does not materialize highlights directly. The eval agent reads unprocessed highlights (via `highlights_unprocessed`), extracts context from the transcript, records what's durable (usually the plan docs already carry it), and marks the highlight processed. Skip silently if `mcp__indusk__highlight` is unavailable — highlights are best-effort and must not fail brief acceptance. See [`apps/docs/src/reference/tools/highlights.md`](../../docs/src/reference/tools/highlights.md) for the full flow.
 
-5. **If brief is accepted** and the workflow includes a test plan (bugfix, refactor, or feature — anything that ships an impl), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **its kind** — which of the five kinds of test proves it, and so when that test runs:
+5. **If brief is accepted** and the workflow includes a test plan (bugfix, refactor, or feature — anything that ships an impl), write the test plan. The test plan is the bridge between the brief (what we want and why) and the ADR (architectural decision). It lists the **behavioral assertions** that must be true for the feature to be working, and for each assertion names **its level** — which of the five levels of test proves it, and so when that test runs:
 
-   | Kind | The question it answers | When it runs |
+   | Level | The question it answers | When it runs |
    |---|---|---|
    | `unit` | Is this rule right? | in the phase that writes it; part of `pnpm test` |
    | `contract` | Do we still fit something we do not own (Jaeger's API, npm, a browser, the OS, Claude Code)? | the system tier: at landing and on release |
@@ -100,9 +117,11 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    | `smoke` | Is the deployed thing alive? | at deploy |
    | `promise` | Is it still true in production? | continuously, by the watcher |
 
-   **Name the smallest kind that can prove the assertion.** An assertion's *wording* is behavioural; its *kind* is usually `unit`, because the behaviour is decided by a rule, and a rule is tested by feeding it inputs. Reach for `contract` only when the question is about the thing you do not own — a store's late-run rule is a `unit`, "Jaeger still answers our query the way we expect" is a `contract`. Code that decides takes its clock and its reads as inputs so its rules can be `unit` tests (`lesson: code-that-decides-takes-its-clock-and-its-reads`); a test that starts a server or waits on the wall clock belongs in the system tier, and the everyday suite refuses it (`lesson: everyday-tests-never-wait`). The five are defined once, in the package's `test-kinds` module.
+   **Name the smallest level that can prove the assertion.** An assertion's *wording* is behavioural; its *level* is usually `unit`, because the behaviour is decided by a rule, and a rule is tested by feeding it inputs. Reach for `contract` only when the question is about the thing you do not own — a store's late-run rule is a `unit`, "Jaeger still answers our query the way we expect" is a `contract`. Code that decides takes its clock and its reads as inputs so its rules can be `unit` tests (`lesson: code-that-decides-takes-its-clock-and-its-reads`); a test that starts a server or waits on the wall clock belongs in the system tier, and the everyday suite refuses it (`lesson: everyday-tests-never-wait`). The five are defined once, in the package's `test-levels` module. (In 1.61 a test's level was called its *kind*. A promise already has a kind, and a row names both, so the test's word changed.)
 
-   The discipline this produces: when you walk into the ADR with a test plan in hand, the architectural decision is constrained by "what makes all these assertions true?" rather than invented from intuition. The ADR's "We decided for" / "And against" clauses gain teeth because alternatives can be rejected against specific assertions. The impl's Test Trajectory rows derive directly from the test plan's assertions — one trajectory row per assertion, with the `Writable at` / `Passes at` columns added during impl authoring.
+   **Group the assertions by promise.** Each promise the brief makes gets a heading, with the assertions that prove it under it. An assertion that proves no promise goes under its own heading with the reason: a regression guard, a rename, a lesson. The grouping becomes each row's `For` cell in the impl. A promise with no assertion under it will have no row to prove it, and the plan will not be able to close.
+
+   The discipline this produces: when you walk into the ADR with a test plan in hand, the architectural decision is constrained by "what makes all these assertions true?" rather than invented from intuition. The ADR's "We decided for" / "And against" clauses gain teeth because alternatives can be rejected against specific assertions. The impl's Test Trajectory rows derive directly from the test plan's assertions — one trajectory row per assertion, with the `Writable at` / `Passes at` columns added during impl authoring and the promise it sits under as its `For`.
 
    **CRITICAL: assertions must be BEHAVIORAL, not functional.** This is the single most important authoring discipline for the test plan. A behavioral assertion describes *what an outside observer sees the system do* — a user action, a visible outcome, an externally-observable state change. A functional assertion describes *how the system does it internally* — function calls, return types, internal state, method signatures. Functional assertions belong in unit tests inside the impl phase, not in the test plan.
 
@@ -123,7 +142,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
    - ❌ "tablesRepository.create() inserts a row" → behavioral: "After creating a table, it appears in the table list"
    - ❌ "The reconstructFromDb() method reads the new column" → behavioral: "Restarting the server preserves in-progress hands"
 
-   The Kind column is the right place for the *how to test* — one of the five. The assertion column stays at the *what should be true* level. If naming a function or type creeps into the assertion, you've leaked the implementation across the boundary the test plan is meant to enforce.
+   The Level column is the right place for the *how to test* — one of the five. The assertion column stays at the *what should be true* level. If naming a function or type creeps into the assertion, you've leaked the implementation across the boundary the test plan is meant to enforce.
 
    **Present the test plan for review.** Walk the user through the assertions: "Here's everything I think must be true for this to work, and how I'd test each one. Anything missing? Anything we'd test differently?" The user signs off before you proceed to the ADR. If they push back on assertions, that's the plan working — better to discover scope gaps here than at impl time. If you catch yourself writing functional-sounding assertions, stop and re-phrase before presenting.
 
@@ -153,7 +172,9 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **Open Phase 1 with a worktree kickoff item.** Worktree-per-plan is the default (see the `worktree-visibility` ADR): every impl's first phase begins with a checklist item that creates or confirms the plan's own worktree — e.g. `Create/confirm this plan's worktree (indusk worktree create <plan>, which records the assignment so the admin and plan tools read the plan from it; a worktree made another way needs indusk worktree assign <plan> <path>) — worktree-per-plan default; skip only if worktree: none in frontmatter`. A plan opts out by setting `worktree: none` in the impl frontmatter (no workflow sets it by default — even hotfix gets a worktree). `/work`'s Worktree Kickoff step reads the frontmatter and nudges before code is written; the kickoff item makes the intent explicit in the checklist.
 
-   **Derive the Test Trajectory from the test plan.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State | Kind`, the Kind one of the five, from the test plan; set `test_kinds: required` in the frontmatter and the hook refuses a row with none or another word (an impl without the key keeps the older optional `Kind`/`Scope` columns). Test IDs are conventionally `T`-prefixed (`T1`, `T2`, …); `A`-prefixed IDs (`A1`, …) are also accepted — handy when the trajectory mirrors an acceptance-style test plan. For feature plans, walk the test plan's assertion list — each assertion becomes a trajectory row, with the assertion text becoming the `Asserts` column and the test plan's kind becoming its `Kind`. Then walk each planned phase and assign `Writable at` / `Passes at`. Every phase's Verification block references test IDs from the trajectory rather than restating the checks. For bugfix/refactor workflows without a test plan, walk the ADR's Decision section (or the brief's Success Criteria) and ask "what test would prove this works?" for each item.
+   **Derive the Test Trajectory from the test plan.** Every new impl opens with a `## Test Trajectory` table (after `## Boundary Map`, before `## Checklist`) that enumerates the tests the plan commits to. Columns: `ID | Asserts | Writable at | Passes at | State | Level | For | Test`. `Level` is one of the five, from the test plan; set `test_levels: required` in the frontmatter and the hook refuses a row with none or another word. `For` says what the row is for; set `test_purpose: required` and the hook refuses a row that does not say. `Test` names the row's test files. (An impl written with `Kind` and `test_kinds: required` still validates.) Test IDs are conventionally `T`-prefixed (`T1`, `T2`, …); `A`-prefixed IDs (`A1`, …) are also accepted — handy when the trajectory mirrors an acceptance-style test plan. For feature plans, walk the test plan's assertion list — each assertion becomes a trajectory row, with the assertion text becoming the `Asserts` column, the test plan's level its `Level`, and the promise it is grouped under its `For`. Then walk each planned phase and assign `Writable at` / `Passes at`. Every phase's Verification block references test IDs from the trajectory rather than restating the checks. A bugfix or a refactor has no ADR: its rows come from its test plan the same way.
+
+   **Every row says what it is for.** A `For` cell holds `promise: <name>` (one or more, separated by commas), `lesson: <name>`, or any other text, which is the reason the row needs neither. A row that names a promise names its test files in `Test`, relative to the code root, by the time it is `passing`: closing the plan reads them, and when the promise breaks later its incident lists the rows that named it. The hook refuses an empty `For` cell, a promise or lesson that does not exist, and a row that names another plan's promise the brief does not list. If the brief lists a promise under **Changes**, give the phase that makes its new sentence true the item `indusk promises change <name> --plan <plan> --statement "…" --reason "…"`.
 
    **Writable at is the earliest possible phase, not the fix phase.** The rule: *if it is possible to write a test, write it — then let it pass when it will.* The validator only enforces `Writable at ≤ Passes at` (a floor); the real discipline is `Writable at = earliest feasible phase`. A test authored in the same phase as its fix is a rubber stamp — nothing proves intermediate phases didn't break it or fix it by accident. A test that goes red early and stays red through intermediate phases until its fix lands is a live tripwire: any intermediate phase that turns it green prematurely signals unexpected coupling; any intermediate phase that breaks an unrelated passing test signals regression.
 
@@ -224,7 +245,7 @@ Workflow templates are in `templates/workflows/` in the package. They describe w
 
    **OTel gate is conditional on `otel.role`.** Read `.indusk/config.json` for the project's `otel.role` field (or use the `shouldEmitOtelGate(projectRoot)` helper from `apps/indusk-mcp/src/lib/config.ts`). The OTel gate fires for projects whose `otel.role` is unset or `"service"` — these are user-facing apps that produce telemetry you want to collect. **Do NOT write `#### Phase N OTel` sections** for projects whose `otel.role` is `"library"`, `"tool"`, or `"none"` — these are libraries, CLIs, or scripts that should never emit telemetry and writing OTel gates for them is friction without value. The `validate-impl-structure` and `check-gates` hooks apply the same rule. The other gates (verify, context, document) always apply regardless of `otel.role`.
 
-8. **If impl is completed** (all items checked off by `/work`), the close-out rituals run before retrospective: `/falsify {plan-name}` then `/cleanup {plan-name}` — each authors a phase (`### Phase N: Falsification` / `### Phase N: Cleanup`) that `/work` executes, and `/retrospective` Step 0 hard-blocks without both terminal-or-skipped. Then invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call.)
+8. **If impl is completed** (all items checked off by `/work`), the close-out rituals run before retrospective: `/falsify {plan-name}` then `/cleanup {plan-name}` — each authors a phase (`### Phase N: Falsification` / `### Phase N: Cleanup`) that `/work` executes, and `/retrospective` Step 0 hard-blocks without both terminal-or-skipped. Then invoke the retrospective skill (`/retrospective {plan-name}`). This handles the structured audit (docs, tests, quality, context), knowledge handoff to the docs site, confirming the plan's promises (`indusk promises confirm`, which a declared promise no passing row names refuses), and archival. Do not write a freeform retrospective — use the skill. (Bugfix and refactor workflows may skip retrospective for small changes — user's call. A plan that skips it still runs `indusk promises confirm {plan-name}` before it is archived; one archived without it is confirmed later with the same command, or its unkept promise withdrawn.)
 
 9. **Always present each document for review** before moving to the next stage. The user signs off on each step.
 
@@ -239,7 +260,7 @@ Plans frequently depend on or relate to each other. When work overlaps:
 
 ### research.md
 
-Research is a record of exploration — what was asked, what was found, and how the findings compare. It includes factual analysis ("X doesn't support Y because of Z") but not recommendations ("we should use X"). Save recommendations for the brief.
+Research is the record of what was found and decided on the way: the background (why this, what exists today), the findings, and the decisions made in conversation. It includes factual analysis ("X doesn't support Y because of Z"). It does not hold promises, which are the brief's, or the approach, which is the ADR's.
 
 ```markdown
 ---
@@ -253,10 +274,16 @@ status: in-progress | complete
 ## Question
 {What are we trying to understand?}
 
+## Background
+{Why this, why now. What exists today and what is wrong with it. The problem lives here; the brief does not repeat it.}
+
 ## Findings
 
 ### {Topic 1}
 {What we found. Facts, comparisons, analysis. Include code snippets when the syntax matters.}
+
+## Decisions
+- {What was settled in conversation on the way, who settled it and why — e.g. "The column is `Level`, not `Kind` (Sandy, 2026-10-05): a promise already has a kind."}
 
 ## Open Questions
 - {What remains unanswered}
@@ -266,6 +293,9 @@ status: in-progress | complete
 ```
 
 ### brief.md
+
+A brief holds what the conversation produced: expectations and promises. `indusk promises contract` reads this shape, so keep the headings, keep each label on its own line, and start each entry with the promise's name as written here. Prose between the parts is fine.
+
 ```markdown
 ---
 title: "{Title}"
@@ -276,23 +306,39 @@ workflow: feature | bugfix | refactor | spike
 
 # {Title} — Brief
 
-## Problem
-{What problem are we solving? Why does it matter? 2-3 sentences.}
+## Expectations
 
-## Proposed Direction
-{High-level approach, not implementation details.}
+1. **{What we expect to follow from this.}**
+   - Measure: {how we would know: what is counted or read, and where}
+   - Look: {when to check}
 
-## Context
-{Background. Reference research.md for deeper exploration.}
+{When there are none, write instead: None — {the reason}}
 
-## Scope
-### In Scope
-- {Item}
-### Out of Scope
-- {Item}
+## Promises
 
-## Success Criteria
-- {How we know this worked}
+### This plan makes
+
+1. **`{promise-name}`** ({behaviour | state | structure}). {The promise, in one plain sentence: what will be true.}
+
+### Existing promises
+
+**Must not break**
+
+- **`{promise-name}`**. {Why this plan comes near it.}
+
+**Changes**
+
+- **`{promise-name}`**. {The promise as it will read.}
+
+**Replaces**
+
+- **`{old-name}`**, by **`{new-name}`**.
+
+{Write `None.` under any of the three that has no entry.}
+
+### Not promised
+
+- {What was considered and deliberately not promised, and where it goes instead.}
 
 ## Depends On
 - {Plans that must be completed before this one — e.g., `.indusk/planning/per-game-escrow/`}
@@ -303,7 +349,7 @@ workflow: feature | bugfix | refactor | spike
 
 ### test-plan.md
 
-The test plan is the bridge between the brief and the ADR. It enumerates the **behavioral assertions** that must be true for the feature to be working, plus the **kind** of test that proves each — one of `unit`, `contract`, `live check`, `smoke`, `promise`, the smallest that can. It does NOT contain test code — only the contract the implementation must satisfy and the kind of test that will verify it.
+The test plan is the bridge between the brief and the ADR. It enumerates the **behavioral assertions** that must be true for the feature to be working, plus the **level** of test that proves each — one of `unit`, `contract`, `live check`, `smoke`, `promise`, the smallest that can — grouped by the promise they prove. It does NOT contain test code — only the contract the implementation must satisfy and the level of test that will verify it.
 
 **Behavioral, not functional.** Every assertion must describe what an outside observer (typically a user) experiences — not what an internal function does. "User can sign in with Google" not "googleAuth() returns a JWT." See step 5 above for the full bad-vs-good list. If an assertion mentions a function name, type name, internal endpoint name, repository method, or other implementation detail, rewrite it at the user-facing level before saving.
 
@@ -318,7 +364,7 @@ status: draft | accepted
 
 ## Purpose
 
-This document lists the behavioral assertions that, taken together, mean the feature is working. Each assertion names its kind — unit / contract / live check / smoke / promise, the smallest that can prove it — and so when its test runs. When all assertions can be made true by an architecture, we have a feature; when all assertions are passing in code, the feature is shipped.
+This document lists the behavioral assertions that, taken together, mean the feature is working. Each assertion names its level — unit / contract / live check / smoke / promise, the smallest that can prove it — and so when its test runs. They are grouped by the promise in the brief that they prove. When all assertions can be made true by an architecture, we have a feature; when all assertions are passing in code, the feature is shipped.
 
 The assertions here become the source rows for the impl's `## Test Trajectory` table. The ADR that follows this document is constrained by "what makes all these assertions true?" rather than invented from intuition.
 
@@ -326,11 +372,20 @@ The assertions here become the source rows for the impl's `## Test Trajectory` t
 
 **Every assertion must be observable from outside the system.** Describe what the user sees, what the API returns to a caller, what an external observer measures — never internal function calls, return types, or method signatures. If a non-engineer stakeholder couldn't read an assertion and understand it, rewrite it.
 
-| ID | Assertion (user-visible behavior) | Kind |
-|----|-----------------------------------|------|
+### `{promise-name}` — {the promise's sentence}
+
+| ID | Assertion (user-visible behavior) | Level |
+|----|-----------------------------------|-------|
 | A1 | {Behavioral fact — e.g., "Sign-in with an invalid password shows the error 'Invalid credentials'."} | unit |
 | A2 | {Behavioral fact — e.g., "Sign-in works against the real identity provider."} | contract |
-| A3 | {Behavioral fact — e.g., "Forgotten-password email arrives in the inbox within 60 seconds."} | live check (account on staging) |
+
+### Not for a promise
+
+{Assertions that prove no promise, each with why it is still worth a test: a regression guard, a rename, a lesson.}
+
+| ID | Assertion (user-visible behavior) | Level | Why |
+|----|-----------------------------------|-------|-----|
+| A3 | {Behavioral fact — e.g., "Every account created before this change still signs in."} | unit | {a regression guard over existing accounts} |
 
 ## Untestable Assertions
 
@@ -343,7 +398,7 @@ The assertions here become the source rows for the impl's `## Test Trajectory` t
 ## Notes
 
 - {Open questions about the test approach}
-- {Kind choices that may need revisiting}
+- {Level choices that may need revisiting}
 ```
 
 ### adr.md
@@ -441,7 +496,8 @@ date: {YYYY-MM-DD}
 status: draft | approved | in-progress | completed | abandoned
 trajectory: required
 test_phases: required
-test_kinds: required
+test_levels: required
+test_purpose: required
 rationale: required
 gate_policy: ask
 ---
@@ -468,10 +524,10 @@ For multi-phase impls, include a boundary map showing what each phase produces a
 
 ## Test Trajectory
 
-| ID | Asserts | Writable at | Passes at | State | Kind |
-|----|---------|-------------|-----------|-------|------|
-| T1 | {one-line assertion — what the test claims is true} | Phase 1 | Phase 1 | planned | unit |
-| T2 | {another assertion} | Phase 1 | Phase 2 | planned | contract |
+| ID | Asserts | Writable at | Passes at | State | Level | For | Test |
+|----|---------|-------------|-----------|-------|-------|-----|------|
+| T1 | {one-line assertion — what the test claims is true} | Phase 1 | Phase 1 | planned | unit | promise: {promise-name} | {path/to/the.test.ts} |
+| T2 | {another assertion} | Phase 1 | Phase 2 | planned | contract | {a regression guard over … — the reason this row needs no promise} | {path/to/another.test.ts} |
 
 {Optional subsection — include ONLY if this plan has items that are genuinely untestable within its scope. Each row requires all three fields: reason, would require, mitigation.}
 

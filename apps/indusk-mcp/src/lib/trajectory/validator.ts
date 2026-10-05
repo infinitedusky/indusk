@@ -10,7 +10,7 @@ import {
 	phaseSequence,
 	unterminatedFenceLine,
 } from "../impl-headings.js";
-import { isTestKind, kindsList } from "../test-kinds.js";
+import { isTestLevel, levelsList } from "../test-levels.js";
 import { parseTrajectory, type Trajectory } from "./parser.js";
 import { parseRegister } from "./register.js";
 
@@ -26,7 +26,9 @@ export interface ValidationError {
 		| "test-phase-gate"
 		| "regression-guard-declaration"
 		| "unterminated-fence"
-		| "test-kinds";
+		| "test-levels"
+		| "test-purpose"
+		| "row-shape";
 	message: string;
 	/** The rough line number in the impl body, if known. */
 	line?: number;
@@ -34,10 +36,16 @@ export interface ValidationError {
 
 export interface ValidateTrajectoryOptions {
 	/**
-	 * `test_kinds: required`: every row names one of the five test kinds
-	 * (test-kinds, ADR D1). Mirrors the hook's `validateTestKinds`.
+	 * `test_levels: required` (or `test_kinds: required`, its first spelling):
+	 * every row names one of the five test levels. Mirrors the hook's
+	 * `validateTestLevels`.
 	 */
-	testKindsRequired?: boolean;
+	testLevelsRequired?: boolean;
+	/**
+	 * `test_purpose: required`: every row says what it is for (planner-promises
+	 * ADR D3). Mirrors the hook's `validateRowPurpose`.
+	 */
+	testPurposeRequired?: boolean;
 	/**
 	 * When true, also enforce `### Trajectory Rationale` completeness — every
 	 * trajectory T-ID must appear as a `- **TN**` entry in the subsection,
@@ -550,30 +558,90 @@ export function validateTrajectory(
 			}),
 		);
 	}
-	errors.push(...validateTestKinds(trajectory, options.testKindsRequired ?? false));
+	errors.push(...validateRowShape(trajectory, options.testPurposeRequired ?? false));
+	errors.push(...validateTestLevels(trajectory, options.testLevelsRequired ?? false));
+	errors.push(...validateRowPurpose(trajectory, options.testPurposeRequired ?? false));
 	return errors;
 }
 
 /**
- * test-kinds (ADR D1): with `test_kinds: required`, every row's `Kind` is one
- * of the five test kinds. Without it nothing is checked. Mirrors the hook's
- * `validateTestKinds` in `hooks/validate-impl-structure.js`.
+ * With `test_purpose: required`, every table line is a row (planner-promises
+ * A31). A line with a cell missing or a cell too many cannot be read, so no
+ * rule judged it and the promise it named read as named by none. Gated on the
+ * key, so every impl written before it validates as it did. Mirrors the
+ * hook's `validateRowShape`.
  */
-export function validateTestKinds(trajectory: Trajectory, required: boolean): ValidationError[] {
+export function validateRowShape(trajectory: Trajectory, required: boolean): ValidationError[] {
+	if (!required) return [];
+	return (trajectory.misshapen ?? []).map((m) => ({
+		rule: "row-shape",
+		message: `Row ${m.id} has ${m.cells} cells where the table has ${m.expected}, so it cannot be read and no rule judges it. Give it one cell per column (an empty cell is still a cell: \`|  |\`).`,
+	}));
+}
+
+/**
+ * With `test_levels: required`, every row's level is one of the five test
+ * levels (test-kinds ADR D1; the word is planner-promises'). Without it
+ * nothing is checked. Mirrors the hook's `validateTestLevels` in
+ * `hooks/validate-impl-structure.js`.
+ */
+export function validateTestLevels(trajectory: Trajectory, required: boolean): ValidationError[] {
 	if (!required) return [];
 	const rows = trajectory.rows;
-	if (rows.length > 0 && rows.every((r) => r.kindText === null || r.kindText === undefined)) {
+	if (rows.length > 0 && rows.every((r) => r.levelText === null || r.levelText === undefined)) {
 		return [
 			{
-				rule: "test-kinds",
-				message: `\`test_kinds: required\` is set but the Test Trajectory has no Kind column. Add one, naming each row's kind: ${kindsList()} — the smallest that can prove the assertion; the kind says when the test runs.`,
+				rule: "test-levels",
+				message: `\`test_levels: required\` is set but the Test Trajectory has no Level column. Add one, naming each row's level: ${levelsList()} — the smallest that can prove the assertion; the level says when the test runs.`,
 			},
 		];
 	}
 	return rows
-		.filter((r) => !r.kindText || !isTestKind(r.kindText))
+		.filter((r) => !r.levelText || !isTestLevel(r.levelText))
 		.map((r) => ({
-			rule: "test-kinds",
-			message: `Row ${r.id} names ${r.kindText ? `the kind \`${r.kindText}\`` : "no kind"}; a kind is one of: ${kindsList()}.`,
+			rule: "test-levels",
+			message: `Row ${r.id} names ${r.levelText ? `the level \`${r.levelText}\`` : "no level"}; a level is one of: ${levelsList()}.`,
 		}));
+}
+
+/** What a `For` cell may hold, as a refusal says it. */
+const PURPOSE_FORMS =
+	"the promise it proves (`promise: <name>`), the lesson it guards (`lesson: <name>`), or the reason it needs neither";
+
+/**
+ * With `test_purpose: required`, every row says what it is for
+ * (planner-promises ADR D3). Whether a named promise or lesson exists is the
+ * contract check's; this is the row's own shape. Mirrors the hook's
+ * `validateRowPurpose`.
+ *
+ * promise: every-test-says-what-it-is-for
+ */
+export function validateRowPurpose(trajectory: Trajectory, required: boolean): ValidationError[] {
+	if (!required) return [];
+	const rows = trajectory.rows;
+	if (rows.length > 0 && rows.every((r) => r.purposeText === null || r.purposeText === undefined)) {
+		return [
+			{
+				rule: "test-purpose",
+				message: `\`test_purpose: required\` is set but the Test Trajectory has no For column. Add one: each row names ${PURPOSE_FORMS}.`,
+			},
+		];
+	}
+	return rows.flatMap((r) =>
+		!r.purpose
+			? [
+					{
+						rule: "test-purpose",
+						message: `Row ${r.id} does not say what it is for. Its For cell names ${PURPOSE_FORMS}.`,
+					},
+				]
+			: r.purpose.malformed
+				? [
+						{
+							rule: "test-purpose",
+							message: `Row ${r.id}'s For cell "${r.purposeText}" ${r.purpose.malformed}. It names ${PURPOSE_FORMS}.`,
+						},
+					]
+				: [],
+	);
 }

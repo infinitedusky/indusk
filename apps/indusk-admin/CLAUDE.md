@@ -29,7 +29,9 @@ Each entry is a rule and a pointer; the pointer holds the story.
   never a local heading regex; rows attach by `(passesAtKind, passesAt)`. The
   active phase is the most recent boundary record among open phases;
   first-open-phase with a visible hint when there are none; a malformed record
-  file is an error block, never a guess.
+  file is an error block, never a guess. The rows table shows `Level` and
+  `For` from the package's parser (`levelText`, `purpose`), never its own
+  reading of a cell; the copied markdown carries the same columns.
 - **One home per piece**: rows table + ritual section in `components/phases/`,
   progress lines in `bars/ProgressLines`, display vocabulary (incl. `phaseTitle`
   — the page says `Phase 4`; the package's `phaseLabel` is for logs, never a

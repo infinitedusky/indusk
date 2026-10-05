@@ -296,6 +296,12 @@ function resolvePosition(input: DerivePlanPositionInput): {
 					awaiting: `rows not terminal — retrospective blocked${rows ? ` (${rows})` : ""}`,
 				};
 			}
+			if (missing.includes("promises")) {
+				return {
+					position: "retrospective",
+					awaiting: `promises unproven — retrospective blocked (${readiness.unprovenPromises.join(", ")})`,
+				};
+			}
 			return { position: "retrospective", awaiting: "cleaned, awaiting /retrospective" };
 		}
 		if (status === "in-progress") {

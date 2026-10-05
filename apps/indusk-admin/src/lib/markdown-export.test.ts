@@ -53,6 +53,30 @@ describe("trajectoryTableMarkdown", () => {
       ].join("\n"),
     );
   });
+
+  it("carries Level and For when the rows have them, as the page does", () => {
+    const md = trajectoryTableMarkdown([
+      {
+        id: "T1",
+        asserts: "does the thing",
+        writableAt: 1,
+        passesAt: 2,
+        writableAtKind: "test",
+        passesAtKind: "build",
+        state: "passing",
+        levelText: "unit",
+        purposeText: "a regression guard",
+        purpose: { promises: [], lessons: [], reason: "a regression guard" },
+      },
+    ]);
+    expect(md).toBe(
+      [
+        "| ID | Asserts | Writable at | Passes at | Level | For | State |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| T1 | does the thing | Test Phase 1 | Phase 2 | unit | a regression guard | passing |",
+      ].join("\n"),
+    );
+  });
 });
 
 describe("checklistMarkdown", () => {

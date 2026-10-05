@@ -14,6 +14,7 @@
  * Exit 2 = block the edit (stderr sent to agent as feedback)
  */
 
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
@@ -31,7 +32,7 @@ import {
 	unterminatedFenceLine,
 } from "./_impl-headings.js";
 import { parseRegister } from "./_register.js";
-import { isTestKind, TEST_KINDS } from "./_test-kinds.js";
+import { isTestLevel, TEST_LEVELS } from "./_test-levels.js";
 import { parseTrajectoryFromBody } from "./_trajectory-parser.js";
 
 // Read hook input from stdin
@@ -132,7 +133,17 @@ let newFullContent;
 if (event.tool_name === "Edit" && toolInput.old_string) {
 	try {
 		const diskContent = readFileSync(filePath, "utf-8");
-		newFullContent = diskContent.replace(toolInput.old_string, newContent);
+		// The Edit tool replaces literally, and every occurrence when asked.
+		// `String.replace` does neither: it reads `$&` and `$1` in the new text
+		// as substitutions and stops at the first match — so the file judged
+		// here was not the file the edit would leave.
+		const at = diskContent.indexOf(toolInput.old_string);
+		if (at === -1) newFullContent = diskContent;
+		else if (toolInput.replace_all)
+			newFullContent = diskContent.split(toolInput.old_string).join(newContent);
+		else
+			newFullContent =
+				diskContent.slice(0, at) + newContent + diskContent.slice(at + toolInput.old_string.length);
 	} catch {
 		// File doesn't exist yet — will be created by Write
 		newFullContent = newContent;
@@ -141,6 +152,63 @@ if (event.tool_name === "Edit" && toolInput.old_string) {
 	newFullContent = toolInput.content ?? "";
 } else {
 	process.exit(0);
+}
+
+/**
+ * The plan's contract (planner-promises ADR D2): the brief, the test rows and
+ * the registry agree before the plan builds. The rule lives in the package
+ * (`lib/promises/contract.ts`) and needs the registry and the brief, so this
+ * hook does not carry a copy — it runs `indusk promises contract`, handing it
+ * the impl AS IT WOULD BE WRITTEN, and passes the refusal on.
+ *
+ * Runs for an impl that sets `test_purpose: required` and is past `draft`,
+ * and on every such write: saving a draft as `approved` touches no phase
+ * structure, and it is the write this exists for.
+ *
+ * A check that cannot be run refuses, and says why. `INDUSK_BIN` names the
+ * CLI (it may be a command line, `node /path/cli.js`, so it goes through the
+ * shell; the plan's name goes in by environment, never by interpolation).
+ *
+ * Returns the refusal text, or null to allow.
+ */
+function planContractRefusal(implPath, content, root) {
+	const fm = content.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? "";
+	if (!/^test_purpose:\s*required/m.test(fm)) return null;
+	const status = fm.match(/^status:\s*["']?([\w-]+)/m)?.[1];
+	if (!status || status === "draft") return null;
+	const plan = implPath.match(
+		/[\\/]\.indusk[\\/]planning[\\/](?:archive[\\/])?([^\\/]+)[\\/]impl\.md$/,
+	)?.[1];
+	if (!plan) return null;
+
+	const bin = process.env.INDUSK_BIN ?? "indusk";
+	const ran = `${bin} promises contract ${plan} --impl-stdin`;
+	const r = spawnSync(`${bin} promises contract "$INDUSK_CONTRACT_PLAN" --impl-stdin`, {
+		shell: true,
+		cwd: root,
+		input: content,
+		encoding: "utf-8",
+		timeout: 30_000,
+		env: { ...process.env, INDUSK_CONTRACT_PLAN: plan, INDUSK_SKIP_UPDATE_CHECK: "1" },
+	});
+	if (r.status === 0) return null;
+	const said = (r.stderr ?? "").trim();
+	if (r.status === 2 && said) {
+		return `The plan's contract is broken, so this impl cannot be saved as ${status} (\`indusk promises contract ${plan}\`):\n\n${said}\n`;
+	}
+	const how = r.error
+		? `could not start: ${r.error.message}`
+		: r.signal
+			? `was stopped by ${r.signal} (30s limit)`
+			: `exited ${r.status}`;
+	const detail = said ? `\n${said.split("\n").slice(0, 6).join("\n")}` : "";
+	return `The plan's contract could not be checked, so this write is refused: a gate that cannot run is never a pass.\n\n  ran: ${ran}\n  in:  ${root}\n  it ${how}${detail}\n\nThe \`indusk\` this hook reaches must have \`promises contract\`: install or upgrade the one on PATH (\`npm i -g @infinitedusky/indusk-mcp@latest\`), or set INDUSK_BIN to a build that has it.\nlesson: detectors-must-distinguish-could-not-check-from-checked-and-failed\n`;
+}
+
+const contractRefusal = planContractRefusal(filePath, newFullContent, statePath);
+if (contractRefusal) {
+	process.stderr.write(contractRefusal);
+	process.exit(2);
 }
 
 // Only validate if this edit is adding/modifying phase structure
@@ -349,9 +417,12 @@ const rationaleRequiredFrontmatter = /rationale:\s*required/.test(frontmatter);
 // `rationale_baseline` lesson was a title's substring silently setting a
 // baseline, and the same shape of bug is available to any unanchored match.
 const testPhasesRequiredFrontmatter = /^test_phases:\s*required/m.test(frontmatter);
-// test-kinds: every row names one of the five kinds, so the plan says when
-// each test runs. Line-anchored like the keys around it.
-const testKindsRequiredFrontmatter = /^test_kinds:\s*required/m.test(frontmatter);
+// Every row names one of the five test levels, so the plan says when each
+// test runs (test-kinds; `test_kinds` was the key's first spelling). And every
+// row says what it is for (planner-promises). Line-anchored like the keys
+// around them.
+const testLevelsRequiredFrontmatter = /^test_(?:levels|kinds):\s*required/m.test(frontmatter);
+const testPurposeRequiredFrontmatter = /^test_purpose:\s*required/m.test(frontmatter);
 const rationaleBaselineMatch = frontmatter.match(/^rationale_baseline:\s*(\d+)/m);
 const rationaleBaseline = rationaleBaselineMatch
 	? Number.parseInt(rationaleBaselineMatch[1], 10)
@@ -364,7 +435,9 @@ if (trajectoryValidationEnabled) {
 		rationaleBaseline,
 		testPhasesRequiredFrontmatter,
 	);
-	trajectoryErrors.push(...validateTestKinds(body, testKindsRequiredFrontmatter));
+	trajectoryErrors.push(...validateTestLevels(body, testLevelsRequiredFrontmatter));
+	trajectoryErrors.push(...validateRowShape(body, testPurposeRequiredFrontmatter));
+	trajectoryErrors.push(...validateRowPurpose(body, testPurposeRequiredFrontmatter));
 	if (trajectoryErrors.length > 0) {
 		process.stderr.write(
 			`Test Trajectory validation failed (policy: ${gatePolicy}):\n${trajectoryErrors.map((e) => `  [${e.rule}] ${e.message}`).join("\n")}\n\nSee .indusk/planning/tests-first-planning/adr.md Sections 3-6 for the Test Trajectory shape and validator rules.\n`,
@@ -398,29 +471,81 @@ process.exit(0);
 // ------------------------------------------------------------------
 
 /**
- * test-kinds (ADR D1): with `test_kinds: required`, every trajectory row's
- * `Kind` is one of the five. Without the key nothing is checked, so impls
- * written before it — some with the old style words in `Kind` — validate as
- * they did.
+ * With `test_levels: required` (or `test_kinds: required`, its first
+ * spelling), every trajectory row's level is one of the five. Without the key
+ * nothing is checked, so impls written before it — some with the old style
+ * words in `Kind` — validate as they did. Mirrors `validateTestLevels` in
+ * `src/lib/trajectory/validator.ts`.
  */
-function validateTestKinds(implBody, required) {
+function validateTestLevels(implBody, required) {
 	if (!required) return [];
-	const kinds = TEST_KINDS.join(", ");
+	const levels = TEST_LEVELS.join(", ");
 	const { rows } = parseTrajectoryFromBody(implBody);
-	if (rows.length > 0 && rows.every((r) => r.kind === null)) {
+	if (rows.length > 0 && rows.every((r) => r.level === null)) {
 		return [
 			{
-				rule: "test-kinds",
-				message: `\`test_kinds: required\` is set but the Test Trajectory has no Kind column. Add one, naming each row's kind: ${kinds} — the smallest that can prove the assertion; the kind says when the test runs.`,
+				rule: "test-levels",
+				message: `\`test_levels: required\` is set but the Test Trajectory has no Level column. Add one, naming each row's level: ${levels} — the smallest that can prove the assertion; the level says when the test runs.`,
 			},
 		];
 	}
 	return rows
-		.filter((r) => !r.kind || !isTestKind(r.kind))
+		.filter((r) => !r.level || !isTestLevel(r.level))
 		.map((r) => ({
-			rule: "test-kinds",
-			message: `Row ${r.id} names ${r.kind ? `the kind \`${r.kind}\`` : "no kind"}; a kind is one of: ${kinds}.`,
+			rule: "test-levels",
+			message: `Row ${r.id} names ${r.level ? `the level \`${r.level}\`` : "no level"}; a level is one of: ${levels}.`,
 		}));
+}
+
+/**
+ * With `test_purpose: required`, every row says what it is for
+ * (planner-promises ADR D3). Whether a named promise or lesson exists needs
+ * the registry, which this hook asks the CLI for. Mirrors `validateRowPurpose`
+ * in `src/lib/trajectory/validator.ts`.
+ *
+ * promise: every-test-says-what-it-is-for
+ */
+/** Port of `validateRowShape` in `src/lib/trajectory/validator.ts` (planner-promises A31). */
+function validateRowShape(implBody, required) {
+	if (!required) return [];
+	return (parseTrajectoryFromBody(implBody).misshapen ?? []).map((m) => ({
+		rule: "row-shape",
+		message: `Row ${m.id} has ${m.cells} cells where the table has ${m.expected}, so it cannot be read and no rule judges it. Give it one cell per column (an empty cell is still a cell: \`|  |\`).`,
+	}));
+}
+
+function validateRowPurpose(implBody, required) {
+	if (!required) return [];
+	// Declared here, not at module level: this file runs top to bottom, and
+	// the call above executes before a later `const` would exist.
+	const PURPOSE_FORMS =
+		"the promise it proves (`promise: <name>`), the lesson it guards (`lesson: <name>`), or the reason it needs neither";
+	const { rows } = parseTrajectoryFromBody(implBody);
+	if (rows.length > 0 && rows.every((r) => r.purposeText === null)) {
+		return [
+			{
+				rule: "test-purpose",
+				message: `\`test_purpose: required\` is set but the Test Trajectory has no For column. Add one: each row names ${PURPOSE_FORMS}.`,
+			},
+		];
+	}
+	return rows.flatMap((r) =>
+		!r.purpose
+			? [
+					{
+						rule: "test-purpose",
+						message: `Row ${r.id} does not say what it is for. Its For cell names ${PURPOSE_FORMS}.`,
+					},
+				]
+			: r.purpose.malformed
+				? [
+						{
+							rule: "test-purpose",
+							message: `Row ${r.id}'s For cell "${r.purposeText}" ${r.purpose.malformed}. It names ${PURPOSE_FORMS}.`,
+						},
+					]
+				: [],
+	);
 }
 
 function validateTrajectory(

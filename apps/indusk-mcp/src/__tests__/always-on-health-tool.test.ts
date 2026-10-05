@@ -1,7 +1,7 @@
 import { readFileSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { registerPlanTools } from "../tools/plan-tools.js";
+import { registerPromiseTools } from "../tools/promise-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { type LocalJaeger, newTraceId, startLocalJaeger } from "./helpers/local-jaeger.js";
 import {
@@ -95,7 +95,7 @@ describe.skipIf(SHOULD_SKIP)("day-always-on — promise health for the session",
 		]);
 		previousHome = process.env.INDUSK_HOME;
 		process.env.INDUSK_HOME = jaeger.home;
-		tools = toolCaller((server) => registerPlanTools(server, fixture.planRoot));
+		tools = toolCaller((server) => registerPromiseTools(server, fixture.planRoot));
 	}, 120_000);
 
 	afterAll(() => {

@@ -37,7 +37,8 @@ tests:                           # code-root-relative; each carries the token
   - src/seats.test.ts
 incidents: []                    # incident ids; required non-empty when known-violated
 aliases: []                      # optional: earlier names that still resolve
-superseded_by:                   # optional: the successor, when retired
+superseded_by:                   # optional, older files: the successor, when retired
+supersedes:                      # optional: the promise this one replaced (written by `promises replace`)
 expect_every:                    # optional: e.g. 1d — silence past this needs attention
 ---
 
@@ -115,6 +116,163 @@ Declared in `.indusk/config.json`, decided in planning, never free:
 `indusk update` ensures the block exists with an empty list on a project
 that has none; it never touches a declared list.
 
+## Writing a promise: `declare`, `change`, `replace`, `withdraw`
+
+Nobody writes a registry file by hand, or deletes one. A promise reaches the
+registry from a planning conversation through one of these commands, and the
+planner calls the MCP tools of the same names (`declare_promise`,
+`change_promise`, `replace_promise`, `withdraw_promise`). Each writes plan documents and commits nothing, and each
+refuses with exit **2**, naming what was wrong, with nothing written.
+
+```
+indusk promises declare <name> --plan <plan> --kind <kind> --domain <domain> --statement "<sentence>"
+```
+
+Writes `<name>.md` as `declared`, owned by the plan, with the sentence as its
+statement and a History line saying where it came from. In a project that
+declares no domains, the promise's domain is declared with it; in one that
+does, a domain it does not declare is refused, naming the ones it does. It
+refuses a name the registry already holds, a kind that is not a kind, and a
+plan that is not a folder under `.indusk/planning/`.
+
+```
+indusk promises change <name> --plan <plan> --statement "<sentence>" --reason "<why>"
+```
+
+Improves a promise in place, when a later plan partly changes what it commits
+to. The sentence is replaced, the plan takes the promise over, and its History
+gains a line with the old sentence, the reason and the plan that owned it
+before. Its name, state, incidents and aliases are untouched, so the marks
+that name it and its incidents stay attached. If it breaks later, the plan
+that changed it is the one reopened.
+
+```
+indusk promises replace <old> --by <new> --plan <plan> --kind <kind> --domain <domain> --statement "<sentence>"
+```
+
+For a promise whose name no longer describes it. Declares the new promise
+with `supersedes: <old>`. The old one stays in force while the plan builds and
+is retired when the plan closes. The link is written once, on the new
+promise; `check` refuses a `supersedes` that names a promise the registry does
+not hold, and refuses a replacement that is in force while what it replaced
+still is. If the plan already declared the new promise with `declare`, `replace`
+records the link on it instead, keeping the sentence it was declared with.
+
+```
+indusk promises withdraw <name> --plan <plan>
+```
+
+Takes back a promise that was never in force: one the plan declared and the
+conversation then dropped, or gave a better name. Its file is removed. A rename
+is a withdrawal and a declaration. Take the promise out of the brief too, or
+`promises contract` will say the brief makes a promise the registry does not
+hold.
+
+It refuses, with exit **2** and nothing removed, naming the promise, when it
+is not `declared` (a promise in force has tests and a history, and leaves by
+being replaced), when another plan declared it, when it lists an incident, and
+when another promise records replacing it (withdraw that one first). A plan
+that was archived with a promise still declared can withdraw it from there.
+
+## `promises contract`
+
+```
+indusk promises contract <plan>
+indusk promises contract --all
+```
+
+Does a plan's [brief](/guide/briefs), its test rows and the registry agree?
+Read-only. Exit **0** with one line saying what was checked; exit **2** with
+every refusal on stderr, one `path: message` line each.
+
+```
+seats-v2: its brief, its rows and the registry agree — 1 made, 1 kept, 0 changed, 0 replaced; 1 expectation
+```
+
+| Situation | Refusal names |
+|---|---|
+| A promise under **This plan makes** that the registry does not hold | the promise, and the `declare` command that writes it |
+| One the registry says another plan owns | the promise and that plan |
+| One whose sentence or kind in the registry is not the brief's | the promise, and both readings |
+| A promise under **Must not break**, **Changes** or **Replaces** that does not exist, or is already retired | the promise and the list |
+| A **Replaces** entry whose replacement is not among the promises the plan makes | both promises |
+| An expectation with no `Measure` or no `Look`, or one still the template's `{placeholder}`; a brief with no expectations that does not say `None — {reason}` | the expectation |
+| A test row whose `For` names a promise the registry does not hold, a retired promise, or a lesson with no file under `.claude/lessons/` | the row and the name |
+| A test row with no `For`, a `For` that tries to name a promise or lesson and does not (the name in backticks, words after it), one that is only a mark (`-`, `n/a`, `TBD`), a `Level` that is not one of the five, or a cell missing or too many — in an impl past `draft` that sets `test_purpose` or `test_levels` | the row |
+| An impl whose frontmatter cannot be read | the file |
+| A test row naming a promise another plan owns that the brief lists under none of the three | the row, the promise and its owner |
+| A line in the brief that looks like part of the contract and cannot be read: a label with words after it or outside `### Existing promises`, a promise's name no list read, an entry that names no promise, no `### This plan makes`, the new parts with no `## Promises` heading | the line |
+| A name that is not a plan folder | the name — never passed |
+
+A brief with no `## Promises` heading, and none of the parts beneath it, was
+written before promises were part of one: it is held to no list, but its plan's
+rows still are, so a row cannot name a promise that does not exist. A brief
+still marked `draft` is left out of `--all` and `promises check` until its plan
+is building; asked about by name, it is checked. An archived plan is held only to what its
+own brief says (its shape and its expectations): the registry is what later
+plans have made of its promises since.
+
+`--all` checks every plan folder, active and archived. `--impl-stdin` judges
+the impl given on stdin in place of the one on disk; the impl hook uses it,
+because it asks before a write lands.
+
+**Who runs it.** The impl hook (`validate-impl-structure.js`) runs it on every
+write to an impl that sets `test_purpose: required` and is past `draft`, and
+refuses the write on a refusal. Because the row rules are the contract's, they
+hold for an impl any tool wrote, not only for edits the hook sees. It reaches the CLI as `indusk` on `PATH`, or as
+`INDUSK_BIN` when that is set. If the command cannot be run (no `indusk`, or
+one too old to have `contract`), the write is refused with the command it ran
+and how it failed. `promises check` runs it for every open plan.
+
+## `promises confirm`
+
+```
+indusk promises confirm <plan> [--code-root <path>]
+```
+
+Closes a plan's promises. For each promise the plan owns that is still
+`declared`, it sets `tests:` to the test files the plan's rows name, `sites:`
+to the files under the code root that carry the promise's token and that no
+row of the plan names as a test, and `state: enforced`, with a History line
+naming the rows; a promise it `supersedes` is retired first. A promise the plan
+owns that is already in force and that its rows name has its links brought up
+to date: a test that moved is listed where it is now, one that is gone is
+dropped. Then it runs `promises check`. It writes plan
+documents and commits nothing.
+
+```
+seat-released-on-timeout: enforced — 1 test file, 1 code site
+seats-v2: 1 promise confirmed; the registry check passes.
+```
+
+Everything that can refuse is decided before anything is written. Exit **2**,
+with nothing written, naming:
+
+| Situation | Refusal names |
+|---|---|
+| No row of the plan's impl names the promise in its `For` cell | the promise |
+| A row that names it is not `passing` | the promise, the row and its state |
+| The rows that name it name no test file in their `Test` cell | the promise and the rows |
+| A test file a row names does not exist under the code root, or does not carry the token | the promise and the file |
+| No code carries the token, for a `behaviour` or `state` promise | the promise |
+| It replaces a promise that code still names | the promise, the one it replaces, and each file |
+| The brief lists a promise under **Changes** that the plan never changed | the promise, and the `change` command |
+| The brief lists a replacement that was declared without recording what it replaces | both promises, and the `replace` command |
+| A name that is not a plan folder | the name |
+
+A plan with nothing to change says so and exits **0**, so running it twice is
+safe; a run that stopped partway is finished by the next. A plan archived
+without confirming (a bugfix that skipped its retrospective) is confirmed from
+its archived folder with the same command; `promises check` names it.
+
+`--code-root` names where the plan's code and tests are. It defaults to the
+project's code root. In a workbench a plan's tests exist only in its own code
+worktree until it lands, so the retrospective passes that worktree.
+
+The retrospective runs this before it archives the plan
+([Step 8a](/reference/skills/retrospective)); its gate names the promises the
+plan's rows do not yet prove. The MCP tool is `confirm_promises`.
+
 ## `promises check`
 
 ```
@@ -145,6 +303,7 @@ is never reported as clean.
 | An `enforced` `structure` promise with no test naming it (sites are optional for structure) | the promise |
 | A listed site or test that does not exist, or does not carry the token | the promise and the file |
 | A `declared` promise whose owner is archived | the promise — the plan closed without establishing it |
+| An open plan whose brief, test rows and the registry disagree | the plan's brief or impl, and the promise, expectation or row — everything [`promises contract`](#promises-contract) refuses |
 | An `established`-lifetime promise still `enforced` after its owner archived | the promise — it should be retired |
 | A `known-violated` promise with no open incident | the promise — the state is evidence, not an excuse |
 | An incident missing `promise`, `source`, `status`, `date` or a `## Symptom` / `## Root cause` / `## Fix` section; an unknown source | the incident and the field |
@@ -409,6 +568,10 @@ traces:
 
 claude exited with code 1: There's an issue with the selected model …
 
+## Proven by
+
+No test row names this promise, so no plan says which test proves it. Its registry entry lists as tests: apps/indusk-mcp/src/__tests__/monitor-mark.test.ts.
+
 ## Root cause
 
 _Unwritten — a person writes this._
@@ -419,7 +582,25 @@ _Not yet fixed._
 ```
 
 The symptom comes from the newest violation's `indusk.promise.violated`
-event. The root cause is never written by the monitor: it is a person's
+event. **Proven by** lists every test row, in any plan's impl, active or
+archived, whose `For` cell names the promise: the plan, the row, its state and
+its test files:
+
+```md
+- `seats-v1` row T4 — passing (src/seat.test.ts)
+- `seats-v2` row T1 — written (src/seat-hold.test.ts)
+```
+
+A `passing` row there is a test that did not catch this break, which is where
+the fix starts. When no row names the promise the section says so and falls
+back to the test files its registry entry lists, as above: that promise was
+registered before rows said what they were for. An impl that could not be read
+is named rather than skipped. It is
+written once, when the incident opens: a record of what was vouching then, not
+a live view. A promise a later plan changed is named by rows in both plans, and
+both are listed.
+
+The root cause is never written by the monitor: it is a person's
 finding, and `promises check` **refuses an incident marked `fixed` whose root
 cause is still the unwritten line**, naming the file. Opening an incident
 also moves an `enforced` promise to `known-violated` and lists the incident

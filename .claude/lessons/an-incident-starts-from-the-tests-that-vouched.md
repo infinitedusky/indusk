@@ -1,0 +1,7 @@
+# An incident starts from the tests that vouched — when a promise breaks, the record names every test row that was proving it
+
+On numero (2026-10-02) a promise broke in the running system while its one test stayed green. The incident said what happened and which traces showed it. Nothing said which test had been vouching for the promise, so the fix began with a search: which plan made this, which row tested it, is that row still passing. The link between the promise and its test existed only as prose someone had typed in a plan.
+
+Why it matters: a green test beside a broken promise is the most useful fact an incident can carry. It says the test checks something other than what broke, and that is where the fix starts: first a test that fails the way production did, then the code. Without the link, the person fixing it re-derives it each time, or skips it and patches the code under a test that still proves nothing.
+
+What to do: record the link where it can be read by a program, not in prose. Here a test row's `For` cell names the promise it proves, and an incident, when it opens, lists every row in every plan that names the broken promise: the plan, the row, its state and its test files, or a sentence saying no row names it. When a promise has been changed by a later plan, both plans' rows are listed. Guarded by `apps/indusk-mcp/src/__tests__/incident-proven-by.test.ts` (planner-promises A12, A27).

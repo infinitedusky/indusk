@@ -72,3 +72,69 @@ describe("A34 — one rows table, two forms", () => {
     expect(container.querySelector("table")).toBeNull();
   });
 });
+
+/**
+ * promise: every-test-says-what-it-is-for — planner-promises A7.
+ *
+ * A row says what it is for (the promise it proves, the lesson it guards, or
+ * why it needs neither) and at which level it is tested. The plan page shows
+ * both when the impl has them, and a promise's name goes to the Promises page.
+ */
+describe("A7 — the rows table shows what each row is for", () => {
+  const PROMISE = "seat-never-double-booked";
+  const LESSON = "a-seat-is-held-in-one-statement";
+  const purposeful: TrajectoryRow[] = [
+    {
+      ...rows[0],
+      levelText: "unit",
+      purposeText: `promise: ${PROMISE}`,
+      purpose: { promises: [PROMISE], lessons: [], reason: null },
+    },
+    {
+      ...rows[1],
+      levelText: "contract",
+      purposeText: `lesson: ${LESSON}`,
+      purpose: { promises: [], lessons: [LESSON], reason: null },
+    },
+    {
+      ...rows[1],
+      id: "A3",
+      levelText: "unit",
+      purposeText: "a regression guard",
+      purpose: { promises: [], lessons: [], reason: "a regression guard" },
+    },
+  ];
+
+  it("adds Level and For when the rows have them, with each row's own", async () => {
+    const { container } = await render(
+      <TrajectoryRowsTable rows={purposeful} />,
+    );
+    const heads = Array.from(container.querySelectorAll("th")).map(
+      (th) => th.textContent,
+    );
+    expect(heads).toEqual(["ID", "Asserts", "Level", "For", "State"]);
+    const cells = Array.from(container.querySelectorAll("tbody tr")).map((tr) =>
+      Array.from(tr.querySelectorAll("td")).map((td) => td.textContent),
+    );
+    expect(cells[0]).toContain("unit");
+    expect(cells[0].join(" ")).toContain(PROMISE);
+    expect(cells[1]).toContain("contract");
+    expect(cells[1].join(" ")).toContain(LESSON);
+    expect(cells[2]).toContain("a regression guard");
+  });
+
+  it("a promise's name links to it on the Promises page", async () => {
+    const { container } = await render(
+      <TrajectoryRowsTable rows={purposeful} promisesHref="/p/demo/promises" />,
+    );
+    const link = container.querySelector(
+      `a[href="/p/demo/promises#promise-${PROMISE}"]`,
+    );
+    expect(link?.textContent).toBe(PROMISE);
+  });
+
+  it("an impl written before rows said what they were for keeps its three columns", async () => {
+    const { container } = await render(<TrajectoryRowsTable rows={rows} />);
+    expect(container.querySelectorAll("th")).toHaveLength(3);
+  });
+});

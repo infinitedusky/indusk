@@ -1,6 +1,6 @@
 import { rmSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { registerPlanTools } from "../tools/plan-tools.js";
+import { registerPromiseTools } from "../tools/promise-tools.js";
 import { runCli, SHOULD_SKIP } from "./helpers/cli.js";
 import { type LocalJaeger, startLocalJaeger } from "./helpers/local-jaeger.js";
 import {
@@ -82,7 +82,7 @@ describe.skipIf(SHOULD_SKIP)("watcher-heartbeat — A8: expect_every", () => {
 	});
 
 	it("promise_health: the promise expecting a mark every hour needs attention; the other does not", async () => {
-		const tools = toolCaller((server) => registerPlanTools(server, fixture.planRoot));
+		const tools = toolCaller((server) => registerPromiseTools(server, fixture.planRoot));
 		const { json, isError } = await tools.call("promise_health", {});
 		expect(isError, JSON.stringify(json)).toBe(false);
 		const health = json as { needsAttention: string[]; promises: Record<string, unknown>[] };

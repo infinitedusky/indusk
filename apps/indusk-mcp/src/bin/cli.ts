@@ -913,4 +913,86 @@ promisesCmd
 		await promisesWatch(rootOrExit(), opts);
 	});
 
+promisesCmd
+	.command("declare <name>")
+	.description(
+		"Write a promise from a planning conversation: `declared`, owned by the plan, with the sentence the person approved. A project that declares no domains gets this one declared. Writes plan documents; commits nothing. Exit 2 naming what was wrong, with nothing written.",
+	)
+	.requiredOption(
+		"--plan <plan>",
+		"the plan that makes the promise (a folder under .indusk/planning/)",
+	)
+	.requiredOption("--kind <kind>", "behaviour | state | structure")
+	.requiredOption("--domain <domain>", "one of the project's declared domains")
+	.requiredOption("--statement <sentence>", "the promise, in one plain sentence")
+	.action(async function (this: Command, name: string) {
+		const { promisesDeclare } = await import("./commands/promises.js");
+		promisesDeclare(rootOrExit(), name, this.opts());
+	});
+
+promisesCmd
+	.command("change <name>")
+	.description(
+		"Improve a promise in place: its sentence is replaced, the plan takes it over, and its History keeps the old sentence, the reason and the plan that owned it before. Its name, state, incidents and marks are untouched. Exit 2 naming the promise when it is unknown or retired.",
+	)
+	.requiredOption("--plan <plan>", "the plan changing it")
+	.requiredOption("--statement <sentence>", "the promise as it now reads")
+	.requiredOption("--reason <reason>", "why it changed")
+	.action(async function (this: Command, name: string) {
+		const { promisesChange } = await import("./commands/promises.js");
+		promisesChange(rootOrExit(), name, this.opts());
+	});
+
+promisesCmd
+	.command("replace <old>")
+	.description(
+		"Replace a promise whose name no longer describes it: declares the new one recording which it replaces. The old one stays in force until the plan closes, when `promises confirm` retires it. Exit 2 naming the promise when it is unknown or already retired.",
+	)
+	.requiredOption("--by <name>", "the new promise's name")
+	.requiredOption("--plan <plan>", "the plan replacing it")
+	.requiredOption("--kind <kind>", "behaviour | state | structure")
+	.requiredOption("--domain <domain>", "one of the project's declared domains")
+	.requiredOption("--statement <sentence>", "the new promise, in one plain sentence")
+	.action(async function (this: Command, old: string) {
+		const { promisesReplace } = await import("./commands/promises.js");
+		promisesReplace(rootOrExit(), old, this.opts());
+	});
+
+promisesCmd
+	.command("withdraw <name>")
+	.description(
+		"Take back a promise a plan declared and then dropped or renamed, before it was ever in force: its file is removed. A rename is a withdrawal and a declaration. Exit 2 naming the promise, with nothing removed, when it is not declared (one in force is replaced, not withdrawn), another plan declared it, or it lists an incident.",
+	)
+	.requiredOption("--plan <plan>", "the plan that declared it")
+	.action(async function (this: Command, name: string) {
+		const { promisesWithdraw } = await import("./commands/promises.js");
+		promisesWithdraw(rootOrExit(), name, this.opts());
+	});
+
+promisesCmd
+	.command("confirm <plan>")
+	.description(
+		"Close a plan's promises: each one it declared becomes enforced, with the test files its rows name and the code that carries its token; a promise it replaces is retired; then the registry check runs. Refuses, naming the promise, when no passing row names it, a test file its row names is missing or does not carry its token, or no code carries it. Writes plan documents, commits nothing. Exit 2 with nothing written on a refusal.",
+	)
+	.option(
+		"--code-root <path>",
+		"where the plan's code and tests are (default: the project's code root; in a workbench before landing, the plan's own worktree)",
+	)
+	.action(async function (this: Command, plan: string) {
+		const { promisesConfirm } = await import("./commands/promises.js");
+		await promisesConfirm(rootOrExit(), plan, this.opts());
+	});
+
+promisesCmd
+	.command("contract [plan]")
+	.description(
+		"Does a plan's brief, its test rows and the registry agree? Refuses, naming the promise, the expectation or the row: a promise the brief makes that the registry does not hold, another plan owns or describes differently; one it keeps, changes or replaces that does not exist or is retired; an expectation with no measure or no time to look; a row naming a promise or lesson that does not exist, or another plan's promise the brief does not list. A brief written before promises were part of one is not held to it. Read-only. Exit 2 on a refusal. The impl hook and `promises check` both run this.",
+	)
+	.option("--all", "every plan folder, active and archived")
+	.option("--impl-stdin", "judge the impl given on stdin in place of the one on disk")
+	.action(async function (this: Command, plan: string | undefined) {
+		const { promisesContract } = await import("./commands/promises.js");
+		promisesContract(rootOrExit(), plan, this.opts());
+	});
+
 program.parse();

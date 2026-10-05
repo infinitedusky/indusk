@@ -29,15 +29,33 @@ export function sectionMarkdown(heading: string, body: string): string {
   return trimmed ? `## ${heading}\n\n${trimmed}` : `## ${heading}`;
 }
 
+/** The rows table as markdown, with the columns the page shows: Level and For when a row has them. */
 export function trajectoryTableMarkdown(rows: TrajectoryRow[]): string {
   if (rows.length === 0) return "";
-  const header = "| ID | Asserts | Writable at | Passes at | State |";
-  const divider = "| --- | --- | --- | --- | --- |";
-  const body = rows.map(
-    (row) =>
-      `| ${row.id} | ${row.asserts} | ${phaseTitle({ kind: row.writableAtKind, number: row.writableAt })} | ${phaseTitle({ kind: row.passesAtKind, number: row.passesAt })} | ${row.state} |`,
+  const hasLevel = rows.some((row) => row.levelText);
+  const hasPurpose = rows.some((row) => row.purpose);
+  const line = (cells: string[]) => `| ${cells.join(" | ")} |`;
+  const header = [
+    "ID",
+    "Asserts",
+    "Writable at",
+    "Passes at",
+    ...(hasLevel ? ["Level"] : []),
+    ...(hasPurpose ? ["For"] : []),
+    "State",
+  ];
+  const body = rows.map((row) =>
+    line([
+      row.id,
+      row.asserts,
+      phaseTitle({ kind: row.writableAtKind, number: row.writableAt }),
+      phaseTitle({ kind: row.passesAtKind, number: row.passesAt }),
+      ...(hasLevel ? [row.levelText ?? ""] : []),
+      ...(hasPurpose ? [row.purposeText ?? ""] : []),
+      row.state,
+    ]),
   );
-  return [header, divider, ...body].join("\n");
+  return [line(header), line(header.map(() => "---")), ...body].join("\n");
 }
 
 export function checklistMarkdown(items: ChecklistItem[]): string {

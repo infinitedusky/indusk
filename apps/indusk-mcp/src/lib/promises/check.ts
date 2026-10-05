@@ -1,9 +1,10 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { readConfig } from "../config.js";
-import { isUsableSegment } from "../path-segment.js";
 import { isRootsRefusal, resolveExecutionRoots } from "../worktree/roots.js";
 import { citedNames } from "./citations.js";
+import { checkAllContracts } from "./contract.js";
+import { planFolderStatus } from "./plan-folder.js";
 import {
 	type IncidentEntry,
 	type PromiseEntry,
@@ -29,6 +30,9 @@ import {
  * point at nothing), and every `enforced` promise must carry the links its
  * kind requires (a promise must not be declared and never upheld). The check
  * proves a test *names* a promise; that it *validates* it is Day step 6.
+ *
+ * It also runs the contract of every open plan (`contract.ts`): a brief, its
+ * test rows and the registry must agree.
  *
  * In a one-repo workbench the registry is plan-root state and sites and tests
  * are code-repo facts; zero or several declared repos refuse by name through
@@ -96,27 +100,6 @@ function registryFile(rel: string): string {
 	return `${PROMISES_REL_DIR}/${rel}`;
 }
 
-type OwnerStatus = "active" | "archived" | "missing" | "not-a-folder" | "archive-folder";
-
-/**
- * A plan is a DIRECTORY under `.indusk/planning/` or its `archive/`, and
- * `archive` itself is not one (A28: a file such as `master.md` and the
- * archive folder both satisfied a bare `existsSync`).
- */
-function ownerStatus(planRoot: string, owner: string): OwnerStatus {
-	if (!isUsableSegment(owner)) return "missing";
-	if (owner === "archive") return "archive-folder";
-	const planning = join(planRoot, ".indusk", "planning");
-	for (const [dir, status] of [
-		[join(planning, owner), "active"],
-		[join(planning, "archive", owner), "archived"],
-	] as const) {
-		if (!existsSync(dir)) continue;
-		return statSync(dir).isDirectory() ? status : "not-a-folder";
-	}
-	return "missing";
-}
-
 /**
  * Whether `rel` under `codeRoot` exists and carries the token for `name` or
  * any of its `aliases` (A29: the reverse scan resolved aliases, the link
@@ -171,7 +154,7 @@ function stateRefusals(
 	incidentsById: Map<string, IncidentEntry>,
 	refusals: CheckRefusal[],
 ): void {
-	const owner = ownerStatus(planRoot, p.owner);
+	const owner = planFolderStatus(planRoot, p.owner);
 	if (owner === "missing") {
 		refusals.push({
 			file: registryFile(p.file),
@@ -209,7 +192,7 @@ function stateRefusals(
 			if (owner === "archived") {
 				refusals.push({
 					file: registryFile(p.file),
-					message: `${p.name}: declared, but its owner "${p.owner}" is archived — the plan closed without establishing it; mark it enforced with its links, or known-violated with the incident that says why`,
+					message: `${p.name}: declared, but its owner "${p.owner}" is archived — the plan closed without confirming it. Confirm it from that plan's rows with \`indusk promises confirm ${p.owner}\`, or, if it was never kept, take it back with \`indusk promises withdraw ${p.name} --plan ${p.owner}\``,
 				});
 			}
 			break;
@@ -260,8 +243,18 @@ function stateRefusals(
 	}
 }
 
-export async function checkPromises(planRootIn: string): Promise<CheckResult> {
-	const roots = resolveExecutionRoots(planRootIn);
+export async function checkPromises(
+	planRootIn: string,
+	/**
+	 * `codeRoot`: where the sites and tests are, in place of the one the
+	 * project declares. Closing a workbench plan passes the plan's own
+	 * worktree, where its tests are until it lands (planner-promises A11).
+	 */
+	opts: { codeRoot?: string } = {},
+): Promise<CheckResult> {
+	const roots = opts.codeRoot
+		? { planRoot: planRootIn, codeRoot: opts.codeRoot, split: opts.codeRoot !== planRootIn }
+		: resolveExecutionRoots(planRootIn);
 	if (isRootsRefusal(roots))
 		return { ok: false, refusals: [{ file: planRootIn, message: roots.error }] };
 	const { planRoot, codeRoot } = roots;
@@ -292,6 +285,11 @@ export async function checkPromises(planRootIn: string): Promise<CheckResult> {
 
 	const incidentsById = new Map(registry.incidents.map((i) => [i.id, i]));
 	for (const p of registry.promises) stateRefusals(planRoot, codeRoot, p, incidentsById, refusals);
+
+	refusals.push(...supersedesRefusals(registry));
+	// planner-promises ADR D2: every open plan's brief, rows and the registry
+	// agree. Run here so every `pnpm test` runs it.
+	refusals.push(...checkAllContracts(planRoot, { activeOnly: true, registry }).refusals);
 
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
 	for (const i of registry.incidents) {
@@ -365,6 +363,39 @@ function domainRefusals(planRoot: string, registry: Registry): CheckRefusal[] {
 	return refusals;
 }
 
+/**
+ * A replacement names what it replaced (planner-promises ADR D4): the name
+ * must be in the registry, and once the new promise is in force the old one
+ * must be retired — two promises in force about one commitment is the state
+ * `replace` exists to end. While the new one is only `declared`, its plan is
+ * still building and the old one rightly stays in force.
+ */
+function supersedesRefusals(registry: Registry): CheckRefusal[] {
+	const byName = new Map(registry.promises.map((p) => [p.name, p]));
+	const refusals: CheckRefusal[] = [];
+	for (const p of registry.promises) {
+		if (!p.supersedes) continue;
+		const old = byName.get(p.supersedes);
+		if (!old) {
+			refusals.push({
+				file: registryFile(p.file),
+				message: `${p.name}: supersedes "${p.supersedes}", which is not in the registry`,
+			});
+		} else if (p.state !== "declared" && p.state !== "retired" && old.state !== "retired") {
+			refusals.push({
+				file: registryFile(p.file),
+				message: `${p.name}: supersedes "${old.name}", which is still ${old.state} — the promise it replaced is retired when the replacing plan closes (\`indusk promises confirm\`)`,
+			});
+		}
+	}
+	return refusals;
+}
+
+/** What replaced `entry`: the promise that names it under `supersedes`, else its own `superseded_by`. */
+function supersededBy(entry: PromiseEntry, registry: Registry): string | undefined {
+	return registry.promises.find((p) => p.supersedes === entry.name)?.name ?? entry.supersededBy;
+}
+
 /** Every token under the code root names a registered, unretired promise (aliases resolve). */
 function citationRefusals(cited: Map<string, string[]>, registry: Registry): CheckRefusal[] {
 	const byName = new Map(registry.promises.map((p) => [p.name, p]));
@@ -383,7 +414,7 @@ function citationRefusals(cited: Map<string, string[]>, registry: Registry): Che
 			} else if (entry.state === "retired") {
 				refusals.push({
 					file: rel,
-					message: `names "promise: ${name}", which is retired${entry.supersededBy ? ` (superseded by ${entry.supersededBy})` : ""} — a retired promise must not keep reporting; remove the mark or point it at the successor`,
+					message: `names "promise: ${name}", which is retired${supersededBy(entry, registry) ? ` (superseded by ${supersededBy(entry, registry)})` : ""} — a retired promise must not keep reporting; remove the mark or point it at the successor`,
 				});
 			}
 		}

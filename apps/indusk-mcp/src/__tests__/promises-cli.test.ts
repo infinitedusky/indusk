@@ -80,8 +80,13 @@ describe.skipIf(SHOULD_SKIP)("A15 — this repository holds three promises, one 
 		for (const kind of ["behaviour", "state", "structure"]) {
 			expect(r.stdout).toMatch(new RegExp(`${kind} [1-9]`));
 		}
-		const enforced = Number(/enforced (\d+)/.exec(r.stdout)?.[1]);
-		const knownViolated = Number(/known-violated (\d+)/.exec(r.stdout)?.[1]);
-		expect(enforced + knownViolated, "every promise enforced or known-violated").toBe(total);
+		// planner-promises (ADR D10): this row once also demanded that every
+		// promise be `enforced` or `known-violated`. A promise `declared` by a
+		// plan that is still open is held too — stated in planning, its plan
+		// building toward it — and the four states are exhaustive, so that sum
+		// can no longer say anything. What "held" means is carried by the exit
+		// code above: `check` refuses a declared promise whose owner is archived,
+		// an enforced one without its links, and a known-violated one with no
+		// open incident.
 	});
 });

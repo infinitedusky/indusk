@@ -54,6 +54,13 @@ export interface PromiseEntry {
 	aliases: string[];
 	supersededBy?: string;
 	/**
+	 * The promise this one replaced (planner-promises ADR D4). Written once, on
+	 * the new side, by the plan doing the replacing; "superseded by" is derived
+	 * by reading. `superseded_by` above stays readable for the files that
+	 * carry it.
+	 */
+	supersedes?: string;
+	/**
 	 * `expect_every` (watcher-heartbeat, ADR D3): the longest silence that is
 	 * still fine, as written (`1d`) and in milliseconds. Absent for most
 	 * promises — silence from a listening watcher is the good outcome.
@@ -135,9 +142,11 @@ function isStringList(value: unknown): value is string[] {
 /**
  * Parse frontmatter structurally. gray-matter throws on malformed YAML in
  * plain Node but returns `data: {}` inside vitest, so a document that opens
- * with `---` and yields no data is malformed either way.
+ * with `---` and yields no data is malformed either way. The one frontmatter
+ * reader the promise modules use: the registry, the contract's impl reader and
+ * the writer's read-back all ask here, so none can drop the guard.
  */
-function parseFrontmatter(
+export function parseFrontmatter(
 	raw: string,
 ): { data: Record<string, unknown>; content: string } | { error: string } {
 	let parsed: { data: Record<string, unknown>; content: string };
@@ -213,6 +222,12 @@ export function promiseProblem(value: unknown, stem: string, statement: string):
 	}
 	if (v.superseded_by !== undefined && typeof v.superseded_by !== "string") {
 		return "`superseded_by` must be a promise name";
+	}
+	if (
+		v.supersedes !== undefined &&
+		(typeof v.supersedes !== "string" || !PROMISE_NAME.test(v.supersedes))
+	) {
+		return "`supersedes` must be a promise name";
 	}
 	if (
 		v.expect_every !== undefined &&
@@ -326,6 +341,7 @@ export function readPromises(planRoot: string): ReadRegistryResult {
 			incidents: (d.incidents as string[] | undefined) ?? [],
 			aliases: (d.aliases as string[] | undefined) ?? [],
 			supersededBy: d.superseded_by as string | undefined,
+			...(typeof d.supersedes === "string" ? { supersedes: d.supersedes } : {}),
 			...(typeof d.expect_every === "string"
 				? { expectEvery: { text: d.expect_every, ms: parseDuration(d.expect_every) as number } }
 				: {}),

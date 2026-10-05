@@ -22,9 +22,11 @@ import type { Plan } from "@/lib/planning-reader";
 export function FalsificationSection({
   plan,
   phase,
+  promisesHref,
 }: {
   plan: Plan;
   phase: Phase | null;
+  promisesHref?: string;
 }) {
   // Priority: phase-authoring flow (new, 1.27.4+) > legacy log file > empty state.
   if (phase) {
@@ -33,6 +35,7 @@ export function FalsificationSection({
         ritual="falsification"
         planName={plan.name}
         phase={phase}
+        promisesHref={promisesHref}
       />
     );
   }

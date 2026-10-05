@@ -34,6 +34,8 @@ Work through these steps in order. Each step is blocking — do not skip ahead.
 
 Before writing a single word of the retrospective, confirm that the plan has completed **both** closing rituals — falsification **and** cleanup. Each is satisfied either via its phase-authoring flow (a Falsification Phase / a `### Phase N: Cleanup` phase, both terminal in impl.md), via a legacy sidecar log (falsification only), or via an explicit skip-reason frontmatter pair. **Both must pass.** The composed check is `checkRetrospectiveReadiness(planRoot, implContent)` from `@infinitedusky/indusk-mcp/cleanup/gate` (monorepo: `apps/indusk-mcp/src/lib/cleanup/gate.ts`) — it returns `{ passes, missing, nonTerminalRows }`, where `missing` names any unsatisfied ritual and, since dawn-workbench-execution, `rows` when a trajectory row whose `Passes at` phase exists in the document is not terminal (`passing`, `skipped` or `blocked`); `nonTerminalRows` names them. That row check is the condition the text below always described and the code did not perform until workbench-trust-fixes closed with two rows still `written`.
 
+The same check names `promises` when the plan declared a promise its test rows do not yet prove: no row's `For` cell names it, a row that names it is not `passing`, or the rows name no test file. `unprovenPromises` lists them. A plan does not close holding a promise nothing proves; Step 8a is where each becomes `enforced`.
+
 **Falsification** is satisfied by any of the three conditions below.
 
 Check the gate by reading three sources in this order:
@@ -51,7 +53,7 @@ The **falsification** requirement passes if ANY of the three conditions above ho
 
 Cleanup runs AFTER falsification: `/work` → `/falsify` → `/work` → `/cleanup` → `/work` → `/retrospective`. Evaluate both rituals at once with `checkRetrospectiveReadiness(planRoot, implContent)`. The gate passes only when BOTH requirements are satisfied. If either fails, refuse to run the retrospective and surface this message to the user:
 
-> **Retrospective blocked: ritual gate not satisfied for `{plan-name}` (missing: `{the `missing` list — falsification and/or cleanup}`).**
+> **Retrospective blocked: ritual gate not satisfied for `{plan-name}` (missing: `{the `missing` list — falsification, cleanup, rows and/or promises}`).**
 >
 > Before closing out a plan, run `/falsify {plan-name}` to exercise the bounty-hunting ritual — investigate the code, form specific hypotheses about what should be broken, and author a Falsification Phase in the plan's impl.md capturing the hypothesis tests + fix items. `/work` then picks up the phase and closes it normally; once all impl phases are terminal, this gate passes automatically.
 >
@@ -70,6 +72,8 @@ Cleanup runs AFTER falsification: `/work` → `/falsify` → `/work` → `/clean
 > ```
 >
 > The skip-reasons are recorded in the archive and surfaced in retrospectives. Use sparingly — typically only for trivial typo-fix plans where the ritual cost exceeds the discipline value.
+>
+> If `promises` is missing, the plan declared a promise (`{the `unprovenPromises` list}`) that no passing test row names. Give the row that tests it a `For` cell naming the promise and a `Test` cell naming its file, and make the row pass. `indusk promises confirm {plan-name}` says exactly what is still unproven, and writes nothing while anything is.
 
 Do not proceed to Step 1 until the gate passes. This is structural enforcement of the discipline documented in the [Falsification Ritual guide](apps/indusk-docs/src/guide/falsification-ritual.md) — happy-path authoring produces happy-path tests, and the ritual is the mechanism for surfacing the gaps the author couldn't think of.
 
@@ -274,6 +278,30 @@ If the retrospective produced broadly useful insights, create `apps/indusk-docs/
 Not every plan produces a lessons page — only create one if the insights are genuinely reusable.
 
 **Update sidebar:** Add new decision/lesson pages to the VitePress sidebar config in `apps/indusk-docs/src/.vitepress/config.ts`.
+
+### Step 8a: Confirm — the plan's promises become enforced
+
+A plan closes with its promises proven. Before the folder is archived, run:
+
+```bash
+indusk promises confirm {plan-name}
+```
+
+(or the `confirm_promises` tool). For each promise the plan declared, it sets `tests:` to the test files the plan's rows name, `sites:` to the other files that carry the promise's token, and `state: enforced`; a promise the plan replaces is retired; then the registry check runs. It writes plan documents and commits nothing — commit the registry with the archive.
+
+It refuses, naming each promise, and writes nothing when:
+
+- no row names the promise, or a row that names it is not `passing`;
+- a test file a row names is missing, or does not carry `promise: <name>`;
+- no code carries the token, for a `behaviour` or `state` promise;
+- code still names a promise this plan replaces;
+- the brief lists a change or a replacement the plan never made (`indusk promises change` / `replace`).
+
+Fix what it names and run it again. **Do not archive past a refusal**: a `declared` promise whose plan is archived fails `indusk promises check`, and with it the next `pnpm test`.
+
+**In a workbench**, the plan's tests exist only in its own code worktree until Step 10 lands them, so name it: `indusk promises confirm {plan-name} --code-root <the plan's code worktree>`.
+
+A plan that declared no promise has nothing to confirm, and the command says so.
 
 ### Step 9: Archival
 

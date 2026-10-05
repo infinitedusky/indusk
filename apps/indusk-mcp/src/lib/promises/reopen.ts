@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { shouldEmitOtelGate } from "../config.js";
 import { parseImplString } from "../impl-parser-core.js";
 import { appendLateRow } from "../trajectory/append-row.js";
+import { promiseToken } from "./vocabulary.js";
 
 /**
  * Reopening a plan is an appended phase, in place (day-monitor, ADR D7).
@@ -138,6 +139,11 @@ export function reopenOwner(
 	const withRow = appendLateRow(text, next, {
 		asserts: `${promise} holds again after ${incidentId}: the test that reproduces it, named by its root cause, passes`,
 		why: `the test that reproduces ${incidentId} is decided by its root cause, which this Maintenance phase writes first`,
+		// Whichever of these columns the owner's table has. The level is the
+		// smallest, which the phase's author may raise once the root cause
+		// says what the test is; the row is for the promise that broke.
+		// promise: an-incident-names-its-tests
+		cells: { kind: "unit", level: "unit", for: promiseToken(promise) },
 	});
 	writeFileSync(
 		implPath,

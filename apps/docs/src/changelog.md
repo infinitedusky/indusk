@@ -4,6 +4,28 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+### Added
+- **The planner asks for promises.** A plan starts with a conversation: what you want, which promises already in force it comes near, and the promises said back before anything is saved. The brief holds what came out of it, expectations (each with a measure and a time to look) and promises (the ones the plan makes, and the existing ones it must not break, changes or replaces), and nothing else; the problem, the context and the decisions go in research.
+- **Six commands, and nobody types a registry file.** `indusk promises declare`, `change` and `replace` write the registry from the conversation, and `withdraw` takes back a promise that was dropped or renamed before it was ever in force; `promises contract <plan>` checks that a plan's brief, its test rows and the registry agree; `promises confirm <plan>` closes a plan's promises, making each `enforced` with the tests its rows name and the code that carries its token. The planner and the retrospective call the tools of the same names (`declare_promise`, `change_promise`, `replace_promise`, `withdraw_promise`, `confirm_promises`).
+- **A test row says what it is for.** An impl with `test_purpose: required` has a `For` column: the promise the row proves, the lesson it guards, or why it needs neither. The hook refuses a row that does not say, one that names a promise or lesson that does not exist, and one that names another plan's promise the brief does not list. An impl cannot be saved as building while its plan's contract is broken.
+- **A plan closes with its promises proven.** The retrospective confirms them before it archives (Step 8a), and its gate names any promise the plan's rows do not yet prove.
+- **An incident names its tests.** When a promise breaks, its incident lists under `Proven by` every test row, in any plan, that named it: the plan, the row, and whether it was passing.
+- **A changed promise keeps its name.** A later plan that improves a promise's sentence takes it over, and its History keeps the old sentence, the reason and the plan that owned it before. A promise that is replaced is retired when the replacing plan closes.
+- The admin's plan page shows each test row's level and what it is for; a promise's name links to it on the Promises page.
+- `@infinitedusky/indusk-mcp/test-levels`.
+
+### Changed
+- **A test's kind is its level.** A promise already has a kind, and a row names both. The column is `Level` and the key `test_levels: required`; an impl written with `Kind` and `test_kinds: required` still validates, and `@infinitedusky/indusk-mcp/test-kinds` still resolves.
+- The impl hook now runs `indusk promises contract` for an impl that sets `test_purpose: required`, so the `indusk` on `PATH` (or `INDUSK_BIN`) must be this version or later. When it is not, the hook refuses the write and says which command it ran and how it failed.
+
+### Fixed
+- **The checks no longer pass what they could not read.** A trajectory row with a cell missing or too many, a `For` cell naming a promise wrongly or holding only a mark, a brief entry no list read, the new brief parts without `## Promises`, and a `{placeholder}` measure are each refused by name. The row rules hold for an impl any tool wrote, and rows are checked whatever the brief's shape. An impl that cannot be read is a refusal naming it in `promises check`, `contract` and `confirm`, not a stack trace.
+- **A plan can close by command alone.** `confirm` brings an in-force promise's links up to date when its test moved, never records a test as a code site, retires what a promise replaces before enforcing it (a second run finishes a stopped one), and works on an archived plan, as does `withdraw`. `replace` records the link on a replacement already declared. `declare` and `change` refuse a domain or sentence the registry could not read back, writing nothing.
+- A brief left at `draft` no longer takes a plan that is building out of `promises check`.
+- **A new project's first `indusk promises check` no longer fails on InDusk's own hooks.** The hooks the package installs carry tokens for promises of the repository that ships them, and the check read those as the project's citations. A project's own hooks are still read.
+- An Edit that replaces every occurrence is judged by the impl hook as the file it would leave, not as if it replaced the first.
+- **A plan reopened by a broken promise can be worked.** The test row appended to its impl was written with five cells whatever the table had, so an impl that requires each row to name its kind (1.61.0) got a row with an empty cell and refused its own next edit. The row now carries its level and the promise that broke.
+
 ## [1.61.0] — 2026-10-05
 
 ### Added

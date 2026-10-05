@@ -42,7 +42,8 @@ flowchart TD
     S5 --> S6["Step 6: Lesson capture"]
     S6 --> S7["Step 7: Context audit"]
     S7 --> S8["Step 8: Knowledge handoff"]
-    S8 --> S9["Step 9: Archival"]
+    S8 --> S8a["Step 8a: Confirm the plan's promises"]
+    S8a --> S9["Step 9: Archival"]
     S9 --> S10["Step 10: Land on trunk"]
     S10 --> S11["Step 11: Bump"]
     S11 --> Done["Plan closed"]
@@ -72,6 +73,12 @@ flowchart TD
 If neither holds, the skill surfaces a gate-refusal message directing the user to run `/falsify {plan}` first, or to add the skip frontmatter with a recorded reason.
 
 This is the structural enforcement layer for the [Falsification Ritual](/guide/falsification-ritual). The two helper functions live in [`apps/indusk-mcp/src/lib/falsification/`](/reference/falsification/log); the retrospective skill invokes them via `tsx` or MCP wrappers the same way other skill-level checks do.
+
+The same gate (`checkRetrospectiveReadiness`) also refuses while a trajectory
+row whose phase exists is not terminal, and while the plan declared a
+[promise](/guide/promises) its test rows do not yet prove: no row names it, a
+row that names it is not `passing`, or the rows name no test file. It names
+the rows and the promises.
 
 ### Step 1: Write the Retrospective Document
 
@@ -180,6 +187,24 @@ Distill planning artifacts into the docs site so the knowledge survives archival
 **Retrospective insights to lessons page:** If the retrospective produced broadly useful insights, create `apps/indusk-docs/src/lessons/{plan-name}.md` with what was learned that applies beyond this plan and what would be done differently. Not every plan produces a lessons page — only create one if the insights are genuinely reusable.
 
 **Update sidebar:** Add new decision and lesson pages to the VitePress sidebar config in `apps/indusk-docs/src/.vitepress/config.ts`.
+
+### Step 8a: Confirm the Plan's Promises
+
+A plan closes with its promises proven. Before the folder is archived:
+
+```bash
+indusk promises confirm {plan-name}
+```
+
+Each promise the plan declared becomes `enforced`, with the test files its rows
+name and the code that carries its token; a promise the plan replaces is
+retired; then the registry check runs. It refuses, naming each promise, and
+writes nothing while one is unproven. In a workbench, pass the plan's own code
+worktree with `--code-root`, because its tests are not on the trunk yet.
+
+Do not archive past a refusal: a `declared` promise whose plan is archived
+fails `indusk promises check`. Every refusal is listed in the
+[`promises confirm` reference](/reference/cli/promises#promises-confirm).
 
 ### Step 9: Archival
 

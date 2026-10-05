@@ -153,9 +153,16 @@ writer. Each command has an MCP tool of the same name for the planner to call.
 | `promises change <name> --plan --statement --reason` | Replaces the sentence; the owner becomes the plan; History gains the date, the old sentence, the reason and the previous owner (A25). Name, state, incidents and aliases are untouched. |
 | `promises replace <old> --by <new> …` | Declares the new promise with `supersedes: <old>`. The old one is untouched until the plan closes (A26). |
 | `promises confirm <plan>` | D5. |
+| `promises withdraw <name> --plan` | *Added 2026-10-05, after acceptance (Sandy).* Removes the file of a promise that is `declared` and owned by that open plan: one the conversation dropped or renamed before it was ever in force. Refuses a promise in any other state, another plan's, one that lists an incident, and one another promise records replacing (A28). |
 
 `supersedes` is a new frontmatter key on the new promise. `superseded_by`
 stays readable for the promises that carry it.
+
+Why `withdraw` was added: writing the planner's steps showed that a promise
+declared and then dropped, or given a better name, could leave the registry
+only by someone deleting its file, which is what the commands exist to end. A
+promise that is in force is never withdrawn. It has tests vouching for it and
+a history, and leaves by being replaced.
 
 **D5 — Closing confirms.** `promises confirm <plan>`, for each promise the
 plan owns that is `declared`:

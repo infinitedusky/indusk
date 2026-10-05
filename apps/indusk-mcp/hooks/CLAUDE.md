@@ -34,8 +34,19 @@ are about keeping the two lanes in step.
   first `-m`/`-F`, never the surrounding command text, and a substituted
   message is refused *as unreadable*, never split into paths.
 - **Never predict Edit results with `String.replace`** — its `$`-substitution
-  diverges from the Edit tool's literal semantics; use an index-splice and
-  guard an empty `old_string`.
+  diverges from the Edit tool's literal semantics and it stops at the first
+  match; use an index-splice (split/join under `replace_all`) and guard an
+  empty `old_string`.
+- **A rule that needs the registry or a brief runs through `indusk promises
+  contract`, never a second reader in a hook.** `validate-impl-structure.js`
+  hands it the impl as it would be written (`--impl-stdin`), before its own
+  "no phase structure touched" exit, and passes the refusal on. A check that
+  cannot be run refuses and says why: the command, how it failed, and that
+  `INDUSK_BIN` names another build
+  (`lesson: detectors-must-distinguish-could-not-check-from-checked-and-failed`).
+  The row rules (shape, level, purpose) are the contract's too, so they hold
+  for a file any tool wrote; the hook's own run of them, on an edit that adds
+  a phase or an item, is the early word on a draft.
 - The budget hook judges growth, not size; a root is the state root, a
   declared repo's dir (`declaredRepoDirsAt`), or any checkout's top (`.git`
   present — plan worktrees), never a depth. Every hook that refuses names its

@@ -65,6 +65,11 @@ For projects using the published package:
 | `order_plans` | — | Topological sort of plans based on dependency graph |
 | `promise_health` | `since_ms?` | What the promises are doing now: per behaviour promise, violations in the window, open incidents, and **violations no incident records yet** — plus `needsAttention`, the promises with unrecorded violations. Reads the Jaeger the project names through the same query the CLI uses, so the two cannot disagree; unreachable telemetry is an error, never a zero. Ask it when answering "what's next". See [`indusk promises`](/reference/cli/promises) |
 | `list_promises` | — | The promise registry (`.indusk/promises/`): every promise with its kind, lifetime, state, domain, owner, statement and links, plus every incident — or the problem naming the file and field when the registry is missing or malformed. See [`indusk promises`](/reference/cli/promises) |
+| `declare_promise` | `name`, `plan`, `kind`, `domain`, `statement` | Writes a promise from a planning conversation as `declared`, owned by the plan; called when the person accepts the brief, never by typing a file. Refuses a name the registry holds, a plan that is not open, an undeclared domain, or a promise the registry could not read back. See [`promises declare`](/reference/cli/promises#writing-a-promise-declare-change-replace-withdraw) |
+| `change_promise` | `name`, `plan`, `statement`, `reason` | Improves an existing promise's sentence; the plan takes it over and its History keeps the old sentence, the reason and the previous owner |
+| `replace_promise` | `old`, `name`, `plan`, `kind`, `domain`, `statement` | Declares a promise recording which it replaces (or records the link on one the plan already declared); the old one is retired when the plan is confirmed |
+| `withdraw_promise` | `name`, `plan` | Takes back a promise the plan declared and then dropped or renamed, before it was ever in force |
+| `confirm_promises` | `plan`, `code_root?` | Closes a plan's promises: each it declared becomes `enforced` from the rows that name it, links of those in force are brought up to date, what one replaces is retired; refuses, writing nothing, while one is unproven. See [`promises confirm`](/reference/cli/promises#promises-confirm) |
 
 #### Which copy of a plan the tools read
 
