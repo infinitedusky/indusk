@@ -4,6 +4,12 @@ All notable changes to InDusk MCP are documented here. Follows [Keep a Changelog
 
 ## [Unreleased]
 
+## [1.59.1] — 2026-10-05
+
+### Fixed
+- **A commit made in a plan worktree is evaluated in the worktree.** The evaluator's commit hook took the repository from the session's directory, so `cd <worktree> && git commit` from a session in the trunk was evaluated as the trunk's HEAD: one trunk commit was graded 14 times while the plan's commits went ungraded, until the evaluator refused. `git -C <dir> commit` was not recognised as a commit at all. The hook now reads where a commit lands with `trunk-guard`'s parser, which both hooks share (`hooks/_commit-anchor.js`). Run `indusk update` to install the fixed hooks.
+- **A rate-limited evaluator start is retried.** A fresh evaluator the API refused with a 429 ("Server is temporarily limiting requests") was marked a violation of `every-commit-evaluated` at once and its commit never graded. It is now retried after 15, 45 and 90 seconds before the run counts as failed.
+
 ## [1.59.0] — 2026-10-05
 
 1.58.5 was bumped and never published; its fixes ship here.
