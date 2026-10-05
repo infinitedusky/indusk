@@ -96,6 +96,7 @@ exists today and answers wrongly.
 - [x] `readSources(root, registry, opts)` → `SourceRead[]`: each source probed and read, with `JaegerUnreachable` and `WatcherBlind` caught into that source's `{ ok: false, kind, where, reason }`. `readPromiseMarks(root, registry, { source? })` reads one named source (the alarm source by default) and throws as today
 - [x] Export the new names through `promises/telemetry` (the admin's subpath)
 - [x] (discovered) `lib/promises/probe.ts`: when the probe's send fails, ask the query API before calling the watcher blind — a server that is down entirely is unreachable, not blind (A4 needs production *unreachable*; today a stopped server reads *watcher blind* because the send fails first). Bounded by the caller's `waitMs`
+- [x] Shape (`apps/indusk-mcp/src/lib/promises/telemetry.ts`) — reviewed, left as-is: each new unit (sourceNames, alarmSource, resolveMarkSources, readSources, readSource) does one job with a seam the tests reach; whether source resolution leaves this file is a module boundary, which /cleanup owns
 
 #### Build Phase 1 Verification
 
@@ -104,7 +105,7 @@ exists today and answers wrongly.
 
 #### Build Phase 1 Context
 
-- [ ] guard: `promise-sources.test.ts` A4 carries `lesson: one-dead-source-never-hides-another` — a read over several backends returns each one's failure as that backend's result, never as the whole read's
+- [x] guard: `promise-sources.test.ts` A4 carries `lesson: one-dead-source-never-hides-another` — a read over several backends returns each one's failure as that backend's result, never as the whole read's
 
 #### Build Phase 1 Document
 
