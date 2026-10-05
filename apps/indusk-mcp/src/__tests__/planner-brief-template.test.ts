@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { parseBriefContract } from "../lib/promises/brief-contract.js";
 import { REPO_ROOT } from "./helpers/cli.js";
 
 /**
@@ -41,6 +42,28 @@ describe("planner-promises A20 — the planner's brief template", () => {
 		for (const heading of ["## Problem", "## Proposed Direction", "## Success Criteria"]) {
 			expect(t, `${heading} belongs to research or the ADR`).not.toContain(heading);
 		}
+	});
+
+	it("filled in, is read by the contract's own parser with nothing out of shape", () => {
+		// The template and the parser are two descriptions of one shape; a
+		// template the parser cannot read would hand every new plan a brief
+		// its first check refuses.
+		const block = /```markdown\n([\s\S]*?)\n```/.exec(briefTemplate())?.[1] ?? "";
+		const filled = block
+			.replaceAll("{promise-name}", "seat-held-once")
+			.replaceAll("{behaviour | state | structure}", "state")
+			.replaceAll("{old-name}", "seat-never-double-booked")
+			.replaceAll("{new-name}", "seat-held-once");
+		const brief = parseBriefContract(filled);
+		if (brief.shape !== "contract") throw new Error("the template reads as a legacy brief");
+		expect(brief.problems).toEqual([]);
+		expect(brief.expectations).toHaveLength(1);
+		expect(brief.expectations[0].measure).not.toBeNull();
+		expect(brief.expectations[0].look).not.toBeNull();
+		expect(brief.makes.map((m) => [m.name, m.kind])).toEqual([["seat-held-once", "state"]]);
+		expect(brief.mustNotBreak).toEqual(["seat-held-once"]);
+		expect(brief.changes.map((c) => c.name)).toEqual(["seat-held-once"]);
+		expect(brief.replaces).toEqual([{ old: "seat-never-double-booked", by: "seat-held-once" }]);
 	});
 
 	it("keeps Depends On and Blocks, which /work reads there", () => {
