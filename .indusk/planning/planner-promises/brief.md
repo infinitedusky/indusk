@@ -1,7 +1,7 @@
 ---
 title: "The planner asks for promises"
 date: 2026-10-04
-status: draft
+status: accepted
 workflow: feature
 ---
 
@@ -43,7 +43,8 @@ defect. It blocks nothing and reopens nothing.
 ### This plan makes
 
 Each will be a file in `.indusk/promises/`, owned by this plan, `declared`
-until this plan's tests prove it. The kind in brackets is the agent's reading
+until this plan's tests prove it. They are written in the plan's first phase
+([research](research.md), finding 9). The kind in brackets is the agent's reading
 and can be corrected.
 
 1. **`a-briefs-promises-are-in-the-registry`** (state). Every promise a plan's

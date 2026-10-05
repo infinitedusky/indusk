@@ -265,6 +265,17 @@ switched off in any workflow: every promise is named by a test that was seen
 failing. It plans a `workflow-builder` that turns today's keys into steps a
 person selects.
 
+### 9. This repository has never held a `declared` promise
+
+`promises-cli.test.ts` asserts that every promise in this repository's own
+registry is `enforced` or `known-violated`. All six are. A `declared` promise
+turns that test red, on the trunk and on every branch, until its plan closes.
+
+So a plan's promises cannot be written here at brief acceptance without also
+changing that test, and a test cannot change on the trunk. For this plan they
+are written in its first phase, in its worktree, with the test corrected in
+the same commit: a promise is held, or declared by a plan that is still open.
+
 ## Open Questions
 
 - Does a row state its purpose in a new column, or is it derived from the
