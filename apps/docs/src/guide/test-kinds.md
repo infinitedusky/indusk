@@ -72,4 +72,4 @@ InDusk keeps this the way it keeps anything else, as promises:
   evaluator's, usually) is not judged, and neither is one that failed in under
   two minutes: a crash at startup measures nothing.
 
-Why: the plan's ADR, `.indusk/planning/test-kinds/adr.md`.
+See the [decision](/decisions/test-kinds) for why.

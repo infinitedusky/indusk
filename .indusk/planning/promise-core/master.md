@@ -214,7 +214,7 @@ None has been edited.
 | Plan | Stands | What changes |
 |---|---|---|
 | [planner-promises](../planner-promises/brief.md), demo step 6: the planner asks what a plan promises | brief draft | It writes each promise "with this plan as owner". Owner becomes optional. It is also where "every test row names a promise" lands for workflows that have a checklist. |
-| [test-kinds](../test-kinds/brief.md): five kinds of test, each run at its own moment | brief draft | Agrees on substance: watching is what promises are for. Two vocabularies now use the word "kind", one for promises and one for tests. One needs another word. |
+| [test-kinds](../archive/test-kinds/brief.md): five kinds of test, each run at its own moment | closed 2026-10-05 | Agrees on substance: watching is what promises are for. Two vocabularies now use the word "kind", one for promises and one for tests. One needs another word. |
 | [admin-plan-authoring](../admin-plan-authoring/brief.md), demo step 3: New plan and Build from the admin | brief draft, spike done | Unchanged for the demo. Afterwards, starting a plan asks which workflow, and the builder reuses its request handling. |
 | [contract-ui](../contract-ui/brief.md): the admin organised around premises, promises and phases | brief and manifesto draft | The lowest level is "phases". A promise built on the short path has none. That level becomes the work toward a promise, which may be a phase or only a test run. |
 | [indusk-demo](../indusk-demo/master.md): a new project, start to finish, recorded | living | The script stands as written. The short path is added at the end. |

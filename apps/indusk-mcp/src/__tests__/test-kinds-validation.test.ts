@@ -25,7 +25,7 @@ afterAll(() => {
  */
 function implWith(kind: string | null): string {
 	const src = readFileSync(
-		join(REPO_ROOT, ".indusk", "planning", "test-kinds", "impl.md"),
+		join(REPO_ROOT, ".indusk", "planning", "archive", "test-kinds", "impl.md"),
 		"utf-8",
 	);
 	expect(src, "the impl opts in").toMatch(/^test_kinds: required$/m);

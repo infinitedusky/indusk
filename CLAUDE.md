@@ -55,7 +55,6 @@ dusk/
 - Context skill is pure markdown instructions; CLAUDE.md keeps a fixed five-section structure (six until context-tiers moved Current State out) — see `.indusk/planning/archive/context-skill/adr.md`
 - Context tiers: a rule is delivered by its enforcer (`lesson:` tokens), by the directory where the work is written (nested `CLAUDE.md` files, the planning one shipped), or — design intent only — by this file; a register proves no rule was lost; the root is held by a lowered budget — see `/decisions/context-tiers`
 - Biome over ESLint; global config is the floor, project extends — see `.indusk/planning/archive/code-quality-system/adr.md`
-- Vitest as committed test runner with adaptive first-connect setup — see `.indusk/planning/archive/verify-skill/adr.md`
 - Document skill (per-phase gate) + retrospective skill (closing audit + docs handoff) — see `.indusk/planning/archive/document-skill/adr.md`
 - GSD-inspired: lessons registry, boundary maps, blocker protocol, forward intelligence — see `/decisions/gsd-inspired-improvements`
 - Plan-gate enforcement via Claude Code PreToolUse hooks — see `.indusk/planning/archive/enforce-plan-gates/adr.md`
@@ -88,7 +87,7 @@ dusk/
 - Watcher heartbeat: every promise read first probes its Jaeger (a span sent and read back) and says *watcher blind*, never zero; the server beats each pass and tells Slack once each way — see `/decisions/watcher-heartbeat`
 - Promise sources: `local` (the daemon) and `production` (`promises.jaeger`) read side by side, each source's failure its own; production raises the alarm — see `/decisions/promise-sources`
 - Promise timeline: compact sliced reads; an admin store that reads only what is new plus a late tail; one `violationState` (unrecorded / open / fixed) for chip and timeline; incidents record `fixed` via `promises fix` — see `/decisions/promise-timeline`
-- Test kinds run at their moments; servers in the system tier — see `.indusk/planning/test-kinds/adr.md`
+- Test kinds run at their moments; servers in the system tier — see `/decisions/test-kinds`
 
 ## Known Gotchas
 
