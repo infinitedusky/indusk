@@ -303,6 +303,13 @@ export async function checkPromises(planRootIn: string): Promise<CheckResult> {
 				message: `${i.id}: marked fixed, but its root cause is still "${UNWRITTEN_ROOT_CAUSE}" — write the root cause before closing the incident`,
 			});
 		}
+		// promise-timeline D1: a fixed incident says when, or its band has no end.
+		if (i.status === "fixed" && i.fixed === null) {
+			refusals.push({
+				file: registryFile(i.file),
+				message: `${i.id}: marked fixed, but it does not say when — add \`fixed: <ISO time>\`, or close incidents with \`indusk promises fix <id>\`, which writes both`,
+			});
+		}
 		if (!byName.has(i.promise)) {
 			refusals.push({
 				file: registryFile(i.file),
