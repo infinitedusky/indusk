@@ -133,7 +133,17 @@ let newFullContent;
 if (event.tool_name === "Edit" && toolInput.old_string) {
 	try {
 		const diskContent = readFileSync(filePath, "utf-8");
-		newFullContent = diskContent.replace(toolInput.old_string, newContent);
+		// The Edit tool replaces literally, and every occurrence when asked.
+		// `String.replace` does neither: it reads `$&` and `$1` in the new text
+		// as substitutions and stops at the first match — so the file judged
+		// here was not the file the edit would leave.
+		const at = diskContent.indexOf(toolInput.old_string);
+		if (at === -1) newFullContent = diskContent;
+		else if (toolInput.replace_all)
+			newFullContent = diskContent.split(toolInput.old_string).join(newContent);
+		else
+			newFullContent =
+				diskContent.slice(0, at) + newContent + diskContent.slice(at + toolInput.old_string.length);
 	} catch {
 		// File doesn't exist yet — will be created by Write
 		newFullContent = newContent;
@@ -192,7 +202,7 @@ function planContractRefusal(implPath, content, root) {
 			? `was stopped by ${r.signal} (30s limit)`
 			: `exited ${r.status}`;
 	const detail = said ? `\n${said.split("\n").slice(0, 6).join("\n")}` : "";
-	return `The plan's contract could not be checked, so this write is refused: a gate that cannot run is never a pass.\n\n  ran: ${ran}\n  in:  ${root}\n  it ${how}${detail}\n\nThe \`indusk\` this hook reaches must have \`promises contract\`: install or upgrade the one on PATH (\`npm i -g @infinitedusky/indusk-mcp@latest\`), or set INDUSK_BIN to a build that has it.\n`;
+	return `The plan's contract could not be checked, so this write is refused: a gate that cannot run is never a pass.\n\n  ran: ${ran}\n  in:  ${root}\n  it ${how}${detail}\n\nThe \`indusk\` this hook reaches must have \`promises contract\`: install or upgrade the one on PATH (\`npm i -g @infinitedusky/indusk-mcp@latest\`), or set INDUSK_BIN to a build that has it.\nlesson: detectors-must-distinguish-could-not-check-from-checked-and-failed\n`;
 }
 
 const contractRefusal = planContractRefusal(filePath, newFullContent, statePath);
