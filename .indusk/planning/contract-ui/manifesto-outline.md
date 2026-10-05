@@ -62,8 +62,9 @@ promises and judging premises.
    (2026-10-05): graphs let a person understand and check the system. It now
    states the real difference in the author's own terms: in a telemetry tool
    telemetry is the output, and here it is an input, the nervous system that
-   carries signals back to the agents that build the software. A person sees
-   only what they could not close.
+   carries signals back to the agents that build the software. Reports and
+   graphs stay: they show it working and help find failures, but they are not
+   the alarm.
 
 ## The two triads
 

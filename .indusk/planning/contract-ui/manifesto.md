@@ -122,7 +122,8 @@ much, but it's so powerful.
   problem and then works out what to do about it. Telemetry is the output.
   Here telemetry is an input. It is the nervous system that carries every
   signal from the running software back to the agents that build it, and they
-  act on it. A person sees only what they could not close.
+  act on it. Reports show this working and help find failures, but they are
+  not the alarm: if nobody looked for a week, nothing would be missed.
 - **Not a test language.** A promise stays a sentence in its author's words.
   The agents write the test and keep it; the person never maintains one.
 - **Not the end of planning.** Plans, gates and tests before code still run
