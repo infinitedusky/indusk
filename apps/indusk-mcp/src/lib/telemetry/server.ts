@@ -161,13 +161,52 @@ export function readServerSettings(env: NodeJS.ProcessEnv = process.env): Server
 		slackWebhook: required(env, SLACK_WEBHOOK_ENV),
 		passIntervalMs: positive(env, PASS_INTERVAL_ENV, DEFAULT_PASS_INTERVAL_MS, "milliseconds"),
 		passWindowMs: positive(env, PASS_WINDOW_ENV, DEFAULT_PASS_WINDOW_HOURS, "hours") * 3_600_000,
-		publicQueryUrl: env[PUBLIC_QUERY_URL_ENV]?.trim()
-			? jaegerEndpoint(required(env, PUBLIC_QUERY_URL_ENV)).queryUrl
-			: null,
+		publicQueryUrl: env[PUBLIC_QUERY_URL_ENV]?.trim() ? publicQueryUrl(env) : null,
 		...(env[WATCHER_STALE_ENV]?.trim()
 			? { watcherStaleMs: positive(env, WATCHER_STALE_ENV, 0, "milliseconds") }
 			: {}),
 	};
+}
+
+/**
+ * The public query URL, checked: it goes into every Slack message the server
+ * posts, so it must be a link Slack can open and must not carry a secret.
+ * Trimming slashes alone let `https://user:password@…` post the password to
+ * the channel and `<app>.fly.dev:16687` post a dead link (A15). A path is
+ * kept, for a Jaeger served under a prefix; a query or fragment is refused,
+ * since `/trace/<id>` would land inside it. The refusal never repeats the
+ * value — it may be the secret.
+ */
+function publicQueryUrl(env: NodeJS.ProcessEnv): string {
+	const raw = required(env, PUBLIC_QUERY_URL_ENV);
+	let url: URL;
+	try {
+		url = new URL(raw);
+	} catch {
+		throw new MissingServerSetting(
+			PUBLIC_QUERY_URL_ENV,
+			"not an absolute URL (https://<host>:<port>)",
+		);
+	}
+	if (url.protocol !== "https:" && url.protocol !== "http:") {
+		throw new MissingServerSetting(
+			PUBLIC_QUERY_URL_ENV,
+			`not an http(s) URL (got ${url.protocol})`,
+		);
+	}
+	if (url.username || url.password) {
+		throw new MissingServerSetting(
+			PUBLIC_QUERY_URL_ENV,
+			"carrying a user or password, which every Slack message would show — the link asks a browser to log in instead",
+		);
+	}
+	if (url.search || url.hash) {
+		throw new MissingServerSetting(
+			PUBLIC_QUERY_URL_ENV,
+			"carrying a query or fragment, which a trace link would land inside",
+		);
+	}
+	return jaegerEndpoint(raw).queryUrl;
 }
 
 /**
