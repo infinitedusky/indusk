@@ -1,7 +1,7 @@
 ---
 title: "Always-on deploy — run the server somewhere real"
 date: 2026-10-04
-status: completed
+status: in-progress
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -270,6 +270,35 @@ Found while investigating (2026-10-04), before any row was written:
 #### Build Phase 4 Document
 
 - [x] `apps/docs/src/reference/cli/telemetry-server.md`: `INDUSK_SERVER_PUBLIC_QUERY_URL`'s refusal (an absolute http(s) URL, no credential); "The query door" says a taken port refuses before Jaeger starts; `apps/docs/src/changelog.md` Unreleased, Fixed: the four; `vitepress build` clean — the door paragraph also says what happens to a response either side drops, and "When it announces nothing" says a short write keeps the previous record
+
+### Build Phase 5: Cleanup — one loopback port picker for the server and its tests
+
+**Goal**: decompose what this plan left spelled more than once across files, per the rule of three. The package is a library and CLI with no nextjs/react extension in play, so the move is reusing or extracting a function. One thing qualifies: picking a free loopback port is written three times, identically — `freeLoopbackPort` in `lib/telemetry/query-door.ts` (Build Phase 2), a private `freePort` in `__tests__/helpers/always-on-server.ts` (older), and another in `__tests__/always-on-door-startup.test.ts` (Build Phase 4, flagged by that phase's Shape as cleanup's to judge). The exported one already exists, and `query-door.test.ts` already imports it.
+
+Reviewed: the 21 files this branch changed under `apps/` and `docker/` since the plan's first commit (`319504122`). One is over its attention threshold — `apps/docs/src/changelog.md`, prose.
+
+- [ ] `__tests__/helpers/always-on-server.ts` and `__tests__/always-on-door-startup.test.ts`: delete each private `freePort` and import `freeLoopbackPort` from `lib/telemetry/query-door.ts` — the rule of three; the third copy is the one that already has a name and an export
+- [ ] (reviewed `lib/telemetry/daemon.ts`'s `pickAnyFreePort` against `freeLoopbackPort` — left as-is: it binds the wildcard scope on purpose, with the reason in its comment (a loopback probe reports free when an IPv6 wildcard holds the port), and the local daemon's ports are exposed, not loopback; and the file is not this plan's)
+- [ ] (reviewed `freeLoopbackPort`'s home in `query-door.ts` — left as-is: its one production caller is `serve()` choosing the port behind the door, and a `ports.ts` for one function would be a module created to hold a name; if a second production caller appears outside telemetry, that is the moment to move it)
+- [ ] (reviewed `lib/telemetry/server.ts` (369 lines), `lib/always-on/pass.ts` (349) and `lib/always-on/heartbeat.ts` (302) — left as-is: under the 400-line threshold, and what this plan added to each threads one value (the gRPC port, the public query URL, the loopback port behind the door) or validates one setting; `publicQueryUrl`'s checks sit beside the other setting readers they mirror)
+- [ ] (reviewed `lib/always-on/durable-write.ts` — left as-is: it *is* the extraction, one writer shared by `pass.ts` and `heartbeat.ts`, which each carried their own write-and-rename before)
+- [ ] (reviewed the tests' Basic-header builders — `e2e/deployed-smoke.e2e.test.ts`'s `auth()`, the helper's `authHeader()`, one inline in `always-on-browser-login.test.ts` — left as-is: one line each over different credentials, a deployment's from the environment, a local server's constants, a deliberately wrong one; a shared helper would take the credential as its whole argument)
+- [ ] (reviewed `e2e/deployed-smoke.e2e.test.ts`'s `eventually` against the polling helpers in `watcher-heartbeat-server.test.ts` and `telemetry-ui-reachable.test.ts` — left as-is: different contracts (a boolean check versus a value or a URL), and neither other file is this plan's)
+- [ ] (reviewed `apps/docs/src/changelog.md`, 822 lines, the one flagged file — left as-is: the project's changelog, flagged by length alone; this plan added its Unreleased entries)
+
+#### Build Phase 5 Verification
+
+- [ ] (no tests flip at this phase — reason: refactor)
+- [ ] The tests that use the two edited files still pass, their assertions unedited: `pnpm --filter @infinitedusky/indusk-mcp build && pnpm --filter @infinitedusky/indusk-mcp exec vitest run --config vitest.system.config.ts src/__tests__/always-on-door-startup src/__tests__/always-on-two-servers src/__tests__/always-on-server src/__tests__/always-on-browser-login src/__tests__/always-on-public-link`, and the leak guard is clear (`node apps/indusk-mcp/scripts/check-test-daemons.js`)
+- [ ] `pnpm --filter @infinitedusky/indusk-mcp exec tsc --noEmit` exits 0, and Biome is clean on the two edited files
+
+#### Build Phase 5 Context
+
+- [ ] `apps/indusk-mcp/CLAUDE.md`, Tests, "Fixtures with one home": add a free loopback port — `freeLoopbackPort` (`lib/telemetry/query-door.ts`), so the next always-on test imports it rather than writing a fourth
+
+#### Build Phase 5 Document
+
+- [ ] `apps/docs/src/changelog.md` Unreleased: under Changed, one line that the always-on tests pick ports through the server's own `freeLoopbackPort` — internal, recorded so the release that carries it says what moved
 
 ## Files Affected
 
