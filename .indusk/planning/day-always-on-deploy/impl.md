@@ -1,7 +1,7 @@
 ---
 title: "Always-on deploy — run the server somewhere real"
 date: 2026-10-04
-status: in-progress
+status: completed
 trajectory: required
 test_phases: required
 gate_policy: ask
@@ -68,7 +68,7 @@ observed instead of "unrun". See [brief.md](brief.md) and
 | A10 | The server's records survive a machine restart: after it, the announced record and the watcher state both still parse, so the server keeps announcing | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/e2e/deployed-smoke.e2e.test.ts |
 | A11 | The trace link in a Slack announcement opens the trace from wherever the reader is: it uses the public query address when one is set, and never the server's own loopback address | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/always-on-public-link.test.ts |
 | A12 | A person opening a trace link in a browser is asked to log in (401 with a Basic challenge) and, logged in, sees the trace | Build Phase 2 | Build Phase 2 | passing | apps/indusk-mcp/src/__tests__/always-on-browser-login.test.ts |
-| A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | written | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
+| A9 | The guide and reference no longer call the image or the Fly configuration unrun, and say what was observed | Test Phase 1 | Build Phase 3 | passing | apps/indusk-mcp/src/__tests__/always-on-docs-observed.test.ts |
 
 ## Checklist
 
@@ -203,16 +203,17 @@ reading Slack, so they are registered below, not authored.
 
 #### Build Phase 3 Verification
 
-- [ ] A9 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-docs-observed`) and A5 is quoted above
-- [ ] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear
+- [x] A9 passes (`pnpm --filter @infinitedusky/indusk-mcp exec vitest run src/__tests__/always-on-docs-observed`) and A5 is quoted above — 3/3
+- [x] `pnpm test` and `pnpm test:system` green, each ending with the leak guard's all-clear — `pnpm test`: mcp 1,680 / 5 skipped, admin 346, `promises check` clean, all-clear. `pnpm test:system`: 31 files, 115 tests, 130 s, all-clear
+- [x] Shape — skipped with its reason: this phase changed no code files (the guide's observed record and the impl only)
 
 #### Build Phase 3 Context
 
-- [ ] current.md: the "image and Fly reference are unrun" note in the shared region's day-always-on line is replaced by the date they were verified
+- [x] current.md: the "image and Fly reference are unrun" note in the shared region's day-always-on line is replaced by the date they were verified
 
 #### Build Phase 3 Document
 
-- [ ] `apps/docs/src/changelog.md` Unreleased: the always-on image and Fly reference verified against a real deployment, with what changed
+- [x] `apps/docs/src/changelog.md` Unreleased: the always-on image and Fly reference verified against a real deployment, with what changed — under Changed, beside the system tier's recovered time
 
 ## Files Affected
 
