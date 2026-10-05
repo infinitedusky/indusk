@@ -12,7 +12,14 @@ import {
   PROMISE_KIND_LABELS,
   PROMISE_STATE_CHIP,
 } from "@/components/bars/labels";
-import { GREY, HealthChip, HealthDetail } from "@/components/PromiseHealth";
+import {
+  GREY,
+  HealthChip,
+  HealthDetail,
+  SourceBanner,
+  type SourceChip,
+  type SourceObserved,
+} from "@/components/PromiseHealth";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -22,7 +29,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
-import type { HealthRow } from "@/lib/promise-health";
 
 /**
  * The Promises page's pieces (day-promises, ADR D8): the registry as a table
@@ -118,23 +124,6 @@ export interface PromisesTableProps {
   observed?: SourceObserved[];
 }
 
-/** One source's observed health, as the page read it. */
-export interface SourceObserved {
-  /** `local` or `production`. */
-  name: string;
-  rows: Record<string, HealthRow>;
-  unknownSince?: string | null;
-  /** The watcher answered and did not hear (watcher-heartbeat). */
-  blind?: { where: string; intake: string };
-}
-
-/** One chip in a promise's state cell: a source, its row, and whether it could be read. */
-export interface SourceChip {
-  source: string;
-  row: HealthRow;
-  unknownSince?: string | null;
-}
-
 export function PromisesTable({
   promises,
   incidents,
@@ -228,39 +217,6 @@ export function PromisesTable({
 
       {incidents.length > 0 && <IncidentsTable incidents={incidents} />}
     </section>
-  );
-}
-
-/**
- * A source that could not be read, said in its own banner (promise-sources,
- * ADR D7): blind, or unknown since its last good read. Nothing for a source
- * that answered.
- */
-function SourceBanner({ observed }: { observed: SourceObserved }) {
-  if (observed.blind) {
-    return (
-      <p
-        className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-        data-testid="watcher-blind"
-        data-source={observed.name}
-      >
-        Watcher blind — a probe sent to {observed.blind.intake} was not returned
-        by {observed.blind.where}. Something answers there and is not receiving
-        this project&apos;s telemetry; no promise is shown upheld.
-      </p>
-    );
-  }
-  if (observed.unknownSince === undefined) return null;
-  return (
-    <p
-      className="rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-      data-testid="health-unknown"
-      data-source={observed.name}
-    >
-      The {observed.name} Jaeger could not be read — health unknown since{" "}
-      {observed.unknownSince ?? "this server started"}. No promise is shown
-      upheld.
-    </p>
   );
 }
 
