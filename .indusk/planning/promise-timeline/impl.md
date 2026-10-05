@@ -113,10 +113,10 @@ with `data-incident`, `data-from` and `data-to`; the old-break marker is
 
 ### Build Phase 1: an incident records when it was fixed
 
-- [ ] `lib/promises/incidents.ts`: `fixed` read and written as an ISO time; `violationState(traceId, incidents)` → `unrecorded | open | fixed`, by the incidents' recorded traces
+- [x] `lib/promises/incidents.ts`: `fixed` read and written as an ISO time; `violationState(traceId, incidents)` → `unrecorded | open | fixed`, by the incidents' recorded traces
 - [x] `bin/commands/promises.ts`: `indusk promises fix <incident-id>` — `status: fixed`, `fixed: <now>`, and the promise back to `enforced` (its `incidents` list kept) when no other incident of it is open; refuses an unknown or already-fixed id by name
 - [x] `lib/promises/check.ts`: refuse `status: fixed` without `fixed`, naming the file
-- [ ] The two fixed incidents get `fixed` from the commit that fixed them (`i-2026-09-15-gates-silently-off`, `i-2026-10-03-every-commit-evaluated`), so this repository's own `promises check` stays green
+- [x] The two fixed incidents get `fixed` from the commit that fixed them (`i-2026-09-15-gates-silently-off`, `i-2026-10-03-every-commit-evaluated`), so this repository's own `promises check` stays green
 
 #### Build Phase 1 Verification
 

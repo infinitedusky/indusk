@@ -3,6 +3,7 @@ id: i-2026-09-15-gates-silently-off
 promise: gates-ran-at-every-checkoff
 source: desk
 status: fixed
+fixed: '2026-09-17T22:28:23Z'
 date: 2026-09-15
 ---
 
