@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 /**
  * T16 + T17 — Phase 7 falsification fixes against `eval-trigger.js`.
@@ -24,7 +24,7 @@ const HOOK_PATH = resolve(__dirname, "../../hooks/eval-trigger.js");
 describe("eval-trigger.js — word-boundary trigger filter (T16)", () => {
 	const source = readFileSync(HOOK_PATH, "utf-8");
 
-	it("uses a regex with a left-edge word boundary (\\b) for the trigger filter", () => {
+	it("filters with the shared command-position reading, not a regex of its own", () => {
 		// As of 1.31.0 (`git-only-substrate` Phase 2) the filter narrowed to
 		// match only the user-facing porcelain `git commit`. Phase 6 (falsi-
 		// fication fix for H5) further tightened the right edge — `\b` matches
@@ -33,7 +33,13 @@ describe("eval-trigger.js — word-boundary trigger filter (T16)", () => {
 		// `(?=$|\s|;|&|\|)`. We assert the left-edge `\b` is still there as
 		// the substring-defense floor; the per-command negative cases live
 		// in the T16 group below.
-		expect(source).toMatch(/\\bgit commit/);
+		//
+		// Since day-monitor A32 (2026-10-05) the filter is trunk-guard's
+		// `COMMIT_RE`, shared through `_commit-anchor.js`: `git` in command
+		// position, which is a stricter left edge than `\b` (a quoted
+		// `"git commit"` is not a command), and `git -C <dir> commit` counts.
+		expect(source).toMatch(/import \{[^}]*\bCOMMIT_RE\b[^}]*\} from "\.\/_commit-anchor\.js"/);
+		expect(source).toMatch(/TRIGGER_RE = COMMIT_RE/);
 	});
 
 	it("does NOT use String.includes for the trigger check (the pre-Phase-7 shape)", () => {
@@ -51,16 +57,16 @@ describe("eval-trigger.js — word-boundary trigger filter (T16)", () => {
 describe("eval-trigger.js — TRIGGER_RE does not match git plumbing commands (T16)", () => {
 	const source = readFileSync(HOOK_PATH, "utf-8");
 
-	// Extract the TRIGGER_RE literal from the source so the assertions exercise
-	// the actual regex the hook will use, not a re-typed copy.
+	// The regex the hook uses — imported from the shared module it imports, so
+	// the assertions exercise it rather than a re-typed copy.
+	let commitRe: RegExp;
+	beforeAll(async () => {
+		// @ts-expect-error — a plain-JS hook module, no type declarations
+		({ COMMIT_RE: commitRe } = await import("../../hooks/_commit-anchor.js"));
+	});
 	function extractTriggerRe(): RegExp {
-		const m = source.match(/const\s+TRIGGER_RE\s*=\s*(\/[^/]+\/[gimsuy]*)/);
-		if (!m) throw new Error("could not find TRIGGER_RE in eval-trigger.js");
-		const literal = m[1];
-		const lastSlash = literal.lastIndexOf("/");
-		const body = literal.slice(1, lastSlash);
-		const flags = literal.slice(lastSlash + 1);
-		return new RegExp(body, flags);
+		expect(source).toMatch(/TRIGGER_RE = COMMIT_RE/);
+		return new RegExp(commitRe.source, commitRe.flags);
 	}
 
 	it("matches the porcelain `git commit` (regression: don't break the happy path)", () => {

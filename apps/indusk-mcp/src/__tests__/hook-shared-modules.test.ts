@@ -73,3 +73,27 @@ describe("A24 — one phase/checkbox-item walk under hooks/", () => {
 		expect(await itemWalkDefiners()).toEqual(["_impl-phases.js"]);
 	}, 30_000);
 });
+
+/**
+ * day-monitor A32 — where a commit lands has one reading under `hooks/`.
+ * `eval-trigger.js` kept its own commit filter and took the repository from
+ * the session's directory while `trunk-guard.js` read the command's `cd` and
+ * `git -C`; a plan's worktree commits were evaluated as the trunk's HEAD.
+ */
+async function commitReadingDefiners(): Promise<string[]> {
+	const files = await glob("*.js", { cwd: hooksDir, absolute: true });
+	const hits: string[] = [];
+	for (const file of files) {
+		const source = await readFile(file, "utf8");
+		if (/\bfunction\s+commitAnchor\s*\(|\bconst\s+COMMIT_RE\s*=/.test(source)) {
+			hits.push(relative(hooksDir, file));
+		}
+	}
+	return hits.sort();
+}
+
+describe("A32 — one reading of where a commit lands, under hooks/", () => {
+	it("is defined exactly once", async () => {
+		expect(await commitReadingDefiners()).toEqual(["_commit-anchor.js"]);
+	}, 30_000);
+});

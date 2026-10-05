@@ -32,6 +32,7 @@ import { execSync, spawn } from "node:child_process";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { COMMIT_RE, commitAnchor } from "./_commit-anchor.js";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
 
 // System log — writes to .indusk/eval/system.log under the InDusk state path.
@@ -101,9 +102,9 @@ const statePath = resolvedPaths.statePath ?? cwd;
 // knew where the commit landed, and a fact beats an inference by newer HEAD
 // (dawn-workbench-execution A12). CLI mode only — never from a hook event.
 const namedRepo = cliSource !== null && !drainPending ? gitRootArg : null;
-const gitPath = namedRepo ?? resolvedPaths.gitPath;
-const attributionRefusal = namedRepo ? null : resolvedPaths.refusal;
-const attribution = namedRepo ? "the repository the queue record named" : resolvedPaths.attribution;
+let gitPath = namedRepo ?? resolvedPaths.gitPath;
+let attributionRefusal = namedRepo ? null : resolvedPaths.refusal;
+let attribution = namedRepo ? "the repository the queue record named" : resolvedPaths.attribution;
 
 if (cliSource !== null || drainPending) {
 	syslog(
@@ -126,19 +127,28 @@ if (cliSource !== null || drainPending) {
 		process.exit(0);
 	}
 
-	// Fast path: not a recognized commit-trigger command. The hook fires on
-	// the user-facing porcelain `git commit ...` but NOT on git plumbing
-	// commands like `git commit-tree` or `git commit-graph`. The left-edge
-	// `\b` defends substring false-positives ("git committer" — `committer`
-	// has `commit` as a substring); the right-edge requires the next
-	// character to terminate the command word (whitespace, end-of-string,
-	// or a shell separator). Without the right-edge tightening, JS's `\b`
-	// matches `t`→`-` (word char to non-word), which would let
-	// `git commit-tree` fire the hook.
-	const TRIGGER_RE = /\bgit commit(?=$|\s|;|&|\|)/;
-	if (!TRIGGER_RE.test(command)) {
+	// Fast path: not a commit. `COMMIT_RE` is trunk-guard's reading of a
+	// command, shared through `_commit-anchor.js`: `git [options] commit` in
+	// command position — `git -C <dir> commit` included — never `git
+	// commit-tree`, `git commit-graph` or `echo "git commit"`.
+	const TRIGGER_RE = COMMIT_RE; // git commit, read once for both hooks
+	const commit = TRIGGER_RE.exec(command);
+	if (!commit) {
 		syslog(statePath, "skip — no git commit in command");
 		process.exit(0);
+	}
+
+	// Evaluate the repository the commit landed in, not the session's
+	// directory: `cd <worktree> && git commit` from a session in the trunk
+	// commits to the worktree (day-monitor A32 — one trunk HEAD was evaluated
+	// 14 times while a plan's commits went ungraded). The event's `cwd` stays
+	// the state path: results and logs belong to the project, wherever the
+	// commit landed.
+	const landed = resolveStateAndGitPaths(commitAnchor(command, commit, cwd));
+	if (landed.gitPath) {
+		gitPath = landed.gitPath;
+		attributionRefusal = landed.refusal;
+		attribution = landed.attribution;
 	}
 }
 

@@ -52,6 +52,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { COMMIT_RE, commitAnchor } from "./_commit-anchor.js";
 import { resolveStateAndGitPaths } from "./_hook-paths.js";
 
 const DEFAULT_BRANCHES = ["main", "master"];
@@ -62,17 +63,6 @@ const DEFAULT_BRANCHES = ["main", "master"];
 const ALLOWED_PREFIXES = [".indusk/", ".claude/lessons/", ".claude/skills/", ".claude/hooks/"];
 const ALLOWED_FILES = new Set(["CLAUDE.md", "AGENTS.md"]);
 const ALLOWED_PATTERNS = [/^\.claude\/settings[^/]*\.json$/];
-// `git [options] commit` in command position: the start of the command, after a
-// separator, inside `$(…)`/backticks, or as the string handed to `-c` (bash, sh,
-// zsh). Git's own pre-verb options are captured so `-C <path>` can move the
-// judged repository. Right-edge lookahead: `git commitment` is not a commit.
-// `echo "git commit"` and `--grep 'git commit'` are not in command position and
-// stay unmatched. Never String.includes.
-const GIT_OPTIONS =
-	"(?:\\s+(?:-C\\s+\\S+|-c\\s+\\S+|--git-dir(?:=\\S+|\\s+\\S+)|--work-tree(?:=\\S+|\\s+\\S+)|--no-pager|--no-optional-locks|--paginate|-[pP]))*";
-const COMMIT_RE = new RegExp(
-	`(?:^|[;&|(\\n]|\\x60|(?:^|\\s)-c\\s+["'])\\s*git(${GIT_OPTIONS})\\s+commit(?=$|\\s|[;&|)"'\\x60])`,
-);
 // Options that take a value, so the value is never read as a pathspec.
 const SHORT_WITH_VALUE = new Set(["m", "F", "C", "c", "t"]);
 const LONG_WITH_VALUE = new Set([
@@ -138,32 +128,11 @@ function classify() {
 	return null;
 }
 
-/**
- * Which repository the commit lands in: the event cwd, moved by every `cd` in
- * an earlier segment of the same command (in order), then by every `-C <path>`
- * among git's own options. The match begins AT the separator, so the text
- * before it ends with one `&` of `&&` — split on runs of separator characters,
- * not on operators.
- */
-function commitAnchor(command, match, cwd) {
-	let anchor = cwd;
-	for (const segment of command.slice(0, match.index).split(/[&|;\n]+/)) {
-		const cd = /^\s*cd\s+(?:"([^"]+)"|'([^']+)'|(\S+))\s*$/.exec(segment);
-		if (cd) anchor = resolve(anchor, cd[1] ?? cd[2] ?? cd[3]);
-	}
-	for (const c of match[1].matchAll(/-C\s+(\S+)/g)) anchor = resolve(anchor, unquote(c[1]));
-	return anchor;
-}
-
 /** The character that ends the commit's argument text when it sits inside a `-c` string or backticks; null when it runs to the segment's end. */
 function commitCloser(match) {
 	if (/-c\s+"$/.test(match[0])) return '"';
 	if (/-c\s+'$/.test(match[0])) return "'";
 	return match[0].includes("\x60") ? "\x60" : null;
-}
-
-function unquote(token) {
-	return /^(["']).*\1$/.test(token) ? token.slice(1, -1) : token;
 }
 
 /**
