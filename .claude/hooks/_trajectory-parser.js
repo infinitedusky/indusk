@@ -98,10 +98,32 @@ export function parsePurpose(cell) {
 	const lessons = [];
 	for (const part of text.split(",")) {
 		const m = /^(promise|lesson):\s*([a-z][a-z0-9-]*)$/.exec(part.trim());
-		if (!m) return { promises: [], lessons: [], reason: text };
+		if (!m) return reasonOrMalformed(text);
 		(m[1] === "promise" ? promises : lessons).push(m[2]);
 	}
 	return { promises, lessons, reason: null };
+}
+
+/** Port of `reasonOrMalformed` in `src/lib/trajectory/parser.ts` (planner-promises A30). */
+function reasonOrMalformed(text) {
+	if (/\b(?:promise|lesson):/i.test(text)) {
+		return {
+			promises: [],
+			lessons: [],
+			reason: null,
+			malformed:
+				"names a promise or a lesson, but not as `promise: <name>` or `lesson: <name>` (the bare name, no backticks, nothing after it; several separated by commas)",
+		};
+	}
+	if (text.split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length < 2) {
+		return {
+			promises: [],
+			lessons: [],
+			reason: null,
+			malformed: "is a mark, not a reason: say why the row needs no promise or lesson",
+		};
+	}
+	return { promises: [], lessons: [], reason: text };
 }
 
 export function parsePhaseRefNumber(cell) {
