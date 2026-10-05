@@ -51,13 +51,17 @@ promises and judging premises.
 5. **What follows.** Five consequences for the interface. One to three carry
    the argument; four and five are standards the build is held to.
    - 2 carries the telemetry point: the agent reads it, the person reads the
-     incident. No graphs.
+     incident.
    - 3 carries the aim's sixth sentence: plans, gates, tests before code and
      review exist for the promises.
 6. **The test.** The verdict, as what a person does and says. The closing
    line is the aim's own measure of success.
 7. **What this is not.** Three misreadings, each one a way to dismiss it: a
-   dashboard, a test language, the end of planning.
+   dashboard, a test language, the end of planning. The dashboard line was
+   first "there are no graphs to watch", which the author judged too strong
+   (2026-10-05): graphs let a person understand and check the system. It now
+   states the real difference, that the path from a problem to its fix is
+   defined in advance and a person sees only what it could not close.
 
 ## The two triads
 

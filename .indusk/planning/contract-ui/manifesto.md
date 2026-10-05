@@ -118,8 +118,9 @@ much, but it's so powerful.
 
 ## What this is not
 
-- **Not a telemetry dashboard.** There are no graphs to watch, because the
-  watching is not a person's job.
+- **Not a telemetry dashboard.** In a telemetry tool, a person finds the
+  problem and then works out what to do about it. Here that path is defined
+  before the code is written, and a person sees only what it could not close.
 - **Not a test language.** A promise stays a sentence in its author's words.
   The agents write the test and keep it; the person never maintains one.
 - **Not the end of planning.** Plans, gates and tests before code still run
