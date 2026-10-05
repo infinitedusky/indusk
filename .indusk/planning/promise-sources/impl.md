@@ -95,7 +95,7 @@ exists today and answers wrongly.
   - As built: `resolveMarkSources` returns `ResolvedSource[]` — each `{ name, ok: true, source }` or `{ name, ok: false, error }` — because a source can fail before it is read (no daemon running, a missing credential), and throwing there would let a laptop with no daemon blank production. `sourceNames(root)` is the I/O-free list; `alarmSource(names)` takes names
 - [x] `readSources(root, registry, opts)` → `SourceRead[]`: each source probed and read, with `JaegerUnreachable` and `WatcherBlind` caught into that source's `{ ok: false, kind, where, reason }`. `readPromiseMarks(root, registry, { source? })` reads one named source (the alarm source by default) and throws as today
 - [x] Export the new names through `promises/telemetry` (the admin's subpath)
-- [ ] (discovered) `lib/promises/probe.ts`: when the probe's send fails, ask the query API before calling the watcher blind — a server that is down entirely is unreachable, not blind (A4 needs production *unreachable*; today a stopped server reads *watcher blind* because the send fails first). Bounded by the caller's `waitMs`
+- [x] (discovered) `lib/promises/probe.ts`: when the probe's send fails, ask the query API before calling the watcher blind — a server that is down entirely is unreachable, not blind (A4 needs production *unreachable*; today a stopped server reads *watcher blind* because the send fails first). Bounded by the caller's `waitMs`
 
 #### Build Phase 1 Verification
 

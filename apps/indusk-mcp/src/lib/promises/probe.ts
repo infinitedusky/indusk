@@ -186,6 +186,10 @@ export async function probeWatcher(
 	try {
 		await sendWatcherSpan(target.intakeUrl, body, target.endpoint.headers);
 	} catch (err) {
+		// A refused intake beside a query API that answers is blind; when the
+		// query API does not answer either, nobody is there, and that is its own
+		// answer (promise-sources A4). This throws `JaegerUnreachable` if so.
+		await jaegerGet(target.endpoint, "/api/services", opts.waitMs ?? DEFAULT_TIMEOUT_MS);
 		throw new WatcherBlind(where, target.intakeUrl, (err as Error).message);
 	}
 
