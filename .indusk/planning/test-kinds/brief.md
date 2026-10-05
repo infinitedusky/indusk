@@ -92,6 +92,12 @@ are one project and one plan, under one set of rules (Sandy, 2026-10-05).
 - `.indusk/research/test-strategy/induskbrief.md` (April) set unit /
   integration / e2e as categories and homes. This plan adds the moment each
   runs and the smallest-kind default.
+- [promise-core](../promise-core/master.md) (living master, 2026-10-05)
+  plans `house-rules-out`, which also edits `planner.md` and `work.md`, and
+  `promise-first-build`, where tests are written first with no plan. The kinds
+  and the clock-and-reads rule are product rules, not house rules: they
+  belong in what ships. Whichever lands second rebases onto the other's skill
+  text.
 - promise-timeline's retrospective names the cost: the plan added three of
   the eight files.
 
