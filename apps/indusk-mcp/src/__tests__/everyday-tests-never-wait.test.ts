@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { glob } from "glob";
 import { describe, expect, it } from "vitest";
 import { SYSTEM as MCP_SYSTEM } from "../../vitest.tiers";
@@ -53,10 +53,15 @@ const PATTERNS: Array<{ name: string; re: RegExp; unlessFakeTimers?: boolean }> 
 
 const ADMIN_TIERS = join(REPO, "apps/indusk-admin/vitest.tiers.ts");
 
-/** The admin's SYSTEM list, from its tiers file. */
+/**
+ * The admin's SYSTEM list, imported as its vitest config imports it — never
+ * read from the file's text, where a line commented out of the array still
+ * looks like an entry (test-kinds A22).
+ */
 export async function adminSystem(tiers: string = ADMIN_TIERS): Promise<string[]> {
 	if (!existsSync(tiers)) return [];
-	return [...readFileSync(tiers, "utf-8").matchAll(/"(src\/[^"]+\.test\.tsx?)"/g)].map((m) => m[1]);
+	const mod = (await import(pathToFileURL(tiers).href)) as { SYSTEM: string[] };
+	return [...mod.SYSTEM];
 }
 
 async function packages() {
